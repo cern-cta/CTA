@@ -36,9 +36,10 @@
 #include "h/Ctape.h"
 
 namespace {
-  castor::messages::NotifyDriveBeforeMountStarted_TapeClientType 
-  convertClientType(castor::tape::tapegateway::ClientType val){
-    switch(val){
+
+  castor::messages::NotifyDriveBeforeMountStarted_TapeClientType
+  convertClientType(castor::tape::tapegateway::ClientType val) {
+    switch (val) {
       case castor::tape::tapegateway::TAPE_GATEWAY:
         return castor::messages::NotifyDriveBeforeMountStarted::CLIENT_TYPE_GATEWAY;
       case castor::tape::tapegateway::READ_TP:
@@ -51,9 +52,10 @@ namespace {
         return castor::messages::NotifyDriveBeforeMountStarted::CLIENT_TYPE_DUMPTP;
     }
   }
-    castor::messages::TapeMode 
-  convertVolumeMode(castor::tape::tapegateway::VolumeMode val){
-    switch(val){
+
+  castor::messages::TapeMode
+  convertVolumeMode(castor::tape::tapegateway::VolumeMode val) {
+    switch (val) {
       case castor::tape::tapegateway::READ:
         return castor::messages::TAPE_MODE_READ;
       case castor::tape::tapegateway::WRITE:
@@ -68,15 +70,16 @@ namespace {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log, 
-  const unsigned short tapeserverPort, const int netTimeout,
-  void *const zmqContext) throw():
-  m_log(log),
-  m_tapeserverHostName("localhost"),
-  m_tapeserverPort(tapeserverPort),
-  m_netTimeout(netTimeout),
-  m_messageSocket(zmqContext, ZMQ_REQ),
-  m_heartbeatSocket(zmqContext, ZMQ_REQ) {
+
+castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log,
+    const unsigned short tapeserverPort, const int netTimeout,
+    void *const zmqContext) throw () :
+m_log(log),
+m_tapeserverHostName("localhost"),
+m_tapeserverPort(tapeserverPort),
+m_netTimeout(netTimeout),
+m_messageSocket(zmqContext, ZMQ_REQ),
+m_heartbeatSocket(zmqContext, ZMQ_REQ) {
   castor::messages::connectToLocalhost(m_messageSocket);
   castor::messages::connectToLocalhost(m_heartbeatSocket);
 }
@@ -84,180 +87,188 @@ castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log,
 //------------------------------------------------------------------------------
 // gotReadMountDetailsFromClient
 //------------------------------------------------------------------------------
+
 void castor::messages::TapeserverProxyZmq::gotReadMountDetailsFromClient(
-castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-        const std::string &unitName) {  
-  castor::messages::NotifyDriveBeforeMountStarted body;
-  body.set_clienttype(convertClientType(volInfo.clientType));
-  body.set_mode(convertVolumeMode(volInfo.volumeMode));
-  body.set_unitname(unitName);
-  body.set_vid(volInfo.vid);
-  
-  castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue("PIPO");
-  header.set_bodysignature("PIPO");
-  header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
-  
-  castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-  castor::messages::sendMessage(m_messageSocket,body);
-  
-  castor::messages::ReplyContainer reply(m_messageSocket);
+    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+    const std::string &unitName) {
+//  castor::messages::NotifyDriveBeforeMountStarted body;
+//  body.set_clienttype(convertClientType(volInfo.clientType));
+//  body.set_mode(convertVolumeMode(volInfo.volumeMode));
+//  body.set_unitname(unitName);
+//  body.set_vid(volInfo.vid);
+//
+//  castor::messages::Header header = castor::messages::preFillHeader();
+//  header.set_bodyhashvalue("PIPO");
+//  header.set_bodysignature("PIPO");
+//  header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
+//
+//  castor::messages::sendMessage(m_messageSocket, header, ZMQ_SNDMORE);
+//  castor::messages::sendMessage(m_messageSocket, body);
+//
+//  castor::messages::ReplyContainer reply(m_messageSocket);
 
 }
 
 //------------------------------------------------------------------------------
 // gotWriteMountDetailsFromClient
 //------------------------------------------------------------------------------
+
 uint64_t
-  castor::messages::TapeserverProxyZmq::gotWriteMountDetailsFromClient(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {  
-    castor::messages::NotifyDriveBeforeMountStarted body;
-  body.set_clienttype(convertClientType(volInfo.clientType));
-  body.set_mode(convertVolumeMode(volInfo.volumeMode));
-  body.set_unitname(unitName);
-  body.set_vid(volInfo.vid);
-  
-  castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue("PIPO");
-  header.set_bodysignature("PIPO");
-  header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
+castor::messages::TapeserverProxyZmq::gotWriteMountDetailsFromClient(
+    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+    const std::string &unitName) {
+//  castor::messages::NotifyDriveBeforeMountStarted body;
+//  body.set_clienttype(convertClientType(volInfo.clientType));
+//  body.set_mode(convertVolumeMode(volInfo.volumeMode));
+//  body.set_unitname(unitName);
+//  body.set_vid(volInfo.vid);
+//
+//  castor::messages::Header header = castor::messages::preFillHeader();
+//  header.set_bodyhashvalue("PIPO");
+//  header.set_bodysignature("PIPO");
+//  header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
+//
+//  castor::messages::sendMessage(m_messageSocket, header, ZMQ_SNDMORE);
+//  castor::messages::sendMessage(m_messageSocket, body);
+//
+//  castor::messages::ReplyContainer reply(m_messageSocket);
 
-  castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-  castor::messages::sendMessage(m_messageSocket,body);
-  
-  castor::messages::ReplyContainer reply(m_messageSocket);
 
-  
   return 0; // TO BE DONE
 }
 
 //------------------------------------------------------------------------------
 // gotDumpMountDetailsFromClient
 //------------------------------------------------------------------------------
+
 void castor::messages::TapeserverProxyZmq::gotDumpMountDetailsFromClient(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {  
-  castor::messages::NotifyDriveBeforeMountStarted body;
-  body.set_clienttype(convertClientType(volInfo.clientType));
-  body.set_mode(convertVolumeMode(volInfo.volumeMode));
-  body.set_unitname(unitName);
-  body.set_vid(volInfo.vid);
-  
-  castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue("PIPO");
-  header.set_bodysignature("PIPO");
-  header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
-  
-
-
-  castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-  castor::messages::sendMessage(m_messageSocket,body);
-  
-  castor::messages::ReplyContainer reply(m_messageSocket);
+    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+    const std::string &unitName) {
+//  castor::messages::NotifyDriveBeforeMountStarted body;
+//  body.set_clienttype(convertClientType(volInfo.clientType));
+//  body.set_mode(convertVolumeMode(volInfo.volumeMode));
+//  body.set_unitname(unitName);
+//  body.set_vid(volInfo.vid);
+//
+//  castor::messages::Header header = castor::messages::preFillHeader();
+//  header.set_bodyhashvalue("PIPO");
+//  header.set_bodysignature("PIPO");
+//  header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
+//
+//
+//
+//  castor::messages::sendMessage(m_messageSocket, header, ZMQ_SNDMORE);
+//  castor::messages::sendMessage(m_messageSocket, body);
+//
+//  castor::messages::ReplyContainer reply(m_messageSocket);
 
 }
 
 //------------------------------------------------------------------------------
 // tapeMountedForRead
 //------------------------------------------------------------------------------
+
 void castor::messages::TapeserverProxyZmq::tapeMountedForRead(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {  
-  castor::messages::NotifyDriveTapeMounted body;
-  body.set_mode(convertVolumeMode(volInfo.volumeMode));
-  body.set_unitname(unitName);
-  body.set_vid(volInfo.vid);
-  
-  castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue("PIPO");
-  header.set_bodysignature("PIPO");
-  header.set_reqtype(castor::messages::reqType::NotifyDriveTapeMounted);
-  
-  castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-  castor::messages::sendMessage(m_messageSocket,body);
-  
-  castor::messages::ReplyContainer reply(m_messageSocket);
-;
+    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+    const std::string &unitName) {
+//  castor::messages::NotifyDriveTapeMounted body;
+//  body.set_mode(convertVolumeMode(volInfo.volumeMode));
+//  body.set_unitname(unitName);
+//  body.set_vid(volInfo.vid);
+//
+//  castor::messages::Header header = castor::messages::preFillHeader();
+//  header.set_bodyhashvalue("PIPO");
+//  header.set_bodysignature("PIPO");
+//  header.set_reqtype(castor::messages::reqType::NotifyDriveTapeMounted);
+//
+//  castor::messages::sendMessage(m_messageSocket, header, ZMQ_SNDMORE);
+//  castor::messages::sendMessage(m_messageSocket, body);
+//
+//  castor::messages::ReplyContainer reply(m_messageSocket);
+  ;
 }
 
 //------------------------------------------------------------------------------
 // tapeMountedForWrite
 //------------------------------------------------------------------------------
+
 void castor::messages::TapeserverProxyZmq::tapeMountedForWrite(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {  
-  castor::messages::NotifyDriveTapeMounted body;
-  body.set_mode(convertVolumeMode(volInfo.volumeMode));
-  body.set_unitname(unitName);
-  body.set_vid(volInfo.vid);
-  
-  castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue("PIPO");
-  header.set_bodysignature("PIPO");
-  header.set_reqtype(castor::messages::reqType::NotifyDriveTapeMounted);
-  
-  castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-  castor::messages::sendMessage(m_messageSocket,body);
-  
-  castor::messages::ReplyContainer reply(m_messageSocket);
+    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+    const std::string &unitName) {
+//  castor::messages::NotifyDriveTapeMounted body;
+//  body.set_mode(convertVolumeMode(volInfo.volumeMode));
+//  body.set_unitname(unitName);
+//  body.set_vid(volInfo.vid);
+//
+//  castor::messages::Header header = castor::messages::preFillHeader();
+//  header.set_bodyhashvalue("PIPO");
+//  header.set_bodysignature("PIPO");
+//  header.set_reqtype(castor::messages::reqType::NotifyDriveTapeMounted);
+//
+//  castor::messages::sendMessage(m_messageSocket, header, ZMQ_SNDMORE);
+//  castor::messages::sendMessage(m_messageSocket, body);
+//
+//  castor::messages::ReplyContainer reply(m_messageSocket);
 
 }
 
 //------------------------------------------------------------------------------
 // tapeUnmounting
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyZmq::tapeUnmounting(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {   
-  castor::messages::NotifyDriveUnmountStarted body;
-  castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue("PIPO");
-  header.set_bodysignature("PIPO");
-  header.set_reqtype(castor::messages::reqType::NotifyDriveUnmountStarted);
 
-  castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-  castor::messages::sendMessage(m_messageSocket,body);
-  
-  castor::messages::ReplyContainer reply(m_messageSocket);
+void castor::messages::TapeserverProxyZmq::tapeUnmounting(
+    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+    const std::string &unitName) {
+//  castor::messages::NotifyDriveUnmountStarted body;
+//  castor::messages::Header header = castor::messages::preFillHeader();
+//  header.set_bodyhashvalue("PIPO");
+//  header.set_bodysignature("PIPO");
+//  header.set_reqtype(castor::messages::reqType::NotifyDriveUnmountStarted);
+//
+//  castor::messages::sendMessage(m_messageSocket, header, ZMQ_SNDMORE);
+//  castor::messages::sendMessage(m_messageSocket, body);
+//
+//  castor::messages::ReplyContainer reply(m_messageSocket);
 
 }
 
 //------------------------------------------------------------------------------
 // tapeUnmounted
 //------------------------------------------------------------------------------
+
 void castor::messages::TapeserverProxyZmq::tapeUnmounted(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {  
-    castor::messages::NotifyDriveTapeUnmounted body;
-    
-  castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue("PIPO");
-  header.set_bodysignature("PIPO");
-  header.set_reqtype(castor::messages::reqType::NotifyDriveTapeUnmounted);
-  
-  castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-  castor::messages::sendMessage(m_messageSocket,body);
-  
-  castor::messages::ReplyContainer reply(m_messageSocket);
+    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+    const std::string &unitName) {
+//  castor::messages::NotifyDriveTapeUnmounted body;
+//
+//  castor::messages::Header header = castor::messages::preFillHeader();
+//  header.set_bodyhashvalue("PIPO");
+//  header.set_bodysignature("PIPO");
+//  header.set_reqtype(castor::messages::reqType::NotifyDriveTapeUnmounted);
+//
+//  castor::messages::sendMessage(m_messageSocket, header, ZMQ_SNDMORE);
+//  castor::messages::sendMessage(m_messageSocket, body);
+//
+//  castor::messages::ReplyContainer reply(m_messageSocket);
 
 }
 
 //-----------------------------------------------------------------------------
 // notifyHeartbeat
 //-----------------------------------------------------------------------------
- void  castor::messages::TapeserverProxyZmq::
- notifyHeartbeat(uint64_t nbOfMemblocksMoved){
-   messages::Heartbeat body;
-   body.set_bytesmoved(nbOfMemblocksMoved);
-   
-   messages::Header header = messages::preFillHeader();
-   header.set_reqtype(messages::reqType::Heartbeat);
-   header.set_bodyhashvalue("PIPO");
-   header.set_bodysignature("PIPO");
 
-   messages::sendMessage(m_heartbeatSocket,header,ZMQ_SNDMORE);
-   messages::sendMessage(m_heartbeatSocket,body);
-   
-   ReplyContainer reply(m_heartbeatSocket);
- }
+void castor::messages::TapeserverProxyZmq::
+notifyHeartbeat(uint64_t nbOfMemblocksMoved) {
+  //   messages::Heartbeat body;
+  //   body.set_bytesmoved(nbOfMemblocksMoved);
+  //   
+  //   messages::Header header = messages::preFillHeader();
+  //   header.set_reqtype(messages::reqType::Heartbeat);
+  //   header.set_bodyhashvalue("PIPO");
+  //   header.set_bodysignature("PIPO");
+  //
+  //   messages::sendMessage(m_heartbeatSocket,header,ZMQ_SNDMORE);
+  //   messages::sendMessage(m_heartbeatSocket,body);
+  //   
+  //   ReplyContainer reply(m_heartbeatSocket);
+}
