@@ -23,19 +23,18 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-// Include Files
+#include "castor/server/BaseThreadPool.hpp"
+#include "castor/server/metrics/MetricsCollector.hpp"
+#include "castor/server/metrics/InternalCounter.hpp"
+#include "castor/Services.hpp"
+#include "h/Cinit.h"
+#include "h/Cuuid.h"
+#include "h/serrno.h"
+
 #include <signal.h>
 #include <sstream>
 #include <iomanip>
 #include <errno.h>
-
-#include "Cinit.h"
-#include "Cuuid.h"
-#include "serrno.h"
-#include "castor/server/BaseThreadPool.hpp"
-#include "castor/Services.hpp"
-#include "castor/metrics/MetricsCollector.hpp"
-#include "castor/metrics/InternalCounter.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -77,16 +76,16 @@ void castor::server::BaseThreadPool::init()
 {
   // Enable internal monitoring if the metrics collector has already
   // been instantiated by the user application
-  castor::metrics::MetricsCollector* mc = castor::metrics::MetricsCollector::getInstance();
+  metrics::MetricsCollector* mc = metrics::MetricsCollector::getInstance();
   if(mc) {
     mc->getHistogram("AvgTaskTime")->addCounter(
-      new castor::metrics::InternalCounter(*this, "ms",
+      new metrics::InternalCounter(*this, "ms",
         &castor::server::BaseThreadPool::getAvgTaskTime));
     mc->getHistogram("ActivityFactor")->addCounter(
-      new castor::metrics::InternalCounter(*this, "%",
+      new metrics::InternalCounter(*this, "%",
         &castor::server::BaseThreadPool::getActivityFactor));
     mc->getHistogram("LoadFactor")->addCounter(
-      new castor::metrics::InternalCounter(*this, "%",
+      new metrics::InternalCounter(*this, "%",
         &castor::server::BaseThreadPool::getLoadFactor));
   }
 }

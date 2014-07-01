@@ -406,13 +406,6 @@ if (${COMPILE_SERVER} STREQUAL "1")
     PERMISSIONS ${CASTOR_HEADER_PERMS})
   
   install(FILES
-    metrics/Counter.hpp
-    metrics/Histogram.hpp
-    metrics/MetricsCollector.hpp
-    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/metrics
-    PERMISSIONS ${CASTOR_HEADER_PERMS})
-  
-  install(FILES
     query/DiskPoolQueryType.hpp
     DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/query
     PERMISSIONS ${CASTOR_HEADER_PERMS})

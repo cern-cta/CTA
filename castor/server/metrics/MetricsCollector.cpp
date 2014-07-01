@@ -24,26 +24,24 @@
  * @author castor-dev team
  *****************************************************************************/
 
-// Include files
-#include <typeinfo>
-#include <fstream>
-#include <time.h>
+#include "castor/server/metrics/InternalCounter.hpp"
+#include "castor/server/metrics/MetricsCollector.hpp"
+#include "castor/server/metrics/UpdateThread.hpp"
 #include "h/getconfent.h"
 
-// Local includes
-#include "castor/metrics/MetricsCollector.hpp"
-#include "castor/metrics/UpdateThread.hpp"
-#include "castor/metrics/InternalCounter.hpp"
+#include <fstream>
+#include <time.h>
+#include <typeinfo>
 
 // Initialization of the singleton
-castor::metrics::MetricsCollector*
-  castor::metrics::MetricsCollector::s_instance(0);
+castor::server::metrics::MetricsCollector*
+  castor::server::metrics::MetricsCollector::s_instance(0);
 
 //------------------------------------------------------------------------------
 // getInstance
 //------------------------------------------------------------------------------
-castor::metrics::MetricsCollector*
-  castor::metrics::MetricsCollector::getInstance(
+castor::server::metrics::MetricsCollector*
+  castor::server::metrics::MetricsCollector::getInstance(
    castor::server::MultiThreadedDaemon* daemon)
 {
   if(s_instance == 0 && daemon) {
@@ -59,7 +57,7 @@ castor::metrics::MetricsCollector*
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::metrics::MetricsCollector::MetricsCollector(
+castor::server::metrics::MetricsCollector::MetricsCollector(
   castor::server::MultiThreadedDaemon& daemon) :
   castor::server::SignalThreadPool("metrics", new UpdateThread()),
   m_daemon(daemon)
@@ -97,7 +95,7 @@ castor::metrics::MetricsCollector::MetricsCollector(
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::metrics::MetricsCollector::~MetricsCollector() throw()
+castor::server::metrics::MetricsCollector::~MetricsCollector() throw()
 {
   for(HistogramsIter h = histBegin(); h != histEnd(); h++)
     delete h->second;
@@ -106,8 +104,8 @@ castor::metrics::MetricsCollector::~MetricsCollector() throw()
 //------------------------------------------------------------------------------
 // updateHistograms
 //------------------------------------------------------------------------------
-void castor::metrics::MetricsCollector::updateHistograms(castor::IObject* obj)
-  
+void castor::server::metrics::MetricsCollector::updateHistograms(
+  castor::IObject* obj)
 {
   for(HistogramsIter h = histBegin(); h != histEnd(); h++) {
     CountersIter c;
@@ -131,8 +129,8 @@ void castor::metrics::MetricsCollector::updateHistograms(castor::IObject* obj)
 //------------------------------------------------------------------------------
 // printXml
 //------------------------------------------------------------------------------
-std::string castor::metrics::MetricsCollector::printXml(std::string histName, std::string counterName)
-  
+std::string castor::server::metrics::MetricsCollector::printXml(
+  std::string histName, std::string counterName)
 {
   std::ostringstream ss;
   time_t t = time(NULL);
@@ -187,7 +185,7 @@ std::string castor::metrics::MetricsCollector::printXml(std::string histName, st
 //------------------------------------------------------------------------------
 // dumpToFile
 //------------------------------------------------------------------------------
-void castor::metrics::MetricsCollector::dumpToFile()
+void castor::server::metrics::MetricsCollector::dumpToFile()
 {
   std::ofstream f(m_dumpFileLocation.c_str());
   if(f.is_open()) {

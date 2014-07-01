@@ -24,20 +24,18 @@
  * @author castor-dev team
  *****************************************************************************/
 
-// Include Files
-#include <stdlib.h>
-#include <iomanip>
-#include <errno.h>
-#include <math.h>
+#include "castor/server/metrics/Counter.hpp"
 #include "h/getconfent.h"
 
-// Local includes
-#include "Counter.hpp"
+#include <errno.h>
+#include <iomanip>
+#include <math.h>
+#include <stdlib.h>
 
 //------------------------------------------------------------------------------
 // inc
 //------------------------------------------------------------------------------
-void castor::metrics::Counter::inc(int value) 
+void castor::server::metrics::Counter::inc(int value) 
 {
   m_mutex.lock();
   m_value += value;
@@ -47,7 +45,7 @@ void castor::metrics::Counter::inc(int value)
 //------------------------------------------------------------------------------
 // updateRates
 //------------------------------------------------------------------------------
-void castor::metrics::Counter::updateRates(int si)
+void castor::server::metrics::Counter::updateRates(int si)
 {
   // force calculation in f.p. to handle negative numbers and get better precision
   double v = m_value;
@@ -81,7 +79,7 @@ void castor::metrics::Counter::updateRates(int si)
 //------------------------------------------------------------------------------
 // getAvg
 //------------------------------------------------------------------------------
-double castor::metrics::Counter::getAvg(int avgType)
+double castor::server::metrics::Counter::getAvg(int avgType)
 {
   switch(avgType) {
     case 0: return m_avg1m;
@@ -95,7 +93,7 @@ double castor::metrics::Counter::getAvg(int avgType)
 //------------------------------------------------------------------------------
 // printXml
 //------------------------------------------------------------------------------
-std::string castor::metrics::Counter::printXml()
+std::string castor::server::metrics::Counter::printXml()
 {
   std::ostringstream ss;
   ss << std::setprecision(3)

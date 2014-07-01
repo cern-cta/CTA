@@ -25,15 +25,14 @@
  * @author castor-dev team
  *****************************************************************************/
 
-// Local includes
+#include "castor/server/metrics/MetricsCollector.hpp"
+#include "castor/server/metrics/UpdateThread.hpp"
 #include "h/getconfent.h"
-#include "castor/metrics/MetricsCollector.hpp"
-#include "castor/metrics/UpdateThread.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::metrics::UpdateThread::UpdateThread() : m_t0(0)
+castor::server::metrics::UpdateThread::UpdateThread() : m_t0(0)
 {
   m_sampling = DEFAULT_SAMPLING_INTERVAL;
   char* sampling = getconfent("Metrics", "SamplingInterval", 0);
@@ -51,7 +50,7 @@ castor::metrics::UpdateThread::UpdateThread() : m_t0(0)
 //------------------------------------------------------------------------------
 // init
 //------------------------------------------------------------------------------
-void castor::metrics::UpdateThread::init()
+void castor::server::metrics::UpdateThread::init()
 {
   // make sure the first run dumps the data
   m_t0 = time(0) - m_sampling - 1;
@@ -60,7 +59,7 @@ void castor::metrics::UpdateThread::init()
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::metrics::UpdateThread::run(void* param)
+void castor::server::metrics::UpdateThread::run(void* param)
 {
   u_signed64 t = time(0);
   if((t - m_t0) / m_sampling == 0) {

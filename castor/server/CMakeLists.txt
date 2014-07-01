@@ -35,12 +35,12 @@ set (SERVER_LIB_SRC_FILES
   ForkedProcessPool.cpp
   ../io/StreamThreadNotificationCnv.cpp
   ListenerThreadPool.cpp
-  ../metrics/Counter.cpp
-  ../metrics/InternalCounter.cpp
-  ../metrics/Histogram.cpp
-  ../metrics/MetricsCollector.cpp
-  ../metrics/UpdateThread.cpp
-  ../metrics/ObjTypeCounter.cpp
+  metrics/Counter.cpp
+  metrics/InternalCounter.cpp
+  metrics/Histogram.cpp
+  metrics/MetricsCollector.cpp
+  metrics/UpdateThread.cpp
+  metrics/ObjTypeCounter.cpp
   MultiThreadedDaemon.cpp
   Mutex.cpp
   NotifierThread.cpp
@@ -57,3 +57,10 @@ CastorSetLibraryVersions (castorserver)
 target_link_libraries (castorserver cap castorclient castorcommon)
 install (TARGETS castorserver LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
   NAMELINK_SKIP)
+
+install(FILES
+  metrics/Counter.hpp
+  metrics/Histogram.hpp
+  metrics/MetricsCollector.hpp
+  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/server/metrics
+  PERMISSIONS ${CASTOR_HEADER_PERMS})

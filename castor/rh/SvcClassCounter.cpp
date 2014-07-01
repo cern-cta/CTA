@@ -24,19 +24,19 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-// Local includes
-#include <errno.h>
-#include "Cpwd.h"
-#include "Cgrp.h"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/rh/SvcClassCounter.hpp"
+#include "h/Cgrp.h"
+#include "h/Cpwd.h"
 
+#include <errno.h>
 
 //------------------------------------------------------------------------------
 // instantiate
 //------------------------------------------------------------------------------
-castor::metrics::Counter* castor::rh::SvcClassCounter::instantiate(castor::IObject* obj)
+castor::server::metrics::Counter* castor::rh::SvcClassCounter::instantiate(
+  castor::IObject* obj)
 {
   return new SvcClassCounter(obj);
 }
@@ -45,7 +45,7 @@ castor::metrics::Counter* castor::rh::SvcClassCounter::instantiate(castor::IObje
 // Constructor
 //------------------------------------------------------------------------------
 castor::rh::SvcClassCounter::SvcClassCounter(castor::IObject* obj) :
-  castor::metrics::Counter("")
+  castor::server::metrics::Counter("")
 {
   castor::stager::Request* r;
   r = dynamic_cast<castor::stager::Request*>(obj);

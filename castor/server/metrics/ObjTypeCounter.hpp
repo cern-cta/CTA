@@ -25,37 +25,37 @@
 
 #pragma once
 
-// Include Files
+#include "castor/server/metrics/Counter.hpp"
+
 #include <string>
-#include "castor/metrics/Counter.hpp"
 
-namespace castor {
-  
-  namespace metrics {
+namespace castor  {
+namespace server  {
+namespace metrics {
 
-    class ObjTypeCounter : public castor::metrics::Counter {
+class ObjTypeCounter : public Counter {
 
-    public:
+public:
       
-      /// Factory method
-      static Counter* instantiate(castor::IObject* obj);
+  /// Factory method
+  static Counter* instantiate(castor::IObject* obj);
       
-      /// Default constructor
-      ObjTypeCounter(castor::IObject* obj);
+  /// Default constructor
+  ObjTypeCounter(castor::IObject* obj);
       
-      /// Default destructor
-      ~ObjTypeCounter() {};
+  /// Default destructor
+  ~ObjTypeCounter() {};
     
-      /// match
-      virtual int match(castor::IObject* obj);
+  /// match
+  virtual int match(castor::IObject* obj);
       
-    protected:
-      /// Object type for matching
-      int m_type;
+protected:
+  /// Object type for matching
+  int m_type;
     
-    };
+}; // class ObjTypeCounter
 
-  } // end of namespace metrics
-  
-} // end of namespace castor
+} // namespace metrics
+} // namespace server
+} // namespace castor
 

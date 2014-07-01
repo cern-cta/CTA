@@ -22,33 +22,33 @@
  *****************************************************************************/
 
 // Include files
-#include "getconfent.h"
-#include "castor/IObject.hpp"
+#include "castor/BaseAddress.hpp"
 #include "castor/Constants.hpp"
-#include "castor/ICnvSvc.hpp"
-#include "castor/Services.hpp"
-#include "castor/System.hpp"
-#include "castor/metrics/MetricsCollector.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/PermissionDenied.hpp"
-#include "castor/BaseAddress.hpp"
+#include "castor/ICnvSvc.hpp"
+#include "castor/IObject.hpp"
+#include "castor/io/biniostream.h"
+#include "castor/MessageAck.hpp"
 #include "castor/PortNumbers.hpp"
+#include "castor/rh/Client.hpp"
+#include "castor/rh/RHThread.hpp"
+#include "castor/rh/Server.hpp"
+#include "castor/Services.hpp"
+#include "castor/System.hpp"
+#include "castor/server/metrics/MetricsCollector.hpp"
 #include "castor/server/ThreadNotification.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
-#include "castor/rh/Client.hpp"
-#include "castor/io/biniostream.h"
-#include "castor/MessageAck.hpp"
-#include "castor/rh/Server.hpp"
-#include "castor/rh/RHThread.hpp"
+#include "h/getconfent.h"
 
-#include <iostream>
+#include <algorithm>
 #include <errno.h>
+#include <iostream>
 #include <sys/time.h>
 #include <unistd.h>
-#include <algorithm>
 
 // Flag to indicate whether the first thread has been created.
 static bool firstThreadInit = true;
@@ -56,10 +56,9 @@ pthread_key_t castor::rh::RHThread::s_rateLimiterKey(0);
 pthread_once_t castor::rh::RHThread::s_rateLimiterOnce(PTHREAD_ONCE_INIT);
 
 //------------------------------------------------------------------------------
-// Cconstructor
+// constructor
 //------------------------------------------------------------------------------
-castor::rh::RHThread::RHThread()
-   :
+castor::rh::RHThread::RHThread() :
   BaseObject() {
 
   // Statically initialize the list of stager service handlers for each
@@ -317,8 +316,8 @@ void castor::rh::RHThread::run(void* param) {
   if (ack.status()) {
     try {
       // Update counters if metrics collection is enabled
-      castor::metrics::MetricsCollector* mc =
-        castor::metrics::MetricsCollector::getInstance();
+      castor::server::metrics::MetricsCollector* mc =
+        castor::server::metrics::MetricsCollector::getInstance();
       if(mc) {
         // catch and ignore any exception at this stage
         mc->updateHistograms(fr);
