@@ -20,7 +20,7 @@ Architecture: any
 Depends: castor-lib = %{version}-%{release} libcap
 Build-Depends: libcap-devel
 Description: castor (Cern Advanced STORage system)
- Server-side library containing common variables, methods types and classes
+ Server-side library containing common variables, methods, types and classes
 
 Package: castor-gc-server
 Architecture: any
