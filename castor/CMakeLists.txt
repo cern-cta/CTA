@@ -31,6 +31,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
   add_subdirectory (rh)
   add_subdirectory (job)
   add_subdirectory (scheduler)
+  add_subdirectory (server)
   add_subdirectory (stager/daemon)
   add_subdirectory (tape)
   add_subdirectory (vdqm)
@@ -120,7 +121,6 @@ set (CLIENT_LIB_SRC_FILES
   io/StreamStagePutDoneRequestCnv.cpp
   io/StreamStagePutRequestCnv.cpp
   io/StreamStageRmRequestCnv.cpp
-  io/StreamThreadNotificationCnv.cpp
   io/StreamStgFilesDeletedCnv.cpp
   io/StreamStgFilesDeletedResponseCnv.cpp
   io/StreamAbortResponseCnv.cpp
@@ -147,12 +147,6 @@ set (CLIENT_LIB_SRC_FILES
   log/LogContext.cpp
   log/Message.cpp
   log/Param.cpp
-  metrics/Counter.cpp
-  metrics/InternalCounter.cpp
-  metrics/Histogram.cpp
-  metrics/MetricsCollector.cpp
-  metrics/UpdateThread.cpp
-  metrics/ObjTypeCounter.cpp
   query/DiskPoolQueryResponse.cpp
   query/FileSystemDescription.cpp
   query/DiskServerDescription.cpp
@@ -174,22 +168,6 @@ set (CLIENT_LIB_SRC_FILES
   rh/FileQryResponse.cpp
   rh/IOResponse.cpp
   rh/BasicResponse.cpp
-  server/AuthListenerThreadPool.cpp
-  server/BaseThreadPool.cpp
-  server/Daemon.cpp
-  server/DynamicThreadPool.cpp
-  server/ListenerThreadPool.cpp
-  server/MultiThreadedDaemon.cpp
-  server/TCPListenerThreadPool.cpp
-  server/UDPListenerThreadPool.cpp
-  server/ForkedProcessPool.cpp
-  server/SignalThreadPool.cpp
-  server/DbAlertedThreadPool.cpp
-  server/Mutex.cpp
-  server/NotifierThread.cpp
-  server/SelectProcessThread.cpp
-  server/ThreadNotification.cpp
-  server/Queue.cpp
   stager/CastorFile.cpp
   stager/DiskCopyInfo.cpp
   stager/DiskCopyForRecall.cpp
@@ -245,7 +223,6 @@ set (CLIENT_LIB_SRC_FILES
   stager/BulkRequestResult.cpp
   stager/FileResult.cpp
   utils/DebugBuf.cpp
-  utils/ProcessCap.cpp
   utils/SmartFd.cpp
   utils/SmartFILEPtr.cpp
   utils/utils.cpp
@@ -275,16 +252,6 @@ set (CLIENT_LIB_SRC_FILES
   ../client/src/stager/stager_client_api_listPrivileges.cpp
   ../client/src/stager/stager_errmsg.c
   ../client/src/stager/stager_mapper.c)
-
-# Try to find the libcap library because it will not exist on Mac OS X
-find_library (LIBCAP_LIB cap)
-if (LIBCAP_LIB)
-  message(STATUS "Found the libcap library")
-  message(STATUS "Adding source to castor::utils to support process capabilities")
-  set (CLIENT_LIB_PROC_CAP_SRC_FILES
-    utils/SmartCap.cpp
-    utils/ProcessCap.cpp)
-endif (LIBCAP_LIB)
 
 add_library (castorclient SHARED
   ${CLIENT_LIB_SRC_FILES}

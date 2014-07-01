@@ -56,6 +56,7 @@ target_link_libraries(tapeserverd
   castorcommon
   castorclient
   castorlegacymsg
+  castorserver
   castortapegatewayprotocol
   castortapereactor
   castorTapeServerThreading

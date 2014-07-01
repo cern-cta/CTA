@@ -62,7 +62,7 @@ public:
           TapeServerReporter & gsr,
           const client::ClientInterface::VolumeInfo& volInfo, 
           uint64_t maxFilesRequest,
-          castor::utils::ProcessCap &capUtils,
+          castor::server::ProcessCap &capUtils,
           TaskWatchDog<detail::Recall>& watchdog,
           castor::log::LogContext & lc): 
    TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr,volInfo,capUtils,lc),

@@ -9,12 +9,12 @@
 
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/log/LogContext.hpp"
+#include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/utils/Timer.hpp"
-#include "castor/utils/ProcessCap.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -35,7 +35,7 @@ private :
   /**
    * Utility to change the capabilities of the current tape thread
    */
-  castor::utils::ProcessCap &m_capUtils;
+  castor::server::ProcessCap &m_capUtils;
 protected:
   ///the queue of tasks 
   castor::tape::threading::BlockingQueue<Task *> m_tasks;
@@ -165,7 +165,7 @@ public:
     castor::legacymsg::RmcProxy & rmc,
     TapeServerReporter & tsr,
     const client::ClientInterface::VolumeInfo& volInfo,
-    castor::utils::ProcessCap &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
+    castor::server::ProcessCap &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
     m_drive(drive), m_rmc(rmc), m_tsr(tsr), m_vid(volInfo.vid), m_logContext(lc),
     m_volInfo(volInfo),m_hardarwareStatus(0) {
 

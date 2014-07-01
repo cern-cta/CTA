@@ -72,7 +72,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   messages::TapeserverProxyFactory &tapeserverFactory,
   legacymsg::NsProxyFactory &nsFactory,
   reactor::ZMQReactor &reactor,
-  castor::utils::ProcessCap &capUtils):
+  castor::server::ProcessCap &capUtils):
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),
   m_argv(argv),

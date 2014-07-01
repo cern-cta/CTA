@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/utils/ProcessCapDummy.cpp
+ *         castor/server/ProcessCapDummy.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,25 +22,25 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/utils/ProcessCapDummy.hpp"
+#include "castor/server/ProcessCapDummy.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::utils::ProcessCapDummy::~ProcessCapDummy()
+castor::server::ProcessCapDummy::~ProcessCapDummy()
   throw() {
 }
 
 //------------------------------------------------------------------------------
 // getProcText
 //------------------------------------------------------------------------------
-std::string castor::utils::ProcessCapDummy::getProcText() {
+std::string castor::server::ProcessCapDummy::getProcText() {
   return m_text;
 }
 
 //------------------------------------------------------------------------------
 // setProcText
 //------------------------------------------------------------------------------
-void castor::utils::ProcessCapDummy::setProcText(const std::string &text) {
+void castor::server::ProcessCapDummy::setProcText(const std::string &text) {
   m_text = text;
 }

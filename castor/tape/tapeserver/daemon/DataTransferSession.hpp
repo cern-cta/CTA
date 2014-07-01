@@ -28,11 +28,11 @@
 #include "castor/messages/TapeserverProxy.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/log/LogContext.hpp"
+#include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
-#include "castor/utils/ProcessCap.hpp"
 
 namespace castor {
 namespace legacymsg {
@@ -104,7 +104,7 @@ namespace daemon {
       const utils::DriveConfig & driveConfig,
       castor::legacymsg::RmcProxy & rmc,
       castor::messages::TapeserverProxy & initialProcess,
-      castor::utils::ProcessCap &capUtils,
+      castor::server::ProcessCap &capUtils,
       const CastorConf & castorConf);
     /** The only method. It will execute (like a task, that it is) */
     int execute() ;
@@ -156,7 +156,7 @@ namespace daemon {
     /** Reference to the tape server's parent process to report detailed status */
     castor::messages::TapeserverProxy & m_intialProcess;
     /** Object providing utilities for working UNIX capabilities. */
-    castor::utils::ProcessCap &m_capUtils;
+    castor::server::ProcessCap &m_capUtils;
     /** copy of the process's argc to allow "command line reporting"
      * i.e. snprintf to argv's, which will be visible in 'ps' */
     int m_argc;

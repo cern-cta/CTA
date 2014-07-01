@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/utils/SmartCap.hpp
+ *         castor/server/SmartCap.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -28,7 +28,7 @@
 #include <sys/capability.h>
 
 namespace castor {
-namespace utils {
+namespace server {
 
 /**
  * A smart pointer that owns a capability state.
@@ -117,6 +117,6 @@ private:
 
 }; // class SmartCap
 
-} // namespace utils
+} // namespace server
 } // namespace castor
 

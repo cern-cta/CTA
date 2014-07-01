@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/utils/SmartCapTest.cpp
+ *         castor/server/SmartCapTest.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,13 +23,13 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
-#include "castor/utils/SmartCap.hpp"
+#include "castor/server/SmartCap.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-class castor_utils_SmartCapTest : public ::testing::Test {
+class castor_server_SmartCapTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -39,21 +39,21 @@ protected:
   }
 };
 
-TEST_F(castor_utils_SmartCapTest, default_constructor) {
-  castor::utils::SmartCap smartPtr;
+TEST_F(castor_server_SmartCapTest, default_constructor) {
+  castor::server::SmartCap smartPtr;
   ASSERT_EQ((cap_t)NULL, smartPtr.get());
 }
 
-TEST_F(castor_utils_SmartCapTest, constructor) {
+TEST_F(castor_server_SmartCapTest, constructor) {
   cap_t cap = cap_get_proc();
   ASSERT_NE((cap_t)NULL, cap);
 
-  castor::utils::SmartCap smartPtr(cap);
+  castor::server::SmartCap smartPtr(cap);
   ASSERT_EQ(cap, smartPtr.get());
 }
 
-TEST_F(castor_utils_SmartCapTest, reset) {
-  castor::utils::SmartCap smartPtr;
+TEST_F(castor_server_SmartCapTest, reset) {
+  castor::server::SmartCap smartPtr;
   ASSERT_EQ((cap_t)NULL, smartPtr.get());
 
   cap_t cap = cap_get_proc();
@@ -63,12 +63,12 @@ TEST_F(castor_utils_SmartCapTest, reset) {
   ASSERT_EQ(cap, smartPtr.get());
 }
 
-TEST_F(castor_utils_SmartCapTest, assignment) {
+TEST_F(castor_server_SmartCapTest, assignment) {
   cap_t cap = cap_get_proc();
   ASSERT_NE((cap_t)NULL, cap);
 
-  castor::utils::SmartCap smartPtr1;
-  castor::utils::SmartCap smartPtr2;
+  castor::server::SmartCap smartPtr1;
+  castor::server::SmartCap smartPtr2;
 
   ASSERT_EQ((cap_t)NULL, smartPtr1.get());
   ASSERT_EQ((cap_t)NULL, smartPtr2.get());
@@ -81,8 +81,8 @@ TEST_F(castor_utils_SmartCapTest, assignment) {
   ASSERT_EQ(cap, smartPtr2.get());
 }
 
-TEST_F(castor_utils_SmartCapTest, releaseNull) {
-  castor::utils::SmartCap smartPtr;
+TEST_F(castor_server_SmartCapTest, releaseNull) {
+  castor::server::SmartCap smartPtr;
   ASSERT_THROW(smartPtr.release(), castor::exception::Exception);
 }
 

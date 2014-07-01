@@ -28,10 +28,10 @@
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/log/DummyLogger.hpp"
 #include "castor/messages/TapeserverProxyDummyFactory.hpp"
+#include "castor/server/ProcessCapDummy.hpp"
 #include "castor/tape/reactor/DummyPollReactor.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/utils/utils.hpp"
-#include "castor/utils/ProcessCapDummy.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <gtest/gtest.h>
@@ -92,7 +92,7 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::messages::TapeserverProxyDummyFactory tpsFactory;
   castor::legacymsg::NsProxyDummyFactory nsFactory;
   castor::tape::reactor::ZMQReactor reactor(log, m_zmqContext);
-  castor::utils::ProcessCapDummy capUtils;
+  castor::server::ProcessCapDummy capUtils;
   std::auto_ptr<TapeDaemon> daemon;
   ASSERT_NO_THROW(daemon.reset(new TapeDaemon(argc, argv, stdOut, stdErr, log,
     driveConfigs, vdqm, vmgr, rmcFactory, tpsFactory, nsFactory,

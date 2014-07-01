@@ -87,7 +87,7 @@ add_library(TestDummies
   ../castor/log/DummyLogger.cpp
   ../castor/tape/reactor/DummyPollEventHandler.cpp
   ../castor/tape/reactor/DummyPollReactor.cpp
-  ../castor/utils/ProcessCapDummy.cpp
+  ../castor/server/ProcessCapDummy.cpp
 )
 
 # Those tests are single threaded, functionnal and error tests. They could
@@ -130,6 +130,7 @@ add_executable(castorUnitTests
   ../castor/log/StringLoggerTest.cpp
   ../castor/log/SyslogLoggerTest.cpp
   ../castor/server/DaemonTest.cpp
+  ../castor/server/SmartCapTest.cpp
   ../castor/tape/reactor/PollReactorImplTest.cpp
   ../castor/tape/reactor/ZMQReactorTest.cpp
   ../castor/tape/tapeserver/client/ClientProxyTest.cpp
@@ -161,7 +162,6 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/threading/AtomicCounterTest.cpp
   ../castor/tape/utils/TpconfigLineTest.cpp
   ../castor/utils/SmartArrayPtrTest.cpp
-  ../castor/utils/SmartCapTest.cpp
   ../castor/utils/SmartFdTest.cpp
   ../castor/utils/UtilsTest.cpp
   ${STK_UNITTEST_SRC_FILES}
@@ -182,6 +182,7 @@ target_link_libraries(castorUnitTests
   Utils
   File
   TestDummies
+  castorserver
   castortapegatewayprotocol
   castorTapeServerThreading
   castorTapeServerDaemonTestDummies
@@ -221,6 +222,7 @@ target_link_libraries(castorThreadedUnitTests
   castorclient
   castorcommon
   castorlegacymsg
+  castorserver
   castortapegatewayprotocol
   castorTapeServerThreading
   castorTapeServerDaemonTestDummies

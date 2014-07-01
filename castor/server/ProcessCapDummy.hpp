@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/utils/ProcessCapDummy.hpp
+ *         castor/server/ProcessCapDummy.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,13 +24,13 @@
 
 #pragma once
 
-#include "castor/utils/ProcessCap.hpp"
+#include "castor/server/ProcessCap.hpp"
 
 #include <string>
 #include <sys/capability.h>
 
 namespace castor {
-namespace utils  {
+namespace server  {
 
 /**
  * A dummy class that pretends to provide support for UNIX capabilities.
@@ -70,5 +70,5 @@ private:
 
 }; // class ProcessCapDummy
 
-} // namespace utils
+} // namespace server
 } // namespace castor

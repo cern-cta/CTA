@@ -1,5 +1,5 @@
 #
-#                      castor/stager/daemon/CMakeLists.txt
+#         castor/server/CMakeLists.txt
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -23,34 +23,37 @@
 cmake_minimum_required (VERSION 2.6)
 
 ################################################################################
-# Rules to build and install stagerd
+# Rules to build and install libcastortapeutils.so
 ################################################################################
-set (STAGERD_SRC_FILES
-  StagerDaemon.cpp
-  PutDoneHandler.cpp
-  ReplyHelper.cpp
-  RequestHelper.cpp
-  RmHandler.cpp
-  SetGCWeightHandler.cpp
-  RequestHandler.cpp
-  BaseRequestSvcThread.cpp
-  StageRequestSvcThread.cpp
-  BulkStageReqSvcThread.cpp
-  JobRequestSvcThread.cpp
-  QueryRequestSvcThread.cpp
-  GcSvcThread.cpp
-  ErrorSvcThread.cpp
-  JobSvcThread.cpp
-  LoggingThread.cpp
-  NsOverride.cpp)
-add_executable (stagerd ${STAGERD_SRC_FILES})
-set_target_properties (stagerd PROPERTIES
-  COMPILE_FLAGS ${ORACLE_CPPFLAGS}
-  LINK_FLAGS "-L${ORACLE_LIBDIR} -locci -lclntsh")
-target_link_libraries (stagerd castorclient castorcnvs castorcommon castorns
-  castorupv castordlf castorcommonora castorserver)
-install (TARGETS stagerd DESTINATION ${CASTOR_DEST_BIN_DIR})
-CastorInstallAdmManPage (stagerd)
-CastorInstallLogRotate (castor-stager-server)
-CastorInstallSysConfigExample (stagerd)
-CastorInstallInitScript (stagerd)
+set (SERVER_LIB_SRC_FILES
+  AuthListenerThreadPool.cpp
+  BaseThreadPool.cpp
+  CMakeLists.txt
+  Daemon.cpp
+  DbAlertedThreadPool.cpp
+  DynamicThreadPool.cpp
+  ForkedProcessPool.cpp
+  ../io/StreamThreadNotificationCnv.cpp
+  ListenerThreadPool.cpp
+  ../metrics/Counter.cpp
+  ../metrics/InternalCounter.cpp
+  ../metrics/Histogram.cpp
+  ../metrics/MetricsCollector.cpp
+  ../metrics/UpdateThread.cpp
+  ../metrics/ObjTypeCounter.cpp
+  MultiThreadedDaemon.cpp
+  Mutex.cpp
+  NotifierThread.cpp
+  ProcessCap.cpp
+  Queue.cpp
+  SelectProcessThread.cpp
+  SignalThreadPool.cpp
+  SmartCap.cpp
+  TCPListenerThreadPool.cpp
+  ThreadNotification.cpp
+  UDPListenerThreadPool.cpp)
+add_library (castorserver SHARED ${SERVER_LIB_SRC_FILES})
+CastorSetLibraryVersions (castorserver)
+#target_link_libraries (castortapeutils castorcommon zmq)
+install (TARGETS castorserver LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
+  NAMELINK_SKIP)

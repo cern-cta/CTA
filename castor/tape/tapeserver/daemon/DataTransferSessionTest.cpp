@@ -33,6 +33,7 @@
 #include "castor/legacymsg/RmcProxyDummy.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
+#include "castor/server/ProcessCapDummy.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
@@ -45,7 +46,6 @@
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
-#include "castor/utils/ProcessCapDummy.hpp"
 #include "h/Ctape.h"
 #include "h/smc_struct.h"
 
@@ -70,8 +70,6 @@ private:
   }
   client::ClientSimulator & m_sim;
 };
-
-  
 
 TEST(tapeServer, DataTransferSessionGooddayRecall) {
   // TpcpClients only supports 32 bits session number
@@ -166,7 +164,7 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   castorConf.tapebridgeBulkRequestRecallMaxFiles = 1000;
   castorConf.tapeserverdDiskThreads = 1;
   castor::legacymsg::RmcProxyDummy rmc;
-  castor::utils::ProcessCap capUtils;
+  castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
   int argc = 4;
@@ -235,7 +233,7 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::legacymsg::RmcProxyDummy rmc;
   castor::messages::TapeserverProxyDummy initialProcess;
-  castor::utils::ProcessCapDummy capUtils;
+  castor::server::ProcessCapDummy capUtils;
   char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
   int argc = 4;
   char * argv [4];
@@ -390,7 +388,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::legacymsg::RmcProxyDummy rmc;
   castor::messages::TapeserverProxyDummy initialProcess;
-  castor::utils::ProcessCap capUtils;
+  castor::server::ProcessCap capUtils;
   char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
   int argc = 4;
   char * argv [4];
@@ -412,5 +410,4 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   }
 }
 
-}
-
+} // namespace unitTest
