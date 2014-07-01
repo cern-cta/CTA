@@ -23,7 +23,7 @@
 cmake_minimum_required (VERSION 2.6)
 
 ################################################################################
-# Rules to build and install libcastortapeutils.so
+# Rules to build and install libcastorserver.so
 ################################################################################
 set (SERVER_LIB_SRC_FILES
   AuthListenerThreadPool.cpp
@@ -54,6 +54,6 @@ set (SERVER_LIB_SRC_FILES
   UDPListenerThreadPool.cpp)
 add_library (castorserver SHARED ${SERVER_LIB_SRC_FILES})
 CastorSetLibraryVersions (castorserver)
-#target_link_libraries (castortapeutils castorcommon zmq)
+target_link_libraries (castorserver cap castorclient castorcommon)
 install (TARGETS castorserver LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
   NAMELINK_SKIP)
