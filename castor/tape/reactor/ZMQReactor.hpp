@@ -52,10 +52,8 @@ public:
    * Constructor.
    *
    * @param log Interface to the CASTOR logging system.
-   * @param xmqContext The ZMQ context used by the sockets handled by this
-   * reactor.
    */
-  ZMQReactor(log::Logger& log, void *const zmqContext) throw();
+  ZMQReactor(log::Logger& log) throw();
 
   /**
    * Destructor.
@@ -86,13 +84,6 @@ public:
    */
   void handleEvents(const int timeout);
   
-  /**
-   * Returns the ZMQ context used by the sockets handled by this reactor.
-   *
-   * @return The ZMQ context used by the sockets handled by this reactor.
-   */
-  void *getZmqContext() const throw();
-
 private:
   
   /**
@@ -132,11 +123,6 @@ private:
    * Map of file descriptor to registered event handler.
    */
   HandlerMap m_handlers;  
-  
-  /**
-   * The ZMQ context used by the sockets handled by this reactor.
-   */
-  void *const m_zmqContext;
   
   /**
    * Object representing the API of the CASTOR logging system.

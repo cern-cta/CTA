@@ -178,6 +178,11 @@ protected:
   void registerTapeDriveWithVdqm(const std::string &unitName);
 
   /**
+   * Initialises the ZMQ context.
+   */
+  void initZmqContext();
+
+  /**
    * Sets up the reactor.
    */
   void setUpReactor() ;
@@ -470,6 +475,11 @@ protected:
    * The process identifier of the ProcessForker.
    */
   pid_t m_processForkerPid;
+
+  /**
+   * The ZMQ context.
+   */
+  void *m_zmqContext;
 
 }; // class TapeDaemon
 

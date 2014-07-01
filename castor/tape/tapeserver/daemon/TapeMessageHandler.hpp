@@ -51,21 +51,22 @@ public:
   /**
    * Constructor.
    *
-   * @param fd The file descriptor of the socket listening for
-   * connections from the vdqmd daemon.
    * @param reactor The reactor to which new Vdqm connection handlers are to
    * be registered.
    * @param log The object representing the API of the CASTOR logging system.
+   * @param driveCatalogue The tape-drive catalogue.
+   * @param hostName The name of the host.
    * @param vdqm Proxy object representing the vdqmd daemon.
-   * @param driveCatalogue The catalogue of tape drives controlled by the tape
-   * server daemon.
+   * @param zmqContext The ZMQ context.
    */
   TapeMessageHandler(
     reactor::ZMQReactor &reactor,
-    log::Logger &log,DriveCatalogue &driveCatalogue,
+    log::Logger &log,
+    DriveCatalogue &driveCatalogue,
     const std::string &hostName,
     castor::legacymsg::VdqmProxy & vdqm,
-    castor::legacymsg::VmgrProxy & vmgr);
+    castor::legacymsg::VmgrProxy & vmgr,
+    void *const zmqContext);
 
   /**
    * Destructor.

@@ -36,31 +36,34 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
-   reactor::ZMQReactor &reactor,
+  reactor::ZMQReactor &reactor,
   log::Logger &log,DriveCatalogue &driveCatalogue,
   const std::string &hostName,
   castor::legacymsg::VdqmProxy & vdqm,
-  castor::legacymsg::VmgrProxy & vmgr):
+  castor::legacymsg::VmgrProxy & vmgr,
+  void *const zmqContext):
   m_reactor(reactor),
-  m_log(log),m_socket(reactor.getZmqContext(), ZMQ_REP),
+  m_log(log),
+  m_socket(zmqContext, ZMQ_REP),
   m_driveCatalogue(driveCatalogue),
   m_hostName(hostName),
   m_vdqm(vdqm),
-  m_vmgr(vmgr){ 
+  m_vmgr(vmgr) { 
+
+  std::ostringstream endpoint;
+  endpoint << "tcp://127.0.0.1:" << TAPE_SERVER_INTERNAL_LISTENING_PORT;
   
-  std::string bindingAdress("tcp://127.0.0.1:");
-  bindingAdress+=castor::utils::toString(tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT);
-  std::vector<log::Param> v;
-  v.push_back(log::Param("endpoint",bindingAdress));
-  
-  try{
-    m_socket.bind(bindingAdress.c_str());
-    m_log(LOG_INFO,"bind succesful",v);
-  }
-  catch(const std::exception& e){
-    std::vector<log::Param> v;
-    v.push_back(log::Param("ex code",e.what()));
-    m_log(LOG_INFO,"Failed to bind",v);
+  try {
+    m_socket.bind(endpoint.str().c_str());
+    log::Param params[] = {log::Param("endpoint", endpoint.str())};
+    m_log(LOG_INFO, "Bound the ZMQ_REP socket of the TapeMessageHandler",
+      params);
+  } catch(castor::exception::Exception &ne){
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to bind the ZMQ_REP socket of the TapeMessageHandler"
+      ": endpoint=" << endpoint.str() << ": " << ne.getMessage().str();
+    throw ex;
   }
 }
 

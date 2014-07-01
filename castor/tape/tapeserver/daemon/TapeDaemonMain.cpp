@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tapeserver/TapeDaemonMain.cpp
+ *         castor/tape/tapeserver/TapeDaemonMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -51,10 +51,9 @@
 // @param argc The number of command-line arguments.
 // @param argv The command-line arguments.
 // @param log The logging system.
-// @param zmqContext The ZMQ context.
 //------------------------------------------------------------------------------
 static int exceptionThrowingMain(const int argc, char **const argv,
-  castor::log::Logger &log, void *const zmqContext);
+  castor::log::Logger &log);
 
 //------------------------------------------------------------------------------
 // main
@@ -72,20 +71,9 @@ int main(const int argc, char **const argv) {
   }
   castor::log::Logger &log = *logPtr;
 
-  // Try to instantiate a ZMQ context
-  const int sizeOfIOThreadPoolForZMQ = 1;
-  void *const zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
-  if(NULL == zmqContext) {
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    castor::log::Param params[] = {castor::log::Param("message", message)};
-    log(LOG_ERR, "Failed to instantiate ZMQ context", params);
-    return 1;
-  }
-
   int programRc = 1; // Be pessimistic
   try {
-    programRc = exceptionThrowingMain(argc, argv, log, zmqContext);
+    programRc = exceptionThrowingMain(argc, argv, log);
   } catch(castor::exception::Exception &ex) {
     castor::log::Param params[] = {
       castor::log::Param("message", ex.getMessage().str())};
@@ -95,15 +83,6 @@ int main(const int argc, char **const argv) {
     log(LOG_ERR, "Caught an unexpected standard exception", params);
   } catch(...) {
     log(LOG_ERR, "Caught an unexpected and unknown exception");
-  }
-
-  // Try to destroy the ZMQ context
-  if(zmq_term(zmqContext)) {
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    castor::log::Param params[] = {castor::log::Param("message", message)};
-    log(LOG_ERR, "Failed to destroy ZMQ context", params);
-    return 1;
   }
 
   return programRc;
@@ -131,7 +110,7 @@ static void logTpconfigLine(castor::log::Logger &log,
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 static int exceptionThrowingMain(const int argc, char **const argv,
-  castor::log::Logger &log, void *const zmqContext) {
+  castor::log::Logger &log) {
   using namespace castor;
   
   const std::string vdqmHostName =
@@ -155,7 +134,7 @@ static int exceptionThrowingMain(const int argc, char **const argv,
     tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT, netTimeout);
   legacymsg::NsProxy_TapeAlwaysEmptyFactory nsFactory;
 
-  tape::reactor::ZMQReactor reactor(log, zmqContext);
+  tape::reactor::ZMQReactor reactor(log);
 
   // Create the object providing utilities for working with UNIX capabilities
   castor::server::ProcessCap capUtils;

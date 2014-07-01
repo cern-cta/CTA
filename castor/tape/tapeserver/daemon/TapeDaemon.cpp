@@ -87,7 +87,8 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   m_programName("tapeserverd"),
   m_hostName(getHostName()),
   m_processForkerCmdSenderSocket(-1),
-  m_processForkerPid(0) {
+  m_processForkerPid(0),
+  m_zmqContext(NULL) {
 }
 
 //------------------------------------------------------------------------------
@@ -125,6 +126,15 @@ castor::tape::tapeserver::daemon::TapeDaemon::~TapeDaemon() throw() {
     } else {
       m_log(LOG_INFO, "Succesffuly closed the socket used for sending commands"
         " to the ProcessForker", params);
+    }
+  }
+
+  if(NULL != m_zmqContext) {
+    if(zmq_term(m_zmqContext)) {
+      char message[100];
+      sstrerror_r(errno, message, sizeof(message));
+      castor::log::Param params[] = {castor::log::Param("message", message)};
+      m_log(LOG_ERR, "Failed to destroy ZMQ context", params);
     }
   }
 }
@@ -178,6 +188,7 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   setProcessCapabilities("cap_sys_rawio+p");
 
   blockSignals();
+  initZmqContext();
   setUpReactor();
   registerTapeDrivesWithVdqm();
   mainEventLoop();
@@ -449,6 +460,21 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
 }
 
 //------------------------------------------------------------------------------
+// initZmqContext
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::initZmqContext() {
+  const int sizeOfIOThreadPoolForZMQ = 1;
+  m_zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
+  if(NULL == m_zmqContext) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to instantiate ZMQ context: " << message;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
 // setUpReactor
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor() {
@@ -574,7 +600,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
   createAndRegisterTapeMessageHandler()  {
   std::auto_ptr<TapeMessageHandler> tapeMessageHandler;
   try {
-    tapeMessageHandler.reset(new TapeMessageHandler(m_reactor, m_log,m_driveCatalogue,m_hostName,m_vdqm,m_vmgr));
+    tapeMessageHandler.reset(new TapeMessageHandler(m_reactor, m_log,
+      m_driveCatalogue, m_hostName, m_vdqm, m_vmgr, m_zmqContext));
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
     ex.getMessage() <<

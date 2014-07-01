@@ -63,7 +63,7 @@ TEST_F(castor_tape_rmc_RmcDaemonTest, constructor) {
   std::ostringstream stdOut;
   std::ostringstream stdErr;
   castor::log::DummyLogger logger("unittest");
-  castor::tape::reactor::ZMQReactor reactor(logger, m_zmqContext);
+  castor::tape::reactor::ZMQReactor reactor(logger);
   const bool isGrantedReturnValue = true;
   castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
   

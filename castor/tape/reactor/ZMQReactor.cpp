@@ -38,8 +38,8 @@ namespace{
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------    
-castor::tape::reactor::ZMQReactor::ZMQReactor(log::Logger& log,
-  void *zmqContext) throw(): m_zmqContext(zmqContext), m_log(log) {
+castor::tape::reactor::ZMQReactor::ZMQReactor(log::Logger& log) throw():
+  m_log(log) {
 }
 
 //------------------------------------------------------------------------------
@@ -92,13 +92,6 @@ void castor::tape::reactor::ZMQReactor::handleEvents(const int timeout) {
     log::Param params[] = {log::Param("message", message)};
     m_log(LOG_ERR, "Failed to handle I/O event: zmq_poll() failed", params);
   }
-}
-
-//------------------------------------------------------------------------------
-// getZmqContext
-//------------------------------------------------------------------------------
-void *castor::tape::reactor::ZMQReactor::getZmqContext() const throw() {
-  return m_zmqContext;
 }
 
 //------------------------------------------------------------------------------
