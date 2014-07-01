@@ -16,6 +16,7 @@
 extern "C" {
 #endif
 
+  void ceph_posix_disconnect_all();
   void ceph_posix_set_logfunc(void (*logfunc) (char *, va_list argp));
   int ceph_posix_open(const char *pathname, int flags, mode_t mode);
   int ceph_posix_close(int fd);

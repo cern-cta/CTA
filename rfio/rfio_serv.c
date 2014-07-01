@@ -558,6 +558,8 @@ int main (int     argc,
     }
     doit(0, &from, uid, gid);
   }
+  // disconnect form ceph (if ever connected)
+  ceph_posix_disconnect_all();
   exit(0);
 }
 

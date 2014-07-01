@@ -38,7 +38,7 @@ std::map<unsigned int, FileRef> g_fds;
 /// global variable remembering the next available file descriptor
 unsigned int g_nextCephFd = 0;
 
-/// global variable for the log function. Defaults to one going to dev/null
+/// global variable for the log function.
 static void (*g_logfunc) (char *, va_list argp) = 0;
 
 static void logwrapper(char* format, ...) {
@@ -70,14 +70,30 @@ static libradosstriper::RadosStriper* getRadosStriper(std::string pool) {
     }
     librados::IoCtx ioctx;
     rc = cluster.ioctx_create(pool.c_str(), ioctx);
-    if (rc != 0) return 0;
+    if (rc != 0) {
+      cluster.shutdown();
+      return 0;
+    }
     libradosstriper::RadosStriper *newStriper = new libradosstriper::RadosStriper;
     rc = libradosstriper::RadosStriper::striper_create(ioctx, newStriper);
-    if (rc != 0) return 0;
+    if (rc != 0) {
+      cluster.shutdown();
+      return 0;
+    }
     it = g_radosStripers.insert(std::pair<std::string, libradosstriper::RadosStriper*>
                                 (pool, newStriper)).first;
   }
   return it->second;
+}
+
+void ceph_posix_disconnect_all() {
+  for (std::map<std::string, libradosstriper::RadosStriper*>::iterator it =
+         g_radosStripers.begin();
+       it != g_radosStripers.end();
+       it++) {
+    delete it->second;
+  }
+  g_radosStripers.clear();
 }
 
 void ceph_open(CephFileRef &fr, const char *pathname, int flags, mode_t mode) {
@@ -223,7 +239,7 @@ int ceph_stat64(const char *pathname, struct stat64 *buf) {
 }
 
 int ceph_fcntl(CephFileRef &fr, int cmd) {
-  // minimal implementation for rfio
+  // minimal implementation
   switch (cmd) {
   case F_GETFL:
     return fr.mode;

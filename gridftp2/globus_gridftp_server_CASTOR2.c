@@ -163,7 +163,7 @@ static void ceph_logfunc_wrapper (char *format, va_list argp) {
  *  start
  *  -----
  *  This function is called when a new session is initialized, ie a user
- *  connectes to the server.  This hook gives the dsi an oppertunity to
+ *  connectes to the server.  This hook gives the dsi an opportunity to
  *  set internal state that will be threaded through to all other
  *  function calls associated with this session.  And an oppertunity to
  *  reject the user.
@@ -211,7 +211,7 @@ static void globus_l_gfs_CASTOR2_start(globus_gfs_operation_t op,
  *  destroy
  *  -------
  *  This is called when a session ends, ie client quits or disconnects.
- *  The dsi should clean up all memory they associated wit the session
+ *  The dsi should clean up all memory they associated with the session
  *  here.
  ************************************************************************/
 static void globus_l_gfs_CASTOR2_destroy(void *user_arg) {
@@ -1082,5 +1082,7 @@ static int globus_l_gfs_CASTOR2_activate(void) {
  */
 static int globus_l_gfs_CASTOR2_deactivate(void) {
   globus_extension_registry_remove(GLOBUS_GFS_DSI_REGISTRY, "CASTOR2");
+  // disconnect from ceph
+  ceph_posix_disconnect_all();
   return 0;
 }
