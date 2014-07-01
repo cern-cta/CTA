@@ -548,13 +548,11 @@ XrdxCastor2FsFile::open(const char*         path,
   authz.accessop = aop;
   time_t now = time(NULL);
   authz.exptime  = (now + gMgr->msTokenLockTime);
-  authz.token = "";
   authz.signature = "";
   authz.manager = (char*)gMgr->ManagerId.c_str();
-  std::string acc_opaque = "";
 
   // Build and sign the authorization token with the server's private key
-  acc_opaque = gMgr->mServerAcc->GetOpaqueAcc(authz, gMgr->mIssueCapability);
+  std::string acc_opaque = gMgr->mServerAcc->GetOpaqueAcc(authz, gMgr->mIssueCapability);
 
   if (acc_opaque.empty())
   {

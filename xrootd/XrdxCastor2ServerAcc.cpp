@@ -494,7 +494,7 @@ XrdxCastor2ServerAcc::Decode(const char* opaque, AuthzInfo& authz)
   // Convert the '&' seperated tokens into '\n' seperated tokens for parsing
   tmp_str.replace("&", "\n");
   XrdOucTokenizer authztokens((char*)tmp_str.c_str());
-
+  
   while ((stoken = authztokens.GetLine()))
   {
     XrdOucString token = stoken;
@@ -507,6 +507,20 @@ XrdxCastor2ServerAcc::Decode(const char* opaque, AuthzInfo& authz)
       continue;
     }
 
+    if (token.beginswith("castor2fs.pfn1="))
+    {
+      authz.pfn1 = (token.c_str() + 15);
+      ntoken++;
+      continue;
+    }
+
+    if (token.beginswith("castor2fs.pfn2="))
+    {
+      authz.pfn2 = (token.c_str() + 15);
+      ntoken++;
+      continue;
+    }
+    
     if (token.beginswith("castor2fs.id="))
     {
       authz.id = (token.c_str() + 13);
@@ -542,13 +556,6 @@ XrdxCastor2ServerAcc::Decode(const char* opaque, AuthzInfo& authz)
       continue;
     }
 
-    if (token.beginswith("castor2fs.token="))
-    {
-      authz.token = (token.c_str() + 16);
-      ntoken++;
-      continue;
-    }
-
     if (token.beginswith("castor2fs.signature="))
     {
       authz.signature = (token.c_str() + 20);
@@ -562,24 +569,10 @@ XrdxCastor2ServerAcc::Decode(const char* opaque, AuthzInfo& authz)
       ntoken++;
       continue;
     }
-
-    if (token.beginswith("castor2fs.pfn1="))
-    {
-      authz.pfn1 = (token.c_str() + 15);
-      ntoken++;
-      continue;
-    }
-
-    if (token.beginswith("castor2fs.pfn2="))
-    {
-      authz.pfn2 = (token.c_str() + 15);
-      ntoken++;
-      continue;
-    }
   }
 
-  // We expect 11 opaque castor2fs tokens to be present
-  if (ntoken != 11)
+  // We expect 10 opaque castor2fs tokens to be present
+  if (ntoken != 10)
   {
     xcastor_err("wrong number of tokens:%i", ntoken);
     return false;
@@ -606,16 +599,13 @@ XrdxCastor2ServerAcc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
     return acc_opaque;
   }
 
-  authz.token = (char*) token.c_str();
-
   // Sign opaque information if requested
   if (doSign)
   {
     std::string sb64 = "";
     int sb64len = 0;
 
-    if (!SignBase64((unsigned char*) authz.token.c_str(),
-                    authz.token.length(), sb64, sb64len))
+    if (!SignBase64((unsigned char*) token.c_str(), token.length(), sb64, sb64len))
     {
       xcastor_err("failed to sign authorization token");
       return acc_opaque;
@@ -634,7 +624,6 @@ XrdxCastor2ServerAcc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
        << "castor2fs.client_sec_gid=" << authz.client_sec_gid << "&"
        << "castor2fs.accessop=" << authz.accessop << "&"
        << "castor2fs.exptime=" << (int)authz.exptime << "&"
-       << "castor2fs.token=" << authz.token << "&"
        << "castor2fs.signature=" << authz.signature << "&"
        << "castor2fs.manager=" << authz.manager << "&";
   acc_opaque = sstr.str().c_str();
@@ -643,35 +632,22 @@ XrdxCastor2ServerAcc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
 
 
 //------------------------------------------------------------------------------
-//! Build the autorization token used for signing
+// Build the autorization token used for signing
 //------------------------------------------------------------------------------
 std::string 
 XrdxCastor2ServerAcc::BuildToken(const AuthzInfo& authz)
 {
-  std::string token = "";
-  
-  if (authz.id.empty() 
-      || authz.sfn.empty() 
-      || authz.pfn1.empty() 
-      || authz.pfn2.empty()
-      || authz.client_sec_uid.empty()
-      || authz.client_sec_gid.empty()
-      || authz.manager.empty())
-  {
-    xcastor_err("AuthzInfo not fully filled");
-    return token;
-  }
-
   std::ostringstream sstr;
-  sstr << authz.sfn << authz.pfn1 
-       << authz.pfn2 << authz.id
+  sstr << authz.sfn
+       << authz.pfn1 
+       << authz.pfn2
+       << authz.id
        << authz.client_sec_uid 
        << authz.client_sec_gid
        << (int)authz.accessop 
        << (int)authz.exptime 
        << authz.manager;
-  token = sstr.str().c_str();
-  return token;
+  return sstr.str();
 }
 
 
@@ -771,18 +747,9 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
       decodeLock.UnLock();
       return XrdAccPriv_None;
     }
-    
-    if (ref_token != authz.token)
-    {
-      TkEroute.Emsg("Access", EACCES, "verify the provided token information - "
-                    "intrinsic tags differ from explicit tags for sfn=", path);
-      printf("%s||||%s\n", ref_token.c_str(), authz.token.c_str());
-      decodeLock.UnLock();
-      return XrdAccPriv_None;
-    }
 
     // Verify the signature of authz information
-    if ((!VerifyUnbase64(authz.token.c_str(), 
+    if ((!VerifyUnbase64(ref_token.c_str(), 
                          (unsigned char*)authz.signature.c_str(), path)))
     {
       TkEroute.Emsg("Access", EACCES, "verify signature in request sfn=", path);

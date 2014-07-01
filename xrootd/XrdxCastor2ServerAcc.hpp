@@ -63,7 +63,6 @@ public:
     std::string id; ///< the client connection id
     std::string client_sec_uid; ///< the sec identity eg. user name
     std::string client_sec_gid; ///< the sec identity eg. group name
-    std::string token; ///< the full token
     std::string signature; ///< signature of the 'token'
     std::string manager; ///< hostname of the managernode
   };
