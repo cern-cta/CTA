@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastorClient.hh
+ *                      XrdxCastorClient.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,13 +18,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru, esindril@cern.ch - CERN 2013
+ * @author Andreas Peters <apeters@cern.ch>
+ * @author Elvin Sindrilaru <esindril@cern.ch>
  * 
  ******************************************************************************/
 
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastorClient.hpp"
-#include "XrdxCastor2FsConstants.hpp"
 /*-----------------------------------------------------------------------------*/
 #include "XrdSfs/XrdSfsInterface.hh"
 /*-----------------------------------------------------------------------------*/
@@ -64,12 +64,16 @@ XrdxCastorClient::XrdxCastorClient()
   int low_port  = castor::client::LOW_CLIENT_PORT_RANGE;
   int high_port = castor::client::HIGH_CLIENT_PORT_RANGE;
   char* sport;
+
   if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
-                          (char *)castor::client::LOWPORT_CONF, 0)) != 0) {
+                          (char *)castor::client::LOWPORT_CONF, 0)) != 0)
+  {
     low_port = castor::System::porttoi(sport);
   }
+
   if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
-                          (char *)castor::client::HIGHPORT_CONF, 0)) != 0) {
+                          (char *)castor::client::HIGHPORT_CONF, 0)) != 0)
+  {
     high_port = castor::System::porttoi(sport);
   }
 
@@ -77,7 +81,9 @@ XrdxCastorClient::XrdxCastorClient()
   int rc;
   int nonblocking = 1;
   rc = ioctl(mCallbackSocket->socket(), FIONBIO, &nonblocking);
-  if (rc == -1) {
+
+  if (rc == -1)
+  {
     castor::exception::InvalidArgument e;
     e.getMessage() << "Could not set socket asynchronous";
     throw e;
@@ -142,9 +148,8 @@ XrdxCastorClient::SendAsyncRequest(const std::string& userId,
 
   // Check if we reached the maximum allowed number of pending request and
   // if so then stall the client i.e. return a positive value which represents
-  // the number of seconds he should be back; AND do a clean-up of requests 
-  // for which we received the responses but the client never showed up to 
-  // collect them.
+  // the number of seconds of stalling; AND do a clean-up of requests for which
+  // we received the responses but the client never showed up to collect them.
   mMutexMaps.Lock();   // -->
   
   //TODO: maybe also add a time constraint i.e. do a clean-up evey 10 min?
@@ -314,7 +319,7 @@ XrdxCastorClient::GetResponse(const std::string& userId,
     }
     else if (isFirstTime)
     {
-      // If this is the first time we check for a response we give the stager a
+      // If this is the first time we check for a response we give the stager
       // wait_time seconds to reply to our request before stalling the client
       int wait_time = 4;
       struct timeval start;
@@ -379,7 +384,7 @@ XrdxCastorClient::GetResponse(const std::string& userId,
 
 //------------------------------------------------------------------------------
 // Check if the user has already submitted the current request. If so, this 
-// means if comes back to collect the response after a stall. 
+// means he is coming back to collect the response after a stall. 
 //------------------------------------------------------------------------------
 bool 
 XrdxCastorClient::HasSubmittedReq(const char* path, XrdOucErrInfo& error)
@@ -390,12 +395,10 @@ XrdxCastorClient::HasSubmittedReq(const char* path, XrdOucErrInfo& error)
   ostr << error.getErrUser() << ":" << path << ":";
   std::string get_req = ostr.str() + "get";
   std::string put_req = ostr.str() + "put";
-  std::string update_req = ostr.str() + "update";
 
   XrdSysMutexHelper lock(mMutexMaps);
   return ((mMapUsers.find(get_req) != mMapUsers.end()) ||
-          (mMapUsers.find(put_req) != mMapUsers.end()) ||
-          (mMapUsers.find(update_req) != mMapUsers.end())) ;
+          (mMapUsers.find(put_req) != mMapUsers.end()));
 }
   
 
@@ -464,11 +467,13 @@ XrdxCastorClient::PollResponses()
     errno = 0;
     int rc = poll(mFds, mNfds, 1000);   // 1 sec timeout to be able to detect a shutdown
     
-    if(mDoStop) {
+    if(mDoStop) 
+    {
       // We're shutting down, just exit the loop
       break;
     }
-    if (rc == 0) {
+    if (rc == 0) 
+    {
       // poll timed out, go to next iteration
       continue;
     }
@@ -614,9 +619,8 @@ XrdxCastorClient::PollResponses()
       if (mFds[i].fd == -1) 
       {
         for (j = i; j < mNfds; j++) 
-        {
           mFds[j].fd = mFds[j + 1].fd;
-        }
+    
         mNfds--;
       }
     }

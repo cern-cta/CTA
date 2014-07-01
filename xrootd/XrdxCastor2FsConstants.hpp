@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastor2Stager.hh
+ *                      XrdxCastor2FsConstants.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,14 +18,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * @author Andreas Peters <apeters@cern.ch> 
+ * @author Elvin Sindrilaru <esindril@cern.ch>
  * 
  ******************************************************************************/
 
 #pragma once
 
-#define XCASTOR2FS_GRIDMAPCHECKINTERVAL     60 // in seconds
-#define XCASTOR2FS_METADATAUPDATEINTERVAL    1 // in seconds
 #define XCASTOR2FS_MAXFILESYSTEMS         8192
 #define XCASTOR2FS_MAXDISTINCTUSERS       8192
 

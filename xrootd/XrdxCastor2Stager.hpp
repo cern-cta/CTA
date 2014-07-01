@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastor2Stager.hh
+ *                      XrdxCastor2Stager.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,12 +18,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * @author Andreas Peters <apeters@cern.ch>
+ * @author Elvin Sindrilaru <esindril@cern.ch>
  * 
  ******************************************************************************/
 
 #pragma once
-
 
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastorLogging.hpp"
@@ -60,188 +60,173 @@ namespace castor
 //------------------------------------------------------------------------------
 class XrdxCastor2Stager : public LogId
 {
-  public:
-
-    ///! Delay store for each of the users
-    static XrdOucHash<XrdOucString>* msDelayStore;
-    static XrdSysRWLock msLockDelay; ///< RW lock for the delay map
-
+public:
     
-    //--------------------------------------------------------------------------
-    //! Request information structure
-    //--------------------------------------------------------------------------
-    struct ReqInfo
-    {
-       uid_t mUid;
-       gid_t mGid;
-       const char* mPath;
-       const char* mStageHost;
-       const char* mServiceClass;
-
-       //-----------------------------------------------------------------------
-       //! Constructor
-       //-----------------------------------------------------------------------
-       ReqInfo(uid_t uid, gid_t gid, const char* path, 
-              const char* stagehost, const char* serviceclass):
-         mUid(uid),
-         mGid(gid),
-         mPath(path),
-         mStageHost(stagehost),
-         mServiceClass(serviceclass)
-       {
-         // empty
-       }
-    };
-  
-
-
-    //--------------------------------------------------------------------------
-    //! Response information structure
-    //--------------------------------------------------------------------------
-    struct RespInfo
-    {
-       XrdOucString mRedirectionHost;
-       XrdOucString mRedirectionPfn1;
-       XrdOucString mRedirectionPfn2;
-       XrdOucString mStageStatus;
-       
-       //-----------------------------------------------------------------------
-       //! Constructor
-       //-----------------------------------------------------------------------
-       RespInfo():
-         mRedirectionHost(""),
-         mRedirectionPfn1(""),
-         mRedirectionPfn2(""),
-         mStageStatus("")
-       {
-         //empty
-       }
-    };
-
+  //----------------------------------------------------------------------------
+  //! Request information structure
+  //----------------------------------------------------------------------------
+  struct ReqInfo
+  {
+    uid_t mUid;
+    gid_t mGid;
+    const char* mPath;
+    const char* mServiceClass;
+    
 
     //--------------------------------------------------------------------------
     //! Constructor
     //--------------------------------------------------------------------------
-    XrdxCastor2Stager(): LogId() {};
-
-
-    //--------------------------------------------------------------------------
-    //! Destructor
-    //--------------------------------------------------------------------------
-    ~XrdxCastor2Stager() {};
-
-
-    //--------------------------------------------------------------------------
-    //! Get a delay value for the corresponding tag 
-    //!
-    //! @param tag is made by concatenating the tident with the path of the req
-    //!
-    //! @return delay in seconds
-    //--------------------------------------------------------------------------
-    static int GetDelayValue(const char* tag);
-
-
-    //------------------------------------------------------------------------------
-    //! Drop delay tag from mapping
-    //!
-    //! @param tag tag to be dropped from mapping
-    //!
-    //------------------------------------------------------------------------------
-    static void DropDelayTag(const char* tag);
-
-
-    //--------------------------------------------------------------------------
-    //! Delete the request and response objects from the maps
-    //!
-    //! @param req request object 
-    //! @param resp response object 
-    //! @param respvect response vector
-    //!
-    //--------------------------------------------------------------------------
-    static void DeleteReqResp(castor::stager::FileRequest* req,
-                              castor::client::IResponseHandler* resp,
-                              std::vector<castor::rh::Response*>* respvec);
-
-
-  
-    //--------------------------------------------------------------------------
-    //! Process response received form the stager
-    //! 
-    //! @param error error object
-    //! @param respElem ReqElemement structure defined in XrdxCastorClient.hh
-    //! @param opType opertation type
-    //! @param reqInfo request informatio structure
-    //! @param respInfo response info structure to be filled in
-    //!
-    //! @return 
-    //--------------------------------------------------------------------------
-    static int ProcessResponse(XrdOucErrInfo& error,
-                               struct xcastor::XrdxCastorClient::ReqElement*& respElem,
-                               const std::string& opType,
-                               struct ReqInfo* reqInfo,
-                               struct RespInfo& respInfo);
+    ReqInfo(uid_t uid, gid_t gid, const char* path, const char* serviceclass):
+      mUid(uid),
+      mGid(gid),
+      mPath(path),
+      mServiceClass(serviceclass)
+    {
+      // empty
+    }
+  };
   
 
-    //--------------------------------------------------------------------------
-    //! Prepare2Get
-    //--------------------------------------------------------------------------
-    static bool Prepare2Get( XrdOucErrInfo& error,
-                             uid_t uid, gid_t gid,
-                             const char* path,
-                             const char* stagehost,
-                             const char* serviceclass,
+
+  //----------------------------------------------------------------------------
+  //! Response information structure
+  //----------------------------------------------------------------------------
+  struct RespInfo
+  {
+    XrdOucString mRedirectionHost;
+    XrdOucString mRedirectionPfn1;
+    XrdOucString mRedirectionPfn2;
+    XrdOucString mStageStatus;
+    
+    //-------------------------------------------------------------------------
+    //! Constructor
+    //-------------------------------------------------------------------------
+    RespInfo():
+      mRedirectionHost(""),
+      mRedirectionPfn1(""),
+      mRedirectionPfn2(""),
+      mStageStatus("")
+    {
+      //empty
+    }
+  };
+  
+  
+  //----------------------------------------------------------------------------
+  //! Constructor
+  //----------------------------------------------------------------------------
+  XrdxCastor2Stager();
+  
+  
+  //----------------------------------------------------------------------------
+  //! Destructor
+  //----------------------------------------------------------------------------
+  ~XrdxCastor2Stager();
+  
+
+  //----------------------------------------------------------------------------
+  //! Get a delay value for the corresponding tag 
+  //!
+  //! @param tag is made by concatenating the tident with the path of the req
+  //!
+  //! @return delay in seconds
+  //----------------------------------------------------------------------------
+  static int GetDelayValue(const char* tag);
+
+
+  //----------------------------------------------------------------------------
+  //! Drop delay tag from mapping
+  //!
+  //! @param tag tag to be dropped from mapping
+  //!
+  //----------------------------------------------------------------------------
+  static void DropDelayTag(const char* tag);
+
+
+  //----------------------------------------------------------------------------
+  //! Delete the request and response objects from the maps
+  //!
+  //! @param req request object 
+  //! @param resp response object 
+  //! @param respvect response vector
+  //!
+  //----------------------------------------------------------------------------
+  static void DeleteReqResp(castor::stager::FileRequest* req,
+                            castor::client::IResponseHandler* resp,
+                            std::vector<castor::rh::Response*>* respvec);
+  
+  
+  //----------------------------------------------------------------------------
+  //! Process response received form the stager
+  //! 
+  //! @param error error object
+  //! @param respElem ReqElemement structure defined in XrdxCastorClient.hh
+  //! @param opType opertation type
+  //! @param reqInfo request informatio structure
+  //! @param respInfo response info structure to be filled in
+  //!
+  //! @return 
+  //--------------------------------------------------------------------------
+  static int ProcessResponse(XrdOucErrInfo& error,
+                             struct xcastor::XrdxCastorClient::ReqElement*& respElem,
+                             const std::string& opType,
+                             struct ReqInfo* reqInfo,
                              struct RespInfo& respInfo);
-
-    //--------------------------------------------------------------------------
-    //! Send an async request to the stager. This request can be a GET or a PUT
-    //! or an UPDATE.
-    //!
-    //! @param error error object 
-    //! @param opType type of operation: get, put or update
-    //! @param reqInfo request information stucture
-    //! @param respInfo response information structure
-    //! 
-    //! @return SFS_OK answer received and successfully parsed
-    //!         SFS_ERROR there was an error
-    //!         SFS_STALL response not available yet, stall the client 
-    //!         
-    //--------------------------------------------------------------------------
-    static int DoAsyncReq(XrdOucErrInfo& error,
-                          const std::string& opType,
-                          struct ReqInfo* reqInfo,
-                          struct RespInfo& respInfo);
-
-
-    //--------------------------------------------------------------------------
-    //! Rm
-    //--------------------------------------------------------------------------
-    static bool Rm( XrdOucErrInfo& error,
-                    uid_t uid, gid_t gid,
-                    const char* path,
-                    const char* stagehost,
-                    const char* serviceclass );
   
+  
+  //----------------------------------------------------------------------------
+  //! Prepare2Get
+  //----------------------------------------------------------------------------
+  static bool Prepare2Get(XrdOucErrInfo& error,
+                          uid_t uid, gid_t gid,
+                          const char* path,
+                          const char* serviceclass,
+                          struct RespInfo& respInfo);
+  
+  //----------------------------------------------------------------------------
+  //! Send an async request to the stager. This request can be a GET or a PUT
+  //! or an UPDATE.
+  //!
+  //! @param error error object 
+  //! @param opType type of operation: get, put or update
+  //! @param reqInfo request information stucture
+  //! @param respInfo response information structure
+  //! 
+  //! @return SFS_OK answer received and successfully parsed
+  //!         SFS_ERROR there was an error
+  //!         SFS_STALL response not available yet, stall the client 
+  //!         
+  //----------------------------------------------------------------------------
+  static int DoAsyncReq(XrdOucErrInfo& error,
+                        const std::string& opType,
+                        struct ReqInfo* reqInfo,
+                        struct RespInfo& respInfo);
+  
+  
+  //----------------------------------------------------------------------------
+  //! Rm
+  //----------------------------------------------------------------------------
+  static bool Rm(XrdOucErrInfo& error,
+                 uid_t uid, gid_t gid,
+                 const char* path,
+                 const char* serviceclass);
 
-    //--------------------------------------------------------------------------
-    //! UpdateDone
-    //--------------------------------------------------------------------------
-    static bool UpdateDone( XrdOucErrInfo& error,
-                            const char* path,
-                            const char* reqid,
-                            const char* fileid,
-                            const char* nameserver,
-                            const char* stagehost,
-                            const char* serviceclass );
+
+  //----------------------------------------------------------------------------
+  //! StagerQuery
+  //----------------------------------------------------------------------------
+  static bool StagerQuery(XrdOucErrInfo& error,
+                          uid_t uid, gid_t gid,
+                          const char* path,
+                          const char* serviceclass,
+                          std::string& stagestatus);
 
 
-    //--------------------------------------------------------------------------
-    //! StagerQuery
-    //--------------------------------------------------------------------------
-    static bool StagerQuery( XrdOucErrInfo& error,
-                             uid_t uid, gid_t gid,
-                             const char* path,
-                             const char* stagehost,
-                             const char* serviceclass,
-                             XrdOucString& stagestatus );
+  static XrdOucHash<XrdOucString>* msDelayStore; ///< delay store for each of the users
+  
+private:
+
+  static XrdSysRWLock msLockStore; ///< RW lock for the delay map
+
 };
 
