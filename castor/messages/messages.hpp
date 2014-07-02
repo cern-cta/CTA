@@ -29,6 +29,8 @@
 #include "castor/tape/utils/ZmqMsg.hpp"
 #include "castor/tape/utils/ZmqSocket.hpp"
 #include "h/Ctape.h"
+#include "castor/exception/Exception.hpp"
+#include <openssl/evp.h>
 #pragma once 
 
 namespace castor {
@@ -56,9 +58,22 @@ template <class T> void sendMessage(tape::utils::ZmqSocket& socket,const T& msg,
   socket.send(&blob.getZmqMsg(), flag);
 }
 
-void connectToLocalhost(tape::utils::ZmqSocket& m_socket);
-castor::messages::Header preFillHeader();
+template <class T>std::string computeSHA1(const char* data,int len) {
+  // Create a context and hash the data
+  EVP_MD_CTX ctx;
+  EVP_MD_CTX_init(&ctx);
+  EVP_SignInit(&ctx, EVP_sha1());
+  if (!EVP_SignUpdate(&ctx, data, len)) {
+    EVP_MD_CTX_cleanup(&ctx);
+    return "";
+  }
+    // cleanup context
+  EVP_MD_CTX_cleanup(&ctx);
+  return "";
+}
 
+void connectToLocalhost(tape::utils::ZmqSocket&  m_socket);
+castor::messages::Header preFillHeader();
 ReplyContainer readReplyMsg(tape::utils::ZmqSocket& socket);
 
 } // namespace messages
