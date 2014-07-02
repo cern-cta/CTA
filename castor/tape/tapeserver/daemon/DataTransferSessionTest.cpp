@@ -388,7 +388,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::legacymsg::RmcProxyDummy rmc;
   castor::messages::TapeserverProxyDummy initialProcess;
-  castor::server::ProcessCap capUtils;
+  castor::server::ProcessCapDummy capUtils;
   char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
   int argc = 4;
   char * argv [4];
