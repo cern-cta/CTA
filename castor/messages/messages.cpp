@@ -59,7 +59,7 @@ castor::messages::ReplyContainer::ReplyContainer(tape::utils::ZmqSocket& socket)
   }
   socket.recv(&blobBody.getZmqMsg());
   
-  if(!header.ParseFromArray(zmq_msg_data(&blobHeader.getZmqMsg()),zmq_msg_size(&blobHeader.getZmqMsg()))){
+  if(!header.ParseFromArray(blobHeader.data(),blobHeader.size())){
     throw castor::exception::Exception("Message header cant be parsed from binary data read");
   }
   
@@ -72,8 +72,16 @@ castor::messages::ReplyContainer::ReplyContainer(tape::utils::ZmqSocket& socket)
   if(header.protocolversion()!=messages::protocolVersion::prototype){
     throw castor::exception::Exception("Wrong protocol version in the header");
   }
-  if(socket.moreParts()){
-    throw castor::exception::Exception("Expecting a message with excatly 2 parts (header+body)."
-            " Got at least 3 parts");
+  
+  if(header.reqtype()==castor::messages::reqType::ReturnValue){
+    castor::messages::ReturnValue body;
+    if(!body.ParseFromArray(blobBody.data(),blobBody.size())){
+        throw castor::exception::Exception("Expecting a ReturnValue body but"
+                " cant parse it from the binary");
+    }
+    
+    if(body.returnvalue()!=0){
+     throw castor::exception::Exception(body.message());
+    }
   }
 }
