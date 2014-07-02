@@ -18,8 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Andreas Peters <apeters@cern.ch> 
- * @author Elvin Sindrilaru <esindril@cern.ch>
+ * @author castor-dev@cern.ch
  *
  ******************************************************************************/
 
@@ -39,7 +38,7 @@
 #include "XrdxCastorLogging.hpp"
 /*-----------------------------------------------------------------------------*/
 
-//! Forward declaration 
+//! Forward declaration
 class XrdOucEnv;
 class XrdSecEntity;
 
@@ -48,10 +47,10 @@ class XrdSecEntity;
 //------------------------------------------------------------------------------
 class XrdxCastor2ServerAcc: public XrdAccAuthorize, public LogId
 {
-public:
-  
+  public:
+
   //----------------------------------------------------------------------------
-  //! Struct AuthzInfo used to hold authorization information about a transfer
+  //! Struct AuthzInfo holding authorization information about a transfer
   //----------------------------------------------------------------------------
   struct AuthzInfo
   {
@@ -66,53 +65,51 @@ public:
     std::string signature; ///< signature of the 'token'
     std::string manager; ///< hostname of the managernode
   };
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Constructor
   //----------------------------------------------------------------------------
   XrdxCastor2ServerAcc();
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Destructor
   //----------------------------------------------------------------------------
   virtual ~XrdxCastor2ServerAcc();
-  
-  
+
+
   //--------------------------------------------------------------------------
   //! Initialise the plugin
   //--------------------------------------------------------------------------
   bool Init();
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Configure the plugin
   //!
   //! @param conf_file path to configuration file
   //!
   //! @return true if configuration successful, otherwise false
-  //!
   //----------------------------------------------------------------------------
   bool Configure(const char* conf_file);
-  
+
 
   //----------------------------------------------------------------------------
   //! Build the authorization token from the information held in the AuthzInfo
-  //! structure and sign all this with the private key of the server if the 
-  //! signature is required
+  //! structure and sign all this with the private key of the server if the
+  //! signature is required.
   //!
   //! @param authz AuthzInfo structure
   //! @param doSign if true sign, otherwise don't
   //!
-  //! @return opaque information containing all the data in the AuthzInfo and 
-  //!         the signature to verify that the information was actually sent 
+  //! @return opaque information containing all the data in the AuthzInfo and
+  //!         the signature to verify that the information was actually sent
   //!         by the XRootD headnode
-  //!
   //----------------------------------------------------------------------------
   std::string GetOpaqueAcc(AuthzInfo& authz, bool doSign);
   
-
+  
   //----------------------------------------------------------------------------
   //! Indicates whether or not the user/host is permitted access to the
   //! path for the specified operation. The default implementation that is
@@ -120,7 +117,7 @@ public:
   //! and user/host netgroup privileges. If the operation is AOP_Any, then the
   //! actual privileges are returned and the caller may make subsequent tests using
   //! Test(). Otherwise, a non-zero value is returned if access is permitted or a
-  //! zero value is returned is access is to be denied. Other iplementations may
+  //! zero value is returned is access is to be denied. Other implementations may
   //! use other decision making schemes but the return values must mean the same.
   //!
   //! @param Entity authentication information
@@ -148,7 +145,7 @@ public:
   {
     return 0;
   }
-
+  
 
   //----------------------------------------------------------------------------
   //! Check whether the specified operation is permitted. If permitted it
@@ -157,18 +154,19 @@ public:
   virtual int Test(const XrdAccPrivs /*priv*/,
                    const Access_Operation /*oper*/)
   {
-      return 0;
+    return 0;
   }
   
-private:
-
+ private:
+  
   //----------------------------------------------------------------------------
-  //! Build the autorization token used for signing
+  //! Build the autorization token used for signing. The token is made up of all
+  //! the values of the parameters passed in the opaque information except of
+  //! course the castor2fs.signature one.
   //!
   //! @param authz AuthzInfo used to build the token
   //!
   //! @return token string used later for signing
-  //!
   //----------------------------------------------------------------------------
   std::string BuildToken(const AuthzInfo& authz);
 
@@ -187,13 +185,12 @@ private:
   //! @param sb64len length of the signature
   //!
   //! @return true if signing was successful, otherwise false
-  //!
   //----------------------------------------------------------------------------
   bool SignBase64(unsigned char* input,
                   int inputlen,
                   std::string& sb64,
                   int& sb64len);
-
+  
   
   //----------------------------------------------------------------------------
   //! The reverse of the SignBase64 method. For this to be successful the
@@ -205,7 +202,6 @@ private:
   //! @param path file name path
   //!
   //! @return true if data matches with the signature, otherwise false
-  //!
   //----------------------------------------------------------------------------
   bool VerifyUnbase64(const char* data,
                       unsigned char* base64buffer,
@@ -219,21 +215,19 @@ private:
   //! @param authz structure populated with info from the opaque buffer
   //!
   //! @return true if decoding successful, otherwise false
-  //!
   //----------------------------------------------------------------------------
   bool Decode(const char* opaque, AuthzInfo& authz);
-
-
+  
+  
   std::string mAuthCertfile; ///< file name of public key for signature verification
   std::string mAuthKeyfile; ///< file name of private key for signature creation
-  
-  bool mRequireCapability; ///< client has to show up with a capability in the opaque info, if true
-  bool mAllowLocal; ///< a client connecting from localhost does not need authorization [default=yes]
-
+  bool mRequireCapability; ///< client has to show up with a capability in the
+                           ///< opaque info, if true
+  bool mAllowLocal; ///< a client connecting from localhost does not need
+                    ///< authorization [default=yes]
   EVP_PKEY* mPublicKey; ///< public key used for decryption
-  EVP_PKEY* mPrivateKey; ///< private key used for encryption 
-
-  XrdSysMutex decodeLock; ///< TODO: not sure if these two are actually useful
-  XrdSysMutex encodeLock; ///< 
+  EVP_PKEY* mPrivateKey; ///< private key used for encryption
+  XrdSysMutex mDecodeMutex; ///< mutex for decoding
+  XrdSysMutex mEncodeMutex; ///< mutex for encoding
 };
 

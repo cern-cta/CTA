@@ -94,8 +94,10 @@ XrdxCastor2ServerAcc::XrdxCastor2ServerAcc():
   mRequireCapability(false),
   mAllowLocal(true)
 {
-  // The log level set for in the XrdxCastor2Fs also applies to this class
-  //empty
+  Logging::Init();
+  Logging::SetLogPriority(LOG_INFO);
+  Logging::SetUnit("xServerAcc");
+  xcastor_info("logging configured");
 }
 
 
@@ -103,9 +105,7 @@ XrdxCastor2ServerAcc::XrdxCastor2ServerAcc():
 // Destructor
 //------------------------------------------------------------------------------
 XrdxCastor2ServerAcc::~XrdxCastor2ServerAcc()
-{
-  // emtpy
-}
+{ }
 
 
 //------------------------------------------------------------------------------
@@ -342,16 +342,16 @@ XrdxCastor2ServerAcc::SignBase64(unsigned char* input,
   sb64 = "";
 
   // Use the envelope api to create and encode the hash value. First the implementation
-  // of the digest type is send and then the input data is hashed into the context
+  // of the digest type is sent and then the input data is hashed into the context
   EVP_SignInit(&md_ctx, EVP_sha1());
   EVP_SignUpdate(&md_ctx, input, inputlen);
   sig_len = sizeof(sig_buf);
   TIMING("EVPINIT/UPDATE", &signtiming);
 
-  encodeLock.Lock(); // -->
+  mEncodeMutex.Lock(); // -->
   EVP_PKEY* usekey = mPrivateKey;
   err = EVP_SignFinal(&md_ctx, sig_buf, &sig_len, usekey);
-  encodeLock.UnLock(); // <--
+  mEncodeMutex.UnLock(); // <--
   TIMING("EVPSIGNFINAL", &signtiming);
 
   if (!err)
@@ -414,13 +414,12 @@ XrdxCastor2ServerAcc::VerifyUnbase64(const char* data,
   int cpcnt = 0;
   char modinput[16384];
   int modlength;
-  int bread;
   int inputlen = strlen((const char*)base64buffer);
   unsigned char* input  = base64buffer;
     
   for (int i = 0; i < (inputlen + 1); i++)
   {
-    // Fill a '\n' every 64 characters which have been removed to be
+    // Add a '\n' every 64 characters which have been removed to be
     // compliant with the HTTP URL syntax
     if (i && (i % 64 == 0))
     {
@@ -452,9 +451,8 @@ XrdxCastor2ServerAcc::VerifyUnbase64(const char* data,
   }
   
   bmem = BIO_push(b64, bmem);
-  bread = BIO_read(bmem, sig_buf, modlength);
+  sig_len = BIO_read(bmem, sig_buf, modlength);
   BIO_free_all(bmem);
-  sig_len = bread;
   
   if (sig_len <= 0) 
   {
@@ -551,7 +549,7 @@ XrdxCastor2ServerAcc::Decode(const char* opaque, AuthzInfo& authz)
 
     if (token.beginswith("castor2fs.exptime="))
     {
-      authz.exptime  = (time_t) strtol(token.c_str() + 18, 0, 10);
+      authz.exptime = (time_t) strtol(token.c_str() + 18, 0, 10);
       ntoken++;
       continue;
     }
@@ -590,16 +588,15 @@ std::string
 XrdxCastor2ServerAcc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
 {
   // Build authorization token
-  std::string acc_opaque = "";
   std::string token = BuildToken(authz);
   
   if (token.empty())
   {
-    xcastor_err("failed to build token for opaque info");
-    return acc_opaque;
+    xcastor_err("authorization token is empty - nothing to sign");
+    return "";
   }
 
-  // Sign opaque information if requested
+  // Sign hash and sign the token if requested
   if (doSign)
   {
     std::string sb64 = "";
@@ -608,7 +605,7 @@ XrdxCastor2ServerAcc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
     if (!SignBase64((unsigned char*) token.c_str(), token.length(), sb64, sb64len))
     {
       xcastor_err("failed to sign authorization token");
-      return acc_opaque;
+      return "";
     }
 
     authz.signature = (char*) sb64.c_str();
@@ -626,8 +623,7 @@ XrdxCastor2ServerAcc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
        << "castor2fs.exptime=" << (int)authz.exptime << "&"
        << "castor2fs.signature=" << authz.signature << "&"
        << "castor2fs.manager=" << authz.manager << "&";
-  acc_opaque = sstr.str().c_str();
-  return acc_opaque;
+  return sstr.str();
 }
 
 
@@ -661,26 +657,13 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
                              const Access_Operation oper,
                              XrdOucEnv* Env)
 {
-  decodeLock.Lock(); // -->
-  XrdOucString envstring = "";
-  int envlen = 0;
+  xcastor_debug("path=%s, operation=%i", path, oper);
   
-  if (Env && (Env->Env(envlen)))
-    envstring.assign(Env->Env(envlen), 0, envlen);
-
-  xcastor_debug("path=%s, operation=%i, env=%s", path, oper, envstring.c_str());
-
-  envlen = 0;
-  // Do a bypass for the /proc file system, we check the client identity 
-  // in the XrdxCastorOfsFile::open method
-  XrdOucString spath = path;
-
   // We take care in XrdxCastorOfs::open that a user cannot give a fake 
   // opaque to get all permissions!
-  if (Env->Get("castor2ofsproc") &&
+  if (Env && Env->Get("castor2ofsproc") &&
       (strncmp(Env->Get("castor2ofsproc"), "true", 4) == 0))
   {
-    decodeLock.UnLock();
     return XrdAccPriv_All;
   }
 
@@ -693,31 +676,30 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
          (chost == "localhost.localdomain") ||
          (chost == "127.0.0.1")))
     {
-      decodeLock.UnLock();
       return XrdAccPriv_All;
     }
   }
 
-  // Check for xfer request
-  // We must be very careful that all other requirements are checked within
-  // the OFS, to avoid security holes
-  if (Env->Get("xferuuid") && (Env->Get("ofsgranted")))
+  if (!Env)
   {
-    decodeLock.UnLock();
-    return XrdAccPriv_All;
+    xcastor_err("no opaque information for path=%s", path);
+    TkEroute.Emsg("Access", EIO, "no opaque information for path=", path);
+    return XrdAccPriv_None;
   }
-
-  envlen = 0;
+  
+  int envlen = 0;
   char* opaque = Env->Env(envlen);
-  time_t now = time(NULL);
 
+  
   if (!opaque)
   {
-    decodeLock.UnLock();
     TkEroute.Emsg("Access", EIO, "no opaque information for sfn=", path);
     return XrdAccPriv_None;
   }
 
+  xcastor_debug("path=%s, operation=%i, env=%s", path, oper, opaque);
+  time_t now = time(NULL);
+  
   // This is not nice, but ROOT puts a ? into the opaque string,
   // if there is a user opaque info
   for (unsigned int i = 0; i < strlen(opaque); i++)
@@ -725,6 +707,9 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
     if (opaque[i] == '?')
       opaque[i] = '&';
   }
+
+  // TODO: maybe this lock can be removed
+  XrdSysMutexHelper lock_decode(mDecodeMutex);
 
   // Decode the authz information from the opaque info
   if (mRequireCapability)
@@ -734,17 +719,15 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
     if (!Decode(opaque, authz))
     {
       TkEroute.Emsg("Access", EACCES, "decode access token for sfn=", path);
-      decodeLock.UnLock();
       return XrdAccPriv_None;
     }
     
-    // Verify that the token information is identical to the explicit tokens
+    // Build the token from the received information
     std::string ref_token = BuildToken(authz);
     
     if (ref_token.empty())
     {
       TkEroute.Emsg("Access", EACCES, "build reference token for sfn=", path);
-      decodeLock.UnLock();
       return XrdAccPriv_None;
     }
 
@@ -753,7 +736,6 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
                          (unsigned char*)authz.signature.c_str(), path)))
     {
       TkEroute.Emsg("Access", EACCES, "verify signature in request sfn=", path);
-      decodeLock.UnLock();
       return XrdAccPriv_None;
     }
 
@@ -763,8 +745,8 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
       // If it does not fit, check that it is a replica location
       if (authz.pfn2.find(authz.pfn1) == std::string::npos)
       {
-        TkEroute.Emsg("Access", EACCES, "give access - the signature was not provided for this path!");
-        decodeLock.UnLock();
+        TkEroute.Emsg("Access", EACCES, "give access - the signature was not "
+                      "provided for this path!");
         return XrdAccPriv_None;
       }
     }
@@ -773,13 +755,10 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
     if (authz.exptime < now)
     {
       TkEroute.Emsg("Access", EACCES, "give access - the signature has expired already!");
-      decodeLock.UnLock();
       return XrdAccPriv_None;
     }
   }
 
-  // If we have an open with a write we have to send a fsctl message to the manager
-  decodeLock.UnLock();
   return XrdAccPriv_All;
 }
 

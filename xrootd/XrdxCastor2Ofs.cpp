@@ -319,7 +319,6 @@ XrdxCastor2OfsFile::open(const char*         path,
     newopaque.erase(tried_pos, amp_pos - tried_pos);
   
   // This prevents 'clever' users from faking internal opaque information
-  newopaque.replace("ofsgranted=", "notgranted=");
   newopaque.replace("source=", "nosource=");
   mEnvOpaque = new XrdOucEnv(newopaque.c_str());
   newpath = mEnvOpaque->Get("castor2fs.pfn1");
