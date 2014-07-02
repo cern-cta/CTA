@@ -810,6 +810,8 @@ XrdxCastor2OfsFile::read(XrdSfsFileOffset fileOffset,
                          char*            buffer,
                          XrdSfsXferSize   buffer_size)
 {
+  xcastor_debug("off=%llu, len=%i", fileOffset, buffer_size);
+  
   // If we once got an adler checksum error, we fail all reads.
   if (mHasAdlerErr)
   {
@@ -829,16 +831,18 @@ XrdxCastor2OfsFile::read(XrdSfsFileOffset fileOffset,
     mAdlerXs = adler32(mAdlerXs, (const Bytef*) buffer, rc);
 
     if (rc > 0)
-      mAdlerOffset += rc;
-  }
-
-  if (mHasAdler && (fileOffset + buffer_size >= mStatInfo.st_size))
-  {
-    // Invoke the checksum verification
-    if (!VerifyChecksum())
     {
-      mHasAdlerErr = true;
-      rc = SFS_ERROR;
+      mAdlerOffset += rc;
+
+      if (fileOffset + rc >= mStatInfo.st_size)
+      {
+        // Invoke the checksum verification
+        if (!VerifyChecksum())
+        {
+          mHasAdlerErr = true;
+          rc = SFS_ERROR;
+        }
+      }
     }
   }
 

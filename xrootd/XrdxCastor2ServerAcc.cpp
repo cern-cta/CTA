@@ -96,7 +96,6 @@ XrdxCastor2ServerAcc::XrdxCastor2ServerAcc():
 {
   Logging::Init();
   Logging::SetLogPriority(LOG_INFO);
-  Logging::SetUnit("xServerAcc");
   xcastor_info("logging configured");
 }
 
