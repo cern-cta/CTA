@@ -27,7 +27,6 @@
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
-#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
@@ -35,7 +34,7 @@
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/utils/Timer.hpp"
-
+#include "castor/tape/tapeserver/file/File.hpp"
 #include <iostream>
 #include <stdio.h>
 
@@ -67,21 +66,13 @@ public:
     const client::ClientInterface::VolumeInfo& volInfo,
     castor::log::LogContext & lc, MigrationReportPacker & repPacker,
     castor::server::ProcessCap &capUtils,
-    uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
-    TapeSingleThreadInterface<TapeWriteTask>(drive, rmc, tsr, volInfo,capUtils, lc),
-    m_filesBeforeFlush(filesBeforeFlush),
-    m_bytesBeforeFlush(bytesBeforeFlush),
-    m_drive(drive), m_reportPacker(repPacker),
-    m_lastFseq(-1),
-    m_compress(true) {}
+    uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush);
     
   /**
    * 
    * @param lastFseq
    */
-  void setlastFseq(uint64_t lastFseq){
-    m_lastFseq=lastFseq;
-  }
+  void setlastFseq(uint64_t lastFseq);
 private:
     class TapeCleaning{
     TapeWriteSingleThread& m_this;
@@ -123,35 +114,7 @@ private:
    * copy constructor, which has a move semantic)
    * @return the WriteSession we need to write on tape
    */
-  std::auto_ptr<castor::tape::tapeFile::WriteSession> openWriteSession() {
-    using castor::log::LogContext;
-    using castor::log::Param;
-    typedef LogContext::ScopedParam ScopedParam;
-    
-    std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession;
-  
-    ScopedParam sp[]={
-        ScopedParam(m_logContext, Param("vid",m_vid)),
-        ScopedParam(m_logContext, Param("lastFseq", m_lastFseq)),
-        ScopedParam(m_logContext, Param("compression", m_compress)) 
-      };
-    tape::utils::suppresUnusedVariable(sp);
-      try {
-       writeSession.reset(
-         new castor::tape::tapeFile::WriteSession(m_drive,m_volInfo,m_lastFseq,m_compress)
-       );
-        m_logContext.log(LOG_INFO, "Tape Write session session successfully started");
-      }
-      catch (castor::exception::Exception & e) {
-        ScopedParam sp0(m_logContext, Param("ErrorMessage", e.getMessageValue()));
-        ScopedParam sp1(m_logContext, Param("ErrorCode", e.code()));
-        m_logContext.log(LOG_ERR, "Failed to start tape write session");
-        // TODO: log and unroll the session
-        // TODO: add an unroll mode to the tape read task. (Similar to exec, but pushing blocks marked in error)
-        throw;
-      }
-    return writeSession;
-  }
+  std::auto_ptr<castor::tape::tapeFile::WriteSession> openWriteSession();
   /**
    * Execute flush on tape, do some log and report the flush to the client
    * @param message the message the log will register
@@ -160,87 +123,10 @@ private:
    * @param files the number of files that have been written since the last flush  
    * (also for logging)
    */
-  void tapeFlush(const std::string& message,uint64_t bytes,uint64_t files){
-    m_drive.flush();
-    log::LogContext::ScopedParam sp0(m_logContext, log::Param("files", files));
-    log::LogContext::ScopedParam sp1(m_logContext, log::Param("bytes", bytes));
-    m_logContext.log(LOG_INFO,message);
-    m_reportPacker.reportFlush();
-  }
+  void tapeFlush(const std::string& message,uint64_t bytes,uint64_t files);
   
 
-  virtual void run() {
-
-    try
-    {
-      m_logContext.pushOrReplace(log::Param("thread", "TapeWrite"));
-      setCapabilities();
-      
-      TapeCleaning cleaner(*this);
-      mountTape(castor::legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
-      waitForDrive();
-      // Then we have to initialise the tape write session
-      std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
-      
-      //log and notify
-      m_logContext.log(LOG_INFO, "Starting tape write thread");
-      m_tsr.tapeMountedForWrite();
-      uint64_t bytes=0;
-      uint64_t files=0;
-      std::auto_ptr<TapeWriteTask> task;  
-      
-      tape::utils::Timer timer;
-      
-      while(1) {
-        
-        //get a task
-        task.reset(m_tasks.pop());
-        
-        //if is the end
-        if(NULL==task.get()) {      
-          //we flush without asking
-          tapeFlush("No more data to write on tape, unconditional flushing to the client",bytes,files);
-          //end of session + log 
-          m_reportPacker.reportEndOfSession();
-          log::LogContext::ScopedParam sp0(m_logContext, log::Param("time taken", timer.secs()));
-          m_logContext.log(LOG_DEBUG, "writing data to tape has finished");
-          break;
-        }
-        
-        task->execute(*writeSession,m_reportPacker,m_logContext);
-
-        //raise counters
-        files++;
-        bytes+=task->fileSize();
-          
-        //if one counter is above a threshold, then we flush
-        if (files >= m_filesBeforeFlush || bytes >= m_bytesBeforeFlush) {
-          tapeFlush("Normal flush because thresholds was reached",bytes,files);
-          files=0;
-          bytes=0;
-        }
-      } //end of while(1))
-    } //end of try
-    catch(const castor::exception::Exception& e){
-      //we end there because write session could not be opened or because a task failed
-
-      //first empty all the tasks and circulate mem blocks
-      while(1) {
-        std::auto_ptr<TapeWriteTask>  task(m_tasks.pop());
-        if(task.get()==NULL) {
-          break;
-        }
-        task->circulateMemBlocks(m_logContext);
-      }
-      //then log
-      log::LogContext::ScopedParam sp1(m_logContext, log::Param("exceptionCode", e.code()));
-      log::LogContext::ScopedParam sp2(m_logContext, log::Param("error_MessageValue", e.getMessageValue()));
-      m_logContext.log(LOG_ERR,"An error occurred during TapwWriteSingleThread::execute");
-      
-      m_reportPacker.reportEndOfSessionWithErrors(e.what(),e.code());
-    }
-    
-  }
+  virtual void run() ;
   
   //m_filesBeforeFlush and m_bytesBeforeFlush are thresholds for flushing 
   //the first one crossed will trigger the flush on tape
