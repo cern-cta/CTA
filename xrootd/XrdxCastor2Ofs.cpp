@@ -696,14 +696,19 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
 int
 XrdxCastor2OfsFile::ContactStagerJob(XrdOucEnv& env_opaque)
 {
-  std::string connect_info = env_opaque.Get("castor2fs.pfn2");
+  char* val = env_opaque.Get("castor2fs.pfn2");
 
-  if (connect_info.empty())
+  if (!val)
   {
-    xcastor_err("no stager job opaque infomation present");
-    return gSrv->Emsg("open", error, EIO, "open - missing stager job info");
+    // If no stager job information is present in the opaque infom, it means that
+    // this is an internal d2d transfer and we don't try to contact the stager
+    // job but we allow it to pass through. The authorization plugin makes sure
+    // we only allowed trusted host to do transfers - it verifies the signature.
+    xcastor_debug("no stager job opaque infomation - this is a d2d transfer");
+    return SFS_OK;
   }
 
+  std::string connect_info = val;
   std::string sjob_uuid = "";
   int sjob_port = 0;
   int pos1;
