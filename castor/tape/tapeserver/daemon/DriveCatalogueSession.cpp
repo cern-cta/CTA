@@ -25,9 +25,15 @@
 #include "castor/tape/tapeserver/daemon/DriveCatalogueSession.hpp"
 
 //------------------------------------------------------------------------------
+// Destructor
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::DriveCatalogueSession::~DriveCatalogueSession(){
+}
+//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueSession::DriveCatalogueSession(const castor::tape::tapeserver::daemon::DriveCatalogueSession::SessionState state):
+castor::tape::tapeserver::daemon::DriveCatalogueSession::
+DriveCatalogueSession(const castor::tape::tapeserver::daemon::DriveCatalogueSession::SessionState state):
 m_state(state) {
 
 }

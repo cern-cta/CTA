@@ -40,6 +40,7 @@ namespace daemon {
   class DriveCatalogueSession {
   public:
     
+    virtual ~DriveCatalogueSession();
     /**
      * The status of the tape with respect to the drive mount and unmount operations
      */
