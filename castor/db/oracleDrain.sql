@@ -93,14 +93,19 @@ BEGIN
   COMMIT;
 
   -- Start new DrainingJobs if needed
-  FOR dj IN (SELECT id, fileSystem FROM DrainingJob WHERE status = dconst.DRAININGJOB_SUBMITTED) LOOP
+  FOR dj IN (SELECT id, fileSystem, fileMask
+               FROM DrainingJob WHERE status = dconst.DRAININGJOB_SUBMITTED) LOOP
     UPDATE DrainingJob SET status = dconst.DRAININGJOB_STARTING WHERE id = dj.id;
     COMMIT;
     -- Compute totals now. Jobs will be later added in bunches by drainRunner
     SELECT count(*), SUM(diskCopySize) INTO varTFiles, varTBytes
-      FROM DiskCopy
+      FROM DiskCopy, CastorFile
      WHERE fileSystem = dj.fileSystem
-       AND status = dconst.DISKCOPY_VALID;
+       AND status = dconst.DISKCOPY_VALID
+       AND CastorFile.id = DiskCopy.castorFile
+       AND ((dj.fileMask = dconst.DRAIN_FILEMASK_NOTONTAPE AND
+             CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
+            (dj.fileMask = dconst.DRAIN_FILEMASK_ALL));
     UPDATE DrainingJob
        SET totalFiles = varTFiles,
            totalBytes = nvl(varTBytes, 0),
