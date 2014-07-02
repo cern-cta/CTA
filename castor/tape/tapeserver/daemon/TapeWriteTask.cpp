@@ -179,17 +179,6 @@ namespace daemon {
 //------------------------------------------------------------------------------
 // circulateMemBlocks
 //------------------------------------------------------------------------------   
-   void TapeWriteTask::circulateMemBlocks(log::LogContext& lc){
-     if(!m_errorFlag){
-       lc.log(LOG_ERR,"Trying to force circulating of all mem block in TapeWriteTask, "
-               "but nothing went wrong (or not record of it) = buggy software ! ");
-       return;
-     }
-     circulateMemBlocks();
-   }
-//------------------------------------------------------------------------------
-// circulateMemBlocks
-//------------------------------------------------------------------------------   
    void TapeWriteTask::circulateMemBlocks(){
      while(!m_fifo.finished()) {
         m_memManager.releaseBlock(m_fifo.popDataBlock());
