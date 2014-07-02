@@ -62,7 +62,10 @@ m_tapeFD(-1),  m_sysWrapper(sw) {
 
 void drives::DriveGeneric::UpdateDriveStatus()  {
   /* Read drive status */
-  castor::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &m_mtInfo), std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
+  castor::exception::Errnum::throwOnMinusOne(
+  m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &m_mtInfo), 
+  std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
+  
   if(GMT_BOT(m_mtInfo.mt_gstat)) m_driveStatus.bot=true; else m_driveStatus.bot=false;
   if(GMT_EOD(m_mtInfo.mt_gstat)) m_driveStatus.eod=true; else m_driveStatus.eod=false;
   if(GMT_WR_PROT(m_mtInfo.mt_gstat)) m_driveStatus.writeProtection=true; else m_driveStatus.writeProtection=false;
@@ -354,7 +357,8 @@ bool drives::DriveGeneric::isTapeBlank() {
   mtCmd2.mt_op = MTFSR;
   mtCmd2.mt_count = 1;
  
-  if((0 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd1)) && (0 != m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd2))) { //we are doing it the old CASTOR way (see readlbl.c)
+  if((0 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd1)) && (0 != m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd2))) {
+    //we are doing it the old CASTOR way (see readlbl.c)
     if(m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &m_mtInfo)>=0) {
       if(GMT_EOD(m_mtInfo.mt_gstat) && GMT_BOT(m_mtInfo.mt_gstat)) {
         return true;
@@ -455,7 +459,9 @@ void drives::DriveGeneric::spaceFileMarksBackwards(size_t count)  {
   while (tobeskipped > 0) {
     size_t c = (tobeskipped > 0x7FFFFF) ? 0x7FFFFF : tobeskipped;
     m_mtCmd.mt_count = (int)c;
-    castor::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd), "Failed ST ioctl (MTBSF) in DriveGeneric::spaceFileMarksBackwards");
+    castor::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd), 
+    "Failed ST ioctl (MTBSF) in DriveGeneric::spaceFileMarksBackwards");
     tobeskipped -= c;
   }  
 }
@@ -471,7 +477,9 @@ void drives::DriveGeneric::spaceFileMarksForward(size_t count)  {
   while (tobeskipped > 0) {
     size_t c = (tobeskipped > 0x7FFFFF) ? 0x7FFFFF : tobeskipped;
     m_mtCmd.mt_count = (int)c;
-    castor::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd), "Failed ST ioctl (MTFSF) in DriveGeneric::spaceFileMarksForward");
+    castor::exception::Errnum::throwOnMinusOne(
+      m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd), 
+      "Failed ST ioctl (MTFSF) in DriveGeneric::spaceFileMarksForward");
     tobeskipped -= c;
   }  
 }
