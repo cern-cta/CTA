@@ -114,7 +114,7 @@ private:
     DiskReadWorkerThread(DiskReadThreadPool & parent):
     m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc) {
        log::LogContext::ScopedParam param(m_lc, log::Param("threadID", m_threadID));
-       m_lc.log(LOG_INFO,"DiskWrite Thread created");
+       m_lc.log(LOG_INFO,"DisReadThread created");
     }
     void start() { castor::tape::threading::Thread::start(); }
     void wait() { castor::tape::threading::Thread::wait(); }
