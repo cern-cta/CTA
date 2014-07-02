@@ -64,7 +64,7 @@ def buildXrootURL(self, diskserver, path):
         # sign opaque part obtained by concatenating the values
         opaque_token = ''.join([opaque_dict['castor2fs.sfn'], 
                                 opaque_dict['castor2fs.pfn1'],
-                                opaque_dict['castor2fs.pfn2']
+                                opaque_dict['castor2fs.pfn2'],
                                 opaque_dict['castor2fs.id'], 
                                 opaque_dict['castor2fs.client_sec_uid'],
                                 opaque_dict['castor2fs.client_sec_gid'],
