@@ -112,24 +112,39 @@ uint64_t
   castor::messages::TapeserverProxyZmq::gotWriteMountDetailsFromClient(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {  
-    castor::messages::NotifyDriveBeforeMountStarted body;
-  body.set_clienttype(convertClientType(volInfo.clientType));
-  body.set_mode(convertVolumeMode(volInfo.volumeMode));
-  body.set_unitname(unitName);
-  body.set_vid(volInfo.vid);
-  
-  castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue("PIPO");
-  header.set_bodysignature("PIPO");
-  header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
-
-  castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-  castor::messages::sendMessage(m_messageSocket,body);
-  
-  castor::messages::ReplyContainer reply(m_messageSocket);
-
-  
-  return 0; // TO BE DONE
+    //question
+    {
+      castor::messages::NotifyDriveBeforeMountStarted bodyToSend;
+      bodyToSend.set_clienttype(convertClientType(volInfo.clientType));
+      bodyToSend.set_mode(convertVolumeMode(volInfo.volumeMode));
+      bodyToSend.set_unitname(unitName);
+      bodyToSend.set_vid(volInfo.vid);
+      
+      castor::messages::Header header=castor::messages::preFillHeader();
+      header.set_bodyhashvalue("PIPO");
+      header.set_bodysignature("PIPO");
+      header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
+      
+      castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
+      castor::messages::sendMessage(m_messageSocket,bodyToSend);
+    }
+    
+    //reply
+    {
+      castor::messages::ReplyContainer reply(m_messageSocket);
+      //return 0;
+      if(reply.header.reqtype()!=messages::reqType::NotifyDriveBeforeMountStartedAnswer){
+        throw castor::exception::Exception("Header's reqtype is not "
+                "NotifyDriveBeforeMountStartedAnswer as expected  ");
+      }
+      messages::NotifyDriveBeforeMountStartedAnswer bodyReply;
+      
+      if(!bodyReply.ParseFromArray(reply.blobBody.data(),reply.blobBody.size())){
+        throw castor::exception::Exception("Cant parse a NotifyDriveBeforeMountStartedAnswer"
+                "from the body blob ");
+      }
+      return bodyReply.howmanyfilesontape(); 
+    }
 }
 
 //------------------------------------------------------------------------------
