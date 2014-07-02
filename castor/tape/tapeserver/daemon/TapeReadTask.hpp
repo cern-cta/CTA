@@ -110,7 +110,6 @@ public:
           // Pass the block to the disk write task
           m_fifo.pushDataBlock(mb);
           watchdog.notify();
-          lc.log(LOG_INFO, "going for sleep");
       } //end of while(stillReading)
       //  we have to signal the end of the tape read to the disk write task.
       m_fifo.pushDataBlock(NULL);
