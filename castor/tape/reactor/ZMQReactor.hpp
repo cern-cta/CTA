@@ -26,8 +26,8 @@
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace castor {
 namespace tape {
@@ -89,13 +89,17 @@ private:
   /**
    * Type used to map zmq_pollitem_t to event handler.
    */
-  typedef std::vector<std::pair<zmq_pollitem_t, ZMQPollEventHandler*> > HandlerMap;
+  typedef std::vector<std::pair<zmq_pollitem_t, ZMQPollEventHandler*> >
+    HandlerMap;
 
   /**
-   * Allocates and builds the array of file descriptors to be passed to poll().
+   * Builds the vector of file descriptors to be passed to poll().
    *
-   * @return The array of file descriptors.  Please note that is the
-   * responsibility of the caller to delete the array.
+   * Please note that the return type is an std::vector because we can assume
+   * that its elements are stored contiguously in memory.  The address of the
+   * first element is going to be passed to zmq_poll().
+   *
+   * @return The vector of file descriptors.
    */
   std::vector<zmq_pollitem_t> buildPollFds() const;
   

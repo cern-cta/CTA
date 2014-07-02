@@ -76,7 +76,9 @@ void castor::tape::reactor::ZMQReactor::registerHandler(
 void castor::tape::reactor::ZMQReactor::handleEvents(const int timeout) {
   //it should not bring any copy, thanks to NRVO
   std::vector<zmq_pollitem_t> pollFds=buildPollFds();
-    
+
+  // Please note that we are relying on the fact that the file descriptors of
+  // the vector are stored contiguously
   const int pollRc = zmq_poll(&pollFds[0], pollFds.size(), timeout);  
   if(0 <= pollRc){
     for(std::vector<zmq_pollitem_t>::const_iterator it=pollFds.begin();
