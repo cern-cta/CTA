@@ -66,7 +66,18 @@ public:
    * @return The underlying ZMQ message.
    */
   zmq_msg_t &getZmqMsg() throw();
-
+  
+  /**
+   * Give a reading  access to the data without having to look at the zmq message
+   * @return a pointer to the beginning of the content
+   */
+  const void* data() const;
+  
+  /**
+   * Get the size of the message
+   * @return 
+   */
+  size_t size() const;
 private:
 
   /**

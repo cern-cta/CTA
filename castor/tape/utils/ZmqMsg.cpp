@@ -69,3 +69,14 @@ castor::tape::utils::ZmqMsg::~ZmqMsg() throw() {
 zmq_msg_t &castor::tape::utils::ZmqMsg::getZmqMsg() throw() {
   return m_zmqMsg;
 }
+
+const void*  castor::tape::utils::ZmqMsg::data () const
+{
+  return zmq_msg_data (const_cast<zmq_msg_t*>(&m_zmqMsg));
+}
+
+size_t  castor::tape::utils::ZmqMsg::size () const
+{
+  return zmq_msg_size (const_cast<zmq_msg_t*>(&m_zmqMsg));
+}
+
