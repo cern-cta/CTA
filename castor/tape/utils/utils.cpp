@@ -48,102 +48,6 @@
 
 
 //-----------------------------------------------------------------------------
-// toHex
-//-----------------------------------------------------------------------------
-void castor::tape::utils::toHex(uint32_t number, char *buf, size_t len)
-   {
-
-  if(len < 9) {
-    castor::exception::InvalidArgument ex;
-
-    ex.getMessage() <<
-      "Failed to convert " << number << " to hex"
-      ": The output string is too small: Actual=" << len <<
-      " Minimum=9";
-
-    throw ex;
-  }
-
-  int digitAsInt = 0;
-
-  for(int i=0; i<8; i++) {
-    digitAsInt = number % 16;
-
-    buf[7-i] = digitAsInt < 10 ? '0' + digitAsInt : 'a' + (digitAsInt-10);
-
-    number /= 16;
-  }
-
-  buf[8] = '\0';
-}
-
-//-----------------------------------------------------------------------------
-// countOccurrences
-//-----------------------------------------------------------------------------
-int castor::tape::utils::countOccurrences(const char ch, const char *str) {
-
-  int  count   = 0;    // The number of occurences
-  char current = '\0'; // The current character
-
-  // For each character in the string
-  for(current = *str; str != NULL; str++) {
-    if(current == ch) {
-      count++;
-    }
-  }
-
-  return count;
-}
-
-//-----------------------------------------------------------------------------
-// toHex
-//-----------------------------------------------------------------------------
-void castor::tape::utils::toHex(const uint64_t i, char *dst,
-  size_t dstLen)  {
-
-  // The largest 64-bit hexadecimal string "FFFFFFFFFFFFFFFF" would ocuppy 17
-  // characters (17 characters = 16 x 'F' + 1 x '\0')
-  const size_t minimumDstLen = 17;
-
-  // If the destination character string cannot store the largest 64-bit
-  // hexadecimal string
-  if(dstLen < minimumDstLen) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __FUNCTION__
-      << ": Destination character array is too small"
-         ": Minimum = " << minimumDstLen
-      << ": Actual = " << dstLen;
-
-    throw ex;
-  }
-
-  const char hexDigits[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-    'A', 'B', 'C', 'D', 'E', 'F'};
-  char backwardsHexDigits[16];
-  castor::utils::setBytes(backwardsHexDigits, '\0');
-  uint64_t exponent = 0;
-  uint64_t quotient = i;
-  int nbDigits = 0;
-
-  for(exponent=0; exponent<16; exponent++) {
-    backwardsHexDigits[exponent] = hexDigits[quotient % 16];
-    nbDigits++;
-
-    quotient = quotient / 16;
-
-    if(quotient== 0) {
-      break;
-    }
-  }
-
-  for(int d=0; d<nbDigits;d++) {
-    dst[d] = backwardsHexDigits[nbDigits-1-d];
-  }
-  dst[nbDigits] = '\0';
-}
-
-//-----------------------------------------------------------------------------
 // writeStrings
 //-----------------------------------------------------------------------------
 void castor::tape::utils::writeStrings(std::ostream &os,
@@ -240,36 +144,6 @@ const char *castor::tape::utils::volumeModeToString(
   case tapegateway::DUMP : return "DUMP";
   default                : return "UKNOWN";
   }
-}
-
-//------------------------------------------------------------------------------
-// drainFile
-//------------------------------------------------------------------------------
-ssize_t castor::tape::utils::drainFile(const int fd)
-   {
-
-  char buf[1024];
-
-  ssize_t rc    = 0;
-  ssize_t total = 0;
-
-  do {
-    rc = read((int)fd, buf, sizeof(buf));
-    const int savedErrno = errno;
-
-    if(rc == -1) {
-      TAPE_THROW_EX(castor::exception::Exception,
-        ": Failed to drain file"
-        ": fd=" << fd <<
-        ": Error=" << sstrerror(savedErrno));
-    } else {
-      total += rc;
-    }
-
-  // while the end of file has not been reached
-  } while(rc != 0);
-
-  return total;
 }
 
 //------------------------------------------------------------------------------
@@ -397,30 +271,6 @@ std::string castor::tape::utils::singleSpaceString(
   }
 
   return result.str();
-}
-
-//------------------------------------------------------------------------------
-// writeBanner
-//------------------------------------------------------------------------------
-void castor::tape::utils::writeBanner(std::ostream &os,
-  const char *const title) throw() {
-
-  const size_t len = strlen(title);
-  size_t       i   = 0;
-
-  for(i=0; i<len+4; i++) {
-    os << "=";
-  }
-  os << std::endl;
-
-  os << "= ";
-  os << title;
-  os << " =" << std::endl;
-
-  for(i=0; i<len+4; i++) {
-    os << "=";
-  }
-  os << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -738,70 +588,6 @@ void castor::tape::utils::extractTpconfigDriveNames(
 }
 
 //------------------------------------------------------------------------------
-// statFile
-//------------------------------------------------------------------------------
-void castor::tape::utils::statFile(const char *const filename,
-  struct stat &buf)  {
-
-  const int rc         = stat(filename, &buf);
-  const int savedErrno = errno;
-
-  // Throw an exception if the stat() call failed
-  if(rc != 0) {
-    castor::exception::Exception ex(savedErrno);
-
-    ex.getMessage() <<
-      "stat() call failed"
-      ": filename=" << filename <<
-      ": " << sstrerror(savedErrno);
-
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// pthreadCreate
-//------------------------------------------------------------------------------
-void castor::tape::utils::pthreadCreate(
-  pthread_t *const thread,
-  const pthread_attr_t *const attr,
-  void *(*const startRoutine)(void*),
-  void *const arg)
-   {
-
-  const int rc = pthread_create(thread, attr, startRoutine, arg);
-
-  if(rc != 0) {
-    castor::exception::Exception ex(rc);
-
-    ex.getMessage() <<
-      "pthread_create() call failed" <<
-      ": " << sstrerror(rc);
-
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// pthreadJoin
-//------------------------------------------------------------------------------
-void castor::tape::utils::pthreadJoin(pthread_t thread, void **const valuePtr)
-   {
-
-  const int rc = pthread_join(thread, valuePtr);
-
-  if(rc != 0) {
-    castor::exception::Exception ex(rc);
-
-    ex.getMessage() <<
-      "pthread_join() call failed" <<
-      ": " << sstrerror(rc);
-
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
 // getMandatoryValueFromConfiguration
 //------------------------------------------------------------------------------
 const char *castor::tape::utils::getMandatoryValueFromConfiguration(
@@ -840,28 +626,6 @@ const char *castor::tape::utils::getMandatoryValueFromConfiguration(
 //------------------------------------------------------------------------------
 bool castor::tape::utils::isAnEmptyString(const char *const str) throw() {
   return *str == '\0';
-}
-
-//------------------------------------------------------------------------------
-// vectorOfStringToString
-//------------------------------------------------------------------------------
-std::string castor::tape::utils::vectorOfStringToString(
-  const std::vector<std::string> &v) throw() {
-
-  std::ostringstream oss;
-
-  for(std::vector<std::string>::const_iterator itor=v.begin(); itor != v.end();
-    itor++) {
-
-    // Append a comma if this is not the first string in the list
-    if(itor!=v.begin()) {
-      oss << ",";
-    }
-
-    oss << *itor;
-  }
-
-  return oss.str();
 }
 
 //------------------------------------------------------------------------------
