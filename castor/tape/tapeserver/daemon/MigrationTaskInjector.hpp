@@ -99,9 +99,11 @@ public:
    */
   void finish();
   
-  uint64_t lastFSeq() const {
-    return m_lastFseq;
-  }
+  /**
+   * Return the first file to be written's fseq
+   * @return 
+   */
+  uint64_t firstFseqToWrite() const;
 private:
   /**
    * Create all the tape-read and write-disk tasks for set of files to retrieve
@@ -206,7 +208,7 @@ private:
    * after we make sure synchronousInjection returned true. To do so, we
    *  need to store it
    */
-  uint64_t m_lastFseq;
+  uint64_t m_firstFseqToWrite;
 };
 
 } //end namespace daemon

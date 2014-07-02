@@ -295,6 +295,8 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(log::Log
     drtp.setTaskInjector(&mti);
     if (mti.synchronousInjection()) {
       const uint64_t firstFseqFromClient = mti.firstFseqToWrite();
+      
+      //the last fseq written on the tape is the first file's fseq minus one
       twst.setlastFseq(firstFseqFromClient-1);
       
       //we retrieved the detail from the client in execute, so at this point 

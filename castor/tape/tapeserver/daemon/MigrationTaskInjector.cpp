@@ -95,6 +95,8 @@ namespace daemon {
       m_diskReader.push(drt.release());
       m_lc.log(LOG_INFO, "Logged file to migrate");
     }
+    LogContext::ScopedParam(m_lc, Param("numbnerOfFiles", jobs.size()));
+    m_lc.log(LOG_INFO, "Finished creating tasks for migrating");
   }
   
 //------------------------------------------------------------------------------
@@ -149,7 +151,7 @@ namespace daemon {
       return false;
     } else {
       std::vector<tapegateway::FileToMigrateStruct*>& jobs=filesToMigrateList->filesToMigrate();
-      m_lastFseq = jobs.front()->fseq() -1;
+      m_firstFseqToWrite = jobs.front()->fseq();
       injectBulkMigrations(jobs);
       return true;
     }
@@ -246,7 +248,9 @@ namespace daemon {
     }
   }
 
-
+  uint64_t MigrationTaskInjector::firstFseqToWrite() const {
+    return m_firstFseqToWrite;
+  }
 } //end namespace daemon
 } //end namespace tapeserver
 } //end namespace tape
