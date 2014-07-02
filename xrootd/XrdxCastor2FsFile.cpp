@@ -474,6 +474,15 @@ XrdxCastor2FsFile::open(const char*         path,
                                  "access file in ANY stager (all stager queries failed) fn=",
                                  map_path.c_str());
     }
+    else
+    {
+      // File is staged somewhere, try to access it through the desired svcClass
+      xcastor_debug("file staged in svc=%s, try to read it through svc=%s",
+                    allowed_svc.c_str(), desired_svc.c_str());
+      
+      if (!desired_svc.empty())
+        allowed_svc = desired_svc;
+    }
       
     // Create structures for request and response and call the get method
     struct XrdxCastor2Stager::ReqInfo req_info(client_uid, client_gid, 
