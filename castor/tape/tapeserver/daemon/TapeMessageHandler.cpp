@@ -223,7 +223,7 @@ const castor::messages::Header& header,
 const castor::messages::NotifyDriveBeforeMountStarted& body){
   m_log(LOG_INFO,"NotifyDriveBeforeMountStarted-dealWith");
   //check castor consistensy
-    if(body.mode()==castor::messages::TAPE_MODE_READWRITE) {
+  if(body.mode()==castor::messages::TAPE_MODE_READWRITE) {
     legacymsg::VmgrTapeInfoMsgBody tapeInfo;
     m_vmgr.queryTape(body.vid(), tapeInfo);
     // If the client is the tape gateway and the volume is not marked as BUSY
@@ -232,8 +232,22 @@ const castor::messages::NotifyDriveBeforeMountStarted& body){
       ex.getMessage() << "The tape gateway is the client and the tape to be mounted is not BUSY: vid=" << body.vid();
       throw ex;
     }
-  }
+    
+    castor::messages::Header header = castor::messages::preFillHeader();
+    header.set_reqtype(messages::reqType::NotifyDriveBeforeMountStartedAnswer);
+    header.set_bodyhashvalue("PIPO");
+    header.set_bodysignature("PIPO");
+    
+    castor::messages::NotifyDriveBeforeMountStartedAnswer body;
+    body.set_howmanyfilesontape(tapeInfo.nbFiles);
+    castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
+    castor::messages::sendMessage(m_socket,body);
+    return;
+  } else {
+    
+    m_log(LOG_INFO,"ELSE");
     sendEmptyReplyToClient();
+  }
 }
 
 void castor::tape::tapeserver::daemon::TapeMessageHandler::dealWith(
@@ -270,10 +284,12 @@ const castor::messages::NotifyDriveTapeMounted& body){
 
 void castor::tape::tapeserver::daemon::TapeMessageHandler::sendEmptyReplyToClient(){
     castor::messages::Header header = castor::messages::preFillHeader();
-    header.set_reqtype(messages::reqType::NoReturnValue);
+    header.set_reqtype(messages::reqType::ReturnValue);
     header.set_bodyhashvalue("PIPO");
     header.set_bodysignature("PIPO");
-    castor::messages::NoReturnValue body;
+    castor::messages::ReturnValue body;
+    body.set_returnvalue(0);
+    body.set_message("");
     castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
     castor::messages::sendMessage(m_socket,body);
 }

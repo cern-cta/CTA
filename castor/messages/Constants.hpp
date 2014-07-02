@@ -32,7 +32,7 @@ namespace castor {
     };
     struct reqType{
       enum {
-        NoReturnValue,
+        ReturnValue,
         Heartbeat,
         NotifyDriveBeforeMountStarted,
         NotifyDriveTapeMounted,
