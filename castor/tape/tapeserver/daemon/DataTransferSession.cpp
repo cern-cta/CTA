@@ -77,7 +77,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     m_capUtils(capUtils),
     m_argc(argc),
     m_argv(argv) {
-  m_logger(LOG_INFO,"fine ");
 }
 
 //------------------------------------------------------------------------------
@@ -295,15 +294,17 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(log::Log
             m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,lc);
     drtp.setTaskInjector(&mti);
     if (mti.synchronousInjection()) {
-      const uint64_t lastFseqFromClient = mti.lastFSeq();
-      twst.setlastFseq(lastFseqFromClient);
+      const uint64_t firstFseqFromClient = mti.firstFseqToWrite();
+      twst.setlastFseq(firstFseqFromClient-1);
       
       //we retrieved the detail from the client in execute, so at this point 
       //we can report. We get in exchange the number of files on the tape
       const uint64_t nbOfFileOnTape = tsr.gotWriteMountDetailsFromClient();
 
       //theses 2 numbers should match. Otherwise, it means the stager went mad 
-      if(lastFseqFromClient != nbOfFileOnTape) {
+      if(firstFseqFromClient != nbOfFileOnTape + 1) {
+        lc.log(LOG_ERR, "First file to write's fseq  and number of files on "
+        "the tape according to the VMGR dont match");
        //no mount at all, drive to be kept up = return 0
         return 0;
       }
