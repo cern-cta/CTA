@@ -41,7 +41,7 @@ extern "C" {
 // this lock allows to serialize accesses to EVP_SignFinal, as it's not thread safe
 static pthread_mutex_t s_lockEVP = PTHREAD_MUTEX_INITIALIZER;
 
-static int signXrootUrl(std::ostringstream &url, const std::string& input) {
+static int signXrootUrl(const std::string& input, std::string& signature) {
   // get the private key to be used to sign our hash
   const char* pkeyFileName = getconfent("XROOT","PrivateKey",0);
   if (NULL == pkeyFileName) {
@@ -104,13 +104,11 @@ static int signXrootUrl(std::ostringstream &url, const std::string& input) {
   BIO_get_mem_ptr(b64, &bptr);
 
   // Remove the backslash from the signature buffer and cleanup memory
-  std::string signature = bptr->data;
+  signature = bptr->data;
   signature.erase(std::remove(signature.begin(), signature.end(), '\n'), signature.end());
   BIO_free(bmem);
   BIO_free(b64);
 
-  // complete the URL with the signature
-  url << "&castor2fs.signature=" << signature;
   return 0;
 }
 
@@ -132,15 +130,30 @@ static std::string rtcpToCastorXroot(const char *const rtcpPath) {
     std::ostringstream ss;
     ss << "root://" << path.substr(0, slashPos) << "1095//dummy?";
     // "opaque" info
-    std::ostringstream opaque;
-    opaque << "castor2fs.pfn1=" << path.substr(slashPos);
     time_t exptime = time(NULL) + 3600;
-    opaque << "&castor2fs.exptime=" << exptime;
+    std::ostringstream opaque;
+    opaque << "castor2fs.sfn=&"
+           << "castor2fs.pfn1=" << path.substr(slashPos) << "&"
+           << "castor2fs.pfn2=&"
+           << "castor2fs.id=&" 
+           << "castor2fs.client_sec_uid=&"
+           << "castor2fs.client.sec_gid=&"
+           << "castor2fs.accessop=0&"
+           << "castor2fs.exptime=" << exptime << "&"
+           << "castor2fs.manager=&"
+           << "castor2fs.signature=";
+    
     ss << opaque.str();
     // signature
-    if (signXrootUrl(ss, opaque.str())) {
+    std::string signature;
+    std::ostringstream sdata;
+    sdata << path.substr(slashPos) << "0" << exptime;
+
+    if (signXrootUrl(sdata.str(), signature)) {
       throw castor::exception::Exception();
     }
+    
+    ss << signature;
     return ss.str();
 }
 

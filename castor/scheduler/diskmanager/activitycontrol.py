@@ -45,16 +45,40 @@ def buildXrootURL(self, diskserver, path):
     '''Builds a xroot valid url for the given path on the given diskserver'''
     # base url and key parameter
     url = 'root://'+diskserver+':1095//dummy?'
-    opaque = 'castor2fs.pfn1='+path+'&castor2fs.exptime='+str(int(time.time())+3600)
+    opaque_dict= {'castor2fs.sfn' : '', 
+                  'castor2fs.pfn1' : path, 
+                  'castor2fs.pfn2' : '', 
+                  'castor2fs.id' : '',
+                  'castor2fs.client_sec_uid' : '', 
+                  'castor2fs.client_sec_gid' : '', 
+                  'castor2fs.accessop' : '0',
+                  'castor2fs.exptime' : str(int(time.time()) + 3600),
+                  'castor2fs.manager' : ''}
+          
     # signature part
     try:
         # get Xroot RSA key
         keyFile = self.configuration.getValue('XROOT', 'PrivateKey', \
                                               '/opt/xrootd/keys/key.pem')
         key = RSA.importKey(open(keyFile, 'r').read())
-        # sign opaque part
-        signature = signBase64(opaque, key)
-        url += opaque + '&castor2fs.signature=' + signature
+        # sign opaque part obtained by concatenating the values
+        opaque_token = ''.join([opaque_dict['castor2fs.sfn'], 
+                                opaque_dict['castor2fs.pfn1'],
+                                opaque_dict['castor2fs.pfn2']
+                                opaque_dict['castor2fs.id'], 
+                                opaque_dict['castor2fs.client_sec_uid'],
+                                opaque_dict['castor2fs.client_sec_gid'],
+                                opaque_dict['castor2fs.accessop'], 
+                                opaque_dict['castor2fs.exptime'], 
+                                opaque_dict['castor2fs.manager']]) 
+        signature = signBase64(opaque_token, key)
+        opaque = ""
+
+        # build the opaque info
+        for key, val in opaque_dict.iteritems():
+          opaque += key + '=' + val + '&'
+                
+        url += opaque + 'castor2fs.signature=' + signature
         return url
     except Exception, e:
         # avoid raising standard exception, as some are used for dedicated purposes
