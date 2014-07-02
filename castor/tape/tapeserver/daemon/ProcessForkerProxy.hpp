@@ -42,17 +42,17 @@ public:
   virtual ~ProcessForkerProxy() throw() = 0;
 
   /**
-   * Forks a mount-session process.
+   * Forks a data-transfer session.
    */
-  virtual void forkMountSession() = 0;
+  virtual void forkDataTransferSession() = 0;
 
   /**
-   * Forks a label-session process.
+   * Forks a label session.
    */
   virtual void forkLabelSession() = 0;
 
   /**
-   * Forks a cleanup-session process.
+   * Forks a cleanup session.
    */
   virtual void forkCleanupSession() = 0;
 

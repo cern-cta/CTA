@@ -112,7 +112,7 @@ namespace daemon {
     std::string getVid() { return m_volInfo.vid; }
     
     /**
-     * Return the global shared zmq context for the mount session
+     * Return the global shared zmq context for the data-transfer session
      * THIS FUNCTION SHALL ONLY BE CALLED IN THE FORKED PROCESS
      *
      * @return The global shared zmq context for the data-transfer session.

@@ -59,9 +59,9 @@ public:
   ~ProcessForkerProxySocket() throw();
 
   /**
-   * Forks a mount-session process.
+   * Forks a data-transfer process.
    */
-  void forkMountSession();
+  void forkDataTransferSession();
 
   /**
    * Forks a label-session process.
@@ -85,6 +85,12 @@ private:
    * with the process forker.
    */
   const int m_socketFd;
+
+  void writeMsg();
+
+  void writeMsgHeader();
+
+  void writeMsgBody();
 
 }; // class ProcessForkerProxySocket
 

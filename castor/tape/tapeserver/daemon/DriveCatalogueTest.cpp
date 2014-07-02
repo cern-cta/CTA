@@ -149,7 +149,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   ASSERT_NO_THROW(unit->configureUp());
   ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_UP, unit->getState());
 
-  // Check that there are no tape drives waiting for their mount sessions to
+  // Check that there are no tape drives waiting for their data-transfer sessions to
   // be forked
   {
     std::list<std::string> unitNames;
@@ -182,7 +182,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   ASSERT_EQ(std::string(job.clientUserName),
     std::string(unit->getVdqmJob().clientUserName));
 
-  // Check that there is one tape drive waiting for a mount session to be forked
+  // Check that there is one tape drive waiting for a data-transfer session to be forked
   {
     std::list<std::string> unitNames;
     ASSERT_NO_THROW(unitNames =
@@ -191,7 +191,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
     ASSERT_EQ(std::string("UNIT"), unitNames.front());
   }
 
-  // Fork the mount session
+  // Fork the data-transfer session
   const pid_t sessionPid = 1234;
   ASSERT_NO_THROW(unit->forkedDataTransferSession(sessionPid));
   ASSERT_EQ(castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_RUNNING, unit->getSessionState());
@@ -217,11 +217,12 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
     ASSERT_EQ(unit, constUnitFoundByPid);
   }
 
-  // Configure the tape drive DOWN whilst the mount session is running
+  // Configure the tape drive DOWN whilst the data-transfer session is running
   ASSERT_NO_THROW(unit->configureDown());
   ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_WAITDOWN, unit->getState());
 
-  // Configure the tape drive back UP whilst the mount session is running
+  // Configure the tape drive back UP whilst the data-transfer session is
+  // running
   ASSERT_NO_THROW(unit->configureUp());
   ASSERT_EQ(castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_RUNNING, unit->getSessionState());
 

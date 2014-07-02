@@ -113,6 +113,15 @@ std::string
 // destructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeDaemon::~TapeDaemon() throw() {
+  closeProcessForkerCmdSenderSocket();
+  destroyZmqContext();
+}
+
+//------------------------------------------------------------------------------
+// closeProcessForkerCmdSenderSocket
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::
+  closeProcessForkerCmdSenderSocket() throw() {
   if(-1 != m_processForkerCmdSenderSocket) {
     std::list<log::Param> params;
     params.push_back(
@@ -124,17 +133,26 @@ castor::tape::tapeserver::daemon::TapeDaemon::~TapeDaemon() throw() {
       m_log(LOG_ERR, "Failed to close the socket used for sending copmmands to"
         " the ProcessForker", params);
     } else {
-      m_log(LOG_INFO, "Succesffuly closed the socket used for sending commands"
+      m_processForkerCmdSenderSocket = -1;
+      m_log(LOG_INFO, "Successfully closed the socket used for sending commands"
         " to the ProcessForker", params);
     }
   }
+}
 
+//------------------------------------------------------------------------------
+// destroyZmqContext
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::destroyZmqContext() throw() {
   if(NULL != m_zmqContext) {
     if(zmq_term(m_zmqContext)) {
       char message[100];
       sstrerror_r(errno, message, sizeof(message));
       castor::log::Param params[] = {castor::log::Param("message", message)};
       m_log(LOG_ERR, "Failed to destroy ZMQ context", params);
+    } else {
+      m_zmqContext = NULL;
+      m_log(LOG_INFO, "Successfully destroyed ZMQ context");
     }
   }
 }
@@ -579,8 +597,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterLabelCmdAcce
 
   std::auto_ptr<LabelCmdAcceptHandler> labelCmdAcceptHandler;
   try {
-    labelCmdAcceptHandler.reset(new LabelCmdAcceptHandler(listenSock.get(), m_reactor,
-      m_log, m_driveCatalogue, m_hostName, m_vdqm, m_vmgr));
+    labelCmdAcceptHandler.reset(new LabelCmdAcceptHandler(listenSock.get(),
+      m_reactor, m_log, m_driveCatalogue, m_hostName, m_vdqm, m_vmgr));
     listenSock.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
@@ -937,8 +955,10 @@ void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedLabelSession(
 //------------------------------------------------------------------------------
 // forkDataTransferSessions
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSessions() throw() {
-  const std::list<std::string> unitNames = m_driveCatalogue.getUnitNamesWaitingForTransferFork();
+void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSessions()
+  throw() {
+  const std::list<std::string> unitNames =
+    m_driveCatalogue.getUnitNamesWaitingForTransferFork();
 
   for(std::list<std::string>::const_iterator itor = unitNames.begin();
     itor != unitNames.end(); itor++) {
@@ -968,7 +988,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSession(
     char message[100];
     sstrerror_r(errno, message, sizeof(message));
     params.push_back(log::Param("message", message));
-    m_log(LOG_ERR, "Failed to fork mount session for tape drive", params);
+    m_log(LOG_ERR, "Failed to fork data-transfer session for tape drive",
+      params);
     return;
 
   // Else if this is the parent process
@@ -988,9 +1009,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSession(
       m_log(LOG_INFO, "Assigned the drive in the vdqm");
     } catch(castor::exception::Exception &ex) {
       log::Param params[] = {log::Param("message", ex.getMessage().str())};
-      m_log(LOG_ERR,
-        "Data-transfer session could not be started: Failed to assign drive in vdqm",
-        params);
+      m_log(LOG_ERR, "Data-transfer session could not be started"
+        ": Failed to assign drive in vdqm", params);
     }
 
     runDataTransferSession(drive);
@@ -1006,7 +1026,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runDataTransferSession(
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", driveConfig.unitName));
 
-  m_log(LOG_INFO, "Mount-session child-process started", params);
+  m_log(LOG_INFO, "Data-transfer child-process started", params);
   
   try {
     DataTransferSession::CastorConf castorConf;
@@ -1047,13 +1067,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runDataTransferSession(
         "RTCPD", "THREAD_POOL", (uint32_t)RTCPD_THREAD_POOL, &m_log);
       
       rmc.reset(m_rmcFactory.create());
-      try{
-        tapeserver.reset(
-          m_tapeserverFactory.create(DataTransferSession::getZmqContext()));
-      }
-      catch(const std::exception& e){
-        m_log(LOG_ERR, "Failed to connect ZMQ/REQ socket in DataTransferSession");
-      }
+      tapeserver.reset(m_tapeserverFactory.create(
+        DataTransferSession::getZmqContext()));
       dataTransferSession.reset(new DataTransferSession (
         m_argc,
         m_argv,
@@ -1076,46 +1091,46 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runDataTransferSession(
         params.push_back(log::Param("errorMessage", ex.getMessageValue()));
         params.push_back(log::Param("errorCode", ex.code()));
         m_log(LOG_ERR, "Failed to notify the client of the failed session"
-          " when setting up the mount session", params);
+          " when setting up the data-transfer session", params);
       }
       throw;
     } 
     catch (...) {
       try {
-        m_log(LOG_ERR, "got non castor exception error while constructing mount session", params);
+        m_log(LOG_ERR, "Got non castor exception error while constructing"
+          " data-transfer session", params);
         client::ClientProxy cl(drive->getVdqmJob());
         client::ClientInterface::RequestReport rep;
         cl.reportEndOfSessionWithError(
-         "Non-Castor exception when setting up the mount session", SEINTERNAL,
-         rep);
+         "Non-Castor exception when setting up the data-transfer session",
+           SEINTERNAL, rep);
       } catch (...) {
         params.push_back(log::Param("errorMessage",
-          "Non-Castor exception when setting up the mount session"));
+          "Non-Castor exception when setting up the data-transfer session"));
         m_log(LOG_ERR, "Failed to notify the client of the failed session"
-          " when setting up the mount session", params);
+          " when setting up the data-transfer session", params);
       }
       throw;
     }
-    m_log(LOG_INFO, "Going to execute Mount Session");
+    m_log(LOG_INFO, "Going to execute data-transfer session");
     int result = dataTransferSession->execute();
     exit(result);
   } catch(castor::exception::Exception & ex) {
     params.push_back(log::Param("message", ex.getMessageValue()));
-    m_log(LOG_ERR,
-      "Aborting mount session: Caught an unexpected CASTOR exception", params);
+    m_log(LOG_ERR, "Aborting data-transfer session"
+      ": Caught an unexpected CASTOR exception", params);
     castor::log::LogContext lc(m_log);
     lc.logBacktrace(LOG_ERR, ex.backtrace());
     exit(1);
   } catch(std::exception &se) {
     params.push_back(log::Param("message", se.what()));
     m_log(LOG_ERR,
-      "Aborting mount session: Caught an unexpected standard exception",
+      "Aborting data-transfer session: Caught an unexpected standard exception",
       params);
     exit(1);
   } catch(...) {
-    m_log(LOG_ERR,
-      "Aborting mount session: Caught an unexpected and unknown exception",
-      params);
+    m_log(LOG_ERR, "Aborting data-transfer session"
+      ": Caught an unexpected and unknown exception", params);
     exit(1);
   }
 }

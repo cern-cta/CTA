@@ -45,7 +45,7 @@ public:
    * Constructor.
    *
    * @param fd The file descriptor of the socket listening for
-   * connections from the mount session
+   * connections from the data-transfer session
    * @param reactor The reactor to which new connection handlers are to be
    * registered.
    * @param log The object representing the API of the CASTOR logging system.

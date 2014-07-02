@@ -51,10 +51,32 @@ castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
 }
 
 //------------------------------------------------------------------------------
-// forkMountSession
+// forkDataTransferSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
-  forkMountSession() {
+  forkDataTransferSession() {
+}
+
+//------------------------------------------------------------------------------
+// writeMsg
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::writeMsg() {
+  writeMsgHeader();
+  writeMsgBody();
+}
+
+//------------------------------------------------------------------------------
+// writeMsgHeader
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
+  writeMsgHeader() {
+}
+
+//------------------------------------------------------------------------------
+// writeMsgBody
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
+  writeMsgBody() {
 }
 
 //------------------------------------------------------------------------------

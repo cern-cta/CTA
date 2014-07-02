@@ -223,8 +223,8 @@ void castor::tape::tapeserver::daemon::LabelCmdConnectionHandler::
     m_thisEventHandlerOwnsFd = false;
     {
       log::Param params[] = {log::Param("fd", m_fd)};
-      m_log(LOG_DEBUG, "Mount-session handler released label connection",
-        params);
+      m_log(LOG_DEBUG,
+        "Label-command connection handler released label connection", params);
     }
   } catch(castor::exception::Exception &ex) {
     log::Param params[] = {log::Param("message", ex.getMessage().str())};

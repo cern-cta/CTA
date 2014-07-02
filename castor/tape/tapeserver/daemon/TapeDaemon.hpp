@@ -136,6 +136,17 @@ protected:
     throw();
 
   /**
+   * Idempotent method that closes the socket used to send commands to the
+   * ProcessForker.
+   */
+  void closeProcessForkerCmdSenderSocket() throw();
+
+  /**
+   * Idempotent method that destroys the ZMQ context.
+   */
+  void destroyZmqContext() throw();
+
+  /**
    * Sets the dumpable attribute of the current process to true.
    */
   void setDumpable();
@@ -292,9 +303,9 @@ protected:
 
   /**
    * Sets the state of the tape drive asscoiated with the specified
-   * mount-session process to down within the vdqmd daemon.
+   * child process to down within the vdqmd daemon.
    *
-   * @param pid The process ID of the mount-session child-process.
+   * @param pid The process ID of the child process.
    * @param driveConfig The configuration of the tape drive.
    */
   void setDriveDownInVdqm(const pid_t pid,
@@ -342,7 +353,7 @@ protected:
     const std::string &vid, const pid_t pid);
 
   /**
-   * Forks a mount-session child-process for every tape drive entry in the
+   * Forks a data-transfer process for every tape drive entry in the
    * tape drive catalogue that is waiting for such a fork to be carried out.
    *
    * There may be more than one child-process to fork because there may be
@@ -353,15 +364,15 @@ protected:
   void forkDataTransferSessions() throw();
 
   /**
-   * Forks a mount-session child-process for the specified tape drive.
+   * Forks a data-transfer process for the specified tape drive.
    *
    * @param drive The tape-drive entry in the tape-drive catalogue.
    */ 
   void forkDataTransferSession(DriveCatalogueEntry *drive) throw();
 
   /**
-   * Runs the mount session.  This method is to be called within the child
-   * process responsible for running the mount session.
+   * Runs the data-transfer session.  This method is to be called within the
+   * child process responsible for running the data-transfer session.
    *
    * @param drive The catalogue entry of the tape drive to be used during the
    * session.
