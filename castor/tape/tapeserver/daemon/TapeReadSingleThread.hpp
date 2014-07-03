@@ -94,13 +94,21 @@ private:
         try {
           tape::utils::Timer timer;
           // Do the final cleanup
-          m_this.m_drive.unloadTape();
-          m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread : Tape unloaded");
+          // in the special case of a "manual" mode tape, we should skip the unload too.
+          if (m_this.m_drive.librarySlot != "manual") {
+            m_this.m_drive.unloadTape();
+            m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread: Tape unloaded");
+          } else {
+            m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread: Tape NOT unloaded (manual mode)");
+          }
           // And return the tape to the library
+          // In case of manual mode, this will be filtered by the rmc daemon
+          // (which will do nothing)
           m_this.m_rmc.unmountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot);
           
           log::LogContext::ScopedParam sp0( m_this.m_logContext, log::Param("timeTaken", timer.usecs()));
-          m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread : tape unmounted");
+          m_this.m_logContext.log(LOG_INFO, m_this.m_drive.librarySlot != "manual"?
+            "TapeReadSingleThread : tape unmounted":"TapeReadSingleThread : tape NOT unmounted (manual mode)");
           m_this.m_tsr.tapeUnmounted();
         } catch(const castor::exception::Exception& ex){
           //set it to -1 to notify something failed during the cleaning 

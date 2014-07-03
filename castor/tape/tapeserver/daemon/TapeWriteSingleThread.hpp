@@ -88,11 +88,19 @@ private:
     ~TapeCleaning(){
       try{
       // Do the final cleanup
-      m_this.m_drive.unloadTape();
-      m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread : Tape unloaded");
+      // in the special case of a "manual" mode tape, we should skip the unload too.
+      if (m_this.m_drive.librarySlot != "manual") {
+        m_this.m_drive.unloadTape();
+        m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread: Tape unloaded");
+      } else {
+        m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread: Tape NOT unloaded (manual mode)");
+      }
       // And return the tape to the library
+      // In case of manual mode, this will be filtered by the rmc daemon
+      // (which will do nothing)
       m_this.m_rmc.unmountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot);
-      m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread : tape unmounted");
+      m_this.m_logContext.log(LOG_INFO, m_this.m_drive.librarySlot != "manual"?
+        "TapeWriteSingleThread : tape unmounted":"TapeWriteSingleThread : tape NOT unmounted (manual mode)");
       m_this.m_tsr.tapeUnmounted();
               
       }
