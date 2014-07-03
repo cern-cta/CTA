@@ -18,7 +18,7 @@
  *
  * A parameter for the CASTOR logging system
  *
- * @author steve.murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/log/Param.hpp"

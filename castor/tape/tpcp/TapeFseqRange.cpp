@@ -18,7 +18,7 @@
  *
  *
  *
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
  
 #include "castor/tape/tpcp/TapeFseqRange.hpp"

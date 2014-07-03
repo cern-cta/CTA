@@ -21,7 +21,7 @@
  * movers, that is movers that were unmodified and do not
  * inform CASTOR in any way
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

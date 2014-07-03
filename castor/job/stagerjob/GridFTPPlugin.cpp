@@ -19,7 +19,7 @@
  *
  * Plugin of the stager job concerning GridFTP
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

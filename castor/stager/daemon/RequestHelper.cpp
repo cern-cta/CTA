@@ -19,7 +19,7 @@
  *
  * Helper class for handling file-oriented user requests
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <string.h>

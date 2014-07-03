@@ -18,7 +18,7 @@
  *
  * @(#)ClientSocket.cpp,v 1.4 $Release$ 2005/06/09 13:24:10 bcouturi
  * 
- * @author Benjamin Couturier
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

@@ -19,7 +19,7 @@
  *
  * A pool of forked processes
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // System headers

@@ -21,7 +21,7 @@
  * based around memcache, there is lots of scope for optimization and
  * improvement! This is ***NOT*** DOS protection.....
  *
- * @author Dennis Waldron
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include files

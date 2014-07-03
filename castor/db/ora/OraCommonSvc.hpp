@@ -19,7 +19,7 @@
  *
  * Implementation of the ICommonSvc for Oracle/CDBC
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

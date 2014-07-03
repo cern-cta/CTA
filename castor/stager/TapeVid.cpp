@@ -19,7 +19,7 @@
  *
  * A very simple class representing a Tape VID
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

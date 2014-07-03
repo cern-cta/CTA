@@ -19,7 +19,7 @@
  *
  * Badversion error exception
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

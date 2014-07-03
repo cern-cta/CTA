@@ -19,7 +19,7 @@
  *
  * A class with static methods for system level utilities.
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

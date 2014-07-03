@@ -19,7 +19,7 @@
  *
  * api to handle privileges i.e. modify the black and white list
  *
- * @author sponcec3
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // includes

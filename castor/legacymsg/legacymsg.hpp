@@ -19,7 +19,7 @@
  *
  *
  *
- * @author steven.murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

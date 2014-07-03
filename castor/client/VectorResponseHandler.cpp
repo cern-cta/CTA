@@ -19,7 +19,7 @@
  *
  * A multi-file Response Handler for command line clients
  *
- * @author  Ben Couturier
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

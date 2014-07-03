@@ -19,7 +19,7 @@
  *
  *
  *
- * @author castor-dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

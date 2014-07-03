@@ -20,7 +20,7 @@
  * A dedicated socket on top of standard file descriptors to be used
  * as communication channel between a parent and its forked children process
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

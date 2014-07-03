@@ -19,7 +19,7 @@
  *
  * Container for a CASTOR log message
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

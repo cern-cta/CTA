@@ -18,7 +18,7 @@
  *
  *
  * 
- * @author dkruse@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"

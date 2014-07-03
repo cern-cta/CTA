@@ -19,7 +19,7 @@
  *
  * Implementation of the streaming operator << for IObject
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

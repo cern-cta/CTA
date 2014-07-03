@@ -19,7 +19,7 @@
  *
  * This class provides stager methods related to Garbage Collection
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

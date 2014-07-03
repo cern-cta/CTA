@@ -19,7 +19,7 @@
  *
  * Service thread for dealing with requests that failed
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <sstream>

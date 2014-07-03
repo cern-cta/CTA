@@ -19,7 +19,7 @@
  *
  * C++ interface to DLF
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

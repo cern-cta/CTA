@@ -18,7 +18,7 @@
  *
  * @(#)RequestReplier.cpp,v 1.23 $Release$ 2005/10/11 14:14:02 bcouturi
  *
- * @author Benjamin Couturier
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <Cthread_api.h>

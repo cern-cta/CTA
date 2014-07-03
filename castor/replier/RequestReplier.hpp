@@ -19,7 +19,7 @@
  *
  *
  *
- * @author Benjamin Couturier
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 

@@ -18,7 +18,7 @@
  *
  * @(#)ClientConnection.cpp,v 1.7 $Release$ 2004/09/17 09:08:27 bcouturi
  *
- * @author Benjamin Couturier
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <Cthread_api.h>

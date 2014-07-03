@@ -19,7 +19,7 @@
  *
  * some useful declarations around the scheduler job implementation
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

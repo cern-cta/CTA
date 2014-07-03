@@ -19,7 +19,7 @@
  *
  * small struct holding the list of arguments passed to stagerjob
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

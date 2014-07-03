@@ -19,7 +19,7 @@
  *
  * Some code to test and play around with Oracle CLOBS
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
  

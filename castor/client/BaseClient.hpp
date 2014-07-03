@@ -20,7 +20,7 @@
  * A base class for all castor clients. Implements many
  * useful and common parts for all clients.
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

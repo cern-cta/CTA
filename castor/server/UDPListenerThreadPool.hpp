@@ -19,7 +19,7 @@
  *
  * Listener thread pool based on UDP
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

@@ -19,7 +19,7 @@
  *
  * Plugin of the stager job concerning Root
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

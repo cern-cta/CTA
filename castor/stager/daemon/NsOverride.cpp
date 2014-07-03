@@ -19,7 +19,7 @@
  *
  * Singleton class for the NameServer override feature
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <getconfent.h>

@@ -21,7 +21,7 @@
  * movers. That is movers that were modified to inform the
  * CASTOR framework of their behavior
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

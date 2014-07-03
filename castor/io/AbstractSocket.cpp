@@ -20,7 +20,7 @@
  *
  * Implementation of an abtract socket interface
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

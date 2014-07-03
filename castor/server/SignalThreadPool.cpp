@@ -19,7 +19,7 @@
  *
  * Thread pool supporting wakeup on signals and periodical run after timeout
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

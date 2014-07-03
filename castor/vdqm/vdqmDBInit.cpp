@@ -19,7 +19,7 @@
  *
  *
  *
- * @author Matthias Braeger
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <Cgetopt.h>

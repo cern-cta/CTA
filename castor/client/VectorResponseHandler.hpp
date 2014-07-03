@@ -19,7 +19,7 @@
  *
  * A simple Response Handler for command line clients
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

@@ -18,7 +18,7 @@
  *
  * Interface to the CASTOR logging system
  *
- * @author Eric.Cano@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "StringLogger.hpp"

@@ -23,7 +23,7 @@
  *   - Ids of services (SVC_***)
  *   - Ids of persistent representations (REP_***)
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

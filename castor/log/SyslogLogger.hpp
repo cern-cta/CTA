@@ -19,7 +19,7 @@
  *
  * Interface to the CASTOR logging system
  *
- * @author Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

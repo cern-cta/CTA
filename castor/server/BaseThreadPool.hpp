@@ -19,7 +19,7 @@
  *
  * Abstract CASTOR thread pool
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

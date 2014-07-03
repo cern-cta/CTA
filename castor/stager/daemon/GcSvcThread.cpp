@@ -19,7 +19,7 @@
  *
  * Service thread for garbage collection related requests
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <vector>

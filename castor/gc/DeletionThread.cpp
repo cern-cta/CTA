@@ -19,7 +19,7 @@
  *
  * Deletion thread used to check periodically whether files need to be deleted
  *
- * @author Dennis Waldron
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include files

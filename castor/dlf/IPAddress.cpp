@@ -19,7 +19,7 @@
  *
  * A simple object around an IP address
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

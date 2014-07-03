@@ -19,7 +19,7 @@
  *
  * Thread pool supporting wakeup from the DBMS_ALERT Oracle interface
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

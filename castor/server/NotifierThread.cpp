@@ -19,7 +19,7 @@
  *
  * A thread to handle notifications to wake up workers in a pool
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

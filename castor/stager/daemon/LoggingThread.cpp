@@ -18,7 +18,7 @@
  *
  * Thread for dumping database logs to DLF
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <vector>

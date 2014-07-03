@@ -19,7 +19,7 @@
  *
  * A simple object around a time stamp
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

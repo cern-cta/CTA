@@ -20,7 +20,7 @@
  *
  * A parameter for the DLF (Distributed Logging System)
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

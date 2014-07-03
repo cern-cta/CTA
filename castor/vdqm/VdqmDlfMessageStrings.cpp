@@ -21,7 +21,7 @@
  *
  *
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"

@@ -19,7 +19,7 @@
  *
  * Base class for a multithreaded client for stress tests
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <sys/types.h> 

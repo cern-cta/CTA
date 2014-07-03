@@ -19,7 +19,7 @@
  *
  *
  *
- * @author Eric Cano
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <execinfo.h>

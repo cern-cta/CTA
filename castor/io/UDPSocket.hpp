@@ -19,7 +19,7 @@
  *
  * Defines a dedicated socket that handles most of the network calls
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

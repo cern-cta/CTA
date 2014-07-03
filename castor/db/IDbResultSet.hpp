@@ -19,7 +19,7 @@
  *
  * 
  *
- * @author Giuseppe Lo Presti, giuseppe.lopresti@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

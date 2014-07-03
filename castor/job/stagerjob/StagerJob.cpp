@@ -19,7 +19,7 @@
  *
  * this is the job launched by the scheduler on the diskserver in order to allow some I/O
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

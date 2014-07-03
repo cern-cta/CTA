@@ -19,7 +19,7 @@
  *
  *
  *
- * @author dkruse@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/io/io.hpp"

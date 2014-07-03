@@ -19,7 +19,7 @@
  *
  * Abstract class defining a listener thread pool
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

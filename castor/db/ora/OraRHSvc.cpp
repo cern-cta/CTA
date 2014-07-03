@@ -19,7 +19,7 @@
  *
  * Implementation of the IRHSvc for Oracle
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

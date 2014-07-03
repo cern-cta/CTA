@@ -19,7 +19,7 @@
  *
  * A parameter for the CASTOR log system
  *
- * @author Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

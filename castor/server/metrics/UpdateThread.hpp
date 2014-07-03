@@ -20,7 +20,7 @@
  * A thread used by the MetricsCollector container/thread pool 
  * to update all collected metric values.
  *
- * @author castor-dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

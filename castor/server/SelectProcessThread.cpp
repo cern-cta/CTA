@@ -20,7 +20,7 @@
  * Base thread for the select/process model: it loops until select() returns
  * something to do, or until a stop signal is received.
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/server/SignalThreadPool.hpp"

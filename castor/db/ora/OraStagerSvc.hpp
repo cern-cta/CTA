@@ -19,7 +19,7 @@
  *
  * Implementation of the IStagerSvc for Oracle
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

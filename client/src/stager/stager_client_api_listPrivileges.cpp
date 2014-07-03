@@ -19,7 +19,7 @@
  *
  * api to list privileges i.e. the content of the black and white list
  *
- * @author sponcec3
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // includes
