@@ -24,6 +24,11 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
+
+#include <google/protobuf/message.h>
+#include <stdint.h>
 
 namespace castor     {
 namespace tape       {
@@ -35,7 +40,7 @@ namespace daemon     {
  *
  * This class uses a socket to communicate with the process forker.
  */
-class ProcessForkerProxySocket {
+class ProcessForkerProxySocket: public ProcessForkerProxy {
 public:
   /**
    * Constructor.
@@ -58,19 +63,38 @@ public:
   ~ProcessForkerProxySocket() throw();
 
   /**
-   * Forks a data-transfer process.
+   * Tells the ProcessForker to stop executing.
+   *
+   * @param reason Human readable string for logging purposes that describes
+   * the reason for stopping.
    */
-  void forkDataTransferSession();
+  void stopProcessForker(const std::string &reason);
 
   /**
-   * Forks a label-session process.
+   * Forks a data-transfer process for the specified tape drive.
+   *
+   * @param unitName The unit name of the tape drive.
    */
-  void forkLabelSession();
+  void forkDataTransfer(const std::string &unitName);
 
   /**
-   * Forks a cleanup-session process.
+   * Forks a label-session process for the specified tape drive.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The volume identifier of the tape.
    */
-  void forkCleanupSession();
+  void forkLabel(const std::string &unitName, const std::string &vid);
+
+  /**
+   * Forks a cleaner session for the specified tape drive.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid If known then this string specifies the volume identifier of the
+   * tape in the drive if there is in fact a tape in the drive and its volume
+   * identifier is known.  If the volume identifier is not known then this
+   * parameter should be set to an empty string.
+   */
+  void forkCleaner(const std::string &unitName, const std::string &vid);
 
 private:
 
@@ -85,11 +109,45 @@ private:
    */
   const int m_socketFd;
 
-  void writeMsg();
+  /**
+   * Writes a frame with the specified message as its payload to the socket
+   * connected to the ProcessForker.
+   *
+   * @param msgType The type of the message being sent in the payload of the
+   * frame.
+   * @param msg The message to sent as the payload of the frame.
+   */
+  void writeFrameToSocket(const ProcessForkerMsgType::Enum msgType,
+    const google::protobuf::Message &msg);
 
-  void writeMsgHeader();
+  /**
+   * Writes a frame header to the socket connected to the ProcessForker.
+   *
+   * @param msgType The type of the message being sent in the payload of the
+   * frame.
+   * @param payloadLen The length of the frame payload in bytes.
+   */
+  void writeFrameHeaderToSocket(const ProcessForkerMsgType::Enum msgType,
+    const uint32_t payloadLen);
 
-  void writeMsgBody();
+  /**
+   * Writes the specified unsigned 32-bit integer to the socket connected to the
+   * ProcessForker.
+   *
+   * @param value The value to be written.
+   */
+  void writeUint32ToSocket(const uint32_t value);
+
+  /**
+   * Writes the specified message as the payload of a frame to the socket
+   * connected to the ProcessForker.
+   */
+  void writeFramePayloadToSocket(const google::protobuf::Message &msg);
+
+  /**
+   * Writes the specified string to the socket connected to the ProcessForker.
+   */
+  void writeStringToSocket(const std::string &str);
 
 }; // class ProcessForkerProxySocket
 

@@ -30,9 +30,11 @@
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/LabelCmdAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
-#include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForker.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerProxySocket.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
@@ -85,7 +87,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   m_capUtils(capUtils),
   m_programName("tapeserverd"),
   m_hostName(getHostName()),
-  m_processForkerCmdSenderSocket(-1),
+  m_processForker(NULL),
   m_processForkerPid(0),
   m_zmqContext(NULL) {
 }
@@ -112,31 +114,11 @@ std::string
 // destructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeDaemon::~TapeDaemon() throw() {
-  closeProcessForkerCmdSenderSocket();
-  destroyZmqContext();
-}
-
-//------------------------------------------------------------------------------
-// closeProcessForkerCmdSenderSocket
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::
-  closeProcessForkerCmdSenderSocket() throw() {
-  if(-1 != m_processForkerCmdSenderSocket) {
-    std::list<log::Param> params;
-    params.push_back(
-      log::Param("cmdSenderSocket", m_processForkerCmdSenderSocket));
-    if(close(m_processForkerCmdSenderSocket)) {
-      char message[100];
-      strerror_r(errno, message, sizeof(message));
-      params.push_back(log::Param("message", message));
-      m_log(LOG_ERR, "Failed to close the socket used for sending copmmands to"
-        " the ProcessForker", params);
-    } else {
-      m_processForkerCmdSenderSocket = -1;
-      m_log(LOG_INFO, "Successfully closed the socket used for sending commands"
-        " to the ProcessForker", params);
-    }
+  if(NULL != m_processForker) {
+    m_processForker->stopProcessForker("TapeDaemon destructor called");
+    delete m_processForker;
   }
+  destroyZmqContext();
 }
 
 //------------------------------------------------------------------------------
@@ -292,18 +274,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkProcessForker() {
     throw ex;
   }
 
-  // TapeDaemon should store the socket responsible for sending commands to the
-  // ProcessForker
-  //
-  // The destructor of the TapeDaemon will close the socket responsible for
-  // sending commands to the ProcessForker
-  m_processForkerCmdSenderSocket = sv[0];
-
+  const int processForkerCmdSenderSocket = sv[0];
   const int processForkerCmdReceiverSocket = sv[1];
 
   {
     log::Param params[] = {
-      log::Param("cmdSenderSocket", m_processForkerCmdSenderSocket),
+      log::Param("cmdSenderSocket", processForkerCmdSenderSocket),
       log::Param("cmdReceiverSocket", processForkerCmdReceiverSocket)};
     m_log(LOG_INFO, "TapeDaemon parent process succesfully created socket"
       " pair for controlling the ProcessForker", params);
@@ -347,6 +323,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkProcessForker() {
         " used to receive ProcessForker commands", params);
     }
 
+    m_processForker =
+      new ProcessForkerProxySocket(m_log, processForkerCmdSenderSocket);
+
     return;
 
   // Else this is the child process
@@ -355,7 +334,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkProcessForker() {
     // file-descriptors owned by the event handlers
     m_reactor.clear();
 
-    if(close(m_processForkerCmdSenderSocket)) {
+    if(close(processForkerCmdSenderSocket)) {
       char message[100];
       sstrerror_r(errno, message, sizeof(message));
       castor::exception::Exception ex;
@@ -365,40 +344,38 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkProcessForker() {
     }
 
     {
-      m_processForkerCmdSenderSocket = -1;
       log::Param params[] = 
-        {log::Param("cmdSenderSocket", m_processForkerCmdSenderSocket)};
+        {log::Param("cmdSenderSocket", processForkerCmdSenderSocket)};
       m_log(LOG_INFO, "ProcessForker process successfully closed the socket" 
         " used to send ProcessForker commands", params);
     }
 
-    runProcessForker(processForkerCmdReceiverSocket);
-
-    exit(0);
+    exit(runProcessForker(processForkerCmdReceiverSocket));
   }
 }
 
 //------------------------------------------------------------------------------
 // runProcessForker
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::runProcessForker(
-  const int cmdReceiverSocket) {
-
-  if(close(cmdReceiverSocket)) {
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    castor::exception::Exception ex;
-    ex.getMessage() << "ProcessForker process failed to close the socket"
-      " used to receive ProcessForker commands: " << message;
-    throw ex;
+int castor::tape::tapeserver::daemon::TapeDaemon::runProcessForker(
+  const int cmdReceiverSocket) throw() {
+  try {
+    ProcessForker processForker(m_log, cmdReceiverSocket);
+    processForker.execute();
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "ProcessForker threw an unexpected exception", params);
+    return 1;
+  } catch(std::exception &se) {
+    log::Param params[] = {log::Param("message", se.what())};
+    m_log(LOG_ERR, "ProcessForker threw an unexpected exception", params);
+    return 1;
+  } catch(...) {
+    m_log(LOG_ERR, "ProcessForker threw an unknown and unexpected exception");
+    return 1;
   }
 
-  {
-    log::Param params[] =
-      {log::Param("cmdReceiverSocket", cmdReceiverSocket)};
-    m_log(LOG_INFO, "ProcessForker process successfully closed the socket"
-      " used to receive ProcessForker commands", params);
-  }
+  return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -686,10 +663,10 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handlePendingSignals()
   sigset_t allSignals;
   siginfo_t sigInfo;
   sigfillset(&allSignals);
-  struct timespec immedTimeout = {0, 0};
+  struct timespec immediateTimeout = {0, 0};
 
   // While there is a pending signal to be handled
-  while (0 < (sig = sigtimedwait(&allSignals, &sigInfo, &immedTimeout))) {
+  while (0 < (sig = sigtimedwait(&allSignals, &sigInfo, &immediateTimeout))) {
     switch(sig) {
     case SIGINT: // Signal number 2
       m_log(LOG_INFO, "Stopping gracefully because SIGINT was received");
@@ -980,6 +957,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSession(
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", driveConfig.unitName));
 
+  m_processForker->forkDataTransfer(driveConfig.unitName);
+
   m_log.prepareForFork();
 
   const pid_t forkRc = fork();
@@ -1159,6 +1138,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
   const utils::DriveConfig &driveConfig = drive->getConfig();
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", driveConfig.unitName));
+
+  m_processForker->forkLabel(driveConfig.unitName, drive->getVid());
 
   // Release the connection with the label command from the drive catalogue
   castor::utils::SmartFd labelCmdConnection;

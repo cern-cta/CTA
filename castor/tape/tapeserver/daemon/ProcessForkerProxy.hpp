@@ -35,25 +35,47 @@ namespace daemon     {
  */
 class ProcessForkerProxy {
 public:
+
   /**
    * Destructor.
    */
   virtual ~ProcessForkerProxy() throw() = 0;
 
   /**
-   * Forks a data-transfer session.
+   * Tells the ProcessForker to stop executing.
+   *
+   * @param reason Human readable string for logging purposes that describes
+   * the reason for stopping.
    */
-  virtual void forkDataTransferSession() = 0;
+  virtual void stopProcessForker(const std::string &reason) = 0;
 
   /**
-   * Forks a label session.
+   * Forks a data-transfer session for the specified tape drive.
+   *
+   * @param unitName The unit name of the tape drive.
    */
-  virtual void forkLabelSession() = 0;
+  virtual void forkDataTransfer(const std::string &unitName) = 0;
 
   /**
-   * Forks a cleanup session.
+   * Forks a label session for the specified tape drive.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The volume identifier of the tape.
    */
-  virtual void forkCleanupSession() = 0;
+  virtual void forkLabel(const std::string &unitName, const std::string &vid) =
+    0;
+
+  /**
+   * Forks a cleaner session for the specified tape drive.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid If known then this string specifies the volume identifier of the
+   * tape in the drive if there is in fact a tape in the drive and its volume
+   * identifier is known.  If the volume identifier is not known then this
+   * parameter should be set to an empty string.
+   */
+  virtual void forkCleaner(const std::string &unitName,
+    const std::string &vid) = 0;
 
 }; // class ProcessForkerProxy
 

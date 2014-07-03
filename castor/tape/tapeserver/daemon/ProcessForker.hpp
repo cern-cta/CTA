@@ -25,6 +25,8 @@
 
 #include "castor/log/Logger.hpp"
 
+#include <stdint.h>
+
 namespace castor     {
 namespace tape       {
 namespace tapeserver {
@@ -56,7 +58,18 @@ public:
    */
   ~ProcessForker() throw();
 
+  /**
+   * Executes the main event loop of the ProcessForker.
+   */
+  void execute();
+
 private:
+
+  /**
+   * The maximum permitted size in bytes for the payload of a frame sent between
+   * the ProcessForker and its proxy.
+   */
+  static const ssize_t s_maxPayloadLen = 1024;
 
   /**
    * Object representing the API of the CASTOR logging system.
@@ -67,6 +80,76 @@ private:
    * The file-descriptor of the socket used to communicate with the client.
    */
   const int m_socketFd;
+
+  /**
+   * Handles any pending events.
+   *
+   * @return true if the main event loop should continue.
+   */
+  bool handleEvents();
+
+  /**
+   * Reads in and handles a single message from the ProcessForker proxy.
+   */
+  bool handleMsg();
+
+  /**
+   * Reads an unsigned 32-bit integer from the socket connected to the
+   * ProcessForkerProxySocket.
+   *
+   * @return The unsigned 32-bit integer.
+   */
+  uint32_t readUint32FromSocket();
+
+  /**
+   * Dispatches the appropriate handle method for the specified message.
+   *
+   * @param msgType The type of the message.
+   * @param payload The frame payload containing the message.
+   * @return True if the main event loop should continue.
+   */
+  bool dispatchMsgHandler(const uint32_t msgType, const std::string &payload);
+
+  /**
+   * Handles a StopProcessForker message.
+   *
+   * @param payload The frame payload containing the message.
+   * @return True if the main event loop should continue.
+   */
+  bool handleStopProcessForkerMsg(const std::string &payload);
+
+  /**
+   * Handles a ForkLabel message.
+   *
+   * @param payload The frame payload containing the message.
+   * @return True if the main event loop should continue.
+   */
+  bool handleForkLabelMsg(const std::string &payload);
+
+  /**
+   * Handles a ForkDataTransfer message.
+   *
+   * @param payload The frame payload containing the message.
+   * @return True if the main event loop should continue.
+   */
+  bool handleForkDataTransferMsg(const std::string &payload);
+
+  /**
+   * Handles a ForkCleaner message.
+   *
+   * @param payload The frame payload containing the message.
+   * @return True if the main event loop should continue.
+   */
+  bool handleForkCleanerMsg(const std::string &payload);
+
+  /**
+   * Reads the payload of a frame from the socket connected to the ProcessForker
+   * proxy.
+   *
+   * @param payloadLen The length of the payload in bytes.
+   * @return The payload as a string.
+   */
+  std::string readPayloadFromSocket(const ssize_t payloadLen);
 
 }; // class ProcessForker
 

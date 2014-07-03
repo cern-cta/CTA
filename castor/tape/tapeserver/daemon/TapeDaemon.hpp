@@ -36,6 +36,7 @@
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 #include "castor/tape/utils/DriveConfigMap.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
@@ -135,12 +136,6 @@ protected:
     throw();
 
   /**
-   * Idempotent method that closes the socket used to send commands to the
-   * ProcessForker.
-   */
-  void closeProcessForkerCmdSenderSocket() throw();
-
-  /**
    * Idempotent method that destroys the ZMQ context.
    */
   void destroyZmqContext() throw();
@@ -168,8 +163,9 @@ protected:
    *
    * @param cmdReceiverSocket The socket used to receive commands for the
    * ProcessForker.
+   * @return the exit code to be used for the process running the ProcessForker.
    */
-  void runProcessForker(const int cmdReceiverSocket);
+  int runProcessForker(const int cmdReceiverSocket) throw();
 
   /**
    * Blocks the signals that should not asynchronously disturb the daemon.
@@ -477,9 +473,9 @@ protected:
   const std::string m_hostName;
 
   /**
-   * The socket used to send commands to the ProcessForker.
+   * Proxy object used to send commands to the ProcessForker.
    */
-  int m_processForkerCmdSenderSocket;
+  ProcessForkerProxy *m_processForker;
 
   /**   
    * The process identifier of the ProcessForker.

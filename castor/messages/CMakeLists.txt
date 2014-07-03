@@ -1,9 +1,13 @@
 add_library(castormessages SHARED
+  ForkCleaner.pb.cc
+  ForkDataTransfer.pb.cc
+  ForkLabel.pb.cc
   Header.pb.cc
   Heartbeat.pb.cc
   messages.cpp
   NotifyDrive.pb.cc
   ReplyContainer.cpp
+  StopProcessForker.pb.cc
   TapeserverProxy.cpp
   TapeserverProxyDummy.cpp
   TapeserverProxyDummyFactory.cpp

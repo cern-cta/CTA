@@ -23,20 +23,20 @@
 
 #pragma once
 
-#include "castor/tape/utils/DriveConfig.hpp"
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeStatDriveEntry.hpp"
 #include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 #include "castor/messages/NotifyDrive.pb.h"
 #include "castor/tape/tapeserver/daemon/DriveCatalogueSession.hpp"
+#include "castor/tape/utils/DriveConfig.hpp"
 
+#include <iostream>
+#include <memory>
 #include <string>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
-#include <memory>
-#include <iostream>
 
 namespace castor     {
 namespace tape       {
