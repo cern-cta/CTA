@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      rmc_send_scsi_cmd.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
