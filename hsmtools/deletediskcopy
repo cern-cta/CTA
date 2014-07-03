@@ -110,12 +110,12 @@ try:
     # close and print statistics
     castor_tools.disconnectDB(stconn)
     if nsstats:
-      print '\nRemoval of %d disk copies completed. The following file(s) have been permanently removed:' % counter
+      print '\nHandling of %d disk copies completed. The following file(s) have been permanently removed:' % counter
       for u in nsstats:
         print '--- owned by user', u, ':'
         print nsstats[u].getvalue()
     else:
-      print 'Removal of %d disk copies completed, no file got lost' % counter
+      print 'Handling of %d disk copies completed, no file got lost' % counter
 
 except Exception, e:
     # detect special error raised by the code

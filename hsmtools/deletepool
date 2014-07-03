@@ -109,7 +109,7 @@ try:
         print 'Pools cannot be dropped if not empty and'
         for name, nbfs, poolType, childType in nonEmptyPools:
             print '  - %s %s still has %d %s' % (poolType, name, nbfs, childType)
-        print 'You may want to use moveDiskServer to correct this'
+        print 'You may want to use delete/moveDiskServer to correct this'
         sys.exit(1)
     # drop disk pools
     if existingDiskPools:

@@ -316,7 +316,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_12');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_13');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -597,13 +597,13 @@ AS
   
   MIGRATION_CANCEL_BY_VID      CONSTANT VARCHAR2(2048) := 'Canceling tape migration for given VID';
   MIGRATION_COMPLETED          CONSTANT VARCHAR2(2048) := 'setFileMigrated: db updates after full migration completed';
-  MIGRATION_NOT_FOUND          CONSTANT VARCHAR2(2048) := 'setFileMigrated: unable to identify migration, giving up';
+  MIGRATION_NOT_FOUND          CONSTANT VARCHAR2(2048) := 'Unable to identify migration, giving up';
   MIGRATION_RETRY              CONSTANT VARCHAR2(2048) := 'setBulkFilesMigrationResult: migration failed, will retry if allowed';
   MIGRATION_FILE_DROPPED       CONSTANT VARCHAR2(2048) := 'failFileMigration: file was dropped or modified during migration, giving up';
   MIGRATION_SUPERFLUOUS_COPY   CONSTANT VARCHAR2(2048) := 'failFileMigration: file already had enough copies on tape, ignoring new segment';
   MIGRATION_FAILED             CONSTANT VARCHAR2(2048) := 'failFileMigration: migration to tape failed for this file, giving up';
   MIGRATION_FAILED_NOT_FOUND   CONSTANT VARCHAR2(2048) := 'failFileMigration: file not found when failing migration';
-  BULK_MIGRATION_COMPLETED     CONSTANT VARCHAR2(2048) := 'setBulkFileMigrationResult: bulk migration completed';
+  BULK_MIGRATION_COMPLETED     CONSTANT VARCHAR2(2048) := 'setBulkFilesMigrationResult: bulk migration completed';
 
   REPACK_SUBMITTED             CONSTANT VARCHAR2(2048) := 'New Repack request submitted';
   REPACK_ABORTING              CONSTANT VARCHAR2(2048) := 'Aborting Repack request';
@@ -2015,6 +2015,8 @@ ALTER TABLE DrainingErrors
  *   destSvcClass : the destination service class
  *   replicationType : the type of replication involved (user, internal, draining or rebalancing)
  *   srcDcId : the source diskCopy. NULL at the beginning when the source is not yet scheduled.
+ *             note there's no FK constraint to DiskCopy as the src DiskCopy may well disappear
+ *             in between and in such a case the job is retried if possible (see disk2DiskCopyStart).
  *   destDcId : the ID to be used for the destination DiskCopy. Note that the DiskCopy does not yet
  *              exist during the lifetime of the job, therefore a FK constraint cannot be enforced.
  *   dropSource : is the source to be dropped?
@@ -2067,8 +2069,6 @@ ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_CastorFile
   FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_SvcClass
   FOREIGN KEY (destSvcClass) REFERENCES SvcClass(id);
-ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_SrcDcId
-  FOREIGN KEY (srcDcId) REFERENCES DiskCopy(id);
 ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_DrainJob
   FOREIGN KEY (drainingJob) REFERENCES DrainingJob(id);
 ALTER TABLE Disk2DiskCopyJob
@@ -3605,6 +3605,27 @@ BEGIN
 END;
 /
 
+/* PL/SQL procedure called when a repack request is over: see archiveSubReq */
+CREATE OR REPLACE PROCEDURE handleEndOfRepack(inReqId INTEGER) AS
+  nbLeftSegs INTEGER;
+BEGIN
+  -- check if any segment is left in the original tape
+  SELECT 1 INTO nbLeftSegs FROM Cns_seg_metadata@RemoteNS
+   WHERE vid = (SELECT repackVID FROM StageRepackRequest WHERE id = inReqId)
+     AND ROWNUM < 2;
+  -- we found at least one segment, final status is FAILED
+  UPDATE StageRepackRequest
+     SET status = tconst.REPACK_FAILED,
+         lastModificationTime = getTime()
+   WHERE id = inReqId;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- no segments found, repack was successful
+  UPDATE StageRepackRequest
+     SET status = tconst.REPACK_FINISHED,
+         lastModificationTime = getTime()
+   WHERE id = inReqId;
+END;
+/
 
 /*
  * Database jobs
@@ -4917,20 +4938,9 @@ BEGIN
        SET status = dconst.SUBREQUEST_ARCHIVED
      WHERE request = rId
        AND status = dconst.SUBREQUEST_FINISHED;
-    -- in case of repack, change the status of the request
+    -- special handling in case of repack
     IF rType = 119 THEN  -- OBJ_StageRepackRequest
-      DECLARE
-        nbfailures NUMBER;
-      BEGIN
-        SELECT count(*) INTO nbfailures FROM SubRequest
-         WHERE request = rId
-           AND status = dconst.SUBREQUEST_FAILED_FINISHED
-           AND ROWNUM < 2;
-        UPDATE StageRepackRequest
-           SET status = CASE nbfailures WHEN 1 THEN tconst.REPACK_FAILED ELSE tconst.REPACK_FINISHED END,
-               lastModificationTime = getTime()
-         WHERE id = rId;
-      END;
+      handleEndOfRepack(rId);
     END IF;
   END;
 END;
@@ -11413,6 +11423,11 @@ BEGIN
                  AND fseq > varNewFseq
                ORDER BY fseq ASC)
        WHERE ROWNUM < 2;
+      -- move up last fseq used. Note that it moves up even if bestFileSystemForRecall
+      -- (or any other statement) fails and the file is actually not recalled.
+      -- The goal is that a potential retry within the same mount only occurs after
+      -- we went around the other files on this tape.
+      varNewFseq := varFseq;
       -- lock the corresponding CastorFile, give up if we do not manage as it means that
       -- this file is already being handled by someone else
       -- Note that the giving up is handled by the handling of the CfLocked exception
@@ -11429,11 +11444,6 @@ BEGIN
         -- we got the race condition ! So this has already been handled, let's move to next file
         CONTINUE;
       END;
-      -- move up last fseq used. Note that it moves up even if bestFileSystemForRecall
-      -- (or any other statement) fails and the file is actually not recalled.
-      -- The goal is that a potential retry within the same mount only occurs after
-      -- we went around the other files on this tape.
-      varNewFseq := varFseq;
       -- Find the best filesystem to recall the selected file
       bestFileSystemForRecall(varCfId, varPath);
       varCount := varCount + 1;
@@ -12139,7 +12149,7 @@ BEGIN
       WHEN CONSTRAINT_VIOLATED THEN
         IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_%_CASTORFILE) violated%' THEN
           -- Ignore the deletion, probably some draining/rebalancing/recall activity created
-	  -- a new Disk2DiskCopyJob/RecallJob entity while we were attempting to drop the CastorFile
+          -- a new Disk2DiskCopyJob/RecallJob entity while we were attempting to drop the CastorFile
           NULL;
         ELSE
           -- Any other constraint violation is an error
@@ -12585,8 +12595,12 @@ BEGIN
                            CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
                           (dj.fileMask = dconst.DRAIN_FILEMASK_ALL))
                      AND DiskCopy.status = dconst.DISKCOPY_VALID
+                     -- exclude files for which there is a running job
                      AND NOT EXISTS (SELECT 1 FROM Disk2DiskCopyJob WHERE castorFile = CastorFile.id)
+                     -- exclude files with previous errors
                      AND NOT EXISTS (SELECT 1 FROM DrainingErrors WHERE diskCopy = DiskCopy.id)
+                     -- exclude files for which another copy exists elsewhere (case of interrupted draining)
+                     AND NOT EXISTS (SELECT 1 FROM DiskCopy WHERE castorFile = cfId AND fileSystem != dj.fileSystem)
                    ORDER BY DiskCopy.importance DESC)
                  WHERE ROWNUM <= varMaxNbOfSchedD2dPerDrain-varNbRunningJobs) LOOP
         createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
