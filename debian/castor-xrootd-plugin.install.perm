@@ -1,6 +1,6 @@
-%attr(0755,root,root) usr/lib/libXrdxCastor2ServerAcc.so*
-%attr(0755,root,root) usr/lib/libXrdxCastor2Ofs.so*
-%attr(0755,root,root) usr/lib/libXrdxCastor2Fs.so*
+%attr(0755,root,root) usr/lib/libxrdxcastor2serveracc.so*
+%attr(0755,root,root) usr/lib/libxrdxcastor2ofs.so*
+%attr(0755,root,root) usr/lib/libxrdxcastor2fs.so*
 %attr(0755,root,root) usr/bin/x2proc
 %attr(0755,root,root) usr/bin/x2cp
 %attr(0644,root,root) etc/sysconfig/xrootd.server.example

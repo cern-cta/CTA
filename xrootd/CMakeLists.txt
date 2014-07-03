@@ -40,13 +40,13 @@ set (XRDXCASTOR2FS_LIB_SRC_FILES
   XrdxCastorLogging.cpp
   XrdxCastorTiming.cpp
   XrdxCastorClient.cpp)
-add_library (XrdxCastor2Fs SHARED ${XRDXCASTOR2FS_LIB_SRC_FILES})
-CastorSetLibraryVersions (XrdxCastor2Fs)
-set_property (TARGET XrdxCastor2Fs
+add_library (xrdxcastor2fs SHARED ${XRDXCASTOR2FS_LIB_SRC_FILES})
+CastorSetLibraryVersions (xrdxcastor2fs)
+set_property (TARGET xrdxcastor2fs
   APPEND PROPERTY COMPILE_DEFINITIONS _FILE_OFFSET_BITS=64)
-target_link_libraries (XrdxCastor2Fs castorclient castorcommon castorns crypto
+target_link_libraries (xrdxcastor2fs castorclient castorcommon castorns crypto
   ${XROOTD_XRDOFS_LIB} ${XROOTD_XRDUTILS_LIB})
-install (TARGETS XrdxCastor2Fs DESTINATION ${CASTOR_DEST_LIB_DIR})
+install (TARGETS xrdxcastor2fs DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 ################################################################################
 # Rules to build and install libXrdxCastor2ServerAcc.so
@@ -55,10 +55,10 @@ set (XRDXCASTOR2SERVERACC_LIB_SRC_FILES
   XrdxCastor2ServerAcc.cpp
   XrdxCastorLogging.cpp
   XrdxCastorTiming.cpp)
-add_library (XrdxCastor2ServerAcc SHARED ${XRDXCASTOR2SERVERACC_LIB_SRC_FILES})
-CastorSetLibraryVersions (XrdxCastor2ServerAcc)
-target_link_libraries (XrdxCastor2ServerAcc crypto ${UUID_LIB} ${XROOTD_XRDUTILS_LIB})
-install (TARGETS XrdxCastor2ServerAcc DESTINATION ${CASTOR_DEST_LIB_DIR})
+add_library (xrdxcastor2serveracc SHARED ${XRDXCASTOR2SERVERACC_LIB_SRC_FILES})
+CastorSetLibraryVersions (xrdxcastor2serveracc)
+target_link_libraries (xrdxcastor2serveracc crypto ${UUID_LIB} ${XROOTD_XRDUTILS_LIB})
+install (TARGETS xrdxcastor2serveracc DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 ################################################################################
 # Rules to build and install libXrdxCastor2Ofs.so
@@ -69,13 +69,13 @@ set (XRDXCASTOR2OFS_LIB_SRC_FILES
   XrdxCastorTiming.cpp)
 set_property(SOURCE XrdxCastor2Ofs.cpp
   PROPERTY COMPILE_FLAGS -Wno-write-strings)
-add_library (XrdxCastor2Ofs SHARED ${XRDXCASTOR2OFS_LIB_SRC_FILES})
+add_library (xrdxcastor2ofs SHARED ${XRDXCASTOR2OFS_LIB_SRC_FILES})
 CastorSetLibraryVersions (XrdxCastor2Ofs)
-set_property (TARGET XrdxCastor2Ofs
+set_property (TARGET xrdxcastor2ofs
   APPEND PROPERTY COMPILE_DEFINITIONS _FILE_OFFSET_BITS=64)
-target_link_libraries (XrdxCastor2Ofs crypto ${XROOTD_XRDCL_LIB}
+target_link_libraries (xrdxcastor2ofs crypto ${XROOTD_XRDCL_LIB}
   ${XROOTD_XRDCLIENT_LIB} ${XROOTD_XRDOFS_LIB} ${UUID_LIB} z)
-install (TARGETS XrdxCastor2Ofs DESTINATION ${CASTOR_DEST_LIB_DIR})
+install (TARGETS xrdxcastor2ofs DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 ################################################################################
 # Rules to install the x2cp and x2proc scripts

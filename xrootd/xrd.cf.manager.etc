@@ -1,7 +1,7 @@
 ################################################################################
 # Location of the plugin OFS library to be loaded
 ################################################################################
-xrootd.fslib /usr/lib64/libXrdxCastor2Fs.so.2.1
+xrootd.fslib /usr/lib64/libxrdxcastor2fs.so.2.1
 xrootd.chksum adler32
 xrd.async off
 xrd.sched mint 16 maxt 512 idle 128
@@ -63,7 +63,7 @@ xcastor2.stagermap /                     default
 # Set the stagerhost which the XRootD daemon contacts. It must be a fully 
 # qualified domain name.
 ################################################################################
-xcasto2.stagerhost mystager.cern.ch
+xcastor2.stagerhost mystager.cern.ch
 
 ################################################################################
 # Log level: INFO by default
