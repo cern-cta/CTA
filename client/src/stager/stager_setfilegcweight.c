@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      stager/stager_setFileGCWeight.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

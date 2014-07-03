@@ -33,7 +33,6 @@
 #include "tplogger_api.h"
 
 /**
- * @file  tplogger.c
  * @brief Implementations of the tplogger interface
  */
 

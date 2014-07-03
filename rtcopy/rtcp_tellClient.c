@@ -1,5 +1,4 @@
 /******************************************************************************
- *                 rtcopy/rtcpd_tellClient.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -52,7 +51,6 @@
  * first client message.
  *
  * This process global variable is defined (memory allocated for it) in
- * rtcopy/rtcp_SendRecv.c
  */
 extern int client_magic;
 

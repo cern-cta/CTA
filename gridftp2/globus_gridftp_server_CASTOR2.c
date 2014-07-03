@@ -1,5 +1,4 @@
 /******************************************************************************
- *                  globus_gridftp_server_CASTOR2.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

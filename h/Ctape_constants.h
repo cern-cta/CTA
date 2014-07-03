@@ -54,7 +54,6 @@
 			/* position method */
 
 /* Note that the next 4 lines should always be identical to the declaration
- * in castor/tape/tapegateway/PositionCommandCode.hpp
  * In the future, the two enums should be merged
  */
 enum PositionCommandCode {

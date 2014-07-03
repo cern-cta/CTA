@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      rfio_calls.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,7 +17,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * header file for functions implemented in rfio_calls.c
  *
  * @author Sebastien Ponce
  *****************************************************************************/

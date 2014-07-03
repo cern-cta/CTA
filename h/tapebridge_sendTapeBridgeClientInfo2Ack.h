@@ -1,5 +1,4 @@
 /******************************************************************************
- *                h/tapebridge_sendTapeBridgeClientInfo2Ack.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

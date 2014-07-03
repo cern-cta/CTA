@@ -1,6 +1,5 @@
 #ifndef GLOBUS_DONT_DOCUMENT_INTERNAL
 /**
- * @file globus_i_gsi_credential.h
  * Globus GSI Credential Library
  * @author Sam Lang, Sam Meder
  *

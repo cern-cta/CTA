@@ -1,6 +1,5 @@
 #ifndef GLOBUS_DONT_DOCUMENT_INTERNAL
 /**
- * @file globus_gsi_gssapi_constants.h
  * @author Sam Lang, Sam Meder
  * 
  * $Revision: 1.3 $

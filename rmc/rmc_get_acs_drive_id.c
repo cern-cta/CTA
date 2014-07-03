@@ -1,5 +1,4 @@
 /******************************************************************************
- *                 rmc/rmc_get_acs_drive_id.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

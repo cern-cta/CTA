@@ -1,5 +1,4 @@
 /******************************************************************************
- *                h/rmc_get_rmc_host_of_drive.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

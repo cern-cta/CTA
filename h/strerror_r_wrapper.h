@@ -1,5 +1,4 @@
 /******************************************************************************
- *         h/strerror_r_wrapper.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

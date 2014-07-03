@@ -1,5 +1,4 @@
 /******************************************************************************
- *                 rmc/rmc_find_char.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
