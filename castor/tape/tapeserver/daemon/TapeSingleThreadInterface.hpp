@@ -1,5 +1,4 @@
 /* 
- * File:   TapeSingleThreadInterface.hpp
  * Author: dcome
  *
  * Created on March 18, 2014, 4:28 PM

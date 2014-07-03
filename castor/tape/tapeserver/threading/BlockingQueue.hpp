@@ -1,5 +1,4 @@
 /* 
- * File:   BlockingQueue.hpp
  * Author: dcome
  *
  * Created on March 5, 2014, 5:06 PM

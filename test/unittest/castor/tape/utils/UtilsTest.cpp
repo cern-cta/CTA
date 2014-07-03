@@ -1,5 +1,4 @@
 /******************************************************************************
- *                test/unittest/castor/tape/utils/UtilsTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

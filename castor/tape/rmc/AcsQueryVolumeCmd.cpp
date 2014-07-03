@@ -1,5 +1,4 @@
 /******************************************************************************
- *                 castor/tape/rmc/AcsQueryVolumeCmd.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

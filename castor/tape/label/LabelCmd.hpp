@@ -1,5 +1,4 @@
 /******************************************************************************
- *                 castor/tape/label/LabelCmd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

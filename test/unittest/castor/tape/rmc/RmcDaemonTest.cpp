@@ -1,5 +1,4 @@
 /******************************************************************************
- *                test/unittest/castor/tape/rmc/RmcDaemonTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

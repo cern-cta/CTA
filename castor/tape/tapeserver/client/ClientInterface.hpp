@@ -1,5 +1,4 @@
 /* 
- * File:   ClientInterface.hpp
  * Author: dcome
  *
  * Created on March 18, 2014, 12:27 PM

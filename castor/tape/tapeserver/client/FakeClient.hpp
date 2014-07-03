@@ -1,5 +1,4 @@
 /* 
- * File:   FakeClient.hpp
  * Author: dcome
  *
  * Created on March 26, 2014, 9:38 AM

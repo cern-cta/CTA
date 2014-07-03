@@ -1,5 +1,4 @@
 /******************************************************************************
- *    test/unitest/tapebridge/MarshallTapeBridgeClientInfo2Test.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

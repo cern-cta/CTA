@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      castor/tape/tapebridge/BridgeClientInfo2Sender.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

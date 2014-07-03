@@ -1,5 +1,4 @@
 /******************************************************************************
- *                castor/utils/SmartArrayPtrTest.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

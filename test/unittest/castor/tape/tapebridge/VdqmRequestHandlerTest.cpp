@@ -1,5 +1,4 @@
 /******************************************************************************
- *    test/unittest/castor/tape/tapebridge/VdqmRequestHandlerTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

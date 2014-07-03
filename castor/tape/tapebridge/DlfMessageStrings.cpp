@@ -2,7 +2,6 @@
  */
 
 /******************************************************************************
- *           castor/tape/tapebridge/TapeBridgeDlfMessageStrings.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

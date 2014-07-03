@@ -1,5 +1,4 @@
 /******************************************************************************
- *         castor/legacymsg/NsProxy_TapeAlwaysEmpty.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

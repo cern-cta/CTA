@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      castor/log/StringLogger.hpp
  * 
  *
  * This file is part of the Castor project.
