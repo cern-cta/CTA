@@ -18,7 +18,7 @@
  *
  *
  *
- * @author Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 /*      rmc_unmnt - unmount a cartridge from a drive that maybe in either */

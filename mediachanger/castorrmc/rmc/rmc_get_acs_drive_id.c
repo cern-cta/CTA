@@ -18,7 +18,7 @@
  *
  *
  *
- * @author Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "h/rmc_get_acs_drive_id.h"
