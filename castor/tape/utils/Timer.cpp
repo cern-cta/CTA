@@ -34,17 +34,22 @@ castor::tape::utils::Timer::Timer() {
 //------------------------------------------------------------------------------
 // usecs
 //------------------------------------------------------------------------------
-signed64 castor::tape::utils::Timer::usecs() {
+signed64 castor::tape::utils::Timer::usecs(reset_t reset) {
   timeval now;
   gettimeofday(&now, 0);
-  return ((now.tv_sec * 1000000) + now.tv_usec) - ((m_reference.tv_sec * 1000000) + m_reference.tv_usec);
+  signed64 ret = ((now.tv_sec * 1000000) + now.tv_usec) - 
+                 ((m_reference.tv_sec * 1000000) + m_reference.tv_usec);
+  if (reset == resetCounter) {
+    m_reference = now;
+  }
+  return ret;
 }
 
 //------------------------------------------------------------------------------
 // secs
 //------------------------------------------------------------------------------
-double castor::tape::utils::Timer::secs() {
-  return usecs() * 0.000001;
+double castor::tape::utils::Timer::secs(reset_t reset) {
+  return usecs(reset) * 0.000001;
 }
 
 //------------------------------------------------------------------------------

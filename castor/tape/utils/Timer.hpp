@@ -39,6 +39,11 @@ namespace castor {
       class Timer {
 
       public:
+        
+        enum reset_t {
+          keepRunning,
+          resetCounter
+        };
 
         /* constructor */
         Timer();
@@ -48,14 +53,15 @@ namespace castor {
 
         /* usecs
          * Gives elapsed time in microseconds with respect to the reference time
+         * optionally resets the counter
          */
-        signed64 usecs();
+        signed64 usecs(reset_t reset = keepRunning);
 
         /* secs
          * Gives elapsed time in seconds (with microsecond precision)
-         * with respect to the reference time
+         * with respect to the reference time. Optionally resets the counter.
          */
-        double secs();
+        double secs(reset_t reset = keepRunning);
 
         /* resets the Timer reference's time to the current time */
         void reset();
