@@ -196,10 +196,10 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchEvent(
     }
       break;
     case messages::reqType::NotifyDriveTapeUnmounted:
-      sendEmptyReplyToClient();
+      sendSuccessReplyToClient();
       break;
     case messages::reqType::NotifyDriveUnmountStarted:
-      sendEmptyReplyToClient();
+      sendSuccessReplyToClient();
       break;
     default:
       m_log(LOG_ERR,"default  dispatch in TapeMessageHandler");
@@ -215,7 +215,7 @@ const castor::messages::Header& header, const castor::messages::Heartbeat& body)
   param.push_back(log::Param("bytesMoved",body.bytesmoved()));
   m_log(LOG_INFO,"IT IS ALIVE",param);
   
-  sendEmptyReplyToClient();
+  sendSuccessReplyToClient();
 }
 
 void castor::tape::tapeserver::daemon::TapeMessageHandler::dealWith(
@@ -244,9 +244,7 @@ const castor::messages::NotifyDriveBeforeMountStarted& body){
     castor::messages::sendMessage(m_socket,body);
     return;
   } else {
-    
-    m_log(LOG_INFO,"ELSE");
-    sendEmptyReplyToClient();
+    sendSuccessReplyToClient();
   }
 }
 
@@ -279,10 +277,10 @@ const castor::messages::NotifyDriveTapeMounted& body){
   m_vdqm.tapeMounted(m_hostName, body.unitname(), driveConfig.dgn, body.vid(),
     drive->getSessionPid());
   
-  sendEmptyReplyToClient();
+  sendSuccessReplyToClient();
 }
 
-void castor::tape::tapeserver::daemon::TapeMessageHandler::sendEmptyReplyToClient(){
+void castor::tape::tapeserver::daemon::TapeMessageHandler::sendSuccessReplyToClient(){
     castor::messages::Header header = castor::messages::preFillHeader();
     header.set_reqtype(messages::reqType::ReturnValue);
     header.set_bodyhashvalue("PIPO");

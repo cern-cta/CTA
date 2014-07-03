@@ -94,7 +94,7 @@ public:
   bool handleEvent(const zmq_pollitem_t &fd);
   
 private:
-  void sendEmptyReplyToClient();
+  void sendSuccessReplyToClient();
   
   template <class T> void unserialize(T& msg, tape::utils::ZmqMsg& blob){
     std::string logMessage="Cant parse " ;
