@@ -226,8 +226,8 @@ XrdxCastor2Fs::GetAllowedSvc(const char* path,
   std::string allowed_svc = "";
   size_t pos = 0;
   std::map< std::string,
-            std::pair<std::list<std::string>, bool> >::iterator iter_map;
-  std::list<std::string>::iterator iter_list;
+      std::pair<std::list<std::string>, bool> >::const_iterator iter_map;
+  std::list<std::string>::const_iterator iter_list;
 
   // Only mapping by path is supported
   while ((pos = spath.find("/", pos)) != std::string::npos)
@@ -243,24 +243,30 @@ XrdxCastor2Fs::GetAllowedSvc(const char* path,
       {
         // Found path mapping, just return first svc, usually default
         allowed_svc = *iter_map->second.first.begin();
+
+        // If we only have "*" then we return the default svcClass
+        if (allowed_svc == "*")
+          allowed_svc = "default";
       }
       else
       {
         // Search for a specific service map
-        bool any_allowed = false;  // look for "*" in the stagermap
-
         for (iter_list = iter_map->second.first.begin();
              iter_list != iter_map->second.first.end(); ++iter_list)
         {
           if (*iter_list == desired_svc)
+          {
             allowed_svc = desired_svc;
+            break;
+          }
 
+          // If any allowed, accept the desired one
           if (*iter_list == "*")
-            any_allowed = true;
+          {
+            allowed_svc = desired_svc;
+            break;
+          }
         }
-
-        if (any_allowed)
-          allowed_svc = desired_svc;
       }
     }
 
@@ -2209,7 +2215,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
                 {
                   duplicate = false;
 
-                  for (std::list<std::string>::iterator iter = list_svc.begin();
+                  for (std::list<std::string>::const_iterator iter = list_svc.begin();
                        iter != list_svc.end(); ++iter)
                   {
                     if (svc == *iter)
@@ -2223,10 +2229,16 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
                     list_svc.push_back(svc);
                 }
 
+                // If the list of allowed svcClasses contains only the wildcard "*"
+                // then we add also the default pool to allow requests for which
+                // the used has not specified any svcClass
+                if ((list_svc.size() == 1) && (*list_svc.begin() == "*"))
+                  list_svc.push_front("default");
+                
                 std::ostringstream oss;
                 oss << "stagermap: " << stage_path << " => ";
 
-                for (std::list<std::string>::iterator iter = list_svc.begin();
+                for (std::list<std::string>::const_iterator iter = list_svc.begin();
                      iter != list_svc.end(); ++iter)
                 {
                   oss << *iter << ", ";
