@@ -26,6 +26,7 @@
 #include "castor/messages/TapeserverProxyZmq.hpp"
 #include "castor/messages/messages.hpp"
 #include "castor/messages/NotifyDrive.pb.h"
+#include "castor/messages/ReplyContainer.hpp"
 #include "castor/tape/tapegateway/ClientType.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "castor/utils/SmartFd.hpp"
@@ -93,7 +94,7 @@ castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   body.set_vid(volInfo.vid);
   
   castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue("PIPO");
+  header.set_bodyhashvalue(computeSHA1Base64(body));
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
   
@@ -120,7 +121,7 @@ uint64_t
       bodyToSend.set_vid(volInfo.vid);
       
       castor::messages::Header header=castor::messages::preFillHeader();
-      header.set_bodyhashvalue("PIPO");
+      header.set_bodyhashvalue(computeSHA1Base64(bodyToSend));
       header.set_bodysignature("PIPO");
       header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
       
@@ -159,7 +160,7 @@ void castor::messages::TapeserverProxyZmq::gotDumpMountDetailsFromClient(
   body.set_vid(volInfo.vid);
   
   castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue("PIPO");
+  header.set_bodyhashvalue(computeSHA1Base64(body));
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
   
@@ -184,7 +185,7 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForRead(
   body.set_vid(volInfo.vid);
   
   castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue("PIPO");
+  header.set_bodyhashvalue(computeSHA1Base64(body));
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveTapeMounted);
   
@@ -207,7 +208,7 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForWrite(
   body.set_vid(volInfo.vid);
   
   castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue("PIPO");
+  header.set_bodyhashvalue(computeSHA1Base64(body));
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveTapeMounted);
   
@@ -226,7 +227,7 @@ void castor::messages::TapeserverProxyZmq::tapeUnmounting(
   const std::string &unitName) {   
   castor::messages::NotifyDriveUnmountStarted body;
   castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue("PIPO");
+  header.set_bodyhashvalue(computeSHA1Base64(body));
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveUnmountStarted);
 
@@ -246,7 +247,7 @@ void castor::messages::TapeserverProxyZmq::tapeUnmounted(
     castor::messages::NotifyDriveTapeUnmounted body;
     
   castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue("PIPO");
+  header.set_bodyhashvalue(computeSHA1Base64(body));
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveTapeUnmounted);
   
@@ -267,7 +268,7 @@ void castor::messages::TapeserverProxyZmq::tapeUnmounted(
    
    messages::Header header = messages::preFillHeader();
    header.set_reqtype(messages::reqType::Heartbeat);
-   header.set_bodyhashvalue("PIPO");
+   header.set_bodyhashvalue(computeSHA1Base64(body));
    header.set_bodysignature("PIPO");
 
    messages::sendMessage(m_heartbeatSocket,header,ZMQ_SNDMORE);

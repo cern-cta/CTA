@@ -47,40 +47,52 @@ castor::messages::Header castor::messages::preFillHeader() {
 }
 
 //------------------------------------------------------------------------------
-// constructor
+// computeSHA1Base64
 //------------------------------------------------------------------------------
-castor::messages::ReplyContainer::ReplyContainer(tape::utils::ZmqSocket& socket)  {
-  tape::utils::ZmqMsg blobHeader;
-  socket.recv(&blobHeader.getZmqMsg()); 
+std::string castor::messages::computeSHA1Base64(void const* const data,int len){
+ // Create a context and hash the data
+  EVP_MD_CTX ctx;
+  EVP_MD_CTX_init(&ctx);
+  EVP_SignInit(&ctx, EVP_sha1());
+  if (!EVP_SignUpdate(&ctx,data, len)) {
+    EVP_MD_CTX_cleanup(&ctx);
+    throw castor::exception::Exception("cant compute SHA1");
+  }
+  unsigned char md_value[EVP_MAX_MD_SIZE];
+  unsigned int md_len;
+  EVP_DigestFinal_ex(&ctx, md_value, &md_len);
+    // cleanup context
+  EVP_MD_CTX_cleanup(&ctx);
   
-  if(!zmq_msg_more(&blobHeader.getZmqMsg())) {
-    throw castor::exception::Exception("Expecting a multi part message. Got a header without a body");
+  // base64 encode 
+  BIO *b64 = BIO_new(BIO_f_base64());
+  BIO *bmem = BIO_new(BIO_s_mem());
+  if (NULL == b64 || NULL == bmem) {
+    throw castor::exception::Exception("cant set up the environnement for computing the SHA1 in base64");
   }
-  socket.recv(&blobBody.getZmqMsg());
+  b64 = BIO_push(b64, bmem);
+  BIO_write(b64, md_value, md_len);
+  (void)BIO_flush(b64);
+  BUF_MEM* bptr;
+  BIO_get_mem_ptr(b64, &bptr);
+
+  std::string ret(bptr->data,bptr->length);
+  BIO_free(bmem);
+  BIO_free(b64);
   
-  if(!header.ParseFromArray(blobHeader.data(),blobHeader.size())){
-    throw castor::exception::Exception("Message header cant be parsed from binary data read");
-  }
-  
-  if(header.magic()!=TPMAGIC){
-    throw castor::exception::Exception("Wrong magic number in the header");
-  }
-  if(header.protocoltype()!=messages::protocolType::Tape){
-    throw castor::exception::Exception("Wrong protocol type in the header");
-  }
-  if(header.protocolversion()!=messages::protocolVersion::prototype){
-    throw castor::exception::Exception("Wrong protocol version in the header");
-  }
-  
-  if(header.reqtype()==castor::messages::reqType::ReturnValue){
-    castor::messages::ReturnValue body;
-    if(!body.ParseFromArray(blobBody.data(),blobBody.size())){
-        throw castor::exception::Exception("Expecting a ReturnValue body but"
-                " cant parse it from the binary");
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// checkSHA1
+//------------------------------------------------------------------------------
+void castor::messages::
+checkSHA1(castor::messages::Header header,const castor::tape::utils::ZmqMsg& body){
+  const std::string bodyHash = castor::messages::computeSHA1Base64(body.data(),body.size());
+  if(bodyHash != header.bodyhashvalue()){
+      std::ostringstream out;
+      out<<"SHA1 mismatch between the one in the header("<<header.bodyhashvalue() 
+         <<") and the one computed from the body("<<bodyHash<<")";
+    throw castor::exception::Exception(out.str());
     }
-    
-    if(body.returnvalue()!=0){
-     throw castor::exception::Exception(body.message());
-    }
-  }
 }

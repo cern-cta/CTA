@@ -177,6 +177,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchEvent(
     {
       castor::messages::Heartbeat body;
       unserialize(body,bodyBlob);
+      castor::messages::checkSHA1(header,bodyBlob);
       dealWith(header,body);
     }
       break;
@@ -184,6 +185,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchEvent(
     {
       castor::messages::NotifyDriveBeforeMountStarted body;
       unserialize(body,bodyBlob);
+      castor::messages::checkSHA1(header,bodyBlob);
       dealWith(header,body);
     }
       break;
@@ -191,6 +193,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchEvent(
     {
       castor::messages::NotifyDriveTapeMounted body;
       unserialize(body,bodyBlob);
+      castor::messages::checkSHA1(header,bodyBlob);
       dealWith(header,body);
     }
       break;
@@ -232,16 +235,16 @@ const castor::messages::NotifyDriveBeforeMountStarted& body){
       throw ex;
     }
     
-    castor::messages::Header header = castor::messages::preFillHeader();
-    header.set_reqtype(messages::reqType::NotifyDriveBeforeMountStartedAnswer);
-    header.set_bodyhashvalue("PIPO");
-    header.set_bodysignature("PIPO");
-    
     castor::messages::NotifyDriveBeforeMountStartedAnswer body;
     body.set_howmanyfilesontape(tapeInfo.nbFiles);
+    
+    castor::messages::Header header = castor::messages::preFillHeader();
+    header.set_reqtype(messages::reqType::NotifyDriveBeforeMountStartedAnswer);
+    header.set_bodyhashvalue(castor::messages::computeSHA1Base64(body));
+    header.set_bodysignature("PIPO");
+    
     castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
     castor::messages::sendMessage(m_socket,body);
-    return;
   } else {
     sendSuccessReplyToClient();
   }
@@ -280,13 +283,15 @@ const castor::messages::NotifyDriveTapeMounted& body){
 }
 
 void castor::tape::tapeserver::daemon::TapeMessageHandler::sendSuccessReplyToClient(){
-    castor::messages::Header header = castor::messages::preFillHeader();
-    header.set_reqtype(messages::reqType::ReturnValue);
-    header.set_bodyhashvalue("PIPO");
-    header.set_bodysignature("PIPO");
     castor::messages::ReturnValue body;
     body.set_returnvalue(0);
     body.set_message("");
+  
+    castor::messages::Header header = castor::messages::preFillHeader();
+    header.set_reqtype(messages::reqType::ReturnValue);
+    header.set_bodyhashvalue(castor::messages::computeSHA1Base64(body));
+    header.set_bodysignature("PIPO");
+
     castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
     castor::messages::sendMessage(m_socket,body);
 }

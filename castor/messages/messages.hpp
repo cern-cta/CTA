@@ -29,21 +29,19 @@
 #include "castor/tape/utils/ZmqSocket.hpp"
 #include "h/Ctape.h"
 #include "castor/exception/Exception.hpp"
+
+#include <openssl/rsa.h>
 #include <openssl/evp.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
 #pragma once 
 
 namespace castor {
 namespace messages {
-
   
-  struct ReplyContainer{
-    castor::messages::Header header;
-    tape::utils::ZmqMsg blobBody;
-    ReplyContainer(tape::utils::ZmqSocket& socket);
-  private :
-    ReplyContainer(const ReplyContainer&);
-    ReplyContainer& operator=(const ReplyContainer&);
-  };
+/**
+ *  Semd the google protobuf message msg over the socket. The flasg is passed to socket
+ */
 template <class T> void sendMessage(tape::utils::ZmqSocket& socket,const T& msg,int flag=0) {
 
   if(!msg.IsInitialized()){
@@ -57,23 +55,67 @@ template <class T> void sendMessage(tape::utils::ZmqSocket& socket,const T& msg,
   socket.send(&blob.getZmqMsg(), flag);
 }
 
-template <class T>std::string computeSHA1(const char* data,int len) {
-  // Create a context and hash the data
-  EVP_MD_CTX ctx;
-  EVP_MD_CTX_init(&ctx);
-  EVP_SignInit(&ctx, EVP_sha1());
-  if (!EVP_SignUpdate(&ctx, data, len)) {
-    EVP_MD_CTX_cleanup(&ctx);
-    return "";
-  }
-    // cleanup context
-  EVP_MD_CTX_cleanup(&ctx);
-  return "";
+/**
+ * Template function to compute inn Base64 the SHA1 of a given buffer
+ * @param data The data
+ * @param len, the length of the buffer
+ * @return the base64 sha1 of the serialized buffer
+ */
+std::string computeSHA1Base64(void const* const data,int len);
+
+/**
+ * Template function to compute inn Base64 the SHA1 of a given ProtoBuff message
+ * All fields  have to be set because we are going to serialize the message
+ * @param msg
+ * @return the base64 sha1 of the serialized body
+ */
+template <class T> std::string computeSHA1Base64(const T& msg) {
+  std::string buffer;
+  msg.SerializeToString(&buffer);
+  return computeSHA1Base64(buffer.c_str(),buffer.size());
 }
 
-void connectToLocalhost(tape::utils::ZmqSocket&  m_socket);
+/**
+ * Check if the sha1 one computed from the body match the one from the header
+ * If not, the function throws an exception
+ * @param header
+ * @param body
+ */
+template <class T> void checkSHA1(Header header,const T& body){
+  const std::string bodyHash = castor::messages::computeSHA1Base64(body);
+  if(bodyHash != header.bodyhashvalue()){
+      std::ostringstream out;
+      out<<"SHA1 mismatch between the one in the header("<<header.bodyhashvalue() 
+         <<") and the one computed from the body("<<bodyHash<<")";
+    throw castor::exception::Exception(out.str());
+    }
+}
+
+/**
+ * Check if the sha1 one computed from the body match the one from the header
+ * If not, the function throws an exception
+ * @param header
+ * @param body
+ */
+void checkSHA1(Header header,const castor::tape::utils::ZmqMsg& body);
+
+/**
+ * Connect the socket to localhost= on port tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT
+ * @param socket
+ */
+void connectToLocalhost(tape::utils::ZmqSocket&  socket);
+
+/**
+ * Header factory which pre fill several fields
+ * magic(TPMAGIC)
+ * protocoltype(castor::messages::protocolType::Tape);
+ * protocolversion(castor::messages::protocolVersion::prototype);
+ * bodyhashtype("SHA1");
+ * bodysignaturetype("SHA1");
+ *  After, the only  fields left are reqtype, bodyhashvalue and bodyhashsignature
+ * @return The header
+ */
 castor::messages::Header preFillHeader();
-ReplyContainer readReplyMsg(tape::utils::ZmqSocket& socket);
 
 } // namespace messages
 } // namespace castor

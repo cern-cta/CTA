@@ -3,6 +3,7 @@ add_library(castormessages SHARED
   Heartbeat.pb.cc
   messages.cpp
   NotifyDrive.pb.cc
+  ReplyContainer.cpp
   TapeserverProxy.cpp
   TapeserverProxyDummy.cpp
   TapeserverProxyDummyFactory.cpp
@@ -11,5 +12,5 @@ add_library(castormessages SHARED
   TapeserverProxyZmqFactory.cpp
 )
 
-target_link_libraries(castormessages protobuf)
+target_link_libraries(castormessages protobuf ssl)
 install (TARGETS castormessages DESTINATION ${CASTOR_DEST_LIB_DIR})
