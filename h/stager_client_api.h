@@ -19,7 +19,7 @@
  *
  * the client API to the castor stager
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 /** @mainpage CASTOR Stager API

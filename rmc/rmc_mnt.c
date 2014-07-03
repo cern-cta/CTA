@@ -18,7 +18,7 @@
  *
  *
  *
- * @author Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 /*      rmc_mnt - mount a cartridge into a drive that maybe in either */

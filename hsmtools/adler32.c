@@ -19,7 +19,7 @@
  *
  * 
  *
- * @author Olof Barring
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <stdio.h>

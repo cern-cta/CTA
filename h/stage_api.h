@@ -24,7 +24,7 @@
  * The application we have in mind here is actually ROOT and its
  * TCastorFile class.
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

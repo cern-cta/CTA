@@ -19,7 +19,7 @@
  *
  * Utilities for castor, including som parsing functions
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

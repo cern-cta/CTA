@@ -22,7 +22,7 @@
  * still run.
  * It should be removed as soon as possible
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <stage_api.h>

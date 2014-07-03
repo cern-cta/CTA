@@ -19,7 +19,7 @@
  *
  * header file for rfio_xy functions
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

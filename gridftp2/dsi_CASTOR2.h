@@ -18,7 +18,7 @@
  *
  * GridFTP plugin for CASTOR Diskservers
  *
- * @author castor-dev@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
