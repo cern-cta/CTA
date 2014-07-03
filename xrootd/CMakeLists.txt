@@ -70,7 +70,7 @@ set (XRDXCASTOR2OFS_LIB_SRC_FILES
 set_property(SOURCE XrdxCastor2Ofs.cpp
   PROPERTY COMPILE_FLAGS -Wno-write-strings)
 add_library (xrdxcastor2ofs SHARED ${XRDXCASTOR2OFS_LIB_SRC_FILES})
-CastorSetLibraryVersions (XrdxCastor2Ofs)
+CastorSetLibraryVersions (xrdxcastor2ofs)
 set_property (TARGET xrdxcastor2ofs
   APPEND PROPERTY COMPILE_DEFINITIONS _FILE_OFFSET_BITS=64)
 target_link_libraries (xrdxcastor2ofs crypto ${XROOTD_XRDCL_LIB}
