@@ -30,6 +30,20 @@
 }
 
 {
+   StopProcessForker
+   Memcheck:Leak
+   ...
+   fun:_GLOBAL__I_StopProcessForker.pb.cc
+}
+
+{
+   _ZN6castor8messages53StaticDescriptorInitializer_StopProcessForker_2eprotoC1Ev
+   Memcheck:Leak
+   ...
+   fun:_ZN6castor8messages53StaticDescriptorInitializer_StopProcessForker_2eprotoC1Ev
+}
+
+{
    libcastorMessages
    Memcheck:Leak
    ...
