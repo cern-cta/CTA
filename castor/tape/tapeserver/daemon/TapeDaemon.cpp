@@ -656,8 +656,11 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleEvents()
     m_reactor.handleEvents(timeout);
   } catch(castor::exception::Exception &ex) {
     // Log exception and continue
-    log::Param params[] = {log::Param("message", ex.getMessage().str())};
-    m_log(LOG_ERR, "Unexpected exception thrown when handling an I/O event",
+    log::Param params[] = {
+      log::Param("message", ex.getMessage().str()),
+      log::Param("backtrace", ex.backtrace())
+    };
+    m_log(LOG_ERR, "Unexpected castor exception thrown when handling an I/O event",
       params);
   } catch(std::exception &se) {
     // Log exception and continue
