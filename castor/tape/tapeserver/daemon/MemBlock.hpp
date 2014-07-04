@@ -69,6 +69,7 @@ public:
     m_fSeq = -1;
     m_tapeFileBlock = -1;
     m_failed=false;
+    m_payload.reset();
   }
   /** Unique memory block id */
   const int m_memoryBlockId;

@@ -75,7 +75,15 @@ bool RecallMemoryManager::areBlocksAllBack() throw() {
 // RecallMemoryManager::~RecallMemoryManager
 //------------------------------------------------------------------------------
 MemBlock* RecallMemoryManager::getFreeBlock() {
-  return m_freeBlocks.pop();
+  MemBlock* ret = m_freeBlocks.pop();
+  // When delivering a fresh block to the user, it should be empty.
+  if (ret->m_payload.size()) {
+    m_freeBlocks.push(ret);
+    throw castor::exception::Exception(
+      "Internal error: RecallMemoryManager::getFreeBlock "
+      "popped a non-empty memory block");
+  }
+  return ret;
 }
 
 //------------------------------------------------------------------------------

@@ -41,18 +41,24 @@ class Payload
   Payload& operator=(const Payload&);
 public:
   Payload(size_t capacity):
-  m_payload(new (std::nothrow) unsigned char[capacity]),m_totalCapacity(capacity),m_size(0) {
-    if(NULL == m_payload) {
+  m_data(new (std::nothrow) unsigned char[capacity]),m_totalCapacity(capacity),m_size(0) {
+    if(NULL == m_data) {
       throw castor::tape::exceptions::MemException("Failed to allocate memory for a new MemBlock!");
     }
   }
+  
   ~Payload(){
-    delete[] m_payload;
+    delete[] m_data;
   }
   
   /** Amount of data present in the payload buffer */
   size_t size() const {
     return m_size;
+  }
+  
+  /** Reset the internal counters of the payload */
+  void reset() {
+    m_size = 0;
   }
   
   /** Remaining free space in the payload buffer */
@@ -67,12 +73,12 @@ public:
     
   /** Returns a pointer to the beginning of the payload block */
   unsigned char* get(){
-    return m_payload;
+    return m_data;
   }
   
   /** Returns a pointer to the beginning of the payload block (readonly version) */
   unsigned char const*  get() const {
-    return m_payload;
+    return m_data;
   }
   
   /** 
@@ -80,7 +86,7 @@ public:
    * @param from reference to the diskFile::ReadFile
    */
   size_t read(tape::diskFile::ReadFile& from){
-    m_size = from.read(m_payload,m_totalCapacity);
+    m_size = from.read(m_data,m_totalCapacity);
     return m_size;
   }
 
@@ -100,7 +106,7 @@ public:
     }
     size_t readSize;
     try {
-      readSize = from.read(m_payload + m_size, from.getBlockSize());
+      readSize = from.read(m_data + m_size, from.getBlockSize());
     } catch (castor::tape::tapeFile::EndOfFile) {
       throw castor::tape::exceptions::EndOfFile("In castor::tape::tapeserver::daemon::Payload::append: reached end of file");
     }
@@ -113,7 +119,7 @@ public:
    * @param to reference to the diskFile::WriteFile
    */
   void write(tape::diskFile::WriteFile& to){
-    to.write(m_payload,m_size);
+    to.write(m_data,m_size);
   }
   
   /**
@@ -126,12 +132,12 @@ public:
     size_t writePosition = 0;
     // Write all possible full tape blocks
     while (m_size - writePosition > blockSize) {
-      to.write(m_payload + writePosition, blockSize);
+      to.write(m_data + writePosition, blockSize);
       writePosition += blockSize;
     }
     // Write a remainder, if any
     if (m_size - writePosition) {
-      to.write(m_payload + writePosition, m_size - writePosition);
+      to.write(m_data + writePosition, m_size - writePosition);
     }
   }
    /**
@@ -140,13 +146,13 @@ public:
     * @return the updated checksum
     */
   unsigned long  adler32(unsigned long previous){
-    return ::adler32(previous,m_payload,m_size);
+    return ::adler32(previous,m_data,m_size);
   }
   static unsigned long zeroAdler32() {
      return  ::adler32(0L,Z_NULL,0);
    }
 private:
-  unsigned char* m_payload;
+  unsigned char* m_data;
   size_t m_totalCapacity;
   size_t m_size;
 };
