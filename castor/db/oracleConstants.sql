@@ -279,6 +279,8 @@ AS
   REPACK_STARTED               CONSTANT VARCHAR2(2048) := 'repackManager: Repack process started';
   REPACK_JOB_STATS             CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes statistics';
   REPACK_UNEXPECTED_EXCEPTION  CONSTANT VARCHAR2(2048) := 'handleRepackRequest: unexpected exception caught';
+  REPACK_COMPLETED             CONSTANT VARCHAR2(2048) := 'Repack completed successfully';
+  REPACK_FAILED                CONSTANT VARCHAR2(2048) := 'Repack ended with failures';
 
   DRAINING_REFILL              CONSTANT VARCHAR2(2048) := 'drainRunner: Creating new replication jobs';
 

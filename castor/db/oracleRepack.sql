@@ -537,23 +537,21 @@ END;
 
 /* PL/SQL procedure called when a repack request is over: see archiveSubReq */
 CREATE OR REPLACE PROCEDURE handleEndOfRepack(inReqId INTEGER) AS
-  nbLeftSegs INTEGER;
+  varNbLeftSegs INTEGER;
+  varStartTime NUMBER;
 BEGIN
-  -- check if any segment is left in the original tape
-  SELECT 1 INTO nbLeftSegs FROM Cns_seg_metadata@RemoteNS
-   WHERE vid = (SELECT repackVID FROM StageRepackRequest WHERE id = inReqId)
-     AND ROWNUM < 2;
-  -- we found at least one segment, final status is FAILED
+  -- check how many segments are left in the original tape
+  SELECT count(*) INTO varNbLeftSegs FROM Cns_seg_metadata@RemoteNS
+   WHERE vid = (SELECT repackVID FROM StageRepackRequest WHERE id = inReqId);
+  -- update request
   UPDATE StageRepackRequest
-     SET status = tconst.REPACK_FAILED,
+     SET status = CASE varNbLeftSegs WHEN 0 THEN tconst.REPACK_FINISHED ELSE tconst.REPACK_FAILED END,
          lastModificationTime = getTime()
-   WHERE id = inReqId;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- no segments found, repack was successful
-  UPDATE StageRepackRequest
-     SET status = tconst.REPACK_FINISHED,
-         lastModificationTime = getTime()
-   WHERE id = inReqId;
+   WHERE id = inReqId
+  RETURNING creationTime INTO varStartTime;
+  -- log successful or unsuccessful completion
+  logToDLF(NULL, dlf.LVL_SYSTEM, CASE varNbLeftSegs WHEN 0 THEN dlf.REPACK_COMPLETED ELSE dlf.REPACK_FAILED END, 0, '',
+    'repackd', 'nbLeftSegments=' || TO_CHAR(varNbLeftSegs) || ' elapsedTime=' || TO_CHAR(TRUNC(getTime() - varStartTime)));
 END;
 /
 
