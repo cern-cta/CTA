@@ -55,9 +55,9 @@ namespace daemon {
      * @param rmc Proxy object representing the rmcd daemon.
      * @param clientRequest The request to label a tape received from the label
      * tape command.
-     * @param log Object reprsenting the API to the CASTOR logging system.
+     * @param log Object representing the API to the CASTOR logging system.
      * @param sysWrapper Object representing the operating system.
-     * @param driveConfig the configiuration of the tape-drive to be used to
+     * @param driveConfig the configuration of the tape-drive to be used to
      * label a tape.
      * @param force The flag that, if set to true, allows labeling a non-blank
      * tape.

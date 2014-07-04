@@ -157,7 +157,6 @@ void castor::tape::tapeserver::daemon::LabelSession::executeLabel() {
   task << "label tape " << m_request.vid << " for gid=" << m_request.gid <<
     " uid=" << m_request.uid << " in drive " << m_request.drive;
   
-  utils::TpconfigLines::const_iterator configLine;
   std::auto_ptr<castor::tape::drives::DriveInterface> drive;
   
   log::Param params[] = {

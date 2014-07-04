@@ -18,6 +18,7 @@ add_library(castorTapeServerDaemon
   LabelCmdAcceptHandler.cpp
   LabelCmdConnectionHandler.cpp
   LabelSession.cpp
+  CleanerSession.cpp
   MigrationMemoryManager.cpp
   MigrationReportPacker.cpp 
   MigrationTaskInjector.cpp

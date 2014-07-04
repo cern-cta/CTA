@@ -69,6 +69,7 @@ void drives::DriveGeneric::UpdateDriveStatus()  {
   if(GMT_EOD(m_mtInfo.mt_gstat)) m_driveStatus.eod=true; else m_driveStatus.eod=false;
   if(GMT_WR_PROT(m_mtInfo.mt_gstat)) m_driveStatus.writeProtection=true; else m_driveStatus.writeProtection=false;
   if(GMT_ONLINE(m_mtInfo.mt_gstat)) m_driveStatus.ready=true; else m_driveStatus.ready=false;
+  if(GMT_DR_OPEN(m_mtInfo.mt_gstat)) m_driveStatus.hasTapeInPlace=false; else m_driveStatus.hasTapeInPlace=true;
 }
 
 /**
@@ -985,4 +986,8 @@ bool drives::FakeDrive::isAtEOD()  {
 
 bool drives::FakeDrive::isTapeBlank() {
   return m_tape.empty();
+}
+
+bool drives::FakeDrive::hasTapeInPlace() {
+  return true;
 }

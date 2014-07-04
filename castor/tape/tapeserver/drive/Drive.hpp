@@ -87,6 +87,7 @@ namespace drives {
     /* TODO: Error condition */
     bool eod;
     bool bot;
+    bool hasTapeInPlace;
   };
 
   class tapeError {
@@ -164,6 +165,7 @@ namespace drives {
     virtual bool isAtBOT()  = 0;
     virtual bool isAtEOD()  = 0;
     virtual bool isTapeBlank() = 0;
+    virtual bool hasTapeInPlace() = 0;
     /**
      * Member string allowing the convenient storage of the string describing
      * drive location for the mount system (we get the information from TPCONFIG
@@ -222,6 +224,7 @@ namespace drives {
     virtual bool isAtBOT() ;
     virtual bool isAtEOD() ;
     virtual bool isTapeBlank();
+    virtual bool hasTapeInPlace();
   };
   
   /**
@@ -333,6 +336,12 @@ namespace drives {
       ex.getMessage()<<timeoutSecond<<" seconds";
       throw ex;
     }
+    
+    virtual bool hasTapeInPlace() {
+      UpdateDriveStatus();
+      return m_driveStatus.hasTapeInPlace;
+    }
+    
     virtual bool isWriteProtected()  {
       UpdateDriveStatus();
       return m_driveStatus.writeProtection;
