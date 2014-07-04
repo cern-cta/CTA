@@ -9,6 +9,20 @@
 }
 
 {
+   ForkCleaner
+   Memcheck:Leak
+   ...
+   fun:_GLOBAL__I_ForkCleaner.pb.cc
+}
+
+{
+   _ZN6castor8messages47StaticDescriptorInitializer_ForkCleaner_2eprotoC1Ev
+   Memcheck:Leak
+   ...
+   fun:_ZN6castor8messages47StaticDescriptorInitializer_ForkCleaner_2eprotoC1Ev
+}
+
+{
    ForkDataTranfser
    Memcheck:Leak
    ...
