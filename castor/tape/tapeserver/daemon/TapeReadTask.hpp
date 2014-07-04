@@ -31,6 +31,8 @@
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "castor/tape/tapeserver/daemon/SessionStats.hpp"
+#include "castor/tape/utils/Timer.hpp"
 
 namespace castor {
 namespace tape {
@@ -59,8 +61,9 @@ public:
      * The main loop is :
      * Acquire a free memory block from the memory manager , fill it, push it 
      */
-   void execute(castor::tape::tapeFile::ReadSession & rs,
-    castor::log::LogContext & lc,TaskWatchDog<detail::Recall>& watchdog) {
+  void execute(castor::tape::tapeFile::ReadSession & rs,
+    castor::log::LogContext & lc,TaskWatchDog<detail::Recall>& watchdog,
+    SessionStats & stats, utils::Timer & timer) {
 
     using castor::log::Param;
     typedef castor::log::LogContext::ScopedParam ScopedParam;
@@ -72,8 +75,11 @@ public:
     ScopedParam sp3(lc, Param("fSeq", m_fileToRecall->fseq()));
     ScopedParam sp4(lc, Param("fileTransactionId", m_fileToRecall->fileTransactionId()));
     
+    // We will clock the stats for the file itself, and eventually add those
+    // stats to the session's.
+    SessionStats localStats;
+    utils::Timer localTime;
 
-    
     // Read the file and transmit it
     bool stillReading = true;
     //for counting how many mem blocks have used and how many tape blocks
@@ -84,10 +90,13 @@ public:
     MemBlock* mb=NULL;
     try {
       std::auto_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
+      localStats.positionTime += timer.secs(utils::Timer::resetCounter);
       watchdog.notifyBeginNewJob(*m_fileToRecall);
+      localStats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
       while (stillReading) {
         // Get a memory block and add information to its metadata
         mb=m_mm.getFreeBlock();
+        localStats.waitDataTime += timer.secs(utils::Timer::resetCounter);
         
         mb->m_fSeq = m_fileToRecall->fseq();
         mb->m_fileBlock = fileBlock++;
@@ -99,62 +108,84 @@ public:
           // append conveniently returns false when there will not be more space
           // for an extra tape block, and throws an exception if we reached the
           // end of file. append() also protects against reading too big tape blocks.
-            while (mb->m_payload.append(*rf)) {
-              tapeBlock++;
-            }
-          } catch (const castor::tape::exceptions::EndOfFile&) {
-            // append() signaled the end of the file.
-            stillReading = false;
-          } 
-          
-          // Pass the block to the disk write task
-          m_fifo.pushDataBlock(mb);
-          watchdog.notify();
-          lc.log(LOG_INFO, "going for sleep");
+          while (mb->m_payload.append(*rf)) {
+            tapeBlock++;
+          }
+        } catch (const castor::tape::exceptions::EndOfFile&) {
+          // append() signaled the end of the file.
+          stillReading = false;
+        }
+        localStats.transferTime += timer.secs(utils::Timer::resetCounter);
+        localStats.dataVolume += mb->m_payload.size();
+        // Pass the block to the disk write task
+        m_fifo.pushDataBlock(mb);
+        watchdog.notify();
+        localStats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
+        lc.log(LOG_INFO, "going for sleep");
       } //end of while(stillReading)
       //  we have to signal the end of the tape read to the disk write task.
       m_fifo.pushDataBlock(NULL);
-      lc.log(LOG_DEBUG, "File read completed");
-      } //end of try
-      catch (castor::exception::Exception & ex) {
-        //we end up there because :
-        //-- openReadFile brought us here (cant put the tape into position)
-        //-- m_payload.append brought us here (error while reading the file)
-        // This is an error case. Log and signal to the disk write task
-        { 
-          castor::log::LogContext::ScopedParam sp0(lc, Param("fileBlock", fileBlock));
-          castor::log::LogContext::ScopedParam sp1(lc, Param("ErrorMessage", ex.getMessageValue()));
-          castor::log::LogContext::ScopedParam sp2(lc, Param("ErrorCode", ex.code()));
-          lc.log(LOG_ERR, "Error reading a file block in TapeReadFileTask (backtrace follows)");
-        }
-        {
-          castor::log::LogContext lc2(lc.logger());
-          lc2.logBacktrace(LOG_ERR, ex.backtrace());
-        }
-        
-        //if we end up there because openReadFile brought us here
-        //then mb is not valid, we need to get a block 
-        //that will be done in reportErrorToDiskTask() 
-        //or directly call reportErrorToDiskTask with the mem block
-        if(!mb) {
-          reportErrorToDiskTask();
-        }
-        else{
-          reportErrorToDiskTask(mb);
-        }
-      } //end of catch
+      // Log the successful transfer
+      double fileTime = localTime.secs();
+      log::ScopedParamContainer params(lc);
+      params.add("transferTime", localStats.transferTime)
+            .add("checksumingTime",localStats.checksumingTime)
+            .add("waitDataTime",localStats.waitDataTime)
+            .add("waitReportingTime",localStats.waitReportingTime)
+            .add("dataVolume",localStats.dataVolume)
+            .add("headerVolume",localStats.headerVolume)
+            .add("totalTime", fileTime)
+            .add("driveTransferSpeedMiB/s",
+                    (localStats.dataVolume+localStats.headerVolume)
+                     /1024/1024
+                     /localStats.transferTime)
+            .add("payloadTransferSpeedMB/s",
+                     1.0*localStats.dataVolume/1024/1024/fileTime)
+            .add("fileid",m_fileToRecall->fileid())
+            .add("fseq",m_fileToRecall->fseq())
+            .add("fileTransactionId",m_fileToRecall->fileTransactionId());
+      lc.log(LOG_INFO, "File successfully read from drive");
+      // Add the local counts to the session's
+      stats.add(localStats);
+    } //end of try
+    catch (castor::exception::Exception & ex) {
+      //we end up there because :
+      //-- openReadFile brought us here (cant put the tape into position)
+      //-- m_payload.append brought us here (error while reading the file)
+      // This is an error case. Log and signal to the disk write task
+      { 
+        castor::log::LogContext::ScopedParam sp0(lc, Param("fileBlock", fileBlock));
+        castor::log::LogContext::ScopedParam sp1(lc, Param("ErrorMessage", ex.getMessageValue()));
+        castor::log::LogContext::ScopedParam sp2(lc, Param("ErrorCode", ex.code()));
+        lc.log(LOG_ERR, "Error reading a file block in TapeReadFileTask (backtrace follows)");
+      }
+      {
+        castor::log::LogContext lc2(lc.logger());
+        lc2.logBacktrace(LOG_ERR, ex.backtrace());
+      }
+      
+      //if we end up there because openReadFile brought us here
+      //then mb is not valid, we need to get a block 
+      //that will be done in reportErrorToDiskTask() 
+      //or directly call reportErrorToDiskTask with the mem block
+      if(!mb) {
+        reportErrorToDiskTask();
+      }
+      else{
+        reportErrorToDiskTask(mb);
+      }
+    } //end of catch
     watchdog.fileFinished();
   }
    /**
     * Get a valid block and ask to to do the report to the disk write task
     */
-   void reportErrorToDiskTask(){
-     MemBlock* mb =m_mm.getFreeBlock();
-     mb->m_fSeq = m_fileToRecall->fseq();
-     mb->m_fileid = m_fileToRecall->fileid();
-     
-     reportErrorToDiskTask(mb);
-   }
+  void reportErrorToDiskTask(){
+    MemBlock* mb =m_mm.getFreeBlock();
+    mb->m_fSeq = m_fileToRecall->fseq();
+    mb->m_fileid = m_fileToRecall->fileid();
+    reportErrorToDiskTask(mb);
+  }
 private:
   /**
    * Do the actual report to the disk write task

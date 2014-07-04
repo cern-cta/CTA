@@ -81,8 +81,11 @@ private:
   //RAII class for cleaning tape stuff
   class TapeCleaning{
     TapeReadSingleThread& m_this;
+    // As we are living in the single thread of tape, we can borrow the timer
+    utils::Timer & m_timer;
   public:
-    TapeCleaning(TapeReadSingleThread& parent):m_this(parent){}
+    TapeCleaning(TapeReadSingleThread& parent, utils::Timer & timer):
+      m_this(parent), m_timer(timer){}
     ~TapeCleaning(){
         // Tell everyone to wrap up the session
         // We now acknowledge to the task injector that read reached the end. There
@@ -91,8 +94,8 @@ private:
         //then we log/notify
         m_this.m_logContext.log(LOG_INFO, "Finishing Tape Read Thread."
         " Just signaled task injector of the end");
+        m_this.m_stats.waitReportingTime += m_timer.secs(utils::Timer::resetCounter);
         try {
-          tape::utils::Timer timer;
           // Do the final cleanup
           // in the special case of a "manual" mode tape, we should skip the unload too.
           if (m_this.m_drive.librarySlot != "manual") {
@@ -101,15 +104,16 @@ private:
           } else {
             m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread: Tape NOT unloaded (manual mode)");
           }
+          m_this.m_stats.unloadTime += m_timer.secs(utils::Timer::resetCounter);
           // And return the tape to the library
           // In case of manual mode, this will be filtered by the rmc daemon
           // (which will do nothing)
           m_this.m_rmc.unmountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot);
-          
-          log::LogContext::ScopedParam sp0( m_this.m_logContext, log::Param("timeTaken", timer.usecs()));
+          m_this.m_stats.unmountTime += m_timer.secs(utils::Timer::resetCounter);
           m_this.m_logContext.log(LOG_INFO, m_this.m_drive.librarySlot != "manual"?
             "TapeReadSingleThread : tape unmounted":"TapeReadSingleThread : tape NOT unmounted (manual mode)");
           m_this.m_tsr.tapeUnmounted();
+          m_this.m_stats.waitReportingTime += m_timer.secs(utils::Timer::resetCounter);
         } catch(const castor::exception::Exception& ex){
           //set it to -1 to notify something failed during the cleaning 
           m_this.m_hardarwareStatus = -1;
@@ -174,47 +178,70 @@ private:
    */
   virtual void run() {
     m_logContext.pushOrReplace(log::Param("thread", "tapeRead"));
-
+    castor::tape::utils::Timer timer, totalTimer;
     try{
-      
+      // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
+      // through the st driver file descriptor.
       setCapabilities();
-      
-      // the tape ins loaded 
-      //it has to be unloaded, unmounted at all cost -> RAII
-      //will also take care of the TapeServerReporter and of RecallTaskInjector
-      TapeCleaning tapeCleaner(*this);
-      
-      // Before anything, the tape should be mounted
-      mountTape(legacymsg::RmcProxy::MOUNT_MODE_READONLY);
-      waitForDrive();
-      
-      // Then we have to initialise the tape read session
-      std::auto_ptr<castor::tape::tapeFile::ReadSession> rs(openReadSession());
-      
-      //and then report
-      m_logContext.log(LOG_INFO, "Tape read session session successfully started");
-      m_tsr.tapeMountedForRead();
-      tape::utils::Timer timer;
-      
-      //start the threading and ask to initiate the protocol with the tapeserverd
-      m_watchdog.startThread();
-      
-      // Then we will loop on the tasks as they get from 
-      // the task injector
-      while(1) {
-        // NULL indicated the end of work
-        TapeReadTask * task = popAndRequestMoreJobs();
-        m_logContext.log(LOG_DEBUG, "TapeReadThread: just got one more job");
-        if (task) {
-          task->execute(*rs, m_logContext,m_watchdog);
-          delete task;
-        } else {
-          log::LogContext::ScopedParam sp0(m_logContext, log::Param("time taken", timer.secs()));
-          m_logContext.log(LOG_INFO, "reading data from the tape has finished");
-          break;
+      {  
+        // The tape will be loaded 
+        // it has to be unloaded, unmounted at all cost -> RAII
+        // will also take care of the TapeServerReporter and of RecallTaskInjector
+        TapeCleaning tapeCleaner(*this, timer);
+        // Before anything, the tape should be mounted
+        mountTape(legacymsg::RmcProxy::MOUNT_MODE_READONLY);
+        waitForDrive();
+        m_stats.mountTime += timer.secs(utils::Timer::resetCounter);
+        // Then we have to initialise the tape read session
+        std::auto_ptr<castor::tape::tapeFile::ReadSession> rs(openReadSession());
+        m_stats.positionTime += timer.secs(utils::Timer::resetCounter);
+        //and then report
+        m_logContext.log(LOG_INFO, "Tape read session session successfully started");
+        m_tsr.tapeMountedForRead();
+        m_stats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
+        //start the threading and ask to initiate the protocol with the tapeserverd
+        // TODO: move up so this thread is the same as others (if we still need it)
+        m_watchdog.startThread();
+        
+        // Then we will loop on the tasks as they get from 
+        // the task injector
+        std::auto_ptr<TapeReadTask> task;
+        while(1) {
+          //get a task
+          task.reset(popAndRequestMoreJobs());
+          m_stats.waitInstructionsTime += timer.secs(utils::Timer::resetCounter);
+          // If we reached the end
+          if (NULL==task.get()) {
+            m_logContext.log(LOG_INFO, "No more files to read from tape");
+            break;
+          }
+          task->execute(*rs, m_logContext, m_watchdog,m_stats,timer);
         }
+        m_watchdog.stopThread();
       }
-      m_watchdog.stopThread();
+      // The session completed successfully, and the cleaner (unmount) executed
+      // at the end of the previous block. Log the results.
+      double sessionTime = totalTimer.secs();
+      log::ScopedParamContainer params(m_logContext);
+      params.add("mountTime", m_stats.mountTime)
+            .add("positionTime", m_stats.positionTime)
+            .add("waitInstructionsTime", m_stats.waitInstructionsTime)
+            .add("checksumingTime", m_stats.checksumingTime)
+            .add("transferTime", m_stats.transferTime)
+            .add("waitDataTime", m_stats.waitDataTime)
+            .add("waitReportingTime", m_stats.waitReportingTime)
+            .add("flushTime", m_stats.flushTime)
+            .add("unloadTime", m_stats.unloadTime)
+            .add("unmountTime", m_stats.unmountTime)
+            .add("dataVolume", m_stats.dataVolume)
+            .add("headerVolume", m_stats.headerVolume)
+            .add("filesCount", m_stats.filesCount)
+            .add("dataBandwidthMiB/s", 1.0*m_stats.dataVolume
+                    /1024/1024/sessionTime)
+            .add("driveBandwidthMiB/s", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
+                    /1024/1024/sessionTime)
+            .add("sessionTime", sessionTime);
+      m_logContext.log(LOG_INFO, "Completed recall session's tape thread successfully");
     } catch(const castor::exception::Exception& e){
       // we can only end there because 
       // moundTape, waitForDrive or crating the ReadSession failed

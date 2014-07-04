@@ -65,6 +65,8 @@ namespace daemon {
     using castor::log::LogContext;
     using castor::log::Param;
     
+    // We will clock the stats for the file itself, and eventually add those
+    // stats to the session's.
     SessionStats localStats;
     utils::Timer localTime;
     unsigned long ckSum = Payload::zeroAdler32();
@@ -118,6 +120,7 @@ namespace daemon {
       reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum);
       localStats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
       // Log the successful transfer
+      double fileTime = localTime.secs();
       log::ScopedParamContainer params(lc);
       params.add("transferTime", localStats.transferTime)
             .add("checksumingTime",localStats.checksumingTime)
@@ -125,12 +128,13 @@ namespace daemon {
             .add("waitReportingTime",localStats.waitReportingTime)
             .add("dataVolume",localStats.dataVolume)
             .add("headerVolume",localStats.headerVolume)
+            .add("totalTime", fileTime)
             .add("driveTransferSpeedMiB/s",
                     (localStats.dataVolume+localStats.headerVolume)
                      /1024/1024
                      /localStats.transferTime)
             .add("payloadTransferSpeedMB/s",
-                     1.0*localStats.dataVolume/1024/1024/localTime.secs())
+                     1.0*localStats.dataVolume/1024/1024/fileTime)
             .add("fileSize",m_fileToMigrate->fileSize())
             .add("fileid",m_fileToMigrate->fileid())
             .add("fseq",m_fileToMigrate->fseq())

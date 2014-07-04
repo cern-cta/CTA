@@ -86,8 +86,7 @@ private:
     // As we are living in the single thread of tape, we can borrow the timer
     utils::Timer & m_timer;
   public:
-    TapeCleaning(TapeWriteSingleThread& parent,
-      utils::Timer & timer):
+    TapeCleaning(TapeWriteSingleThread& parent, utils::Timer & timer):
       m_this(parent), m_timer(timer){}
     ~TapeCleaning(){
       try{
@@ -187,56 +186,85 @@ private:
   
 
   virtual void run() {
-
+    m_logContext.pushOrReplace(log::Param("thread", "TapeWrite"));
     castor::tape::utils::Timer timer, totalTimer;
     try
     {
-      m_logContext.pushOrReplace(log::Param("thread", "TapeWrite"));
+      // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
+      // through the st driver file descriptor.
       setCapabilities();
-      
-      TapeCleaning cleaner(*this, timer);
-      mountTape(castor::legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
-      waitForDrive();
-      m_stats.mountTime += timer.secs(utils::Timer::resetCounter);
-      // Then we have to initialise the tape write session
-      std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
-      m_stats.positionTime += timer.secs(utils::Timer::resetCounter);
-      //log and notify
-      m_logContext.log(LOG_INFO, "Starting tape write thread");
-      m_tsr.tapeMountedForWrite();
-      uint64_t bytes=0;
-      uint64_t files=0;
-      m_stats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
-      
-      std::auto_ptr<TapeWriteTask> task;    
-      while(1) {
-        //get a task
-        task.reset(m_tasks.pop());
-        m_stats.waitInstructionsTime += timer.secs(utils::Timer::resetCounter);
-        //if is the end
-        if(NULL==task.get()) {      
-          //we flush without asking
-          tapeFlush("No more data to write on tape, unconditional flushing to the client",bytes,files,timer);
-          m_stats.flushTime += timer.secs(utils::Timer::resetCounter);
-          //end of session + log
-          m_reportPacker.reportEndOfSession();
-          log::LogContext::ScopedParam sp0(m_logContext, log::Param("tapeThreadDuration", totalTimer.secs()));
-          m_logContext.log(LOG_DEBUG, "writing data to tape has finished");
-          break;
-        }
-        task->execute(*writeSession,m_reportPacker,m_logContext,m_stats,timer);
-
-        // Increase local flush counters (session counters are incremented by
-        // the task)
-        files++;
-        bytes+=task->fileSize();
-        //if one flush counter is above a threshold, then we flush
-        if (files >= m_filesBeforeFlush || bytes >= m_bytesBeforeFlush) {
-          tapeFlush("Normal flush because thresholds was reached",bytes,files,timer);
-          files=0;
-          bytes=0;
-        }
-      } //end of while(1))
+      {  
+        // The tape will be loaded 
+        // it has to be unloaded, unmounted at all cost -> RAII
+        // will also take care of the TapeServerReporter
+        TapeCleaning cleaner(*this, timer);
+        // Before anything, the tape should be mounted
+        mountTape(castor::legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
+        waitForDrive();
+        m_stats.mountTime += timer.secs(utils::Timer::resetCounter);
+        // Then we have to initialise the tape write session
+        std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
+        m_stats.positionTime += timer.secs(utils::Timer::resetCounter);
+        //log and notify
+        m_logContext.log(LOG_INFO, "Starting tape write thread");
+        m_tsr.tapeMountedForWrite();
+        uint64_t bytes=0;
+        uint64_t files=0;
+        m_stats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
+        
+        std::auto_ptr<TapeWriteTask> task;    
+        while(1) {
+          //get a task
+          task.reset(m_tasks.pop());
+          m_stats.waitInstructionsTime += timer.secs(utils::Timer::resetCounter);
+          //if is the end
+          if(NULL==task.get()) {      
+            //we flush without asking
+            tapeFlush("No more data to write on tape, unconditional flushing to the client",bytes,files,timer);
+            m_stats.flushTime += timer.secs(utils::Timer::resetCounter);
+            //end of session + log
+            m_reportPacker.reportEndOfSession();
+            log::LogContext::ScopedParam sp0(m_logContext, log::Param("tapeThreadDuration", totalTimer.secs()));
+            m_logContext.log(LOG_DEBUG, "writing data to tape has finished");
+            break;
+          }
+          task->execute(*writeSession,m_reportPacker,m_logContext,m_stats,timer);
+  
+          // Increase local flush counters (session counters are incremented by
+          // the task)
+          files++;
+          bytes+=task->fileSize();
+          //if one flush counter is above a threshold, then we flush
+          if (files >= m_filesBeforeFlush || bytes >= m_bytesBeforeFlush) {
+            tapeFlush("Normal flush because thresholds was reached",bytes,files,timer);
+            files=0;
+            bytes=0;
+          }
+        } //end of while(1))
+      }
+      // The session completed successfully, and the cleaner (unmount) executed
+      // at the end of the previous block. Log the results.
+      double sessionTime = totalTimer.secs();
+      log::ScopedParamContainer params(m_logContext);
+      params.add("mountTime", m_stats.mountTime)
+            .add("positionTime", m_stats.positionTime)
+            .add("waitInstructionsTime", m_stats.waitInstructionsTime)
+            .add("checksumingTime", m_stats.checksumingTime)
+            .add("transferTime", m_stats.transferTime)
+            .add("waitDataTime", m_stats.waitDataTime)
+            .add("waitReportingTime", m_stats.waitReportingTime)
+            .add("flushTime", m_stats.flushTime)
+            .add("unloadTime", m_stats.unloadTime)
+            .add("unmountTime", m_stats.unmountTime)
+            .add("dataVolume", m_stats.dataVolume)
+            .add("headerVolume", m_stats.headerVolume)
+            .add("filesCount", m_stats.filesCount)
+            .add("dataBandwidthMiB/s", 1.0*m_stats.dataVolume
+                    /1024/1024/sessionTime)
+            .add("driveBandwidthMiB/s", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
+                    /1024/1024/sessionTime)
+            .add("sessionTime", sessionTime);
+      m_logContext.log(LOG_INFO, "Completed migration session successfully");
     } //end of try
     catch(const castor::exception::Exception& e){
       //we end there because write session could not be opened or because a task failed
@@ -255,9 +283,7 @@ private:
       m_logContext.log(LOG_ERR,"An error occurred during TapwWriteSingleThread::execute");
       
       m_reportPacker.reportEndOfSessionWithErrors(e.what(),e.code());
-    }
-    // The session completed successfuly. Log the results
-    TODOTODO
+    }    
   }
   
   //m_filesBeforeFlush and m_bytesBeforeFlush are thresholds for flushing 
