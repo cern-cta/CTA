@@ -58,7 +58,7 @@ message(STATUS "KRB5_LIBS = '${KRB5_LIBS}'")
 set(SECURITY_PLUGIN_KRB5
   Csec_plugin_GSS.c
   Csec_plugin_GSS_mapper.c)
-add_library(castorsec_plugin_KRB5 SHARED ${SECURITY_PLUGIN_KRB5})
+add_library(castorsec_krb5plugin SHARED ${SECURITY_PLUGIN_KRB5})
 
 # Relax compilation of old code full of pointer casting. Funnily enough,
 # the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
@@ -69,12 +69,7 @@ if (APPLE)
   set_property(SOURCE ${SECURITY_PLUGIN_KRB5} APPEND_STRING
     PROPERTY COMPILE_FLAGS " -Wno-deprecated-declarations")
 endif (APPLE)
-target_link_libraries (castorsec_plugin_KRB5 castorcommon ${KRB5_LIBS})
-CastorSetLibraryVersions (castorsec_plugin_KRB5)
-install (TARGETS castorsec_plugin_KRB5 DESTINATION ${CASTOR_DEST_LIB_DIR})
-
-add_library(castorsec_plugin_ID SHARED Csec_plugin_ID.c)
-target_link_libraries (castorsec_plugin_ID castorcommon -lc -ldl)
-CastorSetLibraryVersions (castorsec_plugin_ID)
-install (TARGETS castorsec_plugin_ID DESTINATION ${CASTOR_DEST_LIB_DIR})
+target_link_libraries (castorsec_krb5plugin castorcommon ${KRB5_LIBS})
+CastorSetLibraryVersions (castorsec_krb5plugin)
+install (TARGETS castorsec_krb5plugin DESTINATION ${CASTOR_DEST_LIB_DIR})
 
