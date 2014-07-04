@@ -92,7 +92,7 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
     };
     tape::utils::suppresUnusedVariable(sp);
     
-    m_lc.log(LOG_INFO, "Logged file to recall");
+    m_lc.log(LOG_INFO, "Recall task created");
     
     DiskWriteTask * dwt = 
       new DiskWriteTask(
@@ -109,7 +109,7 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
     m_tapeReader.push(trt);
   }
   LogContext::ScopedParam sp03(m_lc, Param("nbFile", jobs.size()));
-  m_lc.log(LOG_INFO, "Tasks for recalling injected");
+  m_lc.log(LOG_INFO, "Finished processing batch of recall tasks from client");
 }
 //------------------------------------------------------------------------------
 //synchronousInjection
@@ -176,7 +176,7 @@ void RecallTaskInjector::WorkerThread::run()
   try{
     while (1) {
       Request req = m_parent.m_queue.pop();
-      m_parent.m_lc.log(LOG_INFO,"RecallJobInjector:run: about to call client interface\n");
+      m_parent.m_lc.log(LOG_DEBUG,"RecallJobInjector:run: about to call client interface");
       client::ClientProxy::RequestReport reqReport;
       std::auto_ptr<tapegateway::FilesToRecallList> filesToRecallList(m_parent.m_client.getFilesToRecall(req.nbMaxFiles, req.byteSizeThreshold,reqReport));
       
@@ -186,11 +186,11 @@ void RecallTaskInjector::WorkerThread::run()
       
       if (NULL == filesToRecallList.get()) {
         if (req.lastCall) {
-          m_parent.m_lc.log(LOG_INFO,"No more file to recall: triggering the end of session.\n");
+          m_parent.m_lc.log(LOG_INFO,"No more file to recall: triggering the end of session.");
           m_parent.signalEndDataMovement();
           break;
         } else {
-          m_parent.m_lc.log(LOG_INFO,"In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.\n");
+          m_parent.m_lc.log(LOG_DEBUG,"In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.");
         }
       } else {
         std::vector<tapegateway::FileToRecallStruct*>& jobs= filesToRecallList->filesToRecall();
@@ -225,7 +225,7 @@ void RecallTaskInjector::WorkerThread::run()
         stillReading = false;
       }
       LogContext::ScopedParam sp(m_parent.m_lc, Param("lastCall", req.lastCall));
-      m_parent.m_lc.log(LOG_INFO,"In RecallJobInjector::WorkerThread::run(): popping extra request");
+      m_parent.m_lc.log(LOG_DEBUG,"In RecallJobInjector::WorkerThread::run(): popping extra request");
     }
   }
 }

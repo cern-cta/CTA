@@ -123,8 +123,8 @@ void RecallReportPacker::flush(){
       m_client.reportRecallResults(*m_listReports,chrono);
       logRequestReport(chrono,"RecallReportList successfully transmitted to client (contents follow)");
 
-      logReport(m_listReports->failedRecalls(),"A file failed to be recalled");
-      logReport(m_listReports->successfulRecalls(),"A file was successfully recalled");
+      logReport(m_listReports->failedRecalls(),"Reported failed recall to client");
+      logReport(m_listReports->successfulRecalls(),"Reported successful recall to client");
     }
    catch(const castor::tape::Exception& e){
     LogContext::ScopedParam s(m_lc, Param("exceptionCode",e.code()));

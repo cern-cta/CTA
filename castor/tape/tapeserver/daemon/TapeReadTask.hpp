@@ -121,19 +121,17 @@ public:
         m_fifo.pushDataBlock(mb);
         watchdog.notify();
         localStats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
-        lc.log(LOG_INFO, "going for sleep");
       } //end of while(stillReading)
       //  we have to signal the end of the tape read to the disk write task.
       m_fifo.pushDataBlock(NULL);
       // Log the successful transfer
       double fileTime = localTime.secs();
       log::ScopedParamContainer params(lc);
-      params.add("transferTime", localStats.transferTime)
-            .add("checksumingTime",localStats.checksumingTime)
+      params.add("positionTime", localStats.positionTime)
+            .add("transferTime", localStats.transferTime)
             .add("waitDataTime",localStats.waitDataTime)
             .add("waitReportingTime",localStats.waitReportingTime)
             .add("dataVolume",localStats.dataVolume)
-            .add("headerVolume",localStats.headerVolume)
             .add("totalTime", fileTime)
             .add("driveTransferSpeedMiB/s",
                     (localStats.dataVolume+localStats.headerVolume)

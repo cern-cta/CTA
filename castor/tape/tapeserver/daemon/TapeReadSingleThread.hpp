@@ -92,8 +92,7 @@ private:
         // will hence be no more requests for more.
         m_this.m_taskInjector->finish();
         //then we log/notify
-        m_this.m_logContext.log(LOG_INFO, "Finishing Tape Read Thread."
-        " Just signaled task injector of the end");
+        m_this.m_logContext.log(LOG_DEBUG, "Starting session cleanup. Signaled end of session to task injector.");
         m_this.m_stats.waitReportingTime += m_timer.secs(utils::Timer::resetCounter);
         try {
           // Do the final cleanup
@@ -212,7 +211,7 @@ private:
           m_stats.waitInstructionsTime += timer.secs(utils::Timer::resetCounter);
           // If we reached the end
           if (NULL==task.get()) {
-            m_logContext.log(LOG_INFO, "No more files to read from tape");
+            m_logContext.log(LOG_DEBUG, "No more files to read from tape");
             break;
           }
           task->execute(*rs, m_logContext, m_watchdog,m_stats,timer);
