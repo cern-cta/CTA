@@ -9,6 +9,20 @@
 }
 
 {
+   ForkLabel
+   Memcheck:Leak
+   ...
+   fun:_GLOBAL__I_ForkLabel.pb.cc
+}
+
+{
+   _ZN6castor8messages45StaticDescriptorInitializer_ForkLabel_2eprotoC1Ev
+   Memcheck:Leak
+   ...
+   fun:_ZN6castor8messages45StaticDescriptorInitializer_ForkLabel_2eprotoC1Ev
+}
+
+{
    ZN6castor8messages42StaticDescriptorInitializer
    Memcheck:Leak
    ...
