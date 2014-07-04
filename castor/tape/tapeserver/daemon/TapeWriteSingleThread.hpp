@@ -83,26 +83,32 @@ public:
 private:
     class TapeCleaning{
     TapeWriteSingleThread& m_this;
+    // As we are living in the single thread of tape, we can borrow the timer
+    utils::Timer & m_timer;
   public:
-    TapeCleaning(TapeWriteSingleThread& parent):m_this(parent){}
+    TapeCleaning(TapeWriteSingleThread& parent,
+      utils::Timer & timer):
+      m_this(parent), m_timer(timer){}
     ~TapeCleaning(){
       try{
-      // Do the final cleanup
-      // in the special case of a "manual" mode tape, we should skip the unload too.
-      if (m_this.m_drive.librarySlot != "manual") {
-        m_this.m_drive.unloadTape();
-        m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread: Tape unloaded");
-      } else {
-        m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread: Tape NOT unloaded (manual mode)");
-      }
-      // And return the tape to the library
-      // In case of manual mode, this will be filtered by the rmc daemon
-      // (which will do nothing)
-      m_this.m_rmc.unmountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot);
-      m_this.m_logContext.log(LOG_INFO, m_this.m_drive.librarySlot != "manual"?
-        "TapeWriteSingleThread : tape unmounted":"TapeWriteSingleThread : tape NOT unmounted (manual mode)");
-      m_this.m_tsr.tapeUnmounted();
-              
+        // Do the final cleanup
+        // in the special case of a "manual" mode tape, we should skip the unload too.
+        if (m_this.m_drive.librarySlot != "manual") {
+          m_this.m_drive.unloadTape();
+          m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread: Tape unloaded");
+        } else {
+          m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread: Tape NOT unloaded (manual mode)");
+        }
+        m_this.m_stats.unloadTime += m_timer.secs(utils::Timer::resetCounter);
+        // And return the tape to the library
+        // In case of manual mode, this will be filtered by the rmc daemon
+        // (which will do nothing)
+        m_this.m_rmc.unmountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot);
+        m_this.m_stats.unmountTime += m_timer.secs(utils::Timer::resetCounter);
+        m_this.m_logContext.log(LOG_INFO, m_this.m_drive.librarySlot != "manual"?
+          "TapeWriteSingleThread : tape unmounted":"TapeWriteSingleThread : tape NOT unmounted (manual mode)");
+        m_this.m_tsr.tapeUnmounted();
+        m_this.m_stats.waitReportingTime += m_timer.secs(utils::Timer::resetCounter);
       }
       catch(const castor::exception::Exception& ex){
         //set it to -1 to notify something failed during the cleaning 
@@ -166,62 +172,67 @@ private:
    * @param files the number of files that have been written since the last flush  
    * (also for logging)
    */
-  void tapeFlush(const std::string& message,uint64_t bytes,uint64_t files){
+  void tapeFlush(const std::string& message,uint64_t bytes,uint64_t files,
+        utils::Timer & timer){
     m_drive.flush();
-    log::LogContext::ScopedParam sp0(m_logContext, log::Param("files", files));
-    log::LogContext::ScopedParam sp1(m_logContext, log::Param("bytes", bytes));
+    double flushTime = timer.secs(utils::Timer::resetCounter);
+    log::ScopedParamContainer params(m_logContext);
+    params.add("files", files)
+          .add("bytes", bytes)
+          .add("flushTime", flushTime);
     m_logContext.log(LOG_INFO,message);
     m_reportPacker.reportFlush();
+    m_stats.flushTime += flushTime;
   }
   
 
   virtual void run() {
 
+    castor::tape::utils::Timer timer, totalTimer;
     try
     {
       m_logContext.pushOrReplace(log::Param("thread", "TapeWrite"));
       setCapabilities();
       
-      TapeCleaning cleaner(*this);
+      TapeCleaning cleaner(*this, timer);
       mountTape(castor::legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
       waitForDrive();
+      m_stats.mountTime += timer.secs(utils::Timer::resetCounter);
       // Then we have to initialise the tape write session
       std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
-      
+      m_stats.positionTime += timer.secs(utils::Timer::resetCounter);
       //log and notify
       m_logContext.log(LOG_INFO, "Starting tape write thread");
       m_tsr.tapeMountedForWrite();
       uint64_t bytes=0;
       uint64_t files=0;
-      std::auto_ptr<TapeWriteTask> task;  
+      m_stats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
       
-      tape::utils::Timer timer;
-      
+      std::auto_ptr<TapeWriteTask> task;    
       while(1) {
-        
         //get a task
         task.reset(m_tasks.pop());
-        
+        m_stats.waitInstructionsTime += timer.secs(utils::Timer::resetCounter);
         //if is the end
         if(NULL==task.get()) {      
           //we flush without asking
-          tapeFlush("No more data to write on tape, unconditional flushing to the client",bytes,files);
-          //end of session + log 
+          tapeFlush("No more data to write on tape, unconditional flushing to the client",bytes,files,timer);
+          m_stats.flushTime += timer.secs(utils::Timer::resetCounter);
+          //end of session + log
           m_reportPacker.reportEndOfSession();
-          log::LogContext::ScopedParam sp0(m_logContext, log::Param("time taken", timer.secs()));
+          log::LogContext::ScopedParam sp0(m_logContext, log::Param("tapeThreadDuration", totalTimer.secs()));
           m_logContext.log(LOG_DEBUG, "writing data to tape has finished");
           break;
         }
-        
-        task->execute(*writeSession,m_reportPacker,m_logContext);
+        task->execute(*writeSession,m_reportPacker,m_logContext,m_stats,timer);
 
-        //raise counters
+        // Increase local flush counters (session counters are incremented by
+        // the task)
         files++;
         bytes+=task->fileSize();
-          
-        //if one counter is above a threshold, then we flush
+        //if one flush counter is above a threshold, then we flush
         if (files >= m_filesBeforeFlush || bytes >= m_bytesBeforeFlush) {
-          tapeFlush("Normal flush because thresholds was reached",bytes,files);
+          tapeFlush("Normal flush because thresholds was reached",bytes,files,timer);
           files=0;
           bytes=0;
         }
@@ -245,7 +256,8 @@ private:
       
       m_reportPacker.reportEndOfSessionWithErrors(e.what(),e.code());
     }
-    
+    // The session completed successfuly. Log the results
+    TODOTODO
   }
   
   //m_filesBeforeFlush and m_bytesBeforeFlush are thresholds for flushing 

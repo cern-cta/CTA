@@ -15,6 +15,7 @@
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/tape/utils/Timer.hpp"
+#include "castor/tape/tapeserver/daemon/SessionStats.hpp"
 
 namespace castor {
 
@@ -61,10 +62,14 @@ protected:
   client::ClientInterface::VolumeInfo m_volInfo;
   
   /**
-   Integer to notify is the tapeserver if the drive has to be put down
-   * 0 means everything all right, any other value means we have to put it down
+   * Integer to notify the tapeserver if the drive has to be put down or not.
+   * 0 means everything all right, any other value means we have to set it to 
+   * down at the end of the session.
    */
   int m_hardarwareStatus;
+  
+  /** Session statistics */
+  SessionStats m_stats;
  
   /**
    * This function will try to set the cap_sys_rawio capability that is needed
@@ -82,7 +87,7 @@ protected:
     }
   }
   
-    /**
+  /**
    * Try to mount the tape, get an exception if it fails 
    */
   void mountTape(castor::legacymsg::RmcProxy::MountMode mode){
@@ -150,7 +155,19 @@ public:
   /**
    *  Wait for the thread to finish
    */
-  virtual void waitThreads() { wait(); } 
+  virtual void waitThreads() { wait(); }
+  
+  /**
+   * Allows to pre-set the time spent waiting for instructions, spent before
+   * the tape thread is started. This is for timing the synchronous task 
+   * injection done before session startup.
+   * This function MUST be called before starting the thread.
+   * @param secs time in seconds (double)
+   */
+  virtual void setWaitForInstructionsTime(double secs) { 
+    m_stats.waitInstructionsTime = secs; 
+  }
+
   /**
    * Constructor
    * @param drive An interface to manipulate the drive to manipulate the tape
@@ -167,9 +184,7 @@ public:
     const client::ClientInterface::VolumeInfo& volInfo,
     CapabilityUtils &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
     m_drive(drive), m_rmc(rmc), m_tsr(tsr), m_vid(volInfo.vid), m_logContext(lc),
-    m_volInfo(volInfo),m_hardarwareStatus(0) {
-
-  }
+    m_volInfo(volInfo),m_hardarwareStatus(0) {}
 };
 
 }

@@ -216,8 +216,10 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeRead(LogContex
     
     // We are now ready to put everything in motion. First step is to check
     // we get any concrete job to be done from the client (via the task injector)
+    utils::Timer timer;
     if (rti.synchronousInjection()) {
       // We got something to recall. Time to start the machinery
+      trst.setWaitForInstructionsTime(timer.secs());
       trst.startThreads();
       dwtp.startThreads();
       rrp.startThreads();
@@ -295,6 +297,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(LogConte
             m_castorConf.tapebridgeBulkRequestMigrationMaxBytes,
             m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,lc);
     drtp.setTaskInjector(&mti);
+    utils::Timer timer;
     if (mti.synchronousInjection()) {
       const uint64_t lastFseqFromClient = mti.lastFSeq();
       twst.setlastFseq(lastFseqFromClient);
@@ -312,6 +315,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(LogConte
       // threads.
       mm.startThreads();
       drtp.startThreads();
+      twst.setWaitForInstructionsTime(timer.secs());
       twst.startThreads();
       mrp.startThreads();
       mti.startThreads();

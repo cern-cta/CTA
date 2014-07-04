@@ -31,6 +31,8 @@
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
+#include "castor/tape/tapeserver/daemon/SessionStats.hpp"
+#include "castor/tape/utils/Timer.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -66,7 +68,8 @@ public:
    * @param td: tape drive object which will handle the file
    */
   virtual void execute(castor::tape::tapeFile::WriteSession & session,
-   MigrationReportPacker & reportPacker,castor::log::LogContext& lc);
+   MigrationReportPacker & reportPacker,castor::log::LogContext& lc,
+   SessionStats & stats, utils::Timer & timer);
   
   /**
    * Used to reclaim used memory blocks
