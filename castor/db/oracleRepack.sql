@@ -539,6 +539,8 @@ END;
 CREATE OR REPLACE PROCEDURE handleEndOfRepack(inReqId INTEGER) AS
   varNbLeftSegs INTEGER;
   varStartTime NUMBER;
+  varReqUuid VARCHAR2(40);
+  varVID VARCHAR2(10);
 BEGIN
   -- check how many segments are left in the original tape
   SELECT count(*) INTO varNbLeftSegs FROM Cns_seg_metadata@RemoteNS
@@ -548,10 +550,10 @@ BEGIN
      SET status = CASE varNbLeftSegs WHEN 0 THEN tconst.REPACK_FINISHED ELSE tconst.REPACK_FAILED END,
          lastModificationTime = getTime()
    WHERE id = inReqId
-  RETURNING creationTime INTO varStartTime;
+  RETURNING creationTime, reqId, repackVID INTO varStartTime, varReqUuid, varVID;
   -- log successful or unsuccessful completion
-  logToDLF(NULL, dlf.LVL_SYSTEM, CASE varNbLeftSegs WHEN 0 THEN dlf.REPACK_COMPLETED ELSE dlf.REPACK_FAILED END, 0, '',
-    'repackd', 'nbLeftSegments=' || TO_CHAR(varNbLeftSegs) || ' elapsedTime=' || TO_CHAR(TRUNC(getTime() - varStartTime)));
+  logToDLF(varReqUuid, dlf.LVL_SYSTEM, CASE varNbLeftSegs WHEN 0 THEN dlf.REPACK_COMPLETED ELSE dlf.REPACK_FAILED END, 0, '',
+    'repackd', 'TPVID=' || varVID || ' nbLeftSegments=' || TO_CHAR(varNbLeftSegs) || ' elapsedTime=' || TO_CHAR(TRUNC(getTime() - varStartTime)));
 END;
 /
 
