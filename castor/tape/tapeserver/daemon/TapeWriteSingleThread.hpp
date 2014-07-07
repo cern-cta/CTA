@@ -193,20 +193,31 @@ private:
       // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
       // through the st driver file descriptor.
       setCapabilities();
-      {  
+      {
+        //log and notify
+        m_logContext.log(LOG_INFO, "Starting tape write thread");
         // The tape will be loaded 
         // it has to be unloaded, unmounted at all cost -> RAII
         // will also take care of the TapeServerReporter
         TapeCleaning cleaner(*this, timer);
         // Before anything, the tape should be mounted
+        // This call does the logging of the mount
         mountTape(castor::legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
         waitForDrive();
         m_stats.mountTime += timer.secs(utils::Timer::resetCounter);
+        {
+          castor::log::ScopedParamContainer scoped(m_logContext);
+          scoped.add("mountTime", m_stats.mountTime);
+          m_logContext.log(LOG_INFO, "Tape mounted and drive ready");
+        }
         // Then we have to initialise the tape write session
         std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
         m_stats.positionTime += timer.secs(utils::Timer::resetCounter);
-        //log and notify
-        m_logContext.log(LOG_INFO, "Starting tape write thread");
+        {
+          castor::log::ScopedParamContainer scoped(m_logContext);
+          scoped.add("positionTime", m_stats.positionTime);
+          m_logContext.log(LOG_INFO, "Write session initialised, tape VID checked and drive positioned for writing");
+        }
         m_tsr.tapeMountedForWrite();
         uint64_t bytes=0;
         uint64_t files=0;

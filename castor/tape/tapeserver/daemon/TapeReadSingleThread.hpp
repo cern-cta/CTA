@@ -191,11 +191,20 @@ private:
         mountTape(legacymsg::RmcProxy::MOUNT_MODE_READONLY);
         waitForDrive();
         m_stats.mountTime += timer.secs(utils::Timer::resetCounter);
+        {
+          castor::log::ScopedParamContainer scoped(m_logContext);
+          scoped.add("mountTime", m_stats.mountTime);
+          m_logContext.log(LOG_INFO, "Tape mounted and drive ready");
+        }
         // Then we have to initialise the tape read session
         std::auto_ptr<castor::tape::tapeFile::ReadSession> rs(openReadSession());
         m_stats.positionTime += timer.secs(utils::Timer::resetCounter);
         //and then report
-        m_logContext.log(LOG_INFO, "Tape read session session successfully started");
+        {
+          castor::log::ScopedParamContainer scoped(m_logContext);
+          scoped.add("positionTime", m_stats.positionTime);
+          m_logContext.log(LOG_INFO, "Tape read session session successfully started");
+        }
         m_tsr.tapeMountedForRead();
         m_stats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
         //start the threading and ask to initiate the protocol with the tapeserverd
