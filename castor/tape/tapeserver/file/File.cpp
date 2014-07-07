@@ -204,41 +204,48 @@ namespace castor {
           m_session->m_drive.positionToLogicalObject(destination_block);
         }
         else if(fileToRecall.positionCommandCode()==castor::tape::tapegateway::TPPOSIT_FSEQ) {    
-          
-          if(fileToRecall.fseq()<1) {
-            std::stringstream err;
-            err << "Unexpected fileId in ReadFile::position with fSeq expected >=1, got: "
-                    << fileToRecall.fseq() << ")";
-            throw castor::exception::InvalidArgument(err.str());
-          }
-          
-          int64_t fseq_delta = fileToRecall.fseq() - m_session->getCurrentFseq();
-          if(fileToRecall.fseq() == 1) { 
-            // special case: we can rewind the tape to be faster 
-            //(TODO: in the future we could also think of a threshold above 
-            //which we rewind the tape anyway and then space forward)       
-            m_session->m_drive.rewind();
-            VOL1 vol1;
-            m_session->m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[ReadFile::position] - Reading VOL1");
-            try {
-              vol1.verify();
-            } catch (std::exception & e) {
-              throw TapeFormatError(e.what());
+          try {
+            if(fileToRecall.fseq()<1) {
+              std::stringstream err;
+              err << "Unexpected fileId in ReadFile::position with fSeq expected >=1, got: "
+                      << fileToRecall.fseq() << ")";
+              throw castor::exception::InvalidArgument(err.str());
             }
-          }
-          else if(fseq_delta == 0) {
-            // do nothing we are in the correct place
-          }
-          else if(fseq_delta > 0) {
-            //we need to skip three file marks per file (header, payload, trailer)
-            m_session->m_drive.spaceFileMarksForward((uint32_t)fseq_delta*3); 
-          }
-          else { //fseq_delta < 0
-            //we need to skip three file marks per file 
-            //(trailer, payload, header) + 1 to go on the BOT (beginning of tape) side 
-            //of the file mark before the header of the file we want to read
-            m_session->m_drive.spaceFileMarksBackwards((uint32_t)abs(fseq_delta)*3+1); 
-            m_session->m_drive.readFileMark("[ReadFile::position] Reading file mark right before the header of the file we want to read");
+            
+            int64_t fseq_delta = fileToRecall.fseq() - m_session->getCurrentFseq();
+            if(fileToRecall.fseq() == 1) { 
+              // special case: we can rewind the tape to be faster 
+              //(TODO: in the future we could also think of a threshold above 
+              //which we rewind the tape anyway and then space forward)       
+              m_session->m_drive.rewind();
+              VOL1 vol1;
+              m_session->m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[ReadFile::position] - Reading VOL1");
+              try {
+                vol1.verify();
+              } catch (std::exception & e) {
+                throw TapeFormatError(e.what());
+              }
+            }
+            else if(fseq_delta == 0) {
+              // do nothing we are in the correct place
+            }
+            else if(fseq_delta > 0) {
+              //we need to skip three file marks per file (header, payload, trailer)
+              m_session->m_drive.spaceFileMarksForward((uint32_t)fseq_delta*3); 
+            }
+            else { //fseq_delta < 0
+              //we need to skip three file marks per file 
+              //(trailer, payload, header) + 1 to go on the BOT (beginning of tape) side 
+              //of the file mark before the header of the file we want to read
+              m_session->m_drive.spaceFileMarksBackwards((uint32_t)abs(fseq_delta)*3+1); 
+              m_session->m_drive.readFileMark("[ReadFile::position] Reading file mark right before the header of the file we want to read");
+            }
+          } catch (...) {
+            //  In fseq positioning mode, any failure to position/read is
+            // fatal to the session as we lose information about where we are
+            // positioned
+            m_session->setCorrupted();
+            throw;
           }
         }
         else {
