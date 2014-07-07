@@ -291,7 +291,22 @@ int rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int st
                     NULL,
                     &opts);
 
-    if(rc == 0) {
+    if (response == NULL) {
+      TRACE(3,"rfio","Received NULL response");
+      rc = -1;
+    }
+    else if (response->errorCode != 0) {
+      TRACE(3,"rfio","stage_open error: %d/%s",
+            response->errorCode, response->errorMessage);
+      serrno = response->errorCode;
+      rc = -1;
+    }
+    else {
+      url = stage_geturl(response);
+      if (url == NULL) {
+        rc = -1;
+      }
+
       /*
        * Warning, this is a special case for castor2 when a file is recreated
        * with O_TRUNC but without O_CREAT: the correct behaviour is to
@@ -308,24 +323,6 @@ int rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int st
       } else {
         rc = rfio_open(url, flags, mode);
       }
-    }
-
-    if (response == NULL) {
-      TRACE(3,"rfio","Received NULL response");
-      serrno = SEINTERNAL;
-      rc = -1;
-    }
-
-    if (response->errorCode != 0) {
-      TRACE(3,"rfio","stage_open error: %d/%s",
-            response->errorCode, response->errorMessage);
-      serrno = response->errorCode;
-      rc = -1;
-    }
-
-    url = stage_geturl(response);
-    if (url == NULL) {
-      rc = -1;
     }
 
     /* Free response structure. Note: This logic should really as an API
