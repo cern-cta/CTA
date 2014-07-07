@@ -303,9 +303,6 @@ int rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int st
     }
     else {
       url = stage_geturl(response);
-      if (url == NULL) {
-        rc = -1;
-      }
 
       /*
        * Warning, this is a special case for castor2 when a file is recreated
@@ -325,7 +322,7 @@ int rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int st
       }
     }
 
-    /* Free response structure. Note: This logic should really as an API
+    /* Free response structure. Note: this logic should really be an API
      * of the stager client library
      */
     if (response != NULL) {
