@@ -99,7 +99,7 @@ protected:
         m_rmc.mountTape(m_volInfo.vid, m_drive.librarySlot,
                 mode);
         const std::string modeAsString = std::string("R")+ ((mode==legacymsg::RmcProxy::MOUNT_MODE_READWRITE) ? "W" : "");
-        scoped.add("RMCMountTime",timer.usecs()).add("mode",modeAsString);
+        scoped.add("RMCMountTime",timer.secs()).add("mode",modeAsString);
         m_logContext.log(LOG_INFO, "Tape Mounted");
         
     }
@@ -123,7 +123,7 @@ protected:
       tape::utils::Timer timer;
       // wait 600 drive is ready
       m_drive.waitUntilReady(600);
-      log::LogContext::ScopedParam sp0(m_logContext, log::Param("loadTime", timer.usecs()));
+      log::LogContext::ScopedParam sp0(m_logContext, log::Param("loadTime", timer.secs()));
     }catch(const castor::exception::Exception& e){
       log::LogContext::ScopedParam sp01(m_logContext, log::Param("exception_code", e.code()));
       log::LogContext::ScopedParam sp02(m_logContext, log::Param("exception_message", e.getMessageValue()));
