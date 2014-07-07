@@ -221,7 +221,6 @@ int rfio_HsmIf_mkdir(const char *path, mode_t mode) {
 int rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int streaming) {
   int rc = -1;
   int ret;
-  int save_serrno, save_errno;
   struct Cns_filestat st;
   int* auxVal;
   char ** auxPoint;
@@ -280,37 +279,34 @@ int rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int st
     struct stage_io_fileresp *response = NULL;
     char *url = NULL;
 
-    for (;;) {
-      TRACE(3,"rfio","Calling stage_open with: %s 0x%x 0x%x",
-            path, flags, mode);
-      rc = stage_open(NULL,
-                      mover_protocol_rfio,
-                      path,
-                      flags,
-                      mode,
-                      0,
-                      &response,
-                      NULL,
-                      &opts);
-      save_errno = errno;
-      save_serrno = serrno;
-      if (rc < 0) {
-        if ( (save_serrno == SECOMERR)     ||
-             (save_serrno == SETIMEDOUT)   ||
-             (save_serrno == ECONNREFUSED) ||
-             (save_errno  == ECONNREFUSED)
-             ) {
-          int retrySleepTime;
-          retrySleepTime = 1 + (int)(10.0*rand()/(RAND_MAX+1.0));
-          sleep(retrySleepTime);
-          continue;
-        }
+    TRACE(3,"rfio","Calling stage_open with: %s 0%o 0%o",
+          path, flags, mode);
+    rc = stage_open(NULL,
+                    mover_protocol_rfio,
+                    path,
+                    flags,
+                    mode,
+                    0,
+                    &response,
+                    NULL,
+                    &opts);
 
-        /* Free resources */
-        rc = -1;
-        goto end;
+    if(rc == 0) {
+      /*
+       * Warning, this is a special case for castor2 when a file is recreated
+       * with O_TRUNC but without O_CREAT: the correct behaviour is to
+       * recreate the castorfile and schedule access to the new diskcopy.
+       * However, because of there is no O_CREAT the mover open will fail
+       * to create the new diskcopy. We must therefore add O_CREAT but
+       * only after stage_open() has processed the request and recreated
+       * the castorfile.
+       */
+      if ( (flags & O_TRUNC) == O_TRUNC ) flags |= O_CREAT;
+
+      if (mode64) {
+        rc = rfio_open64(url, flags, mode);
       } else {
-        break;
+        rc = rfio_open(url, flags, mode);
       }
     }
 
@@ -318,7 +314,6 @@ int rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int st
       TRACE(3,"rfio","Received NULL response");
       serrno = SEINTERNAL;
       rc = -1;
-      goto end;
     }
 
     if (response->errorCode != 0) {
@@ -326,33 +321,12 @@ int rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int st
             response->errorCode, response->errorMessage);
       serrno = response->errorCode;
       rc = -1;
-      goto end;
     }
 
     url = stage_geturl(response);
     if (url == NULL) {
       rc = -1;
-      goto end;
     }
-
-    /*
-     * Warning, this is a special case for castor2 when a file is recreated
-     * with O_TRUNC but without O_CREAT: the correct behaviour is to
-     * recreate the castorfile and schedule access to the new diskcopy.
-     * However, because of there is no O_CREAT the mover open will fail
-     * to create the new diskcopy. We must therefore add O_CREAT but
-     * only after stage_open() has processed the request and recreated
-     * the castorfile.
-     */
-    if ( (flags & O_TRUNC) == O_TRUNC ) flags |= O_CREAT;
-
-    if (mode64) {
-      rc = rfio_open64(url, flags, mode);
-    } else {
-      rc = rfio_open(url, flags, mode);
-    }
-
-  end:
 
     /* Free response structure. Note: This logic should really as an API
      * of the stager client library
