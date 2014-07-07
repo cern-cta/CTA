@@ -27,24 +27,12 @@ rfcp \- Remote file copy
 .IR directory
 .br
 .P
-On Windows only:
-.br
-.B rfcp
-[
-.BI -a
-] [
-.BI -b
-] [
-.BI -s " size"
-] [
-.BI -v2
-]
 .BI @ command_file
 .SH DESCRIPTION
 .IX "\fLrfcp\fR"
 The remote file I/O copy program provides an interface to the
 .B shift
-remote file I/O daemon (rfiod) for transferring files between remote and/or
+remote file I/O daemon (rfiod) and to CASTOR for transferring files between remote and/or
 local hosts. Each
 .IR filename
 or
@@ -55,7 +43,7 @@ argument is either a remote file name of the form:
 .LP
 or a local file name (not containing the :/ character combination). The standard input is supported with the
 .BI \-
-character. Then directory in output is not supported.
+character. In this case a directory in output is not supported.
 .LP
 For castor files the new TURL sintax may be used, with the following variants:
 .LP
@@ -73,16 +61,6 @@ Of course the old RFIO sintax (rfio://[diskserver][:port]/path) is still valid.
 
 .SH OPTIONS
 .TP
-.BI \-a
-tells
-.B rfcp
-that the source file is ASCII text (Windows/NT only)
-.TP
-.BI \-b
-tells
-.B rfcp
-that the source is a binary file (Windows/NT only)
-.TP
 .BI \-s " size"
 If specified, only
 .I size
@@ -99,15 +77,9 @@ If specified, forces the RFIO V.2 protocol. Otherwise, V.3 is used and rfio3 is 
 .br
 2	System error.
 .br
-3	Unknown error.
-.br
 16	Device or resource busy.
 .br
 28	No space left on device.
-.br
-196	Request killed.
-.br
-198	Stager not active.
 .br
 200	Bad checksum.
 .br
@@ -125,7 +97,7 @@ If the service class is not specified on the command-line, then
 will use the value of the \fBSTAGE_SVCCLASS\fP environment variable if it is
 set. Please note the environment variable name \fBSTAGE_SVCCLASS\fP does not
 contain the letter \fBR\fP, unlike the corresponding configuration parameter
-in the castor configuration file \fB/etc/castor.conf\fP, see below.
+in the castor configuration file \fB/etc/castor/castor.conf\fP, see below.
 .TP
 .BI RFIO_TRACE
 Setting this environment variable to 3 causes the rfcp command to print a
@@ -137,7 +109,7 @@ debugging trace to standard out.
 If the service class is not specified on the command-line or by the environment
 variable \fBSTAGE_SVCCLASS\fP, then \fBrfcp\fP will use the value of the
 configuration parameter \fBSTAGER SVCCLASS\fP specified in the castor
-configuration file \fB/etc/castor.conf\fP. If the service class is not
+configuration file \fB/etc/castor/castor.conf\fP. If the service class is not
 specified using any of these three methods, then the default value of
 "\fBdefault\fP" will be used.  Please note the name of the castor configuration
 parameter \fBSTAGER SVCCLASS\fP contains the letter \fBR\fP, unlike the
