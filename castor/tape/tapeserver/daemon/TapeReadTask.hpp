@@ -96,7 +96,7 @@ public:
       while (stillReading) {
         // Get a memory block and add information to its metadata
         mb=m_mm.getFreeBlock();
-        localStats.waitDataTime += timer.secs(utils::Timer::resetCounter);
+        localStats.waitFreeMemoryTime += timer.secs(utils::Timer::resetCounter);
         
         mb->m_fSeq = m_fileToRecall->fseq();
         mb->m_fileBlock = fileBlock++;

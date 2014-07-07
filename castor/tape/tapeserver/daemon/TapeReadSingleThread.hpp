@@ -236,7 +236,7 @@ private:
             .add("waitInstructionsTime", m_stats.waitInstructionsTime)
             .add("checksumingTime", m_stats.checksumingTime)
             .add("transferTime", m_stats.transferTime)
-            .add("waitDataTime", m_stats.waitDataTime)
+            .add("waitFreeMemoryTime", m_stats.waitFreeMemoryTime)
             .add("waitReportingTime", m_stats.waitReportingTime)
             .add("flushTime", m_stats.flushTime)
             .add("unloadTime", m_stats.unloadTime)

@@ -46,8 +46,10 @@ namespace tapeserver {
     double unloadTime;
     /** Unmount time, in seconds. */
     double unmountTime;
-    /** Cumulated time spent waiting for data blocks/free memory. */
+    /** Cumulated time spent waiting for data blocks. */
     double waitDataTime;
+    /** Cumulated time spent waiting for free memory. */
+    double waitFreeMemoryTime;
     /** Cumulated time spent by the tape thread waiting for a task. */
     double waitInstructionsTime;
     /** Cumulated time spent reporting */
