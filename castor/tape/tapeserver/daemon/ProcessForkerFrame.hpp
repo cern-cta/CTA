@@ -21,21 +21,39 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#pragma once
+
 #include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
 
-//------------------------------------------------------------------------------
-// toString
-//------------------------------------------------------------------------------
-const char *castor::tape::tapeserver::daemon::ProcessForkerMsgType::
-  toString(const Enum value) throw() {
-  switch(value) {
-  case MSG_NONE             : return "None";
-  case MSG_FORKCLEANER      : return "Cleaner";
-  case MSG_FORKDATATRANSFER : return "ForkDataTransfer";
-  case MSG_FORKLABEL        : return "ForkLabel";
-  case MSG_FORKSUCCEEDED    : return "ForkSucceeded";
-  case MSG_STATUS           : return "Status";
-  case MSG_STOPPROCESSFORKER: return "StopProcessForker";
-  default                   : return "Unknown";
+#include <string>
+
+namespace castor     {
+namespace tape       {
+namespace tapeserver {
+namespace daemon     {
+
+/**
+ * Structure reprsenting a message frame.
+ */
+struct ProcessForkerFrame {
+  /**
+   *  The type of the message contained within the payload of the frame.
+   */
+  ProcessForkerMsgType::Enum type;
+
+  /**
+   * The payload of the frame.
+   */
+  std::string payload;
+
+  /**
+   * Constructor.
+   */
+  ProcessForkerFrame(): type(ProcessForkerMsgType::MSG_NONE) {
   }
-}
+}; // struct Frame
+
+} // namespace tapeserver
+} // namespace tape
+} // namespace daemon
+} // namespace castor

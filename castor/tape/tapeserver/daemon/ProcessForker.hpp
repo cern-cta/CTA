@@ -24,6 +24,8 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerFrame.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
 
 #include <stdint.h>
 
@@ -82,6 +84,28 @@ private:
   const int m_socketFd;
 
   /**
+   * Structure defining the result of a message handler.
+   */
+  struct MsgHandlerResult {
+    /**
+     * True if the main event loop should continue.
+     */
+    bool continueMainEventLoop;
+
+    /**
+     * The reply frame.
+     */
+    ProcessForkerFrame reply;
+
+    /**
+     * Constructor.
+     */
+    MsgHandlerResult() throw():
+      continueMainEventLoop(false) {
+    }
+  }; // struct MsgHandlerResult
+
+  /**
    * Handles any pending events.
    *
    * @return true if the main event loop should continue.
@@ -89,67 +113,55 @@ private:
   bool handleEvents();
 
   /**
+   * Return strue if there is a pending message from the ProcessForker proxy.
+   */
+  bool thereIsAPendingMsg();
+
+  /**
    * Reads in and handles a single message from the ProcessForker proxy.
    */
   bool handleMsg();
 
   /**
-   * Reads an unsigned 32-bit integer from the socket connected to the
-   * ProcessForkerProxySocket.
+   * Dispatches the appropriate handler method for the message contained within
+   * the specified frame;
    *
-   * @return The unsigned 32-bit integer.
+   * @param frame The frame containing the message.
+   * @return The result of dispatching the message handler.
    */
-  uint32_t readUint32FromSocket();
-
-  /**
-   * Dispatches the appropriate handle method for the specified message.
-   *
-   * @param msgType The type of the message.
-   * @param payload The frame payload containing the message.
-   * @return True if the main event loop should continue.
-   */
-  bool dispatchMsgHandler(const uint32_t msgType, const std::string &payload);
+  MsgHandlerResult dispatchMsgHandler(const ProcessForkerFrame &frame);
 
   /**
    * Handles a StopProcessForker message.
    *
-   * @param payload The frame payload containing the message.
-   * @return True if the main event loop should continue.
+   * @param frame The frame containing the message.
+   * @return The result of the message handler.
    */
-  bool handleStopProcessForkerMsg(const std::string &payload);
+  MsgHandlerResult handleStopProcessForkerMsg(const ProcessForkerFrame &frame);
 
   /**
    * Handles a ForkLabel message.
    *
-   * @param payload The frame payload containing the message.
-   * @return True if the main event loop should continue.
+   * @param frame The frame containing the message.
+   * @return The result of the message handler.
    */
-  bool handleForkLabelMsg(const std::string &payload);
+  MsgHandlerResult handleForkLabelMsg(const ProcessForkerFrame &frame);
 
   /**
    * Handles a ForkDataTransfer message.
    *
-   * @param payload The frame payload containing the message.
-   * @return True if the main event loop should continue.
+   * @param frame The frame containing the message.
+   * @return The result of the message handler.
    */
-  bool handleForkDataTransferMsg(const std::string &payload);
+  MsgHandlerResult handleForkDataTransferMsg(const ProcessForkerFrame &frame);
 
   /**
    * Handles a ForkCleaner message.
    *
-   * @param payload The frame payload containing the message.
-   * @return True if the main event loop should continue.
+   * @param frame The frame containing the message.
+   * @return The result of the message handler.
    */
-  bool handleForkCleanerMsg(const std::string &payload);
-
-  /**
-   * Reads the payload of a frame from the socket connected to the ProcessForker
-   * proxy.
-   *
-   * @param payloadLen The length of the payload in bytes.
-   * @return The payload as a string.
-   */
-  std::string readPayloadFromSocket(const ssize_t payloadLen);
+  MsgHandlerResult handleForkCleanerMsg(const ProcessForkerFrame &frame);
 
 }; // class ProcessForker
 

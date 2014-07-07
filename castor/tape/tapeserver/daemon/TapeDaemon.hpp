@@ -219,14 +219,14 @@ protected:
   /**
    * The main event loop of the daemon.
    */
-  void mainEventLoop() ;
+  void mainEventLoop();
 
   /**
    * Handles any pending events.
    *
    * @return True if the main event loop should continue, else false.
    */
-  bool handleEvents() ;
+  bool handleEvents();
 
   /**
    * Handles any pending signals.
@@ -383,14 +383,14 @@ protected:
    * call to m_reactor.handleEvents() handled requests to start a label
    * session on more than one of the connected tape drives.
    */
-  void forkLabelSessions() throw();
+  void forkLabelSessions();
 
   /**
    * Forks a label-session child-process for the specified tape drive.
    *
    * @param drive The tape-drive entry in the tape-drive catalogue.
    */
-  void forkLabelSession(DriveCatalogueEntry *drive) throw();
+  void forkLabelSession(DriveCatalogueEntry *drive);
 
   /**
    * Runs the label session.  This method is to be called within the child

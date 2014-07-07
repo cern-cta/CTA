@@ -40,10 +40,13 @@ public:
    * ProcessForkerProxy and the ProcessForker.
    */
   enum Enum {
-    MSG_STOPPROCESSFORKER,
-    MSG_FORKLABEL,
+    MSG_NONE,
+    MSG_FORKCLEANER,
     MSG_FORKDATATRANSFER,
-    MSG_FORKCLEANER
+    MSG_FORKLABEL,
+    MSG_FORKSUCCEEDED,
+    MSG_STATUS,
+    MSG_STOPPROCESSFORKER
   };
 
   /**

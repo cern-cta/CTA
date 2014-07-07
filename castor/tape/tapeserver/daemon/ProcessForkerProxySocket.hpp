@@ -109,46 +109,6 @@ private:
    */
   const int m_socketFd;
 
-  /**
-   * Writes a frame with the specified message as its payload to the socket
-   * connected to the ProcessForker.
-   *
-   * @param msgType The type of the message being sent in the payload of the
-   * frame.
-   * @param msg The message to sent as the payload of the frame.
-   */
-  void writeFrameToSocket(const ProcessForkerMsgType::Enum msgType,
-    const google::protobuf::Message &msg);
-
-  /**
-   * Writes a frame header to the socket connected to the ProcessForker.
-   *
-   * @param msgType The type of the message being sent in the payload of the
-   * frame.
-   * @param payloadLen The length of the frame payload in bytes.
-   */
-  void writeFrameHeaderToSocket(const ProcessForkerMsgType::Enum msgType,
-    const uint32_t payloadLen);
-
-  /**
-   * Writes the specified unsigned 32-bit integer to the socket connected to the
-   * ProcessForker.
-   *
-   * @param value The value to be written.
-   */
-  void writeUint32ToSocket(const uint32_t value);
-
-  /**
-   * Writes the specified message as the payload of a frame to the socket
-   * connected to the ProcessForker.
-   */
-  void writeFramePayloadToSocket(const google::protobuf::Message &msg);
-
-  /**
-   * Writes the specified string to the socket connected to the ProcessForker.
-   */
-  void writeStringToSocket(const std::string &str);
-
 }; // class ProcessForkerProxySocket
 
 } // namespace daemon

@@ -14,36 +14,12 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //
+//
+//
 // @author Castor Dev team, castor-dev@cern.ch
 
 package castor.messages;
 
-message Header {
- required uint32 magic = 1;
-
- //see castor::messages::protocolType's anonymous enum for values
- required uint32 protocolType = 2;
-
- //see castor::messages::protocolVersion's anonymous enum for values
- required uint32 protocolVersion = 3;
-
- //see castor::messages::reqType's anonymous enum for values
- required uint32 reqType = 4;
-
- //will it be hardcoded to SHA1 ?
- required string bodyHashType = 5;		
- required string bodyHashValue = 6;
-
-	
- required string bodySignatureType= 7;	
- required string bodySignature = 8;	
-}
-
-//generic return value. It is either returnValue=0 and message="" (ie everything is OK)
-//or returnValue!=0 and message!="" (ie something went wrong)
-//This SHOULD NOT BE USED as an answer for specific messages.
-//Create your own answers, even for one integer
-message ReturnValue{
-  required uint32 returnValue = 1;
-  required string message= 2;
+message ForkSucceeded {
+  required uint64 pid = 1;
 }

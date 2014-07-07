@@ -1119,8 +1119,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runDataTransferSession(
 //------------------------------------------------------------------------------
 // forkLabelSessions
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSessions() throw() {
-  const std::list<std::string> unitNames = m_driveCatalogue.getUnitNamesWaitingForLabelFork();
+void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSessions() {
+  const std::list<std::string> unitNames =
+    m_driveCatalogue.getUnitNamesWaitingForLabelFork();
 
   for(std::list<std::string>::const_iterator itor = unitNames.begin();
     itor != unitNames.end(); itor++) {
@@ -1134,12 +1135,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSessions() throw() {
 // forkLabelSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
-  DriveCatalogueEntry *drive) throw() {
+  DriveCatalogueEntry *drive) {
   const utils::DriveConfig &driveConfig = drive->getConfig();
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", driveConfig.unitName));
 
-  m_processForker->forkLabel(driveConfig.unitName, drive->getVid());
+  m_processForker->forkLabel(driveConfig.unitName, drive->getLabelJob().vid);
 
   // Release the connection with the label command from the drive catalogue
   castor::utils::SmartFd labelCmdConnection;

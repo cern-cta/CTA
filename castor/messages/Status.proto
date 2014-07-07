@@ -18,32 +18,13 @@
 
 package castor.messages;
 
-message Header {
- required uint32 magic = 1;
+message Status {
+  // Status value where 0 means success and non-zero means error.
+  required uint32 status = 1;
 
- //see castor::messages::protocolType's anonymous enum for values
- required uint32 protocolType = 2;
-
- //see castor::messages::protocolVersion's anonymous enum for values
- required uint32 protocolVersion = 3;
-
- //see castor::messages::reqType's anonymous enum for values
- required uint32 reqType = 4;
-
- //will it be hardcoded to SHA1 ?
- required string bodyHashType = 5;		
- required string bodyHashValue = 6;
-
-	
- required string bodySignatureType= 7;	
- required string bodySignature = 8;	
-}
-
-//generic return value. It is either returnValue=0 and message="" (ie everything is OK)
-//or returnValue!=0 and message!="" (ie something went wrong)
-//This SHOULD NOT BE USED as an answer for specific messages.
-//Create your own answers, even for one integer
-message ReturnValue{
-  required uint32 returnValue = 1;
-  required string message= 2;
+  // In the event of an error, in other words when the status field is set to a
+  // non-zero value, this field should contain a human-readable error-message.
+  // This field should explicitly be set to the empty string when the status
+  // field is 0.
+  required string message = 2;
 }
