@@ -51,6 +51,20 @@
 }
 
 {
+   ForkSucceeded
+   Memcheck:Leak
+   ...
+   fun:_GLOBAL__I_ForkSucceeded.pb.cc
+}
+
+{
+   _ZN6castor8messages49StaticDescriptorInitializer_ForkSucceeded_2eprotoC1Ev
+   Memcheck:Leak
+   ...
+   fun:_ZN6castor8messages49StaticDescriptorInitializer_ForkSucceeded_2eprotoC1Ev
+}
+
+{
    ZN6castor8messages42StaticDescriptorInitializer
    Memcheck:Leak
    ...
