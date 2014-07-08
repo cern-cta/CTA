@@ -86,6 +86,20 @@
 }
 
 {
+   Status
+   Memcheck:Leak
+   ...
+   fun:_GLOBAL__I_Status.pb.cc
+}
+
+{
+   _ZN6castor8messages42StaticDescriptorInitializer_Status_2eprotoC1Ev
+   Memcheck:Leak
+   ...
+   fun:_ZN6castor8messages42StaticDescriptorInitializer_Status_2eprotoC1Ev
+}
+
+{
    StopProcessForker
    Memcheck:Leak
    ...
