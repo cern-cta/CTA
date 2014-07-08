@@ -602,22 +602,23 @@ END;
 
 /* Search and delete old archived/failed subrequests and their requests */
 CREATE OR REPLACE PROCEDURE deleteTerminatedRequests AS
-  timeOut INTEGER;
-  rateDependentTimeOut INTEGER;
+  failuresTimeOut INTEGER;
+  successesTimeOut INTEGER;
   rate INTEGER;
   srIds "numList";
   ct NUMBER;
 BEGIN
-  -- select requested timeout from configuration table
-  timeOut := 3600*TO_NUMBER(getConfigOption('cleaning', 'terminatedRequestsTimeout', '120'));
+  -- select requested timeout for failed requests from configuration table
+  failuresTimeOut := 3600*TO_NUMBER(getConfigOption('cleaning', 'failedRequestsTimeout', '168'));  -- 1 week
   -- compute a rate-dependent timeout for the successful requests by looking at the
-  -- last half-hour of activity: keep max 1M of them regardless the above configured timeOut.
-  SELECT 1800 * 1000000 / (count(*)+1) INTO rateDependentTimeOut
+  -- last half-hour of activity: keep max 1M of them.
+  SELECT 1800 * 1000000 / (count(*)+1) INTO successesTimeOut
     FROM SubRequest
    WHERE status = dconst.SUBREQUEST_ARCHIVED
      AND lastModificationTime > getTime() - 1800;
-  IF rateDependentTimeOut > timeOut THEN
-    rateDependentTimeOut := timeOut;
+  IF successesTimeOut > failuresTimeOut THEN
+    -- in case of light load, don't keep successful request for longer than failed ones
+    successesTimeOut := failuresTimeOut;
   END IF;
   
   -- Delete castorFiles if nothing is left for them. Here we use
@@ -628,10 +629,10 @@ BEGIN
   INSERT /*+ APPEND */ INTO DeleteTermReqHelper (srId, cfId)
     (SELECT SR.id, castorFile FROM SubRequest SR
       WHERE (SR.status = dconst.SUBREQUEST_ARCHIVED
-             AND SR.lastModificationTime < getTime() - rateDependentTimeOut)
+             AND SR.lastModificationTime < getTime() - successesTimeOut)
          -- failed subrequests are kept according to the configured timeout
          OR (SR.status = dconst.SUBREQUEST_FAILED_FINISHED
-             AND reqType != 119 AND SR.lastModificationTime < getTime() - timeOut));  -- StageRepackRequest
+             AND reqType != 119 AND SR.lastModificationTime < getTime() - failuresTimeOut));  -- StageRepackRequest
   COMMIT;  -- needed otherwise the next statement raises
            -- ORA-12838: cannot read/modify an object after modifying it in parallel
   -- 2nd part, separated from above for efficiency reasons
@@ -640,7 +641,7 @@ BEGIN
       WHERE SR.status = dconst.SUBREQUEST_FAILED_FINISHED
          -- only for the Repack case, we keep all failed subrequests around until
          -- the whole Repack request is over for more than <timeOut> seconds
-        AND reqType = 119 AND R.lastModificationTime < getTime() - timeOut  -- StageRepackRequest
+        AND reqType = 119 AND R.lastModificationTime < getTime() - failuresTimeOut  -- StageRepackRequest
         AND R.id = SR.request);
   COMMIT;
   SELECT count(*) INTO ct FROM DeleteTermReqHelper;
@@ -704,12 +705,17 @@ BEGIN
 
   -- Finally deal with Repack: this case is different because StageRepackRequests may be empty
   -- at the beginning. Therefore we only drop repacks that are in a completed state
-  -- for more than <timeOut> seconds.                              FINISHED, FAILED, ABORTED
-  bulkDelete('SELECT id FROM StageRepackRequest R WHERE status IN (2, 3, 5)
+  -- for more than the requested time.
+  -- First failed ones (status FAILED, ABORTED)
+  bulkDelete('SELECT id FROM StageRepackRequest R WHERE status IN (3, 5)
     AND NOT EXISTS (SELECT 1 FROM SubRequest WHERE request = R.id)
-    AND lastModificationTime < getTime() - ' || timeOut || ';',
+    AND lastModificationTime < getTime() - ' || failuresTimeOut || ';',
     'StageRepackRequest');
-
+  -- Then successful ones (status FINISHED)
+  bulkDelete('SELECT id FROM StageRepackRequest R WHERE status = 2
+    AND NOT EXISTS (SELECT 1 FROM SubRequest WHERE request = R.id)
+    AND lastModificationTime < getTime() - ' || successesTimeOut || ';',
+    'StageRepackRequest');
 END;
 /
 
