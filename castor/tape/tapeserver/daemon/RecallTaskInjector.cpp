@@ -176,6 +176,11 @@ void RecallTaskInjector::WorkerThread::run()
   try{
     while (1) {
       Request req = m_parent.m_queue.pop();
+      if (req.end) {
+        m_parent.m_lc.log(LOG_INFO,"Received a end notification from tape thread: triggering the end of session.");
+        m_parent.signalEndDataMovement();
+        break;
+      }
       m_parent.m_lc.log(LOG_DEBUG,"RecallJobInjector:run: about to call client interface");
       client::ClientProxy::RequestReport reqReport;
       std::auto_ptr<tapegateway::FilesToRecallList> filesToRecallList(m_parent.m_client.getFilesToRecall(req.nbMaxFiles, req.byteSizeThreshold,reqReport));
@@ -209,7 +214,7 @@ void RecallTaskInjector::WorkerThread::run()
       
       m_parent.signalEndDataMovement();
       m_parent.deleteAllTasks();
-    } 
+    }
   //-------------
   m_parent.m_lc.log(LOG_DEBUG, "Finishing RecallTaskInjector thread");
   /* We want to finish at the first lastCall we encounter.

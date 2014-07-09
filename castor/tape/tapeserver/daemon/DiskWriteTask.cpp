@@ -51,7 +51,12 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
     while(1) {
       if(MemBlock* const mb = m_fifo.pop()) {
         AutoReleaseBlock<RecallMemoryManager> releaser(mb,m_memManager);
-        
+        if(mb->m_cancelled) {
+          // If the tape side got cancelled, we report nothing and count
+          // it as a success.
+          lc.log(LOG_DEBUG, "File transfer cancelled");
+          return true;
+        }
         if(m_recallingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
                 || blockId != mb->m_fileBlock  || mb->m_failed ){
           LogContext::ScopedParam sp[]={
@@ -72,6 +77,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
       else 
         break;
     } //end of while(1)
+    lc.log(LOG_DEBUG, "File successfully transfered.");
     reporter.reportCompletedJob(*m_recallingFile,checksum);
     return true;
   } //end of try

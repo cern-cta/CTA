@@ -290,7 +290,7 @@ private:
         if(!task) {
           break;
         }
-        task->reportErrorToDiskTask();
+        task->reportCancellationToDiskTask();
         delete task;
       }
     }

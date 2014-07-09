@@ -162,35 +162,38 @@ public:
         lc2.logBacktrace(LOG_ERR, ex.backtrace());
       }
       
-      //if we end up there because openReadFile brought us here
-      //then mb is not valid, we need to get a block 
-      //that will be done in reportErrorToDiskTask() 
-      //or directly call reportErrorToDiskTask with the mem block
-      if(!mb) {
-        reportErrorToDiskTask();
-      }
-      else{
-        reportErrorToDiskTask(mb);
-      }
+      // mb might or might not be allocated at this point, but 
+      // reportErrorToDiskTask will deal with the allocation if required.
+      reportErrorToDiskTask(mb);
     } //end of catch
     watchdog.fileFinished();
   }
-   /**
-    * Get a valid block and ask to to do the report to the disk write task
-    */
-  void reportErrorToDiskTask(){
+  /**
+   * Get a valid block and ask to cancel the disk write task
+   */
+  void reportCancellationToDiskTask(){
     MemBlock* mb =m_mm.getFreeBlock();
     mb->m_fSeq = m_fileToRecall->fseq();
     mb->m_fileid = m_fileToRecall->fileid();
-    reportErrorToDiskTask(mb);
+    //mark the block cancelled and push it (plus signal the end)
+     mb->markAsCancelled();
+     m_fifo.pushDataBlock(mb);
+     m_fifo.pushDataBlock(NULL);
   }
 private:
   /**
    * Do the actual report to the disk write task
    * @param mb We assume that mb is a valid mem block
    */
-  void reportErrorToDiskTask(MemBlock* mb){
-    //mark the block failed and push it
+  void reportErrorToDiskTask(MemBlock* mb = NULL){
+    //If we are not provided with a block, allocate it and
+    // fill it up
+    if (!mb) {
+      mb=m_mm.getFreeBlock();
+      mb->m_fSeq = m_fileToRecall->fseq();
+      mb->m_fileid = m_fileToRecall->fileid();
+    }
+    //mark the block failed and push it (plus signal the end)
      mb->markAsFailed();
      m_fifo.pushDataBlock(mb);
      m_fifo.pushDataBlock(NULL);

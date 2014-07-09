@@ -60,6 +60,18 @@ public:
     m_tapeFileBlock = -1;
   }
   /**
+   * Mark the block as cancelled: this indicates the writer thread that
+   * the read was skipped due to previous, unrelated errors, and that this
+   * file will not be processed at all (and hence should not be reported about).
+   * This is mainly used for the tape read case, when positioning is confused
+   * (when positioning by fSeq, there's nothing we can do).
+   */
+  void markAsCancelled(){
+    m_cancelled = true;
+    m_fileBlock = -1;
+    m_tapeFileBlock = -1;
+  }
+  /**
    * Reset all the members.
    * Numerical ones are set at -1.and m_failed to false.
    */
@@ -69,6 +81,7 @@ public:
     m_fSeq = -1;
     m_tapeFileBlock = -1;
     m_failed=false;
+    m_cancelled=false;
     m_payload.reset();
   }
   /** Unique memory block id */
@@ -94,6 +107,10 @@ public:
   
   /** Flag indicating to the receiver that the file read failed */
   bool m_failed;
+  
+  /** Flag indicating that the transfer was cancelled, usually due to a 
+   previous failure. */
+  bool m_cancelled;
  
 };
 
