@@ -93,8 +93,30 @@ public:
   bool handleEvent(const zmq_pollitem_t &fd);
   
 private:
+  /**
+   *  Send to the client a ReturnValue(0,"")
+   */
   void sendSuccessReplyToClient();
+  /**
+   * Send to the client a ReturnValue(ex.code(),ex.getGetMessageValue())
+   * @param e
+   */
+  void sendErrorReplyToClient(const castor::exception::Exception& e);
+
+  /**
+   * Send to the client a ReturnValue Message with the given parameters
+   * @param returnValue the interger value to send (0 = everything ok, 
+   * positive integer will trigger an exception
+   * @param msg The string to display (should be empty if returnValue=0)
+   */
+  void sendReplyToClient(int returnValue,const std::string& msg);
   
+  /**
+   * Will try to parse a message of type T into msg from the data which are 
+   * within blob
+   * @param msg
+   * @param blob
+   */
   template <class T> void unserialize(T& msg, tape::utils::ZmqMsg& blob){
     std::string logMessage="Cant parse " ;
     logMessage+=castor::utils::demangledNameOf(msg)+" from binary data. Wrong body";
@@ -126,7 +148,7 @@ private:
   const std::string m_hostName;
   
   /** 
-   * Reference to the VdqmProxy, allowing reporting of the drive status. It
+   * Reference to the VdqmProxy, allowing reporting of the drive status. It 
    * will be used by the StatusReporter 
    */
   castor::legacymsg::VdqmProxy & m_vdqm;
@@ -137,8 +159,17 @@ private:
    */
   castor::legacymsg::VmgrProxy & m_vmgr;
   
+  /**
+   * Make sure the  zmq_pollitem_t's socket is the same as m_socket
+   * Throw an exception if it is not the case
+   * @param fd the poll item 
+   */
   void checkSocket(const zmq_pollitem_t &fd);
   
+  /**
+   * Call the right dealWith according to header.reqType()
+   * @param header
+   */
   void dispatchEvent(castor::messages::Header& header);
   
   void dealWith(const castor::messages::Header&,
@@ -147,12 +178,12 @@ private:
   void dealWith(const castor::messages::Header& header, 
      const castor::messages::NotifyDriveBeforeMountStarted& body);
 
-void dealWith(const castor::messages::Header& header,
+  void dealWith(const castor::messages::Header& header,
      const castor::messages::NotifyDriveTapeMounted& body); 
 
   /**
-   * Unserialise the blob and check the header
-   * @param headerBlob
+   * Unserialize the blob and check the header
+   * @param headerBlob The blob from the header
    */
   castor::messages::Header buildHeader(tape::utils::ZmqMsg& headerBlob);
 }; // class TapeMessageHandler

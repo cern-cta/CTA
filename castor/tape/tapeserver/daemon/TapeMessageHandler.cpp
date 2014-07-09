@@ -209,7 +209,9 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchEvent(
   }
 }
 
-
+//------------------------------------------------------------------------------
+// dealWith
+//------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeMessageHandler::dealWith(
 const castor::messages::Header& header, const castor::messages::Heartbeat& body){
   
@@ -229,9 +231,13 @@ const castor::messages::NotifyDriveBeforeMountStarted& body){
     legacymsg::VmgrTapeInfoMsgBody tapeInfo;
     m_vmgr.queryTape(body.vid(), tapeInfo);
     // If the client is the tape gateway and the volume is not marked as BUSY
-    if(body.clienttype() == castor::messages::NotifyDriveBeforeMountStarted::CLIENT_TYPE_GATEWAY && !(tapeInfo.status & TAPE_BUSY)) {
+    if(body.clienttype() == castor::messages::NotifyDriveBeforeMountStarted::CLIENT_TYPE_GATEWAY 
+            && !(tapeInfo.status & TAPE_BUSY)) {
       castor::exception::Exception ex;
       ex.getMessage() << "The tape gateway is the client and the tape to be mounted is not BUSY: vid=" << body.vid();
+      
+      //send an error to the client
+      sendErrorReplyToClient(ex);
       throw ex;
     }
     
@@ -243,13 +249,18 @@ const castor::messages::NotifyDriveBeforeMountStarted& body){
     header.set_bodyhashvalue(castor::messages::computeSHA1Base64(body));
     header.set_bodysignature("PIPO");
     
+    //send the number of files on the tape to the client
     castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
     castor::messages::sendMessage(m_socket,body);
   } else {
+    //we were not event in castor::messages::TAPE_MODE_READWRITE mpde
+    //so send empty answer
     sendSuccessReplyToClient();
   }
 }
-
+//------------------------------------------------------------------------------
+// dealWith
+//------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeMessageHandler::dealWith(
 const castor::messages::Header& header, 
 const castor::messages::NotifyDriveTapeMounted& body){
@@ -259,33 +270,57 @@ const castor::messages::NotifyDriveTapeMounted& body){
   const utils::DriveConfig &driveConfig = drive->getConfig();
     
   const std::string vid = body.vid();
-  switch(body.mode()) {
-    case castor::messages::TAPE_MODE_READ:
-      m_vmgr.tapeMountedForRead(vid);
-      break;
-    case castor::messages::TAPE_MODE_READWRITE:
-      m_vmgr.tapeMountedForWrite(vid);
-      break;
-    case castor::messages::TAPE_MODE_DUMP:
-      m_vmgr.tapeMountedForRead(vid);
-      break;
-    case castor::messages::TAPE_MODE_NONE:
-      break;
-    default:
-      castor::exception::Exception ex;
-      ex.getMessage() << "Unknown tape mode: " << body.mode();
-      throw ex;
+  try
+  {
+    switch(body.mode()) {
+      case castor::messages::TAPE_MODE_READ:
+        m_vmgr.tapeMountedForRead(vid);
+        break;
+      case castor::messages::TAPE_MODE_READWRITE:
+        m_vmgr.tapeMountedForWrite(vid);
+        break;
+      case castor::messages::TAPE_MODE_DUMP:
+        m_vmgr.tapeMountedForRead(vid);
+        break;
+      case castor::messages::TAPE_MODE_NONE:
+        break;
+      default:
+        castor::exception::Exception ex;
+        ex.getMessage() << "Unknown tape mode: " << body.mode();
+        throw ex;
+    }
+    m_vdqm.tapeMounted(m_hostName, body.unitname(), driveConfig.dgn, body.vid(),
+            drive->getSessionPid());
+  }catch(const castor::exception::Exception& ex){
+    sendErrorReplyToClient(ex);
+    throw;
   }
-  m_vdqm.tapeMounted(m_hostName, body.unitname(), driveConfig.dgn, body.vid(),
-    drive->getSessionPid());
   
   sendSuccessReplyToClient();
 }
-
+//------------------------------------------------------------------------------
+// sendSuccessReplyToClient
+//------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeMessageHandler::sendSuccessReplyToClient(){
     castor::messages::ReturnValue body;
-    body.set_returnvalue(0);
-    body.set_message("");
+    sendReplyToClient(0,"");
+}
+//------------------------------------------------------------------------------
+// sendErrorReplyToClient
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeMessageHandler::
+sendErrorReplyToClient(const castor::exception::Exception& ex){
+  //any positive value will trigger an exception in the client side
+  sendReplyToClient(ex.code(),ex.getMessageValue());
+}
+//------------------------------------------------------------------------------
+// sendReplyToClient
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeMessageHandler::
+sendReplyToClient(int returnValue,const std::string& msg){
+    castor::messages::ReturnValue body;
+    body.set_returnvalue(returnValue);
+    body.set_message(msg);
   
     castor::messages::Header header = castor::messages::preFillHeader();
     header.set_reqtype(messages::reqType::ReturnValue);
