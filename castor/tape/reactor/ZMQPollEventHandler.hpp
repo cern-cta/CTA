@@ -58,8 +58,8 @@ public:
    * Test: TEST_F(castor_tape_reactor_ZMQReactorTest, closeFd)
    * Valrgind command-line: valgrind --track-fds=yes test/castorUnitTests
    */
-  //~ZMQPollEventHandler() throw();
-  virtual ~ZMQPollEventHandler() throw() = 0;
+  ~ZMQPollEventHandler() throw();
+  //virtual ~ZMQPollEventHandler() throw() = 0;
 
   /**
    * Returns the human-readable name this event handler.
