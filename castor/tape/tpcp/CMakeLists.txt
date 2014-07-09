@@ -36,7 +36,7 @@ set (DUMPTP_SRC_FILES
   TapeFseqRangeSequence.cpp
   TpcpCommand.cpp)
 add_executable (dumptp ${DUMPTP_SRC_FILES})
-target_link_libraries (dumptp castorcommon castorrfio castortapegatewayprotocol
+target_link_libraries (dumptp castorcommon castortapegatewayprotocol
   castortapeutils castorvdqm castorvmgr)
 install (TARGETS dumptp DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallExeManPage (dumptp)
@@ -55,7 +55,7 @@ set (READTP_SRC_FILES
   TapeFseqRangeSequence.cpp
   TpcpCommand.cpp)
 add_executable (readtp ${READTP_SRC_FILES})
-target_link_libraries (readtp castorcommon castorrfio castortapegatewayprotocol
+target_link_libraries (readtp castorcommon castortapegatewayprotocol
   castortapeutils castorvdqm castorvmgr)
 install (TARGETS readtp DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallExeManPage (readtp)
@@ -74,7 +74,7 @@ set (WRITETP_SRC_FILES
   WriteTpCommand.cpp
   WriteTpMain.cpp)
 add_executable (writetp ${WRITETP_SRC_FILES})
-target_link_libraries (writetp castorcommon castorrfio castortapegatewayprotocol
+target_link_libraries (writetp castorcommon castortapegatewayprotocol
   castortapeutils castorvdqm castorvmgr)
 install (TARGETS writetp DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallExeManPage (writetp)

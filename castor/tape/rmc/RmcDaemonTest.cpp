@@ -1,5 +1,4 @@
 /******************************************************************************
- *         castor/tape/rmc/RmcDaemonTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,7 +18,7 @@
  *
  *
  *
- * @author Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/legacymsg/CupvProxyDummy.hpp"
@@ -63,7 +62,7 @@ TEST_F(castor_tape_rmc_RmcDaemonTest, constructor) {
   std::ostringstream stdOut;
   std::ostringstream stdErr;
   castor::log::DummyLogger logger("unittest");
-  castor::tape::reactor::ZMQReactor reactor(logger, m_zmqContext);
+  castor::tape::reactor::ZMQReactor reactor(logger);
   const bool isGrantedReturnValue = true;
   castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
   

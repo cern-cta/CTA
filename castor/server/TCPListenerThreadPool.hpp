@@ -1,5 +1,4 @@
 /******************************************************************************
- *                   TCPListenerThreadPool.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * Listener thread pool based on TCP
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

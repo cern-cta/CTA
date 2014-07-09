@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      castor/log/StringLogger.hpp
  * 
  *
  * This file is part of the Castor project.
@@ -21,7 +20,7 @@
  *
  * Interface to the CASTOR logging system, and stores the logs in a string
  *
- * @author Eric.Cano@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once 

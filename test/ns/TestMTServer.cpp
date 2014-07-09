@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      TestMTServer.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * Base class for a multithreaded client for stress tests
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 

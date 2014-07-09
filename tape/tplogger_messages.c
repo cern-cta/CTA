@@ -27,9 +27,6 @@
 #include "tplogger_api.h"
 
 /**
- * @file  tplogger_messages.c
- * @brief predefined messages for taped; mainly taken from h/Ctape.h
- *        predefined messages for rtcpd; mainly taken from h/rtcp_constants.h
  */
 
 

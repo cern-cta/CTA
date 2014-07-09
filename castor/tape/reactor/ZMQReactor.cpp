@@ -1,5 +1,4 @@
 /******************************************************************************
- *         castor/tape/reactor/ZMQReactor.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author castor-dev
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/tape/reactor/ZMQReactor.hpp"
@@ -38,8 +37,8 @@ namespace{
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------    
-castor::tape::reactor::ZMQReactor::ZMQReactor(log::Logger& log,
-  void *zmqContext) throw(): m_zmqContext(zmqContext), m_log(log) {
+castor::tape::reactor::ZMQReactor::ZMQReactor(log::Logger& log) throw():
+  m_log(log) {
 }
 
 //------------------------------------------------------------------------------
@@ -76,7 +75,9 @@ void castor::tape::reactor::ZMQReactor::registerHandler(
 void castor::tape::reactor::ZMQReactor::handleEvents(const int timeout) {
   //it should not bring any copy, thanks to NRVO
   std::vector<zmq_pollitem_t> pollFds=buildPollFds();
-    
+
+  // Please note that we are relying on the fact that the file descriptors of
+  // the vector are stored contiguously
   const int pollRc = zmq_poll(&pollFds[0], pollFds.size(), timeout);  
   if(0 <= pollRc){
     for(std::vector<zmq_pollitem_t>::const_iterator it=pollFds.begin();
@@ -92,13 +93,6 @@ void castor::tape::reactor::ZMQReactor::handleEvents(const int timeout) {
     log::Param params[] = {log::Param("message", message)};
     m_log(LOG_ERR, "Failed to handle I/O event: zmq_poll() failed", params);
   }
-}
-
-//------------------------------------------------------------------------------
-// getZmqContext
-//------------------------------------------------------------------------------
-void *castor::tape::reactor::ZMQReactor::getZmqContext() const throw() {
-  return m_zmqContext;
 }
 
 //------------------------------------------------------------------------------

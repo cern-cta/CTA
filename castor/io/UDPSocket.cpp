@@ -1,5 +1,4 @@
 /******************************************************************************
- *                     UDPSocket.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,7 +20,7 @@
  *
  * Implementation of a UDP abtract socket interface
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

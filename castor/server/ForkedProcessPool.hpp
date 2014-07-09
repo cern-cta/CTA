@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      ForkedProcessPool.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * A pool of forked processes
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

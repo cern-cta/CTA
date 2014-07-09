@@ -1,5 +1,4 @@
 /******************************************************************************
- *         castor/tape/reactor/ZMQReactorTest.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,7 +18,7 @@
  *
  * 
  *
- * @author Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
@@ -104,17 +103,6 @@ namespace unitTests {
 
 class castor_tape_reactor_ZMQReactorTest : public ::testing::Test {
 protected:
-  void *const m_zmqContext;
-  
-  castor_tape_reactor_ZMQReactorTest(): m_zmqContext(zmq_init(1)) {
-  }
-
-  ~castor_tape_reactor_ZMQReactorTest() {
-    if(NULL != m_zmqContext) {
-      zmq_term(m_zmqContext);
-    }
-  }
-
   virtual void SetUp() {
   }
 
@@ -128,7 +116,7 @@ TEST_F(castor_tape_reactor_ZMQReactorTest, constructor) {
   castor::log::DummyLogger log("unittests");
   std::auto_ptr<ZMQReactor> reactor;
 
-  ASSERT_NO_THROW(reactor.reset(new ZMQReactor(log, m_zmqContext)));
+  ASSERT_NO_THROW(reactor.reset(new ZMQReactor(log)));
 }
 
 /*
@@ -149,7 +137,7 @@ TEST_F(castor_tape_reactor_ZMQReactorTest, closeFd) {
   using namespace castor::tape::reactor;
 
   castor::log::DummyLogger log("unittests");
-  ZMQReactor reactor(log, m_zmqContext);
+  ZMQReactor reactor(log);
 
   int sv[2] = {-1, -1};
   ASSERT_EQ(0, socketpair(AF_LOCAL, SOCK_STREAM, 0, sv));

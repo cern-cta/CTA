@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-xrootd.fslib /usr/lib64/libXrdxCastor2Ofs.so.2.1
+xrootd.fslib /usr/lib64/libxrdxcastor2ofs.so.2.1
 xrootd.async off nosf
 xrootd.trace emsg login
 xrd.network keepalive
@@ -13,7 +13,7 @@ ofs.trace open close
 ofs.persist off
 #-------------------------------------------------------------------------------
 xrd.port 1095
-ofs.authlib /usr/lib64/libXrdxCastor2ServerAcc.so.2.1
+ofs.authlib /usr/lib64/libxrdxcastor2serveracc.so.2.1
 ofs.authorize
 #-------------------------------------------------------------------------------
 xcastor2.fs /

@@ -46,7 +46,7 @@ class ReportCache(object):
         self.reports = {}
         # some lock to insure thread safe access to the reports
         self.lock = threading.Lock()
-    
+
     def push(self, report):
         '''pushes a new report from the given diskserver in the queue
            Reports should have the following form :

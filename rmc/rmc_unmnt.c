@@ -1,5 +1,4 @@
 /******************************************************************************
- *                 rmc/rmc_unmnt.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,7 +18,7 @@
  *
  *
  *
- * @author Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 /*      rmc_unmnt - unmount a cartridge from a drive that maybe in either */

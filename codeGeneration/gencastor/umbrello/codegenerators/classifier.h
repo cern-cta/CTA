@@ -30,7 +30,7 @@ class IDChangeLog;
  * to also act as namespaces, i.e. it allows classifiers to nest.
  *
  * @short Information for a non-graphical Concept/Class.
- * @author Paul Hensgen <phensgen@techie.com>
+ * @author Castor Dev team, castor-dev@cern.ch
  * Bugs and comments to uml-devel@lists.sf.net or http://bugs.kde.org
  */
 

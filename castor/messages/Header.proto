@@ -1,15 +1,49 @@
+// This file is part of the Castor project.
+// See http://castor.web.cern.ch/castor
+//
+// Copyright (C) 2003  CERN
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+//
+// @author Castor Dev team, castor-dev@cern.ch
+
 package castor.messages;
 
 message Header {
  required uint32 magic = 1;
+
+ //see castor::messages::protocolType's anonymous enum for values
  required uint32 protocolType = 2;
+
+ //see castor::messages::protocolVersion's anonymous enum for values
  required uint32 protocolVersion = 3;
+
+ //see castor::messages::reqType's anonymous enum for values
  required uint32 reqType = 4;
+
+ //will it be hardcoded to SHA1 ?
  required string bodyHashType = 5;		
- required string bodyHashValue = 6;	
+ required string bodyHashValue = 6;
+
+	
  required string bodySignatureType= 7;	
  required string bodySignature = 8;	
 }
 
-message NoReturnValue{
+//generic return value. It is either returnValue=0 and message="" (ie everything is OK)
+//or returnValue!=0 and message!="" (ie something went wrong)
+//This SHOULD NOT BE USED as an answer for specific messages.
+//Create your own answers, even for one integer
+message ReturnValue{
+  required uint32 returnValue = 1;
+  required string message= 2;
 }

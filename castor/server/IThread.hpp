@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      IThread.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * Abstract interface for the CASTOR multithread framework
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

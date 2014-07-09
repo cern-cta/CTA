@@ -50,7 +50,7 @@
 #endif
 
 #include "rfio_callhandlers.h"
-#include "rfio_localio.h"
+#include "ceph/ceph_posix.h"
 #include "checkkey.h"
 #include <fcntl.h>
 
@@ -582,7 +582,7 @@ int  sropen64(int     s,
 
           errno = 0;
           if (forced_filename!=NULL || !check_path_whitelist(host, pfn, perm_array, ofilename, sizeof(ofilename),1)) {
-            fd = generic_open((forced_filename!=NULL)?pfn:ofilename, ntohopnflg(flags),
+            fd = ceph_posix_open((forced_filename!=NULL)?pfn:ofilename, ntohopnflg(flags),
                               ((forced_filename != NULL) && (((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
             (*logfunc)(LOG_DEBUG, "sropen64: open64(%s,0%o,0%o) returned %x (hex)\n",
                 CORRECT_FILENAME(filename), flags, mode, fd);
@@ -598,7 +598,7 @@ int  sropen64(int     s,
              */
             offsetin = 0;
             errno    = 0;
-            offsetout= generic_lseek64(fd, offsetin, SEEK_CUR);
+            offsetout= ceph_posix_lseek64(fd, offsetin, SEEK_CUR);
             (*logfunc)(LOG_DEBUG, "sropen64: lseek64(%d,%s,SEEK_CUR) returned %s\n",
                 fd, u64tostr(offsetin,tmpbuf,0), u64tostr(offsetout,tmpbuf2,0));
             if ( offsetout < 0 ) {
@@ -625,7 +625,7 @@ int  sropen64(int     s,
   replen = WORDSIZE+3*LONGSIZE+HYPERSIZE;
   if (netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen)  {
     (*logfunc)(LOG_ERR, "sropen64: write(): %s\n", strerror(errno));
-    if (fd >=0) generic_close(fd);
+    if (fd >=0) ceph_posix_close(fd);
     return -1;
   }
   return fd;
@@ -727,7 +727,7 @@ int srwrite64(int     s,
     (*logfunc)(LOG_DEBUG, "srwrite64(%d,%d): lseek64(%d,%s,%d)\n", s, fd, fd,
         u64tostr(offset,tmpbuf,0), how);
     infop->seekop++;
-    if ( (offsetout = generic_lseek64(fd,offset,how)) == -1 ) {
+    if ( (offsetout = ceph_posix_lseek64(fd,offset,how)) == -1 ) {
       rfio_call64_answer_client_internal(rqstbuf, errno, -1, s);
       return -1;
     }
@@ -737,7 +737,7 @@ int srwrite64(int     s,
    */
   infop->wnbr+= size;
   (*logfunc)(LOG_DEBUG, "srwrite64: writing %d bytes on %d\n", size, fd);
-  status = generic_write(fd,p,size);
+  status = ceph_posix_write(fd,p,size);
   rcode= ( status < 0 ) ? errno : 0;
 
   if (rfio_call64_answer_client_internal(rqstbuf, rcode, status, s) < 0) {
@@ -785,7 +785,7 @@ int srread64(int     s,
     (*logfunc)(LOG_DEBUG, "srread64(%d,%d): lseek64(%d,%s,%d)\n", s, fd, fd,
         u64tostr(offset,tmpbuf,0), how);
     infop->seekop++;
-    if ( (offsetout= generic_lseek64(fd,offset,how)) == -1 ) {
+    if ( (offsetout= ceph_posix_lseek64(fd,offset,how)) == -1 ) {
       rcode= errno;
       status = -1;
       p= rqstbuf;
@@ -834,7 +834,7 @@ int srread64(int     s,
     (*logfunc)(LOG_DEBUG, "srread64: setsockopt(SO_SNDBUF): %d\n", optval);
   }
   p = iobuffer + replen;
-  status = generic_read(fd, p, size);
+  status = ceph_posix_read(fd, p, size);
   if ( status < 0 ) {
     rcode= errno;
     msgsiz= replen;
@@ -898,7 +898,7 @@ int srreadahd64(int     s,
     (*logfunc)(LOG_DEBUG,"rread64(%d,%d): lseek64(%d,%s,%d)\n", s, fd, fd,
         u64tostr(offset,tmpbuf,0), how);
     infop->seekop++;
-    if ( (offsetout= generic_lseek64(fd,offset,how)) == -1 ) {
+    if ( (offsetout= ceph_posix_lseek64(fd,offset,how)) == -1 ) {
       rcode= errno;
       status= -1;
       p= iobuffer;
@@ -962,7 +962,7 @@ int srreadahd64(int     s,
      * Reading disk ...
      */
     p= iobuffer + WORDSIZE + 3*LONGSIZE;
-    status = generic_read(fd,p,size);
+    status = ceph_posix_read(fd,p,size);
     if (status < 0)        {
       rcode= errno;
       iobufsiz= WORDSIZE+3*LONGSIZE;
@@ -1012,7 +1012,7 @@ int     srfstat64(int      s,
   /*
    * Issuing the fstat()
    */
-  status= generic_fstat64(fd, &statbuf);
+  status= ceph_posix_fstat64(fd, &statbuf);
   if ( status < 0) {
     rcode= errno;
     (*logfunc)(LOG_ERR,"rfstat64(%d,%d): fstat64 gave rc %d, errno=%d\n", s, fd, status, errno);
@@ -1066,7 +1066,7 @@ int srlseek64(int         s,
   unmarshall_LONG(p,how);
   (*logfunc)(LOG_DEBUG, "srlseek64(%d, %d): offset64 %s, how: %x\n", s, fd,
       u64tostr(offset,tmpbuf,0), how);
-  offsetout = generic_lseek64(fd, offset, how);
+  offsetout = ceph_posix_lseek64(fd, offset, how);
   if (offsetout == (off64_t)-1 ) status = -1;
   else status = 0;
   rcode= ( status < 0 ) ? errno : 0;
@@ -1380,7 +1380,7 @@ int  sropen64_v3(int         s,
             strcpy(ofilename, filename);
             fd = -1;
             if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-              fd = generic_open(CORRECT_FILENAME(ofilename), flags,
+              fd = ceph_posix_open(CORRECT_FILENAME(ofilename), flags,
                                 ((forced_filename != NULL) && ((flags & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
             }
           }
@@ -1397,7 +1397,7 @@ int  sropen64_v3(int         s,
             /*
              * Getting current offset
              */
-            offsetout = generic_lseek64(fd, (off64_t)0, SEEK_CUR);
+            offsetout = ceph_posix_lseek64(fd, (off64_t)0, SEEK_CUR);
             if (offsetout == ((off64_t)-1) ) {
               (*logfunc)(LOG_ERR,"ropen64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd,strerror(errno));
               status = -1;
@@ -1523,7 +1523,7 @@ int  sropen64_v3(int         s,
   if (netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen)  {
     (*logfunc)(LOG_ERR,"ropen64_v3: write(): %s\n", strerror(errno));
     close(data_s);
-    if (fd >= 0) generic_close(fd);
+    if (fd >= 0) ceph_posix_close(fd);
     return -1;
   }
 
@@ -1646,15 +1646,15 @@ int   srclose64_v3(int       s,
   /* sync the file to be sure that filesize in correct in following stats.
      this is needed by some ext3 bug/feature
      Still ignore the output of fsync */
-  generic_fsync(fd);
+  ceph_posix_fsync(fd);
 
   /* Stat the file to be able to provide that information
      to the close handler */
   memset(&filestat,0,sizeof(struct stat));
-  generic_fstat(fd, &filestat);
+  ceph_posix_fstat(fd, &filestat);
 
   /* Close the local file                                    */
-  status = generic_close(fd);
+  status = ceph_posix_close(fd);
   rcode = ( status < 0 ) ? errno : 0;
 
   ret=rfio_handle_close(handler_context, &filestat, rcode);
@@ -1725,7 +1725,7 @@ static void *produce64_thread(int *ptr)
     if (!strncasecmp(conf_ent,"no",2)) useCksum = 0;
 
   if (useCksum) {
-    if ((xattr_len = generic_fgetxattr(fd,"user.castor.checksum.value",ckSumbufdisk,CA_MAXCKSUMLEN)) == -1) {
+    if ((xattr_len = ceph_posix_fgetxattr(fd,"user.castor.checksum.value",ckSumbufdisk,CA_MAXCKSUMLEN)) == -1) {
       (*logfunc)(LOG_ERR,"produce64_thread: fgetxattr failed for user.castor.checksum.value, error=%d\n",errno);
       (*logfunc)(LOG_ERR,"produce64_thread: skipping checksums check\n");
       useCksum = 0;
@@ -1745,7 +1745,7 @@ static void *produce64_thread(int *ptr)
     Csemaphore_down(&empty64);
 
     (*logfunc)(LOG_DEBUG, "produce64_thread: read() at %s:%d\n", __FILE__, __LINE__);
-    byte_read = generic_read(fd,array[produced64 % daemonv3_rdmt_nbuf].p,daemonv3_rdmt_bufsize);
+    byte_read = ceph_posix_read(fd,array[produced64 % daemonv3_rdmt_nbuf].p,daemonv3_rdmt_bufsize);
 
     if (byte_read > 0) {
       total_produced += byte_read;
@@ -1830,7 +1830,7 @@ static void *consume64_thread(int *ptr)
 
   /* Deal with cases where checksums should not be calculated */
   if (useCksum) {
-    mode = generic_fcntl(fd,F_GETFL);
+    mode = ceph_posix_fcntl(fd,F_GETFL);
     if (mode == -1) {
       (*logfunc)(LOG_ERR,"consume64_thread: fcntl (F_GETFL) failed, error=%d\n",errno);
       useCksum = 0;
@@ -1844,7 +1844,7 @@ static void *consume64_thread(int *ptr)
      * remove the checksum value but leave the type.
      */
     else if ((mode & O_WRONLY) &&
-             (generic_fgetxattr(fd,"user.castor.checksum.type",ckSumbufdisk,CA_MAXCKSUMLEN) != -1)) {
+             (ceph_posix_fgetxattr(fd,"user.castor.checksum.type",ckSumbufdisk,CA_MAXCKSUMLEN) != -1)) {
       (*logfunc)(LOG_INFO,"consume64_thread: file opened in O_WRONLY and checksum already exists, removing checksum\n");
       useCksum = 0;
     } else {
@@ -1853,7 +1853,7 @@ static void *consume64_thread(int *ptr)
     }
   }
   /* Always remove the checksum value */
-  generic_fremovexattr(fd,"user.castor.checksum.value");
+  ceph_posix_fremovexattr(fd,"user.castor.checksum.value");
 
   while ((! error) && (! end)) {
     (*logfunc)(LOG_DEBUG, "consume64_thread: calling Csemaphore_down(&full64)\n");
@@ -1866,7 +1866,7 @@ static void *consume64_thread(int *ptr)
       (*logfunc)(LOG_DEBUG,"consume64_thread: Trying to write %d bytes from %X\n",
           len_to_write, buffer_to_write);
 
-      byte_written = generic_write(fd, buffer_to_write, len_to_write);
+      byte_written = ceph_posix_write(fd, buffer_to_write, len_to_write);
       saved_errno = errno;
       (*logfunc)(LOG_DEBUG, "consume64_thread: succeeded to write %d bytes\n", byte_written);
       /* If the write is successfull but incomplete (fs is full) we
@@ -1933,14 +1933,14 @@ static void *consume64_thread(int *ptr)
     /* Double check whether the checksum is set on disk. If yes, it means
        it appeared while we were writing. this means that concurrent writing
        is taking place. Thus we reset the checksum rather than setting it */
-    if (generic_fgetxattr(fd,"user.castor.checksum.value",ckSumbufdisk,CA_MAXCKSUMLEN) != -1) {
+    if (ceph_posix_fgetxattr(fd,"user.castor.checksum.value",ckSumbufdisk,CA_MAXCKSUMLEN) != -1) {
       (*logfunc)(LOG_INFO,"consume64_thread: concurrent writing detected, removing checksum\n");
-      generic_fremovexattr(fd,"user.castor.checksum.value");
+      ceph_posix_fremovexattr(fd,"user.castor.checksum.value");
     } else {
       /* Always try and set the type first! */
-      if (generic_fsetxattr(fd,"user.castor.checksum.type",ckSumalg,strlen(ckSumalg),0))
+      if (ceph_posix_fsetxattr(fd,"user.castor.checksum.type",ckSumalg,strlen(ckSumalg),0))
         (*logfunc)(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.type, error=%d\n",errno);
-      else if (generic_fsetxattr(fd,"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0))
+      else if (ceph_posix_fsetxattr(fd,"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0))
         (*logfunc)(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.value, error=%d\n",errno);
     }
   }
@@ -2174,14 +2174,14 @@ static int   readerror64_v3(int            s,
       iobufsiz = DISKBUFSIZE_READ;
     }
 
-    if (generic_fstat64(fd,&st) < 0) {
+    if (ceph_posix_fstat64(fd,&st) < 0) {
       (*logfunc)(LOG_ERR, "rread64_v3: fstat(): ERROR occured (errno=%d)\n", errno);
       readerror64_v3(ctrl_sock, &myinfo, &cid1);
       return -1;
     }
 
     (*logfunc)(LOG_DEBUG, "rread64_v3: filesize : %s bytes\n", u64tostr(st.st_size,tmpbuf,0));
-    offsetout = generic_lseek64(fd,0L,SEEK_CUR);
+    offsetout = ceph_posix_lseek64(fd,0L,SEEK_CUR);
     if (offsetout == (off64_t)-1) {
       (*logfunc)(LOG_ERR, "rread64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd, strerror(errno));
       readerror64_v3(ctrl_sock, &myinfo, &cid1);
@@ -2341,7 +2341,7 @@ static int   readerror64_v3(int            s,
           consumed64++;
         }
         else
-          status = generic_read(fd,iobuffer,DISKBUFSIZE_READ);
+          status = ceph_posix_read(fd,iobuffer,DISKBUFSIZE_READ);
 
         rcode = (status < 0) ? errno:0;
         (*logfunc)(LOG_DEBUG, "srread64_v3: %d bytes have been read on disk\n", status);
@@ -2502,7 +2502,7 @@ static int   writerror64_v3(int            s,
       /* Read as much data as possible from the data socket */
 
       (*logfunc)(LOG_DEBUG, "writerror64_v3: emptying data socket (last disk write)\n");
-        n = generic_read(data_sock, dummy, sizeofdummy);
+        n = ceph_posix_read(data_sock, dummy, sizeofdummy);
       if ( n <= 0 )
         {
           /* Connexion dropped (n==0) or some another error */
@@ -2805,7 +2805,7 @@ int srwrite64_v3(int            s,
 
       }  /* if (daemonv3_wrmt) */
       else {
-        status = generic_write(fd, iobuffer, byte_in_diskbuffer);
+        status = ceph_posix_write(fd, iobuffer, byte_in_diskbuffer);
         /* If the write is successfull but incomplete (fs is full) we
            report the ENOSPC error immediately in order to simplify the
            code */

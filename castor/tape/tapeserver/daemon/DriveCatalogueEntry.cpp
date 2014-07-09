@@ -1,5 +1,4 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/DriveCatalogueEntry.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,7 +18,7 @@
  *
  *
  *
- * @author Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
@@ -488,11 +487,12 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedLabelJob(
 void castor::tape::tapeserver::daemon::DriveCatalogueEntry::forkedDataTransferSession(
   const pid_t sessionPid)  {
   std::ostringstream task;
-  task << "handle fork of mount session for tape drive " << m_config.unitName;
+  task << "handle fork of data-transfer session for tape drive " <<
+    m_config.unitName;
 
   switch(getSession()->getState()) {
-  case castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_WAITFORK:
-    getSession()->setState(castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_RUNNING);
+  case DriveCatalogueSession::SESSION_STATE_WAITFORK:
+    getSession()->setState(DriveCatalogueSession::SESSION_STATE_RUNNING);
     getSession()->setPid(sessionPid);
     break;
   default:

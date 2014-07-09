@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      OraCommonSvc.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

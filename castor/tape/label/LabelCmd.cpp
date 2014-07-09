@@ -1,5 +1,4 @@
 /******************************************************************************
- *                 castor/tapelabel/LabelCmd.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,7 +18,7 @@
  *
  *
  *
- * @author dkruse@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/tape/label/LabelCmd.hpp"

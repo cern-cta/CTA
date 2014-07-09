@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      stager_mapper.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  *
  *
- * @author Ben Couturier
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 /** @mainpage CASTOR Mapper

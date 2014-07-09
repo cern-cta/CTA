@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      GcDaemon.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,7 +22,7 @@
  * filesystem. Makes remote calls to the stager to know what to delete and to
  * update the catalog
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include files

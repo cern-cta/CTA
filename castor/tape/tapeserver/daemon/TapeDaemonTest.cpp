@@ -1,5 +1,4 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/TapeDaemonTest.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,20 +18,20 @@
  *
  * 
  *
- * @author Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/legacymsg/NsProxyDummyFactory.hpp"
 #include "castor/legacymsg/RmcProxyDummyFactory.hpp"
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/log/DummyLogger.hpp"
 #include "castor/messages/TapeserverProxyDummyFactory.hpp"
+#include "castor/server/ProcessCapDummy.hpp"
 #include "castor/tape/reactor/DummyPollReactor.hpp"
-#include "castor/tape/tapeserver/daemon/CapabilityUtilsDummy.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
-#include "castor/legacymsg/NsProxyDummyFactory.hpp"
 
 #include <gtest/gtest.h>
 #include <iostream>
@@ -91,8 +90,8 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::legacymsg::RmcProxyDummyFactory rmcFactory;
   castor::messages::TapeserverProxyDummyFactory tpsFactory;
   castor::legacymsg::NsProxyDummyFactory nsFactory;
-  castor::tape::reactor::ZMQReactor reactor(log, m_zmqContext);
-  CapabilityUtilsDummy capUtils;
+  castor::tape::reactor::ZMQReactor reactor(log);
+  castor::server::ProcessCapDummy capUtils;
   std::auto_ptr<TapeDaemon> daemon;
   ASSERT_NO_THROW(daemon.reset(new TapeDaemon(argc, argv, stdOut, stdErr, log,
     driveConfigs, vdqm, vmgr, rmcFactory, tpsFactory, nsFactory,

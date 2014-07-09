@@ -45,7 +45,7 @@ set_target_properties (tapegatewayd PROPERTIES
   LINK_FLAGS "-L${ORACLE_LIBDIR} -locci -lclntsh")
 target_link_libraries (tapegatewayd castorclient castorcnvs castorcommon
   castorcommonora castorns castortapegatewayprotocol castortapeutils castorvdqm
-  castorvmgr)
+  castorvmgr castorserver)
 install (TARGETS tapegatewayd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (tapegatewayd)
 CastorInstallLogrotate (castor-tapegateway-server)

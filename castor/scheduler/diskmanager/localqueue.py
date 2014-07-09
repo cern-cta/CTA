@@ -133,18 +133,23 @@ class LocalQueue(Queue.Queue):
         # don't wait on the backfill queue: in case nothing is found,
         # we will be back soon and we'll block on the normal queue
         transferId = self.backfillQueue.get(False)
-        if self.queueingTransfers[transferId].transfer.transferType == TransferType.D2DSRC and \
-           self.queueingTransfers[transferId].transfer.replicationType != D2DTransferType.USER:
-          # we got one, but it's a non-user source disk-to-disk copy and we're busy.
-          # Hence we move it to the d2dBackfillQueue to leave some room for normal
-          # transfers, otherwise d2dsrc jobs fill up all available slots, and we loop.
-          # Note that we may starve d2dsrc jobs in case of heavy user activity
-          # coupled with heavy rebalancing! In this case the d2d jobs will wait
-          # until the total activity goes below 50% of the available slots.
-          self.d2dBackfillQueue.put(transferId)
-        else:
-          # we got one, return it
-          return transferId
+        try:
+          if self.queueingTransfers[transferId].transfer.transferType == TransferType.D2DSRC and \
+            self.queueingTransfers[transferId].transfer.replicationType != D2DTransferType.USER:
+            # we got one, but it's a non-user source disk-to-disk copy and we're busy.
+            # Hence we move it to the d2dBackfillQueue to leave some room for normal
+            # transfers, otherwise d2dsrc jobs fill up all available slots, and we loop.
+            # Note that we may starve d2dsrc jobs in case of heavy user activity
+            # coupled with heavy rebalancing! In this case the d2d jobs will wait
+            # until the total activity goes below 50% of the available slots.
+            self.d2dBackfillQueue.put(transferId)
+          else:
+            # we got one, return it
+            return transferId
+        except KeyError:
+          # transfer not found, meaning it was canceled
+          # ignore and go to next one
+          continue
       # we emptied the backfill queue or it was empty, raise to upper level
       raise Queue.Empty
 
@@ -297,7 +302,7 @@ class LocalQueue(Queue.Queue):
           try:
             timeout = timeouts[transfer.svcClassName]
           except KeyError:
-            try :
+            try:
               timeout = timeouts['all']
             except KeyError:
               # no timeout could be found, so we take it as infinite, meaning we do not cancel anything

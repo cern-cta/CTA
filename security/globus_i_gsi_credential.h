@@ -1,8 +1,7 @@
 #ifndef GLOBUS_DONT_DOCUMENT_INTERNAL
 /**
- * @file globus_i_gsi_credential.h
  * Globus GSI Credential Library
- * @author Sam Lang, Sam Meder
+ * @author Castor Dev team, castor-dev@cern.ch
  *
  * $Revision: 1.3 $
  * $Date: 2008/01/16 15:37:29 $

@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      ServerSocket.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,7 +20,7 @@
  *
  *
  *
- * @author Benjamin Couturier
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files
@@ -204,8 +203,7 @@ void castor::io::ServerSocket::bind(int lowPort, int highPort)
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void castor::io::ServerSocket::bind()
-   {
+void castor::io::ServerSocket::bind() {
   int rc = -1;
   int port;
 
@@ -223,6 +221,7 @@ void castor::io::ServerSocket::bind()
   srand(tv.tv_usec * tv.tv_sec);
 
   // randomly select a free port in the allowed port range
+  int nbFailedBinds = 0;
   while (0 != rc) {
     port = (rand() % (m_highPort - m_lowPort +1 )) + m_lowPort;
     m_saddr.sin_port = htons(port);
@@ -234,6 +233,16 @@ void castor::io::ServerSocket::bind()
       castor::exception::Communication e("Port in use", EADDRINUSE);
       e.getMessage() << "Failed to bind: Port in use: " << port;
       throw e;
+    }
+
+    // Count the number of failed attempts to bind a listening socket
+    if(0 != rc) {
+      nbFailedBinds++;
+    }
+
+    // sleep every 10 attempts in order not to consume too much CPU
+    if(0 == nbFailedBinds % 10) {
+      ::sleep(1);
     }
   }
 }

@@ -1,5 +1,4 @@
 /******************************************************************************
- *         castor/tape/rmc/RmcDaemonMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,7 +18,7 @@
  *
  *
  *
- * @author Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
@@ -110,7 +109,7 @@ int main(const int argc, char **const argv) {
 static int exceptionThrowingMain(const int argc, char **const argv,
   castor::log::Logger &log, void *const zmqContext) {
   const std::string cupvHostName = getConfigParam("UPV", "HOST");
-  castor::tape::reactor::ZMQReactor reactor(log, zmqContext);
+  castor::tape::reactor::ZMQReactor reactor(log);
   const int netTimeout = 10; // Timeout in seconds
   castor::legacymsg::CupvProxyTcpIp cupv(log, cupvHostName, CUPV_PORT, netTimeout);
   castor::tape::rmc::RmcDaemon daemon(std::cout, std::cerr, log, reactor, cupv);

@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      SelectProcessThread.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,7 +20,7 @@
  * Base thread for the select/process model: it loops until select() returns
  * something to do. If stop() is called, the underlying database connection is dropped.
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

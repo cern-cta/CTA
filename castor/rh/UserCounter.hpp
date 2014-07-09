@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      UserCounter.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,43 +19,41 @@
  *
  *
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
 
-// Include Files
+#include "castor/server/metrics/Counter.hpp"
+
 #include <string>
-#include "castor/metrics/Counter.hpp"
 
 namespace castor {
+namespace rh     {
+
+class UserCounter : public castor::server::metrics::Counter {
+
+public:    
+    
+  /// Factory method
+  static castor::server::metrics::Counter* instantiate(castor::IObject* obj);
   
-  namespace rh {
-
-    class UserCounter : public castor::metrics::Counter {
-
-    public:    
-    
-      /// Factory method
-      static castor::metrics::Counter* instantiate(castor::IObject* obj);
-      
-      /// Default constructor
-      UserCounter(castor::IObject* obj);
-      
-      /// Default destructor
-      ~UserCounter() {};
-    
-      /// match
-      virtual int match(castor::IObject* obj);
-      
-    protected:
-      
-      /// uid,gid identifying a user
-      unsigned int m_uid, m_gid;
-    
-    };
-
-  } // end of namespace rh
+  /// Default constructor
+  UserCounter(castor::IObject* obj);
   
-} // end of namespace castor
+  /// Default destructor
+  ~UserCounter() {};
+
+  /// match
+  virtual int match(castor::IObject* obj);
+  
+protected:
+      
+  /// uid,gid identifying a user
+  unsigned int m_uid, m_gid;
+    
+}; // class UserCounter
+
+} // namespace rh
+} // namespace castor
 

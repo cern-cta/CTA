@@ -1,5 +1,4 @@
 /******************************************************************************
- *                castor/stager/daemon/BaseRequestSvcThread.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * Base service thread for handling stager requests
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 

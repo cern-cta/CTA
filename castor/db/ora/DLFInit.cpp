@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      DLFInit.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * Initialization of the DLF messages for the ORACLE part
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/db/ora/DLFInit.hpp"

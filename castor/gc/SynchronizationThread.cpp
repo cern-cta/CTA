@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      SynchronizationThread.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,7 +20,7 @@
  * Synchronization thread used to check periodically whether files need to be
  * deleted
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include files

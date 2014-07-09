@@ -36,7 +36,7 @@
  * @see apr_thread_pool.h (Apache Portable Runtime Utils)
  * @see threadpool.h      (LEMON)
  *
- * @author Dennis Waldron
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

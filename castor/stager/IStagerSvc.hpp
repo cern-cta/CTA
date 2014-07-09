@@ -1,5 +1,4 @@
 /******************************************************************************
- *                castor/stager/IStagerSvc.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,7 +20,7 @@
  * This class provides specific stager methods and includes scheduler
  * and error related methods
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

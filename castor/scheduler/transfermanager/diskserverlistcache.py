@@ -34,7 +34,7 @@ import castor_tools
 import dlf
 from transfermanagerdlf import msgs
 
-class DiskServerListCache:
+class DiskServerListCache(object):
   '''cache for the list of diskservers.
   Automatically refreshes the list regularly, by default every 5mn.
   Set the refresh delay to 0 to always refresh (not recommended) and

@@ -76,7 +76,7 @@ class SrcRunningTransfer(object):
     self.srcTransfer = srcTransfer
     self.startTime = startTime
 
-    
+
 class ServerQueue(dict):
   '''a dictionnary of queueing transfers, with the list of machines to which they were sent
   and a reverse lookup facility by machine'''
@@ -212,7 +212,7 @@ class ServerQueue(dict):
     '''drops transfers from the queues and return the dropped transfers. Handles transfers
        without knowning their type. In other words, it's trying to drop STD, D2DSRC and D2DDST'''
     # we could use itertools here as soon as SLC5 (and python 2.4) is not supported anymore
-    return self.remove([(transferId , transferType)
+    return self.remove([(transferId, transferType)
                         for transferId in transferIds
                         for transferType in [TransferType.STD, TransferType.D2DSRC, TransferType.D2DDST]])
 
@@ -262,7 +262,7 @@ class ServerQueue(dict):
       self.lock.acquire()
       try:
         # the source transfer is starting, mark all destinations (and the source) ready
-        try :
+        try:
           # check whether the source transfer is pending
           if (transfer.transferId, transfer.transferType) not in self.transfersLocations:
             # it is not. It may be running or it may have been canceled in the meantime
@@ -417,7 +417,7 @@ class ServerQueue(dict):
       except KeyError:
         # we couldn't find the transfer at all, ignore the error
         pass
-    
+
   def putRunningD2dSource(self, transfer):
     '''Adds a new d2dsrc transfer to the list of runnign ones'''
     self.lock.acquire()

@@ -1,5 +1,4 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/TapeMessageHandler.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author dkruse@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 
@@ -36,31 +35,34 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
-   reactor::ZMQReactor &reactor,
+  reactor::ZMQReactor &reactor,
   log::Logger &log,DriveCatalogue &driveCatalogue,
   const std::string &hostName,
   castor::legacymsg::VdqmProxy & vdqm,
-  castor::legacymsg::VmgrProxy & vmgr):
+  castor::legacymsg::VmgrProxy & vmgr,
+  void *const zmqContext):
   m_reactor(reactor),
-  m_log(log),m_socket(reactor.getZmqContext(), ZMQ_REP),
+  m_log(log),
+  m_socket(zmqContext, ZMQ_REP),
   m_driveCatalogue(driveCatalogue),
   m_hostName(hostName),
   m_vdqm(vdqm),
-  m_vmgr(vmgr){ 
+  m_vmgr(vmgr) { 
+
+  std::ostringstream endpoint;
+  endpoint << "tcp://127.0.0.1:" << TAPE_SERVER_INTERNAL_LISTENING_PORT;
   
-  std::string bindingAdress("tcp://127.0.0.1:");
-  bindingAdress+=castor::utils::toString(tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT);
-  std::vector<log::Param> v;
-  v.push_back(log::Param("endpoint",bindingAdress));
-  
-  try{
-    m_socket.bind(bindingAdress.c_str());
-    m_log(LOG_INFO,"bind succesful",v);
-  }
-  catch(const std::exception& e){
-    std::vector<log::Param> v;
-    v.push_back(log::Param("ex code",e.what()));
-    m_log(LOG_INFO,"Failed to bind",v);
+  try {
+    m_socket.bind(endpoint.str().c_str());
+    log::Param params[] = {log::Param("endpoint", endpoint.str())};
+    m_log(LOG_INFO, "Bound the ZMQ_REP socket of the TapeMessageHandler",
+      params);
+  } catch(castor::exception::Exception &ne){
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to bind the ZMQ_REP socket of the TapeMessageHandler"
+      ": endpoint=" << endpoint.str() << ": " << ne.getMessage().str();
+    throw ex;
   }
 }
 
@@ -175,6 +177,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchEvent(
     {
       castor::messages::Heartbeat body;
       unserialize(body,bodyBlob);
+      castor::messages::checkSHA1(header,bodyBlob);
       dealWith(header,body);
     }
       break;
@@ -182,6 +185,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchEvent(
     {
       castor::messages::NotifyDriveBeforeMountStarted body;
       unserialize(body,bodyBlob);
+      castor::messages::checkSHA1(header,bodyBlob);
       dealWith(header,body);
     }
       break;
@@ -189,14 +193,15 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchEvent(
     {
       castor::messages::NotifyDriveTapeMounted body;
       unserialize(body,bodyBlob);
+      castor::messages::checkSHA1(header,bodyBlob);
       dealWith(header,body);
     }
       break;
     case messages::reqType::NotifyDriveTapeUnmounted:
-      sendEmptyReplyToClient();
+      sendSuccessReplyToClient();
       break;
     case messages::reqType::NotifyDriveUnmountStarted:
-      sendEmptyReplyToClient();
+      sendSuccessReplyToClient();
       break;
     default:
       m_log(LOG_ERR,"default  dispatch in TapeMessageHandler");
@@ -212,7 +217,7 @@ const castor::messages::Header& header, const castor::messages::Heartbeat& body)
   param.push_back(log::Param("bytesMoved",body.bytesmoved()));
   m_log(LOG_INFO,"IT IS ALIVE",param);
   
-  sendEmptyReplyToClient();
+  sendSuccessReplyToClient();
 }
 
 void castor::tape::tapeserver::daemon::TapeMessageHandler::dealWith(
@@ -220,7 +225,7 @@ const castor::messages::Header& header,
 const castor::messages::NotifyDriveBeforeMountStarted& body){
   m_log(LOG_INFO,"NotifyDriveBeforeMountStarted-dealWith");
   //check castor consistensy
-    if(body.mode()==castor::messages::TAPE_MODE_READWRITE) {
+  if(body.mode()==castor::messages::TAPE_MODE_READWRITE) {
     legacymsg::VmgrTapeInfoMsgBody tapeInfo;
     m_vmgr.queryTape(body.vid(), tapeInfo);
     // If the client is the tape gateway and the volume is not marked as BUSY
@@ -229,8 +234,20 @@ const castor::messages::NotifyDriveBeforeMountStarted& body){
       ex.getMessage() << "The tape gateway is the client and the tape to be mounted is not BUSY: vid=" << body.vid();
       throw ex;
     }
+    
+    castor::messages::NotifyDriveBeforeMountStartedAnswer body;
+    body.set_howmanyfilesontape(tapeInfo.nbFiles);
+    
+    castor::messages::Header header = castor::messages::preFillHeader();
+    header.set_reqtype(messages::reqType::NotifyDriveBeforeMountStartedAnswer);
+    header.set_bodyhashvalue(castor::messages::computeSHA1Base64(body));
+    header.set_bodysignature("PIPO");
+    
+    castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
+    castor::messages::sendMessage(m_socket,body);
+  } else {
+    sendSuccessReplyToClient();
   }
-    sendEmptyReplyToClient();
 }
 
 void castor::tape::tapeserver::daemon::TapeMessageHandler::dealWith(
@@ -262,15 +279,19 @@ const castor::messages::NotifyDriveTapeMounted& body){
   m_vdqm.tapeMounted(m_hostName, body.unitname(), driveConfig.dgn, body.vid(),
     drive->getSessionPid());
   
-  sendEmptyReplyToClient();
+  sendSuccessReplyToClient();
 }
 
-void castor::tape::tapeserver::daemon::TapeMessageHandler::sendEmptyReplyToClient(){
+void castor::tape::tapeserver::daemon::TapeMessageHandler::sendSuccessReplyToClient(){
+    castor::messages::ReturnValue body;
+    body.set_returnvalue(0);
+    body.set_message("");
+  
     castor::messages::Header header = castor::messages::preFillHeader();
-    header.set_reqtype(messages::reqType::NoReturnValue);
-    header.set_bodyhashvalue("PIPO");
+    header.set_reqtype(messages::reqType::ReturnValue);
+    header.set_bodyhashvalue(castor::messages::computeSHA1Base64(body));
     header.set_bodysignature("PIPO");
-    castor::messages::NoReturnValue body;
+
     castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
     castor::messages::sendMessage(m_socket,body);
 }

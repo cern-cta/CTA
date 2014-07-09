@@ -1,5 +1,4 @@
 /******************************************************************************
- *                 rtcopy/rtcp_marshallVdqmClientInfoMsg.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,7 +18,7 @@
  *
  *
  *
- * @author Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "h/marshall.h"

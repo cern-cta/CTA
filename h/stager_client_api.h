@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      stager_client_api.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * the client API to the castor stager
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 /** @mainpage CASTOR Stager API

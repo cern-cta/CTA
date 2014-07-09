@@ -1,5 +1,4 @@
 /******************************************************************************
- *                castor/stager/daemon/GcSvcThread.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * Service thread for garbage collection related requests
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

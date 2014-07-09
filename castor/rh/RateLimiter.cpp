@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      RateLimiter.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +21,7 @@
  * based around memcache, there is lots of scope for optimization and
  * improvement! This is ***NOT*** DOS protection.....
  *
- * @author Dennis Waldron
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include files

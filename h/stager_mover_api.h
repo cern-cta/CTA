@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      stager_mover_api.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * 
  *
- * @author Ben Couturier
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
  * @version $Revision: 1.2 $

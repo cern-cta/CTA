@@ -1,5 +1,4 @@
 /******************************************************************************
- *                  UDPListenerThreadPool.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * A listener thread pool listening on an UDP port
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files

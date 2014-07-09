@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      castor/log/StringLogger.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,7 +18,7 @@
  *
  * Interface to the CASTOR logging system, with string output.
  *
- * @author Steven.Murray@cern.ch Eric.Cano@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/log/StringLogger.hpp"

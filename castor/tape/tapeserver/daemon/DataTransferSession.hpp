@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      DataTransferSession.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -28,14 +27,11 @@
 #include "castor/messages/TapeserverProxy.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/log/LogContext.hpp"
+#include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
-#include "TapeSingleThreadInterface.hpp"
-
-using namespace castor::tape;
-using namespace castor::log;
+#include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 
 namespace castor {
 namespace legacymsg {
@@ -107,7 +103,7 @@ namespace daemon {
       const utils::DriveConfig & driveConfig,
       castor::legacymsg::RmcProxy & rmc,
       castor::messages::TapeserverProxy & initialProcess,
-      CapabilityUtils &capUtils,
+      castor::server::ProcessCap &capUtils,
       const CastorConf & castorConf);
     /** The only method. It will execute (like a task, that it is) */
     int execute() ;
@@ -115,7 +111,7 @@ namespace daemon {
     std::string getVid() { return m_volInfo.vid; }
     
     /**
-     * Return the global shared zmq context for the mount session
+     * Return the global shared zmq context for the data-transfer session
      * THIS FUNCTION SHALL ONLY BE CALLED IN THE FORKED PROCESS
      *
      * @return The global shared zmq context for the data-transfer session.
@@ -145,21 +141,21 @@ namespace daemon {
      * all errors and hence does not throw exceptions. It returns NULL
      * in case of failure. */
     castor::tape::drives::DriveInterface * findDrive(
-     const utils::DriveConfig &driveConfig,LogContext & lc);
+     const utils::DriveConfig &driveConfig,log::LogContext & lc);
         
     /** sub-part of execute for the read sessions */
-    int executeRead(LogContext & lc);
+    int executeRead(log::LogContext & lc);
     /** sub-part of execute for a write session */
-    int executeWrite(LogContext & lc);
+    int executeWrite(log::LogContext & lc);
     /** sub-part of execute for a dump session */
-    void executeDump(LogContext & lc);
+    void executeDump(log::LogContext & lc);
     /** Reference to the RmcProxy, allowing the mounting of the tape by the
      * library. It will be used exclusively by the tape thread. */
     castor::legacymsg::RmcProxy & m_rmc;
     /** Reference to the tape server's parent process to report detailed status */
     castor::messages::TapeserverProxy & m_intialProcess;
     /** Object providing utilities for working UNIX capabilities. */
-    CapabilityUtils &m_capUtils;
+    castor::server::ProcessCap &m_capUtils;
     /** copy of the process's argc to allow "command line reporting"
      * i.e. snprintf to argv's, which will be visible in 'ps' */
     int m_argc;

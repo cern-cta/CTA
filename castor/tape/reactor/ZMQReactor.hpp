@@ -1,5 +1,4 @@
 /******************************************************************************
- *         castor/tape/reactor/ZMQReactor.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author castor-dev
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
@@ -26,8 +25,8 @@
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace castor {
 namespace tape {
@@ -52,10 +51,8 @@ public:
    * Constructor.
    *
    * @param log Interface to the CASTOR logging system.
-   * @param xmqContext The ZMQ context used by the sockets handled by this
-   * reactor.
    */
-  ZMQReactor(log::Logger& log, void *const zmqContext) throw();
+  ZMQReactor(log::Logger& log) throw();
 
   /**
    * Destructor.
@@ -86,25 +83,22 @@ public:
    */
   void handleEvents(const int timeout);
   
-  /**
-   * Returns the ZMQ context used by the sockets handled by this reactor.
-   *
-   * @return The ZMQ context used by the sockets handled by this reactor.
-   */
-  void *getZmqContext() const throw();
-
 private:
   
   /**
    * Type used to map zmq_pollitem_t to event handler.
    */
-  typedef std::vector<std::pair<zmq_pollitem_t, ZMQPollEventHandler*> > HandlerMap;
+  typedef std::vector<std::pair<zmq_pollitem_t, ZMQPollEventHandler*> >
+    HandlerMap;
 
   /**
-   * Allocates and builds the array of file descriptors to be passed to poll().
+   * Builds the vector of file descriptors to be passed to poll().
    *
-   * @return The array of file descriptors.  Please note that is the
-   * responsibility of the caller to delete the array.
+   * Please note that the return type is an std::vector because we can assume
+   * that its elements are stored contiguously in memory.  The address of the
+   * first element is going to be passed to zmq_poll().
+   *
+   * @return The vector of file descriptors.
    */
   std::vector<zmq_pollitem_t> buildPollFds() const;
   
@@ -132,11 +126,6 @@ private:
    * Map of file descriptor to registered event handler.
    */
   HandlerMap m_handlers;  
-  
-  /**
-   * The ZMQ context used by the sockets handled by this reactor.
-   */
-  void *const m_zmqContext;
   
   /**
    * Object representing the API of the CASTOR logging system.

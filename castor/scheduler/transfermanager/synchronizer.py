@@ -138,7 +138,7 @@ class SynchronizerThread(threading.Thread):
     try:
       # list d2d source running and handled by this transfer manager
       allTMD2dSrc = connectionpool.connections.getAllRunningD2dSourceTransfers(self.hostname, timeout=None)
-      allTMD2dSrcSet = set([transferid for transferid, reqid, fileid in allTMD2dSrc])
+      allTMD2dSrcSet = set([transferid for transferid, reqid_unused, fileid_unused in allTMD2dSrc])
     except connectionpool.Timeout:
       # we could not list all pending running transfers in the system because of timeouts
       # Thus we have to give up with synchronization for this round
@@ -163,7 +163,7 @@ class SynchronizerThread(threading.Thread):
       transfersToEnd = list(allTMD2dSrcSet - subReqIds)
       # and end them
       if transfersToEnd:
-        tid2fileid = dict([(transferid, fileid) for transferid, reqid, fileid in allTMD2dSrc])
+        tid2fileid = dict([(transferid, fileid) for transferid, reqid_unused, fileid in allTMD2dSrc])
         for transferid in transfersToEnd:
           # 'Transfer ended by synchronization as the transfer disappeared from the DB' message
           dlf.write(msgs.SYNCHROENDEDTRANSFER, subreqid=transferid, fileid=tid2fileid[transferid])

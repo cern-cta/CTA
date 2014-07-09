@@ -22,6 +22,8 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
+find_package (ceph REQUIRED)
+include_directories(${RADOS_INCLUDE_DIR})
 set(STAGERJOB_EXE_SRC_FILES
   StagerJob.cpp
   InputArguments.cpp
@@ -33,6 +35,7 @@ set(STAGERJOB_EXE_SRC_FILES
   XRootPlugin.cpp
   GridFTPPlugin.cpp)
 add_executable(stagerjob ${STAGERJOB_EXE_SRC_FILES})
-target_link_libraries(stagerjob castorcommon castordlf castorclient castorrfio)
+target_link_libraries(stagerjob castorcommon castordlf castorclient castorrfio
+  ${RADOS_LIBS} castorcephposix castorserver)
 install(TARGETS stagerjob DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallLogrotate(castor-job)

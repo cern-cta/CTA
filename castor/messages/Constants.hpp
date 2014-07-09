@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      Constants.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -32,12 +31,13 @@ namespace castor {
     };
     struct reqType{
       enum {
-        NoReturnValue,
+        ReturnValue,
         Heartbeat,
         NotifyDriveBeforeMountStarted,
         NotifyDriveTapeMounted,
         NotifyDriveUnmountStarted,
-        NotifyDriveTapeUnmounted    
+        NotifyDriveTapeUnmounted,
+        NotifyDriveBeforeMountStartedAnswer,
       };
     };
     struct protocolVersion{

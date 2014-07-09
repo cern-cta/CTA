@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      CephGlobals.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  * couple of global maps needed for interfacing with ceph libraries.
  * Basically a cache of connections to ceph
  *
- * @author Dennis Waldron
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/gc/CephGlobals.hpp"

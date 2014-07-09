@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      IVdqmSvc.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * This class provides methods to deal with the VDQM service
  *
- * @author Matthias Braeger
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

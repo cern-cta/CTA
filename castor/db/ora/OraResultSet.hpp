@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      OraResultSet.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  *
  *
- * @author Giuseppe Lo Presti, giuseppe.lopresti@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

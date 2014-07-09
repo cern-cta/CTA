@@ -123,6 +123,5 @@ dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.INITQUEUES : 'Initializing Queues from the diskmanagers\' ones',
                  msgs.INITQUEUESENDED : 'Initialization of queues dones',
                  msgs.INITQUEUELISTRUNNING : 'Queue initialization : Getting running jobs',
-                 msgs.INITQUEUELISTPENDING : 'Queue initialization : Getting pending jobs'
-})
+                 msgs.INITQUEUELISTPENDING : 'Queue initialization : Getting pending jobs'})
 

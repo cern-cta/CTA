@@ -1,20 +1,44 @@
-#include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
-#include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
-#include "castor/log/StringLogger.hpp"
-#include "castor/tape/tapeserver/drive/Drive.hpp"
-#include <gtest/gtest.h>
-#include "castor/tape/tapeserver/client/FakeClient.hpp"
-#include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
+/****************************************************************************** 
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * 
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *****************************************************************************/
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/legacymsg/RmcProxyDummy.hpp"
-#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
+#include "castor/log/StringLogger.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
-#include "castor/tape/utils/TpconfigLine.hpp"
+#include "castor/server/ProcessCapDummy.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
+#include "castor/tape/tapeserver/client/FakeClient.hpp"
+#include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
+#include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
+#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
+#include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
+#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/utils/TpconfigLine.hpp"
 #include "castor/utils/utils.hpp"
-#include "castor/tape/tapeserver/daemon/CapabilityUtilsDummy.hpp"
+
+#include <gtest/gtest.h>
+
 namespace unitTests
 {
 using namespace castor::tape::tapeserver::daemon;
@@ -39,7 +63,7 @@ public:
     castor::legacymsg::RmcProxy & rmc,
     castor::tape::tapeserver::daemon::TapeServerReporter & tsr,
     const castor::tape::tapeserver::client::ClientInterface::VolumeInfo& volInfo, 
-     castor::tape::tapeserver::daemon::CapabilityUtils& cap,
+     castor::server::ProcessCap& cap,
     castor::log::LogContext & lc):
   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, tsr, volInfo,cap, lc){}
   
@@ -78,7 +102,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   volume.volumeMode=castor::tape::tapegateway::READ;
   castor::tape::tapeserver::daemon::TapeServerReporter gsr(initialProcess,
   utils::DriveConfig(),"0.0.0.0",volume,lc);
-  castor::tape::tapeserver::daemon::CapabilityUtilsDummy cap;
+  castor::server::ProcessCapDummy cap;
   FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, volume, cap,lc);
 
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
@@ -133,7 +157,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   volume.labelObsolete="AUL";
   volume.vid="V12345";
   volume.volumeMode=castor::tape::tapegateway::READ;
-  castor::tape::tapeserver::daemon::CapabilityUtilsDummy cap;
+  castor::server::ProcessCapDummy cap;
   castor::tape::tapeserver::daemon::TapeServerReporter tsr(initialProcess,  
   utils::DriveConfig(),"0.0.0.0",volume,lc);  
   FakeSingleTapeReadThread tapeRead(drive, rmc, tsr, volume,cap, lc);

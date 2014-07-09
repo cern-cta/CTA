@@ -1,5 +1,4 @@
 /******************************************************************************
- *                TapeMessageHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author dkruse@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
@@ -51,21 +50,22 @@ public:
   /**
    * Constructor.
    *
-   * @param fd The file descriptor of the socket listening for
-   * connections from the vdqmd daemon.
    * @param reactor The reactor to which new Vdqm connection handlers are to
    * be registered.
    * @param log The object representing the API of the CASTOR logging system.
+   * @param driveCatalogue The tape-drive catalogue.
+   * @param hostName The name of the host.
    * @param vdqm Proxy object representing the vdqmd daemon.
-   * @param driveCatalogue The catalogue of tape drives controlled by the tape
-   * server daemon.
+   * @param zmqContext The ZMQ context.
    */
   TapeMessageHandler(
     reactor::ZMQReactor &reactor,
-    log::Logger &log,DriveCatalogue &driveCatalogue,
+    log::Logger &log,
+    DriveCatalogue &driveCatalogue,
     const std::string &hostName,
     castor::legacymsg::VdqmProxy & vdqm,
-    castor::legacymsg::VmgrProxy & vmgr);
+    castor::legacymsg::VmgrProxy & vmgr,
+    void *const zmqContext);
 
   /**
    * Destructor.
@@ -93,7 +93,7 @@ public:
   bool handleEvent(const zmq_pollitem_t &fd);
   
 private:
-  void sendEmptyReplyToClient();
+  void sendSuccessReplyToClient();
   
   template <class T> void unserialize(T& msg, tape::utils::ZmqMsg& blob){
     std::string logMessage="Cant parse " ;

@@ -1,5 +1,4 @@
 /******************************************************************************
- *         castor/legacymsg/legacymsg.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  *
  *
- * @author steven.murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

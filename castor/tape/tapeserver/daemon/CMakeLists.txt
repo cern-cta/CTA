@@ -4,8 +4,6 @@ add_library(castorTapeServerDaemon
   AdminAcceptHandler.cpp
   AdminConnectionHandler.cpp
   ../client/ClientProxy.cpp 
-  CapabilityUtils.cpp
-  CapabilityUtilsImpl.cpp
   DiskReadThreadPool.cpp
   DiskReadTask.cpp
   DiskWriteTask.cpp
@@ -20,16 +18,22 @@ add_library(castorTapeServerDaemon
   LabelCmdAcceptHandler.cpp
   LabelCmdConnectionHandler.cpp
   LabelSession.cpp
+  CleanerSession.cpp
   MigrationMemoryManager.cpp
   MigrationReportPacker.cpp 
   MigrationTaskInjector.cpp
   DataTransferSession.cpp
+  ProcessForker.cpp
+  ProcessForkerProxy.cpp
+  ProcessForkerMsgType.cpp
+  ProcessForkerProxySocket.cpp
+  ProcessForkerUtils.cpp
   RecallMemoryManager.cpp
   RecallTaskInjector.cpp 
   RecallReportPacker.cpp
-  SmartCap.cpp
   TapeMessageHandler.cpp
   TapeDaemonMain.cpp
+  TapeWriteSingleThread.cpp
   TapeWriteTask.cpp
   TaskWatchDog.cpp
   VdqmAcceptHandler.cpp
@@ -46,15 +50,6 @@ add_library(castorTapeServerDaemonTestDummies
 
 add_executable(tapeserverd TapeDaemon.cpp)
 
-find_library (LIBCAP_LIB cap)
-if (LIBCAP_LIB)
-  message(STATUS "Found the libcap library")
-  set (LIBCAPUNITTEST_SRC_FILES
-    ../castor/tape/tapeserver/daemon/SmartCapTest.cpp)
-else (LIBCAP_LIB)
-  message(STATUS "Failed to find libcap library")
-endif (LIBCAP_LIB)
-
 target_link_libraries(tapeserverd
   castorTapeServerDaemon
   Exception
@@ -65,6 +60,7 @@ target_link_libraries(tapeserverd
   castorcommon
   castorclient
   castorlegacymsg
+  castorserver
   castortapegatewayprotocol
   castortapereactor
   castorTapeServerThreading

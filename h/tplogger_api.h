@@ -30,7 +30,6 @@
 #include "dlf_api.h"
 
 /**
- * @file  tplogger_api.h
  * @brief tplogger interface
  */
 

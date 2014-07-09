@@ -1,5 +1,4 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/LabelCmdConnectionHandler.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author dkruse@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/exception/BadAlloc.hpp"
@@ -223,8 +222,8 @@ void castor::tape::tapeserver::daemon::LabelCmdConnectionHandler::
     m_thisEventHandlerOwnsFd = false;
     {
       log::Param params[] = {log::Param("fd", m_fd)};
-      m_log(LOG_DEBUG, "Mount-session handler released label connection",
-        params);
+      m_log(LOG_DEBUG,
+        "Label-command connection handler released label connection", params);
     }
   } catch(castor::exception::Exception &ex) {
     log::Param params[] = {log::Param("message", ex.getMessage().str())};

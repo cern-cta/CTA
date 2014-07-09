@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      SignalThreadPool.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * Thread pool supporting wakeup on signals and periodical run after timeout
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

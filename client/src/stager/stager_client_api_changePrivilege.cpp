@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      stager_client_api_changePrivilege.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * api to handle privileges i.e. modify the black and white list
  *
- * @author sponcec3
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // includes

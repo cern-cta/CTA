@@ -48,7 +48,7 @@ set_target_properties (stagerd PROPERTIES
   COMPILE_FLAGS ${ORACLE_CPPFLAGS}
   LINK_FLAGS "-L${ORACLE_LIBDIR} -locci -lclntsh")
 target_link_libraries (stagerd castorclient castorcnvs castorcommon castorns
-  castorupv castordlf castorcommonora)
+  castorupv castordlf castorcommonora castorserver)
 install (TARGETS stagerd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (stagerd)
 CastorInstallLogRotate (castor-stager-server)

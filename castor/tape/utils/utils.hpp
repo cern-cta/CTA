@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      castor/tape/utils.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  *
  *
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
@@ -103,70 +102,7 @@
 namespace castor {
 namespace tape   {
 namespace utils  {
-
-/**
- * Writes the hex form of the specified unsigned 32-bit integer into the
- * first 8 bytes of the specified character buffer.  The string termination
- * character '\0' is written to the ninth byte of the output buffer.
- *
- * @param number The 32-bit integer.
- * @param buf    The character buffer that must have a minimum of 9 bytes.
- * @param len    The length of the character buffer.
- */
-void toHex(uint32_t number, char *buf, size_t len);
-
-/**
- * Writes the hex form of the specified unsigned 32-bit integer into the
- * first 8 bytes of the specified character buffer.  The string termination
- * character '\0' is written to the ninth byte of the output buffer.
- *
- * @param number The 32-bit integer.
- * @param buf    The character buffer that must have a minimum of 9 bytes.
- */
-template<size_t n> void toHex(uint32_t number, char (&buf)[n]) {
-  toHex(number, buf, n);
-}
-
-/**
- * Returns the number of occurences the specified character appears in the
- * specified string.
- *
- * @param ch The character to be searched for and counted.
- * @param str The string to be seacrhed.
- */
-int countOccurrences(const char ch, const char *str);
 	
-/**
- * Writes the specified unsigned 64-bit integer into the specified
- * destination character array as a hexadecimal string.
- *
- * This function allows user to allocate a character array on the stack and
- * fill it with 64-bit hexadecimal string.
- *
- * @param i      The unsigned 64-bit integer.
- * @param dst    The destination character array which should have a minimum
- *               length of 17 characters.  The largest 64-bit hexadecimal
- *               string "FFFFFFFFFFFFFFFF" would ocuppy 17 characters
- *               (17 characters = 16 x 'F' + 1 x '\0').
- * @param dstLen The length of the destination character string.
- */
-void toHex(const uint64_t i, char *dst, size_t dstLen);
-
-/**
- * Writes the specified unsigned 64-bit integer into the specified
- * destination character array as a hexadecimal string.
- *
- * This function allows user to allocate a character array on the stack and
- * fill it with 64-bit hexadecimal string.
- *
- * @param i The unsigned 64-bit integer.
- * @param dst The destination character array.
- */
-template<int n> void toHex(const uint64_t i, char (&dst)[n])
-   {
-  toHex(i, dst, n);
-}
-
 /**
  * Writes the specified array of strings to the specified output stream as a
  * list of strings separated by the specified separator.
@@ -231,14 +167,6 @@ const char *volumeClientTypeToString(const tapegateway::ClientType mode)
 const char *volumeModeToString(const tapegateway::VolumeMode mode) throw();
 
 /**
- * Drains (reads and discards) all data from the specified file until end of
- * file is reached.
- *
- * @param fd The file descriptor of the file to be drained.
- */
-ssize_t drainFile(const int fd) ;
-
-/**
  * Appends each line of the specified file to the specified list of lines.
  * The new-line characters are extracted from the file, but they are not
  * stored in the lines appended to the list.
@@ -290,14 +218,6 @@ std::string trimString(const std::string &str) throw();
 std::string singleSpaceString(const std::string &str) throw();
 
 /**
- * Writes a banner with the specified title text to the specified stream.
- *
- * @param os The stream to be written to.
- * @param title The title text to be written.
- */
-void writeBanner(std::ostream &os, const char *const title) throw();
-
-/**
  * Gets and returns the specified port number using getconfent or returns the
  * specified default if getconfent cannot find it.
  *
@@ -343,50 +263,6 @@ void extractTpconfigDriveNames(const TpconfigLines &tpconfigLines,
   std::list<std::string> &driveNames) throw();
 
 /**
- * C++ wrapper for the standard C function stat().
- *
- * This wrapper throws an exception if the underlying C function encounters
- * an error.
- *
- * @param filename The name of the file for which information should be
- *                 returned.
- * @param buf      Output parameter: The infromation returned about the
- *                 specified file.
- */
-void statFile(const char *const filename, struct stat &buf);
-
-/**
- * C++ wrapper function of the C pthread_create() function.  This wrapper
- * converts the return value indicating an error into the throw of a
- * castor::exception::Exception.
- *
- * @param thread       The location where the ID of the created thread will be
- *                     stored.
- * @param attr         The attribute with which the new thread will be created.
- *                     If this parameter is NULL, then the default attributes
- *                     will be used.
- * @param startRoutine The start routine of the thread to be created.
- * @param arg          The argument to be passed to the startRoutine of the
- *                     created thread.
- */
-void pthreadCreate(
-  pthread_t *const thread,
-  const pthread_attr_t *const attr,
-  void *(*const startRoutine)(void*),
-  void *const arg);
-
-/**
- * C++ wrapper function of the C pthread_join() function.  This wrapper
- * converts the return value indicating an error into the throw of a
- * castor::exception::Exception.
- *
- * @param thread   The thread which the calling thread will wait for.
- * @param valuePtr If not NULL, will be made to point to the location of the
- *                 value set by the target thread calling pthread_exit().
- */
-void pthreadJoin(pthread_t thread, void **const valuePtr);
-
-/**
  * C++ wrapper function of the C getconfent() function.  This wrapper
  * converts a return value of null or empty string into an
  * InvalidConfiguration exception.
@@ -403,11 +279,6 @@ const char *getMandatoryValueFromConfiguration(const char *const category,
  */
 bool isAnEmptyString(const char *const str) throw();
 
-/**
- * Returns a comma separated list string-representation of the specified vector
- * of strings.
- */
-std::string vectorOfStringToString(const std::vector<std::string> &v) throw();
 
 /**
  * Returns the string representation of the specified tape block-id.

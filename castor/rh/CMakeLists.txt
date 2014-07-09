@@ -33,7 +33,7 @@ set(RH_SRC_FILES Server.cpp RHThread.cpp RateLimiter.cpp RatingGroup.cpp
   UserCounter.cpp SvcClassCounter.cpp)
 add_executable (rhd ${RH_SRC_FILES})
 target_link_libraries (rhd castorcommon castordlf castorclient castorcnvs 
-  castorns castorcommonora castorsecurity -lmemcached -ldl)
+  castorns castorcommonora castorsecurity castorserver -lmemcached -ldl)
 install (TARGETS rhd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallDir(/var/spool/castor)
 CastorInstallInitScript(rhd)

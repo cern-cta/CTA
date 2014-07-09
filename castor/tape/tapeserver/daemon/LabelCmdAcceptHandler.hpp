@@ -1,5 +1,4 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/LabelCmdAcceptHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author dkruse@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
@@ -45,7 +44,7 @@ public:
    * Constructor.
    *
    * @param fd The file descriptor of the socket listening for
-   * connections from the mount session
+   * connections from the data-transfer session
    * @param reactor The reactor to which new connection handlers are to be
    * registered.
    * @param log The object representing the API of the CASTOR logging system.

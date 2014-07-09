@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      DbParamsSvc.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * A service to provide parameters to access the db layer of a Castor application
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

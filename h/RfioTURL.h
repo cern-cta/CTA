@@ -6,7 +6,7 @@
  *
  *
  *
- * @author Olof Barring
+ * @author Castor Dev team, castor-dev@cern.ch
  */
 
 /** RfioTURL.c - RFIO TURL handling

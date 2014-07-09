@@ -145,7 +145,8 @@ ELSE(DEFINED PackageOnly)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
   endif (APPLE)
   
-  set (CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
+  set (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
+  #set (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wnon-virtual-dtor")
   
   set_property (DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
   
@@ -170,6 +171,7 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory (dlf)
   if (${COMPILE_SERVER} STREQUAL "1")
     add_subdirectory (gridftp2)
+    add_subdirectory (ceph)
   endif (${COMPILE_SERVER} STREQUAL "1")
   add_subdirectory (h)
   if (${COMPILE_SERVER} STREQUAL "1")
@@ -233,12 +235,11 @@ endif (${COMPILE_PACKAGING} STREQUAL "1")
 #                    COMMENT "Not running the unit tests" VERBATIM)
 
 configure_file(test/castorThreadedUnitTests.supp test/castorThreadedUnitTests.supp COPYONLY)
-configure_file(test/VCastorUnitTests.supp test/VCastorUnitTests.supp COPYONLY)
 add_custom_target(test test/castorUnitTests
                     #  
-                    COMMAND valgrind --track-fds=yes --leak-check=full --demangle=no --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --suppressions=test/VCastorUnitTests.supp test/castorUnitTests
+                    COMMAND valgrind --track-fds=yes --leak-check=full --demangle=no --gen-suppressions=all --show-reachable=yes --error-exitcode=1 test/castorUnitTests
                     COMMAND test/castorThreadedUnitTests
-                    COMMAND valgrind --track-fds=yes --leak-check=full --show-reachable=yes --error-exitcode=1 --suppressions=test/VCastorUnitTests.supp test/castorThreadedUnitTests
+                    COMMAND valgrind --track-fds=yes --leak-check=full --show-reachable=yes --error-exitcode=1  test/castorThreadedUnitTests
                     COMMAND valgrind --tool=helgrind -v --demangle=no --conflict-cache-size=30000000 --error-exitcode=1 --suppressions=test/castorThreadedUnitTests.supp test/castorThreadedUnitTests
                     COMMAND test/castorMultiprocessUnitTests
                     COMMAND valgrind --tool=helgrind --error-exitcode=1 --suppressions=test/castorThreadedUnitTests.supp test/castorMultiprocessUnitTests 

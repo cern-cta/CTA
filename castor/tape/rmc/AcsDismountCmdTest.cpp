@@ -1,5 +1,4 @@
 /******************************************************************************
- *             castor/tape/rmc/AcsDismountCmdTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,7 +18,7 @@
  *
  *
  *
- * @author Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/tape/rmc/MockAcs.hpp"

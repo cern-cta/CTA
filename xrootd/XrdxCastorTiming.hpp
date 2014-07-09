@@ -1,5 +1,4 @@
 /*******************************************************************************
- *                      XrdxCastorTiming.hh
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,7 +17,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * @author Castor Dev team, castor-dev@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
@@ -30,7 +30,6 @@
 #include "XrdxCastorNamespace.hpp"
 /*----------------------------------------------------------------------------*/
 #include "XrdOuc/XrdOucString.hh"
-#include "XrdOuc/XrdOucTrace.hh"
 /*----------------------------------------------------------------------------*/
 
 XCASTORNAMESPACE_BEGIN
@@ -93,11 +92,11 @@ public:
   //----------------------------------------------------------------------------
   //! Destructor
   //----------------------------------------------------------------------------
-    virtual ~Timing();
+  virtual ~Timing();
 
 
   //----------------------------------------------------------------------------
-  //! Wrapper Function to hide difference between Apple and Linux
+  //! Wrapper function to hide difference between Apple and Linux
   //----------------------------------------------------------------------------
   static void GetTimeSpec(struct timespec &ts);
 };

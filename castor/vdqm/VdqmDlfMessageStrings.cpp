@@ -2,7 +2,6 @@
  */
 
 /******************************************************************************
- *                      VdqmDlfMessageStrings.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +21,7 @@
  *
  *
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"

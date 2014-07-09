@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      TapeWriteFileTask.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -28,11 +27,13 @@
 #include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
+#include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
 #include "castor/tape/tapeserver/daemon/SessionStats.hpp"
 #include "castor/tape/utils/Timer.hpp"
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -87,13 +88,12 @@ public:
    * Destructor
    */
   virtual ~TapeWriteTask();
+
   /**
-   * Public interface for circulateMemBlocks. If m_errorFlag is not set, 
-   * it will do nothing and log the attempted forced circulation without
-   *  error as en error done by the programmer
-   * @param lc THe log context to log if 
+   * Should only be called in case of error !!
+   * Just pop data block and put in back into the memory manager
    */
-  void circulateMemBlocks(log::LogContext& lc);
+  void circulateMemBlocks();
 private:
     void hasAnotherTaskTailed() const {
     //if a task has signaled an error, we stop our job
@@ -101,11 +101,7 @@ private:
       throw  castor::tape::exceptions::ErrorFlag();
     }
   }
-  /**
-   * Just pop data block and put in back into the memory manager
-   */
-  void circulateMemBlocks();
-  
+    
   /**
    * Function in charge of opening the WriteFile for m_fileToMigrate
    * Throw an exception it it fails

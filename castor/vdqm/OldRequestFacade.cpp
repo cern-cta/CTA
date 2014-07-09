@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      OldRequestFacade.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  *
  *
- * @author Matthias Braeger
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/Constants.hpp"

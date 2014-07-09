@@ -1,5 +1,4 @@
 /******************************************************************************
- *                castor/stager/ICommonSvc.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,7 +20,7 @@
  * This class provides common methods useful to the stager to
  * deal with database queries
  *
- * @author Giuseppe Lo Presti
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

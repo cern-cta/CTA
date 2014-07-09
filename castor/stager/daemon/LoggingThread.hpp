@@ -1,5 +1,4 @@
 /******************************************************************************
- *                castor/stager/daemon/LoggingThread.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,7 +18,7 @@
  *
  * Thread for dumping database logs to DLF
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

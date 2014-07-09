@@ -28,6 +28,9 @@ const ::google::protobuf::internal::GeneratedMessageReflection*
 const ::google::protobuf::Descriptor* NotifyDriveTapeUnmounted_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   NotifyDriveTapeUnmounted_reflection_ = NULL;
+const ::google::protobuf::Descriptor* NotifyDriveBeforeMountStartedAnswer_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  NotifyDriveBeforeMountStartedAnswer_reflection_ = NULL;
 const ::google::protobuf::EnumDescriptor* TapeMode_descriptor_ = NULL;
 
 }  // namespace
@@ -103,6 +106,21 @@ void protobuf_AssignDesc_NotifyDrive_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(NotifyDriveTapeUnmounted));
+  NotifyDriveBeforeMountStartedAnswer_descriptor_ = file->message_type(4);
+  static const int NotifyDriveBeforeMountStartedAnswer_offsets_[1] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NotifyDriveBeforeMountStartedAnswer, howmanyfilesontape_),
+  };
+  NotifyDriveBeforeMountStartedAnswer_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      NotifyDriveBeforeMountStartedAnswer_descriptor_,
+      NotifyDriveBeforeMountStartedAnswer::default_instance_,
+      NotifyDriveBeforeMountStartedAnswer_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NotifyDriveBeforeMountStartedAnswer, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NotifyDriveBeforeMountStartedAnswer, _unknown_fields_),
+      -1,
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(NotifyDriveBeforeMountStartedAnswer));
   TapeMode_descriptor_ = file->enum_type(0);
 }
 
@@ -124,6 +142,8 @@ void protobuf_RegisterTypes(const ::std::string&) {
     NotifyDriveUnmountStarted_descriptor_, &NotifyDriveUnmountStarted::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     NotifyDriveTapeUnmounted_descriptor_, &NotifyDriveTapeUnmounted::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    NotifyDriveBeforeMountStartedAnswer_descriptor_, &NotifyDriveBeforeMountStartedAnswer::default_instance());
 }
 
 }  // namespace
@@ -137,6 +157,8 @@ void protobuf_ShutdownFile_NotifyDrive_2eproto() {
   delete NotifyDriveUnmountStarted_reflection_;
   delete NotifyDriveTapeUnmounted::default_instance_;
   delete NotifyDriveTapeUnmounted_reflection_;
+  delete NotifyDriveBeforeMountStartedAnswer::default_instance_;
+  delete NotifyDriveBeforeMountStartedAnswer_reflection_;
 }
 
 void protobuf_AddDesc_NotifyDrive_2eproto() {
@@ -158,20 +180,24 @@ void protobuf_AddDesc_NotifyDrive_2eproto() {
     "TP\020\005\"`\n\026NotifyDriveTapeMounted\022\013\n\003vid\030\001 "
     "\002(\t\022\020\n\010unitName\030\002 \002(\t\022\'\n\004mode\030\003 \002(\0162\031.ca"
     "stor.messages.TapeMode\"\033\n\031NotifyDriveUnm"
-    "ountStarted\"\032\n\030NotifyDriveTapeUnmounted*"
-    "_\n\010TapeMode\022\022\n\016TAPE_MODE_NONE\020\001\022\022\n\016TAPE_"
-    "MODE_READ\020\002\022\027\n\023TAPE_MODE_READWRITE\020\003\022\022\n\016"
-    "TAPE_MODE_DUMP\020\004", 616);
+    "ountStarted\"\032\n\030NotifyDriveTapeUnmounted\""
+    "A\n#NotifyDriveBeforeMountStartedAnswer\022\032"
+    "\n\022howManyFilesOnTape\030\001 \002(\r*_\n\010TapeMode\022\022"
+    "\n\016TAPE_MODE_NONE\020\001\022\022\n\016TAPE_MODE_READ\020\002\022\027"
+    "\n\023TAPE_MODE_READWRITE\020\003\022\022\n\016TAPE_MODE_DUM"
+    "P\020\004", 683);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "NotifyDrive.proto", &protobuf_RegisterTypes);
   NotifyDriveBeforeMountStarted::default_instance_ = new NotifyDriveBeforeMountStarted();
   NotifyDriveTapeMounted::default_instance_ = new NotifyDriveTapeMounted();
   NotifyDriveUnmountStarted::default_instance_ = new NotifyDriveUnmountStarted();
   NotifyDriveTapeUnmounted::default_instance_ = new NotifyDriveTapeUnmounted();
+  NotifyDriveBeforeMountStartedAnswer::default_instance_ = new NotifyDriveBeforeMountStartedAnswer();
   NotifyDriveBeforeMountStarted::default_instance_->InitAsDefaultInstance();
   NotifyDriveTapeMounted::default_instance_->InitAsDefaultInstance();
   NotifyDriveUnmountStarted::default_instance_->InitAsDefaultInstance();
   NotifyDriveTapeUnmounted::default_instance_->InitAsDefaultInstance();
+  NotifyDriveBeforeMountStartedAnswer::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_NotifyDrive_2eproto);
 }
 
@@ -1238,6 +1264,214 @@ void NotifyDriveTapeUnmounted::Swap(NotifyDriveTapeUnmounted* other) {
   ::google::protobuf::Metadata metadata;
   metadata.descriptor = NotifyDriveTapeUnmounted_descriptor_;
   metadata.reflection = NotifyDriveTapeUnmounted_reflection_;
+  return metadata;
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
+const int NotifyDriveBeforeMountStartedAnswer::kHowManyFilesOnTapeFieldNumber;
+#endif  // !_MSC_VER
+
+NotifyDriveBeforeMountStartedAnswer::NotifyDriveBeforeMountStartedAnswer()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+}
+
+void NotifyDriveBeforeMountStartedAnswer::InitAsDefaultInstance() {
+}
+
+NotifyDriveBeforeMountStartedAnswer::NotifyDriveBeforeMountStartedAnswer(const NotifyDriveBeforeMountStartedAnswer& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+}
+
+void NotifyDriveBeforeMountStartedAnswer::SharedCtor() {
+  _cached_size_ = 0;
+  howmanyfilesontape_ = 0u;
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+NotifyDriveBeforeMountStartedAnswer::~NotifyDriveBeforeMountStartedAnswer() {
+  SharedDtor();
+}
+
+void NotifyDriveBeforeMountStartedAnswer::SharedDtor() {
+  if (this != default_instance_) {
+  }
+}
+
+void NotifyDriveBeforeMountStartedAnswer::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* NotifyDriveBeforeMountStartedAnswer::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return NotifyDriveBeforeMountStartedAnswer_descriptor_;
+}
+
+const NotifyDriveBeforeMountStartedAnswer& NotifyDriveBeforeMountStartedAnswer::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_NotifyDrive_2eproto();  return *default_instance_;
+}
+
+NotifyDriveBeforeMountStartedAnswer* NotifyDriveBeforeMountStartedAnswer::default_instance_ = NULL;
+
+NotifyDriveBeforeMountStartedAnswer* NotifyDriveBeforeMountStartedAnswer::New() const {
+  return new NotifyDriveBeforeMountStartedAnswer;
+}
+
+void NotifyDriveBeforeMountStartedAnswer::Clear() {
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    howmanyfilesontape_ = 0u;
+  }
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool NotifyDriveBeforeMountStartedAnswer::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+  ::google::protobuf::uint32 tag;
+  while ((tag = input->ReadTag()) != 0) {
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // required uint32 howManyFilesOnTape = 1;
+      case 1: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &howmanyfilesontape_)));
+          _set_bit(0);
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectAtEnd()) return true;
+        break;
+      }
+      
+      default: {
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          return true;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+  return true;
+#undef DO_
+}
+
+void NotifyDriveBeforeMountStartedAnswer::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // required uint32 howManyFilesOnTape = 1;
+  if (_has_bit(0)) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->howmanyfilesontape(), output);
+  }
+  
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+}
+
+::google::protobuf::uint8* NotifyDriveBeforeMountStartedAnswer::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  // required uint32 howManyFilesOnTape = 1;
+  if (_has_bit(0)) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->howmanyfilesontape(), target);
+  }
+  
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  return target;
+}
+
+int NotifyDriveBeforeMountStartedAnswer::ByteSize() const {
+  int total_size = 0;
+  
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    // required uint32 howManyFilesOnTape = 1;
+    if (has_howmanyfilesontape()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->howmanyfilesontape());
+    }
+    
+  }
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void NotifyDriveBeforeMountStartedAnswer::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const NotifyDriveBeforeMountStartedAnswer* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const NotifyDriveBeforeMountStartedAnswer*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void NotifyDriveBeforeMountStartedAnswer::MergeFrom(const NotifyDriveBeforeMountStartedAnswer& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from._has_bit(0)) {
+      set_howmanyfilesontape(from.howmanyfilesontape());
+    }
+  }
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void NotifyDriveBeforeMountStartedAnswer::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void NotifyDriveBeforeMountStartedAnswer::CopyFrom(const NotifyDriveBeforeMountStartedAnswer& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool NotifyDriveBeforeMountStartedAnswer::IsInitialized() const {
+  if ((_has_bits_[0] & 0x00000001) != 0x00000001) return false;
+  
+  return true;
+}
+
+void NotifyDriveBeforeMountStartedAnswer::Swap(NotifyDriveBeforeMountStartedAnswer* other) {
+  if (other != this) {
+    std::swap(howmanyfilesontape_, other->howmanyfilesontape_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::google::protobuf::Metadata NotifyDriveBeforeMountStartedAnswer::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = NotifyDriveBeforeMountStartedAnswer_descriptor_;
+  metadata.reflection = NotifyDriveBeforeMountStartedAnswer_reflection_;
   return metadata;
 }
 

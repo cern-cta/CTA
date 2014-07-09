@@ -23,7 +23,7 @@
  * The base implementation is adapted from the following project:
  * @see apr_queue.h (Apache Portable Runtime Utils)
  *
- * @author Dennis Waldron
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      RawMoverPlugin.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +21,7 @@
  * movers, that is movers that were unmodified and do not
  * inform CASTOR in any way
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      ReportPackerInterface.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -82,6 +81,7 @@ template <class PlaceHolder> class ReportPackerInterface{
   typedef typename detail::HelperTrait<PlaceHolder>::FileErrorStruct FileErrorStruct;
 
   protected:
+    virtual ~ReportPackerInterface() {}
     ReportPackerInterface(client::ClientInterface & tg,log::LogContext lc):
   m_client(tg),m_lc(lc),m_listReports(new FileReportList)
   {}

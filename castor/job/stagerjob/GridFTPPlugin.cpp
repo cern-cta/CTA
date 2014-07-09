@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      GridFTPPlugin.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * Plugin of the stager job concerning GridFTP
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files
@@ -183,7 +182,6 @@ void castor::job::stagerjob::GridFTPPlugin::getEnvironment
       throw e;
     }
   }
-  env.dsi_module_extension = (useXroot ? "xroot" : "int");
 
   // Get the location of xroot
   char* xroot_location = getenv("XROOT_LOCATION");
@@ -199,35 +197,17 @@ void castor::job::stagerjob::GridFTPPlugin::getEnvironment
   // Get certificate and key file names
   const char *globus_x509_user_cert = getconfent("GSIFTP", "X509_USER_CERT", 0);
   if (globus_x509_user_cert == NULL) {
-    env.globus_x509_user_cert = "/etc/grid-security/castor-gridftp-dsi-" +
-      env.dsi_module_extension + "/castor-gridftp-dsi-" +
-      env.dsi_module_extension + "-cert.pem";
+    env.globus_x509_user_cert = "/etc/grid-security/castor-gridftp-dsi/castor-gridftp-dsi-cert.pem";
   } else {
     env.globus_x509_user_cert = globus_x509_user_cert;
   }
 
   const char *globus_x509_user_key = getconfent("GSIFTP", "X509_USER_KEY", 0);
   if (globus_x509_user_key == NULL) {
-    env.globus_x509_user_key = "/etc/grid-security/castor-gridftp-dsi-" +
-      env.dsi_module_extension + "/castor-gridftp-dsi-" +
-      env.dsi_module_extension + "-key.pem";
+    env.globus_x509_user_key = "/etc/grid-security/castor-gridftp-dsi/castor-gridftp-dsi-key.pem";
   } else {
     env.globus_x509_user_key = globus_x509_user_key;
   }
-
-  // Check whether gridftp internal should generate checksum information
-  bool useCksum = true;
-  const char *useCksumStr = getconfent("GSIFTP", "USE_CKSUM", 0);
-  if (0 != useCksumStr) {
-    useCksum = (strcasecmp(useCksumStr, "YES") == 0);
-    if (!useCksum && (strcasecmp(useCksumStr, "NO") != 0)) {
-      castor::exception::InvalidArgument e;
-      e.getMessage() << "Invalid option for GSIFTP/USE_CKSUM: '" << useCksumStr
-                     << "' - must be 'yes' or 'no'" << std::endl;
-      throw e;
-    }
-  }
-  env.use_cksum = (useCksum ? "yes" : "no");
 }
 
 //------------------------------------------------------------------------------
@@ -276,9 +256,8 @@ void castor::job::stagerjob::GridFTPPlugin::postForkHook
           << " -control-idle-timeout 3600 -Z "
           << env.globus_logfile_netlogger
           << " -l " << env.globus_logfile
-          << " -dsi CASTOR2" << env.dsi_module_extension
-          << " -allowed-modules CASTOR2"
-          << env.dsi_module_extension << " (pid="
+          << " -dsi CASTOR2"
+          << " -allowed-modules CASTOR2 (pid="
           << context.childPid << ")";
   // "Mover fork uses the following command line"
   std::ostringstream tcprange;
@@ -322,9 +301,6 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
   setenv("GLOBUS_LOCATION", env.globus_location.c_str(), 1);
   std::ostringstream libloc;
   libloc << env.globus_location << "/lib";
-  if (env.dsi_module_extension == "xroot") {
-    libloc << ":" << env.xroot_location << "/lib";
-  }
   setenv("LD_LIBRARY_PATH", libloc.str().c_str(), 1);
   std::ostringstream tcprange;
   tcprange << env.tcp_port_range.first << ","
@@ -336,18 +312,10 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
   setenv("GLOBUS_TCP_SOURCE_RANGE", sourcerange.str().c_str(), 1);
   setenv("X509_USER_CERT", env.globus_x509_user_cert.c_str(), 1);
   setenv("X509_USER_KEY", env.globus_x509_user_key.c_str(), 1);
-  setenv("USE_CKSUM", env.use_cksum.c_str(), 1);
   // This variables we will use inside CASTOR2 DSI
   setenv("UUID", args.rawRequestUuid.c_str(), 1);
   std::string path = "";
-  if (env.dsi_module_extension == "xroot") {
-    path += "root://localhost:1095//" + args.rawRequestUuid +
-      "?castor2fs.pfn1=";
-  }
   path += context.fullDestPath;
-  if (env.dsi_module_extension == "xroot") {
-    path += "&castor2fs.pfn2=unused";
-  }
   setenv("FULLDESTPATH", path.c_str(), 1);
   switch(args.accessMode) {
   case ReadOnly:
@@ -381,7 +349,6 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
     dlf_shutdown();
     exit(EXIT_FAILURE);
   }
-  std::string moduleName = "CASTOR2" + env.dsi_module_extension;
   execl (progfullpath.c_str(), progname.c_str(),
          "-i",
          "-d", env.globus_loglevel.c_str(),
@@ -391,8 +358,8 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
          "-control-idle-timeout", "3600",
          "-Z", env.globus_logfile_netlogger.c_str(),
          "-l", env.globus_logfile.c_str(),
-         "-dsi", moduleName.c_str(),
-         "-allowed-modules", moduleName.c_str(),
+         "-dsi", "CASTOR2",
+         "-allowed-modules", "CASTOR2",
          NULL);
   // Should never be reached
   dlf_shutdown();

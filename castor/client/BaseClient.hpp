@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      BaseClient.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,7 +20,7 @@
  * A base class for all castor clients. Implements many
  * useful and common parts for all clients.
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

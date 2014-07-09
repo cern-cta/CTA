@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      adler32.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * 
  *
- * @author Olof Barring
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <stdio.h>

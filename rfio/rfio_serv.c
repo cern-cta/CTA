@@ -20,6 +20,7 @@
 #include "stage_constants.h"
 #include "rfio_constants.h"
 #include "rfio_calls.h"
+#include "ceph/ceph_posix.h"
 #include "u64subr.h"
 #include <signal.h>   /* Signal handling  */
 #include <Cnetdb.h>
@@ -166,6 +167,21 @@ void unlink_info_file(int pid)
       (*logfunc)(LOG_ERR, "unlink(%s): %s, ignoring\n", infofile, strerror(errno));
     }
   }
+}
+
+static void ceph_logfunc_wrapper (char *format, va_list argp) {
+  // do the printing ourselves as we cannot call the variadic logfunc
+  int size = 1024;
+  char* logstr = (char*)malloc(size);
+  int written = vsnprintf(logstr, size, format, argp);
+  while (written >= size) {
+    size *=2;
+    logstr = (char*)realloc(logstr, size);
+    written = vsnprintf(logstr, size, format, argp);
+  }
+  // call log func with a single argument
+  (*logfunc)(LOG_DEBUG, "%s", logstr);
+  free(logstr);
 }
 
 int main (int     argc,
@@ -331,6 +347,8 @@ int main (int     argc,
 #else
     (*logfunc)(LOG_ERR, "%s\n", argv[0]);
 #endif /* __DATE__ && __TIME__ */
+    // init ceph wrapper log in case we use ceph
+    ceph_posix_set_logfunc(ceph_logfunc_wrapper);
 
     if (gethostname(localhost,sizeof(localhost))) {
       (*logfunc)(LOG_ERR, "gethostname(): %s\n",strerror(errno));
@@ -540,6 +558,8 @@ int main (int     argc,
     }
     doit(0, &from, uid, gid);
   }
+  // disconnect form ceph (if ever connected)
+  ceph_posix_disconnect_all();
   exit(0);
 }
 

@@ -1,5 +1,4 @@
 /*******************************************************************************
- *                      XrdxCastor2Proc.cc
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,13 +17,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters - CERN
- * 
+ * @author Castor Dev team, castor-dev@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
+ *
  ******************************************************************************/
 
 
-/*-----------------------------------------------------------------------------*/
-#include <string.h>
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2Proc.hpp"
 /*-----------------------------------------------------------------------------*/
@@ -37,10 +35,10 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-XrdxCastor2Proc:: XrdxCastor2Proc( const char* procdir, bool syncit )
+XrdxCastor2Proc:: XrdxCastor2Proc(const char* procdir, bool syncit)
 {
-  procdirectory = procdir;
-  procsync = syncit;
+  mProcDirectory = procdir;
+  mProcSync = syncit;
 }
 
 
@@ -51,14 +49,17 @@ bool
 XrdxCastor2Proc::Open()
 {
   XrdOucString doit = "mkdir -p ";
-  doit += procdirectory;
-  system( doit.c_str() );
-  DIR* pd = opendir( procdirectory.c_str() );
+  doit += mProcDirectory;
+  system(doit.c_str());
+  DIR* pd = opendir(mProcDirectory.c_str());
 
-  if ( !pd ) {
+  if (!pd)
+  {
     return false;
-  } else {
-    closedir( pd );
+  }
+  else
+  {
+    closedir(pd);
     return true;
   }
 }
@@ -68,20 +69,24 @@ XrdxCastor2Proc::Open()
 // Get handle to proc file
 //------------------------------------------------------------------------------
 XrdxCastor2ProcFile*
-XrdxCastor2Proc::Handle( const char* name )
+XrdxCastor2Proc::Handle(const char* name)
 {
   XrdxCastor2ProcFile* phandle = 0;
 
-  if ( ( phandle = files.Find( name ) ) ) {
+  if ((phandle = files.Find(name)))
+  {
     return phandle;
-  } else {
-    XrdOucString pfname = procdirectory;
+  }
+  else
+  {
+    XrdOucString pfname = mProcDirectory;
     pfname += "/";
     pfname += name;
-    phandle = new XrdxCastor2ProcFile( pfname.c_str() );
+    phandle = new XrdxCastor2ProcFile(pfname.c_str());
 
-    if ( phandle && phandle->Open() ) {
-      files.Add( name, phandle );
+    if (phandle && phandle->Open())
+    {
+      files.Add(name, phandle);
       return phandle;
     }
 
@@ -92,6 +97,7 @@ XrdxCastor2Proc::Handle( const char* name )
 }
 
 
+
 /*****************************************************************************/
 /*                 X r d x C a s t o r 2 P r o c F i l e                     */
 /*****************************************************************************/
@@ -99,19 +105,19 @@ XrdxCastor2Proc::Handle( const char* name )
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-XrdxCastor2ProcFile::XrdxCastor2ProcFile( const char* name, bool syncit )
+XrdxCastor2ProcFile::XrdxCastor2ProcFile(const char* name, bool syncit)
 {
   fname = name;
   fd = 0;
-  procsync = syncit;
-  lastwrite = 0;
+  mProcSync = syncit;
+  mLastWrite = 0;
 }
 
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-XrdxCastor2ProcFile::~XrdxCastor2ProcFile() 
+XrdxCastor2ProcFile::~XrdxCastor2ProcFile()
 {
   Close();
 }
@@ -123,16 +129,15 @@ XrdxCastor2ProcFile::~XrdxCastor2ProcFile()
 bool
 XrdxCastor2ProcFile::Open()
 {
-  if ( procsync ) {
-    fd = open( fname.c_str(), O_CREAT | O_SYNC | O_RDWR, S_IRWXU | S_IROTH | S_IRGRP );
-  } else {
-    fd = open( fname.c_str(), O_CREAT | O_RDWR, S_IRWXU | S_IROTH | S_IRGRP );
-  }
-
-  if ( fd < 0 ) {
+  if (mProcSync)
+    fd = open(fname.c_str(), O_CREAT | O_SYNC | O_RDWR, S_IRWXU | S_IROTH | S_IRGRP);
+  else
+    fd = open(fname.c_str(), O_CREAT | O_RDWR, S_IRWXU | S_IROTH | S_IRGRP);
+ 
+  if (fd < 0)
     return false;
-  }
-
+  
+  
   return true;
 }
 
@@ -143,7 +148,7 @@ XrdxCastor2ProcFile::Open()
 bool
 XrdxCastor2ProcFile::Close()
 {
-  if ( fd >= 0 ) close( fd );
+  if (fd >= 0) close(fd);
 
   return true;
 }
@@ -153,11 +158,11 @@ XrdxCastor2ProcFile::Close()
 // Write long long to proc file
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2ProcFile::Write( long long val, int writedelay )
+XrdxCastor2ProcFile::Write(long long val, int writedelay)
 {
   char pbuf[1024];
-  sprintf( pbuf, "%lld\n", val );
-  return Write( pbuf, writedelay );
+  sprintf(pbuf, "%lld\n", val);
+  return Write(pbuf, writedelay);
 }
 
 
@@ -165,11 +170,11 @@ XrdxCastor2ProcFile::Write( long long val, int writedelay )
 // Write double to proc file
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2ProcFile::Write( double val, int writedelay )
+XrdxCastor2ProcFile::Write(double val, int writedelay)
 {
   char pbuf[1024];
-  sprintf( pbuf, "%.02f\n", val );
-  return Write( pbuf, writedelay );
+  sprintf(pbuf, "%.02f\n", val);
+  return Write(pbuf, writedelay);
 }
 
 
@@ -177,28 +182,27 @@ XrdxCastor2ProcFile::Write( double val, int writedelay )
 // Write string to proc file
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2ProcFile::Write( const char* pbuf, int writedelay )
+XrdxCastor2ProcFile::Write(const char* pbuf, int writedelay)
 {
-  time_t now = time( NULL );
+  time_t now = time(NULL);
 
-  if ( writedelay ) {
-    if ( now - lastwrite < writedelay ) {
+  if (writedelay)
+  {
+    if (now - mLastWrite < writedelay)
       return true;
-    }
   }
 
   int result;
-  lseek( fd, 0, SEEK_SET );
+  lseek(fd, 0, SEEK_SET);
 
-  while ( ( result =::ftruncate( fd, 0 ) ) && ( errno == EINTR ) ) {}
+  while ((result =::ftruncate(fd, 0)) && (errno == EINTR)) {}
 
-  lastwrite = now;
+  mLastWrite = now;
 
-  if ( ( write( fd, pbuf, strlen( pbuf ) ) ) == ( ssize_t )( strlen( pbuf ) ) ) {
+  if ((write(fd, pbuf, strlen(pbuf))) == (ssize_t)(strlen(pbuf)))
     return true;
-  } else {
+  else
     return false;
-  }
 }
 
 
@@ -206,36 +210,36 @@ XrdxCastor2ProcFile::Write( const char* pbuf, int writedelay )
 // Write key - value with an option to truncate
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2ProcFile::WriteKeyVal( const char*        key,
-                                  unsigned long long value,
-                                  int                writedelay,
-                                  bool               dotruncate )
+XrdxCastor2ProcFile::WriteKeyVal(const char* key,
+                                 unsigned long long value,
+                                 int writedelay,
+                                 bool dotruncate)
 {
-  if ( dotruncate ) {
-    time_t now = time( NULL );
+  if (dotruncate)
+  {
+    time_t now = time(NULL);
 
-    if ( writedelay ) {
-      if ( now - lastwrite < writedelay ) {
+    if (writedelay)
+    {
+      if (now - mLastWrite < writedelay)
         return false;
-      }
     }
 
     // printf("Truncating FD %d for %s\n",fd,key);
-    lseek( fd, 0, SEEK_SET );
+    lseek(fd, 0, SEEK_SET);
 
-    while ( ( ::ftruncate( fd, 0 ) ) && ( errno == EINTR ) ) {}
+    while ((::ftruncate(fd, 0)) && (errno == EINTR)) {}
 
-    lastwrite = now;
+    mLastWrite = now;
   }
 
   char pbuf[1024];
-  sprintf( pbuf, "%lu %-32s %lld\n", ( unsigned long )time( NULL ), key, value );
+  sprintf(pbuf, "%lu %-32s %lld\n", (unsigned long)time(NULL), key, value);
 
-  if ( ( write( fd, pbuf, strlen( pbuf ) ) ) == ( ssize_t )( strlen( pbuf ) ) ) {
+  if ((write(fd, pbuf, strlen(pbuf))) == (ssize_t)(strlen(pbuf)))
     return true;
-  } else {
+  else
     return false;
-  }
 }
 
 
@@ -246,13 +250,13 @@ long long
 XrdxCastor2ProcFile::Read()
 {
   char pbuf[1024];
-  lseek( fd, 0, SEEK_SET );
-  ssize_t rb = read( fd, pbuf, sizeof( pbuf ) );
+  lseek(fd, 0, SEEK_SET);
+  ssize_t rb = read(fd, pbuf, sizeof(pbuf));
 
-  if ( rb <= 0 )
+  if (rb <= 0)
     return -1;
 
-  return strtoll( pbuf, ( char** )NULL, 10 );
+  return strtoll(pbuf, (char**)NULL, 10);
 }
 
 
@@ -260,19 +264,16 @@ XrdxCastor2ProcFile::Read()
 // Read from proc file
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2ProcFile::Read( XrdOucString& str )
+XrdxCastor2ProcFile::Read(XrdOucString& str)
 {
   char pbuf[1024];
   pbuf[0] = 0;
-  lseek( fd, 0, SEEK_SET );
-  ssize_t rb = read( fd, pbuf, sizeof( pbuf ) );
+  lseek(fd, 0, SEEK_SET);
+  ssize_t rb = read(fd, pbuf, sizeof(pbuf));
   str = pbuf;
 
-  if ( rb <= 0 )
+  if (rb <= 0)
     return false;
   else
     return true;
 }
-
-
-

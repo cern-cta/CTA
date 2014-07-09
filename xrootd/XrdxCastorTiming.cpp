@@ -1,5 +1,4 @@
 /*******************************************************************************
- *                      XrdxCastorTiming.cc
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,11 +17,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * @author Castor Dev team, castor-dev@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
 /*----------------------------------------------------------------------------*/
+#include <cstring>
 #include "XrdxCastorTiming.hpp"
 /*----------------------------------------------------------------------------*/
 
@@ -72,12 +73,13 @@ Timing::Print()
   Timing* p = this->next;
   Timing* n; 
   cerr << std::endl;
-  while ((n =p->next)) {
-    
+  while ((n =p->next)) 
+  {
     sprintf(msg,"                                        [%12s] %12s<=>%-12s : %.03f\n",maintag.c_str(),p->tag.c_str(),n->tag.c_str(), (float)((n->tv.tv_sec - p->tv.tv_sec) *1000000 + (n->tv.tv_usec - p->tv.tv_usec))/1000.0);
     cerr << msg;
     p = n;
   }
+
   n = p;
   p = this->next;
   sprintf(msg,"                                        =%12s= %12s<=>%-12s : %.03f\n",maintag.c_str(),p->tag.c_str(), n->tag.c_str(), (float)((n->tv.tv_sec - p->tv.tv_sec) *1000000 + (n->tv.tv_usec - p->tv.tv_usec))/1000.0);
@@ -93,9 +95,12 @@ Timing::RealTime()
 {
   Timing* p = this->next;
   Timing* n; 
-  while ((n =p->next)) {
+
+  while ((n =p->next)) 
+  {
     p = n;
   }
+
   n = p;
   p = this->next;
   return (double) ((n->tv.tv_sec - p->tv.tv_sec) *1000000 + (n->tv.tv_usec - p->tv.tv_usec))/1000.0;

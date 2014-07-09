@@ -34,7 +34,7 @@ void protobuf_AssignDesc_Header_2eproto();
 void protobuf_ShutdownFile_Header_2eproto();
 
 class Header;
-class NoReturnValue;
+class ReturnValue;
 
 // ===================================================================
 
@@ -199,14 +199,14 @@ class Header : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class NoReturnValue : public ::google::protobuf::Message {
+class ReturnValue : public ::google::protobuf::Message {
  public:
-  NoReturnValue();
-  virtual ~NoReturnValue();
+  ReturnValue();
+  virtual ~ReturnValue();
   
-  NoReturnValue(const NoReturnValue& from);
+  ReturnValue(const ReturnValue& from);
   
-  inline NoReturnValue& operator=(const NoReturnValue& from) {
+  inline ReturnValue& operator=(const ReturnValue& from) {
     CopyFrom(from);
     return *this;
   }
@@ -220,17 +220,17 @@ class NoReturnValue : public ::google::protobuf::Message {
   }
   
   static const ::google::protobuf::Descriptor* descriptor();
-  static const NoReturnValue& default_instance();
+  static const ReturnValue& default_instance();
   
-  void Swap(NoReturnValue* other);
+  void Swap(ReturnValue* other);
   
   // implements Message ----------------------------------------------
   
-  NoReturnValue* New() const;
+  ReturnValue* New() const;
   void CopyFrom(const ::google::protobuf::Message& from);
   void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const NoReturnValue& from);
-  void MergeFrom(const NoReturnValue& from);
+  void CopyFrom(const ReturnValue& from);
+  void MergeFrom(const ReturnValue& from);
   void Clear();
   bool IsInitialized() const;
   
@@ -253,16 +253,36 @@ class NoReturnValue : public ::google::protobuf::Message {
   
   // accessors -------------------------------------------------------
   
-  // @@protoc_insertion_point(class_scope:castor.messages.NoReturnValue)
+  // required uint32 returnValue = 1;
+  inline bool has_returnvalue() const;
+  inline void clear_returnvalue();
+  static const int kReturnValueFieldNumber = 1;
+  inline ::google::protobuf::uint32 returnvalue() const;
+  inline void set_returnvalue(::google::protobuf::uint32 value);
+  
+  // required string message = 2;
+  inline bool has_message() const;
+  inline void clear_message();
+  static const int kMessageFieldNumber = 2;
+  inline const ::std::string& message() const;
+  inline void set_message(const ::std::string& value);
+  inline void set_message(const char* value);
+  inline void set_message(const char* value, size_t size);
+  inline ::std::string* mutable_message();
+  
+  // @@protoc_insertion_point(class_scope:castor.messages.ReturnValue)
  private:
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
   mutable int _cached_size_;
   
+  ::google::protobuf::uint32 returnvalue_;
+  ::std::string* message_;
+  static const ::std::string _default_message_;
   friend void  protobuf_AddDesc_Header_2eproto();
   friend void protobuf_AssignDesc_Header_2eproto();
   friend void protobuf_ShutdownFile_Header_2eproto();
   
-  ::google::protobuf::uint32 _has_bits_[1];
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
   
   // WHY DOES & HAVE LOWER PRECEDENCE THAN != !?
   inline bool _has_bit(int index) const {
@@ -276,7 +296,7 @@ class NoReturnValue : public ::google::protobuf::Message {
   }
   
   void InitAsDefaultInstance();
-  static NoReturnValue* default_instance_;
+  static ReturnValue* default_instance_;
 };
 // ===================================================================
 
@@ -519,7 +539,65 @@ inline ::std::string* Header::mutable_bodysignature() {
 
 // -------------------------------------------------------------------
 
-// NoReturnValue
+// ReturnValue
+
+// required uint32 returnValue = 1;
+inline bool ReturnValue::has_returnvalue() const {
+  return _has_bit(0);
+}
+inline void ReturnValue::clear_returnvalue() {
+  returnvalue_ = 0u;
+  _clear_bit(0);
+}
+inline ::google::protobuf::uint32 ReturnValue::returnvalue() const {
+  return returnvalue_;
+}
+inline void ReturnValue::set_returnvalue(::google::protobuf::uint32 value) {
+  _set_bit(0);
+  returnvalue_ = value;
+}
+
+// required string message = 2;
+inline bool ReturnValue::has_message() const {
+  return _has_bit(1);
+}
+inline void ReturnValue::clear_message() {
+  if (message_ != &_default_message_) {
+    message_->clear();
+  }
+  _clear_bit(1);
+}
+inline const ::std::string& ReturnValue::message() const {
+  return *message_;
+}
+inline void ReturnValue::set_message(const ::std::string& value) {
+  _set_bit(1);
+  if (message_ == &_default_message_) {
+    message_ = new ::std::string;
+  }
+  message_->assign(value);
+}
+inline void ReturnValue::set_message(const char* value) {
+  _set_bit(1);
+  if (message_ == &_default_message_) {
+    message_ = new ::std::string;
+  }
+  message_->assign(value);
+}
+inline void ReturnValue::set_message(const char* value, size_t size) {
+  _set_bit(1);
+  if (message_ == &_default_message_) {
+    message_ = new ::std::string;
+  }
+  message_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* ReturnValue::mutable_message() {
+  _set_bit(1);
+  if (message_ == &_default_message_) {
+    message_ = new ::std::string;
+  }
+  return message_;
+}
 
 
 // @@protoc_insertion_point(namespace_scope)

@@ -1,5 +1,4 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/LabelCmdConnectionHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author dkruse@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
@@ -36,7 +35,8 @@ namespace tapeserver {
 namespace daemon     {
 
 /**
- * Handles the events of the socket listening for connection from the mount session
+ * Handles the events of the socket listening for connection from the
+ * data-transfer session
  */
 class LabelCmdConnectionHandler: public reactor::ZMQPollEventHandler {
 public:
@@ -45,7 +45,7 @@ public:
    * Constructor.
    *
    * @param fd The file descriptor of the socket listening for
-   * connections from the mount session
+   * connections from the data-transfer session
    * @param reactor The reactor to which new connection handlers are to be
    * registered.
    * @param log The object representing the API of the CASTOR logging system.
@@ -89,13 +89,13 @@ public:
 private:
 
   /**
-   * Logs the specifed IO event of the mount session connection.
+   * Logs the specifed IO event of the data-transfer session connection.
    */
   void logLabelCmdConnectionEvent(const zmq_pollitem_t &fd);
   
   /**
    * Throws an exception if the specified file-descriptor is not that of the
-   * socket listening for connections from the mount session.
+   * socket listening for connections from the data-transfer session.
    */
   void checkHandleEventFd(const int fd);
   
@@ -114,7 +114,8 @@ private:
   void handleRequest(const legacymsg::MessageHeader &header);
   
   /**
-   * Handles the case when the status of the tape is TAPE_STATUS_MOUNTED in the update drive message
+   * Handles the case when the status of the tape is TAPE_STATUS_MOUNTED in the
+   * update drive message
    * 
    * @param vid   Volume ID of the tape mounted
    * @param mode  The mode in which the tape is mounted
@@ -122,12 +123,14 @@ private:
   void tellVMGRTapeWasMounted(const std::string& vid, const uint32_t mode);
   
   /**
-   * Checks that a tape mounted for migration by request of the tapegateway is marked as BUSY in the VMGR
+   * Checks that a tape mounted for migration by request of the tapegateway is
+   * marked as BUSY in the VMGR
    * 
    * @param vid  Volume ID of the tape to be mounted
-   * @param type The client type of this mount session
+   * @param type The client type of this data-transfer session
    */
-  void checkTapeConsistencyWithVMGR(const std::string& vid, const uint32_t type, const uint32_t mode);
+  void checkTapeConsistencyWithVMGR(const std::string& vid, const uint32_t type,
+    const uint32_t mode);
   
    /**
    * Marshals the specified source tape label reply message structure into the

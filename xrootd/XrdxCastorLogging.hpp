@@ -1,5 +1,4 @@
 /*******************************************************************************
- *                      XrdxCastorLogging.hh
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,7 +17,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * @author Castor Dev team, castor-dev@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
@@ -98,36 +98,37 @@ typedef XrdOucString VirtualIdentity;
 //! Class implementing XCASTOR logging
 //------------------------------------------------------------------------------
 class LogId {
+
 public:
 
-    //--------------------------------------------------------------------------
-    //! Constructor
-    //--------------------------------------------------------------------------
-    LogId();
+  //----------------------------------------------------------------------------
+  //! Constructor
+  //----------------------------------------------------------------------------
+  LogId();
 
 
-    //--------------------------------------------------------------------------
-    //! Destructor
-    //--------------------------------------------------------------------------
-    ~LogId();
+  //----------------------------------------------------------------------------
+  //! Destructor
+  //----------------------------------------------------------------------------
+  ~LogId();
+  
+  
+  //----------------------------------------------------------------------------
+  //! For calls which are not client initiated this function set's a unique 
+  //! dummy log id
+  //----------------------------------------------------------------------------
+  void SetSingleShotLogId(const char* td="<single-exec>");
+  
+  
+  //----------------------------------------------------------------------------
+  //! Set's the logid and trace identifier
+  //----------------------------------------------------------------------------
+  void SetLogId(const char* newlogid, const char* td= "<service>");
 
 
-    //--------------------------------------------------------------------------
-    //! For calls which are not client initiated this function set's a unique 
-    //! dummy log id
-    //--------------------------------------------------------------------------
-    void SetSingleShotLogId(const char* td="<single-exec>");
-
-
-    //--------------------------------------------------------------------------
-    //! Set's the logid and trace identifier
-    //--------------------------------------------------------------------------
-    void SetLogId(const char* newlogid, const char* td= "<service>");
-
-
-    char logId[40];       ///< the log Id for message printout
-    char cident[256];     ///< the client identifier
-    VirtualIdentity vid;  ///< client identity
+  char logId[40];       ///< the log Id for message printout
+  char cident[256];     ///< the client identifier
+  VirtualIdentity vid;  ///< client identity
   
 };
 
@@ -136,92 +137,93 @@ public:
 //! Class wrapping global singleton objects for logging
 //------------------------------------------------------------------------------
 class Logging {
+
 public:
   
-    typedef std::vector< std::vector <XrdOucString> > LogArray; ///< typdef for log message array
-    typedef std::vector< unsigned long > LogCircularIndex; ///< typedef for circular index pointing
-                                                           ///< to the next message position int the log array
+  typedef std::vector< std::vector <XrdOucString> > LogArray; ///< typdef for log message array
+  typedef std::vector< unsigned long > LogCircularIndex; ///< typedef for circular index pointing
+                                              ///< to the next message position int the log array
 
-    static LogCircularIndex gLogCircularIndex;  ///< global circular index
-    static LogArray         gLogMemory;         ///< global logging memory
-    static unsigned long    gCircularIndexSize; ///< global circular index size
-    static VirtualIdentity  gZeroVid;           ///< root vid
-    static int              gLogMask;           ///< log mask
-    static int              gPriorityLevel;     ///< log priority
-    static XrdSysMutex      gMutex;             ///< global mutex
-    static XrdOucString     gUnit;              ///< global unit name
-    static XrdOucString     gFilter;            ///< global log filter to apply
-    static int              gShortFormat;       ///< indicating if the log-output is in short format
+  static LogCircularIndex gLogCircularIndex; ///< global circular index
+  static LogArray gLogMemory; ///< global logging memory
+  static unsigned long gCircularIndexSize; ///< global circular index size
+  static VirtualIdentity gZeroVid; ///< root vid
+  static int gLogMask;       ///< log mask
+  static int gPriorityLevel; ///< log priority
+  static XrdSysMutex gMutex; ///< global mutex
+  static XrdOucString gUnit; ///< global unit name
+  static XrdOucString gFilter; ///< global log filter to apply
+  static int gShortFormat; ///< indicating if the log-output is in short format
+  
 
-
-    //--------------------------------------------------------------------------
-    //! Initialize Logger
-    //--------------------------------------------------------------------------
-    static void Init();
-
-
-    //--------------------------------------------------------------------------
-    //! Set the log priority (like syslog)
-    //--------------------------------------------------------------------------
-    static void SetLogPriority(int pri);
-
-
-    //--------------------------------------------------------------------------
-    //! Set the log unit name
-    //--------------------------------------------------------------------------
-    static void SetUnit(const char* unit);
-
-
-    //--------------------------------------------------------------------------
-    //! Set the log filter
-    //--------------------------------------------------------------------------
-    static void SetFilter(const char* filter);
-
-
-    //--------------------------------------------------------------------------
-    //! Return priority as string
-    //--------------------------------------------------------------------------
-    static const char* GetPriorityString(int pri);
-
-
-    //--------------------------------------------------------------------------
-    //! Return priority int from string
-    //--------------------------------------------------------------------------
-    static int GetPriorityByString(const char* pri) ;
-
-
-    //--------------------------------------------------------------------------
-    //! Check if we should log in the defined level/filter
-    //!
-    //! @param func name of the calling function
-    //! @param priority priority level of the message
-    //!
-    //--------------------------------------------------------------------------
-    static bool shouldlog(const char* func, int priority);
+  //----------------------------------------------------------------------------
+  //! Initialize Logger
+  //----------------------------------------------------------------------------
+  static void Init();
+  
+  
+  //----------------------------------------------------------------------------
+  //! Set the log priority (like syslog)
+  //----------------------------------------------------------------------------
+  static void SetLogPriority(int pri);
+  
+  
+  //----------------------------------------------------------------------------
+  //! Set the log unit name
+  //----------------------------------------------------------------------------
+  static void SetUnit(const char* unit);
+  
+  
+  //----------------------------------------------------------------------------
+  //! Set the log filter
+  //----------------------------------------------------------------------------
+  static void SetFilter(const char* filter);
+  
+  
+  //----------------------------------------------------------------------------
+  //! Return priority as string
+  //----------------------------------------------------------------------------
+  static const char* GetPriorityString(int pri);
+  
+  
+  //----------------------------------------------------------------------------
+  //! Return priority int from string
+  //----------------------------------------------------------------------------
+  static int GetPriorityByString(const char* pri) ;
 
 
-    //--------------------------------------------------------------------------
-    //! Log a message into the global buffer
-    //!
-    //! @param func name of the calling function
-    //! @param file name of the source file calling
-    //! @param line line in the source file
-    //! @param logid log message identifier
-    //! @param vid virtual id of the caller
-    //! @param cident client identifier
-    //! @param priority priority level of the message
-    //! @param msg the actual log message
-    //!
-    //! @return pointer to the log message
-    //!
-    //--------------------------------------------------------------------------
-    static const char* log(const char*                     func,
-                           const char*                     file,
-                           int                             line,
-                           const char*                     logid,
-                           const VirtualIdentity&          vid ,
-                           const char*                     cident,
-                           int                             priority,
-                           const char*                     msg, ...);
+  //----------------------------------------------------------------------------
+  //! Check if we should log in the defined level/filter
+  //!
+  //! @param func name of the calling function
+  //! @param priority priority level of the message
+  //!
+  //----------------------------------------------------------------------------
+  static bool shouldlog(const char* func, int priority);
+  
+  
+  //----------------------------------------------------------------------------
+  //! Log a message into the global buffer
+  //!
+  //! @param func name of the calling function
+  //! @param file name of the source file calling
+  //! @param line line in the source file
+  //! @param logid log message identifier
+  //! @param vid virtual id of the caller
+  //! @param cident client identifier
+  //! @param priority priority level of the message
+  //! @param msg the actual log message
+  //!
+  //! @return pointer to the log message
+  //!
+  //----------------------------------------------------------------------------
+  static const char* log(const char* func,
+                         const char* file,
+                         int line,
+                         const char* logid,
+                         const VirtualIdentity& vid ,
+                         const char* cident,
+                         int priority,
+                         const char* msg, ...);
 };
 

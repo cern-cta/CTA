@@ -1,5 +1,4 @@
 /*******************************************************************************
- *                      XrdxCastorClient.hh
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,7 +17,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru, esindril@cern.ch - CERN 2013
+ * @author Castor Dev team, castor-dev@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  * 
  ******************************************************************************/
 
@@ -28,8 +28,6 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/poll.h>
-#include <sys/times.h>
-#include <sys/time.h>
 #include <string>
 #include <map>
 /*----------------------------------------------------------------------------*/
@@ -43,12 +41,10 @@
 #include "castor/rh/IOResponse.hpp"
 #include "castor/client/IResponseHandler.hpp"
 /*----------------------------------------------------------------------------*/
-#include "XrdSys/XrdSysPthread.hh"
 #include "XrdOuc/XrdOucErrInfo.hh"
 /*----------------------------------------------------------------------------*/
 
 XCASTORNAMESPACE_BEGIN
-
 
 //------------------------------------------------------------------------------
 //! Class XrdxCastorClient
@@ -57,9 +53,9 @@ class XrdxCastorClient: public LogId
 {
 public :
 
-  ///< Declare struct 
+  ///< Forward declaration of struct 
   struct ReqElement;
-
+  
   //! Convenience typedef for map of async requests
   typedef std::map<std::string, struct ReqElement*> AsyncReqMap;
   typedef std::map<std::string, AsyncReqMap::iterator> AsyncUserMap;
@@ -70,8 +66,10 @@ public :
   //! was also started successfully.
   //!
   //! @return new object instance 
+  //!
   //----------------------------------------------------------------------------
   static XrdxCastorClient* Create();
+
 
   //----------------------------------------------------------------------------
   //! Destructor
@@ -84,7 +82,7 @@ public :
   //!
   //! @param iterHint hint where the element was inserted
   //! @param userId user unique id for the request
-  //! @param rhHost hostname of the stager to where the req is sent 
+  //! @param rhHost stager host
   //! @param rhPort port on the stager to where the req is sent 
   //! @param req request object 
   //! @param rh response handler object 
@@ -160,7 +158,7 @@ public :
 
 
   //----------------------------------------------------------------------------
-  //! The ReqElement structure encapsule the request object sent to the stager 
+  //! The ReqElement structure encapsulates the request object sent to the stager 
   //! and also the response handler. These objects are stored in the mMapRequests
   //! and are accessed by both the asyn thread polling for responses and also
   //! by clients check-in for their responses.
@@ -222,6 +220,7 @@ public :
       mRespVec->clear();
       delete mRespVec;
     }
+
 
     //--------------------------------------------------------------------------
     //! Send the time when the response arrived 
@@ -301,7 +300,7 @@ private:
   XrdSysMutex mMutexMaps;      ///< mutex for the two maps
   XrdSysCondVar mCondResponse; ///< condition variable signalling the arrival of a response
 
-  //! Mapping from  user ids (which are obtained by concatenating the type of
+  //! Mapping from user ids (which are obtained by concatenating the type of
   //! request with the tident of the user and the path for the reuqest) to ReqElement 
   AsyncUserMap mMapUsers;
   

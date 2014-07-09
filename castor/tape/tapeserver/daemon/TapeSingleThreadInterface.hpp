@@ -1,5 +1,26 @@
+/****************************************************************************** 
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * 
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *****************************************************************************/
 /* 
- * File:   TapeSingleThreadInterface.hpp
  * Author: dcome
  *
  * Created on March 18, 2014, 4:28 PM
@@ -7,21 +28,21 @@
 
 #pragma once
 
+#include "castor/legacymsg/RmcProxy.hpp"
+#include "castor/log/LogContext.hpp"
+#include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
-#include "castor/log/LogContext.hpp"
-#include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
-#include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/tape/utils/Timer.hpp"
 #include "castor/tape/tapeserver/daemon/SessionStats.hpp"
 
-namespace castor {
-
-namespace tape {
+namespace castor     {
+namespace tape       {
 namespace tapeserver {
-namespace daemon {
+namespace daemon     {
+
   // Forward declaration
   class TapeServerReporter;
   /** 
@@ -36,7 +57,7 @@ private :
   /**
    * Utility to change the capabilities of the current tape thread
    */
-  CapabilityUtils &m_capUtils;
+  castor::server::ProcessCap &m_capUtils;
 protected:
   ///the queue of tasks 
   castor::tape::threading::BlockingQueue<Task *> m_tasks;
@@ -77,13 +98,13 @@ protected:
    */
   void setCapabilities(){
     try {
-      m_capUtils.capSetProcText("cap_sys_rawio+ep");
+      m_capUtils.setProcText("cap_sys_rawio+ep");
       log::LogContext::ScopedParam sp(m_logContext,
-              log::Param("capabilities", m_capUtils.capGetProcText()));
+        log::Param("capabilities", m_capUtils.getProcText()));
       m_logContext.log(LOG_INFO, "Set process capabilities for using tape");
     } catch(const castor::exception::Exception &ne) {
       m_logContext.log(LOG_ERR,
-              "Failed to set process capabilities for using the tape ");
+        "Failed to set process capabilities for using the tape ");
     }
   }
   
@@ -182,13 +203,13 @@ public:
     castor::legacymsg::RmcProxy & rmc,
     TapeServerReporter & tsr,
     const client::ClientInterface::VolumeInfo& volInfo,
-    CapabilityUtils &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
+    castor::server::ProcessCap &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
     m_drive(drive), m_rmc(rmc), m_tsr(tsr), m_vid(volInfo.vid), m_logContext(lc),
     m_volInfo(volInfo),m_hardarwareStatus(0) {}
-};
+}; // class TapeSingleThreadInterface
 
-}
-}
-}
-}
+} // namespace daemon
+} // namespace tapeserver
+} // namespace tape
+} // namespace castor
 

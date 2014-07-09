@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      GridFTPPlugin.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * Plugin of the stager job concerning GridFTP
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
@@ -41,7 +40,6 @@ namespace castor {
       struct Environment {
         std::string globus_location;
         std::string xroot_location;
-        std::string use_cksum;
         std::pair<int, int> tcp_port_range;
         std::pair<int, int> tcp_source_range;
         std::string globus_logfile;
@@ -49,7 +47,6 @@ namespace castor {
         std::string globus_loglevel;
         std::string globus_x509_user_cert;
         std::string globus_x509_user_key;
-        std::string dsi_module_extension;
       };
 
       /**

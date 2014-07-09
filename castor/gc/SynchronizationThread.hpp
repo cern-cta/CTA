@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      SynchronizationThread.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +21,7 @@
  * checking their existence in the nameserver and in the stager catalog. In
  * case the files were dropped, the stager is informed and drops the file
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once

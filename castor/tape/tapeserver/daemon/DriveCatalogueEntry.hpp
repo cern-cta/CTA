@@ -1,5 +1,4 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/DriveCatalogueEntry.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,25 +18,25 @@
  *
  *
  *
- * @author Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
 
-#include "castor/tape/utils/DriveConfig.hpp"
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeStatDriveEntry.hpp"
 #include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 #include "castor/messages/NotifyDrive.pb.h"
 #include "castor/tape/tapeserver/daemon/DriveCatalogueSession.hpp"
+#include "castor/tape/utils/DriveConfig.hpp"
 
+#include <iostream>
+#include <memory>
 #include <string>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
-#include <memory>
-#include <iostream>
 
 namespace castor     {
 namespace tape       {
@@ -106,12 +105,13 @@ public:
    *
    * The DRIVE_STATE_WAITFORKTRANSFER state allows the object responsible for
    * handling the connection from the vdqmd daemon (an instance of
-   * VdqmConnectionHandler) to delegate the task of forking a mount session.
+   * VdqmConnectionHandler) to delegate the task of forking a data-transfer
+   * session.
    *
    * Once the child process is forked the drive enters the DRIVE_STATE_RUNNING
-   * state.  The child process is responsible for running a mount session.
-   * During such a sesion a tape will be mounted, data will be transfered to
-   * and/or from the tape and finally the tape will be dismounted.
+   * state.  The child process is responsible for running a data-transfer
+   * session. During such a sesion a tape will be mounted, data will be
+   * transfered to and/or from the tape and finally the tape will be dismounted.
    *
    * Once the vdqm job has been carried out, the child process completes
    * and the state of the tape drive either returns to DRIVE_STATE_UP if there
@@ -326,7 +326,7 @@ public:
    * not DRIVE_STATE_WAITFORK.
    *
    * @param sessionPid The process ID of the child process responsible for
-   * running the mount session.
+   * running the data-transfer session.
    */
   void forkedDataTransferSession(const pid_t sessionPid);
   
@@ -381,12 +381,12 @@ public:
   const legacymsg::TapeLabelRqstMsgBody getLabelJob() const;
 
   /**
-   * The process ID of the child process running the mount session.
+   * The process ID of the child process running the data-transfer session.
    *
    * This method throws a castor::exception::Exception if the tape drive is not
    * in a state for which there is a session process-ID.
    *
-   * @return The process ID of the child process running the mount session.
+   * @return The process ID of the child process running the data-transfer session.
    */
   pid_t getSessionPid() const;
 
@@ -474,7 +474,7 @@ private:
   DriveState m_state;
   
   /**
-   * The type of mount session.
+   * The type of data-transfer session.
    */
   SessionType m_sessionType;
 

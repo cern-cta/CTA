@@ -1,5 +1,4 @@
 /******************************************************************************
- *                castor/stager/daemon/NsOverride.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,7 +19,7 @@
  *
  * Singleton class for the NameServer override feature
  *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <getconfent.h>

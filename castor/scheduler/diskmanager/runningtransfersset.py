@@ -40,7 +40,7 @@ from reporter import StreamCount
 
 class RunningTransfersSet(object):
   '''handles a list of running transfers and is able to poll them regularly and list the ones that ended'''
- 
+
   def __init__(self, fake=False):
     '''constructor'''
     # do we run in fake mode ?
@@ -80,7 +80,7 @@ class RunningTransfersSet(object):
         # provides a means to see which tape migrations are ongoing and those
         # which have just ended
         self.prevTapeTransfers[key].clientHost = '-'
-        
+
     # loop over all processes listed in proc
     procpath = os.path.sep + 'proc'
     for pid in os.listdir(procpath):
@@ -293,7 +293,7 @@ class RunningTransfersSet(object):
           # we consider read/writes as read
           if rTransfer.transfer.flags in ('o', 'r'):
             res[mountPoint].nbReads += 1
-          if rTransfer.transfer.flags in ('w'):
+          if rTransfer.transfer.flags in ('w',):
             res[mountPoint].nbWrites += 1
     finally:
       self.lock.release()
@@ -344,7 +344,7 @@ class RunningTransfersSet(object):
         isEnded = False
         if transferId in self.leftOverTransfers:
           # special care for left over transfers, we use a signal 0 for them as they are not our children
-          try :
+          try:
             pid = self.leftOverTransfers[transferId]
             os.kill(pid, 0)
             # a process with this pid exists, now is it really our guy or something new ?
@@ -365,7 +365,7 @@ class RunningTransfersSet(object):
             isEnded = True
           else:
             rc = rTransfer.process.poll()
-            isEnded = (rc!=None)
+            isEnded = (rc != None)
         if isEnded:
           # "transfer ended message"
           dlf.writedebug(msgs.TRANSFERENDED, subreqId=transferId, reqId=rTransfer.transfer.reqId,
@@ -379,7 +379,7 @@ class RunningTransfersSet(object):
               d2dEnded[rTransfer.scheduler] = []
             errMsg = ''
             if rc != 0 and rTransfer.process:
-              errMsg = rTransfer.process.stderr.read().replace('\n',' ')
+              errMsg = rTransfer.process.stderr.read().replace('\n', ' ')
             # Determine the size of the newly created file replica
             try:
               replicaFileSize = os.stat(rTransfer.localPath).st_size
@@ -388,7 +388,7 @@ class RunningTransfersSet(object):
               replicaFileSize = 0
               if errMsg == '':
                 errMsg = 'Not able to stat new file : %s' % str(e)
-                rc = errno.ENOENT
+                rc = 2  # ENOENT
             d2dEnded[rTransfer.scheduler].append((rTransfer.transfer, rTransfer.localPath,
                                                   replicaFileSize, rc, errMsg))
           else:
@@ -413,8 +413,8 @@ class RunningTransfersSet(object):
       try:
         connectionpool.connections.d2dended(scheduler,
                                             tuple([(transfer.transferId, transfer.reqId, transfer.fileId,
-                                                    socket.getfqdn(), localPath, fileSize, errCode, errMsg)
-                                                    for transfer, localPath, fileSize, errCode, errMsg
+                                                    socket.getfqdn(), localPath, fileSize, errCode, errMsg) \
+                                                    for transfer, localPath, fileSize, errCode, errMsg \
                                                      in d2dEnded[scheduler]]), timeout=timeout)
       except connectionpool.Timeout, e:
         for transfer, localPath, fileSize, errCode, errMsg in d2dEnded[scheduler]:
@@ -428,7 +428,7 @@ class RunningTransfersSet(object):
           # "Failed to inform scheduler that a d2d transfer is over" message
           dlf.writeerr(msgs.INFORMTRANSFERISOVERFAILED, Scheduler=scheduler,
                        subreqId=transfer.transferId, reqId=transfer.reqId,
-                       fileid=transfer.fileId,  localPath=localPath,
+                       fileid=transfer.fileId, localPath=localPath,
                        Type=str(e.__class__), errCode=errCode, errMessage=str(e))
     # inform schedulers of transfers killed
     for scheduler in killedTransfers:
