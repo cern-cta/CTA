@@ -75,6 +75,7 @@ namespace tapeserver {
       unloadTime += other.unloadTime;
       unmountTime += other.unmountTime;
       waitDataTime += other.waitDataTime;
+      waitFreeMemoryTime += other.waitFreeMemoryTime;
       waitInstructionsTime += other.waitInstructionsTime;
       waitReportingTime += other.waitReportingTime;
       dataVolume += other.dataVolume;
