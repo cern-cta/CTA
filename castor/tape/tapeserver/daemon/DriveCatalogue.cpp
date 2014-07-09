@@ -305,8 +305,12 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry
 
   for(DriveMap::iterator i = m_drives.begin(); i!=m_drives.end(); i++) {
     DriveCatalogueEntry * drive = i->second;
-    if(sessionPid == drive->getSessionPid()) {
-      return drive;
+    try {
+      if(sessionPid == drive->getSessionPid()) {
+        return drive;
+      }
+    } catch(...) {
+      // Ignore any exceptions thrown by getSessionPid()
     }
   }
 
