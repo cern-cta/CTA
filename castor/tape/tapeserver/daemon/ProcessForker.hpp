@@ -24,6 +24,8 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
+#include "castor/messages/ForkDataTransfer.pb.h"
+#include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerFrame.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
 
@@ -47,10 +49,16 @@ public:
    * client.  The destructor of this class will close the file-descriptor.
    *
    * @param log Object representing the API of the CASTOR logging system.
-   * @param socketFd The file-descriptor of the socket used to communicate with
-   * the client.
+   * @param cmdSocket The file-descriptor of the socket used to receive commands
+   * from the ProcessForker proxy.
+   * @param reaperSocket The file-descriptor of the socket used to notify the
+   * TapeDaemon parent process of the termination of a process forked by the
+   * ProcessForker.
+   * @param hostName The name of the host on which the tapeserverd daemon is
+   * running.
    */
-  ProcessForker(log::Logger &log, const int socketFd) throw();
+  ProcessForker(log::Logger &log, const int cmdSocket, const int reaperSocket,
+    const std::string &hostName) throw();
 
   /**
    * Destructor.
@@ -79,9 +87,27 @@ private:
   log::Logger &m_log;
 
   /**
-   * The file-descriptor of the socket used to communicate with the client.
+   * The file-descriptor of the socket used to receive commands from the
+   * ProcessForker proxy.
    */
-  const int m_socketFd;
+  const int m_cmdSocket;
+
+  /**
+   * The file-descriptor of the socket used to notify the TapeDaemon parent
+   * process of the termination of a process forked by the ProcessForker.
+   */
+  const int m_reaperSocket;
+
+  /**
+   * The name of the host on which the tapeserverd daemon is running.
+   */ 
+  const std::string m_hostName;
+
+  /**
+   * Idempotent method that closes the socket used for receving commands
+   * from the ProcessForker proxy.
+   */
+  void closeCmdReceiverSocket() throw();
 
   /**
    * Structure defining the result of a message handler.
@@ -162,6 +188,104 @@ private:
    * @return The result of the message handler.
    */
   MsgHandlerResult handleForkCleanerMsg(const ProcessForkerFrame &frame);
+
+  /**
+   * Runs the data-transfer session.  This method is to be called within the
+   * child process responsible for running the data-transfer session.
+   *
+   * @param rqst The ForkDataTransfer message.
+   * @return The value to be used when exiting the child process.
+   */
+  int runDataTransferSession(const messages::ForkDataTransfer &rqst);
+
+  /**
+   * Gets the drve configuration information from the specified ForkDataTransfer
+   * message.
+   *
+   * @param msg The ForkDataTransfer message.
+   * @return The drive configuration.
+   */
+  utils::DriveConfig getDriveConfig(const messages::ForkDataTransfer &msg);
+
+  /**
+   * Gets the configuration of the data-transfer session from the specified
+   * ForkDataTransfer message.
+   *
+   * @param msg The ForkDataTransfer message.
+   * @return The configuration of the data-transfer session.
+   */
+  castor::tape::tapeserver::daemon::DataTransferSession::CastorConf
+    getDataTransferConfig(const messages::ForkDataTransfer &msg);
+
+  /**
+   * Gets the VDQM job from the specified ForkDataTransfer message.
+   *
+   * @param msg The ForkDataTransfer message.
+   * @return The VDQM job.
+   */
+  castor::legacymsg::RtcpJobRqstMsgBody getVdqmJob(
+    const messages::ForkDataTransfer &msg);
+
+  /**
+   * Instantiates a ZMQ context.
+   *
+   * @param sizeOfIOThreadPoolForZMQ The size of the IO thread pool to be used
+   * by ZMQ.
+   * @return The ZMQ context.
+   */
+  void *instantiateZmqContext(const int sizeOfIOThreadPoolForZMQ);
+
+  /**
+   * Reaps any zombie processes.
+   */
+  void reapZombies() throw();
+
+  /**
+   * Handles the specified reaped zombie.
+   *
+   * @param pid The process ID of the reaped zombie.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void handleReapedZombie(const pid_t pid, const int waitpidStat) throw();
+
+  /**
+   * Logs the fact that the specified child process has terminated.
+   *
+   * @param pid The process ID of the child process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void logChildProcessTerminated(const pid_t pid, const int waitpidStat)
+    throw();
+
+  /**
+   * Notifies the TapeDaemon parent process that a child process of the
+   * ProcessForker has terminated.
+   *
+   * @param pid The process ID of the child process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void notifyTapeDaemonOfTerminatedProcess(const pid_t pid,
+    const int waitpidStat);
+
+  /**
+   * Notifies the TapeDaemon parent process that a child process of the
+   * ProcessForker exited.
+   *
+   * @param pid The process ID of the child process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void notifyTapeDaemonOfExitedProcess(const pid_t pid,
+    const int waitpidStat);
+
+  /**
+   * Notifies the TapeDaemon parent process that a child process of the
+   * ProcessForker crashed.
+   *
+   * @param pid The process ID of the child process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void notifyTapeDaemonOfCrashedProcess(const pid_t pid,
+    const int waitpidStat);
 
 }; // class ProcessForker
 

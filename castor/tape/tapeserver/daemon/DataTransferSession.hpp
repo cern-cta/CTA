@@ -92,11 +92,15 @@ namespace daemon {
       // Additions for tapeserverd
       uint32_t tapeserverdDiskThreads;
     };
-    /** Constructor */
+    /**
+     * Constructor.
+     *
+     * @param log Object representing the API of the CASTOR logging system.
+     */
     DataTransferSession(
       const std::string & hostname,
       const legacymsg::RtcpJobRqstMsgBody & clientRequest, 
-      castor::log::Logger & logger,
+      castor::log::Logger & log,
       System::virtualWrapper & sysWrapper,
       const utils::DriveConfig & driveConfig,
       castor::legacymsg::RmcProxy & rmc,
@@ -109,24 +113,19 @@ namespace daemon {
     std::string getVid() { return m_volInfo.vid; }
     
     /**
-     * Return the global shared zmq context for the data-transfer session
-     * THIS FUNCTION SHALL ONLY BE CALLED IN THE FORKED PROCESS
-     *
-     * @return The global shared zmq context for the data-transfer session.
+     * Destructor.
      */
-    static void *getZmqContext();
-    
-    ~DataTransferSession();
+    ~DataTransferSession() throw();
 
   private:
 
-    /**
-     * The global shared zmq context for the date-transfer session.
-     */
-    static void *m_zmqContext;
-
     legacymsg::RtcpJobRqstMsgBody m_request;
-    castor::log::Logger & m_logger;
+
+    /**
+     * Object representing the API of the CASTOR logging system.
+     */
+    castor::log::Logger & m_log;
+
     client::ClientProxy m_clientProxy;
     client::ClientProxy::VolumeInfo m_volInfo;
     System::virtualWrapper & m_sysWrapper;

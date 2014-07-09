@@ -71,7 +71,7 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::fillPollFd(zmq_pol
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
   const zmq_pollitem_t &fd)  {
-  logVdqmConnectionEvent(fd);
+  logConnectionEvent(fd);
 
   checkHandleEventFd(fd.fd);
 
@@ -99,10 +99,10 @@ bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
 }
 
 //------------------------------------------------------------------------------
-// logVdqmConnectionEvent 
+// logConnectionEvent 
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmConnectionHandler::
-  logVdqmConnectionEvent(const zmq_pollitem_t &fd)  {
+  logConnectionEvent(const zmq_pollitem_t &fd)  {
   log::Param params[] = {
   log::Param("fd", fd.fd),
   log::Param("ZMQ_POLLIN", fd.revents & ZMQ_POLLIN ? "true" : "false"),

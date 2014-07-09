@@ -24,6 +24,7 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
+#include "castor/messages/ForkDataTransfer.pb.h"
 #include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 
@@ -71,19 +72,25 @@ public:
   void stopProcessForker(const std::string &reason);
 
   /**
-   * Forks a data-transfer process for the specified tape drive.
+   * Forks a data-transfer session for the specified tape drive.
    *
-   * @param unitName The unit name of the tape drive.
+   * @param driveConfig The configuration of the tape drive.
+   * @param vdqmJob The job received from the vdqmd daemon.
+   * @param conf The configuration of the data-transfer session.
+   * @return The process identifier of the newly forked session.
    */
-  void forkDataTransfer(const std::string &unitName);
+  pid_t forkDataTransfer(const utils::DriveConfig &driveConfig,
+    const legacymsg::RtcpJobRqstMsgBody vdqmJob, 
+    const DataTransferSession::CastorConf &conf);
 
   /**
    * Forks a label-session process for the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    * @param vid The volume identifier of the tape.
+   * @return The process identifier of the newly forked session.
    */
-  void forkLabel(const std::string &unitName, const std::string &vid);
+  pid_t forkLabel(const std::string &unitName, const std::string &vid);
 
   /**
    * Forks a cleaner session for the specified tape drive.
@@ -93,8 +100,9 @@ public:
    * tape in the drive if there is in fact a tape in the drive and its volume
    * identifier is known.  If the volume identifier is not known then this
    * parameter should be set to an empty string.
+   * @return The process identifier of the newly forked session.
    */
-  void forkCleaner(const std::string &unitName, const std::string &vid);
+  pid_t forkCleaner(const std::string &unitName, const std::string &vid);
 
 private:
 
@@ -108,6 +116,19 @@ private:
    * with the process forker.
    */
   const int m_socketFd;
+
+  /**
+   * Creates a ForkDataTransfer message from the specified tape-drive
+   * configuration, VDQM job and data-transfer session configuration.
+   *
+   * @param driveConfig The configuration of the tape drive.
+   * @param vdqmJob The job received from the vdqmd daemon.
+   * @param config The configuration of the data-transfer session.
+   */
+  messages::ForkDataTransfer createForkDataTransferMsg(
+    const utils::DriveConfig &driveConfig,
+    const legacymsg::RtcpJobRqstMsgBody vdqmJob,
+    const DataTransferSession::CastorConf &config);
 
 }; // class ProcessForkerProxySocket
 

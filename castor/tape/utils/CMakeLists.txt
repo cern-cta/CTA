@@ -29,6 +29,7 @@ set (TAPE_UTILS_LIB_SRC_FILES
   BoolFunctor.cpp
   DriveConfigMap.cpp
   ShutdownBoolFunctor.cpp
+  SmartZmqContext.cpp
   Timer.cpp
   TpconfigLine.cpp
   utils.cpp

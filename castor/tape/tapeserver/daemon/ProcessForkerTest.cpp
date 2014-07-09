@@ -46,38 +46,52 @@ protected:
 TEST_F(castor_tape_tapeserver_daemon_ProcessForkerTest, constructor) {
   using namespace castor::tape::tapeserver::daemon;
 
-  int sv[2] = {-1, -1};
-  ASSERT_EQ(0, socketpair(AF_UNIX, SOCK_STREAM, 0, sv));
-  castor::utils::SmartFd proxySocketfd(sv[0]);
-  castor::utils::SmartFd processForkerSocketfd(sv[1]);
+  int cmdPair[2] = {-1, -1};
+  ASSERT_EQ(0, socketpair(AF_UNIX, SOCK_STREAM, 0, cmdPair));
+  castor::utils::SmartFd cmdSenderSocket(cmdPair[0]);
+  castor::utils::SmartFd cmdReceiverSocket(cmdPair[1]);
+
+  int reaperPair[2] = {-1, -1};
+  ASSERT_EQ(0, socketpair(AF_UNIX, SOCK_STREAM, 0, reaperPair));
+  castor::utils::SmartFd reaperSenderSocket(reaperPair[0]);
+  castor::utils::SmartFd reaperReceiverSocket(reaperPair[1]);
 
   const std::string programName = "unittests";
+  const std::string hostName = "hostName";
   castor::log::DummyLogger log(programName);
   std::auto_ptr<ProcessForker> processForker;
   ASSERT_NO_THROW(processForker.reset(
-    new ProcessForker(log, processForkerSocketfd.get())));
-  processForkerSocketfd.release();
+    new ProcessForker(log, cmdReceiverSocket.get(), reaperSenderSocket.get(),
+      hostName)));
+  cmdReceiverSocket.release();
 }
 
 TEST_F(castor_tape_tapeserver_daemon_ProcessForkerTest, socketproxy) {
   using namespace castor::tape::tapeserver::daemon;
 
-  int sv[2] = {-1, -1};
-  ASSERT_EQ(0, socketpair(AF_UNIX, SOCK_STREAM, 0, sv));
-  castor::utils::SmartFd proxySocketfd(sv[0]);
-  castor::utils::SmartFd processForkerSocketfd(sv[1]);
+  int cmdPair[2] = {-1, -1};
+  ASSERT_EQ(0, socketpair(AF_UNIX, SOCK_STREAM, 0, cmdPair));
+  castor::utils::SmartFd cmdSenderSocket(cmdPair[0]);
+  castor::utils::SmartFd cmdReceiverSocket(cmdPair[1]);
+
+  int reaperPair[2] = {-1, -1};
+  ASSERT_EQ(0, socketpair(AF_UNIX, SOCK_STREAM, 0, reaperPair));
+  castor::utils::SmartFd reaperSenderSocket(reaperPair[0]);
+  castor::utils::SmartFd reaperReceiverSocket(reaperPair[1]);
   
   const std::string programName = "unittests";
+  const std::string hostName = "hostName";
   castor::log::DummyLogger log(programName);
   std::auto_ptr<ProcessForker> processForker;
   ASSERT_NO_THROW(processForker.reset(
-    new ProcessForker(log, processForkerSocketfd.get())));
-  processForkerSocketfd.release();
+    new ProcessForker(log, cmdReceiverSocket.get(), reaperSenderSocket.get(),
+      hostName)));
+  cmdReceiverSocket.release();
 
   std::auto_ptr<ProcessForkerProxySocket> processForkerProxy;
   ASSERT_NO_THROW(processForkerProxy.reset(
-    new ProcessForkerProxySocket(log, proxySocketfd.get())));
-  proxySocketfd.release();
+    new ProcessForkerProxySocket(log, cmdSenderSocket.get())));
+  cmdSenderSocket.release();
 } 
 
 } // namespace unitTests

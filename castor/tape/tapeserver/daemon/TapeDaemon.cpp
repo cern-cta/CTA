@@ -34,6 +34,7 @@
 #include "castor/tape/tapeserver/daemon/LabelCmdAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForker.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerConnectionHandler.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxySocket.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
@@ -265,36 +266,21 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setProcessCapabilities(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::forkProcessForker() {
   m_log.prepareForFork();
-  // Create a socket pair for controlling the ProcessForker
-  int sv[2] = {-1 , -1};
-  if(socketpair(AF_LOCAL, SOCK_STREAM, 0, sv)) {
-    char message[100];
-    strerror_r(errno, message, sizeof(message));
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to fork process forker: Failed to create socket"
-      " pair for controlling the ProcessForker: " << message;
-    throw ex;
-  }
 
-  const int processForkerCmdSenderSocket = sv[0];
-  const int processForkerCmdReceiverSocket = sv[1];
-
-  {
-    log::Param params[] = {
-      log::Param("cmdSenderSocket", processForkerCmdSenderSocket),
-      log::Param("cmdReceiverSocket", processForkerCmdReceiverSocket)};
-    m_log(LOG_INFO, "TapeDaemon parent process succesfully created socket"
-      " pair for controlling the ProcessForker", params);
-  }
+  // Create two socket pairs for ProcessForker communications
+  const ForkerCmdPair cmdPair = createForkerCmdPair();
+  const ForkerReaperPair reaperPair = createForkerReaperPair();
 
   const pid_t forkRc = fork();
 
   // If fork failed
   if(0 > forkRc) {
-    close(processForkerCmdReceiverSocket);
-
     char message[100];
     sstrerror_r(errno, message, sizeof(message));
+
+    closeForkerCmdPair(cmdPair);
+    closeForkerReaperPair(reaperPair);
+
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to fork ProcessForker: " << message;
     throw ex;
@@ -309,24 +295,16 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkProcessForker() {
       m_log(LOG_INFO, "Successfully forked the ProcessForker", params);
     }
 
-    if(close(processForkerCmdReceiverSocket)) {
-      char message[100];
-      sstrerror_r(errno, message, sizeof(message));
-      castor::exception::Exception ex;
-      ex.getMessage() << "TapeDaemon parent process failed to close the socket"
-        " used to receive ProcessForker commands: " << message;
-      throw ex;
-    }
+    closeProcessForkerSideOfCmdPair(cmdPair);
+    closeProcessForkerSideOfReaperPair(reaperPair);
 
-    {
-      log::Param params[] =
-        {log::Param("cmdReceiverSocket", processForkerCmdReceiverSocket)};
-      m_log(LOG_INFO, "TapeDaemon parent process successfully closed the socket"
-        " used to receive ProcessForker commands", params);
-    }
+    m_processForker = new ProcessForkerProxySocket(m_log, cmdPair.tapeDaemon);
+    log::Param params[] =
+      {log::Param("cmdPair.tapeDaemon", cmdPair.tapeDaemon)};
+    m_log(LOG_INFO, "TapeDaemon parent process created ProcessForker proxy",
+      params);
 
-    m_processForker =
-      new ProcessForkerProxySocket(m_log, processForkerCmdSenderSocket);
+    createAndRegisterProcessForkerConnectionHandler(reaperPair.tapeDaemon);
 
     return;
 
@@ -336,48 +314,260 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkProcessForker() {
     // file-descriptors owned by the event handlers
     m_reactor.clear();
 
-    if(close(processForkerCmdSenderSocket)) {
-      char message[100];
-      sstrerror_r(errno, message, sizeof(message));
-      castor::exception::Exception ex;
-      ex.getMessage() << "ProcessForker process failed to close the socket"
-        " used to send ProcessForker commands: " << message;
-      throw ex;
-    }
+    closeTapeDaemonSideOfCmdPair(cmdPair);
+    closeTapeDaemonSideOfReaperPair(reaperPair);
 
-    {
-      log::Param params[] = 
-        {log::Param("cmdSenderSocket", processForkerCmdSenderSocket)};
-      m_log(LOG_INFO, "ProcessForker process successfully closed the socket" 
-        " used to send ProcessForker commands", params);
-    }
-
-    exit(runProcessForker(processForkerCmdReceiverSocket));
+    exit(runProcessForker(cmdPair.processForker, reaperPair.processForker));
   }
+}
+
+//------------------------------------------------------------------------------
+// createForkerCmdPair
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::TapeDaemon::ForkerCmdPair
+  castor::tape::tapeserver::daemon::TapeDaemon::createForkerCmdPair() {
+  ForkerCmdPair cmdPair;
+
+  try {
+    const std::pair<int, int> socketPair = createSocketPair();
+    cmdPair.tapeDaemon = socketPair.first;
+    cmdPair.processForker = socketPair.second;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create socket pair to control the"
+      " ProcessForker: " << ne.getMessage().str();
+    throw ex; 
+  }
+
+  {
+    log::Param params[] = {
+      log::Param("cmdPair.tapeDaemon", cmdPair.tapeDaemon),
+      log::Param("cmdPair.processForker", cmdPair.processForker)};
+    m_log(LOG_INFO, "TapeDaemon parent process succesfully created socket"
+      " pair to control the ProcessForker", params);
+  }
+
+  return cmdPair;
+}
+
+//------------------------------------------------------------------------------
+// createForkerReaperPair
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::TapeDaemon::ForkerReaperPair
+  castor::tape::tapeserver::daemon::TapeDaemon::createForkerReaperPair() {
+  ForkerReaperPair reaperPair;
+
+  try {
+    const std::pair<int, int> socketPair = createSocketPair();
+    reaperPair.tapeDaemon = socketPair.first;
+    reaperPair.processForker = socketPair.second;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create socket pair for the ProcessForker"
+      " to report terminated processes: " << ne.getMessage().str();
+    throw ex;
+  }
+
+  {
+    log::Param params[] = {
+      log::Param("reaperPair.tapeDaemon", reaperPair.tapeDaemon),
+      log::Param("reaperPair.processForker", reaperPair.processForker)};
+    m_log(LOG_INFO, "TapeDaemon parent process succesfully created socket"
+      " pair for ProcessForker to report terminated processes", params);
+  }
+
+  return reaperPair;
+}
+
+//------------------------------------------------------------------------------
+// createSocketPair
+//------------------------------------------------------------------------------
+std::pair<int, int>
+  castor::tape::tapeserver::daemon::TapeDaemon::createSocketPair() {
+  int sv[2] = {-1, -1};
+  if(socketpair(AF_LOCAL, SOCK_STREAM, 0, sv)) {
+    char message[100];
+    strerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create socket pair: " << message;
+    throw ex;
+  }
+
+  return std::pair<int, int> (sv[0], sv[1]);
+}
+
+//------------------------------------------------------------------------------
+// closeForkerCmdPair
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerCmdPair(
+  const ForkerCmdPair &cmdPair) {
+  if(close(cmdPair.tapeDaemon)) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to close TapeDaemon side of cmdPair"
+      ": cmdPair.tapeDaemon=" << cmdPair.tapeDaemon << ": " << message;
+    throw ex;
+  } else {
+    log::Param params[] =
+      {log::Param("cmdPair.tapeDaemon", cmdPair.tapeDaemon)};
+    m_log(LOG_INFO, "Successfully closed TapeDaemon side of cmdPair",
+      params);
+  }
+
+  if(close(cmdPair.processForker)) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to close ProcessForker side of cmdPair"
+      ": cmdPair.processForker=" << cmdPair.processForker << ": " << message;
+    throw ex;
+  } else {
+    log::Param params[] =
+      {log::Param("cmdPair.processForker", cmdPair.processForker)};
+    m_log(LOG_INFO, "Successfully closed ProcessForker side of cmdPair",
+      params);
+  }
+}
+
+//------------------------------------------------------------------------------
+// closeForkerReaperPair
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerReaperPair(
+  const ForkerReaperPair &reaperPair) {
+  if(close(reaperPair.tapeDaemon)) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to close TapeDaemon side of reaperPair"
+      ": reaperPair.tapeDaemon=" << reaperPair.tapeDaemon << ": " << message;
+    throw ex;
+  } else {
+    log::Param params[] =
+      {log::Param("reaperPair.tapeDaemon", reaperPair.tapeDaemon)};
+    m_log(LOG_INFO, "Successfully closed TapeDaemon side of reaperPair",
+      params);
+  }
+
+  if(close(reaperPair.processForker)) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to close ProcessForker side of reaperPair"
+      ": reaperPair.processForker=" << reaperPair.processForker << ": " <<
+      message;
+    throw ex;
+  } else {
+    log::Param params[] =
+      {log::Param("reaperPair.processForker", reaperPair.processForker)};
+    m_log(LOG_INFO, "Successfully closed ProcessForker side of reaperPair",
+      params);
+  }
+}
+
+//------------------------------------------------------------------------------
+// closeProcessForkerSideOfCmdPair
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::
+  closeProcessForkerSideOfCmdPair(const ForkerCmdPair &cmdPair) {
+  if(close(cmdPair.processForker)) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "TapeDaemon parent process failed to close"
+      " ProcessForker side of cmdPair: cmdPair.processForker=" <<
+      cmdPair.processForker << ": " << message;
+    throw ex;
+  }
+
+  log::Param params[] =
+    {log::Param("cmdPair.processForker", cmdPair.processForker)};
+    m_log(LOG_INFO, "TapeDaemon parent process successfully closed"
+      " ProcessForker side of cmdPair", params);
+}
+
+//------------------------------------------------------------------------------
+// closeProcessForkerSideOfReaperPair
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::
+  closeProcessForkerSideOfReaperPair(const ForkerReaperPair &reaperPair) {
+  if(close(reaperPair.processForker)) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "TapeDaemon parent process failed to close"
+      " ProcessForker side of reaperPair: reaperPair.processForker=" <<
+      reaperPair.processForker << ": " << message;
+    throw ex;
+  }
+
+  log::Param params[] =
+    {log::Param("reaperPair.processForker)", reaperPair.processForker)};
+  m_log(LOG_INFO, "TapeDaemon parent process successfully closed"
+    " ProcessForker side of reaperPair", params);
+}
+
+//------------------------------------------------------------------------------
+// closeTapeDaemonSideOfCmdPair
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::
+  closeTapeDaemonSideOfCmdPair(const ForkerCmdPair &cmdPair) {
+  if(close(cmdPair.tapeDaemon)) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "ProcessForker process failed to close"
+      " TapeDaemon side of cmdPair: cmdPair.tapeDaemon=" << cmdPair.tapeDaemon
+      << ": " << message;
+    throw ex;
+  }
+
+  log::Param params[] = {log::Param("cmdPair.tapeDaemon", cmdPair.tapeDaemon)};
+    m_log(LOG_INFO, "ProcessForker process successfully closed"
+      " TapeDaemon side of cmdPair", params);
+}
+
+//------------------------------------------------------------------------------
+// closeTapeDaemonSideOfReaperPair
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::
+  closeTapeDaemonSideOfReaperPair(const ForkerReaperPair &reaperPair) {
+  if(close(reaperPair.tapeDaemon)) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "ProcessForker process failed to close"
+      " TapeDaemon side of reaperPair: reaperPair.tapeDaemon=" <<
+      reaperPair.tapeDaemon << ": " << message;
+    throw ex;
+  }
+
+  log::Param params[] =
+    {log::Param("reaperPair.tapeDaemon", reaperPair.tapeDaemon)};
+  m_log(LOG_INFO, "ProcessForker parent process successfully closed"
+    " TapeDaemon side of reaperPair", params);
 }
 
 //------------------------------------------------------------------------------
 // runProcessForker
 //------------------------------------------------------------------------------
 int castor::tape::tapeserver::daemon::TapeDaemon::runProcessForker(
-  const int cmdReceiverSocket) throw() {
+  const int cmdReceiverSocket, const int reaperSenderSocket) throw() {
   try {
-    ProcessForker processForker(m_log, cmdReceiverSocket);
+    ProcessForker processForker(m_log, cmdReceiverSocket, reaperSenderSocket,
+      m_hostName);
     processForker.execute();
+    return 0;
   } catch(castor::exception::Exception &ex) {
     log::Param params[] = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "ProcessForker threw an unexpected exception", params);
-    return 1;
   } catch(std::exception &se) {
     log::Param params[] = {log::Param("message", se.what())};
     m_log(LOG_ERR, "ProcessForker threw an unexpected exception", params);
-    return 1;
   } catch(...) {
     m_log(LOG_ERR, "ProcessForker threw an unknown and unexpected exception");
-    return 1;
   }
-
-  return 0;
+  return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -483,7 +673,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor() {
 //------------------------------------------------------------------------------
 // createAndRegisterVdqmAcceptHandler
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHandler()  {
+void castor::tape::tapeserver::daemon::TapeDaemon::
+  createAndRegisterVdqmAcceptHandler()  {
   castor::utils::SmartFd listenSock;
   try {
     listenSock.reset(io::createListenerSock(TAPE_SERVER_VDQM_LISTENING_PORT));
@@ -499,10 +690,10 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHa
     m_log(LOG_INFO, "Listening for connections from the vdqmd daemon", params);
   }
 
-  std::auto_ptr<VdqmAcceptHandler> vdqmAcceptHandler;
+  std::auto_ptr<VdqmAcceptHandler> handler;
   try {
-    vdqmAcceptHandler.reset(new VdqmAcceptHandler(listenSock.get(), m_reactor,
-      m_log, m_driveCatalogue));
+    handler.reset(new VdqmAcceptHandler(listenSock.get(), m_reactor, m_log,
+      m_driveCatalogue));
     listenSock.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
@@ -511,14 +702,15 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHa
       ": " << ba.what();
     throw ex;
   }
-  m_reactor.registerHandler(vdqmAcceptHandler.get());
-  vdqmAcceptHandler.release();
+  m_reactor.registerHandler(handler.get());
+  handler.release();
 }
 
 //------------------------------------------------------------------------------
 // createAndRegisterAdminAcceptHandler
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptHandler()  {
+void castor::tape::tapeserver::daemon::TapeDaemon::
+  createAndRegisterAdminAcceptHandler()  {
   castor::utils::SmartFd listenSock;
   try {
     listenSock.reset(io::createListenerSock(TAPE_SERVER_ADMIN_LISTENING_PORT));
@@ -536,10 +728,10 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
       params);
   }
 
-  std::auto_ptr<AdminAcceptHandler> adminAcceptHandler;
+  std::auto_ptr<AdminAcceptHandler> handler;
   try {
-    adminAcceptHandler.reset(new AdminAcceptHandler(listenSock.get(), m_reactor,
-      m_log, m_vdqm, m_driveCatalogue, m_hostName));
+    handler.reset(new AdminAcceptHandler(listenSock.get(), m_reactor, m_log,
+      m_vdqm, m_driveCatalogue, m_hostName));
     listenSock.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
@@ -548,8 +740,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
       ": " << ba.what();
     throw ex;
   }
-  m_reactor.registerHandler(adminAcceptHandler.get());
-  adminAcceptHandler.release();
+  m_reactor.registerHandler(handler.get());
+  handler.release();
 }
 
 //------------------------------------------------------------------------------
@@ -573,10 +765,10 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterLabelCmdAcce
       params);
   }
 
-  std::auto_ptr<LabelCmdAcceptHandler> labelCmdAcceptHandler;
+  std::auto_ptr<LabelCmdAcceptHandler> handler;
   try {
-    labelCmdAcceptHandler.reset(new LabelCmdAcceptHandler(listenSock.get(),
-      m_reactor, m_log, m_driveCatalogue, m_hostName, m_vdqm, m_vmgr));
+    handler.reset(new LabelCmdAcceptHandler(listenSock.get(), m_reactor, m_log,
+      m_driveCatalogue, m_hostName, m_vdqm, m_vmgr));
     listenSock.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
@@ -585,8 +777,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterLabelCmdAcce
       ": " << ba.what();
     throw ex;
   }
-  m_reactor.registerHandler(labelCmdAcceptHandler.get());
-  labelCmdAcceptHandler.release();
+  m_reactor.registerHandler(handler.get());
+  handler.release();
 }
 
 //------------------------------------------------------------------------------
@@ -594,10 +786,10 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterLabelCmdAcce
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::
   createAndRegisterTapeMessageHandler()  {
-  std::auto_ptr<TapeMessageHandler> tapeMessageHandler;
+  std::auto_ptr<TapeMessageHandler> handler;
   try {
-    tapeMessageHandler.reset(new TapeMessageHandler(m_reactor, m_log,
-      m_driveCatalogue, m_hostName, m_vdqm, m_vmgr, m_zmqContext));
+    handler.reset(new TapeMessageHandler(m_reactor, m_log, m_driveCatalogue,
+      m_hostName, m_vdqm, m_vmgr, m_zmqContext));
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
     ex.getMessage() <<
@@ -605,8 +797,28 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
       ": " << ba.what();
     throw ex;
   }
-  m_reactor.registerHandler(tapeMessageHandler.get());
-  tapeMessageHandler.release();
+  m_reactor.registerHandler(handler.get());
+  handler.release();
+}
+
+//------------------------------------------------------------------------------
+// createAndRegisterProcessForkerConnectionHandler
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::
+  createAndRegisterProcessForkerConnectionHandler(const int reaperSocket)  {
+  std::auto_ptr<ProcessForkerConnectionHandler> handler;
+  try {
+    handler.reset(new ProcessForkerConnectionHandler(reaperSocket, m_reactor,
+      m_log, m_driveCatalogue, m_hostName, m_vdqm));
+  } catch(std::bad_alloc &ba) {
+    castor::exception::BadAlloc ex;
+    ex.getMessage() <<
+      "Failed to create event handler for communicating with the ProcessForker"
+      ": " << ba.what();
+    throw ex;
+  }
+  m_reactor.registerHandler(handler.get());
+  handler.release();
 }
 
 //------------------------------------------------------------------------------
@@ -640,8 +852,8 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleEvents()
       log::Param("message", ex.getMessage().str()),
       log::Param("backtrace", ex.backtrace())
     };
-    m_log(LOG_ERR, "Unexpected castor exception thrown when handling an I/O event",
-      params);
+    m_log(LOG_ERR,
+      "Unexpected castor exception thrown when handling an I/O event", params);
   } catch(std::exception &se) {
     // Log exception and continue
     log::Param params[] = {log::Param("message", se.what())};
@@ -792,8 +1004,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
   const int waitpidStat) {
 
   switch(sessionType) {
-  case DriveCatalogueEntry::SESSION_TYPE_DATATRANSFER:
-    return handleReapedDataTransferSession(pid, waitpidStat);
   case DriveCatalogueEntry::SESSION_TYPE_LABEL:
     return handleReapedLabelSession(pid, waitpidStat);
   case DriveCatalogueEntry::SESSION_TYPE_CLEANER:
@@ -805,37 +1015,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
         ": Unexpected session type: sessionType=" << sessionType;
       throw ex;
     }
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleReapedDataTransferSession
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedDataTransferSession(
-  const pid_t pid, const int waitpidStat) {
-  try {
-    std::list<log::Param> params;
-    params.push_back(log::Param("dataTransferPid", pid));
-    DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(pid);
-    const utils::DriveConfig &driveConfig = drive->getConfig();
-
-    if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
-      const std::string vid = drive->getVid();
-      drive->sessionSucceeded();
-      m_log(LOG_INFO, "Data-transfer session succeeded", params);
-      requestVdqmToReleaseDrive(driveConfig, pid);
-      notifyVdqmTapeUnmounted(driveConfig, vid, pid);
-    } else {
-      drive->sessionFailed(); //deletes the session
-      m_log(LOG_INFO, "Data-transfer session failed. Going to try to clean the drive.", params);
-      requestVdqmToReleaseDrive(driveConfig, pid);
-      drive->toBeCleaned();
-    }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle reaped data transfer session: " << 
-    ne.getMessage().str();
-    throw ex;
   }
 }
 
@@ -987,166 +1166,84 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSessions()
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSession(
   DriveCatalogueEntry *drive) throw() {
-  const utils::DriveConfig &driveConfig = drive->getConfig();
+  try {
+    const utils::DriveConfig &driveConfig = drive->getConfig();
+    const legacymsg::RtcpJobRqstMsgBody &vdqmJob = drive->getVdqmJob();
+    const DataTransferSession::CastorConf dataTransferConfig =
+      getDataTransferConf();
 
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", driveConfig.unitName));
-
-  m_processForker->forkDataTransfer(driveConfig.unitName);
-
-  m_log.prepareForFork();
-
-  const pid_t forkRc = fork();
-
-  // If fork failed
-  if(0 > forkRc) {
-    // Log an error message and return
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    params.push_back(log::Param("message", message));
-    m_log(LOG_ERR, "Failed to fork data-transfer session for tape drive",
-      params);
-    return;
-
-  // Else if this is the parent process
-  } else if(0 < forkRc) {
-    drive->forkedDataTransferSession(forkRc);
-    return;
-
-  // Else this is the child process
-  } else {
-    // Clear the reactor which in turn will close all of the open
-    // file-descriptors owned by the event handlers
-    m_reactor.clear();
+    const pid_t dataTransferPid = m_processForker->forkDataTransfer(driveConfig,
+      vdqmJob, dataTransferConfig);
+    drive->forkedDataTransferSession(dataTransferPid);
 
     try {
       m_vdqm.assignDrive(m_hostName, driveConfig.unitName,
-        drive->getVdqmJob().dgn, drive->getVdqmJob().volReqId, getpid());
-      m_log(LOG_INFO, "Assigned the drive in the vdqm");
+        drive->getVdqmJob().dgn, drive->getVdqmJob().volReqId, dataTransferPid);
+      log::Param params[] = {
+        log::Param("server", m_hostName),
+        log::Param("unitName", driveConfig.unitName),
+        log::Param("dgn", std::string(drive->getVdqmJob().dgn)),
+        log::Param("volReqId", drive->getVdqmJob().volReqId),
+        log::Param("dataTransferPid", dataTransferPid)};
+      m_log(LOG_INFO, "Assigned the drive in the vdqm", params);
     } catch(castor::exception::Exception &ex) {
       log::Param params[] = {log::Param("message", ex.getMessage().str())};
       m_log(LOG_ERR, "Data-transfer session could not be started"
         ": Failed to assign drive in vdqm", params);
     }
-
-    runDataTransferSession(drive);
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "Caught an exception when requesting ProcessForker to fork a"
+      " data-transfer session", params);
+    drive->sessionFailed();
+  } catch(std::exception &se) {
+    log::Param params[] = {log::Param("message", se.what())};
+    m_log(LOG_ERR, "Caught an exception when requesting ProcessForker to fork a"
+      " data-transfer session", params);
+    drive->sessionFailed();
+  } catch(...) {
+    m_log(LOG_ERR, "Caught an unknown exception when requesting ProcessForker"
+      " to fork a data-transfer session");
+    drive->sessionFailed();
   }
 }
 
 //------------------------------------------------------------------------------
-// runDataTransferSession
+// getDataTransferConf
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::runDataTransferSession(
-  const DriveCatalogueEntry *drive) throw() {
-  const utils::DriveConfig &driveConfig = drive->getConfig();
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", driveConfig.unitName));
+castor::tape::tapeserver::daemon::DataTransferSession::CastorConf
+  castor::tape::tapeserver::daemon::TapeDaemon::getDataTransferConf() {
+  DataTransferSession::CastorConf castorConf;
+  common::CastorConfiguration &config =
+    common::CastorConfiguration::getConfig();
+  castorConf.rtcopydBufsz = config.getConfEntInt(
+    "RTCOPYD", "BUFSZ", (uint32_t)RTCP_BUFSZ, &m_log);
+  castorConf.rtcopydNbBufs = config.getConfEntInt(
+    "RTCOPYD", "NB_BUFS", (uint32_t)NB_RTCP_BUFS, &m_log);
+  castorConf.tapeBadMIRHandlingRepair = config.getConfEntString(
+    "TAPE", "BADMIR_HANDLING", "CANCEL", &m_log);
+  castorConf.tapebridgeBulkRequestMigrationMaxBytes = config.getConfEntInt(
+    "TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXBYTES",
+    (uint64_t)tapebridge::TAPEBRIDGE_BULKREQUESTMIGRATIONMAXBYTES, &m_log);
+  castorConf.tapebridgeBulkRequestMigrationMaxFiles = config.getConfEntInt(
+    "TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXFILES",
+    (uint64_t)tapebridge::TAPEBRIDGE_BULKREQUESTMIGRATIONMAXFILES, &m_log);
+  castorConf.tapebridgeBulkRequestRecallMaxBytes = config.getConfEntInt(
+    "TAPEBRIDGE", "BULKREQUESTRECALLMAXBYTES",
+    (uint64_t)tapebridge::TAPEBRIDGE_BULKREQUESTRECALLMAXBYTES, &m_log);
+  castorConf.tapebridgeBulkRequestRecallMaxFiles = config.getConfEntInt(
+    "TAPEBRIDGE", "BULKREQUESTRECALLMAXFILES",
+    (uint64_t)tapebridge::TAPEBRIDGE_BULKREQUESTRECALLMAXFILES, &m_log);
+  castorConf.tapebridgeMaxBytesBeforeFlush = config.getConfEntInt(
+    "TAPEBRIDGE", "MAXBYTESBEFOREFLUSH",
+    (uint64_t)tapebridge::TAPEBRIDGE_MAXBYTESBEFOREFLUSH, &m_log);
+  castorConf.tapebridgeMaxFilesBeforeFlush = config.getConfEntInt(
+    "TAPEBRIDGE", "MAXFILESBEFOREFLUSH",
+    (uint64_t)tapebridge::TAPEBRIDGE_MAXFILESBEFOREFLUSH, &m_log);
+  castorConf.tapeserverdDiskThreads = config.getConfEntInt(
+    "RTCPD", "THREAD_POOL", (uint32_t)RTCPD_THREAD_POOL, &m_log);
 
-  m_log(LOG_INFO, "Data-transfer child-process started", params);
-  
-  try {
-    DataTransferSession::CastorConf castorConf;
-    // This try bloc will allow us to send a failure notification to the client
-    // if we fail before the DataTransferSession has an opportunity to do so.
-    std::auto_ptr<DataTransferSession> dataTransferSession;
-    castor::tape::System::realWrapper sysWrapper;
-    std::auto_ptr<legacymsg::RmcProxy> rmc;
-    std::auto_ptr<messages::TapeserverProxy> tapeserver;
-    try {
-      common::CastorConfiguration &config =
-        common::CastorConfiguration::getConfig();
-      castorConf.rtcopydBufsz = config.getConfEntInt(
-        "RTCOPYD", "BUFSZ", (uint32_t)RTCP_BUFSZ, &m_log);
-      castorConf.rtcopydNbBufs = config.getConfEntInt(
-        "RTCOPYD", "NB_BUFS", (uint32_t)NB_RTCP_BUFS, &m_log);
-      castorConf.tapeBadMIRHandlingRepair = config.getConfEntString(
-        "TAPE", "BADMIR_HANDLING", "CANCEL", &m_log);
-      castorConf.tapebridgeBulkRequestMigrationMaxBytes = config.getConfEntInt(
-        "TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXBYTES",
-        (uint64_t)tapebridge::TAPEBRIDGE_BULKREQUESTMIGRATIONMAXBYTES, &m_log);
-      castorConf.tapebridgeBulkRequestMigrationMaxFiles = config.getConfEntInt(
-        "TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXFILES",
-        (uint64_t)tapebridge::TAPEBRIDGE_BULKREQUESTMIGRATIONMAXFILES, &m_log);
-      castorConf.tapebridgeBulkRequestRecallMaxBytes = config.getConfEntInt(
-        "TAPEBRIDGE", "BULKREQUESTRECALLMAXBYTES",
-        (uint64_t)tapebridge::TAPEBRIDGE_BULKREQUESTRECALLMAXBYTES, &m_log);
-      castorConf.tapebridgeBulkRequestRecallMaxFiles = config.getConfEntInt(
-        "TAPEBRIDGE", "BULKREQUESTRECALLMAXFILES",
-        (uint64_t)tapebridge::TAPEBRIDGE_BULKREQUESTRECALLMAXFILES, &m_log);
-      castorConf.tapebridgeMaxBytesBeforeFlush = config.getConfEntInt(
-        "TAPEBRIDGE", "MAXBYTESBEFOREFLUSH",
-        (uint64_t)tapebridge::TAPEBRIDGE_MAXBYTESBEFOREFLUSH, &m_log);
-      castorConf.tapebridgeMaxFilesBeforeFlush = config.getConfEntInt(
-        "TAPEBRIDGE", "MAXFILESBEFOREFLUSH",
-        (uint64_t)tapebridge::TAPEBRIDGE_MAXFILESBEFOREFLUSH, &m_log);
-      castorConf.tapeserverdDiskThreads = config.getConfEntInt(
-        "RTCPD", "THREAD_POOL", (uint32_t)RTCPD_THREAD_POOL, &m_log);
-      
-      rmc.reset(m_rmcFactory.create());
-      tapeserver.reset(m_tapeserverFactory.create(
-        DataTransferSession::getZmqContext()));
-      dataTransferSession.reset(new DataTransferSession (
-        m_hostName,
-        drive->getVdqmJob(),
-        m_log,
-        sysWrapper,
-        driveConfig,
-        *(rmc.get()),
-        *(tapeserver.get()),
-        m_capUtils,
-        castorConf
-      ));
-    } catch (castor::exception::Exception & ex) {
-      try {
-        client::ClientProxy cl(drive->getVdqmJob());
-        client::ClientInterface::RequestReport rep;
-        cl.reportEndOfSessionWithError(ex.getMessageValue(), ex.code(), rep);
-      } catch (...) {
-        params.push_back(log::Param("errorMessage", ex.getMessageValue()));
-        params.push_back(log::Param("errorCode", ex.code()));
-        m_log(LOG_ERR, "Failed to notify the client of the failed session"
-          " when setting up the data-transfer session", params);
-      }
-      throw;
-    } 
-    catch (...) {
-      try {
-        m_log(LOG_ERR, "Got non castor exception error while constructing"
-          " data-transfer session", params);
-        client::ClientProxy cl(drive->getVdqmJob());
-        client::ClientInterface::RequestReport rep;
-        cl.reportEndOfSessionWithError(
-         "Non-Castor exception when setting up the data-transfer session",
-           SEINTERNAL, rep);
-      } catch (...) {
-        params.push_back(log::Param("errorMessage",
-          "Non-Castor exception when setting up the data-transfer session"));
-        m_log(LOG_ERR, "Failed to notify the client of the failed session"
-          " when setting up the data-transfer session", params);
-      }
-      throw;
-    }
-    m_log(LOG_INFO, "Going to execute data-transfer session");
-    int result = dataTransferSession->execute();
-    exit(result);
-  } catch(castor::exception::Exception & ex) {
-    params.push_back(log::Param("message", ex.getMessageValue()));
-    m_log(LOG_ERR, "Aborting data-transfer session"
-      ": Caught an unexpected CASTOR exception", params);
-    castor::log::LogContext lc(m_log);
-    lc.logBacktrace(LOG_ERR, ex.backtrace());
-    exit(1);
-  } catch(std::exception &se) {
-    params.push_back(log::Param("message", se.what()));
-    m_log(LOG_ERR,
-      "Aborting data-transfer session: Caught an unexpected standard exception",
-      params);
-    exit(1);
-  } catch(...) {
-    m_log(LOG_ERR, "Aborting data-transfer session"
-      ": Caught an unexpected and unknown exception", params);
-    exit(1);
-  }
+  return castorConf;
 }
 
 //------------------------------------------------------------------------------

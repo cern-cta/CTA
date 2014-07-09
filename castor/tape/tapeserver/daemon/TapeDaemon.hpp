@@ -159,13 +159,144 @@ protected:
   void forkProcessForker();
 
   /**
+   * Socket pair used to control the ProcessForker.
+   */
+  struct ForkerCmdPair {
+
+    /**
+     * Bi-directional socket used by the TapeDaemon parent process to send
+     * commands to the process forker and receive replies in return.
+     */
+    int tapeDaemon;
+
+    /**
+     * Bi-directional socket used by the ProcessForker to receive commands
+     * from the TapeDaemon parent process and send back replies.
+     */
+    int processForker;
+
+    /**
+     * Constructor.
+     *
+     * This constructor sets both members to -1 which represents an invalid
+     * file descriptor.
+     */
+    ForkerCmdPair(): tapeDaemon(-1), processForker(-1) {
+    }
+  }; // struct ForkerCmdPair
+
+  /**
+   * Creates the socket pair to be used to control the ProcessForker.
+   *
+   * @return The socket pair.
+   */
+  ForkerCmdPair createForkerCmdPair();
+
+  /**
+   * Socket pair used by the ProcessForker to notify the TapeDaemon parent
+   * process of the termination of ProcessForker child processes.
+   */
+  struct ForkerReaperPair {
+
+    /**
+     * Socket used by the TapeDaemon receive process termination notifications
+     * from the ProcessForker.
+     */
+    int tapeDaemon;
+
+    /**
+     * Socket used by the ProcessForker to send process termination
+     * notifications to the TapeDaemon parent process.
+     */
+    int processForker;
+
+    /**
+     * Constructor.
+     *
+     * This constructor sets both members to -1 which represents an invalid
+     * file descriptor.
+     */
+    ForkerReaperPair(): tapeDaemon(-1), processForker(-1) {
+    }
+  }; // struct ForkerReaperPair
+
+  /**
+   * Creates the socket pair to be used by the ProcessForker to notify the
+   * TapeDaemon parent process of the termination of ProcessForker processes.
+   *
+   * @return The socket pair.
+   */
+  ForkerReaperPair createForkerReaperPair();
+
+  /**
+   * C++ wrapper around socketpair() that converts a failure into a C++
+   * exception.
+   *
+   * @return The socket pair.
+   */
+  std::pair<int, int> createSocketPair();
+
+  /**
+   * Closes both the sockets of the specified socket pair.
+   *
+   * @param cmdPair The socket pair to be close.
+   */
+  void closeForkerCmdPair(const ForkerCmdPair &cmdPair);
+
+  /**
+   * Closes both the sockets of the specified socket pair.
+   *
+   * @param reaperPair The socket pair to be close.
+   */
+  void closeForkerReaperPair(const ForkerReaperPair &reaperPair);
+
+  /**
+   * Acting on behalf of the TapeDaemon parent process this method closes the
+   * ProcessForker side of the socket pair used to control the ProcessForker.
+   *
+   * @param cmdPair The socket pair used to control the ProcessForker.
+   */
+  void closeProcessForkerSideOfCmdPair(const ForkerCmdPair &cmdPair);
+
+  /**
+   * Acting on behalf of the TapeDaemon parent process this method closes the
+   * ProcessForker side of the socket pair used by the ProcessForker to report
+   * process terminations.
+   *
+   * @param reaperPair The socket pair used by the ProcessForker to report
+   * process terminations.
+   */
+  void closeProcessForkerSideOfReaperPair(const ForkerReaperPair &reaperPair);
+
+  /**
+   * Acting on behalf of the ProcessForker process this method closes the
+   * TapeDaemon side of the socket pair used to control the ProcessForker.
+   *
+   * @param cmdPair The socket pair used to control the ProcessForker.
+   */
+  void closeTapeDaemonSideOfCmdPair(const ForkerCmdPair &cmdPair);
+
+  /**
+   * Acting on behalf of the ProcessForker process this method closes the
+   * TapeDaemon side of the socket pair used by the ProcessForker to report
+   * process terminations.
+   *
+   * @param reaperPair The socket pair used by the ProcessForker to report
+   * process terminations.
+   */
+  void closeTapeDaemonSideOfReaperPair(const ForkerReaperPair &reaperPair);
+
+  /**
    * Runs the ProcessForker.
    *
    * @param cmdReceiverSocket The socket used to receive commands for the
    * ProcessForker.
+   * @param reaperSenderSocket The socket used to send process termination
+   * reports to the TapeDaemon parent process.
    * @return the exit code to be used for the process running the ProcessForker.
    */
-  int runProcessForker(const int cmdReceiverSocket) throw();
+  int runProcessForker(const int cmdReceiverSocket,
+    const int reaperSenderSocket) throw();
 
   /**
    * Blocks the signals that should not asynchronously disturb the daemon.
@@ -212,9 +343,18 @@ protected:
   void createAndRegisterLabelCmdAcceptHandler();
 
   /**
-   * Creates the handler to discuss through zmq socket to the forked sessions
+   * Creates the handler to handle messages from forked sessions.
    */
   void createAndRegisterTapeMessageHandler();
+
+  /**
+   * Creates the handler to handle the incoming connection from the
+   * ProcessForker.
+   *
+   * @param reaperSocket The TapeDaemon side of the socket pair used by the
+   * ProcessForker  to report the termination of its child processes.
+   */
+  void createAndRegisterProcessForkerConnectionHandler(const int reaperSocket);
   
   /**
    * The main event loop of the daemon.
@@ -287,15 +427,6 @@ protected:
    const pid_t pid,
    const int waitpidStat);
 
-  /**
-   * Does the required post processing for the specified reaped session.
-   *
-   * @param pid The process ID of the reaped session.
-   * @param waitpidStat The status information given by a call to waitpid().
-   */
-  void handleReapedDataTransferSession(const pid_t pid,
-    const int waitpidStat);
-  
   /**
    * Does the required post processing for the specified reaped session.
    *
@@ -375,13 +506,11 @@ protected:
   void forkDataTransferSession(DriveCatalogueEntry *drive) throw();
 
   /**
-   * Runs the data-transfer session.  This method is to be called within the
-   * child process responsible for running the data-transfer session.
+   * Gets the configuration of a data-transfer session.
    *
-   * @param drive The catalogue entry of the tape drive to be used during the
-   * session.
+   * @return The configuration.
    */
-  void runDataTransferSession(const DriveCatalogueEntry *drive) throw();
+  DataTransferSession::CastorConf getDataTransferConf();
 
   /**
    * Forks a label-session child-process for every tape drive entry in the

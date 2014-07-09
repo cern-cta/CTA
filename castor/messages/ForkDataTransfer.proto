@@ -21,5 +21,31 @@
 package castor.messages;
 
 message ForkDataTransfer {
+  // Description of the tape drive
   required string unitname = 1;
+  required string dgn = 2;
+  required string devfilename = 3;
+  repeated string density = 4;
+  required string libraryslot = 5;
+  required string devtype = 6;
+
+  // The job from the VDQM
+  required uint32 mounttransactionid = 7;
+  required uint32 clientport = 8;
+  required uint32 clienteuid = 9;
+  required uint32 clientegid = 10;
+  required string clienthost = 11;
+  required string clientusername = 12;
+
+  // Configuration parameters of the session
+  required uint32 memblocksize = 13;
+  required uint32 nbmemblocks = 14;
+  required string badmirhandling = 15;
+  required uint64 bulkrequestmigrationmaxbytes = 16;
+  required uint64 bulkrequestmigrationmaxfiles = 17;
+  required uint64 bulkrequestrecallmaxbytes = 18;
+  required uint64 bulkrequestrecallmaxfiles = 19;
+  required uint64 maxbytesbeforeflush = 20;
+  required uint64 maxfilesbeforeflush = 21;
+  required uint32 diskthreadpoolsize = 22;
 }

@@ -14,17 +14,13 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //
+//
+//
 // @author Castor Dev team, castor-dev@cern.ch
 
 package castor.messages;
 
-message Status {
-  // Status value where 0 means success and non-zero means error.
-  required uint32 status = 1;
-
-  // In the event of an error, in other words when the status field is set to a
-  // non-zero value, this field should contain a human-readable error-message.
-  // This field should explicitly be set to the empty string when the status
-  // field is 0.
-  required string message = 2;
+message ProcessCrashed {
+  required uint64 pid = 1;
+  required uint32 signal = 2;
 }

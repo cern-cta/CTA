@@ -30,11 +30,13 @@ const char *castor::tape::tapeserver::daemon::ProcessForkerMsgType::
   toString(const Enum value) throw() {
   switch(value) {
   case MSG_NONE             : return "None";
-  case MSG_FORKCLEANER      : return "Cleaner";
+  case MSG_EXCEPTION        : return "Exception";
+  case MSG_FORKCLEANER      : return "ForkCleaner";
   case MSG_FORKDATATRANSFER : return "ForkDataTransfer";
   case MSG_FORKLABEL        : return "ForkLabel";
   case MSG_FORKSUCCEEDED    : return "ForkSucceeded";
-  case MSG_STATUS           : return "Status";
+  case MSG_PROCESSCRASHED   : return "ProcessCrashed";
+  case MSG_PROCESSEXITED    : return "ProcessExited";
   case MSG_STOPPROCESSFORKER: return "StopProcessForker";
   default                   : return "Unknown";
   }

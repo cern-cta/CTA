@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
-#include "castor/messages/Status.pb.h"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
 #include "castor/utils/SmartArrayPtr.hpp"
 #include "h/serrno.h"
@@ -89,6 +88,34 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::serializePayload(
 // serializePayload
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::serializePayload(
+  ProcessForkerFrame &frame, const messages::ProcessCrashed &msg) {
+  frame.type = ProcessForkerMsgType::MSG_PROCESSCRASHED;
+  if(!msg.SerializeToString(&frame.payload)) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to serialize ProcessCrashed payload"
+      ": SerializeToString() returned false";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// serializePayload
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::ProcessForkerUtils::serializePayload(
+  ProcessForkerFrame &frame, const messages::ProcessExited &msg) {
+  frame.type = ProcessForkerMsgType::MSG_PROCESSEXITED;
+  if(!msg.SerializeToString(&frame.payload)) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to serialize ProcessExited payload"
+      ": SerializeToString() returned false";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// serializePayload
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::ProcessForkerUtils::serializePayload(
   ProcessForkerFrame &frame, const messages::StopProcessForker &msg) {
   frame.type = ProcessForkerMsgType::MSG_STOPPROCESSFORKER;
   if(!msg.SerializeToString(&frame.payload)) {
@@ -103,11 +130,11 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::serializePayload(
 // serializePayload
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::serializePayload(
-  ProcessForkerFrame &frame, const messages::Status &msg) {
-  frame.type = ProcessForkerMsgType::MSG_STATUS;
+  ProcessForkerFrame &frame, const messages::Exception &msg) {
+  frame.type = ProcessForkerMsgType::MSG_EXCEPTION;
   if(!msg.SerializeToString(&frame.payload)) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to serialize Status payload"
+    ex.getMessage() << "Failed to serialize Exception payload"
       ": SerializeToString() returned false";
     throw ex;
   }
@@ -141,8 +168,24 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::writeFrame(
 // writeFrame
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::
-  writeFrame(const int fd, const messages::Status &msg) {
-  writeFrame(fd, ProcessForkerMsgType::MSG_STATUS, msg);
+  writeFrame(const int fd, const messages::Exception &msg) {
+  writeFrame(fd, ProcessForkerMsgType::MSG_EXCEPTION, msg);
+}
+
+//------------------------------------------------------------------------------
+// writeFrame
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::ProcessForkerUtils::
+  writeFrame(const int fd, const messages::ProcessCrashed &msg) {
+  writeFrame(fd, ProcessForkerMsgType::MSG_PROCESSCRASHED, msg);
+}
+
+//------------------------------------------------------------------------------
+// writeFrame
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::ProcessForkerUtils::
+  writeFrame(const int fd, const messages::ProcessExited &msg) {
+  writeFrame(fd, ProcessForkerMsgType::MSG_PROCESSEXITED, msg);
 }
 
 //------------------------------------------------------------------------------
@@ -168,8 +211,22 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::
   writeFrame(const int fd, const ProcessForkerFrame &frame) {
-  writeFrameHeader(fd, frame.type, frame.payload.length());
-  writeFramePayload(fd, frame.payload);
+  try {
+    if(0 > fd) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid file-descriptor";
+      throw ex;
+    }
+
+    writeFrameHeader(fd, frame.type, frame.payload.length());
+    writeFramePayload(fd, frame.payload);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to write ProcessForkerFrame: fd=" << fd <<
+      " type=" << ProcessForkerMsgType::toString(frame.type) << " payloadLen="
+      << frame.payload.length() << ": " << ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -179,6 +236,12 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
   writeFrameHeader(const int fd, const ProcessForkerMsgType::Enum type,
   const uint32_t payloadLen) {
   try {
+    if(0 == payloadLen) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Payload length must be greater than 0";
+      throw ex;
+    }
+
     writeUint32(fd, type);
     writeUint32(fd, payloadLen);
   } catch(castor::exception::Exception &ne) {
@@ -406,19 +469,40 @@ std::string castor::tape::tapeserver::daemon::ProcessForkerUtils::
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::readAck(
   const int fd) {
   const ProcessForkerFrame frame = readFrame(fd);
-  messages::Status msg;
+  messages::Exception msg;
 
   if(!msg.ParseFromString(frame.payload)) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to parse Status message"
+    ex.getMessage() << "Failed to parse Exception message"
       ": ParseFromString() returned false";
     throw ex;
   }
 
   // Throw an exception if the acknowledge is negative
-  if(0 != msg.status()) {
-    castor::exception::Exception ex(msg.status());
+  if(0 != msg.code()) {
+    castor::exception::Exception ex(msg.code());
     ex.getMessage() << msg.message();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// parsePayload
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::ProcessForkerUtils::parsePayload(
+  const ProcessForkerFrame &frame, messages::Exception &msg) {
+  if(ProcessForkerMsgType::MSG_EXCEPTION != frame.type) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to parse Exception payload"
+      ": Unexpected message type: type=" <<
+      ProcessForkerMsgType::toString(frame.type);
+    throw ex;
+  }   
+    
+  if(!msg.ParseFromString(frame.payload)) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to parse Exception payload"
+      ": ParseString() returned false: payloadLen="  << frame.payload.length();
     throw ex;
   }
 }
@@ -511,10 +595,31 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::parsePayload(
 // parsePayload
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::parsePayload(
-  const ProcessForkerFrame &frame, messages::Status &msg) {
-  if(ProcessForkerMsgType::MSG_STATUS != frame.type) {
+  const ProcessForkerFrame &frame, messages::ProcessCrashed &msg) {
+  if(ProcessForkerMsgType::MSG_PROCESSCRASHED != frame.type) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to parse Status payload"
+    ex.getMessage() << "Failed to parse ProcessCrashed payload"
+      ": Unexpected message type: type=" <<
+      ProcessForkerMsgType::toString(frame.type);
+    throw ex;
+  }
+
+  if(!msg.ParseFromString(frame.payload)) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to parse ProcessCrashed payload"
+      ": ParseString() returned false: payloadLen="  << frame.payload.length();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// parsePayload
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::ProcessForkerUtils::parsePayload(
+  const ProcessForkerFrame &frame, messages::ProcessExited &msg) {
+  if(ProcessForkerMsgType::MSG_PROCESSEXITED != frame.type) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to parse ProcessExited payload"
       ": Unexpected message type: type=" <<
       ProcessForkerMsgType::toString(frame.type);
     throw ex;
@@ -522,11 +627,11 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::parsePayload(
     
   if(!msg.ParseFromString(frame.payload)) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to parse Status payload"
+    ex.getMessage() << "Failed to parse ProcessExited payload"
       ": ParseString() returned false: payloadLen="  << frame.payload.length();
     throw ex;
-  }
-}
+  }   
+}   
 
 //------------------------------------------------------------------------------
 // parsePayload

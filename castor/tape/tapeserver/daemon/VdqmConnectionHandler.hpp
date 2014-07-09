@@ -34,8 +34,6 @@
 #include "h/vdqm_constants.h"
 #include "h/rtcp_constants.h"
 
-#include <poll.h>
-
 namespace castor     {
 namespace tape       {
 namespace tapeserver {
@@ -70,7 +68,7 @@ public:
 
   /**
    * Fills the specified poll file-descriptor ready to be used in a call to
-   * poll().
+   * zmq_poll().
    */
   void fillPollFd(zmq_pollitem_t &fd) throw();
 
@@ -118,8 +116,10 @@ private:
 
   /**
    * Logs the specifed IO event of the vdqm connection.
+   *
+   * @param fd File descriptor describing the event.
    */
-  void logVdqmConnectionEvent(const zmq_pollitem_t &fd);
+  void logConnectionEvent(const zmq_pollitem_t &fd);
 
   /**
    * Throws an exception if the specified file-descriptor is not that of the

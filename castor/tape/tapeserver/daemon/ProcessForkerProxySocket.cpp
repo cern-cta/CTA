@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/messages/ForkCleaner.pb.h"
-#include "castor/messages/ForkDataTransfer.pb.h"
 #include "castor/messages/ForkLabel.pb.h"
 #include "castor/messages/ForkSucceeded.pb.h"
 #include "castor/messages/StopProcessForker.pb.h"
@@ -74,12 +73,15 @@ void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
 //------------------------------------------------------------------------------
 // forkDataTransfer
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
-  forkDataTransfer(const std::string &unitName) {
+pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
+  forkDataTransfer(const utils::DriveConfig &driveConfig,
+    const legacymsg::RtcpJobRqstMsgBody vdqmJob,
+    const DataTransferSession::CastorConf &conf) {
+
+  const messages::ForkDataTransfer rqst = createForkDataTransferMsg(driveConfig,
+    vdqmJob, conf);
 
   // Request the process forker to fork a data-transfer session
-  messages::ForkDataTransfer rqst;
-  rqst.set_unitname(unitName);
   ProcessForkerUtils::writeFrame(m_socketFd, rqst);
 
   // Read back the reply
@@ -89,12 +91,66 @@ void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   m_log(LOG_INFO,
     "Got process ID of the data-transfer session from the ProcessForker",
     params);
+
+  return reply.pid();
+}
+
+//------------------------------------------------------------------------------
+// createForkDataTransferMsg
+//------------------------------------------------------------------------------
+castor::messages::ForkDataTransfer
+  castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
+  createForkDataTransferMsg(const utils::DriveConfig &driveConfig,
+    const legacymsg::RtcpJobRqstMsgBody vdqmJob,
+    const DataTransferSession::CastorConf &config) {
+  messages::ForkDataTransfer msg;
+
+  // Description of the tape drive
+  msg.set_unitname(driveConfig.unitName);
+  msg.set_dgn(driveConfig.dgn);
+  msg.set_devfilename(driveConfig.devFilename);
+  const std::list<std::string> &densities = driveConfig.densities;
+  for(std::list<std::string>::const_iterator itor = densities.begin();
+    itor != densities.end(); itor++) {
+    msg.add_density(*itor);
+  }
+  msg.set_libraryslot(driveConfig.librarySlot);
+  msg.set_devtype(driveConfig.devType);
+
+  // Description of the client request
+  msg.set_mounttransactionid(vdqmJob.volReqId);
+  msg.set_clientport(vdqmJob.clientPort);
+  msg.set_clienteuid(vdqmJob.clientEuid);
+  msg.set_clientegid(vdqmJob.clientEgid);
+  msg.set_clienthost(vdqmJob.clientHost);
+  msg.set_clientusername(vdqmJob.clientUserName);
+
+  // Configuration parameters of the session
+  msg.set_memblocksize(config.rtcopydBufsz);
+  msg.set_nbmemblocks(config.rtcopydNbBufs);
+  msg.set_badmirhandling(config.tapeBadMIRHandlingRepair);
+  msg.set_bulkrequestmigrationmaxbytes(
+    config.tapebridgeBulkRequestMigrationMaxBytes);
+  msg.set_bulkrequestmigrationmaxfiles(
+    config.tapebridgeBulkRequestMigrationMaxFiles);
+  msg.set_bulkrequestrecallmaxbytes(
+    config.tapebridgeBulkRequestRecallMaxBytes);
+  msg.set_bulkrequestrecallmaxfiles(
+    config.tapebridgeBulkRequestRecallMaxFiles);
+  msg.set_maxbytesbeforeflush(
+    config.tapebridgeMaxBytesBeforeFlush);
+  msg.set_maxfilesbeforeflush(
+    config.tapebridgeMaxFilesBeforeFlush);
+  msg.set_diskthreadpoolsize(
+    config.tapeserverdDiskThreads);
+
+  return msg;
 }
 
 //------------------------------------------------------------------------------
 // forkLabel
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
+pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   forkLabel(const std::string &unitName, const std::string &vid) {
 
   // Request the process forker to fork a label session
@@ -109,12 +165,14 @@ void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   log::Param params[] = {log::Param("pid", reply.pid())};
   m_log(LOG_INFO, "Got process ID of the label session from the ProcessForker",
     params);
+
+  return reply.pid();
 }
 
 //------------------------------------------------------------------------------
 // forkCleaner
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
+pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   forkCleaner(const std::string &unitName, const std::string &vid) {
 
   // Request the process forker to fork a label session
@@ -129,4 +187,6 @@ void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   log::Param params[] = {log::Param("pid", reply.pid())};
   m_log(LOG_INFO, "Got process ID of the cleaner session from the ProcessForker",
     params);
+
+  return reply.pid();
 }

@@ -22,47 +22,49 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/utils/SmartFILEPtr.hpp"
+#include "castor/tape/utils/SmartZmqContext.hpp"
 
 #include <errno.h>
 #include <unistd.h>
+#include <zmq.h>
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::utils::SmartFILEPtr::SmartFILEPtr() throw() :
-  m_file(NULL) {
+castor::tape::utils::SmartZmqContext::SmartZmqContext() throw() :
+  m_zmqContext(NULL) {
 }
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::utils::SmartFILEPtr::SmartFILEPtr(FILE *const file) throw() :
-  m_file(file) {
+castor::tape::utils::SmartZmqContext::SmartZmqContext(void *const zmqContext)
+  throw() : m_zmqContext(zmqContext) {
 }
 
 //-----------------------------------------------------------------------------
 // reset
 //-----------------------------------------------------------------------------
-void castor::utils::SmartFILEPtr::reset(FILE *const file) throw() {
-  // If the new pointer is not the one already owned
-  if(file != m_file) {
+void castor::tape::utils::SmartZmqContext::reset(void *const zmqContext)
+  throw() {
+  // If the new ZMQ context is not the one already owned
+  if(zmqContext != m_zmqContext) {
 
-    // If this smart pointer still owns a pointer, then fclose it
-    if(m_file != NULL) {
-      fclose(m_file);
+    // If this smart pointer still owns a ZMQ context, then terminate it
+    if(m_zmqContext != NULL) {
+      zmq_term(m_zmqContext);
     }
 
-    // Take ownership of the new pointer
-    m_file = file;
+    // Take ownership of the new ZMQ context
+    m_zmqContext = zmqContext;
   }
 }
 
 //-----------------------------------------------------------------------------
-// SmartFILEPtr assignment operator
+// SmartZmqContext assignment operator
 //-----------------------------------------------------------------------------
-castor::utils::SmartFILEPtr &castor::utils::SmartFILEPtr::operator=(
-  SmartFILEPtr& obj) {
+castor::tape::utils::SmartZmqContext
+  &castor::tape::utils::SmartZmqContext::operator=(SmartZmqContext& obj) {
   reset(obj.release());
   return *this;
 }
@@ -70,32 +72,32 @@ castor::utils::SmartFILEPtr &castor::utils::SmartFILEPtr::operator=(
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::utils::SmartFILEPtr::~SmartFILEPtr() throw() {
+castor::tape::utils::SmartZmqContext::~SmartZmqContext() throw() {
   reset();
 }
 
 //-----------------------------------------------------------------------------
 // get
 //-----------------------------------------------------------------------------
-FILE *castor::utils::SmartFILEPtr::get() const throw() {
-  return m_file;
+void *castor::tape::utils::SmartZmqContext::get() const throw() {
+  return m_zmqContext;
 }
 
 //-----------------------------------------------------------------------------
 // release
 //-----------------------------------------------------------------------------
-FILE *castor::utils::SmartFILEPtr::release() {
-  // If this smart pointer does not own a pointer
-  if(NULL == m_file) {
+void *castor::tape::utils::SmartZmqContext::release() {
+  // If this smart pointer does not own a ZMQ context
+  if(NULL == m_zmqContext) {
     castor::exception::NotAnOwner ex;
-    ex.getMessage() << "Smart pointer does not own a FILE pointer";
+    ex.getMessage() << "Smart pointer does not own a ZMQ context";
     throw ex;
   }
 
-  FILE *const tmp = m_file;
+  void *const tmp = m_zmqContext;
 
-  // A NULL value indicates this smart pointer does not own a pointer
-  m_file = NULL;
+  // A NULL value indicates this smart pointer does not own a ZMQ context
+  m_zmqContext = NULL;
 
   return tmp;
 }

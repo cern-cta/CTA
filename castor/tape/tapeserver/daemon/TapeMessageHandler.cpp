@@ -96,29 +96,54 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::fillPollFd(
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
-  const zmq_pollitem_t &fd) {
-  checkSocket(fd);
-  m_log(LOG_DEBUG,"handling event in TapeMessageHandler");
-  messages::Header header; 
+  const zmq_pollitem_t &fd) throw() {
+  try {
+    checkSocket(fd);
+    m_log(LOG_INFO,"handling event in TapeMessageHandler");
   
-  try{
-    tape::utils::ZmqMsg headerBlob;
-    m_socket.recv(&headerBlob.getZmqMsg());
+    messages::Header header; 
+    try {
+      tape::utils::ZmqMsg headerBlob;
+      m_socket.recv(&headerBlob.getZmqMsg());
     
-    if(!zmq_msg_more(&headerBlob.getZmqMsg())){
+      if(!zmq_msg_more(&headerBlob.getZmqMsg())){
+        castor::exception::Exception ex;
+        ex.getMessage() << "No message body after reading the header";
+        throw ex;
+      }
+    
+      header = buildHeader(headerBlob);
+    } catch(castor::exception::Exception &ne){
       castor::exception::Exception ex;
-      ex.getMessage() <<"Read header blob, expecting a multi parts message but nothing to come";
+      ex.getMessage() << "Error handling message header: " <<
+        ne.getMessage().str();
       throw ex;
     }
-    
-    header = buildHeader(headerBlob);
-  }
-  catch(const castor::exception::Exception& ex){
-    m_log(LOG_ERR,"Error while dealing the message's header");
-    return false;
-  }
+
+    tape::utils::ZmqMsg bodyBlob;
+    try {
+      m_socket.recv(&bodyBlob.getZmqMsg());
+    } catch(castor::exception::Exception &ne){
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to receive message body: " << 
+        ne.getMessage().str();
+      throw ex;
+    }
   
-  dispatchEvent(header);
+    dispatchMsgHandler(header, bodyBlob);
+
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "TapeMessageHandler failed to handle event", params);
+  } catch(std::exception &se) {
+    log::Param params[] = {log::Param("message", se.what())};
+    m_log(LOG_ERR, "TapeMessageHandler failed to handle event", params);
+  } catch(...) {
+    log::Param params[] = {
+      log::Param("message", "Caught an unknown exception")};
+    m_log(LOG_ERR, "TapeMessageHandler failed to handle event", params);
+  }
+
   return false; // Ask reactor to remove and delete this handler
 }
 
@@ -164,115 +189,133 @@ castor::messages::Header castor::tape::tapeserver::daemon::TapeMessageHandler::b
 }
 
 //------------------------------------------------------------------------------
-// dispatchEvent
+// dispatchMsgHandler
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchEvent(
-  messages::Header& header) {
-  m_log(LOG_DEBUG,"dispatching  event in TapeMessageHandler");
-  tape::utils::ZmqMsg bodyBlob;
-  m_socket.recv(&bodyBlob.getZmqMsg());
+void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchMsgHandler(
+  messages::Header& header, const tape::utils::ZmqMsg &bodyBlob) {
+  m_log(LOG_INFO,"dispatching  event in TapeMessageHandler");
   
   switch(header.reqtype()){
-    case messages::reqType::Heartbeat:
+  case messages::reqType::Heartbeat:
+    return handleHeartbeatMsg(header, bodyBlob);
+  case messages::reqType::NotifyDriveBeforeMountStarted:
+    return handleNotifyDriveBeforeMountStartedMsg(header, bodyBlob);
+  case messages::reqType::NotifyDriveTapeMounted:
+    return handleNotifyDriveTapeMountedMsg(header, bodyBlob);
+  case messages::reqType::NotifyDriveTapeUnmounted:
+    return handleNotifyDriveTapeUnmountedMsg(header, bodyBlob);
+  case messages::reqType::NotifyDriveUnmountStarted:
+    return handleNotifyDriveUnmountStartedMsg(header, bodyBlob);
+  default:
     {
-      castor::messages::Heartbeat body;
-      unserialize(body,bodyBlob);
-      castor::messages::checkSHA1(header,bodyBlob);
-      dealWith(header,body);
-    }
-      break;
-    case messages::reqType::NotifyDriveBeforeMountStarted:
-    {
-      castor::messages::NotifyDriveBeforeMountStarted body;
-      unserialize(body,bodyBlob);
-      castor::messages::checkSHA1(header,bodyBlob);
-      dealWith(header,body);
-    }
-      break;
-    case messages::reqType::NotifyDriveTapeMounted:
-    {
-      castor::messages::NotifyDriveTapeMounted body;
-      unserialize(body,bodyBlob);
-      castor::messages::checkSHA1(header,bodyBlob);
-      dealWith(header,body);
-    }
-      break;
-    case messages::reqType::NotifyDriveTapeUnmounted:
-      sendSuccessReplyToClient();
-      break;
-    case messages::reqType::NotifyDriveUnmountStarted:
-      sendSuccessReplyToClient();
-      break;
-    default:
-      m_log(LOG_ERR,"default  dispatch in TapeMessageHandler");
-      break;
-  }
-}
-
-//------------------------------------------------------------------------------
-// dealWith
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::dealWith(
-const castor::messages::Header& header, const castor::messages::Heartbeat& body){
-  
-  std::vector<log::Param> param;
-  param.push_back(log::Param("bytesMoved",body.bytesmoved()));
-  m_log(LOG_DEBUG,"IT IS ALIVE",param);
-  
-  sendSuccessReplyToClient();
-}
-
-void castor::tape::tapeserver::daemon::TapeMessageHandler::dealWith(
-const castor::messages::Header& header, 
-const castor::messages::NotifyDriveBeforeMountStarted& body){
-  m_log(LOG_INFO,"NotifyDriveBeforeMountStarted-dealWith");
-  //check castor consistensy
-  if(body.mode()==castor::messages::TAPE_MODE_READWRITE) {
-    legacymsg::VmgrTapeInfoMsgBody tapeInfo;
-    m_vmgr.queryTape(body.vid(), tapeInfo);
-    // If the client is the tape gateway and the volume is not marked as BUSY
-    if(body.clienttype() == castor::messages::NotifyDriveBeforeMountStarted::CLIENT_TYPE_GATEWAY 
-            && !(tapeInfo.status & TAPE_BUSY)) {
       castor::exception::Exception ex;
-      ex.getMessage() << "The tape gateway is the client and the tape to be mounted is not BUSY: vid=" << body.vid();
-      
-      //send an error to the client
-      sendErrorReplyToClient(ex);
+      ex.getMessage() << "Failed to dispatch message handler"
+        ": Unknown request type: reqtype=" << header.reqtype();
       throw ex;
     }
-    
-    castor::messages::NotifyDriveBeforeMountStartedAnswer body;
-    body.set_howmanyfilesontape(tapeInfo.nbFiles);
-    
-    castor::messages::Header header = castor::messages::preFillHeader();
-    header.set_reqtype(messages::reqType::NotifyDriveBeforeMountStartedAnswer);
-    header.set_bodyhashvalue(castor::messages::computeSHA1Base64(body));
-    header.set_bodysignature("PIPO");
-    
-    //send the number of files on the tape to the client
-    castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
-    castor::messages::sendMessage(m_socket,body);
-  } else {
-    //we were not event in castor::messages::TAPE_MODE_READWRITE mpde
-    //so send empty answer
-    sendSuccessReplyToClient();
   }
 }
+
 //------------------------------------------------------------------------------
-// dealWith
+// handleHeartbeatMsg
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::dealWith(
-const castor::messages::Header& header, 
-const castor::messages::NotifyDriveTapeMounted& body){
-  m_log(LOG_INFO,"NotifyDriveTapeMounted-dealWith");
-  DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(body.unitname());
-  drive->updateVolumeInfo(body);
-  const utils::DriveConfig &driveConfig = drive->getConfig();
+void castor::tape::tapeserver::daemon::TapeMessageHandler::handleHeartbeatMsg(
+  const messages::Header& header, const tape::utils::ZmqMsg &bodyBlob) {
+  m_log(LOG_INFO, "Handling Heartbeat message");
+
+  try {
+    castor::messages::Heartbeat body;
+    parseMsgBlob(body, bodyBlob);
+    castor::messages::checkSHA1(header, bodyBlob);
+  
+    std::vector<log::Param> param;
+    param.push_back(log::Param("bytesMoved",body.bytesmoved()));
+  
+    sendSuccessReplyToClient();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to handle Heartbeat message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleNotifyDriveBeforeMountStartedMsg
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleNotifyDriveBeforeMountStartedMsg(const messages::Header& header, 
+  const tape::utils::ZmqMsg &bodyBlob) {
+  m_log(LOG_INFO, "Handling NotifyDriveBeforeMountStarted message");
+
+  try {
+    castor::messages::NotifyDriveBeforeMountStarted body;
+    parseMsgBlob(body, bodyBlob);
+    castor::messages::checkSHA1(header, bodyBlob);
+
+    //check castor consistensy
+    if(body.mode()==castor::messages::TAPE_MODE_READWRITE) {
+      legacymsg::VmgrTapeInfoMsgBody tapeInfo;
+      m_vmgr.queryTape(body.vid(), tapeInfo);
+      // If the client is the tape gateway and the volume is not marked as BUSY
+      if(body.clienttype() == castor::messages::NotifyDriveBeforeMountStarted::CLIENT_TYPE_GATEWAY 
+        && !(tapeInfo.status & TAPE_BUSY)) {
+        castor::exception::Exception ex;
+        ex.getMessage() <<
+          "The tape gateway is the client and the tape to be mounted is not BUSY"
+          ": vid=" << body.vid();
+      
+        //  send an error to the client
+        sendErrorReplyToClient(ex);
+        throw ex;
+      }
     
-  const std::string vid = body.vid();
-  try
-  {
-    switch(body.mode()) {
+      castor::messages::NotifyDriveBeforeMountStartedAnswer body;
+      body.set_howmanyfilesontape(tapeInfo.nbFiles);
+    
+      castor::messages::Header header = castor::messages::preFillHeader();
+      header.set_reqtype(messages::reqType::NotifyDriveBeforeMountStartedAnswer);
+      header.set_bodyhashvalue(castor::messages::computeSHA1Base64(body));
+      header.set_bodysignature("PIPO");
+    
+      //send the number of files on the tape to the client
+      castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
+      castor::messages::sendMessage(m_socket,body);
+    } else {
+      //we were not event in castor::messages::TAPE_MODE_READWRITE mpde
+      //so send empty answer
+      sendSuccessReplyToClient();
+    }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to handle NotifyDriveBeforeMountStarted message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleNotifyDriveTapeMountedMsg
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleNotifyDriveTapeMountedMsg(const messages::Header& header, 
+  const tape::utils::ZmqMsg &bodyBlob) {
+  m_log(LOG_INFO, "Handling NotifyDriveTapeMounted message");
+
+  try {
+    castor::messages::NotifyDriveTapeMounted body;
+    parseMsgBlob(body, bodyBlob);
+    castor::messages::checkSHA1(header, bodyBlob);
+
+    DriveCatalogueEntry *const drive =
+      m_driveCatalogue.findDrive(body.unitname());
+    drive->updateVolumeInfo(body);
+    const utils::DriveConfig &driveConfig = drive->getConfig();
+    
+    const std::string vid = body.vid();
+    try {
+      switch(body.mode()) {
       case castor::messages::TAPE_MODE_READ:
         m_vmgr.tapeMountedForRead(vid, drive->getSessionPid());
         break;
@@ -288,22 +331,67 @@ const castor::messages::NotifyDriveTapeMounted& body){
         castor::exception::Exception ex;
         ex.getMessage() << "Unknown tape mode: " << body.mode();
         throw ex;
+      }
+      m_vdqm.tapeMounted(m_hostName, body.unitname(), driveConfig.dgn,
+        body.vid(), drive->getSessionPid());
+    } catch(const castor::exception::Exception& ex) {
+      sendErrorReplyToClient(ex);
+      throw;
     }
-    m_vdqm.tapeMounted(m_hostName, body.unitname(), driveConfig.dgn, body.vid(),
-            drive->getSessionPid());
-  }catch(const castor::exception::Exception& ex){
-    sendErrorReplyToClient(ex);
-    throw;
+    sendSuccessReplyToClient();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to handle NotifyDriveTapeMounted message: " <<
+      ne.getMessage().str();
+    throw ex;
   }
-  sendSuccessReplyToClient();
 }
+
+//------------------------------------------------------------------------------
+// handleNotifyDriveTapeUnmountedMsg
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleNotifyDriveTapeUnmountedMsg(const messages::Header& header,
+  const tape::utils::ZmqMsg &bodyBlob) {
+  m_log(LOG_INFO, "Handling NotifyDriveTapeUnmounted message");
+
+  try {
+    sendSuccessReplyToClient();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to handle NotifyDriveTapeUnmounted message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleNotifyDriveUnmountStartedMsg
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleNotifyDriveUnmountStartedMsg(const messages::Header& header,
+  const tape::utils::ZmqMsg &bodyBlob) {
+  m_log(LOG_INFO, "Handling handleNotifyDriveUnmountStarted message");
+
+  try {
+    sendSuccessReplyToClient();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to handle NotifyDriveUnmountStarted message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
 //------------------------------------------------------------------------------
 // sendSuccessReplyToClient
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::sendSuccessReplyToClient(){
-    castor::messages::ReturnValue body;
-    sendReplyToClient(0,"");
+void castor::tape::tapeserver::daemon::TapeMessageHandler::
+  sendSuccessReplyToClient() {
+  castor::messages::ReturnValue body;
+  sendReplyToClient(0,"");
 }
+
 //------------------------------------------------------------------------------
 // sendErrorReplyToClient
 //------------------------------------------------------------------------------
@@ -312,20 +400,21 @@ sendErrorReplyToClient(const castor::exception::Exception& ex){
   //any positive value will trigger an exception in the client side
   sendReplyToClient(ex.code(),ex.getMessageValue());
 }
+
 //------------------------------------------------------------------------------
 // sendReplyToClient
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::
-sendReplyToClient(int returnValue,const std::string& msg){
-    castor::messages::ReturnValue body;
-    body.set_returnvalue(returnValue);
-    body.set_message(msg);
+void castor::tape::tapeserver::daemon::TapeMessageHandler::sendReplyToClient(
+  const int returnValue, const std::string& msg) {
+  castor::messages::ReturnValue body;
+  body.set_returnvalue(returnValue);
+  body.set_message(msg);
   
-    castor::messages::Header header = castor::messages::preFillHeader();
-    header.set_reqtype(messages::reqType::ReturnValue);
-    header.set_bodyhashvalue(castor::messages::computeSHA1Base64(body));
-    header.set_bodysignature("PIPO");
+  messages::Header header = castor::messages::preFillHeader();
+  header.set_reqtype(messages::reqType::ReturnValue);
+  header.set_bodyhashvalue(messages::computeSHA1Base64(body));
+  header.set_bodysignature("PIPO");
 
-    castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
-    castor::messages::sendMessage(m_socket,body);
+  messages::sendMessage(m_socket, header,ZMQ_SNDMORE);
+  messages::sendMessage(m_socket, body);
 }

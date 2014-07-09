@@ -21,35 +21,28 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/log/LogContext.hpp"
-#include "castor/tape/tapeserver/exception/Exception.hpp"
-#include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "log.h"
-#include "stager_client_commandline.h"
-#include "castor/tape/utils/utils.hpp"
 #include "castor/System.hpp"
-#include "castor/tape/tapeserver/SCSI/Device.hpp"
-#include "castor/tape/tapeserver/drive/Drive.hpp"
-#include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
-#include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
-#include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
-#include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
-#include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
-#include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
-#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
-#include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
+#include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
+#include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
+#include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
+#include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
+#include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
+#include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
+#include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
+#include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
+#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
+#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/exception/Exception.hpp"
+#include "castor/tape/tapeserver/SCSI/Device.hpp"
+#include "castor/tape/utils/utils.hpp"
+#include "h/log.h"
 #include "h/serrno.h"
+#include "h/stager_client_commandline.h"
+
 #include <google/protobuf/stubs/common.h>
 #include <memory>
-#include <zmq.h>
-
-//------------------------------------------------------------------------------
-// m_zmqContext
-//------------------------------------------------------------------------------
-void *castor::tape::tapeserver::daemon::DataTransferSession::m_zmqContext =
-  NULL;
 
 //------------------------------------------------------------------------------
 //Constructor
@@ -57,14 +50,15 @@ void *castor::tape::tapeserver::daemon::DataTransferSession::m_zmqContext =
 castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     const std::string & hostname,
     const legacymsg::RtcpJobRqstMsgBody & clientRequest, 
-    castor::log::Logger& logger, System::virtualWrapper & sysWrapper,
+    castor::log::Logger & log,
+    System::virtualWrapper & sysWrapper,
     const utils::DriveConfig & driveConfig,
     castor::legacymsg::RmcProxy & rmc,
     castor::messages::TapeserverProxy & initialProcess,
-    castor::server::ProcessCap &capUtils,
+    castor::server::ProcessCap & capUtils,
     const CastorConf & castorConf): 
     m_request(clientRequest),
-    m_logger(logger),
+    m_log(log),
     m_clientProxy(clientRequest),
     m_sysWrapper(sysWrapper),
     m_driveConfig(driveConfig),
@@ -88,7 +82,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
 int castor::tape::tapeserver::daemon::DataTransferSession::execute()
  {
   // 1) Prepare the logging environment
-  log::LogContext lc(m_logger);
+  log::LogContext lc(m_log);
   // Create a sticky thread name, which will be overridden by the other threads
   lc.pushOrReplace(log::Param("thread", "mainThread"));
   log::LogContext::ScopedParam sp01(lc, log::Param("clientHost", m_request.clientHost));
@@ -187,11 +181,12 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeRead(log::LogC
     RecallReportPacker rrp(m_clientProxy,
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
         lc);
+
     // If we talk to a command line client, we do not batch report
     if (tapegateway::READ_TP == m_volInfo.clientType) {
       rrp.disableBulk();
     }
-    TaskWatchDog<detail::Recall> watchdog(m_intialProcess,rrp,m_logger);
+    TaskWatchDog<detail::Recall> watchdog(m_intialProcess, rrp , m_log);
     
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
     TapeServerReporter tsr(m_intialProcess, m_driveConfig, 
@@ -486,32 +481,14 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const utils::Dr
 }
 
 //------------------------------------------------------------------------------
-// getZmqContext
-//------------------------------------------------------------------------------
-void *castor::tape::tapeserver::daemon::DataTransferSession::getZmqContext() {
-  // Create the ZMQ context if it does not already exist
-  if(NULL == m_zmqContext) {
-    const int sizeOfIOThreadPoolForZMQ = 1;
-    m_zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
-    if(NULL == m_zmqContext) {
-      char message[100];
-      sstrerror_r(errno, message, sizeof(message));
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to instantiate ZMQ context: " << message;
-      throw ex;
-    }
-  }
-
-  return m_zmqContext;
-}
-
-//------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DataTransferSession::~DataTransferSession(){
-  if(NULL != m_zmqContext) {
-    zmq_term(m_zmqContext);
-    m_zmqContext = NULL;
+castor::tape::tapeserver::daemon::DataTransferSession::~DataTransferSession()
+  throw () {
+  try {
+    google::protobuf::ShutdownProtobufLibrary();
+  } catch(...) {
+    m_log(LOG_ERR, "google::protobuf::ShutdownProtobufLibrary() threw an"
+      " unexpected exception");
   }
-  google::protobuf::ShutdownProtobufLibrary();
 }

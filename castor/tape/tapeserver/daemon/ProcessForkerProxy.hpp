@@ -23,7 +23,10 @@
 
 #pragma once
 
+#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/log/Logger.hpp"
+#include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
+#include "castor/tape/utils/DriveConfig.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -52,18 +55,24 @@ public:
   /**
    * Forks a data-transfer session for the specified tape drive.
    *
-   * @param unitName The unit name of the tape drive.
+   * @param driveConfig The configuration of the tape drive.
+   * @param vdqmJob The job received from the vdqmd daemon.
+   * @param conf The configuration of the data-transfer session.
+   * @return The process identifier of the newly forked session.
    */
-  virtual void forkDataTransfer(const std::string &unitName) = 0;
+  virtual pid_t forkDataTransfer(const utils::DriveConfig &driveConfig,
+    const legacymsg::RtcpJobRqstMsgBody vdqmJob,
+    const DataTransferSession::CastorConf &conf) = 0;
 
   /**
    * Forks a label session for the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    * @param vid The volume identifier of the tape.
+   * @return The process identifier of the newly forked session.
    */
-  virtual void forkLabel(const std::string &unitName, const std::string &vid) =
-    0;
+  virtual pid_t forkLabel(const std::string &unitName,
+    const std::string &vid) = 0;
 
   /**
    * Forks a cleaner session for the specified tape drive.
@@ -73,8 +82,9 @@ public:
    * tape in the drive if there is in fact a tape in the drive and its volume
    * identifier is known.  If the volume identifier is not known then this
    * parameter should be set to an empty string.
+   * @return The process identifier of the newly forked session.
    */
-  virtual void forkCleaner(const std::string &unitName,
+  virtual pid_t forkCleaner(const std::string &unitName,
     const std::string &vid) = 0;
 
 }; // class ProcessForkerProxy

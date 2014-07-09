@@ -56,6 +56,7 @@ public:
    * @param driveCatalogue The tape-drive catalogue.
    * @param hostName The name of the host.
    * @param vdqm Proxy object representing the vdqmd daemon.
+   * @param vmgr Proxy object representing the vmgrd daemon.
    * @param zmqContext The ZMQ context.
    */
   TapeMessageHandler(
@@ -90,7 +91,7 @@ public:
    * @return true if the event handler should be removed from and deleted by
    * the reactor.
    */
-  bool handleEvent(const zmq_pollitem_t &fd);
+  bool handleEvent(const zmq_pollitem_t &fd) throw();
   
 private:
   /**
@@ -117,12 +118,14 @@ private:
    * @param msg
    * @param blob
    */
-  template <class T> void unserialize(T& msg, tape::utils::ZmqMsg& blob){
-    std::string logMessage="Cant parse " ;
-    logMessage+=castor::utils::demangledNameOf(msg)+" from binary data. Wrong body";
-    if(!msg.ParseFromArray(zmq_msg_data(&blob.getZmqMsg()),zmq_msg_size(&blob.getZmqMsg()))){
-        m_log(LOG_ERR,logMessage); 
-      }
+  template <class T> void parseMsgBlob(T& msg, const tape::utils::ZmqMsg& blob) {
+    if(!msg.ParseFromArray(blob.data(), blob.size())) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to parse a " <<
+        castor::utils::demangledNameOf(msg) << " message blob"
+        ": ParseFromArray() returned false";
+      throw ex;
+    }
   }
   
    /**
@@ -167,19 +170,58 @@ private:
   void checkSocket(const zmq_pollitem_t &fd);
   
   /**
-   * Call the right dealWith according to header.reqType()
-   * @param header
+   * Dispatches the appropriate handler method for the specified message.
+   *
+   * @param header The header of the message.
+   * @param bodyBlob The serialized body of the message.
    */
-  void dispatchEvent(castor::messages::Header& header);
-  
-  void dealWith(const castor::messages::Header&,
-                         const castor::messages::Heartbeat& body);
-  
-  void dealWith(const castor::messages::Header& header, 
-     const castor::messages::NotifyDriveBeforeMountStarted& body);
+  void dispatchMsgHandler(castor::messages::Header& header,
+    const tape::utils::ZmqMsg &bodyBlob);
 
-  void dealWith(const castor::messages::Header& header,
-     const castor::messages::NotifyDriveTapeMounted& body); 
+  /**
+   * Handles the specified message.
+   *
+   * @param header The header of the message.
+   * @param bodyBlob The serialized body of the message.
+   */
+  void handleHeartbeatMsg(const messages::Header& header, 
+    const tape::utils::ZmqMsg &bodyBlob);
+
+  /**
+   * Handles the specified message.
+   *
+   * @param header The header of the message.
+   * @param bodyBlob The serialized body of the message.
+   */
+  void handleNotifyDriveBeforeMountStartedMsg(const messages::Header& header,
+    const tape::utils::ZmqMsg &bodyBlob);
+
+  /**
+   * Handles the specified message.
+   *
+   * @param header The header of the message.
+   * @param bodyBlob The serialized body of the message.
+   */
+  void handleNotifyDriveTapeMountedMsg(const messages::Header& header,
+    const tape::utils::ZmqMsg &bodyBlob);
+
+  /**
+   * Handles the specified message.
+   *
+   * @param header The header of the message.
+   * @param bodyBlob The serialized body of the message.
+   */
+  void handleNotifyDriveTapeUnmountedMsg(const messages::Header& header,
+    const tape::utils::ZmqMsg &bodyBlob);
+
+  /**
+   * Handles the specified message.
+   *
+   * @param header The header of the message.
+   * @param bodyBlob The serialized body of the message.
+   */
+  void handleNotifyDriveUnmountStartedMsg(const messages::Header& header,
+    const tape::utils::ZmqMsg &bodyBlob);
 
   /**
    * Unserialize the blob and check the header

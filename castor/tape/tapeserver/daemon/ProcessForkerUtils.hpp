@@ -23,11 +23,13 @@
 
 #pragma once
 
+#include "castor/messages/Exception.pb.h"
 #include "castor/messages/ForkCleaner.pb.h"
 #include "castor/messages/ForkDataTransfer.pb.h"
 #include "castor/messages/ForkLabel.pb.h"
 #include "castor/messages/ForkSucceeded.pb.h"
-#include "castor/messages/Status.pb.h"
+#include "castor/messages/ProcessCrashed.pb.h"
+#include "castor/messages/ProcessExited.pb.h"
 #include "castor/messages/StopProcessForker.pb.h"
 #include "castor/tape/tapeserver/daemon/ProcessForkerFrame.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
@@ -47,6 +49,18 @@ namespace daemon     {
  */
 class ProcessForkerUtils {
 public:
+
+  /**
+   * Serializes the specified message into the specified frame.
+   *
+   * Please note that this method sets both the type and payload fields of the
+   * frame.
+   *
+   * @param frame Output parameter: The frame.
+   * @param msg The message.
+   */
+  static void serializePayload(ProcessForkerFrame &frame,
+    const messages::Exception &msg);
 
   /**
    * Serializes the specified message into the specified frame.
@@ -97,8 +111,8 @@ public:
     const messages::ForkSucceeded &msg);
 
   /**
-   * Serializes the specified message into the specified frame.
-   *
+   * Serializes the specified message into the specified frame. 
+   *  
    * Please note that this method sets both the type and payload fields of the
    * frame.
    *
@@ -106,7 +120,19 @@ public:
    * @param msg The message.
    */
   static void serializePayload(ProcessForkerFrame &frame,
-    const messages::Status &msg);
+    const messages::ProcessCrashed &msg);
+
+  /**
+   * Serializes the specified message into the specified frame. 
+   *  
+   * Please note that this method sets both the type and payload fields of the
+   * frame.
+   *
+   * @param frame Output parameter: The frame.
+   * @param msg The message.
+   */
+  static void serializePayload(ProcessForkerFrame &frame,
+    const messages::ProcessExited &msg);
 
   /**
    * Serializes the specified message into the specified frame.
@@ -119,6 +145,15 @@ public:
    */
   static void serializePayload(ProcessForkerFrame &frame,
     const messages::StopProcessForker &msg);
+
+  /**
+   * Writes a frame with the specified message as its payload to the specified
+   * file descriptor.
+   *
+   * @param fd The file descriptor to be written to.
+   * @param msg The message to sent as the payload of the frame.
+   */
+  static void writeFrame(const int fd, const messages::Exception &msg);
 
   /**
    * Writes a frame with the specified message as its payload to the specified
@@ -154,7 +189,16 @@ public:
    * @param fd The file descriptor to be written to.
    * @param msg The message to sent as the payload of the frame.
    */
-  static void writeFrame(const int fd, const messages::Status &msg);
+  static void writeFrame(const int fd, const messages::ProcessCrashed &msg);
+
+  /**
+   * Writes a frame with the specified message as its payload to the specified
+   * file descriptor.
+   *
+   * @param fd The file descriptor to be written to.
+   * @param msg The message to sent as the payload of the frame.
+   */
+  static void writeFrame(const int fd, const messages::ProcessExited &msg);
 
   /**
    * Writes a frame with the specified message as its payload to the specified
@@ -184,12 +228,12 @@ public:
    * Reads a good-day reply or an exception from the specified file descriptor.
    *
    * This method deals with two types of message, the one the caller wishes to
-   * read in the good-day scenario and the messages::Status message in the
-   * bad-day scenario where the ProcessForker replies with an error/exception.
+   * read in the good-day scenario and the messages::Exception message in the
+   * bad-day scenario where the ProcessForker replies with an exception.
    *
-   * If the ProcessForker replies with an error/exception in the form of a
-   * messages::Status message, then this method will convert the message into
-   * an exception.
+   * If the ProcessForker replies with an exception in the form of a
+   * messages::Exception message, then this method will convert the message into
+   * a C++ exception.
    *
    * @param fd The file descriptor to be read from.
    * @param msgType The type of the message.
@@ -198,17 +242,17 @@ public:
   template<typename T> static void readReplyOrEx(const int fd, T &msg) {
     const ProcessForkerFrame frame = readFrame(fd);
 
-    // Throw an exception if the ProcessForker replies with an error
-    if(ProcessForkerMsgType::MSG_STATUS == frame.type) {
-      messages::Status errMsg;
-      if(!errMsg.ParseFromString(frame.payload)) {
+    // Throw an exception if the ProcessForker replied with one
+    if(ProcessForkerMsgType::MSG_EXCEPTION == frame.type) {
+      messages::Exception exMsg;
+      if(!exMsg.ParseFromString(frame.payload)) {
         castor::exception::Exception ex;
-        ex.getMessage() << "Failed to parse Status message"
+        ex.getMessage() << "Failed to parse Exception message"
           ": ParseFromString() returned false";
         throw ex;
       }
-      castor::exception::Exception ex(errMsg.status());
-      ex.getMessage() << errMsg.message();
+      castor::exception::Exception ex(exMsg.code());
+      ex.getMessage() << exMsg.message();
       throw ex;
     }
 
@@ -222,6 +266,16 @@ public:
    * @return The frame.
    */
   static ProcessForkerFrame readFrame(const int fd);
+
+  /**
+   * Parses the payload of the specified frame.
+   *
+   * @param frame The frame.
+   * @param msg Output parameter: The message contained within the payload of
+   * the frame.
+   */
+  static void parsePayload(const ProcessForkerFrame &frame,
+    messages::Exception &msg);
 
   /**
    * Parses the payload of the specified frame.
@@ -271,7 +325,17 @@ public:
    * the frame.
    */
   static void parsePayload(const ProcessForkerFrame &frame,
-    messages::Status &msg);
+    messages::ProcessCrashed &msg);
+
+  /**
+   * Parses the payload of the specified frame.
+   *
+   * @param frame The frame.
+   * @param msg Output parameter: The message contained within the payload of
+   * the frame.
+   */
+  static void parsePayload(const ProcessForkerFrame &frame,
+    messages::ProcessExited &msg);
 
   /**
    * Parses the payload of the specified frame.
