@@ -89,8 +89,8 @@ MemBlock* RecallMemoryManager::getFreeBlock() {
 // RecallMemoryManager::~RecallMemoryManager
 //------------------------------------------------------------------------------
 void RecallMemoryManager::releaseBlock(MemBlock* mb) {
-  m_lc.pushOrReplace(log::Param("blockId", mb->m_memoryBlockId));
-  m_lc.log(LOG_DEBUG, "RecallMemoryManager A block has been released");
+  //m_lc.pushOrReplace(log::Param("blockId", mb->m_memoryBlockId));
+  //m_lc.log(LOG_DEBUG, "RecallMemoryManager A block has been released");
   mb->reset();
   m_freeBlocks.push(mb);
 }
