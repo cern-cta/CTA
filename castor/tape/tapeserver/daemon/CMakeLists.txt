@@ -13,6 +13,7 @@ add_library(castorTapeServerDaemon
   DriveCatalogueSession.cpp
   DriveCatalogueLabelSession.cpp
   DriveCatalogueTransferSession.cpp
+  DriveCatalogueCleanerSession.cpp
   ../drive/Drive.cpp
   TapeServerReporter.cpp
   LabelCmdAcceptHandler.cpp

@@ -159,7 +159,8 @@ public:
   enum SessionType {
     SESSION_TYPE_NONE,
     SESSION_TYPE_DATATRANSFER,
-    SESSION_TYPE_LABEL};
+    SESSION_TYPE_LABEL,
+    SESSION_TYPE_CLEANER};
 
   /**
    * Always returns a string representation of the specified session type.
@@ -273,7 +274,8 @@ public:
   void configureDown();
 
   /**
-   * Moves the state of tape drive to DRIVE_STATE_WAITFORK.
+   * Moves the state of tape drive to DRIVE_STATE_SESSIONRUNNING and sets the 
+   * current session type to SESSION_TYPE_DATATRANSFER.
    *
    * This method throws an exception if the current state of the tape drive is
    * not DRIVE_STATE_UP. 
@@ -292,7 +294,8 @@ public:
   void receivedVdqmJob(const legacymsg::RtcpJobRqstMsgBody &job);
       
   /**
-   * Moves the state of the tape drive to DRIVE_STATE_WAITLABEL.
+   * Moves the state of tape drive to DRIVE_STATE_SESSIONRUNNING and sets the 
+   * current session type to SESSION_TYPE_LABEL.
    *
    * This method throws an exception if the current state of the tape drive is
    * not DRIVE_STATE_UP.
@@ -310,7 +313,7 @@ public:
    * the file descriptor of the TCP/IP connection with the tape labeling
    * command-line tool castor-tape-label.  The caller of this method is left
    * to close the connection because this gives them the opportunity to send
-   * an approprioate error message to the client.
+   * an appropriate error message to the client.
    *
    * @param job The label job.
    * @param labelCmdConnection The file descriptor of the TCP/IP connection
@@ -318,12 +321,20 @@ public:
    */
   void receivedLabelJob(const legacymsg::TapeLabelRqstMsgBody &job,
     const int labelCmdConnection);
+  
+  /**
+   * Moves the state of tape drive to DRIVE_STATE_SESSIONRUNNING and sets the 
+   * current session type to SESSION_TYPE_CLEANER.
+   * 
+   * This method will accept any drive state.
+   */   
+  void receivedCleanerJob();
 
   /**
    * Moves the state of the tape drive to DRIVE_STATE_RUNNING.
    *
-   * This method throws an exception if the current state of the tape drive is
-   * not DRIVE_STATE_WAITFORK.
+   * This method throws an exception if the current state of the session of the tape drive is
+   * not SESSION_STATE_WAITFORK.
    *
    * @param sessionPid The process ID of the child process responsible for
    * running the data-transfer session.
@@ -333,13 +344,24 @@ public:
   /**
    * Moves the state of the tape drive to DRIVE_STATE_RUNNING.
    *
-   * This method throws an exception if the current state of the tape drive is
-   * not DRIVE_STATE_WAITLABEL.
+   * This method throws an exception if the current state of the session of the tape drive is
+   * not SESSION_STATE_WAITFORK.
    *
    * @param sessionPid The process ID of the child process responsible for
    * running the label session.
    */   
   void forkedLabelSession(const pid_t sessionPid);
+  
+  /**
+   * Moves the state of the session of the tape drive to SESSION_STATE_RUNNING.
+   *
+   * This method throws an exception if the current state of the session of the tape drive is
+   * not SESSION_STATE_WAITFORK.
+   *
+   * @param sessionPid The process ID of the child process responsible for
+   * running the cleaner session.
+   */   
+  void forkedCleanerSession(const pid_t sessionPid);
 
   /**
    * Moves the state of the tape drive to DRIVE_STATE_UP if the

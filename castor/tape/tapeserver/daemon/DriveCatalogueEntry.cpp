@@ -25,6 +25,7 @@
 #include "castor/tape/tapeserver/daemon/DriveCatalogueEntry.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
+#include "castor/tape/tapeserver/daemon/DriveCatalogueCleanerSession.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogueLabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogueTransferSession.hpp"
 
@@ -90,6 +91,7 @@ const char
   case SESSION_TYPE_NONE        : return "NONE";
   case SESSION_TYPE_DATATRANSFER: return "DATATRANSFER";
   case SESSION_TYPE_LABEL       : return "LABEL";
+  case SESSION_TYPE_CLEANER     : return "CLEANER";
   default                       : return "UNKNOWN";
   }
 }
@@ -482,6 +484,35 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedLabelJob(
 }
 
 //-----------------------------------------------------------------------------
+// receivedCleanerJob
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedCleanerJob()  {
+
+  std::ostringstream task;
+  task << "handle cleaner job for tape drive " << m_config.unitName;
+  
+  switch(m_state) {
+    case DRIVE_STATE_INIT:
+    case DRIVE_STATE_DOWN:
+    case DRIVE_STATE_UP:
+    case DRIVE_STATE_SESSIONRUNNING:
+    case DRIVE_STATE_WAITDOWN:
+      m_state = DRIVE_STATE_SESSIONRUNNING;
+      m_sessionType = SESSION_TYPE_CLEANER;
+      m_session = new DriveCatalogueCleanerSession(castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_WAITFORK);
+      break;
+    default:
+    {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to " << task.str() <<
+        ": Incompatible drive state: state=" << drvState2Str(m_state);
+      throw ex;
+    }
+  } 
+}
+
+
+//-----------------------------------------------------------------------------
 // forkedDataTransferSession
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogueEntry::forkedDataTransferSession(
@@ -512,6 +543,29 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::forkedLabelSession(
   const pid_t sessionPid) {
   std::ostringstream task;
   task << "handle fork of label session for tape drive " << m_config.unitName;
+    
+  switch(getSession()->getState()) {
+  case castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_WAITFORK:
+    getSession()->setState(castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_RUNNING);
+    getSession()->setPid(sessionPid);
+    break;
+  default:
+    {   
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to " << task.str() <<
+        ": Incompatible drive state: state=" << getSession()->getState();
+      throw ex;
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+// forkedCleanerSession
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::forkedCleanerSession(
+  const pid_t sessionPid) {
+  std::ostringstream task;
+  task << "handle fork of cleaner session for tape drive " << m_config.unitName;
     
   switch(getSession()->getState()) {
   case castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_WAITFORK:
