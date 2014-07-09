@@ -41,7 +41,7 @@
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "h/serrno.h"
-
+#include <google/protobuf/stubs/common.h>
 #include <memory>
 #include <zmq.h>
 
@@ -507,4 +507,5 @@ castor::tape::tapeserver::daemon::DataTransferSession::~DataTransferSession(){
     zmq_term(m_zmqContext);
     m_zmqContext = NULL;
   }
+  google::protobuf::ShutdownProtobufLibrary();
 }

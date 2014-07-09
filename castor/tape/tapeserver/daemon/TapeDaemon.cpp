@@ -119,6 +119,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::~TapeDaemon() throw() {
     delete m_processForker;
   }
   destroyZmqContext();
+  google::protobuf::ShutdownProtobufLibrary();
 }
 
 //------------------------------------------------------------------------------
