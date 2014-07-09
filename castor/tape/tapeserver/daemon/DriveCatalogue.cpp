@@ -39,8 +39,8 @@ castor::tape::tapeserver::daemon::DriveCatalogue::~DriveCatalogue() throw() {
     const DriveCatalogueEntry *drive = itor->second;
 
     if(DriveCatalogueEntry::SESSION_TYPE_LABEL == drive->getSessionType() && 
-       castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_WAITFORK == drive->getSessionState() &&
-      -1 != drive->getLabelCmdConnection()) {
+      DriveCatalogueSession::SESSION_STATE_WAITFORK == drive->getSessionState()
+      && -1 != drive->getLabelCmdConnection()) {
       close(drive->getLabelCmdConnection());
     }
     delete drive;
@@ -87,7 +87,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::enterDriveConfig(
   // If the drive is not in the catalogue
   if(m_drives.end() == itor) {
     // Insert it
-    m_drives[driveConfig.unitName] = new castor::tape::tapeserver::daemon::DriveCatalogueEntry(driveConfig,
+    m_drives[driveConfig.unitName] = new DriveCatalogueEntry(driveConfig,
       DriveCatalogueEntry::DRIVE_STATE_DOWN);
   // Else the drive is already in the catalogue
   } else {
@@ -169,8 +169,8 @@ std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnit
       throw ex;
     }
 
-    if(castor::tape::tapeserver::daemon::DriveCatalogueEntry::SESSION_TYPE_DATATRANSFER==drive.getSessionType()
-       && castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_WAITFORK == drive.getSessionState()) {
+    if(DriveCatalogueEntry::SESSION_TYPE_DATATRANSFER==drive.getSessionType()
+       && DriveCatalogueSession::SESSION_STATE_WAITFORK == drive.getSessionState()) {
       unitNames.push_back(itor->first);
     }
   }
@@ -181,7 +181,8 @@ std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnit
 //-----------------------------------------------------------------------------
 // getUnitNamesWaitingForLabelFork
 //-----------------------------------------------------------------------------
-std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNamesWaitingForLabelFork() const {
+std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::
+  getUnitNamesWaitingForLabelFork() const {
   std::list<std::string> unitNames;
 
   for(DriveMap::const_iterator itor = m_drives.begin();
@@ -200,8 +201,8 @@ std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnit
       throw ex;
     }
 
-    if(castor::tape::tapeserver::daemon::DriveCatalogueEntry::SESSION_TYPE_LABEL==drive.getSessionType() &&
-            castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_WAITFORK == drive.getSessionState()) {
+    if(DriveCatalogueEntry::SESSION_TYPE_LABEL==drive.getSessionType() &&
+      DriveCatalogueSession::SESSION_STATE_WAITFORK == drive.getSessionState()) {
       unitNames.push_back(itor->first);
     }
   }
@@ -249,8 +250,12 @@ const castor::tape::tapeserver::daemon::DriveCatalogueEntry
 
   for(DriveMap::const_iterator i = m_drives.begin(); i!=m_drives.end(); i++) {
     const DriveCatalogueEntry * const drive = i->second;
-    if(sessionPid == drive->getSessionPid()) {
-      return drive;
+    try {
+      if(sessionPid == drive->getSessionPid()) {
+        return drive;
+      }
+    } catch(...) {
+      // Ignore any exceptions thrown by getSessionPid()
     }
   }
 
