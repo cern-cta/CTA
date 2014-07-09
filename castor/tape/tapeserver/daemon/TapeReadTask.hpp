@@ -129,7 +129,7 @@ public:
       log::ScopedParamContainer params(lc);
       params.add("positionTime", localStats.positionTime)
             .add("transferTime", localStats.transferTime)
-            .add("waitDataTime",localStats.waitDataTime)
+            .add("waitFreeMemoryTime",localStats.waitFreeMemoryTime)
             .add("waitReportingTime",localStats.waitReportingTime)
             .add("dataVolume",localStats.dataVolume)
             .add("totalTime", fileTime)
