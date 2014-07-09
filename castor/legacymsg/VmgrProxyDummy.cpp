@@ -30,14 +30,14 @@ castor::legacymsg::VmgrProxyDummy::~VmgrProxyDummy() throw() {
 //------------------------------------------------------------------------------
 // tapeMountedForRead
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyDummy::tapeMountedForRead(const std::string &vid)
+void castor::legacymsg::VmgrProxyDummy::tapeMountedForRead(const std::string &vid, uint32_t jid)
    {
 }
 
 //------------------------------------------------------------------------------
 // tapeMountedForWrite
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyDummy::tapeMountedForWrite(const std::string &vid)
+void castor::legacymsg::VmgrProxyDummy::tapeMountedForWrite(const std::string &vid, uint32_t jid)
    {
 }
 

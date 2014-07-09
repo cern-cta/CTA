@@ -47,7 +47,7 @@ public:
    * @param vid The volume identifier of the mounted tape.
    * @param
    */
-  virtual void tapeMountedForRead(const std::string &vid)
+  virtual void tapeMountedForRead(const std::string &vid, uint32_t jid)
      = 0;
 
   /**
@@ -56,7 +56,7 @@ public:
    * @param vid The volume identifier of the mounted tape.
    * @param
    */
-  virtual void tapeMountedForWrite(const std::string &vid)
+  virtual void tapeMountedForWrite(const std::string &vid, uint32_t jid)
      = 0;
   
   /**

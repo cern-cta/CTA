@@ -274,13 +274,13 @@ const castor::messages::NotifyDriveTapeMounted& body){
   {
     switch(body.mode()) {
       case castor::messages::TAPE_MODE_READ:
-        m_vmgr.tapeMountedForRead(vid);
+        m_vmgr.tapeMountedForRead(vid, drive->getSessionPid());
         break;
       case castor::messages::TAPE_MODE_READWRITE:
-        m_vmgr.tapeMountedForWrite(vid);
+        m_vmgr.tapeMountedForWrite(vid, drive->getSessionPid());
         break;
       case castor::messages::TAPE_MODE_DUMP:
-        m_vmgr.tapeMountedForRead(vid);
+        m_vmgr.tapeMountedForRead(vid, drive->getSessionPid());
         break;
       case castor::messages::TAPE_MODE_NONE:
         break;
@@ -295,7 +295,6 @@ const castor::messages::NotifyDriveTapeMounted& body){
     sendErrorReplyToClient(ex);
     throw;
   }
-  
   sendSuccessReplyToClient();
 }
 //------------------------------------------------------------------------------

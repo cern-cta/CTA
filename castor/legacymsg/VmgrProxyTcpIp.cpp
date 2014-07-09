@@ -143,13 +143,13 @@ void castor::legacymsg::VmgrProxyTcpIp::sendNotificationAndReceiveReply(const le
 //------------------------------------------------------------------------------
 // tapeMountedForRead
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForRead(const std::string &vid) 
+void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForRead(const std::string &vid, uint32_t jid) 
 {
   try {
     castor::legacymsg::VmgrTapeMountedMsgBody msg;
     msg.uid = geteuid();
     msg.gid = getegid();
-    msg.jid = getpid();
+    msg.jid = jid;
     msg.mode = WRITE_DISABLE;
     castor::utils::copyString(msg.vid, vid);
 
@@ -165,13 +165,13 @@ void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForRead(const std::string &vi
 //------------------------------------------------------------------------------
 // tapeMountedForWrite
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForWrite(const std::string &vid)
+void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForWrite(const std::string &vid, uint32_t jid)
 {
   try {
     castor::legacymsg::VmgrTapeMountedMsgBody msg;
     msg.uid = geteuid();
     msg.gid = getegid();
-    msg.jid = getpid();
+    msg.jid = jid;
     msg.mode = WRITE_ENABLE;
     castor::utils::copyString(msg.vid, vid);
 
