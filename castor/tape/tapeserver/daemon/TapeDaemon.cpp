@@ -1052,8 +1052,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runDataTransferSession(
       tapeserver.reset(m_tapeserverFactory.create(
         DataTransferSession::getZmqContext()));
       dataTransferSession.reset(new DataTransferSession (
-        m_argc,
-        m_argv,
         m_hostName,
         drive->getVdqmJob(),
         m_log,

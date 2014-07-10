@@ -94,8 +94,6 @@ namespace daemon {
     };
     /** Constructor */
     DataTransferSession(
-      int argc,
-      char ** argv,
       const std::string & hostname,
       const legacymsg::RtcpJobRqstMsgBody & clientRequest, 
       castor::log::Logger & logger,
@@ -156,12 +154,6 @@ namespace daemon {
     castor::messages::TapeserverProxy & m_intialProcess;
     /** Object providing utilities for working UNIX capabilities. */
     castor::server::ProcessCap &m_capUtils;
-    /** copy of the process's argc to allow "command line reporting"
-     * i.e. snprintf to argv's, which will be visible in 'ps' */
-    int m_argc;
-    /** copy of the process's argv to allow "command line reporting"
-     * i.e. snprintf to argv's, which will be visible in 'ps' */
-    char ** m_argv;
     /** hostname, used to report status of the drive */
     const std::string m_hostname;
   };

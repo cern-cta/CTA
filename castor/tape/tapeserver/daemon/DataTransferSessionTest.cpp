@@ -165,18 +165,7 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   castor::legacymsg::RmcProxyDummy rmc;
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
-  int argc = 4;
-  char * argv [4];
-  {
-    std::string argv_ctn_str(argv_container);
-    size_t pos = 0;
-    for (int i=0; i<4; i++) {
-      argv[i] = & (argv_container[pos]);
-      argv_ctn_str.find_first_of("\0",pos);
-    }
-  }
-  DataTransferSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys,
+  DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
     driveConfig, rmc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
@@ -233,18 +222,7 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   castor::legacymsg::RmcProxyDummy rmc;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
-  char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
-  int argc = 4;
-  char * argv [4];
-  {
-    std::string argv_ctn_str(argv_container);
-    size_t pos = 0;
-    for (int i=0; i<4; i++) {
-      argv[i] = & (argv_container[pos]);
-      argv_ctn_str.find_first_of("\0",pos);
-    }
-  }
-  DataTransferSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys,
+  DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
     driveConfig, rmc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
@@ -388,18 +366,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   castor::legacymsg::RmcProxyDummy rmc;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
-  char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
-  int argc = 4;
-  char * argv [4];
-  {
-    std::string argv_ctn_str(argv_container);
-    size_t pos = 0;
-    for (int i=0; i<4; i++) {
-      argv[i] = & (argv_container[pos]);
-      argv_ctn_str.find_first_of("\0",pos);
-    }
-  }
-  DataTransferSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys,
+  DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
     driveConfig, rmc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();

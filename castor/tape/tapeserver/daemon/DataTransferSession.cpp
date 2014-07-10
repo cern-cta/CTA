@@ -55,8 +55,6 @@ void *castor::tape::tapeserver::daemon::DataTransferSession::m_zmqContext =
 //Constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
-    int argc,
-    char ** argv,
     const std::string & hostname,
     const legacymsg::RtcpJobRqstMsgBody & clientRequest, 
     castor::log::Logger& logger, System::virtualWrapper & sysWrapper,
@@ -73,9 +71,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     m_castorConf(castorConf), 
     m_rmc(rmc),
     m_intialProcess(initialProcess),
-    m_capUtils(capUtils),
-    m_argc(argc),
-    m_argv(argv) {
+    m_capUtils(capUtils) {
 }
 
 //------------------------------------------------------------------------------
