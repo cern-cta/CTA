@@ -130,7 +130,7 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid, con
     RmcMountMsgBody body;
     body.uid = geteuid();
     body.gid = getegid();
-    castor::utils::copyString(body.vid, vid.c_str());
+    castor::utils::copyString(body.vid, vid);
     body.drvOrd = parsedSlot.drvOrd;
     writeRmcMountMsg(fd.get(), body);
 
@@ -245,7 +245,7 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid, c
     RmcUnmountMsgBody body;
     body.uid = geteuid();
     body.gid = getegid();
-    castor::utils::copyString(body.vid, vid.c_str());
+    castor::utils::copyString(body.vid, vid);
     body.drvOrd = parsedSlot.drvOrd;
     body.force = 0;
     writeRmcUnmountMsg(fd.get(), body);

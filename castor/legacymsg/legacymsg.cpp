@@ -59,7 +59,7 @@ void castor::legacymsg::writeTapeReplyMsg(const int timeout, const int fd, const
     char dst[dstlen];
     castor::legacymsg::GenericReplyMsgBody src;    
     src.status=rc;
-    castor::utils::copyString(src.errorMessage, message.c_str());
+    castor::utils::copyString(src.errorMessage, message);
     const size_t len = castor::legacymsg::marshal(dst, dstlen, TPMAGIC, MSG_DATA, src);    
     castor::io::writeBytes(fd, timeout, len, dst);
   } catch(castor::exception::Exception &ne) {
@@ -78,7 +78,7 @@ void castor::legacymsg::writeTapeReplyErrorMsg(const int timeout, const int fd, 
     const int dstlen = 12 + CA_MAXLINELEN+1; // 12 bytes of header + max length of error message
     char dst[dstlen];
     castor::legacymsg::GenericErrorReplyMsgBody src;
-    castor::utils::copyString(src.errorMessage, message.c_str());
+    castor::utils::copyString(src.errorMessage, message);
     const size_t len = castor::legacymsg::marshal(dst, dstlen, TPMAGIC, MSG_ERR, src);    
     castor::io::writeBytes(fd, timeout, len, dst);
   } catch(castor::exception::Exception &ne) {

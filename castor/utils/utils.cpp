@@ -221,7 +221,7 @@ double castor::utils::timevalToDouble(const timeval &tv) throw() {
 // copyString
 //-----------------------------------------------------------------------------
 void castor::utils::copyString(char *const dst, const size_t dstSize,
-  const char *const src) {
+  const std::string &src) {
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -232,28 +232,17 @@ void castor::utils::copyString(char *const dst, const size_t dstSize,
     throw ex;
   }
 
-  if(src == NULL) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __FUNCTION__
-      << ": Pointer to source string is NULL";
-
-    throw ex;
-  }
-
-  const size_t srcLen = strlen(src);
-
-  if(srcLen >= dstSize) {
+  if(src.length() >= dstSize) {
     castor::exception::Exception ex(EINVAL);
 
     ex.getMessage() << __FUNCTION__
       << ": Source string is longer than destination.  Source length: "
-      << srcLen << " Max destination length: " << (dstSize - 1);
+      << src.length() << " Max destination length: " << (dstSize - 1);
 
     throw ex;
   }
 
-  strncpy(dst, src, dstSize);
+  strncpy(dst, src.c_str(), dstSize);
   *(dst + dstSize -1) = '\0'; // Ensure destination string is null terminated
 }
 

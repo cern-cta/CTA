@@ -71,8 +71,8 @@ bool castor::legacymsg::CupvProxyTcpIp::isGranted(
     body.gid = getegid();
     body.privUid = privUid;
     body.privGid = privGid;
-    utils::copyString(body.srcHost, srcHost.c_str());
-    utils::copyString(body.tgtHost, tgtHost.c_str());
+    utils::copyString(body.srcHost, srcHost);
+    utils::copyString(body.tgtHost, tgtHost);
     body.priv = priv;
     writeCupvCheckMsg(fd.get(), body);
 

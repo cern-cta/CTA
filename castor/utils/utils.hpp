@@ -145,7 +145,7 @@ double timevalToDouble(const timeval &tv) throw();
  * @param src     Source string.
  * destination.
  */
-void copyString(char *const dst, const size_t dstSize, const char *const src);
+void copyString(char *const dst, const size_t dstSize, const std::string &src);
 
 /**
  * Safely copies source string into destination string.  The destination
@@ -155,8 +155,7 @@ void copyString(char *const dst, const size_t dstSize, const char *const src);
  * @param src Source string.
  */
 template<size_t dstSize> void copyString(char (&dst)[dstSize],
-  const char *const src)
-   {
+  const std::string &src) {
   copyString(dst, dstSize, src);
 }
 

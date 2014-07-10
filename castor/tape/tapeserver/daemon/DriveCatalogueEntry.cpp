@@ -649,17 +649,17 @@ castor::legacymsg::TapeStatDriveEntry
   try {
     entry.uid = getUidForTapeStatDriveEntry();
     entry.jid = getJidForTapeStatDriveEntry();
-    castor::utils::copyString(entry.dgn, m_config.dgn.c_str());
+    castor::utils::copyString(entry.dgn, m_config.dgn);
     entry.up = getUpForTapeStatDriveEntry();
     entry.asn = getAsnForTapeStatDriveEntry();
     entry.asn_time = getAsnTimeForTapeStatDriveEntry();
-    castor::utils::copyString(entry.drive, m_config.unitName.c_str());
+    castor::utils::copyString(entry.drive, m_config.unitName);
     entry.mode = getModeForTapeStatDriveEntry();
     castor::utils::copyString(entry.lblcode,
       getLblCodeForTapeStatDriveEntry().c_str());
     entry.tobemounted = getToBeMountedForTapeStatDriveEntry();
-    castor::utils::copyString(entry.vid, getVidForTapeStatDriveEntry().c_str());
-    castor::utils::copyString(entry.vsn, getVsnForTapeStatDriveEntry().c_str());
+    castor::utils::copyString(entry.vid, getVidForTapeStatDriveEntry());
+    castor::utils::copyString(entry.vsn, getVsnForTapeStatDriveEntry());
     entry.cfseq = 0; // the fseq is ignored by tpstat, so we leave it set to 0
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;

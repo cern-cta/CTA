@@ -151,7 +151,7 @@ void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForRead(const std::string &vi
     msg.gid = getegid();
     msg.jid = getpid();
     msg.mode = WRITE_DISABLE;
-    castor::utils::copyString(msg.vid, vid.c_str());
+    castor::utils::copyString(msg.vid, vid);
 
     sendNotificationAndReceiveReply(msg);
   } catch(castor::exception::Exception &ne) {
@@ -173,7 +173,7 @@ void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForWrite(const std::string &v
     msg.gid = getegid();
     msg.jid = getpid();
     msg.mode = WRITE_ENABLE;
-    castor::utils::copyString(msg.vid, vid.c_str());
+    castor::utils::copyString(msg.vid, vid);
 
     sendNotificationAndReceiveReply(msg);
   } catch(castor::exception::Exception &ne) {
@@ -338,7 +338,7 @@ void castor::legacymsg::VmgrProxyTcpIp::queryTape(const std::string &vid, legacy
     legacymsg::VmgrTapeInfoRqstMsgBody request;    
     request.uid = geteuid();
     request.gid = getegid();
-    castor::utils::copyString(request.vid, vid.c_str());
+    castor::utils::copyString(request.vid, vid);
     request.side = 0; // HARDCODED side
 
     char buf[VMGR_REQUEST_BUFSIZE];

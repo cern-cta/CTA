@@ -52,9 +52,9 @@ void castor::legacymsg::VdqmProxyTcpIp::setDriveDown(const std::string &server, 
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_UNIT_DOWN;
-    castor::utils::copyString(body.server, server.c_str());
-    castor::utils::copyString(body.drive, unitName.c_str());
-    castor::utils::copyString(body.dgn, dgn.c_str());
+    castor::utils::copyString(body.server, server);
+    castor::utils::copyString(body.drive, unitName);
+    castor::utils::copyString(body.dgn, dgn);
 
     setDriveStatus(body);
   } catch(castor::exception::Exception &ne) {
@@ -72,9 +72,9 @@ void castor::legacymsg::VdqmProxyTcpIp::setDriveUp(const std::string &server, co
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_UNIT_UP;
-    castor::utils::copyString(body.server, server.c_str());
-    castor::utils::copyString(body.drive, unitName.c_str());
-    castor::utils::copyString(body.dgn, dgn.c_str());
+    castor::utils::copyString(body.server, server);
+    castor::utils::copyString(body.drive, unitName);
+    castor::utils::copyString(body.dgn, dgn);
 
     setDriveStatus(body);
   } catch(castor::exception::Exception &ne) {
@@ -94,9 +94,9 @@ void castor::legacymsg::VdqmProxyTcpIp::assignDrive(const std::string &server, c
     body.status = VDQM_UNIT_ASSIGN;
     body.volReqId = mountTransactionId;
     body.jobId = sessionPid;
-    castor::utils::copyString(body.server, server.c_str());
-    castor::utils::copyString(body.drive, unitName.c_str());
-    castor::utils::copyString(body.dgn, dgn.c_str());
+    castor::utils::copyString(body.server, server);
+    castor::utils::copyString(body.drive, unitName);
+    castor::utils::copyString(body.dgn, dgn);
 
     setDriveStatus(body);
   } catch(castor::exception::Exception &ne) {
@@ -118,10 +118,10 @@ void castor::legacymsg::VdqmProxyTcpIp::tapeMounted(const std::string &server,
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_VOL_MOUNT;
     body.jobId = sessionPid;
-    castor::utils::copyString(body.volId, vid.c_str());
-    castor::utils::copyString(body.server, server.c_str());
-    castor::utils::copyString(body.drive, unitName.c_str());
-    castor::utils::copyString(body.dgn, dgn.c_str());
+    castor::utils::copyString(body.volId, vid);
+    castor::utils::copyString(body.server, server);
+    castor::utils::copyString(body.drive, unitName);
+    castor::utils::copyString(body.dgn, dgn);
 
     setDriveStatus(body);
   } catch(castor::exception::Exception &ne) {
@@ -148,9 +148,9 @@ void castor::legacymsg::VdqmProxyTcpIp::releaseDrive(const std::string &server,
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = status;
     body.jobId = sessionPid;
-    castor::utils::copyString(body.server, server.c_str());
-    castor::utils::copyString(body.drive, unitName.c_str());
-    castor::utils::copyString(body.dgn, dgn.c_str());
+    castor::utils::copyString(body.server, server);
+    castor::utils::copyString(body.drive, unitName);
+    castor::utils::copyString(body.dgn, dgn);
 
     setDriveStatus(body);
   } catch(castor::exception::Exception &ne) {
@@ -374,10 +374,10 @@ void  castor::legacymsg::VdqmProxyTcpIp::tapeUnmounted(const std::string &server
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = status;
-    castor::utils::copyString(body.volId, vid.c_str());
-    castor::utils::copyString(body.server, server.c_str());
-    castor::utils::copyString(body.drive, unitName.c_str());
-    castor::utils::copyString(body.dgn, dgn.c_str());
+    castor::utils::copyString(body.volId, vid);
+    castor::utils::copyString(body.server, server);
+    castor::utils::copyString(body.drive, unitName);
+    castor::utils::copyString(body.dgn, dgn);
 
     setDriveStatus(body);
   } catch(castor::exception::Exception &ne) {

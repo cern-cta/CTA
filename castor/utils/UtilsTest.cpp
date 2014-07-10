@@ -301,14 +301,6 @@ TEST_F(castor_utils, testCopyStringNullDst) {
     castor::exception::Exception);
 }
 
-TEST_F(castor_utils, testCopyStringNullSrc) {
-  using namespace castor::utils;
-  char dummy[6] = "Dummy";
-
-  ASSERT_THROW(copyString(dummy, sizeof(dummy), NULL),
-    castor::exception::Exception);
-}
-
 TEST_F(castor_utils, testCopyString) {
   using namespace castor::utils;
   char src[12]  = "Hello World";

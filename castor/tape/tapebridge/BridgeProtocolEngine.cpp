@@ -1025,11 +1025,11 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
   // Give volume to rtcpd
   legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
   castor::utils::setBytes(rtcpVolume, '\0');
-  castor::utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
-  castor::utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
-  castor::utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
-  castor::utils::copyString(rtcpVolume.density, m_volume.density().c_str());
-  castor::utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
+  castor::utils::copyString(rtcpVolume.vid    , m_volume.vid()        );
+  castor::utils::copyString(rtcpVolume.vsn    , EMPTYVSN              );
+  castor::utils::copyString(rtcpVolume.label  , m_volume.label()      );
+  castor::utils::copyString(rtcpVolume.density, m_volume.density()    );
+  castor::utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit);
   rtcpVolume.volReqId       = m_jobRequest.volReqId;
   rtcpVolume.mode           = WRITE_ENABLE;
   rtcpVolume.tStartRequest  = time(NULL);
@@ -1090,7 +1090,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
     unsigned char blockId[4];
     castor::utils::setBytes(blockId, '\0');
     char nshost[CA_MAXHOSTNAMELEN+1];
-    castor::utils::copyString(nshost, firstFileToMigrate->nshost().c_str());
+    castor::utils::copyString(nshost, firstFileToMigrate->nshost());
 
     RtcpTxRx::giveFileToRtcpd(
       m_cuuid,
@@ -1136,11 +1136,11 @@ void castor::tape::tapebridge::BridgeProtocolEngine::startRecallSession()
   // Give volume to rtcpd
   legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
   castor::utils::setBytes(rtcpVolume, '\0');
-  castor::utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
-  castor::utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
-  castor::utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
-  castor::utils::copyString(rtcpVolume.density, m_volume.density().c_str());
-  castor::utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
+  castor::utils::copyString(rtcpVolume.vid    , m_volume.vid()        );
+  castor::utils::copyString(rtcpVolume.vsn    , EMPTYVSN              );
+  castor::utils::copyString(rtcpVolume.label  , m_volume.label()      );
+  castor::utils::copyString(rtcpVolume.density, m_volume.density()    );
+  castor::utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit);
   rtcpVolume.volReqId       = m_jobRequest.volReqId;
   rtcpVolume.mode           = WRITE_DISABLE;
   rtcpVolume.tStartRequest  = time(NULL);
@@ -1173,11 +1173,11 @@ void castor::tape::tapebridge::BridgeProtocolEngine::startDumpSession()
   // Give volume to rtcpd
   legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
   castor::utils::setBytes(rtcpVolume, '\0');
-  castor::utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
-  castor::utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
-  castor::utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
-  castor::utils::copyString(rtcpVolume.density, m_volume.density().c_str());
-  castor::utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
+  castor::utils::copyString(rtcpVolume.vid    , m_volume.vid()        );
+  castor::utils::copyString(rtcpVolume.vsn    , EMPTYVSN              );
+  castor::utils::copyString(rtcpVolume.label  , m_volume.label()      );
+  castor::utils::copyString(rtcpVolume.density, m_volume.density()    );
+  castor::utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit);
   rtcpVolume.volReqId       = m_jobRequest.volReqId;
   rtcpVolume.mode           = WRITE_DISABLE;
   rtcpVolume.tStartRequest  = time(NULL);
@@ -1891,7 +1891,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToRecallToRtcpd(
       fileToRecall.blockId2,
       fileToRecall.blockId3};
     char nshost[CA_MAXHOSTNAMELEN+1];
-    castor::utils::copyString(nshost, fileToRecall.nsHost.c_str());
+    castor::utils::copyString(nshost, fileToRecall.nsHost);
 
     // The file size is not specified when recalling
     const uint64_t fileSize = 0;
@@ -3035,7 +3035,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToMigrateToRtcpd(
     unsigned char blockId[4];
     castor::utils::setBytes(blockId, '\0');
     char nshost[CA_MAXHOSTNAMELEN+1];
-    castor::utils::copyString(nshost, fileToMigrate.nsHost.c_str());
+    castor::utils::copyString(nshost, fileToMigrate.nsHost);
 
     RtcpTxRx::giveFileToRtcpd(
       m_cuuid,
