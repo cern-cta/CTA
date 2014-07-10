@@ -38,9 +38,13 @@ RecallMemoryManager::RecallMemoryManager(const size_t numberOfBlocks, const size
   for (size_t i = 0; i < numberOfBlocks; i++) {
     m_freeBlocks.push(new MemBlock(i, blockSize));
 
-    m_lc.pushOrReplace(log::Param("blockId", i));
-    m_lc.log(LOG_DEBUG, "RecallMemoryManager created a block");
+    //m_lc.pushOrReplace(log::Param("blockId", i));
+    //m_lc.log(LOG_DEBUG, "RecallMemoryManager created a block");
   }
+  log::ScopedParamContainer params(m_lc);
+  params.add("blockCount", numberOfBlocks)
+        .add("blockSize", blockSize)
+        .add("totalSize", numberOfBlocks*blockSize);
   m_lc.log(LOG_INFO, "RecallMemoryManager: all blocks have been created");
 }
 

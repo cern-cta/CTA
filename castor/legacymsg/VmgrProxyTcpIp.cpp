@@ -157,7 +157,7 @@ void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForRead(const std::string &vi
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to notify the VMGR that the tape " << vid <<
-      " was mounted: " << ne.getMessage().str();
+      " was mounted for READ by jid " << jid << " : " << ne.getMessage().str();
     throw ex;
   }
 }
@@ -179,7 +179,7 @@ void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForWrite(const std::string &v
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to notify the VMGR that the tape " << vid <<
-      " was mounted: " << ne.getMessage().str();
+      " was mounted for WRITE by jid " << jid << " : " << ne.getMessage().str();
     throw ex;
   }
 }
