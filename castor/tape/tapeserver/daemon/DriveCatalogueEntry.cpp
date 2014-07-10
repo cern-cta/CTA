@@ -484,9 +484,9 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedLabelJob(
 }
 
 //-----------------------------------------------------------------------------
-// receivedCleanerJob
+// toBeCleaned
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedCleanerJob()  {
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::toBeCleaned()  {
 
   std::ostringstream task;
   task << "handle cleaner job for tape drive " << m_config.unitName;

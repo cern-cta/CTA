@@ -60,9 +60,12 @@ namespace daemon {
     /**
      * Cleans the drive by unloading any tape present and unmounting it
      * 
+     * @param vid The identifier of the mounted volume (one can pass the empty string 
+     * in case it is unknown, as it not used except for logging purposes).
+     * 
      * @return 0 in case of success (drive can stay UP) or 1 in case of failure (drive needs to be put down by the caller)
      */
-    int clean();
+    int clean(const std::string &vid);
     
   private:
     /**

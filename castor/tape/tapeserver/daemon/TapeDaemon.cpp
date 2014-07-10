@@ -616,6 +616,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop() {
   while(handleEvents()) {
     forkDataTransferSessions();
     forkLabelSessions();
+    forkCleanerSessions();
   }
 }
 
@@ -795,6 +796,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     return handleReapedDataTransferSession(pid, waitpidStat);
   case DriveCatalogueEntry::SESSION_TYPE_LABEL:
     return handleReapedLabelSession(pid, waitpidStat);
+  case DriveCatalogueEntry::SESSION_TYPE_CLEANER:
+    return handleReapedCleanerSession(pid, waitpidStat);
   default:
     {
       castor::exception::Exception ex;
@@ -823,13 +826,43 @@ void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedDataTransferSessi
       requestVdqmToReleaseDrive(driveConfig, pid);
       notifyVdqmTapeUnmounted(driveConfig, vid, pid);
     } else {
-      drive->sessionFailed();
-      m_log(LOG_INFO, "Data-transfer session failed", params);
-      setDriveDownInVdqm(pid, drive->getConfig());
+      drive->sessionFailed(); //deletes the session
+      m_log(LOG_INFO, "Data-transfer session failed. Going to try to clean the drive.", params);
+      requestVdqmToReleaseDrive(driveConfig, pid);
+      drive->toBeCleaned();
     }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle reaped data transfer session: " << 
+    ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleReapedCleanerSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedCleanerSession(
+  const pid_t pid, const int waitpidStat) {
+  try {
+    std::list<log::Param> params;
+    params.push_back(log::Param("cleanerPid", pid));
+    DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(pid);
+    const utils::DriveConfig &driveConfig = drive->getConfig();
+
+    if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
+      const std::string vid = drive->getVid();
+      drive->sessionSucceeded();
+      m_log(LOG_INFO, "Cleaner session succeeded. Drive will stay UP", params);
+      notifyVdqmTapeUnmounted(driveConfig, vid, pid);
+    } else {
+      drive->sessionFailed();
+      m_log(LOG_INFO, "Cleaner session failed. Drive will go DOWN", params);
+      setDriveDownInVdqm(pid, drive->getConfig());
+    }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to handle reaped cleaner session: " << 
     ne.getMessage().str();
     throw ex;
   }
@@ -1244,8 +1277,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkCleanerSession(
   const utils::DriveConfig &driveConfig = drive->getConfig();
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", driveConfig.unitName));
+  std::string vid = "";
 
-  m_processForker->forkCleaner(driveConfig.unitName, "");
+  m_processForker->forkCleaner(driveConfig.unitName, vid);
 
   m_log.prepareForFork();
   const pid_t forkRc = fork();
@@ -1266,7 +1300,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkCleanerSession(
     // file-descriptors owned by the event handlers
     m_reactor.clear();
 
-    runCleanerSession(drive);
+    runCleanerSession(drive, vid);
   }
 }
 
@@ -1274,7 +1308,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkCleanerSession(
 // runCleanerSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::runCleanerSession(
-  DriveCatalogueEntry *drive) throw() {
+  DriveCatalogueEntry *drive, const std::string &vid) throw() {
   const utils::DriveConfig &driveConfig = drive->getConfig();
   
   std::list<log::Param> params;
@@ -1289,31 +1323,18 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runCleanerSession(
       m_log,
       driveConfig,
       sWrapper);
-    int ret = cleanerSession.clean(); //clean() returns 0 if drive should be put up or 1 if it should be put down
-    if(0==ret) {
-      m_log(LOG_INFO, "Cleaner session cleaned the drive. The drive is going (staying) up", params);
-      m_vdqm.setDriveUp(m_hostName, driveConfig.unitName, driveConfig.dgn);
-      drive->configureUp();
-    }
-    else if(1==ret) {
-      m_log(LOG_ERR, "Cleaner session couldn't clean the drive properly. The drive is going down", params);
-      m_vdqm.setDriveDown(m_hostName, driveConfig.unitName, driveConfig.dgn);
-      drive->configureDown();
-    }
-    exit(0);
+    exit(cleanerSession.clean(vid)); //clean() returns 0 if drive should be put up or 1 if it should be put down
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Aborting cleaner session. Reason: " << ne.getMessage().str();
     m_log(LOG_ERR, ex.getMessage().str());
-    exit(1);
   } catch(std::exception &se) {
     params.push_back(log::Param("message", se.what()));
     m_log(LOG_ERR, "Aborting cleaner session: Caught an unexpected exception",
       params);
-    exit(1);
   } catch(...) {
     m_log(LOG_ERR,
       "Aborting cleaner session: Caught an unexpected and unknown exception");
-    exit(1);
   }
+  exit(1);
 }

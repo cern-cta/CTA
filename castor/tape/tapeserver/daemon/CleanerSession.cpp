@@ -41,7 +41,7 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
 //------------------------------------------------------------------------------
 // clean
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::CleanerSession::clean() {
+int castor::tape::tapeserver::daemon::CleanerSession::clean(const std::string &vid) {
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);    
   castor::tape::SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
   
@@ -72,6 +72,18 @@ int castor::tape::tapeserver::daemon::CleanerSession::clean() {
       drive->rewind();
       drive->readExactBlock((void * )&vol1, sizeof(vol1), "[CleanerSession::clean()] - Reading header VOL1");
       vol1.verify();
+      if(vid.empty()) { // vid given is empty
+        log::Param params[] = {log::Param("vid", vid)};
+        m_log(LOG_INFO, "Cleaner session received an empty vid.", params);
+      }
+      else if(!(vid.compare(vol1.getVSN()))) { // vid provided and vid read on VOL1 correspond
+        log::Param params[] = {log::Param("vid", vid)};
+        m_log(LOG_INFO, "Cleaner session received the same vid read on tape.", params);        
+      }
+      else { // vid provided and vid read on VOL1 don NOT correspond!
+        log::Param params[] = {log::Param("vid provided", vid), log::Param("vid read on label", vol1.getVSN())};
+        m_log(LOG_WARNING, "Cleaner session received a different vid from the one read on tape.", params);
+      }
     } catch(castor::exception::Exception &ne) {
       castor::exception::Exception ex;
       ex.getMessage() << "Cleaner session could not rewind the tape or read its label. Giving up now. Reason: " << ne.getMessage().str();

@@ -328,7 +328,7 @@ public:
    * 
    * This method will accept any drive state.
    */   
-  void receivedCleanerJob();
+  void toBeCleaned();
 
   /**
    * Moves the state of the tape drive to DRIVE_STATE_RUNNING.

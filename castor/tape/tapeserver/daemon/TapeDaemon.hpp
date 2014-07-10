@@ -295,6 +295,15 @@ protected:
    */
   void handleReapedDataTransferSession(const pid_t pid,
     const int waitpidStat);
+  
+  /**
+   * Does the required post processing for the specified reaped session.
+   *
+   * @param pid The process ID of the reaped session.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void handleReapedCleanerSession(const pid_t pid,
+    const int waitpidStat);
 
   /**
    * Sets the state of the tape drive asscoiated with the specified
@@ -428,8 +437,10 @@ protected:
    *
    * @param drive The catalogue entry of the tape drive to be used during the
    * session.
+   * @param vid The identifier of the mounted volume (one can pass the empty string 
+   * in case it is unknown, as it not used except for logging purposes).
    */
-  void runCleanerSession(DriveCatalogueEntry *drive) throw();
+  void runCleanerSession(DriveCatalogueEntry *drive, const std::string &vid) throw();
 
   /**
    * Catalogue used to keep track of both the initial and current state of
