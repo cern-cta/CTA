@@ -45,6 +45,7 @@
 #include "h/Ctape.h"
 #include "h/rtcp_constants.h"
 #include "h/rtcpd_constants.h"
+#include "CleanerSession.hpp"
 
 #include <algorithm>
 #include <errno.h>
@@ -1216,6 +1217,103 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(
     m_log(LOG_ERR,
       "Aborting label session: Caught an unexpected and unknown exception",
       params);
+    exit(1);
+  }
+}
+
+//------------------------------------------------------------------------------
+// forkCleanerSessions
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::forkCleanerSessions() {
+  const std::list<std::string> unitNames =
+    m_driveCatalogue.getUnitNamesWaitingForCleanerFork();
+
+  for(std::list<std::string>::const_iterator itor = unitNames.begin();
+    itor != unitNames.end(); itor++) {
+    const std::string &unitName = *itor;
+    DriveCatalogueEntry *drive = m_driveCatalogue.findDrive(unitName);
+    forkCleanerSession(drive);
+  }
+}
+
+//------------------------------------------------------------------------------
+// forkCleanerSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::forkCleanerSession(
+  DriveCatalogueEntry *drive) {
+  const utils::DriveConfig &driveConfig = drive->getConfig();
+  std::list<log::Param> params;
+  params.push_back(log::Param("unitName", driveConfig.unitName));
+
+  m_processForker->forkCleaner(driveConfig.unitName, "");
+
+  m_log.prepareForFork();
+  const pid_t forkRc = fork();
+
+  // If fork failed
+  if(0 > forkRc) {
+    // Log an error message and return
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    params.push_back(log::Param("message", message));
+    m_log(LOG_ERR, "Failed to fork cleaner session", params);
+
+  // Else if this is the parent process
+  } else if(0 < forkRc) {
+    drive->forkedLabelSession(forkRc);  
+  } else { // Else this is the child process
+    // Clear the reactor which in turn will close all of the open
+    // file-descriptors owned by the event handlers
+    m_reactor.clear();
+
+    runCleanerSession(drive);
+  }
+}
+
+//------------------------------------------------------------------------------
+// runCleanerSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::runCleanerSession(
+  DriveCatalogueEntry *drive) throw() {
+  const utils::DriveConfig &driveConfig = drive->getConfig();
+  
+  std::list<log::Param> params;
+  params.push_back(log::Param("unitName", driveConfig.unitName));
+  m_log(LOG_INFO, "Cleaner-session child-process started", params);
+
+  try {
+    std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
+    castor::tape::System::realWrapper sWrapper;
+    castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
+      *(rmc.get()),
+      m_log,
+      driveConfig,
+      sWrapper);
+    int ret = cleanerSession.clean(); //clean() returns 0 if drive should be put up or 1 if it should be put down
+    if(0==ret) {
+      m_log(LOG_INFO, "Cleaner session cleaned the drive. The drive is going (staying) up", params);
+      m_vdqm.setDriveUp(m_hostName, driveConfig.unitName, driveConfig.dgn);
+      drive->configureUp();
+    }
+    else if(1==ret) {
+      m_log(LOG_ERR, "Cleaner session couldn't clean the drive properly. The drive is going down", params);
+      m_vdqm.setDriveDown(m_hostName, driveConfig.unitName, driveConfig.dgn);
+      drive->configureDown();
+    }
+    exit(0);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Aborting cleaner session. Reason: " << ne.getMessage().str();
+    m_log(LOG_ERR, ex.getMessage().str());
+    exit(1);
+  } catch(std::exception &se) {
+    params.push_back(log::Param("message", se.what()));
+    m_log(LOG_ERR, "Aborting cleaner session: Caught an unexpected exception",
+      params);
+    exit(1);
+  } catch(...) {
+    m_log(LOG_ERR,
+      "Aborting cleaner session: Caught an unexpected and unknown exception");
     exit(1);
   }
 }

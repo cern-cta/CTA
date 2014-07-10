@@ -393,7 +393,7 @@ protected:
   void forkLabelSession(DriveCatalogueEntry *drive);
 
   /**
-   * Runs the label session.  This method is to be called within the child
+   * Runs the label session. This method is to be called within the child
    * process responsible for running the label session.
    *
    * @param drive The catalogue entry of the tape drive to be used during the
@@ -403,6 +403,33 @@ protected:
    */
   void runLabelSession(const DriveCatalogueEntry *drive,
     const int labelCmdConnection) throw();
+  
+  /**
+   * Forks a cleaner-session child-process for every tape drive entry in the
+   * tape drive catalogue that is waiting for such a fork to be carried out.
+   *
+   * There may be more than one child-process to fork because there may be
+   * more than one tape drive connected to the tape server and the previous
+   * call to m_reactor.handleEvents() handled requests to start a cleaner
+   * session on more than one of the connected tape drives.
+   */
+  void forkCleanerSessions();
+
+  /**
+   * Forks a cleaner-session child-process for the specified tape drive.
+   *
+   * @param drive The tape-drive entry in the tape-drive catalogue.
+   */
+  void forkCleanerSession(DriveCatalogueEntry *drive);
+
+  /**
+   * Runs the cleaner session. This method is to be called within the child
+   * process responsible for running the cleaner session.
+   *
+   * @param drive The catalogue entry of the tape drive to be used during the
+   * session.
+   */
+  void runCleanerSession(DriveCatalogueEntry *drive) throw();
 
   /**
    * Catalogue used to keep track of both the initial and current state of
