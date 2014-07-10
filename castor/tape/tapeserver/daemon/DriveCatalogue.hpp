@@ -120,7 +120,7 @@ public:
   std::list<std::string> getUnitNames(const DriveCatalogueEntry::DriveState state) const;
   
   /**
-   * Returns an unordered list of the unit names of the tape drives wait for
+   * Returns an unordered list of the unit names of the tape drives waiting for
    * forking a transfer session.
    *
    * @return Unordered list of the unit names.
@@ -128,12 +128,20 @@ public:
   std::list<std::string> getUnitNamesWaitingForTransferFork() const;
   
   /**
-   * Returns an unordered list of the unit names of the tape drives wait for
+   * Returns an unordered list of the unit names of the tape drives waiting for
    * forking a label session.
    *
    * @return Unordered list of the unit names.
    */
   std::list<std::string> getUnitNamesWaitingForLabelFork() const;
+  
+  /**
+   * Returns an unordered list of the unit names of the tape drives waiting for
+   * forking a cleaner session.
+   *
+   * @return Unordered list of the unit names.
+   */
+  std::list<std::string> getUnitNamesWaitingForCleanerFork() const;
 
 private:
 

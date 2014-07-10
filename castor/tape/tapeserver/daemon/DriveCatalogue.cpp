@@ -211,6 +211,38 @@ std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::
 }
 
 //-----------------------------------------------------------------------------
+// getUnitNamesWaitingForCleanerFork
+//-----------------------------------------------------------------------------
+std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::
+  getUnitNamesWaitingForCleanerFork() const {
+  std::list<std::string> unitNames;
+
+  for(DriveMap::const_iterator itor = m_drives.begin();
+    itor != m_drives.end(); itor++) {
+    const std::string &unitName = itor->first;
+    const DriveCatalogueEntry &drive = *(itor->second);
+    const utils::DriveConfig &driveConfig = drive.getConfig();
+
+    // Sanity check
+    if(unitName != driveConfig.unitName) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to get unit names of drives waiting for forking a cleaner session" <<
+        ": unit name mismatch: unitName=" << unitName <<
+        " driveConfig.unitName=" <<  driveConfig.unitName;
+      throw ex;
+    }
+
+    if(DriveCatalogueEntry::SESSION_TYPE_CLEANER==drive.getSessionType() &&
+      DriveCatalogueSession::SESSION_STATE_WAITFORK == drive.getSessionState()) {
+      unitNames.push_back(itor->first);
+    }
+  }
+
+  return unitNames;
+}
+
+//-----------------------------------------------------------------------------
 // findConstDrive
 //-----------------------------------------------------------------------------
 const castor::tape::tapeserver::daemon::DriveCatalogueEntry
