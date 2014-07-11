@@ -882,7 +882,6 @@ BEGIN
      WHERE SR.castorFile = inCfId
        AND SR.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_WAITSUBREQ);
   END IF;
-  -- commit
   COMMIT;
 END;
 /

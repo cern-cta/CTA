@@ -247,10 +247,11 @@ BEGIN
            AND DiskServer.hwOnline = 1
            AND DC.status = dconst.DISKCOPY_VALID;
         IF varNbCopies = 0 THEN
-          -- find out whether this file is already being recalled
-          SELECT count(*) INTO varWasRecalled FROM RecallJob WHERE castorfile = cfId AND ROWNUM < 2;
+          -- find out whether this file is already being recalled from this tape
+          SELECT count(*) INTO varWasRecalled FROM RecallJob WHERE castorfile = cfId AND vid != varRepackVID;
           IF varWasRecalled = 0 THEN
-            -- trigger recall
+            -- trigger recall: if we have dual copy files, this may trigger a second recall,
+            -- which will race with the first as it happens for user-driven recalls
             triggerRepackRecall(cfId, segment.fileid, nsHostName, segment.blockid,
                                 segment.fseq, segment.copyNb, varEuid, varEgid,
                                 varRecallGroupId, svcClassId, varRepackVID, segment.segSize,
