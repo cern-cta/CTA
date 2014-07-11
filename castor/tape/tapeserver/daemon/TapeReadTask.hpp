@@ -177,7 +177,6 @@ public:
     //mark the block cancelled and push it (plus signal the end)
      mb->markAsCancelled();
      m_fifo.pushDataBlock(mb);
-     m_fifo.pushDataBlock(NULL);
   }
 private:
   /**
