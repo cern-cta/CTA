@@ -98,7 +98,7 @@ template <class placeHolder> class TaskWatchDog : private castor::tape::threadin
   void startThread(){
     start();
   }
-  void stopThread(){
+  void stopAndWaitThread(){
     m_stopFlag.set();
     wait();
   }

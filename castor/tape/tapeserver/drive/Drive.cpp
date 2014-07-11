@@ -903,7 +903,7 @@ void drives::FakeDrive::spaceFileMarksForward(size_t count)  {
     if(!m_tape[i].compare(filemark)) countdown--;
   }
   if(countdown) {
-    throw Exception("Failed FakeDrive::spaceFileMarksForward");
+    throw castor::exception::Errnum(EIO, "Failed FakeDrive::spaceFileMarksForward");
   }
   m_current_position = i; //EOT side of the filemark
 }

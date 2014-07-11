@@ -207,10 +207,6 @@ private:
         }
         m_tsr.tapeMountedForRead();
         m_stats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
-        //start the threading and ask to initiate the protocol with the tapeserverd
-        // TODO: move up so this thread is the same as others (if we still need it)
-        m_watchdog.startThread();
-        
         // Then we will loop on the tasks as they get from 
         // the task injector
         std::auto_ptr<TapeReadTask> task;
@@ -231,7 +227,6 @@ private:
             throw castor::exception::Exception ("Session corrupted: exiting task execution loop in TapeReadSingleThread. Cleanup will follow.");
           }
         }
-        m_watchdog.stopThread();
       }
       // The session completed successfully, and the cleaner (unmount) executed
       // at the end of the previous block. Log the results.

@@ -213,6 +213,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeRead(log::LogC
     if (rti.synchronousInjection()) {
       // We got something to recall. Time to start the machinery
       trst.setWaitForInstructionsTime(timer.secs());
+      watchdog.startThread();
       trst.startThreads();
       dwtp.startThreads();
       rrp.startThreads();
@@ -227,6 +228,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeRead(log::LogC
       dwtp.waitThreads();
       trst.waitThreads();
       tsr.waitThreads();
+      watchdog.stopAndWaitThread();
       return trst.getHardwareStatus();
     } else {
       // Just log this was an empty mount and that's it. The memory management

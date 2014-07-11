@@ -101,7 +101,7 @@ namespace castor {
         /**
          * Checks the hdr1
          * @param hdr1: the hdr1 header of the current file
-         * @param fileInfo: the Information structure of the current file
+         * @param filetoRecall: the Information structure of the current file
          * @param volId: the volume id of the tape in the drive
          */
         static void checkHDR1(const HDR1 &hdr1,
@@ -111,7 +111,7 @@ namespace castor {
         /**
          * Checks the uhl1
          * @param uhl1: the uhl1 header of the current file
-         * @param fileInfo: the Information structure of the current file
+         * @param fileToRecall: the Information structure of the current file
          */
         static void checkUHL1(const UHL1 &uhl1, 
           const castor::tape::tapegateway::FileToRecallStruct &fileToRecall)
