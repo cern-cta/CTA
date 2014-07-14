@@ -235,55 +235,19 @@ private:
       }
       // The session completed successfully, and the cleaner (unmount) executed
       // at the end of the previous block. Log the results.
-      double sessionTime = totalTimer.secs();
       log::ScopedParamContainer params(m_logContext);
-      params.add("mountTime", m_stats.mountTime)
-            .add("positionTime", m_stats.positionTime)
-            .add("waitInstructionsTime", m_stats.waitInstructionsTime)
-            .add("checksumingTime", m_stats.checksumingTime)
-            .add("transferTime", m_stats.transferTime)
-            .add("waitFreeMemoryTime", m_stats.waitFreeMemoryTime)
-            .add("waitReportingTime", m_stats.waitReportingTime)
-            .add("flushTime", m_stats.flushTime)
-            .add("unloadTime", m_stats.unloadTime)
-            .add("unmountTime", m_stats.unmountTime)
-            .add("dataVolume", m_stats.dataVolume)
-            .add("headerVolume", m_stats.headerVolume)
-            .add("filesCount", m_stats.filesCount)
-            .add("dataBandwidthMiB/s", 1.0*m_stats.dataVolume
-                    /1024/1024/sessionTime)
-            .add("driveBandwidthMiB/s", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
-                    /1024/1024/sessionTime)
-            .add("sessionTime", sessionTime);
-      m_logContext.log(LOG_INFO, "Completed recall session's tape thread successfully");
+      logWithStat(LOG_INFO, "Completed recall session's tape thread successfully",
+              params,totalTimer.secs());
     } catch(const castor::exception::Exception& e){
       // We end up here because one step failed, be it at mount time, of after
       // failing to position by fseq (this is fatal to a read session as we need
       // to know where we are to proceed to the next file incrementally in fseq
       // positioning mode).
       // This can happen late in the session, so we can still print the stats.
-      double sessionTime = totalTimer.secs();
       log::ScopedParamContainer params(m_logContext);
-      params.add("ErrorMesage", e.getMessageValue())
-            .add("mountTime", m_stats.mountTime)
-            .add("positionTime", m_stats.positionTime)
-            .add("waitInstructionsTime", m_stats.waitInstructionsTime)
-            .add("checksumingTime", m_stats.checksumingTime)
-            .add("transferTime", m_stats.transferTime)
-            .add("waitFreeMemoryTime", m_stats.waitFreeMemoryTime)
-            .add("waitReportingTime", m_stats.waitReportingTime)
-            .add("flushTime", m_stats.flushTime)
-            .add("unloadTime", m_stats.unloadTime)
-            .add("unmountTime", m_stats.unmountTime)
-            .add("dataVolume", m_stats.dataVolume)
-            .add("headerVolume", m_stats.headerVolume)
-            .add("filesCount", m_stats.filesCount)
-            .add("dataBandwidthMiB/s", 1.0*m_stats.dataVolume
-                    /1024/1024/sessionTime)
-            .add("driveBandwidthMiB/s", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
-                    /1024/1024/sessionTime)
-            .add("sessionTime", sessionTime);
-      m_logContext.log(LOG_ERR, "Tape read thread had to be halted because of an error.");
+      params.add("ErrorMesage", e.getMessageValue());
+      logWithStat(LOG_ERR, "Tape read thread had to be halted because of an error",
+              params,totalTimer.secs());
       // Flush the remaining tasks to cleanly exit.
       while(1){
         TapeReadTask* task=m_tasks.pop();
@@ -294,6 +258,34 @@ private:
         delete task;
       }
     }
+  }
+
+  /**
+   * Log msg with the given level, Session time is the time taken by the action 
+   * @param level
+   * @param msg
+   * @param sessionTime
+   */
+  void logWithStat(int level,const std::string& msg,log::ScopedParamContainer& params,double sessionTime){
+    params.add("mountTime", m_stats.mountTime)
+          .add("positionTime", m_stats.positionTime)
+          .add("waitInstructionsTime", m_stats.waitInstructionsTime)
+          .add("checksumingTime", m_stats.checksumingTime)
+          .add("transferTime", m_stats.transferTime)
+          .add("waitFreeMemoryTime", m_stats.waitFreeMemoryTime)
+          .add("waitReportingTime", m_stats.waitReportingTime)
+          .add("flushTime", m_stats.flushTime)
+          .add("unloadTime", m_stats.unloadTime)
+          .add("unmountTime", m_stats.unmountTime)
+          .add("dataVolume", m_stats.dataVolume)
+          .add("headerVolume", m_stats.headerVolume)
+          .add("filesCount", m_stats.filesCount)
+          .add("dataBandwidthMiB/s", 1.0*m_stats.dataVolume
+                                     /1024/1024/sessionTime)
+          .add("driveBandwidthMiB/s", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
+                                     /1024/1024/sessionTime)
+          .add("sessionTime", sessionTime);
+          m_logContext.log(level,msg);
   }
   
   /**
