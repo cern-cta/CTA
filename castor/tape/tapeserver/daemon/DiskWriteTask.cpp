@@ -66,8 +66,8 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
             LogContext::ScopedParam(lc, Param("failed_Status", mb->m_failed))
           };
           tape::utils::suppresUnusedVariable(sp);
-          lc.log(LOG_ERR,"Failed to read from tape");
-          throw castor::tape::Exception("Failed to read from tape");
+          lc.log(LOG_ERR,mb->m_errorMsg);
+          throw castor::tape::Exception(mb->m_errorMsg);
         }
         mb->m_payload.write(ourFile);
         checksum = mb->m_payload.adler32(checksum);

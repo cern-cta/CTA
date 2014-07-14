@@ -82,6 +82,7 @@ public:
     m_failed=false;
     m_cancelled=false;
     m_payload.reset();
+    m_errorMsg="";
   }
   /** Unique memory block id */
   const int m_memoryBlockId;
@@ -111,6 +112,7 @@ public:
    previous failure. */
   bool m_cancelled;
  
+  std::string m_errorMsg;
 };
 
 }
