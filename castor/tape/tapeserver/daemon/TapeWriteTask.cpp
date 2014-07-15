@@ -68,7 +68,9 @@ namespace daemon {
     // stats to the session's.
     SessionStats localStats;
     utils::Timer localTime;
+    
     unsigned long ckSum = Payload::zeroAdler32();
+    
     int blockId  = 0;
     try {
       //we first check here to not even try to move the tape  if a previous task has failed
@@ -88,20 +90,27 @@ namespace daemon {
         MemBlock* const mb = m_fifo.popDataBlock();
         localStats.waitDataTime += timer.secs(utils::Timer::resetCounter);
         AutoReleaseBlock<MigrationMemoryManager> releaser(mb,m_memManager);
-        
+        //----------------------------deal with errors--------------------------
         if(m_fileToMigrate->fileid() != static_cast<unsigned int>(mb->m_fileid)
-                         || blockId != mb->m_fileBlock  || mb->m_failed ){
+                         || blockId != mb->m_fileBlock  || mb->isFailed() ){
           LogContext::ScopedParam sp[]={
             LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
             LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
             LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
-            LogContext::ScopedParam(lc, Param("failed_Status", mb->m_failed))
+            LogContext::ScopedParam(lc, Param("failed_Status", mb->isFailed()))
           };
           tape::utils::suppresUnusedVariable(sp);
-          lc.log(LOG_ERR,"Failed to read from disk");
-          throw castor::tape::Exception("Failed to read from disk");
+          std::string errorMsg;
+          if(mb->isFailed()){
+            errorMsg=mb->errorMsg();
+          }
+          else{
+            errorMsg="Mistmatch between expected and received filed or blockid";
+          }
+          lc.log(LOG_ERR,errorMsg);
+          throw castor::tape::Exception(errorMsg);
         }
-
+        //----------------------------end deal with errors-----------------------
         ckSum =  mb->m_payload.adler32(ckSum);
         localStats.checksumingTime += timer.secs(utils::Timer::resetCounter);
         mb->m_payload.write(*output);

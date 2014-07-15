@@ -50,25 +50,34 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
     while(1) {
       if(MemBlock* const mb = m_fifo.pop()) {
         AutoReleaseBlock<RecallMemoryManager> releaser(mb,m_memManager);
-        if(mb->m_cancelled) {
-          // If the tape side got cancelled, we report nothing and count
+        if(mb->isCanceled()) {
+          // If the tape side got canceled, we report nothing and count
           // it as a success.
-          lc.log(LOG_DEBUG, "File transfer cancelled");
+          lc.log(LOG_DEBUG, "File transfer canceled");
           return true;
         }
+        //----------------------------deal with errors--------------------------
         if(m_recallingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
-                || blockId != mb->m_fileBlock  || mb->m_failed ){
+                || blockId != mb->m_fileBlock  || mb->isFailed() ){
           LogContext::ScopedParam sp[]={
             LogContext::ScopedParam(lc, Param("expected_NSFILEID",m_recallingFile->fileid())),
             LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
             LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
             LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
-            LogContext::ScopedParam(lc, Param("failed_Status", mb->m_failed))
+            LogContext::ScopedParam(lc, Param("failed_Status", mb->isFailed()))
           };
           tape::utils::suppresUnusedVariable(sp);
-          lc.log(LOG_ERR,mb->m_errorMsg);
-          throw castor::tape::Exception(mb->m_errorMsg);
+          std::string errorMsg;
+          if(mb->isFailed()){
+            errorMsg=mb->errorMsg();
+          }
+          else{
+            errorMsg="Mistmatch between expected and received filed or blockid";
+          }
+          lc.log(LOG_ERR,errorMsg);
+          throw castor::tape::Exception(errorMsg);
         }
+        //----------------------------end deal with errors-----------------------
         mb->m_payload.write(ourFile);
         checksum = mb->m_payload.adler32(checksum);
         blockId++;

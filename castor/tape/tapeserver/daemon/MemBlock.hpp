@@ -37,6 +37,38 @@ namespace daemon {
  * Individual memory block with metadata
  */
 class MemBlock {
+  
+  struct AlterationContext{
+    //provide an enumation of type, thus we can 
+    //overload the constructor on those types
+    struct Failed_t{};
+    static Failed_t Failed ;
+    
+    struct Cancelled_t{}; 
+    static Cancelled_t Cancelled;
+    
+    /** Flag indicating to the receiver that the file read failed */
+    bool m_failed;
+    
+    /** Flag indicating that the transfer was cancelled, usually due to a 
+     previous failure. */
+    bool m_cancelled;
+    
+    /**
+     * in case of error, the error message 
+     */
+    std::string m_errorMsg;
+    
+    int m_errorCode;
+    
+    AlterationContext(const std::string& msg,int errorCode,Failed_t):
+    m_failed(true),m_cancelled(false),m_errorMsg(msg),m_errorCode(errorCode){}
+    
+    AlterationContext(Cancelled_t):
+    m_failed(false),m_cancelled(true),m_errorMsg(""),m_errorCode(0){}
+  };
+  
+  std::auto_ptr<AlterationContext> m_context;
 public:
   /**
    * COnstrucor 
@@ -48,25 +80,42 @@ public:
     reset();
   }
   
+  std::string errorMsg() const {
+    if(m_context.get()) {
+      return m_context->m_errorMsg;
+    }
+
+    throw castor::exception::Exception("Error Context is not set ="
+            " no error message to give");
+  }
+    
+  bool isFailed() const {
+    return m_context.get() && m_context->m_failed;
+  }
+  
+  bool isCanceled() const {
+    return m_context.get() && m_context->m_cancelled;
+  }
+    
   /**
    * Mark this block as failed ie 
    * m_failed is true, m_fileBlock and m_tapeFileBlock are set at -1
    * Other members do not change
    */
-  void markAsFailed(){
-    m_failed = true;
+  void markAsFailed(const std::string msg,int errCode){
+    m_context.reset(new AlterationContext(msg,errCode,AlterationContext::Failed));
     m_fileBlock = -1;
     m_tapeFileBlock = -1;
   }
   /**
-   * Mark the block as cancelled: this indicates the writer thread that
+   * Mark the block as canceled: this indicates the writer thread that
    * the read was skipped due to previous, unrelated errors, and that this
    * file will not be processed at all (and hence should not be reported about).
    * This is mainly used for the tape read case, when positioning is confused
    * (when positioning by fSeq, there's nothing we can do).
    */
   void markAsCancelled(){
-    m_cancelled = true;
+    m_context.reset(new AlterationContext(AlterationContext::Cancelled));
     m_fileBlock = -1;
     m_tapeFileBlock = -1;
   }
@@ -79,10 +128,11 @@ public:
     m_fileBlock = -1;
     m_fSeq = -1;
     m_tapeFileBlock = -1;
-    m_failed=false;
-    m_cancelled=false;
     m_payload.reset();
-    m_errorMsg="";
+    
+    //delete the previous m_context (if allocated) 
+    //and set the new one to NULL
+    m_context.reset();
   }
   /** Unique memory block id */
   const int m_memoryBlockId;
@@ -105,14 +155,6 @@ public:
   /** Size of the tape blocks, allowing sanity checks on the disk write side in recalls */
   int m_tapeBlockSize;
   
-  /** Flag indicating to the receiver that the file read failed */
-  bool m_failed;
-  
-  /** Flag indicating that the transfer was cancelled, usually due to a 
-   previous failure. */
-  bool m_cancelled;
- 
-  std::string m_errorMsg;
 };
 
 }

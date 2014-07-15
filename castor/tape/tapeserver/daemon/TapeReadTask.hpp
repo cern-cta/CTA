@@ -163,7 +163,7 @@ public:
       
       // mb might or might not be allocated at this point, but 
       // reportErrorToDiskTask will deal with the allocation if required.
-      reportErrorToDiskTask(ex.getMessageValue(),mb);
+      reportErrorToDiskTask(ex.getMessageValue(),ex.code(),mb);
     } //end of catch
     watchdog.fileFinished();
   }
@@ -181,9 +181,10 @@ public:
 private:
   /**
    * Do the actual report to the disk write task
-   * @param mb We assume that mb is a valid mem block
+   * @param errorMsg The error message we will give to the client
+   * @param mb The mem block we will use
    */
-  void reportErrorToDiskTask(const std::string& msg,MemBlock* mb = NULL){
+  void reportErrorToDiskTask(const std::string& msg,int code,MemBlock* mb = NULL){
     //If we are not provided with a block, allocate it and
     // fill it up
     if (!mb) {
@@ -192,8 +193,7 @@ private:
       mb->m_fileid = m_fileToRecall->fileid();
     }
     //mark the block failed and push it (plus signal the end)
-     mb->markAsFailed();
-     mb->m_errorMsg=msg;
+     mb->markAsFailed(msg,code);
      m_fifo.pushDataBlock(mb);
      m_fifo.pushDataBlock(NULL);
    }
