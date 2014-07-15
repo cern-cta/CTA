@@ -234,16 +234,16 @@ bool ClientSimulator::processOneRequest()
       m_receivedChecksums[(*i)->fseq()] = (*i)->checksum();
     }
     return true; // The end of session is not signalled here
-  } catch (std::bad_cast) {}
+  } catch (std::bad_cast&) {}
   
   // Final case: end of session.
   // We expect with tape EndNotification or EndNotificationErrorReport
   try {
     (void)dynamic_cast<tapegateway::EndNotification &> (*obj);
-  } catch (std::bad_cast) {
+  } catch (std::bad_cast&) {
     try  {
       (void)dynamic_cast<tapegateway::EndNotificationErrorReport &> (*obj);
-    } catch (std::bad_cast) {
+    } catch (std::bad_cast&) {
       std::stringstream oss;
       oss <<
         "Expected a tapegateway::EndNotification or tapegateway::EndNotificationErrorReport, got " << typeid (msg).name();

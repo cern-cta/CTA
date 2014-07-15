@@ -106,7 +106,7 @@ public:
     size_t readSize;
     try {
       readSize = from.read(m_data + m_size, from.getBlockSize());
-    } catch (castor::tape::tapeFile::EndOfFile) {
+    } catch (castor::tape::tapeFile::EndOfFile&) {
       throw castor::tape::exceptions::EndOfFile("In castor::tape::tapeserver::daemon::Payload::append: reached end of file");
     }
     m_size += readSize;

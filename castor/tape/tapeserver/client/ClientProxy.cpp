@@ -184,7 +184,7 @@ RequestReport &transactionReport)
     // some compilers (at least clang) which complain that the return value 
     // of the cast is not used.
     (void)dynamic_cast<tapegateway::NotificationAcknowledge &>(*ack.get());
-  } catch (std::bad_cast) {
+  } catch (std::bad_cast&) {
     throw UnexpectedResponse(ack.get(), 
         "Unexpected response when reporting end of session");
   }
@@ -218,7 +218,7 @@ const std::string & errorMsg, int errorCode, RequestReport &transactionReport)
     // some compilers (at least clang) which complain that the return value 
     // of the cast is not used.
     (void)dynamic_cast<tapegateway::NotificationAcknowledge &>(*ack.get());
-  } catch (std::bad_cast) {
+  } catch (std::bad_cast&) {
     throw UnexpectedResponse(ack.get(), 
         "Unexpected response when reporting end of session");
   }
@@ -252,14 +252,14 @@ uint64_t files, uint64_t bytes, RequestReport& report)
     } else {
       return NULL;
     }
-  } catch (std::bad_cast) {}
+  } catch (std::bad_cast&) {}
   // 3b) Try again with NoMoreFiles (and this time failure is fatal)
   try {
     // As in reportEndOfSession, we are only interested in receiving a 
     // NoMoreFiles message. (void) for picky compilers
     (void)dynamic_cast<tapegateway::NoMoreFiles &>(*resp);
     return NULL;
-  } catch (std::bad_cast) {
+  } catch (std::bad_cast&) {
     throw UnexpectedResponse(resp.get(),
         "Unexpected response to FilesToMigrateListRequest in getFilesToMigrate");
   }
@@ -292,7 +292,7 @@ tapegateway::FileMigrationReportList & migrationReport,
     // NotificationAcknowledge message. (void) for picky compilers
     (void)dynamic_cast<tapegateway::NotificationAcknowledge &>(*resp);
     return;
-  } catch (std::bad_cast) {}
+  } catch (std::bad_cast&) {}
   // 3b) Handle the end notification error report and turn it into a bare
   // tape::exception
   try {
@@ -302,7 +302,7 @@ tapegateway::FileMigrationReportList & migrationReport,
     mess << "End notification report: errorMessage=\""
         << err.errorMessage() << "\" errorCode=" << err.errorCode();
     throw castor::tape::Exception(mess.str());
-  } catch (std::bad_cast) {
+  } catch (std::bad_cast&) {
     throw UnexpectedResponse(resp.get(),
         "Unexpected response to FileMigrationReportList in reportMigrationResults");
   }
@@ -335,14 +335,14 @@ uint64_t files, uint64_t bytes, RequestReport& report)
     } else {
       return NULL;
     }
-  } catch (std::bad_cast) {}
+  } catch (std::bad_cast&) {}
   // 3b) Try again with NoMoreFiles (and this time failure is fatal)
   try {
     // As in reportEndOfSession, we are only interested in receiving a 
     // NoMoreFiles message. (void) for picky compilers
     (void)dynamic_cast<tapegateway::NoMoreFiles &>(*resp);
     return NULL;
-  } catch (std::bad_cast) {
+  } catch (std::bad_cast&) {
     throw UnexpectedResponse(resp.get(),
         "Unexpected response to FilesToRecallListRequest in getFilesToRecall");
   }
@@ -369,7 +369,7 @@ RequestReport& report) {
     // NotificationAcknowledge message. (void) for picky compilers
     (void)dynamic_cast<tapegateway::NotificationAcknowledge &>(*resp);
     return;
-  } catch (std::bad_cast) {}
+  } catch (std::bad_cast&) {}
   // 3b) Handle the end notification error report and turn it into a bare
   // tape::exception
   try {
@@ -379,7 +379,7 @@ RequestReport& report) {
     mess << "End notification report: errorMessage=\""
         << err.errorMessage() << "\" errorCode=" << err.errorCode();
     throw castor::tape::Exception(mess.str());
-  } catch (std::bad_cast) {
+  } catch (std::bad_cast&) {
     throw UnexpectedResponse(resp.get(),
         "Unexpected response to FileRecallReportList in reportRecallResults");
   }
