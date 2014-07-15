@@ -1,5 +1,4 @@
 /******************************************************************************
- *                      SessionStats.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -27,6 +26,7 @@
 namespace castor {
 namespace tape {
 namespace tapeserver {
+namespace daemon {
   /**
    * Structure holding the timers and stats for the tape session. We use doubles, 
    * for time and all measurements are in seconds or uint64_t for bytes.
@@ -34,37 +34,52 @@ namespace tapeserver {
   struct SessionStats {
     /** Mounting time, in seconds */
     double mountTime;
+    
     /** Cumulated positioning time, in seconds. */
     double positionTime;
+    
     /** Cumulated time spent computing checksums */
     double checksumingTime;
+    
     /** Cumulated time spent transfering data with the drive (for both data and headers). */
     double transferTime;
+    
     /** Cumulated time spent flushing */
     double flushTime;
+    
     /** Unload time, in seconds. */
     double unloadTime;
+    
     /** Unmount time, in seconds. */
     double unmountTime;
+    
     /** Cumulated time spent waiting for data blocks. */
     double waitDataTime;
+    
     /** Cumulated time spent waiting for free memory. */
     double waitFreeMemoryTime;
+    
     /** Cumulated time spent by the tape thread waiting for a task. */
     double waitInstructionsTime;
+    
     /** Cumulated time spent reporting */
     double waitReportingTime;
+    
     /** Cumulated data volume (actual payload), in bytes. */
     uint64_t dataVolume;
+    
     /** Cumulated space used by file headers. */
     uint64_t headerVolume;
+    
     /** Count of files actually transfered in the session. */
     uint64_t filesCount;
+    
     /** Constructor: all defaults are zero */
     SessionStats():  mountTime(0.0), positionTime(0.0), checksumingTime(0.0),
     transferTime(0.0), flushTime(0.0), unloadTime(0.0), unmountTime(0.0),
     waitDataTime(0.0), waitFreeMemoryTime(0.0), waitInstructionsTime(0.0),
     waitReportingTime(0.0), dataVolume(0), headerVolume(0), filesCount(0) {}
+    
     /** Accumulate contents of another stats block */
     void add(const SessionStats& other) {
       mountTime += other.mountTime;
@@ -83,6 +98,5 @@ namespace tapeserver {
       filesCount += other.filesCount;
     }
   };
-}
-}
-}
+  
+}}}}
