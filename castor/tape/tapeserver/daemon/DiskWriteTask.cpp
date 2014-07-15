@@ -57,8 +57,10 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
           lc.log(LOG_DEBUG, "File transfer canceled");
           return true;
         }
+        
+        //will throw (thus exiting the loop) if something is wrong
         checkErrors(mb,blockId,lc);
-        //----------------------------end deal with errors-----------------------
+
         mb->m_payload.write(ourFile);
         checksum = mb->m_payload.adler32(checksum);
         blockId++;

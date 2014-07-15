@@ -92,6 +92,7 @@ namespace daemon {
         localStats.waitDataTime += timer.secs(utils::Timer::resetCounter);
         AutoReleaseBlock<MigrationMemoryManager> releaser(mb,m_memManager);
         
+        //will throw (thus exiting the loop) if something is wrong
         checkErrors(mb,blockId,lc);
         
         ckSum =  mb->m_payload.adler32(ckSum);
