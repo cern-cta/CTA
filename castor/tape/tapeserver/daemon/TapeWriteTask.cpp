@@ -82,7 +82,7 @@ namespace daemon {
       //try to open the session
       std::auto_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       localStats.transferTime += timer.secs(utils::Timer::resetCounter);
-      localStats.headerVolume += (3*80);
+      localStats.headerVolume += SessionStats::headerVolumePerFile;
       while(!m_fifo.finished()) {
 
         //if someone screw somewhere else, we stop
@@ -109,7 +109,7 @@ namespace daemon {
       //put the trailer
       output->close();
       localStats.transferTime += timer.secs(utils::Timer::resetCounter);
-      localStats.headerVolume += (3*80);
+      localStats.headerVolume += SessionStats::headerVolumePerFile;
       localStats.filesCount ++;
       reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum);
       localStats.waitReportingTime += timer.secs(utils::Timer::resetCounter);

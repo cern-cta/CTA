@@ -74,6 +74,8 @@ namespace daemon {
     /** Count of files actually transfered in the session. */
     uint64_t filesCount;
     
+    static const uint64_t headerVolumePerFile = 3*80;
+    
     /** Constructor: all defaults are zero */
     SessionStats():  mountTime(0.0), positionTime(0.0), checksumingTime(0.0),
     transferTime(0.0), flushTime(0.0), unloadTime(0.0), unmountTime(0.0),
