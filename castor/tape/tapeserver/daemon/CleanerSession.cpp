@@ -65,7 +65,7 @@ int castor::tape::tapeserver::daemon::CleanerSession::clean(const std::string &v
   }
   
   //here we check if the drive contains a tape: if not, there's nothing to clean
-  bool driveHasTapeInPlace = drive->hasTapeInPlace();  
+  bool driveHasTapeInPlace = drive->hasTapeInPlace();
   if(driveHasTapeInPlace) { //a tape is still mounted in the drive      
     castor::tape::tapeFile::VOL1 vol1;
     try {   
@@ -91,13 +91,23 @@ int castor::tape::tapeserver::daemon::CleanerSession::clean(const std::string &v
       return 1; //Tells caller to put the drive down
     }
     try {
-      drive->unloadTape();
+      // We implement the same policy as with the tape sessions: 
+      // if the librarySlot parameter is "manual", do nothing.
+      if (m_driveConfig.librarySlot != "manual") {
+        drive->unloadTape();
+        m_log(LOG_INFO, "Cleaner session: Tape unloaded");
+      } else {
+        m_log(LOG_INFO, "Cleaner session: Tape NOT unloaded (manual mode)");
+      }
     } catch (castor::exception::Exception &ex) {
       log::Param params[] = {log::Param("message", ex.getMessage().str())};
       m_log(LOG_INFO, "Cleaner session could not unload the tape. Will still try to unmount it in case it is already unloaded.", params);
     }
     try {
       m_rmc.unmountTape(vol1.getVSN(), m_driveConfig.librarySlot);
+      m_log(LOG_INFO, m_driveConfig.librarySlot != "manual"? 
+        "Cleaner session: unmounted tape":
+        "Cleaner session: tape NOT unmounted (manual mode)");
     } catch(castor::exception::Exception &ne) {
       castor::exception::Exception ex;
       ex.getMessage() << "Cleaner session could not unmount the tape. Giving up now. Reason: " << ne.getMessage().str();
