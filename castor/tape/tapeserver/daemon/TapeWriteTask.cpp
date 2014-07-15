@@ -113,30 +113,10 @@ namespace daemon {
       localStats.filesCount ++;
       reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum);
       localStats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
-      // Log the successful transfer
-      double fileTime = localTime.secs();
-      log::ScopedParamContainer params(lc);
-      params.add("transferTime", localStats.transferTime)
-            .add("checksumingTime",localStats.checksumingTime)
-            .add("waitDataTime",localStats.waitDataTime)
-            .add("waitReportingTime",localStats.waitReportingTime)
-            .add("dataVolume",localStats.dataVolume)
-            .add("headerVolume",localStats.headerVolume)
-            .add("totalTime", fileTime)
-            .add("driveTransferSpeedMiB/s",
-                    (localStats.dataVolume+localStats.headerVolume)
-                     /1024/1024
-                     /localStats.transferTime)
-            .add("payloadTransferSpeedMB/s",
-                     1.0*localStats.dataVolume/1024/1024/fileTime)
-            .add("fileSize",m_fileToMigrate->fileSize())
-            .add("fileid",m_fileToMigrate->fileid())
-            .add("fseq",m_fileToMigrate->fseq())
-            .add("fileTransactionId",m_fileToMigrate->fileTransactionId())
-            .add("lastKnownFilename",m_fileToMigrate->lastKnownFilename())
-            .add("lastModificationTime",m_fileToMigrate->lastModificationTime());
-      lc.log(LOG_INFO, "File successfully transmitted to drive");
-      // Add the local counts to the session's
+      // Log the successful transfer      
+      logWithStats(LOG_INFO, "File successfully transmitted to drive",
+              localTime.secs(),localStats,lc);
+     // Add the local counts to the session's
       stats.add(localStats);
     } 
     catch(const castor::tape::exceptions::ErrorFlag&){
@@ -256,6 +236,33 @@ namespace daemon {
       throw  castor::tape::exceptions::ErrorFlag();
     }
   }
+   
+   void TapeWriteTask::logWithStats(int level, const std::string& msg,
+   double fileTime,SessionStats& localStats,log::LogContext& lc) const{
+     log::ScopedParamContainer params(lc);
+     params.add("transferTime", localStats.transferTime)
+           .add("checksumingTime",localStats.checksumingTime)
+           .add("waitDataTime",localStats.waitDataTime)
+           .add("waitReportingTime",localStats.waitReportingTime)
+           .add("dataVolume",localStats.dataVolume)
+           .add("headerVolume",localStats.headerVolume)
+           .add("totalTime", fileTime)
+           .add("driveTransferSpeedMiB/s",
+                   (localStats.dataVolume+localStats.headerVolume)
+           /1024/1024
+           /localStats.transferTime)
+           .add("payloadTransferSpeedMB/s",
+                   1.0*localStats.dataVolume/1024/1024/fileTime)
+           .add("fileSize",m_fileToMigrate->fileSize())
+           .add("fileid",m_fileToMigrate->fileid())
+           .add("fseq",m_fileToMigrate->fseq())
+           .add("fileTransactionId",m_fileToMigrate->fileTransactionId())
+           .add("lastKnownFilename",m_fileToMigrate->lastKnownFilename())
+           .add("lastModificationTime",m_fileToMigrate->lastModificationTime());
+     
+     lc.log(level, msg);
+
+   }
 }}}}
 
 

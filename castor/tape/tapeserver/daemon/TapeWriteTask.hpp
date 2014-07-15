@@ -41,6 +41,7 @@ namespace daemon {
 
   class MigrationReportPacker;
   class Memblock;
+  class SessionStats;
 /**
  * The TapeWriteFileTask is responsible to write a single file onto tape as part of a migration
  * session. Being a consumer of memory blocks, it inherits from the DataConsumer class. It also
@@ -95,6 +96,13 @@ public:
    */
   void circulateMemBlocks();
 private:
+  /**
+   * Log  all localStats' stats + fileTime + m_fileToMigrate's parameters
+   * into lc with msg at the given level
+   */
+  void logWithStats(int level, const std::string& msg,
+   double fileTime,SessionStats& localStats,log::LogContext& lc) const;
+     
   /**
    *Throw an exception if  m_errorFlag is set
    */
