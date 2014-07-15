@@ -40,7 +40,7 @@ namespace tapeserver {
 namespace daemon {
 
   class MigrationReportPacker;
-  
+  class Memblock;
 /**
  * The TapeWriteFileTask is responsible to write a single file onto tape as part of a migration
  * session. Being a consumer of memory blocks, it inherits from the DataConsumer class. It also
@@ -95,12 +95,19 @@ public:
    */
   void circulateMemBlocks();
 private:
-    void hasAnotherTaskTailed() const {
-    //if a task has signaled an error, we stop our job
-    if(m_errorFlag){
-      throw  castor::tape::exceptions::ErrorFlag();
-    }
-  }
+  /**
+   *Throw an exception if  m_errorFlag is set
+   */
+  void hasAnotherTaskTailed() const ;
+  
+  /**
+   * This function will check the consistency of the mem block and 
+   * throw exception is something goes wrong
+   * @param mb The mem block to check
+   * @param blockId The block id the mem blopck should be at
+   * @param lc FOr logging
+   */
+  void checkErrors(MemBlock* mb,int blockId,castor::log::LogContext& lc);
     
   /**
    * Function in charge of opening the WriteFile for m_fileToMigrate

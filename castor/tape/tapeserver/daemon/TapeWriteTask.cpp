@@ -32,6 +32,7 @@
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/SessionStats.hpp"
+#include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 
 namespace castor {
 namespace tape {
@@ -90,32 +91,16 @@ namespace daemon {
         MemBlock* const mb = m_fifo.popDataBlock();
         localStats.waitDataTime += timer.secs(utils::Timer::resetCounter);
         AutoReleaseBlock<MigrationMemoryManager> releaser(mb,m_memManager);
-        //----------------------------deal with errors--------------------------
-        if(m_fileToMigrate->fileid() != static_cast<unsigned int>(mb->m_fileid)
-                         || blockId != mb->m_fileBlock  || mb->isFailed() ){
-          LogContext::ScopedParam sp[]={
-            LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
-            LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
-            LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
-            LogContext::ScopedParam(lc, Param("failed_Status", mb->isFailed()))
-          };
-          tape::utils::suppresUnusedVariable(sp);
-          std::string errorMsg;
-          if(mb->isFailed()){
-            errorMsg=mb->errorMsg();
-          }
-          else{
-            errorMsg="Mistmatch between expected and received filed or blockid";
-          }
-          lc.log(LOG_ERR,errorMsg);
-          throw castor::tape::Exception(errorMsg);
-        }
-        //----------------------------end deal with errors-----------------------
+        
+        checkErrors(mb,blockId,lc);
+        
         ckSum =  mb->m_payload.adler32(ckSum);
         localStats.checksumingTime += timer.secs(utils::Timer::resetCounter);
         mb->m_payload.write(*output);
+        
         localStats.transferTime += timer.secs(utils::Timer::resetCounter);
         localStats.dataVolume += mb->m_payload.size();
+        
         ++blockId;
       }
       
@@ -191,7 +176,34 @@ namespace daemon {
   MemBlock * TapeWriteTask::getFreeBlock() { 
     return m_fifo.getFreeBlock(); 
   }
-  
+//------------------------------------------------------------------------------
+// checkErrors
+//------------------------------------------------------------------------------  
+  void TapeWriteTask::checkErrors(MemBlock* mb,int blockId,castor::log::LogContext& lc){
+    using namespace castor::log;
+    if(m_fileToMigrate->fileid() != static_cast<unsigned int>(mb->m_fileid)
+            || blockId != mb->m_fileBlock  || mb->isFailed() ){
+      LogContext::ScopedParam sp[]={
+        LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
+        LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
+        LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
+        LogContext::ScopedParam(lc, Param("failed_Status", mb->isFailed()))
+      };
+      tape::utils::suppresUnusedVariable(sp);
+      std::string errorMsg;
+      int errCode;
+      if(mb->isFailed()){
+        errorMsg=mb->errorMsg();
+        errCode=mb->errorCode();
+      }
+      else{
+        errorMsg="Mistmatch between expected and received filed or blockid";
+        errCode=SEINTERNAL;
+      }
+      lc.log(LOG_ERR,errorMsg);
+      throw castor::exception::Exception(errCode,errorMsg);
+    }
+  }
 //------------------------------------------------------------------------------
 // pushDataBlock
 //------------------------------------------------------------------------------   
@@ -234,6 +246,15 @@ namespace daemon {
 //        watchdog.notify();
      }
    }
+//------------------------------------------------------------------------------
+// hasAnotherTaskTailed
+//------------------------------------------------------------------------------      
+   void TapeWriteTask::hasAnotherTaskTailed() const {
+    //if a task has signaled an error, we stop our job
+    if(m_errorFlag){
+      throw  castor::tape::exceptions::ErrorFlag();
+    }
+  }
 }}}}
 
 

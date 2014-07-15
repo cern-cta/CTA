@@ -88,7 +88,14 @@ public:
     throw castor::exception::Exception("Error Context is not set ="
             " no error message to give");
   }
-    
+  int errorCode() const {
+    if(m_context.get()) {
+      return m_context->m_errorCode;
+    }
+
+    throw castor::exception::Exception("Error Context is not set ="
+            " no error code to give");
+  }
   bool isFailed() const {
     return m_context.get() && m_context->m_failed;
   }

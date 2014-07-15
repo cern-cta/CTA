@@ -44,7 +44,7 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-  
+  class MemBlock;
 /**
  * The DiskWriteFileTask is responsible to write a single file onto disk as part of a recall
  * session. Being a consumer of memory blocks, it inherits from the DataConsumer class. It also
@@ -82,8 +82,17 @@ public:
   virtual ~DiskWriteTask();
   
 private:
-
+  /**
+   * This function will check the consistency of the mem block and 
+   * throw exception is something goes wrong
+   * @param mb The mem block to check
+   * @param blockId The block id the mem blopck should be at
+   * @param lc FOr logging
+   */
+  void checkErrors(MemBlock* mb,int blockId,castor::log::LogContext& lc);
+  
   void releaseAllBlock();
+  
   /**
    * The fifo containing the memory blocks holding data to be written to disk
    */

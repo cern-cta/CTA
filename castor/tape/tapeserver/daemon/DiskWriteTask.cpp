@@ -23,7 +23,8 @@
 
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
-
+#include "castor/tape/tapeserver/daemon/MemBlock.hpp"
+#include "castor/log/LogContext.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -56,34 +57,15 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
           lc.log(LOG_DEBUG, "File transfer canceled");
           return true;
         }
-        //----------------------------deal with errors--------------------------
-        if(m_recallingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
-                || blockId != mb->m_fileBlock  || mb->isFailed() ){
-          LogContext::ScopedParam sp[]={
-            LogContext::ScopedParam(lc, Param("expected_NSFILEID",m_recallingFile->fileid())),
-            LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
-            LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
-            LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
-            LogContext::ScopedParam(lc, Param("failed_Status", mb->isFailed()))
-          };
-          tape::utils::suppresUnusedVariable(sp);
-          std::string errorMsg;
-          if(mb->isFailed()){
-            errorMsg=mb->errorMsg();
-          }
-          else{
-            errorMsg="Mistmatch between expected and received filed or blockid";
-          }
-          lc.log(LOG_ERR,errorMsg);
-          throw castor::tape::Exception(errorMsg);
-        }
+        checkErrors(mb,blockId,lc);
         //----------------------------end deal with errors-----------------------
         mb->m_payload.write(ourFile);
         checksum = mb->m_payload.adler32(checksum);
         blockId++;
-      }
-      else 
+      } //end if block non NULL
+      else {        
         break;
+      }
     } //end of while(1)
     lc.log(LOG_DEBUG, "File successfully transfered.");
     reporter.reportCompletedJob(*m_recallingFile,checksum);
@@ -140,6 +122,35 @@ void DiskWriteTask::releaseAllBlock(){
       break;
   }
 }
+
+//------------------------------------------------------------------------------
+// checkErrors
+//------------------------------------------------------------------------------  
+  void DiskWriteTask::checkErrors(MemBlock* mb,int blockId,castor::log::LogContext& lc){
+    using namespace castor::log;
+    if(m_recallingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
+            || blockId != mb->m_fileBlock  || mb->isFailed() ){
+      LogContext::ScopedParam sp[]={
+        LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
+        LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
+        LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
+        LogContext::ScopedParam(lc, Param("failed_Status", mb->isFailed()))
+      };
+      tape::utils::suppresUnusedVariable(sp);
+      std::string errorMsg;
+      int errCode;
+      if(mb->isFailed()){
+        errorMsg=mb->errorMsg();
+        errCode=mb->errorCode();
+      }
+      else{
+        errorMsg="Mistmatch between expected and received filed or blockid";
+        errCode=SEINTERNAL;
+      }
+      lc.log(LOG_ERR,errorMsg);
+      throw castor::exception::Exception(errCode,errorMsg);
+    }
+  }
 
 }}}}
 
