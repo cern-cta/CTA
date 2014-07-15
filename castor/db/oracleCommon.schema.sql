@@ -116,7 +116,7 @@ CREATE DATABASE LINK remotens
 INSERT INTO CastorConfig
   VALUES ('general', 'owner', sys_context('USERENV', 'CURRENT_USER'), 'The database owner of the schema');
 INSERT INTO CastorConfig
-  VALUES ('cleaning', 'terminatedRequestsTimeout', '120', 'Maximum timeout for successful and failed requests in hours');
+  VALUES ('cleaning', 'failedRequestsTimeout', '168', 'Maximum timeout before removing failed requests from the database in hours');
 INSERT INTO CastorConfig
   VALUES ('cleaning', 'outOfDateStageOutDCsTimeout', '72', 'Timeout for STAGEOUT diskCopies in hours');
 INSERT INTO CastorConfig

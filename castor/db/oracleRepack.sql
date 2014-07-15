@@ -252,10 +252,11 @@ BEGIN
                           WHERE DiskCopy.dataPool = DiskServer.DataPool
                             AND DiskServer.hwOnline = 1));
         IF varNbCopies = 0 THEN
-          -- find out whether this file is already being recalled
-          SELECT count(*) INTO varWasRecalled FROM RecallJob WHERE castorfile = cfId AND ROWNUM < 2;
+          -- find out whether this file is already being recalled from this tape
+          SELECT count(*) INTO varWasRecalled FROM RecallJob WHERE castorfile = cfId AND vid != varRepackVID;
           IF varWasRecalled = 0 THEN
-            -- trigger recall
+            -- trigger recall: if we have dual copy files, this may trigger a second recall,
+            -- which will race with the first as it happens for user-driven recalls
             triggerRepackRecall(cfId, segment.fileid, nsHostName, segment.blockid,
                                 segment.fseq, segment.copyNb, varEuid, varEgid,
                                 varRecallGroupId, svcClassId, varRepackVID, segment.segSize,
@@ -542,23 +543,23 @@ END;
 
 /* PL/SQL procedure called when a repack request is over: see archiveSubReq */
 CREATE OR REPLACE PROCEDURE handleEndOfRepack(inReqId INTEGER) AS
-  nbLeftSegs INTEGER;
+  varNbLeftSegs INTEGER;
+  varStartTime NUMBER;
+  varReqUuid VARCHAR2(40);
+  varVID VARCHAR2(10);
 BEGIN
-  -- check if any segment is left in the original tape
-  SELECT 1 INTO nbLeftSegs FROM Cns_seg_metadata@RemoteNS
-   WHERE vid = (SELECT repackVID FROM StageRepackRequest WHERE id = inReqId)
-     AND ROWNUM < 2;
-  -- we found at least one segment, final status is FAILED
+  -- check how many segments are left in the original tape
+  SELECT count(*) INTO varNbLeftSegs FROM Cns_seg_metadata@RemoteNS
+   WHERE vid = (SELECT repackVID FROM StageRepackRequest WHERE id = inReqId);
+  -- update request
   UPDATE StageRepackRequest
-     SET status = tconst.REPACK_FAILED,
+     SET status = CASE varNbLeftSegs WHEN 0 THEN tconst.REPACK_FINISHED ELSE tconst.REPACK_FAILED END,
          lastModificationTime = getTime()
-   WHERE id = inReqId;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- no segments found, repack was successful
-  UPDATE StageRepackRequest
-     SET status = tconst.REPACK_FINISHED,
-         lastModificationTime = getTime()
-   WHERE id = inReqId;
+   WHERE id = inReqId
+  RETURNING creationTime, reqId, repackVID INTO varStartTime, varReqUuid, varVID;
+  -- log successful or unsuccessful completion
+  logToDLF(varReqUuid, dlf.LVL_SYSTEM, CASE varNbLeftSegs WHEN 0 THEN dlf.REPACK_COMPLETED ELSE dlf.REPACK_FAILED END, 0, '',
+    'repackd', 'TPVID=' || varVID || ' nbLeftSegments=' || TO_CHAR(varNbLeftSegs) || ' elapsedTime=' || TO_CHAR(TRUNC(getTime() - varStartTime)));
 END;
 /
 

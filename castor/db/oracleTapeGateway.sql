@@ -904,7 +904,6 @@ BEGIN
      WHERE SR.castorFile = inCfId
        AND SR.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_WAITSUBREQ);
   END IF;
-  -- commit
   COMMIT;
 END;
 /
@@ -1227,7 +1226,7 @@ BEGIN
       END IF;
     ELSE
       -- log "startRecallMounts: not allowed to start new recall mount. Maximum nb of drives has been reached"
-      logToDLF(NULL, dlf.LVL_DEBUG, dlf.RECMOUNT_NOACTION_NODRIVE, 0, '',
+      logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECMOUNT_NOACTION_NODRIVE, 0, '',
                'tapegatewayd', 'recallGroup=' || rg.name);
     END IF;
     COMMIT;

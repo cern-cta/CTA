@@ -60,7 +60,7 @@ try:
                nvl(sum(mj.filesize), 0) total_size,
                sum((case when mj.status = 1 then mj.filesize else 0 end)) size_migrating,
                (select count(*) from migrationmount mm where mm.tapepool = tp.id) migrations,
-               (select count(*) from migrationmount mm where mm.tapepool = tp.id and mm.status in (2, 3)) migrations_queued,
+               (select count(*) from migrationmount mm where mm.tapepool = tp.id and mm.status = 2) migrations_queued,
                (select count(*) from migrationmount mm where mm.tapepool = tp.id and mm.status = 3) migrations_running,
                nvl(min(gettime() - mj.creationtime), 0) min_age,
                nvl(max(gettime() - mj.creationtime), 0) max_age
