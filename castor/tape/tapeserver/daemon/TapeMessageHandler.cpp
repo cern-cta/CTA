@@ -98,7 +98,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::fillPollFd(
 bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
   const zmq_pollitem_t &fd) {
   checkSocket(fd);
-  m_log(LOG_INFO,"handling event in TapeMessageHandler");
+  m_log(LOG_DEBUG,"handling event in TapeMessageHandler");
   messages::Header header; 
   
   try{
@@ -168,7 +168,7 @@ castor::messages::Header castor::tape::tapeserver::daemon::TapeMessageHandler::b
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchEvent(
   messages::Header& header) {
-  m_log(LOG_INFO,"dispatching  event in TapeMessageHandler");
+  m_log(LOG_DEBUG,"dispatching  event in TapeMessageHandler");
   tape::utils::ZmqMsg bodyBlob;
   m_socket.recv(&bodyBlob.getZmqMsg());
   
@@ -217,7 +217,7 @@ const castor::messages::Header& header, const castor::messages::Heartbeat& body)
   
   std::vector<log::Param> param;
   param.push_back(log::Param("bytesMoved",body.bytesmoved()));
-  m_log(LOG_INFO,"IT IS ALIVE",param);
+  m_log(LOG_DEBUG,"IT IS ALIVE",param);
   
   sendSuccessReplyToClient();
 }
