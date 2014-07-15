@@ -59,6 +59,9 @@ class MemBlock {
      */
     std::string m_errorMsg;
     
+    /**
+     * in case of error, the error message 
+     */
     int m_errorCode;
     
     AlterationContext(const std::string& msg,int errorCode,Failed_t):
@@ -80,6 +83,11 @@ public:
     reset();
   }
   
+  /**
+   * Get the error message from the context, 
+   * Throw an exception if there is no context
+   * @return 
+   */
   std::string errorMsg() const {
     if(m_context.get()) {
       return m_context->m_errorMsg;
@@ -88,6 +96,12 @@ public:
     throw castor::exception::Exception("Error Context is not set ="
             " no error message to give");
   }
+  
+  /**
+   * Get the error code from the context, 
+   * Throw an exception if there is no context
+   * @return 
+   */
   int errorCode() const {
     if(m_context.get()) {
       return m_context->m_errorCode;
@@ -96,10 +110,19 @@ public:
     throw castor::exception::Exception("Error Context is not set ="
             " no error code to give");
   }
+  
+  /**
+   * Return true if the block has been marked as failed 
+   * @return 
+   */
   bool isFailed() const {
     return m_context.get() && m_context->m_failed;
   }
   
+  /**
+   * Return true if the block has been marked as canceled 
+   * @return 
+   */
   bool isCanceled() const {
     return m_context.get() && m_context->m_cancelled;
   }
