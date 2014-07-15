@@ -53,7 +53,11 @@ public:
   
   BlockingQueue(){}
   ~BlockingQueue() {}
-
+  
+  /**
+   * Copy the concent of e and push into the queue
+   * @param e
+   */
   void push(const C& e) {
     {
       MutexLocker ml(&m_mutex);
@@ -62,7 +66,9 @@ public:
     m_sem.release();
   }
   
-  ///Return the next value of the queue and remove it
+  /**
+   * Return the next value of the queue and remove it
+   */
   C pop() {
     m_sem.acquire();
     return popCriticalSection();
@@ -81,24 +87,34 @@ public:
     return ret;
   }
   
-  ///return the number of elements currently in the queue
+  /**
+   * return the number of elements currently in the queue
+   */
   size_t size() const { 
     MutexLocker ml(&m_mutex);
     return m_queue.size();
   }
   
 private:  
-  /// holds data of the queue
+  /** 
+   * holds data of the queue 
+   */
   std::queue<C> m_queue;
   
-  ///Used for blocking a consumer thread as long as the queue is empty 
+  /**
+   * Used for blocking a consumer thread as long as the queue is empty 
+   */
   Semaphore m_sem;
   
-  ///used for locking-operation thus providing thread-safety
+  /**
+   * used for locking-operation thus providing thread-safety
+   */
   mutable Mutex m_mutex;
 
-  ///Thread and exception safe pop. Optionally atomically extracts the size 
-  // of the queue after pop
+  /**
+   * Thread and exception safe pop. Optionally atomically extracts the size 
+   * of the queue after pop 
+   */
   C popCriticalSection(size_t * sz = NULL) {
     MutexLocker ml(&m_mutex);
     C ret = m_queue.front();

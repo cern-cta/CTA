@@ -36,22 +36,73 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-
+/**
+ * Templated class for watching tape read or write operation
+ */
 template <class placeHolder> class TaskWatchDog : private castor::tape::threading::Thread{
   typedef typename ReportPackerInterface<placeHolder>::FileStruct FileStruct;
-  
+
+  /*
+   *  Number of blocks we moved since the last update. Has to be atomic because it is 
+   *  updated from the outside 
+   */
   castor::tape::threading::AtomicCounter<uint64_t> m_nbOfMemblocksMoved;
-  timeval m_previousReportTime;
-  castor::tape::threading::AtomicVariable<timeval> m_previousNotifiedTime;
-  const double m_periodToReport; //in second
-  const double m_stuckPeriod; //in second
-  castor::tape::threading::AtomicFlag m_stopFlag;
-  messages::TapeserverProxy& m_initialProcess;
-  ReportPackerInterface<placeHolder>& m_reportPacker;
-  FileStruct m_file;
-  bool m_fileBeingMoved;
-  log::LogContext m_lc;
   
+  /*
+   *  Utility member to send heartbeat notifications at a given period.
+   */  
+  timeval m_previousReportTime;
+  
+  /*
+   *  When was the last time we have been notified by the tape working thread
+   */
+  castor::tape::threading::AtomicVariable<timeval> m_previousNotifiedTime;
+  
+  /*
+   * How often to we send heartbeat notifications (in second)
+   * Currently hard coded in the destructor 
+   */
+  const double m_periodToReport; 
+  
+  /*
+   * How long to we have to wait before saying we are stuck (in second)
+   * Currently hard coded in the destructor 
+   */
+  const double m_stuckPeriod; 
+  
+  /*
+   *  Atomic flag to stop the thread's loop
+   */
+  castor::tape::threading::AtomicFlag m_stopFlag;
+  
+  /*
+   *  The proxy that will receive or heartbeat notifications
+   */
+  messages::TapeserverProxy& m_initialProcess;
+  
+  /*
+   *  An interace on the report packer for sending  a message to the client if we 
+   *  were to be stuck
+   */
+  ReportPackerInterface<placeHolder>& m_reportPacker;
+  
+  /*
+   *  The file we are operating 
+   */
+  FileStruct m_file;
+  
+  /*
+   *  Is the system at _this very moment_ reading or writing on tape
+   */
+  bool m_fileBeingMoved;
+  /*
+   * Logging system  
+   */
+  log::LogContext m_lc;
+
+  /**
+   * Thread;s loop
+   */
   void run(){
     timeval currentTime;
     while(!m_stopFlag) {
@@ -59,6 +110,7 @@ template <class placeHolder> class TaskWatchDog : private castor::tape::threadin
       
       timeval diffTimeStuck = castor::utils::timevalAbsDiff(currentTime,m_previousNotifiedTime);
       double diffTimeStuckd = castor::utils::timevalToDouble(diffTimeStuck);
+      
       if(diffTimeStuckd>m_stuckPeriod && m_fileBeingMoved){
         m_reportPacker.reportStuckOn(m_file);
         break;
@@ -76,12 +128,23 @@ template <class placeHolder> class TaskWatchDog : private castor::tape::threadin
       }
     }
   }
+  
+  /*
+   * 
+   */
   void updateStuckTime(){
     timeval tmpTime;
     castor::utils::getTimeOfDay(&tmpTime);
     m_previousNotifiedTime=tmpTime;
   }
   public:
+    
+  /**
+   * Constructor
+   * @param initialProcess The proxy we use for sending heartbeat 
+   * @param reportPacker 
+   * @param lc To log the events
+   */
   TaskWatchDog(messages::TapeserverProxy& initialProcess,
          ReportPackerInterface<placeHolder>& reportPacker ,log::LogContext lc): 
   m_nbOfMemblocksMoved(0),m_periodToReport(2),m_stuckPeriod(60*10),
@@ -91,23 +154,45 @@ template <class placeHolder> class TaskWatchDog : private castor::tape::threadin
     castor::utils::getTimeOfDay(&m_previousReportTime);
     updateStuckTime();
   }
+  
+  /**
+   * notify the wtachdog a mem block has been moved
+   */
   void notify(){
     updateStuckTime();
     m_nbOfMemblocksMoved++;
   }
+  
+  /**
+   * Start the thread
+   */
   void startThread(){
     start();
   }
+  
+  /**
+   * Ask tp stop the watchdog thread and join it
+   */
   void stopAndWaitThread(){
     m_stopFlag.set();
     wait();
   }
+  
+  /**
+   * Notify the watchdog which file we are operating
+   * @param file
+   */
    void notifyBeginNewJob(const FileStruct& file){
      m_file=file;
      m_fileBeingMoved=true;
    }
+   
+   /**
+    * Notify the watchdog  we have finished operating on the current file
+    */
     void fileFinished(){
       m_fileBeingMoved=false;
+      m_file=FileStruct();
    }
 };
  

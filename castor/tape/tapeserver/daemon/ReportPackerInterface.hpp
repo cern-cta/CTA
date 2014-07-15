@@ -141,7 +141,12 @@ template <class PlaceHolder> class ReportPackerInterface{
    */
   std::auto_ptr<FileReportList> m_listReports;   
   public:
-    virtual void reportStuckOn(FileStruct& file) =0;
+    
+  /**
+   * Put a message to into the queue to notify we have been stuck on 
+   * the given file 
+   */
+  virtual void reportStuckOn(FileStruct& file) =0;
 };
 
 }}}}
