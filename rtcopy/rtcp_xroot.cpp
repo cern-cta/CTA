@@ -137,7 +137,7 @@ static std::string rtcpToCastorXroot(const char *const rtcpPath) {
            << "castor2fs.pfn2=&"
            << "castor2fs.id=&" 
            << "castor2fs.client_sec_uid=&"
-           << "castor2fs.client.sec_gid=&"
+           << "castor2fs.client_sec_gid=&"
            << "castor2fs.accessop=0&"
            << "castor2fs.exptime=" << exptime << "&"
            << "castor2fs.manager=&"
