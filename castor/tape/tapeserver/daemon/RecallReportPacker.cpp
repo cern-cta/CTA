@@ -219,7 +219,8 @@ void RecallReportPacker::WorkerThread::run(){
                                  m_parent.m_listReports->successfulRecalls().size();
         //If we have enough reports or we are going to end the loop
         //then we flush        
-        if(totalSize >= m_parent.m_reportFilePeriod || rep->goingToEnd() )
+        if(totalSize >= m_parent.m_reportFilePeriod || rep->goingToEnd() ||
+           detail::ReportByFile == m_parent.m_reportBatching)
         {
         
           try{

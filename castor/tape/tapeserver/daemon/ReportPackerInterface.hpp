@@ -66,6 +66,13 @@ namespace detail{
     typedef tapegateway::FileRecalledNotificationStruct FileSuccessStruct;
     typedef tapegateway::FileErrorReportStruct FileErrorStruct;
   };
+  
+  // Enum describing the type of client. Some clients need batched reports,
+  // some prefer reports file by file
+  enum ReportBatching {
+    ReportInBulk,
+    ReportByFile
+  };
 }
  
 /**
@@ -83,8 +90,8 @@ template <class PlaceHolder> class ReportPackerInterface{
   protected:
     virtual ~ReportPackerInterface() {}
     ReportPackerInterface(client::ClientInterface & tg,log::LogContext lc):
-  m_client(tg),m_lc(lc),m_listReports(new FileReportList)
-  {}
+    m_client(tg),m_lc(lc),m_listReports(new FileReportList),
+    m_reportBatching(detail::ReportInBulk) {}
   
   /**
    * Log a set of files independently of the success/failure 
@@ -139,14 +146,24 @@ template <class PlaceHolder> class ReportPackerInterface{
   /** 
    * m_listReports is holding all the report waiting to be processed
    */
-  std::auto_ptr<FileReportList> m_listReports;   
+  std::auto_ptr<FileReportList> m_listReports; 
+  /**
+   * Define how we should report to the client (by file/in bulk).
+   */  
+  enum detail::ReportBatching m_reportBatching;
   public:
-    
+
   /**
    * Put a message to into the queue to notify we have been stuck on 
    * the given file 
    */
   virtual void reportStuckOn(FileStruct& file) =0;
+  
+  /**
+   * Turn off the packing of the reports by the report packer.
+   * This is used for recalls driven by read_tp.
+   */
+  virtual void disableBulk() { m_reportBatching = detail::ReportByFile; }
 };
 
 }}}}

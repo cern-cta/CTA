@@ -187,6 +187,10 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeRead(log::LogC
     RecallReportPacker rrp(m_clientProxy,
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
         lc);
+    // If we talk to a command line client, we do not batch report
+    if (tapegateway::READ_TP == m_volInfo.clientType) {
+      rrp.disableBulk();
+    }
     TaskWatchDog<detail::Recall> watchdog(m_intialProcess,rrp,m_logger);
     
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
