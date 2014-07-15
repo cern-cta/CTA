@@ -36,7 +36,6 @@ add_library(castorTapeServerDaemon
   TapeDaemonMain.cpp
   TapeWriteSingleThread.cpp
   TapeWriteTask.cpp
-  TaskWatchDog.cpp
   VdqmAcceptHandler.cpp
   VdqmConnectionHandler.cpp)
 
