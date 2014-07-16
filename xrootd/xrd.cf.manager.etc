@@ -1,32 +1,60 @@
-################################################################################
+#-------------------------------------------------------------------------------
 # Location of the plugin OFS library to be loaded
-################################################################################
+#-------------------------------------------------------------------------------
 xrootd.fslib /usr/lib64/libxrdxcastor2fs.so.2.1
 xrootd.chksum adler32
-xrd.async off
+xrootd.async off nosf
 xrd.sched mint 16 maxt 512 idle 128
 all.export /
 all.role manager
 all.manager localhost 2131
 oss.fdlimit 16384 32768
-################################################################################
-# Namespace Mapping - don't touch
-################################################################################
-xcastor2.nsmap / /
-xcastor2.fs /
 
-################################################################################
-# Plugin configuration - don't touch
-################################################################################
+#-------------------------------------------------------------------------------
+# Log level which is the same as the one used by syslog. By default it's INFO.
+# The filter will print out log messages only from the specified function.
+#-------------------------------------------------------------------------------
+#xcastor2.loglevel 6
+#xcastor2.debugfilter some_function
+
+#-------------------------------------------------------------------------------
+# Namespace mapping 
+#-------------------------------------------------------------------------------
+xcastor2.nsmap / /
+
+#-------------------------------------------------------------------------------
+# Mapping between paths and svcClasses. The path "/" is considered as the
+# default mapping. SvcClasses need to be separated by commas and at the end 
+# there is the posibility to specify the "nohsm" option. SvcClasses are listed 
+# in order of their priority. The special character "*" means that any svcClass 
+# provided by the client is accepted.
+#-------------------------------------------------------------------------------
+xcastor2.stagermap /castor/cern.ch/dev/  default,dev,diskonly,*   nohsm
+xcastor2.stagermap /                     default
+
+#-------------------------------------------------------------------------------
+# Role map. Map incoming user to new identity.
+#-------------------------------------------------------------------------------
+#xcastor2.role user1 user2
+
+#-------------------------------------------------------------------------------
+# Set the stagerhost which the XRootD daemon contacts. It must be a fully 
+# qualified domain name.
+#-------------------------------------------------------------------------------
+#xcastor2.stagerhost mystager.cern.ch
+
+#-------------------------------------------------------------------------------
+# Plugin configuration
+#-------------------------------------------------------------------------------
 xcastor2.targetport 1095
 xcastor2.capability true
 xcastor2.privatekey /opt/xrootd/keys/key.pem
 xcastor2.tokenlocktime 60
 xcastor2.proc /var/log/xroot/manager
 
-################################################################################
-# Security Plugins
-################################################################################
+#-------------------------------------------------------------------------------
+# Security plugins
+#-------------------------------------------------------------------------------
 xrootd.seclib /usr/lib64/libXrdSec.so
 
 # UNIX authentication
@@ -41,31 +69,10 @@ sec.protocol gsi -crl:1 -cert:/etc/grid-security/xrootd-server/xrootd-server-cer
 # To configure krb5 as the default
 #sec.protbind * only krb5
 
-# configure unix authentication for diskservers to communicate back with the
+# Configure unix authentication for diskservers to communicate back with the
 # redirector. Note: This should really use strong authentication!
 #sec.protbind diskserver.domainname only unix
 
-# configure gsi+krb5 only at CERN
+# Configure gsi+krb5 only at CERN
 #sec.protbind *.cern.ch only krb5 gsi
 
-
-################################################################################
-# Set mapping between paths and svcClasses. The path "/" is considered as the
-# default mapping. The svcClasses need to be separated by commas and at the end 
-# there is the posibility to specify the "nohsm" option. The svcClasses are 
-# listed in order of their priority. The special character "*" means that any
-# svcClass provided by the client is accepted.
-################################################################################
-xcastor2.stagermap /castor/cern.ch/dev/  default,dev,diskonly,*   nohsm
-xcastor2.stagermap /                     default
-
-################################################################################
-# Set the stagerhost which the XRootD daemon contacts. It must be a fully 
-# qualified domain name.
-################################################################################
-xcastor2.stagerhost mystager.cern.ch
-
-################################################################################
-# Log level: INFO by default
-################################################################################
-#xcastor2.loglevel 6
