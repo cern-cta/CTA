@@ -175,14 +175,15 @@ namespace daemon {
       int errCode;
       if(mb->isFailed()){
         errorMsg=mb->errorMsg();
-        errCode=mb->errorCode();
+         //disabled temporarily (see comment in MemBlock)
+        //errCode=mb->errorCode();
       }
       else{
         errorMsg="Mistmatch between expected and received filed or blockid";
         errCode=SEINTERNAL;
       }
       lc.log(LOG_ERR,errorMsg);
-      throw castor::exception::Exception(errCode,errorMsg);
+      throw castor::exception::Exception(errorMsg);
     }
   }
 //------------------------------------------------------------------------------
