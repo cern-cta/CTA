@@ -545,7 +545,7 @@ XrdxCastor2FsFile::open(const char*         path,
   }
 
   // Add the opaque authorization information for the server for read & write
-  XrdxCastor2ServerAcc::AuthzInfo authz;
+  XrdxCastor2Acc::AuthzInfo authz;
   authz.sfn = (char*) origpath;
   authz.pfn1 = (char*) resp_info.mRedirectionPfn1.c_str();
   authz.pfn2 = (char*) resp_info.mRedirectionPfn2.c_str();

@@ -42,9 +42,9 @@ class XrdOucEnv;
 class XrdSecEntity;
 
 //------------------------------------------------------------------------------
-//! Class XrdxCastor2ServerAcc
+//! Class XrdxCastor2Acc
 //------------------------------------------------------------------------------
-class XrdxCastor2ServerAcc: public XrdAccAuthorize, public LogId
+class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
 {
   public:
 
@@ -69,13 +69,13 @@ class XrdxCastor2ServerAcc: public XrdAccAuthorize, public LogId
   //----------------------------------------------------------------------------
   //! Constructor
   //----------------------------------------------------------------------------
-  XrdxCastor2ServerAcc();
+  XrdxCastor2Acc();
 
 
   //----------------------------------------------------------------------------
   //! Destructor
   //----------------------------------------------------------------------------
-  virtual ~XrdxCastor2ServerAcc();
+  virtual ~XrdxCastor2Acc();
 
 
   //--------------------------------------------------------------------------

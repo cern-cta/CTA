@@ -27,7 +27,7 @@
 #include <sstream>
 /*-----------------------------------------------------------------------------*/
 #include "XrdVersion.hh"
-#include "XrdxCastor2ServerAcc.hpp"
+#include "XrdxCastor2Acc.hpp"
 #include "XrdxCastorTiming.hpp"
 /*-----------------------------------------------------------------------------*/
 #include "XrdSec/XrdSecInterface.hh"
@@ -38,8 +38,8 @@
 #include "XrdSys/XrdSysDNS.hh"
 /*-----------------------------------------------------------------------------*/
 
-XrdSysError TkEroute(0, "xCastorServerAcc");
-XrdVERSIONINFO(XrdAccAuthorizeObject, xCastor2ServAcc);
+XrdSysError AccEroute(0, "xCastor2Acc_");
+XrdVERSIONINFO(XrdAccAuthorizeObject, xCastor2Acc);
 
 //------------------------------------------------------------------------------
 // XrdAccAuthorizeObject() is called to obtain an instance of the auth object
@@ -55,28 +55,26 @@ extern "C" XrdAccAuthorize* XrdAccAuthorizeObject(XrdSysLogger* lp,
                                                   const char* cfn,
                                                   const char* parm)
 {
-  TkEroute.SetPrefix("XrdxCastor2ServerAcc::");
-  TkEroute.logger(lp);
-  TkEroute.Say("++++++ (c) 2008 CERN/IT-DM-SMD ",
-               "xCastor2ServerAcc (xCastor File System) v 1.0");
-  XrdAccAuthorize* acc = (XrdAccAuthorize*) new XrdxCastor2ServerAcc();
+  AccEroute.logger(lp);
+  AccEroute.Say("++++++ (c) 2014 CERN/IT-DSS xCastor2Acc v1.0");
+  XrdAccAuthorize* acc = (XrdAccAuthorize*) new XrdxCastor2Acc();
 
   if (!acc)
   {
-    TkEroute.Say("------ xCastor2ServerAcc Allocation Failed!");
+    AccEroute.Say("------ xCastor2Acc allocation failed!");
     return 0;
   }
 
-  if (!(((XrdxCastor2ServerAcc*) acc)->Configure(cfn)) ||
-      (!(((XrdxCastor2ServerAcc*) acc)->Init())))
+  if (!((XrdxCastor2Acc*) acc)->Configure(cfn) ||
+      (!((XrdxCastor2Acc*) acc)->Init()))
   {
-    TkEroute.Say("------ xCastor2ServerAcc initialization failed!");
+    AccEroute.Say("------ xCastor2Acc initialization failed!");
     delete acc;
     return 0;
   }
   else
   {
-    TkEroute.Say("------ xCastor2ServerAcc initialization completed");
+    AccEroute.Say("++++++ xCastor2Acc initialization completed");
     return acc;
   }
 }
@@ -85,7 +83,7 @@ extern "C" XrdAccAuthorize* XrdAccAuthorizeObject(XrdSysLogger* lp,
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-XrdxCastor2ServerAcc::XrdxCastor2ServerAcc():
+XrdxCastor2Acc::XrdxCastor2Acc():
   XrdAccAuthorize(),
   LogId(),
   mAuthCertfile(""),
@@ -102,7 +100,7 @@ XrdxCastor2ServerAcc::XrdxCastor2ServerAcc():
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-XrdxCastor2ServerAcc::~XrdxCastor2ServerAcc()
+XrdxCastor2Acc::~XrdxCastor2Acc()
 { }
 
 
@@ -110,12 +108,12 @@ XrdxCastor2ServerAcc::~XrdxCastor2ServerAcc()
 // Configure the authorisation plugin
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2ServerAcc::Configure(const char* conf_file)
+XrdxCastor2Acc::Configure(const char* conf_file)
 {
   char* var;
   const char* val;
   int  cfgFD, NoGo = 0;
-  XrdOucStream Config(&TkEroute, getenv("XRDINSTANCE"));
+  XrdOucStream Config(&AccEroute, getenv("XRDINSTANCE"));
 
   if (!conf_file || !*conf_file)
   {
@@ -258,7 +256,7 @@ XrdxCastor2ServerAcc::Configure(const char* conf_file)
 // Initalise the plugin - get the public/private keys for signing
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2ServerAcc::Init()
+XrdxCastor2Acc::Init()
 {
   // Read in the public key
   if (!mAuthCertfile.empty())
@@ -322,7 +320,7 @@ XrdxCastor2ServerAcc::Init()
 // Signature with base64 encoding ( hash - sign - encode base64 )
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2ServerAcc::SignBase64(unsigned char* input,
+XrdxCastor2Acc::SignBase64(unsigned char* input,
                                  int inputlen,
                                  std::string& sb64,
                                  int& sb64len)
@@ -397,7 +395,7 @@ XrdxCastor2ServerAcc::SignBase64(unsigned char* input,
 // Verify if the data buffer matches the signature provided in base64buffer
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2ServerAcc::VerifyUnbase64(const char* data,
+XrdxCastor2Acc::VerifyUnbase64(const char* data,
                                      unsigned char* base64buffer,
                                      const char* path)
 {
@@ -479,7 +477,7 @@ XrdxCastor2ServerAcc::VerifyUnbase64(const char* data,
 // Decode opaque information
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2ServerAcc::Decode(const char* opaque, AuthzInfo& authz)
+XrdxCastor2Acc::Decode(const char* opaque, AuthzInfo& authz)
 {
   if (!opaque) return false;
 
@@ -583,7 +581,7 @@ XrdxCastor2ServerAcc::Decode(const char* opaque, AuthzInfo& authz)
 // structure and sign all this with the private key of the server.
 //------------------------------------------------------------------------------
 std::string 
-XrdxCastor2ServerAcc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
+XrdxCastor2Acc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
 {
   // Build authorization token
   std::string token = BuildToken(authz);
@@ -629,7 +627,7 @@ XrdxCastor2ServerAcc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
 // Build the autorization token used for signing
 //------------------------------------------------------------------------------
 std::string 
-XrdxCastor2ServerAcc::BuildToken(const AuthzInfo& authz)
+XrdxCastor2Acc::BuildToken(const AuthzInfo& authz)
 {
   std::ostringstream sstr;
   sstr << authz.sfn
@@ -650,7 +648,7 @@ XrdxCastor2ServerAcc::BuildToken(const AuthzInfo& authz)
 // the specified operation
 //------------------------------------------------------------------------------
 XrdAccPrivs
-XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
+XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
                              const char* path,
                              const Access_Operation oper,
                              XrdOucEnv* Env)
@@ -681,7 +679,7 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
   if (!Env)
   {
     xcastor_err("no opaque information for path=%s", path);
-    TkEroute.Emsg("Access", EIO, "no opaque information for path=", path);
+    AccEroute.Emsg("Access", EIO, "no opaque information for path=", path);
     return XrdAccPriv_None;
   }
   
@@ -691,7 +689,7 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
   
   if (!opaque)
   {
-    TkEroute.Emsg("Access", EIO, "no opaque information for sfn=", path);
+    AccEroute.Emsg("Access", EIO, "no opaque information for sfn=", path);
     return XrdAccPriv_None;
   }
 
@@ -712,11 +710,11 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
   // Decode the authz information from the opaque info
   if (mRequireCapability)
   {
-    XrdxCastor2ServerAcc::AuthzInfo authz;
+    XrdxCastor2Acc::AuthzInfo authz;
 
     if (!Decode(opaque, authz))
     {
-      TkEroute.Emsg("Access", EACCES, "decode access token for sfn=", path);
+      AccEroute.Emsg("Access", EACCES, "decode access token for sfn=", path);
       return XrdAccPriv_None;
     }
     
@@ -725,7 +723,7 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
     
     if (ref_token.empty())
     {
-      TkEroute.Emsg("Access", EACCES, "build reference token for sfn=", path);
+      AccEroute.Emsg("Access", EACCES, "build reference token for sfn=", path);
       return XrdAccPriv_None;
     }
 
@@ -733,7 +731,7 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
     if ((!VerifyUnbase64(ref_token.c_str(), 
                          (unsigned char*)authz.signature.c_str(), path)))
     {
-      TkEroute.Emsg("Access", EACCES, "verify signature in request sfn=", path);
+      AccEroute.Emsg("Access", EACCES, "verify signature in request sfn=", path);
       return XrdAccPriv_None;
     }
 
@@ -743,7 +741,7 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
       // If it does not fit, check that it is a replica location
       if (authz.pfn2.find(authz.pfn1) == std::string::npos)
       {
-        TkEroute.Emsg("Access", EACCES, "give access - the signature was not "
+        AccEroute.Emsg("Access", EACCES, "give access - the signature was not "
                       "provided for this path!");
         return XrdAccPriv_None;
       }
@@ -752,7 +750,7 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity* Entity,
     // Check validity time in authz
     if (authz.exptime < now)
     {
-      TkEroute.Emsg("Access", EACCES, "give access - the signature has expired already!");
+      AccEroute.Emsg("Access", EACCES, "give access - the signature has expired already!");
       return XrdAccPriv_None;
     }
   }

@@ -1,4 +1,4 @@
-%attr(0755,root,root) usr/lib/libxrdxcastor2serveracc.so*
+%attr(0755,root,root) usr/lib/libxrdxcastor2acc.so*
 %attr(0755,root,root) usr/lib/libxrdxcastor2ofs.so*
 %attr(0755,root,root) usr/lib/libxrdxcastor2fs.so*
 %attr(0755,root,root) usr/bin/x2proc

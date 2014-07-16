@@ -34,7 +34,7 @@ set (XRDXCASTOR2FS_LIB_SRC_FILES
   XrdxCastor2FsFile.cpp
   XrdxCastor2FsDirectory.cpp
   XrdxCastor2FsStats.cpp
-  XrdxCastor2ServerAcc.cpp
+  XrdxCastor2Acc.cpp
   XrdxCastor2Stager.cpp
   XrdxCastor2Proc.cpp
   XrdxCastorLogging.cpp
@@ -49,16 +49,16 @@ target_link_libraries (xrdxcastor2fs castorclient castorcommon castorns crypto
 install (TARGETS xrdxcastor2fs DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 ################################################################################
-# Rules to build and install libXrdxCastor2ServerAcc.so
+# Rules to build and install libXrdxCastor2Acc.so
 ################################################################################
-set (XRDXCASTOR2SERVERACC_LIB_SRC_FILES
-  XrdxCastor2ServerAcc.cpp
+set (XRDXCASTOR2ACC_LIB_SRC_FILES
+  XrdxCastor2Acc.cpp
   XrdxCastorLogging.cpp
   XrdxCastorTiming.cpp)
-add_library (xrdxcastor2serveracc SHARED ${XRDXCASTOR2SERVERACC_LIB_SRC_FILES})
-CastorSetLibraryVersions (xrdxcastor2serveracc)
-target_link_libraries (xrdxcastor2serveracc crypto ${UUID_LIB} ${XROOTD_XRDUTILS_LIB})
-install (TARGETS xrdxcastor2serveracc DESTINATION ${CASTOR_DEST_LIB_DIR})
+add_library (xrdxcastor2acc SHARED ${XRDXCASTOR2ACC_LIB_SRC_FILES})
+CastorSetLibraryVersions (xrdxcastor2acc)
+target_link_libraries (xrdxcastor2acc crypto ${UUID_LIB} ${XROOTD_XRDUTILS_LIB})
+install (TARGETS xrdxcastor2acc DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 ################################################################################
 # Rules to build and install libXrdxCastor2Ofs.so

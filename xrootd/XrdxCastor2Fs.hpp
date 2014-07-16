@@ -32,7 +32,7 @@
 #include "XrdSfs/XrdSfsInterface.hh"
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2FsStats.hpp"
-#include "XrdxCastor2ServerAcc.hpp"
+#include "XrdxCastor2Acc.hpp"
 #include "XrdxCastor2FsUFS.hpp"
 /*-----------------------------------------------------------------------------*/
 
@@ -488,7 +488,7 @@ public:
                                 ///< up on a disk server in seconds before the token expires
 
   char* ConfigFN; ///< path to config file
-  XrdxCastor2ServerAcc* mServerAcc; ///< authorization module for token encryption/decryption
+  XrdxCastor2Acc* mServerAcc; ///< authorization module for token encryption/decryption
   std::string mZeroProc; ///< path to a 0-byte file in the proc filesystem
   std::string mSrvTargetPort; ///< xrootd port where redirections go on the OFSs - default is 1094
   long long xCastor2FsDelayRead; ///< if true, all reads get a default delay to come back later

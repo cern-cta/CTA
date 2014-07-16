@@ -18,7 +18,6 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
  * 
  ******************************************************************************/
 

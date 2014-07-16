@@ -87,7 +87,7 @@ XrdSfsFileSystem* XrdSfsGetFileSystem(XrdSfsFileSystem* native_fs,
   gMgr = &myFS;
   // Initialize authorization module ServerAcc used for securing the
   // communication betweend redirector and diskserver
-  gMgr->mServerAcc = (XrdxCastor2ServerAcc*) XrdAccAuthorizeObject(lp, configfn, NULL);
+  gMgr->mServerAcc = (XrdxCastor2Acc*) XrdAccAuthorizeObject(lp, configfn, NULL);
 
   if (!gMgr->mServerAcc)
   {
@@ -2291,7 +2291,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
 
   // We need to specify this if the server was not started with the explicit
   // manager option ... e.g. see XrdOfs. The variable is needed in the
-  // XrdxCastor2ServerAcc to find out which keys are required to be loaded
+  // XrdxCastor2Acc to find out which keys are required to be loaded
   Eroute.Say("=====> all.role: ", role.c_str(), "");
   XrdOucString sTokenLockTime = "";
   sTokenLockTime += msTokenLockTime;
