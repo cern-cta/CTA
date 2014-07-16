@@ -18,12 +18,10 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
-#ifndef __XCASTOR_FSDIRECTORY_HH__
-#define __XCASTOR_FSDIRECTORY_HH__
+#pragma once
 
 /*-----------------------------------------------------------------------------*/
 #include "XrdSfs/XrdSfsInterface.hh"
@@ -60,7 +58,6 @@ public:
   //! @param info opaque information, if any
   //!
   //! @return SFS_OK upon success, otherwise SFS_ERROR
-  //!
   //----------------------------------------------------------------------------
   int open(const char* dirName,
            const XrdSecEntity* client = 0,
@@ -74,7 +71,6 @@ public:
   //!         a null terminated string. Returns a null pointer upon EOF or an
   //!         error. To differentiate the two cases, getErrorInfo will return
   //!         0 upon EOF and an actual error code (i.e., not 0) on error.
-  //!
   //----------------------------------------------------------------------------
   const char* nextEntry();
 
@@ -90,7 +86,6 @@ public:
   //!        with a manual stat() call for the full path, a slow and tedious
   //!        process. The autoStat function significantly reduces overhead by
   //!        automatically providing stat information for the entry read.
-  //!
   //----------------------------------------------------------------------------
   int autoStat(struct stat *buf);
  
@@ -101,7 +96,6 @@ public:
   //! @param cred authentication credentials, if any
   //!
   //! @return SFS_OK upon success and SFS_ERROR upon failure
-  //!
   //----------------------------------------------------------------------------
   int close();
   
@@ -123,5 +117,3 @@ private:
   struct stat* mAutoStat; ///< stat buffer used for bulk dir listing
   
 };
-
-#endif // __XCASTOR_FSDIRECTORY_HH__

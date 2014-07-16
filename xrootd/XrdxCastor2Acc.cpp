@@ -18,7 +18,7 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * 
+ *
  ******************************************************************************/
 
 /*-----------------------------------------------------------------------------*/
@@ -90,11 +90,7 @@ XrdxCastor2Acc::XrdxCastor2Acc():
   mAuthKeyfile(""),
   mRequireCapability(false),
   mAllowLocal(true)
-{
-  Logging::Init();
-  Logging::SetLogPriority(LOG_INFO);
-  xcastor_info("logging configured");
-}
+{ }
 
 
 //------------------------------------------------------------------------------
@@ -281,7 +277,7 @@ XrdxCastor2Acc::Init()
     else
     {
       mPublicKey = X509_get_pubkey(x509public);
-      
+
       if (mPublicKey == NULL)
       {
         xcastor_err("no public key in file:%s", mAuthCertfile.c_str());
@@ -300,11 +296,11 @@ XrdxCastor2Acc::Init()
       xcastor_err("error opening private cert. file:%s", mAuthKeyfile.c_str());
       return false;
     }
-    
+
     // Get private key
     mPrivateKey = PEM_read_PrivateKey(fpkey, NULL, NULL, NULL);
     fclose(fpkey);
-    
+
     if (mPrivateKey == NULL)
     {
       xcastor_err("error accessing private key in file:%s", mAuthKeyfile.c_str());
@@ -412,7 +408,7 @@ XrdxCastor2Acc::VerifyUnbase64(const char* data,
   int modlength;
   int inputlen = strlen((const char*)base64buffer);
   unsigned char* input  = base64buffer;
-    
+
   for (int i = 0; i < (inputlen + 1); i++)
   {
     // Add a '\n' every 64 characters which have been removed to be
@@ -422,35 +418,35 @@ XrdxCastor2Acc::VerifyUnbase64(const char* data,
       modinput[cpcnt] = '\n';
       cpcnt++;
     }
-    
+
     modinput[cpcnt] = input[i];
     cpcnt++;
   }
-  
+
   modinput[cpcnt] = 0;
   modlength = cpcnt - 1;
   b64 = BIO_new(BIO_f_base64());
-  
-  if (!b64) 
+
+  if (!b64)
   {
     xcastor_err("unable to allocate new BIO");
     return false;
   }
-  
+
   bmem = BIO_new_mem_buf(modinput, modlength);
-  
+
   if (!bmem)
   {
     xcastor_err("unable to allocate new mem buf");
     BIO_free_all(b64);
     return false;
   }
-  
+
   bmem = BIO_push(b64, bmem);
   sig_len = BIO_read(bmem, sig_buf, modlength);
   BIO_free_all(bmem);
-  
-  if (sig_len <= 0) 
+
+  if (sig_len <= 0)
   {
     xcastor_err("error while decoding base64 message for path=%s", path);
     return false;
@@ -488,7 +484,7 @@ XrdxCastor2Acc::Decode(const char* opaque, AuthzInfo& authz)
   // Convert the '&' seperated tokens into '\n' seperated tokens for parsing
   tmp_str.replace("&", "\n");
   XrdOucTokenizer authztokens((char*)tmp_str.c_str());
-  
+
   while ((stoken = authztokens.GetLine()))
   {
     XrdOucString token = stoken;
@@ -514,7 +510,7 @@ XrdxCastor2Acc::Decode(const char* opaque, AuthzInfo& authz)
       ntoken++;
       continue;
     }
-    
+
     if (token.beginswith("castor2fs.id="))
     {
       authz.id = (token.c_str() + 13);
@@ -580,12 +576,12 @@ XrdxCastor2Acc::Decode(const char* opaque, AuthzInfo& authz)
 // Build the auhorization token from the information held in the AuthzInfo
 // structure and sign all this with the private key of the server.
 //------------------------------------------------------------------------------
-std::string 
+std::string
 XrdxCastor2Acc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
 {
   // Build authorization token
   std::string token = BuildToken(authz);
-  
+
   if (token.empty())
   {
     xcastor_err("authorization token is empty - nothing to sign");
@@ -619,6 +615,8 @@ XrdxCastor2Acc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
        << "castor2fs.exptime=" << (int)authz.exptime << "&"
        << "castor2fs.signature=" << authz.signature << "&"
        << "castor2fs.manager=" << authz.manager << "&";
+
+  xcastor_debug("opaque_acc=%s", sstr.str().c_str());
   return sstr.str();
 }
 
@@ -626,18 +624,18 @@ XrdxCastor2Acc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
 //------------------------------------------------------------------------------
 // Build the autorization token used for signing
 //------------------------------------------------------------------------------
-std::string 
+std::string
 XrdxCastor2Acc::BuildToken(const AuthzInfo& authz)
 {
   std::ostringstream sstr;
   sstr << authz.sfn
-       << authz.pfn1 
+       << authz.pfn1
        << authz.pfn2
        << authz.id
-       << authz.client_sec_uid 
+       << authz.client_sec_uid
        << authz.client_sec_gid
-       << (int)authz.accessop 
-       << (int)authz.exptime 
+       << (int)authz.accessop
+       << (int)authz.exptime
        << authz.manager;
   return sstr.str();
 }
@@ -654,8 +652,8 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
                              XrdOucEnv* Env)
 {
   xcastor_debug("path=%s, operation=%i", path, oper);
-  
-  // We take care in XrdxCastorOfs::open that a user cannot give a fake 
+
+  // We take care in XrdxCastorOfs::open that a user cannot give a fake
   // opaque to get all permissions!
   if (Env && Env->Get("castor2ofsproc") &&
       (strncmp(Env->Get("castor2ofsproc"), "true", 4) == 0))
@@ -682,11 +680,11 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
     AccEroute.Emsg("Access", EIO, "no opaque information for path=", path);
     return XrdAccPriv_None;
   }
-  
+
   int envlen = 0;
   char* opaque = Env->Env(envlen);
 
-  
+
   if (!opaque)
   {
     AccEroute.Emsg("Access", EIO, "no opaque information for sfn=", path);
@@ -695,7 +693,7 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
 
   xcastor_debug("path=%s, operation=%i, env=%s", path, oper, opaque);
   time_t now = time(NULL);
-  
+
   // This is not nice, but ROOT puts a ? into the opaque string,
   // if there is a user opaque info
   for (unsigned int i = 0; i < strlen(opaque); i++)
@@ -717,10 +715,10 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
       AccEroute.Emsg("Access", EACCES, "decode access token for sfn=", path);
       return XrdAccPriv_None;
     }
-    
+
     // Build the token from the received information
     std::string ref_token = BuildToken(authz);
-    
+
     if (ref_token.empty())
     {
       AccEroute.Emsg("Access", EACCES, "build reference token for sfn=", path);
@@ -728,7 +726,7 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
     }
 
     // Verify the signature of authz information
-    if ((!VerifyUnbase64(ref_token.c_str(), 
+    if ((!VerifyUnbase64(ref_token.c_str(),
                          (unsigned char*)authz.signature.c_str(), path)))
     {
       AccEroute.Emsg("Access", EACCES, "verify signature in request sfn=", path);
@@ -757,4 +755,3 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
 
   return XrdAccPriv_All;
 }
-

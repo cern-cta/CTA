@@ -25,16 +25,20 @@
 #include <pwd.h>
 #include <grp.h>
 /*-----------------------------------------------------------------------------*/
+#include "Cthread_api.h"
+/*-----------------------------------------------------------------------------*/
 #include "XrdVersion.hh"
 #include "XrdOss/XrdOss.hh"
-#include "XrdOuc/XrdOucTList.hh"
 #include "XrdSys/XrdSysError.hh"
 #include "XrdSys/XrdSysDNS.hh"
 #include "XrdSys/XrdSysPlugin.hh"
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdSfs/XrdSfsAio.hh"
 #include "XrdCl/XrdClFileSystem.hh"
+#include "XrdOuc/XrdOucTList.hh"
 #include "XrdOuc/XrdOucStream.hh"
+#include "XrdOfs/XrdOfsTrace.hh"
+#include "XrdOuc/XrdOucTrace.hh"
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2Fs.hpp"
 #include "XrdxCastor2FsFile.hpp"
@@ -43,8 +47,6 @@
 #include "XrdxCastor2Stager.hpp"
 #include "XrdxCastor2FsSecurity.hpp"
 #include "XrdxCastorClient.hpp"
-/*-----------------------------------------------------------------------------*/
-#include "Cthread_api.h"
 /*-----------------------------------------------------------------------------*/
 
 /******************************************************************************/
@@ -62,7 +64,8 @@ XrdOucHash<XrdOucString>* XrdxCastor2Stager::msDelayStore;
 xcastor::XrdxCastorClient* XrdxCastor2Fs::msCastorClient;
 int XrdxCastor2Fs::msTokenLockTime = 5;
 XrdxCastor2Fs* gMgr;
-XrdSysError OfsEroute(0, "xCastor2Fs_");
+XrdSysError OfsEroute(0);
+XrdOucTrace OfsTrace(&OfsEroute);
 XrdVERSIONINFO(XrdSfsGetFileSystem, xCastor2Fs);
 
 //------------------------------------------------------------------------------
@@ -74,6 +77,7 @@ XrdSfsFileSystem* XrdSfsGetFileSystem(XrdSfsFileSystem* native_fs,
                                       const char*       configfn)
 {
   OfsEroute.logger(lp);
+  OfsEroute.SetPrefix("xCastor2Fs_");
   static XrdxCastor2Fs myFS;
   OfsEroute.Say("++++++ (c) 2014 CERN/IT-DSS xCastor2Fs v1.0");
 
@@ -106,6 +110,7 @@ XrdSfsFileSystem* XrdSfsGetFileSystem(XrdSfsFileSystem* native_fs,
 // Constructor
 //------------------------------------------------------------------------------
 XrdxCastor2Fs::XrdxCastor2Fs():
+  XrdSfsFileSystem(),
   LogId(),
   mIssueCapability(false),
   mProc(0),
@@ -128,7 +133,7 @@ XrdxCastor2Fs::Init()
 
   if (!msCastorClient)
   {
-    OfsEroute.Emsg("Config", "failed to create castor client object");
+    OfsEroute.Emsg("Init", "failed to create castor client object");
     return false;
   }
 
@@ -369,7 +374,7 @@ XrdxCastor2Fs::chmod(const char*         path,
                      const XrdSecEntity* client,
                      const char*         info)
 {
-  static const char* epname = "chmod";
+  EPNAME("chmod");
   mode_t acc_mode = Mode & S_IAMB;
   XrdOucEnv chmod_Env(info);
   xcastor_debug("path=%s", path);
@@ -389,7 +394,7 @@ XrdxCastor2Fs::chmod(const char*         path,
   SetIdentity(client);
 
   if (XrdxCastor2FsUFS::Chmod(map_path.c_str(), acc_mode))
-    return XrdxCastor2Fs::Emsg(epname, error, serrno, "change mode on", map_path.c_str());
+    return Emsg(epname, error, serrno, "change mode on", map_path.c_str());
 
   return SFS_OK;
 }
@@ -405,7 +410,7 @@ XrdxCastor2Fs::exists(const char* path,
                       const XrdSecEntity* client,
                       const char* info)
 {
-  static const char* epname = "exists";
+  EPNAME("exists");
   XrdOucEnv exists_Env(info);
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &exists_Env, AOP_Stat, "execute exists", path, error)
@@ -434,7 +439,7 @@ XrdxCastor2Fs::_exists(const char* path,
                        const XrdSecEntity* client,
                        const char* info)
 {
-  static const char* epname = "exists";
+  EPNAME("_exists");
   struct Cns_filestatcs fstat;
   // Set client identity
   SetIdentity(client);
@@ -459,7 +464,7 @@ XrdxCastor2Fs::_exists(const char* path,
   }
 
   // An error occured, return the error info
-  return XrdxCastor2Fs::Emsg(epname, error, serrno, "locate", path);
+  return Emsg(epname, error, serrno, "locate", path);
 }
 
 
@@ -503,7 +508,7 @@ XrdxCastor2Fs::_mkdir(const char* path,
                       const char* info)
 
 {
-  static const char* epname = "mkdir";
+  EPNAME("mkdir");
   mode_t acc_mode = (Mode & S_IAMB) | S_IFDIR;
 
   // Set client identity
@@ -566,7 +571,7 @@ XrdxCastor2Fs::_mkdir(const char* path,
 
   // Perform the actual creation
   if (XrdxCastor2FsUFS::Mkdir(path, acc_mode) && (serrno != EEXIST))
-    return XrdxCastor2Fs::Emsg(epname, error, serrno, "create directory", path);
+    return Emsg(epname, error, serrno, "create directory", path);
 
   // Set acl on directory
   if (client)
@@ -585,7 +590,7 @@ XrdxCastor2Fs::stageprepare(const char*         path,
                             const XrdSecEntity* client,
                             const char*         ininfo)
 {
-  static const char* epname = "stageprepare";
+  EPNAME("stageprepare");
   XrdOucString sinfo = (ininfo ? ininfo : "");
   const char* info = 0;
   int qpos = 0;
@@ -612,7 +617,7 @@ XrdxCastor2Fs::stageprepare(const char*         path,
   struct Cns_filestatcs cstat;
 
   if (XrdxCastor2FsUFS::Statfn(map_path.c_str(), &cstat))
-    return XrdxCastor2Fs::Emsg(epname, error, serrno, "stat", map_path.c_str());
+    return Emsg(epname, error, serrno, "stat", map_path.c_str());
 
   char* val;
   std::string desired_svc = "";
@@ -623,8 +628,8 @@ XrdxCastor2Fs::stageprepare(const char*         path,
   std::string allowed_svc = GetAllowedSvc(map_path.c_str(), desired_svc);
 
   if (allowed_svc.empty())
-    return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "stageprepare - cannot find any"
-                               " valid service class mapping for fn = ", map_path.c_str());
+    return Emsg(epname, error, EINVAL, "stageprepare - cannot find any"
+                " valid service class mapping for fn = ", map_path.c_str());
 
   // Get the allowed service class, preference for the default one
   TIMING("STAGERQUERY", &preparetiming);
@@ -650,7 +655,7 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
                        XrdOucErrInfo&      error,
                        const XrdSecEntity* client)
 {
-  static const char* epname = "prepare";
+  EPNAME("prepare");
   const char* tident = error.getErrUser();
   xcastor::Timing preparetiming("prepare");
   TIMING("START", &preparetiming);
@@ -710,14 +715,14 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
     TIMING("CNSUNLINK", &preparetiming);
 
     if ((!oenv.Get("uid")) || (!oenv.Get("gid")))
-      return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "missing sec uid/gid", map_path.c_str());
+      return Emsg(epname, error, EINVAL, "missing sec uid/gid", map_path.c_str());
 
     xcastor_debug("running rm as uid:%i, gid:%i", oenv.Get("uid"), oenv.Get("gid"));
     // Do the unlink as the authorized user in the open
     XrdxCastor2FsUFS::SetId(atoi(oenv.Get("uid")), atoi(oenv.Get("gid")));
 
     if (XrdxCastor2FsUFS::Unlink(map_path.c_str()))
-      return XrdxCastor2Fs::Emsg(epname, error, serrno, "unlink", map_path.c_str());
+      return Emsg(epname, error, serrno, "unlink", map_path.c_str());
   }
 
   TIMING("END", &preparetiming);
@@ -738,7 +743,7 @@ XrdxCastor2Fs::rem(const char*         path,
                    const XrdSecEntity* client,
                    const char*         info)
 {
-  static const char* epname = "rem";
+  EPNAME("rem");
   xcastor::Timing rmtiming("fileremove");
   TIMING("START", &rmtiming);
   XrdOucEnv env(info);
@@ -774,8 +779,8 @@ XrdxCastor2Fs::rem(const char*         path,
 
     if (allowed_svc.empty())
     {
-      return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "rem - cannot find a valid service "
-                                 "class mapping for fn = ", map_path.c_str());
+      return Emsg(epname, error, EINVAL, "rem - cannot find a valid service "
+                  "class mapping for fn = ", map_path.c_str());
     }
 
     // Here we have the allowed stager/service class setting to issue the stage_rm request
@@ -814,12 +819,12 @@ XrdxCastor2Fs::_rem(const char*         path,
                     XrdOucErrInfo&      error,
                     const char*         /*info*/)
 {
-  static const char* epname = "rem";
+  EPNAME("rem");
   xcastor_debug("path=%s", path);
 
   // Perform the actual deletion
   if (XrdxCastor2FsUFS::Unlink(path))
-    return XrdxCastor2Fs::Emsg(epname, error, serrno, "remove", path);
+    return Emsg(epname, error, serrno, "remove", path);
 
   return SFS_OK;
 }
@@ -834,7 +839,7 @@ XrdxCastor2Fs::remdir(const char* path,
                       const XrdSecEntity* client,
                       const char* info)
 {
-  static const char* epname = "remdir";
+  EPNAME("remdir");
   XrdOucEnv remdir_Env(info);
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &remdir_Env, AOP_Delete, "remove", path, error)
@@ -862,12 +867,12 @@ XrdxCastor2Fs::_remdir(const char* path,
                        const XrdSecEntity* client,
                        const char* /*info*/)
 {
-  static const char* epname = "remdir";
+  EPNAME("_remdir");
   SetIdentity(client);
 
   // Perform the actual deletion
   if (XrdxCastor2FsUFS::Remdir(path))
-    return XrdxCastor2Fs::Emsg(epname, error, serrno, "remove", path);
+    return Emsg(epname, error, serrno, "remove", path);
 
   return SFS_OK;
 }
@@ -885,7 +890,7 @@ XrdxCastor2Fs::rename(const char* old_name,
                       const char* infoN)
 
 {
-  static const char* epname = "rename";
+  EPNAME("rename");
   XrdOucString source, destination;
   XrdOucEnv renameo_Env(infoO);
   XrdOucEnv renamen_Env(infoN);
@@ -922,7 +927,7 @@ XrdxCastor2Fs::rename(const char* old_name,
       size_t npos = oldn.rfind('/');
 
       if (npos == std::string::npos)
-        return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "rename", oldn.c_str());
+        return Emsg(epname, error, EINVAL, "rename", oldn.c_str());
 
       sourcebase = oldn.substr(0, npos);
       // Use XrdOucString for the replace functionality
@@ -946,7 +951,7 @@ XrdxCastor2Fs::rename(const char* old_name,
   }
 
   if (XrdxCastor2FsUFS::Rename(oldn.c_str(), newn.c_str()))
-    return XrdxCastor2Fs::Emsg(epname, error, serrno, "rename", oldn.c_str());
+    return Emsg(epname, error, serrno, "rename", oldn.c_str());
 
   xcastor_debug("namespace rename done: %s => %s", oldn.c_str(), newn.c_str());
   return SFS_OK;
@@ -963,7 +968,7 @@ XrdxCastor2Fs::stat(const char* path,
                     const XrdSecEntity* client,
                     const char* info)
 {
-  static const char* epname = "stat";
+  EPNAME("stat");
   xcastor::Timing stattiming("filestat");
   XrdOucEnv Open_Env(info);
   std::string stage_status = "";
@@ -986,7 +991,7 @@ XrdxCastor2Fs::stat(const char* path,
   struct Cns_filestatcs cstat;
 
   if (XrdxCastor2FsUFS::Statfn(map_path.c_str(), &cstat))
-    return XrdxCastor2Fs::Emsg(epname, error, serrno, "stat", map_path.c_str());
+    return Emsg(epname, error, serrno, "stat", map_path.c_str());
 
   if (!(Open_Env.Get("nostagerquery")))
   {
@@ -1098,7 +1103,7 @@ XrdxCastor2Fs::lstat(const char* path,
                      const XrdSecEntity* client,
                      const char* info)
 {
-  static const char* epname = "lstat";
+  EPNAME("lstat");
   XrdOucEnv lstat_Env(info);
   xcastor::Timing stattiming("filelstat");
   TIMING("START", &stattiming);
@@ -1136,7 +1141,7 @@ XrdxCastor2Fs::lstat(const char* path,
   TIMING("CNSLSTAT", &stattiming);
 
   if (XrdxCastor2FsUFS::Lstatfn(map_path.c_str(), &cstat))
-    return XrdxCastor2Fs::Emsg(epname, error, serrno, "lstat", map_path.c_str());
+    return Emsg(epname, error, serrno, "lstat", map_path.c_str());
 
   if (mProc)
     mStats.IncStat();
@@ -1189,7 +1194,7 @@ XrdxCastor2Fs::readlink(const char* path,
                         const XrdSecEntity* client,
                         const char* info)
 {
-  static const char* epname = "readlink";
+  EPNAME("readlink");
   XrdOucEnv rl_Env(info);
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &rl_Env, AOP_Stat, "readlink", path, error)
@@ -1207,7 +1212,7 @@ XrdxCastor2Fs::readlink(const char* path,
   int nlen;
 
   if ((nlen = XrdxCastor2FsUFS::Readlink(map_path.c_str(), lp, 4096)) == -1)
-    return XrdxCastor2Fs::Emsg(epname, error, serrno, "readlink", map_path.c_str());
+    return Emsg(epname, error, serrno, "readlink", map_path.c_str());
 
   lp[nlen] = 0;
   linkpath = lp;
@@ -1225,7 +1230,7 @@ XrdxCastor2Fs::symlink(const char* path,
                        const XrdSecEntity* client,
                        const char* info)
 {
-  static const char* epname = "symlink";
+  EPNAME("symlink");
   XrdOucEnv sl_Env(info);
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &sl_Env, AOP_Create, "symlink", linkpath, error)
@@ -1254,7 +1259,7 @@ XrdxCastor2Fs::symlink(const char* path,
   }
 
   if (XrdxCastor2FsUFS::Symlink(source.c_str(), destination.c_str()))
-    return XrdxCastor2Fs::Emsg(epname, error, serrno, "symlink", source.c_str());
+    return Emsg(epname, error, serrno, "symlink", source.c_str());
 
   SetAcl(destination.c_str(), client_uid, client_gid, 1);
   return SFS_OK;
@@ -1271,7 +1276,7 @@ XrdxCastor2Fs::access(const char* path,
                       const XrdSecEntity* client,
                       const char* info)
 {
-  static const char* epname = "access";
+  EPNAME("access");
   XrdOucEnv access_Env(info);
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &access_Env, AOP_Stat, "access", path, error)
@@ -1296,7 +1301,7 @@ int XrdxCastor2Fs::utimes(const char* path,
                           const XrdSecEntity* client,
                           const char* info)
 {
-  static const char* epname = "utimes";
+  EPNAME("utimes");
   XrdOucEnv utimes_Env(info);
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &utimes_Env, AOP_Update, "set utimes", path, error)
@@ -1312,7 +1317,7 @@ int XrdxCastor2Fs::utimes(const char* path,
   SetIdentity(client);
 
   if ((XrdxCastor2FsUFS::Utimes(map_path.c_str(), tvp)))
-    return XrdxCastor2Fs::Emsg(epname, error, serrno, "utimes", map_path.c_str());
+    return Emsg(epname, error, serrno, "utimes", map_path.c_str());
 
   return SFS_OK;
 }
@@ -1773,8 +1778,8 @@ XrdxCastor2Fs::chksum(csFunc Func,
                       const XrdSecEntity* client,
                       const char* opaque)
 {
+  EPNAME("chksum");
   xcastor_debug("path=%s", path);
-  static const char* epname = "exists";
   XrdOucEnv chksum_env(opaque);
   AUTHORIZE(client, &chksum_env, AOP_Stat, "chksum", path, error);
   char buff[MAXPATHLEN + 8];
@@ -1833,8 +1838,9 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
 {
   char* var;
   const char* val;
-  int  cfgFD, retc, NoGo = 0;
-  XrdOucStream config_stream(&Eroute, getenv("XRDINSTANCE"));
+  int cfgFD, retc, NoGo = 0;
+  XrdOucEnv myEnv;
+  XrdOucStream config_stream(&Eroute, getenv("XRDINSTANCE"), &myEnv, "=====> ");
   XrdOucString role = "server";
   bool authorize = false;
   XrdOucString auth_lib = ""; ///< path to a possible authorizationn library
@@ -1948,7 +1954,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
             mSrvTargetPort = val;
           }
         }
-        
+
         // Get the debug level
         if (!strncmp("loglevel", var, 8))
         {
@@ -2205,7 +2211,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
                 // the used has not specified any svcClass
                 if ((list_svc.size() == 1) && (*list_svc.begin() == "*"))
                   list_svc.push_front("default");
-                
+
                 std::ostringstream oss;
                 oss << "stagermap: " << stage_path << " => ";
 
@@ -2296,7 +2302,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
   XrdOucString sTokenLockTime = "";
   sTokenLockTime += msTokenLockTime;
   Eroute.Say("=====> xcastor2.tokenlocktime: ", sTokenLockTime.c_str(), "");
-  
+
   // Setup the circular in-memory logging buffer
   XrdOucString unit = "rdr@";
   unit += ManagerId;

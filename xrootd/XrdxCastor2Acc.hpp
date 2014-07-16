@@ -107,8 +107,8 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   //!         by the XRootD headnode
   //----------------------------------------------------------------------------
   std::string GetOpaqueAcc(AuthzInfo& authz, bool doSign);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Indicates whether or not the user/host is permitted access to the
   //! path for the specified operation. The default implementation that is
@@ -125,13 +125,12 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   //! @param env environmental information at the time of the
   //! @param operation as supplied by the path CGI string. This is optional
   //!                  and the pointer may be zero.
-  //!
   //----------------------------------------------------------------------------
   virtual XrdAccPrivs Access(const XrdSecEntity* Entity,
                              const char* path,
                              const Access_Operation oper,
                              XrdOucEnv* Env = 0);
-  
+
 
   //----------------------------------------------------------------------------
   //! Not used
@@ -144,7 +143,7 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   {
     return 0;
   }
-  
+
 
   //----------------------------------------------------------------------------
   //! Check whether the specified operation is permitted. If permitted it
@@ -155,9 +154,10 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   {
     return 0;
   }
-  
+
+
  private:
-  
+
   //----------------------------------------------------------------------------
   //! Build the autorization token used for signing. The token is made up of all
   //! the values of the parameters passed in the opaque information except of
@@ -189,8 +189,8 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
                   int inputlen,
                   std::string& sb64,
                   int& sb64len);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! The reverse of the SignBase64 method. For this to be successful the
   //! hashed value of the data buffer must be the same as the value obtained
@@ -205,8 +205,8 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   bool VerifyUnbase64(const char* data,
                       unsigned char* base64buffer,
                       const char* path);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Decode the opaque information
   //!
@@ -216,8 +216,8 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   //! @return true if decoding successful, otherwise false
   //----------------------------------------------------------------------------
   bool Decode(const char* opaque, AuthzInfo& authz);
-  
-  
+
+
   std::string mAuthCertfile; ///< file name of public key for signature verification
   std::string mAuthKeyfile; ///< file name of private key for signature creation
   bool mRequireCapability; ///< client has to show up with a capability in the
@@ -229,4 +229,3 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   XrdSysMutex mDecodeMutex; ///< mutex for decoding
   XrdSysMutex mEncodeMutex; ///< mutex for encoding
 };
-

@@ -18,20 +18,18 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
-#ifndef __XCASTOR_FSFILE_HH__
-#define __XCASTOR_FSFILE_HH__
-
+#pragma once
 
 /*----------------------------------------------------------------------------*/
 #include "XrdSfs/XrdSfsInterface.hh"
+/*----------------------------------------------------------------------------*/
 #include "XrdxCastorLogging.hpp"
 /*----------------------------------------------------------------------------*/
 
-//! Forward declaration 
+//! Forward declaration
 class XrdSfsAio;
 class XrdSecEntity;
 
@@ -47,8 +45,8 @@ public:
   //! Constructor
   //----------------------------------------------------------------------------
   XrdxCastor2FsFile(const char* user = 0, int MonID = 0);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Destructor
   //----------------------------------------------------------------------------
@@ -74,7 +72,6 @@ public:
   //! @param info opaque information to be used as seen fit
   //!
   //! @return OOSS_OK upon success, otherwise SFS_ERROR is returned
-  //!
   //----------------------------------------------------------------------------
   int open(const char* fileName,
            XrdSfsFileOpenMode openMode,
@@ -87,7 +84,6 @@ public:
   //! Close the file object
   //!
   //! @return SFS_OK upon success and SFS_ERROR upon failure
-  //!
   //----------------------------------------------------------------------------
   int close();
 
@@ -107,7 +103,7 @@ public:
   int getMmap(void** Addr, off_t& Size)
   {
     if (Addr) Addr = 0;
-    
+
     Size = 0;
     return SFS_OK;
   }
@@ -133,7 +129,6 @@ public:
   //!             of bytes that will be read from 'fd'
   //!
   //! @return number of bytes read upon success and SFS_ERROR o/w
-  //!
   //----------------------------------------------------------------------------
   XrdSfsXferSize read(XrdSfsFileOffset offset,
                       char* buff,
@@ -159,13 +154,12 @@ public:
   //!
   //!  Notes: An error return may be delayed until the next write(), close(),
   //!         or sync() call.
-  //!
   //----------------------------------------------------------------------------
   XrdSfsXferSize write(XrdSfsFileOffset offset,
                        const char* buff,
                        XrdSfsXferSize blen);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Write to file - asynchrnous
   //----------------------------------------------------------------------------
@@ -176,7 +170,6 @@ public:
   //! Commit all unwritten bytes to physical media
   //!
   //! @return SFS_OK upon success and SFS_ERROR upon failure
-  //!
   //----------------------------------------------------------------------------
   int sync();
 
@@ -185,15 +178,14 @@ public:
   //! Sync file - async mode
   //----------------------------------------------------------------------------
   int sync(XrdSfsAio* aiop);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Function: Return file status information
   //!
   //! @param buf stat structure to hold the results
   //!
   //! @return SFS_OK upon success and SFS_ERROR upon failure
-  //!
   //----------------------------------------------------------------------------
   int stat(struct stat* buf);
 
@@ -210,7 +202,6 @@ public:
   //!         is larger than the current size of the file, a hole is created
   //!         (i.e., the file is logically extended by filling the extra bytes
   //!         with zeroes).
-  //!
   //----------------------------------------------------------------------------
   int truncate(XrdSfsFileOffset fileOffset);
 
@@ -234,9 +225,7 @@ public:
 
 
 private:
-  
-  int oh; ///< file handler 
-  char* fname; ///< file name 
-};
 
-#endif // __XCASTOR_FSFILE_HH__
+  int oh; ///< file handler
+  char* fname; ///< file name
+};

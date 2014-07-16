@@ -28,12 +28,12 @@
 #include <set>
 #include <map>
 /*-----------------------------------------------------------------------------*/
-#include "XrdAcc/XrdAccAuthorize.hh"
-#include "XrdSfs/XrdSfsInterface.hh"
-/*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2FsStats.hpp"
 #include "XrdxCastor2Acc.hpp"
 #include "XrdxCastor2FsUFS.hpp"
+/*-----------------------------------------------------------------------------*/
+#include "XrdAcc/XrdAccAuthorize.hh"
+#include "XrdSfs/XrdSfsInterface.hh"
 /*-----------------------------------------------------------------------------*/
 
 #define RFIO_NOREDEFINE
@@ -84,7 +84,6 @@ public:
   //! Configure plugin
   //!
   //! @return 0 upon success or non zero otherwise
-  //!
   //----------------------------------------------------------------------------
   virtual int Configure(XrdSysError& fsEroute);
 
@@ -99,7 +98,6 @@ public:
   //! Notification to filesystem when client disconnects
   //!
   //! @param client - client identity
-  //!
   //----------------------------------------------------------------------------
   virtual void Disc(const XrdSecEntity* client = 0);
 
@@ -126,7 +124,6 @@ public:
   //! @param info opaque information, if any
   //!
   //! @return SFS_OK upon success and SFS_ERROR upon failure
-  //!
   //----------------------------------------------------------------------------
   int chmod(const char* Name,
             XrdSfsMode Mode,
@@ -153,7 +150,6 @@ public:
   //!         eInfo should contain results, as follows:
   //!         csCalc/csGet eInfo.message - null terminated string with the checksum
   //!         csSize       eInfo.code    - size of binary checksum value.
-  //!
   //--------------------------------------------------------------------------
   int chksum(csFunc Func,
              const char* csName,
@@ -178,7 +174,6 @@ public:
   //!
   //! @return SFS_OK upon success and SFS_ERROR upon failure
   //! Notes:    When failure occurs, 'file_exists' is not modified.
-  //!
   //----------------------------------------------------------------------------
   int exists(const char* path,
              XrdSfsFileExistence& exists_flag,
@@ -232,7 +227,6 @@ public:
   //! @param info opaque information, if any
   //!
   //! @return SFS_OK upon success and SFS_ERROR upon failure
-  //!
   //----------------------------------------------------------------------------
   int mkdir(const char* dirName,
             XrdSfsMode Mode,
@@ -277,7 +271,6 @@ public:
   //! @param info opaque information, if any
   //!
   //! @return SFS_OK upon success and SFS_ERROR upon failure
-  //!
   //----------------------------------------------------------------------------
   int rem(const char* path,
           XrdOucErrInfo&  out_error,
@@ -294,7 +287,6 @@ public:
   //! @param info opaque information, if any
   //!
   //! @return SFS_OK upon success and SFS_ERROR upon failure
-  //!
   //----------------------------------------------------------------------------
   int _rem(const char* path,
            XrdOucErrInfo& out_error,
@@ -310,7 +302,6 @@ public:
   //! @param info opaque information, if any
   //!
   //! @return SFS_OK upon success and SFS_ERROR upon failure
-  //!
   //----------------------------------------------------------------------------
   int remdir(const char* path,
              XrdOucErrInfo& out_error,
@@ -327,7 +318,6 @@ public:
   //! @param info opaque information, if any
   //!
   //! @return SFS_OK upon success and SFS_ERROR upon failure
-  //!
   //----------------------------------------------------------------------------
   int _remdir(const char* path,
               XrdOucErrInfo& out_error,
@@ -346,7 +336,6 @@ public:
   //! @param infoN new_name opaque information, if any
   //!
   //! @return SFS_OK upon success and SFS_ERROR upon failure
-  //!
   //----------------------------------------------------------------------------
   int rename(const char* old_name,
              const char* new_name,
@@ -366,7 +355,6 @@ public:
   //! @param info opaque information, if any
   //!
   //! @return SFS_OK upon success and SFS_ERROR upon failure
-  //!
   //----------------------------------------------------------------------------
   int stat(const char* path,
            struct stat* buf,
@@ -385,7 +373,6 @@ public:
   //! @param info opaque information, if any
   //!
   //! @return SFS_OK upon success and SFS_ERROR upon failure
-  //!
   //----------------------------------------------------------------------------
   int stat(const char* Name,
            mode_t& mode,
@@ -404,7 +391,6 @@ public:
   //! @param info opaque information, if any
   //!
   //! @return SFS_OK upon success and SFS_ERROR upon failure
-  //!
   //----------------------------------------------------------------------------
   int lstat(const char* path,
             struct stat* buf,
@@ -462,7 +448,6 @@ public:
   //! @param ecode the error code
   //! @param op operation beegin performed
   //! @param tager the taget (e.g. file name )
-  //!
   //----------------------------------------------------------------------------
   static int Emsg(const char* pfx,
                   XrdOucErrInfo& einfo,
@@ -475,7 +460,6 @@ public:
   //! Get stager host value
   //!
   //! @return stager host
-  //!
   //----------------------------------------------------------------------------
   inline const std::string& GetStagerHost() const
   {
@@ -512,7 +496,6 @@ private:
   //! through
   //!
   //! @param host hostaname to be cached
-  //!
   //----------------------------------------------------------------------------
   void CacheDiskServer(const std::string& hostname);
 
@@ -523,7 +506,6 @@ private:
   //! @param hostname hostname to look for in the cache
   //!
   //! @return true if hostname knowns, otherwise false
-  //!
   //----------------------------------------------------------------------------
   bool FindDiskServer(const std::string& hostname);
 
@@ -532,7 +514,6 @@ private:
   //! Set the log level for the manager xrootd server
   //!
   //! @param logLevel interger representing the log level according to syslog
-  //!
   //----------------------------------------------------------------------------
   void SetLogLevel(int logLevel);
 
@@ -544,7 +525,6 @@ private:
   //! @param client client object to be mapped
   //! @param uid found uid mapping for client
   //! @param gid found gid mapping for client
-  //!
   //----------------------------------------------------------------------------
   void GetIdMapping(const XrdSecEntity* client, uid_t& uid, gid_t& gid);
 
@@ -556,7 +536,6 @@ private:
   //! the the calling function like for GetIdMapping.
   //!
   //! @param client client object
-  //!
   //----------------------------------------------------------------------------
   void SetIdentity(const XrdSecEntity* client);
 
@@ -568,7 +547,6 @@ private:
   //! @param uid user uid
   //! @param gid user gid
   //! @param isLink true if file is link
-  //!
   //----------------------------------------------------------------------------
   void SetAcl(const char* path, uid_t uid, gid_t gid, bool isLink);
 
@@ -579,7 +557,6 @@ private:
   //! @param input the initial input path
   //!
   //! @return the mapped path according to the directives in the xrd.cf file
-  //!
   //----------------------------------------------------------------------------
   std::string NsMapping(const std::string& input);
 
@@ -591,7 +568,6 @@ private:
   //! @param svcClass desired service class by the user
   //!
   //! @return allowed service class or empty string if none alowed
-  //!
   //----------------------------------------------------------------------------
   std::string GetAllowedSvc(const char* path,
                             const std::string& desired_svc);
@@ -604,7 +580,6 @@ private:
   //! @param no_hsm true if option set, otherwise false
   //!
   //! @return list of allowed service classes or NULL if none found
-  //!
   //----------------------------------------------------------------------------
   std::list<std::string>* GetAllAllowedSvc(const char* path, bool& no_hsm);
 
@@ -617,7 +592,6 @@ private:
   //! @param msg message to give
   //!
   //! @return number of seconds to stall
-  //!
   //----------------------------------------------------------------------------
   int Stall(XrdOucErrInfo& error, int stime, const char* msg);
 
@@ -632,7 +606,6 @@ private:
   //!        otherwise false for read operations
   //!
   //! @return the delay value specified in seconds
-  //!
   //----------------------------------------------------------------------------
   int64_t GetAdminDelay(XrdOucString& msg, bool isRW);
 
