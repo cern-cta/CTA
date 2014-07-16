@@ -41,7 +41,7 @@ namespace daemon {
  */
 template <class placeHolder> class TaskWatchDog : private castor::tape::threading::Thread{
   typedef typename ReportPackerInterface<placeHolder>::FileStruct FileStruct;
-
+  
   /*
    *  Number of blocks we moved since the last update. Has to be atomic because it is 
    *  updated from the outside 
@@ -60,13 +60,11 @@ template <class placeHolder> class TaskWatchDog : private castor::tape::threadin
   
   /*
    * How often to we send heartbeat notifications (in second)
-   * Currently hard coded in the destructor 
    */
   const double m_periodToReport; 
   
   /*
    * How long to we have to wait before saying we are stuck (in second)
-   * Currently hard coded in the destructor 
    */
   const double m_stuckPeriod; 
   
@@ -141,15 +139,19 @@ template <class placeHolder> class TaskWatchDog : private castor::tape::threadin
     
   /**
    * Constructor
+   * @param periodToReport How often should we report to the mother (in seconds)
+   * @param stuckPeriod  How long do we wait before we say we are stuck on file (in seconds)
    * @param initialProcess The proxy we use for sending heartbeat 
    * @param reportPacker 
    * @param lc To log the events
    */
-  TaskWatchDog(messages::TapeserverProxy& initialProcess,
-         ReportPackerInterface<placeHolder>& reportPacker ,log::LogContext lc): 
-  m_nbOfMemblocksMoved(0),m_periodToReport(2),m_stuckPeriod(60*10),
-          m_initialProcess(initialProcess),m_reportPacker(reportPacker),
-          m_fileBeingMoved(false),m_lc(lc){
+  TaskWatchDog(double periodToReport,double stuckPeriod,
+         messages::TapeserverProxy& initialProcess,
+         ReportPackerInterface<placeHolder>& reportPacker,
+         log::LogContext lc): 
+  m_nbOfMemblocksMoved(0), m_periodToReport(periodToReport),
+  m_stuckPeriod(stuckPeriod), m_initialProcess(initialProcess),
+  m_reportPacker(reportPacker), m_fileBeingMoved(false), m_lc(lc) {
     m_lc.pushOrReplace(log::Param("thread","Watchdog"));
     castor::utils::getTimeOfDay(&m_previousReportTime);
     updateStuckTime();

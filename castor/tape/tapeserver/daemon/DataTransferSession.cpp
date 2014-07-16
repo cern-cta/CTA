@@ -186,7 +186,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeRead(log::LogC
     if (tapegateway::READ_TP == m_volInfo.clientType) {
       rrp.disableBulk();
     }
-    TaskWatchDog<detail::Recall> watchdog(m_intialProcess, rrp , m_log);
+    TaskWatchDog<detail::Recall> watchdog(2,60*10,m_intialProcess,rrp,m_logger);
     
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
     TapeServerReporter tsr(m_intialProcess, m_driveConfig, 
