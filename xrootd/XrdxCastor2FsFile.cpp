@@ -18,7 +18,6 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
@@ -231,8 +230,8 @@ XrdxCastor2FsFile::open(const char*         path,
       // For 0 file size use the dummy "zero" file and don't redirect
       if (buf.filesize == 0)
       {
-        oh = XrdxCastor2FsUFS::Open(gMgr->zeroProc.c_str(), 0, 0);
-        fname = strdup(gMgr->zeroProc.c_str());
+        oh = XrdxCastor2FsUFS::Open(gMgr->mZeroProc.c_str(), 0, 0);
+        fname = strdup(gMgr->mZeroProc.c_str());
         return SFS_OK;
       }
     }
@@ -476,11 +475,11 @@ XrdxCastor2FsFile::open(const char*         path,
     else
     {
       // File is staged somewhere, try to access it through the desired svcClass
-      xcastor_debug("file staged in svc=%s, try to read it through svc=%s",
-                    allowed_svc.c_str(), desired_svc.c_str());
-      
       if (!desired_svc.empty())
         allowed_svc = desired_svc;
+
+      xcastor_debug("file staged in svc=%s, try to read it through svc=%s",
+                    allowed_svc.c_str(), desired_svc.c_str());
     }
       
     // Create structures for request and response and call the get method
@@ -598,7 +597,7 @@ XrdxCastor2FsFile::open(const char*         path,
       resp_info.mRedirectionHost += "createifnotexist=1&";
   }
   
-  int ecode = atoi(gMgr->xCastor2FsTargetPort.c_str());
+  int ecode = atoi(gMgr->mSrvTargetPort.c_str());
   error.setErrInfo(ecode, resp_info.mRedirectionHost.c_str());
   TIMING("AUTHZ", &opentiming);
 

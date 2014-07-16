@@ -18,7 +18,6 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
@@ -490,11 +489,10 @@ public:
 
   char* ConfigFN; ///< path to config file
   XrdxCastor2ServerAcc* mServerAcc; ///< authorization module for token encryption/decryption
-  XrdOucString xCastor2FsName; ///< mount point of the catalog fs
-  XrdOucString xCastor2FsTargetPort; ///< xrootd port where redirections go on the OSTs -default is 1094
+  std::string mZeroProc; ///< path to a 0-byte file in the proc filesystem
+  std::string mSrvTargetPort; ///< xrootd port where redirections go on the OFSs - default is 1094
   long long xCastor2FsDelayRead; ///< if true, all reads get a default delay to come back later
   long long xCastor2FsDelayWrite; ///< if true, all writes get a default dealy to come back later
-  XrdOucString zeroProc; ///< path to a 0-byte file in the proc filesystem
 
 protected:
 

@@ -62,8 +62,7 @@ XrdOucHash<XrdOucString>* XrdxCastor2Stager::msDelayStore;
 xcastor::XrdxCastorClient* XrdxCastor2Fs::msCastorClient;
 int XrdxCastor2Fs::msTokenLockTime = 5;
 XrdxCastor2Fs* gMgr;
-XrdSysError OfsEroute(0);
-
+XrdSysError OfsEroute(0, "xCastor2Fs_");
 XrdVERSIONINFO(XrdSfsGetFileSystem, xCastor2Fs);
 
 //------------------------------------------------------------------------------
@@ -74,11 +73,9 @@ XrdSfsFileSystem* XrdSfsGetFileSystem(XrdSfsFileSystem* native_fs,
                                       XrdSysLogger*     lp,
                                       const char*       configfn)
 {
-  OfsEroute.SetPrefix("xcastor2fs_");
   OfsEroute.logger(lp);
   static XrdxCastor2Fs myFS;
-  OfsEroute.Say("++++++ (c) 2013 CERN/IT-DSS-DT ",
-                "xCastor2Fs (xCastor2 File System) v 1.0 ");
+  OfsEroute.Say("++++++ (c) 2014 CERN/IT-DSS xCastor2Fs v1.0");
 
   // Initialize the subsystem
   if (!myFS.Init()) return 0;
@@ -94,8 +91,8 @@ XrdSfsFileSystem* XrdSfsGetFileSystem(XrdSfsFileSystem* native_fs,
 
   if (!gMgr->mServerAcc)
   {
-    xcastor_static_err("failed loading the authorization plugin for "
-                       "encryption/decryption");
+    OfsEroute.Emsg("XrdSfsGetFileSystem", "failed loading the authorization "
+                   "plugin for encryption/decryption");
     return 0;
   }
 
@@ -116,16 +113,6 @@ XrdxCastor2Fs::XrdxCastor2Fs():
 {
   ConfigFN  = 0;
   mLogLevel = LOG_INFO; // default log level
-
-  // Setup the circular in-memory logging buffer
-  XrdOucString unit = "rdr@";
-  unit += XrdSysDNS::getHostName();
-  unit += ":";
-  unit += xCastor2FsTargetPort;
-  Logging::Init();
-  Logging::SetLogPriority(mLogLevel);
-  Logging::SetUnit(unit.c_str());
-  xcastor_info("info=\"logging configured\" ");
 }
 
 
@@ -141,7 +128,7 @@ XrdxCastor2Fs::Init()
 
   if (!msCastorClient)
   {
-    OfsEroute.Emsg("Config", "error=failed to create castor client object");
+    OfsEroute.Emsg("Config", "failed to create castor client object");
     return false;
   }
 
@@ -1397,9 +1384,9 @@ XrdxCastor2Fs::fsctl(const int cmd,
   path.erase(path.find("?"));
   XrdOucEnv env(opaque.c_str());
   const char* scmd;
-  xcastor_debug("args=%s", args);
+  xcastor_debug("cmd=%i, args=%s", cmd, args);
 
-  if ((cmd == SFS_FSCTL_LOCATE) || (cmd == 16777217))
+  if ((cmd & SFS_FSCTL_LOCATE) || (cmd == 16777217))
   {
     if (path.beginswith("*"))
       path.erase(0, 1);
@@ -1416,7 +1403,8 @@ XrdxCastor2Fs::fsctl(const int cmd,
     char locResp[4096];
     char rType[3], *Resp[] = {rType, locResp};
     rType[0] = 'S';
-    // We don't want to manage writes via global redirection - therefore we mark the files as 'r'
+    // We don't want to manage writes via global redirection - therefore
+    // we mark the files as 'r'
     rType[1] = 'r';
     rType[2] = '\0';
     sprintf(locResp, "%s", (char*)gMgr->ManagerLocation.c_str());
@@ -1848,13 +1836,12 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
   int  cfgFD, retc, NoGo = 0;
   XrdOucStream config_stream(&Eroute, getenv("XRDINSTANCE"));
   XrdOucString role = "server";
-  bool xcastor2fsdefined = false;
   bool authorize = false;
   XrdOucString auth_lib = ""; ///< path to a possible authorizationn library
   XrdOucString proc_filesystem = "";
   bool proc_filesystem_sync = false;
   mAuthorization = 0;
-  xCastor2FsTargetPort = "1094";
+  mSrvTargetPort = "1094";
   xCastor2FsDelayRead = 0;
   xCastor2FsDelayWrite = 0;
   long myPort = 0;
@@ -1947,23 +1934,21 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
       {
         var += 9;
 
-        // Get the fs name
-        if (!strncmp("fs", var, 2))
+        // Get the target port where we redirect
+        if (!strcmp("targetport", var))
         {
           if (!(val = config_stream.GetWord()))
           {
             Eroute.Emsg("Config", "argument for fs invalid.");
             NoGo = 1;
-            break;
           }
           else
           {
-            Eroute.Say("=====> xcastor2.fs: ", val, "");
-            xcastor2fsdefined = true;
-            xCastor2FsName = val;
+            Eroute.Say("=====> xcastor2.targetport: ", val, "");
+            mSrvTargetPort = val;
           }
         }
-
+        
         // Get the debug level
         if (!strncmp("loglevel", var, 8))
         {
@@ -2007,21 +1992,6 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
           {
             Logging::SetFilter(val);
             Eroute.Say("=====> xcastor2.debugfileter: ", val, "");
-          }
-        }
-
-        // Get the target port
-        if (!strcmp("targetport", var))
-        {
-          if (!(val = config_stream.GetWord()))
-          {
-            Eroute.Emsg("Config", "argument for fs invalid.");
-            NoGo = 1;
-          }
-          else
-          {
-            Eroute.Say("=====> xcastor2.targetport: ", val, "");
-            xCastor2FsTargetPort = val;
           }
         }
 
@@ -2173,13 +2143,13 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         {
           if (!(val = config_stream.GetWord()))
           {
-            xcastor_err("stagerhost: no host provided");
+            Eroute.Emsg("Config", "no stagerhost provided");
             NoGo = 1;
           }
           else
           {
             mStagerHost = val;
-            xcastor_info("stagerhost set to:%s", mStagerHost.c_str());
+            Eroute.Say("=====> xcastor2.stagerhost: ", mStagerHost.c_str());
           }
         }
 
@@ -2188,7 +2158,8 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         {
           if (!(val = config_stream.GetWord()))
           {
-            xcastor_err("stagermap: provide a path and the service class(es) to assign");
+            Eroute.Emsg("Config:", "stagermap - provide a path and the service"
+                        " class(es) to assign");
             NoGo = 1;
           }
           else
@@ -2197,7 +2168,8 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
 
             if (!(val = config_stream.GetWord()))
             {
-              xcastor_err("stagermap: provide a path and the service class(es) to assign");
+              Eroute.Emsg("Config:", "stagermap - provide a path and the service"
+                          " class(es) to assign");
               NoGo = 1;
             }
             else
@@ -2253,16 +2225,18 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
                   }
                   else
                   {
-                    xcastor_err("stagermap: unknown option: %s, maybe set \"nohsm\" ...", val);
+                    Eroute.Emsg("Config:", "stagermap - unknown option: ", val,
+                                " maybe set to \"nohsm\" ...");
                     NoGo = 1;
                   }
                 }
 
                 mStageMap[stage_path] = std::make_pair(list_svc, nohsm);
-                xcastor_info("%s", oss.str().c_str());
+                Eroute.Say("=====> xcastor2.", oss.str().c_str());
               }
               else
-                xcastor_err("stagermap: already contains stage path: %s", stage_path.c_str());
+                Eroute.Emsg("Config:", "stagermap - already contains stage path: ",
+                            stage_path.c_str());
             }
           }
         }
@@ -2273,7 +2247,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         {
           if ((!(val = config_stream.GetWord())) || (::access(val, R_OK)))
           {
-            Eroute.Emsg("Config", "I cannot acccess you authorization library!");
+            Eroute.Emsg("Config", "cannot acccess the authorization library!");
             NoGo = 1;
           }
           else
@@ -2308,15 +2282,6 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
     }
   }
 
-  // Check if xcastor2fs has been set
-  if (!xcastor2fsdefined)
-  {
-    Eroute.Say("Config error: no xcastor2 fs has been defined (xcastor2.fs /...)", "", "");
-    NoGo = 1;
-  }
-  else
-    Eroute.Say("=====> xcastor2.fs: ", xCastor2FsName.c_str(), "");
-
   // Check that the stager host is set
   if (mStagerHost.empty())
   {
@@ -2331,6 +2296,14 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
   XrdOucString sTokenLockTime = "";
   sTokenLockTime += msTokenLockTime;
   Eroute.Say("=====> xcastor2.tokenlocktime: ", sTokenLockTime.c_str(), "");
+  
+  // Setup the circular in-memory logging buffer
+  XrdOucString unit = "rdr@";
+  unit += ManagerId;
+  Logging::Init();
+  Logging::SetLogPriority(mLogLevel);
+  Logging::SetUnit(unit.c_str());
+  xcastor_info("info=\"logging configured\" ");
 
   if (role == "manager")
     putenv((char*)"XRDREDIRECT=R");
@@ -2378,17 +2351,17 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
 #endif
     system(makeProc.c_str());
     // Create empty file in proc directory
-    zeroProc = "";
-    zeroProc = "rm -rf ";
-    zeroProc += proc_filesystem;
-    zeroProc += "/zero";
-    zeroProc += "; touch ";
-    zeroProc += proc_filesystem;
-    zeroProc += "/zero";
-    system(zeroProc.c_str());
-    // Store the filename in zeroProc
-    zeroProc = proc_filesystem;
-    zeroProc += "/zero";
+    mZeroProc = "";
+    mZeroProc = "rm -rf ";
+    mZeroProc += proc_filesystem.c_str();
+    mZeroProc += "/zero";
+    mZeroProc += "; touch ";
+    mZeroProc += proc_filesystem.c_str();
+    mZeroProc += "/zero";
+    system(mZeroProc.c_str());
+    // Store the filename in mZeroProc
+    mZeroProc = proc_filesystem.c_str();
+    mZeroProc += "/zero";
   }
 
   // Create the proc object, if a proc fs was specified
