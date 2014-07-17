@@ -311,8 +311,7 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
   for(std::list<std::string>::const_iterator itor = unitNames.begin();
     itor!=unitNames.end() and i<CA_MAXNBDRIVES; itor++) {
     const std::string &unitName = *itor;
-    const DriveCatalogueEntry * drive =
-       m_driveCatalogue.findConstDrive(unitName);
+    const DriveCatalogueEntry * drive = m_driveCatalogue.findDrive(unitName);
     body.drives[i] = drive->getTapeStatDriveEntry();
     i++;
   }

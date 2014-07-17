@@ -948,8 +948,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedProcessForker(
 void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedSession(
   const pid_t pid, const int waitpidStat) throw() {
   try {
-    const DriveCatalogueEntry *const drive =
-      m_driveCatalogue.findConstDrive(pid);
+    const DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(pid);
     dispatchReapedSessionHandler(drive->getSessionType(), pid,
       waitpidStat);
   } catch(castor::exception::Exception &ne) {

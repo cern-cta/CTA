@@ -70,7 +70,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  const DriveCatalogueEntry *findConstDrive(const std::string &unitName)
+  const DriveCatalogueEntry *findDrive(const std::string &unitName)
     const;
 
   /**
@@ -81,7 +81,7 @@ public:
    *
    * @param sessionPid The process ID of the session.
    */
-  const DriveCatalogueEntry *findConstDrive(const pid_t sessionPid) const;
+  const DriveCatalogueEntry *findDrive(const pid_t sessionPid) const;
 
   /**
    * Returns a reference to the tape-drive entry corresponding to the tape

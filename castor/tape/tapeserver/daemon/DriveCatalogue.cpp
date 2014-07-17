@@ -246,7 +246,7 @@ std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::
 // findConstDrive
 //-----------------------------------------------------------------------------
 const castor::tape::tapeserver::daemon::DriveCatalogueEntry
-  *castor::tape::tapeserver::daemon::DriveCatalogue::findConstDrive(
+  *castor::tape::tapeserver::daemon::DriveCatalogue::findDrive(
     const std::string &unitName) const {
 
   DriveMap::const_iterator itor = m_drives.find(unitName);
@@ -277,7 +277,7 @@ const castor::tape::tapeserver::daemon::DriveCatalogueEntry
 // findConstDrive
 //-----------------------------------------------------------------------------
 const castor::tape::tapeserver::daemon::DriveCatalogueEntry
-  *castor::tape::tapeserver::daemon::DriveCatalogue::findConstDrive(
+  *castor::tape::tapeserver::daemon::DriveCatalogue::findDrive(
     const pid_t sessionPid) const {
 
   for(DriveMap::const_iterator i = m_drives.begin(); i!=m_drives.end(); i++) {

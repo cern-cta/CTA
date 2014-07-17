@@ -70,7 +70,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
   // UNIT1 assertions
   ///////////////////
 
-  const DriveCatalogueEntry *unit1 = catalogue.findConstDrive("UNIT1");
+  const DriveCatalogueEntry *unit1 = catalogue.findDrive("UNIT1");
   const castor::tape::utils::DriveConfig &unit1Config = unit1->getConfig();
   
   ASSERT_EQ(std::string("DGN1"), unit1Config.dgn);
@@ -94,7 +94,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
   // UNIT2 assertions
   ///////////////////
   
-  const DriveCatalogueEntry *unit2 = catalogue.findConstDrive("UNIT2");
+  const DriveCatalogueEntry *unit2 = catalogue.findDrive("UNIT2");
   const castor::tape::utils::DriveConfig &unit2Config = unit2->getConfig();
   
   ASSERT_EQ(std::string("DGN2"), unit2Config.dgn);
@@ -212,7 +212,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   }
   {
     const DriveCatalogueEntry *constUnitFoundByPid =
-      catalogue.findConstDrive(sessionPid);
+      catalogue.findDrive(sessionPid);
     ASSERT_EQ(unit, constUnitFoundByPid);
   }
 
