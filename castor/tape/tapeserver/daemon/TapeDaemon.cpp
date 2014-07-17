@@ -1269,7 +1269,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", driveConfig.unitName));
 
-  m_processForker->forkLabel(driveConfig.unitName, drive->getLabelJob().vid);
+  m_processForker->forkLabel(driveConfig, drive->getLabelJob());
 
   // Release the connection with the label command from the drive catalogue
   castor::utils::SmartFd labelCmdConnection;

@@ -24,6 +24,7 @@
 #pragma once
 
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/utils/DriveConfig.hpp"
@@ -64,15 +65,15 @@ public:
     const legacymsg::RtcpJobRqstMsgBody vdqmJob,
     const DataTransferSession::CastorConf &conf) = 0;
 
-  /**
-   * Forks a label session for the specified tape drive.
-   *
-   * @param unitName The unit name of the tape drive.
-   * @param vid The volume identifier of the tape.
+  /** 
+   * Forks a label-session process for the specified tape drive.
+   *  
+   * @param driveConfig The configuration of the tape drive.
+   * @param labelJob The job received from the tape-labeling command-line tool.
    * @return The process identifier of the newly forked session.
    */
-  virtual pid_t forkLabel(const std::string &unitName,
-    const std::string &vid) = 0;
+  virtual pid_t forkLabel(const utils::DriveConfig &driveConfig,
+    const legacymsg::TapeLabelRqstMsgBody &labelJob) = 0;
 
   /**
    * Forks a cleaner session for the specified tape drive.

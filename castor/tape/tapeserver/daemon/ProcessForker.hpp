@@ -23,8 +23,10 @@
 
 #pragma once
 
+#include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/messages/ForkDataTransfer.pb.h"
+#include "castor/messages/ForkLabel.pb.h"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerFrame.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
@@ -190,7 +192,7 @@ private:
   MsgHandlerResult handleForkCleanerMsg(const ProcessForkerFrame &frame);
 
   /**
-   * Runs the data-transfer session.  This method is to be called within the
+   * Runs a data-transfer session.  This method is to be called within the
    * child process responsible for running the data-transfer session.
    *
    * @param rqst The ForkDataTransfer message.
@@ -205,7 +207,19 @@ private:
    * @param msg The ForkDataTransfer message.
    * @return The drive configuration.
    */
-  utils::DriveConfig getDriveConfig(const messages::ForkDataTransfer &msg);
+  template<class T> utils::DriveConfig getDriveConfig(const T &msg) {
+    utils::DriveConfig config;
+    config.unitName = msg.unitname();
+    config.dgn = msg.dgn();
+    config.devFilename = msg.devfilename();
+    for(int i=0; i < msg.density_size(); i++) {
+      config.densities.push_back(msg.density(i));
+    }
+    config.librarySlot = msg.libraryslot();
+    config.devType = msg.devtype();
+
+    return config;
+  }
 
   /**
    * Gets the configuration of the data-transfer session from the specified
@@ -286,6 +300,24 @@ private:
    */
   void notifyTapeDaemonOfCrashedProcess(const pid_t pid,
     const int waitpidStat);
+
+  /**
+   * Runs a label session.  This method is to be called within the child
+   * process responsible for running the label session.
+   *
+   * @param rqst The ForkLabel message.
+   * @return The value to be used when exiting the child process.
+   */
+  int runLabelSession(const messages::ForkLabel &rqst);
+
+  /**
+   * Gets the label job from the specified ForkLabel message.
+   *
+   * @param msg The ForkLabel message.
+   * @return The label job.
+   */
+  castor::legacymsg::TapeLabelRqstMsgBody getLabelJob(
+    const messages::ForkLabel &msg);
 
 }; // class ProcessForker
 

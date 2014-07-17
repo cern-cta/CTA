@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/messages/ForkCleaner.pb.h"
-#include "castor/messages/ForkLabel.pb.h"
 #include "castor/messages/ForkSucceeded.pb.h"
 #include "castor/messages/StopProcessForker.pb.h"
 #include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
@@ -106,16 +105,7 @@ castor::messages::ForkDataTransfer
   messages::ForkDataTransfer msg;
 
   // Description of the tape drive
-  msg.set_unitname(driveConfig.unitName);
-  msg.set_dgn(driveConfig.dgn);
-  msg.set_devfilename(driveConfig.devFilename);
-  const std::list<std::string> &densities = driveConfig.densities;
-  for(std::list<std::string>::const_iterator itor = densities.begin();
-    itor != densities.end(); itor++) {
-    msg.add_density(*itor);
-  }
-  msg.set_libraryslot(driveConfig.librarySlot);
-  msg.set_devtype(driveConfig.devType);
+  fillMsgWithDriveConfig(msg, driveConfig);
 
   // Description of the client request
   msg.set_mounttransactionid(vdqmJob.volReqId);
@@ -151,12 +141,11 @@ castor::messages::ForkDataTransfer
 // forkLabel
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
-  forkLabel(const std::string &unitName, const std::string &vid) {
+  forkLabel(const utils::DriveConfig &driveConfig,
+  const legacymsg::TapeLabelRqstMsgBody &labelJob) {
 
-  // Request the process forker to fork a label session
-  messages::ForkLabel rqst;
-  rqst.set_unitname(unitName);
-  rqst.set_vid(vid);
+  const messages::ForkLabel rqst = createForkLabelMsg(driveConfig, labelJob);
+
   ProcessForkerUtils::writeFrame(m_socketFd, rqst);
 
   // Read back the reply
@@ -167,6 +156,24 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
     params);
 
   return reply.pid();
+}
+
+//------------------------------------------------------------------------------
+// createForkLabelMsg
+//------------------------------------------------------------------------------
+castor::messages::ForkLabel castor::tape::tapeserver::daemon::
+  ProcessForkerProxySocket::createForkLabelMsg(
+  const utils::DriveConfig &driveConfig,
+  const legacymsg::TapeLabelRqstMsgBody &labelJob) {
+  messages::ForkLabel msg;
+
+  // Description of the tape drive
+  fillMsgWithDriveConfig(msg, driveConfig);
+
+  // Description of the label job
+  fillMsgWithLabelJob(msg, labelJob);
+
+  return msg;
 }
 
 //------------------------------------------------------------------------------
@@ -185,8 +192,8 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   messages::ForkSucceeded reply;
   ProcessForkerUtils::readReplyOrEx(m_socketFd, reply);
   log::Param params[] = {log::Param("pid", reply.pid())};
-  m_log(LOG_INFO, "Got process ID of the cleaner session from the ProcessForker",
-    params);
+  m_log(LOG_INFO,
+    "Got process ID of the cleaner session from the ProcessForker", params);
 
   return reply.pid();
 }

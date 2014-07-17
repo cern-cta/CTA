@@ -101,10 +101,87 @@ class ForkLabel : public ::google::protobuf::Message {
   inline void set_unitname(const char* value, size_t size);
   inline ::std::string* mutable_unitname();
   
-  // required string vid = 2;
+  // required string dgn = 2;
+  inline bool has_dgn() const;
+  inline void clear_dgn();
+  static const int kDgnFieldNumber = 2;
+  inline const ::std::string& dgn() const;
+  inline void set_dgn(const ::std::string& value);
+  inline void set_dgn(const char* value);
+  inline void set_dgn(const char* value, size_t size);
+  inline ::std::string* mutable_dgn();
+  
+  // required string devfilename = 3;
+  inline bool has_devfilename() const;
+  inline void clear_devfilename();
+  static const int kDevfilenameFieldNumber = 3;
+  inline const ::std::string& devfilename() const;
+  inline void set_devfilename(const ::std::string& value);
+  inline void set_devfilename(const char* value);
+  inline void set_devfilename(const char* value, size_t size);
+  inline ::std::string* mutable_devfilename();
+  
+  // repeated string density = 4;
+  inline int density_size() const;
+  inline void clear_density();
+  static const int kDensityFieldNumber = 4;
+  inline const ::std::string& density(int index) const;
+  inline ::std::string* mutable_density(int index);
+  inline void set_density(int index, const ::std::string& value);
+  inline void set_density(int index, const char* value);
+  inline void set_density(int index, const char* value, size_t size);
+  inline ::std::string* add_density();
+  inline void add_density(const ::std::string& value);
+  inline void add_density(const char* value);
+  inline void add_density(const char* value, size_t size);
+  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& density() const;
+  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_density();
+  
+  // required string libraryslot = 5;
+  inline bool has_libraryslot() const;
+  inline void clear_libraryslot();
+  static const int kLibraryslotFieldNumber = 5;
+  inline const ::std::string& libraryslot() const;
+  inline void set_libraryslot(const ::std::string& value);
+  inline void set_libraryslot(const char* value);
+  inline void set_libraryslot(const char* value, size_t size);
+  inline ::std::string* mutable_libraryslot();
+  
+  // required string devtype = 6;
+  inline bool has_devtype() const;
+  inline void clear_devtype();
+  static const int kDevtypeFieldNumber = 6;
+  inline const ::std::string& devtype() const;
+  inline void set_devtype(const ::std::string& value);
+  inline void set_devtype(const char* value);
+  inline void set_devtype(const char* value, size_t size);
+  inline ::std::string* mutable_devtype();
+  
+  // required bool force = 7;
+  inline bool has_force() const;
+  inline void clear_force();
+  static const int kForceFieldNumber = 7;
+  inline bool force() const;
+  inline void set_force(bool value);
+  
+  // required uint32 uid = 8;
+  inline bool has_uid() const;
+  inline void clear_uid();
+  static const int kUidFieldNumber = 8;
+  inline ::google::protobuf::uint32 uid() const;
+  inline void set_uid(::google::protobuf::uint32 value);
+  
+  // required uint32 gid = 9;
+  inline bool has_gid() const;
+  inline void clear_gid();
+  static const int kGidFieldNumber = 9;
+  inline ::google::protobuf::uint32 gid() const;
+  inline void set_gid(::google::protobuf::uint32 value);
+  
+  // required string vid = 10;
   inline bool has_vid() const;
   inline void clear_vid();
-  static const int kVidFieldNumber = 2;
+  static const int kVidFieldNumber = 10;
   inline const ::std::string& vid() const;
   inline void set_vid(const ::std::string& value);
   inline void set_vid(const char* value);
@@ -118,13 +195,25 @@ class ForkLabel : public ::google::protobuf::Message {
   
   ::std::string* unitname_;
   static const ::std::string _default_unitname_;
+  ::std::string* dgn_;
+  static const ::std::string _default_dgn_;
+  ::std::string* devfilename_;
+  static const ::std::string _default_devfilename_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> density_;
+  ::std::string* libraryslot_;
+  static const ::std::string _default_libraryslot_;
+  ::std::string* devtype_;
+  static const ::std::string _default_devtype_;
+  bool force_;
+  ::google::protobuf::uint32 uid_;
+  ::google::protobuf::uint32 gid_;
   ::std::string* vid_;
   static const ::std::string _default_vid_;
   friend void  protobuf_AddDesc_ForkLabel_2eproto();
   friend void protobuf_AssignDesc_ForkLabel_2eproto();
   friend void protobuf_ShutdownFile_ForkLabel_2eproto();
   
-  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(10 + 31) / 32];
   
   // WHY DOES & HAVE LOWER PRECEDENCE THAN != !?
   inline bool _has_bit(int index) const {
@@ -189,42 +278,302 @@ inline ::std::string* ForkLabel::mutable_unitname() {
   return unitname_;
 }
 
-// required string vid = 2;
-inline bool ForkLabel::has_vid() const {
+// required string dgn = 2;
+inline bool ForkLabel::has_dgn() const {
   return _has_bit(1);
+}
+inline void ForkLabel::clear_dgn() {
+  if (dgn_ != &_default_dgn_) {
+    dgn_->clear();
+  }
+  _clear_bit(1);
+}
+inline const ::std::string& ForkLabel::dgn() const {
+  return *dgn_;
+}
+inline void ForkLabel::set_dgn(const ::std::string& value) {
+  _set_bit(1);
+  if (dgn_ == &_default_dgn_) {
+    dgn_ = new ::std::string;
+  }
+  dgn_->assign(value);
+}
+inline void ForkLabel::set_dgn(const char* value) {
+  _set_bit(1);
+  if (dgn_ == &_default_dgn_) {
+    dgn_ = new ::std::string;
+  }
+  dgn_->assign(value);
+}
+inline void ForkLabel::set_dgn(const char* value, size_t size) {
+  _set_bit(1);
+  if (dgn_ == &_default_dgn_) {
+    dgn_ = new ::std::string;
+  }
+  dgn_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* ForkLabel::mutable_dgn() {
+  _set_bit(1);
+  if (dgn_ == &_default_dgn_) {
+    dgn_ = new ::std::string;
+  }
+  return dgn_;
+}
+
+// required string devfilename = 3;
+inline bool ForkLabel::has_devfilename() const {
+  return _has_bit(2);
+}
+inline void ForkLabel::clear_devfilename() {
+  if (devfilename_ != &_default_devfilename_) {
+    devfilename_->clear();
+  }
+  _clear_bit(2);
+}
+inline const ::std::string& ForkLabel::devfilename() const {
+  return *devfilename_;
+}
+inline void ForkLabel::set_devfilename(const ::std::string& value) {
+  _set_bit(2);
+  if (devfilename_ == &_default_devfilename_) {
+    devfilename_ = new ::std::string;
+  }
+  devfilename_->assign(value);
+}
+inline void ForkLabel::set_devfilename(const char* value) {
+  _set_bit(2);
+  if (devfilename_ == &_default_devfilename_) {
+    devfilename_ = new ::std::string;
+  }
+  devfilename_->assign(value);
+}
+inline void ForkLabel::set_devfilename(const char* value, size_t size) {
+  _set_bit(2);
+  if (devfilename_ == &_default_devfilename_) {
+    devfilename_ = new ::std::string;
+  }
+  devfilename_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* ForkLabel::mutable_devfilename() {
+  _set_bit(2);
+  if (devfilename_ == &_default_devfilename_) {
+    devfilename_ = new ::std::string;
+  }
+  return devfilename_;
+}
+
+// repeated string density = 4;
+inline int ForkLabel::density_size() const {
+  return density_.size();
+}
+inline void ForkLabel::clear_density() {
+  density_.Clear();
+}
+inline const ::std::string& ForkLabel::density(int index) const {
+  return density_.Get(index);
+}
+inline ::std::string* ForkLabel::mutable_density(int index) {
+  return density_.Mutable(index);
+}
+inline void ForkLabel::set_density(int index, const ::std::string& value) {
+  density_.Mutable(index)->assign(value);
+}
+inline void ForkLabel::set_density(int index, const char* value) {
+  density_.Mutable(index)->assign(value);
+}
+inline void ForkLabel::set_density(int index, const char* value, size_t size) {
+  density_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* ForkLabel::add_density() {
+  return density_.Add();
+}
+inline void ForkLabel::add_density(const ::std::string& value) {
+  density_.Add()->assign(value);
+}
+inline void ForkLabel::add_density(const char* value) {
+  density_.Add()->assign(value);
+}
+inline void ForkLabel::add_density(const char* value, size_t size) {
+  density_.Add()->assign(reinterpret_cast<const char*>(value), size);
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+ForkLabel::density() const {
+  return density_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+ForkLabel::mutable_density() {
+  return &density_;
+}
+
+// required string libraryslot = 5;
+inline bool ForkLabel::has_libraryslot() const {
+  return _has_bit(4);
+}
+inline void ForkLabel::clear_libraryslot() {
+  if (libraryslot_ != &_default_libraryslot_) {
+    libraryslot_->clear();
+  }
+  _clear_bit(4);
+}
+inline const ::std::string& ForkLabel::libraryslot() const {
+  return *libraryslot_;
+}
+inline void ForkLabel::set_libraryslot(const ::std::string& value) {
+  _set_bit(4);
+  if (libraryslot_ == &_default_libraryslot_) {
+    libraryslot_ = new ::std::string;
+  }
+  libraryslot_->assign(value);
+}
+inline void ForkLabel::set_libraryslot(const char* value) {
+  _set_bit(4);
+  if (libraryslot_ == &_default_libraryslot_) {
+    libraryslot_ = new ::std::string;
+  }
+  libraryslot_->assign(value);
+}
+inline void ForkLabel::set_libraryslot(const char* value, size_t size) {
+  _set_bit(4);
+  if (libraryslot_ == &_default_libraryslot_) {
+    libraryslot_ = new ::std::string;
+  }
+  libraryslot_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* ForkLabel::mutable_libraryslot() {
+  _set_bit(4);
+  if (libraryslot_ == &_default_libraryslot_) {
+    libraryslot_ = new ::std::string;
+  }
+  return libraryslot_;
+}
+
+// required string devtype = 6;
+inline bool ForkLabel::has_devtype() const {
+  return _has_bit(5);
+}
+inline void ForkLabel::clear_devtype() {
+  if (devtype_ != &_default_devtype_) {
+    devtype_->clear();
+  }
+  _clear_bit(5);
+}
+inline const ::std::string& ForkLabel::devtype() const {
+  return *devtype_;
+}
+inline void ForkLabel::set_devtype(const ::std::string& value) {
+  _set_bit(5);
+  if (devtype_ == &_default_devtype_) {
+    devtype_ = new ::std::string;
+  }
+  devtype_->assign(value);
+}
+inline void ForkLabel::set_devtype(const char* value) {
+  _set_bit(5);
+  if (devtype_ == &_default_devtype_) {
+    devtype_ = new ::std::string;
+  }
+  devtype_->assign(value);
+}
+inline void ForkLabel::set_devtype(const char* value, size_t size) {
+  _set_bit(5);
+  if (devtype_ == &_default_devtype_) {
+    devtype_ = new ::std::string;
+  }
+  devtype_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* ForkLabel::mutable_devtype() {
+  _set_bit(5);
+  if (devtype_ == &_default_devtype_) {
+    devtype_ = new ::std::string;
+  }
+  return devtype_;
+}
+
+// required bool force = 7;
+inline bool ForkLabel::has_force() const {
+  return _has_bit(6);
+}
+inline void ForkLabel::clear_force() {
+  force_ = false;
+  _clear_bit(6);
+}
+inline bool ForkLabel::force() const {
+  return force_;
+}
+inline void ForkLabel::set_force(bool value) {
+  _set_bit(6);
+  force_ = value;
+}
+
+// required uint32 uid = 8;
+inline bool ForkLabel::has_uid() const {
+  return _has_bit(7);
+}
+inline void ForkLabel::clear_uid() {
+  uid_ = 0u;
+  _clear_bit(7);
+}
+inline ::google::protobuf::uint32 ForkLabel::uid() const {
+  return uid_;
+}
+inline void ForkLabel::set_uid(::google::protobuf::uint32 value) {
+  _set_bit(7);
+  uid_ = value;
+}
+
+// required uint32 gid = 9;
+inline bool ForkLabel::has_gid() const {
+  return _has_bit(8);
+}
+inline void ForkLabel::clear_gid() {
+  gid_ = 0u;
+  _clear_bit(8);
+}
+inline ::google::protobuf::uint32 ForkLabel::gid() const {
+  return gid_;
+}
+inline void ForkLabel::set_gid(::google::protobuf::uint32 value) {
+  _set_bit(8);
+  gid_ = value;
+}
+
+// required string vid = 10;
+inline bool ForkLabel::has_vid() const {
+  return _has_bit(9);
 }
 inline void ForkLabel::clear_vid() {
   if (vid_ != &_default_vid_) {
     vid_->clear();
   }
-  _clear_bit(1);
+  _clear_bit(9);
 }
 inline const ::std::string& ForkLabel::vid() const {
   return *vid_;
 }
 inline void ForkLabel::set_vid(const ::std::string& value) {
-  _set_bit(1);
+  _set_bit(9);
   if (vid_ == &_default_vid_) {
     vid_ = new ::std::string;
   }
   vid_->assign(value);
 }
 inline void ForkLabel::set_vid(const char* value) {
-  _set_bit(1);
+  _set_bit(9);
   if (vid_ == &_default_vid_) {
     vid_ = new ::std::string;
   }
   vid_->assign(value);
 }
 inline void ForkLabel::set_vid(const char* value, size_t size) {
-  _set_bit(1);
+  _set_bit(9);
   if (vid_ == &_default_vid_) {
     vid_ = new ::std::string;
   }
   vid_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* ForkLabel::mutable_vid() {
-  _set_bit(1);
+  _set_bit(9);
   if (vid_ == &_default_vid_) {
     vid_ = new ::std::string;
   }

@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
+#include "castor/legacymsg/NsProxy_TapeAlwaysEmpty.hpp"
 #include "castor/legacymsg/RmcProxyTcpIp.hpp"
 #include "castor/messages/ForkCleaner.pb.h"
 #include "castor/messages/ForkDataTransfer.pb.h"
@@ -32,6 +33,7 @@
 #include "castor/messages/StopProcessForker.pb.h"
 #include "castor/messages/TapeserverProxyZmq.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForker.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
@@ -441,8 +443,20 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   } else {
     closeCmdReceiverSocket();
 
-    // TO BE DONE
-    exit(0);
+    try {
+      exit(runLabelSession(rqst));
+    } catch(castor::exception::Exception &ne) {
+      log::Param params[] = {log::Param("message", ne.getMessage().str())};
+      m_log(LOG_ERR, "Failed to run label session", params);
+    } catch(std::exception &ne) {
+      log::Param params[] = {log::Param("message", ne.what())};
+      m_log(LOG_ERR, "Failed to run label session", params);
+    } catch(...) {
+      log::Param params[] = {log::Param("message",
+        "Caught an unknown exception")};
+      m_log(LOG_ERR, "Failed to run label session", params);
+    }
+    exit(1);
   }
 }
 
@@ -545,25 +559,6 @@ int castor::tape::tapeserver::daemon::ProcessForker::runDataTransferSession(
   }
   m_log(LOG_INFO, "Going to execute data-transfer session");
   return dataTransferSession->execute();
-}
-
-//------------------------------------------------------------------------------
-// getDriveConfig
-//------------------------------------------------------------------------------
-castor::tape::utils::DriveConfig
-  castor::tape::tapeserver::daemon::ProcessForker::getDriveConfig(
-  const messages::ForkDataTransfer &msg) {
-  utils::DriveConfig config;
-  config.unitName = msg.unitname();
-  config.dgn = msg.dgn();
-  config.devFilename = msg.devfilename();
-  for(int i=0; i < msg.density_size(); i++) {
-    config.densities.push_back(msg.density(i));
-  }
-  config.librarySlot = msg.libraryslot();
-  config.devType = msg.devtype();
-
-  return config;
 }
 
 //------------------------------------------------------------------------------
@@ -783,4 +778,70 @@ void castor::tape::tapeserver::daemon::ProcessForker::
       "Caught an unknown exception";
     throw ex;
   }
+}
+
+//------------------------------------------------------------------------------
+// runLabelSession
+//------------------------------------------------------------------------------
+int castor::tape::tapeserver::daemon::ProcessForker::runLabelSession(
+  const messages::ForkLabel &rqst) {
+  try {
+    const utils::DriveConfig &driveConfig = getDriveConfig(rqst);
+    const legacymsg::TapeLabelRqstMsgBody labelJob = getLabelJob(rqst);
+
+    std::list<log::Param> params;
+    params.push_back(log::Param("unitName", driveConfig.unitName));
+    params.push_back(log::Param("vid", labelJob.vid));
+    m_log(LOG_INFO, "Label-session child-process started", params);
+
+    // TO BE DONE
+    exit(0);
+
+    const int netTimeout = 10; // Timeout in seconds
+    legacymsg::RmcProxyTcpIp rmc(m_log, netTimeout);
+    legacymsg::NsProxy_TapeAlwaysEmpty ns;
+    castor::tape::System::realWrapper sWrapper;
+    // TO BE DONE
+    const int labelCmdConnection = -1;
+    LabelSession labelsession(
+      labelCmdConnection,
+      rmc,
+      ns,
+      labelJob,
+      m_log,
+      sWrapper,
+      driveConfig,
+      rqst.force());
+    labelsession.execute();
+    return 0;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to run label session: " << ne.getMessage().str();
+    throw ex;
+  } catch(std::exception &se) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to run label session: " << se.what();
+    throw ex;
+  } catch(...) {
+        castor::exception::Exception ex;
+    ex.getMessage() << "Failed to run label session"
+      ": Caught an unknown exception";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getLabelJob
+//------------------------------------------------------------------------------
+castor::legacymsg::TapeLabelRqstMsgBody
+  castor::tape::tapeserver::daemon::ProcessForker::getLabelJob(
+  const messages::ForkLabel &msg) {
+  castor::legacymsg::TapeLabelRqstMsgBody job;
+  job.force = msg.force() ? 1 : 0;
+  job.uid = msg.uid();
+  job.gid = msg.gid();
+  castor::utils::copyString(job.vid,msg.vid());
+  castor::utils::copyString(job.drive, msg.unitname());
+  castor::utils::copyString(job.dgn, msg.dgn());
+  return job;
 }

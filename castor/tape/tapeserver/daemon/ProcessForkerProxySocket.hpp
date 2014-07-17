@@ -25,8 +25,10 @@
 
 #include "castor/log/Logger.hpp"
 #include "castor/messages/ForkDataTransfer.pb.h"
+#include "castor/messages/ForkLabel.pb.h"
 #include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
+#include "castor/tape/utils/DriveConfig.hpp"
 
 #include <google/protobuf/message.h>
 #include <stdint.h>
@@ -86,11 +88,12 @@ public:
   /**
    * Forks a label-session process for the specified tape drive.
    *
-   * @param unitName The unit name of the tape drive.
-   * @param vid The volume identifier of the tape.
+   * @param driveConfig The configuration of the tape drive.
+   * @param labelJob The job received from the tape-labeling command-line tool.
    * @return The process identifier of the newly forked session.
    */
-  pid_t forkLabel(const std::string &unitName, const std::string &vid);
+  pid_t forkLabel(const utils::DriveConfig &driveConfig,
+    const legacymsg::TapeLabelRqstMsgBody &labelJob);
 
   /**
    * Forks a cleaner session for the specified tape drive.
@@ -129,6 +132,55 @@ private:
     const utils::DriveConfig &driveConfig,
     const legacymsg::RtcpJobRqstMsgBody vdqmJob,
     const DataTransferSession::CastorConf &config);
+
+  /**
+   * Fills the appropriate members of the specified message with the information
+   * stored in the specified tape-drive configuration.
+   *
+   * @param msg In/out parameter: The message whose appropriate members will
+   * be filled.
+   * @param driveConfig The tape-drive configuration.
+   */
+  template <typename T> void fillMsgWithDriveConfig(T &msg,
+    const utils::DriveConfig &driveConfig) {
+    msg.set_unitname(driveConfig.unitName);
+    msg.set_dgn(driveConfig.dgn);
+    msg.set_devfilename(driveConfig.devFilename);
+    const std::list<std::string> &densities = driveConfig.densities;
+    for(std::list<std::string>::const_iterator itor = densities.begin();
+      itor != densities.end(); itor++) {
+      msg.add_density(*itor);
+    }
+    msg.set_libraryslot(driveConfig.librarySlot);
+    msg.set_devtype(driveConfig.devType);
+  }
+
+  /**
+   * Creates a ForkDataLabel message from the specified tape-drive
+   * configuration and label job.
+   *
+   * @param driveConfig The configuration of the tape drive.
+   * @param labelJob The job received from the tape-labeling command-line tool.
+   */
+  messages::ForkLabel createForkLabelMsg(const utils::DriveConfig &driveConfig,
+    const legacymsg::TapeLabelRqstMsgBody &labelJob);
+
+  /**
+   * Fills the appropriate members of the specified message with the information
+   * stored in the specified job received from the tape-labeling command-line
+   * tool.
+   *
+   * @param msg In/out parameter: The message whose appropriate members will
+   * be filled.
+   * @param labelJob The job received from the tape-labeling command-line tool.
+   */
+  template <typename T> void fillMsgWithLabelJob(T &msg,
+    const legacymsg::TapeLabelRqstMsgBody &labelJob) {
+    msg.set_force(labelJob.force);
+    msg.set_uid(labelJob.uid);
+    msg.set_gid(labelJob.gid);
+    msg.set_vid(labelJob.vid);
+  }
 
 }; // class ProcessForkerProxySocket
 

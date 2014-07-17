@@ -21,6 +21,17 @@
 package castor.messages;
 
 message ForkLabel {
+  // Description of the tape drive
   required string unitname = 1;
-  required string vid = 2;
+  required string dgn = 2;
+  required string devfilename = 3;
+  repeated string density = 4;
+  required string libraryslot = 5;
+  required string devtype = 6;
+
+  // Description of the label job
+  required bool force = 7;
+  required uint32 uid = 8;
+  required uint32 gid = 9;
+  required string vid = 10;
 }

@@ -31,7 +31,7 @@ namespace castor {
 namespace legacymsg {
 
 /**
- * The body of an RMC_SCSI_MOUNT message.
+ * The body of a TPLABEL message.
  */
 struct TapeLabelRqstMsgBody {
   uint16_t force; // set to 1 if force==true, 0 otherwise
