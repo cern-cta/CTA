@@ -60,7 +60,7 @@ public:
    *
    * @param driveConfigs Tape-drive configurations.
    */
-  void populateCatalogue(const utils::DriveConfigMap &driveConfigs);
+  void populate(const utils::DriveConfigMap &driveConfigs);
 
   /**
    * Returns a const reference to the tape-drive entry corresponding to the

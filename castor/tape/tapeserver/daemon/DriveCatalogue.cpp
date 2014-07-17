@@ -48,9 +48,9 @@ castor::tape::tapeserver::daemon::DriveCatalogue::~DriveCatalogue() throw() {
 }
 
 //-----------------------------------------------------------------------------
-// populateCatalogue
+// populate
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::populateCatalogue(
+void castor::tape::tapeserver::daemon::DriveCatalogue::populate(
   const utils::DriveConfigMap &driveConfigs)  {
   try {
     for(utils::DriveConfigMap::const_iterator itor = driveConfigs.begin();

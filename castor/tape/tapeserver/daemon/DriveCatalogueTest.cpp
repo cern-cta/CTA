@@ -55,7 +55,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
   driveConfigs.enterTpconfigLines(lines);
 
   DriveCatalogue catalogue;
-  ASSERT_NO_THROW(catalogue.populateCatalogue(driveConfigs));
+  ASSERT_NO_THROW(catalogue.populate(driveConfigs));
   
   {
     std::list<std::string> fromCatalogue;
@@ -134,7 +134,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   castor::tape::utils::DriveConfigMap driveConfigs;
   driveConfigs.enterTpconfigLines(lines);
   DriveCatalogue catalogue;
-  ASSERT_NO_THROW(catalogue.populateCatalogue(driveConfigs));
+  ASSERT_NO_THROW(catalogue.populate(driveConfigs));
   DriveCatalogueEntry *unit = catalogue.findDrive("UNIT");
   ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, unit->getState());
 
@@ -243,7 +243,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
   driveConfigs.enterTpconfigLines(lines);
 
   DriveCatalogue catalogue;
-  ASSERT_NO_THROW(catalogue.populateCatalogue(driveConfigs));
+  ASSERT_NO_THROW(catalogue.populate(driveConfigs));
   DriveCatalogueEntry *unit = catalogue.findDrive("UNIT");
   ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, unit->getState());
   ASSERT_NO_THROW(unit->configureUp());
@@ -271,7 +271,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, getUnitNames) {
   driveConfigs.enterTpconfigLines(lines);
 
   DriveCatalogue catalogue;
-  ASSERT_NO_THROW(catalogue.populateCatalogue(driveConfigs));
+  ASSERT_NO_THROW(catalogue.populate(driveConfigs));
 
   {
     std::list<std::string> allUnitNames;

@@ -173,7 +173,7 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   const int argc, char **const argv)  {
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
-  m_driveCatalogue.populateCatalogue(m_driveConfigs);
+  m_driveCatalogue.populate(m_driveConfigs);
 
   // Process must be able to change user now and should be permitted to perform
   // raw IO in the future
