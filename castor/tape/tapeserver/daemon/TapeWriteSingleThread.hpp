@@ -99,7 +99,7 @@ private:
         m_this.m_stats.unmountTime += m_timer.secs(utils::Timer::resetCounter);
         m_this.m_logContext.log(LOG_INFO, m_this.m_drive.librarySlot != "manual"?
           "TapeWriteSingleThread : tape unmounted":"TapeWriteSingleThread : tape NOT unmounted (manual mode)");
-        m_this.m_tsr.tapeUnmounted();
+        m_this.m_initialProcess.tapeUnmounted();
         m_this.m_stats.waitReportingTime += m_timer.secs(utils::Timer::resetCounter);
       }
       catch(const castor::exception::Exception& ex){
@@ -116,7 +116,7 @@ private:
       }
       
       //then we terminate the global status reporter
-      m_this.m_tsr.finish();
+      m_this.m_initialProcess.finish();
     }
   };
   

@@ -125,7 +125,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         scoped.add("positionTime", m_stats.positionTime);
         m_logContext.log(LOG_INFO, "Write session initialised, tape VID checked and drive positioned for writing");
       }
-      m_tsr.tapeMountedForWrite();
+      m_initialProcess.tapeMountedForWrite();
       uint64_t bytes=0;
       uint64_t files=0;
       m_stats.waitReportingTime += timer.secs(utils::Timer::resetCounter);

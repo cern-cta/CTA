@@ -58,13 +58,13 @@ public:
    */
   TapeReadSingleThread(castor::tape::drives::DriveInterface & drive,
           castor::legacymsg::RmcProxy & rmc,
-          TapeServerReporter & gsr,
+          TapeServerReporter & initialProcess,
           const client::ClientInterface::VolumeInfo& volInfo, 
           uint64_t maxFilesRequest,
           castor::server::ProcessCap &capUtils,
           TaskWatchDog<detail::Recall>& watchdog,
           castor::log::LogContext & lc): 
-   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr,volInfo,capUtils,lc),
+   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, initialProcess,volInfo,capUtils,lc),
    m_maxFilesRequest(maxFilesRequest),m_watchdog(watchdog) {
    }
    
@@ -111,7 +111,7 @@ private:
           m_this.m_stats.unmountTime += m_timer.secs(utils::Timer::resetCounter);
           m_this.m_logContext.log(LOG_INFO, m_this.m_drive.librarySlot != "manual"?
             "TapeReadSingleThread : tape unmounted":"TapeReadSingleThread : tape NOT unmounted (manual mode)");
-          m_this.m_tsr.tapeUnmounted();
+          m_this.m_initialProcess.tapeUnmounted();
           m_this.m_stats.waitReportingTime += m_timer.secs(utils::Timer::resetCounter);
         } catch(const castor::exception::Exception& ex){
           //set it to -1 to notify something failed during the cleaning 
@@ -126,7 +126,7 @@ private:
           m_this.m_logContext.log(LOG_ERR, "Non-Castor exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
         }
         //then we terminate the global status reporter
-        m_this.m_tsr.finish();
+        m_this.m_initialProcess.finish();
     }
   };
   /**
@@ -182,6 +182,8 @@ private:
       // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
       // through the st driver file descriptor.
       setCapabilities();
+      
+      //pair of brackets to create an artificial scope for the tapeCleaner
       {  
         // The tape will be loaded 
         // it has to be unloaded, unmounted at all cost -> RAII
@@ -205,7 +207,7 @@ private:
           scoped.add("positionTime", m_stats.positionTime);
           m_logContext.log(LOG_INFO, "Tape read session session successfully started");
         }
-        m_tsr.tapeMountedForRead();
+        m_initialProcess.tapeMountedForRead();
         m_stats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
         // Then we will loop on the tasks as they get from 
         // the task injector
@@ -252,6 +254,8 @@ private:
         task->reportCancellationToDiskTask();
         delete task;
       }
+    }catch(...){
+      m_logContext.log(LOG_DEBUG, "TRIPLE ... in TRST");
     }
   }
 
