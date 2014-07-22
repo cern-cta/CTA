@@ -32,7 +32,7 @@ import castor_tools
 def usage(exitCode):
     '''prints usage'''
     print 'Usage : ' + sys.argv[0] + ' [-h|--help] ' + \
-          '-s|--state <state>|-d|--diskpool <diskpool> ' + \
+          '(-s|--state <state>) | (-d|--diskpool) <diskpool> | (-p|--pool) <datapool>' + \
           '[-m|--mountpoints <mountpoint>[:...]] [-R|--recursive] <diskpool>|<diskServerName> [...]]'
     print '  where state can be "Production", "Draining", "Disabled", "Readonly"'
     sys.exit(exitCode)
