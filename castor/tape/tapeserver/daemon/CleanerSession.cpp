@@ -46,8 +46,8 @@ int castor::tape::tapeserver::daemon::CleanerSession::clean(const std::string &v
   castor::tape::SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
   
   // Instantiate the drive object
-  std::auto_ptr<castor::tape::drives::DriveInterface> drive(
-    castor::tape::drives::DriveFactory(driveInfo, m_sysWrapper));
+  std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> drive(
+    castor::tape::tapeserver::drives::DriveFactory(driveInfo, m_sysWrapper));
 
   if(NULL == drive.get()) {
     castor::exception::Exception ex;

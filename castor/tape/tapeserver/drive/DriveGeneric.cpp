@@ -25,7 +25,9 @@
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/tape/tapeserver/drive/DriveGeneric.hpp"
 
-using namespace castor::tape;
+namespace castor {
+namespace tape {
+namespace tapeserver {
 
 drives::DriveInterface * drives::DriveFactory(SCSI::DeviceInfo di, 
     System::virtualWrapper& sw) {
@@ -822,3 +824,5 @@ drives::compressionStats drives::DriveIBM3592::getCompression()  {
 
   return driveCompressionStats;
 }
+
+}}}

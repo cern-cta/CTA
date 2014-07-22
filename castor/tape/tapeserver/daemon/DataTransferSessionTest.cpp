@@ -108,7 +108,7 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete 
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::drives::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drives::FakeDrive;
   
   // We can prepare files for reading on the drive
   {
@@ -211,7 +211,7 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete 
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::drives::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drives::FakeDrive;
   
   // We can prepare files for reading on the drive
   {
@@ -428,7 +428,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete 
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::drives::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drives::FakeDrive;
   
   // Just label the tape
   castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 

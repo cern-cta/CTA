@@ -37,6 +37,7 @@
  */
 namespace castor {
 namespace tape {
+namespace tapeserver {
 namespace drives {
 
   /**
@@ -184,5 +185,6 @@ namespace drives {
      System::virtualWrapper & sw);
   
 } // namespace drives
+} // namespace tapeserver
 } // namespace tape
 } // namespace castor

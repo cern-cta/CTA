@@ -40,7 +40,7 @@ namespace castor {
   namespace tape {
     namespace tapeFile {
 
-      LabelSession::LabelSession(drives::DriveInterface & drive, const std::string &vid, bool force)  {
+      LabelSession::LabelSession(tapeserver::drives::DriveInterface & drive, const std::string &vid, bool force)  {
         drive.rewind();
         if(!force) {
           if(!drive.isTapeBlank()) {
@@ -56,7 +56,7 @@ namespace castor {
         drive.writeSyncFileMarks(1);
       }
 
-      ReadSession::ReadSession(drives::DriveInterface & drive,
+      ReadSession::ReadSession(tapeserver::drives::DriveInterface & drive,
               tapeserver::client::ClientInterface::VolumeInfo volInfo)  : 
       m_drive(drive), m_vid(volInfo.vid), m_corrupted(false), m_locked(false), 
       m_fseq(1), m_currentFilePart(Header),m_volInfo(volInfo) { 
@@ -328,7 +328,7 @@ namespace castor {
         return bytes_read;
       }
 
-      WriteSession::WriteSession(drives::DriveInterface & drive, 
+      WriteSession::WriteSession(tapeserver::drives::DriveInterface & drive, 
               const tapeserver::client::ClientInterface::VolumeInfo& volInfo, 
               const uint32_t last_fseq, const bool compression)  
       : m_drive(drive), m_vid(volInfo.vid), m_compressionEnabled(compression),

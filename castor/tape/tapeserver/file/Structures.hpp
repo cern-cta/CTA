@@ -324,7 +324,7 @@ namespace tape {
         int blockSize,
         std::string siteName,
         std::string hostName,
-        castor::tape::drives::deviceInfo deviceInfo);
+        castor::tape::tapeserver::drives::deviceInfo deviceInfo);
       /**
        * Throws an exception if the common part structure does
        * not match expectations.
@@ -362,7 +362,7 @@ namespace tape {
         int blockSize,
         std::string siteName,
         std::string hostName,
-        castor::tape::drives::deviceInfo deviceInfo);
+        castor::tape::tapeserver::drives::deviceInfo deviceInfo);
       /**
        * Throws an exception if the structure does not match expectations.
        */
@@ -385,7 +385,7 @@ namespace tape {
         int blockSize,
         std::string siteName,
         std::string hostName,
-        castor::tape::drives::deviceInfo deviceInfo);
+        castor::tape::tapeserver::drives::deviceInfo deviceInfo);
       /**
        * Throws an exception if the structure does not match expectations.
        */

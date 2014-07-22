@@ -106,7 +106,7 @@ namespace daemon {
      *
      * @return The drive object.
      */
-    std::auto_ptr<castor::tape::drives::DriveInterface> getDriveObject();
+    std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> getDriveObject();
     
     /**
      * Check the tape drive write-ability and waits for it to become ready
@@ -114,14 +114,14 @@ namespace daemon {
      * @param drive The drive object pointer
      * @return 
      */
-    void waitUntilDriveReady(castor::tape::drives::DriveInterface *drive);
+    void waitUntilDriveReady(castor::tape::tapeserver::drives::DriveInterface *drive);
     
     /**
      * The function carrying out the actual labeling
      * @param drive The drive object pointer
      * @return 
      */
-    void labelTheTape(castor::tape::drives::DriveInterface *drive);
+    void labelTheTape(castor::tape::tapeserver::drives::DriveInterface *drive);
     
     /**
      * The object representing the rmcd daemon.

@@ -38,7 +38,7 @@
  * assertion and exits.
  * @param expected_position expected position
  */
-void print_and_assert_position(castor::tape::drives::DriveInterface &drive, int expected_position)
+void print_and_assert_position(castor::tape::tapeserver::drives::DriveInterface &drive, int expected_position)
 {
   int curPos = (int)drive.getPositionInfo().currentPosition;
   std::cout << "CurrentPosition: "  << curPos << " (Expected: " << expected_position << ")" << std::endl;
@@ -70,9 +70,9 @@ int main ()
     std::cout << std::endl << "-- SCSI device: " 
               << dev.sg_dev << " (" << dev.nst_dev << ")" << std::endl;
     if (dev.type == castor::tape::SCSI::Types::tape) {
-      std::auto_ptr<castor::tape::drives::DriveInterface> drive(
-        castor::tape::drives::DriveFactory(dev, sWrapper));
-      castor::tape::drives::deviceInfo devInfo;
+      std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> drive(
+        castor::tape::tapeserver::drives::DriveFactory(dev, sWrapper));
+      castor::tape::tapeserver::drives::deviceInfo devInfo;
       try {
         devInfo = drive->getDeviceInfo();
         std::cout << "-- INFO --------------------------------------" << std::endl             
@@ -112,7 +112,7 @@ int main ()
       }
       
       try {
-        castor::tape::drives::positionInfo posInfo = drive->getPositionInfo();
+        castor::tape::tapeserver::drives::positionInfo posInfo = drive->getPositionInfo();
         std::cout << "-- INFO --------------------------------------" << std::endl 
                   << "  posInfo.currentPosition   : "  << posInfo.currentPosition <<std::endl
                   << "  posInfo.oldestDirtyObject : "<< posInfo.oldestDirtyObject <<std::endl
@@ -143,7 +143,7 @@ int main ()
          * Trying to get compression from the drive-> Read or write should be
          * done before to have something in the data fields.
          */
-        castor::tape::drives::compressionStats comp = drive->getCompression();
+        castor::tape::tapeserver::drives::compressionStats comp = drive->getCompression();
         std::cout << "-- INFO --------------------------------------" << std::endl
                 << "  fromHost : " << comp.fromHost << std::endl
                 << "  toHost   : " << comp.toHost << std::endl

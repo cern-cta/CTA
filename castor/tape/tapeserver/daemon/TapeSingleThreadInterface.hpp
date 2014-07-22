@@ -66,7 +66,7 @@ protected:
    * An interface to manipulate the drive to manipulate the tape
    * with the requested vid 
    */
-  castor::tape::drives::DriveInterface & m_drive;
+  castor::tape::tapeserver::drives::DriveInterface & m_drive;
   
   /** Reference to the mount interface */
   castor::legacymsg::RmcProxy & m_rmc;
@@ -199,7 +199,7 @@ public:
    * @param capUtils
    * @param lc lc The log context, later on copied
    */
-  TapeSingleThreadInterface(castor::tape::drives::DriveInterface & drive,
+  TapeSingleThreadInterface(castor::tape::tapeserver::drives::DriveInterface & drive,
     castor::legacymsg::RmcProxy & rmc,
     TapeServerReporter & tsr,
     const client::ClientInterface::VolumeInfo& volInfo,

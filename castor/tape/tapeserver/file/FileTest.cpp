@@ -63,7 +63,7 @@ namespace UnitTests {
     virtual void TearDown() {
       
     }   
-    castor::tape::drives::FakeDrive d;
+    castor::tape::tapeserver::drives::FakeDrive d;
     uint32_t block_size;
     std::string label;
     castor::tape::tapegateway::FileToRecallStruct fileToRecall;

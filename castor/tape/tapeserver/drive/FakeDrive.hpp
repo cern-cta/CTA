@@ -27,6 +27,7 @@
 
 namespace castor {
 namespace tape {
+namespace tapeserver {
 namespace drives {
 /**
    * Fake drive class used for unit testing
@@ -72,4 +73,4 @@ namespace drives {
     virtual bool hasTapeInPlace();
   };
   
-}}}
+}}}}

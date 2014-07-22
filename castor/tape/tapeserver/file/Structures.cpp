@@ -268,7 +268,7 @@ void tapeFile::UHL1UTL1::fillCommon(int fSeq,
   int blockSize,
   std::string siteName,
   std::string hostName,
-  drives::deviceInfo deviceInfo) {
+  tapeserver::drives::deviceInfo deviceInfo) {
 
   setInt(actualfSeq, fSeq);
   setInt(actualBlockSize, blockSize);
@@ -321,7 +321,7 @@ void tapeFile::UHL1::fill(int fSeq,
   int blockSize,
   std::string siteName,
   std::string hostName,
-  drives::deviceInfo deviceInfo) {
+  tapeserver::drives::deviceInfo deviceInfo) {
 
   setString(label, "UHL1");
 
@@ -340,7 +340,7 @@ void tapeFile::UTL1::fill(int fSeq,
   int blockSize,
   std::string siteName,
   std::string hostName,
-  drives::deviceInfo deviceInfo) {
+  tapeserver::drives::deviceInfo deviceInfo) {
 
   setString(label, "UTL1");
 

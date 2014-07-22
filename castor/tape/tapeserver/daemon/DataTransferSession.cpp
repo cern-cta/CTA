@@ -171,7 +171,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeRead(log::LogC
   // file to recall.
   // findDrive does not throw exceptions (it catches them to log errors)
   // A NULL pointer is returned on failure
-  std::auto_ptr<castor::tape::drives::DriveInterface> drive(findDrive(m_driveConfig,lc));
+  std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> drive(findDrive(m_driveConfig,lc));
   
   if(!drive.get()) return 0;    
   // We can now start instantiating all the components of the data path
@@ -261,7 +261,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(log::Log
   // in order to get the task injector ready to check if we actually have a 
   // file to migrate.
   // 1) Get hold of the drive error logs are done inside the findDrive function
-  std::auto_ptr<castor::tape::drives::DriveInterface> drive(findDrive(m_driveConfig,lc));
+  std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> drive(findDrive(m_driveConfig,lc));
   if (!drive.get()) return 0;
   // Once we got hold of the drive, we can run the session
   {
@@ -376,7 +376,7 @@ void castor::tape::tapeserver::daemon::DataTransferSession::executeDump(log::Log
  * @param lc For logging purpose
  * @return the drive if found, NULL otherwise
  */
-castor::tape::drives::DriveInterface *
+castor::tape::tapeserver::drives::DriveInterface *
 castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const utils::DriveConfig
   &driveConfig, log::LogContext& lc) {
   // Find the drive in the system's SCSI devices
@@ -438,8 +438,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const utils::Dr
     return NULL;
   }
   try {
-    std::auto_ptr<castor::tape::drives::DriveInterface> drive;
-    drive.reset(castor::tape::drives::DriveFactory(driveInfo, m_sysWrapper));
+    std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> drive;
+    drive.reset(castor::tape::tapeserver::drives::DriveFactory(driveInfo, m_sysWrapper));
     if (drive.get()) drive->librarySlot = driveConfig.librarySlot;
     return drive.release();
   } catch (castor::exception::Exception & e) {

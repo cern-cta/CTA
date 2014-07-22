@@ -172,7 +172,7 @@ namespace castor {
          * @param vid: volume name of the tape we would like to read from
          * @param force: force labeling even if tape is not empty
          */
-        LabelSession(drives::DriveInterface & drive, const std::string &vid, bool force) ;
+        LabelSession(tapeserver::drives::DriveInterface & drive, const std::string &vid, bool force) ;
       };
 
       /**
@@ -192,13 +192,13 @@ namespace castor {
          * @param drive: drive object to which we bind the session
          * @param vid: volume name of the tape we would like to read from
          */
-        ReadSession(drives::DriveInterface & drive, 
+        ReadSession(tapeserver::drives::DriveInterface & drive, 
                 tapeserver::client::ClientInterface::VolumeInfo volInfo);
         
         /**
          * DriveGeneric object referencing the drive used during this read session
          */
-        drives::DriveInterface & m_drive;
+        tapeserver::drives::DriveInterface & m_drive;
         
         /**
          * Volume Serial Number
@@ -361,14 +361,14 @@ namespace castor {
          * @param last_fseq: fseq of the last active (undeleted) file on tape
          * @param compression: set this to true in case the drive has compression enabled (x000GC)
          */
-        WriteSession(drives::DriveInterface & drive, 
+        WriteSession(tapeserver::drives::DriveInterface & drive, 
                 const tapeserver::client::ClientInterface::VolumeInfo& volInfo, 
                 const uint32_t last_fseq, const bool compression) ;
         
         /**
          * DriveGeneric object referencing the drive used during this write session
          */
-        drives::DriveInterface & m_drive;
+        tapeserver::drives::DriveInterface & m_drive;
         
         /**
          * Volume Serial Number

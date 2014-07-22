@@ -26,6 +26,7 @@
 
 namespace castor {
 namespace tape {
+namespace tapeserver {
 namespace drives {
 /**
    * Class abstracting the tape drives. This class is templated to allow the use
@@ -349,4 +350,4 @@ namespace drives {
     virtual compressionStats getCompression() ;
   };
 
-}}}
+}}}}

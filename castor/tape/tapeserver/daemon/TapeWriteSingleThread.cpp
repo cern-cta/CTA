@@ -26,7 +26,7 @@
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
 
 castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
-castor::tape::drives::DriveInterface & drive, 
+castor::tape::tapeserver::drives::DriveInterface & drive, 
         castor::legacymsg::RmcProxy & rmc,
         TapeServerReporter & tsr,
         const client::ClientInterface::VolumeInfo& volInfo,

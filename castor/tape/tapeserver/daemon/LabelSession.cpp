@@ -93,15 +93,15 @@ void castor::tape::tapeserver::daemon::LabelSession::checkIfVidStillHasSegments(
 //------------------------------------------------------------------------------
 // getDriveObject
 //------------------------------------------------------------------------------
-std::auto_ptr<castor::tape::drives::DriveInterface>
+std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface>
   castor::tape::tapeserver::daemon::LabelSession::getDriveObject() {
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);    
   castor::tape::SCSI::DeviceInfo driveInfo =
     dv.findBySymlink(m_driveConfig.devFilename);
   
   // Instantiate the drive object
-  std::auto_ptr<castor::tape::drives::DriveInterface> drive(
-    castor::tape::drives::DriveFactory(driveInfo, m_sysWrapper));
+  std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> drive(
+    castor::tape::tapeserver::drives::DriveFactory(driveInfo, m_sysWrapper));
 
   if(NULL == drive.get()) {
     castor::exception::Exception ex;
@@ -124,7 +124,7 @@ std::auto_ptr<castor::tape::drives::DriveInterface>
 //------------------------------------------------------------------------------
 // waitUntilDriveReady
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::LabelSession::waitUntilDriveReady(castor::tape::drives::DriveInterface *drive) { 
+void castor::tape::tapeserver::daemon::LabelSession::waitUntilDriveReady(castor::tape::tapeserver::drives::DriveInterface *drive) { 
   std::list<log::Param> params;
   params.push_back(log::Param("uid", m_request.uid));
   params.push_back(log::Param("gid", m_request.gid));
@@ -143,7 +143,7 @@ void castor::tape::tapeserver::daemon::LabelSession::waitUntilDriveReady(castor:
 //------------------------------------------------------------------------------
 // labelTheTape
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::LabelSession::labelTheTape(castor::tape::drives::DriveInterface *drive) {
+void castor::tape::tapeserver::daemon::LabelSession::labelTheTape(castor::tape::tapeserver::drives::DriveInterface *drive) {
   
   // We can now start labelling
   castor::tape::tapeFile::LabelSession ls(*drive, m_request.vid, m_force);
@@ -157,7 +157,7 @@ void castor::tape::tapeserver::daemon::LabelSession::executeLabel() {
   task << "label tape " << m_request.vid << " for gid=" << m_request.gid <<
     " uid=" << m_request.uid << " in drive " << m_request.drive;
   
-  std::auto_ptr<castor::tape::drives::DriveInterface> drive;
+  std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> drive;
   
   log::Param params[] = {
       log::Param("uid", m_request.uid),
