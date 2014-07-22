@@ -1390,7 +1390,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkCleanerSession(
 
   // Else if this is the parent process
   } else if(0 < forkRc) {
-    drive->forkedLabelSession(forkRc);  
+    drive->forkedCleanerSession(forkRc);  
   } else { // Else this is the child process
     // Clear the reactor which in turn will close all of the open
     // file-descriptors owned by the event handlers
