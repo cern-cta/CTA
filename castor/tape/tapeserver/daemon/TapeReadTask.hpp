@@ -145,7 +145,7 @@ public:
       // Add the local counts to the session's
       stats.add(localStats);
     } //end of try
-    catch (castor::exception::Exception & ex) {
+    catch (const castor::exception::Exception & ex) {
       //we end up there because :
       //-- openReadFile brought us here (cant put the tape into position)
       //-- m_payload.append brought us here (error while reading the file)
