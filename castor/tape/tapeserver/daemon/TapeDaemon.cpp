@@ -1304,7 +1304,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
   } else {
     // Clear the reactor which in turn will close all of the open
     // file-descriptors owned by the event handlers
-    m_reactor.clear();
+    //m_reactor.clear();
 
     runLabelSession(drive, labelCmdConnection.release());
   }
@@ -1394,7 +1394,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkCleanerSession(
   } else { // Else this is the child process
     // Clear the reactor which in turn will close all of the open
     // file-descriptors owned by the event handlers
-    m_reactor.clear();
+    //m_reactor.clear();
 
     runCleanerSession(drive, vid);
   }
