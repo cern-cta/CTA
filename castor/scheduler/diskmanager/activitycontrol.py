@@ -210,12 +210,12 @@ class ActivityControlThread(threading.Thread):
             dlf.writedebug(msgs.TRANSFERSTARTCANCELED, reason=e.args, subreqid=transfer.transferId,
                            fileId=transfer.fileId)
             # the transfer has already started somewhere else, or has been canceled, so give up
-          except EnvironmentError:
+          except EnvironmentError, e:
             # we have tried to start a disk to disk copy and the source is not yet ready
             # we will put it in a pending queue
             # "Start postponned until source is ready" message
             dlf.write(msgs.POSTPONEDFORSRCNOTREADY, subreqid=transfer.transferId,
-                      reqid=transfer.reqId, fileId=transfer.fileId)
+                      reqid=transfer.reqId, fileId=transfer.fileId, msg=str(e))
             # put the transfer into the pending queue
             self.transferQueue.d2dDestReady(scheduler, transfer)
           except Exception, e:
