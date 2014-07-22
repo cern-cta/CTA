@@ -454,12 +454,25 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t op,
         chkOffset += checksum_array[0]->size;
         /* go over all received chunks */
         for (i=1;i<CASTOR2_handle->number_of_blocks;i++) {
-          /* check the continuity with previous chunk */
-          if (checksum_array[i]->offset != chkOffset) {
-            // not continuous, a chunk is missing, consider it full of 0s
+          // not continuous, either a chunk is missing or we have overlapping chunks
+          if (checksum_array[i]->offset > chkOffset) {
+            // a chunk is missing, consider it full of 0s
             globus_off_t doff = checksum_array[i]->offset - chkOffset;
             file_checksum = adler32_combine_(file_checksum, adler32_0chunks(doff), doff);
             chkOffset = checksum_array[i]->offset;
+          } else {
+            // overlapping chunks. This is not supported, fail the transfer
+            free_checksum_list(CASTOR2_handle->checksum_list);
+            CASTOR2_handle->cached_res = GLOBUS_FAILURE;
+            globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: Overlapping chunks detected while handling 0x%x-0x%x. The overlap starts at 0x%x\n",
+                                   func,
+                                   checksum_array[i]->offset,
+                                   checksum_array[i]->offset+checksum_array[i]->size,
+                                   chkOffset);
+            CASTOR2_handle->done = GLOBUS_TRUE;
+            close(CASTOR2_handle->fd);
+            globus_mutex_unlock(&CASTOR2_handle->mutex);
+            return;
           }
           /* now handle the next chunk */
           file_checksum=adler32_combine_(file_checksum,
