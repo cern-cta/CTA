@@ -130,6 +130,8 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Migration', 'SizeThreshold', '300000000', 'The threshold to consider a file "small" or "large" when routing it to tape');
 INSERT INTO CastorConfig
+  VALUES ('Migration', 'MaxNbMounts', '3', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed and the MigrationJob entry will be dropped. An operator intervention is required to resume the migration.');
+INSERT INTO CastorConfig
   VALUES ('Migration', 'NbMigCandConsidered', '10000', 'The number of migration jobs considered in time order by each selection of the best files to migrate');
 INSERT INTO CastorConfig
   VALUES ('D2dCopy', 'MaxNbRetries', '2', 'The maximum number of retries for disk to disk copies before it is considered failed. Here 2 means we will do in total 3 attempts.');
