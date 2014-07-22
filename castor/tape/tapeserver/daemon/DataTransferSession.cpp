@@ -33,7 +33,7 @@
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
-#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/utils/utils.hpp"

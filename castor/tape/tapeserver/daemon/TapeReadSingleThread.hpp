@@ -27,7 +27,7 @@
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
-#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"

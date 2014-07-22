@@ -22,7 +22,7 @@
  *****************************************************************************/
 #pragma once
 
-#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include <string>
 
 namespace castor {

@@ -33,7 +33,7 @@
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
-#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/tape/utils/TpconfigLine.hpp"
 #include "castor/utils/utils.hpp"
 

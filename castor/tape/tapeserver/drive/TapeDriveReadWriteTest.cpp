@@ -27,7 +27,7 @@
 
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
-#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include <iostream>
 #include <assert.h>
 #include <memory>

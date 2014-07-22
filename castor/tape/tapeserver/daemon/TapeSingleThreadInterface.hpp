@@ -33,7 +33,7 @@
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
-#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/utils/Timer.hpp"
 #include "castor/tape/tapeserver/daemon/SessionStats.hpp"

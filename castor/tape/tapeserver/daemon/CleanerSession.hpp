@@ -26,7 +26,7 @@
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/log/Logger.hpp"
-#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/utils/DriveConfig.hpp"

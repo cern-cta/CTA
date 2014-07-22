@@ -33,7 +33,7 @@
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/legacymsg/NsProxy.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
-#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 
 #include <memory>
 

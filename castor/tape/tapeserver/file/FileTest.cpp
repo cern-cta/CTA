@@ -23,7 +23,8 @@
 
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
-#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"

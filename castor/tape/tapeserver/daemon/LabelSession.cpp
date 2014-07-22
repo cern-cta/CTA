@@ -29,7 +29,7 @@
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/System.hpp"
-#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "h/Cns.h"

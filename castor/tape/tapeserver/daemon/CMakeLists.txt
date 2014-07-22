@@ -14,7 +14,6 @@ add_library(castorTapeServerDaemon
   DriveCatalogueLabelSession.cpp
   DriveCatalogueTransferSession.cpp
   DriveCatalogueCleanerSession.cpp
-  ../drive/Drive.cpp
   TapeServerReporter.cpp
   LabelCmdAcceptHandler.cpp
   LabelCmdConnectionHandler.cpp
@@ -58,6 +57,7 @@ target_link_libraries(tapeserverd
   System
   Utils
   File
+  TapeDrive
   castorcommon
   castorclient
   castorlegacymsg

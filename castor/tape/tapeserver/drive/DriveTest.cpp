@@ -23,7 +23,9 @@
 
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
-#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "castor/tape/tapeserver/drive/FakeDrive.hpp"
+#include "castor/tape/tapeserver/drive/DriveGeneric.hpp"
 #include <gtest/gtest.h>
 #include <gmock/gmock-cardinalities.h>
 #include <typeinfo>

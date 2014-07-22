@@ -45,6 +45,7 @@
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
+#include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "h/Ctape.h"
 #include "h/smc_struct.h"
 
