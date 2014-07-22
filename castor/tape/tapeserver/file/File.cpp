@@ -504,47 +504,5 @@ namespace castor {
 
     } //end of namespace tapeFile
 
-    namespace diskFile { //toy example using rfio, will not use rfio in production probably xroot or ceph protocols
-      
-      ReadFile::ReadFile(const std::string &url)  {
-        m_fd = rfio_open64((char *)url.c_str(), O_RDONLY);
-        castor::exception::SErrnum::throwOnMinusOne(m_fd, "Failed rfio_open64() in diskFile::ReadFile::ReadFile");
-      }
-      
-      size_t ReadFile::read(void *data, const size_t size)  {
-        return rfio_read(m_fd, data, size);
-      }
-      
-      ReadFile::~ReadFile() throw() {
-        rfio_close(m_fd);
-      }
-      
-      WriteFile::WriteFile(const std::string &url)  : closeTried(false){
-        m_fd = rfio_open64((char *)url.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666); 
-        /* 
-         * The O_TRUNC flag is here to prevent file corruption in case retrying to write a file to disk.
-         * In principle this should be totally safe as the filenames are generated using unique ids given by
-         * the database, so the protection is provided by the uniqueness of the filenames.
-         * As a side note, we tried to use the O_EXCL flag as well (which would provide additional safety)
-         * however this flag does not work with rfio_open64 as apparently it causes memory corruption.
-         */
-        castor::exception::SErrnum::throwOnMinusOne(m_fd, "Failed rfio_open64() in diskFile::WriteFile::WriteFile");        
-      }
-      
-      void WriteFile::write(const void *data, const size_t size)  {
-        rfio_write(m_fd, (void *)data, size);
-      }
-      
-      void WriteFile::close()  {
-        closeTried=true;
-        castor::exception::Errnum::throwOnMinusOne(rfio_close(m_fd), "Failed rfio_close() in diskFile::WriteFile::close");        
-      }
-      
-      WriteFile::~WriteFile() throw() {
-        if(!closeTried){
-          rfio_close(m_fd);
-        }
-      }
-    } //end of namespace diskFile
   } //end of namespace tape
 } //end of namespace castor

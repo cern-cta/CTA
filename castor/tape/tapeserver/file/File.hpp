@@ -45,52 +45,52 @@ namespace castor {
          Trailer
       };
 
-      class TapeFormatError: public Exception {
+      class TapeFormatError: public castor::tape::Exception {
       public:
         TapeFormatError(const std::string & what): Exception(what) {}
       };
       
-      class TapeMediaError: public Exception {
+      class TapeMediaError: public castor::tape::Exception {
       public:
         TapeMediaError(const std::string & what): Exception(what) {}
       };
       
-      class EndOfFile: public Exception {
+      class EndOfFile: public castor::tape::Exception {
       public:
         EndOfFile(): Exception("End Of File reached") {}
       };
       
-      class SessionAlreadyInUse: public Exception {
+      class SessionAlreadyInUse: public castor::tape::Exception {
       public:
         SessionAlreadyInUse(): Exception("Session already in use") {}
       };
       
-      class SessionCorrupted: public Exception {
+      class SessionCorrupted: public castor::tape::Exception {
       public:
         SessionCorrupted(): Exception("Session corrupted") {}
       };
       
-      class FileClosedTwice: public Exception {
+      class FileClosedTwice: public castor::tape::Exception {
       public:
         FileClosedTwice(): Exception("Trying to close a file twice") {}
       };
       
-      class ZeroFileWritten: public Exception {
+      class ZeroFileWritten: public castor::tape::Exception {
       public:
         ZeroFileWritten(): Exception("Trying to write a file with size 0") {}
       };
       
-      class TapeNotEmpty: public Exception {
+      class TapeNotEmpty: public castor::tape::Exception {
       public:
         TapeNotEmpty(): Exception("Trying to label a non-empty tape without the \"force\" setting") {}
       };
       
-      class UnsupportedPositioningMode: public Exception {
+      class UnsupportedPositioningMode: public castor::tape::Exception {
       public:
         UnsupportedPositioningMode(): Exception("Trying to use an unsupported positioning mode") {}
       };
       
-      class WrongBlockSize: public Exception {
+      class WrongBlockSize: public castor::tape::Exception {
       public:
         WrongBlockSize(): Exception("Trying to use a wrong block size") {}
       };
@@ -151,15 +151,12 @@ namespace castor {
       };
       
       /**
-       * Class containign static helper functions that turn block id byte
+       * namespace containing helper functions that turn block id byte
        * collections from fileToRecallStruct into uint32_t
        */
-      
-      class BlockId {
-      public:
-        static uint32_t extract(const castor::tape::tapegateway::FileToRecallStruct &);
-        static void set(castor::tape::tapegateway::FileToRecallStruct &, 
-          uint32_t blockId);
+      namespace BlockId {
+         uint32_t extract(const castor::tape::tapegateway::FileToRecallStruct &);
+         void set(castor::tape::tapegateway::FileToRecallStruct &, uint32_t blockId);
       }; 
       /**
        * Class keeping track of a tape label session on a tape. The session will
@@ -533,68 +530,5 @@ namespace castor {
         int m_numberOfBlocks;
       };
     }
-    
-    /**
-     * Namespace managing the reading and writing of files to and from disk.
-     */
-    namespace diskFile {
-      
-      class ReadFile {
-      public:
-        
-        /**
-         * Constructor of the ReadFile class. It opens the file for reading with the O_RDONLY flag.
-         * @param url: Uniform Resource Locator of the file we want to read
-         */
-        ReadFile(const std::string &url) ;
-        
-        /**
-         * Reads data from the file.
-         * @param data: pointer to the data buffer
-         * @param size: size of the buffer
-         * @return The amount of data actually copied. Zero at end of file.
-         */
-        size_t read(void *data, const size_t size) ;
-        
-        /**
-         * Destructor of the ReadFile class. It closes the corresponding file descriptor.
-         */
-        ~ReadFile() throw();
-        
-      private:
-        int m_fd;
-      };
-      
-      class WriteFile {
-      public:
-        
-        /**
-         * Constructor of the WriteFile class. It opens the file for writing with the O_WRONLY, O_CREAT and O_EXCL flags.
-         * @param url: Uniform Resource Locator of the file we want to write
-         */
-        WriteFile(const std::string &url) ;
-        
-        /**
-         * Writes a block of data on disk
-         * @param data: buffer to copy the data from
-         * @param size: size of the buffer
-         */
-        void write(const void *data, const size_t size) ;
-        
-        /**
-         * Closes the corresponding file descriptor, which may throw an exception.
-         */
-        void close() ;
-        
-        /**
-         * Destructor of the WriteFile class.
-         */
-        ~WriteFile() throw();
-        
-      private:
-        int m_fd;
-        bool closeTried;
-      };
-    } //end of namespace diskFile
   } //end of namespace tape
 } //end of namespace castor

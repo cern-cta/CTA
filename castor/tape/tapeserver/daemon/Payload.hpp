@@ -21,6 +21,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #include <zlib.h>
+#include "castor/tape/tapeserver/file/DiskFile.hpp"
+#include "castor/tape/tapeserver/file/File.hpp"
 
 #pragma once 
 

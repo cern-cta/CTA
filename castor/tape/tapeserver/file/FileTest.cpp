@@ -25,6 +25,7 @@
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
+#include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/exception/Errnum.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
