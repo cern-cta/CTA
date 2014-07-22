@@ -135,7 +135,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
       m_lc.log(LOG_INFO, "As last exiting DiskWriteWorkerThread, reported a successful end of session");
     }
     else{
-      m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("A recall failed",SEINTERNAL);
+      m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("End of recall session with error(s)",SEINTERNAL);
       ScopedParam sp(m_lc, Param("errorCount", m_parentThreadPool.m_failedWriteCount));
       m_lc.log(LOG_ERR, "As last exiting DiskWriteWorkerThread, reported an end of session with errors");
     }
