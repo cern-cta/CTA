@@ -41,6 +41,7 @@ namespace castor {
       enum PartOfFile
       {
          Header,
+         HeaderProcessing,
          Payload,
          Trailer
       };
@@ -311,7 +312,8 @@ namespace castor {
         size_t read(void *data, const size_t size) ;
       
       private:
-        
+        void positionByFseq(const castor::tape::tapegateway::FileToRecallStruct &fileToRecall) ;
+        void positionByBlockID(const castor::tape::tapegateway::FileToRecallStruct &fileToRecall) ;
         /**
          * Positions the tape for reading the file. Depending on the previous activity,
          * it is the duty of this function to determine how to best move to the next
@@ -339,6 +341,11 @@ namespace castor {
          * Session to which we are attached to
          */
         ReadSession *m_session;
+        
+        /**
+         * What kind of command we use to position ourself on the tape (fseq or blockid)
+         */
+        castor::tape::tapegateway::PositionCommandCode m_positionCommandCode;
       };
 
       /**
