@@ -1410,7 +1410,7 @@ BEGIN
       ELSE
         -- Fail/retry this migration, log 'migration failed, will retry if allowed'
         varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' ErrorCode='|| to_char(inErrorCodes(i))
-                     ||' ErrorMessage="'|| inErrorMsgs(i) ||'" VID='|| varVid
+                     ||' ErrorMessage="'|| inErrorMsgs(i) ||'" TPVID='|| varVid
                      ||' copyNb='|| to_char(varCopyNo) ||' '|| inLogContext;
         logToDLF(varReqid, dlf.LVL_WARNING, dlf.MIGRATION_RETRY, inFileIds(i), varNsHost, 'tapegatewayd', varParams);
         retryOrFailMigration(inMountTrId, inFileIds(i), varNsHost, inErrorCodes(i), varReqId);
