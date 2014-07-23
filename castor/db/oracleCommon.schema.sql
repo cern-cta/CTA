@@ -1003,16 +1003,15 @@ CREATE GLOBAL TEMPORARY TABLE BulkSelectHelper
   (objId NUMBER)
   ON COMMIT DELETE ROWS;
 
-/* Global temporary table to store the information on diskcopyies which need to
- * processed to see if too many replicas are online. This temporary table is
- * required to solve the error: `ORA-04091: table is mutating, trigger/function`
+/* Table to store the information on CastorFiles which need a check
+ * to see if too many replicas are online. This table is required to
+ * allow "offline" checks. Onlines checks (e.g. at diskcopy creation)
+ * are difficult as you get the error: `ORA-04091: table is mutating, trigger/function`
  */
-CREATE GLOBAL TEMPORARY TABLE TooManyReplicasHelper
-  (svcClass NUMBER, castorFile NUMBER)
-  ON COMMIT DELETE ROWS;
-
-ALTER TABLE TooManyReplicasHelper 
-  ADD CONSTRAINT UN_TooManyReplicasHelp_SVC_CF UNIQUE (svcClass, castorFile);
+CREATE TABLE TooManyReplicasHelper (svcClass NUMBER, castorFile NUMBER);
+ALTER TABLE TooManyReplicasHelper
+  ADD CONSTRAINT UN_TooManyReplicasHelp_SVC_CF
+  UNIQUE (svcClass, castorFile);
 
 /* Global temporary table to store subRequest and castorFile ids for cleanup operations.
    See the deleteTerminatedRequest procedure for more details.
