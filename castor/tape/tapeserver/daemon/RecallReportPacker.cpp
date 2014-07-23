@@ -214,12 +214,29 @@ void RecallReportPacker::WorkerThread::run(){
       while(1) {    
         std::auto_ptr<Report> rep (m_parent.m_fifo.pop());    
         
+        /*
+         * this boolean is only true if it is the last turn of the loop
+         * == rep is ReportEndOFSession or ReportEndOFSessionWithError
+         */
+        bool isItTheEnd = rep->goingToEnd();
+        
+        /*
+         * if it is not the last turn, we want to execute the report 
+         * (= insert the file into thr right list of results) BEFORE (trying to) 
+         * flush
+         */
+        if(!isItTheEnd){
+          rep->execute(m_parent);
+        }
         //how mane files we have globally treated 
         unsigned int totalSize = m_parent.m_listReports->failedRecalls().size() +
                                  m_parent.m_listReports->successfulRecalls().size();
+        
         //If we have enough reports or we are going to end the loop
-        //then we flush        
-        if(totalSize >= m_parent.m_reportFilePeriod || rep->goingToEnd() ||
+        // or it is the end (== unconditional flush ) 
+        // or we bypass the queuing system if the client is readtp
+        // then we flush        
+        if(totalSize >= m_parent.m_reportFilePeriod || isItTheEnd ||
            detail::ReportByFile == m_parent.m_reportBatching)
         {
         
@@ -236,8 +253,14 @@ void RecallReportPacker::WorkerThread::run(){
           }
         }
         
-        rep->execute(m_parent);
-        if(rep->goingToEnd()) {
+         /* 
+          * It is the last turn of loop, we are going to send 
+          * an EndOfSession (WithError) to the client. We need to have flushed 
+          * all leftover BEFORE. Because as soon as we report the end, we can not 
+          * report any the longer the success or failure of any job
+         */
+        if(isItTheEnd) {
+          rep->execute(m_parent);
           break;
         }
     }
