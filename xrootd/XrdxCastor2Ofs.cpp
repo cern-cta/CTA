@@ -157,11 +157,11 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
                   (end == val))
               {
                 // There was an error default to LOG_INFO
-                  log_level = 6;
+                log_level = 6;
               }
             }
 
-            SetLogLevel(log_level);
+            mLogLevel = log_level;
             Eroute.Say("=====> xcastor2.loglevel: ",
                        Logging::GetPriorityString(mLogLevel), "");
           }
@@ -197,6 +197,9 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
     config_stream.Close();
   }
 
+  // Parse the default XRootD directives
+  int rc = XrdOfs::Configure(Eroute);
+
   // Setup the circular in-memory logging buffer
   XrdOucString unit = "rdr@";
   unit += XrdSysDNS::getHostName();
@@ -205,7 +208,7 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
   Logging::SetLogPriority(mLogLevel);
   Logging::SetUnit(unit.c_str());
   xcastor_info("logging configured");
-  int rc = XrdOfs::Configure(Eroute);
+
 
   // Set the effective user for all the XrdClients used to issue 'prepares'
   // to redirector
@@ -317,7 +320,7 @@ XrdxCastor2OfsFile::open(const char*         path,
 
   if (tried_pos != STR_NPOS)
     newopaque.erase(tried_pos, amp_pos - tried_pos);
-  
+
   // This prevents 'clever' users from faking internal opaque information
   newopaque.replace("source=", "nosource=");
   mEnvOpaque = new XrdOucEnv(newopaque.c_str());
@@ -380,8 +383,26 @@ XrdxCastor2OfsFile::open(const char*         path,
   }
 
   TIMING("DONE", &opentiming);
-  opentiming.Print();
+  if (gSrv->mLogLevel == LOG_DEBUG)
+    opentiming.Print();
+  
   return rc;
+}
+
+
+
+//------------------------------------------------------------------------------
+// Stat file path
+//------------------------------------------------------------------------------
+int
+XrdxCastor2Ofs::stat(const char* path,
+                     struct stat* buf,
+                     XrdOucErrInfo& einfo,
+                     const XrdSecEntity* client,
+                     const char* opaque)
+{
+  xcastor_debug("path=%s, opaque=%s", path, opaque);
+  return XrdOfs::stat(path, buf, einfo, client, opaque);
 }
 
 
@@ -811,7 +832,7 @@ XrdxCastor2OfsFile::read(XrdSfsFileOffset fileOffset,
                          XrdSfsXferSize   buffer_size)
 {
   xcastor_debug("off=%llu, len=%i", fileOffset, buffer_size);
-  
+
   // If we once got an adler checksum error, we fail all reads.
   if (mHasAdlerErr)
   {

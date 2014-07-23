@@ -211,7 +211,7 @@ std::string
 XrdxCastor2Fs::GetAllowedSvc(const char* path,
                              const std::string& desired_svc)
 {
-  xcastor_debug("path=%s desired_svc=%s", path, desired_svc.c_str());
+  xcastor_debug("path=%s desired_svc=\"%s\"", path, desired_svc.c_str());
   std::string spath = path;
   std::string subpath;
   std::string allowed_svc = "";

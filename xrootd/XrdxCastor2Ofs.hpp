@@ -37,6 +37,7 @@
 #include "XrdOuc/XrdOucEnv.hh"
 #include "XrdOuc/XrdOucString.hh"
 #include "XrdOfs/XrdOfs.hh"
+#include "XrdOfs/XrdOfsTrace.hh"
 #include "XrdSfs/XrdSfsInterface.hh"
 #include "XrdSys/XrdSysTimer.hh"
 #include "XrdSys/XrdSysPthread.hh"
@@ -128,7 +129,7 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
     //! Write to file
     //--------------------------------------------------------------------------
     int write(XrdSfsAio* aioparm);
-
+ 
 
     //--------------------------------------------------------------------------
     //! Unlink file
@@ -274,88 +275,94 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
     //--------------------------------------------------------------------------
     //! Chmod - masked
     //--------------------------------------------------------------------------
-    int chmod(const char*         /*Name*/,
-              XrdSfsMode          /*Mode*/,
-              XrdOucErrInfo&      /*out_error*/,
-              const XrdSecEntity* /*client*/,
-              const char*         /*opaque = 0*/)
+    int chmod(const char* path,
+              XrdSfsMode Mode,
+              XrdOucErrInfo& out_error,
+              const XrdSecEntity* client,
+              const char* opaque = 0)
     {
-      return SFS_OK;
+      EPNAME("chmod");
+      return Emsg(epname, out_error, ENOSYS, epname, path);
     }
 
 
     //--------------------------------------------------------------------------
     //! Exists - masked
     //--------------------------------------------------------------------------
-    int exists(const char*          /*fileName*/,
-               XrdSfsFileExistence& /*exists_flag*/,
-               XrdOucErrInfo&       /*out_error*/,
-               const XrdSecEntity*  /*client*/,
-               const char*          /*opaque = 0*/)
+    int exists(const char* path,
+               XrdSfsFileExistence& exists_flag,
+               XrdOucErrInfo& out_error,
+               const XrdSecEntity* client,
+               const char* opaque = 0)
     {
-      return SFS_OK;
+      EPNAME("exists");
+      return Emsg(epname, out_error, ENOSYS, epname, path);
     }
 
 
     //--------------------------------------------------------------------------
     //! fsctl - masked
     //--------------------------------------------------------------------------
-    int fsctl(const int           /*cmd*/,
-              const char*         /*args*/,
-              XrdOucErrInfo&      /*out_error*/,
-              const XrdSecEntity* /*client*/)
+    int fsctl(const int cmd,
+              const char* args,
+              XrdOucErrInfo& out_error,
+              const XrdSecEntity* client)
     {
-      return SFS_OK;
+      EPNAME("fsctl");
+      return Emsg(epname, out_error, ENOSYS, epname);
     }
 
 
     //--------------------------------------------------------------------------
     //! Mkdir - masked
     //--------------------------------------------------------------------------
-    int mkdir(const char*         /*dirName*/,
-              XrdSfsMode          /*Mode*/,
-              XrdOucErrInfo&      /*out_error*/,
-              const XrdSecEntity* /*client*/,
-              const char*         /*opaque = 0*/)
+    int mkdir(const char* path,
+              XrdSfsMode Mode,
+              XrdOucErrInfo& out_error,
+              const XrdSecEntity* client,
+              const char* opaque = 0)
     {
-      return SFS_OK;
+      EPNAME("mkdir");
+      return Emsg(epname, out_error, ENOSYS, epname, path);
     }
 
 
     //--------------------------------------------------------------------------
     //! prepare - masked
     //--------------------------------------------------------------------------
-    int prepare(XrdSfsPrep&         /*pargs*/,
-                XrdOucErrInfo&      /*out_error*/,
-                const XrdSecEntity* /*client = 0*/)
+    int prepare(XrdSfsPrep& pargs,
+                XrdOucErrInfo& out_error,
+                const XrdSecEntity* client = 0)
     {
-      return SFS_OK;
+      EPNAME("prepare");
+      return Emsg(epname, out_error, ENOSYS, epname);
     }
 
 
     //--------------------------------------------------------------------------
     //! remdir - masked
     //--------------------------------------------------------------------------
-    int remdir(const char*         /*dirName*/,
-               XrdOucErrInfo&      /*out_error*/,
-               const XrdSecEntity* /*client*/,
-               const char*         /*info = 0*/)
+    int remdir(const char* path,
+               XrdOucErrInfo& out_error,
+               const XrdSecEntity* client,
+               const char* info = 0)
     {
-      return SFS_OK;
+      return Emsg("remdir", out_error, ENOSYS, path);
     }
 
 
     //--------------------------------------------------------------------------
     //! rename - masked
     //--------------------------------------------------------------------------
-    int rename(const char*         /*oldFileName*/,
-               const char*         /*newFileName*/,
-               XrdOucErrInfo&      /*out_error*/,
-               const XrdSecEntity* /*client*/,
-               const char*         /*infoO = 0*/,
-               const char*         /*infoN = 0*/)
+    int rename(const char* oldFileName,
+               const char* newFileName,
+               XrdOucErrInfo& out_error,
+               const XrdSecEntity* client,
+               const char* infoO = 0,
+               const char* infoN = 0)
     {
-      return SFS_OK;
+      EPNAME("rename");
+      return Emsg(epname, out_error, ENOSYS, epname, oldFileName);
     }
 
 
@@ -367,21 +374,19 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
             const XrdSecEntity* client,
             const char* info = 0)
     {
-      return SFS_OK;
+      EPNAME("rem");
+      return Emsg(epname, out_error, ENOSYS, epname, path);
     }
 
 
     //--------------------------------------------------------------------------
-    //! Stat - masked
+    //! Stat
     //--------------------------------------------------------------------------
     int stat(const char* Name,
              struct stat* buf,
              XrdOucErrInfo& out_error,
              const XrdSecEntity* client,
-             const char* opaque = 0)
-    {
-      return SFS_OK;
-    }
+             const char* opaque = 0);
 
 
     //--------------------------------------------------------------------------
