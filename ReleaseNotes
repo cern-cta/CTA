@@ -40,8 +40,11 @@
   ------
     #104810 Draining has problems when used with --file-mask=NOTONTAPE
     #104671 listtransfers not working when a transfermanagerd is down
-    #104601 RFE: modify/enterSvcClass should check consistency of the GCPolicies when DiskPools are shared
     #104562 bad handling of long arguments in printmigrationroute and printrecalluser
+
+  Protocols
+  ---------
+    #104966 Handle overlapping chunks of data in gridFTP plugin (by raising an error)
 
   Repack
   ------

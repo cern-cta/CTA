@@ -245,29 +245,36 @@ END;
 /
 
 
-/* Trigger used to check if the maxReplicaNb has been exceeded
- * after a diskcopy has changed its status to VALID
+/* This procedure is used to check if the maxReplicaNb has been exceeded
+ * for some CastorFiles. It checks all the files listed in TooManyReplicasHelper
+ * This is called from a DB job and is fed by the tr_DiskCopy_Created trigger
+ * on creation of new diskcopies
  */
-CREATE OR REPLACE TRIGGER tr_DiskCopy_Stmt_Online
-AFTER UPDATE OF STATUS ON DISKCOPY
-DECLARE
-  maxReplicaNb NUMBER;
-  unused NUMBER;
-  nbFiles NUMBER;
+CREATE OR REPLACE PROCEDURE checkNbReplicas AS
+  varSvcClassId INTEGER;
+  varCfId INTEGER;
+  varMaxReplicaNb NUMBER;
+  varNbFiles NUMBER;
+  varDidSth BOOLEAN;
 BEGIN
-  -- Loop over the diskcopies to be processed
-  FOR a IN (SELECT * FROM TooManyReplicasHelper)
+  -- Loop over the CastorFiles to be processed
   LOOP
-    -- Lock the castorfile. This shouldn't be necessary as the procedure that
-    -- caused the trigger to be executed should already have the lock.
-    -- Nevertheless, we make sure!
-    SELECT id INTO unused FROM CastorFile
-     WHERE id = a.castorfile FOR UPDATE;
+    varCfId := NULL;
+    DELETE FROM TooManyReplicasHelper
+     WHERE ROWNUM < 2
+    RETURNING svcClass, castorFile INTO varSvcClassId, varCfId;
+    IF varCfId IS NULL THEN
+      -- we can exit, we went though all files to be processed
+      EXIT;
+    END IF;
+    -- Lock the castorfile
+    SELECT id INTO varCfId FROM CastorFile
+     WHERE id = varCfId FOR UPDATE;
     -- Get the max replica number of the service class
-    SELECT maxReplicaNb INTO maxReplicaNb
-      FROM SvcClass WHERE id = a.svcclass;
-    -- Produce a list of diskcopies to invalidate should too many replicas be
-    -- online.
+    SELECT maxReplicaNb INTO varMaxReplicaNb
+      FROM SvcClass WHERE id = varSvcClassId;
+    -- Produce a list of diskcopies to invalidate should too many replicas be online.
+    varDidSth := False;
     FOR b IN (SELECT id FROM (
                 SELECT rownum ind, id FROM (
                   SELECT * FROM (
@@ -279,8 +286,8 @@ BEGIN
                      WHERE DiskCopy.filesystem = FileSystem.id
                        AND FileSystem.diskpool = DiskPool2SvcClass.parent
                        AND FileSystem.diskserver = DiskServer.id
-                       AND DiskPool2SvcClass.child = a.svcclass
-                       AND DiskCopy.castorfile = a.castorfile
+                       AND DiskPool2SvcClass.child = varSvcClassId
+                       AND DiskCopy.castorfile = varCfId
                        AND DiskCopy.status = dconst.DISKCOPY_VALID
                      UNION ALL
                     SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_Castorfile) */
@@ -290,24 +297,24 @@ BEGIN
                            DiskCopy.gcWeight, DiskCopy.id
                       FROM DiskCopy, DataPool2SvcClass
                      WHERE DiskCopy.dataPool = DataPool2SvcClass.parent
-                       AND DataPool2SvcClass.child = a.svcclass
-                       AND DiskCopy.castorfile = a.castorfile
+                       AND DataPool2SvcClass.child = varSvcClassId
+                       AND DiskCopy.castorfile = varCfId
                        AND DiskCopy.status = dconst.DISKCOPY_VALID)
                    -- Select non-PRODUCTION hardware first
                    ORDER BY decode(fsStatus, 0, decode(dsStatus, 0, 0, 1), 1) ASC, gcWeight DESC))
                WHERE ind > maxReplicaNb)
     LOOP
       -- Sanity check, make sure that the last copy is never dropped!
-      SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ count(*) INTO nbFiles
+      SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ count(*) INTO varNbFiles
         FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass, DiskServer
        WHERE DiskCopy.filesystem = FileSystem.id
          AND FileSystem.diskpool = DiskPool2SvcClass.parent
          AND FileSystem.diskserver = DiskServer.id
          AND DiskPool2SvcClass.child = SvcClass.id
-         AND DiskCopy.castorfile = a.castorfile
+         AND DiskCopy.castorfile = varCfId
          AND DiskCopy.status = dconst.DISKCOPY_VALID
-         AND SvcClass.id = a.svcclass;
-      IF nbFiles = 1 THEN
+         AND SvcClass.id = varSvcClassId;
+      IF varNbFiles = 1 THEN
         EXIT;  -- Last file, so exit the loop
       END IF;
       -- Invalidate the diskcopy
@@ -315,18 +322,18 @@ BEGIN
          SET status = dconst.DISKCOPY_INVALID,
              gcType = dconst.GCTYPE_TOOMANYREPLICAS
        WHERE id = b.id;
+      varDidSth := True;
       -- update importance of remaining diskcopies
       UPDATE DiskCopy SET importance = importance + 1
-       WHERE castorFile = a.castorfile
+       WHERE castorFile = varCfId
          AND status = dconst.DISKCOPY_VALID;
     END LOOP;
+    IF varDidSth THEN COMMIT; END IF;
   END LOOP;
-  -- cleanup the table so that we do not accumulate lines. This would trigger
-  -- a n^2 behavior until the next commit.
-  DELETE FROM TooManyReplicasHelper;
+  -- commit the deletions in case no modification was done that commited them before
+  COMMIT;
 END;
 /
-
 
 /* Trigger used to provide input to the statement level trigger
  * defined above
@@ -344,9 +351,9 @@ DECLARE
 BEGIN
   -- Insert the information about the diskcopy being processed into
   -- the TooManyReplicasHelper. This information will be used later
-  -- on the DiskCopy AFTER UPDATE statement level trigger. We cannot
-  -- do the work of that trigger here as it would result in
-  -- `ORA-04091: table is mutating, trigger/function` errors
+  -- by the checkNbReplicasJob job. We cannot do the work of that
+  -- job here as it would result in `ORA-04091: table is mutating,
+  -- trigger/function` errors
   BEGIN
     SELECT child INTO svcId FROM (
       SELECT DiskPool2SvcClass.child
@@ -3910,5 +3917,24 @@ BEGIN
   RETURN handleRawPutOrPPut(inCfId, inSrId, inFileId, inNsHost, varFileClassId,
                              varSvcClassId, varEuid, varEgid, varReqUUID, varSrUUID,
                              False, inNsOpenTimeInUsec/1000000);
+END;
+/
+
+/*
+ * Database jobs
+ */
+BEGIN
+  -- Remove database job before recreating it
+  DBMS_SCHEDULER.DROP_JOB('CHECKNBREPLICASJOB', TRUE);
+  -- Create a db job to be run every minute executing the checkNbReplicas procedure
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'checkNbReplicasJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN checkNbReplicas(); END;'', ''stagerd''); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
+      START_DATE      => SYSDATE + 60/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Checking for extra replicas to be deleted');
 END;
 /

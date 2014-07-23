@@ -130,6 +130,8 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Migration', 'SizeThreshold', '300000000', 'The threshold to consider a file "small" or "large" when routing it to tape');
 INSERT INTO CastorConfig
+  VALUES ('Migration', 'MaxNbMounts', '3', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed and the MigrationJob entry will be dropped. An operator intervention is required to resume the migration.');
+INSERT INTO CastorConfig
   VALUES ('Migration', 'NbMigCandConsidered', '10000', 'The number of migration jobs considered in time order by each selection of the best files to migrate');
 INSERT INTO CastorConfig
   VALUES ('D2dCopy', 'MaxNbRetries', '2', 'The maximum number of retries for disk to disk copies before it is considered failed. Here 2 means we will do in total 3 attempts.');
@@ -1069,16 +1071,15 @@ CREATE GLOBAL TEMPORARY TABLE BulkSelectHelper
   (objId NUMBER)
   ON COMMIT DELETE ROWS;
 
-/* Global temporary table to store the information on diskcopyies which need to
- * processed to see if too many replicas are online. This temporary table is
- * required to solve the error: `ORA-04091: table is mutating, trigger/function`
+/* Table to store the information on CastorFiles which need a check
+ * to see if too many replicas are online. This table is required to
+ * allow "offline" checks. Onlines checks (e.g. at diskcopy creation)
+ * are difficult as you get the error: `ORA-04091: table is mutating, trigger/function`
  */
-CREATE GLOBAL TEMPORARY TABLE TooManyReplicasHelper
-  (svcClass NUMBER, castorFile NUMBER)
-  ON COMMIT DELETE ROWS;
-
-ALTER TABLE TooManyReplicasHelper 
-  ADD CONSTRAINT UN_TooManyReplicasHelp_SVC_CF UNIQUE (svcClass, castorFile);
+CREATE TABLE TooManyReplicasHelper (svcClass NUMBER, castorFile NUMBER);
+ALTER TABLE TooManyReplicasHelper
+  ADD CONSTRAINT UN_TooManyReplicasHelp_SVC_CF
+  UNIQUE (svcClass, castorFile);
 
 /* Global temporary table to store subRequest and castorFile ids for cleanup operations.
    See the deleteTerminatedRequest procedure for more details.
