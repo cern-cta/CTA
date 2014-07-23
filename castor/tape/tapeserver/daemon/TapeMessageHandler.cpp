@@ -99,7 +99,7 @@ bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
   const zmq_pollitem_t &fd) throw() {
   try {
     checkSocket(fd);
-    m_log(LOG_INFO,"handling event in TapeMessageHandler");
+    m_log(LOG_DEBUG,"handling event in TapeMessageHandler");
   
     messages::Header header; 
     try {
@@ -193,7 +193,7 @@ castor::messages::Header castor::tape::tapeserver::daemon::TapeMessageHandler::b
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchMsgHandler(
   messages::Header& header, const tape::utils::ZmqMsg &bodyBlob) {
-  m_log(LOG_INFO,"dispatching  event in TapeMessageHandler");
+  m_log(LOG_DEBUG,"dispatching  event in TapeMessageHandler");
   
   switch(header.reqtype()){
   case messages::reqType::Heartbeat:
@@ -221,7 +221,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchMsgHandler(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeMessageHandler::handleHeartbeatMsg(
   const messages::Header& header, const tape::utils::ZmqMsg &bodyBlob) {
-  m_log(LOG_INFO, "Handling Heartbeat message");
+  m_log(LOG_DEBUG, "Handling Heartbeat message");
 
   try {
     castor::messages::Heartbeat body;
@@ -388,7 +388,6 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeMessageHandler::
   sendSuccessReplyToClient() {
-  castor::messages::ReturnValue body;
   sendReplyToClient(0,"");
 }
 
