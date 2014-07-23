@@ -111,25 +111,29 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     // through the st driver file descriptor.
     setCapabilities();
     
-    //pair of brackets to create an artficial scope for the tape cleaning
+    //pair of brackets to create an artificial scope for the tape cleaning
     {
       //log and notify
       m_logContext.log(LOG_INFO, "Starting tape write thread");
+      
       // The tape will be loaded 
       // it has to be unloaded, unmounted at all cost -> RAII
       // will also take care of the TapeServerReporter
       TapeCleaning cleaner(*this, timer);
+      
       // Before anything, the tape should be mounted
       // This call does the logging of the mount
       mountTape(castor::legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
       waitForDrive();
+      
       m_stats.mountTime += timer.secs(utils::Timer::resetCounter);
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
         scoped.add("mountTime", m_stats.mountTime);
         m_logContext.log(LOG_INFO, "Tape mounted and drive ready");
       }
-      // Then we have to initialise the tape write session
+      
+      // Then we have to initialize the tape write session
       std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
       m_stats.positionTime  += timer.secs(utils::Timer::resetCounter);
       {
@@ -137,6 +141,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         scoped.add("positionTime", m_stats.positionTime);
         m_logContext.log(LOG_INFO, "Write session initialised, tape VID checked and drive positioned for writing");
       }
+      
       m_initialProcess.tapeMountedForWrite();
       uint64_t bytes=0;
       uint64_t files=0;
@@ -174,27 +179,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     }
     // The session completed successfully, and the cleaner (unmount) executed
     // at the end of the previous block. Log the results.
-    double sessionTime = totalTimer.secs();
-    log::ScopedParamContainer params(m_logContext);
-    params.add("mountTime", m_stats.mountTime)
-          .add("positionTime", m_stats.positionTime)
-          .add("waitInstructionsTime", m_stats.waitInstructionsTime)
-          .add("checksumingTime", m_stats.checksumingTime)
-          .add("transferTime", m_stats.transferTime)
-          .add("waitDataTime", m_stats.waitDataTime)
-          .add("waitReportingTime", m_stats.waitReportingTime)
-          .add("flushTime", m_stats.flushTime)
-          .add("unloadTime", m_stats.unloadTime)
-          .add("unmountTime", m_stats.unmountTime)
-          .add("dataVolume", m_stats.dataVolume)
-          .add("headerVolume", m_stats.headerVolume)
-          .add("filesCount", m_stats.filesCount)
-          .add("dataBandwidthMiB/s", 1.0*m_stats.dataVolume
-                  /1024/1024/sessionTime)
-          .add("driveBandwidthMiB/s", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
-                  /1024/1024/sessionTime)
-          .add("sessionTime", sessionTime);
-    m_logContext.log(LOG_INFO, "Completed migration session successfully");
+    logWithStats(LOG_INFO, "Completed migration session successfully",totalTimer.secs());
   } //end of try
   catch(const castor::exception::Exception& e){
     //we end there because write session could not be opened or because a task failed
@@ -214,4 +199,30 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     
     m_reportPacker.reportEndOfSessionWithErrors(e.what(),e.code());
   }    
+}
+//------------------------------------------------------------------------------
+//logWithStats
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats
+(int level,const std::string& msg,double sessionTime){
+  log::ScopedParamContainer params(m_logContext);
+    params.add("mountTime", m_stats.mountTime)
+          .add("positionTime", m_stats.positionTime)
+          .add("waitInstructionsTime", m_stats.waitInstructionsTime)
+          .add("checksumingTime", m_stats.checksumingTime)
+          .add("transferTime", m_stats.transferTime)
+          .add("waitDataTime", m_stats.waitDataTime)
+          .add("waitReportingTime", m_stats.waitReportingTime)
+          .add("flushTime", m_stats.flushTime)
+          .add("unloadTime", m_stats.unloadTime)
+          .add("unmountTime", m_stats.unmountTime)
+          .add("dataVolume", m_stats.dataVolume)
+          .add("headerVolume", m_stats.headerVolume)
+          .add("filesCount", m_stats.filesCount)
+          .add("dataBandwidthMiB/s", 1.0*m_stats.dataVolume
+                  /1024/1024/sessionTime)
+          .add("driveBandwidthMiB/s", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
+                  /1024/1024/sessionTime)
+          .add("sessionTime", sessionTime);
+    m_logContext.log(level, msg);
 }

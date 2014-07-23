@@ -121,6 +121,11 @@ private:
   };
   
   /**
+   * Log  m_stats  parameters into m_logContext with msg at the given level
+   */
+  void logWithStats(int level,const std::string& msg,double sessionTime);
+  
+  /**
    * Function to open the WriteSession 
    * If successful, returns a std::auto_ptr on it. A copy of that std::auto_ptr
    * will give the caller the ownership of the opened session (see auto_ptr 
