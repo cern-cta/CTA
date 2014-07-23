@@ -116,7 +116,13 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
 //flush
 //------------------------------------------------------------------------------
 void RecallReportPacker::flush(){
-    
+  //we dont want to send empty reports
+  unsigned int totalSize = m_listReports->failedRecalls().size() +
+                           m_listReports->successfulRecalls().size();
+  if(totalSize==0) {
+    return;
+  }
+  
     client::ClientInterface::RequestReport chrono;
     try{
       m_client.reportRecallResults(*m_listReports,chrono);
