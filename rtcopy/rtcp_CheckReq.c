@@ -41,8 +41,8 @@
 #include <Cns.h>
 
 int rtcp_CheckReqStructures (int *,
-			     rtcpClientInfo_t *,
-			     tape_list_t *);
+                             rtcpClientInfo_t *,
+                             tape_list_t *);
 
 #define SET_REQUEST_ERR(X,Z) {\
     (X)->err.severity = (Z); \
@@ -57,34 +57,6 @@ static int max_cpretry = MAX_CPRETRY;
 extern char *getconfent(char *, char *, int);
 extern int rtcp_CallVMGR (tape_list_t *, char *);
 
-/**
- * Convert the server:/path string to xroot root://server:port//path
- * @param rtcpPath the path to be converted.
- * @param xrootFilePath the variable to return xroot path.
- * @return 0 if convertion succeed and -1 in error case.
- */
-static int rtcpToXroot(const char *const rtcpPath,
-                       char *const xrootFilePath) {
-    const char *const xrootPort="1095";
-    const char *pathWithoutServer;
-    *xrootFilePath='\0';
-    if ( CA_MAXPATHLEN < (strlen("root://")+strlen(xrootPort)+strlen(rtcpPath)+1) ) {
-      return (-1);
-    }
-    if ( NULL == (pathWithoutServer=strchr(rtcpPath,'/'))) {
-      return (-1);
-    }
-    /* protocol */
-    strcat(xrootFilePath,"root://");
-    /* server name */
-    strncat(xrootFilePath,rtcpPath, pathWithoutServer-rtcpPath);
-    /* port */
-    strcat(xrootFilePath,xrootPort);
-    /* path itself */
-    strcat(xrootFilePath,"/");
-    strcat(xrootFilePath,pathWithoutServer);
-    return 0;
-}
 
 static int rtcp_CheckTapeReq(tape_list_t *tape) {
     file_list_t *file = NULL;
@@ -476,23 +448,19 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) (tpwrite) stat64() remote file\n",
             filereq->tape_fseq,filereq->file_path);
 
-        /* we have to convert the path to xroot */
+        /* we have to convert the path to xroot and add opaque info */
         struct stat xrootStat;
-        char xrootFilePath[CA_MAXPATHLEN+1];
-        if ( -1 ==  rtcpToXroot(filereq->file_path,xrootFilePath) ) {
-            serrno = EFAULT; /* sets  "Bad address" errno */
-            rc = -1;
-        } else {
-            rc = rtcp_xroot_stat(xrootFilePath,&xrootStat);
-            st.st_mode=xrootStat.st_mode;
-            st.st_size=xrootStat.st_size;
-        }
+        rc = rtcp_xroot_stat(filereq->file_path,&xrootStat);
 
         if ( rc == -1 ) {
             serrno = errno;
             sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
             SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
             if ( rc == -1 ) return(rc);
+        }
+        else {
+            st.st_mode=xrootStat.st_mode;
+            st.st_size=xrootStat.st_size;
         }
         /*
          * Is it a directory?
@@ -508,7 +476,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         /*
          * Zero size?
          */
-	/* Commentimg out the following log statement because it logs     */
+        /* Commentimg out the following log statement because it logs     */
 	/* st_size modulus 4GB.  The log statement is therefore more      */
 	/* confusing than useful.  If anybody wishes to fix the following */
 	/* log line then they MUST test their fix by migrating a file     */
@@ -570,18 +538,16 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             filereq->tape_fseq,filereq->file_path);
         {
             serrno = 0;
+            /* we have to convert the path to xroot and add opaque info */
             struct stat xrootStat;
-            char xrootFilePath[CA_MAXPATHLEN+1];
-            if ( -1 ==  rtcpToXroot(filereq->file_path,
-                                    xrootFilePath) ) {
-                  errno = EFAULT; /* sets  "Bad address" errno */
-                  rc = -1;
-            } else {
-                  rc = rtcp_xroot_stat(xrootFilePath,&xrootStat);
-                  st.st_mode=xrootStat.st_mode;
+            rc = rtcp_xroot_stat(filereq->file_path,&xrootStat);
+
+            if ( rc != -1 ) {
+                st.st_mode=xrootStat.st_mode;
+                st.st_size=xrootStat.st_size;
+                rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) st_mode=0%o\n",
+                         filereq->tape_fseq,filereq->file_path,st.st_mode);
             }
-            if ( rc != -1 ) rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) st_mode=0%o\n",
-                filereq->tape_fseq,filereq->file_path,st.st_mode);
             if ( rc != -1 && (((st.st_mode) & S_IFMT) == S_IFDIR) ) {
                 serrno = EISDIR;
                 sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
@@ -601,15 +567,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                 }
 
                 struct stat xrootStat;
-                char xrootFilePath[CA_MAXPATHLEN+1];
-                if ( -1 ==  rtcpToXroot(filereq->file_path,
-                                        xrootFilePath) ) {
-                    errno = EFAULT; /* sets  "Bad address" errno */
-                    rc = -1;
-                } else {
-                    rc = rtcp_xroot_stat(xrootFilePath,&xrootStat);
-                    st.st_mode=xrootStat.st_mode;
-                }
+                rc = rtcp_xroot_stat(filereq->file_path,&xrootStat);
 
                 if ( rc == -1 ) {
                     serrno = errno;
@@ -617,6 +575,9 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                     if ( p != NULL ) *p = dir_delim;
                     SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
                     if ( rc == -1 ) return(rc);
+                }
+                else {
+                    st.st_mode=xrootStat.st_mode;
                 }
                 /*
                  * Couldn't find S_ISDIR() macro under NT. 

@@ -8,7 +8,7 @@
 /*
 ** An xroot wrapper for file commands used by rtcpd.
 ** We need it to be able to use any compilation flags specific only for xroot
-*/ 
+*/
 
 extern "C" {
 #include <rtcp_xroot.h>
@@ -90,7 +90,7 @@ static int signXrootUrl(const std::string& input, std::string& signature) {
   // cleanup context
   EVP_MD_CTX_cleanup(&md_ctx);
 
-  // base64 encode 
+  // base64 encode
   BIO *b64 = BIO_new(BIO_f_base64());
   BIO *bmem = BIO_new(BIO_s_mem());
   if (NULL == b64 || NULL == bmem) {
@@ -114,7 +114,7 @@ static int signXrootUrl(const std::string& input, std::string& signature) {
 
 /**
  * Convert the server:/path string to the CASTOR xroot
- * root://server:port//dummy?castor2fs.pfn1=path
+ * root://server:port//path?castor2fs... all the opaque tags
  * @param rtcpPath the path to be converted.
  * @param xrootFilePath the variable to return xroot path.
  * @return 0 if convertion succeed and -1 in error case.
@@ -128,21 +128,22 @@ static std::string rtcpToCastorXroot(const char *const rtcpPath) {
     }
     // start of URL
     std::ostringstream ss;
-    ss << "root://" << path.substr(0, slashPos) << "1095//dummy?";
+    ss << "root://" << path.substr(0, slashPos) << "1095/"
+       << path.substr(slashPos) << "?";
     // "opaque" info
     time_t exptime = time(NULL) + 3600;
     std::ostringstream opaque;
     opaque << "castor2fs.sfn=&"
            << "castor2fs.pfn1=" << path.substr(slashPos) << "&"
            << "castor2fs.pfn2=&"
-           << "castor2fs.id=&" 
+           << "castor2fs.id=&"
            << "castor2fs.client_sec_uid=&"
            << "castor2fs.client_sec_gid=&"
            << "castor2fs.accessop=0&"
            << "castor2fs.exptime=" << exptime << "&"
            << "castor2fs.manager=&"
            << "castor2fs.signature=";
-    
+
     ss << opaque.str();
     // signature
     std::string signature;
@@ -152,15 +153,21 @@ static std::string rtcpToCastorXroot(const char *const rtcpPath) {
     if (signXrootUrl(sdata.str(), signature)) {
       throw castor::exception::Exception();
     }
-    
+
     ss << signature;
     return ss.str();
 }
 
 extern "C" {
-  
+
 int        rtcp_xroot_stat(const char *path, struct stat *buf) {
-  return XrdPosix_Stat(path,buf);
+  try {
+    std::string xrootdURL = rtcpToCastorXroot(path);
+    return XrdPosix_Stat(xrootdURL.c_str(), buf);
+  } catch (castor::exception::Exception e) {
+    errno = EFAULT; /* sets "Bad address" errno */
+    return -1;
+  }
 }
 
 int        rtcp_xroot_open(const char *path, int oflag, int mode) {
@@ -181,7 +188,7 @@ int        rtcp_xroot_close(int fildes) {
   return XrdPosix_Close(fildes);
 }
 
-long long  rtcp_xroot_write(int fildes, const void *buf, 
+long long  rtcp_xroot_write(int fildes, const void *buf,
                             unsigned long long nbyte) {
   return XrdPosix_Write(fildes, buf, nbyte);
 }
