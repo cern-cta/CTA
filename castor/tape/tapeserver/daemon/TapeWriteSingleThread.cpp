@@ -24,7 +24,9 @@
 
 
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
-
+//------------------------------------------------------------------------------
+//constructor
+//------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
 castor::tape::tapeserver::drives::DriveInterface & drive, 
         castor::legacymsg::RmcProxy & rmc,
@@ -39,12 +41,16 @@ castor::tape::tapeserver::drives::DriveInterface & drive,
         m_drive(drive), m_reportPacker(repPacker),
         m_lastFseq(-1),
         m_compress(true) {}
-
+//------------------------------------------------------------------------------
+//setlastFseq
+//------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeWriteSingleThread::
 setlastFseq(uint64_t lastFseq){
   m_lastFseq=lastFseq;
 }
-
+//------------------------------------------------------------------------------
+//openWriteSession
+//------------------------------------------------------------------------------
 std::auto_ptr<castor::tape::tapeFile::WriteSession> 
 castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
   using castor::log::LogContext;
@@ -75,7 +81,9 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
   }
   return writeSession;
 }
-
+//------------------------------------------------------------------------------
+//tapeFlush
+//------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeWriteSingleThread::
 tapeFlush(const std::string& message,uint64_t bytes,uint64_t files,
   utils::Timer & timer)
@@ -91,7 +99,9 @@ tapeFlush(const std::string& message,uint64_t bytes,uint64_t files,
   m_stats.flushTime += flushTime;
 }
 
-
+//------------------------------------------------------------------------------
+//run
+//------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   m_logContext.pushOrReplace(log::Param("thread", "TapeWrite"));
   castor::tape::utils::Timer timer, totalTimer;
@@ -100,6 +110,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
     // through the st driver file descriptor.
     setCapabilities();
+    
+    //pair of brackets to create an artficial scope for the tape cleaning
     {
       //log and notify
       m_logContext.log(LOG_INFO, "Starting tape write thread");

@@ -141,6 +141,17 @@ public:
       to.write(m_data + writePosition, m_size - writePosition);
     }
   }
+  
+  /*
+   Example for the Adler32
+   * unsigned long chck = Pyaload::zeroAdler32();
+   * while() {
+   *   payload.read(from);
+   *   chck = payload.adler32(chck);
+   * }
+   */
+  
+  
    /**
     * Compute adler32 checksum on the current data hold.
     * @param previous The previous adler32 checksum from all previous datablock
@@ -149,6 +160,10 @@ public:
   unsigned long  adler32(unsigned long previous){
     return ::adler32(previous,m_data,m_size);
   }
+  
+  /**
+   * Return the initial value for computing Adler32 checksum
+   */
   static unsigned long zeroAdler32() {
      return  ::adler32(0L,Z_NULL,0);
    }
