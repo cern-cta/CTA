@@ -122,15 +122,15 @@ void RecallReportPacker::flush(){
   if(totalSize==0) {
     return;
   }
-  
+ 
     client::ClientInterface::RequestReport chrono;
     try{
-      m_client.reportRecallResults(*m_listReports,chrono);
-      logRequestReport(chrono,"RecallReportList successfully transmitted to client (contents follow)");
-
-      logReport(m_listReports->failedRecalls(),"Reported failed recall to client");
-      logReport(m_listReports->successfulRecalls(),"Reported successful recall to client");
-    }
+         m_client.reportRecallResults(*m_listReports,chrono);
+         logRequestReport(chrono,"RecallReportList successfully transmitted to client (contents follow)");
+         
+         logReport(m_listReports->failedRecalls(),"Reported failed recall to client");
+         logReport(m_listReports->successfulRecalls(),"Reported successful recall to client");
+       }
    catch(const castor::tape::Exception& e){
     LogContext::ScopedParam s(m_lc, Param("exceptionCode",e.code()));
     LogContext::ScopedParam ss(m_lc, Param("exceptionMessageValue", e.getMessageValue()));
@@ -255,6 +255,12 @@ void RecallReportPacker::WorkerThread::run(){
             //reportEndOfSessionWithError might throw 
             m_parent.m_client.reportEndOfSessionWithError(e.getMessageValue(),SEINTERNAL,chrono);
             m_parent.logRequestReport(chrono,"Successfully closed client's session after the failed report RecallResult");
+            
+            // We need to wait until the end of session is signaled from upsteam
+            while (!isItTheEnd) {
+              std::auto_ptr<Report> r(m_parent.m_fifo.pop());
+              isItTheEnd = r->goingToEnd();
+            }
             break;
           }
         }
@@ -277,5 +283,7 @@ void RecallReportPacker::WorkerThread::run(){
     m_parent.logRequestReport(chrono,"tried to report endOfSession(WithError) and got an exception, cant do much more",LOG_ERR);
   }
   m_parent.m_lc.log(LOG_DEBUG, "Finishing RecallReportPacker thread");
+  
+  //When we end up there, we might have still 
 }
 }}}}
