@@ -120,19 +120,11 @@ TEST_F(castor_tape_reactor_ZMQReactorTest, constructor) {
 }
 
 /*
-IMPORTANT NOTE:
-
-This test should be uncommented when the destructor of
-castor::tape::reactor::ZMQReactor is made virtual as it should be.  The
-castorUnitsTest binary should also be ran with valgrind configured to track
+ The castorUnitsTest binary should also be ran with valgrind configured to track
 file-descriptors, for example:
 
 valgrind --track-fds=yes test/castorUnitTests
-
-Please note that the destructor of castor::tape::reactor::ZMQReactor is
-currently not a virtual method in order to all the new tape server to run
-ableit with leakiing file descriptors.
-
+*/
 TEST_F(castor_tape_reactor_ZMQReactorTest, closeFd) {
   using namespace castor::tape::reactor;
 
@@ -151,6 +143,5 @@ TEST_F(castor_tape_reactor_ZMQReactorTest, closeFd) {
   reactor.registerHandler(handler1.get());
   handler1.release();
 }
-*/
 
 } // namespace unitTests
