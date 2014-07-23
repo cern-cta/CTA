@@ -302,7 +302,7 @@ BEGIN
                        AND DiskCopy.status = dconst.DISKCOPY_VALID)
                    -- Select non-PRODUCTION hardware first
                    ORDER BY decode(fsStatus, 0, decode(dsStatus, 0, 0, 1), 1) ASC, gcWeight DESC))
-               WHERE ind > maxReplicaNb)
+               WHERE ind > varMaxReplicaNb)
     LOOP
       -- Sanity check, make sure that the last copy is never dropped!
       SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ count(*) INTO varNbFiles
