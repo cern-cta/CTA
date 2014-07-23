@@ -254,8 +254,6 @@ private:
         task->reportCancellationToDiskTask();
         delete task;
       }
-    }catch(...){
-      m_logContext.log(LOG_DEBUG, "TRIPLE ... in TRST");
     }
   }
 
@@ -273,12 +271,9 @@ private:
           .add("transferTime", m_stats.transferTime)
           .add("waitFreeMemoryTime", m_stats.waitFreeMemoryTime)
           .add("waitReportingTime", m_stats.waitReportingTime)
-          .add("flushTime", m_stats.flushTime)
           .add("unloadTime", m_stats.unloadTime)
           .add("unmountTime", m_stats.unmountTime)
           .add("dataVolume", m_stats.dataVolume)
-          .add("headerVolume", m_stats.headerVolume)
-          .add("filesCount", m_stats.filesCount)
           .add("dataBandwidthMiB/s", 1.0*m_stats.dataVolume
                                      /1024/1024/sessionTime)
           .add("driveBandwidthMiB/s", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
