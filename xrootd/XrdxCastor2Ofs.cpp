@@ -295,8 +295,8 @@ XrdxCastor2OfsFile::open(const char*         path,
   XrdOucString newopaque = opaque;
   // If there is explicit user opaque information we find two ?,
   // so we just replace it with a seperator.
-  newopaque.replace("?", "&");
-  newopaque.replace("&&", "&");
+  while (newopaque.replace("?", "&")) { };
+  while (newopaque.replace("&&", "&")) { };
 
   // Check if there are several redirection tokens
   int firstpos = 0;

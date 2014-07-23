@@ -592,7 +592,6 @@ XrdxCastor2Fs::stageprepare(const char*         path,
 {
   EPNAME("stageprepare");
   XrdOucString sinfo = (ininfo ? ininfo : "");
-  const char* info = 0;
   int qpos = 0;
   // Get client identity
   uid_t client_uid;
@@ -602,7 +601,7 @@ XrdxCastor2Fs::stageprepare(const char*         path,
   if ((qpos = sinfo.find("?")) != STR_NPOS)
     sinfo.erase(qpos);
 
-  info = (ininfo ? sinfo.c_str() : ininfo);
+  const char* info = (ininfo ? sinfo.c_str() : ininfo);
   xcastor_debug("path=%s, info=%s", path, (info ? info : ""));
   XrdOucEnv Open_Env(info);
   xcastor::Timing preparetiming("stageprepare");
@@ -628,22 +627,21 @@ XrdxCastor2Fs::stageprepare(const char*         path,
   std::string allowed_svc = GetAllowedSvc(map_path.c_str(), desired_svc);
 
   if (allowed_svc.empty())
-    return Emsg(epname, error, EINVAL, "stageprepare - cannot find any"
-                " valid service class mapping for fn = ", map_path.c_str());
+    return Emsg(epname, error, EINVAL, "stageprepare - cannot find any "
+                "valid service class mapping for fn = ", map_path.c_str());
 
   // Get the allowed service class, preference for the default one
   TIMING("STAGERQUERY", &preparetiming);
   struct XrdxCastor2Stager::RespInfo resp_info;
-  int retc = (XrdxCastor2Stager::Prepare2Get(error, (uid_t) client_uid,
-              (gid_t) client_gid, map_path.c_str(),
-              allowed_svc.c_str(), resp_info)
-              ? SFS_OK : SFS_ERROR);
+  bool done = XrdxCastor2Stager::Prepare2Get(error, client_uid, client_gid,
+                                             map_path.c_str(), allowed_svc.c_str(),
+                                             resp_info);
   TIMING("END", &preparetiming);
 
   if (gMgr->mLogLevel == LOG_DEBUG)
     preparetiming.Print();
 
-  return retc;
+  return (done ? SFS_OK : SFS_ERROR);
 }
 
 

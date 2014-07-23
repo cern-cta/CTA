@@ -109,7 +109,7 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo& error,
                                const char*    serviceclass,
                                struct RespInfo& respInfo)
 {
-  xcastor_static_debug("uid=%i, gid=%i, path=%s, sericeclass=%s",
+  xcastor_static_debug("uid=%i, gid=%i, path=%s, svcClass=%s",
                        uid, gid, path, serviceclass);
   // Construct the request and subrequest objects
   struct stage_options Opts;

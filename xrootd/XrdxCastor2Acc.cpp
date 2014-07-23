@@ -735,7 +735,7 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
   }
 
   int envlen = 0;
-  char* opaque = Env->Env(envlen);
+  const char* opaque = Env->Env(envlen);
 
   if (!opaque)
   {
@@ -748,11 +748,10 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
 
   // This is not nice, but ROOT puts a ? into the opaque string,
   // if there is a user opaque info
-  for (unsigned int i = 0; i < strlen(opaque); i++)
-  {
-    if (opaque[i] == '?')
-      opaque[i] = '&';
-  }
+  XrdOucString tmp_opaque = opaque;
+  while (tmp_opaque.replace("?", "&")) { };
+  while (tmp_opaque.replace("&&", "&")) { };
+  opaque = tmp_opaque.c_str();
 
   XrdSysMutexHelper lock_decode(mDecodeMutex);
 
