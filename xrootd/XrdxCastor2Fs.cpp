@@ -1014,8 +1014,9 @@ XrdxCastor2Fs::stat(const char* path,
 
         xcastor_debug("trying service class:%s", allowed_iter->c_str());
 
-        if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid, (gid_t) client_gid,
-                                            map_path.c_str(), allowed_iter->c_str(), stage_status))
+        if (!XrdxCastor2Stager::StagerQuery(error, client_uid, client_gid,
+                                            map_path.c_str(), allowed_iter->c_str(),
+                                            stage_status))
         {
           stage_status = "NA";
         }
@@ -1054,10 +1055,14 @@ XrdxCastor2Fs::stat(const char* path,
         (stage_status != "CANBEMIGR") &&
         (stage_status != "STAGEOUT"))
     {
-      // This file is offline
+      // File is on tape so set the kXR_bkpexist and kXR_offline flags
       buf->st_mode = static_cast<mode_t>(0);
       buf->st_dev  = 0;
       buf->st_ino  = 0;
+      // TODO: enable this after XRootD 4.0.2 - extend querying support for
+      // files on tape by returning also the backup exists flag
+      // buf->st_rdev = XRDSFS_HASBKUP;
+      // buf->st_rdev = XRDSFS_OFFLINE;
     }
 
     xcastor_debug("map_path=%s, stage_status=%s", map_path.c_str(), stage_status.c_str());
