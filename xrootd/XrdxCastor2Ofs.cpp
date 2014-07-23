@@ -77,8 +77,7 @@ extern "C"
     // Do the herald thing
     OfsEroute.SetPrefix("castor2ofs_");
     OfsEroute.logger(lp);
-    OfsEroute.Say("++++++ (c) 2008 CERN/IT-DM-SMD ",
-                  "xCastor2Ofs (extended Castor2 File System) v 1.0");
+    OfsEroute.Say("++++++ (c) 2014 CERN/IT-DSS xCastor2Ofs v1.0");
     // Initialize the subsystems
     gSrv = &myFS;
     gSrv->ConfigFN = (configfn && *configfn ? strdup(configfn) : 0);
@@ -133,7 +132,7 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
       {
         var += 9;
 
-        // Get the debug level
+        // Get the log level
         if (!strcmp("loglevel", var))
         {
           if (!(val = config_stream.GetWord()))
@@ -197,9 +196,6 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
     config_stream.Close();
   }
 
-  // Parse the default XRootD directives
-  int rc = XrdOfs::Configure(Eroute);
-
   // Setup the circular in-memory logging buffer
   XrdOucString unit = "rdr@";
   unit += XrdSysDNS::getHostName();
@@ -209,6 +205,8 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
   Logging::SetUnit(unit.c_str());
   xcastor_info("logging configured");
 
+  // Parse the default XRootD directives
+  int rc = XrdOfs::Configure(Eroute);
 
   // Set the effective user for all the XrdClients used to issue 'prepares'
   // to redirector
@@ -721,11 +719,13 @@ XrdxCastor2OfsFile::ContactStagerJob(XrdOucEnv& env_opaque)
 
   if (!val)
   {
-    // If no stager job information is present in the opaque infom, it means that
-    // this is an internal d2d transfer and we don't try to contact the stager
-    // job but we allow it to pass through. The authorization plugin makes sure
-    // we only allowed trusted host to do transfers - it verifies the signature.
-    xcastor_debug("no stager job opaque infomation - this is a d2d transfer");
+    // If no stager job information is present in the opaque infom, it means
+    // that this is an internal d2d or an rtcpd transfer and we don't try to
+    // contact the stager job but we allow it to pass through. The authorization
+    // plugin makes sure we only allowed trusted hosts to do transfers - it
+    // verifies the signature.
+    xcastor_debug("no stager job opaque infomation - this is either a d2d "
+                  "transfer or an rtcpd request");
     return SFS_OK;
   }
 

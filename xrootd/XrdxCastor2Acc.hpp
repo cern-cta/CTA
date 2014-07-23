@@ -218,6 +218,7 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   bool Decode(const char* opaque, AuthzInfo& authz);
 
 
+  int mLogLevel; ///< acc plugin loglevel
   std::string mAuthCertfile; ///< file name of public key for signature verification
   std::string mAuthKeyfile; ///< file name of private key for signature creation
   bool mRequireCapability; ///< client has to show up with a capability in the

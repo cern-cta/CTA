@@ -86,6 +86,7 @@ extern "C" XrdAccAuthorize* XrdAccAuthorizeObject(XrdSysLogger* lp,
 XrdxCastor2Acc::XrdxCastor2Acc():
   XrdAccAuthorize(),
   LogId(),
+  mLogLevel(LOG_INFO),
   mAuthCertfile(""),
   mAuthKeyfile(""),
   mRequireCapability(false),
@@ -109,25 +110,25 @@ XrdxCastor2Acc::Configure(const char* conf_file)
   char* var;
   const char* val;
   int  cfgFD, NoGo = 0;
-  XrdOucStream Config(&AccEroute, getenv("XRDINSTANCE"));
+  XrdOucStream config_stream(&AccEroute, getenv("XRDINSTANCE"));
 
   if (!conf_file || !*conf_file)
   {
-    xcastor_err("configuration file not specified");
+    AccEroute.Emsg("Config", "Configuration file not specified");
   }
   else
   {
     // Try to open the configuration file
     if ((cfgFD = open(conf_file, O_RDONLY, 0)) < 0)
     {
-      xcastor_err("error while opening config file:%s", conf_file);
+      AccEroute.Emsg("Config", "Error opening config file", conf_file);
       return false;
     }
 
-    Config.Attach(cfgFD);
+    config_stream.Attach(cfgFD);
 
     // Now start parsing records until eof
-    while ((var = Config.GetMyFirstWord()))
+    while ((var = config_stream.GetMyFirstWord()))
     {
       if (!strncmp(var, "xcastor2.", 9))
       {
@@ -136,9 +137,9 @@ XrdxCastor2Acc::Configure(const char* conf_file)
         // Get th public key certificate - only at headnode
         if (!strncmp("publickey", var, 9))
         {
-          if (!(val = Config.GetWord()))
+          if (!(val = config_stream.GetWord()))
           {
-            xcastor_err("publickey arg. missing");
+            AccEroute.Emsg("Config", "publickey argument missing");
             NoGo = 1;
           }
           else
@@ -150,9 +151,9 @@ XrdxCastor2Acc::Configure(const char* conf_file)
         // Get the private key certificate - only on diskservers
         if (!strncmp("privatekey", var, 10))
         {
-          if (!(val = Config.GetWord()))
+          if (!(val = config_stream.GetWord()))
           {
-            xcastor_err("privatekey arg. missing");
+            AccEroute.Emsg("Config", "privatekey argument missing");
             NoGo = 1;
           }
           else
@@ -164,9 +165,10 @@ XrdxCastor2Acc::Configure(const char* conf_file)
         // Check for capability tag
         if (!strncmp("capability", var, 10))
         {
-          if (!(val = Config.GetWord()))
+          if (!(val = config_stream.GetWord()))
           {
-            xcastor_err("capability arg. missing. Can be true(1) or false(0)");
+            AccEroute.Emsg("Config", "Capability arg. missing - "
+                           "can be true(1) or false(0)");
             NoGo = 1;
           }
           else
@@ -177,7 +179,8 @@ XrdxCastor2Acc::Configure(const char* conf_file)
               mRequireCapability = false;
             else
             {
-              xcastor_err("capability arg. invalid. Can be true(1) or false(0)");
+              AccEroute.Emsg("Config", "Capability arg. invalid - "
+                             "can be true(1) or false(0)");
               NoGo = 1;
             }
           }
@@ -186,9 +189,10 @@ XrdxCastor2Acc::Configure(const char* conf_file)
         // Check for allowlocalhost access
         if (!strcmp("allowlocalhost", var))
         {
-          if (!(val = Config.GetWord()))
+          if (!(val = config_stream.GetWord()))
           {
-            xcastor_err("allowlocalhost arg. missing. Can be <true>/1 or <false>/0");
+            AccEroute.Emsg("Config", "allowlocalhost arg. missing - "
+                           "can be true(1) or false(0)");
             NoGo = 1;
           }
           else
@@ -199,16 +203,51 @@ XrdxCastor2Acc::Configure(const char* conf_file)
               mAllowLocal = false;
             else
             {
-              xcastor_err("allowlocalhost arg. invalid. Can be true(1) or false(0)");
+              AccEroute.Emsg("Config", "allowlocalhost arg. invalid - "
+                             "can be true(1) or false(0)");
               NoGo = 1;
             }
+          }
+        }
+
+        // Get the log level
+        if (!strcmp("loglevel", var))
+        {
+          if (!(val = config_stream.GetWord()))
+          {
+            AccEroute.Emsg("Config", "argument for debug level invalid set to INFO.");
+            mLogLevel = LOG_INFO;
+          }
+          else
+          {
+            long int log_level = Logging::GetPriorityByString(val);
+
+            if (log_level == -1)
+            {
+              // Maybe the log level is specified as an int from 0 to 7
+              errno = 0;
+              char* end;
+              log_level = (int) strtol(val, &end, 10);
+
+              if ((errno == ERANGE && ((log_level == LONG_MIN) || (log_level == LONG_MAX))) ||
+                  ((errno != 0) && (log_level == 0)) ||
+                  (end == val))
+              {
+                // There was an error default to LOG_INFO
+                log_level = 6;
+              }
+            }
+
+            mLogLevel = log_level;
           }
         }
       }
     }
 
-    xcastor_info("=====> xcastor2.capability: %i" , mRequireCapability);
-    xcastor_info("=====> xcastor2.allowlocalhost: %i", mAllowLocal);
+    AccEroute.Say("=====> xcastor2.capability: ",
+                  (mRequireCapability ? "true" : "false"));
+    AccEroute.Say("=====> xcastor2.allowlocalhost: ",
+                  (mAllowLocal ? "true" : "false"));
 
     // Get XRootD server type
     const char* tp;
@@ -223,7 +262,7 @@ XrdxCastor2Acc::Configure(const char* conf_file)
 
         if (mAuthKeyfile.empty())
         {
-          xcastor_err("privatkey mising on manager host");
+          AccEroute.Emsg("Config", "privatekey missing on manager node");
           NoGo = 1;
         }
       }
@@ -234,11 +273,33 @@ XrdxCastor2Acc::Configure(const char* conf_file)
 
         if (mAuthCertfile.empty())
         {
-          xcastor_err("publickey missing on server host");
+          AccEroute.Emsg("Config", "publickey missing on server node");
           NoGo = 1;
         }
       }
     }
+  }
+
+  // Get the instance name which for us reflects the type: headnode/diskserver
+  char* xrd_name = getenv("XRDNAME");
+  AccEroute.Say("=====> XRootD instance type: ", xrd_name);
+
+  if (strcmp(xrd_name, "server") && strcmp(xrd_name, "manager"))
+  {
+    AccEroute.Emsg("Init", "XRootD unknown instance type: ", xrd_name);
+    return false;
+  }
+
+  // Enable logging explicitly only at the diskserver as the headnode
+  // controls it using the OFS loglevel setting
+  if (!strcmp(xrd_name, "server"))
+  {
+    std::ostringstream unit;
+    unit << "acc@" <<  XrdSysDNS::getHostName() << ":1095";
+    Logging::Init();
+    Logging::SetLogPriority(mLogLevel);
+    Logging::SetUnit(unit.str().c_str());
+    xcastor_info("acc logging configured");
   }
 
   if (NoGo)
@@ -460,7 +521,9 @@ XrdxCastor2Acc::VerifyUnbase64(const char* data,
   int err = EVP_VerifyFinal(&md_ctx, ((unsigned char*)(sig_buf)), sig_len, mPublicKey);
   EVP_MD_CTX_cleanup(&md_ctx);
   TIMING("EVPVERIFY", &verifytiming);
-  verifytiming.Print();
+
+  if (mLogLevel == LOG_DEBUG)
+    verifytiming.Print();
 
   if (err != 1)
     return false;
@@ -651,16 +714,6 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
                              const Access_Operation oper,
                              XrdOucEnv* Env)
 {
-  xcastor_debug("path=%s, operation=%i", path, oper);
-
-  // We take care in XrdxCastorOfs::open that a user cannot give a fake
-  // opaque to get all permissions!
-  if (Env && Env->Get("castor2ofsproc") &&
-      (strncmp(Env->Get("castor2ofsproc"), "true", 4) == 0))
-  {
-    return XrdAccPriv_All;
-  }
-
   // Check for localhost host connection
   if (mAllowLocal)
   {
@@ -677,17 +730,16 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
   if (!Env)
   {
     xcastor_err("no opaque information for path=%s", path);
-    AccEroute.Emsg("Access", EIO, "no opaque information for path=", path);
+    AccEroute.Emsg("Access", "No access opaque information for path", path);
     return XrdAccPriv_None;
   }
 
   int envlen = 0;
   char* opaque = Env->Env(envlen);
 
-
   if (!opaque)
   {
-    AccEroute.Emsg("Access", EIO, "no opaque information for sfn=", path);
+    AccEroute.Emsg("Access", "No access opaque information for path", path);
     return XrdAccPriv_None;
   }
 
@@ -702,7 +754,6 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
       opaque[i] = '&';
   }
 
-  // TODO: maybe this lock can be removed
   XrdSysMutexHelper lock_decode(mDecodeMutex);
 
   // Decode the authz information from the opaque info
@@ -712,7 +763,7 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
 
     if (!Decode(opaque, authz))
     {
-      AccEroute.Emsg("Access", EACCES, "decode access token for sfn=", path);
+      AccEroute.Emsg("Access", "Unable to decode access token for sfn=", path);
       return XrdAccPriv_None;
     }
 
@@ -721,7 +772,7 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
 
     if (ref_token.empty())
     {
-      AccEroute.Emsg("Access", EACCES, "build reference token for sfn=", path);
+      AccEroute.Emsg("Access", "Empty reference token for path", path);
       return XrdAccPriv_None;
     }
 
@@ -729,7 +780,7 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
     if ((!VerifyUnbase64(ref_token.c_str(),
                          (unsigned char*)authz.signature.c_str(), path)))
     {
-      AccEroute.Emsg("Access", EACCES, "verify signature in request sfn=", path);
+      AccEroute.Emsg("Access", "Verify signature failed for path", path);
       return XrdAccPriv_None;
     }
 
@@ -739,8 +790,7 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
       // If it does not fit, check that it is a replica location
       if (authz.pfn2.find(authz.pfn1) == std::string::npos)
       {
-        AccEroute.Emsg("Access", EACCES, "give access - the signature was not "
-                      "provided for this path!");
+        AccEroute.Emsg("Access", "Signature was not provided for this path", path);
         return XrdAccPriv_None;
       }
     }
@@ -748,7 +798,7 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
     // Check validity time in authz
     if (authz.exptime < now)
     {
-      AccEroute.Emsg("Access", EACCES, "give access - the signature has expired already!");
+      AccEroute.Emsg("Access", "Signature expired for path", path);
       return XrdAccPriv_None;
     }
   }
