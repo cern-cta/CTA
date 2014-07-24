@@ -36,7 +36,7 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/utils/Timer.hpp"
-#include "castor/tape/tapeserver/daemon/SessionStats.hpp"
+#include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -90,7 +90,7 @@ protected:
   int m_hardarwareStatus;
   
   /** Session statistics */
-  SessionStats m_stats;
+  TapeSessionStats m_stats;
  
   /**
    * This function will try to set the cap_sys_rawio capability that is needed

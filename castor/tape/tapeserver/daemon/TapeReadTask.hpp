@@ -30,7 +30,7 @@
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-#include "castor/tape/tapeserver/daemon/SessionStats.hpp"
+#include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include "castor/tape/utils/Timer.hpp"
 
 namespace castor {
@@ -62,7 +62,7 @@ public:
      */
   void execute(castor::tape::tapeFile::ReadSession & rs,
     castor::log::LogContext & lc,TaskWatchDog<detail::Recall>& watchdog,
-    SessionStats & stats, utils::Timer & timer) {
+    TapeSessionStats & stats, utils::Timer & timer) {
 
     using castor::log::Param;
     typedef castor::log::LogContext::ScopedParam ScopedParam;
@@ -76,7 +76,7 @@ public:
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
-    SessionStats localStats;
+    TapeSessionStats localStats;
     utils::Timer localTime;
 
     // Read the file and transmit it

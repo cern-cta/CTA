@@ -31,7 +31,7 @@
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
-#include "castor/tape/tapeserver/daemon/SessionStats.hpp"
+#include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include "castor/tape/utils/Timer.hpp"
 
 namespace castor {
@@ -41,7 +41,7 @@ namespace daemon {
 
   class MigrationReportPacker;
   class Memblock;
-  class SessionStats;
+  class TapeSessionStats;
 /**
  * The TapeWriteFileTask is responsible to write a single file onto tape as part of a migration
  * session. Being a consumer of memory blocks, it inherits from the DataConsumer class. It also
@@ -71,7 +71,7 @@ public:
    */
   virtual void execute(castor::tape::tapeFile::WriteSession & session,
    MigrationReportPacker & reportPacker,castor::log::LogContext& lc,
-   SessionStats & stats, utils::Timer & timer);
+   TapeSessionStats & stats, utils::Timer & timer);
   
   /**
    * Used to reclaim used memory blocks
@@ -101,7 +101,7 @@ private:
    * into lc with msg at the given level
    */
   void logWithStats(int level, const std::string& msg,
-   double fileTime,SessionStats& localStats,log::LogContext& lc) const;
+   double fileTime,TapeSessionStats& localStats,log::LogContext& lc) const;
      
   /**
    *Throw an exception if  m_errorFlag is set

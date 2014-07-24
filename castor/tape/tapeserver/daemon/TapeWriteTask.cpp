@@ -31,7 +31,7 @@
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
-#include "castor/tape/tapeserver/daemon/SessionStats.hpp"
+#include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 
 namespace castor {
@@ -61,13 +61,13 @@ namespace daemon {
 //------------------------------------------------------------------------------  
    void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,
            MigrationReportPacker & reportPacker,castor::log::LogContext& lc,
-           SessionStats & stats, utils::Timer & timer) {
+           TapeSessionStats & stats, utils::Timer & timer) {
     using castor::log::LogContext;
     using castor::log::Param;
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
-    SessionStats localStats;
+    TapeSessionStats localStats;
     utils::Timer localTime;
     
     unsigned long ckSum = Payload::zeroAdler32();
@@ -82,7 +82,7 @@ namespace daemon {
       //try to open the session
       std::auto_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       localStats.transferTime += timer.secs(utils::Timer::resetCounter);
-      localStats.headerVolume += SessionStats::headerVolumePerFile;
+      localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
       while(!m_fifo.finished()) {
 
         //if someone screw somewhere else, we stop
@@ -109,7 +109,7 @@ namespace daemon {
       //put the trailer
       output->close();
       localStats.transferTime += timer.secs(utils::Timer::resetCounter);
-      localStats.headerVolume += SessionStats::headerVolumePerFile;
+      localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
       localStats.filesCount ++;
       reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum);
       localStats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
@@ -239,7 +239,7 @@ namespace daemon {
   }
    
    void TapeWriteTask::logWithStats(int level, const std::string& msg,
-   double fileTime,SessionStats& localStats,log::LogContext& lc) const{
+   double fileTime,TapeSessionStats& localStats,log::LogContext& lc) const{
      log::ScopedParamContainer params(lc);
      params.add("transferTime", localStats.transferTime)
            .add("checksumingTime",localStats.checksumingTime)

@@ -31,7 +31,7 @@ namespace daemon {
    * Structure holding the timers and stats for the tape session. We use doubles, 
    * for time and all measurements are in seconds or uint64_t for bytes.
    */
-  struct SessionStats {
+  struct TapeSessionStats {
     /** Mounting time, in seconds */
     double mountTime;
     
@@ -77,13 +77,13 @@ namespace daemon {
     static const uint64_t headerVolumePerFile = 3*80;
     
     /** Constructor: all defaults are zero */
-    SessionStats():  mountTime(0.0), positionTime(0.0), checksumingTime(0.0),
+    TapeSessionStats():  mountTime(0.0), positionTime(0.0), checksumingTime(0.0),
     transferTime(0.0), flushTime(0.0), unloadTime(0.0), unmountTime(0.0),
     waitDataTime(0.0), waitFreeMemoryTime(0.0), waitInstructionsTime(0.0),
     waitReportingTime(0.0), dataVolume(0), headerVolume(0), filesCount(0) {}
     
     /** Accumulate contents of another stats block */
-    void add(const SessionStats& other) {
+    void add(const TapeSessionStats& other) {
       mountTime += other.mountTime;
       positionTime += other.positionTime;
       checksumingTime += other.checksumingTime;
