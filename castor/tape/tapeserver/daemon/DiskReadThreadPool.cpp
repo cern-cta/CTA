@@ -113,19 +113,28 @@ DiskReadTask* DiskReadThreadPool::popAndRequestMore(castor::log::LogContext &lc)
   }
   return vrp.value;
 }
-
+void DiskReadThreadPool::addThreadStats(const DiskStats& other){
+  castor::tape::threading::MutexLocker lock(&m_statAddingProtection);
+  m_pooldStat+=other;
+}
 //------------------------------------------------------------------------------
-// DiskReadThreadPool::DiskReadWorkerThread::run
+// DiskReadWorkerThread::run
 //------------------------------------------------------------------------------
 void DiskReadThreadPool::DiskReadWorkerThread::run() {
   m_lc.pushOrReplace(log::Param("thread", "DiskRead"));
   m_lc.pushOrReplace(log::Param("threadID",m_threadID));
+  
   m_lc.log(LOG_DEBUG, "DiskReadWorkerThread Running");
+  
   std::auto_ptr<DiskReadTask> task;
+  utils::Timer localTime;
+  
   while(1) {
     task.reset( m_parent.popAndRequestMore(m_lc));
+    m_threadStat.waitInstructionsTime += localTime.secs(utils::Timer::resetCounter);
     if (NULL!=task.get()) {
       task->execute(m_lc);
+      m_threadStat += task->getTaskStats();
     }
     else {
       break;
@@ -137,8 +146,27 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
     m_parent.m_injector->finish();
     m_lc.log(LOG_INFO, "Signaled to task injector the end of disk read threads");
   }
-  m_lc.log(LOG_INFO, "Finishing of DiskReadWorkerThread");
+  m_parent.addThreadStats(m_threadStat);
+  logWithStat(LOG_INFO, "Finishing of DiskReadWorkerThread");
 }
-  
+
+//------------------------------------------------------------------------------
+// DiskReadWorkerThread::logWithStat
+//------------------------------------------------------------------------------
+void DiskReadThreadPool::DiskReadWorkerThread::
+logWithStat(int level, const std::string& message){
+  log::ScopedParamContainer params(m_lc);
+     params.add("threadTransferTime", m_threadStat.transferTime)
+           .add("threadChecksumingTime",m_threadStat.checksumingTime)
+           .add("threadWaitDataTime",m_threadStat.waitDataTime)
+           .add("threadWaitReportingTime",m_threadStat.waitReportingTime)
+           .add("threadCheckingErrorTime",m_threadStat.checkingErrorTime)
+           .add("threadOpeningTime",m_threadStat.openingTime)
+           .add("threadClosingTime", m_threadStat.closingTime)
+           .add("threaDataVolumeInMB", 1.0*m_threadStat.dataVolume/1024/1024)
+           .add("threadPayloadTransferSpeedMB/s",
+                   1.0*m_threadStat.dataVolume/1024/1024/m_threadStat.transferTime);
+    m_lc.log(level,message);
+}
 }}}}
 

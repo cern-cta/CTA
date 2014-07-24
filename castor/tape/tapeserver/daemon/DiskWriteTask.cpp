@@ -25,6 +25,8 @@
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/log/LogContext.hpp"
+#include "castor/tape/utils/Timer.hpp"
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -44,12 +46,16 @@ m_recallingFile(file),m_memManager(mm){
 bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
   using log::LogContext;
   using log::Param;
+  utils::Timer localTime;
   try{
     tape::diskFile::WriteFile ourFile(m_recallingFile->path());
+    m_stats.openingTime+=localTime.secs(utils::Timer::resetCounter);
+    
     int blockId  = 0;
     unsigned long checksum = Payload::zeroAdler32();
     while(1) {
       if(MemBlock* const mb = m_fifo.pop()) {
+        m_stats.waitDataTime+=localTime.secs(utils::Timer::resetCounter);
         AutoReleaseBlock<RecallMemoryManager> releaser(mb,m_memManager);
         if(mb->isCanceled()) {
           // If the tape side got canceled, we report nothing and count
@@ -60,17 +66,26 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
         
         //will throw (thus exiting the loop) if something is wrong
         checkErrors(mb,blockId,lc);
-
+        m_stats.checkingErrorTime += localTime.secs(utils::Timer::resetCounter);
+        
+        m_stats.dataVolume+=mb->m_payload.size();
+        
         mb->m_payload.write(ourFile);
+        m_stats.transferTime+=localTime.secs(utils::Timer::resetCounter);
+        
         checksum = mb->m_payload.adler32(checksum);
+        m_stats.checksumingTime+=localTime.secs(utils::Timer::resetCounter);
+         
         blockId++;
       } //end if block non NULL
       else {        
         break;
       }
     } //end of while(1)
-    lc.log(LOG_DEBUG, "File successfully transfered.");
     reporter.reportCompletedJob(*m_recallingFile,checksum);
+    m_stats.waitReportingTime+=localTime.secs(utils::Timer::resetCounter);;
+    logWithStat(LOG_DEBUG, "File successfully transfered to disk",lc);
+    
     return true;
   } //end of try
   catch(const castor::exception::Exception& e){
@@ -156,5 +171,29 @@ void DiskWriteTask::releaseAllBlock(){
     }
   }
 
+//------------------------------------------------------------------------------
+// getTiming
+//------------------------------------------------------------------------------  
+const DiskStats DiskWriteTask::getTaskStats() const{
+  return m_stats;
+}
+//------------------------------------------------------------------------------
+// logWithStat
+//------------------------------------------------------------------------------  
+void DiskWriteTask::logWithStat(int level,const std::string& msg,log::LogContext& lc){
+  log::ScopedParamContainer params(lc);
+     params.add("transferTime", m_stats.transferTime)
+           .add("checksumingTime",m_stats.checksumingTime)
+           .add("waitDataTime",m_stats.waitDataTime)
+           .add("waitReportingTime",m_stats.waitReportingTime)
+           .add("checkingErrorTime",m_stats.checkingErrorTime)
+           .add("openingTime",m_stats.openingTime)
+           .add("closingTime",m_stats.closingTime)
+           .add("payloadTransferSpeedMB/s",
+                   1.0*m_stats.dataVolume/1024/1024/m_stats.transferTime)
+           .add("FILEID",m_recallingFile->fileid())
+           .add("path",m_recallingFile->path());
+    lc.log(level,msg);
+}
 }}}}
 

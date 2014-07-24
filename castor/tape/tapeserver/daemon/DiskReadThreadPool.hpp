@@ -107,6 +107,23 @@ private:
   DiskReadTask* popAndRequestMore(castor::log::LogContext & lc);
   
   /**
+   * When a thread finishm it call this function to Add its stats to one one of the
+   * Threadpool
+   * @param threadStats
+   */
+  void addThreadStats(const DiskStats& stats);
+  
+  /**
+   To protect addThreadStats from concurrent calls
+   */
+  castor::tape::threading::Mutex m_statAddingProtection;
+  
+  /**
+   * Aggregate all threads' stats 
+   */
+  DiskStats m_pooldStat;
+  
+  /**
    * Subclass of the thread pool's worker thread.
    */
   class DiskReadWorkerThread: private castor::tape::threading::Thread {
@@ -119,6 +136,11 @@ private:
     void start() { castor::tape::threading::Thread::start(); }
     void wait() { castor::tape::threading::Thread::wait(); }
   private:
+    void logWithStat(int level, const std::string& message);
+    /*
+     * For measuring how long  are the the different steps 
+     */
+    DiskStats m_threadStat;
     
     /** Pointer to the thread pool, allowing calls to popAndRequestMore,
      * and calling finish() on the task injector when the last thread

@@ -25,9 +25,11 @@
 
 #include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
+#include "castor/tape/tapeserver/daemon/DiskStats.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
 #include "castor/log/LogContext.hpp"
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -45,13 +47,37 @@ public:
           castor::tape::threading::AtomicFlag& errorFlag);
   
   void execute(log::LogContext& lc);
+    /**
+   * Return the stats of the tasks. Should be call after execute 
+   * (otherwise, it is pointless)
+   * @return 
+   */
+  const DiskStats getTaskStats() const;
 private:
+  
+  /**
+   * Stats to measue how long it takes to write on disk
+   */
+  DiskStats m_stats;
+  
+  /**
+   * Throws an exception if m_errorFlag is set
+   */
   void hasAnotherTaskTailed() const {
     //if a task has signaled an error, we stop our job
     if(m_errorFlag){
       throw  castor::tape::exceptions::ErrorFlag();
     }
   }
+  
+    /**
+   * log into lc all m_stats parameters with the given message at the 
+   * given level
+   * @param level
+   * @param message
+   */
+  void logWithStat(int level,const std::string& msg,log::LogContext& lc) ;
+  
   void circulateAllBlocks(size_t fromBlockId);
   /**
    * The task (a TapeWriteTask) that will handle the read blocks

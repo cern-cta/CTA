@@ -30,7 +30,8 @@
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
-#include "DiskWriteTask.hpp"
+#include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
+#include "castor/tape/tapeserver/daemon/DiskStats.hpp"
 #include <vector>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -110,21 +111,64 @@ private:
     void start() { castor::tape::threading::Thread::start(); }
     void wait() { castor::tape::threading::Thread::wait(); }
   private:
+    void logWithStat(int level, const std::string& message);
+    /*
+     * For measuring how long  are the the different steps 
+     */
+    DiskStats m_threadStat;
+    
+    /**
+     * To identify the thread 
+     */
     const int m_threadID;
+    
+    /**
+     * The owning thread pool
+     */
     DiskWriteThreadPool & m_parentThreadPool;
+    
+    /**
+     * For logging the event
+     */
     castor::log::LogContext m_lc;
+    
+    
     virtual void run();
   };
+  /**
+   * When a thread finishm it call this function to Add its stats to one one of the
+   * Threadpool
+   * @param threadStats
+   */
+  void addThreadStats(const DiskStats& threadStats);
+  
+  
+  /**
+   * When the last thread finish, we log all m_pooldStat members + message
+   * at the given level
+   * @param level
+   * @param message
+   */
+  void logWithStat(int level, const std::string& message);
   
   /** The actual container for the thread objects */
   std::vector<DiskWriteWorkerThread *> m_threads;
   /** Mutex protecting the pushers of new tasks from having the object deleted
    * under their feet. */
   castor::tape::threading::Mutex m_pusherProtection;
+  
+  /**
+   To protect addThreadStats from concurrent calls
+   */
+  castor::tape::threading::Mutex m_statAddingProtection;
 protected:
   /** The (thread safe) queue of tasks */
   castor::tape::threading::BlockingQueue<DiskWriteTask*> m_tasks;
 private:
+  /**
+   * Aggregate all threads' stats 
+   */
+  DiskStats m_pooldStat;
   /** Reference to the report packer where tasks report the result of their 
    * individual files and the end of session (for the last thread) */
   RecallReportPacker& m_reporter;

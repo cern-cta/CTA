@@ -29,7 +29,7 @@
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
-
+#include "castor/tape/tapeserver/daemon/DiskStats.hpp"
 #include <memory>
 namespace {
   
@@ -81,7 +81,19 @@ public:
    */
   virtual ~DiskWriteTask();
   
+  /**
+   * Return the stats of the tasks. Should be call after execute 
+   * (otherwise, it is pointless)
+   * @return 
+   */
+  const DiskStats getTaskStats() const;
 private:
+  
+  /**
+   * Stats to measue how long it takes to write on disk
+   */
+  DiskStats m_stats;
+  
   /**
    * This function will check the consistency of the mem block and 
    * throw exception is something goes wrong
@@ -91,6 +103,10 @@ private:
    */
   void checkErrors(MemBlock* mb,int blockId,castor::log::LogContext& lc);
   
+  /**
+   * In case of error, it will spin on the blocks until we reach the end
+   * in order to push them back into the memory manager
+   */
   void releaseAllBlock();
   
   /**
@@ -112,6 +128,13 @@ private:
    */
   castor::tape::threading::Mutex m_producerProtection;
   
+  /**
+   * log into lc all m_stats parameters with the given message at the 
+   * given level
+   * @param level
+   * @param message
+   */
+  void logWithStat(int level,const std::string& msg,log::LogContext& lc) ;
 };
 
 }}}}

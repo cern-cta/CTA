@@ -22,7 +22,9 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
+#include "castor/tape/utils/Timer.hpp"
 #include "castor/log/LogContext.hpp"
+
 namespace{
   /** Use RAII to make sure the memory block is released  
    *(ie pushed back to the memory manager) in any case (exception or not)
@@ -60,6 +62,10 @@ m_nextTask(destination),m_migratedFile(file),
 // DiskReadTask::execute
 //------------------------------------------------------------------------------
 void DiskReadTask::execute(log::LogContext& lc) {
+  using log::LogContext;
+  using log::Param;
+
+  utils::Timer localTime;
   size_t blockId=0;
   size_t migratingFileSize=m_migratedFile->fileSize();
   try{
@@ -69,8 +75,9 @@ void DiskReadTask::execute(log::LogContext& lc) {
     hasAnotherTaskTailed();
     
     tape::diskFile::ReadFile sourceFile(m_migratedFile->path());
-    
-    log::LogContext::ScopedParam sp(lc, log::Param("filePath",m_migratedFile->path()));
+    m_stats.openingTime+=localTime.secs(utils::Timer::resetCounter);
+     
+    LogContext::ScopedParam sp(lc, Param("filePath",m_migratedFile->path()));
     lc.log(LOG_INFO,"Opened file on disk for migration ");
     
     while(migratingFileSize>0){
@@ -78,14 +85,18 @@ void DiskReadTask::execute(log::LogContext& lc) {
       hasAnotherTaskTailed();
       
       MemBlock* const mb = m_nextTask.getFreeBlock();
+      m_stats.waitFreeMemoryTime+=localTime.secs(utils::Timer::resetCounter);
       AutoPushBlock push(mb,m_nextTask);
       
       //set metadata and read the data
       mb->m_fileid = m_migratedFile->fileid();
       mb->m_fileBlock = blockId++;
-      
+            
       migratingFileSize -= mb->m_payload.read(sourceFile);
-      
+      m_stats.transferTime+=localTime.secs(utils::Timer::resetCounter);
+
+      m_stats.dataVolume += mb->m_payload.size();
+
       //we either read at full capacity (ie size=capacity) or if there different,
       //it should be the end => migratingFileSize should be 0. If it not, error
       if(mb->m_payload.size() != mb->m_payload.totalCapacity() && migratingFileSize>0){
@@ -93,6 +104,7 @@ void DiskReadTask::execute(log::LogContext& lc) {
         mb->markAsFailed(erroMsg,SEINTERNAL);
         throw castor::tape::Exception(erroMsg);
       }
+      m_stats.checkingErrorTime += localTime.secs(utils::Timer::resetCounter);
     } //end of while(migratingFileSize>0)
   }
   catch(const castor::tape::exceptions::ErrorFlag&){
@@ -107,9 +119,7 @@ void DiskReadTask::execute(log::LogContext& lc) {
             
     //we have to pump the blocks anyway, mark them failed and then pass them back to TapeWrite
     //Otherwise they would be stuck into TapeWriteTask free block fifo
-    using log::LogContext;
-    using log::Param;
-    
+
     LogContext::ScopedParam sp(lc, Param("blockID",blockId));
     LogContext::ScopedParam sp0(lc, Param("exceptionCode",e.code()));
     LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
@@ -133,5 +143,29 @@ void DiskReadTask::circulateAllBlocks(size_t fromBlockId){
     ++blockId;
   } //end of while
 }
+
+//------------------------------------------------------------------------------
+// logWithStat
+//------------------------------------------------------------------------------  
+void DiskReadTask::logWithStat(int level,const std::string& msg,log::LogContext& lc){
+  log::ScopedParamContainer params(lc);
+     params.add("transferTime", m_stats.transferTime)
+           .add("closingTime", m_stats.closingTime)
+           .add("checksumingTime",m_stats.checksumingTime)
+           .add("waitDataTime",m_stats.waitDataTime)
+           .add("waitReportingTime",m_stats.waitReportingTime)
+           .add("checkingErrorTime",m_stats.checkingErrorTime)
+           .add("openingTime",m_stats.openingTime)
+           .add("payloadTransferSpeedMB/s",
+                   1.0*m_stats.dataVolume/1024/1024/m_stats.transferTime)
+           .add("FILEID",m_migratedFile->fileid())
+           .add("path",m_migratedFile->path());
+    lc.log(level,msg);
+}
+
+const DiskStats DiskReadTask::getTaskStats() const{
+  return m_stats;
+}
+
 }}}}
 

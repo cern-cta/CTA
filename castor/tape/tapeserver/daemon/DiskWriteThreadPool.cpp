@@ -21,6 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
+#include "castor/tape/utils/Timer.hpp"
 #include "log.h"
 #include <memory>
 #include <sstream>
@@ -102,9 +103,33 @@ void DiskWriteThreadPool::finish() {
     m_tasks.push(NULL);
   }
 }
-
 //------------------------------------------------------------------------------
-// constructor
+//addThreadStats
+//------------------------------------------------------------------------------
+void DiskWriteThreadPool::addThreadStats(const DiskStats& other){
+  castor::tape::threading::MutexLocker lock(&m_statAddingProtection);
+  m_pooldStat+=other;
+}
+//------------------------------------------------------------------------------
+//logWithStat
+//------------------------------------------------------------------------------
+void DiskWriteThreadPool::logWithStat(int level, const std::string& message){
+  log::ScopedParamContainer params(m_lc);
+     params.add("threadTransferTime", m_pooldStat.transferTime)
+           .add("threadChecksumingTime",m_pooldStat.checksumingTime)
+           .add("threadWaitDataTime",m_pooldStat.waitDataTime)
+           .add("threadWaitReportingTime",m_pooldStat.waitReportingTime)
+           .add("threadCheckingErrorTime",m_pooldStat.checkingErrorTime)
+           .add("threadOpeningTime",m_pooldStat.openingTime)
+           .add("threadClosingTime", m_pooldStat.closingTime)
+           .add("threaDataVolumeInMB", 1.0*m_pooldStat.dataVolume/1024/1024)
+           .add("threadPayloadTransferSpeedMB/s",
+                   1.0*m_pooldStat.dataVolume/1024/1024/m_pooldStat.transferTime);
+           ;
+    m_lc.log(level,message);
+}
+//------------------------------------------------------------------------------
+// DiskWriteWorkerThread::run
 //------------------------------------------------------------------------------
 void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
   typedef castor::log::LogContext::ScopedParam ScopedParam;
@@ -112,36 +137,60 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
   m_lc.pushOrReplace(log::Param("thread", "diskWrite"));
   m_lc.pushOrReplace(log::Param("threadID", m_threadID));
   m_lc.log(LOG_INFO, "Starting DiskWriteWorkerThread");
+  
   std::auto_ptr<DiskWriteTask>  task;
+  utils::Timer localTime;
+  
   while(1) {
     task.reset(m_parentThreadPool.m_tasks.pop());
+    m_threadStat.waitInstructionsTime+=localTime.secs(utils::Timer::resetCounter);
     if (NULL!=task.get()) {
       if(false==task->execute(m_parentThreadPool.m_reporter,m_lc)) {
         ++m_parentThreadPool.m_failedWriteCount;
         ScopedParam sp(m_lc, Param("errorCount", m_parentThreadPool.m_failedWriteCount));
         m_lc.log(LOG_ERR, "Task failed: counting another error for this session");
       }
+      m_threadStat+=task->getTaskStats();
     } //end of task!=NULL
     else {
       m_lc.log(LOG_DEBUG,"DiskWriteWorkerThread exiting: no more work");
       break;
     }
   } //enf of while(1)
-  
+  logWithStat(LOG_INFO, "Finishing DiskWriteWorkerThread");
+  m_parentThreadPool.addThreadStats(m_threadStat);
   if(0 == --m_parentThreadPool.m_nbActiveThread){
+
     //Im the last Thread alive, report end of session
     if(m_parentThreadPool.m_failedWriteCount==0){
       m_parentThreadPool.m_reporter.reportEndOfSession();
-      m_lc.log(LOG_INFO, "As last exiting DiskWriteWorkerThread, reported a successful end of session");
+      m_parentThreadPool.logWithStat(LOG_INFO, "As last exiting DiskWriteWorkerThread, reported a successful end of session");
     }
     else{
       m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("End of recall session with error(s)",SEINTERNAL);
       ScopedParam sp(m_lc, Param("errorCount", m_parentThreadPool.m_failedWriteCount));
-      m_lc.log(LOG_ERR, "As last exiting DiskWriteWorkerThread, reported an end of session with errors");
+        m_parentThreadPool.logWithStat(LOG_ERR, "As last exiting DiskWriteWorkerThread, reported an end of session with errors");
     }
   }
-  m_lc.log(LOG_INFO, "Finishing DiskWriteWorkerThread");
 }
 
+//------------------------------------------------------------------------------
+// DiskWriteWorkerThread::logWithStat
+//------------------------------------------------------------------------------
+void DiskWriteThreadPool::DiskWriteWorkerThread::
+logWithStat(int level, const std::string& msg) {
+  log::ScopedParamContainer params(m_lc);
+     params.add("threadTransferTime", m_threadStat.transferTime)
+           .add("threadChecksumingTime",m_threadStat.checksumingTime)
+           .add("threadWaitDataTime",m_threadStat.waitDataTime)
+           .add("threadWaitReportingTime",m_threadStat.waitReportingTime)
+           .add("threadCheckingErrorTime",m_threadStat.checkingErrorTime)
+           .add("threadOpeningTime",m_threadStat.openingTime)
+           .add("threadClosingTime", m_threadStat.closingTime)
+           .add("threaDataVolumeInMB", 1.0*m_threadStat.dataVolume/1024/1024)
+           .add("threadPayloadTransferSpeedMB/s",
+                   1.0*m_threadStat.dataVolume/1024/1024/m_threadStat.transferTime);
+    m_lc.log(level,msg);
+}
 }}}}
 
