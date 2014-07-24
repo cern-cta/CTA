@@ -109,23 +109,23 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleEvents() throw() {
   } catch(castor::exception::Exception &ex) {
     log::Param params[] = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "ProcessForker failed to handle events", params);
-
-    // An exception should not stop the main event loop
-    return true; // The main event loop should continue
   } catch(std::exception &se) {
     log::Param params[] = {log::Param("message", se.what())};
     m_log(LOG_ERR, "ProcessForker failed to handle events", params);
-
-    // An exception should not stop the main event loop
-    return true; // The main event loop should continue
   } catch(...) {
     log::Param params[] =
       {log::Param("message", "Caught an unknown exception")};
     m_log(LOG_ERR, "ProcessForker failed to handle events", params);
-
-    // An exception should not stop the main event loop
-    return true; // The main event loop should continue
   }
+
+  // If program execution reached here then an exception was thrown
+
+  // Sleep for a second in order to prevent a tight loop in the case of the
+  // perpetual raising of exceptions
+  sleep(1);
+
+  // An exception should not stop the main event loop
+  return true; // The main event loop should continue
 }
 
 //------------------------------------------------------------------------------
@@ -635,13 +635,14 @@ void *castor::tape::tapeserver::daemon::ProcessForker::instantiateZmqContext(
     char message[100];
     sstrerror_r(errno, message, sizeof(message));
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to instantiate ZMQ context: " << message;
+    ex.getMessage() << "Child of ProcessForker failed to instantiate ZMQ"
+      " context: " << message;
     throw ex;
   }
   std::ostringstream contextAddr;
   contextAddr << std::hex << zmqContext;
   log::Param params[] = {log::Param("contextAddr", contextAddr.str())};
-  m_log(LOG_INFO, "ProcessForker instantiated a ZMQ context", params);
+  m_log(LOG_INFO, "Child of ProcessForker instantiated a ZMQ context", params);
 
   return zmqContext;
 }
@@ -651,10 +652,11 @@ void *castor::tape::tapeserver::daemon::ProcessForker::instantiateZmqContext(
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::ProcessForker::handlePendingSignals() {
   try {
+    // Handle a pending SIGCHLD by reaping the associated zombie(s)
     reapZombies();
 
-    // For now there are not signals that correspond to gracefully shutting the
-    // ProcessForker process
+    // For now there are no signals that require a gracefully shutdown of the
+    // main loop of the ProcessForker
     return true; // The main event loop should continue
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
