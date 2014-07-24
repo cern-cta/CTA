@@ -73,7 +73,7 @@ public:
   /**
    * Executes the main event loop of the ProcessForker.
    */
-  void execute();
+  void execute() throw();
 
 private:
 
@@ -138,7 +138,21 @@ private:
    *
    * @return true if the main event loop should continue.
    */
-  bool handleEvents();
+  bool handleEvents() throw ();
+
+  /**
+   * Handles a pending message if there is one.
+   *
+   * @return true if the main event loop should continue.
+   */
+  bool handlePendingMsgs();
+
+  /**
+   * Handles any pending signals.
+   *
+   * @return true if the main event loop should continue.
+   */ 
+  bool handlePendingSignals();
 
   /**
    * Return strue if there is a pending message from the ProcessForker proxy.
@@ -252,7 +266,7 @@ private:
   /**
    * Reaps any zombie processes.
    */
-  void reapZombies() throw();
+  void reapZombies();
 
   /**
    * Handles the specified reaped zombie.
@@ -260,7 +274,7 @@ private:
    * @param pid The process ID of the reaped zombie.
    * @param waitpidStat The status information given by a call to waitpid().
    */
-  void handleReapedZombie(const pid_t pid, const int waitpidStat) throw();
+  void handleReapedZombie(const pid_t pid, const int waitpidStat);
 
   /**
    * Logs the fact that the specified child process has terminated.

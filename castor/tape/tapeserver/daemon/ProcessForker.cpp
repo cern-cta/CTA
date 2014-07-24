@@ -94,22 +94,44 @@ void castor::tape::tapeserver::daemon::ProcessForker::closeCmdReceiverSocket()
 //------------------------------------------------------------------------------
 // execute
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForker::execute() {
-  try {
-    while(handleEvents()) {
-      reapZombies();
-    }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle events: " << ne.getMessage().str();
-    throw ex;
+void castor::tape::tapeserver::daemon::ProcessForker::execute() throw() {
+  // The main event loop
+  while(handleEvents()) {
   }
 }
 
 //------------------------------------------------------------------------------
 // handleEvents
 //------------------------------------------------------------------------------
-bool castor::tape::tapeserver::daemon::ProcessForker::handleEvents() {
+bool castor::tape::tapeserver::daemon::ProcessForker::handleEvents() throw() {
+  try {
+    return handlePendingMsgs() && handlePendingSignals();
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "ProcessForker failed to handle events", params);
+
+    // An exception should not stop the main event loop
+    return true; // The main event loop should continue
+  } catch(std::exception &se) {
+    log::Param params[] = {log::Param("message", se.what())};
+    m_log(LOG_ERR, "ProcessForker failed to handle events", params);
+
+    // An exception should not stop the main event loop
+    return true; // The main event loop should continue
+  } catch(...) {
+    log::Param params[] =
+      {log::Param("message", "Caught an unknown exception")};
+    m_log(LOG_ERR, "ProcessForker failed to handle events", params);
+
+    // An exception should not stop the main event loop
+    return true; // The main event loop should continue
+  }
+}
+
+//------------------------------------------------------------------------------
+// handlePendingMsgs
+//------------------------------------------------------------------------------
+bool castor::tape::tapeserver::daemon::ProcessForker::handlePendingMsgs() {
   if(thereIsAPendingMsg()) {
     return handleMsg();
   } else {
@@ -625,9 +647,27 @@ void *castor::tape::tapeserver::daemon::ProcessForker::instantiateZmqContext(
 }
 
 //------------------------------------------------------------------------------
+// handlePendingSignals
+//------------------------------------------------------------------------------
+bool castor::tape::tapeserver::daemon::ProcessForker::handlePendingSignals() {
+  try {
+    reapZombies();
+
+    // For now there are not signals that correspond to gracefully shutting the
+    // ProcessForker process
+    return true; // The main event loop should continue
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to handle pending signals: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
 // reapZombies
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForker::reapZombies() throw() {
+void castor::tape::tapeserver::daemon::ProcessForker::reapZombies() {
   pid_t pid = 0;
   int waitpidStat = 0;
   while (0 < (pid = waitpid(-1, &waitpidStat, WNOHANG))) {
@@ -639,20 +679,25 @@ void castor::tape::tapeserver::daemon::ProcessForker::reapZombies() throw() {
 // handleReapedZombie
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForker::handleReapedZombie(
-  const pid_t pid, const int waitpidStat) throw() {
+  const pid_t pid, const int waitpidStat) {
   try {
     logChildProcessTerminated(pid, waitpidStat);
     notifyTapeDaemonOfTerminatedProcess(pid, waitpidStat);
-  } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {log::Param("message", ex.getMessage().str())};
-    m_log(LOG_ERR, "Failed to handle reaped zombie", params);
-  } catch(std::exception &se) {
-    log::Param params[] = {log::Param("message", se.what())};
-    m_log(LOG_ERR, "Failed to handle reaped zombie", params);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to handle reaped zombie: pid=" << pid <<
+      ne.getMessage().str();
+    throw ex;
+  } catch(std::exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to handle reaped zombie: pid=" << pid <<
+      ne.what();
+    throw ex;
   } catch(...) {
-    log::Param params[] = {
-      log::Param("message", "Caught an unknown exception")};
-    m_log(LOG_ERR, "Failed to handle reaped zombie", params);
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to handle reaped zombie: pid=" << pid <<
+      ": Caught an unknown exception";
+    throw ex;
   }
 } 
 
