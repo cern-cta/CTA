@@ -162,7 +162,6 @@ logWithStat(int level, const std::string& message){
            .add("threadWaitReportingTime",m_threadStat.waitReportingTime)
            .add("threadCheckingErrorTime",m_threadStat.checkingErrorTime)
            .add("threadOpeningTime",m_threadStat.openingTime)
-           .add("threadClosingTime", m_threadStat.closingTime)
            .add("threaDataVolumeInMB", 1.0*m_threadStat.dataVolume/1024/1024)
            .add("threadPayloadTransferSpeedMB/s",
                    1.0*m_threadStat.dataVolume/1024/1024/m_threadStat.transferTime);

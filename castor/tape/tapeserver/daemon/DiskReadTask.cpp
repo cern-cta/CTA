@@ -150,7 +150,6 @@ void DiskReadTask::circulateAllBlocks(size_t fromBlockId){
 void DiskReadTask::logWithStat(int level,const std::string& msg,log::LogContext& lc){
   log::ScopedParamContainer params(lc);
      params.add("transferTime", m_stats.transferTime)
-           .add("closingTime", m_stats.closingTime)
            .add("checksumingTime",m_stats.checksumingTime)
            .add("waitDataTime",m_stats.waitDataTime)
            .add("waitReportingTime",m_stats.waitReportingTime)

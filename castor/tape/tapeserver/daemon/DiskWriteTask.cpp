@@ -83,11 +83,12 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
         //A close is done  in WriteFile's destructor, but it may lead to some 
         //silent data loss
         ourFile.close();
+        m_stats.closingTime +=localTime.secs(utils::Timer::resetCounter);
         break;
       }
     } //end of while(1)
     reporter.reportCompletedJob(*m_recallingFile,checksum);
-    m_stats.waitReportingTime+=localTime.secs(utils::Timer::resetCounter);;
+    m_stats.waitReportingTime+=localTime.secs(utils::Timer::resetCounter);
     logWithStat(LOG_DEBUG, "File successfully transfered to disk",lc);
     
     return true;
