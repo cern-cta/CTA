@@ -335,7 +335,8 @@ class LocalQueue(Queue.Queue):
             except KeyError:
               # no timeout could be found, so we take it as infinite, meaning we do not cancel anything
               timeout = -1
-        elif transfer.transferType == TransferType.D2DDST and transfer.replicationType != D2DTransferType.USER:
+        elif (transfer.transferType == TransferType.D2DSRC or transfer.transferType == TransferType.D2DDST) \
+             and transfer.replicationType != D2DTransferType.USER:
           timeout = -1     # no timeout for non-user-driven internal activities
         else:
           timeout = d2dtimeout
