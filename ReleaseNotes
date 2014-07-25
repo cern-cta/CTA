@@ -12,6 +12,12 @@
     #104810 Draining has problems when used with --file-mask=NOTONTAPE
     #104671 listtransfers not working when a transfermanagerd is down
     #104562 bad handling of long arguments in printmigrationroute and printrecalluser
+    #104983 Replica management broken by recent improvements
+    #104998 Synchronization of d2d srcs too aggressive and creating issues for draining cancelation
+    #105004 Timeouts on transfermanagerd replies for canceled jobs are not well handled
+    #105005 D2D destinations do not respect backfill mechanism when source is not ready
+    #105006 Draining disk 2 disk copies are not always repecting the GuaranteedUserSlotsPercentage
+    #105008 Deleting a draining operation may result in a database deadlock
 
   Protocols
   ---------
