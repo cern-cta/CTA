@@ -148,7 +148,8 @@ class LocalQueue(Queue.Queue):
         # we will be back soon and we'll block on the normal queue
         transferId = self.backfillQueue.get(False)
         try:
-          if self.queueingTransfers[transferId].transfer.transferType == TransferType.D2DSRC and \
+          if (self.queueingTransfers[transferId].transfer.transferType == TransferType.D2DSRC or \
+              self.queueingTransfers[transferId].transfer.transferType == TransferType.D2DDST) and \
             self.queueingTransfers[transferId].transfer.replicationType != D2DTransferType.USER:
             # we got one, but it's a non-user source disk-to-disk copy and we're busy.
             # Hence we move it to the d2dBackfillQueue to leave some room for normal
