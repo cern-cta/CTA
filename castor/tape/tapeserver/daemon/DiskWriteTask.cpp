@@ -78,7 +78,11 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
          
         blockId++;
       } //end if block non NULL
-      else {        
+      else { 
+        //close has to be explicit, because it may throw. 
+        //A close is done  in WriteFile's destructor, but it may lead to some 
+        //silent data loss
+        ourFile.close();
         break;
       }
     } //end of while(1)
