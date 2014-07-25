@@ -75,7 +75,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
         
         checksum = mb->m_payload.adler32(checksum);
         m_stats.checksumingTime+=localTime.secs(utils::Timer::resetCounter);
-         
+       
         blockId++;
       } //end if block non NULL
       else { 
@@ -84,6 +84,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
         //silent data loss
         ourFile.close();
         m_stats.closingTime +=localTime.secs(utils::Timer::resetCounter);
+        m_stats.filesCount++;
         break;
       }
     } //end of while(1)
@@ -91,6 +92,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
     m_stats.waitReportingTime+=localTime.secs(utils::Timer::resetCounter);
     logWithStat(LOG_DEBUG, "File successfully transfered to disk",lc);
     
+    //everything went well, return true
     return true;
   } //end of try
   catch(const castor::exception::Exception& e){
@@ -107,6 +109,9 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
     releaseAllBlock();
     
     reporter.reportFailedJob(*m_recallingFile,e.getMessageValue(),e.code());
+    m_stats.waitReportingTime+=localTime.secs(utils::Timer::resetCounter);
+    
+    //got an exception, return false
     return false;
   }
 }

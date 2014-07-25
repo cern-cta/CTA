@@ -99,6 +99,13 @@ public:
       m_injector = injector;
   }
 private:
+  /**
+   * When the last thread finish, we log all m_pooldStat members + message
+   * at the given level
+   * @param level
+   * @param message
+   */
+  void logWithStat(int level, const std::string& message);
   /** 
    * Get the next task to execute and if there is not enough tasks in queue,
    * it will ask the TaskInjector to get more jobs.

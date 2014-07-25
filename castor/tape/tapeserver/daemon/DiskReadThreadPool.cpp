@@ -53,7 +53,7 @@ DiskReadThreadPool::~DiskReadThreadPool() {
     delete m_threads.back();
     m_threads.pop_back();
   }
-  m_lc.log(LOG_INFO, "All the DiskReadWorkerThreads have been destroyed");
+  logWithStat(LOG_INFO, "All the DiskReadWorkerThreads have been destroyed");
 }
 
 //------------------------------------------------------------------------------
@@ -113,9 +113,27 @@ DiskReadTask* DiskReadThreadPool::popAndRequestMore(castor::log::LogContext &lc)
   }
   return vrp.value;
 }
+//------------------------------------------------------------------------------
+//addThreadStats
+//------------------------------------------------------------------------------
 void DiskReadThreadPool::addThreadStats(const DiskStats& other){
   castor::tape::threading::MutexLocker lock(&m_statAddingProtection);
   m_pooldStat+=other;
+}
+//------------------------------------------------------------------------------
+//logWithStat
+//------------------------------------------------------------------------------
+void DiskReadThreadPool::logWithStat(int level, const std::string& message){
+  log::ScopedParamContainer params(m_lc);
+     params.add("poolTransferTime", m_pooldStat.transferTime)
+           .add("poolWaitFreeMemoryTime",m_pooldStat.waitFreeMemoryTime)
+           .add("poolCheckingErrorTime",m_pooldStat.checkingErrorTime)
+           .add("poolOpeningTime",m_pooldStat.openingTime)
+           .add("poolFileCount",m_pooldStat.filesCount)
+           .add("poolDataVolumeInMB", 1.0*m_pooldStat.dataVolume/1024/1024)
+           .add("Average_Pool_PayloadTransferSpeedMB/s",
+                   1.0*m_pooldStat.dataVolume/1024/1024/m_pooldStat.transferTime);
+    m_lc.log(level,message);
 }
 //------------------------------------------------------------------------------
 // DiskReadWorkerThread::run
@@ -157,9 +175,7 @@ void DiskReadThreadPool::DiskReadWorkerThread::
 logWithStat(int level, const std::string& message){
   log::ScopedParamContainer params(m_lc);
      params.add("threadTransferTime", m_threadStat.transferTime)
-           .add("threadChecksumingTime",m_threadStat.checksumingTime)
-           .add("threadWaitDataTime",m_threadStat.waitDataTime)
-           .add("threadWaitReportingTime",m_threadStat.waitReportingTime)
+           .add("threadWaitFreeMemoryTime",m_threadStat.waitFreeMemoryTime)
            .add("threadCheckingErrorTime",m_threadStat.checkingErrorTime)
            .add("threadOpeningTime",m_threadStat.openingTime)
            .add("threaDataVolumeInMB", 1.0*m_threadStat.dataVolume/1024/1024)

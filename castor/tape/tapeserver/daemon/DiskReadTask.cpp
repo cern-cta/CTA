@@ -105,7 +105,10 @@ void DiskReadTask::execute(log::LogContext& lc) {
         throw castor::tape::Exception(erroMsg);
       }
       m_stats.checkingErrorTime += localTime.secs(utils::Timer::resetCounter);
+      
     } //end of while(migratingFileSize>0)
+    
+    m_stats.filesCount++;
   }
   catch(const castor::tape::exceptions::ErrorFlag&){
    

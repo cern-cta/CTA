@@ -115,17 +115,17 @@ void DiskWriteThreadPool::addThreadStats(const DiskStats& other){
 //------------------------------------------------------------------------------
 void DiskWriteThreadPool::logWithStat(int level, const std::string& message){
   log::ScopedParamContainer params(m_lc);
-     params.add("threadTransferTime", m_pooldStat.transferTime)
-           .add("threadChecksumingTime",m_pooldStat.checksumingTime)
-           .add("threadWaitDataTime",m_pooldStat.waitDataTime)
-           .add("threadWaitReportingTime",m_pooldStat.waitReportingTime)
-           .add("threadCheckingErrorTime",m_pooldStat.checkingErrorTime)
-           .add("threadOpeningTime",m_pooldStat.openingTime)
-           .add("threadClosingTime", m_pooldStat.closingTime)
-           .add("threaDataVolumeInMB", 1.0*m_pooldStat.dataVolume/1024/1024)
-           .add("threadPayloadTransferSpeedMB/s",
+     params.add("poolTransferTime", m_pooldStat.transferTime)
+           .add("poolChecksumingTime",m_pooldStat.checksumingTime)
+           .add("poolWaitDataTime",m_pooldStat.waitDataTime)
+           .add("poolWaitReportingTime",m_pooldStat.waitReportingTime)
+           .add("poolCheckingErrorTime",m_pooldStat.checkingErrorTime)
+           .add("poolOpeningTime",m_pooldStat.openingTime)
+           .add("poolFileCount",m_pooldStat.filesCount)
+           .add("poolClosingTime", m_pooldStat.closingTime)
+           .add("poolDataVolumeInMB", 1.0*m_pooldStat.dataVolume/1024/1024)
+           .add("poolPayloadTransferSpeedMB/s",
                    1.0*m_pooldStat.dataVolume/1024/1024/m_pooldStat.transferTime);
-           ;
     m_lc.log(level,message);
 }
 //------------------------------------------------------------------------------
@@ -184,6 +184,7 @@ logWithStat(int level, const std::string& msg) {
            .add("threadChecksumingTime",m_threadStat.checksumingTime)
            .add("threadWaitDataTime",m_threadStat.waitDataTime)
            .add("threadWaitReportingTime",m_threadStat.waitReportingTime)
+           .add("threadFileCount",m_threadStat.filesCount)
            .add("threadCheckingErrorTime",m_threadStat.checkingErrorTime)
            .add("threadOpeningTime",m_threadStat.openingTime)
            .add("threadClosingTime", m_threadStat.closingTime)
