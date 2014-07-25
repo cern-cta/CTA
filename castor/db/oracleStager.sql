@@ -3924,8 +3924,13 @@ END;
  * Database jobs
  */
 BEGIN
-  -- Remove database job before recreating it
-  DBMS_SCHEDULER.DROP_JOB('CHECKNBREPLICASJOB', TRUE);
+  -- Remove database jobs before recreating them
+  FOR j IN (SELECT job_name FROM user_scheduler_jobs
+             WHERE job_name IN ('CHECKNBREPLICASJOB'))
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
+  END LOOP;
+
   -- Create a db job to be run every minute executing the checkNbReplicas procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'checkNbReplicasJob',
