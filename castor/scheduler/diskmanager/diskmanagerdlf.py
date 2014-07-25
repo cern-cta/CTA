@@ -44,7 +44,9 @@ msgs = dlf.enum('INVOKINGSCHEDULETRANSFER', 'INVOKINGSUMMARIZETRANSFERS',
                 'INFORMTRANSFERKILLED', 'TRANSFERBACKTOQUEUEFAILED',
                 'REPORTEREXCEPTION', 'NOSCHEDULERINCONFIG',
                 'SENDREPORTEXCEPTION', 'SENDREPORTFAILURE',
-                'INVOKINGMACHINEDISABLED', 'INVOKINGFSDISABLED')
+                'INVOKINGMACHINEDISABLED', 'INVOKINGFSDISABLED',
+                'SCHEDFROMBACKFILL', 'PUTJOBINBACKFILL', 'SCHEDUSERJOBUNDERPRESSURE',
+                'SCHEDPRIORITY', 'AVOIDBACKFILLSTARV', 'SCHEDUSERJOB')
 
 # initialization of the messages
 dlf.addmessages({msgs.INVOKINGSCHEDULETRANSFER : 'Invoking scheduleTransfer',
@@ -87,4 +89,10 @@ dlf.addmessages({msgs.INVOKINGSCHEDULETRANSFER : 'Invoking scheduleTransfer',
                  msgs.SENDREPORTEXCEPTION : 'Caught exception when sending report to transfermanager, will try other transfermanagers',
                  msgs.SENDREPORTFAILURE : 'Could not send report to any transfermanager, giving up',
                  msgs.INVOKINGMACHINEDISABLED : 'Invoking machineDisabled',
-                 msgs.INVOKINGFSDISABLED : 'Invoking FSDisabled'})
+                 msgs.INVOKINGFSDISABLED : 'Invoking FSDisabled',
+                 msgs.SCHEDFROMBACKFILL : 'Not under pressure, scheduling work from the backfill queues',
+                 msgs.PUTJOBINBACKFILL : 'Under pressure, putting job to d2dbackfill queue',
+                 msgs.SCHEDUSERJOBUNDERPRESSURE : 'Under pressure, but still scheduling user job',
+                 msgs.SCHEDPRIORITY : 'Scheduled job from priority queue',
+                 msgs.AVOIDBACKFILLSTARV : 'Attempted to schedule one job from backfill according to MaxRegularJobsBeforeBackfill',
+                 msgs.SCHEDUSERJOB : 'Scheduled job from regular queue'})
