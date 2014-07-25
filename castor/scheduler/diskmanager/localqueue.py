@@ -99,14 +99,23 @@ class LocalQueue(Queue.Queue):
     finally:
       self.lock.release()
 
-  def putPriority(self, scheduler, transfer):
+  def _putInPriorityQueue(self, transfer):
     '''Put a new transfer in the priority queue'''
+    if transfer.transferType == TransferType.STD or \
+       ((transfer.transferType == TransferType.D2DSRC or transfer.transferType == TransferType.D2DDST) \
+        and transfer.replicationType == D2DTransferType.USER):
+      self.priorityQueue.put(transfer.transferId)
+    else:
+      self.backfillQueue.put(transfer.transferId)
+
+  def putPriority(self, scheduler, transfer):
+    '''Put a new transfer in the priority queue and register it in queueingTransfers'''
     self.lock.acquire()
     try:
       # first keep note of the new transfer (indexed by subreqId)
       self.queueingTransfers[transfer.transferId] = QueueingTransfer(scheduler, transfer)
-      # then add it to the underlying priority queue
-      self.priorityQueue.put(transfer.transferId)
+      # then add it to the underlying priority queue, depending on its type
+      self._putInPriorityQueue(transfer)
     finally:
       self.lock.release()
 
@@ -114,10 +123,15 @@ class LocalQueue(Queue.Queue):
     '''internal method to get a transfer from the backfill queues,
        managing them depending on how many slots are already taken'''
     # are we already using too many slots? i.e. are there less than GuaranteedUserSlotsPercentage% free slots?
-    if self.runningTransfers.nbUsedSlots() <= self.config.getValue('DiskManager', 'NbSlots', 0, int) * \
-       (100 - self.config.getValue('DiskManager', 'GuaranteedUserSlotsPercentage', 50, int)) / 100:
+    nbSlots = self.config.getValue('DiskManager', 'NbSlots', 0, int)
+    guaranteedUserSlotsPercentage = self.config.getValue('DiskManager', 'GuaranteedUserSlotsPercentage', 50, int)
+    if self.runningTransfers.nbUsedSlots() <= nbSlots * (100 - guaranteedUserSlotsPercentage) / 100:
       # no, so we accept any kind of backfill job
       try:
+        dlf.writedebug(msgs.SCHEDFROMBACKFILL, \
+                       nbUsedSlots=self.runningTransfers.nbUsedSlots(), \
+                       nbSlots=nbSlots, \
+                       guaranteedUserSlotsPercentage=guaranteedUserSlotsPercentage)
         # first check the d2dsrc jobs in the backfill queue, without waiting
         transferId = self.d2dBackfillQueue.get(False)
         # found one, return it
@@ -134,7 +148,8 @@ class LocalQueue(Queue.Queue):
         # we will be back soon and we'll block on the normal queue
         transferId = self.backfillQueue.get(False)
         try:
-          if self.queueingTransfers[transferId].transfer.transferType == TransferType.D2DSRC and \
+          if (self.queueingTransfers[transferId].transfer.transferType == TransferType.D2DSRC or \
+              self.queueingTransfers[transferId].transfer.transferType == TransferType.D2DDST) and \
             self.queueingTransfers[transferId].transfer.replicationType != D2DTransferType.USER:
             # we got one, but it's a non-user source disk-to-disk copy and we're busy.
             # Hence we move it to the d2dBackfillQueue to leave some room for normal
@@ -142,8 +157,16 @@ class LocalQueue(Queue.Queue):
             # Note that we may starve d2dsrc jobs in case of heavy user activity
             # coupled with heavy rebalancing! In this case the d2d jobs will wait
             # until the total activity goes below 50% of the available slots.
+            dlf.writedebug(msgs.PUTJOBINBACKFILL, transferId=transferId, \
+                           nbUsedSlots=self.runningTransfers.nbUsedSlots(), \
+                           nbSlots=nbSlots, \
+                           guaranteedUserSlotsPercentage=guaranteedUserSlotsPercentage)
             self.d2dBackfillQueue.put(transferId)
           else:
+            dlf.writedebug(msgs.SCHEDUSERJOBUNDERPRESSURE, transferId=transferId, \
+                           nbUsedSlots=self.runningTransfers.nbUsedSlots(), \
+                           nbSlots=nbSlots, \
+                           guaranteedUserSlotsPercentage=guaranteedUserSlotsPercentage)
             # we got one, return it
             return transferId
         except KeyError:
@@ -160,13 +183,17 @@ class LocalQueue(Queue.Queue):
       try:
         # try to get a priority transfer first
         transferId = self.priorityQueue.get(False)
+        dlf.writedebug(msgs.SCHEDPRIORITY, transferId=transferId)
       except Queue.Empty:
         # else get next transfer from either the regular or the backfill queue,
         # which is guaranteed to be taken at least once
         # every <maxRegularJobsBeforeBackfill> regular jobs
         try:
-          if self.countRegularJobs == self.config.getValue('DiskManager', 'MaxRegularJobsBeforeBackfill', 20, int):
+          maxRegularJobsBeforeBackfill = self.config.getValue('DiskManager', 'MaxRegularJobsBeforeBackfill', 20, int)
+          if self.countRegularJobs == maxRegularJobsBeforeBackfill:
             # give a chance to the backfill queue
+            dlf.writedebug(msgs.AVOIDBACKFILLSTARV, \
+                           maxRegularJobsBeforeBackfill=maxRegularJobsBeforeBackfill)
             raise Queue.Empty
           else:
             # in case of no load (i.e. in the previous round we found nothing) check if
@@ -176,6 +203,7 @@ class LocalQueue(Queue.Queue):
               raise Queue.Empty
             # block and timeout after 1s so that we can go back to the other queues or stop
             transferId = Queue.Queue.get(self, timeout=1)
+            dlf.writedebug(msgs.SCHEDUSERJOB, transferId=transferId)
             self.countRegularJobs += 1
         except Queue.Empty:
           try:
@@ -249,7 +277,7 @@ class LocalQueue(Queue.Queue):
     try:
       # put the transferId back into the priority queue in it's time to retry the transfer
       dlf.writedebug(msgs.RETRYTRANSFER, subreqid=transferId, reqid=reqid) # "Retrying transfer" message
-      self.priorityQueue.put(transferId)
+      self._putInPriorityQueue(transferId)
       del self.pendingD2dDest[transferId]
     finally:
       self.lock.release()
@@ -266,7 +294,7 @@ class LocalQueue(Queue.Queue):
         if timeOfNextTry < currentTime:
           # put the transferId back into the priority queue in it's time to retry the transfer
           dlf.writedebug(msgs.RETRYTRANSFER, subreqid=transferId) # "Retrying transfer" message
-          self.priorityQueue.put(transferId)
+          self._putInPriorityQueue(transferId)
           toBeDeleted.append(transferId)
       # cleanup list of pending transferIds
       for tid in toBeDeleted:

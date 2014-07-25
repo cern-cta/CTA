@@ -666,7 +666,7 @@ try:
     # launch a processing thread that will regularly synchronize the stager DB with the running
     # transfers, meaning that it will check that transfers running for already long according to the DB
     # are effectively still running. If they are not, is will update the DB accordingly
-    synchroThread = synchronizer.SynchronizerThread()
+    synchroThread = synchronizer.SynchronizerThread(queueingTransfers)
     # starts listening
     transfermanager.start()
   except SystemExit:

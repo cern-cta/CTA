@@ -308,10 +308,18 @@ class ServerQueue(dict):
             # we are precisely in the mentionned case. We can safely return as we already think
             # that the job is running on that machine
             # "Transfer starting reconfirmed" message
-            dlf.writedebug(msgs.TRANSFERSTARTCONFIRMED, DiskServer=transfer.diskServer,
-                           subreqId=transfer.transferId, reqId=transfer.reqId)
+            dlf.write(msgs.TRANSFERSTARTCONFIRMED, DiskServer=transfer.diskServer,
+                      subreqId=transfer.transferId, reqId=transfer.reqId)
             if transfer.transferType == TransferType.D2DDST:
-              return self.d2dsrcrunning[transfer.transferId].srcTransfer
+              try:
+                return self.d2dsrcrunning[transfer.transferId].srcTransfer
+              except KeyError:
+                # In this special case, the reconfirmation reconfirms that the job
+                # was canceled, not that it can run. This is made clear by the fact
+                # that the source has been cleaned up while it should be running
+                dlf.write(msgs.TRANSFERCANCELEDCONFIRMED, DiskServer=transfer.diskServer,
+                          subreqId=transfer.transferId, reqId=transfer.reqId)
+                raise ValueError("Request canceled while queueing and retried due to timeout")
             else:
               return
           # The transfer has really started somewhere else. Let the diskServer know by raising an exception
