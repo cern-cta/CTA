@@ -409,7 +409,7 @@ END;
 /
 
 
-/* update a drainingJob at then end of a disk2diskcopy */
+/* Update a drainingJob at the end of a disk2diskcopy */
 CREATE OR REPLACE PROCEDURE updateDrainingJobOnD2dEnd(inDjId IN INTEGER, inFileSize IN INTEGER,
                                                       inHasFailed IN BOOLEAN) AS
   varTotalFiles INTEGER;
@@ -548,6 +548,10 @@ BEGIN
   logToDLF(NULL, dlf.LVL_SYSTEM, varLogMsg, varFileId, varNsHost, 'transfermanagerd', varComment);
   -- if success, create new DiskCopy, restart waiting requests, cleanup and handle replicate on close
   IF inErrorMessage IS NULL THEN
+    -- In case of draining, update DrainingJob: this is done before the rest to respect the locking order
+    IF varDrainingJob IS NOT NULL THEN
+      updateDrainingJobOnD2dEnd(varDrainingJob, varFileSize, False);
+    END IF;
     -- compute GcWeight and importance of the new copy
     IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
       DECLARE
@@ -583,7 +587,7 @@ BEGIN
        AND castorfile = varCfId;
     alertSignalNoLock('wakeUpJobReqSvc');
     -- delete the disk2diskCopyJob
-    DELETE FROM Disk2DiskCopyjob WHERE transferId = inTransferId;
+    DELETE FROM Disk2DiskCopyJob WHERE transferId = inTransferId;
     -- In case of valid new copy
     IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
       IF varDropSource = 1 THEN
@@ -595,12 +599,8 @@ BEGIN
         -- update importance of other DiskCopies if it's an additional one
         UPDATE DiskCopy SET importance = varDCImportance WHERE castorFile = varCfId;
       END IF;
-      -- Trigger the creation of additional copies of the file, if any
+      -- trigger the creation of additional copies of the file, if any
       replicateOnClose(varCfId, varUid, varGid);
-    END IF;
-    -- In case of draining, update DrainingJob
-    IF varDrainingJob IS NOT NULL THEN
-      updateDrainingJobOnD2dEnd(varDrainingJob, varFileSize, False);
     END IF;
   ELSE
     -- failure
@@ -619,16 +619,20 @@ BEGIN
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.D2D_D2DDONE_RETRIED, varFileId, varNsHost, 'transfermanagerd', varComment ||
                  ' RetryNb=' || TO_CHAR(varRetryCounter+1) || ' maxNbRetries=' || TO_CHAR(varMaxNbD2dRetries));
       ELSE
-        -- no retry, let's delete the disk to disk job copy
+        -- No retry. In case of draining, update DrainingJob
+        IF varDrainingJob IS NOT NULL THEN
+          updateDrainingJobOnD2dEnd(varDrainingJob, varFileSize, True);
+        END IF;
+        -- and delete the disk to disk copy job
         BEGIN
-          DELETE FROM Disk2DiskCopyjob WHERE transferId = inTransferId;
+          DELETE FROM Disk2DiskCopyJob WHERE transferId = inTransferId;
           -- and remember the error in case of draining
           IF varDrainingJob IS NOT NULL THEN
             INSERT INTO DrainingErrors (drainingJob, errorMsg, fileId, nsHost, diskCopy, timeStamp)
             VALUES (varDrainingJob, inErrorMessage, varFileId, varNsHost, varSrcDcId, getTime());
           END IF;
         EXCEPTION WHEN NO_DATA_FOUND THEN
-          -- the Disk2DiskCopyjob was already dropped (e.g. because of an interrupted draining)
+          -- the Disk2DiskCopyJob was already dropped (e.g. because of an interrupted draining)
           -- in such a case, forget about the error
           NULL;
         END;
@@ -643,10 +647,6 @@ BEGIN
                               'retries. Last error was : ' || inErrorMessage
          WHERE status = dconst.SUBREQUEST_WAITSUBREQ
            AND castorfile = varCfId;
-        -- In case of draining, update DrainingJob
-        IF varDrainingJob IS NOT NULL THEN
-          updateDrainingJobOnD2dEnd(varDrainingJob, varFileSize, True);
-        END IF;
       END IF;
     END;
   END IF;
