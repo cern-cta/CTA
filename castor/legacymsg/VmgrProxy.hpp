@@ -45,9 +45,7 @@ public:
    * Notifies the vmgrd daemon that the specified tape has been mounted for read.
    *
    * @param vid The volume identifier of the mounted tape.
-   * @param jid The VDQM job id. In pactice, the local unix PID of the
-   * forked session process. This process will end at the end of the session.
-   * The same pid/jid can be queried using tpstat.
+   * @param
    */
   virtual void tapeMountedForRead(const std::string &vid, uint32_t jid)
      = 0;
@@ -56,9 +54,7 @@ public:
    * Notifies the vmgrd daemon that the specified tape has been mounted for read.
    *
    * @param vid The volume identifier of the mounted tape.
-   * @param jid The VDQM job id. In pactice, the local unix PID of the
-   * forked session process. This process will end at the end of the session.
-   * The same pid/jid can be queried using tpstat.
+   * @param
    */
   virtual void tapeMountedForWrite(const std::string &vid, uint32_t jid)
      = 0;
