@@ -27,10 +27,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <grp.h>
-#include <attr/xattr.h>
 #include "h/Cns_api.h"
 #include "h/serrno.h"
 #include <string.h>
+#include "ceph/ceph_posix.h"
 /*----------------------------------------------------------------------------*/
 #include "XrdVersion.hh"
 #include "XrdAcc/XrdAccAuthorize.hh"
@@ -358,13 +358,13 @@ XrdxCastor2OfsFile::open(const char*         path,
     disk_xs_buf[0] = disk_xs_type[0] = '\0';
 
     // Get existing checksum - we don't check errors here
-    nattr = getxattr(newpath.c_str(), "user.castor.checksum.type", disk_xs_type,
-                     sizeof(disk_xs_type));
+    nattr = ceph_posix_getxattr(newpath.c_str(), "user.castor.checksum.type", disk_xs_type,
+                                sizeof(disk_xs_type));
 
     if (nattr) disk_xs_type[nattr] = '\0';
 
-    nattr = getxattr(newpath.c_str(), "user.castor.checksum.value", disk_xs_buf,
-                     sizeof(disk_xs_buf));
+    nattr = ceph_posix_getxattr(newpath.c_str(), "user.castor.checksum.value", disk_xs_buf,
+                                sizeof(disk_xs_buf));
 
     if (nattr) disk_xs_buf[nattr] = '\0';
 
@@ -478,16 +478,16 @@ XrdxCastor2OfsFile::close()
     sprintf(ckSumbuf, "%x", mAdlerXs);
     xcastor_debug("file xs=%s", ckSumbuf);
 
-    if (setxattr(newpath.c_str(), "user.castor.checksum.type", ckSumalg,
-                 strlen(ckSumalg), 0))
+    if (ceph_posix_setxattr(newpath.c_str(), "user.castor.checksum.type", ckSumalg,
+                            strlen(ckSumalg), 0))
     {
       gSrv->Emsg("close", error, EIO, "set checksum type");
       rc = SFS_ERROR; // Anyway this is not returned to the client
     }
     else
     {
-      if (setxattr(newpath.c_str(), "user.castor.checksum.value", ckSumbuf,
-                   strlen(ckSumbuf), 0))
+      if (ceph_posix_setxattr(newpath.c_str(), "user.castor.checksum.value", ckSumbuf,
+                              strlen(ckSumbuf), 0))
       {
         gSrv->Emsg("close", error, EIO, "set checksum");
         rc = SFS_ERROR; // Anyway this is not returned to the client

@@ -63,6 +63,7 @@ install (TARGETS xrdxcastor2acc DESTINATION ${CASTOR_DEST_LIB_DIR})
 ################################################################################
 # Rules to build and install libXrdxCastor2Ofs.so
 ################################################################################
+find_package (ceph REQUIRED)
 set (XRDXCASTOR2OFS_LIB_SRC_FILES
   XrdxCastor2Ofs.cpp
   XrdxCastorLogging.cpp
@@ -74,7 +75,7 @@ CastorSetLibraryVersions (xrdxcastor2ofs)
 set_property (TARGET xrdxcastor2ofs
   APPEND PROPERTY COMPILE_DEFINITIONS _FILE_OFFSET_BITS=64)
 target_link_libraries (xrdxcastor2ofs crypto ${XROOTD_XRDCL_LIB}
-  ${XROOTD_XRDCLIENT_LIB} ${XROOTD_XRDOFS_LIB} ${UUID_LIB} z)
+  ${XROOTD_XRDCLIENT_LIB} ${XROOTD_XRDOFS_LIB} ${UUID_LIB} z ${RADOS_LIBS} castorcephposix)
 install (TARGETS xrdxcastor2ofs DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 ################################################################################
