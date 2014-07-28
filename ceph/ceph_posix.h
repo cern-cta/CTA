@@ -33,6 +33,9 @@ extern "C" {
   ssize_t ceph_posix_fgetxattr(int fd, const char* name, void* value, size_t size);
   int ceph_posix_fsetxattr(int fd, const char* name, const void* value, size_t size, int flags);
   int ceph_posix_fremovexattr(int fd, const char* name);
+  ssize_t ceph_posix_getxattr(const char *pathname, const char* name, void* value, size_t size);
+  int ceph_posix_setxattr(const char *pathname, const char* name, const void* value, size_t size, int flags);
+  int ceph_posix_removexattr(const char *pathname, const char* name);
 
 #ifdef __cplusplus
 }

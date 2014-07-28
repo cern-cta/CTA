@@ -49,6 +49,13 @@ static void logwrapper(char* format, ...) {
   va_end(arg);  
 }
 
+static std::pair<std::string, std::string> splitPoolFromObjName(const char* path) {
+  std::string spath = path;
+  int slashPos = spath.find('/');
+  return std::pair<std::string, std::string>(spath.substr(0,slashPos),
+                                             spath.substr(slashPos+1));
+}
+
 static libradosstriper::RadosStriper* getRadosStriper(std::string pool) {
   std::map<std::string, libradosstriper::RadosStriper*>::iterator it =
     g_radosStripers.find(pool);
@@ -97,10 +104,9 @@ void ceph_posix_disconnect_all() {
 }
 
 void ceph_open(CephFileRef &fr, const char *pathname, int flags, mode_t mode) {
-  std::string path = pathname;
-  int slashPos = path.find('/');
-  fr.pool = path.substr(0,slashPos);
-  fr.name = path.substr(slashPos+1);
+  std::pair<std::string, std::string> poolObj = splitPoolFromObjName(pathname);
+  fr.pool = poolObj.first;
+  fr.name = poolObj.second;
   fr.flags = flags;
   fr.mode = mode;
   fr.offset = 0;
@@ -182,15 +188,14 @@ int ceph_fstat(CephFileRef &fr, struct stat *buf) {
 
 int ceph_stat(const char *pathname, struct stat *buf) {
   // minimal stat : only size and times are filled
-  std::string path = pathname;
-  int slashPos = path.find('/');
-  libradosstriper::RadosStriper *striper = getRadosStriper(path.substr(0,slashPos));
+  std::pair<std::string, std::string> poolObj = splitPoolFromObjName(pathname);
+  libradosstriper::RadosStriper *striper = getRadosStriper(poolObj.first);
   if (0 == striper) {
     errno = EINVAL;
     return -1;
   }
   memset(buf, 0, sizeof(*buf));
-  int rc = striper->stat(path.substr(slashPos+1), (uint64_t*)&(buf->st_size), &(buf->st_atime));
+  int rc = striper->stat(poolObj.second, (uint64_t*)&(buf->st_size), &(buf->st_atime));
   if (rc != 0) {
     errno = -rc;
     return -1;
@@ -220,15 +225,14 @@ int ceph_fstat64(CephFileRef &fr, struct stat64 *buf) {
 
 int ceph_stat64(const char *pathname, struct stat64 *buf) {
   // minimal stat : only size and times are filled
-  std::string path = pathname;
-  int slashPos = path.find('/');
-  libradosstriper::RadosStriper *striper = getRadosStriper(path.substr(0,slashPos));
+  std::pair<std::string, std::string> poolObj = splitPoolFromObjName(pathname);
+  libradosstriper::RadosStriper *striper = getRadosStriper(poolObj.first);
   if (0 == striper) {
     errno = EINVAL;
     return -1;
   }
   memset(buf, 0, sizeof(*buf));
-  int rc = striper->stat(path.substr(slashPos+1), (uint64_t*)&(buf->st_size), &(buf->st_atime));
+  int rc = striper->stat(poolObj.second, (uint64_t*)&(buf->st_size), &(buf->st_atime));
   if (rc != 0) {
     errno = -rc;
     return -1;
@@ -249,14 +253,15 @@ int ceph_fcntl(CephFileRef &fr, int cmd) {
   }
 }
 
-ssize_t ceph_fgetxattr(CephFileRef &fr, const char* name, char* value, size_t size) {
-  libradosstriper::RadosStriper *striper = getRadosStriper(fr.pool);
+ssize_t ceph_getxattr(const std::string &pool, const std::string &objname,
+                      const char* name, char* value, size_t size) {
+  libradosstriper::RadosStriper *striper = getRadosStriper(pool);
   if (0 == striper) {
     errno = EINVAL;
     return -1;
   }
   ceph::bufferlist bl;
-  int rc = striper->getxattr(fr.name, name, bl);
+  int rc = striper->getxattr(objname, name, bl);
   if (rc) {
     errno = -rc;
     return -1;
@@ -265,16 +270,17 @@ ssize_t ceph_fgetxattr(CephFileRef &fr, const char* name, char* value, size_t si
   return 0;
 }
 
-int ceph_fsetxattr(CephFileRef &fr, const char* name, const char* value,
+int ceph_setxattr(const std::string &pool, const std::string &objname,
+                  const char* name, const char* value,
                    size_t size, int flags)  {
-  libradosstriper::RadosStriper *striper = getRadosStriper(fr.pool);
+  libradosstriper::RadosStriper *striper = getRadosStriper(pool);
   if (0 == striper) {
     errno = EINVAL;
     return -1;
   }
   ceph::bufferlist bl;
   bl.append(value, size);
-  int rc = striper->setxattr(fr.name, name, bl);
+  int rc = striper->setxattr(objname, name, bl);
   if (rc) {
     errno = -rc;
     return -1;
@@ -282,13 +288,14 @@ int ceph_fsetxattr(CephFileRef &fr, const char* name, const char* value,
   return 0;
 }
 
-int ceph_fremovexattr(CephFileRef &fr, const char* name) {
-  libradosstriper::RadosStriper *striper = getRadosStriper(fr.pool);
+int ceph_removexattr(const std::string &pool, const std::string &objname,
+                     const char* name) {
+  libradosstriper::RadosStriper *striper = getRadosStriper(pool);
   if (0 == striper) {
     errno = EINVAL;
     return -1;
   }
-  int rc = striper->rmxattr(fr.name, name);
+  int rc = striper->rmxattr(objname, name);
   if (rc) {
     errno = -rc;
     return -1;
@@ -440,10 +447,10 @@ extern "C" {
     if (it != g_fds.end()) {
       FileRef &fr = it->second;
       if (fr.isCeph) {
-        logwrapper((char*)"ceph_stat64: fd %d\n", fd);
+        logwrapper((char*)"ceph_fstat64: fd %d\n", fd);
         return ceph_fstat64(fr.cephFile, buf);
       } else {
-        logwrapper((char*)"local_stat64: fd %d\n", fd);
+        logwrapper((char*)"local_fstat64: fd %d\n", fd);
         return fstat64(fr.fd, buf);
       }
     } else {
@@ -506,7 +513,7 @@ extern "C" {
       FileRef &fr = it->second;
       if (fr.isCeph) {
         logwrapper((char*)"ceph_fgetxattr: fd %d name=%s\n", fd, name);
-        return ceph_fgetxattr(fr.cephFile, name, (char*)value, size);
+        return ceph_getxattr(fr.cephFile.pool, fr.cephFile.name, name, (char*)value, size);
       } else {
         logwrapper((char*)"local_fgetxattr: fd %d name=%s\n", fd, name);
         return fgetxattr(fr.fd, name, value, size);
@@ -524,7 +531,7 @@ extern "C" {
       FileRef &fr = it->second;
       if (fr.isCeph) {
         logwrapper((char*)"ceph_fsetxattr: fd %d name=%s value=%s\n", fd, name, value);
-        return ceph_fsetxattr(fr.cephFile, name, (const char*)value, size, flags);
+        return ceph_setxattr(fr.cephFile.pool, fr.cephFile.name, name, (const char*)value, size, flags);
       } else {
         logwrapper((char*)"local_fsetxattr: fd %d name=%s value=%s\n", fd, name, value);
         return fsetxattr(fr.fd, name, (const char*)value, size, flags);
@@ -540,15 +547,49 @@ extern "C" {
     if (it != g_fds.end()) {
       FileRef &fr = it->second;
       if (fr.isCeph) {
-        logwrapper((char*)"ceph_removexattr: fd %d name=%s\n", fd, name);
-        return ceph_fremovexattr(fr.cephFile, name);
+        logwrapper((char*)"ceph_fremovexattr: fd %d name=%s\n", fd, name);
+        return ceph_removexattr(fr.cephFile.pool, fr.cephFile.name, name);
       } else {
-        logwrapper((char*)"local_removexattr: fd %d name=%s\n", fd, name);
+        logwrapper((char*)"local_fremovexattr: fd %d name=%s\n", fd, name);
         return fremovexattr(fr.fd, name);
       }
     } else {
       errno = EBADF;
       return -1;
+    }
+  }
+
+  ssize_t ceph_posix_getxattr(const char *pathname, const char* name, void* value, size_t size) {
+    if (pathname[0] != '/') {
+      logwrapper((char*)"ceph_getxattr: file %s name=%s\n", pathname, name);
+      std::pair<std::string, std::string> poolObj = splitPoolFromObjName(pathname);
+      return ceph_getxattr(poolObj.first, poolObj.second, name, (char*)value, size);
+    } else {
+      logwrapper((char*)"local_getxattr: file %s name=%s\n", pathname, name);
+      return getxattr(pathname, name, value, size);
+    }
+  }
+
+  int ceph_posix_setxattr(const char *pathname, const char* name, const void* value,
+                           size_t size, int flags)  {
+    if (pathname[0] != '/') {
+      logwrapper((char*)"ceph_setxattr: file %s name=%s value=%s\n", pathname, name, value);
+      std::pair<std::string, std::string> poolObj = splitPoolFromObjName(pathname);
+      return ceph_setxattr(poolObj.first, poolObj.second, name, (const char*)value, size, flags);
+    } else {
+      logwrapper((char*)"local_setxattr: file %s name=%s value=%s\n", pathname, name, value);
+      return setxattr(pathname, name, (const char*)value, size, flags);
+    }
+  }
+
+  int ceph_posix_removexattr(const char *pathname, const char* name) {
+    if (pathname[0] != '/') {
+      logwrapper((char*)"ceph_removexattr: file %s name=%s\n", pathname, name);
+      std::pair<std::string, std::string> poolObj = splitPoolFromObjName(pathname);
+      return ceph_removexattr(poolObj.first, poolObj.second, name);
+    } else {
+      logwrapper((char*)"local_removexattr: file %s name=%s\n", pathname, name);
+      return removexattr(pathname, name);
     }
   }
 
