@@ -63,7 +63,7 @@ public:
    * Destructor: we suppose the threads are no running (waitThreads() should
    * be called befor destruction unless the threads were not started.
    */
-  ~DiskWriteThreadPool();
+  virtual ~DiskWriteThreadPool();
   
   /**
    * Starts the thread created at construction time.
