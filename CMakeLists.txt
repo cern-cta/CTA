@@ -145,8 +145,8 @@ ELSE(DEFINED PackageOnly)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
   endif (APPLE)
   
-  set (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
-  #set (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wnon-virtual-dtor")
+  #set (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
+  set (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wnon-virtual-dtor")
   
   set_property (DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
   
