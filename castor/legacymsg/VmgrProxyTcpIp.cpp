@@ -117,7 +117,8 @@ castor::legacymsg::MessageHeader castor::legacymsg::VmgrProxyTcpIp::readRcReplyM
 //-----------------------------------------------------------------------------
 // writeDriveStatusMsg
 //-----------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::writeTapeMountNotificationMsg(const int fd, const legacymsg::VmgrTapeMountedMsgBody &body)  {
+void castor::legacymsg::VmgrProxyTcpIp::writeTapeMountNotificationMsg(
+  const int fd, const legacymsg::VmgrTapeMountedMsgBody &body)  {
   char buf[REQBUFSZ];
   const size_t len = legacymsg::marshal(buf, body);
 
@@ -134,7 +135,8 @@ void castor::legacymsg::VmgrProxyTcpIp::writeTapeMountNotificationMsg(const int 
 //------------------------------------------------------------------------------
 // setDriveStatus
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::sendNotificationAndReceiveReply(const legacymsg::VmgrTapeMountedMsgBody &body)  {
+void castor::legacymsg::VmgrProxyTcpIp::sendNotificationAndReceiveReply(
+  const legacymsg::VmgrTapeMountedMsgBody &body)  {
   castor::utils::SmartFd fd(connectToVmgr());
   writeTapeMountNotificationMsg(fd.get(), body);
   readVmgrRcReply(fd.get());
@@ -143,8 +145,8 @@ void castor::legacymsg::VmgrProxyTcpIp::sendNotificationAndReceiveReply(const le
 //------------------------------------------------------------------------------
 // tapeMountedForRead
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForRead(const std::string &vid, uint32_t jid) 
-{
+void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForRead(
+  const std::string &vid, const uint32_t jid) {
   try {
     castor::legacymsg::VmgrTapeMountedMsgBody msg;
     msg.uid = geteuid();
@@ -165,8 +167,8 @@ void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForRead(const std::string &vi
 //------------------------------------------------------------------------------
 // tapeMountedForWrite
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForWrite(const std::string &vid, uint32_t jid)
-{
+void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForWrite(
+  const std::string &vid, const uint32_t jid) {
   try {
     castor::legacymsg::VmgrTapeMountedMsgBody msg;
     msg.uid = geteuid();
@@ -205,33 +207,39 @@ int castor::legacymsg::VmgrProxyTcpIp::connectToVmgr() const  {
 //------------------------------------------------------------------------------
 // marshalQueryTapeRequest
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::marshalQueryTapeRequest(const std::string &vid, legacymsg::VmgrTapeInfoRqstMsgBody &request, char *buf, size_t bufLen, size_t &totalLen) {  
+size_t castor::legacymsg::VmgrProxyTcpIp::marshalQueryTapeRequest(
+  const std::string &vid, legacymsg::VmgrTapeInfoRqstMsgBody &request,
+  char *buf, size_t bufLen) {  
   try {
-    totalLen = legacymsg::marshal(buf, bufLen, request);
+    return legacymsg::marshal(buf, bufLen, request);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal request for tape information: vid=" << vid
       << ". Reason: " << ne.getMessage().str();
+    throw ex;
   }
 }
 
 //------------------------------------------------------------------------------
 // sendQueryTapeRequest
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::sendQueryTapeRequest(const std::string &vid, const int fd, char *buf, size_t totalLen) {  
+void castor::legacymsg::VmgrProxyTcpIp::sendQueryTapeRequest(
+  const std::string &vid, const int fd, char *buf, size_t totalLen) {  
   try {
     io::writeBytes(fd, m_netTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to send request for tape information to the VMGR: vid=" << vid
       << ". Reason: " << ne.getMessage().str();
+    throw ex;
   }
 }
 
 //------------------------------------------------------------------------------
 // receiveQueryTapeReplyHeader
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::receiveQueryTapeReplyHeader(const std::string &vid, const int fd, legacymsg::MessageHeader &replyHeader) {   
+void castor::legacymsg::VmgrProxyTcpIp::receiveQueryTapeReplyHeader(
+  const std::string &vid, const int fd, legacymsg::MessageHeader &replyHeader) {   
   const size_t bufLen = 12; // Magic + type + len
   size_t len = bufLen;
   char buf[bufLen];
@@ -252,8 +260,10 @@ void castor::legacymsg::VmgrProxyTcpIp::receiveQueryTapeReplyHeader(const std::s
 //------------------------------------------------------------------------------
 // handleErrorReply
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::handleErrorReply(const std::string &vid, const int fd, legacymsg::MessageHeader &replyHeader) 
-{
+castor::exception::Exception castor::legacymsg::VmgrProxyTcpIp::
+  handleErrorReply(const std::string &vid, const int fd,
+  const legacymsg::MessageHeader &replyHeader) {
+
   // Length of body buffer = Length of message buffer - length of header
   char bodyBuf[VMGR_REPLY_BUFSIZE - 3 * sizeof(uint32_t)];
 
@@ -272,7 +282,7 @@ void castor::legacymsg::VmgrProxyTcpIp::handleErrorReply(const std::string &vid,
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to receive error string from VMGR: reqType=MSG_ERR: vid=" << vid 
       << ". Reason: " << ne.getMessage().str();
-    throw ne;
+    throw ex;
   }
 
   // Ensure the error string is null terminated
@@ -282,7 +292,7 @@ void castor::legacymsg::VmgrProxyTcpIp::handleErrorReply(const std::string &vid,
   castor::exception::Exception ex;
   ex.getMessage() << "Received an error string from the VMGR: reqType=MSG_ERR: vid=" << vid 
     << ": VMGR error string=" << bodyBuf;
-  throw ex;
+  return ex;
 }
 
 //------------------------------------------------------------------------------
@@ -330,7 +340,8 @@ void castor::legacymsg::VmgrProxyTcpIp::handleDataReply(const std::string &vid, 
 //------------------------------------------------------------------------------
 // queryTape
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::queryTape(const std::string &vid, legacymsg::VmgrTapeInfoMsgBody &reply) {
+castor::legacymsg::VmgrTapeInfoMsgBody
+  castor::legacymsg::VmgrProxyTcpIp::queryTape(const std::string &vid) {
   try {
     
     castor::utils::SmartFd fd(connectToVmgr());
@@ -342,8 +353,8 @@ void castor::legacymsg::VmgrProxyTcpIp::queryTape(const std::string &vid, legacy
     request.side = 0; // HARDCODED side
 
     char buf[VMGR_REQUEST_BUFSIZE];
-    size_t totalLen = 0;
-    marshalQueryTapeRequest(vid, request, buf, VMGR_REQUEST_BUFSIZE, totalLen);
+    const size_t totalLen = marshalQueryTapeRequest(vid, request, buf,
+      VMGR_REQUEST_BUFSIZE);
     sendQueryTapeRequest(vid, fd.get(), buf, totalLen);
     legacymsg::MessageHeader replyHeader;
     receiveQueryTapeReplyHeader(vid, fd.get(), replyHeader);
@@ -357,7 +368,6 @@ void castor::legacymsg::VmgrProxyTcpIp::queryTape(const std::string &vid, legacy
         ex.getMessage() << "VMGR unexpectedly wishes to keep the connection open: reqType=VMGR_IRC: vid=" << vid;
         throw ex;
       }
-      break;
       
     // The VMGR has returned an error code
     case VMGR_RC:
@@ -366,17 +376,21 @@ void castor::legacymsg::VmgrProxyTcpIp::queryTape(const std::string &vid, legacy
         ex.getMessage() << "Received an error code from the VMGR: reqType=VMGR_RC: vid=" << vid << ": VMGR error code=" << replyHeader.lenOrStatus;
         throw ex;
       }
-      break;
 
     // The VMGR has returned an error string
     case MSG_ERR:
-      handleErrorReply(vid, fd.get(), replyHeader);
-      break;    
+      {
+        castor::exception::Exception ex = handleErrorReply(vid, fd.get(), replyHeader);
+        throw ex;
+      }
 
     // The VMGR returned the tape information
     case MSG_DATA:
-      handleDataReply(vid, fd.get(), replyHeader, reply);
-      break;
+      {
+        legacymsg::VmgrTapeInfoMsgBody reply;
+        handleDataReply(vid, fd.get(), replyHeader, reply);
+        return reply;
+      }
 
     // The VMGR returned an unknown message type
     default:
@@ -385,7 +399,6 @@ void castor::legacymsg::VmgrProxyTcpIp::queryTape(const std::string &vid, legacy
         ex.getMessage() << "Received an unkown message type from the VMGR: reqType=" << replyHeader.reqType << ": vid=" << vid;
         throw ex;
       }
-      break;
     }    
     
   } catch(castor::exception::Exception &ne) {

@@ -33,11 +33,15 @@ namespace castor {
       enum {
         ReturnValue,
         Heartbeat,
-        NotifyDriveBeforeMountStarted,
-        NotifyDriveTapeMounted,
-        NotifyDriveUnmountStarted,
-        NotifyDriveTapeUnmounted,
-        NotifyDriveBeforeMountStartedAnswer,
+        MigrationJobFromTapeGateway,
+        MigrationJobFromWriteTp,
+        NbFilesOnTape,
+        RecallJobFromReadTp,
+        RecallJobFromTapeGateway,
+        TapeMountedForMigration,
+        TapeMountedForRecall,
+        TapeUnmountStarted,
+        TapeUnmounted
       };
     };
     struct protocolVersion{

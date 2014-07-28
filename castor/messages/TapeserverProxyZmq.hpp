@@ -51,91 +51,96 @@ public:
     const int netTimeout, void *const zmqContext) throw();
 
   /**
-   * Informs the tapeserverd daemon that the mount-session child-process got
-   * the mount details from the client.
+   * Notifies the tapeserverd daemon that the mount-session child-process got
+   * a recall job from the tapegatewayd daemon.
    *
-   * @param volInfo The volume information of the tape the session is working
-   * with.
+   * @param vid The tape to be mounted for recall.
    * @param unitName The unit name of the tape drive.
    */
-  void gotReadMountDetailsFromClient(
-    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  void gotRecallJobFromTapeGateway(const std::string &vid,
     const std::string &unitName);
 
   /**
    * Notifies the tapeserverd daemon that the mount-session child-process got
-   * the mount details from the client.  In return the tapeserverd daemon
-   * replies with the number of files currently stored on the tape as given by
-   * the vmgrd daemon.
+   * a recall job from the readtp command-line tool.
    *
-   * @param volInfo The volume information of the tape the session is working
-   * with.
+   * @param vid The tape to be mounted for recall.
+   * @param unitName The unit name of the tape drive.
+   */
+  void gotRecallJobFromReadTp(const std::string &vid,
+    const std::string &unitName);
+
+  /**
+   * Notifies the tapeserverd daemon that the mount-session child-process got
+   * a migration job from the tapegatewayd daemon.
+   *
+   * @param vid The tape to be mounted for recall.
    * @param unitName The unit name of the tape drive.
    * @return The number of files currently stored on the tape as given by the
    * vmgrd daemon.
    */
-  uint64_t gotWriteMountDetailsFromClient(
-    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  uint32_t gotMigrationJobFromTapeGateway(const std::string &vid,
     const std::string &unitName);
 
   /**
-   * Informs the tapeserverd daemon that the mount-session child-process got
-   * the mount details from the client.
+   * Notifies the tapeserverd daemon that the mount-session child-process got
+   * a migration job from the writetp command-line tool.
    *
-   * @param volInfo The volume information of the tape the session is working
-   * with.
+   * @param vid The tape to be mounted for recall.
    * @param unitName The unit name of the tape drive.
+   * @return The number of files currently stored on the tape as given by the
+   * vmgrd daemon.
    */
-  void gotDumpMountDetailsFromClient(
-    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-    const std::string &unitName);
-
-  /**
-   * Notifies the tapeserverd daemon that the specified tape has been mounted.
-   *
-   * @param volInfo The volume information of the tape the session is working
-   * with.
-   * @param unitName The unit name of the tape drive.
-   */
-  void tapeMountedForRead(
-    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  uint32_t gotMigrationJobFromWriteTp(const std::string &vid,
     const std::string &unitName);
 
   /**
    * Notifies the tapeserverd daemon that the specified tape has been mounted.
    *
-   * @param volInfo The volume information of the tape the session is working
-   * with.
+   * @param vid The tape to be mounted for recall.
    * @param unitName The unit name of the tape drive.
    */
-  void tapeMountedForWrite(
-    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  void tapeMountedForRecall(const std::string &vid,
+    const std::string &unitName);
+
+  /**
+   * Notifies the tapeserverd daemon that the specified tape has been mounted.
+   *
+   * @param vid The tape to be mounted for recall.
+   * @param unitName The unit name of the tape drive.
+   */
+  void tapeMountedForMigration(const std::string &vid, 
     const std::string &unitName);
   
   /**
    * Notifies the tapeserverd daemon that the specified tape is unmounting.
    *
-   * @param volInfo The volume information of the tape the session is working
-   * with.
+   * @param vid The tape to be mounted for recall.
    * @param unitName The unit name of the tape drive.
    */
- void tapeUnmounting(
-   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-   const std::string &unitName);
+  void tapeUnmountStarted(const std::string &vid,
+    const std::string &unitName);
  
   /**
    * Notifies the tapeserverd daemon that the specified tape has been unmounted.
    *
-   * @param volInfo The volume information of the tape the session is working
-   * with.
-   * @param unitName   The unit name of the tape drive.
+   * @param vid The tape to be mounted for recall.
+   * @param unitName The unit name of the tape drive.
    */
- void tapeUnmounted(
-   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-   const std::string &unitName);
+  void tapeUnmounted(const std::string &vid,
+    const std::string &unitName);
  
- void notifyHeartbeat(uint64_t nbOfMemblocksMoved);
+  /**
+   * Notifies the tapeserverd daemon that the data-transfer session is still
+   * alive and gives an indication of how much data has been moved.
+   *
+   * @param nbOfMemblocksMoved Delta value giving the number of blocks moved
+   * since the last heartbeat message.
+   */
+  void notifyHeartbeat(const uint64_t nbOfMemblocksMoved);
+
 private:
+
   /**
    * The object representing the API of the CASTOR logging system.
    */

@@ -30,20 +30,22 @@ castor::legacymsg::VmgrProxyDummy::~VmgrProxyDummy() throw() {
 //------------------------------------------------------------------------------
 // tapeMountedForRead
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyDummy::tapeMountedForRead(const std::string &vid, uint32_t jid)
-   {
+void castor::legacymsg::VmgrProxyDummy::tapeMountedForRead(
+  const std::string &vid, const uint32_t jid) {
 }
 
 //------------------------------------------------------------------------------
 // tapeMountedForWrite
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyDummy::tapeMountedForWrite(const std::string &vid, uint32_t jid)
-   {
+void castor::legacymsg::VmgrProxyDummy::tapeMountedForWrite(
+  const std::string &vid, const uint32_t jid) {
 }
 
 //------------------------------------------------------------------------------
 // getTapeInfo
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyDummy::queryTape(const std::string &vid, legacymsg::VmgrTapeInfoMsgBody &reply)
-   {
+castor::legacymsg::VmgrTapeInfoMsgBody
+  castor::legacymsg::VmgrProxyDummy::queryTape(const std::string &vid) {
+  legacymsg::VmgrTapeInfoMsgBody reply;
+  return reply;
 }

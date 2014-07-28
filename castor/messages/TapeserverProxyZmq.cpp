@@ -23,10 +23,18 @@
 #include "castor/messages/Heartbeat.pb.h"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/Constants.hpp"
-#include "castor/messages/TapeserverProxyZmq.hpp"
 #include "castor/messages/messages.hpp"
-#include "castor/messages/NotifyDrive.pb.h"
+#include "castor/messages/MigrationJobFromTapeGateway.pb.h"
+#include "castor/messages/MigrationJobFromWriteTp.pb.h"
+#include "castor/messages/NbFilesOnTape.pb.h"
+#include "castor/messages/RecallJobFromReadTp.pb.h"
+#include "castor/messages/RecallJobFromTapeGateway.pb.h"
 #include "castor/messages/ReplyContainer.hpp"
+#include "castor/messages/TapeMountedForRecall.pb.h"
+#include "castor/messages/TapeMountedForMigration.pb.h"
+#include "castor/messages/TapeserverProxyZmq.hpp"
+#include "castor/messages/TapeUnmounted.pb.h"
+#include "castor/messages/TapeUnmountStarted.pb.h"
 #include "castor/tape/tapegateway/ClientType.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "castor/utils/SmartFd.hpp"
@@ -35,36 +43,6 @@
 #include "h/vdqm_constants.h"
 #include "h/Ctape.h"
 
-namespace {
-  castor::messages::NotifyDriveBeforeMountStarted_TapeClientType 
-  convertClientType(castor::tape::tapegateway::ClientType val){
-    switch(val){
-      case castor::tape::tapegateway::TAPE_GATEWAY:
-        return castor::messages::NotifyDriveBeforeMountStarted::CLIENT_TYPE_GATEWAY;
-      case castor::tape::tapegateway::READ_TP:
-        return castor::messages::NotifyDriveBeforeMountStarted::CLIENT_TYPE_READTP;
-      case castor::tape::tapegateway::WRITE_TP:
-        return castor::messages::NotifyDriveBeforeMountStarted::CLIENT_TYPE_WRITETP;
-      case castor::tape::tapegateway::DUMP_TP:
-        return castor::messages::NotifyDriveBeforeMountStarted::CLIENT_TYPE_DUMPTP;
-      default:
-        return castor::messages::NotifyDriveBeforeMountStarted::CLIENT_TYPE_DUMPTP;
-    }
-  }
-    castor::messages::TapeMode 
-  convertVolumeMode(castor::tape::tapegateway::VolumeMode val){
-    switch(val){
-      case castor::tape::tapegateway::READ:
-        return castor::messages::TAPE_MODE_READ;
-      case castor::tape::tapegateway::WRITE:
-        return castor::messages::TAPE_MODE_READWRITE;
-      case castor::tape::tapegateway::DUMP:
-        return castor::messages::TAPE_MODE_DUMP;
-      default:
-        return castor::messages::TAPE_MODE_NONE;
-    }
-  }
-}
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -82,180 +60,380 @@ castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log,
 }
 
 //------------------------------------------------------------------------------
-// gotReadMountDetailsFromClient
+// gotRecallJobFromTapeGateway
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyZmq::gotReadMountDetailsFromClient(
-castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-        const std::string &unitName) {  
-  castor::messages::NotifyDriveBeforeMountStarted body;
-  body.set_clienttype(convertClientType(volInfo.clientType));
-  body.set_mode(convertVolumeMode(volInfo.volumeMode));
-  body.set_unitname(unitName);
-  body.set_vid(volInfo.vid);
-  
-  castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue(computeSHA1Base64(body));
-  header.set_bodysignature("PIPO");
-  header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
-  
-  castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-  castor::messages::sendMessage(m_messageSocket,body);
-  
-  castor::messages::ReplyContainer reply(m_messageSocket);
+void castor::messages::TapeserverProxyZmq::gotRecallJobFromTapeGateway(
+  const std::string &vid, const std::string &unitName) {
+  try {
+    messages::RecallJobFromTapeGateway rqstBody;
+    rqstBody.set_vid(vid);
+    rqstBody.set_unitname(unitName);
 
+    messages::Header rqstHeader = castor::messages::preFillHeader();
+    rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
+    rqstHeader.set_bodysignature("PIPO");
+    rqstHeader.set_reqtype(messages::reqType::RecallJobFromTapeGateway);
+
+    messages::sendMessage(m_messageSocket, rqstHeader, ZMQ_SNDMORE);
+    messages::sendMessage(m_messageSocket, rqstBody);
+
+    messages::ReplyContainer reply(m_messageSocket);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of recall job from tapegateway: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  } catch(std::exception &se) {
+    castor::exception::Exception ex;
+    ex.getMessage() << 
+      "Failed to notify tapeserver of recall job from tapegateway: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      se.what();
+    throw ex;
+  } catch(...) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of recall job from tapegateway: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      "Caught an unknown exception";
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
-// gotWriteMountDetailsFromClient
+// gotRecallJobFromReadTp
 //------------------------------------------------------------------------------
-uint64_t
-  castor::messages::TapeserverProxyZmq::gotWriteMountDetailsFromClient(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {  
-    //question
-    {
-      castor::messages::NotifyDriveBeforeMountStarted bodyToSend;
-      bodyToSend.set_clienttype(convertClientType(volInfo.clientType));
-      bodyToSend.set_mode(convertVolumeMode(volInfo.volumeMode));
-      bodyToSend.set_unitname(unitName);
-      bodyToSend.set_vid(volInfo.vid);
-      
-      castor::messages::Header header=castor::messages::preFillHeader();
-      header.set_bodyhashvalue(computeSHA1Base64(bodyToSend));
-      header.set_bodysignature("PIPO");
-      header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
-      
-      castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-      castor::messages::sendMessage(m_messageSocket,bodyToSend);
+void castor::messages::TapeserverProxyZmq::gotRecallJobFromReadTp(
+  const std::string &vid, const std::string &unitName) {
+  try {
+    messages::RecallJobFromReadTp rqstBody;
+    rqstBody.set_vid(vid);
+    rqstBody.set_unitname(unitName);
+
+    messages::Header rqstHeader = castor::messages::preFillHeader();
+    rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
+    rqstHeader.set_bodysignature("PIPO");
+    rqstHeader.set_reqtype(messages::reqType::RecallJobFromReadTp);
+
+    messages::sendMessage(m_messageSocket, rqstHeader, ZMQ_SNDMORE);
+    messages::sendMessage(m_messageSocket, rqstBody);
+
+    messages::ReplyContainer reply(m_messageSocket);
+
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of recall job from readtp: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  } catch(std::exception &se) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of recall job from readtp: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      se.what();
+    throw ex;
+  } catch(...) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of recall job from readtp: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      "Caught an unknown exception";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// gotMigrationJobFromTapeGateway
+//------------------------------------------------------------------------------
+uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromTapeGateway(
+  const std::string &vid, const std::string &unitName) {
+  try {
+    messages::MigrationJobFromTapeGateway rqstBody;
+    rqstBody.set_vid(vid);
+    rqstBody.set_unitname(unitName);
+
+    messages::Header rqstHeader = castor::messages::preFillHeader();
+    rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
+    rqstHeader.set_bodysignature("PIPO");
+    rqstHeader.set_reqtype(messages::reqType::MigrationJobFromTapeGateway);
+
+    messages::sendMessage(m_messageSocket, rqstHeader, ZMQ_SNDMORE);
+    messages::sendMessage(m_messageSocket, rqstBody);
+
+    messages::ReplyContainer rawReply(m_messageSocket);
+    if(rawReply.header.reqtype() != messages::reqType::NbFilesOnTape) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to receive reply from tapeserverd"
+        ": Unexpected message type: expected=" << messages::reqType::NbFilesOnTape
+        << " actual=" << rawReply.header.reqtype();
+      throw ex;
     }
-    
-    //reply
-    {
-      castor::messages::ReplyContainer reply(m_messageSocket);
-      //return 0;
-      if(reply.header.reqtype()!=messages::reqType::NotifyDriveBeforeMountStartedAnswer){
-        throw castor::exception::Exception("Header's reqtype is not "
-                "NotifyDriveBeforeMountStartedAnswer as expected  ");
-      }
-      messages::NotifyDriveBeforeMountStartedAnswer bodyReply;
-      
-      if(!bodyReply.ParseFromArray(reply.blobBody.data(),reply.blobBody.size())){
-        throw castor::exception::Exception("Cant parse a NotifyDriveBeforeMountStartedAnswer"
-                "from the body blob ");
-      }
-      return bodyReply.howmanyfilesontape(); 
+    messages::NbFilesOnTape reply;
+    if(!reply.ParseFromArray(rawReply.blobBody.data(),
+      rawReply.blobBody.size())) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to parse reply from tapeserverd"
+        ": msgType=" << rawReply.header.reqtype();
+      throw ex;
     }
+    return reply.nbfiles(); 
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of migration job from tapegateway: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  } catch(std::exception &se) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of migration job from tapegateway: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      se.what();
+    throw ex;
+  } catch(...) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of migration job from tapegateway: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      "Caught an unknown exception";
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
-// gotDumpMountDetailsFromClient
+// gotMigrationJobFromWriteTp
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyZmq::gotDumpMountDetailsFromClient(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {  
-  castor::messages::NotifyDriveBeforeMountStarted body;
-  body.set_clienttype(convertClientType(volInfo.clientType));
-  body.set_mode(convertVolumeMode(volInfo.volumeMode));
-  body.set_unitname(unitName);
-  body.set_vid(volInfo.vid);
-  
-  castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue(computeSHA1Base64(body));
-  header.set_bodysignature("PIPO");
-  header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
-  
+uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromWriteTp(
+  const std::string &vid, const std::string &unitName) {
+  try {
+    messages::MigrationJobFromWriteTp rqstBody;
+    rqstBody.set_vid(vid);
+    rqstBody.set_unitname(unitName);
 
+    messages::Header rqstHeader = castor::messages::preFillHeader();
+    rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
+    rqstHeader.set_bodysignature("PIPO");
+    rqstHeader.set_reqtype(messages::reqType::MigrationJobFromWriteTp);
 
-  castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-  castor::messages::sendMessage(m_messageSocket,body);
-  
-  castor::messages::ReplyContainer reply(m_messageSocket);
+    messages::sendMessage(m_messageSocket, rqstHeader, ZMQ_SNDMORE);
+    messages::sendMessage(m_messageSocket, rqstBody);
 
+    messages::ReplyContainer rawReply(m_messageSocket);
+    if(rawReply.header.reqtype() != messages::reqType::NbFilesOnTape) {
+      castor::exception::Exception ex;
+      ex.getMessage() <<
+        "Failed to receive NbFilesOnTape reply from tapeserverd: "
+        "Unexpected message type: expected=" << messages::reqType::NbFilesOnTape
+        << " actual=" << rawReply.header.reqtype();
+      throw ex;
+    }
+    messages::NbFilesOnTape reply;
+    if(!reply.ParseFromArray(rawReply.blobBody.data(),
+      rawReply.blobBody.size())) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to parse NbFilesOnTape reply from tapeserverd";
+      throw ex;
+    }
+    return reply.nbfiles();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of migration job from writetp: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  } catch(std::exception &se) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of migration job from writetp: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      se.what();
+    throw ex;
+  } catch(...) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of migration job from writetp: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      "Caught an unknown exception";
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
-// tapeMountedForRead
+// tapeMountedForRecall
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyZmq::tapeMountedForRead(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {  
-  castor::messages::NotifyDriveTapeMounted body;
-  body.set_mode(convertVolumeMode(volInfo.volumeMode));
-  body.set_unitname(unitName);
-  body.set_vid(volInfo.vid);
+void castor::messages::TapeserverProxyZmq::tapeMountedForRecall(
+  const std::string &vid, const std::string &unitName) {  
+  try {
+    castor::messages::TapeMountedForRecall body;
+    body.set_unitname(unitName);
+    body.set_vid(vid);
   
-  castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue(computeSHA1Base64(body));
-  header.set_bodysignature("PIPO");
-  header.set_reqtype(castor::messages::reqType::NotifyDriveTapeMounted);
+    castor::messages::Header header = castor::messages::preFillHeader();
+    header.set_bodyhashvalue(computeSHA1Base64(body));
+    header.set_bodysignature("PIPO");
+    header.set_reqtype(castor::messages::reqType::TapeMountedForRecall);
   
-  castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-  castor::messages::sendMessage(m_messageSocket,body);
+    castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
+    castor::messages::sendMessage(m_messageSocket,body);
   
-  castor::messages::ReplyContainer reply(m_messageSocket);
-;
+    castor::messages::ReplyContainer reply(m_messageSocket);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of tape mounted for recall: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  } catch(std::exception &se) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of tape mounted for recall: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      se.what();
+    throw ex;
+  } catch(...) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of tape mounted for recall: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      "Caught an unknown exception";
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
-// tapeMountedForWrite
+// tapeMountedForMigration
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyZmq::tapeMountedForWrite(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {  
-  castor::messages::NotifyDriveTapeMounted body;
-  body.set_mode(convertVolumeMode(volInfo.volumeMode));
-  body.set_unitname(unitName);
-  body.set_vid(volInfo.vid);
+void castor::messages::TapeserverProxyZmq::tapeMountedForMigration(
+  const std::string &vid, const std::string &unitName) {  
+  try {
+    castor::messages::TapeMountedForMigration body;
+    body.set_unitname(unitName);
+    body.set_vid(vid);
   
-  castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue(computeSHA1Base64(body));
-  header.set_bodysignature("PIPO");
-  header.set_reqtype(castor::messages::reqType::NotifyDriveTapeMounted);
+    castor::messages::Header header = castor::messages::preFillHeader();
+    header.set_bodyhashvalue(computeSHA1Base64(body));
+    header.set_bodysignature("PIPO");
+    header.set_reqtype(castor::messages::reqType::TapeMountedForMigration);
   
-  castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-  castor::messages::sendMessage(m_messageSocket,body);
+    castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
+    castor::messages::sendMessage(m_messageSocket,body);
   
-  castor::messages::ReplyContainer reply(m_messageSocket);
-
+    castor::messages::ReplyContainer reply(m_messageSocket);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of tape mounted for migration: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  } catch(std::exception &se) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of tape mounted for migration: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      se.what();
+    throw ex;
+  } catch(...) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of tape mounted for migration: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      "Caught an unknown exception";
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
-// tapeUnmounting
+// tapeUnmountStarted
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyZmq::tapeUnmounting(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {   
-  castor::messages::NotifyDriveUnmountStarted body;
-  castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue(computeSHA1Base64(body));
-  header.set_bodysignature("PIPO");
-  header.set_reqtype(castor::messages::reqType::NotifyDriveUnmountStarted);
+void castor::messages::TapeserverProxyZmq::tapeUnmountStarted(
+  const std::string &vid, const std::string &unitName) {   
+  try {
+    castor::messages::TapeUnmountStarted body;
+    body.set_unitname(unitName);
+    body.set_vid(vid);
 
-  castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-  castor::messages::sendMessage(m_messageSocket,body);
+    castor::messages::Header header = castor::messages::preFillHeader();
+    header.set_bodyhashvalue(computeSHA1Base64(body));
+    header.set_bodysignature("PIPO");
+    header.set_reqtype(castor::messages::reqType::TapeUnmountStarted);
+
+    castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
+    castor::messages::sendMessage(m_messageSocket,body);
   
-  castor::messages::ReplyContainer reply(m_messageSocket);
-
+    castor::messages::ReplyContainer reply(m_messageSocket);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of start of tape unmount: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  } catch(std::exception &se) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of start of tape unmount: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      se.what();
+    throw ex;
+  } catch(...) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of start of tape unmount: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      "Caught an unknown exception";
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
 // tapeUnmounted
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyZmq::tapeUnmounted(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {  
-    castor::messages::NotifyDriveTapeUnmounted body;
+  const std::string &vid, const std::string &unitName) {
+  try {
+    castor::messages::TapeUnmounted body;
+    body.set_unitname(unitName);
+    body.set_vid(vid);
     
-  castor::messages::Header header=castor::messages::preFillHeader();
-  header.set_bodyhashvalue(computeSHA1Base64(body));
-  header.set_bodysignature("PIPO");
-  header.set_reqtype(castor::messages::reqType::NotifyDriveTapeUnmounted);
+    castor::messages::Header header=castor::messages::preFillHeader();
+    header.set_bodyhashvalue(computeSHA1Base64(body));
+    header.set_bodysignature("PIPO");
+    header.set_reqtype(castor::messages::reqType::TapeUnmounted);
   
-  castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-  castor::messages::sendMessage(m_messageSocket,body);
+    castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
+    castor::messages::sendMessage(m_messageSocket,body);
   
-  castor::messages::ReplyContainer reply(m_messageSocket);
-
+    castor::messages::ReplyContainer reply(m_messageSocket);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver that tape is unmounted: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  } catch(std::exception &se) { 
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver that tape is unmounted: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      se.what();
+    throw ex;
+  } catch(...) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver that tape is unmounted: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      "Caught an unknown exception";
+    throw ex;
+  }
 }
 
 //-----------------------------------------------------------------------------

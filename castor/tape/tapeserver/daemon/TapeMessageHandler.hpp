@@ -21,15 +21,14 @@
 
 #pragma once
 
+#include "castor/legacymsg/VdqmProxy.hpp"
+#include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/Heartbeat.pb.h"
-#include "castor/messages/NotifyDrive.pb.h"
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
-#include "castor/legacymsg/VdqmProxy.hpp"
-#include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/utils/ZmqMsg.hpp"
 #include "castor/tape/utils/ZmqSocket.hpp"
@@ -193,7 +192,52 @@ private:
    * @param header The header of the message.
    * @param bodyBlob The serialized body of the message.
    */
-  void handleNotifyDriveBeforeMountStartedMsg(const messages::Header& header,
+  void handleMigrationJobFromTapeGateway(const messages::Header& header,
+    const tape::utils::ZmqMsg &bodyBlob);
+
+  /**
+   * Handles the specified message.
+   *
+   * @param header The header of the message.
+   * @param bodyBlob The serialized body of the message.
+   */
+  void handleMigrationJobFromWriteTp(const messages::Header& header,
+    const tape::utils::ZmqMsg &bodyBlob);
+
+  /**
+   * Handles the specified message.
+   *
+   * @param header The header of the message.
+   * @param bodyBlob The serialized body of the message.
+   */
+  void handleRecallJobFromTapeGateway(const messages::Header& header,
+    const tape::utils::ZmqMsg &bodyBlob);
+
+  /**
+   * Handles the specified message.
+   *
+   * @param header The header of the message.
+   * @param bodyBlob The serialized body of the message.
+   */  
+  void handleRecallJobFromReadTp(const messages::Header& header,
+    const tape::utils::ZmqMsg &bodyBlob);
+
+  /**
+   * Handles the specified message.
+   *
+   * @param header The header of the message.
+   * @param bodyBlob The serialized body of the message.
+   */  
+  void handleTapeMountedForMigration(const messages::Header& header, 
+    const tape::utils::ZmqMsg &bodyBlob);
+
+  /**
+   * Handles the specified message.
+   *
+   * @param header The header of the message.
+   * @param bodyBlob The serialized body of the message.
+   */
+  void handleTapeMountedForRecall(const messages::Header& header,
     const tape::utils::ZmqMsg &bodyBlob);
 
   /**
@@ -211,7 +255,7 @@ private:
    * @param header The header of the message.
    * @param bodyBlob The serialized body of the message.
    */
-  void handleNotifyDriveTapeUnmountedMsg(const messages::Header& header,
+  void handleTapeUnmountStarted(const messages::Header& header,
     const tape::utils::ZmqMsg &bodyBlob);
 
   /**
@@ -220,14 +264,15 @@ private:
    * @param header The header of the message.
    * @param bodyBlob The serialized body of the message.
    */
-  void handleNotifyDriveUnmountStartedMsg(const messages::Header& header,
+  void handleTapeUnmounted(const messages::Header& header,
     const tape::utils::ZmqMsg &bodyBlob);
 
   /**
    * Unserialize the blob and check the header
    * @param headerBlob The blob from the header
    */
-  castor::messages::Header buildHeader(tape::utils::ZmqMsg& headerBlob);
+  messages::Header buildHeader(tape::utils::ZmqMsg& headerBlob);
+
 }; // class TapeMessageHandler
 
 } // namespace daemon

@@ -34,7 +34,8 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueEntry::~DriveCatalogueEntry() throw() {
+castor::tape::tapeserver::daemon::DriveCatalogueEntry::~DriveCatalogueEntry()
+  throw() {
   delete m_session;
 }
 
@@ -43,7 +44,7 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry::~DriveCatalogueEntry() th
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveCatalogueEntry()
   throw():
-  m_mode(castor::messages::TAPE_MODE_NONE),
+  m_mode(WRITE_DISABLE),
   m_getToBeMountedForTapeStatDriveEntry(false),
   m_state(DRIVE_STATE_INIT),
   m_sessionType(SESSION_TYPE_NONE),
@@ -57,7 +58,7 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveCatalogueEntry()
 castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveCatalogueEntry(
   const utils::DriveConfig &config, const DriveState state) throw():
   m_config(config),
-  m_mode(castor::messages::TAPE_MODE_NONE),
+  m_mode(WRITE_DISABLE),
   m_getToBeMountedForTapeStatDriveEntry(false),
   m_state(state),
   m_sessionType(SESSION_TYPE_NONE),
@@ -306,41 +307,46 @@ int castor::tape::tapeserver::daemon::DriveCatalogueEntry::
 }
 
 //-----------------------------------------------------------------------------
-// updateVolumeInfo
+// receivedRecallJob
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::updateVolumeInfo(
-  const castor::messages::NotifyDriveBeforeMountStarted &body) {
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedRecallJob(
+  const std::string &vid) {
   m_assignmentTime = time(0);
-  m_vid = body.vid();
+  m_vid = vid;
   m_getToBeMountedForTapeStatDriveEntry = true;
-  m_mode = body.mode();
-/*
-  try {    
-    m_event = (castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent)body.event;
-    switch(body.event) {
-      case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED:
-        m_vid = body.vid;
-        m_assignmentTime = time(0);
-        m_mode = (castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode)body.mode;
-        break;
-      case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED:
-        break;
-      case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNT_STARTED:
-        break;
-      case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNTED:
-        m_vid = "";
-        m_assignmentTime = 0;
-        m_mode = castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_NONE;
-        break;
-      default:
-        break;
-    }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task << ": " << ne.getMessage().str();
-    throw ex;
-  }
-*/
+  m_mode = WRITE_DISABLE;
+}
+
+//-----------------------------------------------------------------------------
+// receivedMigrationJob
+//-----------------------------------------------------------------------------
+void
+  castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedMigrationJob(
+  const std::string &vid) {
+  m_assignmentTime = time(0);
+  m_vid = vid;
+  m_getToBeMountedForTapeStatDriveEntry = true;
+  m_mode = WRITE_ENABLE;
+}
+
+//-----------------------------------------------------------------------------
+// tapeMountedForMigration
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::
+  tapeMountedForMigration(const std::string &vid) {
+  m_vid = vid;
+  m_getToBeMountedForTapeStatDriveEntry = false;
+  m_mode = WRITE_ENABLE;
+}
+
+//-----------------------------------------------------------------------------
+// tapeMountedForRecall
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::
+  tapeMountedForRecall(const std::string &vid) {
+  m_vid = vid;
+  m_getToBeMountedForTapeStatDriveEntry = false;
+  m_mode = WRITE_DISABLE;
 }
 
 //------------------------------------------------------------------------------
@@ -743,16 +749,7 @@ uint16_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
   switch(m_state) {
   case DRIVE_STATE_SESSIONRUNNING:
   case DRIVE_STATE_WAITDOWN:
-    switch(m_mode) {
-    case castor::messages::TAPE_MODE_READ:
-      return WRITE_DISABLE;
-    case castor::messages::TAPE_MODE_READWRITE:
-      return WRITE_ENABLE;
-    case castor::messages::TAPE_MODE_DUMP:
-      return WRITE_DISABLE;
-      case castor::messages::TAPE_MODE_NONE:
-      return WRITE_DISABLE;
-    }
+    return m_mode;
   default:
     return WRITE_DISABLE;
   }

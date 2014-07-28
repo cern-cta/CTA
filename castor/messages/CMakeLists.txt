@@ -7,17 +7,25 @@ add_library(castormessages SHARED
   Header.pb.cc
   Heartbeat.pb.cc
   messages.cpp
-  NotifyDrive.pb.cc
+  MigrationJobFromTapeGateway.pb.cc
+  MigrationJobFromWriteTp.pb.cc
+  NbFilesOnTape.pb.cc
   ProcessCrashed.pb.cc
   ProcessExited.pb.cc
+  RecallJobFromReadTp.pb.cc
+  RecallJobFromTapeGateway.pb.cc
   ReplyContainer.cpp
   StopProcessForker.pb.cc
+  TapeMountedForMigration.pb.cc
+  TapeMountedForRecall.pb.cc
   TapeserverProxy.cpp
   TapeserverProxyDummy.cpp
   TapeserverProxyDummyFactory.cpp
   TapeserverProxyFactory.cpp
   TapeserverProxyZmq.cpp
   TapeserverProxyZmqFactory.cpp
+  TapeUnmountStarted.pb.cc
+  TapeUnmounted.pb.cc
 )
 
 target_link_libraries(castormessages protobuf ssl)

@@ -89,7 +89,7 @@ public:
    * exchange return the number of files on the tape according to the VMGR
    * @return the number of files on the tape according to the VMGR
    */
-  uint64_t gotWriteMountDetailsFromClient();
+  uint32_t gotWriteMountDetailsFromClient();
   
   //start and wait for thread to finish
   void startThreads();

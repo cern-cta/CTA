@@ -43,25 +43,25 @@ public:
    * Notifies the vmgrd daemon that the specified tape has been mounted for read.
    *
    * @param vid The volume identifier of the mounted tape.
-   * @param
+   * @param jid The ID of the process that mounted the tape.
    */
-  void tapeMountedForRead(const std::string &vid, uint32_t jid);
+  void tapeMountedForRead(const std::string &vid, const uint32_t jid);
 
   /**
    * Notifies the vmgrd daemon that the specified tape has been mounted for read.
    *
    * @param vid The volume identifier of the mounted tape.
-   * @param
+   * @param jid The ID of the process that mounted the tape.
    */
-  void tapeMountedForWrite(const std::string &vid, uint32_t jid);
-  
+  void tapeMountedForWrite(const std::string &vid, const uint32_t jid);
+
   /**
    * Gets information from vmgrd about the specified tape
    * 
-   * @param vid   The volume identifier of the tape.
-   * @param reply The structure containing the reply from vmgrd
+   * @param vid The volume identifier of the tape.
+   * @return The reply from the vmgrd daemon.
    */
-  void queryTape(const std::string &vid, legacymsg::VmgrTapeInfoMsgBody &reply);
+  legacymsg::VmgrTapeInfoMsgBody queryTape(const std::string &vid);
 
 }; // class VmgrProxyDummy
 

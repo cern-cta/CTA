@@ -1,6 +1,3 @@
-//
-//         castor/messages/TapeserverProxyFactory.cpp
-//
 // This file is part of the Castor project.
 // See http://castor.web.cern.ch/castor
 //
@@ -20,40 +17,14 @@
 // @author Castor Dev team, castor-dev@cern.ch
 package castor.messages;
 
- enum TapeMode {
-    TAPE_MODE_NONE = 1;
-    TAPE_MODE_READ = 2 ;
-    TAPE_MODE_READWRITE = 3;
-    TAPE_MODE_DUMP = 4   ;
+message RecallJob {
+ required string vid = 1;
+ required string unitname = 2;
+
+  enum ClientType {
+    CLIENT_TYPE_GATEWAY = 1;
+    CLIENT_TYPE_READTP = 2;
   }
 
-message NotifyDriveBeforeMountStarted {
- required string vid = 1;
- required string unitName = 2;
-
-  enum TapeClientType {
-    CLIENT_TYPE_NONE = 1;
-    CLIENT_TYPE_GATEWAY = 2;
-    CLIENT_TYPE_READTP = 3;
-    CLIENT_TYPE_WRITETP = 4;
-    CLIENT_TYPE_DUMPTP = 5   ;
-  }
-  required TapeMode mode = 3;
-  required TapeClientType clientType = 4;
-}
-
-message NotifyDriveTapeMounted {
- required string vid = 1;
- required string unitName = 2;
- required TapeMode mode = 3;
-}
-
-message NotifyDriveUnmountStarted {
-}
-
-message NotifyDriveTapeUnmounted {
-}
-
-message NotifyDriveBeforeMountStartedAnswer {
-required uint32 howManyFilesOnTape = 1;
+  required ClientType clienttype = 3;
 }

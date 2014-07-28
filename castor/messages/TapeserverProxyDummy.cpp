@@ -34,63 +34,63 @@ castor::messages::TapeserverProxyDummy::~TapeserverProxyDummy() throw() {
 }
 
 //------------------------------------------------------------------------------
-// gotReadMountDetailsFromClient
+// gotRecallJobFromTapeGateway
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::gotReadMountDetailsFromClient(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {
+void castor::messages::TapeserverProxyDummy::gotRecallJobFromTapeGateway(
+  const std::string &vid, const std::string &unitName) {
 }
 
 //------------------------------------------------------------------------------
-// gotWriteMountDetailsFromClient
+// gotRecallJobFromReadTp
 //------------------------------------------------------------------------------
-uint64_t
-  castor::messages::TapeserverProxyDummy::gotWriteMountDetailsFromClient(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {
-
-  return 0;  // Always return 0 files on tape
+void castor::messages::TapeserverProxyDummy::gotRecallJobFromReadTp(
+  const std::string &vid, const std::string &unitName) {
 }
 
 //------------------------------------------------------------------------------
-// gotDumpMountDetailsFromClient
+// gotMigrationJobFromTapeGateway
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::gotDumpMountDetailsFromClient(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {
+uint32_t castor::messages::TapeserverProxyDummy::gotMigrationJobFromTapeGateway(
+  const std::string &vid, const std::string &unitName) {
+  return 0;
 }
 
 //------------------------------------------------------------------------------
-// tapeMountedForRead
+// gotMigrationJobFromWriteTp
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::tapeMountedForRead(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {
+uint32_t castor::messages::TapeserverProxyDummy::gotMigrationJobFromWriteTp(
+  const std::string &vid, const std::string &unitName) {
+  return 0;
 }
 
 //------------------------------------------------------------------------------
-// tapeMountedForWrite
+// tapeMountedForRecall
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::tapeMountedForWrite(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {
+void castor::messages::TapeserverProxyDummy::tapeMountedForRecall(
+  const std::string &vid, const std::string &unitName) {
 }
 
 //------------------------------------------------------------------------------
-// tapeUnmounting
+// tapeMountedForMigration
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::tapeUnmounting(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {
+void castor::messages::TapeserverProxyDummy::tapeMountedForMigration(
+  const std::string &vid, const std::string &unitName) {
+}
+
+//------------------------------------------------------------------------------
+// tapeUnmountStarted
+//------------------------------------------------------------------------------
+void castor::messages::TapeserverProxyDummy::tapeUnmountStarted(
+  const std::string &vid, const std::string &unitName) {
 } 
 
 //------------------------------------------------------------------------------
 // tapeUnmounted
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyDummy::tapeUnmounted(
-  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-  const std::string &unitName) {
+  const std::string &vid, const std::string &unitName) {
 } 
+
 //------------------------------------------------------------------------------
 // tapeUnmounted
 //------------------------------------------------------------------------------

@@ -27,7 +27,6 @@
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeStatDriveEntry.hpp"
 #include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
-#include "castor/messages/NotifyDrive.pb.h"
 #include "castor/tape/tapeserver/daemon/DriveCatalogueSession.hpp"
 #include "castor/tape/utils/DriveConfig.hpp"
 
@@ -246,12 +245,44 @@ public:
    *
    * @return The current state of the tape drive session.
    */
-  castor::tape::tapeserver::daemon::DriveCatalogueSession::SessionState getSessionState() const throw();
+  DriveCatalogueSession::SessionState getSessionState() const throw();
 
   /**
    * Gets the type of session associated with the tape drive.
    */
   SessionType getSessionType() const throw();
+
+  /**
+   * Notifies the tape-drive catalogue entry that a recall job has been received
+   * for the tape drive.
+   *
+   * @param vid The volume identifier of the tape to be mounted for recall.
+   */
+  void receivedRecallJob(const std::string &vid);
+
+  /**
+   * Notifies the tape-drive catalogue entry that a migration job has been
+   * received for the tape drive.
+   *
+   * @param vid The volume identifier of the tape to be mounted for migration.
+   */
+  void receivedMigrationJob(const std::string &vid);
+
+  /**
+   * Notifies the tape-drive catalogue entry that the specified tape has been
+   * mounted for migration in the tape drive.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  void tapeMountedForMigration(const std::string &vid);
+
+  /**
+   * Notifies the tape-drive catalogue entry that the specified tape has been
+   * mounted for recall in the tape drive.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  void tapeMountedForRecall(const std::string &vid);
 
   /**
    * Configures the tape-drive up.
@@ -333,8 +364,8 @@ public:
   /**
    * Moves the state of the tape drive to DRIVE_STATE_RUNNING.
    *
-   * This method throws an exception if the current state of the session of the tape drive is
-   * not SESSION_STATE_WAITFORK.
+   * This method throws an exception if the current state of the session of the
+   * tape drive is not SESSION_STATE_WAITFORK.
    *
    * @param sessionPid The process ID of the child process responsible for
    * running the data-transfer session.
@@ -344,8 +375,8 @@ public:
   /**
    * Moves the state of the tape drive to DRIVE_STATE_RUNNING.
    *
-   * This method throws an exception if the current state of the session of the tape drive is
-   * not SESSION_STATE_WAITFORK.
+   * This method throws an exception if the current state of the session of the
+   * tape drive is not SESSION_STATE_WAITFORK.
    *
    * @param sessionPid The process ID of the child process responsible for
    * running the label session.
@@ -355,8 +386,8 @@ public:
   /**
    * Moves the state of the session of the tape drive to SESSION_STATE_RUNNING.
    *
-   * This method throws an exception if the current state of the session of the tape drive is
-   * not SESSION_STATE_WAITFORK.
+   * This method throws an exception if the current state of the session of the
+   * tape drive is not SESSION_STATE_WAITFORK.
    *
    * @param sessionPid The process ID of the child process responsible for
    * running the cleaner session.
@@ -408,7 +439,8 @@ public:
    * This method throws a castor::exception::Exception if the tape drive is not
    * in a state for which there is a session process-ID.
    *
-   * @return The process ID of the child process running the data-transfer session.
+   * @return The process ID of the child process running the data-transfer
+   * session.
    */
   pid_t getSessionPid() const;
 
@@ -437,16 +469,6 @@ public:
    */
   int releaseLabelCmdConnection();
 
-
-  //default template version for the nes messages
-  template <class T> void updateVolumeInfo(const T &body) {
-    m_vid = body.vid();
-    m_getToBeMountedForTapeStatDriveEntry = false;
-    m_mode = body.mode();
-  }
-  //overload that will be picked up when passing a NotifyDriveBeforeMountStarted
-  void updateVolumeInfo(const castor::messages::NotifyDriveBeforeMountStarted &body);
-  
   /**
    * Gets the tpstat representation of the tape drive.
    *
@@ -469,9 +491,9 @@ private:
   castor::tape::utils::DriveConfig m_config;
 
   /**
-   * Are we mounting for read, write (read/write), or dump
+   * Are we mounting for recall (WRITE_DISABLE) or migration (WRITE_ENABLE).
    */
-  castor::messages::TapeMode m_mode;
+  uint16_t m_mode;
   
   /**
    * The status of the tape with respect to the drive mount and unmount

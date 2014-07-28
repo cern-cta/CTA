@@ -61,25 +61,25 @@ public:
    * Notifies the vmgrd daemon that the specified tape has been mounted for read.
    *
    * @param vid The volume identifier of the mounted tape.
-   * @param
+   * @param jid The ID of the process that mounted the tape.
    */
-  void tapeMountedForRead(const std::string &vid, uint32_t jid);
-
-  /**
+  void tapeMountedForRead(const std::string &vid, const uint32_t jid);
+  
+  /** 
    * Notifies the vmgrd daemon that the specified tape has been mounted for read.
    *
    * @param vid The volume identifier of the mounted tape.
-   * @param
+   * @param jid The ID of the process that mounted the tape.
    */
-  void tapeMountedForWrite(const std::string &vid, uint32_t jid);
+  void tapeMountedForWrite(const std::string &vid, const uint32_t jid);
   
-  /**
+  /** 
    * Gets information from vmgrd about the specified tape
    * 
-   * @param vid   The volume identifier of the tape.
-   * @param reply The structure containing the reply from vmgrd
+   * @param vid The volume identifier of the tape.
+   * @return The reply from the vmgrd daemon.
    */
-  void queryTape(const std::string &vid, legacymsg::VmgrTapeInfoMsgBody &reply);
+  legacymsg::VmgrTapeInfoMsgBody queryTape(const std::string &vid);
 
 private:
 
@@ -147,9 +147,10 @@ private:
    * 
    * @param request  Source request
    * @param buf      Destination buffer
-   * @param totalLen Total length of bytes marshaled
+   * @return         Total length of bytes marshaled
    */
-  void marshalQueryTapeRequest(const std::string &vid, legacymsg::VmgrTapeInfoRqstMsgBody &request, char *buf, size_t bufLen, size_t &totalLen);
+  size_t marshalQueryTapeRequest(const std::string &vid,
+    legacymsg::VmgrTapeInfoRqstMsgBody &request, char *buf, size_t bufLen);
   
   /**
    * Send the request out to the VMGR
@@ -158,7 +159,8 @@ private:
    * @param buf      Source buffer
    * @param totalLen Buffer length
    */
-  void sendQueryTapeRequest(const std::string &vid, const int fd, char *buf, size_t totalLen);
+  void sendQueryTapeRequest(const std::string &vid, const int fd, char *buf,
+    size_t totalLen);
   
   /**
    * Receives the header of the reply coming from the VMGR
@@ -166,15 +168,19 @@ private:
    * @param fd          File descriptor of the connection
    * @param replyHeader Destination structure for the header
    */
-  void receiveQueryTapeReplyHeader(const std::string &vid, const int fd, legacymsg::MessageHeader &replyHeader);
+  void receiveQueryTapeReplyHeader(const std::string &vid, const int fd,
+    legacymsg::MessageHeader &replyHeader);
   
   /**
    * Function that receives and handles the error string coming from the VMGR
    * 
    * @param fd          File descriptor of the connection
    * @param replyHeader Reply header
+   * @return            The error string from the VMGR converted into a CASTOR
+   *                    exception.
    */
-  void handleErrorReply(const std::string &vid, const int fd, legacymsg::MessageHeader &replyHeader);
+  castor::exception::Exception handleErrorReply(const std::string &vid,
+    const int fd, const legacymsg::MessageHeader &replyHeader);
   
   /**
    * Function that receives and unmarshals the reply data coming from the VMGR

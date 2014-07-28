@@ -20,11 +20,12 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
+
+#include "castor/log/LogContext.hpp"
+#include "castor/log/Logger.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/utils/TpconfigLine.hpp"
-#include "castor/log/LogContext.hpp"
-#include "castor/log/Logger.hpp"
 
 namespace castor {
 namespace tape {
@@ -90,12 +91,28 @@ TapeServerReporter::TapeServerReporter(
 //------------------------------------------------------------------------------
 //gotWriteMountDetailsFromClient
 //------------------------------------------------------------------------------    
-  uint64_t TapeServerReporter::gotWriteMountDetailsFromClient(){
+  uint32_t TapeServerReporter::gotWriteMountDetailsFromClient(){
     if(m_threadRunnig){
       m_lc.log(LOG_ERR,"TapeServerReporter is running but calling a synchronous operation on it"
       "Could cause a race with the underlying  zmq sockets in the proxy");
     }
-   return m_tapeserverProxy.gotWriteMountDetailsFromClient(m_volume, m_unitName);
+    switch(m_volume.clientType) {
+    case tapegateway::TAPE_GATEWAY:
+      return m_tapeserverProxy.gotMigrationJobFromTapeGateway(m_volume.vid,
+        m_unitName);
+    case tapegateway::WRITE_TP:
+      return m_tapeserverProxy.gotMigrationJobFromWriteTp(m_volume.vid,
+        m_unitName);
+    default:
+      {
+        // Should never get here
+        castor::exception::Exception ex;
+        ex.getMessage() << "Failed to notify tapeserverd of write mount details"
+          " received from client: Unexpected client type: clientType=" <<
+          m_volume.clientType;
+        throw ex;
+      }
+    } // switch(m_volume.clientType)
   }
 //------------------------------------------------------------------------------
 //gotReadMountDetailsFromClient
@@ -136,34 +153,55 @@ TapeServerReporter::TapeServerReporter(
     }
   }
 //------------------------------------------------------------------------------
-// ReportGotDetailsFromClient::execute
+// ReportGotReadDetailsFromClient::execute
 //------------------------------------------------------------------------------
     void TapeServerReporter::ReportGotReadDetailsFromClient::execute(
     TapeServerReporter& parent){
       log::ScopedParamContainer sp(parent.m_lc);
       sp.add(parent.m_unitName, "unitName").add(parent.m_volume.vid, "vid");
-      parent.m_tapeserverProxy.gotReadMountDetailsFromClient(parent.m_volume, parent.m_unitName);
+
+      switch(parent.m_volume.clientType) {
+      case tapegateway::TAPE_GATEWAY:
+        return parent.m_tapeserverProxy.gotRecallJobFromTapeGateway(
+          parent.m_volume.vid, parent.m_unitName);
+      case tapegateway::READ_TP:
+        return parent.m_tapeserverProxy.gotRecallJobFromReadTp(
+          parent.m_volume.vid, parent.m_unitName);
+      default:
+        {
+          // Should never get here
+          castor::exception::Exception ex;
+          ex.getMessage() <<
+            "Failed to notify tapeserverd of read mount details received from"
+            " client: Unexpected client type: clientType=" <<
+            parent.m_volume.clientType;
+          throw ex;
+        }
+      } // switch(parent.m_volume.clientType)
     }
 //------------------------------------------------------------------------------
 // ReportTapeMountedForRead::execute
 //------------------------------------------------------------------------------        
     void TapeServerReporter::ReportTapeMountedForRead::
     execute(TapeServerReporter& parent){
-      parent.m_tapeserverProxy.tapeMountedForRead(parent.m_volume, parent.m_unitName);
+      parent.m_tapeserverProxy.tapeMountedForRecall(parent.m_volume.vid,
+        parent.m_unitName);
     }
 //------------------------------------------------------------------------------
 // ReportTapeUnmounted::execute
 //------------------------------------------------------------------------------        
     void TapeServerReporter::ReportTapeUnmounted::
     execute(TapeServerReporter& parent){
-      parent.m_tapeserverProxy.tapeUnmounted(parent.m_volume, parent.m_unitName);
+      parent.m_tapeserverProxy.tapeUnmounted(parent.m_volume.vid,
+        parent.m_unitName);
     }
 //------------------------------------------------------------------------------
 // ReportTapeMounterForWrite::execute
 //------------------------------------------------------------------------------         
     void TapeServerReporter::ReportTapeMounterForWrite::
     execute(TapeServerReporter& parent){
-      parent.m_tapeserverProxy.tapeMountedForWrite(parent.m_volume, parent.m_unitName);
+      parent.m_tapeserverProxy.tapeMountedForMigration(parent.m_volume.vid,
+        parent.m_unitName);
     }
 }}}}
 
