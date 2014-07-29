@@ -121,21 +121,33 @@ static int signXrootUrl(const std::string& input, std::string& signature) {
  */
 static std::string rtcpToCastorXroot(const char *const rtcpPath) {
     std::string path(rtcpPath);
-    size_t slashPos = path.find('/');
-    if (std::string::npos == slashPos) {
+    size_t colonPos = path.find(':');
+    if (std::string::npos == colonPos) {
       rtcp_log(LOG_ERR, "rtcpToCastorXroot: invalid path %s\n", rtcpPath);
       throw castor::exception::Exception();
     }
     // start of URL
     std::ostringstream ss;
-    ss << "root://" << path.substr(0, slashPos) << "1095/"
-       << path.substr(slashPos) << "?";
+    ss << "root://" << path.substr(0, colonPos+1) << "1095/";
+    // Deal with ceph pool if any
+    std::string pfn1, pool;
+    size_t slashPos = path.find('/', colonPos+1);
+    if (std::string::npos == slashPos) {
+      pfn1 = path.substr(colonPos+1);
+    } else {
+      pool = path.substr(colonPos+1, slashPos);
+      pfn1 = path.substr(slashPos+1);
+    }
+    ss << pfn1 << "?";
     // "opaque" info
     time_t exptime = time(NULL) + 3600;
     std::ostringstream opaque;
     opaque << "castor2fs.sfn=&"
-           << "castor2fs.pfn1=" << path.substr(slashPos) << "&"
-           << "castor2fs.pfn2=&"
+           << "castor2fs.pfn1=" << pfn1 << "&";
+    if (std::string::npos != slashPos) {
+      opaque << "castor2fs.pool=" << pool << "&";
+    }
+    opaque << "castor2fs.pfn2=&"
            << "castor2fs.id=&"
            << "castor2fs.client_sec_uid=&"
            << "castor2fs.client_sec_gid=&"
@@ -145,10 +157,11 @@ static std::string rtcpToCastorXroot(const char *const rtcpPath) {
            << "castor2fs.signature=";
 
     ss << opaque.str();
+
     // signature
     std::string signature;
     std::ostringstream sdata;
-    sdata << path.substr(slashPos) << "0" << exptime;
+    sdata << pfn1 << pool << "0" << exptime;
 
     if (signXrootUrl(sdata.str(), signature)) {
       throw castor::exception::Exception();
