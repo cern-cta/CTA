@@ -142,18 +142,11 @@ static std::string rtcpToCastorXroot(const char *const rtcpPath) {
     // "opaque" info
     time_t exptime = time(NULL) + 3600;
     std::ostringstream opaque;
-    opaque << "castor2fs.sfn=&"
-           << "castor2fs.pfn1=" << pfn1 << "&";
+    opaque << "castor2fs.pfn1=" << pfn1 << "&";
     if (std::string::npos != slashPos) {
       opaque << "castor2fs.pool=" << pool << "&";
     }
-    opaque << "castor2fs.pfn2=&"
-           << "castor2fs.id=&"
-           << "castor2fs.client_sec_uid=&"
-           << "castor2fs.client_sec_gid=&"
-           << "castor2fs.accessop=0&"
-           << "castor2fs.exptime=" << exptime << "&"
-           << "castor2fs.manager=&"
+    opaque << "castor2fs.exptime=" << exptime << "&"
            << "castor2fs.signature=";
 
     ss << opaque.str();
@@ -161,7 +154,7 @@ static std::string rtcpToCastorXroot(const char *const rtcpPath) {
     // signature
     std::string signature;
     std::ostringstream sdata;
-    sdata << pfn1 << pool << "0" << exptime;
+    sdata << pfn1 << pool << "0" << exptime; // "0" is for the accessop
 
     if (signXrootUrl(sdata.str(), signature)) {
       throw castor::exception::Exception();

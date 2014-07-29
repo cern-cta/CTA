@@ -53,6 +53,7 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   //----------------------------------------------------------------------------
   struct AuthzInfo
   {
+    AuthzInfo() : accessop(0), exptime(0) {};
     int accessop; ///< the access operation allowed -> see XrdAcc/XrdAccAuthorize.hh
     time_t exptime; ///< time when the authorization expires
     std::string sfn; ///< sfn

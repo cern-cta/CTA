@@ -631,13 +631,6 @@ XrdxCastor2Acc::Decode(const char* opaque, AuthzInfo& authz)
     }
   }
 
-  // We expect 10 opaque castor2fs tokens to be present
-  if (ntoken != 10)
-  {
-    xcastor_err("wrong number of tokens:%i", ntoken);
-    return false;
-  }
-
   return true;
 }
 
@@ -675,17 +668,19 @@ XrdxCastor2Acc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
 
   // Build the opaque information appended to the URL
   std::ostringstream sstr;
-  sstr << "castor2fs.sfn=" << authz.sfn  << "&"
-       << "castor2fs.pfn1=" << authz.pfn1 << "&"
-       << "castor2fs.pool=" << authz.pool << "&"
-       << "castor2fs.pfn2=" << authz.pfn2 << "&"
-       << "castor2fs.id=" << authz.id << "&"
-       << "castor2fs.client_sec_uid=" << authz.client_sec_uid << "&"
-       << "castor2fs.client_sec_gid=" << authz.client_sec_gid << "&"
-       << "castor2fs.accessop=" << authz.accessop << "&"
-       << "castor2fs.exptime=" << (int)authz.exptime << "&"
-       << "castor2fs.signature=" << authz.signature << "&"
-       << "castor2fs.manager=" << authz.manager << "&";
+  if (authz.sfn.size() > 0) sstr << "castor2fs.sfn=" << authz.sfn  << "&";
+  if (authz.pfn1.size() > 0) sstr << "castor2fs.pfn1=" << authz.pfn1 << "&";
+  if (authz.pool.size() > 0) sstr << "castor2fs.pool=" << authz.pool << "&";
+  if (authz.pfn2.size() > 0) sstr << "castor2fs.pfn2=" << authz.pfn2 << "&";
+  if (authz.id.size() > 0) sstr << "castor2fs.id=" << authz.id << "&";
+  if (authz.client_sec_uid.size() > 0)
+    sstr << "castor2fs.client_sec_uid=" << authz.client_sec_uid << "&";
+  if (authz.client_sec_gid.size() > 0)
+    sstr << "castor2fs.client_sec_gid=" << authz.client_sec_gid << "&";
+  sstr << "castor2fs.accessop=" << authz.accessop << "&";
+  sstr << "castor2fs.exptime=" << (int)authz.exptime << "&";
+  sstr << "castor2fs.signature=" << authz.signature << "&";
+  if (authz.manager.size() > 0) sstr << "castor2fs.manager=" << authz.manager << "&";
 
   xcastor_debug("opaque_acc=%s", sstr.str().c_str());
   return sstr.str();
