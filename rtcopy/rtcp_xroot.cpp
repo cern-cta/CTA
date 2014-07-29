@@ -135,7 +135,7 @@ static std::string rtcpToCastorXroot(const char *const rtcpPath) {
     if (std::string::npos == slashPos) {
       pfn1 = path.substr(colonPos+1);
     } else {
-      pool = path.substr(colonPos+1, slashPos);
+      pool = path.substr(colonPos+1, slashPos-colonPos-1);
       pfn1 = path.substr(slashPos+1);
     }
     ss << pfn1 << "?";

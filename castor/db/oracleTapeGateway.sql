@@ -187,7 +187,7 @@ BEGIN
             SELECT * FROM (
               -- take max 3 random diskservers in the data pools involved
               SELECT /*+ INDEX_RS_ASC(RecallJob I_RecallJob_Castorfile_VID) */
-                     DiskServer.name ||':' AS remotePath, 0 as id,
+                     DiskServer.name ||':' || DataPool.name || '/' AS remotePath, 0 as id,
                      DiskServer.id AS diskServer, CastorFile.fileSize,
                      CastorFile.fileId, CastorFile.nsHost, 0 isDiskPool
                 FROM DiskServer, DataPool, DataPool2SvcClass, CastorFile, RecallJob
