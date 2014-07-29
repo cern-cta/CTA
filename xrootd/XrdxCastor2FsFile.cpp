@@ -546,10 +546,20 @@ XrdxCastor2FsFile::open(const char*         path,
     gMgr->mStats.IncUserRdWr(ostreamclient.str().c_str(), isRW);
   }
 
+  // In case we are redirected to a ceph path, extract the pool
+  XrdOucString pfn1 = resp_info.mRedirectionPfn1;
+  XrdOucString pool;
+  if (resp_info.mRedirectionPfn1[0] != '/') {
+    int slashpos = resp_info.mRedirectionPfn1.find("/", 0);
+    pfn1 = XrdOucString(resp_info.mRedirectionPfn1, slashpos+1);
+    pool = XrdOucString(resp_info.mRedirectionPfn1, 0, slashpos-1);
+  }
+  
   // Add the opaque authorization information for the server for read & write
   XrdxCastor2Acc::AuthzInfo authz;
   authz.sfn = (char*) origpath;
-  authz.pfn1 = (char*) resp_info.mRedirectionPfn1.c_str();
+  authz.pfn1 = (char*) pfn1.c_str();
+  authz.pool = (char*) pool.c_str();
   authz.pfn2 = (char*) resp_info.mRedirectionPfn2.c_str();
   authz.id  = (char*)tident;
   authz.client_sec_uid = sclient_uid.c_str();

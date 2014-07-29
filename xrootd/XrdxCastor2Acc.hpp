@@ -57,6 +57,7 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
     time_t exptime; ///< time when the authorization expires
     std::string sfn; ///< sfn
     std::string pfn1; ///< physical mount filename
+    std::string pool; ///< ceph pool in case pfn1 denotes a ceph file (no leading '/')
     std::string pfn2; ///< stager job connection details
     std::string id; ///< the client connection id
     std::string client_sec_uid; ///< the sec identity eg. user name

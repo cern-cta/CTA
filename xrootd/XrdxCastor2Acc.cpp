@@ -567,6 +567,13 @@ XrdxCastor2Acc::Decode(const char* opaque, AuthzInfo& authz)
       continue;
     }
 
+    if (token.beginswith("castor2fs.pool="))
+    {
+      authz.pool = (token.c_str() + 15);
+      ntoken++;
+      continue;
+    }
+
     if (token.beginswith("castor2fs.pfn2="))
     {
       authz.pfn2 = (token.c_str() + 15);
@@ -666,10 +673,11 @@ XrdxCastor2Acc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
     authz.signature = (char*) sb64.c_str();
   }
 
-  // Build the opauqe information appended to the URL
+  // Build the opaque information appended to the URL
   std::ostringstream sstr;
   sstr << "castor2fs.sfn=" << authz.sfn  << "&"
        << "castor2fs.pfn1=" << authz.pfn1 << "&"
+       << "castor2fs.pool=" << authz.pool << "&"
        << "castor2fs.pfn2=" << authz.pfn2 << "&"
        << "castor2fs.id=" << authz.id << "&"
        << "castor2fs.client_sec_uid=" << authz.client_sec_uid << "&"
@@ -693,6 +701,7 @@ XrdxCastor2Acc::BuildToken(const AuthzInfo& authz)
   std::ostringstream sstr;
   sstr << authz.sfn
        << authz.pfn1
+       << authz.pool
        << authz.pfn2
        << authz.id
        << authz.client_sec_uid

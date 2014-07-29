@@ -356,14 +356,20 @@ XrdxCastor2OfsFile::open(const char*         path,
     char disk_xs_buf[32 + 1];
     char disk_xs_type[32];
     disk_xs_buf[0] = disk_xs_type[0] = '\0';
+    
+    // deal with ceph pool if any
+    XrdOucString poolAndPath = newpath;
+    if (mEnvOpaque->Get("castor2fs.pool")) {
+      poolAndPath = mEnvOpaque->Get("castor2fs.pool") + '/' + newpath;
+    };
 
     // Get existing checksum - we don't check errors here
-    nattr = ceph_posix_getxattr(newpath.c_str(), "user.castor.checksum.type", disk_xs_type,
+    nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.type", disk_xs_type,
                                 sizeof(disk_xs_type));
 
     if (nattr) disk_xs_type[nattr] = '\0';
 
-    nattr = ceph_posix_getxattr(newpath.c_str(), "user.castor.checksum.value", disk_xs_buf,
+    nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.value", disk_xs_buf,
                                 sizeof(disk_xs_buf));
 
     if (nattr) disk_xs_buf[nattr] = '\0';
@@ -373,7 +379,7 @@ XrdxCastor2OfsFile::open(const char*         path,
     xcastor_debug("xs_type=%s, xs_val=%s", mXsType.c_str(),  mXsValue.c_str());
 
     // Get also the size of the file
-    if (XrdOfsOss->Stat(newpath.c_str(), &mStatInfo))
+    if (XrdOfsOss->Stat(newpath.c_str(), &mStatInfo, 0, mEnvOpaque))
     {
       xcastor_err("error: getting file stat information");
       rc = SFS_ERROR;
@@ -447,8 +453,7 @@ XrdxCastor2OfsFile::close()
   char ckSumbuf[32 + 1];
   sprintf(ckSumbuf, "%x", mAdlerXs);
   char* ckSumalg = "ADLER32";
-  XrdOucString newpath = "";
-  newpath = mEnvOpaque->Get("castor2fs.pfn1");
+  std::string newpath = mEnvOpaque->Get("castor2fs.pfn1");
 
   if (mHasWrite)
   {
@@ -475,10 +480,19 @@ XrdxCastor2OfsFile::close()
       mHasAdler = true;
     }
 
+    // deal with ceph pool if any
+    std::string poolAndPath = newpath;
+    char* pool = mEnvOpaque->Get("castor2fs.pool");
+    if (pool) {
+      poolAndPath = pool;
+      poolAndPath += '/';
+      poolAndPath += newpath;
+    };
+
     sprintf(ckSumbuf, "%x", mAdlerXs);
     xcastor_debug("file xs=%s", ckSumbuf);
 
-    if (ceph_posix_setxattr(newpath.c_str(), "user.castor.checksum.type", ckSumalg,
+    if (ceph_posix_setxattr(poolAndPath.c_str(), "user.castor.checksum.type", ckSumalg,
                             strlen(ckSumalg), 0))
     {
       gSrv->Emsg("close", error, EIO, "set checksum type");
@@ -486,7 +500,7 @@ XrdxCastor2OfsFile::close()
     }
     else
     {
-      if (ceph_posix_setxattr(newpath.c_str(), "user.castor.checksum.value", ckSumbuf,
+      if (ceph_posix_setxattr(poolAndPath.c_str(), "user.castor.checksum.value", ckSumbuf,
                               strlen(ckSumbuf), 0))
       {
         gSrv->Emsg("close", error, EIO, "set checksum");
