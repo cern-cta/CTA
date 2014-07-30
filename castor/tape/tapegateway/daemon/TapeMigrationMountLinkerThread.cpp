@@ -145,15 +145,8 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
       NsTapeGatewayHelper nsHelper;
       nsHelper.checkFseqForWrite (vidToUse, lastFseq);
     } catch(castor::exception::Exception& e) {
-      castor::dlf::Param params[] = {
-          castor::dlf::Param("MigrationMountId", item->migrationMountId),
-          castor::dlf::Param("errorCode", sstrerror(e.code())),
-          castor::dlf::Param("errorMessage", e.getMessage().str())
-      };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_NO_TAPE_AVAILABLE, params);
-
-      // different errors from vmgr
-      if (e.code()== ENOENT){
+      // different errors from VMGR
+      if (e.code() == ENOENT) {
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_NOT_POOL, params);
         //tapepool doesn't exists anymore
         try {
@@ -195,6 +188,22 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_CRIT, LINKER_VMGR_NS_DISCREPANCY, params);
         // Abort.
         throw e;
+      } else if(e.code() == ENOSPC) {
+        // no free tape on this pool, log a warning
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("MigrationMountId", item->migrationMountId),
+          castor::dlf::Param("errorCode", sstrerror(e.code())),
+          castor::dlf::Param("errorMessage", e.getMessage().str())
+        };
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, LINKER_NO_TAPE_AVAILABLE, params);
+      } else {
+        // anything else coming from VMGR is an error
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("MigrationMountId", item->migrationMountId),
+          castor::dlf::Param("errorCode", sstrerror(e.code())),
+          castor::dlf::Param("errorMessage", e.getMessage().str())
+        };
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_NO_TAPE_AVAILABLE, params);
       }
       continue;
       // in case of errors we don't change the status from TO_BE_RESOLVED to TO_BE_SENT_TO_VDQM -- NO NEED OF WAITSPACE status
