@@ -1283,6 +1283,11 @@ BEGIN
     FROM TapePool, MigrationMount
    WHERE MigrationMount.id = varMountId
      AND MigrationMount.tapePool = TapePool.id;
+  -- We will use this value as a divisor, so we set the oldest age to at least
+  -- one second.
+  IF varOldestAcceptableAge = 0 THEN
+    varOldestAcceptableAge := 1;
+  END IF;
   -- Get candidates up to inCount or inTotalSize
   FOR Cand IN (
     SELECT /*+ FIRST_ROWS(100)
