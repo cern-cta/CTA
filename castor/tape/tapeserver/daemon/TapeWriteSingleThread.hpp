@@ -119,7 +119,11 @@ private:
       m_this.m_initialProcess.finish();
     }
   };
-  
+  /**
+   * Will throw an exception if we cant write on the tape
+   */
+  void isTapeWritable() const;
+
   /**
    * Log  m_stats  parameters into m_logContext with msg at the given level
    */

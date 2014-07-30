@@ -98,7 +98,20 @@ tapeFlush(const std::string& message,uint64_t bytes,uint64_t files,
   m_reportPacker.reportFlush();
   m_stats.flushTime += flushTime;
 }
-
+//------------------------------------------------------------------------------
+//   isTapeWritable
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeWriteSingleThread::
+isTapeWritable() const {
+// check that drive is not write protected
+      if(m_drive.isWriteProtected()) {   
+        castor::exception::Exception ex;
+        ex.getMessage() <<
+                "End session with error. Drive is write protected. Aborting labelling...";
+        throw ex;
+      }
+}
+//------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 //run
 //------------------------------------------------------------------------------
@@ -125,6 +138,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       // This call does the logging of the mount
       mountTape(castor::legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
       waitForDrive();
+      
+      isTapeWritable();
       
       m_stats.mountTime += timer.secs(utils::Timer::resetCounter);
       {
