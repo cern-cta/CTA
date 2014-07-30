@@ -369,9 +369,18 @@ static int DiskFileOpen(int pool_index,
                                  "File Path", TL_MSG_PARAM_STR, filereq->file_path,
                                  "Flags"    , TL_MSG_PARAM_STR, __flags );
         }
+        // add parameter to file name to specify that this is a tape stream
+        int pathLen = strlen(filereq->file_path);
+        const char* params = "?transfertype=tape";
+        int paramsLen = strlen(params);
+        char* pathwithparam = (char*)malloc(pathLen+paramsLen+1);
+        strncpy(pathwithparam, filereq->file_path, pathLen+1);
+        strncpy(pathwithparam+pathLen, params, paramsLen+1);
+        // open the file
         DK_STATUS(RTCP_PS_OPEN);
-        rc = rfio_open64(filereq->file_path,flags,0666);
+        rc = rfio_open64(pathwithparam,flags,0666);
         DK_STATUS(RTCP_PS_NOBLOCKING);
+        free(pathwithparam);
         if ( rc == -1 ) {
             save_errno = errno;
             save_serrno = serrno;

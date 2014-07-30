@@ -1372,7 +1372,7 @@ int  sropen64_v3(int         s,
   char     reqhost[MAXHOSTNAMELEN];
   char     parameters[MAXFILENAMSIZE];
   char     infofile[MAXFILENAMSIZE];
-  int      d2dparam = 0;
+  int      tape_transfer_param = 0;
   unsigned int i;
   const char *value = NULL;
   char     *buf = NULL;
@@ -1466,7 +1466,7 @@ int  sropen64_v3(int         s,
       }
       
       /* Loop over the parameters provided in the filename and extract the key
-       * value pairs. For the time being we are only interested in the "d2d"
+       * value pairs. For the time being we are only interested in the "transfertype"
        * parameter. We do not support any escaping here... this is a hack to
        * allow the diskmanager daemon to distinguish the difference between
        * tape and d2d based transfers!
@@ -1477,9 +1477,9 @@ int  sropen64_v3(int         s,
           char *p = strchr(attr,'=');
           if (p != NULL) {
             *p++ = '\0';
-            if ((strcasecmp(attr, "d2d") == 0) &&
-                (strcasecmp(p, "true") == 0)) {
-              d2dparam = 1;
+            if ((strcasecmp(attr, "transfertype") == 0) &&
+                (strcasecmp(p, "tape") == 0)) {
+              tape_transfer_param = 1;
 	    }
 	  }
 	  attr = strtok(NULL, "&");
@@ -1498,12 +1498,12 @@ int  sropen64_v3(int         s,
 		"CASTOR_CLIENTHOSTNAME=%s\n"
 		"CASTOR_USER=%s\n"
 		"CASTOR_FILENAME=%s\n"
-		"CASTOR_D2D=%s\n",
+		"CASTOR_TRANSFERTYPE=%s\n",
 		(long long int)time(NULL),
 		((ntohopnflg(flags)) & O_RDWR) == O_RDWR ? "o" :
 		((ntohopnflg(flags)) & O_WRONLY) == O_WRONLY  ? "w" :
 		((ntohopnflg(flags)) & O_RDONLY) == O_RDONLY ? "r" : "unknown",
-		host, user, filename, d2dparam ? "true" : "false");
+		host, user, filename, tape_transfer_param ? "TAPE" : "D2D");
         fclose(fp);
       }
     }
