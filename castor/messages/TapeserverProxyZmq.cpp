@@ -77,7 +77,7 @@ void castor::messages::TapeserverProxyZmq::gotRecallJobFromTapeGateway(
     messages::sendMessage(m_messageSocket, rqstHeader, ZMQ_SNDMORE);
     messages::sendMessage(m_messageSocket, rqstBody);
 
-    messages::ReplyContainer reply(m_messageSocket);
+    messages::ProtoTapeReplyContainer reply(m_messageSocket);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -120,7 +120,7 @@ void castor::messages::TapeserverProxyZmq::gotRecallJobFromReadTp(
     messages::sendMessage(m_messageSocket, rqstHeader, ZMQ_SNDMORE);
     messages::sendMessage(m_messageSocket, rqstBody);
 
-    messages::ReplyContainer reply(m_messageSocket);
+    messages::ProtoTapeReplyContainer reply(m_messageSocket);
 
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -164,7 +164,7 @@ uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromTapeGateway(
     messages::sendMessage(m_messageSocket, rqstHeader, ZMQ_SNDMORE);
     messages::sendMessage(m_messageSocket, rqstBody);
 
-    messages::ReplyContainer rawReply(m_messageSocket);
+    messages::ProtoTapeReplyContainer rawReply(m_messageSocket);
     if(rawReply.header.reqtype() != messages::reqType::NbFilesOnTape) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to receive reply from tapeserverd"
@@ -223,7 +223,7 @@ uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromWriteTp(
     messages::sendMessage(m_messageSocket, rqstHeader, ZMQ_SNDMORE);
     messages::sendMessage(m_messageSocket, rqstBody);
 
-    messages::ReplyContainer rawReply(m_messageSocket);
+    messages::ProtoTapeReplyContainer rawReply(m_messageSocket);
     if(rawReply.header.reqtype() != messages::reqType::NbFilesOnTape) {
       castor::exception::Exception ex;
       ex.getMessage() <<
@@ -282,7 +282,7 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForRecall(
     castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
     castor::messages::sendMessage(m_messageSocket,body);
   
-    castor::messages::ReplyContainer reply(m_messageSocket);
+    castor::messages::ProtoTapeReplyContainer reply(m_messageSocket);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -325,7 +325,7 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForMigration(
     castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
     castor::messages::sendMessage(m_messageSocket,body);
   
-    castor::messages::ReplyContainer reply(m_messageSocket);
+    castor::messages::ProtoTapeReplyContainer reply(m_messageSocket);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -368,7 +368,7 @@ void castor::messages::TapeserverProxyZmq::tapeUnmountStarted(
     castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
     castor::messages::sendMessage(m_messageSocket,body);
   
-    castor::messages::ReplyContainer reply(m_messageSocket);
+    castor::messages::ProtoTapeReplyContainer reply(m_messageSocket);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -411,7 +411,7 @@ void castor::messages::TapeserverProxyZmq::tapeUnmounted(
     castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
     castor::messages::sendMessage(m_messageSocket,body);
   
-    castor::messages::ReplyContainer reply(m_messageSocket);
+    castor::messages::ProtoTapeReplyContainer reply(m_messageSocket);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -452,5 +452,5 @@ void castor::messages::TapeserverProxyZmq::tapeUnmounted(
    messages::sendMessage(m_heartbeatSocket,header,ZMQ_SNDMORE);
    messages::sendMessage(m_heartbeatSocket,body);
    
-   ReplyContainer reply(m_heartbeatSocket);
+   ProtoTapeReplyContainer reply(m_heartbeatSocket);
  }

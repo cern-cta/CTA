@@ -14,7 +14,6 @@ add_library(castormessages SHARED
   ProcessExited.pb.cc
   RecallJobFromReadTp.pb.cc
   RecallJobFromTapeGateway.pb.cc
-  ReplyContainer.cpp
   StopProcessForker.pb.cc
   TapeMountedForMigration.pb.cc
   TapeMountedForRecall.pb.cc
