@@ -11,10 +11,13 @@ use IO::Select;
 sub main();
 main;
 
+my %parameters;
+my $confFile = "/etc/castor/SQLSchemaTests.conf";
+
 sub connString ( $ ) {
   my $schema = shift;
-  open(CONF, "< /etc/castor/SQLSchemaTests.conf")
-    or die "Could not open /etc/castor/SQLSchemaTests.conf for reading: $!";
+  open(CONF, "< $confFile")
+    or die "Could not open $confFile for reading: $!";
   while(<CONF>) {
     if ( /^$schema=(.+\/.+\@.+)$/ ) {
       close CONF;
@@ -27,8 +30,8 @@ sub connString ( $ ) {
 
 sub connParams ( $ ) {
   my $schema = shift;
-  open(CONF, "< /etc/castor/SQLSchemaTests.conf")
-    or die "Could not open /etc/castor/SQLSchemaTests.conf for reading: $!";
+  open(CONF, "< $confFile")
+    or die "Could not open $confFile for reading: $!";
   while(<CONF>) {
     if ( /^$schema=(.+)\/(.+)\@(.+)$/ ) {
       close CONF;
@@ -39,6 +42,25 @@ sub connParams ( $ ) {
   die "Could not find connection string for schema $schema";
 }
 
+sub getParamaters () {
+  my @params = ( "stageUid", "stageGid", "adminList", "instanceName",
+    "stagerNsHost" );
+  open(CONF, "< $confFile")
+    or die "Could not open $confFile for reading: $!";
+  foreach my $param (@params) {
+    seek(CONF, 0, SEEK_SET);
+    while (<CONF>) {
+      if ( /^$param=(.*)$/ ) {
+        $parameters{$param}=$1;
+        next;
+      }
+      close CONF;
+      die "Could not find parameter $param in $confFile";
+    }
+  }
+  close (CONF);
+}
+
 sub filterSQL ( $$$$$ ) {
   my $line = shift;
   my ( $NsDbUser, $NsDbPasswd, $NsDbName ) =  ( shift, shift, shift );
@@ -46,11 +68,11 @@ sub filterSQL ( $$$$$ ) {
   $line=~ s/^ACCEPT/--ACCEPT/;
   $line=~ s/^PROMPT/--PROMPT/;
   $line=~ s/^UNDEF/--UNDEF/;
-  $line=~ s/\&stageUid/123/g;
-  $line=~ s/\&stageGid/456/g;
-  $line=~ s/\&adminList/noadmin/g;
-  $line=~ s/\&instanceName/SQLtestInstance/g;
-  $line=~ s/\&stagerNsHost/SQLTestNameServer/g;
+  $line=~ s/\&stageUid/$parameters{stageUid}/g;
+  $line=~ s/\&stageGid/$parameters{stageGid}/g;
+  $line=~ s/\&adminList/$parameters{adminList}/g;
+  $line=~ s/\&instanceName/$parameters{SQLtestInstance}/g;
+  $line=~ s/\&stagerNsHost/$parameters{SQLTestNameServer}/g;
   $line=~ s/\&cnsUser/$NsDbUser/g;
   $line=~ s/\&cnsPasswd/$NsDbPasswd/g;
   $line=~ s/\&cnsDbName/$NsDbName/g;
@@ -125,6 +147,7 @@ sub main () {
   my @SQLTests = ( "vmgr", "cns", "cupv", "vdqm", "stager");
   my ( $NsDbUser, $NsDbPasswd, $NsDbName ) =  connParams( "cns" );
   my ( $vmgrSchema, $vmgrPasswd, $vmgrDbName ) = connParams( "vmgr" );
+  getParamaters();
   foreach my $st ( @SQLTests ) {
     my $scriptFile = `mktemp`;
     chomp $scriptFile;
