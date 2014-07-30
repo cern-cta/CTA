@@ -146,6 +146,11 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
       nsHelper.checkFseqForWrite (vidToUse, lastFseq);
     } catch(castor::exception::Exception& e) {
       // different errors from VMGR
+      castor::dlf::Param params[] = {
+          castor::dlf::Param("MigrationMountId", item->migrationMountId),
+          castor::dlf::Param("errorCode",sstrerror(e.code())),
+          castor::dlf::Param("errorMessage",e.getMessage().str())
+      };
       if (e.code() == ENOENT) {
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_NOT_POOL, params);
         //tapepool doesn't exists anymore
@@ -157,52 +162,37 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
           // Wrapper has no side-effect
           oraSvc->deleteMigrationMountWithBadTapePool(item->migrationMountId);
         } catch (castor::exception::Exception &e){
-          castor::dlf::Param params[] = {
-              castor::dlf::Param("MigrationMountId", item->migrationMountId),
-              castor::dlf::Param("errorCode",sstrerror(e.code())),
-              castor::dlf::Param("errorMessage",e.getMessage().str())
-          };
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_CANNOT_UPDATE_DB, params);
         }
       } else if (e.code() == ERTWRONGFSEQ) {
         try {
           VmgrTapeGatewayHelper::setTapeAsReadonlyAndUnbusy(vidToUse, m_shuttingDown);
         } catch (castor::exception::Exception &e) {
-          castor::dlf::Param params[] = {
+          castor::dlf::Param params2[] = {
               castor::dlf::Param("MigrationMountId", item->migrationMountId),
               castor::dlf::Param("VID", vidToUse),
               castor::dlf::Param("TapePool", item->tapePoolName),
               castor::dlf::Param("errorCode", sstrerror(e.code())),
               castor::dlf::Param("errorMessage", e.getMessage().str())
           };
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_VMGRSETTOREADONLY_FAILED, params);
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_VMGRSETTOREADONLY_FAILED, params2);
         }
         // Major problem, the vmgr told us to write on an fseq still referenced in the NS
-        castor::dlf::Param params[] = {
+        castor::dlf::Param params2[] = {
             castor::dlf::Param("MigrationMountId", item->migrationMountId),
             castor::dlf::Param("TapePool", item->tapePoolName),
             castor::dlf::Param("errorCode", sstrerror(e.code())),
             castor::dlf::Param("errorMessage", e.getMessage().str()),
             castor::dlf::Param("VID", vidToUse)
         };
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_CRIT, LINKER_VMGR_NS_DISCREPANCY, params);
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_CRIT, LINKER_VMGR_NS_DISCREPANCY, params2);
         // Abort.
         throw e;
       } else if(e.code() == ENOSPC) {
         // no free tape on this pool, log a warning
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("MigrationMountId", item->migrationMountId),
-          castor::dlf::Param("errorCode", sstrerror(e.code())),
-          castor::dlf::Param("errorMessage", e.getMessage().str())
-        };
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, LINKER_NO_TAPE_AVAILABLE, params);
       } else {
         // anything else coming from VMGR is an error
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("MigrationMountId", item->migrationMountId),
-          castor::dlf::Param("errorCode", sstrerror(e.code())),
-          castor::dlf::Param("errorMessage", e.getMessage().str())
-        };
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_NO_TAPE_AVAILABLE, params);
       }
       continue;
