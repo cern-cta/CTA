@@ -55,8 +55,8 @@ castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log,
   m_netTimeout(netTimeout),
   m_messageSocket(zmqContext, ZMQ_REQ),
   m_heartbeatSocket(zmqContext, ZMQ_REQ) {
-  castor::messages::connectToLocalhost(m_messageSocket);
-  castor::messages::connectToLocalhost(m_heartbeatSocket);
+  castor::messages::connectToLocalhost(m_messageSocket,tapeserverPort);
+  castor::messages::connectToLocalhost(m_heartbeatSocket,tapeserverPort);
 }
 
 //------------------------------------------------------------------------------

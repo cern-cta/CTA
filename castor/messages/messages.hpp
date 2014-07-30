@@ -100,10 +100,10 @@ template <class T> void checkSHA1(Header header,const T& body){
 void checkSHA1(Header header,const castor::tape::utils::ZmqMsg& body);
 
 /**
- * Connect the socket to localhost= on port tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT
+ * Connect the socket to localhost on the givent port 
  * @param socket
  */
-void connectToLocalhost(tape::utils::ZmqSocket&  socket);
+void connectToLocalhost(tape::utils::ZmqSocket&  socket,int port);
 
 /**
  * Header factory which pre fill several fields
