@@ -92,7 +92,7 @@ namespace daemon {
       
       m_tapeWriter.push(twt.release());
       m_diskReader.push(drt.release());
-      m_lc.log(LOG_INFO, "Logged file to migrate");
+      m_lc.log(LOG_INFO, "Created tasks for migrating a file");
     }
     LogContext::ScopedParam(m_lc, Param("numbnerOfFiles", jobs.size()));
     m_lc.log(LOG_INFO, "Finished creating tasks for migrating");
