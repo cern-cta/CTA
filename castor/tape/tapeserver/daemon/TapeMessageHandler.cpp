@@ -289,7 +289,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::
     messages::NbFilesOnTape replyBody;
     replyBody.set_nbfiles(tapeInfo.nbFiles);
     
-    messages::Header replyHeader = castor::messages::preFillHeader();
+    messages::Header replyHeader = castor::messages::protoTapePreFillHeader();
     replyHeader.set_reqtype(messages::reqType::NbFilesOnTape);
     replyHeader.set_bodyhashvalue(messages::computeSHA1Base64(replyBody));
     replyHeader.set_bodysignature("PIPO");
@@ -332,7 +332,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::
     messages::NbFilesOnTape replyBody;
     replyBody.set_nbfiles(tapeInfo.nbFiles);
 
-    messages::Header replyHeader = castor::messages::preFillHeader();
+    messages::Header replyHeader = castor::messages::protoTapePreFillHeader();
     replyHeader.set_reqtype(messages::reqType::NbFilesOnTape);
     replyHeader.set_bodyhashvalue(messages::computeSHA1Base64(replyBody));
     replyHeader.set_bodysignature("PIPO");
@@ -540,7 +540,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::sendReplyToClient(
   body.set_returnvalue(returnValue);
   body.set_message(msg);
   
-  messages::Header header = castor::messages::preFillHeader();
+  messages::Header header = castor::messages::protoTapePreFillHeader();
   header.set_reqtype(messages::reqType::ReturnValue);
   header.set_bodyhashvalue(messages::computeSHA1Base64(body));
   header.set_bodysignature("PIPO");

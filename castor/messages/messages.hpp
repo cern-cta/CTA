@@ -108,14 +108,31 @@ void connectToLocalhost(tape::utils::ZmqSocket&  socket,int port);
 /**
  * Header factory which pre fill several fields
  * magic(TPMAGIC)
- * protocoltype(castor::messages::protocolType::Tape);
- * protocolversion(castor::messages::protocolVersion::prototype);
+ * protocoltype(protocolType);
+ * protocolversion(protocolVersion;
  * bodyhashtype("SHA1");
  * bodysignaturetype("SHA1");
  *  After, the only  fields left are reqtype, bodyhashvalue and bodyhashsignature
  * @return The header
  */
-castor::messages::Header preFillHeader();
+template <int protocolType, int protocolVersion>
+castor::messages::Header genericPreFillHeader(){
+  castor::messages::Header header;
+  header.set_magic(TPMAGIC);
+  header.set_protocoltype(protocolType);
+  header.set_protocolversion(protocolVersion);
+  header.set_bodyhashtype("SHA1");
+  header.set_bodysignaturetype("SHA1");
+  return header;
+}
+
+ /**
+  * Return genericPreFillHeader() with
+  * protocolType = <protocolType::Tape
+  * protocolVersion = protocolVersion::prototype
+  * @return 
+  */
+  castor::messages::Header protoTapePreFillHeader();
 
 } // namespace messages
 } // namespace castor

@@ -69,7 +69,7 @@ void castor::messages::TapeserverProxyZmq::gotRecallJobFromTapeGateway(
     rqstBody.set_vid(vid);
     rqstBody.set_unitname(unitName);
 
-    messages::Header rqstHeader = castor::messages::preFillHeader();
+    messages::Header rqstHeader = castor::messages::protoTapePreFillHeader();
     rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
     rqstHeader.set_bodysignature("PIPO");
     rqstHeader.set_reqtype(messages::reqType::RecallJobFromTapeGateway);
@@ -112,7 +112,7 @@ void castor::messages::TapeserverProxyZmq::gotRecallJobFromReadTp(
     rqstBody.set_vid(vid);
     rqstBody.set_unitname(unitName);
 
-    messages::Header rqstHeader = castor::messages::preFillHeader();
+    messages::Header rqstHeader = castor::messages::protoTapePreFillHeader();
     rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
     rqstHeader.set_bodysignature("PIPO");
     rqstHeader.set_reqtype(messages::reqType::RecallJobFromReadTp);
@@ -156,7 +156,7 @@ uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromTapeGateway(
     rqstBody.set_vid(vid);
     rqstBody.set_unitname(unitName);
 
-    messages::Header rqstHeader = castor::messages::preFillHeader();
+    messages::Header rqstHeader = castor::messages::protoTapePreFillHeader();
     rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
     rqstHeader.set_bodysignature("PIPO");
     rqstHeader.set_reqtype(messages::reqType::MigrationJobFromTapeGateway);
@@ -215,7 +215,7 @@ uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromWriteTp(
     rqstBody.set_vid(vid);
     rqstBody.set_unitname(unitName);
 
-    messages::Header rqstHeader = castor::messages::preFillHeader();
+    messages::Header rqstHeader = castor::messages::protoTapePreFillHeader();
     rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
     rqstHeader.set_bodysignature("PIPO");
     rqstHeader.set_reqtype(messages::reqType::MigrationJobFromWriteTp);
@@ -274,7 +274,7 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForRecall(
     body.set_unitname(unitName);
     body.set_vid(vid);
   
-    castor::messages::Header header = castor::messages::preFillHeader();
+    castor::messages::Header header = castor::messages::protoTapePreFillHeader();
     header.set_bodyhashvalue(computeSHA1Base64(body));
     header.set_bodysignature("PIPO");
     header.set_reqtype(castor::messages::reqType::TapeMountedForRecall);
@@ -317,7 +317,7 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForMigration(
     body.set_unitname(unitName);
     body.set_vid(vid);
   
-    castor::messages::Header header = castor::messages::preFillHeader();
+    castor::messages::Header header = castor::messages::protoTapePreFillHeader();
     header.set_bodyhashvalue(computeSHA1Base64(body));
     header.set_bodysignature("PIPO");
     header.set_reqtype(castor::messages::reqType::TapeMountedForMigration);
@@ -360,7 +360,7 @@ void castor::messages::TapeserverProxyZmq::tapeUnmountStarted(
     body.set_unitname(unitName);
     body.set_vid(vid);
 
-    castor::messages::Header header = castor::messages::preFillHeader();
+    castor::messages::Header header = castor::messages::protoTapePreFillHeader();
     header.set_bodyhashvalue(computeSHA1Base64(body));
     header.set_bodysignature("PIPO");
     header.set_reqtype(castor::messages::reqType::TapeUnmountStarted);
@@ -403,7 +403,7 @@ void castor::messages::TapeserverProxyZmq::tapeUnmounted(
     body.set_unitname(unitName);
     body.set_vid(vid);
     
-    castor::messages::Header header=castor::messages::preFillHeader();
+    castor::messages::Header header=castor::messages::protoTapePreFillHeader();
     header.set_bodyhashvalue(computeSHA1Base64(body));
     header.set_bodysignature("PIPO");
     header.set_reqtype(castor::messages::reqType::TapeUnmounted);
@@ -444,7 +444,7 @@ void castor::messages::TapeserverProxyZmq::tapeUnmounted(
    messages::Heartbeat body;
    body.set_bytesmoved(nbOfMemblocksMoved);
    
-   messages::Header header = messages::preFillHeader();
+   messages::Header header = messages::protoTapePreFillHeader();
    header.set_reqtype(messages::reqType::Heartbeat);
    header.set_bodyhashvalue(computeSHA1Base64(body));
    header.set_bodysignature("PIPO");

@@ -36,15 +36,10 @@ void castor::messages::connectToLocalhost(tape::utils::ZmqSocket& m_socket,int p
 //------------------------------------------------------------------------------
 // preFillHeader
 //------------------------------------------------------------------------------
-castor::messages::Header castor::messages::preFillHeader() {
-  castor::messages::Header header;
-  header.set_magic(TPMAGIC);
-  header.set_protocoltype(castor::messages::protocolType::Tape);
-  header.set_protocolversion(castor::messages::protocolVersion::prototype);
-  header.set_bodyhashtype("SHA1");
-  header.set_bodysignaturetype("SHA1");
-  return header;
+castor::messages::Header castor::messages::protoTapePreFillHeader() {
+  return genericPreFillHeader<protocolType::Tape,protocolVersion::prototype>();;
 }
+
 
 //------------------------------------------------------------------------------
 // computeSHA1Base64
