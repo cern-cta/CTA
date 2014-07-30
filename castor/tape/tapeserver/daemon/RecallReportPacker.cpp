@@ -196,11 +196,19 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& parent){
 //WorkerThread::run
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportStuck::execute(RecallReportPacker& parent){
+  //we are stuck while recalling a file
   const int errCode=SEINTERNAL;
   const std::string msg="Stuck while reading that file";
+  
+  //add the file to the list of error
   RecallReportPacker::ReportError(m_recalledFile,msg,errCode).execute(parent);
+  //send the reports
   parent.flush();
+  
+  //finish the session
   RecallReportPacker::ReportEndofSessionWithErrors(msg,errCode).execute(parent);
+  
+  //suicide
   kill(getpid(),SIGABRT);
 }
 //------------------------------------------------------------------------------

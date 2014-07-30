@@ -126,6 +126,11 @@ public:
     castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
     const std::string &unitName) = 0;
 
+  /**
+   * Will notify the mother how many block we moved since the last lime we called
+   * the function 
+   * @param nbOfMemblocksMoved
+   */
   virtual void notifyHeartbeat(uint64_t nbOfMemblocksMoved) =0;
 }; // class TapeserverProxy
 

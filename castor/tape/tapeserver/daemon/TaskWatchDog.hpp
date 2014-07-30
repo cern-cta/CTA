@@ -113,7 +113,7 @@ template <class placeHolder> class TaskWatchDog : private castor::tape::threadin
         
         timeval diffTimeStuck = castor::utils::timevalAbsDiff(currentTime,m_previousNotifiedTime);
         double diffTimeStuckd = castor::utils::timevalToDouble(diffTimeStuck);
-        
+        //useful if we are stuck on a particular file
         if(diffTimeStuckd>m_stuckPeriod && m_fileBeingMoved){
           m_reportPacker.reportStuckOn(m_file);
           break;
@@ -122,6 +122,8 @@ template <class placeHolder> class TaskWatchDog : private castor::tape::threadin
       
       timeval diffTimeReport = castor::utils::timevalAbsDiff(currentTime,m_previousReportTime);
       double diffTimeReportd = castor::utils::timevalToDouble(diffTimeReport);
+
+      //heartbeat to notify activity to the mother
       if(diffTimeReportd > m_periodToReport){
         tape::threading::MutexLocker locker(&m_mutex);
         m_lc.log(LOG_DEBUG,"going to report");
