@@ -43,9 +43,10 @@ TEST_F(castor_tape_tapeserver_daemon_RmcProxyTcpIpTest, getLibrarySlotType) {
 
   const std::string programName = "unittests";
   castor::log::DummyLogger log(programName);
+  const unsigned short rmcPort = 0;
   const int netTimeout = 1; // Timeout in seconds
   
-  RmcProxyTcpIp rmc(log, netTimeout);
+  RmcProxyTcpIp rmc(log, rmcPort, netTimeout);
 
   ASSERT_EQ(RmcProxyTcpIp::RMC_LIBRARY_SLOT_TYPE_ACS, rmc.getLibrarySlotType("acs@rmc_host,1,2,3,4"));
   ASSERT_EQ(RmcProxyTcpIp::RMC_LIBRARY_SLOT_TYPE_MANUAL, rmc.getLibrarySlotType("manual"));

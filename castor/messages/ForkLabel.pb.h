@@ -188,6 +188,13 @@ class ForkLabel : public ::google::protobuf::Message {
   inline void set_vid(const char* value, size_t size);
   inline ::std::string* mutable_vid();
   
+  // required uint32 rmcport = 11;
+  inline bool has_rmcport() const;
+  inline void clear_rmcport();
+  static const int kRmcportFieldNumber = 11;
+  inline ::google::protobuf::uint32 rmcport() const;
+  inline void set_rmcport(::google::protobuf::uint32 value);
+  
   // @@protoc_insertion_point(class_scope:castor.messages.ForkLabel)
  private:
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
@@ -209,11 +216,12 @@ class ForkLabel : public ::google::protobuf::Message {
   ::google::protobuf::uint32 gid_;
   ::std::string* vid_;
   static const ::std::string _default_vid_;
+  ::google::protobuf::uint32 rmcport_;
   friend void  protobuf_AddDesc_ForkLabel_2eproto();
   friend void protobuf_AssignDesc_ForkLabel_2eproto();
   friend void protobuf_ShutdownFile_ForkLabel_2eproto();
   
-  ::google::protobuf::uint32 _has_bits_[(10 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(11 + 31) / 32];
   
   // WHY DOES & HAVE LOWER PRECEDENCE THAN != !?
   inline bool _has_bit(int index) const {
@@ -578,6 +586,22 @@ inline ::std::string* ForkLabel::mutable_vid() {
     vid_ = new ::std::string;
   }
   return vid_;
+}
+
+// required uint32 rmcport = 11;
+inline bool ForkLabel::has_rmcport() const {
+  return _has_bit(10);
+}
+inline void ForkLabel::clear_rmcport() {
+  rmcport_ = 0u;
+  _clear_bit(10);
+}
+inline ::google::protobuf::uint32 ForkLabel::rmcport() const {
+  return rmcport_;
+}
+inline void ForkLabel::set_rmcport(::google::protobuf::uint32 value) {
+  _set_bit(10);
+  rmcport_ = value;
 }
 
 

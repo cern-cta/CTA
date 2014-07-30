@@ -25,9 +25,11 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::legacymsg::RmcProxyTcpIpFactory::RmcProxyTcpIpFactory(log::Logger &log, const int netTimeout) throw():
-    m_log(log),
-    m_netTimeout(netTimeout) {
+castor::legacymsg::RmcProxyTcpIpFactory::RmcProxyTcpIpFactory(log::Logger &log,
+  const unsigned short rmcPort, const int netTimeout) throw():
+  m_log(log),
+  m_rmcPort(rmcPort),
+  m_netTimeout(netTimeout) {
 } 
 
 //------------------------------------------------------------------------------
@@ -40,5 +42,5 @@ castor::legacymsg::RmcProxyTcpIpFactory::~RmcProxyTcpIpFactory() throw() {
 // create
 //------------------------------------------------------------------------------
 castor::legacymsg::RmcProxy *castor::legacymsg::RmcProxyTcpIpFactory::create() {
-  return new RmcProxyTcpIp(m_log, m_netTimeout);
+  return new RmcProxyTcpIp(m_log, m_rmcPort, m_netTimeout);
 }

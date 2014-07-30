@@ -44,6 +44,7 @@
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape.h"
+#include "h/rmc_constants.h"
 #include "h/rtcp_constants.h"
 #include "h/rtcpd_constants.h"
 #include "CleanerSession.hpp"
@@ -1170,9 +1171,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSession(
     const legacymsg::RtcpJobRqstMsgBody &vdqmJob = drive->getVdqmJob();
     const DataTransferSession::CastorConf dataTransferConfig =
       getDataTransferConf();
+    const unsigned short rmcPort =
+      common::CastorConfiguration::getConfig().getConfEntInt(
+        "RMC", "PORT", (unsigned short)RMC_PORT, &m_log);
 
     const pid_t dataTransferPid = m_processForker->forkDataTransfer(driveConfig,
-      vdqmJob, dataTransferConfig);
+      vdqmJob, dataTransferConfig, rmcPort);
     drive->forkedDataTransferSession(dataTransferPid);
 
     try {
@@ -1269,7 +1273,11 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", driveConfig.unitName));
 
-  m_processForker->forkLabel(driveConfig, drive->getLabelJob());
+  const unsigned short rmcPort =
+    common::CastorConfiguration::getConfig().getConfEntInt(
+      "RMC", "PORT", (unsigned short)RMC_PORT, &m_log);
+
+  m_processForker->forkLabel(driveConfig, drive->getLabelJob(), rmcPort);
 
   // Release the connection with the label command from the drive catalogue
   castor::utils::SmartFd labelCmdConnection;

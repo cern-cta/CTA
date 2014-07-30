@@ -29,7 +29,7 @@ void protobuf_AssignDesc_ForkLabel_2eproto() {
       "ForkLabel.proto");
   GOOGLE_CHECK(file != NULL);
   ForkLabel_descriptor_ = file->message_type(0);
-  static const int ForkLabel_offsets_[10] = {
+  static const int ForkLabel_offsets_[11] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForkLabel, unitname_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForkLabel, dgn_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForkLabel, devfilename_),
@@ -40,6 +40,7 @@ void protobuf_AssignDesc_ForkLabel_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForkLabel, uid_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForkLabel, gid_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForkLabel, vid_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForkLabel, rmcport_),
   };
   ForkLabel_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -82,12 +83,12 @@ void protobuf_AddDesc_ForkLabel_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\017ForkLabel.proto\022\017castor.messages\"\254\001\n\tF"
+    "\n\017ForkLabel.proto\022\017castor.messages\"\275\001\n\tF"
     "orkLabel\022\020\n\010unitname\030\001 \002(\t\022\013\n\003dgn\030\002 \002(\t\022"
     "\023\n\013devfilename\030\003 \002(\t\022\017\n\007density\030\004 \003(\t\022\023\n"
     "\013libraryslot\030\005 \002(\t\022\017\n\007devtype\030\006 \002(\t\022\r\n\005f"
     "orce\030\007 \002(\010\022\013\n\003uid\030\010 \002(\r\022\013\n\003gid\030\t \002(\r\022\013\n\003"
-    "vid\030\n \002(\t", 209);
+    "vid\030\n \002(\t\022\017\n\007rmcport\030\013 \002(\r", 226);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "ForkLabel.proto", &protobuf_RegisterTypes);
   ForkLabel::default_instance_ = new ForkLabel();
@@ -122,6 +123,7 @@ const int ForkLabel::kForceFieldNumber;
 const int ForkLabel::kUidFieldNumber;
 const int ForkLabel::kGidFieldNumber;
 const int ForkLabel::kVidFieldNumber;
+const int ForkLabel::kRmcportFieldNumber;
 #endif  // !_MSC_VER
 
 ForkLabel::ForkLabel()
@@ -149,6 +151,7 @@ void ForkLabel::SharedCtor() {
   uid_ = 0u;
   gid_ = 0u;
   vid_ = const_cast< ::std::string*>(&_default_vid_);
+  rmcport_ = 0u;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -236,6 +239,7 @@ void ForkLabel::Clear() {
         vid_->clear();
       }
     }
+    rmcport_ = 0u;
   }
   density_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
@@ -411,6 +415,22 @@ bool ForkLabel::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(88)) goto parse_rmcport;
+        break;
+      }
+      
+      // required uint32 rmcport = 11;
+      case 11: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_rmcport:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &rmcport_)));
+          _set_bit(10);
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -511,6 +531,11 @@ void ForkLabel::SerializeWithCachedSizes(
       10, this->vid(), output);
   }
   
+  // required uint32 rmcport = 11;
+  if (_has_bit(10)) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(11, this->rmcport(), output);
+  }
+  
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -603,6 +628,11 @@ void ForkLabel::SerializeWithCachedSizes(
         10, this->vid(), target);
   }
   
+  // required uint32 rmcport = 11;
+  if (_has_bit(10)) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(11, this->rmcport(), target);
+  }
+  
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -677,6 +707,13 @@ int ForkLabel::ByteSize() const {
           this->vid());
     }
     
+    // required uint32 rmcport = 11;
+    if (has_rmcport()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->rmcport());
+    }
+    
   }
   // repeated string density = 4;
   total_size += 1 * this->density_size();
@@ -741,6 +778,9 @@ void ForkLabel::MergeFrom(const ForkLabel& from) {
     if (from._has_bit(9)) {
       set_vid(from.vid());
     }
+    if (from._has_bit(10)) {
+      set_rmcport(from.rmcport());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -758,7 +798,7 @@ void ForkLabel::CopyFrom(const ForkLabel& from) {
 }
 
 bool ForkLabel::IsInitialized() const {
-  if ((_has_bits_[0] & 0x000003f7) != 0x000003f7) return false;
+  if ((_has_bits_[0] & 0x000007f7) != 0x000007f7) return false;
   
   return true;
 }
@@ -775,6 +815,7 @@ void ForkLabel::Swap(ForkLabel* other) {
     std::swap(uid_, other->uid_);
     std::swap(gid_, other->gid_);
     std::swap(vid_, other->vid_);
+    std::swap(rmcport_, other->rmcport_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

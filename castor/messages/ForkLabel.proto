@@ -34,4 +34,7 @@ message ForkLabel {
   required uint32 uid = 8;
   required uint32 gid = 9;
   required string vid = 10;
+
+  // Configuration parameters of the session
+  required uint32 rmcport = 11;
 }

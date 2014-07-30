@@ -112,10 +112,13 @@ static int exceptionThrowingMain(const int argc, char **const argv,
   castor::log::Logger &log) {
   using namespace castor;
   
-  const std::string vdqmHostName =
-    common::CastorConfiguration::getConfig().getConfEntString("VDQM", "HOST");
-  const std::string vmgrHostName =
-    common::CastorConfiguration::getConfig().getConfEntString("VMGR", "HOST");
+  common::CastorConfiguration &config =
+    common::CastorConfiguration::getConfig();
+
+  const std::string vdqmHost = config.getConfEntString("VDQM", "HOST", &log);
+  const std::string vmgrHost = config.getConfEntString("VMGR", "HOST", &log);
+  const uint32_t rmcPort = config.getConfEntInt("RMC", "PORT",
+    (uint32_t)RMC_PORT, &log);
 
   // Parse /etc/castor/TPCONFIG
   tape::utils::TpconfigLines tpconfigLines;
@@ -126,9 +129,9 @@ static int exceptionThrowingMain(const int argc, char **const argv,
 
   // Create proxy objects for the vdqm, vmgr and rmc daemons
   const int netTimeout = 10; // Timeout in seconds
-  legacymsg::VdqmProxyTcpIp vdqm(log, vdqmHostName, VDQM_PORT, netTimeout);
-  legacymsg::VmgrProxyTcpIp vmgr(log, vmgrHostName, VMGR_PORT, netTimeout);
-  legacymsg::RmcProxyTcpIpFactory rmcFactory(log, netTimeout);
+  legacymsg::VdqmProxyTcpIp vdqm(log, vdqmHost, VDQM_PORT, netTimeout);
+  legacymsg::VmgrProxyTcpIp vmgr(log, vmgrHost, VMGR_PORT, netTimeout);
+  legacymsg::RmcProxyTcpIpFactory rmcFactory(log, rmcPort, netTimeout);
   messages::TapeserverProxyZmqFactory tapeserverFactory(log,
     tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT, netTimeout);
   legacymsg::NsProxy_TapeAlwaysEmptyFactory nsFactory;

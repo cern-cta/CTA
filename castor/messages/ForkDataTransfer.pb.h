@@ -278,6 +278,13 @@ class ForkDataTransfer : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 diskthreadpoolsize() const;
   inline void set_diskthreadpoolsize(::google::protobuf::uint32 value);
   
+  // required uint32 rmcport = 23;
+  inline bool has_rmcport() const;
+  inline void clear_rmcport();
+  static const int kRmcportFieldNumber = 23;
+  inline ::google::protobuf::uint32 rmcport() const;
+  inline void set_rmcport(::google::protobuf::uint32 value);
+  
   // @@protoc_insertion_point(class_scope:castor.messages.ForkDataTransfer)
  private:
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
@@ -313,11 +320,12 @@ class ForkDataTransfer : public ::google::protobuf::Message {
   ::google::protobuf::uint64 maxbytesbeforeflush_;
   ::google::protobuf::uint64 maxfilesbeforeflush_;
   ::google::protobuf::uint32 diskthreadpoolsize_;
+  ::google::protobuf::uint32 rmcport_;
   friend void  protobuf_AddDesc_ForkDataTransfer_2eproto();
   friend void protobuf_AssignDesc_ForkDataTransfer_2eproto();
   friend void protobuf_ShutdownFile_ForkDataTransfer_2eproto();
   
-  ::google::protobuf::uint32 _has_bits_[(22 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(23 + 31) / 32];
   
   // WHY DOES & HAVE LOWER PRECEDENCE THAN != !?
   inline bool _has_bit(int index) const {
@@ -926,6 +934,22 @@ inline ::google::protobuf::uint32 ForkDataTransfer::diskthreadpoolsize() const {
 inline void ForkDataTransfer::set_diskthreadpoolsize(::google::protobuf::uint32 value) {
   _set_bit(21);
   diskthreadpoolsize_ = value;
+}
+
+// required uint32 rmcport = 23;
+inline bool ForkDataTransfer::has_rmcport() const {
+  return _has_bit(22);
+}
+inline void ForkDataTransfer::clear_rmcport() {
+  rmcport_ = 0u;
+  _clear_bit(22);
+}
+inline ::google::protobuf::uint32 ForkDataTransfer::rmcport() const {
+  return rmcport_;
+}
+inline void ForkDataTransfer::set_rmcport(::google::protobuf::uint32 value) {
+  _set_bit(22);
+  rmcport_ = value;
 }
 
 

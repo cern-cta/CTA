@@ -36,10 +36,12 @@ public:
    * Constructor.
    *
    * @param log The object representing the API of the CASTOR logging system.
+   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    */
-  RmcProxyTcpIpFactory(log::Logger &log, const int netTimeout) throw();
+  RmcProxyTcpIpFactory(log::Logger &log, const unsigned short rmcPort,
+   const int netTimeout) throw();
 
   /**
    * Destructor.
@@ -63,6 +65,11 @@ private:
    * The object representing the API of the CASTOR logging system.
    */
   log::Logger &m_log;
+
+  /**
+   * The TCP/IP port on which the rmcd daemon is listening.
+   */
+  const unsigned short m_rmcPort;
 
   /**
    * The timeout in seconds to be applied when performing network read and

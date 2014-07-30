@@ -29,7 +29,7 @@ void protobuf_AssignDesc_ForkDataTransfer_2eproto() {
       "ForkDataTransfer.proto");
   GOOGLE_CHECK(file != NULL);
   ForkDataTransfer_descriptor_ = file->message_type(0);
-  static const int ForkDataTransfer_offsets_[22] = {
+  static const int ForkDataTransfer_offsets_[23] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForkDataTransfer, unitname_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForkDataTransfer, dgn_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForkDataTransfer, devfilename_),
@@ -52,6 +52,7 @@ void protobuf_AssignDesc_ForkDataTransfer_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForkDataTransfer, maxbytesbeforeflush_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForkDataTransfer, maxfilesbeforeflush_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForkDataTransfer, diskthreadpoolsize_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForkDataTransfer, rmcport_),
   };
   ForkDataTransfer_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -95,7 +96,7 @@ void protobuf_AddDesc_ForkDataTransfer_2eproto() {
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
     "\n\026ForkDataTransfer.proto\022\017castor.message"
-    "s\"\254\004\n\020ForkDataTransfer\022\020\n\010unitname\030\001 \002(\t"
+    "s\"\275\004\n\020ForkDataTransfer\022\020\n\010unitname\030\001 \002(\t"
     "\022\013\n\003dgn\030\002 \002(\t\022\023\n\013devfilename\030\003 \002(\t\022\017\n\007de"
     "nsity\030\004 \003(\t\022\023\n\013libraryslot\030\005 \002(\t\022\017\n\007devt"
     "ype\030\006 \002(\t\022\032\n\022mounttransactionid\030\007 \002(\r\022\022\n"
@@ -108,7 +109,8 @@ void protobuf_AddDesc_ForkDataTransfer_2eproto() {
     " \002(\004\022!\n\031bulkrequestrecallmaxbytes\030\022 \002(\004\022"
     "!\n\031bulkrequestrecallmaxfiles\030\023 \002(\004\022\033\n\023ma"
     "xbytesbeforeflush\030\024 \002(\004\022\033\n\023maxfilesbefor"
-    "eflush\030\025 \002(\004\022\032\n\022diskthreadpoolsize\030\026 \002(\r", 600);
+    "eflush\030\025 \002(\004\022\032\n\022diskthreadpoolsize\030\026 \002(\r"
+    "\022\017\n\007rmcport\030\027 \002(\r", 617);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "ForkDataTransfer.proto", &protobuf_RegisterTypes);
   ForkDataTransfer::default_instance_ = new ForkDataTransfer();
@@ -157,6 +159,7 @@ const int ForkDataTransfer::kBulkrequestrecallmaxfilesFieldNumber;
 const int ForkDataTransfer::kMaxbytesbeforeflushFieldNumber;
 const int ForkDataTransfer::kMaxfilesbeforeflushFieldNumber;
 const int ForkDataTransfer::kDiskthreadpoolsizeFieldNumber;
+const int ForkDataTransfer::kRmcportFieldNumber;
 #endif  // !_MSC_VER
 
 ForkDataTransfer::ForkDataTransfer()
@@ -196,6 +199,7 @@ void ForkDataTransfer::SharedCtor() {
   maxbytesbeforeflush_ = GOOGLE_ULONGLONG(0);
   maxfilesbeforeflush_ = GOOGLE_ULONGLONG(0);
   diskthreadpoolsize_ = 0u;
+  rmcport_ = 0u;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -311,6 +315,7 @@ void ForkDataTransfer::Clear() {
     maxbytesbeforeflush_ = GOOGLE_ULONGLONG(0);
     maxfilesbeforeflush_ = GOOGLE_ULONGLONG(0);
     diskthreadpoolsize_ = 0u;
+    rmcport_ = 0u;
   }
   density_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
@@ -680,6 +685,22 @@ bool ForkDataTransfer::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(184)) goto parse_rmcport;
+        break;
+      }
+      
+      // required uint32 rmcport = 23;
+      case 23: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_rmcport:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &rmcport_)));
+          _set_bit(22);
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -848,6 +869,11 @@ void ForkDataTransfer::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(22, this->diskthreadpoolsize(), output);
   }
   
+  // required uint32 rmcport = 23;
+  if (_has_bit(22)) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(23, this->rmcport(), output);
+  }
+  
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -1008,6 +1034,11 @@ void ForkDataTransfer::SerializeWithCachedSizes(
   // required uint32 diskthreadpoolsize = 22;
   if (_has_bit(21)) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(22, this->diskthreadpoolsize(), target);
+  }
+  
+  // required uint32 rmcport = 23;
+  if (_has_bit(22)) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(23, this->rmcport(), target);
   }
   
   if (!unknown_fields().empty()) {
@@ -1172,6 +1203,13 @@ int ForkDataTransfer::ByteSize() const {
           this->diskthreadpoolsize());
     }
     
+    // required uint32 rmcport = 23;
+    if (has_rmcport()) {
+      total_size += 2 +
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->rmcport());
+    }
+    
   }
   // repeated string density = 4;
   total_size += 1 * this->density_size();
@@ -1274,6 +1312,9 @@ void ForkDataTransfer::MergeFrom(const ForkDataTransfer& from) {
     if (from._has_bit(21)) {
       set_diskthreadpoolsize(from.diskthreadpoolsize());
     }
+    if (from._has_bit(22)) {
+      set_rmcport(from.rmcport());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -1291,7 +1332,7 @@ void ForkDataTransfer::CopyFrom(const ForkDataTransfer& from) {
 }
 
 bool ForkDataTransfer::IsInitialized() const {
-  if ((_has_bits_[0] & 0x003ffff7) != 0x003ffff7) return false;
+  if ((_has_bits_[0] & 0x007ffff7) != 0x007ffff7) return false;
   
   return true;
 }
@@ -1320,6 +1361,7 @@ void ForkDataTransfer::Swap(ForkDataTransfer* other) {
     std::swap(maxbytesbeforeflush_, other->maxbytesbeforeflush_);
     std::swap(maxfilesbeforeflush_, other->maxfilesbeforeflush_);
     std::swap(diskthreadpoolsize_, other->diskthreadpoolsize_);
+    std::swap(rmcport_, other->rmcport_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

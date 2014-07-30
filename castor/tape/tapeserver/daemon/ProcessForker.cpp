@@ -525,7 +525,7 @@ int castor::tape::tapeserver::daemon::ProcessForker::runDataTransferSession(
     getDataTransferConfig(rqst);
 
   const int netTimeout = 10; // Timeout in seconds
-  legacymsg::RmcProxyTcpIp rmc(m_log, netTimeout);
+  legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), netTimeout);
 
   const int sizeOfIOThreadPoolForZMQ = 1;
   utils::SmartZmqContext
@@ -845,7 +845,7 @@ int castor::tape::tapeserver::daemon::ProcessForker::runLabelSession(
     exit(0);
 
     const int netTimeout = 10; // Timeout in seconds
-    legacymsg::RmcProxyTcpIp rmc(m_log, netTimeout);
+    legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), netTimeout);
     legacymsg::NsProxy_TapeAlwaysEmpty ns;
     castor::tape::System::realWrapper sWrapper;
     // TO BE DONE
