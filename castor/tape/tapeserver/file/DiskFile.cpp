@@ -20,6 +20,7 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
+#include <sys/types.h>
 
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/exception/Errnum.hpp"
@@ -41,7 +42,15 @@ namespace castor {
       size_t ReadFile::read(void *data, const size_t size)  {
         return rfio_read(m_fd, data, size);
       }
-      
+      size_t ReadFile::size() const {
+        //struct is mandatory here, because there is a function stat64 
+        struct stat64 statbuf;        
+        int ret = rfio_fstat64(m_fd,&statbuf);
+        castor::exception::SErrnum::throwOnMinusOne(ret,
+                "Error while trying to read some stats on a disk file");
+        
+        return statbuf.st_size;
+      }
       ReadFile::~ReadFile() throw() {
         rfio_close(m_fd);
       }

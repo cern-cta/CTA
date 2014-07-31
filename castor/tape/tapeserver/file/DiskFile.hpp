@@ -44,6 +44,11 @@ namespace castor {
          * @param url: Uniform Resource Locator of the file we want to read
          */
         ReadFile(const std::string &url) ;
+        /**
+         * Return the size of the file in byte. Can throw
+         * @return 
+         */
+        size_t size() const;
         
         /**
          * Reads data from the file.
