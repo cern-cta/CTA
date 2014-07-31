@@ -34,7 +34,11 @@
         (void) vmgr_end_tr (&thip->dbfd);                               \
       }                                                                 \
     }                                                                   \
-    vmgrlogreq(reqinfo, func, x);                                       \
+    if(0 == x) {                                                        \
+      vmgrlogreq(VMGR_LOG_INFO, reqinfo, func, x);                      \
+    } else {                                                            \
+      vmgrlogreq(VMGR_LOG_ERR, reqinfo, func, x);                       \
+    }                                                                   \
     return ((x));                                                       \
   }
 
@@ -91,8 +95,35 @@ EXTERN_C int sendrep (int, int, ...);
 
 EXTERN_C int openlog (const char *, const char *);
 EXTERN_C int closelog (void);
-EXTERN_C int vmgrlogit (const char *, ...);
-EXTERN_C int vmgrlogreq (struct vmgr_srv_request_info *, const char *, const int);
+
+/**
+ * Enumeration of the different log levels that can be used when creating a
+ * vmgr log.  These log levels are based on those of syslog.
+ *
+ * This enumeration exists instead of using the syslog constants such as
+ * LOG_ERR, because including <syslog.h> causes conflicts with the vmgr source
+ * code.
+ */
+typedef enum VmgrLogLevel {
+  VMGR_LOG_EMERG,
+  VMGR_LOG_ALERT,
+  VMGR_LOG_CRIT,
+  VMGR_LOG_ERR,
+  VMGR_LOG_WARNING,
+  VMGR_LOG_NOTICE,
+  VMGR_LOG_INFO,
+  VMGR_LOG_DEBUG
+} VmgrLogLevel;
+
+/**
+ * Writes a log to the vmgr log file in syslog format.
+ *
+ * @param lvl The log level.
+ * @param format The formated contents of the message to be logged.  This
+ * string should at least include a MSG parameter.
+ */
+EXTERN_C int vmgrlogit(const VmgrLogLevel lvl, const char *format, ...);
+EXTERN_C int vmgrlogreq (const VmgrLogLevel lvl, struct vmgr_srv_request_info *const , const char *const, const int);
 
 
 EXTERN_C int vmgr_init_dbpkg();

@@ -46,10 +46,10 @@ struct vmgr_srv_thread_info *vmgr_srv_thread_info;
 void vmgr_signal_handler(int sig)
 {
   if (sig == SIGINT) {
-    vmgrlogit("MSG=\"Caught SIGINT, immediate stop\"");
+    vmgrlogit(VMGR_LOG_INFO, "MSG=\"Caught SIGINT, immediate stop\"");
     exit(0);
   } else if (sig == SIGTERM) {
-    vmgrlogit("MSG=\"Caught SIGTERM, shutting down\"");
+    vmgrlogit(VMGR_LOG_INFO, "MSG=\"Caught SIGTERM, shutting down\"");
     being_shutdown = 1;
   }
 }
@@ -116,14 +116,14 @@ int vmgr_main(struct main_args *main_args)
   /* Open the logging interface */
   openlog("vmgrd", logfile);
 
-  vmgrlogit("MSG=\"Volume Manager Daemon Started\" "
+  vmgrlogit(VMGR_LOG_INFO, "MSG=\"Volume Manager Daemon Started\" "
             "Version=\"%d.%d.%d-%d\"",
             MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
 
   gethostname (localhost, CA_MAXHOSTNAMELEN+1);
   if (strchr (localhost, '.') == NULL) {
     if (Cdomainname (domainname, sizeof(domainname)) < 0) {
-      vmgrlogit("MSG=\"Error: Unable to get domainname\" Function=\"Cdomainname\" "
+      vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Unable to get domainname\" Function=\"Cdomainname\" "
                 "Error=\"%s\" File=\"%s\" Line=%d",
                 sstrerror(serrno), __FILE__, __LINE__);
       exit (SYERR);
@@ -146,14 +146,14 @@ int vmgr_main(struct main_args *main_args)
 
   /* Create a pool of threads */
   if ((ipool = Cpool_create (nbthreads, NULL)) < 0) {
-    vmgrlogit("MSG=\"Error: Unable to create thread pool\" "
+    vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Unable to create thread pool\" "
               "Function=\"Cpool_create\" Error=\"%s\" File=\"%s\" Line=%d",
               sstrerror(serrno), __FILE__, __LINE__);
     return (SYERR);
   }
   if ((vmgr_srv_thread_info =
        calloc (nbthreads, sizeof(struct vmgr_srv_thread_info))) == NULL) {
-    vmgrlogit("MSG=\"Error: Failed to allocate memory\" "
+    vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Failed to allocate memory\" "
               "Function=\"calloc\" Error=\"%s\" File=\"%s\" Line=%d",
               strerror(errno), __FILE__, __LINE__);
     return (SYERR);
@@ -171,7 +171,7 @@ int vmgr_main(struct main_args *main_args)
 
   /* Open request socket */
   if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    vmgrlogit("MSG=\"Error: Failed to create listening socket\" "
+    vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Failed to create listening socket\" "
               "Function=\"socket\" Error=\"%s\" File=\"%s\" Line=%d",
               neterror(), __FILE__, __LINE__);
     return (CONFERR);
@@ -197,13 +197,13 @@ int vmgr_main(struct main_args *main_args)
 #endif
   sin.sin_addr.s_addr = htonl(INADDR_ANY);
   if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
-    vmgrlogit("MSG=\"Error: Failed to set socket option\" "
+    vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Failed to set socket option\" "
               "Function=\"setsockopt\" Option=\"SO_REUSEADDR\" Error=\"%s\" "
               "File=\"%s\" Line=%d",
               neterror(), __FILE__, __LINE__);
   }
   if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-    vmgrlogit("MSG=\"Error: Failed to bind listening socket\" "
+    vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Failed to bind listening socket\" "
               "Function=\"socket\" Error=\"%s\" File=\"%s\" Line=%d",
               neterror(), __FILE__, __LINE__);
     close(s);
@@ -235,7 +235,7 @@ int vmgr_main(struct main_args *main_args)
     if (select (s+1, &readfd, NULL, NULL, &timeval) > 0) {
       rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
       if ((thread_index = Cpool_next_index (ipool)) < 0) {
-        vmgrlogit("MSG=\"Error: Failed to determine next available thread "
+        vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Failed to determine next available thread "
                   "to process request\" Function=\"Cpool_next_index\" "
                   "Error=\"%s\" File=\"%s\" Line=%d",
                   sstrerror(serrno), __FILE__, __LINE__);
@@ -250,7 +250,7 @@ int vmgr_main(struct main_args *main_args)
       if (Cpool_assign (ipool, &procconnection,
                         vmgr_srv_thread_info + thread_index, 1) < 0) {
         (vmgr_srv_thread_info + thread_index)->s = -1;
-        vmgrlogit("MSG=\"Error: Failed to assign request to thread\" "
+        vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Failed to assign request to thread\" "
                   "Function=\"Cpool_assign\" Error=\"%s\" File=\"%s\" Line=%d",
                   sstrerror(serrno), __FILE__, __LINE__);
         return (SYERR);
@@ -299,7 +299,7 @@ int getreq(struct vmgr_srv_thread_info *thip,
     *req_type = n;
     unmarshall_LONG (rbp, msglen);
     if (msglen > REQBUFSZ) {
-      vmgrlogit("MSG=\"Error: Request too large\" MaxSize=%d "
+      vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Request too large\" MaxSize=%d "
                 "File=\"%s\" Line=%d", REQBUFSZ, __FILE__, __LINE__);
       return (-1);
     }
@@ -309,7 +309,7 @@ int getreq(struct vmgr_srv_thread_info *thip,
       return (EVMGRNACT);
     }
     if (getpeername (thip->s, (struct sockaddr *) &from, &fromlen) < 0) {
-      vmgrlogit("MSG=\"Error: Failed to getpeername\" "
+      vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Failed to getpeername\" "
                 "Function=\"getpeername\" Error=\"%s\" File=\"%s\" Line=%d",
                 neterror(), __FILE__, __LINE__);
       return (SEINTERNAL);
@@ -324,11 +324,11 @@ int getreq(struct vmgr_srv_thread_info *thip,
     return (0);
   } else {
     if (l > 0) {
-      vmgrlogit("MSG=\"Error: Netread failure\" Function=\"netread\" "
+      vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Netread failure\" Function=\"netread\" "
                 "Error=\"1\" File=\"%s\" Line=%d",
                 __FILE__, __LINE__);
     } else if (l < 0) {
-      vmgrlogit("MSG=\"Error: Failed to netread\" Function=\"netread\" "
+      vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Failed to netread\" Function=\"netread\" "
                 "Error=\"%s\" File=\"%s\" Line=%d",
                 neterror(), __FILE__, __LINE__);
     }
@@ -564,7 +564,7 @@ void *procconnection(void *const arg) {
   char *username;
   Csec_server_reinitContext(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
   if (Csec_server_establishContext(&(thip->sec_ctx),thip->s) < 0) {
-    vmgrlogit("MSG=\"Error: Could not establish security context\" "
+    vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Could not establish security context\" "
               "Error=\"%s\"", Csec_getErrorMessage());
     close (thip->s);
     thip->s = -1;
@@ -572,7 +572,7 @@ void *procconnection(void *const arg) {
   }
   /* Connection could be done from another castor service */
   if ((c = Csec_server_isClientAService(&(thip->sec_ctx))) >= 0) {
-    vmgrlogit("MSG=\"CSEC: Client is castor service\" Type=%d", c)
+    vmgrlogit(VMGR_LOG_ERR, "MSG=\"CSEC: Client is castor service\" Type=%d", c)
       thip->Csec_service_type = c;
     thip->Csec_service_type = c;
   }
@@ -580,13 +580,13 @@ void *procconnection(void *const arg) {
     if (Csec_server_mapClientToLocalUser(&(thip->sec_ctx), &username,
                                          &(thip->Csec_uid),
                                          &(thip->Csec_gid)) == 0) {
-      vmgrlogit("MSG=\"Mapping to local user successful\" CsecUid=%d "
+      vmgrlogit(VMGR_LOG_INFO, "MSG=\"Mapping to local user successful\" CsecUid=%d "
                 "CsecGid=%d Username=\"%s\"",
                 thip->Csec_uid, thip->Csec->gid, username);
       thip->Csec_service_type = -1;
     }
     else {
-      vmgrlogit("MSG=\"Error: Could not map to local user\n");
+      vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Could not map to local user\n");
       close (thip->s);
       thip->s = -1;
       return (NULL);
