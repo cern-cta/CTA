@@ -147,8 +147,6 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     file_list_t *tmpfile;
     int rc = 0;
     int mode;
-    char *p;
-    char dir_delim = 0;
     struct stat64 st;
     rtcpFileRequest_t *filereq;
     char errmsgtxt[CA_MAXLINELEN+1];
@@ -553,43 +551,6 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                 sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
                 SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
                 if ( rc == -1 ) return(rc);
-            }
-            /*
-             * If the file doesn't exist we should at least make sure 
-             * that the target directory exists.
-             */
-            if ( rc == -1 ) {
-                p = strrchr(filereq->file_path,'/');
-                if ( p == NULL ) p = strrchr(filereq->file_path,'\\');
-                if ( p != NULL ) {
-                    dir_delim = *p;
-                    *p = '\0';
-                }
-
-                struct stat xrootStat;
-                rc = rtcp_xroot_stat(filereq->file_path,&xrootStat);
-
-                if ( rc == -1 ) {
-                    serrno = errno;
-                    sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
-                    if ( p != NULL ) *p = dir_delim;
-                    SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
-                    if ( rc == -1 ) return(rc);
-                }
-                else {
-                    st.st_mode=xrootStat.st_mode;
-                }
-                /*
-                 * Couldn't find S_ISDIR() macro under NT. 
-                 */
-                if ( !(((st.st_mode) & S_IFMT) == S_IFDIR) ) {
-                    serrno = ENOTDIR;
-                    sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
-                    if ( p != NULL ) *p = dir_delim;
-                    SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
-                    if ( rc == -1 ) return(rc);
-                }
-                if ( p != NULL ) *p = dir_delim;
             }
         }
     }
