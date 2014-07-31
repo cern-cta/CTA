@@ -51,6 +51,35 @@
 #include <sys/wait.h>
 
 //------------------------------------------------------------------------------
+// constructAnException
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult 
+castor::tape::tapeserver::daemon::ProcessForker::
+constructAnException(const std::string& message,bool continueMainEventLoop) {
+    castor::messages::Exception reply;
+    reply.set_code(SEINTERNAL);
+    reply.set_message(message);
+    MsgHandlerResult result;
+    result.continueMainEventLoop = continueMainEventLoop;
+    ProcessForkerUtils::serializePayload(result.reply, reply);
+    return result;
+  }
+//------------------------------------------------------------------------------
+// returnAnPidOfForkedSession
+//------------------------------------------------------------------------------  
+castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult 
+castor::tape::tapeserver::daemon::ProcessForker::
+returnAnPidOfForkedSession(pid_t forkRc,bool continueMainEventLoop) {
+    // Create and return the result of handling the incomming request
+    castor::messages::ForkSucceeded reply;
+    reply.set_pid(forkRc);
+    MsgHandlerResult result;
+    result.continueMainEventLoop = continueMainEventLoop;
+    ProcessForkerUtils::serializePayload(result.reply, reply);
+    
+    return result;
+  }
+//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::ProcessForker::ProcessForker(
@@ -295,22 +324,11 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 
   // If fork failed
   if(0 > forkRc) {
-    // Log an error message and return
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    params.push_back(log::Param("message", message));
-    m_log(LOG_ERR,
-      "ProcessForker failed to fork cleaner session for tape drive",
-      params);
-
+    const std::string& errorMsg = "Failed to fork cleaner session for tape drive";
+    logForkError(errorMsg,params);
+    
     // Create and return the result of handling the incomming request
-    messages::Exception reply;
-    reply.set_code(SEINTERNAL);
-    reply.set_message("Failed to fork cleaner session for tape drive");
-    MsgHandlerResult result;
-    result.continueMainEventLoop = true;
-    ProcessForkerUtils::serializePayload(result.reply, reply);
-    return result;
+    return constructAnException(errorMsg);
 
   // Else if this is the parent process
   } else if(0 < forkRc) {
@@ -320,13 +338,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     // TO BE DONE
     waitpid(forkRc, NULL, 0);
 
-    // Create and return the result of handling the incomming request
-    messages::ForkSucceeded reply;
-    reply.set_pid(forkRc);
-    MsgHandlerResult result;
-    result.continueMainEventLoop = true;
-    ProcessForkerUtils::serializePayload(result.reply, reply);
-    return result;
+    return returnAnPidOfForkedSession(forkRc);
 
   // Else this is the child process
   } else {
@@ -357,35 +369,15 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 
   // If fork failed
   if(0 > forkRc) {
-    // Log an error message and return
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    params.push_back(log::Param("message", message));
-    m_log(LOG_ERR,
-      "ProcessForker failed to fork data-transfer session for tape drive",
-      params);
-
-    // Create and return the result of handling the incomming request
-    messages::Exception reply;
-    reply.set_code(SEINTERNAL);
-    reply.set_message("Failed to fork data-transfer session for tape drive");
-    MsgHandlerResult result;
-    result.continueMainEventLoop = true;
-    ProcessForkerUtils::serializePayload(result.reply, reply);
-    return result;
-
+    const std::string& errorMsg = "Failed to fork data-transfer session for tape drive";
+    logForkError(errorMsg,params);
+    return constructAnException(errorMsg);
   // Else if this is the parent process
   } else if(0 < forkRc) {
     log::Param params[] = {log::Param("pid", forkRc)};
     m_log(LOG_INFO, "ProcessForker forked data-transfer session", params);
 
-    // Create and return the result of handling the incomming request
-    messages::ForkSucceeded reply;
-    reply.set_pid(forkRc);
-    MsgHandlerResult result;
-    result.continueMainEventLoop = true;
-    ProcessForkerUtils::serializePayload(result.reply, reply);
-    return result;
+    return returnAnPidOfForkedSession(forkRc);
 
   // Else this is the child process
   } else {
@@ -430,20 +422,11 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   // If fork failed
   if(0 > forkRc) {
     // Log an error message and return
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    params.push_back(log::Param("message", message));
-    m_log(LOG_ERR, "ProcessForker failed to fork label session for tape drive",
-      params);
-
+    const std::string& errorMsg = "Failed to fork label session for tape drive";
+    logForkError(errorMsg,params);
+    
     // Create and return the result of handling the incomming request
-    messages::Exception reply;
-    reply.set_code(SEINTERNAL);
-    reply.set_message("Failed to fork label session for tape drive");
-    MsgHandlerResult result;
-    result.continueMainEventLoop = true;
-    ProcessForkerUtils::serializePayload(result.reply, reply);
-    return result;
+    return constructAnException(errorMsg);
 
   // Else if this is the parent process
   } else if(0 < forkRc) {
@@ -454,12 +437,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     waitpid(forkRc, NULL, 0);
 
     // Create and return the result of handling the incomming request
-    messages::ForkSucceeded reply;
-    reply.set_pid(forkRc);
-    MsgHandlerResult result;
-    result.continueMainEventLoop = true;
-    ProcessForkerUtils::serializePayload(result.reply, reply);
-    return result;
+    return returnAnPidOfForkedSession(forkRc);
 
   // Else this is the child process
   } else {
