@@ -39,7 +39,7 @@ vmgr_oracle_error(char *func,
     err_msg[err_len - 1] = '\0';
   }
 
-  vmgrlogit("MSG=\"Error: Encountered ORACLE error\" Method=\"%s\" "
+  vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Encountered ORACLE error\" Method=\"%s\" "
             "Function=\"%s\" Error=\"%.*s\"",
             sql_method, func, err_len, err_msg);
 
@@ -1337,7 +1337,7 @@ int vmgr_opendb(struct vmgr_dbfd *dbfd)
   db_user[0] = db_pwd[0] = db_srv[0] = '\0';
   serrno = 0;
   if ((fp = fopen(vmgrconfigfile, "r")) == NULL) {
-    vmgrlogit("MSG=\"Error: Failed to open VMGCONFIG\" Path=\"%s\" "
+    vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Failed to open VMGCONFIG\" Path=\"%s\" "
               "Function=\"%s\" Error=\"%s\"",
               vmgrconfigfile, func, strerror(errno));
     return (-1);
@@ -1365,7 +1365,7 @@ int vmgr_opendb(struct vmgr_dbfd *dbfd)
       (db_pwd[0]  == '\0') ||
       (db_srv[0]  == '\0') ||
       (db_name[0] == '\0')) {
-    vmgrlogit("MSG=\"Error: Failed to extract database connect string\" "
+    vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Failed to extract database connect string\" "
               "Path=\"%s\" Function=\"%s\"", vmgrconfigfile, func);
     return (-1);
   }
@@ -1376,7 +1376,7 @@ int vmgr_opendb(struct vmgr_dbfd *dbfd)
   } else {
     sprintf(db_connect, "%s/%s", db_user, db_pwd);
   }
-  vmgrlogit("MSG=\"Attempting to connect to database\" "
+  vmgrlogit(VMGR_LOG_INFO, "MSG=\"Attempting to connect to database\" "
             "ConnectionDetails=\"%s/*******@%s\"", db_user, db_srv);
 
   EXEC SQL CONNECT :db_connect;
@@ -1395,12 +1395,12 @@ int vmgr_opendb(struct vmgr_dbfd *dbfd)
   case 0: {
     if (strcmp(schema_version, VMGRSCHEMAVERSION) != 0) {
       vmgr_closedb (dbfd);
-      vmgrlogit("MSG=\"Error: Incorrect schema version detected, "
+      vmgrlogit(VMGR_LOG_ERR, "MSG=\"Error: Incorrect schema version detected, "
                 "disconnecting\" SchemaVersion=\"%s\" RequiredVersion=\"%s\"",
                 schema_version, VMGRSCHEMAVERSION);
       return -1;
     }
-    vmgrlogit("MSG=\"Connection successful\" SchemaVersion=\"%s\"",
+    vmgrlogit(VMGR_LOG_INFO, "MSG=\"Connection successful\" SchemaVersion=\"%s\"",
               schema_version);
     return 0;
   }

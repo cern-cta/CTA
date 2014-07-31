@@ -117,7 +117,31 @@ int closelog() {
   return 0;
 }
 
-int _format_header(char *buffer, size_t buflen) {
+/**
+ * Returns the syslog string representation of teh specified vmgr log level.
+ * If the the specified log level is unknown then "Info" is returned.
+ *
+ * This function is thread safe as it only returns addresses to C string
+ * literals.
+ *
+ * @param lvl The VMGR log level.
+ * @return The syslog string representation.
+ */
+static const char *vmgrLogLvlToSyslogStr(const VmgrLogLevel lvl) {
+  switch(lvl) {
+  case VMGR_LOG_EMERG  : return "Emerg";
+  case VMGR_LOG_ALERT  : return "Alert";
+  case VMGR_LOG_CRIT   : return "Crit";
+  case VMGR_LOG_ERR    : return "Error";
+  case VMGR_LOG_WARNING: return "Warn";
+  case VMGR_LOG_NOTICE : return "Notice";
+  case VMGR_LOG_INFO   : return "Info";
+  case VMGR_LOG_DEBUG  : return "Debug";
+  default: return "LOG_INFO";
+  }
+}
+
+static int _format_header(const VmgrLogLevel lvl, char *buffer, size_t buflen) {
 
   /* Variables */
   struct timeval tv;
@@ -151,7 +175,7 @@ int _format_header(char *buffer, size_t buflen) {
    */
   len = snprintf(buffer, buflen,
                  "%04d-%02d-%02dT%02d:%02d:%02d.%06u%c%02d:%02d "
-                 "%s %s[%d]: LVL=Info TID=%d ",
+                 "%s %s[%d]: LVL=%s TID=%d ",
                  tm->tm_year + 1900,
                  tm->tm_mon  + 1,
                  tm->tm_mday,
@@ -165,11 +189,12 @@ int _format_header(char *buffer, size_t buflen) {
                  app_localhost == NULL ? "127.0.0.1" : app_localhost,
                  app_ident[0]  == '\0' ? "unknown"   : app_ident,
                  getpid(),
+                 vmgrLogLvlToSyslogStr(lvl),
                  (int)syscall(__NR_gettid));
   return len;
 }
 
-int _write_to_log(char *buffer, int buflen) {
+static int _write_to_log(char *buffer, int buflen) {
 
   /* Variables */
   int fd;
@@ -192,8 +217,9 @@ int _write_to_log(char *buffer, int buflen) {
   return 0;
 }
 
-int vmgrlogreq(struct vmgr_srv_request_info *reqinfo,
-	       const char *func,
+int vmgrlogreq(const VmgrLogLevel lvl,
+               struct vmgr_srv_request_info *const reqinfo,
+	       const char *const func,
 	       const int errorcode) {
 
   /* Variables */
@@ -207,7 +233,7 @@ int vmgrlogreq(struct vmgr_srv_request_info *reqinfo,
     return 0;
 
   /* Retrieve the header part of the message. */
-  len = _format_header(buffer, sizeof(buffer));
+  len = _format_header(lvl, buffer, sizeof(buffer));
 
   /* Here we format the message parameters in accordance with the DLF
    * specifications. First we handle the REQID and then the request
@@ -248,7 +274,7 @@ int vmgrlogreq(struct vmgr_srv_request_info *reqinfo,
   return 0;
 }
 
-int vmgrlogit(const char *format, ...) {
+int vmgrlogit(const VmgrLogLevel lvl, const char *format, ...) {
 
   /* Variables */
   char    buffer[LOGBUFSZ * 2]; // 4096 * 2
@@ -260,7 +286,7 @@ int vmgrlogit(const char *format, ...) {
     return 0;
 
   /* Retrieve the header part of the message. */
-  len = _format_header(buffer, sizeof(buffer));
+  len = _format_header(lvl, buffer, sizeof(buffer));
 
   /* Now for the message body, if the message is truncated reset the len
    * variable, there isn't much we can do about this.
