@@ -4,6 +4,9 @@
     missingok
     rotate 500
     delaycompress
+    postrotate
+        /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
 }
 
 /var/log/castor/repackd*.log {
@@ -12,4 +15,7 @@
     missingok
     rotate 500
     delaycompress
+    postrotate
+        /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
 }
