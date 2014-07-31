@@ -68,6 +68,7 @@ void DiskReadTask::execute(log::LogContext& lc) {
   utils::Timer localTime;
   size_t blockId=0;
   size_t migratingFileSize=m_migratedFile->fileSize();
+  
   try{
     //we first check here to not even try to open the disk  if a previous task has failed
     //because the disk could the very reason why the previous one failed, 
@@ -75,6 +76,11 @@ void DiskReadTask::execute(log::LogContext& lc) {
     hasAnotherTaskTailed();
     
     tape::diskFile::ReadFile sourceFile(m_migratedFile->path());
+    if(migratingFileSize != sourceFile.size()){
+      throw castor::tape::Exception("Mismtach between size given by the client "
+              "and the real one");
+    }
+    
     m_stats.openingTime+=localTime.secs(utils::Timer::resetCounter);
      
     LogContext::ScopedParam sp(lc, Param("filePath",m_migratedFile->path()));
