@@ -7,12 +7,13 @@
 use strict;
 use IPC::Open2;
 use IO::Select;
+use Fcntl qw(:seek);
 
 sub main();
-main;
-
 my %parameters;
 my $confFile = "/etc/castor/SQLSchemaTests.conf";
+
+main;
 
 sub connString ( $ ) {
   my $schema = shift;
@@ -48,12 +49,16 @@ sub getParamaters () {
   open(CONF, "< $confFile")
     or die "Could not open $confFile for reading: $!";
   foreach my $param (@params) {
+    my $found = 0;
     seek(CONF, 0, SEEK_SET);
     while (<CONF>) {
       if ( /^$param=(.*)$/ ) {
         $parameters{$param}=$1;
-        next;
+        $found = 1;
+        last;
       }
+    }
+    if ( !$found ) {
       close CONF;
       die "Could not find parameter $param in $confFile";
     }
@@ -71,8 +76,8 @@ sub filterSQL ( $$$$$ ) {
   $line=~ s/\&stageUid/$parameters{stageUid}/g;
   $line=~ s/\&stageGid/$parameters{stageGid}/g;
   $line=~ s/\&adminList/$parameters{adminList}/g;
-  $line=~ s/\&instanceName/$parameters{SQLtestInstance}/g;
-  $line=~ s/\&stagerNsHost/$parameters{SQLTestNameServer}/g;
+  $line=~ s/\&instanceName/$parameters{instanceName}/g;
+  $line=~ s/\&stagerNsHost/$parameters{stagerNsHost}/g;
   $line=~ s/\&cnsUser/$NsDbUser/g;
   $line=~ s/\&cnsPasswd/$NsDbPasswd/g;
   $line=~ s/\&cnsDbName/$NsDbName/g;
