@@ -1229,7 +1229,13 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setBulkFileMigrationResu
       blockIds.push_back(blockIdHex.str());
       checksumNames.push_back((*s)->checksumName());
       checksums.push_back(occiNumber((*s)->checksum()));
-      compressedFileSizes.push_back(occiNumber((*s)->compressedFileSize()));
+      // Our file statistics in the name server will break if the compressed
+      // file size is not at least 1. Report it as such.
+      {
+        u_signed64 cfs = (*s)->compressedFileSize();
+        if (!cfs) cfs = 1;
+        compressedFileSizes.push_back(occiNumber(cfs));
+      }
       fileSizes.push_back(occiNumber((*s)->fileSize()));
       errorCodes.push_back(0);
       errorMessages.push_back(std::string(""));

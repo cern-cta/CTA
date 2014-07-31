@@ -198,6 +198,9 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::bulkUpdateTapeInVmgr(
 
   // Data sanity OK, update vmgr and continue to migrate from the tape
   serrno = 0;
+  // Division by zero protection. The data compression being just an estimate,
+  // if we get a totalCompressedBytes of zero, we bump it up to 1.
+  if (!totalCompressedBytes) totalCompressedBytes = 1;
   u_signed64 compression = (totalBytes * 100)/totalCompressedBytes;
   int rc = vmgr_updatetape(vid.c_str(), /* Hardcoded side */ 0, totalBytes,
       compression, filesCount, flags ); // number files always one

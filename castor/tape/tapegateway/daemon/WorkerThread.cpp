@@ -716,7 +716,11 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
            fileMigrationReportList.successfulMigrations().begin();
            sm < fileMigrationReportList.successfulMigrations().end(); sm++) {
       totalBytes += (*sm)->fileSize();
-      totalCompressedBytes += (*sm)->compressedFileSize();
+      // We break our space usage estimates if the compressed file size is less
+      // than a byte. So we do not count for a compressed size of less than 1.
+      u_signed64 cfs = (*sm)->compressedFileSize();
+      if (!cfs) cfs = 1;
+      totalCompressedBytes += cfs;
       highestFseq = std::max((*sm)->fseq(), highestFseq);
       lowestFseq =  std::min((*sm)->fseq(), lowestFseq);
       // Log the file notification while we're at it.
