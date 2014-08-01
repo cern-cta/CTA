@@ -110,7 +110,7 @@ public:
           while (mb->m_payload.append(*rf)) {
             tapeBlock++;
           }
-        } catch (const castor::tape::exceptions::EndOfFile&) {
+        } catch (const castor::exception::EndOfFile&) {
           // append() signaled the end of the file.
           stillReading = false;
         }
