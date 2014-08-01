@@ -26,15 +26,10 @@
 
 """disk server manager daemon of CASTOR."""
 
-import sys
-import getopt
+import sys, getopt, socket, os, stat, traceback, daemon
 import rpyc, rpyc.utils.server
-import socket
-import traceback
-import connectionpool, castor_tools, localqueue, runningtransfersset
-import manager, activitycontrol, activitycontrolchecker, reporter
-import daemon
-import dlf
+import connectionpool, castor_tools, localqueue, runningtransfersset, dlf
+import manager, activitycontrol, activitycontrolchecker, reporter, moverhandler, clientsreplier, clientslistener
 from diskmanagerdlf import msgs
 from transfer import tupleToTransfer, RunningTransfer, TransferType
 
@@ -183,14 +178,14 @@ def initQueues():
       for transferTuple, startTime in \
               connectionpool.connections.getRunningD2dSourceTransfers(scheduler, socket.getfqdn(), timeout=timeout):
         transfer = tupleToTransfer(transferTuple)
-        runningTransfers.add(RunningTransfer(scheduler, None, startTime, transfer, ''))
+        runningTransfers.add(RunningTransfer(scheduler, None, startTime, transfer))
       # rebuild transfer's queue
       for transferTuple in \
               connectionpool.connections.getQueueingTransfers(scheduler, socket.getfqdn(), timeout=timeout):
         transfer = tupleToTransfer(transferTuple)
         transferQueue.put(scheduler, transfer)
     except connectionpool.Timeout:
-      dlf.writeerr(msgs.NOQUEUERETRIEVED, Scheduler=scheduler, Type='Timeout', Message='Timeout used : %d' % timeout)
+      dlf.writeemerg(msgs.NOQUEUERETRIEVED, Scheduler=scheduler, Type='Timeout', Message='Timeout used : %d' % timeout)
       raise SystemExit
     except Exception, e:
       # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
@@ -199,12 +194,15 @@ def initQueues():
 
 import signal
 def handler(signum, _unused_frame):
-  '''signal handler for the disk server manager daemon, only logging and calling sys.exit'''
+  '''signal handler for the disk server manager daemon, only logging and calling sys.exit if termination requested'''
   # 'Caught signal' message
   dlf.write(msgs.SIGNALRECEIVED, Signal=signum)
-  sys.exit()
+  if signum != signal.SIGPIPE:
+    sys.exit()
+
 signal.signal(signal.SIGTERM, handler)
 signal.signal(signal.SIGINT, handler)
+signal.signal(signal.SIGPIPE, handler)
 
 # Note that from python 2.5 on, the daemonization should use the "with" statement :
 # with daemon.DaemonContext():
@@ -225,23 +223,33 @@ try:
     dlf.init('diskmanagerd')
     # 'DiskManager Daemon started'
     dlf.write(msgs.DISKMANAGERDSTARTED)
+    # set umask to execute movers
+    os.umask(stat.S_IWGRP|stat.S_IWOTH)
+    # move somewhere safe as working directory for the movers
+    os.chdir('/tmp')
     # create a list of running Transfers
     runningTransfers = runningtransfersset.RunningTransfersSet(fake)
     # create a queue of transfers to be run
     transferQueue = localqueue.LocalQueue(runningTransfers)
     # initialize the queues of pending and running transfers using the knowledge of the central schedulers
     initQueues()
+    # launch a clients replier thread to asynchronously send responses to clients
+    clientsReplierThr = clientsreplier.ClientsReplierThread(configuration)
+    # launch a clients listener thread to receive clients callbacks
+    clientsListenerThr = clientslistener.ClientsListenerThread(runningTransfers, configuration)
     # launch a processing thread that will regularly check if we need to start new transfers from the queue
-    activityControl = activitycontrol.ActivityControlThread(runningTransfers, transferQueue,
-                                                            configuration, fake)
+    activityControlThr = activitycontrol.ActivityControlThread(runningTransfers, transferQueue, configuration, \
+                                                               clientsReplierThr, clientsListenerThr, fake)
     # launch a processing thread that will regularly check if the activityControl one gets stuck
-    activityControlChecker = activitycontrolchecker.ActivityControlCheckerThread \
-                             (runningTransfers, transferQueue, configuration, activityControl)
+    activityControlCheckerThr = activitycontrolchecker.ActivityControlCheckerThread \
+                                  (runningTransfers, transferQueue, configuration, activityControlThr)
     # launch a management thread that will regularly check transfer completions, d2d transfer to be restarted
     # and transfers to be dropped from the queue, because of timeouts, lack of space, etc...
     managerThr = manager.ManagerThread(runningTransfers, transferQueue)
     # launch a reporting thread that will regularly report status of this machine to transfermanagerd
     reporterThr = reporter.ReporterThread(runningTransfers, configuration)
+    # launch a mover handler thread to accept file close requests from movers
+    moverHandlerThr = moverhandler.MoverHandlerThread(runningTransfers, configuration)
     # launch a service listening for new transfers from the central scheduler and filling the queue
     # By default, the number of threads in the server is the number of server hosts + 1
     t = rpyc.utils.server.ThreadPoolServer \
@@ -253,10 +261,13 @@ try:
     t.start()
     # we reach this point when the service has stopped
     # so let's stop the other threads
-    activityControlChecker.stop()
-    activityControl.stop()
+    activityControlCheckerThr.stop()
+    activityControlThr.stop()
     managerThr.stop()
     reporterThr.stop()
+    clientsListenerThr.stop()
+    clientsReplierThr.stop()
+    moverHandlerThr.stop()
   except SystemExit:
     # we are exiting, fine
     pass
@@ -269,13 +280,13 @@ try:
     raise
 finally:
   try:
-    activityControlChecker.stop()
-    activityControlChecker.join()
+    activityControlCheckerThr.stop()
+    activityControlCheckerThr.join()
   except Exception:
     pass
   try:
-    activityControl.stop()
-    activityControl.join()
+    activityControlThr.stop()
+    activityControlThr.join()
   except Exception:
     pass
   try:
@@ -286,6 +297,21 @@ finally:
   try:
     reporterThr.stop()
     reporterThr.join()
+  except Exception:
+    pass
+  try:
+    moverHandlerThr.stop()
+    moverHandlerThr.join()
+  except Exception:
+    pass
+  try:
+    clientsListenerThr.stop()
+    clientsListenerThr.join()
+  except Exception:
+    pass
+  try:
+    clientsReplierThr.stop()
+    clientsReplierThr.join()
   except Exception:
     pass
   if daemonize:

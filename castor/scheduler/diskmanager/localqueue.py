@@ -128,10 +128,6 @@ class LocalQueue(Queue.Queue):
     if self.runningTransfers.nbUsedSlots() <= nbSlots * (100 - guaranteedUserSlotsPercentage) / 100:
       # no, so we accept any kind of backfill job
       try:
-        dlf.writedebug(msgs.SCHEDFROMBACKFILL, \
-                       nbUsedSlots=self.runningTransfers.nbUsedSlots(), \
-                       nbSlots=nbSlots, \
-                       guaranteedUserSlotsPercentage=guaranteedUserSlotsPercentage)
         # first check the d2dsrc jobs in the backfill queue, without waiting
         transferId = self.d2dBackfillQueue.get(False)
         # found one, return it
@@ -157,13 +153,13 @@ class LocalQueue(Queue.Queue):
             # Note that we may starve d2dsrc jobs in case of heavy user activity
             # coupled with heavy rebalancing! In this case the d2d jobs will wait
             # until the total activity goes below 50% of the available slots.
-            dlf.writedebug(msgs.PUTJOBINBACKFILL, transferId=transferId, \
+            dlf.writedebug(msgs.PUTJOBINBACKFILL, subreqId=transferId, \
                            nbUsedSlots=self.runningTransfers.nbUsedSlots(), \
                            nbSlots=nbSlots, \
                            guaranteedUserSlotsPercentage=guaranteedUserSlotsPercentage)
             self.d2dBackfillQueue.put(transferId)
           else:
-            dlf.writedebug(msgs.SCHEDUSERJOBUNDERPRESSURE, transferId=transferId, \
+            dlf.writedebug(msgs.SCHEDUSERJOBUNDERPRESSURE, subreqId=transferId, \
                            nbUsedSlots=self.runningTransfers.nbUsedSlots(), \
                            nbSlots=nbSlots, \
                            guaranteedUserSlotsPercentage=guaranteedUserSlotsPercentage)
@@ -183,7 +179,7 @@ class LocalQueue(Queue.Queue):
       try:
         # try to get a priority transfer first
         transferId = self.priorityQueue.get(False)
-        dlf.writedebug(msgs.SCHEDPRIORITY, transferId=transferId)
+        dlf.writedebug(msgs.SCHEDPRIORITY, subreqId=transferId)
       except Queue.Empty:
         # else get next transfer from either the regular or the backfill queue,
         # which is guaranteed to be taken at least once
@@ -203,7 +199,7 @@ class LocalQueue(Queue.Queue):
               raise Queue.Empty
             # block and timeout after 1s so that we can go back to the other queues or stop
             transferId = Queue.Queue.get(self, timeout=1)
-            dlf.writedebug(msgs.SCHEDUSERJOB, transferId=transferId)
+            dlf.writedebug(msgs.SCHEDUSERJOB, subreqId=transferId)
             self.countRegularJobs += 1
         except Queue.Empty:
           try:
@@ -458,7 +454,7 @@ class LocalQueue(Queue.Queue):
     return res
 
   def transferset(self):
-    '''Lists all pending and running transfers'''
+    '''Lists all pending transfers'''
     self.lock.acquire()
     try:
       return set([(transferId, qTransfer.transfer.reqId) for transferId, qTransfer in self.queueingTransfers.items()])

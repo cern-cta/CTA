@@ -26,13 +26,13 @@
 """activity control thread of the disk server manager daemon of CASTOR."""
 
 import os, sys, threading, time, subprocess
-import connectionpool, dlf
-from diskmanagerdlf import msgs
-from transfer import TransferType, RunningTransfer, transferToCmdLine
 import Crypto.Hash.SHA as SHA1
 import Crypto.PublicKey.RSA as RSA
 import Crypto.Signature.PKCS1_v1_5 as PKCS1
 import base64
+import connectionpool, dlf, clientsreplier
+from diskmanagerdlf import msgs
+from transfer import TransferType, RunningTransfer
 
 def signBase64(content, RSAKey):
     '''signs content with the given key and encode the result in base64'''
@@ -45,16 +45,16 @@ def buildXrootURL(self, diskserver, path):
     '''Builds a xroot valid url for the given path on the given diskserver'''
     # base url and key parameter
     url = 'root://'+diskserver+':1095//dummy?'
-    opaque_dict= {'castor2fs.sfn' : '', 
-                  'castor2fs.pfn1' : path, 
-                  'castor2fs.pfn2' : '', 
-                  'castor2fs.id' : '',
-                  'castor2fs.client_sec_uid' : '', 
-                  'castor2fs.client_sec_gid' : '', 
-                  'castor2fs.accessop' : '0',
-                  'castor2fs.exptime' : str(int(time.time()) + 3600),
-                  'castor2fs.manager' : ''}
-          
+    opaque_dict = {'castor2fs.sfn' : '',
+                   'castor2fs.pfn1' : path,
+                   'castor2fs.pfn2' : '',
+                   'castor2fs.id' : '',
+                   'castor2fs.client_sec_uid' : '',
+                   'castor2fs.client_sec_gid' : '',
+                   'castor2fs.accessop' : '0',
+                   'castor2fs.exptime' : str(int(time.time()) + 3600),
+                   'castor2fs.manager' : ''}
+
     # signature part
     try:
         # get Xroot RSA key
@@ -62,22 +62,22 @@ def buildXrootURL(self, diskserver, path):
                                               '/opt/xrootd/keys/key.pem')
         key = RSA.importKey(open(keyFile, 'r').read())
         # sign opaque part obtained by concatenating the values
-        opaque_token = ''.join([opaque_dict['castor2fs.sfn'], 
+        opaque_token = ''.join([opaque_dict['castor2fs.sfn'],
                                 opaque_dict['castor2fs.pfn1'],
                                 opaque_dict['castor2fs.pfn2'],
-                                opaque_dict['castor2fs.id'], 
+                                opaque_dict['castor2fs.id'],
                                 opaque_dict['castor2fs.client_sec_uid'],
                                 opaque_dict['castor2fs.client_sec_gid'],
-                                opaque_dict['castor2fs.accessop'], 
-                                opaque_dict['castor2fs.exptime'], 
-                                opaque_dict['castor2fs.manager']]) 
+                                opaque_dict['castor2fs.accessop'],
+                                opaque_dict['castor2fs.exptime'],
+                                opaque_dict['castor2fs.manager']])
         signature = signBase64(opaque_token, key)
         opaque = ""
 
         # build the opaque info
         for key, val in opaque_dict.iteritems():
           opaque += key + '=' + val + '&'
-                
+
         url += opaque + 'castor2fs.signature=' + signature
         return url
     except Exception, e:
@@ -88,13 +88,15 @@ class ActivityControlThread(threading.Thread):
   '''activity control thread.
   This thread is responsible for starting new transfers when free slots are available'''
 
-  def __init__(self, runningTransfers, transferQueue, configuration, fake):
+  def __init__(self, runningTransfers, transferQueue, configuration, clientsReplier, clientsListener, fake):
     '''constructor'''
     super(ActivityControlThread, self).__init__(name='ActivityControl')
     self.alive = True
     self.runningTransfers = runningTransfers
     self.transferQueue = transferQueue
     self.configuration = configuration
+    self.clientsReplier = clientsReplier
+    self.clientsListener = clientsListener
     self.fake = fake
     # last time we've tried to schedule a transfer. This is used by the ActivityControlChecker
     # to find out whether the ActivityControl thread is dead or not
@@ -131,7 +133,7 @@ class ActivityControlThread(threading.Thread):
     # "Transfer starting" message
     dlf.write(msgs.TRANSFERSTARTING, subreqid=transfer.transferId,
               reqid=transfer.reqId, fileId=transfer.fileId,
-              TransferType=TransferType.toStr(transfer.transferType),
+              TtransferType=TransferType.toStr(transfer.transferType),
               cmdLine=' '.join(cmdLine))
     # start transfer process
     process = 0
@@ -141,6 +143,24 @@ class ActivityControlThread(threading.Thread):
       # avoid raising standard exception, as some are used for dedicated purposes
       raise Exception(str(e))
     self.runningTransfers.add(RunningTransfer(scheduler, process, time.time(), transfer, destDcPath))
+
+  def startMover(self, transfer):
+    '''effectively starts the required mover after the client had initiated its connection'''
+    try:
+      # log "Executing mover"
+      dlf.write(msgs.MOVERSTARTING, cmdLine=' '.join(transfer.toCmdLine()), env=transfer.getEnvironment(), moverFd=transfer.moverFd)
+      # execute mover, with the environment specific to this transfer. Note the 'inetd mode': we pass the fd
+      # of the connection that has just been opened with the client as stdin/out/err.
+      process = subprocess.Popen(transfer.toCmdLine(), close_fds=True, \
+                                 stdin=transfer.moverFd, stdout=transfer.moverFd, stderr=transfer.moverFd, \
+                                 env=transfer.getEnvironment())
+      # and store the process in our set of running transfers
+      self.runningTransfers.setProcess(transfer.transferId, process)
+    except Exception, e:
+      # log "Failed to execute mover" with all details about the transfer
+      dlf.writeerr(msgs.MOVERSTARTFAILED, transfer=transfer)
+      # clean up this transfer from the list of running transfers
+      self.runningTransfers.remove([transfer.transferId])
 
   def run(self):
     '''main method, containing the infinite loop'''
@@ -166,32 +186,49 @@ class ActivityControlThread(threading.Thread):
               # this may raise a ValueError exception if we should give up (e.g. the
               # job has already started somewhere else)
               result = connectionpool.connections.transferStarting(scheduler, transfer.asTuple())
-              # in case of d2dsrc, do not actually start for real, only take note
               if transfer.transferType == TransferType.D2DSRC:
+                # in this case do not actually start for real, only take note
                 # "Transfer starting" message
                 dlf.write(msgs.TRANSFERSTARTING, subreqid=transfer.transferId,
                           reqid=transfer.reqId, fileId=transfer.fileId,
-                          TransferType=TransferType.toStr(transfer.transferType))
-                self.runningTransfers.add(RunningTransfer(scheduler, None, time.time(), transfer, None))
+                          transferType=TransferType.toStr(transfer.transferType))
+                self.runningTransfers.add(RunningTransfer(scheduler, None, time.time(), transfer))
               elif transfer.transferType == TransferType.D2DDST:
-                # we have to launch the actual transfer
+                # here we have to launch the actual transfer
                 srcPath, dstPath = result
                 self.startD2DTransfer(scheduler, transfer, srcPath, dstPath)
               else:
+                # this is a regular transfer, we have to answer the client
+                # store the destination path in the transfer object
+                transfer.destDcPath = result
                 # "Transfer starting" message
                 dlf.write(msgs.TRANSFERSTARTING, subreqid=transfer.transferId,
                           reqid=transfer.reqId, fileId=transfer.fileId,
-                          TransferType=TransferType.toStr(transfer.transferType))
-                # start the transfer
+                          transferType=TransferType.toStr(transfer.transferType))
+                dlf.writedebug(msgs.TRANSFERSTARTING, transfer=transfer)
                 if not self.fake:
-                  try:
-                    process = subprocess.Popen(transferToCmdLine(transfer), close_fds=True, stderr=subprocess.PIPE)
-                  except Exception, e:
-                    # avoid raising standard exception, as some are used for dedicated purposes
-                    raise Exception(str(e))
-                else:
-                  process = 0
-                self.runningTransfers.add(RunningTransfer(scheduler, process, time.time(), transfer, None))
+                  if transfer.protocol != 'xroot':
+                    # prepare the listening port for the client to connect. The mover is executed only after the client connects back
+                    moverPort = self.clientsListener.createSocketForMover(qTransfer, self.startMover)
+                    # the 
+                    destPath = transfer.reqId
+                  else:
+                    # xroot is special here: we don't create a socket for the mover, but instead we tell
+                    # the xroot server (through the redirector) to use our mover handler port for telling
+                    # us when the file was effectively opened and closed
+                    moverPort = self.configuration.getValue('DiskManager', 'MoverHandlerPort', 15511)
+                    # and on top, we have to tell the physical destination as the path in the response
+                    destPath = transfer.destDcPath
+                  # prepare the response to the client with the created port
+                  ioresp = clientsreplier.IOResponse(clientsreplier.IOResponse.READY, '', 0, transfer.fileId[1], transfer.transferId, \
+                                                     0, '', transfer.reqId, destPath, moverPort, \
+                                                     'rfio' if transfer.protocol == 'rfio3' else transfer.protocol)   # rfio and rfio3 are the same thing
+                  # and asynchronously answer client
+                  self.clientsReplier.sendResponse(qTransfer, transfer.clientIpAddress, transfer.clientPort, ioresp)
+                # from now on we consider the transfer running, even if the client didn't come yet:
+                # this ensures that the slot is reserved for it. See how it is taken out of the running
+                # transfers in clientslistener in case of failures or time outs.
+                self.runningTransfers.add(RunningTransfer(qTransfer.scheduler, None, time.time(), qTransfer.transfer))
           except connectionpool.Timeout:
             # we timed out in the call to transfersCanceled or transferStarting. We need to try again
             # thus we put the transfer into the priority queue and inform the scheduler
@@ -207,13 +244,22 @@ class ActivityControlThread(threading.Thread):
                               reqid=transfer.reqId, fileId=transfer.fileId, originalError='Timeout', error=e)
           except ValueError, e:
             # 'Transfer start canceled' message
-            dlf.writedebug(msgs.TRANSFERSTARTCANCELED, reason=e.args, subreqid=transfer.transferId,
+            dlf.writedebug(msgs.TRANSFERSTARTCANCELED, reason=e.args, subreqId=transfer.transferId,
                            fileId=transfer.fileId)
             # the transfer has already started somewhere else, or has been canceled, so give up
+          except IOError, e:
+            # 'Transfer start canceled' message
+            dlf.write(msgs.TRANSFERSTARTCANCELED, errCode=e.errno, reason=e.strerror,
+                      subreqId=transfer.transferId, fileId=transfer.fileId)
+            # this is a permanent failure because of the stager, so try and inform the client that the transfer cannot take place
+            ioresp = clientsreplier.IOResponse(clientsreplier.IOResponse.FAILED, '', 0, transfer.fileId, transfer.transferId, \
+                                              e.errno, e.strerror, transfer.reqId, transfer.reqId, 0, transfer.protocol)
+            # use asynch response: exceptions are handled in the clientsReplier thread
+            self.clientsReplier.sendResponse((qTransfer, transfer.clientIpAddress, transfer.clientPort, ioresp))
           except EnvironmentError, e:
             # we have tried to start a disk to disk copy and the source is not yet ready
             # we will put it in a pending queue
-            # "Start postponned until source is ready" message
+            # "Start postponed until source is ready" message
             dlf.write(msgs.POSTPONEDFORSRCNOTREADY, subreqid=transfer.transferId,
                       reqid=transfer.reqId, fileId=transfer.fileId, msg=str(e))
             # put the transfer into the pending queue
@@ -230,7 +276,7 @@ class ActivityControlThread(threading.Thread):
               # 'Failed to start transfer. Putting it back to the queue' message
               dlf.writeerr(msgs.TRANSFERSTARTINGFAILED, subreqid=transfer.transferId,
                            reqid=transfer.reqId, fileId=transfer.fileId, error=e)
-              time.sleep(1)
+              time.sleep(.1)
             except Exception, e2:
               # clear this exception context, i.e. the Timeout, so that we log the original error
               sys.exc_clear()

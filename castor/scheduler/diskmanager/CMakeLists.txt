@@ -35,6 +35,9 @@ set(DISKMANAGERD_LIBS
   activitycontrolchecker.py
   manager.py
   reporter.py
+  moverhandler.py
+  clientsreplier.py
+  clientslistener.py
   diskmanagerdlf.py)
 install(FILES ${DISKMANAGERD_LIBS}
   DESTINATION ${CASTOR_DEST_PYTHON_LIBDIR}

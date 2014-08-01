@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #/******************************************************************************
 # *                   serverqueue.py
 # *
@@ -326,7 +327,7 @@ class ServerQueue(dict):
           # "Transfer had already started. Cancel start" message
           dlf.writedebug(msgs.TRANSFERALREADYSTARTED, DiskServer=transfer.diskServer,
                          subreqId=transfer.transferId, reqId=transfer.reqId)
-          raise ValueError('already started on another host')
+          raise ValueError('Already started on another host')
         # We are now sure that the transfer has not yet started
         # if a destination transfer wants to start, check whether the source is ready
         if transfer.transferType == TransferType.D2DDST and \

@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #/******************************************************************************
 # *                   transfer.py
 # *
@@ -25,7 +26,8 @@
 '''small class defining a CASTOR transfer.
    BaseTransfer is the common abstract class while Transfer and D2dTransfer are the two real types'''
 
-import pwd, subprocess, re, time
+import pwd, subprocess, re, time, os, stat
+import castor_tools
 
 class TransferType(object):
   '''Constants defining the existing types of transfer'''
@@ -55,7 +57,6 @@ class TransferType(object):
       return TransferType.toStr(transfer.transferType) + '-' + D2DTransferType.toStr(transfer.replicationType)
     else:
       return 'UNKNOWN'
-
 
 class TapeTransferType(object):
   '''Constants defining the existing types of tape transfers'''
@@ -128,70 +129,17 @@ def cmdLineToTransfer(cmdLine, scheduler):
     args = dict([cmdLine[i:i+2] for i in range(1, len(cmdLine), 2)])
     # create the transfer object
     if executable == '/usr/bin/stagerjob':
-      _unused_clientType, clientIPAddress, clientPort = args['-C'].split(':')
+      _unused_clientType, clientIpAddress, clientPort = args['-C'].split(':')
       diskServer, mountPoint = args['-R'].split(':')
       creationTime = int(args['-t'])
       transfer = Transfer(args['-s'], args['-r'], (args['-H'], int(args['-F'])),
                           int(args['-u']), int(args['-g']), args['-S'], creationTime,
-                          args['-p'], args['-i'], TransferType.STD, args['-m'], clientIPAddress,
+                          args['-p'], args['-i'], TransferType.STD, args['-m'], clientIpAddress,
                           int(clientPort), int(args['-X']), diskServer, mountPoint)
     # wrap into a RunningTransfer object
     return RunningTransfer(scheduler, None, creationTime, transfer, '')
   else:
     return None
-
-
-def transferToCmdLine(transfer):
-  '''creates a cmdLine for launching a given transfer'''
-  # find out if we have a regular transfer or disk 2 disk copies
-  if transfer.transferType not in (TransferType.D2DDST, TransferType.STD):
-    raise TypeError('no command line for transfer of type %s' % TransferType.toStr(transfer.transferType))
-  else:
-    # first the executable
-    if transfer.transferType == TransferType.D2DDST:
-      cmdLine = ['/usr/bin/d2dtransfer']
-    else:
-      cmdLine = ['/usr/bin/stagerjob']
-    # then common options
-    cmdLine.append('-r')
-    cmdLine.append(transfer.reqId)
-    cmdLine.append('-s')
-    cmdLine.append(transfer.transferId)
-    cmdLine.append('-F')
-    cmdLine.append(str(transfer.fileId[1]))
-    cmdLine.append('-H')
-    cmdLine.append(transfer.fileId[0])
-    # then type dependent options
-    if transfer.transferType == TransferType.D2DDST:
-      cmdLine.append('-D')
-      cmdLine.append(str(transfer.destDiskCopyId))
-      cmdLine.append('-X')
-      cmdLine.append(str(transfer.srcDiskCopyId))
-    else:
-      cmdLine.append('-p')
-      cmdLine.append(transfer.protocol)
-      cmdLine.append('-i')
-      cmdLine.append(str(transfer.srId))
-      cmdLine.append('-T')
-      cmdLine.append(str(transfer.reqType))
-      cmdLine.append('-m')
-      cmdLine.append(transfer.flags)
-      cmdLine.append('-C')
-      cmdLine.append('129:'+transfer.clientIpAddress+':'+str(transfer.clientPort))
-      cmdLine.append('-X')
-      cmdLine.append(str(transfer.clientSecure))
-    # back to common options
-    cmdLine.append('-u')
-    cmdLine.append(str(transfer.euid))
-    cmdLine.append('-g')
-    cmdLine.append(str(transfer.egid))
-    cmdLine.append('-S')
-    cmdLine.append(transfer.svcClassName)
-    cmdLine.append('-t')
-    cmdLine.append(str(transfer.creationTime))
-    cmdLine.append('-R')
-    cmdLine.append(transfer.diskServer+':'+transfer.mountPoint)
-    return cmdLine
 
 
 def cmdLineToTransferId(cmdLine):
@@ -255,12 +203,20 @@ class BaseTransfer(object):
        See method tupleToTransfer for the opposite direction'''
     return tuple(self.__dict__.items())
 
+  def __str__(self):
+    '''a string representation of this transfer object'''
+    return str(self.__dict__.items())
+
 
 class Transfer(BaseTransfer):
-  '''little container describing a regular transfer'''
+  '''A container describing a regular transfer, with some utility methods'''
+  # class level variable pointing to the CASTOR configuration singleton
+  configuration = castor_tools.castorConf()
+
   def __init__(self, transferId, reqId, fileId, euid, egid, svcClassName, creationTime,
                protocol, srId, reqType, flags, clientIpAddress, clientPort,
-               clientSecure, diskServer='', mountPoint='', submissionTime=0):
+               clientSecure, diskServer='', mountPoint='', submissionTime=0,
+               destDcPath='', moverFd=-1):
     '''constructor'''
     super(Transfer, self).__init__(transferId, reqId, fileId, euid, egid, svcClassName,
                                    creationTime, TransferType.STD, diskServer, mountPoint, submissionTime)
@@ -271,6 +227,90 @@ class Transfer(BaseTransfer):
     self.clientIpAddress = clientIpAddress
     self.clientPort = clientPort
     self.clientSecure = clientSecure
+    self.destDcPath = destDcPath
+    self.moverFd = moverFd
+
+  def toCmdLine(self):
+    '''returns the command line for launching the mover for this transfer'''
+    # find out if we have a regular transfer or disk 2 disk copies
+    if self.transferType not in (TransferType.D2DDST, TransferType.STD):
+      raise TypeError('no command line for transfer of type %s' % TransferType.toStr(self.transferType))
+    if self.destDcPath == '':
+      # this transfer was not yet fully initialized by the clientsListener thread, give up
+      raise Exception('Not a valid destination path (%s) for the mover' % self.destDcPath)
+    # compose the command line depending on the type of transfer
+    if self.protocol == 'rfio' or self.protocol == 'rfio3':
+      cmdLine = ['/usr/bin/rfiod']
+      cmdLine.append('-1Ulnf')
+      cmdLine.append(Transfer.configuration.getValue('RFIO', 'LOGFILE', '/var/log/castor/rfiod.log'))
+      cmdLine.append('-M')
+      cmdLine.append(str(stat.S_IWGRP|stat.S_IWOTH))
+      cmdLine.append('-i')
+      cmdLine.append(self.transferId)
+      cmdLine.append('-F')
+      cmdLine.append(self.destDcPath)
+    elif self.protocol == 'gsiftp':
+      cmdLine = ['/usr/sbin/globus-gridftp-server']
+      cmdLine.append('-i')    # inetd mode
+      cmdLine.append('-d')
+      cmdLine.append(Transfer.configuration.getValue('GSIFTP', 'LOGLEVEL', 'ALL'))
+      #cmdLine.append('-auth-level 0')
+      cmdLine.append('-control-idle-timeout')
+      cmdLine.append('3600')
+      cmdLine.append('-Z')
+      cmdLine.append(Transfer.configuration.getValue('GSIFTP', 'NETLOGFILE', '/var/log/globus-gridftp.log'))
+      cmdLine.append('-l')
+      cmdLine.append(Transfer.configuration.getValue('GSIFTP', 'LOGFILE', '/var/log/gridftp.log'))
+      cmdLine.append('-dsi')
+      cmdLine.append('CASTOR2')   # our plugin
+      cmdLine.append('-allowed-modules')
+      cmdLine.append('CASTOR2')
+    else:
+      raise TypeError('No valid mover for protocol %s' % self.protocol)
+    return cmdLine
+
+  def getEnvironment(self):
+    '''returns the OS environment for the execution of the mover for this transfer'''
+    if self.destDcPath == '':
+      raise EnvironmentError('Not a valid destination path (%s) for the mover' % self.destDcPath)
+    moverEnv = os.environ.copy()
+    if self.protocol == 'gsiftp':
+      if self.flags == 'r':
+        moverEnv['ACCESS_MODE'] = 'r'
+      elif self.flags == 'w':
+        moverEnv['ACCESS_MODE'] = 'w'
+      else:
+        raise ValueError('Invalid flags value %c for transfer %s' % (self.flags, self.transferId))
+      moverEnv['UUID'] = self.transferId
+      moverEnv['FULLDESTPATH'] = self.destDcPath
+      moverEnv['GLOBUS_TCP_PORT_RANGE'] = Transfer.configuration.getValue('GSIFTP', 'DATA_TCP_PORT_RANGE', '20000,21000')
+      moverEnv['GLOBUS_TCP_SOURCE_RANGE'] = Transfer.configuration.getValue('GSIFTP', 'DATA_TCP_SOURCE_RANGE', '20000,21000')
+      moverEnv['X509_USER_CERT'] = Transfer.configuration.getValue('GSIFTP', 'X509_USER_CERT', '/etc/grid-security/castor-gridftp-dsi/castor-gridftp-dsi-cert.pem')
+      moverEnv['X509_USER_KEY'] = Transfer.configuration.getValue('GSIFTP', 'X509_USER_KEY', '/etc/grid-security/castor-gridftp-dsi/castor-gridftp-dsi-key.pem')
+    # else no special environment is required for the other movers
+    return moverEnv
+
+  def getPortRange(self):
+    '''returns the port range for the mover for this transfer'''
+    if self.protocol == 'rfio' or self.protocol == 'rfio3':
+      low, high = Transfer.configuration.getValue('RFIOD', 'PORT_RANGE', '50000,55000').split(',')
+    elif self.protocol == 'gsiftp':
+      low, high = Transfer.configuration.getValue('GSIFTP', 'CONTROL_TCP_PORT_RANGE', '20000,21000').split(',')
+    else:
+      raise TypeError('No valid port range for protocol %s' % self.protocol)
+    return int(low), int(high)
+
+  def getTimeout(self):
+    '''returns the accept timeout for the mover of this transfer'''
+    if self.protocol == 'rfio' or self.protocol == 'rfio3':
+      t = Transfer.configuration.getValue('RFIOD', 'CONNTIMEOUT', 10)
+    elif self.protocol == 'gsiftp':
+      t = Transfer.configuration.getValue('GSIFTP', 'TIMEOUT', 180)
+    elif self.protocol == 'xrootd':
+      t = Transfer.configuration.getValue('XROOT', 'TIMEOUT', 300)
+    else:
+      raise TypeError('No valid timeout value for protocol %s' % self.protocol)
+    return t
 
 
 class D2DTransfer(BaseTransfer):
@@ -303,10 +343,9 @@ class TapeTransfer(object):
 
 class RunningTransfer(object):
   '''little container describing a running transfer'''
-  def __init__(self, scheduler, process, startTime, transfer, localPath):
+  def __init__(self, scheduler, process, startTime, transfer):
     '''constructor'''
     self.scheduler = scheduler
     self.process = process
     self.startTime = startTime
     self.transfer = transfer
-    self.localPath = localPath

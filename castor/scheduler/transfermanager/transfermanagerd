@@ -389,17 +389,18 @@ class TransferManagerService(rpyc.Service):
     '''called when a transfer started on a given diskserver'''
     # first log something
     transfer = tupleToTransfer(transferTuple)
-    dlf.writedebug(msgs.INVOKINGTRANSFERSTARTING, DiskServer=transfer.diskServer,
-                   subreqId=transfer.transferId, reqId=transfer.reqId,
-                   TransferType=TransferType.toStr(transfer.transferType))
+    dlf.writedebug(msgs.INVOKINGTRANSFERSTARTING, diskServer=transfer.diskServer,
+                   mountPoint=transfer.mountPoint, subreqId=transfer.transferId,
+                   reqId=transfer.reqId, transferType=TransferType.toStr(transfer.transferType))
     # then handle the queuing part
     srcTransfer = queueingTransfers.transferStarting(transfer)
-    # finally (if no exception), call the DB for d2d transfers (will be for all in the future)
-    if transfer.transferType == TransferType.D2DDST:
+    # finally (if no exception), call the DB
+    try:
+      self.__class__.acquireDbConnection()
       try:
-        self.__class__.acquireDbConnection()
-        try:
-          stcur = self.__class__.dbConnection().cursor()
+        stcur = self.__class__.dbConnection().cursor()
+        if transfer.transferType == TransferType.D2DDST:
+          # deal with disk-to-disk copies
           srcDcPath = stcur.var(cx_Oracle.STRING)
           destDcPath = stcur.var(cx_Oracle.STRING)
           stcur.execute("BEGIN disk2DiskCopyStart(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;",
@@ -409,32 +410,51 @@ class TransferManagerService(rpyc.Service):
                          destDcPath, srcDcPath))
           stcur.close()
           return srcDcPath.getvalue(), destDcPath.getvalue()
-        except Exception, e:
-          # check whether we should reconnect to DB, and do so if needed
-          self.__class__.dbConnection().checkForReconnection(e)
-          # detect special error where the client can give up
-          if isinstance(e, cx_Oracle.Error):
-            error, = e.args
-            if isinstance(error, cx_Oracle._Error):
-              errorcode = error.code
-              if errorcode == 20110:
-                # cleanup source
-                queueingTransfers.d2dendById(transfer.transferId)
-                # raise ValueError to tell the upper layer to give up
-                raise ValueError(error.message)
-          # otherwise reraise for the upper layer
-          raise e
-      finally:
-        self.__class__.releaseDbConnection()
-    else:
-      return None
+        elif transfer.transferType == TransferType.STD and transfer.flags == 'r':
+          # deal with user read transfers
+          dcPath = stcur.var(cx_Oracle.STRING)
+          stcur.execute("BEGIN getStart(:1, :2, :3, :4); END;",
+                        (transfer.transferId, transfer.diskServer, transfer.mountPoint, dcPath))
+          stcur.close()
+          return dcPath.getvalue()
+        elif transfer.transferType == TransferType.STD and transfer.flags == 'w':
+          # deal with user write transfers
+          dcPath = stcur.var(cx_Oracle.STRING)
+          stcur.execute("BEGIN putStart(:1, :2, :3, :4); END;",
+                        (transfer.transferId, transfer.diskServer, transfer.mountPoint, dcPath))
+          stcur.close()
+          return dcPath.getvalue()
+        else:
+          # this is not acceptable
+          raise ValueError('Invalid transferType %d for transfer: %s' \
+                           % (transfer.transferType, transfer.transferId))
+      except Exception, e:
+        # check whether we should reconnect to DB, and do so if needed
+        self.__class__.dbConnection().checkForReconnection(e)
+        # detect special error where the client can give up
+        if isinstance(e, cx_Oracle.Error):
+          error, = e.args
+          if isinstance(error, cx_Oracle._Error):
+            errorcode = error.code
+            if errorcode == 20110:  # disk2DiskCopyStart DB errors
+              # cleanup source
+              queueingTransfers.d2dendById(transfer.transferId)
+              # raise ValueError to tell the upper layer to give up
+              raise ValueError(error.message)
+            elif errorcode in (20104, 20114):  # getStart, putStart DB errors
+              # raise ValueError to tell the upper layer to give up
+              raise ValueError(error.message)
+        # otherwise reraise for the upper layer
+        raise e
+    finally:
+      self.__class__.releaseDbConnection()
 
   def exposed_transferBackToQueue(self, transferTuple):
     '''puts a transfer back to the server queue when a transfer could not be started and was queued back'''
     transfer = tupleToTransfer(transferTuple)
     dlf.writedebug(msgs.INVOKINGTRANSFERBACKTOQUEUE, subreqId=transfer.transferId,
-                   fileid=transfer.fileId, TransferType=TransferType.toStr(transfer.transferType),
-                   DiskServer=transfer.diskServer)
+                   fileid=transfer.fileId, transferType=TransferType.toStr(transfer.transferType),
+                   diskServer=transfer.diskServer)
     queueingTransfers.put(transfer, True)
 
   def exposed_getQueueingTransfers(self, diskserver):
@@ -457,8 +477,9 @@ class TransferManagerService(rpyc.Service):
     dlf.writedebug(msgs.INVOKINGD2DENDSRC, subreqid=transferId)
     queueingTransfers.d2dendById(transferId)
 
-  def exposed_d2dended(self, transferTuples):
-    '''called when d2ds are over. Responsible for updating the stager DB and informing the source of the d2d'''
+  def exposed_d2dEnded(self, transferTuples):
+    '''called when d2ds are over. Responsible for updating the stager DB and informing the source of the d2d.
+       Note that we don't use the transfer class here.'''
     # first deal with the stager DB
     try:
       self.__class__.acquireDbConnection()
@@ -479,13 +500,54 @@ class TransferManagerService(rpyc.Service):
         stcur.close()
       except Exception, e:
         for transferId, reqId, fileId, diskserverName, localPath, fileSize, errCode, errMsg in transferTuples:
-          # "Exception caught while failing transfer" message
-          dlf.writeerr(msgs.FAILTRANSFEREXCEPTION, subreqid=transferId,
+          # "Exception caught while ending transfer" message
+          dlf.writeerr(msgs.ENDTRANSFEREXCEPTION, subreqid=transferId,
                        reqid=reqId, fileid=fileId, diskserver=diskserverName,
                        path=localPath, originalErrCode=errCode, originalError=errMsg,
                        Type=str(e.__class__), Message=str(e))
           # check whether we should reconnect to DB, and do so if needed
         self.__class__.dbConnection().checkForReconnection(e)
+    finally:
+      self.__class__.releaseDbConnection()
+
+  def exposed_transferEnded(self, transferTuple):
+    '''called when user transfers are over. Responsible for updating the stager and nameserver DB.
+       Note that we don't use the transfer class here.'''
+    try:
+      self.__class__.acquireDbConnection()
+      try:
+        stcur = self.__class__.dbConnection().cursor()
+        stcur.arraysize = 1
+        # get the arguments
+        transferId, reqId, fileId, flags, fileSize, mTime, cksumType, cksumValue, errCode, errMsg = transferTuple
+        dlf.writedebug(msgs.INVOKINGTRANSFERENDED, flags=flags, subreqId=transferId, reqId=reqId, fileid=fileId,
+                       fileSize=fileSize, errCode=errCode, errMsg=errMsg)
+        # internal Oracle variables for the INOUT parameters
+        _errMsg = stcur.var(cx_Oracle.STRING)
+        _errMsg.setvalue(0, errMsg)
+        _errCode = stcur.var(cx_Oracle.NUMBER)
+        _errCode.setvalue(0, 0 if errCode == None else errCode)
+        if flags == 'r':
+          stcur.execute("BEGIN getEnded(:1, :2, :3); END;", (transferId, _errCode, _errMsg))
+        elif flags == 'w':
+          stcur.execute("BEGIN putEnded(:1, :2, :3, :4, :5, :6, :7); END;", \
+                        (transferId, fileSize, mTime, cksumType, cksumValue, _errCode, _errMsg))
+        else:
+          # this is not acceptable
+          raise ValueError('Invalid flags %c for transfer %s' % (flags, transferId))
+        # close cursor
+        stcur.close()
+        return _errCode.getvalue(), _errMsg.getvalue()
+      except Exception, e:
+        transferId, reqId, fileId, flags, fileSize, mTime, cksumType, cksumValue, errCode, errMsg = transferTuple
+        # "Exception caught while ending transfer" message
+        dlf.writeerr(msgs.ENDTRANSFEREXCEPTION, subreqid=transferId, flags=flags,
+                     reqid=reqId, fileid=fileId, originalErrCode=errCode, originalError=errMsg,
+                     Type=str(e.__class__), Message=str(e))
+        # check whether we should reconnect to DB, and do so if needed
+        self.__class__.dbConnection().checkForReconnection(e)
+        # and raise to the caller
+        raise e
     finally:
       self.__class__.releaseDbConnection()
 

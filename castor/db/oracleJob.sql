@@ -7,9 +7,8 @@
  *******************************************************************/
 
 /* PL/SQL method implementing putStart */
-CREATE OR REPLACE PROCEDURE putStart
-        (srId IN INTEGER, selectedDiskServer IN VARCHAR2, selectedMountPoint IN VARCHAR2,
-         outPath OUT VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE putStart(inTransferId IN VARCHAR2, selectedDiskServer IN VARCHAR2,
+                                     selectedMountPoint IN VARCHAR2, outPath OUT VARCHAR2) AS
   varCfId INTEGER;
   varDcId INTEGER;
   srStatus INTEGER;
@@ -33,7 +32,7 @@ BEGIN
     INTO varCfId, varDcId, srStatus, prevFsId, prevDPId, srSvcClass, varFileid, varNsHost
     FROM SubRequest, DiskCopy, StagePutRequest Request, CastorFile
    WHERE SubRequest.diskcopy = Diskcopy.id
-     AND SubRequest.id = srId
+     AND SubRequest.subreqId = inTransferId
      AND SubRequest.request = Request.id
      AND CastorFile.id = SubRequest.castorFile
      FOR UPDATE OF CastorFile.id;
@@ -85,6 +84,8 @@ BEGIN
    WHERE id = varDcId;
   IF selectedMountPoint IS NULL THEN
     outPath := varDpName || '/' || outPath;
+  ELSE
+    outPath := selectedMountPoint || outPath;
   END IF;
   -- Log successful completion
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_PUTSTART, varFileId, varNsHost, 'stagerd', '');
@@ -94,9 +95,9 @@ END;
 /
 
 /* PL/SQL method implementing getStart */
-CREATE OR REPLACE PROCEDURE getStart
-        (srId IN INTEGER, selectedDiskServer IN VARCHAR2, selectedMountPoint IN VARCHAR2,
-         outPath OUT VARCHAR2, outIsEmpty OUT INTEGER) AS
+CREATE OR REPLACE PROCEDURE getStart(inTransferId IN VARCHAR2, selectedDiskServer IN VARCHAR2,
+                                     selectedMountPoint IN VARCHAR2, outPath OUT VARCHAR2) AS
+  srId INTEGER;
   cfId INTEGER;
   dcId INTEGER;
   fsId INTEGER := NULL;
@@ -124,12 +125,12 @@ BEGIN
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)
              INDEX(StageGetRequest PK_StageGetRequest_Id) */
          CastorFile.fileSize, CastorFile.id,
-         Req.svcClass, CastorFile.fileId, CastorFile.nsHost
-    INTO fileSize, cfId, srSvcClass, varFileId, varNsHost
+         Req.svcClass, CastorFile.fileId, CastorFile.nsHost, SubRequest.id
+    INTO fileSize, cfId, srSvcClass, varFileId, varNsHost, srId
     FROM CastorFile, SubRequest, StageGetRequest Req
    WHERE CastorFile.id = SubRequest.castorFile
      AND SubRequest.request = Req.id
-     AND SubRequest.id = srId FOR UPDATE OF CastorFile.id;
+     AND SubRequest.subreqId = inTransferid FOR UPDATE OF CastorFile.id;
   -- Get selected filesystem/datapool
   IF selectedMountPoint IS NULL THEN
     SELECT DiskServer.dataPool, DiskServer.status,
@@ -196,8 +197,10 @@ BEGIN
   UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
      SET diskCopy = dcId
    WHERE id = srId;
-  -- Deal with recalls of empty files
-  outIsEmpty := CASE WHEN varDcStatus = dconst.DISKCOPY_VALID AND varDiskCopySize = 0 THEN 1 ELSE 0 END;
+  -- Deal with recalls of empty files: redirect to /dev/null
+  IF varDcStatus = dconst.DISKCOPY_VALID AND varDiskCopySize = 0 THEN
+    outPath := '/dev/null';
+  END IF;
   -- Log successful completion
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETSTART, varFileId, varNsHost, 'stagerd', '');
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -213,19 +216,19 @@ END;
 /
 
 /* PL/SQL method implementing getEnded. The transfer is considered successful iff errno = 0 */
-CREATE OR REPLACE PROCEDURE getEnded(srId IN NUMBER, errno IN NUMBER, errmsg IN VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE getEnded(inTransferId IN VARCHAR2, inoutErrorCode IN OUT INTEGER, errmsg IN VARCHAR2) AS
+  varSrId INTEGER;
   varCfId INTEGER;
-  varSrUuid VARCHAR2(100);
   varFileId INTEGER;
   varNsHost VARCHAR2(100);
 BEGIN
   -- Update the subrequest
   UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-     SET status = CASE WHEN errno > 0 THEN dconst.SUBREQUEST_FAILED ELSE dconst.SUBREQUEST_FINISHED END,
-         errorCode = errno,
+     SET status = CASE WHEN inoutErrorCode > 0 THEN dconst.SUBREQUEST_FAILED ELSE dconst.SUBREQUEST_FINISHED END,
+         errorCode = inoutErrorCode,
          errorMessage = errmsg
-   WHERE id = srId
-  RETURNING castorFile, subReqId INTO varCfId, varSrUuid;
+   WHERE subReqId = inTransferId
+  RETURNING castorFile, id INTO varCfId, varSrId;
   -- Wake up other waiting subrequests
   UPDATE SubRequest
      SET status = dconst.SUBREQUEST_RESTART,
@@ -236,14 +239,16 @@ BEGIN
   SELECT fileId, nsHost INTO varFileId, varNsHost
     FROM CastorFile
    WHERE id = varCfId;
-  IF errno = 0 THEN
+  IF inoutErrorCode = 0 THEN
     -- no error, archive and log
-    archiveSubReq(srId, 8);  -- FINISHED
-    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETENDED, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| varSrUuid);
+    archiveSubReq(varSrId, 8);  -- FINISHED
+    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETENDED, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| inTransferId);
   ELSE
     -- request failed, log
     logToDLF(NULL, dlf.LVL_ERROR, dlf.STAGER_GETENDED, varFileId, varNsHost, 'stagerd',
-      'SUBREQID='|| varSrUuid ||' errorMessage="'|| errmsg ||'"" errorCode='|| errno);
+      'SUBREQID='|| inTransferId ||' errorMessage="'|| errmsg ||'"" errorCode='|| inoutErrorCode);
+    -- and return 0, the error has been handled
+    inoutErrorCode := 0;
   END IF;
 END;
 /
@@ -252,13 +257,14 @@ END;
  * If inoutErrorCode is > 0, the write operation is failed and inFileSize, inNewTimeStamp,
  * inCksumType and inCksumValue are ignored.
  */
-CREATE OR REPLACE PROCEDURE putEnded (srId IN INTEGER,
-                                      inFileSize IN INTEGER,
-                                      inNewTimeStamp IN NUMBER,
-                                      inCksumType IN VARCHAR2,
-                                      inCksumValue IN VARCHAR2,
-                                      inoutErrorCode IN OUT INTEGER,
-                                      inoutErrorMsg IN OUT VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE putEnded(inTransferId IN VARCHAR2,
+                                     inFileSize IN INTEGER,
+                                     inNewTimeStamp IN NUMBER,
+                                     inCksumType IN VARCHAR2,
+                                     inCksumValue IN VARCHAR2,
+                                     inoutErrorCode IN OUT INTEGER,
+                                     inoutErrorMsg IN OUT VARCHAR2) AS
+  srId INTEGER;
   cfId INTEGER;
   dcId INTEGER;
   svcId INTEGER;
@@ -267,14 +273,14 @@ CREATE OR REPLACE PROCEDURE putEnded (srId IN INTEGER,
   contextPIPP INTEGER;
   varLastUpdTime NUMBER;
   varLastOpenTime NUMBER;
-  varSrUuid VARCHAR2(100);
   varMsg VARCHAR2(2048) := '';
   varFileId INTEGER;
   varNsHost VARCHAR(2048);
 BEGIN
   -- Get CastorFile
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ castorFile, diskCopy, subReqId INTO cfId, dcId, varSrUuid
-    FROM SubRequest WHERE id = srId;
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ castorFile, diskCopy, id
+    INTO cfId, dcId, srId
+    FROM SubRequest WHERE subreqId = inTransferId;
   -- Lock the CastorFile and get the fileid and name server host
   SELECT id, fileid, nsHost, nvl(lastUpdateTime, 0), nsOpenTime
     INTO cfId, varFileId, varNsHost, varLastUpdTime, varLastOpenTime
@@ -306,12 +312,12 @@ BEGIN
      WHERE id = srId;
     IF contextPIPP != 0 THEN
       -- On a standalone put cleanup DiskCopy and maybe the CastorFile
-      -- (the physical file is dropped by the job)
+      -- (the physical file is dropped by the mover)
       DELETE FROM DiskCopy WHERE id = dcId;
       deleteCastorFile(cfId);
     END IF;
     logToDLF(NULL, dlf.LVL_NOTICE, dlf.STAGER_PUTENDED, varFileId, varNsHost, 'stagerd',
-      'SUBREQID='|| varSrUuid ||' errorMessage="'|| inoutErrorMsg ||'" errorCode='|| inoutErrorCode);
+      'SUBREQID='|| inTransferId ||' errorMessage="'|| inoutErrorMsg ||'" errorCode='|| inoutErrorCode);
     RETURN;
   END IF;
   -- Check whether the diskCopy is still in STAGEOUT. If not, the file
@@ -321,7 +327,7 @@ BEGIN
       FROM DiskCopy WHERE id = dcId AND status = dconst.DISKCOPY_STAGEOUT;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- So we are in the case, we give up
-    logToDLF(NULL, dlf.LVL_USER_ERROR, dlf.STAGER_DELETED_WRITTENTO, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| varSrUuid);
+    logToDLF(NULL, dlf.LVL_USER_ERROR, dlf.STAGER_DELETED_WRITTENTO, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| inTransferId);
     -- and fail the subRequest
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = dconst.SUBREQUEST_FAILED,
@@ -330,7 +336,7 @@ BEGIN
      WHERE id = srId;
     IF contextPIPP != 0 THEN
       -- On a standalone put cleanup DiskCopy and maybe the CastorFile
-      -- (the physical file is dropped by the job)
+      -- (the physical file is dropped by the mover)
       DELETE FROM DiskCopy WHERE id = dcId;
       deleteCastorFile(cfId);
     END IF;
@@ -349,16 +355,16 @@ BEGIN
   BEGIN
     closex@remoteNS(varFileId, varRealFileSize, inCksumType, inCksumValue, inNewTimeStamp, varLastOpenTime, inoutErrorCode, varMsg);
     IF inoutErrorCode = 0 THEN
-      logToDLF(NULL, dlf.LVL_SYSTEM, dlf.NS_PROCESSING_COMPLETE, varFileId, varNsHost, 'nsd', varMsg || ' SUBREQID='|| varSrUuid);
+      logToDLF(NULL, dlf.LVL_SYSTEM, dlf.NS_PROCESSING_COMPLETE, varFileId, varNsHost, 'nsd', varMsg || ' SUBREQID='|| inTransferId);
     ELSE
       -- Nameserver error: log and fail the entire operation
-      logToDLF(NULL, dlf.LVL_USER_ERROR, dlf.NS_CLOSEX_ERROR, varFileId, varNsHost, 'nsd', 'errorMessage="' || varMsg ||'" SUBREQID='|| varSrUuid);
+      logToDLF(NULL, dlf.LVL_USER_ERROR, dlf.NS_CLOSEX_ERROR, varFileId, varNsHost, 'nsd', 'errorMessage="' || varMsg ||'" SUBREQID='|| inTransferId);
       inoutErrorMsg := varMsg;
     END IF;
   EXCEPTION WHEN OTHERS THEN
     inoutErrorCode := serrno.SEINTERNAL;
     inoutErrorMsg := 'Internal error closing file in the Nameserver';
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.NS_CLOSEX_ERROR, varFileId, varNsHost, 'nsd', 'errorMessage="' || SQLERRM ||'" SUBREQID='|| varSrUuid);
+    logToDLF(NULL, dlf.LVL_ERROR, dlf.NS_CLOSEX_ERROR, varFileId, varNsHost, 'nsd', 'errorMessage="' || SQLERRM ||'" SUBREQID='|| inTransferId);
   END;
   IF inoutErrorCode != 0 THEN
     -- fail the subRequest
@@ -376,9 +382,6 @@ BEGIN
     -- No log for the stager, it would be a duplicate of the nsd one
     RETURN;
   END IF;
-  -- Now we can safely update CastorFile's file size and time stamps
-  UPDATE CastorFile SET fileSize = inFileSize, lastUpdateTime = inNewTimeStamp
-   WHERE id = cfId;
   -- Get svcclass from Request
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ svcClass INTO svcId
     FROM SubRequest,
@@ -404,7 +407,7 @@ BEGIN
   archiveSubReq(srId, 8);  -- FINISHED
   -- Log successful completion
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_PUTENDED, varFileId, varNsHost, 'stagerd',
-    'SUBREQID='|| varSrUuid ||' ChkSumType='|| inCksumType ||' ChkSumValue='|| inCksumValue ||' fileSize='|| varRealFileSize);
+    'SUBREQID='|| inTransferId ||' ChkSumType='|| inCksumType ||' ChkSumValue='|| inCksumValue ||' fileSize='|| varRealFileSize);
 END;
 /
 
@@ -916,9 +919,9 @@ BEGIN
       errNo := errnos(i);
       errMsg := errmsgs(i);
       IF rType = 40 THEN      -- StagePutRequest
-       putEnded(srId, 0, 0, '', '', errNo, errMsg);
+       putEnded(subReqIds(i), 0, 0, '', '', errNo, errMsg);
       ELSE                    -- StageGetRequest
-       getEnded(srId, errNo, errMsg);
+       getEnded(subReqIds(i), errNo, errMsg);
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       BEGIN
@@ -939,7 +942,7 @@ END;
  * transfers. in case the castorfile is already locked
  */
 CREATE OR REPLACE
-PROCEDURE transferFailedLockedFile(subReqId IN castor."strList",
+PROCEDURE transferFailedLockedFile(subReqIds IN castor."strList",
                                    errnos IN castor."cnumList",
                                    errmsgs IN castor."strList")
 AS
@@ -949,32 +952,32 @@ AS
   errNo INTEGER;
   errMsg VARCHAR2(2048);
 BEGIN
-  FOR i IN subReqId.FIRST .. subReqId.LAST LOOP
+  FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
     BEGIN
       -- Get the necessary information needed about the request.
       SELECT id, diskCopy, reqType
         INTO srId, dcId, rType
         FROM SubRequest
-       WHERE subReqId = subReqId(i)
+       WHERE subReqId = subReqIds(i)
          AND status = dconst.SUBREQUEST_READY;
       -- Call the relevant cleanup procedure for the transfer, procedures that
       -- would have been called if the transfer failed on the remote execution host.
       errNo := errnos(i);
       errMsg := errmsgs(i);
       IF rType = 40 THEN      -- StagePutRequest
-        putEnded(srId, 0, 0, '', '', errNo, errMsg);
+        putEnded(subReqIds(i), 0, 0, '', '', errNo, errMsg);
       ELSE                    -- StageGetRequest
-        getEnded(srId, errNo, errMsg);
+        getEnded(subReqIds(i), errNo, errMsg);
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       BEGIN
         -- try disk2diskCopyJob
-        SELECT id into srId FROM Disk2diskCopyJob WHERE transferId = subReqId(i);
+        SELECT id into srId FROM Disk2diskCopyJob WHERE transferId = subReqIds(i);
       EXCEPTION WHEN NO_DATA_FOUND THEN
         CONTINUE;  -- The SubRequest/disk2DiskCopyJob may have be removed, nothing to be done.
       END;
       -- found it, call disk2DiskCopyEnded
-      disk2DiskCopyEnded(subReqId(i), '', '', 0, errnos(i), errmsgs(i));
+      disk2DiskCopyEnded(subReqIds(i), '', '', 0, errnos(i), errmsgs(i));
     END;
   END LOOP;
 END;

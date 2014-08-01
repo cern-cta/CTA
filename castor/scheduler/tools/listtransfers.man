@@ -66,7 +66,7 @@ when used for a summary listing (-s and -p options), enables per transfer type e
 .TP
 .BI \-r,\ \-\-restrict
 when used with the -x option, restricts the list of transfer types detailed in the extra fields. The list of transfer types to be displayed must be given in a colon separated list, e.g. rfio3:xroot
-Note that at the time of writing, supported transfer types included : xroot, root, rfio, rfio3, gsiftp, d2dsrc, d2ddest, recall and migr
+Note that at the time of writing, supported transfer types included : xroot, rfio, rfio3, gsiftp, d2dsrc, d2ddest, recall and migr
 .TP
 .BI \-t,\ \-\-transfermanager
 this option allows to force the connection to a given transfer manager host, on a given port.

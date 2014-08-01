@@ -41,7 +41,7 @@ class StreamCount(object):
     self.nbMigrations = 0
 
 class ReporterThread(threading.Thread):
-  '''activity control thread.
+  '''reporter thread.
   This thread is responsible for regularly sending the resource monitoring and status
    information concerning the diskserver where it runs to the transfermanager'''
 

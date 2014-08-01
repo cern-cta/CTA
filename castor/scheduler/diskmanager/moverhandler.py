@@ -1,0 +1,162 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                   moverhandler.py
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * the mover handler thread of the disk server manager daemon of CASTOR
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+"""mover handler thread of the disk server manager daemon of CASTOR."""
+
+import threading, sys, socket, time
+import connectionpool, dlf
+from diskmanagerdlf import msgs
+
+
+class MoverHandlerThread(threading.Thread):
+  '''the mover handler thread.
+  This thread is responsible for handling the close of the files as requested by the different movers.
+  It is not multithreaded, it simply dispatches any connection to the handleRequest method.
+  '''
+
+  def __init__(self, runningTransfers, config):
+    '''constructor'''
+    super(MoverHandlerThread, self).__init__(name='MoverHandler')
+    self.alive = True
+    self.runningTransfers = runningTransfers
+    self.config = config
+    # start the thread
+    self.setDaemon(True)
+    self.start()
+
+  def handleClose(self, payload):
+    '''handle a CLOSE call'''
+    transferid, fSize, cksumType, cksumValue, errCode = payload.split()[0:5]
+    if errCode != '0':
+      errMessage = payload[payload.find(' '+ errCode +' ')+1:].split(' ', 1)[1]     # the error message is any string at the end
+    else:
+      errCode = 0
+      errMessage = None
+    # xrootd sends us ADLER32, map it to AD
+    if cksumType == 'ADLER32':
+      cksumType = 'AD'
+    # find transfer in runningTransfers, raise KeyError if not found
+    t = self.runningTransfers.get(transferid)
+    # get the admin timeout
+    timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
+    closeTime = time.time()
+    # call transferEnded with the given arguments
+    attempt = 0
+    try:
+      while True:
+        try:
+          # log "Transfer ended"
+          dlf.write(msgs.TRANSFERENDED, subreqId=transferid, reqId=t.transfer.reqId, fileId=t.transfer.fileId,
+                    flags=t.transfer.flags, fileSize=fSize, errCode=errCode, errMessage=errMessage, \
+                    totalTime="%.6f" % (closeTime-t.transfer.creationTime), schedulerTime="%.6f" % (closeTime-t.transfer.submissionTime))
+          rc, errMsg = connectionpool.connections.transferEnded(t.scheduler, \
+                                                                (transferid, t.transfer.reqId, t.transfer.fileId, t.transfer.flags, \
+                                                                 int(fSize), closeTime, cksumType, cksumValue, int(errCode), errMessage), \
+                                                                timeout=timeout)
+          if rc != 0:
+            # log "Failed to end the transfer"
+            dlf.writenotice(msgs.TRANSFERENDEDFAILED, subreqId=transferid, reqId=t.transfer.reqId, errCode=rc, errMessage=errMsg)
+          # return result to the mover
+          dlf.writedebug(msgs.TRANSFERENDED, returnCode=rc, returnMessage=errMsg)
+          return '%d %s\n' % (rc, errMsg)
+        except connectionpool.Timeout, e:
+          # as long as we get a timeout, we retry up to 3 times
+          attempt += 1
+          if attempt < 3:
+            time.sleep(attempt)
+          else:
+            # give up, inform mover
+            raise Exception('Timeout attempting to end transfer %s in scheduler %s' % (transferid, t.scheduler))
+    except Exception, e:
+      # any other error, we give up and inform the mover
+      # "Caught exception in MoverHandler thread" message, error = SEINTERNAL
+      dlf.writeerr(msgs.MOVERHANDLEREXCEPTION, Type=str(e.__class__), Message=str(e))
+      # report error to the mover
+      return '%d %s\n' % (1015, 'Error closing the file in the stager')
+
+  def handleRequest(self, data):
+    '''the requests handler.
+    Only closing files is supported as of now, with the following protocol:
+    - The mover connects to localhost:15511 [DiskManager/MoverHandlerPort in castor.conf]
+    - It sends a single string like
+      CLOSE <transferUUID> <fileSize> <cksumType> <cksumValue> <errorCode>[ <error message>]
+      [In case of Get requests, fileSize, cksumType, and cksumValue are ignored]
+    - It synchronously waits for a single answer like
+      <rc>[ <error message>]\n
+    As this is a local protocol, there's no magic number protection
+    '''
+    # parse input, bail out on any parsing error
+    try:
+      key, payload = data.split(' ', 1)
+      if key == 'CLOSE':
+        return self.handleClose(payload)
+      else:
+        raise ValueError
+    except ValueError:
+      # invalid format, error = EINVAL
+      return '%d Invalid format in %s\n' % (22, data)
+    except KeyError:
+      # if not found, error = ENOENT
+      return '%d Transfer has disappeared from the scheduling system\n' % (2)
+    except IndexError:
+      # thrown by split() when not enough parameters, error = EINVAL
+      return '%d Not enough parameters in %s\n' % (22, data)
+    except Exception, e:
+      # something else went wrong, log "Caught exception in MoverHandler thread"
+      dlf.writeerr(msgs.MOVERHANDLEREXCEPTION, Type=str(e.__class__), Message=str(e))
+      # still return something, error = SEINTERNAL
+      return '%d Internal error: %s\n' % (1015, str(e))
+
+  def run(self):
+    '''main method, containing the infinite accept/serve loop'''
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+      sock.bind(('localhost', self.config.getValue('DiskManager', 'MoverHandlerPort', 15511)))
+      sock.listen(5)
+    except Exception, e:
+      # "Caught exception in CloseHandler thread" message
+      dlf.writeemerg(msgs.CLOSEHANDLEREXCEPTION, \
+                     error='Could not bind to the mover handler port: %s. Terminating' % str(e), \
+                     port=self.config.getValue('DiskManager', 'MoverHandlerPort', 15511))
+      # this is fatal as no mover can close any file, therefore exit
+      raise SystemExit
+
+    while self.alive:
+      try:
+        # wait for a mover to send a message
+        clientsock, addr_unused = sock.accept()
+        # synchronously process this message
+        req = clientsock.recv(1024)
+        res = self.handleRequest(req)
+        clientsock.send(res)
+        clientsock.close()
+      except Exception, e:
+        # "Caught exception in MoverHandler thread" message
+        dlf.writeerr(msgs.MOVERHANDLEREXCEPTION, Type=str(e.__class__), Message=str(e))
+
+  def stop(self):
+    '''stops processing in this thread'''
+    self.alive = False
