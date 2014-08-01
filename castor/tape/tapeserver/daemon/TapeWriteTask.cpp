@@ -33,7 +33,7 @@
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-
+#include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -119,7 +119,7 @@ namespace daemon {
      // Add the local counts to the session's
       stats.add(localStats);
     } 
-    catch(const castor::tape::exceptions::ErrorFlag&){
+    catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
      //we end up there because another task has failed 
       //so we just log, circulate blocks and don't even send a report 
       lc.log(LOG_INFO,"TapeWriteTask: a previous file has failed for migration "
@@ -234,7 +234,7 @@ namespace daemon {
    void TapeWriteTask::hasAnotherTaskTailed() const {
     //if a task has signaled an error, we stop our job
     if(m_errorFlag){
-      throw  castor::tape::exceptions::ErrorFlag();
+      throw  castor::tape::tapeserver::daemon::ErrorFlag();
     }
   }
    

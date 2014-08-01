@@ -23,7 +23,8 @@
 
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
 #include "castor/tape/tapegateway/FilesToMigrateList.hpp"
-#include "log.h"
+#include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
+//#include "log.h"
 
 namespace{
   /*
@@ -189,7 +190,7 @@ namespace daemon {
     try{
       while(1){
         if(m_parent.m_errorFlag){
-          throw castor::tape::exceptions::ErrorFlag();
+          throw castor::tape::tapeserver::daemon::ErrorFlag();
         }
         Request req = m_parent.m_queue.pop();
         client::ClientProxy::RequestReport reqReport;
@@ -210,7 +211,7 @@ namespace daemon {
         }
       } //end of while(1)
     }//end of try
-    catch(const castor::tape::exceptions::ErrorFlag&){
+    catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
       //we end up there because a task screw up somewhere 
       m_parent.m_lc.log(LOG_ERR,"In MigrationTaskInjector::WorkerThread::run(): a task screw up, "
       "finishing and discarding all tasks ");

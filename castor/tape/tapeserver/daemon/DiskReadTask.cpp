@@ -116,7 +116,7 @@ void DiskReadTask::execute(log::LogContext& lc) {
     
     m_stats.filesCount++;
   }
-  catch(const castor::tape::exceptions::ErrorFlag&){
+  catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
    
     lc.log(LOG_INFO,"DiskReadTask: a previous file has failed for migration "
     "Do nothing except circulating blocks");

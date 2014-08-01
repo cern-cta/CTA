@@ -26,6 +26,7 @@
 #include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/daemon/DiskStats.hpp"
+#include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
 #include "castor/log/LogContext.hpp"
@@ -66,7 +67,7 @@ private:
   void hasAnotherTaskTailed() const {
     //if a task has signaled an error, we stop our job
     if(m_errorFlag){
-      throw  castor::tape::exceptions::ErrorFlag();
+      throw  castor::tape::tapeserver::daemon::ErrorFlag();
     }
   }
   
