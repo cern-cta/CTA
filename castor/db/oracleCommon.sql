@@ -247,7 +247,7 @@ BEGIN
   -- if the second '/' was not found, then we are dealing with a data pool
   IF 0 = varPathPos THEN
     -- the data pool id between the ':' and the only '/'
-    varDataPool := SUBSTR(inFullPath, varColonPos+1, varLastSlashPos-varColonPos);
+    varDataPool := SUBSTR(inFullPath, varColonPos+1, varLastSlashPos-varColonPos-1);
     -- the file name is after the only '/'
     outPath := SUBSTR(inFullPath, varLastSlashPos+1);
     -- find out the dataPool Id
