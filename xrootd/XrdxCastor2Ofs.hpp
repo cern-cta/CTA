@@ -33,6 +33,8 @@
 #include <fcntl.h>
 #include <zlib.h>
 /*-----------------------------------------------------------------------------*/
+#include "movers/moverclose.h"
+/*-----------------------------------------------------------------------------*/
 #include "XrdNet/XrdNetSocket.hh"
 #include "XrdOuc/XrdOucEnv.hh"
 #include "XrdOuc/XrdOucString.hh"
@@ -130,13 +132,6 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
     //--------------------------------------------------------------------------
     int write(XrdSfsAio* aioparm);
  
-
-    //--------------------------------------------------------------------------
-    //! Unlink file
-    //--------------------------------------------------------------------------
-    int Unlink();
-
-
   private:
 
     //--------------------------------------------------------------------------
@@ -176,17 +171,17 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
 
 
     //--------------------------------------------------------------------------
-    //! Extract stager job info from the opaque data and establish a connection
+    //! Extract transfer info from the opaque data. This includes the port where
+    //! we need to connect to the disk manager and the request uuid.
     //!
     //! @param env_opaque env containing opaque information
     //!
     //! @return SFS_OK if successful, otherwise SFS_ERROR.
     //--------------------------------------------------------------------------
-    int ContactStagerJob(XrdOucEnv& env_opaque);
+    int ExtractTransferInfo(XrdOucEnv& env_opaque);
 
 
     static const int sKeyExpiry; ///< validity time of a tpc key
-    XrdxCastor2Ofs2StagerJob* mStagerJob; ///< StagerJob object
     XrdOucEnv* mEnvOpaque; ///< initial opaque information
     bool mIsRW; ///< file opened for writing
     bool mHasWrite; ///< mark is file has writes
@@ -202,6 +197,7 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
     struct stat mStatInfo; ///< file stat info
     std::string mTpcKey; ///< tpc key allocated to this file
     TpcFlag::Flag mTpcFlag ;; ///< tpc flag to identify the access type
+    int mDiskMgrPort; ///< disk manager port where to connect
 };
 
 
@@ -406,76 +402,6 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
 
     int mLogLevel; ///< log level from configuration file
     XrdSysError* Eroute; ///< error object
-};
-
-
-//------------------------------------------------------------------------------
-//! Class XrdxCastor2Ofs2StagerJob - interface with the StagerJob process
-//------------------------------------------------------------------------------
-class XrdxCastor2Ofs2StagerJob : public LogId
-{
-  public:
-
-    int ErrCode; ///< error code
-    XrdOucString ErrMsg; ///< error message
-
-    //--------------------------------------------------------------------------
-    //! Constructor
-    //!
-    //! @param sjobuuid stager job identifier
-    //! @param port port
-    //!
-    //--------------------------------------------------------------------------
-    XrdxCastor2Ofs2StagerJob(const std::string& sjobuuid, int port);
-
-
-    //--------------------------------------------------------------------------
-    //! Destructor
-    //--------------------------------------------------------------------------
-    ~XrdxCastor2Ofs2StagerJob();
-
-
-    //--------------------------------------------------------------------------
-    //! Open new connection to the StagerJob
-    //!
-    //! @return True if successful, otherwise false.
-    //--------------------------------------------------------------------------
-    bool Open();
-
-
-    //--------------------------------------------------------------------------
-    //! Close connection
-    //!
-    //! @param ok ?
-    //! @param update mark that writes were made
-    //!
-    //! @return true if succesful, otherwise false
-    //--------------------------------------------------------------------------
-    bool Close(bool ok, bool update);
-
-
-    //--------------------------------------------------------------------------
-    //! Test if connection still alive
-    //!
-    //! @return True if still connected, otherwise false.
-    //--------------------------------------------------------------------------
-    bool StillConnected();
-
-
-    //--------------------------------------------------------------------------
-    //! Get connection status
-    //--------------------------------------------------------------------------
-    inline bool Connected() const
-    {
-      return mIsConnected;
-    }
-
-  private:
-
-    int mPort; ///< port number where stager job is listening
-    std::string mSjobUuid; ///< stager job uuid
-    XrdNetSocket* mSocket; ///< socket object user for connection to sjob
-    bool mIsConnected; ///< true when connected to sjob
 };
 
 extern XrdxCastor2Ofs* gSrv; ///< global diskserver OFS handle

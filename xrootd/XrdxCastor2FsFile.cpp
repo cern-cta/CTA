@@ -548,7 +548,7 @@ XrdxCastor2FsFile::open(const char*         path,
 
   // In case we are redirected to a ceph path, extract the pool
   XrdOucString pfn1 = resp_info.mRedirectionPfn1;
-  XrdOucString pool;
+  XrdOucString pool = "";
   if (resp_info.mRedirectionPfn1[0] != '/') {
     int slashpos = resp_info.mRedirectionPfn1.find("/", 0);
     pfn1 = XrdOucString(resp_info.mRedirectionPfn1, slashpos+1);

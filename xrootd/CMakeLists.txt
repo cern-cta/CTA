@@ -74,8 +74,9 @@ add_library (xrdxcastor2ofs SHARED ${XRDXCASTOR2OFS_LIB_SRC_FILES})
 CastorSetLibraryVersions (xrdxcastor2ofs)
 set_property (TARGET xrdxcastor2ofs
   APPEND PROPERTY COMPILE_DEFINITIONS _FILE_OFFSET_BITS=64)
-target_link_libraries (xrdxcastor2ofs crypto ${XROOTD_XRDCL_LIB}
-  ${XROOTD_XRDCLIENT_LIB} ${XROOTD_XRDOFS_LIB} ${UUID_LIB} z ${RADOS_LIBS} castorcephposix)
+target_link_libraries (xrdxcastor2ofs crypto castormovers castorcephposix z 
+  ${XROOTD_XRDCL_LIB} ${XROOTD_XRDCLIENT_LIB} ${XROOTD_XRDOFS_LIB} ${UUID_LIB} 
+  ${RADOS_LIBS})
 install (TARGETS xrdxcastor2ofs DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 ################################################################################

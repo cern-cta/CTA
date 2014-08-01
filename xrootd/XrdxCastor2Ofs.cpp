@@ -242,7 +242,6 @@ XrdxCastor2Ofs::SetLogLevel(int logLevel)
 //------------------------------------------------------------------------------
 XrdxCastor2OfsFile::XrdxCastor2OfsFile(const char* user, int MonID) :
     XrdOfsFile(user, MonID),
-    mStagerJob(NULL),
     mEnvOpaque(NULL),
     mIsRW(false),
     mHasWrite(false),
@@ -255,7 +254,8 @@ XrdxCastor2OfsFile::XrdxCastor2OfsFile(const char* user, int MonID) :
     mXsType(""),
     mIsClosed(false),
     mTpcKey(""),
-    mTpcFlag(TpcFlag::kTpcNone)
+    mTpcFlag(TpcFlag::kTpcNone),
+    mDiskMgrPort(0)
 {
   mAdlerXs = adler32(0L, Z_NULL, 0);
 }
@@ -270,10 +270,8 @@ XrdxCastor2OfsFile::~XrdxCastor2OfsFile()
   close();
 
   if (mEnvOpaque) delete mEnvOpaque;
-  if (mStagerJob) delete mStagerJob;
 
   mEnvOpaque = NULL;
-  mStagerJob = 0;
 }
 
 
@@ -340,7 +338,7 @@ XrdxCastor2OfsFile::open(const char*         path,
   }
   else
   {
-    if (ContactStagerJob(*mEnvOpaque))
+    if (ExtractTransferInfo(*mEnvOpaque))
       return SFS_ERROR;
   }
 
@@ -449,7 +447,6 @@ XrdxCastor2OfsFile::close()
     }
   }
 
-  XrdOucString spath = FName();
   char ckSumbuf[32 + 1];
   sprintf(ckSumbuf, "%x", mAdlerXs);
   char* ckSumalg = "ADLER32";
@@ -492,55 +489,73 @@ XrdxCastor2OfsFile::close()
     sprintf(ckSumbuf, "%x", mAdlerXs);
     xcastor_debug("file xs=%s", ckSumbuf);
 
-    if (ceph_posix_setxattr(poolAndPath.c_str(), "user.castor.checksum.type", ckSumalg,
-                            strlen(ckSumalg), 0))
+    if (ceph_posix_setxattr(poolAndPath.c_str(), "user.castor.checksum.type",
+                            ckSumalg, strlen(ckSumalg), 0))
     {
-      gSrv->Emsg("close", error, EIO, "set checksum type");
-      rc = SFS_ERROR; // Anyway this is not returned to the client
+      xcastor_err("path=%s unable to set xs type", newpath.c_str());
+      rc = gSrv->Emsg("close", error, EIO, "set checksum type");
     }
     else
     {
-      if (ceph_posix_setxattr(poolAndPath.c_str(), "user.castor.checksum.value", ckSumbuf,
-                              strlen(ckSumbuf), 0))
+      if (ceph_posix_setxattr(poolAndPath.c_str(), "user.castor.checksum.value",
+                              ckSumbuf, strlen(ckSumbuf), 0))
       {
-        gSrv->Emsg("close", error, EIO, "set checksum");
-        rc = SFS_ERROR; // Anyway this is not returned to the client
+        xcastor_err("path=%s unable to set xs value", newpath.c_str());
+        rc = gSrv->Emsg("close", error, EIO, "set checksum");
       }
     }
   }
 
-  bool file_ok = true;
-
   if ((rc = XrdOfsFile::close()))
   {
-    gSrv->Emsg("close", error, EIO, "closing ofs file", "");
-    file_ok = false;
-    rc = SFS_ERROR;
+    xcastor_err("path=%s failed closing ofs file", newpath.c_str());
+    rc = gSrv->Emsg("close", error, EIO, "closing ofs file");
   }
 
   // This means the file was not properly closed
   if (mViaDestructor)
   {
-    Unlink();
-    file_ok = false;
+    xcastor_err("path=%s closed via destructor", newpath.c_str());
+    rc = gSrv->Emsg("close", error, EIO, "close file - delete via destructor");
   }
 
-  if (mStagerJob && (!mStagerJob->Close(file_ok, mHasWrite)))
+  // Send status to diskmanager
+  uint64_t sz_file = 0;
+
+  // Get the size of the file for writes
+  if (mHasWrite)
   {
-    // For the moment, we cannot send this back, but soon we will
-    xcastor_debug("StagerJob close failed, got rc=%i and msg=%s",
-                  mStagerJob->ErrCode, mStagerJob->ErrMsg.c_str());
-    gSrv->Emsg("close", error, mStagerJob->ErrCode, mStagerJob->ErrMsg.c_str());
-    rc = SFS_ERROR;
+    if (XrdOfsOss->Stat(newpath.c_str(), &mStatInfo, 0, mEnvOpaque))
+    {
+      xcastor_err("path=%s failed stat", newpath.c_str());
+      sz_file = 0;
+      rc = gSrv->Emsg("close", error, EIO, "stat file");
+    }
+    else
+      sz_file = mStatInfo.st_size;
   }
 
+  int errorcode = (rc ? error.getErrInfo() : rc);
+  char *errormsg = (rc ? (char*)error.getErrText(): (char*)0);
+  int dm_errno = mover_close_file(mDiskMgrPort, mReqId.c_str(), sz_file,
+                                  const_cast<const char*>(ckSumalg),
+                                  const_cast<const char*>(ckSumbuf),
+                                  &errorcode, &errormsg);
+
+  // If failed to commit to diskmanager then return error
+  if (dm_errno)
+  {
+    xcastor_err("path=%s failed sending status to diskmanager", newpath.c_str());
+    rc = gSrv->Emsg("close", error, dm_errno, "send status to diskmanager");
+  }
+  
   return rc;
 }
 
 
-//--------------------------------------------------------------------------
-//! Prepare TPC transfer - save info in the global TPC map, do checks etc.
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// Prepare TPC transfer - save info in the global TPC map, do checks etc.
+//------------------------------------------------------------------------------
 int
 XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
                                XrdOucString& opaque,
@@ -698,10 +713,10 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
       }
     }
 
-    // Now we can contact the StagerJob process
+    // Now we can extract the transfer info
     XrdOucEnv env_opaque(init_opaque.c_str());
 
-    if (ContactStagerJob(env_opaque))
+    if (ExtractTransferInfo(env_opaque))
       return SFS_ERROR;
   }
   else if (mTpcFlag == TpcFlag::kTpcDstSetup)
@@ -712,10 +727,10 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
     mHasWrite = true;
     mHasAdler = false;
 
-    // Now we can contact the StagerJob process
+    // Now we can extract the transfer info
     XrdOucEnv env_opaque(opaque.c_str());
 
-    if (ContactStagerJob(env_opaque))
+    if (ExtractTransferInfo(env_opaque))
       return SFS_ERROR;
   }
 
@@ -727,52 +742,37 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
 // Extract stager job info from the opaque data and establish a connection
 //------------------------------------------------------------------------------
 int
-XrdxCastor2OfsFile::ContactStagerJob(XrdOucEnv& env_opaque)
+XrdxCastor2OfsFile::ExtractTransferInfo(XrdOucEnv& env_opaque)
 {
   char* val = env_opaque.Get("castor2fs.pfn2");
 
   if (!val)
   {
-    // If no stager job information is present in the opaque infom, it means
+    // If no diskmanager contact info is present in the opaque info, it means
     // that this is an internal d2d or an rtcpd transfer and we don't try to
-    // contact the stager job but we allow it to pass through. The authorization
+    // contact the diskmanager but we allow it to pass through. The authorization
     // plugin makes sure we only allowed trusted hosts to do transfers - it
     // verifies the signature.
-    xcastor_debug("no stager job opaque infomation - this is either a d2d "
+    xcastor_debug("no diskmanager opaque infomation - this is either a d2d "
                   "transfer or an rtcpd request");
     return SFS_OK;
   }
 
   std::string connect_info = val;
-  std::string sjob_uuid = "";
-  int sjob_port = 0;
   int pos1;
 
-  // Syntax for request is: <reqid:stagerJobPort:stagerJobUuid>
+  // Syntax for request is: <id:diskmanagerport:subReqId> out of which only the
+  // last two values are used for the moment
   if ((pos1 = connect_info.find(":")) != STR_NPOS)
   {
-    mReqId.assign(connect_info, 0, pos1 - 1);
     int pos2;
 
     if ((pos2 = connect_info.find(":", pos1 + 1)) != STR_NPOS)
     {
       std::string sport (connect_info, pos1 + 1, pos2 - 1);
-      sjob_port = atoi(sport.c_str());
-      sjob_uuid.assign(connect_info.c_str(), pos2 + 1, std::string::npos);
+      mDiskMgrPort = atoi(sport.c_str());
+      mReqId.assign(connect_info, pos2 + 1, std::string::npos);
     }
-  }
-
-  xcastor_debug("SJob uuid=%s, port=%i ", sjob_uuid.c_str(), sjob_port);
-  mStagerJob = new XrdxCastor2Ofs2StagerJob(sjob_uuid, sjob_port);
-
-  // Send the sigusr1 to the local xcastor2job to signal the open
-  if (!mStagerJob->Open())
-  {
-    xcastor_err("open => couldn't run the open towards StagerJob: "
-                "reqid=%s, stagerjobport=%i, stagerjobuuid=%s",
-                mReqId.c_str(), sjob_port, sjob_uuid.c_str());
-    return gSrv->Emsg("open", error, EIO,
-                      "signal open to the corresponding stagerjob");
   }
 
   return SFS_OK;
@@ -847,7 +847,7 @@ XrdxCastor2OfsFile::read(XrdSfsFileOffset fileOffset,
 {
   xcastor_debug("off=%llu, len=%i", fileOffset, buffer_size);
 
-  // If we once got an adler checksum error, we fail all reads.
+  // If we once got an adler checksum error, we fail all reads
   if (mHasAdlerErr)
   {
     xcastor_err("error: found xs error, fail read at off=%ll, size=%i",
@@ -905,27 +905,6 @@ XrdxCastor2OfsFile::write(XrdSfsFileOffset fileOffset,
                           const char*      buffer,
                           XrdSfsXferSize   buffer_size)
 {
-  if (mStagerJob && mStagerJob->Connected())
-  {
-    // If we have a stagerJob watching, check it is still alive
-    if (!mStagerJob->StillConnected())
-    {
-      // StagerJob died ... reject any writes
-      xcastor_err("error:write => StagerJob has been canceled");
-
-      // We truncate this file to 0!
-      if (!mIsClosed)
-      {
-        truncate(0);
-        sync();
-      }
-
-      gSrv->Emsg("write", error, ECANCELED,
-                 "write - the stagerjob write slot has been canceled ");
-      return SFS_ERROR;
-    }
-  }
-
   int rc = XrdOfsFile::write(fileOffset, buffer, buffer_size);
 
   // Computation of adler checksum - we disable it if seek happened
@@ -951,262 +930,8 @@ XrdxCastor2OfsFile::write(XrdSfsFileOffset fileOffset,
 int
 XrdxCastor2OfsFile::write(XrdSfsAio* aioparm)
 {
-  if (mStagerJob && mStagerJob->Connected())
-  {
-    if (!mStagerJob->StillConnected())
-    {
-      // StagerJob died ... reject any writes
-      xcastor_err("error:write => StagerJob has been canceled");
-
-      // We truncate this file to 0!
-      if (!mIsClosed)
-      {
-        truncate(0);
-        sync();
-      }
-
-      gSrv->Emsg("write", error, ECANCELED,
-                 "write - the stagerjob write slot has been canceled");
-      return SFS_ERROR;
-    }
-    else
-    {
-      xcastor_debug("StagerJob is alive");
-    }
-  }
-
   int rc = XrdOfsFile::write(aioparm);
   mHasWrite = true;
   return rc;
 }
 
-
-//------------------------------------------------------------------------------
-// Unlink
-//------------------------------------------------------------------------------
-int
-XrdxCastor2OfsFile::Unlink()
-{
-  if (!gSrv->doPOSC || !mIsRW)
-    return SFS_OK;
-
-  XrdOucString preparename = mEnvOpaque->Get("castor2fs.sfn");
-  XrdOucString secuid      = mEnvOpaque->Get("castor2fs.client_sec_uid");
-  XrdOucString secgid      = mEnvOpaque->Get("castor2fs.client_sec_gid");
-  xcastor_debug("unlink lfn=%s", preparename.c_str());
-  XrdOucString mdsaddress = "root://";
-  mdsaddress += mEnvOpaque->Get("castor2fs.manager");
-  mdsaddress += "//dummy";
-  XrdCl::URL url(mdsaddress.c_str());
-  XrdCl::Buffer* buffer = 0;
-  std::vector<std::string> list;
-
-  if (!url.IsValid())
-  {
-    xcastor_debug("URL is not valid: %s", mdsaddress.c_str());
-    return gSrv->Emsg("Unlink", error, ENOENT, "URL is not valid ");
-  }
-
-  XrdCl::FileSystem* mdsclient = new XrdCl::FileSystem(url);
-
-  if (!mdsclient)
-  {
-    xcastor_err("Could not create XrdCl::FileSystem object.");
-    return gSrv->Emsg("Unlink", error, EHOSTUNREACH,
-                      "connect to the mds host (normally the manager)");
-  }
-
-  preparename += "?";
-  preparename += "&unlink=true";
-  preparename += "&reqid=";
-  preparename += mReqId.c_str();
-  preparename += "&uid=";
-  preparename += secuid;
-  preparename += "&gid=";
-  preparename += secgid;
-  list.push_back(preparename.c_str());
-  xcastor_debug("Informing about %s", preparename.c_str());
-  XrdCl::XRootDStatus status = mdsclient->Prepare(list,
-                               XrdCl::PrepareFlags::Stage, 1, buffer);
-  delete mdsclient;
-
-  if (!status.IsOK())
-  {
-    xcastor_err("Prepare response invalid.");
-    delete buffer;
-    return gSrv->Emsg("Unlink", error, ESHUTDOWN, "unlink ", FName());
-  }
-
-  delete buffer;
-  return SFS_OK;
-}
-
-
-/******************************************************************************/
-/*              xCastorOfs -  StagerJob Interface                             */
-/******************************************************************************/
-
-//------------------------------------------------------------------------------
-// Constructor
-//------------------------------------------------------------------------------
-XrdxCastor2Ofs2StagerJob::XrdxCastor2Ofs2StagerJob(const std::string& sjobuuid,
-                                                   int port):
-    LogId(),
-    ErrCode(0),
-    ErrMsg("undef"),
-    mPort(port),
-    mSjobUuid(sjobuuid),
-    mSocket(0),
-    mIsConnected(false)
-{ }
-
-
-//------------------------------------------------------------------------------
-// Destructor
-//------------------------------------------------------------------------------
-XrdxCastor2Ofs2StagerJob::~XrdxCastor2Ofs2StagerJob()
-{
-  if (mSocket)
-  {
-    delete mSocket;
-    mSocket = 0;
-  }
-
-  mIsConnected = false;
-}
-
-
-//------------------------------------------------------------------------------
-// StagerJob open
-//------------------------------------------------------------------------------
-bool
-XrdxCastor2Ofs2StagerJob::Open()
-{
-  mSocket = new XrdNetSocket();
-
-  if ((mSocket->Open("localhost", mPort, 0, 0)) < 0)
-  {
-    xcastor_err("can not open SJob socket on port=%i", mPort);
-    return false;
-  }
-
-  mSocket->setOpts(mSocket->SockNum(), XRDNET_KEEPALIVE | XRDNET_DELAY);
-  // Build IDENT message
-  XrdOucString ident = "IDENT ";
-  ident += mSjobUuid.c_str();
-  ident += "\n";
-  // Send IDENT message
-  int nwrite = write(mSocket->SockNum(), ident.c_str(), ident.length());
-
-  if (nwrite != ident.length())
-  {
-    xcastor_err("writing to SJob socket failed");
-    return false;
-  }
-
-  mIsConnected = true;
-  return true;
-}
-
-
-//------------------------------------------------------------------------------
-// StagerJob still connected
-//------------------------------------------------------------------------------
-bool
-XrdxCastor2Ofs2StagerJob::StillConnected()
-{
-  int sval;
-  fd_set check_set;
-
-  if (!mIsConnected || !mSocket)
-    return false;
-
-  // Add the socket to the select set
-  FD_ZERO(&check_set);
-  FD_SET(mSocket->SockNum(), &check_set);
-
-  // Set select timeout to 0
-  struct timeval time;
-  time.tv_sec  = 0;
-  time.tv_usec = 1;
-
-  if ((sval = select(mSocket->SockNum() + 1, &check_set, 0, 0, &time)) < 0)
-    return false;
-
-  if (FD_ISSET(mSocket->SockNum(), &check_set))
-    return false;
-
-  return true;
-}
-
-
-//------------------------------------------------------------------------------
-// StagerJob close
-//------------------------------------------------------------------------------
-bool
-XrdxCastor2Ofs2StagerJob::Close(bool ok, bool haswrite)
-{
-  if (!mSocket || !mIsConnected)
-    return true;
-
-  XrdOucString ident = "CLOSE ";
-
-  if (ok)
-    ident += "0 ";
-  else
-    ident += "1 ";
-
-  if (haswrite)
-    ident += "1 \n";
-  else
-    ident += "0 \n";
-
-  // Send CLOSE message
-  xcastor_debug("SJob send CLOSE message");
-  int nwrite = ::write(mSocket->SockNum(), ident.c_str(), ident.length());
-
-  if (nwrite != ident.length())
-  {
-    ErrCode = EIO;
-    ErrMsg = "Error writing CLOSE request to StagerJob";
-    return false;
-  }
-
-  // Read CLOSE response
-  char closeresp[16384];
-  int  respcode;
-  char respmesg[16384];
-  int nread = 0;
-  nread = ::read(mSocket->SockNum(), closeresp, sizeof(closeresp));
-    xcastor_debug("SJob response bytes=%i, errno=%i", nread, errno);
-
-  if (nread > 0)
-  {
-    // Try to parse the response
-    if ((sscanf(closeresp, "%d %[^\n]", &respcode, respmesg)) == 2)
-    {
-      ErrCode = respcode;
-      ErrMsg = respmesg;
-      xcastor_debug("SJob CLOSE msg=%s, errcode=%i", ErrMsg.c_str(), ErrCode);
-
-      if (ErrCode != 0)
-        return false;
-    }
-    else
-    {
-      ErrCode = EINVAL;
-      ErrMsg  = "SJob CLOSE illegal msg=";
-      ErrMsg += (char*)closeresp;
-      return false;
-    }
-  }
-  else
-  {
-    // That was an error
-    ErrCode = errno;
-    ErrMsg = "Error reading StagerJob response";
-    return false;
-  }
-
-  return true;
-}
