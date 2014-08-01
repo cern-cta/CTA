@@ -1643,7 +1643,7 @@ int   srclose64_v3(int       s,
   (*logfunc)(LOG_INFO,"rclose64_v3(%d, %d): %s bytes read and %s bytes written\n",
       s, fd, u64tostr(myinfo.rnbr,tmpbuf,0), u64tostr(myinfo.wnbr,tmpbuf2,0));
 
-  /* sync the file to be sure that filesize in correct in following stats.
+  /* sync the file to be sure that filesize is correct in following stats.
      this is needed by some ext3 bug/feature
      Still ignore the output of fsync */
   ceph_posix_fsync(fd);

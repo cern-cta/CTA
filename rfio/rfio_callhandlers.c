@@ -15,26 +15,26 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <sys/xattr.h>
 #include "rfio.h"
 #include "u64subr.h"
 #include "log.h"
 #include "serrno.h"
 #include "getconfent.h"
 #include "Castor_limits.h"
-#include <sys/xattr.h>
-#include "castor/stager/IJobSvc.h"
+#include "movers/moverclose.h"
 
 struct internal_context {
   int one_byte_at_least;
   mode_t mode;
   int flags;
-  u_signed64 subrequest_id;
+  char* transferid;
   char *pfn;
   u_signed64 fileId;
   char *nsHost;
 };
 
-extern u_signed64 subrequest_id;
+extern char* transferid;
 extern int forced_mover_exit_error;
 
 int rfio_handle_open(const char *lfn,
@@ -48,15 +48,15 @@ int rfio_handle_open(const char *lfn,
   (void)uid;
   (void)gid;
   (void)need_user_check;
-  if (subrequest_id > 0) {
-    /* rfiod started with -Z option and option value > 0 */
+  if (transferid != NULL) {
+    /* rfiod started with -i option and option value > 0 */
     struct internal_context *internal_context = calloc(1, sizeof(struct internal_context));
 
     if (internal_context != NULL) {
       internal_context->mode = (mode_t) mode;
       internal_context->flags = flags;
       internal_context->pfn = strdup(lfn);
-      internal_context->subrequest_id = subrequest_id;
+      internal_context->transferid = transferid;
       internal_context->nsHost = NULL;
       internal_context->fileId = 0;
 
@@ -81,7 +81,7 @@ int rfio_handle_open(const char *lfn,
               *p++ = '\0';
               internal_context->nsHost = strdup(pnh);
               if (internal_context->nsHost == NULL) {
-                (*logfunc)(LOG_ERR, "rfio_handle_open : memory allocation error duplicating "
+                (*logfunc)(LOG_ERR, "rfio_handle_open: memory allocation error duplicating "
                     "nameserver host (%s)\n", strerror(errno));
                 serrno = errno;
                 free(internal_context);
@@ -96,21 +96,21 @@ int rfio_handle_open(const char *lfn,
          * pfn was not as we expected
          */
         if (internal_context->nsHost == NULL) {
-          (*logfunc)(LOG_ERR, "rfio_handle_open : error parsing the physical filename %s: (format unknown)\n",
+          (*logfunc)(LOG_ERR, "rfio_handle_open: error parsing the physical filename %s: (format unknown)\n",
               internal_context->pfn);
           serrno = EINVAL;
           free(internal_context);
           return -1;
         }
       } else {
-        (*logfunc)(LOG_ERR, "rfio_handle_open : error parsing the physical filename %s: (%s)\n",
+        (*logfunc)(LOG_ERR, "rfio_handle_open: error parsing the physical filename %s: (%s)\n",
             internal_context->pfn, strerror(errno));
         serrno = errno;
         free(internal_context);
         return -1;
       }
     } else {
-      (*logfunc)(LOG_ERR, "rfio_handle_open : calloc error (%s)\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "rfio_handle_open: calloc error (%s)\n", strerror(errno));
       serrno = errno;
       return -1;
     }
@@ -131,28 +131,14 @@ int rfio_handle_open(const char *lfn,
 int rfio_handle_firstwrite(void *ctx) {
   struct internal_context *internal_context = (struct internal_context *) ctx;
   if (internal_context != NULL) {
-
-    /* In case of an update, we should call firstByteWritten, so we ignore pure Get and Put cases */
     if (!((internal_context->flags & O_ACCMODE) == O_RDONLY)  /* Get case (should actually never happen!) */
         && !((internal_context->flags & O_TRUNC) == O_TRUNC)) {   /* Put case */
-      char tmpbuf[21];
-      int rc;
-      (*logfunc)(LOG_INFO,
-          "rfio_handle_firstwrite : Calling Cstager_IJobSvc_firstByteWritten on subrequest_id=%s\n",
-          u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-      int error_code;
-      char* error_msg;
-      rc = Cstager_IJobSvc_firstByteWritten(internal_context->subrequest_id,internal_context->fileId, internal_context->nsHost,&error_code,&error_msg);
-      if (rc != 0) {
-        serrno = error_code;
-        (*logfunc)(LOG_ERR,
-            "rfio_handle_firstwrite : Cstager_IJobSvc_firstByteWritten error for subrequest_id=%s (%s)\n",
-            u64tostr(internal_context->subrequest_id, tmpbuf, 0),
-            error_msg);
-        free(error_msg);
-        return rc;
-      }
+      /* This is the case of a real update, which is not supported any longer, therefore throw error */
+      (*logfunc)(LOG_INFO, "rfio_handle_firstwrite: update not supported\n");
+      serrno = ENOTSUP;
+      return -1;
     }
+    /* otherwise this is a first write without a read, so we are effectively in a Put request */
     internal_context->one_byte_at_least = 1;
   }
   return 0;
@@ -166,101 +152,59 @@ int rfio_handle_close(void *ctx,
 
   char*    csumtypeDiskNs[]={"ADLER32","AD","CRC32","CS","MD5","MD"}; /* in future move it in the one of the headers file */
   char     csumalgnum=3;
-  int      useCksum;
   int      xattr_len;
-  char     csumvalue[CA_MAXCKSUMLEN+1];
-  char     csumtype[CA_MAXCKSUMNAMELEN+1];
-  char     *conf_ent;
-  int      error_code;
-  char*    error_msg;
+  char     csumvalue[CA_MAXCKSUMLEN+1] = "0";
+  char     csumtype[CA_MAXCKSUMNAMELEN+1] = "AD";
+  char*    error_msg = NULL;
+  int      port = MOVERHANDLERPORT;
 
   if (internal_context != NULL) {
-    char tmpbuf[21];
-
     if (((internal_context->flags & O_TRUNC) == O_TRUNC) ||
         (internal_context->one_byte_at_least)) {   /* see also comment in rfio_handle_open */
       /* This is a write */
-        /* File still exists - this is a candidate for migration regardless of its size (zero-length are ignored in the stager) */
-        useCksum = 1;
-        csumtype[0] = '\0';
-        csumvalue[0] = '\0';
-        if ((conf_ent = getconfent("RFIOD", "USE_CKSUM", 0)) != NULL) {
-          if (!strncasecmp(conf_ent, "no", 2)) {
-            useCksum = 0;
-          }
-        }
-        if (useCksum) {
-          /* first we try to read a file xattr for checksum */
-          if ((xattr_len = getxattr(internal_context->pfn, "user.castor.checksum.value", csumvalue, CA_MAXCKSUMLEN)) == -1) {
-            (*logfunc)(LOG_ERR, "rfio_handle_close : fgetxattr failed for user.castor.checksum.value, error=%d\n", errno);
-            (*logfunc)(LOG_ERR, "rfio_handle_close : skipping checksums for castor NS\n");
-            useCksum = 0; /* we don't have the file checksum, and will not fill it in castor NS database */
-          } else {
-            csumvalue[xattr_len] = '\0';
-            (*logfunc)(LOG_DEBUG,"rfio_handle_close : csumvalue for the file on the disk=0x%s\n", csumvalue);
-            if ((xattr_len = getxattr(internal_context->pfn, "user.castor.checksum.type", csumtype, CA_MAXCKSUMNAMELEN)) == -1) {
-              (*logfunc)(LOG_ERR, "rfio_handle_close : fgetxattr failed for user.castor.checksum.type, error=%d\n", errno);
-              (*logfunc)(LOG_ERR, "rfio_handle_close : skipping checksums for castor NS\n");
-              useCksum = 0; /* we don't have the file checksum, and will not fill it in castor NS database */
-            } else {
-              csumtype[xattr_len] = '\0';
-              (*logfunc)(LOG_DEBUG, "rfio_handle_close : csumtype is %s\n", csumtype);
-              /* now we have csumtype from disk and have to convert it for castor name server database */
-              for (xattr_len = 0; xattr_len < csumalgnum; xattr_len++) {
-                if (strncmp(csumtype, csumtypeDiskNs[xattr_len * 2], CA_MAXCKSUMNAMELEN) == 0) {
-          	/* we have found something */
-          	strcpy(csumtype, csumtypeDiskNs[xattr_len * 2 + 1]);
-          	useCksum = 2;
-          	break;
-                }
-              }
-              if (useCksum != 2) {
-                (*logfunc)(LOG_ERR, "rfio_handle_close : unknown checksum type %s\n", csumtype);
-                (*logfunc)(LOG_ERR, "rfio_handle_close : skipping checksums for castor NS\n");
-                useCksum = 0; /* we don't have the file checksum, and will not fill it in castor NS database */
-              }
+      /* File still exists - this is a candidate for migration regardless of its size (zero-length are ignored in the stager) */
+      /* first we try to read a file xattr for checksum */
+      if ((xattr_len = getxattr(internal_context->pfn, "user.castor.checksum.value", csumvalue, CA_MAXCKSUMLEN)) == -1) {
+        (*logfunc)(LOG_ERR, "rfio_handle_close: fgetxattr failed for user.castor.checksum.value, error=%d\n", errno);
+        (*logfunc)(LOG_ERR, "rfio_handle_close: skipping checksums for castor NS\n");
+      } else {
+        csumvalue[xattr_len] = '\0';
+        (*logfunc)(LOG_DEBUG,"rfio_handle_close: csumvalue for the file on the disk=0x%s\n", csumvalue);
+        if ((xattr_len = getxattr(internal_context->pfn, "user.castor.checksum.type", csumtype, CA_MAXCKSUMNAMELEN)) == -1) {
+          (*logfunc)(LOG_ERR, "rfio_handle_close: fgetxattr failed for user.castor.checksum.type, error=%d\n", errno);
+          (*logfunc)(LOG_ERR, "rfio_handle_close: skipping checksums for castor NS\n");
+        } else {
+          csumtype[xattr_len] = '\0';
+          (*logfunc)(LOG_DEBUG, "rfio_handle_close: csumtype is %s\n", csumtype);
+          /* now we have csumtype from disk and have to convert it for castor name server database */
+          for (xattr_len = 0; xattr_len < csumalgnum; xattr_len++) {
+            if (strncmp(csumtype, csumtypeDiskNs[xattr_len * 2], CA_MAXCKSUMNAMELEN) == 0) {
+              /* we have found something */
+              strcpy(csumtype, csumtypeDiskNs[xattr_len * 2 + 1]);
+              break;
             }
           }
         }
-        if (useCksum == 0) {
-          csumtype[0] = '\0';
-          csumvalue[0] = '\0';
-        }
-        (*logfunc)(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_prepareForMigration on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-        if (Cstager_IJobSvc_prepareForMigration(internal_context->subrequest_id,(u_signed64) filestat->st_size, (u_signed64) time(NULL),internal_context->fileId, internal_context->nsHost, csumtype, csumvalue, &error_code, &error_msg) != 0) {
-          serrno = error_code;
-          (*logfunc)(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_prepareForMigration error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), error_msg);
-          free(error_msg);
-        } else {
-          forced_mover_exit_error = 0;
-        }
-    } else {
-      /* This is a read: the close() status is enough to decide on a getUpdateDone/Failed */
-      if (close_status == 0) {
-        (*logfunc)(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_getUpdateDone on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-        if (Cstager_IJobSvc_getUpdateDone(internal_context->subrequest_id,internal_context->fileId, internal_context->nsHost, &error_code, &error_msg) != 0) {
-          serrno = error_code;
-          (*logfunc)(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_getUpdateDone error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), error_msg);
-          free(error_msg);
-        } else {
-          forced_mover_exit_error = 0;
-        }
-      } else {
-        (*logfunc)(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_getUpdateFailed on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-        if (Cstager_IJobSvc_getUpdateFailed(subrequest_id,internal_context->fileId, internal_context->nsHost, &error_code, &error_msg) != 0) {
-          serrno = error_code;
-          (*logfunc)(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_getUpdateFailed error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), error_msg);
-          free(error_msg);
-        }
       }
+    } /* else this is a read, the checksum value is irrelevant, and the close_status decides whether it was successful or not */
+    (*logfunc)(LOG_INFO, "rfio_handle_close: calling mover_close_file on transferid=%s\n", internal_context->transferid);
+    if(getconfent("DiskManager", "MoverHandlerPort", 0) != NULL) {
+      port = atoi(getconfent("DiskManager", "MoverHandlerPort", 0));
+    }
+    if (mover_close_file(port, internal_context->transferid, (u_signed64)filestat->st_size, csumtype, csumvalue, &close_status, &error_msg) != 0) {
+      serrno = close_status;
+      (*logfunc)(LOG_ERR, "rfio_handle_close: mover_close_file failed (%s) for transferid=%s\n", error_msg, internal_context->transferid);
+      free(error_msg);
+    } else {
+      forced_mover_exit_error = 0;
     }
   } else {
+    (*logfunc)(LOG_INFO, "rfio_handle_close: no context given, nothing to do\n");
     return 0;
   }
 
-  if (forced_mover_exit_error != 0){
+  if (forced_mover_exit_error != 0) {
     return -1;
   }
   return 0;
-
 }

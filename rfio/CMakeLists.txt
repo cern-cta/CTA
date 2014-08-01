@@ -105,7 +105,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
   add_executable(rfiod ${RFIOD_SRC_FILES})
   # Relax compilation of old code full of pointer casting. Funnily enough,
   # the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
-  target_link_libraries(rfiod castorcommon castorns castordlf castorsecurity castorclient castorrfio ${RADOS_LIBS} castorcephposix)
+  target_link_libraries(rfiod castorcommon castorns castordlf castorsecurity castorclient castorrfio ${RADOS_LIBS} castorcephposix castormovers)
   set_target_properties(rfiod PROPERTIES LINK_FLAGS "-lcrypto -ldl -lz")
   install(TARGETS rfiod DESTINATION ${CASTOR_DEST_BIN_DIR})
   

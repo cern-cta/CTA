@@ -45,38 +45,41 @@ This option should always be set when rfiod is not started by inetd.
 Turn on single threaded mode. Useful for debugging as no processes
 are created.
 .TP
-.B \-T " timeout"
+.BI \-T " timeout"
 Timeout on the select() system call - default is 1 second. This option should not be used interactively.
 .TP
-.B \-M " umask"
+.BI \-M " umask"
 Forced server umask. This option should not be used interactively.
 .TP
-.B \-D " directory"
+.BI \-D " directory"
 Set current working directory.
 .TP
-.B \-n
+.BI \-n
 Do not detach from controlling terminal. Used only if \-d option is not set.
 .TP
-.B \-S " socket_parent"
+.BI \-S " socket_parent"
 Assuming a listening socket was creating beforehand, do not close this socket when daemonizing. This option should not be used interactively.
 .TP
-.B \-P " socket_parent_port"
+.BI \-P " socket_parent_port"
 Assuming a listening socket was creating beforehand, do not try to bind to standard port, but takes over listening on this given port. This option should not be used interactively.
 .TP
-.B \-1
+.BI \-1
 Accept a single connection and exit. This option should not be used interactively.
 .TP
-.B \-U
+.BI \-U
 Ignore uid/gid from the protocol. This option should not be used interactively.
 .TP
-.B \-Z " subrequest_id"
-Use hooks at open/close/first_byte_writen to commit in the CASTOR2 databases changes to the file. This option should not be used interactively.
+.BI \-i " transferid"
+Use hooks at open/close to commit in the CASTOR2 databases changes to the file. This option should not be used interactively.
 .TP
-.B \-u " uid"
-User id of the client.This option should be present when rfiod runs in secure mode.
+.BI \-F " Filename"
+The physical target filename for this single transfer. This option should not be used interactively.
 .TP
-.B \-g " gid"
-Group id of the client.This option should be present when rfiod runs in secure mode.
+.BI \-u " uid"
+User id of the client. This option should be present when rfiod runs in secure mode.
+.TP
+.BI \-g " gid"
+Group id of the client. This option should be present when rfiod runs in secure mode.
 .SH EXAMPLE
 .RS
 .HP

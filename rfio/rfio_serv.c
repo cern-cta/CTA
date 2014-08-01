@@ -118,10 +118,10 @@ int max_sndbuf;
 char *forced_filename = NULL;
 int forced_umask = -1;
 int ignore_uid_gid = 0;
-u_signed64 subrequest_id = 0;
+char* transferid = NULL;
 void *handler_context = NULL;
 
-/* Use when option -Z is set : then this is put to zero */
+/* Use when option -i is set : then this is put to zero */
 /* only if the close hook was executed successfully */
 int forced_mover_exit_error = 1;
 
@@ -219,8 +219,7 @@ int main (int     argc,
 
   strcpy(logfile, "syslog"); /* default logfile */
   opterr++;
-
-  while ((option = getopt(argc,argv,"sdltf:p:P:D:M:nS:1R:T:UZ:u:g:")) != EOF) {
+  while ((option = getopt(argc, argv, "1sdlnUf:p:P:D:M:S:R:T:i:F:u:g:")) != EOF) {
     switch (option) {
     case 'd':
       debug++;
@@ -230,31 +229,31 @@ int main (int     argc,
       break;
     case 'f':
       lfname++;
-      strcpy(logfile,optarg);
+      strcpy(logfile, optarg);
       break;
     case 'l':
       logging++;
       break;
     case 'T':
-      select_timeout=atoi(optarg);
+      select_timeout = atoi(optarg);
       break;
     case 'M':
-      forced_umask=atoi(optarg);
+      forced_umask = atoi(optarg);
       break;
     case 'p':
       port=atoi(optarg);
       break;
     case 'D':
-      curdir = optarg;
+      curdir = strdup(optarg);
       break;
     case 'n':
       nodetach++;
       break;
     case 'S':
-      Socket_parent=atoi(optarg);
+      Socket_parent = atoi(optarg);
       break;
     case 'P':
-      Socket_parent_port=atoi(optarg);
+      Socket_parent_port = atoi(optarg);
       break;
     case '1':
       once_only++;
@@ -262,8 +261,11 @@ int main (int     argc,
     case 'U':
       ignore_uid_gid++;
       break;
-    case 'Z':
-      subrequest_id = strtou64(optarg);
+    case 'i':
+      transferid = strdup(optarg);
+      break;
+    case 'F':
+      forced_filename = strdup(optarg);
       break;
     case 'u':
       uid = strtou64(optarg);
@@ -275,9 +277,6 @@ int main (int     argc,
       fprintf(stderr,"Unknown option '%c'\n", option);
       exit(1);
     }
-  }
-  if (optind < argc) {
-    forced_filename = argv[optind];
   }
 
   /*
@@ -465,7 +464,7 @@ int main (int     argc,
     }
 
     for (;;) {
-      check_child_exit((subrequest_id>0 ? have_a_child : 0)); /* check childs [pid,status] */
+      check_child_exit((transferid != 0 ? have_a_child : 0)); /* check childs [pid,status] */
       if ( (s != -1) && FD_ISSET (s, &readfd)) {
         fromlen = sizeof(from);
         ns = accept(s, (struct sockaddr *)&from, &fromlen);
@@ -503,7 +502,7 @@ int main (int     argc,
         }
         have_a_child = 1;
         close(ns);                          /* Parent */
-        if ( subrequest_id > 0 ) {
+        if ( transferid != 0 ) {
           /*
            * If we are started by the stagerjob we don't allow for
            * more than one connection. Close the listen socket and loop back
@@ -531,7 +530,7 @@ int main (int     argc,
           } else if (! have_a_child) {
             /* error and no child : we assume very old client */
             (*logfunc)(LOG_DEBUG,"Exiting with status %d\n", 0);
-            exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+            exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
           }
         }
         FD_ZERO (&readfd);
@@ -543,7 +542,7 @@ int main (int     argc,
         } else if (! have_a_child) {
           /* timeout and no child : we assume very old client */
           (*logfunc)(LOG_DEBUG,"Exiting with status %d\n", 0);
-          exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+          exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
         }
       }
     }
@@ -800,7 +799,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"close() returned %d\n",status);
       fd = -1;
       shutdown(s, 2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_READ  :
       info.readop ++ ;
       (*logfunc)(LOG_DEBUG, "request type <read()>\n");
@@ -857,7 +856,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG, "stat() returned %d\n",status);
       if (request==RQST_STAT || request==RQST_STAT_SEC) {
         shutdown(s, 2); close(s);
-        exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+        exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       }  /* if request == RQST_STAT  */
       break ;
     case RQST_LSTAT_SEC:
@@ -866,7 +865,7 @@ int doit(int      s,
       status = srlstat(s,(bet?is_remote:0),(bet?from_host:(char *)NULL),bet);
       (*logfunc)(LOG_DEBUG, "lstat() returned %d\n",status);
       shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_LSEEK :
       info.seekop ++ ;
       (*logfunc)(LOG_DEBUG, "request type <lseek()>\n");
@@ -884,13 +883,13 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG, "request type <errmsg()>\n");
       srerrmsg(s);
       shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_STATFS :
       (*logfunc)(LOG_DEBUG, "request type <statfs()>\n");
       status = srstatfs(s) ;
       (*logfunc)(LOG_DEBUG, "statfs() returned %d\n",status);
       shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_FREAD :
       (*logfunc)(LOG_DEBUG,"request type <fread()>\n");
       status = srfread(s,streamf) ;
@@ -906,11 +905,11 @@ int doit(int      s,
       status = sraccess(s, from_host, (bet?is_remote:0)) ;
       (*logfunc)(LOG_DEBUG,"raccess returned %d\n",status);
       shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_END :
       (*logfunc)(LOG_DEBUG,"request type : end rfiod\n") ;
       shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break ;
     case RQST_OPEN_V3:
       (*logfunc)(LOG_DEBUG,"request type : open_v3\n");
@@ -923,7 +922,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"rclose_v3 returned %d\n", status);
       fd = -1;
       shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     case RQST_READ_V3:
       (*logfunc)(LOG_DEBUG,"request type : read_v3\n");
@@ -931,7 +930,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"rread_v3 returned %d\n",status);
       fd = -1;
       shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     case RQST_WRITE_V3:
       (*logfunc)(LOG_DEBUG,"request type : write_v3\n");
@@ -939,7 +938,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"rwrite_v3 returned %d\n",status);
       fd = -1;
       shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     case RQST_LSEEK_V3:
       info.seekop++;
@@ -958,7 +957,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"rclose64_v3 returned %d\n", status);
       fd = -1;
       shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     case RQST_READ64_V3:
       (*logfunc)(LOG_DEBUG,"request type : read64_v3\n");
@@ -966,7 +965,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"rread64_v3 returned %d\n",status);
       fd = -1;
       shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     case RQST_WRITE64_V3:
       (*logfunc)(LOG_DEBUG,"request type : write64_v3\n");
@@ -974,7 +973,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"rwrite64_v3 returned %d\n",status);
       fd = -1;
       shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     case RQST_MSTAT64:
     case RQST_STAT64 :
@@ -983,7 +982,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG, "stat64() returned %d\n",status);
       if (request == RQST_STAT64) {
         shutdown(s, 2); close(s);
-        exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+        exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       }  /* if request == RQST_STAT64  */
       break ;
     case RQST_LSTAT64 :
@@ -991,11 +990,11 @@ int doit(int      s,
       status = srlstat64(s, is_remote, from_host);
       (*logfunc)(LOG_DEBUG, "lstat64() returned %d\n",status);
       shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     default :
       (*logfunc)(LOG_ERR, "unknown request type %x(hex)\n", request);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((transferid != 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     }  /* End of switch (request) */
   }  /* End of for (;;) */
