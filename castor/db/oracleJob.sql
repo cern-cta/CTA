@@ -301,7 +301,6 @@ BEGIN
     -- Here we are a standalone Put
     contextPIPP := 1;
   END;
-
   -- Failure upstream?
   IF inoutErrorCode > 0 THEN
     -- fail the subRequest
@@ -310,14 +309,13 @@ BEGIN
            errorCode = inoutErrorCode,
            errorMessage = inoutErrorMsg
      WHERE id = srId;
-    IF contextPIPP != 0 THEN
-      -- On a standalone put cleanup DiskCopy and maybe the CastorFile
-      -- (the physical file is dropped by the mover)
-      DELETE FROM DiskCopy WHERE id = dcId;
-      deleteCastorFile(cfId);
-    END IF;
+    -- invalidate the DiskCopy, so that the GC has a chance to clean up
+    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+     WHERE id = dcId;
     logToDLF(NULL, dlf.LVL_NOTICE, dlf.STAGER_PUTENDED, varFileId, varNsHost, 'stagerd',
       'SUBREQID='|| inTransferId ||' errorMessage="'|| inoutErrorMsg ||'" errorCode='|| inoutErrorCode);
+    -- The error was dealt with, return 0 now
+    inoutErrorCode := 0;
     RETURN;
   END IF;
   -- Check whether the diskCopy is still in STAGEOUT. If not, the file
@@ -373,12 +371,9 @@ BEGIN
            errorCode = inoutErrorCode,
            errorMessage = varMsg
      WHERE id = srId;
-    IF contextPIPP != 0 THEN
-      -- On a standalone put cleanup DiskCopy and maybe the CastorFile
-      -- (the physical file is dropped by the job)
-      DELETE FROM DiskCopy WHERE id = dcId;
-      deleteCastorFile(cfId);
-    END IF;
+    -- invalidate the DiskCopy, so that the GC has a chance to clean up
+    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+     WHERE id = dcId;
     -- No log for the stager, it would be a duplicate of the nsd one
     RETURN;
   END IF;
