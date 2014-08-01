@@ -41,7 +41,9 @@
 #include <zlib.h>
 #include <sys/xattr.h>
 
+#include "getconfent.h"
 #include "ceph/ceph_posix.h"
+#include "movers/moverclose.h"
 
 #define  CA_MAXCKSUMLEN 32
 #define  CA_MAXCKSUMNAMELEN 15
@@ -415,7 +417,8 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t op,
     /* if not done just register the next one */
     if(!CASTOR2_handle->done) globus_l_gfs_CASTOR2_read_from_net(CASTOR2_handle);
     /* if done and there are no outstanding callbacks finish */
-    else if(CASTOR2_handle->outstanding == 0){
+    else if(CASTOR2_handle->outstanding == 0) {
+      long long fileSize = 0;
       if (CASTOR2_handle->number_of_blocks > 0) {
         /* checksum calculation */
         checksum_array=(checksum_block_list_t**)
@@ -453,7 +456,7 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t op,
         }
         chkOffset += checksum_array[0]->size;
         /* go over all received chunks */
-        for (i=1;i<CASTOR2_handle->number_of_blocks;i++) {
+        for (i = 1; i < CASTOR2_handle->number_of_blocks; i++) {
           // not continuous, either a chunk is missing or we have overlapping chunks
           if (checksum_array[i]->offset > chkOffset) {
             // a chunk is missing, consider it full of 0s
@@ -480,6 +483,7 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t op,
                                          checksum_array[i]->size);
           chkOffset += checksum_array[i]->size;
         }
+        fileSize = (long long)chkOffset;
 
         globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: checksum for %s : AD 0x%lx\n",
                                func,CASTOR2_handle->fullDestPath,file_checksum);
@@ -496,6 +500,18 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t op,
         }
       }
       ceph_posix_close(CASTOR2_handle->fd);
+      /* tell diskmanagerd to close the file */
+      int port = MOVERHANDLERPORT;
+      if(getconfent("DiskManager", "MoverHandlerPort", 0) != NULL) {
+        port = atoi(getconfent("DiskManager", "MoverHandlerPort", 0));
+      }
+      int rc = 0;
+      char* error_msg = NULL;
+      if (mover_close_file(port, CASTOR2_handle->uuid, fileSize, "AD", ckSumbuf, &rc, &error_msg) != 0) {
+        globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: mover_close_file failed for transferid=%s: %s\n",
+                               func, CASTOR2_handle->uuid, error_msg);
+        free(error_msg);
+      }
 
       globus_gridftp_server_finished_transfer(op, CASTOR2_handle->cached_res);
     }

@@ -44,7 +44,7 @@ set_property (SOURCE globus_gridftp_server_CASTOR2.c
   PROPERTY COMPILE_FLAGS "${CASTOR_GLOBUS_MOPTION}")
 add_library (globus_gridftp_server_CASTOR2 SHARED
   globus_gridftp_server_CASTOR2.c)
-target_link_libraries(globus_gridftp_server_CASTOR2 ${RADOS_LIBS} castorcephposix)
+target_link_libraries(globus_gridftp_server_CASTOR2 ${RADOS_LIBS} castorcephposix castorcommon castormovers)
 set_target_properties (globus_gridftp_server_CASTOR2 PROPERTIES
   LINK_FLAGS "${GLOBUS_FTPLIB} -lz")
 install (TARGETS globus_gridftp_server_CASTOR2
