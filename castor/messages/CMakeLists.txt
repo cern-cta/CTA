@@ -4,6 +4,7 @@ add_library(castormessages SHARED
   ForkDataTransfer.pb.cc
   ForkLabel.pb.cc
   ForkSucceeded.pb.cc
+  Frame.cpp
   Header.pb.cc
   Heartbeat.pb.cc
   messages.cpp
@@ -14,6 +15,7 @@ add_library(castormessages SHARED
   ProcessExited.pb.cc
   RecallJobFromReadTp.pb.cc
   RecallJobFromTapeGateway.pb.cc
+  ReturnValue.pb.cc
   StopProcessForker.pb.cc
   TapeMountedForMigration.pb.cc
   TapeMountedForRecall.pb.cc
@@ -25,6 +27,9 @@ add_library(castormessages SHARED
   TapeserverProxyZmqFactory.cpp
   TapeUnmountStarted.pb.cc
   TapeUnmounted.pb.cc
+  ZmqMsg.cpp
+  ZmqSocket.cpp
+  ZmqSocketMT.cpp
 )
 
 target_link_libraries(castormessages protobuf ssl)

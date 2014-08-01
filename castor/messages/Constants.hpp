@@ -23,31 +23,29 @@
 #pragma once
 
 namespace castor {
-  namespace messages{
-    struct protocolType{
-      enum {
-        Tape
-      };
-    };
-    struct reqType{
-      enum {
-        ReturnValue,
-        Heartbeat,
-        MigrationJobFromTapeGateway,
-        MigrationJobFromWriteTp,
-        NbFilesOnTape,
-        RecallJobFromReadTp,
-        RecallJobFromTapeGateway,
-        TapeMountedForMigration,
-        TapeMountedForRecall,
-        TapeUnmountStarted,
-        TapeUnmounted
-      };
-    };
-    struct protocolVersion{
-      enum {
-        prototype
-      };
-    };
-  }
-}
+namespace messages {
+
+enum ProtocolType {
+  PROTOCOL_TYPE_TAPE
+};
+
+enum MsgType {
+  MSG_TYPE_RETURNVALUE,
+  MSG_TYPE_HEARTBEAT,
+  MSG_TYPE_MIGRATIONJOBFROMTAPEGATEWAY,
+  MSG_TYPE_MIGRATIONJOBFROMWRITETP,
+  MSG_TYPE_NBFILESONTAPE,
+  MSG_TYPE_RECALLJOBFROMREADTP,
+  MSG_TYPE_RECALLJOBFROMTAPEGATEWAY,
+  MSG_TYPE_TAPEMOUNTEDFORMIGRATION,
+  MSG_TYPE_TAPEMOUNTEDFORRECALL,
+  MSG_TYPE_TAPEUNMOUNTSTARTED,
+  MSG_TYPE_TAPEUNMOUNTED
+};
+
+enum ProtocolVersion {
+  PROTOCOL_VERSION_1
+};
+
+} // namespace messages
+} // namespace castor

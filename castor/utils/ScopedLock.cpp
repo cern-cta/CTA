@@ -16,44 +16,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- *
- *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "castor/exception/Exception.hpp"
+#include "castor/utils/ScopedLock.hpp"
+#include "h/serrno.h"
 
-#include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
-
-#include <string>
-
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
-
-/**
- * Structure representing a message frame.
- */
-struct ProcessForkerFrame {
-  /**
-   *  The type of the message contained within the payload of the frame.
-   */
-  ProcessForkerMsgType::Enum type;
-
-  /**
-   * The payload of the frame.
-   */
-  std::string payload;
-
-  /**
-   * Constructor.
-   */
-  ProcessForkerFrame(): type(ProcessForkerMsgType::MSG_NONE) {
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::utils::ScopedLock::ScopedLock(pthread_mutex_t &mutex): m_mutex(&mutex) {
+  const int rc = pthread_mutex_lock(&mutex);
+  if(0 != rc) {
+    char message[100];
+    sstrerror_r(rc, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create scoped lock"
+      ": Failed to lock mutex: " << message;
+    throw ex;
   }
-}; // struct  ProcessForkerFrame
+}
 
-} // namespace tapeserver
-} // namespace tape
-} // namespace daemon
-} // namespace castor
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::utils::ScopedLock::~ScopedLock() throw() {
+  if(m_mutex != NULL) {
+    pthread_mutex_unlock(m_mutex);
+  }
+}

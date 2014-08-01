@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/utils/ZmqMsg.hpp"
+#include "castor/messages/ZmqMsg.hpp"
 
 #include <errno.h>
 #include <unistd.h>
@@ -30,7 +30,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::ZmqMsg::ZmqMsg() throw() {
+castor::messages::ZmqMsg::ZmqMsg() throw() {
   if(zmq_msg_init(&m_zmqMsg)) {
     char message[100];
     sstrerror_r(errno, message, sizeof(message));
@@ -44,7 +44,7 @@ castor::tape::utils::ZmqMsg::ZmqMsg() throw() {
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::ZmqMsg::ZmqMsg(const size_t msgSize) throw() {
+castor::messages::ZmqMsg::ZmqMsg(const size_t msgSize) throw() {
   if(zmq_msg_init_size(&m_zmqMsg, msgSize)) {
     char message[100];
     sstrerror_r(errno, message, sizeof(message));
@@ -58,24 +58,41 @@ castor::tape::utils::ZmqMsg::ZmqMsg(const size_t msgSize) throw() {
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::ZmqMsg::~ZmqMsg() throw() {
+castor::messages::ZmqMsg::~ZmqMsg() throw() {
   zmq_msg_close(&m_zmqMsg);
 }
 
 //-----------------------------------------------------------------------------
 // getZmqMsg
 //-----------------------------------------------------------------------------
-zmq_msg_t &castor::tape::utils::ZmqMsg::getZmqMsg() throw() {
+zmq_msg_t &castor::messages::ZmqMsg::getZmqMsg() throw() {
   return m_zmqMsg;
 }
 
-const void*  castor::tape::utils::ZmqMsg::data () const
-{
-  return zmq_msg_data (const_cast<zmq_msg_t*>(&m_zmqMsg));
+//-----------------------------------------------------------------------------
+// getData
+//-----------------------------------------------------------------------------
+const void* castor::messages::ZmqMsg::getData() const {
+  return zmq_msg_data(const_cast<zmq_msg_t*>(&m_zmqMsg));
 }
 
-size_t  castor::tape::utils::ZmqMsg::size () const
-{
-  return zmq_msg_size (const_cast<zmq_msg_t*>(&m_zmqMsg));
+//-----------------------------------------------------------------------------
+// getData
+//-----------------------------------------------------------------------------
+void* castor::messages::ZmqMsg::getData() {
+  return zmq_msg_data(&m_zmqMsg);
 }
 
+//-----------------------------------------------------------------------------
+// size
+//-----------------------------------------------------------------------------
+size_t castor::messages::ZmqMsg::size() const {
+  return zmq_msg_size(const_cast<zmq_msg_t*>(&m_zmqMsg));
+}
+
+//-----------------------------------------------------------------------------
+// more
+//-----------------------------------------------------------------------------
+bool castor::messages::ZmqMsg::more() const {
+  return zmq_msg_more(const_cast<zmq_msg_t*>(&m_zmqMsg));
+}

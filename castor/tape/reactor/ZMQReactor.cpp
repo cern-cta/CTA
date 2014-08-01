@@ -36,7 +36,7 @@ namespace{
 
 //------------------------------------------------------------------------------
 // constructor
-//------------------------------------------------------------------------------    
+//------------------------------------------------------------------------------
 castor::tape::reactor::ZMQReactor::ZMQReactor(log::Logger& log) throw():
   m_log(log) {
 }
@@ -50,7 +50,7 @@ castor::tape::reactor::ZMQReactor::~ZMQReactor() throw() {
 
 //------------------------------------------------------------------------------
 // clear
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 void castor::tape::reactor::ZMQReactor::clear() {
   for(HandlerMap::iterator it=m_handlers.begin();it!=m_handlers.end();++it){
     delete it->second;
@@ -60,7 +60,7 @@ void castor::tape::reactor::ZMQReactor::clear() {
 
 //------------------------------------------------------------------------------
 // registerHandler
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 void castor::tape::reactor::ZMQReactor::registerHandler(
   ZMQPollEventHandler *const handler) {
   zmq_pollitem_t item;

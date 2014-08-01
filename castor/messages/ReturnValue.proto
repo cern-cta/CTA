@@ -18,23 +18,10 @@
 
 package castor.messages;
 
-message Header {
- required uint32 magic = 1;
-
- //see castor::messages::protocolType's anonymous enum for values
- required uint32 protocoltype = 2;
-
- //see castor::messages::protocolVersion's anonymous enum for values
- required uint32 protocolversion = 3;
-
- //see castor::messages::msgType's anonymous enum for values
- required uint32 msgtype = 4;
-
- //will it be hardcoded to SHA1 ?
- required string bodyhashtype = 5;		
- required string bodyhashValue = 6;
-
-	
- required string bodysignaturetype= 7;	
- required string bodysignature = 8;	
+// Generic return value. It is either returnValue == 0 and message == "" if
+// everything is OK or returnValue != 0 and message != "" if something went
+// wrong.
+message ReturnValue {
+  required uint32 returnValue = 1;
+  required string message = 2;
 }

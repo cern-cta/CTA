@@ -53,10 +53,8 @@ castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log,
   m_tapeserverHostName("localhost"),
   m_tapeserverPort(tapeserverPort),
   m_netTimeout(netTimeout),
-  m_messageSocket(zmqContext, ZMQ_REQ),
-  m_heartbeatSocket(zmqContext, ZMQ_REQ) {
-  castor::messages::connectToLocalhost(m_messageSocket,tapeserverPort);
-  castor::messages::connectToLocalhost(m_heartbeatSocket,tapeserverPort);
+  m_tapeserverSocket(zmqContext, ZMQ_REQ) {
+  connectToLocalhost(m_tapeserverSocket, tapeserverPort);
 }
 
 //------------------------------------------------------------------------------
@@ -72,12 +70,12 @@ void castor::messages::TapeserverProxyZmq::gotRecallJobFromTapeGateway(
     messages::Header rqstHeader = castor::messages::protoTapePreFillHeader();
     rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
     rqstHeader.set_bodysignature("PIPO");
-    rqstHeader.set_reqtype(messages::reqType::RecallJobFromTapeGateway);
+    rqstHeader.set_msgtype(MSG_TYPE_RECALLJOBFROMTAPEGATEWAY);
 
-    messages::sendMessage(m_messageSocket, rqstHeader, ZMQ_SNDMORE);
-    messages::sendMessage(m_messageSocket, rqstBody);
+    messages::sendMessage(m_tapeserverSocket, rqstHeader, ZMQ_SNDMORE);
+    messages::sendMessage(m_tapeserverSocket, rqstBody);
 
-    messages::ProtoTapeReplyContainer reply(m_messageSocket);
+    messages::ProtoTapeReplyContainer reply(m_tapeserverSocket);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -115,12 +113,12 @@ void castor::messages::TapeserverProxyZmq::gotRecallJobFromReadTp(
     messages::Header rqstHeader = castor::messages::protoTapePreFillHeader();
     rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
     rqstHeader.set_bodysignature("PIPO");
-    rqstHeader.set_reqtype(messages::reqType::RecallJobFromReadTp);
+    rqstHeader.set_msgtype(MSG_TYPE_RECALLJOBFROMREADTP);
 
-    messages::sendMessage(m_messageSocket, rqstHeader, ZMQ_SNDMORE);
-    messages::sendMessage(m_messageSocket, rqstBody);
+    messages::sendMessage(m_tapeserverSocket, rqstHeader, ZMQ_SNDMORE);
+    messages::sendMessage(m_tapeserverSocket, rqstBody);
 
-    messages::ProtoTapeReplyContainer reply(m_messageSocket);
+    messages::ProtoTapeReplyContainer reply(m_tapeserverSocket);
 
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -159,25 +157,25 @@ uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromTapeGateway(
     messages::Header rqstHeader = castor::messages::protoTapePreFillHeader();
     rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
     rqstHeader.set_bodysignature("PIPO");
-    rqstHeader.set_reqtype(messages::reqType::MigrationJobFromTapeGateway);
+    rqstHeader.set_msgtype(MSG_TYPE_MIGRATIONJOBFROMTAPEGATEWAY);
 
-    messages::sendMessage(m_messageSocket, rqstHeader, ZMQ_SNDMORE);
-    messages::sendMessage(m_messageSocket, rqstBody);
+    messages::sendMessage(m_tapeserverSocket, rqstHeader, ZMQ_SNDMORE);
+    messages::sendMessage(m_tapeserverSocket, rqstBody);
 
-    messages::ProtoTapeReplyContainer rawReply(m_messageSocket);
-    if(rawReply.header.reqtype() != messages::reqType::NbFilesOnTape) {
+    messages::ProtoTapeReplyContainer rawReply(m_tapeserverSocket);
+    if(rawReply.header.msgtype() != MSG_TYPE_NBFILESONTAPE) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to receive reply from tapeserverd"
-        ": Unexpected message type: expected=" << messages::reqType::NbFilesOnTape
-        << " actual=" << rawReply.header.reqtype();
+        ": Unexpected message type: expected=" << MSG_TYPE_NBFILESONTAPE
+        << " actual=" << rawReply.header.msgtype();
       throw ex;
     }
     messages::NbFilesOnTape reply;
-    if(!reply.ParseFromArray(rawReply.blobBody.data(),
+    if(!reply.ParseFromArray(rawReply.blobBody.getData(),
       rawReply.blobBody.size())) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to parse reply from tapeserverd"
-        ": msgType=" << rawReply.header.reqtype();
+        ": msgType=" << rawReply.header.msgtype();
       throw ex;
     }
     return reply.nbfiles(); 
@@ -218,22 +216,22 @@ uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromWriteTp(
     messages::Header rqstHeader = castor::messages::protoTapePreFillHeader();
     rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
     rqstHeader.set_bodysignature("PIPO");
-    rqstHeader.set_reqtype(messages::reqType::MigrationJobFromWriteTp);
+    rqstHeader.set_msgtype(MSG_TYPE_MIGRATIONJOBFROMWRITETP);
 
-    messages::sendMessage(m_messageSocket, rqstHeader, ZMQ_SNDMORE);
-    messages::sendMessage(m_messageSocket, rqstBody);
+    messages::sendMessage(m_tapeserverSocket, rqstHeader, ZMQ_SNDMORE);
+    messages::sendMessage(m_tapeserverSocket, rqstBody);
 
-    messages::ProtoTapeReplyContainer rawReply(m_messageSocket);
-    if(rawReply.header.reqtype() != messages::reqType::NbFilesOnTape) {
+    messages::ProtoTapeReplyContainer rawReply(m_tapeserverSocket);
+    if(rawReply.header.msgtype() != MSG_TYPE_NBFILESONTAPE) {
       castor::exception::Exception ex;
       ex.getMessage() <<
         "Failed to receive NbFilesOnTape reply from tapeserverd: "
-        "Unexpected message type: expected=" << messages::reqType::NbFilesOnTape
-        << " actual=" << rawReply.header.reqtype();
+        "Unexpected message type: expected=" << MSG_TYPE_NBFILESONTAPE <<
+        " actual=" << rawReply.header.msgtype();
       throw ex;
     }
     messages::NbFilesOnTape reply;
-    if(!reply.ParseFromArray(rawReply.blobBody.data(),
+    if(!reply.ParseFromArray(rawReply.blobBody.getData(),
       rawReply.blobBody.size())) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to parse NbFilesOnTape reply from tapeserverd";
@@ -277,12 +275,12 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForRecall(
     castor::messages::Header header = castor::messages::protoTapePreFillHeader();
     header.set_bodyhashvalue(computeSHA1Base64(body));
     header.set_bodysignature("PIPO");
-    header.set_reqtype(castor::messages::reqType::TapeMountedForRecall);
+    header.set_msgtype(MSG_TYPE_TAPEMOUNTEDFORRECALL);
   
-    castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-    castor::messages::sendMessage(m_messageSocket,body);
+    castor::messages::sendMessage(m_tapeserverSocket,header,ZMQ_SNDMORE);
+    castor::messages::sendMessage(m_tapeserverSocket,body);
   
-    castor::messages::ProtoTapeReplyContainer reply(m_messageSocket);
+    castor::messages::ProtoTapeReplyContainer reply(m_tapeserverSocket);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -320,12 +318,12 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForMigration(
     castor::messages::Header header = castor::messages::protoTapePreFillHeader();
     header.set_bodyhashvalue(computeSHA1Base64(body));
     header.set_bodysignature("PIPO");
-    header.set_reqtype(castor::messages::reqType::TapeMountedForMigration);
+    header.set_msgtype(MSG_TYPE_TAPEMOUNTEDFORMIGRATION);
   
-    castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-    castor::messages::sendMessage(m_messageSocket,body);
+    castor::messages::sendMessage(m_tapeserverSocket,header,ZMQ_SNDMORE);
+    castor::messages::sendMessage(m_tapeserverSocket,body);
   
-    castor::messages::ProtoTapeReplyContainer reply(m_messageSocket);
+    castor::messages::ProtoTapeReplyContainer reply(m_tapeserverSocket);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -363,12 +361,12 @@ void castor::messages::TapeserverProxyZmq::tapeUnmountStarted(
     castor::messages::Header header = castor::messages::protoTapePreFillHeader();
     header.set_bodyhashvalue(computeSHA1Base64(body));
     header.set_bodysignature("PIPO");
-    header.set_reqtype(castor::messages::reqType::TapeUnmountStarted);
+    header.set_msgtype(MSG_TYPE_TAPEUNMOUNTSTARTED);
 
-    castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-    castor::messages::sendMessage(m_messageSocket,body);
+    castor::messages::sendMessage(m_tapeserverSocket,header,ZMQ_SNDMORE);
+    castor::messages::sendMessage(m_tapeserverSocket,body);
   
-    castor::messages::ProtoTapeReplyContainer reply(m_messageSocket);
+    castor::messages::ProtoTapeReplyContainer reply(m_tapeserverSocket);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -406,12 +404,12 @@ void castor::messages::TapeserverProxyZmq::tapeUnmounted(
     castor::messages::Header header=castor::messages::protoTapePreFillHeader();
     header.set_bodyhashvalue(computeSHA1Base64(body));
     header.set_bodysignature("PIPO");
-    header.set_reqtype(castor::messages::reqType::TapeUnmounted);
+    header.set_msgtype(MSG_TYPE_TAPEUNMOUNTED);
   
-    castor::messages::sendMessage(m_messageSocket,header,ZMQ_SNDMORE);
-    castor::messages::sendMessage(m_messageSocket,body);
+    castor::messages::sendMessage(m_tapeserverSocket,header,ZMQ_SNDMORE);
+    castor::messages::sendMessage(m_tapeserverSocket,body);
   
-    castor::messages::ProtoTapeReplyContainer reply(m_messageSocket);
+    castor::messages::ProtoTapeReplyContainer reply(m_tapeserverSocket);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -439,18 +437,18 @@ void castor::messages::TapeserverProxyZmq::tapeUnmounted(
 //-----------------------------------------------------------------------------
 // notifyHeartbeat
 //-----------------------------------------------------------------------------
- void  castor::messages::TapeserverProxyZmq::
- notifyHeartbeat(uint64_t nbOfMemblocksMoved){
-   messages::Heartbeat body;
-   body.set_bytesmoved(nbOfMemblocksMoved);
+void  castor::messages::TapeserverProxyZmq::notifyHeartbeat(
+  const uint64_t nbOfMemblocksMoved){
+  messages::Heartbeat body;
+  body.set_bytesmoved(nbOfMemblocksMoved);
    
-   messages::Header header = messages::protoTapePreFillHeader();
-   header.set_reqtype(messages::reqType::Heartbeat);
-   header.set_bodyhashvalue(computeSHA1Base64(body));
-   header.set_bodysignature("PIPO");
+  messages::Header header = messages::protoTapePreFillHeader();
+  header.set_msgtype(MSG_TYPE_HEARTBEAT);
+  header.set_bodyhashvalue(computeSHA1Base64(body));
+  header.set_bodysignature("PIPO");
 
-   messages::sendMessage(m_heartbeatSocket,header,ZMQ_SNDMORE);
-   messages::sendMessage(m_heartbeatSocket,body);
+  messages::sendMessage(m_tapeserverSocket,header,ZMQ_SNDMORE);
+  messages::sendMessage(m_tapeserverSocket,body);
    
-   ProtoTapeReplyContainer reply(m_heartbeatSocket);
- }
+  ProtoTapeReplyContainer reply(m_tapeserverSocket);
+}

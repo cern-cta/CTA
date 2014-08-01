@@ -21,12 +21,13 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/messages/Header.pb.h"
-#include "castor/tape/utils/ZmqMsg.hpp"
-#include "castor/tape/utils/ZmqSocket.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/messages/Constants.hpp"
+#include "castor/messages/Header.pb.h"
 #include "castor/messages/messages.hpp"
+#include "castor/messages/ReturnValue.pb.h"
+#include "castor/messages/ZmqMsg.hpp"
+#include "castor/messages/ZmqSocket.hpp"
+#include "castor/exception/Exception.hpp"
 #include "h/Ctape.h"
 
 namespace castor {
@@ -42,10 +43,10 @@ namespace messages {
 template <int protocolType, int protocolVersion> 
 struct ReplyContainer{
   castor::messages::Header header;
-  tape::utils::ZmqMsg blobBody;
-  ReplyContainer(tape::utils::ZmqSocket& socket){
+  ZmqMsg blobBody;
+  ReplyContainer(ZmqSocket& socket){
   
-    tape::utils::ZmqMsg blobHeader;
+  ZmqMsg blobHeader;
   socket.recv(&blobHeader.getZmqMsg()); 
   
   if(!zmq_msg_more(&blobHeader.getZmqMsg())) {
@@ -53,7 +54,7 @@ struct ReplyContainer{
   }
   socket.recv(&blobBody.getZmqMsg());
   
-  if(!header.ParseFromArray(blobHeader.data(),blobHeader.size())){
+  if(!header.ParseFromArray(blobHeader.getData(),blobHeader.size())){
     throw castor::exception::Exception("Message header cant be parsed from binary data read");
   }
   //check magic, protocolTypa and protocolVerison
@@ -68,11 +69,12 @@ struct ReplyContainer{
   }
   
   //check if everything is ok in a answer where we are not expecting any real va;ue
-  if(header.reqtype()==castor::messages::reqType::ReturnValue){
+  if(header.msgtype() == MSG_TYPE_RETURNVALUE){
     castor::messages::ReturnValue body;
-    checkSHA1(header,blobBody);
+    // TO BE DONE - SHOUDL DO WITH REPLACMENT FRAME CLASS
+    //checkSHA1(header,blobBody);
     
-    if(!body.ParseFromArray(blobBody.data(),blobBody.size())){
+    if(!body.ParseFromArray(blobBody.getData(),blobBody.size())){
         throw castor::exception::Exception("Expecting a ReturnValue body but"
                 " cant parse it from the binary");
     }
@@ -87,8 +89,8 @@ private :
   ReplyContainer& operator=(const ReplyContainer&);
 };
 
-typedef ReplyContainer<messages::protocolType::Tape,
-                       messages::protocolVersion::prototype> ProtoTapeReplyContainer;
+typedef ReplyContainer<PROTOCOL_TYPE_TAPE, PROTOCOL_VERSION_1>
+  ProtoTapeReplyContainer;
 
-}}
-
+} // namespace messages
+} // namespace castor

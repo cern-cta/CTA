@@ -28,13 +28,17 @@
 #include "castor/messages/NbFilesOnTape.pb.h"
 #include "castor/messages/RecallJobFromReadTp.pb.h"
 #include "castor/messages/RecallJobFromTapeGateway.pb.h"
+#include "castor/messages/ReturnValue.pb.h"
 #include "castor/messages/TapeMountedForMigration.pb.h"
 #include "castor/messages/TapeMountedForRecall.pb.h"
+#include "castor/messages/TapeUnmounted.pb.h"
+#include "castor/messages/TapeUnmountStarted.pb.h"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape.h"
+#include "h/serrno.h"
 #include "h/vmgr_constants.h"
 
 //------------------------------------------------------------------------------
@@ -103,54 +107,41 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::fillPollFd(
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
   const zmq_pollitem_t &fd) throw() {
+  m_log(LOG_DEBUG,"handling event in TapeMessageHandler");
+
+  // Try to receive a request, simply giving up if an exception is raised
+  messages::Frame rqst;
   try {
     checkSocket(fd);
-    m_log(LOG_DEBUG,"handling event in TapeMessageHandler");
-  
-    messages::Header header; 
-    try {
-      tape::utils::ZmqMsg headerBlob;
-      m_socket.recv(&headerBlob.getZmqMsg());
-    
-      if(!zmq_msg_more(&headerBlob.getZmqMsg())){
-        castor::exception::Exception ex;
-        ex.getMessage() << "No message body after reading the header";
-        throw ex;
-      }
-    
-      header = buildHeader(headerBlob);
-    } catch(castor::exception::Exception &ne){
-      castor::exception::Exception ex;
-      ex.getMessage() << "Error handling message header: " <<
-        ne.getMessage().str();
-      throw ex;
-    }
-
-    tape::utils::ZmqMsg bodyBlob;
-    try {
-      m_socket.recv(&bodyBlob.getZmqMsg());
-    } catch(castor::exception::Exception &ne){
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to receive message body: " << 
-        ne.getMessage().str();
-      throw ex;
-    }
-  
-    dispatchMsgHandler(header, bodyBlob);
-
+    rqst = messages::recvFrame(m_socket);
   } catch(castor::exception::Exception &ex) {
     log::Param params[] = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "TapeMessageHandler failed to handle event", params);
-  } catch(std::exception &se) {
-    log::Param params[] = {log::Param("message", se.what())};
-    m_log(LOG_ERR, "TapeMessageHandler failed to handle event", params);
-  } catch(...) {
-    log::Param params[] = {
-      log::Param("message", "Caught an unknown exception")};
-    m_log(LOG_ERR, "TapeMessageHandler failed to handle event", params);
+    return false; // Give up and stay registered with the reactor
   }
 
-  return false; // Ask reactor to remove and delete this handler
+  // From this point on any exception thrown should be converted into a
+  // ReturnValue message and sent back to the client
+  messages::Frame reply;
+  try {
+    reply = dispatchMsgHandler(rqst);
+  } catch(castor::exception::Exception &ex) {
+    reply = createReturnValueFrame(ex.code(), ex.getMessage().str());
+  } catch(std::exception &se) {
+    reply = createReturnValueFrame(SEINTERNAL, se.what());
+  } catch(...) {
+    reply = createReturnValueFrame(SEINTERNAL, "Caught an unknown exception");
+  }
+
+  // Send the reply to the client
+  try {
+    messages::sendFrame(m_socket, reply);
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "TapeMessageHandler failed to send reply to client", params);
+  }
+
+  return false; // Stay registered with the reactor
 }
 
 //------------------------------------------------------------------------------
@@ -161,70 +152,51 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::checkSocket(
   void* underlyingSocket = m_socket.getZmqSocket();
   if(fd.socket != underlyingSocket){
     castor::exception::Exception ex;
-    ex.getMessage() <<"TapeMessageHandler passed wrong poll item";
+    ex.getMessage() << "TapeMessageHandler passed wrong poll item";
     throw ex;
   }
-}
-
-
-//------------------------------------------------------------------------------
-// buildHeader
-//------------------------------------------------------------------------------
-castor::messages::Header castor::tape::tapeserver::daemon::TapeMessageHandler::buildHeader(
-  tape::utils::ZmqMsg &headerBlob){  
-  messages::Header header; 
-  const bool headerCorrectlyParsed = header.ParseFromArray(
-    zmq_msg_data(&headerBlob.getZmqMsg()), zmq_msg_size(&headerBlob.getZmqMsg()));
-  
-  if(!headerCorrectlyParsed){
-    castor::exception::Exception ex;
-    ex.getMessage() <<"TapeMessageHandler received a bad header while handling event";
-    throw ex;
-  }
-    if(header.magic() != TPMAGIC){
-    castor::exception::Exception ex;
-    ex.getMessage() <<"Wrong magic number in the header";
-    throw ex;
-  }
-  if(header.protocoltype() != messages::protocolType::Tape){
-    castor::exception::Exception ex;
-    ex.getMessage() <<"Wrong protocol specified in the header";
-    throw ex;
-  }
-  return header;
 }
 
 //------------------------------------------------------------------------------
 // dispatchMsgHandler
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchMsgHandler(
-  messages::Header& header, const tape::utils::ZmqMsg &bodyBlob) {
-  m_log(LOG_DEBUG, "TapeMessageHandler dispatching messag handler");
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  dispatchMsgHandler(const messages::Frame &rqst) {
+  m_log(LOG_DEBUG, "TapeMessageHandler dispatching message handler");
   
-  switch(header.reqtype()){
-  case messages::reqType::Heartbeat:
-    return handleHeartbeatMsg(header, bodyBlob);
-  case messages::reqType::MigrationJobFromTapeGateway:
-    return handleMigrationJobFromTapeGateway(header, bodyBlob);
-  case messages::reqType::MigrationJobFromWriteTp:
-    return handleMigrationJobFromWriteTp(header, bodyBlob);
-  case messages::reqType::RecallJobFromReadTp:
-    return handleRecallJobFromReadTp(header, bodyBlob);
-  case messages::reqType::RecallJobFromTapeGateway:
-    return handleRecallJobFromTapeGateway(header, bodyBlob);
-  case messages::reqType::TapeMountedForMigration:
-    return handleTapeMountedForMigration(header, bodyBlob);
-  case messages::reqType::TapeMountedForRecall:
-    return handleTapeMountedForRecall(header, bodyBlob);
-  case messages::reqType::TapeUnmountStarted:
-    return handleTapeUnmountStarted(header, bodyBlob);
-  case messages::reqType::TapeUnmounted:
-    return handleTapeUnmounted(header, bodyBlob);
+  switch(rqst.header.msgtype()) {
+  case messages::MSG_TYPE_HEARTBEAT:
+    return handleHeartbeat(rqst);
+
+  case messages::MSG_TYPE_MIGRATIONJOBFROMTAPEGATEWAY:
+    return handleMigrationJobFromTapeGateway(rqst);
+
+  case messages::MSG_TYPE_MIGRATIONJOBFROMWRITETP:
+    return handleMigrationJobFromWriteTp(rqst);
+
+  case messages::MSG_TYPE_RECALLJOBFROMREADTP:
+    return handleRecallJobFromReadTp(rqst);
+
+  case messages::MSG_TYPE_RECALLJOBFROMTAPEGATEWAY:
+    return handleRecallJobFromTapeGateway(rqst);
+
+  case messages::MSG_TYPE_TAPEMOUNTEDFORMIGRATION:
+    return handleTapeMountedForMigration(rqst);
+
+  case messages::MSG_TYPE_TAPEMOUNTEDFORRECALL:
+    return handleTapeMountedForRecall(rqst);
+
+  case messages::MSG_TYPE_TAPEUNMOUNTSTARTED:
+    return handleTapeUnmountStarted(rqst);
+
+  case messages::MSG_TYPE_TAPEUNMOUNTED:
+    return handleTapeUnmounted(rqst);
+
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to dispatch message handler"
-        ": Unknown request type: reqtype=" << header.reqtype();
+        ": Unknown request type: reqtype=" << rqst.header.msgtype();
       throw ex;
     }
   }
@@ -233,19 +205,16 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchMsgHandler(
 //------------------------------------------------------------------------------
 // handleHeartbeatMsg
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::handleHeartbeatMsg(
-  const messages::Header& header, const tape::utils::ZmqMsg &bodyBlob) {
-  m_log(LOG_DEBUG, "Handling Heartbeat message");
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleHeartbeat(const messages::Frame &rqst) {
+  m_log(LOG_INFO, "Handling Heartbeat message");
 
   try {
-    castor::messages::Heartbeat body;
-    parseMsgBlob(body, bodyBlob);
-    castor::messages::checkSHA1(header, bodyBlob);
-  
-    std::vector<log::Param> param;
-    param.push_back(log::Param("bytesMoved",body.bytesmoved()));
-  
-    sendSuccessReplyToClient();
+    castor::messages::Heartbeat rqstBody;
+    rqst.parseBodyIntoProtocolBuffer(rqstBody);
+
+    const messages::Frame reply = createReturnValueFrame(0, "");
+    return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle Heartbeat message: " <<
@@ -257,46 +226,34 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::handleHeartbeatMsg(
 //------------------------------------------------------------------------------
 // handleMigrationJobFromTapeGateway
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::
-  handleMigrationJobFromTapeGateway(const messages::Header& header,
-  const tape::utils::ZmqMsg &bodyBlob) {
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleMigrationJobFromTapeGateway(const messages::Frame &rqst) {
   m_log(LOG_INFO, "Handling MigrationJobFromTapeGateway message");
 
   try {
-    castor::messages::MigrationJobFromWriteTp rqst;
-    parseMsgBlob(rqst, bodyBlob);
-    castor::messages::checkSHA1(header, bodyBlob);
+    castor::messages::MigrationJobFromWriteTp rqstBody;
+    rqst.parseBodyIntoProtocolBuffer(rqstBody);
     
     // Query the vmgrd daemon for information about the tape
     const legacymsg::VmgrTapeInfoMsgBody tapeInfo =
-      m_vmgr.queryTape(rqst.vid());
+      m_vmgr.queryTape(rqstBody.vid());
 
     // If migrating files to tape and the client is the tapegatewayd daemon then
     // the tape must be BUSY
     if(!(tapeInfo.status & TAPE_BUSY)) {
       castor::exception::Exception ex;
-      ex.getMessage() << "Invalid tape mount: Tape is not BUSY: The tapegatewayd"
-        " daemon cannot mount a tape for write access if the tape is not BUSY";
+      ex.getMessage() << "Invalid tape mount: Tape is not BUSY"
+        ": The tapegatewayd daemon cannot mount a tape for write access if the"
+        " tape is not BUSY";
       throw ex;
     }
 
     DriveCatalogueEntry *const drive =
-      m_driveCatalogue.findDrive(rqst.unitname());
-    drive->receivedMigrationJob(rqst.vid());
-    
-    // TO BE DONE - Exception should cause sendErrorReplyToClient(ex) to be
-    // called.
-    messages::NbFilesOnTape replyBody;
-    replyBody.set_nbfiles(tapeInfo.nbFiles);
-    
-    messages::Header replyHeader = castor::messages::protoTapePreFillHeader();
-    replyHeader.set_reqtype(messages::reqType::NbFilesOnTape);
-    replyHeader.set_bodyhashvalue(messages::computeSHA1Base64(replyBody));
-    replyHeader.set_bodysignature("PIPO");
-      
-    //send the number of files on the tape to the client
-    messages::sendMessage(m_socket, replyHeader, ZMQ_SNDMORE);
-    messages::sendMessage(m_socket, replyBody);
+      m_driveCatalogue.findDrive(rqstBody.unitname());
+    drive->receivedMigrationJob(rqstBody.vid());
+
+    messages::Frame reply = createNbFilesOnTapeFrame(tapeInfo.nbFiles);
+    return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -307,39 +264,45 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::
 }
 
 //------------------------------------------------------------------------------
+// createNbFilesOnTapeFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  createNbFilesOnTapeFrame(const uint32_t nbFiles) {
+  messages::Frame frame;
+
+  messages::NbFilesOnTape body;
+  body.set_nbfiles(nbFiles);
+  frame.serializeProtocolBufferIntoBody(body);
+
+  frame.header = messages::protoTapePreFillHeader();
+  frame.header.set_msgtype(messages::MSG_TYPE_NBFILESONTAPE);
+  frame.calcAndSetHashValueOfBody();
+  frame.header.set_bodysignature("PIPO");
+
+  return frame;
+}
+
+//------------------------------------------------------------------------------
 // handleMigrationJobFromWriteTp
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::
-  handleMigrationJobFromWriteTp(const messages::Header& header,
-  const tape::utils::ZmqMsg &bodyBlob) {
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleMigrationJobFromWriteTp(const messages::Frame &rqst) {
   m_log(LOG_INFO, "Handling MigrationJobFromWriteTp message");
 
   try {
-    castor::messages::MigrationJobFromWriteTp rqst;
-    parseMsgBlob(rqst, bodyBlob);
-    castor::messages::checkSHA1(header, bodyBlob);
+    messages::MigrationJobFromWriteTp rqstBody;
+    rqst.parseBodyIntoProtocolBuffer(rqstBody);
 
     // Query the vmgrd daemon for information about the tape
     const legacymsg::VmgrTapeInfoMsgBody tapeInfo =
-      m_vmgr.queryTape(rqst.vid());
+      m_vmgr.queryTape(rqstBody.vid());
 
     DriveCatalogueEntry *const drive =
-      m_driveCatalogue.findDrive(rqst.unitname());
-    drive->receivedMigrationJob(rqst.vid());
+      m_driveCatalogue.findDrive(rqstBody.unitname());
+    drive->receivedMigrationJob(rqstBody.vid());
 
-    // TO BE DONE - Exception should cause sendErrorReplyToClient(ex) to be
-    // called.
-    messages::NbFilesOnTape replyBody;
-    replyBody.set_nbfiles(tapeInfo.nbFiles);
-
-    messages::Header replyHeader = castor::messages::protoTapePreFillHeader();
-    replyHeader.set_reqtype(messages::reqType::NbFilesOnTape);
-    replyHeader.set_bodyhashvalue(messages::computeSHA1Base64(replyBody));
-    replyHeader.set_bodysignature("PIPO");
-
-    //send the number of files on the tape to the client
-    messages::sendMessage(m_socket, replyHeader,ZMQ_SNDMORE);
-    messages::sendMessage(m_socket, replyBody);
+    messages::Frame reply = createNbFilesOnTapeFrame(tapeInfo.nbFiles);
+    return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -352,22 +315,19 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 // handleRecallJobFromReadTp
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::
-  handleRecallJobFromReadTp(const messages::Header& header,
-  const tape::utils::ZmqMsg &bodyBlob) {
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleRecallJobFromReadTp(const messages::Frame &rqst) {
 
   try {
-    castor::messages::RecallJobFromReadTp body;
-    parseMsgBlob(body, bodyBlob);
-    castor::messages::checkSHA1(header, bodyBlob);
+    messages::RecallJobFromReadTp rqstBody;
+    rqst.parseBodyIntoProtocolBuffer(rqstBody);
 
     DriveCatalogueEntry *const drive =
-      m_driveCatalogue.findDrive(body.unitname());
-    drive->receivedRecallJob(body.vid());
+      m_driveCatalogue.findDrive(rqstBody.unitname());
+    drive->receivedRecallJob(rqstBody.vid());
 
-    // TO BE DONE - Exception should cause sendErrorReplyToClient(ex) to be
-    // called.
-    sendSuccessReplyToClient();
+    const messages::Frame reply = createReturnValueFrame(0, "");
+    return reply;
 
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -381,24 +341,20 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 // handleRecallJobFromTapeGateway
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::
-  handleRecallJobFromTapeGateway(const messages::Header& header,
-  const tape::utils::ZmqMsg &bodyBlob) {
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleRecallJobFromTapeGateway(const messages::Frame &rqst) {
   m_log(LOG_INFO, "Handling RecallJobFromTapeGateway message");
 
   try {
-    castor::messages::RecallJobFromTapeGateway body;
-    parseMsgBlob(body, bodyBlob);
-    castor::messages::checkSHA1(header, bodyBlob);
+    messages::RecallJobFromTapeGateway rqstBody;
+    rqst.parseBodyIntoProtocolBuffer(rqstBody);
 
     DriveCatalogueEntry *const drive =
-      m_driveCatalogue.findDrive(body.unitname());
-    drive->receivedRecallJob(body.vid());
+      m_driveCatalogue.findDrive(rqstBody.unitname());
+    drive->receivedRecallJob(rqstBody.vid());
 
-    // TO BE DONE - Exception should cause sendErrorReplyToClient(ex) to be
-    // called.
-    sendSuccessReplyToClient();
-
+    const messages::Frame reply = createReturnValueFrame(0, "");
+    return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -411,30 +367,26 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 // handleTapeMountedForMigration
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::
-  handleTapeMountedForMigration(const messages::Header& header,
-  const tape::utils::ZmqMsg &bodyBlob) {
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleTapeMountedForMigration(const messages::Frame &rqst) {
   m_log(LOG_INFO, "Handling TapeMountedForMigration message");
+
   try {
-    castor::messages::TapeMountedForMigration body;
-    parseMsgBlob(body, bodyBlob);
-    castor::messages::checkSHA1(header, bodyBlob);
+    messages::TapeMountedForMigration rqstBody;
+    rqst.parseBodyIntoProtocolBuffer(rqstBody);
 
     DriveCatalogueEntry *const drive =
-      m_driveCatalogue.findDrive(body.unitname());
+      m_driveCatalogue.findDrive(rqstBody.unitname());
     const utils::DriveConfig &driveConfig = drive->getConfig();
     
-    const std::string &vid = body.vid();
-    try {
+    const std::string &vid = rqstBody.vid();
       drive->tapeMountedForMigration(vid);
       m_vmgr.tapeMountedForWrite(vid, drive->getSessionPid());
-      m_vdqm.tapeMounted(m_hostName, body.unitname(), driveConfig.dgn,
-        body.vid(), drive->getSessionPid());
-    } catch(const castor::exception::Exception& ex) {
-      sendErrorReplyToClient(ex);
-      throw;
-    }
-    sendSuccessReplyToClient();
+      m_vdqm.tapeMounted(m_hostName, rqstBody.unitname(), driveConfig.dgn,
+        rqstBody.vid(), drive->getSessionPid());
+
+    const messages::Frame reply = createReturnValueFrame(0, "");
+    return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle TapeMountedForMigration message: " <<
@@ -446,31 +398,26 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 // handleTapeMountedForRecall
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::
-  handleTapeMountedForRecall(const messages::Header& header,
-  const tape::utils::ZmqMsg &bodyBlob) {
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleTapeMountedForRecall(const messages::Frame& rqst) {
   m_log(LOG_INFO, "Handling TapeMountedForRecall message");
 
   try {
-    castor::messages::TapeMountedForRecall body;
-    parseMsgBlob(body, bodyBlob);
-    castor::messages::checkSHA1(header, bodyBlob);
+    messages::TapeMountedForRecall rqstBody;
+    rqst.parseBodyIntoProtocolBuffer(rqstBody);
 
     DriveCatalogueEntry *const drive =
-      m_driveCatalogue.findDrive(body.unitname());
+      m_driveCatalogue.findDrive(rqstBody.unitname());
     const utils::DriveConfig &driveConfig = drive->getConfig();
     
-    const std::string vid = body.vid();
-    try {
-      drive->tapeMountedForRecall(vid);
-      m_vmgr.tapeMountedForRead(vid, drive->getSessionPid());
-      m_vdqm.tapeMounted(m_hostName, body.unitname(), driveConfig.dgn,
-        body.vid(), drive->getSessionPid());
-    } catch(const castor::exception::Exception& ex) {
-      sendErrorReplyToClient(ex);
-      throw;
-    }
-    sendSuccessReplyToClient();
+    const std::string vid = rqstBody.vid();
+    drive->tapeMountedForRecall(vid);
+    m_vmgr.tapeMountedForRead(vid, drive->getSessionPid());
+    m_vdqm.tapeMounted(m_hostName, rqstBody.unitname(), driveConfig.dgn,
+      rqstBody.vid(), drive->getSessionPid());
+
+    const messages::Frame reply = createReturnValueFrame(0, "");
+    return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle TapeMountedForRecall message: " <<
@@ -482,13 +429,16 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 // handleTapeUnmountStarted
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::
-  handleTapeUnmountStarted(const messages::Header& header,
-  const tape::utils::ZmqMsg &bodyBlob) {
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleTapeUnmountStarted(const messages::Frame& rqst) {
   m_log(LOG_INFO, "Handling TapeUnmountStarted message");
 
   try {
-    sendSuccessReplyToClient();
+    messages::TapeUnmountStarted rqstBody;
+    rqst.parseBodyIntoProtocolBuffer(rqstBody);
+
+    const messages::Frame reply = createReturnValueFrame(0, "");
+    return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle TapeUnmountStarted message: " <<
@@ -498,14 +448,18 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::
 }
 
 //------------------------------------------------------------------------------
-// handleNotifyDriveTapeUnmountedMsg
+// handleTapeUnmounted
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::handleTapeUnmounted(
-  const messages::Header& header, const tape::utils::ZmqMsg &bodyBlob) {
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleTapeUnmounted(const messages::Frame& rqst) {
   m_log(LOG_INFO, "Handling TapeUnmounted message");
 
   try {
-    sendSuccessReplyToClient();
+    messages::TapeUnmounted rqstBody;
+    rqst.parseBodyIntoProtocolBuffer(rqstBody);
+
+    const messages::Frame reply = createReturnValueFrame(0, "");
+    return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle TapeUnmounted message: " <<
@@ -536,15 +490,27 @@ sendErrorReplyToClient(const castor::exception::Exception& ex){
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeMessageHandler::sendReplyToClient(
   const int returnValue, const std::string& msg) {
-  castor::messages::ReturnValue body;
+  const messages::Frame reply = createReturnValueFrame(returnValue, msg);
+
+  messages::sendFrame(m_socket, reply);
+}
+
+//------------------------------------------------------------------------------
+// createReturnValueFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  createReturnValueFrame(const int returnValue, const std::string& msg) {
+  messages::Frame frame;
+
+  messages::ReturnValue body;
   body.set_returnvalue(returnValue);
   body.set_message(msg);
-  
-  messages::Header header = castor::messages::protoTapePreFillHeader();
-  header.set_reqtype(messages::reqType::ReturnValue);
-  header.set_bodyhashvalue(messages::computeSHA1Base64(body));
-  header.set_bodysignature("PIPO");
+  frame.serializeProtocolBufferIntoBody(body);
 
-  messages::sendMessage(m_socket, header,ZMQ_SNDMORE);
-  messages::sendMessage(m_socket, body);
+  frame.header = castor::messages::protoTapePreFillHeader();
+  frame.header.set_msgtype(messages::MSG_TYPE_RETURNVALUE);
+  frame.header.set_bodyhashvalue(messages::computeSHA1Base64(frame.body));
+  frame.header.set_bodysignature("PIPO");
+
+  return frame;
 }

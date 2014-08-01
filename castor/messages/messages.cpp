@@ -24,10 +24,85 @@
 #include "castor/messages/messages.hpp"
 #include "castor/utils/utils.hpp"
 
+#include <string.h>
+
+//------------------------------------------------------------------------------
+// sendFrame
+//------------------------------------------------------------------------------
+void castor::messages::sendFrame(ZmqSocket& socket, const Frame &frame) {
+  try {
+    // Prepare header
+    ZmqMsg header(frame.header.ByteSize());
+    frame.serializeHeaderToZmqMsg(header);
+
+    // Prepare body
+    ZmqMsg body(frame.body.length());
+    memcpy(body.getData(), frame.body.c_str(), body.size());
+
+    // Send header and body as a two part ZMQ message
+    socket.send(header, ZMQ_SNDMORE);
+    socket.send(body, 0);
+
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to send message frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// recvFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::recvFrame(ZmqSocket& socket) {
+  try {
+    ZmqMsg header;
+    try {
+      socket.recv(header);
+    } catch(castor::exception::Exception &ne) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to receive header of message frame: " <<
+        ne.getMessage().str();
+      throw ex;
+    }
+      
+    if(!header.more()){
+      castor::exception::Exception ex;
+      ex.getMessage() << "No message body after receiving the header";
+      throw ex;
+    }
+    
+    Frame frame;
+    frame.parseZmqMsgIntoHeader(header);
+
+    ZmqMsg body;
+    try {
+      socket.recv(body);
+    } catch(castor::exception::Exception &ne) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to receive body of message frame: " <<
+        ne.getMessage().str();
+      throw ex;
+    }
+
+    frame.body = std::string((const char *)body.getData(), body.size());
+
+    frame.checkHashValueOfBody();
+
+    return frame;
+
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to receive message frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
 //------------------------------------------------------------------------------
 // connectToLocalhost
 //------------------------------------------------------------------------------
-void castor::messages::connectToLocalhost(tape::utils::ZmqSocket& m_socket,int port){
+void castor::messages::connectToLocalhost(ZmqSocket& m_socket, const int port) {
   std::string bindingAdress("tcp://127.0.0.1:");
   bindingAdress+=castor::utils::toString(port);
   m_socket.connect(bindingAdress.c_str());
@@ -37,15 +112,23 @@ void castor::messages::connectToLocalhost(tape::utils::ZmqSocket& m_socket,int p
 // preFillHeader
 //------------------------------------------------------------------------------
 castor::messages::Header castor::messages::protoTapePreFillHeader() {
-  return genericPreFillHeader<protocolType::Tape,protocolVersion::prototype>();;
+  return genericPreFillHeader<TPMAGIC, PROTOCOL_TYPE_TAPE,
+    PROTOCOL_VERSION_1>();
 }
-
 
 //------------------------------------------------------------------------------
 // computeSHA1Base64
 //------------------------------------------------------------------------------
-std::string castor::messages::computeSHA1Base64(void const* const data,int len){
- // Create a context and hash the data
+std::string castor::messages::computeSHA1Base64(const std::string &data) {
+  return computeSHA1Base64(data.c_str(), data.length());
+}
+
+//------------------------------------------------------------------------------
+// computeSHA1Base64
+//------------------------------------------------------------------------------
+std::string castor::messages::computeSHA1Base64(void const* const data,
+  const int len){
+  // Create a context and hash the data
   EVP_MD_CTX ctx;
   EVP_MD_CTX_init(&ctx);
   EVP_SignInit(&ctx, EVP_sha1());
@@ -56,7 +139,7 @@ std::string castor::messages::computeSHA1Base64(void const* const data,int len){
   unsigned char md_value[EVP_MAX_MD_SIZE];
   unsigned int md_len;
   EVP_DigestFinal_ex(&ctx, md_value, &md_len);
-    // cleanup context
+  // cleanup context
   EVP_MD_CTX_cleanup(&ctx);
   
   // base64 encode 
@@ -76,18 +159,4 @@ std::string castor::messages::computeSHA1Base64(void const* const data,int len){
   BIO_free(b64);
   
   return ret;
-}
-
-//------------------------------------------------------------------------------
-// checkSHA1
-//------------------------------------------------------------------------------
-void castor::messages::
-checkSHA1(castor::messages::Header header,const castor::tape::utils::ZmqMsg& body){
-  const std::string bodyHash = castor::messages::computeSHA1Base64(body.data(),body.size());
-  if(bodyHash != header.bodyhashvalue()){
-      std::ostringstream out;
-      out<<"SHA1 mismatch between the one in the header("<<header.bodyhashvalue() 
-         <<") and the one computed from the body("<<bodyHash<<")";
-    throw castor::exception::Exception(out.str());
-    }
 }

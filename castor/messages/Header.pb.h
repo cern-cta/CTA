@@ -34,7 +34,6 @@ void protobuf_AssignDesc_Header_2eproto();
 void protobuf_ShutdownFile_Header_2eproto();
 
 class Header;
-class ReturnValue;
 
 // ===================================================================
 
@@ -99,61 +98,61 @@ class Header : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 magic() const;
   inline void set_magic(::google::protobuf::uint32 value);
   
-  // required uint32 protocolType = 2;
+  // required uint32 protocoltype = 2;
   inline bool has_protocoltype() const;
   inline void clear_protocoltype();
-  static const int kProtocolTypeFieldNumber = 2;
+  static const int kProtocoltypeFieldNumber = 2;
   inline ::google::protobuf::uint32 protocoltype() const;
   inline void set_protocoltype(::google::protobuf::uint32 value);
   
-  // required uint32 protocolVersion = 3;
+  // required uint32 protocolversion = 3;
   inline bool has_protocolversion() const;
   inline void clear_protocolversion();
-  static const int kProtocolVersionFieldNumber = 3;
+  static const int kProtocolversionFieldNumber = 3;
   inline ::google::protobuf::uint32 protocolversion() const;
   inline void set_protocolversion(::google::protobuf::uint32 value);
   
-  // required uint32 reqType = 4;
-  inline bool has_reqtype() const;
-  inline void clear_reqtype();
-  static const int kReqTypeFieldNumber = 4;
-  inline ::google::protobuf::uint32 reqtype() const;
-  inline void set_reqtype(::google::protobuf::uint32 value);
+  // required uint32 msgtype = 4;
+  inline bool has_msgtype() const;
+  inline void clear_msgtype();
+  static const int kMsgtypeFieldNumber = 4;
+  inline ::google::protobuf::uint32 msgtype() const;
+  inline void set_msgtype(::google::protobuf::uint32 value);
   
-  // required string bodyHashType = 5;
+  // required string bodyhashtype = 5;
   inline bool has_bodyhashtype() const;
   inline void clear_bodyhashtype();
-  static const int kBodyHashTypeFieldNumber = 5;
+  static const int kBodyhashtypeFieldNumber = 5;
   inline const ::std::string& bodyhashtype() const;
   inline void set_bodyhashtype(const ::std::string& value);
   inline void set_bodyhashtype(const char* value);
   inline void set_bodyhashtype(const char* value, size_t size);
   inline ::std::string* mutable_bodyhashtype();
   
-  // required string bodyHashValue = 6;
+  // required string bodyhashValue = 6;
   inline bool has_bodyhashvalue() const;
   inline void clear_bodyhashvalue();
-  static const int kBodyHashValueFieldNumber = 6;
+  static const int kBodyhashValueFieldNumber = 6;
   inline const ::std::string& bodyhashvalue() const;
   inline void set_bodyhashvalue(const ::std::string& value);
   inline void set_bodyhashvalue(const char* value);
   inline void set_bodyhashvalue(const char* value, size_t size);
   inline ::std::string* mutable_bodyhashvalue();
   
-  // required string bodySignatureType = 7;
+  // required string bodysignaturetype = 7;
   inline bool has_bodysignaturetype() const;
   inline void clear_bodysignaturetype();
-  static const int kBodySignatureTypeFieldNumber = 7;
+  static const int kBodysignaturetypeFieldNumber = 7;
   inline const ::std::string& bodysignaturetype() const;
   inline void set_bodysignaturetype(const ::std::string& value);
   inline void set_bodysignaturetype(const char* value);
   inline void set_bodysignaturetype(const char* value, size_t size);
   inline ::std::string* mutable_bodysignaturetype();
   
-  // required string bodySignature = 8;
+  // required string bodysignature = 8;
   inline bool has_bodysignature() const;
   inline void clear_bodysignature();
-  static const int kBodySignatureFieldNumber = 8;
+  static const int kBodysignatureFieldNumber = 8;
   inline const ::std::string& bodysignature() const;
   inline void set_bodysignature(const ::std::string& value);
   inline void set_bodysignature(const char* value);
@@ -168,7 +167,7 @@ class Header : public ::google::protobuf::Message {
   ::google::protobuf::uint32 magic_;
   ::google::protobuf::uint32 protocoltype_;
   ::google::protobuf::uint32 protocolversion_;
-  ::google::protobuf::uint32 reqtype_;
+  ::google::protobuf::uint32 msgtype_;
   ::std::string* bodyhashtype_;
   static const ::std::string _default_bodyhashtype_;
   ::std::string* bodyhashvalue_;
@@ -197,107 +196,6 @@ class Header : public ::google::protobuf::Message {
   void InitAsDefaultInstance();
   static Header* default_instance_;
 };
-// -------------------------------------------------------------------
-
-class ReturnValue : public ::google::protobuf::Message {
- public:
-  ReturnValue();
-  virtual ~ReturnValue();
-  
-  ReturnValue(const ReturnValue& from);
-  
-  inline ReturnValue& operator=(const ReturnValue& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _unknown_fields_;
-  }
-  
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return &_unknown_fields_;
-  }
-  
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const ReturnValue& default_instance();
-  
-  void Swap(ReturnValue* other);
-  
-  // implements Message ----------------------------------------------
-  
-  ReturnValue* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const ReturnValue& from);
-  void MergeFrom(const ReturnValue& from);
-  void Clear();
-  bool IsInitialized() const;
-  
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  public:
-  
-  ::google::protobuf::Metadata GetMetadata() const;
-  
-  // nested types ----------------------------------------------------
-  
-  // accessors -------------------------------------------------------
-  
-  // required uint32 returnValue = 1;
-  inline bool has_returnvalue() const;
-  inline void clear_returnvalue();
-  static const int kReturnValueFieldNumber = 1;
-  inline ::google::protobuf::uint32 returnvalue() const;
-  inline void set_returnvalue(::google::protobuf::uint32 value);
-  
-  // required string message = 2;
-  inline bool has_message() const;
-  inline void clear_message();
-  static const int kMessageFieldNumber = 2;
-  inline const ::std::string& message() const;
-  inline void set_message(const ::std::string& value);
-  inline void set_message(const char* value);
-  inline void set_message(const char* value, size_t size);
-  inline ::std::string* mutable_message();
-  
-  // @@protoc_insertion_point(class_scope:castor.messages.ReturnValue)
- private:
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
-  mutable int _cached_size_;
-  
-  ::google::protobuf::uint32 returnvalue_;
-  ::std::string* message_;
-  static const ::std::string _default_message_;
-  friend void  protobuf_AddDesc_Header_2eproto();
-  friend void protobuf_AssignDesc_Header_2eproto();
-  friend void protobuf_ShutdownFile_Header_2eproto();
-  
-  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
-  
-  // WHY DOES & HAVE LOWER PRECEDENCE THAN != !?
-  inline bool _has_bit(int index) const {
-    return (_has_bits_[index / 32] & (1u << (index % 32))) != 0;
-  }
-  inline void _set_bit(int index) {
-    _has_bits_[index / 32] |= (1u << (index % 32));
-  }
-  inline void _clear_bit(int index) {
-    _has_bits_[index / 32] &= ~(1u << (index % 32));
-  }
-  
-  void InitAsDefaultInstance();
-  static ReturnValue* default_instance_;
-};
 // ===================================================================
 
 
@@ -321,7 +219,7 @@ inline void Header::set_magic(::google::protobuf::uint32 value) {
   magic_ = value;
 }
 
-// required uint32 protocolType = 2;
+// required uint32 protocoltype = 2;
 inline bool Header::has_protocoltype() const {
   return _has_bit(1);
 }
@@ -337,7 +235,7 @@ inline void Header::set_protocoltype(::google::protobuf::uint32 value) {
   protocoltype_ = value;
 }
 
-// required uint32 protocolVersion = 3;
+// required uint32 protocolversion = 3;
 inline bool Header::has_protocolversion() const {
   return _has_bit(2);
 }
@@ -353,23 +251,23 @@ inline void Header::set_protocolversion(::google::protobuf::uint32 value) {
   protocolversion_ = value;
 }
 
-// required uint32 reqType = 4;
-inline bool Header::has_reqtype() const {
+// required uint32 msgtype = 4;
+inline bool Header::has_msgtype() const {
   return _has_bit(3);
 }
-inline void Header::clear_reqtype() {
-  reqtype_ = 0u;
+inline void Header::clear_msgtype() {
+  msgtype_ = 0u;
   _clear_bit(3);
 }
-inline ::google::protobuf::uint32 Header::reqtype() const {
-  return reqtype_;
+inline ::google::protobuf::uint32 Header::msgtype() const {
+  return msgtype_;
 }
-inline void Header::set_reqtype(::google::protobuf::uint32 value) {
+inline void Header::set_msgtype(::google::protobuf::uint32 value) {
   _set_bit(3);
-  reqtype_ = value;
+  msgtype_ = value;
 }
 
-// required string bodyHashType = 5;
+// required string bodyhashtype = 5;
 inline bool Header::has_bodyhashtype() const {
   return _has_bit(4);
 }
@@ -411,7 +309,7 @@ inline ::std::string* Header::mutable_bodyhashtype() {
   return bodyhashtype_;
 }
 
-// required string bodyHashValue = 6;
+// required string bodyhashValue = 6;
 inline bool Header::has_bodyhashvalue() const {
   return _has_bit(5);
 }
@@ -453,7 +351,7 @@ inline ::std::string* Header::mutable_bodyhashvalue() {
   return bodyhashvalue_;
 }
 
-// required string bodySignatureType = 7;
+// required string bodysignaturetype = 7;
 inline bool Header::has_bodysignaturetype() const {
   return _has_bit(6);
 }
@@ -495,7 +393,7 @@ inline ::std::string* Header::mutable_bodysignaturetype() {
   return bodysignaturetype_;
 }
 
-// required string bodySignature = 8;
+// required string bodysignature = 8;
 inline bool Header::has_bodysignature() const {
   return _has_bit(7);
 }
@@ -535,68 +433,6 @@ inline ::std::string* Header::mutable_bodysignature() {
     bodysignature_ = new ::std::string;
   }
   return bodysignature_;
-}
-
-// -------------------------------------------------------------------
-
-// ReturnValue
-
-// required uint32 returnValue = 1;
-inline bool ReturnValue::has_returnvalue() const {
-  return _has_bit(0);
-}
-inline void ReturnValue::clear_returnvalue() {
-  returnvalue_ = 0u;
-  _clear_bit(0);
-}
-inline ::google::protobuf::uint32 ReturnValue::returnvalue() const {
-  return returnvalue_;
-}
-inline void ReturnValue::set_returnvalue(::google::protobuf::uint32 value) {
-  _set_bit(0);
-  returnvalue_ = value;
-}
-
-// required string message = 2;
-inline bool ReturnValue::has_message() const {
-  return _has_bit(1);
-}
-inline void ReturnValue::clear_message() {
-  if (message_ != &_default_message_) {
-    message_->clear();
-  }
-  _clear_bit(1);
-}
-inline const ::std::string& ReturnValue::message() const {
-  return *message_;
-}
-inline void ReturnValue::set_message(const ::std::string& value) {
-  _set_bit(1);
-  if (message_ == &_default_message_) {
-    message_ = new ::std::string;
-  }
-  message_->assign(value);
-}
-inline void ReturnValue::set_message(const char* value) {
-  _set_bit(1);
-  if (message_ == &_default_message_) {
-    message_ = new ::std::string;
-  }
-  message_->assign(value);
-}
-inline void ReturnValue::set_message(const char* value, size_t size) {
-  _set_bit(1);
-  if (message_ == &_default_message_) {
-    message_ = new ::std::string;
-  }
-  message_->assign(reinterpret_cast<const char*>(value), size);
-}
-inline ::std::string* ReturnValue::mutable_message() {
-  _set_bit(1);
-  if (message_ == &_default_message_) {
-    message_ = new ::std::string;
-  }
-  return message_;
 }
 
 

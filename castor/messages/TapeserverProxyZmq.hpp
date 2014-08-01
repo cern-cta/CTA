@@ -23,8 +23,8 @@
 
 #include "castor/log/Logger.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
+#include "castor/messages/ZmqSocketMT.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "castor/tape/utils/ZmqSocket.hpp"
 
 namespace castor {
 namespace messages {
@@ -162,8 +162,10 @@ private:
    */
   const int m_netTimeout;
   
-  tape::utils::ZmqSocket m_messageSocket;
-  tape::utils::ZmqSocket m_heartbeatSocket;
+  /**
+   * Socket connecting this tape server proxy to the tape server daemon.
+   */
+  ZmqSocketMT m_tapeserverSocket;
 
 }; // class TapeserverProxyZmq
 

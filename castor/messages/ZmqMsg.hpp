@@ -30,8 +30,7 @@
 
 
 namespace castor {
-namespace tape {
-namespace utils {
+namespace messages {
 
 /**
  * C++ wrapper around a ZMQ message.
@@ -60,23 +59,39 @@ public:
   ~ZmqMsg() throw();
 
   /**
-   * Returns the underlying ZMQ message.
+   * Returns the enclosed ZMQ message.
    *
    * @return The underlying ZMQ message.
    */
   zmq_msg_t &getZmqMsg() throw();
   
   /**
-   * Give a reading  access to the data without having to look at the zmq message
-   * @return a pointer to the beginning of the content
+   * Gives read access to the data of the enclosed ZMQ message.
+   *
+   * @return A pointer to the beginning of the data
    */
-  const void* data() const;
+  const void* getData() const;
+
+  /**
+   * Gives read/write access to the data of the enclosed ZMQ message.
+   *
+   * @return A pointer to the beginning of the data
+   */
+  void* getData();
   
   /**
-   * Get the size of the message
-   * @return 
+   * Gets the size of the enclosed ZMQ message.
+   *
+   * @return The size of the ZMQ message.
    */
   size_t size() const;
+
+  /**
+   * Returns true if the enclosed ZMQ message is part of a multi-part message
+   * and there are more parts to receive.
+   */
+  bool more() const;
+
 private:
 
   /**
@@ -94,7 +109,6 @@ private:
 
 }; // class ZmqMsg
 
-} // namespace utils
-} // namespace tape
+} // namespace messages
 } // namespace castor
 

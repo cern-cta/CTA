@@ -25,13 +25,14 @@
 #include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/messages/Header.pb.h"
-#include "castor/messages/Constants.hpp"
 #include "castor/messages/Heartbeat.pb.h"
+#include "castor/messages/Constants.hpp"
+#include "castor/messages/Frame.hpp"
+#include "castor/messages/ZmqMsg.hpp"
+#include "castor/messages/ZmqSocket.hpp"
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
-#include "castor/tape/utils/ZmqMsg.hpp"
-#include "castor/tape/utils/ZmqSocket.hpp"
 #include "castor/utils/utils.hpp"
 
 namespace castor     {
@@ -110,6 +111,16 @@ private:
    * @param msg The string to display (should be empty if returnValue=0)
    */
   void sendReplyToClient(int returnValue,const std::string& msg);
+
+  /**
+   * Creates a message frame containing a ReturnValue message as its payload.
+   *
+   * @param returnValue The return value of the ReturnValue message.
+   * @param msg The msg string of the ReturnValue message.
+   * @return The message frame.
+   */
+  messages::Frame createReturnValueFrame(const int returnValue,
+    const std::string& msg);
   
   /**
    * Will try to parse a message of type T into msg from the data which are 
@@ -117,8 +128,8 @@ private:
    * @param msg
    * @param blob
    */
-  template <class T> void parseMsgBlob(T& msg, const tape::utils::ZmqMsg& blob) {
-    if(!msg.ParseFromArray(blob.data(), blob.size())) {
+  template <class T> void parseMsgBlob(T& msg, const messages::ZmqMsg& blob) {
+    if(!msg.ParseFromArray(blob.getData(), blob.size())) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to parse a " <<
         castor::utils::demangledNameOf(msg) << " message blob"
@@ -126,8 +137,8 @@ private:
       throw ex;
     }
   }
-  
-   /**
+
+  /**
    * The reactor to which new Vdqm connection handlers are to be registered.
    */
   reactor::ZMQReactor &m_reactor;
@@ -137,9 +148,9 @@ private:
    */
   log::Logger &m_log;
   
-  tape::utils::ZmqSocket m_socket;
-  
-    /**
+  messages::ZmqSocket m_socket;
+
+  /**
    * The catalogue of tape drives controlled by the tape server daemon.
    */
   DriveCatalogue &m_driveCatalogue;
@@ -169,109 +180,102 @@ private:
   void checkSocket(const zmq_pollitem_t &fd);
   
   /**
-   * Dispatches the appropriate handler method for the specified message.
+   * Dispatches the appropriate handler method for the specified request
+   * message.
    *
-   * @param header The header of the message.
-   * @param bodyBlob The serialized body of the message.
+   * @param rqst The request.
+   * @return The reply.
    */
-  void dispatchMsgHandler(castor::messages::Header& header,
-    const tape::utils::ZmqMsg &bodyBlob);
+  messages::Frame dispatchMsgHandler(const messages::Frame &rqst);
 
   /**
-   * Handles the specified message.
+   * Handles the specified request.
    *
-   * @param header The header of the message.
-   * @param bodyBlob The serialized body of the message.
+   * @param rqst The request.
+   * @return The reply.
    */
-  void handleHeartbeatMsg(const messages::Header& header, 
-    const tape::utils::ZmqMsg &bodyBlob);
+  messages::Frame handleHeartbeat(const messages::Frame &rqst);
 
   /**
-   * Handles the specified message.
+   * Handles the specified request.
    *
-   * @param header The header of the message.
-   * @param bodyBlob The serialized body of the message.
+   * @param rqst The request.
+   * @return The reply.
    */
-  void handleMigrationJobFromTapeGateway(const messages::Header& header,
-    const tape::utils::ZmqMsg &bodyBlob);
+  messages::Frame handleMigrationJobFromTapeGateway(
+    const messages::Frame &rqst);
 
   /**
-   * Handles the specified message.
+   * Creates a message frame containing a NbFilesOnTape message as its payload.
    *
-   * @param header The header of the message.
-   * @param bodyBlob The serialized body of the message.
+   * @param nbFiles The number of files on the tape.
+   * @return The message frame.
    */
-  void handleMigrationJobFromWriteTp(const messages::Header& header,
-    const tape::utils::ZmqMsg &bodyBlob);
+  messages::Frame createNbFilesOnTapeFrame(const uint32_t nbFiles);
 
   /**
-   * Handles the specified message.
+   * Handles the specified request.
    *
-   * @param header The header of the message.
-   * @param bodyBlob The serialized body of the message.
+   * @param rqst The request.
+   * @return The reply.
    */
-  void handleRecallJobFromTapeGateway(const messages::Header& header,
-    const tape::utils::ZmqMsg &bodyBlob);
+  messages::Frame handleMigrationJobFromWriteTp(const messages::Frame &rqst);
 
   /**
-   * Handles the specified message.
+   * Handles the specified request.
    *
-   * @param header The header of the message.
-   * @param bodyBlob The serialized body of the message.
+   * @param rqst The request.
+   * @return The reply.
+   */
+  messages::Frame handleRecallJobFromTapeGateway(const messages::Frame &rqst);
+
+  /**
+   * Handles the specified request.
+   *
+   * @param rqst The request.
+   * @return The reply.
    */  
-  void handleRecallJobFromReadTp(const messages::Header& header,
-    const tape::utils::ZmqMsg &bodyBlob);
+  messages::Frame handleRecallJobFromReadTp(const messages::Frame &rqst);
 
   /**
-   * Handles the specified message.
+   * Handles the specified request.
    *
-   * @param header The header of the message.
-   * @param bodyBlob The serialized body of the message.
+   * @param rqst The request.
+   * @return The reply.
    */  
-  void handleTapeMountedForMigration(const messages::Header& header, 
-    const tape::utils::ZmqMsg &bodyBlob);
+  messages::Frame handleTapeMountedForMigration(const messages::Frame &rqst);
 
   /**
-   * Handles the specified message.
+   * Handles the specified request.
    *
-   * @param header The header of the message.
-   * @param bodyBlob The serialized body of the message.
+   * @param rqst The request.
+   * @return The reply.
    */
-  void handleTapeMountedForRecall(const messages::Header& header,
-    const tape::utils::ZmqMsg &bodyBlob);
+  messages::Frame handleTapeMountedForRecall(const messages::Frame &rqst);
 
   /**
-   * Handles the specified message.
+   * Handles the specified request.
    *
-   * @param header The header of the message.
-   * @param bodyBlob The serialized body of the message.
+   * @param rqst The request.
+   * @return The reply.
    */
-  void handleNotifyDriveTapeMountedMsg(const messages::Header& header,
-    const tape::utils::ZmqMsg &bodyBlob);
+  messages::Frame handleNotifyDriveTapeMounted(const messages::Frame &rqst);
 
   /**
-   * Handles the specified message.
+   * Handles the specified request.
    *
-   * @param header The header of the message.
-   * @param bodyBlob The serialized body of the message.
+   * @param rqst The request.
+   * @return The reply.
    */
-  void handleTapeUnmountStarted(const messages::Header& header,
-    const tape::utils::ZmqMsg &bodyBlob);
+  messages::Frame handleTapeUnmountStarted(const messages::Frame &rqst);
 
   /**
-   * Handles the specified message.
+   * Handles the specified request.
    *
-   * @param header The header of the message.
-   * @param bodyBlob The serialized body of the message.
+   * @param rqst The request.
+   * @return The reply.
    */
-  void handleTapeUnmounted(const messages::Header& header,
-    const tape::utils::ZmqMsg &bodyBlob);
-
-  /**
-   * Unserialize the blob and check the header
-   * @param headerBlob The blob from the header
-   */
-  messages::Header buildHeader(tape::utils::ZmqMsg& headerBlob);
+  messages::Frame handleTapeUnmounted(const messages::Frame &rqst);
 
 }; // class TapeMessageHandler
 

@@ -23,17 +23,22 @@
 
 #pragma once
 
+#include "castor/messages/ZmqSocket.hpp"
+
+#include <pthread.h>
 #include <string>
 #include <zmq.h>
 
 namespace castor {
-namespace tape {
-namespace utils {
+namespace messages {
 
 /**
- * C++ class that wraps a ZMQ socket.
+ * C++ class that wraps a ZMQ socket and provides a thread safe interface by
+ * acting as a monitor.
+ *
+ * Please note that the getZmqSocket() method is not thread safe.
  */
-class ZmqSocket {
+class ZmqSocketMT: public ZmqSocket {
 public:
     
   /**
@@ -42,12 +47,12 @@ public:
    * @param zmqContext The ZMQ context.
    * @param socketType The type of the ZMQ socket.
    */
-  ZmqSocket(void *const zmqContext, const int socketType);
+  ZmqSocketMT(void *const zmqContext, const int socketType);
     
   /**
    * Destructor.
    */
-  ~ZmqSocket() throw();
+  ~ZmqSocketMT() throw();
     
   /**
    * Closes the ZMQ socket.
@@ -67,12 +72,20 @@ public:
    * @param endpoint The endpoint to connect to.
    */ 
   void connect(const std::string &endpoint);
+
+  /**
+   * Sends the specified ZMQ message over the socket.
+   *
+   * @param msg The ZMQ messge to be sent.
+   * @param flags See manual page of  zmq_msg_send().
+   */
+  void send(ZmqMsg &msg, const int flags = 0);
     
   /**
    * Sends the specified ZMQ message over the socket.
    *
    * @param msg The ZMQ messge to be sent.
-   * @param flags See manaual page of  zmq_msg_send().
+   * @param flags See manual page of  zmq_msg_send().
    */
   void send(zmq_msg_t *const msg, const int flags = 0);
     
@@ -80,12 +93,22 @@ public:
    * Receives a ZMQ mesage from the socket.
    *
    * @param msg Output parameter: The received ZMQ messge.
-   * @param flags See manaual page of  zmq_msg_send().
+   * @param flags See manual page of  zmq_msg_send().
+   */
+  void recv(ZmqMsg &msg, const int flags = 0);
+    
+  /**
+   * Receives a ZMQ mesage from the socket.
+   *
+   * @param msg Output parameter: The received ZMQ messge.
+   * @param flags See manual page of  zmq_msg_send().
    */
   void recv(zmq_msg_t *const msg, const int flags = 0);
 
   /**
    * Returns the ZMQ socket wrappeed by this class.
+   *
+   * Please note that this method is not thread safe.
    *
    * @return The ZMQ socket wrappeed by this class.
    */
@@ -94,22 +117,12 @@ public:
 private:
 
   /**
-   * The ZMQ socket.
+   * Mutex used to implement a critical section around the enclosed
+   * ZMQ socket.
    */
-  void *m_zmqSocket;
-    
-  /**
-   * Copy constructor made private to prevent copies.
-   */
-  ZmqSocket(const ZmqSocket&);
+  pthread_mutex_t m_mutex;
 
-  /**
-   * Assignment operator made private to prevent assignments.
-   */
-  void operator=(const ZmqSocket &);
+}; // class ZmqSocketMT
 
-}; // class ZmqSocket
-
-} // namespace utils
-} // namespace tape
+} // namespace messages
 } // namespace castor

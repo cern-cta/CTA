@@ -16,44 +16,60 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- *
- *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
+#include <pthread.h>
 
-#include <string>
-
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+namespace castor {
+namespace utils {
 
 /**
- * Structure representing a message frame.
+ * A simple scoped-lock on a mutex.  When the scoped-lock goes out of scope,
+ * it will unlock the mutex.
  */
-struct ProcessForkerFrame {
-  /**
-   *  The type of the message contained within the payload of the frame.
-   */
-  ProcessForkerMsgType::Enum type;
+class ScopedLock {
 
-  /**
-   * The payload of the frame.
-   */
-  std::string payload;
+public:
 
   /**
    * Constructor.
+   *
+   * Takes a lock on the specified mutex.
+   *
+   * @param mutex The mutex on which the lock should be taken.
    */
-  ProcessForkerFrame(): type(ProcessForkerMsgType::MSG_NONE) {
-  }
-}; // struct  ProcessForkerFrame
+  ScopedLock(pthread_mutex_t &mutex);
 
-} // namespace tapeserver
-} // namespace tape
-} // namespace daemon
+  /**
+   * Destructor.
+   *
+   * Unlocks the mutex.
+   */
+  ~ScopedLock() throw();
+
+private:
+
+  /**
+   * Private and not implemented copy-constructor to prevent users from trying
+   * to create a new copy of an object of this class.
+   */
+  ScopedLock(const ScopedLock &s) throw();
+
+  /**
+   * Private and not implemented assignment-operator to prevent users from
+   * trying to assign one object of this class to another.
+   */
+  ScopedLock &operator=(ScopedLock& obj) throw();
+
+  /**
+   * The mutex on which the lock has been taken.
+   */
+  pthread_mutex_t *m_mutex;
+
+}; // class ScopedLock
+
+} // namespace utils
 } // namespace castor
