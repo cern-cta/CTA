@@ -72,8 +72,9 @@ public:
     castor::tape::threading::MutexLocker ml(&m_freeBlockProviderProtection);
     {
       castor::tape::threading::MutexLocker ml(&m_countersMutex);
-      if (m_freeBlocksProvided >= m_blocksNeeded)
-        throw castor::tape::exceptions::MemException("DataFifo overflow on free blocks");
+      if (m_freeBlocksProvided >= m_blocksNeeded) {
+        throw castor::exception::MemException("DataFifo overflow on free blocks");
+      }
       m_freeBlocksProvided++;
       ret = m_freeBlocksProvided < m_blocksNeeded;
     }
@@ -106,7 +107,7 @@ public:
     {
       castor::tape::threading::MutexLocker ml(&m_countersMutex);
       if (m_dataBlocksPushed >= m_blocksNeeded)
-        throw castor::tape::exceptions::MemException("DataFifo overflow on data blocks");
+        throw castor::exception::MemException("DataFifo overflow on data blocks");
     }
     m_dataBlocks.push(mb);
     {

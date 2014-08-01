@@ -109,6 +109,7 @@ void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& _th
   successMigration->setNshost(m_migratedFile.nshost());
   successMigration->setFileid(m_migratedFile.fileid());
   successMigration->setChecksum(m_checksum);
+  successMigration->setFileSize(m_migratedFile.fileSize());
   
   //WARNING; Ad-hoc name of the ChecksumName !!
   successMigration->setChecksumName("adler32");
