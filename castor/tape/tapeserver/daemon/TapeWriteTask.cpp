@@ -61,13 +61,13 @@ namespace daemon {
 //------------------------------------------------------------------------------  
    void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,
            MigrationReportPacker & reportPacker,castor::log::LogContext& lc,
-           TapeSessionStats & stats, utils::Timer & timer) {
+           utils::Timer & timer) {
     using castor::log::LogContext;
     using castor::log::Param;
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
-    TapeSessionStats localStats;
+    
     utils::Timer localTime;
     
     unsigned long ckSum = Payload::zeroAdler32();
@@ -81,26 +81,26 @@ namespace daemon {
       
       //try to open the session
       std::auto_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
-      localStats.transferTime += timer.secs(utils::Timer::resetCounter);
-      localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
+      m_taskStats.transferTime += timer.secs(utils::Timer::resetCounter);
+      m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
       while(!m_fifo.finished()) {
 
         //if someone screw somewhere else, we stop
         hasAnotherTaskTailed();
         
         MemBlock* const mb = m_fifo.popDataBlock();
-        localStats.waitDataTime += timer.secs(utils::Timer::resetCounter);
+        m_taskStats.waitDataTime += timer.secs(utils::Timer::resetCounter);
         AutoReleaseBlock<MigrationMemoryManager> releaser(mb,m_memManager);
         
         //will throw (thus exiting the loop) if something is wrong
         checkErrors(mb,blockId,lc);
         
         ckSum =  mb->m_payload.adler32(ckSum);
-        localStats.checksumingTime += timer.secs(utils::Timer::resetCounter);
+        m_taskStats.checksumingTime += timer.secs(utils::Timer::resetCounter);
         mb->m_payload.write(*output);
         
-        localStats.transferTime += timer.secs(utils::Timer::resetCounter);
-        localStats.dataVolume += mb->m_payload.size();
+        m_taskStats.transferTime += timer.secs(utils::Timer::resetCounter);
+        m_taskStats.dataVolume += mb->m_payload.size();
         
         ++blockId;
       }
@@ -108,16 +108,14 @@ namespace daemon {
       //finish the writing of the file on tape
       //put the trailer
       output->close();
-      localStats.transferTime += timer.secs(utils::Timer::resetCounter);
-      localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
-      localStats.filesCount ++;
+      m_taskStats.transferTime += timer.secs(utils::Timer::resetCounter);
+      m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
+      m_taskStats.filesCount ++;
       reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum);
-      localStats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
+      m_taskStats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
       // Log the successful transfer      
       logWithStats(LOG_INFO, "File successfully transmitted to drive",
-              localTime.secs(),localStats,lc);
-     // Add the local counts to the session's
-      stats.add(localStats);
+              localTime.secs(),lc);
     } 
     catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
      //we end up there because another task has failed 
@@ -239,21 +237,21 @@ namespace daemon {
   }
    
    void TapeWriteTask::logWithStats(int level, const std::string& msg,
-   double fileTime,TapeSessionStats& localStats,log::LogContext& lc) const{
+   double fileTime,log::LogContext& lc) const{
      log::ScopedParamContainer params(lc);
-     params.add("transferTime", localStats.transferTime)
-           .add("checksumingTime",localStats.checksumingTime)
-           .add("waitDataTime",localStats.waitDataTime)
-           .add("waitReportingTime",localStats.waitReportingTime)
-           .add("dataVolume",localStats.dataVolume)
-           .add("headerVolume",localStats.headerVolume)
+     params.add("transferTime", m_taskStats.transferTime)
+           .add("checksumingTime",m_taskStats.checksumingTime)
+           .add("waitDataTime",m_taskStats.waitDataTime)
+           .add("waitReportingTime",m_taskStats.waitReportingTime)
+           .add("dataVolume",m_taskStats.dataVolume)
+           .add("headerVolume",m_taskStats.headerVolume)
            .add("totalTime", fileTime)
            .add("driveTransferSpeedMiB/s",
-                   (localStats.dataVolume+localStats.headerVolume)
+                   (m_taskStats.dataVolume+m_taskStats.headerVolume)
            /1024/1024
-           /localStats.transferTime)
+           /m_taskStats.transferTime)
            .add("payloadTransferSpeedMB/s",
-                   1.0*localStats.dataVolume/1024/1024/fileTime)
+                   1.0*m_taskStats.dataVolume/1024/1024/fileTime)
            .add("fileSize",m_fileToMigrate->fileSize())
            .add("fileid",m_fileToMigrate->fileid())
            .add("fseq",m_fileToMigrate->fseq())
@@ -264,6 +262,12 @@ namespace daemon {
      lc.log(level, msg);
 
    }
+//------------------------------------------------------------------------------
+//   getTaskStats
+//------------------------------------------------------------------------------
+const TapeSessionStats TapeWriteTask::getTaskStats() const {
+  return m_taskStats;
+}
 }}}}
 
 

@@ -67,11 +67,14 @@ public:
     
   /**
    * Main execution routine
-   * @param td: tape drive object which will handle the file
+   * @param session
+   * @param reportPacker For reporting success of or failure of the task
+   * @param lc For logging
+   * @param timer
    */
   virtual void execute(castor::tape::tapeFile::WriteSession & session,
    MigrationReportPacker & reportPacker,castor::log::LogContext& lc,
-   TapeSessionStats & stats, utils::Timer & timer);
+   utils::Timer & timer);
   
   /**
    * Used to reclaim used memory blocks
@@ -95,13 +98,19 @@ public:
    * Just pop data block and put in back into the memory manager
    */
   void circulateMemBlocks();
+  
+  /**
+   * Return the tasl stats. Should only be called after execute
+   * @return 
+   */
+  const TapeSessionStats getTaskStats() const ;
 private:
   /**
    * Log  all localStats' stats + fileTime + m_fileToMigrate's parameters
    * into lc with msg at the given level
    */
   void logWithStats(int level, const std::string& msg,
-   double fileTime,TapeSessionStats& localStats,log::LogContext& lc) const;
+   double fileTime,log::LogContext& lc) const;
      
   /**
    *Throw an exception if  m_errorFlag is set
@@ -157,6 +166,11 @@ private:
    * as task failed to do its job 
    */
   castor::tape::threading::AtomicFlag& m_errorFlag;
+  
+  /**
+   * Stats
+   */
+  TapeSessionStats m_taskStats;
 };
 
 }}}}

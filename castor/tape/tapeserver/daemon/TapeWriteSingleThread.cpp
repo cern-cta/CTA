@@ -178,8 +178,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
           m_logContext.log(LOG_DEBUG, "writing data to tape has finished");
           break;
         }
-        task->execute(*writeSession,m_reportPacker,m_logContext,m_stats,timer);
-
+        task->execute(*writeSession,m_reportPacker,m_logContext,timer);
+        // Add the tasks counts to the session's
+        m_stats.add(task->getTaskStats());
         // Increase local flush counters (session counters are incremented by
         // the task)
         files++;
@@ -197,7 +198,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     logWithStats(LOG_INFO, "Completed migration session successfully",totalTimer.secs());
   } //end of try
   catch(const castor::exception::Exception& e){
-    //we end there because write session could not be opened or because a task failed
+    //we end there because write session could not be opened 
+    //or because a task failed or because flush failed
 
     //first empty all the tasks and circulate mem blocks
     while(1) {
