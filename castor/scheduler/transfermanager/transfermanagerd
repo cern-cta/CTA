@@ -196,6 +196,15 @@ class TransferManagerService(rpyc.Service):
         transfers.append((None, scheduler))
     return tuple(transfers)
 
+  def _checkPool(self, pool):
+    '''Checks whether the given pool exists. Raise an exception if not'''
+    stcur = self.__class__.dbConnection().cursor()
+    stcur.execute("SELECT name FROM DiskPool WHERE name = :pool", pool=pool)
+    rows = stcur.fetchall()
+    stcur.close()
+    if not rows:
+      raise ValueError('No pool found with name %s' % pool)
+
   def exposed_summarizeTransfersPerPool(self, pool=None, user=None, detailed=False):
     '''summarizes the number of running and pending transfers per pool for a given pool and user.
     Returns a pair containing :
@@ -219,6 +228,8 @@ class TransferManagerService(rpyc.Service):
                 nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...),
                 (<list of unreachable machine names>))'''
     dlf.writedebug(msgs.INVOKINGSUMMARIZETRANSFERSPERPOOL, Pool=pool, Username=user, Detailed=detailed)
+    if pool:
+      self._checkPool(pool)
     # get the raw data per diskserveras a dictionnary of dictionnaries (svclass then diskserver level)
     nbs = self.dispatch('summarizeTransfers', pool, user, detailed)
     errorMsg = ''
@@ -269,6 +280,8 @@ class TransferManagerService(rpyc.Service):
                          nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
                          nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...)) '''
     dlf.writedebug(msgs.INVOKINGSUMMARIZETRANSFERSPERHOST, Pool=pool, Username=user, Detailed=detailed)
+    if pool:
+      self._checkPool(pool)
     # get the raw data as a dictionnary of dictionnaries (svclass then diskserver level)
     hosts = self.dispatch('summarizeTransfers', pool, user, detailed)
     # flatten it to a list of (diskserver, (values))
@@ -289,6 +302,8 @@ class TransferManagerService(rpyc.Service):
   def exposed_listRunningTransfers(self, pool=None, user=None):
     '''lists the running transfers per pool for a given pool and user'''
     dlf.writedebug(msgs.INVOKINGLISTTRANSFERS, Pool=pool)
+    if pool:
+        self._checkPool(pool)
     transfers = self.dispatch('listRunningTransfers', pool, user)
     res = []
     for pool in transfers:
