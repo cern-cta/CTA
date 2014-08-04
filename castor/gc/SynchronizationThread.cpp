@@ -318,6 +318,10 @@ void castor::gc::SynchronizationThread::run(void*) {
     }
     syncFileSystems();
     syncDataPools();
+    // sleep 1s before restarting. This allows in particular
+    // to not loop tightly when there is nothing to be checked
+    // (empty diskserver or datapool)
+    sleep(1);
   }
 }
 
