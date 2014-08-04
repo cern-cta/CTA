@@ -106,10 +106,11 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
   successRecall->setId(m_recalledFile.id());
   successRecall->setNshost(m_recalledFile.nshost());
   successRecall->setFileid(m_recalledFile.fileid());
-  successRecall->setChecksum(m_checksum);
-  
+
   //WARNING : ad hoc name of checksum algorithm
   successRecall->setChecksumName("adler32");
+  successRecall->setChecksum(m_checksum);
+  
   parent.m_listReports->addSuccessfulRecalls(successRecall.release());
 }
 //------------------------------------------------------------------------------

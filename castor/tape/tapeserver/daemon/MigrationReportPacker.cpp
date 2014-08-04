@@ -26,6 +26,7 @@
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
+#include <numeric>
 #include <cstdio>
 
 namespace{
@@ -73,10 +74,10 @@ void MigrationReportPacker::reportFailedJob(const tapegateway::FileToMigrateStru
 }
 //------------------------------------------------------------------------------
 //reportFlush
-//------------------------------------------------------------------------------ 
-void MigrationReportPacker::reportFlush() {
+//------------------------------------------------------------------------------
+void MigrationReportPacker::reportFlush(uint64_t nbByteWritenWithCompression){
   castor::server::MutexLocker ml(&m_producterProtection);
-  m_fifo.push(new ReportFlush());
+  m_fifo.push(new ReportFlush(nbByteWritenWithCompression));
 }
 //------------------------------------------------------------------------------
 //reportEndOfSession
@@ -108,18 +109,60 @@ void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& _th
   successMigration->setId(m_migratedFile.id());
   successMigration->setNshost(m_migratedFile.nshost());
   successMigration->setFileid(m_migratedFile.fileid());
-  successMigration->setChecksum(m_checksum);
-  successMigration->setFileSize(m_migratedFile.fileSize());
-  
-  //WARNING; Ad-hoc name of the ChecksumName !!
+
+  //WARNING; Ad-hoc name of the ChecksumName !!");
   successMigration->setChecksumName("adler32");
+  successMigration->setChecksum(m_checksum);
+
+  successMigration->setFileSize(m_migratedFile.fileSize());
+  //  successMigration->setCompressedFileSize();
   
+//  successMigration->setBlockId0(m_migratedFile.BlockId0());
+//  successMigration->setBlockId1();
+//  successMigration->setBlockId2();
+//  successMigration->setBlockId3();
+
   _this.m_listReports->addSuccessfulMigrations(successMigration.release());
+}
+//------------------------------------------------------------------------------
+//ReportFlush::computeCompressedSize
+//------------------------------------------------------------------------------
+void MigrationReportPacker::ReportFlush::computeCompressedSize(
+std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator beg,
+std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator end
+)
+{
+  //lets pray for C++11 lamba and std accumulate
+  uint64_t rawSize = 0;
+  for(std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator  it = beg;
+          it != end ;++it){
+            rawSize+=(*it)->fileSize();
+  }
+
+  //we dont want compressionRatio to be equal to zero not to have a division by zero
+  double compressionRatio = nbByteWritenWithCompression>0 && rawSize >0 ? 
+    1.0*rawSize/nbByteWritenWithCompression : 1.;
+  
+  for(std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator  it = beg;
+          it != end ;++it){
+    const uint64_t compressedFileSize =
+    static_cast<uint64_t>((*it)->fileSize() * compressionRatio);
+
+    // The compressed file size should never be reported as being less than 1
+    // byte
+    uint64_t validCompressedFileSize = 0 < compressedFileSize ? compressedFileSize : 1;
+    
+    (*it)->setCompressedFileSize(validCompressedFileSize);
+  }
 }
 //------------------------------------------------------------------------------
 //ReportFlush::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& _this){
+
+  computeCompressedSize(_this.m_listReports->successfulMigrations().begin(),
+                        _this.m_listReports->successfulMigrations().end());
+  
   if(!_this.m_errorHappened){
     _this.logReport(_this.m_listReports->successfulMigrations(),"A file was successfully written on the tape"); 
     tapeserver::client::ClientInterface::RequestReport chrono;

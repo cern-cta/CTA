@@ -167,6 +167,8 @@ namespace drives {
     virtual bool isAtEOD()  = 0;
     virtual bool isTapeBlank() = 0;
     virtual bool hasTapeInPlace() = 0;
+    
+    virtual uint64_t nbByteWritenWithCompression() = 0;
     /**
      * Member string allowing the convenient storage of the string describing
      * drive location for the mount system (we get the information from TPCONFIG

@@ -45,7 +45,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerNominal) {
   
   mrp.reportCompletedJob(migratedFile,0);
   mrp.reportCompletedJob(migratedFile,0);
-  mrp.reportFlush();
+  mrp.reportFlush(0);
   mrp.reportEndOfSession();
   mrp.waitThread();
   
@@ -71,7 +71,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillure) {
   mrp.reportCompletedJob(migratedFile,0);  
   mrp.reportCompletedJob(migratedFile,0);
   mrp.reportFailedJob(failed,error,-1);
-  mrp.reportFlush();
+  mrp.reportFlush(0);
   mrp.reportEndOfSessionWithErrors(error,-1);
   mrp.waitThread();
   
@@ -96,7 +96,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillureGoodEnd) {
   mrp.reportCompletedJob(migratedFile,0);  
   mrp.reportCompletedJob(migratedFile,0);
   mrp.reportFailedJob(failed,error,-1);
-  mrp.reportFlush();
+  mrp.reportFlush(0);
   mrp.reportEndOfSession();
   mrp.waitThread();
    
@@ -123,7 +123,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerGoodBadEnd) {
   mrp.reportCompletedJob(migratedFile,0);  
   mrp.reportCompletedJob(migratedFile,0);
 
-  mrp.reportFlush();
+  mrp.reportFlush(0);
   mrp.reportEndOfSessionWithErrors(error,-1);
   mrp.waitThread();
   

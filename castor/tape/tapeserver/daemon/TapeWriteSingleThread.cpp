@@ -95,7 +95,8 @@ tapeFlush(const std::string& message,uint64_t bytes,uint64_t files,
         .add("bytes", bytes)
         .add("flushTime", flushTime);
   m_logContext.log(LOG_INFO,message);
-  m_reportPacker.reportFlush();
+  uint64_t nbByteWritenWithCompression = m_drive.nbByteWritenWithCompression();
+  m_reportPacker.reportFlush(nbByteWritenWithCompression);
   m_stats.flushTime += flushTime;
 }
 //------------------------------------------------------------------------------

@@ -67,7 +67,7 @@ public:
    /**
    * Create into the MigrationReportPacker a report for the signaling a flusing on tape
    */
-  void reportFlush();
+  void reportFlush(uint64_t nbByteWritenWithCompression);
   
   /**
    * Create into the MigrationReportPacker a report for the nominal end of session
@@ -106,7 +106,30 @@ private:
     virtual void execute(MigrationReportPacker& _this);
   };
   class ReportFlush : public Report {
+    uint64_t nbByteWritenWithCompression;
+    
+    /**
+     * This function will approximate the compressed size of the files which 
+     * have been migrated. The idea is to compute the average ration 
+     * logicalSize/nbByteWritenWithCompression for the whole batch 
+     * and apply that ratio to the whole set of files
+     * We currently computing it only to the file that have been successfully 
+     * migrated
+     * @param beg Beginning of the upper class' successfulMigrations()
+     * @param end End of upper class' successfulMigrations()
+     */
+    void computeCompressedSize(
+    std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator beg,
+    std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator end);
+    
     public:
+    /* We only can compute the compressed size once we have flushed on the drive
+     * We can get from the drive the number of byte it really wrote to tape
+     * @param nbByte the number of byte it really wrote to tape between 
+     * this flush and the previous one
+     *  */
+      ReportFlush(uint64_t nbByte):nbByteWritenWithCompression(nbByte){}
+      
       void execute(MigrationReportPacker& _this);
   };
   class ReportError : public Report {
