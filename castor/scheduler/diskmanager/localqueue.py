@@ -99,8 +99,9 @@ class LocalQueue(Queue.Queue):
     finally:
       self.lock.release()
 
-  def _putInPriorityQueue(self, transfer):
-    '''Put a new transfer in the priority queue'''
+  def _putInPriorityQueue(self, transferId):
+    '''Put back a transfer in the priority queue'''
+    transfer = self.queueingTransfers[transferId].transfer
     if transfer.transferType == TransferType.STD or \
        ((transfer.transferType == TransferType.D2DSRC or transfer.transferType == TransferType.D2DDST) \
         and transfer.replicationType == D2DTransferType.USER):
@@ -115,7 +116,7 @@ class LocalQueue(Queue.Queue):
       # first keep note of the new transfer (indexed by subreqId)
       self.queueingTransfers[transfer.transferId] = QueueingTransfer(scheduler, transfer)
       # then add it to the underlying priority queue, depending on its type
-      self._putInPriorityQueue(transfer)
+      self._putInPriorityQueue(transfer.transferId)
     finally:
       self.lock.release()
 
@@ -331,7 +332,8 @@ class LocalQueue(Queue.Queue):
             except KeyError:
               # no timeout could be found, so we take it as infinite, meaning we do not cancel anything
               timeout = -1
-        elif transfer.transferType == TransferType.D2DDST and transfer.replicationType != D2DTransferType.USER:
+        elif (transfer.transferType == TransferType.D2DSRC or transfer.transferType == TransferType.D2DDST) \
+             and transfer.replicationType != D2DTransferType.USER:
           timeout = -1     # no timeout for non-user-driven internal activities
         else:
           timeout = d2dtimeout
