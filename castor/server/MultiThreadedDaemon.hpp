@@ -23,7 +23,7 @@
 
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/Daemon.hpp"
-#include "castor/server/Mutex.hpp"
+#include "castor/server/AllInOneLockingUtility.hpp"
 
 #include <sstream>
 
@@ -155,7 +155,7 @@ private:
   /**
    * A mutex for the signal handler thread.
    */
-  Mutex* m_signalMutex;
+  AllInOneLockingUtility* m_signalMutex;
 
   /**
    * Entry point for the signal handler thread.

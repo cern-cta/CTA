@@ -26,7 +26,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/IObject.hpp"
-#include "castor/server/Mutex.hpp"
+#include "castor/server/AllInOneLockingUtility.hpp"
 
 #include <string>
 
@@ -120,7 +120,7 @@ protected:
   u_signed64 m_lastValue;
   
   /// Mutex to protect the counter
-  castor::server::Mutex m_mutex;
+  castor::server::AllInOneLockingUtility m_mutex;
       
   /// Configuration parameters for the sliding window average
   std::string m_slWinConfCategory, m_slWinConfName;

@@ -36,7 +36,7 @@ namespace castor {
    * C++ interface to mutex handling with the Cthread API
    */
   // template<class TYPE> class Mutex  could be next step
-  class Mutex {
+  class AllInOneLockingUtility {
 
   public:
     static const unsigned int TIMEOUT = 10;
@@ -46,13 +46,13 @@ namespace castor {
      * @param var the shared variable.
      * @param timeout interval to be used in Cthread calls.
      */
-    Mutex(int value, unsigned int timeout = TIMEOUT)
+    AllInOneLockingUtility(int value, unsigned int timeout = TIMEOUT)
       ;
     
     /**
      * Destructor
      */
-    ~Mutex();
+    ~AllInOneLockingUtility();
     
     /**
      * Gets the internal variable value.

@@ -36,7 +36,7 @@
 #include "castor/BaseObject.hpp"
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/IThread.hpp"
-#include "castor/server/Mutex.hpp"
+#include "castor/server/AllInOneLockingUtility.hpp"
 #include "castor/server/NotifierThread.hpp"
 #include "castor/exception/Exception.hpp"
 
@@ -46,7 +46,7 @@ namespace castor {
  namespace server {
 
   // Forward declaration
-  class Mutex;
+  class AllInOneLockingUtility;
 
   /**
    * CASTOR thread pool supporting wakeup on signals
@@ -76,7 +76,7 @@ namespace castor {
      */
     SignalThreadPool(const std::string poolName,
                      castor::server::IThread* thread,
-                     const int timeout = castor::server::Mutex::TIMEOUT,
+                     const int timeout = castor::server::AllInOneLockingUtility::TIMEOUT,
                      const unsigned int nbThreads = DEFAULT_THREAD_NUMBER,
                      const unsigned int startingThreads = 1)
       ;
@@ -110,7 +110,7 @@ namespace castor {
       ;
 
     /// mutex used by the threads to safely access this class' fields
-    Mutex m_poolMutex;
+    AllInOneLockingUtility m_poolMutex;
     
     /// if > 0, nb of threads that need to be signaled
     int m_notified;

@@ -42,7 +42,7 @@ set (SERVER_LIB_SRC_FILES
   metrics/UpdateThread.cpp
   metrics/ObjTypeCounter.cpp
   MultiThreadedDaemon.cpp
-  Mutex.cpp
+  AllInOneLockingUtility.cpp
   NotifierThread.cpp
   ProcessCap.cpp
   Queue.cpp

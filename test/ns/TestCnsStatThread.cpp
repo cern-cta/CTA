@@ -47,7 +47,7 @@
 //------------------------------------------------------------------------------
 TestCnsStatThread::TestCnsStatThread() :
   m_procTime(0), m_wallTime(0), m_reqCount(0), m_nbThreads(0) {
-  m = new castor::server::Mutex(0);
+  m = new castor::server::AllInOneLockingUtility(0);
   m_timeStart.tv_usec = 0;
 
   // load list of files to stat

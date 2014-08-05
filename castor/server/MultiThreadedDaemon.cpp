@@ -191,7 +191,7 @@ void castor::server::MultiThreadedDaemon::setupMultiThreadedSignalHandling()
    {
   // Initialize mutex variable in case of a signal. Timeout = 10 seconds
   try {
-    m_signalMutex = new Mutex(0);
+    m_signalMutex = new AllInOneLockingUtility(0);
   } catch(castor::exception::Exception &ie) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to create m_signalMutex: " <<

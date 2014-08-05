@@ -24,13 +24,13 @@
 
 // Include Files
 #include <signal.h>
-#include "castor/server/Mutex.hpp"
+#include "castor/server/AllInOneLockingUtility.hpp"
 #include "Cthread_api.h"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::server::Mutex::Mutex(int value, unsigned int timeout)
+castor::server::AllInOneLockingUtility::AllInOneLockingUtility(int value, unsigned int timeout)
    :
   m_var(value), m_timeout(timeout), m_mutexCthread(0)
 {
@@ -44,7 +44,7 @@ castor::server::Mutex::Mutex(int value, unsigned int timeout)
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::server::Mutex::~Mutex()
+castor::server::AllInOneLockingUtility::~AllInOneLockingUtility()
 {
   Cthread_mutex_unlock_ext(m_mutexCthread);
   // Cthread_mutex_destroy(m_mutexCthread);  // XXX this causes a deadlock!
@@ -54,7 +54,7 @@ castor::server::Mutex::~Mutex()
 //------------------------------------------------------------------------------
 // createLock
 //------------------------------------------------------------------------------
-int castor::server::Mutex::createLock()
+int castor::server::AllInOneLockingUtility::createLock()
 {
   if(Cthread_mutex_timedlock(&m_var, m_timeout) != 0) {
   	return -1;
@@ -73,7 +73,7 @@ int castor::server::Mutex::createLock()
 //------------------------------------------------------------------------------
 // setValue
 //------------------------------------------------------------------------------
-void castor::server::Mutex::setValue(int newValue)
+void castor::server::AllInOneLockingUtility::setValue(int newValue)
   
 {
   int oldValue = m_var;
@@ -90,7 +90,7 @@ void castor::server::Mutex::setValue(int newValue)
 //------------------------------------------------------------------------------
 // setValueNoEx
 //------------------------------------------------------------------------------
-void castor::server::Mutex::setValueNoEx(int newValue)
+void castor::server::AllInOneLockingUtility::setValueNoEx(int newValue)
 {
   if (Cthread_mutex_timedlock_ext(m_mutexCthread, m_timeout) == 0) {
     m_var = newValue;
@@ -105,7 +105,7 @@ void castor::server::Mutex::setValueNoEx(int newValue)
 //------------------------------------------------------------------------------
 // wait
 //------------------------------------------------------------------------------
-void castor::server::Mutex::wait()
+void castor::server::AllInOneLockingUtility::wait()
 {
   if (m_mutexCthread == 0)
     return;
@@ -116,7 +116,7 @@ void castor::server::Mutex::wait()
 //------------------------------------------------------------------------------
 // lock
 //------------------------------------------------------------------------------
-void castor::server::Mutex::lock() 
+void castor::server::AllInOneLockingUtility::lock() 
 {
   if (m_mutexCthread == 0 ||
       Cthread_mutex_timedlock_ext(m_mutexCthread, m_timeout) != 0) {
@@ -129,7 +129,7 @@ void castor::server::Mutex::lock()
 //------------------------------------------------------------------------------
 // release
 //------------------------------------------------------------------------------
-void castor::server::Mutex::release() 
+void castor::server::AllInOneLockingUtility::release() 
 {
   if(Cthread_mutex_unlock_ext(m_mutexCthread) != 0) {
     castor::exception::Exception ex;
@@ -141,7 +141,7 @@ void castor::server::Mutex::release()
 //------------------------------------------------------------------------------
 // signal
 //------------------------------------------------------------------------------
-void castor::server::Mutex::signal() 
+void castor::server::AllInOneLockingUtility::signal() 
 {
   if (m_mutexCthread == 0 ||
       Cthread_cond_signal_ext(m_mutexCthread) != 0) {

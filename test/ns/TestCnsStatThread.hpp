@@ -29,7 +29,7 @@
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/server/IThread.hpp"
-#include "castor/server/Mutex.hpp"
+#include "castor/server/AllInOneLockingUtility.hpp"
 
 class TestCnsStatThread : public castor::server::IThread,
                           public castor::BaseObject {
@@ -54,7 +54,7 @@ class TestCnsStatThread : public castor::server::IThread,
     
     std::vector<std::string> m_files;
     
-    castor::server::Mutex* m;
+    castor::server::AllInOneLockingUtility* m;
 
     u_signed64 cnsStat(oracle::occi::Statement* m_cnsStatStatement, std::string filepath)
       ;

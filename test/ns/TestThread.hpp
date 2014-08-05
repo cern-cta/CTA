@@ -26,7 +26,7 @@
 #include <vector>
 #include "castor/exception/Exception.hpp"
 #include "castor/server/IThread.hpp"
-#include "castor/server/Mutex.hpp"
+#include "castor/server/AllInOneLockingUtility.hpp"
 
 class TestThread : public castor::server::IThread {
 
@@ -49,6 +49,6 @@ class TestThread : public castor::server::IThread {
     
     std::vector<std::string> m_files;
     
-    castor::server::Mutex* m;
+    castor::server::AllInOneLockingUtility* m;
 
 };

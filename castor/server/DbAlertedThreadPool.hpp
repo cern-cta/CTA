@@ -36,7 +36,7 @@
 #include "castor/BaseObject.hpp"
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/SelectProcessThread.hpp"
-#include "castor/server/Mutex.hpp"
+#include "castor/server/AllInOneLockingUtility.hpp"
 #include "castor/exception/Exception.hpp"
 
 

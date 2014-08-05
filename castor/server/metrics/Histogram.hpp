@@ -27,7 +27,7 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/server/metrics/Counter.hpp"
-#include "castor/server/Mutex.hpp"
+#include "castor/server/AllInOneLockingUtility.hpp"
 
 #include <string>
 #include <map>
@@ -125,7 +125,7 @@ protected:
   CounterInstantiator m_instantiator;
   
   /// Mutex to protect the addition of new counters     
-  castor::server::Mutex m_mutex;
+  castor::server::AllInOneLockingUtility m_mutex;
 
 }; // Class Histogram
 
