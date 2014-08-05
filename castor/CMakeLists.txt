@@ -223,7 +223,6 @@ set (CLIENT_LIB_SRC_FILES
   stager/BulkRequestResult.cpp
   stager/FileResult.cpp
   utils/DebugBuf.cpp
-  utils/ScopedLock.cpp
   utils/SmartFd.cpp
   utils/SmartFILEPtr.cpp
   utils/utils.cpp

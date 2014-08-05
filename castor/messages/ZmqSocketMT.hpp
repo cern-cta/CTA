@@ -25,7 +25,7 @@
 
 #include "castor/messages/ZmqSocket.hpp"
 #include "castor/messages/ZmqSocketST.hpp"
-
+#include "castor/server/Mutex.hpp"
 #include <pthread.h>
 #include <string>
 #include <zmq.h>
@@ -124,7 +124,7 @@ private:
    * Mutex used to implement a critical section around the enclosed
    * ZMQ socket.
    */
-  pthread_mutex_t m_mutex;
+   castor::server::Mutex m_mutex;
 
   /**
    * The non thread-safe socket to be protected.
