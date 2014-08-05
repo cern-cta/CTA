@@ -77,7 +77,7 @@ void DiskReadTask::execute(log::LogContext& lc) {
     
     tape::diskFile::ReadFile sourceFile(m_migratedFile->path());
     if(migratingFileSize != sourceFile.size()){
-      throw castor::tape::Exception("Mismtach between size given by the client "
+      throw castor::exception::Exception("Mismtach between size given by the client "
               "and the real one");
     }
     
@@ -108,7 +108,7 @@ void DiskReadTask::execute(log::LogContext& lc) {
       if(mb->m_payload.size() != mb->m_payload.totalCapacity() && migratingFileSize>0){
         std::string erroMsg = "Error while reading a file. Did not read at full capacity but the file is not fully read";
         mb->markAsFailed(erroMsg,SEINTERNAL);
-        throw castor::tape::Exception(erroMsg);
+        throw castor::exception::Exception(erroMsg);
       }
       m_stats.checkingErrorTime += localTime.secs(utils::Timer::resetCounter);
       
@@ -122,7 +122,7 @@ void DiskReadTask::execute(log::LogContext& lc) {
     "Do nothing except circulating blocks");
     circulateAllBlocks(blockId);
   }
-  catch(const castor::tape::Exception& e){
+  catch(const castor::exception::Exception& e){
     //signal to all others task that this session is screwed 
     m_errorFlag.set();
             

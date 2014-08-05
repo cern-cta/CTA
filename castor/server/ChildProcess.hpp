@@ -23,7 +23,7 @@
 #pragma once
 
 #include "castor/exception/Errnum.hpp"
-#include "castor/tape/tapeserver/exception/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include <unistd.h>
 
 
@@ -48,22 +48,22 @@ namespace server {
     /**
      * Exceptions for wrong usage.
      */
-    class ProcessStillRunning: public castor::tape::Exception {
+    class ProcessStillRunning: public castor::exception::Exception {
     public:
       ProcessStillRunning(const std::string & what = "Process still running"):
-      castor::tape::Exception::Exception(what) {}
+      castor::exception::Exception::Exception(what) {}
     };
     
-    class ProcessNeverStarted: public castor::tape::Exception {
+    class ProcessNeverStarted: public castor::exception::Exception {
     public:
       ProcessNeverStarted(const std::string & what = "Process never started"):
-      castor::tape::Exception::Exception(what) {}
+      castor::exception::Exception::Exception(what) {}
     };
     
-    class ProcessWasKilled: public castor::tape::Exception {
+    class ProcessWasKilled: public castor::exception::Exception {
     public:
       ProcessWasKilled(const std::string & what = "Process was killed"):
-      castor::tape::Exception::Exception(what) {}
+      castor::exception::Exception::Exception(what) {}
     };
     
     ChildProcess(): m_started(false), m_finished(false), m_exited(false),

@@ -21,7 +21,7 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
-
+#define _XOPEN_SOURCE 600
 // Local Files
 #include "Exception.hpp"
 
@@ -45,6 +45,7 @@ castor::exception::Exception::Exception(
   std::exception() {
   m_serrno = rhs.m_serrno;
   m_message << rhs.m_message.str();
+  m_backtrace = rhs.m_backtrace;
 }
 
 
@@ -72,3 +73,9 @@ const char * castor::exception::Exception::what() const throw () {
 // destructor
 //------------------------------------------------------------------------------
 castor::exception::Exception::~Exception() throw()  {}
+//------------------------------------------------------------------------------
+// setWhat
+//------------------------------------------------------------------------------
+void castor::exception::Exception::setWhat(const std::string& what) {
+  getMessage() << what;
+}

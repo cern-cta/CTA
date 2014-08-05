@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/exception/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include <memory>
 #include "castor/tape/tapeserver/daemon/Payload.hpp"

@@ -27,7 +27,7 @@
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
-#include "castor/tape/tapeserver/exception/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/exception/Errnum.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include <gtest/gtest.h>

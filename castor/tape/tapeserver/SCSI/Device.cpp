@@ -95,7 +95,7 @@ SCSI::DeviceInfo::DeviceFile SCSI::DeviceVector::readDeviceFile(std::string path
   DeviceInfo::DeviceFile ret;
   std::string file = readfile(path);
   if (!::sscanf(file.c_str(), "%d:%d\n", &ret.major, &ret.minor))
-    throw Exception(std::string("Could not parse file: ") + path);
+    throw castor::exception::Exception(std::string("Could not parse file: ") + path);
   return ret;
 }
 
@@ -105,7 +105,7 @@ SCSI::DeviceInfo::DeviceFile SCSI::DeviceVector::statDeviceFile(std::string path
      m_sysWrapper.stat(path.c_str(), &sbuf),
      std::string("Could not stat file ") + path);
   if (!S_ISCHR(sbuf.st_mode))
-    throw Exception("Device file " + path + " is not a character device");
+    throw castor::exception::Exception("Device file " + path + " is not a character device");
   DeviceInfo::DeviceFile ret;
   ret.major = major(sbuf.st_rdev);
   ret.minor = minor(sbuf.st_rdev);
@@ -153,7 +153,7 @@ void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
       if (!devinfo.st_dev.size()) {
         devinfo.st_dev = std::string("/dev/") + res[1];     
       } else
-        throw Exception("Matched st device several times!");
+        throw castor::exception::Exception("Matched st device several times!");
       /* Read the major and major number */
       devinfo.st = readDeviceFile(devinfo.sysfs_entry + tapeDir+ "/"
           + std::string(dent->d_name) + "/dev");
@@ -166,7 +166,7 @@ void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
             << devinfo.st.major << ":" << devinfo.st.minor
             << " while " << devinfo.st_dev << " is: "
             << realFile.major << ":" << realFile.minor;
-        throw Exception(err.str());
+        throw castor::exception::Exception(err.str());
       }
     }
     /* Check if it's the nst information */
@@ -175,7 +175,7 @@ void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
       if (!devinfo.nst_dev.size()) {
         devinfo.nst_dev = std::string("/dev/") + res[1];
       } else
-        throw Exception("Matched nst device several times!");
+        throw castor::exception::Exception("Matched nst device several times!");
       /* Read the major and major number */
       devinfo.nst = readDeviceFile(devinfo.sysfs_entry + tapeDir + "/"
           + std::string(dent->d_name) + "/dev");
@@ -188,7 +188,7 @@ void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
             << devinfo.nst.major << ":" << devinfo.nst.minor
             << " while " << devinfo.st_dev << " is: "
             << realFile.major << ":" << realFile.minor;
-        throw Exception(err.str());
+        throw castor::exception::Exception(err.str());
       }
     }
   }
@@ -208,7 +208,7 @@ SCSI::DeviceInfo SCSI::DeviceVector::getDeviceInfo(const char * path) {
   {
     buf = readfile(ret.sysfs_entry + "/type");
     if (!sscanf(buf.c_str(), "%d", &ret.type))
-      throw Exception(std::string("Could not parse file: ") + ret.sysfs_entry + "/type");
+      throw castor::exception::Exception(std::string("Could not parse file: ") + ret.sysfs_entry + "/type");
   }
   /* Get vendor (trimmed of trailing newline, not of spaces) */
   {
@@ -240,7 +240,7 @@ SCSI::DeviceInfo SCSI::DeviceVector::getDeviceInfo(const char * path) {
     std::string gl(rl);
     size_t pos = gl.find_last_of("/");
     if (pos == std::string::npos)
-      throw Exception(std::string("Could not find last / in link: ") + gl +
+      throw castor::exception::Exception(std::string("Could not find last / in link: ") + gl +
         " read from " + ret.sysfs_entry + "/generic");
     ret.sg_dev = std::string("/dev/") + gl.substr(pos + 1);
   }
@@ -255,7 +255,7 @@ SCSI::DeviceInfo SCSI::DeviceVector::getDeviceInfo(const char * path) {
         << ret.sg.major << ":" << ret.sg.minor
         << " while " << ret.sg_dev << " is: "
         << realFile.major << ":" << realFile.minor;
-    throw Exception(err.str());
+    throw castor::exception::Exception(err.str());
   }
   /* Handle more if we have a tape device */
   if (Types::tape == ret.type)

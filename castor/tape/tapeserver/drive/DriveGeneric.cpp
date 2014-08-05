@@ -47,7 +47,7 @@ drives::DriveInterface * drives::DriveFactory(SCSI::DeviceInfo di,
       return new FakeDrive();
     }
   } else {
-    throw Exception(std::string("Unsupported drive type: ") + di.product);
+    throw castor::exception::Exception(std::string("Unsupported drive type: ") + di.product);
   }
 }
 
@@ -234,7 +234,7 @@ drives::positionInfo drives::DriveGeneric::getPositionInfo()
      * obtain the current position and number of bytes in the object buffer.
      * (note) For T10000 we have only SHORT FORM.
      */
-    throw Exception(std::string("An overflow has occurred in getPostitionInfo"));
+    throw castor::exception::Exception(std::string("An overflow has occurred in getPostitionInfo"));
   }
   return posInfo;
 }

@@ -46,52 +46,52 @@ namespace castor {
          Trailer
       };
 
-      class TapeFormatError: public castor::tape::Exception {
+      class TapeFormatError: public castor::exception::Exception {
       public:
         TapeFormatError(const std::string & what): Exception(what) {}
       };
       
-      class TapeMediaError: public castor::tape::Exception {
+      class TapeMediaError: public castor::exception::Exception {
       public:
         TapeMediaError(const std::string & what): Exception(what) {}
       };
       
-      class EndOfFile: public castor::tape::Exception {
+      class EndOfFile: public castor::exception::Exception {
       public:
         EndOfFile(): Exception("End Of File reached") {}
       };
       
-      class SessionAlreadyInUse: public castor::tape::Exception {
+      class SessionAlreadyInUse: public castor::exception::Exception {
       public:
         SessionAlreadyInUse(): Exception("Session already in use") {}
       };
       
-      class SessionCorrupted: public castor::tape::Exception {
+      class SessionCorrupted: public castor::exception::Exception {
       public:
         SessionCorrupted(): Exception("Session corrupted") {}
       };
       
-      class FileClosedTwice: public castor::tape::Exception {
+      class FileClosedTwice: public castor::exception::Exception {
       public:
         FileClosedTwice(): Exception("Trying to close a file twice") {}
       };
       
-      class ZeroFileWritten: public castor::tape::Exception {
+      class ZeroFileWritten: public castor::exception::Exception {
       public:
         ZeroFileWritten(): Exception("Trying to write a file with size 0") {}
       };
       
-      class TapeNotEmpty: public castor::tape::Exception {
+      class TapeNotEmpty: public castor::exception::Exception {
       public:
         TapeNotEmpty(): Exception("Trying to label a non-empty tape without the \"force\" setting") {}
       };
       
-      class UnsupportedPositioningMode: public castor::tape::Exception {
+      class UnsupportedPositioningMode: public castor::exception::Exception {
       public:
         UnsupportedPositioningMode(): Exception("Trying to use an unsupported positioning mode") {}
       };
       
-      class WrongBlockSize: public castor::tape::Exception {
+      class WrongBlockSize: public castor::exception::Exception {
       public:
         WrongBlockSize(): Exception("Trying to use a wrong block size") {}
       };

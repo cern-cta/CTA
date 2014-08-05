@@ -22,7 +22,7 @@
 
 cmake_minimum_required (VERSION 2.6)
 find_package( ZLIB REQUIRED )
-# Try to find the four STK client libaries: libapi.so, libutl.so, libipc.so 
+# Try to find the four STK client libaries: libaExcpi.so, libutl.so, libipc.so 
 # and libcl.so
 find_library (STK_API_LIB api PATHS /usr/lib64/CDK /usr/lib/CDK NO_DEFAULT_PATH)
 if (STK_API_LIB)
@@ -152,7 +152,6 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/daemon/DiskWriteThreadPoolTest.cpp
   ../castor/tape/tapeserver/daemon/DiskWriteTaskTest.cpp
   ../castor/tape/tapeserver/drive/DriveTest.cpp
-  ../castor/tape/tapeserver/exception/ExceptionTest.cpp
   ../castor/tape/tapeserver/file/StructuresTest.cpp
   ../castor/tape/tapeserver/file/FileTest.cpp
   ../castor/tape/tapeserver/SCSI/DeviceTest.cpp
@@ -175,7 +174,6 @@ target_link_libraries(castorUnitTests
   castorclient
   castorlegacymsg
   castortapeutils
-  Exception
   SCSI
   System
   Utils
@@ -217,7 +215,6 @@ add_executable(castorThreadedUnitTests
 )
 
 target_link_libraries(castorThreadedUnitTests
-  Exception
   castorclient
   castorcommon
   castorlegacymsg
@@ -252,7 +249,6 @@ add_executable(castorMultiprocessUnitTests
 )
 target_link_libraries(castorMultiprocessUnitTests
   TapeDrive
-  Exception
   SCSI
   System 
   Utils File 

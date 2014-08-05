@@ -58,7 +58,7 @@ set (SERVER_LIB_SRC_FILES
   )
 add_library (castorserver SHARED ${SERVER_LIB_SRC_FILES})
 CastorSetLibraryVersions (castorserver)
-target_link_libraries (castorserver cap castorclient castorcommon Exception)
+target_link_libraries (castorserver cap castorclient castorcommon)
 install (TARGETS castorserver LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
   NAMELINK_SKIP)
 

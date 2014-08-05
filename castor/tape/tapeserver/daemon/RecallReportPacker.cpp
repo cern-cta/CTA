@@ -29,7 +29,7 @@
 #include <signal.h>
 
 namespace{
-  struct failedReportRecallResult : public castor::tape::Exception{
+  struct failedReportRecallResult : public castor::exception::Exception{
     failedReportRecallResult(const std::string& s): Exception(s){}
   };
 }
@@ -131,7 +131,7 @@ void RecallReportPacker::flush(){
          logReport(m_listReports->failedRecalls(),"Reported failed recall to client");
          logReport(m_listReports->successfulRecalls(),"Reported successful recall to client");
        }
-   catch(const castor::tape::Exception& e){
+   catch(const castor::exception::Exception& e){
     LogContext::ScopedParam s(m_lc, Param("exceptionCode",e.code()));
     LogContext::ScopedParam ss(m_lc, Param("exceptionMessageValue", e.getMessageValue()));
     LogContext::ScopedParam sss(m_lc, Param("exceptionWhat",e.what()));
@@ -285,7 +285,7 @@ void RecallReportPacker::WorkerThread::run(){
         }
     }
   }
-  catch(const castor::tape::Exception& e){
+  catch(const castor::exception::Exception& e){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
     m_parent.logRequestReport(chrono,"tried to report endOfSession(WithError) and got an exception, cant do much more",LOG_ERR);

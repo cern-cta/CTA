@@ -25,8 +25,6 @@
 
 #include <pthread.h>
 #include <semaphore.h>
-#include "castor/exception/Errnum.hpp"
-#include "castor/tape/tapeserver/exception/Exception.hpp"
 
 namespace castor {
 namespace server {

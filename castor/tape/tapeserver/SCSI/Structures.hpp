@@ -33,7 +33,7 @@
 #include <cstdio>
 
 #include "Constants.hpp"
-#include "castor/tape/tapeserver/exception/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 
 namespace castor {
 namespace tape {
@@ -77,7 +77,7 @@ namespace SCSI {
       void setSenseBuffer(T * senseBuff)  
       { 
         if (sizeof(T) > UCHAR_MAX)
-          throw Exception("sense structure too big in LinuxSGIO_t::setSense");
+          throw castor::exception::Exception("sense structure too big in LinuxSGIO_t::setSense");
         mx_sb_len = (unsigned char) sizeof(T);
         sbp = (unsigned char *)senseBuff;
       }
@@ -736,7 +736,7 @@ namespace SCSI {
     public:
       senseData_t() {
         if (sizeof(*this) > 255)
-          throw Exception("In SCSI::Structures::senseData_t::senseData_t(): size too big (> 255>");      
+          throw castor::exception::Exception("In SCSI::Structures::senseData_t::senseData_t(): size too big (> 255>");      
         zeroStruct(this);
       }
       // byte 0
@@ -817,7 +817,7 @@ namespace SCSI {
           std::stringstream err;
           err << "In senseData_t::getASC: no ACS with this response code or response code not supported ("
                   << std::hex << std::showbase << (int)responseCode << ")";
-          throw Exception(err.str());
+          throw castor::exception::Exception(err.str());
         }
       }
 
@@ -830,7 +830,7 @@ namespace SCSI {
           std::stringstream err;
           err << "In senseData_t::getASCQ: no ACSQ with this response code or response code not supported ("
                   << std::hex << std::showbase << (int)responseCode << ")";
-          throw Exception(err.str());
+          throw castor::exception::Exception(err.str());
         }
       }
       /**

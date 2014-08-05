@@ -24,7 +24,7 @@
 #pragma once
 
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
-#include "castor/tape/tapeserver/exception/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/ClientType.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
@@ -130,7 +130,7 @@ namespace client {
      * Exception thrown when the wrong response type was received from
      * the client after a request. Extracts the type and prints it.
      */
-    class UnexpectedResponse: public castor::tape::Exception {
+    class UnexpectedResponse: public castor::exception::Exception {
     public:
       UnexpectedResponse(const castor::IObject * resp, const std::string & w="");
     };
@@ -138,9 +138,9 @@ namespace client {
     /**
      * Exception marking end of session
      */
-    class EndOfSession: public castor::tape::Exception {
+    class EndOfSession: public castor::exception::Exception {
     public:
-      EndOfSession(std::string w=""):castor::tape::Exception(w) {}
+      EndOfSession(std::string w=""):castor::exception::Exception(w) {}
     };
    
     

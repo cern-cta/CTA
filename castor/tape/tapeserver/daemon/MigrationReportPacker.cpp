@@ -29,7 +29,7 @@
 #include <cstdio>
 
 namespace{
-  struct failedMigrationRecallResult : public castor::tape::Exception{
+  struct failedMigrationRecallResult : public castor::exception::Exception{
     failedMigrationRecallResult(const std::string& s): Exception(s){}
   };
 }
@@ -126,7 +126,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& _this){
     try{
     _this.m_client.reportMigrationResults(*(_this.m_listReports),chrono);    
     }   
-    catch(const castor::tape::Exception& e){
+    catch(const castor::exception::Exception& e){
     LogContext::ScopedParam sp[]={
       LogContext::ScopedParam(_this.m_lc, Param("exceptionCode",e.code())),
       LogContext::ScopedParam(_this.m_lc, Param("exceptionMessageValue", e.getMessageValue())),
@@ -229,7 +229,7 @@ void MigrationReportPacker::WorkerThread::run(){
       }
     }
   }
-  catch(const castor::tape::Exception& e){
+  catch(const castor::exception::Exception& e){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
     m_parent.logRequestReport(chrono,"tried to report endOfSession(WithError) and got an exception, cant do much more",LOG_ERR);

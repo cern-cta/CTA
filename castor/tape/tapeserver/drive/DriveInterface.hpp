@@ -28,7 +28,7 @@
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "castor/tape/tapeserver/SCSI/Exception.hpp"
 #include "castor/tape/tapeserver/drive/mtio_add.hpp"
-#include "castor/tape/tapeserver/exception/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 
 /**
@@ -100,7 +100,7 @@ namespace drives {
    * Exception reported by drive functions when trying to read beyond
    * end of data
    */
-  class EndOfData: public Exception {
+  class EndOfData: public castor::exception::Exception {
   public:
     EndOfData(const std::string w=""): Exception(w) {}
   };
@@ -109,7 +109,7 @@ namespace drives {
    * Exception reported by drive functions when trying to write beyond
    * end of medium
    */
-  class EndOfMedium: public Exception {
+  class EndOfMedium: public castor::exception::Exception {
   public:
     EndOfMedium(const std::string w=""): Exception(w) {}
   };
@@ -117,7 +117,7 @@ namespace drives {
   /**
    * Exception reported by ReadExactBlock when the size is not right
    */
-  class UnexpectedSize: public Exception {
+  class UnexpectedSize: public castor::exception::Exception {
   public:
     UnexpectedSize(const std::string w=""): Exception(w) {}
   };
@@ -125,7 +125,7 @@ namespace drives {
   /**
    * Exception reported by ReadFileMark when finding a data block
    */
-  class NotAFileMark: public Exception {
+  class NotAFileMark: public castor::exception::Exception {
   public:
     NotAFileMark(const std::string w=""): Exception(w) {}
   };

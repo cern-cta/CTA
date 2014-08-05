@@ -1,4 +1,6 @@
 #include "castor/server/Mutex.hpp"
+#include "castor/exception/Errnum.hpp"
+#include "castor/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 //constructor

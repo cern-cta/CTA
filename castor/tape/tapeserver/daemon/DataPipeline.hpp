@@ -25,7 +25,7 @@
 
 #include "castor/server/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/tape/tapeserver/exception/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/exception/Exception.hpp"
 
 namespace castor {

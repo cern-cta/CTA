@@ -32,10 +32,10 @@ castor::tape::tapeserver::drives::FakeDrive::FakeDrive() throw() : m_current_pos
   m_tape.reserve(max_fake_drive_record_length);
 }
 castor::tape::tapeserver::drives::compressionStats castor::tape::tapeserver::drives::FakeDrive::getCompression()  {
-  throw Exception("FakeDrive::getCompression Not implemented");
+  throw castor::exception::Exception("FakeDrive::getCompression Not implemented");
 }
 void castor::tape::tapeserver::drives::FakeDrive::clearCompressionStats()  {
-  throw Exception("FakeDrive::clearCompressionStats Not implemented");
+  throw castor::exception::Exception("FakeDrive::clearCompressionStats Not implemented");
 }
 castor::tape::tapeserver::drives::deviceInfo castor::tape::tapeserver::drives::FakeDrive::getDeviceInfo()  {
   deviceInfo devInfo;
@@ -46,7 +46,7 @@ castor::tape::tapeserver::drives::deviceInfo castor::tape::tapeserver::drives::F
   return devInfo;
 }
 std::string castor::tape::tapeserver::drives::FakeDrive::getSerialNumber()  {
-  throw Exception("FakeDrive::getSerialNumber Not implemented");
+  throw castor::exception::Exception("FakeDrive::getSerialNumber Not implemented");
 }
 void castor::tape::tapeserver::drives::FakeDrive::positionToLogicalObject(uint32_t blockId)  {
   m_current_position = blockId;
@@ -60,19 +60,19 @@ castor::tape::tapeserver::drives::positionInfo castor::tape::tapeserver::drives:
   return pos;
 }
 std::vector<std::string> castor::tape::tapeserver::drives::FakeDrive::getTapeAlerts()  {
-  throw Exception("FakeDrive::getTapeAlerts Not implemented");
+  throw castor::exception::Exception("FakeDrive::getTapeAlerts Not implemented");
 }
 void castor::tape::tapeserver::drives::FakeDrive::setDensityAndCompression(bool compression, unsigned char densityCode)  {
-  throw Exception("FakeDrive::setDensityAndCompression Not implemented");
+  throw castor::exception::Exception("FakeDrive::setDensityAndCompression Not implemented");
 }
 castor::tape::tapeserver::drives::driveStatus castor::tape::tapeserver::drives::FakeDrive::getDriveStatus()  {
-  throw Exception("FakeDrive::getDriveStatus Not implemented");
+  throw castor::exception::Exception("FakeDrive::getDriveStatus Not implemented");
 }
 castor::tape::tapeserver::drives::tapeError castor::tape::tapeserver::drives::FakeDrive::getTapeError()  {
-  throw Exception("FakeDrive::getTapeError Not implemented");
+  throw castor::exception::Exception("FakeDrive::getTapeError Not implemented");
 }
 void castor::tape::tapeserver::drives::FakeDrive::setSTBufferWrite(bool bufWrite)  {
-  throw Exception("FakeDrive::setSTBufferWrite Not implemented");
+  throw castor::exception::Exception("FakeDrive::setSTBufferWrite Not implemented");
 }
 void castor::tape::tapeserver::drives::FakeDrive::fastSpaceToEOM(void)  {
   m_current_position = m_tape.size()-1;
@@ -91,7 +91,7 @@ void castor::tape::tapeserver::drives::FakeDrive::spaceFileMarksBackwards(size_t
     if(!m_tape[i].compare(filemark)) countdown--;
   }
   if(countdown) {
-    throw Exception("FakeDrive::spaceFileMarksBackwards");
+    throw castor::exception::Exception("FakeDrive::spaceFileMarksBackwards");
   }  
   m_current_position = i-1; //BOT side of the filemark
 }
@@ -135,7 +135,7 @@ void castor::tape::tapeserver::drives::FakeDrive::writeBlock(const void * data, 
 }
 ssize_t castor::tape::tapeserver::drives::FakeDrive::readBlock(void *data, size_t count)  {
   if(count < m_tape[m_current_position].size()) {
-    throw Exception("Block size too small in FakeDrive::readBlock");
+    throw castor::exception::Exception("Block size too small in FakeDrive::readBlock");
   }
   size_t bytes_copied = m_tape[m_current_position].copy((char *)data, m_tape[m_current_position].size());
   m_current_position++;
@@ -158,16 +158,16 @@ void castor::tape::tapeserver::drives::FakeDrive::readExactBlock(void *data, siz
     std::stringstream exc;
     exc << "Wrong block size in FakeDrive::readExactBlock. Expected: " << count << " Found: " << m_tape[m_current_position].size() << " Position: " << m_current_position << " String: " << m_tape[m_current_position] << std::endl;
     exc << contentToString();
-    throw Exception(exc.str());
+    throw castor::exception::Exception(exc.str());
   }
   if(count != m_tape[m_current_position].copy((char *)data, count)) {
-    throw Exception("Failed FakeDrive::readExactBlock");
+    throw castor::exception::Exception("Failed FakeDrive::readExactBlock");
   }
   m_current_position++;
 }
 void castor::tape::tapeserver::drives::FakeDrive::readFileMark(std::string context)  {
   if(m_tape[m_current_position].compare(filemark)) {
-    throw Exception("Failed FakeDrive::readFileMark");
+    throw castor::exception::Exception("Failed FakeDrive::readFileMark");
   }
   m_current_position++;  
 }

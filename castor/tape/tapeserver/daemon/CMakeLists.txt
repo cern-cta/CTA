@@ -52,7 +52,6 @@ add_executable(tapeserverd TapeDaemon.cpp)
 
 target_link_libraries(tapeserverd
   castorTapeServerDaemon
-  Exception
   SCSI
   System
   Utils

@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/exception/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 #include "Structures.hpp"
 #include "Constants.hpp"
 
@@ -33,11 +33,11 @@ namespace SCSI {
   /**
    * An exception class turning SCSI sense data into a loggable string
    */
-  class Exception: public castor::tape::Exception {
+  class Exception: public castor::exception::Exception {
   public:
     Exception(unsigned char status, castor::tape::SCSI::Structures::senseData_t<255> * sense,
             const std::string & context = ""):
-        castor::tape::Exception("") {
+        castor::exception::Exception("") {
       std::stringstream w;
       w << context << (context.size()?" ":"") 
               << "SCSI command failed with status "

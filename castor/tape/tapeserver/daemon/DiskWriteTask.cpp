@@ -120,7 +120,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
 // DiskWriteTask::getFreeBlock
 //------------------------------------------------------------------------------
 MemBlock *DiskWriteTask::getFreeBlock() { 
-  throw castor::tape::Exception("DiskWriteTask::getFreeBlock should mot be called");
+  throw castor::exception::Exception("DiskWriteTask::getFreeBlock should mot be called");
 }
 
 //------------------------------------------------------------------------------

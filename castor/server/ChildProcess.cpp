@@ -77,7 +77,7 @@ void castor::server::ChildProcess::wait()  {
   /* Check child status*/
   if (ret == m_pid) parseStatus(status);
   if(!m_finished)
-    throw castor::tape::Exception("Process did not exit after waitpid().");
+    throw castor::exception::Exception("Process did not exit after waitpid().");
 }
 
 int castor::server::ChildProcess::exitCode()  {

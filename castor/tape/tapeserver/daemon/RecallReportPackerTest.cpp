@@ -164,7 +164,7 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerFaillure) {
   
   MockClient client;
   ::testing::InSequence dummy;
-  EXPECT_CALL(client, reportRecallResults(_,_)).WillRepeatedly(Throw(castor::tape::Exception("")));
+  EXPECT_CALL(client, reportRecallResults(_,_)).WillRepeatedly(Throw(castor::exception::Exception("")));
   EXPECT_CALL(client, reportEndOfSessionWithError(_,SEINTERNAL,_)).Times(1);
 
   castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerBadBadEnd");

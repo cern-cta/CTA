@@ -58,7 +58,7 @@ m_request(clientRequest),m_transactionId(0) {}
 //------------------------------------------------------------------------------
 ClientProxy::UnexpectedResponse::
     UnexpectedResponse(const castor::IObject* resp, const std::string & w):
-castor::tape::Exception(w) {
+castor::exception::Exception(w) {
   std::string responseType = typeid(*resp).name();
   int status = -1;
   char * demangled = abi::__cxa_demangle(responseType.c_str(), NULL, NULL, &status);
@@ -301,7 +301,7 @@ tapegateway::FileMigrationReportList & migrationReport,
     std::stringstream mess;
     mess << "End notification report: errorMessage=\""
         << err.errorMessage() << "\" errorCode=" << err.errorCode();
-    throw castor::tape::Exception(mess.str());
+    throw castor::exception::Exception(mess.str());
   } catch (std::bad_cast&) {
     throw UnexpectedResponse(resp.get(),
         "Unexpected response to FileMigrationReportList in reportMigrationResults");
@@ -378,7 +378,7 @@ RequestReport& report) {
     std::stringstream mess;
     mess << "End notification report: errorMessage=\""
         << err.errorMessage() << "\" errorCode=" << err.errorCode();
-    throw castor::tape::Exception(mess.str());
+    throw castor::exception::Exception(mess.str());
   } catch (std::bad_cast&) {
     throw UnexpectedResponse(resp.get(),
         "Unexpected response to FileRecallReportList in reportRecallResults");

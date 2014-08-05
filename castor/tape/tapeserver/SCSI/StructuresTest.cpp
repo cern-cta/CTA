@@ -567,12 +567,12 @@ namespace unitTests {
     ASSERT_EQ("Unknown ASC/ASCQ:00/1f", sense.getACSString());
     
     buff[0] = 0x74;
-    ASSERT_THROW(sense.getASC(), castor::tape::Exception);
+    ASSERT_THROW(sense.getASC(), castor::exception::Exception);
     
-    ASSERT_THROW(sense.getACSString(), castor::tape::Exception);
+    ASSERT_THROW(sense.getACSString(), castor::exception::Exception);
     
     try { sense.getACSString(); ASSERT_TRUE(false); }
-    catch (castor::tape::Exception & ex) {
+    catch (castor::exception::Exception & ex) {
       std::string what(ex.getMessageValue());
       ASSERT_NE(std::string::npos, what.find("response code not supported (0x74)"));
     }

@@ -115,7 +115,7 @@ namespace drives {
      * @return structure containing various booleans, and error conditions.
      */
     virtual driveStatus getDriveStatus()  {
-      throw Exception("Not implemented");
+      throw castor::exception::Exception("Not implemented");
     }
     
     virtual bool waitUntilReady(int timeoutSecond)  {
@@ -194,7 +194,7 @@ namespace drives {
      * @return error code and string containing the error description
      */
     virtual tapeError getTapeError()  {
-      throw Exception("Not implemented");
+      throw castor::exception::Exception("Not implemented");
     }
 
     /**

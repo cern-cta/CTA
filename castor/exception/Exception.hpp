@@ -126,6 +126,8 @@ namespace castor {
       mutable std::string m_what;
       
     protected:  
+      void setWhat(const std::string &w);
+      
       /**
        * Backtrace object. Its constructor does the heavy lifting of
        * generating the backtrace.
