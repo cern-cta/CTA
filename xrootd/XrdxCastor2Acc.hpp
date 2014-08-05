@@ -46,7 +46,7 @@ class XrdSecEntity;
 //------------------------------------------------------------------------------
 class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
 {
-  public:
+ public:
 
   //----------------------------------------------------------------------------
   //! Struct AuthzInfo holding authorization information about a transfer
@@ -54,17 +54,17 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   struct AuthzInfo
   {
     AuthzInfo() : accessop(0), exptime(0) {};
-    int accessop; ///< the access operation allowed -> see XrdAcc/XrdAccAuthorize.hh
+    int accessop; ///< the access operation -> see XrdAcc/XrdAccAuthorize.hh
     time_t exptime; ///< time when the authorization expires
-    std::string sfn; ///< sfn
-    std::string pfn1; ///< physical mount filename
+    std::string sfn; ///< logical file name (original client request)
+    std::string pfn1; ///< physical filename in CASTOR
     std::string pool; ///< ceph pool in case pfn1 denotes a ceph file (no leading '/')
-    std::string pfn2; ///< stager job connection details
+    std::string pfn2; ///< diskmanager connection details
     std::string id; ///< the client connection id
     std::string client_sec_uid; ///< the sec identity eg. user name
     std::string client_sec_gid; ///< the sec identity eg. group name
     std::string signature; ///< signature of the 'token'
-    std::string manager; ///< hostname of the managernode
+    std::string manager; ///< hostname of the manager node
   };
 
 
@@ -80,9 +80,11 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   virtual ~XrdxCastor2Acc();
 
 
-  //--------------------------------------------------------------------------
+  //----------------------------------------------------------------------------
   //! Initialise the plugin
-  //--------------------------------------------------------------------------
+  //!
+  //! @return True if successful, otherwise false
+  //----------------------------------------------------------------------------
   bool Init();
 
 
@@ -221,12 +223,12 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
 
 
   int mLogLevel; ///< acc plugin loglevel
-  std::string mAuthCertfile; ///< file name of public key for signature verification
+  std::string mAuthCertfile; ///< file name of public key for signature check
   std::string mAuthKeyfile; ///< file name of private key for signature creation
-  bool mRequireCapability; ///< client has to show up with a capability in the
-                           ///< opaque info, if true
-  bool mAllowLocal; ///< a client connecting from localhost does not need
-                    ///< authorization [default=yes]
+  //! client has to show up with a capability in the opaque info if true
+  bool mRequireCapability;
+  //! client connecting from localhost does not need authorization [default=yes]
+  bool mAllowLocal; ///<
   EVP_PKEY* mPublicKey; ///< public key used for decryption
   EVP_PKEY* mPrivateKey; ///< private key used for encryption
   XrdSysMutex mDecodeMutex; ///< mutex for decoding

@@ -97,8 +97,7 @@ XrdxCastor2Acc::XrdxCastor2Acc():
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-XrdxCastor2Acc::~XrdxCastor2Acc()
-{ }
+XrdxCastor2Acc::~XrdxCastor2Acc() {}
 
 
 //------------------------------------------------------------------------------
@@ -109,7 +108,7 @@ XrdxCastor2Acc::Configure(const char* conf_file)
 {
   char* var;
   const char* val;
-  int  cfgFD, NoGo = 0;
+  int cfgFD, NoGo = 0;
   XrdOucStream config_stream(&AccEroute, getenv("XRDINSTANCE"));
 
   if (!conf_file || !*conf_file)
@@ -302,10 +301,7 @@ XrdxCastor2Acc::Configure(const char* conf_file)
     xcastor_info("acc logging configured");
   }
 
-  if (NoGo)
-    return false;
-
-  return true;
+  return (NoGo ? false : true);
 }
 
 
@@ -378,9 +374,9 @@ XrdxCastor2Acc::Init()
 //------------------------------------------------------------------------------
 bool
 XrdxCastor2Acc::SignBase64(unsigned char* input,
-                                 int inputlen,
-                                 std::string& sb64,
-                                 int& sb64len)
+                           int inputlen,
+                           std::string& sb64,
+                           int& sb64len)
 {
   int err;
   unsigned int sig_len;
@@ -393,14 +389,12 @@ XrdxCastor2Acc::SignBase64(unsigned char* input,
   BIO* bmem, *b64;
   BUF_MEM* bptr;
   sb64 = "";
-
   // Use the envelope api to create and encode the hash value. First the implementation
   // of the digest type is sent and then the input data is hashed into the context
   EVP_SignInit(&md_ctx, EVP_sha1());
   EVP_SignUpdate(&md_ctx, input, inputlen);
   sig_len = sizeof(sig_buf);
   TIMING("EVPINIT/UPDATE", &signtiming);
-
   mEncodeMutex.Lock(); // -->
   EVP_PKEY* usekey = mPrivateKey;
   err = EVP_SignFinal(&md_ctx, sig_buf, &sig_len, usekey);
@@ -443,7 +437,10 @@ XrdxCastor2Acc::SignBase64(unsigned char* input,
   BIO_free(bmem);
   BIO_free(b64);
   TIMING("BIOFREE", &signtiming);
-  //signtiming.Print();
+
+  if (mLogLevel == LOG_DEBUG)
+    signtiming.Print();
+
   return true;
 }
 
@@ -453,8 +450,8 @@ XrdxCastor2Acc::SignBase64(unsigned char* input,
 //------------------------------------------------------------------------------
 bool
 XrdxCastor2Acc::VerifyUnbase64(const char* data,
-                                     unsigned char* base64buffer,
-                                     const char* path)
+                               unsigned char* base64buffer,
+                               const char* path)
 {
   xcastor::Timing verifytiming("VerifyUb64");
   TIMING("START", &verifytiming);
@@ -515,20 +512,17 @@ XrdxCastor2Acc::VerifyUnbase64(const char* data,
 
   TIMING("UNBASE64", &verifytiming);
   // Verify the signature using the public key
-  // printf("Verify %d %s %d %d\n",strlen((char*)data),data,publickey, sig_len);
   EVP_VerifyInit(&md_ctx, EVP_sha1());
   EVP_VerifyUpdate(&md_ctx, data, strlen((char*)data));
-  int err = EVP_VerifyFinal(&md_ctx, ((unsigned char*)(sig_buf)), sig_len, mPublicKey);
+  int err = EVP_VerifyFinal(&md_ctx, ((unsigned char*)(sig_buf)), sig_len,
+                            mPublicKey);
   EVP_MD_CTX_cleanup(&md_ctx);
   TIMING("EVPVERIFY", &verifytiming);
 
   if (mLogLevel == LOG_DEBUG)
     verifytiming.Print();
 
-  if (err != 1)
-    return false;
-
-  return true;
+  return ((err != 1) ? false : true);
 }
 
 
@@ -543,7 +537,6 @@ XrdxCastor2Acc::Decode(const char* opaque, AuthzInfo& authz)
   int ntoken = 0;
   const char* stoken;
   XrdOucString tmp_str = opaque;
-
   // Convert the '&' seperated tokens into '\n' seperated tokens for parsing
   tmp_str.replace("&", "\n");
   XrdOucTokenizer authztokens((char*)tmp_str.c_str());
@@ -681,7 +674,6 @@ XrdxCastor2Acc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
   sstr << "castor2fs.exptime=" << (int)authz.exptime << "&";
   sstr << "castor2fs.signature=" << authz.signature << "&";
   if (authz.manager.size() > 0) sstr << "castor2fs.manager=" << authz.manager << "&";
-
   xcastor_debug("opaque_acc=%s", sstr.str().c_str());
   return sstr.str();
 }
@@ -714,9 +706,9 @@ XrdxCastor2Acc::BuildToken(const AuthzInfo& authz)
 //------------------------------------------------------------------------------
 XrdAccPrivs
 XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
-                             const char* path,
-                             const Access_Operation oper,
-                             XrdOucEnv* Env)
+                       const char* path,
+                       const Access_Operation oper,
+                       XrdOucEnv* Env)
 {
   // Check for localhost host connection
   if (mAllowLocal)
@@ -749,7 +741,6 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
 
   xcastor_debug("path=%s, operation=%i, env=%s", path, oper, opaque);
   time_t now = time(NULL);
-
   // This is not nice, but ROOT puts a ? into the opaque string,
   // if there is a user opaque info
   XrdOucString tmp_opaque = opaque;
