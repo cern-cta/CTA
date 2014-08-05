@@ -47,12 +47,6 @@ struct Frame {
   std::string body;
 
   /**
-   * Calculates the heash value of the frame body and records the result in the
-   * frame header.
-   */
-  void calcAndSetHashValueOfBody();
-
-  /**
    * Checks the hash value field of the header against the body of the frame.
    */
   void checkHashValueOfBody() const;
@@ -75,17 +69,26 @@ struct Frame {
   void parseZmqMsgIntoHeader(const ZmqMsg &msg);
 
   /**
-   * Serializes the specified protocol buffer into the frame body.
+   * Serializes the specified protocol buffer into the frame body, calculates
+   * it hash value and stores the has value in the frame header.
    *
    * @param protocolBuffer The protocol buffer.
    */
   template <class T> void serializeProtocolBufferIntoBody(
     const T &protocolBuffer) {
-    if(!protocolBuffer.SerializeToString(&body)) {
+    try {
+      if(!protocolBuffer.SerializeToString(&body)) {
+        castor::exception::Exception ex;
+        ex.getMessage() << "SerializeToString() returned false";
+        throw ex;
+      }
+
+      calcAndSetHashValueOfBody();
+    } catch(castor::exception::Exception &ne) {
       castor::exception::Exception ex;
       ex.getMessage() << "Frame failed to serialize protocol buffer " <<
         castor::utils::demangledNameOf(protocolBuffer) << " into frame body: "
-        << ": SerializeToString() returned false";
+        << ne.getMessage().str();
       throw ex;
     }
   }
@@ -105,6 +108,14 @@ struct Frame {
       throw ex;
     } 
   }   
+
+private:
+
+  /**
+   * Calculates the hash value of the frame body and records the result in the
+   * frame header.
+   */
+  void calcAndSetHashValueOfBody();
 }; // struct Frame
 
 } // namespace messages

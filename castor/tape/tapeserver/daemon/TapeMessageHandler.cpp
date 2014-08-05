@@ -99,7 +99,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::fillPollFd(
   fd.events = ZMQ_POLLIN;
   fd.revents = 0;
   fd.socket = m_socket.getZmqSocket();
-  fd.fd= -1;
+  fd.fd = -1;
 }
 
 //------------------------------------------------------------------------------
@@ -107,7 +107,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::fillPollFd(
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
   const zmq_pollitem_t &fd) throw() {
-  m_log(LOG_DEBUG,"handling event in TapeMessageHandler");
+  m_log(LOG_DEBUG, "handling event in TapeMessageHandler");
 
   // Try to receive a request, simply giving up if an exception is raised
   messages::Frame rqst;
@@ -196,7 +196,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to dispatch message handler"
-        ": Unknown request type: reqtype=" << rqst.header.msgtype();
+        ": Unknown request type: msgtype=" << rqst.header.msgtype();
       throw ex;
     }
   }
@@ -270,14 +270,13 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   createNbFilesOnTapeFrame(const uint32_t nbFiles) {
   messages::Frame frame;
 
+  frame.header = messages::protoTapePreFillHeader();
+  frame.header.set_msgtype(messages::MSG_TYPE_NBFILESONTAPE);
+  frame.header.set_bodysignature("PIPO");
+
   messages::NbFilesOnTape body;
   body.set_nbfiles(nbFiles);
   frame.serializeProtocolBufferIntoBody(body);
-
-  frame.header = messages::protoTapePreFillHeader();
-  frame.header.set_msgtype(messages::MSG_TYPE_NBFILESONTAPE);
-  frame.calcAndSetHashValueOfBody();
-  frame.header.set_bodysignature("PIPO");
 
   return frame;
 }
@@ -502,15 +501,15 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   createReturnValueFrame(const int returnValue, const std::string& msg) {
   messages::Frame frame;
 
-  messages::ReturnValue body;
-  body.set_returnvalue(returnValue);
-  body.set_message(msg);
-  frame.serializeProtocolBufferIntoBody(body);
-
   frame.header = castor::messages::protoTapePreFillHeader();
   frame.header.set_msgtype(messages::MSG_TYPE_RETURNVALUE);
   frame.header.set_bodyhashvalue(messages::computeSHA1Base64(frame.body));
   frame.header.set_bodysignature("PIPO");
+
+  messages::ReturnValue body;
+  body.set_returnvalue(returnValue);
+  body.set_message(msg);
+  frame.serializeProtocolBufferIntoBody(body);
 
   return frame;
 }

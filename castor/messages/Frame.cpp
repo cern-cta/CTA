@@ -26,21 +26,6 @@
 #include "castor/messages/Frame.hpp"
 #include "castor/messages/messages.hpp"
 
-
-//------------------------------------------------------------------------------
-// calcAndSetHashValueOfBody
-//------------------------------------------------------------------------------
-void castor::messages::Frame::calcAndSetHashValueOfBody() {
-  try {
-    header.set_bodyhashvalue(messages::computeSHA1Base64(body));
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Frame failed to calculate the hash value of the frame"
-      "body and store it in the header: " << ne.getMessage().str();
-    throw ex;
-  }
-}
-
 //------------------------------------------------------------------------------
 // checkHashValueOfBody
 //------------------------------------------------------------------------------
@@ -115,6 +100,20 @@ void castor::messages::Frame::parseZmqMsgIntoHeader(const ZmqMsg &msg) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to parse ZMQ message into frame header: " <<
       ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// calcAndSetHashValueOfBody
+//------------------------------------------------------------------------------
+void castor::messages::Frame::calcAndSetHashValueOfBody() {
+  try {
+    header.set_bodyhashvalue(messages::computeSHA1Base64(body));
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Frame failed to calculate the hash value of the frame"
+      "body and store it in the header: " << ne.getMessage().str();
     throw ex;
   }
 }
