@@ -41,9 +41,13 @@ namespace castor {
 namespace messages {
   
 /**
- *  Semd the google protobuf message msg over the socket. The flasg is passed to socket
+ *  Sends the specified google protocol buffer over the specified ZMQ socket.
+ *
+ * @param socket The ZMQ socket.
+ * @param msg The google protocol buffer.
+ * @param flag The flag to be passed to the socketsend() method.
  */
-template <class T> void sendMessage(ZmqSocket& socket,const T& msg,int flag=0) {
+template <class ZS, class PB> void sendMessage(ZS& socket, const PB& msg, const int flag=0) {
 
   if(!msg.IsInitialized()){
     castor::exception::Exception ex("the protocol buffer message was not correctly set");
@@ -101,10 +105,16 @@ template <class T> std::string computeSHA1Base64(const T& msg) {
 }
 
 /**
- * Connect the socket to localhost on the givent port 
- * @param socket
+ * Connects the specified ZMQ socket to localhost on the given TCP/IP port.
+ *
+ * @param socket The ZMQ socket.
+ * @param port The TCP/IP port.
  */
-void connectToLocalhost(ZmqSocket&  socket,int port);
+template<class T> void connectZmqSocketToLocalhost(T& socket, const int port) {
+  std::string bindingAdress("tcp://127.0.0.1:");
+  bindingAdress+=castor::utils::toString(port);
+  socket.connect(bindingAdress.c_str());
+}
 
 /**
  * Header factory which pre fill several fields
@@ -127,13 +137,13 @@ castor::messages::Header genericPreFillHeader(){
   return header;
 }
 
- /**
-  * Return genericPreFillHeader() with
-  * protocolType = <protocolType::Tape
-  * protocolVersion = protocolVersion::prototype
-  * @return 
-  */
-  castor::messages::Header protoTapePreFillHeader();
+/**
+ * Return genericPreFillHeader() with
+ * protocolType = <protocolType::Tape
+ * protocolVersion = protocolVersion::prototype
+ * @return 
+ */
+ castor::messages::Header protoTapePreFillHeader();
 
 } // namespace messages
 } // namespace castor

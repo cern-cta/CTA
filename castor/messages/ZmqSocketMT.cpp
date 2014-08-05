@@ -30,7 +30,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::messages::ZmqSocketMT::ZmqSocketMT(void *const zmqContext,
-  const int socketType): ZmqSocket(zmqContext, socketType) {
+  const int socketType): m_socket(zmqContext, socketType) {
   const int rc = pthread_mutex_init(&m_mutex, NULL);
   if(0 != rc) {
     char message[100];
@@ -54,7 +54,7 @@ castor::messages::ZmqSocketMT::~ZmqSocketMT() throw() {
 //------------------------------------------------------------------------------
 void castor::messages::ZmqSocketMT::close() {
   utils::ScopedLock lock(m_mutex);
-  ZmqSocket::close();
+  m_socket.close();
 }
     
 //------------------------------------------------------------------------------
@@ -62,7 +62,7 @@ void castor::messages::ZmqSocketMT::close() {
 //------------------------------------------------------------------------------
 void castor::messages::ZmqSocketMT::bind (const std::string &endpoint) {
   utils::ScopedLock lock(m_mutex);
-  ZmqSocket::bind(endpoint);
+  m_socket.bind(endpoint);
 }
   
 //------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ void castor::messages::ZmqSocketMT::bind (const std::string &endpoint) {
 //------------------------------------------------------------------------------
 void castor::messages::ZmqSocketMT::connect(const std::string &endpoint) {
   utils::ScopedLock lock(m_mutex);
-  ZmqSocket::connect(endpoint);
+  m_socket.connect(endpoint);
 }
 
 //------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ void castor::messages::ZmqSocketMT::connect(const std::string &endpoint) {
 //------------------------------------------------------------------------------
 void castor::messages::ZmqSocketMT::send(ZmqMsg &msg, const int flags) {
   utils::ScopedLock lock(m_mutex);
-  ZmqSocket::send(msg, flags);
+  m_socket.send(msg, flags);
 }
   
 //------------------------------------------------------------------------------
@@ -87,7 +87,7 @@ void castor::messages::ZmqSocketMT::send(ZmqMsg &msg, const int flags) {
 void castor::messages::ZmqSocketMT::send(zmq_msg_t *const msg,
   const int flags) {
   utils::ScopedLock lock(m_mutex);
-  ZmqSocket::send(msg, flags);
+  m_socket.send(msg, flags);
 }
 
 //------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ void castor::messages::ZmqSocketMT::send(zmq_msg_t *const msg,
 //------------------------------------------------------------------------------
 void castor::messages::ZmqSocketMT::recv(ZmqMsg &msg, const int flags) {
   utils::ScopedLock lock(m_mutex);
-  ZmqSocket::recv(msg, flags);
+  m_socket.recv(msg, flags);
 }
 
 //------------------------------------------------------------------------------
@@ -103,12 +103,12 @@ void castor::messages::ZmqSocketMT::recv(ZmqMsg &msg, const int flags) {
 //------------------------------------------------------------------------------
 void castor::messages::ZmqSocketMT::recv(zmq_msg_t *const msg, int flags) {
   utils::ScopedLock lock(m_mutex);
-  ZmqSocket::recv(msg, flags);
+  m_socket.recv(msg, flags);
 }
 
 //------------------------------------------------------------------------------
 // getZmqSocket
 //------------------------------------------------------------------------------
 void *castor::messages::ZmqSocketMT::getZmqSocket() const throw() {
-  return ZmqSocket::getZmqSocket();
+  return m_socket.getZmqSocket();
 }

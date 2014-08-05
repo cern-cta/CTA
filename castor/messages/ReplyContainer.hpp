@@ -40,57 +40,59 @@ namespace messages {
  *It is templated in order to be able to use it with different 
  * protocolType and  protocolVersion
  */
-template <int protocolType, int protocolVersion> 
-struct ReplyContainer{
+template <int magic, int protocolType, int protocolVersion>
+struct ReplyContainer {
   castor::messages::Header header;
+
   ZmqMsg blobBody;
-  ReplyContainer(ZmqSocket& socket){
+
+  template<class T> ReplyContainer(T& socket) {
   
-  ZmqMsg blobHeader;
-  socket.recv(&blobHeader.getZmqMsg()); 
+    ZmqMsg blobHeader;
+    socket.recv(&blobHeader.getZmqMsg()); 
   
-  if(!zmq_msg_more(&blobHeader.getZmqMsg())) {
-    throw castor::exception::Exception("Expecting a multi part message. Got a header without a body");
-  }
-  socket.recv(&blobBody.getZmqMsg());
+    if(!zmq_msg_more(&blobHeader.getZmqMsg())) {
+      throw castor::exception::Exception("Expecting a multi part message. Got a header without a body");
+    }
+    socket.recv(&blobBody.getZmqMsg());
   
-  if(!header.ParseFromArray(blobHeader.getData(),blobHeader.size())){
-    throw castor::exception::Exception("Message header cant be parsed from binary data read");
-  }
-  //check magic, protocolTypa and protocolVerison
-  if(header.magic()!=TPMAGIC){
-    throw castor::exception::Exception("Wrong magic number in the header");
-  }
-  if(header.protocoltype()!=protocolType){
-    throw castor::exception::Exception("Wrong protocol type in the header");
-  }
-  if(header.protocolversion()!=protocolVersion){
-    throw castor::exception::Exception("Wrong protocol version in the header");
-  }
+    if(!header.ParseFromArray(blobHeader.getData(),blobHeader.size())){
+      throw castor::exception::Exception("Message header cant be parsed from binary data read");
+    }
+    //check magic, protocolTypa and protocolVerison
+    if(header.magic() != magic){
+      throw castor::exception::Exception("Wrong magic number in the header");
+    }
+    if(header.protocoltype() != protocolType){
+      throw castor::exception::Exception("Wrong protocol type in the header");
+    }
+    if(header.protocolversion() != protocolVersion){
+      throw castor::exception::Exception("Wrong protocol version in the header");
+    }
   
-  //check if everything is ok in a answer where we are not expecting any real va;ue
-  if(header.msgtype() == MSG_TYPE_RETURNVALUE){
-    castor::messages::ReturnValue body;
-    // TO BE DONE - SHOUDL DO WITH REPLACMENT FRAME CLASS
-    //checkSHA1(header,blobBody);
+    //check if everything is ok in a answer where we are not expecting any real va;ue
+    if(header.msgtype() == MSG_TYPE_RETURNVALUE){
+      castor::messages::ReturnValue body;
+      // TO BE DONE - SHOUDL DO WITH REPLACMENT FRAME CLASS
+      //checkSHA1(header,blobBody);
     
-    if(!body.ParseFromArray(blobBody.getData(),blobBody.size())){
+      if(!body.ParseFromArray(blobBody.getData(),blobBody.size())){
         throw castor::exception::Exception("Expecting a ReturnValue body but"
                 " cant parse it from the binary");
-    }
+      }
     
-    if(body.returnvalue()!=0){
-     throw castor::exception::Exception(body.message());
+      if(body.returnvalue()!=0){
+       throw castor::exception::Exception(body.message());
+      }
     }
   }
-  }
-private :
-  ReplyContainer(const ReplyContainer&);
-  ReplyContainer& operator=(const ReplyContainer&);
-};
 
-typedef ReplyContainer<PROTOCOL_TYPE_TAPE, PROTOCOL_VERSION_1>
-  ProtoTapeReplyContainer;
+private :
+
+  ReplyContainer(const ReplyContainer&);
+
+  ReplyContainer& operator=(const ReplyContainer&);
+}; // struct ReplyContainer
 
 } // namespace messages
 } // namespace castor

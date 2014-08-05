@@ -76,30 +76,10 @@ void castor::messages::Frame::serializeHeaderToZmqMsg(ZmqMsg &msg) const {
 // parseZmqMsgIntoHeader
 //------------------------------------------------------------------------------
 void castor::messages::Frame::parseZmqMsgIntoHeader(const ZmqMsg &msg) {
-  try {
-    if(!header.ParseFromArray(msg.getData(), msg.size())) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "header.ParseFromArray() returned false";
-      throw ex;
-    }
-
-    if(TPMAGIC != header.magic()) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Wrong magic number in the header: expected=" <<
-        TPMAGIC << " actual=" << header.magic();
-      throw ex;
-    }
-
-    if(PROTOCOL_TYPE_TAPE != header.protocoltype()) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Wrong protocol specified in the header: expected=" <<
-        PROTOCOL_TYPE_TAPE << " actual=" << header.protocoltype();
-      throw ex;
-    } 
-  } catch(castor::exception::Exception &ne) {
+  if(!header.ParseFromArray(msg.getData(), msg.size())) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to parse ZMQ message into frame header: " <<
-      ne.getMessage().str();
+    ex.getMessage() << "Failed to parse ZMQ message into frame header: "
+      "header.ParseFromArray() returned false";
     throw ex;
   }
 }

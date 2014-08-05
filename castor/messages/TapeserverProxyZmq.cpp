@@ -27,9 +27,9 @@
 #include "castor/messages/MigrationJobFromTapeGateway.pb.h"
 #include "castor/messages/MigrationJobFromWriteTp.pb.h"
 #include "castor/messages/NbFilesOnTape.pb.h"
+#include "castor/messages/ProtoTapeReplyContainer.hpp"
 #include "castor/messages/RecallJobFromReadTp.pb.h"
 #include "castor/messages/RecallJobFromTapeGateway.pb.h"
-#include "castor/messages/ReplyContainer.hpp"
 #include "castor/messages/TapeMountedForRecall.pb.h"
 #include "castor/messages/TapeMountedForMigration.pb.h"
 #include "castor/messages/TapeserverProxyZmq.hpp"
@@ -54,7 +54,7 @@ castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log,
   m_tapeserverPort(tapeserverPort),
   m_netTimeout(netTimeout),
   m_tapeserverSocket(zmqContext, ZMQ_REQ) {
-  connectToLocalhost(m_tapeserverSocket, tapeserverPort);
+  connectZmqSocketToLocalhost(m_tapeserverSocket, tapeserverPort);
 }
 
 //------------------------------------------------------------------------------
@@ -204,6 +204,26 @@ uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromTapeGateway(
 }
 
 //------------------------------------------------------------------------------
+// createMigrationJobFromTapeGatewayFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::TapeserverProxyZmq::
+  createMigrationJobFromTapeGatewayFrame(const std::string &vid,
+  const std::string &unitName) {
+  Frame frame;
+
+  frame.header = messages::protoTapePreFillHeader();
+  frame.header.set_msgtype(messages::MSG_TYPE_MIGRATIONJOBFROMTAPEGATEWAY);
+  frame.header.set_bodysignature("PIPO");
+
+  MigrationJobFromTapeGateway body;
+  body.set_vid(vid);
+  body.set_unitname(unitName);
+  frame.serializeProtocolBufferIntoBody(body);
+
+  return frame;
+}
+
+//------------------------------------------------------------------------------
 // gotMigrationJobFromWriteTp
 //------------------------------------------------------------------------------
 uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromWriteTp(
@@ -260,6 +280,26 @@ uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromWriteTp(
       "Caught an unknown exception";
     throw ex;
   }
+}
+
+//------------------------------------------------------------------------------
+// createMigrationJobFromWriteTpFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::TapeserverProxyZmq::
+  createMigrationJobFromWriteTpFrame(const std::string &vid,
+  const std::string &unitName) {
+  Frame frame;
+
+  frame.header = messages::protoTapePreFillHeader();
+  frame.header.set_msgtype(messages::MSG_TYPE_MIGRATIONJOBFROMWRITETP);
+  frame.header.set_bodysignature("PIPO");
+
+  MigrationJobFromWriteTp body;
+  body.set_vid(vid);
+  body.set_unitname(unitName);
+  frame.serializeProtocolBufferIntoBody(body);
+
+  return frame;
 }
 
 //------------------------------------------------------------------------------

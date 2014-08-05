@@ -38,7 +38,7 @@ namespace messages {
  *
  * Please note that the getZmqSocket() method is not thread safe.
  */
-class ZmqSocketMT: public ZmqSocket {
+class ZmqSocketMT {
 public:
     
   /**
@@ -121,6 +121,11 @@ private:
    * ZMQ socket.
    */
   pthread_mutex_t m_mutex;
+
+  /**
+   * The non thread-safe socket to be protected.
+   */
+  ZmqSocket m_socket;
 
 }; // class ZmqSocketMT
 

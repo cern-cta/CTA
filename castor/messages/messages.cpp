@@ -100,15 +100,6 @@ castor::messages::Frame castor::messages::recvFrame(ZmqSocket& socket) {
 }
 
 //------------------------------------------------------------------------------
-// connectToLocalhost
-//------------------------------------------------------------------------------
-void castor::messages::connectToLocalhost(ZmqSocket& m_socket, const int port) {
-  std::string bindingAdress("tcp://127.0.0.1:");
-  bindingAdress+=castor::utils::toString(port);
-  m_socket.connect(bindingAdress.c_str());
-}
-
-//------------------------------------------------------------------------------
 // preFillHeader
 //------------------------------------------------------------------------------
 castor::messages::Header castor::messages::protoTapePreFillHeader() {

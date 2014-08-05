@@ -22,6 +22,7 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
+#include "castor/messages/Frame.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
 #include "castor/messages/ZmqSocketMT.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
@@ -166,6 +167,26 @@ private:
    * Socket connecting this tape server proxy to the tape server daemon.
    */
   ZmqSocketMT m_tapeserverSocket;
+
+  /**
+   * Creates a frame containing a MigrationJobFromTapeGateway message.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param unitName The unit name of the tape drive.
+   * @return The frame.
+   */
+  Frame createMigrationJobFromTapeGatewayFrame(const std::string &vid,
+    const std::string &unitName);
+
+  /**
+   * Creates a frame containing a MigrationJobFromWriteTp message.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param unitName The unit name of the tape drive.
+   * @return The frame.
+   */
+  Frame createMigrationJobFromWriteTpFrame(const std::string &vid,
+    const std::string &unitName);
 
 }; // class TapeserverProxyZmq
 
