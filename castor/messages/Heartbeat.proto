@@ -21,5 +21,9 @@
 package castor.messages;
 
 message Heartbeat {
- required int64 bytesMoved = 1;
+ required string unitname = 1;
+
+ // Delta value specifying the number of data blocks moved since the last
+ // heartbeat message.
+ required int64 nbblocksmoved = 2;
 }

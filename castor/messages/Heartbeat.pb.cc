@@ -29,8 +29,9 @@ void protobuf_AssignDesc_Heartbeat_2eproto() {
       "Heartbeat.proto");
   GOOGLE_CHECK(file != NULL);
   Heartbeat_descriptor_ = file->message_type(0);
-  static const int Heartbeat_offsets_[1] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Heartbeat, bytesmoved_),
+  static const int Heartbeat_offsets_[2] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Heartbeat, unitname_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Heartbeat, nbblocksmoved_),
   };
   Heartbeat_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -73,8 +74,9 @@ void protobuf_AddDesc_Heartbeat_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\017Heartbeat.proto\022\017castor.messages\"\037\n\tHe"
-    "artbeat\022\022\n\nbytesMoved\030\001 \002(\003", 67);
+    "\n\017Heartbeat.proto\022\017castor.messages\"4\n\tHe"
+    "artbeat\022\020\n\010unitname\030\001 \002(\t\022\025\n\rnbblocksmov"
+    "ed\030\002 \002(\003", 88);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "Heartbeat.proto", &protobuf_RegisterTypes);
   Heartbeat::default_instance_ = new Heartbeat();
@@ -92,8 +94,10 @@ struct StaticDescriptorInitializer_Heartbeat_2eproto {
 
 // ===================================================================
 
+const ::std::string Heartbeat::_default_unitname_;
 #ifndef _MSC_VER
-const int Heartbeat::kBytesMovedFieldNumber;
+const int Heartbeat::kUnitnameFieldNumber;
+const int Heartbeat::kNbblocksmovedFieldNumber;
 #endif  // !_MSC_VER
 
 Heartbeat::Heartbeat()
@@ -112,7 +116,8 @@ Heartbeat::Heartbeat(const Heartbeat& from)
 
 void Heartbeat::SharedCtor() {
   _cached_size_ = 0;
-  bytesmoved_ = GOOGLE_LONGLONG(0);
+  unitname_ = const_cast< ::std::string*>(&_default_unitname_);
+  nbblocksmoved_ = GOOGLE_LONGLONG(0);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -121,6 +126,9 @@ Heartbeat::~Heartbeat() {
 }
 
 void Heartbeat::SharedDtor() {
+  if (unitname_ != &_default_unitname_) {
+    delete unitname_;
+  }
   if (this != default_instance_) {
   }
 }
@@ -147,7 +155,12 @@ Heartbeat* Heartbeat::New() const {
 
 void Heartbeat::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    bytesmoved_ = GOOGLE_LONGLONG(0);
+    if (_has_bit(0)) {
+      if (unitname_ != &_default_unitname_) {
+        unitname_->clear();
+      }
+    }
+    nbblocksmoved_ = GOOGLE_LONGLONG(0);
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -159,14 +172,31 @@ bool Heartbeat::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // required int64 bytesMoved = 1;
+      // required string unitname = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_unitname()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->unitname().data(), this->unitname().length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(16)) goto parse_nbblocksmoved;
+        break;
+      }
+      
+      // required int64 nbblocksmoved = 2;
+      case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_nbblocksmoved:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
-                 input, &bytesmoved_)));
-          _set_bit(0);
+                 input, &nbblocksmoved_)));
+          _set_bit(1);
         } else {
           goto handle_uninterpreted;
         }
@@ -192,9 +222,18 @@ bool Heartbeat::MergePartialFromCodedStream(
 
 void Heartbeat::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // required int64 bytesMoved = 1;
+  // required string unitname = 1;
   if (_has_bit(0)) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt64(1, this->bytesmoved(), output);
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->unitname().data(), this->unitname().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      1, this->unitname(), output);
+  }
+  
+  // required int64 nbblocksmoved = 2;
+  if (_has_bit(1)) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(2, this->nbblocksmoved(), output);
   }
   
   if (!unknown_fields().empty()) {
@@ -205,9 +244,19 @@ void Heartbeat::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* Heartbeat::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // required int64 bytesMoved = 1;
+  // required string unitname = 1;
   if (_has_bit(0)) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(1, this->bytesmoved(), target);
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->unitname().data(), this->unitname().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->unitname(), target);
+  }
+  
+  // required int64 nbblocksmoved = 2;
+  if (_has_bit(1)) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(2, this->nbblocksmoved(), target);
   }
   
   if (!unknown_fields().empty()) {
@@ -221,11 +270,18 @@ int Heartbeat::ByteSize() const {
   int total_size = 0;
   
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // required int64 bytesMoved = 1;
-    if (has_bytesmoved()) {
+    // required string unitname = 1;
+    if (has_unitname()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->unitname());
+    }
+    
+    // required int64 nbblocksmoved = 2;
+    if (has_nbblocksmoved()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::Int64Size(
-          this->bytesmoved());
+          this->nbblocksmoved());
     }
     
   }
@@ -256,7 +312,10 @@ void Heartbeat::MergeFrom(const Heartbeat& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from._has_bit(0)) {
-      set_bytesmoved(from.bytesmoved());
+      set_unitname(from.unitname());
+    }
+    if (from._has_bit(1)) {
+      set_nbblocksmoved(from.nbblocksmoved());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -275,14 +334,15 @@ void Heartbeat::CopyFrom(const Heartbeat& from) {
 }
 
 bool Heartbeat::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000001) != 0x00000001) return false;
+  if ((_has_bits_[0] & 0x00000003) != 0x00000003) return false;
   
   return true;
 }
 
 void Heartbeat::Swap(Heartbeat* other) {
   if (other != this) {
-    std::swap(bytesmoved_, other->bytesmoved_);
+    std::swap(unitname_, other->unitname_);
+    std::swap(nbblocksmoved_, other->nbblocksmoved_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

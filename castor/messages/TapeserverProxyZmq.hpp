@@ -131,14 +131,17 @@ public:
   void tapeUnmounted(const std::string &vid,
     const std::string &unitName);
  
+  void notifyHeartbeat(const uint64_t nbOfMemblocksMoved);
   /**
    * Notifies the tapeserverd daemon that the data-transfer session is still
    * alive and gives an indication of how much data has been moved.
    *
-   * @param nbOfMemblocksMoved Delta value giving the number of blocks moved
+   * @param unitName The unit name of the tape drive.
+   * @param nbBlocksMoved Delta value giving the number of blocks moved
    * since the last heartbeat message.
    */
-  void notifyHeartbeat(const uint64_t nbOfMemblocksMoved);
+  void notifyHeartbeat(const std::string &unitName,
+    const uint64_t nbBlocksMoved);
 
 private:
 
@@ -187,6 +190,57 @@ private:
    */
   Frame createMigrationJobFromWriteTpFrame(const std::string &vid,
     const std::string &unitName);
+
+  /**
+   * Creates a frame containing a TapeMountedForRecall message.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param unitName The unit name of the tape drive.
+   * @return The frame.
+   */
+  Frame createTapeMountedForRecallFrame(const std::string &vid,
+    const std::string &unitName);
+
+  /**
+   * Creates a frame containing a TapeMountedForMigration message.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param unitName The unit name of the tape drive.
+   * @return The frame.
+   */
+  Frame createTapeMountedForMigrationFrame(const std::string &vid,
+    const std::string &unitName);
+
+  /**
+   * Creates a frame containing a TapeUnmountStarted message.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param unitName The unit name of the tape drive.
+   * @return The frame.
+   */
+  Frame createTapeUnmountStartedFrame(const std::string &vid,
+    const std::string &unitName);
+
+  /**
+   * Creates a frame containing a TapeUnmounted message.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param unitName The unit name of the tape drive.
+   * @return The frame.
+   */
+  Frame createTapeUnmountedFrame(const std::string &vid,
+    const std::string &unitName);
+
+  /**
+   * Creates a frame containing a Heartbeat message.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param nbBlocksMoved Delta value giving the number of blocks moved
+   * since the last heartbeat message.
+   * @return The frame.
+   */
+  Frame createHeartbeatFrame(const std::string &unitName,
+    const uint64_t nbBlocksMoved);
 
 }; // class TapeserverProxyZmq
 

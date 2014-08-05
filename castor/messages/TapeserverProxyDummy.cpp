@@ -95,5 +95,5 @@ void castor::messages::TapeserverProxyDummy::tapeUnmounted(
 // tapeUnmounted
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyDummy::
-notifyHeartbeat(uint64_t) {
+notifyHeartbeat(const std::string &unitName, const uint64_t nbBlocksMoved) {
 } 

@@ -66,7 +66,27 @@ template <class ZS, class PB> void sendMessage(ZS& socket, const PB& msg, const 
  * @param socket The ZMQ socket.
  * @param frame The message frame.
  */
-void sendFrame(ZmqSocket& socket, const Frame &frame);
+template <class T> void sendFrame(T& socket, const Frame &frame) {
+  try {
+    // Prepare header
+    ZmqMsg header(frame.header.ByteSize());
+    frame.serializeHeaderToZmqMsg(header);
+
+    // Prepare body
+    ZmqMsg body(frame.body.length());
+    memcpy(body.getData(), frame.body.c_str(), body.size());
+
+    // Send header and body as a two part ZMQ message
+    socket.send(header, ZMQ_SNDMORE);
+    socket.send(body, 0);
+
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to send message frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
 
 /**
  * Receives a message frame from the specified socket.
@@ -74,7 +94,50 @@ void sendFrame(ZmqSocket& socket, const Frame &frame);
  * @param socket The ZMQ socket.
  * @return The message frame.
  */
-Frame recvFrame(ZmqSocket& socket);
+template <class T> Frame recvFrame(T& socket) {
+  try {
+    ZmqMsg header;
+    try {
+      socket.recv(header);
+    } catch(castor::exception::Exception &ne) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to receive header of message frame: " <<
+        ne.getMessage().str();
+      throw ex;
+    }
+
+    if(!header.more()){
+      castor::exception::Exception ex;
+      ex.getMessage() << "No message body after receiving the header";
+      throw ex;
+    }
+
+    Frame frame;
+    frame.parseZmqMsgIntoHeader(header);
+
+    ZmqMsg body;
+    try {
+      socket.recv(body);
+    } catch(castor::exception::Exception &ne) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to receive body of message frame: " <<
+        ne.getMessage().str();
+      throw ex;
+    }
+
+    frame.body = std::string((const char *)body.getData(), body.size());
+
+    frame.checkHashValueOfBody();
+
+    return frame;
+
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to receive message frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
 
 /**
  * Function to compute inn Base64 the SHA1 of a given buffer

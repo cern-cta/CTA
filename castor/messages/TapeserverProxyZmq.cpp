@@ -150,17 +150,8 @@ void castor::messages::TapeserverProxyZmq::gotRecallJobFromReadTp(
 uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromTapeGateway(
   const std::string &vid, const std::string &unitName) {
   try {
-    messages::MigrationJobFromTapeGateway rqstBody;
-    rqstBody.set_vid(vid);
-    rqstBody.set_unitname(unitName);
-
-    messages::Header rqstHeader = castor::messages::protoTapePreFillHeader();
-    rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
-    rqstHeader.set_bodysignature("PIPO");
-    rqstHeader.set_msgtype(MSG_TYPE_MIGRATIONJOBFROMTAPEGATEWAY);
-
-    messages::sendMessage(m_tapeserverSocket, rqstHeader, ZMQ_SNDMORE);
-    messages::sendMessage(m_tapeserverSocket, rqstBody);
+    const Frame rqst = createMigrationJobFromTapeGatewayFrame(vid, unitName);
+    sendFrame(m_tapeserverSocket, rqst);
 
     messages::ProtoTapeReplyContainer rawReply(m_tapeserverSocket);
     if(rawReply.header.msgtype() != MSG_TYPE_NBFILESONTAPE) {
@@ -209,18 +200,25 @@ uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromTapeGateway(
 castor::messages::Frame castor::messages::TapeserverProxyZmq::
   createMigrationJobFromTapeGatewayFrame(const std::string &vid,
   const std::string &unitName) {
-  Frame frame;
+  try {
+    Frame frame;
 
-  frame.header = messages::protoTapePreFillHeader();
-  frame.header.set_msgtype(messages::MSG_TYPE_MIGRATIONJOBFROMTAPEGATEWAY);
-  frame.header.set_bodysignature("PIPO");
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_MIGRATIONJOBFROMTAPEGATEWAY);
+    frame.header.set_bodysignature("PIPO");
 
-  MigrationJobFromTapeGateway body;
-  body.set_vid(vid);
-  body.set_unitname(unitName);
-  frame.serializeProtocolBufferIntoBody(body);
+    MigrationJobFromTapeGateway body;
+    body.set_vid(vid);
+    body.set_unitname(unitName);
+    frame.serializeProtocolBufferIntoBody(body);
 
-  return frame;
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create MigrationJobFromTapeGateway frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -229,17 +227,8 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
 uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromWriteTp(
   const std::string &vid, const std::string &unitName) {
   try {
-    messages::MigrationJobFromWriteTp rqstBody;
-    rqstBody.set_vid(vid);
-    rqstBody.set_unitname(unitName);
-
-    messages::Header rqstHeader = castor::messages::protoTapePreFillHeader();
-    rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
-    rqstHeader.set_bodysignature("PIPO");
-    rqstHeader.set_msgtype(MSG_TYPE_MIGRATIONJOBFROMWRITETP);
-
-    messages::sendMessage(m_tapeserverSocket, rqstHeader, ZMQ_SNDMORE);
-    messages::sendMessage(m_tapeserverSocket, rqstBody);
+    const Frame rqst = createMigrationJobFromWriteTpFrame(vid, unitName);
+    sendFrame(m_tapeserverSocket, rqst);
 
     messages::ProtoTapeReplyContainer rawReply(m_tapeserverSocket);
     if(rawReply.header.msgtype() != MSG_TYPE_NBFILESONTAPE) {
@@ -288,18 +277,25 @@ uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromWriteTp(
 castor::messages::Frame castor::messages::TapeserverProxyZmq::
   createMigrationJobFromWriteTpFrame(const std::string &vid,
   const std::string &unitName) {
-  Frame frame;
+  try {
+    Frame frame;
 
-  frame.header = messages::protoTapePreFillHeader();
-  frame.header.set_msgtype(messages::MSG_TYPE_MIGRATIONJOBFROMWRITETP);
-  frame.header.set_bodysignature("PIPO");
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_MIGRATIONJOBFROMWRITETP);
+    frame.header.set_bodysignature("PIPO");
 
-  MigrationJobFromWriteTp body;
-  body.set_vid(vid);
-  body.set_unitname(unitName);
-  frame.serializeProtocolBufferIntoBody(body);
+    MigrationJobFromWriteTp body;
+    body.set_vid(vid);
+    body.set_unitname(unitName);
+    frame.serializeProtocolBufferIntoBody(body);
 
-  return frame;
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create MigrationJobFromWriteTp frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -308,19 +304,10 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
 void castor::messages::TapeserverProxyZmq::tapeMountedForRecall(
   const std::string &vid, const std::string &unitName) {  
   try {
-    castor::messages::TapeMountedForRecall body;
-    body.set_unitname(unitName);
-    body.set_vid(vid);
+    const Frame rqst = createTapeMountedForRecallFrame(vid, unitName);
+    sendFrame(m_tapeserverSocket, rqst);
   
-    castor::messages::Header header = castor::messages::protoTapePreFillHeader();
-    header.set_bodyhashvalue(computeSHA1Base64(body));
-    header.set_bodysignature("PIPO");
-    header.set_msgtype(MSG_TYPE_TAPEMOUNTEDFORRECALL);
-  
-    castor::messages::sendMessage(m_tapeserverSocket,header,ZMQ_SNDMORE);
-    castor::messages::sendMessage(m_tapeserverSocket,body);
-  
-    castor::messages::ProtoTapeReplyContainer reply(m_tapeserverSocket);
+    ProtoTapeReplyContainer reply(m_tapeserverSocket);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -341,6 +328,33 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForRecall(
       "Failed to notify tapeserver of tape mounted for recall: " <<
       "vid=" << vid << " unitName=" << unitName << ": " <<
       "Caught an unknown exception";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createTapeMountedForRecallFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::TapeserverProxyZmq::
+  createTapeMountedForRecallFrame(const std::string &vid,
+  const std::string &unitName) {
+  try {
+    Frame frame;
+
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_TAPEMOUNTEDFORRECALL);
+    frame.header.set_bodysignature("PIPO");
+
+    TapeMountedForRecall body;
+    body.set_vid(vid);
+    body.set_unitname(unitName);
+    frame.serializeProtocolBufferIntoBody(body);
+
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create TapeMountedForRecall frame: " <<
+      ne.getMessage().str();
     throw ex;
   }
 }
@@ -351,19 +365,10 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForRecall(
 void castor::messages::TapeserverProxyZmq::tapeMountedForMigration(
   const std::string &vid, const std::string &unitName) {  
   try {
-    castor::messages::TapeMountedForMigration body;
-    body.set_unitname(unitName);
-    body.set_vid(vid);
+    const Frame rqst = createTapeMountedForMigrationFrame(vid, unitName);
+    sendFrame(m_tapeserverSocket, rqst);
   
-    castor::messages::Header header = castor::messages::protoTapePreFillHeader();
-    header.set_bodyhashvalue(computeSHA1Base64(body));
-    header.set_bodysignature("PIPO");
-    header.set_msgtype(MSG_TYPE_TAPEMOUNTEDFORMIGRATION);
-  
-    castor::messages::sendMessage(m_tapeserverSocket,header,ZMQ_SNDMORE);
-    castor::messages::sendMessage(m_tapeserverSocket,body);
-  
-    castor::messages::ProtoTapeReplyContainer reply(m_tapeserverSocket);
+    ProtoTapeReplyContainer reply(m_tapeserverSocket);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -384,6 +389,33 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForMigration(
       "Failed to notify tapeserver of tape mounted for migration: " <<
       "vid=" << vid << " unitName=" << unitName << ": " <<
       "Caught an unknown exception";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createTapeMountedForMigrationFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::TapeserverProxyZmq::
+  createTapeMountedForMigrationFrame(const std::string &vid,
+  const std::string &unitName) {
+  try {
+    Frame frame;
+
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_TAPEMOUNTEDFORMIGRATION);
+    frame.header.set_bodysignature("PIPO");
+
+    TapeMountedForMigration body;
+    body.set_vid(vid);
+    body.set_unitname(unitName);
+    frame.serializeProtocolBufferIntoBody(body);
+
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create TapeMountedForMigration frame: " <<
+      ne.getMessage().str();
     throw ex;
   }
 }
@@ -394,19 +426,10 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForMigration(
 void castor::messages::TapeserverProxyZmq::tapeUnmountStarted(
   const std::string &vid, const std::string &unitName) {   
   try {
-    castor::messages::TapeUnmountStarted body;
-    body.set_unitname(unitName);
-    body.set_vid(vid);
-
-    castor::messages::Header header = castor::messages::protoTapePreFillHeader();
-    header.set_bodyhashvalue(computeSHA1Base64(body));
-    header.set_bodysignature("PIPO");
-    header.set_msgtype(MSG_TYPE_TAPEUNMOUNTSTARTED);
-
-    castor::messages::sendMessage(m_tapeserverSocket,header,ZMQ_SNDMORE);
-    castor::messages::sendMessage(m_tapeserverSocket,body);
+    const Frame rqst = createTapeUnmountStartedFrame(vid, unitName);
+    sendFrame(m_tapeserverSocket, rqst);
   
-    castor::messages::ProtoTapeReplyContainer reply(m_tapeserverSocket);
+    ProtoTapeReplyContainer reply(m_tapeserverSocket);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -432,24 +455,42 @@ void castor::messages::TapeserverProxyZmq::tapeUnmountStarted(
 }
 
 //------------------------------------------------------------------------------
+// createTapeUnmountStartedFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::TapeserverProxyZmq::
+  createTapeUnmountStartedFrame(const std::string &vid,
+  const std::string &unitName) {
+  try {
+    Frame frame;
+
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_TAPEUNMOUNTSTARTED);
+    frame.header.set_bodysignature("PIPO");
+
+    TapeUnmountStarted body;
+    body.set_vid(vid);
+    body.set_unitname(unitName);
+    frame.serializeProtocolBufferIntoBody(body);
+
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create TapeUnmountStarted frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
 // tapeUnmounted
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyZmq::tapeUnmounted(
   const std::string &vid, const std::string &unitName) {
   try {
-    castor::messages::TapeUnmounted body;
-    body.set_unitname(unitName);
-    body.set_vid(vid);
-    
-    castor::messages::Header header=castor::messages::protoTapePreFillHeader();
-    header.set_bodyhashvalue(computeSHA1Base64(body));
-    header.set_bodysignature("PIPO");
-    header.set_msgtype(MSG_TYPE_TAPEUNMOUNTED);
+    const Frame rqst = createTapeUnmountedFrame(vid, unitName);
+    sendFrame(m_tapeserverSocket, rqst);
   
-    castor::messages::sendMessage(m_tapeserverSocket,header,ZMQ_SNDMORE);
-    castor::messages::sendMessage(m_tapeserverSocket,body);
-  
-    castor::messages::ProtoTapeReplyContainer reply(m_tapeserverSocket);
+    ProtoTapeReplyContainer reply(m_tapeserverSocket);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -474,21 +515,91 @@ void castor::messages::TapeserverProxyZmq::tapeUnmounted(
   }
 }
 
+//------------------------------------------------------------------------------
+// createTapeUnmountedFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::TapeserverProxyZmq::
+  createTapeUnmountedFrame(const std::string &vid,
+  const std::string &unitName) {
+  try {
+    Frame frame;
+
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_TAPEUNMOUNTED);
+    frame.header.set_bodysignature("PIPO");
+
+    TapeUnmounted body;
+    body.set_vid(vid);
+    body.set_unitname(unitName);
+    frame.serializeProtocolBufferIntoBody(body);
+
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create TapeUnmounted frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
 //-----------------------------------------------------------------------------
 // notifyHeartbeat
 //-----------------------------------------------------------------------------
 void  castor::messages::TapeserverProxyZmq::notifyHeartbeat(
-  const uint64_t nbOfMemblocksMoved){
-  messages::Heartbeat body;
-  body.set_bytesmoved(nbOfMemblocksMoved);
-   
-  messages::Header header = messages::protoTapePreFillHeader();
-  header.set_msgtype(MSG_TYPE_HEARTBEAT);
-  header.set_bodyhashvalue(computeSHA1Base64(body));
-  header.set_bodysignature("PIPO");
+  const std::string &unitName, const uint64_t nbBlocksMoved) {
 
-  messages::sendMessage(m_tapeserverSocket,header,ZMQ_SNDMORE);
-  messages::sendMessage(m_tapeserverSocket,body);
-   
-  ProtoTapeReplyContainer reply(m_tapeserverSocket);
+  try {
+    const Frame rqst = createHeartbeatFrame(unitName, nbBlocksMoved);
+    sendFrame(m_tapeserverSocket, rqst);
+
+    ProtoTapeReplyContainer reply(m_tapeserverSocket);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of heartbeat: " <<
+      "unitName=" << unitName << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  } catch(std::exception &se) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of heartbeat: " <<
+      "unitName=" << unitName << ": " <<
+      se.what();
+    throw ex;
+  } catch(...) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of heartbeat: " <<
+      "unitName=" << unitName << ": " <<
+      "Caught an unknown exception";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createHeartbeatFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::TapeserverProxyZmq::
+  createHeartbeatFrame(const std::string &unitName,
+  const uint64_t nbBlocksMoved) {
+  try {
+    Frame frame;
+
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_HEARTBEAT);
+    frame.header.set_bodysignature("PIPO");
+    
+    Heartbeat body;
+    body.set_unitname(unitName);
+    body.set_nbblocksmoved(nbBlocksMoved);
+    frame.serializeProtocolBufferIntoBody(body);
+
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create Heartbeat frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
 }

@@ -91,24 +91,36 @@ class Heartbeat : public ::google::protobuf::Message {
   
   // accessors -------------------------------------------------------
   
-  // required int64 bytesMoved = 1;
-  inline bool has_bytesmoved() const;
-  inline void clear_bytesmoved();
-  static const int kBytesMovedFieldNumber = 1;
-  inline ::google::protobuf::int64 bytesmoved() const;
-  inline void set_bytesmoved(::google::protobuf::int64 value);
+  // required string unitname = 1;
+  inline bool has_unitname() const;
+  inline void clear_unitname();
+  static const int kUnitnameFieldNumber = 1;
+  inline const ::std::string& unitname() const;
+  inline void set_unitname(const ::std::string& value);
+  inline void set_unitname(const char* value);
+  inline void set_unitname(const char* value, size_t size);
+  inline ::std::string* mutable_unitname();
+  
+  // required int64 nbblocksmoved = 2;
+  inline bool has_nbblocksmoved() const;
+  inline void clear_nbblocksmoved();
+  static const int kNbblocksmovedFieldNumber = 2;
+  inline ::google::protobuf::int64 nbblocksmoved() const;
+  inline void set_nbblocksmoved(::google::protobuf::int64 value);
   
   // @@protoc_insertion_point(class_scope:castor.messages.Heartbeat)
  private:
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
   mutable int _cached_size_;
   
-  ::google::protobuf::int64 bytesmoved_;
+  ::std::string* unitname_;
+  static const ::std::string _default_unitname_;
+  ::google::protobuf::int64 nbblocksmoved_;
   friend void  protobuf_AddDesc_Heartbeat_2eproto();
   friend void protobuf_AssignDesc_Heartbeat_2eproto();
   friend void protobuf_ShutdownFile_Heartbeat_2eproto();
   
-  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
   
   // WHY DOES & HAVE LOWER PRECEDENCE THAN != !?
   inline bool _has_bit(int index) const {
@@ -131,20 +143,62 @@ class Heartbeat : public ::google::protobuf::Message {
 
 // Heartbeat
 
-// required int64 bytesMoved = 1;
-inline bool Heartbeat::has_bytesmoved() const {
+// required string unitname = 1;
+inline bool Heartbeat::has_unitname() const {
   return _has_bit(0);
 }
-inline void Heartbeat::clear_bytesmoved() {
-  bytesmoved_ = GOOGLE_LONGLONG(0);
+inline void Heartbeat::clear_unitname() {
+  if (unitname_ != &_default_unitname_) {
+    unitname_->clear();
+  }
   _clear_bit(0);
 }
-inline ::google::protobuf::int64 Heartbeat::bytesmoved() const {
-  return bytesmoved_;
+inline const ::std::string& Heartbeat::unitname() const {
+  return *unitname_;
 }
-inline void Heartbeat::set_bytesmoved(::google::protobuf::int64 value) {
+inline void Heartbeat::set_unitname(const ::std::string& value) {
   _set_bit(0);
-  bytesmoved_ = value;
+  if (unitname_ == &_default_unitname_) {
+    unitname_ = new ::std::string;
+  }
+  unitname_->assign(value);
+}
+inline void Heartbeat::set_unitname(const char* value) {
+  _set_bit(0);
+  if (unitname_ == &_default_unitname_) {
+    unitname_ = new ::std::string;
+  }
+  unitname_->assign(value);
+}
+inline void Heartbeat::set_unitname(const char* value, size_t size) {
+  _set_bit(0);
+  if (unitname_ == &_default_unitname_) {
+    unitname_ = new ::std::string;
+  }
+  unitname_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* Heartbeat::mutable_unitname() {
+  _set_bit(0);
+  if (unitname_ == &_default_unitname_) {
+    unitname_ = new ::std::string;
+  }
+  return unitname_;
+}
+
+// required int64 nbblocksmoved = 2;
+inline bool Heartbeat::has_nbblocksmoved() const {
+  return _has_bit(1);
+}
+inline void Heartbeat::clear_nbblocksmoved() {
+  nbblocksmoved_ = GOOGLE_LONGLONG(0);
+  _clear_bit(1);
+}
+inline ::google::protobuf::int64 Heartbeat::nbblocksmoved() const {
+  return nbblocksmoved_;
+}
+inline void Heartbeat::set_nbblocksmoved(::google::protobuf::int64 value) {
+  _set_bit(1);
+  nbblocksmoved_ = value;
 }
 
 

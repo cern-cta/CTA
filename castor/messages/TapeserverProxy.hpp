@@ -128,10 +128,12 @@ public:
    * Notifies the tapeserverd daemon that the data-transfer session is still
    * alive and gives an indication of how much data has been moved.
    *
-   * @param nbOfMemblocksMoved Delta value giving the number of blocks moved
+   * @param unitName The unit name of the tape drive.
+   * @param nbBytesMoved Delta value giving the number of bytes moved
    * since the last heartbeat message.
    */
-  virtual void notifyHeartbeat(const uint64_t nbOfMemblocksMoved) = 0;
+  virtual void notifyHeartbeat(const std::string &unitName,
+    const uint64_t nbBytesMoved) = 0;
 
 }; // class TapeserverProxy
 
