@@ -134,6 +134,36 @@ try:
         if nonexistingpools:
             print 'Invalid or non existent diskpool(s) given : %s' % (', '.join(nonexistingpools))
             sys.exit(1)
+        # check consistency of the garbage collection policies of the different service classes
+        # that pools are linked with
+        if diskPoolIds:
+            stcur.execute('''SELECT DiskPool.name
+                               FROM SvcClass, DiskPool2SvcClass, DiskPool
+                              WHERE SvcClass.id = DiskPool2SvcClass.child
+                                AND DiskPool2SvcClass.parent = DiskPool.id
+                                AND DiskPool2SvcClass.parent IN (''' + \
+                                    ', '.join([str(k) for k in diskPoolIds]) + ''')
+                                AND SvcClass.gcPolicy != :gcPolicy''',
+                          gcPolicy=gcpolicy)
+            rows = stcur.fetchall()
+            if len(rows) > 0:
+                print 'The following diskpool(s) is(are) linked to service class(es) conflicting on the GC Policy : %s' % (', '.join([row[0] for row in rows]))
+                print 'Giving up'
+                sys.exit(1)
+        if dataPoolIds:
+            stcur.execute('''SELECT DataPool.name
+                               FROM SvcClass, DataPool2SvcClass, DataPool
+                              WHERE SvcClass.id = DataPool2SvcClass.child
+                                AND DataPool2SvcClass.parent = DataPool.id
+                                AND DataPool2SvcClass.parent IN (''' + \
+                                    ', '.join([str(k) for k in dataPoolIds]) + ''')
+                                AND SvcClass.gcPolicy != :gcPolicy''',
+                          gcPolicy=gcpolicy)
+            rows = stcur.fetchall()
+            if len(rows) > 0:
+                print 'The following datapool(s) is(are) linked to service class conflicting on the GC Policy : %s' % (', '.join([row[0] for row in rows]))
+                print 'Giving up'
+                sys.exit(1)
     # Oracle needs at least one element...
     if not diskPoolIds:
         diskPoolIds = [-1]
