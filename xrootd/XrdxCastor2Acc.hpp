@@ -34,7 +34,7 @@
 #include "XrdAcc/XrdAccAuthorize.hh"
 #include "XrdAcc/XrdAccPrivs.hh"
 /*-----------------------------------------------------------------------------*/
-#include "XrdxCastorLogging.hpp"
+#include "XrdxCastor2Logging.hpp"
 /*-----------------------------------------------------------------------------*/
 
 //! Forward declaration

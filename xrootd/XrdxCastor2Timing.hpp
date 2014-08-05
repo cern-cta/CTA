@@ -18,7 +18,6 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
@@ -28,7 +27,6 @@
 #include <time.h>
 /*----------------------------------------------------------------------------*/
 #include "XrdxCastorNamespace.hpp"
-/*----------------------------------------------------------------------------*/
 #include "XrdOuc/XrdOucString.hh"
 /*----------------------------------------------------------------------------*/
 
@@ -36,7 +34,7 @@ XCASTORNAMESPACE_BEGIN
 
 /*----------------------------------------------------------------------------*/
 //! Class implementing comfortable time measurements through methods/functions
-//! 
+//!
 //! Example
 //! Timing tm("Test");
 //! COMMONTIMING("START",&tm);
@@ -50,8 +48,9 @@ XCASTORNAMESPACE_BEGIN
 //! fprintf(stdout,"realtime = %.02f", tm.RealTime());
 /*----------------------------------------------------------------------------*/
 
-class Timing {
-public:
+class Timing
+{
+ public:
   struct timeval tv;
   XrdOucString tag;
   XrdOucString maintag;
@@ -65,28 +64,28 @@ public:
   //! @param i_tv initial time value
   //!
   //----------------------------------------------------------------------------
-  Timing(const char* name, struct timeval &i_tv);
+  Timing(const char* name, struct timeval& i_tv);
 
 
   //----------------------------------------------------------------------------
   //! Constructor - tag is used as the name for the measurement in Print
-  //! 
-  //! @param i_maintag set the name of the measurement 
+  //!
+  //! @param i_maintag set the name of the measurement
   //!
   //----------------------------------------------------------------------------
-  Timing(const char* i_maintag); 
+  Timing(const char* i_maintag);
 
 
   //----------------------------------------------------------------------------
   //! Print method to display measurements on STDERR
   //----------------------------------------------------------------------------
-  void Print(); 
+  void Print();
 
 
   //----------------------------------------------------------------------------
   //! Return total Realtime
   //----------------------------------------------------------------------------
-  double RealTime(); 
+  double RealTime();
 
 
   //----------------------------------------------------------------------------
@@ -98,23 +97,20 @@ public:
   //----------------------------------------------------------------------------
   //! Wrapper function to hide difference between Apple and Linux
   //----------------------------------------------------------------------------
-  static void GetTimeSpec(struct timespec &ts);
+  static void GetTimeSpec(struct timespec& ts);
 };
 
 
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 //! Macro to place a measurement throughout the code
-//----------------------------------------------------------------------------
-#define TIMING(__ID__, __LIST__)                \
-  do {                                          \
-    struct timeval tp;                          \
-    struct timezone tz;                         \
-    gettimeofday(&tp, &tz);                     \
-    (__LIST__)->ptr->next=new xcastor::Timing(__ID__,tp);       \
-    (__LIST__)->ptr = (__LIST__)->ptr->next;    \
+//------------------------------------------------------------------------------
+#define TIMING(__ID__, __LIST__)                           \
+  do {                                                     \
+    struct timeval tp;                                     \
+    struct timezone tz;                                    \
+    gettimeofday(&tp, &tz);                                \
+    (__LIST__)->ptr->next=new xcastor::Timing(__ID__,tp);  \
+    (__LIST__)->ptr = (__LIST__)->ptr->next;               \
   } while(0);
 
 XCASTORNAMESPACE_END
-
-
-

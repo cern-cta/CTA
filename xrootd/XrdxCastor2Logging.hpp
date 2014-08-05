@@ -18,7 +18,6 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
@@ -43,41 +42,121 @@ typedef XrdOucString VirtualIdentity;
 //------------------------------------------------------------------------------
 //! Log Macros usable in objects inheriting from the logId Class
 //------------------------------------------------------------------------------
-#define xcastor_log(__XCASTIRCOMMON_LOG_PRIORITY__ , ...) Logging::log(__FUNCTION__,__FILE__, __LINE__, this->logId, this->uid, this->gid,this->ruid, this->rgid, this->cident,  LOG_MASK(__XCASTORCOMMON_LOG_PRIORITY__) , __VA_ARGS__
-#define xcastor_debug(...)   Logging::log(__FUNCTION__,__FILE__, __LINE__, this->logId, vid, this->cident, (LOG_DEBUG)  , __VA_ARGS__)
-#define xcastor_info(...)    Logging::log(__FUNCTION__,__FILE__, __LINE__, this->logId, vid, this->cident, (LOG_INFO)   , __VA_ARGS__)
-#define xcastor_notice(...)  Logging::log(__FUNCTION__,__FILE__, __LINE__, this->logId, vid, this->cident, (LOG_NOTICE) , __VA_ARGS__)
-#define xcastor_warning(...) Logging::log(__FUNCTION__,__FILE__, __LINE__, this->logId, vid, this->cident, (LOG_WARNING), __VA_ARGS__)
-#define xcastor_err(...)     Logging::log(__FUNCTION__,__FILE__, __LINE__, this->logId, vid, this->cident, (LOG_ERR)    , __VA_ARGS__)
-#define xcastor_crit(...)    Logging::log(__FUNCTION__,__FILE__, __LINE__, this->logId, vid, this->cident, (LOG_CRIT)   , __VA_ARGS__)
-#define xcastor_alert(...)   Logging::log(__FUNCTION__,__FILE__, __LINE__, this->logId, vid, this->cident, (LOG_ALERT)  , __VA_ARGS__)
-#define xcastor_emerg(...)   Logging::log(__FUNCTION__,__FILE__, __LINE__, this->logId, vid, this->cident, (LOG_EMERG)  , __VA_ARGS__)
+#define xcastor_log(__XCASTIRCOMMON_LOG_PRIORITY__ , ...)              \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId,          \
+               this->uid, this->gid,this->ruid, this->rgid,            \
+               this->cident, LOG_MASK(__XCASTORCOMMON_LOG_PRIORITY__), \
+               __VA_ARGS__)
+
+#define xcastor_debug(...)                                         \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
+               this->cident, (LOG_DEBUG)  , __VA_ARGS__)
+
+#define xcastor_info(...)                                          \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
+               this->cident, (LOG_INFO)   , __VA_ARGS__)
+
+#define xcastor_notice(...)                                        \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
+               this->cident, (LOG_NOTICE) , __VA_ARGS__)
+
+#define xcastor_warning(...)                                       \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
+               this->cident, (LOG_WARNING), __VA_ARGS__)
+
+#define xcastor_err(...)                                           \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
+               this->cident, (LOG_ERR)    , __VA_ARGS__)
+
+#define xcastor_crit(...)                                          \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
+               this->cident, (LOG_CRIT)   , __VA_ARGS__)
+
+#define xcastor_alert(...)                                         \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
+               this->cident, (LOG_ALERT)  , __VA_ARGS__)
+
+#define xcastor_emerg(...)                                         \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
+               this->cident, (LOG_EMERG)  , __VA_ARGS__)
+
 
 //------------------------------------------------------------------------------
 //! Log Macros usable in singleton objects used by individual threads
 //! You should define locally LodId ThreadLogId in the thread function
 //------------------------------------------------------------------------------
-#define xcastor_thread_debug(...)   Logging::log(__FUNCTION__,__FILE__, __LINE__, ThreadLogId.logId, vid, ThreadLogId.cident, (LOG_DEBUG)  , __VA_ARGS__)
-#define xcastor_thread_info(...)    Logging::log(__FUNCTION__,__FILE__, __LINE__, ThreadLogId.logId, vid, ThreadLogId.cident, (LOG_INFO)   , __VA_ARGS__)
-#define xcastor_thread_notice(...)  Logging::log(__FUNCTION__,__FILE__, __LINE__, ThreadLogId.logId, vid, ThreadLogId.cident, (LOG_NOTICE) , __VA_ARGS__)
-#define xcastor_thread_warning(...) Logging::log(__FUNCTION__,__FILE__, __LINE__, ThreadLogId.logId, vid, ThreadLogId.cident, (LOG_WARNING), __VA_ARGS__)
-#define xcastor_thread_err(...)     Logging::log(__FUNCTION__,__FILE__, __LINE__, ThreadLogId.logId, vid, ThreadLogId.cident, (LOG_ERR)    , __VA_ARGS__)
-#define xcastor_thread_crit(...)    Logging::log(__FUNCTION__,__FILE__, __LINE__, ThreadLogId.logId, vid, ThreadLogId.cident, (LOG_CRIT)   , __VA_ARGS__)
-#define xcastor_thread_alert(...)   Logging::log(__FUNCTION__,__FILE__, __LINE__, ThreadLogId.logId, vid, ThreadLogId.cident, (LOG_ALERT)  , __VA_ARGS__)
-#define xcastor_thread_emerg(...)   Logging::log(__FUNCTION__,__FILE__, __LINE__, ThreadLogId.logId, vid, ThreadLogId.cident, (LOG_EMERG)  , __VA_ARGS__)
+#define xcastor_thread_debug(...)                                        \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
+               ThreadLogId.cident, (LOG_DEBUG)  , __VA_ARGS__)
+
+#define xcastor_thread_info(...)                                         \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
+               ThreadLogId.cident, (LOG_INFO)   , __VA_ARGS__)
+
+#define xcastor_thread_notice(...)                                       \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
+               ThreadLogId.cident, (LOG_NOTICE) , __VA_ARGS__)
+
+#define xcastor_thread_warning(...)                                      \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
+               ThreadLogId.cident, (LOG_WARNING), __VA_ARGS__)
+
+#define xcastor_thread_err(...)                                          \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
+               ThreadLogId.cident, (LOG_ERR)    , __VA_ARGS__)
+
+#define xcastor_thread_crit(...)                                         \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
+               ThreadLogId.cident, (LOG_CRIT)   , __VA_ARGS__)
+
+#define xcastor_thread_alert(...)                                        \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
+               ThreadLogId.cident, (LOG_ALERT)  , __VA_ARGS__)
+
+#define xcastor_thread_emerg(...)                                        \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
+               ThreadLogId.cident, (LOG_EMERG)  , __VA_ARGS__)
+
 
 //------------------------------------------------------------------------------
 //! Log Macros usable from static member functions without LogId object
 //------------------------------------------------------------------------------
-#define xcastor_static_log(__XCASTORCOMMON_LOG_PRIORITY__ , ...) Logging::log(__FUNCTION__,__FILE__, __LINE__, "static", 0,0,0,0,"",  (__XCASTORCOMMON_LOG_PRIORITY__) , __VA_ARGS__
-#define xcastor_static_debug(...)   Logging::log(__FUNCTION__,__FILE__, __LINE__, "static", Logging::gZeroVid,"", (LOG_DEBUG)  , __VA_ARGS__)
-#define xcastor_static_info(...)    Logging::log(__FUNCTION__,__FILE__, __LINE__, "static", Logging::gZeroVid,"", (LOG_INFO)   , __VA_ARGS__)
-#define xcastor_static_notice(...)  Logging::log(__FUNCTION__,__FILE__, __LINE__, "static", Logging::gZeroVid,"", (LOG_NOTICE) , __VA_ARGS__)
-#define xcastor_static_warning(...) Logging::log(__FUNCTION__,__FILE__, __LINE__, "static", Logging::gZeroVid,"", (LOG_WARNING), __VA_ARGS__)
-#define xcastor_static_err(...)     Logging::log(__FUNCTION__,__FILE__, __LINE__, "static", Logging::gZeroVid,"", (LOG_ERR)    , __VA_ARGS__)
-#define xcastor_static_crit(...)    Logging::log(__FUNCTION__,__FILE__, __LINE__, "static", Logging::gZeroVid,"", (LOG_CRIT)   , __VA_ARGS__)
-#define xcastor_static_alert(...)   Logging::log(__FUNCTION__,__FILE__, __LINE__, "static", Logging::gZeroVid,"", (LOG_ALERT)  , __VA_ARGS__)
-#define xcastor_static_emerg(...)   Logging::log(__FUNCTION__,__FILE__, __LINE__, "static", Logging::gZeroVid,"", (LOG_EMERG)  , __VA_ARGS__)
+#define xcastor_static_log(__XCASTORCOMMON_LOG_PRIORITY__ , ...)              \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", 0, 0, 0, 0, "",    \
+               (__XCASTORCOMMON_LOG_PRIORITY__) , __VA_ARGS__)
+
+#define xcastor_static_debug(...)                                             \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
+               "", (LOG_DEBUG)  , __VA_ARGS__)
+
+#define xcastor_static_info(...)                                              \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
+               "", (LOG_INFO)   , __VA_ARGS__)
+
+#define xcastor_static_notice(...)                                            \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
+               "", (LOG_NOTICE) , __VA_ARGS__)
+
+#define xcastor_static_warning(...)                                           \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
+               "", (LOG_WARNING), __VA_ARGS__)
+
+#define xcastor_static_err(...)                                               \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
+               "", (LOG_ERR)    , __VA_ARGS__)
+
+#define xcastor_static_crit(...)                                              \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
+               "", (LOG_CRIT)   , __VA_ARGS__)
+
+#define xcastor_static_alert(...)                                             \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
+               "", (LOG_ALERT)  , __VA_ARGS__)
+
+#define xcastor_static_emerg(...)                                             \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
+               "", (LOG_EMERG)  , __VA_ARGS__)
+
 
 //------------------------------------------------------------------------------
 //! Log Macros to check if a function would log in a certain log level
@@ -97,9 +176,10 @@ typedef XrdOucString VirtualIdentity;
 //------------------------------------------------------------------------------
 //! Class implementing XCASTOR logging
 //------------------------------------------------------------------------------
-class LogId {
+class LogId
+{
 
-public:
+ public:
 
   //----------------------------------------------------------------------------
   //! Constructor
@@ -111,38 +191,40 @@ public:
   //! Destructor
   //----------------------------------------------------------------------------
   ~LogId();
-  
-  
+
+
   //----------------------------------------------------------------------------
-  //! For calls which are not client initiated this function set's a unique 
+  //! For calls which are not client initiated this function set's a unique
   //! dummy log id
   //----------------------------------------------------------------------------
-  void SetSingleShotLogId(const char* td="<single-exec>");
-  
-  
+  void SetSingleShotLogId(const char* td = "<single-exec>");
+
+
   //----------------------------------------------------------------------------
   //! Set's the logid and trace identifier
   //----------------------------------------------------------------------------
-  void SetLogId(const char* newlogid, const char* td= "<service>");
+  void SetLogId(const char* newlogid, const char* td = "<service>");
 
 
   char logId[40];       ///< the log Id for message printout
   char cident[256];     ///< the client identifier
   VirtualIdentity vid;  ///< client identity
-  
 };
 
 
 //------------------------------------------------------------------------------
 //! Class wrapping global singleton objects for logging
 //------------------------------------------------------------------------------
-class Logging {
+class Logging
+{
 
-public:
-  
-  typedef std::vector< std::vector <XrdOucString> > LogArray; ///< typdef for log message array
-  typedef std::vector< unsigned long > LogCircularIndex; ///< typedef for circular index pointing
-                                              ///< to the next message position int the log array
+ public:
+
+  //! Typdef for log message array
+  typedef std::vector< std::vector <XrdOucString> > LogArray; 
+  //! Typedef for circular index pointing to the next message position in
+  //! the log array
+  typedef std::vector< unsigned long >  LogCircularIndex; 
 
   static LogCircularIndex gLogCircularIndex; ///< global circular index
   static LogArray gLogMemory; ///< global logging memory
@@ -154,38 +236,38 @@ public:
   static XrdOucString gUnit; ///< global unit name
   static XrdOucString gFilter; ///< global log filter to apply
   static int gShortFormat; ///< indicating if the log-output is in short format
-  
+
 
   //----------------------------------------------------------------------------
   //! Initialize Logger
   //----------------------------------------------------------------------------
   static void Init();
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Set the log priority (like syslog)
   //----------------------------------------------------------------------------
   static void SetLogPriority(int pri);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Set the log unit name
   //----------------------------------------------------------------------------
   static void SetUnit(const char* unit);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Set the log filter
   //----------------------------------------------------------------------------
   static void SetFilter(const char* filter);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Return priority as string
   //----------------------------------------------------------------------------
   static const char* GetPriorityString(int pri);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Return priority int from string
   //----------------------------------------------------------------------------
@@ -200,8 +282,8 @@ public:
   //!
   //----------------------------------------------------------------------------
   static bool shouldlog(const char* func, int priority);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Log a message into the global buffer
   //!
@@ -226,4 +308,3 @@ public:
                          int priority,
                          const char* msg, ...);
 };
-

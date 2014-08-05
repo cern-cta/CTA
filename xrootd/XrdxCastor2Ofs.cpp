@@ -46,7 +46,7 @@
 /*----------------------------------------------------------------------------*/
 #include "XrdxCastor2Ofs.hpp"
 #include "XrdxCastor2FsConstants.hpp"
-#include "XrdxCastorTiming.hpp"
+#include "XrdxCastor2Timing.hpp"
 /*----------------------------------------------------------------------------*/
 
 XrdxCastor2Ofs* gSrv; ///< global diskserver OFS handle

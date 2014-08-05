@@ -18,13 +18,12 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
 /*----------------------------------------------------------------------------*/
 #include <cstring>
-#include "XrdxCastorTiming.hpp"
+#include "XrdxCastor2Timing.hpp"
 /*----------------------------------------------------------------------------*/
 
 XCASTORNAMESPACE_BEGIN
@@ -32,23 +31,23 @@ XCASTORNAMESPACE_BEGIN
 //------------------------------------------------------------------------------
 // Constructor - used only internally
 //------------------------------------------------------------------------------
-Timing::Timing(const char* name, struct timeval &i_tv) 
+Timing::Timing(const char* name, struct timeval& i_tv)
 {
   memcpy(&tv, &i_tv, sizeof(struct timeval));
   tag = name;
   next = 0;
-  ptr  = this;
+  ptr = this;
 }
 
 
 //------------------------------------------------------------------------------
 // Constructor - tag is used as the name for the measurement in Print
 //------------------------------------------------------------------------------
-Timing::Timing(const char* i_maintag) 
+Timing::Timing(const char* i_maintag)
 {
   tag = "BEGIN";
   next = 0;
-  ptr  = this;
+  ptr = this;
   maintag = i_maintag;
 }
 
@@ -58,31 +57,40 @@ Timing::Timing(const char* i_maintag)
 //------------------------------------------------------------------------------
 Timing::~Timing()
 {
-  Timing* n = next; 
-  if (n) delete n;
+  Timing* n = next;
+
+  if (n)
+    delete n;
 }
 
 
 //------------------------------------------------------------------------------
 // Print method to display measurements on STDERR
 //------------------------------------------------------------------------------
-void 
-Timing::Print() 
+void
+Timing::Print()
 {
   char msg[512];
   Timing* p = this->next;
-  Timing* n; 
+  Timing* n;
   cerr << std::endl;
-  while ((n =p->next)) 
+
+  while ((n = p->next))
   {
-    sprintf(msg,"                                        [%12s] %12s<=>%-12s : %.03f\n",maintag.c_str(),p->tag.c_str(),n->tag.c_str(), (float)((n->tv.tv_sec - p->tv.tv_sec) *1000000 + (n->tv.tv_usec - p->tv.tv_usec))/1000.0);
+    sprintf(msg, "%40s [%12s] %12s<=>%-12s : %.03f\n", "",
+            maintag.c_str(), p->tag.c_str(), n->tag.c_str(),
+            (float)((n->tv.tv_sec - p->tv.tv_sec) * 1000000 +
+                    (n->tv.tv_usec - p->tv.tv_usec)) / 1000.0);
     cerr << msg;
     p = n;
   }
 
   n = p;
   p = this->next;
-  sprintf(msg,"                                        =%12s= %12s<=>%-12s : %.03f\n",maintag.c_str(),p->tag.c_str(), n->tag.c_str(), (float)((n->tv.tv_sec - p->tv.tv_sec) *1000000 + (n->tv.tv_usec - p->tv.tv_usec))/1000.0);
+  sprintf(msg, "%40s =%12s= %12s<=>%-12s : %.03f\n", "",
+          maintag.c_str(), p->tag.c_str(), n->tag.c_str(),
+          (float)((n->tv.tv_sec - p->tv.tv_sec) * 1000000 +
+                  (n->tv.tv_usec - p->tv.tv_usec)) / 1000.0);
   cerr << msg;
 }
 
@@ -90,28 +98,27 @@ Timing::Print()
 //------------------------------------------------------------------------------
 // Return total Realtime
 //------------------------------------------------------------------------------
-double 
-Timing::RealTime() 
+double
+Timing::RealTime()
 {
   Timing* p = this->next;
-  Timing* n; 
+  Timing* n;
 
-  while ((n =p->next)) 
-  {
+  while ((n = p->next))
     p = n;
-  }
 
   n = p;
   p = this->next;
-  return (double) ((n->tv.tv_sec - p->tv.tv_sec) *1000000 + (n->tv.tv_usec - p->tv.tv_usec))/1000.0;
+  return (double)((n->tv.tv_sec - p->tv.tv_sec) * 1000000 +
+                  (n->tv.tv_usec - p->tv.tv_usec)) / 1000.0;
 }
 
 
 //------------------------------------------------------------------------------
 // Wrapper Function to hide difference between Apple and Linux
 //------------------------------------------------------------------------------
-void 
-Timing::GetTimeSpec(struct timespec &ts) 
+void
+Timing::GetTimeSpec(struct timespec& ts)
 {
 #ifdef __APPLE__
   struct timeval tv;
@@ -121,6 +128,6 @@ Timing::GetTimeSpec(struct timespec &ts)
 #else
   clock_gettime(CLOCK_REALTIME, &ts);
 #endif
-}    
+}
 
 XCASTORNAMESPACE_END

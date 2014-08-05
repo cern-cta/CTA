@@ -25,7 +25,7 @@
 #pragma once
 
 /*-----------------------------------------------------------------------------*/
-#include "XrdxCastorLogging.hpp"
+#include "XrdxCastor2Logging.hpp"
 #include "XrdxCastorClient.hpp"
 /*-----------------------------------------------------------------------------*/
 #include <XrdOuc/XrdOucHash.hh>

@@ -25,7 +25,7 @@
 
 /*-----------------------------------------------------------------------------*/
 #include "XrdSfs/XrdSfsInterface.hh"
-#include "XrdxCastorLogging.hpp"
+#include "XrdxCastor2Logging.hpp"
 /*-----------------------------------------------------------------------------*/
 #include <dirent.h>
 #include "Cns_api.h"

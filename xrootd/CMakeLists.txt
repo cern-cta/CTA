@@ -37,8 +37,8 @@ set (XRDXCASTOR2FS_LIB_SRC_FILES
   XrdxCastor2Acc.cpp
   XrdxCastor2Stager.cpp
   XrdxCastor2Proc.cpp
-  XrdxCastorLogging.cpp
-  XrdxCastorTiming.cpp
+  XrdxCastor2Logging.cpp
+  XrdxCastor2Timing.cpp
   XrdxCastorClient.cpp)
 add_library (xrdxcastor2fs SHARED ${XRDXCASTOR2FS_LIB_SRC_FILES})
 CastorSetLibraryVersions (xrdxcastor2fs)
@@ -53,8 +53,8 @@ install (TARGETS xrdxcastor2fs DESTINATION ${CASTOR_DEST_LIB_DIR})
 ################################################################################
 set (XRDXCASTOR2ACC_LIB_SRC_FILES
   XrdxCastor2Acc.cpp
-  XrdxCastorLogging.cpp
-  XrdxCastorTiming.cpp)
+  XrdxCastor2Logging.cpp
+  XrdxCastor2Timing.cpp)
 add_library (xrdxcastor2acc SHARED ${XRDXCASTOR2ACC_LIB_SRC_FILES})
 CastorSetLibraryVersions (xrdxcastor2acc)
 target_link_libraries (xrdxcastor2acc crypto ${UUID_LIB} ${XROOTD_XRDUTILS_LIB})
@@ -66,8 +66,8 @@ install (TARGETS xrdxcastor2acc DESTINATION ${CASTOR_DEST_LIB_DIR})
 find_package (ceph REQUIRED)
 set (XRDXCASTOR2OFS_LIB_SRC_FILES
   XrdxCastor2Ofs.cpp
-  XrdxCastorLogging.cpp
-  XrdxCastorTiming.cpp)
+  XrdxCastor2Logging.cpp
+  XrdxCastor2Timing.cpp)
 set_property(SOURCE XrdxCastor2Ofs.cpp
   PROPERTY COMPILE_FLAGS -Wno-write-strings)
 add_library (xrdxcastor2ofs SHARED ${XRDXCASTOR2OFS_LIB_SRC_FILES})

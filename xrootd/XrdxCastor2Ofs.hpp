@@ -45,7 +45,7 @@
 #include "XrdSys/XrdSysPthread.hh"
 #include "XrdClient/XrdClientAdmin.hh"
 /*-----------------------------------------------------------------------------*/
-#include "XrdxCastorLogging.hpp"
+#include "XrdxCastor2Logging.hpp"
 /*-----------------------------------------------------------------------------*/
 
 

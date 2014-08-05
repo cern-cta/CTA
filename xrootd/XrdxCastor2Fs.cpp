@@ -43,7 +43,7 @@
 #include "XrdxCastor2Fs.hpp"
 #include "XrdxCastor2FsFile.hpp"
 #include "XrdxCastor2FsDirectory.hpp"
-#include "XrdxCastorTiming.hpp"
+#include "XrdxCastor2Timing.hpp"
 #include "XrdxCastor2Stager.hpp"
 #include "XrdxCastor2FsSecurity.hpp"
 #include "XrdxCastorClient.hpp"

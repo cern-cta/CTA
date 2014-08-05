@@ -28,7 +28,7 @@
 /*-----------------------------------------------------------------------------*/
 #include "XrdVersion.hh"
 #include "XrdxCastor2Acc.hpp"
-#include "XrdxCastorTiming.hpp"
+#include "XrdxCastor2Timing.hpp"
 /*-----------------------------------------------------------------------------*/
 #include "XrdSec/XrdSecInterface.hh"
 #include "XrdOuc/XrdOucEnv.hh"
