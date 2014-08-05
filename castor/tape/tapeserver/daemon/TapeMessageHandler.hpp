@@ -94,50 +94,24 @@ public:
   bool handleEvent(const zmq_pollitem_t &fd) throw();
   
 private:
-  /**
-   *  Send to the client a ReturnValue(0,"")
-   */
-  void sendSuccessReplyToClient();
-  /**
-   * Send to the client a ReturnValue(ex.code(),ex.getGetMessageValue())
-   * @param e
-   */
-  void sendErrorReplyToClient(const castor::exception::Exception& e);
 
   /**
-   * Send to the client a ReturnValue Message with the given parameters
-   * @param returnValue the interger value to send (0 = everything ok, 
-   * positive integer will trigger an exception
-   * @param msg The string to display (should be empty if returnValue=0)
-   */
-  void sendReplyToClient(int returnValue,const std::string& msg);
-
-  /**
-   * Creates a message frame containing a ReturnValue message as its payload.
+   * Creates a message frame containing a ReturnValue message.
    *
-   * @param returnValue The return value of the ReturnValue message.
-   * @param msg The msg string of the ReturnValue message.
+   * @param value The return value of the ReturnValue message.
    * @return The message frame.
    */
-  messages::Frame createReturnValueFrame(const int returnValue,
+  messages::Frame createReturnValueFrame(const int value);
+
+  /**
+   * Creates a message frame containing an Exception message.
+   *
+   * @param code The error code of the exception.
+   * @param msg The message string of the exception.
+   */
+  messages::Frame createExceptionFrame(const int code,
     const std::string& msg);
   
-  /**
-   * Will try to parse a message of type T into msg from the data which are 
-   * within blob
-   * @param msg
-   * @param blob
-   */
-  template <class T> void parseMsgBlob(T& msg, const messages::ZmqMsg& blob) {
-    if(!msg.ParseFromArray(blob.getData(), blob.size())) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to parse a " <<
-        castor::utils::demangledNameOf(msg) << " message blob"
-        ": ParseFromArray() returned false";
-      throw ex;
-    }
-  }
-
   /**
    * The reactor to which new Vdqm connection handlers are to be registered.
    */
@@ -148,6 +122,9 @@ private:
    */
   log::Logger &m_log;
   
+  /**
+   * The ZMQ socket listening for messages.
+   */
   messages::ZmqSocket m_socket;
 
   /**
@@ -206,7 +183,7 @@ private:
     const messages::Frame &rqst);
 
   /**
-   * Creates a message frame containing a NbFilesOnTape message as its payload.
+   * Creates a message frame containing a NbFilesOnTape message.
    *
    * @param nbFiles The number of files on the tape.
    * @return The message frame.

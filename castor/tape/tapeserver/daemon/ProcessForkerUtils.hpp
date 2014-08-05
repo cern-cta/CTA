@@ -225,19 +225,18 @@ public:
   static void readAck(const int fd);
 
   /**
-   * Reads a good-day reply or an exception from the specified file descriptor.
+   * Reads either a good-day reply-message or an exception message from the
+   * specified File descriptor.
    *
-   * This method deals with two types of message, the one the caller wishes to
-   * read in the good-day scenario and the messages::Exception message in the
-   * bad-day scenario where the ProcessForker replies with an exception.
+   * If a good-day reply-message is read from the file descriptor then it is
+   * parsed into the specified Google protocol-buffer.
    *
-   * If the ProcessForker replies with an exception in the form of a
-   * messages::Exception message, then this method will convert the message into
-   * a C++ exception.
+   * If an exception message is read from the file descriptor then it is
+   * converted into a C++ exception and thrown.
    *
    * @param fd The file descriptor to be read from.
-   * @param msgType The type of the message.
-   * @param msg Output parameter: The message.
+   * @param msg Output parameter: The good-day reply-message in the form of a
+   * Google protocol-buffer.
    */
   template<typename T> static void readReplyOrEx(const int fd, T &msg) {
     const ProcessForkerFrame frame = readFrame(fd);

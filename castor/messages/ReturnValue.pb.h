@@ -91,36 +91,24 @@ class ReturnValue : public ::google::protobuf::Message {
   
   // accessors -------------------------------------------------------
   
-  // required uint32 returnValue = 1;
-  inline bool has_returnvalue() const;
-  inline void clear_returnvalue();
-  static const int kReturnValueFieldNumber = 1;
-  inline ::google::protobuf::uint32 returnvalue() const;
-  inline void set_returnvalue(::google::protobuf::uint32 value);
-  
-  // required string message = 2;
-  inline bool has_message() const;
-  inline void clear_message();
-  static const int kMessageFieldNumber = 2;
-  inline const ::std::string& message() const;
-  inline void set_message(const ::std::string& value);
-  inline void set_message(const char* value);
-  inline void set_message(const char* value, size_t size);
-  inline ::std::string* mutable_message();
+  // required uint32 value = 1;
+  inline bool has_value() const;
+  inline void clear_value();
+  static const int kValueFieldNumber = 1;
+  inline ::google::protobuf::uint32 value() const;
+  inline void set_value(::google::protobuf::uint32 value);
   
   // @@protoc_insertion_point(class_scope:castor.messages.ReturnValue)
  private:
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
   mutable int _cached_size_;
   
-  ::google::protobuf::uint32 returnvalue_;
-  ::std::string* message_;
-  static const ::std::string _default_message_;
+  ::google::protobuf::uint32 value_;
   friend void  protobuf_AddDesc_ReturnValue_2eproto();
   friend void protobuf_AssignDesc_ReturnValue_2eproto();
   friend void protobuf_ShutdownFile_ReturnValue_2eproto();
   
-  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
   
   // WHY DOES & HAVE LOWER PRECEDENCE THAN != !?
   inline bool _has_bit(int index) const {
@@ -143,62 +131,20 @@ class ReturnValue : public ::google::protobuf::Message {
 
 // ReturnValue
 
-// required uint32 returnValue = 1;
-inline bool ReturnValue::has_returnvalue() const {
+// required uint32 value = 1;
+inline bool ReturnValue::has_value() const {
   return _has_bit(0);
 }
-inline void ReturnValue::clear_returnvalue() {
-  returnvalue_ = 0u;
+inline void ReturnValue::clear_value() {
+  value_ = 0u;
   _clear_bit(0);
 }
-inline ::google::protobuf::uint32 ReturnValue::returnvalue() const {
-  return returnvalue_;
+inline ::google::protobuf::uint32 ReturnValue::value() const {
+  return value_;
 }
-inline void ReturnValue::set_returnvalue(::google::protobuf::uint32 value) {
+inline void ReturnValue::set_value(::google::protobuf::uint32 value) {
   _set_bit(0);
-  returnvalue_ = value;
-}
-
-// required string message = 2;
-inline bool ReturnValue::has_message() const {
-  return _has_bit(1);
-}
-inline void ReturnValue::clear_message() {
-  if (message_ != &_default_message_) {
-    message_->clear();
-  }
-  _clear_bit(1);
-}
-inline const ::std::string& ReturnValue::message() const {
-  return *message_;
-}
-inline void ReturnValue::set_message(const ::std::string& value) {
-  _set_bit(1);
-  if (message_ == &_default_message_) {
-    message_ = new ::std::string;
-  }
-  message_->assign(value);
-}
-inline void ReturnValue::set_message(const char* value) {
-  _set_bit(1);
-  if (message_ == &_default_message_) {
-    message_ = new ::std::string;
-  }
-  message_->assign(value);
-}
-inline void ReturnValue::set_message(const char* value, size_t size) {
-  _set_bit(1);
-  if (message_ == &_default_message_) {
-    message_ = new ::std::string;
-  }
-  message_->assign(reinterpret_cast<const char*>(value), size);
-}
-inline ::std::string* ReturnValue::mutable_message() {
-  _set_bit(1);
-  if (message_ == &_default_message_) {
-    message_ = new ::std::string;
-  }
-  return message_;
+  value_ = value;
 }
 
 

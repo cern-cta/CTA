@@ -21,6 +21,7 @@
 
 
 #include "castor/messages/Constants.hpp"
+#include "castor/messages/Exception.pb.h"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/messages.hpp"
 #include "castor/messages/MigrationJobFromTapeGateway.pb.h"
@@ -120,17 +121,17 @@ bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
     return false; // Give up and stay registered with the reactor
   }
 
-  // From this point on any exception thrown should be converted into a
-  // ReturnValue message and sent back to the client
+  // From this point on any exception thrown should be converted into an
+  // Exception message and sent back to the client
   messages::Frame reply;
   try {
     reply = dispatchMsgHandler(rqst);
   } catch(castor::exception::Exception &ex) {
-    reply = createReturnValueFrame(ex.code(), ex.getMessage().str());
+    reply = createExceptionFrame(ex.code(), ex.getMessage().str());
   } catch(std::exception &se) {
-    reply = createReturnValueFrame(SEINTERNAL, se.what());
+    reply = createExceptionFrame(SEINTERNAL, se.what());
   } catch(...) {
-    reply = createReturnValueFrame(SEINTERNAL, "Caught an unknown exception");
+    reply = createExceptionFrame(SEINTERNAL, "Caught an unknown exception");
   }
 
   // Send the reply to the client
@@ -213,7 +214,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     castor::messages::Heartbeat rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
 
-    const messages::Frame reply = createReturnValueFrame(0, "");
+    const messages::Frame reply = createReturnValueFrame(0);
     return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -325,7 +326,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
       m_driveCatalogue.findDrive(rqstBody.unitname());
     drive->receivedRecallJob(rqstBody.vid());
 
-    const messages::Frame reply = createReturnValueFrame(0, "");
+    const messages::Frame reply = createReturnValueFrame(0);
     return reply;
 
   } catch(castor::exception::Exception &ne) {
@@ -352,7 +353,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
       m_driveCatalogue.findDrive(rqstBody.unitname());
     drive->receivedRecallJob(rqstBody.vid());
 
-    const messages::Frame reply = createReturnValueFrame(0, "");
+    const messages::Frame reply = createReturnValueFrame(0);
     return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -384,7 +385,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
       m_vdqm.tapeMounted(m_hostName, rqstBody.unitname(), driveConfig.dgn,
         rqstBody.vid(), drive->getSessionPid());
 
-    const messages::Frame reply = createReturnValueFrame(0, "");
+    const messages::Frame reply = createReturnValueFrame(0);
     return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -415,7 +416,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     m_vdqm.tapeMounted(m_hostName, rqstBody.unitname(), driveConfig.dgn,
       rqstBody.vid(), drive->getSessionPid());
 
-    const messages::Frame reply = createReturnValueFrame(0, "");
+    const messages::Frame reply = createReturnValueFrame(0);
     return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -436,7 +437,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     messages::TapeUnmountStarted rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
 
-    const messages::Frame reply = createReturnValueFrame(0, "");
+    const messages::Frame reply = createReturnValueFrame(0);
     return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -457,7 +458,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     messages::TapeUnmounted rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
 
-    const messages::Frame reply = createReturnValueFrame(0, "");
+    const messages::Frame reply = createReturnValueFrame(0);
     return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -468,37 +469,10 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 }
 
 //------------------------------------------------------------------------------
-// sendSuccessReplyToClient
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::
-  sendSuccessReplyToClient() {
-  sendReplyToClient(0,"");
-}
-
-//------------------------------------------------------------------------------
-// sendErrorReplyToClient
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::
-sendErrorReplyToClient(const castor::exception::Exception& ex){
-  //any positive value will trigger an exception in the client side
-  sendReplyToClient(ex.code(),ex.getMessageValue());
-}
-
-//------------------------------------------------------------------------------
-// sendReplyToClient
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeMessageHandler::sendReplyToClient(
-  const int returnValue, const std::string& msg) {
-  const messages::Frame reply = createReturnValueFrame(returnValue, msg);
-
-  messages::sendFrame(m_socket, reply);
-}
-
-//------------------------------------------------------------------------------
 // createReturnValueFrame
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
-  createReturnValueFrame(const int returnValue, const std::string& msg) {
+  createReturnValueFrame(const int value) {
   messages::Frame frame;
 
   frame.header = castor::messages::protoTapePreFillHeader();
@@ -507,7 +481,26 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   frame.header.set_bodysignature("PIPO");
 
   messages::ReturnValue body;
-  body.set_returnvalue(returnValue);
+  body.set_value(value);
+  frame.serializeProtocolBufferIntoBody(body);
+
+  return frame;
+}
+
+//------------------------------------------------------------------------------
+// createExceptionFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  createExceptionFrame(const int code, const std::string& msg) {
+  messages::Frame frame;
+
+  frame.header = castor::messages::protoTapePreFillHeader();
+  frame.header.set_msgtype(messages::MSG_TYPE_EXCEPTION);
+  frame.header.set_bodyhashvalue(messages::computeSHA1Base64(frame.body));
+  frame.header.set_bodysignature("PIPO");
+
+  messages::Exception body;
+  body.set_code(code);
   body.set_message(msg);
   frame.serializeProtocolBufferIntoBody(body);
 

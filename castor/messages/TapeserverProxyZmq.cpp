@@ -27,9 +27,9 @@
 #include "castor/messages/MigrationJobFromTapeGateway.pb.h"
 #include "castor/messages/MigrationJobFromWriteTp.pb.h"
 #include "castor/messages/NbFilesOnTape.pb.h"
-#include "castor/messages/ProtoTapeReplyContainer.hpp"
 #include "castor/messages/RecallJobFromReadTp.pb.h"
 #include "castor/messages/RecallJobFromTapeGateway.pb.h"
+#include "castor/messages/ReturnValue.pb.h"
 #include "castor/messages/TapeMountedForRecall.pb.h"
 #include "castor/messages/TapeMountedForMigration.pb.h"
 #include "castor/messages/TapeserverProxyZmq.hpp"
@@ -39,9 +39,9 @@
 #include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
+#include "h/Ctape.h"
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
-#include "h/Ctape.h"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -66,27 +66,21 @@ void castor::messages::TapeserverProxyZmq::gotRecallJobFromTapeGateway(
     const Frame rqst = createRecallJobFromTapeGatewayFrame(vid, unitName);
     sendFrame(m_tapeserverSocket, rqst);
 
-    messages::ProtoTapeReplyContainer reply(m_tapeserverSocket);
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to notify tapeserver of recall job from tapegateway: " <<
       "vid=" << vid << " unitName=" << unitName << ": " <<
       ne.getMessage().str();
-    throw ex;
-  } catch(std::exception &se) {
-    castor::exception::Exception ex;
-    ex.getMessage() << 
-      "Failed to notify tapeserver of recall job from tapegateway: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      se.what();
-    throw ex;
-  } catch(...) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of recall job from tapegateway: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      "Caught an unknown exception";
     throw ex;
   }
 }
@@ -128,28 +122,21 @@ void castor::messages::TapeserverProxyZmq::gotRecallJobFromReadTp(
     const Frame rqst = createRecallJobFromReadTpFrame(vid, unitName);
     sendFrame(m_tapeserverSocket, rqst);
 
-    messages::ProtoTapeReplyContainer reply(m_tapeserverSocket);
-
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to notify tapeserver of recall job from readtp: " <<
       "vid=" << vid << " unitName=" << unitName << ": " <<
       ne.getMessage().str();
-    throw ex;
-  } catch(std::exception &se) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of recall job from readtp: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      se.what();
-    throw ex;
-  } catch(...) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of recall job from readtp: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      "Caught an unknown exception";
     throw ex;
   }
 }
@@ -190,43 +177,15 @@ uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromTapeGateway(
     const Frame rqst = createMigrationJobFromTapeGatewayFrame(vid, unitName);
     sendFrame(m_tapeserverSocket, rqst);
 
-    messages::ProtoTapeReplyContainer rawReply(m_tapeserverSocket);
-    if(rawReply.header.msgtype() != MSG_TYPE_NBFILESONTAPE) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to receive reply from tapeserverd"
-        ": Unexpected message type: expected=" << MSG_TYPE_NBFILESONTAPE
-        << " actual=" << rawReply.header.msgtype();
-      throw ex;
-    }
-    messages::NbFilesOnTape reply;
-    if(!reply.ParseFromArray(rawReply.blobBody.getData(),
-      rawReply.blobBody.size())) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to parse reply from tapeserverd"
-        ": msgType=" << rawReply.header.msgtype();
-      throw ex;
-    }
-    return reply.nbfiles(); 
+    NbFilesOnTape reply;
+    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    return reply.nbfiles();
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to notify tapeserver of migration job from tapegateway: " <<
       "vid=" << vid << " unitName=" << unitName << ": " <<
       ne.getMessage().str();
-    throw ex;
-  } catch(std::exception &se) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of migration job from tapegateway: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      se.what();
-    throw ex;
-  } catch(...) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of migration job from tapegateway: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      "Caught an unknown exception";
     throw ex;
   }
 }
@@ -267,22 +226,8 @@ uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromWriteTp(
     const Frame rqst = createMigrationJobFromWriteTpFrame(vid, unitName);
     sendFrame(m_tapeserverSocket, rqst);
 
-    messages::ProtoTapeReplyContainer rawReply(m_tapeserverSocket);
-    if(rawReply.header.msgtype() != MSG_TYPE_NBFILESONTAPE) {
-      castor::exception::Exception ex;
-      ex.getMessage() <<
-        "Failed to receive NbFilesOnTape reply from tapeserverd: "
-        "Unexpected message type: expected=" << MSG_TYPE_NBFILESONTAPE <<
-        " actual=" << rawReply.header.msgtype();
-      throw ex;
-    }
-    messages::NbFilesOnTape reply;
-    if(!reply.ParseFromArray(rawReply.blobBody.getData(),
-      rawReply.blobBody.size())) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to parse NbFilesOnTape reply from tapeserverd";
-      throw ex;
-    }
+    NbFilesOnTape reply;
+    recvTapeReplyOrEx(m_tapeserverSocket, reply);
     return reply.nbfiles();
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -290,20 +235,6 @@ uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromWriteTp(
       "Failed to notify tapeserver of migration job from writetp: " <<
       "vid=" << vid << " unitName=" << unitName << ": " <<
       ne.getMessage().str();
-    throw ex;
-  } catch(std::exception &se) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of migration job from writetp: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      se.what();
-    throw ex;
-  } catch(...) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of migration job from writetp: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      "Caught an unknown exception";
     throw ex;
   }
 }
@@ -344,27 +275,21 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForRecall(
     const Frame rqst = createTapeMountedForRecallFrame(vid, unitName);
     sendFrame(m_tapeserverSocket, rqst);
   
-    ProtoTapeReplyContainer reply(m_tapeserverSocket);
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to notify tapeserver of tape mounted for recall: " <<
       "vid=" << vid << " unitName=" << unitName << ": " <<
       ne.getMessage().str();
-    throw ex;
-  } catch(std::exception &se) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of tape mounted for recall: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      se.what();
-    throw ex;
-  } catch(...) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of tape mounted for recall: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      "Caught an unknown exception";
     throw ex;
   }
 }
@@ -405,27 +330,21 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForMigration(
     const Frame rqst = createTapeMountedForMigrationFrame(vid, unitName);
     sendFrame(m_tapeserverSocket, rqst);
   
-    ProtoTapeReplyContainer reply(m_tapeserverSocket);
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to notify tapeserver of tape mounted for migration: " <<
       "vid=" << vid << " unitName=" << unitName << ": " <<
       ne.getMessage().str();
-    throw ex;
-  } catch(std::exception &se) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of tape mounted for migration: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      se.what();
-    throw ex;
-  } catch(...) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of tape mounted for migration: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      "Caught an unknown exception";
     throw ex;
   }
 }
@@ -466,27 +385,21 @@ void castor::messages::TapeserverProxyZmq::tapeUnmountStarted(
     const Frame rqst = createTapeUnmountStartedFrame(vid, unitName);
     sendFrame(m_tapeserverSocket, rqst);
   
-    ProtoTapeReplyContainer reply(m_tapeserverSocket);
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to notify tapeserver of start of tape unmount: " <<
       "vid=" << vid << " unitName=" << unitName << ": " <<
       ne.getMessage().str();
-    throw ex;
-  } catch(std::exception &se) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of start of tape unmount: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      se.what();
-    throw ex;
-  } catch(...) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of start of tape unmount: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      "Caught an unknown exception";
     throw ex;
   }
 }
@@ -527,27 +440,21 @@ void castor::messages::TapeserverProxyZmq::tapeUnmounted(
     const Frame rqst = createTapeUnmountedFrame(vid, unitName);
     sendFrame(m_tapeserverSocket, rqst);
   
-    ProtoTapeReplyContainer reply(m_tapeserverSocket);
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to notify tapeserver that tape is unmounted: " <<
       "vid=" << vid << " unitName=" << unitName << ": " <<
       ne.getMessage().str();
-    throw ex;
-  } catch(std::exception &se) { 
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver that tape is unmounted: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      se.what();
-    throw ex;
-  } catch(...) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver that tape is unmounted: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      "Caught an unknown exception";
     throw ex;
   }
 }
@@ -589,27 +496,21 @@ void  castor::messages::TapeserverProxyZmq::notifyHeartbeat(
     const Frame rqst = createHeartbeatFrame(unitName, nbBlocksMoved);
     sendFrame(m_tapeserverSocket, rqst);
 
-    ProtoTapeReplyContainer reply(m_tapeserverSocket);
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to notify tapeserver of heartbeat: " <<
       "unitName=" << unitName << ": " <<
       ne.getMessage().str();
-    throw ex;
-  } catch(std::exception &se) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of heartbeat: " <<
-      "unitName=" << unitName << ": " <<
-      se.what();
-    throw ex;
-  } catch(...) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of heartbeat: " <<
-      "unitName=" << unitName << ": " <<
-      "Caught an unknown exception";
     throw ex;
   }
 }

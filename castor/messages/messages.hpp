@@ -21,21 +21,22 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#pragma once 
+
 #include "castor/exception/Exception.hpp"
-#include "castor/messages/Header.pb.h"
 #include "castor/messages/Constants.hpp"
+#include "castor/messages/Exception.pb.h"
 #include "castor/messages/Frame.hpp"
+#include "castor/messages/Header.pb.h"
 #include "castor/messages/ZmqMsg.hpp"
 #include "castor/messages/ZmqSocket.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "h/Ctape.h"
-#include "castor/exception/Exception.hpp"
 
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#pragma once 
 
 namespace castor {
 namespace messages {
@@ -187,6 +188,86 @@ castor::messages::Header genericPreFillHeader(){
  * @return 
  */
 Header protoTapePreFillHeader();
+
+/**
+ * Receives either a good-day reply-message or an exception message from the
+ * specified ZMQ socket.
+ *
+ * If a good-day reply-message is read from the socket then it's body is parsed
+ * into the specified Google protocol-buffer.
+ *
+ * If an exception message is read from the socket then it is converted into a
+ * a C++ exception and thrown.
+ *
+ * @param socket The ZMQ socket.
+ * @param body Output parameter: The body of the good-day reply-message in the
+ * form of a Google protocol-buffer.
+ */
+template<class ZS, class PB> void recvTapeReplyOrEx(ZS& socket, PB &body) {
+  recvReplyOrEx(socket, body, TPMAGIC, PROTOCOL_TYPE_TAPE, PROTOCOL_VERSION_1);
+}
+
+/**
+ * Receives either a good-day reply-message or an exception message from the
+ * specified ZMQ socket.
+ *
+ * If a good-day reply-message is read from the socket then it's body is parsed
+ * into the specified Google protocol-buffer.
+ *
+ * If an exception message is read from the socket then it is converted into a
+ * a C++ exception and thrown.
+ *
+ * @param socket The ZMQ socket.
+ * @param body Output parameter: The body of the good-day reply-message in the
+ * form of a Google protocol-buffer.
+ * @param magic The expected magic number of the message.
+ * @param protocolType The expected protocol type of the message.
+ * @param protocolVersion The expected protocol version of the message.
+ */
+template<class ZS, class PB> void recvReplyOrEx(ZS& socket, PB &body,
+  const uint32_t magic, const uint32_t protocolType,
+  const uint32_t protocolVersion) {
+  const Frame frame = recvFrame(socket);
+
+  // Check the magic number
+  if(magic != frame.header.magic()) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to receive message"
+      ": Unexpected magic number: excpected=" << magic << " actual= " <<
+      frame.header.magic();
+    throw ex;
+  }
+
+  // Check the protocol type
+  if(protocolType != frame.header.protocoltype()) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to receive message"
+      ": Unexpected protocol type: excpected=" << protocolType << " actual= "
+      << frame.header.protocoltype();
+    throw ex;
+  }
+
+  // Check the protocol version
+  if(protocolVersion != frame.header.protocolversion()) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to receive message"
+      ": Unexpected protocol version: excpected=" << protocolVersion <<
+      " actual= " << frame.header.protocolversion();
+    throw ex;
+  }
+
+  // If an exception message was received
+  if(messages::MSG_TYPE_EXCEPTION == frame.header.msgtype()) {
+    // Convert it into a C++ exception and throw it
+    messages::Exception exMsg;
+    frame.parseBodyIntoProtocolBuffer(exMsg);
+    castor::exception::Exception ex(exMsg.code());
+    ex.getMessage() << exMsg.message();
+    throw ex;
+  }
+
+  frame.parseBodyIntoProtocolBuffer(body);
+}
 
 } // namespace messages
 } // namespace castor
