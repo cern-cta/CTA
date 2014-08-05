@@ -34,7 +34,7 @@
 namespace unitTests{
   using namespace castor::tape::tapeserver::daemon;
   class FakeTapeWriteTask : public  DataConsumer{
-    castor::tape::threading::BlockingQueue<MemBlock*> fifo;
+    castor::server::BlockingQueue<MemBlock*> fifo;
     unsigned long m_checksum;
   public:
     FakeTapeWriteTask():m_checksum(Payload::zeroAdler32()){
@@ -67,7 +67,7 @@ namespace unitTests{
     char path[]="/tmp/testDRT-XXXXXX";
     mkstemp(path);
     std::ofstream out(path,std::ios::out | std::ios::binary);
-    castor::tape::threading::AtomicFlag flag;
+    castor::server::AtomicFlag flag;
     castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskReadTaskTest");
     castor::log::LogContext lc(log);
     

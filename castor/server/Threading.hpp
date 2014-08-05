@@ -21,43 +21,46 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "Regex.hpp"
+#pragma once
+
+#include <pthread.h>
+#include <semaphore.h>
+#include "castor/exception/Errnum.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
-#include <regex.h>
+#include "castor/server/Mutex.hpp"
 
-using namespace castor::tape;
+namespace castor {
+namespace server { 
 
-utils::Regex::Regex(const char * re_str) : m_set(false) {
-  if (int rc = ::regcomp(&m_re, re_str, REG_EXTENDED)) {
-    std::string error("Could not compile regular expression: \"");
-    error += re_str;
-    error += "\"";
-    char re_err[1024];
-    if (::regerror(rc, &m_re, re_err, sizeof (re_err))) {
-      error += ": ";
-      error += re_err;
-    }
-    throw Exception(error);
-  }
-  m_set = true;
-}
+  
 
-utils::Regex::~Regex() {
-  if (m_set)
-    ::regfree(&m_re);
-}
+  /**
+   * An exception class thrown by the Thread class.
+   */
+  class UncaughtExceptionInThread: public castor::tape::Exception {
+  public:
+    UncaughtExceptionInThread(const std::string& w= ""): castor::tape::Exception(w) {}
+  };
 
-std::vector<std::string> utils::Regex::exec(const std::string &s) {
-  regmatch_t matches[100];
-  if (REG_NOMATCH != ::regexec(&m_re, s.c_str(), 100, matches, 0)) {
-    std::vector<std::string> ret;
-    for (int i = 0; i < 100; i++) {
-      if (matches[i].rm_so != -1) {
-        ret.push_back(s.substr(matches[i].rm_so, matches[i].rm_eo - matches[i].rm_so));
-      } else
-        break;
-    }
-    return ret;
-  }
-  return std::vector<std::string>();
-}
+  /**
+   * A Thread class, based on the Qt interface. To be used, on should
+   * inherit from it, and implement the run() method.
+   * The thread is started with start() and joined with wait().
+   */
+  class Thread {
+  public:
+    Thread(): m_hadException(false), m_what("") {}
+    virtual ~Thread () {}
+    void start() ;
+    void wait() ;
+  protected:
+    virtual void run () = 0;
+  private:
+    pthread_t m_thread;
+    bool m_hadException;
+    std::string m_what;
+    std::string m_type;
+    static void * pthread_runner (void * arg);
+  };
+  
+}}

@@ -31,8 +31,8 @@
 #include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
-#include "castor/tape/tapeserver/threading/Threading.hpp"
+#include "castor/server/BlockingQueue.hpp"
+#include "castor/server/Threading.hpp"
 #include "castor/tape/utils/Timer.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include <iostream>

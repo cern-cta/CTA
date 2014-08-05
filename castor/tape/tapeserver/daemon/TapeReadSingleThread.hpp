@@ -24,9 +24,9 @@
 #pragma once
 
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
-#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
+#include "castor/server/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
-#include "castor/tape/tapeserver/threading/Threading.hpp"
+#include "castor/server/Threading.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
@@ -135,7 +135,7 @@ private:
    * @return m_tasks.pop();
    */
   TapeReadTask * popAndRequestMoreJobs() {
-    castor::tape::threading::BlockingQueue<TapeReadTask *>::valueRemainingPair 
+    castor::server::BlockingQueue<TapeReadTask *>::valueRemainingPair 
       vrp = m_tasks.popGetSize();
     // If we just passed (down) the half full limit, ask for more
     // (the remaining value is after pop)

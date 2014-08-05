@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/threading/Threading.hpp"
-#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
+#include "castor/server/Threading.hpp"
+#include "castor/server/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/utils/DriveConfig.hpp"
 #include "castor/log/LogContext.hpp"
@@ -40,7 +40,7 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-class TapeServerReporter : private castor::tape::threading::Thread {
+class TapeServerReporter : private castor::server::Thread {
 
 public:
   /**
@@ -139,7 +139,7 @@ private:
   /** 
    * m_fifo is holding all the report waiting to be processed
    */
-  castor::tape::threading::BlockingQueue<Report*> m_fifo;
+  castor::server::BlockingQueue<Report*> m_fifo;
   
   /**
    A bunch of references to proxies to send messages to the 

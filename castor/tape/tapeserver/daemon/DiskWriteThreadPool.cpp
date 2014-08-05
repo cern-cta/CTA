@@ -51,7 +51,7 @@ DiskWriteThreadPool::DiskWriteThreadPool(int nbThread,
 DiskWriteThreadPool::~DiskWriteThreadPool() {
   // A barrier preventing destruction of the object if a poster has still not
   // returned yet from the push or finish function.
-  castor::tape::threading::MutexLocker ml(&m_pusherProtection);
+  castor::server::MutexLocker ml(&m_pusherProtection);
   while (m_threads.size()) {
     delete m_threads.back();
     m_threads.pop_back();
@@ -90,7 +90,7 @@ void DiskWriteThreadPool::push(DiskWriteTask *t) {
       throw castor::tape::Exception("NULL task should not been directly pushed into DiskWriteThreadPool");
     }
   }
-  castor::tape::threading::MutexLocker ml(&m_pusherProtection);
+  castor::server::MutexLocker ml(&m_pusherProtection);
   m_tasks.push(t);
 }
 
@@ -98,7 +98,7 @@ void DiskWriteThreadPool::push(DiskWriteTask *t) {
 // DiskWriteThreadPool::finish
 //------------------------------------------------------------------------------
 void DiskWriteThreadPool::finish() {
-  castor::tape::threading::MutexLocker ml(&m_pusherProtection);
+  castor::server::MutexLocker ml(&m_pusherProtection);
   for (size_t i=0; i<m_threads.size(); i++) {
     m_tasks.push(NULL);
   }
@@ -107,7 +107,7 @@ void DiskWriteThreadPool::finish() {
 //addThreadStats
 //------------------------------------------------------------------------------
 void DiskWriteThreadPool::addThreadStats(const DiskStats& other){
-  castor::tape::threading::MutexLocker lock(&m_statAddingProtection);
+  castor::server::MutexLocker lock(&m_statAddingProtection);
   m_pooldStat+=other;
 }
 //------------------------------------------------------------------------------

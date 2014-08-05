@@ -25,41 +25,12 @@
 
 #include <pthread.h>
 #include <semaphore.h>
-#include "castor/exception/Errnum.hpp"
-#include "../exception/Exception.hpp"
+#include "castor/server/Mutex.hpp"
 
 namespace castor {
-namespace tape {
-namespace threading {
-  /**
-   * A simple exception throwing wrapper for pthread mutexes.
-   * Inspired from the interface of Qt.
-   */
-  class Mutex {
-  public:
-    Mutex() ;
-    ~Mutex();
-    void lock() ;
-    void unlock();
-  private:
-    pthread_mutex_t m_mutex;
-  };
-  
-  /**
-   * A simple scoped locker for mutexes. Highly recommended as
-   * the mutex will be released in all cases (exception, mid-code return, etc...)
-   * To use, simply instanciate and forget.
-   * @param m pointer to a Mutex instance
-   */
-  class MutexLocker {
-  public:
-    MutexLocker(Mutex * m) :m_mutex(m) {m->lock();}
-    ~MutexLocker() { try { m_mutex->unlock(); } catch (...) {} }
-  private:
-    Mutex * m_mutex;
-  };
-  
-  /**
+namespace server {   
+
+/**
    * An exception throwing wrapper to posix semaphores.
    */
   class PosixSemaphore {
@@ -107,36 +78,4 @@ namespace threading {
   };
 #endif // ndef __APPLE__
   
-
-  /**
-   * An exception class thrown by the Thread class.
-   */
-  class UncaughtExceptionInThread: public castor::tape::Exception {
-  public:
-    UncaughtExceptionInThread(const std::string& w= ""): castor::tape::Exception(w) {}
-  };
-
-  /**
-   * A Thread class, based on the Qt interface. To be used, on should
-   * inherit from it, and implement the run() method.
-   * The thread is started with start() and joined with wait().
-   */
-  class Thread {
-  public:
-    Thread(): m_hadException(false), m_what("") {}
-    virtual ~Thread () {}
-    void start() ;
-    void wait() ;
-  protected:
-    virtual void run () = 0;
-  private:
-    pthread_t m_thread;
-    bool m_hadException;
-    std::string m_what;
-    std::string m_type;
-    static void * pthread_runner (void * arg);
-  };
-  
-} // namespace threading
-} // namespace tape
-} // namespace castor
+  }}

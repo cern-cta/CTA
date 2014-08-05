@@ -37,7 +37,7 @@
 #include "castor/tape/tapegateway/FileMigrationReportList.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
-#include "../threading/Threading.hpp"
+#include "castor/server/Threading.hpp"
 
 namespace castor {
 namespace tape {

@@ -21,29 +21,29 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #include <gtest/gtest.h>
-#include "castor/tape/tapeserver/threading/Threading.hpp"
-#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
+#include "castor/server/Threading.hpp"
+#include "castor/server/AtomicCounter.hpp"
 namespace unitTest {
-  struct ThreadPlus : public castor::tape::threading::Thread{
-    ThreadPlus( castor::tape::threading::AtomicCounter<int>& c):count(c){}
+  struct ThreadPlus : public castor::server::Thread{
+    ThreadPlus( castor::server::AtomicCounter<int>& c):count(c){}
   protected:
-    castor::tape::threading::AtomicCounter<int>& count;
+    castor::server::AtomicCounter<int>& count;
     virtual void run (){
       for(int i=0;i<100;++i)
         ++count;
     }
   };
-  struct ThreadMinus : public castor::tape::threading::Thread{
-    ThreadMinus( castor::tape::threading::AtomicCounter<int>& c):count(c){}
+  struct ThreadMinus : public castor::server::Thread{
+    ThreadMinus( castor::server::AtomicCounter<int>& c):count(c){}
   protected:
-    castor::tape::threading::AtomicCounter<int>& count;
+    castor::server::AtomicCounter<int>& count;
     virtual void run (){
       for(int i=0;i<100;++i)
         --count;
     }
   };
   TEST(castor_tape_threading, AtomicCOunterTest) {
-    castor::tape::threading::AtomicCounter<int> c(42);
+    castor::server::AtomicCounter<int> c(42);
     
     ThreadPlus t(c);
     ThreadPlus t1(c);

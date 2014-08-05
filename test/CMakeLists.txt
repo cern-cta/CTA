@@ -158,8 +158,8 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/SCSI/DeviceTest.cpp
   ../castor/tape/tapeserver/SCSI/StructuresTest.cpp
   ../castor/tape/tapeserver/utils/RegexTest.cpp
-  ../castor/tape/tapeserver/threading/ThreadingTests.cpp
-  ../castor/tape/tapeserver/threading/AtomicCounterTest.cpp
+  ../castor/server/ThreadingTests.cpp
+  ../castor/server/AtomicCounterTest.cpp
   ../castor/tape/utils/TpconfigLineTest.cpp
   ../castor/utils/SmartArrayPtrTest.cpp
   ../castor/utils/SmartFdTest.cpp
@@ -174,7 +174,6 @@ target_link_libraries(castorUnitTests
   castorcommon
   castorclient
   castorlegacymsg
-  castorTapeServerThreading
   castortapeutils
   Exception
   SCSI
@@ -184,7 +183,6 @@ target_link_libraries(castorUnitTests
   TestDummies
   castorserver
   castortapegatewayprotocol
-  castorTapeServerThreading
   castorTapeServerDaemonTestDummies
   castorTapeServerDaemon
   ${GTEST_LIBRARY}
@@ -210,9 +208,9 @@ target_link_libraries(castorUnitTests
 # helgrind/drd (and also memcheck)
 add_executable(castorThreadedUnitTests
   castorUnitTests.cpp
-  ../castor/tape/tapeserver/threading/ThreadingMTTests.cpp
+  ../castor/server/ThreadingMTTests.cpp
  ../castor/tape/tapeserver/daemon/DataTransferSessionTest.cpp
-  ../castor/tape/tapeserver/threading/ThreadingBlockingQTests.cpp
+  ../castor/server/ThreadingBlockingQTests.cpp
   ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp
   ../castor/tape/tapeserver/daemon/MigrationReportPackerTest.cpp
   ../castor/tape/tapeserver/daemon/TaskWatchDogTest.cpp
@@ -225,7 +223,6 @@ target_link_libraries(castorThreadedUnitTests
   castorlegacymsg
   castorserver
   castortapegatewayprotocol
-  castorTapeServerThreading
   castorTapeServerDaemonTestDummies
   castorTapeServerDaemon
   TestDummies
@@ -251,14 +248,15 @@ target_link_libraries(castorThreadedUnitTests
 # helgrind/drd (but not memcheck)
 add_executable(castorMultiprocessUnitTests
   castorUnitTests.cpp
-  ../castor/tape/tapeserver/threading/ThreadingMPTests.cpp
+  ../castor/server/ThreadingMPTests.cpp
 )
 target_link_libraries(castorMultiprocessUnitTests
   TapeDrive
   Exception
   SCSI
   System 
-  Utils File castorTapeServerThreading 
+  Utils File 
+  castorserver
   ${GTEST_LIBRARY} gmock pthread castorcommon castorclient)
 
 install(TARGETS

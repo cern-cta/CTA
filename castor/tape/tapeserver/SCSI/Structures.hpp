@@ -33,7 +33,7 @@
 #include <cstdio>
 
 #include "Constants.hpp"
-#include "../exception/Exception.hpp"
+#include "castor/tape/tapeserver/exception/Exception.hpp"
 
 namespace castor {
 namespace tape {

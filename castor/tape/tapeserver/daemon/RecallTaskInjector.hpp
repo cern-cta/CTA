@@ -25,8 +25,8 @@
 
 #include <stdint.h>
 #include "castor/log/LogContext.hpp"
-#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
-#include "castor/tape/tapeserver/threading/Threading.hpp"
+#include "castor/server/BlockingQueue.hpp"
+#include "castor/server/Threading.hpp"
 
 namespace castor{
 namespace tape{
@@ -156,7 +156,7 @@ private:
     const bool end;
   };
   
-  class WorkerThread: public castor::tape::threading::Thread {
+  class WorkerThread: public castor::server::Thread {
   public:
     WorkerThread(RecallTaskInjector & rji): m_parent(rji) {}
     virtual void run();
@@ -182,8 +182,8 @@ private:
    */
   castor::log::LogContext m_lc;
   
-  castor::tape::threading::Mutex m_producerProtection;
-  castor::tape::threading::BlockingQueue<Request> m_queue;
+  castor::server::Mutex m_producerProtection;
+  castor::server::BlockingQueue<Request> m_queue;
   
 
   //maximal number of files requested. at once

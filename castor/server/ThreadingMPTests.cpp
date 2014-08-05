@@ -30,13 +30,13 @@
  many memory leaks in the child process. */
 
 namespace threadedUnitTests {
-  class emptyCleanup : public castor::tape::threading::ChildProcess::Cleanup {
+  class emptyCleanup : public castor::server::ChildProcess::Cleanup {
   public:
 
     virtual void operator ()() { };
   };
 
-  class myOtherProcess : public castor::tape::threading::ChildProcess {
+  class myOtherProcess : public castor::server::ChildProcess {
   private:
 
     int run() {
@@ -52,14 +52,14 @@ namespace threadedUnitTests {
   TEST(castor_tape_threading, ChildProcess_return_value) {
     myOtherProcess cp;
     emptyCleanup cleanup;
-    EXPECT_THROW(cp.exitCode(), castor::tape::threading::ChildProcess::ProcessNeverStarted);
+    EXPECT_THROW(cp.exitCode(), castor::server::ChildProcess::ProcessNeverStarted);
     EXPECT_NO_THROW(cp.start(cleanup));
-    EXPECT_THROW(cp.exitCode(), castor::tape::threading::ChildProcess::ProcessStillRunning);
+    EXPECT_THROW(cp.exitCode(), castor::server::ChildProcess::ProcessStillRunning);
     EXPECT_NO_THROW(cp.wait());
     ASSERT_EQ(123, cp.exitCode());
   }
 
-  class myInfiniteSpinner : public castor::tape::threading::ChildProcess {
+  class myInfiniteSpinner : public castor::server::ChildProcess {
   private:
 
     int run() {
@@ -77,9 +77,9 @@ namespace threadedUnitTests {
   TEST(castor_tape_threading, ChildProcess_killing) {
     myInfiniteSpinner cp;
     emptyCleanup cleanup;
-    EXPECT_THROW(cp.kill(), castor::tape::threading::ChildProcess::ProcessNeverStarted);
+    EXPECT_THROW(cp.kill(), castor::server::ChildProcess::ProcessNeverStarted);
     EXPECT_NO_THROW(cp.start(cleanup));
-    EXPECT_THROW(cp.exitCode(), castor::tape::threading::ChildProcess::ProcessStillRunning);
+    EXPECT_THROW(cp.exitCode(), castor::server::ChildProcess::ProcessStillRunning);
     ASSERT_EQ(true, cp.running());
     EXPECT_NO_THROW(cp.kill());
     /* The effect is not immediate, wait a bit. */
@@ -88,6 +88,6 @@ namespace threadedUnitTests {
     ts.tv_nsec = 100*1000*1000;
     nanosleep(&ts, NULL);
     ASSERT_EQ(false, cp.running());
-    EXPECT_THROW(cp.exitCode(), castor::tape::threading::ChildProcess::ProcessWasKilled);
+    EXPECT_THROW(cp.exitCode(), castor::server::ChildProcess::ProcessWasKilled);
   }
 } // namespace threadedUnitTests

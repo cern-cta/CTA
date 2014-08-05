@@ -1,2 +1,0 @@
-add_library(castorTapeServerThreading Threading.cpp ChildProcess.cpp)
-target_link_libraries(castorTapeServerThreading Exception)

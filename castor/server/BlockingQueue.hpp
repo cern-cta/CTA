@@ -31,11 +31,11 @@
 #include <queue>
 #include <exception>
 
-#include "Threading.hpp"
+#include "castor/server/Threading.hpp"
+#include "castor/server/Semaphores.hpp"
 
 namespace castor {
-namespace tape {
-namespace threading {
+namespace server {
       
 /***
  * This simple class provides a thread-safe blocking queue
@@ -126,6 +126,4 @@ private:
   
 };
 
-} //end of threading
-} //end of tape
-} //end of castor
+}}

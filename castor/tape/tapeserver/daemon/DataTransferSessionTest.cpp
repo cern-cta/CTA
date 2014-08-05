@@ -43,7 +43,7 @@
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
-#include "castor/tape/tapeserver/threading/Threading.hpp"
+#include "castor/server/Threading.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "h/Ctape.h"
@@ -61,7 +61,7 @@ using namespace castor::tape::tapeserver;
 using namespace castor::tape::tapeserver::daemon;
 namespace unitTest {
 
-class clientRunner: public castor::tape::threading::Thread {
+class clientRunner: public castor::server::Thread {
 public:
   clientRunner(client::ClientSimulator &client): m_sim(client) {}
 private:

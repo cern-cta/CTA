@@ -33,7 +33,7 @@
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
 
-#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
+#include "castor/server/AtomicCounter.hpp"
 namespace castor{
 namespace tape{
 namespace tapeserver{
@@ -156,7 +156,7 @@ private:
     const bool end;
   };
   
-  class WorkerThread: public castor::tape::threading::Thread {
+  class WorkerThread: public castor::server::Thread {
   public:
     WorkerThread(MigrationTaskInjector & rji): m_parent(rji) {}
     virtual void run();
@@ -182,16 +182,16 @@ private:
    */
   castor::log::LogContext m_lc;
   
-  castor::tape::threading::Mutex m_producerProtection;
+  castor::server::Mutex m_producerProtection;
   
   ///all the requests for work we will forward to the client.
-  castor::tape::threading::BlockingQueue<Request> m_queue;
+  castor::server::BlockingQueue<Request> m_queue;
   
   /** a shared flag among the all tasks related to migration, set as true 
    * as soon a single task encounters a failure. That way we go into a degraded mode
    * where we only circulate memory without writing anything on tape
    */
-  castor::tape::threading::AtomicFlag m_errorFlag;
+  castor::server::AtomicFlag m_errorFlag;
 
   /// The maximum number of files we ask per request. 
   const uint64_t m_maxFiles;

@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
+#include "castor/server/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/exception/Exception.hpp"
@@ -59,7 +59,7 @@ public:
   m_dataBlocksPushed(0), m_dataBlocksPopped(0) {};
   
   ~DataPipeline() throw() { 
-    castor::tape::threading::MutexLocker ml(&m_freeBlockProviderProtection); 
+    castor::server::MutexLocker ml(&m_freeBlockProviderProtection); 
   }
 
   /* 
@@ -69,9 +69,9 @@ public:
    */
   bool provideBlock(MemBlock *mb)  {
     bool ret;
-    castor::tape::threading::MutexLocker ml(&m_freeBlockProviderProtection);
+    castor::server::MutexLocker ml(&m_freeBlockProviderProtection);
     {
-      castor::tape::threading::MutexLocker ml(&m_countersMutex);
+      castor::server::MutexLocker ml(&m_countersMutex);
       if (m_freeBlocksProvided >= m_blocksNeeded) {
         throw castor::exception::MemException("DataFifo overflow on free blocks");
       }
@@ -105,13 +105,13 @@ public:
    */
   void pushDataBlock(MemBlock *mb)  {
     {
-      castor::tape::threading::MutexLocker ml(&m_countersMutex);
+      castor::server::MutexLocker ml(&m_countersMutex);
       if (m_dataBlocksPushed >= m_blocksNeeded)
         throw castor::exception::MemException("DataFifo overflow on data blocks");
     }
     m_dataBlocks.push(mb);
     {
-        castor::tape::threading::MutexLocker ml(&m_countersMutex);
+        castor::server::MutexLocker ml(&m_countersMutex);
         m_dataBlocksPushed++;
     }
   }
@@ -124,7 +124,7 @@ public:
   MemBlock * popDataBlock() {
     MemBlock *ret = m_dataBlocks.pop();
     {
-      castor::tape::threading::MutexLocker ml(&m_countersMutex);
+      castor::server::MutexLocker ml(&m_countersMutex);
       m_dataBlocksPopped++;
     }
     return ret;
@@ -137,13 +137,13 @@ public:
   bool finished() {
     // No need to lock because only one int variable is read.
     //TODO : are we sure the operation is atomic ? It is plateform dependant
-    castor::tape::threading::MutexLocker ml(&m_countersMutex);
+    castor::server::MutexLocker ml(&m_countersMutex);
     return m_dataBlocksPopped >= m_blocksNeeded;
   }
   
 private:
-  castor::tape::threading::Mutex m_countersMutex;
-  castor::tape::threading::Mutex m_freeBlockProviderProtection;
+  castor::server::Mutex m_countersMutex;
+  castor::server::Mutex m_freeBlockProviderProtection;
   
   ///the number of memory blocks we want to be provided to the object (its size).
   const int m_blocksNeeded;
@@ -158,10 +158,10 @@ private:
   volatile int m_dataBlocksPopped;
   
     ///thread sage storage of all free blocks
-  castor::tape::threading::BlockingQueue<MemBlock *> m_freeBlocks;
+  castor::server::BlockingQueue<MemBlock *> m_freeBlocks;
   
   ///thread sage storage of all blocks filled with data
-  castor::tape::threading::BlockingQueue<MemBlock *> m_dataBlocks;
+  castor::server::BlockingQueue<MemBlock *> m_dataBlocks;
 };
 
 }

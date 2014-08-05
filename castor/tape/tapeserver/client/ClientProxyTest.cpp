@@ -25,7 +25,7 @@
 #include "ClientSimulator.hpp"
 #include "ClientSimSingleReply.hpp"
 #include "ClientProxy.hpp"
-#include "../threading/Threading.hpp"
+#include "castor/server/Threading.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "../system/Wrapper.hpp"
@@ -41,7 +41,7 @@ using namespace castor::tape::tapeserver::daemon;
 namespace unitTest {
   using namespace castor::tape::tapeserver::client;
 template <class Repl>
-class clientSingleReplRunner: public castor::tape::threading::Thread {
+class clientSingleReplRunner: public castor::server::Thread {
 public:
   clientSingleReplRunner(client::ClientSimSingleReply<Repl> &client): m_sim(client) {}
 private:

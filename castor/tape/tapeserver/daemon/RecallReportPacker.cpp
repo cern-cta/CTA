@@ -54,14 +54,14 @@ ReportPackerInterface<detail::Recall>(tg,lc),
 //Destructor
 //------------------------------------------------------------------------------
 RecallReportPacker::~RecallReportPacker(){
-  castor::tape::threading::MutexLocker ml(&m_producterProtection);
+  castor::server::MutexLocker ml(&m_producterProtection);
 }
 //------------------------------------------------------------------------------
 //reportCompletedJob
 //------------------------------------------------------------------------------
 void RecallReportPacker::reportCompletedJob(const FileStruct& recalledFile,unsigned long checksum){
   std::auto_ptr<Report> rep(new ReportSuccessful(recalledFile,checksum));
-  castor::tape::threading::MutexLocker ml(&m_producterProtection);
+  castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
@@ -70,14 +70,14 @@ void RecallReportPacker::reportCompletedJob(const FileStruct& recalledFile,unsig
 void RecallReportPacker::reportFailedJob(const FileStruct & recalledFile
 ,const std::string& msg,int error_code){
   std::auto_ptr<Report> rep(new ReportError(recalledFile,msg,error_code));
-  castor::tape::threading::MutexLocker ml(&m_producterProtection);
+  castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
 //reportEndOfSession
 //------------------------------------------------------------------------------
 void RecallReportPacker::reportEndOfSession(){
-  castor::tape::threading::MutexLocker ml(&m_producterProtection);
+  castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportEndofSession());
 }
   
@@ -85,14 +85,14 @@ void RecallReportPacker::reportEndOfSession(){
 //reportEndOfSessionWithErrors
 //------------------------------------------------------------------------------
 void RecallReportPacker::reportEndOfSessionWithErrors(const std::string msg,int error_code){
-  castor::tape::threading::MutexLocker ml(&m_producterProtection);
+  castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportEndofSessionWithErrors(msg,error_code));
 }
   //------------------------------------------------------------------------------
   //ReportSuccessful::reportStuckOn
   //------------------------------------------------------------------------------
 void RecallReportPacker::reportStuckOn(FileStruct& file){
-  castor::tape::threading::MutexLocker ml(&m_producterProtection);
+  castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportStuck(file));
 }
 //------------------------------------------------------------------------------

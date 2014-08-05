@@ -25,10 +25,10 @@
 
 namespace threadedUnitTests {
 
-    typedef castor::tape::threading::BlockingQueue<int> QueueType;
+    typedef castor::server::BlockingQueue<int> QueueType;
 
     const int numberOfElements = 10000;
-    class PingThread : public castor::tape::threading::Thread {
+    class PingThread : public castor::server::Thread {
         QueueType& queue;
     protected :
         virtual void run()  //@override 
@@ -47,7 +47,7 @@ namespace threadedUnitTests {
         
 
     };
-    class PongThread : public castor::tape::threading::Thread {
+    class PongThread : public castor::server::Thread {
         QueueType& queue;
     protected:
          virtual void run()  //@override 

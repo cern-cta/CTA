@@ -64,7 +64,6 @@ target_link_libraries(tapeserverd
   castorserver
   castortapegatewayprotocol
   castortapereactor
-  castorTapeServerThreading
   castortapeutils
   ${LIBCAP_LIB}
   ${ZLIB_LIBRARIES}

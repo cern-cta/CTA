@@ -1,4 +1,5 @@
 /******************************************************************************
+ *                      Payload.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,44 +21,41 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
+#pragma once
 
-#include "Regex.hpp"
+#include <pthread.h>
+#include <semaphore.h>
+#include "castor/exception/Errnum.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
-#include <regex.h>
 
-using namespace castor::tape;
-
-utils::Regex::Regex(const char * re_str) : m_set(false) {
-  if (int rc = ::regcomp(&m_re, re_str, REG_EXTENDED)) {
-    std::string error("Could not compile regular expression: \"");
-    error += re_str;
-    error += "\"";
-    char re_err[1024];
-    if (::regerror(rc, &m_re, re_err, sizeof (re_err))) {
-      error += ": ";
-      error += re_err;
-    }
-    throw Exception(error);
-  }
-  m_set = true;
-}
-
-utils::Regex::~Regex() {
-  if (m_set)
-    ::regfree(&m_re);
-}
-
-std::vector<std::string> utils::Regex::exec(const std::string &s) {
-  regmatch_t matches[100];
-  if (REG_NOMATCH != ::regexec(&m_re, s.c_str(), 100, matches, 0)) {
-    std::vector<std::string> ret;
-    for (int i = 0; i < 100; i++) {
-      if (matches[i].rm_so != -1) {
-        ret.push_back(s.substr(matches[i].rm_so, matches[i].rm_eo - matches[i].rm_so));
-      } else
-        break;
-    }
-    return ret;
-  }
-  return std::vector<std::string>();
-}
+namespace castor {
+namespace server {
+  /**
+   * A simple exception throwing wrapper for pthread mutexes.
+   * Inspired from the interface of Qt.
+   */
+  class Mutex {
+  public:
+    Mutex() ;
+    ~Mutex();
+    void lock() ;
+    void unlock();
+  private:
+    pthread_mutex_t m_mutex;
+  };
+  
+  /**
+   * A simple scoped locker for mutexes. Highly recommended as
+   * the mutex will be released in all cases (exception, mid-code return, etc...)
+   * To use, simply instanciate and forget.
+   * @param m pointer to a Mutex instance
+   */
+  class MutexLocker {
+  public:
+    MutexLocker(Mutex * m) :m_mutex(m) {m->lock();}
+    ~MutexLocker() { try { m_mutex->unlock(); } catch (...) {} }
+  private:
+    Mutex * m_mutex;
+  };
+  
+}}

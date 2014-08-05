@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "../exception/Exception.hpp"
+#include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "Structures.hpp"
 #include "Constants.hpp"
 

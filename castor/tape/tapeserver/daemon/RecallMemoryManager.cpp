@@ -54,11 +54,11 @@ RecallMemoryManager::RecallMemoryManager(const size_t numberOfBlocks, const size
 RecallMemoryManager::~RecallMemoryManager() {
   // Make sure the thread is finished: this should be done by the caller,
   // who should have called waitThreads.
-  // castor::tape::threading::Thread::wait();
+  // castor::server::Thread::wait();
   // we expect to be called after all users are finished. Just "free"
   // the memory blocks we still have.
 
-  castor::tape::threading::BlockingQueue<MemBlock*>::valueRemainingPair ret;
+  castor::server::BlockingQueue<MemBlock*>::valueRemainingPair ret;
   do {
     ret = m_freeBlocks.popGetSize();
     delete ret.value;

@@ -33,8 +33,8 @@
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
-#include "../threading/Threading.hpp"
-#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
+#include "castor/server/Threading.hpp"
+#include "castor/server/AtomicCounter.hpp"
 
 namespace castor {
 namespace tape {
@@ -159,7 +159,7 @@ namespace client {
     
     /** The file transaction id a.k.a. aggregator transaction id. This is the 
      * serial number of the message in the session */
-    tape::threading::AtomicCounter<uint32_t> m_transactionId;
+    castor::server::AtomicCounter<uint32_t> m_transactionId;
   };
   
 }

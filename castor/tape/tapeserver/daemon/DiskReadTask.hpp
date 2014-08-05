@@ -28,7 +28,7 @@
 #include "castor/tape/tapeserver/daemon/DiskStats.hpp"
 #include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
-#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
+#include "castor/server/AtomicFlag.hpp"
 #include "castor/log/LogContext.hpp"
 
 namespace castor {
@@ -45,7 +45,7 @@ public:
    */
   DiskReadTask(DataConsumer & destination, 
           tape::tapegateway::FileToMigrateStruct* file,size_t numberOfBlock,
-          castor::tape::threading::AtomicFlag& errorFlag);
+          castor::server::AtomicFlag& errorFlag);
   
   void execute(log::LogContext& lc);
     /**
@@ -95,7 +95,7 @@ private:
    */
   size_t m_numberOfBlock;
   
-  castor::tape::threading::AtomicFlag& m_errorFlag;
+  castor::server::AtomicFlag& m_errorFlag;
 };
 
 }}}}

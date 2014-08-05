@@ -22,8 +22,9 @@
  *****************************************************************************/
 
 #include <gtest/gtest.h>
-#include "Threading.hpp"
-#include "ChildProcess.hpp"
+#include "castor/server/Threading.hpp"
+#include "castor/server/ChildProcess.hpp"
+#include "castor/server/Semaphores.hpp"
 #include <time.h>
 
 /* Note: those tests create multi threading errors on purpose and should not
@@ -33,7 +34,7 @@ namespace unitTests {
   TEST(castor_tape_threading, Mutex_properly_throws_exceptions) {
     /* Check that we properly get exception when doing wrong semaphore 
      operations */
-    castor::tape::threading::Mutex m;
+    castor::server::Mutex m;
     ASSERT_NO_THROW(m.lock());
     /* Duplicate lock */
     ASSERT_THROW(m.lock(),castor::exception::Errnum);
@@ -43,9 +44,9 @@ namespace unitTests {
   }
   
   TEST(castor_tape_threading, MutexLocker_locks_and_properly_throws_exceptions) {
-    castor::tape::threading::Mutex m;
+    castor::server::Mutex m;
     {
-      castor::tape::threading::MutexLocker ml(&m);
+      castor::server::MutexLocker ml(&m);
       /* This is a different flavourr of duplicate locking */
       ASSERT_THROW(m.lock(),castor::exception::Errnum);
       ASSERT_NO_THROW(m.unlock());
@@ -58,27 +59,27 @@ namespace unitTests {
   }
 
   TEST(castor_tape_threading, PosixSemaphore_basic_counting) {
-    castor::tape::threading::PosixSemaphore s(2);
+    castor::server::PosixSemaphore s(2);
     ASSERT_NO_THROW(s.acquire());
     ASSERT_EQ(true, s.tryAcquire());
     ASSERT_EQ(false, s.tryAcquire());
   }
 
   TEST(castor_tape_threading, CondVarSemaphore_basic_counting) {
-    castor::tape::threading::CondVarSemaphore s(2);
+    castor::server::CondVarSemaphore s(2);
     ASSERT_NO_THROW(s.acquire());
     ASSERT_EQ(true, s.tryAcquire());
     ASSERT_EQ(false, s.tryAcquire());
   }
 
   TEST(castor_tape_threading, Semaphore_basic_counting) {
-    castor::tape::threading::Semaphore s(2);
+    castor::server::Semaphore s(2);
     ASSERT_NO_THROW(s.acquire());
     ASSERT_EQ(true, s.tryAcquire());
     ASSERT_EQ(false, s.tryAcquire());
   }
   
-  class Thread_exception_throwing: public castor::tape::threading::Thread {
+  class Thread_exception_throwing: public castor::server::Thread {
   private:
     void run() {
       throw castor::tape::Exception("Exception in child thread");
@@ -88,7 +89,7 @@ namespace unitTests {
     Thread_exception_throwing t, t2;
     t.start();
     t2.start();
-    ASSERT_THROW(t.wait(), castor::tape::threading::UncaughtExceptionInThread);
+    ASSERT_THROW(t.wait(), castor::server::UncaughtExceptionInThread);
     try {
       t2.wait();
     } catch (std::exception & e) {

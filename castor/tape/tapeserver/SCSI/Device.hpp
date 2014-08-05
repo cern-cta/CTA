@@ -29,7 +29,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include "../system/Wrapper.hpp"
-#include "../exception/Exception.hpp"
+#include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "../utils/Regex.hpp"
 #include "Constants.hpp"
 #include <string>

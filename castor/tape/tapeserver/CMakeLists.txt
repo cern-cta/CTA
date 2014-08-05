@@ -43,7 +43,6 @@ add_subdirectory(exception)
 add_subdirectory(utils)
 add_subdirectory(file)
 add_subdirectory(daemon)
-add_subdirectory(threading)
 
 # .. and of course, the tests (last to use the variable definition)
 add_subdirectory(test)

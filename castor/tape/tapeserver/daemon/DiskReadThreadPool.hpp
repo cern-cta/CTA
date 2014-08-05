@@ -25,9 +25,9 @@
 #pragma once
 
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
-#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
-#include "castor/tape/tapeserver/threading/Threading.hpp"
-#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
+#include "castor/server/BlockingQueue.hpp"
+#include "castor/server/Threading.hpp"
+#include "castor/server/AtomicCounter.hpp"
 #include "castor/log/LogContext.hpp"
 #include <vector>
 #include <stdint.h>
@@ -123,7 +123,7 @@ private:
   /**
    To protect addThreadStats from concurrent calls
    */
-  castor::tape::threading::Mutex m_statAddingProtection;
+  castor::server::Mutex m_statAddingProtection;
   
   /**
    * Aggregate all threads' stats 
@@ -133,15 +133,15 @@ private:
   /**
    * Subclass of the thread pool's worker thread.
    */
-  class DiskReadWorkerThread: private castor::tape::threading::Thread {
+  class DiskReadWorkerThread: private castor::server::Thread {
   public:
     DiskReadWorkerThread(DiskReadThreadPool & parent):
     m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc) {
        log::LogContext::ScopedParam param(m_lc, log::Param("threadID", m_threadID));
        m_lc.log(LOG_INFO,"DisReadThread created");
     }
-    void start() { castor::tape::threading::Thread::start(); }
-    void wait() { castor::tape::threading::Thread::wait(); }
+    void start() { castor::server::Thread::start(); }
+    void wait() { castor::server::Thread::wait(); }
   private:
     void logWithStat(int level, const std::string& message);
     /*
@@ -171,7 +171,7 @@ private:
   
   /** The queue of pointer to tasks to be executed. We own the tasks (they are 
    * deleted by the threads after execution) */
-  castor::tape::threading::BlockingQueue<DiskReadTask *> m_tasks;
+  castor::server::BlockingQueue<DiskReadTask *> m_tasks;
   
   /** The log context. This is copied on construction to prevent interferences
    * between threads.
@@ -192,7 +192,7 @@ private:
   
   /** An atomic (i.e. thread safe) counter of the current number of thread (they
    are counted up at creation time and down at completion time) */
-  tape::threading::AtomicCounter<int> m_nbActiveThread;
+  castor::server::AtomicCounter<int> m_nbActiveThread;
 };
 
 }}}}

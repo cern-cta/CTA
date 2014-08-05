@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
+#include "castor/server/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
@@ -133,7 +133,7 @@ private:
     virtual void execute(MigrationReportPacker& _this);
   };
   
-  class WorkerThread: public castor::tape::threading::Thread {
+  class WorkerThread: public castor::server::Thread {
     MigrationReportPacker & m_parent;
   public:
     WorkerThread(MigrationReportPacker& parent);
@@ -143,10 +143,10 @@ private:
   /** 
    * m_fifo is holding all the report waiting to be processed
    */
-  castor::tape::threading::BlockingQueue<Report*> m_fifo;
+  castor::server::BlockingQueue<Report*> m_fifo;
 
 
-  castor::tape::threading::Mutex m_producterProtection;
+  castor::server::Mutex m_producterProtection;
   
   /** 
    * Sanity check variable to register if an error has happened 

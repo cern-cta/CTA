@@ -43,7 +43,7 @@ namespace daemon {
 // Constructor
 //------------------------------------------------------------------------------
   TapeWriteTask::TapeWriteTask(int blockCount, tapegateway::FileToMigrateStruct* file,
-          MigrationMemoryManager& mm,castor::tape::threading::AtomicFlag& errorFlag): 
+          MigrationMemoryManager& mm,castor::server::AtomicFlag& errorFlag): 
   m_fileToMigrate(file),m_memManager(mm), m_fifo(blockCount),
           m_blockCount(blockCount),m_errorFlag(errorFlag)
   {
@@ -188,7 +188,7 @@ namespace daemon {
 // pushDataBlock
 //------------------------------------------------------------------------------   
    void TapeWriteTask::pushDataBlock(MemBlock *mb) {
-    castor::tape::threading::MutexLocker ml(&m_producerProtection);
+    castor::server::MutexLocker ml(&m_producerProtection);
     m_fifo.pushDataBlock(mb);
   }
   
@@ -196,7 +196,7 @@ namespace daemon {
 // Destructor
 //------------------------------------------------------------------------------   
    TapeWriteTask::~TapeWriteTask() {
-    castor::tape::threading::MutexLocker ml(&m_producerProtection);
+    castor::server::MutexLocker ml(&m_producerProtection);
   }
 //------------------------------------------------------------------------------
 // openWriteFile

@@ -26,8 +26,8 @@
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
-#include "castor/tape/tapeserver/threading/Threading.hpp"
-#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
+#include "castor/server/Threading.hpp"
+#include "castor/server/BlockingQueue.hpp"
 
 namespace castor {
 namespace tape {
@@ -141,7 +141,7 @@ private:
     virtual void execute(RecallReportPacker& _this);
   };
   
-  class WorkerThread: public castor::tape::threading::Thread {
+  class WorkerThread: public castor::server::Thread {
     RecallReportPacker & m_parent;
   public:
     WorkerThread(RecallReportPacker& parent);
@@ -153,12 +153,12 @@ private:
    */
   void flush();
   
-  castor::tape::threading::Mutex m_producterProtection;
+  castor::server::Mutex m_producterProtection;
   
   /** 
    * m_fifo is holding all the report waiting to be processed
    */
-  castor::tape::threading::BlockingQueue<Report*> m_fifo;
+  castor::server::BlockingQueue<Report*> m_fifo;
   
   /**
    How often do we report to the client

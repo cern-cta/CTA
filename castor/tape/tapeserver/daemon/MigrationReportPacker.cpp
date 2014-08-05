@@ -51,7 +51,7 @@ m_workerThread(*this),m_errorHappened(false),m_continue(true) {
 //Destructore
 //------------------------------------------------------------------------------
 MigrationReportPacker::~MigrationReportPacker(){
-  castor::tape::threading::MutexLocker ml(&m_producterProtection);
+  castor::server::MutexLocker ml(&m_producterProtection);
 }
 //------------------------------------------------------------------------------
 //reportCompletedJob
@@ -59,7 +59,7 @@ MigrationReportPacker::~MigrationReportPacker(){
 void MigrationReportPacker::reportCompletedJob(
 const tapegateway::FileToMigrateStruct& migratedFile,unsigned long checksum) {
   std::auto_ptr<Report> rep(new ReportSuccessful(migratedFile,checksum));
-  castor::tape::threading::MutexLocker ml(&m_producterProtection);
+  castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
@@ -68,28 +68,28 @@ const tapegateway::FileToMigrateStruct& migratedFile,unsigned long checksum) {
 void MigrationReportPacker::reportFailedJob(const tapegateway::FileToMigrateStruct& migratedFile,
         const std::string& msg,int error_code){
   std::auto_ptr<Report> rep(new ReportError(migratedFile,msg,error_code));
-  castor::tape::threading::MutexLocker ml(&m_producterProtection);
+  castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
 //reportFlush
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportFlush() {
-  castor::tape::threading::MutexLocker ml(&m_producterProtection);
+  castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportFlush());
 }
 //------------------------------------------------------------------------------
 //reportEndOfSession
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportEndOfSession() {
-    castor::tape::threading::MutexLocker ml(&m_producterProtection);
+    castor::server::MutexLocker ml(&m_producterProtection);
     m_fifo.push(new ReportEndofSession());
 }
 //------------------------------------------------------------------------------
 //reportEndOfSessionWithErrors
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int error_code){
-  castor::tape::threading::MutexLocker ml(&m_producterProtection);
+  castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportEndofSessionWithErrors(msg,error_code));
 }
 //------------------------------------------------------------------------------

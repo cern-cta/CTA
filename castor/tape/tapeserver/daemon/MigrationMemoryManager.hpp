@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
-#include "castor/tape/tapeserver/threading/Threading.hpp"
+#include "castor/server/BlockingQueue.hpp"
+#include "castor/server/Threading.hpp"
 #include "castor/log/LogContext.hpp"
 
 namespace castor {
@@ -44,7 +44,7 @@ class DataPipeline;
  * the free ones around to any class in need. The distribution is actively run in
  * a thread.
  */
-class MigrationMemoryManager: private castor::tape::threading::Thread {
+class MigrationMemoryManager: private castor::server::Thread {
 public:
   
   /**
@@ -128,18 +128,18 @@ private:
   /**
    * Mutex protecting the counters
    */
-  castor::tape::threading::Mutex m_countersMutex;
+  castor::server::Mutex m_countersMutex;
   
   /**
    * Container for the free blocks
    */
-  castor::tape::threading::BlockingQueue<MemBlock *> m_freeBlocks;
+  castor::server::BlockingQueue<MemBlock *> m_freeBlocks;
   
   /**
    * The client queue: we will feed them as soon as blocks
    * become free. This is done in a dedicated thread.
    */
-   castor::tape::threading::BlockingQueue<DataPipeline *> m_clientQueue;
+   castor::server::BlockingQueue<DataPipeline *> m_clientQueue;
 
    /**
     * Logging purpose. Given the fact the class is threaded, the LogContext

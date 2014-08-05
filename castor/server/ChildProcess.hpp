@@ -23,13 +23,13 @@
 #pragma once
 
 #include "castor/exception/Errnum.hpp"
-#include "../exception/Exception.hpp"
+#include "castor/tape/tapeserver/exception/Exception.hpp"
 #include <unistd.h>
 
 
 namespace castor {
-namespace tape {
-namespace threading {
+namespace server {
+
   /**
    * A class allowing forking of a child process, and subsequent follow up
    * of the child process. Status check, killing, return code collection.
@@ -97,6 +97,4 @@ namespace threading {
     virtual int run() = 0;
     void parseStatus(int status);
   };
-} // namespace threading
-} // namespace tape
-} // namespace castor
+}}

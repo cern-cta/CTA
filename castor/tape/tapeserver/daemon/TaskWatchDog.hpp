@@ -24,7 +24,7 @@
 #pragma once 
 
 
-#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
+#include "castor/server/AtomicFlag.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
@@ -39,8 +39,8 @@ namespace daemon {
 /**
  * Templated class for watching tape read or write operation
  */
-template <class placeHolder> class TaskWatchDog : private castor::tape::threading::Thread{
-  tape::threading::Mutex m_mutex;
+template <class placeHolder> class TaskWatchDog : private castor::server::Thread{
+  castor::server::Mutex m_mutex;
   typedef typename ReportPackerInterface<placeHolder>::FileStruct FileStruct;
   
   /*
@@ -72,7 +72,7 @@ template <class placeHolder> class TaskWatchDog : private castor::tape::threadin
   /*
    *  Atomic flag to stop the thread's loop
    */
-  castor::tape::threading::AtomicFlag m_stopFlag;
+  castor::server::AtomicFlag m_stopFlag;
   
   /*
    *  The proxy that will receive or heartbeat notifications
@@ -108,7 +108,7 @@ template <class placeHolder> class TaskWatchDog : private castor::tape::threadin
       
       //CRITICAL SECTION
       {
-        tape::threading::MutexLocker locker(&m_mutex);
+        castor::server::MutexLocker locker(&m_mutex);
         castor::utils::getTimeOfDay(&currentTime);
         
         timeval diffTimeStuck = castor::utils::timevalAbsDiff(currentTime,m_previousNotifiedTime);
@@ -125,7 +125,7 @@ template <class placeHolder> class TaskWatchDog : private castor::tape::threadin
 
       //heartbeat to notify activity to the mother
       if(diffTimeReportd > m_periodToReport){
-        tape::threading::MutexLocker locker(&m_mutex);
+        castor::server::MutexLocker locker(&m_mutex);
         m_lc.log(LOG_DEBUG,"going to report");
         m_previousReportTime=currentTime;
         m_initialProcess.notifyHeartbeat("PIPPO", m_nbOfMemblocksMoved);
@@ -171,7 +171,7 @@ template <class placeHolder> class TaskWatchDog : private castor::tape::threadin
    * notify the wtachdog a mem block has been moved
    */
   void notify(){
-    tape::threading::MutexLocker locker(&m_mutex);
+    castor::server::MutexLocker locker(&m_mutex);
     updateStuckTime();
     m_nbOfMemblocksMoved++;
   }
@@ -196,7 +196,7 @@ template <class placeHolder> class TaskWatchDog : private castor::tape::threadin
    * @param file
    */
    void notifyBeginNewJob(const FileStruct& file){
-     tape::threading::MutexLocker locker(&m_mutex);
+     castor::server::MutexLocker locker(&m_mutex);
      m_file=file;
      m_fileBeingMoved=true;
    }
@@ -205,7 +205,7 @@ template <class placeHolder> class TaskWatchDog : private castor::tape::threadin
     * Notify the watchdog  we have finished operating on the current file
     */
     void fileFinished(){
-      tape::threading::MutexLocker locker(&m_mutex);
+      castor::server::MutexLocker locker(&m_mutex);
       m_fileBeingMoved=false;
       m_file=FileStruct();
    }

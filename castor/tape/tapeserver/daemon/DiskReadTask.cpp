@@ -53,7 +53,7 @@ namespace daemon {
 //------------------------------------------------------------------------------
 DiskReadTask::DiskReadTask(DataConsumer & destination, 
         tape::tapegateway::FileToMigrateStruct* file,
-        size_t numberOfBlock,castor::tape::threading::AtomicFlag& errorFlag):
+        size_t numberOfBlock,castor::server::AtomicFlag& errorFlag):
 m_nextTask(destination),m_migratedFile(file),
         m_numberOfBlock(numberOfBlock),m_errorFlag(errorFlag)
 {}

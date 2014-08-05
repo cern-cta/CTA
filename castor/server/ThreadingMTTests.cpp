@@ -22,22 +22,22 @@
  *****************************************************************************/
 
 #include <gtest/gtest.h>
-#include "Threading.hpp"
-
+#include "castor/server/Threading.hpp"
+#include "castor/server/Semaphores.hpp"
 /* This is a collection of multi threaded unit tests, which can (and should)
  be passed through helgrind, as well as valgrind */
 
 namespace threadedUnitTests {
 
-  class Thread_and_basic_locking : public castor::tape::threading::Thread {
+  class Thread_and_basic_locking : public castor::server::Thread {
   public:
     int counter;
-    castor::tape::threading::Mutex mutex;
+    castor::server::Mutex mutex;
   private:
 
     void run() {
       for (int i = 0; i < 100; i++) {
-        castor::tape::threading::MutexLocker ml(&mutex);
+        castor::server::MutexLocker ml(&mutex);
         counter++;
       }
     }
@@ -49,7 +49,7 @@ namespace threadedUnitTests {
     mt.counter = 0;
     mt.start();
     for (int i = 0; i < 100; i++) {
-      castor::tape::threading::MutexLocker ml(&mt.mutex);
+      castor::server::MutexLocker ml(&mt.mutex);
       mt.counter--;
     }
     mt.wait();
@@ -57,7 +57,7 @@ namespace threadedUnitTests {
   }
 
   template <class S>
-  class Semaphore_ping_pong : public castor::tape::threading::Thread {
+  class Semaphore_ping_pong : public castor::server::Thread {
   public:
 
     void thread0() {
@@ -82,20 +82,20 @@ namespace threadedUnitTests {
   };
 
   TEST(castor_tape_threading, PosixSemaphore_ping_pong) {
-    Semaphore_ping_pong<castor::tape::threading::PosixSemaphore> spp;
+    Semaphore_ping_pong<castor::server::PosixSemaphore> spp;
     spp.start();
     spp.thread0();
     spp.wait();
   }
 
   TEST(castor_tape_threading, CondVarSemaphore_ping_pong) {
-    Semaphore_ping_pong<castor::tape::threading::CondVarSemaphore> spp;
+    Semaphore_ping_pong<castor::server::CondVarSemaphore> spp;
     spp.start();
     spp.thread0();
     spp.wait();
   }
 
-  class Thread_exception_throwing : public castor::tape::threading::Thread {
+  class Thread_exception_throwing : public castor::server::Thread {
   private:
 
     void run() {
@@ -107,7 +107,7 @@ namespace threadedUnitTests {
     Thread_exception_throwing t, t2;
     t.start();
     t2.start();
-    ASSERT_THROW(t.wait(), castor::tape::threading::UncaughtExceptionInThread);
+    ASSERT_THROW(t.wait(), castor::server::UncaughtExceptionInThread);
     try {
       t2.wait();
     } catch (std::exception & e) {

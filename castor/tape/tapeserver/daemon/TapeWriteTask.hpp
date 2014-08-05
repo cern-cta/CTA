@@ -30,7 +30,8 @@
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/log/LogContext.hpp"
-#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
+#include "castor/server/Threading.hpp"
+#include "castor/server/AtomicFlag.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include "castor/tape/utils/Timer.hpp"
 
@@ -57,7 +58,7 @@ public:
    * @param mm: reference to the memory manager in use
    */
   TapeWriteTask(int blockCount, tape::tapegateway::FileToMigrateStruct* file,
-          MigrationMemoryManager& mm,castor::tape::threading::AtomicFlag& errorFlag);
+          MigrationMemoryManager& mm,castor::server::AtomicFlag& errorFlag);
   
   
   /**
@@ -154,7 +155,7 @@ private:
   /**
    * Mutex forcing serial access to the fifo
    */
-  castor::tape::threading::Mutex m_producerProtection;
+  castor::server::Mutex m_producerProtection;
   
   /**
    * The number of memory blocks to be used
@@ -165,7 +166,7 @@ private:
    * A shared flag among the the tasks and the task injector, set as true as soon
    * as task failed to do its job 
    */
-  castor::tape::threading::AtomicFlag& m_errorFlag;
+  castor::server::AtomicFlag& m_errorFlag;
   
   /**
    * Stats

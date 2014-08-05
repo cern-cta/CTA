@@ -46,15 +46,19 @@ set (SERVER_LIB_SRC_FILES
   NotifierThread.cpp
   ProcessCap.cpp
   Queue.cpp
+  Mutex.cpp
   SelectProcessThread.cpp
   SignalThreadPool.cpp
+  Semaphores.cpp
   SmartCap.cpp
   TCPListenerThreadPool.cpp
   ThreadNotification.cpp
-  UDPListenerThreadPool.cpp)
+  UDPListenerThreadPool.cpp
+  Threading.cpp ChildProcess.cpp
+  )
 add_library (castorserver SHARED ${SERVER_LIB_SRC_FILES})
 CastorSetLibraryVersions (castorserver)
-target_link_libraries (castorserver cap castorclient castorcommon)
+target_link_libraries (castorserver cap castorclient castorcommon Exception)
 install (TARGETS castorserver LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
   NAMELINK_SKIP)
 
