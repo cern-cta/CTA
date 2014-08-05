@@ -40,11 +40,7 @@ namespace threading {
     Mutex() ;
     ~Mutex();
     void lock() ;
-    void unlock()  {
-      castor::exception::Errnum::throwOnReturnedErrno(
-        pthread_mutex_unlock(&m_mutex),
-        "Error from pthread_mutex_unlock in castor::tape::threading::Mutex::unlock()");
-    }
+    void unlock();
   private:
     pthread_mutex_t m_mutex;
   };

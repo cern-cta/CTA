@@ -32,7 +32,9 @@
 /* Implmentations of the threading primitives */
 
 /* Mutex */
-
+//------------------------------------------------------------------------------
+//constructor
+//------------------------------------------------------------------------------
 castor::tape::threading::Mutex::Mutex()  {
   pthread_mutexattr_t attr;
   castor::exception::Errnum::throwOnReturnedErrno(
@@ -53,25 +55,41 @@ castor::tape::threading::Mutex::Mutex()  {
     throw;
   }
 }
-
+//------------------------------------------------------------------------------
+//destructor
+//------------------------------------------------------------------------------
 castor::tape::threading::Mutex::~Mutex() {
   pthread_mutex_destroy(&m_mutex);
 }
-
+//------------------------------------------------------------------------------
+//lock
+//------------------------------------------------------------------------------
 void castor::tape::threading::Mutex::lock()  {
   castor::exception::Errnum::throwOnReturnedErrno(
     pthread_mutex_lock(&m_mutex),
     "Error from pthread_mutex_lock in castor::tape::threading::Mutex::lock()");
 }
+//------------------------------------------------------------------------------
+//unlock
+//------------------------------------------------------------------------------
+void castor::tape::threading::Mutex::unlock()  {
+  castor::exception::Errnum::throwOnReturnedErrno(
+  pthread_mutex_unlock(&m_mutex),
+          "Error from pthread_mutex_unlock in castor::tape::threading::Mutex::unlock()");
+}
 
-/* PosixSemaphore */
+//------------------------------------------------------------------------------
+//PosixSemaphore constructor
+//------------------------------------------------------------------------------
 castor::tape::threading::PosixSemaphore::PosixSemaphore(int initial)
  {
   castor::exception::Errnum::throwOnReturnedErrno(
     sem_init(&m_sem, 0, initial),
     "Error from sem_init in castor::tape::threading::PosixSemaphore::PosixSemaphore()");
 }
-
+//------------------------------------------------------------------------------
+//PosixSemaphore destructor
+//------------------------------------------------------------------------------
 castor::tape::threading::PosixSemaphore::~PosixSemaphore() {
   /* There is a danger of destroying the semaphore in the consumer
      while the producer is still referring to the object.
@@ -79,7 +97,9 @@ castor::tape::threading::PosixSemaphore::~PosixSemaphore() {
   MutexLocker ml(&m_mutexPosterProtection);
   sem_destroy(&m_sem);
 }
-
+//------------------------------------------------------------------------------
+//acquire
+//------------------------------------------------------------------------------
 void castor::tape::threading::PosixSemaphore::acquire()
  {
   int ret;
@@ -89,7 +109,9 @@ void castor::tape::threading::PosixSemaphore::acquire()
   castor::exception::Errnum::throwOnNonZero(ret,
     "Error from sem_wait in castor::tape::threading::PosixSemaphore::acquire()");
 }
-
+//------------------------------------------------------------------------------
+//tryAcquire
+//------------------------------------------------------------------------------
 bool castor::tape::threading::PosixSemaphore::tryAcquire()
  {
   int ret = sem_trywait(&m_sem);
@@ -100,7 +122,9 @@ bool castor::tape::threading::PosixSemaphore::tryAcquire()
   /* unreacheable, just for compiler happiness */
   return false;
 }
-
+//------------------------------------------------------------------------------
+//release
+//------------------------------------------------------------------------------
 void castor::tape::threading::PosixSemaphore::release(int n)
  {
   for (int i=0; i<n; i++) {
@@ -109,10 +133,11 @@ void castor::tape::threading::PosixSemaphore::release(int n)
       "Error from sem_post in castor::tape::threading::PosixSemaphore::release()");
   }
 }
-
+//------------------------------------------------------------------------------
+//CondVarSemaphore constructor
+//------------------------------------------------------------------------------
 castor::tape::threading::CondVarSemaphore::CondVarSemaphore(int initial)
-:
-m_value(initial) {
+:m_value(initial) {
       castor::exception::Errnum::throwOnReturnedErrno(
         pthread_cond_init(&m_cond, NULL),
         "Error from pthread_cond_init in castor::tape::threading::CondVarSemaphore::CondVarSemaphore()");
@@ -121,7 +146,9 @@ m_value(initial) {
         "Error from pthread_mutex_init in castor::tape::threading::CondVarSemaphore::CondVarSemaphore()");
     }
 
-
+//------------------------------------------------------------------------------
+//CondVarSemaphore destructor
+//------------------------------------------------------------------------------
 castor::tape::threading::CondVarSemaphore::~CondVarSemaphore() {
       /* Barrier protecting the last user */
       pthread_mutex_lock(&m_mutex);
@@ -130,7 +157,9 @@ castor::tape::threading::CondVarSemaphore::~CondVarSemaphore() {
       pthread_cond_destroy(&m_cond);
       pthread_mutex_destroy(&m_mutex);
     }
-
+//------------------------------------------------------------------------------
+//acquire
+//------------------------------------------------------------------------------
 void castor::tape::threading::CondVarSemaphore::acquire()
  {
   castor::exception::Errnum::throwOnReturnedErrno(
@@ -146,7 +175,9 @@ void castor::tape::threading::CondVarSemaphore::acquire()
     pthread_mutex_unlock(&m_mutex),
     "Error from pthread_mutex_unlock in castor::tape::threading::CondVarSemaphore::acquire()");
 }
-
+//------------------------------------------------------------------------------
+//tryAcquire
+//------------------------------------------------------------------------------
 bool castor::tape::threading::CondVarSemaphore::tryAcquire()
  {
   bool ret;
@@ -164,7 +195,9 @@ bool castor::tape::threading::CondVarSemaphore::tryAcquire()
       "Error from pthread_mutex_unlock in castor::tape::threading::CondVarSemaphore::tryAcquire()");
   return ret;
 }
-
+//------------------------------------------------------------------------------
+//release
+//------------------------------------------------------------------------------
 void castor::tape::threading::CondVarSemaphore::release(int n)
  {
   for (int i=0; i<n; i++) {
@@ -180,14 +213,18 @@ void castor::tape::threading::CondVarSemaphore::release(int n)
       "Error from pthread_mutex_unlock in castor::tape::threading::CondVarSemaphore::release()");
   }
 }
-
+//------------------------------------------------------------------------------
+//start
+//------------------------------------------------------------------------------
 void castor::tape::threading::Thread::start()
  {
   castor::exception::Errnum::throwOnReturnedErrno(
     pthread_create(&m_thread, NULL, pthread_runner, this),
       "Error from pthread_create in castor::tape::threading::Thread::start()");
 }
-
+//------------------------------------------------------------------------------
+//wait
+//------------------------------------------------------------------------------
 void castor::tape::threading::Thread::wait()
  {
   castor::exception::Errnum::throwOnReturnedErrno(
@@ -202,7 +239,9 @@ void castor::tape::threading::Thread::wait()
     throw UncaughtExceptionInThread(w);
   }
 }
-
+//------------------------------------------------------------------------------
+//pthread_runner
+//------------------------------------------------------------------------------
 void * castor::tape::threading::Thread::pthread_runner (void * arg) {
 
   /* static_casting a pointer to and from void* preserves the address. 
