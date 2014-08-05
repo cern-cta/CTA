@@ -130,6 +130,21 @@ try:
             print 'Invalid or non existent diskpool(s) given : %s' % (', '.join(nonexistingdiskpools))
             sys.exit(1)
         diskpools = [row[1] for row in rows]
+        # check consistency of the garbage collection policies of the different service classes
+        # that pools are linked with
+        stcur.execute('''SELECT DiskPool.name
+                           FROM SvcClass, DiskPool2SvcClass, DiskPool
+                          WHERE SvcClass.id = DiskPool2SvcClass.child
+                            AND DiskPool2SvcClass.parent = DiskPool.id
+                            AND DiskPool2SvcClass.parent IN (''' + \
+                                ', '.join([str(id) for id in diskpools]) + ''')
+                            AND SvcClass.gcPolicy != :gcPolicy''',
+                      gcPolicy=gcpolicy)
+        rows = stcur.fetchall()
+        if len(rows) > 0:
+            print 'The following diskpool(s) is(are) linked to service class(es) conflicting on the GC Policy : %s' % (', '.join([row[0] for row in rows]))
+            print 'Giving up'
+            sys.exit(1)
     else:
         # Oracle needs at least one element...
         diskpools = [-1]

@@ -137,7 +137,7 @@ try:
         stcur.execute('UPDATE SvcClass SET replicateonclose=:value WHERE id = :svcClassId',
                       value=replicateonclose, svcClassId=svcClassId)
     if gcpolicy != None:
-        # check that the service class exists
+        # check that the GC policyexists
         stcur.execute('SELECT name FROM GcPolicy WHERE name=:name', name=gcpolicy)
         rows = stcur.fetchall()
         if len(rows) == 0:
@@ -165,6 +165,24 @@ try:
             print 'The following diskpool(s) is(are) already linked to %s service class : %s' % \
                   (svcclassname, ', '.join([adddiskpools[dpId] for dpId, in rows]))
             sys.exit(1)
+        # check consistency of the garbage collection policies of the different service classes
+        # that new pools are linked with
+        stcur.execute('SELECT gcPolicy FROM SvcClass WHERE id = :svcClassId', svcClassId=svcClassId)
+        rows = stcur.fetchall()
+        gcPolicy = rows[0][0]
+        if adddiskpools:
+            stcur.execute('''SELECT DiskPool2SvcClass.parent
+                               FROM SvcClass, DiskPool2SvcClass
+                              WHERE SvcClass.id = DiskPool2SvcClass.child
+                                AND DiskPool2SvcClass.parent IN (''' + \
+                                    ', '.join([str(k) for k in adddiskpools.keys()]) + ''')
+                                AND SvcClass.gcPolicy != :gcPolicy''',
+                          gcPolicy=gcPolicy)
+            rows = stcur.fetchall()
+            if len(rows) > 0:
+                print 'The following diskpool(s) is(are) linked to service class(es) conflicting on the GC Policy : %s' % (', '.join([adddiskpools[dpId] for dpId, in rows]))
+                print 'Giving up'
+                sys.exit(1)
         # add diskpools
         sql = '''
         DECLARE
