@@ -172,6 +172,26 @@ private:
   ZmqSocketMT m_tapeserverSocket;
 
   /**
+   * Creates a frame containing a RecallJobFromTapeGateway message.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param unitName The unit name of the tape drive.
+   * @return The frame.
+   */
+  Frame createRecallJobFromTapeGatewayFrame(const std::string &vid,
+    const std::string &unitName);
+
+  /**
+   * Creates a frame containing a RecallJobFromReadTp message.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param unitName The unit name of the tape drive.
+   * @return The frame.
+   */
+  Frame createRecallJobFromReadTpFrame(const std::string &vid,
+    const std::string &unitName);
+
+  /**
    * Creates a frame containing a MigrationJobFromTapeGateway message.
    *
    * @param vid The volume identifier of the tape.

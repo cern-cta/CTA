@@ -63,17 +63,8 @@ castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log,
 void castor::messages::TapeserverProxyZmq::gotRecallJobFromTapeGateway(
   const std::string &vid, const std::string &unitName) {
   try {
-    messages::RecallJobFromTapeGateway rqstBody;
-    rqstBody.set_vid(vid);
-    rqstBody.set_unitname(unitName);
-
-    messages::Header rqstHeader = castor::messages::protoTapePreFillHeader();
-    rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
-    rqstHeader.set_bodysignature("PIPO");
-    rqstHeader.set_msgtype(MSG_TYPE_RECALLJOBFROMTAPEGATEWAY);
-
-    messages::sendMessage(m_tapeserverSocket, rqstHeader, ZMQ_SNDMORE);
-    messages::sendMessage(m_tapeserverSocket, rqstBody);
+    const Frame rqst = createRecallJobFromTapeGatewayFrame(vid, unitName);
+    sendFrame(m_tapeserverSocket, rqst);
 
     messages::ProtoTapeReplyContainer reply(m_tapeserverSocket);
   } catch(castor::exception::Exception &ne) {
@@ -101,22 +92,41 @@ void castor::messages::TapeserverProxyZmq::gotRecallJobFromTapeGateway(
 }
 
 //------------------------------------------------------------------------------
+// createRecallJobFromTapeGatewayFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::TapeserverProxyZmq::
+  createRecallJobFromTapeGatewayFrame(const std::string &vid,
+  const std::string &unitName) {
+  try {
+    Frame frame;
+
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_RECALLJOBFROMTAPEGATEWAY);
+    frame.header.set_bodysignature("PIPO");
+
+    RecallJobFromTapeGateway body;
+    body.set_vid(vid);
+    body.set_unitname(unitName);
+    frame.serializeProtocolBufferIntoBody(body);
+
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create RecallJobFromTapeGateway frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+
+//------------------------------------------------------------------------------
 // gotRecallJobFromReadTp
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyZmq::gotRecallJobFromReadTp(
   const std::string &vid, const std::string &unitName) {
   try {
-    messages::RecallJobFromReadTp rqstBody;
-    rqstBody.set_vid(vid);
-    rqstBody.set_unitname(unitName);
-
-    messages::Header rqstHeader = castor::messages::protoTapePreFillHeader();
-    rqstHeader.set_bodyhashvalue(computeSHA1Base64(rqstBody));
-    rqstHeader.set_bodysignature("PIPO");
-    rqstHeader.set_msgtype(MSG_TYPE_RECALLJOBFROMREADTP);
-
-    messages::sendMessage(m_tapeserverSocket, rqstHeader, ZMQ_SNDMORE);
-    messages::sendMessage(m_tapeserverSocket, rqstBody);
+    const Frame rqst = createRecallJobFromReadTpFrame(vid, unitName);
+    sendFrame(m_tapeserverSocket, rqst);
 
     messages::ProtoTapeReplyContainer reply(m_tapeserverSocket);
 
@@ -140,6 +150,33 @@ void castor::messages::TapeserverProxyZmq::gotRecallJobFromReadTp(
       "Failed to notify tapeserver of recall job from readtp: " <<
       "vid=" << vid << " unitName=" << unitName << ": " <<
       "Caught an unknown exception";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createRecallJobFromReadTpFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::TapeserverProxyZmq::
+  createRecallJobFromReadTpFrame(const std::string &vid,
+  const std::string &unitName) {
+  try {
+    Frame frame;
+
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_RECALLJOBFROMREADTP);
+    frame.header.set_bodysignature("PIPO");
+
+    RecallJobFromReadTp body;
+    body.set_vid(vid);
+    body.set_unitname(unitName);
+    frame.serializeProtocolBufferIntoBody(body);
+
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create RecallJobFromReadTp frame: " <<
+      ne.getMessage().str();
     throw ex;
   }
 }

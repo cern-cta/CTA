@@ -41,26 +41,6 @@ namespace castor {
 namespace messages {
   
 /**
- *  Sends the specified google protocol buffer over the specified ZMQ socket.
- *
- * @param socket The ZMQ socket.
- * @param msg The google protocol buffer.
- * @param flag The flag to be passed to the socketsend() method.
- */
-template <class ZS, class PB> void sendMessage(ZS& socket, const PB& msg, const int flag=0) {
-
-  if(!msg.IsInitialized()){
-    castor::exception::Exception ex("the protocol buffer message was not correctly set");
-    throw ex;
-  }
-
-  const int size=msg.ByteSize();
-  ZmqMsg blob(size);
-  msg.SerializeToArray(zmq_msg_data(&blob.getZmqMsg()),size);
-  socket.send(&blob.getZmqMsg(), flag);
-}
-
-/**
  * Sends the specified message frame over the specified socket.
  *
  * @param socket The ZMQ socket.
@@ -206,7 +186,7 @@ castor::messages::Header genericPreFillHeader(){
  * protocolVersion = protocolVersion::prototype
  * @return 
  */
- castor::messages::Header protoTapePreFillHeader();
+Header protoTapePreFillHeader();
 
 } // namespace messages
 } // namespace castor
