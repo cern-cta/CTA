@@ -79,3 +79,4 @@ castor::exception::Exception::~Exception() throw()  {}
 void castor::exception::Exception::setWhat(const std::string& what) {
   getMessage() << what;
 }
+
