@@ -343,9 +343,10 @@ class TapeTransfer(object):
 
 class RunningTransfer(object):
   '''little container describing a running transfer'''
-  def __init__(self, scheduler, process, startTime, transfer):
+  def __init__(self, scheduler, process, startTime, transfer, localPath=None):
     '''constructor'''
     self.scheduler = scheduler
     self.process = process
     self.startTime = startTime
     self.transfer = transfer
+    self.localPath = localPath
