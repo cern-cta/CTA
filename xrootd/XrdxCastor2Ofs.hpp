@@ -19,7 +19,6 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
@@ -27,31 +26,16 @@
 
 /*-----------------------------------------------------------------------------*/
 #include <map>
-#include "pwd.h"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <zlib.h>
 /*-----------------------------------------------------------------------------*/
-#include "movers/moverclose.h"
-/*-----------------------------------------------------------------------------*/
-#include "XrdNet/XrdNetSocket.hh"
 #include "XrdOuc/XrdOucEnv.hh"
 #include "XrdOuc/XrdOucString.hh"
 #include "XrdOfs/XrdOfs.hh"
 #include "XrdOfs/XrdOfsTrace.hh"
 #include "XrdSfs/XrdSfsInterface.hh"
-#include "XrdSys/XrdSysTimer.hh"
 #include "XrdSys/XrdSysPthread.hh"
-#include "XrdClient/XrdClientAdmin.hh"
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2Logging.hpp"
 /*-----------------------------------------------------------------------------*/
-
-
-//~ Forward declaration
-class XrdxCastor2Ofs2StagerJob;
-
 
 //! TpcInfo structure containing informationn about a third-party transfer
 struct TpcInfo
@@ -68,136 +52,139 @@ struct TpcInfo
 //------------------------------------------------------------------------------
 class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
 {
-  public:
+ public:
 
-    //--------------------------------------------------------------------------
-    //! Constuctor
-    //--------------------------------------------------------------------------
-    XrdxCastor2OfsFile(const char* user, int MonID = 0);
-
-
-    //--------------------------------------------------------------------------
-    //! Destructor
-    //--------------------------------------------------------------------------
-    virtual ~XrdxCastor2OfsFile();
+  //----------------------------------------------------------------------------
+  //! Constuctor
+  //----------------------------------------------------------------------------
+  XrdxCastor2OfsFile(const char* user, int MonID = 0);
 
 
-    //--------------------------------------------------------------------------
-    //! Open file
-    //--------------------------------------------------------------------------
-    int open(const char* fileName,
-             XrdSfsFileOpenMode openMode,
-             mode_t createMode,
-             const XrdSecEntity* client,
-             const char* opaque = 0);
+  //----------------------------------------------------------------------------
+  //! Destructor
+  //----------------------------------------------------------------------------
+  virtual ~XrdxCastor2OfsFile();
 
 
-    //--------------------------------------------------------------------------
-    //! Close file
-    //--------------------------------------------------------------------------
-    int close();
+  //----------------------------------------------------------------------------
+  //! Open file
+  //----------------------------------------------------------------------------
+  int open(const char* fileName,
+           XrdSfsFileOpenMode openMode,
+           mode_t createMode,
+           const XrdSecEntity* client,
+           const char* opaque = 0);
 
 
-    //--------------------------------------------------------------------------
-    //! Read from file
-    //--------------------------------------------------------------------------
-    int read(XrdSfsFileOffset fileOffset,   // Preread only
-             XrdSfsXferSize amount);
+  //----------------------------------------------------------------------------
+  //! Close file
+  //----------------------------------------------------------------------------
+  int close();
 
 
-    //--------------------------------------------------------------------------
-    //! Read from file
-    //--------------------------------------------------------------------------
-    XrdSfsXferSize read(XrdSfsFileOffset fileOffset,
-                        char*            buffer,
-                        XrdSfsXferSize   buffer_size);
+  //----------------------------------------------------------------------------
+  //! Read from file
+  //----------------------------------------------------------------------------
+  int read(XrdSfsFileOffset fileOffset,   // Preread only
+           XrdSfsXferSize amount);
 
 
-    //--------------------------------------------------------------------------
-    //! Read from file
-    //--------------------------------------------------------------------------
-    int read(XrdSfsAio* aioparm);
+  //----------------------------------------------------------------------------
+  //! Read from file
+  //----------------------------------------------------------------------------
+  XrdSfsXferSize read(XrdSfsFileOffset fileOffset,
+                      char* buffer,
+                      XrdSfsXferSize buffer_size);
 
 
-    //--------------------------------------------------------------------------
-    //! Write to file
-    //--------------------------------------------------------------------------
-    XrdSfsXferSize write(XrdSfsFileOffset fileOffset,
-                         const char* buffer,
-                         XrdSfsXferSize buffer_size);
+  //----------------------------------------------------------------------------
+  //! Read from file
+  //----------------------------------------------------------------------------
+  int read(XrdSfsAio* aioparm);
 
 
-    //--------------------------------------------------------------------------
-    //! Write to file
-    //--------------------------------------------------------------------------
-    int write(XrdSfsAio* aioparm);
- 
-  private:
+  //----------------------------------------------------------------------------
+  //! Write to file
+  //----------------------------------------------------------------------------
+  XrdSfsXferSize write(XrdSfsFileOffset fileOffset,
+                       const char* buffer,
+                       XrdSfsXferSize buffer_size);
 
-    //--------------------------------------------------------------------------
-    //! TPC flags - indicating the current access type
-    //--------------------------------------------------------------------------
-    struct TpcFlag
+
+  //----------------------------------------------------------------------------
+  //! Write to file
+  //----------------------------------------------------------------------------
+  int write(XrdSfsAio* aioparm);
+
+ private:
+
+  //----------------------------------------------------------------------------
+  //! TPC flags - indicating the current access type
+  //----------------------------------------------------------------------------
+  struct TpcFlag
+  {
+    enum Flag
     {
-      enum Flag
-      {
-        kTpcNone     = 0, ///< no TPC access
-        kTpcSrcSetup = 1, ///< access setting up a source TPC access
-        kTpcDstSetup = 2, ///< access setting up a destination TPC access
-        kTpcSrcRead  = 3, ///< read access from a TPC destination
-        kTpcSrcCanDo = 4  ///< read access to evaluate if source is available
-      };
+      kTpcNone     = 0, ///< no TPC access
+      kTpcSrcSetup = 1, ///< access setting up a source TPC access
+      kTpcDstSetup = 2, ///< access setting up a destination TPC access
+      kTpcSrcRead  = 3, ///< read access from a TPC destination
+      kTpcSrcCanDo = 4  ///< read access to evaluate if source is available
     };
+  };
 
-    //--------------------------------------------------------------------------
-    //! Prepare TPC transfer - do the necessary operations need to support
-    //! native TPC like saving the tpc.key and tpc.org for the rendez-vous etc.
-    //!
-    //! @param path castor pfn value
-    //! @param opaque opaque information
-    //! @param client client identity
-    //!
-    //! @return SFS_OK if successful, otherwise SFS_ERROR.
-    //--------------------------------------------------------------------------
-    int PrepareTPC(XrdOucString& path,
-                   XrdOucString& opaque,
-                   const XrdSecEntity* client);
-
-
-    //--------------------------------------------------------------------------
-    //! Verify checksum
-    //--------------------------------------------------------------------------
-    bool VerifyChecksum();
+  //----------------------------------------------------------------------------
+  //! Prepare TPC transfer - do the necessary operations need to support
+  //! native TPC like saving the tpc.key and tpc.org for the rendez-vous etc.
+  //!
+  //! @param path castor pfn value
+  //! @param opaque opaque information
+  //! @param client client identity
+  //!
+  //! @return SFS_OK if successful, otherwise SFS_ERROR.
+  //----------------------------------------------------------------------------
+  int PrepareTPC(XrdOucString& path,
+                 XrdOucString& opaque,
+                 const XrdSecEntity* client);
 
 
-    //--------------------------------------------------------------------------
-    //! Extract transfer info from the opaque data. This includes the port where
-    //! we need to connect to the disk manager and the request uuid.
-    //!
-    //! @param env_opaque env containing opaque information
-    //!
-    //! @return SFS_OK if successful, otherwise SFS_ERROR.
-    //--------------------------------------------------------------------------
-    int ExtractTransferInfo(XrdOucEnv& env_opaque);
+  //----------------------------------------------------------------------------
+  //! Verify checksum - check that the checksum value obtained by reading the
+  //! whole file matches the one saved in the extended attributes of the file.
+  //!
+  //! @return True if checksums match, otherwise false.
+  //----------------------------------------------------------------------------
+  bool VerifyChecksum();
 
 
-    static const int sKeyExpiry; ///< validity time of a tpc key
-    XrdOucEnv* mEnvOpaque; ///< initial opaque information
-    bool mIsRW; ///< file opened for writing
-    bool mHasWrite; ///< mark is file has writes
-    bool mViaDestructor; ///< mark close via destructor - not properly closed
-    std::string mReqId; ///< request id received from the redirector
-    unsigned int mAdlerXs; ///< adler checksum
-    bool mHasAdlerErr; ///< mark if there was an adler error
-    bool mHasAdler; ///< mark if it has adler xs computed
-    XrdSfsFileOffset mAdlerOffset; ///< current adler offset
-    XrdOucString mXsValue; ///< checksum value
-    XrdOucString mXsType; ///< checksum type: adler, crc32c etc.
-    bool mIsClosed; ///< make when file is closed
-    struct stat mStatInfo; ///< file stat info
-    std::string mTpcKey; ///< tpc key allocated to this file
-    TpcFlag::Flag mTpcFlag ;; ///< tpc flag to identify the access type
-    int mDiskMgrPort; ///< disk manager port where to connect
+  //----------------------------------------------------------------------------
+  //! Extract transfer info from the opaque data. This includes the port where
+  //! we need to connect to the disk manager and the request uuid.
+  //!
+  //! @param env_opaque env containing opaque information
+  //!
+  //! @return SFS_OK if successful, otherwise SFS_ERROR.
+  //----------------------------------------------------------------------------
+  int ExtractTransferInfo(XrdOucEnv& env_opaque);
+
+
+  static const int sKeyExpiry; ///< validity time of a tpc key
+  XrdOucEnv* mEnvOpaque; ///< initial opaque information
+  bool mIsRW; ///< file opened for writing
+  bool mHasWrite; ///< mark is file has writes
+  bool mViaDestructor; ///< mark close via destructor - not properly closed
+  std::string mReqId; ///< request id received from the redirector
+  unsigned int mAdlerXs; ///< adler checksum
+  bool mHasAdlerErr; ///< mark if there was an adler error
+  bool mHasAdler; ///< mark if it has adler xs computed
+  XrdSfsFileOffset mAdlerOffset; ///< current adler offset
+  std::string mXsValue; ///< checksum value
+  std::string mXsType; ///< checksum type: adler, crc32c etc.
+  bool mIsClosed; ///< make when file is closed
+  struct stat mStatInfo; ///< file stat info
+  std::string mTpcKey; ///< tpc key allocated to this file
+  TpcFlag::Flag mTpcFlag ;; ///< tpc flag to identify the access type
+  int mDiskMgrPort; ///< disk manager port where to connect
 };
 
 
@@ -206,19 +193,19 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
 //------------------------------------------------------------------------------
 class XrdxCastor2OfsDirectory : public XrdOfsDirectory
 {
-  public:
+ public:
 
-    //--------------------------------------------------------------------------
-    //! Constructor
-    //--------------------------------------------------------------------------
-    XrdxCastor2OfsDirectory(const char* user, int MonID = 0) :
+  //----------------------------------------------------------------------------
+  //! Constructor
+  //----------------------------------------------------------------------------
+  XrdxCastor2OfsDirectory(const char* user, int MonID = 0) :
       XrdOfsDirectory(user, MonID)  { }
 
 
-    //--------------------------------------------------------------------------
-    //! Destructor
-    //--------------------------------------------------------------------------
-    virtual ~XrdxCastor2OfsDirectory() { }
+  //----------------------------------------------------------------------------
+  //! Destructor
+  //----------------------------------------------------------------------------
+  virtual ~XrdxCastor2OfsDirectory() { }
 };
 
 
@@ -227,182 +214,179 @@ class XrdxCastor2OfsDirectory : public XrdOfsDirectory
 //------------------------------------------------------------------------------
 class XrdxCastor2Ofs : public XrdOfs, public LogId
 {
-    friend class XrdxCastor2OfsDirectory;
-    friend class XrdxCastor2OfsFile;
+  friend class XrdxCastor2OfsDirectory;
+  friend class XrdxCastor2OfsFile;
 
-  public:
+ public:
 
-    //--------------------------------------------------------------------------
-    //! Constructor
-    //--------------------------------------------------------------------------
-    XrdxCastor2Ofs();
-
-
-    //--------------------------------------------------------------------------
-    //! Destructor
-    //--------------------------------------------------------------------------
-    virtual ~XrdxCastor2Ofs() {}
+  //----------------------------------------------------------------------------
+  //! Constructor
+  //----------------------------------------------------------------------------
+  XrdxCastor2Ofs();
 
 
-    //--------------------------------------------------------------------------
-    //! Configure function
-    //--------------------------------------------------------------------------
-    int Configure(XrdSysError& error);
+  //----------------------------------------------------------------------------
+  //! Destructor
+  //----------------------------------------------------------------------------
+  virtual ~XrdxCastor2Ofs() { }
 
 
-    //--------------------------------------------------------------------------
-    //! Create new directory object
-    //--------------------------------------------------------------------------
-    XrdSfsDirectory* newDir(char* user = 0, int MonID = 0)
-    {
-      return (XrdSfsDirectory*) new XrdxCastor2OfsDirectory(user, MonID);
-    }
+  //----------------------------------------------------------------------------
+  //! Configure function - parse the xrd.cf.server file
+  //----------------------------------------------------------------------------
+  int Configure(XrdSysError& error);
 
 
-    //--------------------------------------------------------------------------
-    //! Create new file object
-    //--------------------------------------------------------------------------
-    XrdSfsFile* newFile(char* user = 0, int MonID = 0)
-    {
-      return (XrdSfsFile*) new XrdxCastor2OfsFile(user, MonID);
-    }
+  //----------------------------------------------------------------------------
+  //! Create new directory object
+  //----------------------------------------------------------------------------
+  XrdSfsDirectory* newDir(char* user = 0, int MonID = 0)
+  {
+    return (XrdSfsDirectory*) new XrdxCastor2OfsDirectory(user, MonID);
+  }
 
 
-    //--------------------------------------------------------------------------
-    //! Chmod - masked
-    //--------------------------------------------------------------------------
-    int chmod(const char* path,
-              XrdSfsMode Mode,
-              XrdOucErrInfo& out_error,
-              const XrdSecEntity* client,
-              const char* opaque = 0)
-    {
-      EPNAME("chmod");
-      return Emsg(epname, out_error, ENOSYS, epname, path);
-    }
+  //----------------------------------------------------------------------------
+  //! Create new file object
+  //----------------------------------------------------------------------------
+  XrdSfsFile* newFile(char* user = 0, int MonID = 0)
+  {
+    return (XrdSfsFile*) new XrdxCastor2OfsFile(user, MonID);
+  }
 
 
-    //--------------------------------------------------------------------------
-    //! Exists - masked
-    //--------------------------------------------------------------------------
-    int exists(const char* path,
-               XrdSfsFileExistence& exists_flag,
-               XrdOucErrInfo& out_error,
-               const XrdSecEntity* client,
-               const char* opaque = 0)
-    {
-      EPNAME("exists");
-      return Emsg(epname, out_error, ENOSYS, epname, path);
-    }
-
-
-    //--------------------------------------------------------------------------
-    //! fsctl - masked
-    //--------------------------------------------------------------------------
-    int fsctl(const int cmd,
-              const char* args,
-              XrdOucErrInfo& out_error,
-              const XrdSecEntity* client)
-    {
-      EPNAME("fsctl");
-      return Emsg(epname, out_error, ENOSYS, epname);
-    }
-
-
-    //--------------------------------------------------------------------------
-    //! Mkdir - masked
-    //--------------------------------------------------------------------------
-    int mkdir(const char* path,
-              XrdSfsMode Mode,
-              XrdOucErrInfo& out_error,
-              const XrdSecEntity* client,
-              const char* opaque = 0)
-    {
-      EPNAME("mkdir");
-      return Emsg(epname, out_error, ENOSYS, epname, path);
-    }
-
-
-    //--------------------------------------------------------------------------
-    //! prepare - masked
-    //--------------------------------------------------------------------------
-    int prepare(XrdSfsPrep& pargs,
-                XrdOucErrInfo& out_error,
-                const XrdSecEntity* client = 0)
-    {
-      EPNAME("prepare");
-      return Emsg(epname, out_error, ENOSYS, epname);
-    }
-
-
-    //--------------------------------------------------------------------------
-    //! remdir - masked
-    //--------------------------------------------------------------------------
-    int remdir(const char* path,
-               XrdOucErrInfo& out_error,
-               const XrdSecEntity* client,
-               const char* info = 0)
-    {
-      return Emsg("remdir", out_error, ENOSYS, path);
-    }
-
-
-    //--------------------------------------------------------------------------
-    //! rename - masked
-    //--------------------------------------------------------------------------
-    int rename(const char* oldFileName,
-               const char* newFileName,
-               XrdOucErrInfo& out_error,
-               const XrdSecEntity* client,
-               const char* infoO = 0,
-               const char* infoN = 0)
-    {
-      EPNAME("rename");
-      return Emsg(epname, out_error, ENOSYS, epname, oldFileName);
-    }
-
-
-    //--------------------------------------------------------------------------
-    //! Remove file - masked
-    //--------------------------------------------------------------------------
-    int rem(const char* path,
+  //----------------------------------------------------------------------------
+  //! Chmod - masked
+  //----------------------------------------------------------------------------
+  int chmod(const char* path,
+            XrdSfsMode Mode,
             XrdOucErrInfo& out_error,
             const XrdSecEntity* client,
-            const char* info = 0)
-    {
-      EPNAME("rem");
-      return Emsg(epname, out_error, ENOSYS, epname, path);
-    }
+            const char* opaque = 0)
+  {
+    EPNAME("chmod");
+    return Emsg(epname, out_error, ENOSYS, epname, path);
+  }
 
 
-    //--------------------------------------------------------------------------
-    //! Stat
-    //--------------------------------------------------------------------------
-    int stat(const char* Name,
-             struct stat* buf,
+  //----------------------------------------------------------------------------
+  //! Exists - masked
+  //----------------------------------------------------------------------------
+  int exists(const char* path,
+             XrdSfsFileExistence& exists_flag,
              XrdOucErrInfo& out_error,
              const XrdSecEntity* client,
-             const char* opaque = 0);
+             const char* opaque = 0)
+  {
+    EPNAME("exists");
+    return Emsg(epname, out_error, ENOSYS, epname, path);
+  }
 
 
-    //--------------------------------------------------------------------------
-    //! Set the log level for the xrootd daemon
-    //!
-    //! @param logLevel new loglevel to be set
-    //!
-    //--------------------------------------------------------------------------
-    void SetLogLevel(int logLevel);
+  //----------------------------------------------------------------------------
+  //! fsctl - masked
+  //----------------------------------------------------------------------------
+  int fsctl(const int cmd,
+            const char* args,
+            XrdOucErrInfo& out_error,
+            const XrdSecEntity* client)
+  {
+    EPNAME("fsctl");
+    return Emsg(epname, out_error, ENOSYS, epname);
+  }
 
 
-    bool doPOSC; ///< 'Persistency on successful close' flag
-    XrdSysMutex mTpcMapMutex; ///< mutex to protect access to the TPC map
-    std::map<std::string, struct TpcInfo> mTpcMap; ///< TPC map of kety to lfn
+  //----------------------------------------------------------------------------
+  //! Mkdir - masked
+  //----------------------------------------------------------------------------
+  int mkdir(const char* path,
+            XrdSfsMode Mode,
+            XrdOucErrInfo& out_error,
+            const XrdSecEntity* client,
+            const char* opaque = 0)
+  {
+    EPNAME("mkdir");
+    return Emsg(epname, out_error, ENOSYS, epname, path);
+  }
 
-  private:
 
-    int mLogLevel; ///< log level from configuration file
-    XrdSysError* Eroute; ///< error object
+  //----------------------------------------------------------------------------
+  //! Prepare - masked
+  //----------------------------------------------------------------------------
+  int prepare(XrdSfsPrep& pargs,
+              XrdOucErrInfo& out_error,
+              const XrdSecEntity* client = 0)
+  {
+    EPNAME("prepare");
+    return Emsg(epname, out_error, ENOSYS, epname);
+  }
+
+
+  //----------------------------------------------------------------------------
+  //! Remdir - masked
+  //----------------------------------------------------------------------------
+  int remdir(const char* path,
+             XrdOucErrInfo& out_error,
+             const XrdSecEntity* client,
+             const char* info = 0)
+  {
+    return Emsg("remdir", out_error, ENOSYS, path);
+  }
+
+
+  //----------------------------------------------------------------------------
+  //! Rename - masked
+  //----------------------------------------------------------------------------
+  int rename(const char* oldFileName,
+             const char* newFileName,
+             XrdOucErrInfo& out_error,
+             const XrdSecEntity* client,
+             const char* infoO = 0,
+             const char* infoN = 0)
+  {
+    EPNAME("rename");
+    return Emsg(epname, out_error, ENOSYS, epname, oldFileName);
+  }
+
+
+  //----------------------------------------------------------------------------
+  //! Remove file - masked
+  //----------------------------------------------------------------------------
+  int rem(const char* path,
+          XrdOucErrInfo& out_error,
+          const XrdSecEntity* client,
+          const char* info = 0)
+  {
+    EPNAME("rem");
+    return Emsg(epname, out_error, ENOSYS, epname, path);
+  }
+
+
+  //----------------------------------------------------------------------------
+  //! Stat
+  //----------------------------------------------------------------------------
+  int stat(const char* Name,
+           struct stat* buf,
+           XrdOucErrInfo& out_error,
+           const XrdSecEntity* client,
+           const char* opaque = 0);
+
+
+  //----------------------------------------------------------------------------
+  //! Set the log level for the xrootd daemon
+  //!
+  //! @param logLevel new loglevel to be set
+  //----------------------------------------------------------------------------
+  void SetLogLevel(int logLevel);
+
+
+  XrdSysMutex mTpcMapMutex; ///< mutex to protect access to the TPC map
+  std::map<std::string, struct TpcInfo> mTpcMap; ///< TPC map of key to lfn
+
+ private:
+
+  int mLogLevel; ///< log level from configuration file
+  XrdSysError* Eroute; ///< error object
 };
 
 extern XrdxCastor2Ofs* gSrv; ///< global diskserver OFS handle
-

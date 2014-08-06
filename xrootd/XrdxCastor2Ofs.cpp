@@ -19,7 +19,6 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
@@ -27,21 +26,22 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <grp.h>
+#include <fcntl.h>
 #include "h/Cns_api.h"
 #include "h/serrno.h"
 #include <string.h>
+#include <zlib.h>
 #include "ceph/ceph_posix.h"
+#include "movers/moverclose.h"
 /*----------------------------------------------------------------------------*/
 #include "XrdVersion.hh"
 #include "XrdAcc/XrdAccAuthorize.hh"
 #include "XrdOfs/XrdOfs.hh"
-#include "XrdSfs/XrdSfsAio.hh"
 #include "XrdSys/XrdSysDNS.hh"
+#include "XrdSys/XrdSysTimer.hh"
 #include "XrdOss/XrdOssApi.hh"
 #include "XrdOuc/XrdOucTrace.hh"
-#include "XrdOuc/XrdOucHash.hh"
-#include "XrdNet/XrdNetOpts.hh"
-#include "XrdCl/XrdClFileSystem.hh"
+#include "XrdNet/XrdNetSocket.hh"
 #include "XrdSec/XrdSecEntity.hh"
 /*----------------------------------------------------------------------------*/
 #include "XrdxCastor2Ofs.hpp"
@@ -51,7 +51,7 @@
 
 XrdxCastor2Ofs* gSrv; ///< global diskserver OFS handle
 
-// extern symbols
+// Extern symbols
 extern XrdOfs*     XrdOfsFS;
 extern XrdSysError OfsEroute;
 extern XrdOssSys*  XrdOfsOss;
@@ -59,7 +59,6 @@ extern XrdOss*     XrdOssGetSS(XrdSysLogger*, const char*, const char*);
 
 XrdVERSIONINFO(XrdSfsGetFileSystem, xCastor2Ofs);
 
-// Constants
 // One minute for destination to contact us for tpc.key rendez-vous
 const int XrdxCastor2OfsFile::sKeyExpiry = 60;
 
@@ -78,6 +77,7 @@ extern "C"
     OfsEroute.SetPrefix("castor2ofs_");
     OfsEroute.logger(lp);
     OfsEroute.Say("++++++ (c) 2014 CERN/IT-DSS xCastor2Ofs v1.0");
+
     // Initialize the subsystems
     gSrv = &myFS;
     gSrv->ConfigFN = (configfn && *configfn ? strdup(configfn) : 0);
@@ -115,7 +115,6 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
   int  cfgFD;
   // Extract the manager from the config file
   XrdOucStream config_stream(&Eroute, getenv("XRDINSTANCE"));
-  doPOSC = false;
 
   if (ConfigFN && *ConfigFN)
   {
@@ -179,20 +178,9 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
             Eroute.Say("=====> xcastor2.debugfileter: ", val, "");
           }
         }
-
-        // Enable 'persistency on successful close'
-        if (!strcmp("posc", var))
-        {
-          if ((val = config_stream.GetWord()))
-          {
-            XrdOucString sval = val;
-
-            if ((sval == "true") || (sval == "1") || (sval == "yes"))
-              doPOSC = true;
-          }
-        }
       }
     }
+
     config_stream.Close();
   }
 
@@ -204,10 +192,8 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
   Logging::SetLogPriority(mLogLevel);
   Logging::SetUnit(unit.c_str());
   xcastor_info("logging configured");
-
   // Parse the default XRootD directives
   int rc = XrdOfs::Configure(Eroute);
-
   // Set the effective user for all the XrdClients used to issue 'prepares'
   // to redirector
   setenv("XrdClientEUSER", "stage", 1);
@@ -216,7 +202,7 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
 
 
 //------------------------------------------------------------------------------
-// Set the log level for the xrootd daemon
+// Set the log level for the XRootD server daemon
 //------------------------------------------------------------------------------
 void
 XrdxCastor2Ofs::SetLogLevel(int logLevel)
@@ -232,6 +218,22 @@ XrdxCastor2Ofs::SetLogLevel(int logLevel)
 }
 
 
+//------------------------------------------------------------------------------
+// Stat file path
+//------------------------------------------------------------------------------
+int
+XrdxCastor2Ofs::stat(const char* path,
+                     struct stat* buf,
+                     XrdOucErrInfo& einfo,
+                     const XrdSecEntity* client,
+                     const char* opaque)
+{
+  xcastor_debug("path=%s, opaque=%s", path, opaque);
+  return XrdOfs::stat(path, buf, einfo, client, opaque);
+}
+
+
+
 /******************************************************************************/
 /*                         x C a s t o r O f s F i l e                        */
 /******************************************************************************/
@@ -241,21 +243,21 @@ XrdxCastor2Ofs::SetLogLevel(int logLevel)
 // Constuctor
 //------------------------------------------------------------------------------
 XrdxCastor2OfsFile::XrdxCastor2OfsFile(const char* user, int MonID) :
-    XrdOfsFile(user, MonID),
-    mEnvOpaque(NULL),
-    mIsRW(false),
-    mHasWrite(false),
-    mViaDestructor(false),
-    mReqId("0"),
-    mHasAdlerErr(false),
-    mHasAdler(true),
-    mAdlerOffset(0),
-    mXsValue(""),
-    mXsType(""),
-    mIsClosed(false),
-    mTpcKey(""),
-    mTpcFlag(TpcFlag::kTpcNone),
-    mDiskMgrPort(0)
+  XrdOfsFile(user, MonID),
+  mEnvOpaque(NULL),
+  mIsRW(false),
+  mHasWrite(false),
+  mViaDestructor(false),
+  mReqId("0"),
+  mHasAdlerErr(false),
+  mHasAdler(true),
+  mAdlerOffset(0),
+  mXsValue(""),
+  mXsType(""),
+  mIsClosed(false),
+  mTpcKey(""),
+  mTpcFlag(TpcFlag::kTpcNone),
+  mDiskMgrPort(0)
 {
   mAdlerXs = adler32(0L, Z_NULL, 0);
 }
@@ -269,9 +271,11 @@ XrdxCastor2OfsFile::~XrdxCastor2OfsFile()
   mViaDestructor = true;
   close();
 
-  if (mEnvOpaque) delete mEnvOpaque;
-
-  mEnvOpaque = NULL;
+  if (mEnvOpaque)
+  {
+    delete mEnvOpaque;
+    mEnvOpaque = NULL;
+  }
 }
 
 
@@ -285,12 +289,13 @@ XrdxCastor2OfsFile::open(const char*         path,
                          const XrdSecEntity* client,
                          const char*         opaque)
 {
-  xcastor::Timing opentiming("ofsf::open");
-  TIMING("START", &opentiming);
+  xcastor::Timing open_timing("open");
+  TIMING("START", &open_timing);
   XrdOucString spath = path;
   xcastor_debug("path=%s, opaque=%s", path, opaque);
   XrdOucString newpath = "";
   XrdOucString newopaque = opaque;
+
   // If there is explicit user opaque information we find two ?,
   // so we just replace it with a seperator.
   while (newopaque.replace("?", "&")) { };
@@ -315,20 +320,24 @@ XrdxCastor2OfsFile::open(const char*         path,
   int amp_pos = newopaque.find('&', tried_pos);
 
   if (tried_pos != STR_NPOS)
-    newopaque.erase(tried_pos, amp_pos - tried_pos);
+  {
+    if (amp_pos != STR_NPOS)
+      newopaque.erase(tried_pos, amp_pos - tried_pos);
+    else
+      newopaque.erase(tried_pos, newopaque.length() - tried_pos);
+  }
 
-  // This prevents 'clever' users from faking internal opaque information
-  newopaque.replace("source=", "nosource=");
+  // Set the open flags and type of operation rd_only/rdwr
   mEnvOpaque = new XrdOucEnv(newopaque.c_str());
   newpath = mEnvOpaque->Get("castor2fs.pfn1");
   open_mode |= SFS_O_MKPTH;
   create_mode |= SFS_O_MKPTH;
 
-  if ((open_mode & (SFS_O_CREAT | SFS_O_TRUNC |
-                    SFS_O_WRONLY | SFS_O_RDWR)) != 0)
-  {
+  if (open_mode & (SFS_O_CREAT | SFS_O_TRUNC | SFS_O_WRONLY | SFS_O_RDWR))
     mIsRW = true;
-  }
+
+  xcastor_info("path=%s, opaque=%s isRW=%d, open_mode=%x", path, opaque,
+               mIsRW, open_mode);
 
   // Deal with native TPC transfers which are passed directly to the OFS layer
   if (newopaque.find("tpc.") != STR_NPOS)
@@ -342,8 +351,7 @@ XrdxCastor2OfsFile::open(const char*         path,
       return SFS_ERROR;
   }
 
-
-  TIMING("FILEOPEN", &opentiming);
+  TIMING("OFS_OPEN", &open_timing);
   int rc = XrdOfsFile::open(newpath.c_str(), open_mode, create_mode, client,
                             newopaque.c_str());
 
@@ -351,29 +359,26 @@ XrdxCastor2OfsFile::open(const char*         path,
   {
     // Try to get the file checksum from the filesystem
     int nattr = 0;
-    char disk_xs_buf[32 + 1];
-    char disk_xs_type[32];
-    disk_xs_buf[0] = disk_xs_type[0] = '\0';
-    
-    // deal with ceph pool if any
+    mXsValue.reserve(32 + 1);
+    mXsValue[0] = '\0';
+    mXsType.reserve(32);
+    mXsType[0] = '\0';
+
+    // Deal with ceph pool if any
     XrdOucString poolAndPath = newpath;
-    if (mEnvOpaque->Get("castor2fs.pool")) {
+
+    if (mEnvOpaque->Get("castor2fs.pool"))
       poolAndPath = mEnvOpaque->Get("castor2fs.pool") + '/' + newpath;
-    };
 
     // Get existing checksum - we don't check errors here
-    nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.type", disk_xs_type,
-                                sizeof(disk_xs_type));
+    nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.type",
+                                (void*)&mXsType[0], mXsType.length());
 
-    if (nattr) disk_xs_type[nattr] = '\0';
+    mXsType[nattr] = '\0';
+    nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.value",
+                                (void*)&mXsValue[0], mXsValue.length());
 
-    nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.value", disk_xs_buf,
-                                sizeof(disk_xs_buf));
-
-    if (nattr) disk_xs_buf[nattr] = '\0';
-
-    mXsValue = disk_xs_buf;
-    mXsType = disk_xs_type;
+    mXsValue[nattr] = '\0';
     xcastor_debug("xs_type=%s, xs_val=%s", mXsType.c_str(),  mXsValue.c_str());
 
     // Get also the size of the file
@@ -384,27 +389,13 @@ XrdxCastor2OfsFile::open(const char*         path,
     }
   }
 
-  TIMING("DONE", &opentiming);
   if (gSrv->mLogLevel == LOG_DEBUG)
-    opentiming.Print();
-  
+  {
+    TIMING("DONE", &open_timing);
+    open_timing.Print();
+  }
+
   return rc;
-}
-
-
-
-//------------------------------------------------------------------------------
-// Stat file path
-//------------------------------------------------------------------------------
-int
-XrdxCastor2Ofs::stat(const char* path,
-                     struct stat* buf,
-                     XrdOucErrInfo& einfo,
-                     const XrdSecEntity* client,
-                     const char* opaque)
-{
-  xcastor_debug("path=%s, opaque=%s", path, opaque);
-  return XrdOfs::stat(path, buf, einfo, client, opaque);
 }
 
 
@@ -420,6 +411,8 @@ XrdxCastor2OfsFile::close()
     return SFS_OK;
 
   mIsClosed = true;
+  xcastor::Timing close_timing("close");
+  TIMING("START", &close_timing);
 
   // If this is a TPC transfer then we can drop the key from the map
   if (mTpcKey != "")
@@ -428,7 +421,6 @@ XrdxCastor2OfsFile::close()
     XrdSysMutexHelper tpc_lock(gSrv->mTpcMapMutex);
     gSrv->mTpcMap.erase(mTpcKey);
     mTpcKey = "";
-
     // Remove keys which are older than one hour
     std::map<std::string, struct TpcInfo>::iterator iter = gSrv->mTpcMap.begin();
     time_t now = time(NULL);
@@ -447,6 +439,7 @@ XrdxCastor2OfsFile::close()
     }
   }
 
+  TIMING("CLEAN_TPC", &close_timing);
   char ckSumbuf[32 + 1];
   sprintf(ckSumbuf, "%x", mAdlerXs);
   char* ckSumalg = "ADLER32";
@@ -458,8 +451,6 @@ XrdxCastor2OfsFile::close()
     {
       // Rescan the file and compute checksum
       xcastor_debug("rescan file and compute checksum");
-      xcastor::Timing xs_timing("ofsf::checksum");
-      TIMING("START", &xs_timing);
       char blk_xs_buf[64 * 1024];
       mAdlerXs = adler32(0L, Z_NULL, 0);
       mAdlerOffset = 0;
@@ -472,19 +463,19 @@ XrdxCastor2OfsFile::close()
         xs_offset += xs_size;
       }
 
-      TIMING("STOP", &xs_timing);
-      xs_timing.Print();
       mHasAdler = true;
     }
 
-    // deal with ceph pool if any
+    // Deal with ceph pool if any
     std::string poolAndPath = newpath;
     char* pool = mEnvOpaque->Get("castor2fs.pool");
-    if (pool) {
+
+    if (pool)
+    {
       poolAndPath = pool;
       poolAndPath += '/';
       poolAndPath += newpath;
-    };
+    }
 
     sprintf(ckSumbuf, "%x", mAdlerXs);
     xcastor_debug("file xs=%s", ckSumbuf);
@@ -506,6 +497,8 @@ XrdxCastor2OfsFile::close()
     }
   }
 
+  TIMING("DONE_XS", &close_timing);
+
   if ((rc = XrdOfsFile::close()))
   {
     xcastor_err("path=%s failed closing ofs file", newpath.c_str());
@@ -519,36 +512,47 @@ XrdxCastor2OfsFile::close()
     rc = gSrv->Emsg("close", error, EIO, "close file - delete via destructor");
   }
 
-  // Send status to diskmanager
-  uint64_t sz_file = 0;
-
-  // Get the size of the file for writes
-  if (mHasWrite)
+  // If we have contact info for the diskmanager then we contact it to pass the
+  // status otherwise this is a d2d or an rtcpd transfer and we don't need to
+  // contact the diskmanager.
+  if (!mDiskMgrPort)
   {
-    if (XrdOfsOss->Stat(newpath.c_str(), &mStatInfo, 0, mEnvOpaque))
+    TIMING("DISKMGR_STATUS", &close_timing);
+    uint64_t sz_file = 0;
+
+    // Get the size of the file for writes
+    if (mHasWrite)
     {
-      xcastor_err("path=%s failed stat", newpath.c_str());
-      sz_file = 0;
-      rc = gSrv->Emsg("close", error, EIO, "stat file");
+      if (XrdOfsOss->Stat(newpath.c_str(), &mStatInfo, 0, mEnvOpaque))
+      {
+        xcastor_err("path=%s failed stat", newpath.c_str());
+        rc = gSrv->Emsg("close", error, EIO, "stat file");
+      }
+      else
+        sz_file = mStatInfo.st_size;
     }
-    else
-      sz_file = mStatInfo.st_size;
+
+    int errorcode = (rc ? error.getErrInfo() : rc);
+    char* errormsg = (rc ? (char*)error.getErrText() : (char*)0);
+    int dm_errno = mover_close_file(mDiskMgrPort, mReqId.c_str(), sz_file,
+                                    const_cast<const char*>(ckSumalg),
+                                    const_cast<const char*>(ckSumbuf),
+                                    &errorcode, &errormsg);
+
+    // If failed to commit to diskmanager then return error
+    if (dm_errno)
+    {
+      xcastor_err("path=%s failed sending status to diskmanager", newpath.c_str());
+      rc = gSrv->Emsg("close", error, dm_errno, "send status to diskmanager");
+    }
   }
 
-  int errorcode = (rc ? error.getErrInfo() : rc);
-  char *errormsg = (rc ? (char*)error.getErrText(): (char*)0);
-  int dm_errno = mover_close_file(mDiskMgrPort, mReqId.c_str(), sz_file,
-                                  const_cast<const char*>(ckSumalg),
-                                  const_cast<const char*>(ckSumbuf),
-                                  &errorcode, &errormsg);
-
-  // If failed to commit to diskmanager then return error
-  if (dm_errno)
+  if (gSrv->mLogLevel == LOG_DEBUG)
   {
-    xcastor_err("path=%s failed sending status to diskmanager", newpath.c_str());
-    rc = gSrv->Emsg("close", error, dm_errno, "send status to diskmanager");
+    TIMING("DONE", &close_timing);
+    close_timing.Print();
   }
-  
+
   return rc;
 }
 
@@ -592,7 +596,7 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
       {
         xcastor_err("missing tpc options in copy stage");
         return gSrv->Emsg("open", error, EACCES, "open - missing tpc options",
-                          "in copy stage" );
+                          "in copy stage");
       }
     }
     else
@@ -607,7 +611,6 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
     mTpcFlag = TpcFlag::kTpcSrcRead;
   }
 
-
   if (mTpcFlag == TpcFlag::kTpcSrcSetup)
   {
     // This is a source TPC file and we just received the second open reuqest
@@ -618,7 +621,6 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
     tpc_org.erase(tpc_org.find(":"));
     tpc_org += "@";
     tpc_org += client->addrInfo->Name();;
-
     struct TpcInfo transfer = (struct TpcInfo)
     {
       castor_pfn,
@@ -626,12 +628,11 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
       std::string(opaque.c_str()),
       time(NULL) + sKeyExpiry
     };
-
     {
       // Insert new key-transfer pair in the map
       XrdSysMutexHelper tpc_lock(gSrv->mTpcMapMutex);
       std::pair< std::map<std::string, struct TpcInfo>::iterator, bool> pair =
-          gSrv->mTpcMap.insert(std::make_pair(mTpcKey, transfer));
+        gSrv->mTpcMap.insert(std::make_pair(mTpcKey, transfer));
 
       if (pair.second == false)
       {
@@ -650,18 +651,16 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
     // the castor lfn from the map which we saved previously as the destination has
     // no knowledge of the castor physical file name.
     std::string check_key =  mEnvOpaque->Get("tpc.key");
-
     // Get init opaque just for stager job information and don't touch the current
     // opaque info as it contains the tpc.key and tpc.org info needed by the OFS
     // layer to perform the actual tpc transfer
     std::string init_opaque;
-
     {
       bool found_key = false;
       int num_tries = 150;
       XrdSysMutexHelper tpc_lock(gSrv->mTpcMapMutex);
       std::map<std::string, struct TpcInfo>::iterator iter =
-          gSrv->mTpcMap.find(check_key);
+        gSrv->mTpcMap.find(check_key);
 
       while ((num_tries > 0) && !found_key)
       {
@@ -690,7 +689,7 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
           {
             xcastor_err("tpc key expired");
             return gSrv->Emsg("open", error, EKEYEXPIRED, "PrepareTPC - "
-                            "tpc key expired");
+                              "tpc key expired");
           }
         }
         else
@@ -712,7 +711,6 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
                           "tpc.key in map");
       }
     }
-
     // Now we can extract the transfer info
     XrdOucEnv env_opaque(init_opaque.c_str());
 
@@ -726,7 +724,6 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
     // the write method in OFS.
     mHasWrite = true;
     mHasAdler = false;
-
     // Now we can extract the transfer info
     XrdOucEnv env_opaque(opaque.c_str());
 
@@ -739,7 +736,7 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
 
 
 //------------------------------------------------------------------------------
-// Extract stager job info from the opaque data and establish a connection
+// Extract diskmanager info from the opaque data
 //------------------------------------------------------------------------------
 int
 XrdxCastor2OfsFile::ExtractTransferInfo(XrdOucEnv& env_opaque)
@@ -751,7 +748,7 @@ XrdxCastor2OfsFile::ExtractTransferInfo(XrdOucEnv& env_opaque)
     // If no diskmanager contact info is present in the opaque info, it means
     // that this is an internal d2d or an rtcpd transfer and we don't try to
     // contact the diskmanager but we allow it to pass through. The authorization
-    // plugin makes sure we only allowed trusted hosts to do transfers - it
+    // plugin makes sure we only allow trusted hosts to do transfers - it
     // verifies the signature.
     xcastor_debug("no diskmanager opaque infomation - this is either a d2d "
                   "transfer or an rtcpd request");
@@ -759,17 +756,15 @@ XrdxCastor2OfsFile::ExtractTransferInfo(XrdOucEnv& env_opaque)
   }
 
   std::string connect_info = val;
-  int pos1;
+  int pos1, pos2;
 
   // Syntax for request is: <id:diskmanagerport:subReqId> out of which only the
   // last two values are used for the moment
   if ((pos1 = connect_info.find(":")) != STR_NPOS)
   {
-    int pos2;
-
     if ((pos2 = connect_info.find(":", pos1 + 1)) != STR_NPOS)
     {
-      std::string sport (connect_info, pos1 + 1, pos2 - 1);
+      std::string sport(connect_info, pos1 + 1, pos2 - 1);
       mDiskMgrPort = atoi(sport.c_str());
       mReqId.assign(connect_info, pos2 + 1, std::string::npos);
     }
@@ -786,8 +781,8 @@ bool
 XrdxCastor2OfsFile::VerifyChecksum()
 {
   bool rc = true;
-  XrdOucString xs_val;
-  XrdOucString xs_type;
+  std::string xs_val;
+  std::string xs_type;
 
   if ((mXsValue != "") && (mXsType != ""))
   {
@@ -810,7 +805,7 @@ XrdxCastor2OfsFile::VerifyChecksum()
 
     if (!rc)
     {
-      xcastor_err("error: checksum %s != %s with algorithms [ %s  <=> %s ]",
+      xcastor_err("error: checksum %s != %s with algorithms [ %s <=> %s ]",
                   xs_val.c_str(), mXsValue.c_str(),
                   xs_type.c_str(), mXsType.c_str());
     }
@@ -934,4 +929,3 @@ XrdxCastor2OfsFile::write(XrdSfsAio* aioparm)
   mHasWrite = true;
   return rc;
 }
-
