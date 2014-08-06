@@ -30,6 +30,7 @@ add_library(castormessages SHARED
   ZmqMsg.cpp
   ZmqSocket.cpp
   ZmqSocketMT.cpp
+  ZmqSocketST.cpp
 )
 
 target_link_libraries(castormessages protobuf ssl)

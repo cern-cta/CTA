@@ -23,48 +23,53 @@
 
 #pragma once
 
-#include "castor/messages/ZmqMsg.hpp"
-
-#include <string>
-#include <zmq.h>
+#include "castor/messages/ZmqSocket.hpp"
 
 namespace castor {
 namespace messages {
 
 /**
- * Abstract C++ class that defines the interace of a wrapper around a ZMQ
- * socket.
+
+ * A "Single-Threaded" ZMQ socket.
+ *
+ * This concrete C++ class wraps a ZMQ socket.  This class is intended for
+ * single-thread use.  If a multi-threaded use is required then the ZmqSocketMT
+ * class should be used instead.
  */
-class ZmqSocket {
+class ZmqSocketST: public ZmqSocket {
 public:
+    
   /**
    * Constructor.
+   *
+   * @param zmqContext The ZMQ context.
+   * @param socketType The type of the ZMQ socket.
    */
-  ZmqSocket();
-
+  ZmqSocketST(void *const zmqContext, const int socketType);
+    
   /**
    * Destructor.
    */
-  virtual ~ZmqSocket() throw() = 0;
+  ~ZmqSocketST() throw();
     
   /**
    * Closes the ZMQ socket.
    */
-  virtual void close() = 0;
+  void close();
     
   /**
    * Binds the ZMQ socket to the specified endpoint.
    *
    * @param endpoint The endpoint to bind to.
    */
-  virtual void bind(const std::string &endpoint) = 0;
+  void bind(const std::string &endpoint);
     
   /**
    * Connects the socket to the spedicied endpoint.
    *
    * @param endpoint The endpoint to connect to.
    */ 
-  virtual void connect(const std::string &endpoint) = 0;
+  void connect(const std::string &endpoint);
 
   /**
    * Sends the specified ZMQ message over the socket.
@@ -72,7 +77,7 @@ public:
    * @param msg The ZMQ messge to be sent.
    * @param flags See manual page of  zmq_msg_send().
    */
-  virtual void send(ZmqMsg &msg, const int flags = 0) = 0;
+  void send(ZmqMsg &msg, const int flags = 0);
     
   /**
    * Sends the specified ZMQ message over the socket.
@@ -80,7 +85,7 @@ public:
    * @param msg The ZMQ messge to be sent.
    * @param flags See manual page of  zmq_msg_send().
    */
-  virtual void send(zmq_msg_t *const msg, const int flags = 0) = 0;
+  void send(zmq_msg_t *const msg, const int flags = 0);
     
   /**
    * Receives a ZMQ mesage from the socket.
@@ -88,7 +93,7 @@ public:
    * @param msg Output parameter: The received ZMQ messge.
    * @param flags See manual page of  zmq_msg_send().
    */
-  virtual void recv(ZmqMsg &msg, const int flags = 0) = 0;
+  void recv(ZmqMsg &msg, const int flags = 0);
     
   /**
    * Receives a ZMQ mesage from the socket.
@@ -96,28 +101,33 @@ public:
    * @param msg Output parameter: The received ZMQ messge.
    * @param flags See manual page of  zmq_msg_send().
    */
-  virtual void recv(zmq_msg_t *const msg, const int flags = 0) = 0;
+  void recv(zmq_msg_t *const msg, const int flags = 0);
 
   /**
    * Returns the ZMQ socket wrappeed by this class.
    *
    * @return The ZMQ socket wrappeed by this class.
    */
-  virtual void *getZmqSocket() const throw() = 0;
+  void *getZmqSocket() const throw();
 
 private:
 
   /**
+   * The ZMQ socket.
+   */
+  void *m_zmqSocket;
+    
+  /**
    * Copy constructor made private to prevent copies.
    */
-  ZmqSocket(const ZmqSocket&);
+  ZmqSocketST(const ZmqSocketST&);
 
   /**
    * Assignment operator made private to prevent assignments.
    */
-  void operator=(const ZmqSocket &);
+  void operator=(const ZmqSocketST &);
 
-}; // class ZmqSocket
+}; // class ZmqSocketST
 
 } // namespace messages
 } // namespace castor

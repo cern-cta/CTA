@@ -21,128 +21,16 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/messages/ZmqSocket.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::messages::ZmqSocket::ZmqSocket(void *const zmqContext,
-  const int socketType) {
-  m_zmqSocket = zmq_socket (zmqContext, socketType);
-  if (NULL == m_zmqSocket) {
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to create ZMQ socket: "
-      << message;
-    throw ex;
-  }
+castor::messages::ZmqSocket::ZmqSocket() {
 }
-  
+
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::messages::ZmqSocket::~ZmqSocket() throw() {
-  try {
-    close();
-  } catch(...) {
-    // Ignore any exceptions because this is a destructor.
-  }
-}
-  
-//------------------------------------------------------------------------------
-// close
-//------------------------------------------------------------------------------
-void castor::messages::ZmqSocket::close() {
-  if(m_zmqSocket == NULL) {
-    return;
-  }
-
-  if(zmq_close (m_zmqSocket)) {
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to close ZMQ socket: "
-      << message;
-    throw ex;
-  }
-  m_zmqSocket = NULL;
-}
-    
-//------------------------------------------------------------------------------
-// bind
-//------------------------------------------------------------------------------
-void castor::messages::ZmqSocket::bind (const std::string &endpoint) {
-  if(zmq_bind (m_zmqSocket, endpoint.c_str())) {
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to bind ZMQ socket: "
-      << message;
-    throw ex;
-  }
-}
-  
-//------------------------------------------------------------------------------
-// connect
-//------------------------------------------------------------------------------
-void castor::messages::ZmqSocket::connect(const std::string &endpoint) {
-  if(zmq_connect(m_zmqSocket, endpoint.c_str())) {
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to connect ZMQ socket: "
-      << message;
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// send
-//------------------------------------------------------------------------------
-void castor::messages::ZmqSocket::send(ZmqMsg &msg, const int flags) {
-  send(&msg.getZmqMsg(), flags);
-}
-  
-//------------------------------------------------------------------------------
-// send
-//------------------------------------------------------------------------------
-void castor::messages::ZmqSocket::send(zmq_msg_t *const msg, const int flags) {
-  if(-1 == zmq_msg_send (msg, m_zmqSocket, flags)) {
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to send ZMQ message: "
-      << message;
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// recv
-//------------------------------------------------------------------------------
-void castor::messages::ZmqSocket::recv(ZmqMsg &msg, const int flags) {
-  recv(&msg.getZmqMsg(), flags);
-}
-
-//------------------------------------------------------------------------------
-// recv
-//------------------------------------------------------------------------------
-void castor::messages::ZmqSocket::recv(zmq_msg_t *const msg, int flags) {
-  if(-1 == zmq_msg_recv (msg, m_zmqSocket, flags)) {
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to receive ZMQ message: "
-      << message;
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// getZmqSocket
-//------------------------------------------------------------------------------
-void *castor::messages::ZmqSocket::getZmqSocket() const throw() {
-  return m_zmqSocket;
 }

@@ -29,7 +29,7 @@
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/Frame.hpp"
 #include "castor/messages/ZmqMsg.hpp"
-#include "castor/messages/ZmqSocket.hpp"
+#include "castor/messages/ZmqSocketST.hpp"
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
@@ -125,7 +125,7 @@ private:
   /**
    * The ZMQ socket listening for messages.
    */
-  messages::ZmqSocket m_socket;
+  messages::ZmqSocketST m_socket;
 
   /**
    * The catalogue of tape drives controlled by the tape server daemon.

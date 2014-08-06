@@ -22,21 +22,20 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
-#include "castor/messages/ZmqSocketMT.hpp"
-#include "castor/utils/ScopedLock.hpp"
+#include "castor/messages/ZmqSocketST.hpp"
 #include "h/serrno.h"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::messages::ZmqSocketMT::ZmqSocketMT(void *const zmqContext,
-  const int socketType): m_socket(zmqContext, socketType) {
-  const int rc = pthread_mutex_init(&m_mutex, NULL);
-  if(0 != rc) {
+castor::messages::ZmqSocketST::ZmqSocketST(void *const zmqContext,
+  const int socketType) {
+  m_zmqSocket = zmq_socket (zmqContext, socketType);
+  if (NULL == m_zmqSocket) {
     char message[100];
-    sstrerror_r(rc, message, sizeof(message));
+    sstrerror_r(errno, message, sizeof(message));
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to create ZmqSocketMT: Failed to create mutex: "
+    ex.getMessage() << "Failed to create ZMQ socket: "
       << message;
     throw ex;
   }
@@ -45,71 +44,106 @@ castor::messages::ZmqSocketMT::ZmqSocketMT(void *const zmqContext,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::messages::ZmqSocketMT::~ZmqSocketMT() throw() {
-  close();
-  pthread_mutex_destroy(&m_mutex);
+castor::messages::ZmqSocketST::~ZmqSocketST() throw() {
+  try {
+    close();
+  } catch(...) {
+    // Ignore any exceptions because this is a destructor.
+  }
 }
   
 //------------------------------------------------------------------------------
 // close
 //------------------------------------------------------------------------------
-void castor::messages::ZmqSocketMT::close() {
-  utils::ScopedLock lock(m_mutex);
-  m_socket.close();
+void castor::messages::ZmqSocketST::close() {
+  if(m_zmqSocket == NULL) {
+    return;
+  }
+
+  if(zmq_close (m_zmqSocket)) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to close ZMQ socket: "
+      << message;
+    throw ex;
+  }
+  m_zmqSocket = NULL;
 }
     
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void castor::messages::ZmqSocketMT::bind (const std::string &endpoint) {
-  utils::ScopedLock lock(m_mutex);
-  m_socket.bind(endpoint);
+void castor::messages::ZmqSocketST::bind (const std::string &endpoint) {
+  if(zmq_bind (m_zmqSocket, endpoint.c_str())) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to bind ZMQ socket: "
+      << message;
+    throw ex;
+  }
 }
   
 //------------------------------------------------------------------------------
 // connect
 //------------------------------------------------------------------------------
-void castor::messages::ZmqSocketMT::connect(const std::string &endpoint) {
-  utils::ScopedLock lock(m_mutex);
-  m_socket.connect(endpoint);
+void castor::messages::ZmqSocketST::connect(const std::string &endpoint) {
+  if(zmq_connect(m_zmqSocket, endpoint.c_str())) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to connect ZMQ socket: "
+      << message;
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
 // send
 //------------------------------------------------------------------------------
-void castor::messages::ZmqSocketMT::send(ZmqMsg &msg, const int flags) {
-  utils::ScopedLock lock(m_mutex);
-  m_socket.send(msg, flags);
+void castor::messages::ZmqSocketST::send(ZmqMsg &msg, const int flags) {
+  send(&msg.getZmqMsg(), flags);
 }
   
 //------------------------------------------------------------------------------
 // send
 //------------------------------------------------------------------------------
-void castor::messages::ZmqSocketMT::send(zmq_msg_t *const msg,
-  const int flags) {
-  utils::ScopedLock lock(m_mutex);
-  m_socket.send(msg, flags);
+void castor::messages::ZmqSocketST::send(zmq_msg_t *const msg, const int flags) {
+  if(-1 == zmq_msg_send (msg, m_zmqSocket, flags)) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to send ZMQ message: "
+      << message;
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
 // recv
 //------------------------------------------------------------------------------
-void castor::messages::ZmqSocketMT::recv(ZmqMsg &msg, const int flags) {
-  utils::ScopedLock lock(m_mutex);
-  m_socket.recv(msg, flags);
+void castor::messages::ZmqSocketST::recv(ZmqMsg &msg, const int flags) {
+  recv(&msg.getZmqMsg(), flags);
 }
 
 //------------------------------------------------------------------------------
 // recv
 //------------------------------------------------------------------------------
-void castor::messages::ZmqSocketMT::recv(zmq_msg_t *const msg, int flags) {
-  utils::ScopedLock lock(m_mutex);
-  m_socket.recv(msg, flags);
+void castor::messages::ZmqSocketST::recv(zmq_msg_t *const msg, int flags) {
+  if(-1 == zmq_msg_recv (msg, m_zmqSocket, flags)) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to receive ZMQ message: "
+      << message;
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
 // getZmqSocket
 //------------------------------------------------------------------------------
-void *castor::messages::ZmqSocketMT::getZmqSocket() const throw() {
-  return m_socket.getZmqSocket();
+void *castor::messages::ZmqSocketST::getZmqSocket() const throw() {
+  return m_zmqSocket;
 }

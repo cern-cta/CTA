@@ -27,6 +27,89 @@
 #include <string.h>
 
 //------------------------------------------------------------------------------
+// sendFrame
+//------------------------------------------------------------------------------
+void castor::messages::sendFrame(ZmqSocket &socket, const Frame &frame) {
+  try {
+    // Prepare header
+    ZmqMsg header(frame.header.ByteSize());
+    frame.serializeHeaderToZmqMsg(header);
+
+    // Prepare body
+    ZmqMsg body(frame.body.length());
+    memcpy(body.getData(), frame.body.c_str(), body.size());
+
+    // Send header and body as a two part ZMQ message
+    socket.send(header, ZMQ_SNDMORE);
+    socket.send(body, 0);
+
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to send message frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// recvFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::recvFrame(ZmqSocket &socket) {
+  try {
+    ZmqMsg header;
+    try {
+      socket.recv(header);
+    } catch(castor::exception::Exception &ne) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to receive header of message frame: " <<
+        ne.getMessage().str();
+      throw ex;
+    }
+
+    if(!header.more()){
+      castor::exception::Exception ex;
+      ex.getMessage() << "No message body after receiving the header";
+      throw ex;
+    }
+
+    Frame frame;
+    frame.parseZmqMsgIntoHeader(header);
+
+    ZmqMsg body;
+    try {
+      socket.recv(body);
+    } catch(castor::exception::Exception &ne) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to receive body of message frame: " <<
+        ne.getMessage().str();
+      throw ex;
+    }
+
+    frame.body = std::string((const char *)body.getData(), body.size());
+
+    frame.checkHashValueOfBody();
+
+    return frame;
+
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to receive message frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// connectZmqSocketToLocalhost
+//------------------------------------------------------------------------------
+void castor::messages::connectZmqSocketToLocalhost(ZmqSocket &socket,
+  const int port) {
+  std::string bindingAdress("tcp://127.0.0.1:");
+  bindingAdress += castor::utils::toString(port);
+  socket.connect(bindingAdress.c_str());
+}
+
+//------------------------------------------------------------------------------
 // preFillHeader
 //------------------------------------------------------------------------------
 castor::messages::Header castor::messages::protoTapePreFillHeader() {

@@ -24,6 +24,7 @@
 #pragma once
 
 #include "castor/messages/ZmqSocket.hpp"
+#include "castor/messages/ZmqSocketST.hpp"
 
 #include <pthread.h>
 #include <string>
@@ -33,12 +34,15 @@ namespace castor {
 namespace messages {
 
 /**
- * C++ class that wraps a ZMQ socket and provides a thread safe interface by
- * acting as a monitor.
+ * A "Multi-Threaded" ZMQ socket.
+ *
+ * This concrete C++ class wraps a ZMQ socket and provides a thread safe
+ * interface by acting as a monitor.  If a single-threaded use is required then
+ * the ZmqSocketST class should be used instead.
  *
  * Please note that the getZmqSocket() method is not thread safe.
  */
-class ZmqSocketMT {
+class ZmqSocketMT: public ZmqSocket {
 public:
     
   /**
@@ -108,7 +112,7 @@ public:
   /**
    * Returns the ZMQ socket wrappeed by this class.
    *
-   * Please note that this method is not thread safe.
+   * Please note that the getZmqSocket() method is not thread safe.
    *
    * @return The ZMQ socket wrappeed by this class.
    */
@@ -125,7 +129,7 @@ private:
   /**
    * The non thread-safe socket to be protected.
    */
-  ZmqSocket m_socket;
+  ZmqSocketST m_socket;
 
 }; // class ZmqSocketMT
 
