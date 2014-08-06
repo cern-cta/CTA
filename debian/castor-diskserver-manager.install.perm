@@ -12,6 +12,7 @@
 %attr(0644,root,root) usr/lib/python*/site-packages/clientsreplier.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/moverhandler.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/castor_tools.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/commonexceptions.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/connectionpool.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/dlf.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/diskmanagerdlf.py*

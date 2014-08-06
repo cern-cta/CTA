@@ -33,6 +33,7 @@ import threading
 import socket
 import daemon
 import castor_tools, connectionpool, dispatcher, serverqueue, aborter
+from commonexceptions import TransferCanceled
 import synchronizer, suicider, reportmanager, diskserverlistcache, modifydiskservers
 import dlf
 from transfermanagerdlf import msgs
@@ -441,8 +442,8 @@ class TransferManagerService(rpyc.Service):
           return dcPath.getvalue()
         else:
           # this is not acceptable
-          raise ValueError('Invalid transferType %d for transfer: %s' \
-                           % (transfer.transferType, transfer.transferId))
+          raise TransferCanceled('Invalid transferType %d for transfer: %s' \
+                                 % (transfer.transferType, transfer.transferId))
       except Exception, e:
         # check whether we should reconnect to DB, and do so if needed
         self.__class__.dbConnection().checkForReconnection(e)
@@ -455,10 +456,10 @@ class TransferManagerService(rpyc.Service):
               # cleanup source
               queueingTransfers.d2dendById(transfer.transferId)
               # raise ValueError to tell the upper layer to give up
-              raise ValueError(error.message)
+              raise TransferCanceled(error.message)
             elif errorcode in (20104, 20114):  # getStart, putStart DB errors
               # raise ValueError to tell the upper layer to give up
-              raise ValueError(error.message)
+              raise TransferCanceled(error.message)
         # otherwise reraise for the upper layer
         raise e
     finally:

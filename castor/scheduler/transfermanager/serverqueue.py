@@ -33,6 +33,7 @@ Manages the transfers pending on the different diskServers'''
 import threading, socket
 import dlf, time
 import castor_tools, diskserverlistcache, connectionpool
+from commonexceptions import TransferCanceled, SourceNotStarted
 from transfermanagerdlf import msgs
 from transfer import TransferType, tupleToTransfer
 
@@ -255,10 +256,10 @@ class ServerQueue(dict):
 
   def transferStarting(self, transfer):
     '''Removes a transfer and gives back the list of other nodes where it was pending.
-    Raises ValueError when not found.
+    Raises TransferCanceled when not found.
     In case of D2DSRC transfers, remember where it started.
     In case of D2DDST transfers, returns the place where the corresponding source started,
-    or raises EnvironmentError if the source did not yet start'''
+    or raises SourceNotStarted if the source did not yet start'''
     if transfer.transferType == TransferType.D2DSRC:
       self.lock.acquire()
       try:
@@ -272,13 +273,13 @@ class ServerQueue(dict):
               # log 'denying start of source transfer as it has been canceled'
               dlf.writedebug(msgs.TRANSFERSRCCANCELED, DiskServer=transfer.diskServer,
                              subreqId=transfer.transferId, reqId=transfer.reqId)
-              raise ValueError('canceled while queuing')
+              raise TransferCanceled('canceled while queuing')
             else:
               # source has really started somewhere else. Let the diskServer know by raising an exception
               # "Transfer had already started. Cancel start" message
               dlf.writedebug(msgs.TRANSFERALREADYSTARTED, DiskServer=transfer.diskServer,
                              subreqId=transfer.transferId, reqId=transfer.reqId)
-              raise ValueError('already started on another host')
+              raise TransferCanceled('already started on another host')
           # remember where the source is running
           self.d2dsrcrunning[transfer.transferId] = SrcRunningTransfer(transfer, time.time())
           machines = self.transfersLocations[(transfer.transferId, transfer.transferType)]
@@ -320,14 +321,14 @@ class ServerQueue(dict):
                 # that the source has been cleaned up while it should be running
                 dlf.write(msgs.TRANSFERCANCELEDCONFIRMED, DiskServer=transfer.diskServer,
                           subreqId=transfer.transferId, reqId=transfer.reqId)
-                raise ValueError("Request canceled while queueing and retried due to timeout")
+                raise TransferCanceled("Request canceled while queueing and retried due to timeout")
             else:
               return
           # The transfer has really started somewhere else. Let the diskServer know by raising an exception
           # "Transfer had already started. Cancel start" message
           dlf.writedebug(msgs.TRANSFERALREADYSTARTED, DiskServer=transfer.diskServer,
                          subreqId=transfer.transferId, reqId=transfer.reqId)
-          raise ValueError('Already started on another host')
+          raise TransferCanceled('Already started on another host')
         # We are now sure that the transfer has not yet started
         # if a destination transfer wants to start, check whether the source is ready
         if transfer.transferType == TransferType.D2DDST and \
@@ -335,7 +336,7 @@ class ServerQueue(dict):
           # "Source is not ready yet" message
           dlf.writedebug(msgs.SOURCENOTREADY, DiskServer=transfer.diskServer,
                          subreqId=transfer.transferId, reqId=transfer.reqId)
-          raise EnvironmentError
+          raise SourceNotStarted
         # this time, the transfer can start.
         # drop the transfer from all queues. Note that this desynchronizes the queues as seen
         # by the diskServers from the queues seen by the central manager. In case of a

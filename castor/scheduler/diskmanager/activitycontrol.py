@@ -31,6 +31,7 @@ import Crypto.PublicKey.RSA as RSA
 import Crypto.Signature.PKCS1_v1_5 as PKCS1
 import base64
 import connectionpool, dlf, clientsreplier
+from commonexceptions import TransferCanceled, SourceNotStarted
 from diskmanagerdlf import msgs
 from transfer import TransferType, RunningTransfer
 
@@ -158,7 +159,7 @@ class ActivityControlThread(threading.Thread):
       self.runningTransfers.setProcess(transfer.transferId, process)
     except Exception, e:
       # log "Failed to execute mover" with all details about the transfer
-      dlf.writeerr(msgs.MOVERSTARTFAILED, transfer=transfer)
+      dlf.writeerr(msgs.MOVERSTARTFAILED, transfer=transfer, error=str(e))
       # clean up this transfer from the list of running transfers
       self.runningTransfers.remove([transfer.transferId])
 
@@ -210,7 +211,6 @@ class ActivityControlThread(threading.Thread):
                   if transfer.protocol != 'xroot':
                     # prepare the listening port for the client to connect. The mover is executed only after the client connects back
                     moverPort = self.clientsListener.createSocketForMover(qTransfer, self.startMover)
-                    # the 
                     destPath = transfer.reqId
                   else:
                     # xroot is special here: we don't create a socket for the mover, but instead we tell
@@ -242,7 +242,7 @@ class ActivityControlThread(threading.Thread):
               # 'Failed to start transfer and got timeout when putting back to queue'
               dlf.writenotice(msgs.TRANSFERBACKTOQUEUEFAILED, subreqid=transfer.transferId,
                               reqid=transfer.reqId, fileId=transfer.fileId, originalError='Timeout', error=e)
-          except ValueError, e:
+          except TransferCanceled, e:
             # 'Transfer start canceled' message
             dlf.writedebug(msgs.TRANSFERSTARTCANCELED, reason=e.args, subreqId=transfer.transferId,
                            fileId=transfer.fileId)
@@ -256,7 +256,7 @@ class ActivityControlThread(threading.Thread):
                                               e.errno, e.strerror, transfer.reqId, transfer.reqId, 0, transfer.protocol)
             # use asynch response: exceptions are handled in the clientsReplier thread
             self.clientsReplier.sendResponse((qTransfer, transfer.clientIpAddress, transfer.clientPort, ioresp))
-          except EnvironmentError, e:
+          except SourceNotStarted, e:
             # we have tried to start a disk to disk copy and the source is not yet ready
             # we will put it in a pending queue
             # "Start postponed until source is ready" message

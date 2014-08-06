@@ -76,7 +76,7 @@ class ConnectionPool(object):
         # we have a master node
         port = self.config.getValue('Scheduler', 'Port', 15011, int)
       # create the connection
-      rpcconn = rpyc.connect(machine, port)
+      rpcconn = rpyc.connect(machine, port, config={'instantiate_custom_exceptions':True})
       # Make the setting up of the connection able to timeout
       # This is in principle done by the rpyc framework on first use of the root attribute
       # but as rpyc does it in a blocking manner, we had to do it "by hand" with
