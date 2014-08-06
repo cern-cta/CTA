@@ -132,7 +132,8 @@ static std::string rtcpToCastorXroot(const char *const rtcpPath) {
     // Deal with ceph pool if any
     std::string pfn1, pool;
     size_t slashPos = path.find('/', colonPos+1);
-    if (std::string::npos == slashPos) {
+    if (std::string::npos == slashPos || slashPos == (colonPos+1)) {
+      // no pool or absolute path (no ceph at all)
       pfn1 = path.substr(colonPos+1);
     } else {
       pool = path.substr(colonPos+1, slashPos-colonPos-1);
