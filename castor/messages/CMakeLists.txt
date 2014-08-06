@@ -5,6 +5,7 @@ PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 
 add_library(castormessages SHARED
   ${ProtoSources}
+  Constants.cpp
   Frame.cpp
   messages.cpp
   SmartZmqContext.cpp

@@ -477,7 +477,8 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedLabelJob(
     m_labelCmdConnection = labelCmdConnection;
     m_state = DRIVE_STATE_SESSIONRUNNING;
     m_sessionType = SESSION_TYPE_LABEL;
-    m_session = new DriveCatalogueLabelSession(castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_WAITFORK, job, labelCmdConnection);
+    m_session = new DriveCatalogueLabelSession(
+      DriveCatalogueSession::SESSION_STATE_WAITFORK, job, labelCmdConnection);
     break;
   default:
     {

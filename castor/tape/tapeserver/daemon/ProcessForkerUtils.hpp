@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include "castor/messages/Constants.hpp"
 #include "castor/messages/Exception.pb.h"
 #include "castor/messages/ForkCleaner.pb.h"
 #include "castor/messages/ForkDataTransfer.pb.h"
@@ -30,9 +31,9 @@
 #include "castor/messages/ForkSucceeded.pb.h"
 #include "castor/messages/ProcessCrashed.pb.h"
 #include "castor/messages/ProcessExited.pb.h"
+#include "castor/messages/ReturnValue.pb.h"
 #include "castor/messages/StopProcessForker.pb.h"
 #include "castor/tape/tapeserver/daemon/ProcessForkerFrame.hpp"
-#include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
 
 #include <google/protobuf/message.h>
 #include <stdint.h>
@@ -135,6 +136,18 @@ public:
     const messages::ProcessExited &msg);
 
   /**
+   * Serializes the specified message into the specified frame. 
+   *  
+   * Please note that this method sets both the type and payload fields of the
+   * frame.
+   *
+   * @param frame Output parameter: The frame.
+   * @param msg The message.
+   */
+  static void serializePayload(ProcessForkerFrame &frame,
+    const messages::ReturnValue &msg);
+
+  /**
    * Serializes the specified message into the specified frame.
    *
    * Please note that this method sets both the type and payload fields of the
@@ -218,13 +231,6 @@ public:
   static void writeFrame(const int fd, const ProcessForkerFrame &frame);
 
   /**
-   * Reads an acknowledgement from the specified file descriptor.
-   *
-   * If the acknowledgement is negative then this method throws an exception.
-   */
-  static void readAck(const int fd);
-
-  /**
    * Reads either a good-day reply-message or an exception message from the
    * specified File descriptor.
    *
@@ -242,7 +248,7 @@ public:
     const ProcessForkerFrame frame = readFrame(fd);
 
     // Throw an exception if the ProcessForker replied with one
-    if(ProcessForkerMsgType::MSG_EXCEPTION == frame.type) {
+    if(messages::MSG_TYPE_EXCEPTION == frame.type) {
       messages::Exception exMsg;
       if(!exMsg.ParseFromString(frame.payload)) {
         castor::exception::Exception ex;
@@ -344,6 +350,16 @@ public:
    * the frame.
    */
   static void parsePayload(const ProcessForkerFrame &frame,
+    messages::ReturnValue &msg);
+
+  /**
+   * Parses the payload of the specified frame.
+   *
+   * @param frame The frame.
+   * @param msg Output parameter: The message contained within the payload of
+   * the frame.
+   */
+  static void parsePayload(const ProcessForkerFrame &frame,
     messages::StopProcessForker &msg);
 
 private:
@@ -362,7 +378,7 @@ private:
    * @param type The type of message.
    * @param msg The message.
    */
-  static void writeFrame(const int fd, const ProcessForkerMsgType::Enum type,
+  static void writeFrame(const int fd, const messages::MsgType type,
     const google::protobuf::Message &msg);
 
   /**
@@ -374,7 +390,7 @@ private:
    * @param payloadLen The length of the frame payload in bytes.
    */
   static void writeFrameHeader(const int fd,
-    const ProcessForkerMsgType::Enum msgType,
+    const messages::MsgType msgType,
     const uint32_t payloadLen);
 
   /**
@@ -419,7 +435,7 @@ private:
    * @param fd The file descriptor to be read from.
    * @return The value of the payload-type field.
    */
-  static ProcessForkerMsgType::Enum readPayloadType(const int fd);
+  static messages::MsgType readPayloadType(const int fd);
 
   /**
    * Reads the payload-length field of a frame from the specified file

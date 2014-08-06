@@ -20,11 +20,6 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
-/* 
- * Author: dcome
- *
- * Created on March 26, 2014, 9:38 AM
- */
 
 #pragma once
 

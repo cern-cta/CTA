@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
+#include "castor/messages/Constants.hpp"
 
 #include <string>
 
@@ -39,7 +39,7 @@ struct ProcessForkerFrame {
   /**
    *  The type of the message contained within the payload of the frame.
    */
-  ProcessForkerMsgType::Enum type;
+  messages::MsgType type;
 
   /**
    * The payload of the frame.
@@ -49,7 +49,7 @@ struct ProcessForkerFrame {
   /**
    * Constructor.
    */
-  ProcessForkerFrame(): type(ProcessForkerMsgType::MSG_NONE) {
+  ProcessForkerFrame(): type(messages::MSG_TYPE_NONE) {
   }
 }; // struct  ProcessForkerFrame
 

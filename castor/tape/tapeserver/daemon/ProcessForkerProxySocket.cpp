@@ -24,7 +24,6 @@
 #include "castor/messages/ForkCleaner.pb.h"
 #include "castor/messages/ForkSucceeded.pb.h"
 #include "castor/messages/StopProcessForker.pb.h"
-#include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxySocket.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
 #include "h/serrno.h"
@@ -62,11 +61,34 @@ castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   stopProcessForker(const std::string &reason) {
+
+  // Request the process forker to stop gracefully
+  const messages::StopProcessForker rqst = createStopProcessForkerMsg(reason);
+  ProcessForkerUtils::writeFrame(m_socketFd, rqst);
+
+  // Read back the reply
+  messages::ReturnValue reply;
+  ProcessForkerUtils::readReplyOrEx(m_socketFd, reply);
+  if(0 != reply.value()) {
+    // Should never get here
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to request ProcessForker to stop gracefully: "
+      "Received a non-zero return value: value=" << reply.value();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createStopProcessForkerMsg
+//------------------------------------------------------------------------------
+castor::messages::StopProcessForker castor::tape::tapeserver::daemon::
+  ProcessForkerProxySocket::createStopProcessForkerMsg(
+  const std::string &reason) {
   messages::StopProcessForker msg;
+
   msg.set_reason(reason);
-  ProcessForkerUtils::writeFrame(m_socketFd, msg);
-  ProcessForkerUtils::readAck(m_socketFd);
-  m_log(LOG_INFO, "Got ack of graceful shutdown from the ProcessForker");
+
+  return msg;
 }
 
 //------------------------------------------------------------------------------
@@ -78,10 +100,9 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
     const DataTransferSession::CastorConf &conf,
     const unsigned short rmcPort) {
 
+  // Request the process forker to fork a data-transfer session
   const messages::ForkDataTransfer rqst = createForkDataTransferMsg(driveConfig,
     vdqmJob, conf, rmcPort);
-
-  // Request the process forker to fork a data-transfer session
   ProcessForkerUtils::writeFrame(m_socketFd, rqst);
 
   // Read back the reply
@@ -148,9 +169,9 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   const legacymsg::TapeLabelRqstMsgBody &labelJob,
   const unsigned short rmcPort) {
 
+  // Request the process forker to fork a label session
   const messages::ForkLabel rqst = createForkLabelMsg(driveConfig, labelJob,
     rmcPort);
-
   ProcessForkerUtils::writeFrame(m_socketFd, rqst);
 
   // Read back the reply

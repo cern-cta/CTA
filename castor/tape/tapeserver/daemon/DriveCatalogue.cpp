@@ -38,11 +38,6 @@ castor::tape::tapeserver::daemon::DriveCatalogue::~DriveCatalogue() throw() {
      itor++) {
     const DriveCatalogueEntry *drive = itor->second;
 
-    if(DriveCatalogueEntry::SESSION_TYPE_LABEL == drive->getSessionType() && 
-      DriveCatalogueSession::SESSION_STATE_WAITFORK == drive->getSessionState()
-      && -1 != drive->getLabelCmdConnection()) {
-      close(drive->getLabelCmdConnection());
-    }
     delete drive;
   }
 }

@@ -29,6 +29,7 @@
 #include "castor/legacymsg/TapeMarshal.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
+#include "castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/LabelCmdAcceptHandler.hpp"
@@ -47,7 +48,6 @@
 #include "h/rmc_constants.h"
 #include "h/rtcp_constants.h"
 #include "h/rtcpd_constants.h"
-#include "CleanerSession.hpp"
 
 #include <algorithm>
 #include <errno.h>
@@ -1004,8 +1004,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
   const int waitpidStat) {
 
   switch(sessionType) {
-  case DriveCatalogueEntry::SESSION_TYPE_LABEL:
-    return handleReapedLabelSession(pid, waitpidStat);
   case DriveCatalogueEntry::SESSION_TYPE_CLEANER:
     return handleReapedCleanerSession(pid, waitpidStat);
   default:
@@ -1277,85 +1275,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
     common::CastorConfiguration::getConfig().getConfEntInt(
       "RMC", "PORT", (unsigned short)RMC_PORT, &m_log);
 
-  m_processForker->forkLabel(driveConfig, drive->getLabelJob(), rmcPort);
-
-  // Release the connection with the label command from the drive catalogue
-  castor::utils::SmartFd labelCmdConnection;
-  try {
-    labelCmdConnection.reset(drive->releaseLabelCmdConnection());
-  } catch(castor::exception::Exception &ne) {
-    params.push_back(log::Param("message", ne.getMessage().str()));
-    m_log(LOG_ERR, "Failed to fork label session", params);
-    return;
-  }
-
-  m_log.prepareForFork();
-  const pid_t forkRc = fork();
-
-  // If fork failed
-  if(0 > forkRc) {
-    // Log an error message and return
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    params.push_back(log::Param("message", message));
-    m_log(LOG_ERR, "Failed to fork label session", params);
-
-  // Else if this is the parent process
-  } else if(0 < forkRc) {
-    // Only the child process should have the connection with the label-command
-    // open
-    close(labelCmdConnection.release());
-
-    drive->forkedLabelSession(forkRc);
-
-  // Else this is the child process
-  } else {
-    // Clear the reactor which in turn will close all of the open
-    // file-descriptors owned by the event handlers
-    //m_reactor.clear();
-
-    runLabelSession(drive, labelCmdConnection.release());
-  }
-}
-
-//------------------------------------------------------------------------------
-// runLabelSession
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(
-  const DriveCatalogueEntry *drive, const int labelCmdConnection) throw() {
-  const utils::DriveConfig &driveConfig = drive->getConfig();
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", driveConfig.unitName));
-
-  m_log(LOG_INFO, "Label-session child-process started", params);
-
-  try {
-    std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
-    std::auto_ptr<legacymsg::NsProxy> ns(m_nsFactory.create());
-    castor::tape::System::realWrapper sWrapper;
-    bool force = drive->getLabelJob().force==1 ? true : false;
-    castor::tape::tapeserver::daemon::LabelSession labelsession(
-      labelCmdConnection,
-      *(rmc.get()),
-      *(ns.get()),
-      drive->getLabelJob(),
-      m_log,
-      sWrapper,
-      driveConfig,
-      force);
-    labelsession.execute();
-    exit(0);
-  } catch(std::exception &se) {
-    params.push_back(log::Param("message", se.what()));
-    m_log(LOG_ERR, "Aborting label session: Caught an unexpected exception",
-      params);
-    exit(1);
-  } catch(...) {
-    m_log(LOG_ERR,
-      "Aborting label session: Caught an unexpected and unknown exception",
-      params);
-    exit(1);
-  }
+  const pid_t labelSessionPid = m_processForker->forkLabel(driveConfig,
+    drive->getLabelJob(), rmcPort);
+  drive->forkedLabelSession(labelSessionPid);
 }
 
 //------------------------------------------------------------------------------

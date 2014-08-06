@@ -19,9 +19,11 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/legacymsg/legacymsg.hpp"
+#include "castor/messages/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerConnectionHandler.hpp"
-#include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
+#include "castor/utils/SmartFd.hpp"
 #include "h/common.h"
 #include "h/serrno.h"
 
@@ -132,7 +134,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   }
 
   log::Param params[] = {
-    log::Param("type", ProcessForkerMsgType::toString(frame.type)),
+    log::Param("type", messages::msgTypeToString(frame.type)),
     log::Param("len", frame.payload.length())};
   m_log(LOG_INFO, "ProcessForkerConnectionHandler handling a message", params);
 
@@ -145,16 +147,16 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
 void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   dispatchMsgHandler(const ProcessForkerFrame &frame) {
   switch(frame.type) {
-  case ProcessForkerMsgType::MSG_PROCESSCRASHED:
+  case messages::MSG_TYPE_PROCESSCRASHED:
     return handleProcessCrashedMsg(frame);
-  case ProcessForkerMsgType::MSG_PROCESSEXITED:
+  case messages::MSG_TYPE_PROCESSEXITED:
     return handleProcessExitedMsg(frame);
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to dispatch message handler"
         ": Unexpected message type"
-        ": type=" << ProcessForkerMsgType::toString(frame.type);
+        ": type=" << messages::msgTypeToString(frame.type);
       throw ex;
     }
   }
@@ -264,6 +266,8 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   std::list<log::Param> params;
   params.push_back(log::Param("pid", msg.pid()));
   params.push_back(log::Param("signal", msg.signal()));
+
+  castor::utils::SmartFd labelCmdConnection(drive.releaseLabelCmdConnection());
 
   try {
     drive.sessionFailed();
@@ -398,6 +402,8 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   params.push_back(log::Param("pid", msg.pid()));
   params.push_back(log::Param("exitCode", msg.exitcode()));
 
+  castor::utils::SmartFd labelCmdConnection(drive.releaseLabelCmdConnection());
+
   try {
     if(0 == msg.exitcode()) {
       drive.sessionSucceeded();
@@ -406,12 +412,32 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
       drive.sessionFailed();
       m_log(LOG_WARNING, "Label session failed", params);
       setDriveDownInVdqm(msg.pid(), drive.getConfig());
+
+      castor::exception::Exception ex;
+      ex.getMessage() << "Label session exited with failure code " <<
+        msg.exitcode();
+      throw ex;
     }
   } catch(castor::exception::Exception &ne) {
+    try {
+      legacymsg::writeTapeReplyMsg(m_netTimeout, labelCmdConnection.get(),
+        ne.code(), ne.getMessage().str());
+    } catch(castor::exception::Exception &we) {
+      log::Param params[] = {log::Param("message", we.getMessage().str())};
+      m_log(LOG_ERR, "Failed to send reply message to label command", params);
+    }
+
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle exited label session: " <<
     ne.getMessage().str();
     throw ex;
+  }
+
+  try {
+    legacymsg::writeTapeReplyMsg(m_netTimeout, labelCmdConnection.get(), 0, "");
+  } catch(castor::exception::Exception &we) {
+    log::Param params[] = {log::Param("message", we.getMessage().str())};
+    m_log(LOG_ERR, "Failed to send reply message to label command", params);
   }
 }
 

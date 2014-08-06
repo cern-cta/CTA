@@ -50,8 +50,6 @@ namespace daemon {
     /**
      *  Constructor 
      *
-     * @param labelCmdConnection The file descriptor of the connection with the
-     * label command.
      * @param rmc Proxy object representing the rmcd daemon.
      * @param clientRequest The request to label a tape received from the label
      * tape command.
@@ -63,7 +61,6 @@ namespace daemon {
      * tape.
      */
     LabelSession(
-      const int labelCmdConnection,
       legacymsg::RmcProxy &rmc,
       legacymsg::NsProxy &ns,
       const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
@@ -84,19 +81,28 @@ namespace daemon {
      */
     int m_timeout;
 
-    /**
-     * The file descriptor of the connection with the label command.
-     */
-    int m_labelCmdConnection;
-    
     enum TapeNsStatus {
       LABEL_SESSION_STEP_SUCCEEDED,
       LABEL_SESSION_STEP_FAILED
-    };
-    
+    }; 
+
     /**
-     * Checks if the VID has still active or disabled segments registered within the name server
-     * @return 
+     * Performs some meta-data checks that need to be done before deciding to
+     * mount the tape for labeling.
+     */ 
+    void performPreMountChecks();
+
+    /**
+     * A meta-data check that sees if the user of the client is either the
+     * owner of the tape pool containing the tape to be labelled or is an ADMIN
+     * user within the CUPV privileges database.
+     */
+    void checkClientIsOwnerOrAdmin();
+
+    /**
+     * A meta-data check that sees if the tape to be labelled contains files
+     * that are registered in the CASTOR name-server as either active or
+     * disabled segments.
      */
     void checkIfVidStillHasSegments();
     
@@ -107,27 +113,41 @@ namespace daemon {
      * @return The drive object.
      */
     std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> getDriveObject();
+
+    /**
+     * Mounts the tap eto be labelled.
+     */
+    void mountTape();
     
     /**
-     * Check the tape drive write-ability and waits for it to become ready
-     * (tape needs to be loaded)
-     * @param drive The drive object pointer
-     * @return 
+     * Waits for the tape to be loaded into the tape drive.
+     *
+     * @param drive Object representing the drive hardware.
+     * @param timeoutSecond The number of seconds to wait for the tape to be
+     * loaded into the tape drive. 
      */
-    void waitUntilDriveReady(castor::tape::tapeserver::drives::DriveInterface *drive);
+    void waitUntilTapeLoaded(drives::DriveInterface *const drive,
+      const int timeoutSecond);
+
+    /**
+     * Checks that the now loaded tape is writable.
+     *
+     * @param drive Object representing the drive hardware.
+     */
+    void checkTapeIsWritable(drives::DriveInterface *const drive);
     
     /**
      * The function carrying out the actual labeling
      * @param drive The drive object pointer
      * @return 
      */
-    void labelTheTape(castor::tape::tapeserver::drives::DriveInterface *drive);
+    void labelTheTape(drives::DriveInterface *const drive);
     
     /**
      * The object representing the rmcd daemon.
      */
     legacymsg::RmcProxy &m_rmc;
-    
+
     /**
      * The object representing the rmcd daemon.
      */
@@ -157,13 +177,6 @@ namespace daemon {
      * The flag that, if set to true, allows labeling a non-blank tape
      */
     const bool m_force;
-    
-    /**
-     * This is the function performing the actual labeling work (it calls the castor::tape::drive:LabelSession to do so)
-     * 
-     * @param lc the log context
-     */
-    void executeLabel();
 
  }; // class LabelSession
 

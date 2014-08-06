@@ -24,18 +24,19 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/NsProxy_TapeAlwaysEmpty.hpp"
 #include "castor/legacymsg/RmcProxyTcpIp.hpp"
+#include "castor/messages/Constants.hpp"
 #include "castor/messages/ForkCleaner.pb.h"
 #include "castor/messages/ForkDataTransfer.pb.h"
 #include "castor/messages/ForkLabel.pb.h"
 #include "castor/messages/ForkSucceeded.pb.h"
 #include "castor/messages/ProcessCrashed.pb.h"
 #include "castor/messages/ProcessExited.pb.h"
+#include "castor/messages/ReturnValue.pb.h"
 #include "castor/messages/StopProcessForker.pb.h"
 #include "castor/messages/TapeserverProxyZmq.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForker.hpp"
-#include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
 #include "castor/tape/utils/DriveConfig.hpp"
 #include "castor/messages/SmartZmqContext.hpp"
@@ -50,35 +51,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-//------------------------------------------------------------------------------
-// constructAnException
-//------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult 
-castor::tape::tapeserver::daemon::ProcessForker::
-constructAnException(const std::string& message,bool continueMainEventLoop) {
-    castor::messages::Exception reply;
-    reply.set_code(SEINTERNAL);
-    reply.set_message(message);
-    MsgHandlerResult result;
-    result.continueMainEventLoop = continueMainEventLoop;
-    ProcessForkerUtils::serializePayload(result.reply, reply);
-    return result;
-  }
-//------------------------------------------------------------------------------
-// returnAnPidOfForkedSession
-//------------------------------------------------------------------------------  
-castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult 
-castor::tape::tapeserver::daemon::ProcessForker::
-returnAnPidOfForkedSession(pid_t forkRc,bool continueMainEventLoop) {
-    // Create and return the result of handling the incomming request
-    castor::messages::ForkSucceeded reply;
-    reply.set_pid(forkRc);
-    MsgHandlerResult result;
-    result.continueMainEventLoop = continueMainEventLoop;
-    ProcessForkerUtils::serializePayload(result.reply, reply);
-    
-    return result;
-  }
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -231,7 +203,7 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleMsg() {
   }
 
   log::Param params[] = {
-    log::Param("type", ProcessForkerMsgType::toString(frame.type)),
+    log::Param("type", messages::msgTypeToString(frame.type)),
     log::Param("len", frame.payload.length())};
   m_log(LOG_INFO, "ProcessForker handling a ProcessForker message", params);
 
@@ -270,7 +242,7 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleMsg() {
   {
     log::Param params[] = {
       log::Param("payloadType",
-        ProcessForkerMsgType::toString(result.reply.type)),
+        messages::msgTypeToString(result.reply.type)),
       log::Param("payloadLen", result.reply.payload.length())};
     m_log(LOG_DEBUG, "ProcessForker wrote reply", params);
   }
@@ -284,13 +256,13 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   castor::tape::tapeserver::daemon::ProcessForker::dispatchMsgHandler(
   const ProcessForkerFrame &frame) {
   switch(frame.type) {
-  case ProcessForkerMsgType::MSG_FORKCLEANER:
+  case messages::MSG_TYPE_FORKCLEANER:
     return handleForkCleanerMsg(frame);
-  case ProcessForkerMsgType::MSG_FORKDATATRANSFER:
+  case messages::MSG_TYPE_FORKDATATRANSFER:
     return handleForkDataTransferMsg(frame);
-  case ProcessForkerMsgType::MSG_FORKLABEL:
+  case messages::MSG_TYPE_FORKLABEL:
     return handleForkLabelMsg(frame);
-  case ProcessForkerMsgType::MSG_STOPPROCESSFORKER:
+  case messages::MSG_TYPE_STOPPROCESSFORKER:
     return handleStopProcessForkerMsg(frame);
   default:
     {
@@ -327,8 +299,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     const std::string& errorMsg = "Failed to fork cleaner session for tape drive";
     logForkError(errorMsg,params);
     
-    // Create and return the result of handling the incomming request
-    return constructAnException(errorMsg);
+    return createExceptionResult(SEINTERNAL, errorMsg, true);
 
   // Else if this is the parent process
   } else if(0 < forkRc) {
@@ -338,7 +309,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     // TO BE DONE
     waitpid(forkRc, NULL, 0);
 
-    return returnAnPidOfForkedSession(forkRc);
+    return createForkSucceededResult(forkRc, true);
 
   // Else this is the child process
   } else {
@@ -371,13 +342,13 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   if(0 > forkRc) {
     const std::string& errorMsg = "Failed to fork data-transfer session for tape drive";
     logForkError(errorMsg,params);
-    return constructAnException(errorMsg);
+    return createExceptionResult(SEINTERNAL, errorMsg, true);
   // Else if this is the parent process
   } else if(0 < forkRc) {
     log::Param params[] = {log::Param("pid", forkRc)};
     m_log(LOG_INFO, "ProcessForker forked data-transfer session", params);
 
-    return returnAnPidOfForkedSession(forkRc);
+    return createForkSucceededResult(forkRc, true);
 
   // Else this is the child process
   } else {
@@ -425,19 +396,14 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     const std::string& errorMsg = "Failed to fork label session for tape drive";
     logForkError(errorMsg,params);
     
-    // Create and return the result of handling the incomming request
-    return constructAnException(errorMsg);
+    return createExceptionResult(SEINTERNAL, errorMsg, true);
 
   // Else if this is the parent process
   } else if(0 < forkRc) {
     log::Param params[] = {log::Param("pid", forkRc)};
     m_log(LOG_INFO, "ProcessForker forked label session", params);
 
-    // TO BE DONE
-    waitpid(forkRc, NULL, 0);
-
-    // Create and return the result of handling the incomming request
-    return returnAnPidOfForkedSession(forkRc);
+    return createForkSucceededResult(forkRc, true);
 
   // Else this is the child process
   } else {
@@ -475,14 +441,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   log::Param params[] = {log::Param("reason", rqst.reason())};
   m_log(LOG_INFO, "Gracefully stopping ProcessForker", params);
 
-  // Create and return the result of handling the incomming request
-  messages::Exception reply;
-  reply.set_code(0);
-  reply.set_message("");
-  MsgHandlerResult result;
-  result.continueMainEventLoop = false;
-  ProcessForkerUtils::serializePayload(result.reply, reply);
-  return result;
+  return createReturnValueResult(0, false);
 }
 
 //------------------------------------------------------------------------------
@@ -819,17 +778,11 @@ int castor::tape::tapeserver::daemon::ProcessForker::runLabelSession(
     params.push_back(log::Param("vid", labelJob.vid));
     m_log(LOG_INFO, "Label-session child-process started", params);
 
-    // TO BE DONE
-    exit(0);
-
     const int netTimeout = 10; // Timeout in seconds
     legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), netTimeout);
     legacymsg::NsProxy_TapeAlwaysEmpty ns;
     castor::tape::System::realWrapper sWrapper;
-    // TO BE DONE
-    const int labelCmdConnection = -1;
     LabelSession labelsession(
-      labelCmdConnection,
       rmc,
       ns,
       labelJob,
@@ -869,4 +822,79 @@ castor::legacymsg::TapeLabelRqstMsgBody
   castor::utils::copyString(job.drive, msg.unitname());
   castor::utils::copyString(job.dgn, msg.dgn());
   return job;
+}
+
+//------------------------------------------------------------------------------
+// createForkSucceededResult
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult 
+  castor::tape::tapeserver::daemon::ProcessForker::createForkSucceededResult(
+  const pid_t pid, const bool continueMainEventLoop) {
+  try {
+    messages::ForkSucceeded reply;
+    reply.set_pid(pid);
+
+    MsgHandlerResult result;
+    result.continueMainEventLoop = continueMainEventLoop;
+    ProcessForkerUtils::serializePayload(result.reply, reply);
+    
+    return result;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to create MsgHandlerResult containing a ForkSucceeded message:"
+      << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createExceptionResult
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult 
+  castor::tape::tapeserver::daemon::ProcessForker::
+  createExceptionResult(const uint32_t code, const std::string& message,
+    const bool continueMainEventLoop) {
+  try {
+    messages::Exception reply;
+    reply.set_code(code);
+    reply.set_message(message);
+
+    MsgHandlerResult result;
+    result.continueMainEventLoop = continueMainEventLoop;
+    ProcessForkerUtils::serializePayload(result.reply, reply);
+
+    return result;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to create MsgHandlerResult containing an Exception message:"
+      << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createReturnValueResult
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
+  castor::tape::tapeserver::daemon::ProcessForker::
+  createReturnValueResult(const uint32_t value,
+    const bool continueMainEventLoop) {
+  try {
+    messages::ReturnValue reply;
+    reply.set_value(value);
+
+    MsgHandlerResult result;
+    result.continueMainEventLoop = continueMainEventLoop;
+    ProcessForkerUtils::serializePayload(result.reply, reply);
+
+    return result;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to create MsgHandlerResult containing ReturnValue message:"
+      << ne.getMessage().str();
+    throw ex;
+  }
 }

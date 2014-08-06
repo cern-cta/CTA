@@ -20,24 +20,34 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
+
 #pragma once
 
 namespace castor {
 namespace messages {
 
 enum ProtocolType {
+  PROTOCOL_TYPE_NONE,
   PROTOCOL_TYPE_TAPE
 };
 
 enum MsgType {
+  MSG_TYPE_NONE,
   MSG_TYPE_EXCEPTION,
+  MSG_TYPE_FORKCLEANER,
+  MSG_TYPE_FORKDATATRANSFER,
+  MSG_TYPE_FORKLABEL,
+  MSG_TYPE_FORKSUCCEEDED,
   MSG_TYPE_HEARTBEAT,
   MSG_TYPE_MIGRATIONJOBFROMTAPEGATEWAY,
   MSG_TYPE_MIGRATIONJOBFROMWRITETP,
   MSG_TYPE_NBFILESONTAPE,
+  MSG_TYPE_PROCESSCRASHED,
+  MSG_TYPE_PROCESSEXITED,
   MSG_TYPE_RECALLJOBFROMREADTP,
   MSG_TYPE_RECALLJOBFROMTAPEGATEWAY,
   MSG_TYPE_RETURNVALUE,
+  MSG_TYPE_STOPPROCESSFORKER,
   MSG_TYPE_TAPEMOUNTEDFORMIGRATION,
   MSG_TYPE_TAPEMOUNTEDFORRECALL,
   MSG_TYPE_TAPEUNMOUNTSTARTED,
@@ -45,8 +55,21 @@ enum MsgType {
 };
 
 enum ProtocolVersion {
+  PROTOCOL_VERSION_NONE,
   PROTOCOL_VERSION_1
 };
+
+/**
+ * Returns the string representation of the specified message type.
+ *
+ * This method is thread safe because it only returns pointers to string
+ * literals.
+ *
+ * In the case where the specified message type is unknown this method does not
+ * throw an exception, instead is returns a string literal that explains the
+ * message type is unknown.
+ */
+const char *msgTypeToString(const MsgType msgType) throw();
 
 } // namespace messages
 } // namespace castor

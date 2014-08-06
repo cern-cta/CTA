@@ -261,7 +261,7 @@ public:
   template<int numParams> void operator() (
     const int priority,
     const std::string &msg,
-    castor::log::Param(&params)[numParams],
+    const log::Param(&params)[numParams],
     const struct timeval &timeStamp) throw() {
     operator() (priority, msg, numParams, params, timeStamp);
   }
@@ -282,7 +282,7 @@ public:
   template<int numParams> void operator() (
     const int priority,
     const std::string &msg,
-    castor::log::Param(&params)[numParams]) throw() {
+    const log::Param(&params)[numParams]) throw() {
     operator() (priority, msg, numParams, params);
   }
 

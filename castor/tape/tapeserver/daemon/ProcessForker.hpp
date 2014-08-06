@@ -29,7 +29,6 @@
 #include "castor/messages/ForkLabel.pb.h"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerFrame.hpp"
-#include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
 
 #include <stdint.h>
 
@@ -145,26 +144,6 @@ private:
       continueMainEventLoop(false) {
     }
   }; // struct MsgHandlerResult
-
-  /**
-   * Return an MsgHandlerResult containing  an exception with SEINTERNAL 
-   * and message
-   * @param message 
-   * @param keepGoingMainLoop do we want the main of the daemon to continue. 
-   * The default behaviour is yes 
-   * @return 
-   */
-  MsgHandlerResult constructAnException(const std::string& message,
-          bool continueMainEventLoop=true);
-  /**
-   * Return an MsgHandlerResult containing  a ForkSucceeded with the pid=forkRc
-   * @param korkRc 
-   * @param keepGoingMainLoop do we want the main of the daemon to continue. 
-   * The default behaviour is yes 
-   * @return 
-   */
-  MsgHandlerResult returnAnPidOfForkedSession(pid_t forkRc,
-          bool continueMainEventLoop=true);
   
   /**
    * Handles any pending events.
@@ -365,6 +344,40 @@ private:
    */
   castor::legacymsg::TapeLabelRqstMsgBody getLabelJob(
     const messages::ForkLabel &msg);
+
+  /**
+   * Creates a MsgHandlerResult containing a ForkSucceeded message.
+   *
+   * @param pid The process identifier of the forked process.
+   * @param continueMainEventLoop Set to true if the main event loop should
+   * continue.
+   * @return The MsgHandlerResult containing a ForkSucceeded message.
+   */
+  MsgHandlerResult createForkSucceededResult(const pid_t pid,
+    const bool continueMainEventLoop);
+
+  /**
+   * Creates a MsgHandlerResult containing an Exception message.
+   *
+   * @param code The error code of the exception.
+   * @param message The error message of the exception.
+   * @param continueMainEventLoop Set to true if the main event loop should
+   * continue.
+   * @return The MsgHandlerResult containing an Exception message.
+   */
+  MsgHandlerResult createExceptionResult(const uint32_t code,
+    const std::string& message, const bool continueMainEventLoop);
+
+  /**
+   * Creates a MsgHandlerResult containing a ReturnValue message.
+   *
+   * @param value The return value.
+   * @param continueMainEventLoop Set to true if the main event loop should
+   * continue.
+   * @return The MsgHandlerResult containing a ReturnValue message.
+   */
+  MsgHandlerResult createReturnValueResult(const uint32_t value, 
+    const bool continueMainEventLoop);
 
 }; // class ProcessForker
 

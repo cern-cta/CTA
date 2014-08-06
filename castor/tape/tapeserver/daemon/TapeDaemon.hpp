@@ -531,18 +531,6 @@ protected:
   void forkLabelSession(DriveCatalogueEntry *drive);
 
   /**
-   * Runs the label session. This method is to be called within the child
-   * process responsible for running the label session.
-   *
-   * @param drive The catalogue entry of the tape drive to be used during the
-   * session.
-   * @param labelCmdConnection The file descriptor of the connection with the
-   * command-line tool castor-tape-label.
-   */
-  void runLabelSession(const DriveCatalogueEntry *drive,
-    const int labelCmdConnection) throw();
-  
-  /**
    * Forks a cleaner-session child-process for every tape drive entry in the
    * tape drive catalogue that is waiting for such a fork to be carried out.
    *

@@ -26,7 +26,7 @@
 #include "castor/log/Logger.hpp"
 #include "castor/messages/ForkDataTransfer.pb.h"
 #include "castor/messages/ForkLabel.pb.h"
-#include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
+#include "castor/messages/StopProcessForker.pb.h"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 #include "castor/tape/utils/DriveConfig.hpp"
 
@@ -126,6 +126,16 @@ private:
   const int m_socketFd;
 
   /**
+   * Creates a StopProcessForker message.
+   *
+   * @param reason Human readable string for logging purposes that describes
+   * the reason for stopping.
+   * @return The message.
+   */
+  messages::StopProcessForker createStopProcessForkerMsg(
+    const std::string &reason);
+
+  /**
    * Creates a ForkDataTransfer message from the specified tape-drive
    * configuration, VDQM job and data-transfer session configuration.
    *
@@ -133,6 +143,7 @@ private:
    * @param vdqmJob The job received from the vdqmd daemon.
    * @param config The configuration of the data-transfer session.
    * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
+   * @return The message.
    */
   messages::ForkDataTransfer createForkDataTransferMsg(
     const utils::DriveConfig &driveConfig,
@@ -169,6 +180,7 @@ private:
    * @param driveConfig The configuration of the tape drive.
    * @param labelJob The job received from the tape-labeling command-line tool.
    * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
+   * @return The message.
    */
   messages::ForkLabel createForkLabelMsg(const utils::DriveConfig &driveConfig,
     const legacymsg::TapeLabelRqstMsgBody &labelJob,
