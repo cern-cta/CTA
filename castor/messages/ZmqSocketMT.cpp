@@ -36,7 +36,11 @@ castor::messages::ZmqSocketMT::ZmqSocketMT(void *const zmqContext,
 // destructor
 //------------------------------------------------------------------------------
 castor::messages::ZmqSocketMT::~ZmqSocketMT() throw() {
-  close();
+  try {
+    close();
+  } catch(...) {
+    // Ignore any exceptions because this is a destructor.
+  }  
 }
   
 //------------------------------------------------------------------------------
