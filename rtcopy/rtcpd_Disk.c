@@ -282,55 +282,10 @@ static int DiskFileOpen(int pool_index,
                          "func"   , TL_MSG_PARAM_STR, "DiskFileOpen",
                          "Message", TL_MSG_PARAM_STR, "open returned",
                          "fd"     , TL_MSG_PARAM_INT, disk_fd );                         
-        if ( rc == 0 && filereq->offset > 0 ) {
-			char tmpbuf[21];
-			char tmpbuf2[21];
-			off64_t rc64;
-            rtcp_log(LOG_DEBUG,"DiskFileOpen() attempt to set offset %s\n",
-                     u64tostr((u_signed64) filereq->offset, tmpbuf, 0));
-            tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
-                             "func"   , TL_MSG_PARAM_STR, "DiskFileOpen",
-                             "Message", TL_MSG_PARAM_STR, "attempt to set offset",
-                             "offset" , TL_MSG_PARAM_STR, u64tostr((u_signed64) filereq->offset, tmpbuf, 0) );
-            errno = 0;
-
-            rc64 = rtcp_xroot_lseek(disk_fd, (off64_t)filereq->offset,SEEK_SET);
-
-            if ( rc64 == -1 ) {
-                save_errno = errno;
-                rtcp_log(LOG_ERR,
-                 "DiskFileOpen() lseek64(%d,%s,0x%x): errno = %d\n",
-                 disk_fd,u64tostr((u_signed64)filereq->offset,tmpbuf,0),SEEK_SET,errno);
-                {
-                        char __seek_set[32];
-                        sprintf( __seek_set, "0x%x", SEEK_SET );
-                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 8, 
-                                         "func"      , TL_MSG_PARAM_STR, "DiskFileOpen",
-                                         "Message"   , TL_MSG_PARAM_STR, "lseek64",
-                                         "disk_fd"   , TL_MSG_PARAM_INT, disk_fd,                                 
-                                         "offset"    , TL_MSG_PARAM_STR, u64tostr((u_signed64) filereq->offset, tmpbuf, 0),
-                                         "SEEK_SET"  , TL_MSG_PARAM_STR, SEEK_SET, 
-                                         "errno"     , TL_MSG_PARAM_INT, errno );
-                }
-                rc = -1;
-            } else if ( rc64 != (off64_t)filereq->offset ) {
-                save_errno = errno;
-                rtcp_log(LOG_ERR,"lseek64(%d,%s,%d) returned %s\n",
-                         disk_fd,u64tostr((u_signed64)filereq->offset,tmpbuf,0),SEEK_SET,u64tostr((u_signed64)rc64,tmpbuf2,0));
-                {
-                        char __seek_set[32];
-                        sprintf( __seek_set, "0x%x", SEEK_SET );
-                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 6, 
-                                         "func"        , TL_MSG_PARAM_STR, "DiskFileOpen",
-                                         "Message"     , TL_MSG_PARAM_STR, "lseek64 returned",
-                                         "disk_fd"     , TL_MSG_PARAM_INT, disk_fd,                                 
-                                         "offset"      , TL_MSG_PARAM_STR, u64tostr((u_signed64) filereq->offset, tmpbuf, 0),
-                                         "SEEK_SET"    , TL_MSG_PARAM_STR, SEEK_SET, 
-                                         "Return Value", TL_MSG_PARAM_STR, u64tostr((u_signed64)rc64,tmpbuf2,0) );
-                }                
-                if ( save_errno == 0 ) save_errno = SEINTERNAL;
-                rc = -1;
-            } else rc = 0;
+        if ( rc == 0 && 0 != filereq->offset) {
+            rtcp_log(LOG_ERR, "File offset is not zero and rtcpd must not do a seek\n");
+            rtcp_log(LOG_ERR, "Aborting rtcpd process\n");
+            exit(-1);
         }
 
     if ( rc != 0 || irc != 0 ) {

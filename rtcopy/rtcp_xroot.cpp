@@ -186,10 +186,6 @@ int        rtcp_xroot_open(const char *path, int oflag, int mode) {
   }
 }
 
-long long  rtcp_xroot_lseek(int fildes, long long offset, int whence) {
-  return XrdPosix_Lseek(fildes, offset, whence);
-}
-
 int        rtcp_xroot_close(int fildes) {
   return XrdPosix_Close(fildes);
 }
