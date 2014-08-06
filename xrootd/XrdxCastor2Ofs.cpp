@@ -515,7 +515,7 @@ XrdxCastor2OfsFile::close()
   // If we have contact info for the diskmanager then we contact it to pass the
   // status otherwise this is a d2d or an rtcpd transfer and we don't need to
   // contact the diskmanager.
-  if (!mDiskMgrPort)
+  if (mDiskMgrPort)
   {
     TIMING("DISKMGR_STATUS", &close_timing);
     uint64_t sz_file = 0;
