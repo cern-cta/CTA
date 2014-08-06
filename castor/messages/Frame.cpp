@@ -85,6 +85,43 @@ void castor::messages::Frame::parseZmqMsgIntoHeader(const ZmqMsg &msg) {
 }
 
 //------------------------------------------------------------------------------
+// serializeProtocolBufferIntoBody
+//------------------------------------------------------------------------------
+void castor::messages::Frame::serializeProtocolBufferIntoBody(
+  const google::protobuf::Message &protocolBuffer) {
+  try {
+    if(!protocolBuffer.SerializeToString(&body)) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "SerializeToString() returned false";
+      throw ex;
+    }
+
+    calcAndSetHashValueOfBody();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Frame failed to serialize protocol buffer " <<
+      castor::utils::demangledNameOf(protocolBuffer) << " into frame body: "
+      << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// parseBodyIntoProtocolBuffer
+//------------------------------------------------------------------------------
+void castor::messages::Frame::parseBodyIntoProtocolBuffer(
+  google::protobuf::Message &protocolBuffer) const {
+  if(!protocolBuffer.ParseFromString(body)) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Frame failed to parse contents of enclosed ZMQ"
+      " message into protocol buffer " <<
+      castor::utils::demangledNameOf(protocolBuffer)
+      << ": ParseFromString() returned false";
+    throw ex;
+  } 
+}   
+
+//------------------------------------------------------------------------------
 // calcAndSetHashValueOfBody
 //------------------------------------------------------------------------------
 void castor::messages::Frame::calcAndSetHashValueOfBody() {

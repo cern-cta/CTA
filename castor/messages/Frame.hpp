@@ -27,6 +27,7 @@
 #include "castor/messages/ZmqMsg.hpp"
 #include "castor/utils/utils.hpp"
 
+#include <google/protobuf/message.h>
 #include <string>
 
 namespace castor   {
@@ -74,40 +75,16 @@ struct Frame {
    *
    * @param protocolBuffer The protocol buffer.
    */
-  template <class T> void serializeProtocolBufferIntoBody(
-    const T &protocolBuffer) {
-    try {
-      if(!protocolBuffer.SerializeToString(&body)) {
-        castor::exception::Exception ex;
-        ex.getMessage() << "SerializeToString() returned false";
-        throw ex;
-      }
-
-      calcAndSetHashValueOfBody();
-    } catch(castor::exception::Exception &ne) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Frame failed to serialize protocol buffer " <<
-        castor::utils::demangledNameOf(protocolBuffer) << " into frame body: "
-        << ne.getMessage().str();
-      throw ex;
-    }
-  }
+  void serializeProtocolBufferIntoBody(
+    const google::protobuf::Message &protocolBuffer);
 
   /**
    * Parses the body into the specified protocol buffer.
    *
    * @param pb Output parameter: The protocol buffer to be written to.
    */
-  template <class T> void parseBodyIntoProtocolBuffer(T &protocolBuffer) const {
-    if(!protocolBuffer.ParseFromString(body)) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Frame failed to parse contents of enclosed ZMQ"
-        " message into protocol buffer " <<
-        castor::utils::demangledNameOf(protocolBuffer)
-        << ": ParseFromString() returned false";
-      throw ex;
-    } 
-  }   
+  void parseBodyIntoProtocolBuffer(google::protobuf::Message &protocolBuffer)
+    const;
 
 private:
 
