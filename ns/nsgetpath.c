@@ -90,8 +90,8 @@ int main(int argc, char**argv) {
     buf = getconfent (CNS_SCE, "HOST", 0);
   }
   if (buf == NULL) {
-    fprintf(stderr, "unable to determine which host to contact, please use the -h option\n");
-    usage (USERR, argv[0]);
+    fprintf(stdout, "Unable to determine which host to contact, used castorns. You can overwrite this with the -h option\n");
+    buf = "castorns";
   }
   if (errflg || (fileid == 0)) {
     usage (USERR, argv[0]);
