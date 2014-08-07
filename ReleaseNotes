@@ -69,9 +69,12 @@
     ------
 
     The upgrade of the stager to 2.1.14-14 can be performed online while the system is running.
+    However, the should not be any draining operations ongoing.
 
       Instructions
       ------------
+
+       0. Stop any draining operation if any.
 
        1. Upgrade the STAGER database using the stager_2.1.14-13_to_2.1.14-14.sql
           upgrade script available from:

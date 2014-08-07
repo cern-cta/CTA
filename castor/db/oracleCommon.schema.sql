@@ -1285,12 +1285,11 @@ CREATE TABLE DrainingErrors
    errorMsg     VARCHAR2(2048) CONSTRAINT NN_DrainingErrors_ErrorMsg NOT NULL,
    fileId       INTEGER CONSTRAINT NN_DrainingErrors_FileId NOT NULL,
    nsHost       VARCHAR2(2048) CONSTRAINT NN_DrainingErrors_NsHost NOT NULL,
-   diskCopy     INTEGER,
+   castorFile   INTEGER CONSTRAINT NN_DrainingErrors_CF NOT NULL,
    timeStamp    NUMBER CONSTRAINT NN_DrainingErrors_TimeStamp NOT NULL)
 ENABLE ROW MOVEMENT;
 
-CREATE INDEX I_DrainingErrors_DJ ON DrainingErrors (drainingJob);
-CREATE INDEX I_DrainingErrors_DC ON DrainingErrors (diskCopy);
+CREATE INDEX I_DrainingErrors_DJ_CF ON DrainingErrors (drainingJob, CastorFile);
 
 ALTER TABLE DrainingErrors
   ADD CONSTRAINT FK_DrainingErrors_DJ

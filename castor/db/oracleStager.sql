@@ -1723,7 +1723,6 @@ END;
 /* PL/SQL method implementing replicateOnClose */
 CREATE OR REPLACE PROCEDURE replicateOnClose(cfId IN NUMBER, ouid IN INTEGER, ogid IN INTEGER) AS
   varNsOpenTime NUMBER;
-  srcDcId NUMBER;
   srcSvcClassId NUMBER;
   ignoreSvcClass NUMBER;
 BEGIN

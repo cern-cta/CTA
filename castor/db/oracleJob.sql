@@ -626,8 +626,8 @@ BEGIN
           DELETE FROM Disk2DiskCopyJob WHERE transferId = inTransferId;
           -- and remember the error in case of draining
           IF varDrainingJob IS NOT NULL THEN
-            INSERT INTO DrainingErrors (drainingJob, errorMsg, fileId, nsHost, diskCopy, timeStamp)
-            VALUES (varDrainingJob, inErrorMessage, varFileId, varNsHost, varSrcDcId, getTime());
+            INSERT INTO DrainingErrors (drainingJob, errorMsg, fileId, nsHost, castorFile, timeStamp)
+            VALUES (varDrainingJob, inErrorMessage, varFileId, varNsHost, varCfId, getTime());
           END IF;
         EXCEPTION WHEN NO_DATA_FOUND THEN
           -- the Disk2DiskCopyJob was already dropped (e.g. because of an interrupted draining)
@@ -725,11 +725,9 @@ BEGIN
     raise_application_error(-20110, dlf.D2D_SOURCE_GONE);
   END;
 
-  -- at this point we can update the Disk2DiskCopyJob with the source. This may be used
-  -- by disk2DiskCopyEnded to track the failed sources.
+  -- update the Disk2DiskCopyJob status and filesystem
   UPDATE Disk2DiskCopyJob
-     SET status = dconst.DISK2DISKCOPYJOB_RUNNING,
-         srcDcId = varSrcDcId
+     SET status = dconst.DISK2DISKCOPYJOB_RUNNING
    WHERE transferId = inTransferId;
 
   IF (varSrcDsStatus = dconst.DISKSERVER_DISABLED OR varSrcFsStatus = dconst.FILESYSTEM_DISABLED
