@@ -36,6 +36,7 @@ namespace drives {
   private:
     std::vector<std::string> m_tape;
     uint32_t m_current_position;
+    int beginOfCompressStats;
   public:
     std::string contentToString() throw();
     FakeDrive() throw();

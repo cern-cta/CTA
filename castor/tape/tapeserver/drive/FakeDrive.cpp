@@ -28,14 +28,21 @@ const long unsigned int max_fake_drive_record_length = 1000;
 const char filemark[] = "";
 }
 
-castor::tape::tapeserver::drives::FakeDrive::FakeDrive() throw() : m_current_position(0) {
+castor::tape::tapeserver::drives::FakeDrive::FakeDrive() throw() : m_current_position(0),beginOfCompressStats(0) {
   m_tape.reserve(max_fake_drive_record_length);
 }
 castor::tape::tapeserver::drives::compressionStats castor::tape::tapeserver::drives::FakeDrive::getCompression()  {
-  throw castor::exception::Exception("FakeDrive::getCompression Not implemented");
+  castor::tape::tapeserver::drives::compressionStats stats;
+  for(unsigned int i=beginOfCompressStats;i<m_tape.size();++i){
+    stats.toTape += m_tape[i].length();
+  }
+  
+  //that way we set also stats for reading
+  stats.fromTape  = stats.toTape;
+  return stats;
 }
 void castor::tape::tapeserver::drives::FakeDrive::clearCompressionStats()  {
-  throw castor::exception::Exception("FakeDrive::clearCompressionStats Not implemented");
+  beginOfCompressStats=m_tape.size();
 }
 castor::tape::tapeserver::drives::deviceInfo castor::tape::tapeserver::drives::FakeDrive::getDeviceInfo()  {
   deviceInfo devInfo;
