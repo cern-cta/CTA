@@ -1292,14 +1292,9 @@ ENABLE ROW MOVEMENT;
 CREATE INDEX I_DrainingErrors_DJ_CF ON DrainingErrors (drainingJob, CastorFile);
 
 ALTER TABLE DrainingErrors
-  ADD CONSTRAINT FK_DrainingErrors_DJ
-  FOREIGN KEY (drainingJob)
-  REFERENCES DrainingJob (id);
-
-ALTER TABLE DrainingErrors
-  ADD CONSTRAINT FK_DrainingErrors_DC
-  FOREIGN KEY (diskCopy)
-  REFERENCES DiskCopy (id);
+  ADD CONSTRAINT FK_DrainingErrors_CF
+  FOREIGN KEY (castorFile)
+  REFERENCES CastorFile (id);
 
 
 /* Definition of the Disk2DiskCopyJob table. Each line is a disk2diskCopy job to process

@@ -90,6 +90,10 @@ ALTER TABLE DrainingErrors DROP (diskCopy);
 ALTER TABLE DrainingErrors ADD (castorFile INTEGER CONSTRAINT NN_DrainingErrors_CF NOT NULL);
 CREATE INDEX I_DrainingErrors_DJ_CF ON DrainingErrors (drainingJob, CastorFile);
 
+ALTER TABLE DrainingErrors
+  ADD CONSTRAINT FK_DrainingErrors_CF
+  FOREIGN KEY (castorFile)
+  REFERENCES CastorFile (id);
 
 /* This procedure is used to check if the maxReplicaNb has been exceeded
  * for some CastorFiles. It checks all the files listed in TooManyReplicasHelper
