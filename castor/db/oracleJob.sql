@@ -192,6 +192,8 @@ BEGIN
     INTO outPath, varDcStatus, varDiskCopySize;
   IF selectedMountPoint IS NULL THEN
     outPath := varDpName || '/' || outPath;
+  ELSE
+    outPath := selectedMountPoint || outPath;
   END IF;
   -- Update the SubRequest and set the link with the DiskCopy
   UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
