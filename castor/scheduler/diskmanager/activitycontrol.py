@@ -45,16 +45,9 @@ def signBase64(content, RSAKey):
 def buildXrootURL(self, diskserver, path):
     '''Builds a xroot valid url for the given path on the given diskserver'''
     # base url and key parameter
-    url = 'root://'+diskserver+':1095//dummy?'
-    opaque_dict = {'castor2fs.sfn' : '',
-                   'castor2fs.pfn1' : path,
-                   'castor2fs.pfn2' : '',
-                   'castor2fs.id' : '',
-                   'castor2fs.client_sec_uid' : '',
-                   'castor2fs.client_sec_gid' : '',
-                   'castor2fs.accessop' : '0',
-                   'castor2fs.exptime' : str(int(time.time()) + 3600),
-                   'castor2fs.manager' : ''}
+    url = 'root://'+diskserver+':1095//' + path + '?'
+    opaque_dict = {'castor2fs.pfn1' : path,
+                   'castor2fs.exptime' : str(int(time.time()) + 3600)}
 
     # signature part
     try:
@@ -63,15 +56,9 @@ def buildXrootURL(self, diskserver, path):
                                               '/opt/xrootd/keys/key.pem')
         key = RSA.importKey(open(keyFile, 'r').read())
         # sign opaque part obtained by concatenating the values
-        opaque_token = ''.join([opaque_dict['castor2fs.sfn'],
-                                opaque_dict['castor2fs.pfn1'],
-                                opaque_dict['castor2fs.pfn2'],
-                                opaque_dict['castor2fs.id'],
-                                opaque_dict['castor2fs.client_sec_uid'],
-                                opaque_dict['castor2fs.client_sec_gid'],
-                                opaque_dict['castor2fs.accessop'],
-                                opaque_dict['castor2fs.exptime'],
-                                opaque_dict['castor2fs.manager']])
+        opaque_token = ''.join([opaque_dict['castor2fs.pfn1'],
+                                "0", # accessop
+                                opaque_dict['castor2fs.exptime']])
         signature = signBase64(opaque_token, key)
         opaque = ""
 
