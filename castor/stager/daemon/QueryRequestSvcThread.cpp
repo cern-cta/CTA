@@ -458,6 +458,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
        ++it) {
     castor::stager::RequestQueryType ptype = (*it)->queryType();
     std::string pval = (*it)->value();
+    castor::stager::SvcClass* svcClass = 0;
     try {
       std::string nshost, reqidtag;
       u_signed64 fid = 0;
@@ -471,6 +472,13 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
           fid = strtou64(pval.substr(0, idx).c_str());
           nshost = pval.substr(idx + 1);
         }
+      }
+
+      // Get the SvcClass associated to the request
+      u_signed64 svcClassId = 0;
+      svcClass = uReq->svcClass();
+      if (0 != svcClass) {
+        svcClassId = svcClass->id();
       }
 
       // Verify whether we are querying a directory
@@ -548,12 +556,6 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
           }
         }
       }
-      // Get the SvcClass associated to the request
-      u_signed64 svcClassId = 0;
-      castor::stager::SvcClass* svcClass = uReq->svcClass();
-      if (0 != svcClass) {
-        svcClassId = svcClass->id();
-      }
       // Call the proper handling request
       if (ptype == REQUESTQUERYTYPE_FILENAME) {
         handleFileQueryRequestByFileName(qrySvc,
@@ -588,16 +590,17 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
       castor::dlf::Param params[] =
         {castor::dlf::Param("Function", "QueryRequestSvcThread::handleFileQueryRequest"),
          castor::dlf::Param("Code", e.code()),
-         castor::dlf::Param("Message", e.getMessage().str())};
+         castor::dlf::Param("Message", e.getMessage().str()),
+         castor::dlf::Param("SvcClass", svcClass ? svcClass->name(): "-")};
       switch(e.code()) {
       case ENOENT:
-        castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 3, params);
+        castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 4, params);
         break;
       case EINVAL:
-        castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_QRYSVC_INVARG, 3, params);
+        castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_QRYSVC_INVARG, 4, params);
         break;
       default:
-        castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
+        castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 4, params);
         break;
       }
       // Send the exception to the client
