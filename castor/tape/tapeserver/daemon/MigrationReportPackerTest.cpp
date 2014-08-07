@@ -132,4 +132,50 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerGoodBadEnd) {
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find("EndofSessionWithErrors has been reported  but NO writing error on the tape was detected"));
 } 
+
+MATCHER(checkCompressFileSize,"compressedFileSize is zero"){ 
+  bool b=true;
+  typedef std::vector<
+                      castor::tape::tapegateway::FileMigratedNotificationStruct*
+                      >::iterator iterator;
+  iterator e = arg.successfulMigrations().end();
+  iterator it = arg.successfulMigrations().begin();
+
+  for(;it!=e;++it){
+    b = b && ((*it)->compressedFileSize() > 0);
+  }
+  return b;
+}
+
+TEST(castor_tape_tapeserver_daemon, MigrationReportPackerOneByteFile) {
+  
+  //using ::testing::Each;
+  testing::StrictMock<MockClient> client;
+  ::testing::InSequence dummy;
+  EXPECT_CALL(client, reportMigrationResults(checkCompressFileSize(),_)).Times(1);
+  EXPECT_CALL(client, reportEndOfSession(_)).Times(1);
+  
+  castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerGoodBadEnd");
+  castor::log::LogContext lc(log);
+ 
+  tapeserver::daemon::MigrationReportPacker mrp(client,lc);
+  mrp.startThreads();
+  
+  tapegateway::FileToMigrateStruct migratedFileSmall;
+  migratedFileSmall.setFileSize(1);
+  tapegateway::FileToMigrateStruct migratedBigFile;
+  migratedBigFile.setFileSize(100000);
+  tapegateway::FileToMigrateStruct migrateNullFile;
+  migratedBigFile.setFileSize(0);
+  
+  mrp.reportCompletedJob(migratedBigFile,0);
+  mrp.reportCompletedJob(migratedFileSmall,0);
+  mrp.reportCompletedJob(migrateNullFile,0);
+  
+  tapeserver::drives::compressionStats stats;
+  stats.toTape=(100000+1)/3;
+  mrp.reportFlush(stats);
+  mrp.reportEndOfSession();
+  mrp.waitThread();
+} 
 }
