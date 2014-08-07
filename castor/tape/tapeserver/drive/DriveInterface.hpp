@@ -136,8 +136,10 @@ namespace drives {
   class DriveInterface {
   public:
     virtual ~DriveInterface(){};
+    
     virtual compressionStats getCompression()  = 0;
     virtual void clearCompressionStats()  = 0;
+    
     virtual deviceInfo getDeviceInfo()  = 0;
     virtual std::string getSerialNumber()  = 0;
     virtual void positionToLogicalObject(uint32_t blockId)  = 0;
@@ -148,27 +150,33 @@ namespace drives {
     virtual driveStatus getDriveStatus()  = 0;
     virtual tapeError getTapeError()  = 0;
     virtual void setSTBufferWrite(bool bufWrite)  = 0;
+    
     virtual void fastSpaceToEOM(void)  = 0;
     virtual void rewind(void)  = 0;
     virtual void spaceToEOM(void)  = 0;
     virtual void spaceFileMarksBackwards(size_t count)  = 0;
     virtual void spaceFileMarksForward(size_t count)  = 0;
+    
     virtual void unloadTape(void)  = 0;
+    
     virtual void flush(void)  = 0;
+    
     virtual void writeSyncFileMarks(size_t count)  = 0;
     virtual void writeImmediateFileMarks(size_t count)  = 0;
     virtual void writeBlock(const void * data, size_t count)  = 0;
+    
     virtual ssize_t readBlock(void * data, size_t count)  = 0;
     virtual void readExactBlock(void * data, size_t count, std::string context)  = 0;
     virtual void readFileMark(std::string context)  = 0;
+    
     virtual bool waitUntilReady(int timeoutSecond)  = 0;    
+    
     virtual bool isWriteProtected()  = 0;
     virtual bool isAtBOT()  = 0;
     virtual bool isAtEOD()  = 0;
     virtual bool isTapeBlank() = 0;
     virtual bool hasTapeInPlace() = 0;
     
-    virtual uint64_t nbByteWritenWithCompression() = 0;
     /**
      * Member string allowing the convenient storage of the string describing
      * drive location for the mount system (we get the information from TPCONFIG

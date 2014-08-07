@@ -71,7 +71,6 @@ namespace drives {
     virtual bool isAtEOD() ;
     virtual bool isTapeBlank();
     virtual bool hasTapeInPlace();
-    virtual uint64_t nbByteWritenWithCompression();
   };
   
 }}}}

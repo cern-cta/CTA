@@ -191,7 +191,3 @@ bool castor::tape::tapeserver::drives::FakeDrive::isTapeBlank() {
 bool castor::tape::tapeserver::drives::FakeDrive::hasTapeInPlace() {
   return true;
 }
-
-uint64_t castor::tape::tapeserver::drives::FakeDrive::nbByteWritenWithCompression(){
-  return 0;
-}

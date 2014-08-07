@@ -637,10 +637,6 @@ void drives::DriveGeneric::SCSI_inquiry() {
       << SCSI::Structures::toString(*((SCSI::Structures::inquiryData_t *) dataBuff));
 }
 
-uint64_t drives::DriveGeneric::nbByteWritenWithCompression(){
-  return 0;
-}
-
 
 drives::compressionStats drives::DriveT10000::getCompression()  {
   compressionStats driveCompressionStats;

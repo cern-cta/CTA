@@ -301,9 +301,6 @@ namespace drives {
 
     void SCSI_inquiry();
     
-    /**
-     */
-    virtual uint64_t nbByteWritenWithCompression();
   protected:
     SCSI::DeviceInfo m_SCSIInfo;
     int m_tapeFD; 

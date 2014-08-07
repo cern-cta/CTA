@@ -21,6 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/client/FakeClient.hpp"
 #include "castor/log/StringLogger.hpp"
 #include <gtest/gtest.h>
@@ -28,6 +29,7 @@
 namespace unitTests {
   const std::string error="ERROR_TEST";
   using namespace castor::tape;
+  const tapeserver::drives::compressionStats statsCompress;
   using ::testing::_;
   
 TEST(castor_tape_tapeserver_daemon, MigrationReportPackerNominal) {
@@ -45,7 +47,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerNominal) {
   
   mrp.reportCompletedJob(migratedFile,0);
   mrp.reportCompletedJob(migratedFile,0);
-  mrp.reportFlush(0);
+  mrp.reportFlush(statsCompress);
   mrp.reportEndOfSession();
   mrp.waitThread();
   
@@ -71,7 +73,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillure) {
   mrp.reportCompletedJob(migratedFile,0);  
   mrp.reportCompletedJob(migratedFile,0);
   mrp.reportFailedJob(failed,error,-1);
-  mrp.reportFlush(0);
+  mrp.reportFlush(statsCompress);
   mrp.reportEndOfSessionWithErrors(error,-1);
   mrp.waitThread();
   
@@ -96,7 +98,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillureGoodEnd) {
   mrp.reportCompletedJob(migratedFile,0);  
   mrp.reportCompletedJob(migratedFile,0);
   mrp.reportFailedJob(failed,error,-1);
-  mrp.reportFlush(0);
+  mrp.reportFlush(statsCompress);
   mrp.reportEndOfSession();
   mrp.waitThread();
    
@@ -123,7 +125,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerGoodBadEnd) {
   mrp.reportCompletedJob(migratedFile,0);  
   mrp.reportCompletedJob(migratedFile,0);
 
-  mrp.reportFlush(0);
+  mrp.reportFlush(statsCompress);
   mrp.reportEndOfSessionWithErrors(error,-1);
   mrp.waitThread();
   

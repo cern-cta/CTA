@@ -27,7 +27,7 @@
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
-
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include <list>
 #include <memory>
 
@@ -65,9 +65,11 @@ public:
   void reportFailedJob(const tapegateway::FileToMigrateStruct& migratedFile,const std::string& msg,int error_code);
      
    /**
-   * Create into the MigrationReportPacker a report for the signaling a flusing on tape
-   */
-  void reportFlush(uint64_t nbByteWritenWithCompression);
+    * Create into the MigrationReportPacker a report for the signaling a flusing on tape
+    * @param compressStats 
+    * 
+    */
+  void reportFlush(drives::compressionStats compressStats);
   
   /**
    * Create into the MigrationReportPacker a report for the nominal end of session
@@ -106,7 +108,7 @@ private:
     virtual void execute(MigrationReportPacker& _this);
   };
   class ReportFlush : public Report {
-    uint64_t nbByteWritenWithCompression;
+    drives::compressionStats m_compressStats;
     
     /**
      * This function will approximate the compressed size of the files which 
@@ -128,7 +130,7 @@ private:
      * @param nbByte the number of byte it really wrote to tape between 
      * this flush and the previous one
      *  */
-      ReportFlush(uint64_t nbByte):nbByteWritenWithCompression(nbByte){}
+      ReportFlush(drives::compressionStats compressStats):m_compressStats(compressStats){}
       
       void execute(MigrationReportPacker& _this);
   };
