@@ -10,4 +10,4 @@
     stager: <uuid2> SND <send duration2> s to send the request
     stager: Waiting for callback from castor
     stager: <uuid2> CBK <answer duration2> s before callback from <server ip2> was received
-close target : Bad checksum (error 1037 on <diskserver>)
+close target : Unable to fetch remote error 1037
