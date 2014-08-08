@@ -41,7 +41,8 @@
 #include "h/Ctape.h"
 #include "h/serrno.h"
 #include "h/vmgr_constants.h"
-
+#include <sstream>
+#include <iomanip>
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -54,7 +55,7 @@ castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
   void *const zmqContext):
   m_reactor(reactor),
   m_log(log),
-  m_socket(zmqContext, ZMQ_REP),
+  m_socket(zmqContext, ZMQ_ROUTER),
   m_driveCatalogue(driveCatalogue),
   m_hostName(hostName),
   m_vdqm(vdqm),
@@ -108,19 +109,34 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::fillPollFd(
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
   const zmq_pollitem_t &fd) throw() {
-  m_log(LOG_DEBUG, "handling event in TapeMessageHandler");
-
   // Try to receive a request, simply giving up if an exception is raised
   messages::Frame rqst;
+
+  //for handling zeroMQ's router socket type specific elements 
+  //ie first frame = identity of the sender
+  //   second one  =  empty
+  //   third and following = actual data frames
+ 
+  //The ZmqMsg address data can be dump as string and used as key for storing 
+  //the identity (for clients who need a late answer)
+  castor::messages::ZmqMsg adress;
+  castor::messages::ZmqMsg empty;
   try {
     checkSocket(fd);
+    m_socket.recv(adress);
+    m_socket.recv(empty);
     rqst = messages::recvFrame(m_socket);
   } catch(castor::exception::Exception &ex) {
     log::Param params[] = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "TapeMessageHandler failed to handle event", params);
     return false; // Give up and stay registered with the reactor
   }
-
+  log::Param params[] = {
+      log::Param("sender identity", 
+              tape::utils::toHexString(adress.getData(),adress.size()))
+     };
+  m_log(LOG_DEBUG, "handling event in TapeMessageHandler", params);
+  
   // From this point on any exception thrown should be converted into an
   // Exception message and sent back to the client
   messages::Frame reply;
@@ -136,6 +152,11 @@ bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
 
   // Send the reply to the client
   try {
+    //we need to prepend our frames the same way we received them
+    // ie identity + empty frames 
+    m_socket.send(adress,ZMQ_SNDMORE);
+    m_socket.send(empty,ZMQ_SNDMORE);
+    
     messages::sendFrame(m_socket, reply);
   } catch(castor::exception::Exception &ex) {
     log::Param params[] = {log::Param("message", ex.getMessage().str())};
