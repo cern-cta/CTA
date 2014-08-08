@@ -102,7 +102,13 @@
 namespace castor {
 namespace tape   {
 namespace utils  {
-	
+  /**
+   * Will  give an hexadecimal dump of the data between mem and mem+n
+   * @param mem THe pointer to memory do dump
+   * @param n The length of the memory
+   * @return The hex dump of the memory
+   */
+  std::string toHexString( const void * mem, unsigned int n );
 /**
  * Writes the specified array of strings to the specified output stream as a
  * list of strings separated by the specified separator.

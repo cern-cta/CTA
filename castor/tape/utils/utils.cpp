@@ -45,7 +45,17 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-
+//-----------------------------------------------------------------------------
+// toHexString
+//-----------------------------------------------------------------------------
+std::string castor::tape::utils::toHexString( const void * mem, unsigned int n ){
+  std::ostringstream out;
+  const unsigned char * p = reinterpret_cast< const unsigned char *>( mem );
+  for ( unsigned int i = 0; i < n; i++ ) {
+     out << std::uppercase << std::hex << std::setw(2) << std::setfill( out.widen('0') ) << int(p[i]) << " ";
+  }
+  return out.str();
+}
 //-----------------------------------------------------------------------------
 // writeStrings
 //-----------------------------------------------------------------------------
