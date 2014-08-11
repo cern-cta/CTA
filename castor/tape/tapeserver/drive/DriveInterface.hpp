@@ -47,7 +47,7 @@ namespace drives {
   public:
 
     compressionStats() :
-    fromHost(0), fromTape(0), toHost(0), toTape(0) {
+    fromHost(0),toTape(0) ,fromTape(0), toHost(0) {
     }
     //migration stats
     
