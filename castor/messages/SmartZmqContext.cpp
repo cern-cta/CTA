@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/utils/SmartZmqContext.hpp"
+#include "castor/messages/SmartZmqContext.hpp"
 
 #include <errno.h>
 #include <unistd.h>
@@ -31,21 +31,21 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartZmqContext::SmartZmqContext() throw() :
+castor::messages::SmartZmqContext::SmartZmqContext() throw() :
   m_zmqContext(NULL) {
 }
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartZmqContext::SmartZmqContext(void *const zmqContext)
+castor::messages::SmartZmqContext::SmartZmqContext(void *const zmqContext)
   throw() : m_zmqContext(zmqContext) {
 }
 
 //-----------------------------------------------------------------------------
 // reset
 //-----------------------------------------------------------------------------
-void castor::tape::utils::SmartZmqContext::reset(void *const zmqContext)
+void castor::messages::SmartZmqContext::reset(void *const zmqContext)
   throw() {
   // If the new ZMQ context is not the one already owned
   if(zmqContext != m_zmqContext) {
@@ -63,8 +63,8 @@ void castor::tape::utils::SmartZmqContext::reset(void *const zmqContext)
 //-----------------------------------------------------------------------------
 // SmartZmqContext assignment operator
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartZmqContext
-  &castor::tape::utils::SmartZmqContext::operator=(SmartZmqContext& obj) {
+castor::messages::SmartZmqContext
+  &castor::messages::SmartZmqContext::operator=(SmartZmqContext& obj) {
   reset(obj.release());
   return *this;
 }
@@ -72,21 +72,21 @@ castor::tape::utils::SmartZmqContext
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartZmqContext::~SmartZmqContext() throw() {
+castor::messages::SmartZmqContext::~SmartZmqContext() throw() {
   reset();
 }
 
 //-----------------------------------------------------------------------------
 // get
 //-----------------------------------------------------------------------------
-void *castor::tape::utils::SmartZmqContext::get() const throw() {
+void *castor::messages::SmartZmqContext::get() const throw() {
   return m_zmqContext;
 }
 
 //-----------------------------------------------------------------------------
 // release
 //-----------------------------------------------------------------------------
-void *castor::tape::utils::SmartZmqContext::release() {
+void *castor::messages::SmartZmqContext::release() {
   // If this smart pointer does not own a ZMQ context
   if(NULL == m_zmqContext) {
     castor::exception::NotAnOwner ex;

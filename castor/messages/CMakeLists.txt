@@ -16,6 +16,7 @@ add_library(castormessages SHARED
   RecallJobFromReadTp.pb.cc
   RecallJobFromTapeGateway.pb.cc
   ReturnValue.pb.cc
+  SmartZmqContext.cpp
   StopProcessForker.pb.cc
   TapeMountedForMigration.pb.cc
   TapeMountedForRecall.pb.cc

@@ -29,8 +29,7 @@
 
 
 namespace castor {
-namespace tape {
-namespace utils {
+namespace messages {
 
 /**
  * A smart pointer that owns a ZMQ context.  If the smart pointer goes out of
@@ -118,7 +117,6 @@ private:
 
 }; // class SmartZmqContext
 
-} // namespace utils
-} // namespace tape
+} // namespace message
 } // namespace castor
 

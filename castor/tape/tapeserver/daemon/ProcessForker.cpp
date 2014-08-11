@@ -38,7 +38,7 @@
 #include "castor/tape/tapeserver/daemon/ProcessForkerMsgType.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
 #include "castor/tape/utils/DriveConfig.hpp"
-#include "castor/tape/utils/SmartZmqContext.hpp"
+#include "castor/messages/SmartZmqContext.hpp"
 #include "castor/utils/SmartArrayPtr.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/serrno.h"
@@ -506,7 +506,7 @@ int castor::tape::tapeserver::daemon::ProcessForker::runDataTransferSession(
   legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), netTimeout);
 
   const int sizeOfIOThreadPoolForZMQ = 1;
-  utils::SmartZmqContext
+  messages::SmartZmqContext
     zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
 
   messages::TapeserverProxyZmq tapeserver(m_log,
