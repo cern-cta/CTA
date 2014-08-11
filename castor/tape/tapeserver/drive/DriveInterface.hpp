@@ -49,10 +49,20 @@ namespace drives {
     compressionStats() :
     fromHost(0), fromTape(0), toHost(0), toTape(0) {
     }
+    //migration stats
+    
+    //amount of bytes the host sent
     uint64_t fromHost;
-    uint64_t fromTape;
-    uint64_t toHost;
+    
+    //amount of bytes really wrote on byte
     uint64_t toTape;
+    //--------------------------------------------------------------------------
+    //recall stats : currently filled by the drive but unused elsewhere
+    //amount of bytes the drive read on tape
+    uint64_t fromTape;
+    
+    //amount of bytes we send to the client
+    uint64_t toHost;
   };
 
   /**
