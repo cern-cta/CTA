@@ -306,7 +306,7 @@ class Transfer(BaseTransfer):
       t = Transfer.configuration.getValue('RFIOD', 'CONNTIMEOUT', 10)
     elif self.protocol == 'gsiftp':
       t = Transfer.configuration.getValue('GSIFTP', 'TIMEOUT', 180)
-    elif self.protocol == 'xrootd':
+    elif self.protocol == 'xroot':
       t = Transfer.configuration.getValue('XROOT', 'TIMEOUT', 300)
     else:
       raise TypeError('No valid timeout value for protocol %s' % self.protocol)

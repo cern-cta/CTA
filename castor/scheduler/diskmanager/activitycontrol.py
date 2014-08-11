@@ -202,7 +202,7 @@ class ActivityControlThread(threading.Thread):
                   else:
                     # xroot is special here: we don't create a socket for the mover, but instead we tell
                     # the xroot server (through the redirector) to use our mover handler port for telling
-                    # us when the file was effectively opened and closed
+                    # us when the file is effectively opened and closed
                     moverPort = self.configuration.getValue('DiskManager', 'MoverHandlerPort', 15511)
                     # and on top, we have to tell the physical destination as the path in the response
                     destPath = transfer.destDcPath

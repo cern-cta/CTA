@@ -26,7 +26,7 @@
 """clients listener thread of the disk server manager daemon of CASTOR."""
 
 import threading, socket, select, time, random
-import connectionpool, dlf
+import dlf
 from diskmanagerdlf import msgs
 
 
@@ -56,6 +56,7 @@ class ClientsListenerThread(threading.Thread):
     self.config = config
     # an fd -> MoverSocket dictionary for keeping track of the outstanding movers
     self.outstandingMovers = {}
+    # a multi-poll structure to look for incoming connections from clients
     self.clientsPoll = select.poll()
     # start the thread
     self.setDaemon(True)
@@ -114,12 +115,10 @@ class ClientsListenerThread(threading.Thread):
         # check timeout for all outstanding movers
         for moverSock in self.outstandingMovers.values():
           if moverSock.expirationTime < time.time():
-            # the client for this mover did not come on time, fail the transfer
-            self.runningTransfers.failTransfer(moverSock.qTransfer.scheduler, moverSock.qTransfer.transfer, 1004,  # SETIMEDOUT
-                                               'Timed out waiting for client connection', removeFromRunningSet=True)
-            # and drop it from our structures
+            # the client for this mover did not come on time, drop it from our structures
             self.clientsPoll.unregister(moverSock.socket.fileno())
             del self.outstandingMovers[moverSock.socket.fileno()]
+            # the transfer will be failed by the manager thread polling all running transfers
       except Exception, e:
         # "Caught exception in ClientsListener thread" message
         dlf.writeerr(msgs.CLIENTSLISTENEREXCEPTION, Type=str(e.__class__), Message=str(e))

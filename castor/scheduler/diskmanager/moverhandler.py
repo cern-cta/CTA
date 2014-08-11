@@ -25,7 +25,7 @@
 
 """mover handler thread of the disk server manager daemon of CASTOR."""
 
-import threading, sys, socket, time
+import threading, socket, time
 import connectionpool, dlf
 from diskmanagerdlf import msgs
 
@@ -45,6 +45,19 @@ class MoverHandlerThread(threading.Thread):
     # start the thread
     self.setDaemon(True)
     self.start()
+
+  def handleOpen(self, transferid):
+    '''handle an OPEN call'''
+    try:
+      t = self.runningTransfers.get(transferid)
+      # found it, update its process. Anything not None is OK here, see runningtransferset.py
+      t.process = 0
+      return "0"
+    except KeyError:
+      # transfer not found: typically it already timed out, so we log this
+      # "Transfer slot timed out" message
+      dlf.writenotice(msgs.TRANSFERTIMEDOUT, subreqId=transferid)
+      raise
 
   def handleClose(self, payload):
     '''handle a CLOSE call'''
@@ -78,8 +91,6 @@ class MoverHandlerThread(threading.Thread):
           if rc != 0:
             # log "Failed to end the transfer"
             dlf.writenotice(msgs.TRANSFERENDEDFAILED, subreqId=transferid, reqId=t.transfer.reqId, errCode=rc, errMessage=errMsg)
-          # return result to the mover
-          dlf.writedebug(msgs.TRANSFERENDED, returnCode=rc, returnMessage=errMsg)
           return '%d %s\n' % (rc, errMsg)
         except connectionpool.Timeout, e:
           # as long as we get a timeout, we retry up to 3 times
@@ -110,7 +121,9 @@ class MoverHandlerThread(threading.Thread):
     # parse input, bail out on any parsing error
     try:
       key, payload = data.split(' ', 1)
-      if key == 'CLOSE':
+      if key == 'OPEN':
+        return self.handleOpen(payload)
+      elif key == 'CLOSE':
         return self.handleClose(payload)
       else:
         raise ValueError

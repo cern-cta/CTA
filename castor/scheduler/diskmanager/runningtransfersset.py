@@ -376,11 +376,27 @@ class RunningTransfersSet(object):
         elif rTransfer.process != None:
           # check regular transfers (non left over), except for d2dsrc transfers or transfers
           # that have just been scheduled and not yet started as they have no process
+          try:
+            rc = rTransfer.process.poll()
+            isEnded = (rc != None)
+          except AttributeError:
+            # this is a running (xrootd) transfer for which we have no process associated, so poll() fails:
+            # in this case we must assume the transfer is still running
+            isEnded = False
+        else:
           if self.fake:
             isEnded = True
           else:
-            rc = rTransfer.process.poll()
-            isEnded = (rc != None)
+            # running transfers without a process are the ones for which a slot has been allocated
+            # but the client has not come yet. They must be timed out to avoid a slot leak - this would
+            # be the case of xrootd clients in particular, due to the stalling mechanism, but also of
+            # any client that does not reconnect after the call back.
+            if rTransfer.startTime + rTransfer.transfer.getTimeout() < time.time():
+              failedTransfers.append((rTransfer.scheduler, rTransfer.transfer, \
+                                      1004, 'Timed out waiting for client connection'))  # SETIMEDOUT
+              ended.append(transferId)
+              isEnded = True
+              rc = None   # the transfer didn't even take place
         if isEnded:
           # "transfer ended" message
           dlf.writedebug(msgs.TRANSFERENDED, subreqId=transferId, reqId=rTransfer.transfer.reqId,
@@ -467,7 +483,7 @@ class RunningTransfersSet(object):
     for scheduler, transfer, rc, msg in failedTransfers:
       try:
         # try to fail the transfer on our side
-        self.failTransfer(scheduler, transfer, rc, msg, removeFromRunningSet=False)  # SEINTERNAL
+        self.failTransfer(scheduler, transfer, rc, msg)  # SEINTERNAL
       except Exception, e:
         # "Failed to end the transfer" message
         dlf.writeerr(msgs.TRANSFERENDEDFAILED, type=str(e.__class__), message=str(e), originalErrorMessage=msg)
@@ -532,18 +548,12 @@ class RunningTransfersSet(object):
     finally:
       self.lock.release()
 
-  def failTransfer(self, scheduler, transfer, errCode, errMessage, removeFromRunningSet):
-    '''fail a transfer with the given error code and message'''
+  def failTransfer(self, scheduler, transfer, errCode, errMessage):
+    '''Fail a transfer with the given error code and message. The transfer is assumed to have already been dropped
+    from the list of running transfers, and thus no lock is taken for this operation.'''
     # get the admin timeout
     timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
     closeTime = time.time()
-    if removeFromRunningSet:
-      try:
-        # first take the transfer out of the running set
-        self.lock.acquire()
-        self.transfers = set(rTransfer for rTransfer in self.transfers if rTransfer.transfer.transferId != transfer.transferId)
-      finally:
-        self.lock.release()
     # call transferEnded to fail the transfer
     attempt = 0
     while True:
