@@ -25,6 +25,7 @@
 
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/log/Logger.hpp"
+#include "castor/messages/ForkCleaner.pb.h"
 #include "castor/messages/ForkDataTransfer.pb.h"
 #include "castor/messages/ForkLabel.pb.h"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
@@ -216,6 +217,15 @@ private:
    * @return The result of the message handler.
    */
   MsgHandlerResult handleForkCleanerMsg(const ProcessForkerFrame &frame);
+
+  /**
+   * Runs a cleaner session.  This method is to be called within the child
+   * process responsible for running the cleaner session.
+   *
+   * @param rqst The ForkCleaner message.
+   * @return The value to be used when exiting the child process.
+   */
+  int runCleanerSession(const messages::ForkCleaner &rqst);
 
   /**
    * Runs a data-transfer session.  This method is to be called within the

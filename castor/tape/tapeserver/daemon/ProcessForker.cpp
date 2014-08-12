@@ -35,6 +35,8 @@
 #include "castor/messages/StopProcessForker.pb.h"
 #include "castor/messages/TapeserverProxyZmq.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "castor/tape/tapeserver/daemon/CleanerSession.hpp"
+#include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForker.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
@@ -289,6 +291,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", rqst.unitname()));
   params.push_back(log::Param("vid", rqst.vid()));
+  params.push_back(log::Param("rmcPort", rqst.rmcport()));
   m_log(LOG_INFO, "ProcessForker handling ForkCleaner message", params);
 
   // Fork a label session
@@ -314,8 +317,21 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   // Else this is the child process
   } else {
     closeCmdReceiverSocket();
-    // TO BE DONE
-    exit(0);
+
+    try {
+      exit(runCleanerSession(rqst));
+    } catch(castor::exception::Exception &ne) {
+      log::Param params[] = {log::Param("message", ne.getMessage().str())};
+      m_log(LOG_ERR, "Failed to run cleaner session", params);
+    } catch(std::exception &ne) {
+      log::Param params[] = {log::Param("message", ne.what())};
+      m_log(LOG_ERR, "Failed to run cleaner session", params);
+    } catch(...) {
+      log::Param params[] = {log::Param("message",
+        "Caught an unknown exception")};
+      m_log(LOG_ERR, "Failed to run cleaner session", params);
+    }
+    exit(1);
   }
 }
 
@@ -333,6 +349,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   // Log the contents of the incomming request
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", rqst.unitname()));
+  params.push_back(log::Param("rmcPort", rqst.rmcport()));
   m_log(LOG_INFO, "ProcessForker handling ForkDataTransfer message", params);
 
   // Fork a data-transfer session
@@ -385,6 +402,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", rqst.unitname()));
   params.push_back(log::Param("vid", rqst.vid()));
+  params.push_back(log::Param("rmcPort", rqst.rmcport()));
   m_log(LOG_INFO, "ProcessForker handling ForkLabel message", params);
 
   // Fork a label session
@@ -442,6 +460,45 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   m_log(LOG_INFO, "Gracefully stopping ProcessForker", params);
 
   return createReturnValueResult(0, false);
+}
+
+//------------------------------------------------------------------------------
+// runCleanerSession
+//------------------------------------------------------------------------------
+int castor::tape::tapeserver::daemon::ProcessForker::runCleanerSession(
+  const messages::ForkCleaner &rqst) {
+  try {
+    const utils::DriveConfig driveConfig = getDriveConfig(rqst);
+    std::list<log::Param> params;
+    params.push_back(log::Param("unitName", driveConfig.unitName));
+    params.push_back(log::Param("vid", rqst.vid()));
+    params.push_back(log::Param("rmcPort", rqst.rmcport()));
+    m_log(LOG_INFO, "Cleaner-session child-process started", params);
+
+    const int netTimeout = 10; // Timeout in seconds
+    legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), netTimeout);
+    castor::tape::System::realWrapper sWrapper;
+    CleanerSession cleanerSession(
+      rmc,
+      m_log,
+      driveConfig,
+      sWrapper);
+    // clean() returns 0 if drive should be put up or 1 if it should be put down
+    return cleanerSession.clean(rqst.vid());
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to run cleaner session: " << ne.getMessage().str();
+    throw ex;
+  } catch(std::exception &se) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to run cleaner session: " << se.what();
+    throw ex;
+  } catch(...) {
+        castor::exception::Exception ex;
+    ex.getMessage() << "Failed to run cleaner session"
+      ": Caught an unknown exception";
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -776,6 +833,7 @@ int castor::tape::tapeserver::daemon::ProcessForker::runLabelSession(
     std::list<log::Param> params;
     params.push_back(log::Param("unitName", driveConfig.unitName));
     params.push_back(log::Param("vid", labelJob.vid));
+    params.push_back(log::Param("rmcPort", rqst.rmcport()));
     m_log(LOG_INFO, "Label-session child-process started", params);
 
     const int netTimeout = 10; // Timeout in seconds

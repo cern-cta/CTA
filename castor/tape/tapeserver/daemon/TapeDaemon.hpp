@@ -398,14 +398,6 @@ protected:
     throw();
 
   /**
-   * Handles the specified reaped session.
-   *
-   * @param pid The process ID of the child process.
-   * @param waitpidStat The status information given by a call to waitpid().
-   */
-  void handleReapedSession(const pid_t pid, const int waitpidStat) throw();
-
-  /**
    * Logs the fact that the specified child process has terminated.
    *
    * @param pid The process ID of the child process.
@@ -413,28 +405,6 @@ protected:
    */
   void logChildProcessTerminated(const pid_t pid, const int waitpidStat)
     throw();
-
-  /**
-   * Dispatches the appropriate post-processor of repaed sessions based on
-   * the specified session type.
-   *
-   * @sessionType The type of the reaped session.
-   * @param pid The process ID of the reaped session.
-   * @param waitpidStat The status information given by a call to waitpid().
-   */
-  void dispatchReapedSessionHandler(
-   const DriveCatalogueEntry::SessionType sessionType,
-   const pid_t pid,
-   const int waitpidStat);
-
-  /**
-   * Does the required post processing for the specified reaped session.
-   *
-   * @param pid The process ID of the reaped session.
-   * @param waitpidStat The status information given by a call to waitpid().
-   */
-  void handleReapedCleanerSession(const pid_t pid,
-    const int waitpidStat);
 
   /**
    * Sets the state of the tape drive asscoiated with the specified
@@ -458,14 +428,6 @@ protected:
   size_t marshalTapeRcReplyMsg(char *const dst, const size_t dstLen,
     const int rc) ;
   
-  /**
-   * Handles the specified reaped session.
-   *
-   * @param pid The process ID of the reaped session.
-   * @param waitpidStat The status information given by a call to waitpid().
-   */
-  void handleReapedLabelSession(const pid_t pid, const int waitpidStat);
-
   /**
    * Request the vdqmd daemon to release the tape drive associated with the
    * session child-process with the specified process ID.
@@ -547,17 +509,6 @@ protected:
    * @param drive The tape-drive entry in the tape-drive catalogue.
    */
   void forkCleanerSession(DriveCatalogueEntry *drive);
-
-  /**
-   * Runs the cleaner session. This method is to be called within the child
-   * process responsible for running the cleaner session.
-   *
-   * @param drive The catalogue entry of the tape drive to be used during the
-   * session.
-   * @param vid The identifier of the mounted volume (one can pass the empty string 
-   * in case it is unknown, as it not used except for logging purposes).
-   */
-  void runCleanerSession(DriveCatalogueEntry *drive, const std::string &vid) throw();
 
   /**
    * Catalogue used to keep track of both the initial and current state of

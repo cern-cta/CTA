@@ -21,6 +21,17 @@
 package castor.messages;
 
 message ForkCleaner {
+  // Description of the tape drive
   required string unitname = 1;
-  required string vid = 2;
+  required string dgn = 2;
+  required string devfilename = 3;
+  repeated string density = 4;
+  required string libraryslot = 5;
+  required string devtype = 6;
+
+  // Description of the tape associated with the drive
+  required string vid = 7;
+
+  // Configuration parameters of the session
+  required uint32 rmcport = 8;
 }

@@ -928,7 +928,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedProcess(
   if(pid == m_processForkerPid) {
     handleReapedProcessForker(pid, waitpidStat);
   } else {
-    handleReapedSession(pid, waitpidStat);
+    log::Param params[] = {log::Param("pid", pid)};
+    m_log(LOG_ERR, "Reaped process was unknown", params);
   }
 }
 
@@ -941,22 +942,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedProcessForker(
     log::Param("processForkerPid", pid)};
   m_log(LOG_INFO, "Handling reaped ProcessForker", params);
   m_processForkerPid = 0;
-}
-
-//------------------------------------------------------------------------------
-// handleReapedSession
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedSession(
-  const pid_t pid, const int waitpidStat) throw() {
-  try {
-    const DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(pid);
-    dispatchReapedSessionHandler(drive->getSessionType(), pid,
-      waitpidStat);
-  } catch(castor::exception::Exception &ne) {
-    log::Param params[] = {log::Param("message", ne.getMessage().str())};
-    m_log(LOG_ERR, "Failed to handle reaped session",
-      params);
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -992,57 +977,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logChildProcessTerminated(
   }
 
   m_log(LOG_INFO, "Child process terminated", params);
-}
-
-//------------------------------------------------------------------------------
-// dispatchReapedSessionHandler
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::
-  dispatchReapedSessionHandler(
-  const DriveCatalogueEntry::SessionType sessionType,
-  const pid_t pid,
-  const int waitpidStat) {
-
-  switch(sessionType) {
-  case DriveCatalogueEntry::SESSION_TYPE_CLEANER:
-    return handleReapedCleanerSession(pid, waitpidStat);
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to dispatch handler for reaped session"
-        ": Unexpected session type: sessionType=" << sessionType;
-      throw ex;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleReapedCleanerSession
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedCleanerSession(
-  const pid_t pid, const int waitpidStat) {
-  try {
-    std::list<log::Param> params;
-    params.push_back(log::Param("cleanerPid", pid));
-    DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(pid);
-    const utils::DriveConfig &driveConfig = drive->getConfig();
-
-    if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
-      const std::string vid = drive->getVid();
-      drive->sessionSucceeded();
-      m_log(LOG_INFO, "Cleaner session succeeded. Drive will stay UP", params);
-      notifyVdqmTapeUnmounted(driveConfig, vid, pid);
-    } else {
-      drive->sessionFailed();
-      m_log(LOG_INFO, "Cleaner session failed. Drive will go DOWN", params);
-      setDriveDownInVdqm(pid, drive->getConfig());
-    }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle reaped cleaner session: " << 
-    ne.getMessage().str();
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -1112,33 +1046,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to set tape-drive down in vdqm: " <<
       ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleReapedLabelSession 
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedLabelSession(
-  const pid_t pid, const int waitpidStat) {
-  try {
-    std::list<log::Param> params;
-    params.push_back(log::Param("labelPid", pid));
-
-    DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(pid);
-
-    if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
-      drive->sessionSucceeded();
-      m_log(LOG_INFO, "Label session succeeded", params);
-    } else {
-      drive->sessionFailed();
-      m_log(LOG_INFO, "Label session failed", params);
-      setDriveDownInVdqm(pid, drive->getConfig());
-    }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle reaped label session: " <<
-    ne.getMessage().str();
     throw ex;
   }
 }
@@ -1305,62 +1212,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkCleanerSession(
   params.push_back(log::Param("unitName", driveConfig.unitName));
   std::string vid = "";
 
-  m_processForker->forkCleaner(driveConfig.unitName, vid);
+  const unsigned short rmcPort =
+    common::CastorConfiguration::getConfig().getConfEntInt(
+      "RMC", "PORT", (unsigned short)RMC_PORT, &m_log);
 
-  m_log.prepareForFork();
-  const pid_t forkRc = fork();
-
-  // If fork failed
-  if(0 > forkRc) {
-    // Log an error message and return
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    params.push_back(log::Param("message", message));
-    m_log(LOG_ERR, "Failed to fork cleaner session", params);
-
-  // Else if this is the parent process
-  } else if(0 < forkRc) {
-    drive->forkedCleanerSession(forkRc);  
-  } else { // Else this is the child process
-    // Clear the reactor which in turn will close all of the open
-    // file-descriptors owned by the event handlers
-    //m_reactor.clear();
-
-    runCleanerSession(drive, vid);
-  }
-}
-
-//------------------------------------------------------------------------------
-// runCleanerSession
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::runCleanerSession(
-  DriveCatalogueEntry *drive, const std::string &vid) throw() {
-  const utils::DriveConfig &driveConfig = drive->getConfig();
-  
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", driveConfig.unitName));
-  m_log(LOG_INFO, "Cleaner-session child-process started", params);
-
-  try {
-    std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
-    castor::tape::System::realWrapper sWrapper;
-    castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
-      *(rmc.get()),
-      m_log,
-      driveConfig,
-      sWrapper);
-    exit(cleanerSession.clean(vid)); //clean() returns 0 if drive should be put up or 1 if it should be put down
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Aborting cleaner session. Reason: " << ne.getMessage().str();
-    m_log(LOG_ERR, ex.getMessage().str());
-  } catch(std::exception &se) {
-    params.push_back(log::Param("message", se.what()));
-    m_log(LOG_ERR, "Aborting cleaner session: Caught an unexpected exception",
-      params);
-  } catch(...) {
-    m_log(LOG_ERR,
-      "Aborting cleaner session: Caught an unexpected and unknown exception");
-  }
-  exit(1);
+  m_processForker->forkCleaner(driveConfig, vid, rmcPort);
 }
