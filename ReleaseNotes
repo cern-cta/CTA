@@ -38,27 +38,36 @@
 
   Stager
   ------
-    #104810 Draining has problems when used with --file-mask=NOTONTAPE
-    #104671 listtransfers not working when a transfermanagerd is down
+    #63910  log service class on 'Processing File Query by fileid' messages
     #104562 bad handling of long arguments in printmigrationroute and printrecalluser
+    #104601 RFE : modify/enterSvcClass should check consistency of the GCPolicies when DiskPools are shared
+    #104671 listtransfers not working when a transfermanagerd is down
+    #104672 Do not loop on same job in case of exception when trying to start it
+    #104708 Integrity constraint violated in GC
+    #104810 Draining has problems when used with --file-mask=NOTONTAPE
     #104983 Replica management broken by recent improvements
     #104998 Synchronization of d2d srcs too aggressive and creating issues for draining cancelation
     #105004 Timeouts on transfermanagerd replies for canceled jobs are not well handled
     #105005 D2D destinations do not respect backfill mechanism when source is not ready
     #105006 Draining disk 2 disk copies are not always repecting the GuaranteedUserSlotsPercentage
     #105008 Deleting a draining operation may result in a database deadlock
+    #105036 logrotation fails to signal rsyslog to reopen the log files
+    #105068 Draining looping when having shared pools and replicated files
 
   Protocols
   ---------
     #104966 Handle overlapping chunks of data in gridFTP plugin (by raising an error)
 
-  Repack
-  ------
+  Repack and tape related
+  -----------------------
     #104856 RFE: make the timeout to expire old requests different for failed vs. successful ones
     #104892 Concurrent repack of dual copy files does not generate two racing recall jobs
+    #105032 RFE: tapegatewayd should log "no more space on device" events from the vmgr as warnings
+    #105037 RFE: vmgr should be able to log errors
   
   Clients
   -------
+    #76759  nsgetpath should fall back to use default nameserver "castorns"
     #104523 RFE: add -n option on nsls to avoid resolution of user and group names
     #104849 RFE: expose stager timeouts on rfcp
 
