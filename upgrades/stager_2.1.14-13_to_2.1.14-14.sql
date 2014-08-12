@@ -91,7 +91,7 @@ ALTER TABLE DrainingErrors ADD (castorFile INTEGER CONSTRAINT NN_DrainingErrors_
 CREATE INDEX I_DrainingErrors_DJ_CF ON DrainingErrors (drainingJob, CastorFile);
 
 ALTER TABLE DrainingErrors
-  ADD CONSTRAINT FK_DrainingErrors_CF
+  ADD CONSTRAINT FK_DrainingErrors_CastorFile
   FOREIGN KEY (castorFile)
   REFERENCES CastorFile (id);
 
