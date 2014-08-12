@@ -593,7 +593,7 @@ BEGIN
     -- recall, thus we pick the first one as "the" responsible. The only consequence is
     -- that it's uid/gid will be used for the DiskCopy creation
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- log "setFileRecalled : unable to identify Recall. giving up"
+    -- log "Unable to identify Recall. giving up"
     logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, varFileId, varNsHost, 'tapegatewayd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) ||
              ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
@@ -1847,7 +1847,7 @@ BEGIN
          AND nsHost = varNsHost
          FOR UPDATE;
     EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- log "setBulkFileRecallResult : unable to identify Recall. giving up"
+      -- log "Unable to identify Recall. giving up"
       logToDLF(varReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, inFileIds(i), varNsHost, 'tapegatewayd',
                'mountTransactionId=' || TO_CHAR(inMountTrId) || ' TPVID=' || varVID ||
                ' fseq=' || TO_CHAR(inFseqs(i)) || ' filePath=' || inFilePaths(i) || ' ' || inLogContext);
