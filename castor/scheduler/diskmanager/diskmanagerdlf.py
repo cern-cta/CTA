@@ -48,7 +48,7 @@ msgs = dlf.enum('INVOKINGSCHEDULETRANSFER', 'INVOKINGSUMMARIZETRANSFERS',
                 'SCHEDFROMBACKFILL', 'PUTJOBINBACKFILL', 'SCHEDUSERJOBUNDERPRESSURE',
                 'SCHEDPRIORITY', 'AVOIDBACKFILLSTARV', 'SCHEDUSERJOB',
                 'MOVERHANDLEREXCEPTION', 'CLIENTSREPLIEREXCEPTION', 'CLIENTSLISTENEREXCEPTION',
-                'MOVERSTARTING', 'MOVERSTARTFAILED')
+                'MOVERSTARTING', 'MOVERSTARTFAILED', 'TRANSFERTIMEDOUT')
 
 # initialization of the messages
 dlf.addmessages({msgs.INVOKINGSCHEDULETRANSFER : 'Invoking scheduleTransfer',
@@ -103,4 +103,6 @@ dlf.addmessages({msgs.INVOKINGSCHEDULETRANSFER : 'Invoking scheduleTransfer',
                  msgs.CLIENTSREPLIEREXCEPTION : 'Caught exception in ClientsReplier thread',
                  msgs.CLIENTSLISTENEREXCEPTION : 'Caught exception in ClientsListener thread',
                  msgs.MOVERSTARTING : 'Executing mover',
-                 msgs.MOVERSTARTFAILED : 'Failed to execute mover'})
+                 msgs.MOVERSTARTFAILED : 'Failed to execute mover',
+                 msgs.TRANSFERTIMEDOUT : 'Transfer slot timed out'})
+
