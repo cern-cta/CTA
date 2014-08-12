@@ -31,7 +31,7 @@ import Crypto.PublicKey.RSA as RSA
 import Crypto.Signature.PKCS1_v1_5 as PKCS1
 import base64
 import connectionpool, dlf, clientsreplier
-from commonexceptions import TransferCanceled, SourceNotStarted
+from commonexceptions import TransferCanceled, TransferFailed, SourceNotStarted
 from diskmanagerdlf import msgs
 from transfer import TransferType, RunningTransfer
 
@@ -231,13 +231,11 @@ class ActivityControlThread(threading.Thread):
                               reqid=transfer.reqId, fileId=transfer.fileId, originalError='Timeout', error=e)
           except TransferCanceled, e:
             # 'Transfer start canceled' message
-            dlf.writedebug(msgs.TRANSFERSTARTCANCELED, reason=e.args, subreqId=transfer.transferId,
-                           fileId=transfer.fileId)
+            dlf.writedebug(msgs.TRANSFERSTARTCANCELED, reason=e.args, subreqId=transfer.transferId, fileId=transfer.fileId)
             # the transfer has already started somewhere else, or has been canceled, so give up
-          except IOError, e:
+          except TransferFailed, e:
             # 'Transfer start canceled' message
-            dlf.write(msgs.TRANSFERSTARTCANCELED, errCode=e.errno, reason=e.strerror,
-                      subreqId=transfer.transferId, fileId=transfer.fileId)
+            dlf.write(msgs.TRANSFERSTARTCANCELED, reason=e.args, subreqId=transfer.transferId, fileId=transfer.fileId)
             # this is a permanent failure because of the stager, so try and inform the client that the transfer cannot take place
             ioresp = clientsreplier.IOResponse(clientsreplier.IOResponse.FAILED, '', 0, transfer.fileId, transfer.transferId, \
                                               e.errno, e.strerror, transfer.reqId, transfer.reqId, 0, transfer.protocol)

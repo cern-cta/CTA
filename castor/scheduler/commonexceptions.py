@@ -27,11 +27,18 @@
 
 class TransferCanceled(Exception):
     """Exception sent by the transfermanager when a transfer that
-       would like to start was already started somewhere else or
-       was actually canceled in the mean time"""
+       would like to start was already started somewhere else"""
     def __init__(self, message):
         """constructor"""
         super(TransferCanceled, self).__init__(message)
+
+class TransferFailed(Exception):
+    """Exception sent by the transfermanager when a transfer that
+       would like to start was failed or canceled in the stager database.
+       In this case we want to tell the client about the failure."""
+    def __init__(self, message):
+        """constructor"""
+        super(TransferFailed, self).__init__(message)
 
 class SourceNotStarted(Exception):
     """Exception sent by the transfermanager when a d2ddst transfer

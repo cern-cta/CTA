@@ -33,7 +33,7 @@ import threading
 import socket
 import daemon
 import castor_tools, connectionpool, dispatcher, serverqueue, aborter
-from commonexceptions import TransferCanceled
+from commonexceptions import TransferCanceled, TransferFailed
 import synchronizer, suicider, reportmanager, diskserverlistcache, modifydiskservers
 import dlf
 from transfermanagerdlf import msgs
@@ -455,11 +455,11 @@ class TransferManagerService(rpyc.Service):
             if errorcode == 20110:  # disk2DiskCopyStart DB errors
               # cleanup source
               queueingTransfers.d2dendById(transfer.transferId)
-              # raise ValueError to tell the upper layer to give up
+              # raise exception to tell the upper layer to give up
               raise TransferCanceled(error.message)
             elif errorcode in (20104, 20114):  # getStart, putStart DB errors
-              # raise ValueError to tell the upper layer to give up
-              raise TransferCanceled(error.message)
+              # raise exception to tell the upper layer to give up
+              raise TransferFailed(error.message)
         # otherwise reraise for the upper layer
         raise e
     finally:
