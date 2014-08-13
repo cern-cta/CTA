@@ -40,19 +40,11 @@
 #include "castor/stager/StgFilesDeleted.hpp"
 #include "castor/stager/StgFilesDeletedResponse.hpp"
 #include "castor/stager/FilesDeletionFailed.hpp"
-#include "castor/stager/GetUpdateDone.hpp"
-#include "castor/stager/GetUpdateFailed.hpp"
-#include "castor/stager/PutFailed.hpp"
 #include "castor/stager/GCLocalFile.hpp"
 #include "castor/stager/GCFile.hpp"
 #include "castor/stager/RemoteGCSvc.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
-#include "castor/stager/GetUpdateStartRequest.hpp"
-#include "castor/stager/PutStartRequest.hpp"
-#include "castor/stager/MoverCloseRequest.hpp"
-#include "castor/rh/GetUpdateStartResponse.hpp"
 #include "castor/rh/GCFilesResponse.hpp"
-#include "castor/rh/StartResponse.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include <errno.h>
 #include <list>
@@ -64,7 +56,7 @@ EXTERN_C char *getconfent (char *, char *, int);
 // Constants
 //------------------------------------------------------------------------------
 const char* castor::stager::RMTGCSVC_CATEGORY_CONF = "REMOTEGCSVC";
-//const char* castor::stager::TIMEOUT_CONF = "TIMEOUT";   // already defined
+const char* castor::stager::TIMEOUT_CONF = "TIMEOUT";
 const int   castor::stager::DEFAULT_REMOTEGCSVC_TIMEOUT = 1800;
 
 

@@ -42,61 +42,6 @@ BEGIN
 END;
 /
 
-/* inserts simple Requests in the stager DB.
- * This handles GetUpdateFailed, GetUpdateDone and PutFailed
- * requests.
- */ 	 
-CREATE OR REPLACE PROCEDURE insertSimpleRequest
-  (machine IN VARCHAR2,
-   euid IN INTEGER,
-   egid IN INTEGER,
-   pid IN INTEGER,
-   userName IN VARCHAR2,
-   svcClassName IN VARCHAR2,
-   reqUUID IN VARCHAR2,
-   reqType IN INTEGER,
-   clientIP IN INTEGER,
-   clientPort IN INTEGER,
-   clientVersion IN INTEGER,
-   clientSecure IN INTEGER,
-   subReqId IN INTEGER,
-   fileId IN INTEGER,
-   nsHost IN VARCHAR2) AS
-  svcClassId NUMBER;
-  reqId NUMBER;
-  clientId NUMBER;
-  creationTime NUMBER;
-BEGIN
-  -- do prechecks and get the service class
-  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
-  -- get unique ids for the request and the client and get current time
-  SELECT ids_seq.nextval INTO reqId FROM DUAL;
-  SELECT ids_seq.nextval INTO clientId FROM DUAL;
-  creationTime := getTime();
-  -- insert the request itself
-  CASE
-    WHEN reqType = 78 THEN -- GetUpdateDone
-      INSERT INTO GetUpdateDone (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileId, nsHost, id, svcClass, client)
-      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,subReqId,fileId,nsHost,reqId,svcClassId,clientId);
-    WHEN reqType = 79 THEN  -- GetUpdateFailed
-      INSERT INTO GetUpdateFailed (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileId, nsHost, id, svcClass, client)
-      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,subReqId,fileId,nsHost,reqId,svcClassId,clientId);
-    WHEN reqType = 80 THEN  -- PutFailed
-      INSERT INTO PutFailed (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileId, nsHost, id, svcClass, client)
-      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,subReqId,fileId,nsHost,reqId,svcClassId,clientId);
-    ELSE
-      raise_application_error(-20122, 'Unsupported request type in insertSimpleRequest : ' || TO_CHAR(reqType));
-  END CASE;
-  -- insert the client information
-  INSERT INTO Client (ipAddress, port, version, secure, id)
-  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert a row into newRequests table to trigger the processing of the request
-  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
-  -- send an alert to accelerate the processing of the request
-  alertSignalNoLock('wakeUpJobSvc');
-END;
-/
-
 /* inserts file Requests in the stager DB.
  * This handles StageGetRequest, StagePrepareToGetRequest,
  * StagePutRequest, StagePrepareToPutRequest,
@@ -196,60 +141,6 @@ BEGIN
        inReqType = 95 THEN -- SetFileGCWeight
     alertSignalNoLock('wakeUpStageReqSvc');
   END CASE;
-END;
-/
-
-/* inserts start Requests in the stager DB.
- * This handles PutStartRequest and GetUpdateStartRequest
- * requests.
- */ 	 
-CREATE OR REPLACE PROCEDURE insertStartRequest
-  (machine IN VARCHAR2,
-   euid IN INTEGER,
-   egid IN INTEGER,
-   pid IN INTEGER,
-   userName IN VARCHAR2,
-   svcClassName IN VARCHAR2,
-   reqUUID IN VARCHAR2,
-   reqType IN INTEGER,
-   clientIP IN INTEGER,
-   clientPort IN INTEGER,
-   clientVersion IN INTEGER,
-   clientSecure IN INTEGER,
-   subReqId IN INTEGER,
-   diskServer IN VARCHAR2,
-   fileSystem IN VARCHAR2,
-   fileId IN INTEGER,
-   nsHost IN VARCHAR2) AS
-  svcClassId NUMBER;
-  reqId NUMBER;
-  clientId NUMBER;
-  creationTime NUMBER;
-BEGIN
-  -- do prechecks and get the service class
-  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
-  -- get unique ids for the request and the client and get current time
-  SELECT ids_seq.nextval INTO reqId FROM DUAL;
-  SELECT ids_seq.nextval INTO clientId FROM DUAL;
-  creationTime := getTime();
-  -- insert the request itself
-  CASE
-    WHEN reqType = 67 THEN -- PutStartRequest
-      INSERT INTO PutStartRequest (subReqId, diskServer, fileSystem, fileId, nsHost, flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
-      VALUES (subReqId,diskServer,fileSystem,fileId,nsHost,0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
-    WHEN reqType = 60 THEN  -- GetUpdateStartRequest
-      INSERT INTO GetUpdateStartRequest (subReqId, diskServer, fileSystem, fileId, nsHost, flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
-      VALUES (subReqId,diskServer,fileSystem,fileId,nsHost,0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
-    ELSE
-      raise_application_error(-20122, 'Unsupported request type in insertStartRequest : ' || TO_CHAR(reqType));
-  END CASE;
-  -- insert the client information
-  INSERT INTO Client (ipAddress, port, version, secure, id)
-  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert a row into newRequests table to trigger the processing of the request
-  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
-  -- send an alert to accelerate the processing of the request
-  alertSignalNoLock('wakeUpJobSvc');
 END;
 /
 
@@ -395,56 +286,6 @@ BEGIN
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
   -- send an alert to accelerate the processing of the request
   alertSignalNoLock('wakeUpQueryReqSvc');
-END;
-/
-
-/* inserts MoverClose Requests in the stager DB */ 	 
-CREATE OR REPLACE PROCEDURE insertMoverCloseRequest
-  (machine IN VARCHAR2,
-   euid IN INTEGER,
-   egid IN INTEGER,
-   pid IN INTEGER,
-   userName IN VARCHAR2,
-   svcClassName IN VARCHAR2,
-   reqUUID IN VARCHAR2,
-   reqType IN INTEGER,
-   clientIP IN INTEGER,
-   clientPort IN INTEGER,
-   clientVersion IN INTEGER,
-   clientSecure IN INTEGER,
-   subReqId IN INTEGER,
-   fileId IN INTEGER,
-   nsHost IN VARCHAR2,
-   fileSize IN INTEGER,
-   timeStamp IN INTEGER,
-   checkSumType IN VARCHAR2,
-   checkSumValue IN VARCHAR2) AS
-  svcClassId NUMBER;
-  reqId NUMBER;
-  clientId NUMBER;
-  creationTime NUMBER;
-BEGIN
-  -- do prechecks and get the service class
-  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
-  -- get unique ids for the request and the client and get current time
-  SELECT ids_seq.nextval INTO reqId FROM DUAL;
-  SELECT ids_seq.nextval INTO clientId FROM DUAL;
-  creationTime := getTime();
-  -- insert the request itself
-  CASE
-    WHEN reqType = 65 THEN -- MoverCloseRequest
-      INSERT INTO MoverCloseRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileSize, timeStamp, fileId, nsHost, csumType, csumValue, id, svcClass, client)
-      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,subReqId,fileSize,timeStamp,fileId,nsHost,checkSumType,checkSumValue,reqId,svcClassId,clientId);
-    ELSE
-      raise_application_error(-20122, 'Unsupported request type in insertMoverClose : ' || TO_CHAR(reqType));
-  END CASE;
-  -- insert the client information
-  INSERT INTO Client (ipAddress, port, version, secure, id)
-  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert a row into newRequests table to trigger the processing of the request
-  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
-  -- send an alert to accelerate the processing of the request
-  alertSignalNoLock('wakeUpJobSvc');
 END;
 /
 

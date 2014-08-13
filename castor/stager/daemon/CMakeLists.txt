@@ -40,7 +40,6 @@ set (STAGERD_SRC_FILES
   QueryRequestSvcThread.cpp
   GcSvcThread.cpp
   ErrorSvcThread.cpp
-  JobSvcThread.cpp
   LoggingThread.cpp
   NsOverride.cpp)
 add_executable (stagerd ${STAGERD_SRC_FILES})

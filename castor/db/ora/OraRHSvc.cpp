@@ -39,16 +39,10 @@
 #include "castor/bwlist/ListPrivileges.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
-#include "castor/stager/StartRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
-#include "castor/stager/GetUpdateDone.hpp"
-#include "castor/stager/GetUpdateFailed.hpp"
-#include "castor/stager/PutFailed.hpp"
-#include "castor/stager/FirstByteWritten.hpp"
 #include "castor/query/VersionQuery.hpp"
 #include "castor/stager/StageFileQueryRequest.hpp"
 #include "castor/query/DiskPoolQuery.hpp"
-#include "castor/stager/MoverCloseRequest.hpp"
 #include "castor/stager/Files2Delete.hpp"
 #include "castor/stager/StageAbortRequest.hpp"
 #include "castor/stager/StagePutDoneRequest.hpp"
@@ -76,17 +70,9 @@ static castor::SvcFactory<castor::db::ora::OraRHSvc>
 // Static constants initialization
 //------------------------------------------------------------------------------
 
-/// SQL statement for storeSimpleRequest
-const std::string castor::db::ora::OraRHSvc::s_storeSimpleRequestStatementString =
-  "BEGIN insertSimpleRequest(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15); END;";
-
 /// SQL statement for storeFileRequest
 const std::string castor::db::ora::OraRHSvc::s_storeFileRequestStatementString =
   "BEGIN insertFileRequest(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20, :21, :22); END;";
-
-/// SQL statement for storeStartRequest
-const std::string castor::db::ora::OraRHSvc::s_storeStartRequestStatementString =
-  "BEGIN insertStartRequest(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17); END;";
 
 /// SQL statement for storeVersionQueryRequest
 const std::string castor::db::ora::OraRHSvc::s_storeVersionQueryStatementString =
@@ -99,10 +85,6 @@ const std::string castor::db::ora::OraRHSvc::s_storeStageFileQueryRequestStateme
 /// SQL statement for storeDiskPoolQueryRequest
 const std::string castor::db::ora::OraRHSvc::s_storeDiskPoolQueryStatementString =
   "BEGIN insertDiskPoolQueryRequest(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14); END;";
-
-/// SQL statement for storeMoverCloseRequest
-const std::string castor::db::ora::OraRHSvc::s_storeMoverCloseRequestStatementString =
-  "BEGIN insertMoverCloseRequest(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19); END;";
 
 /// SQL statement for storeFiles2DeleteRequest
 const std::string castor::db::ora::OraRHSvc::s_storeFiles2DeleteStatementString =
@@ -141,13 +123,10 @@ const std::string castor::db::ora::OraRHSvc::s_listPrivilegesStatementString =
 //------------------------------------------------------------------------------
 castor::db::ora::OraRHSvc::OraRHSvc(const std::string name) :
   OraCommonSvc(name),
-  m_storeSimpleRequestStatement(0),
   m_storeFileRequestStatement(0),
-  m_storeStartRequestStatement(0),
   m_storeVersionQueryStatement(0),
   m_storeStageFileQueryRequestStatement(0),
   m_storeDiskPoolQueryStatement(0),
-  m_storeMoverCloseRequestStatement(0),
   m_storeFiles2DeleteStatement(0),
   m_storeListPrivilegesStatement(0),
   m_storeStageAbortRequestStatement(0),
@@ -187,13 +166,10 @@ void castor::db::ora::OraRHSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
-    if (m_storeSimpleRequestStatement) deleteStatement(m_storeSimpleRequestStatement);
     if (m_storeFileRequestStatement) deleteStatement(m_storeFileRequestStatement);
-    if (m_storeStartRequestStatement) deleteStatement(m_storeStartRequestStatement);
     if (m_storeVersionQueryStatement) deleteStatement(m_storeVersionQueryStatement);
     if (m_storeStageFileQueryRequestStatement) deleteStatement(m_storeStageFileQueryRequestStatement);
     if (m_storeDiskPoolQueryStatement) deleteStatement(m_storeDiskPoolQueryStatement);
-    if (m_storeMoverCloseRequestStatement) deleteStatement(m_storeMoverCloseRequestStatement);
     if (m_storeFiles2DeleteStatement) deleteStatement(m_storeFiles2DeleteStatement);
     if (m_storeListPrivilegesStatement) deleteStatement(m_storeListPrivilegesStatement);
     if (m_storeStageAbortRequestStatement) deleteStatement(m_storeStageAbortRequestStatement);
@@ -204,13 +180,10 @@ void castor::db::ora::OraRHSvc::reset() throw() {
     if (m_listPrivilegesStatement) deleteStatement(m_listPrivilegesStatement);
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
-  m_storeSimpleRequestStatement = 0;
   m_storeFileRequestStatement = 0;
-  m_storeStartRequestStatement = 0;
   m_storeVersionQueryStatement = 0;
   m_storeStageFileQueryRequestStatement = 0;
   m_storeDiskPoolQueryStatement = 0;
-  m_storeMoverCloseRequestStatement = 0;
   m_storeFiles2DeleteStatement = 0;
   m_storeListPrivilegesStatement = 0;
   m_storeStageAbortRequestStatement = 0;
@@ -237,38 +210,6 @@ void castor::db::ora::OraRHSvc::storeRequest
     }
     // Depending on the request, call the appropriate store method
     switch (req->type()) {
-    case castor::OBJ_GetUpdateDone:
-      {
-        // get the precise request
-        const castor::stager::GetUpdateDone* preq = dynamic_cast<const castor::stager::GetUpdateDone*>(req);
-        // and store it
-        storeSimpleRequest(req, client, preq->subReqId(), preq->fileId(), preq->nsHost());
-      }
-      break;
-    case castor::OBJ_GetUpdateFailed:
-      {
-        // get the precise request
-        const castor::stager::GetUpdateFailed* preq = dynamic_cast<const castor::stager::GetUpdateFailed*>(req);
-        // and store it
-        storeSimpleRequest(req, client, preq->subReqId(), preq->fileId(), preq->nsHost());
-      }
-      break;
-    case castor::OBJ_PutFailed:
-      {
-        // get the precise request
-        const castor::stager::PutFailed* preq = dynamic_cast<const castor::stager::PutFailed*>(req);
-        // and store it
-        storeSimpleRequest(req, client, preq->subReqId(), preq->fileId(), preq->nsHost());
-      }
-      break;
-    case castor::OBJ_FirstByteWritten:
-      {
-        // get the precise request
-        const castor::stager::FirstByteWritten* preq = dynamic_cast<const castor::stager::FirstByteWritten*>(req);
-        // and store it
-        storeSimpleRequest(req, client, preq->subReqId(), preq->fileId(), preq->nsHost());
-      }
-      break;
     case castor::OBJ_StageGetRequest:
     case castor::OBJ_StagePrepareToGetRequest:
     case castor::OBJ_StagePutRequest:
@@ -297,15 +238,6 @@ void castor::db::ora::OraRHSvc::storeRequest
         storeFileRequest(freq, client, "", freq->weight());
       }
       break;
-    case castor::OBJ_PutStartRequest:
-    case castor::OBJ_GetUpdateStartRequest:
-      {
-        // get the StartRequest
-        castor::stager::StartRequest* sreq = dynamic_cast<castor::stager::StartRequest*>(req);
-        // and store it
-        storeStartRequest(sreq, client);        
-      }
-      break;
     case castor::OBJ_VersionQuery:
       {
         // get the VersionQuery
@@ -328,14 +260,6 @@ void castor::db::ora::OraRHSvc::storeRequest
         castor::query::DiskPoolQuery* dreq = dynamic_cast<castor::query::DiskPoolQuery*>(req);
         // and store it
         storeDiskPoolQueryRequest(dreq, client);
-      }
-      break;
-    case castor::OBJ_MoverCloseRequest:
-      {
-        // get the MoverCloseRequest
-        castor::stager::MoverCloseRequest* dreq = dynamic_cast<castor::stager::MoverCloseRequest*>(req);
-        // and store it
-        storeMoverCloseRequest(dreq, client);
       }
       break;
     case castor::OBJ_Files2Delete:
@@ -430,45 +354,6 @@ void castor::db::ora::OraRHSvc::storeRequest
                       << ss.str();
       throw ex;
     }
-  }
-}
-
-//------------------------------------------------------------------------------
-// storeSimpleRequest
-//------------------------------------------------------------------------------
-void castor::db::ora::OraRHSvc::storeSimpleRequest (const castor::stager::Request* req,
-                                                    const castor::rh::Client* client,
-                                                    const u_signed64 subReqId,
-                                                    const u_signed64 fileId,
-                                                    const std::string nsHost)
-  throw (castor::exception::Exception, oracle::occi::SQLException) {
-  // Check whether the statement is ok
-  if (0 == m_storeSimpleRequestStatement) {
-    m_storeSimpleRequestStatement =
-      createStatement(s_storeSimpleRequestStatementString);
-    m_storeSimpleRequestStatement->setAutoCommit(true);
-  }
-  // execute the statement and see whether we found something
-  m_storeSimpleRequestStatement->setString(1, req->machine());
-  m_storeSimpleRequestStatement->setInt(2, req->euid());
-  m_storeSimpleRequestStatement->setInt(3, req->egid());
-  m_storeSimpleRequestStatement->setInt(4, req->pid());
-  m_storeSimpleRequestStatement->setString(5, req->userName());
-  m_storeSimpleRequestStatement->setString(6, req->svcClassName());
-  m_storeSimpleRequestStatement->setString(7, req->reqId());
-  m_storeSimpleRequestStatement->setInt(8, req->type());
-  m_storeSimpleRequestStatement->setInt(9, client->ipAddress());
-  m_storeSimpleRequestStatement->setInt(10, client->port());
-  m_storeSimpleRequestStatement->setInt(11, client->version());
-  m_storeSimpleRequestStatement->setInt(12, client->secure());
-  m_storeSimpleRequestStatement->setDouble(13, subReqId);
-  m_storeSimpleRequestStatement->setDouble(14, fileId);
-  m_storeSimpleRequestStatement->setString(15, nsHost);
-  unsigned int rc = m_storeSimpleRequestStatement->executeUpdate();
-  if (0 == rc) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Unable to store simple request";
-    throw ex;
   }
 }
 
@@ -673,44 +558,6 @@ void castor::db::ora::OraRHSvc::storeFileRequest (castor::stager::FileRequest* r
 }
 
 //------------------------------------------------------------------------------
-// storeStartRequest
-//------------------------------------------------------------------------------
-void castor::db::ora::OraRHSvc::storeStartRequest (castor::stager::StartRequest* req,
-                                                   const castor::rh::Client* client)
-  throw (castor::exception::Exception, oracle::occi::SQLException) {
-  // Check whether the statement is ok
-  if (0 == m_storeStartRequestStatement) {
-    m_storeStartRequestStatement =
-      createStatement(s_storeStartRequestStatementString);
-    m_storeStartRequestStatement->setAutoCommit(true);
-  }
-  // execute the statement and see whether we found something
-  m_storeStartRequestStatement->setString(1, req->machine());
-  m_storeStartRequestStatement->setInt(2, req->euid());
-  m_storeStartRequestStatement->setInt(3, req->egid());
-  m_storeStartRequestStatement->setInt(4, req->pid());
-  m_storeStartRequestStatement->setString(5, req->userName());
-  m_storeStartRequestStatement->setString(6, req->svcClassName());
-  m_storeStartRequestStatement->setString(7, req->reqId());
-  m_storeStartRequestStatement->setInt(8, req->type());
-  m_storeStartRequestStatement->setInt(9, client->ipAddress());
-  m_storeStartRequestStatement->setInt(10, client->port());
-  m_storeStartRequestStatement->setInt(11, client->version());
-  m_storeStartRequestStatement->setInt(12, client->secure());
-  m_storeStartRequestStatement->setDouble(13, req->subreqId());
-  m_storeStartRequestStatement->setString(14, req->diskServer());
-  m_storeStartRequestStatement->setString(15, req->fileSystem());
-  m_storeStartRequestStatement->setDouble(16, req->fileId());
-  m_storeStartRequestStatement->setString(17, req->nsHost());
-  unsigned int rc = m_storeStartRequestStatement->executeUpdate();
-  if (0 == rc) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Unable to store start request";
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
 // storeVersionQueryRequest
 //------------------------------------------------------------------------------
 void castor::db::ora::OraRHSvc::storeVersionQueryRequest (castor::query::VersionQuery* req,
@@ -883,46 +730,6 @@ void castor::db::ora::OraRHSvc::storeDiskPoolQueryRequest (castor::query::DiskPo
   if (0 == rc) {
     castor::exception::Exception ex;
     ex.getMessage() << "Unable to store DiskPoolQuery request";
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// storeMoverCloseRequest
-//------------------------------------------------------------------------------
-void castor::db::ora::OraRHSvc::storeMoverCloseRequest (castor::stager::MoverCloseRequest* req,
-                                                        const castor::rh::Client* client)
-  throw (castor::exception::Exception, oracle::occi::SQLException) {
-  // Check whether the statement is ok
-  if (0 == m_storeMoverCloseRequestStatement) {
-    m_storeMoverCloseRequestStatement =
-      createStatement(s_storeMoverCloseRequestStatementString);
-    m_storeMoverCloseRequestStatement->setAutoCommit(true);
-  }
-  // execute the statement and see whether we found something
-  m_storeMoverCloseRequestStatement->setString(1, req->machine());
-  m_storeMoverCloseRequestStatement->setInt(2, req->euid());
-  m_storeMoverCloseRequestStatement->setInt(3, req->egid());
-  m_storeMoverCloseRequestStatement->setInt(4, req->pid());
-  m_storeMoverCloseRequestStatement->setString(5, req->userName());
-  m_storeMoverCloseRequestStatement->setString(6, req->svcClassName());
-  m_storeMoverCloseRequestStatement->setString(7, req->reqId());
-  m_storeMoverCloseRequestStatement->setInt(8, req->type());
-  m_storeMoverCloseRequestStatement->setInt(9, client->ipAddress());
-  m_storeMoverCloseRequestStatement->setInt(10, client->port());
-  m_storeMoverCloseRequestStatement->setInt(11, client->version());
-  m_storeMoverCloseRequestStatement->setInt(12, client->secure());
-  m_storeMoverCloseRequestStatement->setDouble(13, req->subReqId());
-  m_storeMoverCloseRequestStatement->setDouble(14, req->fileId());
-  m_storeMoverCloseRequestStatement->setString(15, req->nsHost());
-  m_storeMoverCloseRequestStatement->setDouble(16, req->fileSize());
-  m_storeMoverCloseRequestStatement->setDouble(17, req->timeStamp());
-  m_storeMoverCloseRequestStatement->setString(18, req->csumType());
-  m_storeMoverCloseRequestStatement->setString(19, req->csumValue());
-  unsigned int rc = m_storeMoverCloseRequestStatement->executeUpdate();
-  if (0 == rc) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Unable to store MoverClose request";
     throw ex;
   }
 }

@@ -1,6 +1,5 @@
 /*************************************************************************************************/
 /* PutDoneHandler: Constructor and implementation of the PutDone request's handle */
-/* basically it is a calll to the jobService->prepareForMigration()       */
 /***********************************************************************************************/
 
 

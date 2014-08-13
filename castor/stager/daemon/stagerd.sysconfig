@@ -5,7 +5,6 @@
 #   -S num         number of threads for the Stage requests service
 #   -Q num         number of threads for the Query requests service
 #   -E num         number of threads for the Error service
-#   -j num         number of threads for the Job service
 #   -G num         number of threads for the GC service
 #   -B num         number of threads for the Bulk stage requests service
 

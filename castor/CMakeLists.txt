@@ -29,7 +29,6 @@ if (${COMPILE_SERVER} STREQUAL "1")
   add_subdirectory (gc)
   add_subdirectory (messages)
   add_subdirectory (rh)
-  add_subdirectory (job)
   add_subdirectory (scheduler)
   add_subdirectory (server)
   add_subdirectory (stager/daemon)
@@ -85,7 +84,6 @@ set (CLIENT_LIB_SRC_FILES
   io/StreamBaseCnv.cpp
   io/StreamBaseAddressCnv.cpp
   io/StreamClientCnv.cpp
-  io/StreamStartResponseCnv.cpp
   io/StreamCnvSvc.cpp
   io/StreamDiskCopyForRecallCnv.cpp
   io/StreamDiskCopyInfoCnv.cpp
@@ -96,18 +94,11 @@ set (CLIENT_LIB_SRC_FILES
   io/StreamNsFilesDeletedCnv.cpp
   io/StreamNsFilesDeletedResponseCnv.cpp
   io/StreamFilesDeletionFailedCnv.cpp
-  io/StreamGetUpdateStartRequestCnv.cpp
-  io/StreamGetUpdateStartResponseCnv.cpp
   io/StreamGCFilesResponseCnv.cpp
   io/StreamGCLocalFileCnv.cpp
   io/StreamGCFileCnv.cpp
-  io/StreamGetUpdateDoneCnv.cpp
-  io/StreamGetUpdateFailedCnv.cpp
   io/StreamMessageAckCnv.cpp
-  io/StreamMoverCloseRequestCnv.cpp
   io/StreamPtrCnv.cpp
-  io/StreamPutFailedCnv.cpp
-  io/StreamPutStartRequestCnv.cpp
   io/StreamQueryParameterCnv.cpp
   io/StreamBasicResponseCnv.cpp
   io/StreamSetFileGCWeightCnv.cpp
@@ -125,7 +116,6 @@ set (CLIENT_LIB_SRC_FILES
   io/StreamStgFilesDeletedResponseCnv.cpp
   io/StreamAbortResponseCnv.cpp
   io/StreamFileQryResponseCnv.cpp
-  io/StreamFirstByteWrittenCnv.cpp
   io/StreamIOResponseCnv.cpp
   io/StreamDiskPoolQueryResponseCnv.cpp
   io/StreamFileSystemDescriptionCnv.cpp
@@ -157,10 +147,8 @@ set (CLIENT_LIB_SRC_FILES
   replier/ClientConnection.cpp
   replier/RequestReplier.cpp
   rh/Client.cpp
-  rh/StartResponse.cpp
   rh/EndResponse.cpp
   rh/FileResponse.cpp
-  rh/GetUpdateStartResponse.cpp
   rh/GCFilesResponse.cpp
   rh/Response.cpp
   rh/StringResponse.cpp
@@ -186,23 +174,13 @@ set (CLIENT_LIB_SRC_FILES
   stager/StgFilesDeleted.cpp
   stager/StgFilesDeletedResponse.cpp
   stager/FilesDeletionFailed.cpp
-  stager/FirstByteWritten.cpp
-  stager/GetUpdateDone.cpp
-  stager/GetUpdateFailed.cpp
-  stager/GetUpdateStartRequest.cpp
   stager/GCLocalFile.cpp
   stager/GCFile.cpp
   stager/GCFileList.cpp
-  stager/MoverCloseRequest.cpp
-  stager/PutStartRequest.cpp
   stager/QryRequest.cpp
-  stager/PutFailed.cpp
   stager/Request.cpp
   stager/RequestQueryType.cpp
   stager/RemoteGCSvc.cpp
-  stager/RemoteJobSvc.cpp
-  stager/IJobSvcCInt.cpp
-  stager/StartRequest.cpp
   stager/SvcClass.cpp
   stager/QueryParameter.cpp
   stager/SetFileGCWeight.cpp
@@ -350,11 +328,6 @@ if (${COMPILE_SERVER} STREQUAL "1")
   install(FILES  io/AbstractSocket.hpp
     io/AbstractTCPSocket.hpp
     DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/io
-    PERMISSIONS ${CASTOR_HEADER_PERMS})
-  
-  install(FILES
-    stager/IJobSvc.hpp
-    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/stager
     PERMISSIONS ${CASTOR_HEADER_PERMS})
   
   # Required by castor-srmv2

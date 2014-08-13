@@ -77,11 +77,18 @@ DELETE FROM WhiteList WHERE reqType IN (38, 44, 147);
 DELETE FROM BlackList WHERE reqType IN (38, 44, 147);
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (36, 37);
 
-/* drop updates */
+/* drop obsoleted entities */
 DROP TABLE StagePrepareToUpdateRequest;
 DROP TABLE StageUpdateRequest;
 DROP TABLE FirstByteWritten;
-DROP PROCEDURE FirstByteWrittenProc;
+DROP TABLE GetUpdateStartRequest;
+DROP TABLE GetUpdateDone;
+DROP TABLE GetUpdateFailed;
+DROP TABLE PutStartRequest;
+DROP TABLE MoverCloseRequest;
+DROP TABLE PutFailed;
+
+DROP PROCEDURE firstByteWrittenProc;
 DROP PROCEDURE handleProtoNoUpd;
 DROP PROCEDURE getBestDiskCopyToRead;
 DROP PROCEDURE getUpdateDoneProc;
@@ -133,28 +140,7 @@ DROP PROCEDURE deleteDiskCopiesInFSs;
 /****************************/
 
 
-
 /* Database jobs */
-BEGIN
-  -- Drop all monitoring jobs
-  FOR j IN (SELECT job_name FROM user_scheduler_jobs
-             WHERE job_name LIKE ('MONITORINGJOB_%'))
-  LOOP
-    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
-  END LOOP;
-
-  -- Recreate monitoring jobs
-  DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'monitoringJob_1min',
-      JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN CastorMon.waitTapeMigrationStats(); CastorMon.waitTapeRecallStats(); END;'', ''stagerd''); END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
-      START_DATE      => SYSDATE + 1/3600,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
-      ENABLED         => TRUE,
-      COMMENTS        => 'Generation of monitoring information about migrations and recalls backlog');
-END;
-/
 
 
 /* Recompile all invalid procedures, triggers and functions */

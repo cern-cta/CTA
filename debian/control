@@ -51,13 +51,6 @@ Description: castor (Cern Advanced STORage system)
   Packaging of the SQL sources for automated tests in continuous integration.
   NOT FOR PRODUCTION.
 
-Package: castor-job
-Architecture: any
-Depends: logrotate, castor-lib = %{version}-%{release}
-Build-Depends: libattr-devel
-Description: castor (Cern Advanced STORage system)
- The job giving user access to data on the worker nodes
-
 Package: castor-lib
 Architecture: any
 Build-Depends: curl-devel, python, krb5-devel, openssl-devel, binutils-devel, libuuid-devel
@@ -82,7 +75,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-diskserver-manager
 Architecture: any
-Depends: python, logrotate, python-daemon, python-rpyc >= 3.3, python-crypto >= 2.6, castor-job = %{version}-%{release}, castor-lib = %{version}-%{release}, castor-lib-server = %{version}-%{release}
+Depends: python, logrotate, python-daemon, python-rpyc >= 3.3, python-crypto >= 2.6, castor-lib = %{version}-%{release}, castor-lib-server = %{version}-%{release}
 Conflicts: castor-dbtools, castor-transfer-manager
 Description: castor (Cern Advanced STORage system)
  Disk server manager of CASTOR

@@ -48,7 +48,6 @@
 #include "castor/stager/daemon/BulkStageReqSvcThread.hpp"
 #include "castor/stager/daemon/QueryRequestSvcThread.hpp"
 #include "castor/stager/daemon/ErrorSvcThread.hpp"
-#include "castor/stager/daemon/JobSvcThread.hpp"
 #include "castor/stager/daemon/GcSvcThread.hpp"
 #include "castor/stager/daemon/LoggingThread.hpp"
 #include "castor/stager/daemon/NsOverride.hpp"
@@ -102,11 +101,6 @@ int main(int argc, char* argv[]){
 
     stagerDaemon.addThreadPool
       (new castor::server::DbAlertedThreadPool
-       ("jobSvcThread",
-	new castor::stager::daemon::JobSvcThread()));
-
-    stagerDaemon.addThreadPool
-      (new castor::server::DbAlertedThreadPool
        ("GcSvcThread",
 	new castor::stager::daemon::GcSvcThread()));
 
@@ -121,7 +115,6 @@ int main(int argc, char* argv[]){
     stagerDaemon.getThreadPool('B')->setNbThreads(3);
     stagerDaemon.getThreadPool('Q')->setNbThreads(6);
     stagerDaemon.getThreadPool('E')->setNbThreads(2);
-    stagerDaemon.getThreadPool('j')->setNbThreads(6);
     stagerDaemon.getThreadPool('G')->setNbThreads(4);
     stagerDaemon.getThreadPool('L')->setNbThreads(1);
 
@@ -196,7 +189,6 @@ castor::stager::daemon::StagerDaemon::StagerDaemon(std::ostream &stdOut,
     /***********************/
     /* BulkStageReqSvcThread  */
     { STAGER_BLKSTGSVC_ABORT, "Abort processed"},
-    { STAGER_BLKSTGSVC_REPACK, "Repack initiated"},
     { STAGER_BLKSTGSVC_UNKREQ, "Unknown request processed"},
 
     /*  SYSTEM LEVEL */
@@ -221,6 +213,8 @@ castor::stager::daemon::StagerDaemon::StagerDaemon(std::ostream &stdOut,
     { STAGER_CASTORFILE_EXCEPTION, "Impossible to get the CastorFile"},
     { STAGER_INVALID_TYPE, "Request type not valid for this thread pool"},
     { STAGER_QRYSVC_DFAILED, "Failed to process DiskPoolQuery"},
+    { STAGER_JOBREQSVC_EXCEPT, "JobRequestSvc unexpected exception caught"},
+    { STAGER_JOBREQSVC_EXCEPT2, "JobRequestSvc: exception caught while handling request"},
 
     /*******************/
     /* QueryRequestSvc */
@@ -262,25 +256,6 @@ castor::stager::daemon::StagerDaemon::StagerDaemon(std::ostream &stdOut,
     { STAGER_ERRSVC_NOREQ,   "No request associated with subrequest ! Cannot answer !"},
     { STAGER_ERRSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
 
-    /**********/
-    /* JobSvc */
-    { STAGER_JOBSVC_GETSVC,  "Could not get JobSvc"},
-    { STAGER_JOBSVC_EXCEPT,  "Unexpected exception caught"},
-    { STAGER_JOBSVC_EXCEPT2, "Exception caught while handling request"},
-    { STAGER_JOBSVC_NOSREQ,  "Could not find subrequest associated to Request"},
-    { STAGER_JOBSVC_BADSRT,  "Expected SubRequest in Request but found another type"},
-    { STAGER_JOBSVC_GETUPDS, "Invoking getUpdateStart"},
-    { STAGER_JOBSVC_PUTS,    "Invoking putStart"},
-    { STAGER_JOBSVC_PFMIG,   "Invoking prepareForMigration"},
-    { STAGER_JOBSVC_GETUPDO, "Invoking getUpdateDone"},
-    { STAGER_JOBSVC_GETUPFA, "Invoking getUpdateFailed"},
-    { STAGER_JOBSVC_PUTFAIL, "Invoking putFailed"},
-    { STAGER_JOBSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
-    { STAGER_JOBSVC_UNKREQ,  "Unknown Request type"},
-    { STAGER_JOBSVC_1STBWR,  "Invoking firstByteWritten"},
-    { STAGER_JOBSVC_DELWWR,  "File was removed by another user while being modified"},
-    { STAGER_JOBSVC_CHKMISMATCH, "Preset checksum mismatch detected, invoking putFailed"},
-
     /**************/
     /* LoggingSvc */
     { STAGER_LOGGING_DONE,   "Dump of the DB logs completed"},
@@ -308,7 +283,6 @@ void castor::stager::daemon::StagerDaemon::help(std::string programName)
     "\t--Sthreads    or -S {integer >= 0}  \tNumber of threads for the Stage requests service\n"
     "\t--Qthreads    or -Q {integer >= 0}  \tNumber of threads for the Query requests service\n"
     "\t--Ethreads    or -E {integer >= 0}  \tNumber of threads for the Error service\n"
-    "\t--jthreads    or -j {integer >= 0}  \tNumber of threads for the Job service\n"
     "\t--Gthreads    or -G {integer >= 0}  \tNumber of threads for the GC service\n"
     "\n"
     "Comments to: Castor.Support@cern.ch\n";

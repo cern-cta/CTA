@@ -282,41 +282,21 @@ CREATE INDEX I_SvcClass_GcPolicy ON SvcClass (gcPolicy);
 
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
-CREATE TABLE newRequests (type NUMBER(38) CONSTRAINT NN_NewRequests_Type NOT NULL, id NUMBER(38) CONSTRAINT NN_NewRequests_Id NOT NULL, creation DATE CONSTRAINT NN_NewRequests_Creation NOT NULL, CONSTRAINT PK_NewRequests_Type_Id PRIMARY KEY (type, id))
+CREATE TABLE NewRequests (type NUMBER(38) CONSTRAINT NN_NewRequests_Type NOT NULL, id NUMBER(38) CONSTRAINT NN_NewRequests_Id NOT NULL, creation DATE CONSTRAINT NN_NewRequests_Creation NOT NULL, CONSTRAINT PK_NewRequests_Type_Id PRIMARY KEY (type, id))
 ORGANIZATION INDEX
 COMPRESS
 PARTITION BY LIST (type)
  (
-  PARTITION type_16 VALUES (16)  TABLESPACE stager_data,
-  PARTITION type_21 VALUES (21)  TABLESPACE stager_data,
   PARTITION type_33 VALUES (33)  TABLESPACE stager_data,
-  PARTITION type_34 VALUES (34)  TABLESPACE stager_data,
   PARTITION type_35 VALUES (35)  TABLESPACE stager_data,
   PARTITION type_36 VALUES (36)  TABLESPACE stager_data,
   PARTITION type_37 VALUES (37)  TABLESPACE stager_data,
   PARTITION type_39 VALUES (39)  TABLESPACE stager_data,
   PARTITION type_40 VALUES (40)  TABLESPACE stager_data,
-  PARTITION type_41 VALUES (41)  TABLESPACE stager_data,
   PARTITION type_42 VALUES (42)  TABLESPACE stager_data,
-  PARTITION type_43 VALUES (43)  TABLESPACE stager_data,
-  PARTITION type_45 VALUES (45)  TABLESPACE stager_data,
   PARTITION type_46 VALUES (46)  TABLESPACE stager_data,
-  PARTITION type_48 VALUES (48)  TABLESPACE stager_data,
-  PARTITION type_49 VALUES (49)  TABLESPACE stager_data,
   PARTITION type_50 VALUES (50)  TABLESPACE stager_data,
-  PARTITION type_51 VALUES (51)  TABLESPACE stager_data,
-  PARTITION type_60 VALUES (60)  TABLESPACE stager_data,
-  PARTITION type_64 VALUES (64)  TABLESPACE stager_data,
-  PARTITION type_65 VALUES (65)  TABLESPACE stager_data,
-  PARTITION type_66 VALUES (66)  TABLESPACE stager_data,
-  PARTITION type_67 VALUES (67)  TABLESPACE stager_data,
-  PARTITION type_78 VALUES (78)  TABLESPACE stager_data,
-  PARTITION type_79 VALUES (79)  TABLESPACE stager_data,
-  PARTITION type_80 VALUES (80)  TABLESPACE stager_data,
-  PARTITION type_84 VALUES (84)  TABLESPACE stager_data,
-  PARTITION type_90 VALUES (90)  TABLESPACE stager_data,
   PARTITION type_142 VALUES (142)  TABLESPACE stager_data,
-  PARTITION type_144 VALUES (144)  TABLESPACE stager_data,
   PARTITION type_149 VALUES (149)  TABLESPACE stager_data,
   PARTITION notlisted VALUES (default) TABLESPACE stager_data
  );
@@ -1111,7 +1091,6 @@ CREATE TABLE BlackList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqTy
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (35, 36, 37, 40);
 UPDATE Type2Obj SET svcHandler = 'StageReqSvc' WHERE type IN (39, 42, 95);
 UPDATE Type2Obj SET svcHandler = 'QueryReqSvc' WHERE type IN (33, 34, 41, 103, 131, 152, 155, 195);
-UPDATE Type2Obj SET svcHandler = 'JobSvc' WHERE type IN (60, 64, 65, 67, 78, 79, 80, 93, 144);
 UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type IN (73, 74, 83, 142, 149);
 UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type IN (50, 119);
 

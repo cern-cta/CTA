@@ -32,7 +32,6 @@ set (COMMON_ORA_LIB_SRC_FILES
   OraCommonSvc.cpp
   OraRHSvc.cpp
   OraStagerSvc.cpp
-  OraJobSvc.cpp
   OraGCSvc.cpp
   OraQuerySvc.cpp
   SmartOcciResultSet.cpp

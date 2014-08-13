@@ -47,9 +47,7 @@ namespace castor {
   namespace stager {
     class Request;
     class FileRequest;
-    class StartRequest;
     class QueryParameter;
-    class MoverCloseRequest;
     class Files2Delete;
     class StageAbortRequest;
     class GCFileList;
@@ -105,27 +103,7 @@ namespace castor {
          * @param req the user request object
          * @exception throws Exception in case of errors, in particular in case of permission denial
          */
-        virtual void storeRequest(castor::stager::Request* req)
-          ;
-
-        /**
-         * stores a simple request into the stager DB.
-         * This includes FirstByteWritten, GetUpdateFailed, GetUpdateDone and PutFailed requests
-         * @param userTag the user tag associated to the request
-         * @param request the request object
-         * @param client the client object associated to the request
-         * @param subReqId the internal id of the subrequest concerned by this request
-         * @param fileId the fileid of the file concerned by this request
-         * @param nsHost the nameserver host where the file concerned by this request is located
-         * @exception throws Exception in case of errors, in particular in case of permission denial
-         * and in case the request is not supported
-         */
-        virtual void storeSimpleRequest(const castor::stager::Request *req,
-                                        const castor::rh::Client *client,
-                                        const u_signed64 subReqId,
-                                        const u_signed64 fileId,
-                                        const std::string nsHost)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
+        virtual void storeRequest(castor::stager::Request* req);
 
         /**
          * stores a file request into the stager DB.
@@ -144,17 +122,6 @@ namespace castor {
                                       const castor::rh::Client *client,
                                       const std::string freeStrParam = "",
                                       const float freeNumParam = 0)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
-         * stores a start request into the stager DB.
-         * This includes PutStartRequest and GetUpdateStartRequest requests.
-         * @param request the StartRequest object
-         * @param client the client object associated to the request
-         * @exception throws Exception in case of errors, in particular in case of permission denial
-         */
-        virtual void storeStartRequest(castor::stager::StartRequest* req,
-                                       const castor::rh::Client *client)
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
@@ -185,16 +152,6 @@ namespace castor {
          */
         virtual void storeDiskPoolQueryRequest(castor::query::DiskPoolQuery* req,
                                                const castor::rh::Client *client)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
-         * stores a MoverCloseRequest request into the stager DB.
-         * @param request the MoverCloseRequest object
-         * @param client the client object associated to the request
-         * @exception throws Exception in case of errors, in particular in case of permission denial
-         */
-        virtual void storeMoverCloseRequest(castor::stager::MoverCloseRequest* req,
-                                            const castor::rh::Client *client)
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
@@ -295,23 +252,11 @@ namespace castor {
 
       private:
 
-        /// SQL statement for function storeSimpleRequest
-        static const std::string s_storeSimpleRequestStatementString;
-
-        /// SQL statement object for function storeSimpleRequest
-        oracle::occi::Statement *m_storeSimpleRequestStatement;
-
         /// SQL statement for function storeFileRequest
         static const std::string s_storeFileRequestStatementString;
 
         /// SQL statement object for function storeFileRequest
         oracle::occi::Statement *m_storeFileRequestStatement;
-
-        /// SQL statement for function storeStartRequest
-        static const std::string s_storeStartRequestStatementString;
-
-        /// SQL statement object for function storeStartRequest
-        oracle::occi::Statement *m_storeStartRequestStatement;
 
         /// SQL statement for function storeVersionQueryRequest
         static const std::string s_storeVersionQueryStatementString;
@@ -330,12 +275,6 @@ namespace castor {
 
         /// SQL statement object for function storeDiskPoolQueryRequest
         oracle::occi::Statement *m_storeDiskPoolQueryStatement;
-
-        /// SQL statement for function storeMoverCloseRequest
-        static const std::string s_storeMoverCloseRequestStatementString;
-
-        /// SQL statement object for function storeMoverCloseRequest
-        oracle::occi::Statement *m_storeMoverCloseRequestStatement;
 
         /// SQL statement for function storeFiles2DeleteRequest
         static const std::string s_storeFiles2DeleteStatementString;

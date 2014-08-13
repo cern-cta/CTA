@@ -32,6 +32,7 @@
 #include "castor/dlf/Param.hpp"
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 #include <sys/time.h>
 
 //-----------------------------------------------------------------------------
@@ -54,7 +55,7 @@ castor::IObject* castor::stager::daemon::JobRequestSvcThread::select() throw() {
        castor::dlf::Param("ErrorCode", e.code()),
        castor::dlf::Param("Message", e.getMessageValue()),
        castor::dlf::Param("BackTrace", e.backtrace())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBREQSVC_EXCEPT, 4, params);
     return 0;
   }
 }
@@ -184,7 +185,7 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* reque
          castor::dlf::Param("ErrorCode", ex2.code()),
          castor::dlf::Param("ErrorMessage", ex2.getMessageValue()),
          castor::dlf::Param("BackTrace", ex2.backtrace())};
-      castor::dlf::dlf_writep(sr->requestUuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+      castor::dlf::dlf_writep(sr->requestUuid, DLF_LVL_ERROR, STAGER_JOBREQSVC_EXCEPT,
                               4, params, &cnsFileid);
     }
   }
@@ -251,7 +252,7 @@ int castor::stager::daemon::JobRequestSvcThread::handleGetOrPut(const JobRequest
       castor::dlf::Param("SvcClass", sr->svcClassName),
       castor::dlf::Param("Error", e.what())
     };
-    castor::dlf::dlf_writep(sr->requestUuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT2,
+    castor::dlf::dlf_writep(sr->requestUuid, DLF_LVL_ERROR, STAGER_JOBREQSVC_EXCEPT2,
                             7, params, &cnsFileid);
     throw ex;
   }

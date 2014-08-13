@@ -34,7 +34,6 @@
 #include "castor/Services.hpp"
 #include "castor/IService.hpp"
 #include "castor/System.hpp"
-#include "castor/stager/IJobSvc.hpp"
 #include "castor/stager/StagePrepareToGetRequest.hpp"
 #include "castor/stager/StagePrepareToPutRequest.hpp"
 #include "castor/stager/StagePutRequest.hpp"

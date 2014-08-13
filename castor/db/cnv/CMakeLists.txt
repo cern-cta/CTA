@@ -39,15 +39,8 @@ set (CNV_LIB_SRC_FILES
   DbFilesDeletedCnv.cpp
   DbNsFilesDeletedCnv.cpp
   DbFilesDeletionFailedCnv.cpp
-  DbFirstByteWrittenCnv.cpp
   DbGCFileCnv.cpp
   DbGCLocalFileCnv.cpp
-  DbGetUpdateDoneCnv.cpp
-  DbGetUpdateFailedCnv.cpp
-  DbGetUpdateStartRequestCnv.cpp
-  DbMoverCloseRequestCnv.cpp
-  DbPutFailedCnv.cpp
-  DbPutStartRequestCnv.cpp
   DbQueryParameterCnv.cpp
   DbRequestTypeCnv.cpp
   DbSetFileGCWeightCnv.cpp

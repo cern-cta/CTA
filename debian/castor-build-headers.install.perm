@@ -73,7 +73,6 @@
 %attr(0644,root,root) usr/include/castor/castor/stager/DiskCopyStatusCodes.hpp
 %attr(0644,root,root) usr/include/castor/castor/stager/FileRequest.hpp
 %attr(0644,root,root) usr/include/castor/castor/stager/ICommonSvc.hpp
-%attr(0644,root,root) usr/include/castor/castor/stager/IJobSvc.hpp
 %attr(0644,root,root) usr/include/castor/castor/stager/NsFileId.hpp
 %attr(0644,root,root) usr/include/castor/castor/stager/QryRequest.hpp
 %attr(0644,root,root) usr/include/castor/castor/stager/QueryParameter.hpp

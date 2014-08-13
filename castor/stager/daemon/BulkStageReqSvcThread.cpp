@@ -145,14 +145,14 @@ void castor::stager::daemon::BulkStageReqSvcThread::process
           {castor::dlf::Param("Function", "BulkStageReqSvcThread::process"),
            castor::dlf::Param("Message", e.getMessage().str()),
            castor::dlf::Param("Code", e.code())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT,
                                 it->fileId(), it->nsHost(), 3, params);
       }
     } else {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Function", "BulkStageReqSvcThread::process")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT,
                               0, "", 1, params);
     }
   }

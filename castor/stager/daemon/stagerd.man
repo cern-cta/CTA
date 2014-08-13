@@ -37,10 +37,6 @@ stagerd \- start the CASTOR Stager daemon
 .BI <nb\ threads>
 ]
 [
-.BI -j
-.BI <nb\ threads>
-]
-[
 .BI -G
 .BI <nb\ threads>
 ]
@@ -86,9 +82,6 @@ specifies the number of threads for user query requests. Default is 6.
 .TP
 .BI \-E,\ \-\-Ethreads\ <nb\ threads>
 specifies the number of threads for handling user errors. Default is 2.
-.TP
-.BI \-j,\ \-\-jthreads\ <nb\ threads>
-specifies the number of threads for internal job oriented requests. Default is 6
 .TP
 .BI \-G,\ \-\-Gthreads\ <nb\ threads>
 specifies the number of threads for internal garbage collection and synchronization. Default is 4.
