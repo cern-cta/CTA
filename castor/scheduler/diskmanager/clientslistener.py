@@ -42,8 +42,7 @@ class MoverSocket(object):
 class ClientsListenerThread(threading.Thread):
   '''the clients listener thread.
   This thread is responsible for listening to clients callbacks, so that movers
-  can be executed in inetd mode only when the client has already connected. In case of
-  timeout, a call to transferEnded is executed to fail the transfer.
+  can be executed in inetd mode only when the client has already connected.
   During the listening time, the transfer slot is already reserved (cf. activitycontrol),
   so that when the client arrives, the transfer starts immediately.
   '''

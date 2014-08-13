@@ -39,7 +39,8 @@ from transfer import cmdLineToTransfer, cmdLineToTransferId, TransferType, TapeT
 from reporter import StreamCount
 
 class RunningTransfersSet(object):
-  '''handles a list of running transfers and is able to poll them regularly and list the ones that ended'''
+  '''handles a list of running transfers and is able to poll them regularly and list the ones that ended.
+  Moreover, in case of a timeout transferEnded is called to fail the transfer.'''
 
   def __init__(self, fake=False):
     '''constructor'''
