@@ -214,9 +214,11 @@ class RunningTransfersSet(object):
   def setProcess(self, transferid, process):
     '''set the process object to the existing running transfer'''
     self.lock.acquire()
-    t = self.get(transferid)
-    t.process = process
-    self.lock.release()
+    try:
+      t = self.get(transferid)
+      t.process = process
+    finally:
+      self.lock.release()
 
   def remove(self, transferIds):
     '''removes a transfer from the list, and kills corresponding process, when possible'''
