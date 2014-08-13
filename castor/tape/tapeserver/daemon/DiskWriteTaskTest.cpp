@@ -38,7 +38,7 @@ namespace unitTests{
   using namespace castor::tape::tapeserver::daemon;
   using namespace castor::tape::tapeserver::client;
   struct MockRecallReportPacker : public RecallReportPacker {
-    MOCK_METHOD2(reportCompletedJob,void(const FileStruct&,unsigned long));
+    MOCK_METHOD3(reportCompletedJob,void(const FileStruct&,u_int32_t,u_int64_t));
     MOCK_METHOD3(reportFailedJob, void(const FileStruct& ,const std::string&,int));
     MOCK_METHOD0(reportEndOfSession, void());
     MOCK_METHOD2(reportEndOfSessionWithErrors, void(const std::string,int));

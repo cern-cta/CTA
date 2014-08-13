@@ -39,8 +39,8 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerNominal) {
   rrp.startThreads();
   
   tapegateway::FileToRecallStruct recalledFiled;
-  rrp.reportCompletedJob(recalledFiled,0);
-  rrp.reportCompletedJob(recalledFiled,0);
+  rrp.reportCompletedJob(recalledFiled,0,0);
+  rrp.reportCompletedJob(recalledFiled,0,0);
   rrp.reportEndOfSession();
   rrp.waitThread();
   
@@ -61,9 +61,9 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerCumulated) {
   rrp.startThreads();
   
   tapegateway::FileToRecallStruct recalledFiled;
-  rrp.reportCompletedJob(recalledFiled,0);
-  rrp.reportCompletedJob(recalledFiled,0);
-  rrp.reportCompletedJob(recalledFiled,0);
+  rrp.reportCompletedJob(recalledFiled,0,0);
+  rrp.reportCompletedJob(recalledFiled,0,0);
+  rrp.reportCompletedJob(recalledFiled,0,0);
   rrp.reportEndOfSession();
   rrp.waitThread();
 
@@ -87,9 +87,9 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerBadBadEnd) {
   rrp.startThreads();
 
   tapegateway::FileToRecallStruct recalledFiled;
-  rrp.reportCompletedJob(recalledFiled,0);
-  rrp.reportCompletedJob(recalledFiled,0);
-  rrp.reportCompletedJob(recalledFiled,0);
+  rrp.reportCompletedJob(recalledFiled,0,0);
+  rrp.reportCompletedJob(recalledFiled,0,0);
+  rrp.reportCompletedJob(recalledFiled,0,0);
   rrp.reportFailedJob(recalledFiled,error_msg,error_code);
   rrp.reportEndOfSessionWithErrors(error_msg,error_code);
   rrp.waitThread();
@@ -117,9 +117,9 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerBadGoodEnd) {
   
   
   tapegateway::FileToRecallStruct recalledFiled;
-  rrp.reportCompletedJob(recalledFiled,0);
-  rrp.reportCompletedJob(recalledFiled,0);
-  rrp.reportCompletedJob(recalledFiled,0);
+  rrp.reportCompletedJob(recalledFiled,0,0);
+  rrp.reportCompletedJob(recalledFiled,0,0);
+  rrp.reportCompletedJob(recalledFiled,0,0);
   rrp.reportFailedJob(recalledFiled,error_msg,-1);
   rrp.reportEndOfSession();
   rrp.waitThread();
@@ -146,8 +146,8 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerGoodBadEnd) {
   rrp.startThreads();
   
   tapegateway::FileToRecallStruct recalledFiled;
-  rrp.reportCompletedJob(recalledFiled,0);
-  rrp.reportCompletedJob(recalledFiled,0);
+  rrp.reportCompletedJob(recalledFiled,0,0);
+  rrp.reportCompletedJob(recalledFiled,0,0);
   rrp.reportEndOfSessionWithErrors(error_msg,error_code);
   rrp.waitThread();
 
@@ -174,8 +174,8 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerFaillure) {
   rrp.startThreads();
   
   tapegateway::FileToRecallStruct recalledFiled;
-  rrp.reportCompletedJob(recalledFiled,0);
-  rrp.reportCompletedJob(recalledFiled,0);
+  rrp.reportCompletedJob(recalledFiled,0,0);
+  rrp.reportCompletedJob(recalledFiled,0,0);
   rrp.reportEndOfSessionWithErrors(error_msg,error_code);
   rrp.waitThread();
 

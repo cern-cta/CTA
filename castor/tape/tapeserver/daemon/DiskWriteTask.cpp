@@ -88,7 +88,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
         break;
       }
     } //end of while(1)
-    reporter.reportCompletedJob(*m_recallingFile,checksum);
+    reporter.reportCompletedJob(*m_recallingFile,checksum,m_stats.dataVolume);
     m_stats.waitReportingTime+=localTime.secs(utils::Timer::resetCounter);
     logWithStat(LOG_DEBUG, "File successfully transfered to disk",lc);
     

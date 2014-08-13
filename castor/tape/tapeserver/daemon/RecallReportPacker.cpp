@@ -59,8 +59,9 @@ RecallReportPacker::~RecallReportPacker(){
 //------------------------------------------------------------------------------
 //reportCompletedJob
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportCompletedJob(const FileStruct& recalledFile,unsigned long checksum){
-  std::auto_ptr<Report> rep(new ReportSuccessful(recalledFile,checksum));
+void RecallReportPacker::reportCompletedJob(const FileStruct& recalledFile,
+  u_int32_t checksum, u_int64_t size){
+  std::auto_ptr<Report> rep(new ReportSuccessful(recalledFile,checksum,size));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
@@ -106,6 +107,8 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
   successRecall->setId(m_recalledFile.id());
   successRecall->setNshost(m_recalledFile.nshost());
   successRecall->setFileid(m_recalledFile.fileid());
+  successRecall->setPath(m_recalledFile.path());
+  successRecall->setFileSize(m_size);
 
   //WARNING : ad hoc name of checksum algorithm
   successRecall->setChecksumName("adler32");

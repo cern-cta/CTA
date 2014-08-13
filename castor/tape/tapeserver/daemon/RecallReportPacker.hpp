@@ -54,7 +54,7 @@ public:
    * @param checksum the checksum the DWT has computed for the file 
    */
   virtual void reportCompletedJob(const FileStruct& recalledFile,
-  unsigned long checksum);
+  u_int32_t checksum, u_int64_t size);
   
   /**
    * Create into the MigrationReportPacker a report for the failed migration
@@ -101,10 +101,12 @@ private:
   };
   class ReportSuccessful :  public Report {
     const FileStruct m_recalledFile;
-    unsigned long m_checksum;
+    u_int32_t m_checksum;
+    u_int64_t m_size;
   public:
-    ReportSuccessful(const FileStruct& file,unsigned long checksum): 
-    Report(false),m_recalledFile(file),m_checksum(checksum){}
+    ReportSuccessful(const FileStruct& file,u_int32_t checksum,
+      u_int64_t size): 
+    Report(false),m_recalledFile(file),m_checksum(checksum),m_size(size){}
     virtual void execute(RecallReportPacker& _this);
   };
   class ReportError : public Report {
