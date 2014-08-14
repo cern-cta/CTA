@@ -475,8 +475,10 @@ int castor::tape::tapeserver::daemon::ProcessForker::runCleanerSession(
     params.push_back(log::Param("rmcPort", rqst.rmcport()));
     m_log(LOG_INFO, "Cleaner-session child-process started", params);
 
-    const int netTimeout = 10; // Timeout in seconds
-    legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), netTimeout);
+    // The network timeout of rmc communications should be several minutes due
+    // to the time it takes to mount and unmount tapes
+    const int rmcNetTimeout = 600; // Timeout in seconds
+    legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), rmcNetTimeout);
     castor::tape::System::realWrapper sWrapper;
     CleanerSession cleanerSession(
       rmc,
@@ -518,15 +520,19 @@ int castor::tape::tapeserver::daemon::ProcessForker::runDataTransferSession(
   const DataTransferSession::CastorConf dataTransferConfig =
     getDataTransferConfig(rqst);
 
-  const int netTimeout = 10; // Timeout in seconds
-  legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), netTimeout);
+  // The network timeout of rmc communications should be several minutes due
+  // to the time it takes to mount and unmount tapes
+  const int rmcNetTimeout = 600; // Timeout in seconds
+  legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), rmcNetTimeout);
 
   const int sizeOfIOThreadPoolForZMQ = 1;
   messages::SmartZmqContext
     zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
 
+  const int tapeserverNetTimeout = 10; // Timeout in seconds
   messages::TapeserverProxyZmq tapeserver(m_log,
-    TAPE_SERVER_INTERNAL_LISTENING_PORT, netTimeout, zmqContext.get());
+    TAPE_SERVER_INTERNAL_LISTENING_PORT, tapeserverNetTimeout,
+    zmqContext.get());
 
   castor::tape::System::realWrapper sysWrapper;
 
@@ -836,8 +842,10 @@ int castor::tape::tapeserver::daemon::ProcessForker::runLabelSession(
     params.push_back(log::Param("rmcPort", rqst.rmcport()));
     m_log(LOG_INFO, "Label-session child-process started", params);
 
-    const int netTimeout = 10; // Timeout in seconds
-    legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), netTimeout);
+    // The network timeout of rmc communications should be several minutes due
+    // to the time it takes to mount and unmount tapes
+    const int rmcNetTimeout = 600; // Timeout in seconds
+    legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), rmcNetTimeout);
     legacymsg::NsProxy_TapeAlwaysEmpty ns;
     castor::tape::System::realWrapper sWrapper;
     LabelSession labelsession(
