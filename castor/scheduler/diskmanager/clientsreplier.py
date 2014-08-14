@@ -124,7 +124,7 @@ class ClientsReplierThread(threading.Thread):
         dlf.writenotice(msgs.CLIENTSREPLIEREXCEPTION, error=str(e), subreqId=qTransfer.transfer.transferId,
                         clientHost=clientHost, clientPort=clientPort)
         # now we should fail the outstanding transfer, as the client will never connect,
-        # but we rely on the clientsListener thread, which fails those transfers on timeout.
+        # but we rely on the manager thread, which fails those transfers on timeout.
 
   def stop(self):
     '''stops processing in this thread'''

@@ -198,7 +198,7 @@ class ActivityControlThread(threading.Thread):
                   if transfer.protocol != 'xroot':
                     # prepare the listening port for the client to connect. The mover is executed only after the client connects back
                     moverPort = self.clientsListener.createSocketForMover(qTransfer, self.startMover)
-                    destPath = transfer.reqId
+                    destPath = transfer.transferId
                   else:
                     # xroot is special here: we don't create a socket for the mover, but instead we tell
                     # the xroot server (through the redirector) to use our mover handler port for telling
