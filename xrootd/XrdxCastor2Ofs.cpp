@@ -542,7 +542,7 @@ XrdxCastor2OfsFile::close()
     // If failed to commit to diskmanager then return error
     if (dm_errno)
     {
-      xcastor_err("path=%s failed sending status to diskmanager", newpath.c_str());
+      xcastor_err("path=%s failed closing file: %s", newpath.c_str(), errormsg);
       rc = gSrv->Emsg("close", error, dm_errno, "send status to diskmanager");
     }
   }
