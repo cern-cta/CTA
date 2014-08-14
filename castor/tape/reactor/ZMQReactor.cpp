@@ -65,8 +65,32 @@ void castor::tape::reactor::ZMQReactor::registerHandler(
   ZMQPollEventHandler *const handler) {
   zmq_pollitem_t item;
   handler->fillPollFd(item);
-  //TODO, handle double registration 
+
+  std::ostringstream socketInHex;
+  socketInHex << std::hex << item.socket;
+  log::Param params[] = {log::Param("fd", item.fd),
+    log::Param("socket", socketInHex)};
+  m_log(LOG_DEBUG, "ZMQReactor registering a new handler", params);
+
+  checkDoubleRegistration(item);
   m_handlers.push_back(std::make_pair(item,handler));
+}
+
+//------------------------------------------------------------------------------
+// checkDoubleRegistration
+//------------------------------------------------------------------------------
+void castor::tape::reactor::ZMQReactor::checkDoubleRegistration(
+  const zmq_pollitem_t &item) const {
+  for(HandlerMap::const_iterator it=m_handlers.begin(); it!=m_handlers.end();
+    ++it) {
+    const std::pair<zmq_pollitem_t, ZMQPollEventHandler*> &maplet = *it;
+    if(item == maplet.first) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "ZMQReactor detected a double registration: fd=" <<
+        item.fd << " socket=" << std::hex << item.socket;
+      throw ex;
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

@@ -86,6 +86,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   m_hostName(getHostName()),
   m_processForker(NULL),
   m_processForkerPid(0),
+  m_driveCatalogue(NULL),
   m_zmqContext(NULL) {
 }
 
@@ -115,6 +116,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::~TapeDaemon() throw() {
     m_processForker->stopProcessForker("TapeDaemon destructor called");
     delete m_processForker;
   }
+  delete m_driveCatalogue;
   destroyZmqContext();
   google::protobuf::ShutdownProtobufLibrary();
 }
@@ -168,7 +170,6 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   const int argc, char **const argv)  {
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
-  m_driveCatalogue.populate(m_driveConfigs);
 
   // Process must be able to change user now and should be permitted to perform
   // raw IO in the future
@@ -177,7 +178,20 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   const bool runAsStagerSuperuser = true;
   daemonizeIfNotRunInForeground(runAsStagerSuperuser);
   setDumpable();
-  forkProcessForker();
+
+  // Create two socket pairs for ProcessForker communications
+  const ForkerCmdPair cmdPair = createForkerCmdPair();
+  const ForkerReaperPair reaperPair = createForkerReaperPair();
+
+  m_processForkerPid = forkProcessForker(cmdPair, reaperPair);
+
+  const DataTransferSession::CastorConf dataTransferConfig =
+    getDataTransferConf();
+  m_processForker = new ProcessForkerProxySocket(m_log, cmdPair.tapeDaemon);
+  m_driveCatalogue = new DriveCatalogue(m_log, dataTransferConfig,
+    *m_processForker, m_vdqm, m_hostName);
+
+  m_driveCatalogue->populate(m_driveConfigs);
 
   // There is no longer any need for the process to be able to change user,
   // however the process should still be permitted to perform raw IO in the
@@ -186,7 +200,7 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
 
   blockSignals();
   initZmqContext();
-  setUpReactor();
+  setUpReactor(reaperPair.tapeDaemon);
   registerTapeDrivesWithVdqm();
   mainEventLoop();
 }
@@ -259,12 +273,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setProcessCapabilities(
 //------------------------------------------------------------------------------
 // forkProcessForker
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkProcessForker() {
+pid_t castor::tape::tapeserver::daemon::TapeDaemon::forkProcessForker(
+  const ForkerCmdPair &cmdPair, const ForkerReaperPair &reaperPair) {
   m_log.prepareForFork();
-
-  // Create two socket pairs for ProcessForker communications
-  const ForkerCmdPair cmdPair = createForkerCmdPair();
-  const ForkerReaperPair reaperPair = createForkerReaperPair();
 
   const pid_t forkRc = fork();
 
@@ -282,33 +293,19 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkProcessForker() {
 
   // Else if this is the parent process
   } else if(0 < forkRc) {
-    m_processForkerPid = forkRc;
-
     {
       log::Param params[] = {
-        log::Param("processForkerPid", m_processForkerPid)};
+        log::Param("processForkerPid", forkRc)};
       m_log(LOG_INFO, "Successfully forked the ProcessForker", params);
     }
 
     closeProcessForkerSideOfCmdPair(cmdPair);
     closeProcessForkerSideOfReaperPair(reaperPair);
 
-    m_processForker = new ProcessForkerProxySocket(m_log, cmdPair.tapeDaemon);
-    log::Param params[] =
-      {log::Param("cmdPair.tapeDaemon", cmdPair.tapeDaemon)};
-    m_log(LOG_INFO, "TapeDaemon parent process created ProcessForker proxy",
-      params);
-
-    createAndRegisterProcessForkerConnectionHandler(reaperPair.tapeDaemon);
-
-    return;
+    return forkRc;
 
   // Else this is the child process
   } else {
-    // Clear the reactor which in turn will close all of the open
-    // file-descriptors owned by the event handlers
-    m_reactor.clear();
-
     closeTapeDaemonSideOfCmdPair(cmdPair);
     closeTapeDaemonSideOfReaperPair(reaperPair);
 
@@ -395,7 +392,7 @@ std::pair<int, int>
 // closeForkerCmdPair
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerCmdPair(
-  const ForkerCmdPair &cmdPair) {
+  const ForkerCmdPair &cmdPair) const {
   if(close(cmdPair.tapeDaemon)) {
     char message[100];
     sstrerror_r(errno, message, sizeof(message));
@@ -403,11 +400,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerCmdPair(
     ex.getMessage() << "Failed to close TapeDaemon side of cmdPair"
       ": cmdPair.tapeDaemon=" << cmdPair.tapeDaemon << ": " << message;
     throw ex;
-  } else {
-    log::Param params[] =
-      {log::Param("cmdPair.tapeDaemon", cmdPair.tapeDaemon)};
-    m_log(LOG_INFO, "Successfully closed TapeDaemon side of cmdPair",
-      params);
   }
 
   if(close(cmdPair.processForker)) {
@@ -417,11 +409,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerCmdPair(
     ex.getMessage() << "Failed to close ProcessForker side of cmdPair"
       ": cmdPair.processForker=" << cmdPair.processForker << ": " << message;
     throw ex;
-  } else {
-    log::Param params[] =
-      {log::Param("cmdPair.processForker", cmdPair.processForker)};
-    m_log(LOG_INFO, "Successfully closed ProcessForker side of cmdPair",
-      params);
   }
 }
 
@@ -429,7 +416,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerCmdPair(
 // closeForkerReaperPair
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerReaperPair(
-  const ForkerReaperPair &reaperPair) {
+  const ForkerReaperPair &reaperPair) const {
   if(close(reaperPair.tapeDaemon)) {
     char message[100];
     sstrerror_r(errno, message, sizeof(message));
@@ -437,11 +424,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerReaperPair(
     ex.getMessage() << "Failed to close TapeDaemon side of reaperPair"
       ": reaperPair.tapeDaemon=" << reaperPair.tapeDaemon << ": " << message;
     throw ex;
-  } else {
-    log::Param params[] =
-      {log::Param("reaperPair.tapeDaemon", reaperPair.tapeDaemon)};
-    m_log(LOG_INFO, "Successfully closed TapeDaemon side of reaperPair",
-      params);
   }
 
   if(close(reaperPair.processForker)) {
@@ -452,11 +434,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerReaperPair(
       ": reaperPair.processForker=" << reaperPair.processForker << ": " <<
       message;
     throw ex;
-  } else {
-    log::Param params[] =
-      {log::Param("reaperPair.processForker", reaperPair.processForker)};
-    m_log(LOG_INFO, "Successfully closed ProcessForker side of reaperPair",
-      params);
   }
 }
 
@@ -464,7 +441,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerReaperPair(
 // closeProcessForkerSideOfCmdPair
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::
-  closeProcessForkerSideOfCmdPair(const ForkerCmdPair &cmdPair) {
+  closeProcessForkerSideOfCmdPair(const ForkerCmdPair &cmdPair) const {
   if(close(cmdPair.processForker)) {
     char message[100];
     sstrerror_r(errno, message, sizeof(message));
@@ -474,18 +451,14 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
       cmdPair.processForker << ": " << message;
     throw ex;
   }
-
-  log::Param params[] =
-    {log::Param("cmdPair.processForker", cmdPair.processForker)};
-    m_log(LOG_INFO, "TapeDaemon parent process successfully closed"
-      " ProcessForker side of cmdPair", params);
 }
 
 //------------------------------------------------------------------------------
 // closeProcessForkerSideOfReaperPair
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::
-  closeProcessForkerSideOfReaperPair(const ForkerReaperPair &reaperPair) {
+  closeProcessForkerSideOfReaperPair(const ForkerReaperPair &reaperPair)
+  const {
   if(close(reaperPair.processForker)) {
     char message[100];
     sstrerror_r(errno, message, sizeof(message));
@@ -495,18 +468,13 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
       reaperPair.processForker << ": " << message;
     throw ex;
   }
-
-  log::Param params[] =
-    {log::Param("reaperPair.processForker)", reaperPair.processForker)};
-  m_log(LOG_INFO, "TapeDaemon parent process successfully closed"
-    " ProcessForker side of reaperPair", params);
 }
 
 //------------------------------------------------------------------------------
 // closeTapeDaemonSideOfCmdPair
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::
-  closeTapeDaemonSideOfCmdPair(const ForkerCmdPair &cmdPair) {
+  closeTapeDaemonSideOfCmdPair(const ForkerCmdPair &cmdPair) const {
   if(close(cmdPair.tapeDaemon)) {
     char message[100];
     sstrerror_r(errno, message, sizeof(message));
@@ -516,17 +484,13 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
       << ": " << message;
     throw ex;
   }
-
-  log::Param params[] = {log::Param("cmdPair.tapeDaemon", cmdPair.tapeDaemon)};
-    m_log(LOG_INFO, "ProcessForker process successfully closed"
-      " TapeDaemon side of cmdPair", params);
 }
 
 //------------------------------------------------------------------------------
 // closeTapeDaemonSideOfReaperPair
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::
-  closeTapeDaemonSideOfReaperPair(const ForkerReaperPair &reaperPair) {
+  closeTapeDaemonSideOfReaperPair(const ForkerReaperPair &reaperPair) const {
   if(close(reaperPair.tapeDaemon)) {
     char message[100];
     sstrerror_r(errno, message, sizeof(message));
@@ -536,11 +500,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
       reaperPair.tapeDaemon << ": " << message;
     throw ex;
   }
-
-  log::Param params[] =
-    {log::Param("reaperPair.tapeDaemon", reaperPair.tapeDaemon)};
-  m_log(LOG_INFO, "ProcessForker parent process successfully closed"
-    " TapeDaemon side of reaperPair", params);
 }
 
 //------------------------------------------------------------------------------
@@ -596,7 +555,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDrivesWithVdqm()
    {
-  const std::list<std::string> unitNames = m_driveCatalogue.getUnitNames();
+  const std::list<std::string> unitNames = m_driveCatalogue->getUnitNames();
 
   for(std::list<std::string>::const_iterator itor = unitNames.begin();
     itor != unitNames.end(); itor++) {
@@ -609,15 +568,15 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDrivesWithVdqm()
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   const std::string &unitName)  {
-  const DriveCatalogueEntry *drive = m_driveCatalogue.findDrive(unitName);
-  const utils::DriveConfig &driveConfig = drive->getConfig();
+  const DriveCatalogueEntry &drive = m_driveCatalogue->findDrive(unitName);
+  const utils::DriveConfig &driveConfig = drive.getConfig();
 
   std::list<log::Param> params;
   params.push_back(log::Param("server", m_hostName));
   params.push_back(log::Param("unitName", unitName));
   params.push_back(log::Param("dgn", driveConfig.dgn));
 
-  switch(drive->getState()) {
+  switch(drive.getState()) {
   case DriveCatalogueEntry::DRIVE_STATE_DOWN:
     params.push_back(log::Param("state", "down"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
@@ -634,7 +593,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
       ex.getMessage() << "Failed to register tape drive in vdqm"
         ": server=" << m_hostName << " unitName=" << unitName << " dgn=" <<
         driveConfig.dgn << ": Invalid drive state: state=" <<
-        DriveCatalogueEntry::drvState2Str(drive->getState());
+        DriveCatalogueEntry::drvState2Str(drive.getState());
       throw ex;
     }
   }
@@ -658,7 +617,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::initZmqContext() {
 //------------------------------------------------------------------------------
 // setUpReactor
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor() {
+void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor(
+  const int reaperSocket) {
+  createAndRegisterProcessForkerConnectionHandler(reaperSocket);
   createAndRegisterVdqmAcceptHandler();
   createAndRegisterAdminAcceptHandler();
   createAndRegisterLabelCmdAcceptHandler();
@@ -666,39 +627,75 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor() {
 }
 
 //------------------------------------------------------------------------------
+// createAndRegisterProcessForkerConnectionHandler
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::
+  createAndRegisterProcessForkerConnectionHandler(const int reaperSocket)  {
+  try {
+    std::auto_ptr<ProcessForkerConnectionHandler> handler;
+    try {
+      handler.reset(new ProcessForkerConnectionHandler(reaperSocket, m_reactor,
+        m_log, *m_driveCatalogue, m_hostName, m_vdqm));
+    } catch(std::bad_alloc &ba) {
+      castor::exception::BadAlloc ex;
+      ex.getMessage() <<
+        "Failed to create event handler for communicating with the ProcessForker"
+        ": " << ba.what();
+      throw ex;
+    }
+    m_reactor.registerHandler(handler.get());
+    handler.release();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to create and register ProcessForkerConnectionHandler: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
 // createAndRegisterVdqmAcceptHandler
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::
   createAndRegisterVdqmAcceptHandler()  {
-  castor::utils::SmartFd listenSock;
   try {
-    listenSock.reset(io::createListenerSock(TAPE_SERVER_VDQM_LISTENING_PORT));
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex(ne.code());
-    ex.getMessage() << "Failed to create socket to listen for vdqm connections"
-      ": " << ne.getMessage().str();
-    throw ex;
-  }
-  {
-    log::Param params[] = {
-      log::Param("listeningPort", TAPE_SERVER_VDQM_LISTENING_PORT)};
-    m_log(LOG_INFO, "Listening for connections from the vdqmd daemon", params);
-  }
+    castor::utils::SmartFd listenSock;
+    try {
+      listenSock.reset(io::createListenerSock(TAPE_SERVER_VDQM_LISTENING_PORT));
+    } catch(castor::exception::Exception &ne) {
+      castor::exception::Exception ex(ne.code());
+      ex.getMessage() << "Failed to create socket to listen for vdqm connections"
+        ": " << ne.getMessage().str();
+      throw ex;
+    }
+    {
+      log::Param params[] = {
+        log::Param("listeningPort", TAPE_SERVER_VDQM_LISTENING_PORT)};
+      m_log(LOG_INFO, "Listening for connections from the vdqmd daemon", params);
+    }
 
-  std::auto_ptr<VdqmAcceptHandler> handler;
-  try {
-    handler.reset(new VdqmAcceptHandler(listenSock.get(), m_reactor, m_log,
-      m_driveCatalogue));
-    listenSock.release();
-  } catch(std::bad_alloc &ba) {
-    castor::exception::BadAlloc ex;
+    std::auto_ptr<VdqmAcceptHandler> handler;
+    try {
+      handler.reset(new VdqmAcceptHandler(listenSock.get(), m_reactor, m_log,
+        *m_driveCatalogue));
+      listenSock.release();
+    } catch(std::bad_alloc &ba) {
+      castor::exception::BadAlloc ex;
+      ex.getMessage() <<
+        "Failed to create event handler for accepting vdqm connections"
+        ": " << ba.what();
+      throw ex;
+    }
+    m_reactor.registerHandler(handler.get());
+    handler.release();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
     ex.getMessage() <<
-      "Failed to create event handler for accepting vdqm connections"
-      ": " << ba.what();
+      "Failed to create and register VdqmAcceptHandler: " <<
+      ne.getMessage().str();
     throw ex;
   }
-  m_reactor.registerHandler(handler.get());
-  handler.release();
 }
 
 //------------------------------------------------------------------------------
@@ -706,74 +703,92 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::
   createAndRegisterAdminAcceptHandler()  {
-  castor::utils::SmartFd listenSock;
   try {
-    listenSock.reset(io::createListenerSock(TAPE_SERVER_ADMIN_LISTENING_PORT));
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex(ne.code());
-    ex.getMessage() <<
-      "Failed to create socket to listen for admin command connections"
-      ": " << ne.getMessage().str();
-    throw ex;
-  }
-  {
-    log::Param params[] = {
-      log::Param("listeningPort", TAPE_SERVER_ADMIN_LISTENING_PORT)};
-    m_log(LOG_INFO, "Listening for connections from the admin commands",
-      params);
-  }
+    castor::utils::SmartFd listenSock;
+    try {
+      listenSock.reset(io::createListenerSock(TAPE_SERVER_ADMIN_LISTENING_PORT));
+    } catch(castor::exception::Exception &ne) {
+      castor::exception::Exception ex(ne.code());
+      ex.getMessage() <<
+        "Failed to create socket to listen for admin command connections"
+        ": " << ne.getMessage().str();
+      throw ex;
+    }
+    {
+      log::Param params[] = {
+        log::Param("listeningPort", TAPE_SERVER_ADMIN_LISTENING_PORT)};
+      m_log(LOG_INFO, "Listening for connections from the admin commands",
+        params);
+    }
 
-  std::auto_ptr<AdminAcceptHandler> handler;
-  try {
-    handler.reset(new AdminAcceptHandler(listenSock.get(), m_reactor, m_log,
-      m_vdqm, m_driveCatalogue, m_hostName));
-    listenSock.release();
-  } catch(std::bad_alloc &ba) {
-    castor::exception::BadAlloc ex;
+    std::auto_ptr<AdminAcceptHandler> handler;
+    try {
+      handler.reset(new AdminAcceptHandler(listenSock.get(), m_reactor, m_log,
+        m_vdqm, *m_driveCatalogue, m_hostName));
+      listenSock.release();
+    } catch(std::bad_alloc &ba) {
+      castor::exception::BadAlloc ex;
+      ex.getMessage() <<
+        "Failed to create event handler for accepting admin connections"
+        ": " << ba.what();
+      throw ex;
+    }
+    m_reactor.registerHandler(handler.get());
+    handler.release();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
     ex.getMessage() <<
-      "Failed to create event handler for accepting admin connections"
-      ": " << ba.what();
+      "Failed to create and register AdminAcceptHandler: " <<
+      ne.getMessage().str();
     throw ex;
   }
-  m_reactor.registerHandler(handler.get());
-  handler.release();
 }
 
 //------------------------------------------------------------------------------
 // createAndRegisterLabelCmdAcceptHandler
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterLabelCmdAcceptHandler()  {
-  castor::utils::SmartFd listenSock;
+void castor::tape::tapeserver::daemon::TapeDaemon::
+  createAndRegisterLabelCmdAcceptHandler()  {
   try {
-    listenSock.reset(io::createListenerSock(TAPE_SERVER_LABELCMD_LISTENING_PORT));
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex(ne.code());
-    ex.getMessage() <<
-      "Failed to create socket to listen for admin command connections"
-      ": " << ne.getMessage().str();
-    throw ex;
-  }
-  {
-    log::Param params[] = {
-      log::Param("listeningPort", TAPE_SERVER_LABELCMD_LISTENING_PORT)};
-    m_log(LOG_INFO, "Listening for connections from label command",
-      params);
-  }
+    castor::utils::SmartFd listenSock;
+    try {
+      listenSock.reset(
+        io::createListenerSock(TAPE_SERVER_LABELCMD_LISTENING_PORT));
+    } catch(castor::exception::Exception &ne) {
+      castor::exception::Exception ex(ne.code());
+      ex.getMessage() <<
+        "Failed to create socket to listen for admin command connections"
+        ": " << ne.getMessage().str();
+      throw ex;
+    }
+    {
+      log::Param params[] = {
+        log::Param("listeningPort", TAPE_SERVER_LABELCMD_LISTENING_PORT)};
+      m_log(LOG_INFO, "Listening for connections from label command",
+        params);
+    }
 
-  std::auto_ptr<LabelCmdAcceptHandler> handler;
-  try {
-    handler.reset(new LabelCmdAcceptHandler(listenSock.get(), m_reactor, m_log,
-      m_driveCatalogue, m_hostName, m_vdqm, m_vmgr));
-    listenSock.release();
-  } catch(std::bad_alloc &ba) {
-    castor::exception::BadAlloc ex;
+    std::auto_ptr<LabelCmdAcceptHandler> handler;
+    try {
+      handler.reset(new LabelCmdAcceptHandler(listenSock.get(), m_reactor, m_log,
+        *m_driveCatalogue, m_hostName, m_vdqm, m_vmgr));
+      listenSock.release();
+    } catch(std::bad_alloc &ba) {
+      castor::exception::BadAlloc ex;
+      ex.getMessage() <<
+        "Failed to create event handler for accepting label-command connections"
+        ": " << ba.what();
+      throw ex;
+    }
+    m_reactor.registerHandler(handler.get());
+    handler.release();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
     ex.getMessage() <<
-      "Failed to create event handler for accepting label-command connections"
-      ": " << ba.what();
+      "Failed to create and register LabelCmdAcceptHandler: " <<
+      ne.getMessage().str();
     throw ex;
   }
-  m_reactor.registerHandler(handler.get());
-  handler.release();
 }
 
 //------------------------------------------------------------------------------
@@ -781,39 +796,27 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterLabelCmdAcce
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::
   createAndRegisterTapeMessageHandler()  {
-  std::auto_ptr<TapeMessageHandler> handler;
   try {
-    handler.reset(new TapeMessageHandler(m_reactor, m_log, m_driveCatalogue,
-      m_hostName, m_vdqm, m_vmgr, m_zmqContext));
-  } catch(std::bad_alloc &ba) {
-    castor::exception::BadAlloc ex;
+    std::auto_ptr<TapeMessageHandler> handler;
+    try {
+      handler.reset(new TapeMessageHandler(m_reactor, m_log, *m_driveCatalogue,
+        m_hostName, m_vdqm, m_vmgr, m_zmqContext));
+    } catch(std::bad_alloc &ba) {
+      castor::exception::BadAlloc ex;
+      ex.getMessage() <<
+        "Failed to create event handler for communicating with forked sessions"
+        ": " << ba.what();
+      throw ex;
+    }
+    m_reactor.registerHandler(handler.get());
+    handler.release();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
     ex.getMessage() <<
-      "Failed to create event handler for communicating with forked sessions"
-      ": " << ba.what();
+      "Failed to create and register TapeMessageHandler: " <<
+      ne.getMessage().str();
     throw ex;
   }
-  m_reactor.registerHandler(handler.get());
-  handler.release();
-}
-
-//------------------------------------------------------------------------------
-// createAndRegisterProcessForkerConnectionHandler
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::
-  createAndRegisterProcessForkerConnectionHandler(const int reaperSocket)  {
-  std::auto_ptr<ProcessForkerConnectionHandler> handler;
-  try {
-    handler.reset(new ProcessForkerConnectionHandler(reaperSocket, m_reactor,
-      m_log, m_driveCatalogue, m_hostName, m_vdqm));
-  } catch(std::bad_alloc &ba) {
-    castor::exception::BadAlloc ex;
-    ex.getMessage() <<
-      "Failed to create event handler for communicating with the ProcessForker"
-      ": " << ba.what();
-    throw ex;
-  }
-  m_reactor.registerHandler(handler.get());
-  handler.release();
 }
 
 //------------------------------------------------------------------------------
@@ -821,9 +824,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop() {
   while(handleEvents()) {
-    forkDataTransferSessions();
-    forkLabelSessions();
-    forkCleanerSessions();
   }
 }
 
@@ -1045,24 +1045,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(
 }
 
 //------------------------------------------------------------------------------
-// forkDataTransferSessions
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSessions()
-  throw() {
-  const std::list<std::string> unitNames =
-    m_driveCatalogue.getUnitNamesWaitingForTransferFork();
-
-  for(std::list<std::string>::const_iterator itor = unitNames.begin();
-    itor != unitNames.end(); itor++) {
-    const std::string unitName = *itor;
-    DriveCatalogueEntry *drive = m_driveCatalogue.findDrive(unitName);
-    forkDataTransferSession(drive);
-  }
-}
-
-//------------------------------------------------------------------------------
 // forkDataTransferSession
 //------------------------------------------------------------------------------
+/*
 void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSession(
   DriveCatalogueEntry *drive) throw() {
   try {
@@ -1109,6 +1094,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSession(
     drive->sessionFailed();
   }
 }
+*/
 
 //------------------------------------------------------------------------------
 // getDataTransferConf
@@ -1149,56 +1135,9 @@ castor::tape::tapeserver::daemon::DataTransferSession::CastorConf
 }
 
 //------------------------------------------------------------------------------
-// forkLabelSessions
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSessions() {
-  const std::list<std::string> unitNames =
-    m_driveCatalogue.getUnitNamesWaitingForLabelFork();
-
-  for(std::list<std::string>::const_iterator itor = unitNames.begin();
-    itor != unitNames.end(); itor++) {
-    const std::string &unitName = *itor;
-    DriveCatalogueEntry *drive = m_driveCatalogue.findDrive(unitName);
-    forkLabelSession(drive);
-  }
-}
-
-//------------------------------------------------------------------------------
-// forkLabelSession
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
-  DriveCatalogueEntry *drive) {
-  const utils::DriveConfig &driveConfig = drive->getConfig();
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", driveConfig.unitName));
-
-  const unsigned short rmcPort =
-    common::CastorConfiguration::getConfig().getConfEntInt(
-      "RMC", "PORT", (unsigned short)RMC_PORT, &m_log);
-
-  const pid_t labelSessionPid = m_processForker->forkLabel(driveConfig,
-    drive->getLabelJob(), rmcPort);
-  drive->forkedLabelSession(labelSessionPid);
-}
-
-//------------------------------------------------------------------------------
-// forkCleanerSessions
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkCleanerSessions() {
-  const std::list<std::string> unitNames =
-    m_driveCatalogue.getUnitNamesWaitingForCleanerFork();
-
-  for(std::list<std::string>::const_iterator itor = unitNames.begin();
-    itor != unitNames.end(); itor++) {
-    const std::string &unitName = *itor;
-    DriveCatalogueEntry *drive = m_driveCatalogue.findDrive(unitName);
-    forkCleanerSession(drive);
-  }
-}
-
-//------------------------------------------------------------------------------
 // forkCleanerSession
 //------------------------------------------------------------------------------
+/*
 void castor::tape::tapeserver::daemon::TapeDaemon::forkCleanerSession(
   DriveCatalogueEntry *drive) {
   const utils::DriveConfig &driveConfig = drive->getConfig();
@@ -1212,3 +1151,4 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkCleanerSession(
 
   m_processForker->forkCleaner(driveConfig, vid, rmcPort);
 }
+*/

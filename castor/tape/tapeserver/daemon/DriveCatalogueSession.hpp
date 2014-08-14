@@ -31,88 +31,71 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
+
+/**
+ * Abstract base class defining the common interface of a catalogue
+ * tape-session.
+ */
+class DriveCatalogueSession {
+public:
+    
   /**
-   * Base class containing info about the session attached to a drive catalogue entry
+   * Destructor.
    */
-  class DriveCatalogueSession {
-  public:
-    
-    virtual ~DriveCatalogueSession();
-    /**
-     * The status of the tape with respect to the drive mount and unmount operations
-     */
-    enum SessionState {
-      SESSION_STATE_NONE,
-      SESSION_STATE_WAITFORK,
-      SESSION_STATE_RUNNING 
-    };
-        
-    /**
-     * pid setter method
-     * 
-     * @param pid process ID of the session
-     */
-    virtual void setPid(const pid_t pid);
-    
-    /**
-     * pid getter method
-     * 
-     * @return process ID of the session
-     */
-    virtual pid_t getPid() const;
-    
-    /**
-     * Sets the point in time when the drive was assigned a tape.
-     */
-    virtual void setAssignmentTime(const time_t assignmentTime);
+  virtual ~DriveCatalogueSession() = 0;
 
-    /**
-     * Gets the point in time when the drive was assigned a tape.
-     *
-     * @return Te point in time when the drive was assigned a tape.
-     */
-    virtual time_t getAssignmentTime() const;
-    
-    /**
-     * state setter method
-     * 
-     * @param state of the drive catalogue session
-     */
-    virtual void setState(const SessionState state);
-    
-    /**
-     * state getter method
-     * 
-     * @return state of the drive catalogue session
-     */
-    virtual SessionState getState() const;
-    
-  protected:
-    
-    /**
-     * Constructor
-     * 
-     * @param pid process ID of the session
-     * @param state state of the drive catalogue session
-     */
-    DriveCatalogueSession(const SessionState state);
-        
-    /**
-     * The process ID of the session
-     */
-    pid_t m_pid;
-    
-    /**
-     * The point in time when the drive was assigned a tape.
-     */
-    time_t m_assignmentTime;
-    
-    /**
-     * The state of the drive catalogue session
-     */
-    SessionState m_state;
+  /**
+   * Gets the volume identifier of the tape associated with the tape drive.
+   *
+   * @return The volume identifier of the tape associated with the tape drive.
+   */
+  virtual std::string getVid() const = 0;
 
- }; // class DriveCatalogueSession
+  /**
+   * Gets the access mode, either recall (WRITE_DISABLE) or migration
+   * (WRITE_ENABLE).
+   *
+   * @return The access mode.
+   */
+  virtual int getMode() const = 0;
+
+  /**
+   * pid getter method
+   * 
+   * @return process ID of the session.
+   */
+  virtual pid_t getPid() const;
+  
+  /**
+   * Gets the time at which a job was assigned to the tape drive.
+   *
+   * @return The time at which a job was assigned to the tape drive.
+   */
+  virtual time_t getAssignmentTime() const throw() = 0;
+
+  /**
+   * Returns true if a tape is in the process of being mounted.
+   *
+   * @return True if a tape is in the process of being mounted.
+   */
+  virtual bool tapeIsBeingMounted() const throw() = 0;
+    
+protected:
+    
+  /**
+   * Constructor
+   * 
+   * @param pid process ID of the session
+   * @param state state of the drive catalogue session
+   */
+  DriveCatalogueSession();
+        
+  /**
+   * The process ID of the session
+   */
+  pid_t m_pid;
+    
+}; // class DriveCatalogueSession
 
 } // namespace daemon
 } // namespace tapeserver

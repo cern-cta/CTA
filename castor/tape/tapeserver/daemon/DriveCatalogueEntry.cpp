@@ -25,11 +25,31 @@
 #include "castor/tape/tapeserver/daemon/DriveCatalogueEntry.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
-#include "castor/tape/tapeserver/daemon/DriveCatalogueCleanerSession.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogueLabelSession.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogueTransferSession.hpp"
 
 #include <string.h>
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveCatalogueEntry(
+  log::Logger &log,
+  ProcessForkerProxy &processForker,
+  legacymsg::VdqmProxy &vdqm,
+  const std::string &hostName,
+  const utils::DriveConfig &config,
+  const DataTransferSession::CastorConf &dataTransferConfig,
+  const DriveState state)
+  throw():
+  m_log(log),
+  m_processForker(processForker),
+  m_vdqm(vdqm),
+  m_config(config),
+  m_dataTransferConfig(dataTransferConfig),
+  m_state(state),
+  m_sessionType(SESSION_TYPE_NONE),
+  m_labelCmdConnection(-1),
+  m_session(NULL) {
+}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -39,33 +59,6 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry::~DriveCatalogueEntry()
   delete m_session;
 }
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveCatalogueEntry()
-  throw():
-  m_mode(WRITE_DISABLE),
-  m_getToBeMountedForTapeStatDriveEntry(false),
-  m_state(DRIVE_STATE_INIT),
-  m_sessionType(SESSION_TYPE_NONE),
-  m_labelCmdConnection(-1),
-  m_session(NULL) {
-}
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveCatalogueEntry(
-  const utils::DriveConfig &config, const DriveState state) throw():
-  m_config(config),
-  m_mode(WRITE_DISABLE),
-  m_getToBeMountedForTapeStatDriveEntry(false),
-  m_state(state),
-  m_sessionType(SESSION_TYPE_NONE),
-  m_labelCmdConnection(-1),
-  m_session(NULL) {
-}
-
 //-----------------------------------------------------------------------------
 // drvState2Str
 //-----------------------------------------------------------------------------
@@ -73,12 +66,12 @@ const char
   *castor::tape::tapeserver::daemon::DriveCatalogueEntry::drvState2Str(
   const DriveState state) throw() {
   switch(state) {
-  case DRIVE_STATE_INIT             : return "INIT";
-  case DRIVE_STATE_DOWN             : return "DOWN";
-  case DRIVE_STATE_UP               : return "UP";
-  case DRIVE_STATE_SESSIONRUNNING   : return "SESSIONRUNNING";
-  case DRIVE_STATE_WAITDOWN         : return "WAITDOWN";
-  default                           : return "UNKNOWN";
+  case DRIVE_STATE_INIT    : return "INIT";
+  case DRIVE_STATE_DOWN    : return "DOWN";
+  case DRIVE_STATE_UP      : return "UP";
+  case DRIVE_STATE_RUNNING : return "RUNNING";
+  case DRIVE_STATE_WAITDOWN: return "WAITDOWN";
+  default                  : return "UNKNOWN";
   }
 }
 
@@ -90,9 +83,9 @@ const char
   const SessionType sessionType) throw() {
   switch(sessionType) {
   case SESSION_TYPE_NONE        : return "NONE";
+  case SESSION_TYPE_CLEANER     : return "CLEANER";
   case SESSION_TYPE_DATATRANSFER: return "DATATRANSFER";
   case SESSION_TYPE_LABEL       : return "LABEL";
-  case SESSION_TYPE_CLEANER     : return "CLEANER";
   default                       : return "UNKNOWN";
   }
 }
@@ -113,22 +106,6 @@ const castor::tape::utils::DriveConfig
 }
 
 //------------------------------------------------------------------------------
-// setVid
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::setVid(
-  const std::string &vid) {
-  m_vid = vid;
-}
-
-//------------------------------------------------------------------------------
-// getVid
-//------------------------------------------------------------------------------
-std::string castor::tape::tapeserver::daemon::DriveCatalogueEntry::getVid()
-  const {
-  return m_vid;
-}
-
-//------------------------------------------------------------------------------
 // getState
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveState
@@ -138,23 +115,267 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveState
 } 
 
 //------------------------------------------------------------------------------
-// getSessionState
+// getSession
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueSession::SessionState
-  castor::tape::tapeserver::daemon::DriveCatalogueEntry::getSessionState()
-  const throw() {
-  return getSession()->getState();
+const castor::tape::tapeserver::daemon::DriveCatalogueSession &
+  castor::tape::tapeserver::daemon::DriveCatalogueEntry::getSession()
+  const {
+  try {
+    checkForSession();
+    return *m_session;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to get tape session for drive " <<
+      m_config.unitName << " from drive catalogue: " << ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
-// getSessionState
+// checkForSession
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueSession * castor::tape::tapeserver::daemon::DriveCatalogueEntry::getSession()
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::checkForSession()
   const {
-  if(m_session) return m_session;
-  else {
+  if(DRIVE_STATE_RUNNING != m_state) {
     castor::exception::Exception ex;
-    ex.getMessage() << "The session pointer is null";
+    ex.getMessage() << "Drive is currently not running a session";
+    throw ex;
+  }
+  if(NULL == m_session) {
+    // Should never get here
+    castor::exception::Exception ex;
+    ex.getMessage() << "Pointer to tape session is unexpectedly NULL";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getCleanerSession
+//------------------------------------------------------------------------------
+const castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession &
+  castor::tape::tapeserver::daemon::DriveCatalogueEntry::getCleanerSession()
+  const {
+  try {
+    checkForCleanerSession();
+    const DriveCatalogueCleanerSession *const cleanerSession =
+      dynamic_cast<const DriveCatalogueCleanerSession*>(m_session);
+    if(NULL == cleanerSession) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() <<
+        "Failed to cast session to DriveCatalogueCleanerSession";
+      throw ex;
+    }
+
+    return *cleanerSession;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to get cleaner session for drive " <<
+      m_config.unitName << " from drive catalogue: " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getCleanerSession
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession &
+  castor::tape::tapeserver::daemon::DriveCatalogueEntry::getCleanerSession() {
+  try {
+    checkForCleanerSession();
+    DriveCatalogueCleanerSession *const cleanerSession =
+      dynamic_cast<DriveCatalogueCleanerSession*>(m_session);
+    if(NULL == cleanerSession) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << 
+        "Failed to cast session to DriveCatalogueCleanerSession";
+      throw ex;
+    }
+
+    return *cleanerSession;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to get cleaner session for drive " <<
+      m_config.unitName << " from drive catalogue: " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkForCleanerSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::
+  checkForCleanerSession() const {
+  if(DRIVE_STATE_RUNNING != m_state) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Drive is currently not running a session";
+    throw ex;
+  }
+  if(SESSION_TYPE_CLEANER != m_sessionType) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Session associated with drive is not a cleaner session"
+      ": actual=" << sessionType2Str(m_sessionType);
+    throw ex;
+  }
+  if(NULL == m_session) {
+    // Should never get here
+    castor::exception::Exception ex;
+    ex.getMessage() << "Pointer to cleaner session is unexpectedly NULL";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getLabelSession
+//------------------------------------------------------------------------------
+const castor::tape::tapeserver::daemon::DriveCatalogueLabelSession &
+  castor::tape::tapeserver::daemon::DriveCatalogueEntry::getLabelSession()
+  const {
+  try {
+    checkForLabelSession();
+    const DriveCatalogueLabelSession *const labelSession =
+      dynamic_cast<const DriveCatalogueLabelSession*>(m_session);
+    if(NULL == labelSession) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to cast session to DriveCatalogueLabelSession";
+      throw ex;
+    }
+
+    return *labelSession;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to get label session for drive " <<
+      m_config.unitName << " from drive catalogue: " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getLabelSession
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::DriveCatalogueLabelSession &
+  castor::tape::tapeserver::daemon::DriveCatalogueEntry::getLabelSession() {
+  try {
+    checkForLabelSession();
+    DriveCatalogueLabelSession *const labelSession =
+      dynamic_cast<DriveCatalogueLabelSession*>(m_session);
+    if(NULL == labelSession) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to cast session to DriveCatalogueLabelSession";
+      throw ex;
+    }
+
+    return *labelSession;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to get label session for drive " <<
+      m_config.unitName << " from drive catalogue: " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkForLabelSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::
+  checkForLabelSession() const {
+  if(DRIVE_STATE_RUNNING != m_state) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Drive is currently not running a session";
+    throw ex;
+  }
+  if(SESSION_TYPE_LABEL != m_sessionType) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Session associated with drive is not a label session"
+      ": actual=" << sessionType2Str(m_sessionType);
+    throw ex;
+  }
+  if(NULL == m_session) {
+    // Should never get here
+    castor::exception::Exception ex;
+    ex.getMessage() << "Pointer to label session is unexpectedly NULL";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getTransferSession
+//------------------------------------------------------------------------------
+const castor::tape::tapeserver::daemon::DriveCatalogueTransferSession &
+  castor::tape::tapeserver::daemon::DriveCatalogueEntry::getTransferSession()
+  const {
+  try {
+    checkForTransferSession();
+    DriveCatalogueTransferSession *const transferSession =
+      dynamic_cast<DriveCatalogueTransferSession*>(m_session);
+    if(NULL == transferSession) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() <<
+        "Failed to cast session to DriveCatalogueTransferSession";
+      throw ex;
+    }
+
+    return *transferSession;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to get transfer session for drive " <<
+      m_config.unitName << " from drive catalogue: " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getTransferSession
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::DriveCatalogueTransferSession &
+  castor::tape::tapeserver::daemon::DriveCatalogueEntry::getTransferSession() {
+  try {
+    checkForTransferSession();
+    DriveCatalogueTransferSession *const transferSession =
+      dynamic_cast<DriveCatalogueTransferSession*>(m_session);
+    if(NULL == transferSession) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() <<
+        "Failed to cast session to DriveCatalogueTransferSession";
+      throw ex;
+    }
+
+    return *transferSession;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to get transfer session for drive " <<
+      m_config.unitName << " from drive catalogue: " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkForTransferSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::
+  checkForTransferSession() const {
+  if(DRIVE_STATE_RUNNING != m_state) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Drive is currently not running a session";
+    throw ex;
+  }
+  if(SESSION_TYPE_DATATRANSFER != m_sessionType) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Session associated with drive is not a transfer session"
+      ": actual=" << sessionType2Str(m_sessionType);
+    throw ex;
+  }
+  if(NULL == m_session) {
+    // Should never get here
+    castor::exception::Exception ex;
+    ex.getMessage() << "Pointer to transfer session is unexpectedly NULL";
     throw ex;
   }
 }
@@ -174,12 +395,9 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry::SessionType
 const castor::legacymsg::RtcpJobRqstMsgBody
   castor::tape::tapeserver::daemon::DriveCatalogueEntry::getVdqmJob() const {
   switch(m_state) {
-  case DRIVE_STATE_SESSIONRUNNING:
+  case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
-  {
-    DriveCatalogueTransferSession *theTransferSession = dynamic_cast<DriveCatalogueTransferSession *>(getSession());
-    return theTransferSession->getVdqmJob();
-  }
+    return getTransferSession().getVdqmJob();
   default:
     {
       castor::exception::Exception ex;
@@ -197,12 +415,9 @@ const castor::legacymsg::RtcpJobRqstMsgBody
 const castor::legacymsg::TapeLabelRqstMsgBody
   castor::tape::tapeserver::daemon::DriveCatalogueEntry::getLabelJob() const {
   switch(m_state) {
-  case DRIVE_STATE_SESSIONRUNNING:
+  case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
-  {
-    DriveCatalogueLabelSession *theLabelSession = dynamic_cast<DriveCatalogueLabelSession *>(getSession());
-    return theLabelSession->getLabelJob();
-  }
+    return getLabelSession().getLabelJob();
   default:
     {
       castor::exception::Exception ex;
@@ -220,9 +435,9 @@ const castor::legacymsg::TapeLabelRqstMsgBody
 pid_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::getSessionPid()
   const {
   switch(m_state) {
-  case DRIVE_STATE_SESSIONRUNNING:
+  case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
-    return getSession()->getPid();
+    return getSession().getPid();
   default:
     {
       castor::exception::Exception ex;
@@ -241,7 +456,7 @@ int
   castor::tape::tapeserver::daemon::DriveCatalogueEntry::getLabelCmdConnection()
   const {
   switch(m_state) {
-  case DRIVE_STATE_SESSIONRUNNING:
+  case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
     return m_labelCmdConnection;;
   default:
@@ -262,7 +477,7 @@ int
 int castor::tape::tapeserver::daemon::DriveCatalogueEntry::
   releaseLabelCmdConnection() {
     switch(m_state) {
-  case DRIVE_STATE_SESSIONRUNNING:
+  case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
     if(0 < m_labelCmdConnection) {
       const int tmpConnection = m_labelCmdConnection;
@@ -289,62 +504,19 @@ int castor::tape::tapeserver::daemon::DriveCatalogueEntry::
 
 }
 
-//-----------------------------------------------------------------------------
-// receivedRecallJob
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedRecallJob(
-  const std::string &vid) {
-  m_assignmentTime = time(0);
-  m_vid = vid;
-  m_getToBeMountedForTapeStatDriveEntry = true;
-  m_mode = WRITE_DISABLE;
-}
-
-//-----------------------------------------------------------------------------
-// receivedMigrationJob
-//-----------------------------------------------------------------------------
-void
-  castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedMigrationJob(
-  const std::string &vid) {
-  m_assignmentTime = time(0);
-  m_vid = vid;
-  m_getToBeMountedForTapeStatDriveEntry = true;
-  m_mode = WRITE_ENABLE;
-}
-
-//-----------------------------------------------------------------------------
-// tapeMountedForMigration
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::
-  tapeMountedForMigration(const std::string &vid) {
-  m_vid = vid;
-  m_getToBeMountedForTapeStatDriveEntry = false;
-  m_mode = WRITE_ENABLE;
-}
-
-//-----------------------------------------------------------------------------
-// tapeMountedForRecall
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::
-  tapeMountedForRecall(const std::string &vid) {
-  m_vid = vid;
-  m_getToBeMountedForTapeStatDriveEntry = false;
-  m_mode = WRITE_DISABLE;
-}
-
 //------------------------------------------------------------------------------
 // configureUp
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogueEntry::configureUp() {
   switch(m_state) {
   case DRIVE_STATE_UP:
-  case DRIVE_STATE_SESSIONRUNNING:
+  case DRIVE_STATE_RUNNING:
     break;
   case DRIVE_STATE_DOWN:
     m_state = DRIVE_STATE_UP;
     break;
   case DRIVE_STATE_WAITDOWN:
-    m_state = DRIVE_STATE_SESSIONRUNNING;
+    m_state = DRIVE_STATE_RUNNING;
     break;
   default:
     {
@@ -366,7 +538,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::configureDown() {
   case DRIVE_STATE_UP:
     m_state = DRIVE_STATE_DOWN;
     break;
-  case DriveCatalogueEntry::DRIVE_STATE_SESSIONRUNNING:
+  case DriveCatalogueEntry::DRIVE_STATE_RUNNING:
     m_state = DRIVE_STATE_WAITDOWN;
     break;
   default:
@@ -408,9 +580,11 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedVdqmJob(
           << job.dgn;
       throw ex;
     }
-    m_state = DRIVE_STATE_SESSIONRUNNING;
+    m_state = DRIVE_STATE_RUNNING;
     m_sessionType = SESSION_TYPE_DATATRANSFER;
-    m_session = new DriveCatalogueTransferSession(castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_WAITFORK, job);
+    m_session = new DriveCatalogueTransferSession(m_log, m_config,
+      m_dataTransferConfig, job, m_processForker, m_vdqm, m_hostName);
+    getTransferSession().forkDataTransferSession();
     break;
   default:
     {
@@ -458,10 +632,11 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedLabelJob(
       throw ex;
     }
     m_labelCmdConnection = labelCmdConnection;
-    m_state = DRIVE_STATE_SESSIONRUNNING;
+    m_state = DRIVE_STATE_RUNNING;
     m_sessionType = SESSION_TYPE_LABEL;
-    m_session = new DriveCatalogueLabelSession(
-      DriveCatalogueSession::SESSION_STATE_WAITFORK, job, labelCmdConnection);
+    m_session = new DriveCatalogueLabelSession(m_log, m_processForker, m_config,
+      job, labelCmdConnection);
+    getLabelSession().forkLabelSession();
     break;
   default:
     {
@@ -476,100 +651,43 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedLabelJob(
 //-----------------------------------------------------------------------------
 // toBeCleaned
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::toBeCleaned()  {
-
-  std::ostringstream task;
-  task << "handle cleaner job for tape drive " << m_config.unitName;
-  
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::toBeCleaned() {
   switch(m_state) {
-    case DRIVE_STATE_INIT:
-    case DRIVE_STATE_DOWN:
-    case DRIVE_STATE_UP:
-    case DRIVE_STATE_SESSIONRUNNING:
-    case DRIVE_STATE_WAITDOWN:
-      m_state = DRIVE_STATE_SESSIONRUNNING;
+  case DRIVE_STATE_RUNNING:
+  case DRIVE_STATE_WAITDOWN:
+    {
+      // Get the vid and assignment time of the crashed tape session
+      std::string vid;
+      try {
+        vid = m_session->getVid();
+      } catch(...) {
+        vid = "";
+      }
+      const time_t assignmentTime = m_session->getAssignmentTime();
+
+      // Free the catalogue representation of the crashed tape session setting
+      // the sesison pointer to NULL to prevent the destructor from perfroming
+      // a doyble delete
+      delete(m_session);
+      m_session = NULL;
+
+      // Create a cleaner session in the catalogue
+      m_state = DRIVE_STATE_RUNNING;
       m_sessionType = SESSION_TYPE_CLEANER;
-      m_session = new DriveCatalogueCleanerSession(castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_WAITFORK);
-      break;
-    default:
+      m_session = new DriveCatalogueCleanerSession(vid, assignmentTime);
+
+      // TO BE DONE - fork porcess
+    }
+    break;
+  default:
     {
       castor::exception::Exception ex;
-      ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(m_state);
+      ex.getMessage() << "Failed to clean drive"
+        ": Drive is not running a tape session: state=" <<
+        drvState2Str(m_state);
       throw ex;
     }
   } 
-}
-
-
-//-----------------------------------------------------------------------------
-// forkedDataTransferSession
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::forkedDataTransferSession(
-  const pid_t sessionPid)  {
-  std::ostringstream task;
-  task << "handle fork of data-transfer session for tape drive " <<
-    m_config.unitName;
-
-  switch(getSession()->getState()) {
-  case DriveCatalogueSession::SESSION_STATE_WAITFORK:
-    getSession()->setState(DriveCatalogueSession::SESSION_STATE_RUNNING);
-    getSession()->setPid(sessionPid);
-    break;
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible session state: state=" << getSession()->getState();
-      throw ex;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-// forkedLabelSession
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::forkedLabelSession(
-  const pid_t sessionPid) {
-  std::ostringstream task;
-  task << "handle fork of label session for tape drive " << m_config.unitName;
-    
-  switch(getSession()->getState()) {
-  case castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_WAITFORK:
-    getSession()->setState(castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_RUNNING);
-    getSession()->setPid(sessionPid);
-    break;
-  default:
-    {   
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << getSession()->getState();
-      throw ex;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-// forkedCleanerSession
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::forkedCleanerSession(
-  const pid_t sessionPid) {
-  std::ostringstream task;
-  task << "handle fork of cleaner session for tape drive " << m_config.unitName;
-    
-  switch(getSession()->getState()) {
-  case castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_WAITFORK:
-    getSession()->setState(castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_RUNNING);
-    getSession()->setPid(sessionPid);
-    break;
-  default:
-    {   
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << getSession()->getState();
-      throw ex;
-    }
-  }
 }
 
 //-----------------------------------------------------------------------------
@@ -577,7 +695,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::forkedCleanerSession
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogueEntry::sessionSucceeded() {
   switch(m_state) {
-  case DRIVE_STATE_SESSIONRUNNING:
+  case DRIVE_STATE_RUNNING:
     m_state = DRIVE_STATE_UP;
     break;
   case DRIVE_STATE_WAITDOWN:
@@ -588,7 +706,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::sessionSucceeded() {
       castor::exception::Exception ex;
       ex.getMessage() <<
         "Failed to record tape session succeeded for session with pid " <<
-        getSession()->getPid() << ": Incompatible drive state: state=" <<
+        getSession().getPid() << ": Incompatible drive state: state=" <<
         drvState2Str(m_state);
       delete m_session;
       m_session = NULL;
@@ -606,7 +724,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::sessionSucceeded() {
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogueEntry::sessionFailed() {
   switch(m_state) {
-  case DRIVE_STATE_SESSIONRUNNING:
+  case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
     m_state = DRIVE_STATE_DOWN;
     break;
@@ -615,7 +733,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::sessionFailed() {
       castor::exception::Exception ex;
       ex.getMessage() <<
         "Failed to record tape session failed for session with pid " <<
-        getSession()->getPid() << ": Incompatible drive state: state=" <<
+        getSession().getPid() << ": Incompatible drive state: state=" <<
         drvState2Str(m_state);
       delete m_session;
       m_session = NULL;
@@ -667,7 +785,7 @@ castor::legacymsg::TapeStatDriveEntry
 uint32_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
   getUidForTapeStatDriveEntry() const throw() {
   switch(m_state) {
-  case DRIVE_STATE_SESSIONRUNNING:
+  case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
     return geteuid();
   default:
@@ -681,9 +799,9 @@ uint32_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
 uint32_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
   getJidForTapeStatDriveEntry() const throw() {
   switch(m_state) {
-  case DRIVE_STATE_SESSIONRUNNING:
+  case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
-    return getSession()->getPid();
+    return getSession().getPid();
   default:
     return 0;
   }
@@ -696,7 +814,7 @@ uint16_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
   getUpForTapeStatDriveEntry() const throw() {
   switch(m_state) {
   case DRIVE_STATE_UP:
-  case DRIVE_STATE_SESSIONRUNNING:
+  case DRIVE_STATE_RUNNING:
     return 1;
   default:
     return 0;
@@ -709,7 +827,7 @@ uint16_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
 uint16_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
   getAsnForTapeStatDriveEntry() const throw() {
   switch(m_state) {
-  case DRIVE_STATE_SESSIONRUNNING:
+  case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
     return 1;
   default:
@@ -722,7 +840,17 @@ uint16_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
 //------------------------------------------------------------------------------
 uint32_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
   getAsnTimeForTapeStatDriveEntry() const throw() {
-  return m_assignmentTime;
+  switch(m_state) {
+  case DRIVE_STATE_RUNNING:
+  case DRIVE_STATE_WAITDOWN:
+    try {
+      return m_session->getAssignmentTime();
+    } catch(...) {
+      return 0;
+    }
+  default:
+    return 0;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -731,9 +859,13 @@ uint32_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
 uint16_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
   getModeForTapeStatDriveEntry() const throw() {
   switch(m_state) {
-  case DRIVE_STATE_SESSIONRUNNING:
+  case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
-    return m_mode;
+    try {
+      return m_session->getMode();
+    } catch(...) {
+      return WRITE_DISABLE;
+    }
   default:
     return WRITE_DISABLE;
   }
@@ -752,7 +884,13 @@ std::string castor::tape::tapeserver::daemon::DriveCatalogueEntry::
 //------------------------------------------------------------------------------
 uint16_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
   getToBeMountedForTapeStatDriveEntry() const throw() {
-  return m_getToBeMountedForTapeStatDriveEntry;
+  switch(m_state) {
+  case DRIVE_STATE_RUNNING:
+  case DRIVE_STATE_WAITDOWN:
+    return m_session->tapeIsBeingMounted();
+  default:
+    return 0;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -760,7 +898,17 @@ uint16_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
 //------------------------------------------------------------------------------
 std::string castor::tape::tapeserver::daemon::DriveCatalogueEntry::
   getVidForTapeStatDriveEntry() const throw() {
-  return m_vid;
+  switch(m_state) {
+  case DRIVE_STATE_RUNNING:
+  case DRIVE_STATE_WAITDOWN:
+    try {
+      return m_session->getVid();
+    } catch(...) {
+      return "";
+    }
+  default:
+    return "";
+  }
 }
 
 //------------------------------------------------------------------------------

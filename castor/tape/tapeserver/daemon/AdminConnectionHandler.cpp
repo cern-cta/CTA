@@ -188,8 +188,8 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
 
   const std::string unitName(body.drive);
   
-  DriveCatalogueEntry *drive = m_driveCatalogue.findDrive(unitName);
-  const utils::DriveConfig &driveConfig = drive->getConfig();
+  DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(unitName);
+  const utils::DriveConfig &driveConfig = drive.getConfig();
 
   log::Param params[] = {
     log::Param("unitName", unitName),
@@ -198,18 +198,19 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
   switch(body.status) {
   case CONF_UP:
     m_vdqm.setDriveUp(m_hostName, unitName, driveConfig.dgn);
-    drive->configureUp();
+    drive.configureUp();
     m_log(LOG_INFO, "Drive configured up", params);
     break;
   case CONF_DOWN:
     m_vdqm.setDriveDown(m_hostName, unitName, driveConfig.dgn);
-    drive->configureDown();
+    drive.configureDown();
     m_log(LOG_INFO, "Drive configured down", params);
     break;
   default:
     {
       castor::exception::Exception ex;
-      ex.getMessage() << "Failed to configure drive. Reason: wrong drive status requested: " << body.status;
+      ex.getMessage() << "Failed to configure drive"
+        ": Unexpected drive status requested: status=" << body.status;
       throw ex;
     }
   }
@@ -311,8 +312,8 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
   for(std::list<std::string>::const_iterator itor = unitNames.begin();
     itor!=unitNames.end() and i<CA_MAXNBDRIVES; itor++) {
     const std::string &unitName = *itor;
-    const DriveCatalogueEntry * drive = m_driveCatalogue.findDrive(unitName);
-    body.drives[i] = drive->getTapeStatDriveEntry();
+    const DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(unitName);
+    body.drives[i] = drive.getTapeStatDriveEntry();
     i++;
   }
   

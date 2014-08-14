@@ -21,43 +21,91 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/common/CastorConfiguration.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogueLabelSession.hpp"
+#include "h/rmc_constants.h"
+#include "h/Ctape_constants.h"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::DriveCatalogueLabelSession(
-        const castor::tape::tapeserver::daemon::DriveCatalogueSession::SessionState state,
-        const castor::legacymsg::TapeLabelRqstMsgBody labelJob,
-        const int labelCmdConnection):
-DriveCatalogueSession(state), m_labelJob(labelJob), m_labelCmdConnection(labelCmdConnection) {
-
+castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+  DriveCatalogueLabelSession(
+  log::Logger &log,
+  ProcessForkerProxy &processForker,
+  const tape::utils::DriveConfig &driveConfig,
+  const castor::legacymsg::TapeLabelRqstMsgBody labelJob,
+  const int labelCmdConnection):
+  m_assignmentTime(time(0)),
+  m_log(log),
+  m_processForker(processForker),
+  m_driveConfig(driveConfig),
+  m_labelJob(labelJob),
+  m_labelCmdConnection(labelCmdConnection) {
 }
 
 //------------------------------------------------------------------------------
-// setLabelJob
+// getAssignmentTime
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::setLabelJob(const castor::legacymsg::TapeLabelRqstMsgBody labelJob){
-  m_labelJob = labelJob;
+time_t castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+  getAssignmentTime() const throw() {
+  return m_assignmentTime;
+}
+
+//------------------------------------------------------------------------------
+// forkLabelSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+  forkLabelSession() {
+  try {
+    const unsigned short rmcPort =
+      common::CastorConfiguration::getConfig().getConfEntInt(
+        "RMC", "PORT", (unsigned short)RMC_PORT, &m_log);
+    m_pid = m_processForker.forkLabel(m_driveConfig, m_labelJob, rmcPort);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to fork label session: unitName=" <<
+      m_driveConfig.unitName << ": " << ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
 // getLabelJob
 //------------------------------------------------------------------------------
-castor::legacymsg::TapeLabelRqstMsgBody castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::getLabelJob() const{
+castor::legacymsg::TapeLabelRqstMsgBody castor::tape::tapeserver::daemon::
+  DriveCatalogueLabelSession::getLabelJob() const throw() {
   return m_labelJob;
-}
-    
-//------------------------------------------------------------------------------
-// setLabelCmdConnection
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::setLabelCmdConnection(const int labelCmdConnection){
-  m_labelCmdConnection = labelCmdConnection;
 }
 
 //------------------------------------------------------------------------------
+// getVid
+//------------------------------------------------------------------------------
+std::string castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+  getVid() const throw() {
+  return m_labelJob.vid;
+}
+
+//------------------------------------------------------------------------------
+// getMode
+//------------------------------------------------------------------------------
+int castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::getMode()
+  const throw() {
+  return WRITE_ENABLE;
+}
+
+//-----------------------------------------------------------------------------
+// tapeIsBeingMounted
+//-----------------------------------------------------------------------------
+bool castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+  tapeIsBeingMounted() const throw() {
+  return false;
+}
+    
+//------------------------------------------------------------------------------
 // getLabelCmdConnection
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::getLabelCmdConnection() const{
+int castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+  getLabelCmdConnection() const {
   return m_labelCmdConnection;
 }

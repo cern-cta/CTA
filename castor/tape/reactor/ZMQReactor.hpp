@@ -92,6 +92,14 @@ private:
     HandlerMap;
 
   /**
+   * Throws a cator::exception::Exception if a handler has already been
+   * registered for the specified poll item.
+   *
+   * @prama item The poll item.
+   */
+  void checkDoubleRegistration(const zmq_pollitem_t &item) const;
+
+  /**
    * Builds the vector of file descriptors to be passed to poll().
    *
    * Please note that the return type is an std::vector because we can assume

@@ -33,6 +33,7 @@
 #include "castor/messages/ProcessExited.pb.h"
 #include "castor/messages/ReturnValue.pb.h"
 #include "castor/messages/StopProcessForker.pb.h"
+#include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerFrame.hpp"
 
 #include <google/protobuf/message.h>
@@ -165,8 +166,11 @@ public:
    *
    * @param fd The file descriptor to be written to.
    * @param msg The message to sent as the payload of the frame.
+   * @param log Optional parameter: Object representing the API of the CASTOR
+   * logging system.
    */
-  static void writeFrame(const int fd, const messages::Exception &msg);
+  static void writeFrame(const int fd, const messages::Exception &msg,
+    log::Logger *const log = NULL);
 
   /**
    * Writes a frame with the specified message as its payload to the specified
@@ -174,8 +178,11 @@ public:
    *
    * @param fd The file descriptor to be written to.
    * @param msg The message to sent as the payload of the frame.
+   * @param log Optional parameter: Object representing the API of the CASTOR
+   * logging system.
    */
-  static void writeFrame(const int fd, const messages::ForkCleaner &msg);
+  static void writeFrame(const int fd, const messages::ForkCleaner &msg,
+    log::Logger *const log = NULL);
 
   /**
    * Writes a frame with the specified message as its payload to the specified
@@ -183,8 +190,11 @@ public:
    *
    * @param fd The file descriptor to be written to.
    * @param msg The message to sent as the payload of the frame.
+   * @param log Optional parameter: Object representing the API of the CASTOR
+   * logging system.
    */
-  static void writeFrame(const int fd, const messages::ForkDataTransfer &msg);
+  static void writeFrame(const int fd, const messages::ForkDataTransfer &msg,
+    log::Logger *const log = NULL);
 
   /**
    * Writes a frame with the specified message as its payload to the specified
@@ -192,8 +202,11 @@ public:
    *
    * @param fd The file descriptor to be written to.
    * @param msg The message to sent as the payload of the frame.
+   * @param log Optional parameter: Object representing the API of the CASTOR
+   * logging system.
    */
-  static void writeFrame(const int fd, const messages::ForkLabel &msg);
+  static void writeFrame(const int fd, const messages::ForkLabel &msg,
+    log::Logger *const log = NULL);
 
   /**
    * Writes a frame with the specified message as its payload to the specified
@@ -201,8 +214,11 @@ public:
    *
    * @param fd The file descriptor to be written to.
    * @param msg The message to sent as the payload of the frame.
+   * @param log Optional parameter: Object representing the API of the CASTOR
+   * logging system.
    */
-  static void writeFrame(const int fd, const messages::ProcessCrashed &msg);
+  static void writeFrame(const int fd, const messages::ProcessCrashed &msg,
+    log::Logger *const log = NULL);
 
   /**
    * Writes a frame with the specified message as its payload to the specified
@@ -210,8 +226,11 @@ public:
    *
    * @param fd The file descriptor to be written to.
    * @param msg The message to sent as the payload of the frame.
+   * @param log Optional parameter: Object representing the API of the CASTOR
+   * logging system.
    */
-  static void writeFrame(const int fd, const messages::ProcessExited &msg);
+  static void writeFrame(const int fd, const messages::ProcessExited &msg,
+    log::Logger *const log = NULL);
 
   /**
    * Writes a frame with the specified message as its payload to the specified
@@ -219,16 +238,22 @@ public:
    *
    * @param fd The file descriptor to be written to.
    * @param msg The message to sent as the payload of the frame.
+   * @param log Optional parameter: Object representing the API of the CASTOR
+   * logging system.
    */
-  static void writeFrame(const int fd, const messages::StopProcessForker &msg);
+  static void writeFrame(const int fd, const messages::StopProcessForker &msg,
+    log::Logger *const log = NULL);
 
   /**
    * Writes the specified frame to the specified file descriptor.
    *
    * @param fd The file descriptor to be written to.
    * @param frame The frame.
+   * @param log Optional parameter: Object representing the API of the CASTOR
+   * logging system.
    */
-  static void writeFrame(const int fd, const ProcessForkerFrame &frame);
+  static void writeFrame(const int fd, const ProcessForkerFrame &frame,
+    log::Logger *const log = NULL);
 
   /**
    * Reads either a good-day reply-message or an exception message from the
@@ -241,11 +266,13 @@ public:
    * converted into a C++ exception and thrown.
    *
    * @param fd The file descriptor to be read from.
+   * @param timeout Timeout in seconds.
    * @param msg Output parameter: The good-day reply-message in the form of a
    * Google protocol-buffer.
    */
-  template<typename T> static void readReplyOrEx(const int fd, T &msg) {
-    const ProcessForkerFrame frame = readFrame(fd);
+  template<typename T> static void readReplyOrEx(const int fd,
+    const int timeout, T &msg) {
+    const ProcessForkerFrame frame = readFrame(fd, timeout);
 
     // Throw an exception if the ProcessForker replied with one
     if(messages::MSG_TYPE_EXCEPTION == frame.type) {
@@ -268,9 +295,10 @@ public:
    * Reads a frame from the specified file descriptor.
    *
    * @param fd The file descriptor to be read from.
+   * @param timeout Timeout in seconds.
    * @return The frame.
    */
-  static ProcessForkerFrame readFrame(const int fd);
+  static ProcessForkerFrame readFrame(const int fd, const int timeout);
 
   /**
    * Parses the payload of the specified frame.
@@ -377,9 +405,11 @@ private:
    * @param fd The file descriptor to be written to.
    * @param type The type of message.
    * @param msg The message.
+   * @param log Optional parameter: Object representing the API of the CASTOR
+   * logging system.
    */
   static void writeFrame(const int fd, const messages::MsgType type,
-    const google::protobuf::Message &msg);
+    const google::protobuf::Message &msg, log::Logger *const log = NULL);
 
   /**
    * Writes a frame header to the specfied file descriptor.
@@ -388,10 +418,13 @@ private:
    * @param msgType The type of the message being sent in the payload of the
    * frame.
    * @param payloadLen The length of the frame payload in bytes.
+   * @param log Optional parameter: Object representing the API of the CASTOR
+   * logging system.
    */
   static void writeFrameHeader(const int fd,
     const messages::MsgType msgType,
-    const uint32_t payloadLen);
+    const uint32_t payloadLen,
+    log::Logger *const log = NULL);
 
   /**
    * Writes the specified unsigned 32-bit integer to the specified file
@@ -408,9 +441,11 @@ private:
    *
    * @param fd The file descriptor to be written to.
    * @param msg The message.
+   * @param log Optional parameter: Object representing the API of the CASTOR
+   * logging system.
    */
   static void writeFramePayload(const int fd,
-    const google::protobuf::Message &msg);
+    const google::protobuf::Message &msg, log::Logger *const log = NULL);
 
   /**
    * Writes the specified message as the payload of a frame to the specified
@@ -419,49 +454,58 @@ private:
    * @param fd The file descriptor to be written to.
    * @param msg The message.
    */
-  static void writeFramePayload(const int fd, const std::string &msg);
+  static void writeFramePayload(const int fd, const std::string &msg,
+    log::Logger *const log = NULL);
 
   /**
    * Writes the specified string to the specified file descriptor.
    *
    * @param fd The file descriptor to be written to.
    * @param str The string.
+   * @param log Optional parameter: Object representing the API of the CASTOR
+   * logging system.
    */
-  static void writeString(const int fd, const std::string &str);
+  static void writeString(const int fd, const std::string &str,
+    log::Logger *const log = NULL);
 
   /**
    * Reads the payload-type field of a frame from the specified file descriptor.
    *
    * @param fd The file descriptor to be read from.
+   * @param timeout The timeout in seconds.
    * @return The value of the payload-type field.
    */
-  static messages::MsgType readPayloadType(const int fd);
+  static messages::MsgType readPayloadType(const int fd, const int timeout);
 
   /**
    * Reads the payload-length field of a frame from the specified file
    * descriptor.
    *
    * @param fd The file descriptor to be read from.
+   * @param timeout The timeout in seconds.
    * @return The value of the payload-length field.
    */
-  static uint32_t readPayloadLen(const int fd);
+  static uint32_t readPayloadLen(const int fd, const int timeout);
 
   /**
    * Reads an unsigned 32-bit integer from the specified file descriptor.
    *
    * @param fd The file descriptor to be read from.
+   * @param timeout The timeout in seconds.
    * @return The unsigned 32-bit integer.
    */
-  static uint32_t readUint32(const int fd);
+  static uint32_t readUint32(const int fd, const int timeout);
 
   /**
    * Reads the payload of a frame from the specified file descriptor.
    *
    * @param fd The file descriptor to be read from.
+   * @param timeout The timeout in seconds.
    * @param payloadLen The length of the payload in bytes.
    * @return The payload as a string.
    */
-  static std::string readPayload(const int fd, const ssize_t payloadLen);
+  static std::string readPayload(const int fd, const int timeout,
+    const ssize_t payloadLen);
 
 }; // class ProcessForkerUtils
 

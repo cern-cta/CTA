@@ -701,8 +701,7 @@ bool castor::io::readBytesFromCloseable(
   const int   socketFd,
   const int   timeout,
   const int   nbBytes,
-  char *const buf)
-   {
+  char *const buf) {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {

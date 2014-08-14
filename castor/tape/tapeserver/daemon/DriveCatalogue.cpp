@@ -28,6 +28,22 @@
 #include <time.h>
 
 //-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::DriveCatalogue::DriveCatalogue(
+  log::Logger &log,
+  const DataTransferSession::CastorConf &dataTransferConfig,
+  ProcessForkerProxy &processForker,
+  legacymsg::VdqmProxy &vdqm,
+  const std::string &hostName):
+  m_log(log),
+  m_dataTransferConfig(dataTransferConfig),
+  m_processForker(processForker),
+  m_vdqm(vdqm),
+  m_hostName(hostName) {
+}
+
+//-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogue::~DriveCatalogue() throw() {
@@ -81,7 +97,8 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::enterDriveConfig(
   // If the drive is not in the catalogue
   if(m_drives.end() == itor) {
     // Insert it
-    m_drives[driveConfig.unitName] = new DriveCatalogueEntry(driveConfig,
+    m_drives[driveConfig.unitName] = new DriveCatalogueEntry(m_log,
+      m_processForker, m_vdqm, m_hostName, driveConfig, m_dataTransferConfig,
       DriveCatalogueEntry::DRIVE_STATE_DOWN);
   // Else the drive is already in the catalogue
   } else {
@@ -142,122 +159,77 @@ std::list<std::string>
 }
 
 //-----------------------------------------------------------------------------
-// getUnitNamesWaitingForTransferFork
-//-----------------------------------------------------------------------------
-std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNamesWaitingForTransferFork() const {
-  std::list<std::string> unitNames;
-
-  for(DriveMap::const_iterator itor = m_drives.begin();
-    itor != m_drives.end(); itor++) {
-    const std::string &unitName = itor->first;
-    const DriveCatalogueEntry &drive = *(itor->second);
-    const utils::DriveConfig &driveConfig = drive.getConfig();
-
-    // Sanity check
-    if(unitName != driveConfig.unitName) {
-      // Should never get here
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to get unit names of drives waiting for forking a transfer session" <<
-        ": unit name mismatch: unitName=" << unitName <<
-        " driveConfig.unitName=" <<  driveConfig.unitName;
-      throw ex;
-    }
-
-    if(DriveCatalogueEntry::SESSION_TYPE_DATATRANSFER==drive.getSessionType()
-       && DriveCatalogueSession::SESSION_STATE_WAITFORK == drive.getSessionState()) {
-      unitNames.push_back(itor->first);
-    }
-  }
-
-  return unitNames;
-}
-
-//-----------------------------------------------------------------------------
-// getUnitNamesWaitingForLabelFork
-//-----------------------------------------------------------------------------
-std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::
-  getUnitNamesWaitingForLabelFork() const {
-  std::list<std::string> unitNames;
-
-  for(DriveMap::const_iterator itor = m_drives.begin();
-    itor != m_drives.end(); itor++) {
-    const std::string &unitName = itor->first;
-    const DriveCatalogueEntry &drive = *(itor->second);
-    const utils::DriveConfig &driveConfig = drive.getConfig();
-
-    // Sanity check
-    if(unitName != driveConfig.unitName) {
-      // Should never get here
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to get unit names of drives waiting for forking a label session" <<
-        ": unit name mismatch: unitName=" << unitName <<
-        " driveConfig.unitName=" <<  driveConfig.unitName;
-      throw ex;
-    }
-
-    if(DriveCatalogueEntry::SESSION_TYPE_LABEL==drive.getSessionType() &&
-      DriveCatalogueSession::SESSION_STATE_WAITFORK == drive.getSessionState()) {
-      unitNames.push_back(itor->first);
-    }
-  }
-
-  return unitNames;
-}
-
-//-----------------------------------------------------------------------------
-// getUnitNamesWaitingForCleanerFork
-//-----------------------------------------------------------------------------
-std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::
-  getUnitNamesWaitingForCleanerFork() const {
-  std::list<std::string> unitNames;
-
-  for(DriveMap::const_iterator itor = m_drives.begin();
-    itor != m_drives.end(); itor++) {
-    const std::string &unitName = itor->first;
-    const DriveCatalogueEntry &drive = *(itor->second);
-    const utils::DriveConfig &driveConfig = drive.getConfig();
-
-    // Sanity check
-    if(unitName != driveConfig.unitName) {
-      // Should never get here
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to get unit names of drives waiting for forking a cleaner session" <<
-        ": unit name mismatch: unitName=" << unitName <<
-        " driveConfig.unitName=" <<  driveConfig.unitName;
-      throw ex;
-    }
-
-    if(DriveCatalogueEntry::SESSION_TYPE_CLEANER==drive.getSessionType() &&
-      DriveCatalogueSession::SESSION_STATE_WAITFORK == drive.getSessionState()) {
-      unitNames.push_back(itor->first);
-    }
-  }
-
-  return unitNames;
-}
-
-//-----------------------------------------------------------------------------
-// findConstDrive
+// findDrive
 //-----------------------------------------------------------------------------
 const castor::tape::tapeserver::daemon::DriveCatalogueEntry
-  *castor::tape::tapeserver::daemon::DriveCatalogue::findDrive(
+  &castor::tape::tapeserver::daemon::DriveCatalogue::findDrive(
     const std::string &unitName) const {
+  std::ostringstream task;
+  task << "find tape drive in catalogue by unit name: unitName=" << unitName;
 
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to find tape-drive in catalogue: " <<
-      ": No entry for tape-drive " << unitName;
+    ex.getMessage() << "Failed to " << task.str() << ": Entry does not exist";
     throw ex;
   }
-  const DriveCatalogueEntry * const drive = itor->second;
-  const utils::DriveConfig &driveConfig = drive->getConfig();
+
+  if(NULL == itor->second) {
+    // Should never get here
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << task <<
+      ": Pointer to drive entry is unexpectedly NULL";
+    throw ex;
+  }
+
+  const DriveCatalogueEntry &drive = *(itor->second);
+  const utils::DriveConfig &driveConfig = drive.getConfig();
+
+  // Sanity check
+  if(unitName != driveConfig.unitName) {
+    // Should never get here
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << task <<
+      ": Found inconsistent entry in tape-drive catalogue"
+      ": Unit name mismatch: actual=" << driveConfig.unitName;
+    throw ex;
+  }
+
+  return drive;
+}
+
+//-----------------------------------------------------------------------------
+// findDrive
+//-----------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::DriveCatalogueEntry
+  &castor::tape::tapeserver::daemon::DriveCatalogue::findDrive(
+  const std::string &unitName) {
+  std::ostringstream task;
+  task << "find tape drive in catalogue by unit name: unitName=" << unitName;
+
+  DriveMap::iterator itor = m_drives.find(unitName);
+  if(m_drives.end() == itor) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << task.str() << ": Entry does not exist";
+    throw ex;
+  }
+
+  if(NULL == itor->second) {
+    // Should never get here
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << task <<
+      ": Pointer to drive entry is unexpectedly NULL";
+    throw ex;
+  }
+
+  DriveCatalogueEntry &drive = *(itor->second);
+  const utils::DriveConfig &driveConfig = drive.getConfig();
 
   // Sanity check
   if(unitName != driveConfig.unitName) {
     // This should never happen
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to find tape-drive in catalogue: " <<
+    ex.getMessage() << "Failed to " << task <<
       ": Found inconsistent entry in tape-drive catalogue"
       ": Unit name mismatch: expected=" << unitName <<
       " actual=" << driveConfig.unitName;
@@ -268,16 +240,29 @@ const castor::tape::tapeserver::daemon::DriveCatalogueEntry
 }
 
 //-----------------------------------------------------------------------------
-// findConstDrive
+// findDrive
 //-----------------------------------------------------------------------------
 const castor::tape::tapeserver::daemon::DriveCatalogueEntry
-  *castor::tape::tapeserver::daemon::DriveCatalogue::findDrive(
+  &castor::tape::tapeserver::daemon::DriveCatalogue::findDrive(
     const pid_t sessionPid) const {
+  std::ostringstream task;
+  task << "find tape drive in catalogue by session pid: sessionPid=" <<
+    sessionPid;
 
-  for(DriveMap::const_iterator i = m_drives.begin(); i!=m_drives.end(); i++) {
-    const DriveCatalogueEntry * const drive = i->second;
+  for(DriveMap::const_iterator itor = m_drives.begin(); itor != m_drives.end();
+    itor++) {
+
+    if(NULL == itor->second) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to " << task.str() <<
+        ": Encountered NULL drive-entry pointer: unitName=" <<  itor->first;
+      throw ex;
+    }
+
+    const DriveCatalogueEntry &drive = *(itor->second);
     try {
-      if(sessionPid == drive->getSessionPid()) {
+      if(sessionPid == drive.getSessionPid()) {
         return drive;
       }
     } catch(...) {
@@ -286,8 +271,7 @@ const castor::tape::tapeserver::daemon::DriveCatalogueEntry
   }
 
   castor::exception::Exception ex;
-  ex.getMessage() << "Failed to find tape-drive in catalogue: " <<
-    ": No drive associated with session process-ID " << sessionPid;
+  ex.getMessage() << "Failed to " << task.str() << ": Entry does not exist";
   throw ex;
 }
 
@@ -295,44 +279,26 @@ const castor::tape::tapeserver::daemon::DriveCatalogueEntry
 // findDrive
 //-----------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueEntry
-  *castor::tape::tapeserver::daemon::DriveCatalogue::findDrive(
-    const std::string &unitName) {
-
-  DriveMap::iterator itor = m_drives.find(unitName);
-  if(m_drives.end() == itor) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to find tape-drive in catalogue: " <<
-      "No entry for tape-drive " << unitName;
-    throw ex;
-  }
-  DriveCatalogueEntry * drive = itor->second;
-  const utils::DriveConfig &driveConfig = drive->getConfig();
-
-  // Sanity check
-  if(unitName != driveConfig.unitName) {
-    // This should never happen
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to find tape-drive in catalogue" <<
-      ": Found inconsistent entry in tape-drive catalogue"
-      ": Unit name mismatch: expected=" << unitName <<
-      " actual=" << driveConfig.unitName;
-    throw ex;
-  }
-
-  return drive;
-}
-
-//-----------------------------------------------------------------------------
-// findDrive
-//-----------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueEntry
-  *castor::tape::tapeserver::daemon::DriveCatalogue::findDrive(
+  &castor::tape::tapeserver::daemon::DriveCatalogue::findDrive(
     const pid_t sessionPid) {
+  std::ostringstream task;
+  task << "find tape drive in catalogue by session pid: sessionPid=" <<
+    sessionPid;
 
-  for(DriveMap::iterator i = m_drives.begin(); i!=m_drives.end(); i++) {
-    DriveCatalogueEntry * drive = i->second;
+  for(DriveMap::iterator itor = m_drives.begin(); itor != m_drives.end();
+    itor++) {
+
+    if(NULL == itor->second) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to " << task.str() <<
+        ": Encountered NULL drive-entry pointer: unitName=" <<  itor->first;
+      throw ex;
+    }
+
+    DriveCatalogueEntry &drive = *(itor->second);
     try {
-      if(sessionPid == drive->getSessionPid()) {
+      if(sessionPid == drive.getSessionPid()) {
         return drive;
       }
     } catch(...) {
@@ -341,7 +307,6 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry
   }
 
   castor::exception::Exception ex;
-  ex.getMessage() << "Failed to find tape-drive in catalogue: " <<
-    ": No drive associated with session process-ID " << sessionPid;
+  ex.getMessage() << "Failed to " << task.str() << ": Entry does not exist";
   throw ex;
 }

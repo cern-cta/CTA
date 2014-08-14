@@ -126,16 +126,18 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   handleMsg() {
   ProcessForkerFrame frame;
   try {
-    frame = ProcessForkerUtils::readFrame(m_fd);
+    const int timeout = 10; // Timeout in seconds
+    frame = ProcessForkerUtils::readFrame(m_fd, timeout);
   } catch(castor::exception::Exception &ne) {
     log::Param params[] = {log::Param("message", ne.getMessage().str())};
-    m_log(LOG_ERR, "Failed to handle message", params);
+    m_log(LOG_ERR, "ProcessForkerConnectionHandler failed to handle message",
+      params);
     sleep(1); // Sleep a moment to avoid going into a tight error loop
   }
 
   log::Param params[] = {
     log::Param("type", messages::msgTypeToString(frame.type)),
-    log::Param("len", frame.payload.length())};
+    log::Param("payloadLen", frame.payload.length())};
   m_log(LOG_INFO, "ProcessForkerConnectionHandler handling a message", params);
 
   dispatchMsgHandler(frame);
@@ -179,8 +181,8 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     m_log(LOG_INFO,
       "ProcessForkerConnectionHandler handling ProcessCrashed message", params);
 
-    DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(msg.pid());
-    dispatchCrashedProcessHandler(*drive, msg);
+    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(msg.pid());
+    dispatchCrashedProcessHandler(drive, msg);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle ProcessCrashed message: " <<
@@ -298,11 +300,11 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     m_log(LOG_INFO, 
       "ProcessForkerConnectionHandler handling ProcessExited message", params);
 
-    DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(msg.pid());
-    dispatchExitedProcessHandler(*drive, msg);
+    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(msg.pid());
+    dispatchExitedProcessHandler(drive, msg);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle ProcessCrashed message: " <<
+    ex.getMessage() << "Failed to handle ProcessExited message: " <<
       ne.getMessage().str();
     throw ex;
   }
@@ -344,7 +346,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
 
   try {
     if(0 == msg.exitcode()) {
-      const std::string vid = drive.getVid();
+      const std::string vid = drive.getTransferSession().getVid();
       drive.sessionSucceeded();
       m_log(LOG_INFO, "Data-transfer session succeeded", params);
       requestVdqmToReleaseDrive(drive.getConfig(), msg.pid());
@@ -374,9 +376,9 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
 
   try {
     if(0 == msg.exitcode()) {
+      const std::string &vid = drive.getCleanerSession().getVid();
       drive.sessionSucceeded();
       m_log(LOG_INFO, "Cleaner session succeeded", params);
-      const std::string &vid = drive.getVid();
       requestVdqmToReleaseDrive(drive.getConfig(), msg.pid());
       notifyVdqmTapeUnmounted(drive.getConfig(), vid, msg.pid());
     } else {

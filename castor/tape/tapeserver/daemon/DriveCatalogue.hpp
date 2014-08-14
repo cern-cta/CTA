@@ -26,9 +26,12 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
+#include "castor/legacymsg/VdqmProxy.hpp"
+#include "castor/log/Logger.hpp"
 #include "castor/tape/utils/DriveConfigMap.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogueEntry.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 
 #include <map>
 #include <string>
@@ -45,6 +48,23 @@ namespace daemon     {
  */
 class DriveCatalogue {
 public:
+
+  /**
+   * Constructor.
+   *
+   * @param log Object representing the API of the CASTOR logging system.
+   * @param dataTransferConfig The configuration of a data-transfer session.
+   * @param processForker Proxy object representing the ProcessForker.
+   * @param vdqm Proxy object representing the vdqmd daemon.
+   * @param hostName The name of the host on which the daemon is running.  This
+   * name is needed to fill in messages to be sent to the vdqmd daemon.
+   */
+  DriveCatalogue(
+    log::Logger &log,
+    const DataTransferSession::CastorConf &dataTransferConfig,
+    ProcessForkerProxy &processForker,
+    legacymsg::VdqmProxy &m_vdqm,
+    const std::string &hostName);
 
   /**
    * Destructor.
@@ -69,7 +89,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  const DriveCatalogueEntry *findDrive(const std::string &unitName)
+  const DriveCatalogueEntry &findDrive(const std::string &unitName)
     const;
 
   /**
@@ -80,7 +100,7 @@ public:
    *
    * @param sessionPid The process ID of the session.
    */
-  const DriveCatalogueEntry *findDrive(const pid_t sessionPid) const;
+  const DriveCatalogueEntry &findDrive(const pid_t sessionPid) const;
 
   /**
    * Returns a reference to the tape-drive entry corresponding to the tape
@@ -90,7 +110,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  DriveCatalogueEntry *findDrive(const std::string &unitName);
+  DriveCatalogueEntry &findDrive(const std::string &unitName);
 
   /**
    * Returns a reference to the tape-drive entry associated with the
@@ -100,7 +120,7 @@ public:
    *
    * @param sessionPid The process ID of the session.
    */
-  DriveCatalogueEntry *findDrive(const pid_t sessionPid);
+  DriveCatalogueEntry &findDrive(const pid_t sessionPid);
 
   /**
    * Returns an unordered list of the unit names of all of the tape drives
@@ -116,33 +136,36 @@ public:
    *
    * @return Unordered list of the unit names.
    */
-  std::list<std::string> getUnitNames(const DriveCatalogueEntry::DriveState state) const;
+  std::list<std::string> getUnitNames(const DriveCatalogueEntry::DriveState
+    state) const;
   
-  /**
-   * Returns an unordered list of the unit names of the tape drives waiting for
-   * forking a transfer session.
-   *
-   * @return Unordered list of the unit names.
-   */
-  std::list<std::string> getUnitNamesWaitingForTransferFork() const;
-  
-  /**
-   * Returns an unordered list of the unit names of the tape drives waiting for
-   * forking a label session.
-   *
-   * @return Unordered list of the unit names.
-   */
-  std::list<std::string> getUnitNamesWaitingForLabelFork() const;
-  
-  /**
-   * Returns an unordered list of the unit names of the tape drives waiting for
-   * forking a cleaner session.
-   *
-   * @return Unordered list of the unit names.
-   */
-  std::list<std::string> getUnitNamesWaitingForCleanerFork() const;
-
 private:
+
+  /**
+   * Object representing the API of the CASTOR logging system.
+   */
+  log::Logger &m_log;
+
+  /**
+   * The configuration of a data-transfer session.
+   */
+  const DataTransferSession::CastorConf m_dataTransferConfig;
+
+  /**
+   * Proxy object representing the ProcessForker.
+   */
+  ProcessForkerProxy &m_processForker;
+
+  /**
+   * Proxy object representing the vdqmd daemon.
+   */
+  legacymsg::VdqmProxy &m_vdqm;
+
+  /**
+   * The name of the host on which the daemon is running.  This name is
+   * needed to fill in messages to be sent to the vdqmd daemon.
+   */
+  const std::string m_hostName;
 
   /**
    * Type that maps the unit name of a tape drive to the catalogue entry of

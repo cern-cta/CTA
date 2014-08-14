@@ -86,8 +86,8 @@ bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
     const legacymsg::RtcpJobRqstMsgBody job = readJobMsg();
     logVdqmJobReception(job);
     writeJobReplyMsg();
-    DriveCatalogueEntry *drive = m_driveCatalogue.findDrive(job.driveUnit);
-    drive->receivedVdqmJob(job);
+    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(job.driveUnit);
+    drive.receivedVdqmJob(job);
   } catch(castor::exception::Exception &ex) {
     params.push_back(log::Param("message", ex.getMessage().str()));
     m_log(LOG_ERR, "Failed to handle vdqm-connection event", params);

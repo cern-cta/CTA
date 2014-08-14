@@ -26,7 +26,13 @@
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeStatDriveEntry.hpp"
+#include "castor/legacymsg/VdqmProxy.hpp"
+#include "castor/log/Logger.hpp"
+#include "castor/tape/tapeserver/daemon/DriveCatalogueCleanerSession.hpp"
+#include "castor/tape/tapeserver/daemon/DriveCatalogueLabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogueSession.hpp"
+#include "castor/tape/tapeserver/daemon/DriveCatalogueTransferSession.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 #include "castor/tape/utils/DriveConfig.hpp"
 
 #include <iostream>
@@ -62,21 +68,14 @@ public:
    *     |    send VDQM_UNIT_UP     ------------------                     |
    *      ------------------------>|       UP         |                    |
    *                                ------------------                     |
-   *                                |  |             ^                     |
-   *              -----------------    |             |                     |
-   *             | label job           | vdqm job    |                     |
-   *             |                     |             |                     |
-   *             v                     v             |                     |
-   *      ---------------      ------------------    | SIGCHLD             |
-   *     | WAITFORKLABEL |    | WAITFORKTRANSFER |   | [success]           |
-   *      ---------------      ------------------    |                     |
-   *             |                     |             |                     |
-   *             |                     |             |                     |
-   *             | forked              | forked      |                     |
-   *             |                     |             |                     |
-   *             |                     v             |                     |
-   *             |                  ------------------    SIGCHLD [fail]   |
-   *              ---------------->|     RUNNING      |--------------------|
+   *                                |                ^                     |
+   *                                |                |                     |
+   *                                | received job   | SIGCHLD             |
+   *                                |                | [success]           |
+   *                                |                |                     |
+   *                                v                |                     |
+   *                                ------------------    SIGCHLD [fail]   |
+   *                               |     RUNNING      |--------------------|
    *                                ------------------                     |
    *                                |                ^                     |
    *                                |                |                     |
@@ -98,13 +97,7 @@ public:
    *
    * The tape daemon can receive a job from the vdqmd daemon for a tape drive
    * when the state of that drive is DRIVE_STATE_UP.  On reception of the job
-   * the daemon prepares to fork a child process and enters the
-   * DRIVE_STATE_WAITFORKTRANSFER state.
-   *
-   * The DRIVE_STATE_WAITFORKTRANSFER state allows the object responsible for
-   * handling the connection from the vdqmd daemon (an instance of
-   * VdqmConnectionHandler) to delegate the task of forking a data-transfer
-   * session.
+   * the daemon has the ProcessForker fork a child process.
    *
    * Once the child process is forked the drive enters the DRIVE_STATE_RUNNING
    * state.  The child process is responsible for running a data-transfer
@@ -136,7 +129,7 @@ public:
     DRIVE_STATE_INIT,
     DRIVE_STATE_DOWN,
     DRIVE_STATE_UP,
-    DRIVE_STATE_SESSIONRUNNING,
+    DRIVE_STATE_RUNNING,
     DRIVE_STATE_WAITDOWN};
 
   /**
@@ -156,9 +149,9 @@ public:
    */
   enum SessionType {
     SESSION_TYPE_NONE,
+    SESSION_TYPE_CLEANER,
     SESSION_TYPE_DATATRANSFER,
-    SESSION_TYPE_LABEL,
-    SESSION_TYPE_CLEANER};
+    SESSION_TYPE_LABEL};
 
   /**
    * Always returns a string representation of the specified session type.
@@ -171,28 +164,32 @@ public:
   static const char *sessionType2Str(const SessionType sessionType) throw();
 
   /**
-   * Default constructor that initializes all strings to the empty string,
-   * all integers to zero, all file descriptors to -1, all lists to empty,
-   * the drive state to DRIVE_STATE_INIT and the sessionType to
-   * SESSION_TYPE_NONE.
-   */
-  DriveCatalogueEntry() throw();
-  
-  /**
-   * Destructor
-   */
-  ~DriveCatalogueEntry() throw();
-
-  /**
    * Constructor that except for its parameters, initializes all strings to
    * the empty string, all integers to zero, all file descriptors to -1,
    * all lists to the emptylist, and the sessionType to SESSION_TYPE_NONE.
    *
+   * @param log Object representing the API of the CASTOR logging system.
+   * @param processForker Proxy object representing the ProcessForker.
+   * @param vdqm Proxy object representing the vdqmd daemon.
+   * @param hostName The name of the host on which the daemon is running.  This
+   * name is needed to fill in messages to be sent to the vdqmd daemon.
    * @param config The configuration of the tape drive.
+   * @param dataTransferConfig The configuration of a data-transfer session.
    * @param state The initial state of the tape drive.
    */
-  DriveCatalogueEntry(const utils::DriveConfig &config,
+  DriveCatalogueEntry(
+    log::Logger &log,
+    ProcessForkerProxy &processForker,
+    legacymsg::VdqmProxy &vdqm,
+    const std::string &hostName,
+    const utils::DriveConfig &config,
+    const DataTransferSession::CastorConf &dataTransferConfig,
     const DriveState state) throw();
+
+  /**
+   * Destructor
+   */
+  ~DriveCatalogueEntry() throw();
 
   /**
    * Sets the configuration of the tape-drive.
@@ -207,20 +204,6 @@ public:
   const tape::utils::DriveConfig &getConfig() const;
 
   /**
-   * Sets the Volume ID of the tape mounted in the drive. Empty string if drive
-   * is empty.
-   */
-  void setVid(const std::string &vid);
-
-  /**
-   * Gets the Volume ID of the tape mounted in the drive. Empty string if drive
-   * is empty.
-   *
-   * @return The Volume ID or an empty string if teh drive is empty.
-   */
-  std::string getVid() const;
-
-  /**
    * Gets the current state of the tape drive.
    *
    * @return The current state of the tape drive.
@@ -228,48 +211,9 @@ public:
   DriveState getState() const throw();
   
   /**
-   * Gets the current state of the tape drive session.
-   *
-   * @return The current state of the tape drive session.
-   */
-  DriveCatalogueSession::SessionState getSessionState() const throw();
-
-  /**
    * Gets the type of session associated with the tape drive.
    */
   SessionType getSessionType() const throw();
-
-  /**
-   * Notifies the tape-drive catalogue entry that a recall job has been received
-   * for the tape drive.
-   *
-   * @param vid The volume identifier of the tape to be mounted for recall.
-   */
-  void receivedRecallJob(const std::string &vid);
-
-  /**
-   * Notifies the tape-drive catalogue entry that a migration job has been
-   * received for the tape drive.
-   *
-   * @param vid The volume identifier of the tape to be mounted for migration.
-   */
-  void receivedMigrationJob(const std::string &vid);
-
-  /**
-   * Notifies the tape-drive catalogue entry that the specified tape has been
-   * mounted for migration in the tape drive.
-   *
-   * @param vid The volume identifier of the tape.
-   */
-  void tapeMountedForMigration(const std::string &vid);
-
-  /**
-   * Notifies the tape-drive catalogue entry that the specified tape has been
-   * mounted for recall in the tape drive.
-   *
-   * @param vid The volume identifier of the tape.
-   */
-  void tapeMountedForRecall(const std::string &vid);
 
   /**
    * Configures the tape-drive up.
@@ -347,39 +291,6 @@ public:
    * This method will accept any drive state.
    */   
   void toBeCleaned();
-
-  /**
-   * Moves the state of the tape drive to DRIVE_STATE_RUNNING.
-   *
-   * This method throws an exception if the current state of the session of the
-   * tape drive is not SESSION_STATE_WAITFORK.
-   *
-   * @param sessionPid The process ID of the child process responsible for
-   * running the data-transfer session.
-   */
-  void forkedDataTransferSession(const pid_t sessionPid);
-  
-  /**
-   * Moves the state of the tape drive to DRIVE_STATE_RUNNING.
-   *
-   * This method throws an exception if the current state of the session of the
-   * tape drive is not SESSION_STATE_WAITFORK.
-   *
-   * @param sessionPid The process ID of the child process responsible for
-   * running the label session.
-   */   
-  void forkedLabelSession(const pid_t sessionPid);
-  
-  /**
-   * Moves the state of the session of the tape drive to SESSION_STATE_RUNNING.
-   *
-   * This method throws an exception if the current state of the session of the
-   * tape drive is not SESSION_STATE_WAITFORK.
-   *
-   * @param sessionPid The process ID of the child process responsible for
-   * running the cleaner session.
-   */   
-  void forkedCleanerSession(const pid_t sessionPid);
 
   /**
    * Moves the state of the tape drive to DRIVE_STATE_UP if the
@@ -463,41 +374,96 @@ public:
    */
   legacymsg::TapeStatDriveEntry getTapeStatDriveEntry() const;
 
+  /** 
+   * Returns the catalogue cleaner-session associated with the tape drive.
+   *
+   * This method throws a castor::exception::Exception if there is no
+   * cleaner session associated with the tape drive.
+   */
+  const DriveCatalogueCleanerSession &getCleanerSession() const;
+    
+  /**
+   * Returns the catalogue cleaner-session associated with the tape drive.
+   *
+   * This method throws a castor::exception::Exception if there is no
+   * cleaner session associated with the tape drive.
+   */ 
+  DriveCatalogueCleanerSession &getCleanerSession();
+
+  /**
+   * Returns the catalogue label-session associated with the tape drive.
+   *
+   * This method throws a castor::exception::Exception if there is no
+   * label session associated with the tape drive.
+   */
+  const DriveCatalogueLabelSession &getLabelSession() const;
+
+  /**
+   * Returns the catalogue label-session associated with the tape drive.
+   *
+   * This method throws a castor::exception::Exception if there is no
+   * label session associated with the tape drive.
+   */
+  DriveCatalogueLabelSession &getLabelSession();
+
+  /**
+   * Returns the catalogue transfer-session associated with the tape drive.
+   *
+   * This method throws a castor::exception::Exception if there is no
+   * transfer session associated with the tape drive.
+   */
+  const DriveCatalogueTransferSession &getTransferSession() const;
+
+  /**
+   * Returns the catalogue transfer-session associated with the tape drive.
+   *
+   * This method throws a castor::exception::Exception if there is no
+   * transfer session associated with the tape drive.
+   */
+  DriveCatalogueTransferSession &getTransferSession();
+
 private:
 
   /**
-   * Copy constructor and assignment operator are declared private since the member "m_session" is now a pointer
-   * @param other
+   * Copy constructor declared private to prevent copies.
    */
-  DriveCatalogueEntry( const DriveCatalogueEntry& other );  
-  DriveCatalogueEntry& operator=( const DriveCatalogueEntry& other );
+  DriveCatalogueEntry(const DriveCatalogueEntry&);
+
+  /**
+   * Assignment operator declared private to prevent assignments.
+   */
+  DriveCatalogueEntry& operator=(const DriveCatalogueEntry&);
+
+  /**
+   * The object representing the API of the CASTOR logging system.
+   */
+  log::Logger &m_log;
+
+  /**
+   * Proxy object representing the ProcessForker.
+   */
+  ProcessForkerProxy &m_processForker;
+
+  /**
+   * Proxy object representing the vdqmd daemon.
+   */
+  legacymsg::VdqmProxy &m_vdqm;
+
+  /**
+   * The name of the host on which the daemon is running.  This name is
+   * needed to fill in messages to be sent to the vdqmd daemon.
+   */   
+  const std::string m_hostName;
 
   /**
    * The configuration of the tape-drive.
    */
-  castor::tape::utils::DriveConfig m_config;
+  tape::utils::DriveConfig m_config;
 
   /**
-   * Are we mounting for recall (WRITE_DISABLE) or migration (WRITE_ENABLE).
+   * The configuration of a data-transfer session.
    */
-  uint16_t m_mode;
-  
-  /**
-   * The status of the tape with respect to the drive mount and unmount
-   * operations.
-   */
-  bool m_getToBeMountedForTapeStatDriveEntry;
-  
-  /**
-   * The Volume ID of the tape mounted in the drive. Empty string if drive is
-   * empty.
-   */
-  std::string m_vid;
-  
-  /**
-   * The point in time when the drive was assigned a tape.
-   */
-  time_t m_assignmentTime;
+  const DataTransferSession::CastorConf m_dataTransferConfig;
 
   /**
    * The current state of the tape drive.
@@ -524,10 +490,50 @@ private:
   DriveCatalogueSession *m_session;
   
   /**
+   * Gets the tape-session asscoiated with the tape drive.
+   *
+   * This method throws castor::exception::Exception if there is no session
+   * currently associated with the tape drive.
    * 
-   * @return the associated drive catalogue session pointer
+   * @return The tape-session associated with the tape drive.
    */
-  DriveCatalogueSession * getSession() const;
+  const DriveCatalogueSession &getSession() const;
+
+  /**
+   * Checks that there is a tape session currently associated with the
+   * tape drive.
+   *
+   * This method throws castor::exception::Exception if there is no
+   * tape session associated with the tape drive.
+   */
+  void checkForSession() const;
+
+  /**
+   * Checks that there is a cleaner session currently associated with the
+   * tape drive.
+   *
+   * This method throws castor::exception::Exception if there is no
+   * cleaner session associated with the tape drive.
+   */
+  void checkForCleanerSession() const;
+
+  /**
+   * Checks that there is a label session currently associated with the
+   * tape drive.
+   *
+   * This method throws castor::exception::Exception if there is no
+   * label session associated with the tape drive.
+   */
+  void checkForLabelSession() const;
+
+  /**
+   * Checks that there is a transfer session currently associated with the
+   * tape drive.
+   *
+   * This method throws castor::exception::Exception if there is no
+   * transfer session associated with the tape drive.
+   */
+  void checkForTransferSession() const;
 
   /**
    * Returns the value of the uid field of a TapeStatDriveEntry to be used

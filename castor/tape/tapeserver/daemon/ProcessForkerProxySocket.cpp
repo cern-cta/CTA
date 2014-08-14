@@ -67,8 +67,9 @@ void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   ProcessForkerUtils::writeFrame(m_socketFd, rqst);
 
   // Read back the reply
+  const int timeout = 10; // Timeout in seconds
   messages::ReturnValue reply;
-  ProcessForkerUtils::readReplyOrEx(m_socketFd, reply);
+  ProcessForkerUtils::readReplyOrEx(m_socketFd, timeout, reply);
   if(0 != reply.value()) {
     // Should never get here
     castor::exception::Exception ex;
@@ -106,8 +107,9 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   ProcessForkerUtils::writeFrame(m_socketFd, rqst);
 
   // Read back the reply
+  const int timeout = 10; // Timeout in seconds
   messages::ForkSucceeded reply;
-  ProcessForkerUtils::readReplyOrEx(m_socketFd, reply);
+  ProcessForkerUtils::readReplyOrEx(m_socketFd, timeout, reply);
   log::Param params[] = {log::Param("pid", reply.pid())};
   m_log(LOG_INFO,
     "Got process ID of the data-transfer session from the ProcessForker",
@@ -175,8 +177,9 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   ProcessForkerUtils::writeFrame(m_socketFd, rqst);
 
   // Read back the reply
+  const int timeout = 10; // Timeout in seconds
   messages::ForkSucceeded reply;
-  ProcessForkerUtils::readReplyOrEx(m_socketFd, reply);
+  ProcessForkerUtils::readReplyOrEx(m_socketFd, timeout, reply);
   log::Param params[] = {log::Param("pid", reply.pid())};
   m_log(LOG_INFO, "Got process ID of the label session from the ProcessForker",
     params);
@@ -218,8 +221,9 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   ProcessForkerUtils::writeFrame(m_socketFd, rqst);
 
   // Read back the reply
+  const int timeout = 10; // Timeout in seconds
   messages::ForkSucceeded reply;
-  ProcessForkerUtils::readReplyOrEx(m_socketFd, reply);
+  ProcessForkerUtils::readReplyOrEx(m_socketFd, timeout, reply);
   log::Param params[] = {log::Param("pid", reply.pid())};
   m_log(LOG_INFO,
     "Got process ID of the cleaner session from the ProcessForker", params);

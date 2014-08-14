@@ -21,13 +21,56 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogueCleanerSession.hpp"
+#include "h/Ctape_constants.h"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::DriveCatalogueCleanerSession(
-        const castor::tape::tapeserver::daemon::DriveCatalogueSession::SessionState state):
-DriveCatalogueSession(state) {
+castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::
+  DriveCatalogueCleanerSession(const std::string &vid, 
+  const time_t assignmentTime):
+  m_vid(vid),
+  m_assignmentTime(assignmentTime) {
+}
 
+//------------------------------------------------------------------------------
+// getVid
+//------------------------------------------------------------------------------
+std::string castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::
+  getVid() const {
+  // If the volume identifier of the tape drive is not known
+  if(m_vid.empty()) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to get VID from cleaner session"
+      ": VID not known";
+    throw ex;
+  }
+
+  return m_vid;
+}
+
+//------------------------------------------------------------------------------
+// getMode
+//------------------------------------------------------------------------------
+int castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::getMode()
+  const throw() {
+  return WRITE_DISABLE;
+}
+
+//------------------------------------------------------------------------------
+// getAssignmentTime
+//------------------------------------------------------------------------------
+time_t castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::
+  getAssignmentTime() const throw() {
+  return m_assignmentTime;
+}
+
+//-----------------------------------------------------------------------------
+// tapeIsBeingMounted
+//-----------------------------------------------------------------------------
+bool castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::
+  tapeIsBeingMounted() const throw() {
+  return false;
 }

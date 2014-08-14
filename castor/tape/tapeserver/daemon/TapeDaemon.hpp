@@ -146,12 +146,7 @@ protected:
   void setProcessCapabilities(const std::string &text);
 
   /**
-   * Forks the ProcessForker.
-   */
-  void forkProcessForker();
-
-  /**
-   * Socket pair used to control the ProcessForker.
+   * Socket pair used to send commands to the ProcessForker.
    */
   struct ForkerCmdPair {
 
@@ -229,18 +224,38 @@ protected:
   std::pair<int, int> createSocketPair();
 
   /**
+   * Forks the ProcessForker and closes the appropriate communication sockets
+   * within the parent and child processes.
+   *
+   * PLEASE NOTE: No sockets should be registered with m_reactor before this
+   * method is called.  This method will NOT call m_reactor.clear() in the
+   * client process.  This is because it is possible to put ZMQ sockets into the
+   * reactor and one should not manipulate such sockets in two difefrent threads
+   * or processes.  Specifically do not call setUpReactor() until
+   * forkProcessForker() has been called.
+   *
+   * @param cmdPair Socket pair used to send commands to the ProcessForker.
+   * @param reaperPair Socket pair used by the ProcessForker to notify the
+   * TapeDaemon parent process of the termination of ProcessForker child
+   * processes.
+   * @return The process identifier of the ProcessForker.
+   */
+  pid_t forkProcessForker(const ForkerCmdPair &cmdPair,
+    const ForkerReaperPair &reaperPair);
+
+  /**
    * Closes both the sockets of the specified socket pair.
    *
    * @param cmdPair The socket pair to be close.
    */
-  void closeForkerCmdPair(const ForkerCmdPair &cmdPair);
+  void closeForkerCmdPair(const ForkerCmdPair &cmdPair) const;
 
   /**
    * Closes both the sockets of the specified socket pair.
    *
    * @param reaperPair The socket pair to be close.
    */
-  void closeForkerReaperPair(const ForkerReaperPair &reaperPair);
+  void closeForkerReaperPair(const ForkerReaperPair &reaperPair) const;
 
   /**
    * Acting on behalf of the TapeDaemon parent process this method closes the
@@ -248,7 +263,7 @@ protected:
    *
    * @param cmdPair The socket pair used to control the ProcessForker.
    */
-  void closeProcessForkerSideOfCmdPair(const ForkerCmdPair &cmdPair);
+  void closeProcessForkerSideOfCmdPair(const ForkerCmdPair &cmdPair) const;
 
   /**
    * Acting on behalf of the TapeDaemon parent process this method closes the
@@ -258,7 +273,8 @@ protected:
    * @param reaperPair The socket pair used by the ProcessForker to report
    * process terminations.
    */
-  void closeProcessForkerSideOfReaperPair(const ForkerReaperPair &reaperPair);
+  void closeProcessForkerSideOfReaperPair(const ForkerReaperPair &reaperPair)
+    const;
 
   /**
    * Acting on behalf of the ProcessForker process this method closes the
@@ -266,7 +282,7 @@ protected:
    *
    * @param cmdPair The socket pair used to control the ProcessForker.
    */
-  void closeTapeDaemonSideOfCmdPair(const ForkerCmdPair &cmdPair);
+  void closeTapeDaemonSideOfCmdPair(const ForkerCmdPair &cmdPair) const;
 
   /**
    * Acting on behalf of the ProcessForker process this method closes the
@@ -276,7 +292,8 @@ protected:
    * @param reaperPair The socket pair used by the ProcessForker to report
    * process terminations.
    */
-  void closeTapeDaemonSideOfReaperPair(const ForkerReaperPair &reaperPair);
+  void closeTapeDaemonSideOfReaperPair(const ForkerReaperPair &reaperPair)
+    const;
 
   /**
    * Runs the ProcessForker.
@@ -313,8 +330,20 @@ protected:
 
   /**
    * Sets up the reactor.
+   *
+   * @param reaperSocket The TapeDaemon side of the socket pair used by the
+   * ProcessForker  to report the termination of its child processes.
    */
-  void setUpReactor() ;
+  void setUpReactor(const int reaperSocket);
+
+  /**
+   * Creates the handler to handle the incoming connection from the
+   * ProcessForker.
+   *
+   * @param reaperSocket The TapeDaemon side of the socket pair used by the
+   * ProcessForker  to report the termination of its child processes.
+   */
+  void createAndRegisterProcessForkerConnectionHandler(const int reaperSocket);
 
   /**
    * Creates the handler to accept connections from the vdqmd daemon and
@@ -338,15 +367,6 @@ protected:
    * Creates the handler to handle messages from forked sessions.
    */
   void createAndRegisterTapeMessageHandler();
-
-  /**
-   * Creates the handler to handle the incoming connection from the
-   * ProcessForker.
-   *
-   * @param reaperSocket The TapeDaemon side of the socket pair used by the
-   * ProcessForker  to report the termination of its child processes.
-   */
-  void createAndRegisterProcessForkerConnectionHandler(const int reaperSocket);
   
   /**
    * The main event loop of the daemon.
@@ -442,71 +462,11 @@ protected:
     const std::string &vid, const pid_t pid);
 
   /**
-   * Forks a data-transfer process for every tape drive entry in the
-   * tape drive catalogue that is waiting for such a fork to be carried out.
-   *
-   * There may be more than one child-process to fork because there may be
-   * more than one tape drive connected to the tape server and the previous
-   * call to m_reactor.handleEvents() handled requests to start a mount
-   * session on more than one of the connected tape drives.
-   */
-  void forkDataTransferSessions() throw();
-
-  /**
-   * Forks a data-transfer process for the specified tape drive.
-   *
-   * @param drive The tape-drive entry in the tape-drive catalogue.
-   */ 
-  void forkDataTransferSession(DriveCatalogueEntry *drive) throw();
-
-  /**
    * Gets the configuration of a data-transfer session.
    *
    * @return The configuration.
    */
   DataTransferSession::CastorConf getDataTransferConf();
-
-  /**
-   * Forks a label-session child-process for every tape drive entry in the
-   * tape drive catalogue that is waiting for such a fork to be carried out.
-   *
-   * There may be more than one child-process to fork because there may be
-   * more than one tape drive connected to the tape server and the previous
-   * call to m_reactor.handleEvents() handled requests to start a label
-   * session on more than one of the connected tape drives.
-   */
-  void forkLabelSessions();
-
-  /**
-   * Forks a label-session child-process for the specified tape drive.
-   *
-   * @param drive The tape-drive entry in the tape-drive catalogue.
-   */
-  void forkLabelSession(DriveCatalogueEntry *drive);
-
-  /**
-   * Forks a cleaner-session child-process for every tape drive entry in the
-   * tape drive catalogue that is waiting for such a fork to be carried out.
-   *
-   * There may be more than one child-process to fork because there may be
-   * more than one tape drive connected to the tape server and the previous
-   * call to m_reactor.handleEvents() handled requests to start a cleaner
-   * session on more than one of the connected tape drives.
-   */
-  void forkCleanerSessions();
-
-  /**
-   * Forks a cleaner-session child-process for the specified tape drive.
-   *
-   * @param drive The tape-drive entry in the tape-drive catalogue.
-   */
-  void forkCleanerSession(DriveCatalogueEntry *drive);
-
-  /**
-   * Catalogue used to keep track of both the initial and current state of
-   * each tape drive being controlled by the tapeserverd daemon.
-   */
-  DriveCatalogue m_driveCatalogue;
 
   /**
    * The argc of main().
@@ -564,6 +524,12 @@ protected:
    * The process identifier of the ProcessForker.
    */
   pid_t m_processForkerPid;
+
+  /**
+   * Catalogue used to keep track of both the initial and current state of
+   * each tape drive being controlled by the tapeserverd daemon.
+   */
+  DriveCatalogue *m_driveCatalogue;
 
   /**
    * The ZMQ context.

@@ -29,20 +29,73 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-  /**
-   * Derived class containing info about the cleaner session attached to a drive catalogue entry
-   */
-  class DriveCatalogueCleanerSession : public DriveCatalogueSession {
-  public:
-    
-    /**
-     * Constructor
-     * 
-     * @param state The state of the drive catalogue session
-     */
-    DriveCatalogueCleanerSession(const SessionState state);
 
-  }; // class DriveCatalogueCleanerSession
+/**
+ * Concrete class representing a cleaner session within the tape drive
+ * catalogue.
+ */
+class DriveCatalogueCleanerSession : public DriveCatalogueSession {
+public:
+    
+  /**
+   * Constructor
+   *
+   * @param vid The volume identifier ofthe tape associated with the tape
+   * drive.  If the volume identifier is not known then this parameter should
+   * be set to the empty string.
+   * @param assignmentTime The time at which a job was assigned to the tape
+   * drive.
+   */
+  DriveCatalogueCleanerSession(const std::string &vid,
+    const time_t assignmentTime);
+
+  /**
+   * Gets the volume identifier of the tape associated with the tape drive.
+   *
+   * This method will throw castor::exception::Exception if the volume
+   * identifier is not known.
+   *
+   * @return The volume identifier of the tape associated with the tape drive.
+   */
+  std::string getVid() const;
+
+  /**
+   * Gets the access mode of the cleaner sesison which is always recall
+   * (WRITE_DISABLE).
+   *
+   * @return Always WRITE_DISABLE.
+   */
+  int getMode() const throw();
+
+  /**
+   * Gets the point in time when the drive was assigned a tape.
+   *
+   * @return Te point in time when the drive was assigned a tape. 
+   */
+  time_t getAssignmentTime() const throw();
+
+  /** 
+   * Always returns false.  A cleaner session does not mount a tape.
+   *  
+   * @return Always false.
+   */
+  bool tapeIsBeingMounted() const throw();
+
+private:
+
+  /**
+   * The volume identifier of the tape associated with the tape drive.  If the
+   * volume identifier was not known when the cleaner session was created then
+   * the value of this member value will be the empty string.
+   */
+  const std::string m_vid;
+
+  /**
+   * The time at which a job was assigned to the tape drive.
+   */
+  const time_t m_assignmentTime;
+
+}; // class DriveCatalogueCleanerSession
 
 } // namespace daemon
 } // namespace tapeserver

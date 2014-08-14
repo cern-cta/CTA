@@ -16,30 +16,50 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * 
+ *
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/DriveCatalogueSession.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerProxyDummy.hpp"
 
 //------------------------------------------------------------------------------
-// destructor
+// stopProcessForker
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueSession::
-  ~DriveCatalogueSession() {
+void castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
+  stopProcessForker(const std::string &reason) {
+  // This is a dummy method and so intentionally does nothing
 }
 
 //------------------------------------------------------------------------------
-// constructor
+// forkDataTransfer
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueSession::
-  DriveCatalogueSession() {
+pid_t castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
+  forkDataTransfer(const utils::DriveConfig &driveConfig,
+    const legacymsg::RtcpJobRqstMsgBody vdqmJob,
+    const DataTransferSession::CastorConf &conf,
+    const unsigned short rmcPort) {
+  // This is a dummy method and so intentionally does nothing
+  return 0;
 }
 
 //------------------------------------------------------------------------------
-// getPid
+// forkLabel
 //------------------------------------------------------------------------------
-pid_t castor::tape::tapeserver::daemon::DriveCatalogueSession::getPid() const {
-  return m_pid;
+pid_t castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
+  forkLabel(const utils::DriveConfig &driveConfig,
+  const legacymsg::TapeLabelRqstMsgBody &labelJob,
+  const unsigned short rmcPort) {
+  // This is a dummy method and so intentionally does nothing
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+// forkCleaner
+//------------------------------------------------------------------------------
+pid_t castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
+  forkCleaner(const utils::DriveConfig &driveConfig, const std::string &vid,
+  const unsigned short rmcPort) {
+  // This is a dummy method and so intentionally does nothing
+  return 0;
 }

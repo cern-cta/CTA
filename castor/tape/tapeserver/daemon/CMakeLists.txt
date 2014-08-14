@@ -26,6 +26,7 @@ add_library(castorTapeServerDaemon
   ProcessForker.cpp
   ProcessForkerConnectionHandler.cpp
   ProcessForkerProxy.cpp
+  ProcessForkerProxyDummy.cpp
   ProcessForkerProxySocket.cpp
   ProcessForkerUtils.cpp
   RecallMemoryManager.cpp

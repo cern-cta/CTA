@@ -191,7 +191,8 @@ bool castor::tape::tapeserver::daemon::ProcessForker::thereIsAPendingMsg() {
 bool castor::tape::tapeserver::daemon::ProcessForker::handleMsg() {
   ProcessForkerFrame frame;
   try {
-    frame = ProcessForkerUtils::readFrame(m_cmdSocket);
+    const int timeout = 10; // Timeout in seconds
+    frame = ProcessForkerUtils::readFrame(m_cmdSocket, timeout);
   } catch(castor::exception::Exception &ne) {
     log::Param params[] = {log::Param("message", ne.getMessage().str())};
     m_log(LOG_ERR, "Failed to handle message", params);
@@ -771,11 +772,14 @@ void castor::tape::tapeserver::daemon::ProcessForker::
     msg.set_pid(pid);
     msg.set_exitcode(WEXITSTATUS(waitpidStat));
 
-    log::Param params[] = {log::Param("pid", msg.pid()),
-      log::Param("exitCode", msg.exitcode())};
-    m_log(LOG_INFO, "Notifying TapeDaemon of process exit", params);
+    log::Param params[] = {
+      log::Param("pid", msg.pid()),
+      log::Param("exitCode", msg.exitcode()),
+      log::Param("payloadLen", msg.ByteSize())};
+    m_log(LOG_INFO, "ProcessForker notifying TapeDaemon of process exit",
+      params);
 
-    ProcessForkerUtils::writeFrame(m_reaperSocket, msg);
+    ProcessForkerUtils::writeFrame(m_reaperSocket, msg, &m_log);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to notify TapeDaemon of process exit: " <<
@@ -806,9 +810,10 @@ void castor::tape::tapeserver::daemon::ProcessForker::
 
     log::Param params[] = {log::Param("pid", msg.pid()),
       log::Param("signal", msg.signal())};
-    m_log(LOG_INFO, "Notifying TapeDaemon of process crash", params);
+    m_log(LOG_INFO, "ProcessForker notifying TapeDaemon of process crash",
+      params);
 
-    ProcessForkerUtils::writeFrame(m_reaperSocket, msg);
+    ProcessForkerUtils::writeFrame(m_reaperSocket, msg, &m_log);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to notify TapeDaemon of process crash: " <<
