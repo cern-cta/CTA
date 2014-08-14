@@ -229,7 +229,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   handleHeartbeat(const messages::Frame &rqst) {
-  m_log(LOG_INFO, "Handling Heartbeat message");
+  m_log(LOG_DEBUG, "Handling Heartbeat message");
 
   try {
     castor::messages::Heartbeat rqstBody;
