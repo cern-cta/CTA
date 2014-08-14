@@ -27,11 +27,8 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/legacymsg/NsProxyFactory.hpp"
-#include "castor/legacymsg/RmcProxyFactory.hpp"
 #include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/legacymsg/VmgrProxy.hpp"
-#include "castor/messages/TapeserverProxyFactory.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
@@ -72,8 +69,6 @@ public:
    * @param driveConfig The configuration of the tape drives.
    * @param vdqm Proxy object representing the vdqmd daemon.
    * @param vmgr Proxy object representing the vmgrd daemon.
-   * @param rmcFactory Factory to create proxy objects representing the rmcd
-   * daemon.
    * @param reactor The reactor responsible for dispatching the I/O events of
    * the parent process of the tape server daemon.
    * @param capUtils Object providing utilities for working UNIX capabilities.
@@ -87,9 +82,6 @@ public:
     const utils::DriveConfigMap &driveConfigs,
     legacymsg::VdqmProxy &vdqm,
     legacymsg::VmgrProxy &vmgr,
-    legacymsg::RmcProxyFactory &rmcFactory,
-    messages::TapeserverProxyFactory &tapeserverProxyFactory,
-    legacymsg::NsProxyFactory &nsProxyFactory,
     reactor::ZMQReactor &reactor,
     castor::server::ProcessCap &capUtils);
 
@@ -540,21 +532,6 @@ protected:
    * Proxy object representing the vmgrd daemon.
    */
   legacymsg::VmgrProxy &m_vmgr;
-
-  /**
-   * Factory to create proxy objects representing the rmcd daemon.
-   */
-  legacymsg::RmcProxyFactory &m_rmcFactory;
-  
-  /**
-   * The proxy object representing the tapeserver daemon.
-   */
-  messages::TapeserverProxyFactory &m_tapeserverFactory;
-  
-  /**
-   * The proxy object representing the nameserver daemon.
-   */
-  legacymsg::NsProxyFactory &m_nsFactory;
 
   /**
    * The reactor responsible for dispatching the file-descriptor event-handlers

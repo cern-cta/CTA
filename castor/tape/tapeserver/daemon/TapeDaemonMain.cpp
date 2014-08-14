@@ -22,12 +22,9 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/legacymsg/NsProxy_TapeAlwaysEmptyFactory.hpp"
-#include "castor/legacymsg/RmcProxyTcpIpFactory.hpp"
 #include "castor/legacymsg/VdqmProxyTcpIp.hpp"
 #include "castor/legacymsg/VmgrProxyTcpIp.hpp"
 #include "castor/log/SyslogLogger.hpp"
-#include "castor/messages/TapeserverProxyZmqFactory.hpp"
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
@@ -117,8 +114,6 @@ static int exceptionThrowingMain(const int argc, char **const argv,
 
   const std::string vdqmHost = config.getConfEntString("VDQM", "HOST", &log);
   const std::string vmgrHost = config.getConfEntString("VMGR", "HOST", &log);
-  const uint32_t rmcPort = config.getConfEntInt("RMC", "PORT",
-    (uint32_t)RMC_PORT, &log);
 
   // Parse /etc/castor/TPCONFIG
   tape::utils::TpconfigLines tpconfigLines;
@@ -131,10 +126,6 @@ static int exceptionThrowingMain(const int argc, char **const argv,
   const int netTimeout = 10; // Timeout in seconds
   legacymsg::VdqmProxyTcpIp vdqm(log, vdqmHost, VDQM_PORT, netTimeout);
   legacymsg::VmgrProxyTcpIp vmgr(log, vmgrHost, VMGR_PORT, netTimeout);
-  legacymsg::RmcProxyTcpIpFactory rmcFactory(log, rmcPort, netTimeout);
-  messages::TapeserverProxyZmqFactory tapeserverFactory(log,
-    tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT, netTimeout);
-  legacymsg::NsProxy_TapeAlwaysEmptyFactory nsFactory;
 
   tape::reactor::ZMQReactor reactor(log);
 
@@ -151,9 +142,6 @@ static int exceptionThrowingMain(const int argc, char **const argv,
     driveConfigs,
     vdqm,
     vmgr,
-    rmcFactory,
-    tapeserverFactory,
-    nsFactory,
     reactor,
     capUtils);
 

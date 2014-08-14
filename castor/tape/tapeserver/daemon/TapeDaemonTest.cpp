@@ -87,15 +87,11 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::tape::utils::DriveConfigMap driveConfigs;
   castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::VmgrProxyDummy vmgr;
-  castor::legacymsg::RmcProxyDummyFactory rmcFactory;
-  castor::messages::TapeserverProxyDummyFactory tpsFactory;
-  castor::legacymsg::NsProxyDummyFactory nsFactory;
   castor::tape::reactor::ZMQReactor reactor(log);
   castor::server::ProcessCapDummy capUtils;
   std::auto_ptr<TapeDaemon> daemon;
   ASSERT_NO_THROW(daemon.reset(new TapeDaemon(argc, argv, stdOut, stdErr, log,
-    driveConfigs, vdqm, vmgr, rmcFactory, tpsFactory, nsFactory,
-    reactor, capUtils)));
+    driveConfigs, vdqm, vmgr, reactor, capUtils)));
 }
 
 } // namespace unitTests
