@@ -24,7 +24,6 @@
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
-#include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 #include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"

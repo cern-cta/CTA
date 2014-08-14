@@ -129,23 +129,6 @@ std::string castor::tape::tapeserver::daemon::DriveCatalogueEntry::getVid()
 }
 
 //------------------------------------------------------------------------------
-// setAssignmentTime
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::setAssignmentTime(
- const time_t assignmentTime) {
- m_assignmentTime = assignmentTime;
-}
-
-//------------------------------------------------------------------------------
-// getAssignmentTime
-//------------------------------------------------------------------------------
-time_t
-  castor::tape::tapeserver::daemon::DriveCatalogueEntry::getAssignmentTime()
-  const {
-  return m_assignmentTime;
-}
-
-//------------------------------------------------------------------------------
 // getState
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveState

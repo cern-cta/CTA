@@ -29,7 +29,6 @@
 #include "castor/tape/utils/DriveConfigMap.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogueEntry.hpp"
-#include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 
 #include <map>
 #include <string>

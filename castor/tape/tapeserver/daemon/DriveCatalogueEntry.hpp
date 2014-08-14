@@ -26,7 +26,6 @@
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeStatDriveEntry.hpp"
-#include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogueSession.hpp"
 #include "castor/tape/utils/DriveConfig.hpp"
 
@@ -220,18 +219,6 @@ public:
    * @return The Volume ID or an empty string if teh drive is empty.
    */
   std::string getVid() const;
-
-  /**
-   * Sets the point in time when the drive was assigned a tape.
-   */
-  void setAssignmentTime(const time_t assignmentTime);
-
-  /**
-   * Gets the point in time when the drive was assigned a tape.
-   *
-   * @return Te point in time when the drive was assigned a tape.
-   */
-  time_t getAssignmentTime() const;
 
   /**
    * Gets the current state of the tape drive.

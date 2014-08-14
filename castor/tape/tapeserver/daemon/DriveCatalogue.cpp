@@ -23,7 +23,6 @@
 
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/utils/utils.hpp"
-#include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 
 #include <string.h>
 #include <time.h>

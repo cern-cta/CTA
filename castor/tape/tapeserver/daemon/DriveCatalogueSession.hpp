@@ -23,11 +23,9 @@
 
 #pragma once
 
-#include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
-
-#include <unistd.h>
-#include <sys/types.h>
 #include <string>
+#include <sys/types.h>
+#include <unistd.h>
 
 namespace castor {
 namespace tape {
@@ -62,22 +60,6 @@ namespace daemon {
      * @return process ID of the session
      */
     virtual pid_t getPid() const;
-    
-    /**
-     * event setter method
-     * 
-     * @param vid The status of the tape with respect to the drive mount and unmount
-     * operations.
-     */
-    virtual void setEvent(const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event);
-    
-    /**
-     * event getter method
-     * 
-     * @return The status of the tape with respect to the drive mount and unmount
-     * operations.
-     */
-    virtual castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent getEvent() const;
     
     /**
      * Sets the point in time when the drive was assigned a tape.
@@ -124,12 +106,6 @@ namespace daemon {
      * The point in time when the drive was assigned a tape.
      */
     time_t m_assignmentTime;
-    
-    /**
-     * The status of the tape with respect to the drive mount and unmount
-     * operations.
-     */
-    castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent m_event;
     
     /**
      * The state of the drive catalogue session

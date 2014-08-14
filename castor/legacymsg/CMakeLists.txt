@@ -58,7 +58,6 @@ set (CASTOR_LEGACYMSG_LIB_SRC_FILES
   RtcpSegmentAttributes.cpp
   RtcpTapeRqstMsgBody.cpp
   ScsiLibrarySlot.cpp
-  TapeUpdateDriveRqstMsgBody.cpp
   TapeBridgeMarshal.cpp
   TapeConfigRequestMsgBody.cpp
   TapeLabelRqstMsgBody.cpp

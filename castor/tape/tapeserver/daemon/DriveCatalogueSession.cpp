@@ -66,20 +66,6 @@ castor::tape::tapeserver::daemon::DriveCatalogueSession::SessionState castor::ta
 }
 
 //------------------------------------------------------------------------------
-// setEvent
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueSession::setEvent(const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event) {
-  m_event = event;
-}
-
-//------------------------------------------------------------------------------
-// getEvent
-//------------------------------------------------------------------------------
-castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent castor::tape::tapeserver::daemon::DriveCatalogueSession::getEvent() const {
-  return m_event;
-}
-
-//------------------------------------------------------------------------------
 // setAssignmentTime
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogueSession::setAssignmentTime(const time_t assignmentTime) {
