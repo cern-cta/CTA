@@ -72,7 +72,7 @@ namespace daemon {
     
     unsigned long ckSum = Payload::zeroAdler32();
     
-    int blockId  = 0;
+    uint32_t memBlockId  = 0;
     try {
       //we first check here to not even try to move the tape  if a previous task has failed
       //because the tape- could the very reason why the previous one failed, 
@@ -93,7 +93,7 @@ namespace daemon {
         AutoReleaseBlock<MigrationMemoryManager> releaser(mb,m_memManager);
         
         //will throw (thus exiting the loop) if something is wrong
-        checkErrors(mb,blockId,lc);
+        checkErrors(mb,memBlockId,lc);
         
         ckSum =  mb->m_payload.adler32(ckSum);
         m_taskStats.checksumingTime += timer.secs(utils::Timer::resetCounter);
@@ -102,7 +102,7 @@ namespace daemon {
         m_taskStats.transferTime += timer.secs(utils::Timer::resetCounter);
         m_taskStats.dataVolume += mb->m_payload.size();
         
-        ++blockId;
+        ++memBlockId;
       }
       
       //finish the writing of the file on tape
@@ -111,7 +111,7 @@ namespace daemon {
       m_taskStats.transferTime += timer.secs(utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
       m_taskStats.filesCount ++;
-      reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum);
+      reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum,output->getBlockId());
       m_taskStats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
       // Log the successful transfer      
       logWithStats(LOG_INFO, "File successfully transmitted to drive",
@@ -158,13 +158,13 @@ namespace daemon {
 //------------------------------------------------------------------------------
 // checkErrors
 //------------------------------------------------------------------------------  
-  void TapeWriteTask::checkErrors(MemBlock* mb,int blockId,castor::log::LogContext& lc){
+  void TapeWriteTask::checkErrors(MemBlock* mb,int memBlockId,castor::log::LogContext& lc){
     using namespace castor::log;
     if(m_fileToMigrate->fileid() != static_cast<unsigned int>(mb->m_fileid)
-            || blockId != mb->m_fileBlock  || mb->isFailed() ){
+            || memBlockId != mb->m_fileBlock  || mb->isFailed() ){
       LogContext::ScopedParam sp[]={
         LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
-        LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
+        LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", memBlockId)),
         LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
         LogContext::ScopedParam(lc, Param("failed_Status", mb->isFailed()))
       };

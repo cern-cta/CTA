@@ -45,8 +45,8 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerNominal) {
   
   tapegateway::FileToMigrateStruct migratedFile;
   
-  mrp.reportCompletedJob(migratedFile,0);
-  mrp.reportCompletedJob(migratedFile,0);
+  mrp.reportCompletedJob(migratedFile,0,0);
+  mrp.reportCompletedJob(migratedFile,0,0);
   mrp.reportFlush(statsCompress);
   mrp.reportEndOfSession();
   mrp.waitThread();
@@ -69,9 +69,9 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillure) {
   
   tapegateway::FileToMigrateStruct migratedFile;
   tapegateway::FileToMigrateStruct failed;
-  mrp.reportCompletedJob(migratedFile,0);
-  mrp.reportCompletedJob(migratedFile,0);  
-  mrp.reportCompletedJob(migratedFile,0);
+  mrp.reportCompletedJob(migratedFile,0,0);
+  mrp.reportCompletedJob(migratedFile,0,0);  
+  mrp.reportCompletedJob(migratedFile,0,0);
   mrp.reportFailedJob(failed,error,-1);
   mrp.reportFlush(statsCompress);
   mrp.reportEndOfSessionWithErrors(error,-1);
@@ -94,9 +94,9 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillureGoodEnd) {
   
   tapegateway::FileToMigrateStruct migratedFile;
   tapegateway::FileToMigrateStruct failed;
-  mrp.reportCompletedJob(migratedFile,0);
-  mrp.reportCompletedJob(migratedFile,0);  
-  mrp.reportCompletedJob(migratedFile,0);
+  mrp.reportCompletedJob(migratedFile,0,0);
+  mrp.reportCompletedJob(migratedFile,0,0);  
+  mrp.reportCompletedJob(migratedFile,0,0);
   mrp.reportFailedJob(failed,error,-1);
   mrp.reportFlush(statsCompress);
   mrp.reportEndOfSession();
@@ -121,9 +121,9 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerGoodBadEnd) {
   
   tapegateway::FileToMigrateStruct migratedFile;
   tapegateway::FileToMigrateStruct failed;
-  mrp.reportCompletedJob(migratedFile,0);
-  mrp.reportCompletedJob(migratedFile,0);  
-  mrp.reportCompletedJob(migratedFile,0);
+  mrp.reportCompletedJob(migratedFile,0,0);
+  mrp.reportCompletedJob(migratedFile,0,0);  
+  mrp.reportCompletedJob(migratedFile,0,0);
 
   mrp.reportFlush(statsCompress);
   mrp.reportEndOfSessionWithErrors(error,-1);
@@ -168,9 +168,9 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerOneByteFile) {
   tapegateway::FileToMigrateStruct migrateNullFile;
   migratedBigFile.setFileSize(0);
   
-  mrp.reportCompletedJob(migratedBigFile,0);
-  mrp.reportCompletedJob(migratedFileSmall,0);
-  mrp.reportCompletedJob(migrateNullFile,0);
+  mrp.reportCompletedJob(migratedBigFile,0,0);
+  mrp.reportCompletedJob(migratedFileSmall,0,0);
+  mrp.reportCompletedJob(migrateNullFile,0,0);
   
   tapeserver::drives::compressionStats stats;
   stats.toTape=(100000+1)/3;

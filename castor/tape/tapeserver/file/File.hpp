@@ -480,6 +480,13 @@ namespace castor {
         uint32_t getPosition() ;
         
         /**
+         * Retuns the block is of the first block of the header of the file.
+         * This is changed from 1 to 0 for the first file on the tape (fseq=1)
+         * @return blockId of the first tape block of the file's header.
+         */
+        uint32_t getBlockId() ;
+        
+        /**
          * Get the block size (that was set at construction time)
          * @return the block size in bytes.
          */
@@ -535,6 +542,12 @@ namespace castor {
          * number of blocks written for the current file         
          */
         int m_numberOfBlocks;
+        
+        /**
+         * BlockId of the file (tape block id of the first header block).
+         * This value is retried at open time.
+         */
+        u_int32_t m_blockId;
       };
     }
   } //end of namespace tape

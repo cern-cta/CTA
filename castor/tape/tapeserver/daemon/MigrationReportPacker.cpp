@@ -59,8 +59,9 @@ MigrationReportPacker::~MigrationReportPacker(){
 //reportCompletedJob
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportCompletedJob(
-const tapegateway::FileToMigrateStruct& migratedFile,unsigned long checksum) {
-  std::auto_ptr<Report> rep(new ReportSuccessful(migratedFile,checksum));
+const tapegateway::FileToMigrateStruct& migratedFile,u_int32_t checksum,
+    u_int32_t blockId) {
+  std::auto_ptr<Report> rep(new ReportSuccessful(migratedFile,checksum,blockId));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
@@ -104,13 +105,15 @@ void MigrationReportPacker::reportStuckOn(FileStruct& file){
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& _this){
   std::auto_ptr<tapegateway::FileMigratedNotificationStruct> successMigration(new tapegateway::FileMigratedNotificationStruct);
-  
   successMigration->setFseq(m_migratedFile.fseq());
   successMigration->setFileTransactionId(m_migratedFile.fileTransactionId());
   successMigration->setId(m_migratedFile.id());
   successMigration->setNshost(m_migratedFile.nshost());
   successMigration->setFileid(m_migratedFile.fileid());
-
+  successMigration->setBlockId0((m_blockId >> 24) & 0xFF);
+  successMigration->setBlockId1((m_blockId >> 16) & 0xFF);
+  successMigration->setBlockId2((m_blockId >>  8) & 0xFF);
+  successMigration->setBlockId3((m_blockId >>  0) & 0xFF);
   //WARNING; Ad-hoc name of the ChecksumName !!");
   successMigration->setChecksumName("adler32");
   successMigration->setChecksum(m_checksum);

@@ -51,9 +51,12 @@ public:
    * of migratedFile
    * @param migratedFile the file successfully migrated
    * @param checksum the checksum we computed of the file we have just migrated
+   * @param blockId The tape logical object ID of the first block of the header
+   * of the file. This is 0 (instead of 1) for the first file on the tape (aka
+   * fseq = 1).
    */
   void reportCompletedJob(const tapegateway::FileToMigrateStruct& migratedFile,
-  unsigned long checksum);
+  u_int32_t checksum, u_int32_t blockId);
   
   /**
    * Create into the MigrationReportPacker a report for the failled migration
@@ -102,9 +105,11 @@ private:
   class ReportSuccessful :  public Report {
     const FileStruct m_migratedFile;
     const unsigned long m_checksum;
+    const uint32_t m_blockId;
   public:
-    ReportSuccessful(const FileStruct& file,unsigned long checksum): 
-    m_migratedFile(file),m_checksum(checksum){}
+    ReportSuccessful(const FileStruct& file,unsigned long checksum,
+            u_int32_t blockId): 
+    m_migratedFile(file),m_checksum(checksum),m_blockId(blockId){}
     virtual void execute(MigrationReportPacker& _this);
   };
   class ReportFlush : public Report {

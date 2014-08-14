@@ -456,6 +456,12 @@ namespace castor {
         hdr2.fill(m_currentBlockSize, m_session->m_compressionEnabled);
         uhl1.fill(m_fileToMigrate.fseq(), m_currentBlockSize, m_session->getSiteName(), 
             m_session->getHostName(), m_session->m_drive.getDeviceInfo());
+        /* Before writing anything, we record the blockId of the file */
+        if (1 == ftm.fseq()) {
+          m_blockId = 0;
+        } else {
+          m_blockId = getPosition();
+        }
         m_session->m_drive.writeBlock(&hdr1, sizeof(hdr1));
         m_session->m_drive.writeBlock(&hdr2, sizeof(hdr2));
         m_session->m_drive.writeBlock(&uhl1, sizeof(uhl1));
@@ -465,6 +471,10 @@ namespace castor {
 
       uint32_t WriteFile::getPosition()  {  
         return m_session->m_drive.getPositionInfo().currentPosition;
+      }
+      
+      uint32_t WriteFile::getBlockId()  {  
+        return m_blockId;
       }
       
       size_t WriteFile::getBlockSize() {
