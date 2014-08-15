@@ -159,6 +159,9 @@ int rfio_handle_close(void *ctx,
   int      port = MOVERHANDLERPORT;
 
   if (internal_context != NULL) {
+    if (close_status) {
+      error_msg = strdup(strerror(errno));
+    }
     if (((internal_context->flags & O_TRUNC) == O_TRUNC) ||
         (internal_context->one_byte_at_least)) {   /* see also comment in rfio_handle_open */
       /* This is a write */
@@ -191,13 +194,13 @@ int rfio_handle_close(void *ctx,
     }
     if (mover_close_file(port, internal_context->transferid, (u_signed64)filestat->st_size, csumtype, csumvalue, &close_status, &error_msg) != 0) {
       serrno = close_status;
-      (*logfunc)(LOG_ERR, "rfio_handle_close: mover_close_file failed (%s) for transferid=%s\n", error_msg, internal_context->transferid);
+      (*logfunc)(LOG_ERR, "rfio_handle_close: mover_close_file failed for transferid=%s with error: %s\n", internal_context->transferid, error_msg);
       free(error_msg);
     } else {
       forced_mover_exit_error = 0;
     }
   } else {
-    (*logfunc)(LOG_INFO, "rfio_handle_close: no context given, nothing to do\n");
+    (*logfunc)(LOG_DEBUG, "rfio_handle_close: no context given, nothing to do\n");
     return 0;
   }
 
