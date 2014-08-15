@@ -23,8 +23,10 @@
 
 #include "castor/messages/messages.hpp"
 #include "castor/utils/utils.hpp"
+#include "h/strerror_r_wrapper.h"
 
 #include <string.h>
+#include <zmq.h>
 
 //------------------------------------------------------------------------------
 // sendFrame
@@ -227,4 +229,52 @@ void castor::messages::recvReplyOrEx(ZmqSocket& socket,
   }
 
   frame.parseBodyIntoProtocolBuffer(body);
+}
+
+//------------------------------------------------------------------------------
+// zmqErrnoToStr
+//------------------------------------------------------------------------------
+std::string castor::messages::zmqErrnoToStr(const int zmqErrno) {
+  switch(zmqErrno) {
+  // Translate the values that are specific to ZMQ
+  case EFSM:
+    return "Operation cannot be accomplished in current state";
+  case ENOCOMPATPROTO:
+    return "The protocol is not compatible with the socket type";
+  case ETERM:
+    return "Context was terminated";
+  case EMTHREAD:
+    return "No thread available";
+
+  // Translate the values that are not specific to ZMQ
+  default:
+    {
+      char errorCStr[100];
+      const int rc = strerror_r_wrapper(zmqErrno, errorCStr, sizeof(errorCStr));
+
+      // If strerror_r_wrapper() failed to translate
+      if(rc) {
+        std::ostringstream oss;
+        oss << "Failed to translate ZMQ errno";
+
+        switch(errno) {
+        case EINVAL:
+          oss << ": Unknown ZMQ errno";
+          break;
+        case ERANGE:
+          oss << ": strerror_r_wrapper() given too small a buffer";
+          break;
+        default:
+          oss << ": Unknown reason";
+        }
+
+        oss << ": zmqErrno=" << zmqErrno;
+        return oss.str();
+      }
+
+      // strerror_r_wrapper() succeeded to translate
+      errorCStr[sizeof(errorCStr) -1] = '\0'; // Being paranoid
+      return errorCStr;
+    }
+  }
 }

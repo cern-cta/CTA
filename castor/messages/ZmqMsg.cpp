@@ -22,6 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/messages/messages.hpp"
 #include "castor/messages/ZmqMsg.hpp"
 
 #include <errno.h>
@@ -32,11 +33,9 @@
 //-----------------------------------------------------------------------------
 castor::messages::ZmqMsg::ZmqMsg() throw() {
   if(zmq_msg_init(&m_zmqMsg)) {
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
+    const int savedErrno = errno;
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to construct a ZmqMsg: zmq_msg_init() failed: "
-      << message;
+    ex.getMessage() << "zmq_msg_init() failed: " << zmqErrnoToStr(savedErrno);
     throw ex;
   }
 }
@@ -46,11 +45,10 @@ castor::messages::ZmqMsg::ZmqMsg() throw() {
 //-----------------------------------------------------------------------------
 castor::messages::ZmqMsg::ZmqMsg(const size_t msgSize) throw() {
   if(zmq_msg_init_size(&m_zmqMsg, msgSize)) {
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
+    const int savedErrno = errno;
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to construct a ZmqMsg"
-     ": zmq_msg_init_size() failed: " << message;
+    ex.getMessage() << "zmq_msg_init_size() failed: " <<
+      zmqErrnoToStr(savedErrno);
     throw ex;
   }
 }

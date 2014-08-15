@@ -156,5 +156,13 @@ void recvReplyOrEx(ZmqSocket& socket,
   const uint32_t magic, const uint32_t protocolType,
   const uint32_t protocolVersion);
 
+/**
+ * Returns the string representation of the specified ZMQ errno.
+ *
+ * This method does not throw an exception if the specified errno is unknown.
+ * Instead the method returns a string explaining that the errno is unknown.
+ */
+std::string zmqErrnoToStr(const int zmqErrno);
+
 } // namespace messages
 } // namespace castor
