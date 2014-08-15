@@ -254,7 +254,8 @@ class Transfer(BaseTransfer):
       cmdLine.append('-i')    # inetd mode
       cmdLine.append('-d')
       cmdLine.append(Transfer.configuration.getValue('GSIFTP', 'LOGLEVEL', 'ALL'))
-      #cmdLine.append('-auth-level 0')
+      cmdLine.append('-auth-level')
+      cmdLine.append('0')     # don't run as the client user
       cmdLine.append('-control-idle-timeout')
       cmdLine.append('3600')
       cmdLine.append('-Z')
