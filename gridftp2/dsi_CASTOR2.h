@@ -46,11 +46,18 @@ typedef struct globus_l_gfs_CASTOR2_handle_s {
   char *uuid;           /* must be pointers to environment variables */
   char *fullDestPath;   /* we do not allocate or free memory here    */
   char *access_mode;
-  /* we have to save all blocs checksums for on the fly calculation */
+  /* we have to save all blocs checksums for the on the fly calculation */
   checksum_block_list_t * checksum_list;
   checksum_block_list_t *checksum_list_p;
   unsigned long number_of_blocks;
+  long long fileSize;
 } globus_l_gfs_CASTOR2_handle_t;
+
+/* a function to wrap all is needed to close a file */
+static void globus_castor_close(const char* func,
+                                globus_l_gfs_CASTOR2_handle_t* CASTOR2_handle,
+                                const char* ckSumbuf,
+                                const char* error_msg);
 
 static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t,
                                           globus_result_t,

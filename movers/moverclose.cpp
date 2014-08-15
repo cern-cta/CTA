@@ -25,6 +25,8 @@ extern "C" {
                << ' ' << cksumvalue << ' ' << *errorcode;
       if(*errorcode) {
         writeBuf << ' ' << *errormsg;
+        free(*errormsg);
+        *errormsg = NULL;
       }
 
       try {
