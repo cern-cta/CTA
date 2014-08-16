@@ -292,7 +292,7 @@ XrdxCastor2OfsFile::open(const char*         path,
   xcastor::Timing open_timing("open");
   TIMING("START", &open_timing);
   XrdOucString spath = path;
-  xcastor_debug("path=%s, opaque=%s", path, opaque);
+  xcastor_debug("path=%s", path);
   XrdOucString newpath = "";
   XrdOucString newopaque = opaque;
 
@@ -532,12 +532,13 @@ XrdxCastor2OfsFile::close()
         sz_file = mStatInfo.st_size;
     }
 
-    int errorcode = (rc ? error.getErrInfo() : rc);
-    char* errormsg = (rc ? (char*)error.getErrText() : (char*)0);
+    int errc = (rc ? error.getErrInfo() : rc);
+    char* errmsg = (rc ? (char*)error.getErrText() : (char*)0);
+    xcastor_info("send diskmgr errc=%i, errmsg=%s", errc, (errmsg ? errmsg : ""));
     int dm_errno = mover_close_file(mDiskMgrPort, mReqId.c_str(), sz_file,
                                     const_cast<const char*>(ckSumalg),
                                     const_cast<const char*>(ckSumbuf),
-                                    &errorcode, &errormsg);
+                                    &errc, &errmsg);
 
     // If failed to commit to diskmanager then return error
     if (dm_errno)
