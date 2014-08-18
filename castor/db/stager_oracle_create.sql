@@ -328,7 +328,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_13');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_14');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -594,7 +594,7 @@ AS
   RECALL_FAILING               CONSTANT VARCHAR2(2048) := 'Failing Recall(s)';
   RECALL_FS_NOT_FOUND          CONSTANT VARCHAR2(2048) := 'bestFileSystemForRecall could not find a suitable destination for this recall';
   RECALL_LOOPING_ON_LOCK       CONSTANT VARCHAR2(2048) := 'Giving up with recall as we are looping on locked file(s)';
-  RECALL_NOT_FOUND             CONSTANT VARCHAR2(2048) := 'setBulkFileRecallResult: unable to identify recall, giving up';
+  RECALL_NOT_FOUND             CONSTANT VARCHAR2(2048) := 'Unable to identify recall, giving up';
   RECALL_INVALID_PATH          CONSTANT VARCHAR2(2048) := 'setFileRecalled: unable to parse input path, giving up';
   RECALL_COMPLETED_DB          CONSTANT VARCHAR2(2048) := 'setFileRecalled: db updates after full recall completed';
   RECALL_FILE_OVERWRITTEN      CONSTANT VARCHAR2(2048) := 'setFileRecalled: file was overwritten during recall, restarting from scratch or skipping repack';
@@ -623,6 +623,8 @@ AS
   REPACK_STARTED               CONSTANT VARCHAR2(2048) := 'repackManager: Repack process started';
   REPACK_JOB_STATS             CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes statistics';
   REPACK_UNEXPECTED_EXCEPTION  CONSTANT VARCHAR2(2048) := 'handleRepackRequest: unexpected exception caught';
+  REPACK_COMPLETED             CONSTANT VARCHAR2(2048) := 'Repack completed successfully';
+  REPACK_FAILED                CONSTANT VARCHAR2(2048) := 'Repack ended with failures';
 
   DRAINING_REFILL              CONSTANT VARCHAR2(2048) := 'drainRunner: Creating new replication jobs';
 
@@ -832,7 +834,7 @@ CREATE DATABASE LINK remotens
 INSERT INTO CastorConfig
   VALUES ('general', 'owner', sys_context('USERENV', 'CURRENT_USER'), 'The database owner of the schema');
 INSERT INTO CastorConfig
-  VALUES ('cleaning', 'terminatedRequestsTimeout', '120', 'Maximum timeout for successful and failed requests in hours');
+  VALUES ('cleaning', 'failedRequestsTimeout', '168', 'Maximum timeout before removing failed requests from the database in hours');
 INSERT INTO CastorConfig
   VALUES ('cleaning', 'outOfDateStageOutDCsTimeout', '72', 'Timeout for STAGEOUT diskCopies in hours');
 INSERT INTO CastorConfig
@@ -845,6 +847,8 @@ INSERT INTO CastorConfig
   VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recalling a given file. When exceeded, the recall will be failed if no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
 INSERT INTO CastorConfig
   VALUES ('Migration', 'SizeThreshold', '300000000', 'The threshold to consider a file "small" or "large" when routing it to tape');
+INSERT INTO CastorConfig
+  VALUES ('Migration', 'MaxNbMounts', '3', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed and the MigrationJob entry will be dropped. An operator intervention is required to resume the migration.');
 INSERT INTO CastorConfig
   VALUES ('Migration', 'NbMigCandConsidered', '10000', 'The number of migration jobs considered in time order by each selection of the best files to migrate');
 INSERT INTO CastorConfig
@@ -1717,16 +1721,15 @@ CREATE GLOBAL TEMPORARY TABLE BulkSelectHelper
   (objId NUMBER)
   ON COMMIT DELETE ROWS;
 
-/* Global temporary table to store the information on diskcopyies which need to
- * processed to see if too many replicas are online. This temporary table is
- * required to solve the error: `ORA-04091: table is mutating, trigger/function`
+/* Table to store the information on CastorFiles which need a check
+ * to see if too many replicas are online. This table is required to
+ * allow "offline" checks. Onlines checks (e.g. at diskcopy creation)
+ * are difficult as you get the error: `ORA-04091: table is mutating, trigger/function`
  */
-CREATE GLOBAL TEMPORARY TABLE TooManyReplicasHelper
-  (svcClass NUMBER, castorFile NUMBER)
-  ON COMMIT DELETE ROWS;
-
-ALTER TABLE TooManyReplicasHelper 
-  ADD CONSTRAINT UN_TooManyReplicasHelp_SVC_CF UNIQUE (svcClass, castorFile);
+CREATE TABLE TooManyReplicasHelper (svcClass NUMBER, castorFile NUMBER);
+ALTER TABLE TooManyReplicasHelper
+  ADD CONSTRAINT UN_TooManyReplicasHelp_SVC_CF
+  UNIQUE (svcClass, castorFile);
 
 /* Global temporary table to store subRequest and castorFile ids for cleanup operations.
    See the deleteTerminatedRequest procedure for more details.
@@ -1929,22 +1932,16 @@ CREATE TABLE DrainingErrors
    errorMsg     VARCHAR2(2048) CONSTRAINT NN_DrainingErrors_ErrorMsg NOT NULL,
    fileId       INTEGER CONSTRAINT NN_DrainingErrors_FileId NOT NULL,
    nsHost       VARCHAR2(2048) CONSTRAINT NN_DrainingErrors_NsHost NOT NULL,
-   diskCopy     INTEGER,
+   castorFile   INTEGER CONSTRAINT NN_DrainingErrors_CF NOT NULL,
    timeStamp    NUMBER CONSTRAINT NN_DrainingErrors_TimeStamp NOT NULL)
 ENABLE ROW MOVEMENT;
 
-CREATE INDEX I_DrainingErrors_DJ ON DrainingErrors (drainingJob);
-CREATE INDEX I_DrainingErrors_DC ON DrainingErrors (diskCopy);
+CREATE INDEX I_DrainingErrors_DJ_CF ON DrainingErrors (drainingJob, CastorFile);
 
 ALTER TABLE DrainingErrors
-  ADD CONSTRAINT FK_DrainingErrors_DJ
-  FOREIGN KEY (drainingJob)
-  REFERENCES DrainingJob (id);
-
-ALTER TABLE DrainingErrors
-  ADD CONSTRAINT FK_DrainingErrors_DC
-  FOREIGN KEY (diskCopy)
-  REFERENCES DiskCopy (id);
+  ADD CONSTRAINT FK_DrainingErrors_CastorFile
+  FOREIGN KEY (castorFile)
+  REFERENCES CastorFile (id);
 
 
 /* Definition of the Disk2DiskCopyJob table. Each line is a disk2diskCopy job to process
@@ -3240,10 +3237,11 @@ BEGIN
            AND DiskServer.hwOnline = 1
            AND DC.status = dconst.DISKCOPY_VALID;
         IF varNbCopies = 0 THEN
-          -- find out whether this file is already being recalled
-          SELECT count(*) INTO varWasRecalled FROM RecallJob WHERE castorfile = cfId AND ROWNUM < 2;
+          -- find out whether this file is already being recalled from this tape
+          SELECT count(*) INTO varWasRecalled FROM RecallJob WHERE castorfile = cfId AND vid != varRepackVID;
           IF varWasRecalled = 0 THEN
-            -- trigger recall
+            -- trigger recall: if we have dual copy files, this may trigger a second recall,
+            -- which will race with the first as it happens for user-driven recalls
             triggerRepackRecall(cfId, segment.fileid, nsHostName, segment.blockid,
                                 segment.fseq, segment.copyNb, varEuid, varEgid,
                                 varRecallGroupId, svcClassId, varRepackVID, segment.segSize,
@@ -3530,23 +3528,23 @@ END;
 
 /* PL/SQL procedure called when a repack request is over: see archiveSubReq */
 CREATE OR REPLACE PROCEDURE handleEndOfRepack(inReqId INTEGER) AS
-  nbLeftSegs INTEGER;
+  varNbLeftSegs INTEGER;
+  varStartTime NUMBER;
+  varReqUuid VARCHAR2(40);
+  varVID VARCHAR2(10);
 BEGIN
-  -- check if any segment is left in the original tape
-  SELECT 1 INTO nbLeftSegs FROM Cns_seg_metadata@RemoteNS
-   WHERE vid = (SELECT repackVID FROM StageRepackRequest WHERE id = inReqId)
-     AND ROWNUM < 2;
-  -- we found at least one segment, final status is FAILED
+  -- check how many segments are left in the original tape
+  SELECT count(*) INTO varNbLeftSegs FROM Cns_seg_metadata@RemoteNS
+   WHERE vid = (SELECT repackVID FROM StageRepackRequest WHERE id = inReqId);
+  -- update request
   UPDATE StageRepackRequest
-     SET status = tconst.REPACK_FAILED,
+     SET status = CASE varNbLeftSegs WHEN 0 THEN tconst.REPACK_FINISHED ELSE tconst.REPACK_FAILED END,
          lastModificationTime = getTime()
-   WHERE id = inReqId;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- no segments found, repack was successful
-  UPDATE StageRepackRequest
-     SET status = tconst.REPACK_FINISHED,
-         lastModificationTime = getTime()
-   WHERE id = inReqId;
+   WHERE id = inReqId
+  RETURNING creationTime, reqId, repackVID INTO varStartTime, varReqUuid, varVID;
+  -- log successful or unsuccessful completion
+  logToDLF(varReqUuid, dlf.LVL_SYSTEM, CASE varNbLeftSegs WHEN 0 THEN dlf.REPACK_COMPLETED ELSE dlf.REPACK_FAILED END, 0, '',
+    'repackd', 'TPVID=' || varVID || ' nbLeftSegments=' || TO_CHAR(varNbLeftSegs) || ' elapsedTime=' || TO_CHAR(TRUNC(getTime() - varStartTime)));
 END;
 /
 
@@ -3819,29 +3817,36 @@ END;
 /
 
 
-/* Trigger used to check if the maxReplicaNb has been exceeded
- * after a diskcopy has changed its status to VALID
+/* This procedure is used to check if the maxReplicaNb has been exceeded
+ * for some CastorFiles. It checks all the files listed in TooManyReplicasHelper
+ * This is called from a DB job and is fed by the tr_DiskCopy_Created trigger
+ * on creation of new diskcopies
  */
-CREATE OR REPLACE TRIGGER tr_DiskCopy_Stmt_Online
-AFTER UPDATE OF STATUS ON DISKCOPY
-DECLARE
-  maxReplicaNb NUMBER;
-  unused NUMBER;
-  nbFiles NUMBER;
+CREATE OR REPLACE PROCEDURE checkNbReplicas AS
+  varSvcClassId INTEGER;
+  varCfId INTEGER;
+  varMaxReplicaNb NUMBER;
+  varNbFiles NUMBER;
+  varDidSth BOOLEAN;
 BEGIN
-  -- Loop over the diskcopies to be processed
-  FOR a IN (SELECT * FROM TooManyReplicasHelper)
+  -- Loop over the CastorFiles to be processed
   LOOP
-    -- Lock the castorfile. This shouldn't be necessary as the procedure that
-    -- caused the trigger to be executed should already have the lock.
-    -- Nevertheless, we make sure!
-    SELECT id INTO unused FROM CastorFile
-     WHERE id = a.castorfile FOR UPDATE;
+    varCfId := NULL;
+    DELETE FROM TooManyReplicasHelper
+     WHERE ROWNUM < 2
+    RETURNING svcClass, castorFile INTO varSvcClassId, varCfId;
+    IF varCfId IS NULL THEN
+      -- we can exit, we went though all files to be processed
+      EXIT;
+    END IF;
+    -- Lock the castorfile
+    SELECT id INTO varCfId FROM CastorFile
+     WHERE id = varCfId FOR UPDATE;
     -- Get the max replica number of the service class
-    SELECT maxReplicaNb INTO maxReplicaNb
-      FROM SvcClass WHERE id = a.svcclass;
-    -- Produce a list of diskcopies to invalidate should too many replicas be
-    -- online.
+    SELECT maxReplicaNb INTO varMaxReplicaNb
+      FROM SvcClass WHERE id = varSvcClassId;
+    -- Produce a list of diskcopies to invalidate should too many replicas be online.
+    varDidSth := False;
     FOR b IN (SELECT id FROM (
                 SELECT rownum ind, id FROM (
                   SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_Castorfile) */ DiskCopy.id
@@ -3851,26 +3856,26 @@ BEGIN
                      AND FileSystem.diskpool = DiskPool2SvcClass.parent
                      AND FileSystem.diskserver = DiskServer.id
                      AND DiskPool2SvcClass.child = SvcClass.id
-                     AND DiskCopy.castorfile = a.castorfile
+                     AND DiskCopy.castorfile = varCfId
                      AND DiskCopy.status = dconst.DISKCOPY_VALID
-                     AND SvcClass.id = a.svcclass
+                     AND SvcClass.id = varSvcClassId
                    -- Select non-PRODUCTION hardware first
                    ORDER BY decode(FileSystem.status, 0,
                             decode(DiskServer.status, 0, 0, 1), 1) ASC,
                             DiskCopy.gcWeight DESC))
-               WHERE ind > maxReplicaNb)
+               WHERE ind > varMaxReplicaNb)
     LOOP
       -- Sanity check, make sure that the last copy is never dropped!
-      SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ count(*) INTO nbFiles
+      SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ count(*) INTO varNbFiles
         FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass, DiskServer
        WHERE DiskCopy.filesystem = FileSystem.id
          AND FileSystem.diskpool = DiskPool2SvcClass.parent
          AND FileSystem.diskserver = DiskServer.id
          AND DiskPool2SvcClass.child = SvcClass.id
-         AND DiskCopy.castorfile = a.castorfile
+         AND DiskCopy.castorfile = varCfId
          AND DiskCopy.status = dconst.DISKCOPY_VALID
-         AND SvcClass.id = a.svcclass;
-      IF nbFiles = 1 THEN
+         AND SvcClass.id = varSvcClassId;
+      IF varNbFiles = 1 THEN
         EXIT;  -- Last file, so exit the loop
       END IF;
       -- Invalidate the diskcopy
@@ -3878,18 +3883,18 @@ BEGIN
          SET status = dconst.DISKCOPY_INVALID,
              gcType = dconst.GCTYPE_TOOMANYREPLICAS
        WHERE id = b.id;
+      varDidSth := True;
       -- update importance of remaining diskcopies
       UPDATE DiskCopy SET importance = importance + 1
-       WHERE castorFile = a.castorfile
+       WHERE castorFile = varCfId
          AND status = dconst.DISKCOPY_VALID;
     END LOOP;
+    IF varDidSth THEN COMMIT; END IF;
   END LOOP;
-  -- cleanup the table so that we do not accumulate lines. This would trigger
-  -- a n^2 behavior until the next commit.
-  DELETE FROM TooManyReplicasHelper;
+  -- commit the deletions in case no modification was done that commited them before
+  COMMIT;
 END;
 /
-
 
 /* Trigger used to provide input to the statement level trigger
  * defined above
@@ -3907,9 +3912,9 @@ DECLARE
 BEGIN
   -- Insert the information about the diskcopy being processed into
   -- the TooManyReplicasHelper. This information will be used later
-  -- on the DiskCopy AFTER UPDATE statement level trigger. We cannot
-  -- do the work of that trigger here as it would result in
-  -- `ORA-04091: table is mutating, trigger/function` errors
+  -- by the checkNbReplicasJob job. We cannot do the work of that
+  -- job here as it would result in `ORA-04091: table is mutating,
+  -- trigger/function` errors
   BEGIN
     SELECT SvcClass.id INTO svcId
       FROM FileSystem, DiskPool2SvcClass, SvcClass
@@ -5182,7 +5187,6 @@ END;
 /* PL/SQL method implementing replicateOnClose */
 CREATE OR REPLACE PROCEDURE replicateOnClose(cfId IN NUMBER, ouid IN INTEGER, ogid IN INTEGER) AS
   varNsOpenTime NUMBER;
-  srcDcId NUMBER;
   srcSvcClassId NUMBER;
   ignoreSvcClass NUMBER;
 BEGIN
@@ -7238,6 +7242,30 @@ BEGIN
                              False, inNsOpenTimeInUsec/1000000);
 END;
 /
+
+/*
+ * Database jobs
+ */
+BEGIN
+  -- Remove database jobs before recreating them
+  FOR j IN (SELECT job_name FROM user_scheduler_jobs
+             WHERE job_name IN ('CHECKNBREPLICASJOB'))
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
+  END LOOP;
+
+  -- Create a db job to be run every minute executing the checkNbReplicas procedure
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'checkNbReplicasJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN checkNbReplicas(); END;'', ''stagerd''); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
+      START_DATE      => SYSDATE + 60/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Checking for extra replicas to be deleted');
+END;
+/
 /*******************************************************************
  *
  *
@@ -7538,7 +7566,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
-/* update a drainingJob at then end of a disk2diskcopy */
+/* Update a drainingJob at the end of a disk2diskcopy */
 CREATE OR REPLACE PROCEDURE updateDrainingJobOnD2dEnd(inDjId IN INTEGER, inFileSize IN INTEGER,
                                                       inHasFailed IN BOOLEAN) AS
   varTotalFiles INTEGER;
@@ -7676,6 +7704,10 @@ BEGIN
   logToDLF(NULL, dlf.LVL_SYSTEM, varLogMsg, varFileId, varNsHost, 'transfermanagerd', varComment);
   -- if success, create new DiskCopy, restart waiting requests, cleanup and handle replicate on close
   IF inErrorMessage IS NULL THEN
+    -- In case of draining, update DrainingJob: this is done before the rest to respect the locking order
+    IF varDrainingJob IS NOT NULL THEN
+      updateDrainingJobOnD2dEnd(varDrainingJob, varFileSize, False);
+    END IF;
     -- compute GcWeight and importance of the new copy
     IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
       DECLARE
@@ -7707,22 +7739,20 @@ BEGIN
        AND castorfile = varCfId;
     alertSignalNoLock('wakeUpJobReqSvc');
     -- delete the disk2diskCopyJob
-    DELETE FROM Disk2DiskCopyjob WHERE transferId = inTransferId;
+    DELETE FROM Disk2DiskCopyJob WHERE transferId = inTransferId;
     -- In case of valid new copy
     IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
       IF varDropSource = 1 THEN
         -- drop source if requested
-        UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID WHERE id = varSrcDcId;
+        UPDATE DiskCopy
+           SET status = dconst.DISKCOPY_INVALID, gcType=dconst.GCTYPE_DRAINING
+         WHERE id = varSrcDcId;
       ELSE
         -- update importance of other DiskCopies if it's an additional one
         UPDATE DiskCopy SET importance = varDCImportance WHERE castorFile = varCfId;
       END IF;
-      -- Trigger the creation of additional copies of the file, if any
+      -- trigger the creation of additional copies of the file, if any
       replicateOnClose(varCfId, varUid, varGid);
-    END IF;
-    -- In case of draining, update DrainingJob
-    IF varDrainingJob IS NOT NULL THEN
-      updateDrainingJobOnD2dEnd(varDrainingJob, varFileSize, False);
     END IF;
   ELSE
     -- failure
@@ -7741,16 +7771,20 @@ BEGIN
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.D2D_D2DDONE_RETRIED, varFileId, varNsHost, 'transfermanagerd', varComment ||
                  ' RetryNb=' || TO_CHAR(varRetryCounter+1) || ' maxNbRetries=' || TO_CHAR(varMaxNbD2dRetries));
       ELSE
-        -- no retry, let's delete the disk to disk job copy
+        -- No retry. In case of draining, update DrainingJob
+        IF varDrainingJob IS NOT NULL THEN
+          updateDrainingJobOnD2dEnd(varDrainingJob, varFileSize, True);
+        END IF;
+        -- and delete the disk to disk copy job
         BEGIN
-          DELETE FROM Disk2DiskCopyjob WHERE transferId = inTransferId;
+          DELETE FROM Disk2DiskCopyJob WHERE transferId = inTransferId;
           -- and remember the error in case of draining
           IF varDrainingJob IS NOT NULL THEN
-            INSERT INTO DrainingErrors (drainingJob, errorMsg, fileId, nsHost, diskCopy, timeStamp)
-            VALUES (varDrainingJob, inErrorMessage, varFileId, varNsHost, varSrcDcId, getTime());
+            INSERT INTO DrainingErrors (drainingJob, errorMsg, fileId, nsHost, castorFile, timeStamp)
+            VALUES (varDrainingJob, inErrorMessage, varFileId, varNsHost, varCfId, getTime());
           END IF;
         EXCEPTION WHEN NO_DATA_FOUND THEN
-          -- the Disk2DiskCopyjob was already dropped (e.g. because of an interrupted draining)
+          -- the Disk2DiskCopyJob was already dropped (e.g. because of an interrupted draining)
           -- in such a case, forget about the error
           NULL;
         END;
@@ -7765,10 +7799,6 @@ BEGIN
                               'retries. Last error was : ' || inErrorMessage
          WHERE status = dconst.SUBREQUEST_WAITSUBREQ
            AND castorfile = varCfId;
-        -- In case of draining, update DrainingJob
-        IF varDrainingJob IS NOT NULL THEN
-          updateDrainingJobOnD2dEnd(varDrainingJob, varFileSize, True);
-        END IF;
       END IF;
     END;
   END IF;
@@ -7838,11 +7868,9 @@ BEGIN
     raise_application_error(-20110, dlf.D2D_SOURCE_GONE);
   END;
 
-  -- at this point we can update the Disk2DiskCopyJob with the source. This may be used
-  -- by disk2DiskCopyEnded to track the failed sources.
+  -- update the Disk2DiskCopyJob status and filesystem
   UPDATE Disk2DiskCopyJob
-     SET status = dconst.DISK2DISKCOPYJOB_RUNNING,
-         srcDcId = varSrcDcId
+     SET status = dconst.DISK2DISKCOPYJOB_RUNNING
    WHERE transferId = inTransferId;
 
   IF (varSrcDsStatus = dconst.DISKSERVER_DISABLED OR varSrcFsStatus = dconst.FILESYSTEM_DISABLED
@@ -9854,7 +9882,7 @@ BEGIN
     -- recall, thus we pick the first one as "the" responsible. The only consequence is
     -- that it's uid/gid will be used for the DiskCopy creation
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- log "setFileRecalled : unable to identify Recall. giving up"
+    -- log "Unable to identify Recall. giving up"
     logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, varFileId, varNsHost, 'tapegatewayd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) ||
              ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
@@ -10143,7 +10171,6 @@ BEGIN
      WHERE SR.castorFile = inCfId
        AND SR.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_WAITSUBREQ);
   END IF;
-  -- commit
   COMMIT;
 END;
 /
@@ -10398,7 +10425,7 @@ BEGIN
       END IF;
     ELSE
       -- log "startRecallMounts: not allowed to start new recall mount. Maximum nb of drives has been reached"
-      logToDLF(NULL, dlf.LVL_DEBUG, dlf.RECMOUNT_NOACTION_NODRIVE, 0, '',
+      logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECMOUNT_NOACTION_NODRIVE, 0, '',
                'tapegatewayd', 'recallGroup=' || rg.name);
     END IF;
     COMMIT;
@@ -10672,7 +10699,7 @@ BEGIN
       ELSE
         -- Fail/retry this migration, log 'migration failed, will retry if allowed'
         varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' ErrorCode='|| to_char(inErrorCodes(i))
-                     ||' ErrorMessage="'|| inErrorMsgs(i) ||'" VID='|| varVid
+                     ||' ErrorMessage="'|| inErrorMsgs(i) ||'" TPVID='|| varVid
                      ||' copyNb='|| to_char(varCopyNo) ||' '|| inLogContext;
         logToDLF(varReqid, dlf.LVL_WARNING, dlf.MIGRATION_RETRY, inFileIds(i), varNsHost, 'tapegatewayd', varParams);
         retryOrFailMigration(inMountTrId, inFileIds(i), varNsHost, inErrorCodes(i), varReqId);
@@ -10857,10 +10884,6 @@ BEGIN
   -- terminate repack subrequests
   IF varOriginalCopyNb IS NOT NULL THEN
     archiveOrFailRepackSubreq(varCfId, inErrorCode);
-    -- set back the CastorFile to ONTAPE otherwise repack will wait forever
-    UPDATE CastorFile
-       SET tapeStatus = dconst.CASTORFILE_ONTAPE
-     WHERE id = varCfId;
   END IF;
   
   IF varErrorCode = serrno.ENOENT THEN
@@ -11113,7 +11136,7 @@ BEGIN
          AND nsHost = varNsHost
          FOR UPDATE;
     EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- log "setBulkFileRecallResult : unable to identify Recall. giving up"
+      -- log "Unable to identify Recall. giving up"
       logToDLF(varReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, inFileIds(i), varNsHost, 'tapegatewayd',
                'mountTransactionId=' || TO_CHAR(inMountTrId) || ' TPVID=' || varVID ||
                ' fseq=' || TO_CHAR(inFseqs(i)) || ' filePath=' || inFilePaths(i) || ' ' || inLogContext);
@@ -11782,22 +11805,23 @@ END;
 
 /* Search and delete old archived/failed subrequests and their requests */
 CREATE OR REPLACE PROCEDURE deleteTerminatedRequests AS
-  timeOut INTEGER;
-  rateDependentTimeOut INTEGER;
+  failuresTimeOut INTEGER;
+  successesTimeOut INTEGER;
   rate INTEGER;
   srIds "numList";
   ct NUMBER;
 BEGIN
-  -- select requested timeout from configuration table
-  timeOut := 3600*TO_NUMBER(getConfigOption('cleaning', 'terminatedRequestsTimeout', '120'));
+  -- select requested timeout for failed requests from configuration table
+  failuresTimeOut := 3600*TO_NUMBER(getConfigOption('cleaning', 'failedRequestsTimeout', '168'));  -- 1 week
   -- compute a rate-dependent timeout for the successful requests by looking at the
-  -- last half-hour of activity: keep max 1M of them regardless the above configured timeOut.
-  SELECT 1800 * 1000000 / (count(*)+1) INTO rateDependentTimeOut
+  -- last half-hour of activity: keep max 1M of them.
+  SELECT 1800 * 1000000 / (count(*)+1) INTO successesTimeOut
     FROM SubRequest
    WHERE status = dconst.SUBREQUEST_ARCHIVED
      AND lastModificationTime > getTime() - 1800;
-  IF rateDependentTimeOut > timeOut THEN
-    rateDependentTimeOut := timeOut;
+  IF successesTimeOut > failuresTimeOut THEN
+    -- in case of light load, don't keep successful request for longer than failed ones
+    successesTimeOut := failuresTimeOut;
   END IF;
   
   -- Delete castorFiles if nothing is left for them. Here we use
@@ -11808,10 +11832,10 @@ BEGIN
   INSERT /*+ APPEND */ INTO DeleteTermReqHelper (srId, cfId)
     (SELECT SR.id, castorFile FROM SubRequest SR
       WHERE (SR.status = dconst.SUBREQUEST_ARCHIVED
-             AND SR.lastModificationTime < getTime() - rateDependentTimeOut)
+             AND SR.lastModificationTime < getTime() - successesTimeOut)
          -- failed subrequests are kept according to the configured timeout
          OR (SR.status = dconst.SUBREQUEST_FAILED_FINISHED
-             AND reqType != 119 AND SR.lastModificationTime < getTime() - timeOut));  -- StageRepackRequest
+             AND reqType != 119 AND SR.lastModificationTime < getTime() - failuresTimeOut));  -- StageRepackRequest
   COMMIT;  -- needed otherwise the next statement raises
            -- ORA-12838: cannot read/modify an object after modifying it in parallel
   -- 2nd part, separated from above for efficiency reasons
@@ -11820,7 +11844,7 @@ BEGIN
       WHERE SR.status = dconst.SUBREQUEST_FAILED_FINISHED
          -- only for the Repack case, we keep all failed subrequests around until
          -- the whole Repack request is over for more than <timeOut> seconds
-        AND reqType = 119 AND R.lastModificationTime < getTime() - timeOut  -- StageRepackRequest
+        AND reqType = 119 AND R.lastModificationTime < getTime() - failuresTimeOut  -- StageRepackRequest
         AND R.id = SR.request);
   COMMIT;
   SELECT count(*) INTO ct FROM DeleteTermReqHelper;
@@ -11884,12 +11908,17 @@ BEGIN
 
   -- Finally deal with Repack: this case is different because StageRepackRequests may be empty
   -- at the beginning. Therefore we only drop repacks that are in a completed state
-  -- for more than <timeOut> seconds.                              FINISHED, FAILED, ABORTED
-  bulkDelete('SELECT id FROM StageRepackRequest R WHERE status IN (2, 3, 5)
+  -- for more than the requested time.
+  -- First failed ones (status FAILED, ABORTED)
+  bulkDelete('SELECT id FROM StageRepackRequest R WHERE status IN (3, 5)
     AND NOT EXISTS (SELECT 1 FROM SubRequest WHERE request = R.id)
-    AND lastModificationTime < getTime() - ' || timeOut || ';',
+    AND lastModificationTime < getTime() - ' || failuresTimeOut || ';',
     'StageRepackRequest');
-
+  -- Then successful ones (status FINISHED)
+  bulkDelete('SELECT id FROM StageRepackRequest R WHERE status = 2
+    AND NOT EXISTS (SELECT 1 FROM SubRequest WHERE request = R.id)
+    AND lastModificationTime < getTime() - ' || successesTimeOut || ';',
+    'StageRepackRequest');
 END;
 /
 
@@ -11923,7 +11952,7 @@ BEGIN
       BEGIN
         DELETE FROM DiskCopy WHERE id = dcIds(i);
       EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-        IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DRAININGERRORS_DC) violated%' OR
+        IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DRAININGERRORS_CASTORFILE) violated%' OR
            sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DISK2DISKCOPYJOB_SRCDCID) violated%' THEN
           -- Ignore the deletion, this diskcopy was either implied in a draining action and
           -- the draining error is still around or it is the source of another d2d copy that
@@ -12112,12 +12141,9 @@ BEGIN
                            CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
                           (dj.fileMask = dconst.DRAIN_FILEMASK_ALL))
                      AND DiskCopy.status = dconst.DISKCOPY_VALID
-                     -- exclude files for which there is a running job
-                     AND NOT EXISTS (SELECT 1 FROM Disk2DiskCopyJob WHERE castorFile = CastorFile.id)
-                     -- exclude files with previous errors
-                     AND NOT EXISTS (SELECT 1 FROM DrainingErrors WHERE diskCopy = DiskCopy.id)
-                     -- exclude files for which another copy exists elsewhere (case of interrupted draining)
-                     AND NOT EXISTS (SELECT 1 FROM DiskCopy WHERE castorFile = cfId AND fileSystem != dj.fileSystem)
+                     AND NOT EXISTS (SELECT 1 FROM DrainingErrors WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
+                     -- don't recreate disk-to-disk copy jobs for the ones already done in previous rounds
+                     AND NOT EXISTS (SELECT 1 FROM Disk2DiskCopyJob WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
                    ORDER BY DiskCopy.importance DESC)
                  WHERE ROWNUM <= varMaxNbOfSchedD2dPerDrain-varNbRunningJobs) LOOP
         createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
@@ -12133,7 +12159,7 @@ BEGIN
         -- give up with this DrainingJob as it was canceled
         ROLLBACK;
       ELSE
-        raise;
+        RAISE;
       END IF;
     END;
   END LOOP;
@@ -12153,14 +12179,19 @@ BEGIN
   COMMIT;
 
   -- Start new DrainingJobs if needed
-  FOR dj IN (SELECT id, fileSystem FROM DrainingJob WHERE status = dconst.DRAININGJOB_SUBMITTED) LOOP
+  FOR dj IN (SELECT id, fileSystem, fileMask
+               FROM DrainingJob WHERE status = dconst.DRAININGJOB_SUBMITTED) LOOP
     UPDATE DrainingJob SET status = dconst.DRAININGJOB_STARTING WHERE id = dj.id;
     COMMIT;
     -- Compute totals now. Jobs will be later added in bunches by drainRunner
     SELECT count(*), SUM(diskCopySize) INTO varTFiles, varTBytes
-      FROM DiskCopy
+      FROM DiskCopy, CastorFile
      WHERE fileSystem = dj.fileSystem
-       AND status = dconst.DISKCOPY_VALID;
+       AND status = dconst.DISKCOPY_VALID
+       AND CastorFile.id = DiskCopy.castorFile
+       AND ((dj.fileMask = dconst.DRAIN_FILEMASK_NOTONTAPE AND
+             CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
+            (dj.fileMask = dconst.DRAIN_FILEMASK_ALL));
     UPDATE DrainingJob
        SET totalFiles = varTFiles,
            totalBytes = nvl(varTBytes, 0),

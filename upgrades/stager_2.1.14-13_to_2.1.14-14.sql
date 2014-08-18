@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * This script upgrades a CASTOR v2.1.14-11 STAGER database to v2.1.14-13
+ * This script upgrades a CASTOR v2.1.14-13 STAGER database to v2.1.14-14
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
