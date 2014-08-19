@@ -128,7 +128,7 @@ template <class placeHolder> class TaskWatchDog : private castor::server::Thread
         castor::server::MutexLocker locker(&m_mutex);
         m_lc.log(LOG_DEBUG,"going to report");
         m_previousReportTime=currentTime;
-        m_initialProcess.notifyHeartbeat("PIPPO", m_nbOfMemblocksMoved);
+        //m_initialProcess.notifyHeartbeat("PIPPO", m_nbOfMemblocksMoved);
         m_nbOfMemblocksMoved=0;
       } 
       else{
