@@ -36,19 +36,19 @@
 //------------------------------------------------------------------------------
 class XrdxCastor2FsDirectory : public XrdSfsDirectory, public LogId
 {
-public:
+  public:
 
   //----------------------------------------------------------------------------
   //! Constructor
   //----------------------------------------------------------------------------
-  XrdxCastor2FsDirectory(const char* user=0, int MonID=0);
-  
-  
+  XrdxCastor2FsDirectory(const char* user = 0, int MonID = 0);
+
+
   //----------------------------------------------------------------------------
   //! Destructor
   //----------------------------------------------------------------------------
   virtual ~XrdxCastor2FsDirectory();
-  
+
 
   //----------------------------------------------------------------------------
   //! Open the directory `path' and prepare for reading
@@ -61,9 +61,9 @@ public:
   //----------------------------------------------------------------------------
   int open(const char* dirName,
            const XrdSecEntity* client = 0,
-           const char* opaque = 0 );
-  
-  
+           const char* opaque = 0);
+
+
   //----------------------------------------------------------------------------
   //! Read the next directory entry
   //!
@@ -78,8 +78,8 @@ public:
   //----------------------------------------------------------------------------
   //! Function: Set stat buffer to automaticaly return stat information
   //! Input:  Pointer to stat buffer which will be filled in on each
-  //!         nextEntry() and represent stat information for that entry. 
-  //! Output: Upon success, returns zero. Upon error returns SFS_ERROR and sets 
+  //!         nextEntry() and represent stat information for that entry.
+  //! Output: Upon success, returns zero. Upon error returns SFS_ERROR and sets
   //!         the error object to contain the reason.
   //!
   //! Notes: 1. If autoStat() is not supported he caller will need to follow up
@@ -87,9 +87,9 @@ public:
   //!        process. The autoStat function significantly reduces overhead by
   //!        automatically providing stat information for the entry read.
   //----------------------------------------------------------------------------
-  int autoStat(struct stat *buf);
- 
-  
+  int autoStat(struct stat* buf);
+
+
   //----------------------------------------------------------------------------
   //! Close the directory object
   //!
@@ -98,22 +98,21 @@ public:
   //! @return SFS_OK upon success and SFS_ERROR upon failure
   //----------------------------------------------------------------------------
   int close();
-  
-  
+
+
   //----------------------------------------------------------------------------
-  //! Get directory name 
+  //! Get directory name
   //----------------------------------------------------------------------------
-  const char* FName() 
+  const char* FName()
   {
-    return (const char*)fname;
+    return const_cast<const char*>(fname);
   }
-  
-private:
-  
-  Cns_DIR* dh;            ///< directory stream handle
-  char* fname;            ///< directory name 
-  struct dirent* d_pnt;   ///< ptr to dir entry
+
+ private:
+
+  Cns_DIR* dh; ///< directory stream handle
+  char* fname; ///< directory name
+  struct dirent* d_pnt; ///< ptr to dir entry
   struct Cns_direnstatc* ds_ptn; ///< ptr dir entry with stat info
   struct stat* mAutoStat; ///< stat buffer used for bulk dir listing
-  
 };

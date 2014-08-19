@@ -18,10 +18,8 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
-
 
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2Proc.hpp"
@@ -53,15 +51,13 @@ XrdxCastor2Proc::Open()
   system(doit.c_str());
   DIR* pd = opendir(mProcDirectory.c_str());
 
-  if (!pd)
-  {
-    return false;
-  }
-  else
+  if (pd)
   {
     closedir(pd);
     return true;
   }
+  else
+    return false;
 }
 
 
@@ -130,15 +126,12 @@ bool
 XrdxCastor2ProcFile::Open()
 {
   if (mProcSync)
-    fd = open(fname.c_str(), O_CREAT | O_SYNC | O_RDWR, S_IRWXU | S_IROTH | S_IRGRP);
+    fd = open(fname.c_str(), O_CREAT | O_SYNC | O_RDWR,
+              S_IRWXU | S_IROTH | S_IRGRP);
   else
     fd = open(fname.c_str(), O_CREAT | O_RDWR, S_IRWXU | S_IROTH | S_IRGRP);
- 
-  if (fd < 0)
-    return false;
-  
-  
-  return true;
+
+  return (fd >= 0);
 }
 
 
@@ -148,7 +141,8 @@ XrdxCastor2ProcFile::Open()
 bool
 XrdxCastor2ProcFile::Close()
 {
-  if (fd >= 0) close(fd);
+  if (fd >= 0)
+    close(fd);
 
   return true;
 }
@@ -192,18 +186,13 @@ XrdxCastor2ProcFile::Write(const char* pbuf, int writedelay)
       return true;
   }
 
-  int result;
+  mLastWrite = now;
   lseek(fd, 0, SEEK_SET);
 
-  while ((result =::ftruncate(fd, 0)) && (errno == EINTR)) {}
+  while (::ftruncate(fd, 0) && (errno == EINTR)) { }
 
-  mLastWrite = now;
-
-  if ((write(fd, pbuf, strlen(pbuf))) == (ssize_t)(strlen(pbuf)))
-    return true;
-  else
-    return false;
-}
+  return (write(fd, pbuf, strlen(pbuf)) == (ssize_t)(strlen(pbuf)));
+ }
 
 
 //------------------------------------------------------------------------------
@@ -213,9 +202,9 @@ bool
 XrdxCastor2ProcFile::WriteKeyVal(const char* key,
                                  unsigned long long value,
                                  int writedelay,
-                                 bool dotruncate)
+                                 bool do_truncate)
 {
-  if (dotruncate)
+  if (do_truncate)
   {
     time_t now = time(NULL);
 
@@ -225,21 +214,15 @@ XrdxCastor2ProcFile::WriteKeyVal(const char* key,
         return false;
     }
 
-    // printf("Truncating FD %d for %s\n",fd,key);
+    mLastWrite = now;
     lseek(fd, 0, SEEK_SET);
 
-    while ((::ftruncate(fd, 0)) && (errno == EINTR)) {}
-
-    mLastWrite = now;
+    while ((::ftruncate(fd, 0)) && (errno == EINTR)) { }
   }
 
   char pbuf[1024];
   sprintf(pbuf, "%lu %-32s %lld\n", (unsigned long)time(NULL), key, value);
-
-  if ((write(fd, pbuf, strlen(pbuf))) == (ssize_t)(strlen(pbuf)))
-    return true;
-  else
-    return false;
+  return (write(fd, pbuf, strlen(pbuf)) == (ssize_t)(strlen(pbuf)));
 }
 
 
@@ -271,9 +254,5 @@ XrdxCastor2ProcFile::Read(XrdOucString& str)
   lseek(fd, 0, SEEK_SET);
   ssize_t rb = read(fd, pbuf, sizeof(pbuf));
   str = pbuf;
-
-  if (rb <= 0)
-    return false;
-  else
-    return true;
+  return (rb > 0);
 }

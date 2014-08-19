@@ -18,16 +18,17 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
- * 
+ *
  ******************************************************************************/
 
 #pragma once
 
-#define XCASTOR2FS_MAXFILESYSTEMS         8192
-#define XCASTOR2FS_MAXDISTINCTUSERS       8192
+#define XCASTOR2FS_MAXFILESYSTEMS    8192
+#define XCASTOR2FS_MAXDISTINCTUSERS  8192
 
-//! Constants dealing with async requests for the stager 
-#define XCASTOR2FS_RESP_TIMEOUT            600 ///< timeout for async responses 
-#define XCASTOR2FS_MAX_REQUESTS           2000 ///< max no. of requests on-the-fly
-
+//! Constants dealing with async requests for the stager
+//! Timeout during which we received the response for an async request from
+//! stager and the client need to show up to collect it
+#define XCASTOR2FS_RESP_TIMEOUT      600
+//! Maximum number of async requests in-fligth
+#define XCASTOR2FS_MAX_REQUESTS      2000

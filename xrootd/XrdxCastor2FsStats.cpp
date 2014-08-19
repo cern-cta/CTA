@@ -18,7 +18,6 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
@@ -73,7 +72,7 @@ XrdxCastor2FsStats::XrdxCastor2FsStats(XrdxCastor2Proc* proc)
 XrdxCastor2FsStats::~XrdxCastor2FsStats()
 {
   if (ServerTable) delete ServerTable;
-  if (UserTable)   delete UserTable;
+  if (UserTable) delete UserTable;
 }
 
 
@@ -183,12 +182,14 @@ XrdxCastor2FsStats::IncCmd(bool lock)
 {
   time_t now = time(NULL);
 
-  if (lock) statmutex.Lock();
+  if (lock)
+    statmutex.Lock();
 
   cmd300s[(now + 1) % 300] = 0;
   cmd300s[now % 300]++;
 
-  if (lock) statmutex.UnLock();
+  if (lock)
+    statmutex.UnLock();
 }
 
 
@@ -224,9 +225,7 @@ XrdxCastor2FsStats::IncServerRead(const char* server)
       ServerTable->Insert(new XrdOucString(server), server);
   }
   else
-  {
     rc->Inc();
-  }
 
   statmutex.UnLock();
 }
@@ -251,9 +250,7 @@ XrdxCastor2FsStats::IncServerWrite(const char* server)
       ServerTable->Insert(new XrdOucString(server), server);
   }
   else
-  {
     rc->Inc();
-  }
 
   statmutex.UnLock();
 }
@@ -289,9 +286,7 @@ XrdxCastor2FsStats::IncUserRead(const char* user)
     UserTable->Insert(new XrdOucString(user), user);
   }
   else
-  {
     rc->Inc();
-  }
 
   statmutex.UnLock();
 }
@@ -314,9 +309,7 @@ XrdxCastor2FsStats::IncUserWrite(const char* user)
     UserTable->Insert(new XrdOucString(user), user);
   }
   else
-  {
     rc->Inc();
-  }
 
   statmutex.UnLock();
 }
@@ -436,7 +429,6 @@ XrdxCastor2FsStats::CmdRate(int nbins)
 
   for (int i = 0 ; i < nbins; i++)
     sum += (cmd300s[(now - 1 - i) % 300]);
-
 
   sum /= nbins;
   return sum;
@@ -575,7 +567,7 @@ XrdxCastor2FsStats::Update()
             errno = 0;
             char* end;
             log_level = (int) strtol(slog_level.c_str(), &end, 10);
-            
+
             if ((errno == ERANGE && ((log_level == LONG_MIN) || (log_level == LONG_MAX))) ||
                 ((errno != 0) && (log_level == 0)) ||
                 (end == slog_level.c_str()))
@@ -589,9 +581,7 @@ XrdxCastor2FsStats::Update()
         }
       }
     }
-    
     statmutex.UnLock();
-
     {
       XrdxCastor2ProcFile* pf = Proc->Handle("serverread");
 

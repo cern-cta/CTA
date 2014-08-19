@@ -18,7 +18,6 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
@@ -37,41 +36,39 @@
 //------------------------------------------------------------------------------
 class XrdxCastor2StatULongLong
 {
-
-private:
+ private:
   unsigned long long cnt;
-  
-public:
+
+ public:
 
   //----------------------------------------------------------------------------
-  //! Constructor 
+  //! Constructor
   //----------------------------------------------------------------------------
   XrdxCastor2StatULongLong()
   {
     Reset();
-  };
-  
+  }
+
 
   //----------------------------------------------------------------------------
   //! Destructor
   //----------------------------------------------------------------------------
   virtual ~XrdxCastor2StatULongLong() {};
-  
+
   void Inc()
   {
     cnt++;
   }
-  
+
   unsigned long long Get()
   {
     return cnt;
   }
-  
+
   void Reset()
   {
     cnt = 0;
   }
-
 };
 
 
@@ -80,65 +77,64 @@ public:
 //------------------------------------------------------------------------------
 class XrdxCastor2FsStats
 {
+ private:
 
-private:
-  
   long long read300s[300];
   long long write300s[300];
   long long stat300s[300];
   long long readd300s[300];
   long long rm300s[300];
   long long cmd300s[300];
-  
+
   double readrate1s;
   double readrate60s;
   double readrate300s;
-  
+
   double writerate1s;
   double writerate60s;
   double writerate300s;
-  
+
   double statrate1s;
   double statrate60s;
   double statrate300s;
-  
+
   double readdrate1s;
   double readdrate60s;
   double readdrate300s;
-  
+
   double rmrate1s;
   double rmrate60s;
   double rmrate300s;
-  
+
   double cmdrate1s;
   double cmdrate60s;
   double cmdrate300s;
-  
+
   XrdOucHash<XrdxCastor2StatULongLong> ServerRead;
   XrdOucHash<XrdxCastor2StatULongLong> ServerWrite;
   XrdOucTable<XrdOucString>* ServerTable;
-  
+
   XrdOucHash<XrdxCastor2StatULongLong> UserRead;
   XrdOucHash<XrdxCastor2StatULongLong> UserWrite;
   XrdOucTable<XrdOucString>* UserTable;
-  
+
   XrdSysMutex statmutex;
   XrdxCastor2Proc* Proc;
-  
-public:
-  
+
+ public:
+
   //----------------------------------------------------------------------------
   //! Constructor
   //----------------------------------------------------------------------------
   XrdxCastor2FsStats(XrdxCastor2Proc* proc = NULL);
-  
+
 
   //----------------------------------------------------------------------------
   //! Destructor
   //----------------------------------------------------------------------------
   virtual ~XrdxCastor2FsStats();
 
-  
+
   void SetProc(XrdxCastor2Proc* proc) ;
   void IncRdWr(bool isRW);
   void IncRead() ;
@@ -161,8 +157,6 @@ public:
   double CmdRate(int nbins);
   void Update();
   void UpdateLoop();
-
 };
 
 extern void* XrdxCastor2FsStatsStart(void* pp);
-

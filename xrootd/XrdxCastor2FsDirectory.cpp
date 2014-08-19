@@ -18,7 +18,6 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
@@ -41,9 +40,7 @@ XrdxCastor2FsDirectory::XrdxCastor2FsDirectory(const char* user, int MonID) :
   d_pnt(0),
   ds_ptn(0),
   mAutoStat(0)
-{
-  // empty
-}
+{ }
 
 
 //------------------------------------------------------------------------------
@@ -66,9 +63,9 @@ XrdxCastor2FsDirectory::~XrdxCastor2FsDirectory()
 // Open directory
 //------------------------------------------------------------------------------
 int
-XrdxCastor2FsDirectory::open(const char*         dir_path,
+XrdxCastor2FsDirectory::open(const char* dir_path,
                              const XrdSecEntity* client,
-                             const char*         info)
+                             const char* info)
 {
   EPNAME("opendir");
   uid_t client_uid;
@@ -90,7 +87,7 @@ XrdxCastor2FsDirectory::open(const char*         dir_path,
   if (dh)
     return gMgr->Emsg(epname, error, EADDRINUSE, "open directory", map_dir.c_str());
 
-  // Open the directory and get it's id
+  // Open the directory and get its id
   if (!(dh = XrdxCastor2FsUFS::OpenDir(map_dir.c_str())))
     return  gMgr->Emsg(epname, error, serrno, "open directory", map_dir.c_str());
 
@@ -141,7 +138,6 @@ XrdxCastor2FsDirectory::nextEntry()
     mAutoStat->st_atime   = ds_ptn->atime;
     mAutoStat->st_mtime   = ds_ptn->mtime;
     mAutoStat->st_ctime   = ds_ptn->ctime;
-
     xcastor_debug("dir next stat entry: %s", ds_ptn->d_name);
     return static_cast<const char*>(ds_ptn->d_name);
   }
@@ -166,7 +162,7 @@ XrdxCastor2FsDirectory::nextEntry()
 // Set stat buffer to automaticaly return stat information
 //------------------------------------------------------------------------------
 int
-XrdxCastor2FsDirectory::autoStat(struct stat *buf)
+XrdxCastor2FsDirectory::autoStat(struct stat* buf)
 {
   EPNAME("autostat");
 

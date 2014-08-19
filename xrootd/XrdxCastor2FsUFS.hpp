@@ -18,12 +18,10 @@
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
- * @author Castor Dev team, castor-dev@cern.ch
  *
  ******************************************************************************/
 
-#ifndef __XCASTOR_FSUFS_HH__
-#define __XCASTOR_FSUFS_HH__
+#pragma once
 
 /*-----------------------------------------------------------------------------*/
 #include "serrno.h"
@@ -150,5 +148,3 @@ class XrdxCastor2FsUFS
       return Cns_closedir(dp);
     }
 };
-
-#endif // __XCASTOR_FSUFS_HH__
