@@ -1996,9 +1996,9 @@ ALTER TABLE DrainingErrors
   REFERENCES DrainingJob (id);
 
 ALTER TABLE DrainingErrors
-  ADD CONSTRAINT FK_DrainingErrors_DC
-  FOREIGN KEY (diskCopy)
-  REFERENCES DiskCopy (id);
+  ADD CONSTRAINT FK_DrainingErrors_CastorFile
+  FOREIGN KEY (castorFile)
+  REFERENCES CastorFile (id);
 
 
 /* Definition of the Disk2DiskCopyJob table. Each line is a disk2diskCopy job to process
