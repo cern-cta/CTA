@@ -705,7 +705,9 @@ BEGIN
 END;
 /
 
-/* This procedure implements the Cns_closex API */
+/* This procedure implements the Cns_closex API.
+ * inCksumType can be either 'AD' or 'NO' for no checksum.
+ */
 CREATE OR REPLACE PROCEDURE closex(inFid IN INTEGER,
                                    inFileSize IN INTEGER,
                                    inCksumType IN VARCHAR2,
@@ -748,7 +750,7 @@ BEGIN
     RETURN;
   END IF;
   -- Validate checksum type
-  IF inCksumType != 'AD' THEN
+  IF inCksumType != 'AD' AND inCksumType != 'NO' THEN
     outRC := serrno.EINVAL;
     outMsg := serrno.EINVAL_MSG ||' : incorrect checksum type detected '|| inCksumType;
     ROLLBACK;
@@ -774,8 +776,8 @@ BEGIN
   -- All right, update file size and other metadata
   UPDATE Cns_file_metadata
      SET fileSize = inFileSize,
-         csumType = inCksumType,
-         csumValue = inCksumValue,
+         csumType = CASE WHEN inCksumType != 'NO' THEN inCksumType ELSE NULL END,
+         csumValue = CASE WHEN inCksumType != 'NO' THEN inCksumValue ELSE NULL END,
          ctime = inMTime,
          mtime = inMTime
    WHERE fileId = inFid;
