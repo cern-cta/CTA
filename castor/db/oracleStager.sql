@@ -657,7 +657,11 @@ BEGIN
       OR abortedSRstatus = dconst.SUBREQUEST_REPACK
       OR abortedSRstatus = dconst.SUBREQUEST_READYFORSCHED THEN
       -- standard case, we only have to fail the subrequest
-      UPDATE SubRequest SET status = dconst.SUBREQUEST_FAILED WHERE id = sr.srId;
+      UPDATE SubRequest
+         SET status = dconst.SUBREQUEST_FAILED,
+             errorCode = 1725,
+             errorMessage = 'Aborted by another user request'
+       WHERE id = sr.srId;
       INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
       VALUES (sr.fileId, sr.nsHost, 0, '');
     WHEN abortedSRstatus = dconst.SUBREQUEST_WAITTAPERECALL THEN
