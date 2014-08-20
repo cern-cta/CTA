@@ -5,10 +5,6 @@ def rfcp(self):
     return ['rfcp', 'rfcp -v2']
 Setup.getTag_rfcp = rfcp
 
-def rfcpupd(self):
-    return ['rfcpupd', 'rfcpupd -v2']
-Setup.getTag_rfcpupd = rfcpupd
-
 def rfioTURL(self, nb=0):
     global RfioTURLs
     RfioTURLs = ['',
