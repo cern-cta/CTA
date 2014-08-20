@@ -29,6 +29,6 @@
 //! Constants dealing with async requests for the stager
 //! Timeout during which we received the response for an async request from
 //! stager and the client need to show up to collect it
-#define XCASTOR2FS_RESP_TIMEOUT      600
+#define XCASTOR2FS_RESP_TIMEOUT      360
 //! Maximum number of async requests in-fligth
 #define XCASTOR2FS_MAX_REQUESTS      2000

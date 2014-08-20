@@ -62,7 +62,7 @@
 /******************************************************************************/
 XrdOucHash<XrdOucString>* XrdxCastor2Stager::msDelayStore;
 xcastor::XrdxCastorClient* XrdxCastor2Fs::msCastorClient;
-int XrdxCastor2Fs::msTokenLockTime = 5;
+int XrdxCastor2Fs::msTokenLockTime = 60;
 XrdxCastor2Fs* gMgr;
 XrdSysError OfsEroute(0);
 XrdOucTrace OfsTrace(&OfsEroute);
@@ -172,14 +172,38 @@ XrdxCastor2Fs::newFile(char* user, int MonID)
 }
 
 
-//----------------------------------------------------------------------------
-// Notification to filesystem when client disconnects
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// Notification when client disconnects
+//------------------------------------------------------------------------------
 void
 XrdxCastor2Fs::Disc(const XrdSecEntity* client)
 {
-  xcastor_debug("Client diconnected - proto=%s, name=%s, host=%s",
-                client->prot, client->name, client->host);
+  if (!client)
+    return;
+
+  xcastor_debug("Client diconnect tident=%s", client->tident);
+  std::vector<xcastor::XrdxCastorClient::ReqElement*>
+    req_abrt = msCastorClient->GetUserRequests(client->tident);
+
+  // Set client identity
+  uid_t client_uid;
+  gid_t client_gid;
+  GetIdMapping(client, client_uid, client_gid);
+  bool status = true;
+  XrdOucErrInfo error;
+  xcastor_info("tident=%s abort %i requests", req_abrt.size(), client->tident);
+
+  // We also need to delete the elements from the vector
+  for (std::vector<xcastor::XrdxCastorClient::ReqElement*>::iterator iter =
+         req_abrt.begin();
+       iter != req_abrt.end(); ++iter)
+  {
+    xcastor_debug("aborting req_uuid=%s", (*iter)->mRequest->reqId().c_str());
+    status = XrdxCastor2Stager::StageAbortRequest((*iter)->mRequest->reqId(),
+                                                  (*iter)->mRequest->svcClassName(),
+                                                  client_uid, client_gid, error);
+    delete (*iter);
+  }
 }
 
 
@@ -631,7 +655,7 @@ XrdxCastor2Fs::stageprepare(const char*         path,
                 "valid service class mapping for fn = ", map_path.c_str());
 
   // Get the allowed service class, preference for the default one
-  TIMING("STAGERQUERY", &preparetiming);
+  TIMING("PREP2GET", &preparetiming);
   struct XrdxCastor2Stager::RespInfo resp_info;
   bool done = XrdxCastor2Stager::Prepare2Get(error, client_uid, client_gid,
                                              map_path.c_str(), allowed_svc.c_str(),
@@ -691,6 +715,11 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
       else
         break;
     }
+
+    TIMING("END", &preparetiming);
+
+    if (gMgr->mLogLevel == LOG_DEBUG)
+      preparetiming.Print();
 
     return SFS_OK;
   }
@@ -1062,10 +1091,11 @@ XrdxCastor2Fs::stat(const char* path,
       // TODO: enable this after XRootD 4.0.2 - extend querying support for
       // files on tape by returning also the backup exists flag
       // buf->st_rdev = XRDSFS_HASBKUP;
-      // buf->st_rdev = XRDSFS_OFFLINE;
+      // buf->st_rdev &= XRDSFS_OFFLINE;
     }
 
-    xcastor_debug("map_path=%s, stage_status=%s", map_path.c_str(), stage_status.c_str());
+    xcastor_debug("map_path=%s, stage_status=%s",
+                  map_path.c_str(), stage_status.c_str());
   }
 
   TIMING("END", &stattiming);
@@ -1128,7 +1158,7 @@ XrdxCastor2Fs::lstat(const char* path,
     buf->st_nlink   = 1;
     buf->st_uid     = 0;
     buf->st_gid     = 0;
-    buf->st_rdev    = 0;     /* device type (if inode device) */
+    buf->st_rdev    = 0;  // device type (if inode device)
     buf->st_size    = 0;
     buf->st_blksize = 4096;
     buf->st_blocks  = 0;
@@ -1739,8 +1769,6 @@ XrdxCastor2Fs::GetIdMapping(const XrdSecEntity* client, uid_t& uid, gid_t& gid)
       pwdcpy = (struct passwd*)memcpy(pwdcpy, pw, sizeof(struct passwd));
       uid = pwdcpy->pw_uid;
       gid = pwdcpy->pw_gid;
-      xcastor_debug("passwd add mapping role=%s -> uid/gid=%i/%i",
-                    role.c_str(), (int)uid, int(gid));
       XrdSysMutexHelper scope_lock(mMutexPasswd);
       mPasswdStore->Add(role.c_str(), pwdcpy, 60);
     }
@@ -1751,7 +1779,7 @@ XrdxCastor2Fs::GetIdMapping(const XrdSecEntity* client, uid_t& uid, gid_t& gid)
   }
 
   XrdxCastor2FsUFS::SetId(uid, gid);
-  xcastor_debug("uid/gid=%i/%i", (int)uid, (int)gid);
+  xcastor_debug("role=%s -> uid/gid=%i/%i", role.c_str(), (int)uid, (int)gid);
 }
 
 

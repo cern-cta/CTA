@@ -157,8 +157,8 @@ public:
              XrdOucErrInfo& eInfo,
              const XrdSecEntity* client = 0,
              const char* opaque = 0);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Determine if file 'path' actually exists
   //!
@@ -193,7 +193,7 @@ public:
 
 
   //----------------------------------------------------------------------------
-  //! Implementation specific command
+  //! Implement file system custom command
   //----------------------------------------------------------------------------
   int fsctl(const int cmd,
             const char* args,
@@ -466,11 +466,9 @@ public:
     return mStagerHost;
   }
 
-
   static xcastor::XrdxCastorClient* msCastorClient; ///< obj dealing with async requests/responses
   static  int msTokenLockTime;  ///< specifies the grace period for client to show
                                 ///< up on a disk server in seconds before the token expires
-
   char* ConfigFN; ///< path to config file
   XrdxCastor2Acc* mServerAcc; ///< authorization module for token encryption/decryption
   std::string mZeroProc; ///< path to a 0-byte file in the proc filesystem
@@ -585,7 +583,7 @@ private:
 
 
   //----------------------------------------------------------------------------
-  //! Stall message
+  //! Create stall message
   //!
   //! @param error error text and code
   //! @param stime seconds to stall
@@ -599,7 +597,7 @@ private:
   //----------------------------------------------------------------------------
   //! Get delay for the current operation set for the entire instance by the
   //! admin. The delay value is read from the xcastor2.proc value specified
-  //! in the /etc/xrd.cf file.
+  //! in the /etc/xrd.cf.manager file.
   //!
   //! @param msg message to be returned to the client
   //! @param isRW true if delay value is requested for a write operation,
@@ -614,8 +612,9 @@ private:
   std::set<std::string> mFsSet; ///< set of known diskserver hosts
   XrdSysMutex mMutexFsSet; ///< mutex for the set of known diskservers
   std::map<std::string, std::string> mNsMap; ///< namespace mapping
+  //! Map path to allowed svcClasses and the no_hsm option
   std::map< std::string,
-            std::pair<std::list<std::string>, bool> > mStageMap;///< map path -> allowed svc
+            std::pair<std::list<std::string>, bool> > mStageMap;
   XrdOucHash<struct passwd>* mPasswdStore; ///< cache passwd struct info
   std::map<std::string, std::string> mRoleMap; ///< user role map
   XrdSysMutex mMutexPasswd; ///< mutex for the passwd store
@@ -623,6 +622,4 @@ private:
   std::string mStagerHost; ///< stager host to which requests are sent
 };
 
-
 extern XrdxCastor2Fs* gMgr; ///< global instance of the redirector OFS subsystem
-

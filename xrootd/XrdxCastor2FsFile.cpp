@@ -264,8 +264,8 @@ XrdxCastor2FsFile::open(const char*         path,
 
   if (allowed_svc.empty())
   {
-    return gMgr->Emsg(epname, error, EINVAL,  "open - no valid service"
-                      " class for fn=", map_path.c_str());
+    return gMgr->Emsg(epname, error, EINVAL,  "open - no valid service class"
+                      " for fn=", map_path.c_str());
   }
 
   // Create response structure in which the pfn2 has the following structure
@@ -554,7 +554,7 @@ XrdxCastor2FsFile::open(const char*         path,
     pfn1 = XrdOucString(resp_info.mRedirectionPfn1, slashpos+1);
     pool = XrdOucString(resp_info.mRedirectionPfn1, 0, slashpos-1);
   }
-  
+
   // Add the opaque authorization information for the server for read & write
   XrdxCastor2Acc::AuthzInfo authz;
   authz.sfn = (char*) origpath;
@@ -603,10 +603,6 @@ XrdxCastor2FsFile::open(const char*         path,
       resp_info.mRedirectionHost += buf.csumvalue;
       resp_info.mRedirectionHost += "&";
     }
-
-    // Add the 0-size create flag
-    if (buf.filesize == 0)
-      resp_info.mRedirectionHost += "createifnotexist=1&";
   }
 
   int ecode = atoi(gMgr->mSrvTargetPort.c_str());

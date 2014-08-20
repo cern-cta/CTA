@@ -71,7 +71,7 @@ public:
   //! @param client authentication credentials, if any
   //! @param info opaque information to be used as seen fit
   //!
-  //! @return OOSS_OK upon success, otherwise SFS_ERROR is returned
+  //! @return SFS_REDIRECT upon success, otherwise SFS_ERROR is returned
   //----------------------------------------------------------------------------
   int open(const char* fileName,
            XrdSfsFileOpenMode openMode,
@@ -102,7 +102,8 @@ public:
   //----------------------------------------------------------------------------
   int getMmap(void** Addr, off_t& Size)
   {
-    if (Addr) Addr = 0;
+    if (Addr)
+      Addr = 0;
 
     Size = 0;
     return SFS_OK;
@@ -207,7 +208,7 @@ public:
 
 
   //----------------------------------------------------------------------------
-  //!
+  //! Get checksum info
   //----------------------------------------------------------------------------
   int getCXinfo(char* cxtype, int& cxrsz)
   {
@@ -216,13 +217,12 @@ public:
 
 
   //----------------------------------------------------------------------------
-  //! Implementation specific command
+  //! Implement custom commands 
   //----------------------------------------------------------------------------
   int fctl(int, const char*, XrdOucErrInfo&)
   {
     return 0;
   }
-
 
 private:
 
