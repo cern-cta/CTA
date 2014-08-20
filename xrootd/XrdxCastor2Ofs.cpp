@@ -533,7 +533,7 @@ XrdxCastor2OfsFile::close()
     }
 
     int errc = (rc ? error.getErrInfo() : rc);
-    char* errmsg = (rc ? (char*)error.getErrText() : (char*)0);
+    char* errmsg = (rc ? strdup(error.getErrText()) : (char*)0);
     xcastor_info("send diskmgr errc=%i, errmsg=%s", errc, (errmsg ? errmsg : ""));
     int dm_errno = mover_close_file(mDiskMgrPort, mReqId.c_str(), sz_file,
                                     const_cast<const char*>(ckSumalg),
@@ -543,9 +543,12 @@ XrdxCastor2OfsFile::close()
     // If failed to commit to diskmanager then return error
     if (dm_errno)
     {
-      xcastor_err("path=%s failed closing file: %s", newpath.c_str(), errormsg);
+      xcastor_err("path=%s failed closing file: %s", newpath.c_str(), errmsg);
       rc = gSrv->Emsg("close", error, dm_errno, "send status to diskmanager");
     }
+
+    // Free errmsg memory
+    free(errmsg);
   }
 
   if (gSrv->mLogLevel == LOG_DEBUG)
