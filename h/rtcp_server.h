@@ -252,7 +252,9 @@ int rtcp_CheckReqStructures (int *, rtcpClientInfo_t *, tape_list_t *);
 int rtcp_CallTMS  (tape_list_t *, char *);
 int tellClient  (int *, tape_list_t *, file_list_t *, int);
 int topen  (tape_list_t *, file_list_t *);
-int tclose  (const int, tape_list_t *const, file_list_t *const, const uint32_t);
+int tclose  (const int, tape_list_t *const, file_list_t *const, const uint32_t,
+             uint64_t *const,  uint64_t *const, const uint64_t, const uint64_t,
+             int *const,  uint64_t *const);
 int tcloserr  (int, tape_list_t *, file_list_t *);
 int twrite  (const int, char *const, const int, tape_list_t *const, file_list_t *const, const uint32_t);
 int tread  (int, char *, int, tape_list_t *, file_list_t *);

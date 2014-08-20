@@ -35,6 +35,8 @@
 #include <rtcp_lbl.h>
 #include "tplogger_api.h"
 
+#include "h/tapebridge_constants.h"
+
 extern int AbortFlag;
 
 char *getconfent (char *, char *, int);
@@ -489,6 +491,83 @@ int topen(tape_list_t *tape, file_list_t *file) {
   return(fd); 
 }
 
+/**
+ * Checks if data should be flushed to tape every N files. Updates the number
+ * of bytes and files written without a flush to tape. Flush data to tape if
+ * the maximum number of bytes or the maximum number of files before a flush 
+ * to tape has been reached.
+ *
+ * @return 0 if there was not any error inside wrttpmrk else -1.
+ * In case of error serrno is set by wrttpmrk.                    
+ */
+int checkAndFlushDataToTape(
+    const int          tape_fd,
+    char *const        filereqTapePath,
+    const uint64_t     filereqBytesIn,
+    const uint32_t     tapeFlushMode,
+    uint64_t *const    nbBytesWrittenWithoutFlush,
+    uint64_t *const    nbFilesWrittenWithoutFlush,
+    const uint64_t     maxBytesBeforeFlush,
+    const uint64_t     maxFilesBeforeFlush,
+    int *const         flushedToTapeAfterNFiles) {
+
+    /* If data should be flushed to tape every N files */
+    if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES == tapeFlushMode) {
+
+        /* Update the number of bytes and files written without a flush to */
+        /* tape */
+        (*nbFilesWrittenWithoutFlush)++;
+        *nbBytesWrittenWithoutFlush += filereqBytesIn;
+
+        /* If the maximum number of bytes or the maximum number of files */
+        /* before a flush to tape has been reached */
+        if(maxBytesBeforeFlush <= *nbBytesWrittenWithoutFlush ||
+            maxFilesBeforeFlush <= *nbFilesWrittenWithoutFlush) {
+
+            /* Flush data to tape */
+            int rc;
+            rc = wrttpmrk(tape_fd, filereqTapePath, 0, 0);
+            if(-1 == rc) {
+                rtcp_log(LOG_ERR,"wrttpmrk() error: %s\n", sstrerror(serrno));
+                tl_rtcpd.tl_log(&tl_rtcpd, 3, 3,
+                    "func"    , TL_MSG_PARAM_STR, "MemoryToTape",
+                    "Message" , TL_MSG_PARAM_STR, "wrttpmrk",
+                    "Error"   , TL_MSG_PARAM_STR, sstrerror(serrno));
+                return(-1);
+            }
+            {
+                const char *const maxBytesBeforeFlushReachedStr =
+                    maxBytesBeforeFlush <= *nbBytesWrittenWithoutFlush ?
+                    "TRUE" : "FALSE";
+                const char *const maxFilesBeforeFlushReachedStr =
+                    maxFilesBeforeFlush <= *nbFilesWrittenWithoutFlush ?
+                    "TRUE" : "FALSE";
+                char logMsg[256];
+
+                snprintf(logMsg, sizeof(logMsg),
+                  "Flushed to tape"
+                  ": maxBytesBeforeFlushReached=%s"
+                  " maxFilesBeforeFlushReachedStr=%s",
+                  maxBytesBeforeFlushReachedStr,
+                  maxFilesBeforeFlushReachedStr);
+                logMsg[sizeof(logMsg) - 1] = '\0';
+                rtcp_log(LOG_INFO, "%s(): %s\n", __FUNCTION__, logMsg);
+                tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+                  "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
+                  "Message", TL_MSG_PARAM_STR, logMsg);
+            }
+
+            /* Indicate a flush to tape has been done */
+            *flushedToTapeAfterNFiles = 1;
+
+            /* Reset the number of bytes and files written without a flush */
+            *nbBytesWrittenWithoutFlush = 0;
+            *nbFilesWrittenWithoutFlush = 0;
+        }
+    }
+    return(0);
+}
+
 /*
  * Closing tape file.
  */
@@ -496,7 +575,13 @@ int tclose(
   const int          fd,
   tape_list_t *const tape,
   file_list_t *const file,
-  const uint32_t     tapeFlushMode) {
+  const uint32_t     tapeFlushMode,
+  uint64_t *const    nbBytesWrittenWithoutFlush,
+  uint64_t *const    nbFilesWrittenWithoutFlush,
+  const uint64_t     maxBytesBeforeFlush,
+  const uint64_t     maxFilesBeforeFlush,
+  int *const         flushedToTapeAfterNFiles,
+  uint64_t *const    batchBytesToTape) {
   int rc = 0;
   int save_serrno = 0;
   int save_errno = 0;
@@ -586,6 +671,15 @@ int tclose(
                          "err"      , TL_MSG_PARAM_STR, sstrerror(save_serrno) );
         serrno = save_serrno;
       }
+      rc = checkAndFlushDataToTape(fd,
+        filereq->tape_path,
+        filereq->bytes_in,
+        tapeFlushMode,
+        nbBytesWrittenWithoutFlush,
+        nbFilesWrittenWithoutFlush,
+        maxBytesBeforeFlush,
+        maxFilesBeforeFlush,
+        flushedToTapeAfterNFiles);
     }
   if ( (rc != -1) && (file->trec > 0) ) {
 /*******************************************************************************
@@ -661,6 +755,7 @@ int tclose(
       filereq->host_bytes = filereq->bytes_in = filereq->bytes_out;
     }
   }
+  *batchBytesToTape += file->filereq.bytes_out;
   (void) close(fd) ; 
   filereq->TEndTransferTape = (int)time(NULL);
   if ( file->cksumRoutine != (unsigned long (*) (unsigned long, 
