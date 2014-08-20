@@ -618,7 +618,7 @@ static void globus_l_gfs_CASTOR2_recv(globus_gfs_operation_t op,
 
   if (strcmp(CASTOR2_handle->access_mode,"w") != 0 &&
       strcmp(CASTOR2_handle->access_mode,"o") != 0) {
-    result=GlobusGFSErrorGeneric("error: incorect access mode");
+    result=GlobusGFSErrorGeneric("error: incorrect access mode");
     globus_gridftp_server_finished_transfer(op, result);
     return;
   }
