@@ -53,6 +53,23 @@ castor::legacymsg::VdqmProxyTcpIp::~VdqmProxyTcpIp() throw() {
 void castor::legacymsg::VdqmProxyTcpIp::setDriveDown(const std::string &server,
   const std::string &unitName, const std::string &dgn)  {
   try {
+    // Check parameters
+    if(server.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: server is an empty string";
+      throw ex;
+    }
+    if(unitName.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: unitName is an empty string";
+      throw ex;
+    }
+    if(dgn.empty()) {
+      castor::exception::Exception ex;      
+      ex.getMessage() << "Invalid parameter: dgn is an empty string";
+      throw ex;
+    }
+
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_UNIT_DOWN;
     castor::utils::copyString(body.server, server);
@@ -75,6 +92,23 @@ void castor::legacymsg::VdqmProxyTcpIp::setDriveDown(const std::string &server,
 void castor::legacymsg::VdqmProxyTcpIp::setDriveUp(const std::string &server,
   const std::string &unitName, const std::string &dgn)  {
   try {
+    // Check parameters
+    if(server.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: server is an empty string";
+      throw ex;
+    }
+    if(unitName.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: unitName is an empty string";
+      throw ex;
+    }
+    if(dgn.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: dgn is an empty string";
+      throw ex;
+    }
+
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_UNIT_UP;
     castor::utils::copyString(body.server, server);
@@ -98,6 +132,23 @@ void castor::legacymsg::VdqmProxyTcpIp::assignDrive(const std::string &server,
   const std::string &unitName, const std::string &dgn,
   const uint32_t mountTransactionId, const pid_t sessionPid)  {
   try {
+    // Check parameters
+    if(server.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: server is an empty string";
+      throw ex;
+    }
+    if(unitName.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: unitName is an empty string";
+      throw ex;
+    }
+    if(dgn.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: dgn is an empty string";
+      throw ex;
+    }
+
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_UNIT_ASSIGN;
     body.volReqId = mountTransactionId;
@@ -123,8 +174,29 @@ void castor::legacymsg::VdqmProxyTcpIp::assignDrive(const std::string &server,
 void castor::legacymsg::VdqmProxyTcpIp::tapeMounted(const std::string &server,
   const std::string &unitName, const std::string &dgn, const std::string &vid,
   const pid_t sessionPid)  {
-
   try {
+    // Check parameters
+    if(server.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: server is an empty string";
+      throw ex;
+    }
+    if(unitName.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: unitName is an empty string";
+      throw ex;
+    }
+    if(dgn.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: dgn is an empty string";
+      throw ex;
+    }
+    if(vid.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: vid is an empty string"; 
+      throw ex;
+    } 
+
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_VOL_MOUNT;
     body.jobId = sessionPid;
@@ -157,6 +229,23 @@ void castor::legacymsg::VdqmProxyTcpIp::releaseDrive(const std::string &server,
   }
 
   try {
+    // Check parameters
+    if(server.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: server is an empty string";
+      throw ex;
+    }
+    if(unitName.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: unitName is an empty string";
+      throw ex;
+    }
+    if(dgn.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: dgn is an empty string"; 
+      throw ex;
+    } 
+
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = status;
     body.jobId = sessionPid;
@@ -393,6 +482,28 @@ void  castor::legacymsg::VdqmProxyTcpIp::tapeUnmounted(
   int status = VDQM_VOL_UNMOUNT;
 
   try {
+    // Check parameters
+    if(server.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: server is an empty string";
+      throw ex;
+    }
+    if(unitName.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: unitName is an empty string";
+      throw ex;
+    }
+    if(dgn.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: dgn is an empty string"; 
+      throw ex;
+    } 
+    if(vid.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: vid is an empty string";
+      throw ex;
+    }
+
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = status;
     castor::utils::copyString(body.volId, vid);

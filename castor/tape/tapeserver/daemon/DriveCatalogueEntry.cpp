@@ -43,6 +43,7 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveCatalogueEntry(
   m_log(log),
   m_processForker(processForker),
   m_vdqm(vdqm),
+  m_hostName(hostName),
   m_config(config),
   m_dataTransferConfig(dataTransferConfig),
   m_state(state),
