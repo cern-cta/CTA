@@ -153,6 +153,10 @@ BEGIN
           varHwOnline = 1) THEN
     raise_application_error(-20114, 'The selected diskserver/filesystem is not in PRODUCTION or READONLY any longer. Giving up.');
   END IF;
+  -- Check that the request is still valid
+  SELECT id INTO srId
+    FROM SubRequest
+   WHERE id = srId AND status NOT IN (dconst.SUBREQUEST_FAILED, dconst.SUBREQUEST_FAILED_FINISHED);
   -- Try to find local DiskCopy
   SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */
          id, nbCopyAccesses, gcWeight, creationTime
@@ -206,9 +210,9 @@ BEGIN
   -- Log successful completion
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETSTART, varFileId, varNsHost, 'stagerd', '');
 EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- No disk copy found on selected FileSystem. This can happen if
-  -- a diskcopy was available and got disabled before this job
-  -- was scheduled. Bad luck, we fail the request, the user will have to retry
+  -- No disk copy found on selected FileSystem, or subRequest not valid any longer.
+  -- This can happen if a diskcopy was available and got disabled, or if an abort came,
+  -- before this job was scheduled. Bad luck, we fail the request, the user will have to retry
   UPDATE SubRequest
      SET status = dconst.SUBREQUEST_FAILED, errorCode = 1725, errorMessage = 'Request canceled while queuing'
    WHERE id = srId;
