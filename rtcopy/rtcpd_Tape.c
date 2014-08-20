@@ -639,66 +639,14 @@ static int MemoryToTape(
         }
     } /* End of for (;;) */
 
-    /* If data should be flushed to tape every N files */
-    if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES == tapeFlushMode) {
-
-        /* Update the number of bytes and files written without a flush to */
-        /* tape */
-        (*nbFilesWrittenWithoutFlush)++;
-        *nbBytesWrittenWithoutFlush += filereq->bytes_in;
-
-        /* If the maximum number of bytes or the maximum number of files */
-        /* before a flush to tape has been reached */
-        if(maxBytesBeforeFlush <= *nbBytesWrittenWithoutFlush ||
-            maxFilesBeforeFlush <= *nbFilesWrittenWithoutFlush) {
-
-            /* Flush data to tape */
-            rc = wrttpmrk(tape_fd, filereq->tape_path, 0, 0);
-            if(-1 == rc) {
-                rtcp_log(LOG_ERR,"wrttpmrk() error: %s\n", sstrerror(serrno));
-                tl_rtcpd.tl_log(&tl_rtcpd, 3, 3,
-                    "func"    , TL_MSG_PARAM_STR, "MemoryToTape",
-                    "Message" , TL_MSG_PARAM_STR, "wrttpmrk",
-                    "Error"   , TL_MSG_PARAM_STR, sstrerror(serrno));
-                return(-1);
-            }
-            {
-                const char *const maxBytesBeforeFlushReachedStr =
-                    maxBytesBeforeFlush <= *nbBytesWrittenWithoutFlush ?
-                    "TRUE" : "FALSE";
-                const char *const maxFilesBeforeFlushReachedStr =
-                    maxFilesBeforeFlush <= *nbFilesWrittenWithoutFlush ?
-                    "TRUE" : "FALSE";
-                char logMsg[256];
-
-                snprintf(logMsg, sizeof(logMsg),
-                  "Flushed to tape"
-                  ": maxBytesBeforeFlushReached=%s"
-                  " maxFilesBeforeFlushReachedStr=%s",
-                  maxBytesBeforeFlushReachedStr,
-                  maxFilesBeforeFlushReachedStr);
-                logMsg[sizeof(logMsg) - 1] = '\0';
-                rtcp_log(LOG_INFO, "%s(): %s\n", __FUNCTION__, logMsg);
-                tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
-                  "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
-                  "Message", TL_MSG_PARAM_STR, logMsg);
-            }
-
-            /* Indicate a flush to tape has been done */
-            *flushedToTapeAfterNFiles = 1;
-
-            /* Reset the number of bytes and files written without a flush */
-            *nbBytesWrittenWithoutFlush = 0;
-            *nbFilesWrittenWithoutFlush = 0;
-        }
-    }
-
-    TP_STATUS(RTCP_PS_CLOSE);
-    if ( proc_err == 0 ) rc = tclose(tape_fd,tape,file,tapeFlushMode);
+    if ( proc_err == 0 ) rc = tclose(tape_fd,tape,file,tapeFlushMode,
+        nbBytesWrittenWithoutFlush,
+        nbFilesWrittenWithoutFlush,
+        maxBytesBeforeFlush,
+        maxFilesBeforeFlush,
+        flushedToTapeAfterNFiles,
+        batchBytesToTape);
     TP_STATUS(RTCP_PS_NOBLOCKING);
-
-    /* tclose updates compression statistics per file */
-    *batchBytesToTape += file->filereq.bytes_out;
 
     return(rc);
 }
@@ -966,10 +914,23 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                  */
                 TP_STATUS(RTCP_PS_CLOSE);
                 {
-                    /* tapeFlushMode is ignored for reads */
+                    /* all following variables are ignored for reads */
                     const uint32_t tapeFlushMode =
                         TAPEBRIDGE_N_FLUSHES_PER_FILE;
-                    rc = tclose(tape_fd,tape,file,tapeFlushMode);
+                    uint64_t       nbBytesWrittenWithoutFlush = 0;
+                    uint64_t       nbFilesWrittenWithoutFlush = 0;
+                    const uint64_t maxBytesBeforeFlush = 0;
+                    const uint64_t maxFilesBeforeFlush = 0;
+                    int            flushedToTapeAfterNFiles = 0;
+                    uint64_t       batchBytesToTape = 0;
+
+                    rc = tclose(tape_fd,tape,file,tapeFlushMode,
+                        &nbBytesWrittenWithoutFlush,
+                        &nbFilesWrittenWithoutFlush,
+                        maxBytesBeforeFlush,
+                        maxFilesBeforeFlush,
+                        &flushedToTapeAfterNFiles,
+                        &batchBytesToTape);
                 }
                 TP_STATUS(RTCP_PS_NOBLOCKING);
                 if ( rc == -1 ) {
@@ -1147,9 +1108,23 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
     if ( proc_err == 0 && tape_fd >= 0 ) {
         TP_STATUS(RTCP_PS_CLOSE);
         {
-            /* tapeFlushMode is ignored for reads */
+            /* all following variables are ignored for reads */
             const uint32_t tapeFlushMode = TAPEBRIDGE_N_FLUSHES_PER_FILE;
-            rc = tclose(tape_fd,tape,file,tapeFlushMode);
+            uint64_t       nbBytesWrittenWithoutFlush = 0;
+            uint64_t       nbFilesWrittenWithoutFlush = 0;
+            const uint64_t maxBytesBeforeFlush = 0;
+            const uint64_t maxFilesBeforeFlush = 0;
+            int            flushedToTapeAfterNFiles = 0;
+            uint64_t       batchBytesToTape = 0;
+            rc = tclose(tape_fd,tape,file,tapeFlushMode,
+                 &nbBytesWrittenWithoutFlush,
+                 &nbFilesWrittenWithoutFlush,
+                 maxBytesBeforeFlush,
+                 maxFilesBeforeFlush,
+                 &flushedToTapeAfterNFiles,
+                 &batchBytesToTape);
+
+
         }
         TP_STATUS(RTCP_PS_NOBLOCKING);
     }
