@@ -71,6 +71,9 @@ castor::IObject* castor::stager::daemon::BaseRequestSvcThread::select() throw() 
        castor::dlf::Param("BackTrace", e.backtrace()),
        castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, castor::stager::daemon::STAGER_SERVICES_EXCEPTION, 4, params);
+    // as this method is supposed to wait for the next request to come,
+    // we should sleep a bit to avoid tight loops
+    sleep(1);
     return 0;
   }
 }
