@@ -1195,11 +1195,11 @@ make castor_rpm
 \end{lstlisting}
 \end{table}
 The last command will give you a list of missing packages that are needed.
-Most of them can be installed with a simple yum install.
+Most of them can be installed with a simple yum install when epel repository is enabled.
 
 \begin{table}[h]
 \begin{lstlisting}
-yum install -y libattr-devel binutils-devel python-devel xfsprogs-devel gtest gtest-devel globus-gridftp-server-devel globus-common-devel cppunit-devel xrootd-server xrootd-client xrootd-libs-devel xrootd-client-devel xrootd-server-devel xrootd-private-devel xrootd-cl xrootd-cl-devel e2fsprogs-devel openssl-devel krb5-devel curl-devel
+yum install -y libattr-devel binutils-devel python-devel xfsprogs-devel gtest gtest-devel globus-gridftp-server-devel globus-common-devel cppunit-devel e2fsprogs-devel openssl-devel krb5-devel curl-devel zeromq3 zeromq3-devel protobuf-compiler protobuf protobuf-devel valgrind
 \end{lstlisting}
 \end{table}
 
@@ -1227,6 +1227,13 @@ yum localinstall http://swrep/swrep/x86_64_slc6/ceph-0.80.1-0.cern.x86_64.rpm ht
 
 You may install ceph-debuginfo (2.8 Go) if you need to.
 
+xrootd4 packages for SLC6 could be installed by : 
+\begin{table}[h]
+\begin{lstlisting}
+yum localinstall http://swrep/swrep/x86_64_slc6/xrootd4-devel-4.0.0-1.slc6.x86_64.rpm  http://swrep/swrep/x86_64_slc6/xrootd4-libs-4.0.0-1.slc6.x86_64.rpm http://swrep/swrep/x86_64_slc6/xrootd4-private-devel-4.0.0-1.slc6.noarch.rpm http://swrep/swrep/x86_64_slc6/xrootd4-client-libs-4.0.0-1.slc6.x86_64.rpm http://swrep/swrep/x86_64_slc6/xrootd4-server-libs-4.0.0-1.slc6.x86_64.rpm http://swrep/swrep/x86_64_slc6/xrootd4-client-4.0.0-1.slc6.x86_64.rpm http://swrep/swrep/x86_64_slc6/xrootd4-client-devel-4.0.0-1.slc6.x86_64.rpm http://swrep/swrep/x86_64_slc6/xrootd4-server-devel-4.0.0-1.slc6.x86_64.rpm
+\end{lstlisting}
+\end{table}
+
 After that, you can run again
 \begin{table}[h]
 \begin{lstlisting}
@@ -1236,7 +1243,8 @@ make castor_rpm
 
 You should have no errors (if some packages are still missing, install it) otherwise it should compile castor and create the rpm package.
 
-A classic compilation is done with the usal \textit{make}
+A classic compilation is done with the usal \textit{make}.
+To run a set of tests \textit{make test} has to be used.
 \subsubsection{Compiling on SLC6}
 On SLC6, there is clash between oracle-*  and postgresql-devel packages about \textit{sqlca.h}.
 The package postgresql-devel provides a new file \textit{sqlca.h}, which has several significant 
