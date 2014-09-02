@@ -459,14 +459,107 @@ int tpd_main() {
 	}
 }
 
-int main(int argc,
-         char **argv)
-{
-	(void)argc;
-	(void)argv;
-	if ((maxfds = Cinitdaemon ("taped", wait4child)) < 0)
-		exit (1);
-	exit (tpd_main());
+/**
+ * Determines whether or not the command line is valid.
+ *
+ * @return 1 if the command line is valid, else 0.
+ */
+int cmd_line_is_valid(const int argc, const char *const *const argv) {
+  // If there are no command-line arguments
+  if(1 == argc) {
+    return 1; // The command line is valid
+  }
+
+  // If there is one command-line argument and it is "-f"
+  if(2 == argc && 0 == strcmp("-f", argv[1])) {
+    return 1; // The command line is valid
+  }
+
+  // If there is one command-line argument and it is "-h"
+  if(2 == argc && 0 == strcmp("-h", argv[1])) {
+    return 1; // The command line is valid
+  }
+
+  // Reaching here means the command line is not valid
+  return 0;
+}
+
+/**
+ * Determines whether or not the help/usage message of taped should be
+ * printed.
+ *
+ * @return 1 if the help/usage message should be printed, else 0.
+ */
+int help_should_be_printed(const int argc, const char *const *const argv) {
+  int i = 0;
+
+  // For each command-line argument
+  for(i = 1; i<argc; i++) {
+    // Return 1 if the argument is "-h"
+    if(0 == strcmp("-h", argv[i])) {
+      return 1;
+    }
+  }
+
+  // Return 0 indicating "-h" was not found
+  return 0;
+}
+
+/**
+ * Prints the command-line syntax of taped to the specified stream.
+ *
+ * @param stream The stream to be printed to.
+ */
+void print_help(FILE *stream) {
+  fprintf(stream, "Usage:\n");
+  fprintf(stream, "\ttaped [-f|-h]\n");
+  fprintf(stream, "\n");
+  fprintf(stream, "Where:\n");
+  fprintf(stream, "\t-f\tRemain in the foreground\n");
+  fprintf(stream, "\t-h\tPrint this usage message\n");
+  fprintf(stream, "\n");
+}
+
+/**
+ * Determine whether or not the taped daemon should remain in the foreground.
+ *
+ * @return 1 if taped daemon should run in the foreground, else 0.
+ */
+int taped_should_remain_in_the_foreground(const int argc,
+  const char *const *const argv) {
+  int i = 0;
+
+  // For each command-line argument
+  for(i = 1; i<argc; i++) {
+    // Return 1 if the argument is "-f"
+    if(0 == strcmp("-f", argv[i])) {
+      return 1;
+    }
+  }
+
+  // Return 0 indicating "-f" was not found
+  return 0;
+}
+
+int main(const int argc, const char *const *const argv) {
+  if(!cmd_line_is_valid(argc, argv)) {
+    fprintf(stderr, "Invalid command-line arguments\n\n");
+    print_help(stderr);
+    return 0;
+  }
+
+  if(help_should_be_printed(argc, argv)) {
+    print_help(stdout);
+    return 0;
+  }
+    
+  if(!taped_should_remain_in_the_foreground(argc, argv)) {
+    if ((maxfds = Cinitdaemon ("taped", wait4child)) < 0) {
+      return 1;
+    }
+  }
+
+  return tpd_main();
 }
 
 int chk_den(struct tptab *tunp,
