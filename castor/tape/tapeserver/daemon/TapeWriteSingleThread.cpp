@@ -21,8 +21,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-
-
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
 //------------------------------------------------------------------------------
 //constructor
@@ -198,8 +196,10 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     }
     // The session completed successfully, and the cleaner (unmount) executed
     // at the end of the previous block. Log the results.
-    logWithStats(LOG_INFO, "Completed migration session successfully",totalTimer.secs());
-  } //end of try
+    log::ScopedParamContainer params(m_logContext);
+    params.add("status", "success");
+    logWithStats(LOG_INFO, "Tape thread complete",params,totalTimer.secs());
+  } //end of try 
   catch(const castor::exception::Exception& e){
     //we end there because write session could not be opened 
     //or because a task failed or because flush failed
@@ -212,37 +212,41 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       }
       task->circulateMemBlocks();
     }
-    //then log
-    log::LogContext::ScopedParam sp1(m_logContext, log::Param("exceptionCode", e.code()));
-    log::LogContext::ScopedParam sp2(m_logContext, log::Param("error_MessageValue", e.getMessageValue()));
-    m_logContext.log(LOG_ERR,"An error occurred during TapwWriteSingleThread::execute");
-    
+    //then log the end of write thread
+    log::ScopedParamContainer params(m_logContext);
+    params.add("status", "error")
+          .add("ErrorMesage", e.getMessageValue());
+    logWithStats(LOG_ERR, "Tape thread complete",
+            params,totalTimer.secs());
     m_reportPacker.reportEndOfSessionWithErrors(e.what(),e.code());
   }    
 }
+
 //------------------------------------------------------------------------------
 //logWithStats
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats
-(int level,const std::string& msg,double sessionTime){
-  log::ScopedParamContainer params(m_logContext);
-    params.add("mountTime", m_stats.mountTime)
-          .add("positionTime", m_stats.positionTime)
-          .add("waitInstructionsTime", m_stats.waitInstructionsTime)
-          .add("checksumingTime", m_stats.checksumingTime)
-          .add("transferTime", m_stats.transferTime)
-          .add("waitDataTime", m_stats.waitDataTime)
-          .add("waitReportingTime", m_stats.waitReportingTime)
-          .add("flushTime", m_stats.flushTime)
-          .add("unloadTime", m_stats.unloadTime)
-          .add("unmountTime", m_stats.unmountTime)
-          .add("dataVolume", m_stats.dataVolume)
-          .add("headerVolume", m_stats.headerVolume)
-          .add("filesCount", m_stats.filesCount)
-          .add("dataBandwidthMiB/s", 1.0*m_stats.dataVolume
-                  /1024/1024/sessionTime)
-          .add("driveBandwidthMiB/s", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
-                  /1024/1024/sessionTime)
-          .add("sessionTime", sessionTime);
-    m_logContext.log(level, msg);
+void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats(
+int level,const std::string& msg, log::ScopedParamContainer& params,
+double sessionTime){
+  params.add("type", "write")
+        .add("VID", m_volInfo.vid)
+        .add("mountTime", m_stats.mountTime)
+        .add("positionTime", m_stats.positionTime)
+        .add("waitInstructionsTime", m_stats.waitInstructionsTime)
+        .add("checksumingTime", m_stats.checksumingTime)
+        .add("transferTime", m_stats.transferTime)
+        .add("waitDataTime", m_stats.waitDataTime)
+        .add("waitReportingTime", m_stats.waitReportingTime)
+        .add("flushTime", m_stats.flushTime)
+        .add("unloadTime", m_stats.unloadTime)
+        .add("unmountTime", m_stats.unmountTime)
+        .add("dataVolume", m_stats.dataVolume)
+        .add("headerVolume", m_stats.headerVolume)
+        .add("files", m_stats.filesCount)
+        .add("dataBandwidthMB/s", 1.0*m_stats.dataVolume
+                /1000/1000/sessionTime)
+        .add("driveBandwidthMiB/s", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
+                /1000/1000/sessionTime)
+        .add("sessionTime", sessionTime);
+  m_logContext.log(level, msg);
 }
