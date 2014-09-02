@@ -578,8 +578,10 @@ def nbToDataAmount(n):
 
 def printPercentage(portion, total):
     '''converts portion/total couple to a percentage of completion'''
-    if total == 0:
+    if total == 0 or total is None:
         return 'N/A'
+    if portion is None:
+        portion = 0
     perc = portion*100.0/total
     return "%.1f %%" % perc
 
