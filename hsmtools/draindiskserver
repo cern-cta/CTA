@@ -364,7 +364,7 @@ def queryFailures():
          WHERE FileSystem.diskServer = DiskServer.id
            AND DrainingJob.fileSystem = FileSystem.id
            AND DrainingErrors.drainingJob = DrainingJob.id
-           AND DrainingErrors.diskCopy = DiskCopy.id(+)'''
+           AND DrainingErrors.castorFile = DiskCopy.castorFile(+)'''
         if fileSystems:
             stGetFailures += ' AND FileSystem.id IN (' + ', '.join([str(fs[2]) for fs in fileSystems]) + ')'
         # get data
