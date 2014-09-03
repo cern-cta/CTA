@@ -46,7 +46,7 @@ def asyncreq(proxy, handler, *args):
     return connection.async_request(handler, oid, *args)
 
 # initialization of the log messages
-msgs = dlf.enum('CONNLOST')
+msgs = dlf.enum('CONNLOST', base=1000)
 dlf.addmessages({msgs.CONNLOST : 'Connection lost'})
 
 class ConnectionPool(object):
