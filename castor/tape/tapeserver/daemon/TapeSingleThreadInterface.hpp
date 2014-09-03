@@ -148,7 +148,7 @@ protected:
     }catch(const castor::exception::Exception& e){
       log::LogContext::ScopedParam sp01(m_logContext, log::Param("exception_code", e.code()));
       log::LogContext::ScopedParam sp02(m_logContext, log::Param("exception_message", e.getMessageValue()));
-      m_logContext.log(LOG_INFO, "waiting for drive to be ready but got timeout");
+      m_logContext.log(LOG_INFO, "Got timeout or error while waiting for drive to be ready.");
       throw;
     }
   }
