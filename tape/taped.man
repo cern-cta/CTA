@@ -5,7 +5,7 @@
 .SH NAME
 taped \- starts the tape daemon
 .SH SYNOPSIS
-.B  /usr/bin/taped
+.B  /usr/bin/taped [-f|-h]
 .SH DESCRIPTION
 .LP
 The
@@ -188,6 +188,13 @@ connected to AIX or Linux platforms, fast tape positionning is used.
 .RE
 .LP
 If a tape drive supports several densities, there must be one line per density.
+.SH OPTIONS
+.TP
+.BI -f
+Remain in the foreground.
+.TP
+.BI -h
+Print the usage message.
 .SH FILES
 .TP 1.5i
 .B /etc/castor/castor.conf
