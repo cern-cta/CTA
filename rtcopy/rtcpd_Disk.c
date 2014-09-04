@@ -263,6 +263,23 @@ static int LockForAppend(const int lock) {
            proc_cntl.DiskFileAppend_lock,&nb_waiters,&next_entry,&wait_list));
 }
 
+/**
+ * Determines whether or not the specified file is local.
+ *
+ * @return 1 if the file is local and 0 if is remote.
+ */
+static int fileIsLocal(char *const path) {
+    char *filename = NULL;
+    char *host = NULL;
+    const int parserc = rfio_parse(path, &host, &filename);
+
+    if(0 == parserc && NULL == host) {
+        return 1; // File is local
+    } else {
+        return 0; // File is remote
+    }
+}
+
 static int DiskFileOpen(int pool_index, 
                         tape_list_t *tape,
                         file_list_t *file) {
@@ -369,18 +386,33 @@ static int DiskFileOpen(int pool_index,
                                  "File Path", TL_MSG_PARAM_STR, filereq->file_path,
                                  "Flags"    , TL_MSG_PARAM_STR, __flags );
         }
-        // add parameter to file name to specify that this is a tape stream
-        int pathLen = strlen(filereq->file_path);
-        const char* params = "?transfertype=tape";
-        int paramsLen = strlen(params);
-        char* pathwithparam = (char*)malloc(pathLen+paramsLen+1);
-        strncpy(pathwithparam, filereq->file_path, pathLen+1);
-        strncpy(pathwithparam+pathLen, params, paramsLen+1);
-        // open the file
-        DK_STATUS(RTCP_PS_OPEN);
-        rc = rfio_open64(pathwithparam,flags,0666);
-        DK_STATUS(RTCP_PS_NOBLOCKING);
-        free(pathwithparam);
+
+        // If the file is local
+        if(fileIsLocal(filereq->file_path)) {
+            // Open the file
+            DK_STATUS(RTCP_PS_OPEN);
+            rc = rfio_open64(filereq->file_path, flags, 0666);
+            DK_STATUS(RTCP_PS_NOBLOCKING);
+
+        // Else the file is remote
+        } else {
+            // Create a new path by concatenating the current one with a
+            // parameter to specify that this is a tape stream
+            const int pathLen = strlen(filereq->file_path);
+            const char *const params = "?transfertype=tape";
+            const int paramsLen = strlen(params);
+            char *const pathwithparam = (char*)malloc(pathLen+paramsLen+1);
+            strncpy(pathwithparam, filereq->file_path, pathLen+1);
+            strncpy(pathwithparam+pathLen, params, paramsLen+1);
+
+            // Open the new path
+            DK_STATUS(RTCP_PS_OPEN);
+            rc = rfio_open64(pathwithparam,flags,0666);
+            DK_STATUS(RTCP_PS_NOBLOCKING);
+            free(pathwithparam);
+        }
+
+        // If the open of the file failed
         if ( rc == -1 ) {
             save_errno = errno;
             save_serrno = serrno;
