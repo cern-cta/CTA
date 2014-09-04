@@ -170,22 +170,6 @@ int rfio_open64_ext_v3(char    * filepath,
       rfio_errno = 0;
       return(rfio_HsmIf_open(filename,flags,mode,1,1));
     }
-
-    {
-      /**
-       * If the RFIO URL in the filename string of the form host:path?name=value
-       * contains a ? character, then terminate the string at that point.
-       *
-       * RFIO URLs of the form host:path?transfertype=tape are used to
-       * facilitate the counting of ongoing tape-transfer streams.  The
-       * ?transfertype=tape qualifier is redundant when accessing local files
-       * and should therefore be removed.
-       */
-      char *const question_mark = strchr(filename, '?');
-      if(question_mark) {
-        *question_mark = '\0';
-      }
-    }
     status= open64(filename, flags, mode) ;
     END_TRACE() ;
     rfio_errno = 0;
