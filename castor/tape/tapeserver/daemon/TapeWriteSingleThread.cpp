@@ -245,7 +245,7 @@ double sessionTime){
         .add("files", m_stats.filesCount)
         .add("dataBandwidthMB/s", 1.0*m_stats.dataVolume
                 /1000/1000/sessionTime)
-        .add("driveBandwidthMiB/s", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
+        .add("driveBandwidthMB/s", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
                 /1000/1000/sessionTime)
         .add("sessionTime", sessionTime);
   m_logContext.log(level, msg);
