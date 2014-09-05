@@ -95,35 +95,29 @@ public:
    * A tape operator toggles the state of tape drive between DOWN and UP
    * using the tpconfig adminstration tool.
    *
-   * The tape daemon can receive a job from the vdqmd daemon for a tape drive
+   * The tape daemon can receive a job the vdqmd daemon for a tape drive
    * when the state of that drive is DRIVE_STATE_UP.  On reception of the job
    * the daemon has the ProcessForker fork a child process.
    *
    * Once the child process is forked the drive enters the DRIVE_STATE_RUNNING
    * state.  The child process is responsible for running a data-transfer
-   * session. During such a sesion a tape will be mounted, data will be
+   * session.  During such a sesion a tape will be mounted, data will be
    * transfered to and/or from the tape and finally the tape will be dismounted.
    *
    * Once the vdqm job has been carried out, the child process completes
-   * and the state of the tape drive either returns to DRIVE_STATE_UP if there
-   * were no problems or to DRIVE_STATE_DOWN if there were.
+   * and the state of the tape drive either returns to DRIVE_STATE_UP if the
+   * associated drive is free or to DRIVE_STATE_DOWN if it could not be freed.
    *
-   * If the tape daemon receives a tpconfig down during a tape session, in
-   * other words whilst the drive in question is in the DRIVE_STATE_RUNNING
+   * If the tape daemon receives a tpconfig-down message during a tape session,
+   * in other words whilst the drive in question is in the DRIVE_STATE_RUNNING
    * state, then the state of the drive is moved to DRIVE_STATE_WAITDOWN.  The
    * tape session continues to run in the DRIVE_STATE_WAITDOWN state, however
    * when the tape session is finished the state of the drive is moved to
    * DRIVE_STATE_DOWN.
    *
-   * The tape daemon can receive a job to label a tape in a drive from an
-   * administration client when the state of that drive is DRIVE_STATE_UP.  On
-   * reception of the job the daemon prepares to fork a child process and
-   * enters the DRIVE_STATE_WAITLABEL state.
-   *
-   * Once the child process is forked the drive enters the DRIVE_STATE_RUNNING
-   * state.  The child process is responsible for running a label session.
-   * During such a sesion a tape will be mounted, the tape will be labeled and
-   * finally the tape will be dismounted.
+   * The tape daemon can also receive a label job from the tape labeling
+   * command-line tool.  The tape daemon behaves as described above except a
+   * label session is forked instead.
    */
   enum DriveState {
     DRIVE_STATE_INIT,
@@ -168,6 +162,8 @@ public:
    * the empty string, all integers to zero, all file descriptors to -1,
    * all lists to the emptylist, and the sessionType to SESSION_TYPE_NONE.
    *
+   * @param netTimeout Timeout in seconds to be used when performing network
+   * I/O.
    * @param log Object representing the API of the CASTOR logging system.
    * @param processForker Proxy object representing the ProcessForker.
    * @param vdqm Proxy object representing the vdqmd daemon.
@@ -178,6 +174,7 @@ public:
    * @param state The initial state of the tape drive.
    */
   DriveCatalogueEntry(
+    const int netTimeout,
     log::Logger &log,
     ProcessForkerProxy &processForker,
     legacymsg::VdqmProxy &vdqm,
@@ -190,11 +187,6 @@ public:
    * Destructor
    */
   ~DriveCatalogueEntry() throw();
-
-  /**
-   * Sets the configuration of the tape-drive.
-   */
-  void setConfig(const tape::utils::DriveConfig &config) throw();
 
   /**
    * Gets the configuration of the tape-drive.
@@ -311,63 +303,6 @@ public:
   void sessionFailed();
 
   /**
-   * Gets the job received from the vdqmd daemon.
-   *
-   * This method throws a castor::exception::Exception if the tape drive is not
-   * in a state for which there is a vdqm job.
-   *
-   * @return The job received from the vdqmd daemon.
-   */
-  const legacymsg::RtcpJobRqstMsgBody getVdqmJob() const;
-
-  /**
-   * Gets the label job received from the castor-tape-label command-line tool.
-   *
-   * This method throws a castor::exception::Exception if the tape drive is not
-   * in a state for which there is a label job.
-   *
-   * @return The label job received from the castor-tape-label command-line
-   * tool.
-   */ 
-  const legacymsg::TapeLabelRqstMsgBody getLabelJob() const;
-
-  /**
-   * The process ID of the child process running the data-transfer session.
-   *
-   * This method throws a castor::exception::Exception if the tape drive is not
-   * in a state for which there is a session process-ID.
-   *
-   * @return The process ID of the child process running the data-transfer
-   * session.
-   */
-  pid_t getSessionPid() const;
-
-  /**
-   * Gets the file descriptor of the TCP/IP connection with the
-   * castor-tape-label command-line tool.
-   *
-   * This method throws a castor::exception::Exception if the tape drive is not
-   * in a state for which there is a TCP/IP connection with the
-   * castor-tape-label command-line tool..
-   *
-   * @return The file descriptor of the TCP/IP connection with the
-   * castor-tape-label command-line tool.
-   */
-  int getLabelCmdConnection() const;
-
-  /**
-   * Releases and returns the TCP/IP connection with the
-   * castor-tape-label command-line tool.
-   *
-   * This method throws a castor::exception::Exception if is invalid to call
-   * this method.
-   *
-   * @return The file descriptor of the TCP/IP connection with the
-   * castor-tape-label command-line tool.
-   */
-  int releaseLabelCmdConnection();
-
-  /**
    * Gets the tpstat representation of the tape drive.
    *
    * @return The tpstat representation of the tape drive.
@@ -422,6 +357,20 @@ public:
    */
   DriveCatalogueTransferSession &getTransferSession();
 
+  /**
+   * Gets the session asscoiated with the tape drive.
+   *
+   * This method throws castor::exception::Exception if there is no session
+   * currently associated with the tape drive.
+   *
+   * Please use either getCleanerSession(), getLabelSession() or
+   * getTransferSession() instead of this method if a specific type of session
+   * is required.
+   * 
+   * @return The session associated with the tape drive.
+   */
+  const DriveCatalogueSession &getSession() const;
+
 private:
 
   /**
@@ -433,6 +382,11 @@ private:
    * Assignment operator declared private to prevent assignments.
    */
   DriveCatalogueEntry& operator=(const DriveCatalogueEntry&);
+
+  /**
+   * Timeout in seconds to be used when performing network I/O.
+   */
+  const int m_netTimeout;
 
   /**
    * The object representing the API of the CASTOR logging system.
@@ -476,28 +430,9 @@ private:
   SessionType m_sessionType;
 
   /**
-   * If the drive state is either DRIVE_WAITLABEL, DRIVE_STATE_RUNNING or
-   * DRIVE_STATE_WAITDOWN and the type of the session is SESSION_TYPE_LABEL
-   * then this is the file descriptor of the TCP/IP connection with the tape
-   * labeling command-line tool castor-tape-label.  In any other state, the
-   * value of this field is undefined.
-   */
-  int m_labelCmdConnection;
-  
-  /**
    * The session metadata associated to the drive catalogue entry
    */
   DriveCatalogueSession *m_session;
-  
-  /**
-   * Gets the tape-session asscoiated with the tape drive.
-   *
-   * This method throws castor::exception::Exception if there is no session
-   * currently associated with the tape drive.
-   * 
-   * @return The tape-session associated with the tape drive.
-   */
-  const DriveCatalogueSession &getSession() const;
 
   /**
    * Checks that there is a tape session currently associated with the

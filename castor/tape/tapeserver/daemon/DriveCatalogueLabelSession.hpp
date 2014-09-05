@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * 
+ *
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -39,33 +39,51 @@ namespace daemon {
  */
 class DriveCatalogueLabelSession : public DriveCatalogueSession {
 public:
-  
+
   /**
    * Constructor
-   * 
+   *
+   * @param netTimeout Timeout in seconds to be used when performing network
+   * I/O.
    * @param log Object representing the API of the CASTOR logging system.
    * @param processForker Proxy object representing the ProcessForker.
    * @param driveConfig The configuration of the tape drive.
    * @param labelJob The label job received from the castor-tape-label
    * command-line tool.
+   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param labelCmdConnection The file descriptor of the TCP/IP connection with
    * the tape labeling command-line tool castor-tape-label.
    */
   DriveCatalogueLabelSession(
+    const int netTimeout,
     log::Logger &log,
     ProcessForkerProxy &processForker,
     const tape::utils::DriveConfig &driveConfig,
-    const castor::legacymsg::TapeLabelRqstMsgBody labelJob, 
+    const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
+    const unsigned short rmcPort,
     const int labelCmdConnection);
 
   /**
-   * Uses the ProcessForker to fork a label-session.
+   * Destructor.
+   *
+   * If still open, closes the file descriptor of the TCP/IP connection with
+   * the tape labeling command-line tool.
    */
-  void forkLabelSession();
+  ~DriveCatalogueLabelSession() throw();
+
+  /**
+   * To be called when the session has ended with success.
+   */
+  void sessionSucceeded();
+  
+  /**
+   * To be called when the session has ended with failure.
+   */
+  void sessionFailed();
 
   /**
    * labelJob getter method
-   * 
+   *
    * @return label job received from the castor-tape-label command-line tool
    */
   castor::legacymsg::TapeLabelRqstMsgBody getLabelJob() const throw();
@@ -86,6 +104,13 @@ public:
   int getMode() const throw();
 
   /**
+   * Gets the process identifier of the session.
+   *
+   * @return The process identifier of the session.
+   */
+  pid_t getPid() const throw();
+
+  /**
    * Gets the time at which the tape drive was assigned a data transfer job.
    */
   time_t getAssignmentTime() const throw();
@@ -97,22 +122,13 @@ public:
    * @return Always false.
    */
   bool tapeIsBeingMounted() const throw();
-  
-  /**
-   * labelCmdConnection setter method
-   * 
-   * @param labelCmdConnection user ID of the process of the session
-   */
-  void setLabelCmdConnection(const int labelCmdConnection);
+
+private:
 
   /**
-   * labelCmdConnection getter method
-   * 
-   * @return user ID of the process of the session
+   * The process ID of the session.
    */
-  int getLabelCmdConnection() const;
-  
-private:
+  const pid_t m_pid;
 
   /**
    * The time at which the tape drive was assigned a data transfer job.
@@ -120,14 +136,14 @@ private:
   const time_t m_assignmentTime;
 
   /**
+   * Timeout in seconds to be used when performing network I/O.
+   */
+  const int m_netTimeout;
+
+  /**
    * Object representing the API of the CASTOR logging system.
    */
   log::Logger &m_log;
-
-  /**
-   * Proxy object representing the ProcessForker.
-   */
-  ProcessForkerProxy &m_processForker;
 
   /**
    * The configuration of the tape drive.
@@ -138,15 +154,27 @@ private:
    * The label job received from the castor-tape-label command-line tool.
    */
   castor::legacymsg::TapeLabelRqstMsgBody m_labelJob;
-  
+
   /**
-   * If the drive state is either DRIVE_WAITLABEL, DRIVE_STATE_RUNNING or
-   * DRIVE_STATE_WAITDOWN and the type of the session is SESSION_TYPE_LABEL
-   * then this is the file descriptor of the TCP/IP connection with the tape
-   * labeling command-line tool castor-tape-label.  In any other state, the
-   * value of this field is undefined.
+   * File descriptor of the TCP/IP connection with the tape-labeling
+   * command-line tool.
    */
-  int m_labelCmdConnection;
+  const int m_labelCmdConnection;
+
+  /**
+   * Uses the ProcessForker to fork a label-session.
+   *
+   * @param processForker Proxy object representing the ProcessForker.
+   * @param driveConfig The configuration of the tape drive.
+   * @param labelJob The label job received from the castor-tape-label
+   * command-line tool.
+   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
+   * @return The process identifier of the session.
+   */
+  static pid_t forkLabelSession(ProcessForkerProxy &processForker,
+    const tape::utils::DriveConfig &driveConfig,
+    const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
+    const unsigned short rmcPort);
 
 }; // class DriveCatalogueLabelSession
 

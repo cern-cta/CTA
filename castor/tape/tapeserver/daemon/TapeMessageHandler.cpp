@@ -401,10 +401,11 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     const utils::DriveConfig &driveConfig = drive.getConfig();
     
     const std::string &vid = rqstBody.vid();
-      drive.getTransferSession().tapeMountedForMigration(vid);
-      m_vmgr.tapeMountedForWrite(vid, drive.getSessionPid());
-      m_vdqm.tapeMounted(m_hostName, rqstBody.unitname(), driveConfig.dgn,
-        rqstBody.vid(), drive.getSessionPid());
+    DriveCatalogueTransferSession &transferSession = drive.getTransferSession();
+    transferSession.tapeMountedForMigration(vid);
+    m_vmgr.tapeMountedForWrite(vid, transferSession.getPid());
+    m_vdqm.tapeMounted(m_hostName, rqstBody.unitname(), driveConfig.dgn,
+      rqstBody.vid(), transferSession.getPid());
 
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;
@@ -432,10 +433,11 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     const utils::DriveConfig &driveConfig = drive.getConfig();
     
     const std::string vid = rqstBody.vid();
-    drive.getTransferSession().tapeMountedForRecall(vid);
-    m_vmgr.tapeMountedForRead(vid, drive.getSessionPid());
+    DriveCatalogueTransferSession &transferSession = drive.getTransferSession();
+    transferSession.tapeMountedForRecall(vid);
+    m_vmgr.tapeMountedForRead(vid, transferSession.getPid());
     m_vdqm.tapeMounted(m_hostName, rqstBody.unitname(), driveConfig.dgn,
-      rqstBody.vid(), drive.getSessionPid());
+      rqstBody.vid(), transferSession.getPid());
 
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;

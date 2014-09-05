@@ -16,14 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * 
+ *
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/common/CastorConfiguration.hpp"
+#include "castor/legacymsg/legacymsg.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogueLabelSession.hpp"
-#include "h/rmc_constants.h"
 #include "h/Ctape_constants.h"
 
 //------------------------------------------------------------------------------
@@ -31,17 +30,78 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
   DriveCatalogueLabelSession(
+  const int netTimeout,
   log::Logger &log,
   ProcessForkerProxy &processForker,
   const tape::utils::DriveConfig &driveConfig,
-  const castor::legacymsg::TapeLabelRqstMsgBody labelJob,
+  const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
+  const unsigned short rmcPort,
   const int labelCmdConnection):
+  m_pid(forkLabelSession(processForker, driveConfig, labelJob, rmcPort)),
   m_assignmentTime(time(0)),
+  m_netTimeout(netTimeout),
   m_log(log),
-  m_processForker(processForker),
   m_driveConfig(driveConfig),
   m_labelJob(labelJob),
   m_labelCmdConnection(labelCmdConnection) {
+}
+
+//------------------------------------------------------------------------------
+// forkLabelSession
+//------------------------------------------------------------------------------
+pid_t castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+  forkLabelSession(ProcessForkerProxy &processForker,
+  const tape::utils::DriveConfig &driveConfig,
+  const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
+  const unsigned short rmcPort) {
+  try {
+    return processForker.forkLabel(driveConfig, labelJob, rmcPort);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to fork label session: unitName=" <<
+      driveConfig.unitName << ": " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+  ~DriveCatalogueLabelSession() throw() {
+  if(m_labelCmdConnection >= 0) {
+    close(m_labelCmdConnection);
+  }
+}
+
+//------------------------------------------------------------------------------
+// sessionSucceeded
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+  sessionSucceeded() {
+  try {
+    legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection, 0, "");
+  } catch(castor::exception::Exception &we) {
+    log::Param params[] = {log::Param("message", we.getMessage().str())};
+    m_log(LOG_ERR, "Failed to send success reply-message to label command",
+      params);
+  }
+}
+
+//------------------------------------------------------------------------------
+// sessionFailed
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+  sessionFailed() {
+  castor::exception::Exception ex;
+  try {
+    legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection,
+      ex.code(), ex.getMessage().str());
+  } catch(castor::exception::Exception &we) {
+    log::Param params[] = {log::Param("message", we.getMessage().str())};
+    m_log(LOG_ERR, "Failed to send failure reply-message to label command",
+      params);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -50,24 +110,6 @@ castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
 time_t castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
   getAssignmentTime() const throw() {
   return m_assignmentTime;
-}
-
-//------------------------------------------------------------------------------
-// forkLabelSession
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
-  forkLabelSession() {
-  try {
-    const unsigned short rmcPort =
-      common::CastorConfiguration::getConfig().getConfEntInt(
-        "RMC", "PORT", (unsigned short)RMC_PORT, &m_log);
-    m_pid = m_processForker.forkLabel(m_driveConfig, m_labelJob, rmcPort);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to fork label session: unitName=" <<
-      m_driveConfig.unitName << ": " << ne.getMessage().str();
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -95,17 +137,17 @@ int castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::getMode()
 }
 
 //-----------------------------------------------------------------------------
+// getPid
+//-----------------------------------------------------------------------------
+pid_t castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+  getPid() const throw() {
+  return m_pid;
+}
+
+//-----------------------------------------------------------------------------
 // tapeIsBeingMounted
 //-----------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
   tapeIsBeingMounted() const throw() {
   return false;
-}
-    
-//------------------------------------------------------------------------------
-// getLabelCmdConnection
-//------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
-  getLabelCmdConnection() const {
-  return m_labelCmdConnection;
 }

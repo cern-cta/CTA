@@ -29,10 +29,45 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::
-  DriveCatalogueCleanerSession(const std::string &vid, 
+  DriveCatalogueCleanerSession(
+  log::Logger &log,
+  ProcessForkerProxy &processForker,
+  const tape::utils::DriveConfig &driveConfig,
+  const std::string &vid,
+  const unsigned short rmcPort,
   const time_t assignmentTime):
+  m_pid(forkCleanerSession(processForker, driveConfig, vid, rmcPort)),
+  m_log(log),
   m_vid(vid),
   m_assignmentTime(assignmentTime) {
+}
+
+//------------------------------------------------------------------------------
+// forkCleanerSession
+//------------------------------------------------------------------------------
+pid_t castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::
+  forkCleanerSession(ProcessForkerProxy &processForker,
+  const tape::utils::DriveConfig &driveConfig,
+  const std::string &vid,
+  const unsigned short rmcPort) {
+
+  // TO BE DONE
+  // processForker->forkCleaner(driveConfig, vid, rmcPort);
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+// sessionSucceeded
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::
+  sessionSucceeded() {
+}
+
+//------------------------------------------------------------------------------
+// sessionFailed
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::
+  sessionFailed() {
 }
 
 //------------------------------------------------------------------------------
@@ -57,6 +92,14 @@ std::string castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::
 int castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::getMode()
   const throw() {
   return WRITE_DISABLE;
+}
+
+//-----------------------------------------------------------------------------
+// getPid
+//-----------------------------------------------------------------------------
+pid_t castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::
+  getPid() const throw() {
+  return m_pid;
 }
 
 //------------------------------------------------------------------------------

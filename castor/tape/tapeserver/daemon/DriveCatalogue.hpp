@@ -52,6 +52,8 @@ public:
   /**
    * Constructor.
    *
+   * @param netTimeout Timeout in seconds to be used when performing network
+   * I/O.
    * @param log Object representing the API of the CASTOR logging system.
    * @param dataTransferConfig The configuration of a data-transfer session.
    * @param processForker Proxy object representing the ProcessForker.
@@ -60,6 +62,7 @@ public:
    * name is needed to fill in messages to be sent to the vdqmd daemon.
    */
   DriveCatalogue(
+    const int netTimeout,
     log::Logger &log,
     const DataTransferSession::CastorConf &dataTransferConfig,
     ProcessForkerProxy &processForker,
@@ -130,16 +133,12 @@ public:
    */
   std::list<std::string> getUnitNames() const;
 
-  /**
-   * Returns an unordered list of the unit names of the tape drives in the
-   * specified state.
-   *
-   * @return Unordered list of the unit names.
-   */
-  std::list<std::string> getUnitNames(const DriveCatalogueEntry::DriveState
-    state) const;
-  
 private:
+
+  /**
+   * Timeout in seconds to be used when performing network I/O.
+   */
+  const int m_netTimeout;
 
   /**
    * Object representing the API of the CASTOR logging system.

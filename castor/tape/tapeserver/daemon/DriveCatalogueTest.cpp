@@ -62,8 +62,9 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
   ProcessForkerProxyDummy processForker;
   castor::legacymsg::VdqmProxyDummy vdqm;
   const std::string hostName = "";
-  DriveCatalogue catalogue(log, dataTransferConfig, processForker, vdqm,
-    hostName);
+  const int netTimeout = 1;
+  DriveCatalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
+    vdqm, hostName);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
   
   {
@@ -129,13 +130,14 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
   using namespace castor::tape::tapeserver::daemon;
 
   const std::string unitName = "DRIVE";
+  const int netTimeout = 1;
   castor::log::DummyLogger log("unittest");
   const DataTransferSession::CastorConf dataTransferConfig;
   ProcessForkerProxyDummy processForker;
   castor::legacymsg::VdqmProxyDummy vdqm;
   const std::string hostName = "";
-  DriveCatalogue catalogue(log, dataTransferConfig, processForker, vdqm,
-    hostName);
+  DriveCatalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
+    vdqm, hostName);
   ASSERT_THROW(catalogue.findDrive(unitName), castor::exception::Exception);
 }
 
@@ -147,13 +149,14 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
   castor::tape::utils::DriveConfigMap driveConfigs;
   driveConfigs.enterTpconfigLines(lines);
 
+  const int netTimeout = 1;
   castor::log::DummyLogger log("unittest");
   const DataTransferSession::CastorConf dataTransferConfig;
   ProcessForkerProxyDummy processForker;
   castor::legacymsg::VdqmProxyDummy vdqm;
   const std::string hostName = "";
-  DriveCatalogue catalogue(log, dataTransferConfig, processForker, vdqm,
-    hostName);
+  DriveCatalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
+    vdqm, hostName);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
   DriveCatalogueEntry &unit = catalogue.findDrive("UNIT");
   ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, unit.getState());
@@ -182,13 +185,14 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, getUnitNames) {
   driveConfigs.enterTpconfigLines(lines);
 
 
+  const int netTimeout = 1;
   castor::log::DummyLogger log("unittest");
   const DataTransferSession::CastorConf dataTransferConfig;
   ProcessForkerProxyDummy processForker;
   castor::legacymsg::VdqmProxyDummy vdqm;
   const std::string hostName = "";
-  DriveCatalogue catalogue(log, dataTransferConfig, processForker, vdqm,
-    hostName);
+  DriveCatalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
+    vdqm, hostName);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
 
   {
@@ -203,20 +207,6 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, getUnitNames) {
     ASSERT_TRUE(secondOfAllUnitNames == "UNIT1" ||
       secondOfAllUnitNames == "UNIT2");
     ASSERT_TRUE(firstOfAllUnitNames != secondOfAllUnitNames);
-  }
-
-  {
-    std::list<std::string> downUnitNames;
-    ASSERT_NO_THROW(downUnitNames =
-      catalogue.getUnitNames(DriveCatalogueEntry::DRIVE_STATE_DOWN));
-    ASSERT_EQ((std::list<std::string>::size_type)2, downUnitNames.size());
-  }
-
-  {
-    std::list<std::string> upUnitNames;
-    ASSERT_NO_THROW(upUnitNames =
-      catalogue.getUnitNames(DriveCatalogueEntry::DRIVE_STATE_UP));
-    ASSERT_EQ((std::list<std::string>::size_type)0, upUnitNames.size());
   }
 }
 } // namespace unitTests

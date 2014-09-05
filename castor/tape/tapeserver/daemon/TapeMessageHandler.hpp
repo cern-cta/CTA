@@ -35,6 +35,8 @@
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/utils/utils.hpp"
 
+#include <string>
+
 namespace castor     {
 namespace tape       {
 namespace tapeserver {

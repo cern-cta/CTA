@@ -31,11 +31,13 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogue::DriveCatalogue(
+  const int netTimeout,
   log::Logger &log,
   const DataTransferSession::CastorConf &dataTransferConfig,
   ProcessForkerProxy &processForker,
   legacymsg::VdqmProxy &vdqm,
   const std::string &hostName):
+  m_netTimeout(netTimeout),
   m_log(log),
   m_dataTransferConfig(dataTransferConfig),
   m_processForker(processForker),
@@ -97,9 +99,9 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::enterDriveConfig(
   // If the drive is not in the catalogue
   if(m_drives.end() == itor) {
     // Insert it
-    m_drives[driveConfig.unitName] = new DriveCatalogueEntry(m_log,
-      m_processForker, m_vdqm, m_hostName, driveConfig, m_dataTransferConfig,
-      DriveCatalogueEntry::DRIVE_STATE_DOWN);
+    m_drives[driveConfig.unitName] = new DriveCatalogueEntry(m_netTimeout,
+      m_log, m_processForker, m_vdqm, m_hostName, driveConfig,
+      m_dataTransferConfig, DriveCatalogueEntry::DRIVE_STATE_DOWN);
   // Else the drive is already in the catalogue
   } else {
     castor::exception::Exception ex;
@@ -120,39 +122,6 @@ std::list<std::string>
   for(DriveMap::const_iterator itor = m_drives.begin();
     itor != m_drives.end(); itor++) {
     unitNames.push_back(itor->first);
-  }
-
-  return unitNames;
-}
-
-//-----------------------------------------------------------------------------
-// getUnitNames
-//-----------------------------------------------------------------------------
-std::list<std::string>
-  castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNames(
-    const DriveCatalogueEntry::DriveState state) const {
-  std::list<std::string> unitNames;
-
-  for(DriveMap::const_iterator itor = m_drives.begin();
-    itor != m_drives.end(); itor++) {
-    const std::string &unitName = itor->first;
-    const DriveCatalogueEntry &drive = *(itor->second);
-    const utils::DriveConfig &driveConfig = drive.getConfig();
-
-    // Sanity check
-    if(unitName != driveConfig.unitName) {
-      // Should never get here
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to get unit names of drives in state " <<
-        DriveCatalogueEntry::drvState2Str(state) <<
-        ": unit name mismatch: unitName=" << unitName <<
-        " driveConfig.unitName=" <<  driveConfig.unitName;
-      throw ex;
-    }
-
-    if(state == drive.getState()) {
-      unitNames.push_back(itor->first);
-    }
   }
 
   return unitNames;
@@ -262,11 +231,12 @@ const castor::tape::tapeserver::daemon::DriveCatalogueEntry
 
     const DriveCatalogueEntry &drive = *(itor->second);
     try {
-      if(sessionPid == drive.getSessionPid()) {
+      const DriveCatalogueSession &session = drive.getSession();
+      if(sessionPid == session.getPid()) {
         return drive;
       }
     } catch(...) {
-      // Ignore any exceptions thrown by getSessionPid()
+      // Ignore any exceptions thrown by getSession()
     }
   }
 
@@ -298,7 +268,8 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry
 
     DriveCatalogueEntry &drive = *(itor->second);
     try {
-      if(sessionPid == drive.getSessionPid()) {
+      const DriveCatalogueSession &session = drive.getSession();
+      if(sessionPid == session.getPid()) {
         return drive;
       }
     } catch(...) {

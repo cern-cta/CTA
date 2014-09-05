@@ -37,19 +37,87 @@ castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
   const tape::utils::DriveConfig &driveConfig,
   const DataTransferSession::CastorConf &dataTransferConfig,
   const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
+  const unsigned short rmcPort,
   ProcessForkerProxy &processForker,
   legacymsg::VdqmProxy &vdqm,
   const std::string &hostName):
-  m_state(TRANSFERSTATE_WAIT_FORK),
+  m_pid(forkTransferSession(processForker, driveConfig, vdqmJob,
+    dataTransferConfig, rmcPort)),
+  m_state(TRANSFERSTATE_WAIT_ASSIGN),
   m_mode(WRITE_DISABLE),
   m_assignmentTime(time(0)),
   m_log(log),
   m_driveConfig(driveConfig),
   m_dataTransferConfig(dataTransferConfig),
   m_vdqmJob(vdqmJob),
-  m_processForker(processForker),
   m_vdqm(vdqm),
   m_hostName(hostName) {
+}
+
+//------------------------------------------------------------------------------
+// forkTransferSession
+//------------------------------------------------------------------------------
+pid_t castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+  forkTransferSession(ProcessForkerProxy &processForker,
+  const tape::utils::DriveConfig &driveConfig,
+  const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
+  const DataTransferSession::CastorConf &dataTransferConfig,
+  const unsigned short rmcPort) {
+  try {
+    return processForker.forkDataTransfer(driveConfig, vdqmJob,
+      dataTransferConfig, rmcPort);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to fork data-transfer session: unitName=" <<
+      driveConfig.unitName << ": " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// sessionSucceeded
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+  sessionSucceeded() {
+}
+
+//------------------------------------------------------------------------------
+// sessionFailed
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+  sessionFailed() {
+}
+
+//------------------------------------------------------------------------------
+// assignDriveInVdqm
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+  assignDriveInVdqm() {
+  try {
+    if(TRANSFERSTATE_WAIT_ASSIGN != m_state) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Catalogue transfer-session state-mismatch: "
+        "expected=" << transferStateToStr(TRANSFERSTATE_WAIT_ASSIGN) <<
+        " actual=" << transferStateToStr(m_state);
+      throw ex;
+    }
+
+    m_vdqm.assignDrive(m_hostName, m_driveConfig.unitName,
+      m_vdqmJob.dgn, m_vdqmJob.volReqId, m_pid);
+    m_state = TRANSFERSTATE_WAIT_JOB;
+    log::Param params[] = {
+      log::Param("server", m_hostName),
+      log::Param("unitName", m_driveConfig.unitName),
+      log::Param("dgn", std::string(m_vdqmJob.dgn)),
+      log::Param("volReqId", m_vdqmJob.volReqId),
+      log::Param("dataTransferPid", m_pid)};
+    m_log(LOG_INFO, "Assigned the drive in the vdqm", params);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to assign drive in vdqm: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -58,52 +126,6 @@ castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 time_t castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
   getAssignmentTime() const throw() {
   return m_assignmentTime;
-}
-
-//------------------------------------------------------------------------------
-// forkTransferSession
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
-  forkDataTransferSession() {
-  try {
-    if(TRANSFERSTATE_WAIT_FORK != m_state) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Catalogue transfer-session state-mismatch: "
-        "expected=" << transferStateToStr(TRANSFERSTATE_WAIT_FORK) <<
-        " actual=" << transferStateToStr(m_state);
-      throw ex;
-    }
-    m_state = TRANSFERSTATE_WAIT_JOB;
-
-    const unsigned short rmcPort =
-      common::CastorConfiguration::getConfig().getConfEntInt(
-        "RMC", "PORT", (unsigned short)RMC_PORT, &m_log);
-
-    m_pid = m_processForker.forkDataTransfer(m_driveConfig, m_vdqmJob,
-      m_dataTransferConfig, rmcPort);
-
-    try {
-      m_vdqm.assignDrive(m_hostName, m_driveConfig.unitName,
-        m_vdqmJob.dgn, m_vdqmJob.volReqId, m_pid);
-      log::Param params[] = {
-        log::Param("server", m_hostName),
-        log::Param("unitName", m_driveConfig.unitName),
-        log::Param("dgn", std::string(m_vdqmJob.dgn)),
-        log::Param("volReqId", m_vdqmJob.volReqId),
-        log::Param("dataTransferPid", m_pid)};
-      m_log(LOG_INFO, "Assigned the drive in the vdqm", params);
-    } catch(castor::exception::Exception &ne) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to assign drive in vdqm: " <<
-        ne.getMessage().str();
-      throw ex;
-    }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to fork data-transfer session: unitName=" <<
-      m_driveConfig.unitName << ": " << ne.getMessage().str();
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -194,6 +216,14 @@ int castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 }
 
 //-----------------------------------------------------------------------------
+// getPid
+//-----------------------------------------------------------------------------
+pid_t castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+  getPid() const throw() {
+  return m_pid;
+}
+
+//-----------------------------------------------------------------------------
 // tapeMountedForMigration
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
@@ -265,7 +295,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 const char *castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
   transferStateToStr(const TransferState state) const throw() {
   switch(state) {
-  case TRANSFERSTATE_WAIT_FORK   : return "WAIT_FORK";
+  case TRANSFERSTATE_WAIT_ASSIGN : return "WAIT_ASSIGN";
   case TRANSFERSTATE_WAIT_JOB    : return "WAIT_JOB";
   case TRANSFERSTATE_WAIT_MOUNTED: return "WAIT_MOUNTED";
   case TRANSFERSTATE_RUNNING     : return "RUNNING";

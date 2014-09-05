@@ -48,6 +48,7 @@ public:
    * @param driveConfig The configuration of the tape drive.
    * @param dataTransferConfig The configuration of a data-transfer session.
    * @param vdqmJob job received from the vdqmd daemon.
+   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param processForker Proxy object representing the ProcessForker.
    * @param vdqm Proxy object representing the vdqmd daemon.
    * @param hostName The name of the host on which the daemon is running.  This
@@ -58,20 +59,31 @@ public:
     const tape::utils::DriveConfig &driveConfig,
     const DataTransferSession::CastorConf &dataTransferConfig,
     const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
+    const unsigned short rmcPort,
     ProcessForkerProxy &processForker,
     legacymsg::VdqmProxy &vdqm,
     const std::string &hostName);
+
+  /**
+   * To be called when the session has ended with success.
+   */
+  void sessionSucceeded();
+
+  /**
+   * To be called when the session has ended with failure.
+   */
+  void sessionFailed();
+
+  /**
+   * Assigns the tape drive in the vdqm.
+   */
+  void assignDriveInVdqm();
 
   /**
    * Gets the time at which the tape drive was assigned a data transfer job.
    */
   time_t getAssignmentTime() const throw();
 
-  /**
-   * Uses the ProcessForker to fork a data-transfer session.
-   */
-  void forkDataTransferSession();
-  
   /**
    * vdqmJob getter method
    * 
@@ -117,6 +129,13 @@ public:
   int getMode() const;
 
   /**
+   * Gets the process identifier of the session.
+   * 
+   * @return The process identifier of the session.
+   */
+  pid_t getPid() const throw();
+
+  /**
    * Notifies the tape-drive catalogue entry that the specified tape has been
    * mounted for migration in the tape drive.
    *
@@ -142,10 +161,15 @@ public:
 private:
 
   /**
+   * The process identifier of the session.
+   */
+  const pid_t m_pid;
+
+  /**
    * Enumeration of the states of a catalogue transfer-session.
    */
   enum TransferState {
-    TRANSFERSTATE_WAIT_FORK,
+    TRANSFERSTATE_WAIT_ASSIGN,
     TRANSFERSTATE_WAIT_JOB,
     TRANSFERSTATE_WAIT_MOUNTED,
     TRANSFERSTATE_RUNNING};
@@ -199,11 +223,6 @@ private:
   const legacymsg::RtcpJobRqstMsgBody m_vdqmJob;
 
   /**
-   * Proxy object representing the ProcessForker.
-   */
-  ProcessForkerProxy &m_processForker;
-
-  /**
    * Proxy object representing the vdqmd daemon.
    */
   legacymsg::VdqmProxy &m_vdqm;
@@ -213,6 +232,22 @@ private:
    * needed to fill in messages to be sent to the vdqmd daemon.
    */   
   const std::string m_hostName;
+
+  /**
+   * Uses the ProcessForker to fork a data-transfer session.
+   *
+   * @param processForker Proxy object representing the ProcessForker.
+   * @param driveConfig The configuration of the tape drive.
+   * @param vdqmJob job received from the vdqmd daemon.
+   * @param dataTransferConfig The configuration of a data-transfer session.
+   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
+   * @return The process identifier of the session.
+   */
+  static pid_t forkTransferSession(ProcessForkerProxy &processForker, 
+    const tape::utils::DriveConfig &driveConfig,
+    const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
+    const DataTransferSession::CastorConf &dataTransferConfig,
+    const unsigned short rmcPort);
 
 }; // class DriveCatalogueTransferSession
 

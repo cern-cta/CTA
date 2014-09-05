@@ -29,17 +29,3 @@
 castor::tape::tapeserver::daemon::DriveCatalogueSession::
   ~DriveCatalogueSession() {
 }
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueSession::
-  DriveCatalogueSession() {
-}
-
-//------------------------------------------------------------------------------
-// getPid
-//------------------------------------------------------------------------------
-pid_t castor::tape::tapeserver::daemon::DriveCatalogueSession::getPid() const {
-  return m_pid;
-}

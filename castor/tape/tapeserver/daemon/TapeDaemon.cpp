@@ -69,6 +69,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   std::ostream &stdOut,
   std::ostream &stdErr,
   log::Logger &log,
+  const int netTimeout,
   const utils::DriveConfigMap &driveConfigs,
   legacymsg::VdqmProxy &vdqm,
   legacymsg::VmgrProxy &vmgr,
@@ -77,6 +78,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),
   m_argv(argv),
+  m_netTimeout(netTimeout),
   m_driveConfigs(driveConfigs),
   m_vdqm(vdqm),
   m_vmgr(vmgr),
@@ -188,8 +190,8 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   const DataTransferSession::CastorConf dataTransferConfig =
     getDataTransferConf();
   m_processForker = new ProcessForkerProxySocket(m_log, cmdPair.tapeDaemon);
-  m_driveCatalogue = new DriveCatalogue(m_log, dataTransferConfig,
-    *m_processForker, m_vdqm, m_hostName);
+  m_driveCatalogue = new DriveCatalogue(m_netTimeout, m_log,
+    dataTransferConfig, *m_processForker, m_vdqm, m_hostName);
 
   m_driveCatalogue->populate(m_driveConfigs);
 

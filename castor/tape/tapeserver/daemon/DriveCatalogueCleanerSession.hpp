@@ -24,6 +24,7 @@
 #pragma once
 
 #include "castor/tape/tapeserver/daemon/DriveCatalogueSession.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 
 namespace castor {
 namespace tape {
@@ -40,14 +41,33 @@ public:
   /**
    * Constructor
    *
+   * @param log Object representing the API of the CASTOR logging system.
+   * @param processForker Proxy object representing the ProcessForker.
+   * @param driveConfig The configuration of the tape drive.
    * @param vid The volume identifier ofthe tape associated with the tape
    * drive.  If the volume identifier is not known then this parameter should
    * be set to the empty string.
+   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param assignmentTime The time at which a job was assigned to the tape
    * drive.
    */
-  DriveCatalogueCleanerSession(const std::string &vid,
+  DriveCatalogueCleanerSession(
+    log::Logger &log,
+    ProcessForkerProxy &processForker,
+    const tape::utils::DriveConfig &driveConfig,
+    const std::string &vid,
+    const unsigned short rmcPort,
     const time_t assignmentTime);
+
+  /**
+   * To be called when the session has ended with success.
+   */
+  void sessionSucceeded();
+
+  /**
+   * To be called when the session has ended with failure.
+   */
+  void sessionFailed();
 
   /**
    * Gets the volume identifier of the tape associated with the tape drive.
@@ -68,9 +88,16 @@ public:
   int getMode() const throw();
 
   /**
+   * Gets the process identifier of the session.
+   *
+   * @return The process identifier of the session.
+   */
+  pid_t getPid() const throw();
+
+  /**
    * Gets the point in time when the drive was assigned a tape.
    *
-   * @return Te point in time when the drive was assigned a tape. 
+   * @return The point in time when the drive was assigned a tape. 
    */
   time_t getAssignmentTime() const throw();
 
@@ -84,6 +111,16 @@ public:
 private:
 
   /**
+   * The process identifier of the session.
+   */
+  const pid_t m_pid;
+
+  /**
+   * Object representing the API of the CASTOR logging system.
+   */
+  log::Logger &m_log;
+
+  /**
    * The volume identifier of the tape associated with the tape drive.  If the
    * volume identifier was not known when the cleaner session was created then
    * the value of this member value will be the empty string.
@@ -94,6 +131,23 @@ private:
    * The time at which a job was assigned to the tape drive.
    */
   const time_t m_assignmentTime;
+
+  /**
+   * Forks a cleaner session.
+   *
+   * @param processForker Proxy object representing the ProcessForker.
+   * @param driveConfig The configuration of the tape drive.
+   * @param vid The volume identifier ofthe tape associated with the tape
+   * drive.  If the volume identifier is not known then this parameter should
+   * be set to the empty string.
+   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
+   * @return The process identifier of the session.
+   */
+  static pid_t forkCleanerSession(
+    ProcessForkerProxy &processForker,
+    const tape::utils::DriveConfig &driveConfig,
+    const std::string &vid,
+    const unsigned short rmcPort);
 
 }; // class DriveCatalogueCleanerSession
 

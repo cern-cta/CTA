@@ -269,8 +269,6 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   params.push_back(log::Param("pid", msg.pid()));
   params.push_back(log::Param("signal", msg.signal()));
 
-  castor::utils::SmartFd labelCmdConnection(drive.releaseLabelCmdConnection());
-
   try {
     drive.sessionFailed();
     m_log(LOG_WARNING, "Label session failed", params);
@@ -404,8 +402,6 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   params.push_back(log::Param("pid", msg.pid()));
   params.push_back(log::Param("exitCode", msg.exitcode()));
 
-  castor::utils::SmartFd labelCmdConnection(drive.releaseLabelCmdConnection());
-
   try {
     if(0 == msg.exitcode()) {
       drive.sessionSucceeded();
@@ -421,25 +417,10 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
       throw ex;
     }
   } catch(castor::exception::Exception &ne) {
-    try {
-      legacymsg::writeTapeReplyMsg(m_netTimeout, labelCmdConnection.get(),
-        ne.code(), ne.getMessage().str());
-    } catch(castor::exception::Exception &we) {
-      log::Param params[] = {log::Param("message", we.getMessage().str())};
-      m_log(LOG_ERR, "Failed to send reply message to label command", params);
-    }
-
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle exited label session: " <<
     ne.getMessage().str();
     throw ex;
-  }
-
-  try {
-    legacymsg::writeTapeReplyMsg(m_netTimeout, labelCmdConnection.get(), 0, "");
-  } catch(castor::exception::Exception &we) {
-    log::Param params[] = {log::Param("message", we.getMessage().str())};
-    m_log(LOG_ERR, "Failed to send reply message to label command", params);
   }
 }
 

@@ -45,6 +45,16 @@ public:
   virtual ~DriveCatalogueSession() = 0;
 
   /**
+   * To be called when the session has ended with success.
+   */
+  virtual void sessionSucceeded() = 0;
+
+  /**
+   * To be called when the session has ended with failure.
+   */
+  virtual void sessionFailed() = 0;
+
+  /**
    * Gets the volume identifier of the tape associated with the tape drive.
    *
    * @return The volume identifier of the tape associated with the tape drive.
@@ -60,11 +70,11 @@ public:
   virtual int getMode() const = 0;
 
   /**
-   * pid getter method
+   * Gets the process identifier of the session.
    * 
-   * @return process ID of the session.
+   * @return The process identifier of the session.
    */
-  virtual pid_t getPid() const;
+  virtual pid_t getPid() const throw() = 0;
   
   /**
    * Gets the time at which a job was assigned to the tape drive.
@@ -79,21 +89,6 @@ public:
    * @return True if a tape is in the process of being mounted.
    */
   virtual bool tapeIsBeingMounted() const throw() = 0;
-    
-protected:
-    
-  /**
-   * Constructor
-   * 
-   * @param pid process ID of the session
-   * @param state state of the drive catalogue session
-   */
-  DriveCatalogueSession();
-        
-  /**
-   * The process ID of the session
-   */
-  pid_t m_pid;
     
 }; // class DriveCatalogueSession
 

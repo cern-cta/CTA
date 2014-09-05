@@ -66,6 +66,8 @@ public:
    * @param stdOut Stream representing standard out.
    * @param stdErr Stream representing standard error.
    * @param log The object representing the API of the CASTOR logging system.
+   * @param netTimeout Timeout in seconds to be used when performing network
+   * I/O.
    * @param driveConfig The configuration of the tape drives.
    * @param vdqm Proxy object representing the vdqmd daemon.
    * @param vmgr Proxy object representing the vmgrd daemon.
@@ -79,6 +81,7 @@ public:
     std::ostream &stdOut,
     std::ostream &stdErr,
     log::Logger &log,
+    const int netTimeout,
     const utils::DriveConfigMap &driveConfigs,
     legacymsg::VdqmProxy &vdqm,
     legacymsg::VmgrProxy &vmgr,
@@ -477,6 +480,11 @@ protected:
    * The argv of main().
    */
   char **const m_argv;
+
+  /**
+   * Timeout in seconds to be used when performing network I/O.
+   */
+  const int m_netTimeout;
 
   /**
    * The configuration of the tape drives.

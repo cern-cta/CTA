@@ -21,10 +21,12 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogueEntry.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
+#include "h/rmc_constants.h"
 
 #include <string.h>
 
@@ -32,6 +34,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveCatalogueEntry(
+  const int netTimeout,
   log::Logger &log,
   ProcessForkerProxy &processForker,
   legacymsg::VdqmProxy &vdqm,
@@ -40,6 +43,7 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveCatalogueEntry(
   const DataTransferSession::CastorConf &dataTransferConfig,
   const DriveState state)
   throw():
+  m_netTimeout(netTimeout),
   m_log(log),
   m_processForker(processForker),
   m_vdqm(vdqm),
@@ -48,7 +52,6 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveCatalogueEntry(
   m_dataTransferConfig(dataTransferConfig),
   m_state(state),
   m_sessionType(SESSION_TYPE_NONE),
-  m_labelCmdConnection(-1),
   m_session(NULL) {
 }
 
@@ -89,13 +92,6 @@ const char
   case SESSION_TYPE_LABEL       : return "LABEL";
   default                       : return "UNKNOWN";
   }
-}
-
-//------------------------------------------------------------------------------
-// setConfig
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::setConfig(
-  const tape::utils::DriveConfig &config) throw() {
 }
 
 //------------------------------------------------------------------------------
@@ -391,121 +387,6 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry::SessionType
 }
 
 //------------------------------------------------------------------------------
-// getVdqmJob
-//------------------------------------------------------------------------------
-const castor::legacymsg::RtcpJobRqstMsgBody
-  castor::tape::tapeserver::daemon::DriveCatalogueEntry::getVdqmJob() const {
-  switch(m_state) {
-  case DRIVE_STATE_RUNNING:
-  case DRIVE_STATE_WAITDOWN:
-    return getTransferSession().getVdqmJob();
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to get VDQM job of tape-drive " <<
-        m_config.unitName << ": Incompatible drive state: state=" <<
-        drvState2Str(m_state);
-      throw ex;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// getLabelJob
-//------------------------------------------------------------------------------
-const castor::legacymsg::TapeLabelRqstMsgBody
-  castor::tape::tapeserver::daemon::DriveCatalogueEntry::getLabelJob() const {
-  switch(m_state) {
-  case DRIVE_STATE_RUNNING:
-  case DRIVE_STATE_WAITDOWN:
-    return getLabelSession().getLabelJob();
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to get label job of tape-drive " <<
-        m_config.unitName << ": Incompatible drive state: state=" <<
-        drvState2Str(m_state);
-      throw ex;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// getSessionPid
-//------------------------------------------------------------------------------
-pid_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::getSessionPid()
-  const {
-  switch(m_state) {
-  case DRIVE_STATE_RUNNING:
-  case DRIVE_STATE_WAITDOWN:
-    return getSession().getPid();
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to get the process ID of tape-drive " <<
-        m_config.unitName << ": Incompatible drive state: state=" <<
-        drvState2Str(m_state);
-      throw ex;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// getLabelCmdConnection
-//------------------------------------------------------------------------------
-int
-  castor::tape::tapeserver::daemon::DriveCatalogueEntry::getLabelCmdConnection()
-  const {
-  switch(m_state) {
-  case DRIVE_STATE_RUNNING:
-  case DRIVE_STATE_WAITDOWN:
-    return m_labelCmdConnection;;
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to get the file descriptor of the TCP/IP"
-        " connection with the castor-tape-label command-line tool for"
-        " tape-drive" << m_config.unitName << ": Incompatible drive state"
-        ": state=" << drvState2Str(m_state);
-      throw ex;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// releaseLabelCmdConnection
-//------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::DriveCatalogueEntry::
-  releaseLabelCmdConnection() {
-    switch(m_state) {
-  case DRIVE_STATE_RUNNING:
-  case DRIVE_STATE_WAITDOWN:
-    if(0 < m_labelCmdConnection) {
-      const int tmpConnection = m_labelCmdConnection;
-      m_labelCmdConnection = -1;
-      return tmpConnection;
-    } else {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to release the file descriptor of the TCP/IP"
-        " connection with the castor-tape-label command-line tool for"
-        " tape-drive" << m_config.unitName << ": File descriptor is not owned"
-        " by the drive entry in the tape-drive catalogue";
-      throw ex;
-    }
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to release the file descriptor of the TCP/IP"
-        " connection with the castor-tape-label command-line tool for"
-        " tape-drive" << m_config.unitName << ": Incompatible drive state"
-        ": state=" << drvState2Str(m_state);
-      throw ex;
-    }
-  }
-
-}
-
-//------------------------------------------------------------------------------
 // configureUp
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogueEntry::configureUp() {
@@ -583,9 +464,16 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedVdqmJob(
     }
     m_state = DRIVE_STATE_RUNNING;
     m_sessionType = SESSION_TYPE_DATATRANSFER;
-    m_session = new DriveCatalogueTransferSession(m_log, m_config,
-      m_dataTransferConfig, job, m_processForker, m_vdqm, m_hostName);
-    getTransferSession().forkDataTransferSession();
+    {
+      const unsigned short rmcPort =
+        common::CastorConfiguration::getConfig().getConfEntInt("RMC", "PORT",
+          (unsigned short)RMC_PORT, &m_log);
+      DriveCatalogueTransferSession *const transferSession =
+        new DriveCatalogueTransferSession(m_log, m_config, m_dataTransferConfig,
+          job, rmcPort, m_processForker, m_vdqm, m_hostName);
+      m_session = dynamic_cast<DriveCatalogueSession *>(transferSession);
+      transferSession->assignDriveInVdqm();
+    }
     break;
   default:
     {
@@ -626,18 +514,15 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedLabelJob(
         << job.dgn;
       throw ex;
     }
-    if(-1 != m_labelCmdConnection) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to " << task.str() <<
-        ": Drive catalogue already owns a label-command connection";
-      throw ex;
-    }
-    m_labelCmdConnection = labelCmdConnection;
     m_state = DRIVE_STATE_RUNNING;
     m_sessionType = SESSION_TYPE_LABEL;
-    m_session = new DriveCatalogueLabelSession(m_log, m_processForker, m_config,
-      job, labelCmdConnection);
-    getLabelSession().forkLabelSession();
+    {
+      const unsigned short rmcPort =
+        common::CastorConfiguration::getConfig().getConfEntInt("RMC", "PORT",
+          (unsigned short)RMC_PORT, &m_log);
+      m_session = new DriveCatalogueLabelSession(m_netTimeout, m_log,
+        m_processForker, m_config, job, rmcPort, labelCmdConnection);
+    }
     break;
   default:
     {
@@ -675,9 +560,16 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::toBeCleaned() {
       // Create a cleaner session in the catalogue
       m_state = DRIVE_STATE_RUNNING;
       m_sessionType = SESSION_TYPE_CLEANER;
-      m_session = new DriveCatalogueCleanerSession(vid, assignmentTime);
-
-      // TO BE DONE - fork porcess
+      const unsigned short rmcPort =
+        common::CastorConfiguration::getConfig().getConfEntInt("RMC", "PORT",
+          (unsigned short)RMC_PORT, &m_log);
+      m_session = new DriveCatalogueCleanerSession(
+        m_log,
+        m_processForker,
+        m_config,
+        vid,
+        rmcPort,
+        assignmentTime);
     }
     break;
   default:
@@ -715,9 +607,17 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::sessionSucceeded() {
       throw ex;
     }
   }
-  delete m_session;
+
+  // Wrap the session in an auto pointer to gaurantee it is deleted even in the
+  // event of an exception
+  std::auto_ptr<DriveCatalogueSession> session(m_session);
+
+  // Set the member variable m_session to NULL to prevent the desstruxtor from
+  // trying a double delete
   m_session = NULL;
   m_sessionType = SESSION_TYPE_NONE;
+
+  session->sessionSucceeded();
 }
 
 //-----------------------------------------------------------------------------
@@ -742,9 +642,17 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::sessionFailed() {
       throw ex;
     }
   }
-  delete m_session;
+
+  // Wrap the session in an auto pointer to gaurantee it is deleted even in the
+  // event of an exception
+  std::auto_ptr<DriveCatalogueSession> session(m_session);
+
+  // Set the member variable m_session to NULL to prevent the desstruxtor from
+  // trying a double delete
   m_session = NULL;
   m_sessionType = SESSION_TYPE_NONE;
+
+  session->sessionFailed();
 }
 
 //------------------------------------------------------------------------------
