@@ -203,7 +203,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   catch(const castor::exception::Exception& e){
     //we end there because write session could not be opened 
     //or because a task failed or because flush failed
-
+    
     //first empty all the tasks and circulate mem blocks
     while(1) {
       std::auto_ptr<TapeWriteTask>  task(m_tasks.pop());

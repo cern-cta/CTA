@@ -25,24 +25,6 @@
 #include "castor/tape/utils/Timer.hpp"
 #include "castor/log/LogContext.hpp"
 
-namespace{
-  /** Use RAII to make sure the memory block is released  
-   *(ie pushed back to the memory manager) in any case (exception or not)
-   */
-  class AutoPushBlock{
-    castor::tape::tapeserver::daemon::MemBlock *block;
-    castor::tape::tapeserver::daemon::DataConsumer& next;
-  public:
-    AutoPushBlock(castor::tape::tapeserver::daemon::MemBlock* mb, 
-            castor::tape::tapeserver::daemon::DataConsumer& task):
-    block(mb),next(task){}
-    
-    ~AutoPushBlock(){
-      next.pushDataBlock(block);
-    }
-  };
-}
-
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -68,12 +50,13 @@ void DiskReadTask::execute(log::LogContext& lc) {
   utils::Timer localTime;
   size_t blockId=0;
   size_t migratingFileSize=m_migratedFile->fileSize();
+  MemBlock* mb=NULL;
   
   try{
     //we first check here to not even try to open the disk  if a previous task has failed
     //because the disk could the very reason why the previous one failed, 
     //so dont do the same mistake twice !
-    hasAnotherTaskTailed();
+    checkMigrationFailing();
     
     tape::diskFile::ReadFile sourceFile(m_migratedFile->path());
     if(migratingFileSize != sourceFile.size()){
@@ -88,11 +71,10 @@ void DiskReadTask::execute(log::LogContext& lc) {
     
     while(migratingFileSize>0){
 
-      hasAnotherTaskTailed();
+      checkMigrationFailing();
       
-      MemBlock* const mb = m_nextTask.getFreeBlock();
+      mb = m_nextTask.getFreeBlock();
       m_stats.waitFreeMemoryTime+=localTime.secs(utils::Timer::resetCounter);
-      AutoPushBlock push(mb,m_nextTask);
       
       //set metadata and read the data
       mb->m_fileid = m_migratedFile->fileid();
@@ -112,6 +94,10 @@ void DiskReadTask::execute(log::LogContext& lc) {
       }
       m_stats.checkingErrorTime += localTime.secs(utils::Timer::resetCounter);
       
+      // We are done with the block, push it to the write task
+      m_nextTask.pushDataBlock(mb);
+      mb=NULL;
+      
     } //end of while(migratingFileSize>0)
     
     m_stats.filesCount++;
@@ -120,36 +106,49 @@ void DiskReadTask::execute(log::LogContext& lc) {
    
     lc.log(LOG_INFO,"DiskReadTask: a previous file has failed for migration "
     "Do nothing except circulating blocks");
-    circulateAllBlocks(blockId);
+    circulateAllBlocks(blockId,mb);
   }
   catch(const castor::exception::Exception& e){
-    //signal to all others task that this session is screwed 
-    m_errorFlag.set();
-            
-    //we have to pump the blocks anyway, mark them failed and then pass them back to TapeWrite
-    //Otherwise they would be stuck into TapeWriteTask free block fifo
-
+    // We have to pump the blocks anyway, mark them failed and then pass them back 
+    // to TapeWriteTask
+    // Otherwise they would be stuck into TapeWriteTask free block fifo
+    // If we got here we had some job to do so there shall be at least one
+    // block either at hand or available.
+    // The tape write task, upon reception of the failed block will mark the 
+    // session as failed, hence signalling to the remaining disk read tasks to
+    // cancel as nothing more will be written to tape.
+    if (!mb) {
+      mb=m_nextTask.getFreeBlock();
+      ++blockId;
+    }
+    mb->markAsFailed(e.getMessageValue(),e.code());
+    m_nextTask.pushDataBlock(mb);
+    mb=NULL;
+    
     LogContext::ScopedParam sp(lc, Param("blockID",blockId));
     LogContext::ScopedParam sp0(lc, Param("exceptionCode",e.code()));
     LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
     lc.log(LOG_ERR,"Exception while reading a file");
     
     //deal here the number of mem block
-    circulateAllBlocks(blockId);
+    circulateAllBlocks(blockId,mb);
   } //end of catch
 }
 
 //------------------------------------------------------------------------------
 // DiskReadTask::circulateAllBlocks
 //------------------------------------------------------------------------------
-void DiskReadTask::circulateAllBlocks(size_t fromBlockId){
+void DiskReadTask::circulateAllBlocks(size_t fromBlockId, MemBlock * mb){
   size_t blockId = fromBlockId;
   while(blockId<m_numberOfBlock) {
-    MemBlock * mb = m_nextTask.getFreeBlock();
+    if (!mb) {
+      mb = m_nextTask.getFreeBlock();
+      ++blockId;
+    }
     mb->m_fileid = m_migratedFile->fileid();
-//    mb->markAsFailed();
+    mb->markAsCancelled();
     m_nextTask.pushDataBlock(mb);
-    ++blockId;
+    mb=NULL;
   } //end of while
 }
 

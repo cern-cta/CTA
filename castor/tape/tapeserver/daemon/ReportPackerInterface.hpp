@@ -103,17 +103,35 @@ template <class PlaceHolder> class ReportPackerInterface{
     using castor::log::Param;
       for(typename C::const_iterator it=c.begin();it!=c.end();++it)
       {
-        LogContext::ScopedParam sp[]={
-          LogContext::ScopedParam(m_lc, Param("NSFILEID",(*it)->fileid())),
-          LogContext::ScopedParam(m_lc, Param("NSFSEQ", (*it)->fseq())),
-          LogContext::ScopedParam(m_lc, Param("NSHOST", (*it)->nshost())),
-          LogContext::ScopedParam(m_lc, Param("NSFILETRANSACTIONID", (*it)->fileTransactionId()))
-        };
-        tape::utils::suppresUnusedVariable(sp);
+        log::ScopedParamContainer sp(m_lc);
+        sp.add("NSFILEID",(*it)->fileid())
+          .add("NSFSEQ", (*it)->fseq())
+          .add("NSHOST", (*it)->nshost())
+          .add("NSFILETRANSACTIONID", (*it)->fileTransactionId());
         m_lc.log(LOG_INFO,msg);
       }
   }  
-  
+
+  /**
+   * Log a set of files independently of the success/failure 
+   * @param c The set of files to log
+   * @param msg The message to be append at the end.
+   */
+  template <class C> void logReportWithError(const C& c,const std::string& msg){
+    using castor::log::LogContext;
+    using castor::log::Param;
+      for(typename C::const_iterator it=c.begin();it!=c.end();++it)
+      {
+        log::ScopedParamContainer sp(m_lc);
+        sp.add("NSFILEID",(*it)->fileid())
+          .add("NSFSEQ", (*it)->fseq())
+          .add("NSHOST", (*it)->nshost())
+          .add("NSFILETRANSACTIONID", (*it)->fileTransactionId())
+          .add("ErrorMessage", (*it)->errorMessage())
+          .add("ErrorCode", (*it)->errorCode());
+        m_lc.log(LOG_INFO,msg);
+      }
+  }
   /**
    * Utility function used to log  a ClientInterface::RequestReport 
    * @param chono the time report to log 
@@ -146,7 +164,7 @@ template <class PlaceHolder> class ReportPackerInterface{
   /** 
    * m_listReports is holding all the report waiting to be processed
    */
-  std::auto_ptr<FileReportList> m_listReports; 
+  std::auto_ptr<FileReportList> m_listReports;
   /**
    * Define how we should report to the client (by file/in bulk).
    */  

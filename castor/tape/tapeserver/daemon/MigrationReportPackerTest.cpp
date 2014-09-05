@@ -58,7 +58,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerNominal) {
 TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillure) {
   testing::StrictMock<MockClient> client;
   ::testing::InSequence dummy;
-  EXPECT_CALL(client, reportMigrationResults(_,_)).Times(0);
+  EXPECT_CALL(client, reportMigrationResults(_,_)).Times(1);
   EXPECT_CALL(client, reportEndOfSessionWithError(error,-1,_)).Times(1);
   
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFaillure");
@@ -78,13 +78,13 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillure) {
   mrp.waitThread();
   
   std::string temp = log.getLog();
-  ASSERT_NE(std::string::npos, temp.find("A flush on tape has been reported but a writing error happened before"));
+  ASSERT_NE(std::string::npos, temp.find("Reported failed file(s) to the client before end of session"));
 } 
 
 TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillureGoodEnd) {
   testing::StrictMock<MockClient> client;
   ::testing::InSequence dummy;
-  EXPECT_CALL(client, reportMigrationResults(_,_)).Times(0);
+  EXPECT_CALL(client, reportMigrationResults(_,_)).Times(1);
   EXPECT_CALL(client, reportEndOfSessionWithError(_,SEINTERNAL,_)).Times(1);
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFaillureGoodEnd");
   castor::log::LogContext lc(log);
@@ -103,7 +103,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillureGoodEnd) {
   mrp.waitThread();
    
   std::string temp = log.getLog();
-  ASSERT_NE(std::string::npos, temp.find("Nominal EndofSession has been reported  but an writing error on the tape happened before"));
+  ASSERT_NE(std::string::npos, temp.find("Reported end of session with error to client due to previous file errors"));
  
 } 
 
@@ -130,7 +130,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerGoodBadEnd) {
   mrp.waitThread();
   
   std::string temp = log.getLog();
-  ASSERT_NE(std::string::npos, temp.find("EndofSessionWithErrors has been reported  but NO writing error on the tape was detected"));
+  ASSERT_NE(std::string::npos, temp.find("Reported end of session with error to client"));
 } 
 
 MATCHER(checkCompressFileSize,"compressedFileSize is zero"){ 

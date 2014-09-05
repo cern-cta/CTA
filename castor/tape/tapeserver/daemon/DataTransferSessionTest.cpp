@@ -480,4 +480,84 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   }
 }
 
+TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
+  // TpcpClients only supports 32 bits session number
+  // This number has to be less than 2^31 as in addition there is a mix
+  // of signed and unsigned numbers
+  // As the current ids in prod are ~30M, we are far from overflow (Feb 2013)
+  // 0) Prepare the logger for everyone
+  castor::log::StringLogger logger("tapeServerUnitTest");
+  
+  // 1) prepare the client and run it in another thread
+  uint32_t volReq = 0xBEEF;
+  std::string vid = "V12345";
+  std::string density = "8000GC";
+  client::ClientSimulator sim(volReq, vid, density,
+    castor::tape::tapegateway::WRITE_TP, castor::tape::tapegateway::WRITE);
+  client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
+  clientRunner simRun(sim);
+  simRun.start();
+  
+  // 2) Prepare the VDQM request
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
+    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
+  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
+  VDQMjob.clientPort = clientAddr.port;
+  VDQMjob.volReqId = volReq;
+  
+  // 3) Prepare the necessary environment (logger, plus system wrapper), 
+  // construct and run the session.
+  castor::tape::System::mockWrapper mockSys;
+  mockSys.delegateToFake();
+  mockSys.disableGMockCallsCounting();
+  mockSys.fake.setupForVirtualDriveSLC6();
+
+  //delete is unnecessary
+  //pointer with ownership will be passed to the application,
+  //which will do the delete 
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drives::FakeDrive;
+  
+  // Just label the tape
+  castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
+      "V12345", true);
+  mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
+  
+  // Prepare the files, but delete them immediately. The migration will fail.
+  for (int fseq=1; fseq<=10; fseq++) {
+    // Create the file from which we will recall
+    std::auto_ptr<tempFile> tf(new tempFile(1000));
+    // Prepare the migrationRequest
+    castor::tape::tapegateway::FileToMigrateStruct ftm;
+    ftm.setFileSize(tf->m_size);
+    ftm.setFileid(1000 + fseq);
+    ftm.setFseq(fseq);
+    ftm.setPath(tf->path());
+    sim.addFileToMigrate(ftm);
+  }
+  castor::tape::utils::DriveConfig driveConfig;
+  driveConfig.unitName = "T10D6116";
+  driveConfig.dgn = "T10KD6";
+  driveConfig.devFilename = "/dev/tape_T10D6116";
+  driveConfig.densities.push_back("8000GC");
+  driveConfig.densities.push_back("5000GC");
+  driveConfig.librarySlot = "manual";
+  driveConfig.devType = "T10000";
+  DataTransferSession::CastorConf castorConf;
+  castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.rtcopydNbBufs = 10;
+  castorConf.tapebridgeBulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.tapebridgeBulkRequestMigrationMaxFiles = 1000;
+  castorConf.tapeserverdDiskThreads = 1;
+  castor::legacymsg::VmgrProxyDummy vmgr;
+  castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
+  castor::legacymsg::RmcProxyDummy rmc;
+  castor::messages::TapeserverProxyDummy initialProcess;
+  castor::server::ProcessCapDummy capUtils;
+  DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
+    driveConfig, rmc, initialProcess, capUtils, castorConf);
+  sess.execute();
+  simRun.wait();
+}
 } // namespace unitTest

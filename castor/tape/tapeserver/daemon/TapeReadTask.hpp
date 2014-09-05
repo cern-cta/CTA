@@ -118,6 +118,7 @@ public:
         localStats.dataVolume += mb->m_payload.size();
         // Pass the block to the disk write task
         m_fifo.pushDataBlock(mb);
+        mb=NULL;
         watchdog.notify();
         localStats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
       } //end of while(stillReading)

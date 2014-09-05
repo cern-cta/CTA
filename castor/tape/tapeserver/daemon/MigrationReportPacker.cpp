@@ -160,6 +160,34 @@ std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator end
   }
 }
 //------------------------------------------------------------------------------
+//Report::reportFileErrors
+//------------------------------------------------------------------------------
+void MigrationReportPacker::Report::reportFileErrors(MigrationReportPacker& _this)
+{
+  // Some errors still have to be transmitted to the client, but not the
+  // successful writes which were not validated by a flush (they will be
+  // discarded)
+  if(_this.m_listReports->failedMigrations().size()) {
+    tapeserver::client::ClientInterface::RequestReport chrono;
+    // First, cleanup the report of existing successes
+    for (size_t i=0; i<_this.m_listReports->successfulMigrations().size(); i++) {
+      delete _this.m_listReports->successfulMigrations()[i];
+    }
+    _this.m_listReports->successfulMigrations().resize(0);
+    // Report those errors to the client
+    _this.logReportWithError(_this.m_listReports->failedMigrations(),
+      "Will report failed file to the client before end of session"); 
+    _this.m_client.reportMigrationResults(*(_this.m_listReports),chrono);
+    log::ScopedParamContainer sp(_this.m_lc);
+    sp.add("connectDuration", chrono.connectDuration)
+      .add("sendRecvDuration", chrono.sendRecvDuration)
+      .add("transactionId", chrono.transactionId);
+    _this.m_lc.log(LOG_INFO, "Reported failed file(s) to the client before end of session");
+    // Reset the report lists.
+    _this.m_listReports.reset(new tapegateway::FileMigrationReportList);
+  }
+}
+//------------------------------------------------------------------------------
 //ReportFlush::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& _this){
@@ -170,31 +198,30 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& _this){
 
       computeCompressedSize(_this.m_listReports->successfulMigrations().begin(),
                             _this.m_listReports->successfulMigrations().end());
-    _this.m_client.reportMigrationResults(*(_this.m_listReports),chrono);   
-    _this.logReport(_this.m_listReports->successfulMigrations(),"A file was successfully written on the tape"); 
-    log::ScopedParamContainer container(_this.m_lc);
-    container.add("batch size",_this.m_listReports->successfulMigrations().size())
-             .add("compressed",m_compressStats.toTape)
-             .add("Non compressed",m_compressStats.fromHost);
-    _this.m_lc.log(LOG_INFO,"Reported to the client that a batch of file was written on tape");
-    }   
-    catch(const castor::exception::Exception& e){
-    LogContext::ScopedParam sp[]={
-      LogContext::ScopedParam(_this.m_lc, Param("exceptionCode",e.code())),
-      LogContext::ScopedParam(_this.m_lc, Param("exceptionMessageValue", e.getMessageValue())),
-      LogContext::ScopedParam(_this.m_lc, Param("exceptionWhat",e.what()))
-    };
-    tape::utils::suppresUnusedVariable(sp);
-    
-    const std::string msg_error="An exception was caught trying to call reportMigrationResults";
-    _this.m_lc.log(LOG_ERR,msg_error);
-    throw failedMigrationRecallResult(msg_error);
+      _this.m_client.reportMigrationResults(*(_this.m_listReports),chrono);   
+      _this.logReport(_this.m_listReports->successfulMigrations(),"A file was successfully written on the tape"); 
+      log::ScopedParamContainer container(_this.m_lc);
+      container.add("batch size",_this.m_listReports->successfulMigrations().size())
+               .add("compressed",m_compressStats.toTape)
+               .add("Non compressed",m_compressStats.fromHost);
+      _this.m_lc.log(LOG_INFO,"Reported to the client that a batch of file was written on tape");
     }
-  }
-  else {
-    const std::string& msg ="A flush on tape has been reported but a writing error happened before";
-    _this.logReport(_this.m_listReports->failedMigrations(),msg); 
-    //throw castor::exception::Exception(msg);
+    catch(const castor::exception::Exception& e){
+      LogContext::ScopedParam sp[]={
+        LogContext::ScopedParam(_this.m_lc, Param("exceptionCode",e.code())),
+        LogContext::ScopedParam(_this.m_lc, Param("exceptionMessageValue", e.getMessageValue())),
+        LogContext::ScopedParam(_this.m_lc, Param("exceptionWhat",e.what()))
+      };
+      tape::utils::suppresUnusedVariable(sp);
+      
+      const std::string msg_error="An exception was caught trying to call reportMigrationResults";
+      _this.m_lc.log(LOG_ERR,msg_error);
+      throw failedMigrationRecallResult(msg_error);
+    }
+  } else {
+    // This is an abnormal situation: we should never flush after an error!
+    _this.m_lc.log(LOG_ALERT,"Received a flush after an error: sending file errors to client");
+    reportFileErrors(_this);
   }
   //reset (ie delete and replace) the current m_listReports.
   //Thus all current reports are deleted otherwise they would have been sent again at the next flush
@@ -207,13 +234,24 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& _this){
 void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& _this){
   client::ClientInterface::RequestReport chrono;
   if(!_this.m_errorHappened){
-    _this.m_lc.log(LOG_INFO,"Nominal EndofSession has been reported without incident on tape-writing");
     _this.m_client.reportEndOfSession(chrono);
+    log::ScopedParamContainer sp(_this.m_lc);
+    sp.add("connectDuration", chrono.connectDuration)
+      .add("sendRecvDuration", chrono.sendRecvDuration)
+      .add("transactionId", chrono.transactionId);
+    _this.m_lc.log(LOG_INFO,"Reported end of session to client");
   }
   else {
-     const std::string& msg ="Nominal EndofSession has been reported  but an writing error on the tape happened before";
-     _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono); 
-     _this.m_lc.log(LOG_ERR,msg);
+    reportFileErrors(_this);
+    // We have some errors: report end of session as such to the client
+    _this.m_client.reportEndOfSessionWithError("Previous file errors",SEINTERNAL,chrono); 
+    log::ScopedParamContainer sp(_this.m_lc);
+    sp.add("errorMessage", "Previous file errors")
+      .add("errorCode", SEINTERNAL)
+      .add("connectDuration", chrono.connectDuration)
+      .add("sendRecvDuration", chrono.sendRecvDuration)
+      .add("transactionId", chrono.transactionId);
+    _this.m_lc.log(LOG_ERR,"Reported end of session with error to client due to previous file errors");
   }
   _this.m_continue=false;
 }
@@ -224,14 +262,19 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
   client::ClientInterface::RequestReport chrono;
   
   if(_this.m_errorHappened) {
-  _this.m_client.reportEndOfSessionWithError(m_message,m_error_code,chrono); 
-  _this.m_lc.log(LOG_ERR,m_message);
-  }
-  else{
-    const std::string& msg ="MigrationReportPacker::EndofSessionWithErrors has been reported  but NO writing error on the tape was detected";
-   _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono); 
-   _this.m_lc.log(LOG_ERR,msg);
-   //throw castor::exception::Exception(msg);
+    reportFileErrors(_this);
+    _this.m_client.reportEndOfSessionWithError(m_message,m_error_code,chrono); 
+    log::ScopedParamContainer sp(_this.m_lc);
+    sp.add("errorMessage", m_message)
+      .add("errorCode", m_error_code)
+      .add("connectDuration", chrono.connectDuration)
+      .add("sendRecvDuration", chrono.sendRecvDuration)
+      .add("transactionId", chrono.transactionId);
+    _this.m_lc.log(LOG_INFO,"Reported end of session with error to client after sending file errors");
+  } else{
+    const std::string& msg ="Reported end of session with error to client";
+    _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono); 
+    _this.m_lc.log(LOG_INFO,msg);
   }
   _this.m_continue=false;
 }

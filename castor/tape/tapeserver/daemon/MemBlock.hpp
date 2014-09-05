@@ -102,8 +102,6 @@ public:
    * Throw an exception if there is no context
    * @return 
    */
-  /* Out of the process, waiting to check if it is a good idea or not 
-   * send the error code
   int errorCode() const {
     if(m_context.get()) {
       return m_context->m_errorCode;
@@ -111,7 +109,7 @@ public:
 
     throw castor::exception::Exception("Error Context is not set ="
             " no error code to give");
-  } */
+  }
   
   /**
    * Return true if the block has been marked as failed 

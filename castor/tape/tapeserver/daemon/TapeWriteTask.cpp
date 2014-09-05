@@ -74,20 +74,11 @@ namespace daemon {
     
     uint32_t memBlockId  = 0;
     try {
-      //we first check here to not even try to move the tape  if a previous task has failed
-      //because the tape- could the very reason why the previous one failed, 
-      //so dont do the same mistake twice !
-      hasAnotherTaskTailed();
-      
       //try to open the session
       std::auto_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       m_taskStats.transferTime += timer.secs(utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
       while(!m_fifo.finished()) {
-
-        //if someone screw somewhere else, we stop
-        hasAnotherTaskTailed();
-        
         MemBlock* const mb = m_fifo.popDataBlock();
         m_taskStats.waitDataTime += timer.secs(utils::Timer::resetCounter);
         AutoReleaseBlock<MigrationMemoryManager> releaser(mb,m_memManager);
@@ -118,14 +109,14 @@ namespace daemon {
               localTime.secs(),lc);
     } 
     catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
-     //we end up there because another task has failed 
-      //so we just log, circulate blocks and don't even send a report 
+      // We end up there because another task has failed 
+      // so we just log, circulate blocks and don't even send a report 
       lc.log(LOG_INFO,"TapeWriteTask: a previous file has failed for migration "
       "Do nothing except circulating blocks");
       circulateMemBlocks();
       
-      //we throw again because we want TWST to stop all tasks from execution 
-      //and go into a degraded mode operation.
+      // We throw again because we want TWST to stop all tasks from execution 
+      // and go into a degraded mode operation.
       throw;
     }
     catch(const castor::exception::Exception& e){
@@ -134,13 +125,13 @@ namespace daemon {
       //we received a bad block or a block written failed
       //close failed
       
-      //first set the error flag 
+      //first set the error flag: we can't proceed any further with writes.
       m_errorFlag.set();
 
       //log and circulate blocks
       LogContext::ScopedParam sp(lc, Param("exceptionCode",e.code()));
       LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
-      lc.log(LOG_ERR,"Circulating blocks into TapeWriteTask::execute");
+      lc.log(LOG_ERR,"An error occurred for this file. End of migrations.");
       circulateMemBlocks();
       reportPacker.reportFailedJob(*m_fileToMigrate,e.getMessageValue(),e.code());
   
@@ -161,7 +152,9 @@ namespace daemon {
   void TapeWriteTask::checkErrors(MemBlock* mb,int memBlockId,castor::log::LogContext& lc){
     using namespace castor::log;
     if(m_fileToMigrate->fileid() != static_cast<unsigned int>(mb->m_fileid)
-            || memBlockId != mb->m_fileBlock  || mb->isFailed() ){
+            || memBlockId != mb->m_fileBlock
+            || mb->isFailed()
+            || mb->isCanceled()) {
       LogContext::ScopedParam sp[]={
         LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
         LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", memBlockId)),
@@ -170,18 +163,21 @@ namespace daemon {
       };
       tape::utils::suppresUnusedVariable(sp);
       std::string errorMsg;
-      int errCode;
+      int errorCode;
       if(mb->isFailed()){
         errorMsg=mb->errorMsg();
-         //disabled temporarily (see comment in MemBlock)
-        //errCode=mb->errorCode();
+        errorCode=mb->errorCode();
+      } else if (mb->isCanceled()) {
+        errorMsg="Received a block marked as cancelled";
+        errorCode=SEINTERNAL;
+      } else{
+        errorMsg="Mismatch between expected and received file id or blockid";
+        errorCode=SEINTERNAL;
       }
-      else{
-        errorMsg="Mistmatch between expected and received filed or blockid";
-        errCode=SEINTERNAL;
-      }
+      // Set the error flag for the session (in case of mismatch)
+      m_errorFlag.set();
       lc.log(LOG_ERR,errorMsg);
-      throw castor::exception::Exception(errorMsg);
+      throw castor::exception::Exception(errorCode,errorMsg);
     }
   }
 //------------------------------------------------------------------------------

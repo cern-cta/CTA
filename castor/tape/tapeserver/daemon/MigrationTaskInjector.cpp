@@ -118,9 +118,8 @@ namespace daemon {
 //------------------------------------------------------------------------------
   void MigrationTaskInjector::requestInjection( bool lastCall) {
     castor::server::MutexLocker ml(&m_producerProtection);
-    if(!m_errorFlag) {
-      m_queue.push(Request(m_maxFiles, m_maxBytes, lastCall));
-    }
+    m_queue.push(Request(m_maxFiles, m_maxBytes, lastCall));
+
   }
 //------------------------------------------------------------------------------
 //synchronousInjection
@@ -200,7 +199,7 @@ namespace daemon {
 
         if(NULL==filesToMigrateList.get()){
           if (req.lastCall) {
-            m_parent.m_lc.log(LOG_INFO,"No more file to migrate: triggering the end of session.\n");
+            m_parent.m_lc.log(LOG_INFO,"No more file to migrate: triggering the end of session.");
             m_parent.signalEndDataMovement();
             break;
           } else {

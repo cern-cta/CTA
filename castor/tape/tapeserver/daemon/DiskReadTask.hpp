@@ -64,14 +64,14 @@ private:
   /**
    * Throws an exception if m_errorFlag is set
    */
-  void hasAnotherTaskTailed() const {
+  void checkMigrationFailing() const {
     //if a task has signaled an error, we stop our job
     if(m_errorFlag){
       throw  castor::tape::tapeserver::daemon::ErrorFlag();
     }
   }
   
-    /**
+  /**
    * log into lc all m_stats parameters with the given message at the 
    * given level
    * @param level
@@ -79,7 +79,7 @@ private:
    */
   void logWithStat(int level,const std::string& msg,log::LogContext& lc) ;
   
-  void circulateAllBlocks(size_t fromBlockId);
+  void circulateAllBlocks(size_t fromBlockId, MemBlock * mb);
   /**
    * The task (a TapeWriteTask) that will handle the read blocks
    */
