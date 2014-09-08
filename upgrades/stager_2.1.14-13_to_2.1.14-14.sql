@@ -1851,13 +1851,3 @@ END;
 UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
  WHERE release = '2_1_14_14';
 COMMIT;
-
-/* Post-upgrade cleanup phase: archive all requests older than 24h and stuck in status 4 */
-BEGIN
-  FOR s in (SELECT id FROM SubRequest WHERE status = 4 AND creationTime < getTime() - 86400) LOOP
-    archiveSubReq(s.id, dconst.SUBREQUEST_FINISHED);
-    COMMIT;
-  END LOOP;
-END;
-/
-
