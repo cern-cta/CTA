@@ -125,10 +125,10 @@ void DiskReadThreadPool::addThreadStats(const DiskStats& other){
 //------------------------------------------------------------------------------
 void DiskReadThreadPool::logWithStat(int level, const std::string& message){
   log::ScopedParamContainer params(m_lc);
-     params.add("poolTransferTime", m_pooldStat.transferTime)
-           .add("poolWaitFreeMemoryTime",m_pooldStat.waitFreeMemoryTime)
-           .add("poolCheckingErrorTime",m_pooldStat.checkingErrorTime)
-           .add("poolOpeningTime",m_pooldStat.openingTime)
+     params.addTiming("poolTransferTime", m_pooldStat.transferTime)
+           .addTiming("poolWaitFreeMemoryTime",m_pooldStat.waitFreeMemoryTime)
+           .addTiming("poolCheckingErrorTime",m_pooldStat.checkingErrorTime)
+           .addTiming("poolOpeningTime",m_pooldStat.openingTime)
            .add("poolFileCount",m_pooldStat.filesCount)
            .add("poolDataVolumeInMB", 1.0*m_pooldStat.dataVolume/1024/1024)
            .add("Average_Pool_PayloadTransferSpeedMB/s",
@@ -174,10 +174,10 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
 void DiskReadThreadPool::DiskReadWorkerThread::
 logWithStat(int level, const std::string& message){
   log::ScopedParamContainer params(m_lc);
-     params.add("threadTransferTime", m_threadStat.transferTime)
-           .add("threadWaitFreeMemoryTime",m_threadStat.waitFreeMemoryTime)
-           .add("threadCheckingErrorTime",m_threadStat.checkingErrorTime)
-           .add("threadOpeningTime",m_threadStat.openingTime)
+     params.addTiming("threadTransferTime", m_threadStat.transferTime)
+           .addTiming("threadWaitFreeMemoryTime",m_threadStat.waitFreeMemoryTime)
+           .addTiming("threadCheckingErrorTime",m_threadStat.checkingErrorTime)
+           .addTiming("threadOpeningTime",m_threadStat.openingTime)
            .add("threaDataVolumeInMB", 1.0*m_threadStat.dataVolume/1024/1024)
            .add("threadPayloadTransferSpeedMB/s",
                    1.0*m_threadStat.dataVolume/1024/1024/m_threadStat.transferTime);

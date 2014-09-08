@@ -24,6 +24,7 @@
 #pragma once
 
 #include <ostream>
+#include <cstdio>
 #include "castor/log/Logger.hpp"
 
 namespace castor {
@@ -156,6 +157,14 @@ class ScopedParamContainer{
 
     template <class T> ScopedParamContainer& add(const std::string& s,const T& t){
       m_context.pushOrReplace(Param(s,t));
+      m_names.push_back(s);
+      return *this;
+    }
+    
+    ScopedParamContainer& addTiming(const std::string& s,double t){
+      char buf[100];
+      std::snprintf(buf, sizeof(buf), "%f", t);
+      m_context.pushOrReplace(Param(s,buf));
       m_names.push_back(s);
       return *this;
     }

@@ -115,14 +115,14 @@ void DiskWriteThreadPool::addThreadStats(const DiskStats& other){
 //------------------------------------------------------------------------------
 void DiskWriteThreadPool::logWithStat(int level, const std::string& message){
   log::ScopedParamContainer params(m_lc);
-     params.add("poolTransferTime", m_pooldStat.transferTime)
-           .add("poolChecksumingTime",m_pooldStat.checksumingTime)
-           .add("poolWaitDataTime",m_pooldStat.waitDataTime)
-           .add("poolWaitReportingTime",m_pooldStat.waitReportingTime)
-           .add("poolCheckingErrorTime",m_pooldStat.checkingErrorTime)
-           .add("poolOpeningTime",m_pooldStat.openingTime)
+     params.addTiming("poolTransferTime", m_pooldStat.transferTime)
+           .addTiming("poolChecksumingTime",m_pooldStat.checksumingTime)
+           .addTiming("poolWaitDataTime",m_pooldStat.waitDataTime)
+           .addTiming("poolWaitReportingTime",m_pooldStat.waitReportingTime)
+           .addTiming("poolCheckingErrorTime",m_pooldStat.checkingErrorTime)
+           .addTiming("poolOpeningTime",m_pooldStat.openingTime)
            .add("poolFileCount",m_pooldStat.filesCount)
-           .add("poolClosingTime", m_pooldStat.closingTime)
+           .addTiming("poolClosingTime", m_pooldStat.closingTime)
            .add("poolDataVolumeInMB", 1.0*m_pooldStat.dataVolume/1024/1024)
            .add("poolPayloadTransferSpeedMB/s",
                    1.0*m_pooldStat.dataVolume/1024/1024/m_pooldStat.transferTime);
@@ -180,14 +180,14 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
 void DiskWriteThreadPool::DiskWriteWorkerThread::
 logWithStat(int level, const std::string& msg) {
   log::ScopedParamContainer params(m_lc);
-     params.add("threadTransferTime", m_threadStat.transferTime)
-           .add("threadChecksumingTime",m_threadStat.checksumingTime)
-           .add("threadWaitDataTime",m_threadStat.waitDataTime)
-           .add("threadWaitReportingTime",m_threadStat.waitReportingTime)
+     params.addTiming("threadTransferTime", m_threadStat.transferTime)
+           .addTiming("threadChecksumingTime",m_threadStat.checksumingTime)
+           .addTiming("threadWaitDataTime",m_threadStat.waitDataTime)
+           .addTiming("threadWaitReportingTime",m_threadStat.waitReportingTime)
            .add("threadFileCount",m_threadStat.filesCount)
-           .add("threadCheckingErrorTime",m_threadStat.checkingErrorTime)
-           .add("threadOpeningTime",m_threadStat.openingTime)
-           .add("threadClosingTime", m_threadStat.closingTime)
+           .addTiming("threadCheckingErrorTime",m_threadStat.checkingErrorTime)
+           .addTiming("threadOpeningTime",m_threadStat.openingTime)
+           .addTiming("threadClosingTime", m_threadStat.closingTime)
            .add("threaDataVolumeInMB", 1.0*m_threadStat.dataVolume/1024/1024)
            .add("threadPayloadTransferSpeedMB/s",
                    1.0*m_threadStat.dataVolume/1024/1024/m_threadStat.transferTime);

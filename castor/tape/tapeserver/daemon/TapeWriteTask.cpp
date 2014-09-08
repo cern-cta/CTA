@@ -235,13 +235,13 @@ namespace daemon {
    void TapeWriteTask::logWithStats(int level, const std::string& msg,
    double fileTime,log::LogContext& lc) const{
      log::ScopedParamContainer params(lc);
-     params.add("transferTime", m_taskStats.transferTime)
-           .add("checksumingTime",m_taskStats.checksumingTime)
-           .add("waitDataTime",m_taskStats.waitDataTime)
-           .add("waitReportingTime",m_taskStats.waitReportingTime)
+     params.addTiming("transferTime", m_taskStats.transferTime)
+           .addTiming("checksumingTime",m_taskStats.checksumingTime)
+           .addTiming("waitDataTime",m_taskStats.waitDataTime)
+           .addTiming("waitReportingTime",m_taskStats.waitReportingTime)
            .add("dataVolume",m_taskStats.dataVolume)
            .add("headerVolume",m_taskStats.headerVolume)
-           .add("totalTime", fileTime)
+           .addTiming("totalTime", fileTime)
            .add("driveTransferSpeedMiB/s",
                    (m_taskStats.dataVolume+m_taskStats.headerVolume)
            /1024/1024

@@ -120,7 +120,7 @@ protected:
         m_rmc.mountTape(m_volInfo.vid, m_drive.librarySlot,
                 mode);
         const std::string modeAsString = std::string("R")+ ((mode==legacymsg::RmcProxy::MOUNT_MODE_READWRITE) ? "W" : "");
-        scoped.add("RMCMountTime",timer.secs()).add("mode",modeAsString);
+        scoped.addTiming("RMCMountTime",timer.secs()).add("mode",modeAsString);
         m_logContext.log(LOG_INFO, "Tape Mounted");
         
     }

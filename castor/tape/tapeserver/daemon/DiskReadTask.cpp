@@ -157,12 +157,12 @@ void DiskReadTask::circulateAllBlocks(size_t fromBlockId, MemBlock * mb){
 //------------------------------------------------------------------------------  
 void DiskReadTask::logWithStat(int level,const std::string& msg,log::LogContext& lc){
   log::ScopedParamContainer params(lc);
-     params.add("transferTime", m_stats.transferTime)
-           .add("checksumingTime",m_stats.checksumingTime)
-           .add("waitDataTime",m_stats.waitDataTime)
-           .add("waitReportingTime",m_stats.waitReportingTime)
-           .add("checkingErrorTime",m_stats.checkingErrorTime)
-           .add("openingTime",m_stats.openingTime)
+     params.addTiming("transferTime", m_stats.transferTime)
+           .addTiming("checksumingTime",m_stats.checksumingTime)
+           .addTiming("waitDataTime",m_stats.waitDataTime)
+           .addTiming("waitReportingTime",m_stats.waitReportingTime)
+           .addTiming("checkingErrorTime",m_stats.checkingErrorTime)
+           .addTiming("openingTime",m_stats.openingTime)
            .add("payloadTransferSpeedMB/s",
                    1.0*m_stats.dataVolume/1024/1024/m_stats.transferTime)
            .add("FILEID",m_migratedFile->fileid())

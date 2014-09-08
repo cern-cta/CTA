@@ -148,7 +148,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       m_stats.mountTime += timer.secs(utils::Timer::resetCounter);
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
-        scoped.add("mountTime", m_stats.mountTime);
+        scoped.addTiming("mountTime", m_stats.mountTime);
         m_logContext.log(LOG_INFO, "Tape mounted and drive ready");
       }
       // Then we have to initialise the tape read session
@@ -157,7 +157,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       //and then report
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
-        scoped.add("positionTime", m_stats.positionTime);
+        scoped.addTiming("positionTime", m_stats.positionTime);
         m_logContext.log(LOG_INFO, "Tape read session session successfully started");
       }
       m_initialProcess.tapeMountedForRead();
@@ -220,22 +220,22 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::logWithStat(
   double sessionTime) {
     params.add("type", "read")
           .add("VID", m_volInfo.vid)
-          .add("mountTime", m_stats.mountTime)
-          .add("positionTime", m_stats.positionTime)
-          .add("waitInstructionsTime", m_stats.waitInstructionsTime)
-          .add("checksumingTime", m_stats.checksumingTime)
-          .add("transferTime", m_stats.transferTime)
-          .add("waitFreeMemoryTime", m_stats.waitFreeMemoryTime)
-          .add("waitReportingTime", m_stats.waitReportingTime)
-          .add("unloadTime", m_stats.unloadTime)
-          .add("unmountTime", m_stats.unmountTime)
+          .addTiming("mountTime", m_stats.mountTime)
+          .addTiming("positionTime", m_stats.positionTime)
+          .addTiming("waitInstructionsTime", m_stats.waitInstructionsTime)
+          .addTiming("checksumingTime", m_stats.checksumingTime)
+          .addTiming("transferTime", m_stats.transferTime)
+          .addTiming("waitFreeMemoryTime", m_stats.waitFreeMemoryTime)
+          .addTiming("waitReportingTime", m_stats.waitReportingTime)
+          .addTiming("unloadTime", m_stats.unloadTime)
+          .addTiming("unmountTime", m_stats.unmountTime)
           .add("dataVolume", m_stats.dataVolume)
           .add("headerVolume", m_stats.headerVolume)
           .add("files", m_stats.filesCount)
-          .add("dataBandwidthMB/s", 1.0*m_stats.dataVolume
+          .add("dataBandwidthMBps", 1.0*m_stats.dataVolume
                   /1000/1000/sessionTime)
-          .add("driveBandwidthMB/s", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
+          .add("driveBandwidthMBps", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
                   /1000/1000/sessionTime)
-          .add("sessionTime", sessionTime);
+          .addTiming("sessionTime", sessionTime);
     m_logContext.log(level,msg);  
 }

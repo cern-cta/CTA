@@ -127,12 +127,12 @@ public:
       // Log the successful transfer
       double fileTime = localTime.secs();
       log::ScopedParamContainer params(lc);
-      params.add("positionTime", localStats.positionTime)
-            .add("transferTime", localStats.transferTime)
-            .add("waitFreeMemoryTime",localStats.waitFreeMemoryTime)
-            .add("waitReportingTime",localStats.waitReportingTime)
+      params.addTiming("positionTime", localStats.positionTime)
+            .addTiming("transferTime", localStats.transferTime)
+            .addTiming("waitFreeMemoryTime",localStats.waitFreeMemoryTime)
+            .addTiming("waitReportingTime",localStats.waitReportingTime)
             .add("dataVolume",localStats.dataVolume)
-            .add("totalTime", fileTime)
+            .addTiming("totalTime", fileTime)
             .add("driveTransferSpeedMiB/s",
                     (localStats.dataVolume+localStats.headerVolume)
                      /1024/1024
