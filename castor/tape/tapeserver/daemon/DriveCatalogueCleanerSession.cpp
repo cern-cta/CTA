@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * 
+ *
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -26,17 +26,39 @@
 #include "h/Ctape_constants.h"
 
 //------------------------------------------------------------------------------
-// constructor
+// create
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::
-  DriveCatalogueCleanerSession(
+castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession *
+  castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::create(
   log::Logger &log,
   ProcessForkerProxy &processForker,
   const tape::utils::DriveConfig &driveConfig,
   const std::string &vid,
   const unsigned short rmcPort,
-  const time_t assignmentTime):
-  m_pid(forkCleanerSession(processForker, driveConfig, vid, rmcPort)),
+  const time_t assignmentTime) {
+
+  const pid_t pid = forkCleanerSession(processForker, driveConfig, vid,
+    rmcPort);
+
+  return new DriveCatalogueCleanerSession(
+    pid,
+    log,
+    driveConfig,
+    vid,
+    assignmentTime);
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::
+  DriveCatalogueCleanerSession(
+  const pid_t pid,
+  log::Logger &log,
+  const tape::utils::DriveConfig &driveConfig,
+  const std::string &vid,
+  const time_t assignmentTime) throw():
+  m_pid(pid),
   m_log(log),
   m_vid(vid),
   m_assignmentTime(assignmentTime) {

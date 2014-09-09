@@ -26,18 +26,42 @@
 #include "h/Ctape_constants.h"
 
 //------------------------------------------------------------------------------
+// create
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::DriveCatalogueLabelSession *
+  castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::create(
+    const int netTimeout,
+    log::Logger &log,
+    ProcessForkerProxy &processForker,
+    const tape::utils::DriveConfig &driveConfig,
+    const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
+    const unsigned short rmcPort,
+    const int labelCmdConnection) {
+
+  const pid_t pid = forkLabelSession(processForker, driveConfig, labelJob,
+    rmcPort);
+
+  return new DriveCatalogueLabelSession(
+    pid,
+    netTimeout,
+    log,
+    driveConfig,
+    labelJob,
+    labelCmdConnection);
+}
+
+//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
   DriveCatalogueLabelSession(
+  const pid_t pid,
   const int netTimeout,
   log::Logger &log,
-  ProcessForkerProxy &processForker,
   const tape::utils::DriveConfig &driveConfig,
   const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
-  const unsigned short rmcPort,
-  const int labelCmdConnection):
-  m_pid(forkLabelSession(processForker, driveConfig, labelJob, rmcPort)),
+  const int labelCmdConnection) throw():
+  m_pid(pid),
   m_assignmentTime(time(0)),
   m_netTimeout(netTimeout),
   m_log(log),

@@ -41,7 +41,10 @@ class DriveCatalogueLabelSession : public DriveCatalogueSession {
 public:
 
   /**
-   * Constructor
+   * Creates a DriveCatalogueLabelSession object.
+   *
+   * Except in the case of unit testing, a DriveCatalogueLabelSession object
+   * should only be created using the static create() method.
    *
    * @param netTimeout Timeout in seconds to be used when performing network
    * I/O.
@@ -53,8 +56,9 @@ public:
    * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param labelCmdConnection The file descriptor of the TCP/IP connection with
    * the tape labeling command-line tool castor-tape-label.
+   * @return A newly created DriveCatalogueSession object.
    */
-  DriveCatalogueLabelSession(
+  static DriveCatalogueLabelSession *create(
     const int netTimeout,
     log::Logger &log,
     ProcessForkerProxy &processForker,
@@ -122,6 +126,34 @@ public:
    * @return Always false.
    */
   bool tapeIsBeingMounted() const throw();
+
+protected:
+
+  /**
+   * Protected constructor.
+   *
+   * Except in the case of unit testing a DriveCatalogueLabelSession object
+   * should only be created using the static create() method.  This constructor
+   * is protected so that unit tests can go around this restriction for sole
+   * purpose of unit testing.
+   *
+   * @param pid The process ID of the session.
+   * @param netTimeout Timeout in seconds to be used when performing network
+   * I/O.
+   * @param log Object representing the API of the CASTOR logging system.
+   * @param driveConfig The configuration of the tape drive.
+   * @param labelJob The label job received from the castor-tape-label
+   * command-line tool.
+   * @param labelCmdConnection The file descriptor of the TCP/IP connection with
+   * the tape labeling command-line tool castor-tape-label.
+   */
+  DriveCatalogueLabelSession(
+    const pid_t pid,
+    const int netTimeout,
+    log::Logger &log,
+    const tape::utils::DriveConfig &driveConfig,
+    const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
+    const int labelCmdConnection) throw();
 
 private:
 

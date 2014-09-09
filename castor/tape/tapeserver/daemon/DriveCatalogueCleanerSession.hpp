@@ -37,9 +37,12 @@ namespace daemon {
  */
 class DriveCatalogueCleanerSession : public DriveCatalogueSession {
 public:
-    
+
   /**
-   * Constructor
+   * Creates a DriveCatalogueCleanerSession object.
+   *
+   * Except in the case of unit testing, a DriveCatalogueCleanerSession object
+   * should only be created using the static create() method.
    *
    * @param log Object representing the API of the CASTOR logging system.
    * @param processForker Proxy object representing the ProcessForker.
@@ -50,15 +53,16 @@ public:
    * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param assignmentTime The time at which a job was assigned to the tape
    * drive.
+   * @return A newly created DriveCatalogueCleanerSession object.
    */
-  DriveCatalogueCleanerSession(
+  static DriveCatalogueCleanerSession *create(
     log::Logger &log,
     ProcessForkerProxy &processForker,
     const tape::utils::DriveConfig &driveConfig,
     const std::string &vid,
     const unsigned short rmcPort,
     const time_t assignmentTime);
-
+    
   /**
    * To be called when the session has ended with success.
    */
@@ -107,6 +111,32 @@ public:
    * @return Always false.
    */
   bool tapeIsBeingMounted() const throw();
+
+protected:
+
+  /**
+   * Protected constructor.
+   *
+   * Except in the case of unit testing a DriveCatalogueCleanerSession object
+   * should only be created using the static create() method.  This constructor
+   * is protected so that unit tests can go around this restriction for sole
+   * purpose of unit testing.
+   *
+   * @param pid Process identifier of the session.
+   * @param log Object representing the API of the CASTOR logging system.
+   * @param driveConfig The configuration of the tape drive.
+   * @param vid The volume identifier ofthe tape associated with the tape
+   * drive.  If the volume identifier is not known then this parameter should
+   * be set to the empty string.
+   * @param assignmentTime The time at which a job was assigned to the tape
+   * drive.
+   */
+  DriveCatalogueCleanerSession(
+    const pid_t pid,
+    log::Logger &log,
+    const tape::utils::DriveConfig &driveConfig,
+    const std::string &vid,
+    const time_t assignmentTime) throw();
 
 private:
 

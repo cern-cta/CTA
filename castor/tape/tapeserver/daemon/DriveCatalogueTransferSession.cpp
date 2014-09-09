@@ -29,10 +29,10 @@
 #include "h/rmc_constants.h"
 
 //------------------------------------------------------------------------------
-// constructor
+// create
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
-  DriveCatalogueTransferSession(
+castor::tape::tapeserver::daemon::DriveCatalogueTransferSession*
+  castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::create(
   log::Logger &log,
   const tape::utils::DriveConfig &driveConfig,
   const DataTransferSession::CastorConf &dataTransferConfig,
@@ -40,9 +40,34 @@ castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
   const unsigned short rmcPort,
   ProcessForkerProxy &processForker,
   legacymsg::VdqmProxy &vdqm,
-  const std::string &hostName):
-  m_pid(forkTransferSession(processForker, driveConfig, vdqmJob,
-    dataTransferConfig, rmcPort)),
+  const std::string &hostName) {
+
+  const pid_t pid = forkTransferSession(processForker, driveConfig, vdqmJob,
+    dataTransferConfig, rmcPort);
+
+  return new DriveCatalogueTransferSession(
+    pid,
+    log,
+    driveConfig,
+    dataTransferConfig,
+    vdqmJob,
+    vdqm,
+    hostName);
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+  DriveCatalogueTransferSession(
+  const pid_t pid,
+  log::Logger &log,
+  const tape::utils::DriveConfig &driveConfig,
+  const DataTransferSession::CastorConf &dataTransferConfig,
+  const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
+  legacymsg::VdqmProxy &vdqm,
+  const std::string &hostName) throw():
+  m_pid(pid),
   m_state(TRANSFERSTATE_WAIT_ASSIGN),
   m_mode(WRITE_DISABLE),
   m_assignmentTime(time(0)),

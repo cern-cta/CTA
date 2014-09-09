@@ -40,10 +40,12 @@ namespace daemon {
  */
 class DriveCatalogueTransferSession : public DriveCatalogueSession {
 public:
-
   /**
-   * Constructor
-   * 
+   * Creates a DriveCatalogueTransferSession object.
+   *
+   * Except in the case of unit testing, a DriveCatalogueLabelSession object
+   * should only be created using the static create() method.
+   *
    * @param log Object representing the API of the CASTOR logging system.
    * @param driveConfig The configuration of the tape drive.
    * @param dataTransferConfig The configuration of a data-transfer session.
@@ -53,8 +55,9 @@ public:
    * @param vdqm Proxy object representing the vdqmd daemon.
    * @param hostName The name of the host on which the daemon is running.  This
    * name is needed to fill in messages to be sent to the vdqmd daemon.
+   * @return A newly created DriveCatalogueTransferSession object.
    */
-  DriveCatalogueTransferSession(
+  static DriveCatalogueTransferSession *create(
     log::Logger &log,
     const tape::utils::DriveConfig &driveConfig,
     const DataTransferSession::CastorConf &dataTransferConfig,
@@ -157,7 +160,35 @@ public:
    * @return True if a tape is in the process of being mounted.
    */
   bool tapeIsBeingMounted() const throw();
-  
+
+protected:
+
+  /**
+   * Protected constructor.
+   *
+   * Except in the case of unit testing a DriveCatalogueTransferSession object
+   * should only be created using the static create() method.  This constructor
+   * is protected so that unit tests can go around this restriction for sole
+   * purpose of unit testing.
+   * 
+   * @param pid The process identifier of the session.
+   * @param log Object representing the API of the CASTOR logging system.
+   * @param driveConfig The configuration of the tape drive.
+   * @param dataTransferConfig The configuration of a data-transfer session.
+   * @param vdqmJob job received from the vdqmd daemon.
+   * @param vdqm Proxy object representing the vdqmd daemon.
+   * @param hostName The name of the host on which the daemon is running.  This
+   * name is needed to fill in messages to be sent to the vdqmd daemon.
+   */
+  DriveCatalogueTransferSession(
+    const pid_t pid,
+    log::Logger &log,
+    const tape::utils::DriveConfig &driveConfig,
+    const DataTransferSession::CastorConf &dataTransferConfig,
+    const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
+    legacymsg::VdqmProxy &vdqm,
+    const std::string &hostName) throw();
+
 private:
 
   /**

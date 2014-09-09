@@ -469,8 +469,9 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedVdqmJob(
         common::CastorConfiguration::getConfig().getConfEntInt("RMC", "PORT",
           (unsigned short)RMC_PORT, &m_log);
       DriveCatalogueTransferSession *const transferSession =
-        new DriveCatalogueTransferSession(m_log, m_config, m_dataTransferConfig,
-          job, rmcPort, m_processForker, m_vdqm, m_hostName);
+        DriveCatalogueTransferSession::create(m_log, m_config,
+          m_dataTransferConfig, job, rmcPort, m_processForker, m_vdqm,
+          m_hostName);
       m_session = dynamic_cast<DriveCatalogueSession *>(transferSession);
       transferSession->assignDriveInVdqm();
     }
@@ -520,7 +521,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedLabelJob(
       const unsigned short rmcPort =
         common::CastorConfiguration::getConfig().getConfEntInt("RMC", "PORT",
           (unsigned short)RMC_PORT, &m_log);
-      m_session = new DriveCatalogueLabelSession(m_netTimeout, m_log,
+      m_session = DriveCatalogueLabelSession::create(m_netTimeout, m_log,
         m_processForker, m_config, job, rmcPort, labelCmdConnection);
     }
     break;
@@ -563,7 +564,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::toBeCleaned() {
       const unsigned short rmcPort =
         common::CastorConfiguration::getConfig().getConfEntInt("RMC", "PORT",
           (unsigned short)RMC_PORT, &m_log);
-      m_session = new DriveCatalogueCleanerSession(
+      m_session = DriveCatalogueCleanerSession::create(
         m_log,
         m_processForker,
         m_config,
