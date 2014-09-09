@@ -35,7 +35,7 @@
 
 namespace castor    {
 namespace legacymsg {
-  
+
 /**
  * Marshals the specified source message header structure into the
  * specified destination buffer.
@@ -46,7 +46,7 @@ namespace legacymsg {
  * @return       The total length of the header.
  */
 size_t marshal(char *const dst, const size_t dstLen,
-  const MessageHeader &src) ;
+  const MessageHeader &src);
 
 /**
  * Marshals the specified source message header structure into the
@@ -69,14 +69,13 @@ template<int n> size_t marshal(char (&dst)[n],
  *               buffer where the message header should be unmarshalled from
  *               and on return points to the byte in the source buffer
  *               immediately after the unmarshalled message header.
- * @param srcLen In/our parameter, before invocation is the length of the
+ * @param srcLen In/out parameter, before invocation is the length of the
  *               source buffer from where the message header should be
  *               unmarshalled and on return is the number of bytes remaining in
  *               the source buffer.
  * @param dst    The destination structure.
  */
-void unmarshal(const char * &src, size_t &srcLen, MessageHeader &dst)
-  ;
+void unmarshal(const char * &src, size_t &srcLen, MessageHeader &dst);
 
 } // namespace legacymsg
 } // namespace castor

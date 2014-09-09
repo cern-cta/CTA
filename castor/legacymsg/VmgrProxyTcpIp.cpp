@@ -19,7 +19,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/VmgrMarshal.hpp"
 #include "castor/legacymsg/VmgrProxyTcpIp.hpp"
@@ -36,11 +35,9 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::legacymsg::VmgrProxyTcpIp::VmgrProxyTcpIp(
-  log::Logger &log,
   const std::string &vmgrHostName,
   const unsigned short vmgrPort,
   const int netTimeout) throw():
-    m_log(log),
     m_vmgrHostName(vmgrHostName),
     m_vmgrPort(vmgrPort),
     m_netTimeout(netTimeout) {
@@ -50,96 +47,6 @@ castor::legacymsg::VmgrProxyTcpIp::VmgrProxyTcpIp(
 // destructor
 //------------------------------------------------------------------------------
 castor::legacymsg::VmgrProxyTcpIp::~VmgrProxyTcpIp() throw() {
-}
-
-//-----------------------------------------------------------------------------
-// readVmgrReply
-//-----------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::readVmgrRcReply(const int fd)  {
-  legacymsg::MessageHeader reply;
-
-  try {
-    reply = readRcReplyMsg(fd);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to read VMGR reply: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-
-  if(VMGR_MAGIC != reply.magic) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to read VMGR reply: Invalid magic"
-      ": expected=0x" << std::hex << VMGR_MAGIC << " actual=" << reply.magic;
-    throw ex;
-  }
-  
-  if(VMGR_RC != reply.reqType) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Wrong VMGR reply type"
-      ": expected=0x" << std::hex << VMGR_RC << " actual=" << reply.reqType;
-    throw ex;
-  } 
-  
-  if(0 != reply.lenOrStatus) {
-    // VMGR is reporting an error
-    char errBuf[80];
-    sstrerror_r(reply.reqType, errBuf, sizeof(errBuf));
-    castor::exception::Exception ex;
-    ex.getMessage() << "VMGR reported an error: " << errBuf;
-    throw ex;
-  }
-}
-
-//-----------------------------------------------------------------------------
-// readRcReplyMsg
-//-----------------------------------------------------------------------------
-castor::legacymsg::MessageHeader castor::legacymsg::VmgrProxyTcpIp::readRcReplyMsg(const int fd)  {
-  char buf[12]; // Magic + type + len
-  legacymsg::MessageHeader reply;
-
-  try {
-    io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to read reply header: "
-      << ne.getMessage().str();
-    throw ex;
-  }
-
-  const char *bufPtr = buf;
-  size_t bufLen = sizeof(buf);
-  legacymsg::unmarshal(bufPtr, bufLen, reply);
-
-  return reply;
-}
-
-//-----------------------------------------------------------------------------
-// writeDriveStatusMsg
-//-----------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::writeTapeMountNotificationMsg(
-  const int fd, const legacymsg::VmgrTapeMountedMsgBody &body)  {
-  char buf[REQBUFSZ];
-  const size_t len = legacymsg::marshal(buf, body);
-
-  try {
-    io::writeBytes(fd, m_netTimeout, len, buf);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to write mount notification message: "
-      << ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// setDriveStatus
-//------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::sendNotificationAndReceiveReply(
-  const legacymsg::VmgrTapeMountedMsgBody &body)  {
-  castor::utils::SmartFd fd(connectToVmgr());
-  writeTapeMountNotificationMsg(fd.get(), body);
-  readVmgrRcReply(fd.get());
 }
 
 //------------------------------------------------------------------------------
@@ -155,7 +62,7 @@ void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForRead(
     msg.mode = WRITE_DISABLE;
     castor::utils::copyString(msg.vid, vid);
 
-    sendNotificationAndReceiveReply(msg);
+    connectWriteNotificationAndReadReply(msg);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to notify the VMGR that the tape " << vid <<
@@ -177,13 +84,23 @@ void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForWrite(
     msg.mode = WRITE_ENABLE;
     castor::utils::copyString(msg.vid, vid);
 
-    sendNotificationAndReceiveReply(msg);
+    connectWriteNotificationAndReadReply(msg);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to notify the VMGR that the tape " << vid <<
       " was mounted for WRITE by jid " << jid << " : " << ne.getMessage().str();
     throw ex;
   }
+}
+
+//------------------------------------------------------------------------------
+// connectWriteNotificationAndReadReply
+//------------------------------------------------------------------------------
+void castor::legacymsg::VmgrProxyTcpIp::connectWriteNotificationAndReadReply(
+  const VmgrTapeMountedMsgBody &body) const {
+  castor::utils::SmartFd fd(connectToVmgr());
+  writeTapeMountNotificationMsg(fd.get(), body);
+  readVmgrRcReply(fd.get());
 }
 
 //-----------------------------------------------------------------------------
@@ -204,137 +121,84 @@ int castor::legacymsg::VmgrProxyTcpIp::connectToVmgr() const  {
   return smartConnectSock.release();
 }
 
-//------------------------------------------------------------------------------
-// marshalQueryTapeRequest
-//------------------------------------------------------------------------------
-size_t castor::legacymsg::VmgrProxyTcpIp::marshalQueryTapeRequest(
-  const std::string &vid, legacymsg::VmgrTapeInfoRqstMsgBody &request,
-  char *buf, size_t bufLen) {  
+//-----------------------------------------------------------------------------
+// writeTapeMountNotificationMsg
+//-----------------------------------------------------------------------------
+void castor::legacymsg::VmgrProxyTcpIp::writeTapeMountNotificationMsg(
+  const int fd, const VmgrTapeMountedMsgBody &body) const {
+  char buf[REQBUFSZ];
+  const size_t len = marshal(buf, body);
+
   try {
-    return legacymsg::marshal(buf, bufLen, request);
+    io::writeBytes(fd, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal request for tape information: vid=" << vid
-      << ". Reason: " << ne.getMessage().str();
+    ex.getMessage() << "Failed to write mount notification message: "
+      << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//-----------------------------------------------------------------------------
+// readVmgrRcReply
+//-----------------------------------------------------------------------------
+void castor::legacymsg::VmgrProxyTcpIp::readVmgrRcReply(const int fd) const {
+  MessageHeader reply;
+
+  try {
+    reply = readMsgHeader(fd);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to read VMGR reply: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+
+  if(VMGR_MAGIC != reply.magic) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to read VMGR reply: Invalid magic"
+      ": expected=0x" << std::hex << VMGR_MAGIC << " actual=" << reply.magic;
+    throw ex;
+  }
+
+  if(VMGR_RC != reply.reqType) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Wrong VMGR reply type"
+      ": expected=0x" << std::hex << VMGR_RC << " actual=" << reply.reqType;
+    throw ex;
+  }
+
+  if(0 != reply.lenOrStatus) {
+    // VMGR is reporting an error
+    char errBuf[80];
+    sstrerror_r(reply.reqType, errBuf, sizeof(errBuf));
+    castor::exception::Exception ex;
+    ex.getMessage() << "VMGR reported an error: " << errBuf;
     throw ex;
   }
 }
 
 //------------------------------------------------------------------------------
-// sendQueryTapeRequest
+// readMsgHeader
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::sendQueryTapeRequest(
-  const std::string &vid, const int fd, char *buf, size_t totalLen) {  
-  try {
-    io::writeBytes(fd, m_netTimeout, totalLen, buf);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to send request for tape information to the VMGR: vid=" << vid
-      << ". Reason: " << ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// receiveQueryTapeReplyHeader
-//------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::receiveQueryTapeReplyHeader(
-  const std::string &vid, const int fd, legacymsg::MessageHeader &replyHeader) {   
-  const size_t bufLen = 12; // Magic + type + len
-  size_t len = bufLen;
-  char buf[bufLen];
+castor::legacymsg::MessageHeader
+  castor::legacymsg::VmgrProxyTcpIp::readMsgHeader(const int fd) const {
+  char buf[3 * sizeof(uint32_t)]; // Magic + type + len
 
   try {
     io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to read reply header: "
+    ex.getMessage() << "Failed to read message header: "
       << ne.getMessage().str();
     throw ex;
   }
-  
+
+  MessageHeader header;
   const char *bufPtr = buf;
-  legacymsg::unmarshal(bufPtr, len, replyHeader);
-}
-
-//------------------------------------------------------------------------------
-// handleErrorReply
-//------------------------------------------------------------------------------
-castor::exception::Exception castor::legacymsg::VmgrProxyTcpIp::
-  handleErrorReply(const std::string &vid, const int fd,
-  const legacymsg::MessageHeader &replyHeader) {
-
-  // Length of body buffer = Length of message buffer - length of header
-  char bodyBuf[VMGR_REPLY_BUFSIZE - 3 * sizeof(uint32_t)];
-
-  // If the error string is larger than the receive buffer
-  if(replyHeader.lenOrStatus > sizeof(bodyBuf)) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Error string from VMGR is larger than the receive buffer: reqType=MSG_ERR: vid=" << vid 
-      << ": receive buffer size=" << sizeof(bodyBuf) << " bytes: error string size including null terminator=" << replyHeader.lenOrStatus << " bytes";
-    throw ex;
-  }
-
-  // Receive the error string
-  try {
-    io::readBytes(fd, m_netTimeout, replyHeader.lenOrStatus, bodyBuf);
-  } catch (castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to receive error string from VMGR: reqType=MSG_ERR: vid=" << vid 
-      << ". Reason: " << ne.getMessage().str();
-    throw ex;
-  }
-
-  // Ensure the error string is null terminated
-  bodyBuf[sizeof(bodyBuf)-1] = '\0';
-
-  // Convert the error string into an exception
-  castor::exception::Exception ex;
-  ex.getMessage() << "Received an error string from the VMGR: reqType=MSG_ERR: vid=" << vid 
-    << ": VMGR error string=" << bodyBuf;
-  return ex;
-}
-
-//------------------------------------------------------------------------------
-// handleDataReply
-//------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::handleDataReply(const std::string &vid, const int fd, legacymsg::MessageHeader &replyHeader, legacymsg::VmgrTapeInfoMsgBody &reply) 
-{
-  // Length of body buffer = Length of message buffer - length of header
-  char bodyBuf[VMGR_REPLY_BUFSIZE - 3 * sizeof(uint32_t)];
-
-  // If the message body is larger than the receive buffer
-  if(replyHeader.lenOrStatus > sizeof(bodyBuf)) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Message body from VMGR is larger than the receive buffer: reqType=MSG_DATA: vid=" << vid 
-      << ": receive buffer size=" << sizeof(bodyBuf) << " bytes: error string size including null terminator=" << replyHeader.lenOrStatus << " bytes";
-    throw ex;
-  }
-
-  // Receive the message body
-  try {
-    io::readBytes(fd, m_netTimeout, replyHeader.lenOrStatus, bodyBuf);
-  } catch (castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to receive message body from VMGR: reqType=MSG_DATA: vid=" << vid 
-      << ". Reason: " << ne.getMessage().str();
-    throw ex;
-  }
-
-  // Unmarshal the message body
-  try {
-    const char *bufPtr = bodyBuf;
-    size_t len = replyHeader.lenOrStatus;
-    legacymsg::unmarshal(bufPtr, len, reply);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to unmarshal message body from VMGR: reqType=MSG_DATA: vid=" << vid
-      << ". Reason: "<< ne.getMessage().str();
-    throw ex;
-  }
-
-  log::Param params[] = {log::Param("vid", vid)};
-  m_log(LOG_INFO, "Received tape information from the VMGR", params);
+  size_t bufLen = sizeof(buf);
+  unmarshal(bufPtr, bufLen, header);
+  return header;
 }
 
 //------------------------------------------------------------------------------
@@ -343,21 +207,26 @@ void castor::legacymsg::VmgrProxyTcpIp::handleDataReply(const std::string &vid, 
 castor::legacymsg::VmgrTapeInfoMsgBody
   castor::legacymsg::VmgrProxyTcpIp::queryTape(const std::string &vid) {
   try {
-    
     castor::utils::SmartFd fd(connectToVmgr());
-    
-    legacymsg::VmgrTapeInfoRqstMsgBody request;    
+
+    VmgrTapeInfoRqstMsgBody request;
     request.uid = geteuid();
     request.gid = getegid();
     castor::utils::copyString(request.vid, vid);
     request.side = 0; // HARDCODED side
 
     char buf[VMGR_REQUEST_BUFSIZE];
-    const size_t totalLen = marshalQueryTapeRequest(vid, request, buf,
-      VMGR_REQUEST_BUFSIZE);
-    sendQueryTapeRequest(vid, fd.get(), buf, totalLen);
-    legacymsg::MessageHeader replyHeader;
-    receiveQueryTapeReplyHeader(vid, fd.get(), replyHeader);
+    const size_t totalLen = marshal(buf, sizeof(buf), request);
+    io::writeBytes(fd.get(), m_netTimeout, totalLen, buf);
+
+    MessageHeader replyHeader = readMsgHeader(fd.get());
+    if(VMGR_MAGIC != replyHeader.magic) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Reply header contains invalid magic"
+        ": expected=0x" << std::hex << VMGR_MAGIC << " actual=" <<
+        replyHeader.magic;
+      throw ex;
+    }
 
     switch(replyHeader.reqType) {
 
@@ -365,30 +234,30 @@ castor::legacymsg::VmgrTapeInfoMsgBody
     case VMGR_IRC:
       {
         castor::exception::Exception ex;
-        ex.getMessage() << "VMGR unexpectedly wishes to keep the connection open: reqType=VMGR_IRC: vid=" << vid;
+        ex.getMessage() <<
+          "VMGR unexpectedly wishes to keep the connection open"
+          ": reqType=VMGR_IRC";
         throw ex;
       }
-      
+
     // The VMGR has returned an error code
     case VMGR_RC:
       {
         castor::exception::Exception ex;
-        ex.getMessage() << "Received an error code from the VMGR: reqType=VMGR_RC: vid=" << vid << ": VMGR error code=" << replyHeader.lenOrStatus;
+        ex.getMessage() << "Received an error code from the VMGR"
+          ": reqType=VMGR_RC errorCode=" << replyHeader.lenOrStatus;
         throw ex;
       }
 
     // The VMGR has returned an error string
     case MSG_ERR:
-      {
-        castor::exception::Exception ex = handleErrorReply(vid, fd.get(), replyHeader);
-        throw ex;
-      }
+      throw readErrReply(fd.get(), replyHeader);
 
     // The VMGR returned the tape information
     case MSG_DATA:
       {
-        legacymsg::VmgrTapeInfoMsgBody reply;
-        handleDataReply(vid, fd.get(), replyHeader, reply);
+        VmgrTapeInfoMsgBody reply =
+          readDataReply<VmgrTapeInfoMsgBody>(fd.get(), replyHeader);
         return reply;
       }
 
@@ -396,15 +265,133 @@ castor::legacymsg::VmgrTapeInfoMsgBody
     default:
       {
         castor::exception::Exception ex;
-        ex.getMessage() << "Received an unkown message type from the VMGR: reqType=" << replyHeader.reqType << ": vid=" << vid;
+        ex.getMessage() << "Received an unkown message type from the VMGR"
+          ": reqType=" << replyHeader.reqType;
         throw ex;
       }
-    }    
-    
+    }
+
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to query the VMGR for tape " << vid <<
-      " Reason: " << ne.getMessage().str();
+      ": " << ne.getMessage().str();
     throw ex;
   }
+}
+
+//------------------------------------------------------------------------------
+// queryPool
+//------------------------------------------------------------------------------
+castor::legacymsg::VmgrPoolInfoMsgBody
+  castor::legacymsg::VmgrProxyTcpIp::queryPool(const std::string &poolName) {
+  try {
+    castor::utils::SmartFd fd(connectToVmgr());
+
+    VmgrQryPoolMsgBody request;
+    request.uid = geteuid();
+    request.gid = getegid();
+    castor::utils::copyString(request.poolName, poolName);
+
+    char buf[VMGR_REQUEST_BUFSIZE];
+    const size_t totalLen = marshal(buf, sizeof(buf), request);
+    io::writeBytes(fd.get(), m_netTimeout, totalLen, buf);
+
+    MessageHeader replyHeader = readMsgHeader(fd.get());
+    if(VMGR_MAGIC != replyHeader.magic) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Reply header contains invalid magic"
+        ": expected=0x" << std::hex << VMGR_MAGIC << " actual=" <<
+        replyHeader.magic;
+      throw ex;
+    }
+
+    switch(replyHeader.reqType) {
+
+    // The VMGR wishes to keep the connection open - this is unexpected
+    case VMGR_IRC:
+      {
+        castor::exception::Exception ex;
+        ex.getMessage() <<
+          "VMGR unexpectedly wishes to keep the connection open"
+          ": reqType=VMGR_IRC";
+        throw ex;
+      }
+
+    // The VMGR has returned an error code
+    case VMGR_RC:
+      {
+        castor::exception::Exception ex;
+        ex.getMessage() << "Received an error code from the VMGR"
+          ": reqType=VMGR_RC errorCode=" << replyHeader.lenOrStatus;
+        throw ex;
+      }
+
+    // The VMGR has returned an error string
+    case MSG_ERR:
+      throw readErrReply(fd.get(), replyHeader);
+
+    // The VMGR returned the tape information
+    case MSG_DATA:
+      {
+        const VmgrPoolInfoMsgBody reply =
+          readDataReply<VmgrPoolInfoMsgBody>(fd.get(), replyHeader);
+        return reply;
+      }
+
+    // The VMGR returned an unknown message type
+    default:
+      {
+        castor::exception::Exception ex;
+        ex.getMessage() << "Received an unkown message type from the VMGR"
+          ": reqType=" << replyHeader.reqType;
+        throw ex;
+      }
+    }
+
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to query the VMGR for pool " << poolName <<
+      ": " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// readErrReply
+//------------------------------------------------------------------------------
+castor::exception::Exception castor::legacymsg::VmgrProxyTcpIp::readErrReply(
+  const int fd, const MessageHeader &replyHeader) const {
+
+  // Length of body buffer = Length of message buffer - length of header
+  char bodyBuf[VMGR_REPLY_BUFSIZE - 3 * sizeof(uint32_t)];
+
+  // If the error string is larger than the receive buffer
+  if(replyHeader.lenOrStatus > sizeof(bodyBuf)) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Error string from VMGR is larger than the receive buffer"
+      ": reqType=MSG_ERR receiveBufferSize=" << sizeof(bodyBuf) << " bytes"
+      " errorStringSizeIncludingNullTerminator=" << replyHeader.lenOrStatus <<
+      " bytes";
+    throw ex;
+  }
+
+  // Receive the error string
+  try {
+    io::readBytes(fd, m_netTimeout, replyHeader.lenOrStatus, bodyBuf);
+  } catch (castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to receive error string from VMGR"
+     ": reqType=MSG_ERR :" << ne.getMessage().str();
+    throw ex;
+  }
+
+  // Ensure the error string is null terminated
+  bodyBuf[sizeof(bodyBuf)-1] = '\0';
+
+  // Convert the error string into an exception
+  castor::exception::Exception ex;
+  ex.getMessage() << "Received an error string from the VMGR"
+    ": reqType=MSG_ERR: " << bodyBuf;
+  return ex;
 }

@@ -125,7 +125,7 @@ static int exceptionThrowingMain(const int argc, char **const argv,
   // Create proxy objects for the vdqm, vmgr and rmc daemons
   const int netTimeout = 10; // Timeout in seconds
   legacymsg::VdqmProxyTcpIp vdqm(log, vdqmHost, VDQM_PORT, netTimeout);
-  legacymsg::VmgrProxyTcpIp vmgr(log, vmgrHost, VMGR_PORT, netTimeout);
+  legacymsg::VmgrProxyTcpIp vmgr(vmgrHost, VMGR_PORT, netTimeout);
 
   tape::reactor::ZMQReactor reactor(log);
 

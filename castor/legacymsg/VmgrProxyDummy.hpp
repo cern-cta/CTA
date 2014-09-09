@@ -57,11 +57,19 @@ public:
 
   /**
    * Gets information from vmgrd about the specified tape
-   * 
+   *
    * @param vid The volume identifier of the tape.
    * @return The reply from the vmgrd daemon.
    */
   legacymsg::VmgrTapeInfoMsgBody queryTape(const std::string &vid);
+
+  /**
+   * Gets information from the vmgrd daemon about the specified tape pool.
+   *
+   * @param poolName The name of teh tape pool.
+   * @return The reply from the vmgrd daemon.
+   */
+  legacymsg::VmgrPoolInfoMsgBody queryPool(const std::string &poolName);
 
 }; // class VmgrProxyDummy
 

@@ -42,10 +42,19 @@ void castor::legacymsg::VmgrProxyDummy::tapeMountedForWrite(
 }
 
 //------------------------------------------------------------------------------
-// getTapeInfo
+// queryPool
 //------------------------------------------------------------------------------
 castor::legacymsg::VmgrTapeInfoMsgBody
   castor::legacymsg::VmgrProxyDummy::queryTape(const std::string &vid) {
   legacymsg::VmgrTapeInfoMsgBody reply;
+  return reply;
+}
+
+//------------------------------------------------------------------------------
+// queryPool
+//------------------------------------------------------------------------------
+castor::legacymsg::VmgrPoolInfoMsgBody
+  castor::legacymsg::VmgrProxyDummy::queryPool(const std::string &vid) {
+  legacymsg::VmgrPoolInfoMsgBody reply;
   return reply;
 }

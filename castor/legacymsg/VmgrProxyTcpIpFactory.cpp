@@ -46,5 +46,5 @@ castor::legacymsg::VmgrProxyTcpIpFactory::~VmgrProxyTcpIpFactory() throw() {
 // create
 //------------------------------------------------------------------------------
 castor::legacymsg::VmgrProxy *castor::legacymsg::VmgrProxyTcpIpFactory::create() {
-  return new VmgrProxyTcpIp(m_log, m_vmgrHostName, m_vmgrPort, m_netTimeout);
+  return new VmgrProxyTcpIp(m_vmgrHostName, m_vmgrPort, m_netTimeout);
 }

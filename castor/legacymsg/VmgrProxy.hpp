@@ -23,6 +23,7 @@
 
 
 #include "castor/exception/Exception.hpp"
+#include "castor/legacymsg/VmgrPoolInfoMsgBody.hpp"
 #include "castor/legacymsg/VmgrTapeInfoMsgBody.hpp"
 
 #include <string>
@@ -58,17 +59,25 @@ public:
    */
   virtual void tapeMountedForWrite(const std::string &vid, const uint32_t jid)
     = 0;
-  
+
   /**
-   * Gets information from vmgrd about the specified tape
-   * 
+   * Gets information from the vmgrd daemon about the specified tape.
+   *
    * @param vid The volume identifier of the tape.
    * @return The reply from the vmgrd daemon.
    */
   virtual legacymsg::VmgrTapeInfoMsgBody queryTape(const std::string &vid) = 0;
 
+  /**
+   * Gets information from the vmgrd daemon about the specified tape pool.
+   *
+   * @param poolName The name of teh tape pool.
+   * @return The reply from the vmgrd daemon.
+   */
+  virtual legacymsg::VmgrPoolInfoMsgBody queryPool(
+    const std::string &poolName) = 0;
+
 }; // class VmgrProxy
 
 } // namespace legacymsg
 } // namespace castor
-
