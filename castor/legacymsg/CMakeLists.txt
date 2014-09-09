@@ -71,10 +71,12 @@ set (CASTOR_LEGACYMSG_LIB_SRC_FILES
   VdqmProxyFactory.cpp
   VdqmProxyTcpIp.cpp
   VdqmProxyTcpIpFactory.cpp
+  VmgrPoolInfoMsgBody.cpp
   VmgrProxy.cpp
   VmgrProxyFactory.cpp
   VmgrProxyTcpIp.cpp
   VmgrProxyTcpIpFactory.cpp
+  VmgrQryPoolMsgBody.cpp
   VmgrMarshal.cpp
   VmgrTapeInfoMsgBody.cpp
   VmgrTapeInfoRqstMsgBody.cpp

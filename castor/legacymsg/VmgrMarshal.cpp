@@ -47,7 +47,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
   }
 
   // Calculate the length of the message body
-  const uint32_t len =
+  const uint32_t bodyLen =
     sizeof(uint32_t)   + // uid
     sizeof(uint32_t)   + // gid
     strlen(src.vid)    + // vid
@@ -56,7 +56,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Calculate the total length of the message (header + body)
   // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
-  const size_t totalLen = 3 * sizeof(uint32_t) + len;
+  const size_t totalLen = 3 * sizeof(uint32_t) + bodyLen;
 
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
@@ -70,10 +70,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
   char *p = dst;
   io::marshalUint32(VMGR_MAGIC2 , p); // Magic number
   io::marshalUint32(VMGR_QRYTAPE, p); // Request type
-  // Marshall the total length of the message.  Please note that this is
-  // different from the RTCOPY legacy protocol which marshalls the length
-  // of the message body.
-  io::marshalUint32(totalLen    , p); // Total length (UNLIKE RTCPD)
+  io::marshalUint32(totalLen    , p);
   io::marshalUint32(src.uid     , p);
   io::marshalUint32(src.gid     , p);
   io::marshalString(src.vid     , p);
@@ -108,7 +105,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
   }
 
   // Calculate the length of the message body
-  const uint32_t len =
+  const uint32_t bodyLen =
     sizeof(uint32_t)   + // uid
     sizeof(uint32_t)   + // gid
     strlen(src.vid)    + // vid
@@ -118,7 +115,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Calculate the total length of the message (header + body)
   // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
-  const size_t totalLen = 3 * sizeof(uint32_t) + len;
+  const size_t totalLen = 3 * sizeof(uint32_t) + bodyLen;
 
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
@@ -130,17 +127,14 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Marshall the whole message (header + body)
   char *p = dst;
-  io::marshalUint32(VMGR_MAGIC2 , p); // Magic number
+  io::marshalUint32(VMGR_MAGIC2   , p); // Magic number
   io::marshalUint32(VMGR_TPMOUNTED, p); // Request type
-  // Marshall the total length of the message.  Please note that this is
-  // different from the RTCOPY legacy protocol which marshals the length
-  // of the message body.
-  io::marshalUint32(totalLen    , p); // Total length (UNLIKE RTCPD)
-  io::marshalUint32(src.uid     , p);
-  io::marshalUint32(src.gid     , p);
-  io::marshalString(src.vid     , p);
-  io::marshalUint16(src.mode    , p);
-  io::marshalUint32(src.jid     , p);
+  io::marshalUint32(totalLen      , p);
+  io::marshalUint32(src.uid       , p);
+  io::marshalUint32(src.gid       , p);
+  io::marshalString(src.vid       , p);
+  io::marshalUint16(src.mode      , p);
+  io::marshalUint32(src.jid       , p);
 
   // Calculate the number of bytes actually marshaled
   const size_t nbBytesMarshaled = p - dst;
@@ -158,11 +152,122 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 }
 
 //-----------------------------------------------------------------------------
+// marshal
+//-----------------------------------------------------------------------------
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
+  const VmgrQryPoolMsgBody &src)  {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to marshal VmgrQryPoolMsgBody"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  // Calculate the length of the message body
+  const uint32_t bodyLen =
+    sizeof(src.uid) +
+    sizeof(src.gid) +
+    strlen(src.poolName) + 1;
+
+  // Calculate the total length of the message (header + body)
+  // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
+  const size_t totalLen = 3 * sizeof(uint32_t) + bodyLen;
+
+  // Check that the message buffer is big enough
+  if(totalLen > dstLen) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to marshal VmgrQryPoolMsgBody"
+      ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
+    throw ex;
+  }
+
+  // Marshall the whole message (header + body)
+  char *p = dst;
+  io::marshalUint32(VMGR_MAGIC  , p); // Magic number
+  io::marshalUint32(VMGR_QRYPOOL, p); // Request type
+  io::marshalUint32(totalLen    , p);
+  io::marshalUint32(src.uid     , p);
+  io::marshalUint32(src.gid     , p);
+  io::marshalString(src.poolName, p);
+
+  // Calculate the number of bytes actually marshaled
+  const size_t nbBytesMarshaled = p - dst;
+
+  // Check that the number of bytes marshaled was what was expected
+  if(totalLen != nbBytesMarshaled) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to marshal VmgrQryPoolMsgBody"
+      ": Mismatch between expected total length and actual"
+      ": expected=" << totalLen << " actual=" << nbBytesMarshaled;
+    throw ex;
+  }
+
+  return totalLen;
+}
+
+//-----------------------------------------------------------------------------
+// marshal
+//-----------------------------------------------------------------------------
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
+  const VmgrPoolInfoMsgBody &src)  {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to marshal VmgrPoolInfoMsgBody"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  // Calculate the length of the message body
+  const uint32_t bodyLen =
+    sizeof(src.poolUid) +
+    sizeof(src.poolGid) +
+    sizeof(src.capacityBytes) +
+    sizeof(src.freeSpaceBytes);
+
+  // Calculate the total length of the message (header + body)
+  // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
+  const size_t totalLen = 3 * sizeof(uint32_t) + bodyLen;
+
+  // Check that the message buffer is big enough
+  if(totalLen > dstLen) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to marshal VmgrPoolInfoMsgBody"
+      ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
+    throw ex;
+  }
+
+  // Marshall the whole message (header + body)
+  char *p = dst;
+  io::marshalUint32(VMGR_MAGIC        , p); // Magic number
+  io::marshalUint32(MSG_DATA          , p); // Request type
+  io::marshalUint32(totalLen          , p);
+  io::marshalUint32(src.poolUid       , p);
+  io::marshalUint32(src.poolGid       , p);
+  io::marshalUint64(src.capacityBytes , p);
+  io::marshalUint64(src.freeSpaceBytes, p);
+
+  // Calculate the number of bytes actually marshaled
+  const size_t nbBytesMarshaled = p - dst;
+
+  // Check that the number of bytes marshaled was what was expected
+  if(totalLen != nbBytesMarshaled) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to marshal VmgrPoolInfoMsgBody"
+      ": Mismatch between expected total length and actual"
+      ": expected=" << totalLen << " actual=" << nbBytesMarshaled;
+    throw ex;
+  }
+
+  return totalLen;
+}
+
+//-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src,
-  size_t &srcLen, VmgrTapeMountedMsgBody &dst)
-   {
+  size_t &srcLen, VmgrTapeMountedMsgBody &dst) {
   io::unmarshalUint32(src, srcLen, dst.uid);
   io::unmarshalUint32(src, srcLen, dst.gid);
   io::unmarshalString(src, srcLen, dst.vid);
@@ -174,8 +279,7 @@ void castor::legacymsg::unmarshal(const char * &src,
 // unmarshal
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src,
-  size_t &srcLen, VmgrTapeInfoRqstMsgBody &dst)
-   {
+  size_t &srcLen, VmgrTapeInfoRqstMsgBody &dst) {
   io::unmarshalUint32(src, srcLen, dst.uid);
   io::unmarshalUint32(src, srcLen, dst.gid);
   io::unmarshalString(src, srcLen, dst.vid);
@@ -186,9 +290,7 @@ void castor::legacymsg::unmarshal(const char * &src,
 // unmarshal
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src,
-  size_t &srcLen, VmgrTapeInfoMsgBody &dst)
-   {
-
+  size_t &srcLen, VmgrTapeInfoMsgBody &dst) {
   io::unmarshalString(src, srcLen, dst.vsn               );
   io::unmarshalString(src, srcLen, dst.library           );
   io::unmarshalString(src, srcLen, dst.dgn               );
@@ -213,4 +315,25 @@ void castor::legacymsg::unmarshal(const char * &src,
   io::unmarshalUint64(src, srcLen, dst.rTime             );
   io::unmarshalUint64(src, srcLen, dst.wTime             );
   io::unmarshalUint32(src, srcLen, dst.status            );
+}
+
+//-----------------------------------------------------------------------------
+// unmarshal
+//-----------------------------------------------------------------------------
+void castor::legacymsg::unmarshal(const char * &src,
+  size_t &srcLen, VmgrQryPoolMsgBody &dst) {
+  io::unmarshalUint32(src, srcLen, dst.uid);
+  io::unmarshalUint32(src, srcLen, dst.gid);
+  io::unmarshalString(src, srcLen, dst.poolName);
+}
+
+//-----------------------------------------------------------------------------
+// unmarshal
+//-----------------------------------------------------------------------------
+void castor::legacymsg::unmarshal(const char * &src,
+  size_t &srcLen, VmgrPoolInfoMsgBody &dst) {
+  io::unmarshalUint32(src, srcLen, dst.poolUid);
+  io::unmarshalUint32(src, srcLen, dst.poolGid);
+  io::unmarshalUint64(src, srcLen, dst.capacityBytes);
+  io::unmarshalUint64(src, srcLen, dst.freeSpaceBytes);
 }

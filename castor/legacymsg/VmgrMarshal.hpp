@@ -26,6 +26,8 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
+#include "castor/legacymsg/VmgrPoolInfoMsgBody.hpp"
+#include "castor/legacymsg/VmgrQryPoolMsgBody.hpp"
 #include "castor/legacymsg/VmgrTapeInfoMsgBody.hpp"
 #include "castor/legacymsg/VmgrTapeInfoRqstMsgBody.hpp"
 #include "castor/legacymsg/VmgrTapeMountedMsgBody.hpp"
@@ -33,7 +35,6 @@
 #include <errno.h>
 #include <stdint.h>
 #include <string>
-
 
 namespace castor    {
 namespace legacymsg {
@@ -89,6 +90,56 @@ template<int n> size_t marshal(char (&dst)[n],
 }
 
 /**
+ * Marshalls the specified source message body structure into the
+ * specified destination buffer.
+ *
+ * @param dst    The destination message buffer.
+ * @param dstLen The length of the destination buffer.
+ * @param src    The source structure.
+ * @return       The total length of the message (header + body).
+ */
+size_t marshal(char *const dst, const size_t dstLen,
+  const VmgrQryPoolMsgBody &src) ;
+
+/**
+ * Marshalls the specified source message body structure into the
+ * specified destination buffer.
+ *
+ * @param dst The destination message buffer.
+ * @param src The source structure.
+ * @return    The total length of the message (header + body).
+ */
+template<int n> size_t marshal(char (&dst)[n],
+  const VmgrQryPoolMsgBody &src)  {
+  return marshal(dst, n, src);
+}
+
+/**
+ * Marshalls the specified source message body structure into the
+ * specified destination buffer.
+ *
+ * @param dst    The destination message buffer.
+ * @param dstLen The length of the destination buffer.
+ * @param src    The source structure.
+ * @return       The total length of the message (header + body).
+ */
+size_t marshal(char *const dst, const size_t dstLen,
+  const VmgrPoolInfoMsgBody &src) ;
+
+/**
+ * Marshalls the specified source message body structure into the
+ * specified destination buffer.
+ *
+ * @param dst The destination message buffer.
+ * @param src The source structure.
+ * @return    The total length of the message (header + body).
+ */
+template<int n> size_t marshal(char (&dst)[n],
+  const VmgrPoolInfoMsgBody &src)  {
+  return marshal(dst, n, src);
+}
+
+/**
  * Unmarshals a message body with the specified destination structure type
  * from the specified source buffer.
  *
@@ -136,7 +187,37 @@ void unmarshal(const char * &src, size_t &srcLen,
 void unmarshal(const char * &src, size_t &srcLen,
   VmgrTapeInfoMsgBody &dst) ;
 
+/**
+ * Unmarshals a message body with the specified destination structure type
+ * from the specified source buffer.
+ *
+ * @param src In/out parameter, before invocation points to the source
+ * buffer where the message body should be unmarshalled from and on return
+ * points to the byte in the source buffer immediately after the
+ * unmarshalled message body.
+ * @param srcLen In/our parameter, before invocation is the length of the
+ * source buffer from where the message body should be unmarshalled and on
+ * return is the number of bytes remaining in the source buffer.
+ * @param dst The destination message body structure.
+ */
+void unmarshal(const char * &src, size_t &srcLen,
+  VmgrQryPoolMsgBody &dst) ;
+
+/**
+ * Unmarshals a message body with the specified destination structure type
+ * from the specified source buffer.
+ *
+ * @param src In/out parameter, before invocation points to the source
+ * buffer where the message body should be unmarshalled from and on return
+ * points to the byte in the source buffer immediately after the
+ * unmarshalled message body.
+ * @param srcLen In/our parameter, before invocation is the length of the
+ * source buffer from where the message body should be unmarshalled and on
+ * return is the number of bytes remaining in the source buffer.
+ * @param dst The destination message body structure.
+ */
+void unmarshal(const char * &src, size_t &srcLen,
+  VmgrPoolInfoMsgBody &dst) ;
+
 } // namespace legacymsg
 } // namespace castor
-
-
