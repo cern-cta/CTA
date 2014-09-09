@@ -122,8 +122,7 @@ drives::deviceInfo drives::DriveGeneric::getDeviceInfo()  {
   castor::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
       "Failed SG_IO ioctl in DriveGeneric::getDeviceInfo");
-  SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getDeviceInfo: ") +
-      SCSI::statusToString(sgh.status));
+  SCSI::ExceptionLauncher(sgh, "SCSI error in getDeviceInfo:");
 
   devInfo.product = SCSI::Structures::toString(inquiryData.prodId);
   devInfo.productRevisionLevel = SCSI::Structures::toString(inquiryData.prodRevLvl);
@@ -156,8 +155,7 @@ std::string drives::DriveGeneric::getSerialNumber()  {
   castor::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
       "Failed SG_IO ioctl in DriveGeneric::getSerialNumber");
-  SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getSerialNumber: ") +
-      SCSI::statusToString(sgh.status));
+  SCSI::ExceptionLauncher(sgh, "SCSI error in getSerialNumber:");
   std::string serialNumber;
   serialNumber.append(inquirySerialData.productSerialNumber, inquirySerialData.pageLength);
 
@@ -219,8 +217,7 @@ drives::positionInfo drives::DriveGeneric::getPositionInfo()
   castor::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
       "Failed SG_IO ioctl in DriveGeneric::getPositionInfo");
-  SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getPositionInfo: ") +
-      SCSI::statusToString(sgh.status));
+  SCSI::ExceptionLauncher(sgh, "SCSI error in getPositionInfo:");
 
   if (0 == positionData.PERR) { // Location fields are valid
     posInfo.currentPosition = SCSI::Structures::toU32(positionData.firstBlockLocation);
@@ -267,8 +264,7 @@ std::vector<std::string> drives::DriveGeneric::getTapeAlerts()  {
   castor::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
       "Failed SG_IO ioctl in DriveGeneric::getTapeAlerts");
-  SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getTapeAlerts: ") +
-      SCSI::statusToString(sgh.status));
+  SCSI::ExceptionLauncher(sgh, "SCSI error in getTapeAlerts:");
   /* Return the ACTIVE tape alerts (this is indicated by "flag" (see 
    * SSC-4: 8.2.3 TapeAlert log page). As they are simply used for logging;
    * return strings. */
@@ -314,9 +310,7 @@ void drives::DriveGeneric::setDensityAndCompression(bool compression,
     castor::exception::Errnum::throwOnMinusOne(
         m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
         "Failed SG_IO ioctl in DriveGeneric::setDensityAndCompression");
-    SCSI::ExceptionLauncher(sgh,
-        std::string("SCSI error in setDensityAndCompression: ") +
-        SCSI::statusToString(sgh.status));
+    SCSI::ExceptionLauncher(sgh, "SCSI error in setDensityAndCompression:");
   }
 
   { // set parameters and we use filled structure devConfig from the previous SCSI call
@@ -341,9 +335,7 @@ void drives::DriveGeneric::setDensityAndCompression(bool compression,
     castor::exception::Errnum::throwOnMinusOne(
         m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
         "Failed SG_IO ioctl in DriveGeneric::setDensityAndCompression");
-    SCSI::ExceptionLauncher(sgh,
-        std::string("SCSI error in setDensityAndCompression: ") +
-        SCSI::statusToString(sgh.status));
+    SCSI::ExceptionLauncher(sgh, "SCSI error in setDensityAndCompression:");
   }
 }
 
@@ -661,8 +653,7 @@ drives::compressionStats drives::DriveT10000::getCompression()  {
   castor::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
       "Failed SG_IO ioctl in DriveT10000::getCompression");
-  SCSI::ExceptionLauncher(sgh, std::string("SCSI error in DriveT10000::getCompression: ") +
-      SCSI::statusToString(sgh.status));
+  SCSI::ExceptionLauncher(sgh, "SCSI error in DriveT10000::getCompression:");
 
   SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
       *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
@@ -717,8 +708,7 @@ drives::compressionStats drives::DriveLTO::getCompression()  {
   castor::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
       "Failed SG_IO ioctl in DriveLTO::getCompression");
-  SCSI::ExceptionLauncher(sgh, std::string("SCSI error in DriveLTO::getCompression: ") +
-      SCSI::statusToString(sgh.status));
+  SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getCompression:");
 
   SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
       *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
@@ -792,8 +782,7 @@ drives::compressionStats drives::DriveIBM3592::getCompression()  {
   castor::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
       "Failed SG_IO ioctl in DriveIBM3592::getCompression");
-  SCSI::ExceptionLauncher(sgh, std::string("SCSI error in DriveIBM3592::getCompression: ") +
-      SCSI::statusToString(sgh.status));
+  SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::getCompression:");
 
   SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
       *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
