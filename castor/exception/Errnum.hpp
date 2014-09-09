@@ -33,8 +33,8 @@ namespace exception {
     Errnum(std::string what = "");
 	  Errnum (int err, std::string what = "");
     virtual ~Errnum() throw() {};
-    int ErrorNumber() { return m_errnum; }
-    std::string strError() { return m_strerror; }
+    int errorNumber() const { return m_errnum; }
+    std::string strError() const { return m_strerror; }
     static void throwOnReturnedErrno(int err, std::string context = "");
     static void throwOnNonZero(int status, std::string context = "");
     static void throwOnZero(int status, std::string context = "");
@@ -42,7 +42,7 @@ namespace exception {
     static void throwOnNegative(int ret, std::string context = "");
     static void throwOnMinusOne(int ret, std::string context = "");
   protected:
-	  void ErrnumConstructorBottomHalf(const std::string & what);
+    void ErrnumConstructorBottomHalf(const std::string & what);
     int m_errnum;
     std::string m_strerror;
   };
