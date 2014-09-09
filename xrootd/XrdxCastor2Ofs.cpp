@@ -410,58 +410,14 @@ XrdxCastor2Ofs::rem( const char*         path,
 // Stat
 //------------------------------------------------------------------------------
 int
-XrdxCastor2Ofs::stat( const char*         Name,
+XrdxCastor2Ofs::stat( const char*         path,
                       struct stat*        buf,
-                      XrdOucErrInfo&      /*out_error*/,
-                      const XrdSecEntity* /*client*/,
-                      const char*         /*opaque*/ )
+                      XrdOucErrInfo&      einfo,
+                      const XrdSecEntity* client,
+                      const char*         opaque)
 {
-  int fd = ::open( "/etc/castor/status", O_RDONLY );
-
-  if ( fd ) {
-    char buffer[4096];
-    int nread = ::read( fd, buffer, 4095 );
-
-    if ( nread > 0 ) {
-      buffer[nread] = 0;
-      XrdOucString status = buffer;
-
-      if ( ( status.find( "DiskServerStatus=DISKSERVER_PRODUCTION" ) ) == STR_NPOS ) {
-        close( fd );
-        return SFS_ERROR;
-      }
-
-      int fpos = 1;
-      XrdOucString name = Name;
-
-      while ( ( fpos = name.find( "/", fpos ) ) != STR_NPOS ) {
-        XrdOucString fsprod;
-        fsprod.assign( name, 0, fpos - 1 );
-        XrdOucString tag1 = fsprod;
-        tag1 += "=FILESYSTEM_PRODUCTION";
-        XrdOucString tag2 = fsprod;
-        tag2 += "/";
-        tag2 += "=FILESYSTEM_PRODUCTION";
-
-        if ( ( status.find( tag1 ) != STR_NPOS ) || ( status.find( tag2 ) != STR_NPOS ) ) {
-          // yes in production
-          break;
-        }
-
-        fpos++;
-      }
-
-      if ( fpos == STR_NPOS ) {
-        close( fd );
-        return SFS_ERROR;
-      }
-    }
-
-    close( fd );
-  }
-
-  if ( !::stat( Name, buf ) ) return SFS_OK;
-  else return SFS_ERROR;
+  xcastor_debug("path=%s, opaque=%s", path, opaque);
+  return XrdOfs::stat(path, buf, einfo, client, opaque);
 }
 
 

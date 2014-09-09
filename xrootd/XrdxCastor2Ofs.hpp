@@ -437,9 +437,9 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
     //--------------------------------------------------------------------------
     //! This function we needs to work without authorization
     //--------------------------------------------------------------------------
-    int stat( const char*         Name,
+    int stat( const char*         path,
               struct stat*        buf,
-              XrdOucErrInfo&      out_error,
+              XrdOucErrInfo&      einfo,
               const XrdSecEntity* client,
               const char*         opaque = 0 );
 
