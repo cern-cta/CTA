@@ -218,7 +218,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
           .add("ErrorMesage", e.getMessageValue());
     logWithStats(LOG_ERR, "Tape thread complete",
             params,totalTimer.secs());
-    m_reportPacker.reportEndOfSessionWithErrors(e.what(),e.code());
+    m_reportPacker.reportEndOfSessionWithErrors(e.getMessageValue(),e.code());
   }    
 }
 

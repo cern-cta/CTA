@@ -30,6 +30,7 @@
 #include "castor/tape/tapeserver/file/File.hpp" 
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Errnum.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
@@ -64,6 +65,15 @@ namespace daemon {
            utils::Timer & timer) {
     using castor::log::LogContext;
     using castor::log::Param;
+    using castor::log::ScopedParamContainer;
+    // Add to our logs the informations on the file
+    ScopedParamContainer params(lc);
+    params.add("NSFILEID",m_fileToMigrate->fileid())
+          .add("lastKnownFileName",m_fileToMigrate->lastKnownFilename())
+          .add("fileSize",m_fileToMigrate->fileSize())
+          .add("fileTransactionId",m_fileToMigrate->fileTransactionId())
+          .add("FSEQ",m_fileToMigrate->fseq())
+          .add("path",m_fileToMigrate->path());
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
@@ -129,11 +139,22 @@ namespace daemon {
       m_errorFlag.set();
 
       //log and circulate blocks
-      LogContext::ScopedParam sp(lc, Param("exceptionCode",e.code()));
+      //We want to report internal error most of the time to avoid wrong
+      // interpretation down the chain. Nevertheless, if the exception
+      // if of type Errnum AND the errorCode is ENOSPC, we will propagate it.
+      // This is how we communicate the fact that a tape is full to the client.
+      int errorCode = e.code();
+      try {
+        const castor::exception::Errnum & errnum = 
+            dynamic_cast<const castor::exception::Errnum &> (e);
+        if (ENOSPC == errnum.errorNumber())
+          errorCode = ENOSPC;
+      } catch (...) {}
+      LogContext::ScopedParam sp(lc, Param("exceptionCode",errorCode));
       LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
       lc.log(LOG_ERR,"An error occurred for this file. End of migrations.");
       circulateMemBlocks();
-      reportPacker.reportFailedJob(*m_fileToMigrate,e.getMessageValue(),e.code());
+      reportPacker.reportFailedJob(*m_fileToMigrate,e.getMessageValue(),errorCode);
   
       //we throw again because we want TWST to stop all tasks from execution 
       //and go into a degraded mode operation.

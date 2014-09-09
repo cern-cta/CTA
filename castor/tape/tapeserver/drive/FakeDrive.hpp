@@ -34,12 +34,18 @@ namespace drives {
   */
   class FakeDrive : public DriveInterface {
   private:
-    std::vector<std::string> m_tape;
-    uint32_t m_current_position;
+    struct tapeBlock {
+      std::string data;
+      uint64_t remainingSpaceAfter;
+    };
+    std::vector<tapeBlock> m_tape;
+    uint32_t m_currentPosition;
+    uint64_t m_tapeCapacity;
     int beginOfCompressStats;
+    uint64_t getRemaingSpace(uint32_t currentPosition);
   public:
     std::string contentToString() throw();
-    FakeDrive() throw();
+    FakeDrive(uint64_t capacity=std::numeric_limits<uint64_t>::max()) throw();
     virtual ~FakeDrive() throw(){}
     virtual compressionStats getCompression() ;
     virtual void clearCompressionStats() ;

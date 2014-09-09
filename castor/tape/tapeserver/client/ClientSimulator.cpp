@@ -226,12 +226,17 @@ bool ClientSimulator::processOneRequest()
     reply.setMountTransactionId(m_volReqId);
     reply.setAggregatorTransactionId(req.aggregatorTransactionId());
     clientConnection->sendObject(reply);
-    req.successfulMigrations();
     // We will now record the fseqs and checksums reported:
     for(std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator i =
         req.successfulMigrations().begin(); i!=req.successfulMigrations().end();
         i++) {
       m_receivedChecksums[(*i)->fseq()] = (*i)->checksum();
+    }
+    // We also record the error codes the the failed migrations
+    for(std::vector<tapegateway::FileErrorReportStruct*>::iterator i =
+        req.failedMigrations().begin(); i!=req.failedMigrations().end();
+        i++) {
+      m_receivedErrorCodes[(*i)->fseq()] = (*i)->errorCode();
     }
     return true; // The end of session is not signalled here
   } catch (std::bad_cast&) {}

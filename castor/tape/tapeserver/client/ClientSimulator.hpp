@@ -86,6 +86,11 @@ namespace client {
      * stored.
      */
     std::map<uint64_t, uint64_t> m_receivedChecksums;
+    /**
+     * Container where the error codes pairs (fseq, errorCode) are 
+     * stored.
+     */
+    std::map<uint64_t, uint64_t> m_receivedErrorCodes;
   protected:
     // Place holders for pure virtual members of TpcpCommand we don't
     // use in the simulator
