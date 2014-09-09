@@ -33,7 +33,7 @@ drives::DriveInterface * drives::DriveFactory(SCSI::DeviceInfo di,
     System::virtualWrapper& sw) {
   if (std::string::npos != di.product.find("T10000")) {
     return new DriveT10000(di, sw);
-  } else if (std::string::npos != di.product.find("ULT" || std::string::npos != di.product.find("Ultrium"))) {
+  } else if (std::string::npos != di.product.find("ULT") || std::string::npos != di.product.find("Ultrium")) {
     return new DriveLTO(di, sw);
   } else if (std::string::npos != di.product.find("03592")) {
     return new DriveIBM3592(di, sw);
