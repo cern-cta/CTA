@@ -677,16 +677,16 @@ drives::compressionStats drives::DriveT10000::getCompression()  {
         *(SCSI::Structures::logSenseParameter_t *) logParameter;
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
       case SCSI::sequentialAccessDevicePage::receivedFromInitiator:
-        driveCompressionStats.fromHost = SCSI::Structures::toU64(reinterpret_cast<unsigned char(&)[8]> (logPageParam.parameterValue));
+        driveCompressionStats.fromHost = logPageParam.getU64Value();
         break;
       case SCSI::sequentialAccessDevicePage::writtenOnTape:
-        driveCompressionStats.toTape = SCSI::Structures::toU64(reinterpret_cast<unsigned char(&)[8]> (logPageParam.parameterValue));
+        driveCompressionStats.toTape = logPageParam.getU64Value();
         break;
       case SCSI::sequentialAccessDevicePage::readFromTape:
-        driveCompressionStats.fromTape = SCSI::Structures::toU64(reinterpret_cast<unsigned char(&)[8]> (logPageParam.parameterValue));
+        driveCompressionStats.fromTape = logPageParam.getU64Value();
         break;
       case SCSI::sequentialAccessDevicePage::readByInitiator:
-        driveCompressionStats.toHost = SCSI::Structures::toU64(reinterpret_cast<unsigned char(&)[8]> (logPageParam.parameterValue));
+        driveCompressionStats.toHost = logPageParam.getU64Value();
         break;
     }
     logParameter += logPageParam.header.parameterLength + sizeof (logPageParam.header);
@@ -736,31 +736,31 @@ drives::compressionStats drives::DriveLTO::getCompression()  {
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
         // fromHost
       case SCSI::dataCompression32h::mbTransferredFromServer:
-        driveCompressionStats.fromHost = SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]> (logPageParam.parameterValue)) * mb;
+        driveCompressionStats.fromHost = logPageParam.getU64Value() * mb;
         break;
       case SCSI::dataCompression32h::bytesTransferredFromServer:
-        driveCompressionStats.fromHost += SCSI::Structures::toS32(reinterpret_cast<unsigned char(&)[4]> (logPageParam.parameterValue));
+        driveCompressionStats.fromHost += logPageParam.getS64Value();
         break;
         // toTape  
       case SCSI::dataCompression32h::mbWrittenToTape:
-        driveCompressionStats.toTape = SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]> (logPageParam.parameterValue)) * mb;
+        driveCompressionStats.toTape = logPageParam.getU64Value() * mb;
         break;
       case SCSI::dataCompression32h::bytesWrittenToTape:
-        driveCompressionStats.toTape += SCSI::Structures::toS32(reinterpret_cast<unsigned char(&)[4]> (logPageParam.parameterValue));
+        driveCompressionStats.toTape += logPageParam.getS64Value();
         break;
         // fromTape     
       case SCSI::dataCompression32h::mbReadFromTape:
-        driveCompressionStats.fromTape = SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]> (logPageParam.parameterValue)) * mb;
+        driveCompressionStats.fromTape = logPageParam.getU64Value() * mb;
         break;
       case SCSI::dataCompression32h::bytesReadFromTape:
-        driveCompressionStats.fromTape += SCSI::Structures::toS32(reinterpret_cast<unsigned char(&)[4]> (logPageParam.parameterValue));
+        driveCompressionStats.fromTape += logPageParam.getS64Value();
         break;
         // toHost            
       case SCSI::dataCompression32h::mbTransferredToServer:
-        driveCompressionStats.toHost = SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]> (logPageParam.parameterValue)) * mb;
+        driveCompressionStats.toHost = logPageParam.getU64Value() * mb;
         break;
       case SCSI::dataCompression32h::bytesTransferredToServer:
-        driveCompressionStats.toHost += SCSI::Structures::toS32(reinterpret_cast<unsigned char(&)[4]> (logPageParam.parameterValue));
+        driveCompressionStats.toHost += logPageParam.getS64Value();
         break;
     }
     logParameter += logPageParam.header.parameterLength + sizeof (logPageParam.header);
@@ -808,16 +808,16 @@ drives::compressionStats drives::DriveIBM3592::getCompression()  {
         *(SCSI::Structures::logSenseParameter_t *) logParameter;
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
       case SCSI::blockBytesTransferred::hostWriteKiBProcessed:
-        driveCompressionStats.fromHost = (uint64_t) SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]> (logPageParam.parameterValue)) << 10;
+        driveCompressionStats.fromHost = logPageParam.getU64Value() << 10;
         break;
       case SCSI::blockBytesTransferred::deviceWriteKiBProcessed:
-        driveCompressionStats.toTape = (uint64_t) SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]> (logPageParam.parameterValue)) << 10;
+        driveCompressionStats.toTape = logPageParam.getU64Value() << 10;
         break;
       case SCSI::blockBytesTransferred::deviceReadKiBProcessed:
-        driveCompressionStats.fromTape = (uint64_t) SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]> (logPageParam.parameterValue)) << 10;
+        driveCompressionStats.fromTape = logPageParam.getU64Value() << 10;
         break;
       case SCSI::blockBytesTransferred::hostReadKiBProcessed:
-        driveCompressionStats.toHost = (uint64_t) SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]> (logPageParam.parameterValue)) << 10;
+        driveCompressionStats.toHost = logPageParam.getU64Value() << 10;
         break;
     }
     logParameter += logPageParam.header.parameterLength + sizeof (logPageParam.header);
@@ -827,3 +827,4 @@ drives::compressionStats drives::DriveIBM3592::getCompression()  {
 }
 
 }}}
+

@@ -624,4 +624,57 @@ namespace unitTests {
       ASSERT_NE(std::string::npos, what.find("In exception validation: "));
     }
   }
+  
+  TEST(castor_tape_SCSI_Structures, logSenseParameter_t) {  
+    unsigned char dataBuff[128];
+    memset(dataBuff, random(), sizeof (dataBuff));
+     
+    castor::tape::SCSI::Structures::logSenseParameter_t &logParam=
+            *(castor::tape::SCSI::Structures::logSenseParameter_t *) dataBuff;
+          
+    ASSERT_EQ(4U, sizeof(logParam.header));
+    ASSERT_LE(sizeof(castor::tape::SCSI::Structures::logSenseParameterHeader_t), sizeof(logParam));
+    
+    unsigned char test1[] = {0x00, 0x08, 0x43, 0x04, 0x11, 0x22, 0x33, 0x44, 0x55};
+    memcpy(dataBuff,test1,sizeof(test1));
+    ASSERT_EQ(0x08U,castor::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
+    ASSERT_EQ(0x04U,logParam.header.parameterLength);
+    ASSERT_EQ(0x11223344ULL,logParam.getU64Value());
+    ASSERT_EQ(0x11223344LL,logParam.getS64Value());
+    
+    unsigned char test2[] = {0x00, 0x00, 0x43, 0x06, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
+    memcpy(dataBuff,test2,sizeof(test2));
+    ASSERT_EQ(0x00U,castor::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
+    ASSERT_EQ(0x06U,logParam.header.parameterLength);
+    ASSERT_EQ(0x112233445566ULL,logParam.getU64Value());
+    ASSERT_EQ(0x112233445566LL,logParam.getS64Value());
+    
+    unsigned char test3[] = {0x0A, 0x0F, 0x43, 0x08, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99};
+    memcpy(dataBuff,test3,sizeof(test3));
+    ASSERT_EQ(0xA0FU,castor::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
+    ASSERT_EQ(0x08U,logParam.header.parameterLength);
+    ASSERT_EQ(0x1122334455667788ULL,logParam.getU64Value());
+    ASSERT_EQ(0x1122334455667788LL,logParam.getS64Value());
+    
+    unsigned char test4[] = {0x0A, 0x0F, 0x43, 0x09, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99};
+    memcpy(dataBuff,test4,sizeof(test4));
+    ASSERT_EQ(0xA0FU,castor::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
+    ASSERT_EQ(0x09U,logParam.header.parameterLength);
+    ASSERT_NE(0x1122334455667788ULL,logParam.getU64Value());
+    ASSERT_NE(0x1122334455667788LL,logParam.getS64Value());
+    
+    unsigned char test5[] = {0xBB, 0xEE, 0x43, 0x00, 0x11, 0x22};
+    memcpy(dataBuff,test5,sizeof(test5));
+    ASSERT_EQ(0xBBEEU,castor::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
+    ASSERT_EQ(0x00U,logParam.header.parameterLength);
+    ASSERT_EQ(0ULL,logParam.getU64Value());
+    ASSERT_EQ(0LL,logParam.getS64Value());
+    
+    unsigned char test6[] = {0xDD, 0xCC, 0x43, 0x04, 0xFF, 0x22, 0x33, 0x44, 0x55};
+    memcpy(dataBuff,test6,sizeof(test6));
+    ASSERT_EQ(0xDDCCU,castor::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
+    ASSERT_EQ(0x04U,logParam.header.parameterLength);
+    ASSERT_EQ(4280431428ULL,logParam.getU64Value());
+    ASSERT_EQ(-14535868LL,logParam.getS64Value());
+  }  
 }

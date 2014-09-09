@@ -27,6 +27,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <arpa/inet.h>
+#include <endian.h>
 #include <string.h>
 #include <scsi/sg.h>
 #include <climits>
@@ -458,8 +459,64 @@ namespace SCSI {
            
       // bytes 4-n
       unsigned char parameterValue[1];     // parameters have variable length 
+      
+      /**
+       * Gets the parameter value
+       * 
+       * @return The value  of the log sense parameter as uint64_t.
+       *         If we have a parameter length more than 8 bytes the returning
+       *         value is not determined. 
+       */
+      inline uint64_t getU64Value()  {
+        union {
+          unsigned char tmp[8];
+          uint64_t val64;
+        } u;
+        
+        u.tmp[0]=(header.parameterLength>0)?parameterValue[0]:0;
+        u.tmp[1]=(header.parameterLength>1)?parameterValue[1]:0;
+        u.tmp[2]=(header.parameterLength>2)?parameterValue[2]:0;
+        u.tmp[3]=(header.parameterLength>3)?parameterValue[3]:0;
+        u.tmp[4]=(header.parameterLength>4)?parameterValue[4]:0;
+        u.tmp[5]=(header.parameterLength>5)?parameterValue[5]:0;
+        u.tmp[6]=(header.parameterLength>6)?parameterValue[6]:0;
+        u.tmp[7]=(header.parameterLength>7)?parameterValue[7]:0;
+
+        u.val64 = be64toh(u.val64);
+     
+        return u.val64>>(64-(header.parameterLength<<3));     
+      }
+      
+      /**
+       * Gets the parameter value.
+       * 
+       * @return The value  of the log sense parameter as int64_t.
+       *         If we have a parameter length more than 8 bytes the returning
+       *         value is not determined. 
+       */
+      inline int64_t getS64Value()  {
+        union {
+          unsigned char tmp[8];
+          uint64_t val64U;
+          int64_t  val64S;
+        } u;
+        
+        u.tmp[0]=(header.parameterLength>0)?parameterValue[0]:0;
+        u.tmp[1]=(header.parameterLength>1)?parameterValue[1]:0;
+        u.tmp[2]=(header.parameterLength>2)?parameterValue[2]:0;
+        u.tmp[3]=(header.parameterLength>3)?parameterValue[3]:0;
+        u.tmp[4]=(header.parameterLength>4)?parameterValue[4]:0;
+        u.tmp[5]=(header.parameterLength>5)?parameterValue[5]:0;
+        u.tmp[6]=(header.parameterLength>6)?parameterValue[6]:0;
+        u.tmp[7]=(header.parameterLength>7)?parameterValue[7]:0;
+      
+        u.val64U = be64toh(u.val64U);
+        
+        return  (u.val64S < 0?-(-u.val64S>> (64-(header.parameterLength<<3))):
+          (u.val64S>>(64-(header.parameterLength<<3))));     
+      }  
     };
-    
+
     /**
      * Log sense Log Page Format as described in SPC-4, 
      */
