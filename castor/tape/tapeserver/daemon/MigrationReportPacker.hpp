@@ -108,7 +108,7 @@ private:
      * recorded, we will transmit it to the client before signaling the
      * end of the session.
      */
-    virtual void reportFileErrors(MigrationReportPacker& _this);
+    virtual void reportFileErrors(MigrationReportPacker& reportPacker);
   };
   class ReportSuccessful :  public Report {
     const FileStruct m_migratedFile;
@@ -118,7 +118,7 @@ private:
     ReportSuccessful(const FileStruct& file,unsigned long checksum,
             u_int32_t blockId): 
     m_migratedFile(file),m_checksum(checksum),m_blockId(blockId){}
-    virtual void execute(MigrationReportPacker& _this);
+    virtual void execute(MigrationReportPacker& reportPacker);
   };
   class ReportFlush : public Report {
     drives::compressionStats m_compressStats;
@@ -145,7 +145,7 @@ private:
      *  */
       ReportFlush(drives::compressionStats compressStats):m_compressStats(compressStats){}
       
-      void execute(MigrationReportPacker& _this);
+      void execute(MigrationReportPacker& reportPacker);
   };
   class ReportError : public Report {
     const FileStruct m_migratedFile;
@@ -155,11 +155,11 @@ private:
     ReportError(const FileStruct& file,std::string msg,int error_code):
     m_migratedFile(file),m_error_msg(msg),m_error_code(error_code){}
     
-    virtual void execute(MigrationReportPacker& _this);
+    virtual void execute(MigrationReportPacker& reportPacker);
   };
   class ReportEndofSession : public Report {
   public:
-    virtual void execute(MigrationReportPacker& _this);
+    virtual void execute(MigrationReportPacker& reportPacker);
   };
   class ReportEndofSessionWithErrors : public Report {
     std::string m_message;
@@ -168,7 +168,7 @@ private:
     ReportEndofSessionWithErrors(std::string msg,int errorCode):
     m_message(msg),m_errorCode(errorCode){}
 
-    virtual void execute(MigrationReportPacker& _this);
+    virtual void execute(MigrationReportPacker& reportPacker);
   };
   
   class WorkerThread: public castor::server::Thread {

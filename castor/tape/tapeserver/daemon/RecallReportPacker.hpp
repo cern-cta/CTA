@@ -107,7 +107,7 @@ private:
     ReportSuccessful(const FileStruct& file,u_int32_t checksum,
       u_int64_t size): 
     Report(false),m_recalledFile(file),m_checksum(checksum),m_size(size){}
-    virtual void execute(RecallReportPacker& _this);
+    virtual void execute(RecallReportPacker& reportPacker);
   };
   class ReportError : public Report {
     const FileStruct m_recalledFile;
@@ -117,7 +117,7 @@ private:
     ReportError(const FileStruct& file,std::string msg,int error_code):
     Report(false),m_recalledFile(file),m_error_msg(msg),m_error_code(error_code){}
 
-    virtual void execute(RecallReportPacker& _this);
+    virtual void execute(RecallReportPacker& reportPacker);
   };
   class ReportStuck : public Report {
     const FileStruct m_recalledFile;
@@ -125,13 +125,13 @@ private:
     ReportStuck(const FileStruct& file):
     Report(false),m_recalledFile(file){}
 
-    virtual void execute(RecallReportPacker& _this);
+    virtual void execute(RecallReportPacker& reportPacker);
   };
   
   class ReportEndofSession : public Report {
   public:
     ReportEndofSession():Report(true){}
-    virtual void execute(RecallReportPacker& _this);
+    virtual void execute(RecallReportPacker& reportPacker);
   };
   class ReportEndofSessionWithErrors : public Report {
     std::string m_message;
@@ -140,7 +140,7 @@ private:
     ReportEndofSessionWithErrors(std::string msg,int error_code):
     Report(true),m_message(msg),m_error_code(error_code){}
   
-    virtual void execute(RecallReportPacker& _this);
+    virtual void execute(RecallReportPacker& reportPacker);
   };
   
   class WorkerThread: public castor::server::Thread {
