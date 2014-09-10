@@ -163,10 +163,10 @@ private:
   };
   class ReportEndofSessionWithErrors : public Report {
     std::string m_message;
-    int m_error_code;
+    int m_errorCode;
   public:
-    ReportEndofSessionWithErrors(std::string msg,int error_code):
-    m_message(msg),m_error_code(error_code){}
+    ReportEndofSessionWithErrors(std::string msg,int errorCode):
+    m_message(msg),m_errorCode(errorCode){}
 
     virtual void execute(MigrationReportPacker& _this);
   };

@@ -173,6 +173,7 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   std::string temp = logger.getLog();
   temp += "";
   ASSERT_EQ("V12345", sess.getVid());
+  ASSERT_EQ(0, sim.m_sessionErrorCode);
 }
 
 TEST(tapeServer, DataTransferSessionWrongRecall) {
@@ -277,6 +278,7 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
   std::string temp = logger.getLog();
   temp += "";
   ASSERT_EQ("V12345", sess.getVid());
+  ASSERT_EQ(SEINTERNAL, sim.m_sessionErrorCode);
 }
 
 TEST(tapeServer, DataTransferSessionNoSuchDrive) {
@@ -333,6 +335,7 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   std::string temp = logger.getLog();
   temp += "";
   ASSERT_NE(std::string::npos, logger.getLog().find("Drive not found on this path"));
+  ASSERT_EQ(SEINTERNAL, sim.m_sessionErrorCode);
 }
 
 class tempFile {
@@ -480,6 +483,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
       i != expected.end(); i++) {
     ASSERT_EQ(i->checksum, sim.m_receivedChecksums[i->fSeq]);
   }
+  ASSERT_EQ(0, sim.m_sessionErrorCode);
 }
 
 /**
@@ -565,6 +569,7 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
     driveConfig, rmc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
+  ASSERT_EQ(SEINTERNAL, sim.m_sessionErrorCode);
 }
 
 /**
@@ -674,6 +679,114 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
       ASSERT_EQ(i->errorCode, sim.m_receivedErrorCodes[i->fSeq]);
     }
   }
+  ASSERT_EQ(ENOSPC, sim.m_sessionErrorCode);
+}
+
+TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
+  // TpcpClients only supports 32 bits session number
+  // This number has to be less than 2^31 as in addition there is a mix
+  // of signed and unsigned numbers
+  // As the current ids in prod are ~30M, we are far from overflow (Feb 2013)
+  // 0) Prepare the logger for everyone
+  castor::log::StringLogger logger("tapeServerUnitTest");
+  
+  // 1) prepare the client and run it in another thread
+  uint32_t volReq = 0xBEEF;
+  std::string vid = "V12345";
+  std::string density = "8000GC";
+  client::ClientSimulator sim(volReq, vid, density,
+    castor::tape::tapegateway::WRITE_TP, castor::tape::tapegateway::WRITE);
+  client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
+  clientRunner simRun(sim);
+  simRun.start();
+  
+  // 2) Prepare the VDQM request
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
+    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
+  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
+  VDQMjob.clientPort = clientAddr.port;
+  VDQMjob.volReqId = volReq;
+  
+  // 3) Prepare the necessary environment (logger, plus system wrapper), 
+  // construct and run the session.
+  castor::tape::System::mockWrapper mockSys;
+  mockSys.delegateToFake();
+  mockSys.disableGMockCallsCounting();
+  mockSys.fake.setupForVirtualDriveSLC6();
+
+  //delete is unnecessary
+  //pointer with ownership will be passed to the application,
+  //which will do the delete 
+  const uint64_t tapeSize = 5000;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] =
+      new castor::tape::tapeserver::drives::FakeDrive(tapeSize,
+        castor::tape::tapeserver::drives::FakeDrive::OnFlush);
+  
+  // Just label the tape
+  castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
+      "V12345", true);
+  mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
+  
+  tempFileVector tempFiles;
+  std::vector<expectedResult> expected;
+  uint64_t remainingSpace = tapeSize;
+  bool failedFileDone = false;
+  // Prepare the files (in real filesystem as they will be opened by the rfio client)
+  for (int fseq=1; fseq<=10; fseq++) {
+    // Create the file from which we will recall
+    const size_t fileSize = 1000;
+    std::auto_ptr<tempFile> tf(new tempFile(fileSize));
+    // Prepare the migrationRequest
+    castor::tape::tapegateway::FileToMigrateStruct ftm;
+    ftm.setFileSize(tf->m_size);
+    ftm.setFileid(1000 + fseq);
+    ftm.setFseq(fseq);
+    ftm.setPath(tf->path());
+    sim.addFileToMigrate(ftm);
+    if (fileSize + 6 * 80 < remainingSpace) {
+      expected.push_back(expectedResult(fseq, tf->checksum()));
+      remainingSpace -= fileSize + 6 * 80;
+    } else if (!failedFileDone) {
+      // We expect no report for this file anymore (but the report for the 
+      // session)
+      failedFileDone = true;
+    }
+    tempFiles.push_back(tf.release());
+  }
+  castor::tape::utils::DriveConfig driveConfig;
+  driveConfig.unitName = "T10D6116";
+  driveConfig.dgn = "T10KD6";
+  driveConfig.devFilename = "/dev/tape_T10D6116";
+  driveConfig.densities.push_back("8000GC");
+  driveConfig.densities.push_back("5000GC");
+  driveConfig.librarySlot = "manual";
+  driveConfig.devType = "T10000";
+  DataTransferSession::CastorConf castorConf;
+  castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.rtcopydNbBufs = 10;
+  castorConf.tapebridgeBulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.tapebridgeBulkRequestMigrationMaxFiles = 1000;
+  castorConf.tapeserverdDiskThreads = 1;
+  castor::legacymsg::VmgrProxyDummy vmgr;
+  castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
+  castor::legacymsg::RmcProxyDummy rmc;
+  castor::messages::TapeserverProxyDummy initialProcess;
+  castor::server::ProcessCapDummy capUtils;
+  DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
+    driveConfig, rmc, initialProcess, capUtils, castorConf);
+  sess.execute();
+  simRun.wait();
+  for (std::vector<struct expectedResult>::iterator i = expected.begin();
+      i != expected.end(); i++) {
+    if (!i->errorCode) {
+      ASSERT_EQ(i->checksum, sim.m_receivedChecksums[i->fSeq]);
+    } else {
+      ASSERT_EQ(i->errorCode, sim.m_receivedErrorCodes[i->fSeq]);
+    }
+  }
+  ASSERT_EQ(ENOSPC, sim.m_sessionErrorCode);
 }
 
 } // namespace unitTest

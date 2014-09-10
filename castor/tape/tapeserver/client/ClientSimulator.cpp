@@ -50,8 +50,9 @@ using namespace castor::tape;
 ClientSimulator::ClientSimulator(uint32_t volReqId, const std::string & vid, 
     const std::string & density, tapegateway::ClientType clientType,
     tapegateway::VolumeMode volumeMode):
-  TpcpCommand("clientSimulator::clientSimulator"), m_vid(vid), 
-    m_density(density), m_clientType(clientType), m_volumeMode(volumeMode)
+  TpcpCommand("clientSimulator::clientSimulator"), m_sessionErrorCode(0),
+    m_vid(vid), m_density(density), m_clientType(clientType),
+    m_volumeMode(volumeMode)
 {
   m_volReqId = volReqId;
   setupCallbackSock();
@@ -247,7 +248,9 @@ bool ClientSimulator::processOneRequest()
     (void)dynamic_cast<tapegateway::EndNotification &> (*obj);
   } catch (std::bad_cast&) {
     try  {
-      (void)dynamic_cast<tapegateway::EndNotificationErrorReport &> (*obj);
+      tapegateway::EndNotificationErrorReport & enr = 
+        dynamic_cast<tapegateway::EndNotificationErrorReport &> (*obj);
+      m_sessionErrorCode = enr.errorCode();
     } catch (std::bad_cast&) {
       std::stringstream oss;
       oss <<

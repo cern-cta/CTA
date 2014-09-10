@@ -91,9 +91,9 @@ void MigrationReportPacker::reportEndOfSession() {
 //------------------------------------------------------------------------------
 //reportEndOfSessionWithErrors
 //------------------------------------------------------------------------------ 
-void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int error_code){
+void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int errorCode){
   castor::server::MutexLocker ml(&m_producterProtection);
-  m_fifo.push(new ReportEndofSessionWithErrors(msg,error_code));
+  m_fifo.push(new ReportEndofSessionWithErrors(msg,errorCode));
 }
 //------------------------------------------------------------------------------
 //ReportSuccessful::reportStuckOn
@@ -263,17 +263,22 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
   
   if(_this.m_errorHappened) {
     reportFileErrors(_this);
-    _this.m_client.reportEndOfSessionWithError(m_message,m_error_code,chrono); 
+    _this.m_client.reportEndOfSessionWithError(m_message,m_errorCode,chrono); 
     log::ScopedParamContainer sp(_this.m_lc);
     sp.add("errorMessage", m_message)
-      .add("errorCode", m_error_code)
+      .add("errorCode", m_errorCode)
       .add("connectDuration", chrono.connectDuration)
       .add("sendRecvDuration", chrono.sendRecvDuration)
       .add("transactionId", chrono.transactionId);
     _this.m_lc.log(LOG_INFO,"Reported end of session with error to client after sending file errors");
   } else{
     const std::string& msg ="Reported end of session with error to client";
-    _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono); 
+    // As a measure of safety we censor any session error which is not ENOSPC into
+    // SEINTERNAL. ENOSPC is the only one interpreted by the tape gateway.
+    if (ENOSPC != m_errorCode) {
+      m_errorCode = SEINTERNAL;
+    }
+    _this.m_client.reportEndOfSessionWithError(msg,m_errorCode,chrono); 
     _this.m_lc.log(LOG_INFO,msg);
   }
   _this.m_continue=false;

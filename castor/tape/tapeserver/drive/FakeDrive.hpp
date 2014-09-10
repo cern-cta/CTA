@@ -41,11 +41,18 @@ namespace drives {
     std::vector<tapeBlock> m_tape;
     uint32_t m_currentPosition;
     uint64_t m_tapeCapacity;
-    int beginOfCompressStats;
+    int m_beginOfCompressStats;
     uint64_t getRemaingSpace(uint32_t currentPosition);
   public:
+    enum FailureMoment { OnWrite, OnFlush } ;
+  private:
+    const enum FailureMoment m_failureMoment;
+    bool m_tapeOverflow;
+  public:
     std::string contentToString() throw();
-    FakeDrive(uint64_t capacity=std::numeric_limits<uint64_t>::max()) throw();
+
+    FakeDrive(uint64_t capacity=std::numeric_limits<uint64_t>::max(),
+      enum FailureMoment failureMoment=OnWrite) throw();
     virtual ~FakeDrive() throw(){}
     virtual compressionStats getCompression() ;
     virtual void clearCompressionStats() ;

@@ -28,13 +28,16 @@ namespace {
   const char filemark[] = "";
 }
 
-castor::tape::tapeserver::drives::FakeDrive::FakeDrive(uint64_t capacity) throw(): 
-  m_currentPosition(0), m_tapeCapacity(capacity), beginOfCompressStats(0) {
+castor::tape::tapeserver::drives::FakeDrive::FakeDrive(uint64_t capacity,
+    FailureMoment failureMoment) throw(): 
+  m_currentPosition(0), m_tapeCapacity(capacity), m_beginOfCompressStats(0),
+  m_failureMoment(failureMoment), m_tapeOverflow(false)
+{
   m_tape.reserve(max_fake_drive_record_length);
 }
 castor::tape::tapeserver::drives::compressionStats castor::tape::tapeserver::drives::FakeDrive::getCompression()  {
   castor::tape::tapeserver::drives::compressionStats stats;
-  for(unsigned int i=beginOfCompressStats;i<m_tape.size();++i){
+  for(unsigned int i=m_beginOfCompressStats;i<m_tape.size();++i){
     stats.toTape += m_tape[i].data.length();
   }
   
@@ -43,7 +46,7 @@ castor::tape::tapeserver::drives::compressionStats castor::tape::tapeserver::dri
   return stats;
 }
 void castor::tape::tapeserver::drives::FakeDrive::clearCompressionStats()  {
-  beginOfCompressStats=m_tape.size();
+  m_beginOfCompressStats=m_tape.size();
 }
 castor::tape::tapeserver::drives::deviceInfo castor::tape::tapeserver::drives::FakeDrive::getDeviceInfo()  {
   deviceInfo devInfo;
@@ -118,7 +121,11 @@ void castor::tape::tapeserver::drives::FakeDrive::spaceFileMarksForward(size_t c
 void castor::tape::tapeserver::drives::FakeDrive::unloadTape(void)  {
 }
 void castor::tape::tapeserver::drives::FakeDrive::flush(void)  {
-  //already flushing
+  if (m_failureMoment == OnFlush) {
+    if (m_tapeOverflow) {
+      throw castor::exception::Errnum(ENOSPC, "Error in castor::tape::tapeserver::drives::FakeDrive::flush");
+    }
+  }
 }
 
 uint64_t castor::tape::tapeserver::drives::FakeDrive::getRemaingSpace(uint32_t currentPosition)
@@ -142,13 +149,22 @@ void castor::tape::tapeserver::drives::FakeDrive::writeImmediateFileMarks(size_t
   writeSyncFileMarks(count);
 }
 void castor::tape::tapeserver::drives::FakeDrive::writeBlock(const void * data, size_t count)  {
-  // check that the next block will fit in the remaining space on the tape.
+  // check that the next block will fit in the remaining space on the tape
+  // and compute what will be left after
+  uint64_t remainingSpaceAfterBlock;
   if (count > getRemaingSpace(m_currentPosition)) {
-    throw castor::exception::Errnum(ENOSPC, "Error in castor::tape::tapeserver::drives::FakeDrive::writeBlock");
+    if (m_failureMoment == OnWrite) {
+      throw castor::exception::Errnum(ENOSPC, "Error in castor::tape::tapeserver::drives::FakeDrive::writeBlock");
+    } else {
+      remainingSpaceAfterBlock = 0;
+      m_tapeOverflow = true;
+    }
+  } else {
+    remainingSpaceAfterBlock = getRemaingSpace(m_currentPosition) - count;
   }
   m_tape.resize(m_currentPosition+1);
   m_tape[m_currentPosition].data.assign((const char *)data, count);
-  m_tape[m_currentPosition].remainingSpaceAfter = getRemaingSpace(m_currentPosition) - count;
+  m_tape[m_currentPosition].remainingSpaceAfter = remainingSpaceAfterBlock;
   m_currentPosition++;
 }
 ssize_t castor::tape::tapeserver::drives::FakeDrive::readBlock(void *data, size_t count)  {

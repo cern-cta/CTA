@@ -91,6 +91,10 @@ namespace client {
      * stored.
      */
     std::map<uint64_t, uint64_t> m_receivedErrorCodes;
+    /**
+     * The resulting error code of the session.
+     */
+    int m_sessionErrorCode;
   protected:
     // Place holders for pure virtual members of TpcpCommand we don't
     // use in the simulator

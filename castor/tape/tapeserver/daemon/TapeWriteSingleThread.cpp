@@ -212,13 +212,26 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       }
       task->circulateMemBlocks();
     }
-    //then log the end of write thread
+    // Prepare the standard error codes for the session
+    std::string errorMessage(e.getMessageValue());
+    int errorCode(e.code());
+    // Override if we got en ENOSPC error (end of tape)
+    // This is 
+    try {
+      const castor::exception::Errnum & errnum = 
+          dynamic_cast<const castor::exception::Errnum &> (e);
+      if (ENOSPC == errnum.errorNumber()) {
+        errorCode = ENOSPC;
+        errorMessage = "End of migration due to tape full";
+      }
+    } catch (...) {}
+    // then log the end of write thread
     log::ScopedParamContainer params(m_logContext);
     params.add("status", "error")
-          .add("ErrorMesage", e.getMessageValue());
+          .add("ErrorMesage", errorMessage);
     logWithStats(LOG_ERR, "Tape thread complete",
             params,totalTimer.secs());
-    m_reportPacker.reportEndOfSessionWithErrors(e.getMessageValue(),e.code());
+    m_reportPacker.reportEndOfSessionWithErrors(errorMessage,errorCode);
   }    
 }
 
