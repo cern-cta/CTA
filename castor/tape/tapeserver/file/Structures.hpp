@@ -59,26 +59,26 @@ namespace tape {
         spaceStruct(this);
       }
     private:
-      char label[4];         // The characters VOL1. 
-      char VSN[6];           // The Volume Serial Number. 
-      char accessibility[1]; // A space indicates that the volume is authorized.
-      char reserved1[13];    // Reserved.
-      char implID[13];       // The Implementation Identifier - spaces.
-      char ownerID[14];      // CASTOR or stagesuperuser name padded with spaces.
-      char reserved2[28];    // Reserved
-      char lblStandard[1];   // The label standard level - ASCII 3 for the CASTOR
+      char m_label[4];         // The characters VOL1. 
+      char m_VSN[6];           // The Volume Serial Number. 
+      char m_accessibility[1]; // A space indicates that the volume is authorized.
+      char m_reserved1[13];    // Reserved.
+      char m_implID[13];       // The Implementation Identifier - spaces.
+      char m_ownerID[14];      // CASTOR or stagesuperuser name padded with spaces.
+      char m_reserved2[28];    // Reserved
+      char m_lblStandard[1];   // The label standard level - ASCII 3 for the CASTOR
     public:
       /**
        * Fills up all fields of the VOL1 structure with proper values and data provided.
        * @param VSN the tape serial number
        */
-      void fill(std::string _VSN);
+      void fill(std::string VSN);
 
       /**
        * @return VSN the tape serial number
        */
       inline std::string getVSN() const {
-        return toString(VSN);
+        return toString(m_VSN);
       }
 
       /**
@@ -96,19 +96,19 @@ namespace tape {
         spaceStruct(this);
       }
     protected:
-      char label[4];         // The characters HDR1. 
-      char fileId[17];       // The CASTOR NS file Id in ACSII hex or PRELABEL
-      char VSN[6];           // The Volume Serial Number.
-      char fSec[4];          // The file section number - '0001'.
-      char fSeq[4];          // The file sequence number is modulus by 10000.
-      char genNum[4];        // The generation number - '0001'.
-      char verNumOfGen[2];   // The version number of generation - '00'.
-      char creationDate[6];  // The creation date in cyyddd form.
-      char expirationDate[6];// The expiration date in cyyddd form.
-      char accessibility[1]; // The security status of the data set - space.
-      char blockCount[6];    // In the HDR1 is always '000000'.
-      char sysCode[13];      // The system ID code - 'CASTOR '+CASTORBASEVERSION
-      char reserved[7];      // Reserved
+      char m_label[4];         // The characters HDR1. 
+      char m_fileId[17];       // The CASTOR NS file Id in ACSII hex or PRELABEL
+      char m_VSN[6];           // The Volume Serial Number.
+      char m_fSec[4];          // The file section number - '0001'.
+      char m_fSeq[4];          // The file sequence number is modulus by 10000.
+      char m_genNum[4];        // The generation number - '0001'.
+      char m_verNumOfGen[2];   // The version number of generation - '00'.
+      char m_creationDate[6];  // The creation date in cyyddd form.
+      char m_expirationDate[6];// The expiration date in cyyddd form.
+      char m_accessibility[1]; // The security status of the data set - space.
+      char m_blockCount[6];    // In the HDR1 is always '000000'.
+      char m_sysCode[13];      // The system ID code - 'CASTOR '+CASTORBASEVERSION
+      char m_reserved[7];      // Reserved
       /**
        * Fills up all common fields of the HDR1, EOF1 and PRELABEL HDR1 
        * structures with proper values and data provided.
@@ -117,7 +117,7 @@ namespace tape {
        * @param VSN          The tape serial number.
        * @param fSeq         The file sequence number on the tape.
        */
-      void fillCommon(std::string _fileId, std::string _VSN, int _fSeq);
+      void fillCommon(std::string fileId, std::string VSN, int fSeq);
 
       /**
        * Throws an exception if the common field of the structures does
@@ -130,28 +130,28 @@ namespace tape {
        * @return VSN the tape serial number
        */
       inline std::string getVSN() const {
-        return toString(VSN);
+        return toString(m_VSN);
       }
 
       /**
        * @return The CASTOR NS file Id
        */
       inline std::string getFileId() const {
-        return toString(fileId);
+        return toString(m_fileId);
       }
 
       /**
        * @return The file sequence number (modulo 10000: useless)
        */
       inline std::string getfSeq() const {
-        return toString(fSeq);
+        return toString(m_fSeq);
       }
       
       /**
        * @return The number of block written on tape per file (only valid in trailer, fairly useless)
        */
       inline std::string getBlockCount() const {
-        return toString(blockCount);
+        return toString(m_blockCount);
       }
     };
 
@@ -165,7 +165,7 @@ namespace tape {
        * @param VSN          The tape serial number.
        * @param fSeq         The file sequence number on the tape.
        */
-      void fill(std::string _fileId, std::string _VSN, int _fSeq);
+      void fill(std::string fileId, std::string VSN, int fSeq);
 
       /**
        * Throws an exception if the structure does not match expectations.
@@ -185,8 +185,8 @@ namespace tape {
        * @param blockCount   The number of written data blocks. It is
        *                     modulus by 1000000.
        */
-      void fill(std::string _fileId,
-        std::string _VSN, int _fSeq, int _blockCount);
+      void fill(std::string fileId,
+        std::string VSN, int fSeq, int blockCount);
 
       /**
        * Throws an exception if the structure does not match expectations.
@@ -202,7 +202,7 @@ namespace tape {
        * 
        * @param VSN          The tape serial number.
        */
-      void fill(std::string _VSN);
+      void fill(std::string VSN);
 
       /**
        * Throws an exception if the structure does not match expectations.
@@ -219,18 +219,18 @@ namespace tape {
         spaceStruct(this);
       }
     protected:
-      char label[4];        // The characters HDR2. 
-      char recordFormat[1]; // The record format is 'F' for the CASTOR AUL. 
-      char blockLength[5];  // If it is greater than 100000 it set as '00000'.
-      char recordLength[5]; // If it is greater than 100000 it set as '00000'.
-      char tapeDensity[1];  // The tape density code. Not used or verified.
-      char reserved1[18];   // Reserved
-      char recTechnique[2]; // The tape recording technique. 'P ' for xxxGC 
-                            // drives (only on the real tapes on we do not see
-                            // it with MHVTL setup).
-      char reserved2[14];   // Reserved
-      char aulId[2];        // CASTOR specific for the AUL format - '00'.
-      char reserved3[28];   // Reserved  
+      char m_label[4];        // The characters HDR2. 
+      char m_recordFormat[1]; // The record format is 'F' for the CASTOR AUL. 
+      char m_blockLength[5];  // If it is greater than 100000 it set as '00000'.
+      char m_recordLength[5]; // If it is greater than 100000 it set as '00000'.
+      char m_tapeDensity[1];  // The tape density code. Not used or verified.
+      char m_reserved1[18];   // Reserved
+      char m_recTechnique[2]; // The tape recording technique. 'P ' for xxxGC 
+                              // drives (only on the real tapes on we do not see
+                              // it with MHVTL setup).
+      char m_reserved2[14];   // Reserved
+      char m_aulId[2];        // CASTOR specific for the AUL format - '00'.
+      char m_reserved3[28];   // Reserved  
       /**
        * Fills up all common fields of the HDR2 and EOF2 structures
        * with proper values and data provided.
@@ -250,7 +250,7 @@ namespace tape {
        * @return    The block length 
        */
       inline std::string getBlockLength() const {
-        return toString(blockLength);
+        return toString(m_blockLength);
       }
     };
 
@@ -301,15 +301,15 @@ namespace tape {
         spaceStruct(this);
       }
     protected:
-      char label[4];              // The characters UHL1. 
-      char actualfSeq[10];        // The actual file sequence number. 
-      char actualBlockSize[10];   // The actual block size.
-      char actualRecordLength[10];// The actual record length.
-      char site[8];               // The domain name uppercase without level 1.
-      char moverHost[10];         // The tape mover host name uppercase.
-      char driveVendor[8];        // The drive manufacturer.
-      char driveModel[8];         // The first 8 bytes from drive identification
-      char serialNumber[12];      // The drive serial number.
+      char m_label[4];              // The characters UHL1. 
+      char m_actualfSeq[10];        // The actual file sequence number. 
+      char m_actualBlockSize[10];   // The actual block size.
+      char m_actualRecordLength[10];// The actual record length.
+      char m_site[8];               // The domain name uppercase without level 1.
+      char m_moverHost[10];         // The tape mover host name uppercase.
+      char m_driveVendor[8];        // The drive manufacturer.
+      char m_driveModel[8];         // The first 8 bytes from drive identification
+      char m_serialNumber[12];      // The drive serial number.
       /**
        * Fills up all common fields of the UHL1 and UTL1 structure with proper
        * values and data provided.
@@ -335,14 +335,14 @@ namespace tape {
        * @return    The block size
        */
       inline std::string getBlockSize() const {
-        return toString(actualBlockSize);
+        return toString(m_actualBlockSize);
       }
 
       /**
        * @return The file sequence number
        */
       inline std::string getfSeq() const {
-        return toString(actualfSeq);
+        return toString(m_actualfSeq);
       }
     };
 
