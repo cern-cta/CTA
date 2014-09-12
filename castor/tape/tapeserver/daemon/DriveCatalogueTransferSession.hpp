@@ -113,10 +113,9 @@ public:
   /**
    * Gets the volume identifier of the tape associated with the tape drive.
    *
-   * This method throws a castor::exception::Exception if the volume identifer
-   * is not yet known.
-   * 
    * @return The volume identifier of the tape associated with the tape drive.
+   * If the volume indentifier is not known then this method returns the empty
+   * string.
    */
   std::string getVid() const;
 

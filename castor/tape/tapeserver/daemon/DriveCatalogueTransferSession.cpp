@@ -209,13 +209,7 @@ std::string castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
   case TRANSFERSTATE_RUNNING:
     return m_vid;
   default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to get VID from catalogue transfer-session"
-        ": Catalogue transfer-session is in an incomaptible state: "
-        " state=" << transferStateToStr(m_state);
-      throw ex;
-    }
+    return "";
   }
 }
 
@@ -233,7 +227,7 @@ int castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to get access mode from catalogue"
         " transfer-session"
-        ": Catalogue transfer-session is in an incomaptible state: "
+        ": Catalogue transfer-session is in an incompatible state: "
         " state=" << transferStateToStr(m_state);
       throw ex;
     }
