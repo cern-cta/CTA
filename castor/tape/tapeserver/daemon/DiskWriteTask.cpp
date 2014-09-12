@@ -199,8 +199,8 @@ void DiskWriteTask::logWithStat(int level,const std::string& msg,log::LogContext
            .addTiming("checkingErrorTime",m_stats.checkingErrorTime)
            .addTiming("openingTime",m_stats.openingTime)
            .addTiming("closingTime",m_stats.closingTime)
-           .add("payloadTransferSpeedMB/s",
-                   1.0*m_stats.dataVolume/1024/1024/m_stats.transferTime)
+           .add("payloadTransferSpeedMBps",
+                   1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime)
            .add("FILEID",m_recallingFile->fileid())
            .add("path",m_recallingFile->path());
     lc.log(level,msg);

@@ -124,8 +124,8 @@ void DiskWriteThreadPool::logWithStat(int level, const std::string& message){
            .add("poolFileCount",m_pooldStat.filesCount)
            .addTiming("poolClosingTime", m_pooldStat.closingTime)
            .add("poolDataVolumeInMB", 1.0*m_pooldStat.dataVolume/1024/1024)
-           .add("poolPayloadTransferSpeedMB/s",
-                   1.0*m_pooldStat.dataVolume/1024/1024/m_pooldStat.transferTime);
+           .add("poolPayloadTransferSpeedMBps",
+                   1.0*m_pooldStat.dataVolume/1000/1000/m_pooldStat.transferTime);
     m_lc.log(level,message);
 }
 //------------------------------------------------------------------------------
@@ -189,8 +189,8 @@ logWithStat(int level, const std::string& msg) {
            .addTiming("threadOpeningTime",m_threadStat.openingTime)
            .addTiming("threadClosingTime", m_threadStat.closingTime)
            .add("threaDataVolumeInMB", 1.0*m_threadStat.dataVolume/1024/1024)
-           .add("threadPayloadTransferSpeedMB/s",
-                   1.0*m_threadStat.dataVolume/1024/1024/m_threadStat.transferTime);
+           .add("threadPayloadTransferSpeedMBps",
+                   1.0*m_threadStat.dataVolume/1000/1000/m_threadStat.transferTime);
     m_lc.log(level,msg);
 }
 }}}}

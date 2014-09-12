@@ -133,12 +133,12 @@ public:
             .addTiming("waitReportingTime",localStats.waitReportingTime)
             .add("dataVolume",localStats.dataVolume)
             .addTiming("totalTime", fileTime)
-            .add("driveTransferSpeedMiB/s",
+            .add("driveTransferSpeedMBps",
                     (localStats.dataVolume+localStats.headerVolume)
-                     /1024/1024
+                     /1000/1000
                      /localStats.transferTime)
-            .add("payloadTransferSpeedMB/s",
-                     1.0*localStats.dataVolume/1024/1024/fileTime)
+            .add("payloadTransferSpeedMBps",
+                     1.0*localStats.dataVolume/1000/1000/fileTime)
             .add("fileid",m_fileToRecall->fileid())
             .add("fseq",m_fileToRecall->fseq())
             .add("fileTransactionId",m_fileToRecall->fileTransactionId());

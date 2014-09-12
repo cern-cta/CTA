@@ -263,12 +263,12 @@ namespace daemon {
            .add("dataVolume",m_taskStats.dataVolume)
            .add("headerVolume",m_taskStats.headerVolume)
            .addTiming("totalTime", fileTime)
-           .add("driveTransferSpeedMiB/s",
+           .add("driveTransferSpeedMBps",
                    (m_taskStats.dataVolume+m_taskStats.headerVolume)
-           /1024/1024
+           /1000/1000
            /m_taskStats.transferTime)
-           .add("payloadTransferSpeedMB/s",
-                   1.0*m_taskStats.dataVolume/1024/1024/fileTime)
+           .add("payloadTransferSpeedMBps",
+                   1.0*m_taskStats.dataVolume/1000/1000/fileTime)
            .add("fileSize",m_fileToMigrate->fileSize())
            .add("fileid",m_fileToMigrate->fileid())
            .add("fseq",m_fileToMigrate->fseq())
