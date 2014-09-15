@@ -242,6 +242,48 @@ std::string errnoToString(const int errnoValue) throw();
  */
 std::string serrnoToString(const int serrnoValue) throw();
 
+/**
+ * Sets both the process name and the command-line to the specified value.
+ *
+ * The command-line is set by modifiying argv[0] and the process name is
+ * modified using prctl(PR_SET_NAME, ...).  Please note that the length of
+ * argv[0] cannot be changed and that prctl(PR_SET_NAME, ...) is limited to
+ * 15 characters plus the null terminator.
+ *
+ * @param argv0 In/out paramater: A pointer to argv[0].
+ * @param name The new name of the process.  If the name is too long for either
+ * the command-line or the process name then it will truncated.  Any truncation
+ * for argv[0] will be independent of any truncation for process name if argv[0]
+ * is not 15 characters in length.
+ */
+void setProcessNameAndCmdLine(char *const argv0, const std::string &name);
+
+/**
+ * Sets the process name to the specified value.
+ *
+ * The process name is modified using prctl(PR_SET_NAME, ...).  Please note that
+ * prctl(PR_SET_NAME, ...) is limited to 15 characters plus the null terminator.
+ *
+ * @param name The new name of the process.  If the new name is longer than 15
+ * characters then it will be truncated.
+ */
+void setProcessName(const std::string &name);
+
+/**
+ * Sets both the process name and the command-line to the specified value.
+ *
+ * The command-line is set by modifiying argv[0] and the process name is
+ * modified using prctl(PR_SET_NAME, ...).  Please note that the length of
+ * argv[0] cannot be changed and that prctl(PR_SET_NAME, ...) is limited to
+ * 15 characters plus the null terminator.
+ *
+ * @param argv0 In/out paramater: A pointer to argv[0].
+ * @param cmdLine The new command-line.  If the new command-line is longer than
+ * argv[0] then it will be truncated.
+ */
+void setCmdLine(char *const argv0, const std::string &cmdLine) throw();
+
+
 } // namespace utils
 } // namespace castor
 

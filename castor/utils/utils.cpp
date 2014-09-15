@@ -410,3 +410,44 @@ std::string castor::utils::serrnoToString(const int serrnoValue) throw() {
     return oss.str();
   }
 }
+
+//------------------------------------------------------------------------------
+// setProcessNameAndCmdLine
+//------------------------------------------------------------------------------
+void castor::utils::setProcessNameAndCmdLine(char *const argv0,
+  const std::string &name) {
+  try {
+    setProcessName(name);
+    setCmdLine(argv0, name);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to set process name and command-line"
+      ": " << ne.getMessage().str();
+  }
+}
+
+//------------------------------------------------------------------------------
+// setProcessName
+//------------------------------------------------------------------------------
+void castor::utils::setProcessName(const std::string &name) {
+  char buf[16];
+  strncpy(buf, name.c_str(), sizeof(buf));
+  buf[sizeof(buf)-1] = '\0';
+
+  if(prctl(PR_SET_NAME, buf)) {
+    const std::string errMsg = errnoToString(errno);
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to set process name: " << errMsg;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// setCmdLine
+//------------------------------------------------------------------------------
+void castor::utils::setCmdLine(char *const argv0, const std::string &cmdLine)
+  throw() {
+  const size_t argv0Len = strlen(argv0);
+  strncpy(argv0, cmdLine.c_str(), argv0Len);
+  argv0[argv0Len] = '\0';
+}
