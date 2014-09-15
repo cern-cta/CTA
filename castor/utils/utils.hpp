@@ -204,7 +204,12 @@ bool getDumpableProcessAttribute();
  */
 void setDumpableProcessAttribute(const bool dumpable);
 
-  
+/**
+ * Determines the demangled type name of the specified object.
+ *
+ * @param t The object.
+ * @return The demangled type name.
+ */  
 template <class T>std::string demangledNameOf(const T&t){
   std::string responseType = typeid(t).name();
   int status = -1;
@@ -216,6 +221,27 @@ template <class T>std::string demangledNameOf(const T&t){
   
   return responseType;
 }
+
+/**
+ * Determines the string representation of the specified error number.
+ *
+ * Please note this method is thread safe.
+ *
+ * @param errnoValue The errno value;
+ * @return The string representation of the specified CASTOR error number.
+ */
+std::string errnoToString(const int errnoValue) throw();
+
+/**
+ * Determines the string representation of the specified CASTOR error number.
+ *
+ * Please note this method is thread safe.
+ *
+ * @param serrnoValue The serrno value;
+ * @return The string representation of the specified CASTOR error number.
+ */
+std::string serrnoToString(const int serrnoValue) throw();
+
 } // namespace utils
 } // namespace castor
 

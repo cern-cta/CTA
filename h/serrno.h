@@ -35,7 +35,7 @@
 #define EDNSBASEOFF     3000            /* DNS error base offset        */
 
 #define SENOERR         SEBASEOFF       /* No error                     */
-#define SENOSHOST       SEBASEOFF+1     /* Host unknown                 */
+#define SENOSHOST       SEBASEOFF+1     /* Host not known               */
 #define SENOSSERV       SEBASEOFF+2     /* Service unknown              */
 #define SENOTRFILE      SEBASEOFF+3     /* Not a remote file            */
 #define SETIMEDOUT      SEBASEOFF+4     /* Has timed out                */

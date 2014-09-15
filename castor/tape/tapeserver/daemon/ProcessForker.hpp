@@ -75,21 +75,8 @@ public:
    */
   void execute() throw();
 
-private:  
-  /**
-   * Retrieve sstrerror_r['s messages and store it by adding a Parameter in params
-   * then log msg with all the params at level=LOG_ERR
-   * Used to handle the failure of a fork 
-   * @param msg
-   * @param params
-   */
-  template <class ParamContainer> 
-  void logForkError(const std::string& msg,ParamContainer& params){
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
-    params.push_back(log::Param("message", message));
-    m_log(LOG_ERR,msg,params);
-  }
+private:
+
   /**
    * The maximum permitted size in bytes for the payload of a frame sent between
    * the ProcessForker and its proxy.

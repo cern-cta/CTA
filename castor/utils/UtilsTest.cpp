@@ -23,6 +23,7 @@
 
 #include "castor/utils/utils.hpp"
 
+#include <errno.h>
 #include <gtest/gtest.h>
 #include <list>
 #include <stdlib.h>
@@ -378,6 +379,20 @@ TEST_F(castor_utils, testCheckVidSyntaxInvalidCharacter) {
 
   ASSERT_THROW(checkVidSyntax(vid.str().c_str()),
     castor::exception::InvalidArgument);
+}
+
+TEST_F(castor_utils, testErrnoToString) {
+  using namespace castor::utils;
+  
+  const std::string str = errnoToString(EACCES);
+  ASSERT_EQ(std::string("Permission denied"), str);
+}
+
+TEST_F(castor_utils, testSerrnoToString) {
+  using namespace castor::utils;
+
+  const std::string str = serrnoToString(SENOSHOST);
+  ASSERT_EQ(std::string("Host not known"), str);
 }
 
 } // namespace unitTests

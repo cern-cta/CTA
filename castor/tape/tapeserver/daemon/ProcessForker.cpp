@@ -300,10 +300,8 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 
   // If fork failed
   if(0 > forkRc) {
-    const std::string& errorMsg = "Failed to fork cleaner session for tape drive";
-    logForkError(errorMsg,params);
-    
-    return createExceptionResult(SEINTERNAL, errorMsg, true);
+    return createExceptionResult(SEINTERNAL,
+      "Failed to fork cleaner session for tape drive", true);
 
   // Else if this is the parent process
   } else if(0 < forkRc) {
@@ -358,9 +356,8 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 
   // If fork failed
   if(0 > forkRc) {
-    const std::string& errorMsg = "Failed to fork data-transfer session for tape drive";
-    logForkError(errorMsg,params);
-    return createExceptionResult(SEINTERNAL, errorMsg, true);
+    return createExceptionResult(SEINTERNAL,
+      "Failed to fork data-transfer session for tape drive", true);
   // Else if this is the parent process
   } else if(0 < forkRc) {
     log::Param params[] = {log::Param("pid", forkRc)};
@@ -411,11 +408,8 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 
   // If fork failed
   if(0 > forkRc) {
-    // Log an error message and return
-    const std::string& errorMsg = "Failed to fork label session for tape drive";
-    logForkError(errorMsg,params);
-    
-    return createExceptionResult(SEINTERNAL, errorMsg, true);
+    return createExceptionResult(SEINTERNAL,
+      "Failed to fork label session for tape drive", true);
 
   // Else if this is the parent process
   } else if(0 < forkRc) {

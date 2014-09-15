@@ -20,6 +20,7 @@
  *****************************************************************************/
 
 #include "castor/utils/utils.hpp"
+#include "h/strerror_r_wrapper.h"
 
 #include <algorithm>
 #include <errno.h>
@@ -334,13 +335,9 @@ bool castor::utils::getDumpableProcessAttribute() {
   }
 }
 
-
-/**
- * Sets the attributes of the current process to indicate hat it will produce a
- * core dump if it receives a signal whose behaviour is to produce a core dump.
- *
- * @param dumpable true if the current program should be dumpable.
- */
+//------------------------------------------------------------------------------
+// setDumpableProcessAttribute
+//------------------------------------------------------------------------------
 void castor::utils::setDumpableProcessAttribute(const bool dumpable) {
   const int rc = prctl(PR_SET_DUMPABLE, dumpable ? 1 : 0);
   switch(rc) {
@@ -363,5 +360,53 @@ void castor::utils::setDumpableProcessAttribute(const bool dumpable) {
         ": Unknown value returned by prctl(): rc=" << rc;
       throw ex;
     }
+  }
+}
+
+//------------------------------------------------------------------------------
+// errnoToString
+//------------------------------------------------------------------------------
+std::string castor::utils::errnoToString(const int errnoValue) throw() {
+  char buf[100];
+
+  if(!strerror_r_wrapper(errnoValue, buf, sizeof(buf))) {
+    return buf;
+  } else {
+    const int errnoSetByStrerror_r_wrapper = errno;
+    std::ostringstream oss;
+
+    switch(errnoSetByStrerror_r_wrapper) {
+    case EINVAL:
+      oss << "Failed to convert errnoValue to string: Invalid errnoValue"
+        ": errnoValue=" << errnoValue;
+      break;
+    case ERANGE:
+      oss << "Failed to convert errnoValue to string"
+        ": Destination buffer for error string is too small"
+        ": errnoValue=" << errnoValue;
+      break;
+    default:
+      oss << "Failed to convert errnoValue to string"
+        ": strerror_r_wrapper failed in an unknown way"
+        ": errnoValue=" << errnoValue;
+      break;
+    }
+
+    return oss.str();
+  }
+}
+
+//------------------------------------------------------------------------------
+// serrnoToString
+//------------------------------------------------------------------------------
+std::string castor::utils::serrnoToString(const int serrnoValue) throw() {
+  char buf[100];
+  if(!sstrerror_r(serrnoValue, buf, sizeof(buf))) {;
+    return buf;
+  } else {
+    std::ostringstream oss;
+    oss << "Failed to convert serrnoValue to string"
+      ": sstrerror_r returned -1: serrnoValue=" << serrnoValue;
+    return oss.str();
   }
 }
