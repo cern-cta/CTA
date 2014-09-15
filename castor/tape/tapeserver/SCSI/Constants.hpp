@@ -330,8 +330,31 @@ namespace SCSI {
       uint8_t ascq_max;
       const char * text;
     };
-    static const struct error_range_info ascRangesStrings[];
+    static const struct error_range_info ascRangesStrings[];    
   };
+  
+  class senseKeys {
+  public:
+    enum {
+      noSense        = 0x0,
+      recoveredError = 0x1, 
+      notReady       = 0x2,
+      mediumError    = 0x3,
+      hardwareError  = 0x4,
+      illegalRequest = 0x5,
+      unitAttention  = 0x6, 
+      dataProtect    = 0x7,
+      blankCheck     = 0x8,
+      vendorSpecific = 0x9,
+      copyAborted    = 0xA,
+      abortedCommand = 0xB,
+      equal          = 0xC,
+      volumeOverflow = 0xD,
+      miscompare     = 0xE,
+      lastWithText   = 0xE
+    };
+    static const char * const senseKeysText[];      
+  }; 
 } // namespace SCSI
 } // namespace tape
 } // namespace castor

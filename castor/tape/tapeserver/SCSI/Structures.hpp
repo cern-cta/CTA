@@ -861,7 +861,7 @@ namespace SCSI {
         return responseCode == 0x70 || responseCode == 0x72;
       }
 
-      bool isDeffered() {
+      bool isDeferred() {
         return responseCode == 0x71 || responseCode == 0x73;
       }
 
@@ -891,6 +891,36 @@ namespace SCSI {
         }
       }
       /**
+       * Returns the Sense Key value.
+       */
+      unsigned char getSenseKey() {
+        if (isFixedFormat()) {
+          return fixedFormat.senseKey;
+        } else if (isDescriptorFormat()) {
+          return descriptorFormat.senseKey;
+        } else {
+          std::stringstream err;
+          err << "In senseData_t::getSenseKey: no Sense Key with this response "
+            "code or response code not supported ("
+            << std::hex << std::showbase << (int)responseCode << ")";
+          throw castor::exception::Exception(err.str());
+        }
+      }
+      /**
+       * Returns the Sense Key value as string.
+       */
+      std::string getSenseKeyString() {
+        if ( castor::tape::SCSI::senseKeys::lastWithText >= getSenseKey()) {
+          return castor::tape::SCSI::senseKeys::senseKeysText[getSenseKey()];
+        } else {
+          std::stringstream err;
+          err << "In senseData_t::getSenseKeyString: no Sense Key with this "
+            "value ("<< std::hex << std::showbase 
+            << (int)getSenseKey() << ")";
+          throw castor::exception::Exception(err.str());
+        }
+      }      
+      /**
        * Function turning the ACS/ACSQ contents into a string.
        * This function is taken from the Linux kernel sources.
        * see scsi_extd_sense_format.
@@ -916,7 +946,7 @@ namespace SCSI {
         snprintf(buff, sizeof (buff), "Unknown ASC/ASCQ:%02x/%02x", asc, ascq);
         return std::string(buff);
       }
-      /* TODO: add support for sense key, and other bits. See section 4.5.6
+      /* TODO: add support for other bits. See section 4.5.6
        * of SPC-4 for sense key = NO SENSE. */
     };
     
@@ -966,7 +996,7 @@ namespace SCSI {
       }
       return hex.str();
     }
-  }
+} // namespace Structures
 } // namespace SCSI
 } // namespace tape
 } // namespace castor

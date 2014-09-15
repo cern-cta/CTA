@@ -43,6 +43,13 @@ namespace SCSI {
               << "SCSI command failed with status "
               << SCSI::statusToString(status);
       if (SCSI::Status::CHECK_CONDITION == status) {
+        w << ": Sense Information";
+        try {
+          w << ": " << sense->getSenseKeyString();
+        } catch (Exception &ex) {
+          w << ": In addition, failed to get Sense Key string: "
+                  << ex.getMessage();
+        }
         try {
           w << ": " << sense->getACSString();
         } catch (Exception &ex) {

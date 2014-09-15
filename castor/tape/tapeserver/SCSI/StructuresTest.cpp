@@ -518,45 +518,57 @@ namespace unitTests {
     ASSERT_EQ(255U - 1U, sizeof(sense.fixedFormat));
     
     buff[0] = 0x70;
+    buff[2] = 0xFE;
     buff[12] = 0x12;
     buff[13] = 0x34;
     ASSERT_EQ(true, sense.isCurrent());
-    ASSERT_EQ(false, sense.isDeffered());
+    ASSERT_EQ(false, sense.isDeferred());
     ASSERT_EQ(true, sense.isFixedFormat());
     ASSERT_EQ(false, sense.isDescriptorFormat());
     ASSERT_EQ(0x12, sense.getASC());
     ASSERT_EQ(0x34, sense.getASCQ());
+    ASSERT_EQ(0xE, sense.getSenseKey());
+    ASSERT_EQ("Miscompare", sense.getSenseKeyString());
     
     buff[0] = 0x71;
+    buff[2] = 0xFA;
     buff[12] = 0x12;
     buff[13] = 0x34;
     ASSERT_EQ(false, sense.isCurrent());
-    ASSERT_EQ(true, sense.isDeffered());
+    ASSERT_EQ(true, sense.isDeferred());
     ASSERT_EQ(true, sense.isFixedFormat());
     ASSERT_EQ(false, sense.isDescriptorFormat());
     ASSERT_EQ(0x12, sense.getASC());
     ASSERT_EQ(0x34, sense.getASCQ());
+    ASSERT_EQ(0xA, sense.getSenseKey());
+    ASSERT_EQ("Copy Aborted", sense.getSenseKeyString());
     
     buff[0] = 0x72;
+    buff[1] = 0xFB;
     buff[2] = 0x56;
     buff[3] = 0x78;
     ASSERT_EQ(true, sense.isCurrent());
-    ASSERT_EQ(false, sense.isDeffered());
+    ASSERT_EQ(false, sense.isDeferred());
     ASSERT_EQ(false, sense.isFixedFormat());
     ASSERT_EQ(true, sense.isDescriptorFormat());
     ASSERT_EQ(0x56, sense.getASC());
     ASSERT_EQ(0x78, sense.getASCQ());
+    ASSERT_EQ(0xB, sense.getSenseKey());
+    ASSERT_EQ("Aborted Command", sense.getSenseKeyString());
     
     buff[0] = 0x73;
+    buff[1] = 0xFC;
     buff[2] = 0x0b;
     buff[3] = 0x08;
     ASSERT_EQ(false, sense.isCurrent());
-    ASSERT_EQ(true, sense.isDeffered());
+    ASSERT_EQ(true, sense.isDeferred());
     ASSERT_EQ(false, sense.isFixedFormat());
     ASSERT_EQ(true, sense.isDescriptorFormat());
     ASSERT_EQ(0x0b, sense.getASC());
     ASSERT_EQ(0x08, sense.getASCQ());
+    ASSERT_EQ(0xC, sense.getSenseKey());
     ASSERT_EQ("Warning - power loss expected", sense.getACSString());
+    ASSERT_EQ("Equal", sense.getSenseKeyString());
     
     buff[2] = 0x40;
     buff[3] = 0xab;
@@ -566,12 +578,29 @@ namespace unitTests {
     buff[3] = 0x1F;
     ASSERT_EQ("Unknown ASC/ASCQ:00/1f", sense.getACSString());
     
+    buff[1] = 0xF;
+    ASSERT_THROW(sense.getSenseKeyString(), castor::exception::Exception);
+    
     buff[0] = 0x74;
     ASSERT_THROW(sense.getASC(), castor::exception::Exception);
     
     ASSERT_THROW(sense.getACSString(), castor::exception::Exception);
     
     try { sense.getACSString(); ASSERT_TRUE(false); }
+    catch (castor::exception::Exception & ex) {
+      std::string what(ex.getMessageValue());
+      ASSERT_NE(std::string::npos, what.find("response code not supported (0x74)"));
+    }
+    
+    buff[1] = 0xA;
+    ASSERT_THROW(sense.getSenseKey(), castor::exception::Exception);
+    ASSERT_THROW(sense.getSenseKeyString(), castor::exception::Exception);
+    try { sense.getSenseKey(); ASSERT_TRUE(false); }
+    catch (castor::exception::Exception & ex) {
+      std::string what(ex.getMessageValue());
+      ASSERT_NE(std::string::npos, what.find("response code not supported (0x74)"));
+    }
+    try { sense.getSenseKeyString(); ASSERT_TRUE(false); }
     catch (castor::exception::Exception & ex) {
       std::string what(ex.getMessageValue());
       ASSERT_NE(std::string::npos, what.find("response code not supported (0x74)"));
