@@ -21,11 +21,14 @@ END;
 /* handle the creation of the Disk2DiskCopyJobs for the running drainingJobs */
 CREATE OR REPLACE PROCEDURE drainRunner AS
   varNbRunningJobs INTEGER;
+  varDataRunningJobs INTEGER;
   varMaxNbOfSchedD2dPerDrain INTEGER;
+  varMaxDataOfSchedD2dPerDrain INTEGER;
   varUnused INTEGER;
 BEGIN
-  -- get maxNbOfSchedD2dPerDrain
+  -- get maxNbOfSchedD2dPerDrain and MaxDataOfSchedD2dPerDrain
   varMaxNbOfSchedD2dPerDrain := TO_NUMBER(getConfigOption('Draining', 'MaxNbSchedD2dPerDrain', '1000'));
+  varMaxDataOfSchedD2dPerDrain := TO_NUMBER(getConfigOption('Draining', 'MaxDataSchedD2dPerDrain', '10000000000')); -- 10 GB
   -- loop over draining jobs
   FOR dj IN (SELECT id, fileSystem, svcClass, fileMask, euid, egid
                FROM DrainingJob WHERE status = dconst.DRAININGJOB_RUNNING) LOOP
@@ -41,7 +44,10 @@ BEGIN
         CONTINUE;
       END;
       -- check how many disk2DiskCopyJobs are already running for this draining job
-      SELECT count(*) INTO varNbRunningJobs FROM Disk2DiskCopyJob WHERE drainingJob = dj.id;
+      SELECT count(*), nvl(sum(CastorFile.fileSize), 0) INTO varNbRunningJobs, varDataRunningJobs
+        FROM Disk2DiskCopyJob, CastorFile
+       WHERE Disk2DiskCopyJob.drainingJob = dj.id
+         AND CastorFile.id = Disk2DiskCopyJob.castorFile;
       -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running
       -- ones into account. Also take the most important jobs first
       logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_REFILL, 0, '', 'stagerd',
@@ -61,8 +67,15 @@ BEGIN
                      AND NOT EXISTS (SELECT 1 FROM Disk2DiskCopyJob WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
                    ORDER BY DiskCopy.importance DESC)
                  WHERE ROWNUM <= varMaxNbOfSchedD2dPerDrain-varNbRunningJobs) LOOP
-        createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
-                               dconst.REPLICATIONTYPE_DRAINING, F.dcId, TRUE, dj.id, FALSE);
+        -- Do not schedule more that varMaxAmountOfSchedD2dPerDrain
+        IF varDataRunningJobs <= varMaxDataOfSchedD2dPerDrain THEN
+          createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
+                                 dconst.REPLICATIONTYPE_DRAINING, F.dcId, TRUE, dj.id, FALSE);
+          varDataRunningJobs := varDataRunningJobs + F.fileSize;
+        ELSE
+          -- enough data amount, we stop scheduling
+          EXIT;
+        END IF;
       END LOOP;
       UPDATE DrainingJob
          SET lastModificationTime = getTime()
