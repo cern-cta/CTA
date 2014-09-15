@@ -228,7 +228,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   try {
     drive.sessionFailed();
     m_log(LOG_WARNING, "Data-transfer session failed", params);
-    drive.toBeCleaned();
+    drive.createCleaner();
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle crashed data-transfer session: " << 

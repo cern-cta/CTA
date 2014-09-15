@@ -189,6 +189,13 @@ public:
   ~DriveCatalogueEntry() throw();
 
   /**
+   * If there is a catalogue session associated with the tape drive then this
+   * method deletes it and sets the member variable pointing to it to NULL in
+   * order to prevent double deletions.
+   */
+  void deleteSession();
+
+  /**
    * Gets the configuration of the tape-drive.
    *
    * @return The configuration of the tape-drive.
@@ -277,12 +284,9 @@ public:
     const int labelCmdConnection);
   
   /**
-   * Moves the state of tape drive to DRIVE_STATE_SESSIONRUNNING and sets the 
-   * current session type to SESSION_TYPE_CLEANER.
-   * 
-   * This method will accept any drive state.
-   */   
-  void toBeCleaned();
+   * Creates a cleaner session to eject any tape left in the tape drive.
+   */
+  void createCleaner();
 
   /**
    * Moves the state of the tape drive to DRIVE_STATE_UP if the
@@ -495,34 +499,52 @@ private:
   uint16_t getAsnForTapeStatDriveEntry() const throw();
 
   /**
-   * Returns the value of the asnTime field of a TapeStatDriveEntry to be used
-   * in a TapeStatReplyMsgBody.
+   * Determines the value of the asnTime field of a TapeStatDriveEntry to be
+   * used in a TapeStatReplyMsgBody.
    */
   uint32_t getAsnTimeForTapeStatDriveEntry() const throw();
 
   /**
-   * Returns the value of the mode field of a TapeStatDriveEntry to be used
+   * Determines the value of the mode field of a TapeStatDriveEntry to be used
    * in a TapeStatReplyMsgBody.
+   *
+   * @return The value of the mode field if known else WRITE_DISABLE.
    */
   uint16_t getModeForTapeStatDriveEntry() const throw();
 
   /**
-   * Returns the value of the lblCode field of a TapeStatDriveEntry to be used
-   * in a TapeStatReplyMsgBody.
+   * Determines the value of the lblCode field of a TapeStatDriveEntry to be
+   * used in a TapeStatReplyMsgBody.
+   *
+   * @return Always "aul" because this is the only tape format supported by
+   * CASTOR.
    */
   std::string getLblCodeForTapeStatDriveEntry() const throw();
 
   /**
-   * Returns the value of the tobeMounted field of a TapeStatDriveEntry to be
+   * Determines the value of the tobeMounted field of a TapeStatDriveEntry to be
    * used in a TapeStatReplyMsgBody.
+   *
+   * @return The value of the tobeMounted filed if known, else 0.
    */
   uint16_t getToBeMountedForTapeStatDriveEntry() const throw();
 
   /**
-   * Returns the value of the vid field of a TapeStatDriveEntry to be used
+   * Determines the value of the vid field of a TapeStatDriveEntry to be used
    * in a TapeStatReplyMsgBody.
+   *
+   * @return The volume indenfier if known else the empty string.
    */
   std::string getVidForTapeStatDriveEntry() const throw();
+
+  /**
+   * Tries to determine the volume identifier of the tape currently associated
+   * with the tape drive.
+   *
+   * @return The volume identifier of the tape or the empty string if it was
+   * not possible to determine.
+   */
+  std::string getVidForCleaner() const throw();
 
   /**
    * Returns the value of the vsn field of a TapeStatDriveEntry to be used

@@ -60,7 +60,15 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveCatalogueEntry(
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueEntry::~DriveCatalogueEntry()
   throw() {
+  deleteSession();
+}
+
+//------------------------------------------------------------------------------
+// deleteSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::deleteSession() {
   delete m_session;
+  m_session = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -524,63 +532,42 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedLabelJob(
 }
 
 //-----------------------------------------------------------------------------
-// toBeCleaned
+// createCleaner
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::toBeCleaned() {
-  switch(m_state) {
-  case DRIVE_STATE_RUNNING:
-  case DRIVE_STATE_WAITDOWN:
-    {
-      // Get the vid and assignment time of the crashed tape session
-      std::string vid;
-      try {
-        vid = getSession().getVid();
-      } catch(...) {
-        vid = "";
-      }
-      time_t assignmentTime = 0;
-      try {
-        getSession().getAssignmentTime();
-      } catch(...) {
-        assignmentTime = 0;
-      }
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::createCleaner() {
+  try {
+    const DriveCatalogueSession &session = getSession();
+    const std::string vid = session.getVid();
+    const time_t assignmentTime = session.getAssignmentTime();
 
-      // Free the catalogue representation of the crashed tape session setting
-      // the sesison pointer to NULL to prevent the destructor from perfroming
-      // a double delete
-      delete(m_session);
-      m_session = NULL;
+    deleteSession();
 
-      // Create a cleaner session in the catalogue
-      m_state = DRIVE_STATE_RUNNING;
-      m_sessionType = SESSION_TYPE_CLEANER;
-      const unsigned short rmcPort =
-        common::CastorConfiguration::getConfig().getConfEntInt("RMC", "PORT",
-          (unsigned short)RMC_PORT, &m_log);
-      m_session = DriveCatalogueCleanerSession::create(
-        m_log,
-        m_processForker,
-        m_config,
-        vid,
-        rmcPort,
-        assignmentTime);
-    }
-    break;
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to clean drive"
-        ": Drive is not running a tape session: state=" <<
-        drvState2Str(m_state);
-      throw ex;
-    }
+    // Create a cleaner session in the catalogue
+    m_state = DRIVE_STATE_RUNNING;
+    m_sessionType = SESSION_TYPE_CLEANER;
+    const unsigned short rmcPort =
+      common::CastorConfiguration::getConfig().getConfEntInt("RMC", "PORT",
+        (unsigned short)RMC_PORT, &m_log);
+    m_session = DriveCatalogueCleanerSession::create(
+      m_log,
+      m_processForker,
+      m_config,
+      vid,
+      rmcPort,
+      assignmentTime);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create cleaner session: " <<
+      ne.getMessage().str();
+    throw ex;
   } 
 }
 
 //-----------------------------------------------------------------------------
 // sessionSucceeded
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::sessionSucceeded() {
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::
+  sessionSucceeded() {
   switch(m_state) {
   case DRIVE_STATE_RUNNING:
     m_state = DRIVE_STATE_UP;

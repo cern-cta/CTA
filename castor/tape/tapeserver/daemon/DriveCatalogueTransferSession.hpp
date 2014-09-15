@@ -84,11 +84,13 @@ public:
 
   /**
    * Gets the time at which the tape drive was assigned a data transfer job.
+   *
+   * @return The assignment time as the number of seconds since the Epoch.
    */
   time_t getAssignmentTime() const throw();
 
   /**
-   * vdqmJob getter method
+   * Get the vdqm job received from the vdqmd daemon.
    * 
    * @return vdqm job received from the vdqmd daemon
    */
@@ -113,9 +115,10 @@ public:
   /**
    * Gets the volume identifier of the tape associated with the tape drive.
    *
+   * This method throws a castor::exception::Exception if the volume identifer
+   * is not yet known.
+   * 
    * @return The volume identifier of the tape associated with the tape drive.
-   * If the volume indentifier is not known then this method returns the empty
-   * string.
    */
   std::string getVid() const;
 
