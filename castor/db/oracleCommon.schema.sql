@@ -140,6 +140,8 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Draining', 'MaxNbSchedD2dPerDrain', '1000', 'The maximum number of disk to disk copies that each draining job should send to the scheduler concurrently.');
 INSERT INTO CastorConfig
+  VALUES ('Draining', 'MaxDataSchedD2dPerDrain', '10000000000', 'The maximum amount of data that each draining job should send to the scheduler in one go.');
+INSERT INTO CastorConfig
   VALUES ('Rebalancing', 'Sensitivity', '5', 'The rebalancing sensitivity (in percent) : if a fileSystem is at least this percentage fuller than the average of the diskpool where it lives, rebalancing will fire.');
 INSERT INTO CastorConfig
   VALUES ('Stager', 'Protocols', 'rfio rfio3 root gsiftp xroot', 'The list of protocols accepted by the system.');
