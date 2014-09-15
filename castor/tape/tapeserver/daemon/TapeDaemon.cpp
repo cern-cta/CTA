@@ -311,6 +311,8 @@ pid_t castor::tape::tapeserver::daemon::TapeDaemon::forkProcessForker(
     closeTapeDaemonSideOfCmdPair(cmdPair);
     closeTapeDaemonSideOfReaperPair(reaperPair);
 
+    castor::utils::setProcessNameAndCmdLine(m_argv[0], "tpforker");
+
     exit(runProcessForker(cmdPair.processForker, reaperPair.processForker));
   }
 }
@@ -511,7 +513,7 @@ int castor::tape::tapeserver::daemon::TapeDaemon::runProcessForker(
   const int cmdReceiverSocket, const int reaperSenderSocket) throw() {
   try {
     ProcessForker processForker(m_log, cmdReceiverSocket, reaperSenderSocket,
-      m_hostName);
+      m_hostName, m_argv[0]);
     processForker.execute();
     return 0;
   } catch(castor::exception::Exception &ex) {

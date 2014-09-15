@@ -59,10 +59,11 @@ TEST_F(castor_tape_tapeserver_daemon_ProcessForkerTest, constructor) {
   const std::string programName = "unittests";
   const std::string hostName = "hostName";
   castor::log::DummyLogger log(programName);
+  char argv0[12] = "tapeserverd";
   std::auto_ptr<ProcessForker> processForker;
   ASSERT_NO_THROW(processForker.reset(
     new ProcessForker(log, cmdReceiverSocket.get(), reaperSenderSocket.get(),
-      hostName)));
+      hostName, argv0)));
   cmdReceiverSocket.release();
 }
 
@@ -82,10 +83,11 @@ TEST_F(castor_tape_tapeserver_daemon_ProcessForkerTest, socketproxy) {
   const std::string programName = "unittests";
   const std::string hostName = "hostName";
   castor::log::DummyLogger log(programName);
+  char argv0[12] = "tapeserverd";
   std::auto_ptr<ProcessForker> processForker;
   ASSERT_NO_THROW(processForker.reset(
     new ProcessForker(log, cmdReceiverSocket.get(), reaperSenderSocket.get(),
-      hostName)));
+      hostName, argv0)));
   cmdReceiverSocket.release();
 
   std::auto_ptr<ProcessForkerProxySocket> processForkerProxy;

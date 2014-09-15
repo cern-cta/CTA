@@ -60,11 +60,13 @@ castor::tape::tapeserver::daemon::ProcessForker::ProcessForker(
   log::Logger &log,
   const int cmdSocket,
   const int reaperSocket,
-  const std::string &hostName) throw():
+  const std::string &hostName,
+  char *const argv0) throw():
   m_log(log),
   m_cmdSocket(cmdSocket),
   m_reaperSocket(reaperSocket),
-  m_hostName(hostName) {
+  m_hostName(hostName),
+  m_argv0(argv0) {
 }
 
 //------------------------------------------------------------------------------
@@ -122,13 +124,8 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleEvents() throw() {
   }
 
   // If program execution reached here then an exception was thrown
-
-  // Sleep for a second in order to prevent a tight loop in the case of the
-  // perpetual raising of exceptions
-  sleep(1);
-
-  // An exception should not stop the main event loop
-  return true; // The main event loop should continue
+  m_log(LOG_ERR, "ProcessForker is gracefully shutting down");
+  return false;
 }
 
 //------------------------------------------------------------------------------
@@ -194,15 +191,9 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleMsg() {
     const int timeout = 10; // Timeout in seconds
     frame = ProcessForkerUtils::readFrame(m_cmdSocket, timeout);
   } catch(castor::exception::Exception &ne) {
-    log::Param params[] = {log::Param("message", ne.getMessage().str())};
-    m_log(LOG_ERR, "Failed to handle message", params);
-    sleep(1); // Sleep a moment to avoid going into a tight error loop
-    return true; // The main event loop should continue
-    /*
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle message: " << ne.getMessage().str();
     throw ex;
-    */
   }
 
   log::Param params[] = {
@@ -308,14 +299,13 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     log::Param params[] = {log::Param("pid", forkRc)};
     m_log(LOG_INFO, "ProcessForker forked cleaner session", params);
 
-    // TO BE DONE
-    waitpid(forkRc, NULL, 0);
-
     return createForkSucceededResult(forkRc, true);
 
   // Else this is the child process
   } else {
     closeCmdReceiverSocket();
+
+    castor::utils::setProcessNameAndCmdLine(m_argv0, "tpcleaner");
 
     try {
       exit(runCleanerSession(rqst));
@@ -369,6 +359,8 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   } else {
     closeCmdReceiverSocket();
 
+    castor::utils::setProcessNameAndCmdLine(m_argv0, "tptransfer");
+
     try {
       exit(runDataTransferSession(rqst));
     } catch(castor::exception::Exception &ne) {
@@ -421,6 +413,8 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   // Else this is the child process
   } else {
     closeCmdReceiverSocket();
+
+    castor::utils::setProcessNameAndCmdLine(m_argv0, "tplabel");
 
     try {
       exit(runLabelSession(rqst));

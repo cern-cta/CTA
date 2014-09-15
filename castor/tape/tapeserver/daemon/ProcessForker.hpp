@@ -58,9 +58,10 @@ public:
    * ProcessForker.
    * @param hostName The name of the host on which the tapeserverd daemon is
    * running.
+   * @param argv0 Pointer to argv[0], the command-line.
    */
   ProcessForker(log::Logger &log, const int cmdSocket, const int reaperSocket,
-    const std::string &hostName) throw();
+    const std::string &hostName, char *const argv0) throw();
 
   /**
    * Destructor.
@@ -104,6 +105,11 @@ private:
    * The name of the host on which the tapeserverd daemon is running.
    */ 
   const std::string m_hostName;
+
+  /**
+   * Pointer to argv[0], the command-line.
+   */
+  char *const m_argv0;
 
   /**
    * Idempotent method that closes the socket used for receving commands
