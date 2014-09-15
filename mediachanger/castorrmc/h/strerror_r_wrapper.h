@@ -56,6 +56,9 @@
  * @param errnum The error number.
  * @param buf The buffer.
  * @param buflen The length of the buffer.
+ * @return 0 on success and -1 on error.  If -1 is returned then errno is set
+ * to either EINVAL to indicate the error number is invalid, or to ERANGE to
+ * indicate the supplied error buffer is not large enough.
  */
 EXTERN_C int strerror_r_wrapper(int errnum, char *buf, size_t buflen);
 

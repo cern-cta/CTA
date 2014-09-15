@@ -81,7 +81,7 @@ The \fBserrno\fP variable is divided into common values and per package values, 
 The following error values might be returned by any package:
 .TP 1.9i
 .B SENOSHOST
-(1001) Host unknown
+(1001) Host not known
 .TP
 .B SENOSSERV
 (1002) Service unknown
