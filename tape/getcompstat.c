@@ -11,16 +11,64 @@
 #include "Ctape_api.h" 
 #include "serrno.h" 
 #include "sendscsicmd.h" 
+#include "endian.h"
+#include "stdint.h"
+
+uint64_t getU64ValueFromLogSenseParameter(
+  const unsigned char *const logSenseParameter)  {
+  union {
+    unsigned char tmp[8];
+    uint64_t val64;
+  } u;
+  const unsigned char lenOffset=3; 
+  const unsigned char valOffset=4;
+  u.tmp[0]=*(logSenseParameter+lenOffset)>0?*(logSenseParameter+valOffset):0;
+  u.tmp[1]=*(logSenseParameter+lenOffset)>1?*(logSenseParameter+valOffset+1):0;
+  u.tmp[2]=*(logSenseParameter+lenOffset)>2?*(logSenseParameter+valOffset+2):0;
+  u.tmp[3]=*(logSenseParameter+lenOffset)>3?*(logSenseParameter+valOffset+3):0;
+  u.tmp[4]=*(logSenseParameter+lenOffset)>4?*(logSenseParameter+valOffset+4):0;
+  u.tmp[5]=*(logSenseParameter+lenOffset)>5?*(logSenseParameter+valOffset+5):0;
+  u.tmp[6]=*(logSenseParameter+lenOffset)>6?*(logSenseParameter+valOffset+6):0;
+  u.tmp[7]=*(logSenseParameter+lenOffset)>7?*(logSenseParameter+valOffset+7):0;
+
+  u.val64 = be64toh(u.val64);
+     
+  return u.val64>>(64-(*(logSenseParameter+lenOffset)<<3));     
+}
+
+uint64_t getS64ValueFromLogSenseParameter(
+  const unsigned char *const logSenseParameter)  {
+  union {
+    unsigned char tmp[8];
+    uint64_t val64U;
+    int64_t  val64S;
+  } u;
+  const unsigned char lenOffset=3;      
+  const unsigned char valOffset=4;
+  u.tmp[0]=*(logSenseParameter+lenOffset)>0?*(logSenseParameter+valOffset):0;
+  u.tmp[1]=*(logSenseParameter+lenOffset)>1?*(logSenseParameter+valOffset+1):0;
+  u.tmp[2]=*(logSenseParameter+lenOffset)>2?*(logSenseParameter+valOffset+2):0;
+  u.tmp[3]=*(logSenseParameter+lenOffset)>3?*(logSenseParameter+valOffset+3):0;
+  u.tmp[4]=*(logSenseParameter+lenOffset)>4?*(logSenseParameter+valOffset+4):0;
+  u.tmp[5]=*(logSenseParameter+lenOffset)>5?*(logSenseParameter+valOffset+5):0;
+  u.tmp[6]=*(logSenseParameter+lenOffset)>6?*(logSenseParameter+valOffset+6):0;
+  u.tmp[7]=*(logSenseParameter+lenOffset)>7?*(logSenseParameter+valOffset+7):0;
+
+  u.val64U = be64toh(u.val64U);
+
+  return  (u.val64S < 0?-(-u.val64S>> (64-(*(logSenseParameter+lenOffset)<<3))):
+          (u.val64S>>(64-(*(logSenseParameter+lenOffset)<<3))));
+}
 
 int get_compression_stats(int tapefd,
                           char *path,
                           char *devtype,
                           COMPRESSION_STATS *comp_stats)
 {
-	unsigned long kbytes_from_host = 0;
-	unsigned long kbytes_to_tape = 0;
-	unsigned long kbytes_from_tape = 0;
-	unsigned long kbytes_to_host = 0;
+        uint64_t bytesToHost;
+        uint64_t bytesFromTape;
+        uint64_t bytesFromHost;
+        uint64_t bytesToTape;
 	unsigned char *endpage;
 	unsigned char *p;
 	unsigned short pagelen;
@@ -54,48 +102,44 @@ int get_compression_stats(int tapefd,
 	pagelen = *(p+2) << 8 | *(p+3);
 	endpage = p + 4 + pagelen;
 	p += 4;
-
+        bytesToHost=bytesFromTape=bytesFromHost=bytesToTape=0;
+        
 	if (strcmp (devtype, "LTO") == 0) {	/* values in bytes */
-
-/* Fixed by BC 2003/04/22
-   On IBM/HP LTO drives, the number of bytes field can be
-   a negative offset.
-*/
-
+        const uint64_t mb      = 1000000;
 	while (p < endpage) {
 		parmcode = *p << 8 | *(p+1);
 			switch (parmcode) {
 			case 0x2:
-				kbytes_to_host =
-					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
+				bytesToHost =
+				    getU64ValueFromLogSenseParameter(p) * mb;
 				break;
 			case 0x3:
-				kbytes_to_host +=
-					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
+				bytesToHost +=
+				    getS64ValueFromLogSenseParameter(p);
 				break;
 			case 0x4:
-				kbytes_from_tape =
-					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
+				bytesFromTape =
+				    getU64ValueFromLogSenseParameter(p) * mb;
 				break;
 			case 0x5:
-				kbytes_from_tape +=
-					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
+				bytesFromTape +=
+		                    getS64ValueFromLogSenseParameter(p);
 				break;
 			case 0x6:
-				kbytes_from_host =
-					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
+				bytesFromHost =
+				    getU64ValueFromLogSenseParameter(p) * mb;
 				break;
 			case 0x7:
-				kbytes_from_host +=
-					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
+				bytesFromHost +=
+				    getS64ValueFromLogSenseParameter(p);
 				break;
 			case 0x8:
-				kbytes_to_tape =
-					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
+				bytesToTape =
+				    getU64ValueFromLogSenseParameter(p) * mb;
 				break;
 			case 0x9:
-				kbytes_to_tape +=
-					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
+				bytesToTape +=
+			            getS64ValueFromLogSenseParameter(p);
 				break;
 			}
 			p += *(p+3) + 4;
@@ -105,20 +149,20 @@ int get_compression_stats(int tapefd,
 			parmcode = *p << 8 | *(p+1);
 			switch (parmcode) {
 			case 0x1:
-				kbytes_from_host =
-				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
+				bytesFromHost =
+				    getU64ValueFromLogSenseParameter(p) << 10;
 				break;
 			case 0x3:
-				kbytes_to_host =
-				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
+				bytesToHost =
+				    getU64ValueFromLogSenseParameter(p) << 10;
 				break;
 			case 0x5:
-				kbytes_to_tape =
-				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
+				bytesToTape =
+				    getU64ValueFromLogSenseParameter(p) << 10;
 				break;
 			case 0x7:
-				kbytes_from_tape =
-				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
+				bytesFromTape =
+				    getU64ValueFromLogSenseParameter(p) << 10;
 				break;
 			}
 			p += *(p+3) + 4;
@@ -128,34 +172,30 @@ int get_compression_stats(int tapefd,
 			parmcode = *p << 8 | *(p+1);
 			switch (parmcode) {
 			case 0x0:
-				kbytes_from_host =
-				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
+				bytesFromHost =
+				    getU64ValueFromLogSenseParameter(p);
 				break;
 			case 0x1:
-				kbytes_to_tape =
-				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
+				bytesToTape =
+				    getU64ValueFromLogSenseParameter(p);
 				break;
 			case 0x2:
-				kbytes_from_tape =
-				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
+				bytesFromTape =
+				    getU64ValueFromLogSenseParameter(p);
 				break;
 			case 0x3:
-				kbytes_to_host =
-				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
+				bytesToHost =
+				    getU64ValueFromLogSenseParameter(p);
 				break;
 			}
 			p += *(p+3) + 4;
 		}
-	} else {
-		kbytes_from_host = 0;
-		kbytes_to_tape = 0;
-		kbytes_from_tape = 0;
-		kbytes_to_host = 0;
-	}
-	comp_stats->from_host = kbytes_from_host;
-	comp_stats->to_tape = kbytes_to_tape;
-	comp_stats->from_tape = kbytes_from_tape;
-	comp_stats->to_host = kbytes_to_host;  
+	} 
+	
+	comp_stats->from_host = bytesFromHost >> 10;
+	comp_stats->to_tape = bytesToTape >> 10;
+	comp_stats->from_tape = bytesFromTape >> 10;
+	comp_stats->to_host = bytesToHost >> 10;  
 	return (0);
 }
 
