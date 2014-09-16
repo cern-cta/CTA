@@ -41,8 +41,7 @@ namespace daemon     {
 /**
  * Handles the events of the incoming connection from the ProcessForker.
  */
-class ProcessForkerConnectionHandler:
-  public reactor::ZMQPollEventHandler {
+class ProcessForkerConnectionHandler: public reactor::ZMQPollEventHandler {
 public:
 
   /**
@@ -54,17 +53,12 @@ public:
    * @param log The object representing the API of the CASTOR logging system.
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
-   * @param hostName The name of the host on which the tape-server daemon is
-   * running.
-   * @param vdqm Proxy object representing the vdqmd daemon.
    */
   ProcessForkerConnectionHandler(
     const int fd,
     reactor::ZMQReactor &reactor,
     log::Logger &log,
-    DriveCatalogue &driveCatalogue,
-    const std::string &hostName,
-    legacymsg::VdqmProxy &vdqm) throw();
+    DriveCatalogue &driveCatalogue) throw();
 
   /**
    * Destructor.
@@ -114,16 +108,6 @@ private:
   DriveCatalogue &m_driveCatalogue;
 
   /**
-   * The name of th ehost on which the tape-server daemon is running.
-   */
-  const std::string m_hostName;
-
-  /** 
-   * Proxy object representing the vdqmd daemon.
-   */
-  castor::legacymsg::VdqmProxy &m_vdqm;
-  
-  /**
    * The timeout in seconds to be applied when performing network read and
    * write operations.
    */
@@ -161,124 +145,11 @@ private:
   void handleProcessCrashedMsg(const ProcessForkerFrame &frame);
 
   /**
-   * Dispatches the appropriate handler for the specified crashed process.
-   *
-   * @param drive The drive associated with the crashed process.
-   * @param msg The ProcessCrashed message.
-   */
-  void dispatchCrashedProcessHandler(DriveCatalogueEntry &drive,
-    const messages::ProcessCrashed &msg);
-
-  /**
-   * Handles the specified crashed process.
-   *
-   * @param drive The drive associated with the crashed process.
-   * @param msg The ProcessCrashed message.
-   */
-  void handleCrashedDataTransferSession(DriveCatalogueEntry &drive,
-    const messages::ProcessCrashed &msg);
-
-  /**
-   * Handles the specified crashed process.
-   *
-   * @param drive The drive associated with the crashed process.
-   * @param msg The ProcessCrashed message.
-   */
-  void handleCrashedCleanerSession(DriveCatalogueEntry &drive,
-    const messages::ProcessCrashed &msg);
-
-  /**
-   * Handles the specified crashed process.
-   *
-   * @param drive The drive associated with the crashed process.
-   * @param msg The ProcessCrashed message.
-   */
-  void handleCrashedLabelSession(DriveCatalogueEntry &drive,
-    const messages::ProcessCrashed &msg);
-
-  /**
    * Handles the specified ProcessExitedMsg.
    *
    * @param frame The frame containing the message.
    */
   void handleProcessExitedMsg(const ProcessForkerFrame &frame);
-
-  /**
-   * Dispatches the appropriate handler for the specified exited process.
-   *
-   * @param drive The drive associated with the exited process.
-   * @param msg The ProcessExited message.
-   */
-  void dispatchExitedProcessHandler(DriveCatalogueEntry &drive,
-    const messages::ProcessExited &msg);
-
-  /**
-   * Handles the specified exited process.
-   *
-   * @param drive The drive associated with the crashed process.
-   * @param msg The ProcessCrashed message.
-   */
-  void handleExitedDataTransferSession(DriveCatalogueEntry &drive,
-    const messages::ProcessExited &msg);
-  
-  /**
-   * Handles the specified exited process.
-   *
-   * @param drive The drive associated with the crashed process.
-   * @param msg The ProcessCrashed message.
-   */
-  void handleExitedCleanerSession(DriveCatalogueEntry &drive,
-    const messages::ProcessExited &msg);
-
-  /**
-   * Handles the specified exited process.
-   *
-   * @param drive The drive associated with the crashed process.
-   * @param msg The ProcessCrashed message.
-   */
-  void handleExitedLabelSession(DriveCatalogueEntry &drive,
-    const messages::ProcessExited &msg);
-
-  /** 
-   * Request the vdqmd daemon to release the tape drive associated with the
-   * session child-process with the specified process ID.
-   *  
-   * @param driveConfig The configuration of the tape drive.
-   * @param pid The process ID of the session child-process.
-   */
-  void requestVdqmToReleaseDrive(const utils::DriveConfig &driveConfig,
-    const pid_t pid);
-
-  /**
-   * Sets the state of the tape drive asscoiated with the specified
-   * child process to down within the vdqmd daemon.
-   *
-   * @param pid The process ID of the child process.
-   * @param driveConfig The configuration of the tape drive.
-   */
-  void setDriveDownInVdqm(const pid_t pid,
-    const utils::DriveConfig &driveConfig);
-
-  /**
-   * Sets the state of the tape drive asscoiated with the specified
-   * child process to up within the vdqmd daemon.
-   *
-   * @param pid The process ID of the child process.
-   * @param driveConfig The configuration of the tape drive.
-   */
-  void setDriveUpInVdqm(const pid_t pid,
-    const utils::DriveConfig &driveConfig);
-
-  /** 
-   * Notifies the vdqm that the tape associated with the session child-process
-   * with the specified process ID has been unmounted.
-   *
-   * @param driveConfig The configuration of the tape drive.
-   * @param vid The identifier of the unmounted volume.
-   * @param pid The process ID of the session child-process.
-   */
-  void notifyVdqmTapeUnmounted(const utils::DriveConfig &driveConfig,
-    const std::string &vid, const pid_t pid);
 
 }; // class ProcessForkerConnectionHandler
 

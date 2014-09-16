@@ -31,18 +31,19 @@
 castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession *
   castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::create(
   log::Logger &log,
-  ProcessForkerProxy &processForker,
+  const int netTimeout,
   const tape::utils::DriveConfig &driveConfig,
+  ProcessForkerProxy &processForker,
   const std::string &vid,
   const unsigned short rmcPort,
   const time_t assignmentTime) {
 
-  const pid_t pid = forkCleanerSession(processForker, driveConfig, vid,
-    rmcPort);
+  const pid_t pid = processForker.forkCleaner(driveConfig, vid, rmcPort);
 
   return new DriveCatalogueCleanerSession(
-    pid,
     log,
+    netTimeout,
+    pid,
     driveConfig,
     vid,
     assignmentTime);
@@ -53,27 +54,15 @@ castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession *
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::
   DriveCatalogueCleanerSession(
-  const pid_t pid,
   log::Logger &log,
+  const int netTimeout,
+  const pid_t pid,
   const tape::utils::DriveConfig &driveConfig,
   const std::string &vid,
   const time_t assignmentTime) throw():
-  m_pid(pid),
-  m_log(log),
+  DriveCatalogueSession(log, netTimeout, pid, driveConfig),
   m_vid(vid),
   m_assignmentTime(assignmentTime) {
-}
-
-//------------------------------------------------------------------------------
-// forkCleanerSession
-//------------------------------------------------------------------------------
-pid_t castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::
-  forkCleanerSession(ProcessForkerProxy &processForker,
-  const tape::utils::DriveConfig &driveConfig,
-  const std::string &vid,
-  const unsigned short rmcPort) {
-
-  return processForker.forkCleaner(driveConfig, vid, rmcPort);
 }
 
 //------------------------------------------------------------------------------

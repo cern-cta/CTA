@@ -49,16 +49,12 @@ castor::tape::tapeserver::daemon::AdminConnectionHandler::AdminConnectionHandler
   const int fd,
   reactor::ZMQReactor &reactor,
   log::Logger &log,
-  legacymsg::VdqmProxy &vdqm,
-  DriveCatalogue &driveCatalogue,
-  const std::string &hostName)
+  DriveCatalogue &driveCatalogue)
   throw():
     m_fd(fd),
     m_reactor(reactor),
     m_log(log),
-    m_vdqm(vdqm),
     m_driveCatalogue(driveCatalogue),
-    m_hostName(hostName),
     m_netTimeout(1) { // Timeout in seconds
 }
 
@@ -197,12 +193,10 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
 
   switch(body.status) {
   case CONF_UP:
-    m_vdqm.setDriveUp(m_hostName, unitName, driveConfig.dgn);
     drive.configureUp();
     m_log(LOG_INFO, "Drive configured up", params);
     break;
   case CONF_DOWN:
-    m_vdqm.setDriveDown(m_hostName, unitName, driveConfig.dgn);
     drive.configureDown();
     m_log(LOG_INFO, "Drive configured down", params);
     break;

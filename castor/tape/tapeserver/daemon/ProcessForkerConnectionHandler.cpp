@@ -35,15 +35,11 @@ castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   const int fd,
   reactor::ZMQReactor &reactor,
   log::Logger &log,
-  DriveCatalogue &driveCatalogue,
-  const std::string &hostName,
-  legacymsg::VdqmProxy &vdqm) throw():
+  DriveCatalogue &driveCatalogue) throw():
   m_fd(fd),
   m_reactor(reactor),
   m_log(log),
   m_driveCatalogue(driveCatalogue),
-  m_hostName(hostName),
-  m_vdqm(vdqm),
   m_netTimeout(1) // Timeout in seconds
 {
 }
@@ -156,8 +152,8 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   default:
     {
       castor::exception::Exception ex;
-      ex.getMessage() << "Failed to dispatch message handler"
-        ": Unexpected message type"
+      ex.getMessage() << "ProcessForkerConnectionHandler failed to dispatch"
+        " message handler: Unexpected message type"
         ": type=" << messages::msgTypeToString(frame.type);
       throw ex;
     }
@@ -181,104 +177,22 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     m_log(LOG_INFO,
       "ProcessForkerConnectionHandler handling ProcessCrashed message", params);
 
+    // Notify the catalogue session
     DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(msg.pid());
-    dispatchCrashedProcessHandler(drive, msg);
+    drive.sessionFailed();
+
+    // Create a cleaner session if the session that crashed is itself not a
+    // cleaner
+    if(DriveCatalogueEntry::SESSION_TYPE_CLEANER != drive.getSessionType()) {
+      const std::string vid = drive.getVidForCleaner();
+      const time_t assignmentTime = drive.getAssignmentTimeForCleaner();
+      drive.createCleaner(vid, assignmentTime);
+    }
+
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle ProcessCrashed message: " <<
       ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// dispatchCrashedProcessHandler
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
-  dispatchCrashedProcessHandler(DriveCatalogueEntry &drive,
-  const messages::ProcessCrashed &msg) {
-
-  switch(drive.getSessionType()) {
-  case DriveCatalogueEntry::SESSION_TYPE_DATATRANSFER:
-    return handleCrashedDataTransferSession(drive, msg);
-  case DriveCatalogueEntry::SESSION_TYPE_LABEL:
-    return handleCrashedLabelSession(drive, msg);
-  case DriveCatalogueEntry::SESSION_TYPE_CLEANER:
-    return handleCrashedCleanerSession(drive, msg);
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to dispatch handler for crashed process"
-        ": Unexpected session type: sessionType=" << drive.getSessionType();
-      throw ex;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleCrashedDataTransferSession
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
-  handleCrashedDataTransferSession(DriveCatalogueEntry &drive,
-  const messages::ProcessCrashed &msg) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("pid", msg.pid()));
-  params.push_back(log::Param("signal", msg.signal()));
-
-  try {
-    m_log(LOG_WARNING, "Data-transfer session failed", params);
-    const std::string vid = drive.getVidForCleaner();
-    const time_t assignmentTime = drive.getAssignmentTimeForCleaner();
-    drive.sessionFailed();
-    drive.createCleaner(vid, assignmentTime);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle crashed data-transfer session: " << 
-    ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleCrashedCleanerSession
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
-  handleCrashedCleanerSession(DriveCatalogueEntry &drive,
-  const messages::ProcessCrashed &msg) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("pid", msg.pid()));
-  params.push_back(log::Param("signal", msg.signal()));
-
-  try {
-    drive.sessionFailed();
-    m_log(LOG_WARNING, "Cleaner session failed", params);
-    setDriveDownInVdqm(msg.pid(), drive.getConfig());
-  }  catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle crashed cleaner session: " << 
-    ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleCrashedLabelSession 
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
-  handleCrashedLabelSession(DriveCatalogueEntry &drive,
-  const messages::ProcessCrashed &msg) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("pid", msg.pid()));
-  params.push_back(log::Param("signal", msg.signal()));
-
-  try {
-    drive.sessionFailed();
-    m_log(LOG_WARNING, "Label session failed", params);
-    setDriveDownInVdqm(msg.pid(), drive.getConfig());
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle crashed label session: " <<
-    ne.getMessage().str();
     throw ex;
   }
 }
@@ -301,216 +215,15 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
       "ProcessForkerConnectionHandler handling ProcessExited message", params);
 
     DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(msg.pid());
-    dispatchExitedProcessHandler(drive, msg);
+    if(0 == msg.exitcode()) {
+      drive.sessionSucceeded();
+    } else {
+      drive.sessionFailed();
+    }
+
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle ProcessExited message: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// dispatchExitedProcessHandler
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
-  dispatchExitedProcessHandler(DriveCatalogueEntry &drive,
-  const messages::ProcessExited &msg) {
-
-  switch(drive.getSessionType()) {
-  case DriveCatalogueEntry::SESSION_TYPE_DATATRANSFER:
-    return handleExitedDataTransferSession(drive, msg);
-  case DriveCatalogueEntry::SESSION_TYPE_LABEL:
-    return handleExitedLabelSession(drive, msg);
-  case DriveCatalogueEntry::SESSION_TYPE_CLEANER:
-    return handleExitedCleanerSession(drive, msg);
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to dispatch handler for exited process"
-        ": Unexpected session type: sessionType=" << drive.getSessionType();
-      throw ex;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleExitedDataTransferSession
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
-  handleExitedDataTransferSession(DriveCatalogueEntry &drive,
-  const messages::ProcessExited &msg) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("pid", msg.pid()));
-  params.push_back(log::Param("exitCode", msg.exitcode()));
-
-  try {
-    if(0 == msg.exitcode()) {
-      drive.sessionSucceeded();
-      m_log(LOG_INFO, "Data-transfer session succeeded", params);
-      setDriveUpInVdqm(msg.pid(), drive.getConfig());
-    } else {
-      drive.sessionFailed();
-      m_log(LOG_WARNING, "Data-transfer session failed", params);
-      setDriveDownInVdqm(msg.pid(), drive.getConfig());
-    }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle exited data-transfer session: " << 
-    ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleExitedCleanerSession
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
-  handleExitedCleanerSession(DriveCatalogueEntry &drive,
-  const messages::ProcessExited &msg) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("pid", msg.pid()));
-  params.push_back(log::Param("exitCode", msg.exitcode()));
-
-  try {
-    if(0 == msg.exitcode()) {
-      drive.sessionSucceeded();
-      m_log(LOG_INFO, "Cleaner session succeeded", params);
-      setDriveUpInVdqm(msg.pid(), drive.getConfig());
-    } else {
-      drive.sessionFailed();
-      m_log(LOG_WARNING, "Cleaner session failed", params);
-      setDriveDownInVdqm(msg.pid(), drive.getConfig());
-    }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle exited cleaner session: " << 
-    ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleExitedLabelSession 
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
-  handleExitedLabelSession(DriveCatalogueEntry &drive,
-  const messages::ProcessExited &msg) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("pid", msg.pid()));
-  params.push_back(log::Param("exitCode", msg.exitcode()));
-
-  try {
-    if(0 == msg.exitcode()) {
-      drive.sessionSucceeded();
-      m_log(LOG_INFO, "Label session succeeded", params);
-    } else {
-      drive.sessionFailed();
-      m_log(LOG_WARNING, "Label session failed", params);
-      setDriveDownInVdqm(msg.pid(), drive.getConfig());
-
-      castor::exception::Exception ex;
-      ex.getMessage() << "Label session exited with failure code " <<
-        msg.exitcode();
-      throw ex;
-    }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle exited label session: " <<
-    ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// requestVdqmToReleaseDrive
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
-  requestVdqmToReleaseDrive(const utils::DriveConfig &driveConfig,
-  const pid_t pid) {
-  std::list<log::Param> params;
-  try {
-    const bool forceUnmount = true;
-
-    params.push_back(log::Param("pid", pid));
-    params.push_back(log::Param("unitName", driveConfig.unitName));
-    params.push_back(log::Param("dgn", driveConfig.dgn));
-    params.push_back(log::Param("forceUnmount", forceUnmount));
-
-    m_vdqm.releaseDrive(m_hostName, driveConfig.unitName, driveConfig.dgn,
-      forceUnmount, pid);
-    m_log(LOG_INFO, "Requested vdqm to release drive", params);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to request vdqm to release drive: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// notifyVdqmTapeUnmounted
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
-  notifyVdqmTapeUnmounted(const utils::DriveConfig &driveConfig,
-  const std::string &vid, const pid_t pid) {
-  try {
-    std::list<log::Param> params;
-    params.push_back(log::Param("pid", pid));
-    params.push_back(log::Param("unitName", driveConfig.unitName));
-    params.push_back(log::Param("vid", vid));
-    params.push_back(log::Param("dgn", driveConfig.dgn));
-
-    m_vdqm.tapeUnmounted(m_hostName, driveConfig.unitName, driveConfig.dgn,
-      vid);
-    m_log(LOG_INFO, "Notified vdqm that a tape was unmounted", params);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed notify vdqm that a tape was unmounted: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// setDriveDownInVdqm
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
-  setDriveDownInVdqm(const pid_t pid, const utils::DriveConfig &driveConfig) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("pid", pid));
-
-  try {
-    params.push_back(log::Param("unitName", driveConfig.unitName));
-    params.push_back(log::Param("dgn", driveConfig.dgn));
-
-    m_vdqm.setDriveDown(m_hostName, driveConfig.unitName, driveConfig.dgn);
-    m_log(LOG_INFO, "Set tape-drive down in vdqm", params);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to set tape-drive down in vdqm: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// setDriveUpInVdqm
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
-  setDriveUpInVdqm(const pid_t pid, const utils::DriveConfig &driveConfig) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("pid", pid));
-
-  try {
-    params.push_back(log::Param("unitName", driveConfig.unitName));
-    params.push_back(log::Param("dgn", driveConfig.dgn));
-
-    m_vdqm.setDriveUp(m_hostName, driveConfig.unitName, driveConfig.dgn);
-    m_log(LOG_INFO, "Set tape-drive up in vdqm", params);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to set tape-drive up in vdqm: " <<
       ne.getMessage().str();
     throw ex;
   }

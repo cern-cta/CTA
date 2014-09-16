@@ -404,6 +404,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::configureUp() {
       throw ex;
     }
   }
+  m_vdqm.setDriveUp(m_hostName, m_config.unitName, m_config.dgn);
 }
 
 //-----------------------------------------------------------------------------
@@ -465,11 +466,17 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedVdqmJob(
         common::CastorConfiguration::getConfig().getConfEntInt("RMC", "PORT",
           (unsigned short)RMC_PORT, &m_log);
       DriveCatalogueTransferSession *const transferSession =
-        DriveCatalogueTransferSession::create(m_log, m_config,
-          m_dataTransferConfig, job, rmcPort, m_processForker, m_vdqm,
-          m_hostName);
+        DriveCatalogueTransferSession::create(
+          m_log,
+          m_netTimeout,
+          m_config,
+          job,
+          m_dataTransferConfig,
+          rmcPort,
+          m_processForker);
       m_session = dynamic_cast<DriveCatalogueSession *>(transferSession);
-      transferSession->assignDriveInVdqm();
+      m_vdqm.assignDrive(m_hostName, m_config.unitName, job.dgn,
+        job.volReqId, m_session->getPid());
     }
     break;
   default:
@@ -517,8 +524,14 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedLabelJob(
       const unsigned short rmcPort =
         common::CastorConfiguration::getConfig().getConfEntInt("RMC", "PORT",
           (unsigned short)RMC_PORT, &m_log);
-      m_session = DriveCatalogueLabelSession::create(m_netTimeout, m_log,
-        m_processForker, m_config, job, rmcPort, labelCmdConnection);
+      m_session = DriveCatalogueLabelSession::create(
+        m_log,
+        m_netTimeout,
+        m_config,
+        m_processForker,
+        job,
+        rmcPort,
+        labelCmdConnection);
     }
     break;
   default:
@@ -545,8 +558,9 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::createCleaner(
         (unsigned short)RMC_PORT, &m_log);
     m_session = DriveCatalogueCleanerSession::create(
       m_log,
-      m_processForker,
+      m_netTimeout,
       m_config,
+      m_processForker,
       vid,
       rmcPort,
       assignmentTime);
@@ -566,9 +580,11 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::
   switch(m_state) {
   case DRIVE_STATE_RUNNING:
     m_state = DRIVE_STATE_UP;
+    m_vdqm.setDriveUp(m_hostName, m_config.unitName, m_config.dgn);
     break;
   case DRIVE_STATE_WAITDOWN:
     m_state = DriveCatalogueEntry::DRIVE_STATE_DOWN;
+    m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
     break;
   default:
     {
@@ -618,6 +634,8 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::sessionFailed() {
       throw ex;
     }
   }
+
+  m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
 
   // Wrap the session in an auto pointer to gaurantee it is deleted even in the
   // event of an exception

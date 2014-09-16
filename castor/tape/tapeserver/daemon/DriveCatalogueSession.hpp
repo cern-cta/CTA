@@ -23,6 +23,9 @@
 
 #pragma once
 
+#include "castor/log/Logger.hpp"
+#include "castor/tape/utils/DriveConfig.hpp"
+
 #include <string>
 #include <sys/types.h>
 #include <unistd.h>
@@ -89,7 +92,49 @@ public:
    * @return True if a tape is in the process of being mounted.
    */
   virtual bool tapeIsBeingMounted() const throw() = 0;
-    
+
+protected:
+
+  /**
+   * Protected constructor.
+   *
+   * Except in the case of unit testing a DriveCatalogueTransferSession object
+   * should only be created using the static create() method.  This constructor
+   * is protected so that unit tests can go around this restriction for sole
+   * purpose of unit testing.
+   * 
+   * @param log Object representing the API of the CASTOR logging system.
+   * @param netTimeout Timeout in seconds to be used when performing network
+   * I/O.
+   * @param pid The process identifier of the session.
+   * @param driveConfig The configuration of the tape drive.
+   */
+  DriveCatalogueSession(
+    log::Logger &log,
+    const int netTimeout,
+    const pid_t pid,
+    const tape::utils::DriveConfig &driveConfig) throw();
+
+  /**
+   * Object representing the API of the CASTOR logging system.
+   */
+  log::Logger &m_log;
+
+  /**
+   * Timeout in seconds to be used when performing network I/O.
+   */
+  const int m_netTimeout;
+
+  /**
+   * The process identifier of the session.
+   */
+  const pid_t m_pid;
+
+  /**
+   * The configuration of the tape drive.
+   */
+  const tape::utils::DriveConfig &m_driveConfig;
+
 }; // class DriveCatalogueSession
 
 } // namespace daemon

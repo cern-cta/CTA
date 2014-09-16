@@ -24,6 +24,21 @@
 #include "castor/tape/tapeserver/daemon/DriveCatalogueSession.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::DriveCatalogueSession::
+  DriveCatalogueSession(
+  log::Logger &log,
+  const int netTimeout,
+  const pid_t pid,
+  const tape::utils::DriveConfig &driveConfig) throw():
+  m_log(log),
+  m_netTimeout(netTimeout),
+  m_pid(pid),
+  m_driveConfig(driveConfig) {
+}
+
+//------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueSession::

@@ -46,11 +46,11 @@ public:
    * Except in the case of unit testing, a DriveCatalogueLabelSession object
    * should only be created using the static create() method.
    *
+   * @param log Object representing the API of the CASTOR logging system.
    * @param netTimeout Timeout in seconds to be used when performing network
    * I/O.
-   * @param log Object representing the API of the CASTOR logging system.
-   * @param processForker Proxy object representing the ProcessForker.
    * @param driveConfig The configuration of the tape drive.
+   * @param processForker Proxy object representing the ProcessForker.
    * @param labelJob The label job received from the castor-tape-label
    * command-line tool.
    * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
@@ -59,10 +59,10 @@ public:
    * @return A newly created DriveCatalogueSession object.
    */
   static DriveCatalogueLabelSession *create(
-    const int netTimeout,
     log::Logger &log,
-    ProcessForkerProxy &processForker,
+    const int netTimeout,
     const tape::utils::DriveConfig &driveConfig,
+    ProcessForkerProxy &processForker,
     const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
     const unsigned short rmcPort,
     const int labelCmdConnection);
@@ -137,10 +137,10 @@ protected:
    * is protected so that unit tests can go around this restriction for sole
    * purpose of unit testing.
    *
-   * @param pid The process ID of the session.
+   * @param log Object representing the API of the CASTOR logging system.
    * @param netTimeout Timeout in seconds to be used when performing network
    * I/O.
-   * @param log Object representing the API of the CASTOR logging system.
+   * @param pid The process ID of the session.
    * @param driveConfig The configuration of the tape drive.
    * @param labelJob The label job received from the castor-tape-label
    * command-line tool.
@@ -148,9 +148,9 @@ protected:
    * the tape labeling command-line tool castor-tape-label.
    */
   DriveCatalogueLabelSession(
-    const pid_t pid,
-    const int netTimeout,
     log::Logger &log,
+    const int netTimeout,
+    const pid_t pid,
     const tape::utils::DriveConfig &driveConfig,
     const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
     const int labelCmdConnection) throw();
@@ -158,29 +158,9 @@ protected:
 private:
 
   /**
-   * The process ID of the session.
-   */
-  const pid_t m_pid;
-
-  /**
    * The time at which the tape drive was assigned a data transfer job.
    */
   const time_t m_assignmentTime;
-
-  /**
-   * Timeout in seconds to be used when performing network I/O.
-   */
-  const int m_netTimeout;
-
-  /**
-   * Object representing the API of the CASTOR logging system.
-   */
-  log::Logger &m_log;
-
-  /**
-   * The configuration of the tape drive.
-   */
-  tape::utils::DriveConfig m_driveConfig;
 
   /**
    * The label job received from the castor-tape-label command-line tool.
@@ -192,21 +172,6 @@ private:
    * command-line tool.
    */
   const int m_labelCmdConnection;
-
-  /**
-   * Uses the ProcessForker to fork a label-session.
-   *
-   * @param processForker Proxy object representing the ProcessForker.
-   * @param driveConfig The configuration of the tape drive.
-   * @param labelJob The label job received from the castor-tape-label
-   * command-line tool.
-   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
-   * @return The process identifier of the session.
-   */
-  static pid_t forkLabelSession(ProcessForkerProxy &processForker,
-    const tape::utils::DriveConfig &driveConfig,
-    const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
-    const unsigned short rmcPort);
 
 }; // class DriveCatalogueLabelSession
 

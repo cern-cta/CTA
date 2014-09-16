@@ -33,26 +33,24 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueTransferSession*
   castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::create(
-  log::Logger &log,
-  const tape::utils::DriveConfig &driveConfig,
-  const DataTransferSession::CastorConf &dataTransferConfig,
-  const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
-  const unsigned short rmcPort,
-  ProcessForkerProxy &processForker,
-  legacymsg::VdqmProxy &vdqm,
-  const std::string &hostName) {
+    log::Logger &log,
+    const int netTimeout,
+    const tape::utils::DriveConfig &driveConfig,
+    const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
+    const DataTransferSession::CastorConf &dataTransferConfig,
+    const unsigned short rmcPort,
+    ProcessForkerProxy &processForker) {
 
-  const pid_t pid = forkTransferSession(processForker, driveConfig, vdqmJob,
+  const pid_t pid = processForker.forkDataTransfer(driveConfig, vdqmJob,
     dataTransferConfig, rmcPort);
 
   return new DriveCatalogueTransferSession(
-    pid,
     log,
+    netTimeout,
+    pid,
     driveConfig,
     dataTransferConfig,
-    vdqmJob,
-    vdqm,
-    hostName);
+    vdqmJob);
 }
 
 //------------------------------------------------------------------------------
@@ -60,43 +58,18 @@ castor::tape::tapeserver::daemon::DriveCatalogueTransferSession*
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
   DriveCatalogueTransferSession(
-  const pid_t pid,
   log::Logger &log,
+  const int netTimeout,
+  const pid_t pid,
   const tape::utils::DriveConfig &driveConfig,
   const DataTransferSession::CastorConf &dataTransferConfig,
-  const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
-  legacymsg::VdqmProxy &vdqm,
-  const std::string &hostName) throw():
-  m_pid(pid),
-  m_state(TRANSFERSTATE_WAIT_ASSIGN),
+  const legacymsg::RtcpJobRqstMsgBody &vdqmJob) throw():
+  DriveCatalogueSession(log, netTimeout, pid, driveConfig),
+  m_state(TRANSFERSTATE_WAIT_JOB),
   m_mode(WRITE_DISABLE),
   m_assignmentTime(time(0)),
-  m_log(log),
-  m_driveConfig(driveConfig),
   m_dataTransferConfig(dataTransferConfig),
-  m_vdqmJob(vdqmJob),
-  m_vdqm(vdqm),
-  m_hostName(hostName) {
-}
-
-//------------------------------------------------------------------------------
-// forkTransferSession
-//------------------------------------------------------------------------------
-pid_t castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
-  forkTransferSession(ProcessForkerProxy &processForker,
-  const tape::utils::DriveConfig &driveConfig,
-  const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
-  const DataTransferSession::CastorConf &dataTransferConfig,
-  const unsigned short rmcPort) {
-  try {
-    return processForker.forkDataTransfer(driveConfig, vdqmJob,
-      dataTransferConfig, rmcPort);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to fork data-transfer session: unitName=" <<
-      driveConfig.unitName << ": " << ne.getMessage().str();
-    throw ex;
-  }
+  m_vdqmJob(vdqmJob) {
 }
 
 //------------------------------------------------------------------------------
@@ -111,38 +84,6 @@ void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
   sessionFailed() {
-}
-
-//------------------------------------------------------------------------------
-// assignDriveInVdqm
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
-  assignDriveInVdqm() {
-  try {
-    if(TRANSFERSTATE_WAIT_ASSIGN != m_state) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Catalogue transfer-session state-mismatch: "
-        "expected=" << transferStateToStr(TRANSFERSTATE_WAIT_ASSIGN) <<
-        " actual=" << transferStateToStr(m_state);
-      throw ex;
-    }
-
-    m_vdqm.assignDrive(m_hostName, m_driveConfig.unitName,
-      m_vdqmJob.dgn, m_vdqmJob.volReqId, m_pid);
-    m_state = TRANSFERSTATE_WAIT_JOB;
-    log::Param params[] = {
-      log::Param("server", m_hostName),
-      log::Param("unitName", m_driveConfig.unitName),
-      log::Param("dgn", std::string(m_vdqmJob.dgn)),
-      log::Param("volReqId", m_vdqmJob.volReqId),
-      log::Param("dataTransferPid", m_pid)};
-    m_log(LOG_INFO, "Assigned the drive in the vdqm", params);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to assign drive in vdqm: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -261,7 +202,6 @@ void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
       " actual=" << transferStateToStr(m_state);
     throw ex;
   }
-  m_state = TRANSFERSTATE_RUNNING;
 
   // If the volume identifier of the data transfer job does not match the
   // mounted tape
@@ -272,13 +212,15 @@ void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
     throw ex;
   }
 
-  //migratiomigration the data transfer bob is not for migration
+  // If the mount is not for migration
   if(WRITE_ENABLE != m_mode) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept tape mounted for migration"
       ": Data transfer job is not for migration";
     throw ex;
   }
+
+  m_state = TRANSFERSTATE_RUNNING;
 }
 
 //-----------------------------------------------------------------------------
@@ -286,6 +228,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
   tapeMountedForRecall(const std::string &vid) {
+
   if(TRANSFERSTATE_WAIT_MOUNTED != m_state) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept tape mounted for recall"
@@ -294,7 +237,6 @@ void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
       " actual=" << transferStateToStr(m_state);
     throw ex;
   }
-  m_state = TRANSFERSTATE_RUNNING;
 
   // If the volume identifier of the data transfer job does not match the
   // mounted tape
@@ -305,13 +247,15 @@ void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
     throw ex;
   }
 
-  // If the data transfer bob is not for recall
+  // If the mount is not for recall
   if(WRITE_DISABLE != m_mode) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept tape mounted for recall"
       ": Data transfer job is not for recall";
     throw ex;
   }
+
+  m_state = TRANSFERSTATE_RUNNING;
 }
 
 //-----------------------------------------------------------------------------
@@ -320,7 +264,6 @@ void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 const char *castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
   transferStateToStr(const TransferState state) const throw() {
   switch(state) {
-  case TRANSFERSTATE_WAIT_ASSIGN : return "WAIT_ASSIGN";
   case TRANSFERSTATE_WAIT_JOB    : return "WAIT_JOB";
   case TRANSFERSTATE_WAIT_MOUNTED: return "WAIT_MOUNTED";
   case TRANSFERSTATE_RUNNING     : return "RUNNING";

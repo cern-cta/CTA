@@ -639,7 +639,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     std::auto_ptr<ProcessForkerConnectionHandler> handler;
     try {
       handler.reset(new ProcessForkerConnectionHandler(reaperSocket, m_reactor,
-        m_log, *m_driveCatalogue, m_hostName, m_vdqm));
+        m_log, *m_driveCatalogue));
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
       ex.getMessage() <<

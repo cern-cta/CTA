@@ -118,7 +118,7 @@ bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
   std::auto_ptr<AdminConnectionHandler> connectionHandler;
   try {
     connectionHandler.reset(new AdminConnectionHandler(connection.get(),
-      m_reactor, m_log, m_vdqm, m_driveCatalogue, m_hostName));
+      m_reactor, m_log, m_driveCatalogue));
     connection.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;

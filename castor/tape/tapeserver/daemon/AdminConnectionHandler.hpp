@@ -51,7 +51,6 @@ public:
    * @param reactor The reactor to which new Vdqm connection handlers are to
    * be registered.
    * @param log The object representing the API of the CASTOR logging system.
-   * @param vdqm Proxy object representing the vdqmd daemon.
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
    */
@@ -59,9 +58,7 @@ public:
     const int fd,
     reactor::ZMQReactor &reactor,
     log::Logger &log,
-    legacymsg::VdqmProxy &vdqm,
-    DriveCatalogue &driveCatalogue,
-    const std::string &hostName) throw();
+    DriveCatalogue &driveCatalogue) throw();
 
   /**
    * Returns the human-readable name this event handler.
@@ -201,20 +198,9 @@ private:
   log::Logger &m_log;
 
   /**
-   * Proxy object representing the vdqmd daemon.
-   */
-  legacymsg::VdqmProxy &m_vdqm;
-
-  /**
    * The catalogue of tape drives controlled by the tape server daemon.
    */
   DriveCatalogue &m_driveCatalogue;
-  
-  /**
-   * The name of the host on which tape daemon is running.  This name is
-   * needed to fill in messages to be sent to the vdqmd daemon.
-   */
-  const std::string m_hostName;
   
   /**
    * The timeout in seconds to be applied when performing network read and

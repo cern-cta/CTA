@@ -30,21 +30,20 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueLabelSession *
   castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::create(
-    const int netTimeout,
     log::Logger &log,
-    ProcessForkerProxy &processForker,
+    const int netTimeout,
     const tape::utils::DriveConfig &driveConfig,
+    ProcessForkerProxy &processForker,
     const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
     const unsigned short rmcPort,
     const int labelCmdConnection) {
 
-  const pid_t pid = forkLabelSession(processForker, driveConfig, labelJob,
-    rmcPort);
+  const pid_t pid = processForker.forkLabel(driveConfig, labelJob, rmcPort);
 
   return new DriveCatalogueLabelSession(
-    pid,
-    netTimeout,
     log,
+    netTimeout,
+    pid,
     driveConfig,
     labelJob,
     labelCmdConnection);
@@ -55,37 +54,16 @@ castor::tape::tapeserver::daemon::DriveCatalogueLabelSession *
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
   DriveCatalogueLabelSession(
-  const pid_t pid,
-  const int netTimeout,
   log::Logger &log,
+  const int netTimeout,
+  const pid_t pid,
   const tape::utils::DriveConfig &driveConfig,
   const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
   const int labelCmdConnection) throw():
-  m_pid(pid),
+  DriveCatalogueSession(log, netTimeout, pid, driveConfig),
   m_assignmentTime(time(0)),
-  m_netTimeout(netTimeout),
-  m_log(log),
-  m_driveConfig(driveConfig),
   m_labelJob(labelJob),
   m_labelCmdConnection(labelCmdConnection) {
-}
-
-//------------------------------------------------------------------------------
-// forkLabelSession
-//------------------------------------------------------------------------------
-pid_t castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
-  forkLabelSession(ProcessForkerProxy &processForker,
-  const tape::utils::DriveConfig &driveConfig,
-  const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
-  const unsigned short rmcPort) {
-  try {
-    return processForker.forkLabel(driveConfig, labelJob, rmcPort);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to fork label session: unitName=" <<
-      driveConfig.unitName << ": " << ne.getMessage().str();
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------
