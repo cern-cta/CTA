@@ -12,15 +12,7 @@
 #include "serrno.h" 
 #include "sendscsicmd.h" 
 
-int get_compression_stats(int tapefd, char *path, char *devtype, COMPRESSION_STATS *comp_stats) {
-	comp_stats->from_host = 1;
-	comp_stats->to_tape = 1;
-	comp_stats->from_tape = 1;
-	comp_stats->to_host = 1  ;
-	return (0);
-}
-
-int TEMPORARILY_NOT_USED_get_compression_stats(int tapefd,
+int get_compression_stats(int tapefd,
                           char *path,
                           char *devtype,
                           COMPRESSION_STATS *comp_stats)
@@ -167,11 +159,7 @@ int TEMPORARILY_NOT_USED_get_compression_stats(int tapefd,
 	return (0);
 }
 
-int clear_compression_stats(int tapefd, char *path, char *devtype) {
-  return 0;
-}
-
-int TEMPORARILY_NOT_USED_clear_compression_stats(int tapefd,
+int clear_compression_stats(int tapefd,
                             char *path,
                             char *devtype)
 {

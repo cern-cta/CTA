@@ -458,27 +458,28 @@ int topen(tape_list_t *tape, file_list_t *file) {
                            "rc"       , TL_MSG_PARAM_INT, fd );      
   }
 
-
-  rtcp_log(LOG_DEBUG,"topen() call clear_compression_stats(%d,%s,%s)\n",
+  if ( WRITE_ENABLE != tapereq->mode ) {
+    /* clear compression stats for recall only */
+    rtcp_log(LOG_DEBUG,"topen() call clear_compression_stats(%d,%s,%s)\n",
            fd,filereq->tape_path,tapereq->devtype);
-  tl_rtcpd.tl_log( &tl_rtcpd, 11, 5, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 5, 
                    "func"             , TL_MSG_PARAM_STR, "topen",
                    "Message"          , TL_MSG_PARAM_STR, "call clear_compression_stats",
                    "fd"               , TL_MSG_PARAM_INT, fd,
                    "Tape path"        , TL_MSG_PARAM_STR, filereq->tape_path,
                    "Tape req dev type", TL_MSG_PARAM_STR, tapereq->devtype );
-  serrno = errno = 0;
-  rc = clear_compression_stats(fd,filereq->tape_path,tapereq->devtype);
-  rtcp_log(LOG_DEBUG,
+    serrno = errno = 0;
+    rc = clear_compression_stats(fd,filereq->tape_path,tapereq->devtype);
+    rtcp_log(LOG_DEBUG,
            "topen() clear_compression_stats() returned rc=%d, errno=%d, serrno=%d\n",
            rc,errno,serrno);
-  tl_rtcpd.tl_log( &tl_rtcpd, 11, 5, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 5, 
                    "func"   , TL_MSG_PARAM_STR, "topen",
                    "Message", TL_MSG_PARAM_STR, "clear_compression_stats returned",
                    "rc"     , TL_MSG_PARAM_INT, rc,
                    "errno"  , TL_MSG_PARAM_INT, errno,
                    "serrno" , TL_MSG_PARAM_INT, serrno );
-
+  }
   if (fd > 0) {
 
           tl_rtcpd.tl_log( &tl_rtcpd, 34, 4, 
@@ -590,11 +591,8 @@ int tclose(
   rtcpTapeRequest_t *tapereq = NULL;
   rtcpFileRequest_t *filereq = NULL;
   const char *errstr = NULL;
-/**********************************************************************
- * S. MURRAY 27/01/2014 COMMENTING OUT OF COMPRESSION STATISTICS      *
- * int comp_rc = 0;                                                   *
- * COMPRESSION_STATS compstats;                                       *
- **********************************************************************/
+  int comp_rc = 0;
+  COMPRESSION_STATS compstats;
 
   if ( tape == NULL || file == NULL ) {
     serrno = EINVAL;
@@ -684,28 +682,11 @@ int tclose(
         flushedToTapeAfterNFiles);
     }
   if ( (rc != -1) && (file->trec > 0) ) {
-/*******************************************************************************
- * S. MURRAY 27/01/2014 START OF COMMENTING OUT OF COMPRESSION STATISTICS      *
- * The gathering of compression statistics from the tape drive is not being    *
- * carried out at the correct moment in time, in other words it is not always  *
- * being carried out immediately after a flush of the underlying tape drive    *
- * cache. I am therefore temporarily commenting out the compression statics    *
- * code with the hope that one day it will either be put back in the legacy    *
- * rtcpd daemon or even better still it will be put into the new TapeServer    *
- * daemon currently under development.                                         *
- *******************************************************************************
     serrno = 0;
     errno = 0;
     memset(&compstats,'\0',sizeof(compstats));
     comp_rc = get_compression_stats(fd,filereq->tape_path,
                                     tapereq->devtype,&compstats);
-*/
-    /* We need to reset stats on the drive here to get correct values
-    *  for the bytesWrittenToTapeByFlush in noMoreFiles section.
-    *  rc means nothing here for us and we just ignore it.
-    */
-/*
-    clear_compression_stats(fd,filereq->tape_path,tapereq->devtype);
     if ( comp_rc == 0 ) {
       if ( tapereq->mode == WRITE_ENABLE ) {
         rtcp_log(LOG_DEBUG,"compression: from_host %d, to_tape %d\n",
@@ -748,16 +729,38 @@ int tclose(
         filereq->host_bytes = filereq->bytes_in = filereq->bytes_out;
       }
     }
- ******************************************************************************
- * S. MURRAY 27/01/2014 END OF COMMENTING OUT OF COMPRESSION STATISTICS       *
- ******************************************************************************/
-    if ( tapereq->mode == WRITE_ENABLE ) {
-      filereq->host_bytes = filereq->bytes_out = filereq->bytes_in;
-    } else {
-      filereq->host_bytes = filereq->bytes_in = filereq->bytes_out;
-    }
   }
-  *batchBytesToTape += file->filereq.bytes_out;
+  if ( 0 == comp_rc && WRITE_ENABLE == tapereq->mode ) {
+    const uint64_t bytesWrittenToTapeSoFar = file->filereq.bytes_out;
+    if ( bytesWrittenToTapeSoFar > *batchBytesToTape ) {
+      file->filereq.bytes_out = bytesWrittenToTapeSoFar - *batchBytesToTape;
+      *batchBytesToTape = bytesWrittenToTapeSoFar;
+    }
+
+    if ( *flushedToTapeAfterNFiles
+      || TAPEBRIDGE_N_FLUSHES_PER_FILE == tapeFlushMode ) {
+      int save_serrno = serrno;
+      int save_errno = errno;
+      serrno = errno = 0;
+      comp_rc = clear_compression_stats(fd,filereq->tape_path,tapereq->devtype);
+      if ( -1 == comp_rc ) {
+        char logMsg[128];
+        snprintf(logMsg, sizeof(logMsg),
+          "clear_compression_stats returned "
+          "rc=%d, errno=%d, serrno=%d",
+           comp_rc,errno,serrno);
+        logMsg[sizeof(logMsg) - 1] = '\0';
+        rtcp_log(LOG_ERR, "%s(): %s\n", __FUNCTION__, logMsg);
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
+          "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
+          "Message", TL_MSG_PARAM_STR, logMsg);
+      }
+      serrno = save_serrno;
+      errno = save_errno;
+    }
+  } else {  
+    *batchBytesToTape += file->filereq.bytes_out;
+  }
   (void) close(fd) ; 
   filereq->TEndTransferTape = (int)time(NULL);
   if ( file->cksumRoutine != (unsigned long (*) (unsigned long, 
