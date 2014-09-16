@@ -639,6 +639,7 @@ static int MemoryToTape(
         }
     } /* End of for (;;) */
 
+    TP_STATUS(RTCP_PS_CLOSE);
     if ( proc_err == 0 ) rc = tclose(tape_fd,tape,file,tapeFlushMode,
         nbBytesWrittenWithoutFlush,
         nbFilesWrittenWithoutFlush,
