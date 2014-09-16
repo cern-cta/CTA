@@ -34,6 +34,11 @@ extern "C" {
 #include <common.h>
 
 #include <pthread.h>
+#include <string.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "castor/exception/Exception.hpp"
 #include <XrdPosix/XrdPosixExtern.hh>
@@ -179,8 +184,17 @@ int        rtcp_xroot_stat(const char *path, struct stat *buf) {
 
 int        rtcp_xroot_open(const char *path, int oflag, int mode) {
   try {
-    std::string xrootURL = rtcpToCastorXroot(path);
-    return XrdPosix_Open(xrootURL.c_str(), oflag, mode);
+    // If a tape is being verified by writing its contents to /dev/null
+    if((oflag | O_WRONLY) && !strcmp(path, "localhost:/dev/null")) {
+
+      // Force xroot posix API to open the local file /dev/null
+      return XrdPosix_Open("/dev/null", oflag, mode);
+
+    // Else this is the normal recall or migration of a file
+    } else {
+      const std::string xrootURL = rtcpToCastorXroot(path);
+      return XrdPosix_Open(xrootURL.c_str(), oflag, mode);
+    }
   } catch (castor::exception::Exception e) {
     errno = EFAULT; /* sets  "Bad address" errno */
     return -1;
