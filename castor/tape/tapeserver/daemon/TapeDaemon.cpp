@@ -149,15 +149,15 @@ int castor::tape::tapeserver::daemon::TapeDaemon::main() throw() {
     exceptionThrowingMain(m_argc, m_argv);
 
   } catch (castor::exception::Exception &ex) {
-    std::ostringstream msg;
-    msg << "Aborting: Caught an unexpected exception: " <<
-      ex.getMessage().str();
-    m_stdErr << std::endl << msg.str() << std::endl << std::endl;
+    // Write the error to standard error
+    m_stdErr << std::endl << "Aborting: " << ex.getMessage().str() << std::endl
+      << std::endl;
 
+    // Log the error
     log::Param params[] = {
-      log::Param("Message", msg.str()),
+      log::Param("Message", ex.getMessage().str()),
       log::Param("Code"   , ex.code())};
-    m_log(LOG_ERR, msg.str(), params);
+    m_log(LOG_ERR, "Aborting", params);
 
     return 1;
   }
@@ -1049,58 +1049,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(
 }
 
 //------------------------------------------------------------------------------
-// forkDataTransferSession
-//------------------------------------------------------------------------------
-/*
-void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSession(
-  DriveCatalogueEntry *drive) throw() {
-  try {
-    const utils::DriveConfig &driveConfig = drive->getConfig();
-    const legacymsg::RtcpJobRqstMsgBody &vdqmJob = drive->getVdqmJob();
-    const DataTransferSession::CastorConf dataTransferConfig =
-      getDataTransferConf();
-    const unsigned short rmcPort =
-      common::CastorConfiguration::getConfig().getConfEntInt(
-        "RMC", "PORT", (unsigned short)RMC_PORT, &m_log);
-
-    const pid_t dataTransferPid = m_processForker->forkDataTransfer(driveConfig,
-      vdqmJob, dataTransferConfig, rmcPort);
-    drive->forkedDataTransferSession(dataTransferPid);
-
-    try {
-      m_vdqm.assignDrive(m_hostName, driveConfig.unitName,
-        drive->getVdqmJob().dgn, drive->getVdqmJob().volReqId, dataTransferPid);
-      log::Param params[] = {
-        log::Param("server", m_hostName),
-        log::Param("unitName", driveConfig.unitName),
-        log::Param("dgn", std::string(drive->getVdqmJob().dgn)),
-        log::Param("volReqId", drive->getVdqmJob().volReqId),
-        log::Param("dataTransferPid", dataTransferPid)};
-      m_log(LOG_INFO, "Assigned the drive in the vdqm", params);
-    } catch(castor::exception::Exception &ex) {
-      log::Param params[] = {log::Param("message", ex.getMessage().str())};
-      m_log(LOG_ERR, "Data-transfer session could not be started"
-        ": Failed to assign drive in vdqm", params);
-    }
-  } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {log::Param("message", ex.getMessage().str())};
-    m_log(LOG_ERR, "Caught an exception when requesting ProcessForker to fork a"
-      " data-transfer session", params);
-    drive->sessionFailed();
-  } catch(std::exception &se) {
-    log::Param params[] = {log::Param("message", se.what())};
-    m_log(LOG_ERR, "Caught an exception when requesting ProcessForker to fork a"
-      " data-transfer session", params);
-    drive->sessionFailed();
-  } catch(...) {
-    m_log(LOG_ERR, "Caught an unknown exception when requesting ProcessForker"
-      " to fork a data-transfer session");
-    drive->sessionFailed();
-  }
-}
-*/
-
-//------------------------------------------------------------------------------
 // getDataTransferConf
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DataTransferSession::CastorConf
@@ -1110,8 +1058,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::CastorConf
     common::CastorConfiguration::getConfig();
   castorConf.rtcopydBufsz = config.getConfEntInt(
     "RTCOPYD", "BUFSZ", (uint32_t)RTCP_BUFSZ, &m_log);
-  castorConf.rtcopydNbBufs = config.getConfEntInt(
-    "RTCOPYD", "NB_BUFS", (uint32_t)NB_RTCP_BUFS, &m_log);
+  castorConf.rtcopydNbBufs = config.getConfEntInt<uint32_t>(
+    "RTCOPYD", "NB_BUFS", &m_log);
   castorConf.tapeBadMIRHandlingRepair = config.getConfEntString(
     "TAPE", "BADMIR_HANDLING", "CANCEL", &m_log);
   castorConf.tapebridgeBulkRequestMigrationMaxBytes = config.getConfEntInt(
@@ -1137,22 +1085,3 @@ castor::tape::tapeserver::daemon::DataTransferSession::CastorConf
 
   return castorConf;
 }
-
-//------------------------------------------------------------------------------
-// forkCleanerSession
-//------------------------------------------------------------------------------
-/*
-void castor::tape::tapeserver::daemon::TapeDaemon::forkCleanerSession(
-  DriveCatalogueEntry *drive) {
-  const utils::DriveConfig &driveConfig = drive->getConfig();
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", driveConfig.unitName));
-  std::string vid = "";
-
-  const unsigned short rmcPort =
-    common::CastorConfiguration::getConfig().getConfEntInt(
-      "RMC", "PORT", (unsigned short)RMC_PORT, &m_log);
-
-  m_processForker->forkCleaner(driveConfig, vid, rmcPort);
-}
-*/

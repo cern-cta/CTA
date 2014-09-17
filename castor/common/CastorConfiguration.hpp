@@ -83,11 +83,10 @@ namespace castor {
        * assignment operator
        * @param other instance of CastorConfiguration class
        */
-      CastorConfiguration & operator=(const CastorConfiguration & other)
-        ;
+      CastorConfiguration & operator=(const CastorConfiguration & other);
 
       /**
-       * retrieves a configuration entry
+       * Retrieves a configuration entry.
        *
        * If this method is passed a logger object then it will log the value
        * of the configuration entry together with an indication of whether the
@@ -105,7 +104,7 @@ namespace castor {
         log::Logger *const log = NULL);
 
       /**
-       * retrieves a configuration entry
+       * Retrieves a configuration entry.
        *
        * Besides other possible exceptions, this method throws a
        * castor::exception::NoEntry exception if the specified configuration
@@ -122,7 +121,7 @@ namespace castor {
         const std::string &key, log::Logger *const log = NULL);
 
       /**
-       * retrieves a configuration entry as an integer
+       * Retrieves a configuration entry as an integer.
        *
        * If this method is passed a logger object then it will log the value
        * of the configuration entry together with an indication of whether the
@@ -155,8 +154,54 @@ namespace castor {
         }
 
         if (!castor::utils::isValidUInt(strValue.c_str())) {
-          throw castor::exception::InvalidConfigEntry(category.c_str(),
+          castor::exception::InvalidConfigEntry ex(category.c_str(),
             key.c_str(), strValue.c_str());
+          ex.getMessage() << "Failed to get configuration entry " << category <<
+            ":" << key << ": Value is not a valid unsigned integer: value=" <<
+            strValue;
+          throw ex;
+        }
+
+        T value;
+        std::stringstream ss;
+        ss << strValue.c_str();
+        ss >> value;
+
+        if(NULL != log) {
+          log::Param params[] = {
+            log::Param("category", category),
+            log::Param("key", key),
+            log::Param("value", value),
+            log::Param("source", m_fileName)};
+          (*log)(LOG_INFO, "Got configuration entry", params);
+        }
+
+        return value;
+      }
+
+      /**
+       * Retrieves a configuration entry as an integer.
+       *
+       * Besides other possible exceptions, this method throws a
+       * castor::exception::NoEntry exception if the specified configuration
+       * entry is not in the configuration file.
+       *
+       * @param category category of the configuration parameter
+       * @param name category of the configuration parameter
+       * @param log pointer to NULL or an optional logger object
+       * @return the integer value
+       */
+      template<typename T> T getConfEntInt(const std::string &category,
+        const std::string &key, log::Logger *const log = NULL)  {
+        const std::string strValue = getConfEntString(category, key);
+
+        if (!castor::utils::isValidUInt(strValue.c_str())) {
+          castor::exception::InvalidConfigEntry ex(category.c_str(),
+            key.c_str(), strValue.c_str());
+          ex.getMessage() << "Failed to get configuration entry " << category <<
+            ":" << key << ": Value is not a valid unsigned integer: value=" <<
+            strValue;
+          throw ex;
         }
 
         T value;
