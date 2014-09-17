@@ -11,8 +11,24 @@
 #include "Ctape_api.h" 
 #include "serrno.h" 
 #include "sendscsicmd.h" 
-#include "endian.h"
 #include "stdint.h"
+
+uint64_t beString8ToU64(const unsigned char *const src) {
+  if(NULL == src) {
+    return (0);
+  }
+  uint64_t dst = 0;  
+
+  dst  = ((uint64_t)src[0] << 56) & 0xFF00000000000000ULL;
+  dst |= ((uint64_t)src[1] << 48) & 0x00FF000000000000ULL;
+  dst |= ((uint64_t)src[2] << 40) & 0x0000FF0000000000ULL;
+  dst |= ((uint64_t)src[3] << 32) & 0x000000FF00000000ULL;
+  dst |= ((uint64_t)src[4] << 24) & 0x00000000FF000000ULL;
+  dst |= ((uint64_t)src[5] << 16) & 0x0000000000FF0000ULL;
+  dst |= ((uint64_t)src[6] << 8)  & 0x000000000000FF00ULL;
+  dst |=  (uint64_t)src[7]        & 0x00000000000000FFULL;
+  return dst;
+}
 
 uint64_t getU64ValueFromLogSenseParameter(
   const unsigned char *const logSenseParameter)  {
@@ -31,7 +47,7 @@ uint64_t getU64ValueFromLogSenseParameter(
   u.tmp[6]=*(logSenseParameter+lenOffset)>6?*(logSenseParameter+valOffset+6):0;
   u.tmp[7]=*(logSenseParameter+lenOffset)>7?*(logSenseParameter+valOffset+7):0;
 
-  u.val64 = be64toh(u.val64);
+  u.val64 = beString8ToU64(u.tmp);
      
   return u.val64>>(64-(*(logSenseParameter+lenOffset)<<3));     
 }
@@ -54,7 +70,7 @@ uint64_t getS64ValueFromLogSenseParameter(
   u.tmp[6]=*(logSenseParameter+lenOffset)>6?*(logSenseParameter+valOffset+6):0;
   u.tmp[7]=*(logSenseParameter+lenOffset)>7?*(logSenseParameter+valOffset+7):0;
 
-  u.val64U = be64toh(u.val64U);
+  u.val64U = beString8ToU64(u.tmp);
 
   return  (u.val64S < 0?-(-u.val64S>> (64-(*(logSenseParameter+lenOffset)<<3))):
           (u.val64S>>(64-(*(logSenseParameter+lenOffset)<<3))));
