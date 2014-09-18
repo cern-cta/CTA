@@ -344,11 +344,9 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
 
   try {
     if(0 == msg.exitcode()) {
-      const std::string vid = drive.getTransferSession().getVid();
       drive.sessionSucceeded();
       m_log(LOG_INFO, "Data-transfer session succeeded", params);
-      requestVdqmToReleaseDrive(drive.getConfig(), msg.pid());
-      notifyVdqmTapeUnmounted(drive.getConfig(), vid, msg.pid());
+      setDriveUpInVdqm(msg.pid(), drive.getConfig());
     } else {
       drive.sessionFailed();
       m_log(LOG_WARNING, "Data-transfer session failed", params);
@@ -374,11 +372,9 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
 
   try {
     if(0 == msg.exitcode()) {
-      const std::string &vid = drive.getCleanerSession().getVid();
       drive.sessionSucceeded();
       m_log(LOG_INFO, "Cleaner session succeeded", params);
-      requestVdqmToReleaseDrive(drive.getConfig(), msg.pid());
-      notifyVdqmTapeUnmounted(drive.getConfig(), vid, msg.pid());
+      setDriveUpInVdqm(msg.pid(), drive.getConfig());
     } else {
       drive.sessionFailed();
       m_log(LOG_WARNING, "Cleaner session failed", params);
@@ -491,6 +487,28 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to set tape-drive down in vdqm: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// setDriveUpInVdqm
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
+  setDriveUpInVdqm(const pid_t pid, const utils::DriveConfig &driveConfig) {
+  std::list<log::Param> params;
+  params.push_back(log::Param("pid", pid));
+
+  try {
+    params.push_back(log::Param("unitName", driveConfig.unitName));
+    params.push_back(log::Param("dgn", driveConfig.dgn));
+
+    m_vdqm.setDriveUp(m_hostName, driveConfig.unitName, driveConfig.dgn);
+    m_log(LOG_INFO, "Set tape-drive up in vdqm", params);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to set tape-drive up in vdqm: " <<
       ne.getMessage().str();
     throw ex;
   }

@@ -259,6 +259,16 @@ private:
   void setDriveDownInVdqm(const pid_t pid,
     const utils::DriveConfig &driveConfig);
 
+  /**
+   * Sets the state of the tape drive asscoiated with the specified
+   * child process to up within the vdqmd daemon.
+   *
+   * @param pid The process ID of the child process.
+   * @param driveConfig The configuration of the tape drive.
+   */
+  void setDriveUpInVdqm(const pid_t pid,
+    const utils::DriveConfig &driveConfig);
+
   /** 
    * Notifies the vdqm that the tape associated with the session child-process
    * with the specified process ID has been unmounted.
