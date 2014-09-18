@@ -226,9 +226,11 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   params.push_back(log::Param("signal", msg.signal()));
 
   try {
-    drive.sessionFailed();
     m_log(LOG_WARNING, "Data-transfer session failed", params);
-    drive.createCleaner();
+    const std::string vid = drive.getVidForCleaner();
+    const time_t assignmentTime = drive.getAssignmentTimeForCleaner();
+    drive.sessionFailed();
+    drive.createCleaner(vid, assignmentTime);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle crashed data-transfer session: " << 

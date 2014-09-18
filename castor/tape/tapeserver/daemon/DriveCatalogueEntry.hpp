@@ -285,8 +285,14 @@ public:
   
   /**
    * Creates a cleaner session to eject any tape left in the tape drive.
+   *
+   * @param vid The volume identifier of the tape currently in the tape drive
+   * or the empty string if not know.
+   * @param The assignment time associated with the tape drive or 0 if not
+   * known.  The assignment time is given as the number of seconds elapsed
+   * since the Epoch.
    */
-  void createCleaner();
+  void createCleaner(const std::string &vid, const time_t assignmentTime);
 
   /**
    * Moves the state of the tape drive to DRIVE_STATE_UP if the
@@ -374,6 +380,23 @@ public:
    * @return The session associated with the tape drive.
    */
   const DriveCatalogueSession &getSession() const;
+
+  /**
+   * Tries to determine the volume identifier of the tape currently associated
+   * with the tape drive.
+   *
+   * @return The volume identifier of the tape or the empty string if it was
+   * not possible to determine.
+   */
+  std::string getVidForCleaner() const throw();
+
+  /**
+   * Tries to determine the assigment time associated with the tap[e drive.
+   *
+   * @return The assigment time associated with the tape drive or 0 if not
+   * known.  The assignment time is given in seconds elapsed since the Epoch.
+   */
+  time_t getAssignmentTimeForCleaner() const throw();
 
 private:
 
@@ -536,15 +559,6 @@ private:
    * @return The volume indenfier if known else the empty string.
    */
   std::string getVidForTapeStatDriveEntry() const throw();
-
-  /**
-   * Tries to determine the volume identifier of the tape currently associated
-   * with the tape drive.
-   *
-   * @return The volume identifier of the tape or the empty string if it was
-   * not possible to determine.
-   */
-  std::string getVidForCleaner() const throw();
 
   /**
    * Returns the value of the vsn field of a TapeStatDriveEntry to be used

@@ -73,9 +73,7 @@ pid_t castor::tape::tapeserver::daemon::DriveCatalogueCleanerSession::
   const std::string &vid,
   const unsigned short rmcPort) {
 
-  // TO BE DONE
-  // processForker->forkCleaner(driveConfig, vid, rmcPort);
-  return 0;
+  return processForker.forkCleaner(driveConfig, vid, rmcPort);
 }
 
 //------------------------------------------------------------------------------

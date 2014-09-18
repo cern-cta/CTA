@@ -534,14 +534,9 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedLabelJob(
 //-----------------------------------------------------------------------------
 // createCleaner
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::createCleaner() {
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::createCleaner(
+  const std::string &vid, const time_t assignmentTime) {
   try {
-    const DriveCatalogueSession &session = getSession();
-    const std::string vid = session.getVid();
-    const time_t assignmentTime = session.getAssignmentTime();
-
-    deleteSession();
-
     // Create a cleaner session in the catalogue
     m_state = DRIVE_STATE_RUNNING;
     m_sessionType = SESSION_TYPE_CLEANER;
@@ -776,6 +771,30 @@ std::string castor::tape::tapeserver::daemon::DriveCatalogueEntry::
     return getSession().getVid();
   } catch(...) {
     return "";
+  }
+}
+
+//------------------------------------------------------------------------------
+// getVidForCleaner
+//------------------------------------------------------------------------------
+std::string castor::tape::tapeserver::daemon::DriveCatalogueEntry::
+  getVidForCleaner() const throw() {
+  try {
+    return getSession().getVid();
+  } catch(...) {
+    return "";
+  }
+}
+
+//------------------------------------------------------------------------------
+// getAssignmentTimeForCleaner
+//------------------------------------------------------------------------------
+time_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
+  getAssignmentTimeForCleaner() const throw() {
+  try {
+    return getSession().getAssignmentTime();
+  } catch(...) {
+    return 0;
   }
 }
 
