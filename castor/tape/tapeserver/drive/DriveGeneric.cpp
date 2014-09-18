@@ -25,6 +25,8 @@
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/tape/tapeserver/drive/DriveGeneric.hpp"
 
+#include "castor/utils/Timer.hpp"
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -813,6 +815,65 @@ drive::compressionStats drive::DriveIBM3592::getCompression()  {
   }
 
   return driveCompressionStats;
+}
+
+//------------------------------------------------------------------------------
+// testUnitReady
+//------------------------------------------------------------------------------
+void drive::DriveGeneric::testUnitReady() const {
+  SCSI::Structures::testUnitReadyCDB_t cdb;
+  
+  SCSI::Structures::senseData_t<255> senseBuff;
+  SCSI::Structures::LinuxSGIO_t sgh;
+ 
+  sgh.setCDB(&cdb);
+  sgh.setSenseBuffer(&senseBuff);
+  sgh.dxfer_direction = SG_DXFER_NONE;
+ 
+  /* Manage both system error and SCSI errors. */
+  castor::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
+    "Failed SG_IO ioctl in DriveGeneric::testUnitReady");
+  
+  SCSI::ExceptionLauncher(sgh,"SCSI error in testUnitReady:");
+}
+
+//------------------------------------------------------------------------------
+// waitUntilReady
+//------------------------------------------------------------------------------
+bool drive::DriveGeneric::waitUntilReady(int timeoutSecond)  {
+  std::string lastTestUnitReadyExceptionMsg("");
+  for (castor::utils::Timer t; t.secs() < timeoutSecond;) {
+    try {
+      testUnitReady();           
+    } catch (castor::tape::SCSI::NotReadyException &ex){
+      lastTestUnitReadyExceptionMsg = ex.getMessage().str();
+      sleep(1);
+      continue;
+    } catch (castor::tape::SCSI::UnitAttentionException &ex){
+      lastTestUnitReadyExceptionMsg = ex.getMessage().str();
+      sleep(1);
+      continue;
+    } catch (...) {
+      throw;
+    }; 
+    // Test Unit Ready finished with a GOOD status.
+    // we need to reopen the drive to have the GMT_ONLINE check working (see "man st")
+    castor::exception::Errnum::throwOnMinusOne(m_sysWrapper.close(m_tapeFD),
+      std::string("Could not close device file: ") + m_SCSIInfo.nst_dev);
+    castor::exception::Errnum::throwOnMinusOne(
+      m_tapeFD = m_sysWrapper.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
+            std::string("Could not open device file: ") + m_SCSIInfo.nst_dev);
+    UpdateDriveStatus();
+    if(m_driveStatus.ready) {
+      return m_driveStatus.ready;
+    }
+  }
+
+  castor::exception::Exception ex;
+  ex.getMessage() << "Cant get the drive ready after waiting " <<
+    timeoutSecond << " seconds: " << lastTestUnitReadyExceptionMsg;
+  throw ex;
 }
 
 }}}

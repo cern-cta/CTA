@@ -459,7 +459,7 @@ namespace SCSI {
            
       // bytes 4-n
       unsigned char parameterValue[1];     // parameters have variable length 
-      
+
       /**
        * Gets the parameter value
        * 

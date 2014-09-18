@@ -118,27 +118,28 @@ namespace drive {
      */
     virtual driveStatus getDriveStatus()  {
       throw castor::exception::Exception("Not implemented");
-    }
+    }   
     
-    virtual bool waitUntilReady(int timeoutSecond)  {
-      for(int i =0;i<timeoutSecond;++i) {
-        // we need to reopen the drive to have the GMT_ONLINE check working (see "man st")
-        castor::exception::Errnum::throwOnMinusOne(m_sysWrapper.close(m_tapeFD),
-                std::string("Could not close device file: ") + m_SCSIInfo.nst_dev);
-        castor::exception::Errnum::throwOnMinusOne(
-                m_tapeFD = m_sysWrapper.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
-                std::string("Could not open device file: ") + m_SCSIInfo.nst_dev);
-        UpdateDriveStatus();
-        if(m_driveStatus.ready) {
-          return m_driveStatus.ready;
-        }
-        //sleep for 1 second
-        sleep(1);
-      }
-      castor::exception::Exception ex("Cant get the drive ready after waiting");
-      ex.getMessage()<<timeoutSecond<<" seconds";
-      throw ex;
-    }
+    /**
+     * Test the readiness of the tape drive by using TEST UNIT READY described
+     * in SPC-4. Throws exceptions if there are any problems and SCSI command 
+     * status is not GOOD. The specific exceptions are thrown for supported by
+     * st driver sense keys: NotReady and UnitAttention.
+     */
+    virtual void testUnitReady() const;
+   
+    /**
+     * Detects readiness of the drive by calling ioctl MTIOCGET and checks if 
+     * the status is GMT_ONLINE. Throws exceptions if the drive is not ready for
+     * at least timeoutSeconds or any errors occurred. We consider any not GOOD 
+     * SCSI replay with sense keys not equals to NotReady or UnitAttention as 
+     * errors.
+     * 
+     * @param timeoutSecond The time in seconds for which it waits the drive to 
+     *                      be ready.
+     * @return true if the drive has the status GMT_ONLINE.
+     */
+    virtual bool waitUntilReady(int timeoutSecond);
     
     virtual bool hasTapeInPlace() {
       UpdateDriveStatus();

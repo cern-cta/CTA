@@ -60,7 +60,36 @@ namespace SCSI {
       setWhat(w.str());
     }
     virtual ~Exception() throw () {}
-  };
+  }; // class Exception
+  
+  /**
+   * Failed with NotReady error.
+   */
+  class NotReadyException : public castor::tape::SCSI::Exception {
+  public: 
+    /**
+     * Constructor
+     */
+    NotReadyException(unsigned char status, 
+      castor::tape::SCSI::Structures::senseData_t<255> * sense,
+      const std::string & context = ""):
+      Exception(status, sense, context) {};
+  }; // class NotReadyException
+  
+  /**
+   * Failed with UnitAttention error.
+   */
+  class UnitAttentionException : public castor::tape::SCSI::Exception {
+  public: 
+    /**
+     * Constructor
+     */
+    UnitAttentionException(unsigned char status, 
+      castor::tape::SCSI::Structures::senseData_t<255> * sense,
+      const std::string & context = ""):
+      Exception(status, sense, context) {};
+  }; // class UnitAttentionException
+  
   /**
    * Automated exception launcher in case of SCSI command error. Does nothing 
    * in the absence of errors.
