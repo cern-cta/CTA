@@ -558,7 +558,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const {
 // registerTapeDrivesWithVdqm
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDrivesWithVdqm()
-   {
+  {
   const std::list<std::string> unitNames = m_driveCatalogue->getUnitNames();
 
   for(std::list<std::string>::const_iterator itor = unitNames.begin();

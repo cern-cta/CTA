@@ -65,7 +65,7 @@ namespace daemon {
      * 
      * @return 0 in case of success (drive can stay UP) or 1 in case of failure (drive needs to be put down by the caller)
      */
-    int clean(const std::string &vid);
+    int execute(const std::string &vid);
     
   private:
     /**

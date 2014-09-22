@@ -39,9 +39,9 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
 }
 
 //------------------------------------------------------------------------------
-// clean
+// execute
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::CleanerSession::clean(const std::string &vid) {
+int castor::tape::tapeserver::daemon::CleanerSession::execute(const std::string &vid) {
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);    
   castor::tape::SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
   
