@@ -62,7 +62,6 @@ namespace daemon {
      */
     LabelSession(
       legacymsg::RmcProxy &rmc,
-      legacymsg::NsProxy &ns,
       const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
       castor::log::Logger &log,
       System::virtualWrapper &sysWrapper,
@@ -99,13 +98,6 @@ namespace daemon {
      */
     void checkClientIsOwnerOrAdmin();
 
-    /**
-     * A meta-data check that sees if the tape to be labelled contains files
-     * that are registered in the CASTOR name-server as either active or
-     * disabled segments.
-     */
-    void checkIfVidStillHasSegments();
-    
     /**
      * Returns a Drive object representing the tape drive to be used to label
      * a tape.
@@ -148,11 +140,6 @@ namespace daemon {
      */
     legacymsg::RmcProxy &m_rmc;
 
-    /**
-     * The object representing the rmcd daemon.
-     */
-    legacymsg::NsProxy &m_ns;
-    
     /**
      * The label request message body
      */

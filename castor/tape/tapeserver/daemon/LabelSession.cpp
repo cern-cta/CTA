@@ -44,7 +44,6 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::LabelSession::LabelSession(
   legacymsg::RmcProxy &rmc, 
-  legacymsg::NsProxy &ns,
   const legacymsg::TapeLabelRqstMsgBody &clientRequest,
   castor::log::Logger &log,
   System::virtualWrapper &sysWrapper,
@@ -52,7 +51,6 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
   const bool force):
   m_timeout(1), // 1 second of timeout for the network in the label session. This is not going to be a parameter of the constructor
   m_rmc(rmc),
-  m_ns(ns),
   m_request(clientRequest),
   m_log(log),
   m_sysWrapper(sysWrapper),
@@ -93,7 +91,6 @@ void castor::tape::tapeserver::daemon::LabelSession::execute()  {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::performPreMountChecks() {
   checkClientIsOwnerOrAdmin();
-  checkIfVidStillHasSegments();
 }
 
 //------------------------------------------------------------------------------
@@ -102,34 +99,6 @@ void castor::tape::tapeserver::daemon::LabelSession::performPreMountChecks() {
 void castor::tape::tapeserver::daemon::LabelSession::
   checkClientIsOwnerOrAdmin() {
   // TO BE DONE
-}
-
-//------------------------------------------------------------------------------
-// checkIfVidStillHasSegments
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::LabelSession::checkIfVidStillHasSegments() {
-  
-  // check if the volume still contains active or inactive segments. If yes, no labeling allowed, even with the force flag enabled.
-  castor::legacymsg::NsProxy::TapeNsStatus rc = m_ns.doesTapeHaveNsFiles(m_request.vid);
-  
-  if(rc==castor::legacymsg::NsProxy::NSPROXY_TAPE_HAS_AT_LEAST_ONE_DISABLED_SEGMENT) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "End session with error. Tape has at least one disabled segment. Aborting labelling...";
-    throw ex;
-  }
-  else if (rc==castor::legacymsg::NsProxy::NSPROXY_TAPE_HAS_AT_LEAST_ONE_ACTIVE_SEGMENT) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "End session with error. Tape has at least one active segment. Aborting labelling...";
-    throw ex;
-  }
-  else {} // rc==castor::legacymsg::NsProxy::NSPROXY_TAPE_EMPTY. Tape is empty, we are good to go..
-
-  const log::Param params[] = {
-    log::Param("vid", m_request.vid),
-    log::Param("unitName", m_request.drive),
-    log::Param("librarySlot", m_driveConfig.librarySlot)};
-  m_log(LOG_INFO,
-    "Tape to be labeled has no files registered in the name server", params);
 }
 
 //------------------------------------------------------------------------------

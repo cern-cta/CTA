@@ -843,7 +843,6 @@ int castor::tape::tapeserver::daemon::ProcessForker::runLabelSession(
     castor::tape::System::realWrapper sWrapper;
     LabelSession labelsession(
       rmc,
-      ns,
       labelJob,
       m_log,
       sWrapper,
