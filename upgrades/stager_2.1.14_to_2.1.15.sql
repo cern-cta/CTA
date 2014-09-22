@@ -78,15 +78,19 @@ DELETE FROM BlackList WHERE reqType IN (38, 44, 147);
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (36, 37);
 
 /* drop obsoleted entities */
+-- updates support
 DROP TABLE StagePrepareToUpdateRequest;
 DROP TABLE StageUpdateRequest;
 DROP TABLE FirstByteWritten;
+-- internal requests for jobs
 DROP TABLE GetUpdateStartRequest;
 DROP TABLE GetUpdateDone;
 DROP TABLE GetUpdateFailed;
 DROP TABLE PutStartRequest;
 DROP TABLE MoverCloseRequest;
 DROP TABLE PutFailed;
+-- obsolete for long
+DROP TABLE GCLocalFile;
 
 DROP PROCEDURE firstByteWrittenProc;
 DROP PROCEDURE handleProtoNoUpd;
