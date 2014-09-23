@@ -30,18 +30,19 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   legacymsg::RmcProxy &rmc,
   castor::log::Logger &log,
   const utils::DriveConfig &driveConfig,
-  System::virtualWrapper &sysWrapper):
+  System::virtualWrapper &sysWrapper,
+  const std::string &vid):
   m_rmc(rmc),
   m_log(log),
   m_driveConfig(driveConfig),
-  m_sysWrapper(sysWrapper) {
-  
+  m_sysWrapper(sysWrapper),
+  m_vid(vid) {
 }
 
 //------------------------------------------------------------------------------
 // execute
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::CleanerSession::execute(const std::string &vid) {
+int castor::tape::tapeserver::daemon::CleanerSession::execute() {
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);    
   castor::tape::SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
   
@@ -72,16 +73,16 @@ int castor::tape::tapeserver::daemon::CleanerSession::execute(const std::string 
       drive->rewind();
       drive->readExactBlock((void * )&vol1, sizeof(vol1), "[CleanerSession::clean()] - Reading header VOL1");
       vol1.verify();
-      if(vid.empty()) { // vid given is empty
-        log::Param params[] = {log::Param("vid", vid)};
+      if(m_vid.empty()) { // vid given is empty
+        log::Param params[] = {log::Param("vid", m_vid)};
         m_log(LOG_INFO, "Cleaner session received an empty vid.", params);
       }
-      else if(!(vid.compare(vol1.getVSN()))) { // vid provided and vid read on VOL1 correspond
-        log::Param params[] = {log::Param("vid", vid)};
+      else if(!(m_vid.compare(vol1.getVSN()))) { // vid provided and vid read on VOL1 correspond
+        log::Param params[] = {log::Param("vid", m_vid)};
         m_log(LOG_INFO, "Cleaner session received the same vid read on tape.", params);        
       }
       else { // vid provided and vid read on VOL1 don NOT correspond!
-        log::Param params[] = {log::Param("vid provided", vid), log::Param("vid read on label", vol1.getVSN())};
+        log::Param params[] = {log::Param("vid provided", m_vid), log::Param("vid read on label", vol1.getVSN())};
         m_log(LOG_WARNING, "Cleaner session received a different vid from the one read on tape.", params);
       }
     } catch(castor::exception::Exception &ne) {

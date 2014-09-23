@@ -50,24 +50,27 @@ namespace daemon {
      * @param log          Object representing the API to the CASTOR logging system.
      * @param driveConfig  Configuration of the tape drive to be cleaned.
      * @param sysWrapper   Object representing the operating system.
+     * @param vid          The volume identifier of the mounted tape if known,
+     *                     else the empty string.
      */
     CleanerSession(
       legacymsg::RmcProxy &rmc,
       castor::log::Logger &log,
       const utils::DriveConfig &driveConfig,
-      System::virtualWrapper &sysWrapper);
+      System::virtualWrapper &sysWrapper,
+      const std::string &vid);
     
     /**
-     * Cleans the drive by unloading any tape present and unmounting it
+     * Executes the cleaner session which unloads and unmounts any tape that is
+     * present in the drive.
      * 
-     * @param vid The identifier of the mounted volume (one can pass the empty string 
-     * in case it is unknown, as it not used except for logging purposes).
-     * 
-     * @return 0 in case of success (drive can stay UP) or 1 in case of failure (drive needs to be put down by the caller)
+     * @return 0 in case of success (drive can stay UP) or 1 in case of failure
+     * (drive needs to be put down by the caller)
      */
-    int execute(const std::string &vid);
+    int execute();
     
   private:
+
     /**
      * The object representing the rmcd daemon.
      */
@@ -87,6 +90,12 @@ namespace daemon {
      * The system wrapper used to find the device and instantiate the drive object
      */
     System::virtualWrapper & m_sysWrapper;
+
+    /**
+     * The volume identifier of the mounted tape if known, else the empty
+     * string.
+     */
+    const std::string m_vid;
     
   }; // class CleanerSession
 

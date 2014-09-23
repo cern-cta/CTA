@@ -473,9 +473,10 @@ int castor::tape::tapeserver::daemon::ProcessForker::runCleanerSession(
       rmc,
       m_log,
       driveConfig,
-      sWrapper);
+      sWrapper,
+      rqst.vid());
     // execute() returns 0 if drive should be put up or 1 if it should be put down
-    return cleanerSession.execute(rqst.vid());
+    return cleanerSession.execute();
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to run cleaner session: " << ne.getMessage().str();
