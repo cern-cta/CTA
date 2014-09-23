@@ -60,7 +60,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-transfer-manager
 Architecture: any
-Depends: python, logrotate, cx_Oracle >= 5.1.1, python-daemon, python-rpyc >= 3.1, castor-lib = %{version}-%{release}
+Depends: python, logrotate, cx_Oracle >= 5.1.1, python-daemon, python-rpyc >= 3.1, castor-lib = %{version}-%{release}, castor-dbtools = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Transfer manager daemon for Castor, central server package
 XBS-Obsoletes: castor-rmmaster-server
