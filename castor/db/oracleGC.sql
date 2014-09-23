@@ -420,7 +420,7 @@ BEGIN
                 ORDER BY cfId ASC) LOOP
       DECLARE
         CONSTRAINT_VIOLATED EXCEPTION;
-        PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+        PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -2292);
       BEGIN
         -- Get data and lock the castorFile
         SELECT fileId, nsHost, fileClass
