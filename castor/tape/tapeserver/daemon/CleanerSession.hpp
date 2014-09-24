@@ -26,6 +26,7 @@
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/log/Logger.hpp"
+#include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
@@ -40,7 +41,7 @@ namespace daemon {
   /**
    * Class responsible for cleaning up a tape drive left in a (possibly) dirty state.
    */
-  class CleanerSession {
+  class CleanerSession : public Session {
     
   public:
     /**
@@ -60,14 +61,27 @@ namespace daemon {
       System::virtualWrapper &sysWrapper,
       const std::string &vid);
     
-    /**
-     * Executes the cleaner session which unloads and unmounts any tape that is
-     * present in the drive.
-     * 
-     * @return 0 in case of success (drive can stay UP) or 1 in case of failure
-     * (drive needs to be put down by the caller)
+    /** 
+     * Execute the session and return the type of action to be performed
+     * immediately after the session has completed.
+     *  
+     * The session is responsible for mounting a tape into the tape drive,
+     * working with that tape, unloading the tape from the drive and then
+     * dismounting the tape from the drive and storing it back in its home slot
+     * within the tape library.
+     *
+     * If this method throws an exception and the session is not a cleaner
+     * session then it assumed that the post session action is
+     * EndOfSessionAction::CLEAN_DRIVE.
+     *
+     * If this method throws an exception and the session is a cleaner
+     * session then it assumed that the post session action is
+     * EndOfSessionAction::MARK_DRIVE_AS_DOWN.
+     *
+     * @return Returns the type of action to be performed after the session has
+     * completed.
      */
-    int execute();
+    EndOfSessionAction execute();
     
   private:
 

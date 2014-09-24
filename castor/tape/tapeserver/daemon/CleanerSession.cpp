@@ -42,7 +42,8 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
 //------------------------------------------------------------------------------
 // execute
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::CleanerSession::execute() {
+castor::tape::tapeserver::daemon::Session::EndOfSessionAction
+  castor::tape::tapeserver::daemon::CleanerSession::execute() {
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);    
   castor::tape::SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
   
@@ -89,7 +90,7 @@ int castor::tape::tapeserver::daemon::CleanerSession::execute() {
       castor::exception::Exception ex;
       ex.getMessage() << "Cleaner session could not rewind the tape or read its label. Giving up now. Reason: " << ne.getMessage().str();
       m_log(LOG_ERR, ex.getMessage().str());
-      return 1; //Tells caller to put the drive down
+      return MARK_DRIVE_AS_DOWN;
     }
     try {
       // We implement the same policy as with the tape sessions: 
@@ -113,11 +114,11 @@ int castor::tape::tapeserver::daemon::CleanerSession::execute() {
       castor::exception::Exception ex;
       ex.getMessage() << "Cleaner session could not unmount the tape. Giving up now. Reason: " << ne.getMessage().str();
       m_log(LOG_ERR, ex.getMessage().str());
-      return 1; //Tells caller to put the drive down
+      return MARK_DRIVE_AS_DOWN;
     }
-    return 0; //Tells caller the drive can stay up
+    return MARK_DRIVE_AS_UP;
   }  
   else { //the drive is empty here we don't care about the drive being ready or not
-    return 0; //Tells caller the drive can stay up
+    return MARK_DRIVE_AS_UP;
   }
 }

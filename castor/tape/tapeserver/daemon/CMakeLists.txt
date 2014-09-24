@@ -32,6 +32,7 @@ add_library(castorTapeServerDaemon
   RecallMemoryManager.cpp
   RecallTaskInjector.cpp 
   RecallReportPacker.cpp
+  Session.cpp
   TapeMessageHandler.cpp
   TapeDaemonMain.cpp
   TapeReadSingleThread.cpp

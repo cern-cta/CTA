@@ -61,7 +61,8 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
 //------------------------------------------------------------------------------
 // execute
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::LabelSession::execute()  {
+castor::tape::tapeserver::daemon::Session::EndOfSessionAction
+  castor::tape::tapeserver::daemon::LabelSession::execute() {
   std::ostringstream task;
   task << "label tape " << m_request.vid << " for gid=" << m_request.gid <<
     " uid=" << m_request.uid << " in drive " << m_request.drive;
@@ -84,6 +85,8 @@ void castor::tape::tapeserver::daemon::LabelSession::execute()  {
   drive->unloadTape();
   m_rmc.unmountTape(m_request.vid, m_driveConfig.librarySlot);
   m_log(LOG_INFO, "The tape has been successfully unmounted after labeling", params);
+
+  return MARK_DRIVE_AS_UP;
 }
 
 //------------------------------------------------------------------------------

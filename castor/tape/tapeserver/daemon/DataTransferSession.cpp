@@ -79,8 +79,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
  * 2b) Log The result
  * Then branch to the right execution
  */
-int castor::tape::tapeserver::daemon::DataTransferSession::execute()
- {
+castor::tape::tapeserver::daemon::Session::EndOfSessionAction
+  castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   // 1) Prepare the logging environment
   log::LogContext lc(m_log);
   // Create a sticky thread name, which will be overridden by the other threads
@@ -106,7 +106,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::execute()
     log::LogContext::ScopedParam sp09(lc, log::Param("sendRecvDuration", reqReport.sendRecvDuration));
     log::LogContext::ScopedParam sp10(lc, log::Param("ErrorMsg", fullError.str()));
     lc.log(LOG_ERR, "Notified client of end session with error");
-    return 0;
+    return MARK_DRIVE_AS_UP;
   } catch (client::ClientProxy::UnexpectedResponse & unexp) {
     std::stringstream fullError;
     fullError << "Received unexpected response from client when requesting Volume"
@@ -118,7 +118,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::execute()
     log::LogContext::ScopedParam sp09(lc, log::Param("sendRecvDuration", reqReport.sendRecvDuration));
     log::LogContext::ScopedParam sp10(lc, log::Param("ErrorMsg", fullError.str()));
     lc.log(LOG_ERR, "Notified client of end session with error");
-    return 0;
+    return MARK_DRIVE_AS_UP;
   } catch (castor::exception::Exception & ex) {
     std::stringstream fullError;
     fullError << "When requesting Volume, "
@@ -132,7 +132,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::execute()
     log::LogContext::ScopedParam sp07(lc, log::Param("tapebridgeTransId", reqReport.transactionId));
     log::LogContext::ScopedParam sp10(lc, log::Param("ErrorMsg", fullError.str()));
     lc.log(LOG_ERR, "Could not contact client for Volume (client notification was attempted).");
-    return 0;
+    return MARK_DRIVE_AS_UP;
   }
   // 2b) ... and log.
   // Make the TPVID parameter permanent.
@@ -157,15 +157,16 @@ int castor::tape::tapeserver::daemon::DataTransferSession::execute()
     return executeWrite(lc);
   case tapegateway::DUMP:
     executeDump(lc);
-    return 0;
+    return MARK_DRIVE_AS_UP;
   default:
-      return 0;
+      return MARK_DRIVE_AS_UP;
   }
 }
 //------------------------------------------------------------------------------
 //DataTransferSession::executeRead
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::DataTransferSession::executeRead(log::LogContext & lc) {
+castor::tape::tapeserver::daemon::Session::EndOfSessionAction
+ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(log::LogContext & lc) {
   // We are ready to start the session. We need to create the whole machinery 
   // in order to get the task injector ready to check if we actually have a 
   // file to recall.
@@ -173,7 +174,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeRead(log::LogC
   // A NULL pointer is returned on failure
   std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> drive(findDrive(m_driveConfig,lc));
   
-  if(!drive.get()) return 0;    
+  if(!drive.get()) return MARK_DRIVE_AS_UP;    
   // We can now start instantiating all the components of the data path
   {
     // Allocate all the elements of the memory management (in proper order
@@ -248,21 +249,23 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeRead(log::LogC
         log::LogContext::ScopedParam sp1(lc, log::Param("notificationError", ex.getMessageValue()));
         lc.log(LOG_ERR, "Failed to notified client of end session with error");
       }
-      //empty mount, hardware is OK, returns 0
-      return 0;
+      // Empty mount, hardware is OK
+      return MARK_DRIVE_AS_UP;
     }
   }
 }
 //------------------------------------------------------------------------------
 //DataTransferSession::executeWrite
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(log::LogContext & lc) {
+castor::tape::tapeserver::daemon::Session::EndOfSessionAction
+  castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(
+  log::LogContext & lc) {
   // We are ready to start the session. We need to create the whole machinery 
   // in order to get the task injector ready to check if we actually have a 
   // file to migrate.
   // 1) Get hold of the drive error logs are done inside the findDrive function
   std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> drive(findDrive(m_driveConfig,lc));
-  if (!drive.get()) return 0;
+  if (!drive.get()) return MARK_DRIVE_AS_UP;
   // Once we got hold of the drive, we can run the session
   {
     
@@ -307,7 +310,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(log::Log
         lc.log(LOG_ERR, "First file to write's fseq  and number of files on "
         "the tape according to the VMGR dont match");
        //no mount at all, drive to be kept up = return 0
-        return 0;
+        return MARK_DRIVE_AS_UP;
       }
       // We have something to do: start the session by starting all the 
       // threads.
@@ -345,8 +348,8 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(log::Log
         log::LogContext::ScopedParam sp1(lc, log::Param("notificationError", ex.getMessageValue()));
         lc.log(LOG_ERR, "Failed to notified client of end session with error");
       }
-      //empty mount, hardware safe, return 0
-      return 0;
+      // Empty mount, hardware safe
+      return MARK_DRIVE_AS_UP;
     }
   }
 }

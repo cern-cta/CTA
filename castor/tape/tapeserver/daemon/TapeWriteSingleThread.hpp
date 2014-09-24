@@ -103,15 +103,15 @@ private:
         m_this.m_stats.waitReportingTime += m_timer.secs(utils::Timer::resetCounter);
       }
       catch(const castor::exception::Exception& ex){
-        //set it to -1 to notify something failed during the cleaning 
-        m_this.m_hardarwareStatus = -1;
+        // Notify something failed during the cleaning 
+        m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
         castor::log::ScopedParamContainer scoped(m_this.m_logContext);
         scoped.add("exception_message", ex.getMessageValue())
         .add("exception_code",ex.code());
         m_this.m_logContext.log(LOG_ERR, "Exception in TapeWriteSingleThread-TapeCleaning");
       } catch (...) {
-          //set it to -1 to notify something failed during the cleaning 
-          m_this.m_hardarwareStatus = -1;
+          // Notify something failed during the cleaning 
+          m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
           m_this.m_logContext.log(LOG_ERR, "Non-Castor exception in TapeWriteSingleThread-TapeCleaning when unmounting the tape");
       }
       

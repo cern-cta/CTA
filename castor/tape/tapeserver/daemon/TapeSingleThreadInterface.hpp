@@ -30,13 +30,14 @@
 
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/log/LogContext.hpp"
+#include "castor/server/BlockingQueue.hpp"
 #include "castor/server/ProcessCap.hpp"
 #include "castor/server/Threading.hpp"
-#include "castor/server/BlockingQueue.hpp"
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
-#include "castor/tape/utils/Timer.hpp"
+#include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "castor/tape/utils/Timer.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -84,10 +85,8 @@ protected:
   
   /**
    * Integer to notify the tapeserver if the drive has to be put down or not.
-   * 0 means everything all right, any other value means we have to set it to 
-   * down at the end of the session.
    */
-  int m_hardarwareStatus;
+  Session::EndOfSessionAction m_hardwareStatus;
   
   /** Session statistics */
   TapeSessionStats m_stats;
@@ -154,8 +153,8 @@ protected:
   }
 public:
   
-  int getHardwareStatus() const {
-    return m_hardarwareStatus;
+  Session::EndOfSessionAction getHardwareStatus() const {
+    return m_hardwareStatus;
   }
   /**
    * Push into the class a sentinel value to trigger to end the the thread.
@@ -205,7 +204,7 @@ public:
     const client::ClientInterface::VolumeInfo& volInfo,
     castor::server::ProcessCap &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
     m_drive(drive), m_rmc(rmc), m_initialProcess(tsr), m_vid(volInfo.vid), m_logContext(lc),
-    m_volInfo(volInfo),m_hardarwareStatus(0) {}
+    m_volInfo(volInfo),m_hardwareStatus(Session::MARK_DRIVE_AS_UP) {}
 }; // class TapeSingleThreadInterface
 
 } // namespace daemon

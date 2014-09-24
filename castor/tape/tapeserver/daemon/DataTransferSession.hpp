@@ -23,15 +23,16 @@
 
 #pragma once
 
-#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
-#include "castor/log/Logger.hpp"
+#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/log/LogContext.hpp"
+#include "castor/log/Logger.hpp"
 #include "castor/server/ProcessCap.hpp"
+#include "castor/tape/tapeserver/client/ClientProxy.hpp"
+#include "castor/tape/tapeserver/daemon/Session.hpp"
+#include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/utils/utils.hpp"
-#include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 
 namespace castor {
 namespace legacymsg {
@@ -47,7 +48,7 @@ namespace daemon {
    * by the master process. It will drive a separate process. Only the sub
    * process interface is not included here to allow testability.
    */
-  class DataTransferSession {
+  class DataTransferSession: public Session {
   public:
     /** Subclass holding all the contents from castor.conf file. The pre-
      * extraction of the contents by the caller instead of direct getconfent
@@ -107,8 +108,29 @@ namespace daemon {
       castor::messages::TapeserverProxy & initialProcess,
       castor::server::ProcessCap &capUtils,
       const CastorConf & castorConf);
-    /** The only method. It will execute (like a task, that it is) */
-    int execute() ;
+
+    /**
+     * Execute the session and return the type of action to be performed
+     * immediately after the session has completed.
+     *
+     * The session is responsible for mounting a tape into the tape drive,
+     * working with that tape, unloading the tape from the drive and then
+     * dismounting the tape from the drive and storing it back in its home slot
+     * within the tape library.
+     *
+     * If this method throws an exception and the session is not a cleaner
+     * session then it assumed that the post session action is
+     * EndOfSessionAction::CLEAN_DRIVE.
+     *
+     * If this method throws an exception and the session is a cleaner
+     * session then it assumed that the post session action is
+     * EndOfSessionAction::MARK_DRIVE_AS_DOWN.
+     *
+     * @return Returns the type of action to be performed after the session has
+     * completed.
+     */
+    EndOfSessionAction execute();
+
     /** Temporary method used for debugging while building the session class */
     std::string getVid() { return m_volInfo.vid; }
     
@@ -141,9 +163,9 @@ namespace daemon {
      const utils::DriveConfig &driveConfig,log::LogContext & lc);
         
     /** sub-part of execute for the read sessions */
-    int executeRead(log::LogContext & lc);
+    EndOfSessionAction executeRead(log::LogContext & lc);
     /** sub-part of execute for a write session */
-    int executeWrite(log::LogContext & lc);
+    EndOfSessionAction executeWrite(log::LogContext & lc);
     /** sub-part of execute for a dump session */
     void executeDump(log::LogContext & lc);
     /** Reference to the RmcProxy, allowing the mounting of the tape by the

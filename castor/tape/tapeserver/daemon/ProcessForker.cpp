@@ -320,7 +320,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
         "Caught an unknown exception")};
       m_log(LOG_ERR, "Failed to run cleaner session", params);
     }
-    exit(1);
+    exit(Session::MARK_DRIVE_AS_DOWN);
   }
 }
 
@@ -374,7 +374,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
         "Caught an unknown exception")};
       m_log(LOG_ERR, "Failed to run data-transfer session", params);
     }
-    exit(1);
+    exit(Session::CLEAN_DRIVE);
   }
 }
 
@@ -429,7 +429,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
         "Caught an unknown exception")};
       m_log(LOG_ERR, "Failed to run label session", params);
     }
-    exit(1);
+    exit(Session::CLEAN_DRIVE);
   }
 }
 
@@ -454,7 +454,8 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 //------------------------------------------------------------------------------
 // runCleanerSession
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::ProcessForker::runCleanerSession(
+castor::tape::tapeserver::daemon::Session::EndOfSessionAction
+  castor::tape::tapeserver::daemon::ProcessForker::runCleanerSession(
   const messages::ForkCleaner &rqst) {
   try {
     const utils::DriveConfig driveConfig = getDriveConfig(rqst);
@@ -475,7 +476,6 @@ int castor::tape::tapeserver::daemon::ProcessForker::runCleanerSession(
       driveConfig,
       sWrapper,
       rqst.vid());
-    // execute() returns 0 if drive should be put up or 1 if it should be put down
     return cleanerSession.execute();
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -496,7 +496,8 @@ int castor::tape::tapeserver::daemon::ProcessForker::runCleanerSession(
 //------------------------------------------------------------------------------
 // runDataTransferSession
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::ProcessForker::runDataTransferSession(
+castor::tape::tapeserver::daemon::Session::EndOfSessionAction
+  castor::tape::tapeserver::daemon::ProcessForker::runDataTransferSession(
   const messages::ForkDataTransfer &rqst) {
   const utils::DriveConfig driveConfig = getDriveConfig(rqst);
 
@@ -824,7 +825,8 @@ void castor::tape::tapeserver::daemon::ProcessForker::
 //------------------------------------------------------------------------------
 // runLabelSession
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::ProcessForker::runLabelSession(
+castor::tape::tapeserver::daemon::Session::EndOfSessionAction
+  castor::tape::tapeserver::daemon::ProcessForker::runLabelSession(
   const messages::ForkLabel &rqst) {
   try {
     const utils::DriveConfig &driveConfig = getDriveConfig(rqst);
@@ -849,8 +851,7 @@ int castor::tape::tapeserver::daemon::ProcessForker::runLabelSession(
       sWrapper,
       driveConfig,
       rqst.force());
-    labelsession.execute();
-    return 0;
+    return labelsession.execute();
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to run label session: " << ne.getMessage().str();

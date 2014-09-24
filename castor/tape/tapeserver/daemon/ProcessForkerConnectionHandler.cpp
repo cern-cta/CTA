@@ -23,6 +23,7 @@
 #include "castor/messages/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerConnectionHandler.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
+#include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "h/common.h"
 #include "h/serrno.h"
@@ -215,10 +216,27 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
       "ProcessForkerConnectionHandler handling ProcessExited message", params);
 
     DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(msg.pid());
-    if(0 == msg.exitcode()) {
-      drive.sessionSucceeded();
-    } else {
-      drive.sessionFailed();
+    switch(msg.exitcode()) {
+    case Session::MARK_DRIVE_AS_UP:
+      return drive.sessionSucceeded();
+    case Session::MARK_DRIVE_AS_DOWN:
+      return drive.sessionFailed();
+    case Session::CLEAN_DRIVE:
+      {
+        const std::string vid = drive.getVidForCleaner();
+        const time_t assignmentTime = drive.getAssignmentTimeForCleaner();
+        drive.sessionFailed();
+        return drive.createCleaner(vid, assignmentTime);
+      }
+    default:
+      // Should never happen
+      {
+        castor::exception::Exception ex;
+        ex.getMessage() <<
+          "ProcessExited message contains an unknown exit code"
+          ": exitCode=" << msg.exitcode();
+        throw ex;
+      }
     }
 
   } catch(castor::exception::Exception &ne) {

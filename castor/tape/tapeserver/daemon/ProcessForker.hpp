@@ -218,7 +218,7 @@ private:
    * @param rqst The ForkCleaner message.
    * @return The value to be used when exiting the child process.
    */
-  int runCleanerSession(const messages::ForkCleaner &rqst);
+  Session::EndOfSessionAction runCleanerSession(const messages::ForkCleaner &rqst);
 
   /**
    * Runs a data-transfer session.  This method is to be called within the
@@ -227,7 +227,8 @@ private:
    * @param rqst The ForkDataTransfer message.
    * @return The value to be used when exiting the child process.
    */
-  int runDataTransferSession(const messages::ForkDataTransfer &rqst);
+  Session::EndOfSessionAction runDataTransferSession(
+    const messages::ForkDataTransfer &rqst);
 
   /**
    * Gets the drve configuration information from the specified ForkDataTransfer
@@ -337,7 +338,7 @@ private:
    * @param rqst The ForkLabel message.
    * @return The value to be used when exiting the child process.
    */
-  int runLabelSession(const messages::ForkLabel &rqst);
+  Session::EndOfSessionAction runLabelSession(const messages::ForkLabel &rqst);
 
   /**
    * Gets the label job from the specified ForkLabel message.
