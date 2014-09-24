@@ -24,17 +24,17 @@
 #pragma once
 
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
-#include "castor/log/Logger.hpp"
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/log/LogContext.hpp"
-#include "castor/tape/tapeserver/system/Wrapper.hpp"
-#include "castor/tape/utils/DriveConfig.hpp"
-#include "castor/tape/utils/utils.hpp"
+#include "castor/log/Logger.hpp"
+#include "castor/messages/TapeserverProxy.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "castor/legacymsg/NsProxy.hpp"
+#include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
+#include "castor/tape/utils/DriveConfig.hpp"
+#include "castor/tape/utils/utils.hpp"
 
 #include <memory>
 
@@ -52,6 +52,7 @@ public:
   /**
    *  Constructor 
    *
+   * @param tapeserver Proxy object representing the tapeserverd daemon.
    * @param rmc Proxy object representing the rmcd daemon.
    * @param clientRequest The request to label a tape received from the label
    * tape command.
@@ -63,6 +64,7 @@ public:
    * tape.
    */
   LabelSession(
+    messages::TapeserverProxy &tapeserver,
     legacymsg::RmcProxy &rmc,
     const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
     castor::log::Logger &log,
@@ -94,16 +96,6 @@ public:
     
 private:
     
-  /**
-   * The network timeout in seconds
-   */
-  const int m_timeout;
-
-  enum TapeNsStatus {
-    LABEL_SESSION_STEP_SUCCEEDED,
-    LABEL_SESSION_STEP_FAILED
-  }; 
-
   /**
    * Performs some meta-data checks that need to be done before deciding to
    * mount the tape for labeling.
@@ -153,6 +145,11 @@ private:
    * @return 
    */
   void labelTheTape(drives::DriveInterface *const drive);
+
+  /**
+   * Proxy object representing the tapeserverd daemon.
+   */
+  messages::TapeserverProxy &m_tapeserver;
     
   /**
    * The object representing the rmcd daemon.

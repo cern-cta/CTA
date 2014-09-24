@@ -519,7 +519,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   const int sizeOfIOThreadPoolForZMQ = 1;
   messages::SmartZmqContext
     zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
-
   const int tapeserverNetTimeout = 10; // Timeout in seconds
   messages::TapeserverProxyZmq tapeserver(m_log,
     TAPE_SERVER_INTERNAL_LISTENING_PORT, tapeserverNetTimeout,
@@ -838,6 +837,14 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     params.push_back(log::Param("rmcPort", rqst.rmcport()));
     m_log(LOG_INFO, "Label-session child-process started", params);
 
+    const int sizeOfIOThreadPoolForZMQ = 1;
+    messages::SmartZmqContext
+      zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
+    const int tapeserverNetTimeout = 10; // Timeout in seconds
+    messages::TapeserverProxyZmq tapeserver(m_log,
+      TAPE_SERVER_INTERNAL_LISTENING_PORT, tapeserverNetTimeout,
+      zmqContext.get());
+
     // The network timeout of rmc communications should be several minutes due
     // to the time it takes to mount and unmount tapes
     const int rmcNetTimeout = 600; // Timeout in seconds
@@ -845,6 +852,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     legacymsg::NsProxy_TapeAlwaysEmpty ns;
     castor::tape::System::realWrapper sWrapper;
     LabelSession labelsession(
+      tapeserver,
       rmc,
       labelJob,
       m_log,

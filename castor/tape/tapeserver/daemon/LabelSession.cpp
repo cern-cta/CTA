@@ -43,13 +43,14 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::LabelSession::LabelSession(
+  messages::TapeserverProxy &tapeserver,
   legacymsg::RmcProxy &rmc, 
   const legacymsg::TapeLabelRqstMsgBody &clientRequest,
   castor::log::Logger &log,
   System::virtualWrapper &sysWrapper,
   const utils::DriveConfig &driveConfig,
   const bool force):
-  m_timeout(1), // 1 second of timeout for the network in the label session. This is not going to be a parameter of the constructor
+  m_tapeserver(tapeserver),
   m_rmc(rmc),
   m_request(clientRequest),
   m_log(log),
@@ -83,8 +84,11 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   labelTheTape(drive.get());
   m_log(LOG_INFO, "The tape has been successfully labeled", params);
   drive->unloadTape();
+  m_log(LOG_INFO, "The tape has been successfully unloaded after labeling",
+    params);
   m_rmc.unmountTape(m_request.vid, m_driveConfig.librarySlot);
-  m_log(LOG_INFO, "The tape has been successfully unmounted after labeling", params);
+  m_log(LOG_INFO, "The tape has been successfully unmounted after labeling",
+    params);
 
   return MARK_DRIVE_AS_UP;
 }
