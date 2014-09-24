@@ -46,7 +46,9 @@ namespace drives {
      * Return cumulative log counter values from the log pages related to
      * the drive statistics about data movements to/from the tape. 
      * Data fields fromHost, toDrive are related to the write operation and
-     * fields toHost, fromDrive are related to the read operation.
+     * fields toHost, fromDrive are related to the read operation. It is 
+     * legal that the drive statistics will be reseted after the log page 
+     * query on the drive.
      * @return compressionStats
      */
     virtual compressionStats getCompression()  = 0;
@@ -349,3 +351,4 @@ namespace drives {
   };
 
 }}}}
+
