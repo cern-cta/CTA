@@ -159,6 +159,8 @@ castor::messages::ForkDataTransfer
   msg.set_diskthreadpoolsize(
     config.tapeserverdDiskThreads);
   msg.set_rmcport(rmcPort);
+  msg.set_remotefileprotocol(
+    config.tapeserverdRemoteFileProtocol);
 
   return msg;
 }

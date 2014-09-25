@@ -50,7 +50,7 @@ public:
    * @param lc log context fpr logging purpose
    */
   DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq, 
-          castor::log::LogContext lc);
+          castor::log::LogContext lc, const std::string & remoteFileProtocol);
   
   /**
    * Destructor.
@@ -129,6 +129,12 @@ private:
    * Aggregate all threads' stats 
    */
   DiskStats m_pooldStat;
+  
+  /**
+   * A disk file factory, that will create the proper type of file access class,
+   * depending on the received path
+   */
+  diskFile::diskFileFactory m_diskFileFactory;
   
   /**
    * Subclass of the thread pool's worker thread.

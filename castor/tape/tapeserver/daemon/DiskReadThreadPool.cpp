@@ -36,7 +36,9 @@ namespace daemon {
 // DiskReadThreadPool constructor
 //------------------------------------------------------------------------------
 DiskReadThreadPool::DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq, 
-        castor::log::LogContext lc) : m_lc(lc),m_maxFilesReq(maxFilesReq),m_maxBytesReq(maxBytesReq),m_nbActiveThread(0){
+    castor::log::LogContext lc, const std::string & remoteFileProtocol) : 
+    m_diskFileFactory(remoteFileProtocol), m_lc(lc),m_maxFilesReq(maxFilesReq),
+    m_maxBytesReq(maxBytesReq), m_nbActiveThread(0) {
   for(int i=0; i<nbThread; i++) {
     DiskReadWorkerThread * thr = new DiskReadWorkerThread(*this);
     m_threads.push_back(thr);
@@ -151,7 +153,7 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
     task.reset( m_parent.popAndRequestMore(m_lc));
     m_threadStat.waitInstructionsTime += localTime.secs(utils::Timer::resetCounter);
     if (NULL!=task.get()) {
-      task->execute(m_lc);
+      task->execute(m_lc, m_parent.m_diskFileFactory);
       m_threadStat += task->getTaskStats();
     }
     else {

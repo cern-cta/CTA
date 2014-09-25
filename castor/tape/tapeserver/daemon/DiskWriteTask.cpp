@@ -43,12 +43,14 @@ m_recallingFile(file),m_memManager(mm){
 //------------------------------------------------------------------------------
 // DiskWriteTask::execute
 //------------------------------------------------------------------------------
-bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
+bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
+    diskFile::diskFileFactory & fileFactory) {
   using log::LogContext;
   using log::Param;
   utils::Timer localTime;
   try{
-    tape::diskFile::WriteFile ourFile(m_recallingFile->path());
+    std::auto_ptr<tape::diskFile::WriteFile> writeFile(
+      fileFactory.createWriteFile(m_recallingFile->path()));
     m_stats.openingTime+=localTime.secs(utils::Timer::resetCounter);
     
     int blockId  = 0;
@@ -70,7 +72,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
         
         m_stats.dataVolume+=mb->m_payload.size();
         
-        mb->m_payload.write(ourFile);
+        mb->m_payload.write(*writeFile);
         m_stats.transferTime+=localTime.secs(utils::Timer::resetCounter);
         
         checksum = mb->m_payload.adler32(checksum);
@@ -82,7 +84,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
         //close has to be explicit, because it may throw. 
         //A close is done  in WriteFile's destructor, but it may lead to some 
         //silent data loss
-        ourFile.close();
+        writeFile->close();
         m_stats.closingTime +=localTime.secs(utils::Timer::resetCounter);
         m_stats.filesCount++;
         break;

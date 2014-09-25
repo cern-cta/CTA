@@ -92,6 +92,7 @@ namespace daemon {
 
       // Additions for tapeserverd
       uint32_t tapeserverdDiskThreads;
+      std::string tapeserverdRemoteFileProtocol;
     };
     /**
      * Constructor.

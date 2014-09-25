@@ -49,4 +49,6 @@ message ForkDataTransfer {
   required uint64 maxfilesbeforeflush = 21;
   required uint32 diskthreadpoolsize = 22;
   required uint32 rmcport = 23;
+  required string remotefileprotocol = 24;
 }
+

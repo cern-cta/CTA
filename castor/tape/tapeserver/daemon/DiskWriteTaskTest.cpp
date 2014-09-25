@@ -37,6 +37,7 @@
 namespace unitTests{
   using namespace castor::tape::tapeserver::daemon;
   using namespace castor::tape::tapeserver::client;
+  using namespace castor::tape::diskFile;
   struct MockRecallReportPacker : public RecallReportPacker {
     MOCK_METHOD3(reportCompletedJob,void(const FileStruct&,u_int32_t,u_int64_t));
     MOCK_METHOD3(reportFailedJob, void(const FileStruct& ,const std::string&,int));
@@ -56,6 +57,7 @@ namespace unitTests{
     MockRecallReportPacker report(client,lc);
     EXPECT_CALL(report,reportFailedJob(_,_,_));
     RecallMemoryManager mm(10,100,lc);
+    diskFileFactory fileFactory("RFIO");
         
     castor::tape::tapegateway::FileToRecallStruct file;
     file.setPath("/dev/null");
@@ -74,7 +76,7 @@ namespace unitTests{
 
     t.pushDataBlock(mb);
     t.pushDataBlock(NULL);
-    t.execute(report,lc);
+    t.execute(report,lc,fileFactory);
   }
 }
 

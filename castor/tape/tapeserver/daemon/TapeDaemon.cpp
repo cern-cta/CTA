@@ -1082,6 +1082,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::CastorConf
     (uint64_t)tapebridge::TAPEBRIDGE_MAXFILESBEFOREFLUSH, &m_log);
   castorConf.tapeserverdDiskThreads = config.getConfEntInt(
     "RTCPD", "THREAD_POOL", (uint32_t)RTCPD_THREAD_POOL, &m_log);
+  castorConf.tapeserverdRemoteFileProtocol = config.getConfEntString(
+    "TAPESERVERD", "REMOTEFILEPROTOCOL", "RTCPD", &m_log);
 
   return castorConf;
 }

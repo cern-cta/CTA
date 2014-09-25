@@ -43,7 +43,7 @@ m_nextTask(destination),m_migratedFile(file),
 //------------------------------------------------------------------------------
 // DiskReadTask::execute
 //------------------------------------------------------------------------------
-void DiskReadTask::execute(log::LogContext& lc) {
+void DiskReadTask::execute(log::LogContext& lc, diskFile::diskFileFactory & fileFactory) {
   using log::LogContext;
   using log::Param;
 
@@ -58,8 +58,9 @@ void DiskReadTask::execute(log::LogContext& lc) {
     //so dont do the same mistake twice !
     checkMigrationFailing();
     
-    tape::diskFile::ReadFile sourceFile(m_migratedFile->path());
-    if(migratingFileSize != sourceFile.size()){
+    std::auto_ptr<tape::diskFile::ReadFile> sourceFile(
+      fileFactory.createReadFile(m_migratedFile->path()));
+    if(migratingFileSize != sourceFile->size()){
       throw castor::exception::Exception("Mismtach between size given by the client "
               "and the real one");
     }
@@ -80,7 +81,7 @@ void DiskReadTask::execute(log::LogContext& lc) {
       mb->m_fileid = m_migratedFile->fileid();
       mb->m_fileBlock = blockId++;
             
-      migratingFileSize -= mb->m_payload.read(sourceFile);
+      migratingFileSize -= mb->m_payload.read(*sourceFile);
       m_stats.transferTime+=localTime.secs(utils::Timer::resetCounter);
 
       m_stats.dataVolume += mb->m_payload.size();

@@ -62,7 +62,8 @@ public:
    * Main routine: takes each memory block in the fifo and writes it to disk
    * @return true if the file has been successfully written false otherwise.
    */
-  virtual bool execute(RecallReportPacker& reporter,log::LogContext& lc) ;
+  virtual bool execute(RecallReportPacker& reporter,log::LogContext& lc,
+    diskFile::diskFileFactory & fileFactory) ;
   
   /**
    * Allows client code to return a reusable memory block. Should not been called

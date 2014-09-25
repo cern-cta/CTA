@@ -34,8 +34,9 @@ namespace daemon {
 // constructor
 //------------------------------------------------------------------------------
 DiskWriteThreadPool::DiskWriteThreadPool(int nbThread,
-        RecallReportPacker& report,castor::log::LogContext lc):
-        m_reporter(report),m_lc(lc)
+        RecallReportPacker& report,castor::log::LogContext lc,
+        const std::string & remoteFileProtocol):
+        m_diskFileFactory(remoteFileProtocol),m_reporter(report),m_lc(lc)
 {
   m_lc.pushOrReplace(castor::log::Param("threadCount", nbThread));
   for(int i=0; i<nbThread; i++) {
@@ -145,7 +146,8 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
     task.reset(m_parentThreadPool.m_tasks.pop());
     m_threadStat.waitInstructionsTime+=localTime.secs(utils::Timer::resetCounter);
     if (NULL!=task.get()) {
-      if(false==task->execute(m_parentThreadPool.m_reporter,m_lc)) {
+      if(false==task->execute(m_parentThreadPool.m_reporter,m_lc, 
+          m_parentThreadPool.m_diskFileFactory)) {
         ++m_parentThreadPool.m_failedWriteCount;
         ScopedParam sp(m_lc, Param("errorCount", m_parentThreadPool.m_failedWriteCount));
         m_lc.log(LOG_ERR, "Task failed: counting another error for this session");

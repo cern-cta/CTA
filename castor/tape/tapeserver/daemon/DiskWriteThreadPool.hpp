@@ -58,7 +58,8 @@ public:
    */
   DiskWriteThreadPool(int nbThread, 
           RecallReportPacker& reportPacker,
-          castor::log::LogContext lc);
+          castor::log::LogContext lc,
+          const std::string & remoteFileProtocol);
   /**
    * Destructor: we suppose the threads are no running (waitThreads() should
    * be called befor destruction unless the threads were not started.
@@ -93,6 +94,12 @@ private:
   castor::server::AtomicCounter<int> m_nbActiveThread;
   /** Thread safe counter for failed tasks */
   castor::server::AtomicCounter<int> m_failedWriteCount;
+  
+  /**
+   * A disk file factory, that will create the proper type of file access class,
+   * depending on the received path
+   */
+  diskFile::diskFileFactory m_diskFileFactory;
   
   /**
    * Private class implementing the worker threads.

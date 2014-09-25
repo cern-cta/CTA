@@ -31,6 +31,7 @@
 #include "castor/exception/Errnum.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include <gtest/gtest.h>
+#include <memory>
 
 namespace UnitTests {
   
@@ -211,23 +212,28 @@ namespace UnitTests {
     const uint32_t block_size = 1024;
     char data1[block_size];
     char data2[block_size];
+    castor::tape::diskFile::diskFileFactory fileFactory("RFIO");
     {
-      castor::tape::diskFile::ReadFile rf("localhost:/etc/fstab");
-      castor::tape::diskFile::WriteFile wf("localhost:/tmp/fstab");
+      std::auto_ptr<castor::tape::diskFile::ReadFile> rf(
+        fileFactory.createReadFile("localhost:/etc/fstab"));
+      std::auto_ptr<castor::tape::diskFile::WriteFile> wf(
+        fileFactory.createWriteFile("localhost:/tmp/fstab"));
       size_t res=0;
       do {
-        res = rf.read(data1, block_size);
-        wf.write(data1, res);
+        res = rf->read(data1, block_size);
+        wf->write(data1, res);
       } while(res);
-      wf.close();
+      wf->close();
     }
-    castor::tape::diskFile::ReadFile src("localhost:/tmp/fstab");
-    castor::tape::diskFile::ReadFile dst("localhost:/etc/fstab");
+    std::auto_ptr<castor::tape::diskFile::ReadFile> src(
+        fileFactory.createReadFile("localhost:/tmp/fstab"));
+    std::auto_ptr<castor::tape::diskFile::ReadFile> dst(
+        fileFactory.createReadFile("localhost:/etc/fstab"));
     size_t res1=0;
     size_t res2=0;
     do {
-      res1 = src.read(data1, block_size);
-      res2 = dst.read(data2, block_size);
+      res1 = src->read(data1, block_size);
+      res2 = dst->read(data2, block_size);
       ASSERT_EQ(res1, res2);
       ASSERT_EQ(strncmp(data1, data2, res1), 0);
     } while(res1 || res2);

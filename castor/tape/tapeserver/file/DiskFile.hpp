@@ -23,11 +23,13 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/file/Structures.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
-#include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
+#include "castor/tape/tapeserver/utils/Regex.hpp"
+/*
+ * This file only contains the interface declaration of the base classes
+ * the real implementation, which depends on many includes is hidden in
+ * DiskFileImplementations.hpp
+ * There is still a single .cpp file
+ */
 
 namespace castor {
   namespace tape {
@@ -36,19 +38,38 @@ namespace castor {
      */
     namespace diskFile {
       
+      class ReadFile;
+      class WriteFile;
+      
+      /**
+       * Factory class deciding on the type of read/write file type
+       * based on the url passed and a config paramter.
+       * Currently, the parameter allows switching between RFIO and XROOT
+       */
+      class diskFileFactory {
+        typedef castor::tape::utils::Regex Regex;
+      public:
+        diskFileFactory(const std::string & remoteFileProtocol);
+        ReadFile * createReadFile(const std::string & path);
+        WriteFile * createWriteFile(const std::string & path);
+      private:
+        Regex m_NoURLLocalFile;
+        Regex m_NoURLRemoteFile;
+        Regex m_NoURLRadosStriperFile;
+        Regex m_URLLocalFile;
+        Regex m_URLRfioFile;
+        Regex m_URLXrootFile;
+        Regex m_URLCephFile;
+        std::string m_remoteFileProtocol;
+      };
+      
       class ReadFile {
       public:
-        
-        /**
-         * Constructor of the ReadFile class. It opens the file for reading with the O_RDONLY flag.
-         * @param url: Uniform Resource Locator of the file we want to read
-         */
-        ReadFile(const std::string &url) ;
         /**
          * Return the size of the file in byte. Can throw
          * @return 
          */
-        size_t size() const;
+        virtual size_t size() const = 0;
         
         /**
          * Reads data from the file.
@@ -56,47 +77,35 @@ namespace castor {
          * @param size: size of the buffer
          * @return The amount of data actually copied. Zero at end of file.
          */
-        size_t read(void *data, const size_t size) ;
+        virtual size_t read(void *data, const size_t size) = 0;
         
         /**
          * Destructor of the ReadFile class. It closes the corresponding file descriptor.
          */
-        ~ReadFile() throw();
-        
-      private:
-        int m_fd;
+        virtual ~ReadFile() throw() {}
       };
       
       class WriteFile {
       public:
-        
-        /**
-         * Constructor of the WriteFile class. It opens the file for writing with the O_WRONLY, O_CREAT and O_EXCL flags.
-         * @param url: Uniform Resource Locator of the file we want to write
-         */
-        WriteFile(const std::string &url) ;
-        
         /**
          * Writes a block of data on disk
          * @param data: buffer to copy the data from
          * @param size: size of the buffer
          */
-        void write(const void *data, const size_t size) ;
+        virtual void write(const void *data, const size_t size) = 0;
         
         /**
          * Closes the corresponding file descriptor, which may throw an exception.
          */
-        void close() ;
+        virtual void close() = 0;
         
         /**
          * Destructor of the WriteFile class.
          */
-        ~WriteFile() throw();
-        
-      private:
-        int m_fd;
-        bool closeTried;
+        virtual ~WriteFile() throw() {}
       };
+
     } //end of namespace diskFile
     
  }}
+

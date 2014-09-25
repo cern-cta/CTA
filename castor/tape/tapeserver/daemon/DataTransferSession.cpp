@@ -201,7 +201,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
     DiskWriteThreadPool dwtp(m_castorConf.tapeserverdDiskThreads,
         rrp,
-        lc);
+        lc,
+        m_castorConf.tapeserverdRemoteFileProtocol);
     RecallTaskInjector rti(mm, trst, dwtp, m_clientProxy,
             m_castorConf.tapebridgeBulkRequestRecallMaxFiles,
             m_castorConf.tapebridgeBulkRequestRecallMaxBytes,lc);
@@ -289,7 +290,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     DiskReadThreadPool drtp(m_castorConf.tapeserverdDiskThreads,
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
         m_castorConf.tapebridgeBulkRequestMigrationMaxBytes,
-        lc);
+        lc,
+        m_castorConf.tapeserverdRemoteFileProtocol);
     MigrationTaskInjector mti(mm, drtp, twst, m_clientProxy, 
             m_castorConf.tapebridgeBulkRequestMigrationMaxBytes,
             m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,lc);
