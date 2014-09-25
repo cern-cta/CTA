@@ -861,17 +861,14 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       rqst.force());
     return labelsession.execute();
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to run label session: " << ne.getMessage().str();
-    throw ex;
+    throw ne;
   } catch(std::exception &se) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to run label session: " << se.what();
+    ex.getMessage() << se.what();
     throw ex;
   } catch(...) {
         castor::exception::Exception ex;
-    ex.getMessage() << "Failed to run label session"
-      ": Caught an unknown exception";
+    ex.getMessage() << "Caught an unknown exception";
     throw ex;
   }
 }

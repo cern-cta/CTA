@@ -88,11 +88,10 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       params);
 
     return MARK_DRIVE_AS_UP;
-  } catch(castor::exception::Exception &ne) {
-    m_tapeserver.labelError(m_request.drive, ne);
+  } catch(castor::exception::Exception &ex) {
 
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to label tape: " << ne.getMessage().str();
+    // Send details of exception to tapeserverd and then rethrow
+    m_tapeserver.labelError(m_request.drive, ex);
     throw ex;
   }
 }

@@ -95,10 +95,15 @@ void castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
   sessionFailed() {
-  castor::exception::Exception ex;
   try {
-    legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection,
-      ex.code(), ex.getMessage().str());
+    if(!m_labelErrors.empty()) {
+      const castor::exception::Exception &labelEx = m_labelErrors.front();
+      legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection,
+        labelEx.code(), labelEx.getMessage().str());
+    } else {
+      legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection,
+        SEINTERNAL, "Unknown error");
+    }
   } catch(castor::exception::Exception &we) {
     log::Param params[] = {log::Param("message", we.getMessage().str())};
     m_log(LOG_ERR, "Failed to send failure reply-message to label command",
