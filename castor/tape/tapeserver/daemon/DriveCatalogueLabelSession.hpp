@@ -29,6 +29,8 @@
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 #include "castor/tape/utils/DriveConfig.hpp"
 
+#include <list>
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -127,6 +129,13 @@ public:
    */
   bool tapeIsBeingMounted() const throw();
 
+  /**
+   * To be called if the label session has sent tapserverd a label error.
+   *
+   * @param labelEx The label error.
+   */
+  void receivedLabelError(const castor::exception::Exception &labelEx);
+
 protected:
 
   /**
@@ -172,6 +181,11 @@ private:
    * command-line tool.
    */
   const int m_labelCmdConnection;
+
+  /**
+   * List of label errors receved from the label session.
+   */
+  std::list<castor::exception::Exception> m_labelErrors;
 
 }; // class DriveCatalogueLabelSession
 

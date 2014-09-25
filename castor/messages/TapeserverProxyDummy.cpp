@@ -97,3 +97,10 @@ void castor::messages::TapeserverProxyDummy::tapeUnmounted(
 void castor::messages::TapeserverProxyDummy::
 notifyHeartbeat(const std::string &unitName, const uint64_t nbBlocksMoved) {
 } 
+
+//------------------------------------------------------------------------------
+// labelError
+//------------------------------------------------------------------------------
+void castor::messages::TapeserverProxyDummy::labelError(
+  const std::string &unitName, const castor::exception::Exception &labelEx) {
+}

@@ -153,3 +153,11 @@ bool castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
   tapeIsBeingMounted() const throw() {
   return false;
 }
+
+//-----------------------------------------------------------------------------
+// receivedLabelError
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+  receivedLabelError(const castor::exception::Exception &labelEx) {
+  m_labelErrors.push_back(labelEx);
+}

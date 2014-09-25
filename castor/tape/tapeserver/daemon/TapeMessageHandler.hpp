@@ -181,6 +181,14 @@ private:
    * @param rqst The request.
    * @return The reply.
    */
+  messages::Frame handleLabelError(const messages::Frame &rqst);
+
+  /**
+   * Handles the specified request.
+   *
+   * @param rqst The request.
+   * @return The reply.
+   */
   messages::Frame handleMigrationJobFromTapeGateway(
     const messages::Frame &rqst);
 

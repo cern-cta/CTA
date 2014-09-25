@@ -143,6 +143,16 @@ public:
   void notifyHeartbeat(const std::string &unitName,
     const uint64_t nbBlocksMoved);
 
+  /**
+   * Notifies the tapeserverd daemon that a label session has encountered the
+   * specified error.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param LabelEx The error encountered by the label session.
+   */
+  void labelError(const std::string &unitName,
+    const castor::exception::Exception &labelEx);
+
 private:
 
   /**
@@ -261,6 +271,16 @@ private:
    */
   Frame createHeartbeatFrame(const std::string &unitName,
     const uint64_t nbBlocksMoved);
+
+  /**
+   * Creates a frame containing a LabelError message.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param LabelEx The error encountered by the label session.
+   * @return The frame.
+   */
+  Frame createLabelErrorFrame(const std::string &unitName,
+    const castor::exception::Exception &labelEx);
 
 }; // class TapeserverProxyZmq
 

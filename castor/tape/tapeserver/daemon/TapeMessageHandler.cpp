@@ -23,6 +23,7 @@
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/Exception.pb.h"
 #include "castor/messages/Header.pb.h"
+#include "castor/messages/LabelError.pb.h"
 #include "castor/messages/messages.hpp"
 #include "castor/messages/MigrationJobFromTapeGateway.pb.h"
 #include "castor/messages/MigrationJobFromWriteTp.pb.h"
@@ -196,6 +197,9 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   case messages::MSG_TYPE_MIGRATIONJOBFROMWRITETP:
     return handleMigrationJobFromWriteTp(rqst);
 
+  case messages::MSG_TYPE_LABELERROR:
+    return handleLabelError(rqst);
+
   case messages::MSG_TYPE_RECALLJOBFROMREADTP:
     return handleRecallJobFromReadTp(rqst);
 
@@ -240,6 +244,37 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle Heartbeat message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleLabelError
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleLabelError(const messages::Frame &rqst) {
+  m_log(LOG_DEBUG, "Handling LabelError message");
+
+  try {
+    castor::messages::LabelError rqstBody;
+    rqst.parseBodyIntoProtocolBuffer(rqstBody);
+    castor::exception::Exception labelEx(rqstBody.code());
+    labelEx.getMessage() << rqstBody.message();
+    log::Param params[] = {
+      log::Param("code", labelEx.code()),
+      log::Param("message", labelEx.getMessage().str())};
+    m_log(LOG_INFO, "Received LabelError", params);
+
+    DriveCatalogueEntry &drive =
+      m_driveCatalogue.findDrive(rqstBody.unitname());
+    drive.getLabelSession().receivedLabelError(labelEx);
+
+    const messages::Frame reply = createReturnValueFrame(0);
+    return reply;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to handle LabelError message: " <<
       ne.getMessage().str();
     throw ex;
   }

@@ -68,6 +68,8 @@ const char *castor::messages::msgTypeToString(const MsgType msgType) throw() {
     return "TapeUnmounStarted";
   case MSG_TYPE_TAPEUNMOUNTED:
     return "TapeUnmounted";
+  case MSG_TYPE_LABELERROR:
+    return "LabelError";
   default:
     return "Unknown";
   }

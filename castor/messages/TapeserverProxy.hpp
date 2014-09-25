@@ -135,6 +135,16 @@ public:
   virtual void notifyHeartbeat(const std::string &unitName,
     const uint64_t nbBytesMoved) = 0;
 
+  /**
+   * Notifies the tapeserverd daemon that a label session has encountered the
+   * specified error.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param labelEx The error encountered by the label session.
+   */
+  virtual void labelError(const std::string &unitName,
+    const castor::exception::Exception &labelEx) = 0;
+
 }; // class TapeserverProxy
 
 } // namespace messages

@@ -81,6 +81,15 @@ namespace castor {
       std::ostringstream& getMessage() {
         return m_message;
       }
+
+      /**
+       * Get the value of m_message
+       * A message explaining why this exception was raised
+       * @return the value of m_message
+       */
+      const std::ostringstream& getMessage() const {
+        return m_message;
+      }
       
       /**
        * Get the value of m_message as a sting, for const-c orrectness

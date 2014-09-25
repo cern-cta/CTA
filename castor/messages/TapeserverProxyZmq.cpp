@@ -23,6 +23,7 @@
 #include "castor/messages/Heartbeat.pb.h"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/Constants.hpp"
+#include "castor/messages/LabelError.pb.h"
 #include "castor/messages/messages.hpp"
 #include "castor/messages/MigrationJobFromTapeGateway.pb.h"
 #include "castor/messages/MigrationJobFromWriteTp.pb.h"
@@ -537,6 +538,62 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to create Heartbeat frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// labelError
+//------------------------------------------------------------------------------
+void castor::messages::TapeserverProxyZmq::labelError(
+  const std::string &unitName, const castor::exception::Exception &labelEx) {
+  try {
+    const Frame rqst = createLabelErrorFrame(unitName, labelEx);
+    sendFrame(m_tapeserverSocket, rqst);
+
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of label-session error: " <<
+      "unitName=" << unitName << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createLabelErrorFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::TapeserverProxyZmq::
+  createLabelErrorFrame(const std::string &unitName,
+  const castor::exception::Exception &labelEx) {
+  try {
+    Frame frame;
+
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_LABELERROR);
+    frame.header.set_bodysignature("PIPO");
+
+    LabelError body;
+    body.set_unitname(unitName);
+    body.set_code(labelEx.code());
+    body.set_message(labelEx.getMessage().str());
+    frame.serializeProtocolBufferIntoBody(body);
+
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create LabelError frame: " <<
       ne.getMessage().str();
     throw ex;
   }

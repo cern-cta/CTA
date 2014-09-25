@@ -64,33 +64,37 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::LabelSession::execute() {
-  std::ostringstream task;
-  task << "label tape " << m_request.vid << " for gid=" << m_request.gid <<
-    " uid=" << m_request.uid << " in drive " << m_request.drive;
-  
-  log::Param params[] = {
+  try {
+    log::Param params[] = {
       log::Param("uid", m_request.uid),
       log::Param("gid", m_request.gid),
       log::Param("vid", m_request.vid),
       log::Param("drive", m_request.drive),
       log::Param("dgn", m_request.dgn)};
   
-  performPreMountChecks();
-  mountTape();
-  std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> drive =
-    getDriveObject();
-  waitUntilTapeLoaded(drive.get(), 60); // 60 = 60 seconds
-  checkTapeIsWritable(drive.get());
-  labelTheTape(drive.get());
-  m_log(LOG_INFO, "The tape has been successfully labeled", params);
-  drive->unloadTape();
-  m_log(LOG_INFO, "The tape has been successfully unloaded after labeling",
-    params);
-  m_rmc.unmountTape(m_request.vid, m_driveConfig.librarySlot);
-  m_log(LOG_INFO, "The tape has been successfully unmounted after labeling",
-    params);
+    performPreMountChecks();
+    mountTape();
+    std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> drive =
+      getDriveObject();
+    waitUntilTapeLoaded(drive.get(), 60); // 60 = 60 seconds
+    checkTapeIsWritable(drive.get());
+    labelTheTape(drive.get());
+    m_log(LOG_INFO, "The tape has been successfully labeled", params);
+    drive->unloadTape();
+    m_log(LOG_INFO, "The tape has been successfully unloaded after labeling",
+      params);
+    m_rmc.unmountTape(m_request.vid, m_driveConfig.librarySlot);
+    m_log(LOG_INFO, "The tape has been successfully unmounted after labeling",
+      params);
 
-  return MARK_DRIVE_AS_UP;
+    return MARK_DRIVE_AS_UP;
+  } catch(castor::exception::Exception &ne) {
+    m_tapeserver.labelError(m_request.drive, ne);
+
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to label tape: " << ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
