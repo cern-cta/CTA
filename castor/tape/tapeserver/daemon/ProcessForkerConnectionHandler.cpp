@@ -36,7 +36,7 @@ castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   const int fd,
   reactor::ZMQReactor &reactor,
   log::Logger &log,
-  DriveCatalogue &driveCatalogue) throw():
+  Catalogue &driveCatalogue) throw():
   m_fd(fd),
   m_reactor(reactor),
   m_log(log),
@@ -179,12 +179,12 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
       "ProcessForkerConnectionHandler handling ProcessCrashed message", params);
 
     // Notify the catalogue session
-    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(msg.pid());
+    CatalogueDrive &drive = m_driveCatalogue.findDrive(msg.pid());
     drive.sessionFailed();
 
     // Create a cleaner session if the session that crashed is itself not a
     // cleaner
-    if(DriveCatalogueEntry::SESSION_TYPE_CLEANER != drive.getSessionType()) {
+    if(CatalogueDrive::SESSION_TYPE_CLEANER != drive.getSessionType()) {
       const std::string vid = drive.getVidForCleaner();
       const time_t assignmentTime = drive.getAssignmentTimeForCleaner();
       drive.createCleaner(vid, assignmentTime);
@@ -215,7 +215,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     m_log(LOG_INFO, 
       "ProcessForkerConnectionHandler handling ProcessExited message", params);
 
-    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(msg.pid());
+    CatalogueDrive &drive = m_driveCatalogue.findDrive(msg.pid());
     switch(msg.exitcode()) {
     case Session::MARK_DRIVE_AS_UP:
       return drive.sessionSucceeded();

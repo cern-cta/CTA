@@ -24,15 +24,15 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/VdqmProxy.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogueTransferSession.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueTransferSession.hpp"
 #include "h/Ctape_constants.h"
 #include "h/rmc_constants.h"
 
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueTransferSession*
-  castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::create(
+castor::tape::tapeserver::daemon::CatalogueTransferSession*
+  castor::tape::tapeserver::daemon::CatalogueTransferSession::create(
     log::Logger &log,
     const int netTimeout,
     const tape::utils::DriveConfig &driveConfig,
@@ -44,7 +44,7 @@ castor::tape::tapeserver::daemon::DriveCatalogueTransferSession*
   const pid_t pid = processForker.forkDataTransfer(driveConfig, vdqmJob,
     dataTransferConfig, rmcPort);
 
-  return new DriveCatalogueTransferSession(
+  return new CatalogueTransferSession(
     log,
     netTimeout,
     pid,
@@ -56,15 +56,15 @@ castor::tape::tapeserver::daemon::DriveCatalogueTransferSession*
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
-  DriveCatalogueTransferSession(
+castor::tape::tapeserver::daemon::CatalogueTransferSession::
+  CatalogueTransferSession(
   log::Logger &log,
   const int netTimeout,
   const pid_t pid,
   const tape::utils::DriveConfig &driveConfig,
   const DataTransferSession::CastorConf &dataTransferConfig,
   const legacymsg::RtcpJobRqstMsgBody &vdqmJob) throw():
-  DriveCatalogueSession(log, netTimeout, pid, driveConfig),
+  CatalogueSession(log, netTimeout, pid, driveConfig),
   m_state(TRANSFERSTATE_WAIT_JOB),
   m_mode(WRITE_DISABLE),
   m_assignmentTime(time(0)),
@@ -75,21 +75,21 @@ castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 //------------------------------------------------------------------------------
 // sessionSucceeded
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   sessionSucceeded() {
 }
 
 //------------------------------------------------------------------------------
 // sessionFailed
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   sessionFailed() {
 }
 
 //------------------------------------------------------------------------------
 // getAssignmentTime
 //------------------------------------------------------------------------------
-time_t castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+time_t castor::tape::tapeserver::daemon::CatalogueTransferSession::
   getAssignmentTime() const throw() {
   return m_assignmentTime;
 }
@@ -98,14 +98,14 @@ time_t castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 // getVdqmJob
 //------------------------------------------------------------------------------
 castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::
-  DriveCatalogueTransferSession::getVdqmJob() const{
+  CatalogueTransferSession::getVdqmJob() const{
   return m_vdqmJob;
 }
 
 //-----------------------------------------------------------------------------
 // receivedRecallJob
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   receivedRecallJob(const std::string &vid) {
   if(TRANSFERSTATE_WAIT_JOB != m_state) {
     castor::exception::Exception ex;
@@ -124,7 +124,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 //-----------------------------------------------------------------------------
 // receivedMigrationJob
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   receivedMigrationJob(const std::string &vid) {
   if(TRANSFERSTATE_WAIT_JOB != m_state) {
     castor::exception::Exception ex;
@@ -143,7 +143,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 //------------------------------------------------------------------------------
 // getVid
 //------------------------------------------------------------------------------
-std::string castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+std::string castor::tape::tapeserver::daemon::CatalogueTransferSession::
   getVid() const {
   switch(m_state) {
   case TRANSFERSTATE_WAIT_MOUNTED:
@@ -163,7 +163,7 @@ std::string castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 //------------------------------------------------------------------------------
 // getMode
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+int castor::tape::tapeserver::daemon::CatalogueTransferSession::
   getMode() const {
   switch(m_state) {
   case TRANSFERSTATE_WAIT_MOUNTED:
@@ -184,7 +184,7 @@ int castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 //-----------------------------------------------------------------------------
 // getPid
 //-----------------------------------------------------------------------------
-pid_t castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+pid_t castor::tape::tapeserver::daemon::CatalogueTransferSession::
   getPid() const throw() {
   return m_pid;
 }
@@ -192,7 +192,7 @@ pid_t castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 //-----------------------------------------------------------------------------
 // tapeMountedForMigration
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   tapeMountedForMigration(const std::string &vid) {
   if(TRANSFERSTATE_WAIT_MOUNTED != m_state) {
     castor::exception::Exception ex;
@@ -226,7 +226,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 //-----------------------------------------------------------------------------
 // tapeMountedForRecall
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   tapeMountedForRecall(const std::string &vid) {
 
   if(TRANSFERSTATE_WAIT_MOUNTED != m_state) {
@@ -261,7 +261,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 //-----------------------------------------------------------------------------
 // transferStateToStr
 //-----------------------------------------------------------------------------
-const char *castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+const char *castor::tape::tapeserver::daemon::CatalogueTransferSession::
   transferStateToStr(const TransferState state) const throw() {
   switch(state) {
   case TRANSFERSTATE_WAIT_JOB    : return "WAIT_JOB";
@@ -274,7 +274,7 @@ const char *castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
 //-----------------------------------------------------------------------------
 // tapeIsBeingMounted
 //-----------------------------------------------------------------------------
-bool castor::tape::tapeserver::daemon::DriveCatalogueTransferSession::
+bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
   tapeIsBeingMounted() const throw() {
   return TRANSFERSTATE_WAIT_MOUNTED == m_state;
 }

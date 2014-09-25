@@ -30,7 +30,7 @@
 #include "castor/log/Logger.hpp"
 #include "castor/tape/utils/DriveConfigMap.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogueEntry.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueDrive.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 
 #include <map>
@@ -46,7 +46,7 @@ namespace daemon     {
  * Class responsible for keeping track of the tape drive being controlled by
  * the tapeserverd daemon.
  */
-class DriveCatalogue {
+class Catalogue {
 public:
 
   /**
@@ -61,7 +61,7 @@ public:
    * @param hostName The name of the host on which the daemon is running.  This
    * name is needed to fill in messages to be sent to the vdqmd daemon.
    */
-  DriveCatalogue(
+  Catalogue(
     const int netTimeout,
     log::Logger &log,
     const DataTransferSession::CastorConf &dataTransferConfig,
@@ -75,7 +75,7 @@ public:
    * Closes the connection with the label command if the drive catalogue owns
    * the connection at the time of destruction.
    */
-  ~DriveCatalogue() throw();
+  ~Catalogue() throw();
 
   /**
    * Poplates the catalogue using the specified tape-drive configurations.
@@ -92,7 +92,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  const DriveCatalogueEntry &findDrive(const std::string &unitName)
+  const CatalogueDrive &findDrive(const std::string &unitName)
     const;
 
   /**
@@ -103,7 +103,7 @@ public:
    *
    * @param sessionPid The process ID of the session.
    */
-  const DriveCatalogueEntry &findDrive(const pid_t sessionPid) const;
+  const CatalogueDrive &findDrive(const pid_t sessionPid) const;
 
   /**
    * Returns a reference to the tape-drive entry corresponding to the tape
@@ -113,7 +113,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  DriveCatalogueEntry &findDrive(const std::string &unitName);
+  CatalogueDrive &findDrive(const std::string &unitName);
 
   /**
    * Returns a reference to the tape-drive entry associated with the
@@ -123,7 +123,7 @@ public:
    *
    * @param sessionPid The process ID of the session.
    */
-  DriveCatalogueEntry &findDrive(const pid_t sessionPid);
+  CatalogueDrive &findDrive(const pid_t sessionPid);
 
   /**
    * Returns an unordered list of the unit names of all of the tape drives
@@ -170,7 +170,7 @@ private:
    * Type that maps the unit name of a tape drive to the catalogue entry of
    * that drive.
    */
-  typedef std::map<std::string, DriveCatalogueEntry *> DriveMap;
+  typedef std::map<std::string, CatalogueDrive *> DriveMap;
 
   /**
    * Map from the unit name of a tape drive to the catalogue entry of that
@@ -185,7 +185,7 @@ private:
    */
   void enterDriveConfig(const utils::DriveConfig &driveConfig);
 
-}; // class DriveCatalogue
+}; // class Catalogue
 
 } // namespace daemon
 } // namespace tapeserver

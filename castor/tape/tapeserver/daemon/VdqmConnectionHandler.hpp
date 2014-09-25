@@ -30,7 +30,7 @@
 #include "castor/legacymsg/VdqmMarshal.hpp"
 #include "castor/tape/reactor/PollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
+#include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "h/vdqm_constants.h"
 #include "h/rtcp_constants.h"
 
@@ -59,7 +59,7 @@ public:
     const int fd,
     reactor::ZMQReactor &reactor,
     log::Logger &log,
-    DriveCatalogue &driveCatalogue) throw();
+    Catalogue &driveCatalogue) throw();
 
   /**
    * Returns the human-readable name this event handler.
@@ -106,7 +106,7 @@ private:
   /**
    * The catalogue of tape drives controlled by the tape server daemon.
    */
-  DriveCatalogue &m_driveCatalogue;
+  Catalogue &m_driveCatalogue;
   
   /**
    * The timeout in seconds to be applied when performing network read and

@@ -25,7 +25,7 @@
 
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogueSession.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 
@@ -38,12 +38,12 @@ namespace daemon {
  * Derived class containing info about the label session attached to a drive
  * catalogue entry.
  */
-class DriveCatalogueTransferSession : public DriveCatalogueSession {
+class CatalogueTransferSession : public CatalogueSession {
 public:
   /**
-   * Creates a DriveCatalogueTransferSession object.
+   * Creates a CatalogueTransferSession object.
    *
-   * Except in the case of unit testing, a DriveCatalogueLabelSession object
+   * Except in the case of unit testing, a CatalogueLabelSession object
    * should only be created using the static create() method.
    *
    * @param log Object representing the API of the CASTOR logging system.
@@ -54,9 +54,9 @@ public:
    * @param dataTransferConfig The configuration of a data-transfer session.
    * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param processForker Proxy object representing the ProcessForker.
-   * @return A newly created DriveCatalogueTransferSession object.
+   * @return A newly created CatalogueTransferSession object.
    */
-  static DriveCatalogueTransferSession *create(
+  static CatalogueTransferSession *create(
     log::Logger &log,
     const int netTimeout,
     const tape::utils::DriveConfig &driveConfig,
@@ -161,7 +161,7 @@ protected:
   /**
    * Protected constructor.
    *
-   * Except in the case of unit testing a DriveCatalogueTransferSession object
+   * Except in the case of unit testing a CatalogueTransferSession object
    * should only be created using the static create() method.  This constructor
    * is protected so that unit tests can go around this restriction for sole
    * purpose of unit testing.
@@ -174,7 +174,7 @@ protected:
    * @param dataTransferConfig The configuration of a data-transfer session.
    * @param vdqmJob job received from the vdqmd daemon.
    */
-  DriveCatalogueTransferSession(
+  CatalogueTransferSession(
     log::Logger &log,
     const int netTimeout,
     const pid_t pid,
@@ -230,7 +230,7 @@ private:
    */
   const legacymsg::RtcpJobRqstMsgBody m_vdqmJob;
 
-}; // class DriveCatalogueTransferSession
+}; // class CatalogueTransferSession
 
 } // namespace daemon
 } // namespace tapeserver

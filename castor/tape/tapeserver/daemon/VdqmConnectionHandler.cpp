@@ -30,7 +30,7 @@ castor::tape::tapeserver::daemon::VdqmConnectionHandler::VdqmConnectionHandler(
   const int fd,
   reactor::ZMQReactor &reactor,
   log::Logger &log,
-  DriveCatalogue &driveCatalogue) throw():
+  Catalogue &driveCatalogue) throw():
     m_fd(fd),
     m_reactor(reactor),
     m_log(log),
@@ -86,7 +86,7 @@ bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
     const legacymsg::RtcpJobRqstMsgBody job = readJobMsg();
     logVdqmJobReception(job);
     writeJobReplyMsg();
-    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(job.driveUnit);
+    CatalogueDrive &drive = m_driveCatalogue.findDrive(job.driveUnit);
     drive.receivedVdqmJob(job);
   } catch(castor::exception::Exception &ex) {
     params.push_back(log::Param("message", ex.getMessage().str()));

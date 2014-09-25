@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
+#include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <string.h>
@@ -30,7 +30,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogue::DriveCatalogue(
+castor::tape::tapeserver::daemon::Catalogue::Catalogue(
   const int netTimeout,
   log::Logger &log,
   const DataTransferSession::CastorConf &dataTransferConfig,
@@ -48,12 +48,12 @@ castor::tape::tapeserver::daemon::DriveCatalogue::DriveCatalogue(
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogue::~DriveCatalogue() throw() {
+castor::tape::tapeserver::daemon::Catalogue::~Catalogue() throw() {
   // Close any label-command connections that are still owned by the
   // tape-drive catalogue
   for(DriveMap::const_iterator itor = m_drives.begin(); itor != m_drives.end();
      itor++) {
-    const DriveCatalogueEntry *drive = itor->second;
+    const CatalogueDrive *drive = itor->second;
 
     delete drive;
   }
@@ -62,7 +62,7 @@ castor::tape::tapeserver::daemon::DriveCatalogue::~DriveCatalogue() throw() {
 //-----------------------------------------------------------------------------
 // populate
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::populate(
+void castor::tape::tapeserver::daemon::Catalogue::populate(
   const utils::DriveConfigMap &driveConfigs)  {
   try {
     for(utils::DriveConfigMap::const_iterator itor = driveConfigs.begin();
@@ -91,7 +91,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::populate(
 //-----------------------------------------------------------------------------
 // enterDriveConfig
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::enterDriveConfig(
+void castor::tape::tapeserver::daemon::Catalogue::enterDriveConfig(
   const utils::DriveConfig &driveConfig)  {
 
   DriveMap::iterator itor = m_drives.find(driveConfig.unitName);
@@ -99,9 +99,9 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::enterDriveConfig(
   // If the drive is not in the catalogue
   if(m_drives.end() == itor) {
     // Insert it
-    m_drives[driveConfig.unitName] = new DriveCatalogueEntry(m_netTimeout,
+    m_drives[driveConfig.unitName] = new CatalogueDrive(m_netTimeout,
       m_log, m_processForker, m_vdqm, m_hostName, driveConfig,
-      m_dataTransferConfig, DriveCatalogueEntry::DRIVE_STATE_DOWN);
+      m_dataTransferConfig, CatalogueDrive::DRIVE_STATE_DOWN);
   // Else the drive is already in the catalogue
   } else {
     castor::exception::Exception ex;
@@ -116,7 +116,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::enterDriveConfig(
 // getUnitNames
 //-----------------------------------------------------------------------------
 std::list<std::string>
-  castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNames() const  {
+  castor::tape::tapeserver::daemon::Catalogue::getUnitNames() const  {
   std::list<std::string> unitNames;
 
   for(DriveMap::const_iterator itor = m_drives.begin();
@@ -130,8 +130,8 @@ std::list<std::string>
 //-----------------------------------------------------------------------------
 // findDrive
 //-----------------------------------------------------------------------------
-const castor::tape::tapeserver::daemon::DriveCatalogueEntry
-  &castor::tape::tapeserver::daemon::DriveCatalogue::findDrive(
+const castor::tape::tapeserver::daemon::CatalogueDrive
+  &castor::tape::tapeserver::daemon::Catalogue::findDrive(
     const std::string &unitName) const {
   std::ostringstream task;
   task << "find tape drive in catalogue by unit name: unitName=" << unitName;
@@ -151,7 +151,7 @@ const castor::tape::tapeserver::daemon::DriveCatalogueEntry
     throw ex;
   }
 
-  const DriveCatalogueEntry &drive = *(itor->second);
+  const CatalogueDrive &drive = *(itor->second);
   const utils::DriveConfig &driveConfig = drive.getConfig();
 
   // Sanity check
@@ -170,8 +170,8 @@ const castor::tape::tapeserver::daemon::DriveCatalogueEntry
 //-----------------------------------------------------------------------------
 // findDrive
 //-----------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueEntry
-  &castor::tape::tapeserver::daemon::DriveCatalogue::findDrive(
+castor::tape::tapeserver::daemon::CatalogueDrive
+  &castor::tape::tapeserver::daemon::Catalogue::findDrive(
   const std::string &unitName) {
   std::ostringstream task;
   task << "find tape drive in catalogue by unit name: unitName=" << unitName;
@@ -191,7 +191,7 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry
     throw ex;
   }
 
-  DriveCatalogueEntry &drive = *(itor->second);
+  CatalogueDrive &drive = *(itor->second);
   const utils::DriveConfig &driveConfig = drive.getConfig();
 
   // Sanity check
@@ -211,8 +211,8 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry
 //-----------------------------------------------------------------------------
 // findDrive
 //-----------------------------------------------------------------------------
-const castor::tape::tapeserver::daemon::DriveCatalogueEntry
-  &castor::tape::tapeserver::daemon::DriveCatalogue::findDrive(
+const castor::tape::tapeserver::daemon::CatalogueDrive
+  &castor::tape::tapeserver::daemon::Catalogue::findDrive(
     const pid_t sessionPid) const {
   std::ostringstream task;
   task << "find tape drive in catalogue by session pid: sessionPid=" <<
@@ -229,9 +229,9 @@ const castor::tape::tapeserver::daemon::DriveCatalogueEntry
       throw ex;
     }
 
-    const DriveCatalogueEntry &drive = *(itor->second);
+    const CatalogueDrive &drive = *(itor->second);
     try {
-      const DriveCatalogueSession &session = drive.getSession();
+      const CatalogueSession &session = drive.getSession();
       if(sessionPid == session.getPid()) {
         return drive;
       }
@@ -248,8 +248,8 @@ const castor::tape::tapeserver::daemon::DriveCatalogueEntry
 //-----------------------------------------------------------------------------
 // findDrive
 //-----------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueEntry
-  &castor::tape::tapeserver::daemon::DriveCatalogue::findDrive(
+castor::tape::tapeserver::daemon::CatalogueDrive
+  &castor::tape::tapeserver::daemon::Catalogue::findDrive(
     const pid_t sessionPid) {
   std::ostringstream task;
   task << "find tape drive in catalogue by session pid: sessionPid=" <<
@@ -266,9 +266,9 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry
       throw ex;
     }
 
-    DriveCatalogueEntry &drive = *(itor->second);
+    CatalogueDrive &drive = *(itor->second);
     try {
-      const DriveCatalogueSession &session = drive.getSession();
+      const CatalogueSession &session = drive.getSession();
       if(sessionPid == session.getPid()) {
         return drive;
       }

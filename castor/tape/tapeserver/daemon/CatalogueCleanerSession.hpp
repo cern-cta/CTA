@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/DriveCatalogueSession.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 
 namespace castor {
@@ -35,13 +35,13 @@ namespace daemon {
  * Concrete class representing a cleaner session within the tape drive
  * catalogue.
  */
-class DriveCatalogueCleanerSession : public DriveCatalogueSession {
+class CatalogueCleanerSession : public CatalogueSession {
 public:
 
   /**
-   * Creates a DriveCatalogueCleanerSession object.
+   * Creates a CatalogueCleanerSession object.
    *
-   * Except in the case of unit testing, a DriveCatalogueCleanerSession object
+   * Except in the case of unit testing, a CatalogueCleanerSession object
    * should only be created using the static create() method.
    *
    * @param log Object representing the API of the CASTOR logging system.
@@ -55,9 +55,9 @@ public:
    * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param assignmentTime The time at which a job was assigned to the tape
    * drive.
-   * @return A newly created DriveCatalogueCleanerSession object.
+   * @return A newly created CatalogueCleanerSession object.
    */
-  static DriveCatalogueCleanerSession *create(
+  static CatalogueCleanerSession *create(
     log::Logger &log,
     const int netTimeout,
     const tape::utils::DriveConfig &driveConfig,
@@ -120,7 +120,7 @@ protected:
   /**
    * Protected constructor.
    *
-   * Except in the case of unit testing a DriveCatalogueCleanerSession object
+   * Except in the case of unit testing a CatalogueCleanerSession object
    * should only be created using the static create() method.  This constructor
    * is protected so that unit tests can go around this restriction for sole
    * purpose of unit testing.
@@ -136,7 +136,7 @@ protected:
    * @param assignmentTime The time at which a job was assigned to the tape
    * drive.
    */
-  DriveCatalogueCleanerSession(
+  CatalogueCleanerSession(
     log::Logger &log,
     const int netTimeout,
     const pid_t pid,
@@ -158,7 +158,7 @@ private:
    */
   const time_t m_assignmentTime;
 
-}; // class DriveCatalogueCleanerSession
+}; // class CatalogueCleanerSession
 
 } // namespace daemon
 } // namespace tapeserver

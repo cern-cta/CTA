@@ -23,7 +23,7 @@
 
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/log/DummyLogger.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
+#include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxyDummy.hpp"
 #include "castor/utils/utils.hpp"
 
@@ -31,7 +31,7 @@
 
 namespace unitTests {
 
-class castor_tape_tapeserver_daemon_DriveCatalogueTest : public ::testing::Test {
+class castor_tape_tapeserver_daemon_CatalogueTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -41,7 +41,7 @@ protected:
   }
 };
 
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
+TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   using namespace castor::tape::tapeserver::daemon;
 
   castor::tape::utils::TpconfigLines lines;
@@ -63,7 +63,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
   castor::legacymsg::VdqmProxyDummy vdqm;
   const std::string hostName = "";
   const int netTimeout = 1;
-  DriveCatalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
+  Catalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
     vdqm, hostName);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
   
@@ -80,7 +80,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
   // UNIT1 assertions
   ///////////////////
 
-  const DriveCatalogueEntry &unit1 = catalogue.findDrive("UNIT1");
+  const CatalogueDrive &unit1 = catalogue.findDrive("UNIT1");
   const castor::tape::utils::DriveConfig &unit1Config = unit1.getConfig();
   
   ASSERT_EQ(std::string("DGN1"), unit1Config.dgn);
@@ -96,7 +96,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
     ASSERT_EQ("DEN12", fromCatalogue.front());
   }
   
-  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, unit1.getState());
+  ASSERT_EQ(CatalogueDrive::DRIVE_STATE_DOWN, unit1.getState());
   ASSERT_EQ(std::string("SLOT1"), unit1Config.librarySlot);
   ASSERT_EQ(std::string("DEVTYPE1"), unit1Config.devType);
   
@@ -104,7 +104,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
   // UNIT2 assertions
   ///////////////////
   
-  const DriveCatalogueEntry &unit2 = catalogue.findDrive("UNIT2");
+  const CatalogueDrive &unit2 = catalogue.findDrive("UNIT2");
   const castor::tape::utils::DriveConfig &unit2Config = unit2.getConfig();
   
   ASSERT_EQ(std::string("DGN2"), unit2Config.dgn);
@@ -120,12 +120,12 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
     ASSERT_EQ("DEN22", fromCatalogue.front());
   }
 
-  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, unit2.getState());
+  ASSERT_EQ(CatalogueDrive::DRIVE_STATE_DOWN, unit2.getState());
   ASSERT_EQ(std::string("SLOT2"), unit2Config.librarySlot);
   ASSERT_EQ(std::string("DEVTYPE2"), unit2Config.devType);
 }
 
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, 
+TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, 
   getStateOfNonExistingDrive) {
   using namespace castor::tape::tapeserver::daemon;
 
@@ -136,12 +136,12 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
   ProcessForkerProxyDummy processForker;
   castor::legacymsg::VdqmProxyDummy vdqm;
   const std::string hostName = "";
-  DriveCatalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
+  Catalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
     vdqm, hostName);
   ASSERT_THROW(catalogue.findDrive(unitName), castor::exception::Exception);
 }
 
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
+TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, dgnMismatchStart) {
   using namespace castor::tape::tapeserver::daemon;
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
@@ -155,13 +155,13 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
   ProcessForkerProxyDummy processForker;
   castor::legacymsg::VdqmProxyDummy vdqm;
   const std::string hostName = "";
-  DriveCatalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
+  Catalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
     vdqm, hostName);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
-  DriveCatalogueEntry &unit = catalogue.findDrive("UNIT");
-  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, unit.getState());
+  CatalogueDrive &unit = catalogue.findDrive("UNIT");
+  ASSERT_EQ(CatalogueDrive::DRIVE_STATE_DOWN, unit.getState());
   ASSERT_NO_THROW(unit.configureUp());
-  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_UP, unit.getState());
+  ASSERT_EQ(CatalogueDrive::DRIVE_STATE_UP, unit.getState());
   castor::legacymsg::RtcpJobRqstMsgBody job;
   job.volReqId = 1111;
   job.clientPort = 2222;
@@ -174,7 +174,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
   ASSERT_THROW(unit.receivedVdqmJob(job), castor::exception::Exception);
 }
 
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, getUnitNames) {
+TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, getUnitNames) {
   using namespace castor::tape::tapeserver::daemon;
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
@@ -191,7 +191,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, getUnitNames) {
   ProcessForkerProxyDummy processForker;
   castor::legacymsg::VdqmProxyDummy vdqm;
   const std::string hostName = "";
-  DriveCatalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
+  Catalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
     vdqm, hostName);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
 

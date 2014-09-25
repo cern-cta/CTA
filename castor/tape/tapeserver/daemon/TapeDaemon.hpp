@@ -32,7 +32,7 @@
 #include "castor/server/Daemon.hpp"
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
+#include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 #include "castor/tape/utils/DriveConfigMap.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -537,7 +537,7 @@ protected:
    * Catalogue used to keep track of both the initial and current state of
    * each tape drive being controlled by the tapeserverd daemon.
    */
-  DriveCatalogue *m_driveCatalogue;
+  Catalogue *m_driveCatalogue;
 
   /**
    * The ZMQ context.

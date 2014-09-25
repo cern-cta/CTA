@@ -22,7 +22,7 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
+#include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/legacymsg/TapeConfigRequestMsgBody.hpp"
 #include "castor/legacymsg/TapeStatRequestMsgBody.hpp"
@@ -60,7 +60,7 @@ public:
     reactor::ZMQReactor &reactor,
     log::Logger &log,
     legacymsg::VdqmProxy &vdqm,
-    DriveCatalogue &driveCatalogue,
+    Catalogue &driveCatalogue,
     const std::string &hostName) throw();
 
   /**
@@ -126,7 +126,7 @@ private:
   /**
    * The catalogue of tape drives controlled by the tape server daemon.
    */
-  DriveCatalogue &m_driveCatalogue;
+  Catalogue &m_driveCatalogue;
   
   /**
    * The name of the host on which tape daemon is running.  This name is

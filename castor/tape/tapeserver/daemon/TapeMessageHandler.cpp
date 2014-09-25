@@ -49,7 +49,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
   reactor::ZMQReactor &reactor,
-  log::Logger &log,DriveCatalogue &driveCatalogue,
+  log::Logger &log,Catalogue &driveCatalogue,
   const std::string &hostName,
   castor::legacymsg::VdqmProxy & vdqm,
   castor::legacymsg::VmgrProxy & vmgr,
@@ -266,7 +266,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
       log::Param("message", labelEx.getMessage().str())};
     m_log(LOG_INFO, "Received LabelError", params);
 
-    DriveCatalogueEntry &drive =
+    CatalogueDrive &drive =
       m_driveCatalogue.findDrive(rqstBody.unitname());
     drive.getLabelSession().receivedLabelError(labelEx);
 
@@ -305,7 +305,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
       throw ex;
     }
 
-    DriveCatalogueEntry &drive =
+    CatalogueDrive &drive =
       m_driveCatalogue.findDrive(rqstBody.unitname());
     drive.getTransferSession().receivedMigrationJob(rqstBody.vid());
 
@@ -353,7 +353,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     const legacymsg::VmgrTapeInfoMsgBody tapeInfo =
       m_vmgr.queryTape(rqstBody.vid());
 
-    DriveCatalogueEntry &drive =
+    CatalogueDrive &drive =
       m_driveCatalogue.findDrive(rqstBody.unitname());
     drive.getTransferSession().receivedMigrationJob(rqstBody.vid());
 
@@ -378,7 +378,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     messages::RecallJobFromReadTp rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
 
-    DriveCatalogueEntry &drive =
+    CatalogueDrive &drive =
       m_driveCatalogue.findDrive(rqstBody.unitname());
     drive.getTransferSession().receivedRecallJob(rqstBody.vid());
 
@@ -405,7 +405,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     messages::RecallJobFromTapeGateway rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
 
-    DriveCatalogueEntry &drive =
+    CatalogueDrive &drive =
       m_driveCatalogue.findDrive(rqstBody.unitname());
     drive.getTransferSession().receivedRecallJob(rqstBody.vid());
 
@@ -431,12 +431,12 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     messages::TapeMountedForMigration rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
 
-    DriveCatalogueEntry &drive =
+    CatalogueDrive &drive =
       m_driveCatalogue.findDrive(rqstBody.unitname());
     const utils::DriveConfig &driveConfig = drive.getConfig();
     
     const std::string &vid = rqstBody.vid();
-    DriveCatalogueTransferSession &transferSession = drive.getTransferSession();
+    CatalogueTransferSession &transferSession = drive.getTransferSession();
     transferSession.tapeMountedForMigration(vid);
     m_vmgr.tapeMountedForWrite(vid, transferSession.getPid());
     m_vdqm.tapeMounted(m_hostName, rqstBody.unitname(), driveConfig.dgn,
@@ -463,12 +463,12 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     messages::TapeMountedForRecall rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
 
-    DriveCatalogueEntry &drive =
+    CatalogueDrive &drive =
       m_driveCatalogue.findDrive(rqstBody.unitname());
     const utils::DriveConfig &driveConfig = drive.getConfig();
     
     const std::string vid = rqstBody.vid();
-    DriveCatalogueTransferSession &transferSession = drive.getTransferSession();
+    CatalogueTransferSession &transferSession = drive.getTransferSession();
     transferSession.tapeMountedForRecall(vid);
     m_vmgr.tapeMountedForRead(vid, transferSession.getPid());
     m_vdqm.tapeMounted(m_hostName, rqstBody.unitname(), driveConfig.dgn,

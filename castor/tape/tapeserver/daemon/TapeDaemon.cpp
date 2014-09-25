@@ -190,7 +190,7 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   const DataTransferSession::CastorConf dataTransferConfig =
     getDataTransferConf();
   m_processForker = new ProcessForkerProxySocket(m_log, cmdPair.tapeDaemon);
-  m_driveCatalogue = new DriveCatalogue(m_netTimeout, m_log,
+  m_driveCatalogue = new Catalogue(m_netTimeout, m_log,
     dataTransferConfig, *m_processForker, m_vdqm, m_hostName);
 
   m_driveCatalogue->populate(m_driveConfigs);
@@ -572,7 +572,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDrivesWithVdqm()
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   const std::string &unitName)  {
-  const DriveCatalogueEntry &drive = m_driveCatalogue->findDrive(unitName);
+  const CatalogueDrive &drive = m_driveCatalogue->findDrive(unitName);
   const utils::DriveConfig &driveConfig = drive.getConfig();
 
   std::list<log::Param> params;
@@ -581,12 +581,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   params.push_back(log::Param("dgn", driveConfig.dgn));
 
   switch(drive.getState()) {
-  case DriveCatalogueEntry::DRIVE_STATE_DOWN:
+  case CatalogueDrive::DRIVE_STATE_DOWN:
     params.push_back(log::Param("state", "down"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
     m_vdqm.setDriveDown(m_hostName, unitName, driveConfig.dgn);
     break;
-  case DriveCatalogueEntry::DRIVE_STATE_UP:
+  case CatalogueDrive::DRIVE_STATE_UP:
     params.push_back(log::Param("state", "up"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
     m_vdqm.setDriveUp(m_hostName, unitName, driveConfig.dgn);
@@ -597,7 +597,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
       ex.getMessage() << "Failed to register tape drive in vdqm"
         ": server=" << m_hostName << " unitName=" << unitName << " dgn=" <<
         driveConfig.dgn << ": Invalid drive state: state=" <<
-        DriveCatalogueEntry::drvState2Str(drive.getState());
+        CatalogueDrive::drvState2Str(drive.getState());
       throw ex;
     }
   }

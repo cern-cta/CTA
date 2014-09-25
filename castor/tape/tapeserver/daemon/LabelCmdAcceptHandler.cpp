@@ -26,7 +26,7 @@
 #include "castor/legacymsg/legacymsg.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
 #include "castor/tape/utils/utils.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
+#include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "castor/tape/tapeserver/daemon/LabelCmdAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/LabelCmdConnectionHandler.hpp"
 #include "castor/utils/SmartFd.hpp"
@@ -50,7 +50,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::LabelCmdAcceptHandler::LabelCmdAcceptHandler(
   const int fd, reactor::ZMQReactor &reactor, log::Logger &log,
-  DriveCatalogue &driveCatalogue, const std::string &hostName,
+  Catalogue &driveCatalogue, const std::string &hostName,
   castor::legacymsg::VdqmProxy & vdqm,
   castor::legacymsg::VmgrProxy & vmgr) throw():
   m_fd(fd),

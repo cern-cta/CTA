@@ -39,13 +39,13 @@ namespace daemon {
  * Abstract base class defining the common interface of a catalogue
  * tape-session.
  */
-class DriveCatalogueSession {
+class CatalogueSession {
 public:
     
   /**
    * Destructor.
    */
-  virtual ~DriveCatalogueSession() = 0;
+  virtual ~CatalogueSession() = 0;
 
   /**
    * To be called when the session has ended with success.
@@ -98,7 +98,7 @@ protected:
   /**
    * Protected constructor.
    *
-   * Except in the case of unit testing a DriveCatalogueTransferSession object
+   * Except in the case of unit testing a CatalogueTransferSession object
    * should only be created using the static create() method.  This constructor
    * is protected so that unit tests can go around this restriction for sole
    * purpose of unit testing.
@@ -109,7 +109,7 @@ protected:
    * @param pid The process identifier of the session.
    * @param driveConfig The configuration of the tape drive.
    */
-  DriveCatalogueSession(
+  CatalogueSession(
     log::Logger &log,
     const int netTimeout,
     const pid_t pid,
@@ -135,7 +135,7 @@ protected:
    */
   const tape::utils::DriveConfig &m_driveConfig;
 
-}; // class DriveCatalogueSession
+}; // class CatalogueSession
 
 } // namespace daemon
 } // namespace tapeserver

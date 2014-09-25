@@ -26,7 +26,7 @@
 #include "castor/legacymsg/legacymsg.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
 #include "castor/tape/utils/utils.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
+#include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "castor/tape/tapeserver/daemon/LabelCmdConnectionHandler.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "h/common.h"
@@ -49,7 +49,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::LabelCmdConnectionHandler::LabelCmdConnectionHandler(
   const int fd, reactor::ZMQReactor &reactor, log::Logger &log,
-  DriveCatalogue &driveCatalogue, const std::string &hostName,
+  Catalogue &driveCatalogue, const std::string &hostName,
   castor::legacymsg::VdqmProxy & vdqm,
   castor::legacymsg::VmgrProxy & vmgr) throw():
   m_fd(fd),
@@ -213,7 +213,7 @@ void castor::tape::tapeserver::daemon::LabelCmdConnectionHandler::
     logLabelRequest(body);
 
     // Try to inform the drive catalogue of the reception of the label job
-    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(body.drive);
+    CatalogueDrive &drive = m_driveCatalogue.findDrive(body.drive);
     drive.receivedLabelJob(body, m_fd);
 
     // The drive catalogue will now remember and own the client connection,

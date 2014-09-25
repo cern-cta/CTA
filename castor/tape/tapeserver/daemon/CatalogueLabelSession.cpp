@@ -22,14 +22,14 @@
  *****************************************************************************/
 
 #include "castor/legacymsg/legacymsg.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogueLabelSession.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueLabelSession.hpp"
 #include "h/Ctape_constants.h"
 
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueLabelSession *
-  castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::create(
+castor::tape::tapeserver::daemon::CatalogueLabelSession *
+  castor::tape::tapeserver::daemon::CatalogueLabelSession::create(
     log::Logger &log,
     const int netTimeout,
     const tape::utils::DriveConfig &driveConfig,
@@ -40,7 +40,7 @@ castor::tape::tapeserver::daemon::DriveCatalogueLabelSession *
 
   const pid_t pid = processForker.forkLabel(driveConfig, labelJob, rmcPort);
 
-  return new DriveCatalogueLabelSession(
+  return new CatalogueLabelSession(
     log,
     netTimeout,
     pid,
@@ -52,15 +52,15 @@ castor::tape::tapeserver::daemon::DriveCatalogueLabelSession *
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
-  DriveCatalogueLabelSession(
+castor::tape::tapeserver::daemon::CatalogueLabelSession::
+  CatalogueLabelSession(
   log::Logger &log,
   const int netTimeout,
   const pid_t pid,
   const tape::utils::DriveConfig &driveConfig,
   const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
   const int labelCmdConnection) throw():
-  DriveCatalogueSession(log, netTimeout, pid, driveConfig),
+  CatalogueSession(log, netTimeout, pid, driveConfig),
   m_assignmentTime(time(0)),
   m_labelJob(labelJob),
   m_labelCmdConnection(labelCmdConnection) {
@@ -69,8 +69,8 @@ castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
-  ~DriveCatalogueLabelSession() throw() {
+castor::tape::tapeserver::daemon::CatalogueLabelSession::
+  ~CatalogueLabelSession() throw() {
   if(m_labelCmdConnection >= 0) {
     close(m_labelCmdConnection);
   }
@@ -79,7 +79,7 @@ castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
 //------------------------------------------------------------------------------
 // sessionSucceeded
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+void castor::tape::tapeserver::daemon::CatalogueLabelSession::
   sessionSucceeded() {
   try {
     legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection, 0, "");
@@ -93,7 +93,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
 //------------------------------------------------------------------------------
 // sessionFailed
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+void castor::tape::tapeserver::daemon::CatalogueLabelSession::
   sessionFailed() {
   try {
     if(!m_labelErrors.empty()) {
@@ -114,7 +114,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
 //------------------------------------------------------------------------------
 // getAssignmentTime
 //------------------------------------------------------------------------------
-time_t castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+time_t castor::tape::tapeserver::daemon::CatalogueLabelSession::
   getAssignmentTime() const throw() {
   return m_assignmentTime;
 }
@@ -123,14 +123,14 @@ time_t castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
 // getLabelJob
 //------------------------------------------------------------------------------
 castor::legacymsg::TapeLabelRqstMsgBody castor::tape::tapeserver::daemon::
-  DriveCatalogueLabelSession::getLabelJob() const throw() {
+  CatalogueLabelSession::getLabelJob() const throw() {
   return m_labelJob;
 }
 
 //------------------------------------------------------------------------------
 // getVid
 //------------------------------------------------------------------------------
-std::string castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+std::string castor::tape::tapeserver::daemon::CatalogueLabelSession::
   getVid() const throw() {
   return m_labelJob.vid;
 }
@@ -138,7 +138,7 @@ std::string castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
 //------------------------------------------------------------------------------
 // getMode
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::getMode()
+int castor::tape::tapeserver::daemon::CatalogueLabelSession::getMode()
   const throw() {
   return WRITE_ENABLE;
 }
@@ -146,7 +146,7 @@ int castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::getMode()
 //-----------------------------------------------------------------------------
 // getPid
 //-----------------------------------------------------------------------------
-pid_t castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+pid_t castor::tape::tapeserver::daemon::CatalogueLabelSession::
   getPid() const throw() {
   return m_pid;
 }
@@ -154,7 +154,7 @@ pid_t castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
 //-----------------------------------------------------------------------------
 // tapeIsBeingMounted
 //-----------------------------------------------------------------------------
-bool castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+bool castor::tape::tapeserver::daemon::CatalogueLabelSession::
   tapeIsBeingMounted() const throw() {
   return false;
 }
@@ -162,7 +162,7 @@ bool castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
 //-----------------------------------------------------------------------------
 // receivedLabelError
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueLabelSession::
+void castor::tape::tapeserver::daemon::CatalogueLabelSession::
   receivedLabelError(const castor::exception::Exception &labelEx) {
   m_labelErrors.push_back(labelEx);
 }

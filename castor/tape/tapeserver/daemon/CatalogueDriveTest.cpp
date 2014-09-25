@@ -21,26 +21,37 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/DriveCatalogueSession.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueDrive.hpp"
+#include "castor/utils/utils.hpp"
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueSession::
-  DriveCatalogueSession(
-  log::Logger &log,
-  const int netTimeout,
-  const pid_t pid,
-  const tape::utils::DriveConfig &driveConfig) throw():
-  m_log(log),
-  m_netTimeout(netTimeout),
-  m_pid(pid),
-  m_driveConfig(driveConfig) {
+#include <gtest/gtest.h>
+
+namespace unitTests {
+
+class castor_tape_tapeserver_daemon_CatalogueDriveTest :
+  public ::testing::Test {
+protected:
+
+  virtual void SetUp() {
+  }
+
+  virtual void TearDown() {
+  }
+};
+
+TEST_F(castor_tape_tapeserver_daemon_CatalogueDriveTest, drvState2Str) {
+  using namespace castor::tape::tapeserver::daemon;
+
+  ASSERT_EQ(std::string("INIT"),
+    CatalogueDrive::drvState2Str(CatalogueDrive::DRIVE_STATE_INIT));
+  ASSERT_EQ(std::string("DOWN"),
+    CatalogueDrive::drvState2Str(CatalogueDrive::DRIVE_STATE_DOWN));
+  ASSERT_EQ(std::string("UP"),
+    CatalogueDrive::drvState2Str(CatalogueDrive::DRIVE_STATE_UP));
+  ASSERT_EQ(std::string("RUNNING"), CatalogueDrive::drvState2Str(
+    CatalogueDrive::DRIVE_STATE_RUNNING));
+  ASSERT_EQ(std::string("WAITDOWN"), CatalogueDrive::drvState2Str(
+    CatalogueDrive::DRIVE_STATE_WAITDOWN));
 }
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogueSession::
-  ~DriveCatalogueSession() {
-}
+} // namespace unitTests

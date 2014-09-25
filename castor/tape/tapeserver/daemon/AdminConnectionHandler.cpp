@@ -49,7 +49,7 @@ castor::tape::tapeserver::daemon::AdminConnectionHandler::AdminConnectionHandler
   const int fd,
   reactor::ZMQReactor &reactor,
   log::Logger &log,
-  DriveCatalogue &driveCatalogue)
+  Catalogue &driveCatalogue)
   throw():
     m_fd(fd),
     m_reactor(reactor),
@@ -184,7 +184,7 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
 
   const std::string unitName(body.drive);
   
-  DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(unitName);
+  CatalogueDrive &drive = m_driveCatalogue.findDrive(unitName);
   const utils::DriveConfig &driveConfig = drive.getConfig();
 
   log::Param params[] = {
@@ -306,7 +306,7 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
   for(std::list<std::string>::const_iterator itor = unitNames.begin();
     itor!=unitNames.end() and i<CA_MAXNBDRIVES; itor++) {
     const std::string &unitName = *itor;
-    const DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(unitName);
+    const CatalogueDrive &drive = m_driveCatalogue.findDrive(unitName);
     body.drives[i] = drive.getTapeStatDriveEntry();
     i++;
   }

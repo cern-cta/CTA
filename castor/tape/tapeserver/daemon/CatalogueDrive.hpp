@@ -28,10 +28,10 @@
 #include "castor/legacymsg/TapeStatDriveEntry.hpp"
 #include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/log/Logger.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogueCleanerSession.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogueLabelSession.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogueSession.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogueTransferSession.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueCleanerSession.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueLabelSession.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueSession.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 #include "castor/tape/utils/DriveConfig.hpp"
 
@@ -50,7 +50,7 @@ namespace daemon     {
 /**
  * A tape-drive entry in the tape-drive catalogue.
  */
-class DriveCatalogueEntry {
+class CatalogueDrive {
 public:
   
   /**
@@ -173,7 +173,7 @@ public:
    * @param dataTransferConfig The configuration of a data-transfer session.
    * @param state The initial state of the tape drive.
    */
-  DriveCatalogueEntry(
+  CatalogueDrive(
     const int netTimeout,
     log::Logger &log,
     ProcessForkerProxy &processForker,
@@ -186,7 +186,7 @@ public:
   /**
    * Destructor
    */
-  ~DriveCatalogueEntry() throw();
+  ~CatalogueDrive() throw();
 
   /**
    * If there is a catalogue session associated with the tape drive then this
@@ -325,7 +325,7 @@ public:
    * This method throws a castor::exception::Exception if there is no
    * cleaner session associated with the tape drive.
    */
-  const DriveCatalogueCleanerSession &getCleanerSession() const;
+  const CatalogueCleanerSession &getCleanerSession() const;
     
   /**
    * Returns the catalogue cleaner-session associated with the tape drive.
@@ -333,7 +333,7 @@ public:
    * This method throws a castor::exception::Exception if there is no
    * cleaner session associated with the tape drive.
    */ 
-  DriveCatalogueCleanerSession &getCleanerSession();
+  CatalogueCleanerSession &getCleanerSession();
 
   /**
    * Returns the catalogue label-session associated with the tape drive.
@@ -341,7 +341,7 @@ public:
    * This method throws a castor::exception::Exception if there is no
    * label session associated with the tape drive.
    */
-  const DriveCatalogueLabelSession &getLabelSession() const;
+  const CatalogueLabelSession &getLabelSession() const;
 
   /**
    * Returns the catalogue label-session associated with the tape drive.
@@ -349,7 +349,7 @@ public:
    * This method throws a castor::exception::Exception if there is no
    * label session associated with the tape drive.
    */
-  DriveCatalogueLabelSession &getLabelSession();
+  CatalogueLabelSession &getLabelSession();
 
   /**
    * Returns the catalogue transfer-session associated with the tape drive.
@@ -357,7 +357,7 @@ public:
    * This method throws a castor::exception::Exception if there is no
    * transfer session associated with the tape drive.
    */
-  const DriveCatalogueTransferSession &getTransferSession() const;
+  const CatalogueTransferSession &getTransferSession() const;
 
   /**
    * Returns the catalogue transfer-session associated with the tape drive.
@@ -365,7 +365,7 @@ public:
    * This method throws a castor::exception::Exception if there is no
    * transfer session associated with the tape drive.
    */
-  DriveCatalogueTransferSession &getTransferSession();
+  CatalogueTransferSession &getTransferSession();
 
   /**
    * Gets the session asscoiated with the tape drive.
@@ -379,7 +379,7 @@ public:
    * 
    * @return The session associated with the tape drive.
    */
-  const DriveCatalogueSession &getSession() const;
+  const CatalogueSession &getSession() const;
 
   /**
    * Tries to determine the volume identifier of the tape currently associated
@@ -403,12 +403,12 @@ private:
   /**
    * Copy constructor declared private to prevent copies.
    */
-  DriveCatalogueEntry(const DriveCatalogueEntry&);
+  CatalogueDrive(const CatalogueDrive&);
 
   /**
    * Assignment operator declared private to prevent assignments.
    */
-  DriveCatalogueEntry& operator=(const DriveCatalogueEntry&);
+  CatalogueDrive& operator=(const CatalogueDrive&);
 
   /**
    * Timeout in seconds to be used when performing network I/O.
@@ -459,7 +459,7 @@ private:
   /**
    * The session metadata associated to the drive catalogue entry
    */
-  DriveCatalogueSession *m_session;
+  CatalogueSession *m_session;
 
   /**
    * Checks that there is a tape session currently associated with the
@@ -566,7 +566,7 @@ private:
    */
   std::string getVsnForTapeStatDriveEntry() const throw();
 
-}; // class DriveCatalogueEntry
+}; // class CatalogueDrive
 
 } // namespace daemon
 } // namespace tapeserver

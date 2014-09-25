@@ -137,10 +137,10 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/client/ClientProxyTest.cpp
   ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
 #  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp
-  ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
-  ../castor/tape/tapeserver/daemon/DriveCatalogueEntry.cpp
-  ../castor/tape/tapeserver/daemon/DriveCatalogueEntryTest.cpp
-  ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
+  ../castor/tape/tapeserver/daemon/Catalogue.cpp
+  ../castor/tape/tapeserver/daemon/CatalogueDrive.cpp
+  ../castor/tape/tapeserver/daemon/CatalogueDriveTest.cpp
+  ../castor/tape/tapeserver/daemon/CatalogueTest.cpp
   ../castor/tape/tapeserver/daemon/ProcessForker.cpp
   ../castor/tape/tapeserver/daemon/ProcessForkerTest.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemon.cpp

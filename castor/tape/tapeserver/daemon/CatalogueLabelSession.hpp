@@ -25,7 +25,7 @@
 
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/log/Logger.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogueSession.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 #include "castor/tape/utils/DriveConfig.hpp"
 
@@ -39,13 +39,13 @@ namespace daemon {
 /**
  * Represention of a label session within the tape-drive catalogue.
  */
-class DriveCatalogueLabelSession : public DriveCatalogueSession {
+class CatalogueLabelSession : public CatalogueSession {
 public:
 
   /**
-   * Creates a DriveCatalogueLabelSession object.
+   * Creates a CatalogueLabelSession object.
    *
-   * Except in the case of unit testing, a DriveCatalogueLabelSession object
+   * Except in the case of unit testing, a CatalogueLabelSession object
    * should only be created using the static create() method.
    *
    * @param log Object representing the API of the CASTOR logging system.
@@ -58,9 +58,9 @@ public:
    * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param labelCmdConnection The file descriptor of the TCP/IP connection with
    * the tape labeling command-line tool castor-tape-label.
-   * @return A newly created DriveCatalogueSession object.
+   * @return A newly created CatalogueSession object.
    */
-  static DriveCatalogueLabelSession *create(
+  static CatalogueLabelSession *create(
     log::Logger &log,
     const int netTimeout,
     const tape::utils::DriveConfig &driveConfig,
@@ -75,7 +75,7 @@ public:
    * If still open, closes the file descriptor of the TCP/IP connection with
    * the tape labeling command-line tool.
    */
-  ~DriveCatalogueLabelSession() throw();
+  ~CatalogueLabelSession() throw();
 
   /**
    * To be called when the session has ended with success.
@@ -141,7 +141,7 @@ protected:
   /**
    * Protected constructor.
    *
-   * Except in the case of unit testing a DriveCatalogueLabelSession object
+   * Except in the case of unit testing a CatalogueLabelSession object
    * should only be created using the static create() method.  This constructor
    * is protected so that unit tests can go around this restriction for sole
    * purpose of unit testing.
@@ -156,7 +156,7 @@ protected:
    * @param labelCmdConnection The file descriptor of the TCP/IP connection with
    * the tape labeling command-line tool castor-tape-label.
    */
-  DriveCatalogueLabelSession(
+  CatalogueLabelSession(
     log::Logger &log,
     const int netTimeout,
     const pid_t pid,
@@ -187,7 +187,7 @@ private:
    */
   std::list<castor::exception::Exception> m_labelErrors;
 
-}; // class DriveCatalogueLabelSession
+}; // class CatalogueLabelSession
 
 } // namespace daemon
 } // namespace tapeserver

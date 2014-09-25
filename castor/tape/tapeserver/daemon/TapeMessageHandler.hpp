@@ -32,7 +32,7 @@
 #include "castor/messages/ZmqSocketST.hpp"
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
+#include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <string>
@@ -64,7 +64,7 @@ public:
   TapeMessageHandler(
     reactor::ZMQReactor &reactor,
     log::Logger &log,
-    DriveCatalogue &driveCatalogue,
+    Catalogue &driveCatalogue,
     const std::string &hostName,
     castor::legacymsg::VdqmProxy & vdqm,
     castor::legacymsg::VmgrProxy & vmgr,
@@ -132,7 +132,7 @@ private:
   /**
    * The catalogue of tape drives controlled by the tape server daemon.
    */
-  DriveCatalogue &m_driveCatalogue;
+  Catalogue &m_driveCatalogue;
   
   /**
    * The name of the host on which tape daemon is running.

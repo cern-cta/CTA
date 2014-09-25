@@ -50,7 +50,7 @@ castor::tape::tapeserver::daemon::AdminAcceptHandler::AdminAcceptHandler(
   reactor::ZMQReactor &reactor,
   log::Logger &log,
   legacymsg::VdqmProxy &vdqm,
-  DriveCatalogue &driveCatalogue,
+  Catalogue &driveCatalogue,
   const std::string &hostName)
   throw():
     m_fd(fd),

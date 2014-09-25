@@ -8,12 +8,12 @@ add_library(castorTapeServerDaemon
   DiskReadTask.cpp
   DiskWriteTask.cpp
   DiskWriteThreadPool.cpp
-  DriveCatalogue.cpp
-  DriveCatalogueEntry.cpp
-  DriveCatalogueSession.cpp
-  DriveCatalogueLabelSession.cpp
-  DriveCatalogueTransferSession.cpp
-  DriveCatalogueCleanerSession.cpp
+  Catalogue.cpp
+  CatalogueDrive.cpp
+  CatalogueSession.cpp
+  CatalogueLabelSession.cpp
+  CatalogueTransferSession.cpp
+  CatalogueCleanerSession.cpp
   TapeServerReporter.cpp
   LabelCmdAcceptHandler.cpp
   LabelCmdConnectionHandler.cpp

@@ -21,37 +21,26 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/DriveCatalogueEntry.hpp"
-#include "castor/utils/utils.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueSession.hpp"
 
-#include <gtest/gtest.h>
-
-namespace unitTests {
-
-class castor_tape_tapeserver_daemon_DriveCatalogueEntryTest :
-  public ::testing::Test {
-protected:
-
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
-};
-
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueEntryTest, drvState2Str) {
-  using namespace castor::tape::tapeserver::daemon;
-
-  ASSERT_EQ(std::string("INIT"),
-    DriveCatalogueEntry::drvState2Str(DriveCatalogueEntry::DRIVE_STATE_INIT));
-  ASSERT_EQ(std::string("DOWN"),
-    DriveCatalogueEntry::drvState2Str(DriveCatalogueEntry::DRIVE_STATE_DOWN));
-  ASSERT_EQ(std::string("UP"),
-    DriveCatalogueEntry::drvState2Str(DriveCatalogueEntry::DRIVE_STATE_UP));
-  ASSERT_EQ(std::string("RUNNING"), DriveCatalogueEntry::drvState2Str(
-    DriveCatalogueEntry::DRIVE_STATE_RUNNING));
-  ASSERT_EQ(std::string("WAITDOWN"), DriveCatalogueEntry::drvState2Str(
-    DriveCatalogueEntry::DRIVE_STATE_WAITDOWN));
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::CatalogueSession::
+  CatalogueSession(
+  log::Logger &log,
+  const int netTimeout,
+  const pid_t pid,
+  const tape::utils::DriveConfig &driveConfig) throw():
+  m_log(log),
+  m_netTimeout(netTimeout),
+  m_pid(pid),
+  m_driveConfig(driveConfig) {
 }
 
-} // namespace unitTests
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::CatalogueSession::
+  ~CatalogueSession() {
+}
