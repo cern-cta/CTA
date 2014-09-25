@@ -1027,13 +1027,6 @@ BEGIN
 END;
 /
 
-CREATE OR REPLACE TRIGGER tr_SubRequest_informError AFTER UPDATE OF status ON SubRequest
-FOR EACH ROW WHEN (new.status = 7) -- SUBREQUEST_FAILED
-BEGIN
-  alertSignalNoLock('wakeUpErrorSvc');
-END;
-/
-
 CREATE OR REPLACE FUNCTION selectRandomDestinationFs(inSvcClassId IN INTEGER,
                                                      inMinFreeSpace IN INTEGER,
                                                      inCfId IN INTEGER)
