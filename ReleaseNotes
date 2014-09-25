@@ -1,3 +1,28 @@
+---------------
+- 2.1.14-14-1 -
+---------------
+
+  Summary
+  -------
+
+  This is a hot fix release that fixes the following bugs:
+
+    CASTOR-3400: Cleaning logic should be more resilient to constraint violation errors
+    CASTOR-4633: Draining does not use disks optimally
+    CASTOR-4734: Deadlock in storeReports
+    CASTOR-4735: Deadlock between dbms_alert and stageRm
+
+  Upgrade Instructions from 2.1.14-14
+  -----------------------------------
+
+    Stager
+    ------
+
+    The upgrade of the stager database to 2.1.14-14-1 can be performed online while the system is running.
+    Upgrade the STAGER database using the stager_2.1.14-14_to_2.1.14-14-1.sql script available from:
+      http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-14/dbupgrades.
+
+
 -------------
 - 2.1.14-14 -
 -------------
