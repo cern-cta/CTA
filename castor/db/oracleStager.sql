@@ -2410,6 +2410,8 @@ BEGIN
                 inNumParams(8*i+4), inNumParams(8*i+5), inNumParams(8*i+6), inNumParams(8*i+7),
                 inNumParams(8*i+8), ids_seq.nextval, 0, varDsId, dconst.FILESYSTEM_DISABLED);
       END IF;
+      -- commit diskServer by diskServer, otherwise multiple reports may deadlock each other
+      COMMIT;
     END LOOP;
   END IF;
 
