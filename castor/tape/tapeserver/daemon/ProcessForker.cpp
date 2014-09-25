@@ -311,14 +311,14 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
       exit(runCleanerSession(rqst));
     } catch(castor::exception::Exception &ne) {
       log::Param params[] = {log::Param("message", ne.getMessage().str())};
-      m_log(LOG_ERR, "Failed to run cleaner session", params);
+      m_log(LOG_ERR, "Cleaner session failed", params);
     } catch(std::exception &ne) {
       log::Param params[] = {log::Param("message", ne.what())};
-      m_log(LOG_ERR, "Failed to run cleaner session", params);
+      m_log(LOG_ERR, "Cleaner session failed", params);
     } catch(...) {
       log::Param params[] = {log::Param("message",
         "Caught an unknown exception")};
-      m_log(LOG_ERR, "Failed to run cleaner session", params);
+      m_log(LOG_ERR, "Cleaner session failed", params);
     }
     exit(Session::MARK_DRIVE_AS_DOWN);
   }
@@ -365,14 +365,14 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
       exit(runDataTransferSession(rqst));
     } catch(castor::exception::Exception &ne) {
       log::Param params[] = {log::Param("message", ne.getMessage().str())};
-      m_log(LOG_ERR, "Failed to run data-transfer session", params);
+      m_log(LOG_ERR, "Data-transfer session failed", params);
     } catch(std::exception &ne) {
       log::Param params[] = {log::Param("message", ne.what())};
-      m_log(LOG_ERR, "Failed to run data-transfer session", params);
+      m_log(LOG_ERR, "Data-transfer session failed", params);
     } catch(...) {
       log::Param params[] = {log::Param("message",
         "Caught an unknown exception")};
-      m_log(LOG_ERR, "Failed to run data-transfer session", params);
+      m_log(LOG_ERR, "Data-transfer session failed", params);
     }
     exit(Session::CLEAN_DRIVE);
   }
@@ -420,14 +420,14 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
       exit(runLabelSession(rqst));
     } catch(castor::exception::Exception &ne) {
       log::Param params[] = {log::Param("message", ne.getMessage().str())};
-      m_log(LOG_ERR, "Failed to run label session", params);
+      m_log(LOG_ERR, "Label session failed", params);
     } catch(std::exception &ne) {
       log::Param params[] = {log::Param("message", ne.what())};
-      m_log(LOG_ERR, "Failed to run label session", params);
+      m_log(LOG_ERR, "Label session failed", params);
     } catch(...) {
       log::Param params[] = {log::Param("message",
         "Caught an unknown exception")};
-      m_log(LOG_ERR, "Failed to run label session", params);
+      m_log(LOG_ERR, "Label session failed", params);
     }
     exit(Session::CLEAN_DRIVE);
   }
@@ -477,18 +477,15 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       sWrapper,
       rqst.vid());
     return cleanerSession.execute();
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to run cleaner session: " << ne.getMessage().str();
+  } catch(castor::exception::Exception &ex) {
     throw ex;
   } catch(std::exception &se) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to run cleaner session: " << se.what();
+    ex.getMessage() << se.what();
     throw ex;
   } catch(...) {
-        castor::exception::Exception ex;
-    ex.getMessage() << "Failed to run cleaner session"
-      ": Caught an unknown exception";
+    castor::exception::Exception ex;
+    ex.getMessage() << "Caught an unknown exception";
     throw ex;
   }
 }
@@ -569,8 +566,20 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     }
     throw;
   }
-  m_log(LOG_INFO, "Going to execute data-transfer session");
-  return dataTransferSession->execute();
+
+  try {
+    return dataTransferSession->execute();
+  } catch(castor::exception::Exception &ex) {
+    throw ex;
+  } catch(std::exception &se) {
+    castor::exception::Exception ex;
+    ex.getMessage() << se.what();
+    throw ex;
+  } catch(...) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Caught an unknown exception";
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -860,8 +869,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       driveConfig,
       rqst.force());
     return labelsession.execute();
-  } catch(castor::exception::Exception &ne) {
-    throw ne;
+  } catch(castor::exception::Exception &ex) {
+    throw ex;
   } catch(std::exception &se) {
     castor::exception::Exception ex;
     ex.getMessage() << se.what();
