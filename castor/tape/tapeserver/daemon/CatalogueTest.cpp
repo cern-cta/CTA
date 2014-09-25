@@ -21,7 +21,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/legacymsg/CupvProxyDummy.hpp"
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
+#include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/log/DummyLogger.hpp"
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxyDummy.hpp"
@@ -60,11 +62,14 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   castor::log::DummyLogger log("unittest");
   const DataTransferSession::CastorConf dataTransferConfig;
   ProcessForkerProxyDummy processForker;
+  const bool isGrantedReturnValue = true;
+  castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
   castor::legacymsg::VdqmProxyDummy vdqm;
+  castor::legacymsg::VmgrProxyDummy vmgr;
   const std::string hostName = "";
   const int netTimeout = 1;
   Catalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
-    vdqm, hostName);
+    cupv, vdqm, vmgr, hostName);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
   
   {
@@ -134,10 +139,13 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest,
   castor::log::DummyLogger log("unittest");
   const DataTransferSession::CastorConf dataTransferConfig;
   ProcessForkerProxyDummy processForker;
+  const bool isGrantedReturnValue = true;
+  castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
   castor::legacymsg::VdqmProxyDummy vdqm;
+  castor::legacymsg::VmgrProxyDummy vmgr;
   const std::string hostName = "";
   Catalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
-    vdqm, hostName);
+    cupv, vdqm, vmgr, hostName);
   ASSERT_THROW(catalogue.findDrive(unitName), castor::exception::Exception);
 }
 
@@ -153,10 +161,13 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, dgnMismatchStart) {
   castor::log::DummyLogger log("unittest");
   const DataTransferSession::CastorConf dataTransferConfig;
   ProcessForkerProxyDummy processForker;
+  const bool isGrantedReturnValue = true;
+  castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
   castor::legacymsg::VdqmProxyDummy vdqm;
+  castor::legacymsg::VmgrProxyDummy vmgr;
   const std::string hostName = "";
   Catalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
-    vdqm, hostName);
+    cupv, vdqm, vmgr, hostName);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
   CatalogueDrive &unit = catalogue.findDrive("UNIT");
   ASSERT_EQ(CatalogueDrive::DRIVE_STATE_DOWN, unit.getState());
@@ -189,10 +200,13 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, getUnitNames) {
   castor::log::DummyLogger log("unittest");
   const DataTransferSession::CastorConf dataTransferConfig;
   ProcessForkerProxyDummy processForker;
+  const bool isGrantedReturnValue = true;
+  castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
   castor::legacymsg::VdqmProxyDummy vdqm;
+  castor::legacymsg::VmgrProxyDummy vmgr;
   const std::string hostName = "";
   Catalogue catalogue(netTimeout, log, dataTransferConfig, processForker,
-    vdqm, hostName);
+    cupv, vdqm, vmgr, hostName);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
 
   {

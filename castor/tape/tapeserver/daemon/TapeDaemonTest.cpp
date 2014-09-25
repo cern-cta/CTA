@@ -21,6 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/legacymsg/CupvProxyDummy.hpp"
 #include "castor/legacymsg/NsProxyDummyFactory.hpp"
 #include "castor/legacymsg/RmcProxyDummyFactory.hpp"
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
@@ -86,13 +87,15 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::utils::copyString(job.clientUserName, "USER");
   const int netTimeout = 1;
   castor::tape::utils::DriveConfigMap driveConfigs;
+  const bool isGrantedReturnValue = true;
+  castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
   castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::tape::reactor::ZMQReactor reactor(log);
   castor::server::ProcessCapDummy capUtils;
   std::auto_ptr<TapeDaemon> daemon;
   ASSERT_NO_THROW(daemon.reset(new TapeDaemon(argc, argv, stdOut, stdErr, log,
-    netTimeout, driveConfigs, vdqm, vmgr, reactor, capUtils)));
+    netTimeout, driveConfigs, cupv, vdqm, vmgr, reactor, capUtils)));
 }
 
 } // namespace unitTests

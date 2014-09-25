@@ -23,7 +23,8 @@
 
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/legacymsg/VdqmProxy.hpp"
+#include "castor/legacymsg/CupvProxy.hpp"
+#include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueTransferSession.hpp"
 #include "h/Ctape_constants.h"
 #include "h/rmc_constants.h"
@@ -36,8 +37,10 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession*
     log::Logger &log,
     const int netTimeout,
     const tape::utils::DriveConfig &driveConfig,
-    const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
     const DataTransferSession::CastorConf &dataTransferConfig,
+    const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
+    legacymsg::VmgrProxy &vmgr,
+    legacymsg::CupvProxy &cupv,
     const unsigned short rmcPort,
     ProcessForkerProxy &processForker) {
 
@@ -50,7 +53,9 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession*
     pid,
     driveConfig,
     dataTransferConfig,
-    vdqmJob);
+    vdqmJob,
+    vmgr,
+    cupv);
 }
 
 //------------------------------------------------------------------------------
@@ -63,13 +68,17 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
   const pid_t pid,
   const tape::utils::DriveConfig &driveConfig,
   const DataTransferSession::CastorConf &dataTransferConfig,
-  const legacymsg::RtcpJobRqstMsgBody &vdqmJob) throw():
+  const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
+  legacymsg::VmgrProxy &vmgr,
+  legacymsg::CupvProxy &cupv) throw():
   CatalogueSession(log, netTimeout, pid, driveConfig),
   m_state(TRANSFERSTATE_WAIT_JOB),
   m_mode(WRITE_DISABLE),
   m_assignmentTime(time(0)),
   m_dataTransferConfig(dataTransferConfig),
-  m_vdqmJob(vdqmJob) {
+  m_vdqmJob(vdqmJob),
+  m_vmgr(vmgr),
+  m_cupv(cupv) {
 }
 
 //------------------------------------------------------------------------------

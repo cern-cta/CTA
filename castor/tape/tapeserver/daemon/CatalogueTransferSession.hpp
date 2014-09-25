@@ -23,11 +23,12 @@
 
 #pragma once
 
+#include "castor/legacymsg/CupvProxy.hpp"
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
-#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 
 namespace castor {
 namespace tape {
@@ -50,8 +51,10 @@ public:
    * @param netTimeout Timeout in seconds to be used when performing network
    * I/O.
    * @param driveConfig The configuration of the tape drive.
-   * @param vdqm Proxy object representing the vdqmd daemon.
    * @param dataTransferConfig The configuration of a data-transfer session.
+   * @param vdqmJob job received from the vdqmd daemon.
+   * @param vmgr Proxy object representing the vmgrd daemon.
+   * @param cupv Proxy object representing the cupvd daemon.
    * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param processForker Proxy object representing the ProcessForker.
    * @return A newly created CatalogueTransferSession object.
@@ -60,8 +63,10 @@ public:
     log::Logger &log,
     const int netTimeout,
     const tape::utils::DriveConfig &driveConfig,
-    const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
     const DataTransferSession::CastorConf &dataTransferConfig,
+    const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
+    legacymsg::VmgrProxy &vmgr,
+    legacymsg::CupvProxy &cupv,
     const unsigned short rmcPort,
     ProcessForkerProxy &processForker);
 
@@ -173,6 +178,8 @@ protected:
    * @param driveConfig The configuration of the tape drive.
    * @param dataTransferConfig The configuration of a data-transfer session.
    * @param vdqmJob job received from the vdqmd daemon.
+   * @param vmgr Proxy object representing the vmgrd daemon.
+   * @param cupv Proxy object representing the cupvd daemon.
    */
   CatalogueTransferSession(
     log::Logger &log,
@@ -180,7 +187,9 @@ protected:
     const pid_t pid,
     const tape::utils::DriveConfig &driveConfig,
     const DataTransferSession::CastorConf &dataTransferConfig,
-    const legacymsg::RtcpJobRqstMsgBody &vdqmJob) throw();
+    const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
+    legacymsg::VmgrProxy &vmgr,
+    legacymsg::CupvProxy &cupv) throw();
 
 private:
 
@@ -229,6 +238,16 @@ private:
    * The job received from the vdqmd daemon.
    */
   const legacymsg::RtcpJobRqstMsgBody m_vdqmJob;
+
+  /**
+   * Proxy object representing the vmgrd daemon.
+   */
+  legacymsg::VmgrProxy &m_vmgr;
+
+  /**
+   * Proxy object representing the cupvd daemon.
+   */
+  legacymsg::CupvProxy &m_cupv;
 
 }; // class CatalogueTransferSession
 

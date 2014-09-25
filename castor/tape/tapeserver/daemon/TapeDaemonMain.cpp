@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
+#include "castor/legacymsg/CupvProxyTcpIp.hpp"
 #include "castor/legacymsg/VdqmProxyTcpIp.hpp"
 #include "castor/legacymsg/VmgrProxyTcpIp.hpp"
 #include "castor/log/SyslogLogger.hpp"
@@ -31,6 +32,7 @@
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/utils/utils.hpp"
+#include "h/Cupv_constants.h"
 #include "h/rmc_constants.h"
 #include "h/vdqm_constants.h"
 #include "h/vmgr_constants.h"
@@ -112,6 +114,7 @@ static int exceptionThrowingMain(const int argc, char **const argv,
   common::CastorConfiguration &config =
     common::CastorConfiguration::getConfig();
 
+  const std::string cupvHost = config.getConfEntString("UPV" , "HOST", &log);
   const std::string vdqmHost = config.getConfEntString("VDQM", "HOST", &log);
   const std::string vmgrHost = config.getConfEntString("VMGR", "HOST", &log);
 
@@ -124,6 +127,7 @@ static int exceptionThrowingMain(const int argc, char **const argv,
 
   // Create proxy objects for the vdqm, vmgr and rmc daemons
   const int netTimeout = 10; // Timeout in seconds
+  legacymsg::CupvProxyTcpIp cupv(log, cupvHost, CUPV_PORT, netTimeout);
   legacymsg::VdqmProxyTcpIp vdqm(log, vdqmHost, VDQM_PORT, netTimeout);
   legacymsg::VmgrProxyTcpIp vmgr(vmgrHost, VMGR_PORT, netTimeout);
 
@@ -141,6 +145,7 @@ static int exceptionThrowingMain(const int argc, char **const argv,
     log,
     netTimeout,
     driveConfigs,
+    cupv,
     vdqm,
     vmgr,
     reactor,

@@ -69,6 +69,7 @@ public:
    * @param netTimeout Timeout in seconds to be used when performing network
    * I/O.
    * @param driveConfig The configuration of the tape drives.
+   * @param cupv Proxy object representing the cupvd daemon.
    * @param vdqm Proxy object representing the vdqmd daemon.
    * @param vmgr Proxy object representing the vmgrd daemon.
    * @param reactor The reactor responsible for dispatching the I/O events of
@@ -83,6 +84,7 @@ public:
     log::Logger &log,
     const int netTimeout,
     const utils::DriveConfigMap &driveConfigs,
+    legacymsg::CupvProxy &cupv,
     legacymsg::VdqmProxy &vdqm,
     legacymsg::VmgrProxy &vmgr,
     reactor::ZMQReactor &reactor,
@@ -490,6 +492,11 @@ protected:
    * The configuration of the tape drives.
    */
   const utils::DriveConfigMap m_driveConfigs;
+
+  /**
+   * Proxy object representing the cupvd daemon.
+   */
+  legacymsg::CupvProxy &m_cupv;
 
   /**
    * Proxy object representing the vdqmd daemon.

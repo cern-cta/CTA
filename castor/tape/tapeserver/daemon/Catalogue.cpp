@@ -35,13 +35,17 @@ castor::tape::tapeserver::daemon::Catalogue::Catalogue(
   log::Logger &log,
   const DataTransferSession::CastorConf &dataTransferConfig,
   ProcessForkerProxy &processForker,
+  legacymsg::CupvProxy &cupv,
   legacymsg::VdqmProxy &vdqm,
+  legacymsg::VmgrProxy &vmgr,
   const std::string &hostName):
   m_netTimeout(netTimeout),
   m_log(log),
   m_dataTransferConfig(dataTransferConfig),
   m_processForker(processForker),
+  m_cupv(cupv),
   m_vdqm(vdqm),
+  m_vmgr(vmgr),
   m_hostName(hostName) {
 }
 
@@ -100,7 +104,7 @@ void castor::tape::tapeserver::daemon::Catalogue::enterDriveConfig(
   if(m_drives.end() == itor) {
     // Insert it
     m_drives[driveConfig.unitName] = new CatalogueDrive(m_netTimeout,
-      m_log, m_processForker, m_vdqm, m_hostName, driveConfig,
+      m_log, m_processForker, m_cupv, m_vdqm, m_vmgr, m_hostName, driveConfig,
       m_dataTransferConfig, CatalogueDrive::DRIVE_STATE_DOWN);
   // Else the drive is already in the catalogue
   } else {
