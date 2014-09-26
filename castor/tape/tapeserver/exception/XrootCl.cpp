@@ -30,6 +30,7 @@ castor::exception::XrootCl::XrootCl(const XrdCl::XRootDStatus& status, const std
   if (what.size())
     w << what << " ";
   w << status.ToString();
+  getMessage().str(w.str());
 }
 
 void castor::exception::XrootCl::throwOnError(const XrdCl::XRootDStatus& status, std::string context)
