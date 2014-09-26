@@ -162,9 +162,14 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
   } //end of while(1)
   // We now acknowledge to the task injector that read reached the end. There
   // will hence be no more requests for more. (last thread turns off the light)
-  if (0 == --m_parent.m_nbActiveThread) {
+  int remainingThreads = --m_parent.m_nbActiveThread;
+  if (!remainingThreads) {
     m_parent.m_injector->finish();
     m_lc.log(LOG_INFO, "Signaled to task injector the end of disk read threads");
+  } else {
+    castor::log::ScopedParamContainer params(m_lc);
+    params.add("remainingThreads", remainingThreads);
+    m_lc.log(LOG_DEBUG, "Will not signal the end to task injector yet");
   }
   m_parent.addThreadStats(m_threadStat);
   logWithStat(LOG_INFO, "Finishing of DiskReadWorkerThread");
