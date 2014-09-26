@@ -5,16 +5,16 @@ PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 
 add_library(castormessages SHARED
   ${ProtoSources}
+  AcsProxy.cpp
+  AcsProxyDummy.cpp
+  AcsProxyZmq.cpp
   Constants.cpp
   Frame.cpp
   messages.cpp
   SmartZmqContext.cpp
   TapeserverProxy.cpp
   TapeserverProxyDummy.cpp
-  TapeserverProxyDummyFactory.cpp
-  TapeserverProxyFactory.cpp
   TapeserverProxyZmq.cpp
-  TapeserverProxyZmqFactory.cpp
   ZmqMsg.cpp
   ZmqSocket.cpp
   ZmqSocketMT.cpp

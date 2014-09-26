@@ -21,35 +21,37 @@
 
 #pragma once
 
-#include "castor/messages/TapeserverProxy.hpp"
+#include <stdint.h>
+#include <string>
 
 namespace castor {
 namespace messages {
 
 /**
- * Abstract factory for creating objects of type TapeserverProxy.
+ * Abstract class defining the interface to a proxy object representing the
+ * CASTOR ACS daemon.
  */
-class TapeserverProxyFactory {
+class AcsProxy {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~TapeserverProxyFactory() throw() = 0;
+  virtual ~AcsProxy()  = 0;
 
   /**
-   * Creates an object of type TapeserverProxy on the heap and returns a pointer to
-   * it.
+   * Request the CASTOR ACS daemon to mount the specifed tape for recall.
    *
-   * Please note that it is the responsibility of the caller to deallocate the
-   * proxy object from the heap.
-   *
-   * @param zmqContext The ZMQ context.
-   * @return A pointer to the newly created object.
+   * @param vid The tape to be mounted.
+   * @param acs The ACS identifier.
+   * @param lsm The LSM identifier.
+   * @param panel The panel identifier.
+   * @param drive The drive identifier.
    */
-  virtual TapeserverProxy *create(void *const zmqContext) = 0;
+  virtual void mountTapeForRecall(const std::string &vid, const uint32_t acs,
+     const uint32_t lsm, const uint32_t panel, const uint32_t drive) = 0;
 
-}; // class TapeserverProxyFactory
+}; // class AcsProxy
 
 } // namespace messages
 } // namespace castor

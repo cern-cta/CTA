@@ -21,9 +21,8 @@
 
 #pragma once
 
-#include "castor/log/Logger.hpp"
+#include "castor/exception/Exception.hpp"
 
-#include <memory>
 #include <stdint.h>
 #include <string>
 
@@ -36,11 +35,9 @@ namespace messages {
  */
 class TapeserverProxy {
 public:
+
   /**
    * Destructor.
-   *
-   * Closes the listening socket created in the constructor to listen for
-   * connections from the vdqmd daemon.
    */
   virtual ~TapeserverProxy()  = 0;
 

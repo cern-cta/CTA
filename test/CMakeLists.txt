@@ -76,7 +76,6 @@ endif (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
 # Create a shared librbary for the dummies supporting the tests
 add_library(TestDummies
   ../castor/messages/TapeserverProxyDummy.cpp
-  ../castor/messages/TapeserverProxyDummyFactory.cpp
   ../castor/legacymsg/CupvProxyDummy.cpp
   ../castor/legacymsg/RmcProxyDummy.cpp
   ../castor/legacymsg/RmcProxyDummyFactory.cpp

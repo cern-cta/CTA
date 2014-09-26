@@ -25,7 +25,6 @@
 #include "castor/messages/Frame.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
 #include "castor/messages/ZmqSocketMT.hpp"
-#include "castor/tape/tapeserver/client/ClientProxy.hpp"
 
 namespace castor {
 namespace messages {
@@ -41,15 +40,12 @@ public:
    * Constructor.
    *
    * @param log The object representing the API of the CASTOR logging system.
-   * @param vdqmHostName The name of the host on which the vdqmd daemon is
-   * running.
-   * @param vdqmPort The TCP/IP port on which the vdqmd daemon is listening.
-   * @param netTimeout The timeout in seconds to be applied when performing
-   * network read and write operations.
+   * @param serverPort The TCP/IP port on which the tapeserverd daemon is
+   * listening for internal ZMQ message.
    * @param zmqContext The ZMQ context.
    */
-  TapeserverProxyZmq(log::Logger &log, const unsigned short tapeserverPort,
-    const int netTimeout, void *const zmqContext) throw();
+  TapeserverProxyZmq(log::Logger &log, const unsigned short serverPort,
+    void *const zmqContext) throw();
 
   /**
    * Notifies the tapeserverd daemon that the mount-session child-process got
@@ -168,18 +164,12 @@ private:
   /**
    * The TCP/IP port on which the vdqmd daemon is listening.
    */
-  const unsigned short m_tapeserverPort;
-  
-  /**
-   * The timeout in seconds to be applied when performing network read and
-   * write operations.
-   */
-  const int m_netTimeout;
+  const unsigned short m_serverPort;
   
   /**
    * Socket connecting this tape server proxy to the tape server daemon.
    */
-  ZmqSocketMT m_tapeserverSocket;
+  ZmqSocketMT m_serverSocket;
 
   /**
    * Creates a frame containing a RecallJobFromTapeGateway message.

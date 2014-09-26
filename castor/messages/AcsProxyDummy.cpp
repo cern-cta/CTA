@@ -19,38 +19,12 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "castor/messages/AcsProxyDummy.hpp"
 
-#include "castor/messages/TapeserverProxyFactory.hpp"
-
-namespace castor {
-namespace messages {
-
-/**
- * Concrete factory for creating objects of type TapeserverProxyDummy.
- */
-class TapeserverProxyDummyFactory: public TapeserverProxyFactory {
-public:
-
-  /**
-   * Destructor.
-   */
-  ~TapeserverProxyDummyFactory() throw();
-
-  /**
-   * Creates an object of type TapeserverProxyDummy on the heap and returns a pointer
-   * to it.
-   *
-   * Please note that it is the responsibility of the caller to deallocate the
-   * proxy object from the heap.
-   *
-   * @param zmqContext The ZMQ context.
-   * @return A pointer to the newly created object.
-   */
-  TapeserverProxy *create(void *const zmqContext);
-
-}; // class TapeserverProxyDummyFactory
-
-} // namespace messages
-} // namespace castor
-
+//------------------------------------------------------------------------------
+// mountTapeForRecall
+//------------------------------------------------------------------------------
+void castor::messages::AcsProxyDummy::mountTapeForRecall(const std::string &vid,
+  const uint32_t acs, const uint32_t lsm, const uint32_t panel,
+  const uint32_t drive) {
+}

@@ -22,18 +22,6 @@
 #include "castor/messages/TapeserverProxyDummy.hpp"
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-castor::messages::TapeserverProxyDummy::TapeserverProxyDummy() throw() {
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-castor::messages::TapeserverProxyDummy::~TapeserverProxyDummy() throw() {
-}
-
-//------------------------------------------------------------------------------
 // gotRecallJobFromTapeGateway
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyDummy::gotRecallJobFromTapeGateway(

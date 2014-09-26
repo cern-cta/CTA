@@ -19,7 +19,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/io/io.hpp"
 #include "castor/messages/Heartbeat.pb.h"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/Constants.hpp"
@@ -36,26 +35,16 @@
 #include "castor/messages/TapeserverProxyZmq.hpp"
 #include "castor/messages/TapeUnmounted.pb.h"
 #include "castor/messages/TapeUnmountStarted.pb.h"
-#include "castor/tape/tapegateway/ClientType.hpp"
-#include "castor/tape/tapegateway/VolumeMode.hpp"
-#include "castor/utils/SmartFd.hpp"
-#include "castor/utils/utils.hpp"
-#include "h/Ctape.h"
-#include "h/rtcp_constants.h"
-#include "h/vdqm_constants.h"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log, 
-  const unsigned short tapeserverPort, const int netTimeout,
-  void *const zmqContext) throw():
+  const unsigned short serverPort, void *const zmqContext) throw():
   m_log(log),
-  m_tapeserverHostName("localhost"),
-  m_tapeserverPort(tapeserverPort),
-  m_netTimeout(netTimeout),
-  m_tapeserverSocket(zmqContext, ZMQ_REQ) {
-  connectZmqSocketToLocalhost(m_tapeserverSocket, tapeserverPort);
+  m_serverPort(serverPort),
+  m_serverSocket(zmqContext, ZMQ_REQ) {
+  connectZmqSocketToLocalhost(m_serverSocket, serverPort);
 }
 
 //------------------------------------------------------------------------------
@@ -65,10 +54,10 @@ void castor::messages::TapeserverProxyZmq::gotRecallJobFromTapeGateway(
   const std::string &vid, const std::string &unitName) {
   try {
     const Frame rqst = createRecallJobFromTapeGatewayFrame(vid, unitName);
-    sendFrame(m_tapeserverSocket, rqst);
+    sendFrame(m_serverSocket, rqst);
 
     ReturnValue reply;
-    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
       castor::exception::Exception ex;
@@ -121,10 +110,10 @@ void castor::messages::TapeserverProxyZmq::gotRecallJobFromReadTp(
   const std::string &vid, const std::string &unitName) {
   try {
     const Frame rqst = createRecallJobFromReadTpFrame(vid, unitName);
-    sendFrame(m_tapeserverSocket, rqst);
+    sendFrame(m_serverSocket, rqst);
 
     ReturnValue reply;
-    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
       castor::exception::Exception ex;
@@ -176,10 +165,10 @@ uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromTapeGateway(
   const std::string &vid, const std::string &unitName) {
   try {
     const Frame rqst = createMigrationJobFromTapeGatewayFrame(vid, unitName);
-    sendFrame(m_tapeserverSocket, rqst);
+    sendFrame(m_serverSocket, rqst);
 
     NbFilesOnTape reply;
-    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    recvTapeReplyOrEx(m_serverSocket, reply);
     return reply.nbfiles();
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -225,10 +214,10 @@ uint32_t castor::messages::TapeserverProxyZmq::gotMigrationJobFromWriteTp(
   const std::string &vid, const std::string &unitName) {
   try {
     const Frame rqst = createMigrationJobFromWriteTpFrame(vid, unitName);
-    sendFrame(m_tapeserverSocket, rqst);
+    sendFrame(m_serverSocket, rqst);
 
     NbFilesOnTape reply;
-    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    recvTapeReplyOrEx(m_serverSocket, reply);
     return reply.nbfiles();
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -274,10 +263,10 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForRecall(
   const std::string &vid, const std::string &unitName) {  
   try {
     const Frame rqst = createTapeMountedForRecallFrame(vid, unitName);
-    sendFrame(m_tapeserverSocket, rqst);
+    sendFrame(m_serverSocket, rqst);
   
     ReturnValue reply;
-    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
       castor::exception::Exception ex;
@@ -329,10 +318,10 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForMigration(
   const std::string &vid, const std::string &unitName) {  
   try {
     const Frame rqst = createTapeMountedForMigrationFrame(vid, unitName);
-    sendFrame(m_tapeserverSocket, rqst);
+    sendFrame(m_serverSocket, rqst);
   
     ReturnValue reply;
-    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
       castor::exception::Exception ex;
@@ -384,10 +373,10 @@ void castor::messages::TapeserverProxyZmq::tapeUnmountStarted(
   const std::string &vid, const std::string &unitName) {   
   try {
     const Frame rqst = createTapeUnmountStartedFrame(vid, unitName);
-    sendFrame(m_tapeserverSocket, rqst);
+    sendFrame(m_serverSocket, rqst);
   
     ReturnValue reply;
-    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
       castor::exception::Exception ex;
@@ -439,10 +428,10 @@ void castor::messages::TapeserverProxyZmq::tapeUnmounted(
   const std::string &vid, const std::string &unitName) {
   try {
     const Frame rqst = createTapeUnmountedFrame(vid, unitName);
-    sendFrame(m_tapeserverSocket, rqst);
+    sendFrame(m_serverSocket, rqst);
   
     ReturnValue reply;
-    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
       castor::exception::Exception ex;
@@ -495,10 +484,10 @@ void  castor::messages::TapeserverProxyZmq::notifyHeartbeat(
 
   try {
     const Frame rqst = createHeartbeatFrame(unitName, nbBlocksMoved);
-    sendFrame(m_tapeserverSocket, rqst);
+    sendFrame(m_serverSocket, rqst);
 
     ReturnValue reply;
-    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
       castor::exception::Exception ex;
@@ -550,10 +539,10 @@ void castor::messages::TapeserverProxyZmq::labelError(
   const std::string &unitName, const castor::exception::Exception &labelEx) {
   try {
     const Frame rqst = createLabelErrorFrame(unitName, labelEx);
-    sendFrame(m_tapeserverSocket, rqst);
+    sendFrame(m_serverSocket, rqst);
 
     ReturnValue reply;
-    recvTapeReplyOrEx(m_tapeserverSocket, reply);
+    recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
       castor::exception::Exception ex;

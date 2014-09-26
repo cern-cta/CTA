@@ -16,21 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
+ *
+ *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/messages/TapeserverProxyDummy.hpp"
-#include "castor/messages/TapeserverProxyDummyFactory.hpp"
-#include "castor/log/LogContext.hpp"
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-castor::messages::TapeserverProxyDummyFactory::~TapeserverProxyDummyFactory() throw() {
-}
+#include "castor/messages/AcsProxy.hpp"
 
-//------------------------------------------------------------------------------
-// create
-//------------------------------------------------------------------------------
-castor::messages::TapeserverProxy *castor::messages::TapeserverProxyDummyFactory::create(void *const zmqContext) {
-  return new TapeserverProxyDummy();
+//-----------------------------------------------------------------------------
+// destructor
+//-----------------------------------------------------------------------------
+castor::messages::AcsProxy::~AcsProxy() {
 }

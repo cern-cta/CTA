@@ -17,10 +17,10 @@
 // @author Castor Dev team, castor-dev@cern.ch
 package castor.messages;
 
-message Heartbeat {
- required string unitname = 1;
-
- // Delta value specifying the number of data blocks moved since the last
- // heartbeat message.
- required int64 nbblocksmoved = 2;
+message AcsMountTapeForRecall {
+  required string vid   = 1;
+  required uint32 acs   = 2;
+  required uint32 lsm   = 3;
+  required uint32 panel = 4;
+  required uint32 drive = 5;
 }

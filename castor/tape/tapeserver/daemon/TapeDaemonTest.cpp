@@ -27,7 +27,6 @@
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/log/DummyLogger.hpp"
-#include "castor/messages/TapeserverProxyDummyFactory.hpp"
 #include "castor/server/ProcessCapDummy.hpp"
 #include "castor/tape/reactor/DummyPollReactor.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"

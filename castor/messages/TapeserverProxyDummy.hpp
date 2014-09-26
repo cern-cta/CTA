@@ -33,16 +33,6 @@ class TapeserverProxyDummy: public TapeserverProxy {
 public:
 
   /**
-   * Constructor.
-   */
-  TapeserverProxyDummy() throw();
-
-  /**
-   * Destructor.
-   */
-  ~TapeserverProxyDummy() throw();
-
-  /**
    * Notifies the tapeserverd daemon that the mount-session child-process got
    * a recall job from the tapegatewayd daemon.
    *

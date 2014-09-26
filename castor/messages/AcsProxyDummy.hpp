@@ -19,10 +19,33 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/messages/TapeserverProxyFactory.hpp"
+#pragma once
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-castor::messages::TapeserverProxyFactory::~TapeserverProxyFactory() throw() {
-}
+#include "castor/messages/AcsProxy.hpp"
+
+namespace castor {
+namespace messages {
+
+/**
+ * Concrete class implementimg a dummy AcsProxy.
+ */
+class AcsProxyDummy: public AcsProxy {
+public:
+
+  /**
+   * Request the CASTOR ACS daemon to mount the specifed tape for recall.
+   *
+   * @param vid The tape to be mounted.
+   * @param acs The ACS identifier.
+   * @param lsm The LSM identifier.
+   * @param panel The panel identifier.
+   * @param drive The drive identifier.
+   */
+  void mountTapeForRecall(const std::string &vid, const uint32_t acs,
+     const uint32_t lsm, const uint32_t panel, const uint32_t drive);
+
+}; // class AcsProxyDummy
+
+} // namespace messages
+} // namespace castor
+
