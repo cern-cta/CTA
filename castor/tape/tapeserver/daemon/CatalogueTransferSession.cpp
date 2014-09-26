@@ -27,7 +27,9 @@
 #include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueTransferSession.hpp"
 #include "h/Ctape_constants.h"
+#include "h/Cupv_constants.h"
 #include "h/rmc_constants.h"
+#include "h/vmgr_constants.h"
 
 //------------------------------------------------------------------------------
 // create
@@ -41,6 +43,7 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession*
     const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
     legacymsg::VmgrProxy &vmgr,
     legacymsg::CupvProxy &cupv,
+    const std::string &hostName,
     const unsigned short rmcPort,
     ProcessForkerProxy &processForker) {
 
@@ -55,7 +58,8 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession*
     dataTransferConfig,
     vdqmJob,
     vmgr,
-    cupv);
+    cupv,
+    hostName);
 }
 
 //------------------------------------------------------------------------------
@@ -70,7 +74,8 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
   const DataTransferSession::CastorConf &dataTransferConfig,
   const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
   legacymsg::VmgrProxy &vmgr,
-  legacymsg::CupvProxy &cupv) throw():
+  legacymsg::CupvProxy &cupv,
+  const std::string &hostName) throw():
   CatalogueSession(log, netTimeout, pid, driveConfig),
   m_state(TRANSFERSTATE_WAIT_JOB),
   m_mode(WRITE_DISABLE),
@@ -78,7 +83,8 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
   m_dataTransferConfig(dataTransferConfig),
   m_vdqmJob(vdqmJob),
   m_vmgr(vmgr),
-  m_cupv(cupv) {
+  m_cupv(cupv),
+  m_hostName(hostName) {
 }
 
 //------------------------------------------------------------------------------
@@ -116,18 +122,74 @@ castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   receivedRecallJob(const std::string &vid) {
+  const char *const task = "accept reception of recall job";
+
   if(TRANSFERSTATE_WAIT_JOB != m_state) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to accept reception of recall job"
+    ex.getMessage() << "Failed to " << task <<
       ": Catalogue transfer-session state-mismatch: "
       "expected=" << transferStateToStr(TRANSFERSTATE_WAIT_JOB) <<
       " actual=" << transferStateToStr(m_state);
     throw ex;
   }
+
+  checkUserCanRecallFromTape(vid);
+
   m_state = TRANSFERSTATE_WAIT_MOUNTED;
 
   m_mode = WRITE_DISABLE;
   m_vid = vid;
+}
+
+//-----------------------------------------------------------------------------
+// checkUserCanRecallFromTape
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::
+  checkUserCanRecallFromTape(const std::string &vid) {
+  std::list<log::Param> params;
+
+  params.push_back(log::Param("vid", vid));
+  params.push_back(log::Param("clientEuid", m_vdqmJob.clientEuid));
+  params.push_back(log::Param("clientEgid", m_vdqmJob.clientEgid));
+
+  const legacymsg::VmgrTapeInfoMsgBody vmgrTape = m_vmgr.queryTape(vid);
+  params.push_back(log::Param("status",
+    castor::utils::tapeStatusToString(vmgrTape.status)));
+  params.push_back(log::Param("poolName", vmgrTape.poolName));
+  m_log(LOG_INFO, "Queried vmgr for the tape to be recalled", params);
+
+  if(vmgrTape.status & EXPORTED) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Cannot recall from an EXPORTED tape: vid=" << vid;
+    throw ex;
+  }
+
+  if(vmgrTape.status & ARCHIVED) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Cannot recall from an ARCHIVED tape: vid=" << vid;
+    throw ex;
+  }
+
+  // Only tape operators can recall from a DISABLED tape
+  if(vmgrTape.status & DISABLED) {
+    const bool userIsTapeOperator = m_cupv.isGranted(
+      m_vdqmJob.clientEuid,
+      m_vdqmJob.clientEgid,
+      m_vdqmJob.clientHost,
+      m_hostName,
+      P_TAPE_OPERATOR);
+    params.push_back(log::Param("userIsTapeOperator", userIsTapeOperator ?
+      "true" : "false"));
+    m_log(LOG_INFO, "Tape is DISABLED, therefore querying cupv to see if user"
+      " is a tape operator", params);
+
+    if(!userIsTapeOperator) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Only a tape operator can recall from a DISABLED tape"
+        ": vid=" << vid;
+      throw ex;
+    }
+  }
 }
 
 //-----------------------------------------------------------------------------

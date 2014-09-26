@@ -55,6 +55,8 @@ public:
    * @param vdqmJob job received from the vdqmd daemon.
    * @param vmgr Proxy object representing the vmgrd daemon.
    * @param cupv Proxy object representing the cupvd daemon.
+   * @param hostName The host name to be used as the target host when
+   * communicating with the cupvd daemon.
    * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param processForker Proxy object representing the ProcessForker.
    * @return A newly created CatalogueTransferSession object.
@@ -67,6 +69,7 @@ public:
     const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
     legacymsg::VmgrProxy &vmgr,
     legacymsg::CupvProxy &cupv,
+    const std::string &hostName,
     const unsigned short rmcPort,
     ProcessForkerProxy &processForker);
 
@@ -101,6 +104,16 @@ public:
    * @param vid The volume identifier of the tape to be mounted for recall.
    */
   void receivedRecallJob(const std::string &vid);
+
+  /**
+   * Determines whether or not the user of the data-transfer session has the
+   * access rights to recall files from the specified tape.
+   *
+   * This method throws a castor::exception::Exception if the user does not
+   * have the necessary access rights or there is an error which prevents this
+   * method for determining if they have such rights.
+   */
+  void checkUserCanRecallFromTape(const std::string &vid);
 
   /**
    * Notifies the tape-drive catalogue entry that a migration job has been
@@ -180,6 +193,8 @@ protected:
    * @param vdqmJob job received from the vdqmd daemon.
    * @param vmgr Proxy object representing the vmgrd daemon.
    * @param cupv Proxy object representing the cupvd daemon.
+   * @param hostName The host name to be used as the target host when
+   * communicating with the cupvd daemon.
    */
   CatalogueTransferSession(
     log::Logger &log,
@@ -189,7 +204,8 @@ protected:
     const DataTransferSession::CastorConf &dataTransferConfig,
     const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
     legacymsg::VmgrProxy &vmgr,
-    legacymsg::CupvProxy &cupv) throw();
+    legacymsg::CupvProxy &cupv,
+    const std::string &hostName) throw();
 
 private:
 
@@ -248,6 +264,12 @@ private:
    * Proxy object representing the cupvd daemon.
    */
   legacymsg::CupvProxy &m_cupv;
+
+  /**
+   * The host name to be used as the target host when communicating with the
+   * cupvd daemon.
+   */
+  const std::string m_hostName;
 
 }; // class CatalogueTransferSession
 

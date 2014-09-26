@@ -478,6 +478,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedVdqmJob(
           job,
           m_vmgr,
           m_cupv,
+          m_hostName,
           rmcPort,
           m_processForker);
       m_session = dynamic_cast<CatalogueSession *>(transferSession);

@@ -283,6 +283,21 @@ void setProcessName(const std::string &name);
  */
 void setCmdLine(char *const argv0, const std::string &cmdLine) throw();
 
+/**
+ * Thread safe method that wraps the C-function gethostname().
+ *
+ * @return The host name of the computer.
+ */
+std::string getHostName();
+
+/**
+ * Returns a human-readable string-representation of the specified tape-status
+ * bit-set.
+ *
+ * @param status The tape-status bit-set.
+ * @return The human-readable string-representation.
+ */
+std::string tapeStatusToString(const uint32_t status);
 
 } // namespace utils
 } // namespace castor

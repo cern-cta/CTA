@@ -21,6 +21,7 @@
 
 #include "castor/utils/utils.hpp"
 #include "h/strerror_r_wrapper.h"
+#include "h/vmgr_constants.h"
 
 #include <algorithm>
 #include <errno.h>
@@ -450,4 +451,65 @@ void castor::utils::setCmdLine(char *const argv0, const std::string &cmdLine)
   const size_t argv0Len = strlen(argv0);
   strncpy(argv0, cmdLine.c_str(), argv0Len);
   argv0[argv0Len] = '\0';
+}
+
+//------------------------------------------------------------------------------
+// getHostname
+//------------------------------------------------------------------------------
+std::string castor::utils::getHostName() {
+  char buf[256];
+  if(gethostname(buf, sizeof(buf))) {
+    const std::string errnoStr = errnoToString(errno);
+    castor::exception::Exception ex;
+    ex.getMessage() << "Call to gethostname() failed: " << errnoStr;
+    throw ex;
+  }
+
+  buf[sizeof(buf) - 1] = '\0';
+  return buf;
+}
+
+//------------------------------------------------------------------------------
+// tapeStatusToString
+//------------------------------------------------------------------------------
+std::string castor::utils::tapeStatusToString(const uint32_t status) {
+  std::string str;
+  if(DISABLED & status) {
+    if(!str.empty()) {
+      str += "|";
+    }
+    str += "DISABLED";
+  }
+  if(EXPORTED & status) {
+    if(!str.empty()) {
+      str += "|";
+    }
+    str += "EXPORTED";
+  }
+  if(TAPE_BUSY & status) {
+    if(!str.empty()) {
+      str += "|";
+    }
+    str += "BUSY";
+  }
+  if(TAPE_FULL & status) {
+    if(!str.empty()) {
+      str += "|";
+    }
+    str += "FULL";
+  }
+  if(TAPE_RDONLY & status) {
+    if(!str.empty()) {
+      str += "|";
+    }
+    str += "RDONLY";
+  }
+  if(ARCHIVED & status) {
+    if(!str.empty()) {
+      str += "|";
+    }
+    str += "ARCHIVED";
+  }
+
+  return str;
 }
