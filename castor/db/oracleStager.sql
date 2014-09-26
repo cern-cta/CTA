@@ -2748,6 +2748,7 @@ CREATE OR REPLACE PROCEDURE deleteDiskCopies(inDcIds IN castor."cnumList", inFil
   varNbRemaining INTEGER;
   varStatus INTEGER;
   varLogParams VARCHAR2(2048);
+  varFileSize INTEGER;
 BEGIN
   DELETE FROM DeleteDiskCopyHelper;
   -- Insert all data in bulk for efficiency reasons
@@ -2781,8 +2782,8 @@ BEGIN
   FOR dc IN (SELECT dcId, fileId, fStatus FROM DeleteDiskCopyHelper) LOOP
     BEGIN
       -- get data and lock
-      SELECT castorFile, DiskCopy.status, DiskPool.name
-        INTO varCfId, varStatus, outDiskPool
+      SELECT castorFile, DiskCopy.status, DiskCopy.diskCopySize, DiskPool.name
+        INTO varCfId, varStatus, varFileSize, outDiskPool
         FROM DiskPool, FileSystem, DiskCopy
        WHERE DiskCopy.id = dc.dcId
          AND DiskCopy.fileSystem = FileSystem.id
@@ -2794,7 +2795,7 @@ BEGIN
          AND fileId = dc.fileId
          FOR UPDATE;
       varLogParams := 'FileName="' || varFileName ||'" DiskPool="'|| outDiskPool
-        ||'" dcId='|| dc.dcId ||' status='
+        ||'" fileSize='|| varFileSize ||' dcId='|| dc.dcId ||' status='
         || getObjStatusName('DiskCopy', 'status', varStatus);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- diskcopy not found in stager
@@ -2878,7 +2879,7 @@ BEGIN
       -- similarly to stageRm, check that the deletion is allowed:
       -- basically only files on tape may be dropped in case no data loss is provoked,
       -- or files already dropped from the namespace. The rest is forbidden.
-      IF (varStatus = dconst.DISKCOPY_VALID AND (varNbRemaining > 0 OR dc.fStatus = 'm'))
+      IF (varStatus = dconst.DISKCOPY_VALID AND (varNbRemaining > 0 OR dc.fStatus = 'm' OR varFileSize = 0))
          OR dc.fStatus = 'd' THEN
         UPDATE DeleteDiskCopyHelper
            SET rc = dconst.DELDC_GC
