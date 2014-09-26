@@ -2567,6 +2567,8 @@ BEGIN
                   inNumParams(8*i+4), ids_seq.nextval, inStrParams(2*i+2));
         END IF;
       END IF;
+      -- commit diskServer by diskServer, otherwise multiple reports may deadlock each other
+      COMMIT;
     END LOOP;
   END IF;
 
@@ -2899,6 +2901,7 @@ CREATE OR REPLACE PROCEDURE internalDeleteDiskCopies(inForce IN BOOLEAN,
   varNbRemaining INTEGER;
   varStatus INTEGER;
   varLogParams VARCHAR2(2048);
+  varFileSize INTEGER;
 BEGIN
   -- gather all remote Nameserver statuses. This could not be
   -- incorporated in the INSERT query, because Oracle would give:
@@ -2927,15 +2930,15 @@ BEGIN
   FOR dc IN (SELECT dcId, fileId, fStatus FROM DeleteDiskCopyHelper) LOOP
     BEGIN
       -- get data and lock
-      SELECT castorFile, DiskCopy.status INTO varCfId, varStatus
+      SELECT castorFile, status, diskCopySize INTO varCfId, varStatus, varFileSize
         FROM DiskCopy
        WHERE DiskCopy.id = dc.dcId;
       SELECT nsHost, lastKnownFileName INTO varNsHost, varFileName
         FROM CastorFile
        WHERE id = varCfId
          FOR UPDATE;
-      varLogParams := 'FileName="' || varFileName || '" dcId='|| dc.dcId ||' status='
-        || getObjStatusName('DiskCopy', 'status', varStatus);
+      varLogParams := 'FileName="'|| varFileName ||'"" fileSize='|| varFileSize
+        ||' dcId='|| dc.dcId ||' status='|| getObjStatusName('DiskCopy', 'status', varStatus);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- diskcopy not found in stager
       UPDATE DeleteDiskCopyHelper
@@ -3010,7 +3013,7 @@ BEGIN
       -- similarly to stageRm, check that the deletion is allowed:
       -- basically only files on tape may be dropped in case no data loss is provoked,
       -- or files already dropped from the namespace. The rest is forbidden.
-      IF (varStatus = dconst.DISKCOPY_VALID AND (varNbRemaining > 0 OR dc.fStatus = 'm'))
+      IF (varStatus = dconst.DISKCOPY_VALID AND (varNbRemaining > 0 OR dc.fStatus = 'm' OR varFileSize = 0))
          OR dc.fStatus = 'd' THEN
         UPDATE DeleteDiskCopyHelper
            SET rc = dconst.DELDC_NOOP,
