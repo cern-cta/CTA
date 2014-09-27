@@ -121,10 +121,6 @@ private:
    */
   void signalEndDataMovement();
 
-  /**
-   * It will delete all remaining tasks 
-   */
-  void deleteAllTasks();
    /**
    * A request of files to migrate. We request EITHER
    * - a maximum of nbMaxFiles files

@@ -171,16 +171,8 @@ namespace daemon {
     m_diskReader.finish();
     m_memManager.finish();
   }
+
 //------------------------------------------------------------------------------
-//deleteAllTasks
-//------------------------------------------------------------------------------     
-  void MigrationTaskInjector::deleteAllTasks(){
-    //discard all the tasks !!
-    while(m_queue.size()>0){
-      m_queue.pop();
-    }
-  }
-  //------------------------------------------------------------------------------
 //WorkerThread::run
 //------------------------------------------------------------------------------
   void MigrationTaskInjector::WorkerThread::run(){
@@ -212,11 +204,10 @@ namespace daemon {
     }//end of try
     catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
       //we end up there because a task screw up somewhere 
-      m_parent.m_lc.log(LOG_ERR,"In MigrationTaskInjector::WorkerThread::run(): a task screw up, "
-      "finishing and discarding all tasks ");
+      m_parent.m_lc.log(LOG_ERR,"In MigrationTaskInjector::WorkerThread::run(): a task failed, "
+      "indicating finish of run");
       
       m_parent.signalEndDataMovement();
-      m_parent.deleteAllTasks();
     } 
     catch(const castor::exception::Exception& ex){
       //we end up there because we could not talk to the client
@@ -226,10 +217,9 @@ namespace daemon {
                .add("exception message",ex.getMessageValue());
       m_parent.m_lc.logBacktrace(LOG_ERR,ex.backtrace());
       m_parent.m_lc.log(LOG_ERR,"In MigrationTaskInjector::WorkerThread::run(): "
-      "could not retrieve a list of file to migrate. End of session");
+      "could not retrieve a list of file to migrate, indicating finish of run");
       
       m_parent.signalEndDataMovement();
-      m_parent.deleteAllTasks();
     } 
     //-------------
     m_parent.m_lc.log(LOG_INFO, "Finishing MigrationTaskInjector thread");
