@@ -44,13 +44,7 @@ template <class T> struct AtomicCounter{
       }
       T operator -- () {
         MutexLocker ml(&m_mutex);
-        // Store the return value in a local variable
-        // instead of returning --m_val, which is a reference
-        // to the value. If this reference to value gets cast into value
-        // and evaluated after the destruction of ml, we have a race 
-        // condition (which we seemed to experience under rare circumstances).
-        T ret = --m_val;
-        return ret;
+        return --m_val;
       }
       operator T() const {
         MutexLocker ml(&m_mutex);
