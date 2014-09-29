@@ -535,10 +535,11 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
         m_log,
         m_netTimeout,
         m_config,
-        m_processForker,
         job,
+        labelCmdConnection,
+        m_cupv,
         rmcPort,
-        labelCmdConnection);
+        m_processForker);
     }
     break;
   default:

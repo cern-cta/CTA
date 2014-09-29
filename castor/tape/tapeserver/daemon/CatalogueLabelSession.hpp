@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include "castor/legacymsg/CupvProxy.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueSession.hpp"
@@ -52,22 +53,24 @@ public:
    * @param netTimeout Timeout in seconds to be used when performing network
    * I/O.
    * @param driveConfig The configuration of the tape drive.
-   * @param processForker Proxy object representing the ProcessForker.
    * @param labelJob The label job received from the castor-tape-label
    * command-line tool.
-   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param labelCmdConnection The file descriptor of the TCP/IP connection with
    * the tape labeling command-line tool castor-tape-label.
+   * @param cupv Proxy object representing the cupvd daemon.
+   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
+   * @param processForker Proxy object representing the ProcessForker.
    * @return A newly created CatalogueSession object.
    */
   static CatalogueLabelSession *create(
     log::Logger &log,
     const int netTimeout,
     const tape::utils::DriveConfig &driveConfig,
-    ProcessForkerProxy &processForker,
     const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
+    const int labelCmdConnection,
+    legacymsg::CupvProxy &cupv,
     const unsigned short rmcPort,
-    const int labelCmdConnection);
+    ProcessForkerProxy &processForker);
 
   /**
    * Destructor.
@@ -186,6 +189,24 @@ private:
    * List of label errors receved from the label session.
    */
   std::list<castor::exception::Exception> m_labelErrors;
+
+  /**
+   * Determines whether or not the user of the label session has the access
+   * rights to label the tape.
+   *
+   * This method throws a castor::exception::Exception if the user does not
+   * have the necessary access rights or there is an error which prevents this
+   * method for determining if they have such rights.
+   *
+   * @param cupv Proxy object representing the cupvd daemon.
+   * @param labelJob The label job received from the castor-tape-label
+   * command-line tool.
+   * @param labelCmdConnection The file descriptor of the TCP/IP connection with
+   * the tape labeling command-line tool castor-tape-label.
+   */
+  static void checkUserCanLabelTape(legacymsg::CupvProxy &cupv,
+    const legacymsg::TapeLabelRqstMsgBody &labelJob,
+    const int labelCmdConnection);
 
 }; // class CatalogueLabelSession
 

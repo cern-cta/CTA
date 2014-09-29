@@ -112,6 +112,8 @@ public:
    * This method throws a castor::exception::Exception if the user does not
    * have the necessary access rights or there is an error which prevents this
    * method for determining if they have such rights.
+   *
+   * @param vid The volume identifier of the tape to be recalled from.
    */
   void checkUserCanRecallFromTape(const std::string &vid);
 

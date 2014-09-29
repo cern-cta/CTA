@@ -72,7 +72,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       log::Param("drive", m_request.drive),
       log::Param("dgn", m_request.dgn)};
   
-    performPreMountChecks();
     mountTape();
     std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> drive =
       getDriveObject();
@@ -94,21 +93,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     m_tapeserver.labelError(m_request.drive, ex);
     throw ex;
   }
-}
-
-//------------------------------------------------------------------------------
-// performPreMountChecks
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::LabelSession::performPreMountChecks() {
-  checkClientIsOwnerOrAdmin();
-}
-
-//------------------------------------------------------------------------------
-// checkClientIsOwnerOrAdmin
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::LabelSession::
-  checkClientIsOwnerOrAdmin() {
-  // TO BE DONE
 }
 
 //------------------------------------------------------------------------------

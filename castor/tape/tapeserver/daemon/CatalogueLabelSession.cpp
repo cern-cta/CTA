@@ -33,10 +33,13 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession *
     log::Logger &log,
     const int netTimeout,
     const tape::utils::DriveConfig &driveConfig,
-    ProcessForkerProxy &processForker,
-    const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
+    const legacymsg::TapeLabelRqstMsgBody &labelJob,
+    const int labelCmdConnection,
+    legacymsg::CupvProxy &cupv,
     const unsigned short rmcPort,
-    const int labelCmdConnection) {
+    ProcessForkerProxy &processForker) {
+
+  checkUserCanLabelTape(cupv, labelJob, labelCmdConnection);
 
   const pid_t pid = processForker.forkLabel(driveConfig, labelJob, rmcPort);
 
@@ -47,6 +50,24 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession *
     driveConfig,
     labelJob,
     labelCmdConnection);
+}
+
+//------------------------------------------------------------------------------
+// checkUserCanLabelTape
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueLabelSession::
+  checkUserCanLabelTape(castor::legacymsg::CupvProxy &cupv,
+  const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
+  const int labelCmdConnection) {
+
+/*
+  const bool userIsAdmin = cupv.isGranted(
+    labelJob.uid,
+    labelJob.gid,
+    m_vdqmJob.clientHost,
+    hostName,
+    P_ADMIN);
+*/
 }
 
 //------------------------------------------------------------------------------
