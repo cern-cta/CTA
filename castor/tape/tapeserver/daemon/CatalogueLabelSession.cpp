@@ -21,9 +21,11 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/io/io.hpp"
 #include "castor/legacymsg/legacymsg.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueLabelSession.hpp"
 #include "h/Ctape_constants.h"
+#include "h/Cupv_constants.h"
 
 //------------------------------------------------------------------------------
 // create
@@ -39,7 +41,7 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession *
     const unsigned short rmcPort,
     ProcessForkerProxy &processForker) {
 
-  checkUserCanLabelTape(cupv, labelJob, labelCmdConnection);
+  checkUserCanLabelTape(log, cupv, labelJob, labelCmdConnection);
 
   const pid_t pid = processForker.forkLabel(driveConfig, labelJob, rmcPort);
 
@@ -56,18 +58,34 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession *
 // checkUserCanLabelTape
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueLabelSession::
-  checkUserCanLabelTape(castor::legacymsg::CupvProxy &cupv,
-  const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
+  checkUserCanLabelTape(log::Logger &log, legacymsg::CupvProxy &cupv,
+  const legacymsg::TapeLabelRqstMsgBody &labelJob,
   const int labelCmdConnection) {
+  const std::string sourceHost = io::getPeerHostName(labelCmdConnection);
+  const std::string targetHost = io::getSockHostName(labelCmdConnection);
 
-/*
   const bool userIsAdmin = cupv.isGranted(
     labelJob.uid,
     labelJob.gid,
-    m_vdqmJob.clientHost,
-    hostName,
+    sourceHost,
+    targetHost,
     P_ADMIN);
-*/
+  log::Param params[] = {
+    log::Param("uid", labelJob.uid),
+    log::Param("gid", labelJob.gid),
+    log::Param("sourceHost", sourceHost),
+    log::Param("targetHost", targetHost),
+    log::Param("privilegeCode", P_ADMIN),
+    log::Param("privilegeStr", "ADMIN"),
+    log::Param("userIsAdmin", userIsAdmin ?  "true" : "false")};
+  log(LOG_INFO, "Queried cupvd for tape to be labelled", params);
+
+  if(!userIsAdmin) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Only an administrator can label a tape: vid=" <<
+      labelJob.vid;
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------

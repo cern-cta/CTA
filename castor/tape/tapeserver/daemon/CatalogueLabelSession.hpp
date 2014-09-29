@@ -198,13 +198,16 @@ private:
    * have the necessary access rights or there is an error which prevents this
    * method for determining if they have such rights.
    *
+   * @param log Object representing the API of the CASTOR logging system.
    * @param cupv Proxy object representing the cupvd daemon.
    * @param labelJob The label job received from the castor-tape-label
    * command-line tool.
    * @param labelCmdConnection The file descriptor of the TCP/IP connection with
    * the tape labeling command-line tool castor-tape-label.
    */
-  static void checkUserCanLabelTape(legacymsg::CupvProxy &cupv,
+  static void checkUserCanLabelTape(
+    log::Logger &log,
+    legacymsg::CupvProxy &cupv,
     const legacymsg::TapeLabelRqstMsgBody &labelJob,
     const int labelCmdConnection);
 

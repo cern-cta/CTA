@@ -525,8 +525,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
         << job.dgn;
       throw ex;
     }
-    m_state = DRIVE_STATE_RUNNING;
-    m_sessionType = SESSION_TYPE_LABEL;
     {
       const unsigned short rmcPort =
         common::CastorConfiguration::getConfig().getConfEntInt("RMC", "PORT",
@@ -541,6 +539,8 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
         rmcPort,
         m_processForker);
     }
+    m_state = DRIVE_STATE_RUNNING;
+    m_sessionType = SESSION_TYPE_LABEL;
     break;
   default:
     {
