@@ -35,7 +35,7 @@ castor::exception::XrootCl::XrootCl(const XrdCl::XRootDStatus& status, const std
 
 void castor::exception::XrootCl::throwOnError(const XrdCl::XRootDStatus& status, std::string context)
 {
-  if (!status.IsOk()) {
+  if (!status.IsOK()) {
     throw XrootCl(status, context);
   }
 }
