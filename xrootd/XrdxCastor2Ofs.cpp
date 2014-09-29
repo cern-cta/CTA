@@ -548,7 +548,8 @@ XrdxCastor2OfsFile::close()
     }
 
     // Free errmsg memory
-    free(errmsg);
+    if (errmsg)
+      free(errmsg);
   }
 
   if (gSrv->mLogLevel == LOG_DEBUG)
