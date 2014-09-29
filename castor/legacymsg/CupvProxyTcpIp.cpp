@@ -78,16 +78,18 @@ bool castor::legacymsg::CupvProxyTcpIp::isGranted(
 
     const MessageHeader header = readCupvMsgHeader(fd.get());
     switch(header.reqType) {
-    case CUPV_IRC:
-      return true;
     case CUPV_RC:
-      if(0 != header.lenOrStatus) {
+      switch(header.lenOrStatus) {
+      case 0:
+        return true;
+      case EACCES:
+        return false;
+      default:
         castor::exception::Exception ex;
         ex.getMessage() << "Received error code from cupv running on " <<
           m_cupvHostName << ": code=" << header.lenOrStatus;
         throw ex;
       }
-      break;
     case MSG_ERR:
       {
         char errorBuf[1024];
@@ -100,7 +102,6 @@ bool castor::legacymsg::CupvProxyTcpIp::isGranted(
           m_cupvHostName << ": " << errorBuf;
         throw ex;
       }
-      break;
     default:
       {
         castor::exception::Exception ex;
@@ -117,7 +118,6 @@ bool castor::legacymsg::CupvProxyTcpIp::isGranted(
     ex.getMessage() << "Failed to " << task.str() << ": " << ne.getMessage().str();
     throw ex;
   }
-  return false;
 }
 
 //-----------------------------------------------------------------------------
