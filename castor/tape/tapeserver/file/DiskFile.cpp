@@ -339,7 +339,7 @@ RadosStriperReadFile::~RadosStriperReadFile() throw() {
 }
 
 //==============================================================================
-// XROOT WRITE FILE
+// RADOS STRIPER WRITE FILE
 //============================================================================== 
 RadosStriperWriteFile::RadosStriperWriteFile(const std::string &url){
   throw castor::exception::Exception(
