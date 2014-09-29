@@ -457,11 +457,7 @@ castor::io::IpAndPort  castor::io::getPeerIpPort(
 //------------------------------------------------------------------------------
 // getSockHostName
 //------------------------------------------------------------------------------
-void castor::io::getSockHostName(
-  const int    socketFd,
-  char *const  buf,
-  const size_t len)
-   {
+std::string castor::io::getSockHostName(const int socketFd) {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -498,7 +494,7 @@ void castor::io::getSockHostName(
     throw ex;
   }
 
-  utils::copyString(buf, len, hostName);
+  return hostName;
 }
 
 //------------------------------------------------------------------------------
@@ -557,12 +553,7 @@ void castor::io::getSockIpHostnamePort(
 //------------------------------------------------------------------------------
 // getPeerHostName
 //------------------------------------------------------------------------------
-void castor::io::getPeerHostName(
-  const int    socketFd,
-  char *const  buf,
-  const size_t len)
-   {
-
+std::string castor::io::getPeerHostName(const int socketFd) {
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
     castor::exception::InvalidArgument ex;
@@ -601,7 +592,7 @@ void castor::io::getPeerHostName(
       throw ex;
     }
 
-    utils::copyString(buf, len, hostName);
+    return hostName;
   }
 }
 

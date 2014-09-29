@@ -176,10 +176,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   const int connectedSock)
    {
   try {
-    char hostName[io::HOSTNAMEBUFLEN];
-
     const io::IpAndPort peerIpAndPort = io::getPeerIpPort(connectedSock);
-    io::getPeerHostName(connectedSock, hostName);
+    const std::string hostName = io::getPeerHostName(connectedSock);
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId       ),

@@ -76,7 +76,7 @@ namespace tapegateway{
         hostName[0]='\0';
       };
       virtual ~requesterInfo() throw() {};
-      char hostName[castor::io::HOSTNAMEBUFLEN];
+      std::string hostName;
       unsigned short port;
       unsigned long ip;
       // Helper converting requester structure into a context string

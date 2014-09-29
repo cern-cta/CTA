@@ -432,9 +432,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     castor::utils::writeTime(os, now, TIMEFORMAT);
     os << " Selected tape server is ";
 
-    char hostName[io::HOSTNAMEBUFLEN];
-
-    io::getPeerHostName(connectionSockFd, hostName);
+    const std::string hostName = io::getPeerHostName(connectionSockFd);
 
     os << hostName << std::endl;
   }

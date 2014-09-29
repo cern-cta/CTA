@@ -146,9 +146,8 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
 
     // Log the connection from the VDQM
     {
-      char hostName[io::HOSTNAMEBUFLEN];
       const io::IpAndPort peerIpAndPort = io::getPeerIpPort(vdqmSock.get());
-      io::getPeerHostName(vdqmSock.get(), hostName);
+      const std::string hostName = io::getPeerHostName(vdqmSock.get());
 
       castor::dlf::Param params[] = {
         castor::dlf::Param("IP"      ,
@@ -440,11 +439,9 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
 
   // Log the initial callback connection from RTCPD
   try {
-    char hostName[io::HOSTNAMEBUFLEN];
-
     const io::IpAndPort peerIpAndPort =
       io::getPeerIpPort(rtcpdInitialSock.get());
-    io::getPeerHostName(rtcpdInitialSock.get(), hostName);
+    const std::string hostName = io::getPeerHostName(rtcpdInitialSock.get());
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", jobRequest.volReqId       ),

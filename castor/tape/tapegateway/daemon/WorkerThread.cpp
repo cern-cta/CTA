@@ -105,7 +105,7 @@ void castor::tape::tapegateway::WorkerThread::run(void* arg)
     std::auto_ptr<castor::io::ServerSocket> sock((castor::io::ServerSocket*)arg); 
     try {
       sock->getPeerIp(requester.port, requester.ip);
-      io::getPeerHostName(sock->socket(), requester.hostName);
+      requester.hostName = io::getPeerHostName(sock->socket());
     } catch(castor::exception::Exception& e) {
       // "Exception caught : ignored" message
       castor::dlf::Param params[] =

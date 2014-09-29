@@ -217,8 +217,7 @@ int acceptConnection(
  * @param socketFd The socket file descriptor.
  * @return         The IP and port number of the specified socket.
  */
-IpAndPort getSockIpPort(const int socketFd)
-  ;
+IpAndPort getSockIpPort(const int socketFd);
 
 /**
  * Gets the peer IP and port number of the specified socket.
@@ -226,35 +225,15 @@ IpAndPort getSockIpPort(const int socketFd)
  * @param socketFd The socket file descriptor.
  * @return         The IP and port number of the specified socket.
  */
-IpAndPort getPeerIpPort(const int socketFd)
-  ;
+IpAndPort getPeerIpPort(const int socketFd);
 
 /**
  * Gets the locally-bound host name of the specified socket.
  *
  * @param socketFd The socket file descriptor.
- * @param buf      The buffer into which the hostname should written to.
- * @param len      The length of the buffer into which the host name should be
- *                 written to.
+ * @return         The host name.
  */
-void getSockHostName(
-  const int    socketFd,
-  char *const  buf,
-  const size_t len)
-  ;
-
-/**
- * Gets the locally-bound host name of the specified socket.
- *
- * @param socketFd The socket file descriptor.
- * @param buf      The buffer into which the hostname should written to.
- */
-template<int n> static void getSockHostName(
-  const int socketFd,
-  char (&buf)[n])
-   {
-  getSockHostName(socketFd, buf, n);
-}
+std::string getSockHostName(const int socketFd);
 
 /**
  * Gets the locally-bound IP, host name and port of the specified socket.
@@ -294,28 +273,10 @@ template<int n> static void getSockIpHostnamePort(
  * Gets the peer host name of the specified connection.
  *
  * @param socketFd The socket file descriptor of the connection.
- * @param buf      The buffer into which the hostname should written to.
- * @param len      The length of the buffer into which the host name should be
  *                 written to.
+ * @return         The peer host name.
  */
-void getPeerHostName(
-  const int    socketFd,
-  char *const  buf,
-  const size_t len)
-  ;
-
-/**
- * Gets the peer host name of the specified connection.
- *
- * @param socketFd The socket file descriptor of the connection.
- * @param buf      The buffer into which the hostname should written to.
- */
-template<int n> static void getPeerHostName(
-  const int socketFd,
-  char (&buf)[n])
-   {
-  getPeerHostName(socketFd, buf, n);
-}
+std::string getPeerHostName(const int socketFd);
 
 /**
  * Writes the string form of specified IP using the specified output
