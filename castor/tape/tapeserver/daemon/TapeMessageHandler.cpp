@@ -229,7 +229,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 }
 
 //------------------------------------------------------------------------------
-// handleHeartbeatMsg
+// handleHeartbeat
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   handleHeartbeat(const messages::Frame &rqst) {
@@ -238,6 +238,10 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   try {
     castor::messages::Heartbeat rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
+
+    CatalogueDrive &drive =
+      m_driveCatalogue.findDrive(rqstBody.unitname());
+    drive.getTransferSession().receivedHeartbeat(rqstBody.nbblocksmoved());
 
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;

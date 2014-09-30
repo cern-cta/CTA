@@ -409,3 +409,12 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
   tapeIsBeingMounted() const throw() {
   return TRANSFERSTATE_WAIT_MOUNTED == m_state;
 }
+
+//-----------------------------------------------------------------------------
+// receivedHeartbeat
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::
+  receivedHeartbeat(const uint64_t nbBlocksMoved) {
+  log::Param params[] = {log::Param("nbBlocksMoved", nbBlocksMoved)};
+  m_log(LOG_DEBUG, "CatalogueTransferSession received heartbeat", params);
+}

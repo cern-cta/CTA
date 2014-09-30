@@ -98,7 +98,7 @@ public:
   castor::legacymsg::RtcpJobRqstMsgBody getVdqmJob() const;
 
   /**
-   * Notifies the tape-drive catalogue entry that a recall job has been received
+   * Notifies the catalogue that a recall job has been received
    * for the tape drive.
    *
    * @param vid The volume identifier of the tape to be mounted for recall.
@@ -118,7 +118,7 @@ public:
   void checkUserCanRecallFromTape(const std::string &vid);
 
   /**
-   * Notifies the tape-drive catalogue entry that a migration job has been
+   * Notifies the catalogue that a migration job has been
    * received for the tape drive.
    *
    * @param vid The volume identifier of the tape to be mounted for migration.
@@ -166,7 +166,7 @@ public:
   pid_t getPid() const throw();
 
   /**
-   * Notifies the tape-drive catalogue entry that the specified tape has been
+   * Notifies the catalogue that the specified tape has been
    * mounted for migration in the tape drive.
    *
    * @param vid The volume identifier of the tape.
@@ -174,7 +174,7 @@ public:
   void tapeMountedForMigration(const std::string &vid);
     
   /**
-   * Notifies the tape-drive catalogue entry that the specified tape has been
+   * Notifies the catalogue that the specified tape has been
    * mounted for recall in the tape drive.
    *
    * @param vid The volume identifier of the tape.
@@ -187,6 +187,15 @@ public:
    * @return True if a tape is in the process of being mounted.
    */
   bool tapeIsBeingMounted() const throw();
+
+  /**
+   * Notifies the catalogue that a heartbeat message has been
+   * received from the data-transfer session.
+   *
+   * @param nbBlocksMoved Delta value specifying the number of data blocks moved
+   * since the last heartbeat message.
+   */
+  void receivedHeartbeat(const uint64_t nbBlocksMoved);
 
 protected:
 
