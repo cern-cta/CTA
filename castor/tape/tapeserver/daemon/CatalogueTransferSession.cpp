@@ -205,10 +205,70 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
       " actual=" << transferStateToStr(m_state);
     throw ex;
   }
+
+  checkUserCanMigrateToTape(vid);
+
   m_state = TRANSFERSTATE_WAIT_MOUNTED;
 
   m_mode = WRITE_ENABLE;
   m_vid = vid;
+}
+
+//-----------------------------------------------------------------------------
+// checkUserCanMigrateToTape
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::
+  checkUserCanMigrateToTape(const std::string &vid) {
+  std::list<log::Param> params;
+
+  params.push_back(log::Param("vid", vid));
+  params.push_back(log::Param("clientEuid", m_vdqmJob.clientEuid));
+  params.push_back(log::Param("clientEgid", m_vdqmJob.clientEgid));
+
+  const legacymsg::VmgrTapeInfoMsgBody vmgrTape = m_vmgr.queryTape(vid);
+  params.push_back(log::Param("status",
+    castor::utils::tapeStatusToString(vmgrTape.status)));
+  params.push_back(log::Param("poolName", vmgrTape.poolName));
+  m_log(LOG_INFO, "Queried vmgr for the tape for migration", params);
+
+  if(vmgrTape.status & EXPORTED) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Cannot migrate files to an EXPORTED tape"
+      ": vid=" << vid;
+    throw ex;
+  }
+
+  if(vmgrTape.status & ARCHIVED) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Cannot migrate files to an ARCHIVED tape"
+      ": vid=" << vid;
+    throw ex;
+  }
+
+  if(vmgrTape.status & DISABLED) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Cannot migrate files to a DISABLED tape"
+      ": vid=" << vid;
+    throw ex;
+  }
+
+  const legacymsg::VmgrPoolInfoMsgBody vmgrPool =
+    m_vmgr.queryPool(vmgrTape.poolName);
+  params.push_back(log::Param("poolUid", vmgrPool.poolUid));
+  params.push_back(log::Param("poolGid", vmgrPool.poolGid));
+  m_log(LOG_INFO, "Queried vmgr for the pool of the tape for migration",
+    params);
+
+  // Only the owner of the pool of a tape can migrate files to that tape
+  const bool userIsPoolOwner = m_vdqmJob.clientEuid == vmgrPool.poolUid &&
+    m_vdqmJob.clientEgid == vmgrPool.poolGid;
+  if(!userIsPoolOwner) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Only the owner of the pool of a tape can migrate files to that tape"
+      ": vid=" << vid;
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------

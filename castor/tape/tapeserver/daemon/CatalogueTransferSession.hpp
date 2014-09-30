@@ -113,7 +113,7 @@ public:
    * have the necessary access rights or there is an error which prevents this
    * method for determining if they have such rights.
    *
-   * @param vid The volume identifier of the tape to be recalled from.
+   * @param vid The volume identifier of the tape.
    */
   void checkUserCanRecallFromTape(const std::string &vid);
 
@@ -124,6 +124,18 @@ public:
    * @param vid The volume identifier of the tape to be mounted for migration.
    */
   void receivedMigrationJob(const std::string &vid);
+
+  /**
+   * Determines whether or not the user of the data-transfer session has the
+   * access rights to migrate files to the specified tape.
+   *
+   * This method throws a castor::exception::Exception if the user does not
+   * have the necessary access rights or there is an error which prevents this
+   * method for determining if they have such rights.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  void checkUserCanMigrateToTape(const std::string &vid);
   
   /**
    * Gets the volume identifier of the tape associated with the tape drive.
