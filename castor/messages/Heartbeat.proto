@@ -22,5 +22,5 @@ message Heartbeat {
 
  // Delta value specifying the number of data blocks moved since the last
  // heartbeat message.
- required int64 nbblocksmoved = 2;
+ required uint64 nbblocksmoved = 2;
 }
