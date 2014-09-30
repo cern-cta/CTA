@@ -23,22 +23,50 @@
  *****************************************************************************/
 #pragma once
 
+#include "castor/server/Mutex.hpp"
+
 #include <pthread.h>
 #include <semaphore.h>
 
 namespace castor {
 namespace server {
+
+/**
+ * A simple scoped locker for mutexes. Highly recommended as
+ * the mutex will be released in all cases (exception, mid-code return, etc...)
+ * To use, simply instantiate and forget.
+ */
+class MutexLocker {
+public:
+
   /**
-   * A simple exception throwing wrapper for pthread mutexes.
-   * Inspired from the interface of Qt.
+   * Constructor.
+   *
+   * @param m pointer to Mutex to be owned.
    */
-  class Mutex {
-  public:
-    Mutex() ;
-    ~Mutex();
-    void lock() ;
-    void unlock();
-  private:
-    pthread_mutex_t m_mutex;
-  };
-}}
+  MutexLocker(Mutex *const m): m_mutex(m) {
+    m->lock();
+  }
+
+  /**
+   * Destructor.
+   */
+  ~MutexLocker() {
+    try {
+      m_mutex->unlock();
+    } catch (...) {
+      // Ignore any exceptions
+    }
+  }
+
+private:
+
+  /**
+   * The mutex owened by this MutexLocker.
+   */
+  Mutex *const m_mutex;
+
+}; // class MutexLocker
+  
+} // namespace server
+} // namespace castor

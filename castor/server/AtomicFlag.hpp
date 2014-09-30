@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "castor/server/MutexLocker.hpp"
 #include "castor/server/Threading.hpp"
 
 namespace castor {

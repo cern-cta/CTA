@@ -21,9 +21,12 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include <gtest/gtest.h>
+#include "castor/server/MutexLocker.hpp"
 #include "castor/server/Threading.hpp"
 #include "castor/server/Semaphores.hpp"
+
+#include <gtest/gtest.h>
+
 /* This is a collection of multi threaded unit tests, which can (and should)
  be passed through helgrind, as well as valgrind */
 

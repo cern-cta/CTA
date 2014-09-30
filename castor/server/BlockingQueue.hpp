@@ -31,6 +31,7 @@
 #include <queue>
 #include <exception>
 
+#include "castor/server/MutexLocker.hpp"
 #include "castor/server/Threading.hpp"
 #include "castor/server/Semaphores.hpp"
 

@@ -21,10 +21,12 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include <gtest/gtest.h>
+#include "castor/server/MutexLocker.hpp"
 #include "castor/server/Threading.hpp"
 #include "castor/server/ChildProcess.hpp"
 #include "castor/server/Semaphores.hpp"
+
+#include <gtest/gtest.h>
 #include <time.h>
 
 /* Note: those tests create multi threading errors on purpose and should not
