@@ -63,7 +63,7 @@ castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
   m_vmgr(vmgr) { 
 
   std::ostringstream endpoint;
-  endpoint << "tcp://127.0.0.1:" << TAPE_SERVER_INTERNAL_LISTENING_PORT;
+  endpoint << "tcp://127.0.0.1:" << TAPESERVER_INTERNAL_LISTENING_PORT;
   
   try {
     m_socket.bind(endpoint.str().c_str());

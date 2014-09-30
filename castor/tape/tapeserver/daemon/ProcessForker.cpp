@@ -517,7 +517,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   messages::SmartZmqContext
     zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
   messages::TapeserverProxyZmq tapeserver(m_log,
-    TAPE_SERVER_INTERNAL_LISTENING_PORT, zmqContext.get());
+    TAPESERVER_INTERNAL_LISTENING_PORT, zmqContext.get());
 
   castor::tape::System::realWrapper sysWrapper;
 
@@ -848,7 +848,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     messages::SmartZmqContext
       zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
     messages::TapeserverProxyZmq tapeserver(m_log,
-      TAPE_SERVER_INTERNAL_LISTENING_PORT, zmqContext.get());
+      TAPESERVER_INTERNAL_LISTENING_PORT, zmqContext.get());
 
     // The network timeout of rmc communications should be several minutes due
     // to the time it takes to mount and unmount tapes

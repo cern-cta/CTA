@@ -299,7 +299,7 @@ void castor::tape::label::LabelCmd::writeTapeLabelRequest(const int timeout) {
   char buf[REQBUFSZ];
   const size_t len = castor::legacymsg::marshal(buf, sizeof(buf), body);
   m_smartClientConnectionSock.reset(castor::io::connectWithTimeout("127.0.0.1",
-    castor::tape::tapeserver::daemon::TAPE_SERVER_LABELCMD_LISTENING_PORT, timeout));
+    tapeserver::daemon::TAPESERVER_LABELCMD_LISTENING_PORT, timeout));
   
   try {
     castor::io::writeBytes(m_smartClientConnectionSock.get(), timeout, len, buf);

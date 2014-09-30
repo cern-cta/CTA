@@ -668,7 +668,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
   try {
     castor::utils::SmartFd listenSock;
     try {
-      listenSock.reset(io::createListenerSock(TAPE_SERVER_VDQM_LISTENING_PORT));
+      listenSock.reset(io::createListenerSock(TAPESERVER_VDQM_LISTENING_PORT));
     } catch(castor::exception::Exception &ne) {
       castor::exception::Exception ex(ne.code());
       ex.getMessage() << "Failed to create socket to listen for vdqm connections"
@@ -677,7 +677,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     }
     {
       log::Param params[] = {
-        log::Param("listeningPort", TAPE_SERVER_VDQM_LISTENING_PORT)};
+        log::Param("listeningPort", TAPESERVER_VDQM_LISTENING_PORT)};
       m_log(LOG_INFO, "Listening for connections from the vdqmd daemon", params);
     }
 
@@ -712,7 +712,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
   try {
     castor::utils::SmartFd listenSock;
     try {
-      listenSock.reset(io::createListenerSock(TAPE_SERVER_ADMIN_LISTENING_PORT));
+      listenSock.reset(io::createListenerSock(TAPESERVER_ADMIN_LISTENING_PORT));
     } catch(castor::exception::Exception &ne) {
       castor::exception::Exception ex(ne.code());
       ex.getMessage() <<
@@ -722,7 +722,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     }
     {
       log::Param params[] = {
-        log::Param("listeningPort", TAPE_SERVER_ADMIN_LISTENING_PORT)};
+        log::Param("listeningPort", TAPESERVER_ADMIN_LISTENING_PORT)};
       m_log(LOG_INFO, "Listening for connections from the admin commands",
         params);
     }
@@ -759,7 +759,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     castor::utils::SmartFd listenSock;
     try {
       listenSock.reset(
-        io::createListenerSock(TAPE_SERVER_LABELCMD_LISTENING_PORT));
+        io::createListenerSock(TAPESERVER_LABELCMD_LISTENING_PORT));
     } catch(castor::exception::Exception &ne) {
       castor::exception::Exception ex(ne.code());
       ex.getMessage() <<
@@ -769,7 +769,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     }
     {
       log::Param params[] = {
-        log::Param("listeningPort", TAPE_SERVER_LABELCMD_LISTENING_PORT)};
+        log::Param("listeningPort", TAPESERVER_LABELCMD_LISTENING_PORT)};
       m_log(LOG_INFO, "Listening for connections from label command",
         params);
     }

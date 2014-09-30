@@ -24,6 +24,7 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueDrive.hpp"
+#include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/rmc_constants.h"
@@ -482,6 +483,9 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedVdqmJob(
       const unsigned short rmcPort =
         common::CastorConfiguration::getConfig().getConfEntInt("RMC", "PORT",
           (unsigned short)RMC_PORT, &m_log);
+      const time_t blockMoveTimeoutInSecs =
+        common::CastorConfiguration::getConfig().getConfEntInt("TAPESERVERD",
+          "BLKMOVETIMEOUT", TAPESERVER_BLKMOVETIMEOUT_DEFAULT, &m_log);
       CatalogueTransferSession *const transferSession =
         CatalogueTransferSession::create(
           m_log,
@@ -492,6 +496,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedVdqmJob(
           m_vmgr,
           m_cupv,
           m_hostName,
+          blockMoveTimeoutInSecs,
           rmcPort,
           m_processForker);
       m_session = dynamic_cast<CatalogueSession *>(transferSession);

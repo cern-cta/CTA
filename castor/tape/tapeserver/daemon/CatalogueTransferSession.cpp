@@ -31,6 +31,9 @@
 #include "h/rmc_constants.h"
 #include "h/vmgr_constants.h"
 
+#include <sys/types.h>
+#include <signal.h>
+
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
@@ -44,6 +47,7 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession*
     legacymsg::VmgrProxy &vmgr,
     legacymsg::CupvProxy &cupv,
     const std::string &hostName,
+    const time_t blockMoveTimeoutInSecs,
     const unsigned short rmcPort,
     ProcessForkerProxy &processForker) {
 
@@ -59,7 +63,8 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession*
     vdqmJob,
     vmgr,
     cupv,
-    hostName);
+    hostName,
+    blockMoveTimeoutInSecs);
 }
 
 //------------------------------------------------------------------------------
@@ -75,22 +80,44 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
   const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
   legacymsg::VmgrProxy &vmgr,
   legacymsg::CupvProxy &cupv,
-  const std::string &hostName) throw():
+  const std::string &hostName,
+  const time_t blockMoveTimeoutInSecs) throw():
   CatalogueSession(log, netTimeout, pid, driveConfig),
   m_state(TRANSFERSTATE_WAIT_JOB),
   m_mode(WRITE_DISABLE),
+  m_lastTimeSomeBlocksWereMoved(time(0)),
   m_assignmentTime(time(0)),
   m_dataTransferConfig(dataTransferConfig),
   m_vdqmJob(vdqmJob),
   m_vmgr(vmgr),
   m_cupv(cupv),
-  m_hostName(hostName) {
+  m_hostName(hostName),
+  m_blockMoveTimeoutInSecs(blockMoveTimeoutInSecs) {
 }
 
 //------------------------------------------------------------------------------
 // tick
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::tick() {
+  const time_t now = time(0);
+  const time_t secsSinceSomeBlocksWereMoved = now -
+    m_lastTimeSomeBlocksWereMoved;
+
+  if(secsSinceSomeBlocksWereMoved > m_blockMoveTimeoutInSecs) {
+    std::list<log::Param> params;
+    params.push_back(log::Param("transferSessionPid", m_pid));
+    params.push_back(log::Param("secsSinceSomeBlocksWereMoved",
+      secsSinceSomeBlocksWereMoved));
+    params.push_back(log::Param("blockMoveTimeoutInSecs",
+      m_blockMoveTimeoutInSecs));
+    m_log(LOG_ERR, "Killing data-transfer session because it is stuck", params);
+
+    if(kill(m_pid, SIGKILL)) {
+      const std::string errnoStr = castor::utils::errnoToString(errno);
+      params.push_back(log::Param("message", errnoStr));
+      m_log(LOG_ERR, "Failed to kill data-transfer session", params);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -421,6 +448,7 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   receivedHeartbeat(const uint64_t nbBlocksMoved) {
-  log::Param params[] = {log::Param("nbBlocksMoved", nbBlocksMoved)};
-  m_log(LOG_DEBUG, "CatalogueTransferSession received heartbeat", params);
+  if(nbBlocksMoved > 0) {
+    m_lastTimeSomeBlocksWereMoved = time(0);
+  }
 }
