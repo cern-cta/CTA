@@ -90,7 +90,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   m_hostName(getHostName()),
   m_processForker(NULL),
   m_processForkerPid(0),
-  m_driveCatalogue(NULL),
+  m_catalogue(NULL),
   m_zmqContext(NULL) {
 }
 
@@ -120,7 +120,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::~TapeDaemon() throw() {
     m_processForker->stopProcessForker("TapeDaemon destructor called");
     delete m_processForker;
   }
-  delete m_driveCatalogue;
+  delete m_catalogue;
   destroyZmqContext();
   google::protobuf::ShutdownProtobufLibrary();
 }
@@ -192,10 +192,10 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   const DataTransferSession::CastorConf dataTransferConfig =
     getDataTransferConf();
   m_processForker = new ProcessForkerProxySocket(m_log, cmdPair.tapeDaemon);
-  m_driveCatalogue = new Catalogue(m_netTimeout, m_log, dataTransferConfig,
+  m_catalogue = new Catalogue(m_netTimeout, m_log, dataTransferConfig,
     *m_processForker, m_cupv, m_vdqm, m_vmgr, m_hostName);
 
-  m_driveCatalogue->populate(m_driveConfigs);
+  m_catalogue->populate(m_driveConfigs);
 
   // There is no longer any need for the process to be able to change user,
   // however the process should still be permitted to perform raw IO in the
@@ -561,7 +561,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDrivesWithVdqm()
   {
-  const std::list<std::string> unitNames = m_driveCatalogue->getUnitNames();
+  const std::list<std::string> unitNames = m_catalogue->getUnitNames();
 
   for(std::list<std::string>::const_iterator itor = unitNames.begin();
     itor != unitNames.end(); itor++) {
@@ -574,7 +574,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDrivesWithVdqm()
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   const std::string &unitName)  {
-  const CatalogueDrive &drive = m_driveCatalogue->findDrive(unitName);
+  const CatalogueDrive &drive = m_catalogue->findDrive(unitName);
   const utils::DriveConfig &driveConfig = drive.getConfig();
 
   std::list<log::Param> params;
@@ -641,7 +641,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     std::auto_ptr<ProcessForkerConnectionHandler> handler;
     try {
       handler.reset(new ProcessForkerConnectionHandler(reaperSocket, m_reactor,
-        m_log, *m_driveCatalogue));
+        m_log, *m_catalogue));
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
       ex.getMessage() <<
@@ -684,7 +684,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     std::auto_ptr<VdqmAcceptHandler> handler;
     try {
       handler.reset(new VdqmAcceptHandler(listenSock.get(), m_reactor, m_log,
-        *m_driveCatalogue));
+        *m_catalogue));
       listenSock.release();
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
@@ -730,7 +730,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     std::auto_ptr<AdminAcceptHandler> handler;
     try {
       handler.reset(new AdminAcceptHandler(listenSock.get(), m_reactor, m_log,
-        m_vdqm, *m_driveCatalogue, m_hostName));
+        m_vdqm, *m_catalogue, m_hostName));
       listenSock.release();
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
@@ -777,7 +777,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     std::auto_ptr<LabelCmdAcceptHandler> handler;
     try {
       handler.reset(new LabelCmdAcceptHandler(listenSock.get(), m_reactor, m_log,
-        *m_driveCatalogue, m_hostName, m_vdqm, m_vmgr));
+        *m_catalogue, m_hostName, m_vdqm, m_vmgr));
       listenSock.release();
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
@@ -805,7 +805,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
   try {
     std::auto_ptr<TapeMessageHandler> handler;
     try {
-      handler.reset(new TapeMessageHandler(m_reactor, m_log, *m_driveCatalogue,
+      handler.reset(new TapeMessageHandler(m_reactor, m_log, *m_catalogue,
         m_hostName, m_vdqm, m_vmgr, m_zmqContext));
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
@@ -865,6 +865,8 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleEvents()
     m_log(LOG_ERR,
       "Unexpected and unknown exception thrown when handling an I/O event");
   }
+
+  m_catalogue->tick();
 
   return handlePendingSignals();
 }

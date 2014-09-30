@@ -88,6 +88,12 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
 }
 
 //------------------------------------------------------------------------------
+// tick
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::tick() {
+}
+
+//------------------------------------------------------------------------------
 // sessionSucceeded
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::

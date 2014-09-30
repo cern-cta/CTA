@@ -41,6 +41,7 @@ namespace daemon {
  */
 class CatalogueTransferSession : public CatalogueSession {
 public:
+
   /**
    * Creates a CatalogueTransferSession object.
    *
@@ -72,6 +73,16 @@ public:
     const std::string &hostName,
     const unsigned short rmcPort,
     ProcessForkerProxy &processForker);
+
+  /** 
+   * Notifies the catalogue session that it should perform any time related
+   * actions such as implementing alarms. 
+   *
+   * This method does not have to be called at any time precise interval,
+   * though it should be called at least twice as fast as the quickest reaction
+   * time imposed on the catalogue session.
+   */
+  void tick();
 
   /**
    * To be called when the session has ended with success.

@@ -56,10 +56,21 @@ castor::tape::tapeserver::daemon::Catalogue::~Catalogue() throw() {
   // Close any label-command connections that are still owned by the
   // tape-drive catalogue
   for(DriveMap::const_iterator itor = m_drives.begin(); itor != m_drives.end();
-     itor++) {
-    const CatalogueDrive *drive = itor->second;
+    itor++) {
+    const CatalogueDrive *const drive = itor->second;
 
     delete drive;
+  }
+}
+
+//-----------------------------------------------------------------------------
+// tick
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::Catalogue::tick() {
+  for(DriveMap::const_iterator itor = m_drives.begin(); itor != m_drives.end();
+    itor++) {
+    CatalogueDrive *const drive = itor->second;
+    drive->tick();
   }
 }
 

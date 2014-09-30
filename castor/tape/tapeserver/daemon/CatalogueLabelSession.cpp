@@ -116,6 +116,12 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession::
 }
 
 //------------------------------------------------------------------------------
+// tick
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueLabelSession::tick() {
+}
+
+//------------------------------------------------------------------------------
 // sessionSucceeded
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueLabelSession::

@@ -195,6 +195,16 @@ public:
   ~CatalogueDrive() throw();
 
   /**
+   * Notifies the catalogue drive that it should perform any time related
+   * actions such as implementing alarms.
+   *
+   * This method does not have to be called at any time precise interval,
+   * though it should be called at least twice as fast as the quickest reaction
+   * time imposed on the catalogue drive.
+   */
+  void tick();
+
+  /**
    * If there is a catalogue session associated with the tape drive then this
    * method deletes it and sets the member variable pointing to it to NULL in
    * order to prevent double deletions.

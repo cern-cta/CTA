@@ -84,6 +84,16 @@ public:
   ~Catalogue() throw();
 
   /**
+   * Notifies the catalogue that it should perform any time related actions
+   * such as implementing alarms.
+   *
+   * This method does not have to be called at any time precise interval,
+   * though it should be called at least twice as fast as the quickest reaction
+   * time imposed on the catalogue.
+   */
+  void tick();
+
+  /**
    * Poplates the catalogue using the specified tape-drive configurations.
    *
    * @param driveConfigs Tape-drive configurations.

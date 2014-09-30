@@ -66,6 +66,12 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession::
 }
 
 //------------------------------------------------------------------------------
+// tick
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueCleanerSession::tick() {
+}
+
+//------------------------------------------------------------------------------
 // sessionSucceeded
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueCleanerSession::

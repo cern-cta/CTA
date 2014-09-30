@@ -544,7 +544,7 @@ protected:
    * Catalogue used to keep track of both the initial and current state of
    * each tape drive being controlled by the tapeserverd daemon.
    */
-  Catalogue *m_driveCatalogue;
+  Catalogue *m_catalogue;
 
   /**
    * The ZMQ context.

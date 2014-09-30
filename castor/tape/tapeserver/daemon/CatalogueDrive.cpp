@@ -68,6 +68,19 @@ castor::tape::tapeserver::daemon::CatalogueDrive::~CatalogueDrive()
 }
 
 //------------------------------------------------------------------------------
+// tick
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueDrive::tick() {
+  try {
+    checkForSession();
+  } catch(...) {
+    return;
+  }
+
+  m_session->tick();
+}
+
+//------------------------------------------------------------------------------
 // deleteSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::deleteSession() {
