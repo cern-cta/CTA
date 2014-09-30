@@ -24,7 +24,8 @@
 #include "castor/log/Logger.hpp"
 #include "castor/messages/Frame.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
-#include "castor/messages/ZmqSocketMT.hpp"
+#include "castor/messages/ZmqSocketST.hpp"
+#include "castor/server/Mutex.hpp"
 
 namespace castor {
 namespace messages {
@@ -152,6 +153,12 @@ public:
 private:
 
   /**
+   * Mutex used to implement a critical section around the enclosed
+   * ZMQ socket.
+   */
+   castor::server::Mutex m_mutex;
+
+  /**
    * The object representing the API of the CASTOR logging system.
    */
   log::Logger &m_log;
@@ -169,7 +176,7 @@ private:
   /**
    * Socket connecting this tape server proxy to the tape server daemon.
    */
-  ZmqSocketMT m_serverSocket;
+  ZmqSocketST m_serverSocket;
 
   /**
    * Creates a frame containing a RecallJobFromTapeGateway message.
