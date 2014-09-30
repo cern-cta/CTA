@@ -162,9 +162,9 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-tape-server
 Architecture: any
-Depends: castor-lib = %{version}-%{release}, logrotate, protobuf, stk-ssi, zeromq3, castor-lib-server = %{version}-%{release}
+Depends: logrotate, castor-lib = %{version}-%{release}, castor-lib-server = %{version}-%{release}, stk-ssi
 Conflicts: castor-tape-server-nostk
-Build-Depends: protobuf-devel, stk-ssi-devel, stk-ssi, zeromq3-devel
+Build-Depends: stk-ssi-devel, stk-ssi
 Description: castor (Cern Advanced STORage system)
  Tape server
 
@@ -232,8 +232,8 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-lib-tape
 Architecture: any
-Depends: castor-lib = %{version}-%{release}, zeromq3
-Build-Depends: python-devel, zeromq3-devel
+Depends: castor-lib = %{version}-%{release}
+Build-Depends: python-devel
 XBS-Obsoletes: castor-lib-policy, castor-lib-tapeutils
 Description: castor (Cern Advanced STORage system)
  Shared utilities library for castor tape servers and command-line tools
@@ -269,7 +269,9 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-tapeserver-server
 Architecture: any
-Depends: logrotate, castor-lib-tape = %{version}-%{release}, castor-lib-server = %{version}-%{release}
+Depends: logrotate, castor-lib-tape = %{version}-%{release}, castor-lib-server = %{version}-%{release}, protobuf, zeromq3
+Build-Depends: protobuf-devel, zeromq3-devel
+
 Description: castor (Cern Advanced STORage system)
  Tape Server Daemon
 
