@@ -191,7 +191,7 @@ XrdxCastor2Fs::Disc(const XrdSecEntity* client)
   GetIdMapping(client, client_uid, client_gid);
   bool status = true;
   XrdOucErrInfo error;
-  xcastor_info("tident=%s abort %i requests", req_abrt.size(), client->tident);
+  xcastor_info("tident=%s abort %i requests", client->tident, req_abrt.size());
 
   // We also need to delete the elements from the vector
   for (std::vector<xcastor::XrdxCastorClient::ReqElement*>::iterator iter =
