@@ -681,24 +681,15 @@ int tclose(
         maxFilesBeforeFlush,
         flushedToTapeAfterNFiles);
     }
-  if ( (rc != -1) && (file->trec > 0) ) {
+   
+  if ( (rc != -1) && (file->trec > 0) && (WRITE_ENABLE != tapereq->mode) ) {
+    /* recall section for getting compression statistics */
     serrno = 0;
     errno = 0;
     memset(&compstats,'\0',sizeof(compstats));
     comp_rc = get_compression_stats(fd,filereq->tape_path,
                                     tapereq->devtype,&compstats);
-    if ( comp_rc == 0 ) {
-      if ( tapereq->mode == WRITE_ENABLE ) {
-        rtcp_log(LOG_DEBUG,"compression: from_host %d, to_tape %d\n",
-                 compstats.from_host,compstats.to_tape);
-        tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
-                         "func"     , TL_MSG_PARAM_STR, "tclose",
-                         "Message"  , TL_MSG_PARAM_STR, "compression",
-                         "from_host", TL_MSG_PARAM_INT, compstats.from_host,
-                         "to_tape"  , TL_MSG_PARAM_INT, compstats.to_tape );
-        filereq->host_bytes = ((u_signed64)compstats.from_host) * 1024;
-        filereq->bytes_out = ((u_signed64)compstats.to_tape) * 1024;
-      } else {
+    if ( 0 == comp_rc ) {
         rtcp_log(LOG_DEBUG,"compression: to_host %d, from_tape %d\n",
                  compstats.to_host,compstats.from_tape);
         tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
@@ -708,7 +699,6 @@ int tclose(
                          "from_tape", TL_MSG_PARAM_INT, compstats.from_tape );
         filereq->host_bytes = ((u_signed64)compstats.to_host) *1024;
         filereq->bytes_in = ((u_signed64)compstats.from_tape) * 1024;
-      }
     } else {
       serrno = (serrno != 0 ? serrno : errno);
       if ( serrno != SEOPNOTSUP ) {
@@ -723,24 +713,48 @@ int tclose(
                          "rc"     , TL_MSG_PARAM_INT, comp_rc,
                          "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
       }
-      if ( tapereq->mode == WRITE_ENABLE ) {
-        filereq->host_bytes = filereq->bytes_out = filereq->bytes_in;
-      } else {
-        filereq->host_bytes = filereq->bytes_in = filereq->bytes_out;
-      }
+      filereq->host_bytes = filereq->bytes_in = filereq->bytes_out;
     }
   }
-  if ( 0 == comp_rc && WRITE_ENABLE == tapereq->mode ) {
-    const uint64_t bytesWrittenToTapeSoFar = file->filereq.bytes_out;
-    if ( bytesWrittenToTapeSoFar > *batchBytesToTape ) {
-      file->filereq.bytes_out = bytesWrittenToTapeSoFar - *batchBytesToTape;
-      *batchBytesToTape = bytesWrittenToTapeSoFar;
-    }
 
+  if ( (rc != -1) && (file->trec > 0) && (WRITE_ENABLE == tapereq->mode) ) {
+    /* migration section for getting compression statistics */
     if ( *flushedToTapeAfterNFiles
       || TAPEBRIDGE_N_FLUSHES_PER_FILE == tapeFlushMode ) {
       int save_serrno = serrno;
       int save_errno = errno;
+      serrno = errno = 0;
+
+      memset(&compstats,'\0',sizeof(compstats));
+      comp_rc = get_compression_stats(fd,filereq->tape_path,
+                                    tapereq->devtype,&compstats);
+      if ( 0 == comp_rc ) {
+        rtcp_log(LOG_DEBUG,"compression: from_host %d, to_tape %d\n",
+                 compstats.from_host,compstats.to_tape);
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 4,
+                         "func"     , TL_MSG_PARAM_STR, "tclose",
+                         "Message"  , TL_MSG_PARAM_STR, "compression",
+                         "from_host", TL_MSG_PARAM_INT, compstats.from_host,
+                         "to_tape"  , TL_MSG_PARAM_INT, compstats.to_tape );
+        filereq->host_bytes = ((u_signed64)compstats.from_host) * 1024;
+        filereq->bytes_out = ((u_signed64)compstats.to_tape) * 1024;
+      } else {
+        serrno = (serrno != 0 ? serrno : errno);
+        if ( serrno != SEOPNOTSUP ) {
+          rtcp_log(
+                 LOG_ERR,
+                 "get_compression_stats() failed, rc = %d: %s\n",
+                 comp_rc,sstrerror(serrno)
+                 );
+          tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
+                         "func"   , TL_MSG_PARAM_STR, "tclose",
+                         "Message", TL_MSG_PARAM_STR, "compression_stats() failed",
+                         "rc"     , TL_MSG_PARAM_INT, comp_rc,
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
+        }
+        filereq->host_bytes = filereq->bytes_out = filereq->bytes_in;
+      }
+
       serrno = errno = 0;
       comp_rc = clear_compression_stats(fd,filereq->tape_path,tapereq->devtype);
       if ( -1 == comp_rc ) {
@@ -754,12 +768,23 @@ int tclose(
         tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
           "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
           "Message", TL_MSG_PARAM_STR, logMsg);
+      } else {
+        char logMsg[128];
+        snprintf(logMsg, sizeof(logMsg),
+          "clear_compression_stats returned "
+          "rc=%d, errno=%d, serrno=%d",
+           comp_rc,errno,serrno);
+        logMsg[sizeof(logMsg) - 1] = '\0';
+        rtcp_log(LOG_DEBUG, "%s(): %s\n", __FUNCTION__, logMsg);
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
+          "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
+          "Message", TL_MSG_PARAM_STR, logMsg);
+
       }
       serrno = save_serrno;
       errno = save_errno;
+      *batchBytesToTape = file->filereq.bytes_out;
     }
-  } else {  
-    *batchBytesToTape += file->filereq.bytes_out;
   }
   (void) close(fd) ; 
   filereq->TEndTransferTape = (int)time(NULL);
