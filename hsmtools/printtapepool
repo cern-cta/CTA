@@ -63,7 +63,8 @@ try:
            lastEditor, lastEditionTime, id
       FROM TapePool'''
     if tapePools:
-        sqlStatement = sqlStatement + " WHERE name IN ('" + "', '".join(tapePools) + "')"
+        sqlStatement += " WHERE name IN ('" + "', '".join(tapePools) + "')"
+    sqlStatement += " ORDER BY name ASC"
     stcur.execute(sqlStatement)
     # get results
     rows = stcur.fetchall()

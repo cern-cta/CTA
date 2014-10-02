@@ -72,7 +72,8 @@ try:
      WHERE DiskPools.id = SvcClasses.diskPoolId(+)
        AND DiskPools.id = FileSystems.diskPool(+)'''
     if diskPools:
-        sqlStatement = sqlStatement + " AND DiskPools.name IN ('" + "', '".join(diskPools) + "')"
+        sqlStatement += " AND DiskPools.name IN ('" + "', '".join(diskPools) + "')"
+    sqlStatement += " ORDER BY DiskPools.name ASC"
     stcur.execute(sqlStatement)
     # get results
     rows = stcur.fetchall()
