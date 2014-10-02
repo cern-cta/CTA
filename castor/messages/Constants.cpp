@@ -72,6 +72,10 @@ const char *castor::messages::msgTypeToString(const MsgType msgType) throw() {
     return "LabelError";
   case MSG_TYPE_ACSMOUNTTAPEFORRECALL:
     return "AcsMountTapeForRecall";
+  case MSG_TYPE_ACSMOUNTTAPEFORMIGRATION:
+    return "AcsMountTapeForMigration";        
+  case MSG_TYPE_ACSDISMOUNTTAPE:
+    return "AcsDismountTape";
   default:
     return "Unknown";
   }

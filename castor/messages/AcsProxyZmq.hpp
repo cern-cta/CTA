@@ -57,6 +57,30 @@ public:
    */
   void mountTapeForRecall(const std::string &vid, const uint32_t acs,
     const uint32_t lsm, const uint32_t panel, const uint32_t drive);
+  
+  /**
+   * Request the CASTOR ACS daemon to mount the specifed tape for migration.
+   *
+   * @param vid The tape to be mounted.
+   * @param acs The ACS identifier.
+   * @param lsm The LSM identifier.
+   * @param panel The panel identifier.
+   * @param drive The drive identifier.
+   */
+  void mountTapeForMigration(const std::string &vid, const uint32_t acs,
+    const uint32_t lsm, const uint32_t panel, const uint32_t drive);
+  
+  /**
+   * Request the CASTOR ACS daemon to dismount the specifed tape.
+   *
+   * @param vid The tape to be mounted.
+   * @param acs The ACS identifier.
+   * @param lsm The LSM identifier.
+   * @param panel The panel identifier.
+   * @param drive The drive identifier.
+   */
+  void dismountTape(const std::string &vid, const uint32_t acs,
+    const uint32_t lsm, const uint32_t panel, const uint32_t drive);
 
 private:
 
@@ -87,6 +111,34 @@ private:
    * @return The frame.
    */
   Frame createAcsMountTapeForRecallFrame(const std::string &vid,
+    const uint32_t acs, const uint32_t lsm, const uint32_t panel,
+    const uint32_t drive);
+  
+  /**
+   * Creates a frame containing a AcsMountTapeForMigration message.
+   *
+   * @param vid The tape to be mounted.
+   * @param acs The ACS identifier.
+   * @param lsm The LSM identifier.
+   * @param panel The panel identifier.
+   * @param drive The drive identifier.
+   * @return The frame.
+   */
+  Frame createAcsMountTapeForMigrationFrame(const std::string &vid,
+    const uint32_t acs, const uint32_t lsm, const uint32_t panel,
+    const uint32_t drive);
+  
+  /**
+   * Creates a frame containing a AcsDismountTape message.
+   *
+   * @param vid The tape to be dismounted.
+   * @param acs The ACS identifier.
+   * @param lsm The LSM identifier.
+   * @param panel The panel identifier.
+   * @param drive The drive identifier.
+   * @return The frame.
+   */
+  Frame createAcsDismountTapeFrame(const std::string &vid,
     const uint32_t acs, const uint32_t lsm, const uint32_t panel,
     const uint32_t drive);
 

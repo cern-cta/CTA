@@ -50,6 +50,30 @@ public:
    */
   virtual void mountTapeForRecall(const std::string &vid, const uint32_t acs,
      const uint32_t lsm, const uint32_t panel, const uint32_t drive) = 0;
+  
+  /**
+   * Request the CASTOR ACS daemon to mount the specifed tape for migration.
+   *
+   * @param vid The tape to be mounted.
+   * @param acs The ACS identifier.
+   * @param lsm The LSM identifier.
+   * @param panel The panel identifier.
+   * @param drive The drive identifier.
+   */
+  virtual void mountTapeForMigration(const std::string &vid, const uint32_t acs,
+     const uint32_t lsm, const uint32_t panel, const uint32_t drive) = 0;
+  
+  /**
+   * Request the CASTOR ACS daemon to dismount the specifed tape.
+   *
+   * @param vid The tape to be dismounted.
+   * @param acs The ACS identifier.
+   * @param lsm The LSM identifier.
+   * @param panel The panel identifier.
+   * @param drive The drive identifier.
+   */
+  virtual void dismountTape(const std::string &vid, const uint32_t acs,
+     const uint32_t lsm, const uint32_t panel, const uint32_t drive) = 0;
 
 }; // class AcsProxy
 

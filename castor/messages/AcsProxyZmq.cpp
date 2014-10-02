@@ -95,3 +95,124 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
     throw ex;
   }
 }
+
+//------------------------------------------------------------------------------
+// mountTapeForMigration
+//------------------------------------------------------------------------------
+void castor::messages::AcsProxyZmq::mountTapeForMigration(const std::string &vid,
+  const uint32_t acs, const uint32_t lsm, const uint32_t panel,
+  const uint32_t drive) {
+  try {
+    const Frame rqst = createAcsMountTapeForMigrationFrame(vid, acs, lsm, panel,
+      drive);
+    sendFrame(m_serverSocket, rqst);
+
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_serverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to request CASTOR ACS daemon to mount tape for migration: " <<
+      "vid=" << vid << " acs=" << acs << " lsm=" << lsm << " panel=" << panel <<
+      " drive=" << drive << ": " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createAcsMountTapeForMigrationFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::AcsProxyZmq::
+  createAcsMountTapeForMigrationFrame(const std::string &vid, 
+  const uint32_t acs,const uint32_t lsm, const uint32_t panel, 
+  const uint32_t drive) {
+  try {
+    Frame frame;
+
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_ACSMOUNTTAPEFORMIGRATION);
+    frame.header.set_bodysignature("PIPO");
+
+    AcsMountTapeForRecall body;
+    body.set_vid(vid);
+    body.set_acs(acs);
+    body.set_lsm(lsm);
+    body.set_panel(panel);
+    body.set_drive(drive);
+    frame.serializeProtocolBufferIntoBody(body);
+
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create AcsMountTapeForMigration frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+//------------------------------------------------------------------------------
+// dismountTape
+//------------------------------------------------------------------------------
+void castor::messages::AcsProxyZmq::dismountTape(const std::string &vid,
+  const uint32_t acs, const uint32_t lsm, const uint32_t panel,
+  const uint32_t drive) {
+  try {
+    const Frame rqst = createAcsDismountTapeFrame(vid, acs, lsm, panel,
+      drive);
+    sendFrame(m_serverSocket, rqst);
+
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_serverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to request CASTOR ACS daemon to dismount tape: " <<
+      "vid=" << vid << " acs=" << acs << " lsm=" << lsm << " panel=" << panel <<
+      " drive=" << drive << ": " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createAcsDismountTapeFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::AcsProxyZmq::
+  createAcsDismountTapeFrame(const std::string &vid, 
+  const uint32_t acs,const uint32_t lsm, const uint32_t panel, 
+  const uint32_t drive) {
+  try {
+    Frame frame;
+
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_ACSDISMOUNTTAPE);
+    frame.header.set_bodysignature("PIPO");
+
+    AcsMountTapeForRecall body;
+    body.set_vid(vid);
+    body.set_acs(acs);
+    body.set_lsm(lsm);
+    body.set_panel(panel);
+    body.set_drive(drive);
+    frame.serializeProtocolBufferIntoBody(body);
+
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create AcsDismountTape frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}

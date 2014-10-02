@@ -28,3 +28,19 @@ void castor::messages::AcsProxyDummy::mountTapeForRecall(const std::string &vid,
   const uint32_t acs, const uint32_t lsm, const uint32_t panel,
   const uint32_t drive) {
 }
+
+//------------------------------------------------------------------------------
+// mountTapeForMigration
+//------------------------------------------------------------------------------
+void castor::messages::AcsProxyDummy::mountTapeForMigration(const std::string &vid,
+  const uint32_t acs, const uint32_t lsm, const uint32_t panel,
+  const uint32_t drive) {
+}
+
+//------------------------------------------------------------------------------
+// dismountTape
+//------------------------------------------------------------------------------
+void castor::messages::AcsProxyDummy::dismountTape(const std::string &vid,
+  const uint32_t acs, const uint32_t lsm, const uint32_t panel,
+  const uint32_t drive) {
+}
