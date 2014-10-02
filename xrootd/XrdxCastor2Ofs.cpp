@@ -329,7 +329,8 @@ XrdxCastor2OfsFile::open(const char*         path,
 
   // Set the open flags and type of operation rd_only/rdwr
   mEnvOpaque = new XrdOucEnv(newopaque.c_str());
-  newpath = mEnvOpaque->Get("castor2fs.pfn1");
+  newpath = (mEnvOpaque->Get("castor2fs.pfn1") ?
+             mEnvOpaque->Get("castor2fs.pfn1") : "");
   open_mode |= SFS_O_MKPTH;
   create_mode |= SFS_O_MKPTH;
 
@@ -716,10 +717,14 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
                           "tpc.key in map");
       }
     }
-    // Now we can extract the transfer info
-    XrdOucEnv env_opaque(init_opaque.c_str());
 
-    if (ExtractTransferInfo(env_opaque))
+    // Now we can extract the transfer info and update the mEnvOpaque to the
+    // inital value from the first request where we have the CASTOR dependent
+    // information from the headnode
+    delete mEnvOpaque;
+    mEnvOpaque = new XrdOucEnv(init_opaque.c_str());
+
+    if (ExtractTransferInfo(*mEnvOpaque))
       return SFS_ERROR;
   }
   else if (mTpcFlag == TpcFlag::kTpcDstSetup)
