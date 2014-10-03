@@ -74,11 +74,9 @@ DECLARE
 BEGIN
   SELECT value INTO unused FROM CastorConfig
    WHERE key = 'MaxDataSchedD2dPerDrain';
+EXCEPTION WHEN NO_DATA_FOUND THEN
   INSERT INTO CastorConfig
    VALUES ('Draining', 'MaxDataSchedD2dPerDrain', '10000000000', 'The maximum amount of data that each draining job should send to the scheduler in one go.');
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- already inserted, ignore
-  NULL;
 END;
 /
 
