@@ -106,7 +106,7 @@ std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
   
   // Instantiate the drive object
   std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-    castor::tape::tapeserver::drive::DriveFactory(driveInfo, m_sysWrapper));
+    castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper));
 
   if(NULL == drive.get()) {
     castor::exception::Exception ex;

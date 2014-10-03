@@ -444,7 +444,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const utils::Dr
   }
   try {
     std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive;
-    drive.reset(castor::tape::tapeserver::drive::DriveFactory(driveInfo, m_sysWrapper));
+    drive.reset(castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper));
     if (drive.get()) drive->librarySlot = driveConfig.librarySlot;
     return drive.release();
   } catch (castor::exception::Exception & e) {

@@ -29,7 +29,7 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 
-drive::DriveInterface * drive::DriveFactory(SCSI::DeviceInfo di, 
+drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di, 
     System::virtualWrapper& sw) {
   if (std::string::npos != di.product.find("T10000")) {
     return new DriveT10000(di, sw);

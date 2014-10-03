@@ -201,7 +201,7 @@ namespace drive {
    * @return pointer to the newly allocated drive object
    */
   
-  DriveInterface * DriveFactory(SCSI::DeviceInfo di,
+  DriveInterface * createDrive(SCSI::DeviceInfo di,
      System::virtualWrapper & sw);
   
 } // namespace drive

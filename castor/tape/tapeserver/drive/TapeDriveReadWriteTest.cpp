@@ -71,7 +71,7 @@ int main ()
               << dev.sg_dev << " (" << dev.nst_dev << ")" << std::endl;
     if (dev.type == castor::tape::SCSI::Types::tape) {
       std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-        castor::tape::tapeserver::drive::DriveFactory(dev, sWrapper));
+        castor::tape::tapeserver::drive::createDrive(dev, sWrapper));
       castor::tape::tapeserver::drive::deviceInfo devInfo;
       try {
         devInfo = drive->getDeviceInfo();
