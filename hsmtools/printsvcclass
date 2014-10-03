@@ -75,7 +75,8 @@ try:
      WHERE SvcClass.id = Pools.svcClassId(+)
        AND SvcClass.forcedFileClass = FileClass.id(+)'''
     if svcClasses:
-        sqlstatement = sqlstatement + " AND SvcClass.name IN ('" + "', '".join(svcClasses) + "')"
+        sqlstatement += " AND SvcClass.name IN ('" + "', '".join(svcClasses) + "')"
+    sqlstatement += " ORDER BY SvcClass.name ASC"
     # get results
     stcur.execute(sqlstatement)
     rows = stcur.fetchall()

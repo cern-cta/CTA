@@ -61,7 +61,7 @@ try:
     # connect to stager and prepare statements
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
-    sqlStatement = 'SELECT class, key, value, description FROM CastorConfig'
+    sqlStatement = 'SELECT class, key, value, description FROM CastorConfig ORDER BY class ASC, key ASC'
     stcur.execute(sqlStatement)
     # get results
     rows = stcur.fetchall()

@@ -41,6 +41,7 @@
     CASTOR-4734: Deadlock in storeReports
     CASTOR-4735: Deadlock between dbms_alert and stageRm
     CASTOR-4742: deletediskcopy does not take into account 0-size files
+    CASTOR-4774: RFE: allow rebalancing activities to be throttled
 
   Upgrade Instructions from 2.1.14-14
   -----------------------------------

@@ -63,7 +63,8 @@ try:
            lastEditor, lastEditionTime, id
       FROM RecallGroup'''
     if recallGroups:
-        sqlStatement = sqlStatement + " WHERE name IN ('" + "', '".join(recallGroups) + "')"
+        sqlStatement += " WHERE name IN ('" + "', '".join(recallGroups) + "')"
+    sqlStatement += " ORDER BY name ASC"
     stcur.execute(sqlStatement)
     # get results
     rows = stcur.fetchall()

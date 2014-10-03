@@ -61,6 +61,7 @@ try:
     sql = 'SELECT name, classId, nbCopies, id FROM FileClass'
     if fileClasses:
         sql += " WHERE name IN ('" + "', '".join(fileClasses) + "')"
+    sql += " ORDER BY name ASC"
     stcur.execute(sql)
     # get results
     rows = stcur.fetchall()
