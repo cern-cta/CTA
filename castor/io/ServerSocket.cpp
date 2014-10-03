@@ -240,9 +240,7 @@ void castor::io::ServerSocket::bind() {
       nbFailedBinds++;
     }
 
-    // sleep every 10 attempts in order not to consume too much CPU
-    if(0 == nbFailedBinds % 10) {
-      ::sleep(1);
-    }
+    // sleep 10ms before retrying the bind to avoid eating CPU
+    ::usleep(10000);
   }
 }
