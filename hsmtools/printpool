@@ -76,7 +76,6 @@ try:
     if pools:
         sqlStatement += " AND DiskPool.name IN ('" + "', '".join(pools) + "')"
     sqlStatement += '''
-     ORDER BY DiskPool.name
      UNION ALL
     SELECT DataPool.name, nvl(DiskServers.nbDiskServers,0), DataPool.free, DataPool.totalSize,
            SvcClasses.names, DataPool.id
@@ -93,7 +92,6 @@ try:
        AND DataPool.id = DiskServers.dataPool(+)'''
     if pools:
         sqlStatement += " AND DataPool.name IN ('" + "', '".join(pools) + "')"
-    sqlStatement += " ORDER BY DataPool.name"
     stcur.execute(sqlStatement)
     # get results
     rows = stcur.fetchall()
