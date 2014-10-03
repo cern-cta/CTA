@@ -27,6 +27,7 @@
 '''Tool to manage the draining of filesystems and diskservers'''
 
 import sys
+import time
 import getopt
 import castor_tools
 import cx_Oracle
@@ -442,7 +443,7 @@ def queryDrain():
                 zr = zip(*results)
                 totFiles, totBytes, totFailedBytes, totSuccessBytes, totFailedFiles, totSuccessFiles = \
                   sum(zr[6]), sum(zr[7]), sum(zr[11]), sum(zr[12]), sum(zr[13]), sum(zr[14])
-                data.append(('', 'TOTAL', castor_tools.secsToDate(currentTime),
+                data.append(('', 'TOTAL', castor_tools.secsToDate(time.time()),
                              totFiles, castor_tools.nbToDataAmount(totBytes),
                              totFiles-totFailedFiles-totSuccessFiles,
                              castor_tools.nbToDataAmount(totBytes-totFailedBytes-totSuccessBytes),
