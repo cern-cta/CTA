@@ -85,13 +85,6 @@ public:
    * @param error_code The error code given by the drive
    */
   void reportEndOfSessionWithErrors(const std::string msg,int error_code);
-  
-  /**
-   * Create into the MigrationReportPacker a report signaling we have stuck on 
-   * that particlar file without moving for to long
-   * @param file
-   */
-  void reportStuckOn(FileStruct& file);
 
   void startThreads() { m_workerThread.start(); }
   void waitThread() { m_workerThread.wait(); }

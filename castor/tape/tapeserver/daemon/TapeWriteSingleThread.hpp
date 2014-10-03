@@ -30,6 +30,7 @@
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/server/BlockingQueue.hpp"
 #include "castor/server/Threading.hpp"
@@ -42,10 +43,6 @@ namespace castor     {
 namespace tape       {
 namespace tapeserver {
 namespace daemon     {
-  
-// forward declaration
-class TapeServerReporter;
-
 class TapeWriteSingleThread : public TapeSingleThreadInterface<TapeWriteTask> {
 public:
   /**

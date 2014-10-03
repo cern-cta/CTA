@@ -34,7 +34,7 @@ namespace unitTests {
   
   struct MockReportPacker : 
   public tapeserver::daemon::ReportPackerInterface<tapeserver::daemon::detail::Recall> {
-    MOCK_METHOD1(reportStuckOn, void(FileStruct& file));
+    // TODO MOCK_METHOD1(reportStuckOn, void(FileStruct& file));
     
     MockReportPacker(tapeserver::client::ClientInterface & tg,castor::log::LogContext lc):
     tapeserver::daemon::ReportPackerInterface<castor::tape::tapeserver::daemon::detail::Recall>(tg,lc){
@@ -45,49 +45,50 @@ namespace unitTests {
 
 
 TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
-  const double periodToReport = 10;
-  const double stuckPeriod = 1;
+  const double periodToReport = 10; // We wont report in practice
+  const double stuckPeriod = 0.01;
+  const double pollPeriod = 0.01;
   
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_WatchdogTestStuck");
   castor::log::LogContext lc(log);
   
   MockClient mockClient;
-  MockReportPacker mockReportPacker(mockClient,lc);
   castor::messages::TapeserverProxyDummy dummyInitialProcess;
-  //we dont tell the watchdog we are working on file, 
-  //it should not report as being stuck
-  EXPECT_CALL(mockReportPacker,reportStuckOn(_)).Times(0);
-  
-  tapeserver::daemon::TaskWatchDog<tapeserver::daemon::detail::Recall> 
-  watchdog(periodToReport,stuckPeriod,dummyInitialProcess,mockReportPacker,lc);
+
+
+  tapeserver::daemon::RecallWatchDog watchdog(periodToReport,
+    stuckPeriod,dummyInitialProcess,lc,pollPeriod);
   
   watchdog.startThread();
-  sleep(2);
+  usleep(100000);
   watchdog.stopAndWaitThread();
+  //we dont tell the watchdog we are working on file, 
+  //it should not report as being stuck
+  ASSERT_EQ(std::string::npos, log.getLog().find("No tape block movement for too long"));
 }
 
-TEST(castor_tape_tapeserver_daemon, WatchdogTestStuck) {
-  const double periodToReport = 10;
-  const double stuckPeriod = 1;
+TEST(castor_tape_tapeserver_daemon, RecallWatchdogTestStuck) {
+  const double reportPeriod = 10; // We wont report in practice
+  const double stuckPeriod = 0.01;
+  const double pollPeriod = 0.01;
   
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_WatchdogTestStuck");
   castor::log::LogContext lc(log);
   
   MockClient mockClient;
-  MockReportPacker mockReportPacker(mockClient,lc);
   castor::messages::TapeserverProxyDummy dummyInitialProcess;
-  //we dont tell the watchdog we are working on file, 
-  //it should not report as being stuck
-  EXPECT_CALL(mockReportPacker,reportStuckOn(_)).Times(1);
   
-  tapeserver::daemon::TaskWatchDog<tapeserver::daemon::detail::Recall> 
-  watchdog(periodToReport,stuckPeriod,dummyInitialProcess,mockReportPacker,lc);
+  // We will poll for a 
+  tapeserver::daemon::RecallWatchDog watchdog(reportPeriod,stuckPeriod,
+    dummyInitialProcess,lc, pollPeriod);
   
   watchdog.startThread();
   tapeserver::daemon::ReportPackerInterface<castor::tape::tapeserver::daemon::detail::Recall>::FileStruct file;
   watchdog.notifyBeginNewJob(file);
-  sleep(2);
+  usleep(100000);
   watchdog.stopAndWaitThread();
+  // This time the internal watchdog should have triggered
+  ASSERT_NE(std::string::npos, log.getLog().find("No tape block movement for too long"));
 }
 
 }

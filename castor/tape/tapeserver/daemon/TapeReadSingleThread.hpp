@@ -62,7 +62,7 @@ public:
           const client::ClientInterface::VolumeInfo& volInfo, 
           uint64_t maxFilesRequest,
           castor::server::ProcessCap &capUtils,
-          TaskWatchDog<detail::Recall>& watchdog,
+          RecallWatchDog& watchdog,
           castor::log::LogContext & lc);
    
    /**
@@ -123,7 +123,7 @@ private:
   ///a pointer to task injector, thus we can ask him for more tasks
   castor::tape::tapeserver::daemon::RecallTaskInjector * m_taskInjector;
   
-  TaskWatchDog<detail::Recall>& m_watchdog;
+  RecallWatchDog& m_watchdog;
 
 }; // class TapeReadSingleThread
 

@@ -89,13 +89,7 @@ void RecallReportPacker::reportEndOfSessionWithErrors(const std::string msg,int 
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportEndofSessionWithErrors(msg,error_code));
 }
-  //------------------------------------------------------------------------------
-  //ReportSuccessful::reportStuckOn
-  //------------------------------------------------------------------------------
-void RecallReportPacker::reportStuckOn(FileStruct& file){
-  castor::server::MutexLocker ml(&m_producterProtection);
-  m_fifo.push(new ReportStuck(file));
-}
+
 //------------------------------------------------------------------------------
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
@@ -195,25 +189,6 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& parent){
   
   parent.m_listReports->addFailedRecalls(failed.release());
   parent.m_errorHappened=true;
-}
-//------------------------------------------------------------------------------
-//WorkerThread::run
-//------------------------------------------------------------------------------
-void RecallReportPacker::ReportStuck::execute(RecallReportPacker& parent){
-  //we are stuck while recalling a file
-  const int errCode=SEINTERNAL;
-  const std::string msg="Stuck while reading that file";
-  
-  //add the file to the list of error
-  RecallReportPacker::ReportError(m_recalledFile,msg,errCode).execute(parent);
-  //send the reports
-  parent.flush();
-  
-  //finish the session
-  RecallReportPacker::ReportEndofSessionWithErrors(msg,errCode).execute(parent);
-  
-  //suicide
-  kill(getpid(),SIGABRT);
 }
 //------------------------------------------------------------------------------
 //WorkerThread::WorkerThread

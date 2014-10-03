@@ -32,7 +32,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   const client::ClientInterface::VolumeInfo& volInfo,
   uint64_t maxFilesRequest,
   castor::server::ProcessCap& capUtils,
-  TaskWatchDog<detail::Recall>& watchdog,
+  RecallWatchDog& watchdog,
   castor::log::LogContext& lc) :
   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, initialProcess, volInfo,
     capUtils, lc),

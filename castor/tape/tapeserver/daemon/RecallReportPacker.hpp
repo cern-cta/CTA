@@ -76,8 +76,6 @@ public:
    * @param error_code The error code given by the drive
    */
   virtual void reportEndOfSessionWithErrors(const std::string msg,int error_code); 
-  
-  void reportStuckOn(FileStruct& file);
 
   /**
    * Start the inner thread
@@ -116,14 +114,6 @@ private:
   public:
     ReportError(const FileStruct& file,std::string msg,int error_code):
     Report(false),m_recalledFile(file),m_error_msg(msg),m_error_code(error_code){}
-
-    virtual void execute(RecallReportPacker& reportPacker);
-  };
-  class ReportStuck : public Report {
-    const FileStruct m_recalledFile;
-  public:
-    ReportStuck(const FileStruct& file):
-    Report(false),m_recalledFile(file){}
 
     virtual void execute(RecallReportPacker& reportPacker);
   };

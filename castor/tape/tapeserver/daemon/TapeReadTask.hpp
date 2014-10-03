@@ -61,7 +61,7 @@ public:
      * Acquire a free memory block from the memory manager , fill it, push it 
      */
   void execute(castor::tape::tapeFile::ReadSession & rs,
-    castor::log::LogContext & lc,TaskWatchDog<detail::Recall>& watchdog,
+    castor::log::LogContext & lc,RecallWatchDog& watchdog,
     TapeSessionStats & stats, utils::Timer & timer) {
 
     using castor::log::Param;

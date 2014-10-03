@@ -95,11 +95,7 @@ void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int err
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportEndofSessionWithErrors(msg,errorCode));
 }
-//------------------------------------------------------------------------------
-//ReportSuccessful::reportStuckOn
-//------------------------------------------------------------------------------
-void MigrationReportPacker::reportStuckOn(FileStruct& file){
-}
+
 //------------------------------------------------------------------------------
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------

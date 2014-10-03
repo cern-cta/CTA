@@ -172,12 +172,6 @@ template <class PlaceHolder> class ReportPackerInterface{
   public:
 
   /**
-   * Put a message to into the queue to notify we have been stuck on 
-   * the given file 
-   */
-  virtual void reportStuckOn(FileStruct& file) =0;
-  
-  /**
    * Turn off the packing of the reports by the report packer.
    * This is used for recalls driven by read_tp.
    */
