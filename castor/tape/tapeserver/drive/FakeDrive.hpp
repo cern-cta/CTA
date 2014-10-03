@@ -28,7 +28,7 @@
 namespace castor {
 namespace tape {
 namespace tapeserver {
-namespace drives {
+namespace drive {
 /**
    * Fake drive class used for unit testing
   */

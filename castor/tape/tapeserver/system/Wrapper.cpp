@@ -190,15 +190,15 @@ int System::fakeWrapper::stat(const char* path, struct stat* buf) {
   return 0;
 }
 
-castor::tape::tapeserver::drives::DriveInterface * 
+castor::tape::tapeserver::drive::DriveInterface * 
   System::fakeWrapper::getDriveByPath(const std::string & path) {
-  std::map<std::string, castor::tape::tapeserver::drives::DriveInterface *>::iterator drive =
+  std::map<std::string, castor::tape::tapeserver::drive::DriveInterface *>::iterator drive =
     m_pathToDrive.find(path);
   if (m_pathToDrive.end() == drive) {
     return NULL;
   } else {
     /* The drive will be deleted by the user, so we remove references to it */
-    castor::tape::tapeserver::drives::DriveInterface * ret = drive->second;
+    castor::tape::tapeserver::drive::DriveInterface * ret = drive->second;
     m_pathToDrive.erase(drive);
     return ret;
   }

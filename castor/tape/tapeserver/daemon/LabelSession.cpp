@@ -73,7 +73,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       log::Param("dgn", m_request.dgn)};
   
     mountTape();
-    std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> drive =
+    std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive =
       getDriveObject();
     waitUntilTapeLoaded(drive.get(), 60); // 60 = 60 seconds
     checkTapeIsWritable(drive.get());
@@ -98,15 +98,15 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 //------------------------------------------------------------------------------
 // getDriveObject
 //------------------------------------------------------------------------------
-std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface>
+std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
   castor::tape::tapeserver::daemon::LabelSession::getDriveObject() {
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);    
   castor::tape::SCSI::DeviceInfo driveInfo =
     dv.findBySymlink(m_driveConfig.devFilename);
   
   // Instantiate the drive object
-  std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> drive(
-    castor::tape::tapeserver::drives::DriveFactory(driveInfo, m_sysWrapper));
+  std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
+    castor::tape::tapeserver::drive::DriveFactory(driveInfo, m_sysWrapper));
 
   if(NULL == drive.get()) {
     castor::exception::Exception ex;
@@ -150,7 +150,7 @@ void castor::tape::tapeserver::daemon::LabelSession::mountTape() {
 // waitUntilTapeLoaded
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::waitUntilTapeLoaded(
-  drives::DriveInterface *const drive, const int timeoutSecond) { 
+  drive::DriveInterface *const drive, const int timeoutSecond) { 
   try {
     drive->waitUntilReady(timeoutSecond);
     const log::Param params[] = {
@@ -170,7 +170,7 @@ void castor::tape::tapeserver::daemon::LabelSession::waitUntilTapeLoaded(
 // checkTapeIsWritable
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::checkTapeIsWritable(
-  drives::DriveInterface *const drive) {
+  drive::DriveInterface *const drive) {
   if(drive->isWriteProtected()) {
     castor::exception::Exception ex;
     ex.getMessage() << "Tape to be labeled in write protected";
@@ -187,6 +187,6 @@ void castor::tape::tapeserver::daemon::LabelSession::checkTapeIsWritable(
 // labelTheTape
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::labelTheTape(
-  drives::DriveInterface *const drive) {
+  drive::DriveInterface *const drive) {
   tapeFile::LabelSession ls(*drive, m_request.vid, m_force);
 }

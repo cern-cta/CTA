@@ -56,7 +56,7 @@ public:
   /**
    * Constructor:
    */
-  TapeReadSingleThread(castor::tape::tapeserver::drives::DriveInterface & drive,
+  TapeReadSingleThread(castor::tape::tapeserver::drive::DriveInterface & drive,
           castor::legacymsg::RmcProxy & rmc,
           TapeServerReporter & initialProcess,
           const client::ClientInterface::VolumeInfo& volInfo, 

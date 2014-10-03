@@ -26,7 +26,7 @@
 //constructor for TapeReadSingleThread
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
-  castor::tape::tapeserver::drives::DriveInterface& drive,
+  castor::tape::tapeserver::drive::DriveInterface& drive,
   castor::legacymsg::RmcProxy& rmc,
   TapeServerReporter& initialProcess,
   const client::ClientInterface::VolumeInfo& volInfo,

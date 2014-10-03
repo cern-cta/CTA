@@ -27,7 +27,7 @@
 namespace castor {
 namespace tape {
 namespace tapeserver {
-namespace drives {
+namespace drive {
 /**
    * Class abstracting the tape drives. This class is templated to allow the use
    * of unrelated test harness and real system. The test harness is made up of 

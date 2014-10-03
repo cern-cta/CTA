@@ -77,7 +77,7 @@ void MigrationReportPacker::reportFailedJob(const tapegateway::FileToMigrateStru
 //------------------------------------------------------------------------------
 //reportFlush
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportFlush(drives::compressionStats compressStats){
+void MigrationReportPacker::reportFlush(drive::compressionStats compressStats){
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportFlush(compressStats));
 }

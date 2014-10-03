@@ -60,7 +60,7 @@ public:
    * @param lastFseq the last fSeq 
    */
   TapeWriteSingleThread(
-    castor::tape::tapeserver::drives::DriveInterface & drive, 
+    castor::tape::tapeserver::drive::DriveInterface & drive, 
     castor::legacymsg::RmcProxy & rmc,
     TapeServerReporter & tsr,
     const client::ClientInterface::VolumeInfo& volInfo,
@@ -162,7 +162,7 @@ private:
   const uint64_t m_bytesBeforeFlush;
 
   ///an interface for manipulating all type of drives
-  castor::tape::tapeserver::drives::DriveInterface& m_drive;
+  castor::tape::tapeserver::drive::DriveInterface& m_drive;
   
   ///the object that will send reports to the client
   MigrationReportPacker & m_reportPacker;

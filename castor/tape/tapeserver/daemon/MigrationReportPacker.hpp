@@ -72,7 +72,7 @@ public:
     * @param compressStats 
     * 
     */
-  void reportFlush(drives::compressionStats compressStats);
+  void reportFlush(drive::compressionStats compressStats);
   
   /**
    * Create into the MigrationReportPacker a report for the nominal end of session
@@ -121,7 +121,7 @@ private:
     virtual void execute(MigrationReportPacker& reportPacker);
   };
   class ReportFlush : public Report {
-    drives::compressionStats m_compressStats;
+    drive::compressionStats m_compressStats;
     
     /**
      * This function will approximate the compressed size of the files which 
@@ -143,7 +143,7 @@ private:
      * @param nbByte the number of byte it really wrote to tape between 
      * this flush and the previous one
      *  */
-      ReportFlush(drives::compressionStats compressStats):m_compressStats(compressStats){}
+      ReportFlush(drive::compressionStats compressStats):m_compressStats(compressStats){}
       
       void execute(MigrationReportPacker& reportPacker);
   };

@@ -115,7 +115,7 @@ private:
    *
    * @return The drive object.
    */
-  std::auto_ptr<castor::tape::tapeserver::drives::DriveInterface> getDriveObject();
+  std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> getDriveObject();
 
   /**
    * Mounts the tape to be labelled.
@@ -129,7 +129,7 @@ private:
    * @param timeoutSecond The number of seconds to wait for the tape to be
    * loaded into the tape drive. 
    */
-  void waitUntilTapeLoaded(drives::DriveInterface *const drive,
+  void waitUntilTapeLoaded(drive::DriveInterface *const drive,
     const int timeoutSecond);
 
   /**
@@ -137,14 +137,14 @@ private:
    *
    * @param drive Object representing the drive hardware.
    */
-  void checkTapeIsWritable(drives::DriveInterface *const drive);
+  void checkTapeIsWritable(drive::DriveInterface *const drive);
   
   /**
    * The function carrying out the actual labeling
    * @param drive The drive object pointer
    * @return 
    */
-  void labelTheTape(drives::DriveInterface *const drive);
+  void labelTheTape(drive::DriveInterface *const drive);
 
   /**
    * Proxy object representing the tapeserverd daemon.

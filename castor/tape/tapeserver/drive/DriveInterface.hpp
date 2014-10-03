@@ -38,7 +38,7 @@
 namespace castor {
 namespace tape {
 namespace tapeserver {
-namespace drives {
+namespace drive {
 
   /**
    * Compressions statistics container, returned by Drive::getCompression()
@@ -204,7 +204,7 @@ namespace drives {
   DriveInterface * DriveFactory(SCSI::DeviceInfo di,
      System::virtualWrapper & sw);
   
-} // namespace drives
+} // namespace drive
 } // namespace tapeserver
 } // namespace tape
 } // namespace castor

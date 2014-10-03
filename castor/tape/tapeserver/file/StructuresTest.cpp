@@ -156,7 +156,7 @@ namespace unitTests {
     EXPECT_ANY_THROW({
       uhl1Label.verify();
     });
-    castor::tape::tapeserver::drives::deviceInfo deviceInfo;
+    castor::tape::tapeserver::drive::deviceInfo deviceInfo;
     deviceInfo.vendor = "TEST";
     deviceInfo.serialNumber = "XXYYTEST";
     deviceInfo.product = "TEST DRIVE";
@@ -180,7 +180,7 @@ namespace unitTests {
     EXPECT_ANY_THROW({
       utl1Label.verify();
     });
-    castor::tape::tapeserver::drives::deviceInfo deviceInfo;
+    castor::tape::tapeserver::drive::deviceInfo deviceInfo;
     deviceInfo.vendor = "TEST";
     deviceInfo.serialNumber = "XXYYTEST";
     deviceInfo.product = "TEST DRIVE";

@@ -59,7 +59,7 @@ class FakeSingleTapeReadThread : public TapeSingleThreadInterface<TapeReadTask>
 public:
   using TapeSingleThreadInterface<TapeReadTask>::m_tasks;
   
-  FakeSingleTapeReadThread(castor::tape::tapeserver::drives::DriveInterface& drive,
+  FakeSingleTapeReadThread(castor::tape::tapeserver::drive::DriveInterface& drive,
     castor::legacymsg::RmcProxy & rmc,
     castor::tape::tapeserver::daemon::TapeServerReporter & tsr,
     const castor::tape::tapeserver::client::ClientInterface::VolumeInfo& volInfo, 
@@ -87,7 +87,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_RecallTaskInjectorTest");
   castor::log::LogContext lc(log);
   RecallMemoryManager mm(50U,50U,lc);
-  castor::tape::tapeserver::drives::FakeDrive drive;
+  castor::tape::tapeserver::drive::FakeDrive drive;
   FakeClient client(nbCalls);
   FakeDiskWriteThreadPool diskWrite(lc);
   castor::legacymsg::RmcProxyDummy rmc;
@@ -144,7 +144,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_RecallTaskInjectorTest");
   castor::log::LogContext lc(log);
   RecallMemoryManager mm(50U,50U,lc);
-  castor::tape::tapeserver::drives::FakeDrive drive;
+  castor::tape::tapeserver::drive::FakeDrive drive;
   FakeClient client(0);
   FakeDiskWriteThreadPool diskWrite(lc);
   castor::legacymsg::RmcProxyDummy rmc;

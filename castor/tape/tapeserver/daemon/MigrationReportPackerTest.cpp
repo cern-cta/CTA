@@ -29,7 +29,7 @@
 namespace unitTests {
   const std::string error="ERROR_TEST";
   using namespace castor::tape;
-  const tapeserver::drives::compressionStats statsCompress;
+  const tapeserver::drive::compressionStats statsCompress;
   using ::testing::_;
   
 TEST(castor_tape_tapeserver_daemon, MigrationReportPackerNominal) {
@@ -172,7 +172,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerOneByteFile) {
   mrp.reportCompletedJob(migratedFileSmall,0,0);
   mrp.reportCompletedJob(migrateNullFile,0,0);
   
-  tapeserver::drives::compressionStats stats;
+  tapeserver::drive::compressionStats stats;
   stats.toTape=(100000+1)/3;
   mrp.reportFlush(stats);
   mrp.reportEndOfSession();

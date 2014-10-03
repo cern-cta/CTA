@@ -108,7 +108,7 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete 
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drives::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
   
   // We can prepare files for reading on the drive
   {
@@ -212,7 +212,7 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete 
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drives::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
   
   // We can prepare files for reading on the drive
   {
@@ -433,7 +433,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete 
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drives::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
   
   // Just label the tape
   castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
@@ -527,7 +527,7 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete 
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drives::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
   
   // Just label the tape
   castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
@@ -615,7 +615,7 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   //pointer with ownership will be passed to the application,
   //which will do the delete 
   const uint64_t tapeSize = 5000;
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drives::FakeDrive(tapeSize);
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(tapeSize);
   
   // Just label the tape
   castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
@@ -721,8 +721,8 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   //which will do the delete 
   const uint64_t tapeSize = 5000;
   mockSys.fake.m_pathToDrive["/dev/nst0"] =
-      new castor::tape::tapeserver::drives::FakeDrive(tapeSize,
-        castor::tape::tapeserver::drives::FakeDrive::OnFlush);
+      new castor::tape::tapeserver::drive::FakeDrive(tapeSize,
+        castor::tape::tapeserver::drive::FakeDrive::OnFlush);
   
   // Just label the tape
   castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 

@@ -26,7 +26,7 @@
 //constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
-castor::tape::tapeserver::drives::DriveInterface & drive, 
+castor::tape::tapeserver::drive::DriveInterface & drive, 
         castor::legacymsg::RmcProxy & rmc,
         TapeServerReporter & tsr,
         const client::ClientInterface::VolumeInfo& volInfo,

@@ -29,7 +29,7 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 
-drives::DriveInterface * drives::DriveFactory(SCSI::DeviceInfo di, 
+drive::DriveInterface * drive::DriveFactory(SCSI::DeviceInfo di, 
     System::virtualWrapper& sw) {
   if (std::string::npos != di.product.find("T10000")) {
     return new DriveT10000(di, sw);
@@ -40,7 +40,7 @@ drives::DriveInterface * drives::DriveFactory(SCSI::DeviceInfo di,
   } else if (std::string::npos != di.product.find("VIRTUAL")) {
     /* In case of a VIRTUAL drive, it could have been pre-allocated 
      * for testing purposes (with "pre-cooked" contents). */
-    drives::DriveInterface * ret = sw.getDriveByPath(di.nst_dev);
+    drive::DriveInterface * ret = sw.getDriveByPath(di.nst_dev);
     if (ret) {
       return ret;
     } else {
@@ -51,7 +51,7 @@ drives::DriveInterface * drives::DriveFactory(SCSI::DeviceInfo di,
   }
 }
 
-drives::DriveGeneric::DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper& sw) : m_SCSIInfo(di),
+drive::DriveGeneric::DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper& sw) : m_SCSIInfo(di),
 m_tapeFD(-1),  m_sysWrapper(sw) {
   /* Open the device files */
   /* We open the tape device file non-blocking as blocking open on rewind tapes (at least)
@@ -63,7 +63,7 @@ m_tapeFD(-1),  m_sysWrapper(sw) {
   UpdateDriveStatus();
 }
 
-void drives::DriveGeneric::UpdateDriveStatus()  {
+void drive::DriveGeneric::UpdateDriveStatus()  {
   /* Read drive status */
   castor::exception::Errnum::throwOnMinusOne(
   m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &m_mtInfo), 
@@ -81,7 +81,7 @@ void drives::DriveGeneric::UpdateDriveStatus()  {
  * All comulative and threshold log counter values will be reset to their
  * default values as specified in that pages reset behavior section.
  */
-void drives::DriveGeneric::clearCompressionStats()  {
+void drive::DriveGeneric::clearCompressionStats()  {
   SCSI::Structures::logSelectCDB_t cdb;
   cdb.PCR = 1; /* PCR set */
   cdb.PC = 0x3; /* PC = 11b  for T10000 only*/
@@ -104,7 +104,7 @@ void drives::DriveGeneric::clearCompressionStats()  {
  * Information about the drive. The vendor id is used in the user labels of the files.
  * @return    The deviceInfo structure with the information about the drive.
  */
-drives::deviceInfo drives::DriveGeneric::getDeviceInfo()  {
+drive::deviceInfo drive::DriveGeneric::getDeviceInfo()  {
   SCSI::Structures::inquiryCDB_t cdb;
   SCSI::Structures::inquiryData_t inquiryData;
   SCSI::Structures::senseData_t<255> senseBuff;
@@ -136,7 +136,7 @@ drives::deviceInfo drives::DriveGeneric::getDeviceInfo()  {
  * Information about the serial number of the drive. 
  * @return   Right-aligned ASCII data for the vendor-assigned serial number.
  */
-std::string drives::DriveGeneric::getSerialNumber()  {
+std::string drive::DriveGeneric::getSerialNumber()  {
   SCSI::Structures::inquiryCDB_t cdb;
   SCSI::Structures::inquiryUnitSerialNumberData_t inquirySerialData;
   SCSI::Structures::senseData_t<255> senseBuff;
@@ -169,7 +169,7 @@ std::string drives::DriveGeneric::getSerialNumber()  {
  * has completed.
  * @param blockId The blockId, represented in local endianness.
  */
-void drives::DriveGeneric::positionToLogicalObject(uint32_t blockId)
+void drive::DriveGeneric::positionToLogicalObject(uint32_t blockId)
  {
   SCSI::Structures::locate10CDB_t cdb;
   SCSI::Structures::senseData_t<255> senseBuff;
@@ -195,7 +195,7 @@ void drives::DriveGeneric::positionToLogicalObject(uint32_t blockId)
  * @return positionInfo class. This contains the logical position, plus information
  * on the dirty data still in the write buffer.
  */
-drives::positionInfo drives::DriveGeneric::getPositionInfo()
+drive::positionInfo drive::DriveGeneric::getPositionInfo()
  {
   SCSI::Structures::readPositionCDB_t cdb;
   SCSI::Structures::readPositionDataShortForm_t positionData;
@@ -242,7 +242,7 @@ drives::positionInfo drives::DriveGeneric::getPositionInfo()
  * Section is 4.2.17 in SSC-3.
  * @return list of tape alerts descriptions. They are simply used for logging.
  */
-std::vector<std::string> drives::DriveGeneric::getTapeAlerts()  {
+std::vector<std::string> drive::DriveGeneric::getTapeAlerts()  {
   /* return vector */
   std::vector<std::string> ret;
   /* We don't know how many elements we'll get. Prepare a 100 parameters array */
@@ -290,7 +290,7 @@ std::vector<std::string> drives::DriveGeneric::getTapeAlerts()  {
  * @param compression  The boolean variable to enable or disable compression
  *                     on the drive for the tape. By default it is enabled.
  */
-void drives::DriveGeneric::setDensityAndCompression(bool compression,
+void drive::DriveGeneric::setDensityAndCompression(bool compression,
     unsigned char densityCode)  {
   SCSI::Structures::modeSenseDeviceConfiguration_t devConfig;
   { // get info from the drive
@@ -344,7 +344,7 @@ void drives::DriveGeneric::setDensityAndCompression(bool compression,
  * Function that checks if a tape is blank (contains no records) 
  * @return true if tape is blank, false otherwise
  */      
-bool drives::DriveGeneric::isTapeBlank() {
+bool drive::DriveGeneric::isTapeBlank() {
   struct mtop mtCmd1;
   mtCmd1.mt_op = MTREW;
   mtCmd1.mt_count = 1;
@@ -376,7 +376,7 @@ bool drives::DriveGeneric::isTapeBlank() {
  * layer, unless the parameter turns out to be disused.
  * @param bufWrite: value of the buffer write switch
  */
-void drives::DriveGeneric::setSTBufferWrite(bool bufWrite)  {
+void drive::DriveGeneric::setSTBufferWrite(bool bufWrite)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTSETDRVBUFFER;
   m_mtCmd.mt_count = bufWrite ? (MT_ST_SETBOOLEANS | MT_ST_BUFFER_WRITES) : (MT_ST_CLEARBOOLEANS | MT_ST_BUFFER_WRITES);
@@ -393,7 +393,7 @@ void drives::DriveGeneric::setSTBufferWrite(bool bufWrite)  {
  * all tape drives.
  * TODO: synchronous? Timeout?
  */    
-void drives::DriveGeneric::spaceToEOM(void)  {
+void drive::DriveGeneric::spaceToEOM(void)  {
   setSTFastMTEOM(false);
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTEOM;
@@ -409,7 +409,7 @@ void drives::DriveGeneric::spaceToEOM(void)  {
  * the higher levels of the software (TODO: protected?).
  * @param fastMTEOM the option switch.
  */
-void drives::DriveGeneric::setSTFastMTEOM(bool fastMTEOM)  {
+void drive::DriveGeneric::setSTFastMTEOM(bool fastMTEOM)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTSETDRVBUFFER;
   m_mtCmd.mt_count = fastMTEOM ? (MT_ST_SETBOOLEANS | MT_ST_FAST_MTEOM) : (MT_ST_CLEARBOOLEANS | MT_ST_FAST_MTEOM);
@@ -422,7 +422,7 @@ void drives::DriveGeneric::setSTFastMTEOM(bool fastMTEOM)  {
  * Jump to end of data. EOM in ST driver jargon, end of data (which is more accurate)
  * in SCSI terminology). This uses the fast setting (not to be used for MIR rebuild) 
  */
-void drives::DriveGeneric::fastSpaceToEOM(void)  {
+void drive::DriveGeneric::fastSpaceToEOM(void)  {
   setSTFastMTEOM(true);
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTEOM;
@@ -435,7 +435,7 @@ void drives::DriveGeneric::fastSpaceToEOM(void)  {
 /**
  * Rewind tape.
  */
-void drives::DriveGeneric::rewind(void)  {
+void drive::DriveGeneric::rewind(void)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTREW;
   m_mtCmd.mt_count = 1;
@@ -448,7 +448,7 @@ void drives::DriveGeneric::rewind(void)  {
  * Space count file marks backwards.
  * @param count
  */
-void drives::DriveGeneric::spaceFileMarksBackwards(size_t count)  {
+void drive::DriveGeneric::spaceFileMarksBackwards(size_t count)  {
   size_t tobeskipped = count;
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTBSF;
@@ -466,7 +466,7 @@ void drives::DriveGeneric::spaceFileMarksBackwards(size_t count)  {
  * Space count file marks forward.
  * @param count
  */
-void drives::DriveGeneric::spaceFileMarksForward(size_t count)  {
+void drive::DriveGeneric::spaceFileMarksForward(size_t count)  {
   size_t tobeskipped = count;
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTFSF;
@@ -483,7 +483,7 @@ void drives::DriveGeneric::spaceFileMarksForward(size_t count)  {
 /**
  * Unload the tape.
  */
-void drives::DriveGeneric::unloadTape(void)  {
+void drive::DriveGeneric::unloadTape(void)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTUNLOAD;
   m_mtCmd.mt_count = 1;
@@ -496,7 +496,7 @@ void drives::DriveGeneric::unloadTape(void)  {
  * Synch call to the tape drive. This function will not return before the 
  * data in the drive's buffer is actually committed to the medium.
  */
-void drives::DriveGeneric::flush(void)  {
+void drive::DriveGeneric::flush(void)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTWEOF; //Not using MTNOP because it doesn't do what it claims (see st source code) so here we put "write sync file marks" with count set to 0.
   // The following text is a quote from the SCSI Stream commands manual (SSC-3):
@@ -512,7 +512,7 @@ void drives::DriveGeneric::flush(void)  {
  * are committed to medium.
  * @param count
  */
-void drives::DriveGeneric::writeSyncFileMarks(size_t count)  {
+void drive::DriveGeneric::writeSyncFileMarks(size_t count)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTWEOF;
   m_mtCmd.mt_count = (int)count;
@@ -526,7 +526,7 @@ void drives::DriveGeneric::writeSyncFileMarks(size_t count)  {
  * buffer and the function return immediately.
  * @param count
  */
-void drives::DriveGeneric::writeImmediateFileMarks(size_t count)  {
+void drive::DriveGeneric::writeImmediateFileMarks(size_t count)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTWEOFI; //Undocumented in "man st" needs the mtio_add.hh header file (see above)
   m_mtCmd.mt_count = (int)count;
@@ -540,7 +540,7 @@ void drives::DriveGeneric::writeImmediateFileMarks(size_t count)  {
  * @param data pointer the the data block
  * @param count size of the data block
  */
-void drives::DriveGeneric::writeBlock(const void * data, size_t count)  {
+void drive::DriveGeneric::writeBlock(const void * data, size_t count)  {
   castor::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.write(m_tapeFD, data, count),
       "Failed ST write in DriveGeneric::writeBlock");
@@ -552,7 +552,7 @@ void drives::DriveGeneric::writeBlock(const void * data, size_t count)  {
  * @param count size of the data block
  * @return the actual size of read data
  */
-ssize_t drives::DriveGeneric::readBlock(void * data, size_t count)  {
+ssize_t drive::DriveGeneric::readBlock(void * data, size_t count)  {
   ssize_t res = m_sysWrapper.read(m_tapeFD, data, count);
   castor::exception::Errnum::throwOnMinusOne(res, 
       "Failed ST read in DriveGeneric::readBlock");
@@ -566,7 +566,7 @@ ssize_t drives::DriveGeneric::readBlock(void * data, size_t count)  {
  * @param count size of the data block
  * @return the actual size of read data
  */
-void drives::DriveGeneric::readExactBlock(void * data, size_t count, std::string context)  {
+void drive::DriveGeneric::readExactBlock(void * data, size_t count, std::string context)  {
   ssize_t res = m_sysWrapper.read(m_tapeFD, data, count);
   // First handle block too big
   if (-1 == res && ENOSPC == errno)
@@ -583,7 +583,7 @@ void drives::DriveGeneric::readExactBlock(void * data, size_t count, std::string
  * Read over a file mark. Throw an exception we do not read one.
  * @return the actual size of read data
  */
-void drives::DriveGeneric::readFileMark(std::string context)  {
+void drive::DriveGeneric::readFileMark(std::string context)  {
   char buff[4]; // We need to try and read at least a small amount of data
                 // due to a bug in mhvtl
   ssize_t res = m_sysWrapper.read(m_tapeFD, buff, 4);
@@ -599,7 +599,7 @@ void drives::DriveGeneric::readFileMark(std::string context)  {
 }
    
 
-void drives::DriveGeneric::SCSI_inquiry() {
+void drive::DriveGeneric::SCSI_inquiry() {
   SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::inquiryCDB_t cdb;
   SCSI::Structures::senseData_t<255> senseBuff;
@@ -630,7 +630,7 @@ void drives::DriveGeneric::SCSI_inquiry() {
 }
 
 
-drives::compressionStats drives::DriveT10000::getCompression()  {
+drive::compressionStats drive::DriveT10000::getCompression()  {
   compressionStats driveCompressionStats;
   
   SCSI::Structures::LinuxSGIO_t sgh;
@@ -686,7 +686,7 @@ drives::compressionStats drives::DriveT10000::getCompression()  {
   return driveCompressionStats;
 }
 
-drives::compressionStats drives::DriveLTO::getCompression()  {
+drive::compressionStats drive::DriveLTO::getCompression()  {
   SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::logSenseCDB_t cdb;
   compressionStats driveCompressionStats;
@@ -759,7 +759,7 @@ drives::compressionStats drives::DriveLTO::getCompression()  {
   return driveCompressionStats;
 }
 
-drives::compressionStats drives::DriveIBM3592::getCompression()  {
+drive::compressionStats drive::DriveIBM3592::getCompression()  {
   SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::logSenseCDB_t cdb;
   SCSI::Structures::senseData_t<255> senseBuff;
