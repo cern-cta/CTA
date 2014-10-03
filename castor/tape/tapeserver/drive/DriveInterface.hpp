@@ -24,12 +24,13 @@
 #pragma once
 
 #include "castor/exception/Errnum.hpp"
-#include "castor/tape/tapeserver/SCSI/Device.hpp"
-#include "castor/tape/tapeserver/SCSI/Structures.hpp"
-#include "castor/tape/tapeserver/SCSI/Exception.hpp"
-#include "castor/tape/tapeserver/drive/mtio_add.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/tape/tapeserver/drive/mtio_add.hpp"
+#include "castor/tape/tapeserver/SCSI/Device.hpp"
+#include "castor/tape/tapeserver/SCSI/Exception.hpp"
+#include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "castor/tape/utils/TapeLibrarySlot.hpp"
 
 /**
  * Class wrapping the tape server. Has to be templated (and hence fully in .hh)
@@ -188,10 +189,10 @@ namespace drive {
     virtual bool hasTapeInPlace() = 0;
     
     /**
-     * Member string allowing the convenient storage of the string describing
-     * drive location for the mount system (we get the information from TPCONFIG
+     * Member allowing the convenient storage of the drive location for the
+     * mount system (we get the information from TPCONFIG)
      */
-    std::string librarySlot;
+    utils::TapeLibrarySlot librarySlot;
   };
   
   /**

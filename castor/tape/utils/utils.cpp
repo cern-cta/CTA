@@ -24,6 +24,7 @@
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/Constants.hpp"
+#include "castor/tape/utils/TapeLibrarySlot.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFILEPtr.hpp"
 #include "castor/utils/utils.hpp"
@@ -56,6 +57,7 @@ std::string castor::tape::utils::toHexString( const void * mem, unsigned int n )
   }
   return out.str();
 }
+
 //-----------------------------------------------------------------------------
 // writeStrings
 //-----------------------------------------------------------------------------
@@ -371,13 +373,14 @@ static void checkTpconfigLineDensity(const std::list<std::string> &catalogueDens
 //-----------------------------------------------------------------------------
 // checkTpconfigLineLibrarySlot
 //-----------------------------------------------------------------------------
-static void checkTpconfigLineLibrarySlot(const std::string &catalogueLibrarySlot,
-  const  castor::tape::utils::TpconfigLine &line)  { 
-  if(catalogueLibrarySlot != line.librarySlot) {
+static void checkTpconfigLineLibrarySlot(
+  const castor::tape::utils::TapeLibrarySlot &catalogueLibrarySlot,
+  const castor::tape::utils::TpconfigLine &line)  { 
+  if(catalogueLibrarySlot.str() != line.librarySlot) {
     castor::exception::Exception ex;
     ex.getMessage() << "Invalid TPCONFIG line"
       ": A tape drive can only have one slot within its library"
-      ": catalogueLibrarySlot=" << catalogueLibrarySlot <<
+      ": catalogueLibrarySlot=" << catalogueLibrarySlot.str() <<
       " lineLibrarySlot=" << line.librarySlot;
     throw ex;
   } 

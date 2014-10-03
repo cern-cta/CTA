@@ -49,7 +49,7 @@ castor::legacymsg::RmcProxyTcpIp::~RmcProxyTcpIp() throw() {
 // mountTape
 //------------------------------------------------------------------------------
 void castor::legacymsg::RmcProxyTcpIp::mountTape(const std::string &vid,
-  const std::string &librarySlot, const MountMode mode) {
+  const tape::utils::TapeLibrarySlot &librarySlot, const MountMode mode) {
   // Verify parameters
   if(vid.empty()) {
     castor::exception::Exception ex;
@@ -63,48 +63,25 @@ void castor::legacymsg::RmcProxyTcpIp::mountTape(const std::string &vid,
       vid.length();
     throw ex;
   }
-  if(librarySlot.empty()) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to mount tape: librarySlot is an empty string"
-      ": vid=" << vid;
-    throw ex;
-  }
 
   // Dispatch the appropriate helper method depending on library slot type
-  switch(getLibrarySlotType(librarySlot)) {
-  case RMC_LIBRARY_SLOT_TYPE_ACS:
-    mountTapeAcs(vid, librarySlot);
+  switch(librarySlot.getLibraryType()) {
+  case tape::utils::TAPE_LIBRARY_TYPE_ACS:
+    mountTapeAcs(vid, librarySlot.str());
     break;
-  case RMC_LIBRARY_SLOT_TYPE_MANUAL:
+  case tape::utils::TAPE_LIBRARY_TYPE_MANUAL:
     mountTapeManual(vid);
     break;
-  case RMC_LIBRARY_SLOT_TYPE_SCSI:
-    mountTapeScsi(vid, librarySlot);
+  case tape::utils::TAPE_LIBRARY_TYPE_SCSI:
+    mountTapeScsi(vid, librarySlot.str());
     break;
   default:
     {
       castor::exception::Exception ex;
-      ex.getMessage() << "Failed to mount tape: Unknown library slot type"
-        ": vid=" << vid << " librarySlot=" << librarySlot;
+      ex.getMessage() << "Failed to mount tape: Unexpected library slot type"
+        ": vid=" << vid << " librarySlot=" << librarySlot.str();
       throw ex;
     }
-  }
-}
-
-//------------------------------------------------------------------------------
-// getLibrarySlotType
-//------------------------------------------------------------------------------
-castor::legacymsg::RmcProxyTcpIp::RmcLibrarySlotType
-  castor::legacymsg::RmcProxyTcpIp::getLibrarySlotType(
-  const std::string &librarySlot) throw() {
-  if(0 == librarySlot.find("acs@")) {
-    return RMC_LIBRARY_SLOT_TYPE_ACS;
-  } else if(0 == librarySlot.find("manual")) {
-    return RMC_LIBRARY_SLOT_TYPE_MANUAL;
-  } else if(0 == librarySlot.find("smc@")) {
-    return RMC_LIBRARY_SLOT_TYPE_SCSI;
-  } else {
-    return RMC_LIBRARY_SLOT_TYPE_UNKNOWN;
   }
 }
 
@@ -186,7 +163,7 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid,
 // unmountTape
 //------------------------------------------------------------------------------
 void castor::legacymsg::RmcProxyTcpIp::unmountTape(const std::string &vid,
-  const std::string &librarySlot) {
+  const tape::utils::TapeLibrarySlot &librarySlot) {
   // Verify parameters
   if(vid.empty()) {
     castor::exception::Exception ex;
@@ -199,29 +176,23 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTape(const std::string &vid,
       ": vid=" << vid << " maxLen=" << CA_MAXVIDLEN << " actualLen=" << vid.length();
     throw ex;
   }
-  if(librarySlot.empty()) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to unmount tape: librarySlot is an empty string"
-      ": vid=" << vid;
-    throw ex;
-  }
 
   // Dispatch the appropriate helper method depending on library slot type
-  switch(getLibrarySlotType(librarySlot)) {
-  case RMC_LIBRARY_SLOT_TYPE_ACS:
-    unmountTapeAcs(vid, librarySlot);
+  switch(librarySlot.getLibraryType()) {
+  case tape::utils::TAPE_LIBRARY_TYPE_ACS:
+    unmountTapeAcs(vid, librarySlot.str());
     break;
-  case RMC_LIBRARY_SLOT_TYPE_MANUAL:
+  case tape::utils::TAPE_LIBRARY_TYPE_MANUAL:
     unmountTapeManual(vid);
     break;
-  case RMC_LIBRARY_SLOT_TYPE_SCSI:
-    unmountTapeScsi(vid, librarySlot);
+  case tape::utils::TAPE_LIBRARY_TYPE_SCSI:
+    unmountTapeScsi(vid, librarySlot.str());
     break;
   default:
     {
       castor::exception::Exception ex;
-      ex.getMessage() << "Failed to unmount tape: Unknown library slot type"
-        ": vid=" << vid << " librarySlot=" << librarySlot;
+      ex.getMessage() << "Failed to unmount tape: Unexpected library slot type"
+        ": vid=" << vid << " librarySlot=" << librarySlot.str();
       throw ex;
     }
   }

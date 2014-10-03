@@ -134,11 +134,11 @@ void castor::tape::utils::DriveConfigMap::checkTpconfigLineDensity(
 //-----------------------------------------------------------------------------
 void castor::tape::utils::DriveConfigMap::checkTpconfigLineLibrarySlot(
   const DriveConfig &drive, const  TpconfigLine &line) {
-  if(drive.librarySlot != line.librarySlot) {
+  if(drive.librarySlot.str() != line.librarySlot) {
     castor::exception::Exception ex;
     ex.getMessage() << "Invalid TPCONFIG line"
       ": A tape drive can only be in one slot within its library"
-      ": first=" << drive.librarySlot <<
+      ": first=" << drive.librarySlot.str() <<
       " second=" << line.librarySlot;
     throw ex;
   }

@@ -24,6 +24,7 @@ cmake_minimum_required (VERSION 2.6)
 
 add_subdirectory (gatewayprotocol)
 add_subdirectory (label)
+add_subdirectory (mediachanger)
 add_subdirectory (reactor)
 add_subdirectory (rmc)
 add_subdirectory (tapebridge)

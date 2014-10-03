@@ -113,10 +113,10 @@ protected:
   void mountTape(castor::legacymsg::RmcProxy::MountMode mode){
     castor::log::ScopedParamContainer scoped(m_logContext); 
     scoped.add("vid",m_volInfo.vid)
-          .add("drive_Slot",m_drive.librarySlot);
+          .add("drive_Slot",m_drive.librarySlot.str());
     try {
       tape::utils::Timer timer;
-        m_rmc.mountTape(m_volInfo.vid, m_drive.librarySlot,
+        m_rmc.mountTape(m_volInfo.vid, m_drive.librarySlot.str(),
                 mode);
         const std::string modeAsString = std::string("R")+ ((mode==legacymsg::RmcProxy::MOUNT_MODE_READWRITE) ? "W" : "");
         scoped.addTiming("RMCMountTime",timer.secs()).add("mode",modeAsString);

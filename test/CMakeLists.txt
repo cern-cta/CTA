@@ -115,7 +115,6 @@ add_executable(castorUnitTests
   ../castor/legacymsg/RmcMarshalTest.cpp
   ../castor/legacymsg/RmcProxy.cpp
   ../castor/legacymsg/RmcProxyTcpIp.cpp
-  ../castor/legacymsg/RmcProxyTcpIpTest.cpp
   ../castor/legacymsg/ScsiLibrarySlot.cpp
   ../castor/legacymsg/ScsiLibrarySlotTest.cpp
   ../castor/legacymsg/TapeMarshalTest.cpp
@@ -159,6 +158,7 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/utils/RegexTest.cpp
   ../castor/server/ThreadingTests.cpp
   ../castor/server/AtomicCounterTest.cpp
+  ../castor/tape/utils/TapeLibrarySlotTest.cpp
   ../castor/tape/utils/TpconfigLineTest.cpp
   ../castor/utils/SmartArrayPtrTest.cpp
   ../castor/utils/SmartFdTest.cpp

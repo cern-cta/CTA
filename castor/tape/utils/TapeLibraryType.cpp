@@ -16,27 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
+ *
+ *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/RmcProxyDummy.hpp"
+#include "castor/tape/utils/TapeLibraryType.hpp"
 
 //------------------------------------------------------------------------------
-// destructor
+// tapeLibraryTypeToString
 //------------------------------------------------------------------------------
-castor::legacymsg::RmcProxyDummy::~RmcProxyDummy() throw() {
-}
-
-//------------------------------------------------------------------------------
-// mountTape
-//------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyDummy::mountTape(const std::string &vid,
-  const tape::utils::TapeLibrarySlot &librarySlot, const MountMode mode)  {
-}
-
-//------------------------------------------------------------------------------
-// unmountTape
-//------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyDummy::unmountTape(const std::string &vid,
-  const tape::utils::TapeLibrarySlot &librarySlot)  {
+const char *castor::tape::utils::tapeLibraryTypeToString(
+  const TapeLibraryType libraryType) throw() {
+  switch(libraryType) {
+  case TAPE_LIBRARY_TYPE_NONE  : return "NONE";
+  case TAPE_LIBRARY_TYPE_ACS   : return "ACS";
+  case TAPE_LIBRARY_TYPE_MANUAL: return "MANUAL";
+  case TAPE_LIBRARY_TYPE_SCSI  : return "SCSI";
+  default                      : return "UNKNOWN";
+  }
 }

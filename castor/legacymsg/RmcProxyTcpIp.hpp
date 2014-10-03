@@ -60,46 +60,24 @@ public:
    * drive in the specified library slot.
    *
    * @param vid The volume identifier of the tape.
-   * @param librarySlot The library slot in one of the following three forms:
-   * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
-   * "manual" or "smc@rmc_host,drive_ordinal".
+   * @param librarySlot The tape library slot containing the tape drive.
    * @param mode The access mode in which the specified tape should be mounted.
    * Please note that the value of this parameter is honored in a best effort
    * fashion.  If the library and drive combination do not support specifying
    * the access mode, then this parameter will be ignored.
    */
-  void mountTape(const std::string &vid, const std::string &librarySlot,
-    const MountMode mode);
+  void mountTape(const std::string &vid,
+    const tape::utils::TapeLibrarySlot &librarySlot, const MountMode mode);
 
   /**
    * Asks the remote media-changer daemon to unmount the specified tape from the
    * drive in the specified library slot.
    *
    * @param vid The volume identifier of the tape.
-   * @param librarySlot The library slot in one of the following three forms:
-   * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
-   * "manual" or "smc@rmc_host,drive_ordinal".
+   * @param librarySlot The tape library slot containing the tape drive.
    */
-  void unmountTape(const std::string &vid, const std::string &librarySlot) ;
-
-  /**
-   * Enumeration of the different types of library slot.
-   */
-  enum RmcLibrarySlotType {
-    RMC_LIBRARY_SLOT_TYPE_ACS,
-    RMC_LIBRARY_SLOT_TYPE_MANUAL,
-    RMC_LIBRARY_SLOT_TYPE_SCSI,
-    RMC_LIBRARY_SLOT_TYPE_UNKNOWN};
-
-  /**
-   * Returns the type of the specified string representation of a library slot.
-   *
-   * @param librarySlot The library slot in one of the following three forms:
-   * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
-   * "manual" or "smc@rmc_host,drive_ordinal".
-   * @return The library slot type.
-   */
-  RmcLibrarySlotType getLibrarySlotType(const std::string &librarySlot) throw();
+  void unmountTape(const std::string &vid,
+    const tape::utils::TapeLibrarySlot &librarySlot);
 
 protected:
 

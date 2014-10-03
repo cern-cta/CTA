@@ -23,57 +23,28 @@
 
 #pragma once
 
-#include "castor/tape/utils/TapeLibrarySlot.hpp"
-
-#include <list>
-#include <string>
-
 namespace castor {
 namespace tape {
 namespace utils {
 
 /**
- * Structure used to store the configuration of a tape drive.
+ * Enumeration of the different types of tape library.
  */
-struct DriveConfig {
-
-  /**
-   * The unit name of the tape drive as defined in /etc/castor/TPCONFIG and
-   * used by the vdqmd daemon.
-   */
-  std::string unitName;
-
-  /**
-   * The device group name of the tape drive as defined in
-   * /etc/castor/TPCONFIG and used by the vdqmd and vmgrd daemons.
-   */
-  std::string dgn;
+enum TapeLibraryType {
+  TAPE_LIBRARY_TYPE_NONE,
+  TAPE_LIBRARY_TYPE_ACS,
+  TAPE_LIBRARY_TYPE_MANUAL,
+  TAPE_LIBRARY_TYPE_SCSI};
   
-  /**
-   * The device file of the tape drive as defined in /etc/castor/TPCONFIG, for
-   * example: /dev/nst0
-   */
-   std::string devFilename;
-
-  /**
-   * The list of tape densities supported by the tape drive as defined in
-   * /etc/castor/TPCONFIG.
-   */
-  std::list<std::string> densities;
-
-  /**
-   * The library slot n which the tape drive is located, for example:
-   * smc@localhost,0
-   */
-  TapeLibrarySlot librarySlot;
-
-  /**
-   * The device type.
-   */
-  std::string devType;
-
-}; // class DriveConfig
-
+/**
+ * Thread safe method that returns the string representation of the
+ * specified tape library.
+ *
+ * Please note that this function does not throw an exception.  If the
+ * tape-library type is not known then an appropriate string is returned.
+ */
+const char *tapeLibraryTypeToString(const TapeLibraryType libraryType) throw();
+  
 } // namespace utils
 } // namespace tape
 } // namespace castor

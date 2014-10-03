@@ -171,7 +171,7 @@ private:
       itor != densities.end(); itor++) {
       msg.add_density(*itor);
     }
-    msg.set_libraryslot(driveConfig.librarySlot);
+    msg.set_libraryslot(driveConfig.librarySlot.str());
     msg.set_devtype(driveConfig.devType);
   }
 

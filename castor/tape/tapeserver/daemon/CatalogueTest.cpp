@@ -48,13 +48,13 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
 
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN1", "DEV1", "DEN11", "SLOT1", "DEVTYPE1"));
+    "UNIT1", "DGN1", "DEV1", "DEN11", "manual@SLOT1", "DEVTYPE1"));
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN1", "DEV1", "DEN12", "SLOT1", "DEVTYPE1"));
+    "UNIT1", "DGN1", "DEV1", "DEN12", "manual@SLOT1", "DEVTYPE1"));
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT2", "DGN2", "DEV2", "DEN21", "SLOT2", "DEVTYPE2"));
+    "UNIT2", "DGN2", "DEV2", "DEN21", "manual@SLOT2", "DEVTYPE2"));
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT2", "DGN2", "DEV2", "DEN22", "SLOT2", "DEVTYPE2"));
+    "UNIT2", "DGN2", "DEV2", "DEN22", "manual@SLOT2", "DEVTYPE2"));
 
   castor::tape::utils::DriveConfigMap driveConfigs;
   driveConfigs.enterTpconfigLines(lines);
@@ -102,7 +102,9 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   }
   
   ASSERT_EQ(CatalogueDrive::DRIVE_STATE_DOWN, unit1.getState());
-  ASSERT_EQ(std::string("SLOT1"), unit1Config.librarySlot);
+  ASSERT_EQ(castor::tape::utils::TAPE_LIBRARY_TYPE_MANUAL,
+    unit1Config.librarySlot.getLibraryType());
+  ASSERT_EQ(std::string("manual@SLOT1"), unit1Config.librarySlot.str());
   ASSERT_EQ(std::string("DEVTYPE1"), unit1Config.devType);
   
   ///////////////////
@@ -126,7 +128,9 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   }
 
   ASSERT_EQ(CatalogueDrive::DRIVE_STATE_DOWN, unit2.getState());
-  ASSERT_EQ(std::string("SLOT2"), unit2Config.librarySlot);
+  ASSERT_EQ(castor::tape::utils::TAPE_LIBRARY_TYPE_MANUAL,
+    unit2Config.librarySlot.getLibraryType());
+  ASSERT_EQ(std::string("manual@SLOT2"), unit2Config.librarySlot.str());
   ASSERT_EQ(std::string("DEVTYPE2"), unit2Config.devType);
 }
 
@@ -153,7 +157,7 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, dgnMismatchStart) {
   using namespace castor::tape::tapeserver::daemon;
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT", "DGN1", "DEV", "DEN", "SLOT", "DEVTYPE"));
+    "UNIT", "DGN1", "DEV", "DEN", "manual@SLOT", "DEVTYPE"));
   castor::tape::utils::DriveConfigMap driveConfigs;
   driveConfigs.enterTpconfigLines(lines);
 
@@ -189,9 +193,9 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, getUnitNames) {
   using namespace castor::tape::tapeserver::daemon;
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN1", "DEV1", "DEN1", "SLOT1", "DEVTYPE1"));
+    "UNIT1", "DGN1", "DEV1", "DEN1", "manual@SLOT1", "DEVTYPE1"));
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT2", "DGN2", "DEV2", "DEN2", "SLOT2", "DEVTYPE2"));
+    "UNIT2", "DGN2", "DEV2", "DEN2", "manual@SLOT2", "DEVTYPE2"));
   castor::tape::utils::DriveConfigMap driveConfigs;
   driveConfigs.enterTpconfigLines(lines);
 
