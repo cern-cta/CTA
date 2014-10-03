@@ -35,7 +35,7 @@ namespace castor {
 namespace tape {
 namespace diskFile {
 
-diskFileFactory::diskFileFactory(const std::string & remoteFileProtocol):
+DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol):
   m_NoURLLocalFile("^(localhost:|)(/.*)$"),
   m_NoURLRemoteFile("^(.*:/.*)$"),
   m_NoURLRadosStriperFile("^localhost:([^/].*)$"),
@@ -46,7 +46,7 @@ diskFileFactory::diskFileFactory(const std::string & remoteFileProtocol):
   m_remoteFileProtocol(remoteFileProtocol)
 {}
 
-ReadFile * diskFileFactory::createReadFile(const std::string& path) {
+ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   std::vector<std::string> regexResult;
   // URL path parsing
   // local file URL?
@@ -90,10 +90,10 @@ ReadFile * diskFileFactory::createReadFile(const std::string& path) {
     return new RadosStriperReadFile(regexResult[1]);
   }
   throw castor::exception::Exception(
-      std::string("In diskFileFactory::createReadFile failed to parse URL: ")+path);
+      std::string("In DiskFileFactory::createReadFile failed to parse URL: ")+path);
 }
 
-WriteFile * diskFileFactory::createWriteFile(const std::string& path) {
+WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   std::vector<std::string> regexResult;
   // URL path parsing
   // local file URL?
@@ -137,7 +137,7 @@ WriteFile * diskFileFactory::createWriteFile(const std::string& path) {
     return new RadosStriperWriteFile(regexResult[0]);
   }
   throw castor::exception::Exception(
-      std::string("In diskFileFactory::createWriteFile failed to parse URL: ")+path);
+      std::string("In DiskFileFactory::createWriteFile failed to parse URL: ")+path);
 }
 
 //==============================================================================

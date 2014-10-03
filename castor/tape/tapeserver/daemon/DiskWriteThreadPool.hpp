@@ -99,7 +99,7 @@ private:
    * A disk file factory, that will create the proper type of file access class,
    * depending on the received path
    */
-  diskFile::diskFileFactory m_diskFileFactory;
+  diskFile::DiskFileFactory m_diskFileFactory;
   
   /**
    * Private class implementing the worker threads.

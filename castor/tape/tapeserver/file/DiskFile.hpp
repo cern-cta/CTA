@@ -46,10 +46,10 @@ namespace castor {
        * based on the url passed and a config paramter.
        * Currently, the parameter allows switching between RFIO and XROOT
        */
-      class diskFileFactory {
+      class DiskFileFactory {
         typedef castor::tape::utils::Regex Regex;
       public:
-        diskFileFactory(const std::string & remoteFileProtocol);
+        DiskFileFactory(const std::string & remoteFileProtocol);
         ReadFile * createReadFile(const std::string & path);
         WriteFile * createWriteFile(const std::string & path);
       private:

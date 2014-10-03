@@ -48,7 +48,7 @@ public:
           tape::tapegateway::FileToMigrateStruct* file,size_t numberOfBlock,
           castor::server::AtomicFlag& errorFlag);
   
-  void execute(log::LogContext& lc, diskFile::diskFileFactory & fileFactory);
+  void execute(log::LogContext& lc, diskFile::DiskFileFactory & fileFactory);
     /**
    * Return the stats of the tasks. Should be call after execute 
    * (otherwise, it is pointless)

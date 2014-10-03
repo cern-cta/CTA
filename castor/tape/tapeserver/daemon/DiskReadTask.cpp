@@ -43,7 +43,7 @@ m_nextTask(destination),m_migratedFile(file),
 //------------------------------------------------------------------------------
 // DiskReadTask::execute
 //------------------------------------------------------------------------------
-void DiskReadTask::execute(log::LogContext& lc, diskFile::diskFileFactory & fileFactory) {
+void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & fileFactory) {
   using log::LogContext;
   using log::Param;
 

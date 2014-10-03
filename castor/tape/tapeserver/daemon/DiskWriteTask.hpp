@@ -63,7 +63,7 @@ public:
    * @return true if the file has been successfully written false otherwise.
    */
   virtual bool execute(RecallReportPacker& reporter,log::LogContext& lc,
-    diskFile::diskFileFactory & fileFactory) ;
+    diskFile::DiskFileFactory & fileFactory) ;
   
   /**
    * Allows client code to return a reusable memory block. Should not been called

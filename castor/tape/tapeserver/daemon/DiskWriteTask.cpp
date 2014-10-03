@@ -44,7 +44,7 @@ m_recallingFile(file),m_memManager(mm){
 // DiskWriteTask::execute
 //------------------------------------------------------------------------------
 bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
-    diskFile::diskFileFactory & fileFactory) {
+    diskFile::DiskFileFactory & fileFactory) {
   using log::LogContext;
   using log::Param;
   utils::Timer localTime;
