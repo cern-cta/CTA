@@ -22,13 +22,13 @@ END;
 CREATE OR REPLACE PROCEDURE drainRunner AS
   varNbRunningJobs INTEGER;
   varDataRunningJobs INTEGER;
-  varMaxNbOfSchedD2dPerDrain INTEGER;
-  varMaxDataOfSchedD2dPerDrain INTEGER;
+  varMaxNbFilesScheduled INTEGER;
+  varMaxDataScheduled INTEGER;
   varUnused INTEGER;
 BEGIN
-  -- get maxNbOfSchedD2dPerDrain and MaxDataOfSchedD2dPerDrain
-  varMaxNbOfSchedD2dPerDrain := TO_NUMBER(getConfigOption('Draining', 'MaxNbSchedD2dPerDrain', '1000'));
-  varMaxDataOfSchedD2dPerDrain := TO_NUMBER(getConfigOption('Draining', 'MaxDataSchedD2dPerDrain', '10000000000')); -- 10 GB
+  -- get maxNbFilesScheduled and maxDataScheduled
+  varMaxNbFilesScheduled := TO_NUMBER(getConfigOption('Draining', 'MaxNbFilesScheduled', '1000'));
+  varMaxDataScheduled := TO_NUMBER(getConfigOption('Draining', 'MaxDataScheduled', '10000000000')); -- 10 GB
   -- loop over draining jobs
   FOR dj IN (SELECT id, fileSystem, svcClass, fileMask, euid, egid
                FROM DrainingJob WHERE status = dconst.DRAININGJOB_RUNNING) LOOP
@@ -52,7 +52,7 @@ BEGIN
       -- ones into account. Also take the most important jobs first
       logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_REFILL, 0, '', 'stagerd',
                'svcClass=' || getSvcClassName(dj.svcClass) || ' DrainReq=' ||
-               TO_CHAR(dj.id) || ' MaxNewJobsCount=' || TO_CHAR(varMaxNbOfSchedD2dPerDrain-varNbRunningJobs));
+               TO_CHAR(dj.id) || ' MaxNewJobsCount=' || TO_CHAR(varMaxNbFilesScheduled-varNbRunningJobs));
       FOR F IN (SELECT * FROM
                  (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
                     FROM DiskCopy, CastorFile
@@ -66,9 +66,9 @@ BEGIN
                      -- don't recreate disk-to-disk copy jobs for the ones already done in previous rounds
                      AND NOT EXISTS (SELECT 1 FROM Disk2DiskCopyJob WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
                    ORDER BY DiskCopy.importance DESC)
-                 WHERE ROWNUM <= varMaxNbOfSchedD2dPerDrain-varNbRunningJobs) LOOP
+                 WHERE ROWNUM <= varMaxNbFilesScheduled-varNbRunningJobs) LOOP
         -- Do not schedule more that varMaxAmountOfSchedD2dPerDrain
-        IF varDataRunningJobs <= varMaxDataOfSchedD2dPerDrain THEN
+        IF varDataRunningJobs <= varMaxDataScheduled THEN
           createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
                                  dconst.REPLICATIONTYPE_DRAINING, F.dcId, TRUE, dj.id, FALSE);
           varDataRunningJobs := varDataRunningJobs + F.fileSize;
@@ -148,6 +148,7 @@ CREATE OR REPLACE PROCEDURE rebalance(inFsId IN INTEGER, inDataAmount IN INTEGER
   varNsOpenTime INTEGER;
   varTotalRebalanced INTEGER := 0;
   varNbFilesRebalanced INTEGER := 0;
+  varMaxNbFilesScheduled INTEGER := TO_NUMBER(getConfigOption('Rebalancing', 'MaxNbFilesScheduled', '1000'));
 BEGIN
   -- disk to disk copy files out of this node until we reach inDataAmount
   -- "rebalancing : starting" message
@@ -162,7 +163,8 @@ BEGIN
     -- no next candidate : this is surprising, but nevertheless, we should go out of the loop
     IF DCcur%NOTFOUND THEN EXIT; END IF;
     -- stop if it would be too much
-    IF varTotalRebalanced + varDcSize > inDataAmount THEN EXIT; END IF;
+    IF varTotalRebalanced + varDcSize > inDataAmount
+      OR varNbFilesRebalanced > varMaxNbFilesScheduled THEN EXIT; END IF;
     -- compute new totals
     varTotalRebalanced := varTotalRebalanced + varDcSize;
     varNbFilesRebalanced := varNbFilesRebalanced + 1;
@@ -186,6 +188,7 @@ CREATE OR REPLACE PROCEDURE rebalancingManager AS
   varSensitivity NUMBER;
   varNbDS INTEGER;
   varAlreadyRebalancing INTEGER;
+  varMaxDataScheduled INTEGER;
 BEGIN
   -- go through all service classes
   FOR SC IN (SELECT id FROM SvcClass) LOOP
@@ -230,6 +233,8 @@ BEGIN
      GROUP BY SC.id;
     -- get sensitivity of the rebalancing
     varSensitivity := TO_NUMBER(getConfigOption('Rebalancing', 'Sensitivity', '5'))/100;
+    -- get max data to move in a single round
+    varMaxDataScheduled := TO_NUMBER(getConfigOption('Rebalancing', 'MaxDataScheduled', '10000000000')); -- 10 GB
     -- for each filesystem too full compared to average, rebalance
     -- note that we take the read only ones into account here
     -- also note the use of decode and the extra totalSize > 0 to protect
@@ -246,7 +251,7 @@ BEGIN
                   AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
                   AND FileSystem.totalSize > 0
                   AND DiskServer.hwOnline = 1) LOOP
-      rebalance(FS.id, FS.dataToMove, SC.id, FS.ds, FS.mountPoint);
+      rebalance(FS.id, LEAST(varMaxDataScheduled, FS.dataToMove), SC.id, FS.ds, FS.mountPoint);
     END LOOP;
   END LOOP;
 END;
