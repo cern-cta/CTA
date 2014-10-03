@@ -79,7 +79,7 @@ Depends: python, logrotate, python-daemon, python-rpyc >= 3.3, python-crypto >= 
 Conflicts: castor-dbtools, castor-transfer-manager
 Description: castor (Cern Advanced STORage system)
  Disk server manager of CASTOR
-XBS-Obsoletes: castor-rmnode-server
+XBS-Obsoletes: castor-rmnode-server, castor-job
 
 Package: castor-lib-oracle
 Architecture: any
