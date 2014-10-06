@@ -19,10 +19,44 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/exception/Exception.hpp"
 #include "castor/mediachanger/MediaChangerProxy.hpp"
+#include "h/Castor_limits.h"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::mediachanger::MediaChangerProxy::~MediaChangerProxy() {
+}
+
+//------------------------------------------------------------------------------
+// verifyVidAndLibrarySlot
+//------------------------------------------------------------------------------
+void castor::mediachanger::MediaChangerProxy::verifyVidAndLibrarySlot(
+  const std::string &vid,
+  const mediachanger::TapeLibraryType expectedLibraryType,
+  const mediachanger::TapeLibrarySlot librarySlot) {
+  // Verify VID
+  if(vid.empty()) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "VID is an empty string";
+    throw ex;
+  }
+  if(CA_MAXVIDLEN < vid.length()) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "VID is too long"
+      ": vid=" << vid << " maxLen=" << CA_MAXVIDLEN << " actualLen=" <<
+      vid.length();
+    throw ex;
+  }
+
+  // Verify library slot
+  const TapeLibraryType actualLibraryType = librarySlot.getLibraryType();
+  if(expectedLibraryType != actualLibraryType) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Incompatible library type: expected=" <<
+      mediachanger::tapeLibraryTypeToString(expectedLibraryType) << " actual=" <<
+      mediachanger::tapeLibraryTypeToString(actualLibraryType);
+    throw ex;
+  }
 }

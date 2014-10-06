@@ -69,6 +69,23 @@ public:
   virtual void dismountTape(const std::string &vid,
     const TapeLibrarySlot &librarySlot) = 0;
 
+protected:
+
+  /**
+   * Verifies the specified tape volume-identifier and tape library-slot.
+   *
+   * This method throws a castor::exception::Exception if the verfication fails.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param expectedLibraryType Expected tape-library type.
+   * @param librarySlot The slot in the tape loibrary that contains the tape
+   * drive.
+   */
+  void verifyVidAndLibrarySlot(
+    const std::string &vid, 
+    const mediachanger::TapeLibraryType expectedLibraryType,
+    const mediachanger::TapeLibrarySlot librarySlot);
+
 }; // class MediaChangerProxy
 
 } // namespace mediachanger

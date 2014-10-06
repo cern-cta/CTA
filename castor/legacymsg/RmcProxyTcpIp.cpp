@@ -50,6 +50,9 @@ castor::legacymsg::RmcProxyTcpIp::~RmcProxyTcpIp() throw() {
 //------------------------------------------------------------------------------
 void castor::legacymsg::RmcProxyTcpIp::mountTapeReadOnly(
   const std::string &vid, const mediachanger::TapeLibrarySlot &librarySlot) {
+  verifyVidAndLibrarySlot(vid, mediachanger::TAPE_LIBRARY_TYPE_SCSI,
+    librarySlot);
+
   // SCSI does not support read-only mounts
   mountTapeReadWrite(vid, librarySlot);
 }
@@ -59,38 +62,35 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeReadOnly(
 //------------------------------------------------------------------------------
 void castor::legacymsg::RmcProxyTcpIp::mountTapeReadWrite(
   const std::string &vid, const mediachanger::TapeLibrarySlot &librarySlot) {
-  // Verify parameters
-  if(vid.empty()) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to mount tape: VID is an empty string";
-    throw ex;
-  }
-  if(CA_MAXVIDLEN < vid.length()) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to mount tape: VID is too long"
-      ": vid=" << vid << " maxLen=" << CA_MAXVIDLEN << " actualLen=" <<
-      vid.length();
-    throw ex;
-  }
+  try {
+    verifyVidAndLibrarySlot(vid, mediachanger::TAPE_LIBRARY_TYPE_SCSI,
+      librarySlot);
 
-  // Dispatch the appropriate helper method depending on library slot type
-  switch(librarySlot.getLibraryType()) {
-  case mediachanger::TAPE_LIBRARY_TYPE_ACS:
-    mountTapeAcs(vid, librarySlot.str());
-    break;
-  case mediachanger::TAPE_LIBRARY_TYPE_MANUAL:
-    mountTapeManual(vid);
-    break;
-  case mediachanger::TAPE_LIBRARY_TYPE_SCSI:
-    mountTapeScsi(vid, librarySlot.str());
-    break;
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to mount tape: Unexpected library slot type"
-        ": vid=" << vid << " librarySlot=" << librarySlot.str();
-      throw ex;
+    // Dispatch the appropriate helper method depending on library slot type
+    switch(librarySlot.getLibraryType()) {
+    case mediachanger::TAPE_LIBRARY_TYPE_ACS:
+      mountTapeAcs(vid, librarySlot.str());
+      break;
+    case mediachanger::TAPE_LIBRARY_TYPE_MANUAL:
+      mountTapeManual(vid);
+      break;
+    case mediachanger::TAPE_LIBRARY_TYPE_SCSI:
+      mountTapeScsi(vid, librarySlot.str());
+      break;
+    default:
+      {
+        castor::exception::Exception ex;
+        ex.getMessage() << "Unexpected library type"
+          ": vid=" << vid << " librarySlot=" << librarySlot.str();
+        throw ex;
+      }
     }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to mount tape in SCSI library for read/write access:" <<
+      ne.getMessage().str();
+    throw ex;
   }
 }
 
@@ -173,18 +173,8 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid,
 //------------------------------------------------------------------------------
 void castor::legacymsg::RmcProxyTcpIp::dismountTape(const std::string &vid,
   const mediachanger::TapeLibrarySlot &librarySlot) {
-  // Verify parameters
-  if(vid.empty()) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to unmount tape: VID is an empty string";
-    throw ex;
-  }
-  if(CA_MAXVIDLEN < vid.length()) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to nmount tape: VID is too long"
-      ": vid=" << vid << " maxLen=" << CA_MAXVIDLEN << " actualLen=" << vid.length();
-    throw ex;
-  }
+  verifyVidAndLibrarySlot(vid, mediachanger::TAPE_LIBRARY_TYPE_SCSI,
+    librarySlot);
 
   // Dispatch the appropriate helper method depending on library slot type
   switch(librarySlot.getLibraryType()) {
