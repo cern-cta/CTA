@@ -217,7 +217,7 @@ exab0     8500		/dev/nrmt9	8500		manual	8500/VB
 
 Library slot can be in one of the following three forms for ACS, manual and SCSI libraries respectively:
 
-	acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
+	acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
 
 	manual
 

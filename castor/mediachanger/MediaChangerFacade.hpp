@@ -21,24 +21,34 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
 #include "castor/mediachanger/MediaChangerProxy.hpp"
 
-#include <string>
+#include <unistd.h>
+#include <sys/types.h>
 
 namespace castor {
-namespace legacymsg {
+namespace mediachanger {
 
 /**
- * Proxy class representing the remote media-changer daemon.
+ * Provides a facade to three communications proxies: acs, manual and rmc.
+ *
+ * This facade will forward requests to mount and dismount tapes to the
+ * appropriate communications proxy based on the type of library slot.
  */
-class RmcProxy: public mediachanger::MediaChangerProxy {
+class MediaChangerFacade: public MediaChangerProxy {
 public:
 
   /**
-   * Destructor.
+   * Constructor.
+   *
+   * @param acs Proxy object representing the CASTOR ACS daemon.
+   * @param mmc Proxy object representing the manual media-changer.
+   * @param rmc Proxy object representing the rmcd daemon.
    */
-  virtual ~RmcProxy() throw() = 0;
+  MediaChangerFacade(
+    MediaChangerProxy &acs,
+    MediaChangerProxy &mmc,
+    MediaChangerProxy &rmc) throw();
 
   /**
    * Requests the media changer to mount of the specified tape for read-only
@@ -47,8 +57,8 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  virtual void mountTapeReadOnly(const std::string &vid,
-    const mediachanger::TapeLibrarySlot &librarySlot) = 0;
+  void mountTapeReadOnly(const std::string &vid,
+    const TapeLibrarySlot &librarySlot);
 
   /**
    * Requests the media changer to mount of the specified tape for read/write
@@ -57,21 +67,37 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  virtual void mountTapeReadWrite(const std::string &vid,
-    const mediachanger::TapeLibrarySlot &librarySlot) = 0;
+  void mountTapeReadWrite(const std::string &vid,
+    const TapeLibrarySlot &librarySlot);
 
-  /** 
+  /**
    * Requests the media changer to dismount of the specified tape from the
    * drive in the specifed library slot.
    *
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  virtual void dismountTape(const std::string &vid,
-    const mediachanger::TapeLibrarySlot &librarySlot) = 0;
+  void dismountTape(const std::string &vid,
+    const TapeLibrarySlot &librarySlot);
 
-}; // class RmcProxy
+private:
 
-} // namespace legacymsg
+  /**
+   * Proxy object representing the CASTOR ACS daemon.
+   */
+  MediaChangerProxy &m_acs;
+
+  /**
+   * Proxy object representing the manual media-changer.
+   */
+  MediaChangerProxy &m_mmc;
+
+  /**
+   * Proxy object representing the rmcd daemon.
+   */
+  MediaChangerProxy &m_rmc;
+
+}; // class MediaChangerFacade
+
+} // namespace mediachanger
 } // namespace castor
-

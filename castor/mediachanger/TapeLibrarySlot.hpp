@@ -43,7 +43,13 @@ public:
 
   /**
    * Constructs a TapeLibrarySlot object from the specified string
-   * reprsentation.
+   * representation.
+   *
+   * The string representation of a tape library-slot must be in one of the
+   * following three forms:
+   * - acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
+   * - manual
+   * - smc@rmc_host,drive_ordinal
    *
    * This method will throw a castor::exception::Exception if the string
    * representation is invalid.

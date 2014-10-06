@@ -27,7 +27,7 @@ and SCSI compatible.
 
 The DRIVE ID format for ACS-compatible libraries is:
 
-.B acs@rmc_host,ACS:LSM:panel:transport
+.B acsACS:LSM:panel:transport
 
 The DRIVE ID format for manual is simply:
 

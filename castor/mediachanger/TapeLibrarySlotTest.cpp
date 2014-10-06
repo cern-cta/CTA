@@ -50,7 +50,7 @@ TEST_F(castor_mediachanger_TapeLibrarySlotTest, getLibraryTypeNone) {
 TEST_F(castor_mediachanger_TapeLibrarySlotTest, getLibraryTypeAcs) {
   using namespace castor::mediachanger;
 
-  TapeLibrarySlot slot("acs@rmc_host,1,2,3,4");
+  TapeLibrarySlot slot("acs1,2,3,4");
 
   ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS, slot.getLibraryType());
 }
@@ -58,7 +58,7 @@ TEST_F(castor_mediachanger_TapeLibrarySlotTest, getLibraryTypeAcs) {
 TEST_F(castor_mediachanger_TapeLibrarySlotTest, getLibraryTypeManual) {
   using namespace castor::mediachanger;
 
-  TapeLibrarySlot slot("manual@opaque_drive_id");
+  TapeLibrarySlot slot("manual");
 
   ASSERT_EQ(TAPE_LIBRARY_TYPE_MANUAL, slot.getLibraryType());
 }

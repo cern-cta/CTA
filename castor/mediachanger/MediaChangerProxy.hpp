@@ -59,9 +59,9 @@ public:
   virtual void mountTapeReadWrite(const std::string &vid,
     const TapeLibrarySlot &librarySlot) = 0;
 
-  /**
-   * Requests the media changer to mount of the specified tape for read/write
-   * access into the drive in the specified library slot.
+  /** 
+   * Requests the media changer to dismount of the specified tape from the
+   * drive in the specifed library slot.
    *
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.

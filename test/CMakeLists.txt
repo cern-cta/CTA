@@ -97,6 +97,7 @@ add_executable(castorUnitTests
   castorUnitTests.cpp
   ../castor/exception/ExceptionTest.cpp
   ../castor/io/IoTest.cpp
+  ../castor/mediachanger/MediaChangerFacadeTest.cpp
   ../castor/messages/TapeserverProxy.cpp
   ../castor/messages/TapeserverProxyZmq.cpp
   ../castor/legacymsg/CommonMarshalTest.cpp

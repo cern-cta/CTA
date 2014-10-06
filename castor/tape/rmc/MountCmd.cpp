@@ -231,7 +231,7 @@ void castor::tape::rmc::MountCmd::usage(std::ostream &os)
   "\n"
   "             manual\n"
   "\n"
-  "             acs@rmc_host,ACS,LSM,panel,transport\n"
+  "             acsACS,LSM,panel,transport\n"
   "\n"
   "Options:\n"
   "\n"

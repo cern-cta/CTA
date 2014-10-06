@@ -25,7 +25,7 @@ It must be at most six characters long.
 specifies the drive in one of the following three forms corresponding to the three supported drive-loader types, namely acs, manual and smc:
 .RS
 .TP
-acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
+acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
 .TP
 manual
 .TP

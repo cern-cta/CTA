@@ -40,7 +40,7 @@ private:
 public:
 
   RmcLibTest():
-    m_acsDrive("acs@rmc_host_for_acs,1,23,456,7890"),
+    m_acsDrive("acs1,23,456,7890"),
     m_smcDrive("smc@rmc_host_for_smc,123") {
   }
 

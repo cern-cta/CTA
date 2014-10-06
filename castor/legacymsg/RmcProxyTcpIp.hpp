@@ -75,9 +75,9 @@ public:
   void mountTapeReadWrite(const std::string &vid,
     const mediachanger::TapeLibrarySlot &librarySlot);
 
-  /**
-   * Requests the media changer to mount of the specified tape for read/write
-   * access into the drive in the specified library slot.
+  /** 
+   * Requests the media changer to dismount of the specified tape from the
+   * drive in the specifed library slot.
    *
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
@@ -114,7 +114,7 @@ protected:
    *
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot in the following form:
-   * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER".
+   * "acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER".
    */
   void mountTapeAcs(const std::string &vid, const std::string &librarySlot) ;
 
@@ -141,7 +141,7 @@ protected:
    *
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot in the following form:
-   * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER".
+   * "acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER".
    */
   void unmountTapeAcs(const std::string &vid, const std::string &librarySlot) ;
 
