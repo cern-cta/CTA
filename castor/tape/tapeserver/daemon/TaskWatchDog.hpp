@@ -203,6 +203,54 @@ private:
   FileStruct m_file;
   
   virtual void logStuckFile() {
+// This code is commented out pending the implementation of a more complete
+// watchdog involving disk side too (CASTOR-4773 tapeserverd's internal watchdog 
+// improvement: track disk transfers as well)
+// 
+//    castor::log::ScopedParamContainer params(m_lc);
+//    params.addTiming("TimeSinceLastBlockMove", m_blockMovementTimer.usecs())
+//          .add("Path",m_file.path())
+//          .add("FILEID",m_file.fileid())
+//          .add("fSeq",m_file.fseq());
+//    m_lc.log(LOG_WARNING, "No tape block movement for too long");
+  }
+public:
+  /** Pass through constructor */
+  RecallWatchDog(double periodToReport,double stuckPeriod,
+    messages::TapeserverProxy& initialProcess,
+    log::LogContext lc, double pollPeriod = 0.1): 
+  TaskWatchDog(periodToReport, stuckPeriod, initialProcess, lc, pollPeriod) {}
+  /**
+   * Notify the watchdog which file we are operating
+   * @param file
+   */
+  void notifyBeginNewJob(const FileStruct& file){
+    castor::server::MutexLocker locker(&m_mutex);
+    m_file=file;
+    m_fileBeingMoved=true;
+  }
+  
+  /**
+   * Notify the watchdog  we have finished operating on the current file
+   */
+  void fileFinished(){
+    castor::server::MutexLocker locker(&m_mutex);
+    m_fileBeingMoved=false;
+    m_file=FileStruct();
+  }
+};
+
+/**
+ * Implementation of TaskWatchDog for migrations 
+ */
+class MigrationWatchDog: public TaskWatchDog {
+private:
+  /** Our file type */
+  typedef castor::tape::tapegateway::FileToMigrateStruct FileStruct;
+  /** The file we are working on */
+  FileStruct m_file;
+  
+  virtual void logStuckFile() {
     castor::log::ScopedParamContainer params(m_lc);
     params.addTiming("TimeSinceLastBlockMove", m_blockMovementTimer.usecs())
           .add("Path",m_file.path())
@@ -212,7 +260,7 @@ private:
   }
 public:
   /** Pass through constructor */
-  RecallWatchDog(double periodToReport,double stuckPeriod,
+  MigrationWatchDog(double periodToReport,double stuckPeriod,
     messages::TapeserverProxy& initialProcess,
     log::LogContext lc, double pollPeriod = 0.1): 
   TaskWatchDog(periodToReport, stuckPeriod, initialProcess, lc, pollPeriod) {}

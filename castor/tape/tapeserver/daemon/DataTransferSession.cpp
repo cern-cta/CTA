@@ -187,7 +187,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     if (tapegateway::READ_TP == m_volInfo.clientType) {
       rrp.disableBulk();
     }
-    RecallWatchDog watchdog(2,60*10,m_intialProcess,lc);
+    RecallWatchDog rwd(2,60*10,m_intialProcess,lc);
     
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
     TapeServerReporter tsr(m_intialProcess, m_driveConfig, 
@@ -197,7 +197,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     tsr.gotReadMountDetailsFromClient();
     
     TapeReadSingleThread trst(*drive, m_mc, tsr, m_volInfo, 
-        m_castorConf.tapebridgeBulkRequestRecallMaxFiles,m_capUtils,watchdog,lc);
+        m_castorConf.tapebridgeBulkRequestRecallMaxFiles,m_capUtils,rwd,lc);
 
     DiskWriteThreadPool dwtp(m_castorConf.tapeserverdDiskThreads,
         rrp,
@@ -214,7 +214,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     if (rti.synchronousInjection()) {
       // We got something to recall. Time to start the machinery
       trst.setWaitForInstructionsTime(timer.secs());
-      watchdog.startThread();
+      rwd.startThread();
       trst.startThreads();
       dwtp.startThreads();
       rrp.startThreads();
@@ -229,7 +229,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       dwtp.waitThreads();
       trst.waitThreads();
       tsr.waitThreads();
-      watchdog.stopAndWaitThread();
+      rwd.stopAndWaitThread();
       return trst.getHardwareStatus();
     } else {
       // Just log this was an empty mount and that's it. The memory management
@@ -270,7 +270,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // Once we got hold of the drive, we can run the session
   {
     
-    //deferencing configLine is safe, because if configLine were not valid, 
+    //dereferencing configLine is safe, because if configLine were not valid, 
     //then findDrive would have return NULL and we would have not end up there
     TapeServerReporter tsr(m_intialProcess, m_driveConfig, m_hostname,m_volInfo,lc);
     
@@ -278,9 +278,11 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         m_castorConf.rtcopydBufsz,lc);
     MigrationReportPacker mrp(m_clientProxy,
         lc);
+    MigrationWatchDog mwd(2,60*10,m_intialProcess,lc);
     TapeWriteSingleThread twst(*drive.get(),
         m_mc,
         tsr,
+        mwd,
         m_volInfo,
         lc,
         mrp,

@@ -59,6 +59,7 @@ public:
     castor::tape::tapeserver::drive::DriveInterface & drive, 
     mediachanger::MediaChangerProxy &mc,
     TapeServerReporter & tsr,
+    MigrationWatchDog & mwd,
     const client::ClientInterface::VolumeInfo& volInfo,
     castor::log::LogContext & lc, MigrationReportPacker & repPacker,
     castor::server::ProcessCap &capUtils,
@@ -180,6 +181,11 @@ private:
    * Should the compression be enabled ? This is currently hard coded to true 
    */
   const bool m_compress;
+  
+  /**
+   * Reference to the watchdog, used in run()
+   */
+  MigrationWatchDog & m_watchdog;
 
 }; // class TapeWriteSingleThread
 

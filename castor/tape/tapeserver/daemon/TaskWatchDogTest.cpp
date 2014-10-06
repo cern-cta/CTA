@@ -67,7 +67,7 @@ TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
   ASSERT_EQ(std::string::npos, log.getLog().find("No tape block movement for too long"));
 }
 
-TEST(castor_tape_tapeserver_daemon, RecallWatchdogTestStuck) {
+TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
   const double reportPeriod = 10; // We wont report in practice
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
@@ -79,11 +79,11 @@ TEST(castor_tape_tapeserver_daemon, RecallWatchdogTestStuck) {
   castor::messages::TapeserverProxyDummy dummyInitialProcess;
   
   // We will poll for a 
-  tapeserver::daemon::RecallWatchDog watchdog(reportPeriod,stuckPeriod,
+  tapeserver::daemon::MigrationWatchDog watchdog(reportPeriod,stuckPeriod,
     dummyInitialProcess,lc, pollPeriod);
   
   watchdog.startThread();
-  tapeserver::daemon::ReportPackerInterface<castor::tape::tapeserver::daemon::detail::Recall>::FileStruct file;
+  tapegateway::FileToMigrateStruct file;
   watchdog.notifyBeginNewJob(file);
   usleep(100000);
   watchdog.stopAndWaitThread();

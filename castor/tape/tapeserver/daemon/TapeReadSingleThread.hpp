@@ -123,6 +123,7 @@ private:
   ///a pointer to task injector, thus we can ask him for more tasks
   castor::tape::tapeserver::daemon::RecallTaskInjector * m_taskInjector;
   
+  /// Reference to the watchdog, used in run()
   RecallWatchDog& m_watchdog;
 
 }; // class TapeReadSingleThread

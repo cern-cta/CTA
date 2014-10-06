@@ -29,6 +29,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
 castor::tape::tapeserver::drive::DriveInterface & drive, 
         castor::mediachanger::MediaChangerProxy & mc,
         TapeServerReporter & tsr,
+        MigrationWatchDog & mwd,
         const client::ClientInterface::VolumeInfo& volInfo,
         castor::log::LogContext & lc, MigrationReportPacker & repPacker,
         castor::server::ProcessCap &capUtils,
@@ -38,7 +39,8 @@ castor::tape::tapeserver::drive::DriveInterface & drive,
         m_bytesBeforeFlush(bytesBeforeFlush),
         m_drive(drive), m_reportPacker(repPacker),
         m_lastFseq(-1),
-        m_compress(true) {}
+        m_compress(true),
+        m_watchdog(mwd){}
 //------------------------------------------------------------------------------
 //setlastFseq
 //------------------------------------------------------------------------------
@@ -179,7 +181,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
           m_logContext.log(LOG_DEBUG, "writing data to tape has finished");
           break;
         }
-        task->execute(*writeSession,m_reportPacker,m_logContext,timer);
+        task->execute(*writeSession,m_reportPacker,m_watchdog,m_logContext,timer);
         // Add the tasks counts to the session's
         m_stats.add(task->getTaskStats());
         // Increase local flush counters (session counters are incremented by

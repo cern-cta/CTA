@@ -61,8 +61,8 @@ namespace daemon {
 // execute
 //------------------------------------------------------------------------------  
    void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,
-           MigrationReportPacker & reportPacker,castor::log::LogContext& lc,
-           utils::Timer & timer) {
+           MigrationReportPacker & reportPacker, MigrationWatchDog & watchdog,
+           castor::log::LogContext& lc, utils::Timer & timer) {
     using castor::log::LogContext;
     using castor::log::Param;
     using castor::log::ScopedParamContainer;
@@ -85,6 +85,7 @@ namespace daemon {
     uint32_t memBlockId  = 0;
     try {
       //try to open the session
+      watchdog.notifyBeginNewJob(*m_fileToMigrate);
       std::auto_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       m_taskStats.transferTime += timer.secs(utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
@@ -102,7 +103,7 @@ namespace daemon {
         
         m_taskStats.transferTime += timer.secs(utils::Timer::resetCounter);
         m_taskStats.dataVolume += mb->m_payload.size();
-        
+        watchdog.notify();
         ++memBlockId;
       }
       
@@ -159,7 +160,8 @@ namespace daemon {
       //we throw again because we want TWST to stop all tasks from execution 
       //and go into a degraded mode operation.
       throw;
-    } 
+    }
+    watchdog.fileFinished();
    }
 //------------------------------------------------------------------------------
 // getFreeBlock
