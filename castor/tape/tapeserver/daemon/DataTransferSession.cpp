@@ -174,7 +174,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // A NULL pointer is returned on failure
   std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(m_driveConfig,lc));
   
-  if(!drive.get()) return MARK_DRIVE_AS_UP;    
+  if(!drive.get()) return MARK_DRIVE_AS_DOWN;    
   // We can now start instantiating all the components of the data path
   {
     // Allocate all the elements of the memory management (in proper order
