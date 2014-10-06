@@ -37,14 +37,12 @@ castor::messages::AcsProxyZmq::AcsProxyZmq(log::Logger &log,
 }
 
 //------------------------------------------------------------------------------
-// mountTapeForRecall
+// mountTapeReadOnly
 //------------------------------------------------------------------------------
-void castor::messages::AcsProxyZmq::mountTapeForRecall(const std::string &vid,
-  const uint32_t acs, const uint32_t lsm, const uint32_t panel,
-  const uint32_t drive) {
+void castor::messages::AcsProxyZmq::mountTapeReadOnly(const std::string &vid,
+  const mediachanger::AcsLibrarySlot &librarySlot) {
   try {
-    const Frame rqst = createAcsMountTapeForRecallFrame(vid, acs, lsm, panel,
-      drive);
+    const Frame rqst = createAcsMountTapeForRecallFrame(vid, librarySlot);
     sendFrame(m_serverSocket, rqst);
 
     ReturnValue reply;
@@ -60,8 +58,7 @@ void castor::messages::AcsProxyZmq::mountTapeForRecall(const std::string &vid,
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to request CASTOR ACS daemon to mount tape for recall: " <<
-      "vid=" << vid << " acs=" << acs << " lsm=" << lsm << " panel=" << panel <<
-      " drive=" << drive << ": " << ne.getMessage().str();
+      librarySlot.str() << ": " << ne.getMessage().str();
     throw ex;
   }
 }
@@ -70,8 +67,9 @@ void castor::messages::AcsProxyZmq::mountTapeForRecall(const std::string &vid,
 // createAcsMountTapeForRecallFrame
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::messages::AcsProxyZmq::
-  createAcsMountTapeForRecallFrame(const std::string &vid, const uint32_t acs,
-  const uint32_t lsm, const uint32_t panel, const uint32_t drive) {
+  createAcsMountTapeForRecallFrame(const std::string &vid,
+  const mediachanger::AcsLibrarySlot &librarySlot) {
+/*
   try {
     Frame frame;
 
@@ -88,23 +86,25 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;
+
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to create AcsMountTapeForRecall frame: " <<
       ne.getMessage().str();
     throw ex;
   }
+*/
+
+  return Frame();
 }
 
 //------------------------------------------------------------------------------
-// mountTapeForMigration
+// mountTapeReadWrite
 //------------------------------------------------------------------------------
-void castor::messages::AcsProxyZmq::mountTapeForMigration(const std::string &vid,
-  const uint32_t acs, const uint32_t lsm, const uint32_t panel,
-  const uint32_t drive) {
+void castor::messages::AcsProxyZmq::mountTapeReadWrite(const std::string &vid,
+  const mediachanger::AcsLibrarySlot &librarySlot) {
   try {
-    const Frame rqst = createAcsMountTapeForMigrationFrame(vid, acs, lsm, panel,
-      drive);
+    const Frame rqst = createAcsMountTapeForMigrationFrame(vid, librarySlot);
     sendFrame(m_serverSocket, rqst);
 
     ReturnValue reply;
@@ -120,8 +120,7 @@ void castor::messages::AcsProxyZmq::mountTapeForMigration(const std::string &vid
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to request CASTOR ACS daemon to mount tape for migration: " <<
-      "vid=" << vid << " acs=" << acs << " lsm=" << lsm << " panel=" << panel <<
-      " drive=" << drive << ": " << ne.getMessage().str();
+      librarySlot.str() << ": " << ne.getMessage().str();
     throw ex;
   }
 }
@@ -131,8 +130,8 @@ void castor::messages::AcsProxyZmq::mountTapeForMigration(const std::string &vid
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::messages::AcsProxyZmq::
   createAcsMountTapeForMigrationFrame(const std::string &vid, 
-  const uint32_t acs,const uint32_t lsm, const uint32_t panel, 
-  const uint32_t drive) {
+  const mediachanger::AcsLibrarySlot &librarySlot) {
+/*
   try {
     Frame frame;
 
@@ -149,22 +148,25 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;
+
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to create AcsMountTapeForMigration frame: " <<
       ne.getMessage().str();
     throw ex;
   }
+*/
+
+  return Frame();
 }
+
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
 void castor::messages::AcsProxyZmq::dismountTape(const std::string &vid,
-  const uint32_t acs, const uint32_t lsm, const uint32_t panel,
-  const uint32_t drive) {
+  const mediachanger::AcsLibrarySlot &librarySlot) {
   try {
-    const Frame rqst = createAcsDismountTapeFrame(vid, acs, lsm, panel,
-      drive);
+    const Frame rqst = createAcsDismountTapeFrame(vid, librarySlot);
     sendFrame(m_serverSocket, rqst);
 
     ReturnValue reply;
@@ -180,8 +182,7 @@ void castor::messages::AcsProxyZmq::dismountTape(const std::string &vid,
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to request CASTOR ACS daemon to dismount tape: " <<
-      "vid=" << vid << " acs=" << acs << " lsm=" << lsm << " panel=" << panel <<
-      " drive=" << drive << ": " << ne.getMessage().str();
+      librarySlot.str() << ": " << ne.getMessage().str();
     throw ex;
   }
 }
@@ -191,8 +192,8 @@ void castor::messages::AcsProxyZmq::dismountTape(const std::string &vid,
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::messages::AcsProxyZmq::
   createAcsDismountTapeFrame(const std::string &vid, 
-  const uint32_t acs,const uint32_t lsm, const uint32_t panel, 
-  const uint32_t drive) {
+  const mediachanger::AcsLibrarySlot &librarySlot) {
+/*
   try {
     Frame frame;
 
@@ -209,10 +210,14 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;
+
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to create AcsDismountTape frame: " <<
       ne.getMessage().str();
     throw ex;
   }
+*/
+
+  return Frame();
 }

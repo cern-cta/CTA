@@ -134,6 +134,7 @@ add_executable(castorUnitTests
   ../castor/log/LogContextTest.cpp
   ../castor/log/StringLoggerTest.cpp
   ../castor/log/SyslogLoggerTest.cpp
+  ../castor/mediachanger/AcsLibrarySlot.cpp
   ../castor/mediachanger/TapeLibrarySlotTest.cpp
   ../castor/messages/MessagesTest.cpp
   ../castor/server/DaemonTest.cpp

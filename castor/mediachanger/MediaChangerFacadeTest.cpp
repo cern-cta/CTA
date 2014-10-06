@@ -32,6 +32,7 @@
 
 namespace unitTests {
 
+/*
 class castor_mediachanger_MediaChangerFacadeTest : public ::testing::Test {
 protected:
 
@@ -268,5 +269,7 @@ TEST_F(castor_mediachanger_MediaChangerFacadeTest, dismountTapeRmc) {
   ASSERT_EQ(0, m_rmc.nbTimesMountTapeReadWriteCalled);
   ASSERT_EQ(1, m_rmc.nbTimesDismountTapeCalled);
 }
+
+*/
 
 } // namespace unitTests

@@ -33,41 +33,34 @@ class AcsProxyDummy: public AcsProxy {
 public:
 
   /**
-   * Request the CASTOR ACS daemon to mount the specifed tape for recall.
+   * Request the CASTOR ACS daemon to mount the specified tape for read-only
+   * access into the tape drive in the specified library slot.
    *
-   * @param vid The tape to be mounted.
-   * @param acs The ACS identifier.
-   * @param lsm The LSM identifier.
-   * @param panel The panel identifier.
-   * @param drive The drive identifier.
+   * @param vid The volume identifier of the tape to be mounted.
+   * @param librarySlot The slot in the library that contains the tape drive.
+   */ 
+  void mountTapeReadOnly(const std::string &vid,
+    const mediachanger::AcsLibrarySlot &librarySlot);
+    
+  /** 
+   * Request the CASTOR ACS daemon to mount the specifed tape for read/write
+   * access into the tape drive in the specified library slot.
+   *    
+   * @param vid The volume identifier of the tape to be mounted.
+   * @param librarySlot The slot in the library that contains the tape drive.
    */
-  void mountTapeForRecall(const std::string &vid, const uint32_t acs,
-     const uint32_t lsm, const uint32_t panel, const uint32_t drive);
-  
-  /**
-   * Request the CASTOR ACS daemon to mount the specifed tape for migration.
+  void mountTapeReadWrite(const std::string &vid,
+    const mediachanger::AcsLibrarySlot &librarySlot);
+    
+  /** 
+   * Request the CASTOR ACS daemon to dismount the specifed tape from the tape
+   * drive in the specified library slot.
    *
-   * @param vid The tape to be mounted.
-   * @param acs The ACS identifier.
-   * @param lsm The LSM identifier.
-   * @param panel The panel identifier.
-   * @param drive The drive identifier.
+   * @param vid The volume identifier of the tape to be mounted.
+   * @param librarySlot The slot in the library that contains the tape drive.
    */
-  void mountTapeForMigration(const std::string &vid, const uint32_t acs,
-     const uint32_t lsm, const uint32_t panel, const uint32_t drive);
-  
-  /**
-   * Request the CASTOR ACS daemon to dismount the specifed tape.
-   *
-   * @param vid The tape to be mounted.
-   * @param acs The ACS identifier.
-   * @param lsm The LSM identifier.
-   * @param panel The panel identifier.
-   * @param drive The drive identifier.
-   */
-  void dismountTape(const std::string &vid, const uint32_t acs,
-     const uint32_t lsm, const uint32_t panel, const uint32_t drive);
-
+  void dismountTape(const std::string &vid,
+    const mediachanger::AcsLibrarySlot &librarySlot);
 
 }; // class AcsProxyDummy
 

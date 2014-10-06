@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "castor/mediachanger/AcsLibrarySlot.hpp"
+
 #include <stdint.h>
 #include <string>
 
@@ -40,40 +42,34 @@ public:
   virtual ~AcsProxy()  = 0;
 
   /**
-   * Request the CASTOR ACS daemon to mount the specifed tape for recall.
+   * Request the CASTOR ACS daemon to mount the specified tape for read-only
+   * access into the tape drive in the specified library slot.
    *
-   * @param vid The tape to be mounted.
-   * @param acs The ACS identifier.
-   * @param lsm The LSM identifier.
-   * @param panel The panel identifier.
-   * @param drive The drive identifier.
+   * @param vid The volume identifier of the tape to be mounted.
+   * @param librarySlot The slot in the library that contains the tape drive.
    */
-  virtual void mountTapeForRecall(const std::string &vid, const uint32_t acs,
-     const uint32_t lsm, const uint32_t panel, const uint32_t drive) = 0;
+  virtual void mountTapeReadOnly(const std::string &vid,
+    const mediachanger::AcsLibrarySlot &librarySlot) = 0;
   
   /**
-   * Request the CASTOR ACS daemon to mount the specifed tape for migration.
+   * Request the CASTOR ACS daemon to mount the specifed tape for read/write
+   * access into the tape drive in the specified library slot.
    *
-   * @param vid The tape to be mounted.
-   * @param acs The ACS identifier.
-   * @param lsm The LSM identifier.
-   * @param panel The panel identifier.
-   * @param drive The drive identifier.
+   * @param vid The volume identifier of the tape to be mounted.
+   * @param librarySlot The slot in the library that contains the tape drive.
    */
-  virtual void mountTapeForMigration(const std::string &vid, const uint32_t acs,
-     const uint32_t lsm, const uint32_t panel, const uint32_t drive) = 0;
+  virtual void mountTapeReadWrite(const std::string &vid,
+    const mediachanger::AcsLibrarySlot &librarySlot) = 0;
   
   /**
-   * Request the CASTOR ACS daemon to dismount the specifed tape.
+   * Request the CASTOR ACS daemon to dismount the specifed tape from the tape
+   * drive in the specified library slot.
    *
-   * @param vid The tape to be dismounted.
-   * @param acs The ACS identifier.
-   * @param lsm The LSM identifier.
-   * @param panel The panel identifier.
-   * @param drive The drive identifier.
+   * @param vid The volume identifier of the tape to be mounted.
+   * @param librarySlot The slot in the library that contains the tape drive.
    */
-  virtual void dismountTape(const std::string &vid, const uint32_t acs,
-     const uint32_t lsm, const uint32_t panel, const uint32_t drive) = 0;
+  virtual void dismountTape(const std::string &vid,
+    const mediachanger::AcsLibrarySlot &librarySlot) = 0;
 
 }; // class AcsProxy
 

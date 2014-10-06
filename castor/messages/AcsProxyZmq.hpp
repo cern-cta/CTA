@@ -47,40 +47,34 @@ public:
     void *const zmqContext) throw();
 
   /**
-   * Request the CASTOR ACS daemon to mount the specifed tape for recall.
+   * Request the CASTOR ACS daemon to mount the specified tape for read-only
+   * access into the tape drive in the specified library slot.
    *
-   * @param vid The tape to be mounted.
-   * @param acs The ACS identifier.
-   * @param lsm The LSM identifier.
-   * @param panel The panel identifier.
-   * @param drive The drive identifier.
+   * @param vid The volume identifier of the tape to be mounted.
+   * @param librarySlot The slot in the library that contains the tape drive.
    */
-  void mountTapeForRecall(const std::string &vid, const uint32_t acs,
-    const uint32_t lsm, const uint32_t panel, const uint32_t drive);
-  
-  /**
-   * Request the CASTOR ACS daemon to mount the specifed tape for migration.
+  void mountTapeReadOnly(const std::string &vid,
+    const mediachanger::AcsLibrarySlot &librarySlot);
+
+  /** 
+   * Request the CASTOR ACS daemon to mount the specifed tape for read/write
+   * access into the tape drive in the specified library slot.
+   *    
+   * @param vid The volume identifier of the tape to be mounted.
+   * @param librarySlot The slot in the library that contains the tape drive.
+   */
+  void mountTapeReadWrite(const std::string &vid,
+    const mediachanger::AcsLibrarySlot &librarySlot);
+
+  /** 
+   * Request the CASTOR ACS daemon to dismount the specifed tape from the tape
+   * drive in the specified library slot.
    *
-   * @param vid The tape to be mounted.
-   * @param acs The ACS identifier.
-   * @param lsm The LSM identifier.
-   * @param panel The panel identifier.
-   * @param drive The drive identifier.
+   * @param vid The volume identifier of the tape to be mounted.
+   * @param librarySlot The slot in the library that contains the tape drive.
    */
-  void mountTapeForMigration(const std::string &vid, const uint32_t acs,
-    const uint32_t lsm, const uint32_t panel, const uint32_t drive);
-  
-  /**
-   * Request the CASTOR ACS daemon to dismount the specifed tape.
-   *
-   * @param vid The tape to be mounted.
-   * @param acs The ACS identifier.
-   * @param lsm The LSM identifier.
-   * @param panel The panel identifier.
-   * @param drive The drive identifier.
-   */
-  void dismountTape(const std::string &vid, const uint32_t acs,
-    const uint32_t lsm, const uint32_t panel, const uint32_t drive);
+  void dismountTape(const std::string &vid,
+    const mediachanger::AcsLibrarySlot &librarySlot);
 
 private:
 
@@ -104,43 +98,31 @@ private:
    * Creates a frame containing a AcsMountTapeForRecall message.
    *
    * @param vid The tape to be mounted.
-   * @param acs The ACS identifier.
-   * @param lsm The LSM identifier.
-   * @param panel The panel identifier.
-   * @param drive The drive identifier.
+   * @param librarySlot The slot in the library that contains the tape drive.
    * @return The frame.
    */
   Frame createAcsMountTapeForRecallFrame(const std::string &vid,
-    const uint32_t acs, const uint32_t lsm, const uint32_t panel,
-    const uint32_t drive);
+    const mediachanger::AcsLibrarySlot &librarySlot);
   
   /**
    * Creates a frame containing a AcsMountTapeForMigration message.
    *
    * @param vid The tape to be mounted.
-   * @param acs The ACS identifier.
-   * @param lsm The LSM identifier.
-   * @param panel The panel identifier.
-   * @param drive The drive identifier.
+   * @param librarySlot The slot in the library that contains the tape drive.
    * @return The frame.
    */
   Frame createAcsMountTapeForMigrationFrame(const std::string &vid,
-    const uint32_t acs, const uint32_t lsm, const uint32_t panel,
-    const uint32_t drive);
+    const mediachanger::AcsLibrarySlot &librarySlot);
   
   /**
    * Creates a frame containing a AcsDismountTape message.
    *
    * @param vid The tape to be dismounted.
-   * @param acs The ACS identifier.
-   * @param lsm The LSM identifier.
-   * @param panel The panel identifier.
-   * @param drive The drive identifier.
+   * @param librarySlot The slot in the library that contains the tape drive.
    * @return The frame.
    */
   Frame createAcsDismountTapeFrame(const std::string &vid,
-    const uint32_t acs, const uint32_t lsm, const uint32_t panel,
-    const uint32_t drive);
+    const mediachanger::AcsLibrarySlot &librarySlot);
 
 }; // class AcsProxyZmq
 

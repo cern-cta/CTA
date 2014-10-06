@@ -20,6 +20,7 @@
 cmake_minimum_required (VERSION 2.6)
 
 set (MEDIA_CHANGER_CLIENT_LIB_SRC_FILES
+  AcsLibrarySlot.cpp
   MediaChangerFacade.cpp
   MediaChangerProxy.cpp
   MediaChangerProxyDummy.cpp

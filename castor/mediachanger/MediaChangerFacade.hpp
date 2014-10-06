@@ -22,6 +22,7 @@
 #pragma once
 
 #include "castor/mediachanger/MediaChangerProxy.hpp"
+#include "castor/messages/AcsProxy.hpp"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -46,7 +47,7 @@ public:
    * @param rmc Proxy object representing the rmcd daemon.
    */
   MediaChangerFacade(
-    MediaChangerProxy &acs,
+    messages::AcsProxy &acs,
     MediaChangerProxy &mmc,
     MediaChangerProxy &rmc) throw();
 
@@ -85,7 +86,7 @@ private:
   /**
    * Proxy object representing the CASTOR ACS daemon.
    */
-  MediaChangerProxy &m_acs;
+  messages::AcsProxy &m_acs;
 
   /**
    * Proxy object representing the manual media-changer.

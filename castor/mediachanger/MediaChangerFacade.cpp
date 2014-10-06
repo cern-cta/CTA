@@ -27,7 +27,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::mediachanger::MediaChangerFacade::MediaChangerFacade(
-  MediaChangerProxy &acs,
+  messages::AcsProxy &acs,
   MediaChangerProxy &mmc,
   MediaChangerProxy &rmc) throw():
   m_acs(acs),
@@ -46,7 +46,7 @@ void castor::mediachanger::MediaChangerFacade::mountTapeReadOnly(
     // Dispatch the appropriate helper method depending on library slot type
     switch(libraryType) {
     case TAPE_LIBRARY_TYPE_ACS:
-      return m_acs.mountTapeReadOnly(vid, librarySlot);
+      return m_acs.mountTapeReadOnly(vid, librarySlot.str());
     case TAPE_LIBRARY_TYPE_MANUAL:
       return m_mmc.mountTapeReadOnly(vid, librarySlot);
     case TAPE_LIBRARY_TYPE_SCSI:
@@ -78,7 +78,7 @@ void castor::mediachanger::MediaChangerFacade::mountTapeReadWrite(
     // Dispatch the appropriate helper method depending on library slot type
     switch(libraryType) {
     case TAPE_LIBRARY_TYPE_ACS: 
-      return m_acs.mountTapeReadWrite(vid, librarySlot);
+      return m_acs.mountTapeReadWrite(vid, librarySlot.str());
     case TAPE_LIBRARY_TYPE_MANUAL: 
       return m_mmc.mountTapeReadWrite(vid, librarySlot);
     case TAPE_LIBRARY_TYPE_SCSI:
@@ -110,7 +110,7 @@ void castor::mediachanger::MediaChangerFacade::dismountTape(
     // Dispatch the appropriate helper method depending on library slot type
     switch(libraryType) {
     case TAPE_LIBRARY_TYPE_ACS:
-      return m_acs.dismountTape(vid, librarySlot);
+      return m_acs.dismountTape(vid, librarySlot.str());
     case TAPE_LIBRARY_TYPE_MANUAL:
       return m_mmc.dismountTape(vid, librarySlot);
     case TAPE_LIBRARY_TYPE_SCSI:

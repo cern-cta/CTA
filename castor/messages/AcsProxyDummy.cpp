@@ -22,25 +22,22 @@
 #include "castor/messages/AcsProxyDummy.hpp"
 
 //------------------------------------------------------------------------------
-// mountTapeForRecall
+// mountTapeReadOnly
 //------------------------------------------------------------------------------
-void castor::messages::AcsProxyDummy::mountTapeForRecall(const std::string &vid,
-  const uint32_t acs, const uint32_t lsm, const uint32_t panel,
-  const uint32_t drive) {
+void castor::messages::AcsProxyDummy::mountTapeReadOnly(const std::string &vid,
+  const mediachanger::AcsLibrarySlot &librarySlot) {
 }
 
 //------------------------------------------------------------------------------
 // mountTapeForMigration
 //------------------------------------------------------------------------------
-void castor::messages::AcsProxyDummy::mountTapeForMigration(const std::string &vid,
-  const uint32_t acs, const uint32_t lsm, const uint32_t panel,
-  const uint32_t drive) {
+void castor::messages::AcsProxyDummy::mountTapeReadWrite(const std::string &vid,
+  const mediachanger::AcsLibrarySlot &librarySlot) {
 }
 
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
 void castor::messages::AcsProxyDummy::dismountTape(const std::string &vid,
-  const uint32_t acs, const uint32_t lsm, const uint32_t panel,
-  const uint32_t drive) {
+  const mediachanger::AcsLibrarySlot &librarySlot) {
 }
