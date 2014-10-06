@@ -32,6 +32,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
   add_subdirectory (stager/daemon)
   add_subdirectory (tape)
   add_subdirectory (vdqm)
+  add_subdirectory (acs)
 endif (${COMPILE_SERVER} STREQUAL "1")
 
 ################################################################################

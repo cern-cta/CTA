@@ -40,6 +40,7 @@ find_library (STK_CL_LIB cl PATHS /usr/lib64/CDK /usr/lib/CDK NO_DEFAULT_PATH)
 if (STK_CL_LIB)
   message(STATUS "Found the STK cl library: ${STK_CL_LIB}")
 endif (STK_CL_LIB)
+set (STK_UNITTEST_SRC_FILES)
 
 # Add STK related tests if all four STK client libaries
 # (libapi.so, libutl.so, libipc.so and libcl.so) have been found
@@ -65,7 +66,15 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     ../castor/tape/rmc/Cmd.cpp
     ../castor/tape/rmc/ConnectionHandler.cpp
     ../castor/tape/rmc/RmcDaemon.cpp
-    ../castor/tape/rmc/RmcDaemonTest.cpp)
+    ../castor/tape/rmc/RmcDaemonTest.cpp
+    ../castor/acs/AcsDaemon.cpp
+    ../castor/acs/AcsDaemonTest.cpp
+    ../castor/acs/AcsMessageHandler.cpp
+    ../castor/acs/AcsDismountTape.cpp
+    ../castor/acs/AcsMountTapeForRecall.cpp
+    ../castor/acs/AcsMountTapeForMigration.cpp
+    ../castor/acs/AcsLibraryInteraction.cpp
+    ../castor/tape/rmc/AcsImpl.cpp)
 
   foreach(SRC_FILE ${STK_UNITTEST_SRC_FILES})
     set_property(SOURCE ${SRC_FILE}
@@ -161,12 +170,13 @@ add_executable(castorUnitTests
   ../castor/utils/SmartArrayPtrTest.cpp
   ../castor/utils/SmartFdTest.cpp
   ../castor/utils/UtilsTest.cpp
-  ${STK_UNITTEST_SRC_FILES}
-  ${LIBCAPUNITTEST_SRC_FILES})
+  ${LIBCAPUNITTEST_SRC_FILES}
+  ${STK_UNITTEST_SRC_FILES})
 
 set_property(SOURCE ../SCSI/StructuresTest.cpp
   PROPERTY COMPILE_FLAGS -fno-strict-aliasing
 )
+
 target_link_libraries(castorUnitTests
   castorcommon
   castorclient

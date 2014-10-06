@@ -115,6 +115,22 @@ DRIVEID castor::tape::rmc::Acs::str2DriveId(const std::string &str)
 }
 
 //------------------------------------------------------------------------------
+// alpd2DriveId
+//------------------------------------------------------------------------------
+DRIVEID castor::tape::rmc::Acs::alpd2DriveId(const uint32_t acsNum,
+  const uint32_t lsm, const uint32_t panel, const uint32_t drive)
+  const  {
+  
+  DRIVEID driveId;
+  driveId.panel_id.lsm_id.acs = (ACS)acsNum;
+  driveId.panel_id.lsm_id.lsm = (LSM)lsm;
+  driveId.panel_id.panel = (PANEL)panel;
+  driveId.drive = (DRIVE)drive;
+
+  return driveId;
+}
+
+//------------------------------------------------------------------------------
 // str2Volid
 //------------------------------------------------------------------------------
 VOLID castor::tape::rmc::Acs::str2Volid(const std::string &str) const

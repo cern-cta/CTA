@@ -31,6 +31,7 @@ extern "C" {
 }
 
 #include <string>
+#include <stdint.h>
 
 namespace castor {
 namespace tape {
@@ -59,6 +60,14 @@ public:
   DRIVEID str2DriveId(const std::string &str) const
     ;
 
+  /**
+   * ????
+   * @return The drive ID object.
+   */
+  DRIVEID alpd2DriveId(const uint32_t acsNum, const uint32_t lsm, 
+    const uint32_t panel, const uint32_t drive) const 
+    ;
+  
   /**
    * Returns the VOLID equibvalent of the specified string.
    *
