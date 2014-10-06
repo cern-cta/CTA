@@ -187,7 +187,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     if (tapegateway::READ_TP == m_volInfo.clientType) {
       rrp.disableBulk();
     }
-    RecallWatchDog rwd(2,60*10,m_intialProcess,lc);
+    RecallWatchDog rwd(2,60*10,m_intialProcess,m_driveConfig.unitName,lc);
     
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
     TapeServerReporter tsr(m_intialProcess, m_driveConfig, 
@@ -278,7 +278,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         m_castorConf.rtcopydBufsz,lc);
     MigrationReportPacker mrp(m_clientProxy,
         lc);
-    MigrationWatchDog mwd(2,60*10,m_intialProcess,lc);
+    MigrationWatchDog mwd(2,60*10,m_intialProcess,m_driveConfig.unitName,lc);
     TapeWriteSingleThread twst(*drive.get(),
         m_mc,
         tsr,

@@ -92,6 +92,10 @@ protected:
    */
   messages::TapeserverProxy& m_initialProcess;
   
+  /**
+   * The drive unit name to report
+   */
+  const std::string m_driveUnitName;
   /*
    *  Is the system at _this very moment_ reading or writing on tape
    */
@@ -135,7 +139,7 @@ protected:
         castor::server::MutexLocker locker(&m_mutex);
         m_lc.log(LOG_DEBUG,"going to report");
         m_reportTimer.reset();
-        m_initialProcess.notifyHeartbeat("Heartbeat report", m_nbOfMemblocksMoved);
+        m_initialProcess.notifyHeartbeat(m_driveUnitName, m_nbOfMemblocksMoved);
         m_nbOfMemblocksMoved=0;
       } 
       else{
@@ -156,10 +160,12 @@ protected:
    */
   TaskWatchDog(double reportPeriod,double stuckPeriod,
          messages::TapeserverProxy& initialProcess,
+          const std::string & driveUnitName,
          log::LogContext lc, double pollPeriod = 0.1): 
   m_nbOfMemblocksMoved(0), m_pollPeriod(pollPeriod),
   m_reportPeriod(reportPeriod), m_stuckPeriod(stuckPeriod), 
-  m_initialProcess(initialProcess), m_fileBeingMoved(false), m_lc(lc) {
+  m_initialProcess(initialProcess), m_driveUnitName(driveUnitName),
+  m_fileBeingMoved(false), m_lc(lc) {
     m_lc.pushOrReplace(log::Param("thread","Watchdog"));
   }
   
@@ -218,8 +224,10 @@ public:
   /** Pass through constructor */
   RecallWatchDog(double periodToReport,double stuckPeriod,
     messages::TapeserverProxy& initialProcess,
+    const std::string & driveUnitName,
     log::LogContext lc, double pollPeriod = 0.1): 
-  TaskWatchDog(periodToReport, stuckPeriod, initialProcess, lc, pollPeriod) {}
+  TaskWatchDog(periodToReport, stuckPeriod, initialProcess, driveUnitName, lc, 
+    pollPeriod) {}
   /**
    * Notify the watchdog which file we are operating
    * @param file
@@ -262,8 +270,10 @@ public:
   /** Pass through constructor */
   MigrationWatchDog(double periodToReport,double stuckPeriod,
     messages::TapeserverProxy& initialProcess,
+    const std::string & driveUnitName,
     log::LogContext lc, double pollPeriod = 0.1): 
-  TaskWatchDog(periodToReport, stuckPeriod, initialProcess, lc, pollPeriod) {}
+  TaskWatchDog(periodToReport, stuckPeriod, initialProcess, driveUnitName, lc, 
+    pollPeriod) {}
   /**
    * Notify the watchdog which file we are operating
    * @param file

@@ -57,7 +57,7 @@ TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
 
 
   tapeserver::daemon::RecallWatchDog watchdog(periodToReport,
-    stuckPeriod,dummyInitialProcess,lc,pollPeriod);
+    stuckPeriod,dummyInitialProcess,"testTapeDrive",lc,pollPeriod);
   
   watchdog.startThread();
   usleep(100000);
@@ -80,7 +80,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
   
   // We will poll for a 
   tapeserver::daemon::MigrationWatchDog watchdog(reportPeriod,stuckPeriod,
-    dummyInitialProcess,lc, pollPeriod);
+    dummyInitialProcess,"testTapeDrive",  lc, pollPeriod);
   
   watchdog.startThread();
   tapegateway::FileToMigrateStruct file;
