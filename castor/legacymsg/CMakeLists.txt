@@ -1,6 +1,3 @@
-#
-#                      castor/legacymsg/CMakeLists.txt
-#
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
 #
@@ -18,7 +15,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 #
-# Steven.Murray@cern.ch
+# @author Castor Dev team, castor-dev@cern.ch
 #
 cmake_minimum_required (VERSION 2.6)
 

@@ -1,6 +1,3 @@
-#
-#                      castor/tape/rmc/CMakeLists.txt
-#
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
 #
