@@ -24,8 +24,7 @@
 #pragma once
 
 namespace castor {
-namespace tape {
-namespace utils {
+namespace mediachanger {
 
 /**
  * Enumeration of the different types of tape library.
@@ -45,6 +44,5 @@ enum TapeLibraryType {
  */
 const char *tapeLibraryTypeToString(const TapeLibraryType libraryType) throw();
   
-} // namespace utils
-} // namespace tape
+} // namespace mediachanger
 } // namespace castor

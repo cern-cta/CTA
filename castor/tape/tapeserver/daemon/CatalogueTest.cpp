@@ -102,7 +102,7 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   }
   
   ASSERT_EQ(CatalogueDrive::DRIVE_STATE_DOWN, unit1.getState());
-  ASSERT_EQ(castor::tape::utils::TAPE_LIBRARY_TYPE_MANUAL,
+  ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
     unit1Config.librarySlot.getLibraryType());
   ASSERT_EQ(std::string("manual@SLOT1"), unit1Config.librarySlot.str());
   ASSERT_EQ(std::string("DEVTYPE1"), unit1Config.devType);
@@ -128,7 +128,7 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   }
 
   ASSERT_EQ(CatalogueDrive::DRIVE_STATE_DOWN, unit2.getState());
-  ASSERT_EQ(castor::tape::utils::TAPE_LIBRARY_TYPE_MANUAL,
+  ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
     unit2Config.librarySlot.getLibraryType());
   ASSERT_EQ(std::string("manual@SLOT2"), unit2Config.librarySlot.str());
   ASSERT_EQ(std::string("DEVTYPE2"), unit2Config.devType);

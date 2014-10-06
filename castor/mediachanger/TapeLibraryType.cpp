@@ -16,40 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
+ *
+ *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "castor/mediachanger/TapeLibraryType.hpp"
 
-#include "castor/legacymsg/RmcProxyFactory.hpp"
-
-namespace castor {
-namespace legacymsg {
-
-/**
- * Concrete factory for creating objects of type RmcProxyDummy.
- */
-class RmcProxyDummyFactory: public RmcProxyFactory {
-public:
-
-  /**
-   * Destructor.
-   */
-  ~RmcProxyDummyFactory() throw();
-
-  /**
-   * Creates an object of type RmcProxyDummy on the heap and returns a pointer
-   * to it.
-   *
-   * Please note that it is the responsibility of the caller to deallocate the
-   * proxy object from the heap.
-   *
-   * @return A pointer to the newly created object.
-   */
-  RmcProxy *create();
-
-}; // class RmcProxyDummyFactory
-
-} // namespace legacymsg
-} // namespace castor
-
+//------------------------------------------------------------------------------
+// tapeLibraryTypeToString
+//------------------------------------------------------------------------------
+const char *castor::mediachanger::tapeLibraryTypeToString(
+  const TapeLibraryType libraryType) throw() {
+  switch(libraryType) {
+  case TAPE_LIBRARY_TYPE_NONE  : return "NONE";
+  case TAPE_LIBRARY_TYPE_ACS   : return "ACS";
+  case TAPE_LIBRARY_TYPE_MANUAL: return "MANUAL";
+  case TAPE_LIBRARY_TYPE_SCSI  : return "SCSI";
+  default                      : return "UNKNOWN";
+  }
+}

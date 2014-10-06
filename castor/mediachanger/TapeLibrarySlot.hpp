@@ -23,13 +23,12 @@
 
 #pragma once
 
-#include "castor/tape/utils/TapeLibraryType.hpp"
+#include "castor/mediachanger/TapeLibraryType.hpp"
 
 #include <string>
 
 namespace castor {
-namespace tape {
-namespace utils {
+namespace mediachanger {
 
 /**
  * Class representing a slot in a tape library.
@@ -89,6 +88,5 @@ private:
 
 }; // class TapeLibrarySlot
 
-} // namespace utils
-} // namespace tape
+} // namespace mediachanger
 } // namespace castor

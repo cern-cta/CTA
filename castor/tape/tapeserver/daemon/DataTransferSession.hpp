@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include "castor/mediachanger/MediaChangerProxy.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/log/LogContext.hpp"
@@ -38,7 +39,6 @@ namespace castor {
 namespace legacymsg {
   class VdqmProxy;
   class VmgrProxy;
-  class RmcProxy;
 }
 namespace tape {
 namespace tapeserver {
@@ -105,7 +105,7 @@ namespace daemon {
       castor::log::Logger & log,
       System::virtualWrapper & sysWrapper,
       const utils::DriveConfig & driveConfig,
-      castor::legacymsg::RmcProxy & rmc,
+      castor::mediachanger::MediaChangerProxy & mc,
       castor::messages::TapeserverProxy & initialProcess,
       castor::server::ProcessCap &capUtils,
       const CastorConf & castorConf);
@@ -169,9 +169,9 @@ namespace daemon {
     EndOfSessionAction executeWrite(log::LogContext & lc);
     /** sub-part of execute for a dump session */
     void executeDump(log::LogContext & lc);
-    /** Reference to the RmcProxy, allowing the mounting of the tape by the
-     * library. It will be used exclusively by the tape thread. */
-    castor::legacymsg::RmcProxy & m_rmc;
+    /** Reference to the MediaChangerProxy, allowing the mounting of the tape
+     * by the library. It will be used exclusively by the tape thread. */
+    castor::mediachanger::MediaChangerProxy & m_mc;
     /** Reference to the tape server's parent process to report detailed status */
     castor::messages::TapeserverProxy & m_intialProcess;
     /** Object providing utilities for working UNIX capabilities. */

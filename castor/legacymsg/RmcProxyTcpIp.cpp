@@ -46,10 +46,19 @@ castor::legacymsg::RmcProxyTcpIp::~RmcProxyTcpIp() throw() {
 }
 
 //------------------------------------------------------------------------------
-// mountTape
+// mountTapeReadOnly
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::mountTape(const std::string &vid,
-  const tape::utils::TapeLibrarySlot &librarySlot, const MountMode mode) {
+void castor::legacymsg::RmcProxyTcpIp::mountTapeReadOnly(
+  const std::string &vid, const mediachanger::TapeLibrarySlot &librarySlot) {
+  // SCSI does not support read-only mounts
+  mountTapeReadWrite(vid, librarySlot);
+}
+
+//------------------------------------------------------------------------------
+// mountTapeReadWrite
+//------------------------------------------------------------------------------
+void castor::legacymsg::RmcProxyTcpIp::mountTapeReadWrite(
+  const std::string &vid, const mediachanger::TapeLibrarySlot &librarySlot) {
   // Verify parameters
   if(vid.empty()) {
     castor::exception::Exception ex;
@@ -66,13 +75,13 @@ void castor::legacymsg::RmcProxyTcpIp::mountTape(const std::string &vid,
 
   // Dispatch the appropriate helper method depending on library slot type
   switch(librarySlot.getLibraryType()) {
-  case tape::utils::TAPE_LIBRARY_TYPE_ACS:
+  case mediachanger::TAPE_LIBRARY_TYPE_ACS:
     mountTapeAcs(vid, librarySlot.str());
     break;
-  case tape::utils::TAPE_LIBRARY_TYPE_MANUAL:
+  case mediachanger::TAPE_LIBRARY_TYPE_MANUAL:
     mountTapeManual(vid);
     break;
-  case tape::utils::TAPE_LIBRARY_TYPE_SCSI:
+  case mediachanger::TAPE_LIBRARY_TYPE_SCSI:
     mountTapeScsi(vid, librarySlot.str());
     break;
   default:
@@ -160,10 +169,10 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid,
 }
 
 //------------------------------------------------------------------------------
-// unmountTape
+// dismountTape
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::unmountTape(const std::string &vid,
-  const tape::utils::TapeLibrarySlot &librarySlot) {
+void castor::legacymsg::RmcProxyTcpIp::dismountTape(const std::string &vid,
+  const mediachanger::TapeLibrarySlot &librarySlot) {
   // Verify parameters
   if(vid.empty()) {
     castor::exception::Exception ex;
@@ -179,13 +188,13 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTape(const std::string &vid,
 
   // Dispatch the appropriate helper method depending on library slot type
   switch(librarySlot.getLibraryType()) {
-  case tape::utils::TAPE_LIBRARY_TYPE_ACS:
+  case mediachanger::TAPE_LIBRARY_TYPE_ACS:
     unmountTapeAcs(vid, librarySlot.str());
     break;
-  case tape::utils::TAPE_LIBRARY_TYPE_MANUAL:
+  case mediachanger::TAPE_LIBRARY_TYPE_MANUAL:
     unmountTapeManual(vid);
     break;
-  case tape::utils::TAPE_LIBRARY_TYPE_SCSI:
+  case mediachanger::TAPE_LIBRARY_TYPE_SCSI:
     unmountTapeScsi(vid, librarySlot.str());
     break;
   default:

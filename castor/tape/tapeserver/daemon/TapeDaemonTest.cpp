@@ -23,7 +23,6 @@
 
 #include "castor/legacymsg/CupvProxyDummy.hpp"
 #include "castor/legacymsg/NsProxyDummyFactory.hpp"
-#include "castor/legacymsg/RmcProxyDummyFactory.hpp"
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/log/DummyLogger.hpp"

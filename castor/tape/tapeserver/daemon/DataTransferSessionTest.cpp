@@ -29,7 +29,7 @@
 
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
-#include "castor/legacymsg/RmcProxyDummy.hpp"
+#include "castor/mediachanger/MediaChangerProxyDummy.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "castor/server/ProcessCapDummy.hpp"
@@ -155,7 +155,7 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   driveConfig.devFilename = "/dev/tape_T10D6116";
   driveConfig.densities.push_back("8000GC");
   driveConfig.densities.push_back("5000GC");
-  driveConfig.librarySlot = castor::tape::utils::TapeLibrarySlot("manual@opaque_drive_id");
+  driveConfig.librarySlot = castor::mediachanger::TapeLibrarySlot("manual@opaque_drive_id");
   driveConfig.devType = "T10000";
   DataTransferSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
@@ -163,11 +163,11 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   castorConf.tapebridgeBulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.tapebridgeBulkRequestRecallMaxFiles = 1000;
   castorConf.tapeserverdDiskThreads = 1;
-  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerProxyDummy mc;
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
-    driveConfig, rmc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
@@ -260,7 +260,7 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
   driveConfig.devFilename = "/dev/tape_T10D6116";
   driveConfig.densities.push_back("8000GC");
   driveConfig.densities.push_back("5000GC");
-  driveConfig.librarySlot = castor::tape::utils::TapeLibrarySlot("manual@opaque_drive_id");
+  driveConfig.librarySlot = castor::mediachanger::TapeLibrarySlot("manual@opaque_drive_id");
   driveConfig.devType = "T10000";
   DataTransferSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
@@ -268,11 +268,11 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
   castorConf.tapebridgeBulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.tapebridgeBulkRequestRecallMaxFiles = 1000;
   castorConf.tapeserverdDiskThreads = 1;
-  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerProxyDummy mc;
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
-    driveConfig, rmc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
@@ -318,18 +318,18 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   driveConfig.devFilename = "/dev/noSuchTape";
   driveConfig.densities.push_back("8000GC");
   driveConfig.densities.push_back("5000GC");
-  driveConfig.librarySlot = castor::tape::utils::TapeLibrarySlot("manual@opaque_drive_id");
+  driveConfig.librarySlot = castor::mediachanger::TapeLibrarySlot("manual@opaque_drive_id");
   driveConfig.devType = "T10000";
   DataTransferSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024;
   castorConf.rtcopydNbBufs = 10;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
-  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerProxyDummy mc;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
   DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
-    driveConfig, rmc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
@@ -462,7 +462,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   driveConfig.devFilename = "/dev/tape_T10D6116";
   driveConfig.densities.push_back("8000GC");
   driveConfig.densities.push_back("5000GC");
-  driveConfig.librarySlot = castor::tape::utils::TapeLibrarySlot("manual@opaque_drive_id");
+  driveConfig.librarySlot = castor::mediachanger::TapeLibrarySlot("manual@opaque_drive_id");
   driveConfig.devType = "T10000";
   DataTransferSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
@@ -472,11 +472,11 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   castorConf.tapeserverdDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
-  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerProxyDummy mc;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
   DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
-    driveConfig, rmc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
   for (std::vector<struct expectedResult>::iterator i = expected.begin();
@@ -552,7 +552,7 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   driveConfig.devFilename = "/dev/tape_T10D6116";
   driveConfig.densities.push_back("8000GC");
   driveConfig.densities.push_back("5000GC");
-  driveConfig.librarySlot = castor::tape::utils::TapeLibrarySlot("manual@opaque_drive_id");
+  driveConfig.librarySlot = castor::mediachanger::TapeLibrarySlot("manual@opaque_drive_id");
   driveConfig.devType = "T10000";
   DataTransferSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
@@ -562,11 +562,11 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   castorConf.tapeserverdDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
-  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerProxyDummy mc;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
   DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
-    driveConfig, rmc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
   ASSERT_EQ(SEINTERNAL, sim.m_sessionErrorCode);
@@ -654,7 +654,7 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   driveConfig.devFilename = "/dev/tape_T10D6116";
   driveConfig.densities.push_back("8000GC");
   driveConfig.densities.push_back("5000GC");
-  driveConfig.librarySlot = castor::tape::utils::TapeLibrarySlot("manual@opaque_drive_id");
+  driveConfig.librarySlot = castor::mediachanger::TapeLibrarySlot("manual@opaque_drive_id");
   driveConfig.devType = "T10000";
   DataTransferSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
@@ -664,11 +664,11 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   castorConf.tapeserverdDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
-  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerProxyDummy mc;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
   DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
-    driveConfig, rmc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
   for (std::vector<struct expectedResult>::iterator i = expected.begin();
@@ -761,7 +761,7 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   driveConfig.devFilename = "/dev/tape_T10D6116";
   driveConfig.densities.push_back("8000GC");
   driveConfig.densities.push_back("5000GC");
-  driveConfig.librarySlot = castor::tape::utils::TapeLibrarySlot("manual@opaque_drive_id");
+  driveConfig.librarySlot = castor::mediachanger::TapeLibrarySlot("manual@opaque_drive_id");
   driveConfig.devType = "T10000";
   DataTransferSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
@@ -771,11 +771,11 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   castorConf.tapeserverdDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
-  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerProxyDummy mc;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
   DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
-    driveConfig, rmc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
   for (std::vector<struct expectedResult>::iterator i = expected.begin();

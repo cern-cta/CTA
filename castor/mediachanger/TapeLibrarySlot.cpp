@@ -16,27 +16,55 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
+ *
+ *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/RmcProxyDummy.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/mediachanger/TapeLibrarySlot.hpp"
 
 //------------------------------------------------------------------------------
-// destructor
+// constructor
 //------------------------------------------------------------------------------
-castor::legacymsg::RmcProxyDummy::~RmcProxyDummy() throw() {
+castor::mediachanger::TapeLibrarySlot::TapeLibrarySlot():
+  m_libraryType(TAPE_LIBRARY_TYPE_NONE) {
 }
 
 //------------------------------------------------------------------------------
-// mountTape
+// constructor
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyDummy::mountTape(const std::string &vid,
-  const tape::utils::TapeLibrarySlot &librarySlot, const MountMode mode)  {
+castor::mediachanger::TapeLibrarySlot::TapeLibrarySlot(const std::string &str):
+  m_str(str),
+  m_libraryType(getLibraryTypeOfSlot(str)) {
 }
 
 //------------------------------------------------------------------------------
-// unmountTape
+// getLibrarySlotType
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyDummy::unmountTape(const std::string &vid,
-  const tape::utils::TapeLibrarySlot &librarySlot)  {
+castor::mediachanger::TapeLibraryType castor::mediachanger::TapeLibrarySlot::
+  getLibraryTypeOfSlot(const std::string &slot) {
+  if(0 == slot.find("acs@"))    return TAPE_LIBRARY_TYPE_ACS;
+  if(0 == slot.find("manual@")) return TAPE_LIBRARY_TYPE_MANUAL;
+  if(0 == slot.find("smc@"))    return TAPE_LIBRARY_TYPE_SCSI;
+
+  castor::exception::Exception ex;
+  ex.getMessage() << "Cannot determine tape-library type of library slot"
+    ": slot=" << slot;
+  throw ex;
+}
+
+//------------------------------------------------------------------------------
+// str
+//------------------------------------------------------------------------------
+const std::string &castor::mediachanger::TapeLibrarySlot::str() const throw() {
+  return m_str;
+}
+
+//------------------------------------------------------------------------------
+// getLibraryType
+//------------------------------------------------------------------------------
+castor::mediachanger::TapeLibraryType
+  castor::mediachanger::TapeLibrarySlot::getLibraryType() const throw() {
+  return m_libraryType;
 }

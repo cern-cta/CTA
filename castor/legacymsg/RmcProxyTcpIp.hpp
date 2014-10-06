@@ -56,28 +56,34 @@ public:
   ~RmcProxyTcpIp() throw();
 
   /**
-   * Asks the remote media-changer daemon to mount the specified tape into the
-   * drive in the specified library slot.
+   * Requests the media changer to mount of the specified tape for read-only
+   * access into the drive in the specified library slot.
    *
    * @param vid The volume identifier of the tape.
-   * @param librarySlot The tape library slot containing the tape drive.
-   * @param mode The access mode in which the specified tape should be mounted.
-   * Please note that the value of this parameter is honored in a best effort
-   * fashion.  If the library and drive combination do not support specifying
-   * the access mode, then this parameter will be ignored.
+   * @param librarySlot The library slot containing the tape drive.
    */
-  void mountTape(const std::string &vid,
-    const tape::utils::TapeLibrarySlot &librarySlot, const MountMode mode);
+  void mountTapeReadOnly(const std::string &vid,
+    const mediachanger::TapeLibrarySlot &librarySlot);
 
   /**
-   * Asks the remote media-changer daemon to unmount the specified tape from the
-   * drive in the specified library slot.
+   * Requests the media changer to mount of the specified tape for read/write
+   * access into the drive in the specified library slot.
    *
    * @param vid The volume identifier of the tape.
-   * @param librarySlot The tape library slot containing the tape drive.
+   * @param librarySlot The library slot containing the tape drive.
    */
-  void unmountTape(const std::string &vid,
-    const tape::utils::TapeLibrarySlot &librarySlot);
+  void mountTapeReadWrite(const std::string &vid,
+    const mediachanger::TapeLibrarySlot &librarySlot);
+
+  /**
+   * Requests the media changer to mount of the specified tape for read/write
+   * access into the drive in the specified library slot.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param librarySlot The library slot containing the tape drive.
+   */
+  void dismountTape(const std::string &vid,
+    const mediachanger::TapeLibrarySlot &librarySlot);
 
 protected:
 

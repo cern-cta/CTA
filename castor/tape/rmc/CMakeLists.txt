@@ -30,12 +30,16 @@ if (${COMPILE_SERVER} STREQUAL "1")
     AcceptHandler.cpp
     ConnectionHandler.cpp
     RmcDaemon.cpp
-    RmcDaemonMain.cpp
-    ../utils/TapeLibrarySlot.cpp
-    ../utils/TapeLibraryType.cpp)
+    RmcDaemonMain.cpp)
   add_executable (newrmcd ${RMCD_SRC_FILES})
-  target_link_libraries (newrmcd castorclient castorcommon castorlegacymsg
-    castorserver castortapereactor zmq)
+  target_link_libraries (newrmcd
+    castorclient
+    castorcommon
+    castorlegacymsg
+    castormediachangerclient
+    castorserver
+    castortapereactor
+    zmq)
   #install (TARGETS newrmcd DESTINATION ${CASTOR_DEST_LIB_DIR})
   #CastorInstallExeManPage(newrmcd)
 

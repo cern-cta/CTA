@@ -21,24 +21,23 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
 #include "castor/mediachanger/MediaChangerProxy.hpp"
 
 #include <string>
 
 namespace castor {
-namespace legacymsg {
+namespace mediachanger {
 
 /**
- * Proxy class representing the remote media-changer daemon.
+ * Concrete class that implementd a dummy a media-changer proxy.
  */
-class RmcProxy: public mediachanger::MediaChangerProxy {
+class MediaChangerProxyDummy: public MediaChangerProxy {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~RmcProxy() throw() = 0;
+  ~MediaChangerProxyDummy();
 
   /**
    * Requests the media changer to mount of the specified tape for read-only
@@ -47,8 +46,8 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  virtual void mountTapeReadOnly(const std::string &vid,
-    const mediachanger::TapeLibrarySlot &librarySlot) = 0;
+  void mountTapeReadOnly(const std::string &vid,
+    const TapeLibrarySlot &librarySlot);
 
   /**
    * Requests the media changer to mount of the specified tape for read/write
@@ -57,8 +56,8 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  virtual void mountTapeReadWrite(const std::string &vid,
-    const mediachanger::TapeLibrarySlot &librarySlot) = 0;
+  void mountTapeReadWrite(const std::string &vid,
+    const TapeLibrarySlot &librarySlot);
 
   /**
    * Requests the media changer to mount of the specified tape for read/write
@@ -67,11 +66,9 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  virtual void dismountTape(const std::string &vid,
-    const mediachanger::TapeLibrarySlot &librarySlot) = 0;
+  void dismountTape(const std::string &vid, const TapeLibrarySlot &librarySlot);
 
-}; // class RmcProxy
+}; // class MediaChangerProxy
 
-} // namespace legacymsg
+} // namespace mediachanger
 } // namespace castor
-

@@ -95,7 +95,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     try {
       // We implement the same policy as with the tape sessions: 
       // if the librarySlot parameter is "manual", do nothing.
-      if (tape::utils::TAPE_LIBRARY_TYPE_MANUAL != m_driveConfig.librarySlot.getLibraryType()) {
+      if (mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_driveConfig.librarySlot.getLibraryType()) {
         drive->unloadTape();
         m_log(LOG_INFO, "Cleaner session: Tape unloaded");
       } else {
@@ -106,8 +106,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       m_log(LOG_INFO, "Cleaner session could not unload the tape. Will still try to unmount it in case it is already unloaded.", params);
     }
     try {
-      m_rmc.unmountTape(vol1.getVSN(), m_driveConfig.librarySlot.str());
-      m_log(LOG_INFO, tape::utils::TAPE_LIBRARY_TYPE_MANUAL != m_driveConfig.librarySlot.getLibraryType() ? 
+      m_rmc.dismountTape(vol1.getVSN(), m_driveConfig.librarySlot.str());
+      m_log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_driveConfig.librarySlot.getLibraryType() ? 
         "Cleaner session: unmounted tape":
         "Cleaner session: tape NOT unmounted (manual mode)");
     } catch(castor::exception::Exception &ne) {

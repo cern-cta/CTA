@@ -19,18 +19,10 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/RmcProxyDummy.hpp"
-#include "castor/legacymsg/RmcProxyDummyFactory.hpp"
+#include "castor/mediachanger/MediaChangerProxy.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::legacymsg::RmcProxyDummyFactory::~RmcProxyDummyFactory() throw() {
-}
-
-//------------------------------------------------------------------------------
-// create
-//------------------------------------------------------------------------------
-castor::legacymsg::RmcProxy *castor::legacymsg::RmcProxyDummyFactory::create() {
-  return new RmcProxyDummy();
+castor::mediachanger::MediaChangerProxy::~MediaChangerProxy() {
 }

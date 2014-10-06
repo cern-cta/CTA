@@ -75,10 +75,9 @@ endif (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
 
 # Create a shared librbary for the dummies supporting the tests
 add_library(TestDummies
+  ../castor/mediachanger/MediaChangerProxyDummy.cpp
   ../castor/messages/TapeserverProxyDummy.cpp
   ../castor/legacymsg/CupvProxyDummy.cpp
-  ../castor/legacymsg/RmcProxyDummy.cpp
-  ../castor/legacymsg/RmcProxyDummyFactory.cpp
   ../castor/legacymsg/VdqmProxyDummy.cpp
   ../castor/legacymsg/VdqmProxyDummyFactory.cpp
   ../castor/legacymsg/VmgrProxyDummy.cpp
@@ -107,8 +106,6 @@ add_executable(castorUnitTests
   ../castor/legacymsg/NsProxy.cpp
   ../castor/legacymsg/NsProxyDummy.cpp
   ../castor/legacymsg/NsProxyDummyFactory.cpp
-  ../castor/legacymsg/RmcProxyDummy.cpp
-  ../castor/legacymsg/RmcProxyDummyFactory.cpp
   ../castor/legacymsg/VdqmProxyDummy.cpp
   ../castor/legacymsg/VdqmProxyDummyFactory.cpp
   ../castor/legacymsg/VmgrMarshalTest.cpp
@@ -127,6 +124,7 @@ add_executable(castorUnitTests
   ../castor/log/LogContextTest.cpp
   ../castor/log/StringLoggerTest.cpp
   ../castor/log/SyslogLoggerTest.cpp
+  ../castor/mediachanger/TapeLibrarySlotTest.cpp
   ../castor/messages/MessagesTest.cpp
   ../castor/server/DaemonTest.cpp
   ../castor/server/SmartCapTest.cpp
@@ -158,7 +156,6 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/utils/RegexTest.cpp
   ../castor/server/ThreadingTests.cpp
   ../castor/server/AtomicCounterTest.cpp
-  ../castor/tape/utils/TapeLibrarySlotTest.cpp
   ../castor/tape/utils/TpconfigLineTest.cpp
   ../castor/utils/SmartArrayPtrTest.cpp
   ../castor/utils/SmartFdTest.cpp

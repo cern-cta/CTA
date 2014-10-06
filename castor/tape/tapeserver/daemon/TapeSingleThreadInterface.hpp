@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "castor/legacymsg/RmcProxy.hpp"
+#include "castor/mediachanger/MediaChangerProxy.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/server/BlockingQueue.hpp"
 #include "castor/server/ProcessCap.hpp"
@@ -70,7 +70,7 @@ protected:
   castor::tape::tapeserver::drive::DriveInterface & m_drive;
   
   /** Reference to the mount interface */
-  castor::legacymsg::RmcProxy & m_rmc;
+  mediachanger::MediaChangerProxy & m_mc;
   
   /** Reference to the Global reporting interface */
   TapeServerReporter & m_initialProcess;
@@ -108,25 +108,47 @@ protected:
   }
   
   /**
-   * Try to mount the tape, get an exception if it fails 
+   * Try to mount the tape for read-only access, get an exception if it fails 
    */
-  void mountTape(castor::legacymsg::RmcProxy::MountMode mode){
+  void mountTapeReadOnly(){
     castor::log::ScopedParamContainer scoped(m_logContext); 
     scoped.add("vid",m_volInfo.vid)
           .add("drive_Slot",m_drive.librarySlot.str());
     try {
       tape::utils::Timer timer;
-        m_rmc.mountTape(m_volInfo.vid, m_drive.librarySlot.str(),
-                mode);
-        const std::string modeAsString = std::string("R")+ ((mode==legacymsg::RmcProxy::MOUNT_MODE_READWRITE) ? "W" : "");
-        scoped.addTiming("RMCMountTime",timer.secs()).add("mode",modeAsString);
-        m_logContext.log(LOG_INFO, "Tape Mounted");
-        
+        m_mc.mountTapeReadOnly(m_volInfo.vid, m_drive.librarySlot.str());
+        const std::string modeAsString = "R";
+        scoped.addTiming("MCMountTime",timer.secs()).add("mode",modeAsString);
+        m_logContext.log(LOG_INFO, "Tape mounted for read-only access");
     }
     catch (castor::exception::Exception & ex) {
       scoped.add("exception_message", ex.getMessageValue())
             .add("exception_code",ex.code());
-      m_logContext.log(LOG_ERR, "Failed to mount the tape");
+      m_logContext.log(LOG_ERR,
+        "Failed to mount the tape for read-only access");
+      throw;
+    }
+  }
+
+  /**
+   * Try to mount the tape for read/write access, get an exception if it fails 
+   */
+  void mountTapeReadWrite(){
+    castor::log::ScopedParamContainer scoped(m_logContext); 
+    scoped.add("vid",m_volInfo.vid)
+          .add("drive_Slot",m_drive.librarySlot.str());
+    try {
+      tape::utils::Timer timer;
+        m_mc.mountTapeReadWrite(m_volInfo.vid, m_drive.librarySlot.str());
+        const std::string modeAsString = "RW";
+        scoped.addTiming("MCMountTime",timer.secs()).add("mode",modeAsString);
+        m_logContext.log(LOG_INFO, "Tape mounted for read/write access");
+    }
+    catch (castor::exception::Exception & ex) {
+      scoped.add("exception_message", ex.getMessageValue())
+            .add("exception_code",ex.code());
+      m_logContext.log(LOG_ERR,
+        "Failed to mount the tape for read/write access");
       throw;
     }
   }
@@ -192,18 +214,18 @@ public:
    * Constructor
    * @param drive An interface to manipulate the drive to manipulate the tape
    * with the requested vid
-   * @param rmc The media changer (=robot) that will (un)load/(un)mount the tape
+   * @param mc The media changer (=robot) that will (un)load/(un)mount the tape
    * @param gsr
    * @param volInfo All we need to know about the tape we are manipulating 
    * @param capUtils
    * @param lc lc The log context, later on copied
    */
   TapeSingleThreadInterface(castor::tape::tapeserver::drive::DriveInterface & drive,
-    castor::legacymsg::RmcProxy & rmc,
+    mediachanger::MediaChangerProxy &mc,
     TapeServerReporter & tsr,
     const client::ClientInterface::VolumeInfo& volInfo,
     castor::server::ProcessCap &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
-    m_drive(drive), m_rmc(rmc), m_initialProcess(tsr), m_vid(volInfo.vid), m_logContext(lc),
+    m_drive(drive), m_mc(mc), m_initialProcess(tsr), m_vid(volInfo.vid), m_logContext(lc),
     m_volInfo(volInfo),m_hardwareStatus(Session::MARK_DRIVE_AS_UP) {}
 }; // class TapeSingleThreadInterface
 

@@ -25,12 +25,12 @@
 
 #include "castor/exception/Errnum.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/mediachanger/TapeLibrarySlot.hpp"
 #include "castor/tape/tapeserver/drive/mtio_add.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/SCSI/Exception.hpp"
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
-#include "castor/tape/utils/TapeLibrarySlot.hpp"
 
 /**
  * Class wrapping the tape server. Has to be templated (and hence fully in .hh)
@@ -192,7 +192,7 @@ namespace drive {
      * Member allowing the convenient storage of the drive location for the
      * mount system (we get the information from TPCONFIG)
      */
-    utils::TapeLibrarySlot librarySlot;
+    mediachanger::TapeLibrarySlot librarySlot;
   };
   
   /**

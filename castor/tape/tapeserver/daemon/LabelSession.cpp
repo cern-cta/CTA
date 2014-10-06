@@ -82,7 +82,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     drive->unloadTape();
     m_log(LOG_INFO, "The tape has been successfully unloaded after labeling",
       params);
-    m_rmc.unmountTape(m_request.vid, m_driveConfig.librarySlot.str());
+    m_rmc.dismountTape(m_request.vid, m_driveConfig.librarySlot.str());
     m_log(LOG_INFO, "The tape has been successfully unmounted after labeling",
       params);
 
@@ -131,8 +131,7 @@ std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::mountTape() {
   try {
-    m_rmc.mountTape(m_request.vid, m_driveConfig.librarySlot.str(),
-    castor::legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
+    m_rmc.mountTapeReadWrite(m_request.vid, m_driveConfig.librarySlot.str());
     const log::Param params[] = {
       log::Param("vid", m_request.vid),
       log::Param("unitName", m_request.drive),

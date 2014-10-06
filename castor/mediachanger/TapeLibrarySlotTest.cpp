@@ -22,14 +22,14 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/utils/TapeLibrarySlot.hpp"
+#include "castor/mediachanger/TapeLibrarySlot.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
 
 namespace unitTests {
 
-class castor_tape_utils_TapeLibrarySlotTest : public ::testing::Test {
+class castor_mediachanger_TapeLibrarySlotTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -39,40 +39,40 @@ protected:
   }
 };
 
-TEST_F(castor_tape_utils_TapeLibrarySlotTest, getLibraryTypeNone) {
-  using namespace castor::tape::utils;
+TEST_F(castor_mediachanger_TapeLibrarySlotTest, getLibraryTypeNone) {
+  using namespace castor::mediachanger;
 
   TapeLibrarySlot slot;
 
   ASSERT_EQ(TAPE_LIBRARY_TYPE_NONE, slot.getLibraryType());
 }
 
-TEST_F(castor_tape_utils_TapeLibrarySlotTest, getLibraryTypeAcs) {
-  using namespace castor::tape::utils;
+TEST_F(castor_mediachanger_TapeLibrarySlotTest, getLibraryTypeAcs) {
+  using namespace castor::mediachanger;
 
   TapeLibrarySlot slot("acs@rmc_host,1,2,3,4");
 
   ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS, slot.getLibraryType());
 }
 
-TEST_F(castor_tape_utils_TapeLibrarySlotTest, getLibraryTypeManual) {
-  using namespace castor::tape::utils;
+TEST_F(castor_mediachanger_TapeLibrarySlotTest, getLibraryTypeManual) {
+  using namespace castor::mediachanger;
 
   TapeLibrarySlot slot("manual@opaque_drive_id");
 
   ASSERT_EQ(TAPE_LIBRARY_TYPE_MANUAL, slot.getLibraryType());
 }
 
-TEST_F(castor_tape_utils_TapeLibrarySlotTest, getLibraryTypeScsi) {
-  using namespace castor::tape::utils;
+TEST_F(castor_mediachanger_TapeLibrarySlotTest, getLibraryTypeScsi) {
+  using namespace castor::mediachanger;
 
   TapeLibrarySlot slot("smc@rmc_host,1");
 
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot.getLibraryType());
 }
 
-TEST_F(castor_tape_utils_TapeLibrarySlotTest, getLibraryTypeNonsense) {
-  using namespace castor::tape::utils;
+TEST_F(castor_mediachanger_TapeLibrarySlotTest, getLibraryTypeNonsense) {
+  using namespace castor::mediachanger;
 
   std::auto_ptr<TapeLibrarySlot> slot;
 

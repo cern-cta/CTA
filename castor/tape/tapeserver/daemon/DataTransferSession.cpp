@@ -53,7 +53,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     castor::log::Logger & log,
     System::virtualWrapper & sysWrapper,
     const utils::DriveConfig & driveConfig,
-    castor::legacymsg::RmcProxy & rmc,
+    castor::mediachanger::MediaChangerProxy & mc,
     castor::messages::TapeserverProxy & initialProcess,
     castor::server::ProcessCap & capUtils,
     const CastorConf & castorConf): 
@@ -63,7 +63,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     m_sysWrapper(sysWrapper),
     m_driveConfig(driveConfig),
     m_castorConf(castorConf), 
-    m_rmc(rmc),
+    m_mc(mc),
     m_intialProcess(initialProcess),
     m_capUtils(capUtils) {
 }
@@ -196,7 +196,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     //we can already report !
     tsr.gotReadMountDetailsFromClient();
     
-    TapeReadSingleThread trst(*drive, m_rmc, tsr, m_volInfo, 
+    TapeReadSingleThread trst(*drive, m_mc, tsr, m_volInfo, 
         m_castorConf.tapebridgeBulkRequestRecallMaxFiles,m_capUtils,watchdog,lc);
 
     DiskWriteThreadPool dwtp(m_castorConf.tapeserverdDiskThreads,
@@ -279,7 +279,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     MigrationReportPacker mrp(m_clientProxy,
         lc);
     TapeWriteSingleThread twst(*drive.get(),
-        m_rmc,
+        m_mc,
         tsr,
         m_volInfo,
         lc,

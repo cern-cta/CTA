@@ -27,13 +27,13 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
 castor::tape::tapeserver::drive::DriveInterface & drive, 
-        castor::legacymsg::RmcProxy & rmc,
+        castor::mediachanger::MediaChangerProxy & mc,
         TapeServerReporter & tsr,
         const client::ClientInterface::VolumeInfo& volInfo,
         castor::log::LogContext & lc, MigrationReportPacker & repPacker,
         castor::server::ProcessCap &capUtils,
         uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
-        TapeSingleThreadInterface<TapeWriteTask>(drive, rmc, tsr, volInfo,capUtils, lc),
+        TapeSingleThreadInterface<TapeWriteTask>(drive, mc, tsr, volInfo,capUtils, lc),
         m_filesBeforeFlush(filesBeforeFlush),
         m_bytesBeforeFlush(bytesBeforeFlush),
         m_drive(drive), m_reportPacker(repPacker),
@@ -137,7 +137,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       
       // Before anything, the tape should be mounted
       // This call does the logging of the mount
-      mountTape(castor::legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
+      mountTapeReadWrite();
       waitForDrive();
       
       isTapeWritable();
