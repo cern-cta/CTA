@@ -117,12 +117,12 @@ DRIVEID castor::tape::rmc::Acs::str2DriveId(const std::string &str)
 //------------------------------------------------------------------------------
 // alpd2DriveId
 //------------------------------------------------------------------------------
-DRIVEID castor::tape::rmc::Acs::alpd2DriveId(const uint32_t acsNum,
+DRIVEID castor::tape::rmc::Acs::alpd2DriveId(const uint32_t acs,
   const uint32_t lsm, const uint32_t panel, const uint32_t drive)
-  const  {
+  const throw () {
   
   DRIVEID driveId;
-  driveId.panel_id.lsm_id.acs = (ACS)acsNum;
+  driveId.panel_id.lsm_id.acs = (ACS)acs;
   driveId.panel_id.lsm_id.lsm = (LSM)lsm;
   driveId.panel_id.panel = (PANEL)panel;
   driveId.drive = (DRIVE)drive;

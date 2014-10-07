@@ -61,11 +61,17 @@ public:
     ;
 
   /**
-   * ????
+   * Converts acs, lsm, panel, drive numbers to the corresponding 
+   * drive ID object.
+   * 
+   * @param acs The integer for acs.
+   * @param lsm The integer for lsm.
+   * @param panel The integer for panel.
+   * @param drive The integer for drive.
    * @return The drive ID object.
    */
-  DRIVEID alpd2DriveId(const uint32_t acsNum, const uint32_t lsm, 
-    const uint32_t panel, const uint32_t drive) const 
+  DRIVEID alpd2DriveId(const uint32_t acs, const uint32_t lsm, 
+    const uint32_t panel, const uint32_t drive) const throw()
     ;
   
   /**
