@@ -60,10 +60,11 @@ void castor::mediachanger::MediaChangerFacade::mountTapeReadOnly(
         throw ex;
       }
     }
-  } catch(castor::exception::Exception &ex) {
+  } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to mount tape for read-only access"
-      ": vid=" << vid << " librarySlot=" << librarySlot.str();
+      ": vid=" << vid << " librarySlot=" << librarySlot.str() << ": " <<
+      ne.getMessage().str();
     throw ex;
   }
 }
@@ -92,10 +93,11 @@ void castor::mediachanger::MediaChangerFacade::mountTapeReadWrite(
         throw ex;
       }
     }
-  } catch(castor::exception::Exception &ex) {
+  } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to mount tape for read/write access"
-      ": vid=" << vid << " librarySlot=" << librarySlot.str();
+      ": vid=" << vid << " librarySlot=" << librarySlot.str() << ": " <<
+      ne.getMessage().str();
     throw ex;
   }
 }
@@ -124,10 +126,11 @@ void castor::mediachanger::MediaChangerFacade::dismountTape(
         throw ex;
       }
     }
-  } catch(castor::exception::Exception &ex) {
+  } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to dismount tape"
-      ": vid=" << vid << " librarySlot=" << librarySlot.str();
+      ": vid=" << vid << " librarySlot=" << librarySlot.str() << ": " <<
+      ne.getMessage().str();
     throw ex;
   }
 }
