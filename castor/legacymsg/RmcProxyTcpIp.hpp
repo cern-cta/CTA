@@ -56,16 +56,6 @@ public:
   ~RmcProxyTcpIp() throw();
 
   /**
-   * Requests the media changer to mount of the specified tape for read-only
-   * access into the drive in the specified library slot.
-   *
-   * @param vid The volume identifier of the tape.
-   * @param librarySlot The library slot containing the tape drive.
-   */
-  void mountTapeReadOnly(const std::string &vid,
-    const mediachanger::ConfigLibrarySlot &librarySlot);
-
-  /**
    * Requests the media changer to mount of the specified tape for read/write
    * access into the drive in the specified library slot.
    *
@@ -73,7 +63,7 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   void mountTapeReadWrite(const std::string &vid,
-    const mediachanger::ConfigLibrarySlot &librarySlot);
+    const mediachanger::ScsiLibrarySlot &librarySlot);
 
   /** 
    * Requests the media changer to dismount of the specified tape from the
@@ -83,7 +73,7 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   void dismountTape(const std::string &vid,
-    const mediachanger::ConfigLibrarySlot &librarySlot);
+    const mediachanger::ScsiLibrarySlot &librarySlot);
 
 protected:
 
@@ -107,60 +97,6 @@ protected:
    * write operations.
    */
   const int m_netTimeout;
-
-  /**
-   * Asks the remote media-changer daemon to mount the specified tape into the
-   * tape drive located in the specified ACS library slot.
-   *
-   * @param vid The volume identifier of the tape.
-   * @param librarySlot The library slot in the following form:
-   * "acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER".
-   */
-  void mountTapeAcs(const std::string &vid, const std::string &librarySlot) ;
-
-  /**
-   * Logs a request to the tape-operator to manually mount the specified tape.
-   *
-   * @param vid The volume identifier of the tape.
-   */
-  void mountTapeManual(const std::string &vid) ;
-
-  /**
-   * Asks the remote media-changer daemon to mount the specified tape into the
-   * drive located in the specified SCSI library slot.
-   *    
-   * @param vid The volume identifier of the tape.
-   * @param librarySlot The library slot in the following form:
-   * "smc@rmc_host,drive_ordinal".
-   */
-  void mountTapeScsi(const std::string &vid, const std::string &librarySlot) ;
-
-  /**
-   * Asks the remote media-changer daemon to unmount the specified tape from the
-   * drive located in the specified an ACS library slot.
-   *
-   * @param vid The volume identifier of the tape.
-   * @param librarySlot The library slot in the following form:
-   * "acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER".
-   */
-  void unmountTapeAcs(const std::string &vid, const std::string &librarySlot) ;
-
-  /**
-   * Logs a request to the tape-operator to manually unmount the specified tape.
-   *
-   * @param vid The volume identifier of the tape.
-   */
-  void unmountTapeManual(const std::string &vid) ;
-
-  /**
-   * Asks the remote media-changer daemon to unmount the specified tape from the
-   * drive located in the specified SCSI compatible library slot.
-   *    
-   * @param vid The volume identifier of the tape.
-   * @param librarySlot The library slot in the following form:
-   * "smc@rmc_host,drive_ordinal".
-   */
-  void unmountTapeScsi(const std::string &vid, const std::string &librarySlot) ;
 
   /**
    * Connects to the rmcd daemon.
@@ -200,4 +136,3 @@ protected:
 
 } // namespace legacymsg
 } // namespace castor
-

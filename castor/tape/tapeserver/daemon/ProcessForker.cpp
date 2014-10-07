@@ -21,9 +21,13 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/acs/Constants.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/NsProxy_TapeAlwaysEmpty.hpp"
 #include "castor/legacymsg/RmcProxyTcpIp.hpp"
+#include "castor/mediachanger/MediaChangerFacade.hpp"
+#include "castor/mediachanger/MmcProxyLog.hpp"
+#include "castor/messages/AcsProxyZmq.hpp"
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/ForkCleaner.pb.h"
 #include "castor/messages/ForkDataTransfer.pb.h"
@@ -32,6 +36,7 @@
 #include "castor/messages/ProcessCrashed.pb.h"
 #include "castor/messages/ProcessExited.pb.h"
 #include "castor/messages/ReturnValue.pb.h"
+#include "castor/messages/SmartZmqContext.hpp"
 #include "castor/messages/StopProcessForker.pb.h"
 #include "castor/messages/TapeserverProxyZmq.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
@@ -41,7 +46,6 @@
 #include "castor/tape/tapeserver/daemon/ProcessForker.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
 #include "castor/tape/utils/DriveConfig.hpp"
-#include "castor/messages/SmartZmqContext.hpp"
 #include "castor/utils/SmartArrayPtr.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/serrno.h"
@@ -508,14 +512,22 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   const DataTransferSession::CastorConf dataTransferConfig =
     getDataTransferConfig(rqst);
 
+  const int sizeOfIOThreadPoolForZMQ = 1;
+  messages::SmartZmqContext
+    zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
+
+  messages::AcsProxyZmq acs(m_log,
+    acs::DEFAULT_ACS_SERVER_INTERNAL_LISTENING_PORT, zmqContext.get());
+
+  mediachanger::MmcProxyLog mmc(m_log);
+
   // The network timeout of rmc communications should be several minutes due
   // to the time it takes to mount and unmount tapes
   const int rmcNetTimeout = 600; // Timeout in seconds
   legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), rmcNetTimeout);
 
-  const int sizeOfIOThreadPoolForZMQ = 1;
-  messages::SmartZmqContext
-    zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
+  mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
+
   messages::TapeserverProxyZmq tapeserver(m_log,
     TAPESERVER_INTERNAL_LISTENING_PORT, zmqContext.get());
 
@@ -531,7 +543,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       m_log,
       sysWrapper,
       driveConfig,
-      rmc,
+      mediaChangerFacade,
       tapeserver,
       capUtils,
       dataTransferConfig));

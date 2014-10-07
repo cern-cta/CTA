@@ -21,8 +21,6 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
-
 #include <stdint.h>
 #include <string>
 
@@ -30,7 +28,7 @@ namespace castor {
 namespace mediachanger {
 
 /**
- * Structure representing a SCSI library slot.
+ * Class representing a slot in a SCSI tape-library.
  */
 class ScsiLibrarySlot {
 public:
@@ -46,14 +44,14 @@ public:
    * Constructor.
    *
    * Initialises the member variables based on the result of parsing the
-   * specified string representation of a SCSI library slot.
+   * specified string representation of the library slot.
    *
-   * @param str The string representation of a SCSI library slot.
+   * @param str The string representation of the library slot.
    */
   ScsiLibrarySlot(const std::string &str);
 
   /**
-   * Returns the SCSI library slot.
+   * Returns the string reprsentation of the library slot.
    */
   const std::string &str() const throw();
 
@@ -74,7 +72,7 @@ public:
 private:
 
   /**
-   * The string representation of the SCSI library slot.
+   * The string representation of the library slot.
    */
   std::string m_str;
 

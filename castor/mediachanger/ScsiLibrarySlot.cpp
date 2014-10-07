@@ -19,6 +19,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/exception/Exception.hpp"
 #include "castor/mediachanger/ScsiLibrarySlot.hpp"
 #include "castor/utils/utils.hpp"
 
@@ -33,11 +34,11 @@ castor::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot()
 // constructor
 //------------------------------------------------------------------------------
 castor::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot(
-  const std::string &str) {
+  const std::string &str): m_str(str) {
   if(str.find("smc@")) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": SCSI library slot must start with smc@: str=" << str;
+      ": Library slot must start with smc@: str=" << str;
     throw ex;
   }
 
@@ -45,7 +46,7 @@ castor::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot(
   if(std::string::npos == indexOfComma) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": Failed to find comma: SCSI library slot must start with smc@host,"
+      ": Failed to find comma: Library slot must start with smc@host,"
       ": str=" << str;
     throw ex;
   }

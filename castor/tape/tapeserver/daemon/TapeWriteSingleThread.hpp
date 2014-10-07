@@ -57,7 +57,7 @@ public:
    */
   TapeWriteSingleThread(
     castor::tape::tapeserver::drive::DriveInterface & drive, 
-    mediachanger::MediaChangerProxy &mc,
+    mediachanger::MediaChangerFacade &mc,
     TapeServerReporter & tsr,
     MigrationWatchDog & mwd,
     const client::ClientInterface::VolumeInfo& volInfo,

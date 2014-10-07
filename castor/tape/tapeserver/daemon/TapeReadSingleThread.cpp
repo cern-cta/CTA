@@ -27,7 +27,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   castor::tape::tapeserver::drive::DriveInterface& drive,
-  mediachanger::MediaChangerProxy& mc,
+  mediachanger::MediaChangerFacade& mc,
   TapeServerReporter& initialProcess,
   const client::ClientInterface::VolumeInfo& volInfo,
   uint64_t maxFilesRequest,

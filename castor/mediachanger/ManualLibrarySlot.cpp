@@ -16,46 +16,36 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * 
- *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
-#include "castor/mediachanger/ScsiLibrarySlot.hpp"
+#include "castor/mediachanger/ManualLibrarySlot.hpp"
+#include "castor/utils/utils.hpp"
 
-#include <gtest/gtest.h>
-
-namespace unitTests {
-
-class castor_mediachanger_ScsiLibrarySlotTest : public ::testing::Test {
-protected:
-
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
-};
-
-TEST_F(castor_mediachanger_ScsiLibrarySlotTest, goodDayParsing) {
-  using namespace castor::mediachanger;
- 
-  ScsiLibrarySlot slot;
-  ASSERT_EQ(std::string(""), slot.getRmcHostName());
-  ASSERT_EQ((uint16_t)0, slot.getDrvOrd());
-
-  const std::string str = "smc@rmc_host,4";
-  ASSERT_NO_THROW(slot = ScsiLibrarySlot(str));
-  ASSERT_EQ(std::string("rmc_host"), slot.getRmcHostName());
-  ASSERT_EQ((uint16_t)4, slot.getDrvOrd());
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::mediachanger::ManualLibrarySlot::ManualLibrarySlot()
+  throw() {
 }
 
-TEST_F(castor_mediachanger_ScsiLibrarySlotTest, badDayParsing) {
-  using namespace castor::mediachanger;
-
-  const std::string str = "nonsense";
-  ASSERT_THROW(ScsiLibrarySlot slot(str), castor::exception::Exception);
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::mediachanger::ManualLibrarySlot::ManualLibrarySlot(
+  const std::string &str): m_str(str) {
+  if(str.find("manual@")) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to construct ManualLibrarySlot"
+      ": Library slot must start with manual: str=" << str;
+    throw ex;
+  }
 }
 
-} // namespace unitTests
+//------------------------------------------------------------------------------
+// str
+//------------------------------------------------------------------------------
+const std::string &castor::mediachanger::ManualLibrarySlot::str() const throw() {
+  return m_str;
+}

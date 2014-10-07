@@ -22,44 +22,17 @@
 #pragma once
 
 #include "castor/legacymsg/RmcProxy.hpp"
-#include "castor/mediachanger/ConfigLibrarySlot.hpp"
-#include "castor/mediachanger/MmcProxy.hpp"
-#include "castor/messages/AcsProxy.hpp"
 
-#include <unistd.h>
-#include <sys/types.h>
+#include <string>
 
 namespace castor {
-namespace mediachanger {
+namespace legacymsg {
 
 /**
- * Provides a facade to three communications proxies: acs, manual and rmc.
- *
- * This facade will forward requests to mount and dismount tapes to the
- * appropriate communications proxy based on the type of library slot.
+ * Concrete class implementing a dummy RmcProxyDummy.
  */
-class MediaChangerFacade {
+class RmcProxyDummy: public RmcProxy {
 public:
-
-  /**
-   * Constructor.
-   *
-   * @param acs Proxy object representing the CASTOR ACS daemon.
-   * @param mmc Proxy object representing the manual media-changer.
-   * @param rmc Proxy object representing the rmcd daemon.
-   */
-  MediaChangerFacade(messages::AcsProxy &acs, MmcProxy &mmc,
-    legacymsg::RmcProxy &rmc) throw();
-
-  /**
-   * Requests the media changer to mount of the specified tape for read-only
-   * access into the drive in the specified library slot.
-   *
-   * @param vid The volume identifier of the tape.
-   * @param librarySlot The library slot containing the tape drive.
-   */
-  void mountTapeReadOnly(const std::string &vid,
-    const ConfigLibrarySlot &librarySlot);
 
   /**
    * Requests the media changer to mount of the specified tape for read/write
@@ -69,9 +42,9 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   void mountTapeReadWrite(const std::string &vid,
-    const ConfigLibrarySlot &librarySlot);
+    const mediachanger::ScsiLibrarySlot &librarySlot);
 
-  /**
+  /** 
    * Requests the media changer to dismount of the specified tape from the
    * drive in the specifed library slot.
    *
@@ -79,26 +52,9 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   void dismountTape(const std::string &vid,
-    const ConfigLibrarySlot &librarySlot);
+    const mediachanger::ScsiLibrarySlot &librarySlot);
 
-private:
+}; // class RmcProxyDummy
 
-  /**
-   * Proxy object representing the CASTOR ACS daemon.
-   */
-  messages::AcsProxy &m_acs;
-
-  /**
-   * Proxy object representing the manual media-changer.
-   */
-  MmcProxy &m_mmc;
-
-  /**
-   * Proxy object representing the rmcd daemon.
-   */
-  legacymsg::RmcProxy &m_rmc;
-
-}; // class MediaChangerFacade
-
-} // namespace mediachanger
+} // namespace legacymsg
 } // namespace castor

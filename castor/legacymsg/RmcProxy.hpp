@@ -22,7 +22,7 @@
 #pragma once
 
 #include "castor/exception/Exception.hpp"
-#include "castor/mediachanger/MediaChangerProxy.hpp"
+#include "castor/mediachanger/ScsiLibrarySlot.hpp"
 
 #include <string>
 
@@ -30,25 +30,16 @@ namespace castor {
 namespace legacymsg {
 
 /**
- * Proxy class representing the remote media-changer daemon.
+ * Abstract class defining the interface to a proxy object representing the
+ * SCSI media-changer daemon (rmcd).
  */
-class RmcProxy: public mediachanger::MediaChangerProxy {
+class RmcProxy {
 public:
 
   /**
    * Destructor.
    */
   virtual ~RmcProxy() throw() = 0;
-
-  /**
-   * Requests the media changer to mount of the specified tape for read-only
-   * access into the drive in the specified library slot.
-   *
-   * @param vid The volume identifier of the tape.
-   * @param librarySlot The library slot containing the tape drive.
-   */
-  virtual void mountTapeReadOnly(const std::string &vid,
-    const mediachanger::ConfigLibrarySlot &librarySlot) = 0;
 
   /**
    * Requests the media changer to mount of the specified tape for read/write
@@ -58,7 +49,7 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   virtual void mountTapeReadWrite(const std::string &vid,
-    const mediachanger::ConfigLibrarySlot &librarySlot) = 0;
+    const mediachanger::ScsiLibrarySlot &librarySlot) = 0;
 
   /** 
    * Requests the media changer to dismount of the specified tape from the
@@ -68,7 +59,7 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   virtual void dismountTape(const std::string &vid,
-    const mediachanger::ConfigLibrarySlot &librarySlot) = 0;
+    const mediachanger::ScsiLibrarySlot &librarySlot) = 0;
 
 }; // class RmcProxy
 

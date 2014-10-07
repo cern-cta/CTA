@@ -28,8 +28,8 @@
 //------------------------------------------------------------------------------
 castor::mediachanger::MediaChangerFacade::MediaChangerFacade(
   messages::AcsProxy &acs,
-  MediaChangerProxy &mmc,
-  MediaChangerProxy &rmc) throw():
+  MmcProxy &mmc,
+  legacymsg::RmcProxy &rmc) throw():
   m_acs(acs),
   m_mmc(mmc),
   m_rmc(rmc) {
@@ -48,9 +48,10 @@ void castor::mediachanger::MediaChangerFacade::mountTapeReadOnly(
     case TAPE_LIBRARY_TYPE_ACS:
       return m_acs.mountTapeReadOnly(vid, librarySlot.str());
     case TAPE_LIBRARY_TYPE_MANUAL:
-      return m_mmc.mountTapeReadOnly(vid, librarySlot);
+      return m_mmc.mountTapeReadOnly(vid, librarySlot.str());
     case TAPE_LIBRARY_TYPE_SCSI:
-      return m_rmc.mountTapeReadOnly(vid, librarySlot);
+      // SCSI media-changers to not support read-only mounts
+      return m_rmc.mountTapeReadWrite(vid, librarySlot.str());
     default:
       {
         // Should never get here
@@ -80,9 +81,9 @@ void castor::mediachanger::MediaChangerFacade::mountTapeReadWrite(
     case TAPE_LIBRARY_TYPE_ACS: 
       return m_acs.mountTapeReadWrite(vid, librarySlot.str());
     case TAPE_LIBRARY_TYPE_MANUAL: 
-      return m_mmc.mountTapeReadWrite(vid, librarySlot);
+      return m_mmc.mountTapeReadWrite(vid, librarySlot.str());
     case TAPE_LIBRARY_TYPE_SCSI:
-      return m_rmc.mountTapeReadWrite(vid, librarySlot);
+      return m_rmc.mountTapeReadWrite(vid, librarySlot.str());
     default:
       {
         // Should never get here
@@ -112,9 +113,9 @@ void castor::mediachanger::MediaChangerFacade::dismountTape(
     case TAPE_LIBRARY_TYPE_ACS:
       return m_acs.dismountTape(vid, librarySlot.str());
     case TAPE_LIBRARY_TYPE_MANUAL:
-      return m_mmc.dismountTape(vid, librarySlot);
+      return m_mmc.dismountTape(vid, librarySlot.str());
     case TAPE_LIBRARY_TYPE_SCSI:
-      return m_rmc.dismountTape(vid, librarySlot);
+      return m_rmc.dismountTape(vid, librarySlot.str());
     default:
       {
         // Should never get here

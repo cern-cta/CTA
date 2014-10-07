@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "castor/mediachanger/MediaChangerProxy.hpp"
+#include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/server/BlockingQueue.hpp"
 #include "castor/server/ProcessCap.hpp"
@@ -70,7 +70,7 @@ protected:
   castor::tape::tapeserver::drive::DriveInterface & m_drive;
   
   /** Reference to the mount interface */
-  mediachanger::MediaChangerProxy & m_mc;
+  mediachanger::MediaChangerFacade & m_mc;
   
   /** Reference to the Global reporting interface */
   TapeServerReporter & m_initialProcess;
@@ -221,7 +221,7 @@ public:
    * @param lc lc The log context, later on copied
    */
   TapeSingleThreadInterface(castor::tape::tapeserver::drive::DriveInterface & drive,
-    mediachanger::MediaChangerProxy &mc,
+    mediachanger::MediaChangerFacade &mc,
     TapeServerReporter & tsr,
     const client::ClientInterface::VolumeInfo& volInfo,
     castor::server::ProcessCap &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),

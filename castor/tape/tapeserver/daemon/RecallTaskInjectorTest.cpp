@@ -20,11 +20,14 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
-#include "castor/legacymsg/RmcProxy.hpp"
+
+#include "castor/legacymsg/RmcProxyDummy.hpp"
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/log/StringLogger.hpp"
-#include "castor/mediachanger/MediaChangerProxyDummy.hpp"
+#include "castor/mediachanger/MediaChangerFacade.hpp"
+#include "castor/mediachanger/MmcProxyDummy.hpp"
+#include "castor/messages/AcsProxyDummy.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "castor/server/ProcessCapDummy.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
@@ -60,7 +63,7 @@ public:
   using TapeSingleThreadInterface<TapeReadTask>::m_tasks;
   
   FakeSingleTapeReadThread(castor::tape::tapeserver::drive::DriveInterface& drive,
-    castor::mediachanger::MediaChangerProxy & mc,
+    castor::mediachanger::MediaChangerFacade & mc,
     castor::tape::tapeserver::daemon::TapeServerReporter & tsr,
     const castor::tape::tapeserver::client::ClientInterface::VolumeInfo& volInfo, 
      castor::server::ProcessCap& cap,
@@ -90,7 +93,10 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   castor::tape::tapeserver::drive::FakeDrive drive;
   FakeClient client(nbCalls);
   FakeDiskWriteThreadPool diskWrite(lc);
-  castor::mediachanger::MediaChangerProxyDummy mc;
+  castor::messages::AcsProxyDummy acs;
+  castor::mediachanger::MmcProxyDummy mmc;
+  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm;
   castor::messages::TapeserverProxyDummy initialProcess;
@@ -147,7 +153,10 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   castor::tape::tapeserver::drive::FakeDrive drive;
   FakeClient client(0);
   FakeDiskWriteThreadPool diskWrite(lc);
-  castor::mediachanger::MediaChangerProxyDummy mc;
+  castor::messages::AcsProxyDummy acs;
+  castor::mediachanger::MmcProxyDummy mmc;
+  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm;
   castor::messages::TapeserverProxyDummy initialProcess;  

@@ -27,7 +27,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
 castor::tape::tapeserver::drive::DriveInterface & drive, 
-        castor::mediachanger::MediaChangerProxy & mc,
+        castor::mediachanger::MediaChangerFacade & mc,
         TapeServerReporter & tsr,
         MigrationWatchDog & mwd,
         const client::ClientInterface::VolumeInfo& volInfo,

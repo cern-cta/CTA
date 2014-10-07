@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "castor/mediachanger/MediaChangerProxy.hpp"
+#include "castor/mediachanger/ManualLibrarySlot.hpp"
 
 #include <string>
 
@@ -29,15 +29,15 @@ namespace castor {
 namespace mediachanger {
 
 /**
- * Concrete class that implements a dummy a media-changer proxy.
+ * Asbtract class defining the interface to manually operated media-changer.
  */
-class MediaChangerProxyDummy: public MediaChangerProxy {
+class MmcProxy {
 public:
 
   /**
    * Destructor.
    */
-  ~MediaChangerProxyDummy();
+  virtual ~MmcProxy() throw() = 0;
 
   /**
    * Requests the media changer to mount of the specified tape for read-only
@@ -46,8 +46,8 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void mountTapeReadOnly(const std::string &vid,
-    const ConfigLibrarySlot &librarySlot);
+  virtual void mountTapeReadOnly(const std::string &vid,
+    const mediachanger::ManualLibrarySlot &librarySlot) = 0;
 
   /**
    * Requests the media changer to mount of the specified tape for read/write
@@ -56,19 +56,20 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void mountTapeReadWrite(const std::string &vid,
-    const ConfigLibrarySlot &librarySlot);
+  virtual void mountTapeReadWrite(const std::string &vid,
+    const mediachanger::ManualLibrarySlot &librarySlot) = 0;
 
-  /**
-   * Requests the media changer to mount of the specified tape for read/write
-   * access into the drive in the specified library slot.
+  /** 
+   * Requests the media changer to dismount of the specified tape from the
+   * drive in the specifed library slot.
    *
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void dismountTape(const std::string &vid, const ConfigLibrarySlot &librarySlot);
+  virtual void dismountTape(const std::string &vid,
+    const mediachanger::ManualLibrarySlot &librarySlot) = 0;
 
-}; // class MediaChangerProxyDummy
+}; // class MmcProxy
 
 } // namespace mediachanger
 } // namespace castor

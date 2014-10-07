@@ -27,10 +27,13 @@
 #include <inttypes.h>
 #include <gtest/gtest.h>
 
+#include "castor/legacymsg/RmcProxyDummy.hpp"
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
-#include "castor/mediachanger/MediaChangerProxyDummy.hpp"
 #include "castor/log/StringLogger.hpp"
+#include "castor/mediachanger/MediaChangerFacade.hpp"
+#include "castor/mediachanger/MmcProxyDummy.hpp"
+#include "castor/messages/AcsProxyDummy.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "castor/server/ProcessCapDummy.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
@@ -163,7 +166,10 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   castorConf.tapebridgeBulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.tapebridgeBulkRequestRecallMaxFiles = 1000;
   castorConf.tapeserverdDiskThreads = 1;
-  castor::mediachanger::MediaChangerProxyDummy mc;
+  castor::messages::AcsProxyDummy acs;
+  castor::mediachanger::MmcProxyDummy mmc;
+  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
@@ -268,7 +274,10 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
   castorConf.tapebridgeBulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.tapebridgeBulkRequestRecallMaxFiles = 1000;
   castorConf.tapeserverdDiskThreads = 1;
-  castor::mediachanger::MediaChangerProxyDummy mc;
+  castor::messages::AcsProxyDummy acs;
+  castor::mediachanger::MmcProxyDummy mmc;
+  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
@@ -325,7 +334,10 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   castorConf.rtcopydNbBufs = 10;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
-  castor::mediachanger::MediaChangerProxyDummy mc;
+  castor::messages::AcsProxyDummy acs;
+  castor::mediachanger::MmcProxyDummy mmc;
+  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
   DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
@@ -472,7 +484,10 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   castorConf.tapeserverdDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
-  castor::mediachanger::MediaChangerProxyDummy mc;
+  castor::messages::AcsProxyDummy acs;
+  castor::mediachanger::MmcProxyDummy mmc;
+  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
   DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
@@ -562,7 +577,10 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   castorConf.tapeserverdDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
-  castor::mediachanger::MediaChangerProxyDummy mc;
+  castor::messages::AcsProxyDummy acs;
+  castor::mediachanger::MmcProxyDummy mmc;
+  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
   DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
@@ -664,7 +682,10 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   castorConf.tapeserverdDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
-  castor::mediachanger::MediaChangerProxyDummy mc;
+  castor::messages::AcsProxyDummy acs;
+  castor::mediachanger::MmcProxyDummy mmc;
+  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
   DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
@@ -771,7 +792,10 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   castorConf.tapeserverdDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
-  castor::mediachanger::MediaChangerProxyDummy mc;
+  castor::messages::AcsProxyDummy acs;
+  castor::mediachanger::MmcProxyDummy mmc;
+  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
   DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,

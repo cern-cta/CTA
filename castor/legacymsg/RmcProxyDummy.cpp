@@ -19,31 +19,18 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/mediachanger/MediaChangerProxyDummy.hpp"
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-castor::mediachanger::MediaChangerProxyDummy::~MediaChangerProxyDummy() {
-}
-
-//------------------------------------------------------------------------------
-// mountTapeReadOnly
-//------------------------------------------------------------------------------
-void castor::mediachanger::MediaChangerProxyDummy::mountTapeReadOnly(
-  const std::string &vid, const ConfigLibrarySlot &librarySlot) {
-}
+#include "castor/legacymsg/RmcProxyDummy.hpp"
 
 //------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
-void castor::mediachanger::MediaChangerProxyDummy::mountTapeReadWrite(
-  const std::string &vid, const ConfigLibrarySlot &librarySlot) {
+void castor::legacymsg::RmcProxyDummy::mountTapeReadWrite(const std::string &vid,
+  const mediachanger::ScsiLibrarySlot &librarySlot) {
 }
 
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
-void castor::mediachanger::MediaChangerProxyDummy::dismountTape(
-  const std::string &vid, const ConfigLibrarySlot &librarySlot) {
+void castor::legacymsg::RmcProxyDummy::dismountTape(const std::string &vid,
+  const mediachanger::ScsiLibrarySlot &librarySlot) {
 }

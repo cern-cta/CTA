@@ -20,7 +20,6 @@
  *****************************************************************************/
 
 #include "castor/io/io.hpp"
-#include "castor/mediachanger/ScsiLibrarySlot.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/RmcMarshal.hpp"
 #include "castor/legacymsg/RmcProxyTcpIp.hpp"
@@ -46,69 +45,10 @@ castor::legacymsg::RmcProxyTcpIp::~RmcProxyTcpIp() throw() {
 }
 
 //------------------------------------------------------------------------------
-// mountTapeReadOnly
-//------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::mountTapeReadOnly(
-  const std::string &vid, const mediachanger::ConfigLibrarySlot &librarySlot) {
-  // SCSI does not support read-only mounts
-  mountTapeReadWrite(vid, librarySlot);
-}
-
-//------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
 void castor::legacymsg::RmcProxyTcpIp::mountTapeReadWrite(
-  const std::string &vid, const mediachanger::ConfigLibrarySlot &librarySlot) {
-  try {
-    // Dispatch the appropriate helper method depending on library slot type
-    switch(librarySlot.getLibraryType()) {
-    case mediachanger::TAPE_LIBRARY_TYPE_ACS:
-      mountTapeAcs(vid, librarySlot.str());
-      break;
-    case mediachanger::TAPE_LIBRARY_TYPE_MANUAL:
-      mountTapeManual(vid);
-      break;
-    case mediachanger::TAPE_LIBRARY_TYPE_SCSI:
-      mountTapeScsi(vid, librarySlot.str());
-      break;
-    default:
-      {
-        castor::exception::Exception ex;
-        ex.getMessage() << "Unexpected library type"
-          ": vid=" << vid << " librarySlot=" << librarySlot.str();
-        throw ex;
-      }
-    }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to mount tape in SCSI library for read/write access:" <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// mountTapeAcs
-//------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::mountTapeAcs(const std::string &vid,
-  const std::string &librarySlot) {
-}
-
-//------------------------------------------------------------------------------
-// mountTapeManual
-//------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::mountTapeManual(const std::string &vid) {
-}
-
-//------------------------------------------------------------------------------
-// mountTapeScsi
-//------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid,
-  const std::string &librarySlot) {
-  std::ostringstream task;
-  task << "mount tape " << vid << " in " << librarySlot;
-
+  const std::string &vid, const mediachanger::ScsiLibrarySlot &librarySlot) {
   try {
     const mediachanger::ScsiLibrarySlot parsedSlot(librarySlot);
 
@@ -156,7 +96,9 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid,
     }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task.str() << ": " <<
+    ex.getMessage() <<
+      "Failed to mount tape in SCSI tape-library for read/write access"
+      ": vid=" << vid << " librarySlot=" << librarySlot.str() << ": " <<
       ne.getMessage().str();
     throw ex;
   }
@@ -166,50 +108,7 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid,
 // dismountTape
 //------------------------------------------------------------------------------
 void castor::legacymsg::RmcProxyTcpIp::dismountTape(const std::string &vid,
-  const mediachanger::ConfigLibrarySlot &librarySlot) {
-  // Dispatch the appropriate helper method depending on library slot type
-  switch(librarySlot.getLibraryType()) {
-  case mediachanger::TAPE_LIBRARY_TYPE_ACS:
-    unmountTapeAcs(vid, librarySlot.str());
-    break;
-  case mediachanger::TAPE_LIBRARY_TYPE_MANUAL:
-    unmountTapeManual(vid);
-    break;
-  case mediachanger::TAPE_LIBRARY_TYPE_SCSI:
-    unmountTapeScsi(vid, librarySlot.str());
-    break;
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to unmount tape: Unexpected library slot type"
-        ": vid=" << vid << " librarySlot=" << librarySlot.str();
-      throw ex;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// unmountTapeAcs
-//------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::unmountTapeAcs(const std::string &vid,
-  const std::string &librarySlot) {
-}
-
-//------------------------------------------------------------------------------
-// unmountTapeManual
-//------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::unmountTapeManual(
-  const std::string &vid) {
-}
-
-//------------------------------------------------------------------------------
-// unmountTapeScsi
-//------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid,
-  const std::string &librarySlot) {
-  std::ostringstream task;
-  task << "unmount tape " << vid << " from " << librarySlot;
-
+  const mediachanger::ScsiLibrarySlot &librarySlot) {
   try {
     const mediachanger::ScsiLibrarySlot parsedSlot(librarySlot);
 
@@ -258,7 +157,9 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid,
     }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task.str() << ": " <<
+    ex.getMessage() <<
+      "Failed to dismount tape in SCSI tape-library"
+      ": vid=" << vid << " librarySlot=" << librarySlot.str() << ": " <<
       ne.getMessage().str();
     throw ex;
   }

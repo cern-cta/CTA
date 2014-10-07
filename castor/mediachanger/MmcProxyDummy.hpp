@@ -21,35 +21,16 @@
 
 #pragma once
 
-#include "castor/legacymsg/RmcProxy.hpp"
-#include "castor/mediachanger/ConfigLibrarySlot.hpp"
 #include "castor/mediachanger/MmcProxy.hpp"
-#include "castor/messages/AcsProxy.hpp"
-
-#include <unistd.h>
-#include <sys/types.h>
 
 namespace castor {
 namespace mediachanger {
 
 /**
- * Provides a facade to three communications proxies: acs, manual and rmc.
- *
- * This facade will forward requests to mount and dismount tapes to the
- * appropriate communications proxy based on the type of library slot.
+ * Concrete class implementing a dummy MmcProxyDummy.
  */
-class MediaChangerFacade {
+class MmcProxyDummy: public MmcProxy {
 public:
-
-  /**
-   * Constructor.
-   *
-   * @param acs Proxy object representing the CASTOR ACS daemon.
-   * @param mmc Proxy object representing the manual media-changer.
-   * @param rmc Proxy object representing the rmcd daemon.
-   */
-  MediaChangerFacade(messages::AcsProxy &acs, MmcProxy &mmc,
-    legacymsg::RmcProxy &rmc) throw();
 
   /**
    * Requests the media changer to mount of the specified tape for read-only
@@ -59,7 +40,7 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   void mountTapeReadOnly(const std::string &vid,
-    const ConfigLibrarySlot &librarySlot);
+    const ManualLibrarySlot &librarySlot);
 
   /**
    * Requests the media changer to mount of the specified tape for read/write
@@ -69,9 +50,9 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   void mountTapeReadWrite(const std::string &vid,
-    const ConfigLibrarySlot &librarySlot);
+    const ManualLibrarySlot &librarySlot);
 
-  /**
+  /** 
    * Requests the media changer to dismount of the specified tape from the
    * drive in the specifed library slot.
    *
@@ -79,26 +60,9 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   void dismountTape(const std::string &vid,
-    const ConfigLibrarySlot &librarySlot);
+    const ManualLibrarySlot &librarySlot);
 
-private:
-
-  /**
-   * Proxy object representing the CASTOR ACS daemon.
-   */
-  messages::AcsProxy &m_acs;
-
-  /**
-   * Proxy object representing the manual media-changer.
-   */
-  MmcProxy &m_mmc;
-
-  /**
-   * Proxy object representing the rmcd daemon.
-   */
-  legacymsg::RmcProxy &m_rmc;
-
-}; // class MediaChangerFacade
+}; // class MmcProxyDummy
 
 } // namespace mediachanger
 } // namespace castor

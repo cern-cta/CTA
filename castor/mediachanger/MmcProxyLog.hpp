@@ -21,23 +21,25 @@
 
 #pragma once
 
-#include "castor/mediachanger/ConfigLibrarySlot.hpp"
-
-#include <string>
+#include "castor/log/Logger.hpp"
+#include "castor/mediachanger/MmcProxy.hpp"
 
 namespace castor {
 namespace mediachanger {
 
 /**
- * Abstract class that defines the inteface to a media-changer proxy.
+ * Concrete class implementing a MmcProxy that simply logs mount and dismount
+ * requests.
  */
-class MediaChangerProxy {
+class MmcProxyLog: public MmcProxy {
 public:
 
   /**
-   * Destructor.
+   * Constructor.
+   *
+   * @param log Object representing the API to the CASTOR logging system.
    */
-  virtual ~MediaChangerProxy() = 0;
+  MmcProxyLog(log::Logger &log) throw();
 
   /**
    * Requests the media changer to mount of the specified tape for read-only
@@ -46,8 +48,8 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  virtual void mountTapeReadOnly(const std::string &vid,
-    const ConfigLibrarySlot &librarySlot) = 0;
+  void mountTapeReadOnly(const std::string &vid,
+    const ManualLibrarySlot &librarySlot);
 
   /**
    * Requests the media changer to mount of the specified tape for read/write
@@ -56,8 +58,8 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  virtual void mountTapeReadWrite(const std::string &vid,
-    const ConfigLibrarySlot &librarySlot) = 0;
+  void mountTapeReadWrite(const std::string &vid,
+    const ManualLibrarySlot &librarySlot);
 
   /** 
    * Requests the media changer to dismount of the specified tape from the
@@ -66,11 +68,17 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  virtual void dismountTape(const std::string &vid,
-    const ConfigLibrarySlot &librarySlot) = 0;
+  void dismountTape(const std::string &vid,
+    const ManualLibrarySlot &librarySlot);
 
-}; // class MediaChangerProxy
+private:
+
+  /**
+   * Object representing the API to the CASTOR logging system.
+   */
+  log::Logger &m_log;
+
+}; // class MmcProxyLog
 
 } // namespace mediachanger
 } // namespace castor
-

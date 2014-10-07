@@ -42,6 +42,7 @@ set (CASTOR_LEGACYMSG_LIB_SRC_FILES
   RmcMarshal.cpp
   RmcMountMsgBody.cpp
   RmcProxy.cpp
+  RmcProxyDummy.cpp
   RmcProxyFactory.cpp
   RmcProxyTcpIp.cpp
   RmcProxyTcpIpFactory.cpp

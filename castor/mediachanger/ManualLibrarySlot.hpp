@@ -19,12 +19,49 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
-#include "castor/mediachanger/MediaChangerProxy.hpp"
-#include "h/Castor_limits.h"
+#pragma once
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-castor::mediachanger::MediaChangerProxy::~MediaChangerProxy() {
-}
+#include <string>
+
+namespace castor {
+namespace mediachanger {
+
+/**
+ * Class representing a slot in a manually operated tape library.
+ */
+class ManualLibrarySlot {
+public:
+
+  /**
+   * Constructor.
+   *
+   * Sets all string member-variables to the empty string.
+   */
+  ManualLibrarySlot() throw();
+
+  /**
+   * Constructor.
+   *
+   * Initialises the member variables based on the result of parsing the
+   * specified string representation of the library slot.
+   *
+   * @param str The string representation of the library slot.
+   */
+  ManualLibrarySlot(const std::string &str);
+
+  /**
+   * Returns the string representation of the library slot.
+   */
+  const std::string &str() const throw();
+
+private:
+
+  /**
+   * The string representation of the library slot.
+   */
+  std::string m_str;
+
+}; // class ManualLibrarySlot
+
+} // namespace mediachanger
+} // namespace castor
