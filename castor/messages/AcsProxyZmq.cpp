@@ -20,6 +20,8 @@
  *****************************************************************************/
 
 #include "castor/messages/AcsMountTapeForRecall.pb.h"
+#include "castor/messages/AcsMountTapeForMigration.pb.h"
+#include "castor/messages/AcsDismountTape.pb.h"
 #include "castor/messages/AcsProxyZmq.hpp"
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/messages.hpp"
@@ -69,7 +71,6 @@ void castor::messages::AcsProxyZmq::mountTapeReadOnly(const std::string &vid,
 castor::messages::Frame castor::messages::AcsProxyZmq::
   createAcsMountTapeForRecallFrame(const std::string &vid,
   const mediachanger::AcsLibrarySlot &librarySlot) {
-/*
   try {
     Frame frame;
 
@@ -79,10 +80,10 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
 
     AcsMountTapeForRecall body;
     body.set_vid(vid);
-    body.set_acs(acs);
-    body.set_lsm(lsm);
-    body.set_panel(panel);
-    body.set_drive(drive);
+    body.set_acs(librarySlot.getAcs());
+    body.set_lsm(librarySlot.getLsm());
+    body.set_panel(librarySlot.getPanel());
+    body.set_drive(librarySlot.getDrive());
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;
@@ -93,9 +94,6 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
       ne.getMessage().str();
     throw ex;
   }
-*/
-
-  return Frame();
 }
 
 //------------------------------------------------------------------------------
@@ -131,7 +129,6 @@ void castor::messages::AcsProxyZmq::mountTapeReadWrite(const std::string &vid,
 castor::messages::Frame castor::messages::AcsProxyZmq::
   createAcsMountTapeForMigrationFrame(const std::string &vid, 
   const mediachanger::AcsLibrarySlot &librarySlot) {
-/*
   try {
     Frame frame;
 
@@ -139,12 +136,12 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
     frame.header.set_msgtype(messages::MSG_TYPE_ACSMOUNTTAPEFORMIGRATION);
     frame.header.set_bodysignature("PIPO");
 
-    AcsMountTapeForRecall body;
+    AcsMountTapeForMigration body;
     body.set_vid(vid);
-    body.set_acs(acs);
-    body.set_lsm(lsm);
-    body.set_panel(panel);
-    body.set_drive(drive);
+    body.set_acs(librarySlot.getAcs());
+    body.set_lsm(librarySlot.getLsm());
+    body.set_panel(librarySlot.getPanel());
+    body.set_drive(librarySlot.getDrive());
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;
@@ -155,9 +152,6 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
       ne.getMessage().str();
     throw ex;
   }
-*/
-
-  return Frame();
 }
 
 //------------------------------------------------------------------------------
@@ -193,7 +187,6 @@ void castor::messages::AcsProxyZmq::dismountTape(const std::string &vid,
 castor::messages::Frame castor::messages::AcsProxyZmq::
   createAcsDismountTapeFrame(const std::string &vid, 
   const mediachanger::AcsLibrarySlot &librarySlot) {
-/*
   try {
     Frame frame;
 
@@ -201,12 +194,12 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
     frame.header.set_msgtype(messages::MSG_TYPE_ACSDISMOUNTTAPE);
     frame.header.set_bodysignature("PIPO");
 
-    AcsMountTapeForRecall body;
+    AcsDismountTape body;
     body.set_vid(vid);
-    body.set_acs(acs);
-    body.set_lsm(lsm);
-    body.set_panel(panel);
-    body.set_drive(drive);
+    body.set_acs(librarySlot.getAcs());
+    body.set_lsm(librarySlot.getLsm());
+    body.set_panel(librarySlot.getPanel());
+    body.set_drive(librarySlot.getDrive());
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;
@@ -217,7 +210,4 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
       ne.getMessage().str();
     throw ex;
   }
-*/
-
-  return Frame();
 }
