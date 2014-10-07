@@ -35,7 +35,7 @@ castor::mediachanger::ManualLibrarySlot::ManualLibrarySlot()
 //------------------------------------------------------------------------------
 castor::mediachanger::ManualLibrarySlot::ManualLibrarySlot(
   const std::string &str): m_str(str) {
-  if(str.find("manual@")) {
+  if(str.find("manual")) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to construct ManualLibrarySlot"
       ": Library slot must start with manual: str=" << str;
