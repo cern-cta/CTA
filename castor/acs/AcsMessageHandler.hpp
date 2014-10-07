@@ -29,8 +29,6 @@
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/acs/AcsDaemon.hpp"
 
-#include <string>
-
 namespace castor     {
 namespace acs        {
 

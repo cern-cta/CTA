@@ -28,9 +28,6 @@
 #include "castor/log/Logger.hpp"
 #include "castor/acs/AcsDaemon.hpp"
 
-#include <stdint.h>
-#include <string>
-
 namespace castor     {
 namespace acs        {
 

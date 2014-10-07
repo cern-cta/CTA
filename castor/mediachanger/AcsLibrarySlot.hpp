@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "castor/exception/InvalidArgument.hpp"
+
 #include <stdint.h>
 #include <string>
 
@@ -41,13 +43,21 @@ public:
   /**
    * Constructor.
    *
-   * This method throws a castor::exceptiuon::Exception if the specified stringi
-   * reprsentation is invalid.
+   * This method throws a castor::exception::InvalidArgument if the specified
+   * string representation is invalid.
    *
-   * @param The string representation of a slot in an ACS tape-library.
+   * @param The string representation of a slot in an ACS tape-library in format
+   * acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
    */
   AcsLibrarySlot(const std::string &str);
-
+  
+  /**
+   * Returns true if the specified string only contains numerals else false.
+   *
+   * @return True if the specified string only contains numerals else false.
+   */
+  bool onlyContainsNumerals(const std::string &str) const throw();
+  
   /**
    * Gets the acs component of the library slot.
    *
