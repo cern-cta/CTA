@@ -22,19 +22,20 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
-#include "castor/mediachanger/TapeLibrarySlot.hpp"
+#include "castor/mediachanger/ConfigLibrarySlot.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::mediachanger::TapeLibrarySlot::TapeLibrarySlot():
+castor::mediachanger::ConfigLibrarySlot::ConfigLibrarySlot():
   m_libraryType(TAPE_LIBRARY_TYPE_NONE) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::mediachanger::TapeLibrarySlot::TapeLibrarySlot(const std::string &str):
+castor::mediachanger::ConfigLibrarySlot::ConfigLibrarySlot(
+  const std::string &str):
   m_str(str),
   m_libraryType(getLibraryTypeOfSlot(str)) {
 }
@@ -42,7 +43,7 @@ castor::mediachanger::TapeLibrarySlot::TapeLibrarySlot(const std::string &str):
 //------------------------------------------------------------------------------
 // getLibrarySlotType
 //------------------------------------------------------------------------------
-castor::mediachanger::TapeLibraryType castor::mediachanger::TapeLibrarySlot::
+castor::mediachanger::TapeLibraryType castor::mediachanger::ConfigLibrarySlot::
   getLibraryTypeOfSlot(const std::string &slot) {
   if(0 == slot.find("acs"))    return TAPE_LIBRARY_TYPE_ACS;
   if(0 == slot.find("manual")) return TAPE_LIBRARY_TYPE_MANUAL;
@@ -57,7 +58,8 @@ castor::mediachanger::TapeLibraryType castor::mediachanger::TapeLibrarySlot::
 //------------------------------------------------------------------------------
 // str
 //------------------------------------------------------------------------------
-const std::string &castor::mediachanger::TapeLibrarySlot::str() const throw() {
+const std::string &castor::mediachanger::ConfigLibrarySlot::str() const
+  throw() {
   return m_str;
 }
 
@@ -65,6 +67,6 @@ const std::string &castor::mediachanger::TapeLibrarySlot::str() const throw() {
 // getLibraryType
 //------------------------------------------------------------------------------
 castor::mediachanger::TapeLibraryType
-  castor::mediachanger::TapeLibrarySlot::getLibraryType() const throw() {
+  castor::mediachanger::ConfigLibrarySlot::getLibraryType() const throw() {
   return m_libraryType;
 }

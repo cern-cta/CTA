@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "castor/mediachanger/TapeLibrarySlot.hpp"
+#include "castor/mediachanger/ConfigLibrarySlot.hpp"
 
 #include <string>
 
@@ -47,7 +47,7 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   virtual void mountTapeReadOnly(const std::string &vid,
-    const TapeLibrarySlot &librarySlot) = 0;
+    const ConfigLibrarySlot &librarySlot) = 0;
 
   /**
    * Requests the media changer to mount of the specified tape for read/write
@@ -57,7 +57,7 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   virtual void mountTapeReadWrite(const std::string &vid,
-    const TapeLibrarySlot &librarySlot) = 0;
+    const ConfigLibrarySlot &librarySlot) = 0;
 
   /** 
    * Requests the media changer to dismount of the specified tape from the
@@ -67,24 +67,7 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   virtual void dismountTape(const std::string &vid,
-    const TapeLibrarySlot &librarySlot) = 0;
-
-protected:
-
-  /**
-   * Verifies the specified tape volume-identifier and tape library-slot.
-   *
-   * This method throws a castor::exception::Exception if the verfication fails.
-   *
-   * @param vid The volume identifier of the tape.
-   * @param expectedLibraryType Expected tape-library type.
-   * @param librarySlot The slot in the tape loibrary that contains the tape
-   * drive.
-   */
-  void verifyVidAndLibrarySlot(
-    const std::string &vid, 
-    const mediachanger::TapeLibraryType expectedLibraryType,
-    const mediachanger::TapeLibrarySlot librarySlot);
+    const ConfigLibrarySlot &librarySlot) = 0;
 
 }; // class MediaChangerProxy
 

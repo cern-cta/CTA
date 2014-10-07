@@ -63,7 +63,7 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   void mountTapeReadOnly(const std::string &vid,
-    const mediachanger::TapeLibrarySlot &librarySlot);
+    const mediachanger::ConfigLibrarySlot &librarySlot);
 
   /**
    * Requests the media changer to mount of the specified tape for read/write
@@ -73,7 +73,7 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   void mountTapeReadWrite(const std::string &vid,
-    const mediachanger::TapeLibrarySlot &librarySlot);
+    const mediachanger::ConfigLibrarySlot &librarySlot);
 
   /** 
    * Requests the media changer to dismount of the specified tape from the
@@ -83,7 +83,7 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   void dismountTape(const std::string &vid,
-    const mediachanger::TapeLibrarySlot &librarySlot);
+    const mediachanger::ConfigLibrarySlot &librarySlot);
 
 protected:
 

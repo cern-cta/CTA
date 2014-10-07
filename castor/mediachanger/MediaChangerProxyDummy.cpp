@@ -31,19 +31,19 @@ castor::mediachanger::MediaChangerProxyDummy::~MediaChangerProxyDummy() {
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
 void castor::mediachanger::MediaChangerProxyDummy::mountTapeReadOnly(
-  const std::string &vid, const TapeLibrarySlot &librarySlot) {
+  const std::string &vid, const ConfigLibrarySlot &librarySlot) {
 }
 
 //------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
 void castor::mediachanger::MediaChangerProxyDummy::mountTapeReadWrite(
-  const std::string &vid, const TapeLibrarySlot &librarySlot) {
+  const std::string &vid, const ConfigLibrarySlot &librarySlot) {
 }
 
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
 void castor::mediachanger::MediaChangerProxyDummy::dismountTape(
-  const std::string &vid, const TapeLibrarySlot &librarySlot) {
+  const std::string &vid, const ConfigLibrarySlot &librarySlot) {
 }

@@ -49,10 +49,7 @@ castor::legacymsg::RmcProxyTcpIp::~RmcProxyTcpIp() throw() {
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
 void castor::legacymsg::RmcProxyTcpIp::mountTapeReadOnly(
-  const std::string &vid, const mediachanger::TapeLibrarySlot &librarySlot) {
-  verifyVidAndLibrarySlot(vid, mediachanger::TAPE_LIBRARY_TYPE_SCSI,
-    librarySlot);
-
+  const std::string &vid, const mediachanger::ConfigLibrarySlot &librarySlot) {
   // SCSI does not support read-only mounts
   mountTapeReadWrite(vid, librarySlot);
 }
@@ -61,11 +58,8 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeReadOnly(
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
 void castor::legacymsg::RmcProxyTcpIp::mountTapeReadWrite(
-  const std::string &vid, const mediachanger::TapeLibrarySlot &librarySlot) {
+  const std::string &vid, const mediachanger::ConfigLibrarySlot &librarySlot) {
   try {
-    verifyVidAndLibrarySlot(vid, mediachanger::TAPE_LIBRARY_TYPE_SCSI,
-      librarySlot);
-
     // Dispatch the appropriate helper method depending on library slot type
     switch(librarySlot.getLibraryType()) {
     case mediachanger::TAPE_LIBRARY_TYPE_ACS:
@@ -172,10 +166,7 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid,
 // dismountTape
 //------------------------------------------------------------------------------
 void castor::legacymsg::RmcProxyTcpIp::dismountTape(const std::string &vid,
-  const mediachanger::TapeLibrarySlot &librarySlot) {
-  verifyVidAndLibrarySlot(vid, mediachanger::TAPE_LIBRARY_TYPE_SCSI,
-    librarySlot);
-
+  const mediachanger::ConfigLibrarySlot &librarySlot) {
   // Dispatch the appropriate helper method depending on library slot type
   switch(librarySlot.getLibraryType()) {
   case mediachanger::TAPE_LIBRARY_TYPE_ACS:

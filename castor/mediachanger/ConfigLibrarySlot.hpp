@@ -31,18 +31,19 @@ namespace castor {
 namespace mediachanger {
 
 /**
- * Class representing a slot in a tape library.
+ * Class representing a tape-library slot in a configuration file
+ * (/etc/castor/TPCONFIG).
  */
-class TapeLibrarySlot {
+class ConfigLibrarySlot {
 public:
 
   /**
    * Constructor.
    */
-  TapeLibrarySlot();
+  ConfigLibrarySlot();
 
   /**
-   * Constructs a TapeLibrarySlot object from the specified string
+   * Constructs a ConfigLibrarySlot object from the specified string
    * representation.
    *
    * The string representation of a tape library-slot must be in one of the
@@ -56,7 +57,7 @@ public:
    *
    * @param str The string reprsentation of the library slot.
    */
-  TapeLibrarySlot(const std::string &str);
+  ConfigLibrarySlot(const std::string &str);
 
   /**
    * Returns the string representation of this tape library slot.
@@ -92,7 +93,7 @@ private:
    */
   static TapeLibraryType getLibraryTypeOfSlot(const std::string &slot);
 
-}; // class TapeLibrarySlot
+}; // class ConfigLibrarySlot
 
 } // namespace mediachanger
 } // namespace castor

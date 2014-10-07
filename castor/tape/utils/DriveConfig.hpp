@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/mediachanger/TapeLibrarySlot.hpp"
+#include "castor/mediachanger/ConfigLibrarySlot.hpp"
 
 #include <list>
 #include <string>
@@ -65,7 +65,7 @@ struct DriveConfig {
    * The library slot n which the tape drive is located, for example:
    * smc@localhost,0
    */
-  mediachanger::TapeLibrarySlot librarySlot;
+  mediachanger::ConfigLibrarySlot librarySlot;
 
   /**
    * The device type.

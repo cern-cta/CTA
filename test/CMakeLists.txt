@@ -106,7 +106,6 @@ add_executable(castorUnitTests
   castorUnitTests.cpp
   ../castor/exception/ExceptionTest.cpp
   ../castor/io/IoTest.cpp
-  ../castor/mediachanger/MediaChangerFacadeTest.cpp
   ../castor/messages/TapeserverProxy.cpp
   ../castor/messages/TapeserverProxyZmq.cpp
   ../castor/legacymsg/CommonMarshalTest.cpp
@@ -133,9 +132,9 @@ add_executable(castorUnitTests
   ../castor/log/StringLoggerTest.cpp
   ../castor/log/SyslogLoggerTest.cpp
   ../castor/mediachanger/AcsLibrarySlot.cpp
+  ../castor/mediachanger/ConfigLibrarySlotTest.cpp
   ../castor/mediachanger/ScsiLibrarySlot.cpp
   ../castor/mediachanger/ScsiLibrarySlotTest.cpp
-  ../castor/mediachanger/TapeLibrarySlotTest.cpp
   ../castor/messages/MessagesTest.cpp
   ../castor/server/DaemonTest.cpp
   ../castor/server/SmartCapTest.cpp
