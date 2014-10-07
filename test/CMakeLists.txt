@@ -122,8 +122,6 @@ add_executable(castorUnitTests
   ../castor/legacymsg/RmcMarshalTest.cpp
   ../castor/legacymsg/RmcProxy.cpp
   ../castor/legacymsg/RmcProxyTcpIp.cpp
-  ../castor/legacymsg/ScsiLibrarySlot.cpp
-  ../castor/legacymsg/ScsiLibrarySlotTest.cpp
   ../castor/legacymsg/TapeMarshalTest.cpp
   ../castor/legacymsg/VdqmMarshalTest.cpp
   ../castor/legacymsg/VdqmProxy.cpp
@@ -135,6 +133,8 @@ add_executable(castorUnitTests
   ../castor/log/StringLoggerTest.cpp
   ../castor/log/SyslogLoggerTest.cpp
   ../castor/mediachanger/AcsLibrarySlot.cpp
+  ../castor/mediachanger/ScsiLibrarySlot.cpp
+  ../castor/mediachanger/ScsiLibrarySlotTest.cpp
   ../castor/mediachanger/TapeLibrarySlotTest.cpp
   ../castor/messages/MessagesTest.cpp
   ../castor/server/DaemonTest.cpp

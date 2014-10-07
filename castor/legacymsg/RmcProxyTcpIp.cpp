@@ -20,10 +20,10 @@
  *****************************************************************************/
 
 #include "castor/io/io.hpp"
+#include "castor/mediachanger/ScsiLibrarySlot.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/RmcMarshal.hpp"
 #include "castor/legacymsg/RmcProxyTcpIp.hpp"
-#include "castor/legacymsg/ScsiLibrarySlot.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Castor_limits.h"
@@ -116,15 +116,15 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid,
   task << "mount tape " << vid << " in " << librarySlot;
 
   try {
-    const ScsiLibrarySlot parsedSlot(librarySlot);
+    const mediachanger::ScsiLibrarySlot parsedSlot(librarySlot);
 
-    castor::utils::SmartFd fd(connectToRmc(parsedSlot.rmcHostName));
+    castor::utils::SmartFd fd(connectToRmc(parsedSlot.getRmcHostName()));
 
     RmcMountMsgBody body;
     body.uid = geteuid();
     body.gid = getegid();
     castor::utils::copyString(body.vid, vid);
-    body.drvOrd = parsedSlot.drvOrd;
+    body.drvOrd = parsedSlot.getDrvOrd();
     writeRmcMountMsg(fd.get(), body);
 
     const MessageHeader header = readRmcMsgHeader(fd.get());
@@ -133,7 +133,7 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid,
       if(0 != header.lenOrStatus) {
         castor::exception::Exception ex;
         ex.getMessage() << "Received error code from rmc running on " <<
-          parsedSlot.rmcHostName << ": code=" << header.lenOrStatus;
+          parsedSlot.getRmcHostName() << ": code=" << header.lenOrStatus;
         throw ex;
       }
       break;
@@ -146,7 +146,7 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid,
         errorBuf[sizeof(errorBuf) - 1] = '\0';
         castor::exception::Exception ex;
         ex.getMessage() << "Received error message from rmc running on " <<
-          parsedSlot.rmcHostName << ": " << errorBuf;
+          parsedSlot.getRmcHostName() << ": " << errorBuf;
         throw ex;
       }
       break;
@@ -154,7 +154,7 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid,
       {
         castor::exception::Exception ex;
         ex.getMessage() <<
-          "Reply message from rmc running on " << parsedSlot.rmcHostName <<
+          "Reply message from rmc running on " << parsedSlot.getRmcHostName() <<
           " has an unexpected request type"
           ": reqType=0x" << header.reqType;
         throw ex;
@@ -220,15 +220,15 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid,
   task << "unmount tape " << vid << " from " << librarySlot;
 
   try {
-    const ScsiLibrarySlot parsedSlot(librarySlot);
+    const mediachanger::ScsiLibrarySlot parsedSlot(librarySlot);
 
-    castor::utils::SmartFd fd(connectToRmc(parsedSlot.rmcHostName));
+    castor::utils::SmartFd fd(connectToRmc(parsedSlot.getRmcHostName()));
 
     RmcUnmountMsgBody body;
     body.uid = geteuid();
     body.gid = getegid();
     castor::utils::copyString(body.vid, vid);
-    body.drvOrd = parsedSlot.drvOrd;
+    body.drvOrd = parsedSlot.getDrvOrd();
     body.force = 0;
     writeRmcUnmountMsg(fd.get(), body);
 
@@ -238,7 +238,7 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid,
       if(0 != header.lenOrStatus) {
         castor::exception::Exception ex;
         ex.getMessage() << "Received error code from rmc running on " <<
-          parsedSlot.rmcHostName << ": code=" << header.lenOrStatus;
+          parsedSlot.getRmcHostName() << ": code=" << header.lenOrStatus;
         throw ex;
       }
       break;
@@ -251,7 +251,7 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid,
         errorBuf[sizeof(errorBuf) - 1] = '\0';
         castor::exception::Exception ex;
         ex.getMessage() << "Received error message from rmc running on " <<
-          parsedSlot.rmcHostName << ": " << errorBuf;
+          parsedSlot.getRmcHostName() << ": " << errorBuf;
         throw ex;
       }
       break;
@@ -259,7 +259,7 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid,
       {
         castor::exception::Exception ex;
         ex.getMessage() <<
-          "Reply message from rmc running on " << parsedSlot.rmcHostName <<
+          "Reply message from rmc running on " << parsedSlot.getRmcHostName() <<
           " has an unexpected request type"
           ": reqType=0x" << header.reqType;
         throw ex;

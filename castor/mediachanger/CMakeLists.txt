@@ -24,6 +24,7 @@ set (MEDIA_CHANGER_CLIENT_LIB_SRC_FILES
   MediaChangerFacade.cpp
   MediaChangerProxy.cpp
   MediaChangerProxyDummy.cpp
+  ScsiLibrarySlot.cpp
   TapeLibrarySlot.cpp
   TapeLibraryType.cpp)
 add_library(castormediachangerclient

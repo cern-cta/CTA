@@ -21,13 +21,13 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/ScsiLibrarySlot.hpp"
+#include "castor/mediachanger/ScsiLibrarySlot.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-class castor_tape_tapeserver_daemon_ScsiLibrarySlotTest : public ::testing::Test {
+class castor_mediachanger_ScsiLibrarySlotTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -37,21 +37,21 @@ protected:
   }
 };
 
-TEST_F(castor_tape_tapeserver_daemon_ScsiLibrarySlotTest, goodDayParsing) {
-  using namespace castor::legacymsg;
+TEST_F(castor_mediachanger_ScsiLibrarySlotTest, goodDayParsing) {
+  using namespace castor::mediachanger;
  
   ScsiLibrarySlot slot;
-  ASSERT_EQ(std::string(""), slot.rmcHostName);
-  ASSERT_EQ((uint16_t)0, slot.drvOrd);
+  ASSERT_EQ(std::string(""), slot.getRmcHostName());
+  ASSERT_EQ((uint16_t)0, slot.getDrvOrd());
 
   const std::string str = "smc@rmc_host,4";
   ASSERT_NO_THROW(slot = ScsiLibrarySlot(str));
-  ASSERT_EQ(std::string("rmc_host"), slot.rmcHostName);
-  ASSERT_EQ((uint16_t)4, slot.drvOrd);
+  ASSERT_EQ(std::string("rmc_host"), slot.getRmcHostName());
+  ASSERT_EQ((uint16_t)4, slot.getDrvOrd());
 }
 
-TEST_F(castor_tape_tapeserver_daemon_ScsiLibrarySlotTest, badDayParsing) {
-  using namespace castor::legacymsg;
+TEST_F(castor_mediachanger_ScsiLibrarySlotTest, badDayParsing) {
+  using namespace castor::mediachanger;
 
   const std::string str = "nonsense";
   ASSERT_THROW(ScsiLibrarySlot slot(str), castor::exception::Exception);

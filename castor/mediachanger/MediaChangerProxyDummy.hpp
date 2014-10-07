@@ -29,7 +29,7 @@ namespace castor {
 namespace mediachanger {
 
 /**
- * Concrete class that implementd a dummy a media-changer proxy.
+ * Concrete class that implements a dummy a media-changer proxy.
  */
 class MediaChangerProxyDummy: public MediaChangerProxy {
 public:
@@ -68,7 +68,7 @@ public:
    */
   void dismountTape(const std::string &vid, const TapeLibrarySlot &librarySlot);
 
-}; // class MediaChangerProxy
+}; // class MediaChangerProxyDummy
 
 } // namespace mediachanger
 } // namespace castor

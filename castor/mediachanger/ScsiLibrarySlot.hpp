@@ -27,7 +27,7 @@
 #include <string>
 
 namespace castor {
-namespace legacymsg {
+namespace mediachanger {
 
 /**
  * Structure representing a SCSI library slot.
@@ -36,19 +36,9 @@ class ScsiLibrarySlot {
 public:
 
   /**
-   * The name of the host on which the rmcd daemon is running.
-   */
-  std::string rmcHostName;
-
-  /**
-   * The drive ordinal.
-   */
-  uint16_t drvOrd;
-
-  /**
    * Constructor.
    *
-   * Sets all integer member-variables to 0.
+   * Sets all integer member-variables to 0 and all strings to the empty string.
    */
   ScsiLibrarySlot() throw();
 
@@ -60,9 +50,46 @@ public:
    *
    * @param str The string representation of a SCSI library slot.
    */
-  ScsiLibrarySlot(const std::string &str) ;
+  ScsiLibrarySlot(const std::string &str);
+
+  /**
+   * Returns the SCSI library slot.
+   */
+  const std::string &str() const throw();
+
+  /**
+   * Gets the name of the host on which the rmcd daemon is running.
+   *
+   * @return The name of the host on which the rmcd daemon is running.
+   */
+  const std::string &getRmcHostName() const throw();
+
+  /**
+   * Gets the drive ordinal.
+   *
+   * @return The drive ordinal.
+   */
+  uint16_t getDrvOrd() const throw();
+
+private:
+
+  /**
+   * The string representation of the SCSI library slot.
+   */
+  std::string m_str;
+
+  /**
+   * The name of the host on which the rmcd daemon is running.
+   */
+  std::string m_rmcHostName;
+
+  /**
+   * The drive ordinal.
+   */
+  uint16_t m_drvOrd;
+
 }; // class ScsiLibrarySlot
 
-} // namespace legacymsg
+} // namespace mediachanger
 } // namespace castor
 

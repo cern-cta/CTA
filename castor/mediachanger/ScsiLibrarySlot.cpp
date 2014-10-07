@@ -19,21 +19,21 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/ScsiLibrarySlot.hpp"
+#include "castor/mediachanger/ScsiLibrarySlot.hpp"
 #include "castor/utils/utils.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::legacymsg::ScsiLibrarySlot::ScsiLibrarySlot()
-  throw(): drvOrd(0) {
+castor::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot()
+  throw(): m_drvOrd(0) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::legacymsg::ScsiLibrarySlot::ScsiLibrarySlot(
-  const std::string &str) : drvOrd(0) {
+castor::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot(
+  const std::string &str) {
   if(str.find("smc@")) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot"
@@ -59,7 +59,7 @@ castor::legacymsg::ScsiLibrarySlot::ScsiLibrarySlot(
     throw ex;
   }
 
-  rmcHostName = str.substr(indexOfAtSign + 1, hostLen);
+  m_rmcHostName = str.substr(indexOfAtSign + 1, hostLen);
 
   const std::string::size_type drvOrdLen = str.length() - indexOfComma;
   if(0 == drvOrdLen) {
@@ -77,5 +77,27 @@ castor::legacymsg::ScsiLibrarySlot::ScsiLibrarySlot(
     throw ex;
   }
 
-  drvOrd = atoi(drvOrdStr.c_str());
+  m_drvOrd = atoi(drvOrdStr.c_str());
+}
+
+//------------------------------------------------------------------------------
+// str
+//------------------------------------------------------------------------------
+const std::string &castor::mediachanger::ScsiLibrarySlot::str() const throw() {
+  return m_str;
+}
+
+//------------------------------------------------------------------------------
+// getRmcHostName
+//------------------------------------------------------------------------------
+const std::string &castor::mediachanger::ScsiLibrarySlot::getRmcHostName() const
+  throw() {
+  return m_rmcHostName;
+}
+
+//------------------------------------------------------------------------------
+// getDrvOrd
+//------------------------------------------------------------------------------
+uint16_t castor::mediachanger::ScsiLibrarySlot::getDrvOrd() const throw() {
+  return m_drvOrd;
 }
