@@ -21,6 +21,7 @@
 #include "h/getconfent.h"
 #include "h/marshall.h"
 #include "h/net.h"
+#include "h/rbtsubr_constants.h"
 #include "h/rmc_constants.h"
 #include "h/rmc_logit.h"
 #include "h/rmc_procreq.h"
@@ -38,6 +39,11 @@ static int getreq(const int s, int *const req_type, char *const req_data,
   char **const clienthost);
 static void procreq(const int rpfd, const int req_type, char *const req_data,
   char *const clienthost);
+static int dispatchRqstHandlerWithFastRetry(const int req_type,
+  const struct rmc_srv_rqst_context *const rqst_context,
+  const unsigned int maxNbAttempts, const unsigned int delayInSec);
+static int dispatchRqstHandler(const int req_type,
+  const struct rmc_srv_rqst_context *const rqst_context);
 static void rmc_doit(const int rpfd);
 
 int jid;
@@ -352,7 +358,6 @@ static void procreq(
   char *const req_data,
   char *const clienthost)
 {
-	int c = 0;
 	struct rmc_srv_rqst_context rqst_context;
 
 	rqst_context.localhost = localhost;
@@ -360,37 +365,75 @@ static void procreq(
 	rqst_context.req_data = req_data;
 	rqst_context.clienthost = clienthost;
 
+	const unsigned int maxNbAttempts = 2;
+	const unsigned int delayInSec = 1;
+	const int handlerRc = dispatchRqstHandlerWithFastRetry(req_type,
+		&rqst_context, maxNbAttempts, delayInSec);
+
+	if(ERMCUNREC == handlerRc) {
+		rmc_sendrep (rpfd, MSG_ERR, RMC03, req_type);
+	}
+	rmc_sendrep (rpfd, RMC_RC, handlerRc);
+}
+
+/**
+ * Dispatches the appropriate request handler in a loop while the result is
+ * RBT_FAST_RETRY until the specified maximum number of attempts has been
+ * reached.
+ *
+ * @param req_type The type of the request to be handled.
+ * @param rqst_context The context of the request.
+ * @param maxNbAttempts The maximum number of attempts.
+ * @param delayInSec The delay in seconds between attempts.
+ * @return The result of handling the request.
+ */
+static int dispatchRqstHandlerWithFastRetry(const int req_type,
+	const struct rmc_srv_rqst_context *const rqst_context,
+	const unsigned int maxNbAttempts, const unsigned int delayInSec) {
+	unsigned int i = 0;
+
+	for(i = 0; i < maxNbAttempts; i++) {
+		const int handlerRc = dispatchRqstHandler(req_type,
+			rqst_context);
+		if(RBT_FAST_RETRY != handlerRc) {
+			return handlerRc;
+		}
+		sleep(delayInSec);
+	}
+
+	// The maximum number of attempts has been reached
+	return RBT_NORETRY;
+}
+
+/**
+ * Dispatches the appropriate request handler.
+ *
+ * @param req_type The type of the request to be handled.
+ * @param rqst_context The context of the request.
+ * @return The result of handling the request.
+ */
+static int dispatchRqstHandler(const int req_type,
+	const struct rmc_srv_rqst_context *const rqst_context) {
 	switch (req_type) {
 	case RMC_SCSI_MOUNT:
-		c = rmc_srv_mount (&rqst_context);
-		break;
+		return rmc_srv_mount (rqst_context);
 	case RMC_SCSI_UNMOUNT:
-		c = rmc_srv_unmount (&rqst_context);
-		break;
+		return rmc_srv_unmount (rqst_context);
 	case RMC_SCSI_EXPORT:
-		c = rmc_srv_export (&rqst_context);
-		break;
+		return rmc_srv_export (rqst_context);
 	case RMC_SCSI_IMPORT:
-		c = rmc_srv_import (&rqst_context);
-		break;
+		return rmc_srv_import (rqst_context);
 	case RMC_SCSI_GETGEOM:
-		c = rmc_srv_getgeom (&rqst_context);
-		break;
+		return rmc_srv_getgeom (rqst_context);
 	case RMC_SCSI_READELEM:
-		c = rmc_srv_readelem (&rqst_context);
-		break;
+		return rmc_srv_readelem (rqst_context);
 	case RMC_SCSI_FINDCART:
-		c = rmc_srv_findcart (&rqst_context);
-		break;
+		return rmc_srv_findcart (rqst_context);
 	case RMC_ACS_MOUNT:
-		c = rmc_srv_acs_mnt (&rqst_context);
-		break;
+		return rmc_srv_acs_mnt (rqst_context);
 	case RMC_ACS_UNMOUNT:
-		c = rmc_srv_acs_unmnt (&rqst_context);
-		break;
+		return rmc_srv_acs_unmnt (rqst_context);
 	default:
-		rmc_sendrep (rpfd, MSG_ERR, RMC03, req_type);
-		c = ERMCUNREC;
+		return ERMCUNREC;
 	}
-	rmc_sendrep (rpfd, RMC_RC, c);
 }
