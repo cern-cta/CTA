@@ -36,7 +36,7 @@ void castor::mediachanger::MmcProxyLog::mountTapeReadOnly(
   log::Param params[] = {
     log::Param("TPVID", vid),
     log::Param("librarySlot", librarySlot.str())};
-  m_log(LOG_INFO, "Tape should be manual mounted for read-only access",
+  m_log(LOG_WARNING, "Tape should be manual mounted for read-only access",
     params);
 }
 
@@ -48,7 +48,7 @@ void castor::mediachanger::MmcProxyLog::mountTapeReadWrite(
   log::Param params[] = {
     log::Param("TPVID", vid),
     log::Param("librarySlot", librarySlot.str())};
-  m_log(LOG_INFO, "Tape should be manual mounted for read/write access",
+  m_log(LOG_WARNING, "Tape should be manual mounted for read/write access",
     params);
 }
 
@@ -60,5 +60,5 @@ void castor::mediachanger::MmcProxyLog::dismountTape(
   log::Param params[] = {
     log::Param("TPVID", vid),
     log::Param("librarySlot", librarySlot.str())};
-  m_log(LOG_INFO, "Tape should be manual dismounted", params);
+  m_log(LOG_WARNING, "Tape should be manual dismounted", params);
 }
