@@ -88,7 +88,7 @@ namespace castor {
       void readConfigFile(unsigned int *chunkInterval,
                           unsigned int *chunkSize,
                           bool *disableStagerSync,
-                          unsigned int *gracePeriod,
+                          time_t *gracePeriod,
                           bool firstTime = false)
         throw(castor::exception::Exception);
 

@@ -71,7 +71,7 @@ void castor::gc::SynchronizationThread::run(void*) {
   unsigned int chunkInterval = DEFAULT_CHUNKINTERVAL;
   unsigned int chunkSize = DEFAULT_CHUNKSIZE;
   bool disableStagerSync = DEFAULT_DISABLESTAGERSYNC;
-  unsigned int gracePeriod = DEFAULT_GRACEPERIOD;
+  time_t gracePeriod = DEFAULT_GRACEPERIOD;
   readConfigFile(&chunkInterval, &chunkSize, &disableStagerSync, &gracePeriod, true);
 
   // Endless loop
@@ -171,7 +171,7 @@ void castor::gc::SynchronizationThread::run(void*) {
             continue;
           } else if (!(filebuf.st_mode & S_IFREG)) {
             continue;  // not a file
-          } else if (filebuf.st_mtime > time(NULL) - (time_t)gracePeriod) {
+          } else if (filebuf.st_mtime > time(NULL) - gracePeriod) {
             continue;
           }
           
@@ -265,7 +265,7 @@ void castor::gc::SynchronizationThread::readConfigFile
 (unsigned int *chunkInterval,
  unsigned int *chunkSize,
  bool *disableStagerSync,
- unsigned int *gracePeriod,
+ time_t *gracePeriod,
  bool firstTime)
   throw(castor::exception::Exception) {
 
