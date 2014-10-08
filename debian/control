@@ -24,7 +24,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-gc-server
 Architecture: any
-Depends: logrotate, castor-lib = %{version}-%{release}, ceph, castor-lib-server = %{version}-%{release}
+Depends: logrotate, castor-lib = %{version}-%{release}, castor-lib-server = %{version}-%{release}
 Build-Depends: ceph-devel
 Description: castor (Cern Advanced STORage system)
  Garbage collector, running on every worker node
@@ -111,7 +111,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rfio-server
 Architecture: any
-Depends: logrotate, castor-lib = %{version}-%{release}, ceph
+Depends: logrotate, castor-lib = %{version}-%{release}
 Build-Depends: ceph-devel, xfsprogs-devel, libattr-devel, zlib-devel
 Description: castor (Cern Advanced STORage system)
  RFIO server
@@ -241,7 +241,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-gridftp-dsi
 Architecture: any
 Depends: globus-gridftp-server-progs, globus-common
-Build-Depends: libattr-devel, zlib-devel, globus-gridftp-server-devel, globus-common-devel
+Build-Depends: libattr-devel, zlib-devel, globus-gridftp-server-devel, globus-common-devel, ceph-devel
 XBS-Obsoletes: castor-gridftp-dsi-common, castor-gridftp-dsi-int
 Description: castor (Cern Advanced STORage system)
  Internal CASTOR2 gridftp2 DSI module
@@ -324,7 +324,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-xrootd-plugin
 Architecture: any
 Depends: xrootd4 >= 4.0.0, castor-lib = %{version}-%{release}
-Build-Depends: xrootd4, xrootd4-devel, xrootd4-client, xrootd4-client-devel, xrootd4-libs, xrootd4-server-libs, xrootd4-server-devel, xrootd4-private-devel
+Build-Depends: xrootd4, xrootd4-devel, xrootd4-client, xrootd4-client-devel, xrootd4-libs, xrootd4-server-libs, xrootd4-server-devel, xrootd4-private-devel, ceph-devel
 Description: castor (Cern Advanced STORage system)
  Xrootd support of Castor
 XBS-Obsoletes: xrootd-libtransfermanager, xrootd-xcastor2fs
