@@ -253,7 +253,8 @@ BEGIN
                             AND DiskServer.hwOnline = 1));
         IF varNbCopies = 0 THEN
           -- find out whether this file is already being recalled from this tape
-          SELECT count(*) INTO varWasRecalled FROM RecallJob WHERE castorfile = cfId AND vid != varRepackVID;
+          SELECT /*+ INDEX_RS_ASC(RecallJob I_RecallJob_CastorFile) */ count(*)
+            INTO varWasRecalled FROM RecallJob WHERE castorfile = cfId AND vid != varRepackVID;
           IF varWasRecalled = 0 THEN
             -- trigger recall: if we have dual copy files, this may trigger a second recall,
             -- which will race with the first as it happens for user-driven recalls
