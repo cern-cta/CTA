@@ -105,9 +105,10 @@ set(HSM_SCRIPTS
   modifydbconfig
   printdbconfig
   
+  checkreplicas
+  diskserver_qry
   fixFileSize
   deletediskcopy
-  diskserver_qry
   draindiskserver
   migratenewcopy
   nslistsegs
