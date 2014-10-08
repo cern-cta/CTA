@@ -50,7 +50,7 @@
 #define DEFAULT_CHUNKINTERVAL      1800
 #define DEFAULT_CHUNKSIZE          2000
 #define DEFAULT_DISABLESTAGERSYNC  false
-
+#define DEFAULT_GRACEPERIOD        86400
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -71,14 +71,15 @@ void castor::gc::SynchronizationThread::run(void*) {
   unsigned int chunkInterval = DEFAULT_CHUNKINTERVAL;
   unsigned int chunkSize = DEFAULT_CHUNKSIZE;
   bool disableStagerSync = DEFAULT_DISABLESTAGERSYNC;
-  readConfigFile(&chunkInterval, &chunkSize, &disableStagerSync, true);
+  unsigned int gracePeriod = DEFAULT_GRACEPERIOD;
+  readConfigFile(&chunkInterval, &chunkSize, &disableStagerSync, &gracePeriod, true);
 
   // Endless loop
   for (;;) {
 
     // Get the synchronization interval and chunk size these may have changed
     // since the last iteration
-    readConfigFile(&chunkInterval, &chunkSize, &disableStagerSync);
+    readConfigFile(&chunkInterval, &chunkSize, &disableStagerSync, &gracePeriod);
     if (chunkInterval <= 0) {
       // just do nothing if interval = 0
       sleep(300);
@@ -158,7 +159,7 @@ void castor::gc::SynchronizationThread::run(void*) {
         struct dirent *file;
         while ((file = readdir(files))) {
 
-          // Ignore non regular files and files closed too recently (< 1mn)
+          // Ignore non regular files and files closed too recently.
           // This protects in particular recently recalled files by giving time
           // to the stager DB to create the associated DiskCopy. Otherwise,
           // we would have a time window where the file exist on disk and can
@@ -170,7 +171,7 @@ void castor::gc::SynchronizationThread::run(void*) {
             continue;
           } else if (!(filebuf.st_mode & S_IFREG)) {
             continue;  // not a file
-          } else if (filebuf.st_mtime > time(NULL) - 600) {
+          } else if (filebuf.st_mtime > time(NULL) - gracePeriod) {
             continue;
           }
           
@@ -258,12 +259,13 @@ void castor::gc::SynchronizationThread::run(void*) {
 
 
 //-----------------------------------------------------------------------------
-// ReadConfigFile
+// readConfigFile
 //-----------------------------------------------------------------------------
 void castor::gc::SynchronizationThread::readConfigFile
 (unsigned int *chunkInterval,
  unsigned int *chunkSize,
  bool *disableStagerSync,
+ unsigned int *gracePeriod,
  bool firstTime)
   throw(castor::exception::Exception) {
 
@@ -332,13 +334,38 @@ void castor::gc::SynchronizationThread::readConfigFile
     }
   }
 
+  // Grace period size
+  int gracePeriodnew;
+  if ((value = getenv("GC_SYNCGRACEPERIOD")) ||
+      (value = getconfent("GC", "SyncGracePeriod", 0))) {
+    gracePeriodnew = atoi(value);
+    if (gracePeriodnew >= 0) {
+      if (*gracePeriod != (time_t)gracePeriodnew) {
+        *gracePeriod = (time_t)gracePeriodnew;
+        if (!firstTime) {
+          // "New synchronization grace period"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("GracePeriod", *gracePeriod)};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 46, 1, params);
+        }
+      }
+    } else {
+      *gracePeriod = DEFAULT_GRACEPERIOD;
+      // "Invalid GC/SyncGracePeriod option, using default"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Default", *gracePeriod)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 47, 1, params);
+    }
+  }
+
   // Logging at start time
   if (firstTime) {
     // "Synchronization configuration"
     castor::dlf::Param params[] =
       {castor::dlf::Param("ChunkInterval", *chunkInterval),
-       castor::dlf::Param("ChunkSize", *chunkSize)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 30, 2, params);
+       castor::dlf::Param("ChunkSize", *chunkSize),
+       castor::dlf::Param("GracePeriod", *gracePeriod)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 30, 3, params);
   }
 }
 

@@ -150,6 +150,8 @@ castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("gcd") {
     { 40, "Unexpected exception caught in synchronizeFiles" },
     { 41, "Failed to stat file" },
     { 43, "Could not get fileid from filepath, giving up for this file" },
+    { 46, "New synchronization grace period" },
+    { 47, "Invalid GC/SyncGracePeriod option, using default" },
     { -1, "" }};
   dlfInit(messages);
 }

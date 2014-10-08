@@ -80,14 +80,17 @@ namespace castor {
        * @param chunkSize a pointer to the chunk size value
        * @param disableStagerSync a pointer to the boolean commanding disabling
        * of the synchronization with the stager
+       * @param gracePeriod a pointer to the grace period for the synchronization
+       * of new files
        * @param firstTime whether this is a first call. used only for logging
        * purposes
        */
       void readConfigFile(unsigned int *chunkInterval,
                           unsigned int *chunkSize,
                           bool *disableStagerSync,
+                          unsigned int *gracePeriod,
                           bool firstTime = false)
-	throw(castor::exception::Exception);
+        throw(castor::exception::Exception);
 
       /**
        * Parse a fileName and extract the diskCopyId
@@ -135,7 +138,6 @@ namespace castor {
 
       /// The number of seconds to delay the first invocation of the run method
       int m_startDelay;
-
     };
 
   } // End of namespace gc
