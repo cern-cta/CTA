@@ -68,13 +68,13 @@ TEST_F(castor_mediachanger_AcsLibrarySlotTest, badDayParsing) {
   const std::string strACS_NUMBER = "acssd1,1,2,3";
   ASSERT_THROW(AcsLibrarySlot slot(strACS_NUMBER), castor::exception::InvalidArgument);
 
-  const std::string strLsm = "asc0,1111,2,3";
+  const std::string strLsm = "acs0,1111,2,3";
   ASSERT_THROW(AcsLibrarySlot slot(strLsm), castor::exception::InvalidArgument);
 
-  const std::string strPanel = "asc0,111,ABC,3";
+  const std::string strPanel = "acs0,111,ABC,3";
   ASSERT_THROW(AcsLibrarySlot slot(strPanel), castor::exception::InvalidArgument);
 
-  const std::string strDrive = "asc0,111,222,3 ";
+  const std::string strDrive = "acs0,111,222,3 ";
   ASSERT_THROW(AcsLibrarySlot slot(strDrive), castor::exception::InvalidArgument);
 }
 
