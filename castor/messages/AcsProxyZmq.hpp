@@ -25,6 +25,7 @@
 #include "castor/messages/AcsProxy.hpp"
 #include "castor/messages/Frame.hpp"
 #include "castor/messages/ZmqSocketMT.hpp"
+#include "castor/server/Mutex.hpp"
 
 namespace castor {
 namespace messages {
@@ -77,7 +78,13 @@ public:
     const mediachanger::AcsLibrarySlot &librarySlot);
 
 private:
-
+  
+  /**
+   * Mutex used to implement a critical section around the enclosed
+   * ZMQ socket.
+   */
+   castor::server::Mutex m_mutex;
+   
   /**
    * The object representing the API of the CASTOR logging system.
    */

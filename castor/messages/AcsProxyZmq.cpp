@@ -22,10 +22,11 @@
 #include "castor/messages/AcsMountTapeForRecall.pb.h"
 #include "castor/messages/AcsMountTapeForMigration.pb.h"
 #include "castor/messages/AcsDismountTape.pb.h"
+#include "castor/messages/ReturnValue.pb.h"
 #include "castor/messages/AcsProxyZmq.hpp"
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/messages.hpp"
-#include "castor/messages/ReturnValue.pb.h"
+#include "castor/server/MutexLocker.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -43,6 +44,8 @@ castor::messages::AcsProxyZmq::AcsProxyZmq(log::Logger &log,
 //------------------------------------------------------------------------------
 void castor::messages::AcsProxyZmq::mountTapeReadOnly(const std::string &vid,
   const mediachanger::AcsLibrarySlot &librarySlot) {
+  server::MutexLocker lock(&m_mutex);
+  
   try {
     const Frame rqst = createAcsMountTapeForRecallFrame(vid, librarySlot);
     sendFrame(m_serverSocket, rqst);
@@ -101,6 +104,8 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
 //------------------------------------------------------------------------------
 void castor::messages::AcsProxyZmq::mountTapeReadWrite(const std::string &vid,
   const mediachanger::AcsLibrarySlot &librarySlot) {
+  server::MutexLocker lock(&m_mutex);
+  
   try {
     const Frame rqst = createAcsMountTapeForMigrationFrame(vid, librarySlot);
     sendFrame(m_serverSocket, rqst);
@@ -159,6 +164,8 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
 //------------------------------------------------------------------------------
 void castor::messages::AcsProxyZmq::dismountTape(const std::string &vid,
   const mediachanger::AcsLibrarySlot &librarySlot) {
+  server::MutexLocker lock(&m_mutex);
+  
   try {
     const Frame rqst = createAcsDismountTapeFrame(vid, librarySlot);
     sendFrame(m_serverSocket, rqst);
