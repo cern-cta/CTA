@@ -44,14 +44,14 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::LabelSession::LabelSession(
   messages::TapeserverProxy &tapeserver,
-  legacymsg::RmcProxy &rmc, 
+  mediachanger::MediaChangerFacade &mc, 
   const legacymsg::TapeLabelRqstMsgBody &clientRequest,
   castor::log::Logger &log,
   System::virtualWrapper &sysWrapper,
   const utils::DriveConfig &driveConfig,
   const bool force):
   m_tapeserver(tapeserver),
-  m_rmc(rmc),
+  m_mc(mc),
   m_request(clientRequest),
   m_log(log),
   m_sysWrapper(sysWrapper),
@@ -82,9 +82,12 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     drive->unloadTape();
     m_log(LOG_INFO, "The tape has been successfully unloaded after labeling",
       params);
-    m_rmc.dismountTape(m_request.vid, m_driveConfig.librarySlot.str());
-    m_log(LOG_INFO, "The tape has been successfully unmounted after labeling",
-      params);
+    m_mc.dismountTape(m_request.vid, m_driveConfig.librarySlot.str());
+    if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL !=
+      m_driveConfig.librarySlot.getLibraryType()) {
+      m_log(LOG_INFO, "The tape has been successfully unmounted after labeling",
+        params);
+    }
 
     return MARK_DRIVE_AS_UP;
   } catch(castor::exception::Exception &ex) {
@@ -131,12 +134,15 @@ std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::mountTape() {
   try {
-    m_rmc.mountTapeReadWrite(m_request.vid, m_driveConfig.librarySlot.str());
-    const log::Param params[] = {
-      log::Param("vid", m_request.vid),
-      log::Param("unitName", m_request.drive),
-      log::Param("librarySlot", m_driveConfig.librarySlot.str())};
-    m_log(LOG_INFO, "Tape successfully mounted for labeling", params);
+    m_mc.mountTapeReadWrite(m_request.vid, m_driveConfig.librarySlot.str());
+    if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL !=
+      m_driveConfig.librarySlot.getLibraryType()) {
+      const log::Param params[] = {
+        log::Param("vid", m_request.vid),
+        log::Param("unitName", m_request.drive),
+        log::Param("librarySlot", m_driveConfig.librarySlot.str())};
+      m_log(LOG_INFO, "Tape successfully mounted for labeling", params);
+    }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to mount tape for labeling: " <<

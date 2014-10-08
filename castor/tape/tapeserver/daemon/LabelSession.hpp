@@ -24,9 +24,9 @@
 #pragma once
 
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
-#include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/log/Logger.hpp"
+#include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
@@ -53,7 +53,7 @@ public:
    *  Constructor 
    *
    * @param tapeserver Proxy object representing the tapeserverd daemon.
-   * @param rmc Proxy object representing the rmcd daemon.
+   * @param mc Object representing the media changer.
    * @param clientRequest The request to label a tape received from the label
    * tape command.
    * @param log Object representing the API to the CASTOR logging system.
@@ -65,7 +65,7 @@ public:
    */
   LabelSession(
     messages::TapeserverProxy &tapeserver,
-    legacymsg::RmcProxy &rmc,
+    mediachanger::MediaChangerFacade &mc,
     const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
     castor::log::Logger &log,
     System::virtualWrapper &sysWrapper,
@@ -152,9 +152,9 @@ private:
   messages::TapeserverProxy &m_tapeserver;
     
   /**
-   * The object representing the rmcd daemon.
+   * The object representing the media changer.
    */
-  legacymsg::RmcProxy &m_rmc;
+  mediachanger::MediaChangerFacade &m_mc;
 
   /**
    * The label request message body

@@ -862,15 +862,23 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     messages::TapeserverProxyZmq tapeserver(m_log,
       TAPESERVER_INTERNAL_LISTENING_PORT, zmqContext.get());
 
+    messages::AcsProxyZmq acs(m_log,
+      acs::DEFAULT_ACS_SERVER_INTERNAL_LISTENING_PORT, zmqContext.get());
+
+    mediachanger::MmcProxyLog mmc(m_log);
+
     // The network timeout of rmc communications should be several minutes due
     // to the time it takes to mount and unmount tapes
     const int rmcNetTimeout = 600; // Timeout in seconds
     legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), rmcNetTimeout);
+
+    mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
+
     legacymsg::NsProxy_TapeAlwaysEmpty ns;
     castor::tape::System::realWrapper sWrapper;
     LabelSession labelsession(
       tapeserver,
-      rmc,
+      mediaChangerFacade,
       labelJob,
       m_log,
       sWrapper,
