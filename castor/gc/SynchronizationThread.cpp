@@ -171,7 +171,7 @@ void castor::gc::SynchronizationThread::run(void*) {
             continue;
           } else if (!(filebuf.st_mode & S_IFREG)) {
             continue;  // not a file
-          } else if (filebuf.st_mtime > time(NULL) - gracePeriod) {
+          } else if (filebuf.st_mtime > time(NULL) - (time_t)gracePeriod) {
             continue;
           }
           
