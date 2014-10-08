@@ -133,6 +133,7 @@ add_executable(castorUnitTests
   ../castor/log/StringLoggerTest.cpp
   ../castor/log/SyslogLoggerTest.cpp
   ../castor/mediachanger/AcsLibrarySlot.cpp
+../castor/mediachanger/AcsLibrarySlotTest.cpp
   ../castor/mediachanger/ConfigLibrarySlotTest.cpp
   ../castor/mediachanger/MediaChangerFacadeTest.cpp
   ../castor/mediachanger/ScsiLibrarySlot.cpp
