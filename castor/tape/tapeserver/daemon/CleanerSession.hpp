@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/log/Logger.hpp"
+#include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
@@ -47,7 +47,7 @@ namespace daemon {
     /**
      * Constructor
      * 
-     * @param rmc          Proxy object representing the rmcd daemon.
+     * @param mc           Object representing the media changer.
      * @param log          Object representing the API to the CASTOR logging system.
      * @param driveConfig  Configuration of the tape drive to be cleaned.
      * @param sysWrapper   Object representing the operating system.
@@ -55,7 +55,7 @@ namespace daemon {
      *                     else the empty string.
      */
     CleanerSession(
-      legacymsg::RmcProxy &rmc,
+      mediachanger::MediaChangerFacade &mc,
       castor::log::Logger &log,
       const utils::DriveConfig &driveConfig,
       System::virtualWrapper &sysWrapper,
@@ -86,9 +86,9 @@ namespace daemon {
   private:
 
     /**
-     * The object representing the rmcd daemon.
+     * The object representing the media changer.
      */
-    legacymsg::RmcProxy &m_rmc;
+    mediachanger::MediaChangerFacade &m_mc;
     
     /**
      * The logging object     

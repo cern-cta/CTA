@@ -27,12 +27,12 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
-  legacymsg::RmcProxy &rmc,
+  mediachanger::MediaChangerFacade &mc,
   castor::log::Logger &log,
   const utils::DriveConfig &driveConfig,
   System::virtualWrapper &sysWrapper,
   const std::string &vid):
-  m_rmc(rmc),
+  m_mc(mc),
   m_log(log),
   m_driveConfig(driveConfig),
   m_sysWrapper(sysWrapper),
@@ -106,7 +106,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       m_log(LOG_INFO, "Cleaner session could not unload the tape. Will still try to unmount it in case it is already unloaded.", params);
     }
     try {
-      m_rmc.dismountTape(vol1.getVSN(), m_driveConfig.librarySlot.str());
+      m_mc.dismountTape(vol1.getVSN(), m_driveConfig.librarySlot.str());
       m_log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_driveConfig.librarySlot.getLibraryType() ? 
         "Cleaner session: unmounted tape":
         "Cleaner session: tape NOT unmounted (manual mode)");

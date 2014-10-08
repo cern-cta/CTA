@@ -469,13 +469,25 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     params.push_back(log::Param("rmcPort", rqst.rmcport()));
     m_log(LOG_INFO, "Cleaner-session child-process started", params);
 
+    const int sizeOfIOThreadPoolForZMQ = 1;
+    messages::SmartZmqContext
+      zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
+
+    messages::AcsProxyZmq acs(m_log,
+      acs::DEFAULT_ACS_SERVER_INTERNAL_LISTENING_PORT, zmqContext.get());
+
+    mediachanger::MmcProxyLog mmc(m_log);
+
     // The network timeout of rmc communications should be several minutes due
     // to the time it takes to mount and unmount tapes
     const int rmcNetTimeout = 600; // Timeout in seconds
     legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), rmcNetTimeout);
+
+    mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
+
     castor::tape::System::realWrapper sWrapper;
     CleanerSession cleanerSession(
-      rmc,
+      mediaChangerFacade,
       m_log,
       driveConfig,
       sWrapper,
