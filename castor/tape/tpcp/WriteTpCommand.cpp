@@ -291,6 +291,19 @@ void castor::tape::tpcp::WriteTpCommand::checkUserHasTapeWritePermission(
     }
   }
 
+  // A pool has no owner if either its user or group ID is 0
+  //
+  // There is no such concept as a pool owned by the user root or the group root
+  const bool poolHasOwner = 0 != poolUserId && 0 != poolGroupId;
+
+  if(!poolHasOwner) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "User can write to tape"
+      ": Cannot write to a tape belonging to an owner-less tape-pool";
+    throw ex;
+  }
+
   const bool userOwnsPool = userId == poolUserId && groupId == poolGroupId;
 
   if(userOwnsPool) {
