@@ -21,14 +21,14 @@
 
 #include "castor/messages/messages.hpp"
 #include "castor/messages/ReturnValue.pb.h"
-#include "castor/messages/AcsMountTapeForRecall.pb.h"
-#include "castor/messages/AcsMountTapeForMigration.pb.h"
+#include "castor/messages/AcsMountTapeReadOnly.pb.h"
+#include "castor/messages/AcsMountTapeReadWrite.pb.h"
 #include "castor/messages/AcsDismountTape.pb.h"
 #include "castor/acs/Constants.hpp"
 #include "castor/acs/AcsMessageHandler.hpp"
 #include "castor/acs/AcsDismountTape.hpp"
-#include "castor/acs/AcsMountTapeForRecall.hpp"
-#include "castor/acs/AcsMountTapeForMigration.hpp"
+#include "castor/acs/AcsMountTapeReadOnly.hpp"
+#include "castor/acs/AcsMountTapeReadWrite.hpp"
 #include "castor/acs/AcsDaemon.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/acs/Acs.hpp"
@@ -179,11 +179,11 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
   m_log(LOG_DEBUG, "AcsMessageHandler dispatching message handler");
   
   switch(rqst.header.msgtype()) {
-    case messages::MSG_TYPE_ACSMOUNTTAPEFORRECALL:
-      return handleAcsMountTapeForRecall(rqst);
+    case messages::MSG_TYPE_ACSMOUNTTAPEREADONLY:
+      return handleAcsMountTapeReadOnly(rqst);
       
-    case messages::MSG_TYPE_ACSMOUNTTAPEFORMIGRATION:
-      return handleAcsMountTapeForMigration(rqst);  
+    case messages::MSG_TYPE_ACSMOUNTTAPEREADWRITE:
+      return handleAcsMountTapeReadWrite(rqst);  
 
     case messages::MSG_TYPE_ACSDISMOUNTTAPE:
       return handleAcsDismountTape(rqst);
@@ -199,14 +199,14 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
 }
 
 //------------------------------------------------------------------------------
-// handleAcsMountTapeForRecall
+// handleAcsMountTapeReadOnly
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::acs::AcsMessageHandler::
-  handleAcsMountTapeForRecall(const messages::Frame &rqst) {
-  m_log(LOG_DEBUG, "Handling AcsMountTapeForRecall message");
+  handleAcsMountTapeReadOnly(const messages::Frame &rqst) {
+  m_log(LOG_DEBUG, "Handling AcsMountTapeReadOnly message");
 
   try {
-    messages::AcsMountTapeForRecall rqstBody;
+    messages::AcsMountTapeReadOnly rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
     
     const std::string vid = rqstBody.vid();
@@ -220,37 +220,38 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
       log::Param("lsm", lsm),
       log::Param("panel", panel),
       log::Param("drive", drive)};
-    m_log(LOG_INFO, "AcsMountTapeForRecall message", params);
+    m_log(LOG_INFO, "AcsMountTapeReadOnly message", params);
 
     castor::acs::AcsImpl acsWrapper;
-    castor::acs::AcsMountTapeForRecall acsMountTapeForRecall(vid, acs, lsm, 
+    castor::acs::AcsMountTapeReadOnly acsMountTapeReadOnly(vid, acs, lsm, 
       panel, drive, acsWrapper, m_log, m_castorConf);
     try {
-      acsMountTapeForRecall.execute();
-      m_log(LOG_INFO,"Tape successfully mounted for recall", params);
+      acsMountTapeReadOnly.execute();
+      m_log(LOG_INFO,"Tape successfully mounted for read only access", params);
     } catch (castor::exception::Exception &ne) {
-      m_log(LOG_ERR,"Tape mount for recall failed: "+ne.getMessage().str(), params);  
+      m_log(LOG_ERR,"Tape mount for read only access failed: "
+        + ne.getMessage().str(), params);  
       throw;  
     }     
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle AcsMountTapeForRecall message: " <<
+    ex.getMessage() << "Failed to handle AcsMountTapeReadOnly message: " <<
       ne.getMessage().str();
     throw ex;
   }
 }
 
 //------------------------------------------------------------------------------
-// handleAcsMountTapeForMigration
+// handleAcsMountTapeReadWrite
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::acs::AcsMessageHandler::
-  handleAcsMountTapeForMigration(const messages::Frame &rqst) {
-  m_log(LOG_DEBUG, "Handling AcsMountTapeForMigration message");
+  handleAcsMountTapeReadWrite(const messages::Frame &rqst) {
+  m_log(LOG_DEBUG, "Handling AcsMountTapeReadWrite message");
 
   try {
-    messages::AcsMountTapeForMigration rqstBody;
+    messages::AcsMountTapeReadWrite rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
      
     const std::string vid = rqstBody.vid();
@@ -264,23 +265,24 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
       log::Param("lsm", lsm),
       log::Param("panel", panel),
       log::Param("drive", drive)};
-    m_log(LOG_INFO, "AcsMountTapeForMigration message", params);
+    m_log(LOG_INFO, "AcsMountTapeReadWrite message", params);
 
     castor::acs::AcsImpl acsWrapper;
-    castor::acs::AcsMountTapeForMigration acsMountTapeForMigration(vid, acs,
+    castor::acs::AcsMountTapeReadWrite acsMountTapeReadWrite(vid, acs,
       lsm, panel, drive, acsWrapper, m_log, m_castorConf);
     try {
-      acsMountTapeForMigration.execute();   
-      m_log(LOG_INFO,"Tape successfully mounted for migration", params);
+      acsMountTapeReadWrite.execute();   
+      m_log(LOG_INFO,"Tape successfully mounted for read/write access", params);
     } catch (castor::exception::Exception &ne) {
-      m_log(LOG_ERR,"Tape mount for migration failed: "+ne.getMessage().str(), params);  
+      m_log(LOG_ERR,"Tape mount for read/write access failed: "
+        + ne.getMessage().str(), params);  
       throw;  
     }     
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle AcsMountTapeForMigration message: " <<
+    ex.getMessage() << "Failed to handle AcsMountTapeReadWrite message: " <<
       ne.getMessage().str();
     throw ex;
   }

@@ -39,8 +39,8 @@ namespace castor {
 namespace acs {
 
 /**
- * Abstract class implementing common code and data structures for mount
- * for recall, mount for migration and dismount requests 
+ * Abstract class implementing common code and data structures for mount 
+ * for read only access, mount for read/write access and dismount requests 
  * that interact with ACS compatible tape libraries.
  */
 class AcsLibraryInteraction  {

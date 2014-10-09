@@ -39,8 +39,8 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     AcsDaemon.cpp
     AcsMessageHandler.cpp
     AcsDismountTape.cpp
-    AcsMountTapeForRecall.cpp
-    AcsMountTapeForMigration.cpp
+    AcsMountTapeReadOnly.cpp
+    AcsMountTapeReadWrite.cpp
     AcsLibraryInteraction.cpp
     Acs.cpp
     AcsImpl.cpp)

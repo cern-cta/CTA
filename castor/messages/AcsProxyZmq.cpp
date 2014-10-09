@@ -19,8 +19,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/messages/AcsMountTapeForRecall.pb.h"
-#include "castor/messages/AcsMountTapeForMigration.pb.h"
+#include "castor/messages/AcsMountTapeReadOnly.pb.h"
+#include "castor/messages/AcsMountTapeReadWrite.pb.h"
 #include "castor/messages/AcsDismountTape.pb.h"
 #include "castor/messages/ReturnValue.pb.h"
 #include "castor/messages/AcsProxyZmq.hpp"
@@ -47,7 +47,7 @@ void castor::messages::AcsProxyZmq::mountTapeReadOnly(const std::string &vid,
   server::MutexLocker lock(&m_mutex);
   
   try {
-    const Frame rqst = createAcsMountTapeForRecallFrame(vid, librarySlot);
+    const Frame rqst = createAcsMountTapeReadOnlyFrame(vid, librarySlot);
     sendFrame(m_serverSocket, rqst);
 
     ReturnValue reply;
@@ -62,26 +62,26 @@ void castor::messages::AcsProxyZmq::mountTapeReadOnly(const std::string &vid,
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
-      "Failed to request CASTOR ACS daemon to mount tape for recall: " <<
-      librarySlot.str() << ": " << ne.getMessage().str();
+      "Failed to request CASTOR ACS daemon to mount tape for read only access: "
+      << librarySlot.str() << ": " << ne.getMessage().str();
     throw ex;
   }
 }
 
 //------------------------------------------------------------------------------
-// createAcsMountTapeForRecallFrame
+// createAcsMountTapeReadnOnlyFrame
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::messages::AcsProxyZmq::
-  createAcsMountTapeForRecallFrame(const std::string &vid,
+  createAcsMountTapeReadOnlyFrame(const std::string &vid,
   const mediachanger::AcsLibrarySlot &librarySlot) {
   try {
     Frame frame;
 
     frame.header = messages::protoTapePreFillHeader();
-    frame.header.set_msgtype(messages::MSG_TYPE_ACSMOUNTTAPEFORRECALL);
+    frame.header.set_msgtype(messages::MSG_TYPE_ACSMOUNTTAPEREADONLY);
     frame.header.set_bodysignature("PIPO");
 
-    AcsMountTapeForRecall body;
+    AcsMountTapeReadOnly body;
     body.set_vid(vid);
     body.set_acs(librarySlot.getAcs());
     body.set_lsm(librarySlot.getLsm());
@@ -93,7 +93,7 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
 
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to create AcsMountTapeForRecall frame: " <<
+    ex.getMessage() << "Failed to create AcsMountTapeReadOnly frame: " <<
       ne.getMessage().str();
     throw ex;
   }
@@ -107,7 +107,7 @@ void castor::messages::AcsProxyZmq::mountTapeReadWrite(const std::string &vid,
   server::MutexLocker lock(&m_mutex);
   
   try {
-    const Frame rqst = createAcsMountTapeForMigrationFrame(vid, librarySlot);
+    const Frame rqst = createAcsMountTapeReadWriteFrame(vid, librarySlot);
     sendFrame(m_serverSocket, rqst);
 
     ReturnValue reply;
@@ -122,26 +122,26 @@ void castor::messages::AcsProxyZmq::mountTapeReadWrite(const std::string &vid,
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
-      "Failed to request CASTOR ACS daemon to mount tape for migration: " <<
-      librarySlot.str() << ": " << ne.getMessage().str();
+      "Failed to request CASTOR ACS daemon to mount tape for read/write " 
+      "access: " << librarySlot.str() << ": " << ne.getMessage().str();
     throw ex;
   }
 }
 
 //------------------------------------------------------------------------------
-// createAcsMountTapeForMigrationFrame
+// createAcsMountTapeReadWriteFrame
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::messages::AcsProxyZmq::
-  createAcsMountTapeForMigrationFrame(const std::string &vid, 
+  createAcsMountTapeReadWriteFrame(const std::string &vid, 
   const mediachanger::AcsLibrarySlot &librarySlot) {
   try {
     Frame frame;
 
     frame.header = messages::protoTapePreFillHeader();
-    frame.header.set_msgtype(messages::MSG_TYPE_ACSMOUNTTAPEFORMIGRATION);
+    frame.header.set_msgtype(messages::MSG_TYPE_ACSMOUNTTAPEREADWRITE);
     frame.header.set_bodysignature("PIPO");
 
-    AcsMountTapeForMigration body;
+    AcsMountTapeReadWrite body;
     body.set_vid(vid);
     body.set_acs(librarySlot.getAcs());
     body.set_lsm(librarySlot.getLsm());
@@ -153,7 +153,7 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
 
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to create AcsMountTapeForMigration frame: " <<
+    ex.getMessage() << "Failed to create AcsMountTapeReadWrite frame: " <<
       ne.getMessage().str();
     throw ex;
   }

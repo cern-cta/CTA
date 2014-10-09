@@ -70,10 +70,10 @@ const char *castor::messages::msgTypeToString(const MsgType msgType) throw() {
     return "TapeUnmounted";
   case MSG_TYPE_LABELERROR:
     return "LabelError";
-  case MSG_TYPE_ACSMOUNTTAPEFORRECALL:
-    return "AcsMountTapeForRecall";
-  case MSG_TYPE_ACSMOUNTTAPEFORMIGRATION:
-    return "AcsMountTapeForMigration";        
+  case MSG_TYPE_ACSMOUNTTAPEREADONLY:
+    return "AcsMountTapeReadOnly";
+  case MSG_TYPE_ACSMOUNTTAPEREADWRITE:
+    return "AcsMountTapeReadWrite";        
   case MSG_TYPE_ACSDISMOUNTTAPE:
     return "AcsDismountTape";
   default:

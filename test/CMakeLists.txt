@@ -71,8 +71,8 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     ../castor/acs/AcsDaemonTest.cpp
     ../castor/acs/AcsMessageHandler.cpp
     ../castor/acs/AcsDismountTape.cpp
-    ../castor/acs/AcsMountTapeForRecall.cpp
-    ../castor/acs/AcsMountTapeForMigration.cpp
+    ../castor/acs/AcsMountTapeReadOnly.cpp
+    ../castor/acs/AcsMountTapeReadWrite.cpp
     ../castor/acs/AcsLibraryInteraction.cpp
     ../castor/acs/AcsImpl.cpp
     ../castor/acs/Acs.cpp)

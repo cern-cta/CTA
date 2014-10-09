@@ -108,7 +108,7 @@ private:
    * @param librarySlot The slot in the library that contains the tape drive.
    * @return The frame.
    */
-  Frame createAcsMountTapeForRecallFrame(const std::string &vid,
+  Frame createAcsMountTapeReadOnlyFrame(const std::string &vid,
     const mediachanger::AcsLibrarySlot &librarySlot);
   
   /**
@@ -118,7 +118,7 @@ private:
    * @param librarySlot The slot in the library that contains the tape drive.
    * @return The frame.
    */
-  Frame createAcsMountTapeForMigrationFrame(const std::string &vid,
+  Frame createAcsMountTapeReadWriteFrame(const std::string &vid,
     const mediachanger::AcsLibrarySlot &librarySlot);
   
   /**

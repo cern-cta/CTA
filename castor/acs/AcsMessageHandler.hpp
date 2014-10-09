@@ -117,20 +117,20 @@ private:
   messages::Frame dispatchMsgHandler(const messages::Frame &rqst) ;
 
   /**
-   * Handles the mount tape for recall.
+   * Handles the mount tape for read only.
    *
    * @param  rqst The request.
    * @return The reply.
    */
-  messages::Frame handleAcsMountTapeForRecall(const messages::Frame &rqst);
+  messages::Frame handleAcsMountTapeReadOnly(const messages::Frame &rqst);
   
   /**
-   * Handles the mount tape for migration request.
+   * Handles the mount tape for read/write.
    *
    * @param  rqst The request.
    * @return The reply.
    */
-  messages::Frame handleAcsMountTapeForMigration(const messages::Frame &rqst);
+  messages::Frame handleAcsMountTapeReadWrite(const messages::Frame &rqst);
 
    /**
    * Handles the dismount tape request.

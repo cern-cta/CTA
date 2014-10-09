@@ -21,13 +21,13 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
  
-#include "castor/acs/AcsMountTapeForRecall.hpp"
+#include "castor/acs/AcsMountTapeReadOnly.hpp"
 #include "castor/exception/MountFailed.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::acs::AcsMountTapeForRecall::AcsMountTapeForRecall(
+castor::acs::AcsMountTapeReadOnly::AcsMountTapeReadOnly(
   const std::string &vid,
   const uint32_t acs,
   const uint32_t lsm,
@@ -47,35 +47,35 @@ castor::acs::AcsMountTapeForRecall::AcsMountTapeForRecall(
 //------------------------------------------------------------------------------
 // execute
 //------------------------------------------------------------------------------
-void castor::acs::AcsMountTapeForRecall::execute() const {
-  syncMountTapeForRecall();
+void castor::acs::AcsMountTapeReadOnly::execute() const {
+  syncMountTapeReadOnly();
 }
 
 //------------------------------------------------------------------------------
-// syncMountTapeForRecall
+// syncMountTapeReadOnly
 //------------------------------------------------------------------------------
-void castor::acs::AcsMountTapeForRecall::syncMountTapeForRecall() const
+void castor::acs::AcsMountTapeReadOnly::syncMountTapeReadOnly() const
   {
   const SEQ_NO requestSeqNumber = 1;
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
 
   try {
-    sendMountForRecallRequest(requestSeqNumber);
+    sendMountTapeReadOnlyRequest(requestSeqNumber);
     requestResponsesUntilFinal(requestSeqNumber, buf, 
       m_castorConf.acsQueryLibraryInterval, m_castorConf.acsCommandTimeout);
-    processMountForRecallResponse(buf);
+    processMountTapeReadOnlyResponse(buf);
   }  catch(castor::exception::Exception &ex) {
     castor::exception::MountFailed mf;
-    mf.getMessage() << "Failed to mount for recall volume " <<
+    mf.getMessage() << "Failed to mount for read only access volume " <<
       m_volId.external_label << ": " << ex.getMessage().str();
     throw mf;
   }
 }
 
 //------------------------------------------------------------------------------
-// sendMountForRecallRequest
+// sendMountTapeReadOnlyRequest
 //------------------------------------------------------------------------------
-void castor::acs::AcsMountTapeForRecall::sendMountForRecallRequest(
+void castor::acs::AcsMountTapeReadOnly::sendMountTapeReadOnlyRequest(
   const SEQ_NO seqNumber) const {
   const LOCKID lockId    = 0; // No lock
   const BOOLEAN bypass   = FALSE;
@@ -90,8 +90,8 @@ void castor::acs::AcsMountTapeForRecall::sendMountForRecallRequest(
 
   if(STATUS_SUCCESS != s) {
     castor::exception::MountFailed ex;
-    ex.getMessage() << "Failed to send request to mount for recall volume " <<
-      m_volId.external_label << " into drive " <<
+    ex.getMessage() << "Failed to send request to mount for read only access"
+      " volume " << m_volId.external_label << " into drive " <<
       m_acsWrapper.driveId2Str(m_driveId) << ": readOnly=" <<
       (readOnly ? "TRUE" : "FALSE") << ": " << acs_status(s);
     throw ex;
@@ -99,17 +99,17 @@ void castor::acs::AcsMountTapeForRecall::sendMountForRecallRequest(
 }
 
 //------------------------------------------------------------------------------
-// processMountForRecallResponse
+// processMountTapeReadOnlyResponse
 //------------------------------------------------------------------------------
-void castor::acs::AcsMountTapeForRecall::processMountForRecallResponse(
+void castor::acs::AcsMountTapeReadOnly::processMountTapeReadOnlyResponse(
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)]) const
   {
   const ACS_MOUNT_RESPONSE *const msg = (ACS_MOUNT_RESPONSE *)buf;
 
   if(STATUS_SUCCESS != msg->mount_status) {
     castor::exception::MountFailed ex;
-    ex.getMessage() << "Status of mount for recall response is not success: " <<
-      acs_status(msg->mount_status);
+    ex.getMessage() << "Status of mount for read only access response is not"
+      " success: " << acs_status(msg->mount_status);
     throw ex;
   }
 }
@@ -117,5 +117,5 @@ void castor::acs::AcsMountTapeForRecall::processMountForRecallResponse(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::acs::AcsMountTapeForRecall::~AcsMountTapeForRecall() throw() {  
+castor::acs::AcsMountTapeReadOnly::~AcsMountTapeReadOnly() throw() {  
 }

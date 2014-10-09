@@ -32,16 +32,16 @@ namespace castor     {
 namespace acs        {
 
 /**
- * Class responsible for mounting tapes for migration through ACS API .
+ * Class responsible for mounting tapes for read/write access through ACS API .
  */
-class AcsMountTapeForMigration: public AcsLibraryInteraction {
+class AcsMountTapeReadWrite: public AcsLibraryInteraction {
 
 public:
 
   /**
    * Constructor.
    */
-  AcsMountTapeForMigration(
+  AcsMountTapeReadWrite(
     const std::string &vid, const uint32_t acs,
     const uint32_t lsm, const uint32_t panel, const uint32_t drive,
     Acs &acsWrapper,log::Logger &log,
@@ -50,7 +50,7 @@ public:
   /**
    * Destructor.
    */
-  ~AcsMountTapeForMigration() throw();
+  ~AcsMountTapeReadWrite() throw();
 
   /**
    * Execute mount request through ACS API.
@@ -66,14 +66,14 @@ protected:
    * This method does not return until the mount has either succeeded, failed or
    * the specified timeout has been reached.
    */
-  void syncMountTapeForMigration() const;
+  void syncMountTapeReadWrite() const;
   
   /**
    * Sends the mount request to ACSLS.
    *
    * @param seqNumber The sequence number to be used in the request.
    */
-  void sendMountForMigrationRequest(const SEQ_NO seqNumber) const;
+  void sendMountTapeReadWriteRequest(const SEQ_NO seqNumber) const;
  
   /**
    * Throws castor::exception::MountFailed if the mount was not
@@ -81,7 +81,7 @@ protected:
    *
    * @param buf The mount-response message.
    */
-  void processMountForMigrationResponse(
+  void processMountTapeReadWriteResponse(
     ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)]) const;
   
   /**
@@ -109,7 +109,7 @@ protected:
    */
   const AcsDaemon::CastorConf & m_castorConf;
   
-}; // class AcsMountTapeForMigration
+}; // class AcsMountTapeReadWrite
 
 } // namespace acs
 } // namespace castor

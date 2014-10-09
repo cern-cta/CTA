@@ -21,13 +21,13 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
  
-#include "castor/acs/AcsMountTapeForMigration.hpp"
+#include "castor/acs/AcsMountTapeReadWrite.hpp"
 #include "castor/exception/MountFailed.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::acs::AcsMountTapeForMigration::AcsMountTapeForMigration(
+castor::acs::AcsMountTapeReadWrite::AcsMountTapeReadWrite(
   const std::string &vid,
   const uint32_t acs,
   const uint32_t lsm,
@@ -47,36 +47,36 @@ castor::acs::AcsMountTapeForMigration::AcsMountTapeForMigration(
 //------------------------------------------------------------------------------
 // execute
 //------------------------------------------------------------------------------
-void castor::acs::AcsMountTapeForMigration::execute() const {
-  syncMountTapeForMigration();
+void castor::acs::AcsMountTapeReadWrite::execute() const {
+  syncMountTapeReadWrite();
 }
 
 //------------------------------------------------------------------------------
-// syncMountTapeForMigration
+// syncMountTapeReadWrite
 //------------------------------------------------------------------------------
-void castor::acs::AcsMountTapeForMigration::syncMountTapeForMigration() const
+void castor::acs::AcsMountTapeReadWrite::syncMountTapeReadWrite() const
   {
   const SEQ_NO requestSeqNumber = 1;
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
 
   try {
-    sendMountForMigrationRequest(requestSeqNumber);
+    sendMountTapeReadWriteRequest(requestSeqNumber);
     requestResponsesUntilFinal(requestSeqNumber, buf, 
       m_castorConf.acsQueryLibraryInterval, 
       m_castorConf.acsCommandTimeout);
-    processMountForMigrationResponse(buf);
+    processMountTapeReadWriteResponse(buf);
   }  catch(castor::exception::Exception &ex) {
     castor::exception::MountFailed mf;
-    mf.getMessage() << "Failed to mount for migration volume " <<
+    mf.getMessage() << "Failed to mount for read/write access volume " <<
       m_volId.external_label << ": " << ex.getMessage().str();
     throw mf;
   }
 }
 
 //------------------------------------------------------------------------------
-// sendMountForMigrationRequest
+// sendMountTapeReadWriteRequest
 //------------------------------------------------------------------------------
-void castor::acs::AcsMountTapeForMigration::sendMountForMigrationRequest(
+void castor::acs::AcsMountTapeReadWrite::sendMountTapeReadWriteRequest(
   const SEQ_NO seqNumber) const {
   const LOCKID lockId    = 0; // No lock
   const BOOLEAN bypass   = FALSE;
@@ -91,27 +91,27 @@ void castor::acs::AcsMountTapeForMigration::sendMountForMigrationRequest(
 
   if(STATUS_SUCCESS != s) {
     castor::exception::MountFailed ex;
-    ex.getMessage() << "Failed to send request to mount for migration volume " 
-                    << m_volId.external_label << " into drive " 
-                    << m_acsWrapper.driveId2Str(m_driveId) 
-                    << ": readOnly=" 
-                    << (readOnly ? "TRUE" : "FALSE") << ": " << acs_status(s);
+    ex.getMessage() << "Failed to send request to mount for read/write access"
+      " volume " << m_volId.external_label << " into drive " 
+      << m_acsWrapper.driveId2Str(m_driveId) 
+      << ": readOnly=" 
+      << (readOnly ? "TRUE" : "FALSE") << ": " << acs_status(s);
     throw ex;
   } 
 }
 
 //------------------------------------------------------------------------------
-// processMountForMigrationResponse
+// processMountTapeReadWriteResponse
 //------------------------------------------------------------------------------
-void castor::acs::AcsMountTapeForMigration::processMountForMigrationResponse(
+void castor::acs::AcsMountTapeReadWrite::processMountTapeReadWriteResponse(
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)]) const
   {
   const ACS_MOUNT_RESPONSE *const msg = (ACS_MOUNT_RESPONSE *)buf;
 
   if(STATUS_SUCCESS != msg->mount_status) {
     castor::exception::MountFailed ex;
-    ex.getMessage() << "Status of mount for migration response is not success: "
-                    << acs_status(msg->mount_status);
+    ex.getMessage() << "Status of mount for read/write access"
+      " response is not success: " << acs_status(msg->mount_status);
     throw ex;
   }
 }
@@ -119,5 +119,5 @@ void castor::acs::AcsMountTapeForMigration::processMountForMigrationResponse(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::acs::AcsMountTapeForMigration::~AcsMountTapeForMigration() throw() {  
+castor::acs::AcsMountTapeReadWrite::~AcsMountTapeReadWrite() throw() {  
 }

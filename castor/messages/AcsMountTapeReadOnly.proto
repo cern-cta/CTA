@@ -17,7 +17,7 @@
 // @author Castor Dev team, castor-dev@cern.ch
 package castor.messages;
 
-message AcsMountTapeForMigration {
+message AcsMountTapeReadOnly {
   required string vid   = 1;
   required uint32 acs   = 2;
   required uint32 lsm   = 3;

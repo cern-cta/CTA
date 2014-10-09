@@ -32,16 +32,16 @@ namespace castor     {
 namespace acs        {
 
 /**
- * Class responsible for mounting tapes for recall through ACS API .
+ * Class responsible for mounting tapes for read only access through ACS API .
  */
-class AcsMountTapeForRecall: public AcsLibraryInteraction {
+class AcsMountTapeReadOnly: public AcsLibraryInteraction {
 
 public:
 
   /**
    * Constructor.
    */
-  AcsMountTapeForRecall(
+  AcsMountTapeReadOnly(
     const std::string &vid, const uint32_t acs,
     const uint32_t lsm, const uint32_t panel, const uint32_t drive,
     Acs &acsWrapper,log::Logger &log,
@@ -50,7 +50,7 @@ public:
   /**
    * Destructor.
    */
-  ~AcsMountTapeForRecall() throw();
+  ~AcsMountTapeReadOnly() throw();
 
   /**
    * Execute mount request through ACS API.
@@ -66,14 +66,14 @@ protected:
    * This method does not return until the mount has either succeeded, failed or
    * the specified timeout has been reached.
    */
-  void syncMountTapeForRecall() const;
+  void syncMountTapeReadOnly() const;
   
   /**
    * Sends the mount request to ACSLS.
    *
    * @param seqNumber The sequence number to be used in the request.
    */
-  void sendMountForRecallRequest(const SEQ_NO seqNumber) const;
+  void sendMountTapeReadOnlyRequest(const SEQ_NO seqNumber) const;
  
   /**
    * Throws castor::exception::MountFailed if the mount was not
@@ -81,7 +81,7 @@ protected:
    *
    * @param buf The mount-response message.
    */
-  void processMountForRecallResponse(
+  void processMountTapeReadOnlyResponse(
     ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)]) const;
   
   /**
@@ -109,7 +109,7 @@ protected:
    */
   const AcsDaemon::CastorConf & m_castorConf;
 
-}; // class AcsMountTapeForRecall
+}; // class AcsMountTapeReadOnly
 
 } // namespace acs
 } // namespace castor
