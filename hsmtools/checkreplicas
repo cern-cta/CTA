@@ -1,22 +1,37 @@
 #!/usr/bin/python
-# CASTOR checkreplicas
-# Xavier Espinal 30-Mar-2012
-# Last revision 27-May-2013 (Xavier)
+#/******************************************************************************
+# *                      checkreplicas
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * queries NameServer and Stager databases to get the footprint of a file in CASTOR
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
 
 '''checkreplicas search for a file footprints in castor'''
 import exceptions
 import sys
 import getopt
-try:
-    import castor_tools
-except Exception:
-    print "Bailing out - This script runs only on privileged boxes"	
-    sys.exit() 
 import commands
 import os
-import rpyc
 import time
 import optparse
+import castor_tools
 
 ############################################################
 # usage function
@@ -59,6 +74,7 @@ try:
         status, fid = commands.getstatusoutput(cmd)
         if len(fid) >= 15:
             print 'No such file on castor namespace:', sys.argv[1]
+            sys.exit(0)
     else:
         fid=sys.argv[1]
 
@@ -70,7 +86,7 @@ except ValueError:
 try:
     cmfc = 0
     nsconn = castor_tools.connectToNS()
-    nscur = nsconn.cursor() 
+    nscur = nsconn.cursor()
     nscur.execute('''
         SELECT getpathforfileid(:name) nspath, f.filesize fmf, f.status fms,
                f.name fmn, f.fileclass fmfc, f.csumvalue fmcs, f.mtime fmtime,
@@ -101,13 +117,13 @@ try:
              migrationjob.status mjs, migrationjob.id mjid, migrationjob.creationtime mjct, migrationjob.vid mjvid, migrationjob.nbretries mjnbr,
              recalljob.status rjs, recalljob.id rjid, recalljob.vid rjvid, recalljob.creationtime rjct, diskpool.id dpid, diskpool2svcclass.child svcid, svcclass.name svcname
      	  FROM diskcopy, FileSystem, diskserver, castorfile, migrationjob, recalljob, diskpool, diskpool2svcclass, svcclass
-    	 WHERE diskcopy.castorfile(+) = castorfile.id 
-         AND FileSystem.id(+) = diskcopy.filesystem 
-         AND diskserver.id(+) = Filesystem.diskserver 
-         AND castorfile.fileid =:name 
-         AND migrationjob.castorfile(+) = diskcopy.castorfile 
-         AND recalljob.castorfile(+) = castorfile.id  
-         AND diskpool.id(+)=filesystem.diskpool 
+    	 WHERE diskcopy.castorfile(+) = castorfile.id
+         AND FileSystem.id(+) = diskcopy.filesystem
+         AND diskserver.id(+) = Filesystem.diskserver
+         AND castorfile.fileid =:name
+         AND migrationjob.castorfile(+) = diskcopy.castorfile
+         AND recalljob.castorfile(+) = castorfile.id
+         AND diskpool.id(+)=filesystem.diskpool
          AND diskpool2svcclass.parent(+) = filesystem.diskpool
          AND svcclass.id(+) = diskpool2svcclass.child''', name=fid)
     stgqry_res = stcur.fetchall()
@@ -120,23 +136,23 @@ try:
 
     for (did, dst, dfs, dp, dcs, cfid, cfs, cfctime, cfnsopentime, dcf, fmt, fdp, fds, fss, dsn, dss, mjs, mjid, mjct, mjvid, mjnbr, rjs, rjid, rjvid, rjct, dpid, svcid, svcname) in stgqry_res:
 # MagicNumbers (CASTOR return codes translation)
-        dssd = {None:'NODISKSERVER_YET', 0:'DISKSERVER IN PRODUCTION', 1:'DISKSERVER IN DRAINING', 2:'DISKSERVER IS DISABLED'}
-        fssd = {None:'NOFILESYSTEM_YET', 0:'FILESYSTEM IN PRODUCTION', 1:'FILESYSTEM IN DRAINING', 2:'FILESYSTEM IS DISABLED'}
-        dscsd = {None:'NODISKCOOPY_YET', 0:'DISKCOPY VALID', 1:'DISKCOPY WAITDISK2DISKCOPY', 2:'DISKCOPY WAITTAPERECALL', 3:'DISKCOPY DELETED', 4:'DISKCOPY FAILED', 5:'DISKCOPY WAITFS', 6:'DISKCOPY STAGEOUT', 7:'DISKCOPY INVALID', 9:'DISKCOPY BEINGDELETED', 11:'DISKCOPY WAITFS_SCHEDULING'}
+        dssd = {None:'NODISKSERVER_FOUND', 0:'DISKSERVER IN PRODUCTION', 1:'DISKSERVER IN DRAINING', 2:'DISKSERVER IS DISABLED', 3:'DISKSERVER IS READONLY'}
+        fssd = {None:'NOFILESYSTEM_FOUND', 0:'FILESYSTEM IN PRODUCTION', 1:'FILESYSTEM IN DRAINING', 2:'FILESYSTEM IS DISABLED'}
+        dscsd = {None:'NODISKCOPY_FOUND', 0:'DISKCOPY VALID', 1:'DISKCOPY WAITDISK2DISKCOPY', 2:'DISKCOPY WAITTAPERECALL', 3:'DISKCOPY DELETED', 4:'DISKCOPY FAILED', 5:'DISKCOPY WAITFS', 6:'DISKCOPY STAGEOUT', 7:'DISKCOPY INVALID', 9:'DISKCOPY BEINGDELETED', 11:'DISKCOPY WAITFS_SCHEDULING'}
         mjsd = {None:'NOMIGRATIONJOB', 0:'MIGRATIONJOB PENDING', 1:'MIGRATIONJOB SELECTED', 2:'MIGRATIONJOB WAITINGONRECALL', 3:'MIGRATIONJOB RETRY'}
         rjsd = {None:'NORECALLJOB', 1:'RECALLJOB PENDING', 2:'RECALLJOB SELECTED', 3:'RECALLJOB RETRYMOUNT'}
 
         output = 'DiskCopy: %s (%s) DiskCopySize: %s CastorfileId: %s CastorfileSize: %s CastorfileLastMTime: %s CastorfileNSOpenTime: %1.6f Svcclass: %s DiskCopyPath: %s:%s%s (%s/%s) FileClass: %s' \
-                 % (did, dscsd[dst], dcs, dcf, cfs, castor_tools.secsToDate(cfctime), cfnsopentime, svcname, dsn,fmt,dp, dssd[dss], fssd[fss], cmfc)
+                 % (did, dscsd[dst], dcf, dcs, cfs, castor_tools.secsToDate(cfctime), cfnsopentime, svcname, dsn,fmt,dp, dssd[dss], fssd[fss], cmfc)
         print '<-- Disk Cache Information -->'
         print output
         if mjsd[mjs] !='NOMIGRATIONJOB':
-            print '<-- Migration Job information -->'  
+            print '<-- Migration Job information -->'
             output2='MigrationJobStatus: %s (since %2.2f(h)) MJId: %s MJVolumeID: %s MJRetryNb: %s' %(mjsd[mjs], (time.time()-mjct)/3600, mjid, mjvid, mjnbr)
             print output2
         if rjsd[rjs] !='NORECALLJOB':
             print '<-- Recall Job information -->'
-            output3='RecallJobStatus: %s since %2.2f(h) RJId: %s RJVID:%s' % (rjsd[rjs], (time.time()-rjct)/3600, rjid, rjvid) 
+            output3='RecallJobStatus: %s since %2.2f(h) RJId: %s RJVID:%s' % (rjsd[rjs], (time.time()-rjct)/3600, rjid, rjvid)
             print output3
 
 # close DB connections
@@ -145,3 +161,4 @@ try:
 except Exception:
     import traceback
     traceback.print_exc()
+
