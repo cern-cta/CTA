@@ -62,11 +62,16 @@ int vmgrchecki(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, 
         return (EINVAL);
       sleep (60);
     }
-    if (((pool_uid != uid && uid != 0) ||
-         (pool_gid != gid && gid != 0)) &&
-        (Cupv_check (uid, gid, clienthost, "TAPE_SERVERS", P_ADMIN) &&
-         Cupv_check (uid, gid, clienthost, NULL, P_ADMIN)))
+
+    const int poolHasOwner = 0 != pool_uid && 0 != pool_gid;
+    if(!poolHasOwner) {
       return (EACCES);
+    }
+
+    const int userOwnsPool = pool_uid == uid && pool_gid == gid;
+    if(!userOwnsPool) {
+      return (EACCES);
+    }
   }
   if (*vsn) {
     if (strcmp (vsn, tape_info.vsn)) {
