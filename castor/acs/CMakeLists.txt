@@ -42,8 +42,8 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     AcsMountTapeForRecall.cpp
     AcsMountTapeForMigration.cpp
     AcsLibraryInteraction.cpp
-    ../../castor/tape/rmc/Acs.cpp
-    ../../castor/tape/rmc/AcsImpl.cpp)
+    Acs.cpp
+    AcsImpl.cpp)
 
   target_link_libraries(castorAcsDaemon castortapereactor)
   set_target_properties (castorAcsDaemon PROPERTIES

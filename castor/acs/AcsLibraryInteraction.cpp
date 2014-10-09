@@ -30,7 +30,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::acs::AcsLibraryInteraction::AcsLibraryInteraction(
-  castor::tape::rmc::Acs &acs, log::Logger &log) throw(): m_acs(acs), m_log(log) {
+  Acs &acs, log::Logger &log) throw(): m_acs(acs), m_log(log) {
 }
 
 //------------------------------------------------------------------------------

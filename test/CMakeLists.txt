@@ -74,7 +74,8 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     ../castor/acs/AcsMountTapeForRecall.cpp
     ../castor/acs/AcsMountTapeForMigration.cpp
     ../castor/acs/AcsLibraryInteraction.cpp
-    ../castor/tape/rmc/AcsImpl.cpp)
+    ../castor/acs/AcsImpl.cpp
+    ../castor/acs/Acs.cpp)
 
   foreach(SRC_FILE ${STK_UNITTEST_SRC_FILES})
     set_property(SOURCE ${SRC_FILE}
@@ -133,7 +134,7 @@ add_executable(castorUnitTests
   ../castor/log/StringLoggerTest.cpp
   ../castor/log/SyslogLoggerTest.cpp
   ../castor/mediachanger/AcsLibrarySlot.cpp
-../castor/mediachanger/AcsLibrarySlotTest.cpp
+  ../castor/mediachanger/AcsLibrarySlotTest.cpp
   ../castor/mediachanger/ConfigLibrarySlotTest.cpp
   ../castor/mediachanger/MediaChangerFacadeTest.cpp
   ../castor/mediachanger/ScsiLibrarySlot.cpp

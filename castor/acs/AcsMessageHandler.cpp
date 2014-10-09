@@ -31,8 +31,8 @@
 #include "castor/acs/AcsMountTapeForMigration.hpp"
 #include "castor/acs/AcsDaemon.hpp"
 #include "castor/tape/utils/utils.hpp"
-#include "castor/tape/rmc/Acs.hpp"
-#include "castor/tape/rmc/AcsImpl.hpp"
+#include "castor/acs/Acs.hpp"
+#include "castor/acs/AcsImpl.hpp"
 
 #include <sstream>
 
@@ -222,7 +222,7 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
       log::Param("DRIVE", drive)};
     m_log(LOG_INFO, "AcsMountTapeForRecall message", params);
 
-    castor::tape::rmc::AcsImpl acsWrapper;
+    castor::acs::AcsImpl acsWrapper;
     castor::acs::AcsMountTapeForRecall acsMountTapeForRecall(vid, acs, lsm, 
       panel, drive, acsWrapper, m_log, m_castorConf);
     try {
@@ -266,7 +266,7 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
       log::Param("DRIVE", drive)};
     m_log(LOG_INFO, "AcsMountTapeForMigration message", params);
 
-    castor::tape::rmc::AcsImpl acsWrapper;
+    castor::acs::AcsImpl acsWrapper;
     castor::acs::AcsMountTapeForMigration acsMountTapeForMigration(vid, acs,
       lsm, panel, drive, acsWrapper, m_log, m_castorConf);
     try {
@@ -310,7 +310,7 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
       log::Param("DRIVE", drive)};
     m_log(LOG_INFO, "AcsDismountTape message", params);
 
-    castor::tape::rmc::AcsImpl acsWrapper;
+    castor::acs::AcsImpl acsWrapper;
     castor::acs::AcsDismountTape acsDismountTape(vid, acs, lsm, panel, drive,
       acsWrapper, m_log, m_castorConf);
     try {

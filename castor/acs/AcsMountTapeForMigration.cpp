@@ -33,7 +33,7 @@ castor::acs::AcsMountTapeForMigration::AcsMountTapeForMigration(
   const uint32_t lsm,
   const uint32_t panel,
   const uint32_t drive,
-  castor::tape::rmc::Acs &acsWrapper,
+  Acs &acsWrapper,
   log::Logger &log,
   const AcsDaemon::CastorConf &castorConf):
   AcsLibraryInteraction(acsWrapper,log),

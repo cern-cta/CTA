@@ -25,7 +25,7 @@
 
 #include "castor/exception/Mismatch.hpp"
 #include "castor/exception/RequestFailed.hpp"
-#include "castor/tape/rmc/Acs.hpp"
+#include "castor/acs/Acs.hpp"
 #include "castor/log/Logger.hpp"
 
 #include <string>
@@ -50,7 +50,7 @@ public:
    *
    * @param acs Wrapper around the ACSLS C-API.
    */
-  AcsLibraryInteraction(castor::tape::rmc::Acs &acs, log::Logger &log) throw();
+  AcsLibraryInteraction(Acs &acs, log::Logger &log) throw();
 
   /**
    * Pure-virtual destructor to guarantee this class is abstract.
@@ -105,7 +105,7 @@ protected:
   /**
    * Wrapper around the ACSLS C-API.
    */
-  castor::tape::rmc::Acs &m_acs;
+  Acs &m_acs;
   
   /**
    * Logger.

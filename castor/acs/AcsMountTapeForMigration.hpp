@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/tape/rmc/Acs.hpp"
+#include "castor/acs/Acs.hpp"
 #include "castor/acs/AcsLibraryInteraction.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/acs/AcsDaemon.hpp"
@@ -44,7 +44,7 @@ public:
   AcsMountTapeForMigration(
     const std::string &vid, const uint32_t acs,
     const uint32_t lsm, const uint32_t panel, const uint32_t drive,
-    castor::tape::rmc::Acs &acsWrapper,log::Logger &log,
+    Acs &acsWrapper,log::Logger &log,
     const AcsDaemon::CastorConf &castorConf);
 
   /**
@@ -97,7 +97,7 @@ protected:
   /**
    * Object providing C wrapper for ACS commands.
    */
-  tape::rmc::Acs &m_acsWrapper;
+  Acs &m_acsWrapper;
   
   /**
    * Logger.
