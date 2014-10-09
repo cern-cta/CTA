@@ -34,4 +34,4 @@ target_link_libraries (castor-tape-label
   castorlegacymsg
   castormediachangerclient)
 install (TARGETS castor-tape-label DESTINATION ${CASTOR_DEST_BIN_DIR})
-#CastorInstallExeManPage (castor-tape-label)
+CastorInstallExeManPage (castor-tape-label)
