@@ -292,6 +292,19 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   m_log(LOG_INFO, "Queried vmgr for the pool of the tape for migration",
     params);
 
+  // A pool has no owner if either its user or group ID is 0
+  //
+  // There is no such concept as a pool owned by the user root or the group root
+  const bool poolHasOwner = 0 != vmgrPool.poolUid && 0 != vmgrPool.poolGid;
+
+  if(!poolHasOwner) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Cannot migrate files to a tape belonging to an owner-less tape-pool"
+      ": vid=" << vid;
+    throw ex;
+  }
+
   // Only the owner of the pool of a tape can migrate files to that tape
   const bool userIsPoolOwner = m_vdqmJob.clientEuid == vmgrPool.poolUid &&
     m_vdqmJob.clientEgid == vmgrPool.poolGid;

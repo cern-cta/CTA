@@ -303,29 +303,13 @@ void castor::tape::tpcp::WriteTpCommand::checkUserHasTapeWritePermission(
       " User can write to tape: User owns tape pool \"" << poolName << "\"" <<
       std::endl;
   } else {
+    castor::exception::PermissionDenied ex;
 
-    const bool userIsAdmin =
-      Cupv_check(userId, groupId, sourceHost, "TAPE_SERVERS",P_ADMIN) == 0 ||
-      Cupv_check(userId, groupId, sourceHost, NULL          ,P_ADMIN) == 0;
+    ex.getMessage() <<
+      "User cannot write to tape"
+      ": User must own the \"" << poolName << "\" tape pool";
 
-    if(userIsAdmin) {
-      // Command-line user feedback
-      std::ostream &os = std::cout;
-      time_t       now = time(NULL);
-
-      castor::utils::writeTime(os, now, TIMEFORMAT);
-      os <<
-        " User can write to tape: User has ADMIN privilege" << std::endl;
-    } else {
-      castor::exception::PermissionDenied ex;
-
-      ex.getMessage() <<
-        "User cannot write to tape"
-        ": User must own the \"" << poolName << "\" tape pool or "
-        "have the ADMIN privilege";
-
-      throw ex;
-    }
+    throw ex;
   }
 }
 

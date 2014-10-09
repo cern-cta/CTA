@@ -62,8 +62,8 @@ int vmgrchecki(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, 
         return (EINVAL);
       sleep (60);
     }
-    if (((pool_uid && pool_uid != uid && uid != 0) ||
-         (pool_gid && pool_gid != gid && gid != 0)) &&
+    if (((pool_uid != uid && uid != 0) ||
+         (pool_gid != gid && gid != 0)) &&
         (Cupv_check (uid, gid, clienthost, "TAPE_SERVERS", P_ADMIN) &&
          Cupv_check (uid, gid, clienthost, NULL, P_ADMIN)))
       return (EACCES);
