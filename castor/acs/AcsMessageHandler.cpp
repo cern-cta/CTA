@@ -215,11 +215,11 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
     const uint32_t panel  = rqstBody.panel();
     const uint32_t drive  = rqstBody.drive();
     
-    log::Param params[] = {log::Param("TPVID", vid),
-      log::Param("ACS", acs),
-      log::Param("LSM", lsm),
-      log::Param("PANEL", panel),
-      log::Param("DRIVE", drive)};
+    log::Param params[] = {log::Param("vid", vid),
+      log::Param("acs", acs),
+      log::Param("lsm", lsm),
+      log::Param("panel", panel),
+      log::Param("drive", drive)};
     m_log(LOG_INFO, "AcsMountTapeForRecall message", params);
 
     castor::acs::AcsImpl acsWrapper;
@@ -259,11 +259,11 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
     const uint32_t panel  = rqstBody.panel();
     const uint32_t drive  = rqstBody.drive();
     
-    log::Param params[] = {log::Param("TPVID", vid),
-      log::Param("ACS", acs),
-      log::Param("LSM", lsm),
-      log::Param("PANEL", panel),
-      log::Param("DRIVE", drive)};
+    log::Param params[] = {log::Param("vid", vid),
+      log::Param("acs", acs),
+      log::Param("lsm", lsm),
+      log::Param("panel", panel),
+      log::Param("drive", drive)};
     m_log(LOG_INFO, "AcsMountTapeForMigration message", params);
 
     castor::acs::AcsImpl acsWrapper;
@@ -303,11 +303,11 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
     const uint32_t panel  = rqstBody.panel();
     const uint32_t drive  = rqstBody.drive();
     
-    log::Param params[] = {log::Param("TPVID", vid),
-      log::Param("ACS", acs),
-      log::Param("LSM", lsm),
-      log::Param("PANEL", panel),
-      log::Param("DRIVE", drive)};
+    log::Param params[] = {log::Param("vid", vid),
+      log::Param("acs", acs),
+      log::Param("lsm", lsm),
+      log::Param("panel", panel),
+      log::Param("drive", drive)};
     m_log(LOG_INFO, "AcsDismountTape message", params);
 
     castor::acs::AcsImpl acsWrapper;
