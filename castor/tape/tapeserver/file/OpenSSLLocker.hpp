@@ -16,32 +16,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- *
- *
+ * 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
-#include <xrootd/XrdCl/XrdClXRootDResponses.hh>
+
+
 
 namespace castor {
 namespace tape {
-namespace server {
-namespace exception {
-  /**
-   * A class turning the XrootCl (xroot 4 object client) error codes
-   * into castor exceptions.
-   */
-  class XrootCl: public castor::exception::Exception {
-  public:
-    XrootCl(const XrdCl::XRootDStatus & status, const std::string & context);
-    virtual ~XrootCl() throw() {};
-    const XrdCl::XRootDStatus & xRootDStatus() const { return m_status; }
-    static void throwOnError(const XrdCl::XRootDStatus & status, std::string context = "");
-  protected:
-    XrdCl::XRootDStatus m_status;
-  };
-}}}}
+namespace diskFile{
+
+  /** Forward declaration of the class */
+  class OpenSSLLockerRef;      
+  OpenSSLLockerRef * OpenSSLLockerRefFactory();
+}}}

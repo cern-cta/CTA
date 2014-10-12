@@ -22,26 +22,23 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "castor/tape/tapeserver/exception/OpenSSL.hpp"
+#include <openssl/err.h>
 
-#include "castor/exception/Exception.hpp"
-#include <xrootd/XrdCl/XrdClXRootDResponses.hh>
-
-namespace castor {
-namespace tape {
-namespace server {
-namespace exception {
-  /**
-   * A class turning the XrootCl (xroot 4 object client) error codes
-   * into castor exceptions.
-   */
-  class XrootCl: public castor::exception::Exception {
-  public:
-    XrootCl(const XrdCl::XRootDStatus & status, const std::string & context);
-    virtual ~XrootCl() throw() {};
-    const XrdCl::XRootDStatus & xRootDStatus() const { return m_status; }
-    static void throwOnError(const XrdCl::XRootDStatus & status, std::string context = "");
-  protected:
-    XrdCl::XRootDStatus m_status;
-  };
-}}}}
+castor::tape::server::exception::OpenSSL::OpenSSL( const std::string & what) {
+  std::stringstream w;
+  if (what.size())
+    w << what << " ";
+  // Dump the OpenSSL error stack
+  // (open SSL maintains a stack of errors per thread)
+  while (unsigned long SSLError = ::ERR_get_error()) {
+    // SSL errors are stored in at least 120 char buffers
+    const size_t len = 200;
+    char buff[len];
+    ::ERR_error_string_n(SSLError, buff, len);
+    w << "[" << buff << "]";
+  }
+  // Flush the SSL error queue
+  ::ERR_clear_error();
+  getMessage().str(w.str());
+}

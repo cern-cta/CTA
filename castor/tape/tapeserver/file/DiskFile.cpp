@@ -26,25 +26,123 @@
 #include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
 #include "castor/exception/Errnum.hpp"
 #include "castor/exception/SErrnum.hpp"
+#include "castor/server/MutexLocker.hpp"
 #include "castor/tape/tapegateway/FilesToMigrateList.hpp"
+#include "castor/tape/tapeserver/exception/OpenSSL.hpp"
 #include <rfio_api.h>
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <radosstriper/libradosstriper.hpp>
+#include <algorithm>
+#include <openssl/pem.h>
+#include <cryptopp/base64.h>
+#include <cryptopp/osrng.h>
 
 namespace castor {
 namespace tape {
 namespace diskFile {
 
-DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol):
+DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
+  const std::string & xrootPrivateKeyFile):
   m_NoURLLocalFile("^(localhost:|)(/.*)$"),
-  m_NoURLRemoteFile("^(.*:/.*)$"),
+  m_NoURLRemoteFile("^(.*:)(/.*)$"),
   m_NoURLRadosStriperFile("^localhost:([^/].*)$"),
   m_URLLocalFile("^file://(.*)$"),
   m_URLRfioFile("^rfio://(.*)$"),
   m_URLXrootFile("^(root://.*)$"),
   m_URLCephFile("^radosStriper://(.*)$"),
-  m_remoteFileProtocol(remoteFileProtocol)
-{}
+  m_remoteFileProtocol(remoteFileProtocol),
+  m_openSSLLocker(OpenSSLLockerRefFactory()),
+  m_xrootPrivateKeyFile(xrootPrivateKeyFile),
+  m_xrootOpenSSLPrivateKey(NULL),
+  m_xrootCryptoPPPrivateKeyLoaded(false)
+{
+  // Lowercase the protocol string
+  std::transform(m_remoteFileProtocol.begin(), m_remoteFileProtocol.end(),
+    m_remoteFileProtocol.begin(), ::tolower);
+}
+
+DiskFileFactory::~DiskFileFactory() {
+  if (m_xrootOpenSSLPrivateKey) {
+    EVP_PKEY_free(m_xrootOpenSSLPrivateKey);
+  }
+}
+
+EVP_PKEY* DiskFileFactory::xrootOpenSSLPrivateKey() {
+  if (!m_xrootOpenSSLPrivateKey) {
+    FILE* fPrivKey = ::fopen(m_xrootPrivateKeyFile.c_str(), "r");
+    castor::exception::Errnum::throwOnNull(fPrivKey, 
+      std::string("In DiskFileFactory::xrootPrivateKey() failed to fopen() on ")+
+        m_xrootPrivateKeyFile);
+    try {
+      m_xrootOpenSSLPrivateKey = PEM_read_PrivateKey(fPrivKey,NULL,NULL,NULL);
+      castor::tape::server::exception::OpenSSL::throwOnNULL(m_xrootOpenSSLPrivateKey,
+        std::string("In DiskFileFactory::xrootPrivateKey() failed to PEM_read_PrivateKey() on ")+
+          m_xrootPrivateKeyFile);
+    } catch (...) {
+      ::fclose(fPrivKey);
+      throw;
+    }
+    ::fclose(fPrivKey);
+  }
+  return m_xrootOpenSSLPrivateKey;
+}
+
+const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootCryptoPPPrivateKey() {
+  if(!m_xrootCryptoPPPrivateKeyLoaded) {
+    // The loading of a PEM-style key is described in 
+    // http://www.cryptopp.com/wiki/Keys_and_Formats#PEM_Encoded_Keys
+    std::string key;
+    std::ifstream keyFile(m_xrootPrivateKeyFile.c_str());
+    char buff[200];
+    while(!keyFile.eof()) {
+      keyFile.read(buff, sizeof(buff));
+      key.append(buff,keyFile.gcount());
+    }
+    const std::string HEADER = "-----BEGIN RSA PRIVATE KEY-----";
+    const std::string FOOTER = "-----END RSA PRIVATE KEY-----";
+        
+    size_t pos1, pos2;
+    pos1 = key.find(HEADER);
+    if(pos1 == std::string::npos)
+        throw castor::exception::Exception(
+          "In DiskFileFactory::xrootCryptoPPPrivateKey, PEM header not found");
+        
+    pos2 = key.find(FOOTER, pos1+1);
+    if(pos2 == std::string::npos)
+        throw castor::exception::Exception(
+          "In DiskFileFactory::xrootCryptoPPPrivateKey, PEM footer not found");
+        
+    // Start position and length
+    pos1 = pos1 + HEADER.length();
+    pos2 = pos2 - pos1;
+    std::string keystr = key.substr(pos1, pos2);
+    
+    // Base64 decode, place in a ByteQueue    
+    CryptoPP::ByteQueue queue;
+    CryptoPP::Base64Decoder decoder;
+    
+    decoder.Attach(new CryptoPP::Redirector(queue));
+    decoder.Put((const byte*)keystr.data(), keystr.length());
+    decoder.MessageEnd();
+
+    m_xrootCryptoPPPrivateKey.BERDecodePrivateKey(queue, false /*paramsPresent*/, queue.MaxRetrievable());
+    
+    // BERDecodePrivateKey is a void function. Here's the only check
+    // we have regarding the DER bytes consumed.
+    if(!queue.IsEmpty())
+      throw castor::exception::Exception(
+        "In DiskFileFactory::xrootCryptoPPPrivateKey, garbage at end of key");
+    
+    CryptoPP::AutoSeededRandomPool prng;
+    bool valid = m_xrootCryptoPPPrivateKey.Validate(prng, 3);
+    if(!valid)
+      throw castor::exception::Exception(
+        "In DiskFileFactory::xrootCryptoPPPrivateKey, RSA private key is not valid");
+
+    m_xrootCryptoPPPrivateKeyLoaded = true;
+  }
+  return m_xrootCryptoPPPrivateKey;
+}
 
 ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   std::vector<std::string> regexResult;
@@ -62,7 +160,7 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   // Xroot URL?
   regexResult = m_URLXrootFile.exec(path);
   if (regexResult.size()) {
-    return new XrootReadFile(regexResult[1]);
+    return new XrootReadFile(regexResult[1],xrootCryptoPPPrivateKey());
   }
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);
@@ -79,9 +177,11 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   regexResult = m_NoURLRemoteFile.exec(path);
   if (regexResult.size()) {
     if (m_remoteFileProtocol == "xroot") {
-      return new XrootReadFile(std::string("root://") + regexResult[1]);
+      // In the current CASTOR implementation, the xrootd port is hard coded to 1095
+      return new XrootReadFile(std::string("root://") + regexResult[1] + "1095/" 
+        + regexResult[2],xrootCryptoPPPrivateKey());
     } else {
-      return new RfioReadFile(regexResult[1]);
+      return new RfioReadFile(regexResult[1]+regexResult[2]);
     }
   }
   // Do we have a radosStriper file?
@@ -109,7 +209,7 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   // Xroot URL?
   regexResult = m_URLXrootFile.exec(path);
   if (regexResult.size()) {
-    return new XrootWriteFile(regexResult[1]);
+    return new XrootWriteFile(regexResult[1],xrootCryptoPPPrivateKey());
   }
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);
@@ -126,9 +226,11 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   regexResult = m_NoURLRemoteFile.exec(path);
   if (regexResult.size()) {
     if (m_remoteFileProtocol == "xroot") {
-      return new XrootWriteFile(std::string("root://") + regexResult[1]);
+      // In the current CASTOR implementation, the xrootd port is hard coded to 1095
+      return new XrootWriteFile(std::string("root://") + regexResult[1] + "1095/" 
+        + regexResult[2],xrootCryptoPPPrivateKey());
     } else {
-      return new RfioWriteFile(regexResult[1]);
+      return new XrootWriteFile(regexResult[1]+regexResult[2],xrootCryptoPPPrivateKey());
     }
   }
   // Do we have a radosStriper file?
@@ -145,11 +247,14 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
 //==============================================================================  
 LocalReadFile::LocalReadFile(const std::string &path)  {
   m_fd = ::open64((char *)path.c_str(), O_RDONLY);
+  m_URL = "file://";
+  m_URL += path;
   castor::exception::SErrnum::throwOnMinusOne(m_fd,
-      "Failed open64() in diskFile::LocalReadFile::LocalReadFile");
+    std::string("In diskFile::LocalReadFile::LocalReadFile failed open64() on ")+m_URL);
+
 }
 
-size_t LocalReadFile::read(void *data, const size_t size)  {
+size_t LocalReadFile::read(void *data, const size_t size) const {
   return ::read(m_fd, data, size);
 }
 
@@ -158,7 +263,7 @@ size_t LocalReadFile::size() const {
   struct stat64 statbuf;        
   int ret = ::fstat64(m_fd,&statbuf);
   castor::exception::SErrnum::throwOnMinusOne(ret,
-          "Error while trying to stat64() a local file");
+    std::string("In diskFile::LocalReadFile::LocalReadFile failed stat64() on ")+m_URL);
   
   return statbuf.st_size;
 }
@@ -173,8 +278,12 @@ LocalReadFile::~LocalReadFile() throw() {
 LocalWriteFile::LocalWriteFile(const std::string &path): m_closeTried(false){
   // For local files, we truncate the file like for RFIO
   m_fd = ::open64((char *)path.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666);
+  m_URL = "file://";
+  m_URL += path;
   castor::exception::SErrnum::throwOnMinusOne(m_fd,
-      "Failed to open64() in LocalWriteFile::LocalWriteFile()");        
+      std::string("In LocalWriteFile::LocalWriteFile() failed to open64() on ")
+      +m_URL);        
+
 }
 
 void LocalWriteFile::write(const void *data, const size_t size)  {
@@ -186,7 +295,7 @@ void LocalWriteFile::close()  {
   if (m_closeTried) return;
   m_closeTried=true;
   castor::exception::Errnum::throwOnMinusOne(::close(m_fd),
-      "Failed rfio_close() in diskFile::WriteFile::close");        
+      std::string("In LocalWriteFile::close failed rfio_close() on ")+m_URL);        
 }
 
 LocalWriteFile::~LocalWriteFile() throw() {
@@ -200,11 +309,14 @@ LocalWriteFile::~LocalWriteFile() throw() {
 //==============================================================================  
 RfioReadFile::RfioReadFile(const std::string &rfioUrl)  {
   m_fd = rfio_open64((char *)rfioUrl.c_str(), O_RDONLY);
+  m_URL = "rfio://";
+  m_URL += rfioUrl;
   castor::exception::SErrnum::throwOnMinusOne(m_fd, 
-      "Failed rfio_open64() in diskFile::RfioReadFile::RfioReadFile");
+      std::string("In RfioReadFile::RfioReadFile failed rfio_open64() on ") + m_URL);
+
 }
 
-size_t RfioReadFile::read(void *data, const size_t size)  {
+size_t RfioReadFile::read(void *data, const size_t size) const {
   return rfio_read(m_fd, data, size);
 }
 
@@ -213,7 +325,7 @@ size_t RfioReadFile::size() const {
   struct stat64 statbuf;        
   int ret = rfio_fstat64(m_fd,&statbuf);
   castor::exception::SErrnum::throwOnMinusOne(ret,
-          "Error while trying to read some stats on an RFIO file");
+    std::string("In RfioReadFile::RfioReadFile failed to rfio_fstat64() on ")+m_URL);
   
   return statbuf.st_size;
 }
@@ -234,7 +346,11 @@ RfioWriteFile::RfioWriteFile(const std::string &rfioUrl)  : m_closeTried(false){
    * As a side note, we tried to use the O_EXCL flag as well (which would provide additional safety)
    * however this flag does not work with rfio_open64 as apparently it causes memory corruption.
    */
-  castor::exception::SErrnum::throwOnMinusOne(m_fd, "Failed rfio_open64() in RfioWriteFile::RfioWriteFile::RfioWriteFile");        
+  m_URL = "rfio://";
+  m_URL += rfioUrl;
+  castor::exception::SErrnum::throwOnMinusOne(m_fd, 
+    std::string("In RfioWriteFile::RfioWriteFile failed rfio_open64()on ")+m_URL);        
+
 }
 
 void RfioWriteFile::write(const void *data, const size_t size)  {
@@ -245,7 +361,8 @@ void RfioWriteFile::close()  {
   // Multiple close protection
   if (m_closeTried) return;
   m_closeTried=true;
-  castor::exception::Errnum::throwOnMinusOne(rfio_close(m_fd), "Failed rfio_close() in diskFile::WriteFile::close");        
+  castor::exception::Errnum::throwOnMinusOne(rfio_close(m_fd), 
+    std::string("In RfioWriteFile::close failed rfio_close on ")+m_URL);
 }
 
 RfioWriteFile::~RfioWriteFile() throw() {
@@ -255,19 +372,144 @@ RfioWriteFile::~RfioWriteFile() throw() {
 }
 
 //==============================================================================
-// XROOT READ FILE
-//==============================================================================  
-XrootReadFile::XrootReadFile(const std::string &url):
-m_readPosition(0){
-  using XrdCl::OpenFlags;
-  XrootClEx::throwOnError(m_xrootFile.Open(url, OpenFlags::Read|OpenFlags::SeqIO),
-    "Error while calling XrdCl::Open() in XrootReadFile::XrootReadFile()");
+// OPENSSL SIGNER
+//==============================================================================
+castor::server::Mutex OpenSSLSigner::s_mutex;
+
+std::string OpenSSLSigner::sign(const std::string msg, EVP_PKEY* privateKey) {
+  // One signature at a time as OpenSSL has race conditions issues...
+  castor::server::MutexLocker ml(&s_mutex);
+  // Sign the block
+  std::string signature;
+  EVP_MD_CTX mdCtx;
+  BIO * b64 = NULL;
+  BIO * bmem = NULL;
+  EVP_MD_CTX_init(&mdCtx);
+  try {
+    EVP_SignInit(&mdCtx, EVP_sha1());
+    castor::tape::server::exception::OpenSSL::throwOnZero(
+      EVP_SignUpdate(&mdCtx, msg.c_str(), msg.size()),
+      "In XrootReadFile::XrootReadFile failed EVP_SignUpdate");
+    // Sign the hash. Note that we need to serialize this code
+    unsigned char sig_buf[16384];
+    unsigned int sig_len = sizeof(sig_buf);
+    castor::tape::server::exception::OpenSSL::throwOnZero(
+      EVP_SignFinal(&mdCtx, sig_buf, &sig_len, privateKey),
+      "In XrootReadFile::XrootReadFile failed EVP_SignFinal()");
+    // We could cleanup the context now, but it's simpler to do it after the 
+    // try block.
+    
+    // Encode the signature in base 64
+    b64 = BIO_new(BIO_f_base64());
+    bmem = BIO_new(BIO_s_mem());
+    castor::tape::server::exception::OpenSSL::throwOnZero(
+      b64 || bmem,
+      "In XrootReadFile::XrootReadFile failed BIO_new()");
+    b64 = BIO_push(b64,bmem);
+    BIO_write(b64, sig_buf, sig_len);
+    (void)BIO_flush(b64);
+    // The signature is expected to be less than 200 bytes so we should get it in 1 pass
+    //char buff[200];
+    //int len=BIO_read(bmem,buff, sizeof(buff));
+    //while (len > 0) {
+    //  signature.append(buff, len);
+    //  len=BIO_read(b64,buff, sizeof(buff));
+    //}
+    BUF_MEM* bptr;
+    BIO_get_mem_ptr(b64, &bptr);
+    signature.append(bptr->data,bptr->length);
+  } catch (...) {
+    EVP_MD_CTX_cleanup(&mdCtx);
+    BIO_free(bmem);
+    BIO_free(b64);
+    throw;
+  }
+  EVP_MD_CTX_cleanup(&mdCtx);
+  BIO_free(bmem);
+  BIO_free(b64);
+
+  // Remove the newlines in the signature (it's truncated in lines)
+  signature.erase(std::remove(signature.begin(), signature.end(), '\n'), signature.end());
+
+  return signature;
 }
 
-size_t XrootReadFile::read(void *data, const size_t size)  {
+//==============================================================================
+// CRYPTOPP SIGNER
+//==============================================================================
+castor::server::Mutex CryptoPPSigner::s_mutex;
+
+std::string CryptoPPSigner::sign(const std::string msg, 
+  const CryptoPP::RSA::PrivateKey& privateKey) {
+  // Global lock as Crypto++ seems not to be thread safe (helgrind complains)
+  castor::server::MutexLocker ml(&s_mutex);
+  // Create a signer object
+  CryptoPP::RSASSA_PKCS1v15_SHA_Signer signer(privateKey);
+  // Return value
+  std::string ret;
+  // Random number generator (not sure it's really used)
+  CryptoPP::AutoSeededRandomPool rng;
+  // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
+  const bool noNewLineInBase64Output = false;
+  CryptoPP::StringSource ss1(msg, true, 
+      new CryptoPP::SignerFilter(rng, signer,
+        new CryptoPP::Base64Encoder(
+          new CryptoPP::StringSink(ret), noNewLineInBase64Output)));
+  // That's all job's already done.
+  return ret;
+}
+
+//==============================================================================
+// XROOT READ FILE
+//==============================================================================  
+XrootReadFile::XrootReadFile(const std::string &url,
+  const CryptoPP::RSA::PrivateKey & xrootPrivateKey):
+m_readPosition(0){
+  using XrdCl::OpenFlags;
+  m_URL = url;
+  m_signedURL = m_URL;
+  // Turn the bare URL into a Castor URL, by adding opaque tags:
+  // ?castor2fs.pfn1=/srv/castor/...  (duplication of the path in practice)
+  // ?castor2fs.exptime=(unix time)
+  // ?castor2fs.signature=
+  //Find the path part of the url. It is the first occurence of "//"
+  // after the inital [x]root://
+  const std::string scheme = "root://";
+  size_t schemePos = url.find(scheme);
+  if (std::string::npos == schemePos) 
+    throw castor::exception::Exception(
+      std::string("In XrootReadFile::XrootReadFile could not find the scheme[x]root:// in URL "+
+        url));
+  size_t pathPos = url.find("//", schemePos + scheme.size());
+  if (std::string::npos == pathPos) 
+    throw castor::exception::Exception(
+      std::string("In XrootReadFile::XrootReadFile could not path in URL "+
+        url));
+  std::string path = url.substr(pathPos + 1);
+  // Build signature block
+  time_t expTime = time(NULL)+3600;
+  std::stringstream signatureBlock;
+  signatureBlock << path << "0" << expTime;
+  
+  // Sign the block
+  std::string signature = CryptoPPSigner::sign(signatureBlock.str(), xrootPrivateKey);
+
+  std::stringstream opaqueBloc;
+  opaqueBloc << "?castor2fs.pfn1=" << path;
+  opaqueBloc << "&castor2fs.exptime=" << expTime;
+  opaqueBloc << "&castor2fs.signature=" << signature;
+  m_signedURL = m_URL + opaqueBloc.str();
+  
+  // ... and finally open the file
+  XrootClEx::throwOnError(m_xrootFile.Open(m_signedURL, OpenFlags::Read),
+    std::string("In XrootReadFile::XrootReadFile failed XrdCl::File::Open() on ")
+    +m_URL+" opaqueBlock="+opaqueBloc.str());
+}
+
+size_t XrootReadFile::read(void *data, const size_t size) const {
   uint32_t ret;
   XrootClEx::throwOnError(m_xrootFile.Read(m_readPosition, size, data, ret),
-    "Error while calling XrdCl::Read() in XrootReadFile::read()");
+    std::string("In XrootReadFile::read failed XrdCl::File::Read() on ")+m_URL);
   m_readPosition += ret;
   return ret;
 }
@@ -277,29 +519,69 @@ size_t XrootReadFile::size() const {
   XrdCl::StatInfo *statInfo(NULL);
   size_t ret;
   XrootClEx::throwOnError(m_xrootFile.Stat(forceStat, statInfo),
-    "Error while calling XrdCl::Stat() in XrootReadFile::size()");
+    std::string("In XrootReadFile::size failed XrdCl::File::Stat() on ")+m_URL);
   ret= statInfo->GetSize();
   delete statInfo;
   return ret;
 }
 
 XrootReadFile::~XrootReadFile() throw() {
-  m_xrootFile.Close();
+  try{
+    m_xrootFile.Close();
+  } catch (...) {}
 }
 
 //==============================================================================
 // XROOT WRITE FILE
 //============================================================================== 
-XrootWriteFile::XrootWriteFile(const std::string &url):
+XrootWriteFile::XrootWriteFile(const std::string &url,
+  const CryptoPP::RSA::PrivateKey & xrootPrivateKey):
 m_writePosition(0),m_closeTried(false){
   using XrdCl::OpenFlags;
-  XrootClEx::throwOnError(m_xrootFile.Open(url, OpenFlags::Delete|OpenFlags::SeqIO),
-    "Error while calling XrdCl::Open() in XrootWriteFile::XrootWriteFile()");
+  m_URL=url;
+  m_signedURL = m_URL;
+  // Turn the bare URL into a Castor URL, by adding opaque tags:
+  // ?castor2fs.pfn1=/srv/castor/...  (duplication of the path in practice)
+  // ?castor2fs.exptime=(unix time)
+  // ?castor2fs.signature=
+  //Find the path part of the url. It is the first occurence of "//"
+  // after the inital [x]root://
+  const std::string scheme = "root://";
+  size_t schemePos = url.find(scheme);
+  if (std::string::npos == schemePos) 
+    throw castor::exception::Exception(
+      std::string("In XrootReadFile::XrootReadFile could not find the scheme[x]root:// in URL "+
+        url));
+  size_t pathPos = url.find("//", schemePos + scheme.size());
+  if (std::string::npos == pathPos) 
+    throw castor::exception::Exception(
+      std::string("In XrootReadFile::XrootReadFile could not path in URL "+
+        url));
+  std::string path = url.substr(pathPos + 1);
+  // Build signature block
+  time_t expTime = time(NULL)+3600;
+  std::stringstream signatureBlock;
+  signatureBlock << path << "0" << expTime;
+  
+  // Sign the block
+  std::string signature = CryptoPPSigner::sign(signatureBlock.str(), xrootPrivateKey);
+
+  std::stringstream opaqueBloc;
+  opaqueBloc << "?castor2fs.pfn1=" << path;
+  opaqueBloc << "&castor2fs.exptime=" << expTime;
+  opaqueBloc << "&castor2fs.signature=" << signature;
+  m_signedURL = m_URL + opaqueBloc.str();
+  
+  XrootClEx::throwOnError(m_xrootFile.Open(m_signedURL, OpenFlags::Delete),
+    std::string("In XrootWriteFile::XrootWriteFile failed XrdCl::File::Open() on ")
+    +m_URL);
+
 }
 
 void XrootWriteFile::write(const void *data, const size_t size)  {
   XrootClEx::throwOnError(m_xrootFile.Write(m_writePosition, size, data),
-    "Error while calling XrdCl::Write() in XrootWriteFile::write()");
+    std::string("In XrootWriteFile::write failed XrdCl::File::Write() on ")
+    +m_URL);
   m_writePosition += size;
 }
 
@@ -308,7 +590,7 @@ void XrootWriteFile::close()  {
   if (m_closeTried) return;
   m_closeTried=true;
   XrootClEx::throwOnError(m_xrootFile.Close(),
-     "Error while calling XrdCl::Stat() in XrootWriteFile::close()");
+    std::string("In XrootWriteFile::close failed XrdCl::File::Stat() on ")+m_URL);
 }
 
 XrootWriteFile::~XrootWriteFile() throw() {
@@ -325,7 +607,7 @@ RadosStriperReadFile::RadosStriperReadFile(const std::string &url){
       "RadosStriperReadFile::RadosStriperReadFile is not implemented");
 }
 
-size_t RadosStriperReadFile::read(void *data, const size_t size)  {
+size_t RadosStriperReadFile::read(void *data, const size_t size) const {
   throw castor::exception::Exception(
       "RadosStriperReadFile::read is not implemented");
 }

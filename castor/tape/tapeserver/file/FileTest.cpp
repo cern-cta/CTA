@@ -212,7 +212,7 @@ namespace UnitTests {
     const uint32_t block_size = 1024;
     char data1[block_size];
     char data2[block_size];
-    castor::tape::diskFile::DiskFileFactory fileFactory("RFIO");
+    castor::tape::diskFile::DiskFileFactory fileFactory("RFIO","");
     {
       std::auto_ptr<castor::tape::diskFile::ReadFile> rf(
         fileFactory.createReadFile("localhost:/etc/fstab"));

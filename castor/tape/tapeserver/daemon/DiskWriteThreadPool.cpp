@@ -21,6 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
+#include "castor/common/CastorConfiguration.hpp"
 #include "castor/tape/utils/Timer.hpp"
 #include "log.h"
 #include <memory>
@@ -34,9 +35,12 @@ namespace daemon {
 // constructor
 //------------------------------------------------------------------------------
 DiskWriteThreadPool::DiskWriteThreadPool(int nbThread,
-        RecallReportPacker& report,castor::log::LogContext lc,
-        const std::string & remoteFileProtocol):
-        m_diskFileFactory(remoteFileProtocol),m_reporter(report),m_lc(lc)
+  RecallReportPacker& report,castor::log::LogContext lc,
+  const std::string & remoteFileProtocol):
+  m_diskFileFactory(remoteFileProtocol,
+    castor::common::CastorConfiguration::getConfig().
+      getConfEntString("XROOT", "PrivateKey", "/opt/xrootd/keys/key.pem")),
+  m_reporter(report),m_lc(lc)
 {
   m_lc.pushOrReplace(castor::log::Param("threadCount", nbThread));
   for(int i=0; i<nbThread; i++) {

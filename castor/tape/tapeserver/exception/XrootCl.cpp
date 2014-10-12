@@ -25,7 +25,7 @@
 #include "XrootCl.hpp"
 #include <sstream>
 
-castor::exception::XrootCl::XrootCl(const XrdCl::XRootDStatus& status, const std::string & what) {
+castor::tape::server::exception::XrootCl::XrootCl(const XrdCl::XRootDStatus& status, const std::string & what) {
   std::stringstream w;
   if (what.size())
     w << what << " ";
@@ -33,7 +33,7 @@ castor::exception::XrootCl::XrootCl(const XrdCl::XRootDStatus& status, const std
   getMessage().str(w.str());
 }
 
-void castor::exception::XrootCl::throwOnError(const XrdCl::XRootDStatus& status, std::string context)
+void castor::tape::server::exception::XrootCl::throwOnError(const XrdCl::XRootDStatus& status, std::string context)
 {
   if (!status.IsOK()) {
     throw XrootCl(status, context);

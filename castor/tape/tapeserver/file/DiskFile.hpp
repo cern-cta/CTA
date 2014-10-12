@@ -24,6 +24,10 @@
 #pragma once
 
 #include "castor/tape/tapeserver/utils/Regex.hpp"
+#include <openssl/evp.h>
+#include <cryptopp/rsa.h>
+#include "castor/tape/tapeserver/file/OpenSSLLocker.hpp"
+#include <memory>
 /*
  * This file only contains the interface declaration of the base classes
  * the real implementation, which depends on many includes is hidden in
@@ -49,9 +53,11 @@ namespace castor {
       class DiskFileFactory {
         typedef castor::tape::utils::Regex Regex;
       public:
-        DiskFileFactory(const std::string & remoteFileProtocol);
+        DiskFileFactory(const std::string & remoteFileProtocol,
+          const std::string & xrootPrivateKey);
         ReadFile * createReadFile(const std::string & path);
         WriteFile * createWriteFile(const std::string & path);
+        ~DiskFileFactory();
       private:
         Regex m_NoURLLocalFile;
         Regex m_NoURLRemoteFile;
@@ -61,6 +67,15 @@ namespace castor {
         Regex m_URLXrootFile;
         Regex m_URLCephFile;
         std::string m_remoteFileProtocol;
+        std::auto_ptr<OpenSSLLockerRef> m_openSSLLocker;
+        std::string m_xrootPrivateKeyFile;
+        EVP_PKEY *m_xrootOpenSSLPrivateKey;
+        CryptoPP::RSA::PrivateKey m_xrootCryptoPPPrivateKey;
+        bool m_xrootCryptoPPPrivateKeyLoaded;
+        
+        /** Return the private key. Read it from the file if necessary. */ 
+        EVP_PKEY* xrootOpenSSLPrivateKey();
+        const CryptoPP::RSA::PrivateKey & xrootCryptoPPPrivateKey();
       };
       
       class ReadFile {
@@ -77,12 +92,23 @@ namespace castor {
          * @param size: size of the buffer
          * @return The amount of data actually copied. Zero at end of file.
          */
-        virtual size_t read(void *data, const size_t size) = 0;
+        virtual size_t read(void *data, const size_t size) const = 0;
         
         /**
          * Destructor of the ReadFile class. It closes the corresponding file descriptor.
          */
         virtual ~ReadFile() throw() {}
+        
+        /**
+         * File protocol and path for logging
+         */
+        virtual std::string URL() const { return m_URL; }
+        
+      protected:
+        /**
+         * Storage for the URL
+         */
+        std::string m_URL;
       };
       
       class WriteFile {
@@ -103,6 +129,17 @@ namespace castor {
          * Destructor of the WriteFile class.
          */
         virtual ~WriteFile() throw() {}
+        
+        /**
+         * File protocol and path for logging
+         */
+        virtual std::string URL() const { return m_URL; }
+        
+      protected:
+        /**
+         * Storage for the URL
+         */
+        std::string m_URL;
       };
 
     } //end of namespace diskFile

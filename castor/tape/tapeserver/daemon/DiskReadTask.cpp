@@ -60,6 +60,8 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     
     std::auto_ptr<tape::diskFile::ReadFile> sourceFile(
       fileFactory.createReadFile(m_migratedFile->path()));
+    log::ScopedParamContainer URLcontext(lc);
+    URLcontext.add("actualURL", sourceFile->URL());
     if(migratingFileSize != sourceFile->size()){
       throw castor::exception::Exception("Mismtach between size given by the client "
               "and the real one");
@@ -68,7 +70,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     m_stats.openingTime+=localTime.secs(utils::Timer::resetCounter);
      
     LogContext::ScopedParam sp(lc, Param("filePath",m_migratedFile->path()));
-    lc.log(LOG_INFO,"Opened file on disk for migration ");
+    lc.log(LOG_INFO,"Opened disk file for read");
     
     while(migratingFileSize>0){
 

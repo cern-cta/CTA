@@ -214,16 +214,21 @@ target_link_libraries(castorUnitTests
   Utils
   ${ZLIB_LIBRARIES})
 
+find_package (xrootd REQUIRED)
+include_directories (${XROOTD_INCLUDE_DIR})
+
 # Those tests are multi threaded. They could should also be run in 
 # helgrind/drd (and also memcheck)
 add_executable(castorThreadedUnitTests
   castorUnitTests.cpp
   ../castor/server/ThreadingMTTests.cpp
- ../castor/tape/tapeserver/daemon/DataTransferSessionTest.cpp
+  ../castor/tape/tapeserver/daemon/DataTransferSessionTest.cpp
   ../castor/server/ThreadingBlockingQTests.cpp
   ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp
   ../castor/tape/tapeserver/daemon/MigrationReportPackerTest.cpp
   ../castor/tape/tapeserver/daemon/TaskWatchDogTest.cpp
+  ../castor/tape/tapeserver/file/OpenSSLTest.cpp
+  ../castor/tape/tapeserver/file/CryptoPPTest.cpp
 )
 
 target_link_libraries(castorThreadedUnitTests
@@ -235,9 +240,6 @@ target_link_libraries(castorThreadedUnitTests
   castorTapeServerDaemonTestDummies
   castorTapeServerDaemon
   TestDummies
-  SCSI
-  System
-  Utils
   castortapegatewayprotocol
   castortapeutils
   castorvdqm
@@ -249,9 +251,10 @@ target_link_libraries(castorThreadedUnitTests
   TapeDrive
   SCSI
   System 
-  Utils
   File 
-  ${ZLIB_LIBRARIES})
+  ${ZLIB_LIBRARIES}
+  Utils
+  cryptopp)
 
 # Those tests are multi threaded. They could should also be run in 
 # helgrind/drd (but not memcheck)

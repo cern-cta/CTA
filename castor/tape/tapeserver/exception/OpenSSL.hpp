@@ -25,23 +25,26 @@
 #pragma once
 
 #include "castor/exception/Exception.hpp"
-#include <xrootd/XrdCl/XrdClXRootDResponses.hh>
 
 namespace castor {
 namespace tape {
 namespace server {
 namespace exception {
   /**
-   * A class turning the XrootCl (xroot 4 object client) error codes
-   * into castor exceptions.
+   * A class retrieving OpenSSL errors codes and turning them into a string.
+   * Comes with exception launchers
    */
-  class XrootCl: public castor::exception::Exception {
+  class OpenSSL: public castor::exception::Exception {
   public:
-    XrootCl(const XrdCl::XRootDStatus & status, const std::string & context);
-    virtual ~XrootCl() throw() {};
-    const XrdCl::XRootDStatus & xRootDStatus() const { return m_status; }
-    static void throwOnError(const XrdCl::XRootDStatus & status, std::string context = "");
-  protected:
-    XrdCl::XRootDStatus m_status;
+    OpenSSL(const std::string & context);
+    virtual ~OpenSSL() throw() {};
+    template<class T>
+    static void throwOnNULL(const T * ptr, std::string context = "") {
+      if (!ptr) throw OpenSSL(context);
+    }
+    template<class T>
+    static void throwOnZero(const T val, std::string context = "") {
+      if (!val) throw OpenSSL(context);
+    }
   };
 }}}}
