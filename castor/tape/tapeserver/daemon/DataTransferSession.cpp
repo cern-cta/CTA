@@ -204,8 +204,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         rrp,
         lc,
         m_castorConf.tapeserverdRemoteFileProtocol,
-        castor::common::CastorConfiguration::getConfig().
-          getConfEntString("XROOT", "PrivateKey", "/opt/xrootd/keys/key.pem"));
+        m_castorConf.xrootPrivateKey);
     RecallTaskInjector rti(mm, trst, dwtp, m_clientProxy,
             m_castorConf.tapebridgeBulkRequestRecallMaxFiles,
             m_castorConf.tapebridgeBulkRequestRecallMaxBytes,lc);
@@ -297,8 +296,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         m_castorConf.tapebridgeBulkRequestMigrationMaxBytes,
         lc,
         m_castorConf.tapeserverdRemoteFileProtocol,
-        castor::common::CastorConfiguration::getConfig().
-          getConfEntString("XROOT", "PrivateKey", "/opt/xrootd/keys/key.pem"));
+        m_castorConf.xrootPrivateKey);
     MigrationTaskInjector mti(mm, drtp, twst, m_clientProxy, 
             m_castorConf.tapebridgeBulkRequestMigrationMaxBytes,
             m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,lc);

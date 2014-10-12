@@ -50,5 +50,6 @@ message ForkDataTransfer {
   required uint32 diskthreadpoolsize = 22;
   required uint32 rmcport = 23;
   required string remotefileprotocol = 24;
+  required string xrootprivatekey = 25;
 }
 

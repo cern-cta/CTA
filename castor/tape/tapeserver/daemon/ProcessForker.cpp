@@ -624,6 +624,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::CastorConf
   config.tapebridgeMaxFilesBeforeFlush = msg.maxfilesbeforeflush();
   config.tapeserverdDiskThreads = msg.diskthreadpoolsize();
   config.tapeserverdRemoteFileProtocol = msg.remotefileprotocol();
+  config.xrootPrivateKey = msg.xrootprivatekey();
   return config;
 }
 

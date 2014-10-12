@@ -1088,6 +1088,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::CastorConf
     "RTCPD", "THREAD_POOL", (uint32_t)RTCPD_THREAD_POOL, &m_log);
   castorConf.tapeserverdRemoteFileProtocol = config.getConfEntString(
     "TAPESERVERD", "REMOTEFILEPROTOCOL", "RFIO", &m_log);
+  castorConf.xrootPrivateKey = config.getConfEntString(
+    "XROOT", "PRIVATEKEY", "/opt/xrootd/keys/key.pem", &m_log);
 
   return castorConf;
 }

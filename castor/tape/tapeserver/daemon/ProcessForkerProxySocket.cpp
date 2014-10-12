@@ -161,6 +161,8 @@ castor::messages::ForkDataTransfer
   msg.set_rmcport(rmcPort);
   msg.set_remotefileprotocol(
     config.tapeserverdRemoteFileProtocol);
+  msg.set_xrootprivatekey(
+      config.xrootPrivateKey);
 
   return msg;
 }
