@@ -227,7 +227,6 @@ add_executable(castorThreadedUnitTests
   ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp
   ../castor/tape/tapeserver/daemon/MigrationReportPackerTest.cpp
   ../castor/tape/tapeserver/daemon/TaskWatchDogTest.cpp
-  ../castor/tape/tapeserver/file/OpenSSLTest.cpp
   ../castor/tape/tapeserver/file/CryptoPPTest.cpp
 )
 

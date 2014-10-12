@@ -24,9 +24,7 @@
 #pragma once
 
 #include "castor/tape/tapeserver/utils/Regex.hpp"
-#include <openssl/evp.h>
 #include <cryptopp/rsa.h>
-#include "castor/tape/tapeserver/file/OpenSSLLocker.hpp"
 #include <memory>
 /*
  * This file only contains the interface declaration of the base classes
@@ -57,7 +55,6 @@ namespace castor {
           const std::string & xrootPrivateKey);
         ReadFile * createReadFile(const std::string & path);
         WriteFile * createWriteFile(const std::string & path);
-        ~DiskFileFactory();
       private:
         Regex m_NoURLLocalFile;
         Regex m_NoURLRemoteFile;
@@ -67,14 +64,11 @@ namespace castor {
         Regex m_URLXrootFile;
         Regex m_URLCephFile;
         std::string m_remoteFileProtocol;
-        std::auto_ptr<OpenSSLLockerRef> m_openSSLLocker;
         std::string m_xrootPrivateKeyFile;
-        EVP_PKEY *m_xrootOpenSSLPrivateKey;
         CryptoPP::RSA::PrivateKey m_xrootCryptoPPPrivateKey;
         bool m_xrootCryptoPPPrivateKeyLoaded;
         
         /** Return the private key. Read it from the file if necessary. */ 
-        EVP_PKEY* xrootOpenSSLPrivateKey();
         const CryptoPP::RSA::PrivateKey & xrootCryptoPPPrivateKey();
       };
       

@@ -51,6 +51,10 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
   try{
     std::auto_ptr<tape::diskFile::WriteFile> writeFile(
       fileFactory.createWriteFile(m_recallingFile->path()));
+    log::ScopedParamContainer URLcontext(lc);
+    URLcontext.add("actualURL", writeFile->URL())
+              .add("path", m_recallingFile->path());
+    lc.log(LOG_INFO, "Opened disk file for write");
     m_stats.openingTime+=localTime.secs(utils::Timer::resetCounter);
     
     int blockId  = 0;

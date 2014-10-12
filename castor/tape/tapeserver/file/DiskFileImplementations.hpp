@@ -29,9 +29,9 @@
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
-
 #include "castor/tape/tapeserver/exception/XrootCl.hpp"
 #include <xrootd/XrdCl/XrdClFile.hh>
+#include <cryptopp/rsa.h>
 
 
 namespace castor {
@@ -44,7 +44,7 @@ namespace castor {
       public:
         LocalReadFile(const std::string &path);
         virtual size_t size() const;
-        virtual size_t read(void *data, const size_t size);
+        virtual size_t read(void *data, const size_t size) const;
         virtual ~LocalReadFile() throw();
       private:
         int m_fd;
@@ -65,7 +65,7 @@ namespace castor {
       public:
         RfioReadFile(const std::string &rfioUrl);
         virtual size_t size() const;
-        virtual size_t read(void *data, const size_t size);
+        virtual size_t read(void *data, const size_t size) const;
         virtual ~RfioReadFile() throw();
       private:
         int m_fd;
@@ -82,37 +82,47 @@ namespace castor {
         bool m_closeTried;
       };
       
+      struct CryptoPPSigner {
+        static std::string sign(const std::string msg, 
+          const CryptoPP::RSA::PrivateKey  & privateKey);
+        static castor::server::Mutex s_mutex;
+      };
+      
       class XrootReadFile: public ReadFile {
       public:
-        XrootReadFile(const std::string &xrootUrl);
+        XrootReadFile(const std::string &xrootUrl,
+          const CryptoPP::RSA::PrivateKey & privateKey);
         virtual size_t size() const;
-        virtual size_t read(void *data, const size_t size);
+        virtual size_t read(void *data, const size_t size) const;
         virtual ~XrootReadFile() throw();
       private:
         // There is no const-correctness with XrdCl...
         mutable XrdCl::File m_xrootFile;
-        uint64_t m_readPosition;
-        typedef castor::exception::XrootCl XrootClEx;
+        mutable uint64_t m_readPosition;
+        typedef castor::tape::server::exception::XrootCl XrootClEx;
+        std::string m_signedURL;
       };
       
       class XrootWriteFile: public WriteFile {
       public:
-        XrootWriteFile(const std::string &xrootUrl);
+        XrootWriteFile(const std::string &xrootUrl,
+          const CryptoPP::RSA::PrivateKey & privateKey);
         virtual void write(const void *data, const size_t size);
         virtual void close();
         virtual ~XrootWriteFile() throw();
       private:
         XrdCl::File m_xrootFile;
         uint64_t m_writePosition;
-        typedef castor::exception::XrootCl XrootClEx;
+        typedef castor::tape::server::exception::XrootCl XrootClEx;
         bool m_closeTried;
+        std::string m_signedURL;
       };
       
       class RadosStriperReadFile: public ReadFile {
       public:
         RadosStriperReadFile(const std::string &xrootUrl);
         virtual size_t size() const;
-        virtual size_t read(void *data, const size_t size);
+        virtual size_t read(void *data, const size_t size) const;
         virtual ~RadosStriperReadFile() throw();
       };
       

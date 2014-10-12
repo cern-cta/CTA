@@ -28,12 +28,10 @@
 #include "castor/exception/SErrnum.hpp"
 #include "castor/server/MutexLocker.hpp"
 #include "castor/tape/tapegateway/FilesToMigrateList.hpp"
-#include "castor/tape/tapeserver/exception/OpenSSL.hpp"
 #include <rfio_api.h>
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <radosstriper/libradosstriper.hpp>
 #include <algorithm>
-#include <openssl/pem.h>
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
 
@@ -51,40 +49,12 @@ DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
   m_URLXrootFile("^(root://.*)$"),
   m_URLCephFile("^radosStriper://(.*)$"),
   m_remoteFileProtocol(remoteFileProtocol),
-  m_openSSLLocker(OpenSSLLockerRefFactory()),
   m_xrootPrivateKeyFile(xrootPrivateKeyFile),
-  m_xrootOpenSSLPrivateKey(NULL),
   m_xrootCryptoPPPrivateKeyLoaded(false)
 {
   // Lowercase the protocol string
   std::transform(m_remoteFileProtocol.begin(), m_remoteFileProtocol.end(),
     m_remoteFileProtocol.begin(), ::tolower);
-}
-
-DiskFileFactory::~DiskFileFactory() {
-  if (m_xrootOpenSSLPrivateKey) {
-    EVP_PKEY_free(m_xrootOpenSSLPrivateKey);
-  }
-}
-
-EVP_PKEY* DiskFileFactory::xrootOpenSSLPrivateKey() {
-  if (!m_xrootOpenSSLPrivateKey) {
-    FILE* fPrivKey = ::fopen(m_xrootPrivateKeyFile.c_str(), "r");
-    castor::exception::Errnum::throwOnNull(fPrivKey, 
-      std::string("In DiskFileFactory::xrootPrivateKey() failed to fopen() on ")+
-        m_xrootPrivateKeyFile);
-    try {
-      m_xrootOpenSSLPrivateKey = PEM_read_PrivateKey(fPrivKey,NULL,NULL,NULL);
-      castor::tape::server::exception::OpenSSL::throwOnNULL(m_xrootOpenSSLPrivateKey,
-        std::string("In DiskFileFactory::xrootPrivateKey() failed to PEM_read_PrivateKey() on ")+
-          m_xrootPrivateKeyFile);
-    } catch (...) {
-      ::fclose(fPrivKey);
-      throw;
-    }
-    ::fclose(fPrivKey);
-  }
-  return m_xrootOpenSSLPrivateKey;
 }
 
 const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootCryptoPPPrivateKey() {
@@ -369,69 +339,6 @@ RfioWriteFile::~RfioWriteFile() throw() {
   if(!m_closeTried){
     rfio_close(m_fd);
   }
-}
-
-//==============================================================================
-// OPENSSL SIGNER
-//==============================================================================
-castor::server::Mutex OpenSSLSigner::s_mutex;
-
-std::string OpenSSLSigner::sign(const std::string msg, EVP_PKEY* privateKey) {
-  // One signature at a time as OpenSSL has race conditions issues...
-  castor::server::MutexLocker ml(&s_mutex);
-  // Sign the block
-  std::string signature;
-  EVP_MD_CTX mdCtx;
-  BIO * b64 = NULL;
-  BIO * bmem = NULL;
-  EVP_MD_CTX_init(&mdCtx);
-  try {
-    EVP_SignInit(&mdCtx, EVP_sha1());
-    castor::tape::server::exception::OpenSSL::throwOnZero(
-      EVP_SignUpdate(&mdCtx, msg.c_str(), msg.size()),
-      "In XrootReadFile::XrootReadFile failed EVP_SignUpdate");
-    // Sign the hash. Note that we need to serialize this code
-    unsigned char sig_buf[16384];
-    unsigned int sig_len = sizeof(sig_buf);
-    castor::tape::server::exception::OpenSSL::throwOnZero(
-      EVP_SignFinal(&mdCtx, sig_buf, &sig_len, privateKey),
-      "In XrootReadFile::XrootReadFile failed EVP_SignFinal()");
-    // We could cleanup the context now, but it's simpler to do it after the 
-    // try block.
-    
-    // Encode the signature in base 64
-    b64 = BIO_new(BIO_f_base64());
-    bmem = BIO_new(BIO_s_mem());
-    castor::tape::server::exception::OpenSSL::throwOnZero(
-      b64 || bmem,
-      "In XrootReadFile::XrootReadFile failed BIO_new()");
-    b64 = BIO_push(b64,bmem);
-    BIO_write(b64, sig_buf, sig_len);
-    (void)BIO_flush(b64);
-    // The signature is expected to be less than 200 bytes so we should get it in 1 pass
-    //char buff[200];
-    //int len=BIO_read(bmem,buff, sizeof(buff));
-    //while (len > 0) {
-    //  signature.append(buff, len);
-    //  len=BIO_read(b64,buff, sizeof(buff));
-    //}
-    BUF_MEM* bptr;
-    BIO_get_mem_ptr(b64, &bptr);
-    signature.append(bptr->data,bptr->length);
-  } catch (...) {
-    EVP_MD_CTX_cleanup(&mdCtx);
-    BIO_free(bmem);
-    BIO_free(b64);
-    throw;
-  }
-  EVP_MD_CTX_cleanup(&mdCtx);
-  BIO_free(bmem);
-  BIO_free(b64);
-
-  // Remove the newlines in the signature (it's truncated in lines)
-  signature.erase(std::remove(signature.begin(), signature.end(), '\n'), signature.end());
-
-  return signature;
 }
 
 //==============================================================================

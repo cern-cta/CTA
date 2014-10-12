@@ -4,8 +4,6 @@ add_library(File
   File.cpp
   DiskFile.cpp
   Structures.cpp
-  OpenSSLLocker.cpp
-  ../exception/XrootCl.cpp
-  ../exception/OpenSSL.cpp)
+  ../exception/XrootCl.cpp)
 target_link_libraries (File castorrfio XrdCl cryptopp)
 

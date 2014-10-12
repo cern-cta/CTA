@@ -26,7 +26,6 @@
 #include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
-#include <openssl/pem.h>
 
 
 namespace unitTests {
@@ -121,7 +120,7 @@ namespace unitTests {
     
     // Run the threads
     std::vector<CryptoPPThread> m_threads;
-    m_threads.resize(10);
+    m_threads.resize(3);
     for (std::vector<CryptoPPThread>::iterator i=m_threads.begin(); 
         i!=m_threads.end(); i++) {
       i->setKey(privateKey);
@@ -133,19 +132,12 @@ namespace unitTests {
   }
   
   TEST(castor_CryptoPP, agreesWithOpenSSL) {
-    // Import the key for Open SSL
-    BIO * BIObuf = BIO_new(BIO_s_mem());
-    BIO_write(BIObuf, somePrivateKey.c_str(), somePrivateKey.size());
-    EVP_PKEY * OSSLKey;
-    OSSLKey = PEM_read_bio_PrivateKey(BIObuf, NULL, NULL, NULL);
-    BIO_free(BIObuf);
-    // We need one reference locker per thread for proper cleanup
-    std::auto_ptr<castor::tape::diskFile::OpenSSLLockerRef> lockerRef(
-      castor::tape::diskFile::OpenSSLLockerRefFactory());
     // Import the key for CryptoPP
     PEMKeyString CryptoPPKey(somePrivateKey);
     std::string msg("Any random message will do!");
-    std::string osslSign(castor::tape::diskFile::OpenSSLSigner::sign(msg,OSSLKey));
+    // This is the output of:
+    // echo -n 'Any random message will do!' | openssl dgst -sha1 -sign  ~/testRSAPrivate.pem | openssl enc -base64 | tr -d '\n' ; echo
+    std::string osslSign("bfqLxACTFS7fMKH5ewNUOaglRlIGCEPWGhx4fRPErFGHtuCi2yWlYFsXIfjBxOT+yCyKRpTnZWGJTbcP72eT7os2qCqIOejAM3nTcsChHN5f3UyADvsi1f7C3DqhYVKVFQPaBdb3zm8IBHsFjmu2EzVE5juc1C9L+ztVmoABptw=");
     std::string CryptoPPSign(castor::tape::diskFile::CryptoPPSigner::sign(msg,CryptoPPKey));
     std::cout << CryptoPPSign << std::endl;
     ASSERT_EQ(osslSign,CryptoPPSign);
@@ -162,6 +154,5 @@ namespace unitTests {
       castor::tape::diskFile::CryptoPPSigner::sign("MtvFsd09F8UQNpwsULF6eMyVkRDIU+uAvBXyJs/LoNM5HrjoJgZrig==",CryptoPPKey));
     ASSERT_EQ("EzSR5Fd1kfmdrVhCiYgoWQ7E1MSdv8OYng3L7LepCfS9OStlEFTkJcMezt4VRqUZnarlcIZ0yPAvrmOUscjrAOAbqA0rMYKsvHnAwd19RaH54QZhtRCDwMloxpuLmUC1cmyJ/PAdRoMYCoHiMVr7yQw0CnVJ5168MUe5o0v3swY=",
       castor::tape::diskFile::CryptoPPSigner::sign("v3lPb49U+Zz+DNdzoTf2R8AU+AFP+/9/7nLlJV1+HNf3Z+Nzl/HuiQ==",CryptoPPKey));
-    EVP_PKEY_free(OSSLKey);
   }
 }
