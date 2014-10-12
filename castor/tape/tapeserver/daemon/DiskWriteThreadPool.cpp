@@ -36,10 +36,9 @@ namespace daemon {
 //------------------------------------------------------------------------------
 DiskWriteThreadPool::DiskWriteThreadPool(int nbThread,
   RecallReportPacker& report,castor::log::LogContext lc,
-  const std::string & remoteFileProtocol):
-  m_diskFileFactory(remoteFileProtocol,
-    castor::common::CastorConfiguration::getConfig().
-      getConfEntString("XROOT", "PrivateKey", "/opt/xrootd/keys/key.pem")),
+  const std::string & remoteFileProtocol,
+  const std::string & xrootPrivateKeyPath):
+  m_diskFileFactory(remoteFileProtocol,xrootPrivateKeyPath),
   m_reporter(report),m_lc(lc)
 {
   m_lc.pushOrReplace(castor::log::Param("threadCount", nbThread));

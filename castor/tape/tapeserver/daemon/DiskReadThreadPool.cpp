@@ -37,10 +37,9 @@ namespace daemon {
 // DiskReadThreadPool constructor
 //------------------------------------------------------------------------------
 DiskReadThreadPool::DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq, 
-    castor::log::LogContext lc, const std::string & remoteFileProtocol) : 
-    m_diskFileFactory(remoteFileProtocol,
-      castor::common::CastorConfiguration::getConfig().
-        getConfEntString("XROOT", "PrivateKey", "/opt/xrootd/keys/key.pem")),
+    castor::log::LogContext lc, const std::string & remoteFileProtocol,
+    const std::string & xrootPrivateKeyPath) : 
+    m_diskFileFactory(remoteFileProtocol, xrootPrivateKeyPath),
     m_lc(lc),m_maxFilesReq(maxFilesReq),
     m_maxBytesReq(maxBytesReq), m_nbActiveThread(0) {
   for(int i=0; i<nbThread; i++) {

@@ -37,6 +37,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/common/CastorConfiguration.hpp"
 #include "h/log.h"
 #include "h/serrno.h"
 #include "h/stager_client_commandline.h"
@@ -202,7 +203,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     DiskWriteThreadPool dwtp(m_castorConf.tapeserverdDiskThreads,
         rrp,
         lc,
-        m_castorConf.tapeserverdRemoteFileProtocol);
+        m_castorConf.tapeserverdRemoteFileProtocol,
+        castor::common::CastorConfiguration::getConfig().
+          getConfEntString("XROOT", "PrivateKey", "/opt/xrootd/keys/key.pem"));
     RecallTaskInjector rti(mm, trst, dwtp, m_clientProxy,
             m_castorConf.tapebridgeBulkRequestRecallMaxFiles,
             m_castorConf.tapebridgeBulkRequestRecallMaxBytes,lc);
@@ -293,7 +296,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
         m_castorConf.tapebridgeBulkRequestMigrationMaxBytes,
         lc,
-        m_castorConf.tapeserverdRemoteFileProtocol);
+        m_castorConf.tapeserverdRemoteFileProtocol,
+        castor::common::CastorConfiguration::getConfig().
+          getConfEntString("XROOT", "PrivateKey", "/opt/xrootd/keys/key.pem"));
     MigrationTaskInjector mti(mm, drtp, twst, m_clientProxy, 
             m_castorConf.tapebridgeBulkRequestMigrationMaxBytes,
             m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,lc);

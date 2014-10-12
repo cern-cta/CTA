@@ -50,7 +50,8 @@ public:
    * @param lc log context fpr logging purpose
    */
   DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq, 
-          castor::log::LogContext lc, const std::string & remoteFileProtocol);
+          castor::log::LogContext lc, const std::string & remoteFileProtocol,
+          const std::string & xrootPrivateKeyPath);
   
   /**
    * Destructor.

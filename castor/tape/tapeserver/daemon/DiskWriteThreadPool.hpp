@@ -55,11 +55,17 @@ public:
    * @param lc reference to a log context object that will be copied at
    * construction time (and then copied further for each thread). There will
    * be no side effect on the caller's logs.
+   * @param remoteFileProtocol a string describing how the bare (no URL)
+   * pathes to files should be interpreted. Default is RFIO, unless the string
+   * is "xroot" (with any case variation) in which case we would use Xroot as a
+   * protocol.
+   * @param xrootPrivateKeyPath the path to the xroot private key file.
    */
   DiskWriteThreadPool(int nbThread, 
           RecallReportPacker& reportPacker,
           castor::log::LogContext lc,
-          const std::string & remoteFileProtocol);
+          const std::string & remoteFileProtocol,
+          const std::string & xrootPrivateKeyPath);
   /**
    * Destructor: we suppose the threads are no running (waitThreads() should
    * be called befor destruction unless the threads were not started.
