@@ -63,15 +63,6 @@ debian/castor/usr/share/man/man3/Cns_symlink.3castor.gz
 debian/castor/usr/share/man/man3/Csec_api.3castor.gz
 debian/castor/usr/share/man/man3/Cpool.3castor.gz
 debian/castor/usr/share/man/man3/Cpwd.3castor.gz
-debian/castor/usr/share/man/man3/Ctape_dmpfil.3castor.gz
-debian/castor/usr/share/man/man3/Ctape_info.3castor.gz
-debian/castor/usr/share/man/man3/Ctape_kill.3castor.gz
-debian/castor/usr/share/man/man3/Ctape_label.3castor.gz
-debian/castor/usr/share/man/man3/Ctape_mount.3castor.gz
-debian/castor/usr/share/man/man3/Ctape_position.3castor.gz
-debian/castor/usr/share/man/man3/Ctape_reserve.3castor.gz
-debian/castor/usr/share/man/man3/Ctape_rls.3castor.gz
-debian/castor/usr/share/man/man3/Ctape_status.3castor.gz
 debian/castor/usr/share/man/man3/Cthread.3castor.gz
 debian/castor/usr/share/man/man3/Cupv_add.3castor.gz
 debian/castor/usr/share/man/man3/Cupv_check.3castor.gz
@@ -86,12 +77,10 @@ debian/castor/usr/share/man/man3/dlf_shutdown.3castor.gz
 debian/castor/usr/share/man/man3/dlf_isinitialized.3castor.gz
 debian/castor/usr/share/man/man3/getacct.3castor.gz
 debian/castor/usr/share/man/man3/getacctent.3castor.gz
-debian/castor/usr/share/man/man3/getcompstat.3castor.gz
 debian/castor/usr/share/man/man3/getconfent.3castor.gz
 debian/castor/usr/share/man/man3/log.3castor.gz
 debian/castor/usr/share/man/man3/netread.3castor.gz
 debian/castor/usr/share/man/man3/netwrite.3castor.gz
-debian/castor/usr/share/man/man3/readlbl.3castor.gz
 debian/castor/usr/share/man/man3/rfio_access.3castor.gz
 debian/castor/usr/share/man/man3/rfio_chmod.3castor.gz
 debian/castor/usr/share/man/man3/rfio_chown.3castor.gz
@@ -153,10 +142,7 @@ debian/castor/usr/share/man/man3/rmc_import.3castor.gz
 debian/castor/usr/share/man/man3/rmc_mount.3castor.gz
 debian/castor/usr/share/man/man3/rmc_read_elem_status.3castor.gz
 debian/castor/usr/share/man/man3/rmc_seterrbuf.3castor.gz
-debian/castor/usr/share/man/man3/rwndtape.3castor.gz
 debian/castor/usr/share/man/man3/serrno.3castor.gz
-debian/castor/usr/share/man/man3/skiptape.3castor.gz
-debian/castor/usr/share/man/man3/usrlbl.3castor.gz
 debian/castor/usr/share/man/man3/vdqm_Connect.3castor.gz
 debian/castor/usr/share/man/man3/vdqm_DelDrive.3castor.gz
 debian/castor/usr/share/man/man3/vdqm_DelVolumeReq.3castor.gz
@@ -203,5 +189,4 @@ debian/castor/usr/share/man/man3/vmgr_seterrbuf.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_settag.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_tpmounted.3castor.gz
 debian/castor/usr/share/man/man3/vmgr_updatetape.3castor.gz
-debian/castor/usr/share/man/man3/wrttpmrk.3castor.gz
 debian/castor/usr/share/man/man4/Castor_limits.4castor.gz
