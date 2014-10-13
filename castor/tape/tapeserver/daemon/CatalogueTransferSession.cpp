@@ -102,8 +102,13 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::tick() {
   const time_t now = time(0);
   const time_t secsSinceSomeBlocksWereMoved = now -
     m_lastTimeSomeBlocksWereMoved;
+  const bool timeOutExceeded = secsSinceSomeBlocksWereMoved >
+    m_blockMoveTimeoutInSecs;
 
-  if(secsSinceSomeBlocksWereMoved > m_blockMoveTimeoutInSecs) {
+  // Only execute watchdog logic when the tape has been mounted and the
+  // session is running, because it is not fair to apply the watchdog logic
+  // whilst a tape is being mounted
+  if(TRANSFERSTATE_RUNNING == m_state && timeOutExceeded) {
     std::list<log::Param> params;
     params.push_back(log::Param("transferSessionPid", m_pid));
     params.push_back(log::Param("secsSinceSomeBlocksWereMoved",
@@ -397,6 +402,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
     throw ex;
   }
 
+  m_lastTimeSomeBlocksWereMoved = time(0); // Start watchdog timer
   m_state = TRANSFERSTATE_RUNNING;
 }
 
@@ -432,6 +438,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
     throw ex;
   }
 
+  m_lastTimeSomeBlocksWereMoved = time(0); // Start watchdog timer
   m_state = TRANSFERSTATE_RUNNING;
 }
 
