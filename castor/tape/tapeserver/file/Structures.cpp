@@ -33,7 +33,7 @@ void tapeFile::VOL1::fill(std::string VSN) {
   setString(m_label, "VOL1");
   setString(m_VSN, VSN);
   setString(m_lblStandard, "3");
-  setString(m_ownerID, "CASTOR"); /* TODO: check do we need CASTOR's STAGERSUPERUSER */
+  setString(m_ownerID, "CASTOR"); 
 }
 
 void tapeFile::VOL1::verify() {
@@ -47,10 +47,6 @@ void tapeFile::VOL1::verify() {
     throw castor::exception::Exception(
           std::string("Failed verify for the label standard: ") +
           tapeFile::toString(m_lblStandard));
-  if (cmpString(m_ownerID, "CASTOR") && cmpString(m_ownerID, "stage"))
-    throw castor::exception::Exception(
-          std::string("Failed verify for the ownerID: ") +
-          tapeFile::toString(m_ownerID));
 
   /* now we verify all other fields which must be spaces */
   if (cmpString(m_accessibility, ""))
