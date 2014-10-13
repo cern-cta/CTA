@@ -65,11 +65,11 @@ namespace castor {
         Regex m_URLCephFile;
         std::string m_remoteFileProtocol;
         std::string m_xrootPrivateKeyFile;
-        CryptoPP::RSA::PrivateKey m_xrootCryptoPPPrivateKey;
-        bool m_xrootCryptoPPPrivateKeyLoaded;
+        CryptoPP::RSA::PrivateKey m_xrootPrivateKey;
+        bool m_xrootPrivateKeyLoaded;
         
         /** Return the private key. Read it from the file if necessary. */ 
-        const CryptoPP::RSA::PrivateKey & xrootCryptoPPPrivateKey();
+        const CryptoPP::RSA::PrivateKey & xrootPrivateKey();
       };
       
       class ReadFile {

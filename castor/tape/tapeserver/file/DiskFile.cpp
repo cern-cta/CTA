@@ -43,22 +43,22 @@ DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
   const std::string & xrootPrivateKeyFile):
   m_NoURLLocalFile("^(localhost:|)(/.*)$"),
   m_NoURLRemoteFile("^(.*:)(/.*)$"),
-  m_NoURLRadosStriperFile("^localhost:([^/].*)$"),
+  m_NoURLRadosStriperFile("^localhost:([^/]+)/(.*)$"),
   m_URLLocalFile("^file://(.*)$"),
   m_URLRfioFile("^rfio://(.*)$"),
   m_URLXrootFile("^(root://.*)$"),
   m_URLCephFile("^radosStriper://(.*)$"),
   m_remoteFileProtocol(remoteFileProtocol),
   m_xrootPrivateKeyFile(xrootPrivateKeyFile),
-  m_xrootCryptoPPPrivateKeyLoaded(false)
+  m_xrootPrivateKeyLoaded(false)
 {
   // Lowercase the protocol string
   std::transform(m_remoteFileProtocol.begin(), m_remoteFileProtocol.end(),
     m_remoteFileProtocol.begin(), ::tolower);
 }
 
-const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootCryptoPPPrivateKey() {
-  if(!m_xrootCryptoPPPrivateKeyLoaded) {
+const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootPrivateKey() {
+  if(!m_xrootPrivateKeyLoaded) {
     // The loading of a PEM-style key is described in 
     // http://www.cryptopp.com/wiki/Keys_and_Formats#PEM_Encoded_Keys
     std::string key;
@@ -95,7 +95,7 @@ const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootCryptoPPPrivateKey() {
     decoder.Put((const byte*)keystr.data(), keystr.length());
     decoder.MessageEnd();
 
-    m_xrootCryptoPPPrivateKey.BERDecodePrivateKey(queue, false /*paramsPresent*/, queue.MaxRetrievable());
+    m_xrootPrivateKey.BERDecodePrivateKey(queue, false /*paramsPresent*/, queue.MaxRetrievable());
     
     // BERDecodePrivateKey is a void function. Here's the only check
     // we have regarding the DER bytes consumed.
@@ -104,14 +104,14 @@ const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootCryptoPPPrivateKey() {
         "In DiskFileFactory::xrootCryptoPPPrivateKey, garbage at end of key");
     
     CryptoPP::AutoSeededRandomPool prng;
-    bool valid = m_xrootCryptoPPPrivateKey.Validate(prng, 3);
+    bool valid = m_xrootPrivateKey.Validate(prng, 3);
     if(!valid)
       throw castor::exception::Exception(
         "In DiskFileFactory::xrootCryptoPPPrivateKey, RSA private key is not valid");
 
-    m_xrootCryptoPPPrivateKeyLoaded = true;
+    m_xrootPrivateKeyLoaded = true;
   }
-  return m_xrootCryptoPPPrivateKey;
+  return m_xrootPrivateKey;
 }
 
 ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
@@ -130,7 +130,7 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   // Xroot URL?
   regexResult = m_URLXrootFile.exec(path);
   if (regexResult.size()) {
-    return new XrootReadFile(regexResult[1],xrootCryptoPPPrivateKey());
+    return new XrootReadFile(regexResult[1]);
   }
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);
@@ -148,8 +148,8 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   if (regexResult.size()) {
     if (m_remoteFileProtocol == "xroot") {
       // In the current CASTOR implementation, the xrootd port is hard coded to 1095
-      return new XrootReadFile(std::string("root://") + regexResult[1] + "1095/" 
-        + regexResult[2],xrootCryptoPPPrivateKey());
+      return new XrootC2FSReadFile(std::string("root://") + regexResult[1] + "1095/" 
+        + regexResult[2],xrootPrivateKey());
     } else {
       return new RfioReadFile(regexResult[1]+regexResult[2]);
     }
@@ -157,7 +157,9 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   // Do we have a radosStriper file?
   regexResult = m_NoURLRadosStriperFile.exec(path);
   if (regexResult.size()) {
-    return new RadosStriperReadFile(regexResult[1]);
+    return new XrootC2FSReadFile(
+      std::string("root://localhost:1095/")+regexResult[1]+"/"+regexResult[2],xrootPrivateKey(),
+        regexResult[1]);
   }
   throw castor::exception::Exception(
       std::string("In DiskFileFactory::createReadFile failed to parse URL: ")+path);
@@ -179,7 +181,7 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   // Xroot URL?
   regexResult = m_URLXrootFile.exec(path);
   if (regexResult.size()) {
-    return new XrootWriteFile(regexResult[1],xrootCryptoPPPrivateKey());
+    return new XrootWriteFile(regexResult[1]);
   }
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);
@@ -197,16 +199,18 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   if (regexResult.size()) {
     if (m_remoteFileProtocol == "xroot") {
       // In the current CASTOR implementation, the xrootd port is hard coded to 1095
-      return new XrootWriteFile(std::string("root://") + regexResult[1] + "1095/" 
-        + regexResult[2],xrootCryptoPPPrivateKey());
+      return new XrootC2FSWriteFile(std::string("root://") + regexResult[1] + "1095/" 
+        + regexResult[2],xrootPrivateKey());
     } else {
-      return new XrootWriteFile(regexResult[1]+regexResult[2],xrootCryptoPPPrivateKey());
+      return new XrootC2FSWriteFile(regexResult[1]+regexResult[2],xrootPrivateKey());
     }
   }
   // Do we have a radosStriper file?
   regexResult = m_NoURLRadosStriperFile.exec(path);
   if (regexResult.size()) {
-    return new RadosStriperWriteFile(regexResult[0]);
+    return new XrootC2FSWriteFile(
+      std::string("root://localhost:1095/")+regexResult[1]+"/"+regexResult[2],xrootPrivateKey(),
+        regexResult[1]);
   }
   throw castor::exception::Exception(
       std::string("In DiskFileFactory::createWriteFile failed to parse URL: ")+path);
@@ -369,14 +373,18 @@ std::string CryptoPPSigner::sign(const std::string msg,
 //==============================================================================
 // XROOT READ FILE
 //==============================================================================  
-XrootReadFile::XrootReadFile(const std::string &url,
-  const CryptoPP::RSA::PrivateKey & xrootPrivateKey):
-m_readPosition(0){
-  using XrdCl::OpenFlags;
+XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
+  const CryptoPP::RSA::PrivateKey & xrootPrivateKey,
+  const std::string & pool) {
+  // Setup parent's members
+  m_readPosition = 0;
   m_URL = url;
+  // And start opening
+  using XrdCl::OpenFlags;
   m_signedURL = m_URL;
   // Turn the bare URL into a Castor URL, by adding opaque tags:
   // ?castor2fs.pfn1=/srv/castor/...  (duplication of the path in practice)
+  // ?castor2fs.pool=xxx optional ceph pool
   // ?castor2fs.exptime=(unix time)
   // ?castor2fs.signature=
   //Find the path part of the url. It is the first occurence of "//"
@@ -385,12 +393,12 @@ m_readPosition(0){
   size_t schemePos = url.find(scheme);
   if (std::string::npos == schemePos) 
     throw castor::exception::Exception(
-      std::string("In XrootReadFile::XrootReadFile could not find the scheme[x]root:// in URL "+
+      std::string("In XrootC2FSReadFile::XrootC2FSReadFile could not find the scheme[x]root:// in URL "+
         url));
-  size_t pathPos = url.find("//", schemePos + scheme.size());
+  size_t pathPos = url.find("/", schemePos + scheme.size());
   if (std::string::npos == pathPos) 
     throw castor::exception::Exception(
-      std::string("In XrootReadFile::XrootReadFile could not path in URL "+
+      std::string("In XrootC2FSReadFile::XrootC2FSReadFile could not path in URL "+
         url));
   std::string path = url.substr(pathPos + 1);
   // Build signature block
@@ -403,17 +411,29 @@ m_readPosition(0){
 
   std::stringstream opaqueBloc;
   opaqueBloc << "?castor2fs.pfn1=" << path;
+  if (pool.size())
+    opaqueBloc << "&castor2fs.pool=" << pool;
   opaqueBloc << "&castor2fs.exptime=" << expTime;
   opaqueBloc << "&castor2fs.signature=" << signature;
   m_signedURL = m_URL + opaqueBloc.str();
   
   // ... and finally open the file
   XrootClEx::throwOnError(m_xrootFile.Open(m_signedURL, OpenFlags::Read),
-    std::string("In XrootReadFile::XrootReadFile failed XrdCl::File::Open() on ")
+    std::string("In XrootC2FSReadFile::XrootC2FSReadFile failed XrdCl::File::Open() on ")
     +m_URL+" opaqueBlock="+opaqueBloc.str());
 }
 
-size_t XrootReadFile::read(void *data, const size_t size) const {
+XrootReadFile::XrootReadFile(const std::string &xrootUrl) {
+  // Setup parent's variables
+  m_readPosition = 0;
+  m_URL = xrootUrl;
+  // and simply open
+  using XrdCl::OpenFlags;
+  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Read),
+    std::string("In XrootC2FSReadFile::XrootC2FSReadFile failed XrdCl::File::Open() on ")+m_URL);
+}
+
+size_t XrootBaseReadFile::read(void *data, const size_t size) const {
   uint32_t ret;
   XrootClEx::throwOnError(m_xrootFile.Read(m_readPosition, size, data, ret),
     std::string("In XrootReadFile::read failed XrdCl::File::Read() on ")+m_URL);
@@ -421,7 +441,7 @@ size_t XrootReadFile::read(void *data, const size_t size) const {
   return ret;
 }
 
-size_t XrootReadFile::size() const {
+size_t XrootBaseReadFile::size() const {
   const bool forceStat=true;
   XrdCl::StatInfo *statInfo(NULL);
   size_t ret;
@@ -432,7 +452,7 @@ size_t XrootReadFile::size() const {
   return ret;
 }
 
-XrootReadFile::~XrootReadFile() throw() {
+XrootBaseReadFile::~XrootBaseReadFile() throw() {
   try{
     m_xrootFile.Close();
   } catch (...) {}
@@ -441,14 +461,19 @@ XrootReadFile::~XrootReadFile() throw() {
 //==============================================================================
 // XROOT WRITE FILE
 //============================================================================== 
-XrootWriteFile::XrootWriteFile(const std::string &url,
-  const CryptoPP::RSA::PrivateKey & xrootPrivateKey):
-m_writePosition(0),m_closeTried(false){
+XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
+  const CryptoPP::RSA::PrivateKey & xrootPrivateKey,
+  const std::string & pool){
+  // Setup parent's members
+  m_writePosition = 0;
+  m_closeTried = false;
+  // and start opening
   using XrdCl::OpenFlags;
   m_URL=url;
   m_signedURL = m_URL;
   // Turn the bare URL into a Castor URL, by adding opaque tags:
   // ?castor2fs.pfn1=/srv/castor/...  (duplication of the path in practice)
+  // ?castor2fs.pool=xxx optional ceph pool
   // ?castor2fs.exptime=(unix time)
   // ?castor2fs.signature=
   //Find the path part of the url. It is the first occurence of "//"
@@ -457,12 +482,12 @@ m_writePosition(0),m_closeTried(false){
   size_t schemePos = url.find(scheme);
   if (std::string::npos == schemePos) 
     throw castor::exception::Exception(
-      std::string("In XrootReadFile::XrootReadFile could not find the scheme[x]root:// in URL "+
+      std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile could not find the scheme[x]root:// in URL "+
         url));
   size_t pathPos = url.find("//", schemePos + scheme.size());
   if (std::string::npos == pathPos) 
     throw castor::exception::Exception(
-      std::string("In XrootReadFile::XrootReadFile could not path in URL "+
+      std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile could not path in URL "+
         url));
   std::string path = url.substr(pathPos + 1);
   // Build signature block
@@ -475,24 +500,37 @@ m_writePosition(0),m_closeTried(false){
 
   std::stringstream opaqueBloc;
   opaqueBloc << "?castor2fs.pfn1=" << path;
+  if (pool.size())
+    opaqueBloc << "&castor2fs.pool=" << pool;
   opaqueBloc << "&castor2fs.exptime=" << expTime;
   opaqueBloc << "&castor2fs.signature=" << signature;
   m_signedURL = m_URL + opaqueBloc.str();
   
   XrootClEx::throwOnError(m_xrootFile.Open(m_signedURL, OpenFlags::Delete),
-    std::string("In XrootWriteFile::XrootWriteFile failed XrdCl::File::Open() on ")
+    std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile failed XrdCl::File::Open() on ")
     +m_URL);
 
 }
 
-void XrootWriteFile::write(const void *data, const size_t size)  {
+XrootWriteFile::XrootWriteFile(const std::string& xrootUrl) {
+  // Setup parent's variables
+  m_writePosition = 0;
+  m_URL = xrootUrl;
+  // and simply open
+  using XrdCl::OpenFlags;
+  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Delete),
+    std::string("In XrootWriteFile::XrootWriteFile failed XrdCl::File::Open() on ")+m_URL);
+
+}
+
+void XrootBaseWriteFile::write(const void *data, const size_t size)  {
   XrootClEx::throwOnError(m_xrootFile.Write(m_writePosition, size, data),
     std::string("In XrootWriteFile::write failed XrdCl::File::Write() on ")
     +m_URL);
   m_writePosition += size;
 }
 
-void XrootWriteFile::close()  {
+void XrootBaseWriteFile::close()  {
   // Multiple close protection
   if (m_closeTried) return;
   m_closeTried=true;
@@ -500,7 +538,7 @@ void XrootWriteFile::close()  {
     std::string("In XrootWriteFile::close failed XrdCl::File::Stat() on ")+m_URL);
 }
 
-XrootWriteFile::~XrootWriteFile() throw() {
+XrootBaseWriteFile::~XrootBaseWriteFile() throw() {
   if(!m_closeTried){
     m_xrootFile.Close();
   }

@@ -40,6 +40,9 @@ namespace castor {
      * Namespace managing the reading and writing of files to and from disk.
      */
     namespace diskFile {
+      //==============================================================================
+      // LOCAL FILES
+      //==============================================================================
       class LocalReadFile: public ReadFile {
       public:
         LocalReadFile(const std::string &path);
@@ -49,7 +52,7 @@ namespace castor {
       private:
         int m_fd;
       };
-      
+     
       class LocalWriteFile: public WriteFile {
       public:
         LocalWriteFile(const std::string &path);
@@ -61,6 +64,9 @@ namespace castor {
         bool m_closeTried;
       };
       
+      //==============================================================================
+      // RFIO FILES
+      //==============================================================================  
       class RfioReadFile: public ReadFile {
       public:
         RfioReadFile(const std::string &rfioUrl);
@@ -70,7 +76,7 @@ namespace castor {
       private:
         int m_fd;
       };
-      
+
       class RfioWriteFile: public WriteFile {
       public:
         RfioWriteFile(const std::string &rfioUrl);
@@ -82,42 +88,79 @@ namespace castor {
         bool m_closeTried;
       };
       
+      //==============================================================================
+      // CRYPTOPP SIGNER
+      //==============================================================================
       struct CryptoPPSigner {
         static std::string sign(const std::string msg, 
           const CryptoPP::RSA::PrivateKey  & privateKey);
         static castor::server::Mutex s_mutex;
       };
       
-      class XrootReadFile: public ReadFile {
+      //==============================================================================
+      // XROOT FILES
+      //==============================================================================  
+      class XrootBaseReadFile: public ReadFile {
       public:
-        XrootReadFile(const std::string &xrootUrl,
-          const CryptoPP::RSA::PrivateKey & privateKey);
         virtual size_t size() const;
         virtual size_t read(void *data, const size_t size) const;
-        virtual ~XrootReadFile() throw();
-      private:
+        virtual ~XrootBaseReadFile() throw();
+      protected:
+        // Access to parent's protected member...
+        void setURL(const std::string & v) { m_URL = v; }
         // There is no const-correctness with XrdCl...
         mutable XrdCl::File m_xrootFile;
         mutable uint64_t m_readPosition;
         typedef castor::tape::server::exception::XrootCl XrootClEx;
+      };
+      
+      class XrootReadFile: public XrootBaseReadFile {
+      public:
+        XrootReadFile(const std::string &xrootUrl);
+      };
+      
+      class XrootC2FSReadFile: public XrootBaseReadFile {
+      public:
+        XrootC2FSReadFile(const std::string &xrootUrl,
+          const CryptoPP::RSA::PrivateKey & privateKey,
+          const std::string & cephPool = "");
+        virtual ~XrootC2FSReadFile() throw () {}
+      private:
         std::string m_signedURL;
       };
       
-      class XrootWriteFile: public WriteFile {
+      class XrootBaseWriteFile: public WriteFile {
       public:
-        XrootWriteFile(const std::string &xrootUrl,
-          const CryptoPP::RSA::PrivateKey & privateKey);
         virtual void write(const void *data, const size_t size);
         virtual void close();
-        virtual ~XrootWriteFile() throw();
-      private:
+        virtual ~XrootBaseWriteFile() throw();        
+      protected:
+        // Access to parent's protected member...
+        void setURL(const std::string & v) { m_URL = v; }
         XrdCl::File m_xrootFile;
         uint64_t m_writePosition;
         typedef castor::tape::server::exception::XrootCl XrootClEx;
-        bool m_closeTried;
+        bool m_closeTried;      
+      };
+      
+      class XrootWriteFile: public XrootBaseWriteFile {
+      public:
+        XrootWriteFile(const std::string &xrootUrl);
+      };
+      
+      class XrootC2FSWriteFile: public XrootBaseWriteFile {
+      public:
+        XrootC2FSWriteFile(const std::string &xrootUrl,
+          const CryptoPP::RSA::PrivateKey & privateKey,
+          const std::string & cephPool = "");
+        virtual ~XrootC2FSWriteFile() throw () {}
+      private:
         std::string m_signedURL;
       };
       
+      //==============================================================================
+      // RADOS STRIPER FILES
+      //==============================================================================
       class RadosStriperReadFile: public ReadFile {
       public:
         RadosStriperReadFile(const std::string &xrootUrl);
