@@ -309,7 +309,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   } else {
     closeCmdReceiverSocket();
 
-    castor::utils::setProcessNameAndCmdLine(m_argv0, "tpcleaner");
+    castor::utils::setProcessNameAndCmdLine(m_argv0, "cleaner");
 
     try {
       exit(runCleanerSession(rqst));
@@ -363,7 +363,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   } else {
     closeCmdReceiverSocket();
 
-    castor::utils::setProcessNameAndCmdLine(m_argv0, "tptransfer");
+    castor::utils::setProcessNameAndCmdLine(m_argv0, "transfer");
 
     try {
       exit(runDataTransferSession(rqst));
@@ -418,7 +418,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   } else {
     closeCmdReceiverSocket();
 
-    castor::utils::setProcessNameAndCmdLine(m_argv0, "tplabel");
+    castor::utils::setProcessNameAndCmdLine(m_argv0, "label");
 
     try {
       exit(runLabelSession(rqst));
