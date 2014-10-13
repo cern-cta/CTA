@@ -45,14 +45,10 @@ set (CASTOR_LEGACYMSG_LIB_SRC_FILES
   RmcProxyDummy.cpp
   RmcProxyTcpIp.cpp
   RmcUnmountMsgBody.cpp
-  RtcpDumpTapeRqstMsgBody.cpp
-  RtcpErrorAppendix.cpp
-  RtcpFileRqst.cpp
-  RtcpJobReplyMsgBody.cpp
   RtcpJobRqstMsgBody.cpp
+  RtcpJobReplyMsgBody.cpp
   RtcpMarshal.cpp
-  RtcpSegmentAttributes.cpp
-  RtcpTapeRqstMsgBody.cpp
+  RtcpErrorAppendix.cpp
   TapeBridgeMarshal.cpp
   TapeConfigRequestMsgBody.cpp
   TapeLabelRqstMsgBody.cpp

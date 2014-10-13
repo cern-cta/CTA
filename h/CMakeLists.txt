@@ -82,10 +82,6 @@ set(SHIFT_SUBHEADERS
   rfio_constants.h
   rfio_errno.h
   rfio_lcastorfdt.h
-  rtcp.h
-  rtcp_api.h
-  rtcp_constants.h
-  rtcp_server.h
   scsictl.h
   serrno.h
   stage_api.h
