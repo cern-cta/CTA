@@ -323,6 +323,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       // threads.
       mm.startThreads();
       drtp.startThreads();
+      mwd.startThread();
       twst.setWaitForInstructionsTime(timer.secs());
       twst.startThreads();
       mrp.startThreads();
@@ -333,6 +334,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       mti.waitThreads();
       mrp.waitThread();
       twst.waitThreads();
+      mwd.stopAndWaitThread();
       drtp.waitThreads();
       mm.waitThreads();
       tsr.waitThreads();
