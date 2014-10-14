@@ -32,15 +32,15 @@
 
 			/* Request types */
 
-#define	RMC_SCSI_GETGEOM  1 /* Get robot geometry */
-#define	RMC_SCSI_FINDCART 2 /* Find cartridge(s) */
-#define RMC_SCSI_READELEM 3 /* Read element status */
-#define	RMC_SCSI_MOUNT    4 /* Mount request */
-#define	RMC_SCSI_UNMOUNT  5 /* Unmount request */
-#define	RMC_SCSI_EXPORT   6 /* Export tape request */
-#define	RMC_SCSI_IMPORT   7 /* Import tape request */
-#define	RMC_ACS_MOUNT     8 /* ACS mount request */
-#define	RMC_ACS_UNMOUNT   9 /* ACS unmount request */
+#define	RMC_GETGEOM        1 /* Get robot geometry */
+#define	RMC_FINDCART       2 /* Find cartridge(s) */
+#define RMC_READELEM       3 /* Read element status */
+#define	RMC_MOUNT          4 /* Mount request */
+#define	RMC_UNMOUNT        5 /* Unmount request */
+#define	RMC_EXPORT         6 /* Export tape request */
+#define	RMC_IMPORT         7 /* Import tape request */
+#define	RMC_GENERICMOUNT   8 /* Generic (SCSI or ACS) mount request */
+#define	RMC_GENERICUNMOUNT 9 /* Generic (SCSI or ACS) mount request */
 
 			/* SCSI media changer server reply types */
 
