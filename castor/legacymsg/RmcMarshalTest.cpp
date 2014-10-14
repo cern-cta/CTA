@@ -40,64 +40,6 @@ protected:
   }
 };
 
-TEST_F(castor_legacymsg_RmcMarshalTest, marshalRmcAcsMntMsgBody) {
-  using namespace castor::legacymsg;
-  char buf[40]; // Expect message (header + body) to occupy exactly 40 bytes
-
-  // Marshal entire message (header + body)
-  {
-    RmcAcsMntMsgBody srcMsgBody;
-
-    srcMsgBody.uid = 1;
-    srcMsgBody.gid = 2;
-    srcMsgBody.acs = 3;
-    srcMsgBody.lsm = 4;
-    srcMsgBody.panel = 5;
-    srcMsgBody.transport = 6;
-    castor::utils::copyString(srcMsgBody.vid, "VID");
-
-    size_t bufLen = sizeof(buf);
-    size_t totalLen = 0; // Total length of message (header + body)
-
-    ASSERT_NO_THROW(totalLen = marshal(buf, bufLen, srcMsgBody));
-
-    ASSERT_EQ((size_t)40, totalLen);
-  }
-
-  // Unmarshall message header
-  {
-    MessageHeader dstHeader;
-    const char *bufPtr = buf;
-    size_t bufLen = 12; // Length of the message header
-    ASSERT_NO_THROW(unmarshal(bufPtr, bufLen, dstHeader));
-    ASSERT_EQ(buf + 12, bufPtr);
-    ASSERT_EQ((size_t)0, bufLen);
-
-    ASSERT_EQ((uint32_t)RMC_MAGIC, dstHeader.magic);
-    ASSERT_EQ((uint32_t)RMC_ACS_MOUNT, dstHeader.reqType);
-    ASSERT_EQ((uint32_t)28, dstHeader.lenOrStatus);
-  }
-
-  // Unmarshall message body
-  {
-    RmcAcsMntMsgBody dstMsgBody;
-
-    const char *bufPtr = buf + 12; // Point at beginning of message body
-    size_t bufLen = 28; // Length of the message body
-    ASSERT_NO_THROW(unmarshal(bufPtr, bufLen, dstMsgBody));
-    ASSERT_EQ(buf + 40, bufPtr);
-    ASSERT_EQ((size_t)0, bufLen);
-
-    ASSERT_EQ((uint32_t)1, dstMsgBody.uid);
-    ASSERT_EQ((uint32_t)2, dstMsgBody.gid);
-    ASSERT_EQ((uint32_t)3, dstMsgBody.acs);
-    ASSERT_EQ((uint32_t)4, dstMsgBody.lsm);
-    ASSERT_EQ((uint32_t)5, dstMsgBody.panel);
-    ASSERT_EQ((uint32_t)6, dstMsgBody.transport);
-    ASSERT_EQ(std::string("VID"), dstMsgBody.vid);
-  }
-}
-
 TEST_F(castor_legacymsg_RmcMarshalTest, marshalRmcMountMsgBody) {
   using namespace castor::legacymsg;
   char buf[29]; // Expect message (header + body) to occupy exactly 29 bytes
@@ -130,7 +72,7 @@ TEST_F(castor_legacymsg_RmcMarshalTest, marshalRmcMountMsgBody) {
     ASSERT_EQ((size_t)0, bufLen);
 
     ASSERT_EQ((uint32_t)RMC_MAGIC, dstHeader.magic);
-    ASSERT_EQ((uint32_t)RMC_SCSI_MOUNT, dstHeader.reqType);
+    ASSERT_EQ((uint32_t)RMC_MOUNT, dstHeader.reqType);
     ASSERT_EQ((uint32_t)29, dstHeader.lenOrStatus);
   }
 

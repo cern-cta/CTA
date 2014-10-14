@@ -32,110 +32,6 @@
 //-----------------------------------------------------------------------------
 // marshal
 //-----------------------------------------------------------------------------
-size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const RmcAcsMntMsgBody &src)  {
-  const char *task = "marshal RmcAcsMntMsgBody";
-
-  if(dst == NULL) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task <<
-      ": Pointer to destination buffer is NULL";
-    throw ex;
-  }
-
-  // Calculate the length of the message body
-  const uint32_t bodyLen =
-    sizeof(src.uid) +
-    sizeof(src.gid) +
-    sizeof(src.acs) +
-    sizeof(src.lsm) +
-    sizeof(src.panel) +
-    sizeof(src.transport) +
-    strlen(src.vid) + 1;
-
-  // Calculate the total length of the message (header + body)
-  const uint32_t totalLen =
-    sizeof(uint32_t) + // magic
-    sizeof(uint32_t) + // reqType
-    sizeof(uint32_t) + // len
-    bodyLen;
-
-  // Check that the message buffer is big enough
-  if(totalLen > dstLen) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task <<
-      ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
-    throw ex;
-  }
-
-  // Marshal message header
-  char *p = dst;
-  try {
-    const uint32_t magic = RMC_MAGIC;
-    const uint32_t reqType = RMC_ACS_MOUNT;
-    io::marshalUint32(magic , p);
-    io::marshalUint32(reqType, p);
-    io::marshalUint32(bodyLen, p);
-  } catch(castor::exception::Exception &ne) { 
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task << ": Failed to marshal header: "
-      << ne.getMessage().str();
-    throw ex;
-  }
-
-  // Marshal message body
-  try {
-    io::marshalUint32(src.uid, p);
-    io::marshalUint32(src.gid, p);
-    io::marshalUint32(src.acs, p);
-    io::marshalUint32(src.lsm, p);
-    io::marshalUint32(src.panel, p);
-    io::marshalUint32(src.transport, p);
-    io::marshalString(src.vid, p);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task << ": Failed to marshal body: "
-      << ne.getMessage().str();
-    throw ex;
-  }
-
-  // Calculate the number of bytes actually marshalled
-  const size_t nbBytesMarshalled = p - dst;
-
-  // Check that the number of bytes marshalled was what was expected
-  if(totalLen != nbBytesMarshalled) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task <<
-      ": Mismatch between expected total length and actual"
-      ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
-    throw ex;
-  }
-
-  return totalLen;
-}
-
-//-----------------------------------------------------------------------------
-// unmarshal
-//-----------------------------------------------------------------------------
-void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, RmcAcsMntMsgBody &dst)  {
-  try {
-    io::unmarshalUint32(src, srcLen, dst.uid);
-    io::unmarshalUint32(src, srcLen, dst.gid);
-    io::unmarshalUint32(src, srcLen, dst.acs);
-    io::unmarshalUint32(src, srcLen, dst.lsm);
-    io::unmarshalUint32(src, srcLen, dst.panel);
-    io::unmarshalUint32(src, srcLen, dst.transport);
-    io::unmarshalString(src, srcLen, dst.vid);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to unmarshal RmcAcsMntMsgBody: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//-----------------------------------------------------------------------------
-// marshal
-//-----------------------------------------------------------------------------
 size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const RmcMountMsgBody &src)  {
   const char *task = "marshal RmcMountMsgBody";
 
@@ -174,7 +70,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Rm
   char *p = dst;
   try {
     const uint32_t magic = RMC_MAGIC;
-    const uint32_t reqType = RMC_SCSI_MOUNT;
+    const uint32_t reqType = RMC_MOUNT;
     io::marshalUint32(magic , p);
     io::marshalUint32(reqType, p);
     io::marshalUint32(totalLen, p);
@@ -275,7 +171,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Rm
   char *p = dst;
   try {
     const uint32_t magic = RMC_MAGIC;
-    const uint32_t reqType = RMC_SCSI_UNMOUNT;
+    const uint32_t reqType = RMC_UNMOUNT;
     io::marshalUint32(magic , p);
     io::marshalUint32(reqType, p);
     io::marshalUint32(totalLen, p);

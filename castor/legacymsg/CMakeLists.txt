@@ -38,7 +38,6 @@ set (CASTOR_LEGACYMSG_LIB_SRC_FILES
   NsProxyFactory.cpp
   NsProxy_TapeAlwaysEmpty.cpp
   NsProxy_TapeAlwaysEmptyFactory.cpp
-  RmcAcsMntMsgBody.cpp
   RmcMarshal.cpp
   RmcMountMsgBody.cpp
   RmcProxy.cpp

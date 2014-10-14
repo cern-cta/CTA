@@ -360,7 +360,6 @@ rununittests: $(RMC_OBJECTS) \
   unittest_PendingMigrationsStoreTest.o \
   unittest_BulkRequestConfigParamsTest.o \
   unittest_IndexedContainerTest.o \
-  unittest_RmcLibTest.o \
   unittest_TapeFseqRangeListSequenceTest.o \
   unittest_TapeFseqRangeSequenceTest.o \
   unittest_TapeFseqRangeTest.o \
@@ -758,15 +757,6 @@ rmc_AcsCmd.o: $(ROOT_DIR)/castor/tape/rmc/AcsCmd.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rmc_DebugBuf.o: $(ROOT_DIR)/castor/tape/rmc/DebugBuf.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-rmc_find_char.o: $(ROOT_DIR)/rmc/rmc_find_char.c
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-rmc_get_acs_drive_id.o: $(ROOT_DIR)/rmc/rmc_get_acs_drive_id.c
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-rmc_get_rmc_host_of_drive.o: $(ROOT_DIR)/rmc/rmc_get_rmc_host_of_drive.c
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rmc_AcsDismountCmdLine.o: $(ROOT_DIR)/castor/tape/rmc/AcsDismountCmdLine.cpp
@@ -1661,12 +1651,6 @@ unittest_BulkRequestConfigParamsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/ta
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
 unittest_IndexedContainerTest.o: $(ROOT_DIR)/test/unittest/castor/tape/utils/IndexedContainerTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-unittest_RmcDaemonTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/RmcDaemonTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-unittest_RmcLibTest.o: $(ROOT_DIR)/test/unittest/rmc/RmcLibTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 unittest_TapeFseqRangeListSequenceTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tpcp/TapeFseqRangeListSequenceTest.cpp

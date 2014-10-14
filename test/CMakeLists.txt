@@ -47,26 +47,6 @@ set (STK_UNITTEST_SRC_FILES)
 if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   message(STATUS "Found all four STK libraries - adding STK related unit tests")
   set (STK_UNITTEST_SRC_FILES
-    ../castor/tape/rmc/AcceptHandler.cpp
-    ../castor/tape/rmc/Acs.cpp
-    ../castor/tape/rmc/AcsCmd.cpp
-    ../castor/tape/rmc/AcsDismountCmd.cpp
-    ../castor/tape/rmc/AcsDismountCmdLine.cpp
-    ../castor/tape/rmc/AcsDismountCmdLineTest.cpp
-    ../castor/tape/rmc/AcsDismountCmdTest.cpp
-    ../castor/tape/rmc/AcsMountCmd.cpp
-    ../castor/tape/rmc/AcsMountCmdLine.cpp
-    ../castor/tape/rmc/AcsMountCmdLineTest.cpp
-    ../castor/tape/rmc/AcsMountCmdTest.cpp
-    ../castor/tape/rmc/AcsQueryVolumeCmd.cpp
-    ../castor/tape/rmc/AcsQueryVolumeCmdLine.cpp
-    ../castor/tape/rmc/AcsQueryVolumeCmdLineTest.cpp
-    ../castor/tape/rmc/AcsQueryVolumeCmdTest.cpp
-    ../castor/tape/rmc/AcsTest.cpp
-    ../castor/tape/rmc/Cmd.cpp
-    ../castor/tape/rmc/ConnectionHandler.cpp
-    ../castor/tape/rmc/RmcDaemon.cpp
-    ../castor/tape/rmc/RmcDaemonTest.cpp
     ../castor/acs/AcsDaemon.cpp
     ../castor/acs/AcsDaemonTest.cpp
     ../castor/acs/AcsMessageHandler.cpp

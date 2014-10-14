@@ -31,16 +31,11 @@ if (${COMPILE_SERVER} STREQUAL "1")
     rmc_errmsg.c
     rmc_export.c
     rmc_find_cartridge.c
-    rmc_find_char.c
     rmc_get_geometry.c
-    rmc_get_acs_drive_id.c
-    rmc_get_rmc_host_of_drive.c
-    rmc_get_loader_type.c
     rmc_import.c
     rmc_mount.c
     rmc_mnt.c
     rmc_read_elem_status.c
-    rmc_unmnt.c
     send2rmc.c)
   add_library (castorrmc SHARED ${RMC_LIB_SRC_FILES})
   CastorSetLibraryVersions (castorrmc)

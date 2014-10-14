@@ -40,7 +40,7 @@ int rmc_find_cartridge(
 
 	sbp = sendbuf;
 	marshall_LONG (sbp, RMC_MAGIC);
-	marshall_LONG (sbp, RMC_SCSI_FINDCART);
+	marshall_LONG (sbp, RMC_FINDCART);
 	q = sbp;	/* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
 	marshall_LONG (sbp, msglen);

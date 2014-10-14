@@ -436,16 +436,14 @@ static int dispatchRqstHandlerWithFastRetry(const int req_type,
  */
 static const char *rmc_req_type_to_str(const int req_type) {
 	switch (req_type) {
-	case RMC_SCSI_MOUNT   : return "RMC_SCSI_MOUNT";
-	case RMC_SCSI_UNMOUNT : return "RMC_SCSI_UNMOUNT";
-	case RMC_SCSI_EXPORT  : return "RMC_SCSI_EXPORT";
-	case RMC_SCSI_IMPORT  : return "RMC_SCSI_IMPORT";
-	case RMC_SCSI_GETGEOM : return "RMC_SCSI_GETGEOM";
-	case RMC_SCSI_READELEM: return "RMC_SCSI_READELEM";
-	case RMC_SCSI_FINDCART: return "RMC_SCSI_FINDCART";
-	case RMC_ACS_MOUNT    : return "RMC_ACS_MOUNT";
-	case RMC_ACS_UNMOUNT  : return "RMC_ACS_UNMOUNT";
-	default               : return "UNKNOWN";
+	case RMC_MOUNT   : return "RMC_MOUNT";
+	case RMC_UNMOUNT : return "RMC_UNMOUNT";
+	case RMC_EXPORT  : return "RMC_EXPORT";
+	case RMC_IMPORT  : return "RMC_IMPORT";
+	case RMC_GETGEOM : return "RMC_GETGEOM";
+	case RMC_READELEM: return "RMC_READELEM";
+	case RMC_FINDCART: return "RMC_FINDCART";
+	default          : return "UNKNOWN";
 	}
 }
 
@@ -459,24 +457,20 @@ static const char *rmc_req_type_to_str(const int req_type) {
 static int dispatchRqstHandler(const int req_type,
 	const struct rmc_srv_rqst_context *const rqst_context) {
 	switch (req_type) {
-	case RMC_SCSI_MOUNT:
+	case RMC_MOUNT:
 		return rmc_srv_mount (rqst_context);
-	case RMC_SCSI_UNMOUNT:
+	case RMC_UNMOUNT:
 		return rmc_srv_unmount (rqst_context);
-	case RMC_SCSI_EXPORT:
+	case RMC_EXPORT:
 		return rmc_srv_export (rqst_context);
-	case RMC_SCSI_IMPORT:
+	case RMC_IMPORT:
 		return rmc_srv_import (rqst_context);
-	case RMC_SCSI_GETGEOM:
+	case RMC_GETGEOM:
 		return rmc_srv_getgeom (rqst_context);
-	case RMC_SCSI_READELEM:
+	case RMC_READELEM:
 		return rmc_srv_readelem (rqst_context);
-	case RMC_SCSI_FINDCART:
+	case RMC_FINDCART:
 		return rmc_srv_findcart (rqst_context);
-	case RMC_ACS_MOUNT:
-		return rmc_srv_acs_mnt (rqst_context);
-	case RMC_ACS_UNMOUNT:
-		return rmc_srv_acs_unmnt (rqst_context);
 	default:
 		return ERMCUNREC;
 	}

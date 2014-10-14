@@ -31,7 +31,7 @@ int rmc_import(const char *const server, const char *const vid)
 
 	sbp = sendbuf;
 	marshall_LONG (sbp, RMC_MAGIC);
-	marshall_LONG (sbp, RMC_SCSI_IMPORT);
+	marshall_LONG (sbp, RMC_IMPORT);
 	q = sbp;	/* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
 	marshall_LONG (sbp, msglen);
