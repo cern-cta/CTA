@@ -42,6 +42,7 @@ static void procreq(const int rpfd, const int req_type, char *const req_data,
 static int dispatchRqstHandlerWithFastRetry(const int req_type,
   const struct rmc_srv_rqst_context *const rqst_context,
   const unsigned int maxNbAttempts, const unsigned int delayInSec);
+static const char *rmc_req_type_to_str(const int req_type);
 static int dispatchRqstHandler(const int req_type,
   const struct rmc_srv_rqst_context *const rqst_context);
 static void rmc_doit(const int rpfd);
@@ -388,21 +389,64 @@ static void procreq(
  * @return The result of handling the request.
  */
 static int dispatchRqstHandlerWithFastRetry(const int req_type,
-	const struct rmc_srv_rqst_context *const rqst_context,
-	const unsigned int maxNbAttempts, const unsigned int delayInSec) {
-	unsigned int i = 0;
+  const struct rmc_srv_rqst_context *const rqst_context,
+  const unsigned int maxNbAttempts, const unsigned int delayInSec) {
+  unsigned int attemptNb = 0;
+  const char *const req_type_str = rmc_req_type_to_str(req_type);
+  char func[16];
 
-	for(i = 0; i < maxNbAttempts; i++) {
-		const int handlerRc = dispatchRqstHandler(req_type,
-			rqst_context);
-		if(RBT_FAST_RETRY != handlerRc) {
-			return handlerRc;
-		}
-		sleep(delayInSec);
+  strncpy (func, "dispatch", sizeof(func));
+  func[sizeof(func) - 1] = '\0';
+
+  for(attemptNb = 1; attemptNb <= maxNbAttempts; attemptNb++) {
+    // If this is not the first attempt then this is a fast retry
+    if(attemptNb > 1) {
+      rmc_logit(func, "Sleeping before fast retry: delayInSec=%u"
+        " req_type=%d req_type_str=%s attemptNb=%u maxNbAttempts=%u\n",
+        delayInSec, req_type, req_type_str, attemptNb, maxNbAttempts);
+      sleep(delayInSec);
+
+      rmc_logit(func, "Performing fast retry"
+        ": req_type=%d req_type_str=%s attemptNb=%u maxNbAttempts=%u\n",
+        req_type, req_type_str, attemptNb, maxNbAttempts);
+    }
+
+    const int handlerRc = dispatchRqstHandler(req_type, rqst_context);
+
+    if(RBT_FAST_RETRY != handlerRc) {
+      return handlerRc;
+    }
+  }
+
+  // The maximum number of attempts has been reached
+  rmc_logit(func, "Maximum number of attempts reached"
+    ": req_type=%d req_type_str=%s maxNbAttempts=%u\n",
+    req_type, req_type_str, maxNbAttempts);
+  return RBT_NORETRY;
+}
+
+/**
+ * Thread safe function that returns the string representation of the specified
+ * RMC request-type.
+ *
+ * If the request type is unknown then "UNKNOWN" is returned.
+ *
+ * @param req_type The request type as an integer.
+ * @return The string representation.
+ */
+static const char *rmc_req_type_to_str(const int req_type) {
+	switch (req_type) {
+	case RMC_SCSI_MOUNT   : return "RMC_SCSI_MOUNT";
+	case RMC_SCSI_UNMOUNT : return "RMC_SCSI_UNMOUNT";
+	case RMC_SCSI_EXPORT  : return "RMC_SCSI_EXPORT";
+	case RMC_SCSI_IMPORT  : return "RMC_SCSI_IMPORT";
+	case RMC_SCSI_GETGEOM : return "RMC_SCSI_GETGEOM";
+	case RMC_SCSI_READELEM: return "RMC_SCSI_READELEM";
+	case RMC_SCSI_FINDCART: return "RMC_SCSI_FINDCART";
+	case RMC_ACS_MOUNT    : return "RMC_ACS_MOUNT";
+	case RMC_ACS_UNMOUNT  : return "RMC_ACS_UNMOUNT";
+	default               : return "UNKNOWN";
 	}
-
-	// The maximum number of attempts has been reached
-	return RBT_NORETRY;
 }
 
 /**
