@@ -188,12 +188,10 @@ castor::messages::ForkLabel castor::tape::tapeserver::daemon::
 // forkCleaner
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
-  forkCleaner(const utils::DriveConfig &driveConfig, const std::string &vid,
-  const unsigned short rmcPort) {
+  forkCleaner(const utils::DriveConfig &driveConfig, const std::string &vid) {
 
   // Request the process forker to fork a label session
-  const messages::ForkCleaner rqst = createForkCleanerMsg(driveConfig, vid,
-    rmcPort);
+  const messages::ForkCleaner rqst = createForkCleanerMsg(driveConfig, vid);
   ProcessForkerUtils::writeFrame(m_socketFd, rqst);
 
   // Read back the reply
@@ -212,15 +210,14 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
 //------------------------------------------------------------------------------
 castor::messages::ForkCleaner castor::tape::tapeserver::daemon::
   ProcessForkerProxySocket::createForkCleanerMsg(
-  const utils::DriveConfig &driveConfig, const std::string &vid,
-  const unsigned short rmcPort) {
+  const utils::DriveConfig &driveConfig, const std::string &vid) {
   messages::ForkCleaner msg;
 
   // Description of the tape drive
   fillMsgWithDriveConfig(msg, driveConfig);
 
+  // Description of the tape
   msg.set_vid(vid);
-  msg.set_rmcport(rmcPort);
 
   return msg;
 }

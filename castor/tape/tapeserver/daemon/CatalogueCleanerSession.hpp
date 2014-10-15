@@ -52,7 +52,6 @@ public:
    * @param vid The volume identifier ofthe tape associated with the tape
    * drive.  If the volume identifier is not known then this parameter should
    * be set to the empty string.
-   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param assignmentTime The time at which a job was assigned to the tape
    * drive.
    * @return A newly created CatalogueCleanerSession object.
@@ -63,7 +62,6 @@ public:
     const tape::utils::DriveConfig &driveConfig,
     ProcessForkerProxy &processForker,
     const std::string &vid,
-    const unsigned short rmcPort,
     const time_t assignmentTime);
 
   /** 

@@ -289,7 +289,6 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", rqst.unitname()));
   params.push_back(log::Param("vid", rqst.vid()));
-  params.push_back(log::Param("rmcPort", rqst.rmcport()));
   m_log(LOG_INFO, "ProcessForker handling ForkCleaner message", params);
 
   // Fork a label session
@@ -467,7 +466,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     std::list<log::Param> params;
     params.push_back(log::Param("unitName", driveConfig.unitName));
     params.push_back(log::Param("vid", rqst.vid()));
-    params.push_back(log::Param("rmcPort", rqst.rmcport()));
     m_log(LOG_INFO, "Cleaner-session child-process started", params);
 
     const int sizeOfIOThreadPoolForZMQ = 1;
@@ -482,7 +480,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     // The network timeout of rmc communications should be several minutes due
     // to the time it takes to mount and unmount tapes
     const int rmcNetTimeout = 600; // Timeout in seconds
-    legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), rmcNetTimeout);
+    legacymsg::RmcProxyTcpIp rmc(m_log, m_config.rmcPort, rmcNetTimeout);
 
     mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
 

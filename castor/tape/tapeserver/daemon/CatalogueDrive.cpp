@@ -576,16 +576,12 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::createCleaner(
     // Create a cleaner session in the catalogue
     m_state = DRIVE_STATE_RUNNING;
     m_sessionType = SESSION_TYPE_CLEANER;
-    const unsigned short rmcPort =
-      common::CastorConfiguration::getConfig().getConfEntInt("RMC", "PORT",
-        (unsigned short)RMC_PORT, &m_log);
     m_session = CatalogueCleanerSession::create(
       m_log,
       m_netTimeout,
       m_config,
       m_processForker,
       vid,
-      rmcPort,
       assignmentTime);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;

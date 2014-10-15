@@ -83,11 +83,10 @@ public:
    * tape in the drive if there is in fact a tape in the drive and its volume
    * identifier is known.  If the volume identifier is not known then this
    * parameter should be set to an empty string.
-   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @return The process identifier of the newly forked session.
    */
   virtual pid_t forkCleaner(const utils::DriveConfig &driveConfig,
-    const std::string &vid, const unsigned short rmcPort) = 0;
+    const std::string &vid) = 0;
 
 }; // class ProcessForkerProxy
 

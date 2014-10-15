@@ -31,7 +31,4 @@ message ForkCleaner {
 
   // Description of the tape associated with the drive
   required string vid = 7;
-
-  // Configuration parameters of the session
-  required uint32 rmcport = 8;
 }
