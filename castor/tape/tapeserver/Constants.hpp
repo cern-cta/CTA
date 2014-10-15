@@ -32,7 +32,7 @@
 
 namespace castor     {
 namespace tape       {
-namespace server {
+namespace tapeserver {
   /**
    * The compile-time default value of the tapebridged configuration parameter
    * named TAPEBRIDGE/MAXBYTESBEFOREFLUSH.
@@ -91,8 +91,6 @@ namespace server {
    */
   const uint64_t TAPEBRIDGE_BULKREQUESTRECALLMAXFILES = 500;
 
-} // namespace tapebridge
+} // namespace tapeserver
 } // namespace tape
 } // namespace castor
-
-

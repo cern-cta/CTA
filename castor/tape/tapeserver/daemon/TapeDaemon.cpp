@@ -1068,22 +1068,22 @@ castor::tape::tapeserver::daemon::DataTransferSession::CastorConf
     "TAPE", "BADMIR_HANDLING", "CANCEL", &m_log);
   castorConf.tapebridgeBulkRequestMigrationMaxBytes = config.getConfEntInt(
     "TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXBYTES",
-    (uint64_t)server::TAPEBRIDGE_BULKREQUESTMIGRATIONMAXBYTES, &m_log);
+    (uint64_t)TAPEBRIDGE_BULKREQUESTMIGRATIONMAXBYTES, &m_log);
   castorConf.tapebridgeBulkRequestMigrationMaxFiles = config.getConfEntInt(
     "TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXFILES",
-    (uint64_t)server::TAPEBRIDGE_BULKREQUESTMIGRATIONMAXFILES, &m_log);
+    (uint64_t)TAPEBRIDGE_BULKREQUESTMIGRATIONMAXFILES, &m_log);
   castorConf.tapebridgeBulkRequestRecallMaxBytes = config.getConfEntInt(
     "TAPEBRIDGE", "BULKREQUESTRECALLMAXBYTES",
-    (uint64_t)server::TAPEBRIDGE_BULKREQUESTRECALLMAXBYTES, &m_log);
+    (uint64_t)TAPEBRIDGE_BULKREQUESTRECALLMAXBYTES, &m_log);
   castorConf.tapebridgeBulkRequestRecallMaxFiles = config.getConfEntInt(
     "TAPEBRIDGE", "BULKREQUESTRECALLMAXFILES",
-    (uint64_t)server::TAPEBRIDGE_BULKREQUESTRECALLMAXFILES, &m_log);
+    (uint64_t)TAPEBRIDGE_BULKREQUESTRECALLMAXFILES, &m_log);
   castorConf.tapebridgeMaxBytesBeforeFlush = config.getConfEntInt(
     "TAPEBRIDGE", "MAXBYTESBEFOREFLUSH",
-    (uint64_t)server::TAPEBRIDGE_MAXBYTESBEFOREFLUSH, &m_log);
+    (uint64_t)TAPEBRIDGE_MAXBYTESBEFOREFLUSH, &m_log);
   castorConf.tapebridgeMaxFilesBeforeFlush = config.getConfEntInt(
     "TAPEBRIDGE", "MAXFILESBEFOREFLUSH",
-    (uint64_t)server::TAPEBRIDGE_MAXFILESBEFOREFLUSH, &m_log);
+    (uint64_t)TAPEBRIDGE_MAXFILESBEFOREFLUSH, &m_log);
   castorConf.tapeserverdDiskThreads = config.getConfEntInt(
     "RTCPD", "THREAD_POOL", (uint32_t)RTCPD_THREAD_POOL, &m_log);
   castorConf.tapeserverdRemoteFileProtocol = config.getConfEntString(
