@@ -57,7 +57,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     castor::mediachanger::MediaChangerFacade & mc,
     castor::messages::TapeserverProxy & initialProcess,
     castor::server::ProcessCap & capUtils,
-    const CastorConf & castorConf): 
+    const DataTransferConfig & castorConf): 
     m_request(clientRequest),
     m_log(log),
     m_clientProxy(clientRequest),
@@ -181,7 +181,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
     RecallReportPacker rrp(m_clientProxy,
-        m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
+        m_castorConf.bulkRequestMigrationMaxFiles,
         lc);
 
     // If we talk to a command line client, we do not batch report
@@ -190,7 +190,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     }
     RecallWatchDog rwd(2,60*10,m_intialProcess,m_driveConfig.unitName,lc);
     
-    RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
+    RecallMemoryManager mm(m_castorConf.nbBufs, m_castorConf.bufsz,lc);
     TapeServerReporter tsr(m_intialProcess, m_driveConfig, 
             m_hostname, m_volInfo, lc);
     //we retrieved the detail from the client in execute, so at this point 
@@ -198,16 +198,16 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     tsr.gotReadMountDetailsFromClient();
     
     TapeReadSingleThread trst(*drive, m_mc, tsr, m_volInfo, 
-        m_castorConf.tapebridgeBulkRequestRecallMaxFiles,m_capUtils,rwd,lc);
+        m_castorConf.bulkRequestRecallMaxFiles,m_capUtils,rwd,lc);
 
-    DiskWriteThreadPool dwtp(m_castorConf.tapeserverdDiskThreads,
+    DiskWriteThreadPool dwtp(m_castorConf.nbDiskThreads,
         rrp,
         lc,
-        m_castorConf.tapeserverdRemoteFileProtocol,
+        m_castorConf.remoteFileProtocol,
         m_castorConf.xrootPrivateKey);
     RecallTaskInjector rti(mm, trst, dwtp, m_clientProxy,
-            m_castorConf.tapebridgeBulkRequestRecallMaxFiles,
-            m_castorConf.tapebridgeBulkRequestRecallMaxBytes,lc);
+            m_castorConf.bulkRequestRecallMaxFiles,
+            m_castorConf.bulkRequestRecallMaxBytes,lc);
     trst.setTaskInjector(&rti);
     
     // We are now ready to put everything in motion. First step is to check
@@ -276,8 +276,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     //then findDrive would have return NULL and we would have not end up there
     TapeServerReporter tsr(m_intialProcess, m_driveConfig, m_hostname,m_volInfo,lc);
     
-    MigrationMemoryManager mm(m_castorConf.rtcopydNbBufs,
-        m_castorConf.rtcopydBufsz,lc);
+    MigrationMemoryManager mm(m_castorConf.nbBufs,
+        m_castorConf.bufsz,lc);
     MigrationReportPacker mrp(m_clientProxy,
         lc);
     MigrationWatchDog mwd(2,60*10,m_intialProcess,m_driveConfig.unitName,lc);
@@ -289,17 +289,17 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         lc,
         mrp,
         m_capUtils,    
-        m_castorConf.tapebridgeMaxFilesBeforeFlush,
-        m_castorConf.tapebridgeMaxBytesBeforeFlush/m_castorConf.rtcopydBufsz);
-    DiskReadThreadPool drtp(m_castorConf.tapeserverdDiskThreads,
-        m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
-        m_castorConf.tapebridgeBulkRequestMigrationMaxBytes,
+        m_castorConf.maxFilesBeforeFlush,
+        m_castorConf.maxBytesBeforeFlush/m_castorConf.bufsz);
+    DiskReadThreadPool drtp(m_castorConf.nbDiskThreads,
+        m_castorConf.bulkRequestMigrationMaxFiles,
+        m_castorConf.bulkRequestMigrationMaxBytes,
         lc,
-        m_castorConf.tapeserverdRemoteFileProtocol,
+        m_castorConf.remoteFileProtocol,
         m_castorConf.xrootPrivateKey);
     MigrationTaskInjector mti(mm, drtp, twst, m_clientProxy, 
-            m_castorConf.tapebridgeBulkRequestMigrationMaxBytes,
-            m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,lc);
+            m_castorConf.bulkRequestMigrationMaxBytes,
+            m_castorConf.bulkRequestMigrationMaxFiles,lc);
     drtp.setTaskInjector(&mti);
     utils::Timer timer;
     if (mti.synchronousInjection()) {

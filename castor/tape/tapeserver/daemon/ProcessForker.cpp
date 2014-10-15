@@ -65,12 +65,14 @@ castor::tape::tapeserver::daemon::ProcessForker::ProcessForker(
   const int cmdSocket,
   const int reaperSocket,
   const std::string &hostName,
-  char *const argv0) throw():
+  char *const argv0,
+  const ProcessForkerOneTimeConfig &config) throw():
   m_log(log),
   m_cmdSocket(cmdSocket),
   m_reaperSocket(reaperSocket),
   m_hostName(hostName),
-  m_argv0(argv0) {
+  m_argv0(argv0),
+  m_config(config) {
 }
 
 //------------------------------------------------------------------------------
@@ -342,7 +344,6 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   // Log the contents of the incomming request
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", rqst.unitname()));
-  params.push_back(log::Param("rmcPort", rqst.rmcport()));
   m_log(LOG_INFO, "ProcessForker handling ForkDataTransfer message", params);
 
   // Fork a data-transfer session
@@ -521,8 +522,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   const legacymsg::RtcpJobRqstMsgBody vdqmJob = getVdqmJob(rqst);
 
   castor::server::ProcessCap capUtils;
-  const DataTransferSession::CastorConf dataTransferConfig =
-    getDataTransferConfig(rqst);
 
   const int sizeOfIOThreadPoolForZMQ = 1;
   messages::SmartZmqContext
@@ -536,7 +535,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // The network timeout of rmc communications should be several minutes due
   // to the time it takes to mount and unmount tapes
   const int rmcNetTimeout = 600; // Timeout in seconds
-  legacymsg::RmcProxyTcpIp rmc(m_log, rqst.rmcport(), rmcNetTimeout);
+  legacymsg::RmcProxyTcpIp rmc(m_log, m_config.rmcPort, rmcNetTimeout);
 
   mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
 
@@ -558,7 +557,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       mediaChangerFacade,
       tapeserver,
       capUtils,
-      dataTransferConfig));
+      m_config.dataTransfer));
   } catch (castor::exception::Exception & ex) {
     try {
       client::ClientProxy cl(vdqmJob);
@@ -602,30 +601,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     ex.getMessage() << "Caught an unknown exception";
     throw ex;
   }
-}
-
-//------------------------------------------------------------------------------
-// getDataTransferConfig
-//------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DataTransferSession::CastorConf
-  castor::tape::tapeserver::daemon::ProcessForker::getDataTransferConfig(
-  const messages::ForkDataTransfer &msg) {
-  DataTransferSession::CastorConf config;
-  config.rtcopydBufsz = msg.memblocksize();
-  config.rtcopydNbBufs = msg.nbmemblocks();
-  config.tapeBadMIRHandlingRepair = msg.badmirhandling();
-  config.tapebridgeBulkRequestMigrationMaxBytes =
-    msg.bulkrequestmigrationmaxbytes();
-  config.tapebridgeBulkRequestMigrationMaxFiles =
-    msg.bulkrequestmigrationmaxfiles();
-  config.tapebridgeBulkRequestRecallMaxBytes = msg.bulkrequestrecallmaxbytes();
-  config.tapebridgeBulkRequestRecallMaxFiles = msg.bulkrequestrecallmaxfiles();
-  config.tapebridgeMaxBytesBeforeFlush = msg.maxbytesbeforeflush();
-  config.tapebridgeMaxFilesBeforeFlush = msg.maxfilesbeforeflush();
-  config.tapeserverdDiskThreads = msg.diskthreadpoolsize();
-  config.tapeserverdRemoteFileProtocol = msg.remotefileprotocol();
-  config.xrootPrivateKey = msg.xrootprivatekey();
-  return config;
 }
 
 //------------------------------------------------------------------------------

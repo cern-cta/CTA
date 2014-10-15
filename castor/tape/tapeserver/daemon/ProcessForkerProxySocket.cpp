@@ -97,13 +97,11 @@ castor::messages::StopProcessForker castor::tape::tapeserver::daemon::
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   forkDataTransfer(const utils::DriveConfig &driveConfig,
-    const legacymsg::RtcpJobRqstMsgBody vdqmJob,
-    const DataTransferSession::CastorConf &conf,
-    const unsigned short rmcPort) {
+    const legacymsg::RtcpJobRqstMsgBody vdqmJob) {
 
   // Request the process forker to fork a data-transfer session
   const messages::ForkDataTransfer rqst = createForkDataTransferMsg(driveConfig,
-    vdqmJob, conf, rmcPort);
+    vdqmJob);
   ProcessForkerUtils::writeFrame(m_socketFd, rqst);
 
   // Read back the reply
@@ -124,9 +122,7 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
 castor::messages::ForkDataTransfer
   castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   createForkDataTransferMsg(const utils::DriveConfig &driveConfig,
-    const legacymsg::RtcpJobRqstMsgBody vdqmJob,
-    const DataTransferSession::CastorConf &config,
-    const unsigned short rmcPort) {
+    const legacymsg::RtcpJobRqstMsgBody vdqmJob) {
   messages::ForkDataTransfer msg;
 
   // Description of the tape drive
@@ -139,30 +135,6 @@ castor::messages::ForkDataTransfer
   msg.set_clientegid(vdqmJob.clientEgid);
   msg.set_clienthost(vdqmJob.clientHost);
   msg.set_clientusername(vdqmJob.clientUserName);
-
-  // Configuration parameters of the session
-  msg.set_memblocksize(config.rtcopydBufsz);
-  msg.set_nbmemblocks(config.rtcopydNbBufs);
-  msg.set_badmirhandling(config.tapeBadMIRHandlingRepair);
-  msg.set_bulkrequestmigrationmaxbytes(
-    config.tapebridgeBulkRequestMigrationMaxBytes);
-  msg.set_bulkrequestmigrationmaxfiles(
-    config.tapebridgeBulkRequestMigrationMaxFiles);
-  msg.set_bulkrequestrecallmaxbytes(
-    config.tapebridgeBulkRequestRecallMaxBytes);
-  msg.set_bulkrequestrecallmaxfiles(
-    config.tapebridgeBulkRequestRecallMaxFiles);
-  msg.set_maxbytesbeforeflush(
-    config.tapebridgeMaxBytesBeforeFlush);
-  msg.set_maxfilesbeforeflush(
-    config.tapebridgeMaxFilesBeforeFlush);
-  msg.set_diskthreadpoolsize(
-    config.tapeserverdDiskThreads);
-  msg.set_rmcport(rmcPort);
-  msg.set_remotefileprotocol(
-    config.tapeserverdRemoteFileProtocol);
-  msg.set_xrootprivatekey(
-      config.xrootPrivateKey);
 
   return msg;
 }

@@ -160,12 +160,12 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
   driveConfig.devType = "T10000";
-  DataTransferSession::CastorConf castorConf;
-  castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
-  castorConf.rtcopydNbBufs = 10;
-  castorConf.tapebridgeBulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
-  castorConf.tapebridgeBulkRequestRecallMaxFiles = 1000;
-  castorConf.tapeserverdDiskThreads = 1;
+  DataTransferConfig castorConf;
+  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.nbBufs = 10;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxFiles = 1000;
+  castorConf.nbDiskThreads = 1;
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
@@ -268,12 +268,12 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
   driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
   driveConfig.devType = "T10000";
-  DataTransferSession::CastorConf castorConf;
-  castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
-  castorConf.rtcopydNbBufs = 10;
-  castorConf.tapebridgeBulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
-  castorConf.tapebridgeBulkRequestRecallMaxFiles = 1000;
-  castorConf.tapeserverdDiskThreads = 1;
+  DataTransferConfig castorConf;
+  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.nbBufs = 10;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxFiles = 1000;
+  castorConf.nbDiskThreads = 1;
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
@@ -329,9 +329,9 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
   driveConfig.devType = "T10000";
-  DataTransferSession::CastorConf castorConf;
-  castorConf.rtcopydBufsz = 1024;
-  castorConf.rtcopydNbBufs = 10;
+  DataTransferConfig castorConf;
+  castorConf.bufsz = 1024;
+  castorConf.nbBufs = 10;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::messages::AcsProxyDummy acs;
@@ -476,12 +476,12 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
   driveConfig.devType = "T10000";
-  DataTransferSession::CastorConf castorConf;
-  castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
-  castorConf.rtcopydNbBufs = 10;
-  castorConf.tapebridgeBulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
-  castorConf.tapebridgeBulkRequestMigrationMaxFiles = 1000;
-  castorConf.tapeserverdDiskThreads = 1;
+  DataTransferConfig castorConf;
+  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.nbBufs = 10;
+  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestMigrationMaxFiles = 1000;
+  castorConf.nbDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::messages::AcsProxyDummy acs;
@@ -569,12 +569,12 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
   driveConfig.devType = "T10000";
-  DataTransferSession::CastorConf castorConf;
-  castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
-  castorConf.rtcopydNbBufs = 10;
-  castorConf.tapebridgeBulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
-  castorConf.tapebridgeBulkRequestMigrationMaxFiles = 1000;
-  castorConf.tapeserverdDiskThreads = 1;
+  DataTransferConfig castorConf;
+  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.nbBufs = 10;
+  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestMigrationMaxFiles = 1000;
+  castorConf.nbDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::messages::AcsProxyDummy acs;
@@ -674,12 +674,12 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
   driveConfig.devType = "T10000";
-  DataTransferSession::CastorConf castorConf;
-  castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
-  castorConf.rtcopydNbBufs = 10;
-  castorConf.tapebridgeBulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
-  castorConf.tapebridgeBulkRequestMigrationMaxFiles = 1000;
-  castorConf.tapeserverdDiskThreads = 1;
+  DataTransferConfig castorConf;
+  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.nbBufs = 10;
+  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestMigrationMaxFiles = 1000;
+  castorConf.nbDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::messages::AcsProxyDummy acs;
@@ -784,12 +784,12 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
   driveConfig.devType = "T10000";
-  DataTransferSession::CastorConf castorConf;
-  castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
-  castorConf.rtcopydNbBufs = 10;
-  castorConf.tapebridgeBulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
-  castorConf.tapebridgeBulkRequestMigrationMaxFiles = 1000;
-  castorConf.tapeserverdDiskThreads = 1;
+  DataTransferConfig castorConf;
+  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.nbBufs = 10;
+  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestMigrationMaxFiles = 1000;
+  castorConf.nbDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::messages::AcsProxyDummy acs;

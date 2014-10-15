@@ -43,7 +43,6 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   legacymsg::VmgrProxy &vmgr,
   const std::string &hostName,
   const utils::DriveConfig &config,
-  const DataTransferSession::CastorConf &dataTransferConfig,
   const DriveState state)
   throw():
   m_netTimeout(netTimeout),
@@ -54,7 +53,6 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   m_vmgr(vmgr),
   m_hostName(hostName),
   m_config(config),
-  m_dataTransferConfig(dataTransferConfig),
   m_state(state),
   m_sessionType(SESSION_TYPE_NONE),
   m_session(NULL) {
@@ -491,7 +489,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedVdqmJob(
           m_log,
           m_netTimeout,
           m_config,
-          m_dataTransferConfig,
           job,
           m_vmgr,
           m_cupv,

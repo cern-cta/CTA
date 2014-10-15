@@ -30,6 +30,7 @@
 #include "castor/messages/ForkLabel.pb.h"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerFrame.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerOneTimeConfig.hpp"
 
 #include <stdint.h>
 
@@ -59,9 +60,12 @@ public:
    * @param hostName The name of the host on which the tapeserverd daemon is
    * running.
    * @param argv0 Pointer to argv[0], the command-line.
+   * @param config The CASTOR configuration parameters used by the
+   * ProcessForker for the entire lifetime of the process.
    */
   ProcessForker(log::Logger &log, const int cmdSocket, const int reaperSocket,
-    const std::string &hostName, char *const argv0) throw();
+    const std::string &hostName, char *const argv0,
+    const ProcessForkerOneTimeConfig &config) throw();
 
   /**
    * Destructor.
@@ -110,6 +114,12 @@ private:
    * Pointer to argv[0], the command-line.
    */
   char *const m_argv0;
+
+  /**
+   * The CASTOR configuration parameters used by the ProcessForker for the 
+   * entire lifetime of the process.
+   */
+  const ProcessForkerOneTimeConfig m_config;
 
   /**
    * Idempotent method that closes the socket used for receving commands
@@ -250,16 +260,6 @@ private:
 
     return config;
   }
-
-  /**
-   * Gets the configuration of the data-transfer session from the specified
-   * ForkDataTransfer message.
-   *
-   * @param msg The ForkDataTransfer message.
-   * @return The configuration of the data-transfer session.
-   */
-  castor::tape::tapeserver::daemon::DataTransferSession::CastorConf
-    getDataTransferConfig(const messages::ForkDataTransfer &msg);
 
   /**
    * Gets the VDQM job from the specified ForkDataTransfer message.

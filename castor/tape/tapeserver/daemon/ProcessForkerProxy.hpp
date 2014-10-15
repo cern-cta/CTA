@@ -58,14 +58,10 @@ public:
    *
    * @param driveConfig The configuration of the tape drive.
    * @param vdqmJob The job received from the vdqmd daemon.
-   * @param conf The configuration of the data-transfer session.
-   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @return The process identifier of the newly forked session.
    */
   virtual pid_t forkDataTransfer(const utils::DriveConfig &driveConfig,
-    const legacymsg::RtcpJobRqstMsgBody vdqmJob,
-    const DataTransferSession::CastorConf &conf,
-    const unsigned short rmcPort) = 0;
+    const legacymsg::RtcpJobRqstMsgBody vdqmJob) = 0;
 
   /** 
    * Forks a label-session process for the specified tape drive.

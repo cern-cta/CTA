@@ -36,9 +36,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
   forkDataTransfer(const utils::DriveConfig &driveConfig,
-    const legacymsg::RtcpJobRqstMsgBody vdqmJob,
-    const DataTransferSession::CastorConf &conf,
-    const unsigned short rmcPort) {
+    const legacymsg::RtcpJobRqstMsgBody vdqmJob) {
   // This is a dummy method and so intentionally does nothing
   return 0;
 }

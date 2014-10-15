@@ -30,6 +30,7 @@
 #include "castor/log/Logger.hpp"
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
+#include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
@@ -50,51 +51,6 @@ namespace daemon {
    */
   class DataTransferSession: public Session {
   public:
-    /** Subclass holding all the contents from castor.conf file. The pre-
-     * extraction of the contents by the caller instead of direct getconfent
-     * calls allows unit testing */
-    class CastorConf {
-    public:
-      CastorConf(): 
-        rtcopydBufsz(0), rtcopydNbBufs(0),
-        tapebridgeBulkRequestMigrationMaxBytes(0),
-        tapebridgeBulkRequestMigrationMaxFiles(0),
-        tapebridgeBulkRequestRecallMaxBytes(0),
-        tapebridgeBulkRequestRecallMaxFiles(0),
-        tapebridgeMaxBytesBeforeFlush(0),
-        tapebridgeMaxFilesBeforeFlush(0),
-        tapeserverdDiskThreads(0) {}
-      uint32_t rtcopydBufsz;
-      uint32_t rtcopydNbBufs;
-      std::string tapeBadMIRHandlingRepair;
-      uint64_t tapebridgeBulkRequestMigrationMaxBytes;
-      uint64_t tapebridgeBulkRequestMigrationMaxFiles;
-      uint64_t tapebridgeBulkRequestRecallMaxBytes;
-      uint64_t tapebridgeBulkRequestRecallMaxFiles;
-      uint64_t tapebridgeMaxBytesBeforeFlush;
-      uint64_t tapebridgeMaxFilesBeforeFlush;
-// Other values found on production tape servers
-//      TAPE CRASHED_RLS_HANDLING RETRY
-//      TAPE CRASHED_RLS_HANDLING_RETRIES 3
-//      TAPE CRASHED_RLS_HANDLING_RETRY_DELAY 180
-//      TAPE DOWN_ON_TPALERT NO
-//      TAPE DOWN_ON_UNLOAD_FAILURE NO
-//      TAPEBRIDGE BULKREQUESTMIGRATIONMAXBYTES 5000000000
-//      TAPEBRIDGE BULKREQUESTMIGRATIONMAXFILES 500
-//      TAPEBRIDGE BULKREQUESTRECALLMAXBYTES 5000000000
-//      TAPEBRIDGE BULKREQUESTRECALLMAXFILES 500
-//      TAPEBRIDGE MAXBYTESBEFOREFLUSH 32000000000
-//      TAPEBRIDGE MAXFILESBEFOREFLUSH 500
-//      TAPEBRIDGE TAPEFLUSHMODE ONE_FLUSH_PER_N_FILES
-//      UPV HOST castorcupv
-//      VDQM HOST castorvdqm1
-//      VMGR HOST castorvmgr
-
-      // Additions for tapeserverd
-      uint32_t tapeserverdDiskThreads;
-      std::string tapeserverdRemoteFileProtocol;
-      std::string xrootPrivateKey;
-    };
     /**
      * Constructor.
      *
@@ -109,7 +65,7 @@ namespace daemon {
       castor::mediachanger::MediaChangerFacade & mc,
       castor::messages::TapeserverProxy & initialProcess,
       castor::server::ProcessCap &capUtils,
-      const CastorConf & castorConf);
+      const DataTransferConfig & castorConf);
 
     /**
      * Execute the session and return the type of action to be performed
@@ -157,7 +113,7 @@ namespace daemon {
      * The configuration of the tape drive to be used by this session.
      */
     const utils::DriveConfig m_driveConfig;
-    const CastorConf & m_castorConf;
+    const DataTransferConfig & m_castorConf;
     /** utility to find the drive on the system. This function logs 
      * all errors and hence does not throw exceptions. It returns NULL
      * in case of failure. */

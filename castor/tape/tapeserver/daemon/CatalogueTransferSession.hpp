@@ -52,7 +52,6 @@ public:
    * @param netTimeout Timeout in seconds to be used when performing network
    * I/O.
    * @param driveConfig The configuration of the tape drive.
-   * @param dataTransferConfig The configuration of a data-transfer session.
    * @param vdqmJob job received from the vdqmd daemon.
    * @param vmgr Proxy object representing the vmgrd daemon.
    * @param cupv Proxy object representing the cupvd daemon.
@@ -68,7 +67,6 @@ public:
     log::Logger &log,
     const int netTimeout,
     const tape::utils::DriveConfig &driveConfig,
-    const DataTransferSession::CastorConf &dataTransferConfig,
     const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
     legacymsg::VmgrProxy &vmgr,
     legacymsg::CupvProxy &cupv,
@@ -226,7 +224,6 @@ protected:
    * I/O.
    * @param pid The process identifier of the session.
    * @param driveConfig The configuration of the tape drive.
-   * @param dataTransferConfig The configuration of a data-transfer session.
    * @param vdqmJob job received from the vdqmd daemon.
    * @param vmgr Proxy object representing the vmgrd daemon.
    * @param cupv Proxy object representing the cupvd daemon.
@@ -240,7 +237,6 @@ protected:
     const int netTimeout,
     const pid_t pid,
     const tape::utils::DriveConfig &driveConfig,
-    const DataTransferSession::CastorConf &dataTransferConfig,
     const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
     legacymsg::VmgrProxy &vmgr,
     legacymsg::CupvProxy &cupv,
@@ -291,11 +287,6 @@ private:
    */
   const time_t m_assignmentTime;
 
-  /**
-   * The configuration of a data-transfer session.
-   */
-  const DataTransferSession::CastorConf m_dataTransferConfig;
-  
   /**
    * The job received from the vdqmd daemon.
    */

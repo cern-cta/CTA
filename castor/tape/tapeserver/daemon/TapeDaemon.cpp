@@ -189,11 +189,11 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
 
   m_processForkerPid = forkProcessForker(cmdPair, reaperPair);
 
-  const DataTransferSession::CastorConf dataTransferConfig =
-    getDataTransferConf();
+  const ProcessForkerOneTimeConfig processForkerConfig =
+    ProcessForkerOneTimeConfig::createFromCastorConf();
   m_processForker = new ProcessForkerProxySocket(m_log, cmdPair.tapeDaemon);
-  m_catalogue = new Catalogue(m_netTimeout, m_log, dataTransferConfig,
-    *m_processForker, m_cupv, m_vdqm, m_vmgr, m_hostName);
+  m_catalogue = new Catalogue(m_netTimeout, m_log, *m_processForker, m_cupv,
+    m_vdqm, m_vmgr, m_hostName);
 
   m_catalogue->populate(m_driveConfigs);
 
@@ -514,8 +514,10 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
 int castor::tape::tapeserver::daemon::TapeDaemon::runProcessForker(
   const int cmdReceiverSocket, const int reaperSenderSocket) throw() {
   try {
+    const ProcessForkerOneTimeConfig processForkerConfig =
+      ProcessForkerOneTimeConfig::createFromCastorConf();
     ProcessForker processForker(m_log, cmdReceiverSocket, reaperSenderSocket,
-      m_hostName, m_argv[0]);
+      m_hostName, m_argv[0], processForkerConfig);
     processForker.execute();
     return 0;
   } catch(castor::exception::Exception &ex) {
@@ -1050,46 +1052,4 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(
       ne.getMessage().str();
     throw ex;
   }
-}
-
-//------------------------------------------------------------------------------
-// getDataTransferConf
-//------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DataTransferSession::CastorConf
-  castor::tape::tapeserver::daemon::TapeDaemon::getDataTransferConf() {
-  DataTransferSession::CastorConf castorConf;
-  common::CastorConfiguration &config =
-    common::CastorConfiguration::getConfig();
-  castorConf.rtcopydBufsz = config.getConfEntInt(
-    "RTCOPYD", "BUFSZ", (uint32_t)RTCP_BUFSZ, &m_log);
-  castorConf.rtcopydNbBufs = config.getConfEntInt<uint32_t>(
-    "RTCOPYD", "NB_BUFS", &m_log);
-  castorConf.tapeBadMIRHandlingRepair = config.getConfEntString(
-    "TAPE", "BADMIR_HANDLING", "CANCEL", &m_log);
-  castorConf.tapebridgeBulkRequestMigrationMaxBytes = config.getConfEntInt(
-    "TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXBYTES",
-    (uint64_t)TAPEBRIDGE_BULKREQUESTMIGRATIONMAXBYTES, &m_log);
-  castorConf.tapebridgeBulkRequestMigrationMaxFiles = config.getConfEntInt(
-    "TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXFILES",
-    (uint64_t)TAPEBRIDGE_BULKREQUESTMIGRATIONMAXFILES, &m_log);
-  castorConf.tapebridgeBulkRequestRecallMaxBytes = config.getConfEntInt(
-    "TAPEBRIDGE", "BULKREQUESTRECALLMAXBYTES",
-    (uint64_t)TAPEBRIDGE_BULKREQUESTRECALLMAXBYTES, &m_log);
-  castorConf.tapebridgeBulkRequestRecallMaxFiles = config.getConfEntInt(
-    "TAPEBRIDGE", "BULKREQUESTRECALLMAXFILES",
-    (uint64_t)TAPEBRIDGE_BULKREQUESTRECALLMAXFILES, &m_log);
-  castorConf.tapebridgeMaxBytesBeforeFlush = config.getConfEntInt(
-    "TAPEBRIDGE", "MAXBYTESBEFOREFLUSH",
-    (uint64_t)TAPEBRIDGE_MAXBYTESBEFOREFLUSH, &m_log);
-  castorConf.tapebridgeMaxFilesBeforeFlush = config.getConfEntInt(
-    "TAPEBRIDGE", "MAXFILESBEFOREFLUSH",
-    (uint64_t)TAPEBRIDGE_MAXFILESBEFOREFLUSH, &m_log);
-  castorConf.tapeserverdDiskThreads = config.getConfEntInt(
-    "RTCPD", "THREAD_POOL", (uint32_t)RTCPD_THREAD_POOL, &m_log);
-  castorConf.tapeserverdRemoteFileProtocol = config.getConfEntString(
-    "TAPESERVERD", "REMOTEFILEPROTOCOL", "RFIO", &m_log);
-  castorConf.xrootPrivateKey = config.getConfEntString(
-    "XROOT", "PRIVATEKEY", "/opt/xrootd/keys/key.pem", &m_log);
-
-  return castorConf;
 }

@@ -4,6 +4,7 @@ add_library(castorTapeServerDaemon
   AdminAcceptHandler.cpp
   AdminConnectionHandler.cpp
   ../client/ClientProxy.cpp 
+  DataTransferConfig.cpp
   DiskReadThreadPool.cpp
   DiskReadTask.cpp
   DiskWriteTask.cpp
@@ -25,6 +26,7 @@ add_library(castorTapeServerDaemon
   DataTransferSession.cpp
   ProcessForker.cpp
   ProcessForkerConnectionHandler.cpp
+  ProcessForkerOneTimeConfig.cpp
   ProcessForkerProxy.cpp
   ProcessForkerProxyDummy.cpp
   ProcessForkerProxySocket.cpp

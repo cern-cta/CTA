@@ -57,7 +57,6 @@ public:
    * @param netTimeout Timeout in seconds to be used when performing network
    * I/O.
    * @param log Object representing the API of the CASTOR logging system.
-   * @param dataTransferConfig The configuration of a data-transfer session.
    * @param processForker Proxy object representing the ProcessForker.
    * @param cupv Proxy object representing the cupvd daemon.
    * @param vdqm Proxy object representing the vdqmd daemon.
@@ -68,7 +67,6 @@ public:
   Catalogue(
     const int netTimeout,
     log::Logger &log,
-    const DataTransferSession::CastorConf &dataTransferConfig,
     ProcessForkerProxy &processForker,
     legacymsg::CupvProxy &cupv,
     legacymsg::VdqmProxy &vdqm,
@@ -160,11 +158,6 @@ private:
    * Object representing the API of the CASTOR logging system.
    */
   log::Logger &m_log;
-
-  /**
-   * The configuration of a data-transfer session.
-   */
-  const DataTransferSession::CastorConf m_dataTransferConfig;
 
   /**
    * Proxy object representing the ProcessForker.

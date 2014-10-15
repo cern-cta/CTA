@@ -42,7 +42,6 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession*
     log::Logger &log,
     const int netTimeout,
     const tape::utils::DriveConfig &driveConfig,
-    const DataTransferSession::CastorConf &dataTransferConfig,
     const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
     legacymsg::VmgrProxy &vmgr,
     legacymsg::CupvProxy &cupv,
@@ -51,15 +50,13 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession*
     const unsigned short rmcPort,
     ProcessForkerProxy &processForker) {
 
-  const pid_t pid = processForker.forkDataTransfer(driveConfig, vdqmJob,
-    dataTransferConfig, rmcPort);
+  const pid_t pid = processForker.forkDataTransfer(driveConfig, vdqmJob);
 
   return new CatalogueTransferSession(
     log,
     netTimeout,
     pid,
     driveConfig,
-    dataTransferConfig,
     vdqmJob,
     vmgr,
     cupv,
@@ -76,7 +73,6 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
   const int netTimeout,
   const pid_t pid,
   const tape::utils::DriveConfig &driveConfig,
-  const DataTransferSession::CastorConf &dataTransferConfig,
   const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
   legacymsg::VmgrProxy &vmgr,
   legacymsg::CupvProxy &cupv,
@@ -87,7 +83,6 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
   m_mode(WRITE_DISABLE),
   m_lastTimeSomeBlocksWereMoved(time(0)),
   m_assignmentTime(time(0)),
-  m_dataTransferConfig(dataTransferConfig),
   m_vdqmJob(vdqmJob),
   m_vmgr(vmgr),
   m_cupv(cupv),

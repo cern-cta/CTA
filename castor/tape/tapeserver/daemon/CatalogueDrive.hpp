@@ -174,7 +174,6 @@ public:
    * @param hostName The name of the host on which the daemon is running.  This
    * name is needed to fill in messages to be sent to the vdqmd daemon.
    * @param config The configuration of the tape drive.
-   * @param dataTransferConfig The configuration of a data-transfer session.
    * @param state The initial state of the tape drive.
    */
   CatalogueDrive(
@@ -186,7 +185,6 @@ public:
     legacymsg::VmgrProxy &vmgr,
     const std::string &hostName,
     const utils::DriveConfig &config,
-    const DataTransferSession::CastorConf &dataTransferConfig,
     const DriveState state) throw();
 
   /**
@@ -466,11 +464,6 @@ private:
    * The configuration of the tape-drive.
    */
   tape::utils::DriveConfig m_config;
-
-  /**
-   * The configuration of a data-transfer session.
-   */
-  const DataTransferSession::CastorConf m_dataTransferConfig;
 
   /**
    * The current state of the tape drive.

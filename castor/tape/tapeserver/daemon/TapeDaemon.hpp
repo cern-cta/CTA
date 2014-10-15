@@ -467,13 +467,6 @@ protected:
     const std::string &vid, const pid_t pid);
 
   /**
-   * Gets the configuration of a data-transfer session.
-   *
-   * @return The configuration.
-   */
-  DataTransferSession::CastorConf getDataTransferConf();
-
-  /**
    * The argc of main().
    */
   const int m_argc;
