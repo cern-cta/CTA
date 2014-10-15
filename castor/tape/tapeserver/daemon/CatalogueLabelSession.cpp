@@ -38,12 +38,11 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession *
     const legacymsg::TapeLabelRqstMsgBody &labelJob,
     const int labelCmdConnection,
     legacymsg::CupvProxy &cupv,
-    const unsigned short rmcPort,
     ProcessForkerProxy &processForker) {
 
   checkUserCanLabelTape(log, cupv, labelJob, labelCmdConnection);
 
-  const pid_t pid = processForker.forkLabel(driveConfig, labelJob, rmcPort);
+  const pid_t pid = processForker.forkLabel(driveConfig, labelJob);
 
   return new CatalogueLabelSession(
     log,

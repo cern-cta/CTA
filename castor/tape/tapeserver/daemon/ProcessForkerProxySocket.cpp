@@ -144,12 +144,10 @@ castor::messages::ForkDataTransfer
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   forkLabel(const utils::DriveConfig &driveConfig,
-  const legacymsg::TapeLabelRqstMsgBody &labelJob,
-  const unsigned short rmcPort) {
+  const legacymsg::TapeLabelRqstMsgBody &labelJob) {
 
   // Request the process forker to fork a label session
-  const messages::ForkLabel rqst = createForkLabelMsg(driveConfig, labelJob,
-    rmcPort);
+  const messages::ForkLabel rqst = createForkLabelMsg(driveConfig, labelJob);
   ProcessForkerUtils::writeFrame(m_socketFd, rqst);
 
   // Read back the reply
@@ -169,8 +167,7 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
 castor::messages::ForkLabel castor::tape::tapeserver::daemon::
   ProcessForkerProxySocket::createForkLabelMsg(
   const utils::DriveConfig &driveConfig,
-  const legacymsg::TapeLabelRqstMsgBody &labelJob,
-  const unsigned short rmcPort) {
+  const legacymsg::TapeLabelRqstMsgBody &labelJob) {
   messages::ForkLabel msg;
 
   // Description of the tape drive
@@ -178,8 +175,6 @@ castor::messages::ForkLabel castor::tape::tapeserver::daemon::
 
   // Description of the label job
   fillMsgWithLabelJob(msg, labelJob);
-
-  msg.set_rmcport(rmcPort);
 
   return msg;
 }

@@ -89,12 +89,10 @@ public:
    *  
    * @param driveConfig The configuration of the tape drive.
    * @param labelJob The job received from the tape-labeling command-line tool.
-   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @return The process identifier of the newly forked session.
    */
   pid_t forkLabel(const utils::DriveConfig &driveConfig,
-    const legacymsg::TapeLabelRqstMsgBody &labelJob,
-    const unsigned short rmcPort);
+    const legacymsg::TapeLabelRqstMsgBody &labelJob);
 
   /**
    * Forks a cleaner session for the specified tape drive.
@@ -172,12 +170,10 @@ private:
    *
    * @param driveConfig The configuration of the tape drive.
    * @param labelJob The job received from the tape-labeling command-line tool.
-   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @return The message.
    */
   messages::ForkLabel createForkLabelMsg(const utils::DriveConfig &driveConfig,
-    const legacymsg::TapeLabelRqstMsgBody &labelJob,
-    const unsigned short rmcPort);
+    const legacymsg::TapeLabelRqstMsgBody &labelJob);
 
   /**
    * Fills the appropriate members of the specified message with the information

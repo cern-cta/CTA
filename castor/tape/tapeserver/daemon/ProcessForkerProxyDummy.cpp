@@ -46,8 +46,7 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
   forkLabel(const utils::DriveConfig &driveConfig,
-  const legacymsg::TapeLabelRqstMsgBody &labelJob,
-  const unsigned short rmcPort) {
+  const legacymsg::TapeLabelRqstMsgBody &labelJob) {
   // This is a dummy method and so intentionally does nothing
   return 0;
 }

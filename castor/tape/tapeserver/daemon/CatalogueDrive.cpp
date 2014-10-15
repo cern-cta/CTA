@@ -540,20 +540,14 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
         << job.dgn;
       throw ex;
     }
-    {
-      const unsigned short rmcPort =
-        common::CastorConfiguration::getConfig().getConfEntInt("RMC", "PORT",
-          (unsigned short)RMC_PORT, &m_log);
-      m_session = CatalogueLabelSession::create(
-        m_log,
-        m_netTimeout,
-        m_config,
-        job,
-        labelCmdConnection,
-        m_cupv,
-        rmcPort,
-        m_processForker);
-    }
+    m_session = CatalogueLabelSession::create(
+      m_log,
+      m_netTimeout,
+      m_config,
+      job,
+      labelCmdConnection,
+      m_cupv,
+      m_processForker);
     m_state = DRIVE_STATE_RUNNING;
     m_sessionType = SESSION_TYPE_LABEL;
     break;

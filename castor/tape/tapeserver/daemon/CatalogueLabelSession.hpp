@@ -58,7 +58,6 @@ public:
    * @param labelCmdConnection The file descriptor of the TCP/IP connection with
    * the tape labeling command-line tool castor-tape-label.
    * @param cupv Proxy object representing the cupvd daemon.
-   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param processForker Proxy object representing the ProcessForker.
    * @return A newly created CatalogueSession object.
    */
@@ -69,7 +68,6 @@ public:
     const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
     const int labelCmdConnection,
     legacymsg::CupvProxy &cupv,
-    const unsigned short rmcPort,
     ProcessForkerProxy &processForker);
 
   /**
