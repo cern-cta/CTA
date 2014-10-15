@@ -75,7 +75,7 @@
 #include "castor/tape/tapegateway/daemon/WorkerThread.hpp"
 
 #include "castor/tape/utils/utils.hpp"
-#include "castor/tape/utils/Timer.hpp"
+#include "castor/utils/Timer.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -257,7 +257,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(
     
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, WORKER_GETTING_VOLUME, params);
 
-    castor::tape::utils::Timer timer;
+    castor::utils::Timer timer;
     try {
     
       // GET FROM DB
@@ -362,7 +362,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker(
   }
   response->setMountTransactionId(endRequest.mountTransactionId());
   response->setAggregatorTransactionId(endRequest.aggregatorTransactionId());
-  castor::tape::utils::Timer timer;
+  castor::utils::Timer timer;
   try {
     // ACCESS DB to get tape to release
     castor::tape::tapegateway::ITapeGatewaySvc::TapeToReleaseInfo tape;
@@ -505,7 +505,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker(
                           WORKER_FAIL_NOTIFICATION, params);
   response->setMountTransactionId(endRequest.mountTransactionId());
   response->setAggregatorTransactionId(endRequest.aggregatorTransactionId());
-  castor::tape::utils::Timer timer;
+  castor::utils::Timer timer;
   try {
     // ACCESS DB to get tape to release
     castor::tape::tapegateway::ITapeGatewaySvc::TapeToReleaseInfo tape;
@@ -777,7 +777,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
     }
 
     // 2.3 Update the VMGR for fseq. Stop here in case of failure.
-    castor::tape::utils::Timer timer;
+    castor::utils::Timer timer;
     try {
       VmgrTapeGatewayHelper::bulkUpdateTapeInVmgr(
           fileMigrationReportList.successfulMigrations().size(),
@@ -968,7 +968,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToMigrateL
   std::queue <FileToMigrateStruct> files_list;
   bool dbFailure = false;
   double dbServingTime;
-  castor::tape::utils::Timer timer;
+  castor::utils::Timer timer;
 
   // Transmit the request to the DB directly
   try {
@@ -1095,7 +1095,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallLi
   std::queue <castor::tape::tapegateway::ITapeGatewaySvc::FileToRecallStructWithContext> files_list;
   bool dbFailure = false;
   double dbServingTime;
-  castor::tape::utils::Timer timer;
+  castor::utils::Timer timer;
 
   // Transmit the request to the DB directly
   try {

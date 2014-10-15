@@ -31,7 +31,7 @@
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
-#include "castor/tape/utils/Timer.hpp"
+#include "castor/utils/Timer.hpp"
 
 namespace castor {
 namespace tape {
@@ -62,7 +62,7 @@ public:
      */
   void execute(castor::tape::tapeFile::ReadSession & rs,
     castor::log::LogContext & lc,RecallWatchDog& watchdog,
-    TapeSessionStats & stats, utils::Timer & timer) {
+    TapeSessionStats & stats, castor::utils::Timer & timer) {
 
     using castor::log::Param;
     typedef castor::log::LogContext::ScopedParam ScopedParam;
@@ -77,7 +77,7 @@ public:
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
     TapeSessionStats localStats;
-    utils::Timer localTime;
+    castor::utils::Timer localTime;
 
     // Read the file and transmit it
     bool stillReading = true;
@@ -89,13 +89,13 @@ public:
     MemBlock* mb=NULL;
     try {
       std::auto_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
-      localStats.positionTime += timer.secs(utils::Timer::resetCounter);
+      localStats.positionTime += timer.secs(castor::utils::Timer::resetCounter);
       watchdog.notifyBeginNewJob(*m_fileToRecall);
-      localStats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
+      localStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       while (stillReading) {
         // Get a memory block and add information to its metadata
         mb=m_mm.getFreeBlock();
-        localStats.waitFreeMemoryTime += timer.secs(utils::Timer::resetCounter);
+        localStats.waitFreeMemoryTime += timer.secs(castor::utils::Timer::resetCounter);
         
         mb->m_fSeq = m_fileToRecall->fseq();
         mb->m_fileBlock = fileBlock++;
@@ -114,13 +114,13 @@ public:
           // append() signaled the end of the file.
           stillReading = false;
         }
-        localStats.transferTime += timer.secs(utils::Timer::resetCounter);
+        localStats.transferTime += timer.secs(castor::utils::Timer::resetCounter);
         localStats.dataVolume += mb->m_payload.size();
         // Pass the block to the disk write task
         m_fifo.pushDataBlock(mb);
         mb=NULL;
         watchdog.notify();
-        localStats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
+        localStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       } //end of while(stillReading)
       //  we have to signal the end of the tape read to the disk write task.
       m_fifo.pushDataBlock(NULL);

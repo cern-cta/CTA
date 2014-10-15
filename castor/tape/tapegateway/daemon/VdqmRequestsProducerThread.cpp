@@ -37,7 +37,6 @@
 
 #include "castor/exception/Exception.hpp"
 
-#include "castor/tape/utils/Timer.hpp"
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 
@@ -47,6 +46,8 @@
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 
 #include "castor/tape/tapegateway/ScopedTransaction.hpp"
+
+#include "castor/utils/Timer.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -93,7 +94,7 @@ bool castor::tape::tapegateway::VdqmRequestsProducerThread::getTapeToHandle
  int &vdqmPriority,
  int &mode)
   throw() {
-  castor::tape::utils::Timer timer;
+  castor::utils::Timer timer;
   try {
     // get a tape from the db
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, PRODUCER_GETTING_TAPE, 0,  NULL);
@@ -134,7 +135,7 @@ castor::tape::tapegateway::VdqmRequestsProducerThread::checkInVMGR
  const std::string &vid,
  const int mode)
   throw() {
-  castor::tape::utils::Timer timer;
+  castor::utils::Timer timer;
   try {
     TapeInfo info = VmgrTapeGatewayHelper::getTapeInfoAssertAvailable(vid, m_shuttingDown);
     castor::dlf::Param paramsVmgr[] = {
@@ -190,7 +191,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::sendToVDQM
  const int vdqmPriority)
   throw() {
   VdqmTapeGatewayHelper vdqmHelper;
-  castor::tape::utils::Timer timer;
+  castor::utils::Timer timer;
   int mountTransactionId = 0;
   try {
     // connect to vdqm and submit the request

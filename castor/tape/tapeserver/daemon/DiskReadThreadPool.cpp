@@ -150,11 +150,11 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
   m_lc.log(LOG_DEBUG, "DiskReadWorkerThread Running");
   
   std::auto_ptr<DiskReadTask> task;
-  utils::Timer localTime;
+  castor::utils::Timer localTime;
   
   while(1) {
     task.reset( m_parent.popAndRequestMore(m_lc));
-    m_threadStat.waitInstructionsTime += localTime.secs(utils::Timer::resetCounter);
+    m_threadStat.waitInstructionsTime += localTime.secs(castor::utils::Timer::resetCounter);
     if (NULL!=task.get()) {
       task->execute(m_lc, m_parent.m_diskFileFactory);
       m_threadStat += task->getTaskStats();

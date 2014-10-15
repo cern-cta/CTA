@@ -37,7 +37,7 @@
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "castor/tape/utils/Timer.hpp"
+#include "castor/utils/Timer.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -115,7 +115,7 @@ protected:
     scoped.add("vid",m_volInfo.vid)
           .add("drive_Slot",m_drive.librarySlot.str());
     try {
-      tape::utils::Timer timer;
+      castor::utils::Timer timer;
         m_mc.mountTapeReadOnly(m_volInfo.vid, m_drive.librarySlot.str());
         const std::string modeAsString = "R";
         scoped.addTiming("MCMountTime",timer.secs()).add("mode",modeAsString);
@@ -141,7 +141,7 @@ protected:
     scoped.add("vid",m_volInfo.vid)
           .add("drive_Slot",m_drive.librarySlot.str());
     try {
-      tape::utils::Timer timer;
+      castor::utils::Timer timer;
         m_mc.mountTapeReadWrite(m_volInfo.vid, m_drive.librarySlot.str());
         const std::string modeAsString = "RW";
         scoped.addTiming("MCMountTime",timer.secs()).add("mode",modeAsString);
@@ -165,7 +165,7 @@ protected:
    */
   void waitForDrive(){
     try{
-      tape::utils::Timer timer;
+      castor::utils::Timer timer;
       // wait 600 drive is ready
       m_drive.waitUntilReady(600);
       log::LogContext::ScopedParam sp0(m_logContext, log::Param("loadTime", timer.secs()));

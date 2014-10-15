@@ -33,8 +33,9 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/server/BlockingQueue.hpp"
 #include "castor/server/Threading.hpp"
-#include "castor/tape/utils/Timer.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
+#include "castor/utils/Timer.hpp"
+
 #include <iostream>
 #include <stdio.h>
 
@@ -74,9 +75,9 @@ private:
     class TapeCleaning{
     TapeWriteSingleThread& m_this;
     // As we are living in the single thread of tape, we can borrow the timer
-    utils::Timer & m_timer;
+    castor::utils::Timer & m_timer;
   public:
-    TapeCleaning(TapeWriteSingleThread& parent, utils::Timer & timer):
+    TapeCleaning(TapeWriteSingleThread& parent, castor::utils::Timer & timer):
       m_this(parent), m_timer(timer){}
     ~TapeCleaning(){
       try{
@@ -88,16 +89,16 @@ private:
         } else {
           m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread: Tape NOT unloaded (manual mode)");
         }
-        m_this.m_stats.unloadTime += m_timer.secs(utils::Timer::resetCounter);
+        m_this.m_stats.unloadTime += m_timer.secs(castor::utils::Timer::resetCounter);
         // And return the tape to the library
         // In case of manual mode, this will be filtered by the rmc daemon
         // (which will do nothing)
         m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot.str());
-        m_this.m_stats.unmountTime += m_timer.secs(utils::Timer::resetCounter);
+        m_this.m_stats.unmountTime += m_timer.secs(castor::utils::Timer::resetCounter);
         m_this.m_logContext.log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.librarySlot.getLibraryType() ?
           "TapeWriteSingleThread : tape unmounted":"TapeWriteSingleThread : tape NOT unmounted (manual mode)");
         m_this.m_initialProcess.tapeUnmounted();
-        m_this.m_stats.waitReportingTime += m_timer.secs(utils::Timer::resetCounter);
+        m_this.m_stats.waitReportingTime += m_timer.secs(castor::utils::Timer::resetCounter);
       }
       catch(const castor::exception::Exception& ex){
         // Notify something failed during the cleaning 
@@ -144,7 +145,7 @@ private:
    * (also for logging)
    */
   void tapeFlush(const std::string& message,uint64_t bytes,uint64_t files,
-    utils::Timer & timer);
+    castor::utils::Timer & timer);
   
 
   virtual void run() ;

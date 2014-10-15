@@ -35,8 +35,9 @@
 #include "castor/tape/tapegateway/FilesToRecallListRequest.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
-#include "castor/tape/utils/Timer.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/Timer.hpp"
+
 #include <cxxabi.h>
 #include <memory>
 #include <stdlib.h>
@@ -76,7 +77,7 @@ tapegateway::GatewayMessage *
     RequestReport & report)
 {
   // 0) Start the stopwatch
-  castor::tape::utils::Timer timer;
+  castor::utils::Timer timer;
   // 1) We re-open connection to client for each request-response exchange
   castor::io::ClientSocket clientConnection(m_request.clientPort, 
       m_request.clientHost);

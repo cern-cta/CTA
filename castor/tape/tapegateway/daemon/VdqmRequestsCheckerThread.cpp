@@ -36,11 +36,11 @@
 
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 #include "castor/stager/TapeTpModeCodes.hpp"
-#include "castor/tape/utils/Timer.hpp"
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmRequestsCheckerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
+#include "castor/utils/Timer.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -66,7 +66,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
 
   // get list of ongoing recall and migration requests
   std::list<castor::tape::tapegateway::ITapeGatewaySvc::TapeRequest> requests;
-  castor::tape::utils::Timer timer;
+  castor::utils::Timer timer;
   try {
     // get tapes to check from the db
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,CHECKER_GETTING_TAPES, 0, NULL);

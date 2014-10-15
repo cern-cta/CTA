@@ -21,9 +21,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
-#include "castor/tape/utils/Timer.hpp"
 #include "castor/log/LogContext.hpp"
+#include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
+#include "castor/utils/Timer.hpp"
 
 namespace castor {
 namespace tape {
@@ -47,7 +47,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
   using log::LogContext;
   using log::Param;
 
-  utils::Timer localTime;
+  castor::utils::Timer localTime;
   size_t blockId=0;
   size_t migratingFileSize=m_migratedFile->fileSize();
   MemBlock* mb=NULL;
@@ -67,7 +67,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
               "and the real one");
     }
     
-    m_stats.openingTime+=localTime.secs(utils::Timer::resetCounter);
+    m_stats.openingTime+=localTime.secs(castor::utils::Timer::resetCounter);
      
     LogContext::ScopedParam sp(lc, Param("filePath",m_migratedFile->path()));
     lc.log(LOG_INFO,"Opened disk file for read");
@@ -77,14 +77,14 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
       checkMigrationFailing();
       
       mb = m_nextTask.getFreeBlock();
-      m_stats.waitFreeMemoryTime+=localTime.secs(utils::Timer::resetCounter);
+      m_stats.waitFreeMemoryTime+=localTime.secs(castor::utils::Timer::resetCounter);
       
       //set metadata and read the data
       mb->m_fileid = m_migratedFile->fileid();
       mb->m_fileBlock = blockId++;
             
       migratingFileSize -= mb->m_payload.read(*sourceFile);
-      m_stats.transferTime+=localTime.secs(utils::Timer::resetCounter);
+      m_stats.transferTime+=localTime.secs(castor::utils::Timer::resetCounter);
 
       m_stats.dataVolume += mb->m_payload.size();
 
@@ -95,7 +95,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
         mb->markAsFailed(erroMsg,SEINTERNAL);
         throw castor::exception::Exception(erroMsg);
       }
-      m_stats.checkingErrorTime += localTime.secs(utils::Timer::resetCounter);
+      m_stats.checkingErrorTime += localTime.secs(castor::utils::Timer::resetCounter);
       
       // We are done with the block, push it to the write task
       m_nextTask.pushDataBlock(mb);

@@ -202,6 +202,7 @@ set (CLIENT_LIB_SRC_FILES
   utils/DebugBuf.cpp
   utils/SmartFd.cpp
   utils/SmartFILEPtr.cpp
+  utils/Timer.cpp
   utils/utils.cpp
   vdqm/ClientIdentification.cpp
   vdqm/TapeDrive.cpp

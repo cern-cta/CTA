@@ -86,10 +86,10 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeWriteSingleThread::
 tapeFlush(const std::string& message,uint64_t bytes,uint64_t files,
-  utils::Timer & timer)
+  castor::utils::Timer & timer)
 {
   m_drive.flush();
-  double flushTime = timer.secs(utils::Timer::resetCounter);
+  double flushTime = timer.secs(castor::utils::Timer::resetCounter);
   log::ScopedParamContainer params(m_logContext);
   params.add("files", files)
         .add("bytes", bytes)
@@ -120,7 +120,7 @@ isTapeWritable() const {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   m_logContext.pushOrReplace(log::Param("thread", "TapeWrite"));
-  castor::tape::utils::Timer timer, totalTimer;
+  castor::utils::Timer timer, totalTimer;
   try
   {
     // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
@@ -144,7 +144,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       
       isTapeWritable();
       
-      m_stats.mountTime += timer.secs(utils::Timer::resetCounter);
+      m_stats.mountTime += timer.secs(castor::utils::Timer::resetCounter);
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
         scoped.addTiming("mountTime", m_stats.mountTime);
@@ -153,7 +153,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       
       // Then we have to initialize the tape write session
       std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
-      m_stats.positionTime  += timer.secs(utils::Timer::resetCounter);
+      m_stats.positionTime  += timer.secs(castor::utils::Timer::resetCounter);
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
         scoped.addTiming("positionTime", m_stats.positionTime);
@@ -163,18 +163,18 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       m_initialProcess.tapeMountedForWrite();
       uint64_t bytes=0;
       uint64_t files=0;
-      m_stats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
+      m_stats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       
       std::auto_ptr<TapeWriteTask> task;    
       while(1) {
         //get a task
         task.reset(m_tasks.pop());
-        m_stats.waitInstructionsTime += timer.secs(utils::Timer::resetCounter);
+        m_stats.waitInstructionsTime += timer.secs(castor::utils::Timer::resetCounter);
         //if is the end
         if(NULL==task.get()) {      
           //we flush without asking
           tapeFlush("No more data to write on tape, unconditional flushing to the client",bytes,files,timer);
-          m_stats.flushTime += timer.secs(utils::Timer::resetCounter);
+          m_stats.flushTime += timer.secs(castor::utils::Timer::resetCounter);
           //end of session + log
           m_reportPacker.reportEndOfSession();
           log::LogContext::ScopedParam sp0(m_logContext, log::Param("tapeThreadDuration", totalTimer.secs()));

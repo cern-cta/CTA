@@ -21,19 +21,19 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/utils/Timer.hpp"
+#include "castor/utils/Timer.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::utils::Timer::Timer() {
+castor::utils::Timer::Timer() {
   reset();
 }
 
 //------------------------------------------------------------------------------
 // usecs
 //------------------------------------------------------------------------------
-signed64 castor::tape::utils::Timer::usecs(reset_t reset) {
+signed64 castor::utils::Timer::usecs(reset_t reset) {
   timeval now;
   gettimeofday(&now, 0);
   signed64 ret = ((now.tv_sec * 1000000) + now.tv_usec) - 
@@ -47,14 +47,14 @@ signed64 castor::tape::utils::Timer::usecs(reset_t reset) {
 //------------------------------------------------------------------------------
 // secs
 //------------------------------------------------------------------------------
-double castor::tape::utils::Timer::secs(reset_t reset) {
+double castor::utils::Timer::secs(reset_t reset) {
   return usecs(reset) * 0.000001;
 }
 
 //------------------------------------------------------------------------------
 // reset
 //------------------------------------------------------------------------------
-void castor::tape::utils::Timer::reset() {
+void castor::utils::Timer::reset() {
   gettimeofday(&m_reference, 0);
 }
 

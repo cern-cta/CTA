@@ -33,8 +33,8 @@
 #include "castor/server/Threading.hpp"
 #include "castor/server/AtomicFlag.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
-#include "castor/tape/utils/Timer.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "castor/utils/Timer.hpp"
 
 namespace castor {
 namespace tape {
@@ -76,7 +76,7 @@ public:
    */
   virtual void execute(castor::tape::tapeFile::WriteSession & session,
    MigrationReportPacker & reportPacker, MigrationWatchDog & watchdog,
-   castor::log::LogContext& lc, utils::Timer & timer);
+   castor::log::LogContext& lc, castor::utils::Timer & timer);
   
   /**
    * Used to reclaim used memory blocks

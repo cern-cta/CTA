@@ -33,7 +33,7 @@
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-#include "castor/tape/utils/Timer.hpp"
+#include "castor/utils/Timer.hpp"
 
 #include <iostream>
 #include <memory>
@@ -79,9 +79,9 @@ private:
   class TapeCleaning{
     TapeReadSingleThread& m_this;
     // As we are living in the single thread of tape, we can borrow the timer
-    utils::Timer & m_timer;
+    castor::utils::Timer & m_timer;
   public:
-    TapeCleaning(TapeReadSingleThread& parent, utils::Timer & timer):
+    TapeCleaning(TapeReadSingleThread& parent, castor::utils::Timer & timer):
       m_this(parent), m_timer(timer){}
     ~TapeCleaning();
   };

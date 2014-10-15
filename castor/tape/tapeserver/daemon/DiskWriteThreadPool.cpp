@@ -20,12 +20,15 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
+
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/tape/utils/Timer.hpp"
-#include "log.h"
+#include "castor/utils/Timer.hpp"
+#include "h/log.h"
+
 #include <memory>
 #include <sstream>
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -143,11 +146,11 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
   m_lc.log(LOG_INFO, "Starting DiskWriteWorkerThread");
   
   std::auto_ptr<DiskWriteTask>  task;
-  utils::Timer localTime;
+  castor::utils::Timer localTime;
   
   while(1) {
     task.reset(m_parentThreadPool.m_tasks.pop());
-    m_threadStat.waitInstructionsTime+=localTime.secs(utils::Timer::resetCounter);
+    m_threadStat.waitInstructionsTime+=localTime.secs(castor::utils::Timer::resetCounter);
     if (NULL!=task.get()) {
       if(false==task->execute(m_parentThreadPool.m_reporter,m_lc, 
           m_parentThreadPool.m_diskFileFactory)) {

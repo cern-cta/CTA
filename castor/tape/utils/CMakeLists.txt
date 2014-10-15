@@ -27,7 +27,6 @@ cmake_minimum_required (VERSION 2.6)
 ################################################################################
 set (TAPE_UTILS_LIB_SRC_FILES
   DriveConfigMap.cpp
-  Timer.cpp
   TpconfigLine.cpp
   utils.cpp)
 add_library (castortapeutils SHARED ${TAPE_UTILS_LIB_SRC_FILES})

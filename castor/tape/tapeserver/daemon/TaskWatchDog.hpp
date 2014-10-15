@@ -28,7 +28,7 @@
 #include "castor/log/LogContext.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
-#include "castor/tape/utils/Timer.hpp"
+#include "castor/utils/Timer.hpp"
 #include "castor/utils/utils.hpp"
 
 namespace castor {
@@ -55,17 +55,17 @@ protected:
   /**
    *  Timer for regular heartbeat reports to parent process
    */  
-  castor::tape::utils::Timer m_reportTimer;
+  castor::utils::Timer m_reportTimer;
   
   /*
    *  How long since we last logged a warning?
    */
-  castor::tape::utils::Timer m_blockMovementReportTimer;
+  castor::utils::Timer m_blockMovementReportTimer;
   
   /**
    * how long since the last block movement?
    */
-  castor::tape::utils::Timer m_blockMovementTimer;
+  castor::utils::Timer m_blockMovementTimer;
   
   /**
    * How fast should we tick?

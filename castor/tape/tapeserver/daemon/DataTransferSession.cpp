@@ -212,7 +212,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     
     // We are now ready to put everything in motion. First step is to check
     // we get any concrete job to be done from the client (via the task injector)
-    utils::Timer timer;
+    castor::utils::Timer timer;
     if (rti.synchronousInjection()) {
       // We got something to recall. Time to start the machinery
       trst.setWaitForInstructionsTime(timer.secs());
@@ -301,7 +301,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
             m_castorConf.bulkRequestMigrationMaxBytes,
             m_castorConf.bulkRequestMigrationMaxFiles,lc);
     drtp.setTaskInjector(&mti);
-    utils::Timer timer;
+    castor::utils::Timer timer;
     if (mti.synchronousInjection()) {
       const uint64_t firstFseqFromClient = mti.firstFseqToWrite();
       

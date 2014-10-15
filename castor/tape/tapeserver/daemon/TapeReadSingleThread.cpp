@@ -49,7 +49,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   m_this.m_taskInjector->finish();
   //then we log/notify
   m_this.m_logContext.log(LOG_DEBUG, "Starting session cleanup. Signaled end of session to task injector.");
-  m_this.m_stats.waitReportingTime += m_timer.secs(utils::Timer::resetCounter);
+  m_this.m_stats.waitReportingTime += m_timer.secs(castor::utils::Timer::resetCounter);
   try {
     // Do the final cleanup
     // in the special case of a "manual" mode tape, we should skip the unload too.
@@ -59,16 +59,16 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     } else {
       m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread: Tape NOT unloaded (manual mode)");
     }
-    m_this.m_stats.unloadTime += m_timer.secs(utils::Timer::resetCounter);
+    m_this.m_stats.unloadTime += m_timer.secs(castor::utils::Timer::resetCounter);
     // And return the tape to the library
     // In case of manual mode, this will be filtered by the rmc daemon
     // (which will do nothing)
     m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot.str());
-    m_this.m_stats.unmountTime += m_timer.secs(utils::Timer::resetCounter);
+    m_this.m_stats.unmountTime += m_timer.secs(castor::utils::Timer::resetCounter);
     m_this.m_logContext.log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.librarySlot.getLibraryType() ?
       "TapeReadSingleThread : tape unmounted":"TapeReadSingleThread : tape NOT unmounted (manual mode)");
     m_this.m_initialProcess.tapeUnmounted();
-    m_this.m_stats.waitReportingTime += m_timer.secs(utils::Timer::resetCounter);
+    m_this.m_stats.waitReportingTime += m_timer.secs(castor::utils::Timer::resetCounter);
   } catch(const castor::exception::Exception& ex){
     // Something failed during the cleaning 
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
@@ -130,7 +130,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
   m_logContext.pushOrReplace(log::Param("thread", "tapeRead"));
-  castor::tape::utils::Timer timer, totalTimer;
+  castor::utils::Timer timer, totalTimer;
   try{
     // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
     // through the st driver file descriptor.
@@ -145,7 +145,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       // Before anything, the tape should be mounted
       mountTapeReadOnly();
       waitForDrive();
-      m_stats.mountTime += timer.secs(utils::Timer::resetCounter);
+      m_stats.mountTime += timer.secs(castor::utils::Timer::resetCounter);
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
         scoped.addTiming("mountTime", m_stats.mountTime);
@@ -153,7 +153,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       }
       // Then we have to initialise the tape read session
       std::auto_ptr<castor::tape::tapeFile::ReadSession> rs(openReadSession());
-      m_stats.positionTime += timer.secs(utils::Timer::resetCounter);
+      m_stats.positionTime += timer.secs(castor::utils::Timer::resetCounter);
       //and then report
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
@@ -161,14 +161,14 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         m_logContext.log(LOG_INFO, "Tape read session session successfully started");
       }
       m_initialProcess.tapeMountedForRead();
-      m_stats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
+      m_stats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       // Then we will loop on the tasks as they get from 
       // the task injector
       std::auto_ptr<TapeReadTask> task;
       while(true) {
         //get a task
         task.reset(popAndRequestMoreJobs());
-        m_stats.waitInstructionsTime += timer.secs(utils::Timer::resetCounter);
+        m_stats.waitInstructionsTime += timer.secs(castor::utils::Timer::resetCounter);
         // If we reached the end
         if (NULL==task.get()) {
           m_logContext.log(LOG_DEBUG, "No more files to read from tape");

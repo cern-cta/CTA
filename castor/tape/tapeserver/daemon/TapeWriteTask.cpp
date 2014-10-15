@@ -62,7 +62,7 @@ namespace daemon {
 //------------------------------------------------------------------------------  
    void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,
            MigrationReportPacker & reportPacker, MigrationWatchDog & watchdog,
-           castor::log::LogContext& lc, utils::Timer & timer) {
+           castor::log::LogContext& lc, castor::utils::Timer & timer) {
     using castor::log::LogContext;
     using castor::log::Param;
     using castor::log::ScopedParamContainer;
@@ -78,7 +78,7 @@ namespace daemon {
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
     
-    utils::Timer localTime;
+    castor::utils::Timer localTime;
     
     unsigned long ckSum = Payload::zeroAdler32();
     
@@ -87,21 +87,21 @@ namespace daemon {
       //try to open the session
       watchdog.notifyBeginNewJob(*m_fileToMigrate);
       std::auto_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
-      m_taskStats.transferTime += timer.secs(utils::Timer::resetCounter);
+      m_taskStats.transferTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
       while(!m_fifo.finished()) {
         MemBlock* const mb = m_fifo.popDataBlock();
-        m_taskStats.waitDataTime += timer.secs(utils::Timer::resetCounter);
+        m_taskStats.waitDataTime += timer.secs(castor::utils::Timer::resetCounter);
         AutoReleaseBlock<MigrationMemoryManager> releaser(mb,m_memManager);
         
         //will throw (thus exiting the loop) if something is wrong
         checkErrors(mb,memBlockId,lc);
         
         ckSum =  mb->m_payload.adler32(ckSum);
-        m_taskStats.checksumingTime += timer.secs(utils::Timer::resetCounter);
+        m_taskStats.checksumingTime += timer.secs(castor::utils::Timer::resetCounter);
         mb->m_payload.write(*output);
         
-        m_taskStats.transferTime += timer.secs(utils::Timer::resetCounter);
+        m_taskStats.transferTime += timer.secs(castor::utils::Timer::resetCounter);
         m_taskStats.dataVolume += mb->m_payload.size();
         watchdog.notify();
         ++memBlockId;
@@ -110,11 +110,11 @@ namespace daemon {
       //finish the writing of the file on tape
       //put the trailer
       output->close();
-      m_taskStats.transferTime += timer.secs(utils::Timer::resetCounter);
+      m_taskStats.transferTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
       m_taskStats.filesCount ++;
       reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum,output->getBlockId());
-      m_taskStats.waitReportingTime += timer.secs(utils::Timer::resetCounter);
+      m_taskStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       // Log the successful transfer      
       logWithStats(LOG_INFO, "File successfully transmitted to drive",
               localTime.secs(),lc);

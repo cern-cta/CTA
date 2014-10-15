@@ -21,11 +21,11 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/log/LogContext.hpp"
-#include "castor/tape/utils/Timer.hpp"
+#include "castor/utils/Timer.hpp"
 
 namespace castor {
 namespace tape {
@@ -47,7 +47,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
     diskFile::DiskFileFactory & fileFactory) {
   using log::LogContext;
   using log::Param;
-  utils::Timer localTime;
+  castor::utils::Timer localTime;
   try{
     std::auto_ptr<tape::diskFile::WriteFile> writeFile(
       fileFactory.createWriteFile(m_recallingFile->path()));
@@ -55,13 +55,13 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
     URLcontext.add("actualURL", writeFile->URL())
               .add("path", m_recallingFile->path());
     lc.log(LOG_INFO, "Opened disk file for write");
-    m_stats.openingTime+=localTime.secs(utils::Timer::resetCounter);
+    m_stats.openingTime+=localTime.secs(castor::utils::Timer::resetCounter);
     
     int blockId  = 0;
     unsigned long checksum = Payload::zeroAdler32();
     while(1) {
       if(MemBlock* const mb = m_fifo.pop()) {
-        m_stats.waitDataTime+=localTime.secs(utils::Timer::resetCounter);
+        m_stats.waitDataTime+=localTime.secs(castor::utils::Timer::resetCounter);
         AutoReleaseBlock<RecallMemoryManager> releaser(mb,m_memManager);
         if(mb->isCanceled()) {
           // If the tape side got canceled, we report nothing and count
@@ -72,15 +72,15 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         
         //will throw (thus exiting the loop) if something is wrong
         checkErrors(mb,blockId,lc);
-        m_stats.checkingErrorTime += localTime.secs(utils::Timer::resetCounter);
+        m_stats.checkingErrorTime += localTime.secs(castor::utils::Timer::resetCounter);
         
         m_stats.dataVolume+=mb->m_payload.size();
         
         mb->m_payload.write(*writeFile);
-        m_stats.transferTime+=localTime.secs(utils::Timer::resetCounter);
+        m_stats.transferTime+=localTime.secs(castor::utils::Timer::resetCounter);
         
         checksum = mb->m_payload.adler32(checksum);
-        m_stats.checksumingTime+=localTime.secs(utils::Timer::resetCounter);
+        m_stats.checksumingTime+=localTime.secs(castor::utils::Timer::resetCounter);
        
         blockId++;
       } //end if block non NULL
@@ -89,13 +89,13 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         //A close is done  in WriteFile's destructor, but it may lead to some 
         //silent data loss
         writeFile->close();
-        m_stats.closingTime +=localTime.secs(utils::Timer::resetCounter);
+        m_stats.closingTime +=localTime.secs(castor::utils::Timer::resetCounter);
         m_stats.filesCount++;
         break;
       }
     } //end of while(1)
     reporter.reportCompletedJob(*m_recallingFile,checksum,m_stats.dataVolume);
-    m_stats.waitReportingTime+=localTime.secs(utils::Timer::resetCounter);
+    m_stats.waitReportingTime+=localTime.secs(castor::utils::Timer::resetCounter);
     logWithStat(LOG_DEBUG, "File successfully transfered to disk",lc);
     
     //everything went well, return true
@@ -115,7 +115,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
     releaseAllBlock();
     
     reporter.reportFailedJob(*m_recallingFile,e.getMessageValue(),e.code());
-    m_stats.waitReportingTime+=localTime.secs(utils::Timer::resetCounter);
+    m_stats.waitReportingTime+=localTime.secs(castor::utils::Timer::resetCounter);
     
     //got an exception, return false
     return false;
