@@ -21,13 +21,30 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
+#pragma once
 
-#include "castor/tape/utils/ShutdownBoolFunctor.hpp"
+#include "castor/tape/utils/BoolFunctor.hpp"
 
+namespace castor      {
+namespace tape        {
+namespace tapegateway {
 
-//-----------------------------------------------------------------------------
-// destructor
-//-----------------------------------------------------------------------------
-castor::tape::utils::ShutdownBoolFunctor::~ShutdownBoolFunctor() throw() {
-  // Do nothing
-}
+/**
+ * Class tracking a shutdown state the interface to be followed by functors that
+ * take no parameters and return a boolean.
+ */
+class ShutdownBoolFunctor: public utils::BoolFunctor {
+public:
+  ShutdownBoolFunctor():m_val(false){};
+  virtual ~ShutdownBoolFunctor() throw();
+  virtual bool operator()() const {return m_val;}
+  void set(void) {m_val=true;}
+  void reset(void) {m_val=false;}
+private:
+  bool m_val;
+}; // class ShutdownBoolFunctor
+
+} // namespace tapegateway
+} // namespace tape
+} // namespace castor      
+

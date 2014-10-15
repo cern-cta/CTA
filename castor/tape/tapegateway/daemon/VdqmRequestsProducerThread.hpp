@@ -28,9 +28,9 @@
 
 #include "castor/server/IThread.hpp"
 #include "castor/BaseObject.hpp"
-#include "castor/tape/utils/ShutdownBoolFunctor.hpp"
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/ShutdownBoolFunctor.hpp"
 
 namespace castor     {
   namespace tape       {
@@ -127,7 +127,7 @@ namespace castor     {
         int m_port;
 
         // functor to know whether the thread is shutting down
-        utils::ShutdownBoolFunctor m_shuttingDown;
+        ShutdownBoolFunctor m_shuttingDown;
 
       };
 

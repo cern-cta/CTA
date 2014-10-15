@@ -27,7 +27,7 @@
 
 #include "castor/BaseObject.hpp"
 #include "castor/server/IThread.hpp"
-#include "castor/tape/utils/ShutdownBoolFunctor.hpp"
+#include "castor/tape/tapegateway/ShutdownBoolFunctor.hpp"
 
 namespace castor     {
   namespace tape       {
@@ -71,7 +71,7 @@ namespace castor     {
         u_signed64 m_timeOut;
 
         /// a functor telling whether the thread is shutting down
-        utils::ShutdownBoolFunctor m_shuttingDown;
+        ShutdownBoolFunctor m_shuttingDown;
       };
 
     } // end of tapegateway

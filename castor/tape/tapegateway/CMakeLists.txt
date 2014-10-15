@@ -27,6 +27,7 @@ cmake_minimum_required (VERSION 2.6)
 ################################################################################
 set (TAPEGATEWAY_SRC_FILES
   ScopedTransaction.cpp
+  ShutdownBoolFunctor.cpp
   TapeGatewayDlfMessageStrings.cpp
   daemon/NsTapeGatewayHelper.cpp
   daemon/TapeGatewayDaemon.cpp

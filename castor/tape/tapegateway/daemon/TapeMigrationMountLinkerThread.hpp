@@ -27,7 +27,7 @@
 
 #include "castor/BaseObject.hpp"
 #include "castor/server/IThread.hpp"
-#include "castor/tape/utils/ShutdownBoolFunctor.hpp"
+#include "castor/tape/tapegateway/ShutdownBoolFunctor.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -61,7 +61,7 @@ namespace tapegateway{
      */
     virtual void stop() {m_shuttingDown.set();}
   private:
-    utils::ShutdownBoolFunctor m_shuttingDown;
+    ShutdownBoolFunctor m_shuttingDown;
 
   };
 

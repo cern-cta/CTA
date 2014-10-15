@@ -30,10 +30,10 @@
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/server/IThread.hpp"
-#include "castor/tape/utils/ShutdownBoolFunctor.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
 #include "castor/tape/tapegateway/FileMigrationReportList.hpp"
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
+#include "castor/tape/tapegateway/ShutdownBoolFunctor.hpp"
 #include <list>
 
 
@@ -149,7 +149,7 @@ namespace tapegateway{
         const std::string & tapePool, const std::string & vid,
         castor::exception::Exception & e);
 
-    utils::ShutdownBoolFunctor m_shuttingDown;
+    ShutdownBoolFunctor m_shuttingDown;
 
     // Utility class for sorting migration reports in fseq order.
     class FileMigratedFseqComparator { public:
