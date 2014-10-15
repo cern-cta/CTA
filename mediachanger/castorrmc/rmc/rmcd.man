@@ -54,26 +54,8 @@ rmc           5014/tcp                        # CASTOR Remote Media Changer
 If none of these methods is used, the default port number is taken from the
 definition of RMC_PORT in rmc_constants.h.
 .LP
-The Remote Media Changer host name can be defined on client hosts
-in either of the following ways:
-.RS
-.LP
-setting an environment variable RMC_HOST, for example:
-.RS
-.HP
-setenv RMC_HOST castor5
-.RE
-.LP
-an entry in
-.B /etc/castor/castor.conf
-for example:
-.RS
-.HP
-RMC	HOST	castor5
 .RE
 .RE
-.LP
-If none of these methods is used, the default host is the local host.
 .LP
 In the log each entry has a timestamp.
 For each user command there is one message RMC92 giving information about
