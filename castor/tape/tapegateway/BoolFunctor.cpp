@@ -21,32 +21,13 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
-#pragma once
 
-namespace castor {
-namespace tape   {
-namespace utils  {
-    
-  /**
-   * Abstract class specifiying the interface to be followed by functors that
-   * take no parameters and return a boolean.
-   */
-  class BoolFunctor {
-  public:
+#include "castor/tape/tapegateway/BoolFunctor.hpp"
 
-    /**
-     * operator() which takes no parameters and returns a boolean.
-     */
-    virtual bool operator()() const = 0;
 
-    /**
-     * Virtual destructor.
-     */
-    virtual ~BoolFunctor() throw();
-
-  }; // class BoolFunctor
-
-} // namespace utils
-} // namespace tape
-} // namespace castor      
-
+//-----------------------------------------------------------------------------
+// destructor
+//-----------------------------------------------------------------------------
+castor::tape::tapegateway::BoolFunctor::~BoolFunctor() throw() {
+  // Do nothing
+}

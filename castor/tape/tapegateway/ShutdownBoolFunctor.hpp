@@ -23,7 +23,7 @@
  *****************************************************************************/
 #pragma once
 
-#include "castor/tape/utils/BoolFunctor.hpp"
+#include "castor/tape/tapegateway/BoolFunctor.hpp"
 
 namespace castor      {
 namespace tape        {
@@ -33,7 +33,7 @@ namespace tapegateway {
  * Class tracking a shutdown state the interface to be followed by functors that
  * take no parameters and return a boolean.
  */
-class ShutdownBoolFunctor: public utils::BoolFunctor {
+class ShutdownBoolFunctor: public BoolFunctor {
 public:
   ShutdownBoolFunctor():m_val(false){};
   virtual ~ShutdownBoolFunctor() throw();

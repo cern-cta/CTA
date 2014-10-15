@@ -26,7 +26,7 @@
 #include "osdep.h"
 #include "vmgr_api.h"
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/utils/BoolFunctor.hpp"
+#include "castor/tape/tapegateway/BoolFunctor.hpp"
 
 namespace castor {
   namespace tape {
@@ -58,7 +58,7 @@ namespace castor {
                                  const std::string& tapepoolName,
                                  std::string &vid,
                                  int& startFseq,
-                                 const utils::BoolFunctor &shuttingDown)
+                                 const BoolFunctor &shuttingDown)
           ;
 
         /** unbusy a tape in VMGR
@@ -67,17 +67,17 @@ namespace castor {
          * @exception throws CASTOR exceptions in case of error
          */
         void resetBusyTape(const std::string &vid,
-                                 const utils::BoolFunctor &shuttingDown)
+                                 const BoolFunctor &shuttingDown)
           ;
       
         void bulkUpdateTapeInVmgr(u_signed64 filesCount, signed64 highestFseq, u_signed64 totalBytes,
-            u_signed64 totalCompressedBytes, const std::string& vid, const utils::BoolFunctor &shuttingDown)
+            u_signed64 totalCompressedBytes, const std::string& vid, const BoolFunctor &shuttingDown)
           ;
       
-        void setTapeAsFull(const std::string &vid, const utils::BoolFunctor &shuttingDown)
+        void setTapeAsFull(const std::string &vid, const BoolFunctor &shuttingDown)
           ;
 
-        void setTapeAsReadonlyAndUnbusy(const  std::string &vid, const utils::BoolFunctor &shuttingDown)
+        void setTapeAsReadonlyAndUnbusy(const  std::string &vid, const BoolFunctor &shuttingDown)
           ;
 
         int maxFseqFromLabel(const char* label);
@@ -87,7 +87,7 @@ namespace castor {
          * @return a struct containing the vmgr information
          * @exception throws CASTOR exceptions in case of error
          */
-        TapeInfo getTapeInfo(const std::string &vid, const utils::BoolFunctor &shuttingDown)
+        TapeInfo getTapeInfo(const std::string &vid, const BoolFunctor &shuttingDown)
           ;
         
         /* get information concerning a tape from VMGR and checks
@@ -97,7 +97,7 @@ namespace castor {
          * @exception throws CASTOR exceptions in case of error, in particular
          * if the tape is not available
          */
-        TapeInfo getTapeInfoAssertAvailable(const std::string &vid, const utils::BoolFunctor &shuttingDown)
+        TapeInfo getTapeInfoAssertAvailable(const std::string &vid, const BoolFunctor &shuttingDown)
           ;
 
       } // end of namespace VmgrTapeGatewayHelper

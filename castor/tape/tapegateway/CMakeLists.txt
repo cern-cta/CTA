@@ -26,6 +26,7 @@ cmake_minimum_required (VERSION 2.6)
 # Rules to build and install tapegatewayd
 ################################################################################
 set (TAPEGATEWAY_SRC_FILES
+  BoolFunctor.cpp
   ScopedTransaction.cpp
   ShutdownBoolFunctor.cpp
   TapeGatewayDlfMessageStrings.cpp

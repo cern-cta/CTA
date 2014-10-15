@@ -46,7 +46,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForMigration
  const std::string& tapepoolName,
  std::string &outVid,
  int& outStartFseq,
- const utils::BoolFunctor &shuttingDown)
+ const BoolFunctor &shuttingDown)
    {
   // Sanity checks
   if (tapepoolName.empty() || initialSizeToTransfer==0) {
@@ -133,7 +133,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForMigration
 }
 
 void  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape
-(const std::string &vid, const utils::BoolFunctor &shuttingDown)
+(const std::string &vid, const BoolFunctor &shuttingDown)
    {
   /* Retrieve from vmgr through helper class */
   TapeInfo info = getTapeInfo(vid, shuttingDown);
@@ -155,7 +155,7 @@ void  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape
 void castor::tape::tapegateway::VmgrTapeGatewayHelper::bulkUpdateTapeInVmgr(
     u_signed64 filesCount, signed64 highestFseq, u_signed64 totalBytes,
     u_signed64 totalCompressedBytes, const std::string& vid,
-    const utils::BoolFunctor &shuttingDown)
+    const BoolFunctor &shuttingDown)
 {
   TapeInfo tinfo = getTapeInfoAssertAvailable (vid, shuttingDown); /* Retrieve from vmgr through helper class, with assertion */
   int flags = tinfo.vmgrTapeInfo.status;
@@ -217,7 +217,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::bulkUpdateTapeInVmgr(
 }
 
 void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsFull
-(const std::string& vid, const utils::BoolFunctor &shuttingDown)
+(const std::string& vid, const BoolFunctor &shuttingDown)
    {
   // called if FileErrorReport ENOSPC
   /* Retrieve from vmgr through helper class */
@@ -238,7 +238,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsFull
 }
 
 void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsReadonlyAndUnbusy
-(const std::string &vid, const utils::BoolFunctor &shuttingDown)
+(const std::string &vid, const BoolFunctor &shuttingDown)
    {
   /* Retrieve from vmgr through helper class */
   TapeInfo info = getTapeInfo(vid, shuttingDown);
@@ -276,7 +276,7 @@ int castor::tape::tapegateway::VmgrTapeGatewayHelper::maxFseqFromLabel(const cha
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::TapeInfo
 castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeInfo
-(const std::string& vid, const utils::BoolFunctor &shuttingDown)
+(const std::string& vid, const BoolFunctor &shuttingDown)
    {
   /* Sanity check */
   if (vid.empty()) {
@@ -323,7 +323,7 @@ castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeInfo
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::TapeInfo
 castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeInfoAssertAvailable
-(const std::string& vid, const utils::BoolFunctor &shuttingDown)
+(const std::string& vid, const BoolFunctor &shuttingDown)
    {
   // call getTapeInfo
   TapeInfo info = getTapeInfo(vid, shuttingDown);
