@@ -239,16 +239,6 @@ unsigned short getPortFromConfig(const char *const category,
  * Parses the specified TPCONFIG file.
  *
  * @param filename The filename of the TPCONFIG file.
- * @param lines    Output parameter: Map from the unit name of a tape drive to
- *                 its configuration.
- */
-void parseTpconfigFile(const std::string &filename, DriveConfigMap &drives)
-  throw(castor::exception::Exception);
-
-/**
- * Parses the specified TPCONFIG file.
- *
- * @param filename The filename of the TPCONFIG file.
  * @param lines    Output parameter: The list of data-lines parsed from the
  *                 TPCONFIG file.
  */
