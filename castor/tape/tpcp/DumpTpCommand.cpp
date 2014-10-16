@@ -137,11 +137,13 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
       m_cmdLine.serverSet = true;
       try {
         castor::utils::copyString(m_cmdLine.server, optarg);
-      } catch(castor::exception::Exception &ex) {
-        TAPE_THROW_EX(castor::exception::Exception,
-          ": Failed to copy the argument of the server command-line option"
+      } catch(castor::exception::Exception &ne) {
+        castor::exception::Exception ex;
+        ex.getMessage() <<
+          "Failed to copy the argument of the server command-line option"
           " into the internal data structures"
-          ": " << ex.getMessage().str());
+          ": " << ne.getMessage().str();
+        throw ex;
       }
       break;
 
@@ -309,23 +311,25 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
   // Check the first command-line argument is syntactically a valid VID
   try {
     castor::utils::checkVidSyntax(argv[optind]);
-  } catch(castor::exception::InvalidArgument &ex) {
-    castor::exception::InvalidArgument ex2;
+  } catch(castor::exception::InvalidArgument &ne) {
+    castor::exception::InvalidArgument ex;
 
-    ex2.getMessage() << "\tFirst command-line argument must be a valid VID:\n"
-      "\t" << ex.getMessage().str();
+    ex.getMessage() << "\tFirst command-line argument must be a valid VID:\n"
+      "\t" << ne.getMessage().str();
 
-    throw ex2;
+    throw ex;
   }
 
   // Parse the VID command-line argument
   try {
     castor::utils::copyString(m_cmdLine.vid, argv[optind]);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Exception,
-      ": Failed to copy VID comand-line argument into the internal data"
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << 
+      "Failed to copy VID comand-line argument into the internal data"
       " structures"
-      ": " << ex.getMessage().str());
+      ": " << ne.getMessage().str();
+    throw ex;
   }
 }
 

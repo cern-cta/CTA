@@ -368,7 +368,9 @@ protected:
       sendEndNotificationErrorReport(tapebridgeTransactionId, SEINTERNAL,
         oss.str(), sock);
 
-      TAPE_THROW_EX(castor::exception::Exception, oss.str());
+      castor::exception::Exception ex;
+      ex.getMessage() <<  oss.str();
+      throw ex;
     }
   }
 

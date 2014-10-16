@@ -146,11 +146,13 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
       m_cmdLine.serverSet = true;
       try {
         castor::utils::copyString(m_cmdLine.server, optarg);
-      } catch(castor::exception::Exception &ex) {
-        TAPE_THROW_EX(castor::exception::Exception,
-          ": Failed to copy the argument of the server command-line option"
+      } catch(castor::exception::Exception &ne) {
+        castor::exception::Exception ex;
+        ex.getMessage() <<
+          "Failed to copy the argument of the server command-line option"
           " into the internal data structures"
-          ": " << ex.getMessage().str());
+          ": " << ne.getMessage().str();
+        throw ex;
       }
       break;
 
@@ -264,11 +266,13 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
   // Parse the VID command-line argument
   try {
     castor::utils::copyString(m_cmdLine.vid, argv[optind]);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Exception,
-      ": Failed to copy VID comand-line argument into the internal data"
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to copy VID comand-line argument into the internal data"
       " structures"
-      ": " << ex.getMessage().str());
+      ": " << ne.getMessage().str();
+    throw ex;
   }
 
   // Move on to the next command-line argument
@@ -342,8 +346,10 @@ void castor::tape::tpcp::ReadTpCommand::checkAccessToDisk()
 
   // Sanity check - there should be at least one file to be recalled
   if(m_filenames.empty()) {
-    TAPE_THROW_EX(castor::exception::Exception,
-      ": List of filenames to be processed is unexpectedly empty");
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "List of filenames to be processed is unexpectedly empty";
+    throw ex;
   }
 }
 
