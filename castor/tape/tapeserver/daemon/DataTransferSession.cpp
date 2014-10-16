@@ -290,7 +290,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         mrp,
         m_capUtils,    
         m_castorConf.maxFilesBeforeFlush,
-        m_castorConf.maxBytesBeforeFlush/m_castorConf.bufsz);
+        m_castorConf.maxBytesBeforeFlush);
     DiskReadThreadPool drtp(m_castorConf.nbDiskThreads,
         m_castorConf.bulkRequestMigrationMaxFiles,
         m_castorConf.bulkRequestMigrationMaxBytes,
