@@ -45,17 +45,8 @@ void castor::log::LogContext::pushOrReplace(const Param& param) throw() {
 }
 
 void castor::log::LogContext::erase(const std::string& paramName) throw() {
-  bool found;
-  do {
-    found = false;
-    ParamNameMatcher match(paramName);
-    std::list<Param>::iterator i = 
-        std::find_if(m_params.begin(), m_params.end(), match);
-    if (i != m_params.end()) {
-      m_params.erase(i);
-      found = true;
-    }
-  } while (found);
+  ParamNameMatcher match(paramName);
+  m_params.erase(std::remove_if(m_params.begin(), m_params.end(), match), m_params.end());
 }
 
 void castor::log::LogContext::log(const int priority, const std::string& msg) throw() {
