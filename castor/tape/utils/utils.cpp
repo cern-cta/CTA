@@ -436,47 +436,6 @@ void castor::tape::utils::parseTpconfigFile(const std::string &filename,
 }
 
 //------------------------------------------------------------------------------
-// getMandatoryValueFromConfiguration
-//------------------------------------------------------------------------------
-const char *castor::tape::utils::getMandatoryValueFromConfiguration(
-  const char *const category, const char *const name)
-   {
-
-  const char *const tmp = getconfent(category, name, 0);
-
-  if(tmp == NULL) {
-    castor::exception::InvalidConfiguration ex;
-
-    ex.getMessage() <<
-      "Failed to get the value of the mandatory configuration parameter " <<
-      category << "/" << name <<
-      ": The parameter is not specified in castor.conf";
-
-    throw ex;
-  }
-
-  if(isAnEmptyString(tmp)) {
-    castor::exception::InvalidConfiguration ex;
-
-    ex.getMessage() <<
-      "Failed to get the value of the mandatory configuration parameter " <<
-      category << "/" << name <<
-      ": The value of the parameter is an empty string";
-
-    throw ex;
-  }
-
-  return tmp;
-}
-
-//------------------------------------------------------------------------------
-// isAnEmptyString
-//------------------------------------------------------------------------------
-bool castor::tape::utils::isAnEmptyString(const char *const str) throw() {
-  return *str == '\0';
-}
-
-//------------------------------------------------------------------------------
 // tapeBlockIdToString
 //------------------------------------------------------------------------------
 std::string castor::tape::utils::tapeBlockIdToString(

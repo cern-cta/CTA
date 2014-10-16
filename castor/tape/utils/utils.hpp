@@ -245,24 +245,6 @@ unsigned short getPortFromConfig(const char *const category,
 void parseTpconfigFile(const std::string &filename, TpconfigLines &lines);
 
 /**
- * C++ wrapper function of the C getconfent() function.  This wrapper
- * converts a return value of null or empty string into an
- * InvalidConfiguration exception.
- *
- * @param category The category of the configuration value to be retrieved.
- * @param name     The name of the configuration value to be retrieved.
- * @return         The value returned bu getconfent().
- */
-const char *getMandatoryValueFromConfiguration(const char *const category,
-  const char *const name) ;
-
-/**
- * Returns true if the specified C string is empty else returns false.
- */
-bool isAnEmptyString(const char *const str) throw();
-
-
-/**
  * Returns the string representation of the specified tape block-id.
  *
  * @param  blockId0 Block-id part 0.
