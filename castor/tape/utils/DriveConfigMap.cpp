@@ -40,121 +40,32 @@ void castor::tape::utils::DriveConfigMap::enterTpconfigLines(
 //------------------------------------------------------------------------------
 void castor::tape::utils::DriveConfigMap::enterTpconfigLine(
   const TpconfigLine &line) {
-  // Try to find the drive within the map
-  DriveConfigMap::iterator itor = find(line.unitName);
+  try {
+    // Try to find the drive within the map
+    DriveConfigMap::iterator itor = find(line.unitName);
 
-  // If the drive is not in the map
-  if(end() == itor) {
-    // Insert it
-    DriveConfig d;
-    d.unitName = line.unitName;
-    d.dgn = line.dgn;
-    d.devFilename = line.devFilename;
-    d.densities.push_back(line.density);
-    d.librarySlot = line.librarySlot;
-    d.devType = line.devType;
-    (*this)[line.unitName] = d;
-
-  // Else the drive is already in the catalogue and therefore the TPCONFIG line
-  // is simply appending a new supported density
-  } else {
-    DriveConfig &drive = itor->second;
-
-    // Check that the TPCONFIG line does not conflict with the current
-    // configuration of the tape drive
-    checkTpconfigLine(drive, line);
-
-    // Add the new density to the list of supported densities
-    drive.densities.push_back(line.density);
-  }
-}
-
-//-----------------------------------------------------------------------------
-// checkTpconfigLine
-//-----------------------------------------------------------------------------
-void castor::tape::utils::DriveConfigMap::checkTpconfigLine(
-  const DriveConfig &drive, const TpconfigLine &line) {
-  checkTpconfigLineDgn(drive, line);
-  checkTpconfigLineDevFilename(drive, line);
-  checkTpconfigLineDensity(drive, line);
-  checkTpconfigLineLibrarySlot(drive, line);
-  checkTpconfigLineDevType(drive, line);
-}
-
-//-----------------------------------------------------------------------------
-// checkTpconfigLineDgn
-//-----------------------------------------------------------------------------
-void castor::tape::utils::DriveConfigMap::checkTpconfigLineDgn(
-  const DriveConfig &drive, const TpconfigLine &line) {
-  if(drive.dgn != line.dgn) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Invalid TPCONFIG line"
-      ": A tape drive can only be asscoiated with one DGN"
-      ": first=" << drive.dgn << " second=" << line.dgn;
-    throw ex;
-  }
-}
-
-//-----------------------------------------------------------------------------
-// checkTpconfigLineDevFilename
-//-----------------------------------------------------------------------------
-void castor::tape::utils::DriveConfigMap::checkTpconfigLineDevFilename(
-  const DriveConfig &drive, const TpconfigLine &line) {
-  if(drive.devFilename != line.devFilename) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Invalid TPCONFIG line"
-      ": A tape drive can only have one device filename"
-      ": first=" << drive.devFilename <<
-      " second=" << line.devFilename;
-    throw ex;
-  }
-}
-
-//-----------------------------------------------------------------------------
-// checkTpconfigLineDensity
-//-----------------------------------------------------------------------------
-void castor::tape::utils::DriveConfigMap::checkTpconfigLineDensity(
-  const DriveConfig &drive, const TpconfigLine &line) {
-  const std::list<std::string> &densities = drive.densities;
-
-  for(std::list<std::string>::const_iterator itor = densities.begin();
-    itor != densities.end(); itor++) {
-    if((*itor) == line.density) {
+    // Enforce one TPCONFIG line per drive
+    if(end() != itor) {
       castor::exception::Exception ex;
       ex.getMessage() << "Invalid TPCONFIG line"
-        ": A tape drive can only be associated with a specific tape density"
-        " once: repeatedDensity=" << line.density;
+        ": There should only be one TPCONFIG line per tape drive: unitName=" <<
+        line.unitName;
       throw ex;
     }
-  }
-}
 
-//-----------------------------------------------------------------------------
-// checkTpconfigLineLibrarySlot
-//-----------------------------------------------------------------------------
-void castor::tape::utils::DriveConfigMap::checkTpconfigLineLibrarySlot(
-  const DriveConfig &drive, const  TpconfigLine &line) {
-  if(drive.librarySlot.str() != line.librarySlot) {
+    // Insert the drive
+    {
+      DriveConfig d;
+      d.unitName = line.unitName;
+      d.dgn = line.dgn;
+      d.devFilename = line.devFilename;
+      d.librarySlot = line.librarySlot;
+      (*this)[line.unitName] = d;
+    }
+  } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Invalid TPCONFIG line"
-      ": A tape drive can only be in one slot within its library"
-      ": first=" << drive.librarySlot.str() <<
-      " second=" << line.librarySlot;
-    throw ex;
-  }
-}
-
-//-----------------------------------------------------------------------------
-// checkTpconfigLineDevType
-//-----------------------------------------------------------------------------
-void castor::tape::utils::DriveConfigMap::checkTpconfigLineDevType(
-  const DriveConfig &drive, const TpconfigLine &line) {
-  if(drive.devType != line.devType) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Invalid TPCONFIG line"
-      ": A tape drive can only have one device type"
-      ": first=" << drive.devType <<
-      " second=" << line.devType;
+    ex.getMessage() << "Failed to enter TPCONFIG line into drive map: " <<
+      ne.getMessage().str();
     throw ex;
   }
 }

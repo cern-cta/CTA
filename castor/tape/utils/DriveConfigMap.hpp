@@ -55,64 +55,6 @@ private:
    */
   void enterTpconfigLine(const TpconfigLine &line);
 
-  /**
-   * Throws an exception if the specified TPCONFIG line is invalid when
-   * compared to the specified current tape-drive configuration.
-   *
-   * @param drive The current configuration of the tape drive.
-   * @param line The line parsed from /etc/castor/TPCONFIG.
-   */
-  void checkTpconfigLine(const DriveConfig &drive, const TpconfigLine &line);
-
-  /**
-   * Throws an exception if the specified TPCONFIG line is invalid when
-   * compared to the specified current tape-drive configuration.
-   *
-   * @param drive The current configuration of the tape drive.
-   * @param line The line parsed from /etc/castor/TPCONFIG.
-   */
-  void checkTpconfigLineDgn(const DriveConfig &drive,
-    const TpconfigLine &line);
-
-  /**
-   * Throws an exception if the specified TPCONFIG line is invalid when
-   * compared to the specified current tape-drive configuration.
-   *
-   * @param drive The current configuration of the tape drive.
-   * @param line The line parsed from /etc/castor/TPCONFIG.
-   */
-  void checkTpconfigLineDevFilename(const DriveConfig &drive,
-    const utils::TpconfigLine &line);
-
-  /**
-   * Throws an exception if the specified TPCONFIG line is invalid when
-   * compared to the specified current tape-drive configuration.
-   *
-   * @param drive The current configuration of the tape drive.
-   * @param line The line parsed from /etc/castor/TPCONFIG.
-   */
-  void checkTpconfigLineDensity(const DriveConfig &drive,
-    const utils::TpconfigLine &line);
-
-  /**
-   * Throws an exception if the specified TPCONFIG line is invalid when
-   * compared to the specified current tape-drive configuration.
-   *
-   * @param drive The current configuration of the tape drive.
-   * @param line The line parsed from /etc/castor/TPCONFIG.
-   */
-  void checkTpconfigLineLibrarySlot(const DriveConfig &drive,
-    const utils::TpconfigLine &line);
-
-  /**
-   * Throws an exception if the specified TPCONFIG line is invalid when
-   * compared to the specified current tape-drive configuration.
-   *
-   * @param drive The current configuration of the tape drive.
-   * @param line The line parsed from /etc/castor/TPCONFIG.
-   */
-  void checkTpconfigLineDevType(const DriveConfig &drive,
-    const utils::TpconfigLine &line);
 }; // class DriveConfigMap
 
 } // namespace utils

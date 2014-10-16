@@ -25,13 +25,11 @@ message ForkLabel {
   required string unitname = 1;
   required string dgn = 2;
   required string devfilename = 3;
-  repeated string density = 4;
-  required string libraryslot = 5;
-  required string devtype = 6;
+  required string libraryslot = 4;
 
   // Description of the label job
-  required bool force = 7;
-  required uint32 uid = 8;
-  required uint32 gid = 9;
-  required string vid = 10;
+  required bool force = 5;
+  required uint32 uid = 6;
+  required uint32 gid = 7;
+  required string vid = 8;
 }

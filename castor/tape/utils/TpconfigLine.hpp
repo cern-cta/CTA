@@ -35,23 +35,40 @@ namespace utils  {
  * TPCONFIG file (/etc/castor/TPCONFIG).
  */
 struct TpconfigLine {
+  /**
+   * The unit name of the tape drive.
+   */
   std::string unitName;
+
+  /**
+   * The Device Group Name (DGN) of the tape drive.
+   */
   std::string dgn;
+
+  /**
+   * The filename of the device file of the tape drive.
+   */
   std::string devFilename;
-  std::string density;
+
+  /**
+   * The slot in the tape library that contains the tape drive.
+   */
   std::string librarySlot;
-  std::string devType;
 
   /**
    * Constructor.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The Device Group Name (DGN) of the tape drive.
+   * @param devFilename The filename of the device file of the tape drive.
+   * @param librarySlot The slot in the tape library that contains the tape
+   * drive.
    */
   TpconfigLine(
     const std::string &unitName,
     const std::string &dgn,
     const std::string &devFilename,
-    const std::string &density,
-    const std::string &librarySlot,
-    const std::string &devType) throw();
+    const std::string &librarySlot) throw();
 }; // struct TpconfigLine
 
 } // namespace utils

@@ -259,10 +259,6 @@ unsigned short castor::tape::utils::getPortFromConfig(
 //------------------------------------------------------------------------------
 void castor::tape::utils::parseTpconfigFile(const std::string &filename,
   TpconfigLines &lines)  {
-
-  // The expected number of data-columns in a TPCONFIG data-line
-  const unsigned int expectedNbOfColumns = 6;
-
   // Open the TPCONFIG file for reading
   castor::utils::SmartFILEPtr file(fopen(filename.c_str(), "r"));
   {
@@ -324,6 +320,10 @@ void castor::tape::utils::parseTpconfigFile(const std::string &filename,
       std::vector<std::string> columns;
       castor::utils::splitString(line, ' ', columns);
 
+      // The expected number of data-columns in a TPCONFIG data-line is 4:
+      //   unitName dgn devFilename librarySlot
+      const unsigned int expectedNbOfColumns = 4;
+
       // Throw an exception if the number of data-columns is invalid
       if(columns.size() != expectedNbOfColumns) {
         castor::exception::InvalidArgument ex;
@@ -332,9 +332,10 @@ void castor::tape::utils::parseTpconfigFile(const std::string &filename,
           "Failed to parse TPCONFIG file"
           ": Invalid number of data columns in TPCONFIG line"
           ": filename='" << filename << "'"
-          ": expectedNbColumns=" << expectedNbOfColumns <<
-          ": actualNbColumns=" << columns.size() <<
-          ": lineNb=" << lineNb;
+          " lineNb=" << lineNb <<
+          " expectedNbColumns=" << expectedNbOfColumns <<
+          " actualNbColumns=" << columns.size() <<
+          " expectedFormat='unitName dgn devFilename librarySlot'";
 
         throw ex;
       }
@@ -344,9 +345,7 @@ void castor::tape::utils::parseTpconfigFile(const std::string &filename,
         columns[0], // unitName
         columns[1], // dgn
         columns[2], // devFilename
-        columns[3], // density
-        columns[4], // positionInLibrary
-        columns[5]  // devType
+        columns[3]  // librarySlot
       ));
     }
   }

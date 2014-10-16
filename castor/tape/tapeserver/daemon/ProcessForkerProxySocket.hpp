@@ -155,13 +155,7 @@ private:
     msg.set_unitname(driveConfig.unitName);
     msg.set_dgn(driveConfig.dgn);
     msg.set_devfilename(driveConfig.devFilename);
-    const std::list<std::string> &densities = driveConfig.densities;
-    for(std::list<std::string>::const_iterator itor = densities.begin();
-      itor != densities.end(); itor++) {
-      msg.add_density(*itor);
-    }
     msg.set_libraryslot(driveConfig.librarySlot.str());
-    msg.set_devtype(driveConfig.devType);
   }
 
   /**

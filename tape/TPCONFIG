@@ -1,15 +1,11 @@
-#               example of tape configuration
+# Example of a tape configuration file (/etc/castor/TPCONFIG)
 #
-#               tape configuration, tpsrv101
-# unit    dev           dev             density   robot/     dev
-# name    group         name           (0 = N/a)  manual     type
+# There should be one line per tape drive.  Each line should consist of the
+# following 4 columns delimited by spaces:
 #
-# units DOWN at reboot.
+# unitName dgn devFilename librarySlot
 #
 # Please replace and uncomment the following
 #
-#994B43A1  994BR4      /dev/nst0            200GC manual    9940
-#994B43A1  994BR4      /dev/nst0            200G  manual    9940
-#
-#994B43A1  994BR4      /dev/nst0            60GC  manual    9940
-#994B43A1  994BR4      /dev/nst0            60G   manual    9940
+# VD41STK0 V41STK /dev/nst0 smc@localhost,0 T10000
+# VD41STK1 V41STK /dev/nst1 smc@localhost,1 T10000

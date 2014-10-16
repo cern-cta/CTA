@@ -252,11 +252,7 @@ private:
     config.unitName = msg.unitname();
     config.dgn = msg.dgn();
     config.devFilename = msg.devfilename();
-    for(int i=0; i < msg.density_size(); i++) {
-      config.densities.push_back(msg.density(i));
-    }
     config.librarySlot = msg.libraryslot();
-    config.devType = msg.devtype();
 
     return config;
   }

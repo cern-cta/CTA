@@ -56,21 +56,10 @@ struct DriveConfig {
    std::string devFilename;
 
   /**
-   * The list of tape densities supported by the tape drive as defined in
-   * /etc/castor/TPCONFIG.
-   */
-  std::list<std::string> densities;
-
-  /**
    * The library slot n which the tape drive is located, for example:
    * smc@localhost,0
    */
   mediachanger::ConfigLibrarySlot librarySlot;
-
-  /**
-   * The device type.
-   */
-  std::string devType;
 
 }; // class DriveConfig
 

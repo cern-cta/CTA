@@ -175,8 +175,6 @@ static void logTpconfigLine(castor::log::Logger &log,
     castor::log::Param("unitName", line.unitName),
     castor::log::Param("dgn", line.dgn),
     castor::log::Param("devFilename", line.devFilename),
-    castor::log::Param("density", line.density),
-    castor::log::Param("librarySlot", line.librarySlot),
-    castor::log::Param("devType", line.devType)};
+    castor::log::Param("librarySlot", line.librarySlot)};
   log(LOG_INFO, "TPCONFIG line", params);
 }

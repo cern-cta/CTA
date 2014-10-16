@@ -156,10 +156,7 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.densities.push_back("8000GC");
-  driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
-  driveConfig.devType = "T10000";
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -264,10 +261,7 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.densities.push_back("8000GC");
-  driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
-  driveConfig.devType = "T10000";
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -325,10 +319,7 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/noSuchTape";
-  driveConfig.densities.push_back("8000GC");
-  driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
-  driveConfig.devType = "T10000";
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024;
   castorConf.nbBufs = 10;
@@ -472,10 +463,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.densities.push_back("8000GC");
-  driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
-  driveConfig.devType = "T10000";
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -565,10 +553,7 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.densities.push_back("8000GC");
-  driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
-  driveConfig.devType = "T10000";
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -670,10 +655,7 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.densities.push_back("8000GC");
-  driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
-  driveConfig.devType = "T10000";
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -780,10 +762,7 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.densities.push_back("8000GC");
-  driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
-  driveConfig.devType = "T10000";
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
