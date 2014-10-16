@@ -102,39 +102,13 @@
 namespace castor {
 namespace tape   {
 namespace utils  {
-  /**
-   * Will  give an hexadecimal dump of the data between mem and mem+n
-   * @param mem THe pointer to memory do dump
-   * @param n The length of the memory
-   * @return The hex dump of the memory
-   */
-  std::string toHexString( const void * mem, unsigned int n );
 /**
- * Writes the specified array of strings to the specified output stream as a
- * list of strings separated by the specified separator.
- *
- * @param os The output stream to be written to.
- * @param strings The array of strings to be written to the output stream.
- * @param stringsLen The length of the array of strings, in other words the
- * number of strings.
- * @param separator The separator to be written between the strings.
+ * Will  give an hexadecimal dump of the data between mem and mem+n
+ * @param mem THe pointer to memory do dump
+ * @param n The length of the memory
+  * @return The hex dump of the memory
  */
-void writeStrings(std::ostream &os, const char **strings,
-  const int stringsLen, const char *const separator);
-
-/**
- * Writes the specified array of strings to the specified output stream as a
- * list of strings separated by the specified separator.
- *
- * @param os The output stream to be written to.
- * @param strings The array of strings to be written to the output stream.
- * @param separator The separator to be written between the strings.
- */
-template<int n> void writeStrings(std::ostream &os,
-  const char *(&strings)[n], const char *const separator) {
-
-  writeStrings(os, strings, n, separator);
-}
+std::string toHexString( const void * mem, unsigned int n );
 
 /**
  * Returns the string representation of the specified magic number.
