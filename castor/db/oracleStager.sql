@@ -2879,16 +2879,20 @@ BEGIN
       -- similarly to stageRm, check that the deletion is allowed:
       -- basically only files on tape may be dropped in case no data loss is provoked,
       -- or files already dropped from the namespace. The rest is forbidden.
-      IF (varStatus = dconst.DISKCOPY_VALID AND (varNbRemaining > 0 OR dc.fStatus = 'm' OR varFileSize = 0))
+      IF (varStatus IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_FAILED) AND (varNbRemaining > 0 OR dc.fStatus = 'm' OR varFileSize = 0))
          OR dc.fStatus = 'd' THEN
         UPDATE DeleteDiskCopyHelper
            SET rc = dconst.DELDC_GC
          WHERE dcId = dc.dcId;
         IF NOT inDryRun THEN
-          UPDATE DiskCopy
-             SET status = dconst.DISKCOPY_INVALID, gcType = dconst.GCTYPE_ADMIN
-           WHERE id = dc.dcId;
-           logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_GC, dc.fileId, varNsHost, 'stagerd', varLogParams);
+          IF varStatus = dconst.DISKCOPY_VALID THEN
+            UPDATE DiskCopy
+               SET status = dconst.DISKCOPY_INVALID, gcType = dconst.GCTYPE_ADMIN
+             WHERE id = dc.dcId;
+          ELSE
+            DELETE FROM DiskCopy WHERE ID = dc.dcId;
+          END IF;
+          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_GC, dc.fileId, varNsHost, 'stagerd', varLogParams);
         END IF;
       ELSE
         -- nothing is done, just record no-action
