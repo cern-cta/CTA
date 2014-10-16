@@ -245,20 +245,6 @@ unsigned short getPortFromConfig(const char *const category,
 void parseTpconfigFile(const std::string &filename, TpconfigLines &lines);
 
 /**
- * Extracts the drive-unit names from the specified list of parsed TPCONFIG
- * data-lines.
- *
- * This method clears the list of drive-unit names before starting extracting
- * the names from the list of parsed TPCONFIG data-lines.
- *
- * @param tpconfigLines The list of parsed TCONFIG data-lines.
- * @param driveNames    Output parameter: The list of extracted drive-unit
- *                      names.
- */
-void extractTpconfigDriveNames(const TpconfigLines &tpconfigLines,
-  std::list<std::string> &driveNames) throw();
-
-/**
  * C++ wrapper function of the C getconfent() function.  This wrapper
  * converts a return value of null or empty string into an
  * InvalidConfiguration exception.
