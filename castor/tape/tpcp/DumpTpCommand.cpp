@@ -461,9 +461,9 @@ bool castor::tape::tpcp::DumpTpCommand::dispatchMsgHandler(
       sendEndNotificationErrorReport(tapebridgeTransactionId, EBADMSG,
         oss.str(), sock);
 
-      TAPE_THROW_CODE(EBADMSG,
-        ": Received unexpected tapebridge message "
-        ": Message type = " << Helper::objectTypeToString(obj->type()));
+      castor::exception::Exception ex;
+      ex.getMessage() << oss.str();
+      throw ex;
     }
   }
 }

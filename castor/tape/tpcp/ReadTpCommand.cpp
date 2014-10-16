@@ -504,9 +504,9 @@ bool castor::tape::tpcp::ReadTpCommand::dispatchMsgHandler(
       sendEndNotificationErrorReport(tapebridgeTransactionId, EBADMSG,
         oss.str(), sock);
 
-      TAPE_THROW_CODE(EBADMSG,
-        ": Received unexpected tapebridge message "
-        ": Message type = " << Helper::objectTypeToString(obj->type()));
+      castor::exception::Exception ex;
+      ex.getMessage() << oss.str();
+      throw ex;
     }
   }
 }
@@ -663,8 +663,10 @@ void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecalls(
     itor = files.begin(); itor != files.end(); itor++) {
 
     if(NULL == *itor) {
-      TAPE_THROW_CODE(EBADMSG,
-        "Pointer to FileRecalledNotificationStruct is NULL");
+      castor::exception::Exception ex;
+      ex.getMessage() <<
+        "Pointer to FileRecalledNotificationStruct is NULL";
+      throw ex;
     }
 
     handleSuccessfulRecall(tapebridgeTransId, *(*itor), sock);

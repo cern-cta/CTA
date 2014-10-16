@@ -104,21 +104,21 @@ castor::tape::tpcp::TpcpCommand::TpcpCommand(const char *const programName)
   m_sigintAction.sa_handler = &sigintHandler;
   if(sigfillset(&m_sigintAction.sa_mask) < 0) { // Mask all signals
     const int savedErrno = errno;
-
-    castor::exception::Exception ex(savedErrno);
-
-    TAPE_THROW_CODE(savedErrno,
+    castor::exception::Exception ex;
+    ex.getMessage() <<
       "Failed to initialize signal mask using sigfillset"
-      ": " << sstrerror(savedErrno));
+      ": " << sstrerror(savedErrno);
+    throw ex;
   }
 
   // Set the SIGINT signal handler
-  if(sigaction(SIGINT, &m_sigintAction, 0) < 0){
+  if(sigaction(SIGINT, &m_sigintAction, 0) < 0) {
     const int savedErrno = errno;
-
-    TAPE_THROW_CODE(savedErrno,
+    castor::exception::Exception ex;
+    ex.getMessage() <<
       "Failed to set the SIGINT signal handler using sigaction"
-      ": " << sstrerror(savedErrno));
+      ": " << sstrerror(savedErrno);
+    throw ex;
   }
 
   castor::utils::setBytes(m_vmgrTapeInfo, '\0');
@@ -515,10 +515,12 @@ void castor::tape::tpcp::TpcpCommand::vmgrQueryTape()
   const int savedSerrno = serrno;
 
   if(0 != rc) {
-    TAPE_THROW_CODE(savedSerrno,
-      ": Failed call to vmgr_querytape()"
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed call to vmgr_querytape()"
       ": VID = " << m_cmdLine.vid <<
-      ": " << sstrerror(savedSerrno));
+      ": " << sstrerror(savedSerrno);
+    throw ex;
   }
 }
 
@@ -794,8 +796,9 @@ void castor::tape::tpcp::TpcpCommand::handleFailedTransfers(
     itor = files.begin(); itor != files.end(); itor++) {
 
     if(NULL == *itor) {
-      TAPE_THROW_CODE(EBADMSG,
-        "Pointer to FileErrorReportStruct is NULL");
+      castor::exception::Exception ex;
+      ex.getMessage() << "Pointer to FileErrorReportStruct is NULL";
+      throw ex;
     }
 
     handleFailedTransfer(*(*itor));
@@ -1023,9 +1026,11 @@ void castor::tape::tpcp::TpcpCommand::deleteVdqmVolumeRequest()
   const int savedSerrno = serrno;
 
   if(rc < 0) {
-    TAPE_THROW_CODE(savedSerrno,
+    castor::exception::Exception ex;
+    ex.getMessage() <<
       "Failed call to vdqm_DelVolumeReq()"
-      ": " << sstrerror(savedSerrno));
+      ": " << sstrerror(savedSerrno);
+    throw ex;
   }
 }
 

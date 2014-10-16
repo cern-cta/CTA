@@ -48,25 +48,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-/**
- * The TAPE_THROW_CODE macro throws an exception and automatically adds file,
- * line and function strings to the message of the exception.  Example usage:
- *
- * TAPE_THROW_CODE(EBADMSG,
- *   ": Unknown reply type "
- *   ": Reply type = " << reply->type());
- */
-#define TAPE_THROW_CODE(CODE, MSG) {       \
-  castor::exception::Exception _ex_(CODE); \
-                                           \
-  _ex_.getMessage()                        \
-    <<  "File="     << __FILE__            \
-    << " Line="     << __LINE__            \
-    << " Function=" << __FUNCTION__        \
-    << MSG       ;                         \
-  throw _ex_;                              \
-}
-
 namespace castor {
 namespace tape   {
 namespace utils  {
