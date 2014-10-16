@@ -190,7 +190,7 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   m_processForkerPid = forkProcessForker(cmdPair, reaperPair);
 
   const ProcessForkerOneTimeConfig processForkerConfig =
-    ProcessForkerOneTimeConfig::createFromCastorConf();
+    ProcessForkerOneTimeConfig::createFromCastorConf(&m_log);
   m_processForker = new ProcessForkerProxySocket(m_log, cmdPair.tapeDaemon);
   m_catalogue = new Catalogue(m_netTimeout, m_log, *m_processForker, m_cupv,
     m_vdqm, m_vmgr, m_hostName);
