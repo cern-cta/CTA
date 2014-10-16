@@ -383,39 +383,3 @@ std::string castor::tape::utils::tapeBlockIdToString(
 
   return oss.str();
 }
-
-//---------------------------------------------------------------------------
-// appendPathToEnvVar
-//---------------------------------------------------------------------------
-void castor::tape::utils::appendPathToEnvVar(const std::string &envVarName,
-  const std::string &pathToBeAppended)  {
-
-  // Get the current value of the enviornment variable (there may not be one)
-  const char *const currentPath = getenv(envVarName.c_str());
-
-  // Construct the new value of PYTHONPATH
-  std::string newPath;
-  if(currentPath == NULL || '\0' == *currentPath) {
-    newPath = pathToBeAppended;
-  } else {
-    newPath  = currentPath;
-    newPath += ":";
-    newPath += pathToBeAppended;
-  }
-
-  // Set the value of the environment variable to the new value
-  const int overwrite = 1;
-  const int rc = setenv(envVarName.c_str(), newPath.c_str(), overwrite);
-  if(rc == -1) {
-    TAPE_THROW_EX(castor::exception::Exception,
-      ": setenv() call failed" <<
-      ": Insufficient space in the environment" <<
-      ": name=" << envVarName <<
-      " value=" << newPath <<
-      " overwrite=" << overwrite);
-  } else if(rc != 0) {
-    TAPE_THROW_EX(castor::exception::Exception,
-      ": setenv() call failed" <<
-      ": Unknown error");
-  }
-}

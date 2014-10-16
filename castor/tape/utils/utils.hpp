@@ -210,21 +210,6 @@ std::string tapeBlockIdToString(
   const unsigned char blockId2,
   const unsigned char blockId3) throw();
 
-/**
- * Appends the specified path to the value of the specified enviornment
- * variable.  If the environment variable does not exist or is set with an
- * empty string, then the specified path simply becomes the value of the
- * environment variable.
- *
- * @param envVarName       The name of the environment variable.
- * @param pathToBeAppended The path to be appended to the value of the
- *                         environment variable.
- */
-void appendPathToEnvVar(const std::string &envVarName,
-  const std::string &pathToBeAppended);
-
 } // namespace utils
 } // namespace tape
 } // namespace castor
-
-
