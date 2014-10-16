@@ -424,6 +424,37 @@ namespace castor {
         getVolumeInfo()  const {
           return m_volInfo;
         }
+        
+        /**
+         * Checks that a fSeq we are intending to write the the proper one,
+         * following the previous written one in sequence.
+         * This is to be used by the tapeWriteTask right before writing the file
+         * @param nextFSeq The fSeq we are about to write.
+         */
+        void validateNextFSeq (int nextFSeq) const {
+          if (nextFSeq != m_lastWrittenFSeq + 1) {
+            castor::exception::Exception e;
+            e.getMessage() << "In WriteSession::validateNextFSeq: wrong fSeq sequence: lastWrittenFSeq="
+              << m_lastWrittenFSeq << " nextFSeq=" << nextFSeq;
+            throw e;
+          }
+        }
+        
+        /**
+         * Checks the value of the lastfSeq written to tape and records it.
+         * This is to be used by the tape write task right after closing the
+         * file.
+         * @param writtenFSeq the fSeq of the file
+         */
+        void reportWrittenFSeq (int writtenFSeq) {
+          if (writtenFSeq != m_lastWrittenFSeq + 1) {
+            castor::exception::Exception e;
+            e.getMessage() << "In WriteSession::reportWrittenFSeq: wrong fSeq reported: lastWrittenFSeq="
+              << m_lastWrittenFSeq << " writtenFSeq=" << writtenFSeq;
+            throw e;
+          }
+          m_lastWrittenFSeq = writtenFSeq;
+        }
       private:
         
         /**
@@ -445,6 +476,11 @@ namespace castor {
          * hostname is instead gotten from gethostname()
          */
         std::string m_hostName;
+        
+        /**
+         * keep track of the fSeq we are writing to tape
+         */
+        int m_lastWrittenFSeq; 
         
         /**
          * set to true in case the write operations do (or try to do) something illegal

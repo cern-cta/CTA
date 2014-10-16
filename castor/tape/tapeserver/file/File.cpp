@@ -386,9 +386,11 @@ namespace castor {
           //trailers are valid here, let's see if they contain the right info, i.e. are we in the correct place?
           //we disregard eof1 and eof2 on purpose as they contain no useful information for us now, we now check the fseq in utl1 (hdr1 also contains fseq info but it is modulo 10000, therefore useless)
           HeaderChecker::checkUTL1(utl1, last_fseq);
+          m_lastWrittenFSeq = last_fseq;
         } 
         else {
           //else we are already where we want to be: at the end of the 80 bytes of the VOL1, all ready to write the headers of the first file
+          m_lastWrittenFSeq = 0;
         }
         //now we need to get two pieces of information that will end up in the headers and trailers that we will write (siteName, hostName)
         setSiteName();

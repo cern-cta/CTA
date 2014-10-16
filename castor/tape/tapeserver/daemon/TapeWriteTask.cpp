@@ -83,6 +83,8 @@ namespace daemon {
     unsigned long ckSum = Payload::zeroAdler32();
     
     uint32_t memBlockId  = 0;
+    
+    session.validateNextFSeq(m_fileToMigrate->fseq());
     try {
       //try to open the session
       watchdog.notifyBeginNewJob(*m_fileToMigrate);
@@ -118,6 +120,8 @@ namespace daemon {
       // Log the successful transfer      
       logWithStats(LOG_INFO, "File successfully transmitted to drive",
               localTime.secs(),lc);
+      // Record the fSeq in the tape session
+      session.reportWrittenFSeq(m_fileToMigrate->fseq());
     } 
     catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
       // We end up there because another task has failed 

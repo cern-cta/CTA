@@ -207,6 +207,15 @@ namespace UnitTests {
     }
     delete rs;
   }
+  
+  TEST_F(castorTapeFileTest, tapeSessionThrowsOnWrongSequence) {
+    castor::tape::tapeFile::WriteSession ws(d, volInfo, 0, true);
+    EXPECT_NO_THROW(ws.validateNextFSeq(1));
+    EXPECT_THROW(ws.reportWrittenFSeq(2),castor::exception::Exception);
+    EXPECT_NO_THROW(ws.reportWrittenFSeq(1));
+    EXPECT_NO_THROW(ws.validateNextFSeq(2));
+    EXPECT_THROW(ws.validateNextFSeq(1), castor::exception::Exception);
+  }
     
   TEST(castorTapeDiskFile, canWriteAndReadDisk) {
     const uint32_t block_size = 1024;
