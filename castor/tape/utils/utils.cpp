@@ -59,21 +59,6 @@ std::string castor::tape::utils::toHexString( const void * mem, unsigned int n )
 }
 
 //-----------------------------------------------------------------------------
-// magicToString
-//-----------------------------------------------------------------------------
-const char *castor::tape::utils::magicToString(const uint32_t magic)
-  throw() {
-  switch(magic) {
-  case RTCOPY_MAGIC_VERYOLD: return "RTCOPY_MAGIC_VERYOLD";
-  case RTCOPY_MAGIC_SHIFT  : return "RTCOPY_MAGIC_SHIFT";
-  case RTCOPY_MAGIC_OLD0   : return "RTCOPY_MAGIC_OLD0";
-  case RTCOPY_MAGIC        : return "RTCOPY_MAGIC";
-  case RFIO2TPREAD_MAGIC   : return "RFIO2TPREAD_MAGIC";
-  default                  : return "UNKNOWN";
-  }
-}
-
-//-----------------------------------------------------------------------------
 // rtcopyReqTypeToString
 //-----------------------------------------------------------------------------
 const char *castor::tape::utils::rtcopyReqTypeToString(

@@ -111,13 +111,6 @@ namespace utils  {
 std::string toHexString( const void * mem, unsigned int n );
 
 /**
- * Returns the string representation of the specified magic number.
- *
- * @param magic The magic number.
- */
-const char *magicToString(const uint32_t magic) throw();
-
-/**
  * Returns the string representation of the specified RTCOPY_MAGIC request
  * type.
  *
