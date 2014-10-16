@@ -59,23 +59,6 @@ std::string castor::tape::utils::toHexString( const void * mem, unsigned int n )
 }
 
 //-----------------------------------------------------------------------------
-// procStatusToString
-//-----------------------------------------------------------------------------
-const char *castor::tape::utils::procStatusToString(
-  const uint32_t procStatus) throw() {
-  switch(procStatus) {
-  case RTCP_WAITING           : return "RTCP_WAITING";
-  case RTCP_POSITIONED        : return "RTCP_POSITIONED";
-  case RTCP_PARTIALLY_FINISHED: return "RTCP_PARTIALLY_FINISHED";
-  case RTCP_FINISHED          : return "RTCP_FINISHED";
-  case RTCP_EOV_HIT           : return "RTCP_EOV_HIT";
-  case RTCP_UNREACHABLE       : return "RTCP_UNREACHABLE";
-  case RTCP_REQUEST_MORE_WORK : return "RTCP_REQUEST_MORE_WORK";
-  default                     : return "UNKNOWN";
-  }
-}
-
-//-----------------------------------------------------------------------------
 // volumeClientTypeToString
 //-----------------------------------------------------------------------------
 const char *castor::tape::utils::volumeClientTypeToString(

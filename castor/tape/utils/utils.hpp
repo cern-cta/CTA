@@ -111,14 +111,6 @@ namespace utils  {
 std::string toHexString( const void * mem, unsigned int n );
 
 /**
- * Returns the string representation of the specified file request status
- * code from an RTCP_FILE[ERR]_REQ message.
- *
- * @param reqType The file request status code.
- */
-const char *procStatusToString(const uint32_t procStatus) throw();
-
-/**
  * Returns the string representation of the specified tapebridge client type
  * from a tapegateay::Volume message (READ, WRITE or DUMP).
  */
