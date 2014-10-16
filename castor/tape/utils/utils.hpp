@@ -111,14 +111,6 @@ namespace utils  {
 std::string toHexString( const void * mem, unsigned int n );
 
 /**
- * Returns the string representation of the specified RTCOPY_MAGIC request
- * type.
- *
- * @param reqType The RTCP request type.
- */
-const char *rtcopyReqTypeToString(const uint32_t reqType) throw();
-
-/**
  * Returns the string representation of the specified file request status
  * code from an RTCP_FILE[ERR]_REQ message.
  *

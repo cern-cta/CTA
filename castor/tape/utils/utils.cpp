@@ -59,27 +59,6 @@ std::string castor::tape::utils::toHexString( const void * mem, unsigned int n )
 }
 
 //-----------------------------------------------------------------------------
-// rtcopyReqTypeToString
-//-----------------------------------------------------------------------------
-const char *castor::tape::utils::rtcopyReqTypeToString(
-  const uint32_t reqType) throw() {
-  switch(reqType) {
-  case GIVE_OUTP         : return "GIVE_OUTP";
-  case RTCP_TAPE_REQ     : return "RTCP_TAPE_REQ";
-  case RTCP_FILE_REQ     : return "RTCP_FILE_REQ";
-  case RTCP_NOMORE_REQ   : return "RTCP_NOMORE_REQ";
-  case RTCP_TAPEERR_REQ  : return "RTCP_TAPEERR_REQ";
-  case RTCP_FILEERR_REQ  : return "RTCP_FILEERR_REQ";
-  case RTCP_ENDOF_REQ    : return "RTCP_ENDOF_REQ";
-  case RTCP_DUMP_REQ     : return "RTCP_DUMP_REQ";
-  case RTCP_DUMPTAPE_REQ : return "RTCP_DUMPTAPE_REQ";
-  case RTCP_PING_REQ     : return "RTCP_PING_REQ";
-  case RTCP_HAS_MORE_WORK: return "RTCP_HAS_MORE_WORK";
-  default                : return "UNKNOWN";
-  }
-}
-
-//-----------------------------------------------------------------------------
 // procStatusToString
 //-----------------------------------------------------------------------------
 const char *castor::tape::utils::procStatusToString(
