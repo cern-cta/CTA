@@ -3016,7 +3016,7 @@ BEGIN
       IF (varStatus IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_FAILED) AND (varNbRemaining > 0 OR dc.fStatus = 'm' OR varFileSize = 0))
          OR dc.fStatus = 'd' THEN
         UPDATE DeleteDiskCopyHelper
-           SET rc = dconst.DELDC_GC,
+           SET rc = dconst.DELDC_NOOP,
                msg = 'garbage collected from stager'
          WHERE dcId = dc.dcId;
         IF NOT inDryRun THEN
