@@ -301,6 +301,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
             m_castorConf.bulkRequestMigrationMaxBytes,
             m_castorConf.bulkRequestMigrationMaxFiles,lc);
     drtp.setTaskInjector(&mti);
+    twst.setTaskInjector(&mti);
     castor::utils::Timer timer;
     if (mti.synchronousInjection()) {
       const uint64_t firstFseqFromClient = mti.firstFseqToWrite();

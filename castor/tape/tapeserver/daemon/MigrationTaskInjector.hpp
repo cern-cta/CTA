@@ -103,6 +103,24 @@ public:
    * @return 
    */
   uint64_t firstFseqToWrite() const;
+  
+  /**
+   * Public interface allowing to set the error flag. This is used
+   * by the tasks (disk and tape) and the tape thread to indicate
+   * that the session cannot continue.
+   */
+  void setErrorFlag() {
+    m_errorFlag.set();
+  }
+  
+  /**
+   * Public interface to the error flag, allowing the disk and tape tasks
+   * to decide whether they should carry on or just free memory.
+   * @return value of the error flag
+   */
+  bool hasErrorFlag() {
+    return m_errorFlag;
+  }
 private:
   /**
    * Create all the tape-read and write-disk tasks for set of files to retrieve

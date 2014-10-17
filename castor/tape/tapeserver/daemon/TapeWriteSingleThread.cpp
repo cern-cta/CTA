@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
+#include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
 //------------------------------------------------------------------------------
 //constructor
 //------------------------------------------------------------------------------
@@ -205,6 +206,14 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   catch(const castor::exception::Exception& e){
     //we end there because write session could not be opened 
     //or because a task failed or because flush failed
+    
+    // First off, indicate the problem to the task injector so it does not inject
+    // more work in the pipeline
+    // If the problem did not originate here, we just re-flag the error, and
+    // this has no effect, but if we had a problem with a non-file operation
+    // like mounting the tape, then we have to signal the problem to the disk
+    // side and the task injector, which will trigger the end of session.
+    m_injector->setErrorFlag();
     
     //first empty all the tasks and circulate mem blocks
     while(1) {

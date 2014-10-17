@@ -43,6 +43,9 @@ namespace castor     {
 namespace tape       {
 namespace tapeserver {
 namespace daemon     {
+// forward definition
+class MigrationTaskInjector;
+  
 class TapeWriteSingleThread : public TapeSingleThreadInterface<TapeWriteTask> {
 public:
   /**
@@ -71,6 +74,19 @@ public:
    * @param lastFseq
    */
   void setlastFseq(uint64_t lastFseq);
+  
+  /**
+   * Sets up the pointer to the task injector. This cannot be done at
+   * construction time as both task injector and tape write single thread refer to 
+   * each other. This function should be called before starting the threads.
+   * This is used for signalling problems during mounting. After that, each 
+   * tape write task does the signalling itself, either on tape problem, or
+   * when receiving an error from the disk tasks via memory blocks.
+   * @param injector pointer to the task injector
+   */
+  void setTaskInjector(MigrationTaskInjector* injector){
+      m_injector = injector;
+  }
 private:
     class TapeCleaning{
     TapeWriteSingleThread& m_this;
@@ -187,6 +203,11 @@ private:
    * Reference to the watchdog, used in run()
    */
   MigrationWatchDog & m_watchdog;
+  
+  /**
+   *  Pointer to the task injector allowing termination signaling 
+   */
+  MigrationTaskInjector* m_injector;
 
 }; // class TapeWriteSingleThread
 
