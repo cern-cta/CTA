@@ -47,15 +47,21 @@ set (STK_UNITTEST_SRC_FILES)
 if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   message(STATUS "Found all four STK libraries - adding STK related unit tests")
   set (STK_UNITTEST_SRC_FILES
+    ../castor/acs/Acs.cpp
+    ../castor/acs/AcsCmd.cpp
     ../castor/acs/AcsDaemon.cpp
     ../castor/acs/AcsDaemonTest.cpp
-    ../castor/acs/AcsMessageHandler.cpp
     ../castor/acs/AcsDismountTape.cpp
+    ../castor/acs/AcsImpl.cpp
+    ../castor/acs/AcsLibraryInteraction.cpp
+    ../castor/acs/AcsMessageHandler.cpp
     ../castor/acs/AcsMountTapeReadOnly.cpp
     ../castor/acs/AcsMountTapeReadWrite.cpp
-    ../castor/acs/AcsLibraryInteraction.cpp
-    ../castor/acs/AcsImpl.cpp
-    ../castor/acs/Acs.cpp)
+    ../castor/acs/AcsQueryVolumeCmd.cpp
+    ../castor/acs/AcsQueryVolumeCmdLine.cpp
+    ../castor/acs/AcsQueryVolumeCmdLineTest.cpp
+    ../castor/acs/AcsQueryVolumeCmdTest.cpp
+    ../castor/acs/Cmd.cpp)
 
   foreach(SRC_FILE ${STK_UNITTEST_SRC_FILES})
     set_property(SOURCE ${SRC_FILE}

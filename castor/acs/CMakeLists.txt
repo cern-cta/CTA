@@ -26,7 +26,7 @@ endif (STK_CL_LIB)
 ################################################################################
 # Add the acsd, acsdTest targets if all four STK client libaries
 # (libapi.so, libutl.so, libipc.so and libcl.so) have been found
-###############################################################################
+################################################################################
 if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   message(STATUS "Found all four STK libraries")
 
@@ -74,5 +74,33 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   CastorInstallLogrotate (castor-acs-server)
   CastorInstallSysconfigExample (acsd)
   CastorInstallInitScript (acsd)
+
+  ##############################################################################
+  # Rules to build and install castor-tape-acs-queryvolume
+  ##############################################################################
+  message(STATUS "Adding castor-tape-acs-queryvolume target")
+  set (ACS_QUERYVOLUME_SRC_FILES
+    Acs.cpp
+    AcsCmd.cpp
+    AcsImpl.cpp
+    AcsQueryVolumeCmd.cpp
+    AcsQueryVolumeCmdLine.cpp
+    AcsQueryVolumeMain.cpp
+    Cmd.cpp)
+  add_executable (castor-tape-acs-queryvolume ${ACS_QUERYVOLUME_SRC_FILES})
+  target_link_libraries (castor-tape-acs-queryvolume
+    castorclient
+    castorcommon
+    castortapeutils
+    ${STK_API_LIB}
+    ${STK_UTL_LIB}
+    ${STK_IPC_LIB}
+    ${STK_CL_LIB})
+  set_target_properties (castor-tape-acs-queryvolume PROPERTIES
+    COMPILE_FLAGS -I/usr/include/CDK
+    COMPILE_DEFINITIONS LINUX)
+  install (TARGETS castor-tape-acs-queryvolume
+    DESTINATION ${CASTOR_DEST_BIN_DIR})
+  CastorInstallExeManPage(castor-tape-acs-queryvolume)
 
 endif (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)

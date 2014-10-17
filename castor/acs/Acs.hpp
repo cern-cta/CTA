@@ -58,8 +58,7 @@ public:
    * @return The drive ID object.
    */
   DRIVEID alpd2DriveId(const uint32_t acs, const uint32_t lsm, 
-    const uint32_t panel, const uint32_t drive) const throw()
-    ;
+    const uint32_t panel, const uint32_t drive) const throw();
 
   /**
    * Returns the VOLID equibvalent of the specified string.
@@ -70,8 +69,7 @@ public:
    * @param str The string representation of the volume identifier.
    * @return The VOLID representation of the volume identifier.
    */
-  VOLID str2Volid(const std::string &str) const
-    ;
+  VOLID str2Volid(const std::string &str) const;
   
   /**
    * Returns the string reprsentation of the specified drive identifier.
@@ -147,9 +145,21 @@ public:
     ACS_RESPONSE_TYPE &rType,
     ALIGNED_BYTES rBuf) throw() = 0;
 
+  /**
+   * C++ wrapper around the acs_query_volume() function of the ACSLS C-API.
+   *
+   * @param seqNumber Client supplied sequence number.
+   * @param volIds Array of the volume identifiers to be queried.
+   * @param count The number of volume identifiers contained iwthin the volId
+   * parameter.
+   * @return status value returned by acs_response().
+   */
+  virtual STATUS queryVolume(
+    const SEQ_NO seqNumber,
+    VOLID (&volIds)[MAX_ID],
+    const unsigned short count) throw() = 0;
+
 }; // class  Acs
 
 } // namespace acs
 } // namespace castor
-
-

@@ -21,63 +21,26 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/acs/AcsImpl.hpp"
+#include "castor/acs/Cmd.hpp"
 
-#include <errno.h>
-#include <sstream>
-#include <string.h>
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::acs::Cmd::Cmd(std::istream &inStream,
+  std::ostream &outStream, std::ostream &errStream) throw():
+  m_in(inStream), m_out(outStream), m_err(errStream), m_debugBuf(outStream),
+  m_dbg(&m_debugBuf) {
+}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::acs::AcsImpl::~AcsImpl() throw() {
+castor::acs::Cmd::~Cmd() throw() {
 }
 
 //------------------------------------------------------------------------------
-// mount
+// bool2Str
 //------------------------------------------------------------------------------
-STATUS castor::acs::AcsImpl::mount(
-  const SEQ_NO seqNumber,
-  const LOCKID lockId,
-  const VOLID &volId,
-  const DRIVEID &driveId,
-  const BOOLEAN readOnly,
-  const BOOLEAN bypass)
-  throw() {
-  return acs_mount(seqNumber, lockId, volId, driveId, readOnly, bypass);
-}
-
-//------------------------------------------------------------------------------
-// dismount
-//------------------------------------------------------------------------------
-STATUS castor::acs::AcsImpl::dismount(
-  const SEQ_NO seqNumber,
-  const LOCKID lockId,
-  const VOLID &volId,
-  const DRIVEID &driveId,
-  const BOOLEAN force)
-  throw() {
-  return acs_dismount(seqNumber, lockId, volId, driveId, force);
-}
-
-//------------------------------------------------------------------------------
-// response
-//------------------------------------------------------------------------------
-STATUS castor::acs::AcsImpl::response(
-  const int timeout,
-  SEQ_NO &seqNumber,
-  REQ_ID &reqId,
-  ACS_RESPONSE_TYPE &rType,
-  ALIGNED_BYTES rBuf) throw() {
-  return acs_response(timeout, &seqNumber, &reqId, &rType, rBuf);
-}
-
-//------------------------------------------------------------------------------
-// queryVolume
-//------------------------------------------------------------------------------
-STATUS castor::acs::AcsImpl::queryVolume(
-  const SEQ_NO seqNumber,
-  VOLID (&volIds)[MAX_ID],
-  const unsigned short count) throw() {
-  return acs_query_volume(seqNumber, volIds, count);
+std::string castor::acs::Cmd::bool2Str(const bool value) const throw() {
+  return value ? "TRUE" : "FALSE";
 }

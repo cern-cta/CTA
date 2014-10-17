@@ -23,20 +23,19 @@
 
 #pragma once
 
-#include "castor/acs/Acs.hpp"
+#include "castor/acs/AcsCmd.hpp"
 
 namespace castor {
 namespace acs {
 
-/**
- * Concrete class that wraps the ACLS C-API.
- */
-class AcsImpl: public Acs {
+class MockAcs: public Acs {
 public:
+
   /**
    * Destructor.
    */
-  ~AcsImpl() throw();
+  ~MockAcs() throw() {
+  }
 
   /**
    * C++ wrapper around the acs_mount() function of the ACSLS C-API.
@@ -58,7 +57,9 @@ public:
     const DRIVEID &driveId,
     const BOOLEAN readOnly,
     const BOOLEAN bypass)
-    throw();
+    throw() {
+    return STATUS_SUCCESS;
+  }
 
   /**
    * C++ wrapper around the acs_dismount() function of the ACSLS C-API.
@@ -78,7 +79,9 @@ public:
     const VOLID &volId,
     const DRIVEID &driveId,
     const BOOLEAN force)
-    throw();
+    throw() {
+    return STATUS_SUCCESS;
+  }
 
   /**
    * C++ wrapper around the acs_response() function of the ACSLS C-API.
@@ -100,7 +103,9 @@ public:
     SEQ_NO &seqNumber,
     REQ_ID &reqId,
     ACS_RESPONSE_TYPE &rType,
-    ALIGNED_BYTES rBuf) throw();
+    ALIGNED_BYTES rBuf) throw() {
+    return STATUS_SUCCESS;
+  }
 
   /**
    * C++ wrapper around the acs_query_volume() function of the ACSLS C-API.
@@ -114,9 +119,11 @@ public:
   STATUS queryVolume(
     const SEQ_NO seqNumber,
     VOLID (&volIds)[MAX_ID],
-    const unsigned short count) throw();
+    const unsigned short count) throw() {
+    return STATUS_SUCCESS;
+  }
 
-}; // class AcsImpl
+}; // class MockAcs
 
 } // namespace acs
 } // namespace castor
