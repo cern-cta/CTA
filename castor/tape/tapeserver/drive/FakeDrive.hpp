@@ -48,11 +48,14 @@ namespace drive {
   private:
     const enum FailureMoment m_failureMoment;
     bool m_tapeOverflow;
+    bool m_failToMount;
   public:
     std::string contentToString() throw();
 
     FakeDrive(uint64_t capacity=std::numeric_limits<uint64_t>::max(),
-      enum FailureMoment failureMoment=OnWrite) throw();
+      enum FailureMoment failureMoment=OnWrite,
+      bool failOnMount = false) throw();
+    FakeDrive(bool failOnMount) throw ();
     virtual ~FakeDrive() throw(){}
     virtual compressionStats getCompression() ;
     virtual void clearCompressionStats() ;

@@ -29,12 +29,20 @@ namespace {
 }
 
 castor::tape::tapeserver::drive::FakeDrive::FakeDrive(uint64_t capacity,
-    FailureMoment failureMoment) throw(): 
+    FailureMoment failureMoment, bool failToMount) throw(): 
   m_currentPosition(0), m_tapeCapacity(capacity), m_beginOfCompressStats(0),
-  m_failureMoment(failureMoment), m_tapeOverflow(false)
+  m_failureMoment(failureMoment), m_tapeOverflow(false), m_failToMount(failToMount)
 {
   m_tape.reserve(max_fake_drive_record_length);
 }
+
+castor::tape::tapeserver::drive::FakeDrive::FakeDrive(bool failToMount) throw(): 
+  m_currentPosition(0), m_tapeCapacity(std::numeric_limits<uint64_t>::max()), m_beginOfCompressStats(0),
+  m_failureMoment(OnWrite), m_tapeOverflow(false), m_failToMount(failToMount)
+{
+  m_tape.reserve(max_fake_drive_record_length);
+}
+
 castor::tape::tapeserver::drive::compressionStats castor::tape::tapeserver::drive::FakeDrive::getCompression()  {
   castor::tape::tapeserver::drive::compressionStats stats;
   for(unsigned int i=m_beginOfCompressStats;i<m_tape.size();++i){
@@ -209,6 +217,8 @@ void castor::tape::tapeserver::drive::FakeDrive::readFileMark(std::string contex
   m_currentPosition++;  
 }
 bool castor::tape::tapeserver::drive::FakeDrive::waitUntilReady(int timeoutSecond)  {
+  if (m_failToMount)
+    throw castor::exception::Exception("In FakeDrive::waitUntilReady: Failed to mount the tape");
   return true;
 }  
 bool castor::tape::tapeserver::drive::FakeDrive::isWriteProtected()  {

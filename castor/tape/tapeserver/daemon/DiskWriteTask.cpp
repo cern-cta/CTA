@@ -49,13 +49,11 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
   using log::Param;
   castor::utils::Timer localTime;
   try{
-    std::auto_ptr<tape::diskFile::WriteFile> writeFile(
-      fileFactory.createWriteFile(m_recallingFile->path()));
+    // Placeholder for the disk file. We will open it only
+    // after getting a first correct memory block.
+    std::auto_ptr<tape::diskFile::WriteFile> writeFile;
     log::ScopedParamContainer URLcontext(lc);
-    URLcontext.add("actualURL", writeFile->URL())
-              .add("path", m_recallingFile->path());
-    lc.log(LOG_INFO, "Opened disk file for write");
-    m_stats.openingTime+=localTime.secs(castor::utils::Timer::resetCounter);
+    URLcontext.add("path", m_recallingFile->path());
     
     int blockId  = 0;
     unsigned long checksum = Payload::zeroAdler32();
@@ -73,9 +71,17 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         //will throw (thus exiting the loop) if something is wrong
         checkErrors(mb,blockId,lc);
         m_stats.checkingErrorTime += localTime.secs(castor::utils::Timer::resetCounter);
+        // If we got that far on the first pass, it's now good enough to open
+        // the disk file for writing...
+        if (!writeFile.get()) {
+          writeFile.reset(fileFactory.createWriteFile(m_recallingFile->path()));
+          URLcontext.add("actualURL", writeFile->URL());
+          lc.log(LOG_INFO, "Opened disk file for write");
+          m_stats.openingTime+=localTime.secs(castor::utils::Timer::resetCounter);
+        }
         
+        // Write the data.
         m_stats.dataVolume+=mb->m_payload.size();
-        
         mb->m_payload.write(*writeFile);
         m_stats.transferTime+=localTime.secs(castor::utils::Timer::resetCounter);
         
