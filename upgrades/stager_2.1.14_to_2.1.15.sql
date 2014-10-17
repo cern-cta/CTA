@@ -102,6 +102,9 @@ DROP PROCEDURE getUpdateFailedProcExt;
 DROP PROCEDURE prepareForMigration;
 DROP PROCEDURE putFailedProc;
 DROP PROCEDURE putFailedProcExt;
+DROP PROCEDURE insertStartRequest;
+DROP PROCEDURE insertMoverCloseRequest;
+DROP PROCEDURE insertSimpleRequest;
 
 /* add DataPools */
 CREATE TABLE DataPool
