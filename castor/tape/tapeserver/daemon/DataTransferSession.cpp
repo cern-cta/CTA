@@ -310,8 +310,24 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       twst.setlastFseq(firstFseqFromClient-1);
       
       //we retrieved the detail from the client in execute, so at this point 
-      //we can report. We get in exchange the number of files on the tape
-      const uint64_t nbOfFileOnTape = tsr.gotWriteMountDetailsFromClient();
+      //we can report. We get in exchange the number of files on the tape.
+      // This function can throw an exception (usually for permission reasons)
+      // This is not a reason to put the drive down. The error is already logged
+      // upstream.
+      // Letting the exception slip through would leave the drive down.
+      // Initialise with something obviously wrong.
+      uint64_t nbOfFileOnTape = std::numeric_limits<uint64_t>::max();
+      try {
+        nbOfFileOnTape = tsr.gotWriteMountDetailsFromClient();
+      } catch (castor::exception::Exception & e) {
+        lc.log(LOG_INFO, "Aborting the session after problem with mount details. Notifying the client.");
+        mrp.synchronousReportEndWithErrors(e.getMessageValue(), SEINTERNAL);
+        return MARK_DRIVE_AS_UP;
+      } catch (...) {
+        lc.log(LOG_INFO, "Aborting the session after problem with mount details (unknown exception). Notifying the client.");
+        mrp.synchronousReportEndWithErrors("Unknown exception while checking session parameters with VMGR", SEINTERNAL);
+        return MARK_DRIVE_AS_UP;
+      }
 
       //theses 2 numbers should match. Otherwise, it means the stager went mad 
       if(firstFseqFromClient != nbOfFileOnTape + 1) {

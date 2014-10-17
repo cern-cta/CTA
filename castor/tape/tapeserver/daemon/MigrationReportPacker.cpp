@@ -95,6 +95,15 @@ void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int err
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportEndofSessionWithErrors(msg,errorCode));
 }
+//------------------------------------------------------------------------------
+//synchronousReportEndWithErrors
+//------------------------------------------------------------------------------ 
+void MigrationReportPacker::synchronousReportEndWithErrors(const std::string msg, int errorCode){
+  // We create the report task here and excute it immediately instead of posting
+  // it to a queue.
+  ReportEndofSessionWithErrors rep(msg,errorCode);
+  rep.execute(*this);
+}
 
 //------------------------------------------------------------------------------
 //ReportSuccessful::execute

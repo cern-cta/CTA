@@ -86,6 +86,13 @@ public:
    */
   void reportEndOfSessionWithErrors(const std::string msg,int error_code);
 
+  /**
+   * Immediately report the end of session to the client.
+   * @param msg The error message 
+   * @param error_code The error code given by the drive
+   */
+  void synchronousReportEndWithErrors(const std::string msg,int error_code);
+  
   void startThreads() { m_workerThread.start(); }
   void waitThread() { m_workerThread.wait(); }
   
