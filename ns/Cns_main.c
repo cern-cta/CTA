@@ -238,13 +238,13 @@ int Cns_main(struct main_args *main_args)
     } else {
       sin.sin_port = htons ((unsigned short)CNS_SEC_PORT);
     }
-    /* Pre-load the KRB5 plugin library */
+    /* Pre-load the krb5 plugin library */
     char filename[CA_MAXNAMELEN];
-    snprintf(filename, CA_MAXNAMELEN, "libcastorsec_plugin_KRB5.so.%d.%d",
+    snprintf(filename, CA_MAXNAMELEN, "libcastorsec_krb5plugin.so.%d.%d",
              MAJORVERSION, MINORVERSION);
     void *handle = dlopen (filename, RTLD_LAZY);
     if (!handle) {
-      nslogit(LOG_ERR, "MSG=\"Error: failed to load the KRB5 plugin library\" "
+      nslogit(LOG_ERR, "MSG=\"Error: failed to load the krb5 plugin library\" "
               "Error=\"%s\"", dlerror());
     }
   } else {
