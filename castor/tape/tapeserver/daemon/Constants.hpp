@@ -51,6 +51,18 @@ const unsigned short TAPESERVER_LABELCMD_LISTENING_PORT = 54321;
 const unsigned short TAPESERVER_INTERNAL_LISTENING_PORT = 54322;
 
 /**
+ * The compile-time default value for the maximum time in seconds that the
+ * data-transfer session can take to get the transfer job from the client.
+ */
+const time_t TAPESERVER_WAITJOBTIMEOUT_DEFAULT = 60; // 1 minute
+
+/** 
+ * The compile-time default value for the maximum time in seconds that the
+ * data-transfer session can take to mount a tape.
+ */
+const time_t TAPESERVER_MOUNTTIMEOUT_DEFAULT = 900; // 15 minutes
+
+/**
  * The compile-time default value for the maximum time in seconds the
  * data-transfer session of tapeserverd can cease to move data blocks.
  */

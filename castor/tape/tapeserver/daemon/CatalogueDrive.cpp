@@ -21,7 +21,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueDrive.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
@@ -43,7 +42,10 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   legacymsg::VmgrProxy &vmgr,
   const std::string &hostName,
   const utils::DriveConfig &config,
-  const DriveState state)
+  const DriveState state,
+  const time_t waitJobTimeoutInSecs,
+  const time_t mountTimeoutInSecs,
+  const time_t blockMoveTimeoutInSecs)
   throw():
   m_netTimeout(netTimeout),
   m_log(log),
@@ -54,6 +56,9 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   m_hostName(hostName),
   m_config(config),
   m_state(state),
+  m_waitJobTimeoutInSecs(waitJobTimeoutInSecs),
+  m_mountTimeoutInSecs(mountTimeoutInSecs),
+  m_blockMoveTimeoutInSecs(blockMoveTimeoutInSecs),
   m_sessionType(SESSION_TYPE_NONE),
   m_session(NULL) {
 }
@@ -479,12 +484,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedVdqmJob(
     m_state = DRIVE_STATE_RUNNING;
     m_sessionType = SESSION_TYPE_DATATRANSFER;
     {
-      const unsigned short rmcPort =
-        common::CastorConfiguration::getConfig().getConfEntInt("RMC", "PORT",
-          (unsigned short)RMC_PORT, &m_log);
-      const time_t blockMoveTimeoutInSecs =
-        common::CastorConfiguration::getConfig().getConfEntInt("TAPESERVERD",
-          "BLKMOVETIMEOUT", TAPESERVER_BLKMOVETIMEOUT_DEFAULT, &m_log);
       CatalogueTransferSession *const transferSession =
         CatalogueTransferSession::create(
           m_log,
@@ -494,8 +493,9 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedVdqmJob(
           m_vmgr,
           m_cupv,
           m_hostName,
-          blockMoveTimeoutInSecs,
-          rmcPort,
+          m_waitJobTimeoutInSecs,
+          m_mountTimeoutInSecs,
+          m_blockMoveTimeoutInSecs,
           m_processForker);
       m_session = dynamic_cast<CatalogueSession *>(transferSession);
       m_vdqm.assignDrive(m_hostName, m_config.unitName, job.dgn,

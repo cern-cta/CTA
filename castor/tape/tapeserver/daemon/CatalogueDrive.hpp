@@ -175,6 +175,12 @@ public:
    * name is needed to fill in messages to be sent to the vdqmd daemon.
    * @param config The configuration of the tape drive.
    * @param state The initial state of the tape drive.
+   * @param waitJobTimeoutInSecs The maximum time in seconds that the
+   * data-transfer session can take to get the transfer job from the client.
+   * @param mountTimeoutInSecs The maximum time in seconds that the
+   * data-transfer session can take to mount a tape.
+   * @param blockMoveTimeoutInSecs The maximum time in seconds that the
+   * data-transfer session can cease to move data blocks.
    */
   CatalogueDrive(
     const int netTimeout,
@@ -185,7 +191,10 @@ public:
     legacymsg::VmgrProxy &vmgr,
     const std::string &hostName,
     const utils::DriveConfig &config,
-    const DriveState state) throw();
+    const DriveState state,
+    const time_t waitJobTimeoutInSecs,
+    const time_t mountTimeoutInSecs,
+    const time_t blockMoveTimeoutInSecs) throw();
 
   /**
    * Destructor
@@ -469,6 +478,24 @@ private:
    * The current state of the tape drive.
    */
   DriveState m_state;
+
+  /**
+   * The maximum time in seconds that the data-transfer session can take to get
+   * the transfer job from the client.
+   */
+  const time_t m_waitJobTimeoutInSecs;
+
+  /**
+   * The maximum time in seconds that the data-transfer session can take to
+   * mount a tape.
+   */
+  const time_t m_mountTimeoutInSecs;
+
+  /**
+   * The maximum time in seconds that the data-transfer session can cease to
+   * move data blocks.
+   */
+  const time_t m_blockMoveTimeoutInSecs;
   
   /**
    * The type of data-transfer session.

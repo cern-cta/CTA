@@ -21,7 +21,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/common/CastorConfiguration.hpp"
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
+#include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <string.h>
@@ -107,6 +109,16 @@ void castor::tape::tapeserver::daemon::Catalogue::populate(
 void castor::tape::tapeserver::daemon::Catalogue::enterDriveConfig(
   const utils::DriveConfig &driveConfig)  {
 
+  common::CastorConfiguration &castorConf =
+    common::CastorConfiguration::getConfig();
+  
+  const time_t waitJobTimeoutInSecs = castorConf.getConfEntInt("TAPESERVERD",
+    "WAITJOBTIMEOUT", (time_t)TAPESERVER_WAITJOBTIMEOUT_DEFAULT, &m_log);
+  const time_t mountTimeoutInSecs = castorConf.getConfEntInt("TAPESERVERD",
+    "MOUNTTIMEOUT", (time_t)TAPESERVER_MOUNTTIMEOUT_DEFAULT, &m_log);
+  const time_t blockMoveTimeoutInSec = castorConf.getConfEntInt("TAPESERVERD",
+    "BLKMOVETIMEOUT", (time_t)TAPESERVER_BLKMOVETIMEOUT_DEFAULT, &m_log);
+
   DriveMap::iterator itor = m_drives.find(driveConfig.unitName);
 
   // If the drive is not in the catalogue
@@ -114,7 +126,8 @@ void castor::tape::tapeserver::daemon::Catalogue::enterDriveConfig(
     // Insert it
     m_drives[driveConfig.unitName] = new CatalogueDrive(m_netTimeout,
       m_log, m_processForker, m_cupv, m_vdqm, m_vmgr, m_hostName, driveConfig,
-      CatalogueDrive::DRIVE_STATE_DOWN);
+      CatalogueDrive::DRIVE_STATE_DOWN, waitJobTimeoutInSecs,
+      mountTimeoutInSecs, blockMoveTimeoutInSec);
   // Else the drive is already in the catalogue
   } else {
     castor::exception::Exception ex;

@@ -46,8 +46,9 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession*
     legacymsg::VmgrProxy &vmgr,
     legacymsg::CupvProxy &cupv,
     const std::string &hostName,
+    const time_t waitJobTimeoutInSecs,
+    const time_t mountTimeoutInSecs,
     const time_t blockMoveTimeoutInSecs,
-    const unsigned short rmcPort,
     ProcessForkerProxy &processForker) {
 
   const pid_t pid = processForker.forkDataTransfer(driveConfig, vdqmJob);
@@ -61,6 +62,8 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession*
     vmgr,
     cupv,
     hostName,
+    waitJobTimeoutInSecs,
+    mountTimeoutInSecs,
     blockMoveTimeoutInSecs);
 }
 
@@ -77,16 +80,21 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
   legacymsg::VmgrProxy &vmgr,
   legacymsg::CupvProxy &cupv,
   const std::string &hostName,
+  const time_t waitJobTimeoutInSecs,
+  const time_t mountTimeoutInSecs,
   const time_t blockMoveTimeoutInSecs) throw():
   CatalogueSession(log, netTimeout, pid, driveConfig),
   m_state(TRANSFERSTATE_WAIT_JOB),
   m_mode(WRITE_DISABLE),
-  m_lastTimeSomeBlocksWereMoved(time(0)),
   m_assignmentTime(time(0)),
+  m_mountStartTime(0),
+  m_lastTimeSomeBlocksWereMoved(0),
   m_vdqmJob(vdqmJob),
   m_vmgr(vmgr),
   m_cupv(cupv),
   m_hostName(hostName),
+  m_waitJobTimeoutInSecs(waitJobTimeoutInSecs),
+  m_mountTimeoutInSecs(mountTimeoutInSecs),
   m_blockMoveTimeoutInSecs(blockMoveTimeoutInSecs) {
 }
 
@@ -94,23 +102,84 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
 // tick
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::tick() {
-  const time_t now = time(0);
-  const time_t secsSinceSomeBlocksWereMoved = now -
-    m_lastTimeSomeBlocksWereMoved;
-  const bool timeOutExceeded = secsSinceSomeBlocksWereMoved >
-    m_blockMoveTimeoutInSecs;
+  switch(m_state) {
+  case TRANSFERSTATE_WAIT_JOB:     return waitJobTick();
+  case TRANSFERSTATE_WAIT_MOUNTED: return waitMountedTick();
+  case TRANSFERSTATE_RUNNING:      return runningTick();
+  default: return;
+  }
+}
 
-  // Only execute watchdog logic when the tape has been mounted and the
-  // session is running, because it is not fair to apply the watchdog logic
-  // whilst a tape is being mounted
-  if(TRANSFERSTATE_RUNNING == m_state && timeOutExceeded) {
+//------------------------------------------------------------------------------
+// waitJobTick
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::waitJobTick() {
+  const time_t now = time(0);
+  const time_t secsWaiting = now - m_assignmentTime;
+  const bool timeOutExceeded = secsWaiting > m_waitJobTimeoutInSecs;
+
+  if(timeOutExceeded) {
     std::list<log::Param> params;
     params.push_back(log::Param("transferSessionPid", m_pid));
-    params.push_back(log::Param("secsSinceSomeBlocksWereMoved",
-      secsSinceSomeBlocksWereMoved));
+    params.push_back(log::Param("secsWaiting", secsWaiting));
+    params.push_back(log::Param("waitJobTimeoutInSecs",
+      m_waitJobTimeoutInSecs));
+    m_log(LOG_ERR,
+      "Killing data-transfer session because transfer job is too late",
+      params);
+
+    if(kill(m_pid, SIGKILL)) {
+      const std::string errnoStr = castor::utils::errnoToString(errno);
+      params.push_back(log::Param("message", errnoStr));
+      m_log(LOG_ERR, "Failed to kill data-transfer session", params);
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// waitMountTick
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::
+  waitMountedTick() {
+  const time_t now = time(0);
+  const time_t secsWaiting = now - m_mountStartTime;
+  const bool timeOutExceeded = secsWaiting > m_mountTimeoutInSecs;
+
+  if(timeOutExceeded) {
+    std::list<log::Param> params;
+    params.push_back(log::Param("transferSessionPid", m_pid));
+    params.push_back(log::Param("secsWaiting", secsWaiting));
+    params.push_back(log::Param("mountTimeoutInSecs",
+      m_mountTimeoutInSecs));
+    m_log(LOG_ERR,
+      "Killing data-transfer session because tape mount is taking too long",
+      params);
+
+    if(kill(m_pid, SIGKILL)) {
+      const std::string errnoStr = castor::utils::errnoToString(errno);
+      params.push_back(log::Param("message", errnoStr));
+      m_log(LOG_ERR, "Failed to kill data-transfer session", params);
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// runningTick
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::runningTick() {
+  const time_t now = time(0);
+  const time_t secsWaiting = now - m_lastTimeSomeBlocksWereMoved;
+  const bool timeOutExceeded = secsWaiting > m_blockMoveTimeoutInSecs;
+
+  if(timeOutExceeded) {
+    std::list<log::Param> params;
+    params.push_back(log::Param("transferSessionPid", m_pid));
+    params.push_back(log::Param("secsWaiting", secsWaiting));
     params.push_back(log::Param("blockMoveTimeoutInSecs",
       m_blockMoveTimeoutInSecs));
-    m_log(LOG_ERR, "Killing data-transfer session because it is stuck", params);
+    m_log(LOG_ERR,
+      "Killing data-transfer session because data blocks are not being moved",
+      params);
 
     if(kill(m_pid, SIGKILL)) {
       const std::string errnoStr = castor::utils::errnoToString(errno);
@@ -168,6 +237,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 
   checkUserCanRecallFromTape(vid);
 
+  m_mountStartTime = time(0);
   m_state = TRANSFERSTATE_WAIT_MOUNTED;
 
   m_mode = WRITE_DISABLE;
@@ -241,6 +311,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 
   checkUserCanMigrateToTape(vid);
 
+  m_mountStartTime = time(0);
   m_state = TRANSFERSTATE_WAIT_MOUNTED;
 
   m_mode = WRITE_ENABLE;

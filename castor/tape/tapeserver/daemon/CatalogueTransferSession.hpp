@@ -57,6 +57,10 @@ public:
    * @param cupv Proxy object representing the cupvd daemon.
    * @param hostName The host name to be used as the target host when
    * communicating with the cupvd daemon.
+   * @param waitJobTimeoutInSecs The maximum time in seconds that the
+   * data-transfer session can take to get the transfer job from the client.
+   * @param mountTimeoutInSecs The maximum time in seconds that the
+   * data-transfer session can take to mount a tape.
    * @param blockMoveTimeoutInSecs The maximum time in seconds that the
    * data-transfer session can cease to move data blocks.
    * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
@@ -71,8 +75,9 @@ public:
     legacymsg::VmgrProxy &vmgr,
     legacymsg::CupvProxy &cupv,
     const std::string &hostName,
+    const time_t waitJobTimeoutInSecs,
+    const time_t mountTimeoutInSecs,
     const time_t blockMoveTimeoutInSecs,
-    const unsigned short rmcPort,
     ProcessForkerProxy &processForker);
 
   /** 
@@ -229,6 +234,10 @@ protected:
    * @param cupv Proxy object representing the cupvd daemon.
    * @param hostName The host name to be used as the target host when
    * communicating with the cupvd daemon.
+   * @param waitJobTimeoutInSecs The maximum time in seconds that the
+   * data-transfer session can take to get the transfer job from the client.
+   * @param mountTimeoutInSecs The maximum time in seconds that the
+   * data-transfer session can take to mount a tape.
    * @param blockMoveTimeoutInSecs The maximum time in seconds that the
    * data-transfer session can cease to move data blocks.
    */
@@ -241,6 +250,8 @@ protected:
     legacymsg::VmgrProxy &vmgr,
     legacymsg::CupvProxy &cupv,
     const std::string &hostName,
+    const time_t waitJobTimeoutInSecs,
+    const time_t mountTimeoutInSecs,
     const time_t blockMoveTimeoutInSecs) throw();
 
 private:
@@ -277,15 +288,21 @@ private:
   uint16_t m_mode;
 
   /**
+   * The time at which the tape drive was assigned a data transfer job.
+   */
+  const time_t m_assignmentTime;
+
+  /**
+   * The time at which this catalogue session started waiting for the data
+   * transfer-session to mount the tape.
+   */
+  time_t m_mountStartTime;
+
+  /**
    * The last time at which some data blocks were moved by the data-transfer
    * session.
    */
   time_t m_lastTimeSomeBlocksWereMoved;
-
-  /**
-   * The time at which the tape drive was assigned a data transfer job.
-   */
-  const time_t m_assignmentTime;
 
   /**
    * The job received from the vdqmd daemon.
@@ -309,10 +326,40 @@ private:
   const std::string m_hostName;
 
   /**
+   * The maximum time in seconds that the data-transfer session can take to get
+   * the transfer job from the client.
+   */
+  const time_t m_waitJobTimeoutInSecs;
+
+  /**
+   * The maximum time in seconds that the data-transfer session can take to
+   * mount a tape.
+   */
+  const time_t m_mountTimeoutInSecs;
+
+  /**
    * The maximum time in seconds that the data-transfer session can cease to
    * move data blocks.
    */
   const time_t m_blockMoveTimeoutInSecs;
+
+  /** 
+   * A tick has occurred whilst the catalogue transfer-session is in thei
+   * TRANSFERSTATE_WAIT_JOB state.
+   */
+  void waitJobTick();
+
+  /** 
+   * A tick has occurred whilst the catalogue transfer-session is in thei
+   * TRANSFERSTATE_WAIT_MOUNTED state.
+   */
+  void waitMountedTick();
+
+  /** 
+   * A tick has occurred whilst the catalogue transfer-session is in thei
+   * TRANSFERSTATE_RUNNING state.
+   */
+  void runningTick();
 
 }; // class CatalogueTransferSession
 
