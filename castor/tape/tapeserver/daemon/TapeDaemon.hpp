@@ -424,16 +424,6 @@ protected:
     throw();
 
   /**
-   * Sets the state of the tape drive asscoiated with the specified
-   * child process to down within the vdqmd daemon.
-   *
-   * @param pid The process ID of the child process.
-   * @param driveConfig The configuration of the tape drive.
-   */
-  void setDriveDownInVdqm(const pid_t pid,
-    const utils::DriveConfig &driveConfig);
-  
-  /**
    * Marshals the specified source tape rc reply message structure into the
    * specified destination buffer.
    *

@@ -445,6 +445,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureDown() {
       throw ex;
     }
   }
+  m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
 }
 
 //-----------------------------------------------------------------------------

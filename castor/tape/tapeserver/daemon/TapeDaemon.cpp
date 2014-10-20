@@ -1031,25 +1031,3 @@ void castor::tape::tapeserver::daemon::TapeDaemon::notifyVdqmTapeUnmounted(
     throw ex;
   }
 }
-
-//------------------------------------------------------------------------------
-// setDriveDownInVdqm
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(
-  const pid_t pid, const utils::DriveConfig &driveConfig) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("pid", pid));
-
-  try {
-    params.push_back(log::Param("unitName", driveConfig.unitName));
-    params.push_back(log::Param("dgn", driveConfig.dgn));
-
-    m_vdqm.setDriveDown(m_hostName, driveConfig.unitName, driveConfig.dgn);
-    m_log(LOG_INFO, "Set tape-drive down in vdqm", params);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to set tape-drive down in vdqm: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
