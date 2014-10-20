@@ -63,6 +63,12 @@ public:
    * @param vmgr Proxy object representing the vmgrd daemon.
    * @param hostName The name of the host on which the daemon is running.  This
    * name is needed to fill in messages to be sent to the vdqmd daemon.
+   * @param waitJobTimeoutInSecs The maximum time in seconds that the
+   * data-transfer session can take to get the transfer job from the client.
+   * @param mountTimeoutInSecs The maximum time in seconds that the
+   * data-transfer session can take to mount a tape.
+   * @param blockMoveTimeoutInSecs The maximum time in seconds that the
+   * data-transfer session can cease to move data blocks.
    */
   Catalogue(
     const int netTimeout,
@@ -71,7 +77,10 @@ public:
     legacymsg::CupvProxy &cupv,
     legacymsg::VdqmProxy &vdqm,
     legacymsg::VmgrProxy &vmgr,
-    const std::string &hostName);
+    const std::string &hostName,
+    const time_t waitJobTimeoutInSecs,
+    const time_t mountTimeoutInSecs,
+    const time_t blockMoveTimeoutInSecs);
 
   /**
    * Destructor.
@@ -184,6 +193,24 @@ private:
    * needed to fill in messages to be sent to the vdqmd daemon.
    */
   const std::string m_hostName;
+
+  /**
+   * The maximum time in seconds that the data-transfer session can take to get
+   * the transfer job from the client.
+   */
+  const time_t m_waitJobTimeoutInSecs;
+
+  /**
+   * The maximum time in seconds that the data-transfer session can take to
+   * mount a tape.
+   */
+  const time_t m_mountTimeoutInSecs;
+
+  /**
+   * The maximum time in seconds that the data-transfer session can cease to
+   * move data blocks.
+   */
+  const time_t m_blockMoveTimeoutInSecs;
 
   /**
    * Type that maps the unit name of a tape drive to the catalogue entry of

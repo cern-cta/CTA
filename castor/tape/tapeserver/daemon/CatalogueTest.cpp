@@ -62,9 +62,12 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::VmgrProxyDummy vmgr;
   const std::string hostName = "";
+  const time_t waitJobTimeoutInSecs = 1;
+  const time_t mountTimeoutInSecs = 1;
+  const time_t blockMoveTimeoutInSecs = 1;
   const int netTimeout = 1;
   Catalogue catalogue(netTimeout, log, processForker, cupv, vdqm, vmgr,
-    hostName);
+    hostName, waitJobTimeoutInSecs, mountTimeoutInSecs, blockMoveTimeoutInSecs);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
   
   {
@@ -134,8 +137,11 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest,
   castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::VmgrProxyDummy vmgr;
   const std::string hostName = "";
+  const time_t waitJobTimeoutInSecs = 1;
+  const time_t mountTimeoutInSecs = 1;
+  const time_t blockMoveTimeoutInSecs = 1;
   Catalogue catalogue(netTimeout, log, processForker, cupv, vdqm, vmgr,
-    hostName);
+    hostName, waitJobTimeoutInSecs, mountTimeoutInSecs, blockMoveTimeoutInSecs);
   ASSERT_THROW(catalogue.findDrive(unitName), castor::exception::Exception);
 }
 
@@ -155,8 +161,11 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, dgnMismatchStart) {
   castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::VmgrProxyDummy vmgr;
   const std::string hostName = "";
+  const time_t waitJobTimeoutInSecs = 1;
+  const time_t mountTimeoutInSecs = 1;
+  const time_t blockMoveTimeoutInSecs = 1;
   Catalogue catalogue(netTimeout, log, processForker, cupv, vdqm, vmgr,
-    hostName);
+    hostName, waitJobTimeoutInSecs, mountTimeoutInSecs, blockMoveTimeoutInSecs);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
   CatalogueDrive &unit = catalogue.findDrive("UNIT");
   ASSERT_EQ(CatalogueDrive::DRIVE_STATE_DOWN, unit.getState());
@@ -193,8 +202,11 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, getUnitNames) {
   castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::VmgrProxyDummy vmgr;
   const std::string hostName = "";
+  const time_t waitJobTimeoutInSecs = 1;
+  const time_t mountTimeoutInSecs = 1;
+  const time_t blockMoveTimeoutInSecs = 1;
   Catalogue catalogue(netTimeout, log, processForker, cupv, vdqm, vmgr,
-    hostName);
+    hostName, waitJobTimeoutInSecs, mountTimeoutInSecs, blockMoveTimeoutInSecs);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
 
   {
