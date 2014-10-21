@@ -7,5 +7,5 @@
 #
 # Please replace and uncomment the following
 #
-# VD41STK0 V41STK /dev/nst0 smc@localhost,0 T10000
-# VD41STK1 V41STK /dev/nst1 smc@localhost,1 T10000
+# VD41STK0 V41STK /dev/nst0 smc@localhost,0
+# VD41STK1 V41STK /dev/nst1 smc@localhost,1
