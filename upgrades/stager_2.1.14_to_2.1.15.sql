@@ -72,10 +72,12 @@ END;
 /******************/
 
 /* Drop updates from Type2Obj and redirect PrepareTo requests */
-DELETE FROM Type2Obj WHERE type in (38, 44, 147);
+DELETE FROM Type2Obj WHERE type IN (38, 44, 147);
 DELETE FROM WhiteList WHERE reqType IN (38, 44, 147);
 DELETE FROM BlackList WHERE reqType IN (38, 44, 147);
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (36, 37);
+/* Drop other obsoleted entries from Type2Obj */
+DELETE FROM Type2Obj WHERE type IN (18, 29, 84, 85, 86, 87, 88, 89, 90, 01, 92, 148);
 
 /* drop obsoleted entities */
 -- updates support
