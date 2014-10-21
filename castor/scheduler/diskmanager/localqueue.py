@@ -468,7 +468,7 @@ class LocalQueue(Queue.Queue):
     self.lock.acquire()
     try:
       # return transferId, transfer, transfertype, arrivaltime
-      return [tuple(qTransfer.transfer.items()) for qTransfer in self.queueingTransfers.itervalues()
+      return [tuple(qTransfer.transfer.__dict__.items()) for qTransfer in self.queueingTransfers.itervalues()
               if qTransfer.scheduler == scheduler]
     finally:
       self.lock.release()

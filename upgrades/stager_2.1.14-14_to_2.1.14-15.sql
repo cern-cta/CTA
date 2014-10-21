@@ -950,6 +950,12 @@ BEGIN
 END;
 /
 
+/* revalidate all code */
+BEGIN
+  recompileAll();
+END;
+/
+
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
 UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
