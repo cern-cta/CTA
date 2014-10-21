@@ -2,10 +2,10 @@
 .\"
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_CREATEREQUESTFORAGGREGATOR l "$Date: 2008/10/11 11:37:41 $" "CASTOR" "VDQM Library Functions"
+.TH VDQM_CREATEREQUEST l "$Date: 2008/10/11 11:37:41 $" "CASTOR" "VDQM Library Functions"
 .SH NAME
 .PP
-vdqm_CreateRequestForAggregator \- asks the VDQM to create a request for a drive and an aggregator
+vdqm_CreateRequest \- asks the VDQM to create a request for a drive
 .SH SYNOPSIS
 .br
 \fB#include "Castor_limits.h"\fR
@@ -16,7 +16,7 @@ vdqm_CreateRequestForAggregator \- asks the VDQM to create a request for a drive
 .br
 \fB#include "vdqm_api.h"\fR
 .sp
-.BI "int vdqm_CreateRequestForAggregator ("
+.BI "int vdqm_CreateRequest ("
 .br
 .BI "                const vdqmnw_t *" nw ,
 .br
@@ -45,7 +45,7 @@ must be valid.
 .PP
 .I reqID
 \- points to an integer location that receives the volume request queue ID 
-returned by the VDQM. This is the key used by the aggregator server when
+returned by the VDQM. This is the key used by the tape server when
 contacting the client. 
 .I VID
 \- character string specifying the volume visual identifier.
@@ -68,18 +68,18 @@ header file. Any other value will result in an error.
 .PP
 .I port
 \- integer value specifying a network listen port opened and bound by
-the client application. The aggregator server will use this port when
+the client application. The tape server will use this port when
 contacting the client at job startup. The port value should be given in host
 order.
 .PP
 .SH DESCRIPTION
-.B vdqm_CreateRequestForAggregator
-asks the VDQM to create a request for a drive and an aggregator. When successful the volume
+.B vdqm_CreateRequest
+asks the VDQM to create a request for a drive. When successful the volume
 request identifier is returned and the VDQM waits on the network connection
 specified by
 .I nw
 for the client to ask for the request to be queued using
-.B vdqm_QueueRequestForAggregator(1).
+.B vdqm_QueueRequest(1).
 This two-phase commit is required to allow the client to store the
 .I reqID
 before the VDQM can allocate a free drive for the request.  This prevents the
@@ -88,25 +88,25 @@ race condition where the action of the client storing the
 is racing against the action of the client receiving the connection from the
 allocated drive.
 When the request is due to run the VDQM server assigns
-a free drive and contacts the aggregator on the node hosting the
-assigned drive. The aggregator receives the client host name and port
+a free drive and contacts the tape server on the node hosting the
+assigned drive. The tape server receives the client host name and port
 number passed in the
 .I port
 parameter and contacts the client to receive the mount request.
-When contacting the client the aggregator checks that the volume request
+When contacting the client the tape server checks that the volume request
 identifier is correct and rejects the request if not.
 
 .SH RETURN VALUES
 .PP
 On successful completion, the
-.B vdqm_CreateRequestForAggregator
+.B vdqm_CreateRequest
 function returns 0. Otherwise, a value of \-1 is returned and
 .B serrno
 is set to indicate the error.
 .SH ERRORS
 .PP
 If the
-.B vdqm_CreateRequestForAggregator
+.B vdqm_CreateRequest
 function fails,
 .B serrno
 may be set to one of the following values:
@@ -138,7 +138,7 @@ to VDQM server maintenance. Client should retry after a short delay.
 
 .SH EXAMPLE
 Here is some example boiler plate code for using
-.B vdqm_CreateRequestForAggregator.
+.B vdqm_CreateRequest
 The character string XXXX shows where user code needs to be a added.
 .P
 .nf
@@ -160,8 +160,8 @@ savedSerrno = serrno;
 // If successfully connected
 if(rc != -1) {
 
-  // Ask the VDQM to create a request for a drive with an aggregator
-  rc = vdqm_CreateRequestForAggregator(nw, reqID, VID, dgn, server, unit,
+  // Ask the VDQM to create a request for a drive
+  rc = vdqm_CreateRequest(nw, reqID, VID, dgn, server, unit,
     mode, client_port);
   savedSerrno = serrno;
 
@@ -172,7 +172,7 @@ if(rc != -1) {
     XXXX
 
     // Ask the VDQM to queue the newly created request
-    rc = vdqm_QueueRequestForAggregator(nw);
+    rc = vdqm_QueueRequest(nw);
     savedSerrno = serrno;
   }
 
@@ -198,7 +198,7 @@ if(rc == -1) {
 .SH SEE ALSO
 .BR vdqm_Connect(3), 
 .BR vdqm_Disconnect(3),
-.BR vdqm_QueueRequestForAggregator(1)
+.BR vdqm_QueueRequest(1)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

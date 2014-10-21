@@ -36,8 +36,7 @@
 //------------------------------------------------------------------------------
 // connectToVdqm
 //------------------------------------------------------------------------------
-void castor::tape::tapegateway::VdqmTapeGatewayHelper::connectToVdqm()
-   {
+void castor::tape::tapegateway::VdqmTapeGatewayHelper::connectToVdqm() {
   serrno=0;
   m_connection=NULL;
   int rc = vdqm_Connect(&m_connection);
@@ -52,11 +51,11 @@ void castor::tape::tapegateway::VdqmTapeGatewayHelper::connectToVdqm()
 }
 
 //------------------------------------------------------------------------------
-// createRequestForAggregator
+// createRequest
 //------------------------------------------------------------------------------
-int castor::tape::tapegateway::VdqmTapeGatewayHelper::createRequestForAggregator
-(const std::string &vid, const char *dgn, const int mode, const int port, const int priority)
-   {
+int castor::tape::tapegateway::VdqmTapeGatewayHelper::createRequest(
+  const std::string &vid, const char *dgn, const int mode, const int port,
+  const int priority) {
   // Due to historical compoenents, we first send the priority of the future
   // request (set on the VID only) and only then we create the request
   serrno = 0;
@@ -64,20 +63,20 @@ int castor::tape::tapegateway::VdqmTapeGatewayHelper::createRequestForAggregator
   if (ret < 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage()
-      << "castor::tape::tapegateway::VdqmTapeGatewayHelper::createRequestForAggregator "
+      << "castor::tape::tapegateway::VdqmTapeGatewayHelper::createRequest "
       << "vdqm_SendVolPriority failed";
     throw ex;
   }
   // send vol request
   int reqId = 0;
   serrno = 0;
-  ret = vdqm_CreateRequestForAggregator(m_connection, &reqId, (char*)vid.c_str(),
-                                        (char*)dgn, NULL, NULL, mode, port);
+  ret = vdqm_CreateRequest(m_connection, &reqId, (char*)vid.c_str(), (char*)dgn,
+    NULL, NULL, mode, port);
   if (ret < 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage()
-      << "castor::tape::tapegateway::VdqmTapeGatewayHelper::createRequestForAggregator "
-      << "vdqm_CreateRequestForAggregator failed";
+      << "castor::tape::tapegateway::VdqmTapeGatewayHelper::createRequest "
+      << "vdqm_CreateRequest failed";
     throw ex;
   }
   return reqId;
@@ -90,13 +89,13 @@ void castor::tape::tapegateway::VdqmTapeGatewayHelper::confirmRequestToVdqm()
    {
   // after saving the transaction id in the db I send the confirmation to vdqm
   serrno=0;
-  int ret = vdqm_QueueRequestForAggregator(m_connection);
+  int ret = vdqm_QueueRequest(m_connection);
 
   if (ret<0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage()
       << "castor::tape::tapegateway::VdqmTapeGatewayHelper::submitTapeToVdqm"
-      <<" vdqm_QueueRequestForAggregator failed";
+      <<" vdqm_QueueRequest failed";
     throw ex;
   }
 }

@@ -55,15 +55,14 @@ namespace castor {
          * @param priority the priority to be used for this request
          * @exception throws CASTOR exception if not successful
          */
-	int createRequestForAggregator(const std::string &vid,
-                                       const char *dgn,
-                                       const int mode,
-                                       const int port,
-                                       const int priority)
-          ;
+	int createRequest(const std::string &vid,
+                          const char *dgn,
+                          const int mode,
+                          const int port,
+                          const int priority);
 
         /**
-         * validate a VDQM request created with createRequestForAggregator
+         * validate a VDQM request created with createRequest
          * @exception throws CASTOR exception if not successful
          */
 	void confirmRequestToVdqm() ;

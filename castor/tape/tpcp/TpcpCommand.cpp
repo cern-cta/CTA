@@ -543,8 +543,7 @@ void castor::tape::tpcp::TpcpCommand::setupCallbackSock() {
 // requestDriveFromVdqm 
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(
-  const int accessMode, char *const tapeServer)
-   {
+  const int accessMode, char *const tapeServer) {
 
   // Get the port number and IP of the callback port
   unsigned short port = 0;
@@ -570,15 +569,15 @@ void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(
   if(rc != -1) {
 
     // Ask the VDQM to create a request
-    rc = vdqm_CreateRequestForAggregator(nw, reqID, VID, dgn, server, unit,
-      mode, client_port);
+    rc = vdqm_CreateRequest(nw, reqID, VID, dgn, server, unit, mode,
+      client_port);
     savedSerrno = serrno;
 
     // If the request was sucessfully created
     if(rc != -1) {
 
       // Ask the VDQM to queue the newly created request
-      rc = vdqm_QueueRequestForAggregator(nw);
+      rc = vdqm_QueueRequest(nw);
       savedSerrno = serrno;
     }
 

@@ -48,6 +48,6 @@ EXTERN_C int vdqm_SendDedicate (char*, char*, char*, char*);
 /*
  * Functions that use VDQM magic number: VDQM4
  */
-EXTERN_C int vdqm_CreateRequestForAggregator (vdqmnw_t *nw, int *reqID, char *VID, char *dgn, char *server, char *unit, int mode, int client_port);
-EXTERN_C int vdqm_QueueRequestForAggregator (vdqmnw_t *nw);
+EXTERN_C int vdqm_CreateRequest (vdqmnw_t *nw, int *reqID, char *VID, char *dgn, char *server, char *unit, int mode, int client_port);
+EXTERN_C int vdqm_QueueRequest (vdqmnw_t *nw);
 

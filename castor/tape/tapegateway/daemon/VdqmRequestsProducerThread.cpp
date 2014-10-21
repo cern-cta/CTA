@@ -209,8 +209,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::sendToVDQM
   }
   // we are now connected to VDQM
   try {
-    mountTransactionId = vdqmHelper.createRequestForAggregator
-      (vid, dgn, mode, m_port, vdqmPriority);
+    mountTransactionId = vdqmHelper.createRequest(vid, dgn, mode, m_port, vdqmPriority);
     // set mountTransactionId in the RecallMount and commit
     oraSvc->attachDriveReq(vid, mountTransactionId, mode, label, density);
     // confirm to vdqm

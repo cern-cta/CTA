@@ -1048,7 +1048,7 @@ int vdqm_SendDedicate(char *server, char *drive, char *dgn,
 }
 
 
-int vdqm_CreateRequestForAggregator(vdqmnw_t *nw,
+int vdqm_CreateRequest(vdqmnw_t *nw,
                     int  *reqID,
                     char *VID, 
                     char *dgn,
@@ -1061,44 +1061,44 @@ int vdqm_CreateRequestForAggregator(vdqmnw_t *nw,
     int           save_serrno = 0;
     int           rc          = 0;
 
-    VDQM_API_ENTER(vdqm_CreateRequestForAggregator);
+    VDQM_API_ENTER(vdqm_CreateRequest);
 
     /* Check function parameters are valid */
     if ( reqID == NULL ) {
         TRACE(1,"vdqm",
-            "vdqm_CreateRequestForAggregator() called with NULL reqID");
+            "vdqm_CreateRequest() called with NULL reqID");
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
     }
     if ( nw == NULL ) {
         TRACE(1,"vdqm",
-            "vdqm_CreateRequestForAggregator() called with nw == NULL");
+            "vdqm_CreateRequest() called with nw == NULL");
 
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
     }
     if ( nw->connect_socket == -1 ) {
         TRACE(1,"vdqm",
-            "vdqm_CreateRequestForAggregator() called with invalid socket");
+            "vdqm_CreateRequest() called with invalid socket");
 
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
     }
     if ( VID == NULL ) {
         TRACE(1,"vdqm",
-            "vdqm_CreateRequestForAggregator() called with NULL VID");
+            "vdqm_CreateRequest() called with NULL VID");
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
     }
     if ( dgn == NULL ) {
         TRACE(1,"vdqm",
-            "vdqm_CreateRequestForAggregator() called with NULL dgn");
+            "vdqm_CreateRequest() called with NULL dgn");
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
     }
     if ( client_port < 0) {
         TRACE(1,"vdqm",
-          "vdqm_CreateRequestForAggregator() called with negative client port");
+          "vdqm_CreateRequest() called with negative client port");
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
     }
@@ -1122,12 +1122,12 @@ int vdqm_CreateRequestForAggregator(vdqmnw_t *nw,
     pw = Cgetpwuid(volreq.clientUID);
     if ( pw == NULL ) {
         TRACE(1,"vdqm",
-            "vdqm_CreateRequestForAggregator() Cgetpwuid() error: %s\n",
+            "vdqm_CreateRequest() Cgetpwuid() error: %s\n",
             sstrerror(serrno));
         VDQM_API_RETURN(-1);
     }
     strcpy(volreq.client_name,pw->pw_name);
-    TRACE(1,"vdqm","vdqm_CreateRequestForAggregator() send request VID %s, drive %s@%s, dgn %s, for %s (%d,%d)",
+    TRACE(1,"vdqm","vdqm_CreateRequest() send request VID %s, drive %s@%s, dgn %s, for %s (%d,%d)",
         volreq.volid,(*volreq.drive!='\0' ? volreq.drive : "*"),
         (*volreq.server!='\0' ? volreq.server : "*"),volreq.dgn,
         volreq.client_name,volreq.clientUID,volreq.clientGID);
@@ -1140,8 +1140,7 @@ int vdqm_CreateRequestForAggregator(vdqmnw_t *nw,
 
     /* Receive the acknowledge */
     rc = vdqm_RecvAckn(nw);
-    TRACE(1,"vdqm",
-        "vdqm_CreateRequestForAggregator() vdqm_RecvAckn() rc = 0x%x",rc);
+    TRACE(1,"vdqm", "vdqm_CreateRequest() vdqm_RecvAckn() rc = 0x%x",rc);
     if ( rc != VDQM_COMMIT ) {
       if ( rc > 0 ) {
           serrno = rc;
@@ -1155,8 +1154,7 @@ int vdqm_CreateRequestForAggregator(vdqmnw_t *nw,
     /* Receive the reply */
     rc = vdqm_AggregatorVolReq_Recv(nw,NULL,&volreq);
     save_serrno = serrno;
-    TRACE(1,"vdqm",
-        "vdqm_CreateRequestForAggregator() received rc=%d, VolReqID=%d", rc,
+    TRACE(1,"vdqm", "vdqm_CreateRequest() received rc=%d, VolReqID=%d", rc,
         volreq.VolReqID);
     if ( rc == -1 ) {
         serrno = save_serrno;
@@ -1169,20 +1167,20 @@ int vdqm_CreateRequestForAggregator(vdqmnw_t *nw,
 }
 
 
-int vdqm_QueueRequestForAggregator(vdqmnw_t *nw) {
+int vdqm_QueueRequest(vdqmnw_t *nw) {
     int rc = 0;
 
-    VDQM_API_ENTER(vdqm_ConfirmRequestForAggregator);
+    VDQM_API_ENTER(vdqm_QueueRequest);
 
     if ( nw == NULL ) {
         TRACE(1,"vdqm",
-            "vdqm_QueueRequestForAggregator() called with nw == NULL");
+            "vdqm_QueueRequest() called with nw == NULL");
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
     }
     if ( nw->connect_socket == -1 ) {
         TRACE(1,"vdqm",
-          "vdqm_QueueRequestForAggregator() called with invalid socket");
+          "vdqm_QueueRequest() called with invalid socket");
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
     }
