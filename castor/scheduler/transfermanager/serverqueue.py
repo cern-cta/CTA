@@ -237,7 +237,7 @@ class ServerQueue(dict):
             continue
         # else put in the list of transfers to really drop
         # note that we can not drop here as we are looping on transfersLocations that would be modified
-        transferstodrop.append((transfer.transferId, transfer.transferType))
+        transferstodrop.append((transferId, transferType))
       # now remove selected transfers
       for transferId, transferType in transferstodrop:
         transfer = self._removetransfer(transferId, transferType, transfersPerMachine)
