@@ -162,13 +162,14 @@ class ActivityControlThread(threading.Thread):
               # 'Failed to start transfer. Putting it back to the queue' message
               dlf.writeerr(msgs.TRANSFERSTARTINGFAILED, subreqid=transfer.transferId,
                            reqid=transfer.reqId, fileId=transfer.fileId, error=e)
-              time.sleep(1)
             except Exception, e2:
               # clear this exception context, i.e. the Timeout, so that we log the original error
               sys.exc_clear()
               # 'Failed to start transfer and got timeout when putting back to queue'
               dlf.writeerr(msgs.TRANSFERBACKTOQUEUEFAILED, subreqid=transfer.transferId,
                            reqid=transfer.reqId, fileId=transfer.fileId, originalError=e, error=e2)
+            # wait a bit to avoid a tight loop in case of persistent errors
+            time.sleep(.1)
         else:
           time.sleep(.05)
       except Exception:
