@@ -53,7 +53,7 @@ public:
 
       os <<
         "Received " << objectTypeToString(msg.type()) <<
-        " from tapebridge" << std::endl <<
+        " from tape server" << std::endl <<
         msg << std::endl;
     }
   }
@@ -71,7 +71,7 @@ public:
 
       os <<
         "Sent " << objectTypeToString(msg.type()) <<
-        " to tapebridge" << std::endl <<
+        " to tape server" << std::endl <<
         msg << std::endl;
     }
   }

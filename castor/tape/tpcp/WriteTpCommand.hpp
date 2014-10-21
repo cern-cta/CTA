@@ -82,17 +82,15 @@ protected:
   void requestDriveFromVdqm(char *const tapeServer);
 
   /**
-   * Sends the volume message to the tapebridged daemon.
+   * Sends the volume message to the tape-server daemon.
    *
    * @param volumeRequest The volume rerquest message received from the
    *                      tapegatewayd daemon.
-   * @param connection    The already open connection to the tapebridged daemon
+   * @param connection    The already open connection to the tape-server daemon
    *                      over which the volume message should be sent.
    */
-  void sendVolumeToTapeBridge(
-    const tapegateway::VolumeRequest &volumeRequest,
-    castor::io::AbstractTCPSocket    &connection)
-    const;
+  void sendVolumeToTapeServer(const tapegateway::VolumeRequest &volumeRequest,
+    castor::io::AbstractTCPSocket &connection) const;
 
   /**
    * Performs the tape copy whether it be DUMP, READ or WRITE.
@@ -153,8 +151,8 @@ private:
   /**
    * FilesToMigrateListRequest message handler.
    *
-   * @param obj  The tapebridge message to be processed.
-   * @param sock The socket on which to reply to the tapebridge.
+   * @param obj  The tape-server message to be processed.
+   * @param sock The socket on which to reply to the tape server.
    * @return     True if there is more work to be done else false.
    */
   bool handleFilesToMigrateListRequest(castor::IObject *const obj,
@@ -163,8 +161,8 @@ private:
   /**
    * FileMigrationReportList message handler.
    *
-   * @param obj  The tapebridge message to be processed.
-   * @param sock The socket on which to reply to the tapebridge.
+   * @param obj  The tape-server message to be processed.
+   * @param sock The socket on which to reply to the tape server.
    * @return     True if there is more work to be done else false.
    */
   bool handleFileMigrationReportList(castor::IObject *const obj,
@@ -173,34 +171,34 @@ private:
   /**
    * Handles the specified successful migration of files to tape.
    *
-   * @param tapebridgeTransId The tapebridge transaction Id of the enclosing
-   *                          FileMigrationReportList message.
-   * @param files             The sucessful migrations to tape.
-   * @param sock              The socket on which to reply to the tapebridge.
+   * @param transactionId The transaction Id of the enclosing
+   *                      FileMigrationReportList message.
+   * @param files         The sucessful migrations to tape.
+   * @param sock          The socket on which to reply to the tape server.
    */
   void handleSuccessfulMigrations(
-    const uint64_t tapebridgeTransId,
+    const uint64_t transactionId,
     const std::vector<tapegateway::FileMigratedNotificationStruct*> &files,
     castor::io::AbstractSocket &sock);
 
   /**
    * Handles the successfull migration of a file to tape.
    *
-   * @param tapebridgeTransId The tapebridge transaction Id of the enclosing
-   *                          FileMigrationReportList message.
-   * @param file              The file that was successfully migrated to tape.
-   * @param sock              The socket on which to reply to the tapebridge.
+   * @param transactionId The transaction Id of the enclosing
+   *                      FileMigrationReportList message.
+   * @param file          The file that was successfully migrated to tape.
+   * @param sock          The socket on which to reply to the tape server.
    */
   void handleSuccessfulMigration(
-    const uint64_t tapebridgeTransId,
+    const uint64_t transactionId,
     const tapegateway::FileMigratedNotificationStruct &file,
     castor::io::AbstractSocket &sock);
 
   /**
    * EndNotification message handler.
    *
-   * @param obj  The tapebridge message to be processed.
-   * @param sock The socket on which to reply to the tapebridge.
+   * @param obj  The tape-server message to be processed.
+   * @param sock The socket on which to reply to the tape server.
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotification(castor::IObject *const obj,
@@ -209,8 +207,8 @@ private:
   /**
    * EndNotificationErrorReport message handler.
    *
-   * @param obj  The tapebridge message to be processed.
-   * @param sock The socket on which to reply to the tapebridge.
+   * @param obj  The tape-server message to be processed.
+   * @param sock The socket on which to reply to the tape server.
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotificationErrorReport(castor::IObject *const obj,
@@ -219,8 +217,8 @@ private:
   /**
    * PingNotification message handler.
    *
-   * @param obj  The tapebridge message to be processed.
-   * @param sock The socket on which to reply to the tapebridge.
+   * @param obj  The tape-server message to be processed.
+   * @param sock The socket on which to reply to the tape server.
    * @return     True if there is more work to be done else false.
    */
   bool handlePingNotification(castor::IObject *const obj,

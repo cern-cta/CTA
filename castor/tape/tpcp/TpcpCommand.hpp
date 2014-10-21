@@ -51,7 +51,7 @@ namespace tape   {
 namespace tpcp   {
 
 /**
- * The common code of the command-line clients of the tapebridged daemon.
+ * The common code of the command-line clients of the tape-server daemon.
  */
 class TpcpCommand : public castor::BaseObject {
 public:
@@ -124,14 +124,14 @@ protected:
   /**
    * To be implemented by sub-classes.
    *
-   * Sends the volume message to the tapebridged daemon.
+   * Sends the volume message to the tape-server daemon.
    *
-   * @param volumeRequest The volume rerquest message received from the
+   * @param volumeRequest The volume request message received from the
    *                      tapegatewayd daemon.
-   * @param connection    The already open connection to the tapebridged daemon
+   * @param connection    The already open connection to the daemon
    *                      over which the volume message should be sent.
    */
-  virtual void sendVolumeToTapeBridge(
+  virtual void sendVolumeToTapeServer(
     const tapegateway::VolumeRequest &volumeRequest,
     castor::io::AbstractTCPSocket    &connection) const  = 0;
 
@@ -326,14 +326,13 @@ protected:
    * method tries to send an EndNotificationErrorReport messages to the
    * tape-bridge and fails silently in the case it cannot.
    *
-   * @param tapebridgeTransactionId The tape-bridge transaction ID.
-   * @param errorCode               The error code.
-   * @param errorMessage            The error message.
-   * @param sock                    The socket on which to reply to the
-   *                                tape-bridge.
+   * @param transactionId The transaction ID.
+   * @param errorCode     The error code.
+   * @param errorMessage  The error message.
+   * @param sock          The socket on which to reply to the tape server.
    */
   void sendEndNotificationErrorReport(
-    const uint64_t             tapebridgeTransactionId,
+    const uint64_t             transactionId,
     const int                  errorCode,
     const std::string          &errorMessage,
     castor::io::AbstractSocket &sock)
@@ -364,8 +363,8 @@ protected:
         ": Actual=" << Helper::objectTypeToString(obj->type()) <<
         " Expected=" << Helper::objectTypeToString(T().type());
 
-      const uint64_t tapebridgeTransactionId = 0; // Transaction Id unknown
-      sendEndNotificationErrorReport(tapebridgeTransactionId, SEINTERNAL,
+      const uint64_t transactionId = 0; // Transaction Id unknown
+      sendEndNotificationErrorReport(transactionId, SEINTERNAL,
         oss.str(), sock);
 
       castor::exception::Exception ex;

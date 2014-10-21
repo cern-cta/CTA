@@ -348,15 +348,14 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
 
   checkAccessToTape();
 
-  // Setup the tapebridge callback socket
+  // Setup the tape-server callback-socket
   setupCallbackSock();
 
-  // If debug, then display a textual description of the tapebridge callback
-  // socket
+  // If debug, then display a textual description of the callback socket
   if(m_cmdLine.debugSet) {
     std::ostream &os = std::cout;
 
-    os << "Tapebridge callback socket details = ";
+    os << "Tape-server callback socket-details = ";
     io::writeSockDescription(os, m_callbackSock.socket());
     os << std::endl;
   }
@@ -377,10 +376,10 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
        << std::endl;
   }
 
-  // Socket file descriptor for a callback connection from the tapebridge
+  // Socket file descriptor for a callback connection from the tape server
   int connectionSockFd = 0;
 
-  // Wait for a callback connection from the tapebridge
+  // Wait for a callback connection from the tape server
   {
     bool   waitForCallback = true;
     time_t timeout         = WAITCALLBACKTIMEOUT;
@@ -442,7 +441,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
   // methods
   castor::io::AbstractTCPSocket callbackConnectionSock(connectionSockFd);
 
-  // Read in the object sent by the tapebridge
+  // Read in the object sent by the tape server
   std::auto_ptr<castor::IObject> firstObj(callbackConnectionSock.readObject());
 
   switch (firstObj->type()) {
@@ -468,7 +467,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     {
       castor::exception::Exception ex(ECANCELED);
       ex.getMessage() <<
-        "Received the wrong type of object from the tapebridge" <<
+        "Received the wrong type of object from the tape server" <<
         ": Actual=" << Helper::objectTypeToString(firstObj->type()) <<
         " Expected=VolumeRequest or EndNotificationErrorReport";
       throw ex;
@@ -487,16 +486,16 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     castor::exception::InvalidArgument ex;
 
     ex.getMessage()
-      << "Received the wrong mount transaction ID from the tapebridge"
+      << "Received the wrong mount transaction ID from the tape server"
       << ": Actual=" << volumeRequest.mountTransactionId()
       << " Expected=" <<  m_volReqId;
 
     throw ex;
   }
 
-  sendVolumeToTapeBridge(volumeRequest, callbackConnectionSock);
+  sendVolumeToTapeServer(volumeRequest, callbackConnectionSock);
 
-  // Close the connection to the tapebridge
+  // Close the connection to the tape server
   callbackConnectionSock.close();
 
   performTransfer();
@@ -506,8 +505,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
 //------------------------------------------------------------------------------
 // vmgrQueryTape
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::vmgrQueryTape()
-   {
+void castor::tape::tpcp::TpcpCommand::vmgrQueryTape() {
   const int side = 0;
   serrno=0;
   const int rc = vmgr_querytape_byte_u64(m_cmdLine.vid, side, &m_vmgrTapeInfo,
@@ -528,15 +526,14 @@ void castor::tape::tpcp::TpcpCommand::vmgrQueryTape()
 //------------------------------------------------------------------------------
 // setupCallbackSock
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::setupCallbackSock()
-   {
+void castor::tape::tpcp::TpcpCommand::setupCallbackSock() {
 
   const unsigned short lowPort = utils::getPortFromConfig(
-    "TAPESERVERCLIENT", "LOWPORT", TAPEBRIDGECLIENT_LOWPORT);
+    "TAPESERVERCLIENT", "LOWPORT", TAPESERVERCLIENT_LOWPORT);
   const unsigned short highPort = utils::getPortFromConfig(
-    "TAPESERVERCLIENT", "HIGHPORT", TAPEBRIDGECLIENT_HIGHPORT);
+    "TAPESERVERCLIENT", "HIGHPORT", TAPESERVERCLIENT_HIGHPORT);
 
-  // Bind the tapebridge callback socket
+  // Bind the tape-server callback-socket
   m_callbackSock.bind(lowPort, highPort);
   m_callbackSock.listen();
 }
@@ -572,7 +569,7 @@ void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(
   // If successfully connected
   if(rc != -1) {
 
-    // Ask the VDQM to create a request for a drive with an tapebridge
+    // Ask the VDQM to create a request
     rc = vdqm_CreateRequestForAggregator(nw, reqID, VID, dgn, server, unit,
       mode, client_port);
     savedSerrno = serrno;
@@ -613,10 +610,10 @@ void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler() {
 
-  // Socket file descriptor for a callback connection from the tapebridge
+  // Socket file descriptor for a callback connection from the tape server
   int connectionSockFd = 0;
 
-  // Wait for a callback connection from the tapebridge
+  // Wait for a callback connection from the tape server
   {
     bool   waitForCallback = true;
     time_t timeout         = WAITCALLBACKTIMEOUT;
@@ -659,12 +656,12 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler() {
     }
   }
 
-  // If debug, then display a textual description of the tapebridge
+  // If debug, then display a textual description of the tape server
   // callback connection
   if(m_cmdLine.debugSet) {
     std::ostream &os = std::cout;
 
-    os << "Tapebridge connection = ";
+    os << "Tape-server connection = ";
     io::writeSockDescription(os, connectionSockFd);
     os << std::endl;
   }
@@ -674,14 +671,14 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler() {
   // methods
   castor::io::AbstractTCPSocket sock(connectionSockFd);
 
-  // Read in the message sent by the tapebridge
+  // Read in the message sent by the tape server
   std::auto_ptr<castor::IObject> obj(sock.readObject());
 
-  // If debug, then display the type of message received from the tapebridge
+  // If debug, then display the type of message received from the tape server
   if(m_cmdLine.debugSet) {
     std::ostream &os = std::cout;
 
-    os << "Received tapebridge message of type = "
+    os << "Received tape-server message of type = "
        << Helper::objectTypeToString(obj->type()) << std::endl;
   }
 
@@ -698,8 +695,8 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler() {
         ": actual=" << Helper::objectTypeToString(obj->type()) <<
         " expected=Subclass of GatewayMessage";
 
-      const uint64_t tapebridgeTransactionId = 0; // Unknown transaction ID
-      sendEndNotificationErrorReport(tapebridgeTransactionId, SEINTERNAL,
+      const uint64_t transactionId = 0; // Unknown transaction ID
+      sendEndNotificationErrorReport(transactionId, SEINTERNAL,
         oss.str(), sock);
 
       castor::exception::Exception ex;
@@ -727,7 +724,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler() {
 
   const bool moreWork = dispatchMsgHandler(obj.get(), sock);
 
-  // Close the tapebridge callback connection
+  // Close the tape-server callback-connection
   sock.close();
 
   return moreWork;
@@ -746,12 +743,12 @@ bool castor::tape::tpcp::TpcpCommand::handlePingNotification(
   castMessage(obj, msg, sock);
   Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
 
-  // Create the NotificationAcknowledge message for the tapebridge
+  // Create the NotificationAcknowledge message for the tape server
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
   acknowledge.setMountTransactionId(m_volReqId);
   acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
-  // Send the NotificationAcknowledge message to the tapebridge
+  // Send the NotificationAcknowledge message to the tape server
   sock.sendObject(acknowledge);
 
   Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
@@ -772,12 +769,12 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotification(
   castMessage(obj, msg, sock);
   Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
 
-  // Create the NotificationAcknowledge message for the tapebridge
+  // Create the NotificationAcknowledge message for the tape server
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
   acknowledge.setMountTransactionId(m_volReqId);
   acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
-  // Send the NotificationAcknowledge message to the tapebridge
+  // Send the NotificationAcknowledge message to the tape server
   sock.sendObject(acknowledge);
 
   Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
@@ -819,7 +816,7 @@ void castor::tape::tpcp::TpcpCommand::handleFailedTransfer(
 
   castor::utils::writeTime(os, now, TIMEFORMAT);
   os <<
-    " Tapebridge encountered the following error concerning a specific file:"
+    " Tape server encountered the following error concerning a specific file:"
     "\n\n"
     "Error code        = "   << file.errorCode()            <<   "\n"
     "Error code string = \"" << sstrerror(file.errorCode()) << "\"\n"
@@ -860,7 +857,7 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
 
     castor::utils::writeTime(os, now, TIMEFORMAT);
     os <<
-      " Tapebridge encountered the following error:" << std::endl <<
+      " Tape server encountered the following error:" << std::endl <<
       std::endl <<
       "Error code        = " <<
       m_tapeSessionErrorReportedByTapeServer.errorCode  << std::endl <<
@@ -872,12 +869,12 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
       std::endl << std::endl;
   }
 
-  // Create the NotificationAcknowledge message for the tapebridge
+  // Create the NotificationAcknowledge message for the tape server
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
   acknowledge.setMountTransactionId(m_volReqId);
   acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
-  // Send the NotificationAcknowledge message to the tapebridge
+  // Send the NotificationAcknowledge message to the tape server
   sock.sendObject(acknowledge);
 
   Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
@@ -892,10 +889,10 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
 void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
    {
 
-  // Socket file descriptor for a callback connection from the tapebridge
+  // Socket file descriptor for a callback connection from the tape server
   int connectionSockFd = 0;
 
-  // Wait for a callback connection from the tapebridge
+  // Wait for a callback connection from the tape server
   {
     bool   waitForCallback = true;
     time_t timeout         = WAITCALLBACKTIMEOUT;
@@ -940,12 +937,12 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
     }
   }
 
-  // If debug, then display a textual description of the tapebridge
+  // If debug, then display a textual description of the tape server
   // callback connection
   if(m_cmdLine.debugSet) {
     std::ostream &os = std::cout;
 
-    os << "Tapebridge connection = ";
+    os << "Tape-server connection = ";
     io::writeSockDescription(os, connectionSockFd);
     os << std::endl;
   }
@@ -955,7 +952,7 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
   // methods
   castor::io::AbstractTCPSocket sock(connectionSockFd);
 
-  // Read in the object sent by the tapebridge
+  // Read in the object sent by the tape server
   std::auto_ptr<castor::IObject> obj(sock.readObject());
 
   // Pointer to the received object with the object's type
@@ -964,16 +961,16 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
   castMessage(obj.get(), endNotification, sock);
   Helper::displayRcvdMsgIfDebug(*endNotification, m_cmdLine.debugSet);
 
-  // Create the NotificationAcknowledge message for the tapebridge
+  // Create the NotificationAcknowledge message for the tape server
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
   acknowledge.setMountTransactionId(m_volReqId);
   acknowledge.setAggregatorTransactionId(
     endNotification->aggregatorTransactionId());
 
-  // Send the volume message to the tapebridge
+  // Send the volume message to the tape server
   sock.sendObject(acknowledge);
 
-  // Close the connection to the tapebridge
+  // Close the connection to the tape server
   sock.close();
 
   Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
@@ -984,7 +981,7 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
 // sendEndNotificationErrorReport
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::sendEndNotificationErrorReport(
-  const uint64_t             tapebridgeTransactionId,
+  const uint64_t             transactionId,
   const int                  errorCode,
   const std::string          &errorMessage,
   castor::io::AbstractSocket &sock)
@@ -993,11 +990,11 @@ void castor::tape::tpcp::TpcpCommand::sendEndNotificationErrorReport(
   try {
     // Create the message
     tapegateway::EndNotificationErrorReport errorReport;
-    errorReport.setAggregatorTransactionId(tapebridgeTransactionId);
+    errorReport.setAggregatorTransactionId(transactionId);
     errorReport.setErrorCode(errorCode);
     errorReport.setErrorMessage(errorMessage);
 
-    // Send the message to the tapebridge
+    // Send the message to the tape server
     sock.sendObject(errorReport);
 
     Helper::displaySentMsgIfDebug(errorReport, m_cmdLine.debugSet);

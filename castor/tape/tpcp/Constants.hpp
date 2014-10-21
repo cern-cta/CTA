@@ -34,7 +34,7 @@ namespace tpcp   {
   	
   /**
    * The number of seconds to stay blocked while waiting for a callback
-   * connection from the Tapebridge.
+   * connection from the tape-server daemon.
    */
   const int WAITCALLBACKTIMEOUT = 60;
 

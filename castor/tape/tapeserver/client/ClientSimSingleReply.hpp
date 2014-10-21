@@ -98,7 +98,7 @@ namespace client {
     
     
     // The functions we actually implement in the simulator
-    virtual void sendVolumeToTapeBridge(
+    virtual void sendVolumeToTapeServer(
       const tapegateway::VolumeRequest &volumeRequest,
       castor::io::AbstractTCPSocket    &connection)
       const  {}

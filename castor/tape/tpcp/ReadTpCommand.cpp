@@ -399,12 +399,11 @@ void castor::tape::tpcp::ReadTpCommand::requestDriveFromVdqm(
 
 
 //------------------------------------------------------------------------------
-// sendVolumeToTapeBridge
+// sendVolumeToTapeServer
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::ReadTpCommand::sendVolumeToTapeBridge(
+void castor::tape::tpcp::ReadTpCommand::sendVolumeToTapeServer(
   const tapegateway::VolumeRequest &volumeRequest,
-  castor::io::AbstractTCPSocket    &connection)
-  const  {
+  castor::io::AbstractTCPSocket &connection) const {
   castor::tape::tapegateway::Volume volumeMsg;
   volumeMsg.setVid(m_vmgrTapeInfo.vid);
   volumeMsg.setClientType(castor::tape::tapegateway::READ_TP);
@@ -414,7 +413,7 @@ void castor::tape::tpcp::ReadTpCommand::sendVolumeToTapeBridge(
   volumeMsg.setAggregatorTransactionId(volumeRequest.aggregatorTransactionId());
   volumeMsg.setDensity(m_vmgrTapeInfo.density);
 
-  // Send the volume message to the tapebridge
+  // Send the volume message to the tape server
   connection.sendObject(volumeMsg);
 
   Helper::displaySentMsgIfDebug(volumeMsg, m_cmdLine.debugSet);
@@ -424,8 +423,7 @@ void castor::tape::tpcp::ReadTpCommand::sendVolumeToTapeBridge(
 //------------------------------------------------------------------------------
 // performTransfer
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::ReadTpCommand::performTransfer()
-   {
+void castor::tape::tpcp::ReadTpCommand::performTransfer() {
 
   m_tapeFseqSequence.reset(&m_cmdLine.tapeFseqRanges);
 
@@ -497,11 +495,11 @@ bool castor::tape::tpcp::ReadTpCommand::dispatchMsgHandler(
       std::stringstream oss;
 
       oss <<
-        "Received unexpected tapebridge message"
+        "Received unexpected tape-server message"
         ": Message type = " << Helper::objectTypeToString(obj->type());
 
-      const uint64_t tapebridgeTransactionId = 0; // Unknown transaction ID
-      sendEndNotificationErrorReport(tapebridgeTransactionId, EBADMSG,
+      const uint64_t transactionId = 0; // Unknown transaction ID
+      sendEndNotificationErrorReport(transactionId, EBADMSG,
         oss.str(), sock);
 
       castor::exception::Exception ex;
@@ -515,8 +513,7 @@ bool castor::tape::tpcp::ReadTpCommand::dispatchMsgHandler(
 //------------------------------------------------------------------------------
 // countNbRangesWithEnd
 //------------------------------------------------------------------------------
-unsigned int castor::tape::tpcp::ReadTpCommand::countNbRangesWithEnd()
-   {
+unsigned int castor::tape::tpcp::ReadTpCommand::countNbRangesWithEnd() {
 
   unsigned int count = 0;
 
@@ -558,7 +555,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFilesToRecallListRequest(
     // Get the tape file sequence number and disk file-name
     const uint32_t tapeFseq = m_tapeFseqSequence.next();
 
-    // Create a FilesToRecallList message for the tapebridge
+    // Create a FilesToRecallList message for the tape server
     std::auto_ptr<tapegateway::FileToRecallStruct> file(
       new tapegateway::FileToRecallStruct());
     file->setFileTransactionId(m_fileTransactionId);
@@ -585,7 +582,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFilesToRecallListRequest(
       m_fileTransactionId++;
     }
 
-    // Send the FilesToRecallList message to the tapebridge
+    // Send the FilesToRecallList message to the tape server
     sock.sendObject(fileList);
 
     {
@@ -605,12 +602,12 @@ bool castor::tape::tpcp::ReadTpCommand::handleFilesToRecallListRequest(
   // Else no more files
   } else {
 
-    // Create the NoMoreFiles message for the tapebridge
+    // Create the NoMoreFiles message for the tape server
     castor::tape::tapegateway::NoMoreFiles noMore;
     noMore.setMountTransactionId(m_volReqId);
     noMore.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
-    // Send the NoMoreFiles message to the tapebridge
+    // Send the NoMoreFiles message to the tape server
     sock.sendObject(noMore);
 
     Helper::displaySentMsgIfDebug(noMore, m_cmdLine.debugSet);
@@ -624,8 +621,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFilesToRecallListRequest(
 // handleFileRecallReportList
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ReadTpCommand::handleFileRecallReportList(
-  castor::IObject *const obj, castor::io::AbstractSocket &sock)
-   {
+  castor::IObject *const obj, castor::io::AbstractSocket &sock) {
 
   tapegateway::FileRecallReportList *msg = NULL;
 
@@ -637,12 +633,12 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileRecallReportList(
 
   TpcpCommand::handleFailedTransfers(msg->failedRecalls());
 
-  // Create the NotificationAcknowledge message for the tapebridge
+  // Create the NotificationAcknowledge message for the tape server
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
   acknowledge.setMountTransactionId(m_volReqId);
   acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
-  // Send the NotificationAcknowledge message to the tapebridge
+  // Send the NotificationAcknowledge message to the tape server
   sock.sendObject(acknowledge);
 
   Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
@@ -655,10 +651,9 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileRecallReportList(
 // handleSuccessfulRecalls
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecalls(
-  const uint64_t tapebridgeTransId,
+  const uint64_t transactionId,
   const std::vector<tapegateway::FileRecalledNotificationStruct*> &files,
-  castor::io::AbstractSocket &sock) 
-   {
+  castor::io::AbstractSocket &sock) {
   for(std::vector<tapegateway::FileRecalledNotificationStruct*>::const_iterator
     itor = files.begin(); itor != files.end(); itor++) {
 
@@ -669,7 +664,7 @@ void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecalls(
       throw ex;
     }
 
-    handleSuccessfulRecall(tapebridgeTransId, *(*itor), sock);
+    handleSuccessfulRecall(transactionId, *(*itor), sock);
   }
 }
 
@@ -678,9 +673,9 @@ void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecalls(
 // handleSuccessfulRecall
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecall(
-  const uint64_t tapebridgeTransId,
+  const uint64_t transactionId,
   const tapegateway::FileRecalledNotificationStruct &file,
-  castor::io::AbstractSocket &sock)  {
+  castor::io::AbstractSocket &sock) {
   // Check the file transaction ID
   {
     FileTransferMap::iterator itor =
@@ -691,10 +686,10 @@ void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecall(
       std::stringstream oss;
 
       oss <<
-        "Received unknown file transaction ID from the tapebridge"
+        "Received unknown file transaction ID from the tape server"
         ": fileTransactionId=" << file.fileTransactionId();
 
-      sendEndNotificationErrorReport(tapebridgeTransId, EBADMSG,
+      sendEndNotificationErrorReport(transactionId, EBADMSG,
         oss.str(), sock);
 
       castor::exception::Exception ex(ECANCELED);
@@ -734,9 +729,7 @@ void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecall(
 // handleEndNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ReadTpCommand::handleEndNotification(
-  castor::IObject *const obj, castor::io::AbstractSocket &sock)
-   {
-
+  castor::IObject *const obj, castor::io::AbstractSocket &sock) {
   return TpcpCommand::handleEndNotification(obj, sock);
 }
 
@@ -745,9 +738,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleEndNotification(
 // handleEndNotificationErrorReport
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ReadTpCommand::handleEndNotificationErrorReport(
-  castor::IObject *const obj, castor::io::AbstractSocket &sock)
-   {
-
+  castor::IObject *const obj, castor::io::AbstractSocket &sock) {
   return TpcpCommand::handleEndNotificationErrorReport(obj,sock);
 }
 
@@ -756,8 +747,6 @@ bool castor::tape::tpcp::ReadTpCommand::handleEndNotificationErrorReport(
 // handlePingNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ReadTpCommand::handlePingNotification(
-  castor::IObject *const obj, castor::io::AbstractSocket &sock)
-   {
-
+  castor::IObject *const obj, castor::io::AbstractSocket &sock) {
   return TpcpCommand::handlePingNotification(obj,sock);
 }

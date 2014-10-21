@@ -67,8 +67,7 @@ protected:
    * @param argc Argument count from the executable's entry function: main().
    * @param argv Argument vector from the executable's entry function: main().
    */
-  void parseCommandLine(const int argc, char **argv)
-    ;
+  void parseCommandLine(const int argc, char **argv);
 
   /**
    * Checks the disk files can be accessed.
@@ -76,7 +75,7 @@ protected:
    * @throw A castor::exception::Exception exception if the disk files cannot
    *        be accessed.
    */
-  void checkAccessToDisk() const ;
+  void checkAccessToDisk() const;
 
   /**
    * Checks the tape can be accessed.
@@ -93,21 +92,18 @@ protected:
    *                   server to be used, therefore overriding the drive
    *                   scheduling of the VDQM.
    */
-  void requestDriveFromVdqm(char *const tapeServer)
-    ;
+  void requestDriveFromVdqm(char *const tapeServer);
 
   /**
-   * Sends the volume message to the tapebridged daemon.
+   * Sends the volume message to the tape-server daemon.
    *
    * @param volumeRequest The volume rerquest message received from the
    *                      tapegatewayd daemon.
-   * @param connection    The already open connection to the tapebridged daemon
+   * @param connection    The already open connection to the tape-server daemon
    *                      over which the volume message should be sent.
    */
-  void sendVolumeToTapeBridge(
-    const tapegateway::VolumeRequest &volumeRequest,
-    castor::io::AbstractTCPSocket    &connection)
-    const ;
+  void sendVolumeToTapeServer(const tapegateway::VolumeRequest &volumeRequest,
+    castor::io::AbstractTCPSocket &connection) const;
 
   /**
    * Performs the tape copy whether it be DUMP, READ or WRITE.
@@ -123,7 +119,7 @@ protected:
    * @return     True if there is more work to be done, else false.
    */
   bool dispatchMsgHandler(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
 
 private:
@@ -134,7 +130,7 @@ private:
    *
    * @return The number of ranges that contain the upper boundary "end of tape".
    */
-  unsigned int countNbRangesWithEnd() ;
+  unsigned int countNbRangesWithEnd();
 
   /**
    * The umask of the process.
@@ -181,78 +177,78 @@ private:
   /**
    * FilesToRecallListRequest message handler.
    *
-   * @param obj  The tapebridge message to be processed.
-   * @param sock The socket on which to reply to the tapebridge.
+   * @param obj  The tape-server message to be processed.
+   * @param sock The socket on which to reply to the tape server.
    * @return     True if there is more work to be done else false.
    */
   bool handleFilesToRecallListRequest(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
   /**
    * FileRecallReportList message handler.
    *
-   * @param obj  The tapebridge message to be processed.
-   * @param sock The socket on which to reply to the tapebridge.
+   * @param obj  The tape-server message to be processed.
+   * @param sock The socket on which to reply to the tape server.
    * @return     True if there is more work to be done else false.
    */
   bool handleFileRecallReportList(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
   /**
    * Handles the specified successful recalls of files from tape.
    *
-   * @param tapebridgeTransId The tapebridge transaction Id of the enclosing
-   *                          FileRecallReportList message.
-   * @param files             The sucessful recalls from tape.
-   * @param sock              The socket on which to reply to the tapebridge.
+   * @param transactionId The transaction Id of the enclosing
+   *                      FileRecallReportList message.
+   * @param files         The sucessful recalls from tape.
+   * @param sock          The socket on which to reply to the tape server.
    */
   void handleSuccessfulRecalls(
-    const uint64_t tapebridgeTransId,
+    const uint64_t transactionId,
     const std::vector<tapegateway::FileRecalledNotificationStruct*> &files,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
   /**
    * Handles the successfull recall of a file from tape.
    *
-   * @param tapebridgeTransId The tapebridge transaction Id of the enclosing
-   *                          FileRecallReportList message.
-   * @param file              The file that was successfully recalled from tape.
-   * @param sock              The socket on which to reply to the tapebridge.
+   * @param transactionId The transaction Id of the enclosing
+   *                      FileRecallReportList message.
+   * @param file          The file that was successfully recalled from tape.
+   * @param sock          The socket on which to reply to the tape server.
    */
   void handleSuccessfulRecall(
-    const uint64_t tapebridgeTransId,
+    const uint64_t transactionId,
     const tapegateway::FileRecalledNotificationStruct &file,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
   /**
    * EndNotification message handler.
    *
-   * @param obj  The tapebridge message to be processed.
-   * @param sock The socket on which to reply to the tapebridge.
+   * @param obj  The tape-server message to be processed.
+   * @param sock The socket on which to reply to the tape server.
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotification(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
   /**
    * EndNotificationErrorReport message handler.
    *
-   * @param obj  The tapebridge message to be processed.
-   * @param sock The socket on which to reply to the tapebridge.
+   * @param obj  The tape-server message to be processed.
+   * @param sock The socket on which to reply to the tape server.
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotificationErrorReport(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
   /**
    * PingNotification message handler.
    *
-   * @param obj  The tapebridge message to be processed.
-   * @param sock The socket on which to reply to the tapebridge.
+   * @param obj  The tape-server message to be processed.
+   * @param sock The socket on which to reply to the tape server.
    * @return     True if there is more work to be done else false.
    */
   bool handlePingNotification(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
 }; // class ReadTpCommand
 

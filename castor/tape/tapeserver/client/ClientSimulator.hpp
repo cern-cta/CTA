@@ -33,7 +33,7 @@ namespace tape {
 namespace tapeserver {
 namespace client {
   /**
-   * A class, reusing code of TpcpCommand which simulates the tapebridge
+   * A class, reusing code of TpcpCommand which simulates the tape server
    * part of the client communication with the server. The constructor
    * will hence setup a client callback socket and wait. All the tape mounting
    * logic is hence skipped. We will then in parallel start a tape session.
@@ -111,7 +111,7 @@ namespace client {
     
     
     // The functions we actually implement in the simulator
-    virtual void sendVolumeToTapeBridge(
+    virtual void sendVolumeToTapeServer(
       const tapegateway::VolumeRequest &volumeRequest,
       castor::io::AbstractTCPSocket    &connection)
       const  {}
@@ -129,7 +129,7 @@ namespace client {
     bool processOneRequest() ;
     // Notify the client
     void sendEndNotificationErrorReport(
-    const uint64_t             tapebridgeTransactionId,
+    const uint64_t             transactionId,
     const int                  errorCode,
     const std::string          &errorMessage,
     castor::io::AbstractSocket &sock)

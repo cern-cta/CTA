@@ -339,9 +339,9 @@ void castor::tape::tpcp::WriteTpCommand::requestDriveFromVdqm(
 }
 
 //------------------------------------------------------------------------------
-// sendVolumeToTapeBridge
+// sendVolumeToTapeServer
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::WriteTpCommand::sendVolumeToTapeBridge(
+void castor::tape::tpcp::WriteTpCommand::sendVolumeToTapeServer(
   const tapegateway::VolumeRequest &volumeRequest,
   castor::io::AbstractTCPSocket    &connection)
   const  {
@@ -354,7 +354,7 @@ void castor::tape::tpcp::WriteTpCommand::sendVolumeToTapeBridge(
   volumeMsg.setAggregatorTransactionId(volumeRequest.aggregatorTransactionId());
   volumeMsg.setDensity(m_vmgrTapeInfo.density);
 
-  // Send the volume message to the tapebridge
+  // Send the volume message to the tape server
   connection.sendObject(volumeMsg);
 
   Helper::displaySentMsgIfDebug(volumeMsg, m_cmdLine.debugSet);
@@ -370,7 +370,7 @@ void castor::tape::tpcp::WriteTpCommand::performTransfer() {
   // Query the VMGR for information about the tape again in order to get
   // the latest number of files written to the tape
   //
-  // Please note that the tapebridged daemon will check again that writetp is
+  // Please note that the tape server daemon will check again that writetp is
   // not overwriting any files written by the CASTOR stagers that succesfully
   // updated the VMGR file counters
   vmgrQueryTape();
@@ -445,11 +445,11 @@ bool castor::tape::tpcp::WriteTpCommand::dispatchMsgHandler(
       std::stringstream oss;
 
       oss <<
-        "Received unexpected tapebridge message"
+        "Received unexpected tape-server message"
         ": Message type = " << Helper::objectTypeToString(obj->type());
 
-      const uint64_t tapebridgeTransactionId = 0; // Unknown transaction ID
-      sendEndNotificationErrorReport(tapebridgeTransactionId, EBADMSG,
+      const uint64_t transactionId = 0; // Unknown transaction ID
+      sendEndNotificationErrorReport(transactionId, EBADMSG,
         oss.str(), sock);
 
       castor::exception::Exception ex;
@@ -488,13 +488,13 @@ bool castor::tape::tpcp::WriteTpCommand::handleFilesToMigrateListRequest(
     try {
       localStat(localFilename.c_str(), statBuf);
     } catch(castor::exception::Exception &ex) {
-      // Notify the tapebridge about the exception and rethrow
+      // Notify the tape server about the exception and rethrow
       sendEndNotificationErrorReport(msg->aggregatorTransactionId(),
         ex.code(), ex.getMessage().str(), sock);
       throw ex;
     }
 
-    // Create a FilesToMigrateList message for the tapebridge
+    // Create a FilesToMigrateList message for the tape server
     std::auto_ptr<tapegateway::FileToMigrateStruct> file(
       new tapegateway::FileToMigrateStruct());
     file->setFileTransactionId(m_fileTransactionId);
@@ -520,7 +520,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleFilesToMigrateListRequest(
       m_fileTransactionId++;
     }
 
-    // Send the FilesToMigrateList message to the tapebridge
+    // Send the FilesToMigrateList message to the tape server
     sock.sendObject(fileList);
 
     Helper::displaySentMsgIfDebug(fileList, m_cmdLine.debugSet);
@@ -539,12 +539,12 @@ bool castor::tape::tpcp::WriteTpCommand::handleFilesToMigrateListRequest(
   // Else no more files
   } else {
 
-    // Create the NoMoreFiles message for the tapebridge
+    // Create the NoMoreFiles message for the tape server
     castor::tape::tapegateway::NoMoreFiles noMore;
     noMore.setMountTransactionId(m_volReqId);
     noMore.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
-    // Send the NoMoreFiles message to the tapebridge
+    // Send the NoMoreFiles message to the tape server
     sock.sendObject(noMore);
 
     Helper::displaySentMsgIfDebug(noMore, m_cmdLine.debugSet);
@@ -571,7 +571,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileMigrationReportList(
 
     ex.getMessage() <<
       "Failed to handle FileMigrationReportList message"
-      ": This version of writetp does not support the tapebridged daemon"
+      ": This version of writetp does not support the tape-server daemon"
       " setting the tape-file sequence-number in the VMGR";
 
     throw ex;
@@ -582,12 +582,12 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileMigrationReportList(
 
   TpcpCommand::handleFailedTransfers(msg->failedMigrations());
 
-  // Create the NotificationAcknowledge message for the tapebridge
+  // Create the NotificationAcknowledge message for the tape server
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
   acknowledge.setMountTransactionId(m_volReqId);
   acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
-  // Send the NotificationAcknowledge message to the tapebridge
+  // Send the NotificationAcknowledge message to the tape server
   sock.sendObject(acknowledge);
 
   Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
@@ -600,7 +600,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileMigrationReportList(
 // handleSuccessfulMigrations
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigrations(
-  const uint64_t tapebridgeTransId,
+  const uint64_t transactionId,
   const std::vector<tapegateway::FileMigratedNotificationStruct*> &files,
   castor::io::AbstractSocket &sock)
    {
@@ -613,7 +613,7 @@ void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigrations(
       throw ex;
     }
 
-    handleSuccessfulMigration(tapebridgeTransId, *(*itor), sock);
+    handleSuccessfulMigration(transactionId, *(*itor), sock);
   }
 }
 
@@ -622,7 +622,7 @@ void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigrations(
 // handleSuccessfulMigration
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigration(
-  const uint64_t tapebridgeTransId,
+  const uint64_t transactionId,
   const tapegateway::FileMigratedNotificationStruct &file,
   castor::io::AbstractSocket &sock)  {
   // Check the file transaction ID
@@ -635,10 +635,10 @@ void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigration(
       std::stringstream oss;
 
       oss <<
-        "Received unknown file transaction ID from the tapebridge"
+        "Received unknown file transaction ID from the tape server"
         ": fileTransactionId=" << file.fileTransactionId();
 
-      sendEndNotificationErrorReport(tapebridgeTransId, EBADMSG,
+      sendEndNotificationErrorReport(transactionId, EBADMSG,
         oss.str(), sock);
 
       castor::exception::Exception ex(ECANCELED);

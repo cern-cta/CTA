@@ -26,34 +26,22 @@
 namespace castor {
 
   /**
-   * The default port on which the tape-bridge daemon listens for connections
+   * The default port on which the tape-server daemon listens for connections
    * from the VDQM.
    */
-  const unsigned int TAPEBRIDGE_VDQMPORT = 5070;
+  const unsigned int TAPESERVER_VDQMPORT = 5070;
 
   /**
    * The default inclusive low port of the client-callback port-range of the
-   * tape-bridge daemon.
+   * tape-server daemon.
    */
-  const unsigned short TAPEBRIDGECLIENT_LOWPORT = 30201;
+  const unsigned short TAPESERVERCLIENT_LOWPORT = 30201;
 
   /**
    * The default inclusive high port of the client-callback port-range of the
-   * tape-bridge daemon.
+   * tape-server daemon.
    */
-  const unsigned short TAPEBRIDGECLIENT_HIGHPORT = 30300;
-
-  /**
-   * The default inclusive low port of the RTCPD callback port-range of the
-   * tape-bridge daemon.
-   */
-  const unsigned short TAPEBRIDGE_RTCPDLOWPORT = 30101;
-
-  /**
-   * The default inclusive high port of the RTCPD callback port-range of the
-   * tape-bridge daemon.
-   */
-  const unsigned short TAPEBRIDGE_RTCPDHIGHPORT = 30200;
+  const unsigned short TAPESERVERCLIENT_HIGHPORT = 30300;
 
   /**
    * The default port on which the stager listens for notifications.
