@@ -23,25 +23,6 @@
 cmake_minimum_required (VERSION 2.6)
 
 ################################################################################
-# Rules to build and install dumptp
-################################################################################
-set (DUMPTP_SRC_FILES
-  DumpTpCommand.cpp
-  DumpTpMain.cpp
-  Helper.cpp
-  StreamOperators.cpp
-  TapeFileSequenceParser.cpp
-  TapeFseqRange.cpp
-  TapeFseqRangeListSequence.cpp
-  TapeFseqRangeSequence.cpp
-  TpcpCommand.cpp)
-add_executable (dumptp ${DUMPTP_SRC_FILES})
-target_link_libraries (dumptp castorcommon castortapegatewayprotocol
-  castortapeutils castorvdqm castorvmgr)
-install (TARGETS dumptp DESTINATION ${CASTOR_DEST_BIN_DIR})
-CastorInstallExeManPage (dumptp)
-
-################################################################################
 # Rules to build and install readtp
 ################################################################################
 set (READTP_SRC_FILES
