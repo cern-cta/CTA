@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 cns_2.1.14-x_to_2.1.15-0.sql
+ *                 cns_2.1.14_to_2.1.15-0.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -62,6 +62,7 @@ BEGIN
     raise_application_error(-20000, 'Nameserver Open mode value is '|| openMode ||', not the expected value N(ative). Please run the cns_2.1.14_switch-open-mode.sql script before this one.');
   END IF;
 END;
+/
 
 
 INSERT INTO UpgradeLog (schemaVersion, release, type)
