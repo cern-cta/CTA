@@ -12,8 +12,10 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#include "h/getconfent.h"
 #include "h/rbtsubr_constants.h"
 #include "h/rmc_constants.h"
+#include "h/rmc_logit.h"
 #include "h/rmc_send_scsi_cmd.h"
 #include "h/rmc_sendrep.h"
 #include "h/rmc_smcsubr.h"
@@ -21,7 +23,6 @@
 #include "h/scsictl.h"
 #include "h/serrno.h"
 #include "h/smc_constants.h"
-#include "h/getconfent.h"
 
 #define	RBT_XTRA_PROC 10
 static struct smc_status smc_status;
@@ -536,11 +537,29 @@ static struct scsierr_codact scsierr_acttbl[] = {
     {0x02, 0x5A, 0x01, RBT_NORETRY, "Operator Medium Removal Request"}
 };
 
+static const char* action_to_str(const short action) {
+	switch(action) {
+	case RBT_FAST_RETRY: return "RBT_FAST_RETRY";
+	case RBT_NORETRY   : return "RBT_NORETRY";
+	case RBT_XTRA_PROC : return "RBT_XTRA_PROC";
+	default            : return "UNKNOWN";
+	}
+}
+
 int smc_lasterror(
 	struct smc_status *const smc_stat,
 	char **const msgaddr)
 {
 	unsigned int i;
+	char func[16];
+
+	strncpy (func, "lasterror", sizeof(func));
+	func[sizeof(func) - 1] = '\0';
+
+	rmc_logit(func, "Function entered:"
+		" asc=%d ascq=%d save_errno=%d rc=%d sensekey=%d skvalid=%d\n",
+		smc_status.asc, smc_status.ascq, smc_status.save_errno,
+		smc_status.rc, smc_status.sensekey, smc_status.skvalid);
 
 	smc_stat->rc = smc_status.rc;
 	smc_stat->skvalid = smc_status.skvalid;
@@ -557,10 +576,19 @@ int smc_lasterror(
 		if (smc_status.asc == scsierr_acttbl[i].asc &&
 		    smc_status.ascq == scsierr_acttbl[i].ascq &&
 		    smc_status.sensekey == scsierr_acttbl[i].sensekey) {
+			const char *const action_str =
+				action_to_str(scsierr_acttbl[i].action);
 			*msgaddr = scsierr_acttbl[i].txt;
+
+			rmc_logit(func, "Entry found in scsierr_acttbl:"
+				" action_str=%s\n", action_str);
+
 			return (scsierr_acttbl[i].action);
 		}
 	}
+
+	rmc_logit(func, "No matching entry in scsierr_acttbl\n");
+
 	return (RBT_NORETRY);
 }
 
