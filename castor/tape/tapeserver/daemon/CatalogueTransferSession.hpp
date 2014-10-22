@@ -262,7 +262,8 @@ private:
   enum TransferState {
     TRANSFERSTATE_WAIT_JOB,
     TRANSFERSTATE_WAIT_MOUNTED,
-    TRANSFERSTATE_RUNNING};
+    TRANSFERSTATE_RUNNING,
+    TRANSFERSTATE_KILLED};
 
   /**
    * Returns the string repsentation of the specified transfer state.
@@ -344,22 +345,28 @@ private:
   const time_t m_blockMoveTimeoutInSecs;
 
   /** 
-   * A tick has occurred whilst the catalogue transfer-session is in thei
+   * A tick has occurred whilst the catalogue transfer-session is in the
    * TRANSFERSTATE_WAIT_JOB state.
    */
   void waitJobTick();
 
   /** 
-   * A tick has occurred whilst the catalogue transfer-session is in thei
+   * A tick has occurred whilst the catalogue transfer-session is in the
    * TRANSFERSTATE_WAIT_MOUNTED state.
    */
   void waitMountedTick();
 
   /** 
-   * A tick has occurred whilst the catalogue transfer-session is in thei
+   * A tick has occurred whilst the catalogue transfer-session is in the
    * TRANSFERSTATE_RUNNING state.
    */
   void runningTick();
+
+  /** 
+   * A tick has occurred whilst the catalogue transfer-session is in the
+   * TRANSFERSTATE_KILLED state.
+   */
+  void killedTick();
 
 }; // class CatalogueTransferSession
 

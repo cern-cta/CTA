@@ -106,6 +106,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::tick() {
   case TRANSFERSTATE_WAIT_JOB:     return waitJobTick();
   case TRANSFERSTATE_WAIT_MOUNTED: return waitMountedTick();
   case TRANSFERSTATE_RUNNING:      return runningTick();
+  case TRANSFERSTATE_KILLED:       return killedTick();
   default: return;
   }
 }
@@ -132,6 +133,8 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::waitJobTick() {
       const std::string errnoStr = castor::utils::errnoToString(errno);
       params.push_back(log::Param("message", errnoStr));
       m_log(LOG_ERR, "Failed to kill data-transfer session", params);
+    } else {
+      m_state = TRANSFERSTATE_KILLED;
     }
   }
 }
@@ -159,6 +162,8 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
       const std::string errnoStr = castor::utils::errnoToString(errno);
       params.push_back(log::Param("message", errnoStr));
       m_log(LOG_ERR, "Failed to kill data-transfer session", params);
+    } else {
+      m_state = TRANSFERSTATE_KILLED;
     }
   }
 }
@@ -185,8 +190,16 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::runningTick() {
       const std::string errnoStr = castor::utils::errnoToString(errno);
       params.push_back(log::Param("message", errnoStr));
       m_log(LOG_ERR, "Failed to kill data-transfer session", params);
+    } else {
+      m_state = TRANSFERSTATE_KILLED;
     }
   }
+}
+
+//------------------------------------------------------------------------------
+// killedTick
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::killedTick() {
 }
 
 //------------------------------------------------------------------------------
@@ -517,6 +530,7 @@ const char *castor::tape::tapeserver::daemon::CatalogueTransferSession::
   case TRANSFERSTATE_WAIT_JOB    : return "WAIT_JOB";
   case TRANSFERSTATE_WAIT_MOUNTED: return "WAIT_MOUNTED";
   case TRANSFERSTATE_RUNNING     : return "RUNNING";
+  case TRANSFERSTATE_KILLED      : return "KILLED";
   default                        : return "UNKNOWN";
   }
 }
