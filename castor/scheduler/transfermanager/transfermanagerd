@@ -386,7 +386,7 @@ class TransferManagerService(rpyc.Service):
         for transferId, fileId, errno, errmsg, reqId in transfers:
           # "Exception caught while failing transfer" message
           dlf.writeerr(msgs.FAILTRANSFEREXCEPTION, subreqId=transferId,
-                       reqId=reqId, fileid=fileId, Type=str(e.__class__), Message=str(e))
+                       reqId=reqId, fileid=fileId, Type=str(e.__class__), Message=str(e), OriginalErrorMsg=errmsg, OriginalErrno=errno)
         # check whether we should reconnect to DB, and do so if needed
         self.__class__.dbConnection().checkForReconnection(e)
     finally:
