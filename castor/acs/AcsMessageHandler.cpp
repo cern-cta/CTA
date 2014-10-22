@@ -248,7 +248,7 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
       log::Param("lsm", lsm),
       log::Param("panel", panel),
       log::Param("drive", drive)};
-    m_log(LOG_INFO, "AcsMountTapeReadOnly message", params);
+    m_log(LOG_INFO, "Mount tape for read only access", params);
 
     castor::acs::AcsImpl acsWrapper;
     castor::acs::AcsMountTapeReadOnly acsMountTapeReadOnly(vid, acs, lsm, 
@@ -293,7 +293,7 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
       log::Param("lsm", lsm),
       log::Param("panel", panel),
       log::Param("drive", drive)};
-    m_log(LOG_INFO, "AcsMountTapeReadWrite message", params);
+    m_log(LOG_INFO, "Mount tape for read/write access", params);
 
     castor::acs::AcsImpl acsWrapper;
     castor::acs::AcsMountTapeReadWrite acsMountTapeReadWrite(vid, acs,
@@ -338,7 +338,7 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
       log::Param("lsm", lsm),
       log::Param("panel", panel),
       log::Param("drive", drive)};
-    m_log(LOG_INFO, "AcsDismountTape message", params);
+    m_log(LOG_INFO, "Dismount tape", params);
 
     castor::acs::AcsImpl acsWrapper;
     castor::acs::AcsDismountTape acsDismountTape(vid, acs, lsm, panel, drive,
