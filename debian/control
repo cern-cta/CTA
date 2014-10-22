@@ -242,7 +242,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-tapeserver-server
 Architecture: any
 Depends: logrotate, castor-lib-tape = %{version}-%{release}, castor-lib-server = %{version}-%{release}, cryptopp, protobuf, zeromq3
-XBS-Obsoletes: castor-rtcopy-server, castor-tape-server, castor-tapebridge-server
+XBS-Obsoletes: castor-rtcopy-server, castor-tape-server, castor-tapebridge-server, castor-tape-server-nostk 
 Build-Depends: cryptopp-devel, protobuf-devel, zeromq3-devel
 Description: castor (Cern Advanced STORage system)
  Tape Server Daemon
