@@ -251,8 +251,8 @@ BEGIN
     logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETENDED, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| inTransferId);
   ELSE
     -- request failed, log
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.STAGER_GETENDED, varFileId, varNsHost, 'stagerd',
-      'SUBREQID='|| inTransferId ||' errorMessage="'|| errmsg ||'"" errorCode='|| inoutErrorCode);
+    logToDLF(NULL, dlf.LVL_NOTICE, dlf.STAGER_GETENDED, varFileId, varNsHost, 'stagerd',
+      'SUBREQID='|| inTransferId ||' errorMessage="'|| errmsg ||'" errorCode='|| inoutErrorCode);
     -- and return 0, the error has been handled
     inoutErrorCode := 0;
   END IF;
