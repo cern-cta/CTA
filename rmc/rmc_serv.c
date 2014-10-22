@@ -378,7 +378,7 @@ static void procreq(
 	rqst_context.req_data = req_data;
 	rqst_context.clienthost = clienthost;
 
-	const unsigned int maxNbAttempts = 2;
+	const unsigned int maxNbAttempts = 3;
 	const unsigned int delayInSec = 1;
 	const int handlerRc = dispatchRqstHandlerWithFastRetry(req_type,
 		&rqst_context, maxNbAttempts, delayInSec);
@@ -417,12 +417,11 @@ static int dispatchRqstHandlerWithFastRetry(const int req_type,
         " req_type=%d req_type_str=%s attemptNb=%u maxNbAttempts=%u\n",
         delayInSec, req_type, req_type_str, attemptNb, maxNbAttempts);
       sleep(delayInSec);
-
-      rmc_logit(func, "Performing fast retry"
-        ": req_type=%d req_type_str=%s attemptNb=%u maxNbAttempts=%u\n",
-        req_type, req_type_str, attemptNb, maxNbAttempts);
     }
 
+    rmc_logit(func, "Dispatching request handler: req_type=%d req_type_str=%s"
+      " attemptNb=%u maxNbAttempts=%u\n",
+      req_type, req_type_str, attemptNb, maxNbAttempts);
     const int handlerRc = dispatchRqstHandler(req_type, rqst_context);
 
     if(RBT_FAST_RETRY != handlerRc) {
