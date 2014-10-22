@@ -35,7 +35,7 @@ castor::acs::AcsDismountTape::AcsDismountTape(
   const uint32_t drive,
   Acs &acsWrapper,
   log::Logger &log,
-  const AcsDaemon::CastorConf &castorConf):
+  const CastorConf &castorConf):
   AcsLibraryInteraction(acsWrapper,log),
   m_volId(acsWrapper.str2Volid(vid)),
   m_driveId(acsWrapper.alpd2DriveId(acs,lsm,panel,drive)), 
@@ -50,6 +50,14 @@ castor::acs::AcsDismountTape::AcsDismountTape(
 void castor::acs::AcsDismountTape::execute() const {
   syncDismount();
 }
+
+//------------------------------------------------------------------------------
+// asyncExecute
+//------------------------------------------------------------------------------
+void castor::acs::AcsDismountTape::asyncExecute(const SEQ_NO seqNo) const {
+  asyncDismount(seqNo);
+}
+
 
 //------------------------------------------------------------------------------
 // syncDismount
@@ -74,19 +82,37 @@ void castor::acs::AcsDismountTape::syncDismount() const
 }
 
 //------------------------------------------------------------------------------
+// asyncDismount
+//------------------------------------------------------------------------------
+void castor::acs::AcsDismountTape::asyncDismount(const SEQ_NO seqNo) const
+  {
+  try {
+    sendDismountRequest(seqNo);    
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::DismountFailed df;
+    df.getMessage() << "Failed to send dismount request to ACS " <<
+      m_volId.external_label << ": " << ex.getMessage().str();     
+    throw df;
+  }
+}
+
+//------------------------------------------------------------------------------
 // sendDismountRequest
 //------------------------------------------------------------------------------
 void castor::acs::AcsDismountTape::sendDismountRequest(
   const SEQ_NO seqNumber) const {
   const LOCKID lockId = 0; // No lock
   const BOOLEAN force = FALSE; 
-    
-  m_log(LOG_DEBUG, "Calling Acs::dismount()");
+  
+  std::stringstream dbgMsg;
+  dbgMsg << "Calling Acs::dismount() with seqNumber=" << seqNumber;
+  m_log(LOG_DEBUG, dbgMsg.str());
   const STATUS s = m_acsWrapper.dismount(seqNumber, lockId, m_volId,
     m_driveId, force);
   
-  std::stringstream dbgMsg;
-  dbgMsg << "Acs::dismount() returned " << acs_status(s);           
+  dbgMsg.str("");
+  dbgMsg << "Acs::dismount() for seqNumber=" << seqNumber << " returned " <<
+    acs_status(s);           
   m_log(LOG_DEBUG,dbgMsg.str());
   if(STATUS_SUCCESS != s) {
     castor::exception::DismountFailed ex;

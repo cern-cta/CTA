@@ -25,7 +25,7 @@
 
 #include "castor/acs/Acs.hpp"
 #include "castor/acs/AcsLibraryInteraction.hpp"
-#include "castor/acs/AcsDaemon.hpp"
+#include "castor/acs/CastorConf.hpp"
 #include "castor/log/Logger.hpp"
 
 namespace castor     {
@@ -45,7 +45,7 @@ public:
     const std::string &vid, const uint32_t acs,
     const uint32_t lsm, const uint32_t panel, const uint32_t drive,
     Acs &acsWrapper,log::Logger &log,
-    const AcsDaemon::CastorConf &castorConf);
+    const CastorConf &castorConf);
 
   /**
    * Destructor.
@@ -107,7 +107,7 @@ protected:
   /**
    * The configuration parameters for the CASTOR ACS daemon.
    */
-  const AcsDaemon::CastorConf & m_castorConf;
+  const CastorConf & m_castorConf;
 
 }; // class AcsMountTapeReadOnly
 

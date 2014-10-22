@@ -43,7 +43,10 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     AcsMountTapeReadWrite.cpp
     AcsLibraryInteraction.cpp
     Acs.cpp
-    AcsImpl.cpp)
+    AcsImpl.cpp
+    AcsPendingRequests.cpp
+    AcsRequestDismountTape.cpp
+    AcsRequest.cpp)
 
   target_link_libraries(castorAcsDaemon castortapereactor)
   set_target_properties (castorAcsDaemon PROPERTIES

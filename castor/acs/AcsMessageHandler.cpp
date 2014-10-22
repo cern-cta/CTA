@@ -29,7 +29,7 @@
 #include "castor/acs/AcsDismountTape.hpp"
 #include "castor/acs/AcsMountTapeReadOnly.hpp"
 #include "castor/acs/AcsMountTapeReadWrite.hpp"
-#include "castor/acs/AcsDaemon.hpp"
+#include "castor/acs/CastorConf.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/acs/Acs.hpp"
 #include "castor/acs/AcsImpl.hpp"
@@ -44,12 +44,14 @@ castor::acs::AcsMessageHandler::AcsMessageHandler(
   log::Logger &log,
   const std::string &hostName,
   void *const zmqContext,
-  const AcsDaemon::CastorConf &castorConf):
+  const CastorConf &castorConf,
+  AcsPendingRequests &acsPendingRequests):
   m_reactor(reactor),
   m_log(log),
   m_socket(zmqContext, ZMQ_ROUTER),
   m_hostName(hostName),
-  m_castorConf(castorConf) { 
+  m_castorConf(castorConf),
+  m_acsPendingRequests(acsPendingRequests) { 
 
   std::ostringstream endpoint;
   endpoint << "tcp://127.0.0.1:" << m_castorConf.ascServerInternalListeningPort;
@@ -126,21 +128,47 @@ bool castor::acs::AcsMessageHandler::handleEvent(
               tape::utils::toHexString(address.getData(),address.size()))
      };
   m_log(LOG_DEBUG, "handling event in AcsMessageHandler", params);
-  
+ 
   // From this point on any exception thrown should be converted into an
-  // Exception message and sent back to the client
+  // Exception message and sent back to the client 
   messages::Frame reply;
+  bool exceptionOccurred = false;
+  
   try {
+    //m_acsPendingRequests.checkAndAddRequest(address, empty, rqst, m_socket);
+    // if there are any problems we need to send the replay to the client.
+    
     reply = dispatchMsgHandler(rqst);
   } catch(castor::exception::Exception &ex) {
     reply = createExceptionFrame(ex.code(), ex.getMessage().str());
+    exceptionOccurred=true;
+    m_log(LOG_ERR, ex.getMessage().str());
   } catch(std::exception &se) {
     reply = createExceptionFrame(SEINTERNAL, se.what());
+    exceptionOccurred=true;
     m_log(LOG_ERR, se.what());
   } catch(...) {
     reply = createExceptionFrame(SEINTERNAL, "Caught an unknown exception");  
+    exceptionOccurred=true;
     m_log(LOG_ERR, "Caught an unknown exception");
   }
+
+/*
+  if (exceptionOccurred) {
+    // Send the reply to the client if we were not able to add request to the
+    // list
+    try {
+      //we need to prepend our frames the same way we received them
+      // ie identity + empty frames 
+      m_socket.send(address,ZMQ_SNDMORE);
+      m_socket.send(empty,ZMQ_SNDMORE);
+      messages::sendFrame(m_socket, reply);    
+    } catch(castor::exception::Exception &ex) {
+      log::Param params[] = {log::Param("message", ex.getMessage().str())};
+      m_log(LOG_ERR, "AcsMessageHandler failed to send reply to client", params);
+    }
+  }
+*/
 
   // Send the reply to the client
   try {
@@ -148,7 +176,7 @@ bool castor::acs::AcsMessageHandler::handleEvent(
     // ie identity + empty frames 
     m_socket.send(address,ZMQ_SNDMORE);
     m_socket.send(empty,ZMQ_SNDMORE);
-    
+
     messages::sendFrame(m_socket, reply);
   } catch(castor::exception::Exception &ex) {
     log::Param params[] = {log::Param("message", ex.getMessage().str())};

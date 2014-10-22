@@ -26,7 +26,7 @@
 #include "castor/acs/Acs.hpp"
 #include "castor/acs/AcsLibraryInteraction.hpp"
 #include "castor/log/Logger.hpp"
-#include "castor/acs/AcsDaemon.hpp"
+#include "castor/acs/CastorConf.hpp"
 
 namespace castor     {
 namespace acs        {
@@ -45,7 +45,7 @@ public:
     const std::string &vid, const uint32_t acs,
     const uint32_t lsm, const uint32_t panel, const uint32_t drive,
     Acs &acsWrapper, log::Logger &log,
-    const AcsDaemon::CastorConf &castorConf);
+    const CastorConf &castorConf);
 
   /**
    * Destructor.
@@ -57,16 +57,33 @@ public:
    */
   void execute() const;
   
+  /**
+   * Execute asynchronous dismount request through ACS API.
+   * 
+   * @param The value of sequence number for ACS API.
+   */
+  void asyncExecute(const SEQ_NO seqNo) const;
+  
 protected:
 
   /**
-   * Dismounts the tape with the specified VID into the drive with the specified
-   * drive ID.
+   * Dismounts the tape with the specified m_volId from the drive with the
+   * specified m_driveId.
    *
    * This method does not return until the dismount has either succeeded, failed
    * or the specified timeout has been reached.
    */
   void syncDismount() const;
+  
+  
+  /**
+   * Dismounts the tape with the specified m_volId from the drive with the
+   * specified m_driveId.
+   * This method sends a dismount request to ACSLS and returns.
+   * 
+   * @param The value of sequence number for ACS API.
+   */
+  void asyncDismount(const SEQ_NO seqNo) const;
   
   /**
    * Sends the dismount request to ACSLS.
@@ -107,7 +124,7 @@ protected:
   /**
    * The configuration parameters for the CASTOR ACS daemon.
    */
-  const AcsDaemon::CastorConf & m_castorConf;
+  const CastorConf &m_castorConf;
 
 }; // class AcsDismountTape
 

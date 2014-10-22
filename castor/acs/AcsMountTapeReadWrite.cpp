@@ -35,7 +35,7 @@ castor::acs::AcsMountTapeReadWrite::AcsMountTapeReadWrite(
   const uint32_t drive,
   Acs &acsWrapper,
   log::Logger &log,
-  const AcsDaemon::CastorConf &castorConf):
+  const CastorConf &castorConf):
   AcsLibraryInteraction(acsWrapper,log),
   m_volId(acsWrapper.str2Volid(vid)),
   m_driveId(acsWrapper.alpd2DriveId(acs,lsm,panel,drive)), 

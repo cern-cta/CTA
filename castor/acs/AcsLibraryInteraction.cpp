@@ -84,11 +84,17 @@ ACS_RESPONSE_TYPE castor::acs::AcsLibraryInteraction::requestResponse(
   REQ_ID reqId = (REQ_ID)0;
   ACS_RESPONSE_TYPE responseType = RT_NONE;
 
-  m_log(LOG_DEBUG,"Calling Acs::response()");
+  std::stringstream dbgMsg;
+  dbgMsg << "Calling Acs::response() for requestSeqNumber=" << requestSeqNumber;
+  m_log(LOG_DEBUG, dbgMsg.str());
+  
   const STATUS s = m_acs.response(timeout, responseSeqNumber, reqId,
     responseType, buf);
-  std::stringstream dbgMsg;
-  dbgMsg << "Acs::response() returned " << acs_status(s);          
+  
+  dbgMsg.str("");
+  dbgMsg << "Acs::response() for requestSeqNumber=" << requestSeqNumber <<
+    " returned responseSeqNumber=" << responseSeqNumber << " and status " << 
+    acs_status(s);          
   m_log(LOG_DEBUG,dbgMsg.str());
   
   switch(s) {

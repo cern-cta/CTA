@@ -49,7 +49,8 @@ castor::acs::AcsDaemon::AcsDaemon(
   m_programName("acsd"),
   m_hostName(getHostName()),  
   m_zmqContext(NULL),
-  m_castorConf(castorConf) {
+  m_castorConf(castorConf),
+  m_acsPendingRequests(log, castorConf) {
 }
 
 //------------------------------------------------------------------------------
@@ -271,7 +272,7 @@ void castor::acs::AcsDaemon::
     std::auto_ptr<AcsMessageHandler> handler;
     try {
       handler.reset(new AcsMessageHandler(m_reactor, m_log, m_hostName, 
-        m_zmqContext,m_castorConf));
+        m_zmqContext, m_castorConf, m_acsPendingRequests));
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
       ex.getMessage() <<
@@ -324,8 +325,39 @@ bool castor::acs::AcsDaemon::handleEvents()
     m_log(LOG_ERR,
       "Unexpected and unknown exception thrown when handling an I/O event");
   }
-
+  
+  try {
+    handlePendingRequests();
+  } catch(castor::exception::Exception &ex) {
+    // Log exception and continue
+    log::Param params[] = {
+      log::Param("message", ex.getMessage().str()),
+      log::Param("backtrace", ex.backtrace())
+    };
+    m_log(LOG_ERR,
+      "Unexpected castor exception thrown when handling pending requests", 
+      params);
+  } catch(std::exception &se) {
+    // Log exception and continue
+    log::Param params[] = {log::Param("message", se.what())};
+    m_log(LOG_ERR, "Unexpected exception thrown when handling pending requests",
+      params);
+  } catch(...) {
+    // Log exception and continue
+    m_log(LOG_ERR,
+      "Unexpected and unknown exception thrown when handling pending requests");
+  }
+  
   return handlePendingSignals();
+}
+//------------------------------------------------------------------------------
+// handlePendingRequests
+//------------------------------------------------------------------------------
+void castor::acs::AcsDaemon::handlePendingRequests() {
+  m_acsPendingRequests.tick(); 
+  m_acsPendingRequests.handleCompletedRequests();
+  m_acsPendingRequests.handleFailedRequests();
+  m_acsPendingRequests.handleToDeleteRequests();
 }
 
 //------------------------------------------------------------------------------

@@ -57,10 +57,13 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     ../castor/acs/AcsMessageHandler.cpp
     ../castor/acs/AcsMountTapeReadOnly.cpp
     ../castor/acs/AcsMountTapeReadWrite.cpp
+    ../castor/acs/AcsPendingRequests.cpp
     ../castor/acs/AcsQueryVolumeCmd.cpp
     ../castor/acs/AcsQueryVolumeCmdLine.cpp
     ../castor/acs/AcsQueryVolumeCmdLineTest.cpp
     ../castor/acs/AcsQueryVolumeCmdTest.cpp
+    ../castor/acs/AcsRequest.cpp
+    ../castor/acs/AcsRequestDismountTape.cpp
     ../castor/acs/Cmd.cpp)
 
   foreach(SRC_FILE ${STK_UNITTEST_SRC_FILES})

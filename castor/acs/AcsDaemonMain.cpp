@@ -27,6 +27,7 @@
 #include "castor/acs/Constants.hpp"
 #include "castor/acs/AcsDaemon.hpp"
 #include "castor/utils/utils.hpp"
+#include "castor/acs/CastorConf.hpp"
 
 #include <iostream>
 
@@ -89,7 +90,7 @@ static int exceptionThrowingMain(const int argc, char **const argv,
   castor::server::ProcessCap capUtils;
   
   // Create default configuration
-  const acs::AcsDaemon::CastorConf castorConf;
+  const acs::CastorConf castorConf;
   
   // Create the main acsd object
   acs::AcsDaemon daemon(

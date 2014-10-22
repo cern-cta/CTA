@@ -72,7 +72,7 @@ TEST_F(castor_acs_AcsDaemonTest, constructor) {
   castor::tape::reactor::ZMQReactor reactor(log);
   castor::server::ProcessCapDummy capUtils;
   std::auto_ptr<AcsDaemon> daemon;
-  const AcsDaemon::CastorConf castorConf;
+  const CastorConf castorConf;
   ASSERT_NO_THROW(daemon.reset(new AcsDaemon(argc, argv, stdOut, stdErr, log,
     reactor, capUtils,castorConf)));
 }

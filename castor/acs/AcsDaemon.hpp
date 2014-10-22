@@ -27,6 +27,8 @@
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/acs/Constants.hpp"
+#include "castor/acs/AcsPendingRequests.hpp"
+#include "castor/acs/CastorConf.hpp"
 
 namespace castor     {
 namespace acs        {
@@ -37,29 +39,6 @@ namespace acs        {
 class AcsDaemon : public castor::server::Daemon {
 
 public:
-  /**
-   *  Subclass holding all the configuration parameters
-   */
-  class CastorConf {
-  public:
-    CastorConf(): 
-      ascServerInternalListeningPort(DEFAULT_ACS_SERVER_INTERNAL_LISTENING_PORT),
-      acsQueryLibraryInterval(DEFAULT_ACS_QUERY_LIBRARY_INTERVAL), 
-      acsCommandTimeout(DEFAULT_ACS_COMMAND_TIMEOUT) {} 
-    /**
-     * The TCP/IP port on which the CASTOR ACS daemon listens for incoming Zmq
-     * connections from the tape server.
-     */
-    unsigned short ascServerInternalListeningPort;
-    /**
-     * Time to wait in seconds between queries to ACS Library for responses.
-     */
-    const int acsQueryLibraryInterval; 
-    /**
-     * Time to wait in seconds for the mount or dismount to conclude.
-     */
-    const int acsCommandTimeout;
-  };
   /**
    * Constructor.
    *
@@ -180,6 +159,12 @@ protected:
    * @return True if the main event loop should continue, else false.
    */
   bool handlePendingSignals() throw();
+  
+  /**
+   * Handles any pending Acs requests.
+   *
+   */
+  void handlePendingRequests();
 
   
   /**
@@ -222,6 +207,11 @@ protected:
    * The configuration parameters for the CASTOR ACS daemon.
    */
   const CastorConf & m_castorConf;
+  
+  /**
+   * The object to handle requests to the CASTOR ACS daemon.
+   */
+  AcsPendingRequests m_acsPendingRequests;
 
 }; // class AcsDaemon
 
