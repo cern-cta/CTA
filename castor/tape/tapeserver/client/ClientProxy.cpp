@@ -149,7 +149,7 @@ void ClientProxy::fetchVolumeId(
   // 3) c) End notification error report.
   } else if (NULL != (errorReport = dynamic_cast<tapegateway::EndNotificationErrorReport *>(
       response.get()))) {
-    EndOfSession eos("Client replied noMoreFiles directly to volume request: ");
+    EndOfSessionWithError eos("Client sent an end session with error to volume request: ");
         eos.getMessage() << "errorCode=" << errorReport->errorCode()
         << "errorReport=\"" <<  errorReport->errorMessage() << "\"";
         throw eos;

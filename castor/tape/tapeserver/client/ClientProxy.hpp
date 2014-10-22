@@ -143,6 +143,13 @@ namespace client {
       EndOfSession(std::string w=""):castor::exception::Exception(w) {}
     };
    
+    /**
+     * Exception marking end of with error
+     */
+    class EndOfSessionWithError: public EndOfSession {
+    public:
+      EndOfSessionWithError(std::string w=""):EndOfSession(w) {}
+    };
     
   private:
     /** The VDQM request that kickstarted the session */

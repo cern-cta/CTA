@@ -49,10 +49,10 @@ using namespace castor::tape;
 //------------------------------------------------------------------------------
 ClientSimulator::ClientSimulator(uint32_t volReqId, const std::string & vid, 
     const std::string & density, tapegateway::ClientType clientType,
-    tapegateway::VolumeMode volumeMode):
+    tapegateway::VolumeMode volumeMode, EmptyMount_t emptyMount):
   TpcpCommand("clientSimulator::clientSimulator"), m_sessionErrorCode(0),
     m_vid(vid), m_density(density), m_clientType(clientType),
-    m_volumeMode(volumeMode)
+    m_volumeMode(volumeMode), m_emptyMount(emptyMount)
 {
   m_volReqId = volReqId;
   setupCallbackSock();
@@ -94,18 +94,27 @@ void ClientSimulator::processFirstRequest()
     ex.getMessage() << oss.str();
     throw ex;
   }
+
   // This should always succeed
   tapegateway::VolumeRequest & vReq =
       dynamic_cast<tapegateway::VolumeRequest &> (msg);
-  tapegateway::Volume vol;
-  vol.setAggregatorTransactionId(vReq.aggregatorTransactionId());
-  vol.setVid(m_vid);
-  vol.setClientType(m_clientType);
-  vol.setMode(m_volumeMode);
-  vol.setLabel(m_volLabel);
-  vol.setMountTransactionId(m_volReqId);
-  vol.setDensity(m_density);
-  clientConnection->sendObject(vol);
+
+  if (EmptyOnVolReq != m_emptyMount) {
+    tapegateway::Volume vol;
+    vol.setAggregatorTransactionId(vReq.aggregatorTransactionId());
+    vol.setVid(m_vid);
+    vol.setClientType(m_clientType);
+    vol.setMode(m_volumeMode);
+    vol.setLabel(m_volLabel);
+    vol.setMountTransactionId(m_volReqId);
+    vol.setDensity(m_density);
+    clientConnection->sendObject(vol);
+  } else {
+    tapegateway::NoMoreFiles noMore;
+    noMore.setAggregatorTransactionId(vReq.aggregatorTransactionId());
+    noMore.setMountTransactionId(m_volReqId);
+    clientConnection->sendObject(noMore);
+  }
 }
 //------------------------------------------------------------------------------
 //processOneRequest

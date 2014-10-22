@@ -96,18 +96,27 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   client::ClientProxy::RequestReport reqReport;
   try {
     m_clientProxy.fetchVolumeId(m_volInfo, reqReport);
-  } catch(client::ClientProxy::EndOfSession & eof) {
+  } catch(client::ClientProxy::EndOfSessionWithError & eoswe) {
     std::stringstream fullError;
-    fullError << "Received end of session rom client when requesting Volume "
-      << eof.getMessageValue();
+    fullError << "Received end of session with error from client when requesting Volume "
+      << eoswe.getMessageValue();
     lc.log(LOG_ERR, fullError.str());
     m_clientProxy.reportEndOfSession(reqReport);
-    log::LogContext::ScopedParam sp07(lc, log::Param("tapebridgeTransId", reqReport.transactionId));
-    log::LogContext::ScopedParam sp08(lc, log::Param("connectDuration", reqReport.connectDuration));
-    log::LogContext::ScopedParam sp09(lc, log::Param("sendRecvDuration", reqReport.sendRecvDuration));
-    log::LogContext::ScopedParam sp10(lc, log::Param("ErrorMsg", fullError.str()));
-    lc.log(LOG_ERR, "Notified client of end session with error");
-    return MARK_DRIVE_AS_UP;
+    log::ScopedParamContainer params(lc);
+    params.add("tapebridgeTransId", reqReport.transactionId)
+          .add("connectDuration", reqReport.connectDuration)
+          .add("sendRecvDuration", reqReport.sendRecvDuration);
+    lc.log(LOG_INFO, "Acknowledged client of end session with error");
+    return MARK_DRIVE_AS_UP;    
+  } catch(client::ClientProxy::EndOfSession & eos) {
+    lc.log(LOG_INFO, "Received end of session from client when requesting Volume");
+    m_clientProxy.reportEndOfSession(reqReport);
+    log::ScopedParamContainer params(lc);
+    params.add("tapebridgeTransId", reqReport.transactionId)
+          .add("connectDuration", reqReport.connectDuration)
+          .add("sendRecvDuration", reqReport.sendRecvDuration);
+    lc.log(LOG_INFO, "Acknowledged client of end session");
+    return MARK_DRIVE_AS_UP;  
   } catch (client::ClientProxy::UnexpectedResponse & unexp) {
     std::stringstream fullError;
     fullError << "Received unexpected response from client when requesting Volume"

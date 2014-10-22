@@ -40,9 +40,14 @@ namespace client {
    */
   class ClientSimulator: public tpcp::TpcpCommand {
   public:
+    typedef enum {
+      NotEmpty,
+      EmptyOnVolReq,
+      EmptyOnGetMoreWork
+    } EmptyMount_t;
     ClientSimulator(uint32_t volReqId, const std::string & vid, 
             const std::string & density, tapegateway::ClientType clientType,
-            tapegateway::VolumeMode volumeMode);
+            tapegateway::VolumeMode volumeMode, EmptyMount_t emptyMount = NotEmpty);
     
     virtual ~ClientSimulator() throw() {}
     
@@ -142,6 +147,7 @@ namespace client {
     std::queue<tapegateway::FileToMigrateStruct> m_filesToMigrate;
     const castor::tape::tapegateway::ClientType m_clientType;
     const castor::tape::tapegateway::VolumeMode m_volumeMode;
+    EmptyMount_t m_emptyMount;
   };
 }
 }
