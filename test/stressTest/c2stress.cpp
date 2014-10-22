@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include files
+#include <limits.h>
 #include <algorithm>
 #include <errno.h>
 #include <fcntl.h>
@@ -225,7 +226,7 @@ int readFileUsingRFIO(const std::string &filepath,
 
   // Read the data into memory
   uint64_t bytesrecv = 0;
-  uint64_t nbbytes = 0;
+  int64_t nbbytes = 0;
   do {
     rfio_errno = serrno = 0;
     nbbytes = rfio_read(fd, (void *)(buffer.c_str()), 
@@ -258,7 +259,7 @@ int writeRFIOBuffer(int fd,
   
   // Variables
   unsigned int offset = 0;
-  uint64_t nbbytes    = 0;
+  int64_t nbbytes    = 0;
 
   // Write the data to the file descriptor
   rfio_errno = serrno = 0;
@@ -318,7 +319,7 @@ int writeFileUsingRFIO(const std::string &filepath,
   generate_n(std::back_inserter(buffer), bufsize - buffer.length(), randAlnum);
 
   // Write the first buffer
-  uint64_t bytessent = 0;
+  int64_t bytessent = 0;
   bytessent = writeRFIOBuffer(fd, buffer, bufsize);
   if (bytessent < 0) {
     rfio_errno = serrno = 0;
@@ -328,7 +329,7 @@ int writeFileUsingRFIO(const std::string &filepath,
 
   // If the amount of data sent in the first buffer is enough to satisfy the
   // total file size, close the file and return to the callee.
-  if (bytessent == fileSize) {
+  if ((unsigned)bytessent == fileSize) {
     rfio_errno = serrno = 0;
     rfio_close(fd);
     return 0;
@@ -346,10 +347,10 @@ int writeFileUsingRFIO(const std::string &filepath,
   // Write the second buffer to the file until we reach the desired fileSize or
   // an error is encountered.
   do {
-    uint64_t nbbytes = 
-      writeRFIOBuffer(fd, buffer,
-                      (bufsize < (fileSize - bytessent)) ? bufsize :
-                      (fileSize - bytessent));
+    int64_t nbbytes = 
+    writeRFIOBuffer(fd, buffer,
+                    (bufsize < (fileSize - bytessent)) ? bufsize :
+                    (fileSize - bytessent));
     if (nbbytes < 0) {
       rfio_close(fd);
       return -1;
@@ -1240,7 +1241,7 @@ int main (int argc, char **argv) {
       break;
     case OPTION_NBTHREADS:
       nbthreads = atoi(optarg);
-      if ((nbthreads < 0) || (nbthreads > MAX_NBTHREADS)) {
+      if (nbthreads > MAX_NBTHREADS) {
         std::cerr << "Invalid argument: " << optarg
                   << " for option --nbthreads, must be > 0 and < "
                   << MAX_NBTHREADS
@@ -1256,9 +1257,9 @@ int main (int argc, char **argv) {
       break;
     case OPTION_BUFFERSIZE:
       rfioBufferSize = atoi(optarg);
-      if ((rfioBufferSize < 0) || (rfioBufferSize > MAX_RFIO_BUFFERSIZE)) {
+      if (rfioBufferSize > MAX_RFIO_BUFFERSIZE) {
         std::cerr << "Invalid argument: " << optarg
-                  << " for option --buffer-sizer, must be > 0 and < "
+                  << " for option --buffer-size, must be > 0 and < "
                   << MAX_RFIO_BUFFERSIZE
                   << std::endl;
         return 2;
@@ -1319,7 +1320,7 @@ int main (int argc, char **argv) {
       baseDirectory = optarg;
       break;
     case 'n':  // --nbiterations
-      if (((iterations = strtoull(optarg, &dp, 0)) < 0) ||
+      if (((iterations = strtoull(optarg, &dp, 0)) == ULLONG_MAX) ||
           (*dp != '\0') || (errno == ERANGE)) {
         std::cerr << "Invalid argument: " << optarg
                   << " for option --nbiterations, not a valid number"
