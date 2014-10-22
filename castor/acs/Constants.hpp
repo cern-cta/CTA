@@ -38,7 +38,7 @@ const int DEFAULT_ACS_QUERY_LIBRARY_INTERVAL = 10;
 /**
  * Default time to wait in seconds for the mount or dismount to conclude.
  */
-const int DEFAULT_ACS_COMMAND_TIMEOUT = 120;
+const int DEFAULT_ACS_COMMAND_TIMEOUT = 610;
 
 /**
  * The maximum ACS sequence number value to be used.
