@@ -65,7 +65,6 @@ int rmc_main(const char *const robot)
 	char plist[40];
 	fd_set readfd, readmask;
 	int s;
-    int n=0;
 	char sense[MAXSENSE];
 	struct sockaddr_in sin;
 	struct smc_status smc_status;
@@ -99,24 +98,37 @@ int rmc_main(const char *const robot)
 
 	extended_robot_info.smc_fd = -1;
 
-	/* get robot geometry, try 2 times */
-   
-    while (n < 2) {
-      if ((c = smc_get_geometry (extended_robot_info.smc_fd,
-                                 extended_robot_info.smc_ldr,
-                                 &extended_robot_info.robot_info))) {
-            c = smc_lasterror (&smc_status, &msgaddr);
-            rmc_logit (func, RMC02, "get_geometry", msgaddr);
-            n++;
-            if (n==2) {
-              rmc_logit (func, RMC02, "get_geometry", msgaddr);
-              exit(c);
-            }
-	     } else {
-             n = 0;
-             break;
-         }
-    }
+	/* get robot geometry */
+	{
+		const int max_nb_attempts = 3;
+		int attempt_nb = 1;
+		for(attempt_nb = 1; attempt_nb <= max_nb_attempts;
+                        attempt_nb++) {
+                        rmc_logit (func,
+                                "Trying to get geometry of tape library"
+                                ": attempt_nb=%d\n", attempt_nb);
+			c = smc_get_geometry (extended_robot_info.smc_fd,
+				extended_robot_info.smc_ldr,
+				&extended_robot_info.robot_info);
+
+			if(0 == c) {
+                                rmc_logit (func,
+                                         "Got geometry of tape library\n");
+				break;
+			}
+
+			c = smc_lasterror (&smc_status, &msgaddr);
+			rmc_logit (func, RMC02, "get_geometry", msgaddr);
+
+                        // If this was the last attempt
+			if(max_nb_attempts == attempt_nb) {
+				exit(c);
+			} else {
+                                sleep(1);
+                        }
+		}
+	}
+
 	/* check if robot support Volume Tag */
 
 	extended_robot_info.smc_support_voltag = 1;
@@ -391,7 +403,7 @@ static void procreq(
 static int dispatchRqstHandlerWithFastRetry(const int req_type,
   const struct rmc_srv_rqst_context *const rqst_context,
   const unsigned int maxNbAttempts, const unsigned int delayInSec) {
-  unsigned int attemptNb = 0;
+  unsigned int attemptNb = 1;
   const char *const req_type_str = rmc_req_type_to_str(req_type);
   char func[16];
 
