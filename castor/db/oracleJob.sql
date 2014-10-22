@@ -88,7 +88,7 @@ BEGIN
     outPath := selectedMountPoint || outPath;
   END IF;
   -- Log successful completion
-  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_PUTSTART, varFileId, varNsHost, 'stagerd', '');
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_PUTSTART, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| inTransferId);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
 END;
@@ -208,7 +208,7 @@ BEGIN
     outPath := '/dev/null';
   END IF;
   -- Log successful completion
-  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETSTART, varFileId, varNsHost, 'stagerd', '');
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETSTART, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| inTransferId);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- No disk copy found on selected FileSystem, or subRequest not valid any longer.
   -- This can happen if a diskcopy was available and got disabled, or if an abort came,
