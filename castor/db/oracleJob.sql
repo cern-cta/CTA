@@ -229,19 +229,14 @@ CREATE OR REPLACE PROCEDURE getEnded(inTransferId IN VARCHAR2, inoutErrorCode IN
   varFileId INTEGER;
   varNsHost VARCHAR2(100);
 BEGIN
-  -- Update the subrequest
+  -- Update the subrequest. Note we don't lock the CastorFile entry
+  -- as we only touch this subrequest.
   UPDATE /*+ INDEX_RS_ASC(SubRequest I_SubRequest_SubReqId)*/ SubRequest
      SET status = CASE WHEN inoutErrorCode > 0 THEN dconst.SUBREQUEST_FAILED ELSE dconst.SUBREQUEST_FINISHED END,
          errorCode = inoutErrorCode,
          errorMessage = errmsg
    WHERE subReqId = inTransferId
   RETURNING castorFile, id INTO varCfId, varSrId;
-  -- Wake up other waiting subrequests
-  UPDATE SubRequest
-     SET status = dconst.SUBREQUEST_RESTART,
-         lastModificationTime = getTime()
-   WHERE castorFile = varCfId
-     AND status = dconst.SUBREQUEST_WAITSUBREQ;
   -- for logging purposes
   SELECT fileId, nsHost INTO varFileId, varNsHost
     FROM CastorFile
