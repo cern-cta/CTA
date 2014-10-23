@@ -424,7 +424,7 @@ static int dispatchRqstHandlerWithFastRetry(const int req_type,
       req_type, req_type_str, attemptNb, maxNbAttempts);
     const int handlerRc = dispatchRqstHandler(req_type, rqst_context);
 
-    if(RBT_FAST_RETRY != handlerRc) {
+    if(ERMCFASTR != handlerRc) {
       return handlerRc;
     }
   }
@@ -433,7 +433,7 @@ static int dispatchRqstHandlerWithFastRetry(const int req_type,
   rmc_logit(func, "Maximum number of attempts reached"
     ": req_type=%d req_type_str=%s maxNbAttempts=%u\n",
     req_type, req_type_str, maxNbAttempts);
-  return RBT_NORETRY;
+  return ERMCUNREC;
 }
 
 /**
