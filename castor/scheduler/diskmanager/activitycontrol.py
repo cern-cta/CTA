@@ -238,7 +238,7 @@ class ActivityControlThread(threading.Thread):
             dlf.write(msgs.TRANSFERSTARTCANCELED, reason=e.args, subreqId=transfer.transferId, fileId=transfer.fileId)
             # this is a permanent failure because of the stager, so try and inform the client that the transfer cannot take place
             ioresp = clientsreplier.IOResponse(clientsreplier.IOResponse.FAILED, '', 0, transfer.fileId, transfer.transferId, \
-                                              e.errno, e.strerror, transfer.reqId, transfer.reqId, 0, transfer.protocol)
+                                               1725, e.message, transfer.reqId, transfer.reqId, 0, transfer.protocol)  # 1725 = ESTREQCANCELED
             # use asynch response: exceptions are handled in the clientsReplier thread
             self.clientsReplier.sendResponse((qTransfer, transfer.clientIpAddress, transfer.clientPort, ioresp))
           except SourceNotStarted, e:
@@ -270,6 +270,7 @@ class ActivityControlThread(threading.Thread):
             # wait a bit to avoid a tight loop in case of persistent errors
             time.sleep(.1)
         else:
+          # all slots are full, wait a bit before checking again
           time.sleep(.05)
       except Exception:
         # "Caught exception in ActivityControl thread" message
