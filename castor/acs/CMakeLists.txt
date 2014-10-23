@@ -78,9 +78,36 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   CastorInstallSysconfigExample (acsd)
   CastorInstallInitScript (acsd)
 
-  ############################################################################
+  ##############################################################################
+  # Rules to build and install castor-tape-acs-dismount
+  ##############################################################################
+  message(STATUS "Adding castor-tape-acs-dismount target")
+  set (ACS_DISMOUNT_SRC_FILES
+    Acs.cpp
+    AcsCmd.cpp
+    AcsImpl.cpp
+    AcsDismountCmd.cpp
+    AcsDismountCmdLine.cpp
+    AcsDismountMain.cpp
+    Cmd.cpp)
+  add_executable (castor-tape-acs-dismount ${ACS_DISMOUNT_SRC_FILES})
+  set_target_properties (castor-tape-acs-dismount PROPERTIES
+    COMPILE_FLAGS -I/usr/include/CDK
+    COMPILE_DEFINITIONS LINUX)
+  target_link_libraries (castor-tape-acs-dismount
+    castorclient
+    castorcommon
+    castortapeutils
+    ${STK_API_LIB}
+    ${STK_UTL_LIB}
+    ${STK_IPC_LIB}
+    ${STK_CL_LIB})
+  install (TARGETS castor-tape-acs-dismount DESTINATION ${CASTOR_DEST_BIN_DIR})
+  CastorInstallExeManPage(castor-tape-acs-dismount)
+
+  ##############################################################################
   # Rules to build and install castor-tape-acs-mount
-  ############################################################################
+  ##############################################################################
   set (ACS_MOUNT_SRC_FILES
     Acs.cpp
     AcsCmd.cpp
