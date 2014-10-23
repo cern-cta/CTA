@@ -237,10 +237,10 @@ class ActivityControlThread(threading.Thread):
             # 'Transfer start canceled' message
             dlf.write(msgs.TRANSFERSTARTCANCELED, reason=e.args, subreqId=transfer.transferId, fileId=transfer.fileId)
             # this is a permanent failure because of the stager, so try and inform the client that the transfer cannot take place
-            ioresp = clientsreplier.IOResponse(clientsreplier.IOResponse.FAILED, '', 0, transfer.fileId, transfer.transferId, \
+            ioresp = clientsreplier.IOResponse(clientsreplier.IOResponse.FAILED, '', 0, transfer.fileId[1], transfer.transferId, \
                                                1725, e.message, transfer.reqId, transfer.reqId, 0, transfer.protocol)  # 1725 = ESTREQCANCELED
             # use asynch response: exceptions are handled in the clientsReplier thread
-            self.clientsReplier.sendResponse((qTransfer, transfer.clientIpAddress, transfer.clientPort, ioresp))
+            self.clientsReplier.sendResponse(qTransfer, transfer.clientIpAddress, transfer.clientPort, ioresp)
           except SourceNotStarted, e:
             # we have tried to start a disk to disk copy and the source is not yet ready
             # we will put it in a pending queue
