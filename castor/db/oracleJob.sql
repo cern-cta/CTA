@@ -26,7 +26,7 @@ CREATE OR REPLACE PROCEDURE putStart(inTransferId IN VARCHAR2, selectedDiskServe
   varDpName VARCHAR2(2048);
 BEGIN
   -- Get data and lock castorfile
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id) */
+  SELECT /*+ INDEX_RS_ASC(SubRequest I_SubRequest_SubReqId) */
          SubRequest.castorFile, DiskCopy.id, SubRequest.status, DiskCopy.fileSystem,
          DiskCopy.dataPool, Request.svcClass, CastorFile.fileId, CastorFile.nsHost
     INTO varCfId, varDcId, srStatus, prevFsId, prevDPId, srSvcClass, varFileid, varNsHost
@@ -122,15 +122,16 @@ CREATE OR REPLACE PROCEDURE getStart(inTransferId IN VARCHAR2, selectedDiskServe
 BEGIN
   -- Get data and take a lock on the CastorFile. Associated with triggers,
   -- this guarantees we are the only ones dealing with its copies
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)
-             INDEX(StageGetRequest PK_StageGetRequest_Id) */
+  SELECT /*+ INDEX_RS_ASC(SubRequest I_SubRequest_SubReqId)
+             INDEX_RS_ASC(StageGetRequest PK_StageGetRequest_Id) */
          CastorFile.fileSize, CastorFile.id,
          Req.svcClass, CastorFile.fileId, CastorFile.nsHost, SubRequest.id
     INTO fileSize, cfId, srSvcClass, varFileId, varNsHost, srId
     FROM CastorFile, SubRequest, StageGetRequest Req
    WHERE CastorFile.id = SubRequest.castorFile
      AND SubRequest.request = Req.id
-     AND SubRequest.subreqId = inTransferid FOR UPDATE OF CastorFile.id;
+     AND SubRequest.subreqId = inTransferid
+     FOR UPDATE OF CastorFile.id;
   -- Get selected filesystem/datapool
   IF selectedMountPoint IS NULL THEN
     SELECT DiskServer.dataPool, DiskServer.status,
@@ -200,7 +201,7 @@ BEGIN
     outPath := selectedMountPoint || outPath;
   END IF;
   -- Update the SubRequest and set the link with the DiskCopy
-  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+  UPDATE /*+ INDEX_RS_ASC(SubRequest PK_Subrequest_Id)*/ SubRequest
      SET diskCopy = dcId
    WHERE id = srId;
   -- Deal with recalls of empty files: redirect to /dev/null
@@ -229,7 +230,7 @@ CREATE OR REPLACE PROCEDURE getEnded(inTransferId IN VARCHAR2, inoutErrorCode IN
   varNsHost VARCHAR2(100);
 BEGIN
   -- Update the subrequest
-  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+  UPDATE /*+ INDEX_RS_ASC(SubRequest I_SubRequest_SubReqId)*/ SubRequest
      SET status = CASE WHEN inoutErrorCode > 0 THEN dconst.SUBREQUEST_FAILED ELSE dconst.SUBREQUEST_FINISHED END,
          errorCode = inoutErrorCode,
          errorMessage = errmsg
@@ -283,19 +284,20 @@ CREATE OR REPLACE PROCEDURE putEnded(inTransferId IN VARCHAR2,
   varFileId INTEGER;
   varNsHost VARCHAR(2048);
 BEGIN
-  -- Get CastorFile
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ castorFile, diskCopy, id
-    INTO cfId, dcId, srId
-    FROM SubRequest WHERE subreqId = inTransferId;
-  -- Lock the CastorFile and get the fileid and name server host
-  SELECT id, fileid, nsHost, nvl(lastUpdateTime, 0), nsOpenTime
-    INTO cfId, varFileId, varNsHost, varLastUpdTime, varLastOpenTime
-    FROM CastorFile WHERE id = cfId FOR UPDATE;
+  -- Get data and lock CastorFile
+  SELECT /*+ INDEX_RS_ASC(SubRequest I_SubRequest_SubReqId) */ castorFile, diskCopy, SubRequest.id,
+         CastorFile.id, fileid, nsHost, nvl(lastUpdateTime, 0), nsOpenTime
+    INTO cfId, dcId, srId, cfId, varFileId, varNsHost, varLastUpdTime, varLastOpenTime
+    FROM SubRequest, CastorFile
+   WHERE subreqId = inTransferId
+     AND SubRequest.castorFile = CastorFile.id
+     FOR UPDATE OF CastorFile.id;
   -- Determine the context (Put inside PrepareToPut or not)
   BEGIN
     -- Check that there is a PrepareToPut going on. There can be only a
     -- single one or none. If there was a PrepareTo, any subsequent PPut would be rejected
-    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile) INDEX(PReq PK_StagePrepareToPutRequest_Id) */
+    SELECT /*+ INDEX_RS_ASC(SubRequest I_Subrequest_Castorfile)
+               INDEX_RS_ASC(PReq PK_StagePrepareToPutRequest_Id) */
            SubRequest.id INTO unused
       FROM SubRequest, StagePrepareToPutRequest PReq
      WHERE SubRequest.CastorFile = cfId
@@ -310,7 +312,7 @@ BEGIN
   -- Failure upstream?
   IF inoutErrorCode > 0 THEN
     -- fail the subRequest
-    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+    UPDATE /*+ INDEX_RS_ASC(SubRequest PK_Subrequest_Id)*/ SubRequest
        SET status = dconst.SUBREQUEST_FAILED,
            errorCode = inoutErrorCode,
            errorMessage = inoutErrorMsg
@@ -333,7 +335,7 @@ BEGIN
     -- So we are in the case, we give up
     logToDLF(NULL, dlf.LVL_USER_ERROR, dlf.STAGER_DELETED_WRITTENTO, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| inTransferId);
     -- and fail the subRequest
-    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+    UPDATE /*+ INDEX_RS_ASC(SubRequest PK_Subrequest_Id)*/ SubRequest
        SET status = dconst.SUBREQUEST_FAILED,
            errorCode = serrno.EBUSY,
            errorMessage = dlf.STAGER_DELETED_WRITTENTO
@@ -372,7 +374,7 @@ BEGIN
   END;
   IF inoutErrorCode != 0 THEN
     -- fail the subRequest
-    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+    UPDATE /*+ INDEX_RS_ASC(SubRequest PK_Subrequest_Id)*/ SubRequest
        SET status = dconst.SUBREQUEST_FAILED,
            errorCode = inoutErrorCode,
            errorMessage = varMsg
@@ -384,10 +386,10 @@ BEGIN
     RETURN;
   END IF;
   -- Get svcclass from Request
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ svcClass INTO svcId
+  SELECT /*+ INDEX_RS_ASC(SubRequest PK_Subrequest_Id)*/ svcClass INTO svcId
     FROM SubRequest,
-      (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ id, svcClass FROM StagePutRequest UNION ALL
-       SELECT /*+ INDEX(StagePutDoneRequest PK_StagePutDoneRequest_Id) */ id, svcClass FROM StagePutDoneRequest) Request
+      (SELECT /*+ INDEX_RS_ASC(StagePutRequest PK_StagePutRequest_Id) */ id, svcClass FROM StagePutRequest UNION ALL
+       SELECT /*+ INDEX_RS_ASC(StagePutDoneRequest PK_StagePutDoneRequest_Id) */ id, svcClass FROM StagePutDoneRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
   IF contextPIPP != 0 THEN
     -- If not a put inside a PrepareToPut/Update, trigger migration
@@ -396,7 +398,7 @@ BEGIN
   ELSE
     -- If put inside PrepareToPut/Update, restart any PutDone currently
     -- waiting on this put/update
-    UPDATE /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ SubRequest
+    UPDATE /*+ INDEX_RS_ASC(SubRequest I_Subrequest_Castorfile)*/ SubRequest
        SET status = dconst.SUBREQUEST_RESTART
      WHERE reqType = 39  -- PutDone
        AND castorFile = cfId
@@ -857,7 +859,7 @@ CREATE OR REPLACE PROCEDURE getFileIdsForSrs
 BEGIN
   FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
     BEGIN
-      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_SubreqId)*/ fileid, nsHost INTO fid, nh
+      SELECT /*+ INDEX_RS_ASC(SubRequest I_Subrequest_SubreqId)*/ fileid, nsHost INTO fid, nh
         FROM Castorfile, SubRequest
        WHERE SubRequest.subreqId = subReqIds(i)
          AND SubRequest.castorFile = CastorFile.id;
@@ -902,7 +904,7 @@ BEGIN
   FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
     BEGIN
       -- Get the necessary information needed about the request.
-      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_SubreqId)*/ id, diskCopy, reqType, castorFile
+      SELECT /*+ INDEX_RS_ASC(SubRequest I_Subrequest_SubreqId)*/ id, diskCopy, reqType, castorFile
         INTO srId, dcId, rType, cfId
         FROM SubRequest
        WHERE subReqId = subReqIds(i)
@@ -911,7 +913,7 @@ BEGIN
       SELECT id INTO cfId FROM CastorFile
        WHERE id = cfId FOR UPDATE;
       -- Confirm SubRequest status hasn't changed after acquisition of lock
-      SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ id INTO srId FROM SubRequest
+      SELECT /*+ INDEX(SubRequest PK_Subrequest_Id)*/ id INTO srId FROM SubRequest
        WHERE id = srId AND status = dconst.SUBREQUEST_READY;
       -- Call the relevant cleanup procedure for the transfer, procedures that
       -- would have been called if the transfer failed on the remote execution host.
@@ -1130,7 +1132,7 @@ BEGIN
          FOR UPDATE NOWAIT;
       -- We have successfully acquired the lock, so we update the subrequest
       -- status and modification time
-      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+      UPDATE /*+ INDEX(SubRequest PK_Subrequest_Id)*/ SubRequest
          SET status = dconst.SUBREQUEST_READY,
              lastModificationTime = getTime()
        WHERE id = varSrId
@@ -1159,7 +1161,7 @@ BEGIN
   BEGIN
     -- We finally got a valid candidate, let's process it
     -- Extract the rest of the information required by transfer manager
-    SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
+    SELECT /*+ INDEX(SubRequest PK_Subrequest_Id)*/
            CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SvcClass.name, SvcClass.id,
            Request.type, Request.reqId, Request.euid, Request.egid,
            Request.direction, Client.ipAddress, Client.port,
