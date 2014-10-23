@@ -48,6 +48,17 @@ public:
   virtual ~Acs() throw() = 0;
 
   /**
+   * Parses the specified string and returns the corresponding drive ID object.
+   *
+   * This method throws a castor::exception::InvalidArgument if the syntax of
+   * the string is invalid.
+   *
+   * @param str The string to be parsed.
+   * @return The drive ID object.
+   */
+  DRIVEID str2DriveId(const std::string &str) const;
+
+  /**
    * Converts acs, lsm, panel, drive numbers to the corresponding 
    * drive ID object.
    * 
@@ -158,6 +169,15 @@ public:
     const SEQ_NO seqNumber,
     VOLID (&volIds)[MAX_ID],
     const unsigned short count) throw() = 0;
+
+protected:
+
+  /**
+   * Returns true if the specified string only contains numerals else false.
+   *
+   * @return True if the specified string only contains numerals else false.
+   */
+  bool onlyContainsNumerals(const std::string &str) const throw();
 
 }; // class  Acs
 

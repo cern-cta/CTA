@@ -35,18 +35,18 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   ##############################################################################
 
   add_library(castorAcsDaemon 
+    Acs.cpp
     AcsDaemonMain.cpp
     AcsDaemon.cpp
-    AcsMessageHandler.cpp
     AcsDismountTape.cpp
+    AcsImpl.cpp
+    AcsLibraryInteraction.cpp
+    AcsMessageHandler.cpp
     AcsMountTapeReadOnly.cpp
     AcsMountTapeReadWrite.cpp
-    AcsLibraryInteraction.cpp
-    Acs.cpp
-    AcsImpl.cpp
     AcsPendingRequests.cpp
-    AcsRequestDismountTape.cpp
-    AcsRequest.cpp)
+    AcsRequest.cpp
+    AcsRequestDismountTape.cpp)
 
   target_link_libraries(castorAcsDaemon castortapereactor)
   set_target_properties (castorAcsDaemon PROPERTIES
@@ -77,6 +77,32 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   CastorInstallLogrotate (castor-acs-server)
   CastorInstallSysconfigExample (acsd)
   CastorInstallInitScript (acsd)
+
+  ############################################################################
+  # Rules to build and install castor-tape-acs-mount
+  ############################################################################
+  set (ACS_MOUNT_SRC_FILES
+    Acs.cpp
+    AcsCmd.cpp
+    AcsImpl.cpp
+    AcsMountCmd.cpp
+    AcsMountCmdLine.cpp
+    AcsMountMain.cpp
+    Cmd.cpp)
+  add_executable (castor-tape-acs-mount ${ACS_MOUNT_SRC_FILES})
+  set_target_properties (castor-tape-acs-mount PROPERTIES
+    COMPILE_FLAGS -I/usr/include/CDK
+    COMPILE_DEFINITIONS LINUX)
+  target_link_libraries (castor-tape-acs-mount
+    castorclient
+    castorcommon
+    castortapeutils
+    ${STK_API_LIB}
+    ${STK_UTL_LIB}
+    ${STK_IPC_LIB}
+    ${STK_CL_LIB})
+  install (TARGETS castor-tape-acs-mount DESTINATION ${CASTOR_DEST_BIN_DIR})
+  CastorInstallExeManPage(castor-tape-acs-mount)
 
   ##############################################################################
   # Rules to build and install castor-tape-acs-queryvolume

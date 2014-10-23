@@ -55,6 +55,10 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     ../castor/acs/AcsImpl.cpp
     ../castor/acs/AcsLibraryInteraction.cpp
     ../castor/acs/AcsMessageHandler.cpp
+    ../castor/acs/AcsMountCmd.cpp
+    ../castor/acs/AcsMountCmdLine.cpp
+    ../castor/acs/AcsMountCmdLineTest.cpp
+    ../castor/acs/AcsMountCmdTest.cpp
     ../castor/acs/AcsMountTapeReadOnly.cpp
     ../castor/acs/AcsMountTapeReadWrite.cpp
     ../castor/acs/AcsPendingRequests.cpp

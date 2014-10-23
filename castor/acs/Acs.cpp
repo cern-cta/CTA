@@ -36,6 +36,98 @@ castor::acs::Acs::~Acs() throw() {
 }
 
 //------------------------------------------------------------------------------
+// str2DriveId
+//------------------------------------------------------------------------------
+DRIVEID castor::acs::Acs::str2DriveId(const std::string &str) const {
+  std::vector<std::string> components;
+  castor::utils::splitString(str, ':', components);
+
+  // The drive ID should consist of 4 components: ACS, LSM, Panel and Transport
+  if(4 != components.size()) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Invalid number of components in drive ID"
+      ": expected=4, actual=" << components.size();
+    throw ex;
+  }
+
+  const std::string &acsStr = components[0];
+  const std::string &lsmStr = components[1];
+  const std::string &panStr = components[2];
+  const std::string &drvStr = components[3];
+
+  // Each of the 4 components must be between 1 and than 3 characters long
+  if(1 > acsStr.length() ||  3 < acsStr.length()) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Invalid ACS string length"
+      ": expected=1..3, actual=" << acsStr.length();
+    throw ex;
+  }
+  if(1 > lsmStr.length() || 3 < lsmStr.length()) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Invalid LSM string length"
+      ": expected=1..3, actual=" << lsmStr.length();
+    throw ex;
+  }
+  if(1 > panStr.length() || 3 < panStr.length()) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Invalid panel string length"
+      ": expected=1..3, actual=" << panStr.length();
+    throw ex;
+  }
+  if(1 > drvStr.length() || 3 < drvStr.length()) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Invalid drive string length"
+      ": expected=1..3, actual=" << drvStr.length();
+    throw ex;
+  }
+
+  // Each of the 4 components must only contain numerals
+  if(!onlyContainsNumerals(acsStr)) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "ACS must only contain numerals: value=" << acsStr;
+    throw ex;
+  }
+  if(!onlyContainsNumerals(lsmStr)) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "LSM must only contain numerals: value=" << acsStr;
+    throw ex;
+  }
+  if(!onlyContainsNumerals(panStr)) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Panel must only contain numerals: value=" << acsStr;
+    throw ex;
+  }
+  if(!onlyContainsNumerals(drvStr)) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Drive/Transport must only contain numerals: value=" <<
+      acsStr;
+    throw ex;
+  }
+
+  DRIVEID driveId;
+  driveId.panel_id.lsm_id.acs = (ACS)atoi(acsStr.c_str());
+  driveId.panel_id.lsm_id.lsm = (LSM)atoi(lsmStr.c_str());
+  driveId.panel_id.panel = (PANEL)atoi(panStr.c_str());
+  driveId.drive = (DRIVE)atoi(drvStr.c_str());
+
+  return driveId;
+}
+
+//------------------------------------------------------------------------------
+// onlyContainsNumerals
+//------------------------------------------------------------------------------
+bool castor::acs::Acs::onlyContainsNumerals(const std::string &str) const
+  throw() {
+  for(std::string::const_iterator itor = str.begin(); itor != str.end();
+    itor++) {
+    if(*itor < '0' || *itor  > '9') {
+      return false;
+    }
+  }
+  return true;
+}
+
+//------------------------------------------------------------------------------
 // alpd2DriveId
 //------------------------------------------------------------------------------
 DRIVEID castor::acs::Acs::alpd2DriveId(const uint32_t acs,
