@@ -393,25 +393,55 @@ protected:
   bool handlePendingSignals() throw();
 
   /**
-   * Reaps any zombie processes.
+   * Handles the specified signals.
+   *
+   * @param sig The number of the signal.
+   * @param sigInfo Information about the signal.
+   * @return True if the main event loop should continue, else false.
    */
-  void reapZombies() throw();
+  bool handleSignal(const int sig, const siginfo_t &sigInfo);
+
+  /**
+   * Handles a SIGINT signal.
+   *
+   * @param sigInfo Information about the signal.
+   * @return True if the main event loop should continue, else false.
+   */
+  bool handleSIGINT(const siginfo_t &sigInfo);
+
+  /**
+   * Handles a SIGTERM signal.
+   *
+   * @param sigInfo Information about the signal.
+   * @return True if the main event loop should continue, else false.
+   */
+  bool handleSIGTERM(const siginfo_t &sigInfo);
+
+  /**
+   * Handles a SIGCHLD signal.
+   *
+   * @param sigInfo Information about the signal.
+   * @return True if the main event loop should continue, else false.
+   */
+  bool handleSIGCHLD(const siginfo_t &sigInfo);
 
   /**
    * Handles the specified reaped process.
    *
    * @param pid The process ID of the child process.
    * @param waitpidStat The status information given by a call to waitpid().
+   * @return True if the main event loop should continue, else false.
    */
-  void handleReapedProcess(const pid_t pid, const int waitpidStat) throw();
+  bool handleReapedProcess(const pid_t pid, const int waitpidStat) throw();
 
   /**
    * Handles the specified reaped ProcessForker.
    *
    * @param pid The process ID of the child process.
    * @param waitpidStat The status information given by a call to waitpid().
+   * @return True if the main event loop should continue, else false.
    */
-  void handleReapedProcessForker(const pid_t pid, const int waitpidStat)
+  bool handleReapedProcessForker(const pid_t pid, const int waitpidStat)
     throw();
 
   /**

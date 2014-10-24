@@ -888,74 +888,107 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleEvents()
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::TapeDaemon::handlePendingSignals()
   throw() {
-  bool continueMainEventLoop = true;
   int sig = 0;
   sigset_t allSignals;
   siginfo_t sigInfo;
   sigfillset(&allSignals);
-  struct timespec immediateTimeout = {0, 0};
+  const struct timespec immediateTimeout = {0, 0};
 
   // While there is a pending signal to be handled
   while (0 < (sig = sigtimedwait(&allSignals, &sigInfo, &immediateTimeout))) {
-    switch(sig) {
-    case SIGINT: // Signal number 2
-      m_log(LOG_INFO, "Stopping gracefully because SIGINT was received");
-      continueMainEventLoop = false;
-      break;
-    case SIGTERM: // Signal number 15
-      m_log(LOG_INFO, "Stopping gracefully because SIGTERM was received");
-      continueMainEventLoop = false;
-      break;
-    case SIGCHLD: // Signal number 17
-      reapZombies();
-      break;
-    default:
-      {
-        log::Param params[] = {log::Param("signal", sig)};
-        m_log(LOG_INFO, "Ignoring signal", params);
-      }
-      break;
+    const bool continueMainEventLoop = handleSignal(sig, sigInfo);
+
+    if(!continueMainEventLoop) {
+      return false;
     }
   }
 
-  return continueMainEventLoop;
+  return true; // Continue the main event loop
 }
 
 //------------------------------------------------------------------------------
-// reapZombies
+// handleSignal
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::reapZombies() throw() {
+bool castor::tape::tapeserver::daemon::TapeDaemon::handleSignal(const int sig,
+  const siginfo_t &sigInfo) {
+  switch(sig) {
+  case SIGINT : return handleSIGINT(sigInfo);
+  case SIGTERM: return handleSIGTERM(sigInfo);
+  case SIGCHLD: return handleSIGCHLD(sigInfo);
+  default:
+    {
+      log::Param params[] = {log::Param("signal", sig)};
+      m_log(LOG_INFO, "Ignoring signal", params);
+      return true; // Continue main event loop
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleSIGINT
+//------------------------------------------------------------------------------
+bool castor::tape::tapeserver::daemon::TapeDaemon::handleSIGINT(
+  const siginfo_t &sigInfo) {
+  m_log(LOG_WARNING, "Tape-server parent-process stopping gracefully because"
+    " SIGINT was received");
+  return false; // Do not continue main event loop
+}
+
+//------------------------------------------------------------------------------
+// handleSIGTERM
+//------------------------------------------------------------------------------
+bool castor::tape::tapeserver::daemon::TapeDaemon::handleSIGTERM(
+  const siginfo_t &sigInfo) {
+  m_log(LOG_WARNING, "Tape-server parent-process stopping gracefully because"
+    " SIGTERM was received");
+  return false; // Do not continue main event loop
+}
+
+//------------------------------------------------------------------------------
+// handleSIGCHLD
+//------------------------------------------------------------------------------
+bool castor::tape::tapeserver::daemon::TapeDaemon::handleSIGCHLD(
+  const siginfo_t &sigInfo) {
+  // Reap zombie processes
   pid_t pid = 0;
   int waitpidStat = 0;
+
   while (0 < (pid = waitpid(-1, &waitpidStat, WNOHANG))) {
-    handleReapedProcess(pid, waitpidStat);
+    const bool continueMainEventLoop = handleReapedProcess(pid, waitpidStat);
+    if(!continueMainEventLoop) {
+      return false;
+    }
   }
+
+  return true; // Continue the main event loop
 }
 
 //------------------------------------------------------------------------------
 // handleReapedProcess
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedProcess(
+bool castor::tape::tapeserver::daemon::TapeDaemon::handleReapedProcess(
   const pid_t pid, const int waitpidStat) throw() {
   logChildProcessTerminated(pid, waitpidStat);
 
   if(pid == m_processForkerPid) {
-    handleReapedProcessForker(pid, waitpidStat);
+    return handleReapedProcessForker(pid, waitpidStat);
   } else {
     log::Param params[] = {log::Param("pid", pid)};
     m_log(LOG_ERR, "Reaped process was unknown", params);
+    return true; // Continue the main event loop
   }
 }
 
 //------------------------------------------------------------------------------
 // handleReapedProcessForker
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedProcessForker(
+bool castor::tape::tapeserver::daemon::TapeDaemon::handleReapedProcessForker(
   const pid_t pid, const int waitpidStat) throw() {
   log::Param params[] = {
     log::Param("processForkerPid", pid)};
-  m_log(LOG_INFO, "Handling reaped ProcessForker", params);
-  m_processForkerPid = 0;
+  m_log(LOG_WARNING, "Tape-server parent-process stopping gracefully because"
+    " ProcessForker has terminated", params);
+  return false; // Do not continue the main event loop
 }
 
 //------------------------------------------------------------------------------
