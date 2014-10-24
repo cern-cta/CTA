@@ -46,6 +46,14 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::CleanerSession::execute() {
+  m_capUtils.setProcText("cap_sys_rawio+ep");
+  {
+    log::Param params[] = {
+      log::Param("capabilities", m_capUtils.getProcText())};
+    m_log(LOG_INFO, "Cleaner session set process capabilities for using tape",
+      params);
+  }
+
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);    
   castor::tape::SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
   

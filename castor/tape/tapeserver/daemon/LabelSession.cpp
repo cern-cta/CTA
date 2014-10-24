@@ -67,6 +67,14 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::LabelSession::execute() {
   try {
+    m_capUtils.setProcText("cap_sys_rawio+ep");
+    {
+      log::Param params[] = {
+        log::Param("capabilities", m_capUtils.getProcText())};
+      m_log(LOG_INFO, "Label session set process capabilities for using tape",
+        params);
+    }
+
     log::Param params[] = {
       log::Param("uid", m_request.uid),
       log::Param("gid", m_request.gid),
