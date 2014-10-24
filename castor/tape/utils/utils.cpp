@@ -331,7 +331,6 @@ void castor::tape::utils::parseTpconfigFile(const std::string &filename,
       // Throw an exception if the number of data-columns is invalid
       if(columns.size() != expectedNbOfColumns) {
         castor::exception::InvalidArgument ex;
-
         ex.getMessage() <<
           "Failed to parse TPCONFIG file"
           ": Invalid number of data columns in TPCONFIG line"
@@ -340,17 +339,44 @@ void castor::tape::utils::parseTpconfigFile(const std::string &filename,
           " expectedNbColumns=" << expectedNbOfColumns <<
           " actualNbColumns=" << columns.size() <<
           " expectedFormat='unitName dgn devFilename librarySlot'";
-
         throw ex;
       }
 
-      // Store the value of the data-coulmns in the output list parameter
-      lines.push_back(TpconfigLine(
+      const TpconfigLine configLine(
         columns[0], // unitName
         columns[1], // dgn
         columns[2], // devFilename
         columns[3]  // librarySlot
-      ));
+      );
+
+      if(CA_MAXUNMLEN < configLine.unitName.length()) {
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() <<
+          "Failed to parse TPCONFIG file"
+          ": Tape-drive unit-name is too long"
+          ": filename='" << filename << "'"
+          " lineNb=" << lineNb <<
+          " unitName=" << configLine.unitName <<
+          " maxUnitNameLen=" << CA_MAXUNMLEN <<
+          " actualUnitNameLen=" << configLine.unitName.length();
+        throw ex;
+      }
+
+      if(CA_MAXDGNLEN < configLine.dgn.length()) {
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() <<
+          "Failed to parse TPCONFIG file"
+          ": DGN is too long"
+          ": filename='" << filename << "'"
+          " lineNb=" << lineNb <<
+          " dgn=" << configLine.dgn <<
+          " maxDgnLen=" << CA_MAXDGNLEN <<
+          " actualDgnLen=" << configLine.dgn.length();
+        throw ex;
+      }
+
+      // Store the value of the data-columns in the output list parameter
+      lines.push_back(TpconfigLine(configLine));
     }
   }
 
