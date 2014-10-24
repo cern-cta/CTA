@@ -82,8 +82,10 @@ public:
    * Handles the specified event.
    *
    * @param fd The poll file-descriptor describing the event.
+   * @return true if the event handler should be removed from and deleted by
+   * the reactor.
    */
-  bool handleEvent(const zmq_pollitem_t &fd) ;
+  bool handleEvent(const zmq_pollitem_t &fd);
 
 private:
 
@@ -126,8 +128,11 @@ private:
 
   /**
    * Handles an incoming message from the ProcessForker.
+   *
+   * @return true if the event handler should be removed from and deleted by
+   * the reactor.
    */
-  void handleMsg();
+  bool handleMsg();
 
   /**
    * Dispatches the appropriate message handler for the message contained

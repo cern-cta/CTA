@@ -84,9 +84,7 @@ bool castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
 
   checkHandleEventFd(fd.fd);
 
-  handleMsg();
-
-  return false; // Ask reactor to keep this handler registered
+  return handleMsg();
 }
 
 //------------------------------------------------------------------------------
@@ -119,7 +117,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
 //------------------------------------------------------------------------------
 // handleMsg
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
+bool castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   handleMsg() {
   ProcessForkerFrame frame;
   try {
@@ -127,9 +125,12 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     frame = ProcessForkerUtils::readFrame(m_fd, timeout);
   } catch(castor::exception::Exception &ne) {
     log::Param params[] = {log::Param("message", ne.getMessage().str())};
-    m_log(LOG_ERR, "ProcessForkerConnectionHandler failed to handle message",
-      params);
-    sleep(1); // Sleep a moment to avoid going into a tight error loop
+    m_log(LOG_ERR, "ProcessForkerConnectionHandler failed to handle message"
+      ": Failed to read frame", params);
+
+    // There is no point in continuing if communications with ProcessForker are
+    // broken
+    return true; // Ask reactor to remove and delete this event handler
   }
 
   log::Param params[] = {
@@ -137,7 +138,18 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     log::Param("payloadLen", frame.payload.length())};
   m_log(LOG_INFO, "ProcessForkerConnectionHandler handling a message", params);
 
-  dispatchMsgHandler(frame);
+  try {
+    dispatchMsgHandler(frame);
+  } catch(castor::exception::Exception &ne) {
+    log::Param params[] = {log::Param("message", ne.getMessage().str())};
+    m_log(LOG_ERR, "ProcessForkerConnectionHandler failed to handle message",
+      params);
+
+    // This may be a transient error so keep communicating with ProcessForker
+    return false; // Ask reactor to keep this handler registered
+  }
+
+  return false; // Ask reactor to keep this handler registered
 }
 
 //------------------------------------------------------------------------------
@@ -145,19 +157,27 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   dispatchMsgHandler(const ProcessForkerFrame &frame) {
-  switch(frame.type) {
-  case messages::MSG_TYPE_PROCESSCRASHED:
-    return handleProcessCrashedMsg(frame);
-  case messages::MSG_TYPE_PROCESSEXITED:
-    return handleProcessExitedMsg(frame);
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "ProcessForkerConnectionHandler failed to dispatch"
-        " message handler: Unexpected message type"
-        ": type=" << messages::msgTypeToString(frame.type);
-      throw ex;
+  try {
+    switch(frame.type) {
+    case messages::MSG_TYPE_PROCESSCRASHED:
+      return handleProcessCrashedMsg(frame);
+    case messages::MSG_TYPE_PROCESSEXITED:
+      return handleProcessExitedMsg(frame);
+    default:
+      {
+        log::Param params[] = {
+          log::Param("type", frame.type),
+          log::Param("typeStr", messages::msgTypeToString(frame.type))};
+        m_log(LOG_ERR, "ProcessForkerConnectionHandler failed to dispatch"
+         " message handler: Unexpected message type", params);
+      }
     }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "ProcessForkerConnectionHandler failed to dispatch message handler"
+      ": " << ne.getMessage().str();
+    throw ex;
   }
 }
 
