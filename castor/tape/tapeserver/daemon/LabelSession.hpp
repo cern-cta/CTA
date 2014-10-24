@@ -28,6 +28,7 @@
 #include "castor/log/Logger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
+#include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
@@ -52,6 +53,7 @@ public:
   /**
    *  Constructor 
    *
+   * @param capUtils Object providing support for UNIX capabilities.
    * @param tapeserver Proxy object representing the tapeserverd daemon.
    * @param mc Object representing the media changer.
    * @param clientRequest The request to label a tape received from the label
@@ -64,6 +66,7 @@ public:
    * tape.
    */
   LabelSession(
+    server::ProcessCap &capUtils,
     messages::TapeserverProxy &tapeserver,
     mediachanger::MediaChangerFacade &mc,
     const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
@@ -145,6 +148,11 @@ private:
    * @return 
    */
   void labelTheTape(drive::DriveInterface *const drive);
+
+  /**
+   * Object providing support for UNIX capabilities.
+   */
+  server::ProcessCap &m_capUtils;
 
   /**
    * Proxy object representing the tapeserverd daemon.

@@ -43,6 +43,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::LabelSession::LabelSession(
+  server::ProcessCap &capUtils,
   messages::TapeserverProxy &tapeserver,
   mediachanger::MediaChangerFacade &mc, 
   const legacymsg::TapeLabelRqstMsgBody &clientRequest,
@@ -50,6 +51,7 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
   System::virtualWrapper &sysWrapper,
   const utils::DriveConfig &driveConfig,
   const bool force):
+  m_capUtils(capUtils),
   m_tapeserver(tapeserver),
   m_mc(mc),
   m_request(clientRequest),

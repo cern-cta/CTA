@@ -27,11 +27,13 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
+  server::ProcessCap &capUtils,
   mediachanger::MediaChangerFacade &mc,
   castor::log::Logger &log,
   const utils::DriveConfig &driveConfig,
   System::virtualWrapper &sysWrapper,
   const std::string &vid):
+  m_capUtils(capUtils),
   m_mc(mc),
   m_log(log),
   m_driveConfig(driveConfig),

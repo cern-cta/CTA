@@ -26,6 +26,7 @@
 #include "castor/log/LogContext.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
+#include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
@@ -47,14 +48,16 @@ namespace daemon {
     /**
      * Constructor
      * 
-     * @param mc           Object representing the media changer.
-     * @param log          Object representing the API to the CASTOR logging system.
-     * @param driveConfig  Configuration of the tape drive to be cleaned.
-     * @param sysWrapper   Object representing the operating system.
-     * @param vid          The volume identifier of the mounted tape if known,
-     *                     else the empty string.
+     * @param capUtils Object providing support for UNIX capabilities.
+     * @param mc Object representing the media changer.
+     * @param log Object representing the API to the CASTOR logging system.
+     * @param driveConfig Configuration of the tape drive to be cleaned.
+     * @param sysWrapper Object representing the operating system.
+     * @param vid The volume identifier of the mounted tape if known,
+     * else the empty string.
      */
     CleanerSession(
+      server::ProcessCap &capUtils,
       mediachanger::MediaChangerFacade &mc,
       castor::log::Logger &log,
       const utils::DriveConfig &driveConfig,
@@ -84,6 +87,11 @@ namespace daemon {
     EndOfSessionAction execute();
     
   private:
+
+    /**
+     * Object providing support for UNIX capabilities.
+     */
+    server::ProcessCap &m_capUtils;
 
     /**
      * The object representing the media changer.

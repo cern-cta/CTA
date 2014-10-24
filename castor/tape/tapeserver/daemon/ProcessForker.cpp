@@ -461,6 +461,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::ProcessForker::runCleanerSession(
   const messages::ForkCleaner &rqst) {
   try {
+    server::ProcessCap capUtils;
+
     const utils::DriveConfig driveConfig = getDriveConfig(rqst);
     std::list<log::Param> params;
     params.push_back(log::Param("unitName", driveConfig.unitName));
@@ -485,6 +487,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
     castor::tape::System::realWrapper sWrapper;
     CleanerSession cleanerSession(
+      capUtils,
       mediaChangerFacade,
       m_log,
       driveConfig,
@@ -518,7 +521,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
   const legacymsg::RtcpJobRqstMsgBody vdqmJob = getVdqmJob(rqst);
 
-  castor::server::ProcessCap capUtils;
+  server::ProcessCap capUtils;
 
   const int sizeOfIOThreadPoolForZMQ = 1;
   messages::SmartZmqContext
@@ -832,6 +835,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::ProcessForker::runLabelSession(
   const messages::ForkLabel &rqst) {
   try {
+    server::ProcessCap capUtils;
+
     const utils::DriveConfig &driveConfig = getDriveConfig(rqst);
     const legacymsg::TapeLabelRqstMsgBody labelJob = getLabelJob(rqst);
 
@@ -861,6 +866,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     legacymsg::NsProxy_TapeAlwaysEmpty ns;
     castor::tape::System::realWrapper sWrapper;
     LabelSession labelsession(
+      capUtils,
       tapeserver,
       mediaChangerFacade,
       labelJob,
