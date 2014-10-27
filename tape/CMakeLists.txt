@@ -26,7 +26,8 @@ if (${COMPILE_SERVER} STREQUAL "1")
   ################################################################################
   # Rules to build and install tpconfig
   ################################################################################
-  add_executable (tpconfig tpconfig.c Ctape_config.c send2tpd.c Ctape_errmsg.c)
+  add_executable (tpconfig tpconfig.c Ctape_config.c send2tpd.c Ctape_errmsg.c
+    Ctape_status.c)
   target_link_libraries (tpconfig castorcommon)
   install (TARGETS tpconfig DESTINATION ${CASTOR_DEST_BIN_DIR})
   CastorInstallExeManPage (tpconfig)

@@ -56,7 +56,7 @@ struct rsv_status {		/* resource reservation status reply entry */
 
 			/* function prototypes */
 
-EXTERN_C int Ctape_config (char *, int);
+EXTERN_C int Ctape_config (const char * const, const int);
 EXTERN_C struct devinfo *Ctape_devinfo (const char *const);
 EXTERN_C int deviceTypeIsSupported(const char *const);
 EXTERN_C int Ctape_dmpend();

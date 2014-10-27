@@ -6,10 +6,14 @@
 tpconfig \- configure tape drive up/down
 .SH SYNOPSIS
 .B tpconfig
-.I drive_name drive_status
+.I [drive_name] drive_status
 .SH DESCRIPTION
 .B tpconfig
-configures drive up or down. This tells the tape daemon if the drive
+configures drive
+.B up
+or
+.B down.
+This tells the tape daemon if the drive
 can be allocated or not. The list of drive names may be found by using
 .BR tpstat .
 The
@@ -18,7 +22,8 @@ command is restricted to privileged users such as root and operator.
 .TP 1.2i
 .I drive_name
 may be either a simple drive name if the program is executed on the tape server
-itself or drivename@hostname.
+itself or drivename@hostname. The drive_name can be omitted if there is only
+one tape drive connected to the tape server.
 .TP 1.2i
 .I drive_status
 can be
@@ -33,8 +38,8 @@ tpconfig dlt02@shd34 up
 .ft
 .fi
 .SH EXIT STATUS
-This program returns 0 if the operation was successful or >0 if the operation
-failed.
+This program returns 0 if the operation was successful or non-zero if the
+operation failed.
 .SH SEE ALSO
 .BR Ctape_config(3) ,
 .B Ctape_status(3)
