@@ -11,8 +11,11 @@
  */
 
 #pragma once
-#include "Ctape_constants.h"
-#include "osdep.h"
+
+#include "h/Ctape_constants.h"
+#include "h/osdep.h"
+
+#include <sys/types.h>
 
 typedef struct {
 	unsigned long from_host;
