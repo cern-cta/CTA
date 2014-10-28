@@ -104,16 +104,6 @@ void readFileIntoList(const char *const filename,
 void parseFileList(const char *filename, std::list<std::string> &list);
 
 /**
- * Creates and returns an std::string which is the result of the stripping
- * the leading and trailing white space from the specified string.  White
- * space is a contiguous sequence of space ' ' and/or a tab '\t' characters.
- *
- * @param str The string to be trimmed.
- * @return    The newly created trimmed string.
- */
-std::string trimString(const std::string &str) throw();
-
-/**
  * Creates and returns an std::string which is the result of replacing each
  * occurance of whitespace (a collection of on or more space and tab
  * characters) with a single space character.

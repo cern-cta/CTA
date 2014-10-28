@@ -134,7 +134,7 @@ void castor::tape::utils::parseFileList(const char *filename,
     std::string &line = *itor;
 
     // Left and right trim the line
-    line = trimString(line);
+    line = castor::utils::trimString(line);
 
     // Remove the line if it is an empty string or if it starts with the shell
     // comment character '#'
@@ -143,25 +143,6 @@ void castor::tape::utils::parseFileList(const char *filename,
     } else {
       itor++;
     }
-  }
-}
-
-//------------------------------------------------------------------------------
-// trimString
-//------------------------------------------------------------------------------
-std::string castor::tape::utils::trimString(const std::string &str) throw() {
-  const char *whitespace = " \t";
-
-  std::string::size_type start = str.find_first_not_of(whitespace);
-  std::string::size_type end   = str.find_last_not_of(whitespace);
-
-  // If all the characters of the string are whitespace
-  if(start == std::string::npos) {
-    // The result is an empty string
-    return std::string("");
-  } else {
-    // The result is what is in the middle
-    return str.substr(start, end - start + 1);
   }
 }
 
@@ -312,7 +293,7 @@ void castor::tape::utils::parseTpconfigFile(const std::string &filename,
     }
 
     // Left and right trim the line of whitespace
-    line = trimString(std::string(line));
+    line = castor::utils::trimString(std::string(line));
 
     // If the line is not empty
     if(line != "") {
