@@ -705,5 +705,33 @@ namespace unitTests {
     ASSERT_EQ(0x04U,logParam.header.parameterLength);
     ASSERT_EQ(4280431428ULL,logParam.getU64Value());
     ASSERT_EQ(-14535868LL,logParam.getS64Value());
+  }
+  
+  TEST(castor_tape_SCSI_Structures, testUnitReadyCDB_t) {
+    castor::tape::SCSI::Structures::testUnitReadyCDB_t testUnitReadyCDB;
+    unsigned char *buff = (unsigned char *)&testUnitReadyCDB;  
+    /*
+     * Make sure this struct is a POD (plain old data without virtual table)
+     * (and has the right size).
+     */
+    ASSERT_EQ(6U, sizeof(testUnitReadyCDB)); 
+    
+    /* Check proper initialization an location of struct members match
+     the bit/byte locations defined in SPC-4 */
+    ASSERT_EQ(castor::tape::SCSI::Commands::TEST_UNIT_READY, testUnitReadyCDB.opCode);
+    buff[0] = 0xAB;
+    ASSERT_EQ(0xABU, testUnitReadyCDB.opCode);
+    
+    buff[1] = 0xFF;
+    
+    ASSERT_EQ(0, testUnitReadyCDB.EDCC);
+    buff[2] |= (0x01 &   0xFF) << 0;
+    ASSERT_EQ(0x1U, testUnitReadyCDB.EDCC);
+        
+    buff[3] = buff[4] = 0xFF;
+    
+    ASSERT_EQ(0U, testUnitReadyCDB.control);
+    buff[5] |= 0xCD;
+    ASSERT_EQ(0xCDU, testUnitReadyCDB.control);
   }  
 }
