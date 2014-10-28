@@ -116,15 +116,6 @@ unsigned short getPortFromConfig(const char *const category,
   throw(exception::InvalidConfigEntry, castor::exception::Exception);
 
 /**
- * Parses the specified TPCONFIG file.
- *
- * @param filename The filename of the TPCONFIG file.
- * @param lines    Output parameter: The list of data-lines parsed from the
- *                 TPCONFIG file.
- */
-void parseTpconfigFile(const std::string &filename, TpconfigLines &lines);
-
-/**
  * Returns the string representation of the specified tape block-id.
  *
  * @param  blockId0 Block-id part 0.

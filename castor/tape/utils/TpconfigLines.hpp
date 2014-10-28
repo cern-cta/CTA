@@ -33,11 +33,20 @@ namespace tape   {
 namespace utils  {
 
 /**
- * A list of TPCONFIG data-lines (as opposed to a comment-lines).
+ * A list of lines parsed from a TPCONFIG file.
  */
-typedef std::list<TpconfigLine> TpconfigLines;
+class TpconfigLines: public std::list<TpconfigLine> {
+public:
+
+  /**
+   * Parses the specified TPCONFIG file.
+   *
+   * @param filename The filename of the TPCONFIG file.
+   * @return The result of parsing the TPCONFIG file.
+   */
+  static TpconfigLines parseFile(const std::string &filename);
+}; // class TpconfigLines
 
 } // namespace utils
 } // namespace tape
 } // namespace castor
-

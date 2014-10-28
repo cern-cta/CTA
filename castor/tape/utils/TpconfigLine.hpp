@@ -74,4 +74,3 @@ struct TpconfigLine {
 } // namespace utils
 } // namespace tape
 } // namespace castor
-

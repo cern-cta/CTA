@@ -119,8 +119,8 @@ static int exceptionThrowingMain(const int argc, char **const argv,
   const std::string vmgrHost = config.getConfEntString("VMGR", "HOST", &log);
 
   // Parse /etc/castor/TPCONFIG
-  tape::utils::TpconfigLines tpconfigLines;
-  tape::utils::parseTpconfigFile("/etc/castor/TPCONFIG", tpconfigLines);
+  const tape::utils::TpconfigLines tpconfigLines =
+    tape::utils::TpconfigLines::parseFile("/etc/castor/TPCONFIG");
   logTpconfigLines(log, tpconfigLines);
   tape::utils::DriveConfigMap driveConfigs;
   driveConfigs.enterTpconfigLines(tpconfigLines);
