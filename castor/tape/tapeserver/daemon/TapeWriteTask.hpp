@@ -108,11 +108,11 @@ public:
   const TapeSessionStats getTaskStats() const ;
 private:
   /**
-   * Log  all localStats' stats + fileTime + m_fileToMigrate's parameters
+   * Log  all localStats' stats +  m_fileToMigrate's parameters
    * into lc with msg at the given level
    */
   void logWithStats(int level, const std::string& msg,
-   double fileTime,log::LogContext& lc) const;
+   log::LogContext& lc) const;
      
   /**
    *Throw an exception if  m_errorFlag is set

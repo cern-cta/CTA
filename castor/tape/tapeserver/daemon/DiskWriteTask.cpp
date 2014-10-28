@@ -48,6 +48,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
   using log::LogContext;
   using log::Param;
   castor::utils::Timer localTime;
+  castor::utils::Timer totalTime(localTime);
   try{
     // Placeholder for the disk file. We will open it only
     // after getting a first correct memory block.
@@ -102,6 +103,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
     } //end of while(1)
     reporter.reportCompletedJob(*m_recallingFile,checksum,m_stats.dataVolume);
     m_stats.waitReportingTime+=localTime.secs(castor::utils::Timer::resetCounter);
+    m_stats.totalTime = totalTime.secs();
     logWithStat(LOG_DEBUG, "File successfully transfered to disk",lc);
     
     //everything went well, return true
@@ -211,8 +213,9 @@ void DiskWriteTask::logWithStat(int level,const std::string& msg,log::LogContext
            .addTiming("checkingErrorTime",m_stats.checkingErrorTime)
            .addTiming("openingTime",m_stats.openingTime)
            .addTiming("closingTime",m_stats.closingTime)
-           .add("payloadTransferSpeedMBps",
-                   1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime)
+           .addTiming("totalTime", m_stats.totalTime)
+           .add("filePayloadTransferSpeedMBps",
+              m_stats.totalTime?1.0*m_stats.dataVolume/1000/1000/m_stats.totalTime:0)
            .add("FILEID",m_recallingFile->fileid())
            .add("path",m_recallingFile->path());
     lc.log(level,msg);

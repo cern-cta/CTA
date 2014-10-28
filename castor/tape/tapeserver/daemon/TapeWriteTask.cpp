@@ -117,9 +117,9 @@ namespace daemon {
       m_taskStats.filesCount ++;
       reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum,output->getBlockId());
       m_taskStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
+      m_taskStats.totalTime = localTime.secs();
       // Log the successful transfer      
-      logWithStats(LOG_INFO, "File successfully transmitted to drive",
-              localTime.secs(),lc);
+      logWithStats(LOG_INFO, "File successfully transmitted to drive",lc);
       // Record the fSeq in the tape session
       session.reportWrittenFSeq(m_fileToMigrate->fseq());
     } 
@@ -260,21 +260,20 @@ namespace daemon {
   }
    
    void TapeWriteTask::logWithStats(int level, const std::string& msg,
-   double fileTime,log::LogContext& lc) const{
+   log::LogContext& lc) const{
      log::ScopedParamContainer params(lc);
      params.addTiming("transferTime", m_taskStats.transferTime)
            .addTiming("checksumingTime",m_taskStats.checksumingTime)
            .addTiming("waitDataTime",m_taskStats.waitDataTime)
            .addTiming("waitReportingTime",m_taskStats.waitReportingTime)
+           .addTiming("totalTime", m_taskStats.totalTime)
            .add("dataVolume",m_taskStats.dataVolume)
            .add("headerVolume",m_taskStats.headerVolume)
-           .addTiming("totalTime", fileTime)
-           .add("driveTransferSpeedMBps",
-                   (m_taskStats.dataVolume+m_taskStats.headerVolume)
-           /1000/1000
-           /m_taskStats.transferTime)
-           .add("payloadTransferSpeedMBps",
-                   1.0*m_taskStats.dataVolume/1000/1000/fileTime)
+           .add("driveTransferSpeedMBps",m_taskStats.totalTime?
+             (m_taskStats.dataVolume+m_taskStats.headerVolume)
+                /1000/1000/m_taskStats.totalTime:0.0)
+           .add("payloadTransferSpeedMBps",m_taskStats.totalTime?
+                   1.0*m_taskStats.dataVolume/1000/1000/m_taskStats.totalTime:0.0)
            .add("fileSize",m_fileToMigrate->fileSize())
            .add("fileid",m_fileToMigrate->fileid())
            .add("fseq",m_fileToMigrate->fseq())

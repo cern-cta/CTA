@@ -187,8 +187,9 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     // at the end of the previous block. Log the results.
     log::ScopedParamContainer params(m_logContext);
     params.add("status", "success");
+    m_stats.totalTime = totalTimer.secs();
     logWithStat(LOG_INFO, "Tape thread complete",
-            params,totalTimer.secs());
+            params);
   } catch(const castor::exception::Exception& e){
     // We end up here because one step failed, be it at mount time, of after
     // failing to position by fseq (this is fatal to a read session as we need
@@ -198,8 +199,9 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     log::ScopedParamContainer params(m_logContext);
     params.add("status", "error")
           .add("ErrorMesage", e.getMessageValue());
-    logWithStat(LOG_ERR, "Tape thread complete",
-            params,totalTimer.secs());
+    m_stats.totalTime = totalTimer.secs();
+    logWithStat(LOG_INFO, "Tape thread complete",
+            params);
     // Flush the remaining tasks to cleanly exit.
     while(1){
       TapeReadTask* task=m_tasks.pop();
@@ -216,8 +218,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
 //TapeReadSingleThread::logWithStat()
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeReadSingleThread::logWithStat(
-  int level, const std::string& msg, log::ScopedParamContainer& params, 
-  double sessionTime) {
+  int level, const std::string& msg, log::ScopedParamContainer& params) {
     params.add("type", "read")
           .add("VID", m_volInfo.vid)
           .addTiming("mountTime", m_stats.mountTime)
@@ -229,13 +230,13 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::logWithStat(
           .addTiming("waitReportingTime", m_stats.waitReportingTime)
           .addTiming("unloadTime", m_stats.unloadTime)
           .addTiming("unmountTime", m_stats.unmountTime)
+          .addTiming("totalTime", m_stats.totalTime)
           .add("dataVolume", m_stats.dataVolume)
           .add("headerVolume", m_stats.headerVolume)
           .add("files", m_stats.filesCount)
-          .add("dataBandwidthMBps", 1.0*m_stats.dataVolume
-                  /1000/1000/sessionTime)
-          .add("driveBandwidthMBps", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
-                  /1000/1000/sessionTime)
-          .addTiming("sessionTime", sessionTime);
+          .add("payloadTransferSpeedMBps", m_stats.totalTime?1.0*m_stats.dataVolume
+                  /1000/1000/m_stats.totalTime:0.0)
+          .add("driveTransferSpeedMBps", m_stats.totalTime?1.0*(m_stats.dataVolume+m_stats.headerVolume)
+                  /1000/1000/m_stats.totalTime:0.0);
     m_logContext.log(level,msg);  
 }

@@ -201,7 +201,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     // at the end of the previous block. Log the results.
     log::ScopedParamContainer params(m_logContext);
     params.add("status", "success");
-    logWithStats(LOG_INFO, "Tape thread complete",params,totalTimer.secs());
+    m_stats.totalTime = totalTimer.secs();
+    logWithStats(LOG_INFO, "Tape thread complete",params);
   } //end of try 
   catch(const castor::exception::Exception& e){
     //we end there because write session could not be opened 
@@ -240,8 +241,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     log::ScopedParamContainer params(m_logContext);
     params.add("status", "error")
           .add("ErrorMesage", errorMessage);
-    logWithStats(LOG_ERR, "Tape thread complete",
-            params,totalTimer.secs());
+    m_stats.totalTime = totalTimer.secs();
+    logWithStats(LOG_INFO, "Tape thread complete",
+            params);
     m_reportPacker.reportEndOfSessionWithErrors(errorMessage,errorCode);
   }    
 }
@@ -250,8 +252,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
 //logWithStats
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats(
-int level,const std::string& msg, log::ScopedParamContainer& params,
-double sessionTime){
+int level,const std::string& msg, log::ScopedParamContainer& params){
   params.add("type", "write")
         .add("VID", m_volInfo.vid)
         .addTiming("mountTime", m_stats.mountTime)
@@ -264,13 +265,13 @@ double sessionTime){
         .addTiming("flushTime", m_stats.flushTime)
         .addTiming("unloadTime", m_stats.unloadTime)
         .addTiming("unmountTime", m_stats.unmountTime)
+        .addTiming("totalTime", m_stats.totalTime)
         .add("dataVolume", m_stats.dataVolume)
         .add("headerVolume", m_stats.headerVolume)
         .add("files", m_stats.filesCount)
-        .add("dataBandwidthMBps", 1.0*m_stats.dataVolume
-                /1000/1000/sessionTime)
-        .add("driveBandwidthMBps", 1.0*(m_stats.dataVolume+m_stats.headerVolume)
-                /1000/1000/sessionTime)
-        .addTiming("sessionTime", sessionTime);
+        .add("payloadTransferSpeedMBps", m_stats.totalTime?1.0*m_stats.dataVolume
+                /1000/1000/m_stats.totalTime:0.0)
+        .add("driveTransferSpeedMBps", m_stats.totalTime?1.0*(m_stats.dataVolume+m_stats.headerVolume)
+                /1000/1000/m_stats.totalTime:0.0);
   m_logContext.log(level, msg);
 }

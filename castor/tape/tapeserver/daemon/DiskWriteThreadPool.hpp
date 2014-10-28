@@ -32,6 +32,7 @@
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/DiskStats.hpp"
+#include "castor/utils/Timer.hpp"
 #include <vector>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -129,7 +130,7 @@ private:
      * For measuring how long  are the the different steps 
      */
     DiskStats m_threadStat;
-    
+  
     /**
      * To identify the thread 
      */
@@ -182,6 +183,12 @@ private:
    * Aggregate all threads' stats 
    */
   DiskStats m_pooldStat;
+
+  /**
+   * Measure the thread pool's lifetime
+   */
+  castor::utils::Timer m_totalTime;
+    
   /** Reference to the report packer where tasks report the result of their 
    * individual files and the end of session (for the last thread) */
   RecallReportPacker& m_reporter;

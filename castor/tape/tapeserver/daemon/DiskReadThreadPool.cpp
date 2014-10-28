@@ -129,16 +129,18 @@ void DiskReadThreadPool::addThreadStats(const DiskStats& other){
 //logWithStat
 //------------------------------------------------------------------------------
 void DiskReadThreadPool::logWithStat(int level, const std::string& message){
+  m_pooldStat.totalTime = m_totalTime.secs();
   log::ScopedParamContainer params(m_lc);
-     params.addTiming("poolTransferTime", m_pooldStat.transferTime)
-           .addTiming("poolWaitFreeMemoryTime",m_pooldStat.waitFreeMemoryTime)
-           .addTiming("poolCheckingErrorTime",m_pooldStat.checkingErrorTime)
-           .addTiming("poolOpeningTime",m_pooldStat.openingTime)
-           .add("poolFileCount",m_pooldStat.filesCount)
-           .add("poolDataVolumeInMB", 1.0*m_pooldStat.dataVolume/1000/1000)
-           .add("AveragePoolPayloadTransferSpeedMBps",
-                   1.0*m_pooldStat.dataVolume/1000/1000/m_pooldStat.transferTime);
-    m_lc.log(level,message);
+  params.addTiming("poolTransferTime", m_pooldStat.transferTime)
+        .addTiming("poolWaitFreeMemoryTime",m_pooldStat.waitFreeMemoryTime)
+        .addTiming("poolCheckingErrorTime",m_pooldStat.checkingErrorTime)
+        .addTiming("poolOpeningTime",m_pooldStat.openingTime)
+        .addTiming("poolRealTime",m_pooldStat.totalTime)
+        .add("poolFileCount",m_pooldStat.filesCount)
+        .add("poolDataVolumeInMB", 1.0*m_pooldStat.dataVolume/1000/1000)
+        .add("AveragePoolPayloadTransferSpeedMBps",
+           m_pooldStat.totalTime?1.0*m_pooldStat.dataVolume/1000/1000/m_pooldStat.totalTime:0);
+  m_lc.log(level,message);
 }
 //------------------------------------------------------------------------------
 // DiskReadWorkerThread::run
@@ -151,6 +153,7 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
   
   std::auto_ptr<DiskReadTask> task;
   castor::utils::Timer localTime;
+  castor::utils::Timer totalTime;
   
   while(1) {
     task.reset( m_parent.popAndRequestMore(m_lc));
@@ -163,19 +166,21 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
       break;
     }
   } //end of while(1)
+  m_threadStat.totalTime = totalTime.secs();
+  m_parent.addThreadStats(m_threadStat);
+  logWithStat(LOG_INFO, "Finishing of DiskReadWorkerThread");
   // We now acknowledge to the task injector that read reached the end. There
   // will hence be no more requests for more. (last thread turns off the light)
   int remainingThreads = --m_parent.m_nbActiveThread;
   if (!remainingThreads) {
     m_parent.m_injector->finish();
-    m_lc.log(LOG_INFO, "Signaled to task injector the end of disk read threads");
+    m_lc.log(LOG_INFO, "Signalled to task injector the end of disk read threads");
+    m_parent.logWithStat(LOG_INFO, "All the DiskReadWorkerThreads have completed");
   } else {
     castor::log::ScopedParamContainer params(m_lc);
     params.add("remainingThreads", remainingThreads);
     m_lc.log(LOG_DEBUG, "Will not signal the end to task injector yet");
   }
-  m_parent.addThreadStats(m_threadStat);
-  logWithStat(LOG_INFO, "Finishing of DiskReadWorkerThread");
 }
 
 //------------------------------------------------------------------------------
@@ -188,9 +193,11 @@ logWithStat(int level, const std::string& message){
            .addTiming("threadWaitFreeMemoryTime",m_threadStat.waitFreeMemoryTime)
            .addTiming("threadCheckingErrorTime",m_threadStat.checkingErrorTime)
            .addTiming("threadOpeningTime",m_threadStat.openingTime)
+           .addTiming("threadTotalTime",m_threadStat.totalTime)
            .add("threaDataVolumeInMB", 1.0*m_threadStat.dataVolume/1000/1000)
            .add("threadPayloadTransferSpeedMBps",
-                   1.0*m_threadStat.dataVolume/1000/1000/m_threadStat.transferTime);
+                   m_threadStat.totalTime?1.0*m_threadStat.dataVolume/1000/1000/m_threadStat.totalTime:0)
+           .addTiming("totalTime",m_threadStat.totalTime);
     m_lc.log(level,message);
 }
 }}}}

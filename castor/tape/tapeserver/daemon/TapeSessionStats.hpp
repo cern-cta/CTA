@@ -65,6 +65,9 @@ namespace daemon {
     /** Cumulated time spent reporting */
     double waitReportingTime;
     
+    /** Total time of the session, computed in parallel */
+    double totalTime;
+    
     /** Cumulated data volume (actual payload), in bytes. */
     uint64_t dataVolume;
     
@@ -80,7 +83,8 @@ namespace daemon {
     TapeSessionStats():  mountTime(0.0), positionTime(0.0), checksumingTime(0.0),
     transferTime(0.0), flushTime(0.0), unloadTime(0.0), unmountTime(0.0),
     waitDataTime(0.0), waitFreeMemoryTime(0.0), waitInstructionsTime(0.0),
-    waitReportingTime(0.0), dataVolume(0), headerVolume(0), filesCount(0) {}
+    waitReportingTime(0.0), totalTime(0.0), dataVolume(0), headerVolume(0),
+    filesCount(0) {}
     
     /** Accumulate contents of another stats block */
     void add(const TapeSessionStats& other) {
@@ -95,6 +99,7 @@ namespace daemon {
       waitFreeMemoryTime += other.waitFreeMemoryTime;
       waitInstructionsTime += other.waitInstructionsTime;
       waitReportingTime += other.waitReportingTime;
+      // totalTime is not cumulative between threads (it's real time)
       dataVolume += other.dataVolume;
       headerVolume += other.headerVolume;
       filesCount += other.filesCount;

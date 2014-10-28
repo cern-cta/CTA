@@ -121,19 +121,21 @@ void DiskWriteThreadPool::addThreadStats(const DiskStats& other){
 //logWithStat
 //------------------------------------------------------------------------------
 void DiskWriteThreadPool::logWithStat(int level, const std::string& message){
+  m_pooldStat.totalTime = m_totalTime.secs();
   log::ScopedParamContainer params(m_lc);
-     params.addTiming("poolTransferTime", m_pooldStat.transferTime)
-           .addTiming("poolChecksumingTime",m_pooldStat.checksumingTime)
-           .addTiming("poolWaitDataTime",m_pooldStat.waitDataTime)
-           .addTiming("poolWaitReportingTime",m_pooldStat.waitReportingTime)
-           .addTiming("poolCheckingErrorTime",m_pooldStat.checkingErrorTime)
-           .addTiming("poolOpeningTime",m_pooldStat.openingTime)
-           .add("poolFileCount",m_pooldStat.filesCount)
-           .addTiming("poolClosingTime", m_pooldStat.closingTime)
-           .add("poolDataVolumeInMB", 1.0*m_pooldStat.dataVolume/1024/1024)
-           .add("poolPayloadTransferSpeedMBps",
-                   1.0*m_pooldStat.dataVolume/1000/1000/m_pooldStat.transferTime);
-    m_lc.log(level,message);
+  params.addTiming("poolTransferTime", m_pooldStat.transferTime)
+        .addTiming("poolChecksumingTime",m_pooldStat.checksumingTime)
+        .addTiming("poolWaitDataTime",m_pooldStat.waitDataTime)
+        .addTiming("poolWaitReportingTime",m_pooldStat.waitReportingTime)
+        .addTiming("poolCheckingErrorTime",m_pooldStat.checkingErrorTime)
+        .addTiming("poolOpeningTime",m_pooldStat.openingTime)
+        .addTiming("poolClosingTime", m_pooldStat.closingTime)
+        .addTiming("poolRealTime",m_pooldStat.totalTime)
+        .add("poolFileCount",m_pooldStat.filesCount)
+        .add("poolDataVolumeInMB", 1.0*m_pooldStat.dataVolume/1024/1024)
+        .add("AveragePoolPayloadTransferSpeedMBps",
+           m_pooldStat.totalTime?1.0*m_pooldStat.dataVolume/1000/1000/m_pooldStat.transferTime:0);
+  m_lc.log(level,message);
 }
 //------------------------------------------------------------------------------
 // DiskWriteWorkerThread::run
@@ -147,6 +149,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
   
   std::auto_ptr<DiskWriteTask>  task;
   castor::utils::Timer localTime;
+  castor::utils::Timer totalTime(localTime);
   
   while(1) {
     task.reset(m_parentThreadPool.m_tasks.pop());
@@ -165,6 +168,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
       break;
     }
   } //enf of while(1)
+  m_threadStat.totalTime = totalTime.secs();
   logWithStat(LOG_INFO, "Finishing DiskWriteWorkerThread");
   m_parentThreadPool.addThreadStats(m_threadStat);
   if(0 == --m_parentThreadPool.m_nbActiveThread){
@@ -177,7 +181,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
     else{
       m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("End of recall session with error(s)",SEINTERNAL);
       ScopedParam sp(m_lc, Param("errorCount", m_parentThreadPool.m_failedWriteCount));
-        m_parentThreadPool.logWithStat(LOG_ERR, "As last exiting DiskWriteWorkerThread, reported an end of session with errors");
+      m_parentThreadPool.logWithStat(LOG_INFO, "As last exiting DiskWriteWorkerThread, reported an end of session with errors");
     }
   }
 }
@@ -192,13 +196,14 @@ logWithStat(int level, const std::string& msg) {
            .addTiming("threadChecksumingTime",m_threadStat.checksumingTime)
            .addTiming("threadWaitDataTime",m_threadStat.waitDataTime)
            .addTiming("threadWaitReportingTime",m_threadStat.waitReportingTime)
-           .add("threadFileCount",m_threadStat.filesCount)
            .addTiming("threadCheckingErrorTime",m_threadStat.checkingErrorTime)
            .addTiming("threadOpeningTime",m_threadStat.openingTime)
            .addTiming("threadClosingTime", m_threadStat.closingTime)
-           .add("threaDataVolumeInMB", 1.0*m_threadStat.dataVolume/1024/1024)
+           .addTiming("threadTotalTime",m_threadStat.totalTime)
+           .add("threaDataVolumeInMB", 1.0*m_threadStat.dataVolume/1000/1000)
+           .add("threadFileCount",m_threadStat.filesCount)
            .add("threadPayloadTransferSpeedMBps",
-                   1.0*m_threadStat.dataVolume/1000/1000/m_threadStat.transferTime);
+                   m_threadStat.totalTime?1.0*m_threadStat.dataVolume/1000/1000/m_threadStat.totalTime:0);
     m_lc.log(level,msg);
 }
 }}}}

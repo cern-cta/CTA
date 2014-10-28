@@ -35,7 +35,7 @@ namespace daemon {
     /** Mounting time, in seconds */
     double openingTime;
     
-    /** Mounting time, in seconds */
+    /** Closing time, in seconds */
     double closingTime;
     
     /** Cumulated time spent computing checksums */
@@ -43,9 +43,6 @@ namespace daemon {
     
     /** Cumulated time spent transfering data with the disk */
     double transferTime;
-    
-    /** Closing time, in seconds */
-    //double closingTime;
     
     /** Cumulated time spent waiting for data blocks. */
     double waitDataTime;
@@ -62,6 +59,9 @@ namespace daemon {
     /** Cumulated time spent reporting */
     double checkingErrorTime;
     
+    /** Total real time spent by the thread/pool. */
+    double totalTime;
+    
     /** Cumulated data volume (actual payload), in bytes. */
     uint64_t dataVolume;
     
@@ -70,15 +70,15 @@ namespace daemon {
     
     /** Constructor: all defaults are zero */
     DiskStats():  openingTime(0.0), 
-    closingTime(0.),
+    closingTime(0.0),
     checksumingTime(0.0),
     transferTime(0.0),
-    //closingTime(0.),
     waitDataTime(0.0), 
     waitFreeMemoryTime(0.0),
     waitInstructionsTime(0.0),
     waitReportingTime(0.0), 
-    checkingErrorTime(0),
+    checkingErrorTime(0.0),
+    totalTime(0.0),
     dataVolume(0),
     filesCount(0) {}
     
@@ -89,12 +89,12 @@ namespace daemon {
       closingTime += other.closingTime;
       checksumingTime += other.checksumingTime;
       transferTime += other.transferTime;
-      //closingTime += other.closingTime;
       waitDataTime += other.waitDataTime;
       waitFreeMemoryTime += other.waitFreeMemoryTime;
       waitInstructionsTime += other.waitInstructionsTime;
       waitReportingTime += other.waitReportingTime;
       checkingErrorTime += other.checkingErrorTime;
+      // total time is not a cumulative member. It is used to represent wallclock time.
       filesCount += other.filesCount;
       dataVolume += other.dataVolume;
     }

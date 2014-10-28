@@ -48,6 +48,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
   using log::Param;
 
   castor::utils::Timer localTime;
+  castor::utils::Timer totalTime(localTime);
   size_t blockId=0;
   size_t migratingFileSize=m_migratedFile->fileSize();
   MemBlock* mb=NULL;
@@ -61,7 +62,8 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     std::auto_ptr<tape::diskFile::ReadFile> sourceFile(
       fileFactory.createReadFile(m_migratedFile->path()));
     log::ScopedParamContainer URLcontext(lc);
-    URLcontext.add("actualURL", sourceFile->URL());
+    URLcontext.add("path", m_migratedFile->path())
+               .add("actualURL", sourceFile->URL());
     if(migratingFileSize != sourceFile->size()){
       throw castor::exception::Exception("Mismtach between size given by the client "
               "and the real one");
@@ -102,8 +104,9 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
       mb=NULL;
       
     } //end of while(migratingFileSize>0)
-    
     m_stats.filesCount++;
+    m_stats.totalTime = totalTime.secs();
+    logWithStat(LOG_INFO, "File successfully read from disk", lc);
   }
   catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
    
@@ -166,8 +169,9 @@ void DiskReadTask::logWithStat(int level,const std::string& msg,log::LogContext&
            .addTiming("waitReportingTime",m_stats.waitReportingTime)
            .addTiming("checkingErrorTime",m_stats.checkingErrorTime)
            .addTiming("openingTime",m_stats.openingTime)
-           .add("payloadTransferSpeedMBps",
-                   1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime)
+           .addTiming("totalTime", m_stats.totalTime)
+           .add("filePayloadTransferSpeedMBps",
+              m_stats.totalTime?1.0*m_stats.dataVolume/1000/1000/m_stats.totalTime:0)
            .add("FILEID",m_migratedFile->fileid())
            .add("path",m_migratedFile->path());
     lc.log(level,msg);

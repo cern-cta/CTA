@@ -112,7 +112,7 @@ private:
    * @param sessionTime
    */
   void logWithStat(int level,const std::string& msg,
-    log::ScopedParamContainer& params,double sessionTime);
+    log::ScopedParamContainer& params);
   
   /**
    * Number of files a single request to the client might give us.

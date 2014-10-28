@@ -78,6 +78,7 @@ public:
     // stats to the session's.
     TapeSessionStats localStats;
     castor::utils::Timer localTime;
+    castor::utils::Timer totalTime(localTime);
 
     // Read the file and transmit it
     bool stillReading = true;
@@ -125,20 +126,22 @@ public:
       //  we have to signal the end of the tape read to the disk write task.
       m_fifo.pushDataBlock(NULL);
       // Log the successful transfer
-      double fileTime = localTime.secs();
+      localStats.totalTime = localTime.secs();
+      // Hardcoded header size for lack of a better mechanism
+      // Head + trailer, 3 * 80 bytes each
+      localStats.headerVolume = (2 * 3 * 80);
       log::ScopedParamContainer params(lc);
       params.addTiming("positionTime", localStats.positionTime)
             .addTiming("transferTime", localStats.transferTime)
             .addTiming("waitFreeMemoryTime",localStats.waitFreeMemoryTime)
             .addTiming("waitReportingTime",localStats.waitReportingTime)
+            .addTiming("totalTime", localStats.totalTime)
             .add("dataVolume",localStats.dataVolume)
-            .addTiming("totalTime", fileTime)
             .add("driveTransferSpeedMBps",
-                    (localStats.dataVolume+localStats.headerVolume)
-                     /1000/1000
-                     /localStats.transferTime)
+                    localStats.totalTime?(1.0*localStats.dataVolume+1.0*localStats.headerVolume)
+                     /1000/1000/localStats.totalTime:0)
             .add("payloadTransferSpeedMBps",
-                     1.0*localStats.dataVolume/1000/1000/fileTime)
+                     localStats.totalTime?1.0*localStats.dataVolume/1000/1000/localStats.totalTime:0)
             .add("fileid",m_fileToRecall->fileid())
             .add("fseq",m_fileToRecall->fseq())
             .add("fileTransactionId",m_fileToRecall->fileTransactionId());

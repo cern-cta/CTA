@@ -138,17 +138,13 @@ template <class PlaceHolder> class ReportPackerInterface{
    * @param msg the message we want to have in the log 
    * @param level the log level wanted
    */
-  void logRequestReport(const client::ClientInterface::RequestReport& chono,const std::string& msg,int level=LOG_INFO){
-    using castor::log::LogContext;
-    using castor::log::Param;
-     
-        LogContext::ScopedParam sp[]={
-          LogContext::ScopedParam(m_lc, Param("connectDuration",chono.connectDuration)),
-          LogContext::ScopedParam(m_lc, Param("sendRecvDuration",chono.sendRecvDuration)),
-          LogContext::ScopedParam(m_lc, Param("transactionId", chono.transactionId)),
-        };
-        tape::utils::suppresUnusedVariable(sp);
-        m_lc.log(level,msg);
+  void logRequestReport(const client::ClientInterface::RequestReport& chono,
+    const std::string& msg, int level=LOG_INFO){
+    castor::log::ScopedParamContainer params(m_lc);
+    params.add("connectDuration",chono.connectDuration)
+          .add("sendRecvDuration",chono.sendRecvDuration)
+          .add("transactionId", chono.transactionId);
+    m_lc.log(level,msg);
         
   } 
   /**

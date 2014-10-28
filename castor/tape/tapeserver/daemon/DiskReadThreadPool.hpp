@@ -29,6 +29,7 @@
 #include "castor/server/Threading.hpp"
 #include "castor/server/AtomicCounter.hpp"
 #include "castor/log/LogContext.hpp"
+#include "castor/utils/Timer.hpp"
 #include <vector>
 #include <stdint.h>
 
@@ -44,10 +45,10 @@ public:
    * start them.
    * @param nbThread Number of thread for reading files 
    * @param maxFilesReq maximal number of files we might require 
-   * within a single request to the task injectore
+   * within a single request to the task injector
    * @param maxBytesReq maximal number of bytes we might require
-   *  within a single request a single request to the task injectore
-   * @param lc log context fpr logging purpose
+   *  within a single request a single request to the task injector
+   * @param lc log context for logging purpose
    */
   DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq, 
           castor::log::LogContext lc, const std::string & remoteFileProtocol,
@@ -130,6 +131,11 @@ private:
    * Aggregate all threads' stats 
    */
   DiskStats m_pooldStat;
+  
+  /**
+   * Measure the thread pool's lifetime
+   */
+  castor::utils::Timer m_totalTime;
   
   /**
    * A disk file factory, that will create the proper type of file access class,

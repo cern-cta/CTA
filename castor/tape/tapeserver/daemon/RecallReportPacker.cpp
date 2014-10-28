@@ -121,25 +121,28 @@ void RecallReportPacker::flush(){
     return;
   }
  
-    client::ClientInterface::RequestReport chrono;
-    try{
-         m_client.reportRecallResults(*m_listReports,chrono);
-         logRequestReport(chrono,"RecallReportList successfully transmitted to client (contents follow)");
-         
-         logReport(m_listReports->failedRecalls(),"Reported failed recall to client");
-         logReport(m_listReports->successfulRecalls(),"Reported successful recall to client");
-       }
-   catch(const castor::exception::Exception& e){
+  client::ClientInterface::RequestReport chrono;
+  try{
+    m_client.reportRecallResults(*m_listReports,chrono);
+    {
+      log::ScopedParamContainer params(m_lc);
+      params.add("successCount", m_listReports->successfulRecalls().size())
+            .add("failureCount", m_listReports->failedRecalls().size());
+      logRequestReport(chrono,"RecallReportList successfully transmitted to client (contents follow)");
+    }
+    logReport(m_listReports->failedRecalls(),"Reported failed recall to client");
+    logReport(m_listReports->successfulRecalls(),"Reported successful recall to client");
+  } catch(const castor::exception::Exception& e){
     LogContext::ScopedParam s(m_lc, Param("exceptionCode",e.code()));
     LogContext::ScopedParam ss(m_lc, Param("exceptionMessageValue", e.getMessageValue()));
     LogContext::ScopedParam sss(m_lc, Param("exceptionWhat",e.what()));
     const std::string msg_error="An exception was caught trying to call reportRecallResults";
     m_lc.log(LOG_ERR,msg_error);
     throw failedReportRecallResult(msg_error);
-    }
-    //delete the old pointer and replace it with the new one provided
-    //that way, all the reports that have been send are deleted (by FileReportList's destructor)
-    m_listReports.reset(new FileReportList);
+  }
+  //delete the old pointer and replace it with the new one provided
+  //that way, all the reports that have been send are deleted (by FileReportList's destructor)
+  m_listReports.reset(new FileReportList);
 }
 //------------------------------------------------------------------------------
 //ReportEndofSession::execute

@@ -142,7 +142,7 @@ private:
    * Log  m_stats  parameters into m_logContext with msg at the given level
    */
   void logWithStats(int level,const std::string& msg,
-    log::ScopedParamContainer& params,double sessionTime);
+    log::ScopedParamContainer& params);
   
   /**
    * Function to open the WriteSession 
