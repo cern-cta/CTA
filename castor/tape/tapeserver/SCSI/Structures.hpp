@@ -726,32 +726,6 @@ namespace SCSI {
     };
     
     /**
-     * TEST UNIT READY as described in SPC-4.
-     */
-    class testUnitReadyCDB_t {
-    public:
-      testUnitReadyCDB_t() {
-        zeroStruct(this);
-        opCode = SCSI::Commands::TEST_UNIT_READY; 
-      }
-      // byte 0
-      unsigned char opCode;       // OPERATION CODE (00h)
-      
-      // byte 1 
-      unsigned char      : 8;     // Reserved
-            
-      // byte 2
-      unsigned char EDCC : 1;     // Enable Deferred CHECK CONDITION (IBM only)
-      unsigned char      : 7;     // Reserved
-            
-      // byte 3-4  
-      unsigned char reserverd[2]; // Reserved
-            
-      // byte 5
-      unsigned char control;      // Control byte
-    };
-    
-    /**
      * Part of a tape alert log page.
      * This structure does not need to be initialized, as the containing structure
      * (tapeAlertLogPage_t) will do it while initializing itself.
