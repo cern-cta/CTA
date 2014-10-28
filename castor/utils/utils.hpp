@@ -76,6 +76,16 @@ void splitString(const std::string &str, const char separator,
  */
 std::string trimString(const std::string &s) throw();
 
+/**
+ * Creates and returns an std::string which is the result of replacing each
+ * occurance of whitespace (a collection of on or more space and tab
+ * characters) with a single space character.
+ *
+ * @param str The original string.
+ * @return    The newly created string with single spaces.
+ */
+std::string singleSpaceString(const std::string &str) throw();
+
 template <class T> std::string toString(const T& t){
   std::ostringstream o;
   o<<t;

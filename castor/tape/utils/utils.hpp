@@ -104,16 +104,6 @@ void readFileIntoList(const char *const filename,
 void parseFileList(const char *filename, std::list<std::string> &list);
 
 /**
- * Creates and returns an std::string which is the result of replacing each
- * occurance of whitespace (a collection of on or more space and tab
- * characters) with a single space character.
- *
- * @param str The original string.
- * @return    The newly created string with single spaces.
- */
-std::string singleSpaceString(const std::string &str) throw();
-
-/**
  * Gets and returns the specified port number using getconfent or returns the
  * specified default if getconfent cannot find it.
  *

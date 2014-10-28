@@ -147,59 +147,6 @@ void castor::tape::utils::parseFileList(const char *filename,
 }
 
 //------------------------------------------------------------------------------
-// singleSpaceString
-//------------------------------------------------------------------------------
-std::string castor::tape::utils::singleSpaceString(
-  const std::string &str) throw() {
-  bool inWhitespace = false;
-  bool strContainsNonWhiteSpace = false;
-
-  // Output string stream used to construct the result
-  std::ostringstream result;
-
-  // For each character in the original string
-  for(std::string::const_iterator itor = str.begin(); itor != str.end();
-    itor++) {
-
-    // If the character is a space or a tab
-    if(*itor == ' ' || *itor == '\t') {
-
-      // Remember we are in whitespace
-      inWhitespace = true;
-
-    // Else the character is not a space or a tab
-    } else {
-
-      // If we are leaving whitespace
-      if(inWhitespace) {
-
-        // Remember we have left whitespace
-        inWhitespace = false;
-
-        // Remember str contains non-whitespace
-        strContainsNonWhiteSpace = true;
-
-        // Insert a single space into the output string stream
-        result << " ";
-      }
-
-      // Insert the character into the output string stream
-      result << *itor;
-
-    }
-  }
-
-  // If str is not emtpy and does not contain any non-whitespace characters
-  // then nothing has been written to the result stream, therefore write a
-  // single space
-  if(!str.empty() && !strContainsNonWhiteSpace) {
-    result << " ";
-  }
-
-  return result.str();
-}
-
-//------------------------------------------------------------------------------
 // getPortFromConfig
 //------------------------------------------------------------------------------
 unsigned short castor::tape::utils::getPortFromConfig(
@@ -299,7 +246,7 @@ void castor::tape::utils::parseTpconfigFile(const std::string &filename,
     if(line != "") {
 
       // Replace each occurance of whitespace with a single space
-      line = singleSpaceString(line);
+      line = castor::utils::singleSpaceString(line);
 
       // Split the line into its component data-columns
       std::vector<std::string> columns;
