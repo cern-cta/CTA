@@ -25,26 +25,29 @@
 
 """mover handler thread of the disk server manager daemon of CASTOR."""
 
-import threading, socket, time
+import threading, socket, time, Queue
 import connectionpool, dlf
 from diskmanagerdlf import msgs
 
+class MoverReqHandlerThread(threading.Thread):
+  '''Worker thread handling each mover request'''
 
-class MoverHandlerThread(threading.Thread):
-  '''the mover handler thread.
-  This thread is responsible for handling the open and close of the files as requested by the different movers.
-  It is not multithreaded, it simply dispatches any connection to the handleRequest method.
-  '''
-
-  def __init__(self, runningTransfers, config):
+  def __init__(self, workQueue, runningTransfers, config):
     '''constructor'''
-    super(MoverHandlerThread, self).__init__(name='MoverHandler')
-    self.alive = True
+    super(MoverReqHandlerThread, self).__init__(name='MoverReqHandler')
+    # the queue to work with
+    self.workQueue = workQueue
+    # get the context
     self.runningTransfers = runningTransfers
     self.config = config
     # start the thread
     self.setDaemon(True)
     self.start()
+
+  def stop(self):
+    '''Stops the thread processing'''
+    # this makes sure we drain the queue and exit only when empty
+    self.workQueue.put(None)
 
   def handleOpen(self, payload):
     '''handle an OPEN call. The protocol is as follows:
@@ -110,11 +113,14 @@ class MoverHandlerThread(threading.Thread):
           if rc != 0:
             # log "Failed to end the transfer"
             dlf.writenotice(msgs.TRANSFERENDEDFAILED, subreqId=transferid, reqId=t.transfer.reqId, errCode=rc, errMessage=errMsg)
+          else:
+            dlf.writedebug(msgs.TRANSFERENDED, subreqId=transferid, errCode=0)
           return '%d %s\n' % (rc, errMsg)
         except connectionpool.Timeout, e:
           # as long as we get a timeout, we retry up to 3 times
           attempt += 1
           if attempt < 3:
+            dlf.writedebug(msgs.TRANSFERENDED, subreqId=transferid, errMessage='Timeout, sleeping %d seconds' % attempt)
             time.sleep(attempt)
           else:
             # give up, inform mover
@@ -157,12 +163,63 @@ class MoverHandlerThread(threading.Thread):
       return '%d Internal error: %s\n' % (1015, str(e))
 
   def run(self):
+    '''main method to the threads. Only get work from the queue and do it'''
+    while True:
+      try:
+        clientsock = self.workQueue.get(True)
+        # if None, we have been asked to close the service
+        if clientsock == None:
+          return
+        req = clientsock.recv(1024)
+        res = self.handleRequest(req)
+        clientsock.send(res)
+        clientsock.close()
+      except Queue.Empty:
+        # we've timed out, let's just retry. We only use the timeout so that this
+        # thread can stop even if there is nothing in the queue
+        pass
+      except Exception, e:
+        # "Caught exception in Worker thread" message
+        dlf.writeerr(msgs.WORKEREXCEPTION, Type=str(e.__class__), Message=str(e))
+
+
+class MoverHandlerThread(threading.Thread):
+  '''the mover handler thread.
+  This thread is responsible for handling the open and close of the files as requested by the different movers.
+  It internally uses a pool of ReqHandlerThread instances to do the actual job.
+  '''
+
+  def __init__(self, runningTransfers, config):
+    '''constructor'''
+    super(MoverHandlerThread, self).__init__(name='MoverHandler')
+    self.alive = True
+    # get context
+    self.runningTransfers = runningTransfers
+    self.config = config
+    # create a work queue for the worker threads
+    self.workQueue = Queue.Queue()
+    # create a number of worker threads
+    self.workers = []
+    nbWorkers = self.config.getValue('DiskManager', 'NbMoverThreads', 5, int)
+    for i_unused in range(nbWorkers):
+      t = MoverReqHandlerThread(self.workQueue, self.runningTransfers, self.config)
+      self.workers.append(t)
+    # start the thread
+    self.setDaemon(True)
+    self.start()
+
+  def stop(self):
+    '''stops processing in this thread'''
+    self.alive = False
+
+  def run(self):
     '''main method, containing the infinite accept/serve loop'''
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     try:
       sock.bind(('localhost', self.config.getValue('DiskManager', 'MoverHandlerPort', 15511)))
       sock.listen(5)
+      sock.settimeout(1)
     except Exception, e:
       # "Caught exception in MoverHandler thread" message
       dlf.writeemerg(msgs.MOVERHANDLEREXCEPTION, \
@@ -175,15 +232,21 @@ class MoverHandlerThread(threading.Thread):
       try:
         # wait for a mover to send a message
         clientsock, addr_unused = sock.accept()
-        # synchronously process this message
-        req = clientsock.recv(1024)
-        res = self.handleRequest(req)
-        clientsock.send(res)
-        clientsock.close()
+        # push this socket to the workQueue
+        self.workQueue.put(clientsock)
+      except socket.timeout:
+        # accept timed out, go back
+        pass
       except Exception, e:
         # "Caught exception in MoverHandler thread" message
         dlf.writeerr(msgs.MOVERHANDLEREXCEPTION, Type=str(e.__class__), Message=str(e))
 
-  def stop(self):
-    '''stops processing in this thread'''
-    self.alive = False
+  def join(self, timeout=None):
+    # stop and drain the worker threads
+    for t in self.workers:
+      t.stop(timeout)
+    # join the worker threads
+    for t in self.workers:
+      t.join(timeout)
+    # join the master thread
+    threading.Thread.join(self, timeout)
