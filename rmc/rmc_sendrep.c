@@ -16,6 +16,15 @@
 #include "h/rmc_sendrep.h"
 #include <unistd.h>
 
+static const char *rep_type_to_str(const int rep_type) {
+	switch(rep_type) {
+	case MSG_ERR : return "MSG_ERR";
+	case MSG_DATA: return "MSG_DATA";
+	case RMC_RC  : return "RMC_RC";
+	default      : return "UNKNOWN";
+	}
+}
+
 int rmc_sendrep(const int rpfd, const int rep_type, ...)
 {
 	va_list args;
@@ -57,7 +66,11 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...)
 	va_end (args);
 	repsize = rbp - repbuf;
 	if (netwrite (rpfd, repbuf, repsize) != repsize) {
-		rmc_logit (func, RMC02, "send", neterror());
+                const char *const neterror_str = neterror();
+		rmc_logit (func, RMC02, "send", neterror_str);
+		rmc_logit (func, "Call to netwrite() failed"
+			": rep_type=%s neterror=%s\n",
+			rep_type_to_str(rep_type), neterror_str);
 		if (rep_type == RMC_RC)
 			close (rpfd);
 		return (-1);
