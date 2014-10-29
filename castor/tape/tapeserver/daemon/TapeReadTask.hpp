@@ -90,6 +90,11 @@ public:
     MemBlock* mb=NULL;
     try {
       std::auto_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
+      log::ScopedParamContainer params(lc);
+      params.add("fileid",m_fileToRecall->fileid())
+            .add("fseq",m_fileToRecall->fseq())
+            .add("fileTransactionId",m_fileToRecall->fileTransactionId());
+      lc.log(LOG_INFO, "Successfully positioned for reading");
       localStats.positionTime += timer.secs(castor::utils::Timer::resetCounter);
       watchdog.notifyBeginNewJob(*m_fileToRecall);
       localStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
@@ -130,7 +135,6 @@ public:
       // Hardcoded header size for lack of a better mechanism
       // Head + trailer, 3 * 80 bytes each
       localStats.headerVolume = (2 * 3 * 80);
-      log::ScopedParamContainer params(lc);
       params.addTiming("positionTime", localStats.positionTime)
             .addTiming("transferTime", localStats.transferTime)
             .addTiming("waitFreeMemoryTime",localStats.waitFreeMemoryTime)
@@ -141,24 +145,21 @@ public:
                     localStats.totalTime?(1.0*localStats.dataVolume+1.0*localStats.headerVolume)
                      /1000/1000/localStats.totalTime:0)
             .add("payloadTransferSpeedMBps",
-                     localStats.totalTime?1.0*localStats.dataVolume/1000/1000/localStats.totalTime:0)
-            .add("fileid",m_fileToRecall->fileid())
-            .add("fseq",m_fileToRecall->fseq())
-            .add("fileTransactionId",m_fileToRecall->fileTransactionId());
+                     localStats.totalTime?1.0*localStats.dataVolume/1000/1000/localStats.totalTime:0);
       lc.log(LOG_INFO, "File successfully read from drive");
       // Add the local counts to the session's
       stats.add(localStats);
     } //end of try
     catch (const castor::exception::Exception & ex) {
       //we end up there because :
-      //-- openReadFile brought us here (cant put the tape into position)
+      //-- openReadFile brought us here (cant position to the file)
       //-- m_payload.append brought us here (error while reading the file)
       // This is an error case. Log and signal to the disk write task
       { 
         castor::log::LogContext::ScopedParam sp0(lc, Param("fileBlock", fileBlock));
         castor::log::LogContext::ScopedParam sp1(lc, Param("ErrorMessage", ex.getMessageValue()));
         castor::log::LogContext::ScopedParam sp2(lc, Param("ErrorCode", ex.code()));
-        lc.log(LOG_ERR, "Error reading a file block in TapeReadFileTask (backtrace follows)");
+        lc.log(LOG_ERR, "Error reading a file in TapeReadFileTask (backtrace follows)");
       }
       {
         castor::log::LogContext lc2(lc.logger());

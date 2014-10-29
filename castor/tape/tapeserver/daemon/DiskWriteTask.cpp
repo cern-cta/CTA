@@ -104,7 +104,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
     reporter.reportCompletedJob(*m_recallingFile,checksum,m_stats.dataVolume);
     m_stats.waitReportingTime+=localTime.secs(castor::utils::Timer::resetCounter);
     m_stats.totalTime = totalTime.secs();
-    logWithStat(LOG_DEBUG, "File successfully transfered to disk",lc);
+    logWithStat(LOG_INFO, "File successfully transfered to disk",lc);
     
     //everything went well, return true
     return true;
