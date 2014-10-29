@@ -41,7 +41,7 @@ int smc_read_elem_status(
 int smc_find_cartridge2 (
   const int fd,
   const char *const rbtdev,
-  const char *const template,
+  const char *const find_template,
   const int type,
   const int start,
   const int nbelem,
@@ -50,7 +50,7 @@ int smc_find_cartridge2 (
 int smc_find_cartridge(
   const int fd,
   const char *const rbtdev,
-  const char *const template,
+  const char *const find_template,
   const int type,
   const int start,
   const int nbelem,

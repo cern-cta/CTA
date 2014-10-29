@@ -348,7 +348,7 @@ int smc_read_elem_status(
 int smc_find_cartridge2 (
 	const int fd,
 	const char *const rbtdev,
-	const char *const template,
+	const char *const find_template,
 	const int type,
 	const int start,
 	const int nbelem,
@@ -388,19 +388,19 @@ int smc_find_cartridge2 (
 		return (c);
 	}
 	found = 0;	
-	if (strchr (template, '*') || strchr (template, '?'))	/* pattern matching */
+	if (strchr (find_template, '*') || strchr (find_template, '?'))	/* pattern matching */
 		pm++;
 	for (i = 0 ; i < tot_nbelem ; i++)
 		if (inventory_info[i].state & 0x1) {
 			if (! pm) {
-				if (strcmp (template, inventory_info[i].name) == 0) {
+				if (strcmp (find_template, inventory_info[i].name) == 0) {
 					memcpy (element_info, &inventory_info[i],
 						sizeof(struct smc_element_info));
 					found++;
 					break;
 				}
 			} else {
-				if (vmatch (template, inventory_info[i].name) == 0) {
+				if (vmatch (find_template, inventory_info[i].name) == 0) {
 					memcpy (&element_info[found], &inventory_info[i],
 						sizeof(struct smc_element_info));
 					found++;
@@ -415,7 +415,7 @@ int smc_find_cartridge2 (
 int smc_find_cartridge(
 	const int fd,
 	const char *const rbtdev,
-	const char *const template,
+	const char *const find_template,
 	const int type,
 	const int start,
 	const int nbelem,
@@ -440,7 +440,7 @@ int smc_find_cartridge(
         smcLibraryType = getconfent("SMC","LIBRARY_TYPE",0);
         if (NULL != smcLibraryType &&
             0 == strcasecmp(smcLibraryType,"SPECTRA")) {
-          rc = smc_find_cartridge2 (fd, rbtdev, template, type, start, nbelem,
+          rc = smc_find_cartridge2 (fd, rbtdev, find_template, type, start, nbelem,
                                     element_info);
           if (rc >= 0)
             return (rc);
@@ -455,7 +455,7 @@ int smc_find_cartridge(
 	cdb[5] = 5;
 	cdb[9] = 40;
 	memset (plist, 0, sizeof(plist));
-	strcpy (plist, template);
+	strcpy (plist, find_template);
    
        /* IBM library in pause mode  */ 
         while (pause_mode && nretries <= 900) {
@@ -477,7 +477,7 @@ int smc_find_cartridge(
 	if (rc < 0) {
                 save_error (rc, nb_sense_ret, sense, msgaddr);
 		if (rc == -4 && nb_sense_ret >= 14 && (sense[2] & 0xF) == 5) {
-			rc = smc_find_cartridge2 (fd, rbtdev, template, type,
+			rc = smc_find_cartridge2 (fd, rbtdev, find_template, type,
 			    start, nbelem, element_info);
 			if (rc >= 0)
 				return (rc);
