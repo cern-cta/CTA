@@ -125,7 +125,7 @@ dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.INVOKINGMODIFYDISKSERVERS : 'Invoking modifyDiskServers',
                  msgs.MODIFYDISKSERVERSEXCEPTION : 'Exception caught while modifying diskserver(s), giving up',
                  msgs.INITQUEUES : 'Initializing Queues from the diskmanagers\' ones',
-                 msgs.INITQUEUESENDED : 'Initialization of queues dones',
+                 msgs.INITQUEUESENDED : 'Initialization of queues completed',
                  msgs.INITQUEUELISTRUNNING : 'Queue initialization : Getting running jobs',
                  msgs.INITQUEUELISTPENDING : 'Queue initialization : Getting pending jobs'})
 
