@@ -207,7 +207,8 @@ signal.signal(signal.SIGPIPE, handler)
 # Note that from python 2.5 on, the daemonization should use the "with" statement :
 # with daemon.DaemonContext():
 if daemonize:
-  context = daemon.DaemonContext(working_directory='/var/log/castor/',
+  # the working directory is a safe place for the movers
+  context = daemon.DaemonContext(working_directory='/tmp',
                                  detach_process=True,
                                  prevent_core=False)
   context.__enter__()
@@ -225,8 +226,6 @@ try:
     dlf.write(msgs.DISKMANAGERDSTARTED)
     # set umask to execute movers
     os.umask(stat.S_IWGRP|stat.S_IWOTH)
-    # move somewhere safe as working directory for the movers
-    os.chdir('/tmp')
     # create a list of running Transfers
     runningTransfers = runningtransfersset.RunningTransfersSet(fake)
     # create a queue of transfers to be run
