@@ -52,48 +52,14 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeReadWrite(
   try {
     const mediachanger::ScsiLibrarySlot parsedSlot(librarySlot);
 
-    castor::utils::SmartFd fd(connectToRmc(parsedSlot.getRmcHostName()));
+    RmcMountMsgBody rqstBody;
+    rqstBody.uid = geteuid();
+    rqstBody.gid = getegid();
+    castor::utils::copyString(rqstBody.vid, vid);
+    rqstBody.drvOrd = parsedSlot.getDrvOrd();
 
-    RmcMountMsgBody body;
-    body.uid = geteuid();
-    body.gid = getegid();
-    castor::utils::copyString(body.vid, vid);
-    body.drvOrd = parsedSlot.getDrvOrd();
-    writeRmcMountMsg(fd.get(), body);
-
-    const MessageHeader header = readRmcMsgHeader(fd.get());
-    switch(header.reqType) {
-    case RMC_RC:
-      if(0 != header.lenOrStatus) {
-        castor::exception::Exception ex;
-        ex.getMessage() << "Received error code from rmc running on " <<
-          parsedSlot.getRmcHostName() << ": code=" << header.lenOrStatus;
-        throw ex;
-      }
-      break;
-    case MSG_ERR:
-      {
-        char errorBuf[1024];
-        const int nbBytesToRead = header.lenOrStatus > sizeof(errorBuf) ?
-          sizeof(errorBuf) : header.lenOrStatus;
-        castor::io::readBytes(fd.get(), m_netTimeout, nbBytesToRead, errorBuf);
-        errorBuf[sizeof(errorBuf) - 1] = '\0';
-        castor::exception::Exception ex;
-        ex.getMessage() << "Received error message from rmc running on " <<
-          parsedSlot.getRmcHostName() << ": " << errorBuf;
-        throw ex;
-      }
-      break;
-    default:
-      {
-        castor::exception::Exception ex;
-        ex.getMessage() <<
-          "Reply message from rmc running on " << parsedSlot.getRmcHostName() <<
-          " has an unexpected request type"
-          ": reqType=0x" << header.reqType;
-        throw ex;
-      }
-    }
+    rmcSendRecvNbAttempts(RMC_MAXATTEMPTS, parsedSlot.getRmcHostName(),
+      rqstBody);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -114,47 +80,15 @@ void castor::legacymsg::RmcProxyTcpIp::dismountTape(const std::string &vid,
 
     castor::utils::SmartFd fd(connectToRmc(parsedSlot.getRmcHostName()));
 
-    RmcUnmountMsgBody body;
-    body.uid = geteuid();
-    body.gid = getegid();
-    castor::utils::copyString(body.vid, vid);
-    body.drvOrd = parsedSlot.getDrvOrd();
-    body.force = 0;
-    writeRmcUnmountMsg(fd.get(), body);
+    RmcUnmountMsgBody rqstBody;
+    rqstBody.uid = geteuid();
+    rqstBody.gid = getegid();
+    castor::utils::copyString(rqstBody.vid, vid);
+    rqstBody.drvOrd = parsedSlot.getDrvOrd();
+    rqstBody.force = 0;
 
-    const MessageHeader header = readRmcMsgHeader(fd.get());
-    switch(header.reqType) {
-    case RMC_RC:
-      if(0 != header.lenOrStatus) {
-        castor::exception::Exception ex;
-        ex.getMessage() << "Received error code from rmc running on " <<
-          parsedSlot.getRmcHostName() << ": code=" << header.lenOrStatus;
-        throw ex;
-      }
-      break;
-    case MSG_ERR:
-      {
-        char errorBuf[1024];
-        const int nbBytesToRead = header.lenOrStatus > sizeof(errorBuf) ?
-          sizeof(errorBuf) : header.lenOrStatus;
-        castor::io::readBytes(fd.get(), m_netTimeout, nbBytesToRead, errorBuf);
-        errorBuf[sizeof(errorBuf) - 1] = '\0';
-        castor::exception::Exception ex;
-        ex.getMessage() << "Received error message from rmc running on " <<
-          parsedSlot.getRmcHostName() << ": " << errorBuf;
-        throw ex;
-      }
-      break;
-    default:
-      {
-        castor::exception::Exception ex;
-        ex.getMessage() <<
-          "Reply message from rmc running on " << parsedSlot.getRmcHostName() <<
-          " has an unexpected request type"
-          ": reqType=0x" << header.reqType;
-        throw ex;
-      }
-    }
+    rmcSendRecvNbAttempts(RMC_MAXATTEMPTS, parsedSlot.getRmcHostName(),
+      rqstBody);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -168,16 +102,16 @@ void castor::legacymsg::RmcProxyTcpIp::dismountTape(const std::string &vid,
 //-----------------------------------------------------------------------------
 // connectToRmc
 //-----------------------------------------------------------------------------
-int castor::legacymsg::RmcProxyTcpIp::connectToRmc(const std::string &hostName)
+int castor::legacymsg::RmcProxyTcpIp::connectToRmc(const std::string &rmcHost)
   const {
   castor::utils::SmartFd smartConnectSock;
   try {
-    smartConnectSock.reset(io::connectWithTimeout(hostName, m_rmcPort,
+    smartConnectSock.reset(io::connectWithTimeout(rmcHost, m_rmcPort,
       m_netTimeout));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to connect to rmc on host " << hostName
-      << " port " << RMC_PORT << ": " << ne.getMessage().str();
+    ex.getMessage() << "Failed to connect to rmcd: rmcHost=" << rmcHost
+      << " rmcPort=" << RMC_PORT << ": " << ne.getMessage().str();
     throw ex;
   }
 
@@ -250,4 +184,32 @@ void castor::legacymsg::RmcProxyTcpIp::writeRmcUnmountMsg(const int fd,
       << ne.getMessage().str();
     throw ex;
   }
+}
+
+//-----------------------------------------------------------------------------
+// rmcReplyTypeToStr
+//-----------------------------------------------------------------------------
+std::string castor::legacymsg::RmcProxyTcpIp::rmcReplyTypeToStr(
+  const int replyType) {
+  std::ostringstream oss;
+  switch(replyType) {
+  case RMC_RC : oss << "RMC_RC";
+  case MSG_ERR: oss << "MSG_ERR";
+  default     : oss << "UNKNOWN(0x" << std::hex << replyType << ")";
+  }
+  return oss.str();
+}
+
+//-----------------------------------------------------------------------------
+// handleMSG_ERR
+//-----------------------------------------------------------------------------
+std::string castor::legacymsg::RmcProxyTcpIp::handleMSG_ERR(
+  const MessageHeader &header,
+  const int fd) {
+  char errorBuf[1024];
+  const int nbBytesToRead = header.lenOrStatus > sizeof(errorBuf) ?
+    sizeof(errorBuf) : header.lenOrStatus;
+  io::readBytes(fd, m_netTimeout, nbBytesToRead, errorBuf);
+  errorBuf[sizeof(errorBuf) - 1] = '\0';
+  return errorBuf;
 }

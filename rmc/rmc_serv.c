@@ -35,15 +35,11 @@
 #include "h/rmc_send_scsi_cmd.h"
 
 /* Forward declaration */
-static int getreq(const int s, int *const req_type, char *const req_data,
+static int rmc_getreq(const int s, int *const req_type, char *const req_data,
   char **const clienthost);
-static void procreq(const int rpfd, const int req_type, char *const req_data,
+static void rmc_procreq(const int rpfd, const int req_type, char *const req_data,
   char *const clienthost);
-static int dispatchRqstHandlerWithFastRetry(const int req_type,
-  const struct rmc_srv_rqst_context *const rqst_context,
-  const unsigned int maxNbAttempts, const unsigned int delayInSec);
-static const char *rmc_req_type_to_str(const int req_type);
-static int dispatchRqstHandler(const int req_type,
+static int rmc_dispatchRqstHandler(const int req_type,
   const struct rmc_srv_rqst_context *const rqst_context);
 static void rmc_doit(const int rpfd);
 
@@ -303,15 +299,15 @@ static void rmc_doit(const int rpfd)
 	char req_data[RMC_REQBUFSZ-3*LONGSIZE];
 	int req_type = 0;
 
-	if ((c = getreq (rpfd, &req_type, req_data, &clienthost)) == 0)
-		procreq (rpfd, req_type, req_data, clienthost);
+	if ((c = rmc_getreq (rpfd, &req_type, req_data, &clienthost)) == 0)
+		rmc_procreq (rpfd, req_type, req_data, clienthost);
 	else if (c > 0)
 		rmc_sendrep (rpfd, RMC_RC, c);
 	else
 		close (rpfd);
 }
 
-static int getreq(
+static int rmc_getreq(
   const int s,
   int *const req_type,
   char *const req_data,
@@ -328,7 +324,7 @@ static int getreq(
 	char req_hdr[3*LONGSIZE];
 	char func[16];
 
-	strncpy (func, "rmc_serv", sizeof(func));
+	strncpy (func, "rmc_getreq", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
 	l = netread_timeout (s, req_hdr, sizeof(req_hdr), RMC_TIMEOUT);
@@ -365,7 +361,7 @@ static int getreq(
 	}
 }
 
-static void procreq(
+static void rmc_procreq(
   const int rpfd,
   const int req_type,
   char *const req_data,
@@ -378,84 +374,12 @@ static void procreq(
 	rqst_context.req_data = req_data;
 	rqst_context.clienthost = clienthost;
 
-	const unsigned int maxNbAttempts = 3;
-	const unsigned int delayInSec = 1;
-	const int handlerRc = dispatchRqstHandlerWithFastRetry(req_type,
-		&rqst_context, maxNbAttempts, delayInSec);
+	const int handlerRc = rmc_dispatchRqstHandler(req_type, &rqst_context);
 
 	if(ERMCUNREC == handlerRc) {
 		rmc_sendrep (rpfd, MSG_ERR, RMC03, req_type);
 	}
 	rmc_sendrep (rpfd, RMC_RC, handlerRc);
-}
-
-/**
- * Dispatches the appropriate request handler in a loop while the result is
- * RBT_FAST_RETRY until the specified maximum number of attempts has been
- * reached.
- *
- * @param req_type The type of the request to be handled.
- * @param rqst_context The context of the request.
- * @param maxNbAttempts The maximum number of attempts.
- * @param delayInSec The delay in seconds between attempts.
- * @return The result of handling the request.
- */
-static int dispatchRqstHandlerWithFastRetry(const int req_type,
-  const struct rmc_srv_rqst_context *const rqst_context,
-  const unsigned int maxNbAttempts, const unsigned int delayInSec) {
-  unsigned int attemptNb = 1;
-  const char *const req_type_str = rmc_req_type_to_str(req_type);
-  char func[16];
-
-  strncpy (func, "dispatch", sizeof(func));
-  func[sizeof(func) - 1] = '\0';
-
-  for(attemptNb = 1; attemptNb <= maxNbAttempts; attemptNb++) {
-    // If this is not the first attempt then this is a fast retry
-    if(attemptNb > 1) {
-      rmc_logit(func, "Sleeping before fast retry: delayInSec=%u"
-        " req_type=%d req_type_str=%s attemptNb=%u maxNbAttempts=%u\n",
-        delayInSec, req_type, req_type_str, attemptNb, maxNbAttempts);
-      sleep(delayInSec);
-    }
-
-    rmc_logit(func, "Dispatching request handler: req_type=%d req_type_str=%s"
-      " attemptNb=%u maxNbAttempts=%u\n",
-      req_type, req_type_str, attemptNb, maxNbAttempts);
-    const int handlerRc = dispatchRqstHandler(req_type, rqst_context);
-
-    if(ERMCFASTR != handlerRc) {
-      return handlerRc;
-    }
-  }
-
-  // The maximum number of attempts has been reached
-  rmc_logit(func, "Maximum number of attempts reached"
-    ": req_type=%d req_type_str=%s maxNbAttempts=%u\n",
-    req_type, req_type_str, maxNbAttempts);
-  return ERMCUNREC;
-}
-
-/**
- * Thread safe function that returns the string representation of the specified
- * RMC request-type.
- *
- * If the request type is unknown then "UNKNOWN" is returned.
- *
- * @param req_type The request type as an integer.
- * @return The string representation.
- */
-static const char *rmc_req_type_to_str(const int req_type) {
-	switch (req_type) {
-	case RMC_MOUNT   : return "RMC_MOUNT";
-	case RMC_UNMOUNT : return "RMC_UNMOUNT";
-	case RMC_EXPORT  : return "RMC_EXPORT";
-	case RMC_IMPORT  : return "RMC_IMPORT";
-	case RMC_GETGEOM : return "RMC_GETGEOM";
-	case RMC_READELEM: return "RMC_READELEM";
-	case RMC_FINDCART: return "RMC_FINDCART";
-	default          : return "UNKNOWN";
-	}
 }
 
 /**
@@ -465,7 +389,7 @@ static const char *rmc_req_type_to_str(const int req_type) {
  * @param rqst_context The context of the request.
  * @return The result of handling the request.
  */
-static int dispatchRqstHandler(const int req_type,
+static int rmc_dispatchRqstHandler(const int req_type,
 	const struct rmc_srv_rqst_context *const rqst_context) {
 	switch (req_type) {
 	case RMC_MOUNT:

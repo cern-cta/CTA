@@ -21,11 +21,14 @@
 
 #pragma once
 
+#include "castor/io/io.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/legacymsg/RmcMountMsgBody.hpp"
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/legacymsg/RmcUnmountMsgBody.hpp"
+#include "castor/utils/SmartFd.hpp"
+#include "h/rmc_constants.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -83,6 +86,11 @@ protected:
   static const int RMC_MSGBUFSIZ = 256;
 
   /**
+   * The maximum number of attempts a retriable RMC request should be issued.
+   */
+  static const int RMC_MAXATTEMPTS = 3;
+
+  /**
    * The object representing the API of the CASTOR logging system.
    */
   log::Logger &m_log;
@@ -101,10 +109,10 @@ protected:
   /**
    * Connects to the rmcd daemon.
    *
-   * @param hostName The name of the host on which the rmcd daemon is running.
+   * @param rmcHost The name of the host on which the rmcd daemon is running.
    * @return The socket-descriptor of the connection with the rmcd daemon.
    */
-  int connectToRmc(const std::string &hostName) const ;
+  int connectToRmc(const std::string &rmcHost) const ;
 
   /**
    * Writes an RMC_SCSI_MOUNT message with the specifed body to the specified
@@ -131,6 +139,125 @@ protected:
    * @param body The body of the message.
    */
   void writeRmcUnmountMsg(const int fd, const RmcUnmountMsgBody &body) ;
+
+  /**
+   * Sends the specified request to the rmcd daemon and receives the reply
+   * until success or the specified number of retriable attempts has been
+   * reached.
+   *
+   * @param maxAttempts The maximum number of retriable attempts.
+   * @param rmcHost The name of the host on which the rmcd daemon is running.
+   * @param rqstBody The request to be sent.
+   */
+  template<typename T> void rmcSendRecvNbAttempts(const int maxAttempts,
+    const std::string &rmcHost, const T &rqstBody) {
+    for(int attemptNb = 1; attemptNb <= maxAttempts; attemptNb++) {
+      std::string errorMsgFromRmc;
+      const int rmcRc = rmcSendRecv(rmcHost, rqstBody, errorMsgFromRmc);
+      switch(rmcRc) {
+      case 0: // Success
+        return;
+      case ERMCFASTR: // Fast retry
+        // If this was the last attempt
+        if(maxAttempts == attemptNb) {
+          castor::exception::Exception ex;
+          ex.getMessage() <<
+            "Received error from rmcd after several fast retries" <<
+            ": nbAttempts=" << attemptNb << " errorMsg=" << errorMsgFromRmc;
+          throw ex;
+        }
+
+        // Pause a moment between attempts
+        sleep(1);
+
+        continue;
+      default:
+        {
+          castor::exception::Exception ex;
+          ex.getMessage() << "Received error from rmcd: rmcRc=" << rmcRc <<
+            " rmcRcStr=" << sstrerror(rmcRc);
+          if(!errorMsgFromRmc.empty()) {
+            ex.getMessage() << " errorMsgFromRmc=" << errorMsgFromRmc;
+          }
+          throw ex;
+        }
+      }
+    }
+  }
+
+  /**
+   * Sends the specified request to the rmcd daemon and receives the reply.
+   *
+   * @param rmcHost The name of the host on which the rmcd daemon is running.
+   * @param rqstBody The request to be sent.
+   * @param The RMC return code.
+   */
+  template<typename T> int rmcSendRecv(const std::string &rmcHost,
+    const T &rqstBody, std::string &errorMsgFromRmc) {
+    // Connect to rmcd and send request
+    castor::utils::SmartFd fd(connectToRmc(rmcHost));
+    {
+      char buf[RMC_MSGBUFSIZ];
+      const size_t len = marshal(buf, rqstBody);
+      io::writeBytes(fd.get(), m_netTimeout, len, buf);
+    }
+
+    // A single RMC reply is composed of an optional ERR_MSG reply
+    // followed by a terminating RMC_RC reply
+
+    // Read and process first reply which can be either RMC_RC or an optional
+    // MSG_ERR
+    {
+      const MessageHeader header = readRmcMsgHeader(fd.get());
+      switch(header.reqType) { 
+      case RMC_RC:
+        return header.lenOrStatus;
+      case MSG_ERR:
+        errorMsgFromRmc = handleMSG_ERR(header, fd.get());
+        break;
+      default:
+        {
+          castor::exception::Exception ex;
+          ex.getMessage() <<
+            "First part of reply from rmcd has unexpected type"
+            ": expected=RMC_RC or MSG_ERR actual=" <<
+            rmcReplyTypeToStr(header.reqType);
+          throw ex;
+        }
+      } // switch(header.reqType)
+    }
+
+    // If we are here then there should only be a RMC_RC message to be read and
+    // processed
+    {
+      const MessageHeader header = readRmcMsgHeader(fd.get());
+      if(RMC_RC != header.reqType) {
+        castor::exception::Exception ex;
+        ex.getMessage() <<
+          "Second part of reply from rmcd has unexpected type"
+          ": expected=RMC_RC actual=" << rmcReplyTypeToStr(header.reqType);
+        throw ex;
+      }
+      return header.lenOrStatus;
+    }
+  }
+
+  /**
+   * Returns a string representation of the specified RMC reply type.
+   *
+   * @param replyType The reply type.
+   * @return The string representation.
+   */
+  std::string rmcReplyTypeToStr(const int replyType);
+
+  /**
+   * Handles a MSG_ERR reply from rmcd.
+   *
+   * @param header The header of the reply.
+   * @param fd The file descriptor of the connection with rmcd daemon.
+   * @return The message contained within the MSG_ERR reply.
+   */
+  std::string handleMSG_ERR(const MessageHeader &header, const int fd);
 
 }; // class RmcProxyTcpIp
 
