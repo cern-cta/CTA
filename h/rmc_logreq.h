@@ -5,5 +5,7 @@
 
 #pragma once
 
-void rmc_logreq(const char *const func, char *const logbuf);
+#include "h/osdep.h"
+
+EXTERN_C void rmc_logreq(const char *const func, char *const logbuf);
 
