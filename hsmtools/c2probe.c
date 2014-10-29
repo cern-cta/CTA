@@ -68,7 +68,7 @@
 #define _DELTA_TIME(WHAT,A,B) (WHAT ## A - WHAT ## B >= 0 ? WHAT ## A - WHAT ## B : time(NULL)-WHAT ## B)
 #define DELTA_TIME(WHAT) _DELTA_TIME(WHAT,_end,_start)
 
-extern int Cinitdaemon (char *, void (*)(int));
+extern int Cinitdaemon (const char *const name, void (*const wait4child)(int));
 extern int Cinitservice (char *, void (*)(int));
 
 uid_t runUid;
