@@ -199,6 +199,7 @@ int rfio_handle_close(void *ctx,
       (*logfunc)(LOG_ERR, "rfio_handle_close: mover_close_file failed for transferid=%s with error: %s\n", internal_context->transferid, error_msg);
       free(error_msg);
     } else {
+      (*logfunc)(LOG_DEBUG, "rfio_handle_close: mover_close_file on transferid=%s completed successfully\n", internal_context->transferid);
       forced_mover_exit_error = 0;
     }
   } else {
