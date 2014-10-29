@@ -437,6 +437,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureDown() {
     break;
   case DRIVE_STATE_UP:
     m_state = DRIVE_STATE_DOWN;
+    m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
     break;
   case CatalogueDrive::DRIVE_STATE_RUNNING:
     m_state = DRIVE_STATE_WAITDOWN;
@@ -450,7 +451,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureDown() {
       throw ex;
     }
   }
-  m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
 }
 
 //-----------------------------------------------------------------------------
