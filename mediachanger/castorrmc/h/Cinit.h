@@ -21,5 +21,5 @@ struct main_args {
 	char	**argv;
 };
 
-EXTERN_C int Cinitdaemon (char *, void (*) (int));
+EXTERN_C int Cinitdaemon (const char *const name, void (*const wait4child) (int));
 
