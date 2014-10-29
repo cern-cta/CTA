@@ -5,5 +5,7 @@
 
 #pragma once
 
-int rmc_sendrep(const int rpfd, const int rep_type, ...);
+#include "h/osdep.h"
+
+EXTERN_C int rmc_sendrep(const int rpfd, const int rep_type, ...);
 
