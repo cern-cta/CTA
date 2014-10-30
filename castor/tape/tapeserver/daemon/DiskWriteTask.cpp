@@ -75,9 +75,10 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         // If we got that far on the first pass, it's now good enough to open
         // the disk file for writing...
         if (!writeFile.get()) {
+          lc.log(LOG_INFO, "About to open disk file for writing");
           writeFile.reset(fileFactory.createWriteFile(m_recallingFile->path()));
           URLcontext.add("actualURL", writeFile->URL());
-          lc.log(LOG_INFO, "Opened disk file for write");
+          lc.log(LOG_INFO, "Opened disk file for writing");
           m_stats.openingTime+=localTime.secs(castor::utils::Timer::resetCounter);
         }
         
