@@ -121,6 +121,8 @@ try:
         print 'GcPolicy %s does not exist in the stager DB' % gcpolicy
         sys.exit(1)
     # Get pools info (and check existence)
+    diskPoolIds = []
+    dataPoolIds = []
     if pools:
         stcur.execute("SELECT name, id FROM DiskPool WHERE name IN ('" + "', '".join(pools) + "')")
         rows = stcur.fetchall()
