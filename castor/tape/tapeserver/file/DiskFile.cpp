@@ -63,6 +63,11 @@ const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootPrivateKey() {
     // http://www.cryptopp.com/wiki/Keys_and_Formats#PEM_Encoded_Keys
     std::string key;
     std::ifstream keyFile(m_xrootPrivateKeyFile.c_str());
+    if (!keyFile) {
+      // We should get the detailed error from errno.
+      throw castor::exception::Errnum(
+        std::string("Failed to open xroot key file: ")+m_xrootPrivateKeyFile);
+    }
     char buff[200];
     while(!keyFile.eof()) {
       keyFile.read(buff, sizeof(buff));
@@ -202,7 +207,7 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
       return new XrootC2FSWriteFile(std::string("root://") + regexResult[1] + "1095/" 
         + regexResult[2],xrootPrivateKey());
     } else {
-      return new XrootC2FSWriteFile(regexResult[1]+regexResult[2],xrootPrivateKey());
+      return new RfioWriteFile(regexResult[1]+regexResult[2]);
     }
   }
   // Do we have a radosStriper file?
