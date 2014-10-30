@@ -262,11 +262,11 @@ namespace daemon {
    void TapeWriteTask::logWithStats(int level, const std::string& msg,
    log::LogContext& lc) const{
      log::ScopedParamContainer params(lc);
-     params.addTiming("transferTime", m_taskStats.transferTime)
-           .addTiming("checksumingTime",m_taskStats.checksumingTime)
-           .addTiming("waitDataTime",m_taskStats.waitDataTime)
-           .addTiming("waitReportingTime",m_taskStats.waitReportingTime)
-           .addTiming("totalTime", m_taskStats.totalTime)
+     params.addSnprintfDouble("transferTime", m_taskStats.transferTime)
+           .addSnprintfDouble("checksumingTime",m_taskStats.checksumingTime)
+           .addSnprintfDouble("waitDataTime",m_taskStats.waitDataTime)
+           .addSnprintfDouble("waitReportingTime",m_taskStats.waitReportingTime)
+           .addSnprintfDouble("totalTime", m_taskStats.totalTime)
            .add("dataVolume",m_taskStats.dataVolume)
            .add("headerVolume",m_taskStats.headerVolume)
            .add("driveTransferSpeedMBps",m_taskStats.totalTime?

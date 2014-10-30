@@ -135,11 +135,11 @@ public:
       // Hardcoded header size for lack of a better mechanism
       // Head + trailer, 3 * 80 bytes each
       localStats.headerVolume = (2 * 3 * 80);
-      params.addTiming("positionTime", localStats.positionTime)
-            .addTiming("transferTime", localStats.transferTime)
-            .addTiming("waitFreeMemoryTime",localStats.waitFreeMemoryTime)
-            .addTiming("waitReportingTime",localStats.waitReportingTime)
-            .addTiming("totalTime", localStats.totalTime)
+      params.addSnprintfDouble("positionTime", localStats.positionTime)
+            .addSnprintfDouble("transferTime", localStats.transferTime)
+            .addSnprintfDouble("waitFreeMemoryTime",localStats.waitFreeMemoryTime)
+            .addSnprintfDouble("waitReportingTime",localStats.waitReportingTime)
+            .addSnprintfDouble("totalTime", localStats.totalTime)
             .add("dataVolume",localStats.dataVolume)
             .add("driveTransferSpeedMBps",
                     localStats.totalTime?(1.0*localStats.dataVolume+1.0*localStats.headerVolume)

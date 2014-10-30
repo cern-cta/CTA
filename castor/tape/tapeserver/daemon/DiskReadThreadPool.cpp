@@ -131,14 +131,14 @@ void DiskReadThreadPool::addThreadStats(const DiskStats& other){
 void DiskReadThreadPool::logWithStat(int level, const std::string& message){
   m_pooldStat.totalTime = m_totalTime.secs();
   log::ScopedParamContainer params(m_lc);
-  params.addTiming("poolTransferTime", m_pooldStat.transferTime)
-        .addTiming("poolWaitFreeMemoryTime",m_pooldStat.waitFreeMemoryTime)
-        .addTiming("poolCheckingErrorTime",m_pooldStat.checkingErrorTime)
-        .addTiming("poolOpeningTime",m_pooldStat.openingTime)
-        .addTiming("poolRealTime",m_pooldStat.totalTime)
+  params.addSnprintfDouble("poolTransferTime", m_pooldStat.transferTime)
+        .addSnprintfDouble("poolWaitFreeMemoryTime",m_pooldStat.waitFreeMemoryTime)
+        .addSnprintfDouble("poolCheckingErrorTime",m_pooldStat.checkingErrorTime)
+        .addSnprintfDouble("poolOpeningTime",m_pooldStat.openingTime)
+        .addSnprintfDouble("poolRealTime",m_pooldStat.totalTime)
         .add("poolFileCount",m_pooldStat.filesCount)
-        .add("poolDataVolumeInMB", 1.0*m_pooldStat.dataVolume/1000/1000)
-        .add("AveragePoolPayloadTransferSpeedMBps",
+        .add("poolDataVolume", m_pooldStat.dataVolume)
+        .addSnprintfDouble("AveragePoolPayloadTransferSpeedMBps",
            m_pooldStat.totalTime?1.0*m_pooldStat.dataVolume/1000/1000/m_pooldStat.totalTime:0);
   m_lc.log(level,message);
 }
@@ -189,15 +189,15 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
 void DiskReadThreadPool::DiskReadWorkerThread::
 logWithStat(int level, const std::string& message){
   log::ScopedParamContainer params(m_lc);
-     params.addTiming("threadTransferTime", m_threadStat.transferTime)
-           .addTiming("threadWaitFreeMemoryTime",m_threadStat.waitFreeMemoryTime)
-           .addTiming("threadCheckingErrorTime",m_threadStat.checkingErrorTime)
-           .addTiming("threadOpeningTime",m_threadStat.openingTime)
-           .addTiming("threadTotalTime",m_threadStat.totalTime)
-           .add("threaDataVolumeInMB", 1.0*m_threadStat.dataVolume/1000/1000)
-           .add("threadPayloadTransferSpeedMBps",
+     params.addSnprintfDouble("threadTransferTime", m_threadStat.transferTime)
+           .addSnprintfDouble("threadWaitFreeMemoryTime",m_threadStat.waitFreeMemoryTime)
+           .addSnprintfDouble("threadCheckingErrorTime",m_threadStat.checkingErrorTime)
+           .addSnprintfDouble("threadOpeningTime",m_threadStat.openingTime)
+           .addSnprintfDouble("threadTotalTime",m_threadStat.totalTime)
+           .addSnprintfDouble("threaDataVolumeInMB", 1.0*m_threadStat.dataVolume/1000/1000)
+           .addSnprintfDouble("threadPayloadTransferSpeedMBps",
                    m_threadStat.totalTime?1.0*m_threadStat.dataVolume/1000/1000/m_threadStat.totalTime:0)
-           .addTiming("totalTime",m_threadStat.totalTime);
+           .addSnprintfDouble("totalTime",m_threadStat.totalTime);
     m_lc.log(level,message);
 }
 }}}}

@@ -161,7 +161,7 @@ class ScopedParamContainer{
       return *this;
     }
     
-    ScopedParamContainer& addTiming(const std::string& s,double t){
+    ScopedParamContainer& addSnprintfDouble(const std::string& s,double t){
       char buf[100];
       std::snprintf(buf, sizeof(buf), "%f", t);
       m_context.pushOrReplace(Param(s,buf));

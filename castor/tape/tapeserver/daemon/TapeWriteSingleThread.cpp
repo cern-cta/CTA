@@ -94,7 +94,7 @@ tapeFlush(const std::string& message,uint64_t bytes,uint64_t files,
   log::ScopedParamContainer params(m_logContext);
   params.add("files", files)
         .add("bytes", bytes)
-        .addTiming("flushTime", flushTime);
+        .addSnprintfDouble("flushTime", flushTime);
   m_logContext.log(LOG_INFO,message);
   m_stats.flushTime += flushTime;
   
@@ -148,7 +148,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       m_stats.mountTime += timer.secs(castor::utils::Timer::resetCounter);
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
-        scoped.addTiming("mountTime", m_stats.mountTime);
+        scoped.addSnprintfDouble("mountTime", m_stats.mountTime);
         m_logContext.log(LOG_INFO, "Tape mounted and drive ready");
       }
       
@@ -157,7 +157,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       m_stats.positionTime  += timer.secs(castor::utils::Timer::resetCounter);
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
-        scoped.addTiming("positionTime", m_stats.positionTime);
+        scoped.addSnprintfDouble("positionTime", m_stats.positionTime);
         m_logContext.log(LOG_INFO, "Write session initialised, tape VID checked and drive positioned for writing");
       }
       
@@ -255,17 +255,17 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats(
 int level,const std::string& msg, log::ScopedParamContainer& params){
   params.add("type", "write")
         .add("VID", m_volInfo.vid)
-        .addTiming("mountTime", m_stats.mountTime)
-        .addTiming("positionTime", m_stats.positionTime)
-        .addTiming("waitInstructionsTime", m_stats.waitInstructionsTime)
-        .addTiming("checksumingTime", m_stats.checksumingTime)
-        .addTiming("transferTime", m_stats.transferTime)
-        .addTiming("waitDataTime", m_stats.waitDataTime)
-        .addTiming("waitReportingTime", m_stats.waitReportingTime)
-        .addTiming("flushTime", m_stats.flushTime)
-        .addTiming("unloadTime", m_stats.unloadTime)
-        .addTiming("unmountTime", m_stats.unmountTime)
-        .addTiming("totalTime", m_stats.totalTime)
+        .addSnprintfDouble("mountTime", m_stats.mountTime)
+        .addSnprintfDouble("positionTime", m_stats.positionTime)
+        .addSnprintfDouble("waitInstructionsTime", m_stats.waitInstructionsTime)
+        .addSnprintfDouble("checksumingTime", m_stats.checksumingTime)
+        .addSnprintfDouble("transferTime", m_stats.transferTime)
+        .addSnprintfDouble("waitDataTime", m_stats.waitDataTime)
+        .addSnprintfDouble("waitReportingTime", m_stats.waitReportingTime)
+        .addSnprintfDouble("flushTime", m_stats.flushTime)
+        .addSnprintfDouble("unloadTime", m_stats.unloadTime)
+        .addSnprintfDouble("unmountTime", m_stats.unmountTime)
+        .addSnprintfDouble("totalTime", m_stats.totalTime)
         .add("dataVolume", m_stats.dataVolume)
         .add("headerVolume", m_stats.headerVolume)
         .add("files", m_stats.filesCount)

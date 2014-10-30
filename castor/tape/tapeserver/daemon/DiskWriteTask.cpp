@@ -206,15 +206,15 @@ const DiskStats DiskWriteTask::getTaskStats() const{
 //------------------------------------------------------------------------------  
 void DiskWriteTask::logWithStat(int level,const std::string& msg,log::LogContext& lc){
   log::ScopedParamContainer params(lc);
-     params.addTiming("transferTime", m_stats.transferTime)
-           .addTiming("checksumingTime",m_stats.checksumingTime)
-           .addTiming("waitDataTime",m_stats.waitDataTime)
-           .addTiming("waitReportingTime",m_stats.waitReportingTime)
-           .addTiming("checkingErrorTime",m_stats.checkingErrorTime)
-           .addTiming("openingTime",m_stats.openingTime)
-           .addTiming("closingTime",m_stats.closingTime)
-           .addTiming("totalTime", m_stats.totalTime)
-           .add("filePayloadTransferSpeedMBps",
+     params.addSnprintfDouble("transferTime", m_stats.transferTime)
+           .addSnprintfDouble("checksumingTime",m_stats.checksumingTime)
+           .addSnprintfDouble("waitDataTime",m_stats.waitDataTime)
+           .addSnprintfDouble("waitReportingTime",m_stats.waitReportingTime)
+           .addSnprintfDouble("checkingErrorTime",m_stats.checkingErrorTime)
+           .addSnprintfDouble("openingTime",m_stats.openingTime)
+           .addSnprintfDouble("closingTime",m_stats.closingTime)
+           .addSnprintfDouble("totalTime", m_stats.totalTime)
+           .addSnprintfDouble("filePayloadTransferSpeedMBps",
               m_stats.totalTime?1.0*m_stats.dataVolume/1000/1000/m_stats.totalTime:0)
            .add("FILEID",m_recallingFile->fileid())
            .add("path",m_recallingFile->path());
