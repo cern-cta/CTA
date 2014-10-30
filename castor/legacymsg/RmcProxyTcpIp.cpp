@@ -191,9 +191,14 @@ std::string castor::legacymsg::RmcProxyTcpIp::rmcReplyTypeToStr(
   const int replyType) {
   std::ostringstream oss;
   switch(replyType) {
-  case RMC_RC : oss << "RMC_RC";
-  case MSG_ERR: oss << "MSG_ERR";
-  default     : oss << "UNKNOWN(0x" << std::hex << replyType << ")";
+  case RMC_RC:
+    oss << "RMC_RC";
+    break;
+  case MSG_ERR:
+    oss << "MSG_ERR";
+    break;
+  default:
+    oss << "UNKNOWN(0x" << std::hex << replyType << ")";
   }
   return oss.str();
 }

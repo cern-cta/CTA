@@ -152,8 +152,8 @@ protected:
   template<typename T> void rmcSendRecvNbAttempts(const int maxAttempts,
     const std::string &rmcHost, const T &rqstBody) {
     for(int attemptNb = 1; attemptNb <= maxAttempts; attemptNb++) {
-      std::string errorMsgFromRmc;
-      const int rmcRc = rmcSendRecv(rmcHost, rqstBody, errorMsgFromRmc);
+      std::ostringstream rmcErrorStream;
+      const int rmcRc = rmcSendRecv(rmcHost, rqstBody, rmcErrorStream);
       switch(rmcRc) {
       case 0: // Success
         return;
@@ -163,7 +163,8 @@ protected:
           castor::exception::Exception ex;
           ex.getMessage() <<
             "Received error from rmcd after several fast retries" <<
-            ": nbAttempts=" << attemptNb << " errorMsg=" << errorMsgFromRmc;
+            ": nbAttempts=" << attemptNb << " rmcErrorStream=" <<
+            rmcErrorStream.str();
           throw ex;
         }
 
@@ -176,8 +177,8 @@ protected:
           castor::exception::Exception ex;
           ex.getMessage() << "Received error from rmcd: rmcRc=" << rmcRc <<
             " rmcRcStr=" << sstrerror(rmcRc);
-          if(!errorMsgFromRmc.empty()) {
-            ex.getMessage() << " errorMsgFromRmc=" << errorMsgFromRmc;
+          if(!rmcErrorStream.str().empty()) {
+            ex.getMessage() << " rmcErrorStream=" << rmcErrorStream.str();
           }
           throw ex;
         }
@@ -190,10 +191,12 @@ protected:
    *
    * @param rmcHost The name of the host on which the rmcd daemon is running.
    * @param rqstBody The request to be sent.
+   * @param rmcErrorStream The error stream constructed from ERR_MSG received
+   * within the reply from the rmcd daemon.
    * @param The RMC return code.
    */
   template<typename T> int rmcSendRecv(const std::string &rmcHost,
-    const T &rqstBody, std::string &errorMsgFromRmc) {
+    const T &rqstBody, std::ostringstream &rmcErrorStream) {
     // Connect to rmcd and send request
     castor::utils::SmartFd fd(connectToRmc(rmcHost));
     {
@@ -202,18 +205,32 @@ protected:
       io::writeBytes(fd.get(), m_netTimeout, len, buf);
     }
 
-    // A single RMC reply is composed of an optional ERR_MSG reply
+    // A single RMC reply is composed of 0 to 2 ERR_MSG replies
     // followed by a terminating RMC_RC reply
-
-    // Read and process first reply which can be either RMC_RC or an optional
-    // MSG_ERR
-    {
+    const int maxERR_MSG = 2;
+    int nbERR_MSG = 0;
+    while(true) {
       const MessageHeader header = readRmcMsgHeader(fd.get());
       switch(header.reqType) { 
       case RMC_RC:
         return header.lenOrStatus;
       case MSG_ERR:
-        errorMsgFromRmc = handleMSG_ERR(header, fd.get());
+        nbERR_MSG++;
+
+        if(maxERR_MSG < nbERR_MSG) {
+          castor::exception::Exception ex;
+          ex.getMessage() <<
+            "Reply from rmcd contains too many ERR_MSG messages"
+            ": maxERR_MSG=" << maxERR_MSG << " rmcErrorStream=" <<
+            rmcErrorStream;
+          throw ex;
+        }
+
+        if(nbERR_MSG > 1) {
+          rmcErrorStream << " ";
+        }
+
+        rmcErrorStream << handleMSG_ERR(header, fd.get());
         break;
       default:
         {
@@ -225,21 +242,7 @@ protected:
           throw ex;
         }
       } // switch(header.reqType)
-    }
-
-    // If we are here then there should only be a RMC_RC message to be read and
-    // processed
-    {
-      const MessageHeader header = readRmcMsgHeader(fd.get());
-      if(RMC_RC != header.reqType) {
-        castor::exception::Exception ex;
-        ex.getMessage() <<
-          "Second part of reply from rmcd has unexpected type"
-          ": expected=RMC_RC actual=" << rmcReplyTypeToStr(header.reqType);
-        throw ex;
-      }
-      return header.lenOrStatus;
-    }
+    } // while(true)
   }
 
   /**
