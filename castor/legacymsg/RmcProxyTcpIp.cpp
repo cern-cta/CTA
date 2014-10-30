@@ -78,8 +78,6 @@ void castor::legacymsg::RmcProxyTcpIp::dismountTape(const std::string &vid,
   try {
     const mediachanger::ScsiLibrarySlot parsedSlot(librarySlot);
 
-    castor::utils::SmartFd fd(connectToRmc(parsedSlot.getRmcHostName()));
-
     RmcUnmountMsgBody rqstBody;
     rqstBody.uid = geteuid();
     rqstBody.gid = getegid();

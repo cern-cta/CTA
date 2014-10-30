@@ -355,7 +355,7 @@ static int rmc_getreq(
 		if (l > 0) {
 			rmc_logit (func, RMC04, l);
 		} else if (l < 0) {
-			rmc_logit (func, RMC02, "netread", strerror(errno));
+			rmc_logit (func, RMC02, "netread", sstrerror(serrno));
                 }
 		return (ERMCUNREC);
 	}
