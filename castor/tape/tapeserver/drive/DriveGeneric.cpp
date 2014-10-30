@@ -848,11 +848,11 @@ bool drive::DriveGeneric::waitUntilReady(int timeoutSecond)  {
       testUnitReady();           
     } catch (castor::tape::SCSI::NotReadyException &ex){
       lastTestUnitReadyExceptionMsg = ex.getMessage().str();
-      sleep(1);
+      usleep(100 * 1000); // 1/10 second
       continue;
     } catch (castor::tape::SCSI::UnitAttentionException &ex){
       lastTestUnitReadyExceptionMsg = ex.getMessage().str();
-      sleep(1);
+      usleep(100 * 1000); // 1/10 second
       continue;
     } catch (...) {
       throw;
