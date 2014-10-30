@@ -684,10 +684,14 @@ def drain(wait=False):
   except Exception:
     pass
   # then launch a new thread that will wait for the remaining transfers to be over and then will commit suicide
-  suicideThread = suicider.SuiciderThread(transfermanager)
-  # wait in the suicide if needed
-  if wait:
-    suicideThread.join()
+  # again ignore NameError exceptions in case the transfermanager service was not created
+  try:
+    suicideThread = suicider.SuiciderThread(transfermanager)
+    # wait in the suicide if needed
+    if wait:
+      suicideThread.join()
+  except NameError:
+    pass
 
 import signal
 def handler(signum, _unused_frame):
