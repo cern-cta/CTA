@@ -122,6 +122,8 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hours');
 INSERT INTO CastorConfig
+  VALUES ('cleaning', 'staleDisk2DiskCopyJobsTimeout', '6', 'Timeout for stuck disk2diskCopyJobs in hours');
+INSERT INTO CastorConfig
   VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
 INSERT INTO CastorConfig
   VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recalling a given file. When exceeded, the recall will be failed if no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');

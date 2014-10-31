@@ -216,6 +216,7 @@ AS
   FILE_DROPPED_BY_CLEANING     CONSTANT VARCHAR2(2048) := 'deleteOutOfDateStageOutDCs: File was dropped by internal cleaning';
   PUTDONE_ENFORCED_BY_CLEANING CONSTANT VARCHAR2(2048) := 'deleteOutOfDateStageOutDCs: PutDone enforced by internal cleaning';
   DELETING_REQUESTS            CONSTANT VARCHAR2(2048) := 'deleteTerminatedRequests: Cleaning up completed requests';
+  D2D_DROPPED_BY_CLEANING      CONSTANT VARCHAR2(2048) := 'deleteStaleDisk2DiskCopyJobs: D2D job removed by internal cleaning';
   
   DBJOB_UNEXPECTED_EXCEPTION   CONSTANT VARCHAR2(2048) := 'Unexpected exception caught in DB job';
 

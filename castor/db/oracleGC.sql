@@ -829,6 +829,40 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE PROCEDURE deleteStaleDisk2DiskCopyJobs(timeOut IN NUMBER) AS
+-- Select stale Disk2DiskCopyJob entries, that is either already scheduled/running
+-- or still pending but originated by a user request (other types of replication may take very long)
+  CURSOR s IS
+    SELECT id FROM Disk2DiskCopyJob
+     WHERE (replicationType = dconst.REPLICATIONTYPE_USER
+         OR status IN (dconst.DISK2DISKCOPYJOB_SCHEDULED, dconst.DISK2DISKCOPYJOB_RUNNING))
+       AND creationTime < getTime() - timeOut;
+  ids "numList";
+  varCfId INTEGER;
+  varFileId INTEGER;
+  varNsHost VARCHAR2(100);
+BEGIN
+  OPEN s;
+  LOOP
+    FETCH s BULK COLLECT INTO ids LIMIT 10000;
+    EXIT WHEN ids.count = 0;
+    FOR i IN 1..ids.COUNT LOOP
+      SELECT castorFile INTO varCfId FROM Disk2DiskCopyJob WHERE id = ids(i);
+      SELECT fileid, nsHost INTO varFileId, varNsHost FROM CastorFile
+       WHERE id = varCfId
+       FOR UPDATE;
+      DELETE FROM Disk2DiskCopyJob WHERE id = ids(i);
+      UPDATE SubRequest
+         SET status = dconst.SUBREQUEST_RESTART
+       WHERE status = dconst.SUBREQUEST_WAITSUBREQ
+         AND castorFile = varCfId;
+      COMMIT;
+      logToDLF(NULL, dlf.LVL_WARNING, dlf.D2D_DROPPED_BY_CLEANING, varFileId, varNsHost, 'stagerd', '');
+    END LOOP;
+  END LOOP;
+END;
+/
+
 /* Runs cleanup operations */
 CREATE OR REPLACE PROCEDURE cleanup AS
   t INTEGER;
@@ -839,6 +873,8 @@ BEGIN
   deleteOutOfDateStageOutDCs(t*3600);
   t := TO_NUMBER(getConfigOption('cleaning', 'failedDCsTimeout', '72'));
   deleteFailedDiskCopies(t*3600);
+  t := TO_NUMBER(getConfigOption('cleaning', 'staleDisk2DiskCopyJobsTimeout', '6'))
+  deleteStaleDisk2DiskCopyJobs(t*3600);
 END;
 /
 
