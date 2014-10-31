@@ -63,7 +63,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
       fileFactory.createReadFile(m_migratedFile->path()));
     log::ScopedParamContainer URLcontext(lc);
     URLcontext.add("path", m_migratedFile->path())
-               .add("actualURL", sourceFile->URL());
+              .add("actualURL", sourceFile->URL());
     if(migratingFileSize != sourceFile->size()){
       throw castor::exception::Exception("Mismtach between size given by the client "
               "and the real one");
@@ -86,7 +86,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
       mb->m_fileBlock = blockId++;
             
       migratingFileSize -= mb->m_payload.read(*sourceFile);
-      m_stats.transferTime+=localTime.secs(castor::utils::Timer::resetCounter);
+      m_stats.readWriteTime+=localTime.secs(castor::utils::Timer::resetCounter);
 
       m_stats.dataVolume += mb->m_payload.size();
 
@@ -106,6 +106,9 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     } //end of while(migratingFileSize>0)
     m_stats.filesCount++;
     m_stats.totalTime = totalTime.secs();
+    // We do not have delayed open like in disk writes, so time spent 
+    // transferring equals total time.
+    m_stats.transferTime = m_stats.totalTime;
     logWithStat(LOG_INFO, "File successfully read from disk", lc);
   }
   catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
@@ -163,15 +166,21 @@ void DiskReadTask::circulateAllBlocks(size_t fromBlockId, MemBlock * mb){
 //------------------------------------------------------------------------------  
 void DiskReadTask::logWithStat(int level,const std::string& msg,log::LogContext& lc){
   log::ScopedParamContainer params(lc);
-     params.addSnprintfDouble("transferTime", m_stats.transferTime)
+     params.addSnprintfDouble("readWriteTime", m_stats.readWriteTime)
            .addSnprintfDouble("checksumingTime",m_stats.checksumingTime)
            .addSnprintfDouble("waitDataTime",m_stats.waitDataTime)
            .addSnprintfDouble("waitReportingTime",m_stats.waitReportingTime)
            .addSnprintfDouble("checkingErrorTime",m_stats.checkingErrorTime)
            .addSnprintfDouble("openingTime",m_stats.openingTime)
+           .addSnprintfDouble("transferTime", m_stats.transferTime)
            .addSnprintfDouble("totalTime", m_stats.totalTime)
-           .addSnprintfDouble("filePayloadTransferSpeedMBps",
+           .add("dataVolume", m_stats.dataVolume)
+           .addSnprintfDouble("globalPayloadTransferSpeedMBps",
               m_stats.totalTime?1.0*m_stats.dataVolume/1000/1000/m_stats.totalTime:0)
+           .addSnprintfDouble("diskPerformanceMBps",
+              m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
+           .addSnprintfDouble("readWriteToTransferTimeRatio", 
+              m_stats.transferTime?m_stats.readWriteTime/m_stats.transferTime:0.0)
            .add("FILEID",m_migratedFile->fileid())
            .add("path",m_migratedFile->path());
     lc.log(level,msg);

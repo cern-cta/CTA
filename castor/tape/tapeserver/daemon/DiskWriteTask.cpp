@@ -49,6 +49,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
   using log::Param;
   castor::utils::Timer localTime;
   castor::utils::Timer totalTime(localTime);
+  castor::utils::Timer transferTime(localTime);
   try{
     // Placeholder for the disk file. We will open it only
     // after getting a first correct memory block.
@@ -76,6 +77,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         // the disk file for writing...
         if (!writeFile.get()) {
           lc.log(LOG_INFO, "About to open disk file for writing");
+          transferTime.reset();
           writeFile.reset(fileFactory.createWriteFile(m_recallingFile->path()));
           URLcontext.add("actualURL", writeFile->URL());
           lc.log(LOG_INFO, "Opened disk file for writing");
@@ -85,7 +87,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         // Write the data.
         m_stats.dataVolume+=mb->m_payload.size();
         mb->m_payload.write(*writeFile);
-        m_stats.transferTime+=localTime.secs(castor::utils::Timer::resetCounter);
+        m_stats.readWriteTime+=localTime.secs(castor::utils::Timer::resetCounter);
         
         checksum = mb->m_payload.adler32(checksum);
         m_stats.checksumingTime+=localTime.secs(castor::utils::Timer::resetCounter);
@@ -104,6 +106,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
     } //end of while(1)
     reporter.reportCompletedJob(*m_recallingFile,checksum,m_stats.dataVolume);
     m_stats.waitReportingTime+=localTime.secs(castor::utils::Timer::resetCounter);
+    m_stats.transferTime = transferTime.secs();
     m_stats.totalTime = totalTime.secs();
     logWithStat(LOG_INFO, "File successfully transfered to disk",lc);
     
@@ -207,16 +210,22 @@ const DiskStats DiskWriteTask::getTaskStats() const{
 //------------------------------------------------------------------------------  
 void DiskWriteTask::logWithStat(int level,const std::string& msg,log::LogContext& lc){
   log::ScopedParamContainer params(lc);
-     params.addSnprintfDouble("transferTime", m_stats.transferTime)
+     params.addSnprintfDouble("readWriteTime", m_stats.readWriteTime)
            .addSnprintfDouble("checksumingTime",m_stats.checksumingTime)
            .addSnprintfDouble("waitDataTime",m_stats.waitDataTime)
            .addSnprintfDouble("waitReportingTime",m_stats.waitReportingTime)
            .addSnprintfDouble("checkingErrorTime",m_stats.checkingErrorTime)
            .addSnprintfDouble("openingTime",m_stats.openingTime)
            .addSnprintfDouble("closingTime",m_stats.closingTime)
+           .addSnprintfDouble("transferTime", m_stats.transferTime)
            .addSnprintfDouble("totalTime", m_stats.totalTime)
-           .addSnprintfDouble("filePayloadTransferSpeedMBps",
+           .add("dataVolume", m_stats.dataVolume)
+           .addSnprintfDouble("globalPayloadTransferSpeedMBps",
               m_stats.totalTime?1.0*m_stats.dataVolume/1000/1000/m_stats.totalTime:0)
+           .addSnprintfDouble("diskPerformanceMBps",
+              m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
+           .addSnprintfDouble("readWriteToTransferTimeRatio", 
+              m_stats.transferTime?m_stats.readWriteTime/m_stats.transferTime:0.0)
            .add("FILEID",m_recallingFile->fileid())
            .add("path",m_recallingFile->path());
     lc.log(level,msg);
