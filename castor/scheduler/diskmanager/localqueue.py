@@ -101,13 +101,18 @@ class LocalQueue(Queue.Queue):
 
   def _putInPriorityQueue(self, transferId):
     '''Put back a transfer in the priority queue'''
-    transfer = self.queueingTransfers[transferId].transfer
-    if transfer.transferType == TransferType.STD or \
-       ((transfer.transferType == TransferType.D2DSRC or transfer.transferType == TransferType.D2DDST) \
-        and transfer.replicationType == D2DTransferType.USER):
-      self.priorityQueue.put(transfer.transferId)
-    else:
-      self.backfillQueue.put(transfer.transferId)
+    try:
+      transfer = self.queueingTransfers[transferId].transfer
+      if transfer.transferType == TransferType.STD or \
+         ((transfer.transferType == TransferType.D2DSRC or transfer.transferType == TransferType.D2DDST) \
+          and transfer.replicationType == D2DTransferType.USER):
+        self.priorityQueue.put(transfer.transferId)
+      else:
+        self.backfillQueue.put(transfer.transferId)
+    except KeyError:
+      # the transfer was not found in the queueing transfers,
+      # meaning it was canceled: just ignore it
+      pass
 
   def putPriority(self, scheduler, transfer):
     '''Put a new transfer in the priority queue and register it in queueingTransfers'''
@@ -293,7 +298,7 @@ class LocalQueue(Queue.Queue):
       for transferId in self.pendingD2dDest:
         timeOfNextTry = self.pendingD2dDest[transferId]
         if timeOfNextTry < currentTime:
-          # put the transferId back into the priority queue in it's time to retry the transfer
+          # put the transferId back into the priority queue if it's time to retry the transfer
           dlf.writedebug(msgs.RETRYTRANSFER, subreqid=transferId) # "Retrying transfer" message
           self._putInPriorityQueue(transferId)
           toBeDeleted.append(transferId)
