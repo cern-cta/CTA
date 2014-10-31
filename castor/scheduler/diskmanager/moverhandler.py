@@ -174,10 +174,6 @@ class MoverReqHandlerThread(threading.Thread):
         res = self.handleRequest(req)
         clientsock.send(res)
         clientsock.close()
-      except Queue.Empty:
-        # we've timed out, let's just retry. We only use the timeout so that this
-        # thread can stop even if there is nothing in the queue
-        pass
       except Exception, e:
         # "Caught exception in Worker thread" message
         dlf.writeerr(msgs.WORKEREXCEPTION, Type=str(e.__class__), Message=str(e))
