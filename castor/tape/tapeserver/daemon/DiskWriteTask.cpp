@@ -77,7 +77,8 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         // the disk file for writing...
         if (!writeFile.get()) {
           lc.log(LOG_INFO, "About to open disk file for writing");
-          transferTime.reset();
+          // Synchronise the counter with the open time counter.
+          transferTime = localTime;
           writeFile.reset(fileFactory.createWriteFile(m_recallingFile->path()));
           URLcontext.add("actualURL", writeFile->URL());
           lc.log(LOG_INFO, "Opened disk file for writing");
@@ -224,8 +225,8 @@ void DiskWriteTask::logWithStat(int level,const std::string& msg,log::LogContext
               m_stats.totalTime?1.0*m_stats.dataVolume/1000/1000/m_stats.totalTime:0)
            .addSnprintfDouble("diskPerformanceMBps",
               m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
-           .addSnprintfDouble("readWriteToTransferTimeRatio", 
-              m_stats.transferTime?m_stats.readWriteTime/m_stats.transferTime:0.0)
+           .addSnprintfDouble("openRWCloseToTransferTimeRatio", 
+              m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
            .add("FILEID",m_recallingFile->fileid())
            .add("path",m_recallingFile->path());
     lc.log(level,msg);

@@ -179,8 +179,8 @@ void DiskReadTask::logWithStat(int level,const std::string& msg,log::LogContext&
               m_stats.totalTime?1.0*m_stats.dataVolume/1000/1000/m_stats.totalTime:0)
            .addSnprintfDouble("diskPerformanceMBps",
               m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
-           .addSnprintfDouble("readWriteToTransferTimeRatio", 
-              m_stats.transferTime?m_stats.readWriteTime/m_stats.transferTime:0.0)
+           .addSnprintfDouble("openRWCloseToTransferTimeRatio", 
+              m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
            .add("FILEID",m_migratedFile->fileid())
            .add("path",m_migratedFile->path());
     lc.log(level,msg);
