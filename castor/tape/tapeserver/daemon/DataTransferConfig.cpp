@@ -24,8 +24,7 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/tape/tapeserver/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
-#include "h/rtcp_constants.h"
-#include "h/rtcpd_constants.h"
+#include "castor/tape/tapeserver/daemon/Constants.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -53,35 +52,37 @@ castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig
   DataTransferConfig config;
 
   config.bufsz = castorConf.getConfEntInt(
-    "RTCOPYD", "BUFSZ", (uint32_t)RTCP_BUFSZ, log);
+    "TAPESERVERD", "BUFSZ",
+    castor::tape::tapeserver::daemon::TAPESERVER_BUFSZ_DEFAULT, log);
   config.nbBufs = castorConf.getConfEntInt<uint32_t>(
-    "RTCOPYD", "NB_BUFS", log);
+    "TAPESERVERD", "NB_BUFS", log);
   config.tapeBadMIRHandlingRepair = castorConf.getConfEntString(
-    "TAPE", "BADMIR_HANDLING", "CANCEL", log);
+    "TAPESERVERD", "BADMIR_HANDLING", "CANCEL", log);
   config.bulkRequestMigrationMaxBytes = castorConf.getConfEntInt(
-    "TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXBYTES",
+    "TAPESERVERD", "BULKREQUESTMIGRATIONMAXBYTES",
     (uint64_t)TAPEBRIDGE_BULKREQUESTMIGRATIONMAXBYTES, log);
   config.bulkRequestMigrationMaxFiles = castorConf.getConfEntInt(
-    "TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXFILES",
+    "TAPESERVERD", "BULKREQUESTMIGRATIONMAXFILES",
     (uint64_t)TAPEBRIDGE_BULKREQUESTMIGRATIONMAXFILES, log);
   config.bulkRequestRecallMaxBytes = castorConf.getConfEntInt(
-    "TAPEBRIDGE", "BULKREQUESTRECALLMAXBYTES",
+    "TAPESERVERD", "BULKREQUESTRECALLMAXBYTES",
     (uint64_t)TAPEBRIDGE_BULKREQUESTRECALLMAXBYTES, log);
   config.bulkRequestRecallMaxFiles = castorConf.getConfEntInt(
-    "TAPEBRIDGE", "BULKREQUESTRECALLMAXFILES",
+    "TAPESERVERD", "BULKREQUESTRECALLMAXFILES",
     (uint64_t)TAPEBRIDGE_BULKREQUESTRECALLMAXFILES, log);
   config.maxBytesBeforeFlush = castorConf.getConfEntInt(
-    "TAPEBRIDGE", "MAXBYTESBEFOREFLUSH",
+    "TAPESERVERD", "MAXBYTESBEFOREFLUSH",
     (uint64_t)TAPEBRIDGE_MAXBYTESBEFOREFLUSH, log);
   config.maxFilesBeforeFlush = castorConf.getConfEntInt(
-    "TAPEBRIDGE", "MAXFILESBEFOREFLUSH",
+    "TAPESERVERD", "MAXFILESBEFOREFLUSH",
     (uint64_t)TAPEBRIDGE_MAXFILESBEFOREFLUSH, log);
   config.nbDiskThreads = castorConf.getConfEntInt(
-    "RTCPD", "THREAD_POOL", (uint32_t)RTCPD_THREAD_POOL, log);
+    "TAPESERVERD", "THREAD_POOL", 
+    castor::tape::tapeserver::daemon::TAPESERVER_NB_DISK_THREAD_DEFAULT, log);
   config.remoteFileProtocol = castorConf.getConfEntString(
     "TAPESERVERD", "REMOTEFILEPROTOCOL", "RFIO", log);
   config.xrootPrivateKey = castorConf.getConfEntString(
-    "XROOT", "PRIVATEKEY", "/opt/xrootd/keys/key.pem", log);
+    "XROOT", "PrivateKey", "/opt/xrootd/keys/key.pem", log);
 
   return config;
 }

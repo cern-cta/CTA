@@ -68,6 +68,18 @@ const time_t TAPESERVER_MOUNTTIMEOUT_DEFAULT = 900; // 15 minutes
  */
 const time_t TAPESERVER_BLKMOVETIMEOUT_DEFAULT = 300; // 5 minutes
 
+/**
+ * The compile-time default value for the number of disk threads in 
+ * the thread pool serving disk accesses.
+ */
+const uint32_t TAPESERVER_NB_DISK_THREAD_DEFAULT = 3;
+
+/**
+ * The compile-time default value for the memory buffers exchanged between
+ * tape and disk threads.
+ */
+const size_t TAPESERVER_BUFSZ_DEFAULT = 5 * 1024 * 1024;
+
 } // namespace daemon
 } // namespace tapeserver
 } // namespace tape

@@ -46,8 +46,6 @@
 #include "castor/utils/utils.hpp"
 #include "h/Ctape.h"
 #include "h/rmc_constants.h"
-#include "h/rtcp_constants.h"
-#include "h/rtcpd_constants.h"
 
 #include <algorithm>
 #include <errno.h>
