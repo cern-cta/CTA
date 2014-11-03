@@ -72,7 +72,7 @@ const time_t TAPESERVER_BLKMOVETIMEOUT_DEFAULT = 300; // 5 minutes
  * The compile-time default value for the number of disk threads in 
  * the thread pool serving disk accesses.
  */
-const uint32_t TAPESERVER_NB_DISK_THREAD_DEFAULT = 3;
+const uint32_t TAPESERVER_NB_DISK_THREAD_DEFAULT = 10;
 
 /**
  * The compile-time default value for the memory buffers exchanged between
