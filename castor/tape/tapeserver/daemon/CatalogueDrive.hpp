@@ -157,7 +157,7 @@ public:
    * @param sessionType The numerical sessionType.
    * @return The string representation if known else "UNKNOWN".
    */
-  static const char *sessionType2Str(const SessionType sessionType) throw();
+  static const char *sessionTypeToStr(const SessionType sessionType) throw();
 
   /**
    * Constructor that except for its parameters, initializes all strings to

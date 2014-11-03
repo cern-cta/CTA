@@ -80,11 +80,6 @@ public:
     const time_t blockMoveTimeoutInSecs,
     ProcessForkerProxy &processForker);
 
-  /**
-   * Returns a string representation of the type of the session.
-   */
-  std::string getTypeString() const throw();
-
   /** 
    * Notifies the catalogue session that it should perform any time related
    * actions such as implementing alarms. 

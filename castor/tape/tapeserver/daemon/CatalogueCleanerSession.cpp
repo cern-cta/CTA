@@ -65,14 +65,6 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession::
 }
 
 //------------------------------------------------------------------------------
-// getTypeString
-//------------------------------------------------------------------------------
-std::string castor::tape::tapeserver::daemon::CatalogueCleanerSession::
-  getTypeString() const throw() {
-  return "CatalogueCleanerSession";
-}
-
-//------------------------------------------------------------------------------
 // tick
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueCleanerSession::tick() {

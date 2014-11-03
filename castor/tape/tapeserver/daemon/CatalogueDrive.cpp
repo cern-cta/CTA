@@ -112,10 +112,10 @@ const char
 }
 
 //-----------------------------------------------------------------------------
-// sessionType2Str
+// sessionTypeToStr
 //-----------------------------------------------------------------------------
 const char
-   *castor::tape::tapeserver::daemon::CatalogueDrive::sessionType2Str(
+   *castor::tape::tapeserver::daemon::CatalogueDrive::sessionTypeToStr(
   const SessionType sessionType) throw() {
   switch(sessionType) {
   case SESSION_TYPE_NONE        : return "NONE";
@@ -241,7 +241,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Session associated with drive is not a cleaner session"
-      ": actual=" << sessionType2Str(m_sessionType);
+      ": actual=" << sessionTypeToStr(m_sessionType);
     throw ex;
   }
   if(NULL == m_session) {
@@ -312,7 +312,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
   if(SESSION_TYPE_LABEL != m_sessionType) {
     castor::exception::Exception ex;
     ex.getMessage() << "Session associated with drive is not a label session"
-      ": actual=" << sessionType2Str(m_sessionType);
+      ": actual=" << sessionTypeToStr(m_sessionType);
     throw ex;
   }
   if(NULL == m_session) {
@@ -386,7 +386,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Session associated with drive is not a transfer session"
-      ": actual=" << sessionType2Str(m_sessionType);
+      ": actual=" << sessionTypeToStr(m_sessionType);
     throw ex;
   }
   if(NULL == m_session) {
@@ -850,7 +850,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::killSession() {
         throw ex;
       }
       log::Param params[] = {
-        log::Param("type", m_session->getTypeString()),
+        log::Param("sessionType", sessionTypeToStr(m_sessionType)),
         log::Param("pid", pid)};
       m_log(LOG_WARNING, "Killed tape-session child-process", params);
       delete m_session;
