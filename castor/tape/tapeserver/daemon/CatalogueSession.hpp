@@ -47,6 +47,29 @@ public:
    */
   virtual ~CatalogueSession() = 0;
 
+  /**
+   * enumeration of all the possible types of tape session.
+   */
+  enum Type {
+    SESSION_TYPE_CLEANER,
+    SESSION_TYPE_TRANSFER,
+    SESSION_TYPE_LABEL};
+
+  /**
+   * always returns a string representation of the specified session type.
+   * if the session type is unknown then an appropriately worded string
+   * representation is returned and no exception is thrown.
+   *
+   * @param sessiontype the numerical sessiontype.
+   * @return the string representation if known else "unknown".
+   */
+  static const char *sessionTypeToStr(const Type sessionType) throw();
+
+  /**
+   * Returns the type of this tape session.
+   */
+  Type getType() const throw();
+
   /** 
    * Notifies the catalogue session that it should perform any time related
    * actions such as implementing alarms. 
@@ -113,6 +136,7 @@ protected:
    * is protected so that unit tests can go around this restriction for sole
    * purpose of unit testing.
    * 
+   * @param sessionType The type of the tape session.
    * @param log Object representing the API of the CASTOR logging system.
    * @param netTimeout Timeout in seconds to be used when performing network
    * I/O.
@@ -120,10 +144,16 @@ protected:
    * @param driveConfig The configuration of the tape drive.
    */
   CatalogueSession(
+    const Type sessionType,
     log::Logger &log,
     const int netTimeout,
     const pid_t pid,
     const tape::utils::DriveConfig &driveConfig) throw();
+
+  /**
+   * The type of the tape session.
+   */
+  const Type m_sessionType;
 
   /**
    * Object representing the API of the CASTOR logging system.

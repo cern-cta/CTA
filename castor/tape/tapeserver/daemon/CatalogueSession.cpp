@@ -28,10 +28,12 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CatalogueSession::
   CatalogueSession(
+  const Type sessionType,
   log::Logger &log,
   const int netTimeout,
   const pid_t pid,
   const tape::utils::DriveConfig &driveConfig) throw():
+  m_sessionType(sessionType),
   m_log(log),
   m_netTimeout(netTimeout),
   m_pid(pid),
@@ -43,4 +45,27 @@ castor::tape::tapeserver::daemon::CatalogueSession::
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CatalogueSession::
   ~CatalogueSession() {
+}
+
+//-----------------------------------------------------------------------------
+// sessionTypeToStr
+//-----------------------------------------------------------------------------
+const char
+   *castor::tape::tapeserver::daemon::CatalogueSession::sessionTypeToStr(
+  const Type sessionType) throw() {
+  switch(sessionType) {
+  case SESSION_TYPE_CLEANER : return "CLEANER";
+  case SESSION_TYPE_TRANSFER: return "TRANSFER";
+  case SESSION_TYPE_LABEL   : return "LABEL";
+  default                   : return "UNKNOWN";
+  }
+}
+
+//-----------------------------------------------------------------------------
+// getType
+//-----------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::CatalogueSession::Type
+  castor::tape::tapeserver::daemon::CatalogueSession::getType()
+  const throw() {
+  return m_sessionType;
 }

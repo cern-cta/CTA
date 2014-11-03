@@ -62,7 +62,6 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   m_waitJobTimeoutInSecs(waitJobTimeoutInSecs),
   m_mountTimeoutInSecs(mountTimeoutInSecs),
   m_blockMoveTimeoutInSecs(blockMoveTimeoutInSecs),
-  m_sessionType(SESSION_TYPE_NONE),
   m_session(NULL) {
 }
 
@@ -108,21 +107,6 @@ const char
   case DRIVE_STATE_RUNNING : return "RUNNING";
   case DRIVE_STATE_WAITDOWN: return "WAITDOWN";
   default                  : return "UNKNOWN";
-  }
-}
-
-//-----------------------------------------------------------------------------
-// sessionTypeToStr
-//-----------------------------------------------------------------------------
-const char
-   *castor::tape::tapeserver::daemon::CatalogueDrive::sessionTypeToStr(
-  const SessionType sessionType) throw() {
-  switch(sessionType) {
-  case SESSION_TYPE_NONE        : return "NONE";
-  case SESSION_TYPE_CLEANER     : return "CLEANER";
-  case SESSION_TYPE_DATATRANSFER: return "DATATRANSFER";
-  case SESSION_TYPE_LABEL       : return "LABEL";
-  default                       : return "UNKNOWN";
   }
 }
 
@@ -237,17 +221,12 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession &
 void castor::tape::tapeserver::daemon::CatalogueDrive::
   checkForCleanerSession() const {
   checkForSession();
-  if(SESSION_TYPE_CLEANER != m_sessionType) {
+  const CatalogueSession::Type sessionType = m_session->getType();
+  if(CatalogueSession::SESSION_TYPE_CLEANER != sessionType) {
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Session associated with drive is not a cleaner session"
-      ": actual=" << sessionTypeToStr(m_sessionType);
-    throw ex;
-  }
-  if(NULL == m_session) {
-    // Should never get here
-    castor::exception::Exception ex;
-    ex.getMessage() << "Pointer to cleaner session is unexpectedly NULL";
+      ": actual=" << CatalogueSession::sessionTypeToStr(sessionType);
     throw ex;
   }
 }
@@ -309,16 +288,11 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession &
 void castor::tape::tapeserver::daemon::CatalogueDrive::
   checkForLabelSession() const {
   checkForSession();
-  if(SESSION_TYPE_LABEL != m_sessionType) {
+  const CatalogueSession::Type sessionType = m_session->getType();
+  if(CatalogueSession::SESSION_TYPE_LABEL != sessionType) {
     castor::exception::Exception ex;
     ex.getMessage() << "Session associated with drive is not a label session"
-      ": actual=" << sessionTypeToStr(m_sessionType);
-    throw ex;
-  }
-  if(NULL == m_session) {
-    // Should never get here
-    castor::exception::Exception ex;
-    ex.getMessage() << "Pointer to label session is unexpectedly NULL";
+      ": actual=" << CatalogueSession::sessionTypeToStr(sessionType);
     throw ex;
   }
 }
@@ -382,28 +356,14 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession &
 void castor::tape::tapeserver::daemon::CatalogueDrive::
   checkForTransferSession() const {
   checkForSession();
-  if(SESSION_TYPE_DATATRANSFER != m_sessionType) {
+  const CatalogueSession::Type sessionType = m_session->getType();
+  if(CatalogueSession::SESSION_TYPE_TRANSFER != sessionType) {
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Session associated with drive is not a transfer session"
-      ": actual=" << sessionTypeToStr(m_sessionType);
+      ": actual=" << CatalogueSession::sessionTypeToStr(sessionType);
     throw ex;
   }
-  if(NULL == m_session) {
-    // Should never get here
-    castor::exception::Exception ex;
-    ex.getMessage() << "Pointer to transfer session is unexpectedly NULL";
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// getSessionType
-//------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::CatalogueDrive::SessionType
-  castor::tape::tapeserver::daemon::CatalogueDrive::getSessionType()
-  const throw() {
-  return m_sessionType;
 }
 
 //------------------------------------------------------------------------------
@@ -485,7 +445,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedVdqmJob(
       throw ex;
     }
     m_state = DRIVE_STATE_RUNNING;
-    m_sessionType = SESSION_TYPE_DATATRANSFER;
     {
       CatalogueTransferSession *const transferSession =
         CatalogueTransferSession::create(
@@ -553,7 +512,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
       m_cupv,
       m_processForker);
     m_state = DRIVE_STATE_RUNNING;
-    m_sessionType = SESSION_TYPE_LABEL;
     break;
   default:
     {
@@ -573,7 +531,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::createCleaner(
   try {
     // Create a cleaner session in the catalogue
     m_state = DRIVE_STATE_RUNNING;
-    m_sessionType = SESSION_TYPE_CLEANER;
     m_session = CatalogueCleanerSession::create(
       m_log,
       m_netTimeout,
@@ -612,7 +569,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
         drvState2Str(m_state);
       delete m_session;
       m_session = NULL;
-      m_sessionType = SESSION_TYPE_NONE;
       throw ex;
     }
   }
@@ -624,7 +580,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
   // Set the member variable m_session to NULL to prevent the desstruxtor from
   // trying a double delete
   m_session = NULL;
-  m_sessionType = SESSION_TYPE_NONE;
 
   session->sessionSucceeded();
 }
@@ -647,7 +602,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::sessionFailed() {
         drvState2Str(m_state);
       delete m_session;
       m_session = NULL;
-      m_sessionType = SESSION_TYPE_NONE;
       throw ex;
     }
   }
@@ -661,7 +615,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::sessionFailed() {
   // Set the member variable m_session to NULL to prevent the desstruxtor from
   // trying a double delete
   m_session = NULL;
-  m_sessionType = SESSION_TYPE_NONE;
 
   session->sessionFailed();
 }
@@ -842,15 +795,18 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::killSession() {
   case DRIVE_STATE_WAITDOWN:
     {
       const pid_t pid = m_session->getPid();
+      const CatalogueSession::Type sessionType = m_session->getType();
+      const char *sessionTypeStr =
+        CatalogueSession::sessionTypeToStr(sessionType);
       if(kill(pid, SIGKILL)) {
         const std::string errorStr = castor::utils::errnoToString(errno);
         castor::exception::Exception ex;
         ex.getMessage() << "CatalogueDrive failed to kill session: pid=" << pid
-          << " errorStr=" << errorStr;
+          << " sessionType=" << sessionTypeStr << ": " << errorStr;
         throw ex;
       }
       log::Param params[] = {
-        log::Param("sessionType", sessionTypeToStr(m_sessionType)),
+        log::Param("sessionType", sessionTypeStr),
         log::Param("pid", pid)};
       m_log(LOG_WARNING, "Killed tape-session child-process", params);
       delete m_session;

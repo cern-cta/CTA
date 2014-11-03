@@ -83,7 +83,7 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
   const time_t waitJobTimeoutInSecs,
   const time_t mountTimeoutInSecs,
   const time_t blockMoveTimeoutInSecs) throw():
-  CatalogueSession(log, netTimeout, pid, driveConfig),
+  CatalogueSession(SESSION_TYPE_TRANSFER, log, netTimeout, pid, driveConfig),
   m_state(TRANSFERSTATE_WAIT_JOB),
   m_mode(WRITE_DISABLE),
   m_assignmentTime(time(0)),

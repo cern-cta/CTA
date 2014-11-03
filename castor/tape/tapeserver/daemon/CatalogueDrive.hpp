@@ -141,25 +141,6 @@ public:
   static const char *drvState2Str(const DriveState state) throw();
 
   /**
-   * Enumeration of the possible types of session.
-   */
-  enum SessionType {
-    SESSION_TYPE_NONE,
-    SESSION_TYPE_CLEANER,
-    SESSION_TYPE_DATATRANSFER,
-    SESSION_TYPE_LABEL};
-
-  /**
-   * Always returns a string representation of the specified session type.
-   * If the session type is unknown then an appropriately worded string
-   * representation is returned and no exception is thrown.
-   *
-   * @param sessionType The numerical sessionType.
-   * @return The string representation if known else "UNKNOWN".
-   */
-  static const char *sessionTypeToStr(const SessionType sessionType) throw();
-
-  /**
    * Constructor that except for its parameters, initializes all strings to
    * the empty string, all integers to zero, all file descriptors to -1,
    * all lists to the emptylist, and the sessionType to SESSION_TYPE_NONE.
@@ -232,11 +213,6 @@ public:
    */
   DriveState getState() const throw();
   
-  /**
-   * Gets the type of session associated with the tape drive.
-   */
-  SessionType getSessionType() const throw();
-
   /**
    * Configures the tape-drive up.
    *
@@ -505,11 +481,6 @@ private:
    */
   const time_t m_blockMoveTimeoutInSecs;
   
-  /**
-   * The type of data-transfer session.
-   */
-  SessionType m_sessionType;
-
   /**
    * The session metadata associated to the drive catalogue entry
    */

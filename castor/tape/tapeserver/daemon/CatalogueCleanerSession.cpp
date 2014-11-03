@@ -59,7 +59,7 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession::
   const tape::utils::DriveConfig &driveConfig,
   const std::string &vid,
   const time_t assignmentTime) throw():
-  CatalogueSession(log, netTimeout, pid, driveConfig),
+  CatalogueSession(SESSION_TYPE_CLEANER, log, netTimeout, pid, driveConfig),
   m_vid(vid),
   m_assignmentTime(assignmentTime) {
 }

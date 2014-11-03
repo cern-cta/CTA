@@ -204,7 +204,9 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
 
     // Create a cleaner session if the session that crashed is itself not a
     // cleaner
-    if(CatalogueDrive::SESSION_TYPE_CLEANER != drive.getSessionType()) {
+    const CatalogueSession &session = drive.getSession();
+    const CatalogueSession::Type sessionType = session.getType();
+    if(CatalogueSession::SESSION_TYPE_CLEANER != sessionType) {
       const std::string vid = drive.getVidForCleaner();
       const time_t assignmentTime = drive.getAssignmentTimeForCleaner();
       drive.createCleaner(vid, assignmentTime);

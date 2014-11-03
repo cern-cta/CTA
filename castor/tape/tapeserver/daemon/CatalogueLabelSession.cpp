@@ -98,7 +98,7 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession::
   const tape::utils::DriveConfig &driveConfig,
   const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
   const int labelCmdConnection) throw():
-  CatalogueSession(log, netTimeout, pid, driveConfig),
+  CatalogueSession(SESSION_TYPE_LABEL, log, netTimeout, pid, driveConfig),
   m_assignmentTime(time(0)),
   m_labelJob(labelJob),
   m_labelCmdConnection(labelCmdConnection) {
