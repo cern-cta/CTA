@@ -156,6 +156,13 @@ public:
    */
   std::list<std::string> getUnitNames() const;
 
+  /**
+   * If there are running sessions (one per tape drive) then this method kills
+   * tem and sets their corresponding drives down in the vdqm and the drive
+   * catalogue.
+   */
+  void killSessions();
+
 private:
 
   /**

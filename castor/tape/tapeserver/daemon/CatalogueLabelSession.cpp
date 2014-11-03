@@ -115,6 +115,14 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession::
 }
 
 //------------------------------------------------------------------------------
+// getTypeString
+//------------------------------------------------------------------------------
+std::string castor::tape::tapeserver::daemon::CatalogueLabelSession::
+  getTypeString() const throw() {
+  return "CatalogueLabelSession";
+}
+
+//------------------------------------------------------------------------------
 // tick
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueLabelSession::tick() {

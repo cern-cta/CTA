@@ -149,6 +149,22 @@ std::list<std::string>
 }
 
 //-----------------------------------------------------------------------------
+// killSessions
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::Catalogue::killSessions() {
+  for(DriveMap::iterator itor = m_drives.begin();
+    itor != m_drives.end(); itor++) {
+    CatalogueDrive *const drive = itor->second;
+    try {
+      drive->killSession();
+    } catch(castor::exception::Exception &ex) {
+      log::Param params[] = {log::Param("message", ex.getMessage().str())};
+      m_log(LOG_ERR, "Failed to kill session", params);
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
 // findDrive
 //-----------------------------------------------------------------------------
 const castor::tape::tapeserver::daemon::CatalogueDrive

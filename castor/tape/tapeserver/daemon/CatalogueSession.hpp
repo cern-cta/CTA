@@ -47,6 +47,11 @@ public:
    */
   virtual ~CatalogueSession() = 0;
 
+  /**
+   * Returns a string representation of the type of the session.
+   */
+  virtual std::string getTypeString() const throw() = 0;
+
   /** 
    * Notifies the catalogue session that it should perform any time related
    * actions such as implementing alarms. 

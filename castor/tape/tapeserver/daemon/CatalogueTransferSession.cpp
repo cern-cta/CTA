@@ -99,6 +99,14 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
 }
 
 //------------------------------------------------------------------------------
+// getTypeString
+//------------------------------------------------------------------------------
+std::string castor::tape::tapeserver::daemon::CatalogueTransferSession::
+  getTypeString() const throw() {
+  return "CatalogueTransferSession";
+}
+
+//------------------------------------------------------------------------------
 // tick
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::tick() {

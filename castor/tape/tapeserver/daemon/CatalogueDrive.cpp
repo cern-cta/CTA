@@ -28,7 +28,10 @@
 #include "h/Ctape_constants.h"
 #include "h/rmc_constants.h"
 
+#include <errno.h>
+#include <signal.h>
 #include <string.h>
+#include <sys/types.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -827,6 +830,37 @@ time_t castor::tape::tapeserver::daemon::CatalogueDrive::
     return getSession().getAssignmentTime();
   } catch(...) {
     return 0;
+  }
+}
+
+//------------------------------------------------------------------------------
+// killSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueDrive::killSession() {
+  switch(m_state) {
+  case DRIVE_STATE_RUNNING:
+  case DRIVE_STATE_WAITDOWN:
+    {
+      const pid_t pid = m_session->getPid();
+      if(kill(pid, SIGKILL)) {
+        const std::string errorStr = castor::utils::errnoToString(errno);
+        castor::exception::Exception ex;
+        ex.getMessage() << "CatalogueDrive failed to kill session: pid=" << pid
+          << " errorStr=" << errorStr;
+        throw ex;
+      }
+      log::Param params[] = {
+        log::Param("type", m_session->getTypeString()),
+        log::Param("pid", pid)};
+      m_log(LOG_WARNING, "Killed tape-session child-process", params);
+      delete m_session;
+      m_session = NULL;
+      m_state = DRIVE_STATE_DOWN;
+      m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
+      break;
+    }
+  default:
+    break;
   }
 }
 

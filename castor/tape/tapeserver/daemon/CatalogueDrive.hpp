@@ -421,6 +421,14 @@ public:
    */
   time_t getAssignmentTimeForCleaner() const throw();
 
+  /**
+   * If there is a running session then this method kills it and sets the drive
+   * down in the vdqm and the drive catalogue.
+   *
+   * If there is no running session then this method does nothing.
+   */
+  void killSession();
+
 private:
 
   /**

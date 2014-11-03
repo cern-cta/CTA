@@ -118,6 +118,11 @@ castor::tape::tapeserver::daemon::TapeDaemon::~TapeDaemon() throw() {
     m_processForker->stopProcessForker("TapeDaemon destructor called");
     delete m_processForker;
   }
+  if(NULL != m_catalogue) {
+    m_log(LOG_WARNING,
+      "Tape-server parent-process killing any running tape-sessions");
+    m_catalogue->killSessions();
+  }
   delete m_catalogue;
   destroyZmqContext();
   google::protobuf::ShutdownProtobufLibrary();
