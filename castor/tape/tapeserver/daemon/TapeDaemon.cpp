@@ -844,21 +844,14 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
 // mainEventLoop
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop() {
-  while(handleEvents()) {
+  while (handleIOEvents() && handleTick() && handlePendingSignals()) {
   }
 }
 
 //------------------------------------------------------------------------------
-// handleEvents
+// handleIOEvents
 //------------------------------------------------------------------------------
-bool castor::tape::tapeserver::daemon::TapeDaemon::handleEvents()
-   {
-  // With our current understanding we see no reason for an exception from the
-  // reactor to be used as a reason to stop the tapeserverd daemon.
-  //
-  // In the future, one or more specific exception types could be introduced
-  // with their own catch clauses that do in fact require the tapeserverd daemon
-  // to be stopped.
+bool castor::tape::tapeserver::daemon::TapeDaemon::handleIOEvents() throw() {
   try {
     const int timeout = 100; // 100 milliseconds
     m_reactor.handleEvents(timeout);
@@ -868,8 +861,8 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleEvents()
       log::Param("message", ex.getMessage().str()),
       log::Param("backtrace", ex.backtrace())
     };
-    m_log(LOG_ERR,
-      "Unexpected castor exception thrown when handling an I/O event", params);
+    m_log(LOG_ERR, "Unexpected castor exception thrown when handling an I/O"
+      " event", params);
   } catch(std::exception &se) {
     // Log exception and continue
     log::Param params[] = {log::Param("message", se.what())};
@@ -881,9 +874,35 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleEvents()
       "Unexpected and unknown exception thrown when handling an I/O event");
   }
 
-  m_catalogue->tick();
+  return true; // Continue main event loop
+}
 
-  return handlePendingSignals();
+//------------------------------------------------------------------------------
+// handleTick
+//------------------------------------------------------------------------------
+bool castor::tape::tapeserver::daemon::TapeDaemon::handleTick() throw() {
+  try {
+    return m_catalogue->handleTick();
+  } catch(castor::exception::Exception &ex) {
+    // Log exception and continue
+    log::Param params[] = {
+      log::Param("message", ex.getMessage().str()),
+      log::Param("backtrace", ex.backtrace())
+    };
+    m_log(LOG_ERR, "Unexpected castor exception thrown when handling a tick"
+      " in time", params);
+  } catch(std::exception &se) {
+    // Log exception and continue
+    log::Param params[] = {log::Param("message", se.what())};
+    m_log(LOG_ERR, "Unexpected exception thrown when handling a tick in time",
+      params);
+  } catch(...) {
+    // Log exception and continue
+    m_log(LOG_ERR,
+      "Unexpected and unknown exception thrown when handling a tick in time");
+  }
+
+  return true; // Continue main event loop
 }
 
 //------------------------------------------------------------------------------
@@ -891,19 +910,38 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleEvents()
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::TapeDaemon::handlePendingSignals()
   throw() {
-  int sig = 0;
-  sigset_t allSignals;
-  siginfo_t sigInfo;
-  sigfillset(&allSignals);
-  const struct timespec immediateTimeout = {0, 0};
+  try {
+    int sig = 0;
+    sigset_t allSignals;
+    siginfo_t sigInfo;
+    sigfillset(&allSignals);
+    const struct timespec immediateTimeout = {0, 0};
 
-  // While there is a pending signal to be handled
-  while (0 < (sig = sigtimedwait(&allSignals, &sigInfo, &immediateTimeout))) {
-    const bool continueMainEventLoop = handleSignal(sig, sigInfo);
+    // While there is a pending signal to be handled
+    while (0 < (sig = sigtimedwait(&allSignals, &sigInfo, &immediateTimeout))) {
+      const bool continueMainEventLoop = handleSignal(sig, sigInfo);
 
-    if(!continueMainEventLoop) {
-      return false;
+      if(!continueMainEventLoop) {
+        return false;
+      }
     }
+  } catch(castor::exception::Exception &ex) {
+    // Log exception and continue
+    log::Param params[] = {
+      log::Param("message", ex.getMessage().str()),
+      log::Param("backtrace", ex.backtrace())
+    };
+    m_log(LOG_ERR, "Unexpected castor exception thrown when handling a"
+      " pending signal", params);
+  } catch(std::exception &se) {
+    // Log exception and continue
+    log::Param params[] = {log::Param("message", se.what())};
+    m_log(LOG_ERR, "Unexpected exception thrown when handling a pending signal",
+      params);
+  } catch(...) {
+    // Log exception and continue
+    m_log(LOG_ERR,
+      "Unexpected and unknown exception thrown when handling a pending signal");
   }
 
   return true; // Continue the main event loop

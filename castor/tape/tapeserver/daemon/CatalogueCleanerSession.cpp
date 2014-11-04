@@ -65,9 +65,10 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession::
 }
 
 //------------------------------------------------------------------------------
-// tick
+// handleTick
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueCleanerSession::tick() {
+bool castor::tape::tapeserver::daemon::CatalogueCleanerSession::handleTick() {
+  return true; // Continue the main event loop
 }
 
 //------------------------------------------------------------------------------

@@ -64,15 +64,17 @@ public:
     const std::string &vid,
     const time_t assignmentTime);
 
-  /** 
-   * Notifies the catalogue session that it should perform any time related
-   * actions such as implementing alarms. 
+  /**
+   * Handles a tick in time.  Time driven actions such as alarms should be
+   * implemented here.
    *
    * This method does not have to be called at any time precise interval,
    * though it should be called at least twice as fast as the quickest reaction
-   * time imposed on the catalogue session.
+   * time imposed on the catalogue.
+   *
+   * @return True if the main event loop should continue, else false.
    */
-  void tick();
+  bool handleTick();
     
   /**
    * To be called when the session has ended with success.

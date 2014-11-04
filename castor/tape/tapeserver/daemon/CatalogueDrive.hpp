@@ -183,14 +183,16 @@ public:
   ~CatalogueDrive() throw();
 
   /**
-   * Notifies the catalogue drive that it should perform any time related
-   * actions such as implementing alarms.
+   * Handles a tick in time.  Time driven actions such as alarms should be
+   * implemented here.
    *
    * This method does not have to be called at any time precise interval,
    * though it should be called at least twice as fast as the quickest reaction
-   * time imposed on the catalogue drive.
+   * time imposed on the catalogue.
+   *
+   * @return True if the main event loop should continue, else false.
    */
-  void tick();
+  bool handleTick();
 
   /**
    * If there is a catalogue session associated with the tape drive then this

@@ -379,11 +379,23 @@ protected:
   void mainEventLoop();
 
   /**
-   * Handles any pending events.
+   * Handles any pending IO events.
    *
    * @return True if the main event loop should continue, else false.
    */
-  bool handleEvents();
+  bool handleIOEvents() throw();
+
+  /**
+   * Handles a tick in time.  Time driven actions such as alarms should be
+   * implemented here.
+   *
+   * This method does not have to be called at any time precise interval,
+   * though it should be called at least twice as fast as the quickest reaction
+   * time imposed on the catalogue.
+   *
+   * @return True if the main event loop should continue, else false.
+   */
+  bool handleTick() throw();
 
   /**
    * Handles any pending signals.

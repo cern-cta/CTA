@@ -115,9 +115,10 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession::
 }
 
 //------------------------------------------------------------------------------
-// tick
+// handlTick
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueLabelSession::tick() {
+bool castor::tape::tapeserver::daemon::CatalogueLabelSession::handleTick() {
+  return true; // Continue the main event loop
 }
 
 //------------------------------------------------------------------------------

@@ -80,15 +80,17 @@ public:
     const time_t blockMoveTimeoutInSecs,
     ProcessForkerProxy &processForker);
 
-  /** 
-   * Notifies the catalogue session that it should perform any time related
-   * actions such as implementing alarms. 
+  /**
+   * Handles a tick in time.  Time driven actions such as alarms should be
+   * implemented here.
    *
    * This method does not have to be called at any time precise interval,
    * though it should be called at least twice as fast as the quickest reaction
-   * time imposed on the catalogue session.
+   * time imposed on the catalogue.
+   *
+   * @return True if the main event loop should continue, else false.
    */
-  void tick();
+  bool handleTick();
 
   /**
    * To be called when the session has ended with success.
@@ -344,29 +346,53 @@ private:
    */
   const time_t m_blockMoveTimeoutInSecs;
 
-  /** 
-   * A tick has occurred whilst the catalogue transfer-session is in the
-   * TRANSFERSTATE_WAIT_JOB state.
+  /**
+   * Handles a tick in time whilst in the TRANSFERSTATE_WAIT_JOB state.  Time
+   * driven actions such as alarms should be implemented here.
+   *
+   * This method does not have to be called at any time precise interval,
+   * though it should be called at least twice as fast as the quickest reaction
+   * time imposed on the catalogue.
+   *
+   * @return True if the main event loop should continue, else false.
    */
-  void waitJobTick();
+  bool handleTickWhilstWaitJob();
 
-  /** 
-   * A tick has occurred whilst the catalogue transfer-session is in the
-   * TRANSFERSTATE_WAIT_MOUNTED state.
+  /**
+   * Handles a tick in time whilst in the TRANSFERSTATE_WAIT_MOUNTED state.  Time
+   * driven actions such as alarms should be implemented here.
+   *
+   * This method does not have to be called at any time precise interval,
+   * though it should be called at least twice as fast as the quickest reaction
+   * time imposed on the catalogue.
+   *
+   * @return True if the main event loop should continue, else false.
    */
-  void waitMountedTick();
+  bool handleTickWhilstWaitMounted();
 
-  /** 
-   * A tick has occurred whilst the catalogue transfer-session is in the
-   * TRANSFERSTATE_RUNNING state.
+  /**
+   * Handles a tick in time whilst in the TRANSFERSTATE_RUNNING state.  Time
+   * driven actions such as alarms should be implemented here.
+   *
+   * This method does not have to be called at any time precise interval,
+   * though it should be called at least twice as fast as the quickest reaction
+   * time imposed on the catalogue.
+   *
+   * @return True if the main event loop should continue, else false.
    */
-  void runningTick();
+  bool handleTickWhilstRunning();
 
-  /** 
-   * A tick has occurred whilst the catalogue transfer-session is in the
-   * TRANSFERSTATE_KILLED state.
+  /**
+   * Handles a tick in time whilst in the TRANSFERSTATE_KILLED state.  Time
+   * driven actions such as alarms should be implemented here.
+   *
+   * This method does not have to be called at any time precise interval,
+   * though it should be called at least twice as fast as the quickest reaction
+   * time imposed on the catalogue.
+   *
+   * @return True if the main event loop should continue, else false.
    */
-  void killedTick();
+  bool handleTickWhilstKilled();
 
 }; // class CatalogueTransferSession
 

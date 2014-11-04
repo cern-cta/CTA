@@ -74,16 +74,16 @@ castor::tape::tapeserver::daemon::CatalogueDrive::~CatalogueDrive()
 }
 
 //------------------------------------------------------------------------------
-// tick
+// handleTick
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueDrive::tick() {
+bool castor::tape::tapeserver::daemon::CatalogueDrive::handleTick() {
   try {
     checkForSession();
   } catch(...) {
-    return;
+    return true; // Continue the main event loop
   }
 
-  m_session->tick();
+  return m_session->handleTick();
 }
 
 //------------------------------------------------------------------------------

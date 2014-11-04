@@ -69,14 +69,19 @@ castor::tape::tapeserver::daemon::Catalogue::~Catalogue() throw() {
 }
 
 //-----------------------------------------------------------------------------
-// tick
+// handleTick
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::Catalogue::tick() {
+bool castor::tape::tapeserver::daemon::Catalogue::handleTick() {
   for(DriveMap::const_iterator itor = m_drives.begin(); itor != m_drives.end();
     itor++) {
     CatalogueDrive *const drive = itor->second;
-    drive->tick();
+
+    if(!drive->handleTick()) {
+      return false; // Do not continue the main event loop
+    }
   }
+
+  return true; // Continue the main event loop
 }
 
 //-----------------------------------------------------------------------------

@@ -91,14 +91,16 @@ public:
   ~Catalogue() throw();
 
   /**
-   * Notifies the catalogue that it should perform any time related actions
-   * such as implementing alarms.
+   * Handles a tick in time.  Time driven actions such as alarms should be
+   * implemented here.
    *
    * This method does not have to be called at any time precise interval,
    * though it should be called at least twice as fast as the quickest reaction
    * time imposed on the catalogue.
+   *
+   * @return True if the main event loop should continue, else false.
    */
-  void tick();
+  bool handleTick();
 
   /**
    * Poplates the catalogue using the specified tape-drive configurations.

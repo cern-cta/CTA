@@ -99,22 +99,23 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
 }
 
 //------------------------------------------------------------------------------
-// tick
+// handleTick
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueTransferSession::tick() {
+bool castor::tape::tapeserver::daemon::CatalogueTransferSession::handleTick() {
   switch(m_state) {
-  case TRANSFERSTATE_WAIT_JOB:     return waitJobTick();
-  case TRANSFERSTATE_WAIT_MOUNTED: return waitMountedTick();
-  case TRANSFERSTATE_RUNNING:      return runningTick();
-  case TRANSFERSTATE_KILLED:       return killedTick();
-  default: return;
+  case TRANSFERSTATE_WAIT_JOB:     return handleTickWhilstWaitJob();
+  case TRANSFERSTATE_WAIT_MOUNTED: return handleTickWhilstWaitMounted();
+  case TRANSFERSTATE_RUNNING:      return handleTickWhilstRunning();
+  case TRANSFERSTATE_KILLED:       return handleTickWhilstKilled();
+  default: return true; // Continue the main event loop
   }
 }
 
 //------------------------------------------------------------------------------
-// waitJobTick
+// handleTickWhilstWaitJob
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueTransferSession::waitJobTick() {
+bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
+  handleTickWhilstWaitJob() {
   const time_t now = time(0);
   const time_t secsWaiting = now - m_assignmentTime;
   const bool timeOutExceeded = secsWaiting > m_waitJobTimeoutInSecs;
@@ -137,13 +138,15 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::waitJobTick() {
       m_state = TRANSFERSTATE_KILLED;
     }
   }
+
+  return true; // Continue the main event loop
 }
 
 //------------------------------------------------------------------------------
-// waitMountTick
+// handleTickWhilstWaitMounted
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueTransferSession::
-  waitMountedTick() {
+bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
+  handleTickWhilstWaitMounted() {
   const time_t now = time(0);
   const time_t secsWaiting = now - m_mountStartTime;
   const bool timeOutExceeded = secsWaiting > m_mountTimeoutInSecs;
@@ -166,12 +169,15 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
       m_state = TRANSFERSTATE_KILLED;
     }
   }
+
+  return true; // Continue the main event loop
 }
 
 //------------------------------------------------------------------------------
-// runningTick
+// handleTickWhilstRunning
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueTransferSession::runningTick() {
+bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
+  handleTickWhilstRunning() {
   const time_t now = time(0);
   const time_t secsWaiting = now - m_lastTimeSomeBlocksWereMoved;
   const bool timeOutExceeded = secsWaiting > m_blockMoveTimeoutInSecs;
@@ -194,12 +200,16 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::runningTick() {
       m_state = TRANSFERSTATE_KILLED;
     }
   }
+
+  return true; // Continue the main event loop
 }
 
 //------------------------------------------------------------------------------
-// killedTick
+// handleTickWhilstKilled
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueTransferSession::killedTick() {
+bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
+  handleTickWhilstKilled() {
+  return true; // Continue the main event loop
 }
 
 //------------------------------------------------------------------------------
