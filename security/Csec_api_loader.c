@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <unistd.h>
 #include <netdb.h>
@@ -277,13 +278,16 @@ void *Csec_get_shlib(Csec_context_t *ctx) {
     Csec_trace(func, "Could not find library in linked list. Will try to load it\n");
 
     /* Creating the library name */
-    snprintf(filename, CA_MAXNAMELEN, "libcastorsec_plugin_%s.so.%d.%d",
-             ctx->protocols[ctx->current_protocol].id, MAJORVERSION, MINORVERSION);
+    char idlower[CA_MAXNAMELEN];
+    int i;
+    strncpy(idlower, ctx->protocols[ctx->current_protocol].id, CA_MAXNAMELEN);
+    for (i = 0; idlower[i]; i++) { idlower[i] = tolower(idlower[i]); }
+    snprintf(filename, CA_MAXNAMELEN, "libcastorsec_%splugin.so.%d.%d",
+             idlower, MAJORVERSION, MINORVERSION);
     snprintf(filename_thread,CA_MAXNAMELEN-1,"%s_thread.so",filename);
     filename_thread[CA_MAXNAMELEN-1] = 0;
 
     handle = NULL;
-    
     if (ctx->thread_safe && ! csec_nothread ) {
       Csec_trace(func, "Using shared library <%s> for mechanism <%s>\n",
                         filename_thread,
