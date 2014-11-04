@@ -84,6 +84,25 @@ bool castor::tape::tapeserver::daemon::Catalogue::handleTick() {
   return true; // Continue the main event loop
 }
 
+//------------------------------------------------------------------------------
+// allDrivesAreShutdown
+//------------------------------------------------------------------------------
+bool castor::tape::tapeserver::daemon::Catalogue::allDrivesAreShutdown()
+  const throw() {
+  try {
+    for(DriveMap::const_iterator itor = m_drives.begin(); itor != m_drives.end();
+      itor++) {
+      CatalogueDrive *const drive = itor->second;
+      if(CatalogueDrive::DRIVE_STATE_SHUTDOWN != drive->getState()) {
+        return false;
+      }
+    }
+    return true;
+  } catch(...) {
+    return false;
+  }
+}
+
 //-----------------------------------------------------------------------------
 // populate
 //-----------------------------------------------------------------------------
@@ -151,6 +170,23 @@ std::list<std::string>
   }
 
   return unitNames;
+}
+
+//-----------------------------------------------------------------------------
+// shutdown
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::Catalogue::shutdown() {
+  // Request sessions to shutdown
+  for(DriveMap::iterator itor = m_drives.begin();
+    itor != m_drives.end(); itor++) {
+    CatalogueDrive *const drive = itor->second;
+    try {
+      drive->shutdown();
+    } catch(castor::exception::Exception &ex) {
+      log::Param params[] = {log::Param("message", ex.getMessage().str())};
+      m_log(LOG_ERR, "Failed to shutdown session", params);
+    }
+  }
 }
 
 //-----------------------------------------------------------------------------

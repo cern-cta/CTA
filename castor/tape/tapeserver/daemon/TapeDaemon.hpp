@@ -105,6 +105,31 @@ public:
 protected:
 
   /**
+   * Enumeration of the possible tape-daemon states.
+   */
+  enum State {
+    TAPEDAEMON_STATE_RUNNING,
+    TAPEDAEMON_STATE_SHUTTINGDOWN};
+
+  /**
+   * Return sthe string representation of the specified tape-daemon state.
+   *
+   * @param The tape-deamon state.
+   * @return The string representation.
+   */
+  static const char *stateToStr(const State state) throw();
+
+  /**
+   * The current state of the tape-server daemon.
+   */
+  State m_state;
+
+  /**
+   * The absolute time at which the shutdown sequence was started.
+   */
+  time_t m_startOfShutdown;
+
+  /**
    * Returns the name of the host on which the daemon is running.
    */
   std::string getHostName() const;

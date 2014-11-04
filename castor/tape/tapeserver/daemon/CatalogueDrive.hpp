@@ -120,13 +120,54 @@ public:
    * The tape daemon can also receive a label job from the tape labeling
    * command-line tool.  The tape daemon behaves as described above except a
    * label session is forked instead.
+   *
+   * The following FSTN showns the shutdown logic.
+   *
+   *  ------------------  shutdown
+   * |       DOWN       |---------------------------------------->
+   *  ------------------                                          |
+   *                                                              |
+   *                                                              |
+   *  ------------------  shutdown                                |
+   * |       UP         |---------------------------------------->|
+   *  ------------------                                          |
+   *                                                              |
+   *                                                              |
+   *  ------------------  shutdown / kill session                 |
+   * |     RUNNING      |------------------------->               |
+   *  ------------------                           |              |
+   *                                               |              |
+   *                                               |              |
+   *  ------------------  shutdown / kill session  |              |
+   * |     WAITDOWN     |------------------------->|              |
+   *  ------------------                           |              |
+   *                                               v              |
+   *                                      -------------------     |
+   *                                     | WAITSHUTDOWNKILL  |    |
+   *                                      -------------------     |
+   *                                               |              |
+   *                  session killed / run cleaner |              |
+   *                                               |              |
+   *                                     ---------------------    |
+   *                                    | WAITSHUTDOWNCLEANER |   |
+   *                                     ---------------------    |
+   *                                               |              |
+   *                              cleaner finished |              |
+   *                                               |              |
+   *                                               v              v
+   *                                               ----------------
+   *                                              |    SHUTDOWN    |
+   *                                               ----------------
    */
   enum DriveState {
     DRIVE_STATE_INIT,
     DRIVE_STATE_DOWN,
     DRIVE_STATE_UP,
     DRIVE_STATE_RUNNING,
-    DRIVE_STATE_WAITDOWN};
+    DRIVE_STATE_WAITDOWN,
+    DRIVE_STATE_WAITSHUTDOWNKILL,
+    DRIVE_STATE_WAITSHUTDOWNCLEANER,
+    DRIVE_STATE_SHUTDOWN};
 
   /**
    * Returns the string representation of the specified tape-drive state.
@@ -138,7 +179,7 @@ public:
    * @param state The numerical tape-drive state.
    * @return The string representation if known else "UNKNOWN".
    */
-  static const char *drvState2Str(const DriveState state) throw();
+  static const char *driveStateToStr(const DriveState state) throw();
 
   /**
    * Constructor that except for its parameters, initializes all strings to
@@ -400,6 +441,12 @@ public:
   time_t getAssignmentTimeForCleaner() const throw();
 
   /**
+   * If there is a running session that is not a cleaner session then this
+   * method kills the session and runs a cleaner session.
+   */
+  void shutdown();
+
+  /**
    * If there is a running session then this method kills it and sets the drive
    * down in the vdqm and the drive catalogue.
    *
@@ -592,6 +639,13 @@ private:
    * in a TapeStatReplyMsgBody.
    */
   std::string getVsnForTapeStatDriveEntry() const throw();
+
+  /**
+   * Helper method for logging and changing the state of the catalogue drive.
+   *
+   * @param newState The state to which the catalogue drive should be changed.
+   */
+  void changeState(const DriveState newState) throw();
 
 }; // class CatalogueDrive
 

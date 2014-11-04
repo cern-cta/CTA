@@ -69,8 +69,8 @@ start() {
 }
 
 stop() {
-        echo -n $"Stopping $prog: "
-        killproc $prog
+        echo -n $"Stopping $prog with a maximum delay of 10 minutes: "
+        killproc -d 600 $prog
 
         RETVAL=$?
         echo

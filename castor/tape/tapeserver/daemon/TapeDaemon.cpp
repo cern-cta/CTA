@@ -75,6 +75,8 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   reactor::ZMQReactor &reactor,
   castor::server::ProcessCap &capUtils):
   castor::server::Daemon(stdOut, stdErr, log),
+  m_state(TAPEDAEMON_STATE_RUNNING),
+  m_startOfShutdown(0),
   m_argc(argc),
   m_argv(argv),
   m_netTimeout(netTimeout),
@@ -93,11 +95,21 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
 }
 
 //------------------------------------------------------------------------------
+// stateToStr
+//------------------------------------------------------------------------------
+const char *castor::tape::tapeserver::daemon::TapeDaemon::stateToStr(
+  const State state) throw () {
+  switch(state) {
+  case TAPEDAEMON_STATE_RUNNING     : return "RUNNING";
+  case TAPEDAEMON_STATE_SHUTTINGDOWN: return "SHUTTINGDOWN";
+  default                           : return "UNKNOWN";
+  }
+}
+
+//------------------------------------------------------------------------------
 // getHostName
 //------------------------------------------------------------------------------
-std::string
-  castor::tape::tapeserver::daemon::TapeDaemon::getHostName()
-  const  {
+std::string castor::tape::tapeserver::daemon::TapeDaemon::getHostName() const {
   char nameBuf[81];
   if(gethostname(nameBuf, sizeof(nameBuf))) {
     char message[100];
@@ -124,7 +136,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::~TapeDaemon() throw() {
     m_catalogue->killSessions();
   }
   delete m_catalogue;
-  destroyZmqContext();
+  //destroyZmqContext();
   google::protobuf::ShutdownProtobufLibrary();
 }
 
@@ -614,7 +626,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
       ex.getMessage() << "Failed to register tape drive in vdqm"
         ": server=" << m_hostName << " unitName=" << unitName << " dgn=" <<
         driveConfig.dgn << ": Invalid drive state: state=" <<
-        CatalogueDrive::drvState2Str(drive.getState());
+        CatalogueDrive::driveStateToStr(drive.getState());
       throw ex;
     }
   }
@@ -874,13 +886,31 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleIOEvents() throw() {
       "Unexpected and unknown exception thrown when handling an I/O event");
   }
 
-  return true; // Continue main event loop
+  return true; // Continue the main event loop
 }
 
 //------------------------------------------------------------------------------
 // handleTick
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::TapeDaemon::handleTick() throw() {
+  if(m_catalogue->allDrivesAreShutdown()) {
+    m_log(LOG_WARNING, "Tape-server parent-process ending main loop because"
+      " all tape drives are shutdown");
+    return false; // Do not continue the main event loop
+  }
+
+  if(TAPEDAEMON_STATE_SHUTTINGDOWN == m_state) {
+    const time_t now = time(NULL);
+    const time_t timeSpentShuttingDown = now - m_startOfShutdown;
+    const time_t shutdownTimeout = 9*60; // 9 minutes
+    if(shutdownTimeout <= timeSpentShuttingDown) {
+      log::Param params[] = {log::Param("shutdownTimeout", shutdownTimeout)};
+      m_log(LOG_WARNING, "Tape-server parent-process ending main loop because"
+        " shutdown timeout has been reached", params);
+      return false; // Do not continue the main event loop
+    }
+  }
+
   try {
     return m_catalogue->handleTick();
   } catch(castor::exception::Exception &ex) {
@@ -902,7 +932,7 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleTick() throw() {
       "Unexpected and unknown exception thrown when handling a tick in time");
   }
 
-  return true; // Continue main event loop
+  return true; // Continue the main event loop
 }
 
 //------------------------------------------------------------------------------
@@ -960,7 +990,7 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleSignal(const int sig,
     {
       log::Param params[] = {log::Param("signal", sig)};
       m_log(LOG_INFO, "Ignoring signal", params);
-      return true; // Continue main event loop
+      return true; // Continue the main event loop
     }
   }
 }
@@ -970,9 +1000,19 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleSignal(const int sig,
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::TapeDaemon::handleSIGINT(
   const siginfo_t &sigInfo) {
-  m_log(LOG_WARNING, "Tape-server parent-process stopping gracefully because"
-    " SIGINT was received");
-  return false; // Do not continue main event loop
+  if(TAPEDAEMON_STATE_RUNNING == m_state) {
+    m_log(LOG_WARNING, "Tape-server parent-process starting shutdown sequence"
+      " because SIGINT was received");
+
+    m_state = TAPEDAEMON_STATE_SHUTTINGDOWN;
+    m_startOfShutdown = time(NULL);
+    m_catalogue->shutdown();
+  } else {
+    m_log(LOG_WARNING, "Tape-server parent-process ignoring SIGINT because the"
+      " shutdown sequence has already been started");
+  }
+
+  return true; // Continue the main event loop
 }
 
 //------------------------------------------------------------------------------
@@ -980,9 +1020,19 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleSIGINT(
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::TapeDaemon::handleSIGTERM(
   const siginfo_t &sigInfo) {
-  m_log(LOG_WARNING, "Tape-server parent-process stopping gracefully because"
-    " SIGTERM was received");
-  return false; // Do not continue main event loop
+  if(TAPEDAEMON_STATE_RUNNING == m_state) {
+    m_log(LOG_WARNING, "Tape-server parent-process starting shutdown sequence"
+      " because SIGTERM was received");
+
+    m_state = TAPEDAEMON_STATE_SHUTTINGDOWN;
+    m_startOfShutdown = time(NULL);
+    m_catalogue->shutdown();
+  } else {
+    m_log(LOG_WARNING, "Tape-server parent-process ignoring SIGTERM because the"
+      " shutdown sequence has already been started");
+  }
+
+  return true; // Continue the main event loop
 }
 
 //------------------------------------------------------------------------------

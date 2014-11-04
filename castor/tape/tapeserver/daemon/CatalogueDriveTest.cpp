@@ -39,18 +39,18 @@ protected:
   }
 };
 
-TEST_F(castor_tape_tapeserver_daemon_CatalogueDriveTest, drvState2Str) {
+TEST_F(castor_tape_tapeserver_daemon_CatalogueDriveTest, driveStateToStr) {
   using namespace castor::tape::tapeserver::daemon;
 
   ASSERT_EQ(std::string("INIT"),
-    CatalogueDrive::drvState2Str(CatalogueDrive::DRIVE_STATE_INIT));
+    CatalogueDrive::driveStateToStr(CatalogueDrive::DRIVE_STATE_INIT));
   ASSERT_EQ(std::string("DOWN"),
-    CatalogueDrive::drvState2Str(CatalogueDrive::DRIVE_STATE_DOWN));
+    CatalogueDrive::driveStateToStr(CatalogueDrive::DRIVE_STATE_DOWN));
   ASSERT_EQ(std::string("UP"),
-    CatalogueDrive::drvState2Str(CatalogueDrive::DRIVE_STATE_UP));
-  ASSERT_EQ(std::string("RUNNING"), CatalogueDrive::drvState2Str(
+    CatalogueDrive::driveStateToStr(CatalogueDrive::DRIVE_STATE_UP));
+  ASSERT_EQ(std::string("RUNNING"), CatalogueDrive::driveStateToStr(
     CatalogueDrive::DRIVE_STATE_RUNNING));
-  ASSERT_EQ(std::string("WAITDOWN"), CatalogueDrive::drvState2Str(
+  ASSERT_EQ(std::string("WAITDOWN"), CatalogueDrive::driveStateToStr(
     CatalogueDrive::DRIVE_STATE_WAITDOWN));
 }
 

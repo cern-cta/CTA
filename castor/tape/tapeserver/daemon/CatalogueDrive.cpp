@@ -95,18 +95,21 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::deleteSession() {
 }
 
 //-----------------------------------------------------------------------------
-// drvState2Str
+// driveStateToStr
 //-----------------------------------------------------------------------------
 const char
-  *castor::tape::tapeserver::daemon::CatalogueDrive::drvState2Str(
+  *castor::tape::tapeserver::daemon::CatalogueDrive::driveStateToStr(
   const DriveState state) throw() {
   switch(state) {
-  case DRIVE_STATE_INIT    : return "INIT";
-  case DRIVE_STATE_DOWN    : return "DOWN";
-  case DRIVE_STATE_UP      : return "UP";
-  case DRIVE_STATE_RUNNING : return "RUNNING";
-  case DRIVE_STATE_WAITDOWN: return "WAITDOWN";
-  default                  : return "UNKNOWN";
+  case DRIVE_STATE_INIT                : return "INIT";
+  case DRIVE_STATE_DOWN                : return "DOWN";
+  case DRIVE_STATE_UP                  : return "UP";
+  case DRIVE_STATE_RUNNING             : return "RUNNING";
+  case DRIVE_STATE_WAITDOWN            : return "WAITDOWN";
+  case DRIVE_STATE_WAITSHUTDOWNKILL    : return "WAITSHUTDOWNKILL";
+  case DRIVE_STATE_WAITSHUTDOWNCLEANER : return "WAITSHUTDOWNCLEANER";
+  case DRIVE_STATE_SHUTDOWN            : return "SHUTDOWN";
+  default                              : return "UNKNOWN";
   }
 }
 
@@ -131,8 +134,7 @@ castor::tape::tapeserver::daemon::CatalogueDrive::DriveState
 // getSession
 //------------------------------------------------------------------------------
 const castor::tape::tapeserver::daemon::CatalogueSession &
-  castor::tape::tapeserver::daemon::CatalogueDrive::getSession()
-  const {
+  castor::tape::tapeserver::daemon::CatalogueDrive::getSession() const {
   try {
     checkForSession();
     return *m_session;
@@ -149,15 +151,10 @@ const castor::tape::tapeserver::daemon::CatalogueSession &
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::checkForSession()
   const {
-  if(DRIVE_STATE_RUNNING != m_state && DRIVE_STATE_WAITDOWN != m_state) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Drive is currently not running a session";
-    throw ex;
-  }
   if(NULL == m_session) {
-    // Should never get here
     castor::exception::Exception ex;
-    ex.getMessage() << "Pointer to tape session is unexpectedly NULL";
+    ex.getMessage() << "Drive is currently not running a session: state=" <<
+      driveStateToStr(m_state);
     throw ex;
   }
 }
@@ -375,16 +372,16 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureUp() {
   case DRIVE_STATE_RUNNING:
     break;
   case DRIVE_STATE_DOWN:
-    m_state = DRIVE_STATE_UP;
+    changeState(DRIVE_STATE_UP);
     break;
   case DRIVE_STATE_WAITDOWN:
-    m_state = DRIVE_STATE_RUNNING;
+    changeState(DRIVE_STATE_RUNNING);
     break;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to configure tape-drive " << m_config.unitName
-        << " up : Incompatible drive state: state=" << drvState2Str(m_state);
+        << " up : Incompatible drive state: state=" << driveStateToStr(m_state);
       throw ex;
     }
   }
@@ -399,18 +396,18 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureDown() {
   case DRIVE_STATE_DOWN:
     break;
   case DRIVE_STATE_UP:
-    m_state = DRIVE_STATE_DOWN;
+    changeState(DRIVE_STATE_DOWN);
     m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
     break;
   case CatalogueDrive::DRIVE_STATE_RUNNING:
-    m_state = DRIVE_STATE_WAITDOWN;
+    changeState(DRIVE_STATE_WAITDOWN);
     break;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to configure tape drive " << m_config.unitName
         << " down: " << ": Incompatible drive state: state=" <<
-        drvState2Str(m_state);
+        driveStateToStr(m_state);
       throw ex;
     }
   }
@@ -444,7 +441,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedVdqmJob(
           << job.dgn;
       throw ex;
     }
-    m_state = DRIVE_STATE_RUNNING;
+    changeState(DRIVE_STATE_RUNNING);
     {
       CatalogueTransferSession *const transferSession =
         CatalogueTransferSession::create(
@@ -468,7 +465,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedVdqmJob(
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(m_state);
+        ": Incompatible drive state: state=" << driveStateToStr(m_state);
       throw ex;
     }
   } 
@@ -511,13 +508,13 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
       labelCmdConnection,
       m_cupv,
       m_processForker);
-    m_state = DRIVE_STATE_RUNNING;
+    changeState(DRIVE_STATE_RUNNING);
     break;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(m_state);
+        ": Incompatible drive state: state=" << driveStateToStr(m_state);
       throw ex;
     }
   }
@@ -529,8 +526,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
 void castor::tape::tapeserver::daemon::CatalogueDrive::createCleaner(
   const std::string &vid, const time_t assignmentTime) {
   try {
-    // Create a cleaner session in the catalogue
-    m_state = DRIVE_STATE_RUNNING;
+    // Create a cleaner session
     m_session = CatalogueCleanerSession::create(
       m_log,
       m_netTimeout,
@@ -553,11 +549,15 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
   sessionSucceeded() {
   switch(m_state) {
   case DRIVE_STATE_RUNNING:
-    m_state = DRIVE_STATE_UP;
+    changeState(DRIVE_STATE_UP);
     m_vdqm.setDriveUp(m_hostName, m_config.unitName, m_config.dgn);
     break;
   case DRIVE_STATE_WAITDOWN:
-    m_state = CatalogueDrive::DRIVE_STATE_DOWN;
+    changeState(CatalogueDrive::DRIVE_STATE_DOWN);
+    m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
+    break;
+  case DRIVE_STATE_WAITSHUTDOWNCLEANER:
+    changeState(DRIVE_STATE_SHUTDOWN);
     m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
     break;
   default:
@@ -566,21 +566,15 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
       ex.getMessage() <<
         "Failed to record tape session succeeded for session with pid " <<
         getSession().getPid() << ": Incompatible drive state: state=" <<
-        drvState2Str(m_state);
+        driveStateToStr(m_state);
       delete m_session;
       m_session = NULL;
       throw ex;
     }
   }
 
-  // Wrap the session in an auto pointer to gaurantee it is deleted even in the
-  // event of an exception
   std::auto_ptr<CatalogueSession> session(m_session);
-
-  // Set the member variable m_session to NULL to prevent the desstruxtor from
-  // trying a double delete
   m_session = NULL;
-
   session->sessionSucceeded();
 }
 
@@ -591,7 +585,38 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::sessionFailed() {
   switch(m_state) {
   case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
-    m_state = DRIVE_STATE_DOWN;
+    {
+      std::auto_ptr<CatalogueSession> session(m_session);
+      m_session = NULL;
+      session->sessionFailed();
+
+      if(CatalogueSession::SESSION_TYPE_CLEANER != session->getType()) {
+        createCleaner(session->getVid(), session->getAssignmentTime());
+      } else {
+        changeState(DRIVE_STATE_DOWN);
+        m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
+      }
+    }
+    break;
+  case DRIVE_STATE_WAITSHUTDOWNKILL:
+    {
+      std::auto_ptr<CatalogueSession> session(m_session);
+      m_session = NULL;
+      session->sessionFailed();
+
+      changeState(DRIVE_STATE_WAITSHUTDOWNCLEANER);
+      createCleaner(session->getVid(), session->getAssignmentTime());
+    }
+    break;
+  case DRIVE_STATE_WAITSHUTDOWNCLEANER:
+    {
+      std::auto_ptr<CatalogueSession> session(m_session);
+      m_session = NULL;
+      session->sessionFailed();
+
+      // Cleaner failed, no more can be done, mark drive as shutdown
+      changeState(DRIVE_STATE_SHUTDOWN);
+    }
     break;
   default:
     {
@@ -599,24 +624,12 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::sessionFailed() {
       ex.getMessage() <<
         "Failed to record tape session failed for session with pid " <<
         getSession().getPid() << ": Incompatible drive state: state=" <<
-        drvState2Str(m_state);
+        driveStateToStr(m_state);
       delete m_session;
       m_session = NULL;
       throw ex;
     }
   }
-
-  m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
-
-  // Wrap the session in an auto pointer to gaurantee it is deleted even in the
-  // event of an exception
-  std::auto_ptr<CatalogueSession> session(m_session);
-
-  // Set the member variable m_session to NULL to prevent the desstruxtor from
-  // trying a double delete
-  m_session = NULL;
-
-  session->sessionFailed();
 }
 
 //------------------------------------------------------------------------------
@@ -787,37 +800,80 @@ time_t castor::tape::tapeserver::daemon::CatalogueDrive::
 }
 
 //------------------------------------------------------------------------------
+// shutdown
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueDrive::shutdown() {
+  const DriveState previousState = m_state;
+
+  // If there is no running session
+  if(NULL == m_session) {
+    changeState(DRIVE_STATE_SHUTDOWN);
+
+    if(DRIVE_STATE_DOWN != previousState) {
+      m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
+    }
+
+    return;
+  }
+
+  changeState(DRIVE_STATE_WAITSHUTDOWNKILL);
+
+  const pid_t sessionPid = m_session->getPid();
+  const CatalogueSession::Type sessionType = m_session->getType();
+  const char *sessionTypeStr =
+    CatalogueSession::sessionTypeToStr(sessionType);
+
+  std::list<log::Param> params;
+  params.push_back(log::Param("unitName", m_config.unitName));
+  params.push_back(log::Param("sessionType", sessionTypeStr));
+  params.push_back(log::Param("sessionPid", sessionPid));
+
+  // Kill the non-cleaner session
+  if(kill(sessionPid, SIGKILL)) {
+    const std::string message = castor::utils::errnoToString(errno);
+    params.push_back(log::Param("message", message));
+    m_log(LOG_ERR, "Failed to kill non-cleaner session whilst shutting down",
+      params);
+
+    // Nothing else can be done, mark drive as shutdown and return
+    changeState(DRIVE_STATE_SHUTDOWN);
+
+    return;
+  }
+  m_log(LOG_WARNING, "Sent SIGKILL to tape-session child-process", params);
+}
+
+//------------------------------------------------------------------------------
 // killSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::killSession() {
-  switch(m_state) {
-  case DRIVE_STATE_RUNNING:
-  case DRIVE_STATE_WAITDOWN:
-    {
-      const pid_t pid = m_session->getPid();
-      const CatalogueSession::Type sessionType = m_session->getType();
-      const char *sessionTypeStr =
-        CatalogueSession::sessionTypeToStr(sessionType);
-      if(kill(pid, SIGKILL)) {
-        const std::string errorStr = castor::utils::errnoToString(errno);
-        castor::exception::Exception ex;
-        ex.getMessage() << "CatalogueDrive failed to kill session: pid=" << pid
-          << " sessionType=" << sessionTypeStr << ": " << errorStr;
-        throw ex;
-      }
-      log::Param params[] = {
-        log::Param("sessionType", sessionTypeStr),
-        log::Param("pid", pid)};
-      m_log(LOG_WARNING, "Killed tape-session child-process", params);
-      delete m_session;
-      m_session = NULL;
-      m_state = DRIVE_STATE_DOWN;
-      m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
-      break;
-    }
-  default:
-    break;
+  // Do nothing if there is no running session
+  if(NULL == m_session) {
+    return;
   }
+
+  const pid_t sessionPid = m_session->getPid();
+  const CatalogueSession::Type sessionType = m_session->getType();
+  const char *sessionTypeStr =
+    CatalogueSession::sessionTypeToStr(sessionType);
+
+  std::list<log::Param> params;
+  params.push_back(log::Param("unitName", m_config.unitName));
+  params.push_back(log::Param("sessionType", sessionTypeStr));
+  params.push_back(log::Param("sessionPid", sessionPid));
+
+  if(kill(sessionPid, SIGKILL)) {
+    const std::string errorStr = castor::utils::errnoToString(errno);
+    castor::exception::Exception ex;
+    ex.getMessage() << "CatalogueDrive failed to kill session: sessionPid=" <<
+     sessionPid << " sessionType=" << sessionTypeStr << ": " << errorStr;
+    throw ex;
+  }
+  m_log(LOG_WARNING, "Killed tape-session child-process", params);
+  delete m_session;
+  m_session = NULL;
+  changeState(DRIVE_STATE_DOWN);
+  m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
 }
 
 //------------------------------------------------------------------------------
@@ -826,4 +882,21 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::killSession() {
 std::string castor::tape::tapeserver::daemon::CatalogueDrive::
   getVsnForTapeStatDriveEntry() const throw() {
   return getVidForTapeStatDriveEntry();
+}
+
+//------------------------------------------------------------------------------
+// changeState
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueDrive::changeState(
+  const DriveState newState) throw() {
+  std::list<log::Param> params;
+  params.push_back(log::Param("unitName", m_config.unitName));
+  params.push_back(log::Param("previousState", driveStateToStr(m_state)));
+  params.push_back(log::Param("newState", driveStateToStr(newState)));
+  if(NULL != m_session) {
+    params.push_back(log::Param("sessionPid", m_session->getPid()));
+  }
+
+  m_state = newState;
+  m_log(LOG_DEBUG, "CatalogueDrive changed state", params);
 }

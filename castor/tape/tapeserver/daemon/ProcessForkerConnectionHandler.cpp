@@ -198,19 +198,12 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     m_log(LOG_INFO,
       "ProcessForkerConnectionHandler handling ProcessCrashed message", params);
 
-    // Notify the catalogue session
+    // Get information about the crashed session that can be used by a
+    // possible cleaner
     CatalogueDrive &drive = m_driveCatalogue.findDrive(msg.pid());
-    drive.sessionFailed();
 
-    // Create a cleaner session if the session that crashed is itself not a
-    // cleaner
-    const CatalogueSession &session = drive.getSession();
-    const CatalogueSession::Type sessionType = session.getType();
-    if(CatalogueSession::SESSION_TYPE_CLEANER != sessionType) {
-      const std::string vid = drive.getVidForCleaner();
-      const time_t assignmentTime = drive.getAssignmentTimeForCleaner();
-      drive.createCleaner(vid, assignmentTime);
-    }
+    // Notify the catalogue drive of the failed session
+    drive.sessionFailed();
 
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;

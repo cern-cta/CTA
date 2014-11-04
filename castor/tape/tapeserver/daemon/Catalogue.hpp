@@ -103,6 +103,11 @@ public:
   bool handleTick();
 
   /**
+   * Returns true if all of teh tape-drives are shutdown.
+   */
+  bool allDrivesAreShutdown() const throw();
+
+  /**
    * Poplates the catalogue using the specified tape-drive configurations.
    *
    * @param driveConfigs Tape-drive configurations.
@@ -157,6 +162,10 @@ public:
    * @return Unordered list of the unit names.
    */
   std::list<std::string> getUnitNames() const;
+
+  /**
+   */
+  void shutdown();
 
   /**
    * If there are running sessions (one per tape drive) then this method kills

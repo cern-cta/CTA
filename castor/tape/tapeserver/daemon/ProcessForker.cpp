@@ -806,7 +806,7 @@ void castor::tape::tapeserver::daemon::ProcessForker::
 
     log::Param params[] = {log::Param("pid", msg.pid()),
       log::Param("signal", msg.signal())};
-    m_log(LOG_INFO, "ProcessForker notifying TapeDaemon of process crash",
+    m_log(LOG_WARNING, "ProcessForker notifying TapeDaemon of process crash",
       params);
 
     ProcessForkerUtils::writeFrame(m_reaperSocket, msg, &m_log);
