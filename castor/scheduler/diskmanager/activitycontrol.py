@@ -246,7 +246,7 @@ class ActivityControlThread(threading.Thread):
             # we will put it in a pending queue
             # "Start postponed until source is ready" message
             dlf.write(msgs.POSTPONEDFORSRCNOTREADY, subreqid=transfer.transferId,
-                      reqid=transfer.reqId, fileId=transfer.fileId, msg=str(e))
+                      reqid=transfer.reqId, fileId=transfer.fileId)
             # put the transfer into the pending queue
             self.transferQueue.d2dDestReady(scheduler, transfer)
           except Exception, e:
