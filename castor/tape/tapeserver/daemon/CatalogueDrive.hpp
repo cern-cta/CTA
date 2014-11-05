@@ -333,8 +333,11 @@ public:
    * @param The assignment time associated with the tape drive or 0 if not
    * known.  The assignment time is given as the number of seconds elapsed
    * since the Epoch.
+   * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
+   * the drive to be raedy with a tape inside of it.
    */
-  void createCleaner(const std::string &vid, const time_t assignmentTime);
+  void createCleaner(const std::string &vid, const time_t assignmentTime,
+    const uint32_t driveReadyDelayInSeconds);
 
   /**
    * Moves the state of the tape drive to DRIVE_STATE_UP if the

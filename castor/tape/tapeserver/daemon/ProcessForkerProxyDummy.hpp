@@ -82,19 +82,17 @@ public:
   /**
    * Forks a cleaner session for the specified tape drive.
    *
-   * PLEASE NOTE that this method is a dummy method and intentionally does
-   * nothing.
-   * 
    * @param driveConfig The configuration of the tape drive.
    * @param vid If known then this string specifies the volume identifier of the
    * tape in the drive if there is in fact a tape in the drive and its volume
    * identifier is known.  If the volume identifier is not known then this
    * parameter should be set to an empty string.
-   * @return The process identifier of the newly forked session which will
-   * always be 0 because this is a dummy method.
+   * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
+   * the drive to be raedy with a tape inside of it.
+   * @return The process identifier of the newly forked session.
    */
   pid_t forkCleaner(const utils::DriveConfig &driveConfig,
-    const std::string &vid);
+    const std::string &vid, const uint32_t driveReadyDelayInSeconds);
 
 }; // class ProcessForkerProxySocket
 

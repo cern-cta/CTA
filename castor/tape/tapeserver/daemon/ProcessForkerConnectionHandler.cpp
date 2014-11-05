@@ -241,7 +241,9 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
         const std::string vid = drive.getVidForCleaner();
         const time_t assignmentTime = drive.getAssignmentTimeForCleaner();
         drive.sessionFailed();
-        return drive.createCleaner(vid, assignmentTime);
+        const uint32_t driveReadyDelayInSeconds = 60;
+        return drive.createCleaner(vid, assignmentTime,
+          driveReadyDelayInSeconds);
       }
     default:
       // Should never happen

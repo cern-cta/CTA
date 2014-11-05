@@ -35,9 +35,11 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession *
   const tape::utils::DriveConfig &driveConfig,
   ProcessForkerProxy &processForker,
   const std::string &vid,
-  const time_t assignmentTime) {
+  const time_t assignmentTime,
+  const uint32_t driveReadyDelayInSeconds) {
 
-  const pid_t pid = processForker.forkCleaner(driveConfig, vid);
+  const pid_t pid = processForker.forkCleaner(driveConfig, vid,
+    driveReadyDelayInSeconds);
 
   return new CatalogueCleanerSession(
     log,

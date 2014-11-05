@@ -29,4 +29,7 @@ message ForkCleaner {
 
   // Description of the tape associated with the drive
   required string vid = 5;
+
+  // Description of the cleaner job
+  required uint32 drivereadydelayinseconds = 6;
 }

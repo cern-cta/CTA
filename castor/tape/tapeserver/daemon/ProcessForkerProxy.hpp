@@ -81,10 +81,12 @@ public:
    * tape in the drive if there is in fact a tape in the drive and its volume
    * identifier is known.  If the volume identifier is not known then this
    * parameter should be set to an empty string.
+   * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
+   * the drive to be raedy with a tape inside of it.
    * @return The process identifier of the newly forked session.
    */
   virtual pid_t forkCleaner(const utils::DriveConfig &driveConfig,
-    const std::string &vid) = 0;
+    const std::string &vid, const uint32_t driveReadyDelayInSeconds) = 0;
 
 }; // class ProcessForkerProxy
 

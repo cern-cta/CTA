@@ -524,7 +524,8 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
 // createCleaner
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::createCleaner(
-  const std::string &vid, const time_t assignmentTime) {
+  const std::string &vid, const time_t assignmentTime,
+  const uint32_t driveReadyDelayInSeconds) {
   try {
     // Create a cleaner session
     m_session = CatalogueCleanerSession::create(
@@ -533,7 +534,8 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::createCleaner(
       m_config,
       m_processForker,
       vid,
-      assignmentTime);
+      assignmentTime,
+      driveReadyDelayInSeconds);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to create cleaner session: " <<
@@ -591,7 +593,9 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::sessionFailed() {
       session->sessionFailed();
 
       if(CatalogueSession::SESSION_TYPE_CLEANER != session->getType()) {
-        createCleaner(session->getVid(), session->getAssignmentTime());
+        const uint32_t driveReadyDelayInSeconds = 60;
+        createCleaner(session->getVid(), session->getAssignmentTime(),
+          driveReadyDelayInSeconds);
       } else {
         changeState(DRIVE_STATE_DOWN);
         m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
@@ -605,7 +609,9 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::sessionFailed() {
       session->sessionFailed();
 
       changeState(DRIVE_STATE_WAITSHUTDOWNCLEANER);
-      createCleaner(session->getVid(), session->getAssignmentTime());
+      const uint32_t driveReadyDelayInSeconds = 60;
+      createCleaner(session->getVid(), session->getAssignmentTime(),
+        driveReadyDelayInSeconds);
     }
     break;
   case DRIVE_STATE_WAITSHUTDOWNCLEANER:
@@ -803,44 +809,58 @@ time_t castor::tape::tapeserver::daemon::CatalogueDrive::
 // shutdown
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::shutdown() {
-  const DriveState previousState = m_state;
-
   // If there is no running session
   if(NULL == m_session) {
-    changeState(DRIVE_STATE_SHUTDOWN);
 
-    if(DRIVE_STATE_DOWN != previousState) {
-      m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
-    }
+    changeState(DRIVE_STATE_WAITSHUTDOWNCLEANER);
 
-    return;
-  }
+    // Create a cleaner process to make 100% sure the tape drive is empty
+    const std::string vid = ""; // Empty string means VID is not known
+    const time_t assignmentTime = time(NULL);
+    const uint32_t driveReadyDelayInSeconds = 0;
+    createCleaner(vid, assignmentTime, driveReadyDelayInSeconds);
 
-  changeState(DRIVE_STATE_WAITSHUTDOWNKILL);
+  // Else there is a running session
+  } else {
 
-  const pid_t sessionPid = m_session->getPid();
-  const CatalogueSession::Type sessionType = m_session->getType();
-  const char *sessionTypeStr =
-    CatalogueSession::sessionTypeToStr(sessionType);
+    // If the running session is a cleaner
+    if(CatalogueSession::SESSION_TYPE_CLEANER == m_session->getType()) {
 
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", m_config.unitName));
-  params.push_back(log::Param("sessionType", sessionTypeStr));
-  params.push_back(log::Param("sessionPid", sessionPid));
+      changeState(DRIVE_STATE_WAITSHUTDOWNCLEANER);
 
-  // Kill the non-cleaner session
-  if(kill(sessionPid, SIGKILL)) {
-    const std::string message = castor::utils::errnoToString(errno);
-    params.push_back(log::Param("message", message));
-    m_log(LOG_ERR, "Failed to kill non-cleaner session whilst shutting down",
-      params);
+    // Else the running session is not a cleaner
+    } else {
 
-    // Nothing else can be done, mark drive as shutdown and return
-    changeState(DRIVE_STATE_SHUTDOWN);
+      changeState(DRIVE_STATE_WAITSHUTDOWNKILL);
 
-    return;
-  }
-  m_log(LOG_WARNING, "Sent SIGKILL to tape-session child-process", params);
+      const pid_t sessionPid = m_session->getPid();
+      const CatalogueSession::Type sessionType = m_session->getType();
+      const char *sessionTypeStr =
+        CatalogueSession::sessionTypeToStr(sessionType);
+
+      std::list<log::Param> params;
+      params.push_back(log::Param("unitName", m_config.unitName));
+      params.push_back(log::Param("sessionType", sessionTypeStr));
+      params.push_back(log::Param("sessionPid", sessionPid));
+
+      // Kill the non-cleaner session
+      if(kill(sessionPid, SIGKILL)) {
+        const std::string message = castor::utils::errnoToString(errno);
+        params.push_back(log::Param("message", message));
+        m_log(LOG_ERR, "Failed to kill non-cleaner session whilst shutting"
+          " down", params);
+
+        // Nothing else can be done, mark drive as shutdown
+        changeState(DRIVE_STATE_SHUTDOWN);
+
+      } else {
+        m_log(LOG_WARNING, "Sent SIGKILL to tape-session child-process",
+          params);
+      }
+
+    } // Else the running session is not a cleaner
+
+  } // Else there is a running session
 }
 
 //------------------------------------------------------------------------------

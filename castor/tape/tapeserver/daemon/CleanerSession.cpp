@@ -32,13 +32,15 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   castor::log::Logger &log,
   const utils::DriveConfig &driveConfig,
   System::virtualWrapper &sysWrapper,
-  const std::string &vid):
+  const std::string &vid,
+  const uint32_t driveReadyDelayInSeconds):
   m_capUtils(capUtils),
   m_mc(mc),
   m_log(log),
   m_driveConfig(driveConfig),
   m_sysWrapper(sysWrapper),
-  m_vid(vid) {
+  m_vid(vid),
+  m_driveReadyDelayInSeconds(driveReadyDelayInSeconds) {
 }
 
 //------------------------------------------------------------------------------
@@ -69,11 +71,15 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   }
   
   //temporization to allow for actions to complete
-  try {
-    drive->waitUntilReady(60); //wait 1 minute for a possible ongoing mount to complete or for an IO operation to complete
-  } catch (castor::exception::Exception &ex) {
-    log::Param params[] = {log::Param("message", ex.getMessage().str())};
-    m_log(LOG_INFO, "Cleaner session caught a non-fatal exception while waiting for the drive to become ready. One of the reasons we get here is if the drive has no tape inside.", params);
+  if(0 != m_driveReadyDelayInSeconds) {
+    try {
+      drive->waitUntilReady(m_driveReadyDelayInSeconds);
+    } catch (castor::exception::Exception &ex) {
+      log::Param params[] = {log::Param("message", ex.getMessage().str())};
+      m_log(LOG_INFO, "Cleaner session caught a non-fatal exception whilst"
+        " waiting for the drive to become ready. One of the reasons we get here"
+        " is if the drive has no tape inside.", params);
+    }
   }
   
   //here we check if the drive contains a tape: if not, there's nothing to clean

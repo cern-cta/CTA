@@ -54,6 +54,8 @@ public:
    * be set to the empty string.
    * @param assignmentTime The time at which a job was assigned to the tape
    * drive.
+   * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
+   * the drive to be raedy with a tape inside of it.
    * @return A newly created CatalogueCleanerSession object.
    */
   static CatalogueCleanerSession *create(
@@ -62,7 +64,8 @@ public:
     const tape::utils::DriveConfig &driveConfig,
     ProcessForkerProxy &processForker,
     const std::string &vid,
-    const time_t assignmentTime);
+    const time_t assignmentTime,
+    const uint32_t driveReadyDelayInSeconds);
 
   /**
    * Handles a tick in time.  Time driven actions such as alarms should be

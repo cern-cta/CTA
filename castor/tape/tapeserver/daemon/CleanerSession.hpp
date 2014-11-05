@@ -55,6 +55,8 @@ namespace daemon {
      * @param sysWrapper Object representing the operating system.
      * @param vid The volume identifier of the mounted tape if known,
      * else the empty string.
+     * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
+     * the drive to be raedy with a tape inside of it.
      */
     CleanerSession(
       server::ProcessCap &capUtils,
@@ -62,7 +64,8 @@ namespace daemon {
       castor::log::Logger &log,
       const utils::DriveConfig &driveConfig,
       System::virtualWrapper &sysWrapper,
-      const std::string &vid);
+      const std::string &vid,
+      const uint32_t driveReadyDelayInSeconds);
     
     /** 
      * Execute the session and return the type of action to be performed
@@ -118,6 +121,12 @@ namespace daemon {
      * string.
      */
     const std::string m_vid;
+
+    /**
+     * The maximum number of seconds to wait for the drive to be raedy with a
+     * tape inside of it.
+     */
+    const uint32_t m_driveReadyDelayInSeconds;
     
   }; // class CleanerSession
 

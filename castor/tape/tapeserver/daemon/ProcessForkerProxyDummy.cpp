@@ -55,7 +55,8 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
 // forkCleaner
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
-  forkCleaner(const utils::DriveConfig &driveConfig, const std::string &vid) {
+  forkCleaner(const utils::DriveConfig &driveConfig, const std::string &vid,
+  const uint32_t driveReadyDelayInSeconds) {
   // This is a dummy method and so intentionally does nothing
   return 0;
 }

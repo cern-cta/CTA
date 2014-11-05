@@ -289,6 +289,8 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", rqst.unitname()));
   params.push_back(log::Param("vid", rqst.vid()));
+  params.push_back(log::Param("driveReadyDelayInSeconds",
+    rqst.drivereadydelayinseconds()));
   m_log(LOG_INFO, "ProcessForker handling ForkCleaner message", params);
 
   // Fork a label session
@@ -492,7 +494,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       m_log,
       driveConfig,
       sWrapper,
-      rqst.vid());
+      rqst.vid(),
+      rqst.drivereadydelayinseconds());
     return cleanerSession.execute();
   } catch(castor::exception::Exception &ex) {
     throw ex;
