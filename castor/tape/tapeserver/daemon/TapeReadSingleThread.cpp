@@ -136,6 +136,17 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     // through the st driver file descriptor.
     setCapabilities();
     
+    // Report the parameters of the session to the main thread
+    typedef castor::log::Param Param;
+    m_watchdog.addParameter(Param("clientType", castor::tape::tapegateway::ClientTypeStrings[m_volInfo.clientType]));
+    m_watchdog.addParameter(Param("TPVID", m_volInfo.vid));
+    m_watchdog.addParameter(Param("volumeMode",tapegateway::VolumeModeStrings[m_volInfo.volumeMode]));
+    m_watchdog.addParameter(Param("density", m_volInfo.density));
+    
+    // Set the tape thread time in the watchdog for total time estimation in case
+    // of crash
+    m_watchdog.updateThreadTimer(totalTimer);
+    
     //pair of brackets to create an artificial scope for the tapeCleaner
     {  
       // The tape will be loaded 
@@ -177,6 +188,8 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         // This can lead the the session being marked as corrupt, so we test
         // it in the while loop
         task->execute(*rs, m_logContext, m_watchdog,m_stats,timer);
+        // Transmit the statistics to the watchdog thread
+        m_watchdog.updateStats(m_stats);
         // The session could have been corrupted (failed positioning)
         if(rs->isCorrupted()) {
           throw castor::exception::Exception ("Session corrupted: exiting task execution loop in TapeReadSingleThread. Cleanup will follow.");
@@ -190,6 +203,8 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     m_stats.totalTime = totalTimer.secs();
     logWithStat(LOG_INFO, "Tape thread complete",
             params);
+    // Report one last time the stats, after unloading/unmounting.
+    m_watchdog.updateStats(m_stats);
   } catch(const castor::exception::Exception& e){
     // We end up here because one step failed, be it at mount time, of after
     // failing to position by fseq (this is fatal to a read session as we need

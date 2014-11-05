@@ -264,6 +264,22 @@ private:
    */
   messages::Frame handleTapeUnmounted(const messages::Frame &rqst);
 
+  /**
+   * Handles the specified request.
+   *
+   * @param rqst The request.
+   * @return The reply.
+   */
+  messages::Frame handleAddLogParams(const messages::Frame &rqst);
+  
+  /**
+   * Handles the specified request.
+   *
+   * @param rqst The request.
+   * @return The reply.
+   */
+  messages::Frame handleDeleteLogParams(const messages::Frame &rqst);
+  
 }; // class TapeMessageHandler
 
 } // namespace daemon

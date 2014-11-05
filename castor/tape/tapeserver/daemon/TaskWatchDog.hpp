@@ -25,11 +25,13 @@
 
 
 #include "castor/server/AtomicFlag.hpp"
+#include "castor/server/BlockingQueue.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "castor/utils/Timer.hpp"
 #include "castor/utils/utils.hpp"
+#include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 
 namespace castor {
 
@@ -51,6 +53,21 @@ protected:
    *  updated from the outside 
    */
   uint64_t m_nbOfMemblocksMoved;
+  
+  /**
+   * Statistics of the current session
+   */
+  TapeSessionStats m_stats;
+  
+  /**
+   * Did we set the stats at least once?
+   */
+  bool m_statsSet;
+  
+  /**
+   * A timer allowing estimation of the total timer for crashing sessions
+   */
+  castor::utils::Timer m_tapeThreadTimer;
   
   /**
    *  Timer for regular heartbeat reports to parent process
@@ -109,11 +126,60 @@ protected:
    * Member function actually logging the file.
    */
   virtual void logStuckFile() = 0;
+  
+  /**
+   * One offs parameters to be sent to the initial process
+   */
+  castor::server::BlockingQueue<castor::log::Param> m_paramsQueue;
 
+  /**
+   * Send the statistics to the initial process. m_mutex should be taken before
+   * calling.
+   */
+  void reportStats() {
+    // Shortcut definitions
+    typedef castor::log::ParamDoubleSnprintf ParamDoubleSnprintf;
+    typedef castor::log::Param Param;
+    if (m_statsSet) {
+      // Build the statistics to be logged
+      std::list<Param> paramList;
+      // total time is a special case. We will estimate it ourselves before
+      // getting the final stats (at the end of the thread). This will allow
+      // proper estimation of statistics for tape sessions that get killed
+      // before completion.
+      double totalTime = m_stats.totalTime?m_stats.totalTime:m_tapeThreadTimer.secs();
+      paramList.push_back(Param("mountTime", m_stats.mountTime));
+      paramList.push_back(Param("positionTime", m_stats.positionTime));
+      paramList.push_back(Param("waitInstructionsTime", m_stats.waitInstructionsTime));
+      paramList.push_back(Param("waitFreeMemoryTime", m_stats.waitFreeMemoryTime));
+      paramList.push_back(Param("waitDataTime", m_stats.waitDataTime));
+      paramList.push_back(Param("waitReportingTime", m_stats.waitReportingTime));
+      paramList.push_back(Param("checksumingTime", m_stats.checksumingTime));
+      paramList.push_back(Param("transferTime", m_stats.transferTime));
+      paramList.push_back(Param("flushTime", m_stats.flushTime));
+      paramList.push_back(Param("unloadTime", m_stats.unloadTime));
+      paramList.push_back(Param("unmountTime", m_stats.unmountTime));
+      paramList.push_back(Param("totalTime", totalTime));
+      paramList.push_back(Param("dataVolume", m_stats.dataVolume));
+      paramList.push_back(Param("filesCount", m_stats.filesCount));
+      paramList.push_back(Param("headerVolume", m_stats.headerVolume));
+      // Compute performance
+      paramList.push_back(Param("payloadTransferSpeedMBps", totalTime?1.0*m_stats.dataVolume
+                /1000/1000/totalTime:0.0));
+      paramList.push_back(Param("driveTransferSpeedMBps", totalTime?1.0*(m_stats.dataVolume+m_stats.headerVolume)
+                /1000/1000/totalTime:0.0));
+      // Ship the logs to the initial process
+      m_initialProcess.addLogParams(m_driveUnitName, paramList);
+    }
+  }
+  
   /**
    * Thread's loop
    */
   void run(){
+    // Shortcut definitions
+    typedef castor::log::ParamDoubleSnprintf ParamDoubleSnprintf;
+    typedef castor::log::Param Param;
     // reset timers as we don't know how long it took before the thread started
     m_reportTimer.reset();
     m_blockMovementReportTimer.reset();
@@ -133,18 +199,38 @@ protected:
           break;
         }
       }
+      
+      // Send any one-off parameter
+      {
+        std::list<Param> params;
+        // This is thread safe because we are the only consumer:
+        // a non-zero size guarantees we will find something.
+        while (m_paramsQueue.size())
+          params.push_back(m_paramsQueue.pop());
+        if (params.size()) {
+          m_initialProcess.addLogParams(m_driveUnitName, params);
+        }
+      }
 
       //heartbeat to notify activity to the mother
+      // and transmit statistics
       if(m_reportTimer.secs() > m_reportPeriod){
         castor::server::MutexLocker locker(&m_mutex);
         m_lc.log(LOG_DEBUG,"going to report");
         m_reportTimer.reset();
         m_initialProcess.notifyHeartbeat(m_driveUnitName, m_nbOfMemblocksMoved);
+        reportStats();
         m_nbOfMemblocksMoved=0;
       } 
       else{
         usleep(m_pollPeriod*1000*1000);
       }
+    }
+    // At the end of the run, make sure we push the last stats to the initial
+    // process
+    {
+      castor::server::MutexLocker locker(&m_mutex);
+      reportStats();
     }
   }
   
@@ -161,8 +247,8 @@ protected:
   TaskWatchDog(double reportPeriod,double stuckPeriod,
          messages::TapeserverProxy& initialProcess,
           const std::string & driveUnitName,
-         log::LogContext lc, double pollPeriod = 0.1): 
-  m_nbOfMemblocksMoved(0), m_pollPeriod(pollPeriod),
+         log::LogContext lc, double pollPeriod = 0.1):
+  m_nbOfMemblocksMoved(0), m_statsSet(false), m_pollPeriod(pollPeriod),
   m_reportPeriod(reportPeriod), m_stuckPeriod(stuckPeriod), 
   m_initialProcess(initialProcess), m_driveUnitName(driveUnitName),
   m_fileBeingMoved(false), m_lc(lc) {
@@ -176,6 +262,34 @@ protected:
     castor::server::MutexLocker locker(&m_mutex);
     m_blockMovementTimer.reset();
     m_nbOfMemblocksMoved++;
+  }
+  
+  /**
+   * update the watchdog's statistics for the session
+   * @param stats the stats counters collection to push
+   */
+  void updateStats (const TapeSessionStats & stats) {
+    castor::server::MutexLocker locker(&m_mutex);
+    m_stats = stats;
+    m_statsSet = true;
+  }
+  
+  /**
+   * update the tapeThreadTimer, allowing logging a "best estimate" total time
+   * in case of crash. If the provided stats in updateStats has a non-zero total
+   * time, we will not use this value.
+   * @param tapeThreadTimer:  the start time of the tape thread
+   */
+  void updateThreadTimer(const castor::utils::Timer & timer) {
+    castor::server::MutexLocker locker(&m_mutex);
+    m_tapeThreadTimer = timer;
+  }
+  
+  /**
+   * 
+   */
+  void addParameter (const log::Param & param) {
+    m_paramsQueue.push(param);
   }
   
   /**

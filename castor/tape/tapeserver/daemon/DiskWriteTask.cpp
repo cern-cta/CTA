@@ -55,7 +55,8 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
     // after getting a first correct memory block.
     std::auto_ptr<tape::diskFile::WriteFile> writeFile;
     log::ScopedParamContainer URLcontext(lc);
-    URLcontext.add("path", m_recallingFile->path());
+    URLcontext.add("",m_recallingFile->fileid())
+              .add("path", m_recallingFile->path());
     
     int blockId  = 0;
     unsigned long checksum = Payload::zeroAdler32();

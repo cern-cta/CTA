@@ -78,6 +78,7 @@ namespace daemon {
     uint64_t filesCount;
     
     static const uint64_t headerVolumePerFile = 3*80;
+    static const uint64_t trailerVolumePerFile = 3*80;
     
     /** Constructor: all defaults are zero */
     TapeSessionStats():  mountTime(0.0), positionTime(0.0), checksumingTime(0.0),

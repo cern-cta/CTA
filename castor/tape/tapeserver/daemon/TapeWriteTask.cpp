@@ -68,11 +68,12 @@ namespace daemon {
     using castor::log::ScopedParamContainer;
     // Add to our logs the informations on the file
     ScopedParamContainer params(lc);
-    params.add("NSFILEID",m_fileToMigrate->fileid())
+    params.add("NSHOSTNAME", m_fileToMigrate->nshost())
+          .add("NSFILEID",m_fileToMigrate->fileid())
           .add("lastKnownFileName",m_fileToMigrate->lastKnownFilename())
           .add("fileSize",m_fileToMigrate->fileSize())
           .add("fileTransactionId",m_fileToMigrate->fileTransactionId())
-          .add("FSEQ",m_fileToMigrate->fseq())
+          .add("fSeq",m_fileToMigrate->fseq())
           .add("path",m_fileToMigrate->path());
     
     // We will clock the stats for the file itself, and eventually add those
@@ -113,7 +114,7 @@ namespace daemon {
       //put the trailer
       output->close();
       m_taskStats.transferTime += timer.secs(castor::utils::Timer::resetCounter);
-      m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
+      m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
       m_taskStats.filesCount ++;
       reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum,output->getBlockId());
       m_taskStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
@@ -275,8 +276,9 @@ namespace daemon {
            .add("payloadTransferSpeedMBps",m_taskStats.totalTime?
                    1.0*m_taskStats.dataVolume/1000/1000/m_taskStats.totalTime:0.0)
            .add("fileSize",m_fileToMigrate->fileSize())
-           .add("fileid",m_fileToMigrate->fileid())
-           .add("fseq",m_fileToMigrate->fseq())
+           .add("NSHOST",m_fileToMigrate->nshost())
+           .add("NSFILEID",m_fileToMigrate->fileid())
+           .add("fSeq",m_fileToMigrate->fseq())
            .add("fileTransactionId",m_fileToMigrate->fileTransactionId())
            .add("lastKnownFilename",m_fileToMigrate->lastKnownFilename())
            .add("lastModificationTime",m_fileToMigrate->lastModificationTime());

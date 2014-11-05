@@ -95,7 +95,19 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
   m_hostName(hostName),
   m_waitJobTimeoutInSecs(waitJobTimeoutInSecs),
   m_mountTimeoutInSecs(mountTimeoutInSecs),
-  m_blockMoveTimeoutInSecs(blockMoveTimeoutInSecs) {
+  m_blockMoveTimeoutInSecs(blockMoveTimeoutInSecs),
+  m_sessionLogContext(log)
+{
+  // Record immediately the parameters from the vdqm request for the end of
+  // session logs.
+  typedef castor::log::Param Param;
+  m_sessionLogContext.pushOrReplace(Param("volReqId", m_vdqmJob.volReqId));
+  m_sessionLogContext.pushOrReplace(Param("dgn", m_vdqmJob.dgn));
+  m_sessionLogContext.pushOrReplace(Param("driveUnit", m_vdqmJob.driveUnit));
+  m_sessionLogContext.pushOrReplace(Param("clientHost", m_vdqmJob.clientHost));
+  m_sessionLogContext.pushOrReplace(Param("clientPort", m_vdqmJob.clientPort));
+  m_sessionLogContext.pushOrReplace(Param("clientEuid", m_vdqmJob.clientEuid));
+  m_sessionLogContext.pushOrReplace(Param("clientEgid", m_vdqmJob.clientEgid));
 }
 
 //------------------------------------------------------------------------------
@@ -217,6 +229,8 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   sessionSucceeded() {
+  m_sessionLogContext.pushOrReplace(log::Param("status","success"));
+  m_sessionLogContext.log(LOG_INFO, "Tape session finished");
 }
 
 //------------------------------------------------------------------------------
@@ -224,6 +238,8 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   sessionFailed() {
+  m_sessionLogContext.pushOrReplace(log::Param("status","failed"));
+  m_sessionLogContext.log(LOG_INFO, "Tape session finished");
 }
 
 //------------------------------------------------------------------------------
@@ -561,4 +577,20 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   if(nbBlocksMoved > 0) {
     m_lastTimeSomeBlocksWereMoved = time(0);
   }
+}
+
+//-----------------------------------------------------------------------------
+// addLogParam
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::
+  addLogParam(const log::Param & param) {
+  m_sessionLogContext.pushOrReplace(param);
+}
+
+//-----------------------------------------------------------------------------
+// deleteLogParam
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::
+  deleteLogParam(const std::string & paramName) {
+  m_sessionLogContext.erase(paramName);
 }

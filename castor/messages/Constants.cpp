@@ -76,6 +76,10 @@ const char *castor::messages::msgTypeToString(const MsgType msgType) throw() {
     return "AcsMountTapeReadWrite";        
   case MSG_TYPE_ACSDISMOUNTTAPE:
     return "AcsDismountTape";
+  case MSG_TYPE_ADDLOGPARAMS:
+    return "AddLogParams";
+  case MSG_TYPE_DELETELOGPARAMS:
+    return "DeleteLogParams";
   default:
     return "Unknown";
   }

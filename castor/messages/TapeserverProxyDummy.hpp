@@ -123,7 +123,21 @@ public:
    */
   void notifyHeartbeat(const std::string &unitName,
     const uint64_t nbBlocksMoved);
-
+  
+  /**
+   * Sends a new set of parameters, to be logged by the mother process when the
+   * transfer session is over.
+   * @param params: a vector of log parameters
+   */
+  virtual void addLogParams(const std::string &unitName,
+    const std::list<castor::log::Param> & params);
+  
+  /**
+   * Sends a list of parameters to remove from the end of session logging.
+   */
+  virtual void deleteLogParams(const std::string &unitName,
+    const std::list<std::string> & paramNames);
+  
   /**
    * Notifies the tapeserverd daemon that a label session has encountered the
    * specified error.

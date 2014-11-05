@@ -128,7 +128,6 @@ public:
   void tapeUnmounted(const std::string &vid,
     const std::string &unitName);
  
-  void notifyHeartbeat(const uint64_t nbOfMemblocksMoved);
   /**
    * Notifies the tapeserverd daemon that the data-transfer session is still
    * alive and gives an indication of how much data has been moved.
@@ -139,7 +138,21 @@ public:
    */
   void notifyHeartbeat(const std::string &unitName,
     const uint64_t nbBlocksMoved);
-
+  
+  /**
+   * Sends a new set of parameters, to be logged by the mother process when the
+   * transfer session is over.
+   * @param params: a vector of log parameters
+   */
+  virtual void addLogParams(const std::string &unitName,
+    const std::list<castor::log::Param> & params);
+  
+  /**
+   * Sends a list of parameters to remove from the end of session logging.
+   */
+  virtual void deleteLogParams(const std::string &unitName,
+    const std::list<std::string> & paramNames);
+  
   /**
    * Notifies the tapeserverd daemon that a label session has encountered the
    * specified error.
@@ -268,7 +281,28 @@ private:
    */
   Frame createHeartbeatFrame(const std::string &unitName,
     const uint64_t nbBlocksMoved);
+  
+  /**
+   * Creates a frame containing an add log params.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param params Values of the log parameters to be added or overwritten
+   * in the status that the session will have in the main process's logs.
+   * @return The frame.
+   */
+  Frame createAddLogParamsFrame(const std::string &unitName,
+    const std::list<castor::log::Param> & params);
 
+  /**
+   * Creates a frame containing a delete log params.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param paramNames names of the log parameters to remove
+   * @return The frame.
+   */
+  Frame createDeleteLogParamsFrame(const std::string &unitName,
+    const std::list<std::string> & paramNames);
+  
   /**
    * Creates a frame containing a LabelError message.
    *

@@ -215,6 +215,22 @@ public:
    * since the last heartbeat message.
    */
   void receivedHeartbeat(const uint64_t nbBlocksMoved);
+  
+  /**
+   * Adds or updates in the catalogue entry log parameters relevant to the session.
+   *
+   * @param param Log parameter to add to the log context used at the end of the 
+   * session.
+   */
+  void addLogParam(const log::Param & param);
+  
+  /**
+   * deletes from the catalogue entry log parameters relevant to the session.
+   *
+   * @param param Log parameter to delete from the log context used at the end 
+   * of the session.
+   */
+  void deleteLogParam(const std::string & paramName);
 
 protected:
 
@@ -345,6 +361,13 @@ private:
    * move data blocks.
    */
   const time_t m_blockMoveTimeoutInSecs;
+  
+  /**
+   * The context that will be used to log the end of session. Parameters will
+   * be updated regularly by the session process, so we get a good picture
+   * of the session's state even after a crash.
+   */
+  log::LogContext m_sessionLogContext;
 
   /**
    * Handles a tick in time whilst in the TRANSFERSTATE_WAIT_JOB state.  Time

@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "castor/log/Param.hpp"
+#include <cstdio>
 
 //------------------------------------------------------------------------------
 // getName
@@ -35,4 +36,17 @@ const std::string &castor::log::Param::getName() const throw() {
 //------------------------------------------------------------------------------
 const std::string &castor::log::Param::getValue() const throw() {
   return m_value;
+}
+
+//------------------------------------------------------------------------------
+// ParamDoubleSnprintf constructor
+//------------------------------------------------------------------------------
+castor::log::ParamDoubleSnprintf::ParamDoubleSnprintf
+(const std::string& name, const double value):
+castor::log::Param(name, "") {
+  char buf[100];
+  std::snprintf(buf, sizeof(buf), "%f", value);
+  // Just in case we overflow
+  buf[sizeof(buf)-1]='\0';
+  m_value = buf;
 }

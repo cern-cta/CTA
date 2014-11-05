@@ -24,7 +24,6 @@
 #pragma once
 
 #include <ostream>
-#include <cstdio>
 #include "castor/log/Logger.hpp"
 
 namespace castor {
@@ -162,9 +161,7 @@ class ScopedParamContainer{
     }
     
     ScopedParamContainer& addSnprintfDouble(const std::string& s,double t){
-      char buf[100];
-      std::snprintf(buf, sizeof(buf), "%f", t);
-      m_context.pushOrReplace(Param(s,buf));
+      m_context.pushOrReplace(ParamDoubleSnprintf(s,t));
       m_names.push_back(s);
       return *this;
     }

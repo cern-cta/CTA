@@ -26,6 +26,7 @@
 
 #include <sstream>
 #include <string.h>
+#include <cstdio>
 
 namespace castor {
 namespace log {
@@ -46,9 +47,25 @@ public:
    */
   template <typename T> Param(const std::string &name, const T &value) throw():
     m_name(name) {
-    std::stringstream oss;
+    std::ostringstream oss;
     oss << value;
     m_value = oss.str();
+  }
+  
+  /**
+   * Constructor.
+   *
+   * @param name The name of the parameter.
+   * @param value The value of the parameter that will be converted to a string
+   * using snprintf for doubles
+   */
+  Param (const std::string &name, const double value) throw():
+  m_name(name) {
+    char buf[100];
+    std::snprintf(buf, sizeof(buf), "%f", value);
+    // Just in case we overflow
+    buf[sizeof(buf)-1]='\0';
+    m_value = buf;
   }
     
   /**
@@ -72,7 +89,7 @@ public:
    */
   const std::string &getValue() const throw();
 
-private:
+protected:
 
   /**
    * Name of the parameter
@@ -85,6 +102,15 @@ private:
   std::string m_value;
 
 }; // class Param
+
+/**
+ * An helper class allowing the construction of a Param class with sprintf
+ * formatting for a double.
+ */
+class ParamDoubleSnprintf: public Param {
+public:
+  ParamDoubleSnprintf(const std::string &name, const double value);
+}; // class ParamDoubleSnprintf
 
 } // namespace log
 } // namespace castor

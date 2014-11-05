@@ -35,6 +35,8 @@
 #include "castor/messages/TapeMountedForRecall.pb.h"
 #include "castor/messages/TapeUnmounted.pb.h"
 #include "castor/messages/TapeUnmountStarted.pb.h"
+#include "castor/messages/AddLogParams.pb.h"
+#include "castor/messages/DeleteLogParams.pb.h"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -217,6 +219,12 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 
   case messages::MSG_TYPE_TAPEUNMOUNTED:
     return handleTapeUnmounted(rqst);
+    
+  case messages::MSG_TYPE_ADDLOGPARAMS:
+    return handleAddLogParams(rqst);
+    
+  case messages::MSG_TYPE_DELETELOGPARAMS:
+    return handleDeleteLogParams(rqst);
 
   default:
     {
@@ -525,6 +533,70 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle TapeUnmounted message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleAddLogParams
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleAddLogParams(const messages::Frame& rqst) {
+  m_log(LOG_INFO, "Handling AddLogParams message");
+
+  try {
+    messages::AddLogParams rqstBody;
+    rqst.parseBodyIntoProtocolBuffer(rqstBody);
+
+    CatalogueDrive &drive =
+      m_driveCatalogue.findDrive(rqstBody.unitname());
+    
+    CatalogueTransferSession &transferSession = drive.getTransferSession();
+    typedef google::protobuf::RepeatedPtrField<messages::LogParam>::const_iterator
+      paramsIterator;
+    for (paramsIterator i = rqstBody.params().begin(); 
+        i != rqstBody.params().end(); i++) {
+      transferSession.addLogParam(log::Param(i->name(),i->value()));
+    }
+
+    const messages::Frame reply = createReturnValueFrame(0);
+    return reply;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to handle TapeMountedForRecall message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleTapeMountedForRecall
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleDeleteLogParams(const messages::Frame& rqst) {
+  m_log(LOG_INFO, "Handling AddLogParams message");
+
+  try {
+    messages::DeleteLogParams rqstBody;
+    rqst.parseBodyIntoProtocolBuffer(rqstBody);
+
+    CatalogueDrive &drive =
+      m_driveCatalogue.findDrive(rqstBody.unitname());
+    
+    CatalogueTransferSession &transferSession = drive.getTransferSession();
+    typedef google::protobuf::RepeatedPtrField<std::string>::const_iterator
+      paramsIterator;
+    for (paramsIterator i = rqstBody.param_names().begin(); 
+        i != rqstBody.param_names().end(); i++) {
+      transferSession.deleteLogParam(*i);
+    }
+
+    const messages::Frame reply = createReturnValueFrame(0);
+    return reply;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to handle TapeMountedForRecall message: " <<
       ne.getMessage().str();
     throw ex;
   }

@@ -120,13 +120,25 @@ isTapeWritable() const {
 //run
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
-  m_logContext.pushOrReplace(log::Param("thread", "TapeWrite"));
+  castor::log::ScopedParamContainer threadGlobalParams(m_logContext);
+  threadGlobalParams.add("thread", "TapeWrite");
   castor::utils::Timer timer, totalTimer;
   try
   {
     // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
     // through the st driver file descriptor.
     setCapabilities();
+    
+    // Report the parameters of the session to the main thread
+    typedef castor::log::Param Param;
+    m_watchdog.addParameter(Param("clientType", castor::tape::tapegateway::ClientTypeStrings[m_volInfo.clientType]));
+    m_watchdog.addParameter(Param("TPVID", m_volInfo.vid));
+    m_watchdog.addParameter(Param("volumeMode",tapegateway::VolumeModeStrings[m_volInfo.volumeMode]));
+    m_watchdog.addParameter(Param("density", m_volInfo.density));
+    
+    // Set the tape thread time in the watchdog for total time estimation in case
+    // of crash
+    m_watchdog.updateThreadTimer(totalTimer);
     
     //pair of brackets to create an artificial scope for the tape cleaning
     {
@@ -203,6 +215,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     params.add("status", "success");
     m_stats.totalTime = totalTimer.secs();
     logWithStats(LOG_INFO, "Tape thread complete",params);
+    // Report one last time the stats, after unloading/unmounting.
+    m_watchdog.updateStats(m_stats);
   } //end of try 
   catch(const castor::exception::Exception& e){
     //we end there because write session could not be opened 

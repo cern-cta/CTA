@@ -68,11 +68,13 @@ public:
     typedef castor::log::LogContext::ScopedParam ScopedParam;
     
     // Set the common context for all the coming logs (file info)
-    ScopedParam sp0(lc, Param("NSHOSTNAME", m_fileToRecall->nshost()));
-    ScopedParam sp1(lc, Param("NSFILEID", m_fileToRecall->fileid()));
-    ScopedParam sp2(lc, Param("BlockId", castor::tape::tapeFile::BlockId::extract(*m_fileToRecall)));
-    ScopedParam sp3(lc, Param("fSeq", m_fileToRecall->fseq()));
-    ScopedParam sp4(lc, Param("fileTransactionId", m_fileToRecall->fileTransactionId()));
+    log::ScopedParamContainer params(lc);
+    params.add("NSHOSTNAME", m_fileToRecall->nshost())
+          .add("NSFILEID", m_fileToRecall->fileid())
+          .add("BlockId", castor::tape::tapeFile::BlockId::extract(*m_fileToRecall))
+          .add("fSeq", m_fileToRecall->fseq())
+          .add("fileTransactionId", m_fileToRecall->fileTransactionId())
+          .add("path", m_fileToRecall->path());
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
@@ -90,10 +92,9 @@ public:
     MemBlock* mb=NULL;
     try {
       std::auto_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
-      log::ScopedParamContainer params(lc);
-      params.add("fileid",m_fileToRecall->fileid())
-            .add("fseq",m_fileToRecall->fseq())
-            .add("fileTransactionId",m_fileToRecall->fileTransactionId());
+      // At that point we already read the header.
+      localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
+
       lc.log(LOG_INFO, "Successfully positioned for reading");
       localStats.positionTime += timer.secs(castor::utils::Timer::resetCounter);
       watchdog.notifyBeginNewJob(*m_fileToRecall);
@@ -132,15 +133,17 @@ public:
       m_fifo.pushDataBlock(NULL);
       // Log the successful transfer
       localStats.totalTime = localTime.secs();
-      // Hardcoded header size for lack of a better mechanism
-      // Head + trailer, 3 * 80 bytes each
-      localStats.headerVolume = (2 * 3 * 80);
+      // Count the trailer size
+      localStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
+      // We now transmitted one file:
+      localStats.filesCount++;
       params.addSnprintfDouble("positionTime", localStats.positionTime)
             .addSnprintfDouble("transferTime", localStats.transferTime)
             .addSnprintfDouble("waitFreeMemoryTime",localStats.waitFreeMemoryTime)
             .addSnprintfDouble("waitReportingTime",localStats.waitReportingTime)
             .addSnprintfDouble("totalTime", localStats.totalTime)
             .add("dataVolume",localStats.dataVolume)
+            .add("headerVolume",localStats.headerVolume)
             .add("driveTransferSpeedMBps",
                     localStats.totalTime?(1.0*localStats.dataVolume+1.0*localStats.headerVolume)
                      /1000/1000/localStats.totalTime:0)

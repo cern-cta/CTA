@@ -22,9 +22,11 @@
 #pragma once
 
 #include "castor/exception/Exception.hpp"
+#include "castor/log/Param.hpp"
 
 #include <stdint.h>
 #include <string>
+#include <list>
 
 namespace castor {
 namespace messages {
@@ -131,6 +133,20 @@ public:
    */
   virtual void notifyHeartbeat(const std::string &unitName,
     const uint64_t nbBytesMoved) = 0;
+  
+  /**
+   * Sends a new set of parameters, to be logged by the mother process when the
+   * transfer session is over.
+   * @param params: a vector of log parameters
+   */
+  virtual void addLogParams(const std::string &unitName,
+    const std::list<castor::log::Param> & params) = 0;
+  
+  /**
+   * Sends a list of parameters to remove from the end of session logging.
+   */
+  virtual void deleteLogParams(const std::string &unitName,
+    const std::list<std::string> & paramNames) = 0;
 
   /**
    * Notifies the tapeserverd daemon that a label session has encountered the

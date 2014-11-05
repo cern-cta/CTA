@@ -35,6 +35,8 @@
 #include "castor/messages/TapeserverProxyZmq.hpp"
 #include "castor/messages/TapeUnmounted.pb.h"
 #include "castor/messages/TapeUnmountStarted.pb.h"
+#include "castor/messages/AddLogParams.pb.h"
+#include "castor/messages/DeleteLogParams.pb.h"
 #include "castor/server/MutexLocker.hpp"
 
 //------------------------------------------------------------------------------
@@ -545,6 +547,130 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to create Heartbeat frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//-----------------------------------------------------------------------------
+// addLogParams
+//-----------------------------------------------------------------------------
+void  castor::messages::TapeserverProxyZmq::addLogParams(
+  const std::string &unitName,
+  const std::list<castor::log::Param> & params) {
+  server::MutexLocker lock(&m_mutex);
+
+  try {
+    const Frame rqst = createAddLogParamsFrame(unitName, params);
+    sendFrame(m_serverSocket, rqst);
+
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_serverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to send tapeserver addLogParams: " <<
+      "unitName=" << unitName << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createAddLogParamsFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::TapeserverProxyZmq::
+  createAddLogParamsFrame(const std::string &unitName,
+  const std::list<castor::log::Param> & params) {
+  try {
+    Frame frame;
+
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_ADDLOGPARAMS);
+    frame.header.set_bodysignature("PIPO");
+    
+    AddLogParams body;
+    body.set_unitname(unitName);
+    for(std::list<castor::log::Param>::const_iterator i=params.begin();
+        i!=params.end(); i++) {
+      LogParam * lp = body.add_params();
+      lp->set_name(i->getName());
+      lp->set_value(i->getValue());
+    }
+    frame.serializeProtocolBufferIntoBody(body);
+
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create AddLogParams frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//-----------------------------------------------------------------------------
+// deleteLogParams
+//-----------------------------------------------------------------------------
+void  castor::messages::TapeserverProxyZmq::deleteLogParams(
+  const std::string &unitName,
+  const std::list<std::string> & paramNames) {
+  server::MutexLocker lock(&m_mutex);
+
+  try {
+    const Frame rqst = createDeleteLogParamsFrame(unitName, paramNames);
+    sendFrame(m_serverSocket, rqst);
+
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_serverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to send tapeserver deleteLogParams: " <<
+      "unitName=" << unitName << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createAddLogParamsFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::TapeserverProxyZmq::
+  createDeleteLogParamsFrame(const std::string &unitName,
+  const std::list<std::string> & paramNames) {
+  try {
+    Frame frame;
+
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_DELETELOGPARAMS);
+    frame.header.set_bodysignature("PIPO");
+    
+    DeleteLogParams body;
+    body.set_unitname(unitName);
+    for(std::list<std::string>::const_iterator i=paramNames.begin();
+        i!=paramNames.end(); i++) {
+      body.add_param_names(*i);
+    }
+    frame.serializeProtocolBufferIntoBody(body);
+
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create DeleteLogParams frame: " <<
       ne.getMessage().str();
     throw ex;
   }

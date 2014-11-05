@@ -80,11 +80,27 @@ void castor::messages::TapeserverProxyDummy::tapeUnmounted(
 } 
 
 //------------------------------------------------------------------------------
-// tapeUnmounted
+// notifyHeartbeat
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyDummy::
 notifyHeartbeat(const std::string &unitName, const uint64_t nbBlocksMoved) {
 } 
+
+//------------------------------------------------------------------------------
+// addLogParams
+//------------------------------------------------------------------------------
+void castor::messages::TapeserverProxyDummy::
+addLogParams(const std::string &unitName,
+  const std::list<castor::log::Param> & params) {
+}
+
+//------------------------------------------------------------------------------
+// deleteLogParans
+//------------------------------------------------------------------------------
+void castor::messages::TapeserverProxyDummy::
+deleteLogParams(const std::string &unitName,
+  const std::list<std::string> & paramNames) {
+}
 
 //------------------------------------------------------------------------------
 // labelError
