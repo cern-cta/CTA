@@ -486,7 +486,7 @@ class RunningTransfersSet(object):
     for scheduler, transfer, rc, msg in failedTransfers:
       try:
         # try to fail the transfer on our side
-        self.failTransfer(scheduler, transfer, rc, msg)  # SEINTERNAL
+        self.failTransfer(scheduler, transfer, rc, msg)
       except Exception, e:
         # "Failed to end the transfer" message
         dlf.writeerr(msgs.TRANSFERENDEDFAILED, type=str(e.__class__), message=str(e), originalErrorMessage=msg)
