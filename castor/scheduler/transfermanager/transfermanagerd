@@ -199,12 +199,19 @@ class TransferManagerService(rpyc.Service):
 
   def _checkPool(self, pool):
     '''Checks whether the given pool exists. Raise an exception if not'''
-    stcur = self.__class__.dbConnection().cursor()
-    stcur.execute("SELECT name FROM DiskPool WHERE name = :pool", pool=pool)
-    rows = stcur.fetchall()
-    stcur.close()
-    if not rows:
-      raise ValueError('No pool found with name %s' % pool)
+    try:
+      self.__class__.acquireDbConnection()
+      stcur = self.__class__.dbConnection().cursor()
+      stcur.execute("SELECT name FROM DiskPool WHERE name = :pool", pool=pool)
+      rows = stcur.fetchall()
+      stcur.close()
+      if not rows:
+        raise ValueError('No pool found with name %s' % pool)
+    except Exception, e:
+      self.__class__.dbConnection().checkForReconnection(e)
+      raise e
+    finally:
+      self.__class__.releaseDbConnection()
 
   def exposed_summarizeTransfersPerPool(self, pool=None, user=None, detailed=False):
     '''summarizes the number of running and pending transfers per pool for a given pool and user.
