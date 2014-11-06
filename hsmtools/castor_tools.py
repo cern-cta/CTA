@@ -25,7 +25,7 @@
 
 """utility functions for castor tools written in python"""
 
-import os, sys, time, thread, subprocess, re, socket, pwd, grp
+import os, sys, time, thread, threading, subprocess, re, socket, pwd, grp
 import dlf
 
 def _checkValueFound(name, value, instance, configFile):
@@ -49,7 +49,7 @@ dlf.addmessages({msgs.CREATEDORACONN : 'Created new Oracle connection',
 class DBConnection(object):
     '''This class wraps an Oracle database connection with the ability to automatically reconnect when 
     the underlying db connection drops. See also castor/db/ora/OraCnvSvc.cpp'''
-    
+
     def __init__(self, connString, schemaVersion, enforceCheck=True):
         '''Constructor'''
         try:
@@ -64,10 +64,11 @@ class DBConnection(object):
         self.enforceCheck = enforceCheck
         self._autocommit = False
         self.connection = None
+        self.connectionLock = threading.Lock()
         # the following ORA error codes are known (see OraCnvSvc.cpp) to be raised when the Oracle connection drops
         self.errorCodesForReconnect = [28, 3113, 3114, 32102, 3135, 12170, 12541, 1012, 1003, 12571, 1033, 1089, 24338, 12537] + range(25401, 25410)
     
-    def initConnection(self):
+    def _initConnection(self):
         '''Instantiates an Oracle connection and checks the schema version defined in the db against the code one.
         Raises ValueError in case of mismatch, cx_Oracle.OperationalError for any other Oracle issue.'''
         self.connection = self.cx_Oracle.Connection(self.connString)
@@ -90,7 +91,7 @@ class DBConnection(object):
         cur = self.connection.cursor()
         cur.execute("BEGIN DBMS_APPLICATION_INFO.SET_CLIENT_INFO('CASTOR pid=%d tid=%d'); END;" % (os.getpid(), thread.get_ident()%10000))
     
-    def dropConnection(self):
+    def _dropConnection(self):
         '''Drop existing internal connection'''
         try:
             # first close the connection
@@ -113,7 +114,12 @@ class DBConnection(object):
             # check whether to reconnect
             if (errorcode in self.errorCodesForReconnect) or (errorcode >= 25401 and errorcode <= 25409):
                 # We should reconnect
-                self.dropConnection()
+                try:
+                    self.connectionLock.acquire()
+                    self._dropConnection()
+                finally:
+                    self.connectionLock.release()
+
 
     # autocommit property
     def set_autocommit(self, value):
@@ -131,8 +137,12 @@ class DBConnection(object):
     def __getattr__(self, name):
         '''Implements a facade pattern: any method of the underlying connection is exposed by this class,
         but disconnections are handled automatically'''
-        if not self.connection:
-            self.initConnection()
+        try:
+            self.connectionLock.acquire()
+            if not self.connection:
+                self._initConnection()
+        finally:
+            self.connectionLock.release()
         def facade(*args):
             '''internal method returned by getattr and wrapping the original one'''
             try:
