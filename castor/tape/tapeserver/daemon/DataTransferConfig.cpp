@@ -29,7 +29,8 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig():
+castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig()
+  throw():
   bufsz(0),
   nbBufs(0),
   bulkRequestMigrationMaxBytes(0),
@@ -44,7 +45,7 @@ castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig():
 //------------------------------------------------------------------------------
 // createFromCastorConf
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig
+castor::tape::tapeserver::daemon::DataTransferConfig
   castor::tape::tapeserver::daemon::DataTransferConfig::createFromCastorConf(
     log::Logger *const log) {
   common::CastorConfiguration &castorConf =

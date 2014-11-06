@@ -119,10 +119,10 @@ struct DataTransferConfig {
   std::string xrootPrivateKey;
 
   /**
-   * Constructor that sets all integer memebr-variables to 0 and all string
+   * Constructor that sets all integer member-variables to 0 and all string
    * member-variables to the empty string.
    */
-  DataTransferConfig();
+  DataTransferConfig() throw();
 
   /**
    * Returns a configuration structure based on the contents of

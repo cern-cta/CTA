@@ -38,6 +38,7 @@
 #include "castor/tape/tapeserver/daemon/ProcessForkerConnectionHandler.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxySocket.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
+#include "castor/tape/tapeserver/daemon/TapeDaemonConfig.hpp"
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
@@ -190,14 +191,8 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
 
-  common::CastorConfiguration &castorConf =
-    common::CastorConfiguration::getConfig();
-  const time_t waitJobTimeoutInSecs = castorConf.getConfEntInt("TAPESERVERD",
-    "WAITJOBTIMEOUT", (time_t)TAPESERVER_WAITJOBTIMEOUT_DEFAULT, &m_log);
-  const time_t mountTimeoutInSecs = castorConf.getConfEntInt("TAPESERVERD",
-    "MOUNTTIMEOUT", (time_t)TAPESERVER_MOUNTTIMEOUT_DEFAULT, &m_log);
-  const time_t blockMoveTimeoutInSec = castorConf.getConfEntInt("TAPESERVERD",
-    "BLKMOVETIMEOUT", (time_t)TAPESERVER_BLKMOVETIMEOUT_DEFAULT, &m_log);
+  const TapeDaemonConfig config =
+    TapeDaemonConfig::createFromCastorConf(&m_log);
 
   // Process must be able to change user now and should be permitted to perform
   // raw IO in the future
@@ -216,9 +211,17 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   const ProcessForkerOneTimeConfig processForkerConfig =
     ProcessForkerOneTimeConfig::createFromCastorConf(&m_log);
   m_processForker = new ProcessForkerProxySocket(m_log, cmdPair.tapeDaemon);
-  m_catalogue = new Catalogue(m_netTimeout, m_log, *m_processForker, m_cupv,
-    m_vdqm, m_vmgr, m_hostName, waitJobTimeoutInSecs, mountTimeoutInSecs,
-    blockMoveTimeoutInSec);
+  m_catalogue = new Catalogue(
+    m_netTimeout,
+    m_log,
+    *m_processForker,
+    m_cupv,
+    m_vdqm,
+    m_vmgr,
+    m_hostName,
+    config.waitJobTimeoutInSecs,
+    config.mountTimeoutInSecs,
+    config.blockMoveTimeoutInSec);
 
   m_catalogue->populate(m_driveConfigs);
 
