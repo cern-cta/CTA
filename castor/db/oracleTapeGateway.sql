@@ -743,7 +743,7 @@ BEGIN
     FROM RecallJob
    WHERE castorFile = inCfId
      AND ROWNUM < 2;
-  -- if no remaining recallJobs, the subrequests are failed
+  -- if no remaining recallJobs, the subrequests are failed and pending remigrations canceled
   IF varRecallStillAlive = 0 THEN
     UPDATE /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile) */ SubRequest 
        SET status = dconst.SUBREQUEST_FAILED,
@@ -752,6 +752,9 @@ BEGIN
            errorMessage = 'File recall from tape has failed, please try again later'
      WHERE castorFile = inCfId 
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
+     DELETE MigrationJob
+      WHERE castorFile = inCfId
+        AND status = tconst.MIGRATIONJOB_WAITINGONRECALL;
      -- log 'File recall has permanently failed'
     logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_PERMANENTLY_FAILED, varFileId, varNsHost,
       'tapegatewayd', ' TPVID=' || inVID ||' '|| inLogContext);
