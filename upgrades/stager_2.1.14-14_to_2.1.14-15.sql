@@ -95,6 +95,21 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
+/* cleanup "orphaned" MigrationJobs that have no associated DiskCopies
+   These were due to 2 bugs :
+    - CASTOR-4828 : MigrationJobs left behind by deleteDiskCopy
+    - CASTOR-4827: MigrationJobs left behind in case of failing recalls
+*/
+BEGIN
+  FOR cf IN (SELECT castorFile FROM MigrationJob
+              WHERE NOT EXISTS (SELECT 1 FROM DiskCopy
+                                 WHERE DiskCopy.CastorFile = MigrationJob.CastorFile)) LOOP
+    deleteMigrationJobs(cf.castorFile);
+    deleteCastorFile(cf.castorFile);
+    COMMIT;
+  END LOOP;
+END;
+/
 
 /* Search and delete old diskCopies in bad states */
 CREATE OR REPLACE PROCEDURE deleteFailedDiskCopies(timeOut IN NUMBER) AS
