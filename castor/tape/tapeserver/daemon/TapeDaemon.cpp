@@ -216,9 +216,7 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
     m_vdqm,
     m_vmgr,
     m_hostName,
-    m_tapeDaemonConfig.waitJobTimeoutInSecs,
-    m_tapeDaemonConfig.mountTimeoutInSecs,
-    m_tapeDaemonConfig.blockMoveTimeoutInSec);
+    m_tapeDaemonConfig.catalogueConfig);
 
   m_catalogue->populate(m_driveConfigs);
 

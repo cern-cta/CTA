@@ -24,24 +24,33 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/tape/tapeserver/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
-#include "castor/tape/tapeserver/daemon/TapeDaemonConfig.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueConfig.hpp"
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::CatalogueConfig::CatalogueConfig() throw():
+  waitJobTimeoutInSecs(0),
+  mountTimeoutInSecs(0),
+  blockMoveTimeoutInSecs(0) {
+}
 
 //------------------------------------------------------------------------------
 // createFromCastorConf
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::TapeDaemonConfig
-  castor::tape::tapeserver::daemon::TapeDaemonConfig::createFromCastorConf(
+castor::tape::tapeserver::daemon::CatalogueConfig
+  castor::tape::tapeserver::daemon::CatalogueConfig::createFromCastorConf(
     log::Logger *const log) {
   common::CastorConfiguration &castorConf =
     common::CastorConfiguration::getConfig();
 
-  TapeDaemonConfig config;
-  
-  config.processForkerConfig = ProcessForkerConfig::createFromCastorConf(log);
-  config.catalogueConfig = CatalogueConfig::createFromCastorConf(log);
-  config.cupvHost = castorConf.getConfEntString("UPV" , "HOST", log);
-  config.vdqmHost = castorConf.getConfEntString("VDQM", "HOST", log);
-  config.vmgrHost = castorConf.getConfEntString("VMGR", "HOST", log);
+  CatalogueConfig config;
+  config.waitJobTimeoutInSecs = castorConf.getConfEntInt("TapeServer",
+    "WaitJobTimeout", (time_t)TAPESERVER_WAITJOBTIMEOUT_DEFAULT, log);
+  config.mountTimeoutInSecs = castorConf.getConfEntInt("TapeServer",
+    "MountTimeout", (time_t)TAPESERVER_MOUNTTIMEOUT_DEFAULT, log);
+  config.blockMoveTimeoutInSecs = castorConf.getConfEntInt("TapeServer",
+    "BlkMoveTimeout", (time_t)TAPESERVER_BLKMOVETIMEOUT_DEFAULT, log);
 
   return config;
 }

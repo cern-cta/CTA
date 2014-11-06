@@ -24,8 +24,6 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
-#include "castor/tape/tapeserver/daemon/CatalogueConfig.hpp"
-#include "castor/tape/tapeserver/daemon/ProcessForkerConfig.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -36,34 +34,34 @@ namespace tapeserver {
 namespace daemon {
 
 /**
- * The contents of the castor.conf file to be used by the tape-server daemon.
+ * The contents of the castor.conf file to be used by the tape-drive catalogue
+ * of the tape-server daemon.
  */
-struct TapeDaemonConfig {
+struct CatalogueConfig {
 
   /**
-   * The CASTOR configuration parameters used by the ProcessForker.
+   * The maximum time in seconds that the data-transfer session can take to get
+   * the transfer job from the client.
    */
-  ProcessForkerConfig processForkerConfig;
+  time_t waitJobTimeoutInSecs;
 
   /**
-   * The CASTOR configuration parameters used by the Catalogue.
+   * The maximum time in seconds that the data-transfer session can take to
+   * mount a tape.
    */
-  CatalogueConfig catalogueConfig;
+  time_t mountTimeoutInSecs;
 
   /**
-   * The network name of the host on which the cupv daemon is running.
+   * The maximum time in seconds the data-transfer session of tapeserverd can
+   * cease to move data blocks
    */
-  std::string cupvHost;
+  time_t blockMoveTimeoutInSecs;
 
   /**
-   * The network name of the host on which the vdqm daemon is running.
+   * Constructor that sets all integer member-variables to 0 and all string
+   * member-variables to the empty string.
    */
-  std::string vdqmHost;
-
-  /**
-   * The network name of the host on which the vmgr host is running.
-   */
-  std::string vmgrHost;
+  CatalogueConfig() throw();
 
   /**
    * Returns a configuration structure based on the contents of
@@ -72,10 +70,10 @@ struct TapeDaemonConfig {
    * @param log pointer to NULL or an optional logger object.
    * @return The configuration structure.
    */
-  static TapeDaemonConfig createFromCastorConf(
+  static CatalogueConfig createFromCastorConf(
     log::Logger *const log = NULL);
 
-}; // TapeDaemonConfig
+}; // CatalogueConfig
 
 } // namespace daemon
 } // namespace tapeserver

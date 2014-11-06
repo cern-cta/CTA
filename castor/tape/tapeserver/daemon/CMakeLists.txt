@@ -15,6 +15,7 @@ add_library(castorTapeServerDaemon
   CatalogueLabelSession.cpp
   CatalogueTransferSession.cpp
   CatalogueCleanerSession.cpp
+  CatalogueConfig.cpp
   TapeServerReporter.cpp
   LabelCmdAcceptHandler.cpp
   LabelCmdConnectionHandler.cpp

@@ -39,9 +39,7 @@ castor::tape::tapeserver::daemon::Catalogue::Catalogue(
   legacymsg::VdqmProxy &vdqm,
   legacymsg::VmgrProxy &vmgr,
   const std::string &hostName,
-  const time_t waitJobTimeoutInSecs,
-  const time_t mountTimeoutInSecs,
-  const time_t blockMoveTimeoutInSecs):
+  const CatalogueConfig &catalogueConfig):
   m_netTimeout(netTimeout),
   m_log(log),
   m_processForker(processForker),
@@ -49,9 +47,7 @@ castor::tape::tapeserver::daemon::Catalogue::Catalogue(
   m_vdqm(vdqm),
   m_vmgr(vmgr),
   m_hostName(hostName),
-  m_waitJobTimeoutInSecs(waitJobTimeoutInSecs),
-  m_mountTimeoutInSecs(mountTimeoutInSecs),
-  m_blockMoveTimeoutInSecs(blockMoveTimeoutInSecs) {
+  m_catalogueConfig(catalogueConfig) {
 }
 
 //-----------------------------------------------------------------------------
@@ -145,8 +141,9 @@ void castor::tape::tapeserver::daemon::Catalogue::enterDriveConfig(
     // Insert it
     m_drives[driveConfig.unitName] = new CatalogueDrive(m_netTimeout,
       m_log, m_processForker, m_cupv, m_vdqm, m_vmgr, m_hostName, driveConfig,
-      CatalogueDrive::DRIVE_STATE_DOWN, m_waitJobTimeoutInSecs,
-      m_mountTimeoutInSecs, m_blockMoveTimeoutInSecs);
+      CatalogueDrive::DRIVE_STATE_DOWN, m_catalogueConfig.waitJobTimeoutInSecs,
+      m_catalogueConfig.mountTimeoutInSecs,
+      m_catalogueConfig.blockMoveTimeoutInSecs);
   // Else the drive is already in the catalogue
   } else {
     castor::exception::Exception ex;

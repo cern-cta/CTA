@@ -32,6 +32,7 @@
 #include "castor/log/Logger.hpp"
 #include "castor/tape/utils/DriveConfigMap.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueConfig.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueDrive.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 
@@ -63,12 +64,8 @@ public:
    * @param vmgr Proxy object representing the vmgrd daemon.
    * @param hostName The name of the host on which the daemon is running.  This
    * name is needed to fill in messages to be sent to the vdqmd daemon.
-   * @param waitJobTimeoutInSecs The maximum time in seconds that the
-   * data-transfer session can take to get the transfer job from the client.
-   * @param mountTimeoutInSecs The maximum time in seconds that the
-   * data-transfer session can take to mount a tape.
-   * @param blockMoveTimeoutInSecs The maximum time in seconds that the
-   * data-transfer session can cease to move data blocks.
+   * @param catalogueConfig The CASTOR configuration parameters to be used by
+   * the catalogue.
    */
   Catalogue(
     const int netTimeout,
@@ -78,9 +75,7 @@ public:
     legacymsg::VdqmProxy &vdqm,
     legacymsg::VmgrProxy &vmgr,
     const std::string &hostName,
-    const time_t waitJobTimeoutInSecs,
-    const time_t mountTimeoutInSecs,
-    const time_t blockMoveTimeoutInSecs);
+    const CatalogueConfig &catalogueConfig);
 
   /**
    * Destructor.
@@ -213,22 +208,9 @@ private:
   const std::string m_hostName;
 
   /**
-   * The maximum time in seconds that the data-transfer session can take to get
-   * the transfer job from the client.
+   * The CASTOR configuration parameters to be used by the catalogue.
    */
-  const time_t m_waitJobTimeoutInSecs;
-
-  /**
-   * The maximum time in seconds that the data-transfer session can take to
-   * mount a tape.
-   */
-  const time_t m_mountTimeoutInSecs;
-
-  /**
-   * The maximum time in seconds that the data-transfer session can cease to
-   * move data blocks.
-   */
-  const time_t m_blockMoveTimeoutInSecs;
+  const CatalogueConfig m_catalogueConfig;
 
   /**
    * Type that maps the unit name of a tape drive to the catalogue entry of
