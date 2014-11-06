@@ -752,9 +752,7 @@ BEGIN
            errorMessage = 'File recall from tape has failed, please try again later'
      WHERE castorFile = inCfId 
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
-     DELETE MigrationJob
-      WHERE castorFile = inCfId
-        AND status = tconst.MIGRATIONJOB_WAITINGONRECALL;
+     deleteMigrationJobsForRecall(inCfId);
      -- log 'File recall has permanently failed'
     logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_PERMANENTLY_FAILED, varFileId, varNsHost,
       'tapegatewayd', ' TPVID=' || inVID ||' '|| inLogContext);
