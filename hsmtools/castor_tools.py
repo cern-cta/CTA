@@ -137,12 +137,13 @@ class DBConnection(object):
     def __getattr__(self, name):
         '''Implements a facade pattern: any method of the underlying connection is exposed by this class,
         but disconnections are handled automatically'''
-        try:
-            self.connectionLock.acquire()
-            if not self.connection:
-                self._initConnection()
-        finally:
-            self.connectionLock.release()
+        if not self.connection:
+            try:
+                self.connectionLock.acquire()
+                if not self.connection:
+                    self._initConnection()
+            finally:
+                self.connectionLock.release()
         def facade(*args):
             '''internal method returned by getattr and wrapping the original one'''
             try:
