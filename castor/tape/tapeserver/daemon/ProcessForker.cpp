@@ -66,7 +66,7 @@ castor::tape::tapeserver::daemon::ProcessForker::ProcessForker(
   const int reaperSocket,
   const std::string &hostName,
   char *const argv0,
-  const ProcessForkerOneTimeConfig &config) throw():
+  const ProcessForkerConfig &config) throw():
   m_log(log),
   m_cmdSocket(cmdSocket),
   m_reaperSocket(reaperSocket),

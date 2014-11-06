@@ -208,8 +208,8 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
 
   m_processForkerPid = forkProcessForker(cmdPair, reaperPair);
 
-  const ProcessForkerOneTimeConfig processForkerConfig =
-    ProcessForkerOneTimeConfig::createFromCastorConf(&m_log);
+  const ProcessForkerConfig processForkerConfig =
+    ProcessForkerConfig::createFromCastorConf(&m_log);
   m_processForker = new ProcessForkerProxySocket(m_log, cmdPair.tapeDaemon);
   m_catalogue = new Catalogue(
     m_netTimeout,
@@ -542,8 +542,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
 int castor::tape::tapeserver::daemon::TapeDaemon::runProcessForker(
   const int cmdReceiverSocket, const int reaperSenderSocket) throw() {
   try {
-    const ProcessForkerOneTimeConfig processForkerConfig =
-      ProcessForkerOneTimeConfig::createFromCastorConf();
+    const ProcessForkerConfig processForkerConfig =
+      ProcessForkerConfig::createFromCastorConf();
     ProcessForker processForker(m_log, cmdReceiverSocket, reaperSenderSocket,
       m_hostName, m_argv[0], processForkerConfig);
     processForker.execute();

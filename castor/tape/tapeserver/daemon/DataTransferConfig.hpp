@@ -34,11 +34,7 @@ namespace tapeserver {
 namespace daemon {
 
 /**
- * The contents of the castor.conf file to be used by the
- * DataTransferSession.
- *
- * The pre-extraction of the contents by the caller instead of direct
- * getconfent() calls facilitates unit-testing.
+ * The contents of the castor.conf file to be used by a DataTransferSession.
  */
 struct DataTransferConfig {
 

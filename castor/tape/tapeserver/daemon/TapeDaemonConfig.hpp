@@ -24,7 +24,7 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
-#include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerConfig.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -36,20 +36,13 @@ namespace daemon {
 
 /**
  * The contents of the castor.conf file to be used by the tape-server daemon.
- *
- * The pre-extraction of the contents by the caller instead of direct
- * getconfent() calls facilitates unit-testing.
  */
 struct TapeDaemonConfig {
 
   /**
-   * The contents of the castor.conf file to be used by the
-   * DataTransferSession.
-   *
-   * The pre-extraction of the contents by the caller instead of direct
-   * getconfent() calls facilitates unit-testing.
+   * The CASTOR configuration parameters used by the ProcessForker.
    */
-  DataTransferConfig dataTransferConfig;
+  ProcessForkerConfig processForkerConfig;
 
   /**
    * The maximum time in seconds that the data-transfer session can take to get

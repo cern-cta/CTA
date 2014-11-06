@@ -32,9 +32,9 @@ namespace daemon {
 
 /**
  * Structure containing the CASTOR configuration parameters used by the
- * ProcessForker for the entire lifetime of the process.
+ * ProcessForker.
  */
-struct ProcessForkerOneTimeConfig {
+struct ProcessForkerConfig {
 
   /**
    * The TCP/IP port on which the rmcd daemon is listening.
@@ -50,7 +50,7 @@ struct ProcessForkerOneTimeConfig {
    * Constructor that sets all integer member-variables to 0 and all string
    * member-variables to the emptry string.
    */
-  ProcessForkerOneTimeConfig();
+  ProcessForkerConfig();
 
   /**
    * Returns a configuration structure based on the contents of
@@ -59,10 +59,10 @@ struct ProcessForkerOneTimeConfig {
    * @param log pointer to NULL or an optional logger object.
    * @return The configuration structure.
    */
-  static ProcessForkerOneTimeConfig createFromCastorConf(
+  static ProcessForkerConfig createFromCastorConf(
     log::Logger *const log = NULL);
 
-}; // class ProcessForkerOneTimeConfig
+}; // class ProcessForkerConfig
 
 } // namespace daemon
 } // namespace tapeserver

@@ -22,26 +22,26 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/tape/tapeserver/daemon/ProcessForkerOneTimeConfig.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerConfig.hpp"
 #include "h/rmc_constants.h"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::ProcessForkerOneTimeConfig::
-  ProcessForkerOneTimeConfig():
+castor::tape::tapeserver::daemon::ProcessForkerConfig::
+  ProcessForkerConfig():
   rmcPort(0) {
 }
 
 //------------------------------------------------------------------------------
 // createFromCastorConfig
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::ProcessForkerOneTimeConfig
-  castor::tape::tapeserver::daemon::ProcessForkerOneTimeConfig::
+castor::tape::tapeserver::daemon::ProcessForkerConfig
+  castor::tape::tapeserver::daemon::ProcessForkerConfig::
   createFromCastorConf(log::Logger *const log) {
   common::CastorConfiguration &castorConf =
     common::CastorConfiguration::getConfig();
-  ProcessForkerOneTimeConfig config;
+  ProcessForkerConfig config;
 
   config.rmcPort = castorConf.getConfEntInt("RMC", "PORT",
     (unsigned short)RMC_PORT, log);

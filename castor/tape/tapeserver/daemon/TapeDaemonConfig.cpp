@@ -46,7 +46,7 @@ castor::tape::tapeserver::daemon::TapeDaemonConfig
 
   TapeDaemonConfig config;
   
-  config.dataTransferConfig = DataTransferConfig::createFromCastorConf(log);
+  config.processForkerConfig = ProcessForkerConfig::createFromCastorConf(log);
 
   config.waitJobTimeoutInSecs = castorConf.getConfEntInt("TAPESERVERD",
     "WAITJOBTIMEOUT", (time_t)TAPESERVER_WAITJOBTIMEOUT_DEFAULT, log);

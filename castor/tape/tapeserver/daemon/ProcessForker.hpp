@@ -29,8 +29,8 @@
 #include "castor/messages/ForkDataTransfer.pb.h"
 #include "castor/messages/ForkLabel.pb.h"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerConfig.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerFrame.hpp"
-#include "castor/tape/tapeserver/daemon/ProcessForkerOneTimeConfig.hpp"
 
 #include <stdint.h>
 
@@ -65,7 +65,7 @@ public:
    */
   ProcessForker(log::Logger &log, const int cmdSocket, const int reaperSocket,
     const std::string &hostName, char *const argv0,
-    const ProcessForkerOneTimeConfig &config) throw();
+    const ProcessForkerConfig &config) throw();
 
   /**
    * Destructor.
@@ -116,10 +116,9 @@ private:
   char *const m_argv0;
 
   /**
-   * The CASTOR configuration parameters used by the ProcessForker for the 
-   * entire lifetime of the process.
+   * The CASTOR configuration parameters used by the ProcessForker.
    */
-  const ProcessForkerOneTimeConfig m_config;
+  const ProcessForkerConfig m_config;
 
   /**
    * Idempotent method that closes the socket used for receving commands
