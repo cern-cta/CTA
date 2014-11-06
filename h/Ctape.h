@@ -61,6 +61,8 @@
 #define D1600G  0x20
 #define D4000G  0x21
 #define D8000G  0x22
+#define D7000G  0x23
+#define D10T    0x24
 #define IDRC	0x100
 #define D10GC	(D10G | IDRC)
 #define D20GC	(D20G | IDRC)
@@ -83,7 +85,9 @@
 #define D5000GC	(D5000G | IDRC)
 #define D1600GC (D1600G | IDRC)
 #define D4000GC (D4000G | IDRC)
+#define D7000GC (D7000G | IDRC)
 #define D8000GC (D8000G | IDRC)
+#define D10TC  (D10T | IDRC)
 
 #ifdef NOTRACE
 #define ENTRY(x) \
