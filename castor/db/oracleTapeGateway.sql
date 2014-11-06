@@ -1306,8 +1306,8 @@ BEGIN
                ORDER BY creationTime)
              WHERE ROWNUM < TO_NUMBER(getConfigOption('Migration', 'NbMigCandConsidered', 10000)))
            Job, CastorFile,
-           (SELECT /*+ LEADING(DiskCopy, FileSystem, DiskServer)
-                       USE_NL(DiskCopy, FileSystem, DiskServer)
+           (SELECT /*+ LEADING(DiskCopy FileSystem DiskServer)
+                       USE_NL(DiskCopy FileSystem DiskServer)
                        INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
                    DiskCopy.castorFile,
                    DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path AS filePath,
