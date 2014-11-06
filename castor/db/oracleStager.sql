@@ -2892,6 +2892,10 @@ BEGIN
           ELSE
             DELETE FROM DiskCopy WHERE ID = dc.dcId;
           END IF;
+          -- do not forget to cancel pending migrations in case we've lost that last DiskCopy
+          IF varNbRemaining = 0 THEN
+            deleteMigrationJobs(varCfId);
+          END IF;
           logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_GC, dc.fileId, varNsHost, 'stagerd', varLogParams);
         END IF;
       ELSE
