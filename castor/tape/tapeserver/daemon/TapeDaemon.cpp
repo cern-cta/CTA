@@ -74,7 +74,8 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   legacymsg::VdqmProxy &vdqm,
   legacymsg::VmgrProxy &vmgr,
   reactor::ZMQReactor &reactor,
-  castor::server::ProcessCap &capUtils):
+  castor::server::ProcessCap &capUtils,
+  const TapeDaemonConfig &tapeDaemonConfig):
   castor::server::Daemon(stdOut, stdErr, log),
   m_state(TAPEDAEMON_STATE_RUNNING),
   m_startOfShutdown(0),
@@ -87,6 +88,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   m_vmgr(vmgr),
   m_reactor(reactor),
   m_capUtils(capUtils),
+  m_tapeDaemonConfig(tapeDaemonConfig),
   m_programName("tapeserverd"),
   m_hostName(getHostName()),
   m_processForker(NULL),
@@ -191,9 +193,6 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
 
-  const TapeDaemonConfig config =
-    TapeDaemonConfig::createFromCastorConf(&m_log);
-
   // Process must be able to change user now and should be permitted to perform
   // raw IO in the future
   setProcessCapabilities("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
@@ -208,8 +207,6 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
 
   m_processForkerPid = forkProcessForker(cmdPair, reaperPair);
 
-  const ProcessForkerConfig processForkerConfig =
-    ProcessForkerConfig::createFromCastorConf(&m_log);
   m_processForker = new ProcessForkerProxySocket(m_log, cmdPair.tapeDaemon);
   m_catalogue = new Catalogue(
     m_netTimeout,
@@ -219,9 +216,9 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
     m_vdqm,
     m_vmgr,
     m_hostName,
-    config.waitJobTimeoutInSecs,
-    config.mountTimeoutInSecs,
-    config.blockMoveTimeoutInSec);
+    m_tapeDaemonConfig.waitJobTimeoutInSecs,
+    m_tapeDaemonConfig.mountTimeoutInSecs,
+    m_tapeDaemonConfig.blockMoveTimeoutInSec);
 
   m_catalogue->populate(m_driveConfigs);
 
@@ -542,10 +539,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
 int castor::tape::tapeserver::daemon::TapeDaemon::runProcessForker(
   const int cmdReceiverSocket, const int reaperSenderSocket) throw() {
   try {
-    const ProcessForkerConfig processForkerConfig =
-      ProcessForkerConfig::createFromCastorConf();
     ProcessForker processForker(m_log, cmdReceiverSocket, reaperSenderSocket,
-      m_hostName, m_argv[0], processForkerConfig);
+      m_hostName, m_argv[0], m_tapeDaemonConfig.processForkerConfig);
     processForker.execute();
     return 0;
   } catch(castor::exception::Exception &ex) {

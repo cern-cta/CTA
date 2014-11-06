@@ -53,35 +53,33 @@ castor::tape::tapeserver::daemon::DataTransferConfig
   DataTransferConfig config;
 
   config.bufsz = castorConf.getConfEntInt(
-    "TAPESERVERD", "BUFSZ",
+    "TapeServer", "BufSize",
     castor::tape::tapeserver::daemon::TAPESERVER_BUFSZ_DEFAULT, log);
   config.nbBufs = castorConf.getConfEntInt<uint32_t>(
-    "TAPESERVERD", "NB_BUFS", log);
-  config.tapeBadMIRHandlingRepair = castorConf.getConfEntString(
-    "TAPESERVERD", "BADMIR_HANDLING", "CANCEL", log);
+    "TapeServer", "NbBufs", log);
   config.bulkRequestMigrationMaxBytes = castorConf.getConfEntInt(
-    "TAPESERVERD", "BULKREQUESTMIGRATIONMAXBYTES",
+    "TapeServer", "BulkRequestMigrationMaxBytes",
     (uint64_t)TAPEBRIDGE_BULKREQUESTMIGRATIONMAXBYTES, log);
   config.bulkRequestMigrationMaxFiles = castorConf.getConfEntInt(
-    "TAPESERVERD", "BULKREQUESTMIGRATIONMAXFILES",
+    "TapeServer", "BulkRequestMigrationMaxFiles",
     (uint64_t)TAPEBRIDGE_BULKREQUESTMIGRATIONMAXFILES, log);
   config.bulkRequestRecallMaxBytes = castorConf.getConfEntInt(
-    "TAPESERVERD", "BULKREQUESTRECALLMAXBYTES",
+    "TapeServer", "BulkRequestRecallMaxBytes",
     (uint64_t)TAPEBRIDGE_BULKREQUESTRECALLMAXBYTES, log);
   config.bulkRequestRecallMaxFiles = castorConf.getConfEntInt(
-    "TAPESERVERD", "BULKREQUESTRECALLMAXFILES",
+    "TapeServer", "BulkRequestRecallMaxFiles",
     (uint64_t)TAPEBRIDGE_BULKREQUESTRECALLMAXFILES, log);
   config.maxBytesBeforeFlush = castorConf.getConfEntInt(
-    "TAPESERVERD", "MAXBYTESBEFOREFLUSH",
+    "TapeServer", "MaxBytesBeforeFlush",
     (uint64_t)TAPEBRIDGE_MAXBYTESBEFOREFLUSH, log);
   config.maxFilesBeforeFlush = castorConf.getConfEntInt(
-    "TAPESERVERD", "MAXFILESBEFOREFLUSH",
+    "TapeServer", "MaxFilesBeforeFlush",
     (uint64_t)TAPEBRIDGE_MAXFILESBEFOREFLUSH, log);
   config.nbDiskThreads = castorConf.getConfEntInt(
-    "TAPESERVERD", "THREAD_POOL", 
+    "TapeServer", "NbDiskThreads", 
     castor::tape::tapeserver::daemon::TAPESERVER_NB_DISK_THREAD_DEFAULT, log);
   config.remoteFileProtocol = castorConf.getConfEntString(
-    "TAPESERVERD", "REMOTEFILEPROTOCOL", "RFIO", log);
+    "TapeServer", "RemoteFileProtocol", "RFIO", log);
   config.xrootPrivateKey = castorConf.getConfEntString(
     "XROOT", "PrivateKey", "/opt/xrootd/keys/key.pem", log);
 

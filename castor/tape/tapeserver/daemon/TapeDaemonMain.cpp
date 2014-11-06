@@ -110,13 +110,10 @@ static void logTpconfigLine(castor::log::Logger &log,
 static int exceptionThrowingMain(const int argc, char **const argv,
   castor::log::Logger &log) {
   using namespace castor;
-  
-  common::CastorConfiguration &config =
-    common::CastorConfiguration::getConfig();
 
-  const std::string cupvHost = config.getConfEntString("UPV" , "HOST", &log);
-  const std::string vdqmHost = config.getConfEntString("VDQM", "HOST", &log);
-  const std::string vmgrHost = config.getConfEntString("VMGR", "HOST", &log);
+  // Parse /etc/castor/castor.conf
+  const tape::tapeserver::daemon::TapeDaemonConfig tapeDaemonConfig =
+    tape::tapeserver::daemon::TapeDaemonConfig::createFromCastorConf(&log);
 
   // Parse /etc/castor/TPCONFIG
   const tape::utils::TpconfigLines tpconfigLines =
@@ -127,9 +124,12 @@ static int exceptionThrowingMain(const int argc, char **const argv,
 
   // Create proxy objects for the vdqm, vmgr and rmc daemons
   const int netTimeout = 10; // Timeout in seconds
-  legacymsg::CupvProxyTcpIp cupv(log, cupvHost, CUPV_PORT, netTimeout);
-  legacymsg::VdqmProxyTcpIp vdqm(log, vdqmHost, VDQM_PORT, netTimeout);
-  legacymsg::VmgrProxyTcpIp vmgr(vmgrHost, VMGR_PORT, netTimeout);
+  legacymsg::CupvProxyTcpIp cupv(log, tapeDaemonConfig.cupvHost, CUPV_PORT,
+    netTimeout);
+  legacymsg::VdqmProxyTcpIp vdqm(log, tapeDaemonConfig.vdqmHost, VDQM_PORT,
+    netTimeout);
+  legacymsg::VmgrProxyTcpIp vmgr(tapeDaemonConfig.vmgrHost, VMGR_PORT,
+    netTimeout);
 
   tape::reactor::ZMQReactor reactor(log);
 
@@ -149,7 +149,8 @@ static int exceptionThrowingMain(const int argc, char **const argv,
     vdqm,
     vmgr,
     reactor,
-    capUtils);
+    capUtils,
+    tapeDaemonConfig);
 
   // Run the tapeserverd daemon
   return daemon.main();

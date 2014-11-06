@@ -45,6 +45,21 @@ struct TapeDaemonConfig {
   ProcessForkerConfig processForkerConfig;
 
   /**
+   * The network name of the host on which the cupv daemon is running.
+   */
+  std::string cupvHost;
+
+  /**
+   * The network name of the host on which the vdqm daemon is running.
+   */
+  std::string vdqmHost;
+
+  /**
+   * The network name of the host on which the vmgr host is running.
+   */
+  std::string vmgrHost;
+
+  /**
    * The maximum time in seconds that the data-transfer session can take to get
    * the transfer job from the client.
    */

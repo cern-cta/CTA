@@ -33,7 +33,9 @@
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerConfig.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
+#include "castor/tape/tapeserver/daemon/TapeDaemonConfig.hpp"
 #include "castor/tape/utils/DriveConfigMap.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
@@ -75,6 +77,8 @@ public:
    * @param reactor The reactor responsible for dispatching the I/O events of
    * the parent process of the tape server daemon.
    * @param capUtils Object providing utilities for working UNIX capabilities.
+   * @param tapeDaemonConfig The CASTOR configuration parameters to be used by
+   * the tape daemon.
    */
   TapeDaemon(
     const int argc,
@@ -88,7 +92,8 @@ public:
     legacymsg::VdqmProxy &vdqm,
     legacymsg::VmgrProxy &vmgr,
     reactor::ZMQReactor &reactor,
-    castor::server::ProcessCap &capUtils);
+    castor::server::ProcessCap &capUtils,
+    const TapeDaemonConfig &tapeDaemonConfig);
 
   /**
    * Destructor.
@@ -268,6 +273,7 @@ protected:
    * @param reaperPair Socket pair used by the ProcessForker to notify the
    * TapeDaemon parent process of the termination of ProcessForker child
    * processes.
+   * by the ProcessForker.
    * @return The process identifier of the ProcessForker.
    */
   pid_t forkProcessForker(const ForkerCmdPair &cmdPair,
@@ -334,7 +340,8 @@ protected:
    * reports to the TapeDaemon parent process.
    * @return the exit code to be used for the process running the ProcessForker.
    */
-  int runProcessForker(const int cmdReceiverSocket,
+  int runProcessForker(
+    const int cmdReceiverSocket,
     const int reaperSenderSocket) throw();
 
   /**
@@ -568,6 +575,11 @@ protected:
    * Object providing utilities for working UNIX capabilities.
    */
   castor::server::ProcessCap &m_capUtils;
+
+  /**
+   * The CASTOR configuration parameters to be used by the tape daemon.
+   */
+  const TapeDaemonConfig m_tapeDaemonConfig;
 
   /**
    * The program name of the daemon.

@@ -47,13 +47,15 @@ castor::tape::tapeserver::daemon::TapeDaemonConfig
   TapeDaemonConfig config;
   
   config.processForkerConfig = ProcessForkerConfig::createFromCastorConf(log);
-
-  config.waitJobTimeoutInSecs = castorConf.getConfEntInt("TAPESERVERD",
-    "WAITJOBTIMEOUT", (time_t)TAPESERVER_WAITJOBTIMEOUT_DEFAULT, log);
-  config.mountTimeoutInSecs = castorConf.getConfEntInt("TAPESERVERD",
-    "MOUNTTIMEOUT", (time_t)TAPESERVER_MOUNTTIMEOUT_DEFAULT, log);
-  config.blockMoveTimeoutInSec = castorConf.getConfEntInt("TAPESERVERD",
-    "BLKMOVETIMEOUT", (time_t)TAPESERVER_BLKMOVETIMEOUT_DEFAULT, log);
+  config.cupvHost = castorConf.getConfEntString("UPV" , "HOST", log);
+  config.vdqmHost = castorConf.getConfEntString("VDQM", "HOST", log);
+  config.vmgrHost = castorConf.getConfEntString("VMGR", "HOST", log);
+  config.waitJobTimeoutInSecs = castorConf.getConfEntInt("TapeServer",
+    "WaitJobTimeout", (time_t)TAPESERVER_WAITJOBTIMEOUT_DEFAULT, log);
+  config.mountTimeoutInSecs = castorConf.getConfEntInt("TapeServer",
+    "MountTimeout", (time_t)TAPESERVER_MOUNTTIMEOUT_DEFAULT, log);
+  config.blockMoveTimeoutInSec = castorConf.getConfEntInt("TapeServer",
+    "BlkMoveTimeout", (time_t)TAPESERVER_BLKMOVETIMEOUT_DEFAULT, log);
 
   return config;
 }
