@@ -26,12 +26,8 @@
 
 """transfer manager daemon of CASTOR."""
 
-import sys
-import getopt
+import sys, getopt, threading, socket, daemon, Queue
 import rpyc, rpyc.utils.server
-import threading
-import socket
-import daemon
 import castor_tools, connectionpool, dispatcher, serverqueue, aborter
 from commonexceptions import TransferCanceled, TransferFailed
 import synchronizer, suicider, reportmanager, diskserverlistcache, modifydiskservers
@@ -43,15 +39,14 @@ import cx_Oracle
 # usage function
 def usage(exitCode):
   '''prints usage'''
-  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--foreground] [-n|--nbworkers <nb worker threads>]'
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--foreground]'
   sys.exit(exitCode)
 
 # first parse the options
 daemonize = True
-nbWorkers = 5
 verbose = False
 try:
-  options, arguments = getopt.getopt(sys.argv[1:], 'hvfn:v', ['help', 'foreground', 'nbworkers', 'verbose'])
+  options, arguments = getopt.getopt(sys.argv[1:], 'hfv', ['help', 'foreground', 'verbose'])
 except Exception, parsingException:
   print parsingException
   usage(1)
@@ -60,13 +55,17 @@ for f, v in options:
     usage(0)
   elif f == '-f' or f == '--foreground':
     daemonize = False
-  elif f == '-n' or f == '--nbworkers':
-    nbWorkers = int(v)
   elif f == '-v' or f == '--verbose':
     verbose = True
   else:
     print "unknown option : " + f
     usage(1)
+# get configuration
+try:
+  configuration = castor_tools.castorConf()
+except ValueError, ex:
+  print ex
+  sys.exit(1)
 
 # If any arg, complain and stop
 if len(arguments) != 0:
@@ -91,35 +90,27 @@ class TransferManagerService(rpyc.Service):
   '''This service is responsible for answering all requests made to the scheduler.
   There are mainly 2 kinds : monitoring requests and callbacks from the diskservers'''
 
-  stagerDBlock = threading.Lock()
-  stagerConnection = None
+  # prepare a pool of connections to the stager DB
+  _stagerConnectionPool = Queue.Queue()
+  for t in range(configuration.getValue('TransferManager', 'NbDatabaseConnections', 5, int)):
+    c = castor_tools.connectToStager()
+    c.autocommit = True
+    _stagerConnectionPool.put(c)
 
   def __init__(self, conn):
     '''constructor'''
     rpyc.Service.__init__(self, conn)
-    # connection to the stager DB
-    self.stagerConnection = None
 
-  def dbConnection(cls):
-    '''returns a connection to the stager DB.
-       The connection is cached and reconnections are handled.
-       Note that the connection is shared between all instances of the
-       TransferManagerService. Thus this method should never be called
-       without calling first acquireDbConnection'''
-    if cls.stagerConnection == None:
-      cls.stagerConnection = castor_tools.connectToStager()
-      cls.stagerConnection.autocommit = True
-    return cls.stagerConnection
-  dbConnection = classmethod(dbConnection)
+  def getDbConnection(cls):
+    '''returns a connection to the stager DB out of a pool. If the pool is busy,
+    it waits until a connection is freed. The connection must be released back to the
+    pool by calling releaseDbConnection.'''
+    return cls._stagerConnectionPool.get(True)
+  getDbConnection = classmethod(getDbConnection)
 
-  def acquireDbConnection(cls):
-    '''Take a lock on the Db connection access'''
-    cls.stagerDBlock.acquire()
-  acquireDbConnection = classmethod(acquireDbConnection)
-
-  def releaseDbConnection(cls):
-    '''Release the lock on the Db connection access'''
-    cls.stagerDBlock.release()
+  def releaseDbConnection(cls, conn):
+    '''Release a stager DB connection back to the pool'''
+    cls._stagerConnectionPool.put(conn)
   releaseDbConnection = classmethod(releaseDbConnection)
 
   def dispatch(self, func, pool, *args):
@@ -198,20 +189,20 @@ class TransferManagerService(rpyc.Service):
     return tuple(transfers)
 
   def _checkPool(self, pool):
-    '''Checks whether the given pool exists. Raise an exception if not'''
+    '''Checks whether the given pool exists. Raises an exception if not'''
+    conn = self.__class__.getDbConnection()
     try:
-      self.__class__.acquireDbConnection()
-      stcur = self.__class__.dbConnection().cursor()
+      stcur = conn.cursor()
       stcur.execute("SELECT name FROM DiskPool WHERE name = :pool", pool=pool)
       rows = stcur.fetchall()
       stcur.close()
       if not rows:
         raise ValueError('No pool found with name %s' % pool)
     except Exception, e:
-      self.__class__.dbConnection().checkForReconnection(e)
+      conn.checkForReconnection(e)
       raise e
     finally:
-      self.__class__.releaseDbConnection()
+      self.__class__.releaseDbConnection(conn)
 
   def exposed_summarizeTransfersPerPool(self, pool=None, user=None, detailed=False):
     '''summarizes the number of running and pending transfers per pool for a given pool and user.
@@ -383,9 +374,9 @@ class TransferManagerService(rpyc.Service):
       errmsgs.append(errmsg)
     # only inform the stager
     try:
-      self.__class__.acquireDbConnection()
+      conn = self.__class__.getDbConnection()
       try:
-        stcur = self.__class__.dbConnection().cursor()
+        stcur = conn.cursor()
         stcur.arraysize = 50
         stcur.execute("BEGIN transferFailedSafe(:1, :2, :3); END;", [transferIds, errnos, errmsgs])
         stcur.close()
@@ -395,9 +386,9 @@ class TransferManagerService(rpyc.Service):
           dlf.writeerr(msgs.FAILTRANSFEREXCEPTION, subreqId=transferId,
                        reqId=reqId, fileid=fileId, Type=str(e.__class__), Message=str(e), OriginalErrorMsg=errmsg, OriginalErrno=errno)
         # check whether we should reconnect to DB, and do so if needed
-        self.__class__.dbConnection().checkForReconnection(e)
+        conn.checkForReconnection(e)
     finally:
-      self.__class__.releaseDbConnection()
+      self.__class__.releaseDbConnection(conn)
 
   def exposed_transfersCanceled(self, transfers):
     '''cancels transfers in the queues and informs the stager in case there is no
@@ -408,6 +399,34 @@ class TransferManagerService(rpyc.Service):
     if transferskilled:
       self.exposed_transfersKilled(transferskilled)
 
+  def exposed_transferBackToQueue(self, transferTuple):
+    '''puts a transfer back to the server queue when a transfer could not be started and was queued back'''
+    transfer = tupleToTransfer(transferTuple)
+    dlf.writedebug(msgs.INVOKINGTRANSFERBACKTOQUEUE, subreqId=transfer.transferId,
+                   fileid=transfer.fileId, transferType=TransferType.toStr(transfer.transferType),
+                   diskServer=transfer.diskServer)
+    queueingTransfers.put(transfer, True)
+
+  def exposed_getQueueingTransfers(self, diskserver):
+    '''called on the (re)start of the diskManager to rebuild the queue of transfers'''
+    dlf.writedebug(msgs.INVOKINGGETQUEUEINGTRANSFERS, DiskServer=diskserver)
+    return tuple(queueingTransfers.listQueueingTransfers(diskserver))
+
+  def exposed_getRunningD2dSourceTransfers(self, diskserver):
+    '''called on the (re)start of the diskManager to rebuild the list of running d2dsrc transfers'''
+    dlf.writedebug(msgs.INVOKINGGETRUNNINGD2DSOURCETRANSFERS, DiskServer=diskserver)
+    return tuple(queueingTransfers.listRunningD2dSources(diskserver))
+
+  def exposed_getAllRunningD2dSourceTransfers(self):
+    '''called by synchronization to list running d2dsrc transfers'''
+    dlf.writedebug(msgs.INVOKINGGETALLRUNNINGD2DSOURCETRANSFERS)
+    return tuple(queueingTransfers.listAllRunningD2dSources())
+
+  def exposed_d2dendsrc(self, transferId):
+    '''called when a d2dsrc should be informed that transfer is over'''
+    dlf.writedebug(msgs.INVOKINGD2DENDSRC, subreqid=transferId)
+    queueingTransfers.d2dendById(transferId)
+
   def exposed_transferStarting(self, transferTuple):
     '''called when a transfer started on a given diskserver'''
     # first log something
@@ -417,11 +436,12 @@ class TransferManagerService(rpyc.Service):
                    reqId=transfer.reqId, transferType=TransferType.toStr(transfer.transferType))
     # then handle the queuing part
     srcTransfer = queueingTransfers.transferStarting(transfer)
-    # finally (if no exception), call the DB
+    # finally (if no exception), call the DB: this is done in a separate thread pool
+    # in order to use multiple database connections
     try:
-      self.__class__.acquireDbConnection()
+      conn = self.__class__.getDbConnection()
       try:
-        stcur = self.__class__.dbConnection().cursor()
+        stcur = conn.cursor()
         if transfer.transferType == TransferType.D2DDST:
           # deal with disk-to-disk copies
           srcDcPath = stcur.var(cx_Oracle.STRING)
@@ -453,7 +473,7 @@ class TransferManagerService(rpyc.Service):
                                  % (transfer.transferType, transfer.transferId))
       except Exception, e:
         # check whether we should reconnect to DB, and do so if needed
-        self.__class__.dbConnection().checkForReconnection(e)
+        conn.checkForReconnection(e)
         # detect special error where the client can give up
         if isinstance(e, cx_Oracle.Error):
           error, = e.args
@@ -470,76 +490,15 @@ class TransferManagerService(rpyc.Service):
         # otherwise reraise for the upper layer
         raise e
     finally:
-      self.__class__.releaseDbConnection()
-
-  def exposed_transferBackToQueue(self, transferTuple):
-    '''puts a transfer back to the server queue when a transfer could not be started and was queued back'''
-    transfer = tupleToTransfer(transferTuple)
-    dlf.writedebug(msgs.INVOKINGTRANSFERBACKTOQUEUE, subreqId=transfer.transferId,
-                   fileid=transfer.fileId, transferType=TransferType.toStr(transfer.transferType),
-                   diskServer=transfer.diskServer)
-    queueingTransfers.put(transfer, True)
-
-  def exposed_getQueueingTransfers(self, diskserver):
-    '''called on the (re)start of the diskManager to rebuild the queue of transfers'''
-    dlf.writedebug(msgs.INVOKINGGETQUEUEINGTRANSFERS, DiskServer=diskserver)
-    return tuple(queueingTransfers.listQueueingTransfers(diskserver))
-
-  def exposed_getRunningD2dSourceTransfers(self, diskserver):
-    '''called on the (re)start of the diskManager to rebuild the list of running d2dsrc transfers'''
-    dlf.writedebug(msgs.INVOKINGGETRUNNINGD2DSOURCETRANSFERS, DiskServer=diskserver)
-    return tuple(queueingTransfers.listRunningD2dSources(diskserver))
-
-  def exposed_getAllRunningD2dSourceTransfers(self):
-    '''called by synchronization to list running d2dsrc transfers'''
-    dlf.writedebug(msgs.INVOKINGGETALLRUNNINGD2DSOURCETRANSFERS)
-    return tuple(queueingTransfers.listAllRunningD2dSources())
-
-  def exposed_d2dendsrc(self, transferId):
-    '''called when a d2dsrc should be informed that transfer is over'''
-    dlf.writedebug(msgs.INVOKINGD2DENDSRC, subreqid=transferId)
-    queueingTransfers.d2dendById(transferId)
-
-  def exposed_d2dEnded(self, transferTuples):
-    '''called when d2ds are over. Responsible for updating the stager DB and informing the source of the d2d.
-       Note that we don't use the transfer class here.'''
-    # first deal with the stager DB
-    try:
-      self.__class__.acquireDbConnection()
-      try:
-        stcur = self.__class__.dbConnection().cursor()
-        stcur.arraysize = 50
-        # loop over the transfers to be ended
-        for transferId, reqId, fileId, diskServerName, localPath, fileSize, errCode, errMsg in transferTuples:
-          dlf.writedebug(msgs.INVOKINGD2DEND, subreqid=transferId, reqid=reqId, fileid=fileId,
-                         path=localPath, size=fileSize, errCode=errCode, errMsg=errMsg)
-          # cleanup source in our queues
-          queueingTransfers.d2dendById(transferId)
-          # then end them in the stager DB, allowing retry (the 1 in 5th place)
-          # the order is important as the synchronizer will remove d2dsrc with no entry in the DB
-          stcur.execute("BEGIN disk2DiskCopyEnded(:1, :2, :3, :4, :5, :6); END;",
-                        (transferId, diskServerName, localPath, fileSize, errCode, errMsg))
-        # close cursor
-        stcur.close()
-      except Exception, e:
-        for transferId, reqId, fileId, diskserverName, localPath, fileSize, errCode, errMsg in transferTuples:
-          # "Exception caught while ending transfer" message
-          dlf.writeerr(msgs.ENDTRANSFEREXCEPTION, subreqid=transferId,
-                       reqid=reqId, fileid=fileId, diskserver=diskserverName,
-                       path=localPath, originalErrCode=errCode, originalError=errMsg,
-                       Type=str(e.__class__), Message=str(e))
-          # check whether we should reconnect to DB, and do so if needed
-        self.__class__.dbConnection().checkForReconnection(e)
-    finally:
-      self.__class__.releaseDbConnection()
+      self.__class__.releaseDbConnection(conn)
 
   def exposed_transferEnded(self, transferTuple):
     '''called when user transfers are over. Responsible for updating the stager and nameserver DB.
        Note that we don't use the transfer class here.'''
     try:
-      self.__class__.acquireDbConnection()
+      conn = self.__class__.getDbConnection()
       try:
-        stcur = self.__class__.dbConnection().cursor()
+        stcur = conn.cursor()
         stcur.arraysize = 1
         # get the arguments
         transferId, reqId, fileId, flags, fileSize, mTime, cksumType, cksumValue, errCode, errMsg = transferTuple
@@ -568,11 +527,44 @@ class TransferManagerService(rpyc.Service):
                      reqid=reqId, fileid=fileId, originalErrCode=errCode, originalError=errMsg,
                      Type=str(e.__class__), Message=str(e))
         # check whether we should reconnect to DB, and do so if needed
-        self.__class__.dbConnection().checkForReconnection(e)
+        conn.checkForReconnection(e)
         # and raise to the caller
         raise e
     finally:
-      self.__class__.releaseDbConnection()
+      self.__class__.releaseDbConnection(conn)
+
+  def exposed_d2dEnded(self, transferTuples):
+    '''called when d2ds are over. Responsible for updating the stager DB and informing the source of the d2d.
+       Note that we don't use the transfer class here.'''
+    # first deal with the stager DB
+    try:
+      conn = self.__class__.getDbConnection()
+      try:
+        stcur = conn.cursor()
+        stcur.arraysize = 50
+        # loop over the transfers to be ended
+        for transferId, reqId, fileId, diskServerName, localPath, fileSize, errCode, errMsg in transferTuples:
+          dlf.writedebug(msgs.INVOKINGD2DEND, subreqid=transferId, reqid=reqId, fileid=fileId,
+                         path=localPath, size=fileSize, errCode=errCode, errMsg=errMsg)
+          # cleanup source in our queues
+          queueingTransfers.d2dendById(transferId)
+          # then end them in the stager DB, allowing retry (the 1 in 5th place)
+          # the order is important as the synchronizer will remove d2dsrc with no entry in the DB
+          stcur.execute("BEGIN disk2DiskCopyEnded(:1, :2, :3, :4, :5, :6); END;",
+                        (transferId, diskServerName, localPath, fileSize, errCode, errMsg))
+        # close cursor
+        stcur.close()
+      except Exception, e:
+        for transferId, reqId, fileId, diskserverName, localPath, fileSize, errCode, errMsg in transferTuples:
+          # "Exception caught while ending transfer" message
+          dlf.writeerr(msgs.ENDTRANSFEREXCEPTION, subreqid=transferId,
+                       reqid=reqId, fileid=fileId, diskserver=diskserverName,
+                       path=localPath, originalErrCode=errCode, originalError=errMsg,
+                       Type=str(e.__class__), Message=str(e))
+          # check whether we should reconnect to DB, and do so if needed
+        conn.checkForReconnection(e)
+    finally:
+      self.__class__.releaseDbConnection(conn)
 
   def exposed_drain(self):
     '''when called, moves the daemon to drain mode, where only ongoing transfers are handled
@@ -588,12 +580,12 @@ class TransferManagerService(rpyc.Service):
     have been killed while no daemon was running are properly terminated.'''
     dlf.writedebug(msgs.INVOKINGSYNCRUN)
     try:
-      self.__class__.acquireDbConnection()
+      conn = self.__class__.getDbConnection()
       try:
         # connect to the DB and call the proper PL/SQL procedure
-        stcur = self.__class__.dbConnection().cursor()
+        stcur = conn.cursor()
         stcur.arraysize = 50
-        respcur = self.__class__.dbConnection().cursor()
+        respcur = conn.cursor()
         respcur.arraysize = 50
         stcur.execute("BEGIN syncRunningTransfers(:1, :2, :3); END;", [diskserver, list(runningTransfers), respcur])
         terminatedtransfers = respcur.fetchall()
@@ -607,9 +599,9 @@ class TransferManagerService(rpyc.Service):
         # "Exception caught while synchronizing running transfers, giving up with synchronization" message
         dlf.writeerr(msgs.SYNCRUNEXCEPTION, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
         # check whether we should reconnect to DB, and do so if needed
-        self.__class__.dbConnection().checkForReconnection(e)
+        conn.checkForReconnection(e)
     finally:
-      self.__class__.releaseDbConnection()
+      self.__class__.releaseDbConnection(conn)
 
   def exposed_stateReport(self, report):
     '''called by diskservers to report their state. Passes the report over to the ReportManager
@@ -622,16 +614,16 @@ class TransferManagerService(rpyc.Service):
     dlf.write(msgs.INVOKINGMODIFYDISKSERVERS, Targets=str(targets), State=state, MountPoints=str(mountPoints))
     try:
       try:
-        self.__class__.acquireDbConnection()
-        return modifydiskservers.modifyDiskServers(self.__class__.dbConnection(), targets, state, mountPoints, pool, dataPool, isRecursive)
+        conn = self.__class__.getDbConnection()
+        return modifydiskservers.modifyDiskServers(conn, targets, state, mountPoints, pool, dataPool, isRecursive)
       except Exception, e:
         # "Exception caught while modifying diskserver(s), giving up" message
         dlf.writenotice(msgs.MODIFYDISKSERVERSEXCEPTION, Message=str(e), Type=str(e.__class__), Targets=str(targets), State=state, MountPoints=str(mountPoints), Pool=pool, DataPool=dataPool)
         # check whether we should reconnect to DB, and do so if needed
-        self.__class__.dbConnection().checkForReconnection(e)
+        conn.checkForReconnection(e)
         raise e
     finally:
-      self.__class__.releaseDbConnection()
+      self.__class__.releaseDbConnection(conn)
 
 
 def initQueues():
@@ -720,12 +712,6 @@ if daemonize:
 drainOnExit = False
 try:
   try:
-    # get configuration
-    try:
-      configuration = castor_tools.castorConf()
-    except ValueError, ex:
-      print ex
-      sys.exit(1)
     # setup logging
     dlf.init('transfermanagerd')
     # 'TransferManager Daemon started'
@@ -746,8 +732,9 @@ try:
     # launch a report manager thread, handling reports from diskservers about their state and
     # updating the stager DB regularly
     reportManagerThread = reportmanager.ReportManagerThread()
-    # launch a processing threads that will regularly check if we need to schedule new transfers
+    # launch processing threads that will regularly check if we need to schedule new transfers
     # and dispatch them on the relevant diskservers
+    nbWorkers = configuration.getValue('TransferManager', 'NbWorkers', 5, int)
     userDispatchThread = dispatcher.UserDispatcherThread(queueingTransfers, nbWorkers)
     d2dDispatchThread = dispatcher.D2DDispatcherThread(queueingTransfers, nbWorkers)
     # launch a processing thread that will regularly check if there are transfers to abort
