@@ -1146,7 +1146,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToRecall (
       ftrwc.setFseq                (occiNumber(rs->getNumber(         fSeqIdx)));
       ftrwc.setPath                (           rs->getString(         pathIdx));
       ftrwc.setUmask               (022);
-      ftrwc.setPositionCommandCode (TPPOSIT_FSEQ);
+      ftrwc.setPositionCommandCode (TPPOSIT_BLKID);
       // Fill the context part of the FileToRecallStructWithContext
       ftrwc.copyNb           = occiNumber(rs->getNumber(      copyNbIdx));
       ftrwc.eUid             = occiNumber(rs->getNumber(        eUidIdx));
