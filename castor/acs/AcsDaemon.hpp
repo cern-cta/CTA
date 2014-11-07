@@ -24,11 +24,10 @@
 #pragma once
 
 #include "castor/server/Daemon.hpp"
-#include "castor/server/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
-#include "castor/acs/Constants.hpp"
+#include "castor/acs/AcsDaemonConfig.hpp"
 #include "castor/acs/AcsPendingRequests.hpp"
-#include "castor/acs/CastorConf.hpp"
+#include "castor/acs/Constants.hpp"
 
 namespace castor     {
 namespace acs        {
@@ -49,8 +48,8 @@ public:
    * @param log The object representing the API of the CASTOR logging system.
    * @param reactor The reactor responsible for dispatching the I/O requests to
    * the CASTOR ACS daemon.
-   * @param capUtils Object providing utilities for working UNIX capabilities.
-   * @param castorConf The configuration for the CASTOR ACS daemon.
+   * @param config The CASTOR configuration parameters used by the CASTOR ACS
+   * daemon.
    */
   AcsDaemon(
     const int argc,
@@ -59,8 +58,7 @@ public:
     std::ostream &stdErr,
     log::Logger &log,
     castor::tape::reactor::ZMQReactor &reactor,
-    castor::server::ProcessCap &capUtils,
-    const CastorConf &castorConf);
+    const AcsDaemonConfig &config);
 
   /**
    * Destructor.
@@ -113,14 +111,6 @@ protected:
    * Sets the dumpable attribute of the current process to true.
    */
   void setDumpable();
-
-  /**
-   * Sets the capabilities of the current process.
-   *
-   * @text The string representation the capabilities that the current
-   * process should have.
-   */
-  void setProcessCapabilities(const std::string &text);
 
   /**
    * Blocks the signals that should not asynchronously disturb the daemon.
@@ -184,11 +174,6 @@ protected:
   castor::tape::reactor::ZMQReactor &m_reactor;
 
   /**
-   * Object providing utilities for working UNIX capabilities.
-   */
-  castor::server::ProcessCap &m_capUtils;
-
-  /**
    * The program name of the daemon.
    */
   const std::string m_programName;
@@ -204,9 +189,9 @@ protected:
   void *m_zmqContext;
   
   /**
-   * The configuration parameters for the CASTOR ACS daemon.
+   * The CASTOR configuration parameters used by the CASTOR ACS daemon.
    */
-  const CastorConf & m_castorConf;
+  const AcsDaemonConfig m_config;
   
   /**
    * The object to handle requests to the CASTOR ACS daemon.

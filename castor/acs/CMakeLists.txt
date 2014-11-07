@@ -36,8 +36,9 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
 
   add_library(castorAcsDaemon 
     Acs.cpp
-    AcsDaemonMain.cpp
     AcsDaemon.cpp
+    AcsDaemonConfig.cpp
+    AcsDaemonMain.cpp
     AcsDismountTape.cpp
     AcsImpl.cpp
     AcsLibraryInteraction.cpp

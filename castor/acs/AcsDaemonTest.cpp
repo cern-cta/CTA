@@ -70,11 +70,10 @@ TEST_F(castor_acs_AcsDaemonTest, constructor) {
   castor::log::DummyLogger log(programName);
     
   castor::tape::reactor::ZMQReactor reactor(log);
-  castor::server::ProcessCapDummy capUtils;
   std::auto_ptr<AcsDaemon> daemon;
-  const CastorConf castorConf;
+  const AcsDaemonConfig config;
   ASSERT_NO_THROW(daemon.reset(new AcsDaemon(argc, argv, stdOut, stdErr, log,
-    reactor, capUtils,castorConf)));
+    reactor, config)));
 }
 
 } // namespace unitTests

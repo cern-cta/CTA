@@ -24,8 +24,8 @@
 #pragma once
 
 #include "castor/acs/Acs.hpp"
+#include "castor/acs/AcsDaemonConfig.hpp"
 #include "castor/acs/AcsLibraryInteraction.hpp"
-#include "castor/acs/CastorConf.hpp"
 #include "castor/log/Logger.hpp"
 
 namespace castor     {
@@ -45,7 +45,7 @@ public:
     const std::string &vid, const uint32_t acs,
     const uint32_t lsm, const uint32_t panel, const uint32_t drive,
     Acs &acsWrapper,log::Logger &log,
-    const CastorConf &castorConf);
+    const AcsDaemonConfig &castorConf);
 
   /**
    * Destructor.
@@ -107,7 +107,7 @@ protected:
   /**
    * The configuration parameters for the CASTOR ACS daemon.
    */
-  const CastorConf & m_castorConf;
+  const AcsDaemonConfig m_castorConf;
 
 }; // class AcsMountTapeReadOnly
 

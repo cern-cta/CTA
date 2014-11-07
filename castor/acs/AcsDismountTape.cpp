@@ -35,7 +35,7 @@ castor::acs::AcsDismountTape::AcsDismountTape(
   const uint32_t drive,
   Acs &acsWrapper,
   log::Logger &log,
-  const CastorConf &castorConf):
+  const AcsDaemonConfig &castorConf):
   AcsLibraryInteraction(acsWrapper,log),
   m_volId(acsWrapper.str2Volid(vid)),
   m_driveId(acsWrapper.alpd2DriveId(acs,lsm,panel,drive)), 
@@ -62,16 +62,15 @@ void castor::acs::AcsDismountTape::asyncExecute(const SEQ_NO seqNo) const {
 //------------------------------------------------------------------------------
 // syncDismount
 //------------------------------------------------------------------------------
-void castor::acs::AcsDismountTape::syncDismount() const
-  {
+void castor::acs::AcsDismountTape::syncDismount() const {
   const SEQ_NO requestSeqNumber = 1;
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
 
   try {
     sendDismountRequest(requestSeqNumber);
     requestResponsesUntilFinal(requestSeqNumber, buf,
-      m_castorConf.acsQueryLibraryInterval,
-      m_castorConf.acsCommandTimeout);
+      m_castorConf.queryInterval,
+      m_castorConf.cmdTimeout);
     processDismountResponse(buf);
   } catch(castor::exception::Exception &ex) {
     castor::exception::DismountFailed df;

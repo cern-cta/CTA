@@ -21,40 +21,54 @@
 
 #pragma once
 
-#include "castor/acs/Constants.hpp"
+#include "castor/log/Logger.hpp"
 
-namespace castor     {
-namespace acs        {
+#include <time.h>
+
+namespace castor {
+namespace acs    {
+
+/**
+ * Structure used to store the CASTOR configuration parameters used by the
+ * CASTOR ACS daemon.
+ */
+struct AcsDaemonConfig {
 
   /**
-   *  Subclass holding all the configuration parameters
+   * The TCP/IP port on which the CASTOR ACS daemon listens for incoming Zmq
+   * connections from the tape server.
    */
-  class CastorConf {
-  public:
-    CastorConf(): 
-      ascServerInternalListeningPort(DEFAULT_ACS_SERVER_INTERNAL_LISTENING_PORT),
-      acsQueryLibraryInterval(DEFAULT_ACS_QUERY_LIBRARY_INTERVAL), 
-      acsCommandTimeout(DEFAULT_ACS_COMMAND_TIMEOUT), 
-      acsResponseTimeout(DEFAULT_ACS_RESPONSE_TIMEOUT) {} 
-    /**
-     * The TCP/IP port on which the CASTOR ACS daemon listens for incoming Zmq
-     * connections from the tape server.
-     */
-    unsigned short ascServerInternalListeningPort;
-    /**
-     * Time to wait in seconds between queries to ACS Library for responses.
-     */
-    const int acsQueryLibraryInterval; 
-    /**
-     * Time to wait in seconds for the mount or dismount to conclude.
-     */
-    const int acsCommandTimeout;
-    
-    /**
-     * Time to wait in seconds for the ACS response command timeouted.
-     */
-    const int acsResponseTimeout;
-  };
+  unsigned short port;
+
+  /**
+   * Time to wait in seconds between queries to the tape Library.
+   */
+  time_t queryInterval; 
+
+  /**
+   * The maximum time to wait in seconds for a tape-library command to
+   * conclude.
+   */
+  time_t cmdTimeout;
+
+  /**
+   * Constructor that sets all integer member-variables to 0 and all string
+   * member-variables to the empty string.
+   */
+  AcsDaemonConfig() throw();
+
+  /**
+   * Returns a configuration structure based on the contents of
+   * /etc/castor/castor.conf and compile-time constants.
+   *
+   * @param log pointer to NULL or an optional logger object.
+   * @return The configuration structure.
+   */
+  static AcsDaemonConfig createFromCastorConf(
+    log::Logger *const log = NULL);
+
+}; // struct AcsDaemonConfig
+
 } // namespace acs
 } // namespace castor
 

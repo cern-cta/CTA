@@ -28,6 +28,7 @@
 #include "castor/messages/ZmqSocketST.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/acs/AcsDaemon.hpp"
+#include "castor/acs/AcsDaemonConfig.hpp"
 #include "castor/acs/AcsPendingRequests.hpp"
 
 namespace castor     {
@@ -57,7 +58,7 @@ public:
     log::Logger &log,
     const std::string &hostName,
     void *const zmqContext,
-    const CastorConf &castorConf,
+    const AcsDaemonConfig &castorConf,
     AcsPendingRequests &acsPendingRequests);
 
   /**
@@ -168,7 +169,7 @@ private:
   /**
    * The configuration parameters for the CASTOR ACS daemon.
    */
-  const CastorConf &m_castorConf;
+  const AcsDaemonConfig m_castorConf;
   
   /**
    * The object to handle requests to the CASTOR ACS daemon.

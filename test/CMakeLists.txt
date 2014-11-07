@@ -50,6 +50,7 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     ../castor/acs/Acs.cpp
     ../castor/acs/AcsCmd.cpp
     ../castor/acs/AcsDaemon.cpp
+    ../castor/acs/AcsDaemonConfig.cpp
     ../castor/acs/AcsDaemonTest.cpp
     ../castor/acs/AcsDismountCmd.cpp
     ../castor/acs/AcsDismountCmdLine.cpp

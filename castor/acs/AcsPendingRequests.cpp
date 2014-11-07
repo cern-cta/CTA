@@ -30,8 +30,8 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::acs::AcsPendingRequests::AcsPendingRequests(
-  log::Logger &log, const CastorConf &castorConf):
+castor::acs::AcsPendingRequests::AcsPendingRequests(log::Logger &log,
+  const AcsDaemonConfig &castorConf):
   m_log(log),
   m_castorConf(castorConf),
   m_lastTimeResponseUsed(0) {
@@ -66,8 +66,8 @@ void castor::acs::AcsPendingRequests::tick() {
     const time_t now = time(0);
     
     const time_t secsSinceLastResponse = now -  m_lastTimeResponseUsed;
-    const bool responseTimeExceeded = secsSinceLastResponse > 
-      m_castorConf.acsResponseTimeout;
+    const bool responseTimeExceeded = secsSinceLastResponse >
+      ACS_RESPONSE_TIMEOUT;
     
     if (responseTimeExceeded) {
       const int responseTimeout = 0 ; // 0 - means pool for 
@@ -287,7 +287,7 @@ void castor::acs::AcsPendingRequests::checkRequest(const std::string &vid,
 //-----------------------------------------------------------------------------
 SEQ_NO castor::acs::AcsPendingRequests::getSequenceNumber() const {
   unsigned short maxSeqNo = 0;
-  unsigned short minSeqNo = ACS_MAXIMUM_SEQUENCE_NUMBER;
+  unsigned short minSeqNo = ACS_MAX_SEQ;
   
   for(RequestList::const_iterator itor = m_acsRequestList.begin(); 
     itor != m_acsRequestList.end();itor++) {
@@ -301,7 +301,7 @@ SEQ_NO castor::acs::AcsPendingRequests::getSequenceNumber() const {
   }
   
   // first request
-  if(ACS_MAXIMUM_SEQUENCE_NUMBER == minSeqNo && 0 == maxSeqNo) {
+  if(ACS_MAX_SEQ == minSeqNo && 0 == maxSeqNo) {
     return 1;
   }
     
@@ -311,7 +311,7 @@ SEQ_NO castor::acs::AcsPendingRequests::getSequenceNumber() const {
     }
   
   // try to get number from maxSeqNo to maximum allowed
-  if (ACS_MAXIMUM_SEQUENCE_NUMBER != maxSeqNo) {
+  if (ACS_MAX_SEQ != maxSeqNo) {
     return maxSeqNo+1;
   }
   

@@ -28,27 +28,27 @@ namespace acs        {
  * The default TCP/IP port on which the CASTOR ACS daemon listens for incoming Zmq
  * connections from the tape server.
  */
-const unsigned short DEFAULT_ACS_SERVER_INTERNAL_LISTENING_PORT = 54521; 
+const unsigned short ACS_PORT = 54521; 
       
 /**
  * Default time to wait in seconds between queries to ACS Library for responses.
  */
-const int DEFAULT_ACS_QUERY_LIBRARY_INTERVAL = 10;
+const int ACS_QUERY_INTERVAL = 10;
 
 /**
- * Default time to wait in seconds for the mount or dismount to conclude.
+ * Default time to wait in seconds for the tape-library command to conclude.
  */
-const int DEFAULT_ACS_COMMAND_TIMEOUT = 610;
+const int ACS_CMD_TIMEOUT = 610;
 
 /**
  * The maximum ACS sequence number value to be used.
  */
-const unsigned short ACS_MAXIMUM_SEQUENCE_NUMBER = 65535;
+const unsigned short ACS_MAX_SEQ = 65535;
 
 /**
  * Default timeout for the response command to the ACS library.
  */
-const int DEFAULT_ACS_RESPONSE_TIMEOUT = 5;
+const int ACS_RESPONSE_TIMEOUT = 5;
 
 /**
  * Enumeration of the states of an ACS request.

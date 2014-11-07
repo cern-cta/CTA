@@ -39,18 +39,16 @@ castor::acs::AcsDaemon::AcsDaemon(
   std::ostream &stdErr,
   log::Logger &log,  
   castor::tape::reactor::ZMQReactor &reactor,
-  castor::server::ProcessCap &capUtils,
-  const CastorConf &castorConf):
+  const AcsDaemonConfig &config):
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),
   m_argv(argv),
   m_reactor(reactor),
-  m_capUtils(capUtils),
   m_programName("acsd"),
   m_hostName(getHostName()),  
   m_zmqContext(NULL),
-  m_castorConf(castorConf),
-  m_acsPendingRequests(log, castorConf) {
+  m_config(config),
+  m_acsPendingRequests(log, config) {
 }
 
 //------------------------------------------------------------------------------
@@ -130,18 +128,9 @@ void  castor::acs::AcsDaemon::exceptionThrowingMain(
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
 
-  // Process must be able to change user now and should be permitted to perform
-  // raw IO in the future
-  setProcessCapabilities("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
-
   const bool runAsStagerSuperuser = true;
   daemonizeIfNotRunInForeground(runAsStagerSuperuser);
   setDumpable();
-
-  // There is no longer any need for the process to be able to change user,
-  // however the process should still be permitted to perform raw IO in the
-  // future
-  setProcessCapabilities("cap_sys_rawio+p");
 
   blockSignals();
   initZmqContext();
@@ -197,24 +186,6 @@ void castor::acs::AcsDaemon::setDumpable() {
 }
 
 //------------------------------------------------------------------------------
-// setProcessCapabilities
-//------------------------------------------------------------------------------
-void castor::acs::AcsDaemon::setProcessCapabilities(
-  const std::string &text) {
-  try {
-    m_capUtils.setProcText(text);
-    log::Param params[] =
-      {log::Param("capabilities", m_capUtils.getProcText())};
-    m_log(LOG_INFO, "Set process capabilities", params);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to set process capabilities to '" << text <<
-      "': " << ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
 // blockSignals
 //------------------------------------------------------------------------------
 void castor::acs::AcsDaemon::blockSignals() const {
@@ -239,7 +210,6 @@ void castor::acs::AcsDaemon::blockSignals() const {
     sigprocmask(SIG_BLOCK, &sigs, NULL),
     "Failed to block signals: sigprocmask() failed");
 }
-
 
 //------------------------------------------------------------------------------
 // initZmqContext
@@ -266,13 +236,12 @@ void castor::acs::AcsDaemon::setUpReactor() {
 //------------------------------------------------------------------------------
 // createAndRegisterAcsMessageHandler
 //------------------------------------------------------------------------------
-void castor::acs::AcsDaemon::
-  createAndRegisterAcsMessageHandler()  {
+void castor::acs::AcsDaemon::createAndRegisterAcsMessageHandler()  {
   try {
     std::auto_ptr<AcsMessageHandler> handler;
     try {
       handler.reset(new AcsMessageHandler(m_reactor, m_log, m_hostName, 
-        m_zmqContext, m_castorConf, m_acsPendingRequests));
+        m_zmqContext, m_config, m_acsPendingRequests));
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
       ex.getMessage() <<

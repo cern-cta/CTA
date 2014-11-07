@@ -25,8 +25,8 @@
 
 #include "castor/log/Logger.hpp"
 #include "castor/messages/messages.hpp"
+#include "castor/acs/AcsDaemonConfig.hpp"
 #include "castor/acs/AcsRequest.hpp"
-#include "castor/acs/CastorConf.hpp"
 #include "castor/acs/AcsImpl.hpp"
 
 #include <list>
@@ -48,8 +48,7 @@ public:
    * @param log Object representing the API of the CASTOR logging system.
    * @param castorConf The configuration for the CASTOR ACS daemon.
    */
-  AcsPendingRequests(
-    log::Logger &log, const CastorConf &castorConf );
+  AcsPendingRequests(log::Logger &log, const AcsDaemonConfig &castorConf);
   
   /**
    * Destructor.
@@ -170,7 +169,7 @@ private:
    * The object representing castor configuration parameters for 
    * the CASTOR ACS daemon.
    */
-  const CastorConf &m_castorConf;
+  const AcsDaemonConfig m_castorConf;
   
   /**
    * Type for the list of the ACS requests.

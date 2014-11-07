@@ -29,7 +29,6 @@
 #include "castor/acs/AcsDismountTape.hpp"
 #include "castor/acs/AcsMountTapeReadOnly.hpp"
 #include "castor/acs/AcsMountTapeReadWrite.hpp"
-#include "castor/acs/CastorConf.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/acs/Acs.hpp"
 #include "castor/acs/AcsImpl.hpp"
@@ -44,7 +43,7 @@ castor::acs::AcsMessageHandler::AcsMessageHandler(
   log::Logger &log,
   const std::string &hostName,
   void *const zmqContext,
-  const CastorConf &castorConf,
+  const AcsDaemonConfig &castorConf,
   AcsPendingRequests &acsPendingRequests):
   m_reactor(reactor),
   m_log(log),
@@ -54,7 +53,7 @@ castor::acs::AcsMessageHandler::AcsMessageHandler(
   m_acsPendingRequests(acsPendingRequests) { 
 
   std::ostringstream endpoint;
-  endpoint << "tcp://127.0.0.1:" << m_castorConf.ascServerInternalListeningPort;
+  endpoint << "tcp://127.0.0.1:" << m_castorConf.port;
   
   try {
     m_socket.bind(endpoint.str().c_str());

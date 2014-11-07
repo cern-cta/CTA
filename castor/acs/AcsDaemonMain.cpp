@@ -27,7 +27,6 @@
 #include "castor/acs/Constants.hpp"
 #include "castor/acs/AcsDaemon.hpp"
 #include "castor/utils/utils.hpp"
-#include "castor/acs/CastorConf.hpp"
 
 #include <iostream>
 
@@ -86,11 +85,8 @@ static int exceptionThrowingMain(const int argc, char **const argv,
   
   tape::reactor::ZMQReactor reactor(log);
 
-  // Create the object providing utilities for working with UNIX capabilities
-  castor::server::ProcessCap capUtils;
-  
-  // Create default configuration
-  const acs::CastorConf castorConf;
+  const acs::AcsDaemonConfig config =
+    acs::AcsDaemonConfig::createFromCastorConf(&log);
   
   // Create the main acsd object
   acs::AcsDaemon daemon(
@@ -100,8 +96,7 @@ static int exceptionThrowingMain(const int argc, char **const argv,
     std::cerr,
     log,   
     reactor,
-    capUtils,
-    castorConf);
+    config);
 
   // Run the acsd daemon
   return daemon.main();

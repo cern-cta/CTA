@@ -30,7 +30,7 @@
 castor::acs::AcsRequestDismountTape::AcsRequestDismountTape(log::Logger &log,
   const std::string &vid, const uint32_t acs,
   const uint32_t lsm, const uint32_t panel, const uint32_t drive, 
-  const CastorConf &castorConf,
+  const AcsDaemonConfig &castorConf,
   messages::ZmqSocketST &socket,
   messages::ZmqMsg &address,
   messages::ZmqMsg &empty,
@@ -59,7 +59,7 @@ void castor::acs::AcsRequestDismountTape::tick() {
     
     const time_t secsSinceLastQuery = now -  m_lastTimeLibraryQueried;
     const bool firstQueryOrTimeExceeded = secsSinceLastQuery > 
-      m_castorConf.acsQueryLibraryInterval;
+      m_castorConf.queryInterval;
     
     if(isRunning() && firstQueryOrTimeExceeded) {      
       if(isResponseFinalAndSuccess()) {
@@ -74,7 +74,7 @@ void castor::acs::AcsRequestDismountTape::tick() {
     
     const time_t secsSinceCommandStarted = now -  m_timeAcsCommandStarted;
     const bool acsCommandTimeExceeded = secsSinceCommandStarted >
-      m_castorConf.acsCommandTimeout;
+      m_castorConf.cmdTimeout;
     
     if(isRunning() && acsCommandTimeExceeded) {
       castor::exception::RequestFailed ex;

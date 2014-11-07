@@ -35,7 +35,7 @@ castor::acs::AcsMountTapeReadWrite::AcsMountTapeReadWrite(
   const uint32_t drive,
   Acs &acsWrapper,
   log::Logger &log,
-  const CastorConf &castorConf):
+  const AcsDaemonConfig &castorConf):
   AcsLibraryInteraction(acsWrapper,log),
   m_volId(acsWrapper.str2Volid(vid)),
   m_driveId(acsWrapper.alpd2DriveId(acs,lsm,panel,drive)), 
@@ -62,8 +62,7 @@ void castor::acs::AcsMountTapeReadWrite::syncMountTapeReadWrite() const
   try {
     sendMountTapeReadWriteRequest(requestSeqNumber);
     requestResponsesUntilFinal(requestSeqNumber, buf, 
-      m_castorConf.acsQueryLibraryInterval, 
-      m_castorConf.acsCommandTimeout);
+      m_castorConf.queryInterval, m_castorConf.cmdTimeout);
     processMountTapeReadWriteResponse(buf);
   }  catch(castor::exception::Exception &ex) {
     castor::exception::MountFailed mf;

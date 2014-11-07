@@ -23,11 +23,11 @@
 
 #pragma once
 
+#include "castor/acs/AcsDaemonConfig.hpp"
+#include "castor/acs/AcsDismountTape.hpp"
+#include "castor/acs/AcsImpl.hpp"
 #include "castor/acs/AcsRequest.hpp"
 #include "castor/log/Logger.hpp"
-#include "castor/acs/AcsDismountTape.hpp"
-#include "castor/acs/CastorConf.hpp"
-#include "castor/acs/AcsImpl.hpp"
 
 namespace castor     {
 namespace acs        {
@@ -57,7 +57,7 @@ public:
    */
   AcsRequestDismountTape(log::Logger &log, const std::string &vid, 
     const uint32_t acs, const uint32_t lsm, const uint32_t panel, 
-    const uint32_t drive, const CastorConf &castorConf,
+    const uint32_t drive, const AcsDaemonConfig &castorConf,
     messages::ZmqSocketST &socket,  messages::ZmqMsg &address,
      messages::ZmqMsg &empty, const SEQ_NO seqNo);
   
@@ -85,10 +85,9 @@ private:
   log::Logger &m_log;
   
   /**
-   * The object representing castor configuration parameters for 
-   * the CASTOR ACS daemon.
+   * The CASTOR configuration parameters for the CASTOR ACS daemon.
    */
-  const CastorConf &m_castorConf;
+  const AcsDaemonConfig m_castorConf;
   
   /**
    * The object representing the class for tape dismount through ACS API.
