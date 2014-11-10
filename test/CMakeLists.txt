@@ -73,7 +73,7 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     ../castor/acs/AcsQueryVolumeCmdTest.cpp
     ../castor/acs/AcsRequest.cpp
     ../castor/acs/AcsRequestDismountTape.cpp
-    ../castor/acs/Cmd.cpp)
+    ../castor/acs/CmdLineTool.cpp)
 
   foreach(SRC_FILE ${STK_UNITTEST_SRC_FILES})
     set_property(SOURCE ${SRC_FILE}

@@ -27,7 +27,7 @@
 #include "castor/exception/Mismatch.hpp"
 #include "castor/exception/RequestFailed.hpp"
 #include "castor/acs/Acs.hpp"
-#include "castor/acs/Cmd.hpp"
+#include "castor/acs/CmdLineTool.hpp"
 
 #include <istream>
 #include <ostream>
@@ -45,7 +45,7 @@ namespace acs {
  * Abstract class implementing common code and data structures for command-line
  * tools that interact with ACLS compatible tape libraries.
  */
-class AcsCmd: public Cmd {
+class AcsCmd: public CmdLineTool {
 public:
   /**
    * Constructor.

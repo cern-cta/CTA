@@ -36,7 +36,7 @@ namespace acs {
  * Abstract class implementing common code and data structures for a
  * command-line tool.
  */
-class Cmd {
+class CmdLineTool {
 public:
   /**
    * Constructor.
@@ -45,13 +45,13 @@ public:
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
    */
-  Cmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream)
+  CmdLineTool(std::istream &inStream, std::ostream &outStream, std::ostream &errStream)
     throw();
 
   /**
    * Pure-virtual destructor to guarantee this class is abstract.
    */
-  virtual ~Cmd() throw() = 0;
+  virtual ~CmdLineTool() throw() = 0;
 
 protected:
 
@@ -91,8 +91,7 @@ protected:
    */
   std::string bool2Str(const bool value) const throw();
 
-}; // class Cmd
+}; // class CmdLineTool
 
 } // namespace acs
 } // namespace castor
-

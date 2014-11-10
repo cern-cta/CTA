@@ -31,7 +31,7 @@
 //------------------------------------------------------------------------------
 castor::acs::AcsCmd::AcsCmd(std::istream &inStream,
   std::ostream &outStream, std::ostream &errStream, Acs &acs) throw():
-  Cmd(inStream, outStream, errStream), m_acs(acs) {
+  CmdLineTool(inStream, outStream, errStream), m_acs(acs) {
 }
 
 //------------------------------------------------------------------------------

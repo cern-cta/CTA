@@ -21,12 +21,12 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/acs/Cmd.hpp"
+#include "castor/acs/CmdLineTool.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::acs::Cmd::Cmd(std::istream &inStream,
+castor::acs::CmdLineTool::CmdLineTool(std::istream &inStream,
   std::ostream &outStream, std::ostream &errStream) throw():
   m_in(inStream), m_out(outStream), m_err(errStream), m_debugBuf(outStream),
   m_dbg(&m_debugBuf) {
@@ -35,12 +35,12 @@ castor::acs::Cmd::Cmd(std::istream &inStream,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::acs::Cmd::~Cmd() throw() {
+castor::acs::CmdLineTool::~CmdLineTool() throw() {
 }
 
 //------------------------------------------------------------------------------
 // bool2Str
 //------------------------------------------------------------------------------
-std::string castor::acs::Cmd::bool2Str(const bool value) const throw() {
+std::string castor::acs::CmdLineTool::bool2Str(const bool value) const throw() {
   return value ? "TRUE" : "FALSE";
 }
