@@ -38,14 +38,6 @@ namespace acs {
  */
 struct AcsMountCmdLine {
   /**
-   * Constructor.
-   *
-   * Initialises all BOOLEAN member-variables to FALSE, all integer
-   * member-variables to 0 and the volume identifier to an empty string.
-   */
-  AcsMountCmdLine() throw();
-
-  /**
    * True if the debug option has been set.
    */
   bool debug;
@@ -79,6 +71,38 @@ struct AcsMountCmdLine {
    * The identifier of the drive into which the tape is to be mounted.
    */
   DRIVEID driveId;
+
+  /**
+   * Constructor.
+   *
+   * Initialises all BOOLEAN member-variables to FALSE, all integer
+   * member-variables to 0 and the volume identifier to an empty string.
+   */
+  AcsMountCmdLine() throw();
+
+  /**
+   * Constructor.
+   *
+   * Parses the specified command-line arguments.
+   *
+   * @param argc Argument count from the executable's entry function: main().
+   * @param argv Argument vector from the executable's entry function: main().
+   * @param defaultQueryInterval The default time in seconds to wait between
+   * queries to ACS for responses.
+   * @param defaultTimeout The default timeout value in seconds for the mount
+   * to conclude either success or failure.
+   */
+  AcsMountCmdLine(const int argc, char *const *const argv,
+    const int defaultQueryInterval, const int defaultTimeout);
+
+private:
+
+  /** 
+   * Processes the specified option that was returned by getopt_long().
+   *
+   * @param opt The option that was returned by getopt_long().
+   */
+  void processOption(const int opt);
 
 }; // class AcsMountCmdLine
 

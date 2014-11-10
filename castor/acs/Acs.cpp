@@ -38,7 +38,7 @@ castor::acs::Acs::~Acs() throw() {
 //------------------------------------------------------------------------------
 // str2DriveId
 //------------------------------------------------------------------------------
-DRIVEID castor::acs::Acs::str2DriveId(const std::string &str) const {
+DRIVEID castor::acs::Acs::str2DriveId(const std::string &str) {
   std::vector<std::string> components;
   castor::utils::splitString(str, ':', components);
 
@@ -116,8 +116,7 @@ DRIVEID castor::acs::Acs::str2DriveId(const std::string &str) const {
 //------------------------------------------------------------------------------
 // onlyContainsNumerals
 //------------------------------------------------------------------------------
-bool castor::acs::Acs::onlyContainsNumerals(const std::string &str) const
-  throw() {
+bool castor::acs::Acs::onlyContainsNumerals(const std::string &str) throw() {
   for(std::string::const_iterator itor = str.begin(); itor != str.end();
     itor++) {
     if(*itor < '0' || *itor  > '9') {
@@ -131,8 +130,7 @@ bool castor::acs::Acs::onlyContainsNumerals(const std::string &str) const
 // alpd2DriveId
 //------------------------------------------------------------------------------
 DRIVEID castor::acs::Acs::alpd2DriveId(const uint32_t acs,
-  const uint32_t lsm, const uint32_t panel, const uint32_t drive)
-  const throw () {
+  const uint32_t lsm, const uint32_t panel, const uint32_t drive) throw () {
   
   DRIVEID driveId;
   driveId.panel_id.lsm_id.acs = (ACS)acs;
@@ -146,8 +144,7 @@ DRIVEID castor::acs::Acs::alpd2DriveId(const uint32_t acs,
 //------------------------------------------------------------------------------
 // str2Volid
 //------------------------------------------------------------------------------
-VOLID castor::acs::Acs::str2Volid(const std::string &str) const
-   {
+VOLID castor::acs::Acs::str2Volid(const std::string &str) {
   if(EXTERNAL_LABEL_SIZE < str.length()) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Failed to convert string to volume identifier"
@@ -165,8 +162,7 @@ VOLID castor::acs::Acs::str2Volid(const std::string &str) const
 //------------------------------------------------------------------------------
 // driveId2Str
 //------------------------------------------------------------------------------
-std::string castor::acs::Acs::driveId2Str(const DRIVEID &driveId)
-  const throw() {
+std::string castor::acs::Acs::driveId2Str(const DRIVEID &driveId) throw() {
   std::ostringstream oss;
   oss << std::setfill('0') <<
     std::setw(3) << (int32_t)driveId.panel_id.lsm_id.acs << ":" <<

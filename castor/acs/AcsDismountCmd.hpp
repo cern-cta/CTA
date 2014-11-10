@@ -74,15 +74,6 @@ protected:
   void usage(std::ostream &os) const throw();
 
   /**
-   * Parses the specified command-line arguments.
-   *
-   * @param argc Argument count from the executable's entry function: main().
-   * @param argv Argument vector from the executable's entry function: main().
-   * @return The parsed command-line.
-   */
-  AcsDismountCmdLine parseCmdLine(const int argc, char *const *const argv);
-
-  /**
    * Dismounts the tape with the specified VID into the drive with the specified
    * drive ID.
    *

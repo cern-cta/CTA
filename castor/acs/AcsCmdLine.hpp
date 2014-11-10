@@ -23,30 +23,46 @@
 
 #pragma once
 
-#include "castor/acs/AcsDismountCmd.hpp"
+#include <string>
 
 namespace castor {
 namespace acs {
 
-class TestingAcsDismountCmd: public AcsDismountCmd {
-public:
+/**
+ * Class containing the code common to the parsed command-line of the ACS
+ * command-line tools provided by CASTOR.
+ */
+struct AcsCmdLine {
 
   /**
-   * Constructor.
+   * Parses the specified query interval.
    *
-   * @param inStream Standard input stream.
-   * @param outStream Standard output stream.
-   * @param errStream Standard error stream.
-   * @param acs Wrapper around the ACSLS C-API.
+   * @return The parse query interval.
    */
-  TestingAcsDismountCmd(std::istream &inStream, std::ostream &outStream,
-    std::ostream &errStream, Acs &acs) throw():
-    AcsDismountCmd(inStream, outStream, errStream, acs) {
-  }
+  static int parseQueryInterval(const std::string &s);
 
-  using AcsDismountCmd::parseCmdLine;
+  /**
+   * Parses the specified timeout.
+   *
+   * @return The parse query interval.
+   */
+  static int parseTimeout(const std::string &s);
 
-}; // class TestingAcsDismountCmd
+  /**
+   * Handles the specified parameter that is missing a parameter.
+   *
+   * @param option The option.
+   */
+  static void handleMissingParameter(const int option);
+
+  /**
+   * Handles the specified unknown option.
+   *
+   * @param option The option.
+   */
+  static void handleUnknownOption(const int option);
+
+}; // class AcsCmdLine
 
 } // namespace acs
 } // namespace castor

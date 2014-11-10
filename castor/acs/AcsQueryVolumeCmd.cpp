@@ -51,7 +51,8 @@ castor::acs::AcsQueryVolumeCmd::~AcsQueryVolumeCmd() throw() {
 int castor::acs::AcsQueryVolumeCmd::main(const int argc,
   char *const *const argv) throw() {
   try {
-    m_cmdLine = parseCmdLine(argc, argv);
+    m_cmdLine = AcsQueryVolumeCmdLine(argc, argv, m_defaultQueryInterval, 
+      m_defaultTimeout);
   } catch(castor::exception::InvalidArgument &ia) {
     m_err << "Aborting: Invalid command-line: " << ia.getMessage().str() <<
       std::endl;
@@ -92,113 +93,6 @@ int castor::acs::AcsQueryVolumeCmd::main(const int argc,
   }
 
   return 0;
-}
-
-//------------------------------------------------------------------------------
-// parseCmdLine
-//------------------------------------------------------------------------------
-castor::acs::AcsQueryVolumeCmdLine
-  castor::acs::AcsQueryVolumeCmd::parseCmdLine(
-  const int argc, char *const *const argv)
-  throw(castor::exception::Exception, castor::exception::InvalidArgument,
-    castor::exception::MissingOperand) {
-
-  static struct option longopts[] = {
-    {"debug", 0, NULL, 'd'},
-    {"help" , 0, NULL, 'h'},
-    {"query" , required_argument, NULL, 'q'},
-    {"timeout" , required_argument, NULL, 't'},
-    {NULL, 0, NULL, 0}
-  };
-  AcsQueryVolumeCmdLine cmdLine;
-  char c;
-
-  // Set the query option to the default value
-  cmdLine.queryInterval = m_defaultQueryInterval;
-
-  // Set timeout option to the default value
-  cmdLine.timeout = m_defaultTimeout;
-
-  // Prevent getopt() from printing an error message if it does not recognize
-  // an option character
-  opterr = 0;
-  while((c = getopt_long(argc, argv, ":dhq:t:", longopts, NULL)) != -1) {
-
-    switch (c) {
-    case 'd':
-      cmdLine.debug = true;
-      break;
-    case 'h':
-      cmdLine.help = true;
-      break;
-    case 'q':
-      cmdLine.queryInterval = atoi(optarg);
-      if(0 >= cmdLine.queryInterval) {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "Query value must be an integer greater than 0"
-          ": value=" << cmdLine.queryInterval;
-        throw ex;
-      }
-      break;
-    case 't':
-      cmdLine.timeout = atoi(optarg);
-      if(0 >= cmdLine.timeout) {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "Timeout value must be an integer greater than 0"
-          ": value=" << cmdLine.timeout;
-        throw ex;
-      }
-      break;
-    case ':':
-      {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "The -" << (char)optopt
-          << " option requires a parameter";
-        throw ex;
-      }
-      break;
-    case '?':
-      {
-        castor::exception::InvalidArgument ex;
-
-        if(optopt == 0) {
-          ex.getMessage() << "Unknown command-line option";
-        } else {
-          ex.getMessage() << "Unknown command-line option: -" << (char)optopt;
-        }
-        throw ex;
-      }
-      break;
-    default:
-      {
-        castor::exception::Exception ex;
-        ex.getMessage() <<
-          "getopt_long returned the following unknown value: 0x" <<
-          std::hex << (int)c;
-        throw ex;
-      }
-    } // switch (c)
-  } // while ((c = getopt_long( ... )) != -1)
-
-  // There is no need to continue parsing when the help option is set
-  if(cmdLine.help) {
-    return cmdLine;
-  }
-
-  // Calculate the number of non-option ARGV-elements
-  const int nbArgs = argc - optind;
-
-  // Check that VID has been specified
-  if(nbArgs < 1) {
-    castor::exception::MissingOperand ex;
-    ex.getMessage() << "VID must be specified";
-    throw ex;
-  }
-
-  // Parse the VID command-line argument
-  cmdLine.volId = m_acs.str2Volid(argv[optind]);
-
-  return cmdLine;
 }
 
 //------------------------------------------------------------------------------

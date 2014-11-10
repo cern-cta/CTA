@@ -49,7 +49,8 @@ castor::acs::AcsDismountCmd::~AcsDismountCmd() throw() {
 int castor::acs::AcsDismountCmd::main(const int argc, char *const *const argv)
   throw() {
   try {
-    m_cmdLine = parseCmdLine(argc, argv);
+    m_cmdLine = AcsDismountCmdLine(argc, argv, m_defaultQueryInterval,
+      m_defaultTimeout);
   } catch(castor::exception::InvalidArgument &ia) {
     m_err << "Aborting: Invalid command-line: " << ia.getMessage().str() <<
       std::endl;
@@ -131,123 +132,6 @@ void castor::acs::AcsDismountCmd::usage(std::ostream &os) const throw() {
     << m_defaultTimeout << ".\n"
   "\n"
   "Comments to: Castor.Support@cern.ch" << std::endl;
-}
-
-//------------------------------------------------------------------------------
-// parseCmdLine
-//------------------------------------------------------------------------------
-castor::acs::AcsDismountCmdLine castor::acs::AcsDismountCmd::parseCmdLine(
-  const int argc, char *const *const argv) {
-
-  static struct option longopts[] = {
-    {"debug", 0, NULL, 'd'},
-    {"force", 0, NULL, 'f'},
-    {"help" , 0, NULL, 'h'},
-    {"query" , required_argument, NULL, 'q'},
-    {"timeout" , required_argument, NULL, 't'},
-    {NULL   , 0, NULL,  0 }
-  };
-  AcsDismountCmdLine cmdLine;
-  char c;
-
-  // Set the query option to the default value
-  cmdLine.queryInterval = m_defaultQueryInterval;
-
-  // Set timeout option to the default value
-  cmdLine.timeout = m_defaultTimeout;
-
-  // Prevent getopt() from printing an error message if it does not recognize
-  // an option character
-  opterr = 0;
-  while((c = getopt_long(argc, argv, ":dfhq:t:", longopts, NULL)) != -1) {
-
-    switch (c) {
-    case 'd':
-      cmdLine.debug = true;
-      break;
-    case 'f':
-      cmdLine.force = TRUE;
-      break;
-    case 'h':
-      cmdLine.help = true;
-      break;
-    case 'q':
-      cmdLine.queryInterval = atoi(optarg);
-      if(0 >= cmdLine.queryInterval) {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "Query value must be an integer greater than 0"
-          ": value=" << cmdLine.queryInterval;
-        throw ex;
-      }
-      break;
-    case 't':
-      cmdLine.timeout = atoi(optarg);
-      if(0 >= cmdLine.timeout) {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "Timeout value must be an integer greater than 0"
-          ": value=" << cmdLine.timeout;
-        throw ex;
-      }
-      break;
-    case ':':
-      {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "The -" << (char)optopt
-          << " option requires a parameter";
-        throw ex;
-      }
-      break;
-    case '?':
-      {
-        castor::exception::InvalidArgument ex;
-
-        if(optopt == 0) {
-          ex.getMessage() << "Unknown command-line option";
-        } else {
-          ex.getMessage() << "Unknown command-line option: -" << (char)optopt;
-        }
-        throw ex;
-      }
-      break;
-    default:
-      {
-        castor::exception::Exception ex;
-        ex.getMessage() <<
-          "getopt_long returned the following unknown value: 0x" <<
-          std::hex << (int)c;
-        throw ex;
-      }
-    } // switch (c)
-  } // while ((c = getopt_long( ... )) != -1)
-
-  // There is no need to continue parsing when the help option is set
-  if(cmdLine.help) {
-    return cmdLine;
-  }
-
-  // Calculate the number of non-option ARGV-elements
-  const int nbArgs = argc-optind;
-
-  // Check that both VID and DRIVE has been specified
-  if(nbArgs < 2) {
-    castor::exception::MissingOperand ex;
-
-    ex.getMessage() <<
-      "Both VID and DRIVE must be specified";
-
-    throw ex;
-  }
-
-  // Parse the volume identifier of the command-line argument
-  cmdLine.volId = m_acs.str2Volid(argv[optind]);
-
-  // Move on to the next command-line argument
-  optind++;
-
-  // Parse the drive-identifier command-line argument
-  cmdLine.driveId = m_acs.str2DriveId(argv[optind]);
-
-  return cmdLine;
 }
 
 //------------------------------------------------------------------------------

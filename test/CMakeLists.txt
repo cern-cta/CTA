@@ -49,13 +49,13 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   set (STK_UNITTEST_SRC_FILES
     ../castor/acs/Acs.cpp
     ../castor/acs/AcsCmd.cpp
+    ../castor/acs/AcsCmdLine.cpp
     ../castor/acs/AcsDaemon.cpp
     ../castor/acs/AcsDaemonConfig.cpp
     ../castor/acs/AcsDaemonTest.cpp
     ../castor/acs/AcsDismountCmd.cpp
     ../castor/acs/AcsDismountCmdLine.cpp
     ../castor/acs/AcsDismountCmdLineTest.cpp
-    ../castor/acs/AcsDismountCmdTest.cpp
     ../castor/acs/AcsDismountTape.cpp
     ../castor/acs/AcsImpl.cpp
     ../castor/acs/AcsLibraryInteraction.cpp
@@ -63,14 +63,12 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     ../castor/acs/AcsMountCmd.cpp
     ../castor/acs/AcsMountCmdLine.cpp
     ../castor/acs/AcsMountCmdLineTest.cpp
-    ../castor/acs/AcsMountCmdTest.cpp
     ../castor/acs/AcsMountTapeReadOnly.cpp
     ../castor/acs/AcsMountTapeReadWrite.cpp
     ../castor/acs/AcsPendingRequests.cpp
     ../castor/acs/AcsQueryVolumeCmd.cpp
     ../castor/acs/AcsQueryVolumeCmdLine.cpp
     ../castor/acs/AcsQueryVolumeCmdLineTest.cpp
-    ../castor/acs/AcsQueryVolumeCmdTest.cpp
     ../castor/acs/AcsRequest.cpp
     ../castor/acs/AcsRequestDismountTape.cpp
     ../castor/acs/CmdLineTool.cpp)

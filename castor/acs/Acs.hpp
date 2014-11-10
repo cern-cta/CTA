@@ -56,7 +56,7 @@ public:
    * @param str The string to be parsed.
    * @return The drive ID object.
    */
-  DRIVEID str2DriveId(const std::string &str) const;
+  static DRIVEID str2DriveId(const std::string &str);
 
   /**
    * Converts acs, lsm, panel, drive numbers to the corresponding 
@@ -68,8 +68,8 @@ public:
    * @param drive The integer for drive.
    * @return The drive ID object.
    */
-  DRIVEID alpd2DriveId(const uint32_t acs, const uint32_t lsm, 
-    const uint32_t panel, const uint32_t drive) const throw();
+  static DRIVEID alpd2DriveId(const uint32_t acs, const uint32_t lsm, 
+    const uint32_t panel, const uint32_t drive) throw();
 
   /**
    * Returns the VOLID equibvalent of the specified string.
@@ -80,7 +80,7 @@ public:
    * @param str The string representation of the volume identifier.
    * @return The VOLID representation of the volume identifier.
    */
-  VOLID str2Volid(const std::string &str) const;
+  static VOLID str2Volid(const std::string &str);
   
   /**
    * Returns the string reprsentation of the specified drive identifier.
@@ -90,7 +90,7 @@ public:
    * @param driveId The drive identifier.
    * @return The string representation.
    */
-  std::string driveId2Str(const DRIVEID &driveId) const throw();
+  static std::string driveId2Str(const DRIVEID &driveId) throw();
   
   /**
    * C++ wrapper around the acs_mount() function of the ACSLS C-API.
@@ -177,7 +177,7 @@ protected:
    *
    * @return True if the specified string only contains numerals else false.
    */
-  bool onlyContainsNumerals(const std::string &str) const throw();
+  static bool onlyContainsNumerals(const std::string &str) throw();
 
 }; // class  Acs
 

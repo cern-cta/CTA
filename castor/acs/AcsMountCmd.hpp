@@ -67,15 +67,6 @@ public:
 protected:
 
   /**
-   * Parses the specified command-line arguments.
-   *
-   * @param argc Argument count from the executable's entry function: main().
-   * @param argv Argument vector from the executable's entry function: main().
-   * @return The parsed command-line.
-   */
-  AcsMountCmdLine parseCmdLine(const int argc, char *const *const argv);
-
-  /**
    * Writes the command-line usage message of to the specified output stream.
    *
    * @param os Output stream to be written to.

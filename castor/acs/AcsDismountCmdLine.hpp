@@ -38,14 +38,6 @@ namespace acs {
  */
 struct AcsDismountCmdLine {
   /**
-   * Constructor.
-   *
-   * Initialises all boolean member-variables to false, all integer
-   * member-variables to 0 and the volume identifier to an empty string.
-   */
-  AcsDismountCmdLine() throw();
-
-  /**
    * True if the debug option has been set.
    */
   bool debug;
@@ -82,6 +74,38 @@ struct AcsDismountCmdLine {
    * The drive into which the tape is to be mounted.
    */
   DRIVEID driveId;
+
+  /**
+   * Constructor.
+   *
+   * Initialises all boolean member-variables to false, all integer
+   * member-variables to 0 and the volume identifier to an empty string.
+   */
+  AcsDismountCmdLine() throw();
+
+  /**
+   * Constructor.
+   *
+   * Parses the specified command-line arguments.
+   *
+   * @param argc Argument count from the executable's entry function: main().
+   * @param argv Argument vector from the executable's entry function: main().
+   * @param defaultQueryInterval The default time in seconds to wait between
+   * queries to ACS for responses.
+   * @param defaultTimeout The default timeout value in seconds for the mount
+   * to conclude either success or failure.
+   */
+  AcsDismountCmdLine(const int argc, char *const *const argv,
+    const int defaultQueryInterval, const int defaultTimeout);
+
+private:
+
+  /**
+   * Processes the specified option that was returned by getopt_long().
+   *
+   * @param opt The option that was returned by getopt_long().
+   */
+  void processOption(const int opt);
 
 }; // class AcsDismountCmdLine
 

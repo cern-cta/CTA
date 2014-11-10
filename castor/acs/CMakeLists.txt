@@ -86,6 +86,7 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   set (ACS_DISMOUNT_SRC_FILES
     Acs.cpp
     AcsCmd.cpp
+    AcsCmdLine.cpp
     AcsImpl.cpp
     AcsDismountCmd.cpp
     AcsDismountCmdLine.cpp
@@ -112,6 +113,7 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   set (ACS_MOUNT_SRC_FILES
     Acs.cpp
     AcsCmd.cpp
+    AcsCmdLine.cpp
     AcsImpl.cpp
     AcsMountCmd.cpp
     AcsMountCmdLine.cpp
@@ -139,6 +141,7 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   set (ACS_QUERYVOLUME_SRC_FILES
     Acs.cpp
     AcsCmd.cpp
+    AcsCmdLine.cpp
     AcsImpl.cpp
     AcsQueryVolumeCmd.cpp
     AcsQueryVolumeCmdLine.cpp
