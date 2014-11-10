@@ -168,9 +168,9 @@ class DiskServerManagerService(rpyc.Service):
 
 def initQueues():
   '''Initializes the queue of pending transfers by rebuilding it from the knowledge of the transfermanagers'''
-  # we will timeout after 5mn per machine. Note that in this case, we refuse to start
+  # we will timeout after 30secs per machine. Note that in this case, we refuse to start
   # and thus raise a SystemExit exception.
-  timeout = 300
+  timeout = 30
   # loop on all transfermanagers
   for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
     try:
