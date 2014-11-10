@@ -631,13 +631,13 @@ void *castor::tape::tapeserver::daemon::ProcessForker::instantiateZmqContext(
   const int sizeOfIOThreadPoolForZMQ) {
   void *const zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
   if(NULL == zmqContext) {
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
+    const std::string message = castor::utils::errnoToString(errno);
     castor::exception::Exception ex;
     ex.getMessage() << "Child of ProcessForker failed to instantiate ZMQ"
       " context: " << message;
     throw ex;
   }
+
   std::ostringstream contextAddr;
   contextAddr << std::hex << zmqContext;
   log::Param params[] = {log::Param("contextAddr", contextAddr.str())};

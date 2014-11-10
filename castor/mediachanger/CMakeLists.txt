@@ -25,8 +25,36 @@ set (MEDIA_CHANGER_CLIENT_LIB_SRC_FILES
   ManualLibrarySlot.cpp
   MediaChangerFacade.cpp
   MmcProxy.cpp
+  MmcProxyDummy.cpp
   MmcProxyLog.cpp
   ScsiLibrarySlot.cpp
   TapeLibraryType.cpp)
 add_library(castormediachangerclient
   ${MEDIA_CHANGER_CLIENT_LIB_SRC_FILES})
+
+##############################################################################
+# Rules to build and install castor-tape-mediachanger-mount
+##############################################################################
+set (MEDIA_CHANGER_MOUNT_SRC_FILES
+  CmdLine.cpp
+  CmdLineTool.cpp
+  MountCmd.cpp
+  MountCmdLine.cpp
+  MountCmdMain.cpp)
+add_executable (castor-tape-mediachanger-mount ${MEDIA_CHANGER_MOUNT_SRC_FILES})
+set_target_properties (castor-tape-mediachanger-mount PROPERTIES
+  COMPILE_FLAGS -I/usr/include/CDK
+  COMPILE_DEFINITIONS LINUX)
+target_link_libraries (castor-tape-mediachanger-mount
+  castorcommon
+  castorlegacymsg
+  castorlog
+  castormediachangerclient
+  castormessages
+  castorutils
+  ${STK_API_LIB}
+  ${STK_UTL_LIB}
+  ${STK_IPC_LIB}
+  ${STK_CL_LIB})
+install (TARGETS castor-tape-mediachanger-mount DESTINATION ${CASTOR_DEST_BIN_DIR})
+CastorInstallExeManPage(castor-tape-mediachanger-mount)

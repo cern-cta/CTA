@@ -20,41 +20,14 @@
 cmake_minimum_required (VERSION 2.6)
 
 ################################################################################
-# Rules to build and install stagerd
+# Rules to build and install libcastorlegacymsg.so
 ################################################################################
-set (STAGERD_SRC_FILES
-  StagerDaemon.cpp
-  PutDoneHandler.cpp
-  ReplyHelper.cpp
-  RequestHelper.cpp
-  RmHandler.cpp
-  SetGCWeightHandler.cpp
-  RequestHandler.cpp
-  BaseRequestSvcThread.cpp
-  StageRequestSvcThread.cpp
-  BulkStageReqSvcThread.cpp
-  JobRequestSvcThread.cpp
-  QueryRequestSvcThread.cpp
-  GcSvcThread.cpp
-  ErrorSvcThread.cpp
-  LoggingThread.cpp
-  NsOverride.cpp)
-add_executable (stagerd ${STAGERD_SRC_FILES})
-set_target_properties (stagerd PROPERTIES
-  COMPILE_FLAGS ${ORACLE_CPPFLAGS}
-  LINK_FLAGS "-L${ORACLE_LIBDIR} -locci -lclntsh")
-target_link_libraries (stagerd
-  castorclient
-  castorcnvs
-  castorcommon
-  castorlog
-  castorns
-  castorupv
-  castordlf
-  castorcommonora
-  castorserver)
-install (TARGETS stagerd DESTINATION ${CASTOR_DEST_BIN_DIR})
-CastorInstallAdmManPage (stagerd)
-CastorInstallLogRotate (castor-stager-server)
-CastorInstallSysConfigExample (stagerd)
-CastorInstallInitScript (stagerd)
+set (LOG_LIB_SRC_FILES
+  DummyLogger.cpp
+  Logger.cpp
+  StringLogger.cpp
+  SyslogLogger.cpp
+  LogContext.cpp
+  Message.cpp
+  Param.cpp)
+add_library (castorlog ${LOG_LIB_SRC_FILES})

@@ -1,5 +1,3 @@
-#                 castor/rh/CMakeLists.txt
-#
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
 #
@@ -17,7 +15,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 #
-# Steven.Murray@cern.ch Eric.Cano@cern.ch
+# @author Castor Dev team, castor-dev@cern.ch
 #
 cmake_minimum_required (VERSION 2.6)
 
@@ -32,8 +30,18 @@ cmake_minimum_required (VERSION 2.6)
 set(RH_SRC_FILES Server.cpp RHThread.cpp RateLimiter.cpp RatingGroup.cpp
   UserCounter.cpp SvcClassCounter.cpp)
 add_executable (rhd ${RH_SRC_FILES})
-target_link_libraries (rhd castorcommon castordlf castorclient castorcnvs 
-  castorns castorcommonora castorsecurity castorserver -lmemcached -ldl)
+target_link_libraries (rhd
+  castorcommon
+  castordlf
+  castorclient
+  castorcnvs
+  castorlog
+  castorns
+  castorcommonora
+  castorsecurity
+  castorserver
+  -lmemcached
+  -ldl)
 install (TARGETS rhd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallDir(/var/spool/castor)
 CastorInstallInitScript(rhd)

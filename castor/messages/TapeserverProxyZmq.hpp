@@ -23,9 +23,9 @@
 
 #include "castor/log/Logger.hpp"
 #include "castor/messages/Frame.hpp"
+#include "castor/messages/Mutex.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
 #include "castor/messages/ZmqSocketST.hpp"
-#include "castor/server/Mutex.hpp"
 
 namespace castor {
 namespace messages {
@@ -168,7 +168,7 @@ private:
    * Mutex used to implement a critical section around the enclosed
    * ZMQ socket.
    */
-   castor::server::Mutex m_mutex;
+  Mutex m_mutex;
 
   /**
    * The object representing the API of the CASTOR logging system.

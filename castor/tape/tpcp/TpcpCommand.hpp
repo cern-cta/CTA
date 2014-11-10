@@ -235,17 +235,6 @@ protected:
   void setupCallbackSock();
 
   /**
-   * Gets and returns the specified port number using getconfent or returns the
-   * specified default if getconfent cannot find it.
-   *
-   * @param catagory    The category of the configuration entry.
-   * @param name        The name of the configuration entry.
-   * @param defaultPort The default port number.
-   */
-  unsigned short getPortFromConfig(const char *const category,
-    const char *const name, const unsigned short defaultPort) const;
-
-  /**
    * Request a drive from the VDQM to mount the specified tape for the
    * specified access mode (read or write).
    *

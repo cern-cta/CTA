@@ -21,6 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
  
+#include "castor/common/CastorConfiguration.hpp"
 #include "castor/Constants.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/io.hpp"
@@ -526,54 +527,17 @@ void castor::tape::tpcp::TpcpCommand::vmgrQueryTape() {
 // setupCallbackSock
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::setupCallbackSock() {
+  common::CastorConfiguration &castorConf =
+    common::CastorConfiguration::getConfig();
 
-  const unsigned short lowPort = getPortFromConfig(
-    "TAPESERVERCLIENT", "LOWPORT", TAPESERVERCLIENT_LOWPORT);
-  const unsigned short highPort = getPortFromConfig(
-    "TAPESERVERCLIENT", "HIGHPORT", TAPESERVERCLIENT_HIGHPORT);
+  const unsigned short lowPort = castorConf.getConfEntInt(
+    "TAPESERVERCLIENT", "LOWPORT", (unsigned short)TAPESERVERCLIENT_LOWPORT);
+  const unsigned short highPort = castorConf.getConfEntInt(
+    "TAPESERVERCLIENT", "HIGHPORT", (unsigned short)TAPESERVERCLIENT_HIGHPORT);
 
   // Bind the tape-server callback-socket
   m_callbackSock.bind(lowPort, highPort);
   m_callbackSock.listen();
-}
-
-//------------------------------------------------------------------------------
-// getPortFromConfig
-//------------------------------------------------------------------------------
-unsigned short castor::tape::tpcp::TpcpCommand::getPortFromConfig(
-  const char *const category, const char *const name,
-  const unsigned short defaultPort) const {
-
-  unsigned short    port  = defaultPort;
-  const char *const value = getconfent(category, name, 0);
-
-  if(value != NULL) {
-    if(castor::utils::isValidUInt(value)) {
-      port = atoi(value);
-    } else {
-      exception::InvalidConfigEntry ex(category, name, value);
-
-      ex.getMessage() <<
-        "Invalid '" << category << " " << name << "' configuration entry"
-        ": Value should be an unsigned integer greater than 0"
-        ": Value='" << value << "'";
-
-      throw ex;
-    }
-
-    if(port == 0) {
-      exception::InvalidConfigEntry ex(category, name, value);
-
-      ex.getMessage() <<
-        "Invalid '" << category << " " << name << "' configuration entry"
-        ": Value should be an unsigned integer greater than 0"
-        ": Value='" << value << "'";
-
-      throw ex;
-    }
-  }
-
-  return port;
 }
 
 //------------------------------------------------------------------------------

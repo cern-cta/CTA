@@ -1,6 +1,3 @@
-#
-#                      castor/vdqm/CMakeLists.txt
-#
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
 #
@@ -18,7 +15,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 #
-# Steven.Murray@cern.ch
+# @author Castor Dev team, castor-dev@cern.ch
 #
 cmake_minimum_required (VERSION 2.6)
 
@@ -56,8 +53,15 @@ set (VDQMD_SRC_FILES
   handler/VdqmMagic3RequestHandler.cpp
   handler/VdqmMagic4RequestHandler.cpp)
 add_executable (vdqmd ${VDQMD_SRC_FILES})
-target_link_libraries (vdqmd castorclient castorcnvs castorcommon castorserver
-  castorupv castorvdqmora castorvmgr)
+target_link_libraries (vdqmd
+  castorclient
+  castorcnvs
+  castorcommon
+  castorlog
+  castorserver
+  castorupv
+  castorvdqmora
+  castorvmgr)
 install (TARGETS vdqmd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (vdqmd)
 CastorInstallLogrotate (castor-vdqm2-server)

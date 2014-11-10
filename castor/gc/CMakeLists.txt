@@ -32,8 +32,14 @@ set(GCBIN_SRCS
   SynchronizationThread.cpp
   CephGlobals.cpp)
 add_executable (gcd ${GCBIN_SRCS})
-target_link_libraries (gcd castorcommon castordlf castorns castorclient
-  castorserver ${RADOS_LIBS})
+target_link_libraries (gcd
+  castorcommon
+  castordlf
+  castorlog
+  castorns
+  castorclient
+  castorserver
+  ${RADOS_LIBS})
 install (TARGETS gcd DESTINATION ${CASTOR_DEST_BIN_DIR})
 
 ################################################################################

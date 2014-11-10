@@ -136,6 +136,8 @@ add_executable(castorUnitTests
   ../castor/mediachanger/ScsiLibrarySlot.cpp
   ../castor/mediachanger/ScsiLibrarySlotTest.cpp
   ../castor/messages/MessagesTest.cpp
+  ../castor/messages/MutexLockerTest.cpp
+  ../castor/messages/MutexTest.cpp
   ../castor/server/DaemonTest.cpp
   ../castor/server/SmartCapTest.cpp
   ../castor/tape/reactor/PollReactorImplTest.cpp

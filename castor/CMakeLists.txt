@@ -27,6 +27,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
   add_subdirectory (messages)
   add_subdirectory (db)
   add_subdirectory (gc)
+  add_subdirectory (log)
   add_subdirectory (rh)
   add_subdirectory (scheduler)
   add_subdirectory (server)
@@ -131,12 +132,6 @@ set (CLIENT_LIB_SRC_FILES
   io/StreamBWUserCnv.cpp
   io/StreamRequestTypeCnv.cpp
   io/StreamNsFileIdCnv.cpp
-  log/Logger.cpp
-  log/StringLogger.cpp
-  log/SyslogLogger.cpp
-  log/LogContext.cpp
-  log/Message.cpp
-  log/Param.cpp
   query/DiskPoolQueryResponse.cpp
   query/FileSystemDescription.cpp
   query/DiskServerDescription.cpp

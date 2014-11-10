@@ -22,8 +22,8 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
+#include "castor/messages/MutexLocker.hpp"
 #include "castor/messages/ZmqSocketMT.hpp"
-#include "castor/server/MutexLocker.hpp"
 #include "h/serrno.h"
 
 //------------------------------------------------------------------------------
@@ -48,7 +48,7 @@ castor::messages::ZmqSocketMT::~ZmqSocketMT() throw() {
 // close
 //------------------------------------------------------------------------------
 void castor::messages::ZmqSocketMT::close() {
-  server::MutexLocker lock(&m_mutex);
+  MutexLocker lock(&m_mutex);
   m_socket.close();
 }
     
@@ -56,7 +56,7 @@ void castor::messages::ZmqSocketMT::close() {
 // bind
 //------------------------------------------------------------------------------
 void castor::messages::ZmqSocketMT::bind (const std::string &endpoint) {
-  server::MutexLocker lock(&m_mutex);
+  MutexLocker lock(&m_mutex);
   m_socket.bind(endpoint);
 }
   
@@ -64,7 +64,7 @@ void castor::messages::ZmqSocketMT::bind (const std::string &endpoint) {
 // connect
 //------------------------------------------------------------------------------
 void castor::messages::ZmqSocketMT::connect(const std::string &endpoint) {
-  server::MutexLocker lock(&m_mutex);
+  MutexLocker lock(&m_mutex);
   m_socket.connect(endpoint);
 }
 
@@ -72,7 +72,7 @@ void castor::messages::ZmqSocketMT::connect(const std::string &endpoint) {
 // send
 //------------------------------------------------------------------------------
 void castor::messages::ZmqSocketMT::send(ZmqMsg &msg, const int flags) {
-  server::MutexLocker lock(&m_mutex);
+  MutexLocker lock(&m_mutex);
   m_socket.send(msg, flags);
 }
   
@@ -81,7 +81,7 @@ void castor::messages::ZmqSocketMT::send(ZmqMsg &msg, const int flags) {
 //------------------------------------------------------------------------------
 void castor::messages::ZmqSocketMT::send(zmq_msg_t *const msg,
   const int flags) {
-  server::MutexLocker lock(&m_mutex);
+  MutexLocker lock(&m_mutex);
   m_socket.send(msg, flags);
 }
 
@@ -89,7 +89,7 @@ void castor::messages::ZmqSocketMT::send(zmq_msg_t *const msg,
 // recv
 //------------------------------------------------------------------------------
 void castor::messages::ZmqSocketMT::recv(ZmqMsg &msg, const int flags) {
-  server::MutexLocker lock(&m_mutex);
+  MutexLocker lock(&m_mutex);
   m_socket.recv(msg, flags);
 }
 
@@ -97,7 +97,7 @@ void castor::messages::ZmqSocketMT::recv(ZmqMsg &msg, const int flags) {
 // recv
 //------------------------------------------------------------------------------
 void castor::messages::ZmqSocketMT::recv(zmq_msg_t *const msg, int flags) {
-  server::MutexLocker lock(&m_mutex);
+  MutexLocker lock(&m_mutex);
   m_socket.recv(msg, flags);
 }
 
