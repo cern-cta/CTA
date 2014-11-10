@@ -650,6 +650,23 @@ private:
    */
   void changeState(const DriveState newState) throw();
 
+  /**
+   * Called when a running session (DRIVE_STATE_RUNNING or DRIVE_STATE_WAITDOWN)
+   * has failed.
+   */
+  void runningSessionFailed();
+
+  /**
+   * Called when a running session has been intentionally killed by the shutdown
+   * sequence.
+   */
+  void sessionKilledByShutdown();
+
+  /**
+   * Called when a CLeanerSession of the shutdown sequence has failed.
+   */
+  void cleanerOfShutdownFailed();
+
 }; // class CatalogueDrive
 
 } // namespace daemon

@@ -587,43 +587,11 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::sessionFailed() {
   switch(m_state) {
   case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
-    {
-      std::auto_ptr<CatalogueSession> session(m_session);
-      m_session = NULL;
-      session->sessionFailed();
-
-      if(CatalogueSession::SESSION_TYPE_CLEANER != session->getType()) {
-        const uint32_t driveReadyDelayInSeconds = 60;
-        createCleaner(session->getVid(), session->getAssignmentTime(),
-          driveReadyDelayInSeconds);
-      } else {
-        changeState(DRIVE_STATE_DOWN);
-        m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
-      }
-    }
-    break;
+    return runningSessionFailed();
   case DRIVE_STATE_WAITSHUTDOWNKILL:
-    {
-      std::auto_ptr<CatalogueSession> session(m_session);
-      m_session = NULL;
-      session->sessionFailed();
-
-      changeState(DRIVE_STATE_WAITSHUTDOWNCLEANER);
-      const uint32_t driveReadyDelayInSeconds = 60;
-      createCleaner(session->getVid(), session->getAssignmentTime(),
-        driveReadyDelayInSeconds);
-    }
-    break;
+    return sessionKilledByShutdown();
   case DRIVE_STATE_WAITSHUTDOWNCLEANER:
-    {
-      std::auto_ptr<CatalogueSession> session(m_session);
-      m_session = NULL;
-      session->sessionFailed();
-
-      // Cleaner failed, no more can be done, mark drive as shutdown
-      changeState(DRIVE_STATE_SHUTDOWN);
-    }
-    break;
+    return cleanerOfShutdownFailed();
   default:
     {
       castor::exception::Exception ex;
@@ -636,6 +604,52 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::sessionFailed() {
       throw ex;
     }
   }
+}
+
+//------------------------------------------------------------------------------
+// runningSessionFailed
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueDrive::runningSessionFailed() {
+  std::auto_ptr<CatalogueSession> session(m_session);
+  m_session = NULL;
+  session->sessionFailed();
+
+  if(CatalogueSession::SESSION_TYPE_CLEANER != session->getType()) {
+    const uint32_t driveReadyDelayInSeconds = 60;
+    createCleaner(session->getVid(), session->getAssignmentTime(),
+      driveReadyDelayInSeconds);
+  } else {
+    changeState(DRIVE_STATE_DOWN);
+    m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
+  }
+}
+
+//------------------------------------------------------------------------------
+// sessionKilledByShutdown
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueDrive::
+  sessionKilledByShutdown() {
+  std::auto_ptr<CatalogueSession> session(m_session);
+  m_session = NULL;
+  session->sessionFailed();
+
+  changeState(DRIVE_STATE_WAITSHUTDOWNCLEANER);
+  const uint32_t driveReadyDelayInSeconds = 60;
+  createCleaner(session->getVid(), session->getAssignmentTime(),
+    driveReadyDelayInSeconds);
+}
+
+//------------------------------------------------------------------------------
+// cleanerOfShutdownFailed
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueDrive::
+  cleanerOfShutdownFailed() {
+  std::auto_ptr<CatalogueSession> session(m_session);
+  m_session = NULL;
+  session->sessionFailed();
+
+  // Cleaner failed, no more can be done, mark drive as shutdown
+  changeState(DRIVE_STATE_SHUTDOWN);
 }
 
 //------------------------------------------------------------------------------
