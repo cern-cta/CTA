@@ -727,18 +727,26 @@ CREATE OR REPLACE PROCEDURE deleteFailedDiskCopies(timeOut IN NUMBER) AS
   cfIds "numList";
 BEGIN
   LOOP
-    -- select INVALID diskcopies without filesystem (they can exist after a
+    -- select INVALID diskcopies with no filesystem nor datapool (they can exist after a
     -- stageRm that came before the diskcopy had been created on disk) and ALL FAILED
-    -- ones (coming from failed recalls or failed removals from the GC daemon).
+    -- ones (coming from failed removals from the GC daemon).
     -- Note that we don't select INVALID diskcopies from recreation of files
     -- because they are taken by the standard GC as they physically exist on disk.
-    -- go only for 1000 at a time and retry if the limit was reached
+    -- go only for max 2000 at a time and retry if the limit was reached
     SELECT id
       BULK COLLECT INTO dcIds
-      FROM DiskCopy
-     WHERE (status = 4 OR (status = 7 AND fileSystem = 0))
-       AND creationTime < getTime() - timeOut
-       AND ROWNUM <= 1000;
+    FROM (
+      SELECT /*+ FIRST_ROWS(10) INDEX_RS_ASC(DiskCopy I_DiskCopy_Status_4) */ id
+        FROM DiskCopy
+       WHERE decode(status,4,status,NULL) = 4
+         AND creationTime < getTime() - timeOut
+         AND ROWNUM <= 1000
+      UNION ALL
+      SELECT /*+ FIRST_ROWS(10) INDEX_RS_ASC(DiskCopy I_DiskCopy_Status_7_FS_DP) */ id
+        FROM DiskCopy
+       WHERE (decode(status,7,status,NULL) = 7 AND nvl(fileSystem,0)+nvl(dataPool,0) = 0)
+         AND creationTime < getTime() - timeOut
+         AND ROWNUM <= 1000);
     SELECT /*+ INDEX(DC PK_DiskCopy_ID) */ UNIQUE castorFile
       BULK COLLECT INTO cfIds
       FROM DiskCopy DC
