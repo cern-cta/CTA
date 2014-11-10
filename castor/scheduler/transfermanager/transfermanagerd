@@ -92,7 +92,7 @@ class TransferManagerService(rpyc.Service):
 
   # prepare a pool of connections to the stager DB
   _stagerConnectionPool = Queue.Queue()
-  for t in range(configuration.getValue('TransferManager', 'NbDatabaseConnections', 5, int)):
+  for t_unused in range(configuration.getValue('TransferManager', 'NbDatabaseConnections', 5, int)):
     c = castor_tools.connectToStager()
     c.autocommit = True
     _stagerConnectionPool.put(c)
