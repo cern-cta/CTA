@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/acs/Acs.hpp"
-#include "castor/acs/AcsCmdLine.hpp"
 #include "castor/acs/AcsQueryVolumeCmdLine.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
@@ -109,15 +108,15 @@ void castor::acs::AcsQueryVolumeCmdLine::processOption(const int opt) {
     help = true;
     break;
   case 'q':
-    queryInterval = AcsCmdLine::parseQueryInterval(optarg);
+    queryInterval = parseQueryInterval(optarg);
     break;
   case 't':
-    timeout = AcsCmdLine::parseTimeout(optarg);
+    timeout = parseTimeout(optarg);
     break;
   case ':':
-    return AcsCmdLine::handleMissingParameter(optopt);
+    return handleMissingParameter(optopt);
   case '?':
-    return AcsCmdLine::handleUnknownOption(optopt);
+    return handleUnknownOption(optopt);
   default:
     {
       castor::exception::Exception ex;

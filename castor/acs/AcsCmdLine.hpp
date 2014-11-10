@@ -33,34 +33,35 @@ namespace acs {
  * command-line tools provided by CASTOR.
  */
 struct AcsCmdLine {
+protected:
 
   /**
    * Parses the specified query interval.
    *
    * @return The parse query interval.
    */
-  static int parseQueryInterval(const std::string &s);
+  int parseQueryInterval(const std::string &s);
 
   /**
    * Parses the specified timeout.
    *
    * @return The parse query interval.
    */
-  static int parseTimeout(const std::string &s);
+  int parseTimeout(const std::string &s);
 
   /**
    * Handles the specified parameter that is missing a parameter.
    *
-   * @param option The option.
+   * @param opt The option.
    */
-  static void handleMissingParameter(const int option);
+  void handleMissingParameter(const int opt);
 
   /**
    * Handles the specified unknown option.
    *
-   * @param option The option.
+   * @param opt The option.
    */
-  static void handleUnknownOption(const int option);
+  void handleUnknownOption(const int opt);
 
 }; // class AcsCmdLine
 

@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include "castor/acs/AcsCmdLine.hpp"
+
 extern "C" {
 #include "acssys.h"
 #include "acsapi.h"
@@ -36,7 +38,7 @@ namespace acs {
 /**
  * Data type used to store the results of parsing the command-line.
  */
-struct AcsQueryVolumeCmdLine {
+struct AcsQueryVolumeCmdLine: public AcsCmdLine {
   /**
    * True if the debug option has been set.
    */

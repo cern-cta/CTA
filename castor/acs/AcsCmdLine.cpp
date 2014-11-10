@@ -59,22 +59,21 @@ int castor::acs::AcsCmdLine::parseTimeout(const std::string &s) {
 //------------------------------------------------------------------------------
 // handleMissingParameter
 //------------------------------------------------------------------------------
-void castor::acs::AcsCmdLine::handleMissingParameter(const int option) {
+void castor::acs::AcsCmdLine::handleMissingParameter(const int opt) {
   castor::exception::MissingOperand ex;
-  ex.getMessage() << "The -" << (char)optopt
-    << " option requires a parameter";
+  ex.getMessage() << "The -" << (char)opt << " option requires a parameter";
  throw ex;
 }
 
 //------------------------------------------------------------------------------
 // handleUnknownOption
 //------------------------------------------------------------------------------
-void castor::acs::AcsCmdLine::handleUnknownOption(const int option) {
+void castor::acs::AcsCmdLine::handleUnknownOption(const int opt) {
   castor::exception::InvalidArgument ex;
   if(0 == optopt) {
     ex.getMessage() << "Unknown command-line option";
   } else {
-    ex.getMessage() << "Unknown command-line option: -" << (char)optopt;
+    ex.getMessage() << "Unknown command-line option: -" << (char)opt;
   }
   throw ex;
 }
