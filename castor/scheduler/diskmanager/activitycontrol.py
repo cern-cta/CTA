@@ -76,14 +76,13 @@ class ActivityControlThread(threading.Thread):
   '''activity control thread.
   This thread is responsible for starting new transfers when free slots are available'''
 
-  def __init__(self, runningTransfers, transferQueue, configuration, clientsReplier, clientsListener, fake):
+  def __init__(self, runningTransfers, transferQueue, configuration, clientsListener, fake):
     '''constructor'''
     super(ActivityControlThread, self).__init__(name='ActivityControl')
     self.alive = True
     self.runningTransfers = runningTransfers
     self.transferQueue = transferQueue
     self.configuration = configuration
-    self.clientsReplier = clientsReplier
     self.clientsListener = clientsListener
     self.fake = fake
     # last time we've tried to schedule a transfer. This is used by the ActivityControlChecker
@@ -211,7 +210,7 @@ class ActivityControlThread(threading.Thread):
                                                      0, '', transfer.reqId, destPath, moverPort, \
                                                      'rfio' if transfer.protocol == 'rfio3' else transfer.protocol)   # rfio and rfio3 are the same thing
                   # and asynchronously answer client
-                  self.clientsReplier.sendResponse(qTransfer, transfer.clientIpAddress, transfer.clientPort, ioresp)
+                  clientsreplier.ClientsReplierThread.sendResponse(qTransfer, transfer.clientIpAddress, transfer.clientPort, ioresp)
                 # from now on we consider the transfer running, even if the client didn't come yet:
                 # this ensures that the slot is reserved for it. See how it is taken out of the running
                 # transfers in clientslistener in case of failures or time outs.
@@ -239,8 +238,8 @@ class ActivityControlThread(threading.Thread):
             # this is a permanent failure because of the stager, so try and inform the client that the transfer cannot take place
             ioresp = clientsreplier.IOResponse(clientsreplier.IOResponse.FAILED, '', 0, transfer.fileId[1], transfer.transferId, \
                                                1725, e.message, transfer.reqId, transfer.reqId, 0, transfer.protocol)  # 1725 = ESTREQCANCELED
-            # use asynch response: exceptions are handled in the clientsReplier thread
-            self.clientsReplier.sendResponse(qTransfer, transfer.clientIpAddress, transfer.clientPort, ioresp)
+            # use asynch response: exceptions are handled in the clientsReplier threads
+            clientsreplier.ClientsReplierThread.sendResponse(qTransfer, transfer.clientIpAddress, transfer.clientPort, ioresp)
           except SourceNotStarted, e:
             # we have tried to start a disk to disk copy and the source is not yet ready
             # we will put it in a pending queue

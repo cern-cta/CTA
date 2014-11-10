@@ -232,13 +232,15 @@ try:
     transferQueue = localqueue.LocalQueue(runningTransfers)
     # initialize the queues of pending and running transfers using the knowledge of the central schedulers
     initQueues()
-    # launch a clients replier thread to asynchronously send responses to clients
-    clientsReplierThr = clientsreplier.ClientsReplierThread(configuration)
+    # launch a pool of clients replier threads to asynchronously send responses to clients
+    clientsReplierThrs = []
+    for i_unused in range(configuration.getValue('DiskManager', 'NbClientRepliers', 5, int)):
+      clientsReplierThrs.append(clientsreplier.ClientsReplierThread(configuration))
     # launch a clients listener thread to receive clients callbacks
     clientsListenerThr = clientslistener.ClientsListenerThread(runningTransfers, configuration)
     # launch a processing thread that will regularly check if we need to start new transfers from the queue
     activityControlThr = activitycontrol.ActivityControlThread(runningTransfers, transferQueue, configuration, \
-                                                               clientsReplierThr, clientsListenerThr, fake)
+                                                               clientsListenerThr, fake)
     # launch a processing thread that will regularly check if the activityControl one gets stuck
     activityControlCheckerThr = activitycontrolchecker.ActivityControlCheckerThread \
                                   (runningTransfers, transferQueue, configuration, activityControlThr)
@@ -247,7 +249,7 @@ try:
     managerThr = manager.ManagerThread(runningTransfers, transferQueue)
     # launch a reporting thread that will regularly report status of this machine to transfermanagerd
     reporterThr = reporter.ReporterThread(runningTransfers, configuration)
-    # launch a mover handler thread to accept file close requests from movers
+    # launch a mover handler thread with its pool of threads to accept file close requests from movers
     moverHandlerThr = moverhandler.MoverHandlerThread(runningTransfers, configuration)
     # launch a service listening for new transfers from the central scheduler and filling the queue
     # By default, the number of threads in the server is the number of server hosts + 1
@@ -265,7 +267,8 @@ try:
     managerThr.stop()
     reporterThr.stop()
     clientsListenerThr.stop()
-    clientsReplierThr.stop()
+    for t in clientsReplierThrs:
+      t.stop()
     moverHandlerThr.stop()
   except SystemExit:
     # we are exiting, fine
@@ -309,8 +312,9 @@ finally:
   except Exception:
     pass
   try:
-    clientsReplierThr.stop()
-    clientsReplierThr.join()
+    for t in clientsReplierThrs:
+      t.stop()
+      t.join()
   except Exception:
     pass
   if daemonize:

@@ -89,26 +89,29 @@ class ClientsReplierThread(threading.Thread):
   so that the sendResponse() method returns immediately.
   '''
 
+  # class level shared queue of the responses to be sent out
+  respQueue = Queue.Queue()
+
   def __init__(self, config):
     '''constructor'''
     super(ClientsReplierThread, self).__init__(name='ClientsReplier')
     self.alive = True
     self.config = config
-    self.queue = Queue.Queue()
     # start the thread
     self.setDaemon(True)
     self.start()
 
-  def sendResponse(self, qTransfer, clientHost, clientPort, ioResponse):
+  def sendResponse(cls, qTransfer, clientHost, clientPort, ioResponse):
     '''push a response to the queue for a given queued transfer'''
-    self.queue.put((qTransfer, clientHost, clientPort, ioResponse))
+    cls.respQueue.put((qTransfer, clientHost, clientPort, ioResponse))
+  sendResponse = classmethod(sendResponse)
 
   def run(self):
     '''main method, consuming the queue'''
     while self.alive:
       try:
         # get next response to send out
-        qTransfer, clientHost, clientPort, ioResponse = self.queue.get(timeout=1)
+        qTransfer, clientHost, clientPort, ioResponse = ClientsReplierThread.respQueue.get(timeout=1)
       except Queue.Empty:
         continue
       try:
