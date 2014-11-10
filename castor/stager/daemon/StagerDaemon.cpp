@@ -279,7 +279,6 @@ void castor::stager::daemon::StagerDaemon::help(std::string programName)
     "where options can be:\n"
     "\n"
     "\t--Jthreads    or -J {integer >= 0}  \tNumber of threads for the Job requests service\n"
-    "\t--Pthreads    or -P {integer >= 0}  \tNumber of threads for the Prepare requests service\n"
     "\t--Sthreads    or -S {integer >= 0}  \tNumber of threads for the Stage requests service\n"
     "\t--Qthreads    or -Q {integer >= 0}  \tNumber of threads for the Query requests service\n"
     "\t--Ethreads    or -E {integer >= 0}  \tNumber of threads for the Error service\n"
