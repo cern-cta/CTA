@@ -21,8 +21,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/mediachanger/GenericLibrarySlot.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
-#include "castor/mediachanger/ConfigLibrarySlot.hpp"
 
 #include <gtest/gtest.h>
 #include <iostream>
@@ -114,9 +114,9 @@ protected:
 
   const std::string m_vid;
 
-  const castor::mediachanger::ConfigLibrarySlot m_acsSlot;
-  const castor::mediachanger::ConfigLibrarySlot m_mmcSlot;
-  const castor::mediachanger::ConfigLibrarySlot m_rmcSlot;
+  const castor::mediachanger::GenericLibrarySlot m_acsSlot;
+  const castor::mediachanger::GenericLibrarySlot m_mmcSlot;
+  const castor::mediachanger::GenericLibrarySlot m_rmcSlot;
 
   castor_mediachanger_MediaChangerFacadeTest():
     m_vid("123456"),

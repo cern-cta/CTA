@@ -25,7 +25,7 @@
 
 #include "castor/exception/Errnum.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/mediachanger/ConfigLibrarySlot.hpp"
+#include "castor/mediachanger/GenericLibrarySlot.hpp"
 #include "castor/tape/tapeserver/drive/mtio_add.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/SCSI/Exception.hpp"
@@ -192,7 +192,7 @@ namespace drive {
      * Member allowing the convenient storage of the drive location for the
      * mount system (we get the information from TPCONFIG)
      */
-    mediachanger::ConfigLibrarySlot librarySlot;
+    mediachanger::GenericLibrarySlot librarySlot;
   };
   
   /**

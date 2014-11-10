@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/mediachanger/ConfigLibrarySlot.hpp"
+#include "castor/mediachanger/GenericLibrarySlot.hpp"
 #include "castor/tape/Constants.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFILEPtr.hpp"

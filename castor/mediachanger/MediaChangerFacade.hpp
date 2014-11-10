@@ -22,7 +22,7 @@
 #pragma once
 
 #include "castor/legacymsg/RmcProxy.hpp"
-#include "castor/mediachanger/ConfigLibrarySlot.hpp"
+#include "castor/mediachanger/GenericLibrarySlot.hpp"
 #include "castor/mediachanger/MmcProxy.hpp"
 #include "castor/messages/AcsProxy.hpp"
 
@@ -59,7 +59,7 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   void mountTapeReadOnly(const std::string &vid,
-    const ConfigLibrarySlot &librarySlot);
+    const GenericLibrarySlot &librarySlot);
 
   /**
    * Requests the media changer to mount of the specified tape for read/write
@@ -69,7 +69,7 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   void mountTapeReadWrite(const std::string &vid,
-    const ConfigLibrarySlot &librarySlot);
+    const GenericLibrarySlot &librarySlot);
 
   /**
    * Requests the media changer to dismount of the specified tape from the
@@ -79,7 +79,7 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   void dismountTape(const std::string &vid,
-    const ConfigLibrarySlot &librarySlot);
+    const GenericLibrarySlot &librarySlot);
 
 private:
 

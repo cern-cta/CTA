@@ -39,7 +39,7 @@ castor::mediachanger::MediaChangerFacade::MediaChangerFacade(
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
 void castor::mediachanger::MediaChangerFacade::mountTapeReadOnly(
-  const std::string &vid, const ConfigLibrarySlot &librarySlot) {
+  const std::string &vid, const GenericLibrarySlot &librarySlot) {
   try {
     const TapeLibraryType libraryType = librarySlot.getLibraryType();
 
@@ -73,7 +73,7 @@ void castor::mediachanger::MediaChangerFacade::mountTapeReadOnly(
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
 void castor::mediachanger::MediaChangerFacade::mountTapeReadWrite(
-  const std::string &vid, const ConfigLibrarySlot &librarySlot) {
+  const std::string &vid, const GenericLibrarySlot &librarySlot) {
   try {
     const TapeLibraryType libraryType = librarySlot.getLibraryType();
 
@@ -106,7 +106,7 @@ void castor::mediachanger::MediaChangerFacade::mountTapeReadWrite(
 // dismountTape
 //------------------------------------------------------------------------------
 void castor::mediachanger::MediaChangerFacade::dismountTape(
-  const std::string &vid, const ConfigLibrarySlot &librarySlot) {
+  const std::string &vid, const GenericLibrarySlot &librarySlot) {
   try {
     const TapeLibraryType libraryType = librarySlot.getLibraryType();
   

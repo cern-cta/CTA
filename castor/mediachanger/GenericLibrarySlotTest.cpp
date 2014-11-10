@@ -22,14 +22,14 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
-#include "castor/mediachanger/ConfigLibrarySlot.hpp"
+#include "castor/mediachanger/GenericLibrarySlot.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
 
 namespace unitTests {
 
-class castor_mediachanger_ConfigLibrarySlotTest : public ::testing::Test {
+class castor_mediachanger_GenericLibrarySlotTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -39,44 +39,44 @@ protected:
   }
 };
 
-TEST_F(castor_mediachanger_ConfigLibrarySlotTest, getLibraryTypeNone) {
+TEST_F(castor_mediachanger_GenericLibrarySlotTest, getLibraryTypeNone) {
   using namespace castor::mediachanger;
 
-  ConfigLibrarySlot slot;
+  GenericLibrarySlot slot;
 
   ASSERT_EQ(TAPE_LIBRARY_TYPE_NONE, slot.getLibraryType());
 }
 
-TEST_F(castor_mediachanger_ConfigLibrarySlotTest, getLibraryTypeAcs) {
+TEST_F(castor_mediachanger_GenericLibrarySlotTest, getLibraryTypeAcs) {
   using namespace castor::mediachanger;
 
-  ConfigLibrarySlot slot("acs1,2,3,4");
+  GenericLibrarySlot slot("acs1,2,3,4");
 
   ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS, slot.getLibraryType());
 }
 
-TEST_F(castor_mediachanger_ConfigLibrarySlotTest, getLibraryTypeManual) {
+TEST_F(castor_mediachanger_GenericLibrarySlotTest, getLibraryTypeManual) {
   using namespace castor::mediachanger;
 
-  ConfigLibrarySlot slot("manual");
+  GenericLibrarySlot slot("manual");
 
   ASSERT_EQ(TAPE_LIBRARY_TYPE_MANUAL, slot.getLibraryType());
 }
 
-TEST_F(castor_mediachanger_ConfigLibrarySlotTest, getLibraryTypeScsi) {
+TEST_F(castor_mediachanger_GenericLibrarySlotTest, getLibraryTypeScsi) {
   using namespace castor::mediachanger;
 
-  ConfigLibrarySlot slot("smc@rmc_host,1");
+  GenericLibrarySlot slot("smc@rmc_host,1");
 
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot.getLibraryType());
 }
 
-TEST_F(castor_mediachanger_ConfigLibrarySlotTest, getLibraryTypeNonsense) {
+TEST_F(castor_mediachanger_GenericLibrarySlotTest, getLibraryTypeNonsense) {
   using namespace castor::mediachanger;
 
-  std::auto_ptr<ConfigLibrarySlot> slot;
+  std::auto_ptr<GenericLibrarySlot> slot;
 
-  ASSERT_THROW(slot.reset(new ConfigLibrarySlot("nonsense")),
+  ASSERT_THROW(slot.reset(new GenericLibrarySlot("nonsense")),
     castor::exception::Exception);
 }
 

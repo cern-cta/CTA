@@ -156,7 +156,7 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
+  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -261,7 +261,7 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
+  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -319,7 +319,7 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/noSuchTape";
-  driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
+  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024;
   castorConf.nbBufs = 10;
@@ -407,7 +407,7 @@ TEST(tapeServer, DataTransferSessionFailtoMount) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
+  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -471,7 +471,7 @@ TEST(tapeServer, DataTransferSessionEmptyOnVolReq) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
+  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -619,7 +619,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
+  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -709,7 +709,7 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
+  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -811,7 +811,7 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
+  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -918,7 +918,7 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::ConfigLibrarySlot("manual");
+  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
