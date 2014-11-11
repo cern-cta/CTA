@@ -379,8 +379,8 @@ private:
   virtual void logStuckFile() {
     castor::log::ScopedParamContainer params(m_lc);
     params.add("TimeSinceLastBlockMove", m_blockMovementTimer.usecs())
-          .add("Path",m_file.path())
-          .add("FILEID",m_file.fileid())
+          .add("path",m_file.path())
+          .add("NSFILEID",m_file.fileid())
           .add("fSeq",m_file.fseq());
     m_lc.log(LOG_WARNING, "No tape block movement for too long");
   }
