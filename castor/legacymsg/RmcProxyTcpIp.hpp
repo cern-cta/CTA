@@ -205,9 +205,9 @@ protected:
       io::writeBytes(fd.get(), m_netTimeout, len, buf);
     }
 
-    // A single RMC reply is composed of 0 to 2 ERR_MSG replies
+    // A single RMC reply is composed of 0 to 10 ERR_MSG replies
     // followed by a terminating RMC_RC reply
-    const int maxERR_MSG = 2;
+    const int maxERR_MSG = 10;
     int nbERR_MSG = 0;
     while(true) {
       const MessageHeader header = readRmcMsgHeader(fd.get());
