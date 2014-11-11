@@ -119,7 +119,7 @@ void castor::acs::AcsPendingRequests::handleCompletedRequests() {
     itor != m_acsRequestList.end();itor++) {
     AcsRequest *const acsRequest = *itor;
     if (acsRequest->isCompleted()) {
-      log::Param params[] = {log::Param("vid", acsRequest->getVid()),
+      log::Param params[] = {log::Param("TPVID", acsRequest->getVid()),
         log::Param("acs", acsRequest->getAcs()),
         log::Param("lsm", acsRequest->getLsm()),
         log::Param("panel", acsRequest->getPanel()),
@@ -141,7 +141,7 @@ void castor::acs::AcsPendingRequests::handleFailedRequests() {
     itor != m_acsRequestList.end();itor++) {
     AcsRequest *const acsRequest = *itor;
     if (acsRequest->isFailed()) {
-      log::Param params[] = {log::Param("vid", acsRequest->getVid()),
+      log::Param params[] = {log::Param("TPVID", acsRequest->getVid()),
         log::Param("acs", acsRequest->getAcs()),
         log::Param("lsm", acsRequest->getLsm()),
         log::Param("panel", acsRequest->getPanel()),
@@ -225,7 +225,7 @@ void castor::acs::AcsPendingRequests::checkAndAddRequestDismountTape(
 
   checkRequest(vid, acs, lsm, panel, drive);
   
-  log::Param params[] = {log::Param("vid", vid),
+  log::Param params[] = {log::Param("TPVID", vid),
     log::Param("acs", acs),
     log::Param("lsm", lsm),
     log::Param("panel", panel),

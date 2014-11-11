@@ -158,7 +158,8 @@ TapeServerReporter::TapeServerReporter(
     void TapeServerReporter::ReportGotReadDetailsFromClient::execute(
     TapeServerReporter& parent){
       log::ScopedParamContainer sp(parent.m_lc);
-      sp.add(parent.m_unitName, "unitName").add(parent.m_volume.vid, "vid");
+      sp.add("unitName", parent.m_unitName)
+        .add("TPVID", parent.m_volume.vid);
 
       switch(parent.m_volume.clientType) {
       case tapegateway::TAPE_GATEWAY:

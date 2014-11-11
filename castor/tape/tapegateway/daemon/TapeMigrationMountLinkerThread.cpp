@@ -168,7 +168,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
         } catch (castor::exception::Exception &e) {
           castor::dlf::Param params2[] = {
               castor::dlf::Param("MigrationMountId", item->migrationMountId),
-              castor::dlf::Param("VID", vidToUse),
+              castor::dlf::Param("TPVID", vidToUse),
               castor::dlf::Param("TapePool", item->tapePoolName),
               castor::dlf::Param("errorCode", sstrerror(e.code())),
               castor::dlf::Param("errorMessage", e.getMessage().str())
@@ -181,7 +181,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
             castor::dlf::Param("TapePool", item->tapePoolName),
             castor::dlf::Param("errorCode", sstrerror(e.code())),
             castor::dlf::Param("errorMessage", e.getMessage().str()),
-            castor::dlf::Param("VID", vidToUse)
+            castor::dlf::Param("TPVID", vidToUse)
         };
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_CRIT, LINKER_VMGR_NS_DISCREPANCY, params2);
         // Abort.

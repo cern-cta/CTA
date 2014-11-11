@@ -288,7 +288,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   // Log the contents of the incomming request
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", rqst.unitname()));
-  params.push_back(log::Param("vid", rqst.vid()));
+  params.push_back(log::Param("TPVID", rqst.vid()));
   params.push_back(log::Param("driveReadyDelayInSeconds",
     rqst.drivereadydelayinseconds()));
   m_log(LOG_INFO, "ProcessForker handling ForkCleaner message", params);
@@ -397,7 +397,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   // Log the contents of the incomming request
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", rqst.unitname()));
-  params.push_back(log::Param("vid", rqst.vid()));
+  params.push_back(log::Param("TPVID", rqst.vid()));
   m_log(LOG_INFO, "ProcessForker handling ForkLabel message", params);
 
   // Fork a label session
@@ -468,7 +468,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     const utils::DriveConfig driveConfig = getDriveConfig(rqst);
     std::list<log::Param> params;
     params.push_back(log::Param("unitName", driveConfig.unitName));
-    params.push_back(log::Param("vid", rqst.vid()));
+    params.push_back(log::Param("TPVID", rqst.vid()));
     m_log(LOG_INFO, "Cleaner-session child-process started", params);
 
     const int sizeOfIOThreadPoolForZMQ = 1;
@@ -844,7 +844,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
     std::list<log::Param> params;
     params.push_back(log::Param("unitName", driveConfig.unitName));
-    params.push_back(log::Param("vid", labelJob.vid));
+    params.push_back(log::Param("TPVID", labelJob.vid));
     m_log(LOG_INFO, "Label-session child-process started", params);
 
     const int sizeOfIOThreadPoolForZMQ = 1;

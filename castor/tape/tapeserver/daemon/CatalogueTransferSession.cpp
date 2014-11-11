@@ -290,7 +290,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   checkUserCanRecallFromTape(const std::string &vid) {
   std::list<log::Param> params;
 
-  params.push_back(log::Param("vid", vid));
+  params.push_back(log::Param("TPVID", vid));
   params.push_back(log::Param("clientEuid", m_vdqmJob.clientEuid));
   params.push_back(log::Param("clientEgid", m_vdqmJob.clientEgid));
 
@@ -364,7 +364,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   checkUserCanMigrateToTape(const std::string &vid) {
   std::list<log::Param> params;
 
-  params.push_back(log::Param("vid", vid));
+  params.push_back(log::Param("TPVID", vid));
   params.push_back(log::Param("clientEuid", m_vdqmJob.clientEuid));
   params.push_back(log::Param("clientEgid", m_vdqmJob.clientEgid));
 

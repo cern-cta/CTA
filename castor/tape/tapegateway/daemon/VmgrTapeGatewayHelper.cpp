@@ -303,7 +303,7 @@ castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeInfo
         throw ex;
       }
       castor::dlf::Param params[] = {
-        castor::dlf::Param("VID",  vid),
+        castor::dlf::Param("TPVID",  vid),
         castor::dlf::Param("serrno",save_serrno)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, VMGR_GATEWAY_HELPER_RETRYING, params);
       sleep(5);

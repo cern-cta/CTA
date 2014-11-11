@@ -251,7 +251,7 @@ void castor::tape::tapeserver::daemon::LabelCmdConnectionHandler::
   const throw() {
   log::Param params[] = {
     log::Param("drive", job.drive),
-    log::Param("vid", job.vid),
+    log::Param("TPVID", job.vid),
     log::Param("dgn", job.dgn),
     log::Param("uid", job.uid),
     log::Param("gid", job.gid)};

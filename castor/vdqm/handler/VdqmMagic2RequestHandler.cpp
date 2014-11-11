@@ -37,7 +37,7 @@ void castor::vdqm::handler::VdqmMagic2RequestHandler::handleVolPriority(
     castor::dlf::Param("clientUID"   , msg.clientUID),
     castor::dlf::Param("clientGID"   , msg.clientGID),
     castor::dlf::Param("clientHost"  , msg.clientHost),
-    castor::dlf::Param("vid"         , msg.vid),
+    castor::dlf::Param("TPVID"         , msg.vid),
     castor::dlf::Param("tpMode"      , msg.tpMode),
     castor::dlf::Param("lifespanType", msg.lifespanType)};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,

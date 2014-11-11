@@ -116,7 +116,7 @@ bool castor::tape::tapegateway::VdqmRequestsProducerThread::getTapeToHandle
   } else {
     // We have something to do, log "found tape to submit"
     castor::dlf::Param params[] = {
-      castor::dlf::Param("VID", vid),
+      castor::dlf::Param("TPVID", vid),
       castor::dlf::Param("vdqmPriority", vdqmPriority),
       castor::dlf::Param("mode", mode==WRITE_ENABLE?"WRITE_ENABLE":"WRITE_DISABLE"),
       castor::dlf::Param("ProcessingTime", timer.secs())

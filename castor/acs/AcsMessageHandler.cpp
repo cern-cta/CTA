@@ -242,7 +242,7 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
     const uint32_t panel  = rqstBody.panel();
     const uint32_t drive  = rqstBody.drive();
     
-    log::Param params[] = {log::Param("vid", vid),
+    log::Param params[] = {log::Param("TPVID", vid),
       log::Param("acs", acs),
       log::Param("lsm", lsm),
       log::Param("panel", panel),
@@ -287,7 +287,7 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
     const uint32_t panel  = rqstBody.panel();
     const uint32_t drive  = rqstBody.drive();
     
-    log::Param params[] = {log::Param("vid", vid),
+    log::Param params[] = {log::Param("TPVID", vid),
       log::Param("acs", acs),
       log::Param("lsm", lsm),
       log::Param("panel", panel),
@@ -332,7 +332,7 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
     const uint32_t panel  = rqstBody.panel();
     const uint32_t drive  = rqstBody.drive();
     
-    log::Param params[] = {log::Param("vid", vid),
+    log::Param params[] = {log::Param("TPVID", vid),
       log::Param("acs", acs),
       log::Param("lsm", lsm),
       log::Param("panel", panel),

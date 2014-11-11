@@ -112,7 +112,7 @@ protected:
    */
   void mountTapeReadOnly(){
     castor::log::ScopedParamContainer scoped(m_logContext); 
-    scoped.add("vid",m_volInfo.vid)
+    scoped.add("TPVID",m_volInfo.vid)
           .add("drive_Slot",m_drive.librarySlot.str());
     try {
       castor::utils::Timer timer;
@@ -138,7 +138,7 @@ protected:
    */
   void mountTapeReadWrite(){
     castor::log::ScopedParamContainer scoped(m_logContext); 
-    scoped.add("vid",m_volInfo.vid)
+    scoped.add("TPVID",m_volInfo.vid)
           .add("drive_Slot",m_drive.librarySlot.str());
     try {
       castor::utils::Timer timer;

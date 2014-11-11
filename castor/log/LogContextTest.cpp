@@ -45,7 +45,7 @@ namespace unitTests {
         // Test that we do not allow duplicate params
         LogContext::ScopedParam sp(lc, Param("NSFILEID", 123456));
         ASSERT_EQ(2U, lc.size());
-        LogContext::ScopedParam sp2(lc, Param("VID", "T1234"));
+        LogContext::ScopedParam sp2(lc, Param("TPVID", "T1234"));
         ASSERT_EQ(3U, lc.size());
       }
     }

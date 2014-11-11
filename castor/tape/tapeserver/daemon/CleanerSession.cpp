@@ -91,16 +91,16 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       drive->readExactBlock((void * )&vol1, sizeof(vol1), "[CleanerSession::clean()] - Reading header VOL1");
       vol1.verify();
       if(m_vid.empty()) { // vid given is empty
-        log::Param params[] = {log::Param("vid", m_vid)};
+        log::Param params[] = {log::Param("TPVID", m_vid)};
         m_log(LOG_INFO, "Cleaner session received an empty vid.", params);
       }
       else if(!(m_vid.compare(vol1.getVSN()))) { // vid provided and vid read on VOL1 correspond
-        log::Param params[] = {log::Param("vid", m_vid)};
+        log::Param params[] = {log::Param("TPVID", m_vid)};
         m_log(LOG_INFO, "Cleaner session received the same vid read on tape.", params);        
       }
       else { // vid provided and vid read on VOL1 don NOT correspond!
-        log::Param params[] = {log::Param("vid provided", m_vid), log::Param("vid read on label", vol1.getVSN())};
-        m_log(LOG_WARNING, "Cleaner session received a different vid from the one read on tape.", params);
+        log::Param params[] = {log::Param("TPVID provided", m_vid), log::Param("TPVID read on label", vol1.getVSN())};
+        m_log(LOG_WARNING, "Cleaner session received a different TPVID from the one read on tape.", params);
       }
     } catch(castor::exception::Exception &ne) {
       castor::exception::Exception ex;

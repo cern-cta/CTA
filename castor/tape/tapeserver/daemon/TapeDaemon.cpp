@@ -1148,7 +1148,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::notifyVdqmTapeUnmounted(
     std::list<log::Param> params;
     params.push_back(log::Param("pid", pid));
     params.push_back(log::Param("unitName", driveConfig.unitName));
-    params.push_back(log::Param("vid", vid));
+    params.push_back(log::Param("TPVID", vid));
     params.push_back(log::Param("dgn", driveConfig.dgn));
 
     m_vdqm.tapeUnmounted(m_hostName, driveConfig.unitName, driveConfig.dgn,

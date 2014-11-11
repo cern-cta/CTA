@@ -135,7 +135,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
     try {
       VmgrTapeGatewayHelper::resetBusyTape(*tapeToReset, m_shuttingDown);
       castor::dlf::Param params[] =
-        {castor::dlf::Param("VID", *tapeToReset)};
+        {castor::dlf::Param("TPVID", *tapeToReset)};
       castor::dlf::dlf_writep(nullCuuid,DLF_LVL_SYSTEM, CHECKER_RELEASING_UNUSED_TAPE, params);
     } catch (castor::exception::Exception& e){
       castor::dlf::Param params[] = {

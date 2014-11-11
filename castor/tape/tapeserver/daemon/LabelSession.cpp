@@ -78,7 +78,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     log::Param params[] = {
       log::Param("uid", m_request.uid),
       log::Param("gid", m_request.gid),
-      log::Param("vid", m_request.vid),
+      log::Param("TPVID", m_request.vid),
       log::Param("drive", m_request.drive),
       log::Param("dgn", m_request.dgn)};
   
@@ -148,7 +148,7 @@ void castor::tape::tapeserver::daemon::LabelSession::mountTape() {
     if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL !=
       m_driveConfig.librarySlot.getLibraryType()) {
       const log::Param params[] = {
-        log::Param("vid", m_request.vid),
+        log::Param("TPVID", m_request.vid),
         log::Param("unitName", m_request.drive),
         log::Param("librarySlot", m_driveConfig.librarySlot.str())};
       m_log(LOG_INFO, "Tape successfully mounted for labeling", params);
@@ -169,7 +169,7 @@ void castor::tape::tapeserver::daemon::LabelSession::waitUntilTapeLoaded(
   try {
     drive->waitUntilReady(timeoutSecond);
     const log::Param params[] = {
-      log::Param("vid", m_request.vid),
+      log::Param("TPVID", m_request.vid),
       log::Param("unitName", m_request.drive),
       log::Param("librarySlot", m_driveConfig.librarySlot.str())};
     m_log(LOG_INFO, "Tape to be labelled has been mounted", params);
@@ -192,7 +192,7 @@ void castor::tape::tapeserver::daemon::LabelSession::checkTapeIsWritable(
     throw ex;
   }
   const log::Param params[] = {
-    log::Param("vid", m_request.vid),
+    log::Param("TPVID", m_request.vid),
     log::Param("unitName", m_request.drive),
     log::Param("librarySlot", m_driveConfig.librarySlot.str())};
   m_log(LOG_INFO, "Tape to be labelled is writable", params);

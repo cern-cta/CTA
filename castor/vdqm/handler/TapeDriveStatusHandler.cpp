@@ -533,7 +533,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
         if(volPriorityId != 0) { // A delete took place
           castor::dlf::Param param[] = {
             castor::dlf::Param("volPriorityId", volPriorityId),
-            castor::dlf::Param("vid"          , finishedTapeRequestVid),
+            castor::dlf::Param("TPVID"          , finishedTapeRequestVid),
             castor::dlf::Param("tpMode"       , finishedTapeRequestTpMode),
             castor::dlf::Param("lifespanType" , 0),
             castor::dlf::Param("priority"     , priority),
@@ -546,7 +546,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
         // Else no delete took place
         } else {
           castor::dlf::Param param[] = {
-            castor::dlf::Param("vid"         , finishedTapeRequestVid),
+            castor::dlf::Param("TPVID"         , finishedTapeRequestVid),
             castor::dlf::Param("tpMode"      , finishedTapeRequestTpMode),
             castor::dlf::Param("lifespanType", 0)};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,

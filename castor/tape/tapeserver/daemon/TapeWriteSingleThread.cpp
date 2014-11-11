@@ -61,7 +61,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
   std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession;
   
   ScopedParam sp[]={
-    ScopedParam(m_logContext, Param("vid",m_vid)),
+    ScopedParam(m_logContext, Param("TPVID",m_vid)),
     ScopedParam(m_logContext, Param("lastFseq", m_lastFseq)),
     ScopedParam(m_logContext, Param("compression", m_compress)) 
   };
@@ -268,7 +268,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
 void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats(
 int level,const std::string& msg, log::ScopedParamContainer& params){
   params.add("type", "write")
-        .add("VID", m_volInfo.vid)
+        .add("TPVID", m_volInfo.vid)
         .add("mountTime", m_stats.mountTime)
         .add("positionTime", m_stats.positionTime)
         .add("waitInstructionsTime", m_stats.waitInstructionsTime)
