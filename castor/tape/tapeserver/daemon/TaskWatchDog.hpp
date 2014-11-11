@@ -232,6 +232,10 @@ protected:
       castor::server::MutexLocker locker(&m_mutex);
       reportStats();
     }
+    // We have a race condition here between the processing of this message by
+    // the initial process and the printing of the end-of-session log, triggered
+    // by the end our process. To delay the latter, we sleep half a second here.
+    usleep(500*1000);
   }
   
   public:
