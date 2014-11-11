@@ -145,17 +145,19 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     return MARK_DRIVE_AS_UP;
   }
   // 2b) ... and log.
-  // Make the TPVID parameter permanent.
-  log::LogContext::ScopedParam sp07(lc, log::Param("TPVID", m_request.dgn));
+  // Make the DGN and TPVID parameter permanent.
+  log::ScopedParamContainer params(lc);
+  params.add("dgn", m_request.dgn)
+        .add("TPVID", m_volInfo.vid);
   {
-    log::LogContext::ScopedParam sp08(lc, log::Param("tapebridgeTransId", reqReport.transactionId));
-    log::LogContext::ScopedParam sp09(lc, log::Param("connectDuration", reqReport.connectDuration));
-    log::LogContext::ScopedParam sp00(lc, log::Param("sendRecvDuration", reqReport.sendRecvDuration));
-    log::LogContext::ScopedParam sp11(lc, log::Param("TPVID", m_volInfo.vid));
-    log::LogContext::ScopedParam sp12(lc, log::Param("density", m_volInfo.density));
-    log::LogContext::ScopedParam sp13(lc, log::Param("label", m_volInfo.labelObsolete));
-    log::LogContext::ScopedParam sp14(lc, log::Param("clientType", utils::volumeClientTypeToString(m_volInfo.clientType)));
-    log::LogContext::ScopedParam sp15(lc, log::Param("mode", utils::volumeModeToString(m_volInfo.volumeMode)));
+    log::ScopedParamContainer localParams(lc);
+    localParams.add("tapebridgeTransId", reqReport.transactionId)
+               .add("connectDuration", reqReport.connectDuration)
+               .add("sendRecvDuration", reqReport.sendRecvDuration)
+               .add("density", m_volInfo.density)
+               .add("label", m_volInfo.labelObsolete)
+               .add("clientType", utils::volumeClientTypeToString(m_volInfo.clientType))
+               .add("mode", utils::volumeModeToString(m_volInfo.volumeMode));
     lc.log(LOG_INFO, "Got volume from client");
   }
   
