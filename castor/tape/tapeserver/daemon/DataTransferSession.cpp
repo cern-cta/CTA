@@ -219,6 +219,10 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     RecallTaskInjector rti(mm, trst, dwtp, m_clientProxy,
             m_castorConf.bulkRequestRecallMaxFiles,
             m_castorConf.bulkRequestRecallMaxBytes,lc);
+    // Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
+    // In order to implement the fix, the task injector needs to know the type
+    // of the client
+    rti.setClientType(m_volInfo.clientType);
     trst.setTaskInjector(&rti);
     
     // We are now ready to put everything in motion. First step is to check

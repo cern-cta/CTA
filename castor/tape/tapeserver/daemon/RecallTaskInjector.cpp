@@ -104,6 +104,12 @@ void RecallTaskInjector::startThreads() {
 //------------------------------------------------------------------------------
 void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapegateway::FileToRecallStruct*>& jobs) {
   for (std::vector<tapegateway::FileToRecallStruct*>::const_iterator it = jobs.begin(); it != jobs.end(); ++it) {
+    
+    // Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
+    // When the client is a tape gateway, we should *always* position by block id.
+    if (tapegateway::TAPE_GATEWAY == m_clientType) {
+      (*it)->setPositionCommandCode(tapegateway::TPPOSIT_BLKID);
+    }
 
     LogContext::ScopedParam sp[]={
       LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->nshost())),

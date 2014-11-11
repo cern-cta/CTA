@@ -27,6 +27,9 @@
 #include "castor/log/LogContext.hpp"
 #include "castor/server/BlockingQueue.hpp"
 #include "castor/server/Threading.hpp"
+//Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
+#include "castor/tape/tapegateway/PositionCommandCode.hpp"
+#include "castor/tape/tapegateway/ClientType.hpp"
 
 namespace castor{
 namespace tape{
@@ -71,6 +74,13 @@ public:
         uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc);
 
   virtual ~RecallTaskInjector();
+  
+  /**
+   * Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
+   */
+  void setClientType(tapegateway::ClientType clientType) {
+    m_clientType = clientType;
+  }
   
   /**
    * Function for a feed-back loop purpose between RecallTaskInjector and 
@@ -191,6 +201,9 @@ private:
   
   //maximal number of cumulated byte requested. at once
   const uint64_t m_maxBytes;
+  
+  // Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
+  tapegateway::ClientType m_clientType;
 };
 
 } //end namespace daemon
