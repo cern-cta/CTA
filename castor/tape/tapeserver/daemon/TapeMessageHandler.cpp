@@ -543,7 +543,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   handleAddLogParams(const messages::Frame& rqst) {
-  m_log(LOG_INFO, "Handling AddLogParams message");
+  m_log(LOG_DEBUG, "Handling AddLogParams message");
 
   try {
     messages::AddLogParams rqstBody;
@@ -575,7 +575,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   handleDeleteLogParams(const messages::Frame& rqst) {
-  m_log(LOG_INFO, "Handling AddLogParams message");
+  m_log(LOG_DEBUG, "Handling DeleteLogParams message");
 
   try {
     messages::DeleteLogParams rqstBody;
