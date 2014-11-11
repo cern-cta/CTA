@@ -81,7 +81,7 @@ class ClientsListenerThread(threading.Thread):
         port += 1
         if port > highPort:
           port = lowPort
-          time.sleep(1)
+          time.sleep(.1)
         continue
     # add the socket to our map of outstanding movers
     self.outstandingMovers[sock.fileno()] = MoverSocket(qTransfer, callback, sock)
@@ -92,32 +92,33 @@ class ClientsListenerThread(threading.Thread):
 
   def run(self):
     '''main method, containing the infinite poll listening loop'''
+    nextCheck = 0
     while self.alive:
       try:
         fds = self.clientsPoll.poll(1000)
-        for (fd, event) in fds:
-          if event == select.POLLIN or event == select.POLLPRI:
-            # a client connected: drop this fd from our poll record
-            self.clientsPoll.unregister(fd)
-            # get the corresponding container
-            # in case we don't find it, i.e. we got a client for a mover
-            # that got dropped, raise error and go to next one
-            moverSock = self.outstandingMovers[fd]
-            del self.outstandingMovers[fd]
-            # accept this incoming connection
-            clientSock, addr_unused = moverSock.socket.accept()
-            # keep the fd for the mover (inetd-like mode)
-            moverSock.qTransfer.transfer.moverFd = clientSock.fileno()
-            # now we are ready to start the mover
-            moverSock.callback(moverSock.qTransfer.transfer)
-          # any other event is ignored, eventually the transfer is failed by the time out
-        # check timeout for all outstanding movers
-        for moverSock in self.outstandingMovers.values():
-          if moverSock.expirationTime < time.time():
-            # the client for this mover did not come on time, drop it from our structures
-            self.clientsPoll.unregister(moverSock.socket.fileno())
-            del self.outstandingMovers[moverSock.socket.fileno()]
-            # the transfer will be failed by the manager thread polling all running transfers
+        for (fd, event_unused) in fds:
+          # a client connected: drop this fd from our poll record
+          self.clientsPoll.unregister(fd)
+          # get the corresponding container
+          # in case we don't find it, i.e. we got a client for a mover
+          # that got dropped, raise error and go to next one
+          moverSock = self.outstandingMovers[fd]
+          del self.outstandingMovers[fd]
+          # accept this incoming connection
+          clientSock, addr_unused = moverSock.socket.accept()
+          # keep the fd for the mover (inetd-like mode)
+          moverSock.qTransfer.transfer.moverFd = clientSock.fileno()
+          # now we are ready to start the mover
+          moverSock.callback(moverSock.qTransfer.transfer)
+        # at least once per second, check all outstanding movers for their timeouts
+        if time.time() > nextCheck:
+          for moverSock in self.outstandingMovers.values():
+            if moverSock.expirationTime < time.time():
+              # the client for this mover did not come on time, drop it from our structures.
+              # The transfer will be failed by the manager thread polling all running transfers
+              self.clientsPoll.unregister(moverSock.socket.fileno())
+              del self.outstandingMovers[moverSock.socket.fileno()]
+          nextCheck = time.time()+1
       except Exception, e:
         # "Caught exception in ClientsListener thread" message
         dlf.writeerr(msgs.CLIENTSLISTENEREXCEPTION, Type=str(e.__class__), Message=str(e))
