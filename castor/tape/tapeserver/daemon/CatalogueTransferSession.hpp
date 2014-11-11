@@ -278,10 +278,10 @@ private:
    * Enumeration of the states of a catalogue transfer-session.
    */
   enum TransferState {
-    TRANSFERSTATE_WAIT_JOB,
-    TRANSFERSTATE_WAIT_MOUNTED,
-    TRANSFERSTATE_RUNNING,
-    TRANSFERSTATE_KILLED};
+    WAIT_JOB,
+    WAIT_MOUNTED,
+    RUNNING,
+    WAIT_TIMEOUT_KILL};
 
   /**
    * Returns the string repsentation of the specified transfer state.
@@ -406,8 +406,8 @@ private:
   bool handleTickWhilstRunning();
 
   /**
-   * Handles a tick in time whilst in the TRANSFERSTATE_KILLED state.  Time
-   * driven actions such as alarms should be implemented here.
+   * Handles a tick in time whilst in the TRANSFERSTATE_WAIT_TIMEOUT_KILL state.
+   * Time driven actions such as alarms should be implemented here.
    *
    * This method does not have to be called at any time precise interval,
    * though it should be called at least twice as fast as the quickest reaction
@@ -415,7 +415,7 @@ private:
    *
    * @return True if the main event loop should continue, else false.
    */
-  bool handleTickWhilstKilled();
+  bool handleTickWhilstWaitTimeoutKill();
 
 }; // class CatalogueTransferSession
 

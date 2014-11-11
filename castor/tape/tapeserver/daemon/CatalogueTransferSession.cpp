@@ -84,7 +84,7 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
   const time_t mountTimeoutInSecs,
   const time_t blockMoveTimeoutInSecs) throw():
   CatalogueSession(SESSION_TYPE_TRANSFER, log, netTimeout, pid, driveConfig),
-  m_state(TRANSFERSTATE_WAIT_JOB),
+  m_state(WAIT_JOB),
   m_mode(WRITE_DISABLE),
   m_assignmentTime(time(0)),
   m_mountStartTime(0),
@@ -115,10 +115,10 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::CatalogueTransferSession::handleTick() {
   switch(m_state) {
-  case TRANSFERSTATE_WAIT_JOB:     return handleTickWhilstWaitJob();
-  case TRANSFERSTATE_WAIT_MOUNTED: return handleTickWhilstWaitMounted();
-  case TRANSFERSTATE_RUNNING:      return handleTickWhilstRunning();
-  case TRANSFERSTATE_KILLED:       return handleTickWhilstKilled();
+  case WAIT_JOB         : return handleTickWhilstWaitJob();
+  case WAIT_MOUNTED     : return handleTickWhilstWaitMounted();
+  case RUNNING          : return handleTickWhilstRunning();
+  case WAIT_TIMEOUT_KILL: return handleTickWhilstWaitTimeoutKill();
   default: return true; // Continue the main event loop
   }
 }
@@ -147,7 +147,7 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
       params.push_back(log::Param("message", errnoStr));
       m_log(LOG_ERR, "Failed to kill data-transfer session", params);
     } else {
-      m_state = TRANSFERSTATE_KILLED;
+      m_state = WAIT_TIMEOUT_KILL;
     }
   }
 
@@ -178,7 +178,7 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
       params.push_back(log::Param("message", errnoStr));
       m_log(LOG_ERR, "Failed to kill data-transfer session", params);
     } else {
-      m_state = TRANSFERSTATE_KILLED;
+      m_state = WAIT_TIMEOUT_KILL;
     }
   }
 
@@ -209,7 +209,7 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
       params.push_back(log::Param("message", errnoStr));
       m_log(LOG_ERR, "Failed to kill data-transfer session", params);
     } else {
-      m_state = TRANSFERSTATE_KILLED;
+      m_state = WAIT_TIMEOUT_KILL;
     }
   }
 
@@ -217,10 +217,10 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
 }
 
 //------------------------------------------------------------------------------
-// handleTickWhilstKilled
+// handleTickWhilstWaitTimeoutKill
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
-  handleTickWhilstKilled() {
+  handleTickWhilstWaitTimeoutKill() {
   return true; // Continue the main event loop
 }
 
@@ -265,11 +265,11 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   receivedRecallJob(const std::string &vid) {
   const char *const task = "accept reception of recall job";
 
-  if(TRANSFERSTATE_WAIT_JOB != m_state) {
+  if(WAIT_JOB != m_state) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Catalogue transfer-session state-mismatch: "
-      "expected=" << transferStateToStr(TRANSFERSTATE_WAIT_JOB) <<
+      "expected=" << transferStateToStr(WAIT_JOB) <<
       " actual=" << transferStateToStr(m_state);
     throw ex;
   }
@@ -277,7 +277,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   checkUserCanRecallFromTape(vid);
 
   m_mountStartTime = time(0);
-  m_state = TRANSFERSTATE_WAIT_MOUNTED;
+  m_state = WAIT_MOUNTED;
 
   m_mode = WRITE_DISABLE;
   m_vid = vid;
@@ -339,11 +339,11 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   receivedMigrationJob(const std::string &vid) {
-  if(TRANSFERSTATE_WAIT_JOB != m_state) {
+  if(WAIT_JOB != m_state) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept reception of recall job"
       ": Catalogue transfer-session state-mismatch: "
-      "expected=" << transferStateToStr(TRANSFERSTATE_WAIT_JOB) <<
+      "expected=" << transferStateToStr(WAIT_JOB) <<
       " actual=" << transferStateToStr(m_state);
     throw ex;
   }
@@ -351,7 +351,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   checkUserCanMigrateToTape(vid);
 
   m_mountStartTime = time(0);
-  m_state = TRANSFERSTATE_WAIT_MOUNTED;
+  m_state = WAIT_MOUNTED;
 
   m_mode = WRITE_ENABLE;
   m_vid = vid;
@@ -433,8 +433,9 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 std::string castor::tape::tapeserver::daemon::CatalogueTransferSession::
   getVid() const {
   switch(m_state) {
-  case TRANSFERSTATE_WAIT_MOUNTED:
-  case TRANSFERSTATE_RUNNING:
+  case WAIT_MOUNTED:
+  case RUNNING:
+  case WAIT_TIMEOUT_KILL:
     return m_vid;
   default:
     {
@@ -453,8 +454,8 @@ std::string castor::tape::tapeserver::daemon::CatalogueTransferSession::
 int castor::tape::tapeserver::daemon::CatalogueTransferSession::
   getMode() const {
   switch(m_state) {
-  case TRANSFERSTATE_WAIT_MOUNTED:
-  case TRANSFERSTATE_RUNNING:
+  case WAIT_MOUNTED:
+  case RUNNING:
     return m_mode;
   default:
     {
@@ -481,11 +482,11 @@ pid_t castor::tape::tapeserver::daemon::CatalogueTransferSession::
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   tapeMountedForMigration(const std::string &vid) {
-  if(TRANSFERSTATE_WAIT_MOUNTED != m_state) {
+  if(WAIT_MOUNTED != m_state) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept tape mounted for migration"
       ": Catalogue transfer-session state-mismatch: "
-      "expected=" << transferStateToStr(TRANSFERSTATE_WAIT_MOUNTED) <<
+      "expected=" << transferStateToStr(WAIT_MOUNTED) <<
       " actual=" << transferStateToStr(m_state);
     throw ex;
   }
@@ -508,7 +509,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   }
 
   m_lastTimeSomeBlocksWereMoved = time(0); // Start watchdog timer
-  m_state = TRANSFERSTATE_RUNNING;
+  m_state = RUNNING;
 }
 
 //-----------------------------------------------------------------------------
@@ -517,11 +518,11 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   tapeMountedForRecall(const std::string &vid) {
 
-  if(TRANSFERSTATE_WAIT_MOUNTED != m_state) {
+  if(WAIT_MOUNTED != m_state) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept tape mounted for recall"
       ": Catalogue transfer-session state-mismatch: "
-      "expected=" << transferStateToStr(TRANSFERSTATE_WAIT_MOUNTED) <<
+      "expected=" << transferStateToStr(WAIT_MOUNTED) <<
       " actual=" << transferStateToStr(m_state);
     throw ex;
   }
@@ -544,7 +545,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   }
 
   m_lastTimeSomeBlocksWereMoved = time(0); // Start watchdog timer
-  m_state = TRANSFERSTATE_RUNNING;
+  m_state = RUNNING;
 }
 
 //-----------------------------------------------------------------------------
@@ -553,11 +554,11 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 const char *castor::tape::tapeserver::daemon::CatalogueTransferSession::
   transferStateToStr(const TransferState state) const throw() {
   switch(state) {
-  case TRANSFERSTATE_WAIT_JOB    : return "WAIT_JOB";
-  case TRANSFERSTATE_WAIT_MOUNTED: return "WAIT_MOUNTED";
-  case TRANSFERSTATE_RUNNING     : return "RUNNING";
-  case TRANSFERSTATE_KILLED      : return "KILLED";
-  default                        : return "UNKNOWN";
+  case WAIT_JOB         : return "WAIT_JOB";
+  case WAIT_MOUNTED     : return "WAIT_MOUNTED";
+  case RUNNING          : return "RUNNING";
+  case WAIT_TIMEOUT_KILL: return "WAIT_TIMEOUT_KILL";
+  default               : return "UNKNOWN";
   }
 }
 
@@ -566,7 +567,7 @@ const char *castor::tape::tapeserver::daemon::CatalogueTransferSession::
 //-----------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
   tapeIsBeingMounted() const throw() {
-  return TRANSFERSTATE_WAIT_MOUNTED == m_state;
+  return WAIT_MOUNTED == m_state;
 }
 
 //-----------------------------------------------------------------------------
