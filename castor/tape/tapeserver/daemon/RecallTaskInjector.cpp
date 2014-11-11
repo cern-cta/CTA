@@ -64,7 +64,8 @@ RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm,
         uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc) : 
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
-        m_client(client),m_lc(lc),m_maxFiles(maxFiles),m_maxBytes(byteSizeThreshold)
+        m_client(client),m_lc(lc),m_maxFiles(maxFiles),m_maxBytes(byteSizeThreshold),
+        m_clientType(tapegateway::READ_TP)
 {}
 //------------------------------------------------------------------------------
 //destructor
