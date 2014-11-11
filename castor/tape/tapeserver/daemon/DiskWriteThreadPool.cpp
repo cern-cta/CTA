@@ -123,21 +123,21 @@ void DiskWriteThreadPool::addThreadStats(const DiskStats& other){
 void DiskWriteThreadPool::logWithStat(int level, const std::string& message){
   m_pooldStat.totalTime = m_totalTime.secs();
   log::ScopedParamContainer params(m_lc);
-  params.addSnprintfDouble("poolReadWriteTime", m_pooldStat.readWriteTime)
-        .addSnprintfDouble("poolChecksumingTime",m_pooldStat.checksumingTime)
-        .addSnprintfDouble("poolWaitDataTime",m_pooldStat.waitDataTime)
-        .addSnprintfDouble("poolWaitReportingTime",m_pooldStat.waitReportingTime)
-        .addSnprintfDouble("poolCheckingErrorTime",m_pooldStat.checkingErrorTime)
-        .addSnprintfDouble("poolOpeningTime",m_pooldStat.openingTime)
-        .addSnprintfDouble("poolClosingTime", m_pooldStat.closingTime)
-        .addSnprintfDouble("poolRealTime",m_pooldStat.totalTime)
+  params.add("poolReadWriteTime", m_pooldStat.readWriteTime)
+        .add("poolChecksumingTime",m_pooldStat.checksumingTime)
+        .add("poolWaitDataTime",m_pooldStat.waitDataTime)
+        .add("poolWaitReportingTime",m_pooldStat.waitReportingTime)
+        .add("poolCheckingErrorTime",m_pooldStat.checkingErrorTime)
+        .add("poolOpeningTime",m_pooldStat.openingTime)
+        .add("poolClosingTime", m_pooldStat.closingTime)
+        .add("poolRealTime",m_pooldStat.totalTime)
         .add("poolFileCount",m_pooldStat.filesCount)
         .add("poolDataVolume", m_pooldStat.dataVolume)
-        .addSnprintfDouble("poolGlobalPayloadTransferSpeedMBps",
+        .add("poolGlobalPayloadTransferSpeedMBps",
            m_pooldStat.totalTime?1.0*m_pooldStat.dataVolume/1000/1000/m_pooldStat.totalTime:0)
-        .addSnprintfDouble("poolAverageDiskPerformanceMBps",
+        .add("poolAverageDiskPerformanceMBps",
            m_pooldStat.transferTime?1.0*m_pooldStat.dataVolume/1000/1000/m_pooldStat.transferTime:0.0)
-        .addSnprintfDouble("poolOpenRWCloseToTransferTimeRatio",
+        .add("poolOpenRWCloseToTransferTimeRatio",
            m_pooldStat.transferTime?(m_pooldStat.openingTime+m_pooldStat.readWriteTime+m_pooldStat.closingTime)/m_pooldStat.transferTime:0.0);
   m_lc.log(level,message);
 }
@@ -196,22 +196,22 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
 void DiskWriteThreadPool::DiskWriteWorkerThread::
 logWithStat(int level, const std::string& msg) {
   log::ScopedParamContainer params(m_lc);
-     params.addSnprintfDouble("threadReadWriteTime", m_threadStat.readWriteTime)
-           .addSnprintfDouble("threadChecksumingTime",m_threadStat.checksumingTime)
-           .addSnprintfDouble("threadWaitDataTime",m_threadStat.waitDataTime)
-           .addSnprintfDouble("threadWaitReportingTime",m_threadStat.waitReportingTime)
-           .addSnprintfDouble("threadCheckingErrorTime",m_threadStat.checkingErrorTime)
-           .addSnprintfDouble("threadOpeningTime",m_threadStat.openingTime)
-           .addSnprintfDouble("threadClosingTime", m_threadStat.closingTime)
-           .addSnprintfDouble("threadTransferTime",m_threadStat.transferTime)
-           .addSnprintfDouble("threadTotalTime",m_threadStat.totalTime)
+     params.add("threadReadWriteTime", m_threadStat.readWriteTime)
+           .add("threadChecksumingTime",m_threadStat.checksumingTime)
+           .add("threadWaitDataTime",m_threadStat.waitDataTime)
+           .add("threadWaitReportingTime",m_threadStat.waitReportingTime)
+           .add("threadCheckingErrorTime",m_threadStat.checkingErrorTime)
+           .add("threadOpeningTime",m_threadStat.openingTime)
+           .add("threadClosingTime", m_threadStat.closingTime)
+           .add("threadTransferTime",m_threadStat.transferTime)
+           .add("threadTotalTime",m_threadStat.totalTime)
            .add("threadDataVolume",m_threadStat.dataVolume)
            .add("threadFileCount",m_threadStat.filesCount)
-           .addSnprintfDouble("threadGlobalPayloadTransferSpeedMBps",
+           .add("threadGlobalPayloadTransferSpeedMBps",
               m_threadStat.totalTime?1.0*m_threadStat.dataVolume/1000/1000/m_threadStat.totalTime:0)
-           .addSnprintfDouble("threadAverageDiskPerformanceMBps",
+           .add("threadAverageDiskPerformanceMBps",
               m_threadStat.transferTime?1.0*m_threadStat.dataVolume/1000/1000/m_threadStat.transferTime:0.0)
-           .addSnprintfDouble("threadOpenRWCloseToTransferTimeRatio",
+           .add("threadOpenRWCloseToTransferTimeRatio",
               m_threadStat.transferTime?(m_threadStat.openingTime+m_threadStat.readWriteTime+m_threadStat.closingTime)/m_threadStat.transferTime:0.0);
     m_lc.log(level,msg);
 }

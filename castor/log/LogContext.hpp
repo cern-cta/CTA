@@ -159,12 +159,6 @@ class ScopedParamContainer{
       m_names.push_back(s);
       return *this;
     }
-    
-    ScopedParamContainer& addSnprintfDouble(const std::string& s,double t){
-      m_context.pushOrReplace(ParamDoubleSnprintf(s,t));
-      m_names.push_back(s);
-      return *this;
-    }
   private:
         
     LogContext & m_context;

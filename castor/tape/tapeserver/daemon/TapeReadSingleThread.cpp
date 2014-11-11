@@ -159,7 +159,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       m_stats.mountTime += timer.secs(castor::utils::Timer::resetCounter);
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
-        scoped.addSnprintfDouble("mountTime", m_stats.mountTime);
+        scoped.add("mountTime", m_stats.mountTime);
         m_logContext.log(LOG_INFO, "Tape mounted and drive ready");
       }
       // Then we have to initialise the tape read session
@@ -168,7 +168,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       //and then report
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
-        scoped.addSnprintfDouble("positionTime", m_stats.positionTime);
+        scoped.add("positionTime", m_stats.positionTime);
         m_logContext.log(LOG_INFO, "Tape read session session successfully started");
       }
       m_initialProcess.tapeMountedForRead();
@@ -236,15 +236,15 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::logWithStat(
   int level, const std::string& msg, log::ScopedParamContainer& params) {
     params.add("type", "read")
           .add("VID", m_volInfo.vid)
-          .addSnprintfDouble("mountTime", m_stats.mountTime)
-          .addSnprintfDouble("positionTime", m_stats.positionTime)
-          .addSnprintfDouble("waitInstructionsTime", m_stats.waitInstructionsTime)
-          .addSnprintfDouble("transferTime", m_stats.transferTime)
-          .addSnprintfDouble("waitFreeMemoryTime", m_stats.waitFreeMemoryTime)
-          .addSnprintfDouble("waitReportingTime", m_stats.waitReportingTime)
-          .addSnprintfDouble("unloadTime", m_stats.unloadTime)
-          .addSnprintfDouble("unmountTime", m_stats.unmountTime)
-          .addSnprintfDouble("totalTime", m_stats.totalTime)
+          .add("mountTime", m_stats.mountTime)
+          .add("positionTime", m_stats.positionTime)
+          .add("waitInstructionsTime", m_stats.waitInstructionsTime)
+          .add("transferTime", m_stats.transferTime)
+          .add("waitFreeMemoryTime", m_stats.waitFreeMemoryTime)
+          .add("waitReportingTime", m_stats.waitReportingTime)
+          .add("unloadTime", m_stats.unloadTime)
+          .add("unmountTime", m_stats.unmountTime)
+          .add("totalTime", m_stats.totalTime)
           .add("dataVolume", m_stats.dataVolume)
           .add("headerVolume", m_stats.headerVolume)
           .add("files", m_stats.filesCount)

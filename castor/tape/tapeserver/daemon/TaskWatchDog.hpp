@@ -374,7 +374,7 @@ private:
   
   virtual void logStuckFile() {
     castor::log::ScopedParamContainer params(m_lc);
-    params.addSnprintfDouble("TimeSinceLastBlockMove", m_blockMovementTimer.usecs())
+    params.add("TimeSinceLastBlockMove", m_blockMovementTimer.usecs())
           .add("Path",m_file.path())
           .add("FILEID",m_file.fileid())
           .add("fSeq",m_file.fseq());

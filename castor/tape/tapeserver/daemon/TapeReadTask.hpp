@@ -137,11 +137,11 @@ public:
       localStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
       // We now transmitted one file:
       localStats.filesCount++;
-      params.addSnprintfDouble("positionTime", localStats.positionTime)
-            .addSnprintfDouble("transferTime", localStats.transferTime)
-            .addSnprintfDouble("waitFreeMemoryTime",localStats.waitFreeMemoryTime)
-            .addSnprintfDouble("waitReportingTime",localStats.waitReportingTime)
-            .addSnprintfDouble("totalTime", localStats.totalTime)
+      params.add("positionTime", localStats.positionTime)
+            .add("transferTime", localStats.transferTime)
+            .add("waitFreeMemoryTime",localStats.waitFreeMemoryTime)
+            .add("waitReportingTime",localStats.waitReportingTime)
+            .add("totalTime", localStats.totalTime)
             .add("dataVolume",localStats.dataVolume)
             .add("headerVolume",localStats.headerVolume)
             .add("driveTransferSpeedMBps",

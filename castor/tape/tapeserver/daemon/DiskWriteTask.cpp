@@ -212,21 +212,21 @@ const DiskStats DiskWriteTask::getTaskStats() const{
 //------------------------------------------------------------------------------  
 void DiskWriteTask::logWithStat(int level,const std::string& msg,log::LogContext& lc){
   log::ScopedParamContainer params(lc);
-     params.addSnprintfDouble("readWriteTime", m_stats.readWriteTime)
-           .addSnprintfDouble("checksumingTime",m_stats.checksumingTime)
-           .addSnprintfDouble("waitDataTime",m_stats.waitDataTime)
-           .addSnprintfDouble("waitReportingTime",m_stats.waitReportingTime)
-           .addSnprintfDouble("checkingErrorTime",m_stats.checkingErrorTime)
-           .addSnprintfDouble("openingTime",m_stats.openingTime)
-           .addSnprintfDouble("closingTime",m_stats.closingTime)
-           .addSnprintfDouble("transferTime", m_stats.transferTime)
-           .addSnprintfDouble("totalTime", m_stats.totalTime)
+     params.add("readWriteTime", m_stats.readWriteTime)
+           .add("checksumingTime",m_stats.checksumingTime)
+           .add("waitDataTime",m_stats.waitDataTime)
+           .add("waitReportingTime",m_stats.waitReportingTime)
+           .add("checkingErrorTime",m_stats.checkingErrorTime)
+           .add("openingTime",m_stats.openingTime)
+           .add("closingTime",m_stats.closingTime)
+           .add("transferTime", m_stats.transferTime)
+           .add("totalTime", m_stats.totalTime)
            .add("dataVolume", m_stats.dataVolume)
-           .addSnprintfDouble("globalPayloadTransferSpeedMBps",
+           .add("globalPayloadTransferSpeedMBps",
               m_stats.totalTime?1.0*m_stats.dataVolume/1000/1000/m_stats.totalTime:0)
-           .addSnprintfDouble("diskPerformanceMBps",
+           .add("diskPerformanceMBps",
               m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
-           .addSnprintfDouble("openRWCloseToTransferTimeRatio", 
+           .add("openRWCloseToTransferTimeRatio", 
               m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
            .add("FILEID",m_recallingFile->fileid())
            .add("path",m_recallingFile->path());
