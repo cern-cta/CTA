@@ -193,6 +193,12 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
 
+  if(m_driveConfigs.empty()) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "/etc/castor/TPCONFIG is empty";
+    throw ex;
+  }
+
   // Process must be able to change user now and should be permitted to perform
   // raw IO in the future
   setProcessCapabilities("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
