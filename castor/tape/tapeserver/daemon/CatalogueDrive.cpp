@@ -394,6 +394,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureUp() {
 void castor::tape::tapeserver::daemon::CatalogueDrive::configureDown() {
   switch(m_state) {
   case DRIVE_STATE_DOWN:
+  case DRIVE_STATE_WAITDOWN:
     break;
   case DRIVE_STATE_UP:
     changeState(DRIVE_STATE_DOWN);
@@ -406,7 +407,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureDown() {
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to configure tape drive " << m_config.unitName
-        << " down: " << ": Incompatible drive state: state=" <<
+        << " down: Incompatible drive state: state=" <<
         driveStateToStr(m_state);
       throw ex;
     }
