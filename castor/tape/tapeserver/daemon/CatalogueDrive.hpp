@@ -326,36 +326,20 @@ public:
     const int labelCmdConnection);
   
   /**
-   * Creates a cleaner session to eject any tape left in the tape drive.
-   *
-   * @param vid The volume identifier of the tape currently in the tape drive
-   * or the empty string if not know.
-   * @param The assignment time associated with the tape drive or 0 if not
-   * known.  The assignment time is given as the number of seconds elapsed
-   * since the Epoch.
-   * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
-   * the drive to be raedy with a tape inside of it.
-   */
-  void createCleaner(const std::string &vid, const time_t assignmentTime,
-    const uint32_t driveReadyDelayInSeconds);
-
-  /**
-   * Moves the state of the tape drive to DRIVE_STATE_UP if the
-   * current state is DRIVE_STATE_RUNNING or to DRIVE_STATE_DOWN if the
-   * current state is DRIVE_STATE_WAIT_DOWN.
-   *  
-   * This method throws an exception if the current state of the tape drive is
-   * not DRIVE_STATE_RUNNING or DRIVE_STATE_WAITDOWN.
+   * Informs catalogue drive that the current tape session has succeeded.
    */
   void sessionSucceeded(); 
       
   /**
-   * Moves the state of tape drive to DRIVE_STATE_DOWN.
-   *
-   * This method throws an exception if the current state of the tape drive is
-   * not DRIVE_STATE_RUNNING.
+   * Informs catalogue drive that the current tape session has failed.
    */
   void sessionFailed();
+
+  /**
+   * Informs catalogue drive that the current tape session has failed and that
+   * it has requested a CleanerSession.
+   */
+  void sessionFailedAndRequestsCleaner();
 
   /**
    * Gets the tpstat representation of the tape drive.
@@ -666,6 +650,27 @@ private:
    * Called when a CLeanerSession of the shutdown sequence has failed.
    */
   void cleanerOfShutdownFailed();
+
+  /**
+   * Called when a running session (DRIVE_STATE_RUNNING or DRIVE_STATE_WAITDOWN)
+   * has failed and has requested a CleanerSession.
+   */
+  void runningSessionFailedAndRequestedCleaner();
+
+  /**
+   * Creates a cleaner session to eject any tape left in the tape drive.
+   *
+   * @param vid The volume identifier of the tape currently in the tape drive
+   * or the empty string if not know.
+   * @param The assignment time associated with the tape drive or 0 if not
+   * known.  The assignment time is given as the number of seconds elapsed
+   * since the Epoch.
+   * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
+   * the drive to be raedy with a tape inside of it.
+   * @return The catalogue cleaner-session.
+   */
+  CatalogueCleanerSession *createCleaner(const std::string &vid,
+    const time_t assignmentTime, const uint32_t driveReadyDelayInSeconds) const;
 
 }; // class CatalogueDrive
 

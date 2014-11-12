@@ -524,12 +524,12 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
 //-----------------------------------------------------------------------------
 // createCleaner
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueDrive::createCleaner(
+castor::tape::tapeserver::daemon::CatalogueCleanerSession
+  *castor::tape::tapeserver::daemon::CatalogueDrive::createCleaner(
   const std::string &vid, const time_t assignmentTime,
-  const uint32_t driveReadyDelayInSeconds) {
+  const uint32_t driveReadyDelayInSeconds) const {
   try {
-    // Create a cleaner session
-    m_session = CatalogueCleanerSession::create(
+    return CatalogueCleanerSession::create(
       m_log,
       m_netTimeout,
       m_config,
@@ -617,7 +617,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::runningSessionFailed() {
 
   if(CatalogueSession::SESSION_TYPE_CLEANER != session->getType()) {
     const uint32_t driveReadyDelayInSeconds = 60;
-    createCleaner(session->getVid(), session->getAssignmentTime(),
+    m_session = createCleaner(session->getVid(), session->getAssignmentTime(),
       driveReadyDelayInSeconds);
   } else {
     changeState(DRIVE_STATE_DOWN);
@@ -636,7 +636,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
 
   changeState(DRIVE_STATE_WAITSHUTDOWNCLEANER);
   const uint32_t driveReadyDelayInSeconds = 60;
-  createCleaner(session->getVid(), session->getAssignmentTime(),
+  m_session = createCleaner(session->getVid(), session->getAssignmentTime(),
     driveReadyDelayInSeconds);
 }
 
@@ -651,6 +651,62 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
 
   // Cleaner failed, no more can be done, mark drive as shutdown
   changeState(DRIVE_STATE_SHUTDOWN);
+}
+
+//------------------------------------------------------------------------------
+// sessionFailedAndRequestsCleaner
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueDrive::
+  sessionFailedAndRequestsCleaner() {
+  switch(m_state) {
+  case DRIVE_STATE_RUNNING:
+  case DRIVE_STATE_WAITDOWN:
+    return runningSessionFailedAndRequestedCleaner();
+  default:
+    {
+      castor::exception::Exception ex;
+      ex.getMessage() <<
+        "Failed to record tape session failed for session with pid " <<
+        getSession().getPid() << ": Incompatible drive state: state=" <<
+        driveStateToStr(m_state);
+      delete m_session;
+      m_session = NULL;
+      throw ex;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// runningSessionFailedAndRequestedCleaner
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueDrive::
+  runningSessionFailedAndRequestedCleaner() {
+  {
+    const pid_t sessionPid = m_session->getPid();
+    const CatalogueSession::Type sessionType = m_session->getType();
+    const char *sessionTypeStr =
+      CatalogueSession::sessionTypeToStr(sessionType);
+
+    std::list<log::Param> params;
+    params.push_back(log::Param("unitName", m_config.unitName));
+    params.push_back(log::Param("sessionType", sessionTypeStr));
+    params.push_back(log::Param("sessionPid", sessionPid));
+
+    m_log(LOG_INFO, "Failed session has requested cleaner", params);
+  }
+
+  std::auto_ptr<CatalogueSession> session(m_session);
+  m_session = NULL;
+  session->sessionFailed();
+
+  if(CatalogueSession::SESSION_TYPE_CLEANER != session->getType()) {
+    const uint32_t driveReadyDelayInSeconds = 60;
+    m_session = createCleaner(session->getVid(), session->getAssignmentTime(),
+      driveReadyDelayInSeconds);
+  } else {
+    changeState(DRIVE_STATE_DOWN);
+    m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -833,7 +889,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::shutdown() {
     const std::string vid = ""; // Empty string means VID is not known
     const time_t assignmentTime = time(NULL);
     const uint32_t driveReadyDelayInSeconds = 0;
-    createCleaner(vid, assignmentTime, driveReadyDelayInSeconds);
+    m_session = createCleaner(vid, assignmentTime, driveReadyDelayInSeconds);
 
   // Else there is a running session
   } else {

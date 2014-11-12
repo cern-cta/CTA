@@ -237,14 +237,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     case Session::MARK_DRIVE_AS_DOWN:
       return drive.sessionFailed();
     case Session::CLEAN_DRIVE:
-      {
-        const std::string vid = drive.getVidForCleaner();
-        const time_t assignmentTime = drive.getAssignmentTimeForCleaner();
-        drive.sessionFailed();
-        const uint32_t driveReadyDelayInSeconds = 60;
-        return drive.createCleaner(vid, assignmentTime,
-          driveReadyDelayInSeconds);
-      }
+      return drive.sessionFailedAndRequestsCleaner();
     default:
       // Should never happen
       {
