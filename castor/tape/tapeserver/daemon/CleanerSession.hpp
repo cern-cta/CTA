@@ -127,6 +127,71 @@ namespace daemon {
      * tape inside of it.
      */
     const uint32_t m_driveReadyDelayInSeconds;
+
+    EndOfSessionAction exceptionThrowingExecute();
+
+    /**
+     * Sets the capabilities of the process and logs the result.
+     *
+     * @param capabilities The string representation of the capabilities.
+     */
+    void setProcessCapabilities(const std::string &capabilities);
+
+    /**
+     * Creates and returns the object that represents the tape drive to be
+     * cleaned.
+     *
+     * @return The tape drive.
+     */
+    drive::DriveInterface *createDrive();
+
+    /**
+     * Waits for the specified drive to be ready.
+     *
+     * @param drive The tape drive.
+     */
+    void waitUntilDriveIsReady(drive::DriveInterface *const drive);
+
+    /**
+     * Rewinds the specified tape drive.
+     *
+     * @param drive The tape drive.
+     */
+    void rewindDrive(drive::DriveInterface *const drive);
+
+    /**
+     * Checks the tape in the specified tape drive contains some data where no
+     * data means the tape does not even contain a volume label.
+     *
+     * @param drive The tape drive.
+     */
+    void checkTapeContainsData(drive::DriveInterface *const drive);
+
+    /**
+     * Checks that the tape in the specified drive contains a valid volume
+     * label.
+     *
+     * @param drive The tape drive for which it is assumed the tape to be
+     * tested is present and rewound to the beginning.
+     * @return The VSN stored within the colue label.
+     */
+    std::string checkVolumeLabel(drive::DriveInterface *const drive);
+
+    /**
+     * Unloads the specified tape from the specified tape drive.
+     *
+     * @param vid The volume identifier of the tape to be unloaded.  Please note
+     * that the value of this field is only used for logging purposes.
+     * @param drive The tape drive.
+     */
+    void unloadTape(const std::string &vid, drive::DriveInterface *const drive);
+
+    /**
+     * Dismounts the specified tape.
+     *
+     * @param vid The volume identifier of the tape to be dismounted.
+     */
+    void dismountTape(const std::string &vid);
     
   }; // class CleanerSession
 
