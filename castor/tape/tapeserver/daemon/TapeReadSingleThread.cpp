@@ -50,6 +50,11 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   //then we log/notify
   m_this.m_logContext.log(LOG_DEBUG, "Starting session cleanup. Signaled end of session to task injector.");
   m_this.m_stats.waitReportingTime += m_timer.secs(castor::utils::Timer::resetCounter);
+  // This out-of-try-catch variables allows us to record the stage of the 
+  // process we're in, and to count the error if it occurs.
+  // We will not record errors for an empty string. This will allow us to
+  // prevent counting where error happened upstream.
+  std::string currentErrorToCount = "tapeUnloadErrorCount";
   try {
     // Do the final cleanup
     // in the special case of a "manual" mode tape, we should skip the unload too.
@@ -63,6 +68,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     // And return the tape to the library
     // In case of manual mode, this will be filtered by the rmc daemon
     // (which will do nothing)
+    currentErrorToCount = "tapeDismountErrorCount";
     m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot.str());
     m_this.m_stats.unmountTime += m_timer.secs(castor::utils::Timer::resetCounter);
     m_this.m_logContext.log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.librarySlot.getLibraryType() ?
@@ -76,10 +82,20 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     scoped.add("exception_message", ex.getMessageValue())
           .add("exception_code",ex.code());
     m_this.m_logContext.log(LOG_ERR, "Exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
+    try {
+      if (currentErrorToCount.size()) {
+        m_this.m_watchdog.addToErrorCount(currentErrorToCount);
+      }
+    } catch (...) {}
   } catch (...) {
     // Notify something failed during the cleaning 
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
     m_this.m_logContext.log(LOG_ERR, "Non-Castor exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
+    try {
+      if (currentErrorToCount.size()) {
+        m_this.m_watchdog.addToErrorCount(currentErrorToCount);
+      }
+    } catch (...) {}
   }
   //then we terminate the global status reporter
   m_this.m_initialProcess.finish();
@@ -129,8 +145,9 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
 //TapeReadSingleThread::run()
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
-  m_logContext.pushOrReplace(log::Param("thread", "tapeRead"));
+  m_logContext.pushOrReplace(log::Param("thread", "TapeRead"));
   castor::utils::Timer timer, totalTimer;
+  std::string currentErrorToCount = "failedToSetCapabilitiesCount";
   try{
     // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
     // through the st driver file descriptor.
@@ -154,7 +171,9 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       // will also take care of the TapeServerReporter and of RecallTaskInjector
       TapeCleaning tapeCleaner(*this, timer);
       // Before anything, the tape should be mounted
+      currentErrorToCount = "tapeFailedToMountForWriteCount";
       mountTapeReadOnly();
+      currentErrorToCount = "tapeFailedToLoadCount";
       waitForDrive();
       m_stats.mountTime += timer.secs(castor::utils::Timer::resetCounter);
       {
@@ -163,7 +182,10 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         m_logContext.log(LOG_INFO, "Tape mounted and drive ready");
       }
       // Then we have to initialise the tape read session
+      currentErrorToCount = "tapeFailedToCheckLabelBeforeReadingCount";
       std::auto_ptr<castor::tape::tapeFile::ReadSession> rs(openReadSession());
+      // From now on, the tasks will identify problems when executed.
+      currentErrorToCount = "";
       m_stats.positionTime += timer.secs(castor::utils::Timer::resetCounter);
       //and then report
       {
@@ -217,6 +239,10 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     m_stats.totalTime = totalTimer.secs();
     logWithStat(LOG_INFO, "Tape thread complete",
             params);
+    // Also transmit the error step to the watchdog
+    if (currentErrorToCount.size()) {
+      m_watchdog.addToErrorCount(currentErrorToCount);
+    }
     // Flush the remaining tasks to cleanly exit.
     while(1){
       TapeReadTask* task=m_tasks.pop();

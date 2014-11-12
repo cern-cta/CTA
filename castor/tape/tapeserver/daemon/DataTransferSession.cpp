@@ -84,7 +84,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // 1) Prepare the logging environment
   log::LogContext lc(m_log);
   // Create a sticky thread name, which will be overridden by the other threads
-  lc.pushOrReplace(log::Param("thread", "mainThread"));
+  lc.pushOrReplace(log::Param("thread", "MainThread"));
   log::LogContext::ScopedParam sp01(lc, log::Param("clientHost", m_request.clientHost));
   log::LogContext::ScopedParam sp02(lc, log::Param("clientPort", m_request.clientPort));
   log::LogContext::ScopedParam sp03(lc, log::Param("mountTransactionId", m_request.volReqId));
@@ -212,6 +212,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
     DiskWriteThreadPool dwtp(m_castorConf.nbDiskThreads,
         rrp,
+        rwd,
         lc,
         m_castorConf.remoteFileProtocol,
         m_castorConf.xrootPrivateKey);
@@ -308,6 +309,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     DiskReadThreadPool drtp(m_castorConf.nbDiskThreads,
         m_castorConf.bulkRequestMigrationMaxFiles,
         m_castorConf.bulkRequestMigrationMaxBytes,
+        mwd,
         lc,
         m_castorConf.remoteFileProtocol,
         m_castorConf.xrootPrivateKey);

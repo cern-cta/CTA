@@ -36,10 +36,12 @@ namespace daemon {
 //------------------------------------------------------------------------------
 // DiskReadThreadPool constructor
 //------------------------------------------------------------------------------
-DiskReadThreadPool::DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq, 
+DiskReadThreadPool::DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq,
+    castor::tape::tapeserver::daemon::MigrationWatchDog & migrationWatchDog,
     castor::log::LogContext lc, const std::string & remoteFileProtocol,
     const std::string & xrootPrivateKeyPath) : 
     m_diskFileFactory(remoteFileProtocol, xrootPrivateKeyPath),
+    m_watchdog(migrationWatchDog),
     m_lc(lc),m_maxFilesReq(maxFilesReq),
     m_maxBytesReq(maxBytesReq), m_nbActiveThread(0) {
   for(int i=0; i<nbThread; i++) {
@@ -151,10 +153,10 @@ void DiskReadThreadPool::logWithStat(int level, const std::string& message){
 // DiskReadWorkerThread::run
 //------------------------------------------------------------------------------
 void DiskReadThreadPool::DiskReadWorkerThread::run() {
-  m_lc.pushOrReplace(log::Param("thread", "DiskRead"));
-  m_lc.pushOrReplace(log::Param("threadID",m_threadID));
-  
-  m_lc.log(LOG_DEBUG, "DiskReadWorkerThread Running");
+  castor::log::ScopedParamContainer logParams(m_lc);
+  logParams.add("thread", "DiskRead")
+           .add("threadID", m_threadID);
+  m_lc.log(LOG_DEBUG, "Starting DiskReadWorkerThread");
   
   std::auto_ptr<DiskReadTask> task;
   castor::utils::Timer localTime;
@@ -164,7 +166,7 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
     task.reset( m_parent.popAndRequestMore(m_lc));
     m_threadStat.waitInstructionsTime += localTime.secs(castor::utils::Timer::resetCounter);
     if (NULL!=task.get()) {
-      task->execute(m_lc, m_parent.m_diskFileFactory);
+      task->execute(m_lc, m_parent.m_diskFileFactory,m_parent.m_watchdog);
       m_threadStat += task->getTaskStats();
     }
     else {

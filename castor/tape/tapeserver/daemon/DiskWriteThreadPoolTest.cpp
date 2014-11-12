@@ -63,7 +63,7 @@ namespace unitTests{
     
     RecallMemoryManager mm(10,100,lc);
     
-    DiskWriteThreadPool dwtp(2,report,lc,"RFIO","/dev/null");
+    DiskWriteThreadPool dwtp(2,report,*((RecallWatchDog*)NULL),lc,"RFIO","/dev/null");
     dwtp.startThreads();
     
     castor::tape::tapegateway::FileToRecallStruct file;

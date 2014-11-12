@@ -136,6 +136,7 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
     
     m_diskWriter.push(dwt);
     m_tapeReader.push(trt);
+    m_lc.log(LOG_INFO, "Created tasks for recalling a file");
   }
   LogContext::ScopedParam sp03(m_lc, Param("nbFile", jobs.size()));
   m_lc.log(LOG_INFO, "Finished processing batch of recall tasks from client");
@@ -199,7 +200,7 @@ bool RecallTaskInjector::synchronousInjection()
 void RecallTaskInjector::WorkerThread::run()
 {
   using castor::log::LogContext;
-  m_parent.m_lc.pushOrReplace(Param("thread", "recallTaskInjector"));
+  m_parent.m_lc.pushOrReplace(Param("thread", "RecallTaskInjector"));
   m_parent.m_lc.log(LOG_DEBUG, "Starting RecallTaskInjector thread");
   
   try{

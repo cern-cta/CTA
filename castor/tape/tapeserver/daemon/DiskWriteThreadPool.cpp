@@ -38,11 +38,13 @@ namespace daemon {
 // constructor
 //------------------------------------------------------------------------------
 DiskWriteThreadPool::DiskWriteThreadPool(int nbThread,
-  RecallReportPacker& report,castor::log::LogContext lc,
+  RecallReportPacker& report,
+  RecallWatchDog& recallWatchDog,
+  castor::log::LogContext lc,
   const std::string & remoteFileProtocol,
   const std::string & xrootPrivateKeyPath):
   m_diskFileFactory(remoteFileProtocol,xrootPrivateKeyPath),
-  m_reporter(report),m_lc(lc)
+  m_reporter(report),m_watchdog(recallWatchDog),m_lc(lc)
 {
   m_lc.pushOrReplace(castor::log::Param("threadCount", nbThread));
   for(int i=0; i<nbThread; i++) {
@@ -145,10 +147,9 @@ void DiskWriteThreadPool::logWithStat(int level, const std::string& message){
 // DiskWriteWorkerThread::run
 //------------------------------------------------------------------------------
 void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
-  typedef castor::log::LogContext::ScopedParam ScopedParam;
-  using castor::log::Param;
-  m_lc.pushOrReplace(log::Param("thread", "diskWrite"));
-  m_lc.pushOrReplace(log::Param("threadID", m_threadID));
+  castor::log::ScopedParamContainer logParams(m_lc);
+  logParams.add("thread", "DiskWrite")
+           .add("threadID", m_threadID);
   m_lc.log(LOG_INFO, "Starting DiskWriteWorkerThread");
   
   std::auto_ptr<DiskWriteTask>  task;
@@ -160,9 +161,10 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
     m_threadStat.waitInstructionsTime+=localTime.secs(castor::utils::Timer::resetCounter);
     if (NULL!=task.get()) {
       if(false==task->execute(m_parentThreadPool.m_reporter,m_lc, 
-          m_parentThreadPool.m_diskFileFactory)) {
+          m_parentThreadPool.m_diskFileFactory, m_parentThreadPool.m_watchdog)) {
         ++m_parentThreadPool.m_failedWriteCount;
-        ScopedParam sp(m_lc, Param("errorCount", m_parentThreadPool.m_failedWriteCount));
+        castor::log::ScopedParamContainer logParams(m_lc);
+        logParams.add("errorCount", m_parentThreadPool.m_failedWriteCount);
         m_lc.log(LOG_ERR, "Task failed: counting another error for this session");
       }
       m_threadStat+=task->getTaskStats();
@@ -184,7 +186,8 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
     }
     else{
       m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("End of recall session with error(s)",SEINTERNAL);
-      ScopedParam sp(m_lc, Param("errorCount", m_parentThreadPool.m_failedWriteCount));
+      castor::log::ScopedParamContainer logParams(m_lc);
+      logParams.add("errorCount", m_parentThreadPool.m_failedWriteCount);
       m_parentThreadPool.logWithStat(LOG_INFO, "As last exiting DiskWriteWorkerThread, reported an end of session with errors");
     }
   }

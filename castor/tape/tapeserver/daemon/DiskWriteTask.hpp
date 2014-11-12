@@ -30,6 +30,7 @@
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/DiskStats.hpp"
+#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include <memory>
 namespace {
   
@@ -63,7 +64,7 @@ public:
    * @return true if the file has been successfully written false otherwise.
    */
   virtual bool execute(RecallReportPacker& reporter,log::LogContext& lc,
-    diskFile::DiskFileFactory & fileFactory) ;
+    diskFile::DiskFileFactory & fileFactory, RecallWatchDog & watchdog) ;
   
   /**
    * Allows client code to return a reusable memory block. Should not been called

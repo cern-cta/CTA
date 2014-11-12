@@ -25,6 +25,7 @@
 #pragma once
 
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
+#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/server/BlockingQueue.hpp"
 #include "castor/server/Threading.hpp"
 #include "castor/server/AtomicCounter.hpp"
@@ -51,6 +52,7 @@ public:
    * @param lc log context for logging purpose
    */
   DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq, 
+          castor::tape::tapeserver::daemon::MigrationWatchDog & migrationWatchDog,
           castor::log::LogContext lc, const std::string & remoteFileProtocol,
           const std::string & xrootPrivateKeyPath);
   
@@ -185,6 +187,11 @@ private:
   /** The queue of pointer to tasks to be executed. We own the tasks (they are 
    * deleted by the threads after execution) */
   castor::server::BlockingQueue<DiskReadTask *> m_tasks;
+  
+  /**
+   * Reference to the watchdog, for error reporting.
+   */
+  castor::tape::tapeserver::daemon::MigrationWatchDog & m_watchdog;
   
   /** The log context. This is copied on construction to prevent interferences
    * between threads.

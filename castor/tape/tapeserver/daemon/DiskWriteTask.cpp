@@ -44,19 +44,27 @@ m_recallingFile(file),m_memManager(mm){
 // DiskWriteTask::execute
 //------------------------------------------------------------------------------
 bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
-    diskFile::DiskFileFactory & fileFactory) {
+    diskFile::DiskFileFactory & fileFactory, RecallWatchDog & watchdog) {
   using log::LogContext;
   using log::Param;
   castor::utils::Timer localTime;
   castor::utils::Timer totalTime(localTime);
   castor::utils::Timer transferTime(localTime);
+  log::ScopedParamContainer URLcontext(lc);
+  URLcontext.add("NSFILEID",m_recallingFile->fileid())
+            .add("path", m_recallingFile->path())
+            .add("fileTransactionId",m_recallingFile->fileTransactionId())
+            .add("fSeq",m_recallingFile->fseq());
+  // This out-of-try-catch variables allows us to record the stage of the 
+  // process we're in, and to count the error if it occurs.
+  // We will not record errors for an empty string. This will allow us to
+  // prevent counting where error happened upstream.
+  std::string currentErrorToCount = "";
   try{
+    currentErrorToCount = "";
     // Placeholder for the disk file. We will open it only
     // after getting a first correct memory block.
     std::auto_ptr<tape::diskFile::WriteFile> writeFile;
-    log::ScopedParamContainer URLcontext(lc);
-    URLcontext.add("NSFILEID",m_recallingFile->fileid())
-              .add("path", m_recallingFile->path());
     
     int blockId  = 0;
     unsigned long checksum = Payload::zeroAdler32();
@@ -77,8 +85,9 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         // If we got that far on the first pass, it's now good enough to open
         // the disk file for writing...
         if (!writeFile.get()) {
-          lc.log(LOG_INFO, "About to open disk file for writing");
+          lc.log(LOG_DEBUG, "About to open disk file for writing");
           // Synchronise the counter with the open time counter.
+          currentErrorToCount = "diskOpenForWriteErrorCount";
           transferTime = localTime;
           writeFile.reset(fileFactory.createWriteFile(m_recallingFile->path()));
           URLcontext.add("actualURL", writeFile->URL());
@@ -87,12 +96,14 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         }
         
         // Write the data.
+        currentErrorToCount = "diskWriteErrorCount";
         m_stats.dataVolume+=mb->m_payload.size();
         mb->m_payload.write(*writeFile);
         m_stats.readWriteTime+=localTime.secs(castor::utils::Timer::resetCounter);
         
         checksum = mb->m_payload.adler32(checksum);
         m_stats.checksumingTime+=localTime.secs(castor::utils::Timer::resetCounter);
+        currentErrorToCount = "";
        
         blockId++;
       } //end if block non NULL
@@ -100,10 +111,12 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         //close has to be explicit, because it may throw. 
         //A close is done  in WriteFile's destructor, but it may lead to some 
         //silent data loss
+        currentErrorToCount = "diskCloseAfterWriteErrorCount";
         writeFile->close();
         m_stats.closingTime +=localTime.secs(castor::utils::Timer::resetCounter);
         m_stats.filesCount++;
         break;
+        currentErrorToCount = "";
       }
     } //end of while(1)
     reporter.reportCompletedJob(*m_recallingFile,checksum,m_stats.dataVolume);
@@ -128,8 +141,19 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
     // We need to empty it
     releaseAllBlock();
     
-    reporter.reportFailedJob(*m_recallingFile,e.getMessageValue(),e.code());
+    // Propagate the error to the watchdog
+    if (currentErrorToCount.size()) {
+      watchdog.addToErrorCount(currentErrorToCount);
+    }
+    
     m_stats.waitReportingTime+=localTime.secs(castor::utils::Timer::resetCounter);
+    log::ScopedParamContainer params(lc);
+    params.add("errorMessage", e.getMessageValue())
+          .add("errorCode", e.code());
+    logWithStat(LOG_ERR, "File writing to disk failed.", lc);
+    lc.logBacktrace(LOG_ERR, e.backtrace());
+    reporter.reportFailedJob(*m_recallingFile,e.getMessageValue(),e.code());
+
     
     //got an exception, return false
     return false;

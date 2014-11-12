@@ -85,13 +85,21 @@ namespace daemon {
     
     uint32_t memBlockId  = 0;
     
+    // This out-of-try-catch variables allows us to record the stage of the 
+    // process we're in, and to count the error if it occurs.
+    // We will not record errors for an empty string. This will allow us to
+    // prevent counting where error happened upstream.
+    std::string currentErrorToCount = "tapeFSeqOutOfSequenceForWriteCount";
     session.validateNextFSeq(m_fileToMigrate->fseq());
     try {
       //try to open the session
+      currentErrorToCount = "tapeWriteHeaderErrorCount";
       watchdog.notifyBeginNewJob(*m_fileToMigrate);
       std::auto_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       m_taskStats.transferTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
+      // We are not error sources here until we actually write.
+      currentErrorToCount = "";
       while(!m_fifo.finished()) {
         MemBlock* const mb = m_fifo.popDataBlock();
         m_taskStats.waitDataTime += timer.secs(castor::utils::Timer::resetCounter);
@@ -102,7 +110,9 @@ namespace daemon {
         
         ckSum =  mb->m_payload.adler32(ckSum);
         m_taskStats.checksumingTime += timer.secs(castor::utils::Timer::resetCounter);
+        currentErrorToCount = "tapeWriteDataErrorCount";
         mb->m_payload.write(*output);
+        currentErrorToCount = "";
         
         m_taskStats.transferTime += timer.secs(castor::utils::Timer::resetCounter);
         m_taskStats.dataVolume += mb->m_payload.size();
@@ -112,7 +122,9 @@ namespace daemon {
       
       //finish the writing of the file on tape
       //put the trailer
+      currentErrorToCount = "tapeWriteTrailerErrorCount";
       output->close();
+      currentErrorToCount = "";
       m_taskStats.transferTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
       m_taskStats.filesCount ++;
@@ -143,6 +155,12 @@ namespace daemon {
       
       //first set the error flag: we can't proceed any further with writes.
       m_errorFlag.set();
+      
+      // If we got here with a new error, currentErrorToCount will be non-empty,
+      // and we will pass the error name to the watchdog
+      if(currentErrorToCount.size()) {
+        watchdog.addToErrorCount(currentErrorToCount);
+      }
 
       //log and circulate blocks
       //We want to report internal error most of the time to avoid wrong

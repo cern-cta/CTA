@@ -131,6 +131,11 @@ protected:
    * One offs parameters to be sent to the initial process
    */
   castor::server::BlockingQueue<castor::log::Param> m_paramsQueue;
+  
+  /**
+   * 
+   */
+  std::map<std::string, uint32_t> m_errorCounts;
 
   /**
    * Send the statistics to the initial process. m_mutex should be taken before
@@ -290,10 +295,29 @@ protected:
   }
   
   /**
-   * 
+   * Queue new parameter to be sent asynchronously to the main thread.
    */
   void addParameter (const log::Param & param) {
     m_paramsQueue.push(param);
+  }
+  
+  /**
+   * Add error by name. We will count the errors by name in the watchdog.
+   */
+  void addToErrorCount (const std::string & errorName) {
+    uint32_t count;
+    {
+      castor::server::MutexLocker locker(&m_mutex);
+      // There is no default constructor for uint32_t (auto set to zero),
+      // so we need to consider 2 cases.
+      if(m_errorCounts.end() != m_errorCounts.find(errorName)) {
+        count = ++m_errorCounts[errorName];
+      } else {
+        count = m_errorCounts[errorName] = 1;
+      }
+    }
+    // We ship the new value ASAP to the main thread.
+    addParameter(log::Param(errorName, count));
   }
   
   /**

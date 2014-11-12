@@ -32,6 +32,7 @@
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/DiskStats.hpp"
+#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/utils/Timer.hpp"
 #include <vector>
 #define __STDC_FORMAT_MACROS
@@ -64,6 +65,7 @@ public:
    */
   DiskWriteThreadPool(int nbThread, 
           RecallReportPacker& reportPacker,
+          RecallWatchDog& recallWatchDog,
           castor::log::LogContext lc,
           const std::string & remoteFileProtocol,
           const std::string & xrootPrivateKeyPath);
@@ -192,6 +194,10 @@ private:
   /** Reference to the report packer where tasks report the result of their 
    * individual files and the end of session (for the last thread) */
   RecallReportPacker& m_reporter;
+  
+  /** Reference to the session watchdog, allowing reporting of errors to it.
+   */
+  RecallWatchDog& m_watchdog;
   
   /** logging context that will be copied by each thread for individual context */
   castor::log::LogContext m_lc;

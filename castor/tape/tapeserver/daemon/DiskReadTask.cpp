@@ -43,7 +43,8 @@ m_nextTask(destination),m_migratedFile(file),
 //------------------------------------------------------------------------------
 // DiskReadTask::execute
 //------------------------------------------------------------------------------
-void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & fileFactory) {
+void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & fileFactory,
+    MigrationWatchDog & watchdog) {
   using log::LogContext;
   using log::Param;
 
@@ -52,22 +53,28 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
   size_t blockId=0;
   size_t migratingFileSize=m_migratedFile->fileSize();
   MemBlock* mb=NULL;
-  
+  // This out-of-try-catch variables allows us to record the stage of the 
+  // process we're in, and to count the error if it occurs.
+  // We will not record errors for an empty string. This will allow us to
+  // prevent counting where error happened upstream.
+  std::string currentErrorToCount = "";
   try{
     //we first check here to not even try to open the disk  if a previous task has failed
     //because the disk could the very reason why the previous one failed, 
     //so dont do the same mistake twice !
     checkMigrationFailing();
-    
+    currentErrorToCount = "diskOpenForReadErrorCount";
     std::auto_ptr<tape::diskFile::ReadFile> sourceFile(
       fileFactory.createReadFile(m_migratedFile->path()));
     log::ScopedParamContainer URLcontext(lc);
     URLcontext.add("path", m_migratedFile->path())
               .add("actualURL", sourceFile->URL());
+    currentErrorToCount = "diskFileToReadSizeMismatchCount";
     if(migratingFileSize != sourceFile->size()){
       throw castor::exception::Exception("Mismtach between size given by the client "
               "and the real one");
     }
+    currentErrorToCount = "";
     
     m_stats.openingTime+=localTime.secs(castor::utils::Timer::resetCounter);
      
@@ -84,7 +91,8 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
       //set metadata and read the data
       mb->m_fileid = m_migratedFile->fileid();
       mb->m_fileBlock = blockId++;
-            
+      
+      currentErrorToCount = "diskReadErrorCount";
       migratingFileSize -= mb->m_payload.read(*sourceFile);
       m_stats.readWriteTime+=localTime.secs(castor::utils::Timer::resetCounter);
 
@@ -92,11 +100,13 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
 
       //we either read at full capacity (ie size=capacity) or if there different,
       //it should be the end => migratingFileSize should be 0. If it not, error
+      currentErrorToCount = "diskUnexpectedSizeWhenReadingCount";
       if(mb->m_payload.size() != mb->m_payload.totalCapacity() && migratingFileSize>0){
         std::string erroMsg = "Error while reading a file. Did not read at full capacity but the file is not fully read";
         mb->markAsFailed(erroMsg,SEINTERNAL);
         throw castor::exception::Exception(erroMsg);
       }
+      currentErrorToCount = "";
       m_stats.checkingErrorTime += localTime.secs(castor::utils::Timer::resetCounter);
       
       // We are done with the block, push it to the write task
@@ -118,6 +128,10 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     circulateAllBlocks(blockId,mb);
   }
   catch(const castor::exception::Exception& e){
+    // Send the error for counting to the watchdog
+    if (currentErrorToCount.size()) {
+      watchdog.addToErrorCount(currentErrorToCount);
+    }
     // We have to pump the blocks anyway, mark them failed and then pass them back 
     // to TapeWriteTask
     // Otherwise they would be stuck into TapeWriteTask free block fifo

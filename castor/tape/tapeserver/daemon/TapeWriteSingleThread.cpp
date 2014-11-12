@@ -123,6 +123,11 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   castor::log::ScopedParamContainer threadGlobalParams(m_logContext);
   threadGlobalParams.add("thread", "TapeWrite");
   castor::utils::Timer timer, totalTimer;
+  // This out-of-try-catch variables allows us to record the stage of the 
+  // process we're in, and to count the error if it occurs.
+  // We will not record errors for an empty string. This will allow us to
+  // prevent counting where error happened upstream.
+  std::string currentErrorToCount = "failedToSetCapabilitiesCount";
   try
   {
     // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
@@ -148,13 +153,15 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       // The tape will be loaded 
       // it has to be unloaded, unmounted at all cost -> RAII
       // will also take care of the TapeServerReporter
+      // 
       TapeCleaning cleaner(*this, timer);
-      
+      currentErrorToCount = "tapeFailedToMountForWriteCount";
       // Before anything, the tape should be mounted
       // This call does the logging of the mount
       mountTapeReadWrite();
+      currentErrorToCount = "tapeFailedToLoadCount";
       waitForDrive();
-      
+      currentErrorToCount = "tapeNotWriteableCount";
       isTapeWritable();
       
       m_stats.mountTime += timer.secs(castor::utils::Timer::resetCounter);
@@ -163,7 +170,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         scoped.add("mountTime", m_stats.mountTime);
         m_logContext.log(LOG_INFO, "Tape mounted and drive ready");
       }
-      
+      currentErrorToCount = "tapeFailedToPositionForWriteCount";
       // Then we have to initialize the tape write session
       std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
       m_stats.positionTime  += timer.secs(castor::utils::Timer::resetCounter);
@@ -177,7 +184,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       uint64_t bytes=0;
       uint64_t files=0;
       m_stats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
-      
+      // Tasks handle their error logging themselves.
+      currentErrorToCount = "";
       std::auto_ptr<TapeWriteTask> task;    
       while(1) {
         //get a task
@@ -203,9 +211,11 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         bytes+=task->fileSize();
         //if one flush counter is above a threshold, then we flush
         if (files >= m_filesBeforeFlush || bytes >= m_bytesBeforeFlush) {
+          currentErrorToCount = "tapeFailedToFlushCount";
           tapeFlush("Normal flush because thresholds was reached",bytes,files,timer);
           files=0;
           bytes=0;
+          currentErrorToCount = "";
         }
       } //end of while(1))
     }
@@ -229,6 +239,11 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     // like mounting the tape, then we have to signal the problem to the disk
     // side and the task injector, which will trigger the end of session.
     m_injector->setErrorFlag();
+    
+    // report the error to the watchdog for counting
+    if(currentErrorToCount.size()) {
+      m_watchdog.addToErrorCount(currentErrorToCount);
+    }
     
     //first empty all the tasks and circulate mem blocks
     while(1) {

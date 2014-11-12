@@ -76,7 +76,7 @@ namespace unitTests{
 
     t.pushDataBlock(mb);
     t.pushDataBlock(NULL);
-    t.execute(report,lc,fileFactory);
+    t.execute(report,lc,fileFactory,*((RecallWatchDog*)NULL));
   }
 }
 

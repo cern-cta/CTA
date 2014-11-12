@@ -27,6 +27,7 @@
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/daemon/DiskStats.hpp"
 #include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
+#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/server/AtomicFlag.hpp"
 #include "castor/log/LogContext.hpp"
@@ -48,7 +49,8 @@ public:
           tape::tapegateway::FileToMigrateStruct* file,size_t numberOfBlock,
           castor::server::AtomicFlag& errorFlag);
   
-  void execute(log::LogContext& lc, diskFile::DiskFileFactory & fileFactory);
+  void execute(log::LogContext& lc, diskFile::DiskFileFactory & fileFactory,
+    MigrationWatchDog & watchdog);
     /**
    * Return the stats of the tasks. Should be call after execute 
    * (otherwise, it is pointless)

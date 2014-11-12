@@ -88,9 +88,14 @@ public:
     //(because one mem block can hold several tape blocks
     int fileBlock = 0;
     int tapeBlock = 0;
-    
+    // This out-of-try-catch variables allows us to record the stage of the 
+    // process we're in, and to count the error if it occurs.
+    // We will not record errors for an empty string. This will allow us to
+    // prevent counting where error happened upstream.
+    std::string currentErrorToCount = "";
     MemBlock* mb=NULL;
     try {
+      currentErrorToCount = "tapeReadPositionErrorCount";
       std::auto_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
       // At that point we already read the header.
       localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
@@ -99,6 +104,7 @@ public:
       localStats.positionTime += timer.secs(castor::utils::Timer::resetCounter);
       watchdog.notifyBeginNewJob(*m_fileToRecall);
       localStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
+      currentErrorToCount = "tapeReadDataError";
       while (stillReading) {
         // Get a memory block and add information to its metadata
         mb=m_mm.getFreeBlock();
@@ -157,6 +163,10 @@ public:
       //we end up there because :
       //-- openReadFile brought us here (cant position to the file)
       //-- m_payload.append brought us here (error while reading the file)
+      // Record the error in the watchdog
+      if (currentErrorToCount.size()) {
+        watchdog.addToErrorCount(currentErrorToCount);
+      }
       // This is an error case. Log and signal to the disk write task
       { 
         castor::log::LogContext::ScopedParam sp0(lc, Param("fileBlock", fileBlock));
