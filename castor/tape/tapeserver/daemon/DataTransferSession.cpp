@@ -376,7 +376,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       // Just log this was an empty mount and that's it. The memory management
       // will be deallocated automatically.
       lc.log(LOG_ERR, "Aborting migration mount startup: empty mount");
-      log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", "Aborted: empty recall mount"));
+      log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", "Aborted: empty migration mount"));
       log::LogContext::ScopedParam sp2(lc, log::Param("errorCode", SEINTERNAL));
       try {
         client::ClientProxy::RequestReport reqReport;

@@ -137,7 +137,7 @@ namespace daemon {
             .add("byteSizeThreshold",m_maxBytes)
             .add("maxFiles", m_maxFiles)
             .add("message", ex.getMessageValue());
-      m_lc.log(LOG_ERR, "Failed to getFiledToRecall.");
+      m_lc.log(LOG_ERR, "Failed to getFilesToMigrate");
       return false;
     }
     castor::log::ScopedParamContainer scoped(m_lc); 
