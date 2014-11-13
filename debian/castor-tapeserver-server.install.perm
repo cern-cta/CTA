@@ -1,4 +1,4 @@
-%attr(0640,root,root) etc/castor/TPCONFIG.example
+%attr(0640,root,st) etc/castor/TPCONFIG.example
 %attr(0755,root,root) usr/bin/tapeserverd
 %attr(0644,root,root) etc/sysconfig/tapeserverd.example
 %attr(0755,root,root) etc/init.d/tapeserverd
