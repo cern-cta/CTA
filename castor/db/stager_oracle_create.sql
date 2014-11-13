@@ -328,7 +328,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_14');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_15');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -856,7 +856,13 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to offline.');
 INSERT INTO CastorConfig
-  VALUES ('Draining', 'MaxNbSchedD2dPerDrain', '1000', 'The maximum number of disk to disk copies that each draining job should send to the scheduler concurrently.');
+  VALUES ('Draining', 'MaxNbFilesScheduled', '1000', 'The maximum number of disk to disk copies that each draining job should send to the scheduler concurrently.');
+INSERT INTO CastorConfig
+  VALUES ('Draining', 'MaxDataScheduled', '10000000000', 'The maximum amount of data that each draining job should send to the scheduler in one go.');
+INSERT INTO CastorConfig
+  VALUES ('Rebalancing', 'MaxNbFilesScheduled', '1000', 'The maximum number of disk to disk copies that each rebalancing run should send to the scheduler concurrently.');
+INSERT INTO CastorConfig
+  VALUES ('Rebalancing', 'MaxDataScheduled', '10000000000', 'The maximum amount of data that each rebalancing run should send to the scheduler in one go.');
 INSERT INTO CastorConfig
   VALUES ('Rebalancing', 'Sensitivity', '5', 'The rebalancing sensitivity (in percent) : if a fileSystem is at least this percentage fuller than the average of the diskpool where it lives, rebalancing will fire.');
 INSERT INTO CastorConfig
@@ -3243,7 +3249,8 @@ BEGIN
            AND DC.status = dconst.DISKCOPY_VALID;
         IF varNbCopies = 0 THEN
           -- find out whether this file is already being recalled from this tape
-          SELECT count(*) INTO varWasRecalled FROM RecallJob WHERE castorfile = cfId AND vid != varRepackVID;
+          SELECT /*+ INDEX_RS_ASC(RecallJob I_RecallJob_CastorFile) */ count(*)
+            INTO varWasRecalled FROM RecallJob WHERE castorfile = cfId AND vid != varRepackVID;
           IF varWasRecalled = 0 THEN
             -- trigger recall: if we have dual copy files, this may trigger a second recall,
             -- which will race with the first as it happens for user-driven recalls
@@ -5988,6 +5995,8 @@ BEGIN
                 inNumParams(8*i+4), inNumParams(8*i+5), inNumParams(8*i+6), inNumParams(8*i+7),
                 inNumParams(8*i+8), ids_seq.nextval, 0, varDsId, dconst.FILESYSTEM_DISABLED);
       END IF;
+      -- commit diskServer by diskServer, otherwise multiple reports may deadlock each other
+      COMMIT;
     END LOOP;
   END IF;
 
@@ -6324,6 +6333,7 @@ CREATE OR REPLACE PROCEDURE deleteDiskCopies(inDcIds IN castor."cnumList", inFil
   varNbRemaining INTEGER;
   varStatus INTEGER;
   varLogParams VARCHAR2(2048);
+  varFileSize INTEGER;
 BEGIN
   DELETE FROM DeleteDiskCopyHelper;
   -- Insert all data in bulk for efficiency reasons
@@ -6357,8 +6367,8 @@ BEGIN
   FOR dc IN (SELECT dcId, fileId, fStatus FROM DeleteDiskCopyHelper) LOOP
     BEGIN
       -- get data and lock
-      SELECT castorFile, DiskCopy.status, DiskPool.name
-        INTO varCfId, varStatus, outDiskPool
+      SELECT castorFile, DiskCopy.status, DiskCopy.diskCopySize, DiskPool.name
+        INTO varCfId, varStatus, varFileSize, outDiskPool
         FROM DiskPool, FileSystem, DiskCopy
        WHERE DiskCopy.id = dc.dcId
          AND DiskCopy.fileSystem = FileSystem.id
@@ -6370,7 +6380,7 @@ BEGIN
          AND fileId = dc.fileId
          FOR UPDATE;
       varLogParams := 'FileName="' || varFileName ||'" DiskPool="'|| outDiskPool
-        ||'" dcId='|| dc.dcId ||' status='
+        ||'" fileSize='|| varFileSize ||' dcId='|| dc.dcId ||' status='
         || getObjStatusName('DiskCopy', 'status', varStatus);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- diskcopy not found in stager
@@ -6454,16 +6464,24 @@ BEGIN
       -- similarly to stageRm, check that the deletion is allowed:
       -- basically only files on tape may be dropped in case no data loss is provoked,
       -- or files already dropped from the namespace. The rest is forbidden.
-      IF (varStatus = dconst.DISKCOPY_VALID AND (varNbRemaining > 0 OR dc.fStatus = 'm'))
+      IF (varStatus IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_FAILED) AND (varNbRemaining > 0 OR dc.fStatus = 'm' OR varFileSize = 0))
          OR dc.fStatus = 'd' THEN
         UPDATE DeleteDiskCopyHelper
            SET rc = dconst.DELDC_GC
          WHERE dcId = dc.dcId;
         IF NOT inDryRun THEN
-          UPDATE DiskCopy
-             SET status = dconst.DISKCOPY_INVALID, gcType = dconst.GCTYPE_ADMIN
-           WHERE id = dc.dcId;
-           logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_GC, dc.fileId, varNsHost, 'stagerd', varLogParams);
+          IF varStatus = dconst.DISKCOPY_VALID THEN
+            UPDATE DiskCopy
+               SET status = dconst.DISKCOPY_INVALID, gcType = dconst.GCTYPE_ADMIN
+             WHERE id = dc.dcId;
+          ELSE
+            DELETE FROM DiskCopy WHERE ID = dc.dcId;
+          END IF;
+          -- do not forget to cancel pending migrations in case we've lost that last DiskCopy
+          IF varNbRemaining = 0 THEN
+            deleteMigrationJobs(varCfId);
+          END IF;
+          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_GC, dc.fileId, varNsHost, 'stagerd', varLogParams);
         END IF;
       ELSE
         -- nothing is done, just record no-action
@@ -8300,13 +8318,6 @@ BEGIN
 END;
 /
 
-CREATE OR REPLACE TRIGGER tr_SubRequest_informError AFTER UPDATE OF status ON SubRequest
-FOR EACH ROW WHEN (new.status = 7) -- SUBREQUEST_FAILED
-BEGIN
-  alertSignalNoLock('wakeUpErrorSvc');
-END;
-/
-
 CREATE OR REPLACE FUNCTION selectRandomDestinationFs(inSvcClassId IN INTEGER,
                                                      inMinFreeSpace IN INTEGER,
                                                      inCfId IN INTEGER)
@@ -10015,7 +10026,7 @@ BEGIN
     FROM RecallJob
    WHERE castorFile = inCfId
      AND ROWNUM < 2;
-  -- if no remaining recallJobs, the subrequests are failed
+  -- if no remaining recallJobs, the subrequests are failed and pending remigrations canceled
   IF varRecallStillAlive = 0 THEN
     UPDATE /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile) */ SubRequest 
        SET status = dconst.SUBREQUEST_FAILED,
@@ -10024,6 +10035,7 @@ BEGIN
            errorMessage = 'File recall from tape has failed, please try again later'
      WHERE castorFile = inCfId 
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
+     deleteMigrationJobsForRecall(inCfId);
      -- log 'File recall has permanently failed'
     logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_PERMANENTLY_FAILED, varFileId, varNsHost,
       'tapegatewayd', ' TPVID=' || inVID ||' '|| inLogContext);
@@ -11628,7 +11640,7 @@ BEGIN
                 ORDER BY cfId ASC) LOOP
       DECLARE
         CONSTRAINT_VIOLATED EXCEPTION;
-        PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+        PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -2292);
       BEGIN
         -- Get data and lock the castorFile
         SELECT fileId, nsHost, fileClass
@@ -11953,7 +11965,7 @@ BEGIN
     FOR i IN 1 .. dcIds.COUNT LOOP
       DECLARE
         CONSTRAINT_VIOLATED EXCEPTION;
-        PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+        PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -2292);
       BEGIN
         DELETE FROM DiskCopy WHERE id = dcIds(i);
       EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
@@ -12111,17 +12123,20 @@ END;
 /* handle the creation of the Disk2DiskCopyJobs for the running drainingJobs */
 CREATE OR REPLACE PROCEDURE drainRunner AS
   varNbRunningJobs INTEGER;
-  varMaxNbOfSchedD2dPerDrain INTEGER;
+  varDataRunningJobs INTEGER;
+  varMaxNbFilesScheduled INTEGER;
+  varMaxDataScheduled INTEGER;
   varUnused INTEGER;
 BEGIN
-  -- get maxNbOfSchedD2dPerDrain
-  varMaxNbOfSchedD2dPerDrain := TO_NUMBER(getConfigOption('Draining', 'MaxNbSchedD2dPerDrain', '1000'));
+  -- get maxNbFilesScheduled and maxDataScheduled
+  varMaxNbFilesScheduled := TO_NUMBER(getConfigOption('Draining', 'MaxNbFilesScheduled', '1000'));
+  varMaxDataScheduled := TO_NUMBER(getConfigOption('Draining', 'MaxDataScheduled', '10000000000')); -- 10 GB
   -- loop over draining jobs
   FOR dj IN (SELECT id, fileSystem, svcClass, fileMask, euid, egid
                FROM DrainingJob WHERE status = dconst.DRAININGJOB_RUNNING) LOOP
     DECLARE
       CONSTRAINT_VIOLATED EXCEPTION;
-      PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+      PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -2292);
     BEGIN
       BEGIN
         -- lock the draining job first
@@ -12131,12 +12146,15 @@ BEGIN
         CONTINUE;
       END;
       -- check how many disk2DiskCopyJobs are already running for this draining job
-      SELECT count(*) INTO varNbRunningJobs FROM Disk2DiskCopyJob WHERE drainingJob = dj.id;
+      SELECT count(*), nvl(sum(CastorFile.fileSize), 0) INTO varNbRunningJobs, varDataRunningJobs
+        FROM Disk2DiskCopyJob, CastorFile
+       WHERE Disk2DiskCopyJob.drainingJob = dj.id
+         AND CastorFile.id = Disk2DiskCopyJob.castorFile;
       -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running
       -- ones into account. Also take the most important jobs first
       logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_REFILL, 0, '', 'stagerd',
                'svcClass=' || getSvcClassName(dj.svcClass) || ' DrainReq=' ||
-               TO_CHAR(dj.id) || ' MaxNewJobsCount=' || TO_CHAR(varMaxNbOfSchedD2dPerDrain-varNbRunningJobs));
+               TO_CHAR(dj.id) || ' MaxNewJobsCount=' || TO_CHAR(varMaxNbFilesScheduled-varNbRunningJobs));
       FOR F IN (SELECT * FROM
                  (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
                     FROM DiskCopy, CastorFile
@@ -12150,9 +12168,16 @@ BEGIN
                      -- don't recreate disk-to-disk copy jobs for the ones already done in previous rounds
                      AND NOT EXISTS (SELECT 1 FROM Disk2DiskCopyJob WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
                    ORDER BY DiskCopy.importance DESC)
-                 WHERE ROWNUM <= varMaxNbOfSchedD2dPerDrain-varNbRunningJobs) LOOP
-        createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
-                               dconst.REPLICATIONTYPE_DRAINING, F.dcId, TRUE, dj.id, FALSE);
+                 WHERE ROWNUM <= varMaxNbFilesScheduled-varNbRunningJobs) LOOP
+        -- Do not schedule more that varMaxAmountOfSchedD2dPerDrain
+        IF varDataRunningJobs <= varMaxDataScheduled THEN
+          createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
+                                 dconst.REPLICATIONTYPE_DRAINING, F.dcId, TRUE, dj.id, FALSE);
+          varDataRunningJobs := varDataRunningJobs + F.fileSize;
+        ELSE
+          -- enough data amount, we stop scheduling
+          EXIT;
+        END IF;
       END LOOP;
       UPDATE DrainingJob
          SET lastModificationTime = getTime()
@@ -12225,6 +12250,7 @@ CREATE OR REPLACE PROCEDURE rebalance(inFsId IN INTEGER, inDataAmount IN INTEGER
   varNsOpenTime INTEGER;
   varTotalRebalanced INTEGER := 0;
   varNbFilesRebalanced INTEGER := 0;
+  varMaxNbFilesScheduled INTEGER := TO_NUMBER(getConfigOption('Rebalancing', 'MaxNbFilesScheduled', '1000'));
 BEGIN
   -- disk to disk copy files out of this node until we reach inDataAmount
   -- "rebalancing : starting" message
@@ -12239,7 +12265,8 @@ BEGIN
     -- no next candidate : this is surprising, but nevertheless, we should go out of the loop
     IF DCcur%NOTFOUND THEN EXIT; END IF;
     -- stop if it would be too much
-    IF varTotalRebalanced + varDcSize > inDataAmount THEN EXIT; END IF;
+    IF varTotalRebalanced + varDcSize > inDataAmount
+      OR varNbFilesRebalanced > varMaxNbFilesScheduled THEN EXIT; END IF;
     -- compute new totals
     varTotalRebalanced := varTotalRebalanced + varDcSize;
     varNbFilesRebalanced := varNbFilesRebalanced + 1;
@@ -12263,6 +12290,7 @@ CREATE OR REPLACE PROCEDURE rebalancingManager AS
   varSensitivity NUMBER;
   varNbDS INTEGER;
   varAlreadyRebalancing INTEGER;
+  varMaxDataScheduled INTEGER;
 BEGIN
   -- go through all service classes
   FOR SC IN (SELECT id FROM SvcClass) LOOP
@@ -12307,6 +12335,8 @@ BEGIN
      GROUP BY SC.id;
     -- get sensitivity of the rebalancing
     varSensitivity := TO_NUMBER(getConfigOption('Rebalancing', 'Sensitivity', '5'))/100;
+    -- get max data to move in a single round
+    varMaxDataScheduled := TO_NUMBER(getConfigOption('Rebalancing', 'MaxDataScheduled', '10000000000')); -- 10 GB
     -- for each filesystem too full compared to average, rebalance
     -- note that we take the read only ones into account here
     -- also note the use of decode and the extra totalSize > 0 to protect
@@ -12323,7 +12353,7 @@ BEGIN
                   AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
                   AND FileSystem.totalSize > 0
                   AND DiskServer.hwOnline = 1) LOOP
-      rebalance(FS.id, FS.dataToMove, SC.id, FS.ds, FS.mountPoint);
+      rebalance(FS.id, LEAST(varMaxDataScheduled, FS.dataToMove), SC.id, FS.ds, FS.mountPoint);
     END LOOP;
   END LOOP;
 END;
