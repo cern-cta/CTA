@@ -680,11 +680,11 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
 // labelError
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyZmq::labelError(
-  const std::string &unitName, const castor::exception::Exception &labelEx) {
+  const std::string &unitName, const std::string &message) {
   server::MutexLocker lock(&m_mutex);
 
   try {
-    const Frame rqst = createLabelErrorFrame(unitName, labelEx);
+    const Frame rqst = createLabelErrorFrame(unitName, message);
     sendFrame(m_serverSocket, rqst);
 
     ReturnValue reply;
@@ -711,7 +711,7 @@ void castor::messages::TapeserverProxyZmq::labelError(
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::messages::TapeserverProxyZmq::
   createLabelErrorFrame(const std::string &unitName,
-  const castor::exception::Exception &labelEx) {
+  const std::string &message) {
   try {
     Frame frame;
 
@@ -721,8 +721,7 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
 
     LabelError body;
     body.set_unitname(unitName);
-    body.set_code(labelEx.code());
-    body.set_message(labelEx.getMessage().str());
+    body.set_message(message);
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;

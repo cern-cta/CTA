@@ -153,10 +153,10 @@ public:
    * specified error.
    *
    * @param unitName The unit name of the tape drive.
-   * @param labelEx The error encountered by the label session.
+   * @param message The error message.
    */
   virtual void labelError(const std::string &unitName,
-    const castor::exception::Exception &labelEx) = 0;
+    const std::string &message) = 0;
 
 }; // class TapeserverProxy
 

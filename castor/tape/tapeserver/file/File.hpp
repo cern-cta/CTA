@@ -160,20 +160,19 @@ namespace castor {
          void set(castor::tape::tapegateway::FileToRecallStruct &, uint32_t blockId);
       }; 
       /**
-       * Class keeping track of a tape label session on a tape. The session will
-       * check for everything to be coherent. The tape should be mounted in
-       * the drive before the LabelSession is started (i.e. constructed).
+       * Class that labels a tape.  This class assumes the tape to be labeled is
+       * already mounted and rewound.
        */      
       class LabelSession {        
       public:        
         /**
-         * Constructor of the LabelSession. It will rewind the tape, and label it.
-         * Throws an exception in case of tape is not empty and argument force is false.
+         * Constructor of the LabelSession. This constructor will label the
+         * tape in the specified drive.  This constructor assumes the tape to be
+         * labeled is already mounted and rewound.
          * @param drive: drive object to which we bind the session
          * @param vid: volume name of the tape we would like to read from
-         * @param force: force labeling even if tape is not empty
          */
-        LabelSession(tapeserver::drive::DriveInterface & drive, const std::string &vid, bool force) ;
+        LabelSession(tapeserver::drive::DriveInterface & drive, const std::string &vid);
       };
 
       /**

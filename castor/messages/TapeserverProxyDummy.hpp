@@ -103,7 +103,6 @@ public:
   void tapeUnmountStarted(const std::string &vid,
     const std::string &unitName);
 
-
   /**
    * Notifies the tapeserverd daemon that the specified tape has been unmounted.
    *
@@ -143,10 +142,10 @@ public:
    * specified error.
    *
    * @param unitName The unit name of the tape drive.
-   * @param labelEx The error encountered by the label session.
+   * @param message The error message.
    */
   void labelError(const std::string &unitName,
-    const castor::exception::Exception &labelEx);
+    const std::string &message);
 
 }; // class TapeserverProxyDummy
 

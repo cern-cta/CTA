@@ -26,6 +26,7 @@
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
+#include "castor/tape/tapeserver/file/Structures.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/System.hpp"
@@ -65,77 +66,109 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
 // execute
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-  castor::tape::tapeserver::daemon::LabelSession::execute() {
+  castor::tape::tapeserver::daemon::LabelSession::execute() throw() {
+  std::string errorMessage;
+
   try {
-    m_capUtils.setProcText("cap_sys_rawio+ep");
-    {
-      log::Param params[] = {
-        log::Param("capabilities", m_capUtils.getProcText())};
-      m_log(LOG_INFO, "Label session set process capabilities for using tape",
-        params);
-    }
-
-    log::Param params[] = {
-      log::Param("uid", m_request.uid),
-      log::Param("gid", m_request.gid),
-      log::Param("TPVID", m_request.vid),
-      log::Param("drive", m_request.drive),
-      log::Param("dgn", m_request.dgn)};
-  
-    mountTape();
-    std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive =
-      getDriveObject();
-    waitUntilTapeLoaded(drive.get(), 60); // 60 = 60 seconds
-    checkTapeIsWritable(drive.get());
-    labelTheTape(drive.get());
-    m_log(LOG_INFO, "The tape has been successfully labeled", params);
-    drive->unloadTape();
-    m_log(LOG_INFO, "The tape has been successfully unloaded after labeling",
-      params);
-    m_mc.dismountTape(m_request.vid, m_driveConfig.librarySlot.str());
-    if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL !=
-      m_driveConfig.librarySlot.getLibraryType()) {
-      m_log(LOG_INFO, "The tape has been successfully unmounted after labeling",
-        params);
-    }
-
-    return MARK_DRIVE_AS_UP;
+    return exceptionThrowingExecute();
   } catch(castor::exception::Exception &ex) {
-
-    // Send details of exception to tapeserverd and then rethrow
-    m_tapeserver.labelError(m_request.drive, ex);
-    throw ex;
+    errorMessage = ex.getMessage().str();
+  } catch(std::exception &se) {
+    errorMessage = se.what();
+  } catch(...) {
+    errorMessage = "Caught an unknown exception";
   }
+
+  // Reaching this point means the label session failed and an exception was
+  // thrown
+  std::list<log::Param> params;
+  params.push_back(log::Param("uid", m_request.uid));
+  params.push_back(log::Param("gid", m_request.gid));
+  params.push_back(log::Param("TPVID", m_request.vid));
+  params.push_back(log::Param("unitName", m_request.drive));
+  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("force", boolToStr(m_force)));
+  params.push_back(log::Param("message", errorMessage));
+  m_log(LOG_ERR, "Label session failed", params);
+
+  // Send details of exception to tapeserverd and then re-throw
+  m_tapeserver.labelError(m_request.drive, errorMessage);
+
+  return MARK_DRIVE_AS_DOWN;
 }
 
 //------------------------------------------------------------------------------
-// getDriveObject
+// exceptionThrowingExecute
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::Session::EndOfSessionAction
+  castor::tape::tapeserver::daemon::LabelSession::exceptionThrowingExecute() {
+
+  setProcessCapabilities("cap_sys_rawio+ep");
+
+  mountTape();
+
+  std::auto_ptr<drive::DriveInterface> drivePtr = createDrive();
+  drive::DriveInterface &drive = *drivePtr.get();
+
+  waitUntilTapeLoaded(drive, 60); // 60 = 60 seconds
+
+  checkTapeIsWritable(drive);
+
+  rewindDrive(drive);
+
+  // If the user is trying to label a non-empty tape without the force option
+  if(!m_force && !drive.isTapeBlank()) {
+    const std::string message = "Cannot label a non-empty tape without the"
+      " force option";
+    notifyTapeserverOfUserError(message);
+
+  // Else the labeling can go ahead
+  } else {
+    writeLabelToTape(drive);
+  }
+
+  unloadTape(m_request.vid, drive);
+  dismountTape(m_request.vid);
+
+  return MARK_DRIVE_AS_UP;
+}
+
+//------------------------------------------------------------------------------
+// setProcessCapabilities
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::LabelSession::setProcessCapabilities(
+  const std::string &capabilities) {
+  std::list<log::Param> params;
+  params.push_back(log::Param("uid", m_request.uid));
+  params.push_back(log::Param("gid", m_request.gid));
+  params.push_back(log::Param("TPVID", m_request.vid));
+  params.push_back(log::Param("unitName", m_request.drive));
+  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("force", boolToStr(m_force)));
+
+  m_capUtils.setProcText(capabilities);
+  params.push_back(log::Param("capabilities", m_capUtils.getProcText()));
+  m_log(LOG_INFO, "Label session set process capabilities", params);
+}
+
+//------------------------------------------------------------------------------
+// createDrive
 //------------------------------------------------------------------------------
 std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
-  castor::tape::tapeserver::daemon::LabelSession::getDriveObject() {
-  castor::tape::SCSI::DeviceVector dv(m_sysWrapper);    
-  castor::tape::SCSI::DeviceInfo driveInfo =
-    dv.findBySymlink(m_driveConfig.devFilename);
+  castor::tape::tapeserver::daemon::LabelSession::createDrive() {
+  SCSI::DeviceVector dv(m_sysWrapper);    
+  SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
   
   // Instantiate the drive object
-  std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-    castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper));
+  std::auto_ptr<drive::DriveInterface>
+    drive(drive::createDrive(driveInfo, m_sysWrapper));
 
   if(NULL == drive.get()) {
     castor::exception::Exception ex;
-    ex.getMessage() <<
-      "End session with error. Failed to instantiate drive object";
+    ex.getMessage() << "Failed to instantiate drive object";
     throw ex;
   }
   
-  // check that drive is not write protected
-  if(drive->isWriteProtected()) {   
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "End session with error. Drive is write protected. Aborting labelling...";
-    throw ex;
-  }
-
   return drive;
 }
 
@@ -143,21 +176,25 @@ std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
 // mountTape
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::mountTape() {
-  try {
-    m_mc.mountTapeReadWrite(m_request.vid, m_driveConfig.librarySlot.str());
-    if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL !=
-      m_driveConfig.librarySlot.getLibraryType()) {
-      const log::Param params[] = {
-        log::Param("TPVID", m_request.vid),
-        log::Param("unitName", m_request.drive),
-        log::Param("librarySlot", m_driveConfig.librarySlot.str())};
-      m_log(LOG_INFO, "Tape successfully mounted for labeling", params);
-    }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to mount tape for labeling: " <<
-      ne.getMessage().str();
-    throw ex;
+  const std::string &librarySlot = m_driveConfig.librarySlot.str();
+
+  std::list<log::Param> params;
+  params.push_back(log::Param("uid", m_request.uid));
+  params.push_back(log::Param("gid", m_request.gid));
+  params.push_back(log::Param("TPVID", m_request.vid));
+  params.push_back(log::Param("unitName", m_request.drive));
+  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("force", boolToStr(m_force)));
+  params.push_back(log::Param("librarySlot", librarySlot));
+
+  m_log(LOG_INFO, "Label session mounting tape", params);
+  m_mc.mountTapeReadWrite(m_request.vid, librarySlot);
+  if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
+    m_driveConfig.librarySlot.getLibraryType()) {
+    m_log(LOG_INFO, "Label session did not mounted tape because the media"
+      " changer is manual", params);
+  } else {
+   m_log(LOG_INFO, "Label session mounted tape", params);
   }
 }
 
@@ -165,14 +202,18 @@ void castor::tape::tapeserver::daemon::LabelSession::mountTape() {
 // waitUntilTapeLoaded
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::waitUntilTapeLoaded(
-  drive::DriveInterface *const drive, const int timeoutSecond) { 
+  drive::DriveInterface &drive, const int timeoutSecond) { 
+  std::list<log::Param> params;
+  params.push_back(log::Param("uid", m_request.uid));
+  params.push_back(log::Param("gid", m_request.gid));
+  params.push_back(log::Param("TPVID", m_request.vid));
+  params.push_back(log::Param("unitName", m_request.drive));
+  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("force", boolToStr(m_force)));
+
   try {
-    drive->waitUntilReady(timeoutSecond);
-    const log::Param params[] = {
-      log::Param("TPVID", m_request.vid),
-      log::Param("unitName", m_request.drive),
-      log::Param("librarySlot", m_driveConfig.librarySlot.str())};
-    m_log(LOG_INFO, "Tape to be labelled has been mounted", params);
+    drive.waitUntilReady(timeoutSecond);
+    m_log(LOG_INFO, "Label session loaded tape", params);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to wait for tape to be loaded: " <<
@@ -185,23 +226,147 @@ void castor::tape::tapeserver::daemon::LabelSession::waitUntilTapeLoaded(
 // checkTapeIsWritable
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::checkTapeIsWritable(
-  drive::DriveInterface *const drive) {
-  if(drive->isWriteProtected()) {
+  drive::DriveInterface &drive) {
+  std::list<log::Param> params;
+  params.push_back(log::Param("uid", m_request.uid));
+  params.push_back(log::Param("gid", m_request.gid));
+  params.push_back(log::Param("TPVID", m_request.vid));
+  params.push_back(log::Param("unitName", m_request.drive));
+  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("force", boolToStr(m_force)));
+
+  if(drive.isWriteProtected()) {
     castor::exception::Exception ex;
     ex.getMessage() << "Tape to be labeled in write protected";
     throw ex;
   }
-  const log::Param params[] = {
-    log::Param("TPVID", m_request.vid),
-    log::Param("unitName", m_request.drive),
-    log::Param("librarySlot", m_driveConfig.librarySlot.str())};
-  m_log(LOG_INFO, "Tape to be labelled is writable", params);
+  m_log(LOG_INFO, "Label session detected tape is writable", params);
 }
 
 //------------------------------------------------------------------------------
-// labelTheTape
+// rewindDrive
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::LabelSession::labelTheTape(
-  drive::DriveInterface *const drive) {
-  tapeFile::LabelSession ls(*drive, m_request.vid, m_force);
+void castor::tape::tapeserver::daemon::LabelSession::rewindDrive(
+  drive::DriveInterface &drive) {
+  std::list<log::Param> params;
+  params.push_back(log::Param("uid", m_request.uid));
+  params.push_back(log::Param("gid", m_request.gid));
+  params.push_back(log::Param("TPVID", m_request.vid));
+  params.push_back(log::Param("unitName", m_request.drive));
+  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("force", boolToStr(m_force)));
+
+  m_log(LOG_INFO, "Label session rewinding tape", params);
+  drive.rewind();
+  m_log(LOG_INFO, "Label session successfully rewound tape", params);
+}
+
+//------------------------------------------------------------------------------
+// notifyTapeserverOfUserError
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::LabelSession::
+  notifyTapeserverOfUserError(const std::string message) {
+  std::list<log::Param> params;
+  params.push_back(log::Param("uid", m_request.uid));
+  params.push_back(log::Param("gid", m_request.gid));
+  params.push_back(log::Param("TPVID", m_request.vid));
+  params.push_back(log::Param("unitName", m_request.drive));
+  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("force", boolToStr(m_force)));
+  params.push_back(log::Param("message", message));
+
+  m_log(LOG_ERR, "Label session encountered user error", params);
+  m_tapeserver.labelError(m_request.drive, message);
+}
+
+//------------------------------------------------------------------------------
+// writeLabelToTape
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::LabelSession::writeLabelToTape(
+  drive::DriveInterface &drive) {
+  std::list<log::Param> params;
+  params.push_back(log::Param("uid", m_request.uid));
+  params.push_back(log::Param("gid", m_request.gid));
+  params.push_back(log::Param("TPVID", m_request.vid));
+  params.push_back(log::Param("unitName", m_request.drive));
+  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("force", boolToStr(m_force)));
+
+  m_log(LOG_INFO, "Label session is writing label to tape", params);
+  tapeFile::LabelSession ls(drive, m_request.vid);
+  m_log(LOG_INFO, "Label session has written label to tape", params);
+}
+
+//------------------------------------------------------------------------------
+// unloadTape
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::LabelSession::unloadTape(
+  const std::string &vid, drive::DriveInterface &drive) {
+  std::list<log::Param> params;
+  params.push_back(log::Param("uid", m_request.uid));
+  params.push_back(log::Param("gid", m_request.gid));
+  params.push_back(log::Param("TPVID", m_request.vid));
+  params.push_back(log::Param("unitName", m_request.drive));
+  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("force", boolToStr(m_force)));
+
+  // We implement the same policy as with the tape sessions: 
+  // if the librarySlot parameter is "manual", do nothing.
+  if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
+    m_driveConfig.librarySlot.getLibraryType()) {
+    m_log(LOG_INFO, "Label session not unloading tape because media changer is"
+      " manual", params);
+    return;
+  }
+
+  try {
+    m_log(LOG_INFO, "Label session unloading tape", params);
+    drive.unloadTape();
+    m_log(LOG_INFO, "Label session unloaded tape", params);
+  } catch (castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Label session failed to unload tape: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// dismountTape
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::LabelSession::dismountTape(
+  const std::string &vid) {
+  std::list<log::Param> params;
+  params.push_back(log::Param("uid", m_request.uid));
+  params.push_back(log::Param("gid", m_request.gid));
+  params.push_back(log::Param("TPVID", m_request.vid));
+  params.push_back(log::Param("unitName", m_request.drive));
+  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("force", boolToStr(m_force)));
+
+  try {
+    m_log(LOG_INFO, "Label session dismounting tape", params);
+    m_mc.dismountTape(vid, m_driveConfig.librarySlot.str());
+    const bool dismountWasManual = mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
+      m_driveConfig.librarySlot.getLibraryType();
+    if(dismountWasManual) {
+      m_log(LOG_INFO, "Label session did not dismount tape because media"
+        " changer is manual", params);
+    } else {
+      m_log(LOG_INFO, "Label session dismounted tape", params);
+    }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Label session failed to dismount tape: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// boolToStr
+//------------------------------------------------------------------------------
+const char *castor::tape::tapeserver::daemon::LabelSession::boolToStr(
+  const bool value) {
+  return value ? "true" : "false";
 }

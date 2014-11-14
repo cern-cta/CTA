@@ -79,75 +79,12 @@ public:
    * Execute the session and return the type of action to be performed
    * immediately after the session has completed.
    *
-   * The session is responsible for mounting a tape into the tape drive, working
-   * with that tape, unloading the tape from the drive and then dismounting the
-   * tape from the drive and storing it back in its home slot within the tape
-   * library.
-   *
-   * If this method throws an exception and the session is not a cleaner
-   * session then it assumed that the post session action is
-   * EndOfSessionAction::CLEAN_DRIVE.
-   *
-   * If this method throws an exception and the session is a cleaner
-   * session then it assumed that the post session action is
-   * EndOfSessionAction::MARK_DRIVE_AS_DOWN.
-   *
    * @return Returns the type of action to be performed after the session has
    * completed.
    */
-  EndOfSessionAction execute();
+  EndOfSessionAction execute() throw();
     
 private:
-    
-  /**
-   * Performs some meta-data checks that need to be done before deciding to
-   * mount the tape for labeling.
-   */ 
-  void performPreMountChecks();
-
-  /**
-   * A meta-data check that sees if the user of the client is either the
-   * owner of the tape pool containing the tape to be labelled or is an ADMIN
-   * user within the CUPV privileges database.
-   */
-  void checkClientIsOwnerOrAdmin();
-
-  /**
-   * Returns a Drive object representing the tape drive to be used to label
-   * a tape.
-   *
-   * @return The drive object.
-   */
-  std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> getDriveObject();
-
-  /**
-   * Mounts the tape to be labelled.
-   */
-  void mountTape();
-  
-  /**
-   * Waits for the tape to be loaded into the tape drive.
-   *
-   * @param drive Object representing the drive hardware.
-   * @param timeoutSecond The number of seconds to wait for the tape to be
-   * loaded into the tape drive. 
-   */
-  void waitUntilTapeLoaded(drive::DriveInterface *const drive,
-    const int timeoutSecond);
-
-  /**
-   * Checks that the now loaded tape is writable.
-   *
-   * @param drive Object representing the drive hardware.
-   */
-  void checkTapeIsWritable(drive::DriveInterface *const drive);
-  
-  /**
-   * The function carrying out the actual labeling
-   * @param drive The drive object pointer
-   * @return 
-   */
-  void labelTheTape(drive::DriveInterface *const drive);
 
   /**
    * Object providing support for UNIX capabilities.
@@ -189,7 +126,113 @@ private:
    */
   const bool m_force;
 
- }; // class LabelSession
+  /** 
+   * Execute the session and return the type of action to be performed
+   * immediately after the session has completed.
+   *
+   * @return Returns the type of action to be performed after the session has
+   * completed.
+   */
+  EndOfSessionAction exceptionThrowingExecute();
+
+  /**
+   * Sets the capabilities of the process and logs the result.
+   *
+   * @param capabilities The string representation of the capabilities.
+   */
+  void setProcessCapabilities(const std::string &capabilities);
+    
+  /**
+   * Performs some meta-data checks that need to be done before deciding to
+   * mount the tape for labeling.
+   */ 
+  void performPreMountChecks();
+
+  /**
+   * A meta-data check that sees if the user of the client is either the
+   * owner of the tape pool containing the tape to be labelled or is an ADMIN
+   * user within the CUPV privileges database.
+   */
+  void checkClientIsOwnerOrAdmin();
+
+  /**
+   * Returns a Drive object representing the tape drive to be used to label
+   * a tape.
+   *
+   * @return The drive object.
+   */
+  std::auto_ptr<drive::DriveInterface> createDrive();
+
+  /**
+   * Mounts the tape to be labelled.
+   */
+  void mountTape();
+  
+  /**
+   * Waits for the tape to be loaded into the tape drive.
+   *
+   * @param drive Object representing the drive hardware.
+   * @param timeoutSecond The number of seconds to wait for the tape to be
+   * loaded into the tape drive. 
+   */
+  void waitUntilTapeLoaded(drive::DriveInterface &drive,
+    const int timeoutSecond);
+
+  /**
+   * Checks that the now loaded tape is writable.
+   *
+   * @param drive Object representing the drive hardware.
+   */
+  void checkTapeIsWritable(drive::DriveInterface &drive);
+
+  /**
+   * Rewinds the specified tape drive.
+   *
+   * @param drive The tape drive.
+   */
+  void rewindDrive(drive::DriveInterface &drive);
+
+  /**
+   * Notifies the tape-server parent-process of the specified user error.
+   *
+   * @param message The error message.
+   */
+  void notifyTapeserverOfUserError(const std::string message);
+  
+  /**
+   * Writes the label file to the tape.
+   *
+   * This method assumes the tape has been rewound.
+   *
+   * @param drive The tape drive.
+   */
+  void writeLabelToTape(drive::DriveInterface &drive);
+
+  /**
+   * Unloads the specified tape from the specified tape drive.
+   *
+   * @param vid The volume identifier of the tape to be unloaded.  Please note
+   * that the value of this field is only used for logging purposes.
+   * @param drive The tape drive.
+   */
+  void unloadTape(const std::string &vid, drive::DriveInterface &drive);
+
+  /**
+   * Dismounts the specified tape.
+   *
+   * @param vid The volume identifier of the tape to be dismounted.
+   */
+  void dismountTape(const std::string &vid);
+
+  /**
+   * Returns the string representation of the specified boolean value.
+   *
+   * @param value The boolean value.
+   * @return The string representation.
+   */
+  const char *boolToStr(const bool value);
+
+}; // class LabelSession
 
 } // namespace daemon
 } // namespace tapeserver

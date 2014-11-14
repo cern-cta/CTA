@@ -58,7 +58,7 @@ namespace UnitTests {
       volInfo.vid= label;
       //Label
       castor::tape::tapeFile::LabelSession *ls;
-      ls = new castor::tape::tapeFile::LabelSession(d, label, true);
+      ls = new castor::tape::tapeFile::LabelSession(d, label);
       delete ls;      
     }
     virtual void TearDown() {
@@ -71,10 +71,6 @@ namespace UnitTests {
     castor::tape::tapegateway::FileToMigrateStruct fileToMigrate;
     castor::tape::tapeserver::client::ClientInterface::VolumeInfo volInfo;
   };
-  
-  TEST_F(castorTapeFileTest, throwsWhenLabelingANonEmptyTape) {
-    ASSERT_THROW({castor::tape::tapeFile::LabelSession *ls; ls = new castor::tape::tapeFile::LabelSession(d, label, false); delete ls;}, castor::tape::tapeFile::TapeNotEmpty); //cannot relabel a non empty tape without the 'force' setting    
-  }
   
   TEST_F(castorTapeFileTest, throwsWhenReadingAnEmptyTape) {    
     castor::tape::tapeFile::ReadSession *rs;

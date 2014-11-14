@@ -106,5 +106,5 @@ deleteLogParams(const std::string &unitName,
 // labelError
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyDummy::labelError(
-  const std::string &unitName, const castor::exception::Exception &labelEx) {
+  const std::string &unitName, const std::string &message) {
 }

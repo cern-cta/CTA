@@ -117,7 +117,7 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
-        "V12345", true);
+        "V12345");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::client::ClientInterface::VolumeInfo volInfo;
@@ -221,7 +221,7 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
-        "V12345", true);
+        "V12345");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::client::ClientInterface::VolumeInfo volInfo;
@@ -384,7 +384,7 @@ TEST(tapeServer, DataTransferSessionFailtoMount) {
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
-        "V12345", true);
+        "V12345");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::client::ClientInterface::VolumeInfo volInfo;
@@ -596,7 +596,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   
   // Just label the tape
   castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
-      "V12345", true);
+      "V12345");
   mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
   
   tempFileVector tempFiles;
@@ -690,7 +690,7 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   
   // Just label the tape
   castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
-      "V12345", true);
+      "V12345");
   mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
   
   // Prepare the files, but delete them immediately. The migration will fail.
@@ -778,7 +778,7 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   
   // Just label the tape
   castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
-      "V12345", true);
+      "V12345");
   mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
   
   tempFileVector tempFiles;
@@ -885,7 +885,7 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   
   // Just label the tape
   castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
-      "V12345", true);
+      "V12345");
   mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
   
   tempFileVector tempFiles;

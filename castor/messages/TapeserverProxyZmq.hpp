@@ -158,10 +158,9 @@ public:
    * specified error.
    *
    * @param unitName The unit name of the tape drive.
-   * @param LabelEx The error encountered by the label session.
+   * @param message The error message.
    */
-  void labelError(const std::string &unitName,
-    const castor::exception::Exception &labelEx);
+  void labelError(const std::string &unitName, const std::string &message);
 
 private:
 
@@ -307,11 +306,11 @@ private:
    * Creates a frame containing a LabelError message.
    *
    * @param unitName The unit name of the tape drive.
-   * @param LabelEx The error encountered by the label session.
+   * @param message The error message.
    * @return The frame.
    */
   Frame createLabelErrorFrame(const std::string &unitName,
-    const castor::exception::Exception &labelEx);
+    const std::string &message);
 
 }; // class TapeserverProxyZmq
 

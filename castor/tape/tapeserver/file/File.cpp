@@ -40,13 +40,7 @@ namespace castor {
   namespace tape {
     namespace tapeFile {
 
-      LabelSession::LabelSession(tapeserver::drive::DriveInterface & drive, const std::string &vid, bool force)  {
-        drive.rewind();
-        if(!force) {
-          if(!drive.isTapeBlank()) {
-            throw TapeNotEmpty();
-          }
-        }
+      LabelSession::LabelSession(tapeserver::drive::DriveInterface & drive, const std::string &vid)  {
         VOL1 vol1;
         vol1.fill(vid);
         drive.writeBlock(&vol1, sizeof(vol1));

@@ -126,9 +126,44 @@ bool castor::tape::tapeserver::daemon::CatalogueLabelSession::handleTick() {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueLabelSession::
   sessionSucceeded() {
+  const bool thereWasAUserError = !m_labelErrors.empty();
+
+  if(thereWasAUserError) {
+    sendFailureReplyToLabelCommand();
+  } else {
+    sendSuccessReplyToLabelCommand();
+  }
+}
+
+//------------------------------------------------------------------------------
+// sendFailureReplyToLabelCommand
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueLabelSession::
+  sendFailureReplyToLabelCommand() {
+  try {
+    const std::string labelErrors = concatLabelErrors(" ,");
+    if(!labelErrors.empty()) {
+      legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection,
+        SEINTERNAL, labelErrors);
+    } else {
+      legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection,
+        SEINTERNAL, "Unknown error");
+    }
+  } catch(castor::exception::Exception &we) {
+    log::Param params[] = {log::Param("message", we.getMessage().str())};
+    m_log(LOG_ERR, "Failed to send failure reply-message to label command",
+      params);
+  }
+}
+
+//------------------------------------------------------------------------------
+// sendSuccessReplyToLabelCommand
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueLabelSession::
+  sendSuccessReplyToLabelCommand() {
   try {
     legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection, 0, "");
-  } catch(castor::exception::Exception &we) {
+  } catch(castor::exception::Exception &we) { 
     log::Param params[] = {log::Param("message", we.getMessage().str())};
     m_log(LOG_ERR, "Failed to send success reply-message to label command",
       params);
@@ -140,20 +175,23 @@ void castor::tape::tapeserver::daemon::CatalogueLabelSession::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueLabelSession::
   sessionFailed() {
-  try {
-    if(!m_labelErrors.empty()) {
-      const castor::exception::Exception &labelEx = m_labelErrors.front();
-      legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection,
-        labelEx.code(), labelEx.getMessage().str());
-    } else {
-      legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection,
-        SEINTERNAL, "Unknown error");
+  sendFailureReplyToLabelCommand();
+}
+
+//------------------------------------------------------------------------------
+// concatLabelErrors
+//------------------------------------------------------------------------------
+std::string castor::tape::tapeserver::daemon::CatalogueLabelSession::
+  concatLabelErrors(const std::string &separator) {
+  std::ostringstream oss;
+  for(std::list<std::string>::const_iterator itor = m_labelErrors.begin();
+    itor != m_labelErrors.end(); itor++) {
+    if(itor != m_labelErrors.begin()) {
+      oss << separator;
     }
-  } catch(castor::exception::Exception &we) {
-    log::Param params[] = {log::Param("message", we.getMessage().str())};
-    m_log(LOG_ERR, "Failed to send failure reply-message to label command",
-      params);
+    oss << *itor;
   }
+  return oss.str();
 }
 
 //------------------------------------------------------------------------------
@@ -208,6 +246,6 @@ bool castor::tape::tapeserver::daemon::CatalogueLabelSession::
 // receivedLabelError
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueLabelSession::
-  receivedLabelError(const castor::exception::Exception &labelEx) {
-  m_labelErrors.push_back(labelEx);
+  receivedLabelError(const std::string &message) {
+  m_labelErrors.push_back(message);
 }

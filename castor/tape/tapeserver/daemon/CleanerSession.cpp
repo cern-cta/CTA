@@ -47,7 +47,7 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
 // execute
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-  castor::tape::tapeserver::daemon::CleanerSession::execute() {
+  castor::tape::tapeserver::daemon::CleanerSession::execute() throw() {
   std::string errorMessage;
 
   try {
@@ -80,22 +80,23 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
   setProcessCapabilities("cap_sys_rawio+ep");
 
-  std::auto_ptr<tapeserver::drive::DriveInterface> drive(createDrive());
+  std::auto_ptr<drive::DriveInterface> drivePtr = createDrive();
+  drive::DriveInterface &drive = *drivePtr.get();
 
-  waitUntilDriveIsReady(drive.get());
+  waitUntilDriveIsReady(drive);
 
-  if(!drive->hasTapeInPlace()) {
+  if(!drive.hasTapeInPlace()) {
     m_log(LOG_INFO, "Cleaner found tape drive empty", params);
     return MARK_DRIVE_AS_UP;
   }
 
-  rewindDrive(drive.get());
+  rewindDrive(drive);
 
-  checkTapeContainsData(drive.get());
+  checkTapeContainsData(drive);
 
-  const std::string volumeLabelVSN = checkVolumeLabel(drive.get());
+  const std::string volumeLabelVSN = checkVolumeLabel(drive);
 
-  unloadTape(volumeLabelVSN, drive.get());
+  unloadTape(volumeLabelVSN, drive);
 
   dismountTape(volumeLabelVSN);
 
@@ -119,20 +120,21 @@ void castor::tape::tapeserver::daemon::CleanerSession::setProcessCapabilities(
 //------------------------------------------------------------------------------
 // createDrive
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::drive::DriveInterface *
+std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
   castor::tape::tapeserver::daemon::CleanerSession::createDrive() {
-  SCSI::DeviceVector dv(m_sysWrapper);    
+  SCSI::DeviceVector dv(m_sysWrapper);
   SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
-  drive::DriveInterface *const drive = drive::createDrive(driveInfo,
-    m_sysWrapper);
+  
+  // Instantiate the drive object
+  std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
+    drive(drive::createDrive(driveInfo, m_sysWrapper));
 
-  if(NULL == drive) {
+  if(NULL == drive.get()) {
     castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to instantiate drive object";
+    ex.getMessage() << "Failed to instantiate drive object";
     throw ex;
-  }
-
+  } 
+    
   return drive;
 }
 
@@ -140,7 +142,7 @@ castor::tape::tapeserver::drive::DriveInterface *
 // waitUntilDriveIsReady
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CleanerSession::waitUntilDriveIsReady(
-  drive::DriveInterface *const drive) {
+  drive::DriveInterface &drive) {
   if(0 != m_driveReadyDelayInSeconds) {
     std::list<log::Param> params;
     params.push_back(log::Param("TPVID", m_vid));
@@ -150,7 +152,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::waitUntilDriveIsReady(
 
     try {
       m_log(LOG_INFO, "Cleaner waiting for drive to be ready", params);
-      drive->waitUntilReady(m_driveReadyDelayInSeconds);
+      drive.waitUntilReady(m_driveReadyDelayInSeconds);
       m_log(LOG_INFO, "Cleaner detected drive is ready", params);
     } catch (castor::exception::Exception &ex) {
       params.push_back(log::Param("message", ex.getMessage().str()));
@@ -164,13 +166,13 @@ void castor::tape::tapeserver::daemon::CleanerSession::waitUntilDriveIsReady(
 // rewindDrive
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CleanerSession::rewindDrive(
-  drive::DriveInterface *const drive) {
+  drive::DriveInterface &drive) {
   std::list<log::Param> params;
   params.push_back(log::Param("TPVID", m_vid));
   params.push_back(log::Param("unitName", m_driveConfig.unitName));
 
   m_log(LOG_INFO, "Cleaner rewinding tape", params);
-  drive->rewind();
+  drive.rewind();
   m_log(LOG_INFO, "Cleaner successfully rewound tape", params);
 }
 
@@ -178,13 +180,13 @@ void castor::tape::tapeserver::daemon::CleanerSession::rewindDrive(
 // checkTapeContainsData
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CleanerSession::checkTapeContainsData(
-  drive::DriveInterface *const drive) {
+  drive::DriveInterface &drive) {
   std::list<log::Param> params;
   params.push_back(log::Param("TPVID", m_vid));
   params.push_back(log::Param("unitName", m_driveConfig.unitName));
 
   m_log(LOG_INFO, "Cleaner checking tape contains data", params);
-  if(drive->isTapeBlank()) {
+  if(drive.isTapeBlank()) {
     castor::exception::Exception ex;
     ex.getMessage() << "Tape is completely blank when it should be labeled";
     throw ex;
@@ -196,14 +198,14 @@ void castor::tape::tapeserver::daemon::CleanerSession::checkTapeContainsData(
 // checkVolumeLabel
 //------------------------------------------------------------------------------
 std::string castor::tape::tapeserver::daemon::CleanerSession::checkVolumeLabel(
-  drive::DriveInterface *const drive) {
+  drive::DriveInterface &drive) {
   tapeFile::VOL1 vol1;
   std::list<log::Param> params;
   params.push_back(log::Param("TPVID", m_vid));
   params.push_back(log::Param("unitName", m_driveConfig.unitName));
   
   try {
-    drive->readExactBlock((void * )&vol1, sizeof(vol1),
+    drive.readExactBlock((void * )&vol1, sizeof(vol1),
       "[CleanerSession::clean()] - Reading header VOL1");
     vol1.verify();
 
@@ -235,7 +237,7 @@ std::string castor::tape::tapeserver::daemon::CleanerSession::checkVolumeLabel(
 // unloadTape
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CleanerSession::unloadTape(
-  const std::string &vid, drive::DriveInterface *const drive) {
+  const std::string &vid, drive::DriveInterface &drive) {
   std::list<log::Param> params;
   params.push_back(log::Param("TPVID", vid));
   params.push_back(log::Param("unitName", m_driveConfig.unitName));
@@ -251,7 +253,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::unloadTape(
 
   try {
     m_log(LOG_INFO, "Cleaner unloading tape", params);
-    drive->unloadTape();
+    drive.unloadTape();
     m_log(LOG_INFO, "Cleaner unloaded tape", params);
   } catch (castor::exception::Exception &ne) {
     castor::exception::Exception ex;

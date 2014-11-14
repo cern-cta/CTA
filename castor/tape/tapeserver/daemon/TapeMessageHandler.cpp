@@ -271,16 +271,12 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   try {
     castor::messages::LabelError rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
-    castor::exception::Exception labelEx(rqstBody.code());
-    labelEx.getMessage() << rqstBody.message();
     log::Param params[] = {
-      log::Param("code", labelEx.code()),
-      log::Param("message", labelEx.getMessage().str())};
+      log::Param("message", rqstBody.message())};
     m_log(LOG_INFO, "Received LabelError", params);
 
-    CatalogueDrive &drive =
-      m_driveCatalogue.findDrive(rqstBody.unitname());
-    drive.getLabelSession().receivedLabelError(labelEx);
+    CatalogueDrive &drive = m_driveCatalogue.findDrive(rqstBody.unitname());
+    drive.getLabelSession().receivedLabelError(rqstBody.message());
 
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;

@@ -143,11 +143,11 @@ public:
   bool tapeIsBeingMounted() const throw();
 
   /**
-   * To be called if the label session has sent tapserverd a label error.
+   * To be called when the label session has sent tapeserverd a label error.
    *
-   * @param labelEx The label error.
+   * @param message The error message.
    */
-  void receivedLabelError(const castor::exception::Exception &labelEx);
+  void receivedLabelError(const std::string &message);
 
 protected:
 
@@ -198,7 +198,7 @@ private:
   /**
    * List of label errors receved from the label session.
    */
-  std::list<castor::exception::Exception> m_labelErrors;
+  std::list<std::string> m_labelErrors;
 
   /**
    * Determines whether or not the user of the label session has the access
@@ -220,6 +220,27 @@ private:
     legacymsg::CupvProxy &cupv,
     const legacymsg::TapeLabelRqstMsgBody &labelJob,
     const int labelCmdConnection);
+
+  /**
+   * Concatenates all of the errors received from the label session into a
+   * single string.
+   *
+   * @param separator The separator to be placed between each error message.
+   * @return The result.
+   */
+  std::string concatLabelErrors(const std::string &separator);
+
+  /**
+   * Sends a failure reply to the tape labeling command-line tool.  The error
+   * message sent is the concatenation of all of the errors received from the
+   * label session.
+   */
+  void sendFailureReplyToLabelCommand();
+
+  /**
+   * Sends a success reply to the tape labeling command-line tool.
+   */
+  void sendSuccessReplyToLabelCommand();
 
 }; // class CatalogueLabelSession
 

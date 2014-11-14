@@ -70,24 +70,11 @@ namespace daemon {
     /** 
      * Execute the session and return the type of action to be performed
      * immediately after the session has completed.
-     *  
-     * The session is responsible for mounting a tape into the tape drive,
-     * working with that tape, unloading the tape from the drive and then
-     * dismounting the tape from the drive and storing it back in its home slot
-     * within the tape library.
-     *
-     * If this method throws an exception and the session is not a cleaner
-     * session then it assumed that the post session action is
-     * EndOfSessionAction::CLEAN_DRIVE.
-     *
-     * If this method throws an exception and the session is a cleaner
-     * session then it assumed that the post session action is
-     * EndOfSessionAction::MARK_DRIVE_AS_DOWN.
      *
      * @return Returns the type of action to be performed after the session has
      * completed.
      */
-    EndOfSessionAction execute();
+    EndOfSessionAction execute() throw();
     
   private:
 
@@ -128,6 +115,13 @@ namespace daemon {
      */
     const uint32_t m_driveReadyDelayInSeconds;
 
+    /** 
+     * Execute the session and return the type of action to be performed
+     * immediately after the session has completed.
+     *
+     * @return Returns the type of action to be performed after the session has
+     * completed.
+     */
     EndOfSessionAction exceptionThrowingExecute();
 
     /**
@@ -143,21 +137,21 @@ namespace daemon {
      *
      * @return The tape drive.
      */
-    drive::DriveInterface *createDrive();
+    std::auto_ptr<drive::DriveInterface> createDrive();
 
     /**
      * Waits for the specified drive to be ready.
      *
      * @param drive The tape drive.
      */
-    void waitUntilDriveIsReady(drive::DriveInterface *const drive);
+    void waitUntilDriveIsReady(drive::DriveInterface &drive);
 
     /**
      * Rewinds the specified tape drive.
      *
      * @param drive The tape drive.
      */
-    void rewindDrive(drive::DriveInterface *const drive);
+    void rewindDrive(drive::DriveInterface &drive);
 
     /**
      * Checks the tape in the specified tape drive contains some data where no
@@ -165,7 +159,7 @@ namespace daemon {
      *
      * @param drive The tape drive.
      */
-    void checkTapeContainsData(drive::DriveInterface *const drive);
+    void checkTapeContainsData(drive::DriveInterface &drive);
 
     /**
      * Checks that the tape in the specified drive contains a valid volume
@@ -175,7 +169,7 @@ namespace daemon {
      * tested is present and rewound to the beginning.
      * @return The VSN stored within the colue label.
      */
-    std::string checkVolumeLabel(drive::DriveInterface *const drive);
+    std::string checkVolumeLabel(drive::DriveInterface &drive);
 
     /**
      * Unloads the specified tape from the specified tape drive.
@@ -184,7 +178,7 @@ namespace daemon {
      * that the value of this field is only used for logging purposes.
      * @param drive The tape drive.
      */
-    void unloadTape(const std::string &vid, drive::DriveInterface *const drive);
+    void unloadTape(const std::string &vid, drive::DriveInterface &drive);
 
     /**
      * Dismounts the specified tape.

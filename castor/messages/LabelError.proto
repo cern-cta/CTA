@@ -22,9 +22,6 @@ message LabelError {
   // The unit name of the drive
   required string unitname = 1;
 
-  // The error code
-  required uint32 code = 2;
-
   // The error message
-  required string message = 3;
+  required string message = 2;
 }
