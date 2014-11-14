@@ -169,9 +169,9 @@ void castor::tape::tapeserver::daemon::CleanerSession::rewindDrive(
   params.push_back(log::Param("TPVID", m_vid));
   params.push_back(log::Param("unitName", m_driveConfig.unitName));
 
-  m_log(LOG_INFO, "Cleaner rewinding drive", params);
+  m_log(LOG_INFO, "Cleaner rewinding tape", params);
   drive->rewind();
-  m_log(LOG_INFO, "Cleaner successfully rewound drive", params);
+  m_log(LOG_INFO, "Cleaner successfully rewound tape", params);
 }
 
 //------------------------------------------------------------------------------
