@@ -1325,7 +1325,10 @@ BEGIN
                                          dconst.DISKSERVER_READONLY)
                AND DiskServer.hwOnline = 1
              UNION ALL
-            SELECT DiskCopy.castorFile,
+            SELECT /*+ LEADING(DiskCopy DiskServer)
+                       USE_NL(DiskCopy DiskServer)
+                       INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
+                   DiskCopy.castorFile,
                    DiskServer.name || ':' || DiskCopy.path AS filePath, 0 AS rate
               FROM DiskServer, DiskCopy
              WHERE DiskCopy.status = dconst.DISKCOPY_VALID
