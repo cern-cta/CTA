@@ -263,10 +263,16 @@ void castor::gc::SynchronizationThread::syncDataPools() {
     sleep(m_chunkInterval);
     return;
   }
+  const char* userId = getconfent("DiskManager", "PoolUserId", 0);
+  if (0 == userId) {
+    userId = "castor";
+  }
   // Loop over the DataPools
   std::map<std::string, std::map<u_signed64, std::string> > paths;
   for (int dpIt = 0; dpIt < nbDPs; dpIt++) {
-    g_pool = dps[dpIt];
+    g_pool = userId;
+    g_pool += "@";
+    g_pool += dps[dpIt];
     librados::IoCtx* ioCtx = getRadosIoCtx(g_pool);
     if (0 == ioCtx) {
       castor::dlf::Param params[] =

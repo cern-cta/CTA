@@ -56,13 +56,27 @@ static std::pair<std::string, std::string> splitPoolFromObjName(const char* path
                                              spath.substr(slashPos+1));
 }
 
-static libradosstriper::RadosStriper* getRadosStriper(std::string pool) {
+static libradosstriper::RadosStriper* getRadosStriper(std::string userAtPool) {
   std::map<std::string, libradosstriper::RadosStriper*>::iterator it =
-    g_radosStripers.find(pool);
+    g_radosStripers.find(userAtPool);
   if (it == g_radosStripers.end()) {
     // we need to create a new radosStriper
+    // First find the user id (if any given) in the pool string
+    // format is [<userid>@]<poolname>
+    const char* userId = 0;
+    size_t pos = userAtPool.find('@');
+    std::string user;
+    std::string pool;
+    if (pos != std::string::npos) {
+      user = userAtPool.substr(0, pos);
+      userId = user.c_str();
+      pool = userAtPool.substr(pos+1);
+    } else {
+      pool = userAtPool;
+    }
+    // Create the Rados object
     librados::Rados cluster;
-    int rc = cluster.init(0);
+    int rc = cluster.init(userId);
     if (rc) return 0;
     rc = cluster.conf_read_file(NULL);
     if (rc) {
@@ -88,7 +102,7 @@ static libradosstriper::RadosStriper* getRadosStriper(std::string pool) {
       return 0;
     }
     it = g_radosStripers.insert(std::pair<std::string, libradosstriper::RadosStriper*>
-                                (pool, newStriper)).first;
+                                (userAtPool, newStriper)).first;
   }
   return it->second;
 }

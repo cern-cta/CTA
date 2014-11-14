@@ -83,7 +83,7 @@ BEGIN
          nbCopyAccesses = nbCopyAccesses + 1
    WHERE id = varDcId;
   IF selectedMountPoint IS NULL THEN
-    outPath := varDpName || '/' || outPath;
+    outPath := getConfigOption('DiskManager', 'PoolUserId', 'castor') || '@' || varDpName || '/' || outPath;
   ELSE
     outPath := selectedMountPoint || outPath;
   END IF;
@@ -196,7 +196,7 @@ BEGIN
   RETURNING path, status, diskCopySize
     INTO outPath, varDcStatus, varDiskCopySize;
   IF selectedMountPoint IS NULL THEN
-    outPath := varDpName || '/' || outPath;
+    outPath := getConfigOption('DiskManager', 'PoolUserId', 'castor') || '@' || varDpName || '/' || outPath;
   ELSE
     outPath := selectedMountPoint || outPath;
   END IF;

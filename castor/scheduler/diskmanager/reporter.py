@@ -95,30 +95,35 @@ class ReporterThread(threading.Thread):
           os.mkdir(os.sep.join([mountPoint, '%02d' % i]))
     # now handle dataPools if any
     if dataPools:
-      # get numbers from ceph
-      jsonoutput = subprocess.Popen(['ceph', 'df', '-f', 'json'],
-                                    stdout=subprocess.PIPE).communicate()[0]
-      pyoutput = json.loads(jsonoutput)
-      usedSpace = dict([(entry['name'], entry['stats']['bytes_used'])
-                        for entry in pyoutput['pools']
-                        if entry['name'] in dataPools])
-      jsonoutput = subprocess.Popen(['ceph', 'osd', 'dump', '-f', 'json'],
-                                    stdout=subprocess.PIPE).communicate()[0]
-      pyoutput = json.loads(jsonoutput)
-      quotas = dict([(entry['pool_name'], entry['quota_max_bytes'])
-                     for entry in pyoutput['pools']
-                     if entry['pool_name'] in dataPools])
-      for dataPool in dataPools:
-          try:
-                totalSpace = quotas[dataPool]
-                if 0 == totalSpace:
-                      raise Exception("Quota missing in datapool %s (set to 0)" % dataPool)
-                freeSpace = totalSpace - usedSpace[dataPool]
-                # fill report
-                reports.append((diskServerName, dataPool, maxFreeSpace, minAllowedFreeSpace,
-                                totalSpace, freeSpace, 0, 0, 0, 0))
-          except KeyError:
-                raise Exception("No data found for datapool %s - May be missing quota" % dataPool)
+      try :
+        # check which userId to use
+        userId = self.configuration.getValue('DiskManager', 'PoolUserId', 'castor')
+        # get numbers from ceph
+        jsonoutput = subprocess.Popen(['ceph', 'df', '--id', userId, '-f', 'json'],
+                                      stdout=subprocess.PIPE).communicate()[0]
+        pyoutput = json.loads(jsonoutput)
+        usedSpace = dict([(entry['name'], entry['stats']['bytes_used'])
+                          for entry in pyoutput['pools']
+                          if entry['name'] in dataPools])
+        jsonoutput = subprocess.Popen(['ceph', 'osd', 'dump', '--id', userId, '-f', 'json'],
+                                      stdout=subprocess.PIPE).communicate()[0]
+        pyoutput = json.loads(jsonoutput)
+        quotas = dict([(entry['pool_name'], entry['quota_max_bytes'])
+                       for entry in pyoutput['pools']
+                       if entry['pool_name'] in dataPools])
+        for dataPool in dataPools:
+            try:
+                  totalSpace = quotas[dataPool]
+                  if 0 == totalSpace:
+                        raise Exception("Quota missing in datapool %s (set to 0)" % dataPool)
+                  freeSpace = totalSpace - usedSpace[dataPool]
+                  # fill report
+                  reports.append((diskServerName, dataPool, maxFreeSpace, minAllowedFreeSpace,
+                                  totalSpace, freeSpace, 0, 0, 0, 0))
+            except KeyError:
+                  raise Exception("No data found for datapool %s - May be missing quota" % dataPool)
+      except ValueError, e:
+        raise Exception("Error caught in trying to build report for Datapools : %s" % e)
     return tuple(reports)
 
   def run(self):

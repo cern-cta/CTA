@@ -416,7 +416,7 @@ BEGIN
                AND DiskServer.name = diskServerName
              UNION ALL
             SELECT DiskCopy.castorFile,
-                   DataPool.name || '/' || DiskCopy.path AS path, DiskCopy.id,
+                   getConfigOption('DiskManager', 'PoolUserId', 'castor') || '@' || DataPool.name || '/' || DiskCopy.path AS path, DiskCopy.id,
                    DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
                    getObjStatusName('DiskCopy', 'gcType', DiskCopy.gcType) AS gcType,
                    getSvcClassListDP(DiskServer.dataPool) AS svcClassList
