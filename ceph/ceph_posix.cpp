@@ -276,12 +276,13 @@ ssize_t ceph_getxattr(const std::string &pool, const std::string &objname,
   }
   ceph::bufferlist bl;
   int rc = striper->getxattr(objname, name, bl);
-  if (rc) {
+  if (rc < 0) {
     errno = -rc;
     return -1;
   }
-  bl.copy(0, size, value);
-  return 0;
+  size_t returned_size = (size_t)rc<size?rc:size;
+  bl.copy(0, returned_size, value);
+  return returned_size;
 }
 
 int ceph_setxattr(const std::string &pool, const std::string &objname,

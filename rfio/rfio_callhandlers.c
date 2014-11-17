@@ -167,13 +167,13 @@ int rfio_handle_close(void *ctx,
       /* This is a write */
       /* File still exists - this is a candidate for migration regardless of its size (zero-length are ignored in the stager) */
       /* first we try to read a file xattr for checksum */
-      if ((xattr_len = ceph_posix_getxattr(internal_context->pfn, "user.castor.checksum.value", csumvalue, CA_MAXCKSUMLEN)) == -1) {
+      if ((xattr_len = ceph_posix_getxattr(internal_context->pfn, "user.castor.checksum.value", csumvalue, CA_MAXCKSUMLEN-1)) == -1) {
         (*logfunc)(LOG_ERR, "rfio_handle_close: getxattr failed for user.castor.checksum.value, skipping checksum. Error=%d\n", errno);
         strcpy(csumtype, "NO");
       } else {
         csumvalue[xattr_len] = '\0';
         (*logfunc)(LOG_DEBUG,"rfio_handle_close: csumvalue for the file on the disk=0x%s\n", csumvalue);
-        if ((xattr_len = ceph_posix_getxattr(internal_context->pfn, "user.castor.checksum.type", csumtype, CA_MAXCKSUMNAMELEN)) == -1) {
+        if ((xattr_len = ceph_posix_getxattr(internal_context->pfn, "user.castor.checksum.type", csumtype, CA_MAXCKSUMNAMELEN-1)) == -1) {
           (*logfunc)(LOG_ERR, "rfio_handle_close: getxattr failed for user.castor.checksum.type, skipping checksum. Error=%d\n", errno);
           strcpy(csumtype, "NO");
         } else {
