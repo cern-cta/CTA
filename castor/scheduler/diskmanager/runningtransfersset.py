@@ -221,8 +221,8 @@ class RunningTransfersSet(object):
     finally:
       self.lock.release()
 
-  def remove(self, transferIds):
-    '''removes a transfer from the list, and kills corresponding process, when possible'''
+  def kill(self, transferIds):
+    '''removes a set of transfers from the list, and kills corresponding process, when possible'''
     self.lock.acquire()
     try:
       # kill what can be killed
@@ -232,6 +232,16 @@ class RunningTransfersSet(object):
           rTransfer.process.terminate()
       # cleanup list of running transfers
       self.transfers = set(rTransfer for rTransfer in self.transfers if rTransfer.transfer.transferId not in transferIds)
+    finally:
+      self.lock.release()
+
+  def remove(self, transfer):
+    '''removes a transfer from the list, assuming the corresponding mover process is gone'''
+    self.lock.acquire()
+    try:
+      self.transfers.remove(transfer)
+    except KeyError:
+      pass
     finally:
       self.lock.release()
 

@@ -95,7 +95,7 @@ class MoverReqHandlerThread(threading.Thread):
     # find transfer in runningTransfers, raise KeyError if not found
     t = self.runningTransfers.get(transferid)
     # remove it from there as it is not running any longer
-    self.runningTransfers.remove([transferid])
+    self.runningTransfers.remove(t)
     # get the admin timeout
     timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
     closeTime = time.time()

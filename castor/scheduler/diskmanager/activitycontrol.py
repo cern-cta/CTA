@@ -147,7 +147,7 @@ class ActivityControlThread(threading.Thread):
       # log "Failed to execute mover" with all details about the transfer
       dlf.writeerr(msgs.MOVERSTARTFAILED, transfer=transfer, error=str(e))
       # clean up this transfer from the list of running transfers
-      self.runningTransfers.remove([transfer.transferId])
+      self.runningTransfers.remove(transfer)
 
   def run(self):
     '''main method, containing the infinite loop'''
