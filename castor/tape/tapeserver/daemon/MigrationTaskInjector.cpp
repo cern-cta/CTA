@@ -198,7 +198,31 @@ namespace daemon {
             m_parent.m_lc.log(LOG_INFO,"In MigrationTaskInjector::WorkerThread::run(): got empty list, but not last call");
           }
         } else {
+          // Accumulate the content of the work to do, so we stop if there is
+          // than half what we asked for.
+          uint64_t totalSize = 0;
+          uint64_t filesCount = 0;
+          for(std::vector<tapegateway::FileToMigrateStruct*>::iterator f = 
+              filesToMigrateList->filesToMigrate().begin();
+              f != filesToMigrateList->filesToMigrate().end(); f++) {
+            totalSize += (*f)->fileSize();
+            filesCount++;
+          }
+          // Inject the tasks
           m_parent.injectBulkMigrations(filesToMigrateList->filesToMigrate());
+          // Decide on continuation
+          if(filesCount < req.nbMaxFiles / 2 && totalSize < req.byteSizeThreshold) {
+            // The client starts to dribble files at a low rate. Better finish
+            // the session now, so we get a clean batch on a later mount.
+            log::ScopedParamContainer params(m_parent.m_lc);
+            params.add("filesRequested", req.nbMaxFiles)
+                  .add("bytesRequested", req.byteSizeThreshold)
+                  .add("filesReceived", filesCount)
+                  .add("bytesReceived", totalSize);
+            m_parent.m_lc.log(LOG_INFO, "Got less than half the requested work to do: triggering the end of session.");
+            m_parent.signalEndDataMovement();
+            break;
+          }
         }
       } //end of while(1)
     }//end of try
