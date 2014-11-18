@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/acs/AcsDismountCmd.hpp"
-#include "castor/tape/utils/utils.hpp"
 
 #include <getopt.h>
  

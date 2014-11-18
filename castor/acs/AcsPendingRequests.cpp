@@ -23,9 +23,8 @@
 
 #include "castor/acs/AcsPendingRequests.hpp"
 #include "castor/acs/AcsRequestDismountTape.hpp"
-#include "castor/tape/utils/utils.hpp"
-#include "castor/messages/AcsDismountTape.pb.h"
 #include "castor/acs/Constants.hpp"
+#include "castor/messages/AcsDismountTape.pb.h"
 
 //-----------------------------------------------------------------------------
 // constructor
@@ -179,7 +178,7 @@ void castor::acs::AcsPendingRequests::checkAndAddRequest(
  const messages::Frame &rqst, messages::ZmqSocketST &socket) {
   log::Param params[] = {
     log::Param("sender identity", 
-      tape::utils::toHexString(address.getData(), address.size()))
+      utils::hexDump(address.getData(), address.size()))
   };
   m_log(LOG_DEBUG, "AcsPendingRequests::checkAndAddRequest", params);
   switch(rqst.header.msgtype()) {
@@ -231,7 +230,7 @@ void castor::acs::AcsPendingRequests::checkAndAddRequestDismountTape(
     log::Param("panel", panel),
     log::Param("drive", drive),
     log::Param("sender identity", 
-      tape::utils::toHexString(address.getData(), address.size()))
+      utils::hexDump(address.getData(), address.size()))
   };
   m_log(LOG_INFO, "Dismount tape", params);
    

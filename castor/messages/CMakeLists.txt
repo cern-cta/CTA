@@ -21,5 +21,5 @@ add_library(castormessages SHARED
   ZmqSocketST.cpp
 )
 
-target_link_libraries(castormessages protobuf ssl)
+target_link_libraries(castormessages castormediachangerclient protobuf ssl zmq)
 install (TARGETS castormessages DESTINATION ${CASTOR_DEST_LIB_DIR})

@@ -565,3 +565,20 @@ std::string castor::utils::tapeStatusToString(const uint32_t status) {
 
   return str;
 }
+
+//-----------------------------------------------------------------------------
+// hexDump
+//-----------------------------------------------------------------------------
+std::string castor::utils::hexDump(const void * mem, unsigned int n ){
+  std::ostringstream out;
+  const unsigned char * p = reinterpret_cast< const unsigned char *>( mem );
+  for ( unsigned int i = 0; i < n; i++ ) {
+     if (0 != i) {
+       out << " ";
+     }
+     out << std::uppercase << std::hex << std::setw(2) <<
+       std::setfill( out.widen('0') ) << int(p[i]);
+
+  }
+  return out.str();
+}

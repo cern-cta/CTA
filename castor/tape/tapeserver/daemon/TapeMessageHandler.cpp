@@ -20,7 +20,9 @@
  *****************************************************************************/
 
 
+#include "castor/messages/AddLogParams.pb.h"
 #include "castor/messages/Constants.hpp"
+#include "castor/messages/DeleteLogParams.pb.h"
 #include "castor/messages/Exception.pb.h"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/LabelError.pb.h"
@@ -35,17 +37,16 @@
 #include "castor/messages/TapeMountedForRecall.pb.h"
 #include "castor/messages/TapeUnmounted.pb.h"
 #include "castor/messages/TapeUnmountStarted.pb.h"
-#include "castor/messages/AddLogParams.pb.h"
-#include "castor/messages/DeleteLogParams.pb.h"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape.h"
 #include "h/serrno.h"
 #include "h/vmgr_constants.h"
+
 #include <sstream>
 #include <iomanip>
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -136,7 +137,7 @@ bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
   }
   log::Param params[] = {
       log::Param("sender identity", 
-              tape::utils::toHexString(adress.getData(),adress.size()))
+              castor::utils::hexDump(adress.getData(),adress.size()))
      };
   m_log(LOG_DEBUG, "handling event in TapeMessageHandler", params);
   

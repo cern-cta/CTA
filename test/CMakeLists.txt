@@ -180,7 +180,6 @@ target_link_libraries(castorUnitTests
   castorcommon
   castorclient
   castorlegacymsg
-  castortapeutils
   SCSI
   System
   Utils
@@ -195,7 +194,6 @@ target_link_libraries(castorUnitTests
   pthread
   castorcommon
   castorclient
-  castortapeutils
   castorvmgr
   castorvdqm
   ${LIBCAP_LIB}
@@ -235,7 +233,6 @@ target_link_libraries(castorThreadedUnitTests
   castorTapeServerDaemon
   TestDummies
   castortapegatewayprotocol
-  castortapeutils
   castorvdqm
   castorvmgr
   castorrfio

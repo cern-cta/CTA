@@ -22,7 +22,6 @@
  *****************************************************************************/
  
 #include "castor/tape/tpcp/StreamOperators.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 
 /**

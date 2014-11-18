@@ -25,7 +25,6 @@
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/legacymsg.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "castor/tape/tapeserver/daemon/LabelCmdAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/LabelCmdConnectionHandler.hpp"

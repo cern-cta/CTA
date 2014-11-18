@@ -23,11 +23,11 @@
 
 #pragma once
 
-#include "castor/mediachanger/MediaChangerFacade.hpp"
-#include "castor/messages/TapeserverProxy.hpp"
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/log/Logger.hpp"
+#include "castor/mediachanger/MediaChangerFacade.hpp"
+#include "castor/messages/TapeserverProxy.hpp"
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
@@ -35,7 +35,6 @@
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
-#include "castor/tape/utils/utils.hpp"
 
 namespace castor {
 namespace legacymsg {
@@ -136,6 +135,20 @@ namespace daemon {
     castor::server::ProcessCap &m_capUtils;
     /** hostname, used to report status of the drive */
     const std::string m_hostname;
+
+    /**
+     * Returns the string representation of the specified tapebridge client type
+     * from a tapegateay::Volume message (READ, WRITE or DUMP).
+     */
+    const char *volumeClientTypeToString(const tapegateway::ClientType mode)
+      const throw();
+
+    /**
+     * Returns the string representation of the specified volume mode from a
+     * tapegateay::Volume message (READ, WRITE or DUMP).
+     */
+    const char *volumeModeToString(const tapegateway::VolumeMode mode) const
+      throw();
   };
 }
 }

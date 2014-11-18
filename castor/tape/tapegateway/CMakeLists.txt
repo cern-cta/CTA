@@ -46,7 +46,7 @@ set_target_properties (tapegatewayd PROPERTIES
   COMPILE_FLAGS ${ORACLE_CPPFLAGS}
   LINK_FLAGS "-L${ORACLE_LIBDIR} -locci -lclntsh")
 target_link_libraries (tapegatewayd castorclient castorcnvs castorcommon
-  castorcommonora castorns castortapegatewayprotocol castortapeutils castorvdqm
+  castorcommonora castorns castortapegatewayprotocol castorvdqm
   castorvmgr castorserver)
 install (TARGETS tapegatewayd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (tapegatewayd)

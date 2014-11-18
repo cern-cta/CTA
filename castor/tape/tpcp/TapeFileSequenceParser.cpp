@@ -25,7 +25,6 @@
 #include "castor/tape/tpcp/TapeFileSequenceParser.hpp"
 #include "castor/tape/tpcp/TapeFseqRange.hpp"
 #include "castor/tape/tpcp/TapeFseqRangeList.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <string>

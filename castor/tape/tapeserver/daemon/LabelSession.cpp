@@ -21,22 +21,21 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/exception/Exception.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/legacymsg.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/log/LogContext.hpp"
-#include "castor/tape/tapeserver/daemon/LabelSession.hpp"
-#include "castor/tape/tapeserver/file/Structures.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "castor/System.hpp"
+#include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
+#include "castor/tape/tapeserver/file/Structures.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "h/Cns.h"
 #include "h/getconfent.h"
-#include "h/serrno.h"
 #include "h/log.h"
+#include "h/serrno.h"
 
 #include <memory>
 

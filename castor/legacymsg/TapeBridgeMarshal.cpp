@@ -25,7 +25,6 @@
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/TapeBridgeMarshal.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
 

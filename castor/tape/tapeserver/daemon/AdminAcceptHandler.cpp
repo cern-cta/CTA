@@ -24,15 +24,14 @@
 #include "castor/io/io.hpp"
 #include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/AdminConnectionHandler.hpp"
-#include "castor/utils/SmartFd.hpp"
-#include "h/common.h"
-#include "h/serrno.h"
-#include "h/Ctape.h"
-#include "h/vdqm_api.h"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
-#include "castor/tape/utils/utils.hpp"
+#include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
+#include "h/common.h"
+#include "h/Ctape.h"
+#include "h/serrno.h"
+#include "h/vdqm_api.h"
 
 #include <errno.h>
 #include <list>

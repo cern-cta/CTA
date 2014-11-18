@@ -42,7 +42,6 @@
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape.h"

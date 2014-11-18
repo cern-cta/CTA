@@ -27,12 +27,12 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/PermissionDenied.hpp"
 #include "castor/io/ServerSocket.hpp"
+#include "castor/tape/Constants.hpp"
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/Helper.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "h/Castor_limits.h"
 #include "h/vmgr_api.h"
 
@@ -233,6 +233,17 @@ protected:
    * callbacks from the tape-bridge daemon.
    */
   void setupCallbackSock();
+
+  /**
+   * Gets and returns the specified port number using getconfent or returns the
+   * specified default if getconfent cannot find it.
+   *
+   * @param catagory    The category of the configuration entry.
+   * @param name        The name of the configuration entry.
+   * @param defaultPort The default port number.
+   */
+  unsigned short getPortFromConfig(const char *const category,
+    const char *const name, const unsigned short defaultPort) const;
 
   /**
    * Request a drive from the VDQM to mount the specified tape for the
@@ -474,7 +485,8 @@ private:
    * @param filename The filename of the "filelist" file.
    * @param list     The list to which the filenames will be appended.
    */
-  void parseFileList(const std::string &filename, std::list<std::string> &list);
+  void parseFileList(const std::string &filename, std::list<std::string> &list)
+    const;
 
   /**
    * Appends each line of the specified file to the specified list of lines.
@@ -488,7 +500,7 @@ private:
    * @param lines The list to which each line of the file will be appended.
    */
   void readFileIntoList(const std::string &filename,
-    std::list<std::string> &lines);
+    std::list<std::string> &lines) const;
 
 }; // class TpcpCommand
 

@@ -38,7 +38,6 @@
 #include "castor/tape/tpcp/Helper.hpp"
 #include "castor/tape/tpcp/ReadTpCommand.hpp"
 #include "castor/tape/tpcp/TapeFileSequenceParser.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/Cupv_api.h"

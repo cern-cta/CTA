@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/acs/Acs.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <iomanip>

@@ -24,7 +24,6 @@
 #include "castor/acs/AcsRequest.hpp"
 #include "castor/messages/messages.hpp"
 #include "castor/messages/ReturnValue.pb.h"
-#include "castor/tape/utils/utils.hpp"
 
 //-----------------------------------------------------------------------------
 // constructor
@@ -40,7 +39,7 @@ castor::acs::AcsRequest::AcsRequest(messages::ZmqSocketST &socket,
   m_panel(panel),
   m_drive(drive), 
   m_socket(socket),
-  m_identity(tape::utils::toHexString(address.getData(),address.size())),
+  m_identity(utils::hexDump(address.getData(),address.size())),
   m_isReplaySent(false) {
     zmq_msg_init_size (&m_addressMsg, address.size());
     memcpy (zmq_msg_data (&m_addressMsg), (const void*)&address.getZmqMsg(), 

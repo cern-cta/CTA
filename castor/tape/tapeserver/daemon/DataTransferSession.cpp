@@ -21,6 +21,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/common/CastorConfiguration.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/System.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
@@ -34,10 +36,7 @@
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
-#include "castor/tape/utils/utils.hpp"
-#include "castor/common/CastorConfiguration.hpp"
 #include "h/log.h"
 #include "h/serrno.h"
 #include "h/stager_client_commandline.h"
@@ -156,8 +155,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
                .add("sendRecvDuration", reqReport.sendRecvDuration)
                .add("density", m_volInfo.density)
                .add("label", m_volInfo.labelObsolete)
-               .add("clientType", utils::volumeClientTypeToString(m_volInfo.clientType))
-               .add("mode", utils::volumeModeToString(m_volInfo.volumeMode));
+               .add("clientType", volumeClientTypeToString(m_volInfo.clientType))
+               .add("mode", volumeModeToString(m_volInfo.volumeMode));
     lc.log(LOG_INFO, "Got volume from client");
   }
   
@@ -534,5 +533,32 @@ castor::tape::tapeserver::daemon::DataTransferSession::~DataTransferSession()
   } catch(...) {
     m_log(LOG_ERR, "google::protobuf::ShutdownProtobufLibrary() threw an"
       " unexpected exception");
+  }
+}
+
+//-----------------------------------------------------------------------------
+// volumeClientTypeToString
+//-----------------------------------------------------------------------------
+const char *castor::tape::tapeserver::daemon::DataTransferSession::
+  volumeClientTypeToString(const tapegateway::ClientType mode) const throw() {
+  switch(mode) {
+  case tapegateway::TAPE_GATEWAY: return "TAPE_GATEWAY";
+  case tapegateway::READ_TP     : return "READ_TP";
+  case tapegateway::WRITE_TP    : return "WRITE_TP";
+  case tapegateway::DUMP_TP     : return "DUMP_TP";
+  default                       : return "UKNOWN";
+  }
+}   
+
+//-----------------------------------------------------------------------------
+// volumeModeToString
+//-----------------------------------------------------------------------------
+const char *castor::tape::tapeserver::daemon::DataTransferSession::
+  volumeModeToString(const tapegateway::VolumeMode mode) const throw() {
+  switch(mode) {
+  case tapegateway::READ : return "READ";
+  case tapegateway::WRITE: return "WRITE";
+  case tapegateway::DUMP : return "DUMP";
+  default                : return "UKNOWN";
   }
 }

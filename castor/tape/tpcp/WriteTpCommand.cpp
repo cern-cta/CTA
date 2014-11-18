@@ -37,7 +37,6 @@
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/Helper.hpp"
 #include "castor/tape/tpcp/WriteTpCommand.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/Cupv_api.h"

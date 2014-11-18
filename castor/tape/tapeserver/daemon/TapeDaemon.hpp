@@ -37,7 +37,6 @@
 #include "castor/tape/tapeserver/daemon/ProcessForkerConfig.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemonConfig.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <iostream>

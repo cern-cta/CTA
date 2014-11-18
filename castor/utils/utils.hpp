@@ -309,6 +309,14 @@ std::string getHostName();
  */
 std::string tapeStatusToString(const uint32_t status);
 
+/**
+ * Returns the hexadecimal dump of the specified memory.
+ *
+ * @param mem Pointer to the memory to be dumped.
+ * @param n The length of the memory to be dumped.
+ * @return The hexadecimal dump.
+ */
+std::string hexDump(const void *mem, unsigned int n);
+
 } // namespace utils
 } // namespace castor
-

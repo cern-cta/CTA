@@ -24,8 +24,10 @@
 #pragma once
 
 #include "castor/tape/tpcp/TpcpCommand.hpp"
+#include "castor/tape/tapegateway/ClientType.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
+#include "castor/tape/tapegateway/VolumeMode.hpp"
 #include <queue>
 
 namespace castor {

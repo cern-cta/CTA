@@ -74,7 +74,6 @@
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/WorkerThread.hpp"
 
-#include "castor/tape/utils/utils.hpp"
 #include "castor/utils/Timer.hpp"
 
 

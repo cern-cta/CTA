@@ -21,22 +21,23 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include <typeinfo>
-#include <memory>
-#include <queue>
-
-#include "ClientSimulator.hpp"
-#include "castor/tape/tapegateway/GatewayMessage.hpp"
-#include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
-#include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
+#include "castor/tape/tapegateway/FileMigrationReportList.hpp"
+#include "castor/tape/tapegateway/FilesToMigrateListRequest.hpp"
 #include "castor/tape/tapegateway/FilesToRecallListRequest.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
+#include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
+#include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
+#include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/tapeserver/client/ClientSimulator.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
-#include "castor/tape/tapegateway/FilesToMigrateListRequest.hpp"
-#include "castor/tape/tapegateway/FileMigrationReportList.hpp"
+
+#include <errno.h>
+#include <memory>
+#include <queue>
+#include <typeinfo>
 
 namespace castor {
 namespace tape {

@@ -24,7 +24,6 @@
 
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/RmcMarshal.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "h/rmc_constants.h"
 
 #include <string.h>

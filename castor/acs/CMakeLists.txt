@@ -86,7 +86,6 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     castorcommon
     castorserver
     castormessages
-    castortapeutils
     zmq
     ${STK_API_LIB}
     ${STK_UTL_LIB}
@@ -119,7 +118,6 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   target_link_libraries (castor-tape-acs-dismount
     castorclient
     castorcommon
-    castortapeutils
     ${STK_API_LIB}
     ${STK_UTL_LIB}
     ${STK_IPC_LIB}
@@ -146,7 +144,6 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   target_link_libraries (castor-tape-acs-mount
     castorclient
     castorcommon
-    castortapeutils
     ${STK_API_LIB}
     ${STK_UTL_LIB}
     ${STK_IPC_LIB}
@@ -171,7 +168,6 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   target_link_libraries (castor-tape-acs-queryvolume
     castorclient
     castorcommon
-    castortapeutils
     ${STK_API_LIB}
     ${STK_UTL_LIB}
     ${STK_IPC_LIB}

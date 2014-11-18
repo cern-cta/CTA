@@ -24,7 +24,6 @@
 
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
-#include "castor/tape/utils/utils.hpp"
 
 #include <errno.h>
 #include <iostream>

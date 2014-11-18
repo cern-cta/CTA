@@ -21,21 +21,20 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "ClientProxy.hpp"
 #include "castor/io/ClientSocket.hpp"
-#include "castor/tape/tapegateway/VolumeRequest.hpp"
-#include "castor/tape/tapegateway/Volume.hpp"
-#include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
-#include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/FilesToMigrateListRequest.hpp"
 #include "castor/tape/tapegateway/FilesToMigrateList.hpp"
 #include "castor/tape/tapegateway/FileMigrationReportList.hpp"
 #include "castor/tape/tapegateway/FilesToRecallListRequest.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
-#include "castor/tape/utils/utils.hpp"
+#include "castor/tape/tapegateway/NoMoreFiles.hpp"
+#include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
+#include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/tapegateway/VolumeRequest.hpp"
+#include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/utils/Timer.hpp"
 
 #include <cxxabi.h>

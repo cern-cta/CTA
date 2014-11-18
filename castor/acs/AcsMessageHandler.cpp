@@ -19,19 +19,18 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/messages/messages.hpp"
-#include "castor/messages/ReturnValue.pb.h"
-#include "castor/messages/AcsMountTapeReadOnly.pb.h"
-#include "castor/messages/AcsMountTapeReadWrite.pb.h"
-#include "castor/messages/AcsDismountTape.pb.h"
 #include "castor/acs/Constants.hpp"
 #include "castor/acs/AcsMessageHandler.hpp"
 #include "castor/acs/AcsDismountTape.hpp"
 #include "castor/acs/AcsMountTapeReadOnly.hpp"
 #include "castor/acs/AcsMountTapeReadWrite.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "castor/acs/Acs.hpp"
 #include "castor/acs/AcsImpl.hpp"
+#include "castor/messages/messages.hpp"
+#include "castor/messages/ReturnValue.pb.h"
+#include "castor/messages/AcsMountTapeReadOnly.pb.h"
+#include "castor/messages/AcsMountTapeReadWrite.pb.h"
+#include "castor/messages/AcsDismountTape.pb.h"
 
 #include <sstream>
 
@@ -124,7 +123,7 @@ bool castor::acs::AcsMessageHandler::handleEvent(
   }
   log::Param params[] = {
       log::Param("sender identity", 
-              tape::utils::toHexString(address.getData(),address.size()))
+              utils::hexDump(address.getData(),address.size()))
      };
   m_log(LOG_DEBUG, "handling event in AcsMessageHandler", params);
  

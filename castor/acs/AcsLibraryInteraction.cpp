@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/acs/AcsLibraryInteraction.hpp"
-#include "castor/tape/utils/utils.hpp"
 
 #include <stdlib.h>
 

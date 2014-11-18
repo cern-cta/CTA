@@ -22,10 +22,10 @@
  *****************************************************************************/
  
 #include "castor/Constants.hpp"
-#include "castor/PortNumbers.hpp"
-#include "castor/System.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/io.hpp"
+#include "castor/PortNumbers.hpp"
+#include "castor/System.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
@@ -39,7 +39,6 @@
 #include "castor/tape/tpcp/TapeFileSequenceParser.hpp"
 #include "castor/tape/tpcp/TapeFseqRangeListSequence.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Cgetopt.h"
 #include "h/common.h"
@@ -528,9 +527,9 @@ void castor::tape::tpcp::TpcpCommand::vmgrQueryTape() {
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::setupCallbackSock() {
 
-  const unsigned short lowPort = utils::getPortFromConfig(
+  const unsigned short lowPort = getPortFromConfig(
     "TAPESERVERCLIENT", "LOWPORT", TAPESERVERCLIENT_LOWPORT);
-  const unsigned short highPort = utils::getPortFromConfig(
+  const unsigned short highPort = getPortFromConfig(
     "TAPESERVERCLIENT", "HIGHPORT", TAPESERVERCLIENT_HIGHPORT);
 
   // Bind the tape-server callback-socket
@@ -538,6 +537,44 @@ void castor::tape::tpcp::TpcpCommand::setupCallbackSock() {
   m_callbackSock.listen();
 }
 
+//------------------------------------------------------------------------------
+// getPortFromConfig
+//------------------------------------------------------------------------------
+unsigned short castor::tape::tpcp::TpcpCommand::getPortFromConfig(
+  const char *const category, const char *const name,
+  const unsigned short defaultPort) const {
+
+  unsigned short    port  = defaultPort;
+  const char *const value = getconfent(category, name, 0);
+
+  if(value != NULL) {
+    if(castor::utils::isValidUInt(value)) {
+      port = atoi(value);
+    } else {
+      exception::InvalidConfigEntry ex(category, name, value);
+
+      ex.getMessage() <<
+        "Invalid '" << category << " " << name << "' configuration entry"
+        ": Value should be an unsigned integer greater than 0"
+        ": Value='" << value << "'";
+
+      throw ex;
+    }
+
+    if(port == 0) {
+      exception::InvalidConfigEntry ex(category, name, value);
+
+      ex.getMessage() <<
+        "Invalid '" << category << " " << name << "' configuration entry"
+        ": Value should be an unsigned integer greater than 0"
+        ": Value='" << value << "'";
+
+      throw ex;
+    }
+  }
+
+  return port;
+}
 
 //------------------------------------------------------------------------------
 // requestDriveFromVdqm 
@@ -1117,7 +1154,7 @@ void castor::tape::tpcp::TpcpCommand::localStat(const char *const path,
 // parseFileList
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::parseFileList(const std::string &filename,
-  std::list<std::string> &list)  {
+  std::list<std::string> &list) const {
 
   readFileIntoList(filename, list);
 
@@ -1143,7 +1180,7 @@ void castor::tape::tpcp::TpcpCommand::parseFileList(const std::string &filename,
 // readFileIntoList
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::readFileIntoList(
-  const std::string &filename, std::list<std::string> &lines)  {
+  const std::string &filename, std::list<std::string> &lines) const {
 
   std::ifstream file(filename.c_str());
 

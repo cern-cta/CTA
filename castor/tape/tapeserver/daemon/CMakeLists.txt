@@ -72,10 +72,10 @@ target_link_libraries(tapeserverd
   castorserver
   castortapegatewayprotocol
   castortapereactor
-  castortapeutils
   ${LIBCAP_LIB}
   ${ZLIB_LIBRARIES}
-  castormessages)
+  castormessages
+  zmq)
 
 install (TARGETS tapeserverd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (tapeserverd)

@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/acs/AcsMountCmd.hpp"
-#include "castor/tape/utils/utils.hpp"
 
 #include <getopt.h>
 #include <iostream>
