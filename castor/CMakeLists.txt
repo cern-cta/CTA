@@ -31,6 +31,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
   add_subdirectory (server)
   add_subdirectory (stager/daemon)
   add_subdirectory (tape)
+  add_subdirectory (utils)
   add_subdirectory (vdqm)
   add_subdirectory (acs)
 endif (${COMPILE_SERVER} STREQUAL "1")
@@ -199,11 +200,6 @@ set (CLIENT_LIB_SRC_FILES
   stager/NsFileId.cpp
   stager/BulkRequestResult.cpp
   stager/FileResult.cpp
-  utils/DebugBuf.cpp
-  utils/SmartFd.cpp
-  utils/SmartFILEPtr.cpp
-  utils/Timer.cpp
-  utils/utils.cpp
   vdqm/ClientIdentification.cpp
   vdqm/TapeDrive.cpp
   vdqm/DeviceGroupName.cpp
@@ -239,7 +235,7 @@ add_library (castorclient SHARED
 # the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
 set_property(SOURCE ../client/src/stager/stager_errmsg.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 CastorSetLibraryVersions (castorclient)
-target_link_libraries (castorclient castordlf)
+target_link_libraries (castorclient castordlf castorutils)
 install (TARGETS castorclient DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 if (${COMPILE_SERVER} STREQUAL "1")
