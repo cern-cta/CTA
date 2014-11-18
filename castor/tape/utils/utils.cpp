@@ -92,61 +92,6 @@ const char *castor::tape::utils::volumeModeToString(
 }
 
 //------------------------------------------------------------------------------
-// readFileIntoList
-//------------------------------------------------------------------------------
-void castor::tape::utils::readFileIntoList(const char *const filename,
-  std::list<std::string> &lines)  {
-
-  std::ifstream file(filename);
-
-  if(!file) {
-    castor::exception::Exception ex(ECANCELED);
-
-    ex.getMessage() << "Failed to open file: Filename='" << filename << "'";
-
-    throw ex;
-  } 
-
-  std::string line;
-
-  while(!file.eof()) {
-    line.clear();
-
-    std::getline(file, line, '\n');
-
-    if(!line.empty() || !file.eof()) {
-      lines.push_back(line);
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// parseFileList
-//------------------------------------------------------------------------------
-void castor::tape::utils::parseFileList(const char *filename,
-  std::list<std::string> &list)  {
-
-  readFileIntoList(filename, list);
-
-  std::list<std::string>::iterator itor=list.begin();
-
-  while(itor!=list.end()) {
-    std::string &line = *itor;
-
-    // Left and right trim the line
-    line = castor::utils::trimString(line);
-
-    // Remove the line if it is an empty string or if it starts with the shell
-    // comment character '#'
-    if(line.empty() || (line.size() > 0 && line[0] == '#')) {
-      itor = list.erase(itor);
-    } else {
-      itor++;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
 // getPortFromConfig
 //------------------------------------------------------------------------------
 unsigned short castor::tape::utils::getPortFromConfig(

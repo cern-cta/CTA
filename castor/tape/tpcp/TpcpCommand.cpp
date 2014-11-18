@@ -52,6 +52,7 @@
 
 #include <ctype.h>
 #include <exception>
+#include <fstream>
 #include <getopt.h>
 #include <iostream>
 #include <list>
@@ -171,7 +172,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
   try {
     executeCommand();
   } catch(castor::exception::Exception &ex) {
-    displayErrorMsgCleanUpAndExit(ex.getMessage().str().c_str());
+    displayErrorMsgCleanUpAndExit(ex.getMessage().str());
   } catch(std::exception &se) {
     displayErrorMsgCleanUpAndExit(se.what());
   } catch(...) {
@@ -203,7 +204,7 @@ int castor::tape::tpcp::TpcpCommand::determineCommandLineReturnCode()
 // displayErrorMsgCleanUpAndExit
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::displayErrorMsgCleanUpAndExit(
-  const char *msg) throw() {
+  const std::string &msg) throw() {
 
   // Display error message
   {
@@ -287,8 +288,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
   if(m_cmdLine.fileListSet) {
     // Parse the "filelist" file into the list of file names to be
     // processed
-    utils::parseFileList(m_cmdLine.fileListFilename.c_str(),
-      m_filenames);
+    parseFileList(m_cmdLine.fileListFilename, m_filenames);
   } else {
     if(!m_cmdLine.nodataSet) {
       // Copy the command-line argument file-names into the list of file-names
@@ -1110,5 +1110,60 @@ void castor::tape::tpcp::TpcpCommand::localStat(const char *const path,
     ex.getMessage() << "Failed to stat \"" << path << "\""
       ": " << errMsg;
     throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// parseFileList
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::parseFileList(const std::string &filename,
+  std::list<std::string> &list)  {
+
+  readFileIntoList(filename, list);
+
+  std::list<std::string>::iterator itor=list.begin();
+
+  while(itor!=list.end()) {
+    std::string &line = *itor;
+
+    // Left and right trim the line
+    line = castor::utils::trimString(line);
+
+    // Remove the line if it is an empty string or if it starts with the shell
+    // comment character '#'
+    if(line.empty() || (line.size() > 0 && line[0] == '#')) {
+      itor = list.erase(itor);
+    } else {
+      itor++;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// readFileIntoList
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::readFileIntoList(
+  const std::string &filename, std::list<std::string> &lines)  {
+
+  std::ifstream file(filename.c_str());
+
+  if(!file) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() << "Failed to open file: Filename='" << filename << "'";
+
+    throw ex;
+  } 
+
+  std::string line;
+
+  while(!file.eof()) {
+    line.clear();
+
+    std::getline(file, line, '\n');
+
+    if(!line.empty() || !file.eof()) {
+      lines.push_back(line);
+    }
   }
 }

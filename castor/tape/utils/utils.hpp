@@ -70,37 +70,6 @@ const char *volumeClientTypeToString(const tapegateway::ClientType mode)
 const char *volumeModeToString(const tapegateway::VolumeMode mode) throw();
 
 /**
- * Appends each line of the specified file to the specified list of lines.
- * The new-line characters are extracted from the file, but they are not
- * stored in the lines appended to the list.
- *
- * An empty line, with or without a delimiting '\n' character will be appended
- * to the list od lines as an empty string.
- *
- * @param filename The filename of the file to be read.
- * @param lines The list to which each line of the file will be appended.
- */
-void readFileIntoList(const char *const filename,
-  std::list<std::string> &lines) ;
-
-/**
- * Appends to the specified list the filenames from the "filelist" file with
- * the specified filename.
- *
- * This method:
- * <ul>
- * <li>Trims leading and trailing white space from each line
- * <li>Ignores blank lines with or without white space.
- * <li>Ignores comment lines, i.e. those starting with a '#' after their
- * leading and trailing white space has been trimmed.
- * </ul>
- *
- * @param filename The filename of the "filelist" file.
- * @param list     The list to which the filenames will be appended.
- */
-void parseFileList(const char *filename, std::list<std::string> &list);
-
-/**
  * Gets and returns the specified port number using getconfent or returns the
  * specified default if getconfent cannot find it.
  *

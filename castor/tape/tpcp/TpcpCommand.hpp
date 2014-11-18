@@ -386,33 +386,6 @@ protected:
 private:
 
   /**
-   * Displays the specified error message, cleans up (at least deletes the
-   * volume-request id if there is one) and then calls exit(1) indicating an
-   * error.
-   */
-  void displayErrorMsgCleanUpAndExit(
-    const char *msg) throw();
-
-  /**
-   * Executes the main code of the command.
-   *
-   * The specification of this method intentionally does not have a throw()
-   * clause so that any type of exception can be thrown.
-   */
-  void executeCommand();
-
-  /**
-   * Determines and returns the numeric code that should be returned by this
-   * command-line tool.
-   */
-  int determineCommandLineReturnCode() const throw();
-
-  /**
-   * Deletes the specified VDQM volume request.
-   */
-  void deleteVdqmVolumeRequest();
-
-  /**
    * The SIGINT signal handler.
    */
   static void sigintHandler(int signal);
@@ -421,15 +394,6 @@ private:
    * The SIGINT action handler structure to be used with sigaction.
    */
   struct sigaction m_sigintAction;
-
-  /**
-   * This method prefixes the local hostname onto the beginning of local
-   * file-names.
-   *
-   * This method prefixes the current working directory onto the
-   * beginning of relative-path file-names.
-   */
-  void translateFilenamesIntoRemoteFilenames();
 
   /**
    * The current working directory where tpcp command is run.
@@ -460,10 +424,74 @@ private:
    */
   bool m_tapeServerReportedATapeSessionError;
 
+  /**
+   * This method prefixes the local hostname onto the beginning of local
+   * file-names.
+   *
+   * This method prefixes the current working directory onto the
+   * beginning of relative-path file-names.
+   */
+  void translateFilenamesIntoRemoteFilenames();
+
+  /**
+   * Displays the specified error message, cleans up (at least deletes the
+   * volume-request id if there is one) and then calls exit(1) indicating an
+   * error.
+   */
+  void displayErrorMsgCleanUpAndExit(const std::string &msg) throw();
+
+  /**
+   * Executes the main code of the command.
+   *
+   * The specification of this method intentionally does not have a throw()
+   * clause so that any type of exception can be thrown.
+   */
+  void executeCommand();
+
+  /**
+   * Determines and returns the numeric code that should be returned by this
+   * command-line tool.
+   */
+  int determineCommandLineReturnCode() const throw();
+
+  /**
+   * Deletes the specified VDQM volume request.
+   */
+  void deleteVdqmVolumeRequest();
+
+  /**
+   * Appends to the specified list the filenames from the "filelist" file with
+   * the specified filename.
+   *
+   * This method:
+   * <ul>
+   * <li>Trims leading and trailing white space from each line
+   * <li>Ignores blank lines with or without white space.
+   * <li>Ignores comment lines, i.e. those starting with a '#' after their
+   * leading and trailing white space has been trimmed.
+   * </ul>
+   *
+   * @param filename The filename of the "filelist" file.
+   * @param list     The list to which the filenames will be appended.
+   */
+  void parseFileList(const std::string &filename, std::list<std::string> &list);
+
+  /**
+   * Appends each line of the specified file to the specified list of lines.
+   * The new-line characters are extracted from the file, but they are not
+   * stored in the lines appended to the list.
+   *
+   * An empty line, with or without a delimiting '\n' character will be appended
+   * to the list od lines as an empty string.
+   *
+   * @param filename The filename of the file to be read.
+   * @param lines The list to which each line of the file will be appended.
+   */
+  void readFileIntoList(const std::string &filename,
+    std::list<std::string> &lines);
+
 }; // class TpcpCommand
 
 } // namespace tpcp
 } // namespace tape
 } // namespace castor
-
-
