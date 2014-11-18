@@ -130,22 +130,3 @@ unsigned short castor::tape::utils::getPortFromConfig(
 
   return port;
 }
-
-//------------------------------------------------------------------------------
-// tapeBlockIdToString
-//------------------------------------------------------------------------------
-std::string castor::tape::utils::tapeBlockIdToString(
-  const unsigned char blockId0,
-  const unsigned char blockId1,
-  const unsigned char blockId2,
-  const unsigned char blockId3) throw() {
-  std::ostringstream oss;
-
-  oss << std::hex << std::setfill('0') <<
-    std::setw(2) << (int)blockId0 <<
-    std::setw(2) << (int)blockId1 <<
-    std::setw(2) << (int)blockId2 <<
-    std::setw(2) << (int)blockId3;
-
-  return oss.str();
-}

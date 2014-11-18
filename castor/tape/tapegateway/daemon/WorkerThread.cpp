@@ -1308,12 +1308,28 @@ void castor::tape::tapegateway::WorkerThread::logMigrationNotified (Cuuid_t uuid
       castor::dlf::Param("checksum",checkSum.str()),
       castor::dlf::Param("fileSize",fileMigrated.fileSize()),
       castor::dlf::Param("compressedFileSize",fileMigrated.compressedFileSize()),
-      castor::dlf::Param("blockid", utils::tapeBlockIdToString(fileMigrated.blockId0(),
+      castor::dlf::Param("blockid", tapeBlockIdToString(fileMigrated.blockId0(),
           fileMigrated.blockId1(), fileMigrated.blockId2(),
           fileMigrated.blockId3())),
       castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId())
   };
   castor::dlf::dlf_writep(uuid, DLF_LVL_DEBUG, WORKER_MIGRATION_NOTIFIED, paramsComplete, castorFileId);
+}
+
+std::string castor::tape::tapegateway::WorkerThread::tapeBlockIdToString(
+  const unsigned char blockId0,
+  const unsigned char blockId1,
+  const unsigned char blockId2,
+  const unsigned char blockId3) throw() {
+  std::ostringstream oss;
+
+  oss << std::hex << std::setfill('0') <<
+    std::setw(2) << (int)blockId0 <<
+    std::setw(2) << (int)blockId1 <<
+    std::setw(2) << (int)blockId2 <<
+    std::setw(2) << (int)blockId3;
+
+  return oss.str();
 }
 
 void castor::tape::tapegateway::WorkerThread::logMigrationBulkVmgrUpdate (Cuuid_t uuid,

@@ -81,21 +81,6 @@ unsigned short getPortFromConfig(const char *const category,
   const char *const name, const unsigned short defaultPort)
   throw(exception::InvalidConfigEntry, castor::exception::Exception);
 
-/**
- * Returns the string representation of the specified tape block-id.
- *
- * @param  blockId0 Block-id part 0.
- * @param  blockId1 Block-id part 1.
- * @param  blockId2 Block-id part 2.
- * @param  blockId3 Block-id part 3.
- * @return The string representation of the block-id.
- */
-std::string tapeBlockIdToString(
-  const unsigned char blockId0,
-  const unsigned char blockId1,
-  const unsigned char blockId2,
-  const unsigned char blockId3) throw();
-
 } // namespace utils
 } // namespace tape
 } // namespace castor
