@@ -33,6 +33,7 @@ set (TAPE_UTILS_LIB_SRC_FILES
 add_library (castortapeutils SHARED ${TAPE_UTILS_LIB_SRC_FILES})
 CastorSetLibraryVersions (castortapeutils)
 target_link_libraries (castortapeutils
+  castorclient
   castorcommon
   castormediachangerclient
   zmq)
