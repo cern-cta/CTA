@@ -19,9 +19,6 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-################################################################################
-# Rules to build and install libcastortapeutils.so
-################################################################################
 set (UTILS_LIB_SRC_FILES
   DebugBuf.cpp
   SmartFd.cpp
