@@ -27,8 +27,8 @@
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueSession.hpp"
+#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
-#include "castor/tape/utils/DriveConfig.hpp"
 
 #include <list>
 
@@ -64,7 +64,7 @@ public:
   static CatalogueLabelSession *create(
     log::Logger &log,
     const int netTimeout,
-    const tape::utils::DriveConfig &driveConfig,
+    const DriveConfig &driveConfig,
     const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
     const int labelCmdConnection,
     legacymsg::CupvProxy &cupv,
@@ -173,7 +173,7 @@ protected:
     log::Logger &log,
     const int netTimeout,
     const pid_t pid,
-    const tape::utils::DriveConfig &driveConfig,
+    const DriveConfig &driveConfig,
     const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
     const int labelCmdConnection) throw();
 

@@ -18,35 +18,47 @@
  *
  *
  *
- *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
 
-#include "castor/tape/utils/TpconfigLine.hpp"
+#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
+#include "castor/tape/tapeserver/daemon/TpconfigLine.hpp"
+#include "castor/tape/tapeserver/daemon/TpconfigLines.hpp"
 
-#include <list>
+#include <map>
+#include <string>
 
 namespace castor {
-namespace tape   {
-namespace utils  {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
 
 /**
- * A list of lines parsed from a TPCONFIG file.
+ * Datatype representing a map from the unit name of a tape drive to its
+ * configuration as specified in /etc/castor/TPCONFIG.
  */
-class TpconfigLines: public std::list<TpconfigLine> {
+class DriveConfigMap: public std::map<std::string, DriveConfig> {
 public:
 
   /**
-   * Parses the specified TPCONFIG file.
-   *
-   * @param filename The filename of the TPCONFIG file.
-   * @return The result of parsing the TPCONFIG file.
+   * Enters the specified list of parsed lines from the TPCONFIG file into
+   * the map of drive configurations.
    */
-  static TpconfigLines parseFile(const std::string &filename);
-}; // class TpconfigLines
+  void enterTpconfigLines(const TpconfigLines &lines);
 
-} // namespace utils
+private:
+
+  /**
+   * Enters the specified parsed line from the TPCONFIG file into the map
+   * of drive configurations.
+   */
+  void enterTpconfigLine(const TpconfigLine &line);
+
+}; // class DriveConfigMap
+
+} // namespace daemon
+} // namespace tapeserver
 } // namespace tape
 } // namespace castor

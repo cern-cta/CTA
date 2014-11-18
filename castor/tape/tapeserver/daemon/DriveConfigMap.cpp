@@ -22,12 +22,12 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/utils/DriveConfigMap.hpp"
+#include "castor/tape/tapeserver/daemon/DriveConfigMap.hpp"
 
 //------------------------------------------------------------------------------
 // enterTpconfigLines
 //------------------------------------------------------------------------------
-void castor::tape::utils::DriveConfigMap::enterTpconfigLines(
+void castor::tape::tapeserver::daemon::DriveConfigMap::enterTpconfigLines(
   const TpconfigLines &lines) {
   for(TpconfigLines::const_iterator itor = lines.begin();
     itor != lines.end(); itor++) {
@@ -38,7 +38,7 @@ void castor::tape::utils::DriveConfigMap::enterTpconfigLines(
 //------------------------------------------------------------------------------
 // enterTpconfigLine
 //------------------------------------------------------------------------------
-void castor::tape::utils::DriveConfigMap::enterTpconfigLine(
+void castor::tape::tapeserver::daemon::DriveConfigMap::enterTpconfigLine(
   const TpconfigLine &line) {
   try {
     // Try to find the drive within the map

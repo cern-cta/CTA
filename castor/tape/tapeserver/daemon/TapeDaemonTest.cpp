@@ -84,7 +84,7 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
   const int netTimeout = 1;
-  castor::tape::utils::DriveConfigMap driveConfigs;
+  DriveConfigMap driveConfigs;
   const bool isGrantedReturnValue = true;
   castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
   castor::legacymsg::VdqmProxyDummy vdqm;

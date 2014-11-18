@@ -24,7 +24,7 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
-#include "castor/tape/utils/DriveConfig.hpp"
+#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 
 #include <string>
 #include <sys/types.h>
@@ -150,7 +150,7 @@ protected:
     log::Logger &log,
     const int netTimeout,
     const pid_t pid,
-    const tape::utils::DriveConfig &driveConfig) throw();
+    const DriveConfig &driveConfig) throw();
 
   /**
    * The type of the tape session.
@@ -175,7 +175,7 @@ protected:
   /**
    * The configuration of the tape drive.
    */
-  const tape::utils::DriveConfig &m_driveConfig;
+  const DriveConfig &m_driveConfig;
 
 }; // class CatalogueSession
 

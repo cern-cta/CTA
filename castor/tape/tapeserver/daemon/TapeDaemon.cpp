@@ -69,7 +69,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   std::ostream &stdErr,
   log::Logger &log,
   const int netTimeout,
-  const utils::DriveConfigMap &driveConfigs,
+  const DriveConfigMap &driveConfigs,
   legacymsg::CupvProxy &cupv,
   legacymsg::VdqmProxy &vdqm,
   legacymsg::VmgrProxy &vmgr,
@@ -604,7 +604,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDrivesWithVdqm()
 void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   const std::string &unitName)  {
   const CatalogueDrive &drive = m_catalogue->findDrive(unitName);
-  const utils::DriveConfig &driveConfig = drive.getConfig();
+  const DriveConfig &driveConfig = drive.getConfig();
 
   std::list<log::Param> params;
   params.push_back(log::Param("server", m_hostName));
@@ -1123,7 +1123,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logChildProcessTerminated(
 // requestVdqmToReleaseDrive
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::requestVdqmToReleaseDrive(
-  const utils::DriveConfig &driveConfig, const pid_t pid) {
+  const DriveConfig &driveConfig, const pid_t pid) {
   std::list<log::Param> params;
   try {
     const bool forceUnmount = true;
@@ -1148,7 +1148,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::requestVdqmToReleaseDrive(
 // notifyVdqmTapeUnmounted
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::notifyVdqmTapeUnmounted(
-  const utils::DriveConfig &driveConfig, const std::string &vid,
+  const DriveConfig &driveConfig, const std::string &vid,
   const pid_t pid) {
   try {
     std::list<log::Param> params;

@@ -32,7 +32,7 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession *
   castor::tape::tapeserver::daemon::CatalogueCleanerSession::create(
   log::Logger &log,
   const int netTimeout,
-  const tape::utils::DriveConfig &driveConfig,
+  const DriveConfig &driveConfig,
   ProcessForkerProxy &processForker,
   const std::string &vid,
   const time_t assignmentTime,
@@ -58,7 +58,7 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession::
   log::Logger &log,
   const int netTimeout,
   const pid_t pid,
-  const tape::utils::DriveConfig &driveConfig,
+  const DriveConfig &driveConfig,
   const std::string &vid,
   const time_t assignmentTime) throw():
   CatalogueSession(SESSION_TYPE_CLEANER, log, netTimeout, pid, driveConfig),

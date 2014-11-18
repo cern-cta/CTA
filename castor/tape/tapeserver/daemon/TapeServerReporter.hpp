@@ -26,7 +26,7 @@
 #include "castor/server/Threading.hpp"
 #include "castor/server/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
-#include "castor/tape/utils/DriveConfig.hpp"
+#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/log/LogContext.hpp"
 #include <memory>
 #include <string>
@@ -53,7 +53,7 @@ public:
    */
   TapeServerReporter(
     messages::TapeserverProxy& tapeserverProxy,
-    const tape::utils::DriveConfig &driveConfig,
+    const DriveConfig &driveConfig,
     const std::string &hostname,
     const castor::tape::tapeserver::client::ClientInterface::VolumeInfo &volume,
     log::LogContext lc);

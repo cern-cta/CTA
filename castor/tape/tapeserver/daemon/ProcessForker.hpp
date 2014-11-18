@@ -246,8 +246,8 @@ private:
    * @param msg The ForkDataTransfer message.
    * @return The drive configuration.
    */
-  template<class T> utils::DriveConfig getDriveConfig(const T &msg) {
-    utils::DriveConfig config;
+  template<class T> DriveConfig getDriveConfig(const T &msg) {
+    DriveConfig config;
     config.unitName = msg.unitname();
     config.dgn = msg.dgn();
     config.devFilename = msg.devfilename();

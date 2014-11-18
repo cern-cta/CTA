@@ -25,7 +25,7 @@
 #include "castor/log/Logger.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
-#include "castor/tape/utils/TpconfigLine.hpp"
+#include "castor/tape/tapeserver/daemon/TpconfigLine.hpp"
 
 namespace castor {
 namespace tape {
@@ -36,7 +36,7 @@ namespace daemon {
 //------------------------------------------------------------------------------  
 TapeServerReporter::TapeServerReporter(
   messages::TapeserverProxy& tapeserverProxy,
-  const tape::utils::DriveConfig& driveConfig,
+  const DriveConfig& driveConfig,
   const std::string &hostname,
   const castor::tape::tapeserver::client::ClientInterface::VolumeInfo &volume,
   log::LogContext lc):

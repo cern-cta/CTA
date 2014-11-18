@@ -34,7 +34,7 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession *
   castor::tape::tapeserver::daemon::CatalogueLabelSession::create(
     log::Logger &log,
     const int netTimeout,
-    const tape::utils::DriveConfig &driveConfig,
+    const DriveConfig &driveConfig,
     const legacymsg::TapeLabelRqstMsgBody &labelJob,
     const int labelCmdConnection,
     legacymsg::CupvProxy &cupv,
@@ -95,7 +95,7 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession::
   log::Logger &log,
   const int netTimeout,
   const pid_t pid,
-  const tape::utils::DriveConfig &driveConfig,
+  const DriveConfig &driveConfig,
   const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
   const int labelCmdConnection) throw():
   CatalogueSession(SESSION_TYPE_LABEL, log, netTimeout, pid, driveConfig),

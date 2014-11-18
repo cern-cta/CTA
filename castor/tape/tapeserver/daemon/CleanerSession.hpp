@@ -27,11 +27,11 @@
 #include "castor/log/Logger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/server/ProcessCap.hpp"
+#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
-#include "castor/tape/utils/DriveConfig.hpp"
 
 #include <memory>
 
@@ -62,7 +62,7 @@ namespace daemon {
       server::ProcessCap &capUtils,
       mediachanger::MediaChangerFacade &mc,
       castor::log::Logger &log,
-      const utils::DriveConfig &driveConfig,
+      const DriveConfig &driveConfig,
       System::virtualWrapper &sysWrapper,
       const std::string &vid,
       const uint32_t driveReadyDelayInSeconds);
@@ -96,7 +96,7 @@ namespace daemon {
     /**
      * The configuration of the tape drive to be cleaned.
      */
-    const utils::DriveConfig m_driveConfig;
+    const DriveConfig m_driveConfig;
     
     /**
      * The system wrapper used to find the device and instantiate the drive object

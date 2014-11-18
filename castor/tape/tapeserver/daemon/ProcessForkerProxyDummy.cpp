@@ -35,7 +35,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
 // forkDataTransfer
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
-  forkDataTransfer(const utils::DriveConfig &driveConfig,
+  forkDataTransfer(const DriveConfig &driveConfig,
     const legacymsg::RtcpJobRqstMsgBody vdqmJob) {
   // This is a dummy method and so intentionally does nothing
   return 0;
@@ -45,7 +45,7 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
 // forkLabel
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
-  forkLabel(const utils::DriveConfig &driveConfig,
+  forkLabel(const DriveConfig &driveConfig,
   const legacymsg::TapeLabelRqstMsgBody &labelJob) {
   // This is a dummy method and so intentionally does nothing
   return 0;
@@ -55,7 +55,7 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
 // forkCleaner
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
-  forkCleaner(const utils::DriveConfig &driveConfig, const std::string &vid,
+  forkCleaner(const DriveConfig &driveConfig, const std::string &vid,
   const uint32_t driveReadyDelayInSeconds) {
   // This is a dummy method and so intentionally does nothing
   return 0;

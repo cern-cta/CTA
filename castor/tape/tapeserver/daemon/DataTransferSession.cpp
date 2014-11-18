@@ -53,7 +53,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     const legacymsg::RtcpJobRqstMsgBody & clientRequest, 
     castor::log::Logger & log,
     System::virtualWrapper & sysWrapper,
-    const utils::DriveConfig & driveConfig,
+    const DriveConfig & driveConfig,
     castor::mediachanger::MediaChangerFacade & mc,
     castor::messages::TapeserverProxy & initialProcess,
     castor::server::ProcessCap & capUtils,
@@ -421,7 +421,7 @@ void castor::tape::tapeserver::daemon::DataTransferSession::executeDump(log::Log
  * @return the drive if found, NULL otherwise
  */
 castor::tape::tapeserver::drive::DriveInterface *
-castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const utils::DriveConfig
+castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConfig
   &driveConfig, log::LogContext& lc) {
   // Find the drive in the system's SCSI devices
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);

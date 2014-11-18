@@ -23,9 +23,6 @@ cmake_minimum_required (VERSION 2.6)
 # Rules to build and install libcastortapeutils.so
 ################################################################################
 set (TAPE_UTILS_LIB_SRC_FILES
-  DriveConfigMap.cpp
-  TpconfigLine.cpp
-  TpconfigLines.cpp
   utils.cpp)
 add_library (castortapeutils SHARED ${TAPE_UTILS_LIB_SRC_FILES})
 CastorSetLibraryVersions (castortapeutils)

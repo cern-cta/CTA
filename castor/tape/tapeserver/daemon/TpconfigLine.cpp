@@ -22,21 +22,18 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
-#include "castor/tape/utils/TpconfigLine.hpp"
+#include "castor/tape/tapeserver/daemon/TpconfigLine.hpp"
 
-#include <gtest/gtest.h>
-
-namespace unitTests {
-
-class castor_tape_utils_TpconfigLineTest : public ::testing::Test {
-protected:
-
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
-};
-
-} // namespace unitTests
+//------------------------------------------------------------------------------
+// Constructor.
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::TpconfigLine::TpconfigLine(
+  const std::string &unitName,
+  const std::string &dgn,
+  const std::string &devFilename,
+  const std::string &librarySlot) throw():
+  unitName(unitName),
+  dgn(dgn),
+  devFilename(devFilename),
+  librarySlot(librarySlot) {
+}

@@ -185,7 +185,7 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
   const std::string unitName(body.drive);
   
   CatalogueDrive &drive = m_driveCatalogue.findDrive(unitName);
-  const utils::DriveConfig &driveConfig = drive.getConfig();
+  const DriveConfig &driveConfig = drive.getConfig();
 
   log::Param params[] = {
     log::Param("unitName", unitName),

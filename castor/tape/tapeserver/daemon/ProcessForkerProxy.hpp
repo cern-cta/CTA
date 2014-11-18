@@ -27,7 +27,7 @@
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
-#include "castor/tape/utils/DriveConfig.hpp"
+#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -60,7 +60,7 @@ public:
    * @param vdqmJob The job received from the vdqmd daemon.
    * @return The process identifier of the newly forked session.
    */
-  virtual pid_t forkDataTransfer(const utils::DriveConfig &driveConfig,
+  virtual pid_t forkDataTransfer(const DriveConfig &driveConfig,
     const legacymsg::RtcpJobRqstMsgBody vdqmJob) = 0;
 
   /** 
@@ -70,7 +70,7 @@ public:
    * @param labelJob The job received from the tape-labeling command-line tool.
    * @return The process identifier of the newly forked session.
    */
-  virtual pid_t forkLabel(const utils::DriveConfig &driveConfig,
+  virtual pid_t forkLabel(const DriveConfig &driveConfig,
     const legacymsg::TapeLabelRqstMsgBody &labelJob) = 0;
 
   /**
@@ -85,7 +85,7 @@ public:
    * the drive to be raedy with a tape inside of it.
    * @return The process identifier of the newly forked session.
    */
-  virtual pid_t forkCleaner(const utils::DriveConfig &driveConfig,
+  virtual pid_t forkCleaner(const DriveConfig &driveConfig,
     const std::string &vid, const uint32_t driveReadyDelayInSeconds) = 0;
 
 }; // class ProcessForkerProxy

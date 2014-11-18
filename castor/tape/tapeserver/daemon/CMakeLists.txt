@@ -4,11 +4,6 @@ add_library(castorTapeServerDaemon
   AdminAcceptHandler.cpp
   AdminConnectionHandler.cpp
   ../client/ClientProxy.cpp 
-  DataTransferConfig.cpp
-  DiskReadThreadPool.cpp
-  DiskReadTask.cpp
-  DiskWriteTask.cpp
-  DiskWriteThreadPool.cpp
   Catalogue.cpp
   CatalogueDrive.cpp
   CatalogueSession.cpp
@@ -16,6 +11,12 @@ add_library(castorTapeServerDaemon
   CatalogueTransferSession.cpp
   CatalogueCleanerSession.cpp
   CatalogueConfig.cpp
+  DataTransferConfig.cpp
+  DiskReadThreadPool.cpp
+  DiskReadTask.cpp
+  DiskWriteTask.cpp
+  DiskWriteThreadPool.cpp
+  DriveConfigMap.cpp
   TapeServerReporter.cpp
   LabelCmdAcceptHandler.cpp
   LabelCmdConnectionHandler.cpp
@@ -42,6 +43,8 @@ add_library(castorTapeServerDaemon
   TapeReadSingleThread.cpp
   TapeWriteSingleThread.cpp
   TapeWriteTask.cpp
+  TpconfigLine.cpp
+  TpconfigLines.cpp
   VdqmAcceptHandler.cpp
   VdqmConnectionHandler.cpp)
 

@@ -34,8 +34,8 @@
 #include "castor/tape/tapeserver/daemon/CatalogueLabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueSession.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueTransferSession.hpp"
+#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
-#include "castor/tape/utils/DriveConfig.hpp"
 
 #include <iostream>
 #include <memory>
@@ -212,7 +212,7 @@ public:
     legacymsg::VdqmProxy &vdqm,
     legacymsg::VmgrProxy &vmgr,
     const std::string &hostName,
-    const utils::DriveConfig &config,
+    const DriveConfig &config,
     const DriveState state,
     const time_t waitJobTimeoutInSecs,
     const time_t mountTimeoutInSecs,
@@ -247,7 +247,7 @@ public:
    *
    * @return The configuration of the tape-drive.
    */
-  const tape::utils::DriveConfig &getConfig() const;
+  const DriveConfig &getConfig() const;
 
   /**
    * Gets the current state of the tape drive.
@@ -492,7 +492,7 @@ private:
   /**
    * The configuration of the tape-drive.
    */
-  tape::utils::DriveConfig m_config;
+  DriveConfig m_config;
 
   /**
    * The current state of the tape drive.

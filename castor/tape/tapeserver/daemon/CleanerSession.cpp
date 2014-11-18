@@ -30,7 +30,7 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   server::ProcessCap &capUtils,
   mediachanger::MediaChangerFacade &mc,
   castor::log::Logger &log,
-  const utils::DriveConfig &driveConfig,
+  const DriveConfig &driveConfig,
   System::virtualWrapper &sysWrapper,
   const std::string &vid,
   const uint32_t driveReadyDelayInSeconds):

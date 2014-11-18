@@ -103,12 +103,12 @@ bool castor::tape::tapeserver::daemon::Catalogue::allDrivesAreShutdown()
 // populate
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::Catalogue::populate(
-  const utils::DriveConfigMap &driveConfigs)  {
+  const DriveConfigMap &driveConfigs)  {
   try {
-    for(utils::DriveConfigMap::const_iterator itor = driveConfigs.begin();
+    for(DriveConfigMap::const_iterator itor = driveConfigs.begin();
       itor != driveConfigs.end(); itor++) {
       const std::string &unitName = itor->first;
-      const utils::DriveConfig &driveConfig = itor->second;
+      const DriveConfig &driveConfig = itor->second;
 
       // Sanity check
       if(unitName != driveConfig.unitName) {
@@ -132,7 +132,7 @@ void castor::tape::tapeserver::daemon::Catalogue::populate(
 // enterDriveConfig
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::Catalogue::enterDriveConfig(
-  const utils::DriveConfig &driveConfig)  {
+  const DriveConfig &driveConfig)  {
 
   DriveMap::iterator itor = m_drives.find(driveConfig.unitName);
 
@@ -227,7 +227,7 @@ const castor::tape::tapeserver::daemon::CatalogueDrive
   }
 
   const CatalogueDrive &drive = *(itor->second);
-  const utils::DriveConfig &driveConfig = drive.getConfig();
+  const DriveConfig &driveConfig = drive.getConfig();
 
   // Sanity check
   if(unitName != driveConfig.unitName) {
@@ -267,7 +267,7 @@ castor::tape::tapeserver::daemon::CatalogueDrive
   }
 
   CatalogueDrive &drive = *(itor->second);
-  const utils::DriveConfig &driveConfig = drive.getConfig();
+  const DriveConfig &driveConfig = drive.getConfig();
 
   // Sanity check
   if(unitName != driveConfig.unitName) {

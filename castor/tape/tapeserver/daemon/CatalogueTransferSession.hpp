@@ -70,7 +70,7 @@ public:
   static CatalogueTransferSession *create(
     log::Logger &log,
     const int netTimeout,
-    const tape::utils::DriveConfig &driveConfig,
+    const DriveConfig &driveConfig,
     const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
     legacymsg::VmgrProxy &vmgr,
     legacymsg::CupvProxy &cupv,
@@ -263,7 +263,7 @@ protected:
     log::Logger &log,
     const int netTimeout,
     const pid_t pid,
-    const tape::utils::DriveConfig &driveConfig,
+    const DriveConfig &driveConfig,
     const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
     legacymsg::VmgrProxy &vmgr,
     legacymsg::CupvProxy &cupv,

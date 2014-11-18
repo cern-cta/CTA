@@ -152,7 +152,7 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
       sim.addFileToRecall(ftr, sizeof(data));
     }
   }
-  castor::tape::utils::DriveConfig driveConfig;
+  DriveConfig driveConfig;
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
@@ -257,7 +257,7 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
       sim.addFileToRecall(ftr, sizeof(data));
     }
   }
-  castor::tape::utils::DriveConfig driveConfig;
+  DriveConfig driveConfig;
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
@@ -315,7 +315,7 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
-  castor::tape::utils::DriveConfig driveConfig;
+  DriveConfig driveConfig;
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/noSuchTape";
@@ -403,7 +403,7 @@ TEST(tapeServer, DataTransferSessionFailtoMount) {
       sim.addFileToRecall(ftr, 1000);
     }
   }
-  castor::tape::utils::DriveConfig driveConfig;
+  DriveConfig driveConfig;
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
@@ -467,7 +467,7 @@ TEST(tapeServer, DataTransferSessionEmptyOnVolReq) {
   // The drive will not even be opened. so no need for one.
   mockSys.fake.m_pathToDrive["/dev/nst0"] = NULL;
   
-  castor::tape::utils::DriveConfig driveConfig;
+  DriveConfig driveConfig;
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
@@ -615,7 +615,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
     expected.push_back(expectedResult(fseq, tf->checksum()));
     tempFiles.push_back(tf.release());
   }
-  castor::tape::utils::DriveConfig driveConfig;
+  DriveConfig driveConfig;
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
@@ -705,7 +705,7 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
     ftm.setPath(tf->path());
     sim.addFileToMigrate(ftm);
   }
-  castor::tape::utils::DriveConfig driveConfig;
+  DriveConfig driveConfig;
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
@@ -807,7 +807,7 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
     }
     tempFiles.push_back(tf.release());
   }
-  castor::tape::utils::DriveConfig driveConfig;
+  DriveConfig driveConfig;
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
@@ -914,7 +914,7 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
     }
     tempFiles.push_back(tf.release());
   }
-  castor::tape::utils::DriveConfig driveConfig;
+  DriveConfig driveConfig;
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";

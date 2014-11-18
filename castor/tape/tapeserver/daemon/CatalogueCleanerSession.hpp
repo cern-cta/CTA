@@ -61,7 +61,7 @@ public:
   static CatalogueCleanerSession *create(
     log::Logger &log,
     const int netTimeout,
-    const tape::utils::DriveConfig &driveConfig,
+    const DriveConfig &driveConfig,
     ProcessForkerProxy &processForker,
     const std::string &vid,
     const time_t assignmentTime,
@@ -153,7 +153,7 @@ protected:
     log::Logger &log,
     const int netTimeout,
     const pid_t pid,
-    const tape::utils::DriveConfig &driveConfig,
+    const DriveConfig &driveConfig,
     const std::string &vid,
     const time_t assignmentTime) throw();
 

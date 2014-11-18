@@ -96,7 +96,7 @@ castor::messages::StopProcessForker castor::tape::tapeserver::daemon::
 // forkDataTransfer
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
-  forkDataTransfer(const utils::DriveConfig &driveConfig,
+  forkDataTransfer(const DriveConfig &driveConfig,
     const legacymsg::RtcpJobRqstMsgBody vdqmJob) {
 
   // Request the process forker to fork a data-transfer session
@@ -121,7 +121,7 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
 //------------------------------------------------------------------------------
 castor::messages::ForkDataTransfer
   castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
-  createForkDataTransferMsg(const utils::DriveConfig &driveConfig,
+  createForkDataTransferMsg(const DriveConfig &driveConfig,
     const legacymsg::RtcpJobRqstMsgBody vdqmJob) {
   messages::ForkDataTransfer msg;
 
@@ -143,7 +143,7 @@ castor::messages::ForkDataTransfer
 // forkLabel
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
-  forkLabel(const utils::DriveConfig &driveConfig,
+  forkLabel(const DriveConfig &driveConfig,
   const legacymsg::TapeLabelRqstMsgBody &labelJob) {
 
   // Request the process forker to fork a label session
@@ -166,7 +166,7 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
 //------------------------------------------------------------------------------
 castor::messages::ForkLabel castor::tape::tapeserver::daemon::
   ProcessForkerProxySocket::createForkLabelMsg(
-  const utils::DriveConfig &driveConfig,
+  const DriveConfig &driveConfig,
   const legacymsg::TapeLabelRqstMsgBody &labelJob) {
   messages::ForkLabel msg;
 
@@ -183,7 +183,7 @@ castor::messages::ForkLabel castor::tape::tapeserver::daemon::
 // forkCleaner
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
-  forkCleaner(const utils::DriveConfig &driveConfig, const std::string &vid,
+  forkCleaner(const DriveConfig &driveConfig, const std::string &vid,
   const uint32_t driveReadyDelayInSeconds) {
 
   // Request the process forker to fork a label session
@@ -207,7 +207,7 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
 //------------------------------------------------------------------------------
 castor::messages::ForkCleaner castor::tape::tapeserver::daemon::
   ProcessForkerProxySocket::createForkCleanerMsg(
-  const utils::DriveConfig &driveConfig, const std::string &vid,
+  const DriveConfig &driveConfig, const std::string &vid,
   const uint32_t driveReadyDelayInSeconds) {
   messages::ForkCleaner msg;
 

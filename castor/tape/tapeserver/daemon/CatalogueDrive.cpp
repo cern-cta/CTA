@@ -44,7 +44,7 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   legacymsg::VdqmProxy &vdqm,
   legacymsg::VmgrProxy &vmgr,
   const std::string &hostName,
-  const utils::DriveConfig &config,
+  const DriveConfig &config,
   const DriveState state,
   const time_t waitJobTimeoutInSecs,
   const time_t mountTimeoutInSecs,
@@ -116,7 +116,7 @@ const char
 //------------------------------------------------------------------------------
 // getConfig
 //------------------------------------------------------------------------------
-const castor::tape::utils::DriveConfig
+const castor::tape::tapeserver::daemon::DriveConfig
   &castor::tape::tapeserver::daemon::CatalogueDrive::getConfig() const {
   return m_config;
 }

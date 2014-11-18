@@ -441,7 +441,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 
     CatalogueDrive &drive =
       m_driveCatalogue.findDrive(rqstBody.unitname());
-    const utils::DriveConfig &driveConfig = drive.getConfig();
+    const DriveConfig &driveConfig = drive.getConfig();
     
     const std::string &vid = rqstBody.vid();
     CatalogueTransferSession &transferSession = drive.getTransferSession();
@@ -473,7 +473,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 
     CatalogueDrive &drive =
       m_driveCatalogue.findDrive(rqstBody.unitname());
-    const utils::DriveConfig &driveConfig = drive.getConfig();
+    const DriveConfig &driveConfig = drive.getConfig();
     
     const std::string vid = rqstBody.vid();
     CatalogueTransferSession &transferSession = drive.getTransferSession();

@@ -32,9 +32,6 @@
 #include "castor/tape/Constants.hpp"
 #include "castor/tape/tapegateway/ClientType.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
-#include "castor/tape/utils/DriveConfig.hpp"
-#include "castor/tape/utils/DriveConfigMap.hpp"
-#include "castor/tape/utils/TpconfigLines.hpp"
 
 #include <errno.h>
 #include <list>

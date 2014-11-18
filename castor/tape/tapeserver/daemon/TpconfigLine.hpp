@@ -27,8 +27,9 @@
 #include <string>
 
 namespace castor {
-namespace tape   {
-namespace utils  {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
 
 /**
  * The data stored in a data-line (as opposed to a comment-line) from a
@@ -71,6 +72,7 @@ struct TpconfigLine {
     const std::string &librarySlot) throw();
 }; // struct TpconfigLine
 
-} // namespace utils
+} // namespace daemon
+} // namespace tapesever
 } // namespace tape
 } // namespace castor

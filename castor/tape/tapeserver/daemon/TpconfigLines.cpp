@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/utils/TpconfigLines.hpp"
+#include "castor/tape/tapeserver/daemon/TpconfigLines.hpp"
 #include "castor/utils/SmartFILEPtr.hpp"
 #include "castor/utils/utils.hpp"
 
@@ -31,8 +31,8 @@
 //------------------------------------------------------------------------------
 // parseTpconfigFile
 //------------------------------------------------------------------------------
-castor::tape::utils::TpconfigLines castor::tape::utils::TpconfigLines::
-  parseFile(const std::string &filename) {
+castor::tape::tapeserver::daemon::TpconfigLines castor::tape::tapeserver::
+  daemon::TpconfigLines:: parseFile(const std::string &filename) {
   TpconfigLines lines;
 
   // Open the TPCONFIG file for reading

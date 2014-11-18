@@ -42,10 +42,10 @@
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
+#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForker.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
-#include "castor/tape/utils/DriveConfig.hpp"
 #include "castor/utils/SmartArrayPtr.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/serrno.h"
@@ -465,7 +465,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   try {
     server::ProcessCap capUtils;
 
-    const utils::DriveConfig driveConfig = getDriveConfig(rqst);
+    const DriveConfig driveConfig = getDriveConfig(rqst);
     std::list<log::Param> params;
     params.push_back(log::Param("unitName", driveConfig.unitName));
     params.push_back(log::Param("TPVID", rqst.vid()));
@@ -516,7 +516,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::ProcessForker::runDataTransferSession(
   const messages::ForkDataTransfer &rqst) {
-  const utils::DriveConfig driveConfig = getDriveConfig(rqst);
+  const DriveConfig driveConfig = getDriveConfig(rqst);
 
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", driveConfig.unitName));
@@ -839,7 +839,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   try {
     server::ProcessCap capUtils;
 
-    const utils::DriveConfig &driveConfig = getDriveConfig(rqst);
+    const DriveConfig &driveConfig = getDriveConfig(rqst);
     const legacymsg::TapeLabelRqstMsgBody labelJob = getLabelJob(rqst);
 
     std::list<log::Param> params;

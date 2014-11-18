@@ -61,7 +61,7 @@ public:
    * @return The process identifier of the newly forked session which will
    * always be 0 because this is a dummy method.
    */ 
-  pid_t forkDataTransfer(const utils::DriveConfig &driveConfig,
+  pid_t forkDataTransfer(const DriveConfig &driveConfig,
     const legacymsg::RtcpJobRqstMsgBody vdqmJob);
 
   /** 
@@ -76,7 +76,7 @@ public:
    * always be 0 because this is a dummy method.
 
    */
-  pid_t forkLabel(const utils::DriveConfig &driveConfig,
+  pid_t forkLabel(const DriveConfig &driveConfig,
     const legacymsg::TapeLabelRqstMsgBody &labelJob);
 
   /**
@@ -91,7 +91,7 @@ public:
    * the drive to be raedy with a tape inside of it.
    * @return The process identifier of the newly forked session.
    */
-  pid_t forkCleaner(const utils::DriveConfig &driveConfig,
+  pid_t forkCleaner(const DriveConfig &driveConfig,
     const std::string &vid, const uint32_t driveReadyDelayInSeconds);
 
 }; // class ProcessForkerProxySocket

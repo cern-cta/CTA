@@ -33,10 +33,10 @@
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
+#include "castor/tape/tapeserver/daemon/DriveConfigMap.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerConfig.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemonConfig.hpp"
-#include "castor/tape/utils/DriveConfigMap.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 
@@ -87,7 +87,7 @@ public:
     std::ostream &stdErr,
     log::Logger &log,
     const int netTimeout,
-    const utils::DriveConfigMap &driveConfigs,
+    const DriveConfigMap &driveConfigs,
     legacymsg::CupvProxy &cupv,
     legacymsg::VdqmProxy &vdqm,
     legacymsg::VmgrProxy &vmgr,
@@ -516,7 +516,7 @@ protected:
    * @param driveConfig The configuration of the tape drive.
    * @param pid The process ID of the session child-process.
    */
-  void requestVdqmToReleaseDrive(const utils::DriveConfig &driveConfig,
+  void requestVdqmToReleaseDrive(const DriveConfig &driveConfig,
     const pid_t pid);
 
   /**
@@ -527,7 +527,7 @@ protected:
    * @param vid The identifier of the unmounted volume.
    * @param pid The process ID of the session child-process.
    */
-  void notifyVdqmTapeUnmounted(const utils::DriveConfig &driveConfig,
+  void notifyVdqmTapeUnmounted(const DriveConfig &driveConfig,
     const std::string &vid, const pid_t pid);
 
   /**
@@ -548,7 +548,7 @@ protected:
   /**
    * The configuration of the tape drives.
    */
-  const utils::DriveConfigMap m_driveConfigs;
+  const DriveConfigMap m_driveConfigs;
 
   /**
    * Proxy object representing the cupvd daemon.

@@ -27,8 +27,8 @@
 #include "castor/messages/ForkDataTransfer.pb.h"
 #include "castor/messages/ForkLabel.pb.h"
 #include "castor/messages/StopProcessForker.pb.h"
+#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
-#include "castor/tape/utils/DriveConfig.hpp"
 
 #include <google/protobuf/message.h>
 #include <stdint.h>
@@ -81,7 +81,7 @@ public:
    * @param vdqmJob The job received from the vdqmd daemon.
    * @return The process identifier of the newly forked session.
    */ 
-  pid_t forkDataTransfer(const utils::DriveConfig &driveConfig,
+  pid_t forkDataTransfer(const DriveConfig &driveConfig,
     const legacymsg::RtcpJobRqstMsgBody vdqmJob);
 
   /** 
@@ -91,7 +91,7 @@ public:
    * @param labelJob The job received from the tape-labeling command-line tool.
    * @return The process identifier of the newly forked session.
    */
-  pid_t forkLabel(const utils::DriveConfig &driveConfig,
+  pid_t forkLabel(const DriveConfig &driveConfig,
     const legacymsg::TapeLabelRqstMsgBody &labelJob);
 
   /**
@@ -106,7 +106,7 @@ public:
    * the drive to be raedy with a tape inside of it.
    * @return The process identifier of the newly forked session.
    */
-  pid_t forkCleaner(const utils::DriveConfig &driveConfig,
+  pid_t forkCleaner(const DriveConfig &driveConfig,
     const std::string &vid, const uint32_t driveReadyDelayInSeconds);
 
 private:
@@ -141,7 +141,7 @@ private:
    * @return The message.
    */
   messages::ForkDataTransfer createForkDataTransferMsg(
-    const utils::DriveConfig &driveConfig,
+    const DriveConfig &driveConfig,
     const legacymsg::RtcpJobRqstMsgBody vdqmJob);
 
   /**
@@ -153,7 +153,7 @@ private:
    * @param driveConfig The tape-drive configuration.
    */
   template <typename T> void fillMsgWithDriveConfig(T &msg,
-    const utils::DriveConfig &driveConfig) {
+    const DriveConfig &driveConfig) {
     msg.set_unitname(driveConfig.unitName);
     msg.set_dgn(driveConfig.dgn);
     msg.set_devfilename(driveConfig.devFilename);
@@ -168,7 +168,7 @@ private:
    * @param labelJob The job received from the tape-labeling command-line tool.
    * @return The message.
    */
-  messages::ForkLabel createForkLabelMsg(const utils::DriveConfig &driveConfig,
+  messages::ForkLabel createForkLabelMsg(const DriveConfig &driveConfig,
     const legacymsg::TapeLabelRqstMsgBody &labelJob);
 
   /**
@@ -200,7 +200,7 @@ private:
    * @return The message.
    */
   messages::ForkCleaner createForkCleanerMsg(
-    const utils::DriveConfig &driveConfig, const std::string &vid,
+    const DriveConfig &driveConfig, const std::string &vid,
     const uint32_t driveReadyDelayInSeconds);
 
 }; // class ProcessForkerProxySocket

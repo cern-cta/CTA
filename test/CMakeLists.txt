@@ -166,7 +166,6 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/utils/RegexTest.cpp
   ../castor/server/ThreadingTests.cpp
   ../castor/server/AtomicCounterTest.cpp
-  ../castor/tape/utils/TpconfigLineTest.cpp
   ../castor/utils/SmartArrayPtrTest.cpp
   ../castor/utils/SmartFdTest.cpp
   ../castor/utils/UtilsTest.cpp

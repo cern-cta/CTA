@@ -32,7 +32,7 @@ castor::tape::tapeserver::daemon::CatalogueSession::
   log::Logger &log,
   const int netTimeout,
   const pid_t pid,
-  const tape::utils::DriveConfig &driveConfig) throw():
+  const DriveConfig &driveConfig) throw():
   m_sessionType(sessionType),
   m_log(log),
   m_netTimeout(netTimeout),

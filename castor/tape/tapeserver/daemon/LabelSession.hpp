@@ -30,11 +30,11 @@
 #include "castor/messages/TapeserverProxy.hpp"
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
-#include "castor/tape/utils/DriveConfig.hpp"
+#include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <memory>
@@ -72,7 +72,7 @@ public:
     const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
     castor::log::Logger &log,
     System::virtualWrapper &sysWrapper,
-    const utils::DriveConfig &driveConfig,
+    const DriveConfig &driveConfig,
     const bool force);
   
   /** 
@@ -119,7 +119,7 @@ private:
   /**
    * The configuration of the tape drive to be used to label a tape.
    */
-  const utils::DriveConfig m_driveConfig;
+  const DriveConfig m_driveConfig;
   
   /**
    * The flag that, if set to true, allows labeling a non-blank tape

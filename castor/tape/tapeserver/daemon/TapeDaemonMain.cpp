@@ -93,7 +93,7 @@ int main(const int argc, char **const argv) {
 // @param lines The lines parsed from /etc/castor/TPCONFIG.
 //------------------------------------------------------------------------------
 static void logTpconfigLines(castor::log::Logger &log,
-  const castor::tape::utils::TpconfigLines &lines) throw();
+  const castor::tape::tapeserver::daemon::TpconfigLines &lines) throw();
 
 //------------------------------------------------------------------------------
 // Writes the specified TPCONFIG lines to the logging system.
@@ -102,7 +102,7 @@ static void logTpconfigLines(castor::log::Logger &log,
 // @param line The line parsed from /etc/castor/TPCONFIG.
 //------------------------------------------------------------------------------
 static void logTpconfigLine(castor::log::Logger &log,
-  const castor::tape::utils::TpconfigLine &line) throw();
+  const castor::tape::tapeserver::daemon::TpconfigLine &line) throw();
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
@@ -116,10 +116,10 @@ static int exceptionThrowingMain(const int argc, char **const argv,
     tape::tapeserver::daemon::TapeDaemonConfig::createFromCastorConf(&log);
 
   // Parse /etc/castor/TPCONFIG
-  const tape::utils::TpconfigLines tpconfigLines =
-    tape::utils::TpconfigLines::parseFile("/etc/castor/TPCONFIG");
+  const tape::tapeserver::daemon::TpconfigLines tpconfigLines =
+    tape::tapeserver::daemon::TpconfigLines::parseFile("/etc/castor/TPCONFIG");
   logTpconfigLines(log, tpconfigLines);
-  tape::utils::DriveConfigMap driveConfigs;
+  tape::tapeserver::daemon::DriveConfigMap driveConfigs;
   driveConfigs.enterTpconfigLines(tpconfigLines);
 
   // Create proxy objects for the vdqm, vmgr and rmc daemons
@@ -160,8 +160,10 @@ static int exceptionThrowingMain(const int argc, char **const argv,
 // logTpconfigLines
 //------------------------------------------------------------------------------
 static void logTpconfigLines(castor::log::Logger &log,
-  const castor::tape::utils::TpconfigLines &lines) throw() {
-  for(castor::tape::utils::TpconfigLines::const_iterator itor = lines.begin();
+  const castor::tape::tapeserver::daemon::TpconfigLines &lines) throw() {
+  using namespace castor::tape::tapeserver::daemon;
+
+  for(TpconfigLines::const_iterator itor = lines.begin();
     itor != lines.end(); itor++) {
     logTpconfigLine(log, *itor);
   }
@@ -171,7 +173,7 @@ static void logTpconfigLines(castor::log::Logger &log,
 // logTpconfigLine
 //------------------------------------------------------------------------------
 static void logTpconfigLine(castor::log::Logger &log,
-  const castor::tape::utils::TpconfigLine &line) throw() {
+  const castor::tape::tapeserver::daemon::TpconfigLine &line) throw() {
   castor::log::Param params[] = {
     castor::log::Param("unitName", line.unitName),
     castor::log::Param("dgn", line.dgn),

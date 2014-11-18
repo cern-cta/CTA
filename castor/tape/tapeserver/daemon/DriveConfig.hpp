@@ -18,23 +18,53 @@
  *
  *
  *
- *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/utils/TpconfigLine.hpp"
-#include "castor/utils/utils.hpp"
+#pragma once
 
-//------------------------------------------------------------------------------
-// Constructor.
-//------------------------------------------------------------------------------
-castor::tape::utils::TpconfigLine::TpconfigLine(
-  const std::string &unitName,
-  const std::string &dgn,
-  const std::string &devFilename,
-  const std::string &librarySlot) throw():
-  unitName(unitName),
-  dgn(dgn),
-  devFilename(devFilename),
-  librarySlot(librarySlot) {
-}
+#include "castor/mediachanger/GenericLibrarySlot.hpp"
+
+#include <list>
+#include <string>
+
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+
+/**
+ * Structure used to store the configuration of a tape drive.
+ */
+struct DriveConfig {
+
+  /**
+   * The unit name of the tape drive as defined in /etc/castor/TPCONFIG and
+   * used by the vdqmd daemon.
+   */
+  std::string unitName;
+
+  /**
+   * The device group name of the tape drive as defined in
+   * /etc/castor/TPCONFIG and used by the vdqmd and vmgrd daemons.
+   */
+  std::string dgn;
+  
+  /**
+   * The device file of the tape drive as defined in /etc/castor/TPCONFIG, for
+   * example: /dev/nst0
+   */
+   std::string devFilename;
+
+  /**
+   * The library slot n which the tape drive is located, for example:
+   * smc@localhost,0
+   */
+  mediachanger::GenericLibrarySlot librarySlot;
+
+}; // class DriveConfig
+
+} // namespace daemon
+} // namespace tapeserver
+} // namespace tape
+} // namespace castor

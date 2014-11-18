@@ -31,6 +31,7 @@
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
+#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
@@ -61,7 +62,7 @@ namespace daemon {
       const legacymsg::RtcpJobRqstMsgBody & clientRequest, 
       castor::log::Logger & log,
       System::virtualWrapper & sysWrapper,
-      const utils::DriveConfig & driveConfig,
+      const DriveConfig & driveConfig,
       castor::mediachanger::MediaChangerFacade & mc,
       castor::messages::TapeserverProxy & initialProcess,
       castor::server::ProcessCap &capUtils,
@@ -112,13 +113,13 @@ namespace daemon {
     /**
      * The configuration of the tape drive to be used by this session.
      */
-    const utils::DriveConfig m_driveConfig;
+    const DriveConfig m_driveConfig;
     const DataTransferConfig & m_castorConf;
     /** utility to find the drive on the system. This function logs 
      * all errors and hence does not throw exceptions. It returns NULL
      * in case of failure. */
     castor::tape::tapeserver::drive::DriveInterface * findDrive(
-     const utils::DriveConfig &driveConfig,log::LogContext & lc);
+     const DriveConfig &driveConfig,log::LogContext & lc);
         
     /** sub-part of execute for the read sessions */
     EndOfSessionAction executeRead(log::LogContext & lc);

@@ -50,7 +50,7 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
   const legacymsg::TapeLabelRqstMsgBody &clientRequest,
   castor::log::Logger &log,
   System::virtualWrapper &sysWrapper,
-  const utils::DriveConfig &driveConfig,
+  const DriveConfig &driveConfig,
   const bool force):
   m_capUtils(capUtils),
   m_tapeserver(tapeserver),
