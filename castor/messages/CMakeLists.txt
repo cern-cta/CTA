@@ -11,7 +11,7 @@ set(PROTO_H_FILES)
 set(PROTO_CC_FILES)
 foreach(PROTO_PATH ${PROTO_PATHS})
   get_filename_component(PROTO_TGT ${PROTO_PATH} NAME_WE)
-  add_custom_target(${PROTO_TGT} ALL
+  add_custom_target(${PROTO_TGT}
     COMMAND ${PROTOC} -I ${CMAKE_CURRENT_SOURCE_DIR} ${PROTO_PATH} --cpp_out ${CMAKE_CURRENT_BINARY_DIR})
   list(APPEND PROTO_TGTS ${PROTO_TGT})
   set(PROTO_H_FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROTO_TGT}.pb.h")
