@@ -17,7 +17,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * a single function definition for closing a file by any CASTOR mover
+ * function definitions for opening and closing a file by any CASTOR mover
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -36,13 +36,18 @@ extern "C" {
  * transfer the data, regardless from the fact that the mover daemon runs forever.
  * It connects to the diskmanagerd daemon and synchronously wait for the response.
  *
- * port           the port to which to connect
- * transferUuid   the UUID of the transfer to be served, aka the subRequest id
+ * port             the port to which to connect
+ * transferMetaData the metadata associated with this transfer. This is a string tuple:
+ *                  (isWriteFlag, tident, transferType, physicalPath [, transferId])
+ *                  where tident has the format: username.clientPid:fd@clientHost
+ *                  and transferType is one of Tape, User, D2DUser, D2DInternal, D2DDraining, D2DBalance
+ *                  and transferId is missing for non-user transfers
+ * errormsg         a pointer to a buffer for the error message if the operation failed
  *
- * The return value is 0 for success and SETIMEDOUT if the slot had timed out meanwhile.
- *
-int mover_open_file(const int port, const char* transferUuid);
-*/
+ * The return value is 0 for success, SETIMEDOUT if the slot had timed out meanwhile
+ * or SEINTERNAL for any other error.
+ */
+int mover_open_file(const int port, const char* transferMetaData, char** errormsg);
 
 /**
  * mover_close_file allows a mover to close a CASTOR file after a transfer.
@@ -54,14 +59,13 @@ int mover_open_file(const int port, const char* transferUuid);
  * cksumtype      the type of checksum (relevant only on Put requests)
  * cksumvalue     the hexadecimal value of the checksum (relevant only on Put requests)
  * errorcode      an error code to be passed in case of failure
- * errormsg       an error message
+ * errormsg       a pointer to a buffer for the error message if the operation failed
  *
  * errorcode and errormsg are then populated with the result of the operation:
  * if errorcode == 0 the operation was successful, otherwise errormsg contains
  * a useful string to be sent to the client or logged by the mover.
  * The return value is equal to errorcode.
  */
-
 int mover_close_file(const int port, const char* transferUuid, const long long filesize,
                      const char* cksumtype, const char* cksumvalue,
                      int* errorcode, char** errormsg);
