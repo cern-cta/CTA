@@ -367,10 +367,10 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       mti.waitThreads();
       mrp.waitThread();
       twst.waitThreads();
-      mwd.stopAndWaitThread();
       drtp.waitThreads();
       mm.waitThreads();
       tsr.waitThreads();
+      mwd.stopAndWaitThread();
       
       return twst.getHardwareStatus();
     } else {
