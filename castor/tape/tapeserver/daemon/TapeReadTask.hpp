@@ -95,7 +95,7 @@ public:
     std::string currentErrorToCount = "";
     MemBlock* mb=NULL;
     try {
-      currentErrorToCount = "tapeReadPositionErrorCount";
+      currentErrorToCount = "tapeFailedToPositionForReadCount";
       std::auto_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
       // At that point we already read the header.
       localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
