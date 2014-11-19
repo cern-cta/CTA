@@ -171,7 +171,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       // will also take care of the TapeServerReporter and of RecallTaskInjector
       TapeCleaning tapeCleaner(*this, timer);
       // Before anything, the tape should be mounted
-      currentErrorToCount = "tapeFailedToMountForWriteCount";
+      currentErrorToCount = "tapeFailedToMountForReadCount";
       mountTapeReadOnly();
       currentErrorToCount = "tapeFailedToLoadCount";
       waitForDrive();
