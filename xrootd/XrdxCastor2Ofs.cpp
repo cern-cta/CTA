@@ -32,7 +32,7 @@
 #include <string.h>
 #include <zlib.h>
 #include "ceph/ceph_posix.h"
-#include "movers/moverclose.h"
+#include "movers/moveropenclose.h"
 /*----------------------------------------------------------------------------*/
 #include "XrdVersion.hh"
 #include "XrdAcc/XrdAccAuthorize.hh"

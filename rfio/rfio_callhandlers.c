@@ -22,7 +22,7 @@
 #include "getconfent.h"
 #include "Castor_limits.h"
 #include "ceph/ceph_posix.h"
-#include "movers/moverclose.h"
+#include "movers/moveropenclose.h"
 
 struct internal_context {
   int one_byte_at_least;

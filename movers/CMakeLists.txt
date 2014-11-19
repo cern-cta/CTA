@@ -18,4 +18,4 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-add_library (castormovers moverclose.cpp)
+add_library (castormovers moveropenclose.cpp)

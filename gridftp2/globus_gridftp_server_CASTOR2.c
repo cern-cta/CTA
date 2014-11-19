@@ -41,7 +41,7 @@
 #include "getconfent.h"
 #include "serrno.h"
 #include "ceph/ceph_posix.h"
-#include "movers/moverclose.h"
+#include "movers/moveropenclose.h"
 
 #define  CA_MAXCKSUMLEN 32
 #define  CA_MAXCKSUMNAMELEN 15
