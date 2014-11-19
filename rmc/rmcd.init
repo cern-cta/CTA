@@ -47,7 +47,7 @@ start() {
         echo -n $"Starting $prog: "
 
         cd /var/log/castor
-        daemon /usr/bin/$prog $RMCD_OPTIONS
+        daemon --user=stage /usr/bin/$prog $RMCD_OPTIONS
 
         # Write the pid to a file.
         RETVAL=$?
