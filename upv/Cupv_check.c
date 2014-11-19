@@ -58,14 +58,14 @@ int Cupv_check(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt,
     return(-1);
   }
 
-  /* Applying a first check to see if the request is for root */
+  /* Applying a first check to see if the request is for root or for the user running this daemon */
   /* In this case just return without asking the server */
-  if (priv_uid == 0) {
+  if (priv_uid == 0 || priv_uid == getuid()) {
     if (src == NULL && tgt == NULL) {
       /* Both NULL, authorized */
       return(0);
     } else if ((src != NULL) && (tgt != NULL) && (strcmp(src, tgt)==0)) {
-      /* src == tmp */
+      /* src == tgt */
       return(0);
     }
   } /* In other cases, a message is sent to the server for validation */
