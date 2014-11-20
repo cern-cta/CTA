@@ -23,6 +23,7 @@
  ******************************************************************************/
 
 /*-----------------------------------------------------------------------------*/
+#include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <grp.h>
@@ -233,6 +234,95 @@ XrdxCastor2Ofs::stat(const char* path,
 }
 
 
+//----------------------------------------------------------------------------
+// Perform a filesystem control operation - in our case it returns the list
+// of ongoing transfers in the current diskserver
+//
+// struct XrdSfsFSctl //!< SFS_FSCTL_PLUGIN/PLUGIO parameters
+// {
+//   const char            *Arg1;      //!< PLUGIO & PLUGIN
+//         int              Arg1Len;   //!< Length
+//         int              Arg2Len;   //!< Length
+//   const char            *Arg2;      //!< PLUGIN opaque string
+// };
+//----------------------------------------------------------------------------
+int
+XrdxCastor2Ofs::FSctl(const int cmd,
+                      XrdSfsFSctl& args,
+                      XrdOucErrInfo& eInfo,
+                      const XrdSecEntity* client)
+{
+  xcastor_debug("Calling FSctl with cmd=%i, arg1=%s, arg1len=%i", cmd,
+                args.Arg1, args.Arg1Len);
+
+  if (cmd == SFS_FSCTL_PLUGIO)
+  {
+    if (strncmp(args.Arg1, "transfers", args.Arg1Len) == 0)
+    {
+      std::ostringstream oss;
+      oss << "[";
+
+      {
+        // Dump all the running transfers
+        XrdSysMutexHelper scope_lock(mMutexTransfers);
+
+        if (!mSetTransfers.empty())
+        {
+          std::set<std::string>::const_iterator iter = mSetTransfers.begin();
+          oss << "(" << *iter << ")";
+
+          for (++iter; iter != mSetTransfers.end(); ++iter)
+            oss << ", " << "(" << *iter << ")";
+        }
+      }
+
+      oss << "]";
+      eInfo.setErrInfo(oss.str().length(), oss.str().c_str());
+      return SFS_DATA;
+    }
+    else
+    {
+      xcastor_err("Unkown type of command requested:%s", args.Arg1);
+      eInfo.setErrInfo(ENOTSUP, "unknown query command");
+      return SFS_ERROR;
+    }
+  }
+  else
+  {
+    eInfo.setErrInfo(ENOTSUP, "operation not implemented");
+    return SFS_ERROR;
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// Add entry to the set of transfers
+//------------------------------------------------------------------------------
+bool
+XrdxCastor2Ofs::AddTransfer(const std::string transfer_id)
+{
+  std::pair<std::set<std::string>::iterator, bool> ret;
+
+  if (!transfer_id.empty())
+  {
+    XrdSysMutexHelper scope_lock(mMutexTransfers);
+    ret = mSetTransfers.insert(transfer_id);
+    return ret.second;
+  }
+
+  return false;
+}
+
+//------------------------------------------------------------------------------
+// Remove entry from the set of transfers
+//------------------------------------------------------------------------------
+size_t
+XrdxCastor2Ofs::RemoveTransfer(const std::string transfer_id)
+{
+  XrdSysMutexHelper scope_lock(mMutexTransfers);
+  return mSetTransfers.erase(transfer_id);
+}
+
 
 /******************************************************************************/
 /*                         x C a s t o r O f s F i l e                        */
@@ -244,20 +334,21 @@ XrdxCastor2Ofs::stat(const char* path,
 //------------------------------------------------------------------------------
 XrdxCastor2OfsFile::XrdxCastor2OfsFile(const char* user, int MonID) :
   XrdOfsFile(user, MonID),
-  mEnvOpaque(NULL),
+  mIsClosed(false),
   mIsRW(false),
   mHasWrite(false),
   mViaDestructor(false),
-  mReqId("0"),
   mHasAdlerErr(false),
   mHasAdler(true),
   mAdlerOffset(0),
+  mDiskMgrPort(0),
   mXsValue(""),
   mXsType(""),
-  mIsClosed(false),
   mTpcKey(""),
+  mReqId("0"),
+  mTransferId(""),
   mTpcFlag(TpcFlag::kTpcNone),
-  mDiskMgrPort(0)
+  mEnvOpaque(NULL)
 {
   mAdlerXs = adler32(0L, Z_NULL, 0);
 }
@@ -374,11 +465,9 @@ XrdxCastor2OfsFile::open(const char*         path,
     // Get existing checksum - we don't check errors here
     nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.type",
                                 (void*)&mXsType[0], mXsType.length());
-
     mXsType[nattr] = '\0';
     nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.value",
                                 (void*)&mXsValue[0], mXsValue.length());
-
     mXsValue[nattr] = '\0';
     xcastor_debug("xs_type=%s, xs_val=%s", mXsType.c_str(),  mXsValue.c_str());
 
@@ -387,6 +476,23 @@ XrdxCastor2OfsFile::open(const char*         path,
     {
       xcastor_err("error: getting file stat information");
       rc = SFS_ERROR;
+    }
+
+    // Add entry to the set of onging transfers if we don't have any errors so
+    // so far and if this is either a normal transfer or a TPC transfer either
+    // in TpcSrcRead or TpcDstSetup state
+    if ((rc == SFS_OK) &&
+        ((mTpcFlag == TpcFlag::kTpcNone) ||
+         (mTpcFlag == TpcFlag::kTpcSrcRead || mTpcFlag == TpcFlag::kTpcDstSetup)))
+    {
+      BuildTransferId(client->tident, mEnvOpaque);
+
+      if (!gSrv->AddTransfer(mTransferId))
+      {
+        xcastor_err("Failed insert into set of transfers for id=%s",
+                    mTransferId.c_str());
+        return gSrv->Emsg("open", error, EIO, "failed adding entry to transfer set");
+      }
     }
   }
 
@@ -421,7 +527,8 @@ XrdxCastor2OfsFile::close()
     xcastor_debug("drop from map tpc.key=%s", mTpcKey.c_str());
     XrdSysMutexHelper tpc_lock(gSrv->mTpcMapMutex);
     gSrv->mTpcMap.erase(mTpcKey);
-    mTpcKey = "";
+    mTpcKey.clear();
+
     // Remove keys which are older than one hour
     std::map<std::string, struct TpcInfo>::iterator iter = gSrv->mTpcMap.begin();
     time_t now = time(NULL);
@@ -553,6 +660,13 @@ XrdxCastor2OfsFile::close()
       free(errmsg);
   }
 
+  // Remove entry from the set of transfers
+  if (!gSrv->RemoveTransfer(mTransferId))
+  {
+    xcastor_warning("No entry removed from the set of transfers for id=%s",
+                    mTransferId.c_str());
+  }
+
   if (gSrv->mLogLevel == LOG_DEBUG)
   {
     TIMING("DONE", &close_timing);
@@ -560,6 +674,29 @@ XrdxCastor2OfsFile::close()
   }
 
   return rc;
+}
+
+
+//------------------------------------------------------------------------------
+// Build transfer identifier
+//------------------------------------------------------------------------------
+void
+XrdxCastor2OfsFile::BuildTransferId(const char* tident, XrdOucEnv* env)
+{
+  std::string castor_path;
+  std::string tx_type = "unknown";
+
+  if (env && env->Get("castor.txtype"))
+    tx_type = env->Get("castor.txtype");
+
+ if (env && env->Get("castor2fs.pfn1"))
+   castor_path = env->Get("castor2fs.pfn1");
+
+  std::ostringstream oss;
+  oss << tident << "," << castor_path << "," << tx_type << ","
+      << mIsRW << "," << mReqId;
+
+  mTransferId = oss.str();
 }
 
 

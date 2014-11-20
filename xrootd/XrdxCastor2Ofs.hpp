@@ -26,6 +26,7 @@
 
 /*-----------------------------------------------------------------------------*/
 #include <map>
+#include <set>
 /*-----------------------------------------------------------------------------*/
 #include "XrdOuc/XrdOucEnv.hh"
 #include "XrdOuc/XrdOucString.hh"
@@ -141,7 +142,7 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
   //! @param opaque opaque information
   //! @param client client identity
   //!
-  //! @return SFS_OK if successful, otherwise SFS_ERROR.
+  //! @return SFS_OK if successful, otherwise SFS_ERROR
   //----------------------------------------------------------------------------
   int PrepareTPC(XrdOucString& path,
                  XrdOucString& opaque,
@@ -152,7 +153,7 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
   //! Verify checksum - check that the checksum value obtained by reading the
   //! whole file matches the one saved in the extended attributes of the file.
   //!
-  //! @return True if checksums match, otherwise false.
+  //! @return True if checksums match, otherwise false
   //----------------------------------------------------------------------------
   bool VerifyChecksum();
 
@@ -163,28 +164,38 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
   //!
   //! @param env_opaque env containing opaque information
   //!
-  //! @return SFS_OK if successful, otherwise SFS_ERROR.
+  //! @return SFS_OK if successful, otherwise SFS_ERROR
   //----------------------------------------------------------------------------
   int ExtractTransferInfo(XrdOucEnv& env_opaque);
 
+  //----------------------------------------------------------------------------
+  //! Build transfer identifier
+  //!
+  //! @param tident Client identity information containing the following:
+  //!               userid.pid.fd@origin_host
+  //! @param env XrdOucEnv containing the opaque information from the open req.
+  //----------------------------------------------------------------------------
+  void BuildTransferId(const char* tident, XrdOucEnv* env);
+
 
   static const int sKeyExpiry; ///< validity time of a tpc key
-  XrdOucEnv* mEnvOpaque; ///< initial opaque information
+  struct stat mStatInfo; ///< file stat info
+  bool mIsClosed; ///< mark when file is closed
   bool mIsRW; ///< file opened for writing
   bool mHasWrite; ///< mark is file has writes
   bool mViaDestructor; ///< mark close via destructor - not properly closed
-  std::string mReqId; ///< request id received from the redirector
-  unsigned int mAdlerXs; ///< adler checksum
   bool mHasAdlerErr; ///< mark if there was an adler error
   bool mHasAdler; ///< mark if it has adler xs computed
+  unsigned int mAdlerXs; ///< adler checksum
   XrdSfsFileOffset mAdlerOffset; ///< current adler offset
+  int mDiskMgrPort; ///< disk manager port where to connect
   std::string mXsValue; ///< checksum value
   std::string mXsType; ///< checksum type: adler, crc32c etc.
-  bool mIsClosed; ///< make when file is closed
-  struct stat mStatInfo; ///< file stat info
   std::string mTpcKey; ///< tpc key allocated to this file
-  TpcFlag::Flag mTpcFlag ;; ///< tpc flag to identify the access type
-  int mDiskMgrPort; ///< disk manager port where to connect
+  std::string mReqId; ///< request id received from the redirector
+  std::string mTransferId; ///< unique id identifying current transfer
+  TpcFlag::Flag mTpcFlag; ///< tpc flag to identify the access type
+  XrdOucEnv* mEnvOpaque; ///< initial opaque information
 };
 
 
@@ -373,6 +384,30 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
 
 
   //----------------------------------------------------------------------------
+  //! Perform a filesystem control operation
+  //!
+  //! @param  cmd    - The operation to be performed:
+  //!                  SFS_FSCTL_PLUGIO  Return implementation dependent data
+  //! @param  args   - Arguments specific to cmd.
+  //!                  SFS_FSCTL_PLUGIO
+  //! @param  eInfo  - The object where error info or results are to be returned.
+  //! @param  client - Client's identify (see common description).
+  //!
+  //! @return SFS_OK   a null response is sent.
+  //! @return SFS_DATA error.code    length of the data to be sent.
+  //!                  error.message contains the data to be sent.
+  //! @return SFS_STARTED Operation started result will be returned via callback.
+  //!                  Valid only for for SFS_FSCTL_LOCATE, SFS_FSCTL_STATFS, and
+  //!                  SFS_FSCTL_STATXA
+  //!         o/w      one of SFS_ERROR, SFS_REDIRECT, or SFS_STALL.
+  //----------------------------------------------------------------------------
+  int FSctl(const int cmd,
+            XrdSfsFSctl& args,
+            XrdOucErrInfo& eInfo,
+            const XrdSecEntity* client = 0);
+
+
+  //----------------------------------------------------------------------------
   //! Set the log level for the xrootd daemon
   //!
   //! @param logLevel new loglevel to be set
@@ -385,8 +420,30 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
 
  private:
 
+  //----------------------------------------------------------------------------
+  //! Add entry to the set of transfers
+  //!
+  //! @param entry string uniquely identifying a transfer
+  //!
+  //! @return True if successfully added, otherwise false
+  //----------------------------------------------------------------------------
+  bool AddTransfer(const std::string transfer_id);
+
+
+  //----------------------------------------------------------------------------
+  //! Remove entry from the set of transfers
+  //!
+  //! @param entry string uniquely identifying a transfer
+  //!
+  //! @return Number of entries erased from the set of transfers
+  //----------------------------------------------------------------------------
+  size_t RemoveTransfer(const std::string transfer_id);
+
+
   int mLogLevel; ///< log level from configuration file
   XrdSysError* Eroute; ///< error object
+  XrdSysMutex mMutexTransfers; ///< mutex to protecte access to the transfer list
+  std::set<std::string> mSetTransfers; ///< set of ongoing transfers
 };
 
 extern XrdxCastor2Ofs* gSrv; ///< global diskserver OFS handle
