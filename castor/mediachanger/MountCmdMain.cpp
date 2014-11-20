@@ -89,7 +89,7 @@ static int exceptionThrowingMain(const int argc, char *const *const argv) {
   const int sizeOfIOThreadPoolForZMQ = 1;
   messages::SmartZmqContext zmqContext(instantiateZmqContext(
     sizeOfIOThreadPoolForZMQ));
-  messages::AcsProxyZmq acs(log, acs::ACS_PORT, zmqContext.get());
+  messages::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
 
   mediachanger::MmcProxyDummy mmc;
 

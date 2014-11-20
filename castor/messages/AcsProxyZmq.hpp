@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "castor/log/Logger.hpp"
 #include "castor/messages/AcsProxy.hpp"
 #include "castor/messages/Frame.hpp"
 #include "castor/messages/Mutex.hpp"
@@ -39,13 +38,11 @@ public:
   /**
    * Constructor.
    *
-   * @param log The object representing the API of the CASTOR logging system.
-   * @param serverPort The TCP/IP port on which the CASTOR ACS daemon is listening
-   * for ZMQ messages.
+   * @param serverPort The TCP/IP port on which the CASTOR ACS daemon is
+   * listening for ZMQ messages.
    * @param zmqContext The ZMQ context.
    */
-  AcsProxyZmq(log::Logger &log, const unsigned short serverPort,
-    void *const zmqContext) throw();
+  AcsProxyZmq(const unsigned short serverPort, void *const zmqContext) throw();
 
   /**
    * Request the CASTOR ACS daemon to mount the specified tape for read-only
@@ -85,11 +82,6 @@ private:
    */
   Mutex m_mutex;
    
-  /**
-   * The object representing the API of the CASTOR logging system.
-   */
-  log::Logger &m_log;
-
   /**
    * The TCP/IP port on which the CASTOR ACS daemon is listening for ZMQ
    * messages.

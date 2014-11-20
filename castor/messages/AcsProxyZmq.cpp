@@ -31,9 +31,8 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::messages::AcsProxyZmq::AcsProxyZmq(log::Logger &log, 
-  const unsigned short serverPort, void *const zmqContext) throw():
-  m_log(log),
+castor::messages::AcsProxyZmq::AcsProxyZmq(const unsigned short serverPort,
+  void *const zmqContext) throw():
   m_serverPort(serverPort),
   m_serverSocket(zmqContext, ZMQ_REQ) {
   connectZmqSocketToLocalhost(m_serverSocket, serverPort);

@@ -475,8 +475,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     messages::SmartZmqContext
       zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
 
-    messages::AcsProxyZmq acs(m_log,
-      acs::ACS_PORT, zmqContext.get());
+    messages::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
 
     mediachanger::MmcProxyLog mmc(m_log);
 
@@ -530,7 +529,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   messages::SmartZmqContext
     zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
 
-  messages::AcsProxyZmq acs(m_log, acs::ACS_PORT, zmqContext.get());
+  messages::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
 
   mediachanger::MmcProxyLog mmc(m_log);
 
@@ -853,7 +852,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     messages::TapeserverProxyZmq tapeserver(m_log,
       TAPESERVER_INTERNAL_LISTENING_PORT, zmqContext.get());
 
-    messages::AcsProxyZmq acs(m_log, acs::ACS_PORT, zmqContext.get());
+    messages::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
 
     mediachanger::MmcProxyLog mmc(m_log);
 
