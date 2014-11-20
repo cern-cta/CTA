@@ -64,7 +64,7 @@ public:
     throw();
 
   /**
-   * Requests the media changer to mount of the specified tape for read-only
+   * Requests the media changer to mount the specified tape for read-only
    * access into the drive in the specified library slot.
    *
    * @param vid The volume identifier of the tape.
@@ -74,7 +74,7 @@ public:
     const GenericLibrarySlot &librarySlot);
 
   /**
-   * Requests the media changer to mount of the specified tape for read/write
+   * Requests the media changer to mount the specified tape for read/write
    * access into the drive in the specified library slot.
    *
    * @param vid The volume identifier of the tape.
@@ -84,7 +84,7 @@ public:
     const GenericLibrarySlot &librarySlot);
 
   /**
-   * Requests the media changer to dismount of the specified tape from the
+   * Requests the media changer to dismount the specified tape from the
    * drive in the specifed library slot.
    *
    * @param vid The volume identifier of the tape.

@@ -10,15 +10,15 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH CASTOR-TAPE-MEDIACHANGER-MOUNT "1castor" "$Date: 2013/10/09 14:00:00 $" CASTOR "CASTOR"
+.TH CASTOR-TAPE-MEDIACHANGER-DISMOUNT "1castor" "$Date: 2013/10/09 14:00:00 $" CASTOR "CASTOR"
 .SH NAME
-castor-tape-mediachanger-mount \- mount a volume
+castor-tape-mediachanger-dismount \- dismount a volume
 .SH SYNOPSIS
-.BI "castor-tape-mediachanger-mount [options] VID DRIVE_SLOT"
+.BI "castor-tape-mediachanger-dismount [options] VID DRIVE_SLOT"
 
 .SH DESCRIPTION
-\fBcastor-tape-mediachanger-mount\fP mounts the volume with the specified
-\fBVID\fP into the drive located in the specified \fBDRIVE_SLOT\fP within the
+\fBcastor-tape-mediachanger-dismount\fP dismounts the volume with the specified
+\fBVID\fP from the drive located in the specified \fBDRIVE_SLOT\fP within the
 tape library.  \fBDRIVE_SLOT\fP must be in one of the following two forms:
 .IP
 .B acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
@@ -32,9 +32,6 @@ Turns on the printing of debug information.
 .TP
 \fB\-h, \-\-help
 Prints the usage message.
-.TP
-\fB\-r, \-\-readonly
-Request the volume is mounted for read-only access.
 
 .SH "RETURN CODES"
 .TP

@@ -33,6 +33,7 @@ set (MEDIA_CHANGER_LIB_SRC_FILES
 add_library(castormediachanger ${MEDIA_CHANGER_LIB_SRC_FILES})
 
 if (${COMPILE_SERVER} STREQUAL "1")
+
   ##############################################################################
   # Rules to build and install castor-tape-mediachanger-mount
   ##############################################################################
@@ -42,7 +43,8 @@ if (${COMPILE_SERVER} STREQUAL "1")
     MountCmd.cpp
     MountCmdLine.cpp
     MountCmdMain.cpp)
-  add_executable (castor-tape-mediachanger-mount ${MEDIA_CHANGER_MOUNT_SRC_FILES})
+  add_executable (castor-tape-mediachanger-mount
+    ${MEDIA_CHANGER_MOUNT_SRC_FILES})
   set_target_properties (castor-tape-mediachanger-mount PROPERTIES
     COMPILE_FLAGS -I/usr/include/CDK
     COMPILE_DEFINITIONS LINUX)
@@ -57,6 +59,37 @@ if (${COMPILE_SERVER} STREQUAL "1")
     ${STK_UTL_LIB}
     ${STK_IPC_LIB}
     ${STK_CL_LIB})
-  install (TARGETS castor-tape-mediachanger-mount DESTINATION ${CASTOR_DEST_BIN_DIR})
+  install (TARGETS castor-tape-mediachanger-mount
+    DESTINATION ${CASTOR_DEST_BIN_DIR})
   CastorInstallExeManPage(castor-tape-mediachanger-mount)
+
+  ##############################################################################
+  # Rules to build and install castor-tape-mediachanger-dismount
+  ##############################################################################
+  set (MEDIA_CHANGER_DISMOUNT_SRC_FILES
+    CmdLine.cpp
+    CmdLineTool.cpp
+    DismountCmd.cpp
+    DismountCmdLine.cpp
+    DismountCmdMain.cpp)
+  add_executable (castor-tape-mediachanger-dismount
+    ${MEDIA_CHANGER_DISMOUNT_SRC_FILES})
+  set_target_properties (castor-tape-mediachanger-dismount PROPERTIES
+    COMPILE_FLAGS -I/usr/include/CDK
+    COMPILE_DEFINITIONS LINUX)
+  target_link_libraries (castor-tape-mediachanger-dismount
+    castorcommon
+    castorlegacymsg
+    castorlog
+    castormediachanger
+    castormessages
+    castorutils
+    ${STK_API_LIB}
+    ${STK_UTL_LIB}
+    ${STK_IPC_LIB}
+    ${STK_CL_LIB})
+  install (TARGETS castor-tape-mediachanger-dismount
+    DESTINATION ${CASTOR_DEST_BIN_DIR})
+  CastorInstallExeManPage(castor-tape-mediachanger-dismount)
+
 endif (${COMPILE_SERVER} STREQUAL "1")

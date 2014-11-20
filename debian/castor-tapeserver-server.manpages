@@ -1,3 +1,4 @@
 debian/castor/usr/share/man/man1/castor-tape-label.1castor.gz
+debian/castor/usr/share/man/man1/castor-tape-mediachanger-dismount.1castor.gz
 debian/castor/usr/share/man/man1/castor-tape-mediachanger-mount.1castor.gz
 debian/castor/usr/share/man/man8/tapeserverd.8castor.gz

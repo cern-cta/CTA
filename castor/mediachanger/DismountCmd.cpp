@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/mediachanger/MountCmd.hpp"
+#include "castor/mediachanger/DismountCmd.hpp"
 
 #include <getopt.h>
 #include <iostream>
@@ -29,7 +29,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::mediachanger::MountCmd::MountCmd(
+castor::mediachanger::DismountCmd::DismountCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
   MediaChangerFacade &mc) throw():
   CmdLineTool(inStream, outStream, errStream, mc) {
@@ -38,16 +38,16 @@ castor::mediachanger::MountCmd::MountCmd(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::mediachanger::MountCmd::~MountCmd() throw() {
+castor::mediachanger::DismountCmd::~DismountCmd() throw() {
   // Do nothing
 }
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-void castor::mediachanger::MountCmd::exceptionThrowingMain(const int argc,
+void castor::mediachanger::DismountCmd::exceptionThrowingMain(const int argc,
   char *const *const argv) {
-  m_cmdLine = MountCmdLine(argc, argv);
+  m_cmdLine = DismountCmdLine(argc, argv);
 
   // Display the usage message to standard out and exit with success if the
   // user requested help
@@ -59,25 +59,24 @@ void castor::mediachanger::MountCmd::exceptionThrowingMain(const int argc,
   // Setup debug mode to be on or off depending on the command-line arguments
   m_debugBuf.setDebug(m_cmdLine.debug);
 
-  m_dbg << "readonly   = " << bool2Str(m_cmdLine.readOnly) << std::endl;
   m_dbg << "VID        = " << m_cmdLine.vid << std::endl;
   m_dbg << "DRIVE_SLOT = " << m_cmdLine.driveLibrarySlot.str() << std::endl;
 
-  mountTape();
+  m_mc.dismountTape(m_cmdLine.vid, m_cmdLine.driveLibrarySlot);
 }
 
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::mediachanger::MountCmd::usage(std::ostream &os) const throw() {
+void castor::mediachanger::DismountCmd::usage(std::ostream &os) const throw() {
   os <<
   "Usage:\n"
   "\n"
-  "  castor-tape-mediachanger-mount [options] VID DRIVE_SLOT\n"
+  "  castor-tape-mediachanger-dismount [options] VID DRIVE_SLOT\n"
   "\n"
   "Where:\n"
   "\n"
-  "  VID        The VID of the volume to be mounted.\n"
+  "  VID        The VID of the volume to be dismounted.\n"
   "  DRIVE_SLOT The slot in the tape library where the drive is located.\n"
   "             DRIVE_SLOT must be in one of the following two forms:\n"
   "\n"
@@ -86,22 +85,9 @@ void castor::mediachanger::MountCmd::usage(std::ostream &os) const throw() {
   "\n"
   "Options:\n"
   "\n"
-  "  -d|--debug    Turn on the printing of debug information.\n"
+  "  -d|--debug Turn on the printing of debug information.\n"
   "\n"
-  "  -h|--help     Print this help message and exit.\n"
-  "\n"
-  "  -r|--readOnly Request the volume is mounted for read-only access\n"
+  "  -h|--help  Print this help message and exit.\n"
   "\n"
   "Comments to: Castor.Support@cern.ch" << std::endl;
-}
-
-//------------------------------------------------------------------------------
-// mountTape
-//------------------------------------------------------------------------------
-void castor::mediachanger::MountCmd::mountTape() {
-  if(m_cmdLine.readOnly) {
-    m_mc.mountTapeReadOnly(m_cmdLine.vid, m_cmdLine.driveLibrarySlot);
-  } else {
-    m_mc.mountTapeReadWrite(m_cmdLine.vid, m_cmdLine.driveLibrarySlot);
-  }
 }
