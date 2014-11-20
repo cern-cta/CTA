@@ -31,9 +31,8 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::legacymsg::RmcProxyTcpIp::RmcProxyTcpIp(log::Logger &log,
-  const unsigned short rmcPort, const int netTimeout) throw():
-  m_log(log),
+castor::legacymsg::RmcProxyTcpIp::RmcProxyTcpIp(const unsigned short rmcPort,
+  const int netTimeout) throw():
   m_rmcPort(rmcPort),
   m_netTimeout(netTimeout) {
 } 

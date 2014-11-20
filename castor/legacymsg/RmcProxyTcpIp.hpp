@@ -22,7 +22,6 @@
 #pragma once
 
 #include "castor/io/io.hpp"
-#include "castor/log/Logger.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/legacymsg/RmcMountMsgBody.hpp"
 #include "castor/legacymsg/RmcProxy.hpp"
@@ -45,13 +44,11 @@ public:
   /**
    * Constructor.
    *
-   * @param log The object representing the API of the CASTOR logging system.
    * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    */
-  RmcProxyTcpIp(log::Logger &log, const unsigned short rmcPort,
-    const int netTimeout) throw();
+  RmcProxyTcpIp(const unsigned short rmcPort, const int netTimeout) throw();
 
   /**
    * Destructor.
@@ -89,11 +86,6 @@ protected:
    * The maximum number of attempts a retriable RMC request should be issued.
    */
   static const int RMC_MAXATTEMPTS = 3;
-
-  /**
-   * The object representing the API of the CASTOR logging system.
-   */
-  log::Logger &m_log;
 
   /**
    * The TCP/IP port on which the rmcd daemon is listening.

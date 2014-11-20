@@ -25,7 +25,6 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/RmcProxyTcpIp.hpp"
-#include "castor/log/DummyLogger.hpp"
 #include "castor/mediachanger/MmcProxyDummy.hpp"
 #include "castor/mediachanger/MountCmd.hpp"
 #include "castor/messages/AcsProxyZmq.hpp"
@@ -84,8 +83,6 @@ int main(const int argc, char *const *const argv) {
 static int exceptionThrowingMain(const int argc, char *const *const argv) {
   using namespace castor;
 
-  log::DummyLogger log("castor-tape-mediachanger-mount");
-
   const int sizeOfIOThreadPoolForZMQ = 1;
   messages::SmartZmqContext zmqContext(instantiateZmqContext(
     sizeOfIOThreadPoolForZMQ));
@@ -103,7 +100,7 @@ static int exceptionThrowingMain(const int argc, char *const *const argv) {
   // to the time it takes to mount and unmount tapes
   const int rmcNetTimeout = 600; // Timeout in seconds
 
-  legacymsg::RmcProxyTcpIp rmc(log, rmcPort, rmcNetTimeout);
+  legacymsg::RmcProxyTcpIp rmc(rmcPort, rmcNetTimeout);
 
   mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   
