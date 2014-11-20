@@ -36,6 +36,17 @@ castor::mediachanger::MediaChangerFacade::MediaChangerFacade(
 }
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::mediachanger::MediaChangerFacade::MediaChangerFacade(
+  messages::AcsProxy &acs,
+  legacymsg::RmcProxy &rmc) throw():
+  m_acs(acs),
+  m_mmc(m_mmcNotSupported),
+  m_rmc(rmc) {
+}
+
+//------------------------------------------------------------------------------
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
 void castor::mediachanger::MediaChangerFacade::mountTapeReadOnly(

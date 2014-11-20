@@ -19,11 +19,9 @@ castor-tape-mediachanger-mount \- mount a volume
 .SH DESCRIPTION
 \fBcastor-tape-mediachanger-mount\fP mounts the volume with the specfied
 \fBVID\fP into the drive located in the specified \fBDRIVE_SLOT\fP within the
-tape library.  \fBDRIVE_SLOT\fP must be in one of the following three forms:
+tape library.  \fBDRIVE_SLOT\fP must be in one of the following two forms:
 .IP
 .B acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
-.IP
-.B manual
 .IP
 .B smc@rmc_host,drive_ordinal
 

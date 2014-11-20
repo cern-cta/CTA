@@ -63,7 +63,7 @@ public:
    * @param argc The number of command-line arguments.
    * @param argv The command-line arguments.
    */
-  int main(const int argc, char *const *const argv) throw();
+  void exceptionThrowingMain(const int argc, char *const *const argv);
 
 private:
 
@@ -76,15 +76,6 @@ private:
   MountCmdLine m_cmdLine;
 
   /**
-   * Parses the specified command line.
-   *
-   * @param argc The number of command-line arguments.
-   * @param argv The command-line arguments.
-   * @return true on failure and false on success.
-   */
-  bool parseCmdLine(const int argc, char *const *const argv) throw();
-
-  /**
    * Writes the command-line usage message of to the specified output stream.
    *
    * @param os Output stream to be written to.
@@ -94,10 +85,8 @@ private:
   /**
    * Requests the media changer to mount the tape and returns only when the
    * operation has terminated.
-   *
-   * @return The return value of the command-line tool.
    */
-  int mountTape() throw();
+  void mountTape();
 
 }; // class MountCmd
 

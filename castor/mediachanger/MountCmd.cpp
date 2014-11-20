@@ -45,61 +45,25 @@ castor::mediachanger::MountCmd::~MountCmd() throw() {
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int castor::mediachanger::MountCmd::main(const int argc,
-  char *const *const argv) throw() {
-  if(parseCmdLine(argc, argv)) {
-    return 1;
-  }
+void castor::mediachanger::MountCmd::exceptionThrowingMain(const int argc,
+  char *const *const argv) {
+  m_cmdLine = MountCmdLine(argc, argv);
 
   // Display the usage message to standard out and exit with success if the
   // user requested help
   if(m_cmdLine.help) {
     usage(m_out);
-    return 0;
+    return;
   }
 
   // Setup debug mode to be on or off depending on the command-line arguments
   m_debugBuf.setDebug(m_cmdLine.debug);
 
   m_dbg << "readonly   = " << bool2Str(m_cmdLine.readOnly) << std::endl;
-  m_dbg << "VID        = " << m_cmdLine.vid;
+  m_dbg << "VID        = " << m_cmdLine.vid << std::endl;
   m_dbg << "DRIVE_SLOT = " << m_cmdLine.driveLibrarySlot.str() << std::endl;
 
-  return mountTape();
-}
-
-//------------------------------------------------------------------------------
-// parseCmdLine
-//------------------------------------------------------------------------------
-bool castor::mediachanger::MountCmd::parseCmdLine(const int argc,
-  char *const *const argv) throw() {
-  std::ostringstream errorMessage;
-
-  try {
-    m_cmdLine = MountCmdLine(argc, argv);
-    return false; // Successfully parsed command line
-  } catch(castor::exception::InvalidArgument &ia) {
-    errorMessage << "Invalid argument: " << ia.getMessage().str() << std::endl;
-    errorMessage << std::endl;
-    usage(errorMessage);
-  } catch(castor::exception::MissingOperand &mo) {
-    errorMessage << "Missing operand: " << mo.getMessage().str() << std::endl;
-    errorMessage << std::endl;
-    usage(errorMessage);
-  } catch(castor::exception::Exception &ie) {
-    errorMessage << "Internal error: " << ie.getMessage().str() << std::endl;
-  } catch(std::exception &se) {
-    errorMessage << "Unexpected exception: " << se.what() << std::endl;
-  } catch(...) {
-    errorMessage << "Unknown exception" << std::endl;
-  }
-
-  // Reaching here means the command line could not be parsed, an exception has
-  // been thrown and errorMessage has been set accordingly
-
-  m_err << "Aborting: Failed to parse command line: " << errorMessage.str();
-
-  return true; // Failed to parse command line
+  mountTape();
 }
 
 //------------------------------------------------------------------------------
@@ -135,17 +99,10 @@ void castor::mediachanger::MountCmd::usage(std::ostream &os) const throw() {
 //------------------------------------------------------------------------------
 // mountTape
 //------------------------------------------------------------------------------
-int castor::mediachanger::MountCmd::mountTape() throw() {
-  try {
-    if(m_cmdLine.readOnly) {
-      m_mc.mountTapeReadOnly(m_cmdLine.vid, m_cmdLine.driveLibrarySlot);
-    } else {
-      m_mc.mountTapeReadWrite(m_cmdLine.vid, m_cmdLine.driveLibrarySlot);
-    }
-  } catch(castor::exception::Exception &ex) {
-    m_err << "Aborting: " << ex.getMessage().str() << std::endl;
-    return 1;
+void castor::mediachanger::MountCmd::mountTape() {
+  if(m_cmdLine.readOnly) {
+    m_mc.mountTapeReadOnly(m_cmdLine.vid, m_cmdLine.driveLibrarySlot);
+  } else {
+    m_mc.mountTapeReadWrite(m_cmdLine.vid, m_cmdLine.driveLibrarySlot);
   }
-
-  return 0;
 }

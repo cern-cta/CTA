@@ -25,7 +25,7 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/RmcProxyTcpIp.hpp"
-#include "castor/mediachanger/MmcProxyDummy.hpp"
+#include "castor/mediachanger/MmcProxyNotSupported.hpp"
 #include "castor/mediachanger/MountCmd.hpp"
 #include "castor/messages/AcsProxyZmq.hpp"
 #include "castor/messages/SmartZmqContext.hpp"
@@ -42,7 +42,7 @@
  * @param argc The number of command-line arguments including the program name.
  * @param argv The command-line arguments.
  */
-static int exceptionThrowingMain(const int argc, char *const *const argv);
+static void exceptionThrowingMain(const int argc, char *const *const argv);
 
 /**
  * Instantiates a ZMQ context.
@@ -60,7 +60,8 @@ int main(const int argc, char *const *const argv) {
   std::string errorMessage;
 
   try {
-    return exceptionThrowingMain(argc, argv);
+    exceptionThrowingMain(argc, argv);
+    return 0;
   } catch(castor::exception::Exception &ex) {
     errorMessage = ex.getMessage().str();
   } catch(std::exception &se) {
@@ -72,7 +73,7 @@ int main(const int argc, char *const *const argv) {
   // Reaching this point means the command has failed, ane exception was throw
   // and errorMessage has been set accordingly
 
-  std::cerr << "Aborting: " << errorMessage;
+  std::cerr << "Aborting: " << errorMessage << std::endl;
   return 1;
 }
 
@@ -80,7 +81,7 @@ int main(const int argc, char *const *const argv) {
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const int argc, char *const *const argv) {
+static void exceptionThrowingMain(const int argc, char *const *const argv) {
   using namespace castor;
 
   const int sizeOfIOThreadPoolForZMQ = 1;
@@ -88,7 +89,7 @@ static int exceptionThrowingMain(const int argc, char *const *const argv) {
     sizeOfIOThreadPoolForZMQ));
   messages::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
 
-  mediachanger::MmcProxyDummy mmc;
+  mediachanger::MmcProxyNotSupported mmc;
 
   common::CastorConfiguration &castorConf =
     common::CastorConfiguration::getConfig();
@@ -106,7 +107,7 @@ static int exceptionThrowingMain(const int argc, char *const *const argv) {
   
   mediachanger::MountCmd cmd(std::cin, std::cout, std::cerr, mc);
 
-  return cmd.main(argc, argv);
+  cmd.exceptionThrowingMain(argc, argv);
 }
 
 //------------------------------------------------------------------------------
