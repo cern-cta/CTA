@@ -33,7 +33,7 @@ import base64
 import connectionpool, dlf, clientsreplier
 from commonexceptions import TransferCanceled, TransferFailed, SourceNotStarted
 from diskmanagerdlf import msgs
-from transfer import TransferType, RunningTransfer
+from transfer import TransferType, D2DTransferType, RunningTransfer
 
 def signBase64(content, RSAKey):
     '''signs content with the given key and encode the result in base64'''
@@ -42,11 +42,12 @@ def signBase64(content, RSAKey):
     signature = signer.sign(contentHash)
     return base64.b64encode(signature)
 
-def buildXrootURL(self, diskserver, path):
+def buildXrootURL(self, diskserver, path, transferType):
     '''Builds a xroot valid url for the given path on the given diskserver'''
     # base url and key parameter
     url = 'root://'+diskserver+':1095//' + path + '?'
     opaque_dict = {'castor2fs.pfn1' : path,
+                   'castor.txtype' : transferType,
                    'castor2fs.exptime' : str(int(time.time()) + 3600)}
 
     # signature part
@@ -57,6 +58,7 @@ def buildXrootURL(self, diskserver, path):
         key = RSA.importKey(open(keyFile, 'r').read())
         # sign opaque part obtained by concatenating the values
         opaque_token = ''.join([opaque_dict['castor2fs.pfn1'],
+                                opaque_dict['castor.txtype'],
                                 "0", # accessop
                                 opaque_dict['castor2fs.exptime']])
         signature = signBase64(opaque_token, key)
@@ -114,13 +116,14 @@ class ActivityControlThread(threading.Thread):
   def startD2DTransfer(self, scheduler, transfer, srcDcPath, destDcPath):
     '''effectively starts a disk to disk transfer'''
     # build command line
+    transferType = 'd2d' + D2DTransferType.toStr(transfer.replicationType)
     srcDS, srcPath = srcDcPath.split(':', 1)
-    cmdLine = ['xrdcp', buildXrootURL(self, srcDS, srcPath), \
-                        buildXrootURL(self, 'localhost', destDcPath)]
+    cmdLine = ['xrdcp', buildXrootURL(self, srcDS, srcPath, transferType), \
+                        buildXrootURL(self, 'localhost', destDcPath, transferType)]
     # "Transfer starting" message
     dlf.write(msgs.TRANSFERSTARTING, subreqid=transfer.transferId,
               reqid=transfer.reqId, fileId=transfer.fileId,
-              TtransferType=TransferType.toStr(transfer.transferType),
+              transferType=TransferType.toStr(transfer.transferType),
               cmdLine=' '.join(cmdLine))
     # start transfer process
     process = 0
