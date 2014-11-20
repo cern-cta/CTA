@@ -7,21 +7,18 @@
 
   Packaging
   ---------
-  - xrootd4
+  - xrootd-4.1
   - rpyc-3.3
   - ceph
   - zmq
   - python-crypto
-
+  - xrootd-python
+  - rtcpd, taped and tapebridged obsoleted by tapeserverd
   - Dropped castor-job
-
   - change of package name for gridFTP plugins (-int disappears)
       
   Configuration changes
   ---------------------
-  If missing, add the following privilege in Cupv:
-  Cupvadd  --user stage --group st --src ^HEADNODE$ --tgt ^HEADNODE$ --priv ADMIN
- 
   Change of key location and names (not -int anymore):
   + /etc/grid-security/castor-gridftp-dsi/castor-gridftp-dsi-cert.pem
   + /etc/grid-security/castor-gridftp-dsi/castor-gridftp-dsi-key.pem
