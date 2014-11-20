@@ -439,8 +439,6 @@ class RunningTransfersSet(object):
             if rTransfer.scheduler not in killedTransfers:
               killedTransfers[rTransfer.scheduler] = []
             errMsg = 'Transfer has been killed'
-            if rTransfer.process:
-              errMsg += ' : ' + rTransfer.process.stderr.read()
             killedTransfers[rTransfer.scheduler].append((rTransfer.transfer.transferId,
                                                          rTransfer.transfer.fileId, rc, errMsg,
                                                          rTransfer.transfer.reqId))
@@ -481,7 +479,7 @@ class RunningTransfersSet(object):
         for transferId, fileId, rc, msg, reqId in killedTransfers[scheduler]:
           # "Informed scheduler that transfer was killed by a signal" message
           dlf.write(msgs.INFORMTRANSFERKILLED, Scheduler=scheduler, subreqId=transferId,
-                    reqId=reqId, fileid=fileId, signal=-rc, Message=msg)
+                    reqId=reqId, fileid=fileId, signal=(-rc if rc else None), Message=msg)
       except connectionpool.Timeout, e:
         for transferId, fileId, rc, msg, reqId in killedTransfers[scheduler]:
           # "Failed to inform scheduler that transfer was killed by a signal" message
