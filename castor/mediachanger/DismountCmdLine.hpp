@@ -56,6 +56,12 @@ struct DismountCmdLine: public CmdLine {
   GenericLibrarySlot driveLibrarySlot;
 
   /**
+   * True if the dismount should be forced.  Forcing a dismount means rewinding
+   * and eject a tape where necessary.
+   */
+  bool force;
+
+  /**
    * Constructor.
    *
    * Initialises all BOOLEAN member-variables to FALSE, all integer

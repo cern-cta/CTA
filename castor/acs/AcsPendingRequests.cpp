@@ -181,9 +181,11 @@ void castor::acs::AcsPendingRequests::checkAndAddRequest(
       utils::hexDump(address.getData(), address.size()))
   };
   m_log(LOG_DEBUG, "AcsPendingRequests::checkAndAddRequest", params);
-  switch(rqst.header.msgtype()) {
-    case messages::MSG_TYPE_ACSMOUNTTAPEREADONLY:
-    case messages::MSG_TYPE_ACSMOUNTTAPEREADWRITE:
+
+  const messages::MsgType msgType = (messages::MsgType)rqst.header.msgtype();
+  switch(msgType) {
+  case messages::MSG_TYPE_ACSMOUNTTAPEREADONLY:
+  case messages::MSG_TYPE_ACSMOUNTTAPEREADWRITE:
     {  
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to check request"
@@ -191,14 +193,16 @@ void castor::acs::AcsPendingRequests::checkAndAddRequest(
         rqst.header.msgtype();
       throw ex;      
     }
-    case messages::MSG_TYPE_ACSDISMOUNTTAPE:
-      checkAndAddRequestDismountTape(address, empty, rqst, socket);
-      break;
-    default:
+  case messages::MSG_TYPE_ACSDISMOUNTTAPE:
+    checkAndAddRequestDismountTape(address, empty, rqst, socket);
+    break;
+  default:
     {
+      const std::string msgTypeStr = messages::msgTypeToString(msgType);
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to check request"
-        ": Unknown request type: msgtype=" << rqst.header.msgtype();
+        ": Unexpected request type: msgType=" << msgType << " msgTypeStr=" <<
+        msgTypeStr;
       throw ex;
     }
   }

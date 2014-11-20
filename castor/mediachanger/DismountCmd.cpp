@@ -62,5 +62,9 @@ void castor::mediachanger::DismountCmd::exceptionThrowingMain(const int argc,
   m_dbg << "VID        = " << m_cmdLine.vid << std::endl;
   m_dbg << "DRIVE_SLOT = " << m_cmdLine.driveLibrarySlot.str() << std::endl;
 
-  m_mc.dismountTape(m_cmdLine.vid, m_cmdLine.driveLibrarySlot);
+  if(m_cmdLine.force) {
+    m_mc.forceDismountTape(m_cmdLine.vid, m_cmdLine.driveLibrarySlot);
+  } else {
+    m_mc.dismountTape(m_cmdLine.vid, m_cmdLine.driveLibrarySlot);
+  }
 }

@@ -38,11 +38,13 @@ protected:
     unsigned int nbTimesMountTapeReadOnlyCalled;
     unsigned int nbTimesMountTapeReadWriteCalled;
     unsigned int nbTimesDismountTapeCalled;
+    unsigned int nbTimesForceDismountTapeCalled;
 
     MockAcsProxy():
       nbTimesMountTapeReadOnlyCalled(0),
       nbTimesMountTapeReadWriteCalled(0),
-      nbTimesDismountTapeCalled(0) {
+      nbTimesDismountTapeCalled(0),
+      nbTimesForceDismountTapeCalled(0) {
     }
 
     void mountTapeReadOnly(const std::string &vid,
@@ -59,17 +61,24 @@ protected:
       const castor::mediachanger::AcsLibrarySlot &librarySlot) {
       nbTimesDismountTapeCalled++;
     }
+
+    void forceDismountTape(const std::string &vid,
+      const castor::mediachanger::AcsLibrarySlot &librarySlot) {
+      nbTimesForceDismountTapeCalled++;
+    }
   }; // struct MockAcsProxy
 
   struct MockMmcProxy: public castor::mediachanger::MmcProxy {
     unsigned int nbTimesMountTapeReadOnlyCalled;
     unsigned int nbTimesMountTapeReadWriteCalled;
     unsigned int nbTimesDismountTapeCalled;
+    unsigned int nbTimesForceDismountTapeCalled;
 
     MockMmcProxy():
       nbTimesMountTapeReadOnlyCalled(0),
       nbTimesMountTapeReadWriteCalled(0),
-      nbTimesDismountTapeCalled(0) {
+      nbTimesDismountTapeCalled(0),
+      nbTimesForceDismountTapeCalled(0) {
     }
 
     void mountTapeReadOnly(const std::string &vid,
@@ -86,15 +95,29 @@ protected:
       const castor::mediachanger::ManualLibrarySlot &librarySlot) {
       nbTimesDismountTapeCalled++;
     }
+
+    void forceDismountTape(const std::string &vid,
+      const castor::mediachanger::ManualLibrarySlot &librarySlot) {
+      nbTimesForceDismountTapeCalled++;
+    }
   }; // struct MockMmcProxy
 
   struct MockRmcProxy: public castor::legacymsg::RmcProxy {
+    unsigned int nbTimesMountTapeReadOnlyCalled;
     unsigned int nbTimesMountTapeReadWriteCalled;
     unsigned int nbTimesDismountTapeCalled;
+    unsigned int nbTimesForceDismountTapeCalled;
 
     MockRmcProxy():
+      nbTimesMountTapeReadOnlyCalled(0),
       nbTimesMountTapeReadWriteCalled(0),
-      nbTimesDismountTapeCalled(0) {
+      nbTimesDismountTapeCalled(0),
+      nbTimesForceDismountTapeCalled(0) {
+    }
+
+    void mountTapeReadOnly(const std::string &vid,
+      const castor::mediachanger::ScsiLibrarySlot &librarySlot) {
+      nbTimesMountTapeReadOnlyCalled++;
     }
 
     void mountTapeReadWrite(const std::string &vid,
@@ -105,6 +128,11 @@ protected:
     void dismountTape(const std::string &vid,
       const castor::mediachanger::ScsiLibrarySlot &librarySlot) {
       nbTimesDismountTapeCalled++;
+    }
+
+    void forceDismountTape(const std::string &vid,
+      const castor::mediachanger::ScsiLibrarySlot &librarySlot) {
+      nbTimesForceDismountTapeCalled++;
     }
   }; // struct MockRmcProxy
 

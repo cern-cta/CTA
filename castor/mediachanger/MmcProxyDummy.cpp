@@ -41,3 +41,10 @@ void castor::mediachanger::MmcProxyDummy::mountTapeReadWrite(
 void castor::mediachanger::MmcProxyDummy::dismountTape(
   const std::string &vid, const ManualLibrarySlot &librarySlot) {
 }
+
+//------------------------------------------------------------------------------
+// forceDismountTape
+//------------------------------------------------------------------------------
+void castor::mediachanger::MmcProxyDummy::forceDismountTape(
+  const std::string &vid, const ManualLibrarySlot &librarySlot) {
+}

@@ -44,6 +44,15 @@ castor::legacymsg::RmcProxyTcpIp::~RmcProxyTcpIp() throw() {
 }
 
 //------------------------------------------------------------------------------
+// mountTapeReadOnly
+//------------------------------------------------------------------------------
+void castor::legacymsg::RmcProxyTcpIp::mountTapeReadOnly(
+  const std::string &vid, const mediachanger::ScsiLibrarySlot &librarySlot) {
+  // SCSI libraries do not support read-only mounts
+  mountTapeReadWrite(vid, librarySlot);
+}
+
+//------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
 void castor::legacymsg::RmcProxyTcpIp::mountTapeReadWrite(
@@ -94,6 +103,15 @@ void castor::legacymsg::RmcProxyTcpIp::dismountTape(const std::string &vid,
       ne.getMessage().str();
     throw ex;
   }
+}
+
+//------------------------------------------------------------------------------
+// forceDismountTape
+//------------------------------------------------------------------------------
+void castor::legacymsg::RmcProxyTcpIp::forceDismountTape(const std::string &vid,
+  const mediachanger::ScsiLibrarySlot &librarySlot) {
+  // SCSI libraries do not support forced dismounts
+  dismountTape(vid, librarySlot);
 }
 
 //-----------------------------------------------------------------------------

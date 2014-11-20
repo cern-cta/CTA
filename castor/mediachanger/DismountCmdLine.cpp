@@ -32,7 +32,8 @@
 //-----------------------------------------------------------------------------
 castor::mediachanger::DismountCmdLine::DismountCmdLine() throw():
   debug(false),
-  help(false) {
+  help(false),
+  force(false) {
 }
 
 //------------------------------------------------------------------------------
@@ -41,11 +42,13 @@ castor::mediachanger::DismountCmdLine::DismountCmdLine() throw():
 castor::mediachanger::DismountCmdLine::DismountCmdLine(const int argc,
   char *const *const argv):
   debug(false),
-  help(false) {
+  help(false),
+  force(false) {
 
   static struct option longopts[] = {
     {"debug", 0, NULL, 'd'},
     {"help" , 0, NULL, 'h'},
+    {"force", 0, NULL, 'f'},
     {NULL   , 0, NULL, 0}
   };
 
@@ -54,7 +57,7 @@ castor::mediachanger::DismountCmdLine::DismountCmdLine(const int argc,
   opterr = 0;
 
   int opt = 0;
-  while((opt = getopt_long(argc, argv, ":dh", longopts, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, ":dhf", longopts, NULL)) != -1) {
     processOption(opt);
   }
 
@@ -93,6 +96,9 @@ void castor::mediachanger::DismountCmdLine::processOption(const int opt) {
     break;
   case 'h':
     help = true;
+    break;
+  case 'f':
+    force = true;
     break;
   case ':':
     return handleMissingParameter(optopt);
@@ -133,5 +139,7 @@ std::string castor::mediachanger::DismountCmdLine::getUsage() throw() {
   "\n"
   "  -h|--help  Print this help message and exit.\n"
   "\n"
+  "  -f|--force Force the dismount (rewind and eject the tape where necessary)."
+    "\n"
   "Comments to: Castor.Support@cern.ch\n";
 }

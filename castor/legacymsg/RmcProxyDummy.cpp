@@ -22,6 +22,13 @@
 #include "castor/legacymsg/RmcProxyDummy.hpp"
 
 //------------------------------------------------------------------------------
+// mountTapeReadOnly
+//------------------------------------------------------------------------------
+void castor::legacymsg::RmcProxyDummy::mountTapeReadOnly(const std::string &vid,
+  const mediachanger::ScsiLibrarySlot &librarySlot) {
+}
+
+//------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
 void castor::legacymsg::RmcProxyDummy::mountTapeReadWrite(const std::string &vid,
@@ -32,5 +39,12 @@ void castor::legacymsg::RmcProxyDummy::mountTapeReadWrite(const std::string &vid
 // dismountTape
 //------------------------------------------------------------------------------
 void castor::legacymsg::RmcProxyDummy::dismountTape(const std::string &vid,
+  const mediachanger::ScsiLibrarySlot &librarySlot) {
+}
+
+//------------------------------------------------------------------------------
+// forceDismountTape
+//------------------------------------------------------------------------------
+void castor::legacymsg::RmcProxyDummy::forceDismountTape(const std::string &vid,
   const mediachanger::ScsiLibrarySlot &librarySlot) {
 }

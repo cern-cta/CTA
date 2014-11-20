@@ -137,13 +137,21 @@ private:
    */
   messages::Frame handleAcsMountTapeReadWrite(const messages::Frame &rqst);
 
-   /**
+  /**
    * Handles the dismount tape request.
    *
    * @param rqst The request.
    * @return The reply.
    */
   messages::Frame handleAcsDismountTape(const messages::Frame &rqst);
+
+  /**
+   * Handles the force dismount tape request.
+   *
+   * @param rqst The request.
+   * @return The reply.
+   */
+  messages::Frame handleAcsForceDismountTape(const messages::Frame &rqst);
   
   /**
    * The reactor to which new CASTOR ACS daemon connection handlers are to

@@ -271,8 +271,7 @@ void castor::acs::AcsDaemon::mainEventLoop() {
 //------------------------------------------------------------------------------
 // handleEvents
 //------------------------------------------------------------------------------
-bool castor::acs::AcsDaemon::handleEvents()
-  { 
+bool castor::acs::AcsDaemon::handleEvents() { 
   try {
     const int timeout = 100; // 100 milliseconds
     m_reactor.handleEvents(timeout);
@@ -332,8 +331,7 @@ void castor::acs::AcsDaemon::handlePendingRequests() {
 //------------------------------------------------------------------------------
 // handlePendingSignals
 //------------------------------------------------------------------------------
-bool castor::acs::AcsDaemon::handlePendingSignals()
-  throw() {
+bool castor::acs::AcsDaemon::handlePendingSignals() throw() {
   bool continueMainEventLoop = true;
   int sig = 0;
   sigset_t allSignals;

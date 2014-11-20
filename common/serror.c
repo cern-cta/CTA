@@ -341,6 +341,7 @@ const char *sys_terrlist[ETMAXERR-ETBASEOFF+2] =
    "Failed to mount volume",
    "Failed to dismount volume",
    "Failed to query volume",
+   "Failed to force dismount volume",
    "BAD ERROR NUMBER"
   };
 

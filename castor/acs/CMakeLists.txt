@@ -60,6 +60,7 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     AcsDaemonConfig.cpp
     AcsDaemonMain.cpp
     AcsDismountTape.cpp
+    AcsForceDismountTape.cpp
     AcsImpl.cpp
     AcsLibraryInteraction.cpp
     AcsMessageHandler.cpp

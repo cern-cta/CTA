@@ -62,3 +62,14 @@ void castor::mediachanger::MmcProxyLog::dismountTape(
     log::Param("librarySlot", librarySlot.str())};
   m_log(LOG_WARNING, "Tape should be manual dismounted", params);
 }
+
+//------------------------------------------------------------------------------
+// forceDismountTape
+//------------------------------------------------------------------------------
+void castor::mediachanger::MmcProxyLog::forceDismountTape(
+  const std::string &vid, const ManualLibrarySlot &librarySlot) {
+  log::Param params[] = {
+    log::Param("TPVID", vid),
+    log::Param("librarySlot", librarySlot.str())};
+  m_log(LOG_WARNING, "Tape should be manual dismounted", params);
+}

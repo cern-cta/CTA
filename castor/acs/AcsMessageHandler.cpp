@@ -22,6 +22,7 @@
 #include "castor/acs/Constants.hpp"
 #include "castor/acs/AcsMessageHandler.hpp"
 #include "castor/acs/AcsDismountTape.hpp"
+#include "castor/acs/AcsForceDismountTape.hpp"
 #include "castor/acs/AcsMountTapeReadOnly.hpp"
 #include "castor/acs/AcsMountTapeReadWrite.hpp"
 #include "castor/acs/Acs.hpp"
@@ -31,6 +32,7 @@
 #include "castor/messages/AcsMountTapeReadOnly.pb.h"
 #include "castor/messages/AcsMountTapeReadWrite.pb.h"
 #include "castor/messages/AcsDismountTape.pb.h"
+#include "castor/messages/AcsForceDismountTape.pb.h"
 
 #include <sstream>
 
@@ -204,21 +206,27 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
   dispatchMsgHandler(const messages::Frame &rqst) {
   m_log(LOG_DEBUG, "AcsMessageHandler dispatching message handler");
   
-  switch(rqst.header.msgtype()) {
-    case messages::MSG_TYPE_ACSMOUNTTAPEREADONLY:
-      return handleAcsMountTapeReadOnly(rqst);
+  const messages::MsgType msgType = (messages::MsgType)rqst.header.msgtype();
+  switch(msgType) {
+  case messages::MSG_TYPE_ACSMOUNTTAPEREADONLY:
+    return handleAcsMountTapeReadOnly(rqst);
       
-    case messages::MSG_TYPE_ACSMOUNTTAPEREADWRITE:
-      return handleAcsMountTapeReadWrite(rqst);  
+  case messages::MSG_TYPE_ACSMOUNTTAPEREADWRITE:
+    return handleAcsMountTapeReadWrite(rqst);  
 
-    case messages::MSG_TYPE_ACSDISMOUNTTAPE:
-      return handleAcsDismountTape(rqst);
+  case messages::MSG_TYPE_ACSDISMOUNTTAPE:
+    return handleAcsDismountTape(rqst);
 
-    default:
+  case messages::MSG_TYPE_ACSFORCEDISMOUNTTAPE:
+    return handleAcsForceDismountTape(rqst);
+
+  default:
     {
+      const std::string msgTypeStr = messages::msgTypeToString(msgType);
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to dispatch message handler"
-        ": Unknown request type: msgtype=" << rqst.header.msgtype();
+        ": Unexpected request type: msgType=" << msgType << " msgTypeStr=" <<
+        msgTypeStr;
       throw ex;
     }
   }
@@ -358,6 +366,56 @@ castor::messages::Frame castor::acs::AcsMessageHandler::
   } catch(...) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle AcsDismountTape message: " 
+                    << "Caught an unknown exception";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleAcsForceDismountTape
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::acs::AcsMessageHandler::
+  handleAcsForceDismountTape(const messages::Frame& rqst) {
+  m_log(LOG_DEBUG, "Handling AcsDismountTape message");
+
+  try {
+    messages::AcsForceDismountTape rqstBody;
+    rqst.parseBodyIntoProtocolBuffer(rqstBody);
+
+    const std::string vid = rqstBody.vid();
+    const uint32_t acs    = rqstBody.acs();
+    const uint32_t lsm    = rqstBody.lsm();
+    const uint32_t panel  = rqstBody.panel();
+    const uint32_t drive  = rqstBody.drive();
+
+    log::Param params[] = {log::Param("TPVID", vid),
+      log::Param("acs", acs),
+      log::Param("lsm", lsm),
+      log::Param("panel", panel),
+      log::Param("drive", drive)};
+    m_log(LOG_INFO, "Force dismount tape", params);
+
+    castor::acs::AcsImpl acsWrapper;
+    castor::acs::AcsForceDismountTape acsForceDismountTape(vid, acs, lsm,
+      panel, drive, acsWrapper, m_log, m_castorConf);
+    try {
+      acsForceDismountTape.execute();
+      m_log(LOG_INFO,"Tape successfully force dismounted", params);
+    } catch (castor::exception::Exception &ne) {
+      m_log(LOG_ERR,"Tape force dismount failed: "+ne.getMessage().str(),
+        params);
+      throw;
+    }
+    const messages::Frame reply = createReturnValueFrame(0);
+    return reply;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to handle AcsForceDismountTape message: " <<
+      ne.getMessage().str();
+    throw ex;
+  } catch(...) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to handle AcsForceDismountTape message: "
                     << "Caught an unknown exception";
     throw ex;
   }

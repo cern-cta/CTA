@@ -36,6 +36,9 @@ public:
    * Requests the media changer to mount the specified tape for read-only
    * access into the drive in the specified library slot.
    *
+   * Please note that this method provides a best-effort service because not all
+   * media changers support read-only mounts.
+   *
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
@@ -60,6 +63,20 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   void dismountTape(const std::string &vid,
+    const ManualLibrarySlot &librarySlot);
+
+  /**
+   * Request the CASTOR ACS daemon to forcefully dismount the specifed tape
+   * from the tape drive in the specified library slot.  Forcefully means
+   * rewinding and ejecting the tape if necessary.
+   *
+   * Please note that this method provides a best-effort service because not all
+   * media changers support forceful dismounts.
+   *
+   * @param vid The volume identifier of the tape to be mounted.
+   * @param librarySlot The slot in the library that contains the tape drive.
+   */
+  void forceDismountTape(const std::string &vid,
     const ManualLibrarySlot &librarySlot);
 
 }; // class MmcProxyDummy

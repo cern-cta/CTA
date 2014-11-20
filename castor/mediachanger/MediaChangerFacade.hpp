@@ -67,6 +67,9 @@ public:
    * Requests the media changer to mount the specified tape for read-only
    * access into the drive in the specified library slot.
    *
+   * Please note that this method provides a best-effort service because not all
+   * media changers support read-only mounts.
+   *
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
@@ -91,6 +94,20 @@ public:
    * @param librarySlot The library slot containing the tape drive.
    */
   void dismountTape(const std::string &vid,
+    const GenericLibrarySlot &librarySlot);
+
+  /**
+   * Requests the media changer to forcefully dismount the specified tape from
+   * the drive in the specifed library slot.  Forcefully means rewinding and
+   * ejecting the tape where necessary.
+   *
+   * Please note that this method provides a best-effort service because not all
+   * media changers support forceful dismounts.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param librarySlot The library slot containing the tape drive.
+   */
+  void forceDismountTape(const std::string &vid,
     const GenericLibrarySlot &librarySlot);
 
 private:

@@ -45,6 +45,7 @@ set (COMMON_LIB_SRC_FILES
   ../castor/exception/Errnum.cpp
   ../castor/exception/Exception.cpp
   ../castor/exception/FailedToExecutePython.cpp
+  ../castor/exception/ForceDismountFailed.cpp
   ../castor/exception/InvalidArgument.cpp
   ../castor/exception/InvalidConfigEntry.cpp
   ../castor/exception/InvalidConfiguration.cpp

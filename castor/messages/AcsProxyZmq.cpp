@@ -22,6 +22,7 @@
 #include "castor/messages/AcsMountTapeReadOnly.pb.h"
 #include "castor/messages/AcsMountTapeReadWrite.pb.h"
 #include "castor/messages/AcsDismountTape.pb.h"
+#include "castor/messages/AcsForceDismountTape.pb.h"
 #include "castor/messages/ReturnValue.pb.h"
 #include "castor/messages/AcsProxyZmq.hpp"
 #include "castor/messages/Constants.hpp"
@@ -213,6 +214,66 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to create AcsDismountTape frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// forceDismountTape
+//------------------------------------------------------------------------------
+void castor::messages::AcsProxyZmq::forceDismountTape(const std::string &vid,
+  const mediachanger::AcsLibrarySlot &librarySlot) {
+  MutexLocker lock(&m_mutex);
+  
+  try {
+    const Frame rqst = createAcsForceDismountTapeFrame(vid, librarySlot);
+    sendFrame(m_serverSocket, rqst);
+
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_serverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to request CASTOR ACS daemon to force dismount tape: " <<
+      librarySlot.str() << ": " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createAcsForceDismountTapeFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::AcsProxyZmq::
+  createAcsForceDismountTapeFrame(const std::string &vid,
+  const mediachanger::AcsLibrarySlot &librarySlot) {
+  try {
+    Frame frame;
+  
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_ACSFORCEDISMOUNTTAPE);
+    frame.header.set_bodysignature("PIPO");
+
+    AcsForceDismountTape body;
+    body.set_vid(vid);
+    body.set_acs(librarySlot.getAcs());
+    body.set_lsm(librarySlot.getLsm());
+    body.set_panel(librarySlot.getPanel());
+    body.set_drive(librarySlot.getDrive());
+    frame.serializeProtocolBufferIntoBody(body);
+
+    return frame;
+
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create AcsForceDismountTape frame: " <<
       ne.getMessage().str();
     throw ex;
   }

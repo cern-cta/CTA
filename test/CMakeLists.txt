@@ -57,6 +57,7 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     ../castor/acs/AcsDismountCmdLine.cpp
     ../castor/acs/AcsDismountCmdLineTest.cpp
     ../castor/acs/AcsDismountTape.cpp
+    ../castor/acs/AcsForceDismountTape.cpp
     ../castor/acs/AcsImpl.cpp
     ../castor/acs/AcsLibraryInteraction.cpp
     ../castor/acs/AcsMessageHandler.cpp

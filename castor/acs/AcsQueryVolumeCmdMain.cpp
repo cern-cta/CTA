@@ -57,8 +57,6 @@ int main(const int argc, char *const *const argv) {
   // and errorMessage has been set accordingly
 
   std::cerr << "Aborting: " << errorMessage << std::endl;
-  std::cerr << std::endl;
-  std::cerr << acs::AcsQueryVolumeCmdLine::getUsage();
   return 1;
 }
 

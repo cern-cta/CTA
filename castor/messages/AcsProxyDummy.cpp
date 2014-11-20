@@ -41,3 +41,10 @@ void castor::messages::AcsProxyDummy::mountTapeReadWrite(const std::string &vid,
 void castor::messages::AcsProxyDummy::dismountTape(const std::string &vid,
   const mediachanger::AcsLibrarySlot &librarySlot) {
 }
+
+//------------------------------------------------------------------------------
+// dismountTape
+//------------------------------------------------------------------------------
+void castor::messages::AcsProxyDummy::forceDismountTape(const std::string &vid,
+  const mediachanger::AcsLibrarySlot &librarySlot) {
+}

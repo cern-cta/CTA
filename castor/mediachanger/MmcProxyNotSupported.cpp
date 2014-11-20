@@ -51,3 +51,13 @@ void castor::mediachanger::MmcProxyNotSupported::dismountTape(
   ex.getMessage() << "Manual dismounting is not supported";
   throw ex;
 }
+
+//------------------------------------------------------------------------------
+// forceDismountTape
+//------------------------------------------------------------------------------
+void castor::mediachanger::MmcProxyNotSupported::forceDismountTape(
+  const std::string &vid, const ManualLibrarySlot &librarySlot) {
+  castor::exception::Exception ex;
+  ex.getMessage() << "Manual dismounting is not supported";
+  throw ex;
+} 

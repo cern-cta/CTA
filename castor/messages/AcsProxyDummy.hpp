@@ -62,6 +62,17 @@ public:
   void dismountTape(const std::string &vid,
     const mediachanger::AcsLibrarySlot &librarySlot);
 
+  /**
+   * Request the CASTOR ACS daemon to forcefully dismount the specifed tape
+   * from the tape drive in the specified library slot.  Forcefully means
+   * rewinding and ejecting the tape if necessary.
+   *
+   * @param vid The volume identifier of the tape to be mounted.
+   * @param librarySlot The slot in the library that contains the tape drive.
+   */
+  void forceDismountTape(const std::string &vid,
+    const mediachanger::AcsLibrarySlot &librarySlot);
+
 }; // class AcsProxyDummy
 
 } // namespace messages

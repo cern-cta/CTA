@@ -145,3 +145,36 @@ void castor::mediachanger::MediaChangerFacade::dismountTape(
     throw ex;
   }
 }
+
+//------------------------------------------------------------------------------
+// forceDismountTape
+//------------------------------------------------------------------------------
+void castor::mediachanger::MediaChangerFacade::forceDismountTape(
+  const std::string &vid, const GenericLibrarySlot &librarySlot) {
+  try {
+    const TapeLibraryType libraryType = librarySlot.getLibraryType();
+
+    // Dispatch the appropriate helper method depending on library slot type
+    switch(libraryType) {
+    case TAPE_LIBRARY_TYPE_ACS:
+      return m_acs.forceDismountTape(vid, librarySlot.str());
+    case TAPE_LIBRARY_TYPE_MANUAL:
+      return m_mmc.forceDismountTape(vid, librarySlot.str());
+    case TAPE_LIBRARY_TYPE_SCSI:
+      return m_rmc.forceDismountTape(vid, librarySlot.str());
+    default:
+      {
+        // Should never get here
+        castor::exception::Exception ex;
+        ex.getMessage() << "Library slot has an unexpected library type";
+        throw ex;
+      }
+    }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to force dismount tape"
+      ": vid=" << vid << " librarySlot=" << librarySlot.str() << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
