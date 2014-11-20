@@ -37,7 +37,7 @@
 extern "C" {
 
   /* internal function to connect to the diskmanager */
-  int connect_to_diskmanager(const int port) {
+  int connectToDiskmanager(const int port) {
     // connect and send data
     int sockfd = 0;
     if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -55,7 +55,7 @@ extern "C" {
 
 
   /* internal function to parse the answer from the diskmanager */
-  void parse_answer(const int sockfd, int* rc, char** errormsg) {
+  void parseAnswer(const int sockfd, int* rc, char** errormsg) {
     // synchronously read answer back from sockfd until \n
     // Format is <returnCode> [<error message>]\n
     int n = 0;
@@ -82,42 +82,40 @@ extern "C" {
   }
 
 
-  int mover_open_file(const int port, const char* transferMetaData, char** errormsg) {
-    int rc = 0;
+  int mover_open_file(const int port, const char* transferMetaData, int* errorcode, char** errormsg) {
     *errormsg = NULL;
     try {
       /* Prepare open message. Protocol:
-         OPEN <transferMetaData>
+         OPEN <errorCode> <transferMetaData>
          where the latter is a tuple:
          (<isWriteFlag>, <tident>, <transferType>, <physicalPath> [, transferId])
        */
       std::ostringstream writeBuf;
-      writeBuf << "OPEN " << transferMetaData;
+      writeBuf << "OPEN " << *errorcode << " " << transferMetaData;
 
       try {
         int sockfd = 0, n = 0;
         // connect and send data
-        sockfd = connect_to_diskmanager(port);
+        sockfd = connectToDiskmanager(port);
         n = write(sockfd, writeBuf.str().c_str(), writeBuf.str().length());
-        // process result
         if (n != (int)writeBuf.str().length()) {
           throw std::runtime_error("Failed to send OPEN message");
         }
         // synchronously read and parse answer
-        parse_answer(sockfd, &rc, errormsg);
+        parseAnswer(sockfd, errorcode, errormsg);
       }
       catch (std::exception& e) {
         // report any exception to the caller
-        rc = SEINTERNAL;
+        *errorcode = SEINTERNAL;
         *errormsg = strdup(e.what());
       }
     }
     catch (...) {
       // this is to avoid core dumps on standard exceptions
-      rc = SEINTERNAL;
+      *errorcode = SEINTERNAL;
       *errormsg = strdup("mover_open_file: caught general exception");
     }
-    return rc;
+    return *errorcode;
   }
 
 
@@ -139,14 +137,13 @@ extern "C" {
       try {
         int sockfd = 0, n = 0;
         // connect and send data
-        sockfd = connect_to_diskmanager(port);
+        sockfd = connectToDiskmanager(port);
         n = write(sockfd, writeBuf.str().c_str(), writeBuf.str().length());
-        // process result
         if (n != (int)writeBuf.str().length()) {
           throw std::runtime_error("Failed to send CLOSE message");
         }
         // synchronously read and parse answer
-        parse_answer(sockfd, errorcode, errormsg);
+        parseAnswer(sockfd, errorcode, errormsg);
       }
       catch (std::exception& e) {
         // report any exception to the caller

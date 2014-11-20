@@ -42,24 +42,27 @@ extern "C" {
  *                  where tident has the format: username.clientPid:fd@clientHost
  *                  and transferType is one of Tape, User, D2DUser, D2DInternal, D2DDraining, D2DBalance
  *                  and transferId is missing for non-user transfers
+ * errorcode        an error code to be passed in case of a failure; it may be filled
+                    with a non-zero value when the operation fails
  * errormsg         a pointer to a buffer for the error message if the operation failed
  *
  * The return value is 0 for success, SETIMEDOUT if the slot had timed out meanwhile
  * or SEINTERNAL for any other error.
  */
-int mover_open_file(const int port, const char* transferMetaData, char** errormsg);
+int mover_open_file(const int port, const char* transferMetaData, int* errorcode, char** errormsg);
 
 /**
  * mover_close_file allows a mover to close a CASTOR file after a transfer.
  * It connects to the diskmanagerd daemon and synchronously wait for the response.
  *
- * port           the port to which to connect
- * transferUuid   the UUID of the current transfer, aka the subRequest id
- * filesize       the size of the file (relevant only on Put requests)
- * cksumtype      the type of checksum (relevant only on Put requests)
- * cksumvalue     the hexadecimal value of the checksum (relevant only on Put requests)
- * errorcode      an error code to be passed in case of failure
- * errormsg       a pointer to a buffer for the error message if the operation failed
+ * port             the port to which to connect
+ * transferUuid     the UUID of the current transfer, aka the subRequest id
+ * filesize         the size of the file (relevant only on Put requests)
+ * cksumtype        the type of checksum (relevant only on Put requests)
+ * cksumvalue       the hexadecimal value of the checksum (relevant only on Put requests)
+ * errorcode        an error code to be passed in case of a failure; it may be filled
+                    with a non-zero value when the operation fails
+ * errormsg         a pointer to a buffer for the error message if the operation failed
  *
  * errorcode and errormsg are then populated with the result of the operation:
  * if errorcode == 0 the operation was successful, otherwise errormsg contains
