@@ -796,6 +796,7 @@ CREATE TABLE DiskServer
   dataPool INTEGER)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
+CREATE INDEX I_DiskServer_DP_ST_HW ON DiskServer (dataPool, status, hwOnline);
 ALTER TABLE DiskServer MODIFY
   (status CONSTRAINT NN_DiskServer_Status NOT NULL,
    name CONSTRAINT NN_DiskServer_Name NOT NULL,

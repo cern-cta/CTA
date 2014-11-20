@@ -1327,7 +1327,8 @@ BEGIN
              UNION ALL
             SELECT /*+ LEADING(DiskCopy DiskServer)
                        USE_NL(DiskCopy DiskServer)
-                       INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
+                       INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
+                       INDEX_RS_ASC(DiskServer I_DiskServer_DP_ST_HW) */
                    DiskCopy.castorFile,
                    DiskServer.name || ':' || DiskCopy.path AS filePath, 0 AS rate
               FROM DiskServer, DiskCopy

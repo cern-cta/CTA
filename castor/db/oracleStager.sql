@@ -3137,7 +3137,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   BEGIN
     SELECT COUNT(*), max(maxReplicaNb), sum(isDataPool)
       INTO varNbDCs, varMaxDCs, varDPinvolved FROM (
-      SELECT DiskCopy.id, SvcClass.maxReplicaNb, 0 AS isDataPool
+      SELECT /*+ LEADING(DiskCopy FileSystem DiskPool2SvcClass SvcClass)
+                 USE_NL(DiskCopy FileSystem DiskPool2SvcClass SvcClass) */
+             DiskCopy.id, SvcClass.maxReplicaNb, 0 AS isDataPool
         FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass
        WHERE DiskCopy.castorfile = inCfId
          AND DiskCopy.fileSystem = FileSystem.id
@@ -3146,7 +3148,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
          AND SvcClass.id = inSvcClassId
          AND DiskCopy.status = dconst.DISKCOPY_VALID
        UNION ALL
-      SELECT DiskCopy.id, SvcClass.maxReplicaNb, 1 AS isDatapool
+      SELECT /*+ LEADING(DiskCopy DataPool2SvcClass SvcClass)
+                 USE_NL(DiskCopy DataPool2SvcClass SvcClass) */
+             DiskCopy.id, SvcClass.maxReplicaNb, 1 AS isDatapool
         FROM DiskCopy, DataPool2SvcClass, SvcClass
        WHERE DiskCopy.castorfile = inCfId
          AND DiskCopy.dataPool = DataPool2SvcClass.parent
@@ -3626,9 +3630,9 @@ BEGIN
   -- the min() function does not represent anything here.
   -- Note that we accept copies in READONLY hardware here as we're
   -- processing Get requests
-  SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */
-         COUNT(id), min(status) INTO varNbDCs, varDcStatus
-    FROM (SELECT DiskCopy.id, DiskCopy.status
+  SELECT COUNT(id), min(status) INTO varNbDCs, varDcStatus
+    FROM (SELECT /*+ USE_NL(DiskCopy FileSystem DiskPool2SvcClass DiskServer) INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */
+                 DiskCopy.id, DiskCopy.status
             FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
            WHERE DiskCopy.castorfile = inCfId
              AND DiskCopy.fileSystem = FileSystem.id
@@ -3640,7 +3644,8 @@ BEGIN
              AND DiskServer.hwOnline = 1
              AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
            UNION ALL
-          SELECT DiskCopy.id, DiskCopy.status
+          SELECT /*+ USE_NL(DiskCopy DataPool2SvcClass) INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */
+                 DiskCopy.id, DiskCopy.status
             FROM DiskCopy, DataPool2SvcClass
            WHERE DiskCopy.castorfile = inCfId
              AND DiskCopy.dataPool = DataPool2SvcClass.parent
@@ -3665,7 +3670,7 @@ BEGIN
       SELECT LISTAGG(dsName || ':' || fsMountPoint, '|')
              WITHIN GROUP (ORDER BY DBMS_Random.value)
         INTO varDcList
-        FROM (SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) INDEX(Subrequest PK_Subrequest_Id)*/
+        FROM (SELECT /*+ USE_NL(DiskCopy FileSystem DiskPool2SvcClass DiskServer) INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */
                      DiskServer.name AS dsname, FileSystem.mountPoint AS fsMountPoint
                 FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
                WHERE DiskCopy.castorfile = inCfId
@@ -3679,7 +3684,8 @@ BEGIN
                  AND DiskServer.hwOnline = 1
                UNION ALL
               SELECT *
-                FROM (SELECT DiskServer.name AS dsname, '' AS fsMountPoint
+                FROM (SELECT /*+ USE_NL(DiskCopy DataPool2SvcClass DiskServer) INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */
+                             DiskServer.name AS dsname, '' AS fsMountPoint
                         FROM DiskCopy, DiskServer, DataPool2SvcClass
                        WHERE DiskCopy.castorfile = inCfId
                          AND DiskCopy.datapool = DataPool2SvcClass.parent
