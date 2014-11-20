@@ -19,7 +19,7 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-set (MEDIA_CHANGER_CLIENT_LIB_SRC_FILES
+set (MEDIA_CHANGER_LIB_SRC_FILES
   AcsLibrarySlot.cpp
   GenericLibrarySlot.cpp
   ManualLibrarySlot.cpp
@@ -29,32 +29,33 @@ set (MEDIA_CHANGER_CLIENT_LIB_SRC_FILES
   MmcProxyLog.cpp
   ScsiLibrarySlot.cpp
   TapeLibraryType.cpp)
-add_library(castormediachangerclient
-  ${MEDIA_CHANGER_CLIENT_LIB_SRC_FILES})
+add_library(castormediachanger ${MEDIA_CHANGER_LIB_SRC_FILES})
 
-##############################################################################
-# Rules to build and install castor-tape-mediachanger-mount
-##############################################################################
-set (MEDIA_CHANGER_MOUNT_SRC_FILES
-  CmdLine.cpp
-  CmdLineTool.cpp
-  MountCmd.cpp
-  MountCmdLine.cpp
-  MountCmdMain.cpp)
-add_executable (castor-tape-mediachanger-mount ${MEDIA_CHANGER_MOUNT_SRC_FILES})
-set_target_properties (castor-tape-mediachanger-mount PROPERTIES
-  COMPILE_FLAGS -I/usr/include/CDK
-  COMPILE_DEFINITIONS LINUX)
-target_link_libraries (castor-tape-mediachanger-mount
-  castorcommon
-  castorlegacymsg
-  castorlog
-  castormediachangerclient
-  castormessages
-  castorutils
-  ${STK_API_LIB}
-  ${STK_UTL_LIB}
-  ${STK_IPC_LIB}
-  ${STK_CL_LIB})
-install (TARGETS castor-tape-mediachanger-mount DESTINATION ${CASTOR_DEST_BIN_DIR})
-CastorInstallExeManPage(castor-tape-mediachanger-mount)
+if (${COMPILE_SERVER} STREQUAL "1")
+  ##############################################################################
+  # Rules to build and install castor-tape-mediachanger-mount
+  ##############################################################################
+  set (MEDIA_CHANGER_MOUNT_SRC_FILES
+    CmdLine.cpp
+    CmdLineTool.cpp
+    MountCmd.cpp
+    MountCmdLine.cpp
+    MountCmdMain.cpp)
+  add_executable (castor-tape-mediachanger-mount ${MEDIA_CHANGER_MOUNT_SRC_FILES})
+  set_target_properties (castor-tape-mediachanger-mount PROPERTIES
+    COMPILE_FLAGS -I/usr/include/CDK
+    COMPILE_DEFINITIONS LINUX)
+  target_link_libraries (castor-tape-mediachanger-mount
+    castorcommon
+    castorlegacymsg
+    castorlog
+    castormediachanger
+    castormessages
+    castorutils
+    ${STK_API_LIB}
+    ${STK_UTL_LIB}
+    ${STK_IPC_LIB}
+    ${STK_CL_LIB})
+  install (TARGETS castor-tape-mediachanger-mount DESTINATION ${CASTOR_DEST_BIN_DIR})
+  CastorInstallExeManPage(castor-tape-mediachanger-mount)
+endif (${COMPILE_SERVER} STREQUAL "1")

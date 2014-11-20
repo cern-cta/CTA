@@ -75,7 +75,6 @@ add_library (castorlegacymsg SHARED ${CASTOR_LEGACYMSG_LIB_SRC_FILES})
 CastorSetLibraryVersions (castorlegacymsg)
 target_link_libraries (castorlegacymsg
   castorclient
-  castorcommon
-  castormediachangerclient)
+  castorcommon)
 install (TARGETS castorlegacymsg LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
   NAMELINK_SKIP)

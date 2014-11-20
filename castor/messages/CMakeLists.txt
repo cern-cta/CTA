@@ -65,7 +65,7 @@ add_library(castormessages SHARED
 
 target_link_libraries(castormessages
   castorlog
-  castormediachangerclient
+  castormediachanger
   protobuf
   ssl
   zmq)

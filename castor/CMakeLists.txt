@@ -20,10 +20,10 @@
 cmake_minimum_required (VERSION 2.6)
 
 add_subdirectory (legacymsg)
+add_subdirectory (mediachanger)
 add_subdirectory (utils)
 
 if (${COMPILE_SERVER} STREQUAL "1")
-  add_subdirectory (mediachanger)
   add_subdirectory (messages)
   add_subdirectory (db)
   add_subdirectory (gc)

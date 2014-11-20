@@ -32,6 +32,6 @@ add_executable (castor-tape-label ${LABEL_SRC_FILES})
 target_link_libraries (castor-tape-label
   castorclient
   castorlegacymsg
-  castormediachangerclient)
+  castormediachanger)
 install (TARGETS castor-tape-label DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallExeManPage (castor-tape-label)

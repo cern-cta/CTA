@@ -6,7 +6,7 @@ add_executable(TapeDriveReadWriteTest
   TapeDriveReadWriteTest.cpp)
 target_link_libraries(TapeDriveReadWriteTest
   TapeDrive
-  castormediachangerclient
+  castormediachanger
   SCSI
   System
   Utils
