@@ -389,6 +389,7 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
   m_signedURL = m_URL;
   // Turn the bare URL into a Castor URL, by adding opaque tags:
   // ?castor2fs.pfn1=/srv/castor/...  (duplication of the path in practice)
+  // ?castor.txtype=tape
   // ?castor2fs.pool=xxx optional ceph pool
   // ?castor2fs.exptime=(unix time)
   // ?castor2fs.signature=
@@ -418,6 +419,7 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
   opaqueBloc << "?castor2fs.pfn1=" << path;
   if (pool.size())
     opaqueBloc << "&castor2fs.pool=" << pool;
+  opaqueBloc << "&castor.txtype=tape";
   opaqueBloc << "&castor2fs.exptime=" << expTime;
   opaqueBloc << "&castor2fs.signature=" << signature;
   m_signedURL = m_URL + opaqueBloc.str();
@@ -507,6 +509,7 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
   opaqueBloc << "?castor2fs.pfn1=" << path;
   if (pool.size())
     opaqueBloc << "&castor2fs.pool=" << pool;
+  opaqueBloc << "&castor.txtype=tape";
   opaqueBloc << "&castor2fs.exptime=" << expTime;
   opaqueBloc << "&castor2fs.signature=" << signature;
   m_signedURL = m_URL + opaqueBloc.str();
