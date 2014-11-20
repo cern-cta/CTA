@@ -302,15 +302,9 @@ bool
 XrdxCastor2Ofs::AddTransfer(const std::string transfer_id)
 {
   std::pair<std::set<std::string>::iterator, bool> ret;
-
-  if (!transfer_id.empty())
-  {
-    XrdSysMutexHelper scope_lock(mMutexTransfers);
-    ret = mSetTransfers.insert(transfer_id);
-    return ret.second;
-  }
-
-  return false;
+  XrdSysMutexHelper scope_lock(mMutexTransfers);
+  ret = mSetTransfers.insert(transfer_id);
+  return ret.second;
 }
 
 //------------------------------------------------------------------------------
@@ -319,8 +313,13 @@ XrdxCastor2Ofs::AddTransfer(const std::string transfer_id)
 size_t
 XrdxCastor2Ofs::RemoveTransfer(const std::string transfer_id)
 {
-  XrdSysMutexHelper scope_lock(mMutexTransfers);
-  return mSetTransfers.erase(transfer_id);
+  if (!transfer_id.empty())
+  {
+    XrdSysMutexHelper scope_lock(mMutexTransfers);
+    return mSetTransfers.erase(transfer_id);
+  }
+
+  return 0;
 }
 
 
@@ -386,6 +385,7 @@ XrdxCastor2OfsFile::open(const char*         path,
   xcastor_debug("path=%s", path);
   XrdOucString newpath = "";
   XrdOucString newopaque = opaque;
+  bool notify_dm = false;
 
   // If there is explicit user opaque information we find two ?,
   // so we just replace it with a seperator.
@@ -443,6 +443,14 @@ XrdxCastor2OfsFile::open(const char*         path,
       return SFS_ERROR;
   }
 
+  // Build the transfer id if either this a normal transfer or a TPC transfer
+  // in TpcSrcRead or TpcDstSetup state
+  if ((mTpcFlag == TpcFlag::kTpcNone) ||
+      (mTpcFlag == TpcFlag::kTpcSrcRead || mTpcFlag == TpcFlag::kTpcDstSetup))
+  {
+    BuildTransferId(client->tident, mEnvOpaque);
+  }
+
   TIMING("OFS_OPEN", &open_timing);
   int rc = XrdOfsFile::open(newpath.c_str(), open_mode, create_mode, client,
                             newopaque.c_str());
@@ -474,26 +482,49 @@ XrdxCastor2OfsFile::open(const char*         path,
     // Get also the size of the file
     if (XrdOfsOss->Stat(newpath.c_str(), &mStatInfo, 0, mEnvOpaque))
     {
-      xcastor_err("error: getting file stat information");
+      xcastor_err("error getting file stat information path=%s", newpath.c_str());
       rc = SFS_ERROR;
     }
 
-    // Add entry to the set of onging transfers if we don't have any errors so
-    // so far and if this is either a normal transfer or a TPC transfer either
-    // in TpcSrcRead or TpcDstSetup state
-    if ((rc == SFS_OK) &&
-        ((mTpcFlag == TpcFlag::kTpcNone) ||
-         (mTpcFlag == TpcFlag::kTpcSrcRead || mTpcFlag == TpcFlag::kTpcDstSetup)))
+    // Add entry to the set of onging transfers if we don't have any errors
+    if (rc == SFS_OK && !mTransferId.empty())
     {
-      BuildTransferId(client->tident, mEnvOpaque);
+      // Connect to the diskmanager and notify that there is an open request
+      notify_dm = true;
+      char* errmsg = (char*)0;
+      int dm_errno = mover_open_file(mDiskMgrPort, mTransferId.c_str(), &rc, &errmsg);
 
-      if (!gSrv->AddTransfer(mTransferId))
+      // If failed to commit to diskmanager then return error
+      if (dm_errno)
       {
-        xcastor_err("Failed insert into set of transfers for id=%s",
-                    mTransferId.c_str());
-        return gSrv->Emsg("open", error, EIO, "failed adding entry to transfer set");
+        rc = gSrv->Emsg("open", error, dm_errno, "send open to diskmanager");
+
+        // Free memory
+        if (errmsg)
+          free(errmsg);
+      }
+      else
+      {
+        if (!gSrv->AddTransfer(mTransferId))
+        {
+          xcastor_err("Failed insert into set of transfers for id=%s",
+                      mTransferId.c_str());
+          rc = gSrv->Emsg("open", error, EIO, "failed adding entry to transfer set");
+        }
       }
     }
+  }
+
+  // Notify the diskmanager if open failed and we haven't done that already
+  if ((rc == SFS_ERROR) && !mTransferId.empty() && !notify_dm)
+  {
+    xcastor_debug("notify failed open to diskmanager");
+    char* errmsg = (char*)0;
+    (void)mover_open_file(mDiskMgrPort, mTransferId.c_str(), &rc, &errmsg);
+
+    // Free memory
+    if (errmsg)
+      free(errmsg);
   }
 
   if (gSrv->mLogLevel == LOG_DEBUG)
@@ -663,7 +694,7 @@ XrdxCastor2OfsFile::close()
   // Remove entry from the set of transfers
   if (!gSrv->RemoveTransfer(mTransferId))
   {
-    xcastor_warning("No entry removed from the set of transfers for id=%s",
+    xcastor_warning("No entry removed from the set of transfers for id=\"%s\"",
                     mTransferId.c_str());
   }
 
@@ -779,11 +810,10 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
 
       if (pair.second == false)
       {
-        xcastor_err("tpc.key:%s is already in the map", mTpcKey.c_str());
+        xcastor_err("tpc.key=%s is already in the map", mTpcKey.c_str());
         gSrv->mTpcMap.erase(pair.first);
         return gSrv->Emsg("open", error, EINVAL,
-                          "tpc.key already in the map for file:  ",
-                          path.c_str());
+                          "tpc.key already in the map for file=", path.c_str());
       }
     }
   }
