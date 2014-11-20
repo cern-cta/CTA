@@ -351,7 +351,8 @@
 #define ETMOUNTFAILED	ETBASEOFF+41    /* Failed to mount volume */
 #define ETDISMOUNTFAILED ETBASEOFF+42   /* Failed to dismount volume */
 #define ETQUERYVOLFAILED ETBASEOFF+43   /* Failed to query volume */
-#define ETMAXERR        ETBASEOFF+43
+#define ETFDISMOUNTFAILED ETBASEOFF+44  /* Failed to force dismount volume */
+#define ETMAXERR        ETBASEOFF+44
 
 /*
  *------------------------------------------------------------------------
