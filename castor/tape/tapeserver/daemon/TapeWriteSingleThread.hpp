@@ -100,7 +100,7 @@ private:
       // process we're in, and to count the error if it occurs.
       // We will not record errors for an empty string. This will allow us to
       // prevent counting where error happened upstream.
-      std::string currentErrorToCount = "tapeUnloadErrorCount";
+      std::string currentErrorToCount = "Error_tapeUnload";
       try{
         // Do the final cleanup
         // in the special case of a "manual" mode tape, we should skip the unload too.
@@ -114,7 +114,7 @@ private:
         // And return the tape to the library
         // In case of manual mode, this will be filtered by the rmc daemon
         // (which will do nothing)
-        currentErrorToCount = "tapeDismountErrorCount";
+        currentErrorToCount = "Error_tapeDismount";
         m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot.str());
         m_this.m_stats.unmountTime += m_timer.secs(castor::utils::Timer::resetCounter);
         m_this.m_logContext.log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.librarySlot.getLibraryType() ?

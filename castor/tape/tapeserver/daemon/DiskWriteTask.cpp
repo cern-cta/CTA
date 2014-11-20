@@ -87,7 +87,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         if (!writeFile.get()) {
           lc.log(LOG_DEBUG, "About to open disk file for writing");
           // Synchronise the counter with the open time counter.
-          currentErrorToCount = "diskOpenForWriteErrorCount";
+          currentErrorToCount = "Error_diskOpenForWrite";
           transferTime = localTime;
           writeFile.reset(fileFactory.createWriteFile(m_recallingFile->path()));
           URLcontext.add("actualURL", writeFile->URL());
@@ -96,7 +96,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         }
         
         // Write the data.
-        currentErrorToCount = "diskWriteErrorCount";
+        currentErrorToCount = "Error_diskWrite";
         m_stats.dataVolume+=mb->m_payload.size();
         mb->m_payload.write(*writeFile);
         m_stats.readWriteTime+=localTime.secs(castor::utils::Timer::resetCounter);
@@ -111,7 +111,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         //close has to be explicit, because it may throw. 
         //A close is done  in WriteFile's destructor, but it may lead to some 
         //silent data loss
-        currentErrorToCount = "diskCloseAfterWriteErrorCount";
+        currentErrorToCount = "Error_diskCloseAfterWrite";
         writeFile->close();
         m_stats.closingTime +=localTime.secs(castor::utils::Timer::resetCounter);
         m_stats.filesCount++;

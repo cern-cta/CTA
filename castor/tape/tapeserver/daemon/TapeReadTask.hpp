@@ -95,7 +95,7 @@ public:
     std::string currentErrorToCount = "";
     MemBlock* mb=NULL;
     try {
-      currentErrorToCount = "tapeFailedToPositionForReadCount";
+      currentErrorToCount = "Error_tapePositionForRead";
       std::auto_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
       // At that point we already read the header.
       localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
@@ -104,7 +104,7 @@ public:
       localStats.positionTime += timer.secs(castor::utils::Timer::resetCounter);
       watchdog.notifyBeginNewJob(*m_fileToRecall);
       localStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
-      currentErrorToCount = "tapeReadDataError";
+      currentErrorToCount = "Error_tapeReadData";
       while (stillReading) {
         // Get a memory block and add information to its metadata
         mb=m_mm.getFreeBlock();

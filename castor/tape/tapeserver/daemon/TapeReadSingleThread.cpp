@@ -54,7 +54,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
   // prevent counting where error happened upstream.
-  std::string currentErrorToCount = "tapeUnloadErrorCount";
+  std::string currentErrorToCount = "Error_tapeUnload";
   try {
     // Do the final cleanup
     // in the special case of a "manual" mode tape, we should skip the unload too.
@@ -68,7 +68,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     // And return the tape to the library
     // In case of manual mode, this will be filtered by the rmc daemon
     // (which will do nothing)
-    currentErrorToCount = "tapeDismountErrorCount";
+    currentErrorToCount = "Error_tapeDismount";
     m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot.str());
     m_this.m_stats.unmountTime += m_timer.secs(castor::utils::Timer::resetCounter);
     m_this.m_logContext.log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.librarySlot.getLibraryType() ?
@@ -147,7 +147,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
 void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
   m_logContext.pushOrReplace(log::Param("thread", "TapeRead"));
   castor::utils::Timer timer, totalTimer;
-  std::string currentErrorToCount = "failedToSetCapabilitiesCount";
+  std::string currentErrorToCount = "Error_setCapabilities";
   try{
     // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
     // through the st driver file descriptor.
@@ -171,9 +171,9 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       // will also take care of the TapeServerReporter and of RecallTaskInjector
       TapeCleaning tapeCleaner(*this, timer);
       // Before anything, the tape should be mounted
-      currentErrorToCount = "tapeFailedToMountForReadCount";
+      currentErrorToCount = "Error_tapeMountForRead";
       mountTapeReadOnly();
-      currentErrorToCount = "tapeFailedToLoadCount";
+      currentErrorToCount = "Error_tapeLoad";
       waitForDrive();
       m_stats.mountTime += timer.secs(castor::utils::Timer::resetCounter);
       {
@@ -182,7 +182,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         m_logContext.log(LOG_INFO, "Tape mounted and drive ready");
       }
       // Then we have to initialise the tape read session
-      currentErrorToCount = "tapeFailedToCheckLabelBeforeReadingCount";
+      currentErrorToCount = "Error_tapesCheckLabelBeforeReading";
       std::auto_ptr<castor::tape::tapeFile::ReadSession> rs(openReadSession());
       // From now on, the tasks will identify problems when executed.
       currentErrorToCount = "";

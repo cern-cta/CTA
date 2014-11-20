@@ -89,11 +89,11 @@ namespace daemon {
     // process we're in, and to count the error if it occurs.
     // We will not record errors for an empty string. This will allow us to
     // prevent counting where error happened upstream.
-    std::string currentErrorToCount = "tapeFSeqOutOfSequenceForWriteCount";
+    std::string currentErrorToCount = "Error_tapeFSeqOutOfSequenceForWrite";
     session.validateNextFSeq(m_fileToMigrate->fseq());
     try {
       //try to open the session
-      currentErrorToCount = "tapeWriteHeaderErrorCount";
+      currentErrorToCount = "Error_tapeWriteHeader";
       watchdog.notifyBeginNewJob(*m_fileToMigrate);
       std::auto_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       m_taskStats.transferTime += timer.secs(castor::utils::Timer::resetCounter);
@@ -110,7 +110,7 @@ namespace daemon {
         
         ckSum =  mb->m_payload.adler32(ckSum);
         m_taskStats.checksumingTime += timer.secs(castor::utils::Timer::resetCounter);
-        currentErrorToCount = "tapeWriteDataErrorCount";
+        currentErrorToCount = "Error_tapeWriteData";
         mb->m_payload.write(*output);
         currentErrorToCount = "";
         
@@ -122,7 +122,7 @@ namespace daemon {
       
       //finish the writing of the file on tape
       //put the trailer
-      currentErrorToCount = "tapeWriteTrailerErrorCount";
+      currentErrorToCount = "Error_tapeWriteTrailer";
       output->close();
       currentErrorToCount = "";
       m_taskStats.transferTime += timer.secs(castor::utils::Timer::resetCounter);

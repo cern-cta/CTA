@@ -127,7 +127,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
   // prevent counting where error happened upstream.
-  std::string currentErrorToCount = "failedToSetCapabilitiesCount";
+  std::string currentErrorToCount = "Error_setCapabilities";
   try
   {
     // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
@@ -155,13 +155,13 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       // will also take care of the TapeServerReporter
       // 
       TapeCleaning cleaner(*this, timer);
-      currentErrorToCount = "tapeFailedToMountForWriteCount";
+      currentErrorToCount = "Error_tapeMountForWrite";
       // Before anything, the tape should be mounted
       // This call does the logging of the mount
       mountTapeReadWrite();
-      currentErrorToCount = "tapeFailedToLoadCount";
+      currentErrorToCount = "Error_tapeLoad";
       waitForDrive();
-      currentErrorToCount = "tapeNotWriteableCount";
+      currentErrorToCount = "Error_tapeNotWriteable";
       isTapeWritable();
       
       m_stats.mountTime += timer.secs(castor::utils::Timer::resetCounter);
@@ -170,7 +170,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         scoped.add("mountTime", m_stats.mountTime);
         m_logContext.log(LOG_INFO, "Tape mounted and drive ready");
       }
-      currentErrorToCount = "tapeFailedToPositionForWriteCount";
+      currentErrorToCount = "Error_tapePositionForWrite";
       // Then we have to initialize the tape write session
       std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
       m_stats.positionTime  += timer.secs(castor::utils::Timer::resetCounter);
@@ -211,7 +211,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         bytes+=task->fileSize();
         //if one flush counter is above a threshold, then we flush
         if (files >= m_filesBeforeFlush || bytes >= m_bytesBeforeFlush) {
-          currentErrorToCount = "tapeFailedToFlushCount";
+          currentErrorToCount = "Error_tapeFlush";
           tapeFlush("Normal flush because thresholds was reached",bytes,files,timer);
           files=0;
           bytes=0;

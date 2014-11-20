@@ -63,13 +63,13 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     //because the disk could the very reason why the previous one failed, 
     //so dont do the same mistake twice !
     checkMigrationFailing();
-    currentErrorToCount = "diskOpenForReadErrorCount";
+    currentErrorToCount = "Error_diskOpenForRead";
     std::auto_ptr<tape::diskFile::ReadFile> sourceFile(
       fileFactory.createReadFile(m_migratedFile->path()));
     log::ScopedParamContainer URLcontext(lc);
     URLcontext.add("path", m_migratedFile->path())
               .add("actualURL", sourceFile->URL());
-    currentErrorToCount = "diskFileToReadSizeMismatchCount";
+    currentErrorToCount = "Error_diskFileToReadSizeMismatch";
     if(migratingFileSize != sourceFile->size()){
       throw castor::exception::Exception("Mismtach between size given by the client "
               "and the real one");
@@ -92,7 +92,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
       mb->m_fileid = m_migratedFile->fileid();
       mb->m_fileBlock = blockId++;
       
-      currentErrorToCount = "diskReadErrorCount";
+      currentErrorToCount = "Error_diskRead";
       migratingFileSize -= mb->m_payload.read(*sourceFile);
       m_stats.readWriteTime+=localTime.secs(castor::utils::Timer::resetCounter);
 
@@ -100,7 +100,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
 
       //we either read at full capacity (ie size=capacity) or if there different,
       //it should be the end => migratingFileSize should be 0. If it not, error
-      currentErrorToCount = "diskUnexpectedSizeWhenReadingCount";
+      currentErrorToCount = "Error_diskUnexpectedSizeWhenReading";
       if(mb->m_payload.size() != mb->m_payload.totalCapacity() && migratingFileSize>0){
         std::string erroMsg = "Error while reading a file. Did not read at full capacity but the file is not fully read";
         mb->markAsFailed(erroMsg,SEINTERNAL);
