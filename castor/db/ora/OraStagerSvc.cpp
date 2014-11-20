@@ -326,10 +326,6 @@ castor::db::ora::OraStagerSvc::subRequestToDo
       m_subRequestToDoStatement->registerOutParam
         (28, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->setAutoCommit(true);
-      // also register for associated alert
-      oracle::occi::Statement* registerAlertStmt = 
-        createStatement("BEGIN DBMS_ALERT.REGISTER('wakeUp" + service + "'); END;");
-      registerAlertStmt->execute();
     }
     m_subRequestToDoStatement->setString(1, service);
 
@@ -451,10 +447,6 @@ castor::db::ora::OraStagerSvc::processBulkRequest
       m_processBulkRequestStatement->registerOutParam
         (10, oracle::occi::OCCICURSOR);
       m_processBulkRequestStatement->setAutoCommit(true);
-      // also register for associated alert
-      oracle::occi::Statement* registerAlertStmt = 
-        createStatement("BEGIN DBMS_ALERT.REGISTER('wakeUp" + service + "'); END;");
-      registerAlertStmt->execute();
     }
     m_processBulkRequestStatement->setString(1, service);
 
@@ -536,10 +528,6 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
         (9, oracle::occi::OCCIINT);
       m_subRequestFailedToDoStatement->registerOutParam
         (10, oracle::occi::OCCIDOUBLE);
-      // also register for associated alert
-      oracle::occi::Statement* registerAlertStmt = 
-        createStatement("BEGIN DBMS_ALERT.REGISTER('wakeUpErrorSvc'); END;");
-      registerAlertStmt->execute();
     }
     // execute the statement and see whether we found something
     unsigned int rc =

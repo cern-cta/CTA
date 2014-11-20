@@ -1103,7 +1103,7 @@ BEGIN
     -- We do not wait forever in order to to give the control back to the
     -- caller daemon in case it should exit.
     CLOSE c;
-    DBMS_ALERT.WAITONE('transferReadyToSchedule', unusedMessage, unusedStatus, 3);
+    waitSignalNoLock('transferReadyToSchedule');
     -- try again to find something now that we waited
     OPEN c;
     FETCH c INTO varSrId;
@@ -1232,7 +1232,7 @@ BEGIN
     -- We do not wait forever in order to to give the control back to the
     -- caller daemon in case it should exit.
     CLOSE c;
-    DBMS_ALERT.WAITONE('d2dReadyToSchedule', varUnusedMessage, varUnusedStatus, 3);
+    waitSignalNoLock('d2dReadyToSchedule');
     -- try again to find something now that we waited
     OPEN c;
     FETCH c INTO varD2dJId;
@@ -1306,7 +1306,7 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- There is nothing to abort. Wait for next alert concerning something
     -- to abort or at least 3 seconds.
-    DBMS_ALERT.WAITONE('transfersToAbort', unusedMessage, unusedStatus, 3);
+    waitSignalNoLock('transfersToAbort');
   END;
   -- we want to delete what we will return but deleting multiple rows is a nice way
   -- to have deadlocks. So we first take locks in NOWAIT mode

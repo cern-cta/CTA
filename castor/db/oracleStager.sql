@@ -413,7 +413,7 @@ BEGIN
     -- We do not wait forever in order to to give the control back to the
     -- caller daemon in case it should exit.
     CLOSE SRCur;
-    DBMS_ALERT.WAITONE('wakeUpJobReqSvc', varUnusedMessage, varUnusedStatus, 3);
+    waitSignalNoLock('wakeUpJobReqSvc');
     -- try again to find something now that we waited
     OPEN SRCur;
     FETCH SRCur INTO varSrId;
@@ -537,7 +537,7 @@ BEGIN
     -- We do not wait forever in order to to give the control back to the
     -- caller daemon in case it should exit.
     CLOSE SRCur;
-    DBMS_ALERT.WAITONE('wakeUp'||service, varUnusedMessage, varUnusedStatus, 3);
+    waitSignalNoLock('wakeUp'||service);
     -- try again to find something now that we waited
     OPEN SRCur;
     FETCH SRCur INTO varSrId;
@@ -1047,7 +1047,7 @@ BEGIN
     -- We do not wait forever in order to to give the control back to the
     -- caller daemon in case it should exit.
     CLOSE Rcur;
-    DBMS_ALERT.WAITONE('wakeUp'||service, varUnusedMessage, varUnusedStatus, 3);
+    waitSignalNoLock('wakeUp'||service);
     -- try again to find something now that we waited
     OPEN Rcur;
     FETCH Rcur INTO requestId;
@@ -1128,7 +1128,7 @@ BEGIN
     -- We do not wait forever in order to to give the control back to the
     -- caller daemon in case it should exit.
     CLOSE c;
-    DBMS_ALERT.WAITONE('wakeUpErrorSvc', varUnusedMessage, varUnusedStatus, 3);
+    waitSignalNoLock('wakeUpErrorSvc');
     -- try again to find something now that we waited
     OPEN c;
     FETCH c INTO varSRId;
@@ -1247,7 +1247,7 @@ BEGIN
     -- There is no candidate available. Wait for next alert for a maximum of 3 seconds.
     -- We do not wait forever in order to to give the control back to the
     -- caller daemon in case it should exit.
-    DBMS_ALERT.WAITONE('wakeUp'||service, varUnusedMessage, varUnusedStatus, 3);
+    waitSignalNoLock('wakeUp'||service);
     -- try again to find something now that we waited
     DELETE FROM NewRequests
      WHERE type IN (SELECT type FROM Type2Obj
@@ -2390,10 +2390,9 @@ BEGIN
     RETURN;
   END IF;
 
-  -- In case of something to abort, first commit and then signal the service. The
-  -- commit is needed to avoid to deadlock with the DBMS_ALERT_INFO table, as
-  -- seen during stress tests. Moreover this procedure is called by the stager
-  -- with autocommit=TRUE, hence committing here is safe.
+  -- In case of something to abort, first commit and then signal the service.
+  -- This procedure is called by the stager with autocommit=TRUE, hence
+  -- committing here is safe.
   IF dcsToRmStatus.COUNT > 0 THEN
     COMMIT;
     -- wake up the scheduler so that it can remove the transfer from the queues now

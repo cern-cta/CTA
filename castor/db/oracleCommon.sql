@@ -424,18 +424,45 @@ EXCEPTION WHEN OTHERS THEN
 END;
 /
 
-/* A wrapper procedure to execute DBMS_ALERT.SIGNAL() without taking a lock if
- * already another session did it. Helps reducing contention on DBMS_ALERT_INFO.
- */
+/* A wrapper procedure to execute DBMS_AQ.ENQUEUE only if nothing is queued so far */
 CREATE OR REPLACE PROCEDURE alertSignalNoLock(inName IN VARCHAR2) AS
   unused INTEGER;
 BEGIN
   SELECT 1 INTO unused
-    FROM SYS.DBMS_ALERT_INFO
-   WHERE name = upper(inName) AND changed = 'Y'
+    FROM CastorQueueTable
+   WHERE q_name = inName
      AND ROWNUM < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN
-  DBMS_ALERT.SIGNAL(inName, '');
+   DECLARE
+      enqueue_options     DBMS_AQ.enqueue_options_t;
+      message_properties  DBMS_AQ.message_properties_t;
+      recipients          DBMS_AQ.aq$_recipient_list_t;
+      message_handle      RAW(16);
+   BEGIN
+      message_properties.correlation := inName;
+      DBMS_AQ.ENQUEUE('CastorQueue', enqueue_options, message_properties, '', message_handle);
+   END;
+END;
+/
+
+/* A wrapper procedure to execute DBMS_AQ.DEQUEUE */
+CREATE OR REPLACE PROCEDURE waitSignalNoLock(inName IN VARCHAR2) AS
+   dequeue_options     DBMS_AQ.dequeue_options_t;
+   message_properties  DBMS_AQ.message_properties_t;
+   message_handle      RAW(16);
+   message             VARCHAR2(2048);
+   no_messages         EXCEPTION;
+   pragma exception_init (no_messages, -25228);
+BEGIN
+   -- wait for max 3s
+   dequeue_options.wait := 3;
+   BEGIN
+      dequeue_options.correlation := inName;
+      DBMS_AQ.DEQUEUE('CastorQueue', dequeue_options, message_properties, message, message_handle);
+   EXCEPTION
+      WHEN no_messages THEN
+         NULL;
+   END; 
 END;
 /
 

@@ -91,11 +91,6 @@ castor::stager::daemon::JobRequestSvcThread::jobSubRequestToDo()
       jobSubRequestToDoStatement->registerOutParam(13, oracle::occi::OCCIINT);
       jobSubRequestToDoStatement->registerOutParam(14, oracle::occi::OCCIINT);
       jobSubRequestToDoStatement->registerOutParam(15, oracle::occi::OCCISTRING, 2048);
-      // also register for associated alert
-      oracle::occi::Statement* registerAlertStmt = 
-        dbSvc->createOraStatement("BEGIN DBMS_ALERT.REGISTER('wakeUpJobReqSvc'); END;");
-      registerAlertStmt->execute();
-      dbSvc->terminateStatement(registerAlertStmt);
     }
     // execute the statement and see whether we found something
     unsigned int rc = jobSubRequestToDoStatement->executeUpdate();

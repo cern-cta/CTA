@@ -17,7 +17,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * Thread pool supporting wakeup from the DBMS_ALERT Oracle interface
+ * Thread pool supporting wakeup from the Advanced queueing Oracle interface
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/

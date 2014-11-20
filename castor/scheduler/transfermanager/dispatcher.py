@@ -320,10 +320,7 @@ class UserDispatcherThread(AbstractDispatcherThread):
     configuration = castor_tools.castorConf()
     while self.running:
       try:
-        # setup an oracle connection and register our interest for 'transferReadyToSchedule' alerts
-        stcur = self.dbConnection().cursor()
         try:
-          stcur.execute("BEGIN DBMS_ALERT.REGISTER('transferReadyToSchedule'); END;")
           # prepare a cursor for database polling
           stcur = self.dbConnection().cursor()
           stcur.arraysize = 50
@@ -454,10 +451,7 @@ class D2DDispatcherThread(AbstractDispatcherThread):
     '''main method, containing the infinite loop'''
     while self.running:
       try:
-        # setup an oracle connection and register our interest for 'transferReadyToSchedule' alerts
-        stcur = self.dbConnection().cursor()
         try:
-          stcur.execute("BEGIN DBMS_ALERT.REGISTER('d2dReadyToSchedule'); END;")
           # prepare a cursor for database polling
           stcur = self.dbConnection().cursor()
           stcur.arraysize = 50

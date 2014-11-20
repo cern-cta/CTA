@@ -63,10 +63,7 @@ class AborterThread(threading.Thread):
     try:
       while self.running:
         try:
-          # setup an oracle connection and register our interest for 'transfersToAbort' alerts
-          stcur = self.dbConnection().cursor()
           try:
-            stcur.execute("BEGIN DBMS_ALERT.REGISTER('transfersToAbort'); END;")
             # prepare a cursor for database polling
             stcur = self.dbConnection().cursor()
             subReqIdsCur = self.dbConnection().cursor()
@@ -101,15 +98,6 @@ class AborterThread(threading.Thread):
           time.sleep(1)
     finally:
       # try to clean up what we can
-      try:
-        stcur = self.dbConnection().cursor()
-        try:
-          stcur.execute("BEGIN DBMS_ALERT.REMOVE('transfersToAbort'); END;")
-        finally:
-          stcur.close()
-      except Exception, e:
-        # check whether we should reconnect to DB, and do so if needed
-        self.dbConnection().checkForReconnection(e)
       try:
         castor_tools.disconnectDB(self.dbConnection())
       except Exception:
