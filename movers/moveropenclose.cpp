@@ -87,8 +87,7 @@ extern "C" {
     try {
       /* Prepare open message. Protocol:
          OPEN <errorCode> <transferMetaData>
-         where the latter is a tuple:
-         (<isWriteFlag>, <tident>, <transferType>, <physicalPath> [, transferId])
+         where the latter is a tuple (cf. header for its full specification)
        */
       std::ostringstream writeBuf;
       writeBuf << "OPEN " << *errorcode << " " << transferMetaData;

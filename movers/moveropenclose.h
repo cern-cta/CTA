@@ -38,10 +38,10 @@ extern "C" {
  *
  * port             the port to which to connect
  * transferMetaData the metadata associated with this transfer. This is a string tuple:
- *                  (isWriteFlag, tident, transferType, physicalPath [, transferId])
+ *                  (tident, physicalPath, transferType, isWriteFlag, transferId)
  *                  where tident has the format: username.clientPid:fd@clientHost
- *                  and transferType is one of Tape, User, D2DUser, D2DInternal, D2DDraining, D2DBalance
- *                  and transferId is missing for non-user transfers
+ *                  and transferType is one of tape, user, d2duser, d2dinternal, d2ddraining, d2redbalance
+ *                  and transferId is the UUID of the transfer, 0 for non-user transfers
  * errorcode        an error code to be passed in case of a failure; it may be filled
                     with a non-zero value when the operation fails
  * errormsg         a pointer to a buffer for the error message if the operation failed
