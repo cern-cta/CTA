@@ -141,13 +141,14 @@ namespace castor {
         std::string strValue;
         try {
           strValue = getConfEntString(category, key);
-        } catch(castor::exception::NoEntry &ne) {
+        } catch(castor::exception::Exception &ex) {
           if(NULL != log) {
             log::Param params[] = {
               log::Param("category", category),
               log::Param("key", key),
               log::Param("value", defaultValue),
-              log::Param("source", "DEFAULT")};
+              log::Param("source", "DEFAULT"),
+              log::Param("reasonForUsingDefault", ex.getMessage().str())};
             (*log)(LOG_INFO, "Got configuration entry", params);
           }
           return defaultValue;

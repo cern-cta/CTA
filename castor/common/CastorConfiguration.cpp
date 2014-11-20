@@ -147,14 +147,14 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
       (*log)(LOG_INFO, "Got configuration entry", params);
     }
     return value;
-  } catch(castor::exception::Exception &ne) {
+  } catch(castor::exception::Exception &ex) {
     if(NULL != log) {
       log::Param params[] = {
         log::Param("category", category),
         log::Param("key", key),
         log::Param("value", defaultValue),
         log::Param("source", "DEFAULT"),
-        log::Param("reasonForUsingDefault", ne.getMessage().str())};
+        log::Param("reasonForUsingDefault", ex.getMessage().str())};
       (*log)(LOG_INFO, "Got configuration entry", params);
     }
     return defaultValue;
