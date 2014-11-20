@@ -43,7 +43,7 @@ castor::mediachanger::MountCmd::~MountCmd() throw() {
 }
 
 //------------------------------------------------------------------------------
-// main
+// exceptionThrowingMain
 //------------------------------------------------------------------------------
 void castor::mediachanger::MountCmd::exceptionThrowingMain(const int argc,
   char *const *const argv) {

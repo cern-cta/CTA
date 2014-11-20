@@ -69,10 +69,10 @@ castor::mediachanger::MountCmdLine::MountCmdLine(const int argc,
   // Calculate the number of non-option ARGV-elements
   const int nbArgs = argc - optind;
 
-  // Check that both VID and DRIVE has been specified
+  // Check that both VID and DRIVE_SLOT has been specified
   if(nbArgs < 2) {
     castor::exception::MissingOperand ex;
-    ex.getMessage() << "Both VID and DRIVE must be specified";
+    ex.getMessage() << "Both VID and DRIVE_SLOT must be specified";
     throw ex;
   }
 
@@ -82,7 +82,7 @@ castor::mediachanger::MountCmdLine::MountCmdLine(const int argc,
   // Move on to the next command-line argument
   optind++;
 
-  // Parse the DRIVE command-line argument
+  // Parse the DRIVE_SLOT command-line argument
   driveLibrarySlot = GenericLibrarySlot(argv[optind]);
 }
 
