@@ -229,7 +229,8 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   sessionSucceeded() {
-  m_sessionLogContext.pushOrReplace(log::Param("status","success"));
+  // If the session is happy, it could determine the operational status
+  // (was there a problem or not?) by itself. status should be set by now.
   m_sessionLogContext.log(LOG_INFO, "Tape session finished");
 }
 
@@ -238,6 +239,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   sessionFailed() {
+  // In case of problem, we mark the session failed ourselves
   m_sessionLogContext.pushOrReplace(log::Param("status","failed"));
   m_sessionLogContext.log(LOG_INFO, "Tape session finished");
 }

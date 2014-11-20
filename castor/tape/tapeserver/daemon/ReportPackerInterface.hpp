@@ -34,13 +34,14 @@
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/FilesToMigrateList.hpp"
 
+
 #include <memory>
 
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-    
+  
 namespace detail{
   //nameholder
   struct Recall{};
@@ -74,7 +75,10 @@ namespace detail{
     ReportByFile
   };
 }
- 
+
+// Forward declaration to avoid circular inclusions.
+class TaskWatchDog;
+
 /**
  * Utility class that should be inherited privately/protectedly 
  * the type PlaceHolder is either detail::Recall or detail::Migration
@@ -86,12 +90,17 @@ template <class PlaceHolder> class ReportPackerInterface{
   typedef typename detail::HelperTrait<PlaceHolder>::FileStruct FileStruct;
   typedef typename detail::HelperTrait<PlaceHolder>::FileSuccessStruct FileSuccessStruct;
   typedef typename detail::HelperTrait<PlaceHolder>::FileErrorStruct FileErrorStruct;
+  
+  // Pass a reference to the watchdog for initial process reporting.
+  void setWatchdog(TaskWatchDog & wd) {
+    m_watchdog = &wd;
+  }
 
   protected:
     virtual ~ReportPackerInterface() {}
-    ReportPackerInterface(client::ClientInterface & tg,log::LogContext lc):
+    ReportPackerInterface(client::ClientInterface & tg, log::LogContext lc):
     m_client(tg),m_lc(lc),m_listReports(new FileReportList),
-    m_reportBatching(detail::ReportInBulk) {}
+    m_reportBatching(detail::ReportInBulk),m_watchdog(NULL) {}
   
   /**
    * Log a set of files independently of the success/failure 
@@ -172,6 +181,13 @@ template <class PlaceHolder> class ReportPackerInterface{
    * This is used for recalls driven by read_tp.
    */
   virtual void disableBulk() { m_reportBatching = detail::ReportByFile; }
+  
+  /**
+   * Pointer to the watchdog, so we can communicate communication errors
+   * and end of session results to the initial process
+   */
+  TaskWatchDog * m_watchdog;
+  
 };
 
 }}}}

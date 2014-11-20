@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
+#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
 #include "castor/log/Logger.hpp"
@@ -44,8 +45,8 @@ namespace daemon {
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
-RecallReportPacker::RecallReportPacker(client::ClientInterface & tg,
-        unsigned int reportFilePeriod,log::LogContext lc):
+RecallReportPacker::RecallReportPacker(client::ClientInterface & tg, 
+    unsigned int reportFilePeriod,log::LogContext lc):
 ReportPackerInterface<detail::Recall>(tg,lc),
         m_workerThread(*this),m_reportFilePeriod(reportFilePeriod),m_errorHappened(false){
 
@@ -152,6 +153,9 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
     if(!parent.m_errorHappened){
       parent.m_client.reportEndOfSession(chrono);
       parent.logRequestReport(chrono,"Nominal RecallReportPacker::EndofSession has been reported",LOG_INFO);
+      if (parent.m_watchdog) {
+        parent.m_watchdog->addParameter(log::Param("status","failure"));
+      }
     }
     else {
       const std::string& msg ="RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process";

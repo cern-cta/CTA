@@ -42,7 +42,7 @@ public:
    * @param tg The client who is asking for a migration of his files 
    * and to whom we have to report to the status of the operations.
    */
-  MigrationReportPacker(client::ClientInterface & tg,log::LogContext lc);
+  MigrationReportPacker(client::ClientInterface & tg, log::LogContext lc);
   
   ~MigrationReportPacker();
     

@@ -24,6 +24,7 @@
 #include <memory>
 
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
+#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
@@ -45,7 +46,8 @@ namespace daemon {
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
-MigrationReportPacker::MigrationReportPacker(client::ClientInterface & tg,castor::log::LogContext lc):
+MigrationReportPacker::MigrationReportPacker(client::ClientInterface & tg,
+  castor::log::LogContext lc):
 ReportPackerInterface<detail::Migration>(tg,lc),
 m_workerThread(*this),m_errorHappened(false),m_continue(true) {
 }
@@ -245,6 +247,9 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
       .add("sendRecvDuration", chrono.sendRecvDuration)
       .add("transactionId", chrono.transactionId);
     reportPacker.m_lc.log(LOG_INFO,"Reported end of session to client");
+    if(reportPacker.m_watchdog) {
+      reportPacker.m_watchdog->addParameter(log::Param("status","failure"));
+    }
   }
   else {
     reportFileErrors(reportPacker);
@@ -257,6 +262,9 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
       .add("sendRecvDuration", chrono.sendRecvDuration)
       .add("transactionId", chrono.transactionId);
     reportPacker.m_lc.log(LOG_ERR,"Reported end of session with error to client due to previous file errors");
+    if(reportPacker.m_watchdog) {
+      reportPacker.m_watchdog->addParameter(log::Param("status","success"));
+    }
   }
   reportPacker.m_continue=false;
 }
@@ -285,6 +293,9 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
     }
     reportPacker.m_client.reportEndOfSessionWithError(msg,m_errorCode,chrono); 
     reportPacker.m_lc.log(LOG_INFO,msg);
+  }
+  if(reportPacker.m_watchdog) {
+    reportPacker.m_watchdog->addParameter(log::Param("status","failure"));
   }
   reportPacker.m_continue=false;
 }

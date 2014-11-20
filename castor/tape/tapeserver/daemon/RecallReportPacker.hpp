@@ -42,8 +42,8 @@ public:
    * @param reportFilePeriod how often  do we report to the client
    * @param lc log context, copied du to threads
    */
-  RecallReportPacker(client::ClientInterface & tg,unsigned int reportFilePeriod,
-          log::LogContext lc);
+  RecallReportPacker(client::ClientInterface & tg, unsigned int reportFilePeriod, 
+    log::LogContext lc);
   
   virtual ~RecallReportPacker();
   

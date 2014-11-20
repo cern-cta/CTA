@@ -224,6 +224,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     // of the client
     rti.setClientType(m_volInfo.clientType);
     trst.setTaskInjector(&rti);
+    rrp.setWatchdog(rwd);
     
     // We are now ready to put everything in motion. First step is to check
     // we get any concrete job to be done from the client (via the task injector)
@@ -293,8 +294,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     
     MigrationMemoryManager mm(m_castorConf.nbBufs,
         m_castorConf.bufsz,lc);
-    MigrationReportPacker mrp(m_clientProxy,
-        lc);
+    MigrationReportPacker mrp(m_clientProxy, lc);
     MigrationWatchDog mwd(15,60*10,m_intialProcess,m_driveConfig.unitName,lc);
     TapeWriteSingleThread twst(*drive.get(),
         m_mc,
@@ -318,6 +318,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
             m_castorConf.bulkRequestMigrationMaxFiles,lc);
     drtp.setTaskInjector(&mti);
     twst.setTaskInjector(&mti);
+    mrp.setWatchdog(mwd);
     castor::utils::Timer timer;
     if (mti.synchronousInjection()) {
       const uint64_t firstFseqFromClient = mti.firstFseqToWrite();

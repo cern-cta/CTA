@@ -36,7 +36,7 @@ namespace unitTests {
   public tapeserver::daemon::ReportPackerInterface<tapeserver::daemon::detail::Recall> {
     // TODO MOCK_METHOD1(reportStuckOn, void(FileStruct& file));
     
-    MockReportPacker(tapeserver::client::ClientInterface & tg,castor::log::LogContext lc):
+    MockReportPacker(tapeserver::client::ClientInterface & tg, castor::log::LogContext lc):
     tapeserver::daemon::ReportPackerInterface<castor::tape::tapeserver::daemon::detail::Recall>(tg,lc){
     
     }
