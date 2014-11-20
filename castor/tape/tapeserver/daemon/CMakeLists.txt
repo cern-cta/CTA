@@ -49,6 +49,7 @@ add_library(castorTapeServerDaemon
   VdqmConnectionHandler.cpp)
 
 target_link_libraries(castorTapeServerDaemon castormessages castortapereactor)
+add_dependencies(castorTapeServerDaemon castormessagesprotobuf)
 
 add_library(castorTapeServerDaemonTestDummies
   ../client/ClientSimulator.cpp 

@@ -68,6 +68,7 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     AcsPendingRequests.cpp
     AcsRequest.cpp
     AcsRequestDismountTape.cpp)
+  add_dependencies(castorAcsDaemon castormessagesprotobuf)
 
   target_link_libraries(castorAcsDaemon castortapereactor)
   set_target_properties (castorAcsDaemon PROPERTIES
