@@ -62,16 +62,9 @@ public:
    * @param argc The number of command-line arguments.
    * @param argv The command-line arguments.
    */
-  int main(const int argc, char *const *const argv) throw();
+  void exceptionThrowingMain(const int argc, char *const *const argv);
 
 protected:
-
-  /**
-   * Writes the command-line usage message of to the specified output stream.
-   *
-   * @param os Output stream to be written to.
-   */
-  void usage(std::ostream &os) const throw();
 
   /**
    * Queries ACS for information about the volume identifier specified on the
@@ -121,17 +114,6 @@ private:
    * class.
    */
   AcsQueryVolumeCmdLine m_cmdLine;
-
-  /**
-   * The default time in seconds to wait between queries to ACS for responses.
-   */
-  const int m_defaultQueryInterval;
-
-  /**
-   * The default timeout value in seconds for the query to conclude either
-   * success or failure.
-   */
-  const int m_defaultTimeout;
 
 }; // class AcsQueryVolumeCmd
 

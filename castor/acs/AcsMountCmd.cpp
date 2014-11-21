@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "castor/acs/AcsMountCmd.hpp"
+#include "castor/acs/AcsMountCmdLine.hpp"
 
 #include <getopt.h>
 #include <iostream>
@@ -32,8 +33,7 @@
 castor::acs::AcsMountCmd::AcsMountCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
   Acs &acs) throw():
-  AcsCmd(inStream, outStream, errStream, acs), m_defaultQueryInterval(10),
-  m_defaultTimeout(600) {
+  AcsCmd(inStream, outStream, errStream, acs) {
 }
 
 //------------------------------------------------------------------------------
@@ -44,36 +44,17 @@ castor::acs::AcsMountCmd::~AcsMountCmd() throw() {
 }
 
 //------------------------------------------------------------------------------
-// main
+// exceptionThrowingMain
 //------------------------------------------------------------------------------
-int castor::acs::AcsMountCmd::main(const int argc, char *const *const argv)
-  throw() {
-  try {
-    m_cmdLine = AcsMountCmdLine(argc, argv, m_defaultQueryInterval,
-      m_defaultTimeout);
-  } catch(castor::exception::InvalidArgument &ia) {
-    m_err << "Aborting: Invalid command-line: " << ia.getMessage().str() <<
-      std::endl;
-    m_err << std::endl;
-    usage(m_err);
-    return 1;
-  } catch(castor::exception::MissingOperand &mo) {
-    m_err << "Aborting: Missing operand: " << mo.getMessage().str() <<
-      std::endl;
-    m_err << std::endl;
-    usage(m_err);
-    return 1;
-  } catch(castor::exception::Exception &ie) {
-    m_err << "Aborting: Internal error: " << ie.getMessage().str() <<
-      std::endl;
-    return 1;
-  }
+void castor::acs::AcsMountCmd::exceptionThrowingMain(const int argc,
+  char *const *const argv) {
+  m_cmdLine = AcsMountCmdLine(argc, argv);
 
   // Display the usage message to standard out and exit with success if the
   // user requested help
   if(m_cmdLine.help) {
-    usage(m_out);
-    return 0;
+    m_out << AcsMountCmdLine::getUsage();
+    return;
   }
 
   // Setup debug mode to be on or off depending on the command-line arguments
@@ -83,54 +64,10 @@ int castor::acs::AcsMountCmd::main(const int argc, char *const *const argv)
   m_dbg << "readonly = " << bool2Str(m_cmdLine.readOnly) << std::endl;
   m_dbg << "timeout = " << m_cmdLine.timeout << std::endl;
   m_dbg << "VID = " << m_cmdLine.volId.external_label << std::endl;
-  m_dbg << "DRIVE = " << m_acs.driveId2Str(m_cmdLine.driveId) << std::endl;
+  m_dbg << "DRIVE_SLOT = " << m_acs.driveId2Str(m_cmdLine.libraryDriveSlot)
+    << std::endl;
 
-  try {
-    syncMount();
-  } catch(castor::exception::Exception &ex) {
-    m_err << "Aborting: " << ex.getMessage().str() << std::endl;
-    return 1;
-  }
-
-  return 0;
-}
-
-//------------------------------------------------------------------------------
-// usage
-//------------------------------------------------------------------------------
-void castor::acs::AcsMountCmd::usage(std::ostream &os) const throw() {
-  os <<
-  "Usage:\n"
-  "\n"
-  "  castor-tape-acs-mount [options] VID DRIVE\n"
-  "\n"
-  "Where:\n"
-  "\n"
-  "  VID    The VID of the volume to be mounted.\n"
-  "  DRIVE  The ID of the drive into which the volume is to be mounted.\n"
-  "         The format of DRIVE is:\n"
-  "\n"
-  "             ACS:LSM:panel:transport\n"
-  "\n"
-  "Options:\n"
-  "\n"
-  "  -d|--debug            Turn on the printing of debug information.\n"
-  "\n"
-  "  -h|--help             Print this help message and exit.\n"
-  "\n"
-  "  -q|--query SECONDS    Time to wait between queries to ACS for responses.\n"
-  "                        SECONDS must be an integer value greater than 0.\n"
-  "                        The default value of SECONDS is "
-    << m_defaultQueryInterval << ".\n"
-  "\n"
-  "  -r|--readOnly         Request the volume is mounted for read-only access\n"
-  "\n"
-  "  -t|--timeout SECONDS  Time to wait for the mount to conclude. SECONDS\n"
-  "                        must be an integer value greater than 0.  The\n"
-  "                        default value of SECONDS is "
-    << m_defaultTimeout << ".\n"
-  "\n"
-  "Comments to: Castor.Support@cern.ch" << std::endl;
+  syncMount();
 }
 
 //------------------------------------------------------------------------------
@@ -162,14 +99,14 @@ void castor::acs::AcsMountCmd::sendMountRequest(const SEQ_NO seqNumber) {
 
   m_dbg << "Calling Acs::mount()" << std::endl;
   const STATUS s = m_acs.mount(seqNumber, lockId, m_cmdLine.volId,
-    m_cmdLine.driveId, m_cmdLine.readOnly, bypass);
+    m_cmdLine.libraryDriveSlot, m_cmdLine.readOnly, bypass);
   m_dbg << "Acs::mount() returned " << acs_status(s) << std::endl;
 
   if(STATUS_SUCCESS != s) {
     castor::exception::MountFailed ex;
     ex.getMessage() << "Failed to send request to mount volume " <<
       m_cmdLine.volId.external_label << " into drive " <<
-      m_acs.driveId2Str(m_cmdLine.driveId) << ": readOnly=" <<
+      m_acs.driveId2Str(m_cmdLine.libraryDriveSlot) << ": readOnly=" <<
       (m_cmdLine.readOnly ? "TRUE" : "FALSE") << ": " << acs_status(s);
     throw ex;
   }

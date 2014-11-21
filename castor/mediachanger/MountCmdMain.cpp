@@ -27,6 +27,7 @@
 #include "castor/legacymsg/RmcProxyTcpIp.hpp"
 #include "castor/mediachanger/MmcProxyNotSupported.hpp"
 #include "castor/mediachanger/MountCmd.hpp"
+#include "castor/mediachanger/MountCmdLine.hpp"
 #include "castor/messages/AcsProxyZmq.hpp"
 #include "castor/messages/SmartZmqContext.hpp"
 #include "castor/utils/utils.hpp"
@@ -57,6 +58,7 @@ static void *instantiateZmqContext(const int sizeOfIOThreadPoolForZMQ);
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char *const *const argv) {
+  using namespace castor;
   std::string errorMessage;
 
   try {
@@ -74,9 +76,10 @@ int main(const int argc, char *const *const argv) {
   // and errorMessage has been set accordingly
 
   std::cerr << "Aborting: " << errorMessage << std::endl;
+  std::cerr << std::endl;
+  std::cerr << mediachanger::MountCmdLine::getUsage();
   return 1;
 }
-
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain

@@ -52,7 +52,7 @@ void castor::mediachanger::MountCmd::exceptionThrowingMain(const int argc,
   // Display the usage message to standard out and exit with success if the
   // user requested help
   if(m_cmdLine.help) {
-    usage(m_out);
+    m_out << MountCmdLine::getUsage();
     return;
   }
 
@@ -64,35 +64,6 @@ void castor::mediachanger::MountCmd::exceptionThrowingMain(const int argc,
   m_dbg << "DRIVE_SLOT = " << m_cmdLine.driveLibrarySlot.str() << std::endl;
 
   mountTape();
-}
-
-//------------------------------------------------------------------------------
-// usage
-//------------------------------------------------------------------------------
-void castor::mediachanger::MountCmd::usage(std::ostream &os) const throw() {
-  os <<
-  "Usage:\n"
-  "\n"
-  "  castor-tape-mediachanger-mount [options] VID DRIVE_SLOT\n"
-  "\n"
-  "Where:\n"
-  "\n"
-  "  VID        The VID of the volume to be mounted.\n"
-  "  DRIVE_SLOT The slot in the tape library where the drive is located.\n"
-  "             DRIVE_SLOT must be in one of the following two forms:\n"
-  "\n"
-  "             acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER\n"
-  "             smc@rmc_host,drive_ordinal\n"
-  "\n"
-  "Options:\n"
-  "\n"
-  "  -d|--debug    Turn on the printing of debug information.\n"
-  "\n"
-  "  -h|--help     Print this help message and exit.\n"
-  "\n"
-  "  -r|--readOnly Request the volume is mounted for read-only access\n"
-  "\n"
-  "Comments to: Castor.Support@cern.ch" << std::endl;
 }
 
 //------------------------------------------------------------------------------

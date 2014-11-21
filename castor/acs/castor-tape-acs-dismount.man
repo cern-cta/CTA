@@ -14,12 +14,12 @@
 .SH NAME
 castor-tape-acs-dismount \- dismount a volume
 .SH SYNOPSIS
-.BI "castor-tape-acs-dismount [options] VID DRIVE"
+.BI "castor-tape-acs-dismount [options] VID DRIVE_SLOT"
 
 .SH DESCRIPTION
-.B castor-tape-acs-dismount
-dismounts the volume with the specfied VID from the drive with the specified
-DRIVE ID. The DRIVE ID format is:
+\fBcastor-tape-acs-dismount\fP dismounts the volume with the specfied \fBVID\fP
+from the drive located in the specified \fBDRIVE_SLOT\fP of the tape library.
+The format of \fBDRIVE_SLOT\fP is as follows:
 
 .B ACS:LSM:panel:transport
 
@@ -36,13 +36,13 @@ Prints the usage message.
 .TP
 \fB\-q, \-\-query SECONDS
 Time wait between queries to ACLS for responses.
-SECONDS must be an integer value greater than 0.
-The default value of SECONDS is 10.
+\fBSECONDS\fP must be an integer value greater than 0.
+The default value of \fBSECONDS\fP is 10.
 .TP
 \fB\-t, \-\-timeout SECONDS
 Time to wait for the dismount operation to conclude.
-SECONDS must be an integer value greater than 0.
-The default value of SECONDS is 600.
+\fBSECONDS\fP must be an integer value greater than 0.
+The default value of \fBSECONDS\fP is 610.
 
 .SH "RETURN CODES"
 .TP

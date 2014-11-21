@@ -108,3 +108,30 @@ void castor::mediachanger::DismountCmdLine::processOption(const int opt) {
     }
   } // switch(opt)
 }
+
+//------------------------------------------------------------------------------
+// getUsage
+//------------------------------------------------------------------------------
+std::string castor::mediachanger::DismountCmdLine::getUsage() throw() {
+  return
+  "Usage:\n"
+  "\n"
+  "  castor-tape-mediachanger-dismount [options] VID DRIVE_SLOT\n"
+  "\n"
+  "Where:\n"
+  "\n"
+  "  VID        The VID of the volume to be dismounted.\n"
+  "  DRIVE_SLOT The slot in the tape library where the drive is located.\n"
+  "             DRIVE_SLOT must be in one of the following two forms:\n"
+  "\n"
+  "             acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER\n"
+  "             smc@rmc_host,drive_ordinal\n"
+  "\n"
+  "Options:\n"
+  "\n"
+  "  -d|--debug Turn on the printing of debug information.\n"
+  "\n"
+  "  -h|--help  Print this help message and exit.\n"
+  "\n"
+  "Comments to: Castor.Support@cern.ch\n";
+}

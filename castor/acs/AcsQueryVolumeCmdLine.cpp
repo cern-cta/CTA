@@ -23,6 +23,7 @@
 
 #include "castor/acs/Acs.hpp"
 #include "castor/acs/AcsQueryVolumeCmdLine.hpp"
+#include "castor/acs/Constants.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
 
@@ -46,12 +47,11 @@ castor::acs::AcsQueryVolumeCmdLine::AcsQueryVolumeCmdLine()
 // constructor
 //------------------------------------------------------------------------------
 castor::acs::AcsQueryVolumeCmdLine::AcsQueryVolumeCmdLine(const int argc,
-  char *const *const argv, const int defaultQueryInterval,
-  const int defaultTimeout):
+  char *const *const argv):
   debug(FALSE),
   help(FALSE),
-  queryInterval(0),
-  timeout(0) {
+  queryInterval(ACS_QUERY_INTERVAL),
+  timeout(ACS_CMD_TIMEOUT) {
   memset(volId.external_label, '\0', sizeof(volId.external_label));
 
   static struct option longopts[] = {
@@ -61,12 +61,6 @@ castor::acs::AcsQueryVolumeCmdLine::AcsQueryVolumeCmdLine(const int argc,
     {"timeout" , required_argument, NULL, 't'},
     {NULL, 0, NULL, 0}
   };
-
-  // Set the query option to the default value
-  queryInterval = defaultQueryInterval;
-
-  // Set timeout option to the default value
-  timeout = defaultTimeout;
 
   // Prevent getopt() from printing an error message if it does not recognize
   // an option character
@@ -126,4 +120,34 @@ void castor::acs::AcsQueryVolumeCmdLine::processOption(const int opt) {
       throw ex;
     }
   } // switch(opt)
+}
+
+//------------------------------------------------------------------------------
+// getUsage
+//------------------------------------------------------------------------------
+std::string castor::acs::AcsQueryVolumeCmdLine::getUsage() throw() {
+  std::ostringstream usage;
+  usage <<
+  "Usage:\n"
+  "  castor-tape-acs-queryvolume [options] VID\n"
+  "\n"
+  "Where:\n"
+  "\n"
+  "  VID    The VID of the volume to be queried.\n"
+  "\n"
+  "Options:\n"
+  "\n"
+  "  -d|--debug            Turn on the printing of debug information.\n"
+  "  -h|--help             Print this help message and exit.\n"
+  "  -q|--query SECONDS    Time to wait between queries to ACS for responses.\n"
+  "                        SECONDS must be an integer value greater than 0.\n"
+  "                        The default value of SECONDS is "
+    << ACS_QUERY_INTERVAL << ".\n"
+  "  -t|--timeout SECONDS  Time to wait for the query to conclude. SECONDS\n"
+  "                        must be an integer value greater than 0.  The\n"
+  "                        default value of SECONDS in "
+    << ACS_CMD_TIMEOUT << ".\n"
+  "\n"
+  "Comments to: Castor.Support@cern.ch\n";
+  return usage.str();
 }

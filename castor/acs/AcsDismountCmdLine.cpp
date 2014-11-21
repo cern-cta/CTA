@@ -24,6 +24,7 @@
 #include "castor/acs/Acs.hpp"
 #include "castor/acs/AcsCmdLine.hpp"
 #include "castor/acs/AcsDismountCmdLine.hpp"
+#include "castor/acs/Constants.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
 
@@ -40,10 +41,10 @@ castor::acs::AcsDismountCmdLine::AcsDismountCmdLine() throw():
   help(false),
   queryInterval(0),
   timeout(0) {
-  driveId.panel_id.lsm_id.acs = (ACS)0;
-  driveId.panel_id.lsm_id.lsm = (LSM)0;
-  driveId.panel_id.panel = (PANEL)0;
-  driveId.drive = (DRIVE)0;
+  libraryDriveSlot.panel_id.lsm_id.acs = (ACS)0;
+  libraryDriveSlot.panel_id.lsm_id.lsm = (LSM)0;
+  libraryDriveSlot.panel_id.panel = (PANEL)0;
+  libraryDriveSlot.drive = (DRIVE)0;
   memset(volId.external_label, '\0', sizeof(volId.external_label));
 }
 
@@ -51,17 +52,16 @@ castor::acs::AcsDismountCmdLine::AcsDismountCmdLine() throw():
 // constructor
 //------------------------------------------------------------------------------
 castor::acs::AcsDismountCmdLine::AcsDismountCmdLine(const int argc,
-  char *const *const argv, const int defaultQueryInterval,
-  const int defaultTimeout):
+  char *const *const argv):
   debug(false),
   force(FALSE),
   help(false),
-  queryInterval(defaultQueryInterval),
-  timeout(defaultTimeout) {
-  driveId.panel_id.lsm_id.acs = (ACS)0;
-  driveId.panel_id.lsm_id.lsm = (LSM)0;
-  driveId.panel_id.panel = (PANEL)0;
-  driveId.drive = (DRIVE)0;
+  queryInterval(ACS_QUERY_INTERVAL),
+  timeout(ACS_CMD_TIMEOUT) {
+  libraryDriveSlot.panel_id.lsm_id.acs = (ACS)0;
+  libraryDriveSlot.panel_id.lsm_id.lsm = (LSM)0;
+  libraryDriveSlot.panel_id.panel = (PANEL)0;
+  libraryDriveSlot.drive = (DRIVE)0;
   memset(volId.external_label, '\0', sizeof(volId.external_label));
 
   static struct option longopts[] = {
@@ -72,12 +72,6 @@ castor::acs::AcsDismountCmdLine::AcsDismountCmdLine(const int argc,
     {"timeout" , required_argument, NULL, 't'},
     {NULL   , 0, NULL,  0 }
   };
-
-  // Set the query option to the default value
-  queryInterval = defaultQueryInterval;
-
-  // Set timeout option to the default value
-  timeout = defaultTimeout;
 
   // Prevent getopt() from printing an error message if it does not recognize
   // an option character
@@ -96,24 +90,24 @@ castor::acs::AcsDismountCmdLine::AcsDismountCmdLine(const int argc,
   // Calculate the number of non-option ARGV-elements
   const int nbArgs = argc-optind;
 
-  // Check that both VID and DRIVE has been specified
+  // Check that both VID and DRIVE_SLOT have been specified
   if(nbArgs < 2) {
     castor::exception::MissingOperand ex;
 
     ex.getMessage() <<
-      "Both VID and DRIVE must be specified";
+      "Both VID and DRIVE_SLOT must be specified";
 
     throw ex;
   }
 
-  // Parse the volume identifier of the command-line argument
+  // Parse VID
   volId = Acs::str2Volid(argv[optind]);
 
   // Move on to the next command-line argument
   optind++;
 
-  // Parse the drive-identifier command-line argument
-  driveId = Acs::str2DriveId(argv[optind]);
+  // Parse DRIVE_SLOT
+  libraryDriveSlot = Acs::str2DriveId(argv[optind]);
 }
 
 //------------------------------------------------------------------------------
@@ -149,4 +143,45 @@ void castor::acs::AcsDismountCmdLine::processOption(const int opt) {
       throw ex;
     }
   } // switch(opt)
+}
+
+//------------------------------------------------------------------------------
+// getUsage
+//------------------------------------------------------------------------------
+std::string castor::acs::AcsDismountCmdLine::getUsage() throw() {
+  std::ostringstream usage;
+  usage <<
+  "Usage:\n"
+  "\n"
+  "  castor-tape-acs-dismount [options] VID DRIVE_SLOT\n"
+  "\n"
+  "Where:\n"
+  "\n"
+  "  VID        The VID of the volume to be dismounted.\n"
+  "\n"
+  "  DRIVE_SLOT The slot in the tape library where the drive is located.\n"
+  "             The format of DRIVE_SLOT is as follows:\n"
+  "\n"
+  "               ACS:LSM:panel:transport\n"
+  "\n"
+  "Options:\n"
+  "\n"
+  "  -d|--debug            Turn on the printing of debug information.\n"
+  "\n"
+  "  -f|--force            Force the dismount.\n"
+  "\n"
+  "  -h|--help             Print this help message and exit.\n"
+  "\n"
+  "  -q|--query SECONDS    Time to wait between queries to ACS for responses.\n"
+  "                        SECONDS must be an integer value greater than 0.\n"
+  "                        The default value of SECONDS is "
+    << ACS_QUERY_INTERVAL << ".\n"
+  "\n"
+  "  -t|--timeout SECONDS  Time to wait for the dismount to conclude. SECONDS\n"
+  "                        must be an integer value greater than 0.  The\n"
+  "                        default value of SECONDS is "
+    << ACS_CMD_TIMEOUT << ".\n"
+  "\n"
+  "Comments to: Castor.Support@cern.ch\n";
+  return usage.str();
 }

@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "castor/acs/AcsQueryVolumeCmdLine.hpp"
+#include "castor/acs/Constants.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
 
@@ -95,10 +96,7 @@ TEST_F(castor_acs_AcsQueryVolumeCmdLineTest, parseCmdLineWithNoArgs) {
   std::istringstream inStream;
   std::ostringstream outStream;
   std::ostringstream errStream;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_THROW(AcsQueryVolumeCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout),
+  ASSERT_THROW(AcsQueryVolumeCmdLine(args->argc, args->argv),
     castor::exception::MissingOperand);
 }
 
@@ -116,14 +114,11 @@ TEST_F(castor_acs_AcsQueryVolumeCmdLineTest, parseCmdLineWithValidVolId) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsQueryVolumeCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv));
   ASSERT_EQ((BOOLEAN)FALSE, cmdLine.debug);
   ASSERT_EQ((BOOLEAN)FALSE, cmdLine.help);
-  ASSERT_EQ(defaultQueryInterval, cmdLine.queryInterval);
-  ASSERT_EQ(defaultTimeout, cmdLine.timeout);
+  ASSERT_EQ(ACS_QUERY_INTERVAL, cmdLine.queryInterval);
+  ASSERT_EQ(ACS_CMD_TIMEOUT, cmdLine.timeout);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
 }
 
@@ -141,10 +136,7 @@ TEST_F(castor_acs_AcsQueryVolumeCmdLineTest, parseCmdLineWithShortHelp) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsQueryVolumeCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv));
   ASSERT_EQ((BOOLEAN)TRUE, cmdLine.help);
 }
 
@@ -162,10 +154,7 @@ TEST_F(castor_acs_AcsQueryVolumeCmdLineTest, parseCmdLineWithLongHelp) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsQueryVolumeCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv));
   ASSERT_EQ((BOOLEAN)TRUE, cmdLine.help);
 }
 
@@ -184,10 +173,7 @@ TEST_F(castor_acs_AcsQueryVolumeCmdLineTest, parseCmdLineWithShortDebug) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsQueryVolumeCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv));
   ASSERT_EQ((BOOLEAN)TRUE, cmdLine.debug);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
 }
@@ -207,10 +193,7 @@ TEST_F(castor_acs_AcsQueryVolumeCmdLineTest, parseCmdLineWithLongDebug) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsQueryVolumeCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv));
   ASSERT_EQ((BOOLEAN)TRUE, cmdLine.debug);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
 }
@@ -228,10 +211,7 @@ TEST_F(castor_acs_AcsQueryVolumeCmdLineTest, parseCmdLineWithTooLongVolId) {
   std::istringstream inStream;
   std::ostringstream outStream;
   std::ostringstream errStream;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_THROW(AcsQueryVolumeCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout),
+  ASSERT_THROW(AcsQueryVolumeCmdLine(args->argc, args->argv),
     castor::exception::InvalidArgument);
 }
 
@@ -251,10 +231,7 @@ TEST_F(castor_acs_AcsQueryVolumeCmdLineTest, parseCmdLineWithShortTimeout) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsQueryVolumeCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv));
   ASSERT_EQ(2, cmdLine.timeout);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
 }
@@ -275,10 +252,7 @@ TEST_F(castor_acs_AcsQueryVolumeCmdLineTest, parseCmdLineWithLongTimeout) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsQueryVolumeCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv));
   ASSERT_EQ(2, cmdLine.timeout);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
 }
@@ -298,10 +272,7 @@ TEST_F(castor_acs_AcsQueryVolumeCmdLineTest, parseCmdLineWith0Timeout) {
   std::istringstream inStream;
   std::ostringstream outStream;
   std::ostringstream errStream;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_THROW(AcsQueryVolumeCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout),
+  ASSERT_THROW(AcsQueryVolumeCmdLine(args->argc, args->argv),
     castor::exception::InvalidArgument);
 }
 
@@ -321,10 +292,7 @@ TEST_F(castor_acs_AcsQueryVolumeCmdLineTest, parseCmdLineWithShortQuery) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsQueryVolumeCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv));
   ASSERT_EQ(1, cmdLine.queryInterval);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
 }
@@ -345,10 +313,7 @@ TEST_F(castor_acs_AcsQueryVolumeCmdLineTest, parseCmdLineWithLongQuery) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsQueryVolumeCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsQueryVolumeCmdLine(args->argc, args->argv));
   ASSERT_EQ(1, cmdLine.queryInterval);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
 }
@@ -368,10 +333,7 @@ TEST_F(castor_acs_AcsQueryVolumeCmdLineTest, parseCmdLineWith0Query) {
   std::istringstream inStream;
   std::ostringstream outStream;
   std::ostringstream errStream;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_THROW(AcsQueryVolumeCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout),
+  ASSERT_THROW(AcsQueryVolumeCmdLine(args->argc, args->argv),
     castor::exception::InvalidArgument);
 }
 

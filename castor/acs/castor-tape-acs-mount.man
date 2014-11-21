@@ -14,12 +14,12 @@
 .SH NAME
 castor-tape-acs-mount \- mount a volume
 .SH SYNOPSIS
-.BI "castor-tape-acs-mount [options] VID DRIVE"
+.BI "castor-tape-acs-mount [options] VID DRIVE_SLOT"
 
 .SH DESCRIPTION
-.B castor-tape-acs-mount
-mounts the volume with the specfied VID in an ACS compatible tape-library into
-the drive with the specified DRIVE ID. The DRIVE ID format is:
+\fBcastor-tape-acs-mount\fP mounts the volume with the specfied \fBVID\fP into
+the drive located in the specified \fBDRIVE_SLOT\fP of the tape library.
+The format of \fBDRIVE_SLOT\fP is as follows:
 
 .B ACS:LSM:panel:transport
 
@@ -33,16 +33,16 @@ Prints the usage message.
 .TP
 \fB\-q, \-\-query SECONDS
 Time wait between queries to ACLS for responses.
-SECONDS must be an integer value greater than 0.
-The default value of SECONDS is 10.
+\fBSECONDS\fP must be an integer value greater than 0.
+The default value of \fBSECONDS\fP is 10.
 .TP
 \fB\-r, \-\-readonly
 Request the volume is mounted for read-only access.
 .TP
 \fB\-t, \-\-timeout SECONDS
 Time to wait for the mount operation to conclude.  
-SECONDS must be an integer value greater than 0.
-The default value of SECONDS is 600.
+\fBSECONDS\fP must be an integer value greater than 0.
+The default value of \fBSECONDS\fP is 610.
 
 .SH "RETURN CODES"
 .TP

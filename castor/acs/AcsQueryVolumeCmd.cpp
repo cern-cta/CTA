@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "castor/acs/AcsQueryVolumeCmd.hpp"
+#include "castor/acs/AcsQueryVolumeCmdLine.hpp"
 
 #include <getopt.h>
 #include <iostream>
@@ -33,8 +34,7 @@
 castor::acs::AcsQueryVolumeCmd::AcsQueryVolumeCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
   Acs &acs) throw():
-  AcsCmd(inStream, outStream, errStream, acs), m_defaultQueryInterval(1),
-  m_defaultTimeout(20) {
+  AcsCmd(inStream, outStream, errStream, acs) {
 }
 
 //------------------------------------------------------------------------------
@@ -45,36 +45,17 @@ castor::acs::AcsQueryVolumeCmd::~AcsQueryVolumeCmd() throw() {
 }
 
 //------------------------------------------------------------------------------
-// main
+// exceptionThrowingMain
 //------------------------------------------------------------------------------
-int castor::acs::AcsQueryVolumeCmd::main(const int argc,
-  char *const *const argv) throw() {
-  try {
-    m_cmdLine = AcsQueryVolumeCmdLine(argc, argv, m_defaultQueryInterval, 
-      m_defaultTimeout);
-  } catch(castor::exception::InvalidArgument &ia) {
-    m_err << "Aborting: Invalid command-line: " << ia.getMessage().str() <<
-      std::endl;
-    m_err << std::endl;
-    usage(m_err);
-    return 1;
-  } catch(castor::exception::MissingOperand &mo) {
-    m_err << "Aborting: Missing operand: " << mo.getMessage().str() <<
-      std::endl;
-    m_err << std::endl;
-    usage(m_err);
-    return 1;
-  } catch(castor::exception::Exception &ie) {
-    m_err << "Aborting: Internal error: " << ie.getMessage().str() <<
-      std::endl;
-    return 1;
-  }
+void castor::acs::AcsQueryVolumeCmd::exceptionThrowingMain(const int argc,
+  char *const *const argv) {
+  m_cmdLine = AcsQueryVolumeCmdLine(argc, argv);
 
   // Display the usage message to standard out and exit with success if the
   // user requested help
   if(m_cmdLine.help) {
-    usage(m_out);
-    return 0;
+    m_out << AcsQueryVolumeCmdLine::getUsage();
+    return;
   }
 
   // Setup debug mode to be on or off depending on the command-line arguments
@@ -84,50 +65,13 @@ int castor::acs::AcsQueryVolumeCmd::main(const int argc,
   m_dbg << "timeout = " << m_cmdLine.timeout << std::endl;
   m_dbg << "VID = " << m_cmdLine.volId.external_label << std::endl;
 
-  try {
-    syncQueryVolume();
-  } catch(castor::exception::QueryVolumeFailed &ex) {
-    m_err << "Aborting: " << ex.getMessage().str() << std::endl;
-    return 1;
-  }
-
-  return 0;
-}
-
-//------------------------------------------------------------------------------
-// usage
-//------------------------------------------------------------------------------
-void castor::acs::AcsQueryVolumeCmd::usage(std::ostream &os)
-  const throw() {
-  os <<
-  "Usage:\n"
-  "  castor-tape-acs-queryvolume [options] VID\n"
-  "\n"
-  "Where:\n"
-  "\n"
-  "  VID    The VID of the volume to be queried.\n"
-  "\n"
-  "Options:\n"
-  "\n"
-  "  -d|--debug            Turn on the printing of debug information.\n"
-  "  -h|--help             Print this help message and exit.\n"
-  "  -q|--query SECONDS    Time to wait between queries to ACS for responses.\n"
-  "                        SECONDS must be an integer value greater than 0.\n"
-  "                        The default value of SECONDS is "
-    << m_defaultQueryInterval << ".\n"
-  "  -t|--timeout SECONDS  Time to wait for the query to conclude. SECONDS\n"
-  "                        must be an integer value greater than 0.  The\n"
-  "                        default value of SECONDS in "
-    << m_defaultTimeout << ".\n"
-  "\n"
-  "Comments to: Castor.Support@cern.ch" << std::endl;
+  syncQueryVolume();
 }
 
 //------------------------------------------------------------------------------
 // syncQueryVolume
 //------------------------------------------------------------------------------
-void castor::acs::AcsQueryVolumeCmd::syncQueryVolume()
-   {
+void castor::acs::AcsQueryVolumeCmd::syncQueryVolume() {
   const SEQ_NO requestSeqNumber = 1;
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
 

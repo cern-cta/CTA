@@ -110,7 +110,7 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     AcsImpl.cpp
     AcsDismountCmd.cpp
     AcsDismountCmdLine.cpp
-    AcsDismountMain.cpp
+    AcsDismountCmdMain.cpp
     CmdLineTool.cpp)
   add_executable (castor-tape-acs-dismount ${ACS_DISMOUNT_SRC_FILES})
   set_target_properties (castor-tape-acs-dismount PROPERTIES
@@ -136,7 +136,7 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     AcsImpl.cpp
     AcsMountCmd.cpp
     AcsMountCmdLine.cpp
-    AcsMountMain.cpp
+    AcsMountCmdMain.cpp
     CmdLineTool.cpp)
   add_executable (castor-tape-acs-mount ${ACS_MOUNT_SRC_FILES})
   set_target_properties (castor-tape-acs-mount PROPERTIES
@@ -163,7 +163,7 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     AcsImpl.cpp
     AcsQueryVolumeCmd.cpp
     AcsQueryVolumeCmdLine.cpp
-    AcsQueryVolumeMain.cpp
+    AcsQueryVolumeCmdMain.cpp
     CmdLineTool.cpp)
   add_executable (castor-tape-acs-queryvolume ${ACS_QUERYVOLUME_SRC_FILES})
   target_link_libraries (castor-tape-acs-queryvolume

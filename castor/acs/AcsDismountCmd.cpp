@@ -31,8 +31,7 @@
 castor::acs::AcsDismountCmd::AcsDismountCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
   Acs &acs) throw():
-  AcsCmd(inStream, outStream, errStream, acs), m_defaultQueryInterval(10),
-  m_defaultTimeout(600) {
+  AcsCmd(inStream, outStream, errStream, acs) {
 }
 
 //------------------------------------------------------------------------------
@@ -43,36 +42,17 @@ castor::acs::AcsDismountCmd::~AcsDismountCmd() throw() {
 }
 
 //------------------------------------------------------------------------------
-// main
+// exceptionThrowingMain
 //------------------------------------------------------------------------------
-int castor::acs::AcsDismountCmd::main(const int argc, char *const *const argv)
-  throw() {
-  try {
-    m_cmdLine = AcsDismountCmdLine(argc, argv, m_defaultQueryInterval,
-      m_defaultTimeout);
-  } catch(castor::exception::InvalidArgument &ia) {
-    m_err << "Aborting: Invalid command-line: " << ia.getMessage().str() <<
-      std::endl;
-    m_err << std::endl;
-    usage(m_err);
-    return 1;
-  } catch(castor::exception::MissingOperand &mo) {
-    m_err << "Aborting: Missing operand: " << mo.getMessage().str() <<
-      std::endl;
-    m_err << std::endl;
-    usage(m_err);
-    return 1;
-  } catch(castor::exception::Exception &ie) {
-    m_err << "Aborting: Internal error: " << ie.getMessage().str() <<
-      std::endl;
-    return 1;
-  }
+void castor::acs::AcsDismountCmd::exceptionThrowingMain(const int argc,
+  char *const *const argv) {
+  m_cmdLine = AcsDismountCmdLine(argc, argv);
 
   // Display the usage message to standard out and exit with success if the
   // user requested help
   if(m_cmdLine.help) {
-    usage(m_out);
-    return 0;
+    m_out << AcsDismountCmdLine::getUsage();
+    return;
   }
 
   // Setup debug mode to be on or off depending on the command-line arguments
@@ -82,55 +62,10 @@ int castor::acs::AcsDismountCmd::main(const int argc, char *const *const argv)
   m_dbg << "query = " << m_cmdLine.queryInterval << std::endl;
   m_dbg << "timeout = " << m_cmdLine.timeout << std::endl;
   m_dbg << "VID = " << m_cmdLine.volId.external_label << std::endl;
-  m_dbg << "DRIVE = " << m_acs.driveId2Str(m_cmdLine.driveId) << std::endl;
+  m_dbg << "DRIVE_SLOT = " << m_acs.driveId2Str(m_cmdLine.libraryDriveSlot)
+    << std::endl;
 
-  try {
-    syncDismount();
-  } catch(castor::exception::Exception &ex) {
-    m_err << "Aborting: " << ex.getMessage().str() << std::endl;
-    return 1;
-  }
-
-  return 0;
-}
-
-//------------------------------------------------------------------------------
-// usage
-//------------------------------------------------------------------------------
-void castor::acs::AcsDismountCmd::usage(std::ostream &os) const throw() {
-  os <<
-  "Usage:\n"
-  "\n"
-  "  castor-tape-acs-dismount [options] VID DRIVE\n"
-  "\n"
-  "Where:\n"
-  "\n"
-  "  VID    The VID of the volume to be dismounted.\n"
-  "\n"
-  "  DRIVE  The drive from which the volume is to be dismounted.\n"
-  "         The format of DRIVE is:\n"
-  "\n"
-  "             ACS:LSM:panel:transport\n"
-  "\n"
-  "Options:\n"
-  "\n"
-  "  -d|--debug            Turn on the printing of debug information.\n"
-  "\n"
-  "  -f|--force            Force the dismount.\n"
-  "\n"
-  "  -h|--help             Print this help message and exit.\n"
-  "\n"
-  "  -q|--query SECONDS    Time to wait between queries to ACS for responses.\n"
-  "                        SECONDS must be an integer value greater than 0.\n"
-  "                        The default value of SECONDS is "
-    << m_defaultQueryInterval << ".\n"
-  "\n"
-  "  -t|--timeout SECONDS  Time to wait for the dismount to conclude. SECONDS\n"
-  "                        must be an integer value greater than 0.  The\n"
-  "                        default value of SECONDS is "
-    << m_defaultTimeout << ".\n"
-  "\n"
-  "Comments to: Castor.Support@cern.ch" << std::endl;
+  syncDismount();
 }
 
 //------------------------------------------------------------------------------
@@ -162,13 +97,13 @@ void castor::acs::AcsDismountCmd::sendDismountRequest(
 
   m_dbg << "Calling Acs::dismount()" << std::endl;
   const STATUS s = m_acs.dismount(seqNumber, lockId, m_cmdLine.volId,
-    m_cmdLine.driveId, m_cmdLine.force);
+    m_cmdLine.libraryDriveSlot, m_cmdLine.force);
   m_dbg << "Acs::dismount() returned " << acs_status(s) << std::endl;
   if(STATUS_SUCCESS != s) {
     castor::exception::DismountFailed ex;
     ex.getMessage() << "Failed to send request to dismount volume " <<
       m_cmdLine.volId.external_label << " from drive " <<
-      m_acs.driveId2Str(m_cmdLine.driveId) << ": force=" <<
+      m_acs.driveId2Str(m_cmdLine.libraryDriveSlot) << ": force=" <<
       (m_cmdLine.force ? "TRUE" : "FALSE") << ": " << acs_status(s);
     throw ex;
   }

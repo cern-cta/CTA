@@ -23,17 +23,53 @@
  
 #include "castor/acs/AcsImpl.hpp"
 #include "castor/acs/AcsQueryVolumeCmd.hpp"
+#include "castor/acs/AcsQueryVolumeCmdLine.hpp"
 
 #include <iostream>
 
+/**
+ * An exception throwing version of main().
+ *
+ * @param argc The number of command-line arguments including the program name.
+ * @param argv The command-line arguments.
+ */ 
+static void exceptionThrowingMain(const int argc, char *const *const argv);
+  
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char *const *const argv) {
+  using namespace castor;
+  std::string errorMessage;
 
-  castor::acs::AcsImpl acs;
-  castor::acs::AcsQueryVolumeCmd
-    cmd(std::cin, std::cout, std::cerr, acs);
+  try {
+    exceptionThrowingMain(argc, argv);
+    return 0;
+  } catch(castor::exception::Exception &ex) {
+    errorMessage = ex.getMessage().str();
+  } catch(std::exception &se) {
+    errorMessage = se.what();
+  } catch(...) {
+    errorMessage = "An unknown exception was thrown";
+  }
 
-  return cmd.main(argc, argv);
+  // Reaching this point means the command has failed, ane exception was throw
+  // and errorMessage has been set accordingly
+
+  std::cerr << "Aborting: " << errorMessage << std::endl;
+  std::cerr << std::endl;
+  std::cerr << acs::AcsQueryVolumeCmdLine::getUsage();
+  return 1;
+}
+
+//------------------------------------------------------------------------------
+// exceptionThrowingMain
+//------------------------------------------------------------------------------
+static void exceptionThrowingMain(const int argc, char *const *const argv) {
+  using namespace castor;
+
+  acs::AcsImpl acs;
+  acs::AcsQueryVolumeCmd cmd(std::cin, std::cout, std::cerr, acs);
+
+  cmd.exceptionThrowingMain(argc, argv);
 }

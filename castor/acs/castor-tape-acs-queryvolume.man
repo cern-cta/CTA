@@ -17,8 +17,8 @@ castor-tape-acs-queryvolume \- queries a volume
 .BI "castor-tape-acs-queryvolume [options] VID"
 
 .SH DESCRIPTION
-.B castor-tape-acs-queryvolume
-quieries ACS for information about the volume with the specfied VID.
+\fBcastor-tape-acs-queryvolume\fP quieries ACS for information about the volume
+with the specfied \fBVID\fP.
 
 .SH OPTIONS
 .TP
@@ -30,13 +30,13 @@ Prints the usage message.
 .TP
 \fB\-q, \-\-query SECONDS
 Time wait between queries to ACLS for responses.
-SECONDS must be an integer value greater than 0.
-The default values of SECONDS is 300.
+\fBSECONDS\fP must be an integer value greater than 0.
+The default values of \fBSECONDS\fP is 610.
 .TP
 \fB\-t, \-\-timeout SECONDS
 Time to wait for the mount operation to conclude.  
-SECONDS must be an integer value greater than 0.
-The default value of SECONDS is 10.
+\fBSECONDS\fP must be an integer value greater than 0.
+The default value of \fBSECONDS\fP is 10.
 
 .SH "RETURN CODES"
 .TP

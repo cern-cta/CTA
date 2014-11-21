@@ -79,13 +79,15 @@ struct AcsQueryVolumeCmdLine: public AcsCmdLine {
    *
    * @param argc Argument count from the executable's entry function: main().
    * @param argv Argument vector from the executable's entry function: main().
-   * @param defaultQueryInterval The default time in seconds to wait between
-   * queries to ACS for responses.
-   * @param defaultTimeout The default timeout value in seconds for the mount
-   * to conclude either success or failure.
    */
-  AcsQueryVolumeCmdLine(const int argc, char *const *const argv,
-    const int defaultQueryInterval, const int defaultTimeout);
+  AcsQueryVolumeCmdLine(const int argc, char *const *const argv);
+
+  /**
+   * Gets the usage message that describes the comamnd line.
+   *
+   * @return The usage message.
+   */
+  static std::string getUsage() throw();
 
 private:
 

@@ -82,6 +82,13 @@ struct MountCmdLine: public CmdLine {
    */
   MountCmdLine(const int argc, char *const *const argv);
 
+  /**
+   * Gets the usage message that describes the command line.
+   *
+   * @return The usage message.
+   */
+  static std::string getUsage() throw();
+
 private:
 
   /**

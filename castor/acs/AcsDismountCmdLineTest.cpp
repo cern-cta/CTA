@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "castor/acs/AcsDismountCmdLine.hpp"
+#include "castor/acs/Constants.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
 
@@ -82,10 +83,10 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, constructor) {
   ASSERT_EQ(false, cmdLine.help);
   ASSERT_EQ(0, cmdLine.timeout);
   ASSERT_EQ(0, cmdLine.queryInterval);
-  ASSERT_EQ(0, (int)cmdLine.driveId.panel_id.lsm_id.acs);
-  ASSERT_EQ(0, (int)cmdLine.driveId.panel_id.lsm_id.lsm);
-  ASSERT_EQ(0, (int)cmdLine.driveId.panel_id.panel);
-  ASSERT_EQ(0, (int)cmdLine.driveId.drive);
+  ASSERT_EQ(0, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.acs);
+  ASSERT_EQ(0, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.lsm);
+  ASSERT_EQ(0, (int)cmdLine.libraryDriveSlot.panel_id.panel);
+  ASSERT_EQ(0, (int)cmdLine.libraryDriveSlot.drive);
   ASSERT_EQ('\0', cmdLine.volId.external_label[0]);
 }
 
@@ -101,10 +102,7 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithNoArgs) {
   std::istringstream inStream;
   std::ostringstream outStream;
   std::ostringstream errStream;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_THROW(AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout),
+  ASSERT_THROW(AcsDismountCmdLine(args->argc, args->argv),
     castor::exception::MissingOperand);
 }
 
@@ -121,10 +119,7 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithOnlyVolId) {
   std::istringstream inStream;
   std::ostringstream outStream;
   std::ostringstream errStream;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_THROW(AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout),
+  ASSERT_THROW(AcsDismountCmdLine(args->argc, args->argv),
     castor::exception::MissingOperand);
 }
 
@@ -144,16 +139,13 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithShortForce) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsDismountCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv));
   ASSERT_EQ((BOOLEAN)TRUE, cmdLine.force);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
-  ASSERT_EQ(111, (int)cmdLine.driveId.panel_id.lsm_id.acs);
-  ASSERT_EQ(112, (int)cmdLine.driveId.panel_id.lsm_id.lsm);
-  ASSERT_EQ(113, (int)cmdLine.driveId.panel_id.panel);
-  ASSERT_EQ(114, (int)cmdLine.driveId.drive);
+  ASSERT_EQ(111, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.acs);
+  ASSERT_EQ(112, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.lsm);
+  ASSERT_EQ(113, (int)cmdLine.libraryDriveSlot.panel_id.panel);
+  ASSERT_EQ(114, (int)cmdLine.libraryDriveSlot.drive);
 }
 
 TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithLongForce) {
@@ -172,16 +164,13 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithLongForce) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsDismountCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv));
   ASSERT_EQ((BOOLEAN)TRUE, cmdLine.force);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
-  ASSERT_EQ(111, (int)cmdLine.driveId.panel_id.lsm_id.acs);
-  ASSERT_EQ(112, (int)cmdLine.driveId.panel_id.lsm_id.lsm);
-  ASSERT_EQ(113, (int)cmdLine.driveId.panel_id.panel);
-  ASSERT_EQ(114, (int)cmdLine.driveId.drive);
+  ASSERT_EQ(111, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.acs);
+  ASSERT_EQ(112, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.lsm);
+  ASSERT_EQ(113, (int)cmdLine.libraryDriveSlot.panel_id.panel);
+  ASSERT_EQ(114, (int)cmdLine.libraryDriveSlot.drive);
 }
 
 TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithShortHelp) {
@@ -198,10 +187,7 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithShortHelp) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsDismountCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv));
   ASSERT_EQ(true, cmdLine.help);
 }
 
@@ -219,10 +205,7 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithLongHelp) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsDismountCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv));
   ASSERT_EQ(true, cmdLine.help);
 }
 
@@ -241,19 +224,16 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithVolIdAndDrive) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsDismountCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv));
   ASSERT_EQ(false, cmdLine.debug);
   ASSERT_EQ(false, cmdLine.help);
-  ASSERT_EQ(defaultQueryInterval, cmdLine.queryInterval);
-  ASSERT_EQ(defaultTimeout, cmdLine.timeout);
+  ASSERT_EQ(ACS_QUERY_INTERVAL, cmdLine.queryInterval);
+  ASSERT_EQ(ACS_CMD_TIMEOUT, cmdLine.timeout);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
-  ASSERT_EQ(111, (int)cmdLine.driveId.panel_id.lsm_id.acs);
-  ASSERT_EQ(112, (int)cmdLine.driveId.panel_id.lsm_id.lsm);
-  ASSERT_EQ(113, (int)cmdLine.driveId.panel_id.panel);
-  ASSERT_EQ(114, (int)cmdLine.driveId.drive);
+  ASSERT_EQ(111, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.acs);
+  ASSERT_EQ(112, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.lsm);
+  ASSERT_EQ(113, (int)cmdLine.libraryDriveSlot.panel_id.panel);
+  ASSERT_EQ(114, (int)cmdLine.libraryDriveSlot.drive);
 }
 
 TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithShortDebug) {
@@ -272,16 +252,13 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithShortDebug) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsDismountCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv));
   ASSERT_EQ(true, cmdLine.debug);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
-  ASSERT_EQ(111, (int)cmdLine.driveId.panel_id.lsm_id.acs);
-  ASSERT_EQ(112, (int)cmdLine.driveId.panel_id.lsm_id.lsm);
-  ASSERT_EQ(113, (int)cmdLine.driveId.panel_id.panel);
-  ASSERT_EQ(114, (int)cmdLine.driveId.drive);
+  ASSERT_EQ(111, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.acs);
+  ASSERT_EQ(112, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.lsm);
+  ASSERT_EQ(113, (int)cmdLine.libraryDriveSlot.panel_id.panel);
+  ASSERT_EQ(114, (int)cmdLine.libraryDriveSlot.drive);
 }
 
 TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithLongDebug) {
@@ -300,16 +277,13 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithLongDebug) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsDismountCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv));
   ASSERT_EQ(true, cmdLine.debug);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
-  ASSERT_EQ(111, (int)cmdLine.driveId.panel_id.lsm_id.acs);
-  ASSERT_EQ(112, (int)cmdLine.driveId.panel_id.lsm_id.lsm);
-  ASSERT_EQ(113, (int)cmdLine.driveId.panel_id.panel);
-  ASSERT_EQ(114, (int)cmdLine.driveId.drive);
+  ASSERT_EQ(111, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.acs);
+  ASSERT_EQ(112, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.lsm);
+  ASSERT_EQ(113, (int)cmdLine.libraryDriveSlot.panel_id.panel);
+  ASSERT_EQ(114, (int)cmdLine.libraryDriveSlot.drive);
 }
 
 TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithTooLongVolIdAndDrive) {
@@ -326,10 +300,7 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithTooLongVolIdAndDrive) 
   std::istringstream inStream;
   std::ostringstream outStream;
   std::ostringstream errStream;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_THROW(AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout),
+  ASSERT_THROW(AcsDismountCmdLine(args->argc, args->argv),
     castor::exception::InvalidArgument);
 }
 
@@ -347,10 +318,7 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithValidVolIdAndInvalidDr
   std::istringstream inStream;
   std::ostringstream outStream;
   std::ostringstream errStream;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_THROW(AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout),
+  ASSERT_THROW(AcsDismountCmdLine(args->argc, args->argv),
     castor::exception::InvalidArgument);
 }
 
@@ -371,16 +339,13 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithShortTimeout) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsDismountCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv));
   ASSERT_EQ(2, cmdLine.timeout);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
-  ASSERT_EQ(111, (int)cmdLine.driveId.panel_id.lsm_id.acs);
-  ASSERT_EQ(112, (int)cmdLine.driveId.panel_id.lsm_id.lsm);
-  ASSERT_EQ(113, (int)cmdLine.driveId.panel_id.panel);
-  ASSERT_EQ(114, (int)cmdLine.driveId.drive);
+  ASSERT_EQ(111, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.acs);
+  ASSERT_EQ(112, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.lsm);
+  ASSERT_EQ(113, (int)cmdLine.libraryDriveSlot.panel_id.panel);
+  ASSERT_EQ(114, (int)cmdLine.libraryDriveSlot.drive);
 }
 
 TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithLongTimeout) {
@@ -400,16 +365,13 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithLongTimeout) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsDismountCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv));
   ASSERT_EQ(2, cmdLine.timeout);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
-  ASSERT_EQ(111, (int)cmdLine.driveId.panel_id.lsm_id.acs);
-  ASSERT_EQ(112, (int)cmdLine.driveId.panel_id.lsm_id.lsm);
-  ASSERT_EQ(113, (int)cmdLine.driveId.panel_id.panel);
-  ASSERT_EQ(114, (int)cmdLine.driveId.drive);
+  ASSERT_EQ(111, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.acs);
+  ASSERT_EQ(112, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.lsm);
+  ASSERT_EQ(113, (int)cmdLine.libraryDriveSlot.panel_id.panel);
+  ASSERT_EQ(114, (int)cmdLine.libraryDriveSlot.drive);
 }
 
 TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWith0Timeout) {
@@ -428,10 +390,7 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWith0Timeout) {
   std::istringstream inStream;
   std::ostringstream outStream;
   std::ostringstream errStream;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_THROW(AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout),
+  ASSERT_THROW(AcsDismountCmdLine(args->argc, args->argv),
     castor::exception::InvalidArgument);
 }
 
@@ -452,16 +411,13 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithShortQuery) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsDismountCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv));
   ASSERT_EQ(1, cmdLine.queryInterval);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
-  ASSERT_EQ(111, (int)cmdLine.driveId.panel_id.lsm_id.acs);
-  ASSERT_EQ(112, (int)cmdLine.driveId.panel_id.lsm_id.lsm);
-  ASSERT_EQ(113, (int)cmdLine.driveId.panel_id.panel);
-  ASSERT_EQ(114, (int)cmdLine.driveId.drive);
+  ASSERT_EQ(111, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.acs);
+  ASSERT_EQ(112, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.lsm);
+  ASSERT_EQ(113, (int)cmdLine.libraryDriveSlot.panel_id.panel);
+  ASSERT_EQ(114, (int)cmdLine.libraryDriveSlot.drive);
 }
 
 TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithLongQuery) {
@@ -481,16 +437,13 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWithLongQuery) {
   std::ostringstream outStream;
   std::ostringstream errStream;
   AcsDismountCmdLine cmdLine;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout));
+  ASSERT_NO_THROW(cmdLine = AcsDismountCmdLine(args->argc, args->argv));
   ASSERT_EQ(1, cmdLine.queryInterval);
   ASSERT_EQ(std::string("VIDVID"), std::string(cmdLine.volId.external_label));
-  ASSERT_EQ(111, (int)cmdLine.driveId.panel_id.lsm_id.acs);
-  ASSERT_EQ(112, (int)cmdLine.driveId.panel_id.lsm_id.lsm);
-  ASSERT_EQ(113, (int)cmdLine.driveId.panel_id.panel);
-  ASSERT_EQ(114, (int)cmdLine.driveId.drive);
+  ASSERT_EQ(111, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.acs);
+  ASSERT_EQ(112, (int)cmdLine.libraryDriveSlot.panel_id.lsm_id.lsm);
+  ASSERT_EQ(113, (int)cmdLine.libraryDriveSlot.panel_id.panel);
+  ASSERT_EQ(114, (int)cmdLine.libraryDriveSlot.drive);
 }
 
 TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWith0Query) {
@@ -509,10 +462,7 @@ TEST_F(castor_acs_AcsDismountCmdLineTest, parseCmdLineWith0Query) {
   std::istringstream inStream;
   std::ostringstream outStream;
   std::ostringstream errStream;
-  const int defaultQueryInterval = 10;
-  const int defaultTimeout = 20;
-  ASSERT_THROW(AcsDismountCmdLine(args->argc, args->argv,
-    defaultQueryInterval, defaultTimeout),
+  ASSERT_THROW(AcsDismountCmdLine(args->argc, args->argv),
     castor::exception::InvalidArgument);
 }
 

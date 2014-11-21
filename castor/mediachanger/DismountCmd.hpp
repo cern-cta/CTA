@@ -75,13 +75,6 @@ private:
    */
   DismountCmdLine m_cmdLine;
 
-  /**
-   * Writes the command-line usage message of to the specified output stream.
-   *
-   * @param os Output stream to be written to.
-   */
-  void usage(std::ostream &os) const throw();
-
 }; // class DismountCmd
 
 } // namespace mediachanger
