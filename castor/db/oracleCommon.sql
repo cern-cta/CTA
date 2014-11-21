@@ -439,8 +439,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       recipients          DBMS_AQ.aq$_recipient_list_t;
       message_handle      RAW(16);
    BEGIN
-      message_properties.correlation := inName;
-      DBMS_AQ.ENQUEUE('CastorQueue', enqueue_options, message_properties, '', message_handle);
+      enqueue_options.delivery_mode := DBMS_AQ.BUFFERED;
+      enqueue_options.visibility := DBMS_AQ.IMMEDIATE;
+      DBMS_AQ.ENQUEUE(inName, enqueue_options, message_properties, '', message_handle);
    END;
 END;
 /
@@ -454,11 +455,12 @@ CREATE OR REPLACE PROCEDURE waitSignalNoLock(inName IN VARCHAR2) AS
    no_messages         EXCEPTION;
    pragma exception_init (no_messages, -25228);
 BEGIN
-   -- wait for max 3s
-   dequeue_options.wait := 3;
    BEGIN
-      dequeue_options.correlation := inName;
-      DBMS_AQ.DEQUEUE('CastorQueue', dequeue_options, message_properties, message, message_handle);
+      -- wait for max 3s
+      dequeue_options.wait := 3;
+      dequeue_options.visibility := DBMS_AQ.IMMEDIATE;
+      dequeue_options.delivery_mode := DBMS_AQ.BUFFERED;
+      DBMS_AQ.DEQUEUE(inName, dequeue_options, message_properties, message, message_handle);
    EXCEPTION
       WHEN no_messages THEN
          NULL;
