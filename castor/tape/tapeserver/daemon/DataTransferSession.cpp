@@ -314,8 +314,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         m_castorConf.remoteFileProtocol,
         m_castorConf.xrootPrivateKey);
     MigrationTaskInjector mti(mm, drtp, twst, m_clientProxy, 
-            m_castorConf.bulkRequestMigrationMaxBytes,
-            m_castorConf.bulkRequestMigrationMaxFiles,lc);
+            m_castorConf.bulkRequestMigrationMaxFiles,
+            m_castorConf.bulkRequestMigrationMaxBytes,lc);
     drtp.setTaskInjector(&mti);
     twst.setTaskInjector(&mti);
     mrp.setWatchdog(mwd);
