@@ -24,7 +24,12 @@
 #pragma once
 
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
+#include "castor/tape/tapegateway/FilesToMigrateList.hpp"
+#include "castor/tape/tapegateway/FilesToMigrateListRequest.hpp"
+#include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
+
+#include <memory>
 
 namespace castor {
 namespace tape   {
@@ -155,8 +160,32 @@ private:
    * @param sock The socket on which to reply to the tape server.
    * @return     True if there is more work to be done else false.
    */
-  bool handleFilesToMigrateListRequest(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock);
+  bool handleFilesToMigrateListRequest(IObject *const obj,
+    io::AbstractSocket &sock);
+
+  /**
+   * Creates a FilesToMigrateList based on the remaining work to be done and on
+   * how much can be put into the current batch.
+   *
+   * @param rqst The request for more work from the tape server.
+   * @param sock The socket on which to reply to the tape server.
+   * @return     The FilesToMigrateList mesaage.
+   */
+  tapegateway::FilesToMigrateList createFilesToMigrateList(
+    tapegateway::FilesToMigrateListRequest &rqst, io::AbstractSocket &sock);
+
+
+  /**
+   * Creates a FileToMigrateStruct for the specified file to be migrated,
+   *
+   * @param rqst     The request for more work from the tape server.
+   * @param sock     The socket on which to reply to the tape server.
+   * @param filename The name of the file to be migrated.
+   * @return         The FileToMigrateStruct.
+   */
+  std::auto_ptr<tapegateway::FileToMigrateStruct> createFileToMigrateStruct(
+    tapegateway::FilesToMigrateListRequest &rqst, io::AbstractSocket &sock,
+    const std::string &filename);
 
   /**
    * FileMigrationReportList message handler.
@@ -229,5 +258,3 @@ private:
 } // namespace tpcp
 } // namespace tape
 } // namespace castor
-
-

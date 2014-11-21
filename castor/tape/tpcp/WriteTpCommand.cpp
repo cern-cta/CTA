@@ -426,8 +426,7 @@ void castor::tape::tpcp::WriteTpCommand::performTransfer() {
 // dispatchMsgHandler
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::WriteTpCommand::dispatchMsgHandler(
-  castor::IObject *const obj, castor::io::AbstractSocket &sock)
-   {
+  castor::IObject *const obj, castor::io::AbstractSocket &sock) {
   switch(obj->type()) {
   case OBJ_FilesToMigrateListRequest:
     return handleFilesToMigrateListRequest(obj, sock);
@@ -458,82 +457,26 @@ bool castor::tape::tpcp::WriteTpCommand::dispatchMsgHandler(
   }
 }
 
-
 //------------------------------------------------------------------------------
 // handleFilesMigrateListRequest
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::WriteTpCommand::handleFilesToMigrateListRequest(
-  castor::IObject *const obj, castor::io::AbstractSocket &sock) {
+  IObject *const obj, io::AbstractSocket &sock) {
 
   tapegateway::FilesToMigrateListRequest *msg = NULL;
 
   castMessage(obj, msg, sock);
   Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
 
-  const bool anotherFile = m_filenameItor != m_filenames.end();
+  tapegateway::FilesToMigrateList fileList = createFilesToMigrateList(*msg,
+    sock);
 
-  if(anotherFile) {
-
-    const std::string filename = *(m_filenameItor++);
-
-    // Determine the local file-name
-    const std::string::size_type localIdx = filename.find(':');
-    const std::string localFilename  =
-      localIdx == std::string::npos || localIdx == filename.length() - 1 ?
-      filename : filename.substr(localIdx + 1);
-
-    // stat the disk file in order to get the file size
-    struct stat statBuf;
-    try {
-      localStat(localFilename.c_str(), statBuf);
-    } catch(castor::exception::Exception &ex) {
-      // Notify the tape server about the exception and rethrow
-      sendEndNotificationErrorReport(msg->aggregatorTransactionId(),
-        ex.code(), ex.getMessage().str(), sock);
-      throw ex;
-    }
-
-    // Create a FilesToMigrateList message for the tape server
-    std::auto_ptr<tapegateway::FileToMigrateStruct> file(
-      new tapegateway::FileToMigrateStruct());
-    file->setFileTransactionId(m_fileTransactionId);
-    file->setNshost("tpcp");
-    file->setFileid(0);
-    file->setFileSize(statBuf.st_size);
-    file->setLastKnownFilename(filename);
-    file->setLastModificationTime(statBuf.st_mtime);
-    file->setUmask(RTCOPYCONSERVATIVEUMASK);
-    file->setPath(filename);
-    file->setPositionCommandCode(tapegateway::TPPOSIT_FSEQ);
-    file->setFseq(m_nextTapeFseq++);
-
-    tapegateway::FilesToMigrateList fileList;
-    fileList.setMountTransactionId(m_volReqId);
-    fileList.setAggregatorTransactionId(msg->aggregatorTransactionId());
-    fileList.addFilesToMigrate(file.release());
-
-    // Update the map of current file transfers and increment the file
-    // transaction ID
-    {
-      m_pendingFileTransfers[m_fileTransactionId] = filename;
-      m_fileTransactionId++;
-    }
+  if(!fileList.filesToMigrate().empty()) {
 
     // Send the FilesToMigrateList message to the tape server
     sock.sendObject(fileList);
 
     Helper::displaySentMsgIfDebug(fileList, m_cmdLine.debugSet);
-
-    {
-      // Command-line user feedback
-      std::ostream &os = std::cout;
-
-      time_t now = time(NULL);
-      castor::utils::writeTime(os, now, TIMEFORMAT);
-      os <<
-        " Migrating"
-        " \"" << filename << "\"" << std::endl;
-    }
 
   // Else no more files
   } else {
@@ -552,13 +495,98 @@ bool castor::tape::tpcp::WriteTpCommand::handleFilesToMigrateListRequest(
   return true;
 }
 
+//------------------------------------------------------------------------------
+// createFilesToMigrateList
+//------------------------------------------------------------------------------
+castor::tape::tapegateway::FilesToMigrateList
+  castor::tape::tpcp::WriteTpCommand::createFilesToMigrateList(
+  tapegateway::FilesToMigrateListRequest &rqst, io::AbstractSocket &sock) {
+  tapegateway::FilesToMigrateList fileList;
+  fileList.setMountTransactionId(m_volReqId);
+  fileList.setAggregatorTransactionId(rqst.aggregatorTransactionId());
+
+  uint64_t bytesToBeMigrated = 0;
+
+  // While there is more work and it can be added to the batch
+  while(m_filenameItor != m_filenames.end() &&
+    fileList.filesToMigrate().size() < rqst.maxFiles() &&
+    bytesToBeMigrated < rqst.maxBytes()) {
+
+    const std::string filename = *(m_filenameItor++);
+
+    std::auto_ptr<tapegateway::FileToMigrateStruct> file =
+      createFileToMigrateStruct(rqst, sock, filename);
+
+    bytesToBeMigrated += file->fileSize();
+    fileList.addFilesToMigrate(file.release());
+
+    // Update the map of current file transfers and increment the file
+    // transaction ID
+    m_pendingFileTransfers[m_fileTransactionId] = filename;
+    m_fileTransactionId++;
+
+    {
+      // Command-line user feedback
+      std::ostream &os = std::cout;
+
+      time_t now = time(NULL);
+      castor::utils::writeTime(os, now, TIMEFORMAT);
+      os <<
+        " Migrating"
+        " \"" << filename << "\"" << std::endl;
+    }
+  }
+
+  return fileList;
+}
+
+//------------------------------------------------------------------------------
+// createFileToMigrateStruct
+//------------------------------------------------------------------------------
+std::auto_ptr<castor::tape::tapegateway::FileToMigrateStruct>
+  castor::tape::tpcp::WriteTpCommand::createFileToMigrateStruct(
+  tapegateway::FilesToMigrateListRequest &rqst, io::AbstractSocket &sock,
+  const std::string &filename) {
+
+  // Determine the local file-name
+  const std::string::size_type localIdx = filename.find(':');
+  const std::string localFilename  =
+    localIdx == std::string::npos || localIdx == filename.length() - 1 ?
+    filename : filename.substr(localIdx + 1);
+
+  // stat the disk file in order to get the file size
+  struct stat statBuf;
+  try {
+    localStat(localFilename.c_str(), statBuf);
+  } catch(castor::exception::Exception &ex) {
+    // Notify the tape server about the exception and rethrow
+    sendEndNotificationErrorReport(rqst.aggregatorTransactionId(),
+      ex.code(), ex.getMessage().str(), sock);
+    throw ex;
+  }
+
+  // Create and fill the FileToMigrateStruct
+  std::auto_ptr<tapegateway::FileToMigrateStruct> file(
+    new tapegateway::FileToMigrateStruct());
+  file->setFileTransactionId(m_fileTransactionId);
+  file->setNshost("tpcp");
+  file->setFileid(0);
+  file->setFileSize(statBuf.st_size);
+  file->setLastKnownFilename(filename);
+  file->setLastModificationTime(statBuf.st_mtime);
+  file->setUmask(RTCOPYCONSERVATIVEUMASK);
+  file->setPath(filename);
+  file->setPositionCommandCode(tapegateway::TPPOSIT_FSEQ);
+  file->setFseq(m_nextTapeFseq++);
+
+  return file;
+}
 
 //------------------------------------------------------------------------------
 // handleFileMigrationReportList
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::WriteTpCommand::handleFileMigrationReportList(
-  castor::IObject *const obj, castor::io::AbstractSocket &sock)
-   {
+  castor::IObject *const obj, castor::io::AbstractSocket &sock) {
 
   tapegateway::FileMigrationReportList *msg = NULL;
 
