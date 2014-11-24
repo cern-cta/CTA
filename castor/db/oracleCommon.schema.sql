@@ -201,6 +201,33 @@ BEGIN
 END;
 /
 
+/****************************/
+/* Advanced Queues creation */
+/****************************/
+
+EXECUTE DBMS_AQADM.CREATE_QUEUE_TABLE ('CastorQueueTable', 'RAW');
+EXECUTE DBMS_AQADM.CREATE_QUEUE ('CastorQueue', 'CastorQueueTable');
+
+EXECUTE DBMS_AQADM.CREATE_QUEUE ('transferReadyToSchedule', 'CastorQueueTable');
+EXECUTE DBMS_AQADM.CREATE_QUEUE ('wakeUpJobReqSvc', 'CastorQueueTable');
+EXECUTE DBMS_AQADM.CREATE_QUEUE ('wakeUpStageReqSvc', 'CastorQueueTable');
+EXECUTE DBMS_AQADM.CREATE_QUEUE ('wakeUpBulkStageReqSvc', 'CastorQueueTable');
+EXECUTE DBMS_AQADM.CREATE_QUEUE ('wakeUpGCSvc', 'CastorQueueTable');
+EXECUTE DBMS_AQADM.CREATE_QUEUE ('wakeUpQueryReqSvc', 'CastorQueueTable');
+EXECUTE DBMS_AQADM.CREATE_QUEUE ('wakeUpErrorSvc', 'CastorQueueTable');
+EXECUTE DBMS_AQADM.CREATE_QUEUE ('d2dReadyToSchedule', 'CastorQueueTable');
+EXECUTE DBMS_AQADM.CREATE_QUEUE ('transfersToAbort', 'CastorQueueTable');
+
+EXECUTE DBMS_AQADM.START_QUEUE ('transferReadyToSchedule');
+EXECUTE DBMS_AQADM.START_QUEUE ('wakeUpJobReqSvc');
+EXECUTE DBMS_AQADM.START_QUEUE ('wakeUpStageReqSvc');
+EXECUTE DBMS_AQADM.START_QUEUE ('wakeUpBulkStageReqSvc');
+EXECUTE DBMS_AQADM.START_QUEUE ('wakeUpGCSvc');
+EXECUTE DBMS_AQADM.START_QUEUE ('wakeUpQueryReqSvc');
+EXECUTE DBMS_AQADM.START_QUEUE ('wakeUpErrorSvc');
+EXECUTE DBMS_AQADM.START_QUEUE ('d2dReadyToSchedule');
+EXECUTE DBMS_AQADM.START_QUEUE ('transfersToAbort');
+
 
 /************************************/
 /* Garbage collection related table */
