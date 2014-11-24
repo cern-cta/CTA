@@ -54,8 +54,6 @@ class ManagerThread(threading.Thread):
         self.transferQueue.pollD2dDest()
         # check for transfer to be canceled for various reasons (timeout, missing resources, ...)
         self.transferQueue.checkForTransfersCancelation()
-        # recompute list of ongoing tape transfers
-        self.runningTransfers.listTapeTransfers()
       except connectionpool.Timeout, e:
         # 'Caught exception in Management thread' message
         dlf.writenotice(msgs.MGMTEXCEPTION, Type=str(e.__class__), Message=str(e))
