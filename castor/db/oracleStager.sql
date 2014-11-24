@@ -152,7 +152,7 @@ BEGIN
   -- Look for files that are STAGEOUT on the filesystem coming back to life
   -- but already VALID/WAITFS/STAGEOUT/
   -- WAITFS_SCHEDULING somewhere else
-  FOR cf IN (SELECT /*+ USE_NL(D E) INDEX(D I_DiskCopy_Status6) */
+  FOR cf IN (SELECT /*+ USE_NL(D E) INDEX(D I_DiskCopy_Status_6) */
                     UNIQUE D.castorfile, D.id dcId
                FROM DiskCopy D, DiskCopy E
               WHERE D.castorfile = E.castorfile
@@ -390,8 +390,8 @@ CREATE OR REPLACE PROCEDURE jobSubRequestToDo(outSrId OUT INTEGER, outReqUuid OU
                                               outClientPort OUT INTEGER, outClientVersion OUT INTEGER,
                                               outErrNo OUT INTEGER, outErrMsg OUT VARCHAR2) AS
   CURSOR SRcur IS
-    SELECT /*+ FIRST_ROWS_10 INDEX_RS_ASC(SR I_SubRequest_RT_CT_ID) */ SR.id
-      FROM SubRequest PARTITION (P_STATUS_0_1_2) SR  -- START, RESTART, RETRY
+    SELECT /*+ FIRST_ROWS_10 INDEX_RS_ASC(SR I_SubRequest_Svc_CT_ID) */ SR.id
+      FROM SubRequest PARTITION (P_STATUS_START) SR  -- START, RESTART, RETRY
      WHERE SR.svcHandler = 'JobReqSvc'
      ORDER BY SR.creationTime ASC;
   SrLocked EXCEPTION;
@@ -429,7 +429,7 @@ BEGIN
     BEGIN
       -- Try to take a lock on the current candidate, and revalidate its status
       SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO varSrId
-        FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
+        FROM SubRequest PARTITION (P_STATUS_START) SR
        WHERE id = varSrId FOR UPDATE NOWAIT;
       -- Since we are here, we got the lock. We have our winner, let's update it
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
@@ -516,8 +516,8 @@ CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            rRepackVid OUT VARCHAR2, rGCWeight OUT INTEGER,
                                            clIpAddress OUT INTEGER, clPort OUT INTEGER, clVersion OUT INTEGER) AS
   CURSOR SRcur IS
-    SELECT /*+ FIRST_ROWS_10 INDEX_RS_ASC(SR I_SubRequest_RT_CT_ID) */ SR.id
-      FROM SubRequest PARTITION (P_STATUS_0_1_2) SR  -- START, RESTART, RETRY
+    SELECT /*+ FIRST_ROWS_10 INDEX_RS_ASC(SR I_SubRequest_Svc_CT_ID) */ SR.id
+      FROM SubRequest PARTITION (P_STATUS_START) SR  -- START, RESTART, RETRY
      WHERE SR.svcHandler = service
      ORDER BY SR.creationTime ASC;
   SrLocked EXCEPTION;
@@ -553,7 +553,7 @@ BEGIN
     BEGIN
       -- Try to take a lock on the current candidate, and revalidate its status
       SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO varSrId
-        FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
+        FROM SubRequest PARTITION (P_STATUS_START) SR
        WHERE id = varSrId FOR UPDATE NOWAIT;
       -- Since we are here, we got the lock. We have our winner, let's update it
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
@@ -1108,8 +1108,8 @@ CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT NUMBER, srFileName OUT
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
   CURSOR c IS
-     SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
-       FROM SubRequest PARTITION (P_STATUS_7) SR; -- FAILED
+     SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_Svc_CT_ID) */ SR.id
+       FROM SubRequest PARTITION (P_STATUS_FAILED) SR;
   varSRId NUMBER;
   varCFId NUMBER;
   varRId NUMBER;
@@ -1143,7 +1143,7 @@ BEGIN
   LOOP
     BEGIN
       SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ answered INTO varSrAnswered
-        FROM SubRequest PARTITION (P_STATUS_7)
+        FROM SubRequest PARTITION (P_STATUS_FAILED)
        WHERE id = varSRId FOR UPDATE NOWAIT;
       IF varSrAnswered = 1 THEN
         -- already answered, archive and move on

@@ -1081,8 +1081,8 @@ PROCEDURE userTransferToSchedule(srId OUT INTEGER,              srSubReqId OUT V
   -- Note that the where clause is not strictly needed, but this way Oracle is forced
   -- to use an INDEX RANGE SCAN instead of its preferred (and unstable upon load) FULL SCAN!
   CURSOR c IS
-    SELECT /*+ FIRST_ROWS_10 INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
-      FROM SubRequest PARTITION (P_STATUS_13_14) SR  -- READYFORSCHED
+    SELECT /*+ FIRST_ROWS_10 INDEX(SR I_SubRequest_Svc_CT_ID) */ SR.id
+      FROM SubRequest PARTITION (P_STATUS_SCHED) SR  -- READYFORSCHED
      WHERE svcHandler = 'JobReqSvc'
      ORDER BY SR.creationTime ASC;
   SrLocked EXCEPTION;
@@ -1121,7 +1121,7 @@ BEGIN
       -- Try to lock the current candidate, verify that the status is valid. A
       -- valid subrequest is in status READYFORSCHED
       SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO varSrId
-        FROM SubRequest PARTITION (P_STATUS_13_14) SR
+        FROM SubRequest PARTITION (P_STATUS_SCHED) SR
        WHERE id = varSrId
          AND status = dconst.SUBREQUEST_READYFORSCHED
          FOR UPDATE NOWAIT;

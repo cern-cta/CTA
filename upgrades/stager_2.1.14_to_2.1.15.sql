@@ -79,6 +79,54 @@ UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (36, 37);
 /* Drop other obsoleted entries from Type2Obj */
 DELETE FROM Type2Obj WHERE type IN (18, 29, 84, 85, 86, 87, 88, 89, 90, 01, 92, 148);
 
+/* Restructure the SubRequest table */
+DROP TABLE SubRequest;
+CREATE TABLE SubRequest (retryCounter NUMBER,
+                         fileName VARCHAR2(2048),
+                         protocol VARCHAR2(2048),
+                         xsize INTEGER,
+                         priority NUMBER,
+                         subreqId VARCHAR2(2048),
+                         flags NUMBER,
+                         modeBits NUMBER,
+                         creationTime INTEGER CONSTRAINT NN_SubRequest_CreationTime NOT NULL,
+                         lastModificationTime INTEGER,
+                         answered NUMBER,
+                         errorCode NUMBER, 
+                         errorMessage VARCHAR2(2048),
+                         id NUMBER CONSTRAINT NN_SubRequest_Id NOT NULL,
+                         diskcopy INTEGER,
+                         diskServer INTEGER,
+                         castorFile INTEGER,
+                         status INTEGER,
+                         request INTEGER,
+                         getNextStatus INTEGER,
+                         requestedFileSystems VARCHAR2(2048),
+                         svcHandler VARCHAR2(2048) CONSTRAINT NN_SubRequest_SvcHandler NOT NULL,
+                         reqType INTEGER CONSTRAINT NN_SubRequest_reqType NOT NULL)
+  PCTFREE 50 PCTUSED 40 INITRANS 50
+  ENABLE ROW MOVEMENT
+  PARTITION BY LIST (STATUS)
+  SUBPARTITION BY HASH(ID) SUBPARTITIONS 5
+   (
+    PARTITION P_STATUS_START    VALUES (0, 1, 2),      -- *START
+    PARTITION P_STATUS_ACTIVE   VALUES (3, 4, 5, 6, 12),
+    PARTITION P_STATUS_FAILED   VALUES (7),
+    PARTITION P_STATUS_FINISHED VALUES (8, 9, 10, 11),        -- FAILED_*
+    PARTITION P_STATUS_SCHED    VALUES (13, 14)      -- *SCHED
+   );
+
+ALTER TABLE SubRequest
+  ADD CONSTRAINT PK_SubRequest_Id PRIMARY KEY (ID);
+CREATE INDEX I_SubRequest_Svc_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL;
+CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,NULL,9,NULL,status));
+CREATE INDEX I_SubRequest_Castorfile ON SubRequest (castorFile);
+CREATE INDEX I_SubRequest_DiskCopy ON SubRequest (diskCopy);
+CREATE INDEX I_SubRequest_DiskServer ON SubRequest (diskServer);
+CREATE INDEX I_SubRequest_Request ON SubRequest (request);
+CREATE INDEX I_SubRequest_SubReqId ON SubRequest (subReqId);
+CREATE INDEX I_SubRequest_LastModTime ON SubRequest (lastModificationTime);
+
 /* drop obsoleted entities */
 -- updates support
 DROP TABLE StagePrepareToUpdateRequest;

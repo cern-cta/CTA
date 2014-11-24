@@ -362,50 +362,25 @@ CREATE TABLE SubRequest (retryCounter NUMBER,
   PCTFREE 50 PCTUSED 40 INITRANS 50
   ENABLE ROW MOVEMENT
   PARTITION BY LIST (STATUS)
+  SUBPARTITION BY HASH(ID) SUBPARTITIONS 5
    (
-    PARTITION P_STATUS_0_1_2 VALUES (0, 1, 2),      -- *START
-    PARTITION P_STATUS_3     VALUES (3),
-    PARTITION P_STATUS_4     VALUES (4),
-    PARTITION P_STATUS_5     VALUES (5),
-    PARTITION P_STATUS_6     VALUES (6),
-    PARTITION P_STATUS_7     VALUES (7),
-    PARTITION P_STATUS_8     VALUES (8),
-    PARTITION P_STATUS_9_10  VALUES (9, 10),        -- FAILED_*
-    PARTITION P_STATUS_11    VALUES (11),
-    PARTITION P_STATUS_12    VALUES (12),
-    PARTITION P_STATUS_13_14 VALUES (13, 14),       -- *SCHED
-    PARTITION P_STATUS_OTHER VALUES (DEFAULT)
+    PARTITION P_STATUS_START    VALUES (0, 1, 2),      -- *START
+    PARTITION P_STATUS_ACTIVE   VALUES (3, 4, 5, 6, 12),
+    PARTITION P_STATUS_FAILED   VALUES (7),
+    PARTITION P_STATUS_FINISHED VALUES (8, 9, 10, 11),        -- FAILED_*
+    PARTITION P_STATUS_SCHED    VALUES (13, 14)      -- *SCHED
    );
 
-/* SQL statements for constraints on the SubRequest table */
 ALTER TABLE SubRequest
   ADD CONSTRAINT PK_SubRequest_Id PRIMARY KEY (ID);
-CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL
- (PARTITION P_STATUS_0_1_2,
-  PARTITION P_STATUS_3,
-  PARTITION P_STATUS_4,
-  PARTITION P_STATUS_5,
-  PARTITION P_STATUS_6,
-  PARTITION P_STATUS_7,
-  PARTITION P_STATUS_8,
-  PARTITION P_STATUS_9_10,
-  PARTITION P_STATUS_11,
-  PARTITION P_STATUS_12,
-  PARTITION P_STATUS_13_14,
-  PARTITION P_STATUS_OTHER);
-
-/* this index is dedicated to archivesubreq */
+CREATE INDEX I_SubRequest_Svc_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL;
 CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,NULL,9,NULL,status));
-
 CREATE INDEX I_SubRequest_Castorfile ON SubRequest (castorFile);
 CREATE INDEX I_SubRequest_DiskCopy ON SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_DiskServer ON SubRequest (diskServer);
 CREATE INDEX I_SubRequest_Request ON SubRequest (request);
 CREATE INDEX I_SubRequest_SubReqId ON SubRequest (subReqId);
-CREATE INDEX I_SubRequest_LastModTime ON SubRequest (lastModificationTime) LOCAL;
-ALTER TABLE SubRequest
-  ADD CONSTRAINT CK_SubRequest_Status
-  CHECK (status IN (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13));
+CREATE INDEX I_SubRequest_LastModTime ON SubRequest (lastModificationTime);
 
 BEGIN
   setObjStatusName('SubRequest', 'status', dconst.SUBREQUEST_START, 'SUBREQUEST_START');
