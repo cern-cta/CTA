@@ -149,13 +149,13 @@ private:
   class Request {
   public:
     Request(uint64_t mf, uint64_t mb, bool lc):
-    nbMaxFiles(mf), byteSizeThreshold(mb), lastCall(lc), end(false) {}
+    filesRequested(mf), bytesRequested(mb), lastCall(lc), end(false) {}
     
     Request():
-    nbMaxFiles(-1), byteSizeThreshold(-1), lastCall(true),end(true) {}
+    filesRequested(-1), bytesRequested(-1), lastCall(true),end(true) {}
     
-    const uint64_t nbMaxFiles;
-    const uint64_t byteSizeThreshold;
+    const uint64_t filesRequested;
+    const uint64_t bytesRequested;
     
     /** 
      * True if it is the last call for the set of requests :it means

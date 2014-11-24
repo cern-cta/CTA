@@ -63,15 +63,15 @@ public:
   * @param diskWriter the one object that will hold all the threads which will be executing 
   * disk-writing tasks
   * @param client The one that will give us files to recall 
-  * @param maxFiles maximal number of files we may request to the client at once 
-  * @param byteSizeThreshold maximal number of cumulated byte 
+  * @param filesPerRequest number of files we request from the client at once 
+  * @param bytesPerRequest number of bytes we request from the client at once 
   * we may request to the client. at once
   * @param lc  copied because of the threading mechanism 
   */
   RecallTaskInjector(RecallMemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
         DiskWriteThreadPool & diskWriter,client::ClientInterface& client,
-        uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc);
+        uint64_t filesPerRequest, uint64_t bytesPerRequest,castor::log::LogContext lc);
 
   virtual ~RecallTaskInjector();
   
@@ -146,12 +146,12 @@ private:
   class Request {
   public:
     Request(uint64_t mf, uint64_t mb, bool lc):
-    nbMaxFiles(mf), byteSizeThreshold(mb), lastCall(lc),end(false) {}
+    filesRequested(mf), bytesRequested(mb), lastCall(lc),end(false) {}
     
     Request():
-    nbMaxFiles(0), byteSizeThreshold(0), lastCall(true),end(true) {}
-    const uint64_t nbMaxFiles;
-    const uint64_t byteSizeThreshold;
+    filesRequested(0), bytesRequested(0), lastCall(true),end(true) {}
+    const uint64_t filesRequested;
+    const uint64_t bytesRequested;
     
     /** 
      * True if it is the last call for the set of requests :it means

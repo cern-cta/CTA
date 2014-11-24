@@ -213,7 +213,7 @@ void RecallTaskInjector::WorkerThread::run()
       }
       m_parent.m_lc.log(LOG_DEBUG,"RecallJobInjector:run: about to call client interface");
       client::ClientProxy::RequestReport reqReport;
-      std::auto_ptr<tapegateway::FilesToRecallList> filesToRecallList(m_parent.m_client.getFilesToRecall(req.nbMaxFiles, req.byteSizeThreshold,reqReport));
+      std::auto_ptr<tapegateway::FilesToRecallList> filesToRecallList(m_parent.m_client.getFilesToRecall(req.filesRequested, req.bytesRequested,reqReport));
       
       LogContext::ScopedParam sp01(m_parent.m_lc, Param("transactionId", reqReport.transactionId));
       LogContext::ScopedParam sp02(m_parent.m_lc, Param("connectDuration", reqReport.connectDuration));

@@ -186,7 +186,7 @@ namespace daemon {
         Request req = m_parent.m_queue.pop();
         client::ClientProxy::RequestReport reqReport;
         std::auto_ptr<tapegateway::FilesToMigrateList> filesToMigrateList(
-          m_parent.m_client.getFilesToMigrate(req.nbMaxFiles, req.byteSizeThreshold,reqReport)
+          m_parent.m_client.getFilesToMigrate(req.filesRequested, req.bytesRequested,reqReport)
         );
 
         if(NULL==filesToMigrateList.get()){
@@ -211,12 +211,12 @@ namespace daemon {
           // Inject the tasks
           m_parent.injectBulkMigrations(filesToMigrateList->filesToMigrate());
           // Decide on continuation
-          if(filesCount < req.nbMaxFiles / 2 && totalSize < req.byteSizeThreshold) {
+          if(filesCount < req.filesRequested / 2 && totalSize < req.bytesRequested) {
             // The client starts to dribble files at a low rate. Better finish
             // the session now, so we get a clean batch on a later mount.
             log::ScopedParamContainer params(m_parent.m_lc);
-            params.add("filesRequested", req.nbMaxFiles)
-                  .add("bytesRequested", req.byteSizeThreshold)
+            params.add("filesRequested", req.filesRequested)
+                  .add("bytesRequested", req.bytesRequested)
                   .add("filesReceived", filesCount)
                   .add("bytesReceived", totalSize);
             m_parent.m_lc.log(LOG_INFO, "Got less than half the requested work to do: triggering the end of session.");
