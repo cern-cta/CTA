@@ -23,6 +23,10 @@ The format of \fBDRIVE_SLOT\fP is as follows:
 
 .B ACS:LSM:panel:transport
 
+Please note that this command-line tool communicates directly with the CSI of
+the ACS system. This command-line tool does not communicate with any CASTOR
+daemons.
+
 .SH OPTIONS
 .TP
 \fB\-d, \-\-debug

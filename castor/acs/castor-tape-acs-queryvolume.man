@@ -20,6 +20,10 @@ castor-tape-acs-queryvolume \- queries a volume
 \fBcastor-tape-acs-queryvolume\fP quieries ACS for information about the volume
 with the specfied \fBVID\fP.
 
+Please note that this command-line tool communicates directly with the CSI of 
+the ACS system. This command-line tool does not communicate with any CASTOR
+daemons.
+
 .SH OPTIONS
 .TP
 \fB\-d, \-\-debug
