@@ -200,7 +200,7 @@ bool ClientSimulator::processOneRequest()
     uint32_t files = 0;
     uint64_t bytes = 0;
     tapegateway::FilesToMigrateList reply;
-    while (files < req.maxFiles() && bytes < req.maxFiles()) {
+    while (files < req.maxFiles() && bytes < req.maxBytes()) {
       if (m_filesToMigrate.size()) {
         files++;
         std::auto_ptr<tapegateway::FileToMigrateStruct> ftm(new tapegateway::FileToMigrateStruct);
