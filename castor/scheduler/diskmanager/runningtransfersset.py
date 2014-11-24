@@ -110,17 +110,29 @@ class RunningTransfersSet(object):
     return leftOvers
 
   def add(self, rTransfer):
-    '''add a new running transfer to the list'''
+    '''add a new running transfer to the set'''
     self.lock.acquire()
     try:
       self.transfers.add(rTransfer)
     finally:
       self.lock.release()
 
+  def addTapeTransfer(self, tTransfer):
+    '''appends a tape transfer to the dedicated list'''
+    self.tapelock.acquire()
+    try:
+      self.tapeTransfers.append(tTransfer)
+    finally:
+      self.tapelock.release()
+
   def get(self, transferid):
     '''get a transfer by transferid. Raise KeyError if not found'''
     for t in self.transfers:
       if t.transfer.transferId == transferid:
+        return t
+    # try a tape transfer
+    for t in self.tapeTransfers:
+      if t.transferid == transferid:
         return t
     raise KeyError
 
@@ -134,7 +146,7 @@ class RunningTransfersSet(object):
       self.lock.release()
 
   def kill(self, transferIds):
-    '''removes a set of transfers from the list, and kills corresponding process, when possible'''
+    '''removes a set of transfers from the list, and kills corresponding processes when possible'''
     self.lock.acquire()
     try:
       # kill what can be killed
@@ -148,14 +160,24 @@ class RunningTransfersSet(object):
       self.lock.release()
 
   def remove(self, transfer):
-    '''removes a transfer from the list, assuming the corresponding mover process is gone'''
+    '''removes a transfer from the appropriate list, assuming the corresponding mover process is gone'''
     self.lock.acquire()
     try:
       self.transfers.remove(transfer)
+      return
     except KeyError:
       pass
     finally:
       self.lock.release()
+    # not found, try a tape transfer
+    self.tapelock.acquire()
+    try:
+      self.tapeTransfers.remove(transfer)
+    except ValueError:
+      pass
+    finally:
+      self.tapelock.release()
+
 
   def nbTransfers(self, reqUser=None, detailed=False):
     '''returns number of running transfers and number of running slots, plus details

@@ -332,14 +332,14 @@ class D2DTransfer(BaseTransfer):
 
 class TapeTransfer(object):
   '''little container describing a tape transfer'''
-  def __init__(self, transferType, startTime, clientHost, fileId, mountPoint, lastTimeViewed):
+  def __init__(self, transferId, transferType, startTime, clientHost, fileId, mountPoint):
     '''constructor'''
+    self.transferId = transferId
     self.transferType = transferType
     self.startTime = startTime
     self.clientHost = clientHost
     self.fileId = fileId
     self.mountPoint = mountPoint
-    self.lastTimeViewed = lastTimeViewed
 
 
 class RunningTransfer(object):

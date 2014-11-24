@@ -25,9 +25,10 @@
 
 """mover handler thread of the disk server manager daemon of CASTOR."""
 
-import threading, socket, time, Queue
+import threading, socket, time, Queue, os
 import connectionpool, dlf
 from diskmanagerdlf import msgs
+from transfer import TapeTransfer, TapeTransferType, RunningTransfer
 
 class MoverReqHandlerThread(threading.Thread):
   '''Worker thread handling each mover request'''
@@ -53,25 +54,56 @@ class MoverReqHandlerThread(threading.Thread):
     '''handle an OPEN call. The protocol is as follows:
     - The mover connects to localhost:15511 [DiskManager/MoverHandlerPort in castor.conf]
     - It sends a single string like
-      OPEN <transferUUID>
+      OPEN errorCode ('tident', 'physicalPath', 'transferType', isWriteFlag, 'transferId')
+      where errorCode is non-0 in case the transfer is to be cancelled
+            tident has the format: username.clientPid:fd@clientHost
+            transferType is one of tape, user, d2duser, d2dinternal, d2ddraining, d2drebalance
+            transferId is the UUID of the transfer or 0 for non-user transfers
     - It synchronously waits for a single answer like
       <rc>[ <error message>]\n
-      either: "0" for success
-      or: "2 Transfer has disappeared from the scheduling system"
-      in case the slot is not available any longer
+      either "0" for success
+      or "2 Transfer has disappeared from the scheduling system"
+         in case the slot is not available any longer for a user transfer
+      or "22 Invalid format"
+         in case the tuple does not respect the correct format
     '''
-    try:
-      # parse payload, ignore anything after first string
-      transferid = payload.split()[0]
-      # Look up for this transferid and update its process.
-      # Anything not None is OK here, see runningtransferset.py
-      self.runningTransfers.setProcess(transferid, 0)
-      return "0"
-    except KeyError:
-      # transfer not found: typically it already timed out, so we log this
-      # "Transfer slot timed out" message
-      dlf.writenotice(msgs.TRANSFERTIMEDOUT, subreqId=transferid)
-      raise
+    # parse payload, throw IndexError or TypeError on malformed input
+    errCode = int(payload.split()[0])
+    tident, physicalPath, transferType, isWriteFlag, transferid = eval(' '.join(payload.split()[1:]))
+    # is the transfer coming from the user or from a disk-to-disk copy?
+    if transferType == 'user' or transferType[0:3] == 'd2d':
+      try:
+        # yes, look it up for this transferid
+        t = self.runningTransfers.get(transferid)
+        if errCode != 0:
+          # this is a user transfer that has to be failed
+          self.runningTransfers.remove(t)
+          self.runningTransfers.failTransfer(t.scheduler, t.transfer, errCode, 'Error while opening the file')
+        else:
+          # Anything not None is OK here, see runningtransferset.py
+          self.runningTransfers.setProcess(transferid, 0)
+      except KeyError:
+        # transfer not found: assume it already timed out, raise error
+        # "Transfer slot timed out" message
+        dlf.writenotice(msgs.TRANSFERTIMEDOUT, subreqId=transferid)
+        raise
+    elif transferType == 'tape':
+      # this is a tape transfer: take note
+      clientHost = tident.split('@')[1]   # this is the host part
+      fid, nshost = os.path.basename(physicalPath).split('@')
+      nshost = nshost.split('.')[0]
+      fileid = (nshost, int(fid))
+      mountPoint = physicalPath.rsplit(os.sep, 2)[0] + os.sep
+      tTransfer = TapeTransfer(tident + ':' + physicalPath,    # this is a unique identifier for a tape transfer
+                               TapeTransferType.RECALL if isWriteFlag else TapeTransferType.MIGRATION,
+                               time.time(), clientHost, fileid, mountPoint)
+      self.runningTransfers.addTapeTransfer(tTransfer)
+    else:
+      # any other transfer is unknown - this should not happen
+      #raise ValueError
+      # for now we keep an entry XXX to be dropped once all code is validated
+      self.runningTransfers.add(RunningTransfer('unknown', 0, time.time(), None, physicalPath))
+    return '0\n'
 
   def handleClose(self, payload):
     '''handle a CLOSE call. The protocol is as follows:
@@ -96,6 +128,9 @@ class MoverReqHandlerThread(threading.Thread):
     t = self.runningTransfers.get(transferid)
     # remove it from there as it is not running any longer
     self.runningTransfers.remove(t)
+    # in case of a tape transfer, nothing else to do
+    if type(t) == TapeTransfer:
+      return '0\n'
     # get the admin timeout
     timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
     closeTime = time.time()
@@ -149,7 +184,7 @@ class MoverReqHandlerThread(threading.Thread):
         return self.handleClose(payload)
       else:
         raise ValueError
-    except ValueError:
+    except (ValueError, TypeError):
       # invalid format, error = EINVAL
       return '%d Invalid format in %s\n' % (22, data)
     except KeyError:
