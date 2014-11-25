@@ -550,17 +550,23 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::
   sessionSucceeded() {
+  std::auto_ptr<CatalogueSession> session(m_session);
+  m_session = NULL;
+
   switch(m_state) {
   case DRIVE_STATE_RUNNING:
     changeState(DRIVE_STATE_UP);
+    session->sessionSucceeded();
     m_vdqm.setDriveUp(m_hostName, m_config.unitName, m_config.dgn);
     break;
   case DRIVE_STATE_WAITDOWN:
     changeState(CatalogueDrive::DRIVE_STATE_DOWN);
+    session->sessionSucceeded();
     m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
     break;
   case DRIVE_STATE_WAITSHUTDOWNCLEANER:
     changeState(DRIVE_STATE_SHUTDOWN);
+    session->sessionSucceeded();
     m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
     break;
   default:
@@ -570,15 +576,9 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
         "Failed to record tape session succeeded for session with pid " <<
         getSession().getPid() << ": Incompatible drive state: state=" <<
         driveStateToStr(m_state);
-      delete m_session;
-      m_session = NULL;
       throw ex;
     }
   }
-
-  std::auto_ptr<CatalogueSession> session(m_session);
-  m_session = NULL;
-  session->sessionSucceeded();
 }
 
 //-----------------------------------------------------------------------------
