@@ -544,7 +544,7 @@ BEGIN
          ' fileSize=' || TO_CHAR(varFileSize);
   IF inErrorMessage IS NOT NULL THEN
     varComment := varComment || ' replicaFileSize=' || TO_CHAR(inReplicaFileSize) ||
-                  ' errorMessage=' || inErrorMessage;
+                  ' errorMessage="' || inErrorMessage || '"';
   END IF;
   logToDLF(NULL, dlf.LVL_SYSTEM, varLogMsg, varFileId, varNsHost, 'transfermanagerd', varComment);
   -- if success, create new DiskCopy, restart waiting requests, cleanup and handle replicate on close
