@@ -142,16 +142,35 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
       "Killing data-transfer session because transfer job is too late",
       params);
 
-    if(kill(m_pid, SIGKILL)) {
-      const std::string errnoStr = castor::utils::errnoToString(errno);
-      params.push_back(log::Param("message", errnoStr));
-      m_log(LOG_ERR, "Failed to kill data-transfer session", params);
-    } else {
+    try {
+      idempotentKill(m_pid, SIGKILL);
       m_state = WAIT_TIMEOUT_KILL;
+    } catch(castor::exception::Exception &ex) {
+      params.push_back(log::Param("message", ex.getMessage()));
+      m_log(LOG_ERR, "Failed to kill data-transfer session", params);
     }
   }
 
   return true; // Continue the main event loop
+}
+
+//------------------------------------------------------------------------------
+// idempotentKill
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::idempotentKill(
+  const pid_t pid, const int signal) {
+  // Try to kill the process
+  const int killRc = kill(m_pid, signal);
+
+  // If the kill failed for a reason other than the fact the process was already
+  // dead
+  if(killRc && ESRCH != errno) {
+    const std::string errnoStr = castor::utils::errnoToString(errno);
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to kill process"
+      ": pid=" << pid << " signal=" << signal << ": " << errnoStr;
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -173,12 +192,12 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
       "Killing data-transfer session because tape mount is taking too long",
       params);
 
-    if(kill(m_pid, SIGKILL)) {
-      const std::string errnoStr = castor::utils::errnoToString(errno);
-      params.push_back(log::Param("message", errnoStr));
-      m_log(LOG_ERR, "Failed to kill data-transfer session", params);
-    } else {
+    try {
+      idempotentKill(m_pid, SIGKILL);
       m_state = WAIT_TIMEOUT_KILL;
+    } catch(castor::exception::Exception &ex) {
+      params.push_back(log::Param("message", ex.getMessage()));
+      m_log(LOG_ERR, "Failed to kill data-transfer session", params);
     }
   }
 
@@ -204,12 +223,12 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
       "Killing data-transfer session because data blocks are not being moved",
       params);
 
-    if(kill(m_pid, SIGKILL)) {
-      const std::string errnoStr = castor::utils::errnoToString(errno);
-      params.push_back(log::Param("message", errnoStr));
-      m_log(LOG_ERR, "Failed to kill data-transfer session", params);
-    } else {
+    try {
+      idempotentKill(m_pid, SIGKILL);
       m_state = WAIT_TIMEOUT_KILL;
+    } catch(castor::exception::Exception &ex) {
+      params.push_back(log::Param("message", ex.getMessage()));
+      m_log(LOG_ERR, "Failed to kill data-transfer session", params);
     }
   }
 

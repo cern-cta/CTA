@@ -382,6 +382,15 @@ private:
   bool handleTickWhilstWaitJob();
 
   /**
+   * Tries to kill the specified process using the specified signal.  This
+   * method calls the system call kill() but differs in its overall
+   * functionality in that it is idempotent.  If the underlying kill() fails due
+   * to the fact the process is already dead (errno = ESRCH), then this method
+   * return successfully.
+   */
+  void idempotentKill(const pid_t pid, const int signal);
+
+  /**
    * Handles a tick in time whilst in the TRANSFERSTATE_WAIT_MOUNTED state.  Time
    * driven actions such as alarms should be implemented here.
    *
