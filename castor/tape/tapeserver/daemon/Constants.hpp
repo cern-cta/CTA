@@ -66,7 +66,7 @@ const time_t TAPESERVER_MOUNTTIMEOUT_DEFAULT = 900; // 15 minutes
  * The compile-time default value for the maximum time in seconds the
  * data-transfer session of tapeserverd can cease to move data blocks.
  */
-const time_t TAPESERVER_BLKMOVETIMEOUT_DEFAULT = 300; // 5 minutes
+const time_t TAPESERVER_BLKMOVETIMEOUT_DEFAULT = 1800; // 30 minutes
 
 /**
  * The compile-time default value for the number of disk threads in 
