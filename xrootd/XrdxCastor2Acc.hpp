@@ -61,10 +61,12 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
     std::string pool; ///< ceph pool in case pfn1 denotes a ceph file (no leading '/')
     std::string pfn2; ///< diskmanager connection details
     std::string id; ///< the client connection id
-    std::string client_sec_uid; ///< the sec identity eg. user name
-    std::string client_sec_gid; ///< the sec identity eg. group name
+    std::string uid; ///< the sec identity eg. user name
+    std::string gid; ///< the sec identity eg. group name
     std::string signature; ///< signature of the 'token'
     std::string manager; ///< hostname of the manager node
+    std::string txtype; ///< type of transfer: user/tape/d2duser/d2dbalance/
+                        ///< d2dinternal/d2ddrain
   };
 
 

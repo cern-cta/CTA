@@ -244,13 +244,13 @@ XrdxCastor2FsFile::open(const char*         path,
   }
 
   TIMING("PREOPEN", &opentiming);
-  uid_t client_uid;
-  gid_t client_gid;
-  XrdOucString sclient_uid = "";
-  XrdOucString sclient_gid = "";
-  gMgr->GetIdMapping(client, client_uid, client_gid);
-  sclient_uid += (int) client_uid;
-  sclient_gid += (int) client_gid;
+  uid_t uid;
+  gid_t gid;
+  XrdOucString str_uid = "";
+  XrdOucString str_gid = "";
+  gMgr->GetIdMapping(client, uid, gid);
+  str_uid += (int) uid;
+  str_gid += (int) gid;
 
   const char* val;
   std::string desired_svc= "";
@@ -316,7 +316,7 @@ XrdxCastor2FsFile::open(const char*         path,
             {
               XrdOucString createpath;
               createpath.assign(newpath, 0, fpos);
-              xcastor_debug("creating path as uid=%i, gid=%i", (int)client_uid, (int)client_gid);
+              xcastor_debug("creating path as uid=%i, gid=%i", (int)uid, (int)gid);
               mode_t cmask = 0;
               Cns_umask(cmask);
               fpos++;
@@ -350,8 +350,8 @@ XrdxCastor2FsFile::open(const char*         path,
     int status = 0;
 
     // Create structures for request and response and call async method
-    struct XrdxCastor2Stager::ReqInfo req_info(client_uid, client_gid,
-                                               map_path.c_str(), allowed_svc.c_str());
+    struct XrdxCastor2Stager::ReqInfo req_info(uid, gid, map_path.c_str(),
+                                               allowed_svc.c_str());
 
     xcastor_debug("Put allowed_svc=%s", allowed_svc.c_str());
     status = XrdxCastor2Stager::DoAsyncReq(error, "put", &req_info, resp_info);
@@ -437,8 +437,8 @@ XrdxCastor2FsFile::open(const char*         path,
       TIMING("PREP2GET", &opentiming);
 
       // Do a stager_qry for the current allowed_svc
-      if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid, (gid_t) client_gid,
-                                          map_path.c_str(), allowed_svc.c_str(), stage_status))
+      if (!XrdxCastor2Stager::StagerQuery(error, uid, gid, map_path.c_str(),
+                                          allowed_svc.c_str(), stage_status))
       {
         stage_status = "NA";
       }
@@ -485,8 +485,8 @@ XrdxCastor2FsFile::open(const char*         path,
     }
 
     // Create structures for request and response and call the get method
-    struct XrdxCastor2Stager::ReqInfo req_info(client_uid, client_gid,
-                                               map_path.c_str(), allowed_svc.c_str());
+    struct XrdxCastor2Stager::ReqInfo req_info(uid, gid, map_path.c_str(),
+                                               allowed_svc.c_str());
 
     TIMING("GET", &opentiming);
     int status = XrdxCastor2Stager::DoAsyncReq(error, "get", &req_info, resp_info);
@@ -562,13 +562,14 @@ XrdxCastor2FsFile::open(const char*         path,
   authz.pool = (char*) pool.c_str();
   authz.pfn2 = (char*) resp_info.mRedirectionPfn2.c_str();
   authz.id  = (char*)tident;
-  authz.client_sec_uid = sclient_uid.c_str();
-  authz.client_sec_gid = sclient_gid.c_str();
+  authz.uid = str_uid.c_str();
+  authz.gid = str_gid.c_str();
   authz.accessop = aop;
   time_t now = time(NULL);
   authz.exptime  = (now + gMgr->msTokenLockTime);
   authz.signature = "";
   authz.manager = (char*)gMgr->ManagerId.c_str();
+  authz.txtype = "user";
 
   // Build and sign the authorization token with the server's private key
   std::string acc_opaque = gMgr->mServerAcc->GetOpaqueAcc(authz, gMgr->mIssueCapability);
