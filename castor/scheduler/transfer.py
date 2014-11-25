@@ -214,9 +214,8 @@ class Transfer(BaseTransfer):
   configuration = castor_tools.castorConf()
 
   def __init__(self, transferId, reqId, fileId, euid, egid, svcClassName, creationTime,
-               protocol, srId, reqType, flags, clientIpAddress, clientPort,
-               clientSecure, diskServer='', mountPoint='', submissionTime=0,
-               destDcPath='', moverFd=-1):
+               protocol, srId, reqType, flags, clientIpAddress='', clientPort=0,
+               diskServer='', mountPoint='', submissionTime=0, destDcPath='', moverFd=-1):
     '''constructor'''
     super(Transfer, self).__init__(transferId, reqId, fileId, euid, egid, svcClassName,
                                    creationTime, TransferType.STD, diskServer, mountPoint, submissionTime)
@@ -226,7 +225,6 @@ class Transfer(BaseTransfer):
     self.flags = flags
     self.clientIpAddress = clientIpAddress
     self.clientPort = clientPort
-    self.clientSecure = clientSecure
     self.destDcPath = destDcPath
     self.moverFd = moverFd
 

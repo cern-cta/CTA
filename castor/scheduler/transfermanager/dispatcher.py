@@ -338,17 +338,15 @@ class UserDispatcherThread(AbstractDispatcherThread):
           srOpenFlags = stcur.var(cx_Oracle.STRING)
           clientIp = stcur.var(cx_Oracle.NUMBER)
           clientPort = stcur.var(cx_Oracle.NUMBER)
-          clientSecure = stcur.var(cx_Oracle.NUMBER)
           reqCreationTime = stcur.var(cx_Oracle.NUMBER)
-          stTransferToSchedule = 'BEGIN userTransferToSchedule(:srId, :srSubReqId , :srProtocol, :destFilesystems, :reqId, :cfFileId, :cfNsHost, :reqSvcClass, :reqType, :reqEuid, :reqEgid, :srOpenFlags, :clientIp, :clientPort, :clientSecure, :reqCreationTime); END;' # pylint: disable=C0301
+          stTransferToSchedule = 'BEGIN userTransferToSchedule(:srId, :srSubReqId , :srProtocol, :destFilesystems, :reqId, :cfFileId, :cfNsHost, :reqSvcClass, :reqType, :reqEuid, :reqEgid, :srOpenFlags, :clientIp, :clientPort, :reqCreationTime); END;' # pylint: disable=C0301
           # infinite loop over the polling of the DB
           while self.running:
             # see whether there is something to do
             # note that this will hang until something comes or the internal timeout is reached
             stcur.execute(stTransferToSchedule, (srId, srSubReqId, srProtocol, destFilesystems, reqId, cfFileId,
                                                  cfNsHost, reqSvcClass, reqType, reqEuid, reqEgid,
-                                                 srOpenFlags, clientIp, clientPort, clientSecure,
-                                                 reqCreationTime))
+                                                 srOpenFlags, clientIp, clientPort, reqCreationTime))
             # in case of timeout, we may have nothing to do
             if srId.getvalue() != None:
               # errors are handled internally and there are no exception others than
@@ -361,8 +359,7 @@ class UserDispatcherThread(AbstractDispatcherThread):
                                                  srProtocol.getvalue(), srId.getvalue(),
                                                  int(reqType.getvalue()), srOpenFlags.getvalue(),
                                                  inttoip(int(clientIp.getvalue())),
-                                                 int(clientPort.getvalue()), int(clientSecure.getvalue())),
-                                        destFilesystems.getvalue())))
+                                                 int(clientPort.getvalue()), destFilesystems.getvalue())))
               # if maxNbTransfersScheduledPerSecond is given, request throttling is active
               # What it does is keep a count of the number of scheduled request in the current second
               # and wait the rest of the second if it reached the limit

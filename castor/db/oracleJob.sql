@@ -1075,7 +1075,7 @@ PROCEDURE userTransferToSchedule(srId OUT INTEGER,              srSubReqId OUT V
                                  reqType OUT INTEGER,           reqEuid OUT INTEGER,
                                  reqEgid OUT INTEGER,           srOpenFlags OUT VARCHAR2,
                                  clientIp OUT INTEGER,          clientPort OUT INTEGER,
-                                 clientSecure OUT INTEGER,      reqCreationTime OUT INTEGER) AS
+                                 reqCreationTime OUT INTEGER) AS
   cfId NUMBER;
   -- Cursor to select the next candidate for submission to the scheduler ordered
   -- by creation time.
@@ -1161,9 +1161,9 @@ BEGIN
            CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SvcClass.name, SvcClass.id,
            Request.type, Request.reqId, Request.euid, Request.egid,
            Request.direction, Client.ipAddress, Client.port,
-           Client.secure, Request.creationTime
+           Request.creationTime
       INTO cfId, cfFileId, cfNsHost, reqSvcClass, svcClassId, reqType, reqId, reqEuid, reqEgid,
-           srOpenFlags, clientIp, clientPort, clientSecure, reqCreationTime
+           srOpenFlags, clientIp, clientPort, reqCreationTime
       FROM SubRequest, CastorFile, SvcClass, Client,
            (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */
                    id, euid, egid, reqid, client, creationTime,
