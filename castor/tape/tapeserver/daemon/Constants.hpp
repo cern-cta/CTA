@@ -80,6 +80,14 @@ const uint32_t TAPESERVER_NB_DISK_THREAD_DEFAULT = 10;
  */
 const size_t TAPESERVER_BUFSZ_DEFAULT = 5 * 1024 * 1024;
 
+/**
+ * The compile time timeout value for the potentially DB based calls to the client.
+ * As those can take time on a contended and for bulk communications, we go above 
+ * the default 20 seconds.
+ * This value is not configurable.
+ */
+const int TAPESERVER_DB_TIMEOUT = 60 * 5; // 5 minutes
+
 } // namespace daemon
 } // namespace tapeserver
 } // namespace tape

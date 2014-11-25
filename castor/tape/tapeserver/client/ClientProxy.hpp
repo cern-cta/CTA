@@ -158,11 +158,15 @@ namespace client {
      * A helper function managing a single request-response session with the
      * client.
      * @param req the request to send to the client
+     * @param report Report of the connection and request-reply time
+     * @param timeout (optional) read response timeout (castor wide default if
+     * not set, currently 20 seconds)
      * @return the response from the client
      */
     tapegateway::GatewayMessage * requestResponseSession(
             const tapegateway::GatewayMessage &req,
-            RequestReport & report);
+            RequestReport & report,
+            int timeout = 0);
     
     /** The file transaction id a.k.a. aggregator transaction id. This is the 
      * serial number of the message in the session */
