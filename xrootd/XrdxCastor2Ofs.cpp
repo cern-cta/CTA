@@ -26,6 +26,7 @@
 #include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <uuid/uuid.h>
 #include <grp.h>
 #include <fcntl.h>
 #include "h/Cns_api.h"
@@ -928,7 +929,14 @@ XrdxCastor2OfsFile::ExtractTransferInfo(XrdOucEnv& env_opaque)
     // plugin makes sure we only allow trusted hosts to do transfers - it
     // verifies the signature.
     xcastor_debug("no diskmanager opaque infomation - this is either a d2d "
-                  "transfer or an rtcpd request");
+                  "or a tape transfer");
+
+    // Use a random request id for d2d/tape transfers
+    uuid_t id;
+    uuid_generate(id);
+    char sid[100];
+    uuid_unparse(id, sid);
+    mReqId = sid;
     return SFS_OK;
   }
 

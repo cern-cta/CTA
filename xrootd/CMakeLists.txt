@@ -45,7 +45,7 @@ CastorSetLibraryVersions (xrdxcastor2fs)
 set_property (TARGET xrdxcastor2fs
   APPEND PROPERTY COMPILE_DEFINITIONS _FILE_OFFSET_BITS=64)
 target_link_libraries (xrdxcastor2fs castorclient castorcommon castorns crypto
-  ${XROOTD_XRDOFS_LIB} ${XROOTD_XRDUTILS_LIB})
+  ${XROOTD_XRDOFS_LIB} ${XROOTD_XRDUTILS_LIB} ${UUID_LIB})
 install (TARGETS xrdxcastor2fs DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 ################################################################################
