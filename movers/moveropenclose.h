@@ -41,7 +41,7 @@ extern "C" {
  *                  (tident, physicalPath, transferType, isWriteFlag, transferId)
  *                  where tident has the format: username.clientPid:fd@clientHost
  *                  and transferType is one of tape, user, d2duser, d2dinternal, d2ddraining, d2redbalance
- *                  and transferId is the UUID of the transfer, 0 for non-user transfers
+ *                  and transferId is the UUID of the transfer
  * errorcode        an error code to be passed in case of a failure; it may be filled
                     with a non-zero value when the operation fails
  * errormsg         a pointer to a buffer for the error message if the operation failed
