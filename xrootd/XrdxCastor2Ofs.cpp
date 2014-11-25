@@ -270,10 +270,10 @@ XrdxCastor2Ofs::FSctl(const int cmd,
         if (!mSetTransfers.empty())
         {
           std::set<std::string>::const_iterator iter = mSetTransfers.begin();
-          oss << "(" << *iter << ")";
+          oss << *iter ;
 
           for (++iter; iter != mSetTransfers.end(); ++iter)
-            oss << ", " << "(" << *iter << ")";
+            oss << ", " << *iter;
         }
       }
 
@@ -725,8 +725,13 @@ XrdxCastor2OfsFile::BuildTransferId(const char* tident, XrdOucEnv* env)
    castor_path = env->Get("castor.pfn1");
 
   std::ostringstream oss;
-  oss << tident << "," << castor_path << "," << tx_type << ","
-      << mIsRW << "," << mReqId;
+  oss << "("
+      << "\"" << tident << "\", "
+      << "\"" << castor_path << "\", "
+      << "\"" << tx_type << "\", "
+      << "\"" << mIsRW << "\", "
+      << "\"" << mReqId
+      << ")";
 
   mTransferId = oss.str();
 }
