@@ -62,9 +62,9 @@ def buildXrootURL(self, diskserver, path, transferId, transferType):
       # sign opaque part obtained by concatenating the values
       opaque_token = ''.join([opaque_dict['castor.pfn1'],
                               opaque_dict['castor.pfn2'],
-                              opaque_dict['castor.txtype'],
                               opaque_dict['castor.accessop'],
-                              opaque_dict['castor.exptime']])
+                              opaque_dict['castor.exptime'],
+                              opaque_dict['castor.txtype']])
       signature = signBase64(opaque_token, key)
       opaque = ""
 
