@@ -557,7 +557,7 @@ XrdxCastor2Acc::Decode(const char* opaque, AuthzInfo& authz)
       continue;
     }
 
-    tag = "castor.pfn2=";
+    tag = "castor.pfn1=";
 
     if (token.beginswith(tag.c_str()))
     {
@@ -651,7 +651,7 @@ XrdxCastor2Acc::Decode(const char* opaque, AuthzInfo& authz)
 
     if (token.beginswith(tag.c_str()))
     {
-      authz.manager = (token.c_str() + tag.length());
+      authz.txtype = (token.c_str() + tag.length());
       ntoken++;
       continue;
     }

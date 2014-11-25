@@ -921,17 +921,15 @@ XrdxCastor2OfsFile::ExtractTransferInfo(XrdOucEnv& env_opaque)
 {
   char* val = env_opaque.Get("castor.pfn2");
 
-  if (!val)
+  if (!val || !strlen(val))
   {
     // If no diskmanager contact info is present in the opaque info, it means
-    // that this is an internal d2d or an rtcpd transfer and we don't try to
-    // contact the diskmanager but we allow it to pass through. The authorization
-    // plugin makes sure we only allow trusted hosts to do transfers - it
-    // verifies the signature.
-    xcastor_debug("no diskmanager opaque infomation - this is either a d2d "
-                  "or a tape transfer");
+    // that this is a tape transfer and we don't try to contact the diskmanager
+    // but we allow it to pass through. The authorization plugin makes sure we
+    // only allow trusted hosts to do transfers - it  verifies the signature
+    xcastor_debug("no diskmanager opaque information - this is a tape transfer");
 
-    // Use a random request id for d2d/tape transfers
+    // Use a random request id for tape transfers
     uuid_t id;
     uuid_generate(id);
     char sid[100];
