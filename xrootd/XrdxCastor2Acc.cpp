@@ -541,93 +541,117 @@ XrdxCastor2Acc::Decode(const char* opaque, AuthzInfo& authz)
   // Convert the '&' seperated tokens into '\n' seperated tokens for parsing
   tmp_str.replace("&", "\n");
   XrdOucTokenizer authztokens((char*)tmp_str.c_str());
+  std::string tag;
   XrdOucString token;
 
   while ((stoken = authztokens.GetLine()))
   {
     token = stoken;
+    tag = "castor.sfn=";
 
-    // Check the existance of the castor2fs tokens in the opaque info
-    if (token.beginswith("castor2fs.sfn="))
+    // Check the existance of the "castor." tokens in the opaque info
+    if (token.beginswith(tag.c_str()))
     {
-      authz.sfn = (token.c_str() + 14);
+      authz.sfn = (token.c_str() + tag.length());
       ntoken++;
       continue;
     }
 
-    if (token.beginswith("castor2fs.pfn1="))
+    tag = "castor.pfn2=";
+
+    if (token.beginswith(tag.c_str()))
     {
-      authz.pfn1 = (token.c_str() + 15);
+      authz.pfn1 = (token.c_str() + tag.length());
       ntoken++;
       continue;
     }
 
-    if (token.beginswith("castor2fs.pool="))
+    tag = "castor.pool=";
+
+    if (token.beginswith(tag.c_str()))
     {
-      authz.pool = (token.c_str() + 15);
+      authz.pool = (token.c_str() + tag.length());
       ntoken++;
       continue;
     }
 
-    if (token.beginswith("castor2fs.pfn2="))
+    tag = "castor.pfn2=";
+
+    if (token.beginswith(tag.c_str()))
     {
-      authz.pfn2 = (token.c_str() + 15);
+      authz.pfn2 = (token.c_str() + tag.length());
       ntoken++;
       continue;
     }
 
-    if (token.beginswith("castor2fs.id="))
+    tag = "castor.id=";
+
+    if (token.beginswith(tag.c_str()))
     {
-      authz.id = (token.c_str() + 13);
+      authz.id = (token.c_str() + tag.length());
       ntoken++;
       continue;
     }
 
-    if (token.beginswith("castor2fs.client_sec_uid="))
+    tag = "castor.client_sec_uid=";
+
+    if (token.beginswith(tag.c_str()))
     {
-      authz.uid = (token.c_str() + 25);
+      authz.uid = (token.c_str() + tag.length());
       ntoken++;
       continue;
     }
 
-    if (token.beginswith("castor2fs.client_sec_gid="))
+    tag = "castor.client_sec_gid=";
+
+    if (token.beginswith(tag.c_str()))
     {
-      authz.gid = (token.c_str() + 25);
+      authz.gid = (token.c_str() + tag.length());
       ntoken++;
       continue;
     }
 
-    if (token.beginswith("castor2fs.accessop="))
+    tag = "castor.accessop=";
+
+    if (token.beginswith(tag.c_str()))
     {
-      authz.accessop = atoi(token.c_str() + 19);
+      authz.accessop = atoi(token.c_str() + tag.length());
       ntoken++;
       continue;
     }
 
-    if (token.beginswith("castor2fs.exptime="))
+    tag = "castor.exptime=";
+
+    if (token.beginswith(tag.c_str()))
     {
-      authz.exptime = (time_t) strtol(token.c_str() + 18, 0, 10);
+      authz.exptime = (time_t) strtol(token.c_str() + tag.length(), 0, 10);
       ntoken++;
       continue;
     }
 
-    if (token.beginswith("castor2fs.signature="))
+    tag = "castor.signature=";
+
+    if (token.beginswith(tag.c_str()))
     {
-      authz.signature = (token.c_str() + 20);
+      authz.signature = (token.c_str() + tag.length());
       ntoken++;
       continue;
     }
 
-    if (token.beginswith("castor2fs.manager="))
+    tag = "castor.manager=";
+
+    if (token.beginswith(tag.c_str()))
     {
-      authz.manager = (token.c_str() + 18);
+      authz.manager = (token.c_str() + tag.length());
       ntoken++;
       continue;
     }
 
-    if (token.beginswith("castor.txtype="))
+    tag = "castor.txtype=";
+
+    if (token.beginswith(tag.c_str()))
     {
-      authz.manager = (token.c_str() + 14);
+      authz.manager = (token.c_str() + tag.length());
       ntoken++;
       continue;
     }
@@ -670,19 +694,19 @@ XrdxCastor2Acc::GetOpaqueAcc(AuthzInfo& authz, bool doSign)
 
   // Build the opaque information appended to the URL
   std::ostringstream sstr;
-  if (authz.sfn.size() > 0) sstr << "castor2fs.sfn=" << authz.sfn  << "&";
-  if (authz.pfn1.size() > 0) sstr << "castor2fs.pfn1=" << authz.pfn1 << "&";
-  if (authz.pool.size() > 0) sstr << "castor2fs.pool=" << authz.pool << "&";
-  if (authz.pfn2.size() > 0) sstr << "castor2fs.pfn2=" << authz.pfn2 << "&";
-  if (authz.id.size() > 0) sstr << "castor2fs.id=" << authz.id << "&";
+  if (authz.sfn.size() > 0) sstr << "castor.sfn=" << authz.sfn  << "&";
+  if (authz.pfn1.size() > 0) sstr << "castor.pfn1=" << authz.pfn1 << "&";
+  if (authz.pool.size() > 0) sstr << "castor.pool=" << authz.pool << "&";
+  if (authz.pfn2.size() > 0) sstr << "castor.pfn2=" << authz.pfn2 << "&";
+  if (authz.id.size() > 0) sstr << "castor.id=" << authz.id << "&";
   if (authz.uid.size() > 0)
-    sstr << "castor2fs.client_sec_uid=" << authz.uid << "&";
+    sstr << "castor.client_sec_uid=" << authz.uid << "&";
   if (authz.gid.size() > 0)
-    sstr << "castor2fs.client_sec_gid=" << authz.gid << "&";
-  sstr << "castor2fs.accessop=" << authz.accessop << "&"
-       << "castor2fs.exptime=" << (int)authz.exptime << "&"
-       << "castor2fs.signature=" << authz.signature << "&";
-  if (authz.manager.size() > 0) sstr << "castor2fs.manager=" << authz.manager << "&";
+    sstr << "castor.client_sec_gid=" << authz.gid << "&";
+  sstr << "castor.accessop=" << authz.accessop << "&"
+       << "castor.exptime=" << (int)authz.exptime << "&"
+       << "castor.signature=" << authz.signature << "&";
+  if (authz.manager.size() > 0) sstr << "castor.manager=" << authz.manager << "&";
   if (authz.txtype.size() > 0) sstr << "castor.txtype=" << authz.txtype << "&";
   xcastor_debug("opaque_acc=%s", sstr.str().c_str());
   return sstr.str();

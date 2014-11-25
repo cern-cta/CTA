@@ -90,7 +90,7 @@ XrdxCastor2FsFile::open(const char*         path,
     info_str.erase(qpos);
 
   // If the clients send old redirection info, we have to erase it
-  if ((qpos = info_str.find("castor2fs.sfn=")))
+  if ((qpos = info_str.find("castor.sfn=")))
     info_str.erase(qpos);
 
   info = (ininfo ? info_str.c_str() : 0);

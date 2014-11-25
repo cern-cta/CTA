@@ -397,10 +397,10 @@ XrdxCastor2OfsFile::open(const char*         path,
   int firstpos = 0;
   int lastpos = 0;
   int newpos = 0;
-  firstpos = newopaque.find("castor2fs.sfn", 0);
+  firstpos = newopaque.find("castor.sfn", 0);
   lastpos = firstpos + 1;
 
-  while ((newpos = newopaque.find("castor2fs.sfn", lastpos)) != STR_NPOS)
+  while ((newpos = newopaque.find("castor.sfn", lastpos)) != STR_NPOS)
     lastpos = newpos + 1;
 
   // Erase from the beginning to the last token start
@@ -421,8 +421,8 @@ XrdxCastor2OfsFile::open(const char*         path,
 
   // Set the open flags and type of operation rd_only/rdwr
   mEnvOpaque = new XrdOucEnv(newopaque.c_str());
-  newpath = (mEnvOpaque->Get("castor2fs.pfn1") ?
-             mEnvOpaque->Get("castor2fs.pfn1") : "");
+  newpath = (mEnvOpaque->Get("castor.pfn1") ?
+             mEnvOpaque->Get("castor.pfn1") : "");
   open_mode |= SFS_O_MKPTH;
   create_mode |= SFS_O_MKPTH;
 
@@ -468,8 +468,8 @@ XrdxCastor2OfsFile::open(const char*         path,
     // Deal with ceph pool if any
     XrdOucString poolAndPath = newpath;
 
-    if (mEnvOpaque->Get("castor2fs.pool"))
-      poolAndPath = mEnvOpaque->Get("castor2fs.pool") + '/' + newpath;
+    if (mEnvOpaque->Get("castor.pool"))
+      poolAndPath = mEnvOpaque->Get("castor.pool") + '/' + newpath;
 
     // Get existing checksum - we don't check errors here
     nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.type",
@@ -583,7 +583,7 @@ XrdxCastor2OfsFile::close()
   char ckSumbuf[32 + 1];
   sprintf(ckSumbuf, "%x", mAdlerXs);
   char* ckSumalg = "ADLER32";
-  std::string newpath = mEnvOpaque->Get("castor2fs.pfn1");
+  std::string newpath = mEnvOpaque->Get("castor.pfn1");
 
   if (mHasWrite)
   {
@@ -608,7 +608,7 @@ XrdxCastor2OfsFile::close()
 
     // Deal with ceph pool if any
     std::string poolAndPath = newpath;
-    char* pool = mEnvOpaque->Get("castor2fs.pool");
+    char* pool = mEnvOpaque->Get("castor.pool");
 
     if (pool)
     {
@@ -721,8 +721,8 @@ XrdxCastor2OfsFile::BuildTransferId(const char* tident, XrdOucEnv* env)
   if (env && env->Get("castor.txtype"))
     tx_type = env->Get("castor.txtype");
 
- if (env && env->Get("castor2fs.pfn1"))
-   castor_path = env->Get("castor2fs.pfn1");
+ if (env && env->Get("castor.pfn1"))
+   castor_path = env->Get("castor.pfn1");
 
   std::ostringstream oss;
   oss << tident << "," << castor_path << "," << tx_type << ","
@@ -791,7 +791,7 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
     // This is a source TPC file and we just received the second open reuqest
     // from the initiator. We save the mapping between the tpc.key and the
     // castor pfn for future open requests from the destination of the TPC transfer.
-    std::string castor_pfn = mEnvOpaque->Get("castor2fs.pfn1");
+    std::string castor_pfn = mEnvOpaque->Get("castor.pfn1");
     std::string tpc_org = client->tident;
     tpc_org.erase(tpc_org.find(":"));
     tpc_org += "@";
@@ -919,7 +919,7 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
 int
 XrdxCastor2OfsFile::ExtractTransferInfo(XrdOucEnv& env_opaque)
 {
-  char* val = env_opaque.Get("castor2fs.pfn2");
+  char* val = env_opaque.Get("castor.pfn2");
 
   if (!val)
   {

@@ -167,7 +167,7 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   //----------------------------------------------------------------------------
   //! Build the autorization token used for signing. The token is made up of all
   //! the values of the parameters passed in the opaque information except of
-  //! course the castor2fs.signature one.
+  //! course the castor.signature one.
   //!
   //! @param authz AuthzInfo used to build the token
   //!
