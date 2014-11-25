@@ -140,7 +140,7 @@ ELSE(DEFINED PackageOnly)
     set (CMAKE_SHARED_LINKER_FLAGS
       "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
   else (APPLE)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wl,--defsym,CastorVersion_v${CASTOR_VERSION}.${CASTOR_RELEASE}=0")
   endif (APPLE)
   
   #set (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
