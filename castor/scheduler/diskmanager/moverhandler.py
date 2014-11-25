@@ -75,18 +75,18 @@ class MoverReqHandlerThread(threading.Thread):
       try:
         # yes, look it up for this transferid
         t = self.runningTransfers.get(transferid)
-        if errCode != 0:
-          # this is a user transfer that has to be failed as we got an error from xroot
-          self.runningTransfers.remove(t)
-          self.runningTransfers.failTransfer(t.scheduler, t.transfer, errCode, 'Error while opening the file')
-        else:
-          # Anything not None is OK here, see runningtransferset.py
-          self.runningTransfers.setProcess(transferid, 0)
       except KeyError:
         # transfer not found: assume it already timed out, raise error
         # "Transfer slot timed out" message
         dlf.writenotice(msgs.TRANSFERTIMEDOUT, subreqId=transferid)
         raise
+      if errCode != 0:
+        # this is a user transfer that has to be failed as we got an error from xroot
+        self.runningTransfers.remove(t)
+        self.runningTransfers.failTransfer(t.scheduler, t.transfer, errCode, 'Error while opening the file')
+      else:
+        # Anything not None is OK here, see runningtransferset.py
+        self.runningTransfers.setProcess(transferid, 0)
     elif transferType == 'tape':
       # this is a tape transfer: take note
       clientHost = tident.split('@')[1]   # this is the host part
@@ -99,10 +99,8 @@ class MoverReqHandlerThread(threading.Thread):
                                time.time(), clientHost, fileid, mountPoint)
       self.runningTransfers.addTapeTransfer(tTransfer)
     else:
-      # any other transfer is unknown - this should not happen
-      #raise ValueError
-      # for now we keep an entry XXX to be dropped once all code is validated
-      self.runningTransfers.add(RunningTransfer('unknown', 0, time.time(), None, physicalPath))
+      # any other transfer is unknown, this should never happen
+      raise ValueError
     return '0\n'
 
   def handleClose(self, payload):
