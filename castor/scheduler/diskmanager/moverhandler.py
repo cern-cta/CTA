@@ -25,7 +25,7 @@
 
 """mover handler thread of the disk server manager daemon of CASTOR."""
 
-import threading, socket, time, Queue, os
+import threading, socket, time, Queue, os, ast
 import connectionpool, dlf
 from diskmanagerdlf import msgs
 from transfer import TapeTransfer, TapeTransferType, RunningTransfer
@@ -69,7 +69,7 @@ class MoverReqHandlerThread(threading.Thread):
     '''
     # parse payload, throw IndexError or TypeError on malformed input
     errCode = int(payload.split()[0])
-    tident, physicalPath, transferType, isWriteFlag, transferid = eval(' '.join(payload.split()[1:]))
+    tident, physicalPath, transferType, isWriteFlag, transferid = ast.literal_eval(' '.join(payload.split()[1:]))
     # is the transfer coming from the user or from a disk-to-disk copy?
     if transferType == 'user' or transferType[0:3] == 'd2d':
       try:
