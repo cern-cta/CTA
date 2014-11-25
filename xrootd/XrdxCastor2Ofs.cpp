@@ -730,7 +730,7 @@ XrdxCastor2OfsFile::BuildTransferId(const char* tident, XrdOucEnv* env)
       << "\"" << castor_path << "\", "
       << "\"" << tx_type << "\", "
       << "\"" << mIsRW << "\", "
-      << "\"" << mReqId
+      << "\"" << mReqId << "\""
       << ")";
 
   mTransferId = oss.str();
