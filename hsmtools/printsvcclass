@@ -60,8 +60,8 @@ try:
     stcur = stconn.cursor()
     sqlstatement = '''
     SELECT SvcClass.name, SvcClass.defaultfilesize, SvcClass.failjobswhennospace, SvcClass.gcPolicy,
-           SvcClass.maxReplicaNb, FileClass.name, SvcClass.replicateonclose,
-           SvcClass.disk1behavior, SvcClass.id, Pools.names, SvcClass.lastEditor, SvcClass.lastEditionTime
+           SvcClass.replicaNb, FileClass.name, SvcClass.disk1behavior, SvcClass.id,
+           Pools.names, SvcClass.lastEditor, SvcClass.lastEditionTime
       FROM SvcClass, FileClass,
            (SELECT svcClassId, cast(collect(poolName) AS strListTable) AS names
               FROM (SELECT DiskPool2SvcClass.child svcClassId, DiskPool.name poolName
@@ -85,21 +85,20 @@ try:
         unknownSvcClasses = svcClasses - existingSvcClasses
     # loop over svcclasses and print them
     if existingSvcClasses:
-        titles = ('NAME', 'DEFAULTFILESIZE', 'FAILJOBSWHENNOSPACE', 'MAXREPLICANB',
-                  'FORCEDFILECLASS', 'REPLICATEONCLOSE', 'DISK1BEHAVIOR', 'GCPOLICY',
+        titles = ('NAME', 'DEFAULTFILESIZE', 'FAILJOBSWHENNOSPACE', 'REPLICANB',
+                  'FORCEDFILECLASS', 'DISK1BEHAVIOR', 'GCPOLICY',
                   'POOLS', 'ID', 'LASTEDITOR', 'LASTEDITION')
         data = []
-        for name, defaultfilesize, failjobswhennospace, gcPolicy, maxReplicaNb, \
-                forcedFileClass, replicateonclose, disk1behavior, scId, pools, \
-                lastEditor, lastEdition in rows:
+        for name, defaultfilesize, failjobswhennospace, gcPolicy, replicaNb, \
+                forcedFileClass, disk1behavior, scId, pools, lastEditor, lastEdition in rows:
             if pools:
                 data.append((name, castor_tools.nbToDataAmount(defaultfilesize), bool(failjobswhennospace),
-                             maxReplicaNb, forcedFileClass or '-', bool(replicateonclose),
+                             replicaNb, forcedFileClass or '-',
                              bool(disk1behavior), gcPolicy, ','.join(pools),
                              scId, lastEditor, castor_tools.secsToDate(lastEdition)))
             else:
                 data.append((name, castor_tools.nbToDataAmount(defaultfilesize), bool(failjobswhennospace),
-                             maxReplicaNb, forcedFileClass or '-', bool(replicateonclose),
+                             replicaNb, forcedFileClass or '-',
                              bool(disk1behavior), gcPolicy, '-',
                              scId, lastEditor, castor_tools.secsToDate(lastEdition)))
 

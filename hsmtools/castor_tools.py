@@ -298,7 +298,6 @@ def connectToNS():
 areBooleans = ["aborted",
                "emptyfile",
                "disk1behavior",
-               "replicateonclose",
                "failJobsWhenNoSpace",
                "recursive",
                "created",

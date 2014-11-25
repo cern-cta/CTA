@@ -245,7 +245,7 @@ END;
 /
 
 
-/* This procedure is used to check if the maxReplicaNb has been exceeded
+/* This procedure is used to check if the replicaNb has been exceeded
  * for some CastorFiles. It checks all the files listed in TooManyReplicasHelper
  * This is called from a DB job and is fed by the tr_DiskCopy_Created trigger
  * on creation of new diskcopies
@@ -253,7 +253,7 @@ END;
 CREATE OR REPLACE PROCEDURE checkNbReplicas AS
   varSvcClassId INTEGER;
   varCfId INTEGER;
-  varMaxReplicaNb NUMBER;
+  varReplicaNb NUMBER;
   varNbFiles NUMBER;
   varDidSth BOOLEAN;
 BEGIN
@@ -271,7 +271,7 @@ BEGIN
     SELECT id INTO varCfId FROM CastorFile
      WHERE id = varCfId FOR UPDATE;
     -- Get the max replica number of the service class
-    SELECT maxReplicaNb INTO varMaxReplicaNb
+    SELECT replicaNb INTO varReplicaNb
       FROM SvcClass WHERE id = varSvcClassId;
     -- Produce a list of diskcopies to invalidate should too many replicas be online.
     varDidSth := False;
@@ -302,7 +302,7 @@ BEGIN
                        AND DiskCopy.status = dconst.DISKCOPY_VALID)
                    -- Select non-PRODUCTION hardware first
                    ORDER BY decode(fsStatus, 0, decode(dsStatus, 0, 0, 1), 1) ASC, gcWeight DESC))
-               WHERE ind > varMaxReplicaNb)
+               WHERE ind > varReplicaNb)
     LOOP
       -- Sanity check, make sure that the last copy is never dropped!
       SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ count(*) INTO varNbFiles
@@ -1725,59 +1725,57 @@ END;
 /
 
 /* PL/SQL method implementing replicateOnClose */
-CREATE OR REPLACE PROCEDURE replicateOnClose(cfId IN NUMBER, ouid IN INTEGER, ogid IN INTEGER) AS
+CREATE OR REPLACE PROCEDURE replicateOnClose(inCfId IN INTEGER,
+                                             inUid IN INTEGER,
+                                             inGid IN INTEGER,
+                                             inSvcClassId IN INTEGER) AS
   varNsOpenTime NUMBER;
-  srcSvcClassId NUMBER;
-  ignoreSvcClass NUMBER;
+  varNbCopies INTEGER;
+  varExpectedNbCopies INTEGER;
 BEGIN
   -- Lock the castorfile and take the nsOpenTime
-  SELECT nsOpenTime INTO varNsOpenTime FROM CastorFile WHERE id = cfId FOR UPDATE;
-  -- Loop over all service classes where replication is required
-  FOR a IN (SELECT SvcClass.id FROM (
-              -- Determine the number of copies of the file in all service classes
-              SELECT * FROM (
-                SELECT child, sum(available) AS available FROM (
-                  SELECT  /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
-                         DiskPool2SvcClass.child, 1 available
-                    FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
-                   WHERE DiskCopy.filesystem = FileSystem.id
-                     AND DiskCopy.castorfile = cfId
-                     AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                     AND DiskCopy.status = dconst.DISKCOPY_VALID
-                     AND FileSystem.status IN
-                         (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
-                     AND DiskServer.id = FileSystem.diskserver
-                     AND DiskServer.status IN
-                         (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
-                   UNION ALL
-                  SELECT  /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
-                         DataPool2SvcClass.child, 1 available
-                    FROM DiskCopy, DataPool2SvcClass
-                   WHERE DiskCopy.castorfile = cfId
-                     AND DiskCopy.status = dconst.DISKCOPY_VALID
-                     AND DiskCopy.dataPool = DataPool2SvcClass.parent
-                     AND EXISTS (SELECT 1 FROM DiskServer
-                                  WHERE DiskServer.dataPool = DiskCopy.dataPool
-                                    AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
-                                                              dconst.DISKSERVER_DRAINING,
-                                                              dconst.DISKSERVER_READONLY)))
-                 GROUP by child)) results, SvcClass
-             -- Join the results with the service class table and determine if
-             -- additional copies need to be created
-             WHERE results.child = SvcClass.id
-               AND SvcClass.replicateOnClose = 1
-               AND results.available < SvcClass.maxReplicaNb)
-  LOOP
+  SELECT nsOpenTime INTO varNsOpenTime FROM CastorFile WHERE id = inCfId FOR UPDATE;
+  -- Determine the number of copies of the file in the given service class
+  SELECT count(*) INTO varNbCopies FROM (
+    SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ 1
+      FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+     WHERE DiskCopy.castorfile = inCfId
+       AND FileSystem.id = DiskCopy.filesystem
+       AND DiskServer.id = FileSystem.diskserver
+       AND DiskPool2SvcClass.parent = FileSystem.diskpool
+       AND DiskPool2SvcClass.child = inSvcClassId
+       AND DiskCopy.status = dconst.DISKCOPY_VALID
+       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION,
+                                 dconst.FILESYSTEM_DRAINING,
+                                 dconst.FILESYSTEM_READONLY)
+       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                 dconst.DISKSERVER_DRAINING,
+                                 dconst.DISKSERVER_READONLY)
+     UNION ALL
+    SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ 1
+      FROM DiskCopy, DataPool2SvcClass
+     WHERE DiskCopy.castorfile = inCfId
+       AND DiskCopy.status = dconst.DISKCOPY_VALID
+       AND DataPool2SvcClass.parent = DiskCopy.dataPool
+       AND DataPool2SvcClass.child = inSvcClassId
+       AND EXISTS (SELECT 1 FROM DiskServer
+                    WHERE DiskServer.dataPool = DiskCopy.dataPool
+                      AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                                dconst.DISKSERVER_DRAINING,
+                                                dconst.DISKSERVER_READONLY)));
+  -- Determine expected number of copies
+  SELECT replicaNb INTO varExpectedNbCopies FROM SvcClass WHERE id = inSvcClassId;
+  -- Trigger additional copies if needed
+  FOR varI IN (varNbCopies+1)..varExpectedNbCopies LOOP
     BEGIN
       -- Trigger a replication request.
-      createDisk2DiskCopyJob(cfId, varNsOpenTime, a.id, ouid, ogid, dconst.REPLICATIONTYPE_USER, NULL, FALSE, NULL, TRUE);
+      createDisk2DiskCopyJob(inCfId, varNsOpenTime, inSvcClassId, inUid, inGid, dconst.REPLICATIONTYPE_USER, NULL, FALSE, NULL, TRUE);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- No copies to replicate from
     END;
   END LOOP;
 END;
 /
-
 
 /*** initMigration ***/
 CREATE OR REPLACE PROCEDURE initMigration
@@ -1865,7 +1863,7 @@ BEGIN
     END;
   END IF;
   -- Trigger the creation of additional copies of the file, if necessary.
-  replicateOnClose(cfId, ouid, ogid);
+  replicateOnClose(cfId, ouid, ogid, svcClassId);
 END;
 /
 
@@ -2890,6 +2888,58 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE PROCEDURE handleReplication(inFileId IN INTEGER,
+                                              inNsHost IN VARCHAR2,
+                                              inCfId IN INTEGER,
+                                              inNsOpenTime IN INTEGER,
+                                              inSvcClassId IN INTEGER,
+                                              inEuid IN INTEGER,
+                                              inEGID IN INTEGER) AS
+  varNbDSs INTEGER;
+BEGIN
+  -- Check that we have a diskserver where to replicate
+  SELECT COUNT(*) INTO varNbDSs FROM (
+    SELECT 1
+      FROM DiskServer, FileSystem, DiskPool2SvcClass
+     WHERE FileSystem.diskServer = DiskServer.id
+       AND FileSystem.diskPool = DiskPool2SvcClass.parent
+       AND DiskPool2SvcClass.child = inSvcClassId
+       AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+       AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+       AND DiskServer.hwOnline = 1
+       AND DiskServer.id NOT IN (
+         SELECT /*+ INDEX(DiskCopy I_DiskCopy_CastorFile) */ DISTINCT(DiskServer.id)
+           FROM DiskCopy, FileSystem, DiskServer
+          WHERE DiskCopy.castorfile = inCfId
+            AND DiskCopy.fileSystem = FileSystem.id
+            AND FileSystem.diskserver = DiskServer.id
+            AND DiskCopy.status = dconst.DISKCOPY_VALID)
+     UNION ALL
+    SELECT 1
+      FROM DiskServer, DataPool2SvcClass
+     WHERE DiskServer.dataPool = DataPool2SvcClass.parent
+       AND DataPool2SvcClass.child = inSvcClassId
+       AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+       AND DiskServer.hwOnline = 1);
+  IF varNbDSs > 0 THEN
+    BEGIN
+      -- yes, we can replicate, create a replication request without waiting on it.
+      createDisk2DiskCopyJob(inCfId, inNsOpenTime, inSvcClassId, inEuid, inEgid,
+                             dconst.REPLICATIONTYPE_INTERNAL, NULL, FALSE, NULL, FALSE);
+      -- log it
+      logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GET_REPLICATION, inFileId, inNsHost, 'stagerd',
+               'svcClassId=' || getSvcClassName(inSvcClassId) ||
+               ' euid=' || TO_CHAR(inEuid) || ' egid=' || TO_CHAR(inEgid));
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      logToDLF(NULL, dlf.LVL_WARNING, dlf.STAGER_GET_REPLICATION_FAIL, inFileId, inNsHost, 'stagerd',
+               'svcClassId=' || getSvcClassName(inSvcClassId) ||
+               ' euid=' || TO_CHAR(inEuid) || ' egid=' || TO_CHAR(inEgid));
+    END;
+  END IF;
+END;
+/
+
+
 /* PL/SQL method to either force GC of the given diskCopies or delete them when the physical files behind have been lost */
 CREATE OR REPLACE PROCEDURE internalDeleteDiskCopies(inForce IN BOOLEAN,
                                                      inDryRun IN BOOLEAN,
@@ -2901,6 +2951,10 @@ CREATE OR REPLACE PROCEDURE internalDeleteDiskCopies(inForce IN BOOLEAN,
   varStatus INTEGER;
   varLogParams VARCHAR2(2048);
   varFileSize INTEGER;
+  varNsOpenTime NUMBER;
+  varSvcClassId INTEGER;
+  varEuid INTEGER;
+  varEgid INTEGER;
 BEGIN
   -- gather all remote Nameserver statuses. This could not be
   -- incorporated in the INSERT query, because Oracle would give:
@@ -2927,17 +2981,37 @@ BEGIN
   -- when handling large numbers of files (e.g. an entire mount point).
   COMMIT;
   FOR dc IN (SELECT dcId, fileId, fStatus FROM DeleteDiskCopyHelper) LOOP
+    DECLARE
+      varDCFileSystem INTEGER;
+      varDCPool INTEGER;
     BEGIN
       -- get data and lock
-      SELECT castorFile, status, diskCopySize INTO varCfId, varStatus, varFileSize
+      SELECT castorFile, status, diskCopySize, owneruid, ownergid, fileSystem, dataPool
+        INTO varCfId, varStatus, varFileSize, varEuid, varEgid, varDCFileSystem, varDCPool
         FROM DiskCopy
        WHERE DiskCopy.id = dc.dcId;
-      SELECT nsHost, lastKnownFileName INTO varNsHost, varFileName
+      SELECT nsHost, lastKnownFileName, lastUpdateTime INTO varNsHost, varFileName, varNsOpenTime
         FROM CastorFile
        WHERE id = varCfId
          FOR UPDATE;
+      -- get a service class where to put the new copy. Note that we have to choose
+      -- potentially among several and we take randomly the first one. This may cause
+      -- the creation of a new copy of the file in a different place from the lost
+      -- copy, maybe also visible from different service classes in tricky cases.
+      -- However, the essential will be preserved : a second copy will be rebuilt
+      SELECT child INTO varSvcClassId
+        FROM (SELECT DiskPool2SvcClass.child
+                FROM FileSystem, DiskPool2SvcClass
+               WHERE FileSystem.id = varDCFileSystem
+                 AND DiskPool2SvcClass.parent = FileSystem.diskPool
+               UNION ALL
+               SELECT DataPool2SvcClass.child
+                 FROM DataPool2SvcClass
+                WHERE DataPool2SvcClass.parent = varDCPool)
+       WHERE ROWNUM < 2;
       varLogParams := 'FileName="'|| varFileName ||'"" fileSize='|| varFileSize
-        ||' dcId='|| dc.dcId ||' status='|| getObjStatusName('DiskCopy', 'status', varStatus);
+        ||' dcId='|| dc.dcId ||' svcClass=' || varSvcClassId || ', status='
+        || getObjStatusName('DiskCopy', 'status', varStatus);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- diskcopy not found in stager
       UPDATE DeleteDiskCopyHelper
@@ -3006,6 +3080,7 @@ BEGIN
         IF NOT inDryRun THEN
           logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_REPLICATION,
                    dc.fileId, varNsHost, 'stagerd', varLogParams);
+          handleReplication(dc.fileId, varNsHost, varCfId, varNsOpenTime, varSvcClassId, varEuid, varEgid);
         END IF;
       END IF;
     ELSE
@@ -3029,6 +3104,9 @@ BEGIN
           -- do not forget to cancel pending migrations in case we've lost that last DiskCopy
           IF varNbRemaining = 0 THEN
             deleteMigrationJobs(varCfId);
+          ELSE
+            -- try to recreate lost copy if possible
+            handleReplication(dc.fileId, varNsHost, varCfId, varNsOpenTime, varSvcClassId, varEuid, varEgid);
           END IF;
           logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_GC, dc.fileId, varNsHost, 'stagerd', varLogParams);
         END IF;
@@ -3109,99 +3187,6 @@ BEGIN
   END LOOP;
   -- now call the internal method doing the real job
   internalDeleteDiskCopies(inForce, inDryRun, outRes);
-END;
-/
-
-/* PL/SQL procedure to handle disk-to-disk copy replication */
-CREATE OR REPLACE PROCEDURE handleReplication(inSRId IN INTEGER, inFileId IN INTEGER,
-                                              inNsHost IN VARCHAR2, inCfId IN INTEGER,
-                                              inNsOpenTime IN INTEGER, inSvcClassId IN INTEGER,
-                                              inEuid IN INTEGER, inEGID IN INTEGER,
-                                              inReqUUID IN VARCHAR2, inSrUUID IN VARCHAR2) AS
-  varUnused INTEGER;
-BEGIN
-  -- check whether there's already an ongoing replication
-  SELECT id INTO varUnused
-    FROM Disk2DiskCopyJob
-   WHERE castorfile = inCfId
-     AND ROWNUM < 2;
-  -- there is an ongoing replication, so just let it go and do nothing more
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- no ongoing replication, let's see whether we need to trigger one
-  -- that is compare total current # of diskcopies, regardless hardware availability, against maxReplicaNb
-  DECLARE
-    varNbDCs INTEGER;
-    varMaxDCs INTEGER;
-    varNbDss INTEGER;
-    varDPinvolved INTEGER;
-  BEGIN
-    SELECT COUNT(*), max(maxReplicaNb), sum(isDataPool)
-      INTO varNbDCs, varMaxDCs, varDPinvolved FROM (
-      SELECT /*+ LEADING(DiskCopy FileSystem DiskPool2SvcClass SvcClass)
-                 USE_NL(DiskCopy FileSystem DiskPool2SvcClass SvcClass) */
-             DiskCopy.id, SvcClass.maxReplicaNb, 0 AS isDataPool
-        FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass
-       WHERE DiskCopy.castorfile = inCfId
-         AND DiskCopy.fileSystem = FileSystem.id
-         AND FileSystem.diskpool = DiskPool2SvcClass.parent
-         AND DiskPool2SvcClass.child = SvcClass.id
-         AND SvcClass.id = inSvcClassId
-         AND DiskCopy.status = dconst.DISKCOPY_VALID
-       UNION ALL
-      SELECT /*+ LEADING(DiskCopy DataPool2SvcClass SvcClass)
-                 USE_NL(DiskCopy DataPool2SvcClass SvcClass) */
-             DiskCopy.id, SvcClass.maxReplicaNb, 1 AS isDatapool
-        FROM DiskCopy, DataPool2SvcClass, SvcClass
-       WHERE DiskCopy.castorfile = inCfId
-         AND DiskCopy.dataPool = DataPool2SvcClass.parent
-         AND DataPool2SvcClass.child = SvcClass.id
-         AND SvcClass.id = inSvcClassId
-         AND DiskCopy.status = dconst.DISKCOPY_VALID);
-    IF varNbDCs < varMaxDCs OR varMaxDCs = 0 THEN
-      -- we have to replicate. But in case we have only filesystem based DiskPool,
-      -- we should only do it if we have enough available diskservers
-      -- In case of datapools, we only need one DiskServer available
-      IF varDPinvolved = 0 THEN
-        SELECT COUNT(DISTINCT(DiskServer.name)) INTO varNbDSs
-          FROM DiskServer, FileSystem, DiskPool2SvcClass
-         WHERE FileSystem.diskServer = DiskServer.id
-           AND FileSystem.diskPool = DiskPool2SvcClass.parent
-           AND DiskPool2SvcClass.child = inSvcClassId
-           AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
-           AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
-           AND DiskServer.hwOnline = 1
-           AND DiskServer.id NOT IN (
-             SELECT /*+ INDEX(DiskCopy I_DiskCopy_CastorFile) */ DISTINCT(DiskServer.id)
-               FROM DiskCopy, FileSystem, DiskServer
-              WHERE DiskCopy.castorfile = inCfId
-                AND DiskCopy.fileSystem = FileSystem.id
-                AND FileSystem.diskserver = DiskServer.id
-                AND DiskCopy.status = dconst.DISKCOPY_VALID);
-      ELSE
-        SELECT COUNT(DISTINCT(DiskServer.name)) INTO varNbDSs
-          FROM DiskServer, DataPool2SvcClass
-         WHERE DiskServer.dataPool = DataPool2SvcClass.parent
-           AND DataPool2SvcClass.child = inSvcClassId
-           AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
-           AND DiskServer.hwOnline = 1;
-      END IF;
-      IF varNbDSs > 0 THEN
-        BEGIN
-          -- yes, we can replicate, create a replication request without waiting on it.
-          createDisk2DiskCopyJob(inCfId, inNsOpenTime, inSvcClassId, inEuid, inEgid,
-                                 dconst.REPLICATIONTYPE_INTERNAL, NULL, FALSE, NULL, FALSE);
-          -- log it
-          logToDLF(inReqUUID, dlf.LVL_SYSTEM, dlf.STAGER_GET_REPLICATION, inFileId, inNsHost, 'stagerd',
-                   'SUBREQID=' || inSrUUID || ' svcClassId=' || getSvcClassName(inSvcClassId) ||
-                   ' euid=' || TO_CHAR(inEuid) || ' egid=' || TO_CHAR(inEgid));
-        EXCEPTION WHEN NO_DATA_FOUND THEN
-          logToDLF(inReqUUID, dlf.LVL_WARNING, dlf.STAGER_GET_REPLICATION_FAIL, inFileId, inNsHost, 'stagerd',
-                   'SUBREQID=' || inSrUUID || ' svcClassId=' || getSvcClassName(inSvcClassId) ||
-                   ' euid=' || TO_CHAR(inEuid) || ' egid=' || TO_CHAR(inEgid));
-        END;
-      END IF;
-    END IF;
-  END;
 END;
 /
 
@@ -3657,11 +3642,6 @@ BEGIN
                             AND DiskServer.hwOnline = 1));
   -- first handle the case where we found diskcopies
   IF varNbDCs > 0 THEN
-    -- We may still need to replicate the file (replication on demand)
-    IF varDcStatus != dconst.DISKCOPY_STAGEOUT THEN
-      handleReplication(inSRId, inFileId, inNsHost, inCfId, varNsOpenTime, varSvcClassId,
-                        varEuid, varEgid, varReqUUID, varSrUUID);
-    END IF;
     DECLARE
       varDcList VARCHAR2(2048);
     BEGIN
@@ -3845,9 +3825,6 @@ BEGIN
               'SUBREQID=' || varSrUUID);
       -- update SubRequest
       archiveSubReq(inSrId, dconst.SUBREQUEST_FINISHED);
-      -- last thing, check whether we should recreate missing copies
-      handleReplication(inSrId, inFileId, inNsHost, inCfId, varNsOpenTime, varSvcClassId,
-                        varEuid, varEgid, varReqUUID, varSrUUID);
       -- all went fine, we should answer to client
       RETURN 1;
     END IF;

@@ -11,8 +11,8 @@ entersvcclass \- define a new service class in the stager catalog
 <defaultFileSize>
 ]
 [
-.BI --maxreplicanb 
-<maxReplicaNb>
+.BI --replicanb 
+<replicaNb>
 ]
 [
 .BI --failjobswhennospace 
@@ -25,10 +25,6 @@ entersvcclass \- define a new service class in the stager catalog
 [
 .BI --forcedfileclass 
 <forcedFileClass>
-]
-[
-.BI --replicateonclose 
-<bool>
 ]
 .BI --gcpolicy 
 <gcPolicyName>
@@ -51,9 +47,8 @@ Default is 2 GiB if not specified.
 The value can be given using the standard K/M/G/T extensions, with or without B (i.e. both KB and K are accepted).
 These have the ISO meaning of powers of 10. Ki/Mi/Gi/Ti[B] extensions are also accepted and deal with powers of 2.
 .TP
-.BI \-\-maxreplicanb\ <maxReplicaNb>
-Specifies the maximum number of disk resident replicas for a given CASTOR file
-in this service class.
+.BI \-\-replicanb\ <replicaNb>
+Specifies the number of disk resident replicas for a given CASTOR file in this service class.
 Default is 1 if not specified.
 .TP
 .BI \-\-failjobswhennospace\ <boolean\ value>
@@ -73,15 +68,6 @@ The forced file class overrides the file class that the user specifies. This par
 specifying for this service class any TapeN retention policy, where N is the number of
 tape copies of the forced file class.
 When not provided, the user specified file class is not overwritten.
-.TP
-.BI \-\-replicateonclose\ <boolean\ value>
-Enables or disables replication on close is enabled for this service class.
-When enabled, once a file is created and finalized/closed it will be replicated
-so that MaxReplicaNb copies exist in the pool where the file resides.
-Example of supported values are yes/no, y/n, true/false, t/f, 1/0.
-Note: this functionality will not rebalance the number copies in the pool in response to
-diskservers which are no longer in production!
-Default is no if not specified.
 .TP
 .BI \-\-gcpolicy\ <gcPolicyName>
 Specifies the name of the garbage collection policy to be used for this service class.
@@ -103,9 +89,9 @@ name of the service class to create.
 inserted service class public successfully
 
 #printsvcclass -a
-  NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY     POOLS ID LASTEDITOR          LASTEDITION
-------------------------------------------------------------------------------------------------------------------------------------------------------------
-public         2048MiB                True            1               -            False         False        -   default 13   sponcec3 30-Aug-2011 16:59:13
+  NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE REPLICANB FORCEDFILECLASS DISK1BEHAVIOR GCPOLICY     POOLS ID LASTEDITOR          LASTEDITION
+----------------------------------------------------------------------------------------------------------------------------------------
+public         2048MiB                True         1               -         False        -   default 13   sponcec3 30-Aug-2011 16:59:13
 
 #entersvcclass --pools default public
 SvcClass public already exists in the stager DB

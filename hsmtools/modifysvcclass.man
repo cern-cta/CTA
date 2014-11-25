@@ -11,8 +11,8 @@ modifysvcclass \- modifies an existing service class in the stager catalog
 <defaultFileSize>
 ]
 [
-.BI --maxreplicanb
-<maxReplicaNb>
+.BI --replicanb
+<replicaNb>
 ]
 [
 .BI --failjobswhennospace
@@ -25,10 +25,6 @@ modifysvcclass \- modifies an existing service class in the stager catalog
 [
 .BI --forcedfileclass
 <forcedFileClass>
-]
-[
-.BI --replicateonclose
-<bool>
 ]
 [
 .BI --gcpolicy
@@ -57,8 +53,8 @@ If given, modifies the default file size allocation for write requests not speci
 The value can be given using the standard K/M/G/T extensions, with or without B (i.e. both KB and K are accepted).
 These have the ISO meaning of powers of 10. Ki/Mi/Gi/Ti[B] extensions are also accepted and deal with powers of 2.
 .TP
-.BI \-\-maxreplicanb <maxReplicaNb>
-If given, modifies the maximum number of disk resident replicas for a given CASTOR file
+.BI \-\-replicanb <replicaNb>
+If given, modifies the number of disk resident replicas for a given CASTOR file
 in this service class.
 .TP
 .BI \-\-failjobswhennospace <boolean value>
@@ -77,14 +73,6 @@ specifying for this service class any TapeN retention policy, where N is the num
 tape copies of the forced file class.
 In order to disable the forcing, just provide an empty class name. Do not for get the quotes
 so that the shell sees that empty argument
-.TP
-.BI \-\-replicateonclose <boolean value>
-If given, enables or disables replication on close is enabled for this service class.
-When enabled, once a file is created and finalized/closed it will be replicated
-so that MaxReplicaNb copies exist in the pool where the file resides.
-Example of supported values are yes/no, y/n, true/false, t/f, 1/0.
-Note: this functionality will not rebalance the number copies in the pool in response to
-diskservers which are no longer in production!
 .TP
 .BI \-\-gcpolicy <gcPolicyName>
 If given, modifies the name of the garbage collection policy to be used for this service class.
@@ -105,25 +93,25 @@ name of the service class to modify.
 .nf
 .ft CW
 #printsvcclass default
-   NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY     POOLS ID LASTEDITOR          LASTEDITION
--------------------------------------------------------------------------------------------------------------------------------------------------------------
-default           10MiB                True            1               -            False         False        -   default 15   sponcec3 30-Aug-2011 17:02:00
+   NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE REPLICANB FORCEDFILECLASS DISK1BEHAVIOR GCPOLICY     POOLS ID LASTEDITOR          LASTEDITION
+-----------------------------------------------------------------------------------------------------------------------------------------
+default           10MiB                True         1               -         False        -   default 15   sponcec3 30-Aug-2011 17:02:00
 
-# modifysvcclass --defaultfilesize 20GiB --maxreplicanb 2 --gcpolicy dropall --forcedfileclass temp --removepools default default
+# modifysvcclass --defaultfilesize 20GiB --replicanb 2 --gcpolicy dropall --forcedfileclass temp --removepools default default
 modified service class default successfully
 
 # printsvcclass test
-   NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY     POOLS ID LASTEDITOR          LASTEDITION
--------------------------------------------------------------------------------------------------------------------------------------------------------------
-default           10MiB                True            2            temp            False         False  dropall         - 15   sponcec3 30-Aug-2011 17:09:44
+   NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE REPLICANB FORCEDFILECLASS DISK1BEHAVIOR GCPOLICY     POOLS ID LASTEDITOR          LASTEDITION
+-----------------------------------------------------------------------------------------------------------------------------------------
+default           10MiB                True         2            temp         False  dropall         - 15   sponcec3 30-Aug-2011 17:09:44
 
 # modifysvcclass --forcedfileclass '' --addpools default default
 modified service class default successfully
 
 # printsvcclass test
-   NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY     POOLS ID LASTEDITOR          LASTEDITION
--------------------------------------------------------------------------------------------------------------------------------------------------------------
-default           10MiB                True            2               -            False         False  dropall   default 15   sponcec3 30-Aug-2011 17:10:39
+   NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE REPLICANB FORCEDFILECLASS DISK1BEHAVIOR GCPOLICY     POOLS ID LASTEDITOR          LASTEDITION
+-----------------------------------------------------------------------------------------------------------------------------------------
+default           10MiB                True         2               -         False  dropall   default 15   sponcec3 30-Aug-2011 17:10:39
 
 .SH NOTES
 This command requires database client access to the stager catalog and nameserver DBs.

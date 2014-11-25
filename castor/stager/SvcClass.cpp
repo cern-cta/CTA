@@ -37,10 +37,9 @@
 castor::stager::SvcClass::SvcClass() throw() :
   m_name(""),
   m_defaultFileSize(0),
-  m_maxReplicaNb(0),
+  m_replicaNb(0),
   m_gcPolicy(""),
   m_disk1Behavior(false),
-  m_replicateOnClose(false),
   m_failJobsWhenNoSpace(false),
   m_lastEditor(""),
   m_lastEditionTime(0),
@@ -69,10 +68,9 @@ void castor::stager::SvcClass::print(std::ostream& stream,
   // Output of all members
   stream << indent << "name : " << m_name << std::endl;
   stream << indent << "defaultFileSize : " << m_defaultFileSize << std::endl;
-  stream << indent << "maxReplicaNb : " << m_maxReplicaNb << std::endl;
+  stream << indent << "replicaNb : " << m_replicaNb << std::endl;
   stream << indent << "gcPolicy : " << m_gcPolicy << std::endl;
   stream << indent << "disk1Behavior : " << (m_disk1Behavior ? "Yes" : "No") << std::endl;
-  stream << indent << "replicateOnClose : " << (m_replicateOnClose ? "Yes" : "No") << std::endl;
   stream << indent << "failJobsWhenNoSpace : " << (m_failJobsWhenNoSpace ? "Yes" : "No") << std::endl;
   stream << indent << "lastEditor : " << m_lastEditor << std::endl;
   stream << indent << "lastEditionTime : " << m_lastEditionTime << std::endl;

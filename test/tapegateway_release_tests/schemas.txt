@@ -29,14 +29,13 @@ SQL> describe castorfile
  NBDRIVES                                           NUMBER
  NAME                                      NOT NULL VARCHAR2(2048)
  DEFAULTFILESIZE                                    NUMBER(38)
- MAXREPLICANB                                       NUMBER
+ REPLICANB                                          NUMBER
  MIGRATORPOLICY                                     VARCHAR2(2048)
  RECALLERPOLICY                                     VARCHAR2(2048)
  ID                                        NOT NULL NUMBER(38)
  STREAMPOLICY                                       VARCHAR2(2048)
  FORCEDFILECLASS                           NOT NULL NUMBER
  GCPOLICY                                           VARCHAR2(2048)
- REPLICATEONCLOSE                                   NUMBER
  DISK1BEHAVIOR                                      NUMBER
  FAILJOBSWHENNOSPACE                                NUMBER
 

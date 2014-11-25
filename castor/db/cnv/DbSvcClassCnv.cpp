@@ -53,11 +53,11 @@ static castor::CnvFactory<castor::db::cnv::DbSvcClassCnv>* s_factoryDbSvcClassCn
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbSvcClassCnv::s_insertStatementString =
-"INSERT INTO SvcClass (name, defaultFileSize, maxReplicaNb, gcPolicy, disk1Behavior, replicateOnClose, failJobsWhenNoSpace, lastEditor, lastEditionTime, id, forcedFileClass) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,ids_seq.nextval,:10) RETURNING id INTO :11";
+"INSERT INTO SvcClass (name, defaultFileSize, replicaNb, gcPolicy, disk1Behavior, failJobsWhenNoSpace, lastEditor, lastEditionTime, id, forcedFileClass) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,ids_seq.nextval,:9) RETURNING id INTO :10";
 
 /// SQL statement for request bulk insertion
 const std::string castor::db::cnv::DbSvcClassCnv::s_bulkInsertStatementString =
-"INSERT /* bulk */ INTO SvcClass (name, defaultFileSize, maxReplicaNb, gcPolicy, disk1Behavior, replicateOnClose, failJobsWhenNoSpace, lastEditor, lastEditionTime, id, forcedFileClass) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,ids_seq.nextval,:10) RETURNING id INTO :11";
+"INSERT /* bulk */ INTO SvcClass (name, defaultFileSize, replicaNb, gcPolicy, disk1Behavior, failJobsWhenNoSpace, lastEditor, lastEditionTime, id, forcedFileClass) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,ids_seq.nextval,:9) RETURNING id INTO :10";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbSvcClassCnv::s_deleteStatementString =
@@ -65,19 +65,19 @@ const std::string castor::db::cnv::DbSvcClassCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbSvcClassCnv::s_selectStatementString =
-"SELECT name, defaultFileSize, maxReplicaNb, gcPolicy, disk1Behavior, replicateOnClose, failJobsWhenNoSpace, lastEditor, lastEditionTime, id, forcedFileClass FROM SvcClass WHERE id = :1";
+"SELECT name, defaultFileSize, replicaNb, gcPolicy, disk1Behavior, failJobsWhenNoSpace, lastEditor, lastEditionTime, id, forcedFileClass FROM SvcClass WHERE id = :1";
 
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbSvcClassCnv::s_bulkSelectStatementString =
 "DECLARE \
-   TYPE RecordType IS RECORD (name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, gcPolicy VARCHAR2(2048), disk1Behavior NUMBER, replicateOnClose NUMBER, failJobsWhenNoSpace NUMBER, lastEditor VARCHAR2(2048), lastEditionTime INTEGER, id INTEGER, forcedFileClass INTEGER); \
+   TYPE RecordType IS RECORD (name VARCHAR2(2048), defaultFileSize INTEGER, replicaNb NUMBER, gcPolicy VARCHAR2(2048), disk1Behavior NUMBER, failJobsWhenNoSpace NUMBER, lastEditor VARCHAR2(2048), lastEditionTime INTEGER, id INTEGER, forcedFileClass INTEGER); \
    TYPE CurType IS REF CURSOR RETURN RecordType; \
    PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
                         objs OUT CurType) AS \
    BEGIN \
      FORALL i IN ids.FIRST..ids.LAST \
        INSERT INTO bulkSelectHelper VALUES(ids(i)); \
-     OPEN objs FOR SELECT name, defaultFileSize, maxReplicaNb, gcPolicy, disk1Behavior, replicateOnClose, failJobsWhenNoSpace, lastEditor, lastEditionTime, id, forcedFileClass \
+     OPEN objs FOR SELECT name, defaultFileSize, replicaNb, gcPolicy, disk1Behavior, failJobsWhenNoSpace, lastEditor, lastEditionTime, id, forcedFileClass \
                      FROM SvcClass t, bulkSelectHelper h \
                     WHERE t.id = h.objId; \
      DELETE FROM bulkSelectHelper; \
@@ -88,7 +88,7 @@ const std::string castor::db::cnv::DbSvcClassCnv::s_bulkSelectStatementString =
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbSvcClassCnv::s_updateStatementString =
-"UPDATE SvcClass SET name = :1, defaultFileSize = :2, maxReplicaNb = :3, gcPolicy = :4, disk1Behavior = :5, replicateOnClose = :6, failJobsWhenNoSpace = :7, lastEditor = :8, lastEditionTime = :9 WHERE id = :10";
+"UPDATE SvcClass SET name = :1, defaultFileSize = :2, replicaNb = :3, gcPolicy = :4, disk1Behavior = :5, failJobsWhenNoSpace = :6, lastEditor = :7, lastEditionTime = :8 WHERE id = :9";
 
 /// SQL existence statement for member forcedFileClass
 const std::string castor::db::cnv::DbSvcClassCnv::s_checkFileClassExistStatementString =
@@ -252,7 +252,7 @@ void castor::db::cnv::DbSvcClassCnv::fillObjFileClass(castor::stager::SvcClass* 
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 forcedFileClassId = rset->getInt64(11);
+  u_signed64 forcedFileClassId = rset->getInt64(10);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -290,21 +290,20 @@ void castor::db::cnv::DbSvcClassCnv::createRep(castor::IAddress*,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(11, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(10, castor::db::DBTYPE_UINT64);
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->name());
     m_insertStatement->setUInt64(2, obj->defaultFileSize());
-    m_insertStatement->setInt(3, obj->maxReplicaNb());
+    m_insertStatement->setInt(3, obj->replicaNb());
     m_insertStatement->setString(4, obj->gcPolicy());
     m_insertStatement->setInt(5, obj->disk1Behavior());
-    m_insertStatement->setInt(6, obj->replicateOnClose());
-    m_insertStatement->setInt(7, obj->failJobsWhenNoSpace());
-    m_insertStatement->setString(8, obj->lastEditor());
-    m_insertStatement->setUInt64(9, obj->lastEditionTime());
-    m_insertStatement->setUInt64(10, (type == OBJ_FileClass && obj->forcedFileClass() != 0) ? obj->forcedFileClass()->id() : 0);
+    m_insertStatement->setInt(6, obj->failJobsWhenNoSpace());
+    m_insertStatement->setString(7, obj->lastEditor());
+    m_insertStatement->setUInt64(8, obj->lastEditionTime());
+    m_insertStatement->setUInt64(9, (type == OBJ_FileClass && obj->forcedFileClass() != 0) ? obj->forcedFileClass()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(11));
+    obj->setId(m_insertStatement->getUInt64(10));
     if (endTransaction) {
       cnvSvc()->commit();
     }
@@ -321,10 +320,9 @@ void castor::db::cnv::DbSvcClassCnv::createRep(castor::IAddress*,
                     << " and parameters' values were :" << std::endl
                     << "  name : " << obj->name() << std::endl
                     << "  defaultFileSize : " << obj->defaultFileSize() << std::endl
-                    << "  maxReplicaNb : " << obj->maxReplicaNb() << std::endl
+                    << "  replicaNb : " << obj->replicaNb() << std::endl
                     << "  gcPolicy : " << obj->gcPolicy() << std::endl
                     << "  disk1Behavior : " << obj->disk1Behavior() << std::endl
-                    << "  replicateOnClose : " << obj->replicateOnClose() << std::endl
                     << "  failJobsWhenNoSpace : " << obj->failJobsWhenNoSpace() << std::endl
                     << "  lastEditor : " << obj->lastEditor() << std::endl
                     << "  lastEditionTime : " << obj->lastEditionTime() << std::endl
@@ -355,7 +353,7 @@ void castor::db::cnv::DbSvcClassCnv::bulkCreateRep(castor::IAddress*,
     // Check whether the statements are ok
     if (0 == m_bulkInsertStatement) {
       m_bulkInsertStatement = createStatement(s_bulkInsertStatementString);
-      m_bulkInsertStatement->registerOutParam(11, castor::db::DBTYPE_UINT64);
+      m_bulkInsertStatement->registerOutParam(10, castor::db::DBTYPE_UINT64);
     }
     // build the buffers for name
     unsigned int nameMaxLen = 0;
@@ -400,25 +398,25 @@ void castor::db::cnv::DbSvcClassCnv::bulkCreateRep(castor::IAddress*,
     }
     m_bulkInsertStatement->setDataBuffer
       (2, defaultFileSizeBuffer, castor::db::DBTYPE_UINT64, sizeof(defaultFileSizeBuffer[0]), defaultFileSizeBufLens);
-    // build the buffers for maxReplicaNb
-    int* maxReplicaNbBuffer = (int*) malloc(nb * sizeof(int));
-    if (maxReplicaNbBuffer == 0) {
+    // build the buffers for replicaNb
+    int* replicaNbBuffer = (int*) malloc(nb * sizeof(int));
+    if (replicaNbBuffer == 0) {
       castor::exception::OutOfMemory e;
       throw e;
     }
-    allocMem.push_back(maxReplicaNbBuffer);
-    unsigned short* maxReplicaNbBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
-    if (maxReplicaNbBufLens == 0) {
+    allocMem.push_back(replicaNbBuffer);
+    unsigned short* replicaNbBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (replicaNbBufLens == 0) {
       castor::exception::OutOfMemory e;
       throw e;
     }
-    allocMem.push_back(maxReplicaNbBufLens);
+    allocMem.push_back(replicaNbBufLens);
     for (int i = 0; i < nb; i++) {
-      maxReplicaNbBuffer[i] = objs[i]->maxReplicaNb();
-      maxReplicaNbBufLens[i] = sizeof(int);
+      replicaNbBuffer[i] = objs[i]->replicaNb();
+      replicaNbBufLens[i] = sizeof(int);
     }
     m_bulkInsertStatement->setDataBuffer
-      (3, maxReplicaNbBuffer, castor::db::DBTYPE_INT, sizeof(maxReplicaNbBuffer[0]), maxReplicaNbBufLens);
+      (3, replicaNbBuffer, castor::db::DBTYPE_INT, sizeof(replicaNbBuffer[0]), replicaNbBufLens);
     // build the buffers for gcPolicy
     unsigned int gcPolicyMaxLen = 0;
     for (int i = 0; i < nb; i++) {
@@ -462,25 +460,6 @@ void castor::db::cnv::DbSvcClassCnv::bulkCreateRep(castor::IAddress*,
     }
     m_bulkInsertStatement->setDataBuffer
       (5, disk1BehaviorBuffer, castor::db::DBTYPE_INT, sizeof(disk1BehaviorBuffer[0]), disk1BehaviorBufLens);
-    // build the buffers for replicateOnClose
-    bool* replicateOnCloseBuffer = (bool*) malloc(nb * sizeof(bool));
-    if (replicateOnCloseBuffer == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(replicateOnCloseBuffer);
-    unsigned short* replicateOnCloseBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
-    if (replicateOnCloseBufLens == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(replicateOnCloseBufLens);
-    for (int i = 0; i < nb; i++) {
-      replicateOnCloseBuffer[i] = objs[i]->replicateOnClose();
-      replicateOnCloseBufLens[i] = sizeof(bool);
-    }
-    m_bulkInsertStatement->setDataBuffer
-      (6, replicateOnCloseBuffer, castor::db::DBTYPE_INT, sizeof(replicateOnCloseBuffer[0]), replicateOnCloseBufLens);
     // build the buffers for failJobsWhenNoSpace
     bool* failJobsWhenNoSpaceBuffer = (bool*) malloc(nb * sizeof(bool));
     if (failJobsWhenNoSpaceBuffer == 0) {
@@ -499,7 +478,7 @@ void castor::db::cnv::DbSvcClassCnv::bulkCreateRep(castor::IAddress*,
       failJobsWhenNoSpaceBufLens[i] = sizeof(bool);
     }
     m_bulkInsertStatement->setDataBuffer
-      (7, failJobsWhenNoSpaceBuffer, castor::db::DBTYPE_INT, sizeof(failJobsWhenNoSpaceBuffer[0]), failJobsWhenNoSpaceBufLens);
+      (6, failJobsWhenNoSpaceBuffer, castor::db::DBTYPE_INT, sizeof(failJobsWhenNoSpaceBuffer[0]), failJobsWhenNoSpaceBufLens);
     // build the buffers for lastEditor
     unsigned int lastEditorMaxLen = 0;
     for (int i = 0; i < nb; i++) {
@@ -523,7 +502,7 @@ void castor::db::cnv::DbSvcClassCnv::bulkCreateRep(castor::IAddress*,
       lastEditorBufLens[i] = objs[i]->lastEditor().length()+1; // + 1 for the trailing \0
     }
     m_bulkInsertStatement->setDataBuffer
-      (8, lastEditorBuffer, castor::db::DBTYPE_STRING, lastEditorMaxLen, lastEditorBufLens);
+      (7, lastEditorBuffer, castor::db::DBTYPE_STRING, lastEditorMaxLen, lastEditorBufLens);
     // build the buffers for lastEditionTime
     double* lastEditionTimeBuffer = (double*) malloc(nb * sizeof(double));
     if (lastEditionTimeBuffer == 0) {
@@ -542,7 +521,7 @@ void castor::db::cnv::DbSvcClassCnv::bulkCreateRep(castor::IAddress*,
       lastEditionTimeBufLens[i] = sizeof(double);
     }
     m_bulkInsertStatement->setDataBuffer
-      (9, lastEditionTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(lastEditionTimeBuffer[0]), lastEditionTimeBufLens);
+      (8, lastEditionTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(lastEditionTimeBuffer[0]), lastEditionTimeBufLens);
     // build the buffers for forcedFileClass
     double* forcedFileClassBuffer = (double*) malloc(nb * sizeof(double));
     if (forcedFileClassBuffer == 0) {
@@ -561,7 +540,7 @@ void castor::db::cnv::DbSvcClassCnv::bulkCreateRep(castor::IAddress*,
       forcedFileClassBufLens[i] = sizeof(double);
     }
     m_bulkInsertStatement->setDataBuffer
-      (10, forcedFileClassBuffer, castor::db::DBTYPE_UINT64, sizeof(forcedFileClassBuffer[0]), forcedFileClassBufLens);
+      (9, forcedFileClassBuffer, castor::db::DBTYPE_UINT64, sizeof(forcedFileClassBuffer[0]), forcedFileClassBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     if (idBuffer == 0) {
@@ -576,7 +555,7 @@ void castor::db::cnv::DbSvcClassCnv::bulkCreateRep(castor::IAddress*,
     }
     allocMem.push_back(idBufLens);
     m_bulkInsertStatement->setDataBuffer
-      (11, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
+      (10, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_bulkInsertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
@@ -625,14 +604,13 @@ void castor::db::cnv::DbSvcClassCnv::updateRep(castor::IAddress*,
     // Update the current object
     m_updateStatement->setString(1, obj->name());
     m_updateStatement->setUInt64(2, obj->defaultFileSize());
-    m_updateStatement->setInt(3, obj->maxReplicaNb());
+    m_updateStatement->setInt(3, obj->replicaNb());
     m_updateStatement->setString(4, obj->gcPolicy());
     m_updateStatement->setInt(5, obj->disk1Behavior());
-    m_updateStatement->setInt(6, obj->replicateOnClose());
-    m_updateStatement->setInt(7, obj->failJobsWhenNoSpace());
-    m_updateStatement->setString(8, obj->lastEditor());
-    m_updateStatement->setUInt64(9, obj->lastEditionTime());
-    m_updateStatement->setUInt64(10, obj->id());
+    m_updateStatement->setInt(6, obj->failJobsWhenNoSpace());
+    m_updateStatement->setString(7, obj->lastEditor());
+    m_updateStatement->setUInt64(8, obj->lastEditionTime());
+    m_updateStatement->setUInt64(9, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -714,14 +692,13 @@ castor::IObject* castor::db::cnv::DbSvcClassCnv::createObj(castor::IAddress* add
     // Now retrieve and set members
     object->setName(rset->getString(1));
     object->setDefaultFileSize(rset->getUInt64(2));
-    object->setMaxReplicaNb(rset->getInt(3));
+    object->setReplicaNb(rset->getInt(3));
     object->setGcPolicy(rset->getString(4));
     object->setDisk1Behavior(rset->getInt(5));
-    object->setReplicateOnClose(rset->getInt(6));
-    object->setFailJobsWhenNoSpace(rset->getInt(7));
-    object->setLastEditor(rset->getString(8));
-    object->setLastEditionTime(rset->getUInt64(9));
-    object->setId(rset->getUInt64(10));
+    object->setFailJobsWhenNoSpace(rset->getInt(6));
+    object->setLastEditor(rset->getString(7));
+    object->setLastEditionTime(rset->getUInt64(8));
+    object->setId(rset->getUInt64(9));
     delete rset;
     return object;
   } catch (castor::exception::SQLError& e) {
@@ -769,14 +746,13 @@ castor::db::cnv::DbSvcClassCnv::bulkCreateObj(castor::IAddress* address)
       // Now retrieve and set members
       object->setName(rset->getString(1));
       object->setDefaultFileSize(rset->getUInt64(2));
-      object->setMaxReplicaNb(rset->getInt(3));
+      object->setReplicaNb(rset->getInt(3));
       object->setGcPolicy(rset->getString(4));
       object->setDisk1Behavior(rset->getInt(5));
-      object->setReplicateOnClose(rset->getInt(6));
-      object->setFailJobsWhenNoSpace(rset->getInt(7));
-      object->setLastEditor(rset->getString(8));
-      object->setLastEditionTime(rset->getUInt64(9));
-      object->setId(rset->getUInt64(10));
+      object->setFailJobsWhenNoSpace(rset->getInt(6));
+      object->setLastEditor(rset->getString(7));
+      object->setLastEditionTime(rset->getUInt64(8));
+      object->setId(rset->getUInt64(9));
       // store object in results and loop;
       res.push_back(object);
       status = rset->next();
@@ -816,14 +792,13 @@ void castor::db::cnv::DbSvcClassCnv::updateObj(castor::IObject* obj)
       dynamic_cast<castor::stager::SvcClass*>(obj);
     object->setName(rset->getString(1));
     object->setDefaultFileSize(rset->getUInt64(2));
-    object->setMaxReplicaNb(rset->getInt(3));
+    object->setReplicaNb(rset->getInt(3));
     object->setGcPolicy(rset->getString(4));
     object->setDisk1Behavior(rset->getInt(5));
-    object->setReplicateOnClose(rset->getInt(6));
-    object->setFailJobsWhenNoSpace(rset->getInt(7));
-    object->setLastEditor(rset->getString(8));
-    object->setLastEditionTime(rset->getUInt64(9));
-    object->setId(rset->getUInt64(10));
+    object->setFailJobsWhenNoSpace(rset->getInt(6));
+    object->setLastEditor(rset->getString(7));
+    object->setLastEditionTime(rset->getUInt64(8));
+    object->setId(rset->getUInt64(9));
     delete rset;
   } catch (castor::exception::SQLError& e) {
     castor::exception::InvalidArgument ex;

@@ -25,19 +25,19 @@ name of service classes to delete. Several names can be given, colon separated
 .ft CW
 
 #printsvcclass -a
-    NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY     POOLS ID LASTEDITOR          LASTEDITION
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- default           10MiB                True            2               -            False         False  dropall              -   default 15   sponcec3 30-Aug-2011 17:10:39
-     dev           10MiB                True            1               -            False         False        -              -     extra 16   sponcec3 30-Aug-2011 17:02:05
-diskonly           10MiB                True            1            temp            False          True        -              -     extra 17   sponcec3 30-Aug-2011 17:02:10
+    NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE REPLICANB FORCEDFILECLASS DISK1BEHAVIOR GCPOLICY RECALLERPOLICY     POOLS ID LASTEDITOR          LASTEDITION
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+ default           10MiB                True         2               -         False  dropall              -   default 15   sponcec3 30-Aug-2011 17:10:39
+     dev           10MiB                True         1               -         False        -              -     extra 16   sponcec3 30-Aug-2011 17:02:05
+diskonly           10MiB                True         1            temp          True        -              -     extra 17   sponcec3 30-Aug-2011 17:02:10
 
 # deletesvcclass default:dev
 successfully dropped the following service class(es) : default, dev
 
 #printsvcclass -a
-    NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY     POOLS ID LASTEDITOR          LASTEDITION
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-diskonly           10MiB                True            1            temp            False          True        -              -     extra 17   sponcec3 30-Aug-2011 17:02:10
+    NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE REPLICANB FORCEDFILECLASS DISK1BEHAVIOR GCPOLICY RECALLERPOLICY     POOLS ID LASTEDITOR          LASTEDITION
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+diskonly           10MiB                True         1            temp          True        -              -     extra 17   sponcec3 30-Aug-2011 17:02:10
 
 # deletesvcclass diskonly:dev
 successfully dropped the following service class(es) : diskonly

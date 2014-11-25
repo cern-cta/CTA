@@ -31,31 +31,28 @@ import castor_tools
 def usage(exitCode):
     '''prints usage'''
     print 'Usage : ' + sys.argv[0] + ' [-h|--help] ' + \
-          '[--defaultfilesize <defaultFileSize>] [--maxreplicanb <maxReplicaNb>] ' + \
+          '[--defaultfilesize <defaultFileSize>] [--replicanb <replicaNb>] ' + \
           '[--failjobswhennospace <[yes|no]>] [--disk1behavior <[yes|no]>] ' + \
-          '[--forcedfileclass <forcedFileClass>] [--replicateonclose <[yes|no]>] ' + \
-          '[--gcpolicy <gcPolicyName>] ' + \
+          '[--forcedfileclass <forcedFileClass>] [--gcpolicy <gcPolicyName>] ' + \
           '[--addpools <poolName>:[...]] [--removepools <poolName>:[...]] <svcClassName>'
     sys.exit(exitCode)
 
 # first parse the options
 try:
     options, args = getopt.getopt(sys.argv[1:], 'hv',
-                                  ['help', 'verbose', 'defaultfilesize=', 'maxreplicanb=',
+                                  ['help', 'verbose', 'defaultfilesize=', 'replicanb=',
                                    'failjobswhennospace=', 'disk1behavior=', 'forcedfileclass=',
-                                   'replicateonclose=', 'gcpolicy=',
-                                   'addpools=', 'removepools='])
+                                   'gcpolicy=', 'addpools=', 'removepools='])
 except Exception, e:
     print e
     usage(1)
 verbose = False
 defaultfilesize = None
-maxreplicanb = None
+replicanb = None
 failjobswhennospace = None
 disk1behavior = None
 forcedfileclass = None
 forcedfileclassset = False
-replicateonclose = None
 gcpolicy = None
 addpools = None
 removepools = None
@@ -67,8 +64,8 @@ try:
             verbose = True
         elif f == '--defaultfilesize':
             defaultfilesize = castor_tools.parseDataAmount('defaultfilesize', v)
-        elif f == '--maxreplicanb':
-            maxreplicanb = castor_tools.parsePositiveNonNullInt('maxreplicanb', v)
+        elif f == '--replicanb':
+            replicanb = castor_tools.parsePositiveNonNullInt('replicanb', v)
         elif f == '--failjobswhennospace':
             failjobswhennospace = castor_tools.parseBool('failjobswhennospace', v)
         elif f == '--disk1behavior':
@@ -76,8 +73,6 @@ try:
         elif f == '--forcedfileclass':
             forcedfileclass = v
             forcedfileclassset = True
-        elif f == '--replicateonclose':
-            replicateonclose = castor_tools.parseBool('replicateonclose', v)
         elif f == '--gcpolicy':
             gcpolicy = v
         elif f == '--addpools':
@@ -102,8 +97,8 @@ else:
     svcclassname = args[0]
 
 # check we have something to do
-if defaultfilesize == None and maxreplicanb == None and failjobswhennospace == None and \
-   disk1behavior == None and forcedfileclass == None and replicateonclose == None and gcpolicy == None and \
+if defaultfilesize == None and replicanb == None and failjobswhennospace == None and \
+   disk1behavior == None and forcedfileclass == None and gcpolicy == None and \
    addpools == None and removepools == None:
     print 'Nothing to modify. Did you forget some argument ?'
     usage(1)
@@ -125,18 +120,15 @@ try:
     if defaultfilesize != None:
         stcur.execute('UPDATE SvcClass SET defaultfilesize=:value WHERE id = :svcClassId',
                       value=defaultfilesize, svcClassId=svcClassId)
-    if maxreplicanb != None:
-        stcur.execute('UPDATE SvcClass SET maxreplicanb=:value WHERE id = :svcClassId',
-                      value=maxreplicanb, svcClassId=svcClassId)
+    if replicanb != None:
+        stcur.execute('UPDATE SvcClass SET replicanb=:value WHERE id = :svcClassId',
+                      value=replicanb, svcClassId=svcClassId)
     if failjobswhennospace != None:
         stcur.execute('UPDATE SvcClass SET failjobswhennospace=:value WHERE id = :svcClassId',
                       value=failjobswhennospace, svcClassId=svcClassId)
     if disk1behavior != None:
         stcur.execute('UPDATE SvcClass SET disk1behavior=:value WHERE id = :svcClassId',
                       value=disk1behavior, svcClassId=svcClassId)
-    if replicateonclose != None:
-        stcur.execute('UPDATE SvcClass SET replicateonclose=:value WHERE id = :svcClassId',
-                      value=replicateonclose, svcClassId=svcClassId)
     if gcpolicy != None:
         # check that the GC policyexists
         stcur.execute('SELECT name FROM GcPolicy WHERE name=:name', name=gcpolicy)

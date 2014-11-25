@@ -135,25 +135,21 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_maxReplicaNb
-       * Maximum number of replicas for a file created with this service class. If 0, the
-       * replication is ruled by the replication policy. If there is none, then 0 means
-       * infinity.
-       * @return the value of m_maxReplicaNb
+       * Get the value of m_replicaNb
+       * Number of replicas for a file created with this service class
+       * @return the value of m_replicaNb
        */
-      int maxReplicaNb() const {
-        return m_maxReplicaNb;
+      int replicaNb() const {
+        return m_replicaNb;
       }
 
       /**
-       * Set the value of m_maxReplicaNb
-       * Maximum number of replicas for a file created with this service class. If 0, the
-       * replication is ruled by the replication policy. If there is none, then 0 means
-       * infinity.
-       * @param new_var the new value of m_maxReplicaNb
+       * Set the value of m_replicaNb
+       * Number of replicas for a file created with this service class
+       * @param new_var the new value of m_replicaNb
        */
-      void setMaxReplicaNb(int new_var) {
-        m_maxReplicaNb = new_var;
+      void setReplicaNb(int new_var) {
+        m_replicaNb = new_var;
       }
 
       /**
@@ -192,26 +188,6 @@ namespace castor {
        */
       void setDisk1Behavior(bool new_var) {
         m_disk1Behavior = new_var;
-      }
-
-      /**
-       * Get the value of m_replicateOnClose
-       * Flag to indicate whether files in this service class are replicated on closure.
-       * The number of copies created is defined by the maxReplicaNb attribute.
-       * @return the value of m_replicateOnClose
-       */
-      bool replicateOnClose() const {
-        return m_replicateOnClose;
-      }
-
-      /**
-       * Set the value of m_replicateOnClose
-       * Flag to indicate whether files in this service class are replicated on closure.
-       * The number of copies created is defined by the maxReplicaNb attribute.
-       * @param new_var the new value of m_replicateOnClose
-       */
-      void setReplicateOnClose(bool new_var) {
-        m_replicateOnClose = new_var;
       }
 
       /**
@@ -314,17 +290,14 @@ namespace castor {
       /// Default size used for space allocation in the case of a stage put with no size explicitely given (ie size given was 0).
       u_signed64 m_defaultFileSize;
 
-      /// Maximum number of replicas for a file created with this service class. If 0, the replication is ruled by the replication policy. If there is none, then 0 means infinity.
-      int m_maxReplicaNb;
+      /// Number of replicas for a file created with this service class.
+      int m_replicaNb;
 
       /// Policy ruling the behavior of the garbage collector, when enabled.
       std::string m_gcPolicy;
 
       /// Flag to indicate whether the diskpools under this service class should behave as Disk1 pools. This means no automatic GC, and failJobsWhenNoSpace set to true.
       bool m_disk1Behavior;
-
-      /// Flag to indicate whether files in this service class are replicated on closure. The number of copies created is defined by the maxReplicaNb attribute.
-      bool m_replicateOnClose;
 
       /// Flag to indicate whether jobs that require new space on disk shall be failed when the diskpools under this service class have run out of space. This flag is enabled by default, if disabled jobs are left pending in the scheduler.
       bool m_failJobsWhenNoSpace;

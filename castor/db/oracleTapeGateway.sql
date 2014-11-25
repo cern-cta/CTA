@@ -695,7 +695,7 @@ BEGIN
      AND status = dconst.SUBREQUEST_WAITTAPERECALL;
 
   -- trigger the creation of additional copies of the file, if necessary.
-  replicateOnClose(varCfId, varEuid, varEgid);
+  replicateOnClose(varCfId, varEuid, varEgid, varSvcClassId);
 
   -- log success
   logToDLF(inReqId, dlf.LVL_SYSTEM, dlf.RECALL_COMPLETED_DB, varFileId, varNsHost, 'tapegatewayd',

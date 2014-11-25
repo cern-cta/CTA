@@ -31,29 +31,27 @@ import castor_tools
 def usage(exitCode):
     '''prints usage'''
     print 'Usage : ' + sys.argv[0] + ' [-h|--help] ' + \
-          '[--defaultfilesize <defaultFileSize>] [--maxreplicanb <maxReplicaNb>] ' + \
+          '[--defaultfilesize <defaultFileSize>] [--replicanb <ReplicaNb>] ' + \
           '[--failjobswhennospace <[yes|no]>] [--disk1behavior <[yes|no]>] ' + \
-          '[--forcedfileclass <forcedFileClass>] [--replicateonclose <[yes|no]>] ' + \
-          '--gcpolicy <gcPolicyName> ' + \
+          '[--forcedfileclass <forcedFileClass>] --gcpolicy <gcPolicyName> ' + \
           '[--pools <poolName>:[...]] <svcClassName>'
     sys.exit(exitCode)
 
 # first parse the options
 try:
     options, args = getopt.getopt(sys.argv[1:], 'hv',
-                                  ['help', 'verbose', 'defaultfilesize=', 'maxreplicanb=',
+                                  ['help', 'verbose', 'defaultfilesize=', 'replicanb=',
                                    'failjobswhennospace=', 'disk1behavior=', 'forcedfileclass=',
-                                   'replicateonclose=', 'gcpolicy=', 'pools='])
+                                   'gcpolicy=', 'pools='])
 except Exception, e:
     print e
     usage(1)
 verbose = False
 defaultfilesize = 2147483648 # 2GiB
-maxreplicanb = 1
+replicanb = 1
 failjobswhennospace = True
 disk1behavior = False
 forcedfileclass = None
-replicateonclose = False
 gcpolicy = None
 pools = []
 try:
@@ -64,16 +62,14 @@ try:
             verbose = True
         elif f == '--defaultfilesize':
             defaultfilesize = castor_tools.parseDataAmount('defaultfilesize', v)
-        elif f == '--maxreplicanb':
-            maxreplicanb = castor_tools.parsePositiveNonNullInt('maxreplicanb', v)
+        elif f == '--replicanb':
+            replicanb = castor_tools.parsePositiveNonNullInt('replicanb', v)
         elif f == '--failjobswhennospace':
             failjobswhennospace = castor_tools.parseBool('failjobswhennospace', v)
         elif f == '--disk1behavior':
             disk1behavior = castor_tools.parseBool('disk1behavior', v)
         elif f == '--forcedfileclass':
             forcedfileclass = v
-        elif f == '--replicateonclose':
-            replicateonclose = castor_tools.parseBool('replicateonclose', v)
         elif f == '--gcpolicy':
             gcpolicy = v
         elif f == '--pools':
@@ -192,11 +188,9 @@ try:
       diskPoolIds castor."cnumList" := :diskPoolIds;
       dataPoolIds castor."cnumList" := :dataPoolIds;
     BEGIN
-      INSERT INTO SvcClass (name, defaultFileSize, maxReplicaNb,
-                            gcPolicy, disk1Behavior, replicateOnClose,
+      INSERT INTO SvcClass (name, defaultFileSize, replicaNb, gcPolicy, disk1Behavior,
                             failJobsWhenNoSpace, id, forcedFileClass, lastEditor, lastEditionTime)
-             VALUES (:name, :defaultFileSize, :maxReplicaNb,
-                     :gcPolicy, :disk1Behavior, :replicateOnClose,
+             VALUES (:name, :defaultFileSize, :replicaNb, :gcPolicy, :disk1Behavior,
                      :failJobsWhenNoSpace, ids_seq.nextval, :forcedFileClass, :lastEditor, gettime())
              RETURNING id INTO scId;
       IF diskPoolIds.COUNT != 1 OR diskPoolIds(1) != -1 THEN
@@ -209,10 +203,9 @@ try:
       END IF;
     END;'''
     stcur.execute(insertFCSQL, name=svcclassname, defaultFileSize=defaultfilesize,
-                  maxReplicaNb=maxreplicanb, gcPolicy=gcpolicy, disk1Behavior=disk1behavior,
-                  replicateOnClose=replicateonclose, failJobsWhenNoSpace=failjobswhennospace,
-                  forcedFileClass=forcedfileclass, diskPoolIds=diskPoolIds, dataPoolIds=dataPoolIds,
-                  lastEditor=lasteditor)
+                  replicaNb=replicanb, gcPolicy=gcpolicy, disk1Behavior=disk1behavior,
+                  failJobsWhenNoSpace=failjobswhennospace, forcedFileClass=forcedfileclass,
+                  skPoolIds=diskPoolIds, dataPoolIds=dataPoolIds, lastEditor=lasteditor)
     # commit insertion and tell user
     stconn.commit()
     print 'inserted service class %s successfully' % svcclassname

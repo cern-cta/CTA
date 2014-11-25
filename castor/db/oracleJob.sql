@@ -601,7 +601,7 @@ BEGIN
         UPDATE DiskCopy SET importance = varDCImportance WHERE castorFile = varCfId;
       END IF;
       -- trigger the creation of additional copies of the file, if any
-      replicateOnClose(varCfId, varUid, varGid);
+      replicateOnClose(varCfId, varUid, varGid, varDestSvcClass);
     END IF;
   ELSE
     -- failure
@@ -1049,7 +1049,8 @@ BEGIN
              AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
              AND DiskServer.hwOnline = 1
            UNION
-          SELECT DiskServer.name || ':' AS candidate
+          SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ 
+                 DiskServer.name || ':' AS candidate
             FROM DiskServer, DiskCopy
            WHERE DiskCopy.castorFile = inCfId
              AND DiskCopy.status = dconst.DISKCOPY_VALID
