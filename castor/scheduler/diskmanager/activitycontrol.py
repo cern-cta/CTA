@@ -42,13 +42,15 @@ def signBase64(content, RSAKey):
     signature = signer.sign(contentHash)
     return base64.b64encode(signature)
 
-def buildXrootURL(self, diskserver, path, transferType):
+def buildXrootURL(self, diskserver, path, transferId, transferType):
     '''Builds a xroot valid url for the given path on the given diskserver'''
     # base url and key parameter
     url = 'root://'+diskserver+':1095//' + path + '?'
-    opaque_dict = {'castor2fs.pfn1' : path,
+    opaque_dict = {'castor.pfn1' : path,
+                   'castor.pfn2' : '0:' + self.config.getValue('DiskManager', 'MoverHandlerPort', 15511) \
+                   + ':' + transferId,
                    'castor.txtype' : transferType,
-                   'castor2fs.exptime' : str(int(time.time()) + 3600)}
+                   'castor.exptime' : str(int(time.time()) + 3600)}
 
     # signature part
     try:
@@ -57,10 +59,11 @@ def buildXrootURL(self, diskserver, path, transferType):
                                               '/opt/xrootd/keys/key.pem')
         key = RSA.importKey(open(keyFile, 'r').read())
         # sign opaque part obtained by concatenating the values
-        opaque_token = ''.join([opaque_dict['castor2fs.pfn1'],
+        opaque_token = ''.join([opaque_dict['castor.pfn1'],
+                                opaque_dict['castor.pfn2'],
                                 opaque_dict['castor.txtype'],
                                 "0", # accessop
-                                opaque_dict['castor2fs.exptime']])
+                                opaque_dict['castor.exptime']])
         signature = signBase64(opaque_token, key)
         opaque = ""
 
@@ -118,8 +121,8 @@ class ActivityControlThread(threading.Thread):
     # build command line
     transferType = 'd2d' + D2DTransferType.toStr(transfer.replicationType)
     srcDS, srcPath = srcDcPath.split(':', 1)
-    cmdLine = ['xrdcp', buildXrootURL(self, srcDS, srcPath, transferType), \
-                        buildXrootURL(self, 'localhost', destDcPath, transferType)]
+    cmdLine = ['xrdcp', buildXrootURL(self, srcDS, srcPath, transfer.transferId, transferType), \
+                        buildXrootURL(self, 'localhost', destDcPath, transfer.transferId, transferType)]
     # "Transfer starting" message
     dlf.write(msgs.TRANSFERSTARTING, subreqid=transfer.transferId,
               reqid=transfer.reqId, fileId=transfer.fileId,

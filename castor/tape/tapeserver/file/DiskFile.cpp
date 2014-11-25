@@ -388,11 +388,11 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
   using XrdCl::OpenFlags;
   m_signedURL = m_URL;
   // Turn the bare URL into a Castor URL, by adding opaque tags:
-  // ?castor2fs.pfn1=/srv/castor/...  (duplication of the path in practice)
+  // ?castor.pfn1=/srv/castor/...  (duplication of the path in practice)
   // ?castor.txtype=tape
-  // ?castor2fs.pool=xxx optional ceph pool
-  // ?castor2fs.exptime=(unix time)
-  // ?castor2fs.signature=
+  // ?castor.pool=xxx optional ceph pool
+  // ?castor.exptime=(unix time)
+  // ?castor.signature=
   //Find the path part of the url. It is the first occurence of "//"
   // after the inital [x]root://
   const std::string scheme = "root://";
@@ -416,12 +416,12 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
   std::string signature = CryptoPPSigner::sign(signatureBlock.str(), xrootPrivateKey);
 
   std::stringstream opaqueBloc;
-  opaqueBloc << "?castor2fs.pfn1=" << path;
+  opaqueBloc << "?castor.pfn1=" << path;
   if (pool.size())
-    opaqueBloc << "&castor2fs.pool=" << pool;
+    opaqueBloc << "&castor.pool=" << pool;
   opaqueBloc << "&castor.txtype=tape";
-  opaqueBloc << "&castor2fs.exptime=" << expTime;
-  opaqueBloc << "&castor2fs.signature=" << signature;
+  opaqueBloc << "&castor.exptime=" << expTime;
+  opaqueBloc << "&castor.signature=" << signature;
   m_signedURL = m_URL + opaqueBloc.str();
   
   // ... and finally open the file
@@ -479,10 +479,10 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
   m_URL=url;
   m_signedURL = m_URL;
   // Turn the bare URL into a Castor URL, by adding opaque tags:
-  // ?castor2fs.pfn1=/srv/castor/...  (duplication of the path in practice)
-  // ?castor2fs.pool=xxx optional ceph pool
-  // ?castor2fs.exptime=(unix time)
-  // ?castor2fs.signature=
+  // ?castor.pfn1=/srv/castor/...  (duplication of the path in practice)
+  // ?castor.pool=xxx optional ceph pool
+  // ?castor.exptime=(unix time)
+  // ?castor.signature=
   //Find the path part of the url. It is the first occurence of "//"
   // after the inital [x]root://
   const std::string scheme = "root://";
@@ -506,12 +506,12 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
   std::string signature = CryptoPPSigner::sign(signatureBlock.str(), xrootPrivateKey);
 
   std::stringstream opaqueBloc;
-  opaqueBloc << "?castor2fs.pfn1=" << path;
+  opaqueBloc << "?castor.pfn1=" << path;
   if (pool.size())
-    opaqueBloc << "&castor2fs.pool=" << pool;
+    opaqueBloc << "&castor.pool=" << pool;
   opaqueBloc << "&castor.txtype=tape";
-  opaqueBloc << "&castor2fs.exptime=" << expTime;
-  opaqueBloc << "&castor2fs.signature=" << signature;
+  opaqueBloc << "&castor.exptime=" << expTime;
+  opaqueBloc << "&castor.signature=" << signature;
   m_signedURL = m_URL + opaqueBloc.str();
   
   XrootClEx::throwOnError(m_xrootFile.Open(m_signedURL, OpenFlags::Delete),
