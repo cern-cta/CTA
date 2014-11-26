@@ -198,7 +198,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     if (tapegateway::READ_TP == m_volInfo.clientType) {
       rrp.disableBulk();
     }
-    RecallWatchDog rwd(15,60*10,m_intialProcess,m_driveConfig.unitName,lc);
+    RecallWatchDog rwd(15,60*10,m_intialProcess,m_driveConfig.getUnitName(),lc);
     
     RecallMemoryManager mm(m_castorConf.nbBufs, m_castorConf.bufsz,lc);
     TapeServerReporter tsr(m_intialProcess, m_driveConfig, 
@@ -295,7 +295,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     MigrationMemoryManager mm(m_castorConf.nbBufs,
         m_castorConf.bufsz,lc);
     MigrationReportPacker mrp(m_clientProxy, lc);
-    MigrationWatchDog mwd(15,60*10,m_intialProcess,m_driveConfig.unitName,lc);
+    MigrationWatchDog mwd(15,60*10,m_intialProcess,m_driveConfig.getUnitName(),lc);
     TapeWriteSingleThread twst(*drive.get(),
         m_mc,
         tsr,
@@ -429,11 +429,11 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);
   castor::tape::SCSI::DeviceInfo driveInfo;
   try {
-    driveInfo = dv.findBySymlink(driveConfig.devFilename);
+    driveInfo = dv.findBySymlink(driveConfig.getDevFilename());
   } catch (castor::tape::SCSI::DeviceVector::NotFound & e) {
     // We could not find this drive in the system's SCSI devices
     log::LogContext::ScopedParam sp08(lc, log::Param("density", m_volInfo.density));
-    log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.devFilename));
+    log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
     lc.log(LOG_ERR, "Drive not found on this path");
     
     client::ClientProxy::RequestReport reqReport;
@@ -450,7 +450,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
   } catch (castor::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
     log::LogContext::ScopedParam sp08(lc, log::Param("density", m_volInfo.density));
-    log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.devFilename));
+    log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
     log::LogContext::ScopedParam sp10(lc, log::Param("errorMessage", e.getMessageValue()));
     lc.log(LOG_ERR, "Error looking to path to tape drive");
     
@@ -468,7 +468,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
     log::LogContext::ScopedParam sp08(lc, log::Param("density", m_volInfo.density));
-    log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.devFilename));
+    log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
     lc.log(LOG_ERR, "Unexpected exception while looking for drive");
     
     client::ClientProxy::RequestReport reqReport;
@@ -491,7 +491,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
   } catch (castor::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
     log::LogContext::ScopedParam sp08(lc, log::Param("density", m_volInfo.density));
-    log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.devFilename));
+    log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
     log::LogContext::ScopedParam sp10(lc, log::Param("errorMessage", e.getMessageValue()));
     lc.log(LOG_ERR, "Error opening tape drive");
     
@@ -509,7 +509,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
     log::LogContext::ScopedParam sp08(lc, log::Param("density", m_volInfo.density));
-    log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.devFilename));
+    log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
     lc.log(LOG_ERR, "Unexpected exception while opening drive");
     
     client::ClientProxy::RequestReport reqReport;

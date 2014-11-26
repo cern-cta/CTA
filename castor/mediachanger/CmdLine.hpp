@@ -32,7 +32,7 @@ namespace mediachanger {
  * Class containing the code common to the parsed command-line of the ACS
  * command-line tools provided by CASTOR.
  */
-struct CmdLine {
+class CmdLine {
 protected:
 
   /**

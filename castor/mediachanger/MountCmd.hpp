@@ -47,7 +47,7 @@ public:
    * @param inStream Standard input stream.
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
-   * @param mc Object representing the API of the media changer.
+   * @param mc Interface to the media changer.
    */
   MountCmd(std::istream &inStream, std::ostream &outStream,
     std::ostream &errStream, MediaChangerFacade &mc) throw();

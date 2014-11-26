@@ -152,11 +152,7 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
       sim.addFileToRecall(ftr, sizeof(data));
     }
   }
-  DriveConfig driveConfig;
-  driveConfig.unitName = "T10D6116";
-  driveConfig.dgn = "T10KD6";
-  driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
+  DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -257,11 +253,7 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
       sim.addFileToRecall(ftr, sizeof(data));
     }
   }
-  DriveConfig driveConfig;
-  driveConfig.unitName = "T10D6116";
-  driveConfig.dgn = "T10KD6";
-  driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
+  DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -315,11 +307,7 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
-  DriveConfig driveConfig;
-  driveConfig.unitName = "T10D6116";
-  driveConfig.dgn = "T10KD6";
-  driveConfig.devFilename = "/dev/noSuchTape";
-  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
+  DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/noSuchTape", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024;
   castorConf.nbBufs = 10;
@@ -403,11 +391,7 @@ TEST(tapeServer, DataTransferSessionFailtoMount) {
       sim.addFileToRecall(ftr, 1000);
     }
   }
-  DriveConfig driveConfig;
-  driveConfig.unitName = "T10D6116";
-  driveConfig.dgn = "T10KD6";
-  driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
+  DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -467,11 +451,7 @@ TEST(tapeServer, DataTransferSessionEmptyOnVolReq) {
   // The drive will not even be opened. so no need for one.
   mockSys.fake.m_pathToDrive["/dev/nst0"] = NULL;
   
-  DriveConfig driveConfig;
-  driveConfig.unitName = "T10D6116";
-  driveConfig.dgn = "T10KD6";
-  driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
+  DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -615,11 +595,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
     expected.push_back(expectedResult(fseq, tf->checksum()));
     tempFiles.push_back(tf.release());
   }
-  DriveConfig driveConfig;
-  driveConfig.unitName = "T10D6116";
-  driveConfig.dgn = "T10KD6";
-  driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
+  DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -705,11 +681,7 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
     ftm.setPath(tf->path());
     sim.addFileToMigrate(ftm);
   }
-  DriveConfig driveConfig;
-  driveConfig.unitName = "T10D6116";
-  driveConfig.dgn = "T10KD6";
-  driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
+  DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -807,11 +779,7 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
     }
     tempFiles.push_back(tf.release());
   }
-  DriveConfig driveConfig;
-  driveConfig.unitName = "T10D6116";
-  driveConfig.dgn = "T10KD6";
-  driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
+  DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -914,11 +882,7 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
     }
     tempFiles.push_back(tf.release());
   }
-  DriveConfig driveConfig;
-  driveConfig.unitName = "T10D6116";
-  driveConfig.dgn = "T10KD6";
-  driveConfig.devFilename = "/dev/tape_T10D6116";
-  driveConfig.librarySlot = castor::mediachanger::GenericLibrarySlot("manual");
+  DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;

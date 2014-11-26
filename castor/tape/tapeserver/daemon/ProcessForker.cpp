@@ -467,7 +467,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
     const DriveConfig driveConfig = getDriveConfig(rqst);
     std::list<log::Param> params;
-    params.push_back(log::Param("unitName", driveConfig.unitName));
+    params.push_back(log::Param("unitName", driveConfig.getUnitName()));
     params.push_back(log::Param("TPVID", rqst.vid()));
     m_log(LOG_INFO, "Cleaner-session child-process started", params);
 
@@ -518,7 +518,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   const DriveConfig driveConfig = getDriveConfig(rqst);
 
   std::list<log::Param> params;
-  params.push_back(log::Param("unitName", driveConfig.unitName));
+  params.push_back(log::Param("unitName", driveConfig.getUnitName()));
   m_log(LOG_INFO, "Data-transfer child-process started", params);
 
   const legacymsg::RtcpJobRqstMsgBody vdqmJob = getVdqmJob(rqst);
@@ -842,7 +842,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     const legacymsg::TapeLabelRqstMsgBody labelJob = getLabelJob(rqst);
 
     std::list<log::Param> params;
-    params.push_back(log::Param("unitName", driveConfig.unitName));
+    params.push_back(log::Param("unitName", driveConfig.getUnitName()));
     params.push_back(log::Param("TPVID", labelJob.vid));
     m_log(LOG_INFO, "Label-session child-process started", params);
 

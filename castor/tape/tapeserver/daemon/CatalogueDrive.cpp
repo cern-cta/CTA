@@ -141,7 +141,8 @@ const castor::tape::tapeserver::daemon::CatalogueSession &
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to get tape session for drive " <<
-      m_config.unitName << " from drive catalogue: " << ne.getMessage().str();
+      m_config.getUnitName() << " from drive catalogue: " <<
+      ne.getMessage().str();
     throw ex;
   }
 }
@@ -181,7 +182,8 @@ const castor::tape::tapeserver::daemon::CatalogueCleanerSession &
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to get cleaner session for drive " <<
-      m_config.unitName << " from drive catalogue: " << ne.getMessage().str();
+      m_config.getUnitName() << " from drive catalogue: " <<
+      ne.getMessage().str();
     throw ex;
   }
 }
@@ -207,7 +209,8 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession &
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to get cleaner session for drive " <<
-      m_config.unitName << " from drive catalogue: " << ne.getMessage().str();
+      m_config.getUnitName() << " from drive catalogue: " <<
+      ne.getMessage().str();
     throw ex;
   }
 }
@@ -249,7 +252,8 @@ const castor::tape::tapeserver::daemon::CatalogueLabelSession &
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to get label session for drive " <<
-      m_config.unitName << " from drive catalogue: " << ne.getMessage().str();
+      m_config.getUnitName() << " from drive catalogue: " <<
+      ne.getMessage().str();
     throw ex;
   }
 }
@@ -274,7 +278,8 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession &
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to get label session for drive " <<
-      m_config.unitName << " from drive catalogue: " << ne.getMessage().str();
+      m_config.getUnitName() << " from drive catalogue: " <<
+      ne.getMessage().str();
     throw ex;
   }
 }
@@ -316,7 +321,8 @@ const castor::tape::tapeserver::daemon::CatalogueTransferSession &
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to get transfer session for drive " <<
-      m_config.unitName << " from drive catalogue: " << ne.getMessage().str();
+      m_config.getUnitName() << " from drive catalogue: " <<
+      ne.getMessage().str();
     throw ex;
   }
 }
@@ -342,7 +348,8 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession &
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to get transfer session for drive " <<
-      m_config.unitName << " from drive catalogue: " << ne.getMessage().str();
+      m_config.getUnitName() << " from drive catalogue: " <<
+      ne.getMessage().str();
     throw ex;
   }
 }
@@ -380,12 +387,13 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureUp() {
   default:
     {
       castor::exception::Exception ex;
-      ex.getMessage() << "Failed to configure tape-drive " << m_config.unitName
-        << " up : Incompatible drive state: state=" << driveStateToStr(m_state);
+      ex.getMessage() << "Failed to configure tape-drive " <<
+        m_config.getUnitName() << " up: Incompatible drive state: state=" <<
+        driveStateToStr(m_state);
       throw ex;
     }
   }
-  m_vdqm.setDriveUp(m_hostName, m_config.unitName, m_config.dgn);
+  m_vdqm.setDriveUp(m_hostName, m_config.getUnitName(), m_config.getDgn());
 }
 
 //-----------------------------------------------------------------------------
@@ -398,7 +406,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureDown() {
     break;
   case DRIVE_STATE_UP:
     changeState(DRIVE_STATE_DOWN);
-    m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
+    m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
     break;
   case CatalogueDrive::DRIVE_STATE_RUNNING:
     changeState(DRIVE_STATE_WAITDOWN);
@@ -406,8 +414,8 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureDown() {
   default:
     {
       castor::exception::Exception ex;
-      ex.getMessage() << "Failed to configure tape drive " << m_config.unitName
-        << " down: Incompatible drive state: state=" <<
+      ex.getMessage() << "Failed to configure tape drive " <<
+        m_config.getUnitName() << " down: Incompatible drive state: state=" <<
         driveStateToStr(m_state);
       throw ex;
     }
@@ -421,24 +429,24 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedVdqmJob(
   const legacymsg::RtcpJobRqstMsgBody &job)  {
 
   std::ostringstream task;
-  task << "handle vdqm job for tape drive " << m_config.unitName;
+  task << "handle vdqm job for tape drive " << m_config.getUnitName();
 
   // Sanity check
-  if(job.driveUnit != m_config.unitName) {
+  if(job.driveUnit != m_config.getUnitName()) {
     // Should never happen
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
       ": unit name mismatch: job.driveUnit=" << job.driveUnit <<
-      " m_config.unitName=" << m_config.unitName;
+      " m_config.getUnitName()=" << m_config.getUnitName();
     throw ex;
   }
   
   switch(m_state) {
   case DRIVE_STATE_UP:
-    if(std::string(job.dgn) != m_config.dgn) {
+    if(std::string(job.dgn) != m_config.getDgn()) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": DGN mismatch: catalogueDgn=" << m_config.dgn << " vdqmJobDgn="
+        ": DGN mismatch: catalogueDgn=" << m_config.getDgn() << " vdqmJobDgn="
           << job.dgn;
       throw ex;
     }
@@ -458,7 +466,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedVdqmJob(
           m_blockMoveTimeoutInSecs,
           m_processForker);
       m_session = dynamic_cast<CatalogueSession *>(transferSession);
-      m_vdqm.assignDrive(m_hostName, m_config.unitName, job.dgn,
+      m_vdqm.assignDrive(m_hostName, m_config.getUnitName(), job.dgn,
         job.volReqId, m_session->getPid());
     }
     break;
@@ -480,24 +488,24 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
   const std::string unitName(job.drive);
 
   std::ostringstream task;
-  task << "handle label job for tape drive " << m_config.unitName;
+  task << "handle label job for tape drive " << m_config.getUnitName();
 
   // Sanity check
-  if(job.drive != m_config.unitName) {
+  if(job.drive != m_config.getUnitName()) {
     // Should never happen
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
       ": unit name mismatch: job.drive=" << job.drive << 
-      " m_config.unitName=" << m_config.unitName;
+      " m_config.getUnitName()=" << m_config.getUnitName();
     throw ex;
   }
 
   switch(m_state) {
   case DRIVE_STATE_UP:
-    if(std::string(job.dgn) != m_config.dgn) {
+    if(std::string(job.dgn) != m_config.getDgn()) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": DGN mismatch: catalogueDgn=" << m_config.dgn << " labelJobDgn="
+        ": DGN mismatch: catalogueDgn=" << m_config.getDgn() << " labelJobDgn="
         << job.dgn;
       throw ex;
     }
@@ -557,18 +565,18 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
   case DRIVE_STATE_RUNNING:
     changeState(DRIVE_STATE_UP);
     session->sessionSucceeded();
-    m_vdqm.setDriveUp(m_hostName, m_config.unitName, m_config.dgn);
+    m_vdqm.setDriveUp(m_hostName, m_config.getUnitName(), m_config.getDgn());
     break;
   case DRIVE_STATE_WAITDOWN:
     changeState(CatalogueDrive::DRIVE_STATE_DOWN);
     session->sessionSucceeded();
-    m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
+    m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
     break;
   case DRIVE_STATE_WAITSHUTDOWNKILL:
   case DRIVE_STATE_WAITSHUTDOWNCLEANER:
     changeState(DRIVE_STATE_SHUTDOWN);
     session->sessionSucceeded();
-    m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
+    m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
     break;
   default:
     {
@@ -642,7 +650,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::runningSessionFailed() {
   m_session = NULL;
   session->sessionFailed();
   changeState(DRIVE_STATE_DOWN);
-  m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
+  m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
 }
 
 //------------------------------------------------------------------------------
@@ -660,7 +668,7 @@ runningSessionKilled(uint32_t signal) {
       driveReadyDelayInSeconds);
   } else {
     changeState(DRIVE_STATE_DOWN);
-    m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
+    m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
   }
 }
 
@@ -728,7 +736,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
       CatalogueSession::sessionTypeToStr(sessionType);
 
     std::list<log::Param> params;
-    params.push_back(log::Param("unitName", m_config.unitName));
+    params.push_back(log::Param("unitName", m_config.getUnitName()));
     params.push_back(log::Param("sessionType", sessionTypeStr));
     params.push_back(log::Param("sessionPid", sessionPid));
 
@@ -745,7 +753,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
       driveReadyDelayInSeconds);
   } else {
     changeState(DRIVE_STATE_DOWN);
-    m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
+    m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
   }
 }
 
@@ -760,11 +768,11 @@ castor::legacymsg::TapeStatDriveEntry
   try {
     entry.uid = getUidForTapeStatDriveEntry();
     entry.jid = getJidForTapeStatDriveEntry();
-    castor::utils::copyString(entry.dgn, m_config.dgn);
+    castor::utils::copyString(entry.dgn, m_config.getDgn());
     entry.up = getUpForTapeStatDriveEntry();
     entry.asn = getAsnForTapeStatDriveEntry();
     entry.asn_time = getAsnTimeForTapeStatDriveEntry();
-    castor::utils::copyString(entry.drive, m_config.unitName);
+    castor::utils::copyString(entry.drive, m_config.getUnitName());
     entry.mode = getModeForTapeStatDriveEntry();
     castor::utils::copyString(entry.lblcode,
       getLblCodeForTapeStatDriveEntry().c_str());
@@ -950,7 +958,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::shutdown() {
         CatalogueSession::sessionTypeToStr(sessionType);
 
       std::list<log::Param> params;
-      params.push_back(log::Param("unitName", m_config.unitName));
+      params.push_back(log::Param("unitName", m_config.getUnitName()));
       params.push_back(log::Param("sessionType", sessionTypeStr));
       params.push_back(log::Param("sessionPid", sessionPid));
 
@@ -989,7 +997,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::killSession() {
     CatalogueSession::sessionTypeToStr(sessionType);
 
   std::list<log::Param> params;
-  params.push_back(log::Param("unitName", m_config.unitName));
+  params.push_back(log::Param("unitName", m_config.getUnitName()));
   params.push_back(log::Param("sessionType", sessionTypeStr));
   params.push_back(log::Param("sessionPid", sessionPid));
 
@@ -1004,7 +1012,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::killSession() {
   delete m_session;
   m_session = NULL;
   changeState(DRIVE_STATE_DOWN);
-  m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
+  m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
 }
 
 //------------------------------------------------------------------------------
@@ -1021,7 +1029,7 @@ std::string castor::tape::tapeserver::daemon::CatalogueDrive::
 void castor::tape::tapeserver::daemon::CatalogueDrive::changeState(
   const DriveState newState) throw() {
   std::list<log::Param> params;
-  params.push_back(log::Param("unitName", m_config.unitName));
+  params.push_back(log::Param("unitName", m_config.getUnitName()));
   params.push_back(log::Param("previousState", driveStateToStr(m_state)));
   params.push_back(log::Param("newState", driveStateToStr(newState)));
   if(NULL != m_session) {

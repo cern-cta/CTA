@@ -27,14 +27,19 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::mediachanger::ManualLibrarySlot::ManualLibrarySlot()
-  throw() {
+  throw():
+  LibrarySlot(TAPE_LIBRARY_TYPE_MANUAL) {
+  m_str = "manual";
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::mediachanger::ManualLibrarySlot::ManualLibrarySlot(
-  const std::string &str): m_str(str) {
+  const std::string &str):
+  LibrarySlot(TAPE_LIBRARY_TYPE_MANUAL) {
+  m_str = str;
+
   if(str.find("manual")) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to construct ManualLibrarySlot"
@@ -44,8 +49,15 @@ castor::mediachanger::ManualLibrarySlot::ManualLibrarySlot(
 }
 
 //------------------------------------------------------------------------------
-// str
+// destructor
 //------------------------------------------------------------------------------
-const std::string &castor::mediachanger::ManualLibrarySlot::str() const throw() {
-  return m_str;
+castor::mediachanger::ManualLibrarySlot::~ManualLibrarySlot() throw() {
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::mediachanger::LibrarySlot *castor::mediachanger::ManualLibrarySlot::
+  clone() {
+  return new ManualLibrarySlot(*this);
 }

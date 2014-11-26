@@ -111,11 +111,11 @@ void castor::tape::tapeserver::daemon::Catalogue::populate(
       const DriveConfig &driveConfig = itor->second;
 
       // Sanity check
-      if(unitName != driveConfig.unitName) {
+      if(unitName != driveConfig.getUnitName()) {
         // This should never happen
         castor::exception::Exception ex;
         ex.getMessage() << "Unit name mismatch: expected=" << unitName <<
-          " actual=" << driveConfig.unitName;
+          " actual=" << driveConfig.getUnitName();
         throw ex;
       }
       enterDriveConfig(driveConfig);
@@ -134,12 +134,12 @@ void castor::tape::tapeserver::daemon::Catalogue::populate(
 void castor::tape::tapeserver::daemon::Catalogue::enterDriveConfig(
   const DriveConfig &driveConfig)  {
 
-  DriveMap::iterator itor = m_drives.find(driveConfig.unitName);
+  DriveMap::iterator itor = m_drives.find(driveConfig.getUnitName());
 
   // If the drive is not in the catalogue
   if(m_drives.end() == itor) {
     // Insert it
-    m_drives[driveConfig.unitName] = new CatalogueDrive(m_netTimeout,
+    m_drives[driveConfig.getUnitName()] = new CatalogueDrive(m_netTimeout,
       m_log, m_processForker, m_cupv, m_vdqm, m_vmgr, m_hostName, driveConfig,
       CatalogueDrive::DRIVE_STATE_DOWN, m_catalogueConfig.waitJobTimeoutInSecs,
       m_catalogueConfig.mountTimeoutInSecs,
@@ -149,7 +149,7 @@ void castor::tape::tapeserver::daemon::Catalogue::enterDriveConfig(
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to enter tape-drive configuration into tape-drive catalogue"
-      ": Duplicate drive-entry: unitName=" << driveConfig.unitName;
+      ": Duplicate drive-entry: unitName=" << driveConfig.getUnitName();
     throw ex;
   }
 }
@@ -230,12 +230,12 @@ const castor::tape::tapeserver::daemon::CatalogueDrive
   const DriveConfig &driveConfig = drive.getConfig();
 
   // Sanity check
-  if(unitName != driveConfig.unitName) {
+  if(unitName != driveConfig.getUnitName()) {
     // Should never get here
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Found inconsistent entry in tape-drive catalogue"
-      ": Unit name mismatch: actual=" << driveConfig.unitName;
+      ": Unit name mismatch: actual=" << driveConfig.getUnitName();
     throw ex;
   }
 
@@ -270,13 +270,13 @@ castor::tape::tapeserver::daemon::CatalogueDrive
   const DriveConfig &driveConfig = drive.getConfig();
 
   // Sanity check
-  if(unitName != driveConfig.unitName) {
+  if(unitName != driveConfig.getUnitName()) {
     // This should never happen
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Found inconsistent entry in tape-drive catalogue"
       ": Unit name mismatch: expected=" << unitName <<
-      " actual=" << driveConfig.unitName;
+      " actual=" << driveConfig.getUnitName();
     throw ex;
   }
 

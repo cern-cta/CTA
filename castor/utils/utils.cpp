@@ -165,17 +165,19 @@ std::string castor::utils::singleSpaceString(const std::string &str) throw() {
 //------------------------------------------------------------------------------
 // isValidUInt
 //------------------------------------------------------------------------------
-bool castor::utils::isValidUInt(const char *str)
+bool castor::utils::isValidUInt(const std::string &str)
   throw() {
   // An empty string is not a valid unsigned integer
-  if(*str == '\0') {
+  if(str.empty()) {
     return false;
   }
 
   // For each character in the string
-  for(;*str != '\0'; str++) {
+  for(std::string::const_iterator itor = str.begin(); itor != str.end();
+    itor++) {
+
     // If the current character is not a valid numerical digit
-    if(*str < '0' || *str > '9') {
+    if(*itor < '0' || *itor > '9') {
       return false;
     }
   }

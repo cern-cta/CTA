@@ -63,7 +63,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // Reaching this point means the cleaner failed and an exception was thrown
   log::Param params[] = {
     log::Param("TPVID", m_vid),
-    log::Param("unitName", m_driveConfig.unitName),
+    log::Param("unitName", m_driveConfig.getUnitName()),
     log::Param("message", errorMessage)};
   m_log(LOG_ERR, "Cleaner failed", params);
   return MARK_DRIVE_AS_DOWN;
@@ -76,7 +76,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::CleanerSession::exceptionThrowingExecute() {
   std::list<log::Param> params;
   params.push_back(log::Param("TPVID", m_vid));
-  params.push_back(log::Param("unitName", m_driveConfig.unitName));
+  params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
 
   setProcessCapabilities("cap_sys_rawio+ep");
 
@@ -123,7 +123,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::setProcessCapabilities(
 std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
   castor::tape::tapeserver::daemon::CleanerSession::createDrive() {
   SCSI::DeviceVector dv(m_sysWrapper);
-  SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
+  SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.getDevFilename());
   
   // Instantiate the drive object
   std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
@@ -146,7 +146,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::waitUntilDriveIsReady(
   if(0 != m_driveReadyDelayInSeconds) {
     std::list<log::Param> params;
     params.push_back(log::Param("TPVID", m_vid));
-    params.push_back(log::Param("unitName", m_driveConfig.unitName));
+    params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
     params.push_back(log::Param("driveReadyDelayInSeconds",
       m_driveReadyDelayInSeconds));
 
@@ -169,7 +169,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::rewindDrive(
   drive::DriveInterface &drive) {
   std::list<log::Param> params;
   params.push_back(log::Param("TPVID", m_vid));
-  params.push_back(log::Param("unitName", m_driveConfig.unitName));
+  params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
 
   m_log(LOG_INFO, "Cleaner rewinding tape", params);
   drive.rewind();
@@ -183,7 +183,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::checkTapeContainsData(
   drive::DriveInterface &drive) {
   std::list<log::Param> params;
   params.push_back(log::Param("TPVID", m_vid));
-  params.push_back(log::Param("unitName", m_driveConfig.unitName));
+  params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
 
   m_log(LOG_INFO, "Cleaner checking tape contains data", params);
   if(drive.isTapeBlank()) {
@@ -202,7 +202,7 @@ std::string castor::tape::tapeserver::daemon::CleanerSession::checkVolumeLabel(
   tapeFile::VOL1 vol1;
   std::list<log::Param> params;
   params.push_back(log::Param("TPVID", m_vid));
-  params.push_back(log::Param("unitName", m_driveConfig.unitName));
+  params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
   
   try {
     drive.readExactBlock((void * )&vol1, sizeof(vol1),
@@ -238,14 +238,15 @@ std::string castor::tape::tapeserver::daemon::CleanerSession::checkVolumeLabel(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CleanerSession::unloadTape(
   const std::string &vid, drive::DriveInterface &drive) {
+  const mediachanger::LibrarySlot &librarySlot = m_driveConfig.getLibrarySlot();
   std::list<log::Param> params;
   params.push_back(log::Param("TPVID", vid));
-  params.push_back(log::Param("unitName", m_driveConfig.unitName));
+  params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
+  params.push_back(log::Param("librarySlot", librarySlot.str()));
 
   // We implement the same policy as with the tape sessions: 
   // if the librarySlot parameter is "manual", do nothing.
-  if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
-    m_driveConfig.librarySlot.getLibraryType()) {
+  if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL == librarySlot.getLibraryType()) {
     m_log(LOG_INFO, "Cleaner not unloading tape because media changer is"
       " manual", params);
     return;
@@ -268,14 +269,16 @@ void castor::tape::tapeserver::daemon::CleanerSession::unloadTape(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CleanerSession::dismountTape(
   const std::string &vid) {
+  const mediachanger::LibrarySlot &librarySlot = m_driveConfig.getLibrarySlot();
   std::list<log::Param> params;
   params.push_back(log::Param("TPVID", vid));
-  params.push_back(log::Param("unitName", m_driveConfig.unitName));
+  params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
+  params.push_back(log::Param("librarySlot", librarySlot.str()));
 
   try {
-    m_mc.dismountTape(vid, m_driveConfig.librarySlot.str());
+    m_mc.dismountTape(vid, librarySlot);
     const bool dismountWasManual = mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
-      m_driveConfig.librarySlot.getLibraryType();
+      librarySlot.getLibraryType();
     if(dismountWasManual) {
       m_log(LOG_INFO, "Cleaner did not dismount tape because media changer is"
         " manual", params);

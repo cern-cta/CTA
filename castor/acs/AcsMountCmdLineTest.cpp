@@ -47,7 +47,7 @@ protected:
   ArgcvList m_argsList;
 
   /**
-   * Creates a duplicate string usin the new operator.
+   * Creates a duplicate string using the new operator.
    */
   char *dupString(const char *str) {
     const size_t len = strlen(str);

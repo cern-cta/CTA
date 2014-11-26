@@ -22,7 +22,7 @@
 #pragma once
 
 #include "castor/legacymsg/RmcProxy.hpp"
-#include "castor/mediachanger/GenericLibrarySlot.hpp"
+#include "castor/mediachanger/LibrarySlot.hpp"
 #include "castor/mediachanger/MmcProxy.hpp"
 #include "castor/mediachanger/MmcProxyNotSupported.hpp"
 #include "castor/messages/AcsProxy.hpp"
@@ -71,30 +71,27 @@ public:
    * media changers support read-only mounts.
    *
    * @param vid The volume identifier of the tape.
-   * @param librarySlot The library slot containing the tape drive.
+   * @param slot The library slot containing the tape drive.
    */
-  void mountTapeReadOnly(const std::string &vid,
-    const GenericLibrarySlot &librarySlot);
+  void mountTapeReadOnly(const std::string &vid, const LibrarySlot &slot);
 
   /**
    * Requests the media changer to mount the specified tape for read/write
    * access into the drive in the specified library slot.
    *
    * @param vid The volume identifier of the tape.
-   * @param librarySlot The library slot containing the tape drive.
+   * @param slot The library slot containing the tape drive.
    */
-  void mountTapeReadWrite(const std::string &vid,
-    const GenericLibrarySlot &librarySlot);
+  void mountTapeReadWrite(const std::string &vid, const LibrarySlot &slot);
 
   /**
    * Requests the media changer to dismount the specified tape from the
    * drive in the specifed library slot.
    *
    * @param vid The volume identifier of the tape.
-   * @param librarySlot The library slot containing the tape drive.
+   * @param slot The library slot containing the tape drive.
    */
-  void dismountTape(const std::string &vid,
-    const GenericLibrarySlot &librarySlot);
+  void dismountTape(const std::string &vid, const LibrarySlot &slot);
 
   /**
    * Requests the media changer to forcefully dismount the specified tape from
@@ -105,10 +102,9 @@ public:
    * media changers support forceful dismounts.
    *
    * @param vid The volume identifier of the tape.
-   * @param librarySlot The library slot containing the tape drive.
+   * @param slot The library slot containing the tape drive.
    */
-  void forceDismountTape(const std::string &vid,
-    const GenericLibrarySlot &librarySlot);
+  void forceDismountTape(const std::string &vid, const LibrarySlot &slot);
 
 private:
 

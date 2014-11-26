@@ -98,7 +98,7 @@ template <class T> std::string toString(const T& t){
  * @param str The string to be checked.
  * @returns true if the string is a valid unsigned integer, else false.
  */
-bool isValidUInt(const char *str) throw();
+bool isValidUInt(const std::string &str) throw();
 
 /**
  * Converts the specified string to uppercase.

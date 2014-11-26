@@ -22,14 +22,14 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
-#include "castor/mediachanger/GenericLibrarySlot.hpp"
+#include "castor/mediachanger/ManualLibrarySlot.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
 
 namespace unitTests {
 
-class castor_mediachanger_GenericLibrarySlotTest : public ::testing::Test {
+class castor_mediachanger_ManualLibrarySlotTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -39,45 +39,38 @@ protected:
   }
 };
 
-TEST_F(castor_mediachanger_GenericLibrarySlotTest, getLibraryTypeNone) {
+TEST_F(castor_mediachanger_ManualLibrarySlotTest, manual1234) {
   using namespace castor::mediachanger;
 
-  GenericLibrarySlot slot;
+  std::auto_ptr<ManualLibrarySlot> slot;
+  ASSERT_NO_THROW(slot.reset(new ManualLibrarySlot("manual1234")));
 
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_NONE, slot.getLibraryType());
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_MANUAL, slot->getLibraryType());
+  ASSERT_EQ("manual1234", slot->str());
 }
 
-TEST_F(castor_mediachanger_GenericLibrarySlotTest, getLibraryTypeAcs) {
+TEST_F(castor_mediachanger_ManualLibrarySlotTest, notmanual) {
   using namespace castor::mediachanger;
 
-  GenericLibrarySlot slot("acs1,2,3,4");
-
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS, slot.getLibraryType());
-}
-
-TEST_F(castor_mediachanger_GenericLibrarySlotTest, getLibraryTypeManual) {
-  using namespace castor::mediachanger;
-
-  GenericLibrarySlot slot("manual");
-
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_MANUAL, slot.getLibraryType());
-}
-
-TEST_F(castor_mediachanger_GenericLibrarySlotTest, getLibraryTypeScsi) {
-  using namespace castor::mediachanger;
-
-  GenericLibrarySlot slot("smc@rmc_host,1");
-
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot.getLibraryType());
-}
-
-TEST_F(castor_mediachanger_GenericLibrarySlotTest, getLibraryTypeNonsense) {
-  using namespace castor::mediachanger;
-
-  std::auto_ptr<GenericLibrarySlot> slot;
-
-  ASSERT_THROW(slot.reset(new GenericLibrarySlot("nonsense")),
+  std::auto_ptr<ManualLibrarySlot> slot;
+  ASSERT_THROW(slot.reset(new ManualLibrarySlot("notmanual")),
     castor::exception::Exception);
+}
+
+TEST_F(castor_mediachanger_ManualLibrarySlotTest, clone) {
+  using namespace castor::mediachanger;
+
+  std::auto_ptr<ManualLibrarySlot> slot1;
+  ASSERT_NO_THROW(slot1.reset(new ManualLibrarySlot("manual1234")));
+
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_MANUAL, slot1->getLibraryType());
+  ASSERT_EQ("manual1234", slot1->str());
+
+  std::auto_ptr<ManualLibrarySlot> slot2;
+  ASSERT_NO_THROW(slot2.reset((ManualLibrarySlot*)slot1->clone()));
+
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_MANUAL, slot2->getLibraryType());
+  ASSERT_EQ("manual1234", slot2->str());
 }
 
 } // namespace unitTests

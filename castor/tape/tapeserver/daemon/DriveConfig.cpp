@@ -16,88 +16,106 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
+ *
+ *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/mediachanger/AcsLibrarySlot.hpp"
-#include "castor/utils/utils.hpp"
-
-#include <sstream>
+#include "castor/exception/Exception.cpp"
+#include "castor/mediachanger/LibrarySlotParser.hpp"
+#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::mediachanger::AcsLibrarySlot::AcsLibrarySlot() throw():
-  LibrarySlot(TAPE_LIBRARY_TYPE_ACS),
-  m_acs(0),
-  m_lsm(0),
-  m_panel(0),
-  m_drive(0) {
-  m_str = librarySlotToString(0, 0, 0, 0);
-}
-
-//------------------------------------------------------------------------------
-// librarySlotToString
-//------------------------------------------------------------------------------
-std::string castor::mediachanger::AcsLibrarySlot::librarySlotToString(
-  const uint32_t acs, const uint32_t lsm, const uint32_t panel,
-  const uint32_t drive) const {
-  std::ostringstream oss;
-  oss << "acs" << acs << "," << lsm << "," << panel << "," << drive;
-  return oss.str();
+castor::tape::tapeserver::daemon::DriveConfig::DriveConfig() throw():
+  m_librarySlot(0) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::mediachanger::AcsLibrarySlot::AcsLibrarySlot(const uint32_t acs,
-  const uint32_t lsm, const uint32_t panel, const uint32_t drive) throw():
-  LibrarySlot(TAPE_LIBRARY_TYPE_ACS),
-  m_acs(acs),
-  m_lsm(lsm),
-  m_panel(panel),
-  m_drive(drive) {
-  m_str = librarySlotToString(acs, lsm, panel, drive);
+castor::tape::tapeserver::daemon::DriveConfig::DriveConfig(
+  const std::string &unitName,
+  const std::string &dgn,
+  const std::string &devFilename,
+  const std::string &librarySlot):
+  m_unitName(unitName),
+  m_dgn(dgn),
+  m_devFilename(devFilename),
+  m_librarySlot(mediachanger::LibrarySlotParser::parse(librarySlot)) {
+}
+
+//------------------------------------------------------------------------------
+// copy constructor
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::DriveConfig::DriveConfig(
+  const DriveConfig &obj):
+  m_unitName(obj.m_unitName),
+  m_dgn(obj.m_dgn),
+  m_devFilename(obj.m_devFilename),
+  m_librarySlot(0 == obj.m_librarySlot ? 0 : obj.m_librarySlot->clone()) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::mediachanger::AcsLibrarySlot::~AcsLibrarySlot() throw() {
+castor::tape::tapeserver::daemon::DriveConfig::~DriveConfig() throw() {
+  delete m_librarySlot;
 }
 
 //------------------------------------------------------------------------------
-// clone
+// assignment operator
 //------------------------------------------------------------------------------
-castor::mediachanger::LibrarySlot *castor::mediachanger::AcsLibrarySlot::
-  clone() {
-  return new AcsLibrarySlot(*this);
+castor::tape::tapeserver::daemon::DriveConfig &castor::tape::tapeserver::
+  daemon::DriveConfig::operator=(const DriveConfig &rhs) {
+  // If this is not a self assigment
+  if(this != &rhs) {
+    // Avoid a memory leak
+    delete(m_librarySlot);
+
+    m_unitName    = rhs.m_unitName;
+    m_dgn         = rhs.m_dgn;
+    m_devFilename = rhs.m_devFilename;
+    m_librarySlot = 0 == rhs.m_librarySlot ? 0 : rhs.m_librarySlot->clone();
+  }
+
+  return *this;
 }
 
 //------------------------------------------------------------------------------
-// getAcs
+// getUnitName
 //------------------------------------------------------------------------------
-uint32_t castor::mediachanger::AcsLibrarySlot::getAcs() const throw () {
-  return m_acs;
+const std::string &castor::tape::tapeserver::daemon::DriveConfig::getUnitName()
+  const throw() {
+  return m_unitName;
 }
 
 //------------------------------------------------------------------------------
-// getLsm
+// getDgn
 //------------------------------------------------------------------------------
-uint32_t castor::mediachanger::AcsLibrarySlot::getLsm() const throw () {
-  return m_lsm;
+const std::string &castor::tape::tapeserver::daemon::DriveConfig::getDgn()
+  const throw() {
+  return m_dgn;
+}
+  
+//------------------------------------------------------------------------------
+// getDevFilename
+//------------------------------------------------------------------------------
+const std::string &castor::tape::tapeserver::daemon::DriveConfig::
+  getDevFilename() const throw() {
+  return m_devFilename;
 }
 
 //------------------------------------------------------------------------------
-// getPanel
+// getLibrarySlot
 //------------------------------------------------------------------------------
-uint32_t castor::mediachanger::AcsLibrarySlot::getPanel() const throw () {
-  return m_panel;
-}
-
-//------------------------------------------------------------------------------
-// getDrive
-//------------------------------------------------------------------------------
-uint32_t castor::mediachanger::AcsLibrarySlot::getDrive() const throw () {
-  return m_drive;
+const castor::mediachanger::LibrarySlot &castor::tape::tapeserver::daemon::
+  DriveConfig::getLibrarySlot() const {
+  if(0 == m_librarySlot) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to get library slot: Value not set";
+    throw ex;
+  }
+  return *m_librarySlot;
 }

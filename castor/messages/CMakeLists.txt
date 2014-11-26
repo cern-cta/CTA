@@ -33,6 +33,7 @@ target_link_libraries(castormessages
   castormessagesprotobuf
   castorlog
   castormediachanger
+  castorutils
   protobuf
   ssl
   zmq)

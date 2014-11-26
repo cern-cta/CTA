@@ -25,6 +25,7 @@
 
 #include <getopt.h>
 #include <iostream>
+#include <memory>
  
 //------------------------------------------------------------------------------
 // constructor
@@ -51,20 +52,22 @@ void castor::mediachanger::DismountCmd::exceptionThrowingMain(const int argc,
 
   // Display the usage message to standard out and exit with success if the
   // user requested help
-  if(m_cmdLine.help) {
-    m_out << DismountCmdLine::getUsage();
+  if(m_cmdLine.getHelp()) {
+    m_out << m_cmdLine.getUsage();
     return;
   }
 
   // Setup debug mode to be on or off depending on the command-line arguments
-  m_debugBuf.setDebug(m_cmdLine.debug);
+  m_debugBuf.setDebug(m_cmdLine.getDebug());
 
-  m_dbg << "VID        = " << m_cmdLine.vid << std::endl;
-  m_dbg << "DRIVE_SLOT = " << m_cmdLine.driveLibrarySlot.str() << std::endl;
+  m_dbg << "VID        = " << m_cmdLine.getVid() << std::endl;
+  m_dbg << "DRIVE_SLOT = " << m_cmdLine.getDriveLibrarySlot().str() <<
+    std::endl;
 
-  if(m_cmdLine.force) {
-    m_mc.forceDismountTape(m_cmdLine.vid, m_cmdLine.driveLibrarySlot);
+  if(m_cmdLine.getForce()) {
+    m_mc.forceDismountTape(m_cmdLine.getVid(),
+      m_cmdLine.getDriveLibrarySlot());
   } else {
-    m_mc.dismountTape(m_cmdLine.vid, m_cmdLine.driveLibrarySlot);
+    m_mc.dismountTape(m_cmdLine.getVid(), m_cmdLine.getDriveLibrarySlot());
   }
 }

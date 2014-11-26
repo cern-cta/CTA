@@ -27,65 +27,45 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot()
-  throw(): m_drvOrd(0) {
+  throw():
+  LibrarySlot(TAPE_LIBRARY_TYPE_SCSI),
+  m_drvOrd(0) {
+  m_str = librarySlotToString("rmcHostName", 0);
+}
+
+//------------------------------------------------------------------------------
+// librarySlotToString
+//------------------------------------------------------------------------------
+std::string castor::mediachanger::ScsiLibrarySlot::librarySlotToString(
+  const std::string &rmcHostName, const uint16_t drvOrd) {
+  std::ostringstream oss;
+  oss << "smc@" << rmcHostName << "," << drvOrd;
+  return oss.str();
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot(
-  const std::string &str): m_str(str) {
-  if(str.find("smc@")) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": Library slot must start with smc@: str=" << str;
-    throw ex;
-  }
-
-  const std::string::size_type indexOfComma = str.find(',');
-  if(std::string::npos == indexOfComma) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": Failed to find comma: Library slot must start with smc@host,"
-      ": str=" << str;
-    throw ex;
-  }
-
-  const std::string::size_type indexOfAtSign = 3;  // smc@
-  const std::string::size_type hostLen = indexOfComma - indexOfAtSign - 1;
-  if(0 == hostLen) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": Missing rmc host-name: str=" << str;
-    throw ex;
-  }
-
-  m_rmcHostName = str.substr(indexOfAtSign + 1, hostLen);
-
-  const std::string::size_type drvOrdLen = str.length() - indexOfComma;
-  if(0 == drvOrdLen) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": Missing str ordinal: str=" << str;
-    throw ex;
-  }
-
-  const std::string drvOrdStr = str.substr(indexOfComma + 1, drvOrdLen);
-  if(!castor::utils::isValidUInt(drvOrdStr.c_str())) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": Drive ordinal is not a valid unsigned integer: str=" << str;
-    throw ex;
-  }
-
-  m_drvOrd = atoi(drvOrdStr.c_str());
+  const std::string &rmcHostName, const uint16_t drvOrd):
+  LibrarySlot(TAPE_LIBRARY_TYPE_SCSI),
+  m_rmcHostName(rmcHostName),
+  m_drvOrd(drvOrd) {
+  m_str = librarySlotToString(rmcHostName, drvOrd);
 }
 
 //------------------------------------------------------------------------------
-// str
+// destructor
 //------------------------------------------------------------------------------
-const std::string &castor::mediachanger::ScsiLibrarySlot::str() const throw() {
-  return m_str;
+castor::mediachanger::ScsiLibrarySlot::~ScsiLibrarySlot() throw() {
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::mediachanger::LibrarySlot *castor::mediachanger::ScsiLibrarySlot::
+  clone() {
+  return new ScsiLibrarySlot(*this);
 }
 
 //------------------------------------------------------------------------------

@@ -45,10 +45,11 @@ public:
    * @param inStream Standard input stream.
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
-   * @param mc Object representing the API of the media changer.
+   * @param mc Interface to the media changer.
    */
   CmdLineTool(std::istream &inStream, std::ostream &outStream,
-    std::ostream &errStream, MediaChangerFacade &mc) throw();
+    std::ostream &errStream, MediaChangerFacade &mc)
+    throw();
 
   /**
    * Pure-virtual destructor to guarantee this class is abstract.
@@ -73,7 +74,7 @@ protected:
   std::ostream &m_err;
 
   /**
-   * Object representing the API of the media changer.
+   * Interface to the media changer.
    */
   MediaChangerFacade &m_mc;
 

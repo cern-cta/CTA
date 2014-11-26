@@ -84,13 +84,14 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   const CatalogueDrive &unit1 = catalogue.findDrive("UNIT1");
   const DriveConfig &unit1Config = unit1.getConfig();
   
-  ASSERT_EQ(std::string("DGN1"), unit1Config.dgn);
-  ASSERT_EQ(std::string("DEV1"), unit1Config.devFilename);
+  ASSERT_EQ(std::string("DGN1"), unit1Config.getDgn());
+  ASSERT_EQ(std::string("DEV1"), unit1Config.getDevFilename());
   
   ASSERT_EQ(CatalogueDrive::DRIVE_STATE_DOWN, unit1.getState());
+  ASSERT_NO_THROW(unit1Config.getLibrarySlot());
   ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
-    unit1Config.librarySlot.getLibraryType());
-  ASSERT_EQ(std::string("manual@SLOT1"), unit1Config.librarySlot.str());
+    unit1Config.getLibrarySlot().getLibraryType());
+  ASSERT_EQ(std::string("manual@SLOT1"), unit1Config.getLibrarySlot().str());
   
   ///////////////////
   // UNIT2 assertions
@@ -99,13 +100,14 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   const CatalogueDrive &unit2 = catalogue.findDrive("UNIT2");
   const DriveConfig &unit2Config = unit2.getConfig();
   
-  ASSERT_EQ(std::string("DGN2"), unit2Config.dgn);
-  ASSERT_EQ(std::string("DEV2"), unit2Config.devFilename);
+  ASSERT_EQ(std::string("DGN2"), unit2Config.getDgn());
+  ASSERT_EQ(std::string("DEV2"), unit2Config.getDevFilename());
 
   ASSERT_EQ(CatalogueDrive::DRIVE_STATE_DOWN, unit2.getState());
+  ASSERT_NO_THROW(unit2Config.getLibrarySlot());
   ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
-    unit2Config.librarySlot.getLibraryType());
-  ASSERT_EQ(std::string("manual@SLOT2"), unit2Config.librarySlot.str());
+    unit2Config.getLibrarySlot().getLibraryType());
+  ASSERT_EQ(std::string("manual@SLOT2"), unit2Config.getLibrarySlot().str());
 }
 
 TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, duplicateUnitName) {

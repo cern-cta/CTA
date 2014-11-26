@@ -34,33 +34,34 @@ namespace mediachanger {
  * Class representing a generic tape-library slot as found in the
  * /etc/castor/TPCONFIG.
  */
-class GenericLibrarySlot {
-public:
+class LibrarySlot {
+protected:
 
   /**
    * Constructor.
+   *
+   * @param libraryType The library type of the slot.
    */
-  GenericLibrarySlot();
+  LibrarySlot(const TapeLibraryType libraryType) throw();
+
+public:
 
   /**
-   * Constructs a GenericLibrarySlot object from the specified string
-   * representation.
-   *
-   * The string representation of a tape library-slot must be in one of the
-   * following three forms:
-   * - acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
-   * - manual
-   * - smc@rmc_host,drive_ordinal
-   *
-   * This method will throw a castor::exception::Exception if the string
-   * representation is invalid.
-   *
-   * @param str The string reprsentation of the library slot.
+   * Destructor.
    */
-  GenericLibrarySlot(const std::string &str);
+  virtual ~LibrarySlot() throw() = 0;
 
   /**
-   * Returns the string representation of this tape library slot.
+   * Creates a clone of this object.
+   *
+   * @return The clone.
+   */
+  virtual LibrarySlot *clone() = 0;
+
+  /**
+   * Gets the string representation of this tape library slot.
+   *
+   * @return The string representation of this tape library slot.
    */
   const std::string &str() const throw();
 
@@ -69,15 +70,17 @@ public:
    */
   TapeLibraryType getLibraryType() const throw();
 
-private:
+protected:
 
   /**
    * The string representation of this tape library slot.
    */
   std::string m_str;
 
+private:
+
   /**
-   * The type of the tape library to which this library slot refers.
+   * The library type of the slot.
    */
   TapeLibraryType m_libraryType;
 
@@ -93,7 +96,7 @@ private:
    */
   static TapeLibraryType getLibraryTypeOfSlot(const std::string &slot);
 
-}; // class GenericLibrarySlot
+}; // class LibrarySlot
 
 } // namespace mediachanger
 } // namespace castor

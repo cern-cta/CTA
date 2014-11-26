@@ -188,7 +188,7 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
 
   log::Param params[] = {
     log::Param("unitName", unitName),
-    log::Param("dgn", driveConfig.dgn)};
+    log::Param("dgn", driveConfig.getDgn())};
 
   switch(body.status) {
   case CONF_UP:

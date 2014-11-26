@@ -132,8 +132,15 @@ add_executable(castorUnitTests
   ../castor/log/SyslogLoggerTest.cpp
   ../castor/mediachanger/AcsLibrarySlot.cpp
   ../castor/mediachanger/AcsLibrarySlotTest.cpp
-  ../castor/mediachanger/GenericLibrarySlotTest.cpp
+  ../castor/mediachanger/CmdLine.cpp
+  ../castor/mediachanger/DismountCmdLine.cpp
+  ../castor/mediachanger/DismountCmdLineTest.cpp
+  ../castor/mediachanger/LibrarySlotParserTest.cpp
+  ../castor/mediachanger/ManualLibrarySlotTest.cpp
+  ../castor/mediachanger/MediaChangerFacade.cpp
   ../castor/mediachanger/MediaChangerFacadeTest.cpp
+  ../castor/mediachanger/MountCmdLine.cpp
+  ../castor/mediachanger/MountCmdLineTest.cpp
   ../castor/mediachanger/ScsiLibrarySlot.cpp
   ../castor/mediachanger/ScsiLibrarySlotTest.cpp
   ../castor/messages/MessagesTest.cpp
@@ -150,6 +157,7 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/daemon/CatalogueDrive.cpp
   ../castor/tape/tapeserver/daemon/CatalogueDriveTest.cpp
   ../castor/tape/tapeserver/daemon/CatalogueTest.cpp
+  ../castor/tape/tapeserver/daemon/DriveConfigTest.cpp
   ../castor/tape/tapeserver/daemon/ProcessForker.cpp
   ../castor/tape/tapeserver/daemon/ProcessForkerTest.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemon.cpp

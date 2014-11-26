@@ -21,7 +21,8 @@ cmake_minimum_required (VERSION 2.6)
 
 set (MEDIA_CHANGER_LIB_SRC_FILES
   AcsLibrarySlot.cpp
-  GenericLibrarySlot.cpp
+  LibrarySlot.cpp
+  LibrarySlotParser.cpp
   ManualLibrarySlot.cpp
   MediaChangerFacade.cpp
   MmcProxy.cpp

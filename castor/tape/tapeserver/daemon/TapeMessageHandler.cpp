@@ -448,7 +448,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     CatalogueTransferSession &transferSession = drive.getTransferSession();
     transferSession.tapeMountedForMigration(vid);
     m_vmgr.tapeMountedForWrite(vid, transferSession.getPid());
-    m_vdqm.tapeMounted(m_hostName, rqstBody.unitname(), driveConfig.dgn,
+    m_vdqm.tapeMounted(m_hostName, rqstBody.unitname(), driveConfig.getDgn(),
       rqstBody.vid(), transferSession.getPid());
 
     const messages::Frame reply = createReturnValueFrame(0);
@@ -480,7 +480,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     CatalogueTransferSession &transferSession = drive.getTransferSession();
     transferSession.tapeMountedForRecall(vid);
     m_vmgr.tapeMountedForRead(vid, transferSession.getPid());
-    m_vdqm.tapeMounted(m_hostName, rqstBody.unitname(), driveConfig.dgn,
+    m_vdqm.tapeMounted(m_hostName, rqstBody.unitname(), driveConfig.getDgn(),
       rqstBody.vid(), transferSession.getPid());
 
     const messages::Frame reply = createReturnValueFrame(0);

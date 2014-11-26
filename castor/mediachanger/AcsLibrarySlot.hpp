@@ -22,9 +22,9 @@
 #pragma once
 
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/mediachanger/LibrarySlot.hpp"
 
 #include <stdint.h>
-#include <string>
 
 namespace castor {
 namespace mediachanger {
@@ -32,7 +32,7 @@ namespace mediachanger {
 /**
  * Class reprsenting a slot in an ACS tape-library.
  */
-class AcsLibrarySlot {
+class AcsLibrarySlot: public LibrarySlot {
 public:
 
   /**
@@ -43,53 +43,53 @@ public:
   /**
    * Constructor.
    *
-   * This method throws a castor::exception::InvalidArgument if the specified
-   * string representation is invalid.
-   *
-   * @param The string representation of a slot in an ACS tape-library in format
-   * acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
+   * @param acs The acs component of the library slot.
+   * @param lsm The lsm component of the library slot.
+   * @param panel The panel component of the library slot.
+   * @param drive The drive component of the library slot.
    */
-  AcsLibrarySlot(const std::string &str);
-  
+  AcsLibrarySlot(const uint32_t acs, const uint32_t lsm,
+    const uint32_t panel, const uint32_t drive) throw();
+
   /**
-   * Returns true if the specified string only contains numerals else false.
-   *
-   * @return True if the specified string only contains numerals else false.
+   * Destructor.
    */
-  bool onlyContainsNumerals(const std::string &str) const throw();
-  
+  ~AcsLibrarySlot() throw();
+
+  /**
+   * Creates a clone of this object.
+   *
+   * @return The clone.
+   */
+  LibrarySlot *clone();
+
   /**
    * Gets the acs component of the library slot.
    *
    * @return the acs component of the library slot.
    */
-  uint32_t getAcs() const throw ();
+  uint32_t getAcs() const throw();
 
   /**
    * Gets the lsm component of the library slot.
    *
    * @return the lsm component of the library slot.
    */
-  uint32_t getLsm() const throw ();
+  uint32_t getLsm() const throw();
 
   /**
    * Gets the panel component of the library slot.
    *
    * @return the panel component of the library slot.
    */
-  uint32_t getPanel() const throw ();
+  uint32_t getPanel() const throw();
 
   /**
    * Gets the drive component of the library slot.
    *
    * @return the drive component of the library slot.
    */
-  uint32_t getDrive() const throw ();
-
-  /**
-   * Returns the representation of the slot.
-   */
-  std::string str() const;
+  uint32_t getDrive() const throw();
 
 private:
 
@@ -112,9 +112,20 @@ private:
    * The drive component of the library slot.
    */
   uint32_t m_drive;
+
+  /**
+   * Returns the string representation of the specified ACS library slot.
+   *
+   * @param acs The acs component of the library slot.
+   * @param lsm The lsm component of the library slot.
+   * @param panel The panel component of the library slot.
+   * @param drive The drive component of the library slot.
+   * @return The string representation.
+   */
+  std::string librarySlotToString(const uint32_t acs, const uint32_t lsm,
+    const uint32_t panel, const uint32_t drive) const;
   
 }; // class AcsProxy
 
 } // namespace mediachanger
 } // namespace castor
-

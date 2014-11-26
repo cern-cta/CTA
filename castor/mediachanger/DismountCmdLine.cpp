@@ -24,6 +24,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/MissingOperand.hpp"
 #include "castor/mediachanger/DismountCmdLine.hpp"
+#include "castor/mediachanger/LibrarySlotParser.hpp"
 
 #include <getopt.h>
 
@@ -31,9 +32,10 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::mediachanger::DismountCmdLine::DismountCmdLine() throw():
-  debug(false),
-  help(false),
-  force(false) {
+  m_debug(false),
+  m_help(false),
+  m_driveLibrarySlot(0),
+  m_force(false) {
 }
 
 //------------------------------------------------------------------------------
@@ -41,9 +43,10 @@ castor::mediachanger::DismountCmdLine::DismountCmdLine() throw():
 //------------------------------------------------------------------------------
 castor::mediachanger::DismountCmdLine::DismountCmdLine(const int argc,
   char *const *const argv):
-  debug(false),
-  help(false),
-  force(false) {
+  m_debug(false),
+  m_help(false),
+  m_driveLibrarySlot(0),
+  m_force(false) {
 
   static struct option longopts[] = {
     {"debug", 0, NULL, 'd'},
@@ -62,7 +65,7 @@ castor::mediachanger::DismountCmdLine::DismountCmdLine(const int argc,
   }
 
   // There is no need to continue parsing when the help option is set
-  if(help) {
+  if(m_help) {
     return;
   }
 
@@ -77,13 +80,60 @@ castor::mediachanger::DismountCmdLine::DismountCmdLine(const int argc,
   }
 
   // Parse the VID command-line argument
-  vid = argv[optind];
+  m_vid = argv[optind];
 
   // Move on to the next command-line argument
   optind++;
 
   // Parse the DRIVE_SLOT command-line argument
-  driveLibrarySlot = GenericLibrarySlot(argv[optind]);
+  const std::string driveLibrarySlot = argv[optind];
+  m_driveLibrarySlot = LibrarySlotParser::parse(driveLibrarySlot);
+}
+
+//-----------------------------------------------------------------------------
+// copy constructor
+//-----------------------------------------------------------------------------
+castor::mediachanger::DismountCmdLine::DismountCmdLine(
+  const DismountCmdLine &obj):
+  m_debug(obj.m_debug),
+  m_help(obj.m_help),
+  m_driveLibrarySlot(0 == obj.m_driveLibrarySlot ? 0 :
+    obj.m_driveLibrarySlot->clone()),
+  m_force(obj.m_force) {
+}
+
+//-----------------------------------------------------------------------------
+// destructor
+//-----------------------------------------------------------------------------
+castor::mediachanger::DismountCmdLine::~DismountCmdLine() throw() {
+  delete m_driveLibrarySlot;
+}
+
+//------------------------------------------------------------------------------
+// assignment operator
+//------------------------------------------------------------------------------
+castor::mediachanger::DismountCmdLine &castor::mediachanger::DismountCmdLine::
+  operator=(const DismountCmdLine &rhs) {
+  // If this is not a self assigment
+  if(this != &rhs) {
+    // Avoid a memory leak
+    delete(m_driveLibrarySlot);
+
+    m_debug = rhs.m_debug;
+    m_help  = rhs.m_help;
+    m_force = rhs.m_force;
+    m_driveLibrarySlot = 0 == rhs.m_driveLibrarySlot ? 0 :
+      rhs.m_driveLibrarySlot->clone();
+  }
+
+  return *this;
+}
+
+//------------------------------------------------------------------------------
+// getForce
+//------------------------------------------------------------------------------
+bool castor::mediachanger::DismountCmdLine::getForce() const throw() {
+  return m_force;
 }
 
 //------------------------------------------------------------------------------
@@ -92,13 +142,13 @@ castor::mediachanger::DismountCmdLine::DismountCmdLine(const int argc,
 void castor::mediachanger::DismountCmdLine::processOption(const int opt) {
   switch(opt) {
   case 'd':
-    debug = true;
+    m_debug = true;
     break;
   case 'h':
-    help = true;
+    m_help = true;
     break;
   case 'f':
-    force = true;
+    m_force = true;
     break;
   case ':':
     return handleMissingParameter(optopt);
@@ -143,3 +193,40 @@ std::string castor::mediachanger::DismountCmdLine::getUsage() throw() {
     "\n"
   "Comments to: Castor.Support@cern.ch\n";
 }
+
+//------------------------------------------------------------------------------
+// getDebug
+//------------------------------------------------------------------------------
+bool castor::mediachanger::DismountCmdLine::getDebug() const throw() {
+  return m_debug;
+}
+
+//------------------------------------------------------------------------------
+// getHelp
+//------------------------------------------------------------------------------
+bool castor::mediachanger::DismountCmdLine::getHelp() const throw() {
+  return m_help;
+}
+
+//------------------------------------------------------------------------------
+// getVid
+//------------------------------------------------------------------------------
+const std::string &castor::mediachanger::DismountCmdLine::getVid()
+  const throw() {
+  return m_vid;
+}
+
+//------------------------------------------------------------------------------
+// getDriveLibrarySlot
+//------------------------------------------------------------------------------
+const castor::mediachanger::LibrarySlot &castor::mediachanger::
+  DismountCmdLine::getDriveLibrarySlot() const {
+  if(0 == m_driveLibrarySlot) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to get drive library-slot: Value not set";
+    throw ex;
+  }
+
+  return *m_driveLibrarySlot;
+}
+

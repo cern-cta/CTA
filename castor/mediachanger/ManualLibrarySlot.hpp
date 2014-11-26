@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <string>
+#include "castor/mediachanger/LibrarySlot.hpp"
 
 namespace castor {
 namespace mediachanger {
@@ -29,7 +29,7 @@ namespace mediachanger {
 /**
  * Class representing a slot in a manually operated tape library.
  */
-class ManualLibrarySlot {
+class ManualLibrarySlot: public LibrarySlot {
 public:
 
   /**
@@ -50,16 +50,16 @@ public:
   ManualLibrarySlot(const std::string &str);
 
   /**
-   * Returns the string representation of the library slot.
+   * Destructor.
    */
-  const std::string &str() const throw();
-
-private:
+  ~ManualLibrarySlot() throw();
 
   /**
-   * The string representation of the library slot.
+   * Creates a clone of this object.
+   *
+   * @return The clone.
    */
-  std::string m_str;
+  LibrarySlot *clone();
 
 }; // class ManualLibrarySlot
 

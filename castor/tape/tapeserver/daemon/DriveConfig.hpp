@@ -23,7 +23,8 @@
 
 #pragma once
 
-#include "castor/mediachanger/GenericLibrarySlot.hpp"
+#include "castor/mediachanger/LibrarySlot.hpp"
+#include "castor/mediachanger/LibrarySlotParser.hpp"
 
 #include <list>
 #include <string>
@@ -34,33 +35,107 @@ namespace tapeserver {
 namespace daemon {
 
 /**
- * Structure used to store the configuration of a tape drive.
+ * Class representing the configuration of a tape drive as specified in the
+ * TPCONFIG file.
  */
-struct DriveConfig {
+class DriveConfig {
+public:
+  /**
+   * Constructor.
+   */
+  DriveConfig() throw();
 
   /**
-   * The unit name of the tape drive as defined in /etc/castor/TPCONFIG and
-   * used by the vdqmd daemon.
+   * Constructor.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive as used by the vdqmd
+   * and vmgrd daemons.
+   * @param devFilename The device file of the tape drive, for example:
+   * /dev/nst0.
+   * @param librarySlot The library slot in which the tape drive is located,
+   * for example: smc@localhost,0
    */
-  std::string unitName;
+  DriveConfig(
+    const std::string &unitName,
+    const std::string &dgn,
+    const std::string &devFilename,
+    const std::string &librarySlot);
 
   /**
-   * The device group name of the tape drive as defined in
-   * /etc/castor/TPCONFIG and used by the vdqmd and vmgrd daemons.
+   * Copy constructor.
+   *
+   * @param obj The object to be copied.
    */
-  std::string dgn;
+  DriveConfig(const DriveConfig &obj);
+
+  /**
+   * Destructor.
+   */
+  ~DriveConfig() throw();
+
+  /**
+   * Assignment operator.
+   *
+   * @param rhs The right-hand side of the operator.
+   */
+  DriveConfig &operator=(const DriveConfig &rhs);
+
+  /**
+   * Gets the unit name of the tape drive as used by the vdqmd daemon.
+   *
+   * @return The unit name of the tape drive as used by the vdqmd daemon.
+   */
+  const std::string &getUnitName() const throw();
+
+  /**
+   * Gets the device group name of the tape drive as used by the vdqmd and
+   * vmgrd daemons.
+   *
+   * @return The device group name of the tape drive as used by the vdqmd and
+   * vmgrd daemons.
+   */
+  const std::string &getDgn() const throw();
   
   /**
-   * The device file of the tape drive as defined in /etc/castor/TPCONFIG, for
-   * example: /dev/nst0
+   * Gets the device file of the tape drive, for example: /dev/nst0
+   *
+   * @return The device file of the tape drive, for example: /dev/nst0
    */
-   std::string devFilename;
+  const std::string &getDevFilename() const throw();
 
   /**
-   * The library slot n which the tape drive is located, for example:
+   * Gets the library slot in which the tape drive is located, for example:
+   * smc@localhost,0
+   *
+   * @return The library slot in which the tape drive is located, for example:
    * smc@localhost,0
    */
-  mediachanger::GenericLibrarySlot librarySlot;
+  const mediachanger::LibrarySlot &getLibrarySlot() const;
+
+private:
+
+  /**
+   * The unit name of the tape drive as used by the vdqmd daemon.
+   */
+  std::string m_unitName;
+
+  /**
+   * The device group name of the tape drive as used by the vdqmd and vmgrd
+   * daemons.
+   */
+  std::string m_dgn;
+  
+  /**
+   * The device file of the tape drive, for example: /dev/nst0
+   */
+   std::string m_devFilename;
+
+  /**
+   * The library slot in which the tape drive is located, for example:
+   * smc@localhost,0
+   */
+  mediachanger::LibrarySlot *m_librarySlot;
 
 }; // class DriveConfig
 

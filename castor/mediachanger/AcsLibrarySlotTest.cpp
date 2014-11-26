@@ -24,6 +24,7 @@
 #include "castor/mediachanger/AcsLibrarySlot.hpp"
 
 #include <gtest/gtest.h>
+#include <memory>
 
 namespace unitTests {
 
@@ -37,45 +38,37 @@ protected:
   }
 };
 
-TEST_F(castor_mediachanger_AcsLibrarySlotTest, goodDayParsing) {
+TEST_F(castor_mediachanger_AcsLibrarySlotTest, goodDay) {
   using namespace castor::mediachanger;
- 
-  AcsLibrarySlot slot;
-  ASSERT_EQ(std::string("acs=0 lsm=0 panel=0 drive=0"), slot.str());
-  ASSERT_EQ((uint32_t)0, slot.getAcs());
-  ASSERT_EQ((uint32_t)0, slot.getLsm());
-  ASSERT_EQ((uint32_t)0, slot.getPanel());
-  ASSERT_EQ((uint32_t)0, slot.getDrive());
-
-  const std::string str = "acs11,22,33,44";
-  ASSERT_NO_THROW(slot = AcsLibrarySlot(str));
-  ASSERT_EQ(std::string("acs=11 lsm=22 panel=33 drive=44"), slot.str());
+  AcsLibrarySlot slot(11, 22, 33, 44);
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS, slot.getLibraryType());
+  ASSERT_EQ(std::string("acs11,22,33,44"), slot.str());
   ASSERT_EQ((uint32_t)11, slot.getAcs());
   ASSERT_EQ((uint32_t)22, slot.getLsm());
   ASSERT_EQ((uint32_t)33, slot.getPanel());
   ASSERT_EQ((uint32_t)44, slot.getDrive());
 }
 
-TEST_F(castor_mediachanger_AcsLibrarySlotTest, badDayParsing) {
+TEST_F(castor_mediachanger_AcsLibrarySlotTest, clone) {
   using namespace castor::mediachanger;
 
-  const std::string str = "nonsense";
-  ASSERT_THROW(AcsLibrarySlot slot(str), castor::exception::InvalidArgument);
-  
-  const std::string strAcs = "asc0,1,2,3";
-  ASSERT_THROW(AcsLibrarySlot slot(strAcs), castor::exception::InvalidArgument);
-  
-  const std::string strACS_NUMBER = "acssd1,1,2,3";
-  ASSERT_THROW(AcsLibrarySlot slot(strACS_NUMBER), castor::exception::InvalidArgument);
+  std::auto_ptr<AcsLibrarySlot> slot1;
+  ASSERT_NO_THROW(slot1.reset(new AcsLibrarySlot(11, 22, 33, 44)));
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS, slot1->getLibraryType());
+  ASSERT_EQ(std::string("acs11,22,33,44"), slot1->str());
+  ASSERT_EQ((uint32_t)11, slot1->getAcs());
+  ASSERT_EQ((uint32_t)22, slot1->getLsm());
+  ASSERT_EQ((uint32_t)33, slot1->getPanel());
+  ASSERT_EQ((uint32_t)44, slot1->getDrive());
 
-  const std::string strLsm = "acs0,1111,2,3";
-  ASSERT_THROW(AcsLibrarySlot slot(strLsm), castor::exception::InvalidArgument);
-
-  const std::string strPanel = "acs0,111,ABC,3";
-  ASSERT_THROW(AcsLibrarySlot slot(strPanel), castor::exception::InvalidArgument);
-
-  const std::string strDrive = "acs0,111,222,3 ";
-  ASSERT_THROW(AcsLibrarySlot slot(strDrive), castor::exception::InvalidArgument);
+  std::auto_ptr<AcsLibrarySlot> slot2;
+  ASSERT_NO_THROW(slot2.reset((AcsLibrarySlot*)slot1->clone()));
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS, slot2->getLibraryType());
+  ASSERT_EQ(std::string("acs11,22,33,44"), slot2->str());
+  ASSERT_EQ((uint32_t)11, slot2->getAcs());
+  ASSERT_EQ((uint32_t)22, slot2->getLsm());
+  ASSERT_EQ((uint32_t)33, slot2->getPanel());
+  ASSERT_EQ((uint32_t)44, slot2->getDrive());
 }
 
 } // namespace unitTests

@@ -54,14 +54,11 @@ void castor::tape::tapeserver::daemon::DriveConfigMap::enterTpconfigLine(
     }
 
     // Insert the drive
-    {
-      DriveConfig d;
-      d.unitName = line.unitName;
-      d.dgn = line.dgn;
-      d.devFilename = line.devFilename;
-      d.librarySlot = line.librarySlot;
-      (*this)[line.unitName] = d;
-    }
+    (*this)[line.unitName] = DriveConfig(
+      line.unitName,
+      line.dgn,
+      line.devFilename,
+      line.librarySlot);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to enter TPCONFIG line into drive map: " <<

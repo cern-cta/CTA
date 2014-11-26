@@ -247,13 +247,11 @@ private:
    * @return The drive configuration.
    */
   template<class T> DriveConfig getDriveConfig(const T &msg) {
-    DriveConfig config;
-    config.unitName = msg.unitname();
-    config.dgn = msg.dgn();
-    config.devFilename = msg.devfilename();
-    config.librarySlot = msg.libraryslot();
-
-    return config;
+    return DriveConfig(
+      msg.unitname(),
+      msg.dgn(),
+      msg.devfilename(),
+      msg.libraryslot());
   }
 
   /**

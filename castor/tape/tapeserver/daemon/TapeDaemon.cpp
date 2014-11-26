@@ -608,25 +608,25 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   std::list<log::Param> params;
   params.push_back(log::Param("server", m_hostName));
   params.push_back(log::Param("unitName", unitName));
-  params.push_back(log::Param("dgn", driveConfig.dgn));
+  params.push_back(log::Param("dgn", driveConfig.getDgn()));
 
   switch(drive.getState()) {
   case CatalogueDrive::DRIVE_STATE_DOWN:
     params.push_back(log::Param("state", "down"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.setDriveDown(m_hostName, unitName, driveConfig.dgn);
+    m_vdqm.setDriveDown(m_hostName, unitName, driveConfig.getDgn());
     break;
   case CatalogueDrive::DRIVE_STATE_UP:
     params.push_back(log::Param("state", "up"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.setDriveUp(m_hostName, unitName, driveConfig.dgn);
+    m_vdqm.setDriveUp(m_hostName, unitName, driveConfig.getDgn());
     break;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to register tape drive in vdqm"
         ": server=" << m_hostName << " unitName=" << unitName << " dgn=" <<
-        driveConfig.dgn << ": Invalid drive state: state=" <<
+        driveConfig.getDgn() << ": Invalid drive state: state=" <<
         CatalogueDrive::driveStateToStr(drive.getState());
       throw ex;
     }
@@ -1128,12 +1128,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::requestVdqmToReleaseDrive(
     const bool forceUnmount = true;
 
     params.push_back(log::Param("pid", pid));
-    params.push_back(log::Param("unitName", driveConfig.unitName));
-    params.push_back(log::Param("dgn", driveConfig.dgn));
+    params.push_back(log::Param("unitName", driveConfig.getUnitName()));
+    params.push_back(log::Param("dgn", driveConfig.getDgn()));
     params.push_back(log::Param("forceUnmount", forceUnmount));
 
-    m_vdqm.releaseDrive(m_hostName, driveConfig.unitName, driveConfig.dgn,
-      forceUnmount, pid);
+    m_vdqm.releaseDrive(m_hostName, driveConfig.getUnitName(),
+      driveConfig.getDgn(), forceUnmount, pid);
     m_log(LOG_INFO, "Requested vdqm to release drive", params);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -1152,12 +1152,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::notifyVdqmTapeUnmounted(
   try {
     std::list<log::Param> params;
     params.push_back(log::Param("pid", pid));
-    params.push_back(log::Param("unitName", driveConfig.unitName));
+    params.push_back(log::Param("unitName", driveConfig.getUnitName()));
     params.push_back(log::Param("TPVID", vid));
-    params.push_back(log::Param("dgn", driveConfig.dgn));
+    params.push_back(log::Param("dgn", driveConfig.getDgn()));
 
-    m_vdqm.tapeUnmounted(m_hostName, driveConfig.unitName, driveConfig.dgn,
-      vid);
+    m_vdqm.tapeUnmounted(m_hostName, driveConfig.getUnitName(),
+      driveConfig.getDgn(), vid);
     m_log(LOG_INFO, "Notified vdqm that a tape was unmounted", params);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;

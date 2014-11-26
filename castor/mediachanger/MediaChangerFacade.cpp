@@ -50,19 +50,22 @@ castor::mediachanger::MediaChangerFacade::MediaChangerFacade(
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
 void castor::mediachanger::MediaChangerFacade::mountTapeReadOnly(
-  const std::string &vid, const GenericLibrarySlot &librarySlot) {
+  const std::string &vid, const LibrarySlot &slot) {
   try {
-    const TapeLibraryType libraryType = librarySlot.getLibraryType();
+    const TapeLibraryType libraryType = slot.getLibraryType();
 
     // Dispatch the appropriate helper method depending on library slot type
     switch(libraryType) {
     case TAPE_LIBRARY_TYPE_ACS:
-      return m_acs.mountTapeReadOnly(vid, librarySlot.str());
+      return m_acs.mountTapeReadOnly(vid,
+        dynamic_cast<const AcsLibrarySlot&>(slot));
     case TAPE_LIBRARY_TYPE_MANUAL:
-      return m_mmc.mountTapeReadOnly(vid, librarySlot.str());
+      return m_mmc.mountTapeReadOnly(vid,
+        dynamic_cast<const ManualLibrarySlot&>(slot));
     case TAPE_LIBRARY_TYPE_SCSI:
       // SCSI media-changers to not support read-only mounts
-      return m_rmc.mountTapeReadWrite(vid, librarySlot.str());
+      return m_rmc.mountTapeReadWrite(vid,
+         dynamic_cast<const ScsiLibrarySlot&>(slot));
     default:
       {
         // Should never get here
@@ -74,7 +77,7 @@ void castor::mediachanger::MediaChangerFacade::mountTapeReadOnly(
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to mount tape for read-only access"
-      ": vid=" << vid << " librarySlot=" << librarySlot.str() << ": " <<
+      ": vid=" << vid << " slot=" << slot.str() << ": " <<
       ne.getMessage().str();
     throw ex;
   }
@@ -84,18 +87,21 @@ void castor::mediachanger::MediaChangerFacade::mountTapeReadOnly(
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
 void castor::mediachanger::MediaChangerFacade::mountTapeReadWrite(
-  const std::string &vid, const GenericLibrarySlot &librarySlot) {
+  const std::string &vid, const LibrarySlot &slot) {
   try {
-    const TapeLibraryType libraryType = librarySlot.getLibraryType();
+    const TapeLibraryType libraryType = slot.getLibraryType();
 
     // Dispatch the appropriate helper method depending on library slot type
     switch(libraryType) {
     case TAPE_LIBRARY_TYPE_ACS: 
-      return m_acs.mountTapeReadWrite(vid, librarySlot.str());
+      return m_acs.mountTapeReadWrite(vid,
+        dynamic_cast<const AcsLibrarySlot&>(slot));
     case TAPE_LIBRARY_TYPE_MANUAL: 
-      return m_mmc.mountTapeReadWrite(vid, librarySlot.str());
+      return m_mmc.mountTapeReadWrite(vid,
+        dynamic_cast<const ManualLibrarySlot&>(slot));
     case TAPE_LIBRARY_TYPE_SCSI:
-      return m_rmc.mountTapeReadWrite(vid, librarySlot.str());
+      return m_rmc.mountTapeReadWrite(vid,
+        dynamic_cast<const ScsiLibrarySlot&>(slot));
     default:
       {
         // Should never get here
@@ -107,7 +113,7 @@ void castor::mediachanger::MediaChangerFacade::mountTapeReadWrite(
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to mount tape for read/write access"
-      ": vid=" << vid << " librarySlot=" << librarySlot.str() << ": " <<
+      ": vid=" << vid << " slot=" << slot.str() << ": " <<
       ne.getMessage().str();
     throw ex;
   }
@@ -117,18 +123,21 @@ void castor::mediachanger::MediaChangerFacade::mountTapeReadWrite(
 // dismountTape
 //------------------------------------------------------------------------------
 void castor::mediachanger::MediaChangerFacade::dismountTape(
-  const std::string &vid, const GenericLibrarySlot &librarySlot) {
+  const std::string &vid, const LibrarySlot &slot) {
   try {
-    const TapeLibraryType libraryType = librarySlot.getLibraryType();
+    const TapeLibraryType libraryType = slot.getLibraryType();
   
     // Dispatch the appropriate helper method depending on library slot type
     switch(libraryType) {
     case TAPE_LIBRARY_TYPE_ACS:
-      return m_acs.dismountTape(vid, librarySlot.str());
+      return m_acs.dismountTape(vid,
+        dynamic_cast<const AcsLibrarySlot&>(slot));
     case TAPE_LIBRARY_TYPE_MANUAL:
-      return m_mmc.dismountTape(vid, librarySlot.str());
+      return m_mmc.dismountTape(vid,
+        dynamic_cast<const ManualLibrarySlot&>(slot));
     case TAPE_LIBRARY_TYPE_SCSI:
-      return m_rmc.dismountTape(vid, librarySlot.str());
+      return m_rmc.dismountTape(vid,
+        dynamic_cast<const ScsiLibrarySlot&>(slot));
     default:
       {
         // Should never get here
@@ -140,7 +149,7 @@ void castor::mediachanger::MediaChangerFacade::dismountTape(
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to dismount tape"
-      ": vid=" << vid << " librarySlot=" << librarySlot.str() << ": " <<
+      ": vid=" << vid << " slot=" << slot.str() << ": " <<
       ne.getMessage().str();
     throw ex;
   }
@@ -150,18 +159,21 @@ void castor::mediachanger::MediaChangerFacade::dismountTape(
 // forceDismountTape
 //------------------------------------------------------------------------------
 void castor::mediachanger::MediaChangerFacade::forceDismountTape(
-  const std::string &vid, const GenericLibrarySlot &librarySlot) {
+  const std::string &vid, const LibrarySlot &slot) {
   try {
-    const TapeLibraryType libraryType = librarySlot.getLibraryType();
+    const TapeLibraryType libraryType = slot.getLibraryType();
 
     // Dispatch the appropriate helper method depending on library slot type
     switch(libraryType) {
     case TAPE_LIBRARY_TYPE_ACS:
-      return m_acs.forceDismountTape(vid, librarySlot.str());
+      return m_acs.forceDismountTape(vid,
+        dynamic_cast<const AcsLibrarySlot&>(slot));
     case TAPE_LIBRARY_TYPE_MANUAL:
-      return m_mmc.forceDismountTape(vid, librarySlot.str());
+      return m_mmc.forceDismountTape(vid,
+        dynamic_cast<const ManualLibrarySlot&>(slot));
     case TAPE_LIBRARY_TYPE_SCSI:
-      return m_rmc.forceDismountTape(vid, librarySlot.str());
+      return m_rmc.forceDismountTape(vid,
+        dynamic_cast<const ScsiLibrarySlot&>(slot));
     default:
       {
         // Should never get here
@@ -173,7 +185,7 @@ void castor::mediachanger::MediaChangerFacade::forceDismountTape(
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to force dismount tape"
-      ": vid=" << vid << " librarySlot=" << librarySlot.str() << ": " <<
+      ": vid=" << vid << " slot=" << slot.str() << ": " <<
       ne.getMessage().str();
     throw ex;
   }

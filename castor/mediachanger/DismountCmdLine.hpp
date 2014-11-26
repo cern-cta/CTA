@@ -24,7 +24,7 @@
 #pragma once
 
 #include "castor/mediachanger/CmdLine.hpp"
-#include "castor/mediachanger/GenericLibrarySlot.hpp"
+#include "castor/mediachanger/LibrarySlot.hpp"
 
 #include <string>
 
@@ -34,38 +34,11 @@ namespace mediachanger {
 /**
  * Data type used to store the results of parsing the command-line.
  */
-struct DismountCmdLine: public CmdLine {
-  /**
-   * True if the debug option has been set.
-   */
-  bool debug;
-
-  /**
-   * True if the help option has been set.
-   */
-  bool help;
-
-  /**
-   * The volume identifier of the tape to be mounted.
-   */
-  std::string vid;
-
-  /**
-   * The slot in the tape library where the drive is located.
-   */
-  GenericLibrarySlot driveLibrarySlot;
-
-  /**
-   * True if the dismount should be forced.  Forcing a dismount means rewinding
-   * and eject a tape where necessary.
-   */
-  bool force;
+class DismountCmdLine: public CmdLine {
+public:
 
   /**
    * Constructor.
-   *
-   * Initialises all BOOLEAN member-variables to FALSE, all integer
-   * member-variables to 0 and the volume identifier to an empty string.
    */
   DismountCmdLine() throw();
 
@@ -76,12 +49,27 @@ struct DismountCmdLine: public CmdLine {
    *
    * @param argc Argument count from the executable's entry function: main().
    * @param argv Argument vector from the executable's entry function: main().
-   * @param defaultQueryInterval The default time in seconds to wait between
-   * queries to ACS for responses.
-   * @param defaultTimeout The default timeout value in seconds for the mount
-   * to conclude either success or failure.
    */
   DismountCmdLine(const int argc, char *const *const argv);
+
+  /**
+   * Copy constructor.
+   *
+   * @param obj The object to be copied.
+   */
+  DismountCmdLine(const DismountCmdLine &obj);
+
+  /**
+   * Destructor.
+   */
+  ~DismountCmdLine() throw();
+
+  /**
+   * Assignment oprator.
+   *
+   * @param rhs The right-hand side of the operator.
+   */
+  DismountCmdLine &operator=(const DismountCmdLine &rhs);
 
   /**
    * Gets the usage message that describes the command line.
@@ -90,7 +78,69 @@ struct DismountCmdLine: public CmdLine {
    */ 
   static std::string getUsage() throw();
 
+  /**
+   * Gets the value of the debug option.
+   *
+   * @return True if the debug option has been set.
+   */
+  bool getDebug() const throw();
+
+  /**
+   * Gets the value of the help option.
+   *
+   * @return True if the help option has been set.
+   */
+  bool getHelp() const throw();
+
+  /**
+   * Gets the volume identifier of the tape to be mounted.
+   *
+   * @return The volume identifier of the tape to be mounted.
+   */
+  const std::string &getVid() const throw();
+
+  /**
+   * Gets the slot in the tape library where the drive is located.
+   *
+   * @return The slot in the tape library where the drive is located.
+   */
+  const LibrarySlot &getDriveLibrarySlot() const;
+
+  /**
+   * Gets the value of the force option.
+   *
+   * @return True if the dismount should be forced.  Forcing a dismount means
+   * rewinding and ejecting the tape where necessary.
+   */
+  bool getForce() const throw();
+
 private:
+
+  /**
+   * True if the debug option has been set.
+   */
+  bool m_debug;
+
+  /**
+   * True if the help option has been set.
+   */
+  bool m_help;
+
+  /**
+   * The volume identifier of the tape to be mounted.
+   */
+  std::string m_vid;
+
+  /**
+   * The slot in the tape library where the drive is located.
+   */
+  LibrarySlot *m_driveLibrarySlot;
+
+  /**
+   * True if the dismount should be forced.  Forcing a dismount means
+   * rewinding and ejecting the tape where necessary.
+   */
+  bool m_force;
 
   /**
    * Processes the specified option that was returned by getopt_long().

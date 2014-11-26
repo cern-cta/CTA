@@ -22,14 +22,14 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
-#include "castor/mediachanger/ScsiLibrarySlot.hpp"
+#include "castor/mediachanger/LibrarySlotParser.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
 
 namespace unitTests {
 
-class castor_mediachanger_ScsiLibrarySlotTest : public ::testing::Test {
+class castor_mediachanger_LibrarySlotParserTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -39,30 +39,39 @@ protected:
   }
 };
 
-TEST_F(castor_mediachanger_ScsiLibrarySlotTest, goodDay) {
+TEST_F(castor_mediachanger_LibrarySlotParserTest, acs) {
   using namespace castor::mediachanger;
 
-  ScsiLibrarySlot slot("host1", 2);
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot.getLibraryType());
-  ASSERT_EQ(std::string("smc@host1,2"), slot.str());
-  ASSERT_EQ(std::string("host1"), slot.getRmcHostName());
-  ASSERT_EQ((uint16_t)2, slot.getDrvOrd());
+  std::auto_ptr<LibrarySlot> slot;
+  ASSERT_NO_THROW(slot.reset(LibrarySlotParser::parse("acs1,2,3,4")));
+  ASSERT_NE((LibrarySlot*)0, slot.get());
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS, slot->getLibraryType());
 }
 
-TEST_F(castor_mediachanger_ScsiLibrarySlotTest, clone) {
+TEST_F(castor_mediachanger_LibrarySlotParserTest, manual) {
   using namespace castor::mediachanger;
 
-  std::auto_ptr<ScsiLibrarySlot> slot1;
-  ASSERT_NO_THROW(slot1.reset(new ScsiLibrarySlot("host1", 2)));
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot1->getLibraryType());
-  ASSERT_EQ(std::string("smc@host1,2"), slot1->str());
-  ASSERT_EQ(std::string("host1"), slot1->getRmcHostName());
+  std::auto_ptr<LibrarySlot> slot;
+  ASSERT_NO_THROW(slot.reset(LibrarySlotParser::parse("manual")));
+  ASSERT_NE((LibrarySlot*)0, slot.get());
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_MANUAL, slot->getLibraryType());
+}
 
-  std::auto_ptr<ScsiLibrarySlot> slot2;
-  ASSERT_NO_THROW(slot2.reset((ScsiLibrarySlot*)slot1->clone()));
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot2->getLibraryType());
-  ASSERT_EQ(std::string("smc@host1,2"), slot2->str());
-  ASSERT_EQ(std::string("host1"), slot2->getRmcHostName());
+TEST_F(castor_mediachanger_LibrarySlotParserTest, scsi) {
+  using namespace castor::mediachanger;
+
+  std::auto_ptr<LibrarySlot> slot;
+  ASSERT_NO_THROW(slot.reset(LibrarySlotParser::parse("smc@rmc_host,1")));
+  ASSERT_NE((LibrarySlot*)0, slot.get());
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot->getLibraryType());
+}
+
+TEST_F(castor_mediachanger_LibrarySlotParserTest, nonsense) {
+  using namespace castor::mediachanger;
+
+  std::auto_ptr<LibrarySlot> slot;
+  ASSERT_THROW(slot.reset(LibrarySlotParser::parse("nonsense")),
+    castor::exception::Exception);
 }
 
 } // namespace unitTests

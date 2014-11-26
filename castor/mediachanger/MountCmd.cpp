@@ -25,6 +25,7 @@
 
 #include <getopt.h>
 #include <iostream>
+#include <memory>
  
 //------------------------------------------------------------------------------
 // constructor
@@ -51,17 +52,18 @@ void castor::mediachanger::MountCmd::exceptionThrowingMain(const int argc,
 
   // Display the usage message to standard out and exit with success if the
   // user requested help
-  if(m_cmdLine.help) {
+  if(m_cmdLine.getHelp()) {
     m_out << MountCmdLine::getUsage();
     return;
   }
 
   // Setup debug mode to be on or off depending on the command-line arguments
-  m_debugBuf.setDebug(m_cmdLine.debug);
+  m_debugBuf.setDebug(m_cmdLine.getDebug());
 
-  m_dbg << "readonly   = " << bool2Str(m_cmdLine.readOnly) << std::endl;
-  m_dbg << "VID        = " << m_cmdLine.vid << std::endl;
-  m_dbg << "DRIVE_SLOT = " << m_cmdLine.driveLibrarySlot.str() << std::endl;
+  m_dbg << "readonly   = " << bool2Str(m_cmdLine.getReadOnly()) << std::endl;
+  m_dbg << "VID        = " << m_cmdLine.getVid() << std::endl;
+  m_dbg << "DRIVE_SLOT = " << m_cmdLine.getDriveLibrarySlot().str() <<
+    std::endl;
 
   mountTape();
 }
@@ -70,9 +72,10 @@ void castor::mediachanger::MountCmd::exceptionThrowingMain(const int argc,
 // mountTape
 //------------------------------------------------------------------------------
 void castor::mediachanger::MountCmd::mountTape() {
-  if(m_cmdLine.readOnly) {
-    m_mc.mountTapeReadOnly(m_cmdLine.vid, m_cmdLine.driveLibrarySlot);
+  if(m_cmdLine.getReadOnly()) {
+    m_mc.mountTapeReadOnly(m_cmdLine.getVid(), m_cmdLine.getDriveLibrarySlot());
   } else {
-    m_mc.mountTapeReadWrite(m_cmdLine.vid, m_cmdLine.driveLibrarySlot);
+    m_mc.mountTapeReadWrite(m_cmdLine.getVid(),
+      m_cmdLine.getDriveLibrarySlot());
   }
 }

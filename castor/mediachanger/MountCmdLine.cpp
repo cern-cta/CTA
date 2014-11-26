@@ -31,9 +31,10 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::mediachanger::MountCmdLine::MountCmdLine() throw():
-  debug(false),
-  help(false),
-  readOnly(false) {
+  m_debug(false),
+  m_help(false),
+  m_readOnly(false),
+  m_driveLibrarySlot(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -41,9 +42,10 @@ castor::mediachanger::MountCmdLine::MountCmdLine() throw():
 //------------------------------------------------------------------------------
 castor::mediachanger::MountCmdLine::MountCmdLine(const int argc,
   char *const *const argv):
-  debug(false),
-  help(false),
-  readOnly(false) {
+  m_debug(false),
+  m_help(false),
+  m_readOnly(false),
+  m_driveLibrarySlot(0) {
 
   static struct option longopts[] = {
     {"debug"    , 0, NULL, 'd'},
@@ -62,7 +64,7 @@ castor::mediachanger::MountCmdLine::MountCmdLine(const int argc,
   }
 
   // There is no need to continue parsing when the help option is set
-  if(help) {
+  if(m_help) {
     return;
   }
 
@@ -77,13 +79,52 @@ castor::mediachanger::MountCmdLine::MountCmdLine(const int argc,
   }
 
   // Parse the VID command-line argument
-  vid = argv[optind];
+  m_vid = argv[optind];
 
   // Move on to the next command-line argument
   optind++;
 
   // Parse the DRIVE_SLOT command-line argument
-  driveLibrarySlot = GenericLibrarySlot(argv[optind]);
+  const std::string driveLibrarySlot = argv[optind];
+  m_driveLibrarySlot = LibrarySlotParser::parse(driveLibrarySlot);
+}
+
+//-----------------------------------------------------------------------------
+// copy constructor
+//-----------------------------------------------------------------------------
+castor::mediachanger::MountCmdLine::MountCmdLine(const MountCmdLine &obj):
+  m_debug(obj.m_debug),
+  m_help(obj.m_help),
+  m_readOnly(obj.m_readOnly),
+  m_driveLibrarySlot(0 == obj.m_driveLibrarySlot ? 0 :
+    obj.m_driveLibrarySlot->clone()) {
+}
+
+//-----------------------------------------------------------------------------
+// destructor
+//-----------------------------------------------------------------------------
+castor::mediachanger::MountCmdLine::~MountCmdLine() throw() {
+  delete m_driveLibrarySlot;
+}
+
+//------------------------------------------------------------------------------
+// assignment operator
+//------------------------------------------------------------------------------
+castor::mediachanger::MountCmdLine &castor::mediachanger::MountCmdLine::
+  operator=(const MountCmdLine &rhs) {
+  // If this is not a self assigment
+  if(this != &rhs) {
+    // Avoid a memory leak
+    delete(m_driveLibrarySlot);
+
+    m_debug    = rhs.m_debug;
+    m_help     = rhs.m_help;
+    m_readOnly = rhs.m_readOnly;
+    m_driveLibrarySlot = 0 == rhs.m_driveLibrarySlot ? 0 :
+      rhs.m_driveLibrarySlot->clone();
+  }
+
+  return *this;
 }
 
 //------------------------------------------------------------------------------
@@ -92,13 +133,13 @@ castor::mediachanger::MountCmdLine::MountCmdLine(const int argc,
 void castor::mediachanger::MountCmdLine::processOption(const int opt) {
   switch(opt) {
   case 'd':
-    debug = true;
+    m_debug = true;
     break;
   case 'h':
-    help = true;
+    m_help = true;
     break;
   case 'r':
-    readOnly = true;
+    m_readOnly = true;
     break;
   case ':':
     return handleMissingParameter(optopt);
@@ -142,4 +183,45 @@ std::string castor::mediachanger::MountCmdLine::getUsage() throw() {
   "  -r|--readOnly Request the volume is mounted for read-only access\n"
   "\n"
   "Comments to: Castor.Support@cern.ch\n";
+}
+
+//------------------------------------------------------------------------------
+// getDebug
+//------------------------------------------------------------------------------
+bool castor::mediachanger::MountCmdLine::getDebug() const throw() {
+  return m_debug;
+}
+
+//------------------------------------------------------------------------------
+// getHelp
+//------------------------------------------------------------------------------
+bool castor::mediachanger::MountCmdLine::getHelp() const throw() {
+  return m_help;
+}
+
+//------------------------------------------------------------------------------
+// getReadOnly
+//------------------------------------------------------------------------------
+bool castor::mediachanger::MountCmdLine::getReadOnly() const throw() {
+  return m_readOnly;
+}
+
+//------------------------------------------------------------------------------
+// getVid
+//------------------------------------------------------------------------------
+std::string castor::mediachanger::MountCmdLine::getVid() const throw() {
+  return m_vid;
+}
+
+//------------------------------------------------------------------------------
+// getDriveLibrarySlot
+//------------------------------------------------------------------------------
+const castor::mediachanger::LibrarySlot &castor::mediachanger::MountCmdLine::
+  getDriveLibrarySlot() const {
+  if(0 == m_driveLibrarySlot) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to get drive library-slot: Value not set";
+    throw ex;
+  }
+  return *m_driveLibrarySlot;
 }

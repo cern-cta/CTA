@@ -26,6 +26,7 @@
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/TpconfigLine.hpp"
 #include "castor/tape/tapeserver/daemon/TpconfigLines.hpp"
+#include "castor/mediachanger/LibrarySlotParser.hpp"
 
 #include <map>
 #include <string>
@@ -45,6 +46,8 @@ public:
   /**
    * Enters the specified list of parsed lines from the TPCONFIG file into
    * the map of drive configurations.
+   *
+   * @param lines The lines of the TPCONFIG file.
    */
   void enterTpconfigLines(const TpconfigLines &lines);
 
@@ -53,6 +56,8 @@ private:
   /**
    * Enters the specified parsed line from the TPCONFIG file into the map
    * of drive configurations.
+   *
+   * @param line A line from the TPCONFIG file.
    */
   void enterTpconfigLine(const TpconfigLine &line);
 

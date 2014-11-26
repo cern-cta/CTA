@@ -21,8 +21,9 @@
 
 #pragma once
 
+#include "castor/mediachanger/LibrarySlot.hpp"
+
 #include <stdint.h>
-#include <string>
 
 namespace castor {
 namespace mediachanger {
@@ -30,7 +31,7 @@ namespace mediachanger {
 /**
  * Class representing a slot in a SCSI tape-library.
  */
-class ScsiLibrarySlot {
+class ScsiLibrarySlot: public LibrarySlot {
 public:
 
   /**
@@ -43,17 +44,23 @@ public:
   /**
    * Constructor.
    *
-   * Initialises the member variables based on the result of parsing the
-   * specified string representation of the library slot.
-   *
-   * @param str The string representation of the library slot.
+   * @param rmcHostName The name of the host on which the rmcd daemon is
+   * running.
+   * @param drvOrd The drive ordinal.
    */
-  ScsiLibrarySlot(const std::string &str);
+  ScsiLibrarySlot(const std::string &rmcHostName, const uint16_t drvOrd);
 
   /**
-   * Returns the string reprsentation of the library slot.
+   * Destructor.
    */
-  const std::string &str() const throw();
+  ~ScsiLibrarySlot() throw();
+
+  /**
+   * Creates a clone of this object.
+   *
+   * @return The clone.
+   */
+  LibrarySlot *clone();
 
   /**
    * Gets the name of the host on which the rmcd daemon is running.
@@ -72,11 +79,6 @@ public:
 private:
 
   /**
-   * The string representation of the library slot.
-   */
-  std::string m_str;
-
-  /**
    * The name of the host on which the rmcd daemon is running.
    */
   std::string m_rmcHostName;
@@ -85,6 +87,17 @@ private:
    * The drive ordinal.
    */
   uint16_t m_drvOrd;
+
+  /**
+   * Returns the string representation of the specified SCSI library slot.
+   *
+   * @param rmcHostName The name of the host on which the rmcd daemon is
+   * running.
+   * @param drvOrd The drive ordinal.
+   * @return The string representation.
+   */
+  std::string librarySlotToString(const std::string &rmcHostName,
+    const uint16_t drvOrd);
 
 }; // class ScsiLibrarySlot
 
