@@ -154,7 +154,7 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
       parent.m_client.reportEndOfSession(chrono);
       parent.logRequestReport(chrono,"Nominal RecallReportPacker::EndofSession has been reported",LOG_INFO);
       if (parent.m_watchdog) {
-        parent.m_watchdog->addParameter(log::Param("status","failure"));
+        parent.m_watchdog->addParameter(log::Param("status","success"));
       }
     }
     else {
@@ -162,6 +162,9 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
       parent.m_lc.log(LOG_ERR,msg);
       parent.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono);
       parent.logRequestReport(chrono,"reporting EndOfSessionWithError done",LOG_ERR);
+      if (parent.m_watchdog) {
+        parent.m_watchdog->addParameter(log::Param("status","failure"));
+      }
     }
 }
 //------------------------------------------------------------------------------
@@ -178,6 +181,9 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
    const std::string& msg ="RecallReportPacker::EndofSessionWithErrors has been reported  but NO error was detected during the process";
    parent.m_lc.log(LOG_ERR,msg);
    parent.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono); 
+  }
+  if (parent.m_watchdog) {
+    parent.m_watchdog->addParameter(log::Param("status","failure"));
   }
 }
 //------------------------------------------------------------------------------

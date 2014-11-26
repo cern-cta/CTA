@@ -259,7 +259,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   sessionFailed() {
   // In case of problem, we mark the session failed ourselves
-  m_sessionLogContext.pushOrReplace(log::Param("status","failed"));
+  m_sessionLogContext.pushOrReplace(log::Param("status","failure"));
   m_sessionLogContext.log(LOG_INFO, "Tape session finished");
 }
 

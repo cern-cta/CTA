@@ -248,7 +248,7 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
       .add("transactionId", chrono.transactionId);
     reportPacker.m_lc.log(LOG_INFO,"Reported end of session to client");
     if(reportPacker.m_watchdog) {
-      reportPacker.m_watchdog->addParameter(log::Param("status","failure"));
+      reportPacker.m_watchdog->addParameter(log::Param("status","success"));
     }
   }
   else {
@@ -263,7 +263,7 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
       .add("transactionId", chrono.transactionId);
     reportPacker.m_lc.log(LOG_ERR,"Reported end of session with error to client due to previous file errors");
     if(reportPacker.m_watchdog) {
-      reportPacker.m_watchdog->addParameter(log::Param("status","success"));
+      reportPacker.m_watchdog->addParameter(log::Param("status","failure"));
     }
   }
   reportPacker.m_continue=false;
