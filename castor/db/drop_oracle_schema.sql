@@ -45,8 +45,8 @@ BEGIN
       ELSIF rec.object_type = 'SYNONYM' THEN
         EXECUTE IMMEDIATE 'DROP SYNONYM '||rec.object_name;
       ELSIF rec.object_type = 'QUEUE' THEN
-        EXECUTE DBMS_AQADM.STOP_QUEUE(queue_name => rec.object_name);
-        EXECUTE DBMS_AQADM.DROP_QUEUE(queue_name => rec.object_name);
+        DBMS_AQADM.STOP_QUEUE(queue_name => rec.object_name);
+        DBMS_AQADM.DROP_QUEUE(queue_name => rec.object_name);
       END IF;
     EXCEPTION WHEN OTHERS THEN
       -- Ignore: ORA-04043: "object string does not exist" or
