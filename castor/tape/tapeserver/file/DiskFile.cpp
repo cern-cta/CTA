@@ -410,7 +410,7 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
   // Build signature block
   time_t expTime = time(NULL)+3600;
   std::stringstream signatureBlock;
-  signatureBlock << path << "0" << expTime;
+  signatureBlock << path << "0" << expTime << "tape";
   
   // Sign the block
   std::string signature = CryptoPPSigner::sign(signatureBlock.str(), xrootPrivateKey);
@@ -501,7 +501,7 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
   // Build signature block
   time_t expTime = time(NULL)+3600;
   std::stringstream signatureBlock;
-  signatureBlock << path << "0" << expTime;
+  signatureBlock << path << "0" << expTime << "tape";
   
   // Sign the block
   std::string signature = CryptoPPSigner::sign(signatureBlock.str(), xrootPrivateKey);
