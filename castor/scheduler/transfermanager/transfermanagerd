@@ -434,10 +434,12 @@ class TransferManagerService(rpyc.Service):
     dlf.writedebug(msgs.INVOKINGTRANSFERSTARTING, diskServer=transfer.diskServer,
                    mountPoint=transfer.mountPoint, subreqId=transfer.transferId,
                    reqId=transfer.reqId, transferType=TransferType.toStr(transfer.transferType))
-    # then handle the queuing part
+    # handle the queuing part
     srcTransfer = queueingTransfers.transferStarting(transfer)
-    # finally (if no exception), call the DB: this is done in a separate thread pool
-    # in order to use multiple database connections
+    if transfer.transferType == TransferType.D2DSRC:
+      # that's it, nothing to do with the db
+      return None
+    # finally (if no exception), call the DB
     try:
       conn = self.__class__.getDbConnection()
       try:
@@ -536,7 +538,6 @@ class TransferManagerService(rpyc.Service):
   def exposed_d2dEnded(self, transferTuples):
     '''called when d2ds are over. Responsible for updating the stager DB and informing the source of the d2d.
        Note that we don't use the transfer class here.'''
-    # first deal with the stager DB
     try:
       conn = self.__class__.getDbConnection()
       try:
