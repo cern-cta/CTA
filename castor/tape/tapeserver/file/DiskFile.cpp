@@ -389,9 +389,9 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
   m_signedURL = m_URL;
   // Turn the bare URL into a Castor URL, by adding opaque tags:
   // ?castor.pfn1=/srv/castor/...  (duplication of the path in practice)
-  // ?castor.txtype=tape
   // ?castor.pool=xxx optional ceph pool
   // ?castor.exptime=(unix time)
+  // ?castor.txtype=tape
   // ?castor.signature=
   //Find the path part of the url. It is the first occurence of "//"
   // after the inital [x]root://
@@ -419,8 +419,8 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
   opaqueBloc << "?castor.pfn1=" << path;
   if (pool.size())
     opaqueBloc << "&castor.pool=" << pool;
-  opaqueBloc << "&castor.txtype=tape";
   opaqueBloc << "&castor.exptime=" << expTime;
+  opaqueBloc << "&castor.txtype=tape";
   opaqueBloc << "&castor.signature=" << signature;
   m_signedURL = m_URL + opaqueBloc.str();
   
@@ -482,6 +482,7 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
   // ?castor.pfn1=/srv/castor/...  (duplication of the path in practice)
   // ?castor.pool=xxx optional ceph pool
   // ?castor.exptime=(unix time)
+  // ?castor.txtype=tape
   // ?castor.signature=
   //Find the path part of the url. It is the first occurence of "//"
   // after the inital [x]root://
@@ -509,8 +510,8 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
   opaqueBloc << "?castor.pfn1=" << path;
   if (pool.size())
     opaqueBloc << "&castor.pool=" << pool;
-  opaqueBloc << "&castor.txtype=tape";
   opaqueBloc << "&castor.exptime=" << expTime;
+  opaqueBloc << "&castor.txtype=tape";
   opaqueBloc << "&castor.signature=" << signature;
   m_signedURL = m_URL + opaqueBloc.str();
   
