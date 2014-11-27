@@ -117,46 +117,68 @@ def getProcessStartTime(pid):
     raise ValueError('No such process')
 
 
-def cmdLineToTransfer(cmdLine, scheduler):
+def cmdLineToTransfer(cmdLine, scheduler, pid):
   '''creates a RunningTransfer object from the command line that launched the transfer.
   Depending on the command, the appropriate type of transfer will be created inside the
   RunningTransfer. In case the command is not recognized, None is returned'''
   # find out if we have a regular transfer or disk 2 disk copies
-  if cmdLine.startswith('/usr/bin/stagerjob'):
+  if cmdLine.startswith('/usr/bin/rfiod -1Ulnf'):
     # parse command line
     cmdLine = cmdLine.split('\0')
-    executable = cmdLine[0]
     args = dict([cmdLine[i:i+2] for i in range(1, len(cmdLine), 2)])
-    # create the transfer object
-    if executable == '/usr/bin/stagerjob':
-      _unused_clientType, clientIpAddress, clientPort = args['-C'].split(':')
-      diskServer, mountPoint = args['-R'].split(':')
-      creationTime = int(args['-t'])
-      transfer = Transfer(args['-s'], args['-r'], (args['-H'], int(args['-F'])),
-                          int(args['-u']), int(args['-g']), args['-S'], creationTime,
-                          args['-p'], args['-i'], TransferType.STD, args['-m'], clientIpAddress,
-                          int(clientPort), int(args['-X']), diskServer, mountPoint)
-    # wrap into a RunningTransfer object
-    return RunningTransfer(scheduler, None, creationTime, transfer, '')
+    # extract the metadata
+    transferId = args['-i']
+    destDcPath = args['-F']
+    flags = args['-a']
+    protocol = 'rfio'
+    startTime = os.stat('/proc/' + str(pid)).st_ctime
+  elif cmdLine.startswith('/usr/sbin/globus-gridftp-server'):
+    protocol = 'gsiftp'
+    startTime = os.stat('/proc/' + str(pid)).st_ctime
+    # parse environment of process pid
+    env = open('/proc/' + str(pid) + '/environ').read().split('\0')
+    for e in env:
+      try:
+        kv = e.split('=')
+        if kv[0] == 'UUID':
+          transferId = kv[1]
+        if kv[0] == 'FULLDESTPATH':
+          destDcPath = kv[1]
+        if kv[0] == 'ACCESS_MODE':
+          flags = kv[1]
+      except KeyError:
+        pass
+  else:
+    # other command lines are not recognized
+    return None
+  fid, nshost = os.path.basename(destDcPath).split('@')
+  nshost = nshost.split('.')[0]
+  fileid = (nshost, int(fid))
+  # create the transfer object; note that many data are missing
+  transfer = Transfer(transferId, '-', fileid, -1, -1, 'unknownSvcClass', startTime, protocol, 0, 0, flags)
+  # and wrap it into a RunningTransfer object
+  return RunningTransfer(scheduler, None, startTime, transfer, destDcPath)
+
+
+def cmdLineToTransferId(cmdLine):
+  '''extracts the transferId from a command line that launched a given transfer.
+  This only works with rfiod.'''
+  if cmdLine.startswith('/usr/bin/rfiod'):
+    args = dict([cmdLine[i:i+2] for i in range(1, len(cmdLine), 2)])
+    return args['-i']
   else:
     return None
 
 
-def cmdLineToTransferId(cmdLine):
-  '''extracts transferId from a command line that launched a given transfer'''
-  args = dict([cmdLine[i:i+2] for i in range(1, len(cmdLine), 2)])
-  return args['-s']
-
-
 def tupleToTransfer(t):
   '''creates a transfer object from a tuple of tuples which actually contains the
-  dictionnary of members and their values. Depending on the reqType member,
+  dictionary of members and their values. Depending on the transferType member,
   the appropriate object will be created.
   See BaseTransfer.asTuple for the opposite direction'''
   try:
     d = dict(t)
   except TypeError:
-    raise ValueError('parameter of tupleToTransfer was no a valid tuple of tuples : %s' % str(t))
+    raise ValueError('parameter of tupleToTransfer was not a valid tuple of tuples : %s' % str(t))
   transferType = d['transferType']
   try:
     if transferType == TransferType.STD:
@@ -247,6 +269,8 @@ class Transfer(BaseTransfer):
       cmdLine.append(self.transferId)
       cmdLine.append('-F')
       cmdLine.append(self.destDcPath)
+      cmdLine.append('-a')
+      cmdLine.append(self.flags)
     elif self.protocol == 'gsiftp':
       cmdLine = ['/usr/sbin/globus-gridftp-server']
       cmdLine.append('-i')    # inetd mode
@@ -274,10 +298,8 @@ class Transfer(BaseTransfer):
       raise EnvironmentError('Not a valid destination path (%s) for the mover' % self.destDcPath)
     moverEnv = os.environ.copy()
     if self.protocol == 'gsiftp':
-      if self.flags == 'r':
-        moverEnv['ACCESS_MODE'] = 'r'
-      elif self.flags == 'w':
-        moverEnv['ACCESS_MODE'] = 'w'
+      if self.flags == 'r' or self.flags == 'w':
+        moverEnv['ACCESS_MODE'] = self.flags
       else:
         raise ValueError('Invalid flags value %c for transfer %s' % (self.flags, self.transferId))
       moverEnv['UUID'] = self.transferId

@@ -200,6 +200,7 @@ int main (int     argc,
   int      Socket_parent_port = -1;  /* Somebody's giving us a yet binded port !? */
   int      once_only = 0;            /* Process only one request */
   char     *curdir = NULL;           /* Current directory    */
+  char     access_mode = 0;          /* access_mode, 'r'|'w' */
   char     *p;
   uid_t    uid = 0;      /* User id of the user issuing the request*/
   gid_t    gid = 0;        /* Group id of the user issuing the request*/
@@ -219,7 +220,7 @@ int main (int     argc,
 
   strcpy(logfile, "syslog"); /* default logfile */
   opterr++;
-  while ((option = getopt(argc, argv, "1sdlnUf:p:P:D:M:S:R:T:i:F:u:g:")) != EOF) {
+  while ((option = getopt(argc, argv, "1sdlnUf:p:P:D:M:S:R:T:i:F:u:g:a:")) != EOF) {
     switch (option) {
     case 'd':
       debug++;
@@ -272,6 +273,9 @@ int main (int     argc,
       break;
     case 'g':
       gid = strtou64(optarg);
+      break;
+    case 'a':
+      access_mode = optarg[0];
       break;
     default:
       fprintf(stderr,"Unknown option '%c'\n", option);

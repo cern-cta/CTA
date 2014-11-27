@@ -77,7 +77,7 @@ class RunningTransfersSet(object):
     for pid in pids:
       try:
         cmdline = open(os.path.sep+os.path.join('proc', pid, 'cmdline'), 'rb').read()
-        rTransfer = cmdLineToTransfer(cmdline, scheduler)
+        rTransfer = cmdLineToTransfer(cmdline, scheduler, pid)
         if rTransfer != None:
           # create the entry in the list of running transfers
           self.transfers.add(rTransfer)
@@ -85,8 +85,7 @@ class RunningTransfersSet(object):
           leftOvers[rTransfer.transfer.transferId] = int(pid)
           # 'Found transfer already running' message
           dlf.write(msgs.FOUNDTRANSFERALREADYRUNNING, subreqId=rTransfer.transfer.transferId,
-                    reqId=rTransfer.transfer.reqId, fileid=rTransfer.transfer.fileId,
-                    startTime=rTransfer.startTime)
+                    fileid=rTransfer.transfer.fileId, startTime=rTransfer.startTime)
       except Exception:
         # exceptions caught here mean we could not get the info we wanted on the
         # process we were looking at. We only ignore this process as it has probably
