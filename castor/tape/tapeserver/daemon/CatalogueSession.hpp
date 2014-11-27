@@ -29,6 +29,7 @@
 #include <string>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdint.h>
 
 namespace castor {
 namespace tape {
@@ -91,6 +92,13 @@ public:
    * To be called when the session has ended with failure.
    */
   virtual void sessionFailed() = 0;
+  
+  /**
+   *  To be called when a session is killed.
+   *  This member function is a no-op by default. (overridden by 
+   *  CatalogueTransferSession at the time of writing)
+   */
+  virtual void sessionKilled(uint32_t signal) {}
 
   /**
    * Gets the volume identifier of the tape associated with the tape drive.

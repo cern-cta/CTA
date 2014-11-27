@@ -249,6 +249,10 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
     reportPacker.m_lc.log(LOG_INFO,"Reported end of session to client");
     if(reportPacker.m_watchdog) {
       reportPacker.m_watchdog->addParameter(log::Param("status","success"));
+      // We have a race condition here between the processing of this message by
+      // the initial process and the printing of the end-of-session log, triggered
+      // by the end our process. To delay the latter, we sleep half a second here.
+      usleep(500*1000);
     }
   }
   else {
@@ -264,6 +268,10 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
     reportPacker.m_lc.log(LOG_ERR,"Reported end of session with error to client due to previous file errors");
     if(reportPacker.m_watchdog) {
       reportPacker.m_watchdog->addParameter(log::Param("status","failure"));
+      // We have a race condition here between the processing of this message by
+      // the initial process and the printing of the end-of-session log, triggered
+      // by the end our process. To delay the latter, we sleep half a second here.
+      usleep(500*1000);
     }
   }
   reportPacker.m_continue=false;
@@ -296,6 +304,10 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
   }
   if(reportPacker.m_watchdog) {
     reportPacker.m_watchdog->addParameter(log::Param("status","failure"));
+    // We have a race condition here between the processing of this message by
+    // the initial process and the printing of the end-of-session log, triggered
+    // by the end our process. To delay the latter, we sleep half a second here.
+    usleep(500*1000);
   }
   reportPacker.m_continue=false;
 }

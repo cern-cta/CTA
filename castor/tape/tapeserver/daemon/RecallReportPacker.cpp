@@ -155,6 +155,10 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
       parent.logRequestReport(chrono,"Nominal RecallReportPacker::EndofSession has been reported",LOG_INFO);
       if (parent.m_watchdog) {
         parent.m_watchdog->addParameter(log::Param("status","success"));
+        // We have a race condition here between the processing of this message by
+        // the initial process and the printing of the end-of-session log, triggered
+        // by the end our process. To delay the latter, we sleep half a second here.
+        usleep(500*1000);
       }
     }
     else {
@@ -164,6 +168,10 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
       parent.logRequestReport(chrono,"reporting EndOfSessionWithError done",LOG_ERR);
       if (parent.m_watchdog) {
         parent.m_watchdog->addParameter(log::Param("status","failure"));
+        // We have a race condition here between the processing of this message by
+        // the initial process and the printing of the end-of-session log, triggered
+        // by the end our process. To delay the latter, we sleep half a second here.
+        usleep(500*1000);
       }
     }
 }
@@ -184,6 +192,10 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
   }
   if (parent.m_watchdog) {
     parent.m_watchdog->addParameter(log::Param("status","failure"));
+    // We have a race condition here between the processing of this message by
+    // the initial process and the printing of the end-of-session log, triggered
+    // by the end our process. To delay the latter, we sleep half a second here.
+    usleep(500*1000);
   }
 }
 //------------------------------------------------------------------------------

@@ -564,6 +564,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
     session->sessionSucceeded();
     m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
     break;
+  case DRIVE_STATE_WAITSHUTDOWNKILL:
   case DRIVE_STATE_WAITSHUTDOWNCLEANER:
     changeState(DRIVE_STATE_SHUTDOWN);
     session->sessionSucceeded();
@@ -588,7 +589,33 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::sessionFailed() {
   switch(m_state) {
   case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
+  case DRIVE_STATE_WAITSHUTDOWNKILL:
     return runningSessionFailed();
+  case DRIVE_STATE_WAITSHUTDOWNCLEANER:
+    return cleanerOfShutdownFailed();
+  default:
+    {
+      castor::exception::Exception ex;
+      ex.getMessage() <<
+        "Failed to record tape session failed for session with pid " <<
+        getSession().getPid() << ": Incompatible drive state: state=" <<
+        driveStateToStr(m_state);
+      delete m_session;
+      m_session = NULL;
+      throw ex;
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+// sessionKilled
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueDrive::
+sessionKilled(uint32_t signal) {
+  switch(m_state) {
+  case DRIVE_STATE_RUNNING:
+  case DRIVE_STATE_WAITDOWN:
+    return runningSessionKilled(signal);
   case DRIVE_STATE_WAITSHUTDOWNKILL:
     return sessionKilledByShutdown();
   case DRIVE_STATE_WAITSHUTDOWNCLEANER:
@@ -614,6 +641,18 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::runningSessionFailed() {
   std::auto_ptr<CatalogueSession> session(m_session);
   m_session = NULL;
   session->sessionFailed();
+  changeState(DRIVE_STATE_DOWN);
+  m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
+}
+
+//------------------------------------------------------------------------------
+// runningSessionKilled
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueDrive::
+runningSessionKilled(uint32_t signal) {
+  std::auto_ptr<CatalogueSession> session(m_session);
+  m_session = NULL;
+  session->sessionKilled(signal);
 
   if(CatalogueSession::SESSION_TYPE_CLEANER != session->getType()) {
     const uint32_t driveReadyDelayInSeconds = 60;
@@ -624,6 +663,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::runningSessionFailed() {
     m_vdqm.setDriveDown(m_hostName, m_config.unitName, m_config.dgn);
   }
 }
+
 
 //------------------------------------------------------------------------------
 // sessionKilledByShutdown

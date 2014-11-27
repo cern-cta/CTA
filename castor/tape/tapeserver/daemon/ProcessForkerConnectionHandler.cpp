@@ -203,7 +203,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     CatalogueDrive &drive = m_driveCatalogue.findDrive(msg.pid());
 
     // Notify the catalogue drive of the failed session
-    drive.sessionFailed();
+    drive.sessionKilled(msg.signal());
 
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;

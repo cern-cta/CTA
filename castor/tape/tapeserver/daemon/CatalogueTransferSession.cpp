@@ -141,6 +141,8 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
     m_log(LOG_ERR,
       "Killing data-transfer session because transfer job is too late",
       params);
+    // We will also attach the error to final log for the session
+    addLogParam(castor::log::Param("Error_timeoutGettingJobInfo","1"));
 
     try {
       idempotentKill(m_pid, SIGKILL);
@@ -191,7 +193,9 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
     m_log(LOG_ERR,
       "Killing data-transfer session because tape mount is taking too long",
       params);
-
+    // We will also attach the error to final log for the session
+    addLogParam(castor::log::Param("Error_timeoutMountingTape","1"));
+    
     try {
       idempotentKill(m_pid, SIGKILL);
       m_state = WAIT_TIMEOUT_KILL;
@@ -222,6 +226,8 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
     m_log(LOG_ERR,
       "Killing data-transfer session because data blocks are not being moved",
       params);
+    // We will also attach the error to final log for the session
+    addLogParam(castor::log::Param("Error_sessionHung","1"));
 
     try {
       idempotentKill(m_pid, SIGKILL);
@@ -259,6 +265,18 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   sessionFailed() {
   // In case of problem, we mark the session failed ourselves
+  m_sessionLogContext.pushOrReplace(log::Param("status","failure"));
+  m_sessionLogContext.log(LOG_INFO, "Tape session finished");
+}
+
+//------------------------------------------------------------------------------
+// sessionFailed
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueTransferSession::
+  sessionKilled(uint32_t signal) {
+  // In case of problem, we mark the session failed ourselves
+  m_sessionLogContext.pushOrReplace(log::Param("Error_sessionKilled","1"));
+  m_sessionLogContext.pushOrReplace(log::Param("killSignal",signal));
   m_sessionLogContext.pushOrReplace(log::Param("status","failure"));
   m_sessionLogContext.log(LOG_INFO, "Tape session finished");
 }

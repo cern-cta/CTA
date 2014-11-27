@@ -331,9 +331,16 @@ public:
   void sessionSucceeded(); 
       
   /**
-   * Informs catalogue drive that the current tape session has failed.
+   * Informs catalogue drive that the current tape session completed in a failed
+   * state (tape not unloaded, usually) and the drive should be marked as down.
    */
   void sessionFailed();
+  
+  /**
+   * Informs catalogue drive that the current tape session was killed (either 
+   * due to a hang, of for other reason, like a dissatisfied operator.)
+   */
+  void sessionKilled(uint32_t signal);
 
   /**
    * Informs catalogue drive that the current tape session has failed and that
@@ -636,9 +643,15 @@ private:
 
   /**
    * Called when a running session (DRIVE_STATE_RUNNING or DRIVE_STATE_WAITDOWN)
-   * has failed.
+   * has competed with an error return value.
    */
   void runningSessionFailed();
+  
+  /**
+   * Called when a running session (DRIVE_STATE_RUNNING or DRIVE_STATE_WAITDOWN)
+   * has been killed.
+   */
+  void runningSessionKilled(uint32_t signal);
 
   /**
    * Called when a running session has been intentionally killed by the shutdown

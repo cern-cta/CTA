@@ -101,6 +101,11 @@ public:
    * To be called when the session has ended with failure.
    */
   void sessionFailed();
+  
+  /**
+   * To be called when the session has ended with a kill.
+   */
+  virtual void sessionKilled(uint32_t signal);
 
   /**
    * Gets the time at which the tape drive was assigned a data transfer job.
