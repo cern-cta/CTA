@@ -55,7 +55,7 @@ try:
     stcur = stconn.cursor()
     sqlStatement = '''
       SELECT * FROM (
-        SELECT /*+ use_nl (tp mj) */ tp.name tapepool, count(*) files,
+        SELECT /*+ USE_NL(tp mj) NO_INDEX_FFS(mj) */ tp.name tapepool, count(*) files,
                sum((case when mj.status = 1 then 1 else 0 end)) files_migrating,
                nvl(sum(mj.filesize), 0) total_size,
                sum((case when mj.status = 1 then mj.filesize else 0 end)) size_migrating,
@@ -70,7 +70,7 @@ try:
          GROUP BY tp.name, tp.id
          ORDER BY tapepool ASC)
       UNION ALL
-      SELECT 'stuck migrations' tapepool, count(*) files, 0 files_migrating,
+      SELECT /*+ NO_INDEX_FFS(MigrationJob) */ 'stuck migrations' tapepool, count(*) files, 0 files_migrating,
              nvl(sum(dc.diskcopysize), 0) total_size, 0 size_migrating,
              0 migrations, 0 migrations_queued, 0 migrations_running,
              nvl(min(gettime() - dc.creationtime), 0) min_age,
@@ -79,7 +79,7 @@ try:
        WHERE dc.castorFile = cf.id
          AND tapeStatus = 0  -- CASTORFILE_NOTONTAPE
          AND NOT EXISTS
-           (SELECT 1 FROM MigrationJob WHERE castorFile = dc.castorFile)
+           (SELECT /*+ NO_INDEX_FFS(MigrationJob) */ 1 FROM MigrationJob WHERE castorFile = dc.castorFile)
         '''
     stcur.execute(sqlStatement)
     # get results and print them
