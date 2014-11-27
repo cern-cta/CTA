@@ -113,14 +113,14 @@ protected:
   void mountTapeReadOnly(){
     castor::log::ScopedParamContainer scoped(m_logContext); 
     scoped.add("TPVID",m_volInfo.vid)
-          .add("drive_Slot",m_drive.librarySlot.str());
+          .add("drive_Slot",m_drive.config.librarySlot.str());
     try {
       castor::utils::Timer timer;
-        m_mc.mountTapeReadOnly(m_volInfo.vid, m_drive.librarySlot.str());
+        m_mc.mountTapeReadOnly(m_volInfo.vid, m_drive.config.librarySlot.str());
         const std::string modeAsString = "R";
         scoped.add("MCMountTime",timer.secs()).add("mode",modeAsString);
         if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL !=
-          m_drive.librarySlot.getLibraryType()) {
+          m_drive.config.librarySlot.getLibraryType()) {
           m_logContext.log(LOG_INFO, "Tape mounted for read-only access");
         }
     }
@@ -139,10 +139,10 @@ protected:
   void mountTapeReadWrite(){
     castor::log::ScopedParamContainer scoped(m_logContext); 
     scoped.add("TPVID",m_volInfo.vid)
-          .add("drive_Slot",m_drive.librarySlot.str());
+          .add("drive_Slot",m_drive.config.librarySlot.str());
     try {
       castor::utils::Timer timer;
-        m_mc.mountTapeReadWrite(m_volInfo.vid, m_drive.librarySlot.str());
+        m_mc.mountTapeReadWrite(m_volInfo.vid, m_drive.config.librarySlot.str());
         const std::string modeAsString = "RW";
         scoped.add("MCMountTime",timer.secs()).add("mode",modeAsString);
         m_logContext.log(LOG_INFO, "Tape mounted for read/write access");

@@ -25,7 +25,7 @@
 
 #include "castor/exception/Errnum.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/mediachanger/GenericLibrarySlot.hpp"
+#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/drive/mtio_add.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/SCSI/Exception.hpp"
@@ -189,10 +189,9 @@ namespace drive {
     virtual bool hasTapeInPlace() = 0;
     
     /**
-     * Member allowing the convenient storage of the drive location for the
-     * mount system (we get the information from TPCONFIG)
+     * The configuration of teh tape drive as parsed from the TPCONFIG file.
      */
-    mediachanger::GenericLibrarySlot librarySlot;
+    daemon::DriveConfig config;
   };
   
   /**

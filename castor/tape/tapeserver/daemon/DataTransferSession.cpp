@@ -486,7 +486,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
   try {
     std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive;
     drive.reset(castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper));
-    if (drive.get()) drive->librarySlot = driveConfig.librarySlot;
+    if (drive.get()) drive->config = driveConfig;
     return drive.release();
   } catch (castor::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
