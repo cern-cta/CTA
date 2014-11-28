@@ -70,7 +70,7 @@ namespace daemon {
     ScopedParamContainer params(lc);
     params.add("NSHOSTNAME", m_fileToMigrate->nshost())
           .add("NSFILEID",m_fileToMigrate->fileid())
-          .add("lastKnownFileName",m_fileToMigrate->lastKnownFilename())
+          .add("lastKnownFilename",m_fileToMigrate->lastKnownFilename())
           .add("fileSize",m_fileToMigrate->fileSize())
           .add("fileTransactionId",m_fileToMigrate->fileTransactionId())
           .add("fSeq",m_fileToMigrate->fseq())
