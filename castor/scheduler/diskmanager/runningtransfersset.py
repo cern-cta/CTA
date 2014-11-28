@@ -131,7 +131,7 @@ class RunningTransfersSet(object):
         return t
     # try a tape transfer
     for t in self.tapeTransfers:
-      if t.transferid == transferid:
+      if t.transferId == transferid:
         return t
     raise KeyError
 
