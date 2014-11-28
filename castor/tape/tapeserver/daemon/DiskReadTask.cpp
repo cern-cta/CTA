@@ -182,6 +182,7 @@ void DiskReadTask::logWithStat(int level,const std::string& msg,log::LogContext&
   log::ScopedParamContainer params(lc);
      params.add("readWriteTime", m_stats.readWriteTime)
            .add("checksumingTime",m_stats.checksumingTime)
+           .add("waitFreeMemoryTime",m_stats.waitFreeMemoryTime)
            .add("waitDataTime",m_stats.waitDataTime)
            .add("waitReportingTime",m_stats.waitReportingTime)
            .add("checkingErrorTime",m_stats.checkingErrorTime)
