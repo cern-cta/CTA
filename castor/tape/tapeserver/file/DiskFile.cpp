@@ -31,6 +31,7 @@
 #include <rfio_api.h>
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <radosstriper/libradosstriper.hpp>
+#include <uuid/uuid.h>
 #include <algorithm>
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
@@ -389,6 +390,7 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
   m_signedURL = m_URL;
   // Turn the bare URL into a Castor URL, by adding opaque tags:
   // ?castor.pfn1=/srv/castor/...  (duplication of the path in practice)
+  // ?castor.pfn2=0:diskManagerPort:transferId
   // ?castor.pool=xxx optional ceph pool
   // ?castor.exptime=(unix time)
   // ?castor.txtype=tape
@@ -407,10 +409,14 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
       std::string("In XrootC2FSReadFile::XrootC2FSReadFile could not path in URL "+
         url));
   std::string path = url.substr(pathPos + 1);
-  // Build signature block
   time_t expTime = time(NULL)+3600;
+  uuid_t uuid;
+  char suuid[100];
+  uuid_generate(uuid);
+  uuid_unparse(uuid, suuid);
   std::stringstream signatureBlock;
-  signatureBlock << path << "0" << expTime << "tape";
+  // Build signature block
+  signatureBlock << path << "0:15511:" << suuid << "0" << expTime << "tape";
   
   // Sign the block
   std::string signature = CryptoPPSigner::sign(signatureBlock.str(), xrootPrivateKey);
@@ -419,6 +425,7 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
   opaqueBloc << "?castor.pfn1=" << path;
   if (pool.size())
     opaqueBloc << "&castor.pool=" << pool;
+  opaqueBloc << "&castor.pfn2=0:15511:" << suuid;
   opaqueBloc << "&castor.exptime=" << expTime;
   opaqueBloc << "&castor.txtype=tape";
   opaqueBloc << "&castor.signature=" << signature;
