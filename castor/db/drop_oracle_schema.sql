@@ -48,10 +48,17 @@ BEGIN
         DECLARE
           compilation_error exception;
           pragma exception_init(compilation_error, -6550);
+          invalid_statement EXCEPTION;
+          pragma exception_init(invalid_statement, -900);
         BEGIN
           execute immediate 'DBMS_AQADM.STOP_QUEUE(queue_name => rec.object_name);';
           execute immediate 'DBMS_AQADM.DROP_QUEUE(queue_name => rec.object_name);';
-        EXCEPTION WHEN compilation_error THEN
+        EXCEPTION
+        WHEN invalid_statement THEN
+          -- the statement IS valid, but this is raised when the queue does not exist
+          -- so we should just ignore it
+          NULL;
+        WHEN compilation_error THEN
           DECLARE
             error_code VARCHAR2(20) := regexp_substr(dbms_utility.format_error_stack, '(PLS-[[:digit:]]+):', 1, 1, '', 1);
           BEGIN
