@@ -130,7 +130,6 @@ CREATE INDEX I_SubRequest_LastModTime ON SubRequest (lastModificationTime);
 /* Modify SvcClass table for the drop of replicateOnClose */
 ALTER TABLE SvcClass DROP COLUMN replicateOnClose;
 ALTER TABLE SvcClass RENAME COLUMN maxReplicaNb to replicaNb;
-DROP PROCEDURE handleReplication;
 
 /* drop obsoleted entities */
 -- updates support
