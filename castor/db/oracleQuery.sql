@@ -73,20 +73,20 @@ BEGIN
                   AND (euid = 0 OR SvcClass.id IS NULL OR   -- if euid > 0 check read permissions for srmLs (see bug #69678)
                        checkPermission(SvcClass.name, euid, egid, 35) = 0)   -- OBJ_StageGetRequest
                 UNION ALL
-               SELECT /*+ LEADING(cfidTable DiskCopy DataPool2SvcClass SvcClass DataPool)
-                          USE_NL(cfidTable DiskCopy DataPool2SvcClass SvcClass DataPool) */
+               SELECT /*+ LEADING(cfidTable DiskCopy DataPool2SvcClass SvcClass DataPool DiskServer)
+                          USE_NL(cfidTable DiskCopy DataPool2SvcClass SvcClass DataPool DiskServer)
+                          INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
                       DiskCopy.id, DiskCopy.path, DiskCopy.status, DataPool.name AS machine, '' AS mountPoint,
                       SvcClass.name AS svcClass, DiskCopy.castorFile, DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime,
                       0 AS isOnDrainingHardware
-                 FROM DataPool2SvcClass, DataPool, SvcClass, DiskCopy
+                 FROM DataPool2SvcClass, DataPool, SvcClass, DiskCopy, DiskServer
                 WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                   AND Diskcopy.status IN (0, 1, 4, 5, 6, 7, 10, 11) -- search for diskCopies not BEINGDELETED
-                  AND EXISTS (SELECT 1 FROM DiskServer
-                               WHERE DiskServer.dataPool = DiskCopy.dataPool
-                                 AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
-                                                           dconst.DISKSERVER_DRAINING,
-                                                           dconst.DISKSERVER_READONLY)
-                                 AND DiskServer.hwOnline = 1)
+                  AND DiskServer.dataPool = DiskCopy.dataPool
+                  AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                            dconst.DISKSERVER_DRAINING,
+                                            dconst.DISKSERVER_READONLY)
+                  AND DiskServer.hwOnline = 1
                   AND DataPool2SvcClass.parent = Diskcopy.dataPool
                   AND SvcClass.id = DataPool2SvcClass.child
                   AND (euid = 0 OR   -- if euid > 0 check read permissions for srmLs (see bug #69678)
@@ -161,18 +161,20 @@ BEGIN
                   AND nvl(DiskServer.hwOnline, 1) = 1
                   AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
                 UNION ALL
-               SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DataPool.name AS machine, '' AS mountPoint,
+               SELECT /*+ LEADING(cfidTable DiskCopy DataPool2SvcClass DataPool DiskServer)
+                          USE_NL(cfidTable DiskCopy DataPool2SvcClass DataPool DiskServer)
+                          INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
+                      DiskCopy.id, DiskCopy.path, DiskCopy.status, DataPool.name AS machine, '' AS mountPoint,
                       DataPool2SvcClass.child AS dcSvcClass, DiskCopy.castorFile, DiskCopy.nbCopyAccesses, DiskCopy.creationTime,
                        DiskCopy.lastAccessTime, 0 AS isOnDrainingHardware
-                 FROM DataPool2SvcClass, DataPool, DiskCopy
+                 FROM DataPool2SvcClass, DataPool, DiskCopy, DiskServer
                 WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                   AND DiskCopy.status IN (0, 1, 4, 5, 6, 7, 10, 11)  -- search for diskCopies not GCCANDIDATE or BEINGDELETED
-                  AND EXISTS (SELECT 1 FROM DiskServer
-                               WHERE DiskServer.dataPool = DiskCopy.dataPool
-                                 AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
-                                                           dconst.DISKSERVER_DRAINING,
-                                                           dconst.DISKSERVER_READONLY)
-                                 AND DiskServer.hwOnline = 1)
+                  AND DiskServer.dataPool = DiskCopy.dataPool
+                  AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                            dconst.DISKSERVER_DRAINING,
+                                            dconst.DISKSERVER_READONLY)
+                  AND DiskServer.hwOnline = 1
                   AND DataPool2SvcClass.parent = DiskCopy.dataPool
                   AND DataPool.id = Diskcopy.dataPool) DC
                   -- No extra check on read permissions here, it is not relevant
