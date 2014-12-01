@@ -228,7 +228,7 @@ namespace daemon {
     }//end of try
     catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
       //we end up there because a task screw up somewhere 
-      m_parent.m_lc.log(LOG_ERR,"In MigrationTaskInjector::WorkerThread::run(): a task failed, "
+      m_parent.m_lc.log(LOG_INFO,"In MigrationTaskInjector::WorkerThread::run(): a task failed, "
       "indicating finish of run");
       
       m_parent.signalEndDataMovement();

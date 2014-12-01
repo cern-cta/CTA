@@ -178,20 +178,24 @@ namespace daemon {
       }
 
       //log and circulate blocks
-      //We want to report internal error most of the time to avoid wrong
+      // We want to report internal error most of the time to avoid wrong
       // interpretation down the chain. Nevertheless, if the exception
       // if of type Errnum AND the errorCode is ENOSPC, we will propagate it.
       // This is how we communicate the fact that a tape is full to the client.
+      // We also change the log level to INFO for the case of end of tape.
       int errorCode = e.code();
+      int errorLevel = LOG_ERR;
       try {
         const castor::exception::Errnum & errnum = 
             dynamic_cast<const castor::exception::Errnum &> (e);
-        if (ENOSPC == errnum.errorNumber())
+        if (ENOSPC == errnum.errorNumber()) {
           errorCode = ENOSPC;
+          errorLevel = LOG_INFO;
+        }
       } catch (...) {}
       LogContext::ScopedParam sp(lc, Param("exceptionCode",errorCode));
       LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
-      lc.log(LOG_ERR,"An error occurred for this file. End of migrations.");
+      lc.log(errorLevel,"An error occurred for this file. End of migrations.");
       circulateMemBlocks();
       reportPacker.reportFailedJob(*m_fileToMigrate,e.getMessageValue(),errorCode);
   
