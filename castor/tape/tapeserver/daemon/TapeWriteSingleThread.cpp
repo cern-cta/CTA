@@ -240,9 +240,25 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     // side and the task injector, which will trigger the end of session.
     m_injector->setErrorFlag();
     
-    // report the error to the watchdog for counting
-    if(currentErrorToCount.size()) {
-      m_watchdog.addToErrorCount(currentErrorToCount);
+    // If we reached the end of tape, this is not an error (ENOSPC)
+    try {
+      // If it's not the error we're looking for, we will go about our business
+      // in the catch section. dynamic cast will throw, and we'll do ourselves
+      // if the error code is not the one we want.
+      const castor::exception::Errnum & en = 
+        dynamic_cast<const castor::exception::Errnum &>(e);
+      if(en.errorNumber()!= ENOSPC) {
+        throw 0;
+      }
+      // This is indeed the end of the tape. Not an error.
+      m_watchdog.addToErrorCount("Info_tapeFilledUp");
+    } catch (...) {
+      // The error is not an ENOSPC, so it is, indeed, an error.
+      // If we got here with a new error, currentErrorToCount will be non-empty,
+      // and we will pass the error name to the watchdog.
+      if(currentErrorToCount.size()) {
+        m_watchdog.addToErrorCount(currentErrorToCount);
+      }
     }
     
     //first empty all the tasks and circulate mem blocks
