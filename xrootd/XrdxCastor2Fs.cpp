@@ -299,7 +299,6 @@ XrdxCastor2Fs::GetAllowedSvc(const char* path,
 std::list<std::string>*
 XrdxCastor2Fs::GetAllAllowedSvc(const char* path, bool& no_hsm)
 {
-  xcastor_debug("path=%s", path);
   std::string spath = path;
   std::string subpath;
   std::list<std::string>* list_svc = 0;
