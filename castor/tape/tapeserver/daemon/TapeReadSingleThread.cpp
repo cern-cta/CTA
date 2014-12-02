@@ -228,6 +228,9 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     // Report one last time the stats, after unloading/unmounting.
     m_watchdog.updateStats(m_stats);
   } catch(const castor::exception::Exception& e){
+    // We can still update the session stats one last time (unmount timings
+    // should have been updated by the RAII cleaner/unmounter).
+    m_watchdog.updateStats(m_stats);
     // We end up here because one step failed, be it at mount time, of after
     // failing to position by fseq (this is fatal to a read session as we need
     // to know where we are to proceed to the next file incrementally in fseq

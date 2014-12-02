@@ -205,6 +205,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         task->execute(*writeSession,m_reportPacker,m_watchdog,m_logContext,timer);
         // Add the tasks counts to the session's
         m_stats.add(task->getTaskStats());
+        // Transmit the statistics to the watchdog thread
+        m_watchdog.updateStats(m_stats);
         // Increase local flush counters (session counters are incremented by
         // the task)
         files++;
@@ -239,6 +241,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     // like mounting the tape, then we have to signal the problem to the disk
     // side and the task injector, which will trigger the end of session.
     m_injector->setErrorFlag();
+    // We can still update the session stats one last time (unmount timings
+    // should have been updated by the RAII cleaner/unmounter).
+    m_watchdog.updateStats(m_stats);
     
     // If we reached the end of tape, this is not an error (ENOSPC)
     try {
