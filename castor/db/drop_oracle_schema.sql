@@ -17,34 +17,29 @@ BEGIN
   EXECUTE IMMEDIATE 'PURGE RECYCLEBIN';
 
   -- Drop tables linked to queues
-  FOR rec IN (SELECT object_name, object_type
-                FROM user_objects
-               WHERE object_type = 'QUEUE')
-  LOOP
+  DECLARE
+    compilation_error exception;
+    pragma exception_init(compilation_error, -6550);
+    does_not_exist EXCEPTION;
+    pragma exception_init(does_not_exist, -24002);
+  BEGIN
+    EXECUTE IMMEDIATE 'BEGIN DBMS_AQADM.DROP_QUEUE_TABLE (queue_table => ''CASTORQUEUETABLE'', force => TRUE); END;';
+  EXCEPTION
+  WHEN does_not_exist THEN
+    -- the statement IS valid, but this is raised when the queue does not exist
+    -- so we should just ignore it
+    NULL;
+  WHEN compilation_error THEN
     DECLARE
-      compilation_error exception;
-      pragma exception_init(compilation_error, -6550);
-      does_not_exist EXCEPTION;
-      pragma exception_init(does_not_exist, -24002);
+      error_code VARCHAR2(20) := regexp_substr(dbms_utility.format_error_stack, '(PLS-[[:digit:]]+):', 1, 1, '', 1);
     BEGIN
-      DBMS_AQADM.DROP_QUEUE_TABLE (queue_table => 'CASTORQUEUETABLE', force => TRUE);
-    EXCEPTION
-    WHEN does_not_exist THEN
-      -- the statement IS valid, but this is raised when the queue does not exist
-      -- so we should just ignore it
-      NULL;
-    WHEN compilation_error THEN
-      DECLARE
-        error_code VARCHAR2(20) := regexp_substr(dbms_utility.format_error_stack, '(PLS-[[:digit:]]+):', 1, 1, '', 1);
-      BEGIN
-        -- Ignore PLS-00201: identifier 'DBMS_AQADM' must be declared
-        -- as obviously, there is nothing to be dropped
-        IF error_code != 'PLS-00201' THEN
-          RAISE;
-        END IF;
-      END;
+      -- Ignore PLS-00201: identifier 'DBMS_AQADM' must be declared
+      -- as obviously, there is nothing to be dropped
+      IF error_code != 'PLS-00201' THEN
+        RAISE;
+      END IF;
     END;
-  END LOOP;
+  END;
 
   -- Drop all other objects
   FOR rec IN (SELECT object_name, object_type
