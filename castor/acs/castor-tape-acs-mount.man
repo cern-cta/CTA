@@ -21,7 +21,7 @@ castor-tape-acs-mount \- mount a volume
 the drive located in the specified \fBDRIVE_SLOT\fP of the tape library.
 The format of \fBDRIVE_SLOT\fP is as follows:
 
-.B acsACS,LSM,panel,transport
+.B ACS:LSM:panel:transport
 
 Please note that this command-line tool communicates directly with the CSI of
 the ACS system. This command-line tool does not communicate with any CASTOR
