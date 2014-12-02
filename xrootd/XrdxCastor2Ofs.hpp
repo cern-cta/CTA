@@ -244,8 +244,13 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
 
   //----------------------------------------------------------------------------
   //! Configure function - parse the xrd.cf.server file
+  //!
+  //! @param error error object
+  //! @param envP env holding implementation specific information
+  //!
+  //! @return SFS_OK if successful, otherwise SFS_ERROR
   //----------------------------------------------------------------------------
-  int Configure(XrdSysError& error);
+  int Configure(XrdSysError& error, XrdOucEnv* envP);
 
 
   //----------------------------------------------------------------------------

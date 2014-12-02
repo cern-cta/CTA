@@ -70,9 +70,10 @@ const int XrdxCastor2OfsFile::sKeyExpiry = 60;
 //------------------------------------------------------------------------------
 extern "C"
 {
-  XrdSfsFileSystem* XrdSfsGetFileSystem(XrdSfsFileSystem* native_fs,
-                                        XrdSysLogger*     lp,
-                                        const char*       configfn)
+  XrdSfsFileSystem* XrdSfsGetFileSystem2(XrdSfsFileSystem* native_fs,
+                                         XrdSysLogger* lp,
+                                         const char* configfn,
+                                         XrdOucEnv* envP)
   {
     static XrdxCastor2Ofs myFS;
     // Do the herald thing
@@ -84,7 +85,7 @@ extern "C"
     gSrv = &myFS;
     gSrv->ConfigFN = (configfn && *configfn ? strdup(configfn) : 0);
 
-    if (gSrv->Configure(OfsEroute)) return 0;
+    if (gSrv->Configure(OfsEroute, envP)) return 0;
 
     // All done, we can return the callout vector to these routines
     XrdOfsFS = static_cast<XrdOfs*>(gSrv);
@@ -110,7 +111,7 @@ XrdxCastor2Ofs::XrdxCastor2Ofs():
 //------------------------------------------------------------------------------
 // Configure
 //------------------------------------------------------------------------------
-int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
+int XrdxCastor2Ofs::Configure(XrdSysError& Eroute, XrdOucEnv* envP)
 {
   char* var;
   const char* val;
@@ -195,7 +196,7 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
   Logging::SetUnit(unit.c_str());
   xcastor_info("logging configured");
   // Parse the default XRootD directives
-  int rc = XrdOfs::Configure(Eroute);
+  int rc = XrdOfs::Configure(Eroute, envP);
   // Set the effective user for all the XrdClients used to issue 'prepares'
   // to redirector
   setenv("XrdClientEUSER", "stage", 1);
