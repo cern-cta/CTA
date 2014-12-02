@@ -102,6 +102,8 @@ extern "C" {
         }
         // synchronously read and parse answer
         parseAnswer(sockfd, errorcode, errormsg);
+        // close the connection
+        close(sockfd);
       }
       catch (std::exception& e) {
         // report any exception to the caller
@@ -143,6 +145,8 @@ extern "C" {
         }
         // synchronously read and parse answer
         parseAnswer(sockfd, errorcode, errormsg);
+        // close the connection
+        close(sockfd);
       }
       catch (std::exception& e) {
         // report any exception to the caller
