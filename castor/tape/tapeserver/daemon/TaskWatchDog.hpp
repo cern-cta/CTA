@@ -321,6 +321,19 @@ protected:
   }
   
   /**
+   * Set error count. This is used for once per session events that could
+   * be detected several times.
+   */
+  void setErrorCount (const std::string & errorName, uint32_t value) {
+    {
+      castor::server::MutexLocker locker(&m_mutex);
+      m_errorCounts[errorName] = value;
+    }
+    // We ship the new value ASAP to the main thread.
+    addParameter(log::Param(errorName, value));
+  }
+  
+  /**
    * Start the thread
    */
   void startThread(){

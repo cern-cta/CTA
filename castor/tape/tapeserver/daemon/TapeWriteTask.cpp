@@ -167,7 +167,7 @@ namespace daemon {
           throw 0;
         }
         // This is indeed the end of the tape. Not an error.
-        watchdog.addToErrorCount("Info_tapeFilledUp");
+        watchdog.setErrorCount("Info_tapeFilledUp",1);
       } catch (...) {
         // The error is not an ENOSPC, so it is, indeed, an error.
         // If we got here with a new error, currentErrorToCount will be non-empty,
