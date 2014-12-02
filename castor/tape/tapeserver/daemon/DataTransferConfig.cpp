@@ -25,6 +25,7 @@
 #include "castor/tape/tapeserver/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "movers/moveropenclose.h"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -39,7 +40,8 @@ castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig()
   bulkRequestRecallMaxFiles(0),
   maxBytesBeforeFlush(0),
   maxFilesBeforeFlush(0),
-  nbDiskThreads(0) {
+  nbDiskThreads(0),
+  moverHandlerPort(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -82,6 +84,8 @@ castor::tape::tapeserver::daemon::DataTransferConfig
     "TapeServer", "RemoteFileProtocol", "RFIO", log);
   config.xrootPrivateKey = castorConf.getConfEntString(
     "XROOT", "PrivateKey", "/opt/xrootd/keys/key.pem", log);
+  config.moverHandlerPort = castorConf.getConfEntInt(
+    "DiskManager", "MoverHandlerPort", MOVERHANDLERPORT, log);
 
   return config;
 }

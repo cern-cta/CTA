@@ -58,8 +58,8 @@ struct DataTransferConfig {
 
   /**
    * When the tapebridged daemon requests the tapegatewayd daemon for a set of
-   * files to migrate to tape, this parameter defines the maximum number of bytes
-   * the set of files should represent.
+   * files to migrate to tape, this parameter defines the maximum number of
+   * bytes the set of files should represent.
    */
   uint64_t bulkRequestMigrationMaxBytes;
 
@@ -113,6 +113,12 @@ struct DataTransferConfig {
    * using XROOT as the remote transfer protocol.
    */
   std::string xrootPrivateKey;
+
+  /**
+   * The TCP/IP port on which the disk manager listens for data-transfer
+   * notifications from XROOT server.
+   */
+  uint16_t moverHandlerPort;
 
   /**
    * Constructor that sets all integer member-variables to 0 and all string
