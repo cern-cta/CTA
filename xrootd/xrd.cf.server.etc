@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------------
 # Location of the plugin OFS library to be loaded + XRootD config
 #-------------------------------------------------------------------------------
-xrootd.fslib /usr/lib64/libxrdxcastor2ofs.so.2.1
+xrootd.fslib -2 /usr/lib64/libxrdxcastor2ofs.so.2.1
 xrootd.async off nosf
 xrootd.trace emsg login
 xrd.port 1095
