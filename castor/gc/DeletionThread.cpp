@@ -22,7 +22,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-// Include files
 #include "castor/gc/DeletionThread.hpp"
 #include "castor/gc/CephGlobals.hpp"
 #include "castor/Services.hpp"
@@ -30,7 +29,9 @@
 #include "castor/stager/IGCSvc.hpp"
 #include "castor/stager/GCLocalFile.hpp"
 #include "castor/System.hpp"
-#include "getconfent.h"
+#include "h/getconfent.h"
+#include "h/serrno.h"
+
 #include <radosstriper/libradosstriper.hpp>
 
 #include <vector>

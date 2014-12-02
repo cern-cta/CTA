@@ -24,21 +24,21 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-// Include files
 #include "castor/exception/OutOfMemory.hpp"
-#include "Cgrp.h"
-#include "Cpwd.h"
-#include "dlfcn.h"
-#include "getconfent.h"
-#include "RateLimiter.hpp"
-#include "RatingGroup.hpp"
+#include "castor/rh/RateLimiter.hpp"
+#include "castor/rh/RatingGroup.hpp"
+#include "h/Cpwd.h"
+#include "h/getconfent.h"
+#include "h/Cgrp.h"
+#include "h/serrno.h"
+
+#include <dlfcn.h>
 #include <errno.h>
 #include <iostream>
 #include <math.h>
 #include <string>
 #include <vector>
 #include <string.h>
-
 
 //-----------------------------------------------------------------------------
 // Constructor

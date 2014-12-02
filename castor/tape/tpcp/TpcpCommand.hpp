@@ -34,6 +34,7 @@
 #include "castor/tape/tpcp/Helper.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
 #include "h/Castor_limits.h"
+#include "h/serrno.h"
 #include "h/vmgr_api.h"
 
 #include <iostream>

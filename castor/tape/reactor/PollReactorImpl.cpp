@@ -22,6 +22,7 @@
 #include "castor/exception/BadAlloc.hpp"
 #include "castor/tape/reactor/PollReactorImpl.hpp"
 #include "castor/utils/SmartArrayPtr.hpp"
+#include "castor/utils/utils.hpp"
 
 #include <unistd.h>
 #include <poll.h>
@@ -103,7 +104,7 @@ void castor::tape::reactor::PollReactorImpl::handleEvents(const int timeout) {
 
       log::Param params[] = {
         log::Param("errno", pollErrno),
-        log::Param("message", sstrerror(pollErrno))};
+        log::Param("message", utils::errnoToString(pollErrno))};
       m_log(LOG_ERR, "Failed to handle a pending vdqm request: poll() failed",
         params);
     }

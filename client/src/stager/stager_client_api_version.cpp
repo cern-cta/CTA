@@ -2,12 +2,6 @@
  * $Id: stager_client_api_version.cpp,v 1.6 2009/07/13 06:22:08 waldron Exp $
  */
 
-/* ============= */
-/* Local headers */
-/* ============= */
-#include "errno.h"
-#include "stager_client_api_common.hpp"
-#include "stager_client_api.h"
 #include "castor/BaseObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
@@ -17,6 +11,11 @@
 #include "castor/query/VersionQuery.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Communication.hpp"
+#include "h/serrno.h"
+#include "h/stager_client_api_common.hpp"
+#include "h/stager_client_api.h"
+
+#include <errno.h>
 
 /* ================= */
 /* StageVersion      */

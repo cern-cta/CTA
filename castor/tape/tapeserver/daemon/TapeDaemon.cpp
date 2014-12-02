@@ -46,6 +46,7 @@
 #include "castor/utils/utils.hpp"
 #include "h/Ctape.h"
 #include "h/rmc_constants.h"
+#include "h/serrno.h"
 
 #include <algorithm>
 #include <errno.h>

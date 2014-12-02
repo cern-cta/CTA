@@ -63,7 +63,7 @@ public:
    * @param unitName The unit name of the tape drive. 
    * @param dgn The device group name of the tape drive.
    */
-  void setDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn) ;
+  void setDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn);
 
   /**
    * Sets the status of the specified tape drive to up.
@@ -73,7 +73,7 @@ public:
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
    */
-  void setDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn) ;
+  void setDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn);
 
   /**
    * Sets the status of the specified tape drive to assign.
@@ -86,7 +86,7 @@ public:
    * @param sessionPid The process ID of the tape-server daemon's mount-session
    * process.
    */
-  void assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t sessionPid) ;
+  void assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t sessionPid);
 
   /**
    * Notifies the vdqmd daemon of the specified tape mount.
@@ -99,7 +99,7 @@ public:
    * @param sessionPid The process ID of the tape-server daemon's mount-session
    * process.
    */
-  void tapeMounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid) ;
+  void tapeMounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid);
 
   /**
    * Sets the status of the specified tape drive to release.
@@ -113,7 +113,8 @@ public:
    * @param sessionPid The process ID of the tape-server daemon's mount-session
    * process.
    */
-  void releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid) ;
+  void releaseDrive(const std::string &server, const std::string &unitName,
+    const std::string &dgn, const bool forceUnmount, const pid_t sessionPid);
 
   /**
    * Notifies the vdqmd daemon that the specified tape has been dismounted.
@@ -124,16 +125,28 @@ public:
    * @param dgn The device group name of the tape drive.
    * @param vid The volume identifier of the mounted tape.
    */
-  void tapeUnmounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid) ;
+  void tapeUnmounted(const std::string &server, const std::string &unitName,
+    const std::string &dgn, const std::string &vid);
+
+  /**
+   * Queries the vdqmd daemon for the status of the specified tape drive.
+   *
+   * @param unitName The unit name of the tap drive.
+   * @param dgn The device group name of the tape drive.
+   * @return The status of the tape drive.
+   */
+  int getDriveStatus(const std::string &unitName, const std::string &dgn);
 
 private:
 
   /**
-   * Sets the status of a tape drive.
+   * Sends the specifed request and receives the reply.  This method sends and
+   * receives the necessary acknowledge messages.
    *
-   * @param body The message body defining the drive and status.
+   * @param rqst The message body defining the request.
+   * @return The message body defining the reply.
    */
-  void setDriveStatus(const VdqmDrvRqstMsgBody &body) ;
+  VdqmDrvRqstMsgBody sendRqstRecvReply(const VdqmDrvRqstMsgBody &rqst);
 
   /**
    * Connects to the vdqmd daemon.
@@ -148,7 +161,7 @@ private:
    *
    * @param body The message body defining the drive and status.
    */
-  void writeDriveStatusMsg(const int fd, const VdqmDrvRqstMsgBody &body) ;
+  void writeDriveStatusMsg(const int fd, const VdqmDrvRqstMsgBody &body);
 
   /**
    * Reads a VDQM_COMMIT ack message from the specified connection.
@@ -156,7 +169,7 @@ private:
    * @param fd The file-descriptor of the connection.
    * @return The message.
    */
-  void readCommitAck(const int fd) ;
+  void readCommitAck(const int fd);
 
   /**
    * Reads an ack message from the specified connection.
@@ -164,14 +177,14 @@ private:
    * @param fd The file-descriptor of the connection.
    * @return The message.
    */
-  MessageHeader readAck(const int fd) ;
+  MessageHeader readAck(const int fd);
 
   /**
    * Reads drive status message from the specified connection and discards it.
    *
    * @param fd The file-descriptor of the connection.
    */
-  void readDriveStatusMsg(const int fd) ;
+  void readDriveStatusMsg(const int fd);
 
   /**
    * Reads the header of a drive status message from the specified connection.
@@ -179,21 +192,22 @@ private:
    * @param fd The file-descriptor of the connection.
    * @return The message header.
    */
-  MessageHeader readDriveStatusMsgHeader(const int fd) ;
+  MessageHeader readDriveStatusMsgHeader(const int fd);
 
   /**
    * Reads the body of a drive status message from the specified connection.
    * @param fd The file-descriptor of the connection.
    * @return The message body.
    */
-  VdqmDrvRqstMsgBody readDriveStatusMsgBody(const int fd, const uint32_t bodyLen) ;
+  VdqmDrvRqstMsgBody readDriveStatusMsgBody(const int fd,
+    const uint32_t bodyLen);
 
   /**
    * Writes a VDQM_COMMIT ack message to the specified connection.
    *
    * @param fd The file-descriptor of the connection.
    */
-  void writeCommitAck(const int fd) ;
+  void writeCommitAck(const int fd);
 
   /**
    * The object representing the API of the CASTOR logging system.

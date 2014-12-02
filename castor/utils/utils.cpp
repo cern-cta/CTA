@@ -20,6 +20,7 @@
  *****************************************************************************/
 
 #include "castor/utils/utils.hpp"
+#include "h/serrno.h"
 #include "h/strerror_r_wrapper.h"
 #include "h/vmgr_constants.h"
 
@@ -209,10 +210,9 @@ void castor::utils::toUpper(std::string &str) {
 void castor::utils::getTimeOfDay(struct timeval *const tv)  {
   if(0 != gettimeofday(tv, NULL)) {
     const int savedErrno = errno;
-    char errBuf[100];
     castor::exception::Exception ex;
     ex.getMessage() << "Call to gettimeofday() failed: " <<
-      sstrerror_r(savedErrno, errBuf, sizeof(errBuf));
+      errnoToString(savedErrno);
     throw ex;
   }
 }
@@ -368,9 +368,7 @@ bool castor::utils::getDumpableProcessAttribute() {
   switch(rc) {
   case -1:
     {
-      char errStr[100];
-      sstrerror_r(errno, errStr, sizeof(errStr));
-      errStr[sizeof(errStr) - 1] = '\0';
+      const std::string errStr = errnoToString(errno);
       castor::exception::Exception ex;
       ex.getMessage() <<
         "Failed to get the dumpable attribute of the process: " << errStr;
@@ -398,9 +396,7 @@ void castor::utils::setDumpableProcessAttribute(const bool dumpable) {
   switch(rc) {
   case -1:
     {
-      char errStr[100];
-      sstrerror_r(errno, errStr, sizeof(errStr));
-      errStr[sizeof(errStr) - 1] = '\0';
+      const std::string errStr = errnoToString(errno);
       castor::exception::Exception ex;
       ex.getMessage() <<
         "Failed to set the dumpable attribute of the process: " << errStr;

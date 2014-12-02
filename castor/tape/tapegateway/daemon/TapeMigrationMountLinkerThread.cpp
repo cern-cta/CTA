@@ -22,34 +22,31 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/Constants.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/IService.hpp"
+#include "castor/Services.hpp"
+#include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
+#include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
+#include "castor/tape/tapegateway/daemon/TapeMigrationMountLinkerThread.hpp"
+#include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/ScopedTransaction.hpp"
+#include "h/serrno.h"
+#include "h/u64subr.h"
+#include "h/vdqm_api.h"
 
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <u64subr.h>
-
-#include "castor/Constants.hpp"
-#include "castor/IService.hpp"
-#include "castor/Services.hpp"
-
-#include "castor/exception/Exception.hpp"
-
-#include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
-
-#include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
-#include "castor/tape/tapegateway/daemon/TapeMigrationMountLinkerThread.hpp"
-#include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
-#include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
-#include "castor/tape/tapegateway/ScopedTransaction.hpp"
-#include "vdqm_api.h"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapegateway::TapeMigrationMountLinkerThread::TapeMigrationMountLinkerThread(){
-
+castor::tape::tapegateway::TapeMigrationMountLinkerThread::
+  TapeMigrationMountLinkerThread() {
 }
 
 //------------------------------------------------------------------------------

@@ -63,7 +63,7 @@ public:
    * daemon.
    * @return The job request from the vdqm.
    */
-  RtcpJobRqstMsgBody receiveJob(const int connection) ;
+  RtcpJobRqstMsgBody receiveJob(const int connection);
 
   /**
    * Sets the status of the specified tape drive to down.
@@ -73,7 +73,8 @@ public:
    * @param unitName The unit name of the tape drive. 
    * @param dgn The device group name of the tape drive.
    */
-  void setDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn) ;
+  void setDriveDown(const std::string &server, const std::string &unitName,
+    const std::string &dgn);
 
   /**
    * Sets the status of the specified tape drive to up.
@@ -83,7 +84,8 @@ public:
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
    */
-  void setDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn) ;
+  void setDriveUp(const std::string &server, const std::string &unitName,
+    const std::string &dgn);
 
   /**
    * Sets the status of the specified tape drive to assign.
@@ -96,7 +98,9 @@ public:
    * @param sessionPid The process ID of the tape-server daemon's mount-session
    * process.
    */
-  void assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t sessionPid) ;
+  void assignDrive(const std::string &server, const std::string &unitName,
+    const std::string &dgn, const uint32_t mountTransactionId,
+    const pid_t sessionPid);
 
   /**
    * Notifies the vdqmd daemon of the specified tape mount.
@@ -109,7 +113,8 @@ public:
    * @param sessionPid The process ID of the tape-server daemon's mount-session
    * process.
    */
-  void tapeMounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid) ;
+  void tapeMounted(const std::string &server, const std::string &unitName,
+    const std::string &dgn, const std::string &vid, const pid_t sessionPid);
 
   /**
    * Sets the status of the specified tape drive to release.
@@ -123,7 +128,8 @@ public:
    * @param sessionPid The process ID of the tape-server daemon's mount-session
    * process.
    */
-  void releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid) ;
+  void releaseDrive(const std::string &server, const std::string &unitName,
+    const std::string &dgn, const bool forceUnmount, const pid_t sessionPid);
 
   /**
    * Notifies the vdqmd daemon that the specified tape has been dismounted.
@@ -134,7 +140,17 @@ public:
    * @param dgn The device group name of the tape drive.
    * @param vid The volume identifier of the mounted tape.
    */
-  void tapeUnmounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid) ;
+  void tapeUnmounted(const std::string &server, const std::string &unitName,
+    const std::string &dgn, const std::string &vid);
+
+  /**
+   * Queries the vdqmd daemon for the status of the specified tape drive.
+   *
+   * @param unitName The unit name of the tap drive.
+   * @param dgn The device group name of the tape drive.
+   * @return The status of the tape drive.
+   */
+  int getDriveStatus(const std::string &unitName, const std::string &dgn);
 
 private:
 

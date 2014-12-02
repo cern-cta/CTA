@@ -28,6 +28,7 @@
 #include "castor/stager/FileRequest.hpp"
 #include "h/Cgrp.h"
 #include "h/Cpwd.h"
+#include "h/serrno.h"
 
 #include <errno.h>
 #include <string.h>

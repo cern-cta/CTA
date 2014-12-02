@@ -41,6 +41,7 @@ castor::legacymsg::VdqmProxyTcpIpFactory::~VdqmProxyTcpIpFactory() throw() {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-castor::legacymsg::VdqmProxy *castor::legacymsg::VdqmProxyTcpIpFactory::create() {
+castor::legacymsg::VdqmProxy *castor::legacymsg::VdqmProxyTcpIpFactory::create()
+{
   return new VdqmProxyTcpIp(m_log, m_vdqmHostName, m_vdqmPort, m_netTimeout);
 }

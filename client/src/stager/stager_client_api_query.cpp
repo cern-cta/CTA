@@ -7,16 +7,6 @@
  * All rights reserved
  */
 
-/* ============== */
-/* System headers */
-/* ============== */
-
-/* ============= */
-/* Local headers */
-/* ============= */
-#include "errno.h"
-#include "u64subr.h"
-#include "stager_client_api.h"
 #include "castor/BaseObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/client/IResponseHandler.hpp"
@@ -26,12 +16,17 @@
 #include "castor/stager/StageFileQueryRequest.hpp"
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/SubRequest.hpp"
-#include "stager_client_api_common.hpp"
-#include "stager_client_api_query.hpp"
 #include "castor/query/DiskPoolQuery.hpp"
 #include "castor/query/DiskPoolQueryResponse.hpp"
 #include "castor/query/DiskServerDescription.hpp"
 #include "castor/query/FileSystemDescription.hpp"
+#include "client/src/stager/stager_client_api_query.hpp"
+#include "h/serrno.h"
+#include "h/stager_client_api.h"
+#include "h/stager_client_api_common.hpp"
+#include "h/u64subr.h"
+
+#include <errno.h>
 #include <string.h>
 
 /* ================= */

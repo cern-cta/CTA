@@ -25,6 +25,7 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/utils/Timer.hpp"
 #include "h/log.h"
+#include "h/serrno.h"
 
 #include <memory>
 #include <sstream>

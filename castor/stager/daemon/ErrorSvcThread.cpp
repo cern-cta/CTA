@@ -22,8 +22,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include <sstream>
-
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/BaseAddress.hpp"
@@ -42,6 +40,9 @@
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
 #include "castor/stager/daemon/ErrorSvcThread.hpp"
+#include "h/serrno.h"
+
+#include <sstream>
 
 //-----------------------------------------------------------------------------
 // constructor

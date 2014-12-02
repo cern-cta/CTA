@@ -22,31 +22,11 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include <errno.h>
-#include <getconfent.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <limits.h>
-#include <inttypes.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <u64subr.h>
-#include <memory>
-#include <typeinfo>
-#include <algorithm>
-#include <queue>
-#include <cstring>
-#include <typeinfo>
-
-#include "Ctape_constants.h" // for log only
-#include "Cns_api.h" // for log only
-
 #include "castor/Constants.hpp"
+#include "castor/io/io.hpp"
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"
-
-#include "castor/io/io.hpp"
-
+#include "castor/stager/TapeTpModeCodes.hpp"
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
@@ -68,14 +48,29 @@
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
 #include "castor/tape/tapegateway/FilesToMigrateListRequest.hpp"
 #include "castor/tape/tapegateway/FilesToRecallListRequest.hpp"
-#include "castor/stager/TapeTpModeCodes.hpp"
-
 #include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/WorkerThread.hpp"
-
 #include "castor/utils/Timer.hpp"
+#include "h/Cns_api.h" // for log only
+#include "h/Ctape_constants.h" // for log only
+#include "h/getconfent.h"
+#include "h/serrno.h"
+#include "h/u64subr.h"
 
+#include <errno.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <limits.h>
+#include <inttypes.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <memory>
+#include <typeinfo>
+#include <algorithm>
+#include <queue>
+#include <cstring>
+#include <typeinfo>
 
 //------------------------------------------------------------------------------
 // Constructor

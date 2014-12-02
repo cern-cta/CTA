@@ -23,6 +23,7 @@
 
 #include "castor/acs/AcsRequestDismountTape.hpp"
 #include "castor/exception/DismountFailed.hpp"
+#include "h/serrno.h"
 
 //-----------------------------------------------------------------------------
 // constructor 

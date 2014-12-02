@@ -21,17 +21,15 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-
+#include "castor/Services.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmTapeGatewayHelper.hpp"
+#include "h/serrno.h"
+#include "h/vdqm_api.h"
 
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <cstring>
-
-#include "castor/Services.hpp"
-#include "vdqm_api.h"
-
 
 //------------------------------------------------------------------------------
 // connectToVdqm

@@ -28,6 +28,7 @@
 #include "castor/legacymsg/RmcUnmountMsgBody.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "h/rmc_constants.h"
+#include "h/serrno.h"
 
 #include <unistd.h>
 #include <sys/types.h>

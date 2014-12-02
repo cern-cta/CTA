@@ -21,9 +21,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include <string>
-#include <vector>
-
 #include "castor/BaseAddress.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
@@ -34,8 +31,11 @@
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
+#include "h/serrno.h"
 
- 
+#include <string>
+#include <vector>
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------

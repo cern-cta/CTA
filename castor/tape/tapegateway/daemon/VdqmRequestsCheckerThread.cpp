@@ -22,18 +22,10 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include <stdlib.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <errno.h>
-
-#include "Ctape_constants.h"
 #include "castor/Constants.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"
-
-#include "castor/exception/Exception.hpp"
-
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 #include "castor/stager/TapeTpModeCodes.hpp"
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
@@ -41,7 +33,13 @@
 #include "castor/tape/tapegateway/daemon/VdqmTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 #include "castor/utils/Timer.hpp"
+#include "h/Ctape_constants.h"
+#include "h/serrno.h"
 
+#include <errno.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 //------------------------------------------------------------------------------
 // constructor

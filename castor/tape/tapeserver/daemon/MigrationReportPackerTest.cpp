@@ -20,10 +20,13 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
+
+#include "castor/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/client/FakeClient.hpp"
-#include "castor/log/StringLogger.hpp"
+#include "h/serrno.h"
+
 #include <gtest/gtest.h>
 
 namespace unitTests {

@@ -157,20 +157,21 @@ void castor::log::SyslogLogger::initMutex() {
   if(0 != rc) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to initialize mutex attribute for m_mutex: " <<
-      sstrerror(rc);
+      utils::serrnoToString(rc);
     throw ex;
   }
   rc = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
   if(0 != rc) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to set mutex type of m_mutex: " <<
-      sstrerror(rc);
+      utils::serrnoToString(rc);
     throw ex;
   }
   rc = pthread_mutex_init(&m_mutex, NULL);
    if(0 != rc) {
      castor::exception::Exception ex;
-     ex.getMessage() << "Failed to initialize m_mutex: " << sstrerror(rc);
+     ex.getMessage() << "Failed to initialize m_mutex: " <<
+       utils::serrnoToString(rc);
      throw ex;
    }
   rc = pthread_mutexattr_destroy(&attr);
@@ -178,7 +179,7 @@ void castor::log::SyslogLogger::initMutex() {
     pthread_mutex_destroy(&m_mutex);
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to destroy mutex attribute of m_mutex: " <<
-      sstrerror(rc);
+      utils::serrnoToString(rc);
     throw ex;
   }
 }
@@ -200,7 +201,7 @@ void castor::log::SyslogLogger::prepareForFork() {
     if(0 != mutex_lock_rc) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to lock mutex of logger's critcial section: "
-        << sstrerror(mutex_lock_rc);
+        << utils::serrnoToString(mutex_lock_rc);
       throw ex;
     }
   }
@@ -213,7 +214,7 @@ void castor::log::SyslogLogger::prepareForFork() {
     if(0 != mutex_unlock_rc) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to unlock mutex of logger's critcial section: "
-        << sstrerror(mutex_unlock_rc);
+        << utils::serrnoToString(mutex_unlock_rc);
       throw ex;
     }
   }

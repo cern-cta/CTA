@@ -22,32 +22,27 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include <errno.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <u64subr.h>
-#include <memory>
-
-#include <Ctape_constants.h>
-
 #include "castor/Constants.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"
-
-#include "castor/exception/Exception.hpp"
-
-#include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
-#include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
-
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmRequestsProducerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
-
+#include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/ScopedTransaction.hpp"
-
+#include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 #include "castor/utils/Timer.hpp"
+#include "h/Ctape_constants.h"
+#include "h/serrno.h"
+#include "h/u64subr.h"
+
+#include <errno.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <memory>
 
 //------------------------------------------------------------------------------
 // constructor

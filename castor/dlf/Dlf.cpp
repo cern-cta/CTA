@@ -26,6 +26,7 @@
 // Include Files
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
+#include "h/serrno.h"
 
 #include <errno.h>
 

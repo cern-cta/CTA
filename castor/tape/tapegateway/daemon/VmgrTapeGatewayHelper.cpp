@@ -23,20 +23,21 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include <errno.h>
-#include <sys/types.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <u64subr.h>
-#include <cstring>
-#include <climits>
-
-#include "vmgr_api.h"
 #include "castor/Services.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 #include "castor/stager/TapeTpModeCodes.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
+#include "h/serrno.h"
+#include "h/u64subr.h"
+#include "h/vmgr_api.h"
+
+#include <errno.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <cstring>
+#include <climits>
 
 //------------------------------------------------------------------------------
 // getTapeForMigration

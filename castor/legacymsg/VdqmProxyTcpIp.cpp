@@ -51,7 +51,7 @@ castor::legacymsg::VdqmProxyTcpIp::~VdqmProxyTcpIp() throw() {
 // setDriveDown
 //------------------------------------------------------------------------------
 void castor::legacymsg::VdqmProxyTcpIp::setDriveDown(const std::string &server,
-  const std::string &unitName, const std::string &dgn)  {
+  const std::string &unitName, const std::string &dgn) {
   try {
     // Check parameters
     if(server.empty()) {
@@ -70,13 +70,13 @@ void castor::legacymsg::VdqmProxyTcpIp::setDriveDown(const std::string &server,
       throw ex;
     }
 
-    legacymsg::VdqmDrvRqstMsgBody body;
-    body.status = VDQM_UNIT_DOWN;
-    castor::utils::copyString(body.server, server);
-    castor::utils::copyString(body.drive, unitName);
-    castor::utils::copyString(body.dgn, dgn);
+    legacymsg::VdqmDrvRqstMsgBody rqst;
+    rqst.status = VDQM_UNIT_DOWN;
+    castor::utils::copyString(rqst.server, server);
+    castor::utils::copyString(rqst.drive, unitName);
+    castor::utils::copyString(rqst.dgn, dgn);
 
-    setDriveStatus(body);
+    sendRqstRecvReply(rqst);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to set state of tape drive"
@@ -90,7 +90,7 @@ void castor::legacymsg::VdqmProxyTcpIp::setDriveDown(const std::string &server,
 // setDriveUp
 //------------------------------------------------------------------------------
 void castor::legacymsg::VdqmProxyTcpIp::setDriveUp(const std::string &server,
-  const std::string &unitName, const std::string &dgn)  {
+  const std::string &unitName, const std::string &dgn) {
   try {
     // Check parameters
     if(server.empty()) {
@@ -109,13 +109,13 @@ void castor::legacymsg::VdqmProxyTcpIp::setDriveUp(const std::string &server,
       throw ex;
     }
 
-    legacymsg::VdqmDrvRqstMsgBody body;
-    body.status = VDQM_UNIT_UP;
-    castor::utils::copyString(body.server, server);
-    castor::utils::copyString(body.drive, unitName);
-    castor::utils::copyString(body.dgn, dgn);
+    legacymsg::VdqmDrvRqstMsgBody rqst;
+    rqst.status = VDQM_UNIT_UP;
+    castor::utils::copyString(rqst.server, server);
+    castor::utils::copyString(rqst.drive, unitName);
+    castor::utils::copyString(rqst.dgn, dgn);
 
-    setDriveStatus(body);
+    sendRqstRecvReply(rqst);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to set state of tape drive"
@@ -130,7 +130,7 @@ void castor::legacymsg::VdqmProxyTcpIp::setDriveUp(const std::string &server,
 //------------------------------------------------------------------------------
 void castor::legacymsg::VdqmProxyTcpIp::assignDrive(const std::string &server,
   const std::string &unitName, const std::string &dgn,
-  const uint32_t mountTransactionId, const pid_t sessionPid)  {
+  const uint32_t mountTransactionId, const pid_t sessionPid) {
   try {
     // Check parameters
     if(server.empty()) {
@@ -149,15 +149,15 @@ void castor::legacymsg::VdqmProxyTcpIp::assignDrive(const std::string &server,
       throw ex;
     }
 
-    legacymsg::VdqmDrvRqstMsgBody body;
-    body.status = VDQM_UNIT_ASSIGN;
-    body.volReqId = mountTransactionId;
-    body.jobId = sessionPid;
-    castor::utils::copyString(body.server, server);
-    castor::utils::copyString(body.drive, unitName);
-    castor::utils::copyString(body.dgn, dgn);
+    legacymsg::VdqmDrvRqstMsgBody rqst;
+    rqst.status = VDQM_UNIT_ASSIGN;
+    rqst.volReqId = mountTransactionId;
+    rqst.jobId = sessionPid;
+    castor::utils::copyString(rqst.server, server);
+    castor::utils::copyString(rqst.drive, unitName);
+    castor::utils::copyString(rqst.dgn, dgn);
 
-    setDriveStatus(body);
+    sendRqstRecvReply(rqst);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to assign drive"
@@ -173,7 +173,7 @@ void castor::legacymsg::VdqmProxyTcpIp::assignDrive(const std::string &server,
 //------------------------------------------------------------------------------
 void castor::legacymsg::VdqmProxyTcpIp::tapeMounted(const std::string &server,
   const std::string &unitName, const std::string &dgn, const std::string &vid,
-  const pid_t sessionPid)  {
+  const pid_t sessionPid) {
   try {
     // Check parameters
     if(server.empty()) {
@@ -197,15 +197,15 @@ void castor::legacymsg::VdqmProxyTcpIp::tapeMounted(const std::string &server,
       throw ex;
     } 
 
-    legacymsg::VdqmDrvRqstMsgBody body;
-    body.status = VDQM_VOL_MOUNT;
-    body.jobId = sessionPid;
-    castor::utils::copyString(body.volId, vid);
-    castor::utils::copyString(body.server, server);
-    castor::utils::copyString(body.drive, unitName);
-    castor::utils::copyString(body.dgn, dgn);
+    legacymsg::VdqmDrvRqstMsgBody rqst;
+    rqst.status = VDQM_VOL_MOUNT;
+    rqst.jobId = sessionPid;
+    castor::utils::copyString(rqst.volId, vid);
+    castor::utils::copyString(rqst.server, server);
+    castor::utils::copyString(rqst.drive, unitName);
+    castor::utils::copyString(rqst.dgn, dgn);
 
-    setDriveStatus(body);
+    sendRqstRecvReply(rqst);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to notify vdqm that tape is mounted"
@@ -221,12 +221,10 @@ void castor::legacymsg::VdqmProxyTcpIp::tapeMounted(const std::string &server,
 //------------------------------------------------------------------------------
 void castor::legacymsg::VdqmProxyTcpIp::releaseDrive(const std::string &server,
   const std::string &unitName, const std::string &dgn, const bool forceUnmount,
-  const pid_t sessionPid)  {
+  const pid_t sessionPid) {
 
-  int status = VDQM_UNIT_RELEASE;
-  if(forceUnmount) {
-    status |= VDQM_FORCE_UNMOUNT;
-  }
+  const int status = forceUnmount ? VDQM_UNIT_RELEASE | VDQM_FORCE_UNMOUNT :
+    VDQM_UNIT_RELEASE;
 
   try {
     // Check parameters
@@ -246,14 +244,14 @@ void castor::legacymsg::VdqmProxyTcpIp::releaseDrive(const std::string &server,
       throw ex;
     } 
 
-    legacymsg::VdqmDrvRqstMsgBody body;
-    body.status = status;
-    body.jobId = sessionPid;
-    castor::utils::copyString(body.server, server);
-    castor::utils::copyString(body.drive, unitName);
-    castor::utils::copyString(body.dgn, dgn);
+    legacymsg::VdqmDrvRqstMsgBody rqst;
+    rqst.status = status;
+    rqst.jobId = sessionPid;
+    castor::utils::copyString(rqst.server, server);
+    castor::utils::copyString(rqst.drive, unitName);
+    castor::utils::copyString(rqst.dgn, dgn);
 
-    setDriveStatus(body);
+    sendRqstRecvReply(rqst);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to release tape drive"
@@ -265,21 +263,23 @@ void castor::legacymsg::VdqmProxyTcpIp::releaseDrive(const std::string &server,
 }
 
 //------------------------------------------------------------------------------
-// setDriveStatus
+// sendRqstRecvReply
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyTcpIp::setDriveStatus(
-  const legacymsg::VdqmDrvRqstMsgBody &body)  {
+castor::legacymsg::VdqmDrvRqstMsgBody castor::legacymsg::VdqmProxyTcpIp::
+  sendRqstRecvReply(const legacymsg::VdqmDrvRqstMsgBody &rqst) {
   castor::utils::SmartFd fd(connectToVdqm());
-  writeDriveStatusMsg(fd.get(), body);
+  writeDriveStatusMsg(fd.get(), rqst);
   readCommitAck(fd.get());
   const legacymsg::MessageHeader header = readDriveStatusMsgHeader(fd.get());
-  readDriveStatusMsgBody(fd.get(), header.lenOrStatus);
+  const legacymsg::VdqmDrvRqstMsgBody reply = readDriveStatusMsgBody(fd.get(),
+    header.lenOrStatus);
   writeCommitAck(fd.get());
+  return reply;
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // connectToVdqm
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::legacymsg::VdqmProxyTcpIp::connectToVdqm() const  {
   castor::utils::SmartFd smartConnectSock;
   try {
@@ -295,11 +295,11 @@ int castor::legacymsg::VdqmProxyTcpIp::connectToVdqm() const  {
   return smartConnectSock.release();
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // writeDriveStatusMsg
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::legacymsg::VdqmProxyTcpIp::writeDriveStatusMsg(const int fd,
-  const legacymsg::VdqmDrvRqstMsgBody &body)  {
+  const legacymsg::VdqmDrvRqstMsgBody &body) {
   char buf[VDQM_MSGBUFSIZ];
   const size_t len = legacymsg::marshal(buf, body);
 
@@ -313,10 +313,10 @@ void castor::legacymsg::VdqmProxyTcpIp::writeDriveStatusMsg(const int fd,
   }
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // readCommitAck
-//-----------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyTcpIp::readCommitAck(const int fd)  {
+//------------------------------------------------------------------------------
+void castor::legacymsg::VdqmProxyTcpIp::readCommitAck(const int fd) {
   legacymsg::MessageHeader ack;
 
   try {
@@ -340,10 +340,9 @@ void castor::legacymsg::VdqmProxyTcpIp::readCommitAck(const int fd)  {
     return;
   } else if(0 < ack.reqType) {
     // VDQM_COMMIT ack is reporting an error
-    char errBuf[80];
-    sstrerror_r(ack.reqType, errBuf, sizeof(errBuf));
+    const std::string errStr = utils::serrnoToString(ack.reqType);
     castor::exception::Exception ex;
-    ex.getMessage() << "VDQM_COMMIT ack reported an error: " << errBuf;
+    ex.getMessage() << "VDQM_COMMIT ack reported an error: " << errStr;
     throw ex;
   } else {
     // VDQM_COMMIT ack contains an invalid request type
@@ -354,11 +353,11 @@ void castor::legacymsg::VdqmProxyTcpIp::readCommitAck(const int fd)  {
   }
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // readAck
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::legacymsg::MessageHeader castor::legacymsg::VdqmProxyTcpIp::readAck(
-  const int fd)  {
+  const int fd) {
   char buf[12]; // Magic + type + len
   legacymsg::MessageHeader ack;
 
@@ -378,9 +377,9 @@ castor::legacymsg::MessageHeader castor::legacymsg::VdqmProxyTcpIp::readAck(
   return ack;
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // readDriveStatusMsgHeader
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::legacymsg::MessageHeader castor::legacymsg::VdqmProxyTcpIp::
   readDriveStatusMsgHeader(const int fd) {
   char buf[12]; // Magic + type + len
@@ -420,11 +419,11 @@ castor::legacymsg::MessageHeader castor::legacymsg::VdqmProxyTcpIp::
   return header;
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // readDriveStatusMsgBody
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::legacymsg::VdqmDrvRqstMsgBody castor::legacymsg::VdqmProxyTcpIp::
-  readDriveStatusMsgBody(const int fd, const uint32_t bodyLen)  {
+  readDriveStatusMsgBody(const int fd, const uint32_t bodyLen) {
   char buf[VDQM_MSGBUFSIZ];
 
   if(sizeof(buf) < bodyLen) {
@@ -451,10 +450,10 @@ castor::legacymsg::VdqmDrvRqstMsgBody castor::legacymsg::VdqmProxyTcpIp::
   return body;
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // writeCommitAck
-//-----------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyTcpIp::writeCommitAck(const int fd)  {
+//------------------------------------------------------------------------------
+void castor::legacymsg::VdqmProxyTcpIp::writeCommitAck(const int fd) {
   legacymsg::MessageHeader ack;
   ack.magic = VDQM_MAGIC;
   ack.reqType = VDQM_COMMIT;
@@ -473,14 +472,12 @@ void castor::legacymsg::VdqmProxyTcpIp::writeCommitAck(const int fd)  {
   }
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // tapeUnmounted
-//-----------------------------------------------------------------------------
-void  castor::legacymsg::VdqmProxyTcpIp::tapeUnmounted(
+//------------------------------------------------------------------------------
+void castor::legacymsg::VdqmProxyTcpIp::tapeUnmounted(
   const std::string &server, const std::string &unitName,
-  const std::string &dgn, const std::string &vid)  {
-  int status = VDQM_VOL_UNMOUNT;
-
+  const std::string &dgn, const std::string &vid) {
   try {
     // Check parameters
     if(server.empty()) {
@@ -504,19 +501,53 @@ void  castor::legacymsg::VdqmProxyTcpIp::tapeUnmounted(
       throw ex;
     }
 
-    legacymsg::VdqmDrvRqstMsgBody body;
-    body.status = status;
-    castor::utils::copyString(body.volId, vid);
-    castor::utils::copyString(body.server, server);
-    castor::utils::copyString(body.drive, unitName);
-    castor::utils::copyString(body.dgn, dgn);
+    legacymsg::VdqmDrvRqstMsgBody rqst;
+    rqst.status = VDQM_VOL_UNMOUNT;
+    castor::utils::copyString(rqst.volId, vid);
+    castor::utils::copyString(rqst.server, server);
+    castor::utils::copyString(rqst.drive, unitName);
+    castor::utils::copyString(rqst.dgn, dgn);
 
-    setDriveStatus(body);
+    sendRqstRecvReply(rqst);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to notify vdqm that tape " << vid <<
       " was unmounted from tape drive " << unitName << ": " <<
       ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getDriveStatus
+//------------------------------------------------------------------------------
+int castor::legacymsg::VdqmProxyTcpIp::getDriveStatus(
+  const std::string &unitName, const std::string &dgn) {
+  try {
+    // Check parameters
+    if(unitName.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: unitName is an empty string";
+      throw ex;
+    }
+    if(dgn.empty()) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Invalid parameter: dgn is an empty string";
+      throw ex;
+    }
+
+    legacymsg::VdqmDrvRqstMsgBody rqst;
+    rqst.status = VDQM_UNIT_QUERY;
+    castor::utils::copyString(rqst.drive, unitName);
+    castor::utils::copyString(rqst.dgn, dgn);
+
+    const legacymsg::VdqmDrvRqstMsgBody reply = sendRqstRecvReply(rqst);
+
+    return reply.status;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to query vdqm for status of drive " << unitName
+      << " in dgn " << dgn << ": " << ne.getMessage().str();
     throw ex;
   }
 }

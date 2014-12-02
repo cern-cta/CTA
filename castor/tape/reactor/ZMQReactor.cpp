@@ -21,6 +21,7 @@
 
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
+#include "castor/utils/utils.hpp"
 
 #include <algorithm>
 
@@ -112,8 +113,7 @@ void castor::tape::reactor::ZMQReactor::handleEvents(const int timeout) {
       }
     }
   } else if(0 > pollRc) {
-    char message[100];
-    sstrerror_r(errno, message, sizeof(message));
+    const std::string message = utils::errnoToString(errno);
     log::Param params[] = {log::Param("message", message)};
     m_log(LOG_ERR, "Failed to handle I/O event: zmq_poll() failed", params);
   }

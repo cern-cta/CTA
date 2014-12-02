@@ -22,7 +22,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-// Include Files
 #include "castor/Constants.hpp"
 #include "castor/IConverter.hpp"
 #include "castor/ICnvSvc.hpp"
@@ -31,18 +30,18 @@
 #include "castor/SvcFactory.hpp"
 #include "castor/db/DbParamsSvc.hpp"
 #include "castor/BaseAddress.hpp"
+#include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/db/ora/OraStatement.hpp"
 #include "castor/exception/BadVersion.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "h/serrno.h"
+
 #include <sstream>
 #include <iomanip>
 #include <sys/types.h>
 #include <unistd.h>
 #include <linux/unistd.h>
-
-// Local Files
-#include "castor/db/ora/OraCnvSvc.hpp"
 
 //------------------------------------------------------------------------------
 // External C function used for getting configuration from castor.conf file

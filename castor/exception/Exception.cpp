@@ -22,8 +22,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #define _XOPEN_SOURCE 600
-// Local Files
-#include "Exception.hpp"
+
+#include "castor/exception/Exception.hpp"
+#include "h/serrno.h"
 
 //------------------------------------------------------------------------------
 // constructor

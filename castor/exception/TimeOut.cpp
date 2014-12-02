@@ -22,9 +22,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-// Include Files
-#include "errno.h"
 #include "castor/exception/TimeOut.hpp"
+#include "h/serrno.h"
 
 // -----------------------------------------------------------------------
 // Constructor

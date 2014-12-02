@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "castor/utils/utils.hpp"
+#include "h/serrno.h"
 #include "h/vmgr_constants.h"
 
 #include <errno.h>

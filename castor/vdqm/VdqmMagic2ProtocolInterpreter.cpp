@@ -24,6 +24,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/vdqm/vdqmMacros.h"
 #include "castor/vdqm/VdqmMagic2ProtocolInterpreter.hpp"
+#include "h/serrno.h"
 #include "h/vdqm_constants.h"
 
 

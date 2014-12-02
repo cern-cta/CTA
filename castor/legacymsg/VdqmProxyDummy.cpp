@@ -77,8 +77,18 @@ void castor::legacymsg::VdqmProxyDummy::tapeMounted(const std::string &server, c
 void castor::legacymsg::VdqmProxyDummy::releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid)  {
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // tapeUnmounted
+//------------------------------------------------------------------------------
+void castor::legacymsg::VdqmProxyDummy::tapeUnmounted(const std::string &server,
+  const std::string &unitName, const std::string &dgn, const std::string &vid)
+  {
+}
+
 //-----------------------------------------------------------------------------
-void  castor::legacymsg::VdqmProxyDummy::tapeUnmounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid)  {
+// getDriveStatus
+//-----------------------------------------------------------------------------
+int castor::legacymsg::VdqmProxyDummy::getDriveStatus(
+  const std::string &unitName, const std::string &dgn) {
+  return 0;
 }

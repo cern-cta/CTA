@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "castor/log/StringLogger.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/Castor_limits.h"
 #include "h/getconfent.h"
 
@@ -97,27 +98,27 @@ std::map<int, std::string>
 //------------------------------------------------------------------------------
 // initMutex
 //------------------------------------------------------------------------------
-void castor::log::StringLogger::initMutex()
-   {
+void castor::log::StringLogger::initMutex() {
   pthread_mutexattr_t attr;
   int rc = pthread_mutexattr_init(&attr);
   if(0 != rc) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to initialize mutex attribute for m_mutex: " <<
-      sstrerror(rc);
+      utils::serrnoToString(rc);
     throw ex;
   }
   rc = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
   if(0 != rc) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to set mutex type of m_mutex: " <<
-      sstrerror(rc);
+      utils::serrnoToString(rc);
     throw ex;
   }
   rc = pthread_mutex_init(&m_mutex, NULL);
    if(0 != rc) {
      castor::exception::Exception ex;
-     ex.getMessage() << "Failed to initialize m_mutex: " << sstrerror(rc);
+     ex.getMessage() << "Failed to initialize m_mutex: " <<
+       utils::serrnoToString(rc);
      throw ex;
    }
   rc = pthread_mutexattr_destroy(&attr);
@@ -125,7 +126,7 @@ void castor::log::StringLogger::initMutex()
     pthread_mutex_destroy(&m_mutex);
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to destroy mutex attribute of m_mutex: " <<
-      sstrerror(rc);
+      utils::serrnoToString(rc);
     throw ex;
   }
 }
@@ -139,8 +140,8 @@ castor::log::StringLogger::~StringLogger() throw() {
 //------------------------------------------------------------------------------
 // prepareForFork
 //------------------------------------------------------------------------------
-void castor::log::StringLogger::prepareForFork() 
-   {}
+void castor::log::StringLogger::prepareForFork() {
+}
 
 //-----------------------------------------------------------------------------
 // operator() 

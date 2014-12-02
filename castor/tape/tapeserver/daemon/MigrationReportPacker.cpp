@@ -21,13 +21,14 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include <memory>
-
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "h/serrno.h"
+
+#include <memory>
 #include <numeric>
 #include <cstdio>
 

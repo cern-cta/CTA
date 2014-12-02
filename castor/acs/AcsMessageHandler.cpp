@@ -33,6 +33,7 @@
 #include "castor/messages/AcsMountTapeReadWrite.pb.h"
 #include "castor/messages/AcsDismountTape.pb.h"
 #include "castor/messages/AcsForceDismountTape.pb.h"
+#include "h/serrno.h"
 
 #include <sstream>
 

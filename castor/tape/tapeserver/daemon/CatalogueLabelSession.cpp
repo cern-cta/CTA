@@ -26,6 +26,7 @@
 #include "castor/tape/tapeserver/daemon/CatalogueLabelSession.hpp"
 #include "h/Ctape_constants.h"
 #include "h/Cupv_constants.h"
+#include "h/serrno.h"
 
 //------------------------------------------------------------------------------
 // create

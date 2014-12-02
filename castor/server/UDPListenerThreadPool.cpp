@@ -22,12 +22,13 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-// Include Files
-#include <signal.h>
 #include "castor/server/ListenerThreadPool.hpp"
 #include "castor/server/UDPListenerThreadPool.hpp"
 #include "castor/io/UDPSocket.hpp"
+#include "h/serrno.h"
+
 #include <errno.h>
+#include <signal.h>
 
 //------------------------------------------------------------------------------
 // constructor

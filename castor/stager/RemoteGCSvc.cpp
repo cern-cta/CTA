@@ -46,6 +46,8 @@
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/rh/GCFilesResponse.hpp"
 #include "castor/exception/NotSupported.hpp"
+#include "h/serrno.h"
+
 #include <errno.h>
 #include <list>
 #include <vector>

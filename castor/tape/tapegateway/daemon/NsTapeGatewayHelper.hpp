@@ -27,6 +27,8 @@
 
 #include "castor/exception/Exception.hpp"
 
+#include <errno.h>
+
 namespace castor {
 
   namespace tape {

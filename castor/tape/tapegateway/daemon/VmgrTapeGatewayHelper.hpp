@@ -22,11 +22,12 @@
  *****************************************************************************/
 #pragma once
 
-// Include Files
-#include "osdep.h"
-#include "vmgr_api.h"
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapegateway/BoolFunctor.hpp"
+#include "h/osdep.h"
+#include "h/vmgr_api.h"
+
+#include <string.h>
 
 namespace castor {
   namespace tape {

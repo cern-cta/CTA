@@ -20,6 +20,7 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
+
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
@@ -32,6 +33,8 @@
 #include "castor/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
+#include "h/serrno.h"
+
 #include <gtest/gtest.h>
 
 namespace unitTests{

@@ -170,10 +170,9 @@ void castor::legacymsg::VmgrProxyTcpIp::readVmgrRcReply(const int fd) const {
 
   if(0 != reply.lenOrStatus) {
     // VMGR is reporting an error
-    char errBuf[80];
-    sstrerror_r(reply.reqType, errBuf, sizeof(errBuf));
+    const std::string errStr = utils::serrnoToString(reply.reqType);
     castor::exception::Exception ex;
-    ex.getMessage() << "VMGR reported an error: " << errBuf;
+    ex.getMessage() << "VMGR reported an error: " << errStr;
     throw ex;
   }
 }
