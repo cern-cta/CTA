@@ -137,17 +137,52 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
   const std::string &category, const std::string &key,
   const std::string &defaultValue, log::Logger *const log) {
   try {
-    const std::string &value = getConfEntString(category, key);
-    if(NULL != log) {           
-      log::Param params[] = {   
+    if (isStale()) {
+      tryToRenewConfig();
+    }
+    // get read lock
+    int rc = pthread_rwlock_rdlock(&m_lock);
+    if (0 != rc) {
+      castor::exception::Exception e(rc);
+      e.getMessage() << "Failed to get configuration entry " << category << ":"
+                     << key << ": Failed to get read lock";
+      throw e;
+    }
+    // get the entry
+    std::map<std::string, ConfCategory>::const_iterator catIt = m_config.find(category);
+    if (m_config.end() != catIt) {
+      // get the entry
+      ConfCategory::const_iterator entIt = catIt->second.find(key);
+      if (catIt->second.end() != entIt) {
+        // release the lock
+        pthread_rwlock_unlock(&m_lock);
+        if(NULL != log) {           
+          log::Param params[] = {   
+            log::Param("category", category),
+            log::Param("key", key),
+            log::Param("value", entIt->second),
+            log::Param("source", m_fileName)};
+          (*log)(LOG_INFO, "Got configuration entry", params);
+        }
+        return entIt->second;
+      }
+    }
+    // no entry found
+    if(NULL != log) {
+      log::Param params[] = {
         log::Param("category", category),
         log::Param("key", key),
-        log::Param("value", value),
-        log::Param("source", m_fileName)};
+        log::Param("value", defaultValue),
+        log::Param("source", "DEFAULT"),
+        log::Param("reasonForUsingDefault", "No entry found")};
       (*log)(LOG_INFO, "Got configuration entry", params);
     }
-    return value;
-  } catch(castor::exception::Exception &ex) {
+    // Unlock and return default
+    pthread_rwlock_unlock(&m_lock);
+  } catch (castor::exception::Exception ex) {
+    // exception caught : Unlock and return default
+    pthread_rwlock_unlock(&m_lock);
+    // log the exception
     if(NULL != log) {
       log::Param params[] = {
         log::Param("category", category),
@@ -157,8 +192,12 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
         log::Param("reasonForUsingDefault", ex.getMessage().str())};
       (*log)(LOG_INFO, "Got configuration entry", params);
     }
-    return defaultValue;
+  } catch (...) {
+    // release the lock
+    pthread_rwlock_unlock(&m_lock);
+    throw;
   }
+  return defaultValue;
 }
 
 //------------------------------------------------------------------------------
