@@ -59,7 +59,7 @@ extern XrdSysError OfsEroute;
 extern XrdOssSys*  XrdOfsOss;
 extern XrdOss*     XrdOssGetSS(XrdSysLogger*, const char*, const char*);
 
-XrdVERSIONINFO(XrdSfsGetFileSystem, xCastor2Ofs);
+XrdVERSIONINFO(XrdSfsGetFileSystem2, xCastor2Ofs);
 
 // One minute for destination to contact us for tpc.key rendez-vous
 const int XrdxCastor2OfsFile::sKeyExpiry = 60;
