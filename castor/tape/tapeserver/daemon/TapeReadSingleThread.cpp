@@ -175,6 +175,8 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       mountTapeReadOnly();
       currentErrorToCount = "Error_tapeLoad";
       waitForDrive();
+      currentErrorToCount = "Error_checkingTapeAlert";
+      logTapeAlerts();
       m_stats.mountTime += timer.secs(castor::utils::Timer::resetCounter);
       {
         castor::log::ScopedParamContainer scoped(m_logContext);

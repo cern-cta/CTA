@@ -161,6 +161,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       mountTapeReadWrite();
       currentErrorToCount = "Error_tapeLoad";
       waitForDrive();
+      currentErrorToCount = "Error_checkingTapeAlert";
+      logTapeAlerts();
       currentErrorToCount = "Error_tapeNotWriteable";
       isTapeWritable();
       

@@ -79,7 +79,8 @@ castor::tape::tapeserver::drive::positionInfo castor::tape::tapeserver::drive::F
   return pos;
 }
 std::vector<std::string> castor::tape::tapeserver::drive::FakeDrive::getTapeAlerts()  {
-  throw castor::exception::Exception("FakeDrive::getTapeAlerts Not implemented");
+  std::vector<std::string> empty;
+  return empty;
 }
 void castor::tape::tapeserver::drive::FakeDrive::setDensityAndCompression(bool compression, unsigned char densityCode)  {
   throw castor::exception::Exception("FakeDrive::setDensityAndCompression Not implemented");

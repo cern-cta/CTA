@@ -176,6 +176,25 @@ protected:
       throw;
     }
   }
+  
+  /**
+   * After waiting for the drive, we will dump the tape alert log content, if
+   * not empty 
+   */
+  void logTapeAlerts() {
+    std::vector<std::string> tapeAlerts = m_drive.getTapeAlerts();
+    if (tapeAlerts.empty()) return;
+    size_t alertNumber = 0;
+    for (std::vector<std::string>::iterator ta=tapeAlerts.begin();
+            ta!=tapeAlerts.end();ta++)
+    {
+      log::ScopedParamContainer params(m_logContext);
+      params.add("tapeAlert",*ta)
+            .add("tapeAlertNumber", alertNumber++)
+            .add("tapeAlertCount", tapeAlerts.size());
+      m_logContext.log(LOG_WARNING, "Tape alert detected");
+    }
+  }
 public:
   
   Session::EndOfSessionAction getHardwareStatus() const {
