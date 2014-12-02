@@ -303,7 +303,8 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
     reportPacker.m_lc.log(LOG_INFO,msg);
   }
   if(reportPacker.m_watchdog) {
-    reportPacker.m_watchdog->addParameter(log::Param("status","failure"));
+    reportPacker.m_watchdog->addParameter(log::Param("status",
+      ENOSPC == m_errorCode?"success":"failure"));
     // We have a race condition here between the processing of this message by
     // the initial process and the printing of the end-of-session log, triggered
     // by the end our process. To delay the latter, we sleep half a second here.
