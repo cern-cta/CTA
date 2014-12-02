@@ -15,8 +15,38 @@ BEGIN
 
   -- Purge the recycle bin
   EXECUTE IMMEDIATE 'PURGE RECYCLEBIN';
- 
-  -- Drop all objects
+
+  -- Drop tables linked to queues
+  FOR rec IN (SELECT object_name, object_type
+                FROM user_objects
+               WHERE object_type = 'QUEUE')
+  LOOP
+    DECLARE
+      compilation_error exception;
+      pragma exception_init(compilation_error, -6550);
+      does_not_exist EXCEPTION;
+      pragma exception_init(does_not_exist, -24002);
+    BEGIN
+      DBMS_AQADM.DROP_QUEUE_TABLE (queue_table => 'CASTORQUEUETABLE', force => TRUE);
+    EXCEPTION
+    WHEN does_not_exist THEN
+      -- the statement IS valid, but this is raised when the queue does not exist
+      -- so we should just ignore it
+      NULL;
+    WHEN compilation_error THEN
+      DECLARE
+        error_code VARCHAR2(20) := regexp_substr(dbms_utility.format_error_stack, '(PLS-[[:digit:]]+):', 1, 1, '', 1);
+      BEGIN
+        -- Ignore PLS-00201: identifier 'DBMS_AQADM' must be declared
+        -- as obviously, there is nothing to be dropped
+        IF error_code != 'PLS-00201' THEN
+          RAISE;
+        END IF;
+      END;
+    END;
+  END LOOP;
+
+  -- Drop all other objects
   FOR rec IN (SELECT object_name, object_type
                 FROM user_objects
                ORDER BY object_name, object_type)
@@ -44,31 +74,6 @@ BEGIN
         EXECUTE IMMEDIATE 'DROP DATABASE LINK '||rec.object_name;
       ELSIF rec.object_type = 'SYNONYM' THEN
         EXECUTE IMMEDIATE 'DROP SYNONYM '||rec.object_name;
-      ELSIF rec.object_type = 'QUEUE' THEN
-        DECLARE
-          compilation_error exception;
-          pragma exception_init(compilation_error, -6550);
-          invalid_statement EXCEPTION;
-          pragma exception_init(invalid_statement, -900);
-        BEGIN
-          execute immediate 'DBMS_AQADM.STOP_QUEUE(queue_name => rec.object_name);';
-          execute immediate 'DBMS_AQADM.DROP_QUEUE(queue_name => rec.object_name);';
-        EXCEPTION
-        WHEN invalid_statement THEN
-          -- the statement IS valid, but this is raised when the queue does not exist
-          -- so we should just ignore it
-          NULL;
-        WHEN compilation_error THEN
-          DECLARE
-            error_code VARCHAR2(20) := regexp_substr(dbms_utility.format_error_stack, '(PLS-[[:digit:]]+):', 1, 1, '', 1);
-          BEGIN
-            -- Ignore PLS-00201: identifier 'DBMS_AQADM' must be declared
-            -- as obviously, there is nothing to be dropped
-            IF error_code != 'PLS-00201' THEN
-              RAISE;
-            END IF;
-          END;
-        END;
       END IF;
     EXCEPTION WHEN OTHERS THEN
       -- Ignore: ORA-04043: "object string does not exist" or
