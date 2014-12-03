@@ -291,8 +291,8 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-tape-developer-tools
 Architecture: any
-Depends: castor-lib = %{version}-%{release}, stk-ssi
-Build-Depends: stk-ssi-devel, stk-ssi
+Depends: castor-lib = %{version}-%{release}, protobuf, stk-ssi, zeromq3, castor-tapeserver-server = %{version}-%{release}
+Build-Depends: protobuf-devel, stk-ssi-devel, stk-ssi, zeromq3-devel
 Description: castor (Cern Advanced STORage system)
  Tools for CASTOR tape developers
 
