@@ -70,7 +70,7 @@ try:
          GROUP BY tp.name, tp.id
          ORDER BY tapepool ASC)
       UNION ALL
-      SELECT /*+ NO_INDEX_FFS(MigrationJob) */ 'stuck migrations' tapepool, count(*) files, 0 files_migrating,
+      SELECT /*+ NO_INDEX_FFS(MigrationJob) NO_USE_HASH(dc cf) */ 'stuck migrations' tapepool, count(*) files, 0 files_migrating,
              nvl(sum(dc.diskcopysize), 0) total_size, 0 size_migrating,
              0 migrations, 0 migrations_queued, 0 migrations_running,
              nvl(min(gettime() - dc.creationtime), 0) min_age,
