@@ -162,7 +162,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       currentErrorToCount = "Error_tapeLoad";
       waitForDrive();
       currentErrorToCount = "Error_checkingTapeAlert";
-      logTapeAlerts();
+      if (logTapeAlerts()) {
+        throw castor::exception::Exception("Aborting migration session in presence of tape alerts");
+      }
       currentErrorToCount = "Error_tapeNotWriteable";
       isTapeWritable();
       

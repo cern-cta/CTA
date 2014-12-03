@@ -163,6 +163,133 @@ std::string castor::tape::SCSI::tapeAlertToString(uint16_t parameterCode)
   }
 }
 
+std::string castor::tape::SCSI::tapeAlertToCompactString(uint16_t parameterCode)
+{
+  std::stringstream ret;
+  ret << std::hex << std::nouppercase << std::showbase;
+  ret << "tapeAlert";
+  if (parameterCode < 1 || parameterCode > 64) {
+    ret << "Unexpected" << parameterCode;
+    return ret.str();
+  } else if (parameterCode >= 0x28 && parameterCode <= 0x2e) {
+    ret << "Obsolete" << parameterCode;
+    return ret.str();
+  }  
+  switch(parameterCode) {
+    /* This list is hand compacted from the one in castor::tape::SCSI::tapeAlertToString
+       */
+    case 0x01:
+      return "tapeAlertReadWarning";
+    case 0x02:
+      return "tapeAlertWriteWarning";
+    case 0x03:
+      return "tapeAlertHardError";
+    case 0x04:
+      return "tapeAlertMedium";
+    case 0x05:
+      return "tapeAlertReadFailure";
+    case 0x06:
+      return "tapeAlertWriteFailure";
+    case 0x07:
+      return "tapeAlertMediumLife";
+    case 0x08:
+      return "tapeAlertNotDataGrade";
+    case 0x09:
+      return "tapeAlertWriteProtect";
+    case 0x0A:
+      return "tapeAlertVolumePemovalPrevented";
+    case 0x0B:
+      return "tapeAlertCleaningVolume";
+    case 0x0C:
+      return "tapeAlertUnsupportedFormat";
+    case 0x0D:
+      return "tapeAlertRecoverableMechanicalCartridgeFailure";
+    case 0x0E:
+      return "tapeAlertUnrecoverableMechanicalCartridgeFailure";
+    case 0x0F:
+      return "tapeAlertMemoryChipInCartridgeFailure";
+    case 0x10:
+      return "tapeAlertForcedEject";
+    case 0x11:
+      return "tapeAlertReadOnlyFormat";
+    case 0x12:
+      return "tapeAlertTapeDirectoryCorruptedOnLoad";
+    case 0x13:
+      return "tapeAlertNearingMediumLife";
+    case 0x14:
+      return "tapeAlertCleaningRequired";
+    case 0x15:
+      return "tapeAlertCleaningRequested";
+    case 0x16:
+      return "tapeAlertExpiredCleaningVolume";
+    case 0x17:
+      return "tapeAlertInvalidCleaningVolume";
+    case 0x18:
+      return "tapeAlertRetensionRequested";
+    case 0x19:
+      return "tapeAlertMultiPortInterfaceErrorOnAPrimaryPort";
+    case 0x1A:
+      return "tapeAlertCoolingFanFailure";
+    case 0x1B:
+      return "tapeAlertPowerSupplyFailure";
+    case 0x1C:
+      return "tapeAlertPowerConsumption";
+    case 0x1D:
+      return "tapeAlertDrivePreventiveMaintenanceRequired";
+    case 0x1E:
+      return "tapeAlertHardwareA";
+    case 0x1F:
+      return "tapeAlertHardwareB";
+    case 0x20:
+      return "tapeAlertPrimaryInterface";
+    case 0x21:
+      return "tapeAlertEjectVolume";
+    case 0x22:
+      return "tapeAlertMicrocodeUpdateFail";
+    case 0x23:
+      return "tapeAlertDriveHumidity";
+    case 0x24:
+      return "tapeAlertDriveTemperature";
+    case 0x25:
+      return "tapeAlertDriveVoltage";
+    case 0x26:
+      return "tapeAlertPredictiveFailure";
+    case 0x27:
+      return "tapeAlertDiagnosticsRequired";
+    case 0x2F:
+      return "tapeAlertExternalDataEncryptionControlCommunicationFailure";
+    case 0x30:
+      return "tapeAlertExternalDataEncryptionControlKeyManagerReturnedAnError";
+    case 0x31:
+      return "tapeAlertDiminishedNativeCapacity";
+    case 0x32:
+      return "tapeAlertLostStatistics";
+    case 0x33:
+      return "tapeAlertTapeDirectoryInvalidAtUnload";
+    case 0x34:
+      return "tapeAlertTapeSystemAreaWriteFailure";
+    case 0x35:
+      return "tapeAlertTapeSystemAreaReadFailure";
+    case 0x36:
+      return "tapeAlertNoStartOfData";
+    case 0x37:
+      return "tapeAlertLoadingOrThreadingFailure";
+    case 0x38:
+      return "tapeAlertUnrecoverableUnloadFailure";
+    case 0x39:
+      return "tapeAlertAutomationInterfaceFailure";
+    case 0x3A:
+      return "tapeAlertMicrocodeFailure";
+    case 0x3B:
+      return "tapeAlertWORMVolumeIntegrityCheckFailed";
+    case 0x3C:
+      return "tapeAlertWORMVolumeOverwriteAttempted";      
+    default:
+      ret << "ReservedCode" << parameterCode;
+      return ret.str();
+  }
+}
+
 /**
  * Turn a SCSI status code into a string
  * @param status

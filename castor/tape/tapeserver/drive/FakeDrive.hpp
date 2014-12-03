@@ -64,6 +64,7 @@ namespace drive {
     virtual void positionToLogicalObject(uint32_t blockId) ;
     virtual positionInfo getPositionInfo() ;
     virtual std::vector<std::string> getTapeAlerts() ;
+    virtual std::vector<std::string> getTapeAlertsCompact() ;
     virtual void setDensityAndCompression(bool compression = true, 
     unsigned char densityCode = 0) ;
     virtual driveStatus getDriveStatus() ;

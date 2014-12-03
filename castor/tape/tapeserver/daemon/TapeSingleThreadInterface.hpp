@@ -180,11 +180,13 @@ protected:
   /**
    * After waiting for the drive, we will dump the tape alert log content, if
    * not empty 
+   * @return true if any alert was detected
    */
-  void logTapeAlerts() {
+  bool logTapeAlerts() {
     std::vector<std::string> tapeAlerts = m_drive.getTapeAlerts();
-    if (tapeAlerts.empty()) return;
+    if (tapeAlerts.empty()) return false;
     size_t alertNumber = 0;
+    // Log tape alerts in the logs.
     for (std::vector<std::string>::iterator ta=tapeAlerts.begin();
             ta!=tapeAlerts.end();ta++)
     {
@@ -194,7 +196,23 @@ protected:
             .add("tapeAlertCount", tapeAlerts.size());
       m_logContext.log(LOG_WARNING, "Tape alert detected");
     }
+    // Add tape alerts in the tape log parameters
+    std::vector<std::string> tapeAlertsCompact = m_drive.getTapeAlertsCompact();
+    for (std::vector<std::string>::iterator tac=tapeAlertsCompact.begin();
+            tac!=tapeAlertsCompact.end();tac++)
+    {
+      countTapeLogError(std::string("Error_")+*tac);
+    }
+    return true;
   }
+  
+  /**
+   * Helper virtual function allowing the access to the m_watchdog member
+   * in the inherited classes (TapeReadSingleThread and TapeWriteSingleThread)
+   * @param error
+   */
+  virtual void countTapeLogError(const std::string & error) = 0;
+  
 public:
   
   Session::EndOfSessionAction getHardwareStatus() const {

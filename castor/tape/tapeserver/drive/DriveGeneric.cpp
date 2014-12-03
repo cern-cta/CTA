@@ -241,12 +241,12 @@ drive::positionInfo drive::DriveGeneric::getPositionInfo()
 /**
  * Get tape alert information from the drive. There is a quite long list of possible tape alerts.
  * They are described in SSC-4, section 4.2.20: TapeAlert application client interface.
- * Section is 4.2.17 in SSC-3.
- * @return list of tape alerts descriptions. They are simply used for logging.
+ * Section is 4.2.17 in SSC-3. This version gives a list of numerical codes.
+ * @return list of tape alerts codes.
  */
-std::vector<std::string> drive::DriveGeneric::getTapeAlerts()  {
+std::vector<uint16_t> drive::DriveGeneric::getTapeAlertCodes(){
   /* return vector */
-  std::vector<std::string> ret;
+  std::vector<uint16_t> ret;
   /* We don't know how many elements we'll get. Prepare a 100 parameters array */
   SCSI::Structures::tapeAlertLogPage_t<100> tal;
   /* Prepare a sense buffer of 255 bytes */
@@ -272,9 +272,43 @@ std::vector<std::string> drive::DriveGeneric::getTapeAlerts()  {
    * return strings. */
   for (size_t i = 0; i < tal.parameterNumber(); i++) {
     if (tal.parameters[i].flag)
-      ret.push_back(SCSI::tapeAlertToString(
-        SCSI::Structures::toU16(tal.parameters[i].parameterCode)
-        ));
+      ret.push_back(SCSI::Structures::toU16(tal.parameters[i].parameterCode));
+  }
+  return ret;
+}
+
+/**
+ * Get tape alert information from the drive. There is a quite long list of possible tape alerts.
+ * They are described in SSC-4, section 4.2.20: TapeAlert application client interface.
+ * Section is 4.2.17 in SSC-3. This version gives the standard strings from SSC-4.
+ * @return list of tape alerts descriptions. They are simply used for logging.
+ */
+std::vector<std::string> drive::DriveGeneric::getTapeAlerts(){
+  /* return vector */
+  std::vector<std::string> ret;
+  /* The tape alerts */
+  std::vector<uint16_t> tacs = getTapeAlertCodes();
+  /* convert tape alert codes to strings */
+  for (std::vector<uint16_t>::iterator code =  tacs.begin(); code!= tacs.end(); code++) {
+    ret.push_back(SCSI::tapeAlertToString(*code));
+  }
+  return ret;
+}
+
+/**
+ * Get tape alert information from the drive. There is a quite long list of possible tape alerts.
+ * They are described in SSC-4, section 4.2.20: TapeAlert application client interface.
+ * Section is 4.2.17 in SSC-3. This version gives the standard strings from SSC-4.
+ * @return list of tape alerts descriptions, shortened in single words with mixed case.
+ */
+std::vector<std::string> drive::DriveGeneric::getTapeAlertsCompact(){
+  /* return vector */
+  std::vector<std::string> ret;
+  /* The tape alerts */
+  std::vector<uint16_t> tacs = getTapeAlertCodes();
+  /* convert tape alert codes to strings */
+  for (std::vector<uint16_t>::iterator code =  tacs.begin(); code!= tacs.end(); code++) {
+    ret.push_back(SCSI::tapeAlertToCompactString(*code));
   }
   return ret;
 }

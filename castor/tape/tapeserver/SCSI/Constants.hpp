@@ -211,6 +211,11 @@ namespace SCSI {
    */
   std::string tapeAlertToString(uint16_t parameterCode);
   
+  /**
+   * Helper function turning tape alerts to mixed case compact strings.
+   */
+  std::string tapeAlertToCompactString(uint16_t parameterCode);
+  
   class Status {
   public:
     enum {

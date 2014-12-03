@@ -84,6 +84,8 @@ public:
   virtual void push(TapeReadTask* t){
     m_tasks.push(t);
   }
+  
+  virtual void countTapeLogError(const std::string & error) {};
 };
 
 TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {

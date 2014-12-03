@@ -222,6 +222,15 @@ private:
    */
   MigrationWatchDog & m_watchdog;
   
+protected:
+  /***
+   * Helper virtual function to access the watchdog from parent class
+   */
+  virtual void countTapeLogError(const std::string & error) { 
+    m_watchdog.addToErrorCount(error);
+  }
+  
+private:
   /**
    *  Pointer to the task injector allowing termination signaling 
    */
