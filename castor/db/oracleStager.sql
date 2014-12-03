@@ -896,23 +896,31 @@ BEGIN
     -- handle the case of selective abort
     FOR i IN fileIds.FIRST .. fileIds.LAST LOOP
       DECLARE
-        srId NUMBER;
-        cfId NUMBER;
-        srUuid VARCHAR(2048);
+        CONSTRAINT_VIOLATED EXCEPTION;
+        PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
       BEGIN
-        SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_CastorFile)*/
-               SubRequest.id, CastorFile.id, SubRequest.subreqId INTO srId, cfId, srUuid
-          FROM SubRequest, CastorFile
-         WHERE request = origReqId
-           AND SubRequest.castorFile = CastorFile.id
-           AND CastorFile.fileid = fileIds(i)
-           AND CastorFile.nsHost = nsHosts(i);
-        INSERT INTO processBulkAbortFileReqsHelper (srId, cfId, fileId, nsHost, uuid)
-        VALUES (srId, cfId, fileIds(i), nsHosts(i), srUuid);
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- this fileid/nshost did not exist in the request, send an error back
-        INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
-        VALUES (fileIds(i), nsHosts(i), serrno.ENOENT, 'No subRequest found for this fileId/nsHost');
+        -- note that we may insert several rows in one go in case the abort request contains
+        -- several times the same file
+        INSERT INTO processBulkAbortFileReqsHelper
+          (SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_CastorFile)*/
+                  DISTINCT SubRequest.id, CastorFile.id, fileIds(i), nsHosts(i), SubRequest.subreqId
+             FROM SubRequest, CastorFile
+            WHERE request = origReqId
+              AND SubRequest.castorFile = CastorFile.id
+              AND CastorFile.fileid = fileIds(i)
+              AND CastorFile.nsHost = nsHosts(i));
+        -- check that we found something
+        IF SQL%ROWCOUNT = 0 THEN
+          -- this fileid/nshost did not exist in the request, send an error back
+          INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
+          VALUES (fileIds(i), nsHosts(i), serrno.ENOENT, 'No subRequest found for this fileId/nsHost');
+        END IF;
+      EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+        -- the insertion in ProcessBulkRequestHelper triggered a violation of the
+        -- primary key. This primary key being the subrequest id, this means that
+        -- this subrequest is already in the list of the ones to be aborted. So
+        -- nothing left to be done
+        NULL;
       END;
     END LOOP;
   END IF;
