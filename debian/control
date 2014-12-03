@@ -249,7 +249,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-acs-server
 Architecture: any
-Depends: castor-lib = %{version}-%{release}, logrotate, protobuf, stk-ssi, zeromq3, castor-lib-server = %{version}-%{release}
+Depends: castor-lib = %{version}-%{release}, logrotate, protobuf, stk-ssi, zeromq3, castor-lib-server = %{version}-%{release}, castor-tapeserver-server = %{version}-%{release}
 Build-Depends: protobuf-devel, stk-ssi-devel, stk-ssi, zeromq3-devel
 Description: castor (Cern Advanced STORage system)
  ACS Server Daemon
@@ -288,6 +288,13 @@ Architecture: any
 Depends: python, python-rpyc >= 3.1, lemon-sensor-pythonAPI
 Description: castor (Cern Advanced STORage system)
  Lemon sensor for the MAE
+
+Package: castor-tape-developer-tools
+Architecture: any
+Depends: castor-lib = %{version}-%{release}, stk-ssi
+Build-Depends: stk-ssi-devel, stk-ssi
+Description: castor (Cern Advanced STORage system)
+ Tools for CASTOR tape developers
 
 Package: castor-traffic-shaper
 Architecture: any

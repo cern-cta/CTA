@@ -1,0 +1,3 @@
+%attr(0755,root,root) usr/bin/castor-tape-acs-dismount
+%attr(0755,root,root) usr/bin/castor-tape-acs-mount
+%attr(0755,root,root) usr/bin/castor-tape-acs-queryvolume
