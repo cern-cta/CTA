@@ -444,7 +444,7 @@ XrootReadFile::XrootReadFile(const std::string &xrootUrl) {
   // and simply open
   using XrdCl::OpenFlags;
   XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Read),
-    std::string("In XrootC2FSReadFile::XrootC2FSReadFile failed XrdCl::File::Open() on ")+m_URL);
+    std::string("In XrootReadFile::XrootReadFile failed XrdCl::File::Open() on ")+m_URL);
 }
 
 size_t XrootBaseReadFile::read(void *data, const size_t size) const {
