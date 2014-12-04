@@ -91,8 +91,7 @@ void castor::tape::tapeserver::daemon::ProcessForker::closeCmdReceiverSocket()
     std::list<log::Param> params;
     params.push_back(log::Param("cmdSocket", m_cmdSocket));
     if(-1 == close(m_cmdSocket)) {
-      char message[100];
-      sstrerror_r(errno, message, sizeof(message));
+      const std::string message = castor::utils::errnoToString(errno);
       params.push_back(log::Param("message", message));
       m_log(LOG_ERR, "Failed to close command receiver socket",
         params);
@@ -164,8 +163,7 @@ bool castor::tape::tapeserver::daemon::ProcessForker::thereIsAPendingMsg() {
     return false;
   case -1: // Error
     {
-      char message[100];
-      sstrerror_r(errno, message, sizeof(message));
+      const std::string message = castor::utils::errnoToString(errno);
       log::Param params[] = {log::Param("message", message)};
       m_log(LOG_ERR,
         "Error detected when checking for a pending ProcessForker message",

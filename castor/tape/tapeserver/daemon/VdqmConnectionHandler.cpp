@@ -20,6 +20,7 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/daemon/VdqmConnectionHandler.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/common.h"
 #include "h/serrno.h"
 
@@ -148,9 +149,9 @@ bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::connectionIsAuthor
     const int savedSerrno = serrno;
     std::string errorMessage;
     if(0 != serrno) {
-      errorMessage = sstrerror(savedSerrno);
+      errorMessage = castor::utils::serrnoToString(savedSerrno);
     } else if(0 != errno) {
-      errorMessage = sstrerror(savedErrno);
+      errorMessage = castor::utils::errnoToString(savedErrno);
     } else {
       errorMessage = "UNKNOWN";
     }

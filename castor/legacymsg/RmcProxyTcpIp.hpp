@@ -27,6 +27,7 @@
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/legacymsg/RmcUnmountMsgBody.hpp"
 #include "castor/utils/SmartFd.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/rmc_constants.h"
 #include "h/serrno.h"
 
@@ -196,7 +197,7 @@ protected:
         {
           castor::exception::Exception ex;
           ex.getMessage() << "Received error from rmcd: rmcRc=" << rmcRc <<
-            " rmcRcStr=" << sstrerror(rmcRc);
+            " rmcRcStr=" << utils::serrnoToString(rmcRc);
           if(!rmcErrorStream.str().empty()) {
             ex.getMessage() << " rmcErrorStream=" << rmcErrorStream.str();
           }

@@ -49,7 +49,7 @@ castor::tape::tapeserver::daemon::TpconfigLines castor::tape::tapeserver::
         "Failed to parse TPCONFIG file"
         ": Failed to open file"
         ": filename='" << filename << "'"
-        ": " << sstrerror(savedErrno);
+        ": " << castor::utils::errnoToString(savedErrno);
 
       throw ex;
     }
@@ -161,7 +161,7 @@ castor::tape::tapeserver::daemon::TpconfigLines castor::tape::tapeserver::
       "Failed to parse TPCONFIG file"
       ": Failed to read file"
       ": filename='" << filename << "'"
-      ": " << sstrerror(fgetsErrno);
+      ": " << castor::utils::errnoToString(fgetsErrno);
 
     throw ex;
   }
