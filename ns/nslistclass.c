@@ -133,10 +133,7 @@ int main(int argc,char **argv)
 int listentry(struct Cns_fileclass *Cns_fileclass)
 {
   struct group *gr;
-  int i;
-  char *p;
   struct passwd *pw;
-  char retenpstr[20];
   static gid_t sav_gid = -1;
   static char sav_gidstr[7];
   static uid_t sav_uid = -1;
@@ -160,40 +157,16 @@ int listentry(struct Cns_fileclass *Cns_fileclass)
     else
       sprintf (sav_gidstr, "%-6u", sav_gid);
   }
-  if (Cns_fileclass->retenp_on_disk == AS_LONG_AS_POSSIBLE)
-    strcpy (retenpstr, "AS_LONG_AS_POSSIBLE");
-  else if (Cns_fileclass->retenp_on_disk == INFINITE_LIFETIME)
-    strcpy (retenpstr, "INFINITE_LIFETIME");
-  else
-    sprintf (retenpstr, "%d", Cns_fileclass->retenp_on_disk);
-  p = Cns_fileclass->tppools;
   if (nohdr) {
-    printf ("%d %s %-8.8s %-6.6s 0x%x %d %d %d %d %d %d %d %s %s",
+    printf ("%d %s %-8.8s %-6.6s %d",
             Cns_fileclass->classid, Cns_fileclass->name, sav_uidstr, sav_gidstr,
-            Cns_fileclass->flags, Cns_fileclass->maxdrives,
-            Cns_fileclass->min_filesize, Cns_fileclass->max_filesize,
-            Cns_fileclass->max_segsize, Cns_fileclass->migr_time_interval,
-            Cns_fileclass->mintime_beforemigr, Cns_fileclass->nbcopies,
-            retenpstr, p);
+            Cns_fileclass->nbcopies);
   } else {
     printf ("CLASS_ID %d\n", Cns_fileclass->classid);
     printf ("CLASS_NAME %s\n", Cns_fileclass->name);
     printf ("CLASS_UID %s\n", sav_uidstr);
     printf ("CLASS_GID %s\n", sav_gidstr);
-    printf ("FLAGS  0x%x\n", Cns_fileclass->flags);
-    printf ("MAXDRIVES %d\n", Cns_fileclass->maxdrives);
-    printf ("MIN FILESIZE %d\n", Cns_fileclass->min_filesize);
-    printf ("MAX FILESIZE %d\n", Cns_fileclass->max_filesize);
-    printf ("MAX SEGSIZE %d\n", Cns_fileclass->max_segsize);
-    printf ("MIGR INTERVAL %d\n", Cns_fileclass->migr_time_interval);
-    printf ("MIN TIME %d\n", Cns_fileclass->mintime_beforemigr);
-    printf ("NBCOPIES %d\n", Cns_fileclass->nbcopies);
-    printf ("RETENP_ON_DISK %s\n", retenpstr);
-    printf ("TAPE POOLS %s", Cns_fileclass->nbtppools ? p : "");
-  }
-  for (i = 1; i < Cns_fileclass->nbtppools; i++) {
-    p += (CA_MAXPOOLNAMELEN+1);
-    printf (":%s", p);
+    printf ("NBCOPIES %d", Cns_fileclass->nbcopies);
   }
   printf ("\n");
   return (0);

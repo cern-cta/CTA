@@ -31,24 +31,6 @@ The class is restricted to this group name
 .BI --id=CLASSID
 The class number of the class to be modified.
 .TP
-.BI --maxdrives=NUM
-Specifies the number of drives which can be used in parallel for a migration.
-.TP
-.BI --maxfilesize=NUM
-Specifies the maximum file size. There is no limit by default.
-.TP
-.BI --maxsegsize=NUM
-Specifies the maximum segment size. There is no limit by default.
-.TP
-.BI --migr_interval=NUM
-A new migration will be started if at least NUM seconds have elapsed since the last migration.
-.TP
-.BI --minfilesize=NUM
-Specifies the minimum file size. The default value is 0.
-.TP
-.BI --mintime=NUM
-A file will not be migrated unless at least NUM seconds have elapsed since the last update.
-.TP
 .BI --name=CLASSNAME
 The name of the class to be modified.
 .TP
@@ -58,17 +40,6 @@ tape pool.
 .TP
 .BI --newname=CLASSNAME
 The class name must be at most CA_MAXCLASNAMELEN characters long.
-.TP
-.BI --retenp_on_disk=NUM
-Specifies the maximum retention period (in seconds) for a file on disk.
-The retention period can also be set to AS_LONG_AS_POSSIBLE or INFINITE_LIFETIME.
-If zero, the file is purged immediately after migration.
-Default is AS_LONG_AS_POSSIBLE, i.e. purged when disk space is needed.
-.TP
-.BI --tppools=POOL1:POOL2...
-Specifies the tape pools to be used for migration. The number of tape pools
-must be at least as big as the number of copies.
-Pool names must be at most CA_MAXPOOLNAMELEN characters long.
 .TP
 .BI --uid=CLASSUID
 The class is restricted to this user uid.

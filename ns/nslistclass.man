@@ -38,16 +38,7 @@ CLASS_ID        2
 CLASS_NAME      user
 CLASS_UID       -
 CLASS_GID       -
-FLAGS           0x0
-MAXDRIVES       2
-MIN FILESIZE    0
-MAX FILESIZE    0
-MAX SEGSIZE     0
-MIGR INTERVAL   1800
-MIN TIME        0
 NBCOPIES        1
-RETENP_ON_DISK  AS_LONG_AS_POSSIBLE
-TAPE POOLS      default
 
 
 nslistclass --id 2 -nohdr
