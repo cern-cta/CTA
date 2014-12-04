@@ -155,7 +155,7 @@ public:
                      /1000/1000/localStats.totalTime:0)
             .add("payloadTransferSpeedMBps",
                      localStats.totalTime?1.0*localStats.dataVolume/1000/1000/localStats.totalTime:0);
-      lc.log(LOG_INFO, "File successfully read from drive");
+      lc.log(LOG_INFO, "File successfully read from tape");
       // Add the local counts to the session's
       stats.add(localStats);
     } //end of try
