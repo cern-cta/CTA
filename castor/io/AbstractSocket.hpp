@@ -24,12 +24,12 @@
 
 #pragma once
 
-// Include Files
-#include <net.h>
-#include <string>
-#include <netinet/in.h>
+#include "h/net.h"
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
+
+#include <string>
+#include <netinet/in.h>
 
 namespace castor {
 

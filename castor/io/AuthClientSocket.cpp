@@ -20,27 +20,24 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-// Include Files
-#include <net.h>
+#include "castor/Constants.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/IObject.hpp"
+#include "castor/io/AuthClientSocket.hpp"
+#include "castor/io/biniostream.h"
+#include "castor/io/StreamAddress.hpp"
+#include "castor/Services.hpp"
+#include "h/net.h"
+#include "h/serrno.h"
+
 #include <netdb.h>
 #include <errno.h>
-#include <serrno.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <string>
-#include "castor/IObject.hpp"
-#include "castor/Constants.hpp"
-#include "castor/Services.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/io/biniostream.h"
-#include "castor/io/StreamAddress.hpp"
-
-// Local Includes
-#include "AuthClientSocket.hpp"
-
 
 //------------------------------------------------------------------------------
 // constructor

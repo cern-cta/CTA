@@ -23,21 +23,19 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-// Include Files
+#include "castor/exception/Exception.hpp"
+#include "castor/io/biniostream.h"
+#include "castor/Services.hpp"
+#include "castor/io/AbstractSocket.hpp"
+#include "castor/io/StreamAddress.hpp"
+#include "h/net.h"
+#include "h/Cnetdb.h"
+
 #include <unistd.h>
-#include <net.h>
 #include <errno.h>
 #include <serrno.h>
 #include <sys/types.h>
 #include <string>
-#include "Cnetdb.h"
-#include "castor/exception/Exception.hpp"
-#include "castor/io/biniostream.h"
-#include "castor/Services.hpp"
-#include "castor/io/StreamAddress.hpp"
-
-// Local Includes
-#include "AbstractSocket.hpp"
 
 // Definitions
 #define STG_CALLBACK_BACKLOG 2

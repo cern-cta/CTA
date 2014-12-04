@@ -24,12 +24,12 @@
 
 #pragma once
 
-// Include Files
-#include "dlf_api.h"
-#include "castor/IObject.hpp"
-#include "castor/stager/TapeVid.hpp"
 #include "castor/dlf/IPAddress.hpp"
 #include "castor/dlf/TimeStamp.hpp"
+#include "castor/IObject.hpp"
+#include "castor/stager/TapeVid.hpp"
+#include "h/dlf_api.h"
+
 #include <string.h>
 #include <stdlib.h>
 

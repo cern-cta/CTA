@@ -26,6 +26,7 @@
 #include "castor/replier/ClientConnection.hpp"
 #include "castor/rh/Client.hpp"
 #include "h/Cthread_api.h"
+#include "h/net.h"
 #include "h/serrno.h"
 
 #include <unistd.h>
@@ -34,7 +35,6 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
-#include <net.h>
 #include <netdb.h>
 #include <sys/types.h>
 #include <errno.h>

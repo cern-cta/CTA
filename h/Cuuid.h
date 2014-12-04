@@ -8,7 +8,8 @@
 
 #pragma once
 
-#include <osdep.h>
+#include "h/osdep.h"
+
 #include <sys/types.h>
 
 #define CUUID_STRING_LEN 36

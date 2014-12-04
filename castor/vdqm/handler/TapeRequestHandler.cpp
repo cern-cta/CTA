@@ -22,12 +22,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
  
-#include <memory>
-#include <string> 
-#include <vector>
-#include <time.h>
-#include <string.h>
-
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/vdqm/ClientIdentification.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
@@ -52,19 +46,20 @@
 
 #define VDQMSERV 1
 
-#include <net.h>
-#include <vdqm_constants.h>
+#include "h/common.h" //for getconfent
 #include "h/Ctape_constants.h"
 #include "h/Cupv_constants.h"
-#include <common.h> //for getconfent
-
-/**
- * includes to talk to VMGR
- */
-#include <vmgr_struct.h>
-#include <sys/types.h>
-#include "vmgr_api.h"
+#include "h/net.h"
+#include "h/vdqm_constants.h"
+#include "h/vmgr_api.h"
+#include "h/vmgr_struct.h"
  
+#include <sys/types.h>
+#include <memory>
+#include <string> 
+#include <string.h>
+#include <time.h>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor

@@ -24,19 +24,18 @@
 
 #pragma once
 
-// Include Files
-#include <net.h>
-#include <string>
-#include <netinet/in.h>
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Security.hpp"
-#include "ServerSocket.hpp"
+#include "castor/io/ServerSocket.hpp"
+#include "h/net.h"
 
 extern "C" {
-#include "Csecloader.h"
+#include "h/Csecloader.h"
 }
 
+#include <string>
+#include <netinet/in.h>
 
 namespace castor {
 

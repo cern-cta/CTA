@@ -23,23 +23,21 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-// Include Files
-#include <net.h>
+#include "castor/Constants.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/io/AbstractTCPSocket.hpp"
+#include "h/getconfent.h"
+#include "h/net.h"
+#include "h/serrno.h"
+
+#include <limits.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <errno.h>
-#include <serrno.h>
 #include <sys/types.h>
-#include "castor/Constants.hpp"
-#include "castor/exception/Exception.hpp"
-#include "getconfent.h"
-#include <limits.h>
-
-// Local Includes
-#include "AbstractTCPSocket.hpp"
 
 // Definitions
 #define MAX_NETDATA_SIZE 0x1400000 // 20MB

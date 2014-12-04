@@ -23,8 +23,19 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-// Include Files
-#include <net.h>
+#include "castor/IObject.hpp"
+#include "castor/Constants.hpp"
+#include "castor/Services.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Communication.hpp"
+#include "castor/io/biniostream.h"
+#include "castor/io/ServerSocket.hpp"
+#include "castor/io/StreamAddress.hpp"
+#include "h/net.h"
+#include "h/serrno.h"
+
+#include <time.h>
+#include <sys/time.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -32,21 +43,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <errno.h>
-#include <serrno.h>
 #include <string>
-#include "castor/IObject.hpp"
-#include "castor/Constants.hpp"
-#include "castor/Services.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/exception/Communication.hpp"
-#include "castor/io/biniostream.h"
-#include "castor/io/StreamAddress.hpp"
-
-#include <time.h>
-#include <sys/time.h>
-
-// Local Includes
-#include "ServerSocket.hpp"
 
 // Definition of some constants
 #define STG_CALLBACK_BACKLOG 2

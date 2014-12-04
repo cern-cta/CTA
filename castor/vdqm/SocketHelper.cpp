@@ -20,17 +20,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include <net.h>
-#include <netdb.h>
-#include <errno.h>
-#include <serrno.h>
-#include <unistd.h> // for close()
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <string>
-
 #include "castor/System.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/vdqm/DevTools.hpp"
@@ -39,10 +28,20 @@
 #include "h/Cnetdb.h"
 #include "h/common.h"
 #include "h/Cupv_api.h"
+#include "h/net.h"
 #include "h/osdep.h" //for LONGSIZE
+#include "h/serrno.h"
 #include "h/vdqm_constants.h"
 
+#include <netdb.h>
+#include <errno.h>
 #include <stdio.h>
+#include <unistd.h> // for close()
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <string>
 
 // definition of some constants
 #define STG_CALLBACK_BACKLOG 2

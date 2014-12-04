@@ -22,10 +22,20 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include <net.h>
+#include "h/common.h"
+#include "h/Cnetdb.h"
+#include "h/net.h"
+#include "h/osdep.h" //for LONGSIZE
+#include "h/serrno.h"
+
+#include "castor/exception/InvalidArgument.hpp"
+#include "castor/vdqm/OldProtocolInterpreter.hpp"
+#include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "castor/vdqm/vdqmMacros.h"  // Needed for marshalling
+#include "castor/vdqm/SocketHelper.hpp"
+
 #include <netdb.h>
 #include <errno.h>
-#include <serrno.h>
 #include <unistd.h> // for close()
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -34,17 +44,6 @@
 #include <string>
 #include <sstream>
 #include <string.h>
-
-#include "osdep.h" //for LONGSIZE
-#include "Cnetdb.h"
-#include <common.h>
-
-#include "castor/exception/InvalidArgument.hpp"
-#include "castor/vdqm/OldProtocolInterpreter.hpp"
-#include "castor/vdqm/VdqmDlfMessageConstants.hpp"
-#include "castor/vdqm/vdqmMacros.h"  // Needed for marshalling
-#include "castor/vdqm/SocketHelper.hpp"
-
 
 //------------------------------------------------------------------------------
 // constructor
