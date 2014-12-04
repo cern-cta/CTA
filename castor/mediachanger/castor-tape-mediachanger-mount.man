@@ -17,6 +17,10 @@ castor-tape-mediachanger-mount \- mount a volume
 .BI "castor-tape-mediachanger-mount [options] VID DRIVE_SLOT"
 
 .SH DESCRIPTION
+\fBWarning\fP, \fBcastor-tape-mediachanger-mount\fP is a developer tool and is
+therefore subject to change in and even removal from a future release of CASTOR.
+End users should not rely on this tool to operate their CASTOR installation.
+
 \fBcastor-tape-mediachanger-mount\fP mounts the volume with the specified
 \fBVID\fP into the drive located in the specified \fBDRIVE_SLOT\fP within the
 tape library.  \fBDRIVE_SLOT\fP must be in one of the following two forms:

@@ -17,6 +17,10 @@ castor-tape-acs-mount \- mount a volume
 .BI "castor-tape-acs-mount [options] VID DRIVE_SLOT"
 
 .SH DESCRIPTION
+\fBWarning\fP, \fBcastor-tape-acs-mount\fP is a developer tool and is therefore
+subject to change in and even removal from a future release of CASTOR.
+End users should not rely on this tool to operate their CASTOR installation.
+
 \fBcastor-tape-acs-mount\fP mounts the volume with the specfied \fBVID\fP into
 the drive located in the specified \fBDRIVE_SLOT\fP of the tape library.
 The format of \fBDRIVE_SLOT\fP is as follows:

@@ -17,6 +17,10 @@ castor-tape-acs-queryvolume \- queries a volume
 .BI "castor-tape-acs-queryvolume [options] VID"
 
 .SH DESCRIPTION
+\fBWarning\fP, \fBcastor-tape-acs-queryvolume\fP is a developer tool and is
+therefore subject to change in and even removal from a future release of CASTOR.
+End users should not rely on this tool to operate their CASTOR installation.
+
 \fBcastor-tape-acs-queryvolume\fP quieries ACS for information about the volume
 with the specfied \fBVID\fP.
 

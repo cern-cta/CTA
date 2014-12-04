@@ -17,6 +17,11 @@ castor-tape-mediachanger-dismount \- dismount a volume
 .BI "castor-tape-mediachanger-dismount [options] VID DRIVE_SLOT"
 
 .SH DESCRIPTION
+\fBWarning\fP, \fBcastor-tape-mediachanger-dismount\fP is a developer tool and
+is therefore subject to change in and even removal from a future release of
+CASTOR.
+End users should not rely on this tool to operate their CASTOR installation.
+
 \fBcastor-tape-mediachanger-dismount\fP dismounts the volume with the specified
 \fBVID\fP from the drive located in the specified \fBDRIVE_SLOT\fP within the
 tape library.  \fBDRIVE_SLOT\fP must be in one of the following two forms:
