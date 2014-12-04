@@ -28,7 +28,7 @@
   Ask your DBA to run the following snippet, providing your stager account name:
 
   DECLARE
-    stager_account := '<your stager account>';
+    stager_account VARCHAR2(100) := '<your stager account>';
   BEGIN
     EXECUTE IMMEDIATE 'GRANT CONNECT, RESOURCE, aq_administrator_role TO ' || stager_account;
     EXECUTE IMMEDIATE 'GRANT EXECUTE ON dbms_aq TO ' || stager_account;
