@@ -118,7 +118,8 @@ namespace castor {
 }
 #endif // COLLECTEXTRABACKTRACEINFOS
 
-castor::exception::Backtrace::Backtrace(): m_trace() {
+castor::exception::Backtrace::Backtrace(bool fake): m_trace() {
+  if (fake) return;
   void * array[200];
   g_lock.lock();  
   size_t depth = ::backtrace(array, sizeof(array)/sizeof(void*));

@@ -28,7 +28,7 @@ namespace castor {
   namespace exception {
     class Backtrace {
     public:
-      Backtrace();
+      Backtrace(bool fake=false);
       operator std::string() const { return m_trace; }
       Backtrace& operator= (const Backtrace& bt) { m_trace = bt.m_trace; return *this; }
     private:

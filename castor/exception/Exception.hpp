@@ -46,15 +46,19 @@ namespace castor {
        * @param serrno the serrno code of the corresponding C error
        * @param context optional context string added to the message
        * at initialisation time.
+       * @param embedBacktrace whether to embed a backtrace of where the
+       * exception was throw in the message
        */
-      Exception(int se, std::string context="");
+      Exception(int se, std::string context="", bool embedBacktrace=true);
 
       /**
        * Empty Constructor with implicit serrno = SEINERNAL;
        * @param context optional context string added to the message
        * at initialisation time.
+       * @param embedBacktrace whether to embed a backtrace of where the
+       * exception was throw in the message
        */
-      Exception(std::string context="");
+      Exception(std::string context="", bool embedBacktrace=true);
       
       /**
        * Copy Constructor

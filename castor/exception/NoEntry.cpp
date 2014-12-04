@@ -31,4 +31,5 @@
 // Constructor
 // -----------------------------------------------------------------------
 castor::exception::NoEntry::NoEntry() :
-  castor::exception::Exception(ENOENT) {}
+  // No backtrace for this exception
+  castor::exception::Exception(ENOENT, "", false) {}
