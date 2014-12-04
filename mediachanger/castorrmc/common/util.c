@@ -28,14 +28,14 @@
 /**
  * Checks whether the given string is a size.
  * The accepted syntax is :
- *    [blanks]<digits>[b|k|M|G|T|P]
+ *    [blanks]<digits>[b|k|M|G|T|P]i?
  * @return -1 if it is not a size,
  * 0 if it is a size with no unit,
  * 1 if it is a size with a unit
  */
 int check_for_strutou64(char *str) {
   /* We accept only the following format */
-  /* [blanks]<digits>[b|k|M|G|T|P] */
+  /* [blanks]<digits>[b|k|M|G|T|P]i? */
   char *p = (char *) str;
   while (isspace (*p)) p++; /* skip leading spaces */
   while (*p) {
@@ -59,6 +59,11 @@ int check_for_strutou64(char *str) {
     switch (*++p) {
     case '\0':
       return(1); /* Ok with unit */
+    case 'i':
+      if (*(p+2) == '\0')
+        return(1); /* Ok with power of 2 unit */
+      else
+        return(-1); /* Unit followed by anything, not valid */        
     default:
       return(-1); /* Unit followed by anything, not valid */
     }
