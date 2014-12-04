@@ -210,13 +210,14 @@ u_signed64 strutou64(const char *str)
 		if (! isdigit (*p)) break;
 		u64 = u64 * 10 + (*p++ - '0');
 	}
-	if (*p && ! *(p + 1)) {
-		if (*p == 'K') u64 *= ONE_KB;
-		else if (*p == 'M') u64 *= ONE_MB;
-		else if (*p == 'G') u64 *= ONE_GB;
-		else if (*p == 'T') u64 *= ONE_TB;
-		else if (*p == 'P') u64 *= ONE_PB;
-	}
+	if (*p && ((! *(p + 1)) || (*(p+1)=='i' && (! *(p + 2))))) {
+            if (*p == 'K') u64 *= ((*(p+1)=='i') ? ONE_KIB : ONE_KB);
+            else if (*p == 'M') u64 *= ((*(p+1)=='i') ? ONE_MIB : ONE_MB);
+            else if (*p == 'G') u64 *= ((*(p+1)=='i') ? ONE_GIB : ONE_GB);
+            else if (*p == 'T') u64 *= ((*(p+1)=='i') ? ONE_TIB : ONE_TB);
+            else if (*p == 'P') u64 *= ((*(p+1)=='i') ? ONE_PIB : ONE_PB);
+            else if (*p == 'H') u64 *= ((*(p+1)=='i') ? ONE_HIB : ONE_HB);
+          }
 	return (u64);
 }
 
@@ -242,14 +243,15 @@ u_signed64 hexstrutou64(const char *str)
 			u64 = u64 * 16 + (*p++ - 'A' + 10);
 		}
 	}
-	if (*p && ! *(p + 1)) {
-		if (*p == 'K') u64 *= ONE_KB;
-		else if (*p == 'M') u64 *= ONE_MB;
-		else if (*p == 'G') u64 *= ONE_GB;
-		else if (*p == 'T') u64 *= ONE_TB;
-		else if (*p == 'P') u64 *= ONE_PB;
-	}
-	return (u64);
+	if (*p && ((! *(p + 1)) || (*(p+1)=='i' && (! *(p + 2))))) {
+            if (*p == 'K') u64 *= ((*(p+1)=='i') ? ONE_KIB : ONE_KB);
+            else if (*p == 'M') u64 *= ((*(p+1)=='i') ? ONE_MIB : ONE_MB);
+            else if (*p == 'G') u64 *= ((*(p+1)=='i') ? ONE_GIB : ONE_GB);
+            else if (*p == 'T') u64 *= ((*(p+1)=='i') ? ONE_TIB : ONE_TB);
+            else if (*p == 'P') u64 *= ((*(p+1)=='i') ? ONE_PIB : ONE_PB);
+            else if (*p == 'H') u64 *= ((*(p+1)=='i') ? ONE_HIB : ONE_HB);
+          }
+        return (u64);
 }
 
 /* u64tostru- gives the string representation with powers of 2 units of the
@@ -272,20 +274,23 @@ char *u64tostru(u_signed64 u64,
 	char unit;
 
 	t64 = u64;
-	if (u64 >= ONE_PB) {
-		fnum = (double) t64 / (double) ONE_PB;
+	if (u64 >= ONE_HIB) {
+		fnum = (double) t64 / (double) ONE_HIB;
+		unit = 'H';
+        } else if (u64 >= ONE_PIB) {
+		fnum = (double) t64 / (double) ONE_PIB;
 		unit = 'P';
-	} else if (u64 >= ONE_TB) {
-		fnum = (double) t64 / (double) ONE_TB;
+	} else if (u64 >= ONE_TIB) {
+		fnum = (double) t64 / (double) ONE_TIB;
 		unit = 'T';
-	} else if (u64 >= ONE_GB) {
-		fnum = (double) t64 / (double) ONE_GB;
+	} else if (u64 >= ONE_GIB) {
+		fnum = (double) t64 / (double) ONE_GIB;
 		unit = 'G';
-	} else if (u64 >= ONE_MB) {
-		fnum = (double) t64 / (double) ONE_MB;
+	} else if (u64 >= ONE_MIB) {
+		fnum = (double) t64 / (double) ONE_MIB;
 		unit = 'M';
-	} else if (u64 >= ONE_KB) {
-		fnum = (double) t64 / (double) ONE_KB;
+	} else if (u64 >= ONE_KIB) {
+		fnum = (double) t64 / (double) ONE_KIB;
 		unit = 'K';
 	} else {
 		inum = (int) u64;
@@ -329,20 +334,23 @@ char *u64tostrsi(u_signed64 u64,
 	char unit;
 
 	t64 = u64;
-	if (u64 >= 1000000000000000LL) {
-		fnum = (double) t64 / (double) 1000000000000000LL;
+	if (u64 >= ONE_HB) {
+		fnum = (double) t64 / (double) ONE_HB;
+		unit = 'H';
+	} else if (u64 >= ONE_PB) {
+		fnum = (double) t64 / (double) ONE_PB;
 		unit = 'P';
-	} else if (u64 >= 1000000000000LL) {
-		fnum = (double) t64 / (double) 1000000000000LL;
+	} else if (u64 >= ONE_TB) {
+		fnum = (double) t64 / (double) ONE_TB;
 		unit = 'T';
-	} else if (u64 >= 1000000000) {
-		fnum = (double) t64 / (double) 1000000000;
+	} else if (u64 >= ONE_GB) {
+		fnum = (double) t64 / (double) ONE_GB;
 		unit = 'G';
-	} else if (u64 >= 1000000) {
-		fnum = (double) t64 / (double) 1000000;
+	} else if (u64 >= ONE_MB) {
+		fnum = (double) t64 / (double) ONE_MB;
 		unit = 'M';
-	} else if (u64 >= 1000) {
-		fnum = (double) t64 / (double) 1000;
+	} else if (u64 >= ONE_KB) {
+		fnum = (double) t64 / (double) ONE_KB;
 		unit = 'K';
 	} else {
 		inum = (int) u64;

@@ -49,16 +49,15 @@ is the model of cartridge.
 It must be at most CA_MAXMODELLEN characters long.
 .TP
 .I native_capacity
-in bytes. The number may also have a suffix M or G to indicate Mbyte and
-Gbyte respectively.
+in bytes. The number may also have a suffix K/M/G/T/P/H to indicate kilo/mega/giga/tera/peta/hexabytes or Ki/Mi/Gi/Ti/Pi/Hi for their powers of 2 version.
 For a multi-sided media like DVD, the native capacity corresponds to one side.
 .LP
 This command requires ADMIN privilege in the Cupv database.
 .SH EXAMPLES
 .nf
 .ft CW
-vmgrenterdenmap --mo 9840 --ml R -d 20GC --nc 20G
-vmgrenterdenmap --mo 8500 -d 8500C --nc 5G
+vmgrenterdenmap --mo 9840 --ml R -d 20GC --nc 20Gi
+vmgrenterdenmap --mo 8500 -d 8500C --nc 5Gi
 .ft
 .fi
 .SH EXIT STATUS
