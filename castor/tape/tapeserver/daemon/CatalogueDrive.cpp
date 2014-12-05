@@ -93,11 +93,30 @@ bool castor::tape::tapeserver::daemon::CatalogueDrive::handleTick() {
 // syncVdqmWithDriveStateWhenNecessary
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::
-  syncVdqmWithDriveStateWhenNecessary() {
-  if(300.0 < m_syncVdqmTimer.secs()) {
-    m_syncVdqmTimer.reset();
-    syncVdqmWithDriveStateIfOutOfSync();
+  syncVdqmWithDriveStateWhenNecessary() throw() {
+  std::string errMsg;
+
+  try {
+    if(600.0 < m_syncVdqmTimer.secs()) {
+      m_syncVdqmTimer.reset();
+      syncVdqmWithDriveStateIfOutOfSync();
+    }
+    return;
+  } catch(castor::exception::Exception &ex) {
+    errMsg = ex.getMessage().str();
+  } catch(std::exception &se) {
+    errMsg = se.what();
+  } catch(...) {
+    errMsg = "Caught an unknown exception";
   }
+
+  // Reaching here means an exception was thrown
+  // Failing to synchronise the vdqm with the drive state is not fatal
+  std::list<log::Param> params;
+  params.push_back(log::Param("unitName", m_config.getUnitName()));
+  params.push_back(log::Param("dgn", m_config.getDgn()));
+  params.push_back(log::Param("message", errMsg));
+  m_log(LOG_WARNING, "Failed to synchronise vdqm with drive state", params);
 }
 
 //------------------------------------------------------------------------------
