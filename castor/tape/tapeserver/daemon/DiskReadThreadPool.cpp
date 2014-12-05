@@ -39,8 +39,9 @@ namespace daemon {
 DiskReadThreadPool::DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq,
     castor::tape::tapeserver::daemon::MigrationWatchDog & migrationWatchDog,
     castor::log::LogContext lc, const std::string & remoteFileProtocol,
-    const std::string & xrootPrivateKeyPath) : 
-    m_diskFileFactory(remoteFileProtocol, xrootPrivateKeyPath),
+    const std::string & xrootPrivateKeyPath,
+    uint16_t moverHandlerPort) : 
+    m_diskFileFactory(remoteFileProtocol, xrootPrivateKeyPath, moverHandlerPort),
     m_watchdog(migrationWatchDog),
     m_lc(lc),m_maxFilesReq(maxFilesReq),
     m_maxBytesReq(maxBytesReq), m_nbActiveThread(0) {

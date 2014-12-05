@@ -54,7 +54,7 @@ public:
   using DiskWriteThreadPool::m_tasks;
   FakeDiskWriteThreadPool(castor::log::LogContext & lc):
     DiskWriteThreadPool(1,*((RecallReportPacker*)NULL),
-    *((RecallWatchDog*)NULL),lc, "RFIO","/dev/null"){}
+    *((RecallWatchDog*)NULL),lc, "RFIO","/dev/null",0){}
   virtual ~FakeDiskWriteThreadPool() {};
 };
      

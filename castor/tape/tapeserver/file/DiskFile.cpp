@@ -41,7 +41,7 @@ namespace tape {
 namespace diskFile {
 
 DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
-  const std::string & xrootPrivateKeyFile):
+  const std::string & xrootPrivateKeyFile, uint16_t moverHandlerPort):
   m_NoURLLocalFile("^(localhost:|)(/.*)$"),
   m_NoURLRemoteFile("^(.*:)(/.*)$"),
   m_NoURLRadosStriperFile("^localhost:([^/]+)/(.*)$"),
@@ -51,7 +51,8 @@ DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
   m_URLCephFile("^radosStriper://(.*)$"),
   m_remoteFileProtocol(remoteFileProtocol),
   m_xrootPrivateKeyFile(xrootPrivateKeyFile),
-  m_xrootPrivateKeyLoaded(false)
+  m_xrootPrivateKeyLoaded(false),
+  m_moverHandlerPort(moverHandlerPort)
 {
   // Lowercase the protocol string
   std::transform(m_remoteFileProtocol.begin(), m_remoteFileProtocol.end(),

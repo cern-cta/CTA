@@ -26,6 +26,7 @@
 #include "castor/tape/tapeserver/utils/Regex.hpp"
 #include <cryptopp/rsa.h>
 #include <memory>
+#include <stdint.h>
 /*
  * This file only contains the interface declaration of the base classes
  * the real implementation, which depends on many includes is hidden in
@@ -52,7 +53,8 @@ namespace castor {
         typedef castor::tape::utils::Regex Regex;
       public:
         DiskFileFactory(const std::string & remoteFileProtocol,
-          const std::string & xrootPrivateKey);
+          const std::string & xrootPrivateKey,
+          uint16_t moverHandlerPort);
         ReadFile * createReadFile(const std::string & path);
         WriteFile * createWriteFile(const std::string & path);
       private:
@@ -67,6 +69,7 @@ namespace castor {
         std::string m_xrootPrivateKeyFile;
         CryptoPP::RSA::PrivateKey m_xrootPrivateKey;
         bool m_xrootPrivateKeyLoaded;
+        uint16_t m_moverHandlerPort;
         
         /** Return the private key. Read it from the file if necessary. */ 
         const CryptoPP::RSA::PrivateKey & xrootPrivateKey();

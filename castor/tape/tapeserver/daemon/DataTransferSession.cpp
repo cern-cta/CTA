@@ -215,7 +215,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         rwd,
         lc,
         m_castorConf.remoteFileProtocol,
-        m_castorConf.xrootPrivateKey);
+        m_castorConf.xrootPrivateKey,
+        m_castorConf.moverHandlerPort);
     RecallTaskInjector rti(mm, trst, dwtp, m_clientProxy,
             m_castorConf.bulkRequestRecallMaxFiles,
             m_castorConf.bulkRequestRecallMaxBytes,lc);
@@ -312,7 +313,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         mwd,
         lc,
         m_castorConf.remoteFileProtocol,
-        m_castorConf.xrootPrivateKey);
+        m_castorConf.xrootPrivateKey,
+        m_castorConf.moverHandlerPort);
     MigrationTaskInjector mti(mm, drtp, twst, m_clientProxy, 
             m_castorConf.bulkRequestMigrationMaxFiles,
             m_castorConf.bulkRequestMigrationMaxBytes,lc);
