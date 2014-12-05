@@ -120,7 +120,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_15');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_15_0');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -531,6 +531,13 @@ BEGIN
   END LOOP;
 END;
 /
+
+-- Permissions should be granted to the CNS schema for VMGR_TAPE_SIDE and
+-- VMGR_TAPE_STATUS_VIEW.
+UNDEF cnsSchema
+ACCEPT cnsSchema CHAR DEFAULT 'castor_ns' PROMPT 'Enter the name of the NS schema (default castor_ns): ';
+GRANT SELECT ON vmgr_tape_side TO &cnsSchema;
+GRANT SELECT ON vmgr_tape_status_view TO &cnsSchema;
 
 /* Flag the schema creation as COMPLETE */
 UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE';

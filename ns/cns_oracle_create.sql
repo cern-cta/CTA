@@ -440,7 +440,7 @@ BEGIN
     varParams := 'copyNb=' || varRepSeg.copyNo ||' gid=' || varRepSeg.gid ||' SegmentSize=' || varRepSeg.segSize
       ||' Compression=' || varRepSeg.comprSize ||' TPVID=' || varRepSeg.vid
       ||' fseq=' || varRepSeg.fseq ||' BlockId="' || varBlockId
-      ||'" ChecksumType="' || varRepSeg.checksum_name ||'" ChecksumValue=' || varRepSeg.checksum
+      ||'" ChecksumType="' || varRepSeg.checksum_name ||'" ChecksumValue=' || to_char(varRepSeg.checksum, 'XXXXXXXX')
       ||' creationTime=' || trunc(varRepSeg.creationTime, 6)
       ||' lastModificationTime=' || trunc(varRepSeg.lastModificationTime, 6);
     addSegResult(1, inReqId, 0, 'Unlinking segment (replaced)', inFid, varParams);
@@ -721,7 +721,7 @@ BEGIN
       varParams := 'copyNb='|| varOwSeg.copyNo ||' SegmentSize='|| varOwSeg.segSize
         ||' Compression='|| varOwSeg.comprSize ||' TPVID='|| varOwSeg.vid
         ||' fseq='|| varOwSeg.fseq ||' BlockId="' || varBlockId ||'" gid=' || varOwSeg.gid
-        ||' ChecksumType="'|| varOwSeg.checksum_name ||'" ChecksumValue=' || varOwSeg.checksum
+        ||' ChecksumType="'|| varOwSeg.checksum_name ||'" ChecksumValue=' || to_char(varOwSeg.checksum, 'XXXXXXXX')
         ||' creationTime=' || trunc(varOwSeg.creationTime, 6)
         ||' lastModificationTime=' || trunc(varOwSeg.lastModificationTime, 6);
       addSegResult(1, inReqId, 0, 'Unlinking segment (overwritten)', varFid, varParams);
@@ -730,7 +730,7 @@ BEGIN
       -- actually had an incorrect copyNo (e.g. it was 2 but no copyNo=1 existed). In such a case
       -- we want to fix the existing segment so that it gets properly replaced.
       -- Note that we won't throw CONSTRAINT_VIOLATED because we know inSegEntry.copyNo
-      -- does not exist, and we won't throw NO_DATA_FOUND because inOldCopyNo does exist.
+      -- does not exist, and we know the segment currently has copyNo=inOldCopyNo.
       UPDATE Cns_seg_metadata
          SET copyNo = inSegEntry.copyNo
        WHERE s_fileid = varFid
@@ -893,7 +893,9 @@ BEGIN
 END;
 /
 
-/* This procedure implements the Cns_closex API */
+/* This procedure implements the Cns_closex API.
+ * inCksumType can be either 'AD' or 'NO' for no checksum.
+ */
 CREATE OR REPLACE PROCEDURE closex(inFid IN INTEGER,
                                    inFileSize IN INTEGER,
                                    inCksumType IN VARCHAR2,
@@ -936,7 +938,7 @@ BEGIN
     RETURN;
   END IF;
   -- Validate checksum type
-  IF inCksumType != 'AD' THEN
+  IF inCksumType != 'AD' AND inCksumType != 'NO' THEN
     outRC := serrno.EINVAL;
     outMsg := serrno.EINVAL_MSG ||' : incorrect checksum type detected '|| inCksumType;
     ROLLBACK;
@@ -962,8 +964,8 @@ BEGIN
   -- All right, update file size and other metadata
   UPDATE Cns_file_metadata
      SET fileSize = inFileSize,
-         csumType = inCksumType,
-         csumValue = inCksumValue,
+         csumType = CASE WHEN inCksumType != 'NO' THEN inCksumType ELSE NULL END,
+         csumValue = CASE WHEN inCksumType != 'NO' THEN inCksumValue ELSE NULL END,
          ctime = inMTime,
          mtime = inMTime
    WHERE fileId = inFid;

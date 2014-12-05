@@ -44,10 +44,22 @@ DECLARE
 BEGIN
   SELECT release INTO unused FROM CastorVersion
    WHERE schemaName = 'STAGER'
-     AND release LIKE '2_1_14_1%';
+     AND release LIKE '2_1_14_15%';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we cannot apply this script
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the STAGER before this one.');
+END;
+/
+
+DECLARE
+  unused VARCHAR(100);
+BEGIN
+  SELECT release INTO unused FROM CastorVersion@remotens
+   WHERE schemaName = 'CNS'
+     AND release LIKE '2_1_15%';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Error, we cannot apply this script
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please upgrade your Nameserver before upgrading this STAGER database.');
 END;
 /
 
@@ -143,6 +155,9 @@ DROP TABLE GetUpdateFailed;
 DROP TABLE PutStartRequest;
 DROP TABLE MoverCloseRequest;
 DROP TABLE PutFailed;
+DROP TABLE DISK2DISKCOPYDONEREQUEST;
+DROP TABLE DISK2DISKCOPYSTARTREQUEST;
+
 -- obsolete for long
 DROP TABLE GCLocalFile;
 
@@ -159,6 +174,7 @@ DROP PROCEDURE putFailedProcExt;
 DROP PROCEDURE insertStartRequest;
 DROP PROCEDURE insertMoverCloseRequest;
 DROP PROCEDURE insertSimpleRequest;
+DROP FUNCTION checkIfFilesExist;
 
 /* add DataPools */
 CREATE TABLE DataPool
@@ -179,6 +195,7 @@ ALTER TABLE DataPool2SvcClass
 ALTER TABLE DiskServer ADD (dataPool INTEGER);
 ALTER TABLE DiskServer ADD CONSTRAINT FK_DiskServer_DataPool 
   FOREIGN KEY (dataPool) REFERENCES DataPool(id);
+CREATE INDEX I_DiskServer_DP_ST_HW ON DiskServer (dataPool, status, hwOnline);
 
 ALTER TABLE DiskCopy ADD (dataPool INTEGER);
 CREATE INDEX I_DiskCopy_DataPool ON DiskCopy (dataPool);
@@ -191,18 +208,39 @@ ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_FileSystem
 ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_DataPool
   FOREIGN KEY (DataPool) REFERENCES DataPool (id);
 
-ALTER TABLE SubRequest ADD (diskServer INTEGER);
-CREATE INDEX I_SubRequest_DiskServer ON SubRequest (diskServer);
-
 ALTER TABLE DeleteDiskCopyHelper ADD (msg VARCHAR2(2048));
 DROP PROCEDURE deleteDiskCopiesInFSs;
 
+/* Create advanced queuing queues */
+BEGIN
+  DBMS_AQADM.CREATE_QUEUE_TABLE ('CastorQueueTable', 'RAW');
+  DBMS_AQADM.CREATE_QUEUE('D2DREADYTOSCHEDULE', 'CASTORQUEUETABLE');
+  DBMS_AQADM.CREATE_QUEUE('TRANSFERREADYTOSCHEDULE', 'CASTORQUEUETABLE');
+  DBMS_AQADM.CREATE_QUEUE('TRANSFERSTOABORT', 'CASTORQUEUETABLE');
+  DBMS_AQADM.CREATE_QUEUE('WAKEUPBULKSTAGEREQSVC', 'CASTORQUEUETABLE');
+  DBMS_AQADM.CREATE_QUEUE('WAKEUPERRORSVC', 'CASTORQUEUETABLE');
+  DBMS_AQADM.CREATE_QUEUE('WAKEUPGCSVC', 'CASTORQUEUETABLE');
+  DBMS_AQADM.CREATE_QUEUE('WAKEUPJOBREQSVC', 'CASTORQUEUETABLE');
+  DBMS_AQADM.CREATE_QUEUE('WAKEUPQUERYREQSVC', 'CASTORQUEUETABLE');
+  DBMS_AQADM.CREATE_QUEUE('WAKEUPSTAGEREQSVC', 'CASTORQUEUETABLE');
+END;
+/
+
 /* PL/SQL code revalidation */
 /****************************/
-
-
-/* Database jobs */
-
+@../castor/db/oracleCommon.sql
+@../castor/db/oracleConstants.sql
+@../castor/db/oracleDebug.sql
+@../castor/db/oraclePerm.sql
+@../castor/db/oracleRH.sql
+@../castor/db/oracleTapeGateway.sql
+@../castor/db/oracleDrain.sql
+@../castor/db/oracleJob.sql
+@../castor/db/oracleQuery.sql
+@../castor/db/oracleGC.sql
+@../castor/db/oracleMonitoring.sql
+@../castor/db/oracleRepack.sql
+@../castor/db/oracleStager.sql
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
