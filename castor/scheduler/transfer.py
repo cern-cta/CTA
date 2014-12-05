@@ -135,9 +135,9 @@ def cmdLineToTransfer(cmdLine, scheduler, pid):
   Depending on the command, the appropriate type of transfer will be created inside the
   RunningTransfer set. In case the command is not recognized, None is returned'''
   # find out if we have a regular transfer or disk 2 disk copies
-  if cmdLine.startswith('/usr/bin/rfiod -1Ulnf'):
+  if cmdLine.startswith('/usr/bin/rfiod'):
     # parse command line
-    cmdLine = cmdLine.split('\0')
+    cmdLine = cmdLine.split('\0')[:-1]
     args = dict([cmdLine[i:i+2] for i in range(1, len(cmdLine), 2)])
     # extract the metadata
     transferId = args['-i']
@@ -178,7 +178,7 @@ def cmdLineToTransferId(cmdLine, pid):
   if cmdLine.startswith('/usr/bin/rfiod'):
     args = dict([cmdLine[i:i+2] for i in range(1, len(cmdLine), 2)])
     return args['-i']
-  elif cmdLine.startsWith('/usr/sbin/globus-gridftp-server'):
+  elif cmdLine.startswith('/usr/sbin/globus-gridftp-server'):
     env = open('/proc/' + str(pid) + '/environ').read().split('\0')
     for e in env:
       kv = e.split('=')
