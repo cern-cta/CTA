@@ -47,15 +47,22 @@ castor::acs::AcsQueryVolumeCmd::~AcsQueryVolumeCmd() throw() {
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-void castor::acs::AcsQueryVolumeCmd::exceptionThrowingMain(const int argc,
+int castor::acs::AcsQueryVolumeCmd::exceptionThrowingMain(const int argc,
   char *const *const argv) {
-  m_cmdLine = AcsQueryVolumeCmdLine(argc, argv);
+  try {
+    m_cmdLine = AcsQueryVolumeCmdLine(argc, argv);
+  } catch(castor::exception::Exception &ex) {
+    m_err << ex.getMessage().str() << std::endl;
+    m_err << std::endl;
+    m_err << m_cmdLine.getUsage() << std::endl;
+    return 1;
+  }
 
   // Display the usage message to standard out and exit with success if the
   // user requested help
   if(m_cmdLine.help) {
     m_out << AcsQueryVolumeCmdLine::getUsage();
-    return;
+    return 0;
   }
 
   // Setup debug mode to be on or off depending on the command-line arguments
@@ -66,6 +73,7 @@ void castor::acs::AcsQueryVolumeCmd::exceptionThrowingMain(const int argc,
   m_dbg << "VID = " << m_cmdLine.volId.external_label << std::endl;
 
   syncQueryVolume();
+  return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -117,8 +125,7 @@ void castor::acs::AcsQueryVolumeCmd::sendQueryVolumeRequest(
 //------------------------------------------------------------------------------
 void castor::acs::AcsQueryVolumeCmd::processQueryResponse(
   std::ostream &os,
-  ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
-   {
+  ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)]) {
 
   const ACS_QUERY_VOL_RESPONSE *const msg = (ACS_QUERY_VOL_RESPONSE *)buf;
 

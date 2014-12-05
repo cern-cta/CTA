@@ -42,8 +42,9 @@
  *
  * @param argc The number of command-line arguments including the program name.
  * @param argv The command-line arguments.
+ * @return The exit value of the program.
  */
-static void exceptionThrowingMain(const int argc, char *const *const argv);
+static int exceptionThrowingMain(const int argc, char *const *const argv);
 
 /**
  * Instantiates a ZMQ context.
@@ -63,8 +64,7 @@ int main(const int argc, char *const *const argv) {
   std::string errorMessage;
 
   try {
-    exceptionThrowingMain(argc, argv);
-    return 0;
+    return exceptionThrowingMain(argc, argv);
   } catch(castor::exception::Exception &ex) {
     errorMessage = ex.getMessage().str();
   } catch(std::exception &se) {
@@ -84,7 +84,7 @@ int main(const int argc, char *const *const argv) {
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-static void exceptionThrowingMain(const int argc, char *const *const argv) {
+static int exceptionThrowingMain(const int argc, char *const *const argv) {
   using namespace castor;
 
   const int sizeOfIOThreadPoolForZMQ = 1;
@@ -110,7 +110,7 @@ static void exceptionThrowingMain(const int argc, char *const *const argv) {
   
   mediachanger::DismountCmd cmd(std::cin, std::cout, std::cerr, mc);
 
-  cmd.exceptionThrowingMain(argc, argv);
+  return cmd.exceptionThrowingMain(argc, argv);
 }
 
 //------------------------------------------------------------------------------

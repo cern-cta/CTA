@@ -44,15 +44,22 @@ castor::acs::AcsDismountCmd::~AcsDismountCmd() throw() {
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-void castor::acs::AcsDismountCmd::exceptionThrowingMain(const int argc,
+int castor::acs::AcsDismountCmd::exceptionThrowingMain(const int argc,
   char *const *const argv) {
-  m_cmdLine = AcsDismountCmdLine(argc, argv);
+  try {
+    m_cmdLine = AcsDismountCmdLine(argc, argv);
+  } catch(castor::exception::Exception &ex) {
+    m_err << ex.getMessage().str() << std::endl;
+    m_err << std::endl;
+    m_err << m_cmdLine.getUsage() << std::endl;
+    return 1;
+  }
 
   // Display the usage message to standard out and exit with success if the
   // user requested help
   if(m_cmdLine.help) {
     m_out << AcsDismountCmdLine::getUsage();
-    return;
+    return 0;
   }
 
   // Setup debug mode to be on or off depending on the command-line arguments
@@ -66,6 +73,7 @@ void castor::acs::AcsDismountCmd::exceptionThrowingMain(const int argc,
     << std::endl;
 
   syncDismount();
+  return 0;
 }
 
 //------------------------------------------------------------------------------

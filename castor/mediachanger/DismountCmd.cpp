@@ -46,15 +46,22 @@ castor::mediachanger::DismountCmd::~DismountCmd() throw() {
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-void castor::mediachanger::DismountCmd::exceptionThrowingMain(const int argc,
+int castor::mediachanger::DismountCmd::exceptionThrowingMain(const int argc,
   char *const *const argv) {
-  m_cmdLine = DismountCmdLine(argc, argv);
+  try {
+    m_cmdLine = DismountCmdLine(argc, argv);
+  } catch(castor::exception::Exception &ex) {
+    m_err << ex.getMessage().str() << std::endl;
+    m_err << std::endl;
+    m_err << m_cmdLine.getUsage() << std::endl;
+    return 1;
+  }
 
   // Display the usage message to standard out and exit with success if the
   // user requested help
   if(m_cmdLine.getHelp()) {
     m_out << m_cmdLine.getUsage();
-    return;
+    return 0;
   }
 
   // Setup debug mode to be on or off depending on the command-line arguments
@@ -70,4 +77,5 @@ void castor::mediachanger::DismountCmd::exceptionThrowingMain(const int argc,
   } else {
     m_mc.dismountTape(m_cmdLine.getVid(), m_cmdLine.getDriveLibrarySlot());
   }
+  return 0;
 }
