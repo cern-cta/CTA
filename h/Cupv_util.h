@@ -11,9 +11,9 @@
  */
 
 #pragma once
-#include "osdep.h"
-#include "Cupv_constants.h" 
-#include "Cupv_struct.h"
+#include "h/osdep.h"
+#include "h/Cupv_constants.h" 
+#include "h/Cupv_struct.h"
 
 /* Funtions fron Cupv_util.c */
 int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf_len);

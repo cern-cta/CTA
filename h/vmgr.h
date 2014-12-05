@@ -11,8 +11,8 @@
 
                         /* volume manager constants */
 
-#include "vmgr_constants.h"
-#include "osdep.h"
+#include "h/vmgr_constants.h"
+#include "h/osdep.h"
 
 #define VMGR_MAGIC           0x766D6701
 #define VMGR_MAGIC2          0x766D6702

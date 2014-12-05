@@ -11,9 +11,9 @@
  */
 
 #pragma once
-#include "osdep.h"
-#include "vmgr_constants.h"
-#include "vmgr_struct.h"
+#include "h/osdep.h"
+#include "h/vmgr_constants.h"
+#include "h/vmgr_struct.h"
 
 int *C__vmgr_errno();
 #define vmgr_errno (*C__vmgr_errno())

@@ -16,12 +16,12 @@
 
 #pragma once
 
-#include "net.h"
-#include "vdqm_messages.h"
-#include "Castor_limits.h"
-#include "Cregexp.h"
+#include "h/net.h"
+#include "h/vdqm_messages.h"
+#include "h/Castor_limits.h"
+#include "h/Cregexp.h"
 #ifdef VDQMCSEC
-#include "Csec_api.h"
+#include "h/Csec_api.h"
 #endif 
 
 

@@ -120,7 +120,9 @@ ELSE(DEFINED PackageOnly)
           iname=${CMAKE_CURRENT_SOURCE_DIR}/${_name}.pc
           oname=${CMAKE_CURRENT_BINARY_DIR}/${_name}.c
           ${ORACLE_PROCINC}
-          include=${CMAKE_SOURCE_DIR}/h threads=yes
+          include=${CMAKE_SOURCE_DIR}
+          include=${CMAKE_SOURCE_DIR}/h
+          threads=yes
           char_map=string
           parse=full
           prefetch=1000)

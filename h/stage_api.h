@@ -29,11 +29,12 @@
 
 #pragma once
 
+#include "h/osdep.h"
+#include "h/Castor_limits.h"
+#include "h/stage_constants.h"
+
 #include <pwd.h>
 #include <sys/types.h>
-#include "osdep.h"
-#include "Castor_limits.h"
-#include "stage_constants.h"
 
 EXTERN_C int stage_setoutbuf(char *, int);
 EXTERN_C int stage_seterrbuf(char *, int);

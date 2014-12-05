@@ -3,6 +3,11 @@
  * All rights reserved
  */
 
+#include "h/serrno.h"
+#include "h/u64subr.h"
+#include "h/vmgr.h"
+#include "h/vmgr_server.h"
+
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
@@ -10,10 +15,6 @@
 #include <stdio.h>
 #include <sqlca.h>
 #include <sqlcpr.h>
-#include "serrno.h"
-#include "u64subr.h"
-#include "vmgr.h"
-#include "vmgr_server.h"
 
 static sql_context ctx[VMGR_MAXNBTHREADS];
 static const char *const VMGRSCHEMAVERSION = "2_1_14_2";

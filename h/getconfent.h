@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "osdep.h"
+#include "h/osdep.h"
 
 EXTERN_C char *getconfent (const char *, const char *, int);
 EXTERN_C char *getconfent_fromfile (const char *, const char *, const char *, int);

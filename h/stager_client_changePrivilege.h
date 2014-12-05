@@ -24,9 +24,10 @@
 
 #pragma once
 
+#include "h/osdep.h"
+#include "h/stager_api.h"
+
 #include <sys/types.h>
-#include "osdep.h"
-#include "stager_api.h"
 
 /**
  * changePrivilege

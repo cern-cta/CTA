@@ -18,7 +18,7 @@
 /* =================================== */
 /* stage configuration maximum values  */
 /* =================================== */
-#include "stage_limits.h"
+#include "h/stage_limits.h"
 
 /* =================== */
 /* stage request types */

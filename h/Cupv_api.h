@@ -11,11 +11,13 @@
  */
 
 #pragma once
-#include "osdep.h"
+
+#include "h/osdep.h"
+#include "h/Cupv_constants.h"
+#include "h/Cupv_struct.h"
+#include "h/Cupv_util.h"
+
 #include <sys/types.h>
-#include "Cupv_constants.h"
-#include "Cupv_struct.h"
-#include "Cupv_util.h"
 
 int *C__Cupv_errno();
 #define Cupv_errno (*C__Cupv_errno())

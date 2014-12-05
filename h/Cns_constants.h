@@ -8,7 +8,7 @@
  */
 
 #pragma once
-#include "Castor_limits.h"
+#include "h/Castor_limits.h"
 
 #define DIRXSIZE (HYPERSIZE+WORDSIZE+LONGSIZE+LONGSIZE+LONGSIZE+HYPERSIZE+TIME_TSIZE+TIME_TSIZE+TIME_TSIZE+WORDSIZE+1)
 

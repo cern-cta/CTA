@@ -22,11 +22,11 @@
 
 #pragma once
 
-/* Include files */
+#include "h/Cuuid.h"
+#include "h/Cns_api.h"
+#include "h/osdep.h"
+
 #include <syslog.h>
-#include "Cuuid.h"
-#include "Cns_api.h"
-#include "osdep.h"
 
 /*---------------------------------------------------------------------------
  * Definitions

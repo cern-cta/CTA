@@ -3,6 +3,11 @@
  * All rights reserved
  */
 
+#include "h/serrno.h"
+#include "h/u64subr.h"
+#include "h/Cupv.h"
+#include "h/Cupv_server.h"
+
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -10,10 +15,6 @@
 #include <unistd.h>
 #include <sqlca.h>
 #include <sqlcpr.h>
-#include "serrno.h"
-#include "u64subr.h"
-#include "Cupv.h"
-#include "Cupv_server.h"
 
 static sql_context ctx[CUPV_MAXNBTHREADS];
 static const char *const CUPVSCHEMAVERSION = "2_1_9_3";

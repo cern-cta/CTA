@@ -11,7 +11,7 @@
  */
  
 #pragma once
-#include "Castor_limits.h"
+#include "h/Castor_limits.h"
 
                         /* structures common to volume manager client and server */
 

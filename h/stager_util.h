@@ -4,11 +4,12 @@
 
 #pragma once
 
+#include "h/osdep.h"
+#include "h/Cns_api.h"
+
 #include <sys/types.h>
 #include <time.h>
 #include <stdarg.h>
-#include "osdep.h"
-#include "Cns_api.h"
 
 EXTERN_C void stager_log (const char *, const char *, int, int, struct Cns_fileid *, ...);
 

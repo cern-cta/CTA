@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "osdep.h"
+#include "h/osdep.h"
 
 EXTERN_C char * i64tostr (HYPER, char *, int);
 EXTERN_C char * i64tohexstr (HYPER, char *, int);

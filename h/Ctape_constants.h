@@ -11,7 +11,7 @@
  */
 
 #pragma once
-#include "Castor_limits.h"
+#include "h/Castor_limits.h"
 
 #ifdef TPCSEC
 #define STAPE_PORT 5511

@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include <stdio.h>
+#include "h/dlf_api.h"
 
-#include "dlf_api.h"
+#include <stdio.h>
 
 /**
  * @brief tplogger interface
