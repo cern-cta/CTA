@@ -160,10 +160,11 @@ protected:
       paramList.push_back(Param("waitDataTime", m_stats.waitDataTime));
       paramList.push_back(Param("waitReportingTime", m_stats.waitReportingTime));
       paramList.push_back(Param("checksumingTime", m_stats.checksumingTime));
-      paramList.push_back(Param("transferTime", m_stats.transferTime));
+      paramList.push_back(Param("readWriteTime", m_stats.readWriteTime));
       paramList.push_back(Param("flushTime", m_stats.flushTime));
       paramList.push_back(Param("unloadTime", m_stats.unloadTime));
       paramList.push_back(Param("unmountTime", m_stats.unmountTime));
+      paramList.push_back(Param("transferTime", m_stats.transferTime()));
       paramList.push_back(Param("totalTime", totalTime));
       paramList.push_back(Param("dataVolume", m_stats.dataVolume));
       paramList.push_back(Param("filesCount", m_stats.filesCount));

@@ -41,8 +41,8 @@ namespace daemon {
     /** Cumulated time spent computing checksums */
     double checksumingTime;
     
-    /** Cumulated time spent transfering data with the drive (for both data and headers). */
-    double transferTime;
+    /** Cumulated time spent reading and writing data with the drive (for both data and headers). */
+    double readWriteTime;
     
     /** Cumulated time spent flushing */
     double flushTime;
@@ -65,6 +65,13 @@ namespace daemon {
     /** Cumulated time spent reporting */
     double waitReportingTime;
     
+    /** Time spent during the session, except mounting, positioning and 
+     * unloading / unmounting. This a derived value */
+    double transferTime() const {
+      return checksumingTime + readWriteTime + flushTime + waitDataTime +
+              waitFreeMemoryTime + waitInstructionsTime + waitReportingTime;
+    }
+    
     /** Total time of the session, computed in parallel */
     double totalTime;
     
@@ -82,7 +89,7 @@ namespace daemon {
     
     /** Constructor: all defaults are zero */
     TapeSessionStats():  mountTime(0.0), positionTime(0.0), checksumingTime(0.0),
-    transferTime(0.0), flushTime(0.0), unloadTime(0.0), unmountTime(0.0),
+    readWriteTime(0.0), flushTime(0.0), unloadTime(0.0), unmountTime(0.0),
     waitDataTime(0.0), waitFreeMemoryTime(0.0), waitInstructionsTime(0.0),
     waitReportingTime(0.0), totalTime(0.0), dataVolume(0), headerVolume(0),
     filesCount(0) {}
@@ -92,7 +99,7 @@ namespace daemon {
       mountTime += other.mountTime;
       positionTime += other.positionTime;
       checksumingTime += other.checksumingTime;
-      transferTime += other.transferTime;
+      readWriteTime += other.readWriteTime;
       flushTime += other.flushTime;
       unloadTime += other.unloadTime;
       unmountTime += other.unmountTime;

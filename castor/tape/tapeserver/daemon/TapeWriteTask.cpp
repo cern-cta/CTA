@@ -97,7 +97,7 @@ namespace daemon {
       currentErrorToCount = "Error_tapeWriteHeader";
       watchdog.notifyBeginNewJob(*m_fileToMigrate);
       std::auto_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
-      m_taskStats.transferTime += timer.secs(castor::utils::Timer::resetCounter);
+      m_taskStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
       // We are not error sources here until we actually write.
       currentErrorToCount = "";
@@ -115,7 +115,7 @@ namespace daemon {
         mb->m_payload.write(*output);
         currentErrorToCount = "";
         
-        m_taskStats.transferTime += timer.secs(castor::utils::Timer::resetCounter);
+        m_taskStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
         m_taskStats.dataVolume += mb->m_payload.size();
         watchdog.notify();
         ++memBlockId;
@@ -126,7 +126,7 @@ namespace daemon {
       currentErrorToCount = "Error_tapeWriteTrailer";
       output->close();
       currentErrorToCount = "";
-      m_taskStats.transferTime += timer.secs(castor::utils::Timer::resetCounter);
+      m_taskStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
       m_taskStats.filesCount ++;
       reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum,output->getBlockId());
@@ -301,10 +301,11 @@ namespace daemon {
    void TapeWriteTask::logWithStats(int level, const std::string& msg,
    log::LogContext& lc) const{
      log::ScopedParamContainer params(lc);
-     params.add("transferTime", m_taskStats.transferTime)
+     params.add("readWriteTime", m_taskStats.readWriteTime)
            .add("checksumingTime",m_taskStats.checksumingTime)
            .add("waitDataTime",m_taskStats.waitDataTime)
            .add("waitReportingTime",m_taskStats.waitReportingTime)
+           .add("transferTime",m_taskStats.transferTime())
            .add("totalTime", m_taskStats.totalTime)
            .add("dataVolume",m_taskStats.dataVolume)
            .add("headerVolume",m_taskStats.headerVolume)

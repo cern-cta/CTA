@@ -127,7 +127,7 @@ public:
           // append() signaled the end of the file.
           stillReading = false;
         }
-        localStats.transferTime += timer.secs(castor::utils::Timer::resetCounter);
+        localStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
         localStats.dataVolume += mb->m_payload.size();
         // Pass the block to the disk write task
         m_fifo.pushDataBlock(mb);
@@ -144,9 +144,10 @@ public:
       // We now transmitted one file:
       localStats.filesCount++;
       params.add("positionTime", localStats.positionTime)
-            .add("transferTime", localStats.transferTime)
+            .add("readWriteTime", localStats.readWriteTime)
             .add("waitFreeMemoryTime",localStats.waitFreeMemoryTime)
             .add("waitReportingTime",localStats.waitReportingTime)
+            .add("transferTime",localStats.transferTime())
             .add("totalTime", localStats.totalTime)
             .add("dataVolume",localStats.dataVolume)
             .add("headerVolume",localStats.headerVolume)
