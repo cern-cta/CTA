@@ -62,9 +62,11 @@ BEGIN
                            CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
                           (dj.fileMask = dconst.DRAIN_FILEMASK_ALL))
                      AND DiskCopy.status = dconst.DISKCOPY_VALID
-                     AND NOT EXISTS (SELECT 1 FROM DrainingErrors WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
+                     AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(DrainingErrors I_DrainingErrors_DJ_CF) */ 1
+                                       FROM DrainingErrors WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
                      -- don't recreate disk-to-disk copy jobs for the ones already done in previous rounds
-                     AND NOT EXISTS (SELECT 1 FROM Disk2DiskCopyJob WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
+                     AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(Disk2DiskCopyJob I_Disk2DiskCopyJob_DrainJob) */ 1
+                                       FROM Disk2DiskCopyJob WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
                    ORDER BY DiskCopy.importance DESC)
                  WHERE ROWNUM <= varMaxNbFilesScheduled-varNbRunningJobs) LOOP
         -- Do not schedule more that varMaxAmountOfSchedD2dPerDrain
