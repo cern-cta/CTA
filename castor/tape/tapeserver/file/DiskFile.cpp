@@ -61,6 +61,14 @@ DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
 
 const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootPrivateKey() {
   if(!m_xrootPrivateKeyLoaded) {
+    // There is one DiskFactory per disk thread, so this function is called
+    // in a single thread. Nevertheless, we experience errors from double
+    // deletes in the CryptoPP functions called from here.
+    // As this function portion of the code is called once per disk thread,
+    // serialising them will have little effect in performance.
+    // This is an experimental workaround.
+    static castor::server::Mutex mutex;
+    castor::server::MutexLocker ml(&mutex);
     // The loading of a PEM-style key is described in 
     // http://www.cryptopp.com/wiki/Keys_and_Formats#PEM_Encoded_Keys
     std::string key;

@@ -131,6 +131,30 @@ namespace unitTests {
       i->wait();
   }
   
+  class CryptoPPKeyThread: public castor::server::Thread {
+  private:
+    virtual void run() {
+      for (int i=0; i<5; i++) {
+        // Read keys in parallel and in a loop to test MT protection of the
+        // key reading, not protected here.
+        PEMKeyString CryptoPPKey(somePrivateKey);
+      }
+    }
+  };
+  
+  TEST(castor_CryptoPP, multiThreadingKeyRead) {
+    // Run the threads
+    std::vector<CryptoPPKeyThread> m_threads;
+    m_threads.resize(3);
+    for (std::vector<CryptoPPKeyThread>::iterator i=m_threads.begin(); 
+        i!=m_threads.end(); i++) {
+      i->start();
+    }
+    for (std::vector<CryptoPPKeyThread>::iterator i=m_threads.begin(); 
+        i!=m_threads.end(); i++)
+      i->wait();
+  }
+  
   TEST(castor_CryptoPP, agreesWithOpenSSL) {
     // Import the key for CryptoPP
     PEMKeyString CryptoPPKey(somePrivateKey);
