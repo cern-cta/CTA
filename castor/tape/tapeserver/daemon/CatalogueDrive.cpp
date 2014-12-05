@@ -94,7 +94,7 @@ bool castor::tape::tapeserver::daemon::CatalogueDrive::handleTick() {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::
   syncVdqmWithDriveStateWhenNecessary() {
-  if(60.0 < m_syncVdqmTimer.secs()) {
+  if(300.0 < m_syncVdqmTimer.secs()) {
     m_syncVdqmTimer.reset();
     syncVdqmWithDriveStateIfOutOfSync();
   }
