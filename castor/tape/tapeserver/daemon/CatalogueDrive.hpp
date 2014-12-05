@@ -530,6 +530,54 @@ private:
   CatalogueSession *m_session;
 
   /**
+   * Timer used to decide when to synchronise the vdqm with current status ofi
+   * this drive.
+   */
+  castor::utils::Timer m_syncVdqmTimer;
+
+  /**
+   * If enough time as past then this method synchronises the vdqmd daemon with
+   * the state of this drive.
+   */
+  void syncVdqmWithDriveStateWhenNecessary();
+
+  /**
+   * If this drive is UP and the vdqmd daemon thinks otherwise then this method
+   * synchronises the vdqm with the state of this drive.
+   */
+  void syncVdqmWithDriveStateIfOutOfSync();
+
+  /**
+   * Synchronises the vdqmd daemon with the state of this drive.
+   */
+  void syncVdqmWithDriveState();
+
+  /**
+   * Returns the string representation of the specified drive status from the
+   * vdqmd daemon.
+   *
+   * @param The drive status.
+   * @return The string representation.
+   */
+  std::string vdqmDriveStatusToString(int status);
+
+  /**
+   * This is a helper method for vdqmDriveStatusToString().
+   *
+   * If the specified bit mask is set within the specified bit set then this
+   * method appends the specified name of the bit mask to the end of the
+   * specified string stream representation of the bit set.  This method also
+   * modifies the bit set by unsetting the bit mask if it was set.
+   *
+   * @param bitMask The bit mask to be tested against the bit set.
+   * @param bitMaskName The name of the bit mask.
+   * @param bitSet In/out parameter: The bit set.
+   * @param bitSetStringStream The string stream representation of the bit set.
+   */
+  void appendBitIfSet(const int bitMask, const std::string bitName, int &bitSet,
+    std::ostringstream &bitSetStringStream);
+
+  /**
    * Checks that there is a tape session currently associated with the
    * tape drive.
    *
