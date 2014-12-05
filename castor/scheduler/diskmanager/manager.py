@@ -61,7 +61,7 @@ class ManagerThread(threading.Thread):
         # 'Caught exception in Management thread' message
         dlf.writeerr(msgs.MGMTEXCEPTION, Type=str(e.__class__), Message=str(e))
       # do not loop too fast
-      time.sleep(1)
+      time.sleep(5)
 
   def stop(self):
     '''stops processing in this thread'''

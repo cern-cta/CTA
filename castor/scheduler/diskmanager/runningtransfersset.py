@@ -28,15 +28,18 @@
 '''runningtransferset module of the CASTOR disk server manager.
 Handle a set of running transfers on a given diskserver'''
 
-import os, socket, subprocess
+import os, ast, socket, subprocess
 import threading
 import time
+from XRootD import client as XrdClient
+from XRootD.client.flags import QueryCode
 import dlf
 from diskmanagerdlf import msgs
 import castor_tools
 import connectionpool
-from transfer import cmdLineToTransfer, cmdLineToTransferId, TransferType, TapeTransferType
+from transfer import cmdLineToTransfer, cmdLineToTransferId, TransferType, TapeTransferType, TapeTransfer
 from reporter import StreamCount
+import xrootiface
 
 class RunningTransfersSet(object):
   '''handles a list of running transfers and is able to poll them regularly and list the ones that ended.
@@ -50,16 +53,14 @@ class RunningTransfersSet(object):
     self.transfers = set()
     # lock for the transfers variable
     self.lock = threading.Lock()
-    # get configuration
-    self.config = castor_tools.castorConf()
-    # list transfers already running on the node, left over from the last time we ran
-    self.leftOverTransfers = self.populate()
-    # list of ongoing tape transfers. Only transfer type and start time are listed here
-    self.tapeTransfers = []
-    # dictionary of previously known tape transfers
-    self.prevTapeTransfers = {}
     # lock for the tapeTransfers variable
     self.tapelock = threading.Lock()
+    # get configuration
+    self.config = castor_tools.castorConf()
+    # list of ongoing tape transfers. Only transfer type and start time are listed here
+    self.tapeTransfers = []
+    # list transfers already running on the node, left over from the last time we ran
+    self.leftOverTransfers = self.populate()
 
   def populate(self):
     '''populates the list of ongoing transfers from the system.
@@ -71,7 +72,7 @@ class RunningTransfersSet(object):
     dlf.write(msgs.POPULATING)
     # get a random scheduler host
     scheduler = self.config.getValue('DiskManager', 'ServerHosts').split()[0]
-    # loop over all processes
+    # first loop over all processes
     pids = [pid for pid in os.listdir('/proc') if pid.isdigit()]
     leftOvers = {}
     for pid in pids:
@@ -84,13 +85,39 @@ class RunningTransfersSet(object):
           # keep in memory that this was a rebuilt entry
           leftOvers[rTransfer.transfer.transferId] = int(pid)
           # 'Found transfer already running' message
-          dlf.write(msgs.FOUNDTRANSFERALREADYRUNNING, subreqId=rTransfer.transfer.transferId,
+          dlf.write(msgs.FOUNDTRANSFERALREADYRUNNING, transferType= 'user', subreqId=rTransfer.transfer.transferId,
                     fileid=rTransfer.transfer.fileId, startTime=rTransfer.startTime)
       except Exception:
         # exceptions caught here mean we could not get the info we wanted on the
         # process we were looking at. We only ignore this process as it has probably
         # finished in the mean time
         pass
+    # then query xroot for its transfers
+    try:
+      # XXX TODO replace socket.getfqdn() with 'localhost' after deploying the new xrootd-python package
+      fs = XrdClient.FileSystem(xrootiface.buildXrootURL(socket.getfqdn(), '', None, ''))
+      st_stat, resp = fs.query(QueryCode.OPAQUE, "transfers")
+      if not st_stat.ok:
+        # 'Failed to query xrootd server' message
+        dlf.writenotice(msgs.FAILTOQUERYXROOT, Message=st_stat.message)
+      else:
+        # this is the list of currently running transfers according to xroot
+        resp = ast.literal_eval(resp)
+        for t in resp:
+          rTransfer = xrootiface.xrootTupleToTransfer(scheduler, t)
+          if type(rTransfer) == TapeTransfer:
+            self.tapeTransfers.append(rTransfer)
+            # 'Found transfer already running' message
+            dlf.write(msgs.FOUNDTRANSFERALREADYRUNNING, transferType=TapeTransferType.toStr(rTransfer.transferType),
+                      subreqId=rTransfer.transferId, fileid=rTransfer.fileId, startTime=rTransfer.startTime)
+          else:
+            self.transfers.add(rTransfer)
+            # 'Found transfer already running' message
+            dlf.write(msgs.FOUNDTRANSFERALREADYRUNNING, transferType=TransferType.toPreciseStr(rTransfer.transfer),
+                      subreqId=rTransfer.transfer.transferId, fileid=rTransfer.transfer.fileId, startTime=rTransfer.startTime)
+    except Exception, e:
+      dlf.writeerr(msgs.FAILTOQUERYXROOT, Type=str(e.__class__), Message=str(e))
+
     # send the list of running transfers to the stager DB for synchronization
     try:
       while True:
@@ -292,7 +319,9 @@ class RunningTransfersSet(object):
     return n
 
   def _isTransferOver(self, rTransfer):
-    '''checks if the given running transfer is still alive, and returns its return code'''
+    '''checks if the given running transfer is still alive, and returns a (boolean, int) tuple
+    where the first element says whether the transfer is over and the second is its return code,
+    None for transfers that never run.'''
     transferId = rTransfer.transfer.transferId
     # check whether the transfer is over
     isEnded = False
@@ -304,7 +333,7 @@ class RunningTransfersSet(object):
         os.kill(pid, 0)
         # a process with this pid exists, now is it really our guy or something new ?
         cmdline = open(os.path.sep+os.path.join('proc', str(pid), 'cmdline'), 'rb').read().split('\0')
-        if transferId != cmdLineToTransferId(cmdline):
+        if transferId != cmdLineToTransferId(cmdline, pid):
           # it's a new one, not our guy
           isEnded = True
       except OSError:
@@ -320,7 +349,7 @@ class RunningTransfersSet(object):
         rc = rTransfer.process.poll()
         isEnded = (rc != None)
       except AttributeError:
-        # this is a running (xrootd) transfer for which we have no process associated, so poll() fails:
+        # this is a running (xrootd) transfer for which we have no process associated, so we can't poll():
         # in this case we must assume the transfer is still running
         isEnded = False
     else:

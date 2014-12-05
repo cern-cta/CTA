@@ -26,57 +26,11 @@
 """activity control thread of the disk server manager daemon of CASTOR."""
 
 import os, sys, threading, time, subprocess
-import Crypto.Hash.SHA as SHA1
-import Crypto.PublicKey.RSA as RSA
-import Crypto.Signature.PKCS1_v1_5 as PKCS1
-import base64
 import connectionpool, dlf, clientsreplier
 from commonexceptions import TransferCanceled, TransferFailed, SourceNotStarted
 from diskmanagerdlf import msgs
 from transfer import TransferType, D2DTransferType, RunningTransfer
-
-def signBase64(content, RSAKey):
-    '''signs content with the given key and encode the result in base64'''
-    contentHash = SHA1.new(content)
-    signer = PKCS1.new(RSAKey)
-    signature = signer.sign(contentHash)
-    return base64.b64encode(signature)
-
-def buildXrootURL(self, diskserver, path, transferId, transferType):
-    '''Builds a valid xroot url for the given path on the given diskserver'''
-    # base url and key parameter
-    url = 'root://'+diskserver+':1095//' + path + '?'
-    opaque_dict = {'castor.pfn1' : path,
-                   'castor.pfn2' : '0:' + str(self.configuration.getValue('DiskManager', 'MoverHandlerPort', 15511)) \
-                   + ':' + transferId,
-                   'castor.txtype' : transferType,
-                   'castor.accessop' : '0',   # read from remote
-                   'castor.exptime' : str(int(time.time()) + 3600)}
-
-    # signature part
-    try:
-      # get Xroot RSA key
-      keyFile = self.configuration.getValue('XROOT', 'PrivateKey', \
-                                            '/opt/xrootd/keys/key.pem')
-      key = RSA.importKey(open(keyFile, 'r').read())
-      # sign opaque part obtained by concatenating the values
-      opaque_token = ''.join([opaque_dict['castor.pfn1'],
-                              opaque_dict['castor.pfn2'],
-                              opaque_dict['castor.accessop'],
-                              opaque_dict['castor.exptime'],
-                              opaque_dict['castor.txtype']])
-      signature = signBase64(opaque_token, key)
-      opaque = ""
-
-      # build the opaque info
-      for key, val in opaque_dict.iteritems():
-        opaque += key + '=' + val + '&'
-
-      url += opaque + 'castor.signature=' + signature
-      return url
-    except Exception, e:
-      # avoid raising standard exception, as some are used for dedicated purposes
-      raise Exception(str(e))
+from xrootiface import buildXrootURL
 
 class ActivityControlThread(threading.Thread):
   '''activity control thread.
@@ -122,8 +76,8 @@ class ActivityControlThread(threading.Thread):
     # build command line
     transferType = 'd2d' + D2DTransferType.toStr(transfer.replicationType)
     srcDS, srcPath = srcDcPath.split(':', 1)
-    cmdLine = ['xrdcp', buildXrootURL(self, srcDS, srcPath, transfer.transferId, transferType), \
-                        buildXrootURL(self, 'localhost', destDcPath, transfer.transferId, transferType)]
+    cmdLine = ['xrdcp', buildXrootURL(srcDS, srcPath, transfer.transferId, transferType), \
+                        buildXrootURL('localhost', destDcPath, transfer.transferId, transferType)]
     # "Transfer starting" message
     dlf.write(msgs.TRANSFERSTARTING, subreqid=transfer.transferId,
               reqid=transfer.reqId, fileId=transfer.fileId,

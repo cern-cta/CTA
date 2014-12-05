@@ -98,6 +98,19 @@ class D2DTransferType(object):
       return 'rebalance'
     else:
       return 'UNKNOWN'
+  @staticmethod
+  def toType(strType):
+    '''returns a D2DTransferType corresponding to the given representation'''
+    if strType == 'user':
+      return D2DTransferType.USER
+    elif strType == 'internal':
+      return D2DTransferType.INTERNAL
+    elif strType == 'draining':
+      return D2DTransferType.DRAINING
+    elif strType == 'rebalance':
+      return D2DTransferType.REBALANCE
+    else:
+      raise ValueError('Invalid replication type %s' % strType)
 
 
 def getProcessStartTime(pid):
@@ -120,7 +133,7 @@ def getProcessStartTime(pid):
 def cmdLineToTransfer(cmdLine, scheduler, pid):
   '''creates a RunningTransfer object from the command line that launched the transfer.
   Depending on the command, the appropriate type of transfer will be created inside the
-  RunningTransfer. In case the command is not recognized, None is returned'''
+  RunningTransfer set. In case the command is not recognized, None is returned'''
   # find out if we have a regular transfer or disk 2 disk copies
   if cmdLine.startswith('/usr/bin/rfiod -1Ulnf'):
     # parse command line
@@ -142,9 +155,9 @@ def cmdLineToTransfer(cmdLine, scheduler, pid):
         kv = e.split('=')
         if kv[0] == 'UUID':
           transferId = kv[1]
-        if kv[0] == 'FULLDESTPATH':
+        elif kv[0] == 'FULLDESTPATH':
           destDcPath = kv[1]
-        if kv[0] == 'ACCESS_MODE':
+        elif kv[0] == 'ACCESS_MODE':
           flags = kv[1]
       except KeyError:
         pass
@@ -160,14 +173,18 @@ def cmdLineToTransfer(cmdLine, scheduler, pid):
   return RunningTransfer(scheduler, None, startTime, transfer, destDcPath)
 
 
-def cmdLineToTransferId(cmdLine):
-  '''extracts the transferId from a command line that launched a given transfer.
-  This only works with rfiod.'''
+def cmdLineToTransferId(cmdLine, pid):
+  '''extracts the transferId from a command line that launched a transfer'''
   if cmdLine.startswith('/usr/bin/rfiod'):
     args = dict([cmdLine[i:i+2] for i in range(1, len(cmdLine), 2)])
     return args['-i']
-  else:
-    return None
+  elif cmdLine.startsWith('/usr/sbin/globus-gridftp-server'):
+    env = open('/proc/' + str(pid) + '/environ').read().split('\0')
+    for e in env:
+      kv = e.split('=')
+      if kv[0] == 'UUID':
+        return kv[1]
+  return None
 
 
 def tupleToTransfer(t):
@@ -254,7 +271,7 @@ class Transfer(BaseTransfer):
     '''returns the command line for launching the mover for this transfer'''
     # find out if we have a regular transfer or disk 2 disk copies
     if self.transferType not in (TransferType.D2DDST, TransferType.STD):
-      raise TypeError('no command line for transfer of type %s' % TransferType.toStr(self.transferType))
+      raise ValueError('no command line for transfer of type %s' % TransferType.toStr(self.transferType))
     if self.destDcPath == '':
       # this transfer was not yet fully initialized by the clientsListener thread, give up
       raise Exception('Not a valid destination path (%s) for the mover' % self.destDcPath)
@@ -289,7 +306,7 @@ class Transfer(BaseTransfer):
       cmdLine.append('-allowed-modules')
       cmdLine.append('CASTOR2')
     else:
-      raise TypeError('No valid mover for protocol %s' % self.protocol)
+      raise ValueError('No valid mover for protocol %s' % self.protocol)
     return cmdLine
 
   def getEnvironment(self):
@@ -318,7 +335,7 @@ class Transfer(BaseTransfer):
     elif self.protocol == 'gsiftp':
       low, high = Transfer.configuration.getValue('GSIFTP', 'CONTROL_TCP_PORT_RANGE', '20000,21000').split(',')
     else:
-      raise TypeError('No valid port range for protocol %s' % self.protocol)
+      raise ValueError('No valid port range for protocol %s' % self.protocol)
     return int(low), int(high)
 
   def getTimeout(self):
@@ -330,7 +347,7 @@ class Transfer(BaseTransfer):
     elif self.protocol == 'xroot':
       t = Transfer.configuration.getValue('XROOT', 'TIMEOUT', 300)
     else:
-      raise TypeError('No valid timeout value for protocol %s' % self.protocol)
+      raise ValueError('No valid timeout value for protocol %s' % self.protocol)
     return t
 
 

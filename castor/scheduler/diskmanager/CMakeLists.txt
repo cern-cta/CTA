@@ -38,6 +38,7 @@ set(DISKMANAGERD_LIBS
   moverhandler.py
   clientsreplier.py
   clientslistener.py
+  xrootiface.py
   diskmanagerdlf.py)
 install(FILES ${DISKMANAGERD_LIBS}
   DESTINATION ${CASTOR_DEST_PYTHON_LIBDIR}
