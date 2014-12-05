@@ -24,13 +24,15 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::legacymsg::VdqmProxyDummy::VdqmProxyDummy() throw(): m_job(), m_hasJob(false) {
+castor::legacymsg::VdqmProxyDummy::VdqmProxyDummy() throw(): m_job(),
+  m_hasJob(false) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::legacymsg::VdqmProxyDummy::VdqmProxyDummy(const RtcpJobRqstMsgBody &job) throw(): m_job(job), m_hasJob(true) {
+castor::legacymsg::VdqmProxyDummy::VdqmProxyDummy(const RtcpJobRqstMsgBody &job)
+  throw(): m_job(job), m_hasJob(true) {
 }
 
 //------------------------------------------------------------------------------
@@ -42,7 +44,8 @@ castor::legacymsg::VdqmProxyDummy::~VdqmProxyDummy() throw() {
 //------------------------------------------------------------------------------
 // receiveJob
 //------------------------------------------------------------------------------
-castor::legacymsg::RtcpJobRqstMsgBody castor::legacymsg::VdqmProxyDummy::receiveJob(const int connection)  {
+castor::legacymsg::RtcpJobRqstMsgBody castor::legacymsg::VdqmProxyDummy::
+  receiveJob(const int connection)  {
   if(!m_hasJob) throw castor::exception::Exception("In castor::legacymsg::VdqmProxyDummy::receiveJob: this object was constructed without a job.");
   return m_job;
 }
@@ -50,31 +53,39 @@ castor::legacymsg::RtcpJobRqstMsgBody castor::legacymsg::VdqmProxyDummy::receive
 //------------------------------------------------------------------------------
 // setDriveDown
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyDummy::setDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn)  {
+void castor::legacymsg::VdqmProxyDummy::setDriveDown(const std::string &server,
+  const std::string &unitName, const std::string &dgn)  {
 }
 
 //------------------------------------------------------------------------------
 // setDriveUp
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyDummy::setDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn)  {
+void castor::legacymsg::VdqmProxyDummy::setDriveUp(const std::string &server,
+  const std::string &unitName, const std::string &dgn)  {
 }
 
 //------------------------------------------------------------------------------
 // assignDrive
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyDummy::assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t sessionPid)  {
+void castor::legacymsg::VdqmProxyDummy::assignDrive(const std::string &server,
+  const std::string &unitName, const std::string &dgn,
+  const uint32_t mountTransactionId, const pid_t sessionPid)  {
 }
 
 //------------------------------------------------------------------------------
 // tapeMounted
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyDummy::tapeMounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid)  {
+void castor::legacymsg::VdqmProxyDummy::tapeMounted(const std::string &server,
+  const std::string &unitName, const std::string &dgn, const std::string &vid,
+  const pid_t sessionPid)  {
 }
 
 //------------------------------------------------------------------------------
 // releaseDrive
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyDummy::releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid)  {
+void castor::legacymsg::VdqmProxyDummy::releaseDrive(const std::string &server,
+  const std::string &unitName, const std::string &dgn, const bool forceUnmount,
+  const pid_t sessionPid)  {
 }
 
 //------------------------------------------------------------------------------
@@ -89,6 +100,7 @@ void castor::legacymsg::VdqmProxyDummy::tapeUnmounted(const std::string &server,
 // getDriveStatus
 //-----------------------------------------------------------------------------
 int castor::legacymsg::VdqmProxyDummy::getDriveStatus(
-  const std::string &unitName, const std::string &dgn) {
+  const std::string &server, const std::string &unitName,
+  const std::string &dgn) {
   return 0;
 }

@@ -521,7 +521,7 @@ void castor::legacymsg::VdqmProxyTcpIp::tapeUnmounted(
 //------------------------------------------------------------------------------
 // getDriveStatus
 //------------------------------------------------------------------------------
-int castor::legacymsg::VdqmProxyTcpIp::getDriveStatus(
+int castor::legacymsg::VdqmProxyTcpIp::getDriveStatus(const std::string &server,
   const std::string &unitName, const std::string &dgn) {
   try {
     // Check parameters
@@ -538,6 +538,7 @@ int castor::legacymsg::VdqmProxyTcpIp::getDriveStatus(
 
     legacymsg::VdqmDrvRqstMsgBody rqst;
     rqst.status = VDQM_UNIT_QUERY;
+    castor::utils::copyString(rqst.server, server);
     castor::utils::copyString(rqst.drive, unitName);
     castor::utils::copyString(rqst.dgn, dgn);
 

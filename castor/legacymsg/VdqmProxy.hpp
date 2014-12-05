@@ -165,12 +165,14 @@ public:
   /**
    * Queries the vdqmd daemon for the status of the specified tape drive.
    *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
    * @param unitName The unit name of the tap drive.
    * @param dgn The device group name of the tape drive.
    * @return The status of the tape drive.
    */
-  virtual int getDriveStatus(const std::string &unitName,
-    const std::string &dgn) = 0;
+  virtual int getDriveStatus(const std::string &server,
+    const std::string &unitName, const std::string &dgn) = 0;
 
 }; // class VdqmProxy
 
