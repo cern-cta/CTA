@@ -95,7 +95,7 @@ class ReporterThread(threading.Thread):
           os.mkdir(os.sep.join([mountPoint, '%02d' % i]))
     # now handle dataPools if any
     if dataPools:
-      try :
+      try:
         # check which userId to use
         userId = self.configuration.getValue('DiskManager', 'PoolUserId', 'castor')
         # get numbers from ceph
