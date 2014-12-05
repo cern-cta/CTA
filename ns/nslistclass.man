@@ -36,14 +36,12 @@ nslistclass --id 2
 
 CLASS_ID        2
 CLASS_NAME      user
-CLASS_UID       -
-CLASS_GID       -
 NBCOPIES        1
 
 
 nslistclass --id 2 -nohdr
 
-2 user -        -      0x0 2 0 0 0 1800 1 AS_LONG_AS_POSSIBLE default
+2 user 1
 .ft
 .fi
 .SH EXIT STATUS

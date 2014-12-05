@@ -45,12 +45,8 @@
 
 			/* long options for Cns utilities */
 
-#define	OPT_CLASS_GID	1
-#define	OPT_CLASS_GROUP	2
 #define	OPT_CLASS_ID	3
 #define	OPT_CLASS_NAME	4
-#define	OPT_CLASS_UID	5
-#define	OPT_CLASS_USER	6
 #define	OPT_FLAGS	7
 #define	OPT_MAX_DRV	8
 #define	OPT_MAX_FSZ	9

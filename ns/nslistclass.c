@@ -132,40 +132,11 @@ int main(int argc,char **argv)
 
 int listentry(struct Cns_fileclass *Cns_fileclass)
 {
-  struct group *gr;
-  struct passwd *pw;
-  static gid_t sav_gid = -1;
-  static char sav_gidstr[7];
-  static uid_t sav_uid = -1;
-  static char sav_uidstr[CA_MAXUSRNAMELEN+1];
-
-  if (Cns_fileclass->uid != sav_uid) {
-    sav_uid = Cns_fileclass->uid;
-    if (sav_uid == 0)
-      strcpy (sav_uidstr, "-");
-    else if ((pw = getpwuid (sav_uid)))
-      strcpy (sav_uidstr, pw->pw_name);
-    else
-      sprintf (sav_uidstr, "%-8u", sav_uid);
-  }
-  if (Cns_fileclass->gid != sav_gid) {
-    sav_gid = Cns_fileclass->gid;
-    if (sav_gid == 0)
-      strcpy (sav_gidstr, "-");
-    else if ((gr = getgrgid (sav_gid)))
-      strcpy (sav_gidstr, gr->gr_name);
-    else
-      sprintf (sav_gidstr, "%-6u", sav_gid);
-  }
   if (nohdr) {
-    printf ("%d %s %-8.8s %-6.6s %d",
-            Cns_fileclass->classid, Cns_fileclass->name, sav_uidstr, sav_gidstr,
-            Cns_fileclass->nbcopies);
+    printf ("%d %s %d", Cns_fileclass->classid, Cns_fileclass->name, Cns_fileclass->nbcopies);
   } else {
     printf ("CLASS_ID %d\n", Cns_fileclass->classid);
     printf ("CLASS_NAME %s\n", Cns_fileclass->name);
-    printf ("CLASS_UID %s\n", sav_uidstr);
-    printf ("CLASS_GID %s\n", sav_gidstr);
     printf ("NBCOPIES %d", Cns_fileclass->nbcopies);
   }
   printf ("\n");

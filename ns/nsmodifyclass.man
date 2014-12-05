@@ -22,12 +22,6 @@ CNS_HOST environment variable.
 .TP
 .BI --flags=FLAGS
 .TP
-.BI --gid=CLASSGID
-The class is restricted to this group gid.
-.TP
-.BI --group=CLASSGRP
-The class is restricted to this group name
-.TP
 .BI --id=CLASSID
 The class number of the class to be modified.
 .TP
@@ -40,12 +34,6 @@ tape pool.
 .TP
 .BI --newname=CLASSNAME
 The class name must be at most CA_MAXCLASNAMELEN characters long.
-.TP
-.BI --uid=CLASSUID
-The class is restricted to this user uid.
-.TP
-.BI --user=CLASSUSER
-The class is restricted to this user name
 .TP
 .B \-\-help
 Display this help and exit

@@ -18,9 +18,6 @@ This command requires ADMIN privileges in the Cupv database.
 specify the name server hostname. This can also be set through the
 CNS_HOST environment variable.
 .TP
-.BI --gid=CLASSGID
-The class is restricted to this group gid.
-.TP
 .BI --id=CLASSID
 The class number must be strictly positive.
 .TP
@@ -30,12 +27,6 @@ The class name must be at most CA_MAXCLASNAMELEN characters long.
 .BI --nbcopies=NUM
 Specifies the number of copies for a file. Each copy is written to a different
 tape pool. Default is 1.
-.TP
-.BI --uid=CLASSUID
-The class is restricted to this user uid.
-.TP
-.BI --user=CLASSUSER
-The class is restricted to this user name
 .TP
 .B \-\-help
 Display this help and exit
