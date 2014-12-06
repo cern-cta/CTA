@@ -93,7 +93,7 @@ bool castor::tape::tapeserver::daemon::CatalogueDrive::handleTick() {
 // syncVdqmWithDriveStateWhenNecessary
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::
-  syncVdqmWithDriveStateWhenNecessary() throw() {
+  syncVdqmWithDriveStateWhenNecessary() {
   std::string errMsg;
 
   try {

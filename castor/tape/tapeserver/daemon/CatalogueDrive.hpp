@@ -539,7 +539,7 @@ private:
    * If enough time as past then this method synchronises the vdqmd daemon with
    * the state of this drive.
    */
-  void syncVdqmWithDriveStateWhenNecessary() throw();
+  void syncVdqmWithDriveStateWhenNecessary();
 
   /**
    * If this drive is UP and the vdqmd daemon thinks otherwise then this method
