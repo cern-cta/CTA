@@ -65,7 +65,7 @@ const int XrdxCastor2OfsFile::sKeyExpiry = 60;
 
 
 //------------------------------------------------------------------------------
-// SfsGetFileSystem
+// XrdSfsGetFileSystem2 version 2 also passes the envP info pointer
 //------------------------------------------------------------------------------
 extern "C"
 {
@@ -253,13 +253,32 @@ XrdxCastor2Ofs::FSctl(const int cmd,
                       XrdOucErrInfo& eInfo,
                       const XrdSecEntity* client)
 {
-  xcastor_debug("Calling FSctl with cmd=%i, arg1=%s, arg1len=%i", cmd,
-                args.Arg1, args.Arg1Len);
+  xcastor_debug("Calling FSctl with cmd=%i, arg1=%s, arg1len=%i, arg2=%s, "
+                "arg2len=%i", cmd,
+                (args.Arg1 ? args.Arg1: ""), args.Arg1Len,
+                (args.Arg2 ? args.Arg2 : ""), args.Arg2Len);
 
-  if (cmd == SFS_FSCTL_PLUGIO)
+  if (!client || !client->host || strncmp(client->host, "localhost", 9))
   {
-    if (strncmp(args.Arg1, "transfers", args.Arg1Len) == 0)
+    eInfo.setErrInfo(ENOTSUP, "operation possible only from localhost");
+    return SFS_ERROR;
+  }
+
+  if (cmd == SFS_FSCTL_PLUGIN)
+  {
+    if (strncmp(args.Arg1, "/transfers", args.Arg1Len) == 0)
     {
+      /*
+      // Create authz object used to check the signature - requires authz
+      // object which currently is not accessibe from XrdOfs i.e it's private
+      XrdOucEnv tx_env(args.Arg2 ? args.Arg2 : 0, 0, client);
+
+      if (client && ((XrdOfs*)this)->Authorization &&
+          !((XrdOfs*)this)->Authorization->Access(client, args.Arg1, AOP_Read, tx_env))
+       {
+         return gSrv->Emsg(epname, eInfo, EACCES, "list transfers", pathp);
+       }
+      */
       std::ostringstream oss;
       oss << "[";
 
@@ -493,7 +512,7 @@ XrdxCastor2OfsFile::open(const char*         path,
   {
     TIMING("NOTIFY_DM", &open_timing);
     char* errmsg = (char*)0;
-    xcastor_debug("send_dm errc=%i, tx_id=%s", rc, mTransferId.c_str()); 
+    xcastor_debug("send_dm errc=%i, tx_id=%s", rc, mTransferId.c_str());
     int dm_errno = mover_open_file(mDiskMgrPort, mTransferId.c_str(), &rc, &errmsg);
 
     // If failed to commit to diskmanager then return error
