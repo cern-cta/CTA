@@ -26,7 +26,6 @@
 #include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <uuid/uuid.h>
 #include <grp.h>
 #include <fcntl.h>
 #include "h/Cns_api.h"
@@ -922,19 +921,8 @@ XrdxCastor2OfsFile::ExtractTransferInfo(XrdOucEnv& env_opaque)
 
   if (!val || !strlen(val))
   {
-    // If no diskmanager contact info is present in the opaque info, it means
-    // that this is a tape transfer and we don't try to contact the diskmanager
-    // but we allow it to pass through. The authorization plugin makes sure we
-    // only allow trusted hosts to do transfers - it  verifies the signature
-    xcastor_debug("no diskmanager opaque information - this is a tape transfer");
-
-    // Use a random request id for tape transfers
-    uuid_t id;
-    uuid_generate(id);
-    char sid[100];
-    uuid_unparse(id, sid);
-    mReqId = sid;
-    return SFS_OK;
+    xcastor_err("no diskmanager opaque information i.e. castor.pfn2 missing");
+    return gSrv->Emsg("open", error, EIO, "get diskmanager opaque info (pfn2)");
   }
 
   std::string connect_info = val;
