@@ -519,8 +519,8 @@ XrdxCastor2Acc::VerifyUnbase64(const char* data,
   EVP_MD_CTX_cleanup(&md_ctx);
   TIMING("EVPVERIFY", &verifytiming);
 
-  if (mLogLevel == LOG_DEBUG)
-    verifytiming.Print();
+  // if (mLogLevel == LOG_DEBUG)
+  //   verifytiming.Print();
 
   return ((err != 1) ? false : true);
 }

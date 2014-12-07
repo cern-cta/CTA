@@ -367,7 +367,7 @@ XrdxCastor2FsFile::open(const char*         path,
           opentiming.Print();
         }
 
-        return gMgr->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) ,
+        return gMgr->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()),
                            "file is still busy, please wait");
       }
 
@@ -377,12 +377,10 @@ XrdxCastor2FsFile::open(const char*         path,
         opentiming.Print();
       }
 
-      return gMgr->Emsg(epname, error, error.getErrInfo(), "async request failed");
-
+      return gMgr->Emsg(epname, error, error.getErrInfo(), "do async PUT request");
     }
     else if (status >= SFS_STALL)
     {
-
       if (gMgr->mLogLevel == LOG_DEBUG)
       {
         TIMING("RETURN", &opentiming);
@@ -404,8 +402,7 @@ XrdxCastor2FsFile::open(const char*         path,
         TIMING("RETURN", &opentiming);
       }
 
-      return gMgr->Emsg(epname, error, EINVAL, "access file in stager (put request failed) fn= ",
-                        map_path.c_str());
+      return gMgr->Emsg(epname, error, EINVAL, "access file in stager (PUT request failed)");
     }
   }
   else
@@ -475,8 +472,7 @@ XrdxCastor2FsFile::open(const char*         path,
 
         XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
         return gMgr->Emsg(epname, error, EINVAL,
-                          "access file in ANY stager (all stager queries failed) fn=",
-                          map_path.c_str());
+                          "access file in ANY stager (all stager queries failed)");
       }
       else
       {
@@ -496,30 +492,22 @@ XrdxCastor2FsFile::open(const char*         path,
     TIMING("GET", &opentiming);
     int status = XrdxCastor2Stager::DoAsyncReq(error, "get", &req_info, resp_info);
     delaytag += ":get";
+    int ret_val = SFS_OK;
 
     if (status == SFS_ERROR)
     {
-      if (gMgr->mLogLevel == LOG_DEBUG)
-      {
-        TIMING("RETURN", &opentiming);
-        opentiming.Print();
-      }
-
-      return gMgr->Emsg(epname, error, EINVAL, "async req failed fn=", map_path.c_str());
+      ret_val = gMgr->Emsg(epname, error, error.getErrInfo(), "do async GET request");
     }
     else if (status >= SFS_STALL)
     {
-      if (gMgr->mLogLevel == LOG_DEBUG)
-      {
-        TIMING("RETURN", &opentiming);
-        opentiming.Print();
-      }
-
-      return gMgr->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()),
-                         "request queue full or response not ready");
+      ret_val = gMgr->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()),
+                            "request queue full or response not ready");
     }
 
     if (resp_info.mStageStatus != "READY")
+      ret_val = gMgr->Emsg(epname, error, EINVAL, "access stager (GET request failed)");
+
+    if (ret_val != SFS_OK)
     {
       if (gMgr->mLogLevel == LOG_DEBUG)
       {
@@ -527,8 +515,7 @@ XrdxCastor2FsFile::open(const char*         path,
         opentiming.Print();
       }
 
-      return gMgr->Emsg(epname, error, EINVAL, "access stager (Get request failed) fn=",
-                        map_path.c_str());
+      return ret_val;
     }
   }
 

@@ -447,13 +447,13 @@ public:
   //! @param einfo place to put text and error code
   //! @param ecode the error code
   //! @param op operation beegin performed
-  //! @param tager the taget (e.g. file name )
+  //! @param target the target (e.g. file name )
   //----------------------------------------------------------------------------
   static int Emsg(const char* pfx,
                   XrdOucErrInfo& einfo,
                   int ecode,
                   const char* op,
-                  const char* tagert = "");
+                  const char* target = "");
 
 
   //----------------------------------------------------------------------------
