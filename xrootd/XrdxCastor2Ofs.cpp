@@ -188,7 +188,7 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute, XrdOucEnv* envP)
   }
 
   // Setup the circular in-memory logging buffer
-  XrdOucString unit = "rdr@";
+  XrdOucString unit = "ds@";
   unit += XrdSysDNS::getHostName();
   unit += ":1094";
   Logging::Init();
@@ -384,10 +384,8 @@ XrdxCastor2OfsFile::open(const char*         path,
   xcastor::Timing open_timing("open");
   TIMING("START", &open_timing);
   XrdOucString spath = path;
-  xcastor_debug("path=%s", path);
   XrdOucString newpath = "";
   XrdOucString newopaque = opaque;
-  bool notify_dm = false;
 
   // If there is explicit user opaque information we find two ?,
   // so we just replace it with a seperator.
@@ -430,7 +428,7 @@ XrdxCastor2OfsFile::open(const char*         path,
   if (open_mode & (SFS_O_CREAT | SFS_O_TRUNC | SFS_O_WRONLY | SFS_O_RDWR))
     mIsRW = true;
 
-  xcastor_info("path=%s, opaque=%s isRW=%d, open_mode=%x", path, opaque,
+  xcastor_info("path=%s, opaque=%s, isRW=%d, open_mode=%x", path, opaque,
                mIsRW, open_mode);
 
   // Deal with native TPC transfers which are passed directly to the OFS layer
@@ -479,7 +477,9 @@ XrdxCastor2OfsFile::open(const char*         path,
     nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.value",
                                 (void*)&mXsValue[0], mXsValue.length());
     mXsValue[nattr] = '\0';
-    xcastor_debug("xs_type=%s, xs_val=%s", mXsType.c_str(),  mXsValue.c_str());
+
+    if (!mXsType.empty() || !mXsValue.empty())
+      xcastor_debug("xs_type=%s, xs_val=%s", mXsType.c_str(),  mXsValue.c_str());
 
     // Get also the size of the file
     if (XrdOfsOss->Stat(newpath.c_str(), &mStatInfo, 0, mEnvOpaque))
@@ -487,46 +487,34 @@ XrdxCastor2OfsFile::open(const char*         path,
       xcastor_err("error getting file stat information path=%s", newpath.c_str());
       rc = SFS_ERROR;
     }
-
-    // Add entry to the set of onging transfers if we don't have any errors
-    if (rc == SFS_OK && !mTransferId.empty())
-    {
-      // Connect to the diskmanager and notify that there is an open request
-      notify_dm = true;
-      char* errmsg = (char*)0;
-      int dm_errno = mover_open_file(mDiskMgrPort, mTransferId.c_str(), &rc, &errmsg);
-
-      // If failed to commit to diskmanager then return error
-      if (dm_errno)
-      {
-        rc = gSrv->Emsg("open", error, dm_errno, "send open to diskmanager");
-
-        // Free memory
-        if (errmsg)
-          free(errmsg);
-      }
-      else
-      {
-        if (!gSrv->AddTransfer(mTransferId))
-        {
-          xcastor_err("Failed insert into set of transfers for id=%s",
-                      mTransferId.c_str());
-          rc = gSrv->Emsg("open", error, EIO, "failed adding entry to transfer set");
-        }
-      }
-    }
   }
 
-  // Notify the diskmanager if open failed and we haven't done that already
-  if ((rc == SFS_ERROR) && !mTransferId.empty() && !notify_dm)
+  // Notify the diskmanager
+  if (!mTransferId.empty())
   {
-    xcastor_debug("notify failed open to diskmanager");
+    TIMING("NOTIFY_DM", &open_timing);
     char* errmsg = (char*)0;
-    (void)mover_open_file(mDiskMgrPort, mTransferId.c_str(), &rc, &errmsg);
+    xcastor_debug("send_dm errc=%i, tx_id=%s", rc, mTransferId.c_str()); 
+    int dm_errno = mover_open_file(mDiskMgrPort, mTransferId.c_str(), &rc, &errmsg);
+
+    // If failed to commit to diskmanager then return error
+    if (dm_errno)
+    {
+      rc = gSrv->Emsg("open", error, dm_errno, "open due to diskmanager error");
+    }
+    else
+    {
+      TIMING("ADD_TX", &open_timing);
+
+      if (!gSrv->AddTransfer(mTransferId))
+      {
+        xcastor_err("Failed to insert tx_id=%s", mTransferId.c_str());
+        rc = gSrv->Emsg("open", error, EIO, "add entry to transfer set");
+      }
+    }
 
     // Free memory
-    if (errmsg)
-      free(errmsg);
+    if (errmsg) free(errmsg);
   }
 
   if (gSrv->mLogLevel == LOG_DEBUG)
@@ -658,7 +646,7 @@ XrdxCastor2OfsFile::close()
   // contact the diskmanager.
   if (mDiskMgrPort)
   {
-    TIMING("DISKMGR_STATUS", &close_timing);
+    TIMING("NOTIFY_DM", &close_timing);
     uint64_t sz_file = 0;
 
     // Get the size of the file for writes
@@ -675,7 +663,7 @@ XrdxCastor2OfsFile::close()
 
     int errc = (rc ? error.getErrInfo() : rc);
     char* errmsg = (rc ? strdup(error.getErrText()) : (char*)0);
-    xcastor_info("send diskmgr errc=%i, errmsg=%s", errc, (errmsg ? errmsg : ""));
+    xcastor_info("send_dm errc=%i, errmsg=\"%s\"", errc, (errmsg ? errmsg : ""));
     int dm_errno = mover_close_file(mDiskMgrPort, mReqId.c_str(), sz_file,
                                     const_cast<const char*>(ckSumalg),
                                     const_cast<const char*>(ckSumbuf),
@@ -684,8 +672,8 @@ XrdxCastor2OfsFile::close()
     // If failed to commit to diskmanager then return error
     if (dm_errno)
     {
-      xcastor_err("path=%s failed closing file: %s", newpath.c_str(), errmsg);
-      rc = gSrv->Emsg("close", error, dm_errno, "send status to diskmanager");
+      xcastor_err("error_dm path=%s errmsg=\"%s\"", newpath.c_str(), errmsg);
+      rc = gSrv->Emsg("close", error, dm_errno, "close due to diskmanager error");
     }
 
     // Free errmsg memory
@@ -695,10 +683,7 @@ XrdxCastor2OfsFile::close()
 
   // Remove entry from the set of transfers
   if (!gSrv->RemoveTransfer(mTransferId))
-  {
-    xcastor_warning("No entry removed from the set of transfers for id=\"%s\"",
-                    mTransferId.c_str());
-  }
+    xcastor_warning("Tx_id=%s not in the set of transfers", mTransferId.c_str());
 
   if (gSrv->mLogLevel == LOG_DEBUG)
   {
