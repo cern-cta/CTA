@@ -450,7 +450,7 @@ XrdxCastor2OfsFile::open(const char*         path,
   if ((mTpcFlag == TpcFlag::kTpcNone) ||
       (mTpcFlag == TpcFlag::kTpcSrcRead || mTpcFlag == TpcFlag::kTpcDstSetup))
   {
-    BuildTransferId(client->tident, mEnvOpaque);
+    BuildTransferId(client, mEnvOpaque);
   }
 
   TIMING("OFS_OPEN", &open_timing);
@@ -714,16 +714,24 @@ XrdxCastor2OfsFile::close()
 // Build transfer identifier
 //------------------------------------------------------------------------------
 void
-XrdxCastor2OfsFile::BuildTransferId(const char* tident, XrdOucEnv* env)
+XrdxCastor2OfsFile::BuildTransferId(const XrdSecEntity* client, XrdOucEnv* env)
 {
   std::string castor_path;
   std::string tx_type = "unknown";
+  std::string tident = client->tident;
 
   if (env && env->Get("castor.txtype"))
     tx_type = env->Get("castor.txtype");
 
- if (env && env->Get("castor.pfn1"))
-   castor_path = env->Get("castor.pfn1");
+  if (env && env->Get("castor.pfn1"))
+    castor_path = env->Get("castor.pfn1");
+
+  // Try to use the FQDN of the client origin if it is present
+  if (client->host)
+  {
+    tident = tident.erase(tident.find("@") + 1);
+    tident += client->host;
+  }
 
   std::ostringstream oss;
   oss << "("

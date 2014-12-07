@@ -171,11 +171,12 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
   //----------------------------------------------------------------------------
   //! Build transfer identifier
   //!
-  //! @param tident Client identity information containing the following:
+  //! @param client Client identity from which we extract the tident and add
+  //!               to it the FQDN of the client origin therefore getting:
   //!               userid.pid.fd@origin_host
   //! @param env XrdOucEnv containing the opaque information from the open req.
   //----------------------------------------------------------------------------
-  void BuildTransferId(const char* tident, XrdOucEnv* env);
+  void BuildTransferId(const XrdSecEntity* client, XrdOucEnv* env);
 
 
   static const int sKeyExpiry; ///< validity time of a tpc key
