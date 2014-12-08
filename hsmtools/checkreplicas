@@ -111,7 +111,7 @@ try:
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
     stcur.execute('''
-    	SELECT diskcopy.id did, diskcopy.status dst, diskcopy.filesystem dfs, diskcopy.path dp, diskcopy.diskcopysize dcs,
+       SELECT diskcopy.id did, diskcopy.status dst, diskcopy.filesystem dfs, diskcopy.path dp, diskcopy.diskcopysize dcs, diskcopy.gcweight dcgcw,
              castorfile.id cfid, castorfile.filesize cfs, castorfile.creationtime cfctime, castorfile.nsopentime cfnsopentime, castorfile.tapestatus cftapestatus, diskcopy.castorfile dcf,
              FileSystem.mountPoint fmt, Filesystem.diskpool fdp, Filesystem.diskserver fds, Filesystem.status fss, diskserver.name dsn, diskserver.status dss,
              migrationjob.status mjs, migrationjob.id mjid, migrationjob.creationtime mjct, migrationjob.vid mjvid, migrationjob.nbretries mjnbr,
@@ -134,7 +134,7 @@ try:
     if cmfc == 0:
         cmfc = 'no_info'
 
-    for (did, dst, dfs, dp, dcs, cfid, cfs, cfctime, cfnsopentime, cftapestatus, dcf, fmt, fdp, fds, fss, dsn, dss, mjs, mjid, mjct, mjvid, mjnbr, rjs, rjid, rjvid, rjct, dpid, svcid, svcname) in stgqry_res:
+    for (did, dst, dfs, dp, dcs, dcgcw, cfid, cfs, cfctime, cfnsopentime, cftapestatus, dcf, fmt, fdp, fds, fss, dsn, dss, mjs, mjid, mjct, mjvid, mjnbr, rjs, rjid, rjvid, rjct, dpid, svcid, svcname) in stgqry_res:
 # MagicNumbers (CASTOR return codes translation)
         dssd = {None:'NODISKSERVER_FOUND', 0:'DISKSERVER IN PRODUCTION', 1:'DISKSERVER IN DRAINING', 2:'DISKSERVER IS DISABLED', 3:'DISKSERVER IS READONLY'}
         fssd = {None:'NOFILESYSTEM_FOUND', 0:'FILESYSTEM IN PRODUCTION', 1:'FILESYSTEM IN DRAINING', 2:'FILESYSTEM IS DISABLED'}
@@ -143,8 +143,8 @@ try:
         rjsd = {None:'NORECALLJOB', 1:'RECALLJOB PENDING', 2:'RECALLJOB SELECTED', 3:'RECALLJOB RETRYMOUNT'}
         cftsd = {None:'NOCASTORFILE', 0:'CASTORFILE_NOTONTAPE', 1:'CASTORFILE_ONTAPE', 2:'CASTORFILE_DISKONLY'}
 
-        output = 'DiskCopy: %s (%s) DiskCopySize: %s CastorfileId: %s CastorfileSize: %s CastorfileTapeStatus: %s CastorfileLastMTime: %s CastorfileNSOpenTime: %1.6f Svcclass: %s DiskCopyPath: %s:%s%s (%s/%s) FileClass: %s' \
-                 % (did, dscsd[dst], dcf, dcs, cfs, cftsd[cftapestatus], castor_tools.secsToDate(cfctime), cfnsopentime, svcname, dsn,fmt,dp, dssd[dss], fssd[fss], cmfc)
+        output = 'DiskCopy: %s (%s) DiskCopySize: %s CastorfileId: %s CastorfileSize: %s CastorfileTapeStatus: %s CastorfileLastMTime: %s CastorfileNSOpenTime: %1.6f Svcclass: %s DiskCopyPath: %s:%s%s (%s/%s) FileClass: %s GcWeight: %d' \
+                 % (did, dscsd[dst], dcf, dcs, cfs, cftsd[cftapestatus], castor_tools.secsToDate(cfctime), cfnsopentime, svcname, dsn,fmt,dp, dssd[dss], fssd[fss], cmfc, dcgcw)
         print '<-- Disk Cache Information -->'
         print output
         if mjsd[mjs] !='NOMIGRATIONJOB':
