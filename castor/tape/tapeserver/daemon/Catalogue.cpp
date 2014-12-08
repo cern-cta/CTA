@@ -86,10 +86,10 @@ bool castor::tape::tapeserver::daemon::Catalogue::handleTick() {
 bool castor::tape::tapeserver::daemon::Catalogue::allDrivesAreShutdown()
   const throw() {
   try {
-    for(DriveMap::const_iterator itor = m_drives.begin(); itor != m_drives.end();
-      itor++) {
+    for(DriveMap::const_iterator itor = m_drives.begin();
+      itor != m_drives.end(); itor++) {
       CatalogueDrive *const drive = itor->second;
-      if(CatalogueDrive::DRIVE_STATE_SHUTDOWN != drive->getState()) {
+      if(DRIVE_STATE_SHUTDOWN != drive->getState()) {
         return false;
       }
     }
@@ -141,7 +141,7 @@ void castor::tape::tapeserver::daemon::Catalogue::enterDriveConfig(
     // Insert it
     m_drives[driveConfig.getUnitName()] = new CatalogueDrive(m_netTimeout,
       m_log, m_processForker, m_cupv, m_vdqm, m_vmgr, m_hostName, driveConfig,
-      CatalogueDrive::DRIVE_STATE_DOWN, m_catalogueConfig.waitJobTimeoutInSecs,
+      DRIVE_STATE_DOWN, m_catalogueConfig.waitJobTimeoutInSecs,
       m_catalogueConfig.mountTimeoutInSecs,
       m_catalogueConfig.blockMoveTimeoutInSecs);
   // Else the drive is already in the catalogue

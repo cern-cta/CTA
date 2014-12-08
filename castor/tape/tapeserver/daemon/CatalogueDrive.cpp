@@ -46,7 +46,7 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   legacymsg::VmgrProxy &vmgr,
   const std::string &hostName,
   const DriveConfig &config,
-  const DriveState state,
+  const CatalogueDriveState state,
   const time_t waitJobTimeoutInSecs,
   const time_t mountTimeoutInSecs,
   const time_t blockMoveTimeoutInSecs)
@@ -225,25 +225,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::deleteSession() {
   m_session = NULL;
 }
 
-//-----------------------------------------------------------------------------
-// driveStateToStr
-//-----------------------------------------------------------------------------
-const char
-  *castor::tape::tapeserver::daemon::CatalogueDrive::driveStateToStr(
-  const DriveState state) throw() {
-  switch(state) {
-  case DRIVE_STATE_INIT                : return "INIT";
-  case DRIVE_STATE_DOWN                : return "DOWN";
-  case DRIVE_STATE_UP                  : return "UP";
-  case DRIVE_STATE_RUNNING             : return "RUNNING";
-  case DRIVE_STATE_WAITDOWN            : return "WAITDOWN";
-  case DRIVE_STATE_WAITSHUTDOWNKILL    : return "WAITSHUTDOWNKILL";
-  case DRIVE_STATE_WAITSHUTDOWNCLEANER : return "WAITSHUTDOWNCLEANER";
-  case DRIVE_STATE_SHUTDOWN            : return "SHUTDOWN";
-  default                              : return "UNKNOWN";
-  }
-}
-
 //------------------------------------------------------------------------------
 // getConfig
 //------------------------------------------------------------------------------
@@ -255,9 +236,8 @@ const castor::tape::tapeserver::daemon::DriveConfig
 //------------------------------------------------------------------------------
 // getState
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::CatalogueDrive::DriveState
-  castor::tape::tapeserver::daemon::CatalogueDrive::getState()
-  const throw() {
+castor::tape::tapeserver::daemon::CatalogueDriveState castor::tape::tapeserver::
+  daemon::CatalogueDrive::getState() const throw() {
   return m_state;
 } 
 
@@ -286,7 +266,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::checkForSession()
   if(NULL == m_session) {
     castor::exception::Exception ex;
     ex.getMessage() << "Drive is currently not running a session: state=" <<
-      driveStateToStr(m_state);
+      catalogueDriveStateToStr(m_state);
     throw ex;
   }
 }
@@ -520,7 +500,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureUp() {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to configure tape-drive " <<
         m_config.getUnitName() << " up: Incompatible drive state: state=" <<
-        driveStateToStr(m_state);
+        catalogueDriveStateToStr(m_state);
       throw ex;
     }
   }
@@ -539,7 +519,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureDown() {
     changeState(DRIVE_STATE_DOWN);
     m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
     break;
-  case CatalogueDrive::DRIVE_STATE_RUNNING:
+  case DRIVE_STATE_RUNNING:
     changeState(DRIVE_STATE_WAITDOWN);
     break;
   default:
@@ -547,7 +527,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureDown() {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to configure tape drive " <<
         m_config.getUnitName() << " down: Incompatible drive state: state=" <<
-        driveStateToStr(m_state);
+        catalogueDriveStateToStr(m_state);
       throw ex;
     }
   }
@@ -605,7 +585,8 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedVdqmJob(
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << driveStateToStr(m_state);
+        ": Incompatible drive state: state=" <<
+        catalogueDriveStateToStr(m_state);
       throw ex;
     }
   } 
@@ -654,7 +635,8 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << driveStateToStr(m_state);
+        ": Incompatible drive state: state=" <<
+        catalogueDriveStateToStr(m_state);
       throw ex;
     }
   }
@@ -699,7 +681,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
     m_vdqm.setDriveUp(m_hostName, m_config.getUnitName(), m_config.getDgn());
     break;
   case DRIVE_STATE_WAITDOWN:
-    changeState(CatalogueDrive::DRIVE_STATE_DOWN);
+    changeState(DRIVE_STATE_DOWN);
     session->sessionSucceeded();
     m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
     break;
@@ -715,7 +697,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
       ex.getMessage() <<
         "Failed to record tape session succeeded for session with pid " <<
         getSession().getPid() << ": Incompatible drive state: state=" <<
-        driveStateToStr(m_state);
+        catalogueDriveStateToStr(m_state);
       throw ex;
     }
   }
@@ -738,7 +720,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::sessionFailed() {
       ex.getMessage() <<
         "Failed to record tape session failed for session with pid " <<
         getSession().getPid() << ": Incompatible drive state: state=" <<
-        driveStateToStr(m_state);
+        catalogueDriveStateToStr(m_state);
       delete m_session;
       m_session = NULL;
       throw ex;
@@ -765,7 +747,7 @@ sessionKilled(uint32_t signal) {
       ex.getMessage() <<
         "Failed to record tape session failed for session with pid " <<
         getSession().getPid() << ": Incompatible drive state: state=" <<
-        driveStateToStr(m_state);
+        catalogueDriveStateToStr(m_state);
       delete m_session;
       m_session = NULL;
       throw ex;
@@ -847,7 +829,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
       ex.getMessage() <<
         "Failed to record tape session failed for session with pid " <<
         getSession().getPid() << ": Incompatible drive state: state=" <<
-        driveStateToStr(m_state);
+        catalogueDriveStateToStr(m_state);
       delete m_session;
       m_session = NULL;
       throw ex;
@@ -1158,11 +1140,12 @@ std::string castor::tape::tapeserver::daemon::CatalogueDrive::
 // changeState
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::changeState(
-  const DriveState newState) throw() {
+  const CatalogueDriveState newState) throw() {
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", m_config.getUnitName()));
-  params.push_back(log::Param("previousState", driveStateToStr(m_state)));
-  params.push_back(log::Param("newState", driveStateToStr(newState)));
+  params.push_back(log::Param("previousState",
+    catalogueDriveStateToStr(m_state)));
+  params.push_back(log::Param("newState", catalogueDriveStateToStr(newState)));
   if(NULL != m_session) {
     params.push_back(log::Param("sessionPid", m_session->getPid()));
   }

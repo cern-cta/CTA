@@ -601,12 +601,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   params.push_back(log::Param("dgn", driveConfig.getDgn()));
 
   switch(drive.getState()) {
-  case CatalogueDrive::DRIVE_STATE_DOWN:
+  case DRIVE_STATE_DOWN:
     params.push_back(log::Param("state", "down"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
     m_vdqm.setDriveDown(m_hostName, unitName, driveConfig.getDgn());
     break;
-  case CatalogueDrive::DRIVE_STATE_UP:
+  case DRIVE_STATE_UP:
     params.push_back(log::Param("state", "up"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
     m_vdqm.setDriveUp(m_hostName, unitName, driveConfig.getDgn());
@@ -617,7 +617,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
       ex.getMessage() << "Failed to register tape drive in vdqm"
         ": server=" << m_hostName << " unitName=" << unitName << " dgn=" <<
         driveConfig.getDgn() << ": Invalid drive state: state=" <<
-        CatalogueDrive::driveStateToStr(drive.getState());
+        catalogueDriveStateToStr(drive.getState());
       throw ex;
     }
   }

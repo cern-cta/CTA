@@ -21,14 +21,14 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/CatalogueDrive.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueDriveState.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-class castor_tape_tapeserver_daemon_CatalogueDriveTest :
+class castor_tape_tapeserver_daemon_CatalogueDriveStateTest :
   public ::testing::Test {
 protected:
 
@@ -39,19 +39,26 @@ protected:
   }
 };
 
-TEST_F(castor_tape_tapeserver_daemon_CatalogueDriveTest, driveStateToStr) {
+TEST_F(castor_tape_tapeserver_daemon_CatalogueDriveStateTest,
+  catalogueDriveStateToStr) {
   using namespace castor::tape::tapeserver::daemon;
 
   ASSERT_EQ(std::string("INIT"),
-    CatalogueDrive::driveStateToStr(CatalogueDrive::DRIVE_STATE_INIT));
+    catalogueDriveStateToStr(DRIVE_STATE_INIT));
   ASSERT_EQ(std::string("DOWN"),
-    CatalogueDrive::driveStateToStr(CatalogueDrive::DRIVE_STATE_DOWN));
+    catalogueDriveStateToStr(DRIVE_STATE_DOWN));
   ASSERT_EQ(std::string("UP"),
-    CatalogueDrive::driveStateToStr(CatalogueDrive::DRIVE_STATE_UP));
-  ASSERT_EQ(std::string("RUNNING"), CatalogueDrive::driveStateToStr(
-    CatalogueDrive::DRIVE_STATE_RUNNING));
-  ASSERT_EQ(std::string("WAITDOWN"), CatalogueDrive::driveStateToStr(
-    CatalogueDrive::DRIVE_STATE_WAITDOWN));
+    catalogueDriveStateToStr(DRIVE_STATE_UP));
+  ASSERT_EQ(std::string("RUNNING"),
+    catalogueDriveStateToStr(DRIVE_STATE_RUNNING));
+  ASSERT_EQ(std::string("WAITDOWN"),
+    catalogueDriveStateToStr(DRIVE_STATE_WAITDOWN));
+  ASSERT_EQ(std::string("WAITSHUTDOWNKILL"),
+    catalogueDriveStateToStr(DRIVE_STATE_WAITSHUTDOWNKILL));
+  ASSERT_EQ(std::string("WAITSHUTDOWNCLEANER"),
+    catalogueDriveStateToStr(DRIVE_STATE_WAITSHUTDOWNCLEANER));
+  ASSERT_EQ(std::string("SHUTDOWN"),
+    catalogueDriveStateToStr(DRIVE_STATE_SHUTDOWN));
 }
 
 } // namespace unitTests

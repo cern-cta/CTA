@@ -25,6 +25,7 @@ add_library(castorTapeServerDaemon
   ../client/ClientProxy.cpp 
   Catalogue.cpp
   CatalogueDrive.cpp
+  CatalogueDriveState.cpp
   CatalogueSession.cpp
   CatalogueLabelSession.cpp
   CatalogueTransferSession.cpp

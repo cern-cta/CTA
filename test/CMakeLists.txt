@@ -155,7 +155,7 @@ add_executable(castorUnitTests
 #  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp
   ../castor/tape/tapeserver/daemon/Catalogue.cpp
   ../castor/tape/tapeserver/daemon/CatalogueDrive.cpp
-  ../castor/tape/tapeserver/daemon/CatalogueDriveTest.cpp
+  ../castor/tape/tapeserver/daemon/CatalogueDriveStateTest.cpp
   ../castor/tape/tapeserver/daemon/CatalogueTest.cpp
   ../castor/tape/tapeserver/daemon/DriveConfigTest.cpp
   ../castor/tape/tapeserver/daemon/ProcessForker.cpp
