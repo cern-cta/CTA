@@ -56,7 +56,7 @@ castor::tape::tapeserver::daemon::DataTransferConfig
 
   config.bufsz = castorConf.getConfEntInt(
     "TapeServer", "BufSize",
-    castor::tape::tapeserver::daemon::TAPESERVER_BUFSZ_DEFAULT, log);
+    castor::tape::tapeserver::daemon::TAPESERVER_BUFSZ, log);
   config.nbBufs = castorConf.getConfEntInt<uint32_t>(
     "TapeServer", "NbBufs", log);
   config.bulkRequestMigrationMaxBytes = castorConf.getConfEntInt(
@@ -79,7 +79,7 @@ castor::tape::tapeserver::daemon::DataTransferConfig
     (uint64_t)TAPEBRIDGE_MAXFILESBEFOREFLUSH, log);
   config.nbDiskThreads = castorConf.getConfEntInt(
     "TapeServer", "NbDiskThreads", 
-    castor::tape::tapeserver::daemon::TAPESERVER_NB_DISK_THREAD_DEFAULT, log);
+    castor::tape::tapeserver::daemon::TAPESERVER_NB_DISK_THREAD, log);
   config.remoteFileProtocol = castorConf.getConfEntString(
     "TapeServer", "RemoteFileProtocol", "RFIO", log);
   config.xrootPrivateKey = castorConf.getConfEntString(

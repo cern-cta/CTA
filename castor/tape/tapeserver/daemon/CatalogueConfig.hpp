@@ -43,19 +43,26 @@ struct CatalogueConfig {
    * The maximum time in seconds that the data-transfer session can take to get
    * the transfer job from the client.
    */
-  time_t waitJobTimeoutInSecs;
+  time_t waitJobTimeoutSecs;
 
   /**
    * The maximum time in seconds that the data-transfer session can take to
    * mount a tape.
    */
-  time_t mountTimeoutInSecs;
+  time_t mountTimeoutSecs;
 
   /**
    * The maximum time in seconds the data-transfer session of tapeserverd can
    * cease to move data blocks
    */
-  time_t blockMoveTimeoutInSecs;
+  time_t blockMoveTimeoutSecs;
+
+  /**
+   * The time interval in seconds to wait between attempts to keep the vdqmd
+   * daemon synchronized with the state of a tape drive within the catalogue of
+   * the tapeserverd daemon.
+   */
+  time_t vdqmDriveSyncIntervalSecs;
 
   /**
    * Constructor that sets all integer member-variables to 0 and all string

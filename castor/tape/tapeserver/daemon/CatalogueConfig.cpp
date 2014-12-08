@@ -30,9 +30,10 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CatalogueConfig::CatalogueConfig() throw():
-  waitJobTimeoutInSecs(0),
-  mountTimeoutInSecs(0),
-  blockMoveTimeoutInSecs(0) {
+  waitJobTimeoutSecs(0),
+  mountTimeoutSecs(0),
+  blockMoveTimeoutSecs(0),
+  vdqmDriveSyncIntervalSecs(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -45,12 +46,14 @@ castor::tape::tapeserver::daemon::CatalogueConfig
     common::CastorConfiguration::getConfig();
 
   CatalogueConfig config;
-  config.waitJobTimeoutInSecs = castorConf.getConfEntInt("TapeServer",
-    "WaitJobTimeout", (time_t)TAPESERVER_WAITJOBTIMEOUT_DEFAULT, log);
-  config.mountTimeoutInSecs = castorConf.getConfEntInt("TapeServer",
-    "MountTimeout", (time_t)TAPESERVER_MOUNTTIMEOUT_DEFAULT, log);
-  config.blockMoveTimeoutInSecs = castorConf.getConfEntInt("TapeServer",
-    "BlkMoveTimeout", (time_t)TAPESERVER_BLKMOVETIMEOUT_DEFAULT, log);
+  config.waitJobTimeoutSecs = castorConf.getConfEntInt("TapeServer",
+    "WaitJobTimeout", TAPESERVER_WAITJOBTIMEOUT, log);
+  config.mountTimeoutSecs = castorConf.getConfEntInt("TapeServer",
+    "MountTimeout", TAPESERVER_MOUNTTIMEOUT, log);
+  config.blockMoveTimeoutSecs = castorConf.getConfEntInt("TapeServer",
+    "BlkMoveTimeout", TAPESERVER_BLKMOVETIMEOUT, log);
+  config.vdqmDriveSyncIntervalSecs = castorConf.getConfEntInt("TapeServer",
+    "VdqmDriveSyncInterval", TAPESERVER_VDQMDRIVESYNCINTERVAL, log);
 
   return config;
 }

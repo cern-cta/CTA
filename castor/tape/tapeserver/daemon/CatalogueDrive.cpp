@@ -47,9 +47,7 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   const std::string &hostName,
   const DriveConfig &config,
   const CatalogueDriveState state,
-  const time_t waitJobTimeoutInSecs,
-  const time_t mountTimeoutInSecs,
-  const time_t blockMoveTimeoutInSecs)
+  const CatalogueConfig &catalogueConfig)
   throw():
   m_netTimeout(netTimeout),
   m_log(log),
@@ -60,10 +58,12 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   m_hostName(hostName),
   m_config(config),
   m_state(state),
-  m_waitJobTimeoutInSecs(waitJobTimeoutInSecs),
-  m_mountTimeoutInSecs(mountTimeoutInSecs),
-  m_blockMoveTimeoutInSecs(blockMoveTimeoutInSecs),
-  m_session(NULL) {
+  m_waitJobTimeoutSecs(catalogueConfig.waitJobTimeoutSecs),
+  m_mountTimeoutSecs(catalogueConfig.mountTimeoutSecs),
+  m_blockMoveTimeoutSecs(catalogueConfig.blockMoveTimeoutSecs),
+  m_session(NULL),
+  m_vdqmDriveSynchronizer(log, vdqm, hostName, config,
+    catalogueConfig.vdqmDriveSyncIntervalSecs) {
 }
 
 //------------------------------------------------------------------------------
@@ -84,137 +84,9 @@ bool castor::tape::tapeserver::daemon::CatalogueDrive::handleTick() {
     return false; // Do no continue the main event loop
   }
 
-  syncVdqmWithDriveStateWhenNecessary();
+  m_vdqmDriveSynchronizer.sync(m_state);
 
   return true; // Continue the main event loop
-}
-
-//------------------------------------------------------------------------------
-// syncVdqmWithDriveStateWhenNecessary
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueDrive::
-  syncVdqmWithDriveStateWhenNecessary() {
-  std::string errMsg;
-
-  try {
-    if(600.0 < m_syncVdqmTimer.secs()) {
-      m_syncVdqmTimer.reset();
-      syncVdqmWithDriveStateIfOutOfSync();
-    }
-    return;
-  } catch(castor::exception::Exception &ex) {
-    errMsg = ex.getMessage().str();
-  } catch(std::exception &se) {
-    errMsg = se.what();
-  } catch(...) {
-    errMsg = "Caught an unknown exception";
-  }
-
-  // Reaching here means an exception was thrown
-  // Failing to synchronise the vdqm with the drive state is not fatal
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", m_config.getUnitName()));
-  params.push_back(log::Param("dgn", m_config.getDgn()));
-  params.push_back(log::Param("message", errMsg));
-  m_log(LOG_WARNING, "Failed to synchronise vdqm with drive state", params);
-}
-
-//------------------------------------------------------------------------------
-// syncVdqmWithDriveStateIfOutOfSync
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueDrive::
-  syncVdqmWithDriveStateIfOutOfSync() {
-  // If the drive is UP and therefore ready for new work
-  if(DRIVE_STATE_UP == m_state) {
-    // Query the vdqmd daemon for the state of the drive
-    const int vdqmDriveStatus = m_vdqm.getDriveStatus(m_hostName,
-      m_config.getUnitName(), m_config.getDgn());
-    const bool vdqmDriveRunning = vdqmDriveStatus ==
-      (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_ASSIGN);
-    const bool vdqmDriveRelease = vdqmDriveStatus ==
-      (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_RELEASE|VDQM_UNIT_UNKNOWN);
-    const bool vdqmDriveBadUnknown = vdqmDriveStatus ==
-      (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_UNKNOWN);
-
-    // If the vdqmd daemon thinks the drive is not read for new work
-    //
-    // We explicitely do not check (vdqmstate == UP|FREE) here, since
-    // VDQM changes the state to UP|BUSY before contacting tape daemon.
-    // The latter should not reset the state to UP|FREE in that case. 
-    if(vdqmDriveRunning || vdqmDriveRelease || vdqmDriveBadUnknown) {
-      std::list<log::Param> params;
-      params.push_back(log::Param("unitName", m_config.getUnitName()));
-      params.push_back(log::Param("dgn", m_config.getDgn()));
-      params.push_back(log::Param("vdqmDriveStatus", vdqmDriveStatus));
-      params.push_back(log::Param("vdqmDriveStatusStr",
-      vdqmDriveStatusToString(vdqmDriveStatus)));
-
-      m_log(LOG_WARNING, "Vdqm is out of sync with drive status", params);
-      syncVdqmWithDriveState();
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// syncVdqmWithDriveState
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueDrive::syncVdqmWithDriveState()
-  {
-  m_vdqm.setDriveUp(m_hostName, m_config.getUnitName(), m_config.getDgn());
-
-  const int vdqmDriveStatus = m_vdqm.getDriveStatus(m_hostName,
-      m_config.getUnitName(), m_config.getDgn());
-
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", m_config.getUnitName()));
-  params.push_back(log::Param("dgn", m_config.getDgn()));
-  params.push_back(log::Param("vdqmDriveStatus", vdqmDriveStatus));
-  params.push_back(log::Param("vdqmDriveStatusStr",
-    vdqmDriveStatusToString(vdqmDriveStatus)));
-
-  m_log(LOG_WARNING, "Forced drive UP in vdqm", params);
-}
-
-//------------------------------------------------------------------------------
-// vdqmDriveStatusToString
-//------------------------------------------------------------------------------
-std::string castor::tape::tapeserver::daemon::CatalogueDrive::
-  vdqmDriveStatusToString(int status) {
-  std::ostringstream oss;
-
-  appendBitIfSet(VDQM_UNIT_UP,             "UP", status, oss);
-  appendBitIfSet(VDQM_UNIT_DOWN,         "DOWN", status, oss);
-  appendBitIfSet(VDQM_UNIT_WAITDOWN, "WAITDOWN", status, oss);
-  appendBitIfSet(VDQM_UNIT_ASSIGN  ,   "ASSIGN", status, oss);
-  appendBitIfSet(VDQM_UNIT_RELEASE,   "RELEASE", status, oss);
-  appendBitIfSet(VDQM_UNIT_BUSY,         "BUSY", status, oss);
-  appendBitIfSet(VDQM_UNIT_FREE,         "FREE", status, oss);
-  appendBitIfSet(VDQM_UNIT_UNKNOWN,   "UNKNOWN", status, oss);
-  appendBitIfSet(VDQM_UNIT_ERROR,       "ERROR", status, oss);
-
-  if(status) {
-    if(!oss.str().empty()) {
-      oss << "|";
-    }
-    oss << "leftovers=0x" << std::hex << status;
-  }
-
-  return oss.str();
-}
-
-//------------------------------------------------------------------------------
-// appendBitIfSet
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueDrive::appendBitIfSet(
-  const int bitMask, const std::string bitMaskName, int &bitSet,
-  std::ostringstream &bitSetStringStream) {
-  if(bitSet & bitMask) {
-    if(!bitSetStringStream.str().empty()) {
-      bitSetStringStream << "|";
-    }
-    bitSetStringStream << bitMaskName;
-    bitSet -= bitMask;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -572,9 +444,9 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedVdqmJob(
           m_vmgr,
           m_cupv,
           m_hostName,
-          m_waitJobTimeoutInSecs,
-          m_mountTimeoutInSecs,
-          m_blockMoveTimeoutInSecs,
+          m_waitJobTimeoutSecs,
+          m_mountTimeoutSecs,
+          m_blockMoveTimeoutSecs,
           m_processForker);
       m_session = dynamic_cast<CatalogueSession *>(transferSession);
       m_vdqm.assignDrive(m_hostName, m_config.getUnitName(), job.dgn,

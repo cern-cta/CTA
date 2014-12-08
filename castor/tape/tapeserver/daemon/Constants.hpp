@@ -54,31 +54,38 @@ const unsigned short TAPESERVER_INTERNAL_LISTENING_PORT = 54322;
  * The compile-time default value for the maximum time in seconds that the
  * data-transfer session can take to get the transfer job from the client.
  */
-const time_t TAPESERVER_WAITJOBTIMEOUT_DEFAULT = 60; // 1 minute
+const time_t TAPESERVER_WAITJOBTIMEOUT = 60; // 1 minute
 
 /** 
  * The compile-time default value for the maximum time in seconds that the
  * data-transfer session can take to mount a tape.
  */
-const time_t TAPESERVER_MOUNTTIMEOUT_DEFAULT = 900; // 15 minutes
+const time_t TAPESERVER_MOUNTTIMEOUT = 900; // 15 minutes
 
 /**
  * The compile-time default value for the maximum time in seconds the
  * data-transfer session of tapeserverd can cease to move data blocks.
  */
-const time_t TAPESERVER_BLKMOVETIMEOUT_DEFAULT = 1800; // 30 minutes
+const time_t TAPESERVER_BLKMOVETIMEOUT = 1800; // 30 minutes
+
+/**
+ * The time interval in seconds to wait between attempts to keep the vdqmd
+ * daemon synchronized with the state of a tape drive within the catalogue of
+ * the tapeserverd daemon.
+ */
+const time_t TAPESERVER_VDQMDRIVESYNCINTERVAL = 600; // 10 minutes
 
 /**
  * The compile-time default value for the number of disk threads in 
  * the thread pool serving disk accesses.
  */
-const uint32_t TAPESERVER_NB_DISK_THREAD_DEFAULT = 10;
+const uint32_t TAPESERVER_NB_DISK_THREAD = 10;
 
 /**
  * The compile-time default value for the memory buffers exchanged between
  * tape and disk threads.
  */
-const size_t TAPESERVER_BUFSZ_DEFAULT = 5 * 1024 * 1024;
+const size_t TAPESERVER_BUFSZ = 5 * 1024 * 1024;
 
 /**
  * The compile time timeout value for the potentially DB based calls to the client.

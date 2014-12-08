@@ -31,12 +31,14 @@
 #include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueCleanerSession.hpp"
+#include "castor/tape/tapeserver/daemon/CatalogueConfig.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueDriveState.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueLabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueSession.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
+#include "castor/tape/tapeserver/daemon/VdqmDriveSynchronizer.hpp"
 
 #include <iostream>
 #include <memory>
@@ -72,12 +74,8 @@ public:
    * name is needed to fill in messages to be sent to the vdqmd daemon.
    * @param config The configuration of the tape drive.
    * @param state The initial state of the tape drive.
-   * @param waitJobTimeoutInSecs The maximum time in seconds that the
-   * data-transfer session can take to get the transfer job from the client.
-   * @param mountTimeoutInSecs The maximum time in seconds that the
-   * data-transfer session can take to mount a tape.
-   * @param blockMoveTimeoutInSecs The maximum time in seconds that the
-   * data-transfer session can cease to move data blocks.
+   * @param catalogueConfig The CASTOR configuration parameters to be used by
+   * the catalogue.
    */
   CatalogueDrive(
     const int netTimeout,
@@ -89,9 +87,7 @@ public:
     const std::string &hostName,
     const DriveConfig &config,
     const CatalogueDriveState state,
-    const time_t waitJobTimeoutInSecs,
-    const time_t mountTimeoutInSecs,
-    const time_t blockMoveTimeoutInSecs) throw();
+    const CatalogueConfig &catalogueConfig) throw();
 
   /**
    * Destructor
@@ -385,19 +381,19 @@ private:
    * The maximum time in seconds that the data-transfer session can take to get
    * the transfer job from the client.
    */
-  const time_t m_waitJobTimeoutInSecs;
+  const time_t m_waitJobTimeoutSecs;
 
   /**
    * The maximum time in seconds that the data-transfer session can take to
    * mount a tape.
    */
-  const time_t m_mountTimeoutInSecs;
+  const time_t m_mountTimeoutSecs;
 
   /**
    * The maximum time in seconds that the data-transfer session can cease to
    * move data blocks.
    */
-  const time_t m_blockMoveTimeoutInSecs;
+  const time_t m_blockMoveTimeoutSecs;
   
   /**
    * The session metadata associated to the drive catalogue entry
@@ -405,52 +401,10 @@ private:
   CatalogueSession *m_session;
 
   /**
-   * Timer used to decide when to synchronise the vdqm with current status ofi
-   * this drive.
+   * Object responsible for sychronizing the vdqmd daemon with the state of
+   * this catalogue tape-drive.
    */
-  castor::utils::Timer m_syncVdqmTimer;
-
-  /**
-   * If enough time as past then this method synchronises the vdqmd daemon with
-   * the state of this drive.
-   */
-  void syncVdqmWithDriveStateWhenNecessary();
-
-  /**
-   * If this drive is UP and the vdqmd daemon thinks otherwise then this method
-   * synchronises the vdqm with the state of this drive.
-   */
-  void syncVdqmWithDriveStateIfOutOfSync();
-
-  /**
-   * Synchronises the vdqmd daemon with the state of this drive.
-   */
-  void syncVdqmWithDriveState();
-
-  /**
-   * Returns the string representation of the specified drive status from the
-   * vdqmd daemon.
-   *
-   * @param The drive status.
-   * @return The string representation.
-   */
-  std::string vdqmDriveStatusToString(int status);
-
-  /**
-   * This is a helper method for vdqmDriveStatusToString().
-   *
-   * If the specified bit mask is set within the specified bit set then this
-   * method appends the specified name of the bit mask to the end of the
-   * specified string stream representation of the bit set.  This method also
-   * modifies the bit set by unsetting the bit mask if it was set.
-   *
-   * @param bitMask The bit mask to be tested against the bit set.
-   * @param bitMaskName The name of the bit mask.
-   * @param bitSet In/out parameter: The bit set.
-   * @param bitSetStringStream The string stream representation of the bit set.
-   */
-  void appendBitIfSet(const int bitMask, const std::string bitName, int &bitSet,
-    std::ostringstream &bitSetStringStream);
+  VdqmDriveSynchronizer m_vdqmDriveSynchronizer;
 
   /**
    * Checks that there is a tape session currently associated with the
