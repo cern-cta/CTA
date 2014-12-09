@@ -24,6 +24,7 @@
 #include <gtest/gtest.h>
 #include "castor/server/Threading.hpp"
 #include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
+#include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
 
@@ -153,6 +154,63 @@ namespace unitTests {
     for (std::vector<CryptoPPKeyThread>::iterator i=m_threads.begin(); 
         i!=m_threads.end(); i++)
       i->wait();
+  }
+  
+  class castor_CryptoPPDiskFileFactory: public castor::server::Thread {
+  public:
+    void setPath(const std::string & path) {
+      m_keyPath = path;
+    }
+  private:
+    virtual void run() {
+      castor::tape::diskFile::DiskFileFactory dff("xroot", m_keyPath, 0);
+      for (int i=0; i<5; i++) {
+        // Read keys in parallel and in a loop to test MT protection of the
+        // key reading, not protected here.
+        dff.xrootPrivateKey();
+      }
+    }
+    std::string m_keyPath;
+  };
+  
+  class TempFileForXrootKey {
+  public:
+    TempFileForXrootKey(const std::string & content) {
+      char path[100];
+      strncpy(path, "/tmp/castorUnitTestPrivateKeyXXXXXX", 100);
+      int tmpFileFd = mkstemp(path);
+      castor::exception::Errnum::throwOnMinusOne(tmpFileFd, "Error creating a temporary file");
+      m_path = path;
+      castor::exception::Errnum::throwOnMinusOne(write(tmpFileFd, content.c_str(), content.size()));
+    }
+    ~TempFileForXrootKey() {
+      ::unlink(m_path.c_str());
+    }
+    const std::string & path() {
+      return m_path;
+    }
+  private:
+    std::string m_path;
+  };
+  
+  TEST(castor_CryptoPP, multiThreadingFileFactoryKeyRead) {
+    // Create the key file
+    TempFileForXrootKey keyFile(somePrivateKey);
+    // Run the threads
+    std::vector<castor_CryptoPPDiskFileFactory> m_threads;
+    m_threads.resize(3);
+    for (std::vector<castor_CryptoPPDiskFileFactory>::iterator i=m_threads.begin(); 
+        i!=m_threads.end(); i++) {
+      i->setPath(keyFile.path());
+    }
+    for (std::vector<castor_CryptoPPDiskFileFactory>::iterator i=m_threads.begin(); 
+        i!=m_threads.end(); i++) {
+      i->start();
+    }
+    for (std::vector<castor_CryptoPPDiskFileFactory>::iterator i=m_threads.begin(); 
+        i!=m_threads.end(); i++) {
+      i->wait();
+    }
   }
   
   TEST(castor_CryptoPP, agreesWithOpenSSL) {

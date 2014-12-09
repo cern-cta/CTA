@@ -71,6 +71,7 @@ namespace castor {
         bool m_xrootPrivateKeyLoaded;
         uint16_t m_moverHandlerPort;
         
+      public:
         /** Return the private key. Read it from the file if necessary. */ 
         const CryptoPP::RSA::PrivateKey & xrootPrivateKey();
       };
