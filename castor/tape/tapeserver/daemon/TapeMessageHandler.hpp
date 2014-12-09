@@ -52,6 +52,9 @@ public:
   /**
    * Constructor.
    *
+   * @param internalPort The TCP/IP port on which ZMQ sockets will bind for
+   * internal communication between forked sessions and the parent tapeserverd
+   * process.
    * @param reactor The reactor to which new Vdqm connection handlers are to
    * be registered.
    * @param log The object representing the API of the CASTOR logging system.
@@ -62,6 +65,7 @@ public:
    * @param zmqContext The ZMQ context.
    */
   TapeMessageHandler(
+    const unsigned short internalPort,
     reactor::ZMQReactor &reactor,
     log::Logger &log,
     Catalogue &driveCatalogue,

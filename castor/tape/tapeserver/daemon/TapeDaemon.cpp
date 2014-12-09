@@ -533,7 +533,7 @@ int castor::tape::tapeserver::daemon::TapeDaemon::runProcessForker(
   const int cmdReceiverSocket, const int reaperSenderSocket) throw() {
   try {
     ProcessForker processForker(m_log, cmdReceiverSocket, reaperSenderSocket,
-      m_hostName, m_argv[0], m_tapeDaemonConfig.processForkerConfig);
+      m_hostName, m_argv[0], m_tapeDaemonConfig);
     processForker.execute();
     return 0;
   } catch(castor::exception::Exception &ex) {
@@ -685,7 +685,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
   try {
     castor::utils::SmartFd listenSock;
     try {
-      listenSock.reset(io::createListenerSock(TAPESERVER_VDQM_LISTENING_PORT));
+      listenSock.reset(io::createListenerSock(m_tapeDaemonConfig.jobPort));
     } catch(castor::exception::Exception &ne) {
       castor::exception::Exception ex(ne.code());
       ex.getMessage() << "Failed to create socket to listen for vdqm connections"
@@ -694,7 +694,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     }
     {
       log::Param params[] = {
-        log::Param("listeningPort", TAPESERVER_VDQM_LISTENING_PORT)};
+        log::Param("listeningPort", m_tapeDaemonConfig.jobPort)};
       m_log(LOG_INFO, "Listening for connections from the vdqmd daemon", params);
     }
 
@@ -729,7 +729,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
   try {
     castor::utils::SmartFd listenSock;
     try {
-      listenSock.reset(io::createListenerSock(TAPESERVER_ADMIN_LISTENING_PORT));
+      listenSock.reset(io::createListenerSock(m_tapeDaemonConfig.adminPort));
     } catch(castor::exception::Exception &ne) {
       castor::exception::Exception ex(ne.code());
       ex.getMessage() <<
@@ -739,7 +739,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     }
     {
       log::Param params[] = {
-        log::Param("listeningPort", TAPESERVER_ADMIN_LISTENING_PORT)};
+        log::Param("listeningPort", m_tapeDaemonConfig.adminPort)};
       m_log(LOG_INFO, "Listening for connections from the admin commands",
         params);
     }
@@ -776,7 +776,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     castor::utils::SmartFd listenSock;
     try {
       listenSock.reset(
-        io::createListenerSock(TAPESERVER_LABELCMD_LISTENING_PORT));
+        io::createListenerSock(m_tapeDaemonConfig.labelPort));
     } catch(castor::exception::Exception &ne) {
       castor::exception::Exception ex(ne.code());
       ex.getMessage() <<
@@ -786,7 +786,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     }
     {
       log::Param params[] = {
-        log::Param("listeningPort", TAPESERVER_LABELCMD_LISTENING_PORT)};
+        log::Param("listeningPort", m_tapeDaemonConfig.labelPort)};
       m_log(LOG_INFO, "Listening for connections from label command",
         params);
     }
@@ -822,8 +822,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
   try {
     std::auto_ptr<TapeMessageHandler> handler;
     try {
-      handler.reset(new TapeMessageHandler(m_reactor, m_log, *m_catalogue,
-        m_hostName, m_vdqm, m_vmgr, m_zmqContext));
+      handler.reset(new TapeMessageHandler(m_tapeDaemonConfig.internalPort,
+        m_reactor, m_log, *m_catalogue, m_hostName, m_vdqm, m_vmgr,
+        m_zmqContext));
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
       ex.getMessage() <<

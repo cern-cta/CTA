@@ -21,17 +21,17 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/label/LabelCmd.hpp"
-#include "castor/tape/label/ParsedTpLabelCommandLine.hpp"
-#include "castor/tape/tpcp/Constants.hpp"
+#include "castor/common/CastorConfiguration.hpp"
+#include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
+#include "castor/legacymsg/GenericMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
-#include "castor/io/io.hpp"
+#include "castor/tape/label/LabelCmd.hpp"
+#include "castor/tape/label/ParsedTpLabelCommandLine.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
-#include "h/Ctape.h"
 #include "castor/tape/tpcp/Constants.hpp"
-#include "castor/legacymsg/GenericMarshal.hpp"
+#include "h/Ctape.h"
 
 #include <getopt.h>
 #include <iostream>
@@ -288,6 +288,10 @@ int castor::tape::label::LabelCmd::executeCommand()  {
 // writeTapeLabelRequest
 //------------------------------------------------------------------------------
 void castor::tape::label::LabelCmd::writeTapeLabelRequest(const int timeout) {
+  common::CastorConfiguration &castorConf =
+    common::CastorConfiguration::getConfig();
+  const unsigned short tapeServerLabelPort = castorConf.getConfEntInt(
+    "TapeServer", "LabelPort", tapeserver::daemon::TAPESERVER_LABEL_PORT);
   castor::legacymsg::TapeLabelRqstMsgBody body;
   body.uid = m_userId;
   body.gid = m_groupId;
@@ -298,8 +302,9 @@ void castor::tape::label::LabelCmd::writeTapeLabelRequest(const int timeout) {
   
   char buf[REQBUFSZ];
   const size_t len = castor::legacymsg::marshal(buf, sizeof(buf), body);
+
   m_smartClientConnectionSock.reset(castor::io::connectWithTimeout("127.0.0.1",
-    tapeserver::daemon::TAPESERVER_LABELCMD_LISTENING_PORT, timeout));
+    tapeServerLabelPort, timeout));
   
   try {
     castor::io::writeBytes(m_smartClientConnectionSock.get(), timeout, len, buf);

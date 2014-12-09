@@ -28,27 +28,27 @@ namespace daemon     {
 
 /**
  * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the VDQM server.
+ * connections and jobs from the VDQM server.
  */
-const unsigned short TAPESERVER_VDQM_LISTENING_PORT = 5070;
+const unsigned short TAPESERVER_JOB_PORT = 5070;
 
 /**
  * The TCP/IP port on which the tape server daemon listens for incoming
  * connections from the tpconfig admin command.
  */
-const unsigned short TAPESERVER_ADMIN_LISTENING_PORT = 5011;
+const unsigned short TAPESERVER_ADMIN_PORT = 5011;
 
 /**
  * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the label command.
+ * connections from the tape labeling command.
  */
-const unsigned short TAPESERVER_LABELCMD_LISTENING_PORT = 54321;
+const unsigned short TAPESERVER_LABEL_PORT = 54321;
 
-/*
- * The port on which ZMQ sockets will bind for internal communication between 
- * forked sessions and the parent tapeserverd process.
+/**
+ * The TCP/IP port on which ZMQ sockets will bind for internal communication
+ * between forked sessions and the parent tapeserverd process.
  */
-const unsigned short TAPESERVER_INTERNAL_LISTENING_PORT = 54322;
+const unsigned short TAPESERVER_INTERNAL_PORT = 54322;
 
 /**
  * The compile-time default value for the maximum time in seconds that the

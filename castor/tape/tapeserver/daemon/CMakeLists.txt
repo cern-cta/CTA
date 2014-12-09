@@ -48,7 +48,6 @@ add_library(castorTapeServerDaemon
   MigrationTaskInjector.cpp
   DataTransferSession.cpp
   ProcessForker.cpp
-  ProcessForkerConfig.cpp
   ProcessForkerConnectionHandler.cpp
   ProcessForkerProxy.cpp
   ProcessForkerProxyDummy.cpp

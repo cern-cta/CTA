@@ -51,6 +51,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
+  const unsigned short internalPort,
   reactor::ZMQReactor &reactor,
   log::Logger &log,Catalogue &driveCatalogue,
   const std::string &hostName,
@@ -66,7 +67,7 @@ castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
   m_vmgr(vmgr) { 
 
   std::ostringstream endpoint;
-  endpoint << "tcp://127.0.0.1:" << TAPESERVER_INTERNAL_LISTENING_PORT;
+  endpoint << "tcp://127.0.0.1:" << internalPort;
   
   try {
     m_socket.bind(endpoint.str().c_str());

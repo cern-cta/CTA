@@ -25,7 +25,7 @@
 
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueConfig.hpp"
-#include "castor/tape/tapeserver/daemon/ProcessForkerConfig.hpp"
+#include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -39,11 +39,6 @@ namespace daemon {
  * The contents of the castor.conf file to be used by the tape-server daemon.
  */
 struct TapeDaemonConfig {
-
-  /**
-   * The CASTOR configuration parameters used by the ProcessForker.
-   */
-  ProcessForkerConfig processForkerConfig;
 
   /**
    * The CASTOR configuration parameters used by the Catalogue.
@@ -64,6 +59,48 @@ struct TapeDaemonConfig {
    * The network name of the host on which the vmgr host is running.
    */
   std::string vmgrHost;
+
+  /**
+   * The TCP/IP port on which the rmcd daemon is listening.
+   */
+  unsigned short rmcPort;
+
+  /**
+   * The TCP/IP port on which the tape server daemon listens for incoming
+   * connections from the VDQM server.
+   */
+  unsigned short jobPort;
+
+  /**
+   * The TCP/IP port on which the tape server daemon listens for incoming
+   * connections from the tpconfig admin command.
+   */
+  unsigned short adminPort;
+
+  /**
+   * The TCP/IP port on which the tape server daemon listens for incoming
+   * connections from the label command.
+   */
+  unsigned short labelPort;
+
+  /**
+   * The port on which ZMQ sockets will bind for internal communication between
+   * forked sessions and the parent tapeserverd process.
+   */
+  unsigned short internalPort;
+
+  /**
+   * The configuration parameters required by a data-transfer session.
+   */
+  DataTransferConfig dataTransfer;
+
+  /**
+   * Constructor.
+   *
+   * Initializes all integer values to 0 and all string values to the empty
+   * string.
+   */
+  TapeDaemonConfig();
 
   /**
    * Returns a configuration structure based on the contents of

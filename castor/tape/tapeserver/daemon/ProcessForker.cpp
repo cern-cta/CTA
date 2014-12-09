@@ -66,7 +66,7 @@ castor::tape::tapeserver::daemon::ProcessForker::ProcessForker(
   const int reaperSocket,
   const std::string &hostName,
   char *const argv0,
-  const ProcessForkerConfig &config) throw():
+  const TapeDaemonConfig &config) throw():
   m_log(log),
   m_cmdSocket(cmdSocket),
   m_reaperSocket(reaperSocket),
@@ -538,8 +538,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
   mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
 
-  messages::TapeserverProxyZmq tapeserver(m_log,
-    TAPESERVER_INTERNAL_LISTENING_PORT, zmqContext.get());
+  messages::TapeserverProxyZmq tapeserver(m_log, m_config.internalPort,
+    zmqContext.get());
 
   castor::tape::System::realWrapper sysWrapper;
 
@@ -847,8 +847,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     const int sizeOfIOThreadPoolForZMQ = 1;
     messages::SmartZmqContext
       zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
-    messages::TapeserverProxyZmq tapeserver(m_log,
-      TAPESERVER_INTERNAL_LISTENING_PORT, zmqContext.get());
+    messages::TapeserverProxyZmq tapeserver(m_log, m_config.internalPort,
+      zmqContext.get());
 
     messages::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
 

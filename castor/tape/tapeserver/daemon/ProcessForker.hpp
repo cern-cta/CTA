@@ -29,8 +29,8 @@
 #include "castor/messages/ForkDataTransfer.pb.h"
 #include "castor/messages/ForkLabel.pb.h"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
-#include "castor/tape/tapeserver/daemon/ProcessForkerConfig.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerFrame.hpp"
+#include "castor/tape/tapeserver/daemon/TapeDaemonConfig.hpp"
 
 #include <stdint.h>
 
@@ -60,12 +60,12 @@ public:
    * @param hostName The name of the host on which the tapeserverd daemon is
    * running.
    * @param argv0 Pointer to argv[0], the command-line.
-   * @param config The CASTOR configuration parameters used by the
-   * ProcessForker for the entire lifetime of the process.
+   * @param config The CASTOR configuration parameters used by the tapeserverd
+   * daemon.
    */
   ProcessForker(log::Logger &log, const int cmdSocket, const int reaperSocket,
     const std::string &hostName, char *const argv0,
-    const ProcessForkerConfig &config) throw();
+    const TapeDaemonConfig &config) throw();
 
   /**
    * Destructor.
@@ -116,9 +116,9 @@ private:
   char *const m_argv0;
 
   /**
-   * The CASTOR configuration parameters used by the ProcessForker.
+   * The CASTOR configuration parameters used by the tapeserverd daemon.
    */
-  const ProcessForkerConfig m_config;
+  const TapeDaemonConfig m_config;
 
   /**
    * Idempotent method that closes the socket used for receving commands
