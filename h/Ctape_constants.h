@@ -13,11 +13,6 @@
 #pragma once
 #include "h/Castor_limits.h"
 
-#ifdef TPCSEC
-#define STAPE_PORT 5511
-#endif
-#define TAPE_PORT 5011
-
 			/* config status */
 
 #define	CONF_DOWN	0

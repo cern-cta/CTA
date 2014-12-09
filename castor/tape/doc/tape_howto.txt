@@ -1621,8 +1621,6 @@ egrep -v 'HPP|MAX|IMPORT|EXPORT|VALID_PORT|EMONBASEOFF' > ports.txt
 ./h/tape_aggregator_constants.h:#define TAPE_AGGREGATOR_PORT (5070)
 ./h/Cns_constants.h:#define CNS_SEC_PORT 5510
 ./h/Cns_constants.h:#define CNS_PORT 5010
-./h/Ctape_constants.h:#define STAPE_PORT 5511
-./h/Ctape_constants.h:#define TAPE_PORT 5011
 ./h/rmc_constants.h:#define RMC_PORT 5014
 ./h/rtcp_constants.h:#define RTCOPY_PORT        (5503)
 ./h/rtcp_constants.h:#define RTCOPY_PORT        (5003)
