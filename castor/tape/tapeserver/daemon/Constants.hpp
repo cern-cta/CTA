@@ -21,6 +21,10 @@
 
 #pragma once
 
+#include <stdint.h>
+#include <stdlib.h>
+#include <time.h>
+
 namespace castor     {
 namespace tape       {
 namespace tapeserver {
@@ -99,4 +103,3 @@ const int TAPESERVER_DB_TIMEOUT = 60 * 5; // 5 minutes
 } // namespace tapeserver
 } // namespace tape
 } // namespace castor
-

@@ -5,6 +5,15 @@
  * All rights reserved
  */
 
+#include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "h/Cnetdb.h"
+#include "h/Ctape.h"
+#include "h/Ctape_api.h"
+#include "h/getconfent.h"
+#include "h/marshall.h"
+#include "h/net.h"
+#include "h/serrno.h"
+
 #include <errno.h>
 #include <sys/types.h>
 #include <stdlib.h>
@@ -12,16 +21,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include "Cnetdb.h"
 #include <stddef.h>
-#include "Ctape.h"
-#include "marshall.h"
-#include "net.h"
-#include "serrno.h"
-#ifdef TPCSEC
-#include "Csec_api.h"
-#endif
-#include "Ctape_api.h"
 
 /* send2tpd - send a request to the tape daemon and wait for the reply */
 
@@ -34,8 +34,6 @@ int send2tpd(char *host,
 	int actual_replen = 0;
 	int c;
 	char func[16];
-	char *getconfent();
-	char *getenv();
 	struct hostent *hp;
 	int magic;
 	int n;
@@ -45,43 +43,17 @@ int send2tpd(char *host,
 	char repbuf[REPBUFSZ];
 	int s;
 	struct sockaddr_in sin; /* internet socket */
-	struct servent *sp;
 	char tapehost[CA_MAXHOSTNAMELEN+1];
-#ifdef TPCSEC
-	Csec_context_t ctx;
-	int secure_connection = 0;
-#endif
 
 	strncpy (func, "send2tpd", 16);
-#ifdef TPCSEC
-	if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
-#endif
 	sin.sin_family = AF_INET;
-#ifdef TPCSEC
-	if (secure_connection) {
-	  if ((p = getenv ("STAPE_PORT")) || (p = getconfent ("STAPE", "PORT", 0))) {
-	    sin.sin_port = htons ((unsigned short)atoi (p));
-	  } else if (sp = Cgetservbyname ("stape", "tcp")) {
-	    sin.sin_port = sp->s_port;
-	    serrno = 0;
-	  } else {
-	    sin.sin_port = htons ((unsigned short)STAPE_PORT);
-	    serrno = 0;
-	  }
+	if ((p = getconfent ("TapeServer", "AdminPort", 0))) {
+		sin.sin_port = htons ((unsigned short)atoi (p));
 	} else {
-#endif
-	  if ((p = getenv ("TAPE_PORT")) || (p = getconfent ("TAPE", "PORT", 0))) {
-	    sin.sin_port = htons ((unsigned short)atoi (p));
-	  } else if ((sp = Cgetservbyname ("tape", "tcp"))) {
-	    sin.sin_port = sp->s_port;
-	    serrno = 0;
-	  } else {
-	    sin.sin_port = htons ((unsigned short)TAPE_PORT);
-	    serrno = 0;
-	  }
-#ifdef TPCSEC
+                using namespace castor::tape::tapeserver::daemon;
+		sin.sin_port = htons (TAPESERVER_ADMIN_PORT);
+		serrno = 0;
 	}
-#endif
 	if (host == NULL) {
 		gethostname (tapehost, CA_MAXHOSTNAMELEN+1);
 	} else {
@@ -113,29 +85,6 @@ int send2tpd(char *host,
 			return (-1);
 		}
 	}
-#ifdef TPCSEC
-
-		if (secure_connection) {
-		  
-		  if (Csec_client_initContext(&ctx, CSEC_SERVICE_TYPE_TAPE, NULL) <0) {
-			  Ctape_errmsg (func, TP002, "send", "Could not init context");
-			  (void) close (s);
-			  serrno = ESEC_CTX_NOT_INITIALIZED;
-			  return -1;
-			}
-			
-			if(Csec_client_establishContext(&ctx, s)< 0) {
-			  Ctape_errmsg (func, "%s: %s\n",
-				      "send",
-				      "Could not establish context");
-			  (void) close (s);
-			  serrno = ESEC_NO_CONTEXT;
-			  return -1;
-			}
-
-			Csec_clearContext(&ctx);
-		}
-#endif
 
 	/* send request to tape daemon */
 
