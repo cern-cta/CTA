@@ -189,14 +189,6 @@
 #define VDQM_PORT        (5012)
 #endif /* VDQM_PORT */
 
-#ifndef VDQMBC_PORT
-#ifdef VDQMCSEC
-#define VDQMBC_PORT      (9390)
-#else
-#define VDQMBC_PORT      (8890)
-#endif /* VDQMCSEC */
-#endif /* VDQMBC_PORT */
-
 #define VDQM_TIMEOUT     (300)
 #define VDQM_THREADPOOL  (10)
 #define VDQM_MAXTIMEDIFF (600)        /* Deferred unmount: max time diff to oldest request */

@@ -1617,8 +1617,6 @@ egrep -v 'HPP|MAX|IMPORT|EXPORT|VALID_PORT|EMONBASEOFF' > ports.txt
 ./castor/Constants.hpp:#define RHSERVER_PORT 9002
 ./h/vdqm_constants.h:#define SVDQM_PORT       (5512)
 ./h/vdqm_constants.h:#define VDQM_PORT        (5012)
-./h/vdqm_constants.h:#define VDQMBC_PORT      (9390)
-./h/vdqm_constants.h:#define VDQMBC_PORT      (8890)
 ./h/stage_constants.h:#define STAGE_PORT 5007
 ./h/tape_aggregator_constants.h:#define TAPE_AGGREGATOR_PORT (5070)
 ./h/Cns_constants.h:#define CNS_SEC_PORT 5510
