@@ -477,9 +477,9 @@ TEST(tapeServer, DataTransferSessionEmptyOnVolReq) {
   ASSERT_EQ(std::string::npos, logger.getLog().find("LVL=E"));
 }
 
-class tempFile {
+class TempFileForData {
 public:
-  tempFile(size_t size): m_size(size) {
+  TempFileForData(size_t size): m_size(size) {
     // Create a temporary file
     int randomFd = open("/dev/urandom", 0);
     castor::exception::Errnum::throwOnMinusOne(randomFd, "Error opening /dev/urandom");
@@ -506,7 +506,7 @@ public:
     }
   }
   
-  ~tempFile() {
+  ~TempFileForData() {
     unlink(m_path.c_str());
   }
   const size_t m_size;
@@ -517,7 +517,7 @@ private:
   uint32_t m_checksum;
 };
 
-class tempFileVector: public std::vector<tempFile *> {
+class tempFileVector: public std::vector<TempFileForData *> {
 public:
   ~tempFileVector() {
     while(size()) {
@@ -584,7 +584,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   // Prepare the files (in real filesystem as they will be opened by the rfio client)
   for (int fseq=1; fseq<=10; fseq++) {
     // Create the file from which we will recall
-    std::auto_ptr<tempFile> tf(new tempFile(1000));
+    std::auto_ptr<TempFileForData> tf(new TempFileForData(1000));
     // Prepare the migrationRequest
     castor::tape::tapegateway::FileToMigrateStruct ftm;
     ftm.setFileSize(tf->m_size);
@@ -672,7 +672,7 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   // Prepare the files, but delete them immediately. The migration will fail.
   for (int fseq=1; fseq<=10; fseq++) {
     // Create the file from which we will recall
-    std::auto_ptr<tempFile> tf(new tempFile(1000));
+    std::auto_ptr<TempFileForData> tf(new TempFileForData(1000));
     // Prepare the migrationRequest
     castor::tape::tapegateway::FileToMigrateStruct ftm;
     ftm.setFileSize(tf->m_size);
@@ -761,7 +761,7 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   for (int fseq=1; fseq<=10; fseq++) {
     // Create the file from which we will recall
     const size_t fileSize = 1000;
-    std::auto_ptr<tempFile> tf(new tempFile(fileSize));
+    std::auto_ptr<TempFileForData> tf(new TempFileForData(fileSize));
     // Prepare the migrationRequest
     castor::tape::tapegateway::FileToMigrateStruct ftm;
     ftm.setFileSize(tf->m_size);
@@ -864,7 +864,7 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   for (int fseq=1; fseq<=10; fseq++) {
     // Create the file from which we will recall
     const size_t fileSize = 1000;
-    std::auto_ptr<tempFile> tf(new tempFile(fileSize));
+    std::auto_ptr<TempFileForData> tf(new TempFileForData(fileSize));
     // Prepare the migrationRequest
     castor::tape::tapegateway::FileToMigrateStruct ftm;
     ftm.setFileSize(tf->m_size);
