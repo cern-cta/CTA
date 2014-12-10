@@ -36,6 +36,24 @@ Prints the usage message.
 \fB\-c, \-\-config <config-file>
 Set the location of the CASTOR configuration file (castor.conf).  The default location is /etc/castor/castor.conf.
 
+.SH CASTOR CONFIGURATION PARAMETERS
+The acsd daemon reads and uses the following CASTOR configuration
+parameters which are specified within the CASTOR configuration file (the
+default location is /etc/castor/castor.conf).
+
+.TP
+\fBAcsDaemon CmdTimeout
+The maximum time to wait in seconds for a tape-library command to conclude.
+
+.TP
+\fBAcsDaemon Port
+The TCP/IP port on which the CASTOR ACS daemon listens for incoming Zmq
+connections from the tape server.
+
+.TP
+\fBAcsDaemon QueryInterval
+Time to wait in seconds between queries to the tape Library.
+
 .SH FILES
 .TP
 .B /etc/castor/castor.conf
