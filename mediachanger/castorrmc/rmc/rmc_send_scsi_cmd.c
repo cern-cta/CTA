@@ -35,7 +35,7 @@
 #include "h/serrno.h"
 #include "h/rmc_send_scsi_cmd.h"
 static char rmc_err_msgbuf[132];
-static char *sk_msg[] = {
+static const char *sk_msg[] = {
         "No sense",
         "Recovered error",
         "Not ready",
@@ -188,7 +188,7 @@ int rmc_send_scsi_cmd (
 	}
 	if ((int)sizeof(struct sg_header)+cdblen+buflen > sg_bufsiz) {
 		if (sg_bufsiz > 0) free (sg_buffer);
-		if ((sg_buffer = malloc (sizeof(struct sg_header)+cdblen+buflen)) == NULL) {
+		if ((sg_buffer = (char *)malloc (sizeof(struct sg_header)+cdblen+buflen)) == NULL) {
 			serrno = errno;
 			sprintf (rmc_err_msgbuf, "cannot get memory");
 			*msgaddr = rmc_err_msgbuf;
