@@ -141,7 +141,7 @@ int rmc_send_scsi_cmd (
 	const int senselen,
 	const int flags,
 	int *const nb_sense_ret,
-	char **const msgaddr)
+	const char **const msgaddr)
 {
 	/* The timeout used when sending SCSI commands through the sg driver is in */
 	/* milliseconds and should equal that used by the st driver which on the   */

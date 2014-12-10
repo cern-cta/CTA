@@ -26,13 +26,13 @@
 
 #define	RBT_XTRA_PROC 10
 static struct smc_status smc_status;
-static char *smc_msgaddr;
+static const char *smc_msgaddr;
 
 static void save_error(
 	const int rc,
 	const int nb_sense,
 	const char *const sense,
-	char *const msgaddr)
+	const char *const msgaddr)
 {
 	smc_msgaddr = msgaddr;
 	smc_status.rc = rc;
@@ -84,7 +84,7 @@ static int get_element_size(
 {
 	unsigned char buf[128];
 	unsigned char cdb[12];
-	char *msgaddr;
+	const char *msgaddr;
 	int nb_sense_ret;
 	int rc;
 	char sense[MAXSENSE];
@@ -139,7 +139,7 @@ static int get_element_info(
 	char func[16];
 	int i;
 	int len;
-	char *msgaddr;
+	const char *msgaddr;
 	int nb_sense_ret;
 	unsigned char *p;
 	unsigned char *page_end, *page_start;
@@ -250,7 +250,7 @@ int smc_get_geometry(
 	unsigned char buf[36];
 	unsigned char cdb[6];
 	char func[16];
-	char *msgaddr;
+	const char *msgaddr;
 	int nb_sense_ret;
 	int rc;
 	char sense[MAXSENSE];
@@ -423,7 +423,7 @@ int smc_find_cartridge(
 {
 	unsigned char cdb[12];
 	char func[16];
-	char *msgaddr;
+	const char *msgaddr;
 	int nb_sense_ret;
 	char plist[40];
 	int rc;
@@ -601,7 +601,7 @@ int smc_move_medium(
 {
 	unsigned char cdb[12];
 	char func[16];
-	char *msgaddr;
+	const char *msgaddr;
 	int nb_sense_ret;
 	int rc;
 	char sense[MAXSENSE];
@@ -687,7 +687,7 @@ int smc_dismount (
 	int drive_not_unloaded = 1;
 	struct smc_element_info drive_element_info;
 	char func[16];
-	char *msgaddr = 0;
+	const char *msgaddr = 0;
 	struct smc_status smc_status;
  
 	strncpy (func, "smc_dismount", sizeof(func));
@@ -768,7 +768,7 @@ int smc_export (
 	char func[16];
 	int i;
         struct smc_element_info *impexp_info;
-	char *msgaddr;
+	const char *msgaddr;
 	int nbelem;
 	struct smc_status smc_status;
  
@@ -836,7 +836,7 @@ int smc_import (
         struct smc_element_info *element_info;
 	char func[16];
 	int i, j;
-	char *msgaddr;
+	const char *msgaddr;
 	int nbelem;
 	int port_start;
 	int slot_start;
@@ -924,7 +924,7 @@ int smc_mount (
     int c;
     struct smc_element_info element_info;
 	char func[16];
-	char *msgaddr;
+	const char *msgaddr;
 	struct smc_status smc_status;
  
 	strncpy (func, "smc_mount", sizeof(func));

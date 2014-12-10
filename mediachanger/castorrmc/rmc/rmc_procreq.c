@@ -84,7 +84,7 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 	gid_t gid;
 	int i;
 	char logbuf[CA_MAXVIDLEN+15];
-	char *msgaddr;
+	const char *msgaddr;
 	int nbelem;
 	char *rbp;
 	char *repbuf;
@@ -320,7 +320,7 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context) {
 	gid_t gid;
 	int i;
 	char logbuf[21];
-	char *msgaddr;
+	const char *msgaddr;
 	int nbelem;
 	char *rbp;
 	char *repbuf;
