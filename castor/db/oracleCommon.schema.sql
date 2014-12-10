@@ -376,7 +376,7 @@ CREATE TABLE SubRequest (retryCounter NUMBER,
                          errorCode NUMBER, 
                          errorMessage VARCHAR2(2048),
                          id NUMBER CONSTRAINT NN_SubRequest_Id NOT NULL,
-                         diskcopy INTEGER,
+                         diskCopy INTEGER,
                          diskServer INTEGER,
                          castorFile INTEGER,
                          status INTEGER,
@@ -401,7 +401,9 @@ ALTER TABLE SubRequest
   ADD CONSTRAINT PK_SubRequest_Id PRIMARY KEY (ID);
 CREATE INDEX I_SubRequest_Svc_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL;
 CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,NULL,9,NULL,status));
-CREATE INDEX I_SubRequest_Castorfile ON SubRequest (castorFile);
+CREATE INDEX I_SubRequest_CastorFile ON SubRequest (castorFile);
+ALTER TABLE SubRequest
+  ADD CONSTRAINT FK_SubRequest_CastorFile FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 CREATE INDEX I_SubRequest_DiskCopy ON SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_DiskServer ON SubRequest (diskServer);
 CREATE INDEX I_SubRequest_Request ON SubRequest (request);
