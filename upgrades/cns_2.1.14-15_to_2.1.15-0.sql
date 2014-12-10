@@ -159,6 +159,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
   outRC := serrno.ENOENT;
   outMsg := serrno.ENOENT_MSG;
+  ROLLBACK;  -- this is a no-op, but it's needed to close the autonomous transaction and avoid ORA-06519 errors
 END;
 /
 
