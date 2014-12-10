@@ -59,7 +59,7 @@ EXTERN_C int smc_find_cartridge(
 
 EXTERN_C int smc_lasterror(
   struct smc_status *const smc_stat,
-  char **const msgaddr);
+  const char **const msgaddr);
 
 EXTERN_C int smc_move_medium(
   const int fd,

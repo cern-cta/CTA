@@ -38,5 +38,5 @@ EXTERN_C int rmc_send_scsi_cmd (
   const int senselen,
   const int flags,
   int *const nb_sense_ret,
-  char **const msgaddr);
+  const char **const msgaddr);
 
