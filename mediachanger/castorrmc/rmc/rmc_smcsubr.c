@@ -741,8 +741,7 @@ int smc_dismount (
     /* check that the vid is in a slot before returning */
     while (1) {   
           struct smc_element_info vol_element_info;
-          const int elementType = 2; // Storage element
-          if (0 > smc_find_cartridge (fd, loader, drive_element_info.name, elementType, 0, 1, &vol_element_info)) {
+          if (0 > smc_find_cartridge (fd, loader, drive_element_info.name, 0, 0, 1, &vol_element_info)) {
               const int smc_error = smc_lasterror (&smc_status, &msgaddr);
               rmc_usrmsg ( rpfd, func, SR017, "find_cartridge", drive_element_info.name, msgaddr);
               return (smc_error);
@@ -931,8 +930,7 @@ int smc_mount (
 	strncpy (func, "smc_mount", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
-	const int elementType = 2; // Storage element
-	if ((c = smc_find_cartridge (fd, loader, vid, elementType, 0, 1, &element_info)) < 0) {
+	if ((c = smc_find_cartridge (fd, loader, vid, 0, 0, 1, &element_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		rmc_usrmsg ( rpfd, func, SR017, "find_cartridge", vid, msgaddr);
 		return (c);
