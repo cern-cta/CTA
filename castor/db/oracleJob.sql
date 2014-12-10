@@ -243,10 +243,11 @@ BEGIN
    WHERE id = varCfId;
   IF inoutErrorCode = 0 THEN
     -- no error, archive and log
-    archiveSubReq(varSrId, 8);  -- FINISHED
+    archiveSubReq(varSrId, dconst.SUBREQUEST_FINISHED);
     logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETENDED, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| inTransferId);
   ELSE
-    -- request failed, log
+    -- request failed, fail and log
+    archiveSubReq(varSrId, dconst.SUBREQUEST_FAILED_FINISHED);
     logToDLF(NULL, dlf.LVL_NOTICE, dlf.STAGER_GETENDED, varFileId, varNsHost, 'stagerd',
       'SUBREQID='|| inTransferId ||' errorMessage="'|| errmsg ||'" errorCode='|| inoutErrorCode);
     -- and return 0, the error has been handled
