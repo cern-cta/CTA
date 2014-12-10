@@ -172,7 +172,7 @@ static int get_element_info(
 		len += 8;	/* one element header */
 	else
 		len += 32;	/* possibly four element headers */
-	data = malloc (len);
+	data = (unsigned char *)malloc (len);
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = opcode;	/* read element status or request volume element address */
 	cdb[1] = 0x10 + type;
@@ -375,7 +375,7 @@ int smc_find_cartridge2 (
 	tot_nbelem = robot_info.transport_count + robot_info.slot_count +
 		robot_info.port_count + robot_info.device_count;
 
-	if ((inventory_info = malloc (tot_nbelem * sizeof(struct smc_element_info))) == NULL) {
+	if ((inventory_info = (struct smc_element_info *)malloc (tot_nbelem * sizeof(struct smc_element_info))) == NULL) {
 		serrno = errno;
 		sprintf (err_msgbuf, "malloc error: %s", strerror(errno));
 		msgaddr = err_msgbuf;
@@ -495,7 +495,7 @@ struct scsierr_codact {
 	unsigned char asc;
 	unsigned char ascq;
 	short action;
-	char *txt;
+	const char *txt;
 };
 static struct scsierr_codact scsierr_acttbl[] = {
     {0x02, 0x04, 0x00, RBT_FAST_RETRY, "Logical Unit Not Ready, Cause Not Reportable"},
@@ -548,7 +548,7 @@ static const char* action_to_str(const short action) {
 
 int smc_lasterror(
 	struct smc_status *const smc_stat,
-	char **const msgaddr)
+	const char **const msgaddr)
 {
 	unsigned int i;
 	char func[16];
@@ -791,7 +791,7 @@ int smc_export (
 	/* look for a free export slot */
 
 	nbelem = robot_info->port_count;
-	if ((impexp_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
+	if ((impexp_info = (struct smc_element_info *)malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
 		rmc_usrmsg ( rpfd, func, SR012);
 		return (RBT_NORETRY);
 	}
@@ -847,7 +847,7 @@ int smc_import (
 
 	nbelem = robot_info->transport_count + robot_info->slot_count +
 		 robot_info->port_count + robot_info->device_count;
-	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
+	if ((element_info = (struct smc_element_info *)malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
 		rmc_usrmsg ( rpfd, func, SR012);
 		return (RBT_NORETRY);
 	}
