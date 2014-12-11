@@ -391,28 +391,13 @@ castor::vdqm::IVdqmSvc *castor::vdqm::RTCPJobSubmitterThread::getDbVdqmSvc()
 // submitJob
 //-----------------------------------------------------------------------------
 void castor::vdqm::RTCPJobSubmitterThread::submitJob(const Cuuid_t &cuuid,
-  castor::vdqm::TapeRequest *request)
-   {
+  castor::vdqm::TapeRequest *request) {
   castor::vdqm::ClientIdentification *client = request->client();
   castor::vdqm::TapeDrive *tapeDrive  = request->tapeDrive();
   castor::vdqm::DeviceGroupName *dgn = tapeDrive->deviceGroupName();
   castor::vdqm::TapeServer *tapeServer = tapeDrive->tapeServer();
   const std::string remoteCopyType = request->remoteCopyType();
-  unsigned short port = 0;
-
-
-  if(remoteCopyType == "RTCPD") {
-    port = RTCOPY_PORT;
-  } else if(remoteCopyType == "AGGREGATOR" || remoteCopyType == "TAPEBRIDGE") {
-    port = TAPESERVER_VDQMPORT;
-  } else {
-    castor::exception::Exception ie;
-
-    ie.getMessage() << "Invalid remoteCopyType: " << remoteCopyType;
-
-    throw ie;
-  }
-
+  const unsigned short port = TAPESERVER_VDQMPORT;
   RemoteCopyConnection connection(port, tapeServer->serverName());
 
   try {

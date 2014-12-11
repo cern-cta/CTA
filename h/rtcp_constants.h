@@ -182,16 +182,7 @@
 /*
  * Some general constants
  */
-#if !defined(RTCOPY_PORT)
-#ifdef RTCOPYCSEC
-#define RTCOPY_PORT        (5503)
-#else
-#define RTCOPY_PORT        (5003)
-#endif /* RTCOPYCSEC */
-#endif /* RTCOPY_PORT */
-
 #define RTCP_MAX_REQUEST_LENGTH (8*1024*1024)
-#define RTCOPY_PORT_DEBUG  (8889)
 #define RTCP_HDRBUFSIZ     (3*LONGSIZE)
 #define RTCP_MSGBUFSIZ     (4096)
 #define VALID_MSGLEN(X) ((X)>0 && (X)<(RTCP_MSGBUFSIZ))
