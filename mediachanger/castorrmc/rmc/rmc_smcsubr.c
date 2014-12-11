@@ -148,6 +148,8 @@ static int get_element_info(
 	char sense[MAXSENSE];
         int pause_mode = 1;
         int nretries = 0;
+	int nbReportBytesRemaining = 0;
+	int nbElementsInReport = 0;
 
 	strncpy (func, "get_elem_info", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
@@ -207,15 +209,19 @@ static int get_element_info(
 		return (-1);
 	}
 	avail_elem = *(data+2) * 256 + *(data+3);
+	nbReportBytesRemaining = *(data+5) * 256 * 256 + *(data+6) * 256 + *(data+7);
 	i = 0;
 	p = data + 8;			/* point after data header */
-	while (i < avail_elem) {
+	while (i < avail_elem && 0 < nbReportBytesRemaining) {
+		nbReportBytesRemaining -= 8;
 		edl = *(p+2) * 256 + *(p+3);
 		page_start = p + 8;	/* point after page header */
 		page_end = page_start +
 			(((*(p+5) * 256 + *(p+6)) * 256) + *(p+7));
 		if (page_end > (data + len)) page_end = data + len;
 		for (p = page_start; p < page_end && i < avail_elem; p += edl, i++) {
+			nbElementsInReport++;
+			nbReportBytesRemaining -= edl;
 			element_info[i].element_address = *p * 256 + *(p+1);
 			element_info[i].element_type = *(page_start-8);
 			element_info[i].state = *(p+2);
@@ -239,7 +245,7 @@ static int get_element_info(
 		}
 	}
 	free (data);
-	return (avail_elem);
+	return (nbElementsInReport);
 }
 
 int smc_get_geometry(
