@@ -10,11 +10,6 @@
 #define STAGERSUPERGROUP "st"
 #define STAGERSUPERUSER "stage"
 
-#ifdef  STAGE_PORT
-#undef  STAGE_PORT
-#endif
-#define STAGE_PORT 5007
-
 /* =================================== */
 /* stage configuration maximum values  */
 /* =================================== */
