@@ -199,10 +199,9 @@ protected:
         if(m_fileBeingMoved && 
            m_blockMovementTimer.secs()>m_stuckPeriod &&
            m_blockMovementReportTimer.secs()>m_stuckPeriod){
-          // We are stuck while moving a file. We will log that.
+          // We are stuck while moving a file. We will just log that.
           logStuckFile();
           m_blockMovementReportTimer.reset();
-          break;
         }
       }
       
@@ -233,15 +232,25 @@ protected:
       }
     }
     // At the end of the run, make sure we push the last stats to the initial
-    // process
+    // process and that we process any remaining parameter.
     {
       castor::server::MutexLocker locker(&m_mutex);
       reportStats();
+      // Flush the one-of parameters one last time.
+      std::list<Param> params;
+      while (m_paramsQueue.size())
+        params.push_back(m_paramsQueue.pop());
+      if (params.size()) {
+        m_initialProcess.addLogParams(m_driveUnitName, params);
+      }
     }
     // We have a race condition here between the processing of this message by
     // the initial process and the printing of the end-of-session log, triggered
     // by the end our process. To delay the latter, we sleep half a second here.
-    usleep(500*1000);
+    // To be sure we wait the full half second, we use a timed loop.
+    castor::utils::Timer exitTimer;
+    while (exitTimer.secs() < 0.5)
+      usleep(100*1000);
   }
   
   public:
@@ -349,9 +358,6 @@ protected:
     wait();
   }
   
-
-   
-
 };
 
 /**
