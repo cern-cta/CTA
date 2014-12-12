@@ -32,6 +32,8 @@
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
 #include "h/Ctape.h"
+#include "h/Ctape_api.h"
+#include "h/serrno.h"
 
 #include <getopt.h>
 #include <iostream>
@@ -40,10 +42,10 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::label::LabelCmd::LabelCmd() throw():
-  m_userId(getuid()),
-  m_groupId(getgid()),
-  m_programName("castor-tape-label") {
-  
+m_userId(getuid()),
+m_groupId(getgid()),
+m_programName("castor-tape-label") {
+  castor::utils::setBytes(m_dgn, '\0');
 }
 
 //------------------------------------------------------------------------------
@@ -53,7 +55,6 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
 
   static struct option longopts[] = {
     {"unitname", 1, NULL, 'u'},
-    {"dgn", 1, NULL, 'g'},
     {"vid", 1, NULL, 'V'},
     {"help", 0, NULL, 'h'},
     {"force", 0, NULL, 'f'},
@@ -66,7 +67,7 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
 
   char c;
 
-  while((c = getopt_long(argc, argv, "u:g:V:hfd", longopts, NULL)) != -1) {
+  while((c = getopt_long(argc, argv, "u:V:hfd", longopts, NULL)) != -1) {
 
     switch (c) {
     case 'u':
@@ -77,20 +78,6 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
         castor::exception::Exception ex;
         ex.getMessage() <<
           "Failed to copy the argument of the unit name command-line option"
-          " into the internal data structures"
-          ": " << ex.getMessage().str();
-        throw ex;
-      }
-      break;
-
-    case 'g':
-      m_cmdLine.dgnIsSet = true;
-      try {
-        castor::utils::copyString(m_cmdLine.dgn, optarg);
-      } catch(castor::exception::Exception &ex) {
-        castor::exception::Exception ex;
-        ex.getMessage() <<
-          "Failed to copy the argument of the dgn command-line option"
           " into the internal data structures"
           ": " << ex.getMessage().str();
         throw ex;
@@ -164,17 +151,6 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
       }
     }
   }
-
-  // There is no need to continue parsing when the help option is set
-  if(m_cmdLine.helpIsSet) {
-    return;
-  }
-
-  if(!m_cmdLine.allCompulsoryOptionsSet()) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Not all compulsory options have been set";
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -183,12 +159,11 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
 void castor::tape::label::LabelCmd::usage(std::ostream &os) const throw() {
   os <<
     "Usage:\n"
-    "\t" << m_programName << " -u unitname -g dgn -V vid [-h] [-f] [-d]\n"
+    "\t" << m_programName << " [-u unitname] -V vid [-h] [-f] [-d]\n"
     "\n"
     "Where:\n"
     "\n"
-    "\t-u, --unitname <unitname>   Explicit name of drive to be used.\n"
-    "\t-g, --dgn      <dgn>        Device group name of the tape.\n"
+    "\t-u, --unitname <unitname>   Name of drive to be used.\n"
     "\t-V, --vid      <vid>        Volume ID of the tape.\n"
     "\t-h, --help                  Print this help message and exit.\n"
     "\t-f, --force                 Use this option to label a non-blank tape\n"
@@ -196,11 +171,11 @@ void castor::tape::label::LabelCmd::usage(std::ostream &os) const throw() {
     "\n"
     "Constraints:\n"
     "\n"
-    "\tAll arguments, except -h -f -d, are mandatory!\n"
+    "\tThe <vid> argument is mandatory! The <unitname> is mandatory only if TPCONFIG has more than 1 drive\n"
     "\n"
     "Example:\n"
     "\n"
-    "\t" << m_programName << " -u T10D6515 -g T10KD6 -V T54321 -f\n"
+    "\t" << m_programName << " -u T10D6515 -V T54321 -f\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
@@ -227,8 +202,7 @@ int castor::tape::label::LabelCmd::main(const int argc, char **argv) throw() {
   // If debug, then display parsed command-line arguments
   if(m_cmdLine.debugIsSet) {
     std::cout << "Parsed command-line =\n" 
-            << "m_cmdLine.drive: " << m_cmdLine.drive << std::endl  
-            << "m_cmdLine.dgn: " << m_cmdLine.dgn << std::endl 
+            << "m_cmdLine.drive: " << m_cmdLine.drive << std::endl
             << "m_cmdLine.vid: " << m_cmdLine.vid << std::endl 
             << "m_cmdLine.debugIsSet: " << m_cmdLine.debugIsSet << std::endl 
             << "m_cmdLine.forceIsSet: " << m_cmdLine.forceIsSet << std::endl
@@ -242,6 +216,48 @@ int castor::tape::label::LabelCmd::main(const int argc, char **argv) throw() {
     std::cout << std::endl;
     return 0;
   }
+  
+  // The VID should always be specified
+  if(!m_cmdLine.vidIsSet) {
+    std::cout << std::endl;
+    usage(std::cout);
+    std::cout << std::endl;
+    return 0;
+  }
+  
+  // Execute tpstat to find out the DGN and the number of drives defined in TPCONFIG
+  struct drv_status drv_status[CA_MAXNBDRIVES];
+  char hostname[CA_MAXHOSTNAMELEN+1];
+  const int nbentries = CA_MAXNBDRIVES;
+  
+  if(0 > gethostname(hostname, sizeof(hostname))) {
+    displayErrorMsgAndExit("Call to gethostname() failed", SYERR);
+  } 
+  
+  const int nbDrives = Ctape_status(hostname, drv_status, nbentries);
+  if(0 > nbDrives) {
+    displayErrorMsgAndExit("Call to Ctape_status() failed", SYERR);
+  }
+  
+  if(!m_cmdLine.driveIsSet && nbDrives!=1) {
+    displayErrorMsgAndExit("TPCONFIG contains more than one drive and the unitname option (-u) has not been specified. Please specify which drive to use", 1);    
+  }
+  else if(!m_cmdLine.driveIsSet && nbDrives==1) {
+    castor::utils::copyString(m_dgn, sizeof(m_dgn), drv_status[0].dgn);
+    castor::utils::copyString(m_cmdLine.drive, sizeof(m_cmdLine.drive), drv_status[0].drive);
+  }
+  else { //m_cmdLine.driveIsSet==true
+    bool dgn_found=false;
+    for(int i=0; i<nbDrives; i++) {
+      if(!strcmp(drv_status[i].drive,m_cmdLine.drive)) {
+        castor::utils::copyString(m_dgn, sizeof(m_dgn), drv_status[i].dgn);
+        dgn_found=true;
+      }
+    }
+    if(!dgn_found) {
+      displayErrorMsgAndExit("The drive you specified was not found in TPCONFIG", 1);
+    }
+  }
 
   int rc = 1;
   
@@ -249,11 +265,11 @@ int castor::tape::label::LabelCmd::main(const int argc, char **argv) throw() {
   try {
     rc = executeCommand();
   } catch(castor::exception::Exception &ex) {
-    displayErrorMsgAndExit(ex.getMessage().str().c_str());
+    displayErrorMsgAndExit(ex.getMessage().str().c_str(), 1);
   } catch(std::exception &se) {
-    displayErrorMsgAndExit(se.what());
+    displayErrorMsgAndExit(se.what(), 1);
   } catch(...) {
-    displayErrorMsgAndExit("Caught unknown exception");
+    displayErrorMsgAndExit("Caught unknown exception", 1);
   }
 
   return rc;
@@ -278,7 +294,7 @@ int castor::tape::label::LabelCmd::executeCommand()  {
   legacymsg::GenericReplyMsgBody replymsg = readTapeLabelReply(readReplyTimeout);
   
   if(0 != replymsg.status) {
-    std::cout << "\n[ERROR] Tape labeling failed due to the following reason: " << replymsg.errorMessage << "\n";
+    displayErrorMsgAndExit(replymsg.errorMessage, replymsg.status);
   }
 
   return replymsg.status;
@@ -297,7 +313,7 @@ void castor::tape::label::LabelCmd::writeTapeLabelRequest(const int timeout) {
   body.gid = m_groupId;
   body.force = m_cmdLine.forceIsSet ? 1 : 0;
   castor::utils::copyString(body.drive, sizeof(body.drive), m_cmdLine.drive);
-  castor::utils::copyString(body.dgn, sizeof(body.dgn), m_cmdLine.dgn);
+  castor::utils::copyString(body.dgn, sizeof(body.dgn), m_dgn);
   castor::utils::copyString(body.vid, sizeof(body.vid), m_cmdLine.vid);
   
   char buf[REQBUFSZ];
@@ -371,15 +387,13 @@ castor::legacymsg::GenericReplyMsgBody castor::tape::label::LabelCmd::readTapeLa
 //------------------------------------------------------------------------------
 // displayErrorMsgAndExit
 //------------------------------------------------------------------------------
-void castor::tape::label::LabelCmd::displayErrorMsgAndExit(const char *msg) throw() {
+void castor::tape::label::LabelCmd::displayErrorMsgAndExit(const char *msg, const int errnum) throw() {
 
   // Display error message
   {
     const time_t now = time(NULL);
     castor::utils::writeTime(std::cerr, now, castor::tape::tpcp::TIMEFORMAT);
-    std::cerr <<
-      " " << m_programName << " failed"
-      ": " << msg << std::endl;
+    std::cerr << " " << m_programName << " failed: " << msg << std::endl << "Exit code: " << errnum << std::endl;
   }
-  exit(1); // Error
+  exit(errnum); // Error
 }

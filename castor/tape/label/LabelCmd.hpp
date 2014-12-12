@@ -43,11 +43,6 @@ class LabelCmd {
 public:
   /**
    * Constructor.
-   *
-   * @param inStream Standard input stream.
-   * @param outStream Standard output stream.
-   * @param errStream Standard error stream.
-   * @param tapeserver Proxy object representing the tapeserverd daemon.
    */
   LabelCmd() throw();
 
@@ -95,9 +90,10 @@ protected:
   /**
    * Displays the error message passed as string and exits with exit code 1.
    * 
-   * @param msg The string containing the error message
+   * @param msg    The string containing the error message
+   * @param errnum The error number
    */
-  void displayErrorMsgAndExit(const char *msg) throw();
+  void displayErrorMsgAndExit(const char *msg, const int errnum) throw();
   
   /**
    * Sends the label request and waits for the reply
@@ -110,6 +106,11 @@ protected:
    * The command line structure
    */
   ParsedTpLabelCommandLine m_cmdLine;
+
+  /**
+   * The dgn corresponding to the drive chosen.
+   */
+  char m_dgn[CA_MAXDGNLEN+1];
   
   /**
    * Sends the tape label request to the tapeserver

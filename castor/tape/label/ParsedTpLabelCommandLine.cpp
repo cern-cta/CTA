@@ -21,43 +21,18 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "ParsedTpLabelCommandLine.hpp"
 
-#include "castor/utils/utils.hpp"
-#include "h/Castor_limits.h"
-
-namespace castor {
-namespace tape {
-namespace label {
-
-/**
- * Data type used to store the results of parsing the tplabel command-line.
- */
-struct ParsedTpLabelCommandLine {
-
-  /**
-   * The filename of the "file list" file.
-   */
-  char drive[CA_MAXUNMLEN+1];
-
-  /**
-   * The VID of the tape to be mounted.
-   */
-  char vid[CA_MAXVIDLEN+1];
-  
-  bool driveIsSet;
-  bool vidIsSet;
-  bool helpIsSet;
-  bool forceIsSet;
-  bool debugIsSet;
-
-  /**
-   * Constructor.
-   */
-  ParsedTpLabelCommandLine() throw();
-  
-}; // struct ParsedTpLabelCommandLine
-
-} // namespace label
-} // namespace tape
-} // namespace castor
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::label::ParsedTpLabelCommandLine::ParsedTpLabelCommandLine() throw():
+driveIsSet(false),
+vidIsSet(false),
+helpIsSet(false),
+forceIsSet(false),
+debugIsSet(false)
+{
+  castor::utils::setBytes(drive, '\0');
+  castor::utils::setBytes(vid, '\0');
+}

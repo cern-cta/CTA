@@ -27,8 +27,9 @@ cmake_minimum_required (VERSION 2.6)
 ################################################################################
 set (LABEL_SRC_FILES
   LabelCmd.cpp
-  LabelMain.cpp)
-add_executable (castor-tape-label ${LABEL_SRC_FILES})
+  LabelMain.cpp
+  ParsedTpLabelCommandLine.cpp)
+add_executable (castor-tape-label ${LABEL_SRC_FILES} ../../../tape/Ctape_status.c ../../../tape/send2tpd.cpp ../../../tape/Ctape_errmsg.c)
 target_link_libraries (castor-tape-label
   castorclient
   castorlegacymsg
