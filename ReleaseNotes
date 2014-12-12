@@ -3,6 +3,64 @@
 ------------
 
   DRAFT NOTES
+  
+  Stager
+  ------
+
+    CASTOR-4849: Issues with aborting when the same file is mentioned more than once
+    CASTOR-3454: draindiskserver -q -f broken
+    CASTOR-3453: Fixed display of percentages where None is given
+    CASTOR-3419: rhd should run as stage:st
+    CASTOR-3287: Problem found when trying to change fileclass: classid/classname not resolved
+    CASTOR-3151: RFE: listtransfers - show/use originating user for d2d transfers
+    CASTOR-3043: RFE: strutou64 should handle XiB in addition to G/T/P suffixes. Fractionnal numbers would be nice too.
+    CASTOR-3016: rhd craches if given the configuration parameter RH DefaultThreshold 500/25
+    CASTOR-2924: stagerd core dump in case of loss of db connection
+    CASTOR-2759: CM: enhancements in the core framework
+    CASTOR-2582: RFE: NbReplicas should be respected in svcClasses with shared disk pools
+
+  Nameserver
+  ----------
+
+    CASTOR-4830: Several minor defects in documenting nsenter/nsmodify
+
+  Clients
+  -------
+
+    CASTOR-4853: There is no way to find out the current gcWeight of a DiskCopy from command line
+
+  Protocols
+  ---------
+
+    CASTOR-4624: RFIO client library incorrectly processes local URLS of the form host:path?transfertype=tape
+    CASTOR-3343: Be more clever in xcastor2.stagermap mapping regarding machine names
+    CASTOR-3295: RFE: xrootd should directly talk to diskmanagerd without a stagerjob process in the way
+
+  Tape
+  ----
+
+    CASTOR-4835: tapeserverd should check for blank tapes for cleaner sessions
+    CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
+    CASTOR-4816: RFE: 2.1.15-x should provide castor-tape-acs-dismount
+    CASTOR-4815: RFE: 2.1.15-x should provide castor-tape-acs-mount
+    CASTOR-4804: RFE: dumptp should be removed from 2.1.15-x
+    CASTOR-4803: RFE: Remove rtcpd, taped and tapebridged daemons from 2.1.15-x
+    CASTOR-4799: RFE: TPCONFIG of 2.1.15-x should have 4 columns: unitName dgn devFilename librarySlot
+    CASTOR-4797: RFE: Remove TAPE/BUFFER_TAPEMARK and TAPEBRIDGE/TAPEFLUSHMODE from 2.1.15-x
+    CASTOR-4795: RFE: The rmcd daemon should log any fast retries that it performs
+    CASTOR-4792: RFE: writetp of 2.1.15-x should only allow pool owners to migrate files
+    CASTOR-4791: RFE: CASTOR 2.1.15-x should not allow writes to owner-less tape pools
+    CASTOR-4790: RFE: rmcd daemon should carry out fast retries itself
+    CASTOR-4771: RFE: tapeserverd must only allow the owner of a tape's pool to migrate files to that tape
+    CASTOR-4770: RFE: tapeserverd must only allow CASTOR TAPE OPERATORS to recall from DISABLED tapes
+    CASTOR-4769: RFE: tapeserverd must only allow CASTOR ADMINs to label tapes
+    CASTOR-4767: RFE: tpconfig default drive selection
+    CASTOR-4740: tapeserverd: DriveGeneric::waitUntilReady() should be based on SCSI call TEST UNIT READY instead of st driver.
+    CASTOR-4641: RFE: Tapeserverd should abort if NB_BUFS (memory size) is not set
+    CASTOR-4636: rtcpd of 2.1.15 cannot verify tapes
+    CASTOR-3456: RFE: Add -f option to taped
+    CASTOR-3424: RFE: showqueues should report an error when failing to connect to vdqm
+    CASTOR-3411: Remove redundant RMC HOST configuration parameter
 
 
   Packaging
