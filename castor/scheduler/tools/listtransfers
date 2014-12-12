@@ -253,9 +253,9 @@ def processPoolListing():
   '''retrieves and display summary of the running transfers per pool for the given pool and user'''
   summaryreport, errorMsg = rpconn.root.summarizeTransfersPerPool(reqpool, requser, extra)
   # compute the max length of the pools we got and deduce the title and printf args
-  maxPoolNameLen = max([0] + [len(s[0]) for s in summaryreport])
-  poolHead = 'POOL ' + ' '*(maxPoolNameLen-5)
-  poolHeadLen = max(maxPoolNameLen+4, 12)
+  maxPoolNameLen = max([4] + [len(s[0]) for s in summaryreport])
+  poolHeadLen = max(maxPoolNameLen + 4, 12)
+  poolHead = 'POOL ' + ' '*(poolHeadLen-5)
   # depending on the extra flag, the output will differ
   if extra:
     # summaryreport is a tuple of reports of this form :
