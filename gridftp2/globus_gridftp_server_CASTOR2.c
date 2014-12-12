@@ -181,7 +181,7 @@ static void globus_castor_close(const char* func,
   if(getconfent("DiskManager", "MoverHandlerPort", 0) != NULL) {
     port = atoi(getconfent("DiskManager", "MoverHandlerPort", 0));
   }
-  if (mover_close_file(port, CASTOR2_handle->uuid, CASTOR2_handle->fileSize, "AD", ckSumbuf, &rc, &errorBuf) != 0) {
+  if (mover_close_file(port, CASTOR2_handle->uuid, CASTOR2_handle->fileSize, "AD", (ckSumbuf ? ckSumbuf : "0"), &rc, &errorBuf) != 0) {
     globus_gfs_log_message(GLOBUS_GFS_LOG_ERR, "%s: mover_close_file failed for transferid=%s: %s\n",
                            func, CASTOR2_handle->uuid, errorBuf);
     CASTOR2_handle->cached_res = GLOBUS_FAILURE;
