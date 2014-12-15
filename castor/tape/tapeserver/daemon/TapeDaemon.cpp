@@ -776,7 +776,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     castor::utils::SmartFd listenSock;
     try {
       listenSock.reset(
-        io::createListenerSock(m_tapeDaemonConfig.labelPort));
+        io::createLocalhostListenerSock(m_tapeDaemonConfig.labelPort));
     } catch(castor::exception::Exception &ne) {
       castor::exception::Exception ex(ne.code());
       ex.getMessage() <<
