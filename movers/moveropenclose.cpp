@@ -91,6 +91,7 @@ extern "C" {
        */
       std::ostringstream writeBuf;
       writeBuf << "OPEN " << *errorcode << " " << transferMetaData;
+      *errorcode = 0;
 
       try {
         int sockfd = 0, n = 0;
@@ -133,6 +134,7 @@ extern "C" {
         writeBuf << ' ' << *errormsg;
         free(*errormsg);
         *errormsg = NULL;
+        *errorcode = 0;
       }
 
       try {
