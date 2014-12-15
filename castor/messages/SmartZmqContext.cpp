@@ -73,7 +73,12 @@ castor::messages::SmartZmqContext
 // destructor
 //-----------------------------------------------------------------------------
 castor::messages::SmartZmqContext::~SmartZmqContext() throw() {
-  reset();
+  // ZMQ sends an abort on exit when cleaned up this way under some
+  // circumstances, so we purposely do not clean up the context (zmq_term) and
+  // leave a resource leak, which in our use case is one-off situation
+  // per process, and it gets cleaned up on process termination, which happens
+  // very soon after this destructor being called.
+  //reset();
 }
 
 //-----------------------------------------------------------------------------
