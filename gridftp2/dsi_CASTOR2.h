@@ -53,12 +53,6 @@ typedef struct globus_l_gfs_CASTOR2_handle_s {
   long long fileSize;
 } globus_l_gfs_CASTOR2_handle_t;
 
-/* a function to wrap all is needed to close a file */
-static void globus_castor_close(const char* func,
-                                globus_l_gfs_CASTOR2_handle_t* CASTOR2_handle,
-                                const char* ckSumbuf,
-                                const char* error_msg);
-
 static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t,
                                           globus_result_t,
                                           globus_byte_t *,

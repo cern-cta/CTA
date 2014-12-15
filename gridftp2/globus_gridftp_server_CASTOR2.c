@@ -54,10 +54,10 @@ globus_version_t local_version = {
   0 /* branch ID */
 };
 
-/*
- *  utility function to make errors
- */
 
+/*** Locally definded convenience functions ***/
+
+/* utility function to make errors */
 static globus_result_t globus_l_gfs_make_error(const char *msg) {
   char *err_str;
   globus_result_t result;
@@ -84,6 +84,7 @@ static void fill_stat_array(globus_gfs_stat_t * filestat, struct stat64 statbuf,
   filestat->ino = statbuf.st_ino;
   filestat->name = strdup(name);
 }
+
 /* free memory in stat_array from globus_gfs_stat_t->name */
 static void free_stat_array(globus_gfs_stat_t * filestat,int count) {
   int i;
@@ -103,7 +104,7 @@ static void free_checksum_list(checksum_block_list_t *checksum_list) {
   globus_free(checksum_list_p);
 }
 
-// comparison of 2 checksum_block_list_t* on their offset for the use of qsort
+/* comparison of 2 checksum_block_list_t* on their offset for the use of qsort */
 static int offsetComparison(const void *first, const void *second) {
   checksum_block_list_t** f = (checksum_block_list_t**)first;
   checksum_block_list_t** s = (checksum_block_list_t**)second;
@@ -168,7 +169,7 @@ static void globus_castor_close(const char* func,
   CASTOR2_handle->done = GLOBUS_TRUE;
   ceph_posix_close(CASTOR2_handle->fd);
   if(error_msg) {
-    CASTOR2_handle->cached_res = GLOBUS_FAILURE;
+    CASTOR2_handle->cached_res = globus_l_gfs_make_error(error_msg);
     globus_gfs_log_message(GLOBUS_GFS_LOG_ERR, "%s: terminating transfer on error: %s\n", func, error_msg);
     errorBuf = strdup(error_msg);
     rc = SEINTERNAL;
@@ -194,6 +195,8 @@ static void globus_castor_close(const char* func,
   }
 }
 
+
+/*** Implementation of the globus plugin ***/
 
 /*************************************************************************
  *  start
@@ -462,7 +465,7 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t op,
         if (checksum_array == NULL) {
           free_checksum_list(CASTOR2_handle->checksum_list);
           CASTOR2_handle->fileSize = 0;
-          globus_castor_close(func, CASTOR2_handle, NULL, "Internal error (malloc)");
+          globus_castor_close(func, CASTOR2_handle, NULL, "internal error (malloc failed)");
           globus_mutex_unlock(&CASTOR2_handle->mutex);
           return;
         }
@@ -502,14 +505,12 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t op,
             } else {
               /* overlapping chunks. This is not supported, fail the transfer */
               free_checksum_list(CASTOR2_handle->checksum_list);
-              CASTOR2_handle->cached_res = GLOBUS_FAILURE;
               globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: Overlapping chunks detected while handling 0x%x-0x%x. The overlap starts at 0x%x\n",
                                      func,
                                      checksum_array[i]->offset,
                                      checksum_array[i]->offset+checksum_array[i]->size,
                                      chkOffset);
-              CASTOR2_handle->done = GLOBUS_TRUE;
-              globus_castor_close(func, CASTOR2_handle, ckSumbuf, NULL);
+              globus_castor_close(func, CASTOR2_handle, NULL, "overlapping chunks detected when computing checksum");
               globus_mutex_unlock(&CASTOR2_handle->mutex);
               globus_gridftp_server_finished_transfer(op, CASTOR2_handle->cached_res);
               return;
@@ -557,21 +558,18 @@ static void globus_l_gfs_CASTOR2_read_from_net
   while(CASTOR2_handle->outstanding < CASTOR2_handle->optimal_count) {
     buffer=globus_malloc(CASTOR2_handle->block_size);
     if (buffer == NULL) {
-      result = GlobusGFSErrorGeneric("error: globus malloc failed");
-      CASTOR2_handle->cached_res = result;
-      CASTOR2_handle->done = GLOBUS_TRUE;
       if (CASTOR2_handle->outstanding == 0) {
-        globus_castor_close(func, CASTOR2_handle, NULL, "malloc failed");
+        globus_castor_close(func, CASTOR2_handle, NULL, "internal error (malloc failed)");
         globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
                                                 CASTOR2_handle->cached_res);
       }
       return;
     }
-    result= globus_gridftp_server_register_read(CASTOR2_handle->op,
-                                                buffer,
-                                                CASTOR2_handle->block_size,
-                                                globus_l_gfs_file_net_read_cb,
-                                                CASTOR2_handle);
+    result = globus_gridftp_server_register_read(CASTOR2_handle->op,
+                                                 buffer,
+                                                 CASTOR2_handle->block_size,
+                                                 globus_l_gfs_file_net_read_cb,
+                                                 CASTOR2_handle);
 
     if(result != GLOBUS_SUCCESS)  {
       globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,
@@ -579,7 +577,6 @@ static void globus_l_gfs_CASTOR2_read_from_net
                              func);
       globus_free(buffer);
       CASTOR2_handle->cached_res = result;
-      CASTOR2_handle->done = GLOBUS_TRUE;
       if (CASTOR2_handle->outstanding == 0) {
         globus_castor_close(func, CASTOR2_handle, NULL, "register read has finished with a bad result");
         globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
@@ -814,7 +811,6 @@ static globus_bool_t globus_l_gfs_CASTOR2_send_next_to_client
                                          &CASTOR2_handle->blk_offset,
                                          &CASTOR2_handle->blk_length);
     if(CASTOR2_handle->blk_length == 0) {
-      result = GLOBUS_SUCCESS;
       globus_castor_close(func, CASTOR2_handle, ckSumbuf, NULL);
       if (CASTOR2_handle->outstanding == 0) {
         globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
@@ -834,9 +830,7 @@ static globus_bool_t globus_l_gfs_CASTOR2_send_next_to_client
                                     SEEK_SET);
   /* verify that it worked */
   if (start_offset != CASTOR2_handle->blk_offset) {
-    result = globus_l_gfs_make_error("seek");
     globus_castor_close(func, CASTOR2_handle, NULL, "failed to seek");
-    CASTOR2_handle->cached_res = result;
     if (CASTOR2_handle->outstanding == 0) {
       globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
                                               CASTOR2_handle->cached_res);
@@ -846,9 +840,7 @@ static globus_bool_t globus_l_gfs_CASTOR2_send_next_to_client
 
   buffer = globus_malloc(read_length);
   if (buffer == NULL) {
-    result = GlobusGFSErrorGeneric("error: malloc failed");
-    globus_castor_close(func, CASTOR2_handle, NULL, "malloc failed");
-    CASTOR2_handle->cached_res = result;
+    globus_castor_close(func, CASTOR2_handle, NULL, "internal error (malloc failed)");
     if (CASTOR2_handle->outstanding == 0) {
       globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
                                               CASTOR2_handle->cached_res);
@@ -867,7 +859,7 @@ static globus_bool_t globus_l_gfs_CASTOR2_send_next_to_client
 
     if (CASTOR2_handle->checksum_list_p->next==NULL) {
       globus_free(buffer);
-      globus_castor_close(func, CASTOR2_handle, NULL, "malloc error");
+      globus_castor_close(func, CASTOR2_handle, NULL, "internal error (malloc failed)");
       if (CASTOR2_handle->outstanding == 0) {
         globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
                                                 CASTOR2_handle->cached_res);
@@ -891,11 +883,11 @@ static globus_bool_t globus_l_gfs_CASTOR2_send_next_to_client
                                              sizeof(checksum_block_list_t*));
     if (checksum_array==NULL){
       free_checksum_list(CASTOR2_handle->checksum_list);
+      globus_castor_close(func, CASTOR2_handle, NULL, "internal error (malloc failed)");
       if (CASTOR2_handle->outstanding == 0) {
         globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
                                                 CASTOR2_handle->cached_res);
       }
-      globus_castor_close(func, CASTOR2_handle, NULL, "malloc error");
       return CASTOR2_handle->done;
     }
     checksum_list_pp=CASTOR2_handle->checksum_list;
@@ -955,13 +947,13 @@ static globus_bool_t globus_l_gfs_CASTOR2_send_next_to_client
                 ckSumbufdisk,
                 ckSumbuf);
         /* to do something in error case */
+        globus_castor_close(func, CASTOR2_handle, NULL, errorBuf);
         CASTOR2_handle->cached_res =
           globus_error_put (globus_object_construct (GLOBUS_ERROR_TYPE_BAD_DATA));
         if (CASTOR2_handle->outstanding == 0) {
           globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
                                                   CASTOR2_handle->cached_res);
         }
-        globus_castor_close(func, CASTOR2_handle, NULL, errorBuf);
         return CASTOR2_handle->done;
       }
     } else {
@@ -978,10 +970,8 @@ static globus_bool_t globus_l_gfs_CASTOR2_send_next_to_client
     return CASTOR2_handle->done;
   }
   if (nbread < 0) { /* error */
-    result = globus_l_gfs_make_error("read");
     globus_free(buffer);
     globus_castor_close(func, CASTOR2_handle, NULL, "error reading from disk");
-    CASTOR2_handle->cached_res = result;
     if (CASTOR2_handle->outstanding == 0) {
       globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
                                               CASTOR2_handle->cached_res);
