@@ -29,10 +29,11 @@ set (LABEL_SRC_FILES
   LabelCmd.cpp
   LabelMain.cpp
   ParsedTpLabelCommandLine.cpp)
-add_executable (castor-tape-label ${LABEL_SRC_FILES} ../../../tape/Ctape_status.c ../../../tape/send2tpd.cpp ../../../tape/Ctape_errmsg.c)
+add_executable (castor-tape-label ${LABEL_SRC_FILES})
 target_link_libraries (castor-tape-label
   castorclient
   castorlegacymsg
-  castormediachanger)
+  castormediachanger
+  tpclient)
 install (TARGETS castor-tape-label DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallExeManPage (castor-tape-label)

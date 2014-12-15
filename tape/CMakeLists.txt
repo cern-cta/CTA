@@ -23,6 +23,16 @@
 cmake_minimum_required (VERSION 2.6)
 
 if (${COMPILE_SERVER} STREQUAL "1")
+
+  ################################################################################
+  # The tpclient library used by castor-tape-label
+  ################################################################################
+  add_library (tpclient 
+    Ctape_config.c
+    Ctape_errmsg.c
+    Ctape_status.c
+    send2tpd.cpp)
+
   ################################################################################
   # Rules to build and install tpconfig
   ################################################################################
