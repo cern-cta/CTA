@@ -289,15 +289,6 @@ public:
   const CatalogueSession &getSession() const;
 
   /**
-   * Tries to determine the volume identifier of the tape currently associated
-   * with the tape drive.
-   *
-   * @return The volume identifier of the tape or the empty string if it was
-   * not possible to determine.
-   */
-  std::string getVidForCleaner() const throw();
-
-  /**
    * Tries to determine the assigment time associated with the tap[e drive.
    *
    * @return The assigment time associated with the tape drive or 0 if not

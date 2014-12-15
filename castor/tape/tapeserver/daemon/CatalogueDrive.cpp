@@ -886,18 +886,6 @@ std::string castor::tape::tapeserver::daemon::CatalogueDrive::
 }
 
 //------------------------------------------------------------------------------
-// getVidForCleaner
-//------------------------------------------------------------------------------
-std::string castor::tape::tapeserver::daemon::CatalogueDrive::
-  getVidForCleaner() const throw() {
-  try {
-    return getSession().getVid();
-  } catch(...) {
-    return "";
-  }
-}
-
-//------------------------------------------------------------------------------
 // getAssignmentTimeForCleaner
 //------------------------------------------------------------------------------
 time_t castor::tape::tapeserver::daemon::CatalogueDrive::
