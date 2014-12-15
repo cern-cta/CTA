@@ -255,7 +255,6 @@ CREATE OR REPLACE PROCEDURE checkNbReplicas AS
   varCfId INTEGER;
   varReplicaNb NUMBER;
   varNbFiles NUMBER;
-  varDidSth BOOLEAN;
 BEGIN
   -- Loop over the CastorFiles to be processed
   LOOP
@@ -274,7 +273,6 @@ BEGIN
     SELECT replicaNb INTO varReplicaNb
       FROM SvcClass WHERE id = varSvcClassId;
     -- Produce a list of diskcopies to invalidate should too many replicas be online.
-    varDidSth := False;
     FOR b IN (SELECT id FROM (
                 SELECT rownum ind, id FROM (
                   SELECT * FROM (
@@ -322,16 +320,14 @@ BEGIN
          SET status = dconst.DISKCOPY_INVALID,
              gcType = dconst.GCTYPE_TOOMANYREPLICAS
        WHERE id = b.id;
-      varDidSth := True;
       -- update importance of remaining diskcopies
       UPDATE DiskCopy SET importance = importance + 1
        WHERE castorFile = varCfId
          AND status = dconst.DISKCOPY_VALID;
     END LOOP;
-    IF varDidSth THEN COMMIT; END IF;
-  END LOOP;
-  -- commit the deletions in case no modification was done that commited them before
+  -- either commit the deletions or release the lock on castorFile
   COMMIT;
+  END LOOP;
 END;
 /
 
