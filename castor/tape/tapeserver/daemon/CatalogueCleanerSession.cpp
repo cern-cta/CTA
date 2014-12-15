@@ -92,13 +92,6 @@ void castor::tape::tapeserver::daemon::CatalogueCleanerSession::
 //------------------------------------------------------------------------------
 std::string castor::tape::tapeserver::daemon::CatalogueCleanerSession::
   getVid() const {
-  // If the volume identifier of the tape drive is not known
-  if(m_vid.empty()) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to get VID from cleaner session"
-      ": VID not known";
-    throw ex;
-  }
 
   return m_vid;
 }

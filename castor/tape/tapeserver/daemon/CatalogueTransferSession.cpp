@@ -477,13 +477,7 @@ std::string castor::tape::tapeserver::daemon::CatalogueTransferSession::
   case WAIT_TIMEOUT_KILL:
     return m_vid;
   default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to get VID from catalogue transfer-session"
-        ": Catalogue transfer-session is in an incompatible state: "
-        " state=" << transferStateToStr(m_state);
-      throw ex;
-    }
+    return "";
   }
 }
 

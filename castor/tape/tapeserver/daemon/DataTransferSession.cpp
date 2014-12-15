@@ -322,6 +322,11 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     twst.setTaskInjector(&mti);
     mrp.setWatchdog(mwd);
     castor::utils::Timer timer;
+
+lc.log(LOG_INFO, "STEVE Aborting");
+kill(getpid(), 6);
+
+
     if (mti.synchronousInjection()) {
       const uint64_t firstFseqFromClient = mti.firstFseqToWrite();
       
