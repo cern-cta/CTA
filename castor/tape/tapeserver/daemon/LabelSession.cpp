@@ -112,7 +112,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   waitUntilTapeLoaded(drive, 60); // 60 = 60 seconds
   
   if(drive.isWriteProtected()) {
-    const std::string message = "Cannot label the tape because the drive is write-protected";
+    const std::string message = "Cannot label the tape because it is write-protected";
     notifyTapeserverOfUserError(message);
   }
   else {
