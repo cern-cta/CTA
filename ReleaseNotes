@@ -74,6 +74,7 @@
   - rtcpd, taped and tapebridged obsoleted by tapeserverd
   - Dropped castor-job
   - change of package name for gridFTP plugins (-int disappears)
+  - dependency on radosstriper in many places (gc, rfio, gridFTP). Must be release >= giant
       
   Configuration changes
   ---------------------
