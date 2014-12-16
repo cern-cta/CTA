@@ -700,8 +700,8 @@ XrdxCastor2OfsFile::close()
   }
 
   // Remove entry from the set of transfers
-  if (!gSrv->RemoveTransfer(mTransferId))
-    xcastor_warning("Tx_id=%s not in the set of transfers", mTransferId.c_str());
+  if (!mTransferId.empty() && !gSrv->RemoveTransfer(mTransferId))
+    xcastor_warning("Tx_id=\"%s\" not in the set of transfers", mTransferId.c_str());
 
   if (gSrv->mLogLevel == LOG_DEBUG)
   {

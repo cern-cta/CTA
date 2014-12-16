@@ -151,16 +151,13 @@ def cmdLineToTransfer(cmdLine, scheduler, pid):
     # parse environment of process pid
     env = open('/proc/' + str(pid) + '/environ').read().split('\0')
     for e in env:
-      try:
-        kv = e.split('=')
-        if kv[0] == 'UUID':
-          transferId = kv[1]
-        elif kv[0] == 'FULLDESTPATH':
-          destDcPath = kv[1]
-        elif kv[0] == 'ACCESS_MODE':
-          flags = kv[1]
-      except KeyError:
-        pass
+      kv = e.split('=')
+      if kv[0] == 'UUID':
+        transferId = kv[1]
+      elif kv[0] == 'FULLDESTPATH':
+        destDcPath = kv[1]
+      elif kv[0] == 'ACCESS_MODE':
+        flags = kv[1]
   else:
     # other command lines are not recognized
     return None
@@ -176,6 +173,7 @@ def cmdLineToTransfer(cmdLine, scheduler, pid):
 def cmdLineToTransferId(cmdLine, pid):
   '''extracts the transferId from a command line that launched a transfer'''
   if cmdLine.startswith('/usr/bin/rfiod'):
+    cmdLine = cmdLine.split('\0')
     args = dict([cmdLine[i:i+2] for i in range(1, len(cmdLine), 2)])
     return args['-i']
   elif cmdLine.startswith('/usr/sbin/globus-gridftp-server'):
