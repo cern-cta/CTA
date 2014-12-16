@@ -132,8 +132,7 @@ class MoverReqHandlerThread(threading.Thread):
       try:
         # log "Transfer ended"
         dlf.write(msgs.TRANSFERENDED, subreqId=transferid, reqId=t.transfer.reqId, fileId=t.transfer.fileId, \
-                  transferType=(t.transfer.flags if t.transfer.transferType == TransferType.STD else D2DTransferType.toStr(t.transfer.replicationType)),
-                  fileSize=fSize, errCode=errCode, errMessage=errMessage, \
+                  transferType=TransferType.toPreciseStr(t.transfer), fileSize=fSize, errCode=errCode, errMessage=errMessage, \
                   totalTime="%.6f" % (closeTime-t.transfer.creationTime), schedulerTime="%.6f" % (closeTime-t.transfer.submissionTime))
         if t.transfer.transferType == TransferType.STD:
           # user transfer
