@@ -63,8 +63,8 @@
     CASTOR-3411: Remove redundant RMC HOST configuration parameter
 
 
-  Packaging
-  ---------
+  Package Changes
+  ---------------
   - xrootd-4.1
   - rpyc-3.3
   - ceph
@@ -86,18 +86,107 @@
   ----------------------
   Ask your DBA to run the following snippet, providing your stager account name:
 
-  DECLARE
-    stager_account VARCHAR2(100) := '<your stager account>';
-  BEGIN
-    EXECUTE IMMEDIATE 'GRANT CONNECT, RESOURCE, aq_administrator_role TO ' || stager_account;
-    EXECUTE IMMEDIATE 'GRANT EXECUTE ON dbms_aq TO ' || stager_account;
-    EXECUTE IMMEDIATE 'GRANT EXECUTE ON dbms_aqadm TO ' || stager_account;
-    DBMS_AQADM.grant_system_privilege('ENQUEUE_ANY', stager_account, FALSE);
-    DBMS_AQADM.grant_system_privilege('DEQUEUE_ANY', stager_account, FALSE);
-  END;
-  /
 
   Oracle client configuration: ~/.sqlnet.ora should contain DIAG_DDE_ENABLED=FALSE
+
+  Upgrade Instructions from 2.1.14-15
+  -----------------------------------
+
+    The upgrade path for the new major version 2.1.15-0 is rather complex. The short summary
+    is as follows:
+    1) Upgrade the central services (Nameserver in particular)
+    2) Upgrade each stager instance
+    3) Upgrade all tape servers
+    4) Switch the tape servers to use the xroot protocol
+
+    Step 2) and 3) can be swapped and/or mixed, while step 4) must come after all stagers
+    run version 2.1.15-0 or later.
+
+    Detailed instructions for each step follow.
+
+  Central Services
+  ----------------
+
+  - The upgrade of the central daemons can be done online.
+    This upgrade must be done before any stager instance be upgraded.
+
+      Instructions
+      ------------
+
+       1. Apply the vmgr_2.1.14-15_to_2.1.15-0.sql database upgrade script to the VMGR DB from:
+          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-0/dbupgrades
+
+       2. Apply the cns_2.1.14-15_to_2.1.15-0.sql database upgrade script to the NS DB from:
+          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-0/dbupgrades
+
+       3. Apply the cupv_2.1.14-15_to_2.1.15-0.sql database upgrade script to the CUPV DB from:
+          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-0/dbupgrades
+
+       4. Apply the vdqm_2.1.14-15_to_2.1.15-0.sql database upgrade script to the VDQM DB from:
+          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-0/dbupgrades
+
+       5. Update the software to use the 2.1.15-0 RPMs on the central nodes. All daemons will
+          automatically restart.
+
+       6. Upgrade complete.
+
+
+  Stager
+  ------
+
+  - The upgrade of the STAGER database to 2.1.15-0 cannot be performed online:
+    as a result all daemons accessing the STAGER database MUST be stopped.
+    The expected downtime for the upgrade is less than one hour.
+    Prior to upgrading the STAGER database please verify that your nameserver database
+    has been upgraded to 2.1.15-0 (see above). The database upgrade will fail otherwise.
+
+
+      Instructions
+      ------------
+
+      1. Stop all CASTOR daemons on all diskservers and headnodes.
+
+      2. Ask your Oracle DBA to run the following code snippet, providing your stager account:
+
+         DECLARE
+           stager_account VARCHAR2(100) := '<your stager account>';
+         BEGIN
+           EXECUTE IMMEDIATE 'GRANT CONNECT, RESOURCE, aq_administrator_role TO ' || stager_account;
+           EXECUTE IMMEDIATE 'GRANT EXECUTE ON dbms_aq TO ' || stager_account;
+           EXECUTE IMMEDIATE 'GRANT EXECUTE ON dbms_aqadm TO ' || stager_account;
+           DBMS_AQADM.grant_system_privilege('ENQUEUE_ANY', stager_account, FALSE);
+           DBMS_AQADM.grant_system_privilege('DEQUEUE_ANY', stager_account, FALSE);
+         END;
+         /
+
+      3. Upgrade the STAGER database using the stager_2.1.14-15_to_2.1.15-0.sql
+         upgrade script available from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-0/dbupgrades
+         This step may take several minutes. You can proceed to step 4 at the same time.
+
+      4. Upgrade the software on the headnodes and diskservers to 2.1.15-0. Note that the new
+         RPMs bring in a number of new dependencies, as listed in the Package changes section above.
+
+      5. Start all the daemons which were stopped in step 1.
+
+         Note: If you have a concept of private and public request handlers
+               you should start only the private ones to test/validate the
+               installation without user interference.
+
+      6. Wait a few seconds to give time for the diskservers to send a heartbeat
+         message to the transfermanager daemon.
+
+      7. Test the instance by running the test suite available from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-0/testsuite
+
+      8. Start the public request handlers (if applicable)
+
+      9. Congratulations you have successfully upgraded to the 2.1.15-0 release
+         of CASTOR.
+
+  Tape servers
+  ------------
+  
 
 
 -------------
