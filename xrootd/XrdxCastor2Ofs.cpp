@@ -477,11 +477,7 @@ XrdxCastor2OfsFile::open(const char*         path,
   {
     // Try to get the file checksum from the filesystem
     int nattr = 0;
-    mXsValue.reserve(32 + 1);
-    mXsValue[0] = '\0';
-    mXsType.reserve(32);
-    mXsType[0] = '\0';
-
+    char buf[32];
     // Deal with ceph pool if any
     XrdOucString poolAndPath = newpath;
 
@@ -490,14 +486,14 @@ XrdxCastor2OfsFile::open(const char*         path,
 
     // Get existing checksum - we don't check errors here
     nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.type",
-                                (void*)&mXsType[0], mXsType.length());
-    mXsType[nattr] = '\0';
+                                buf, 32);
+    mXsType = buf;
     nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.value",
-                                (void*)&mXsValue[0], mXsValue.length());
-    mXsValue[nattr] = '\0';
+                                buf, 32);
+    mXsValue = buf;
 
     if (!mXsType.empty() || !mXsValue.empty())
-      xcastor_debug("xs_type=%s, xs_val=%s", mXsType.c_str(),  mXsValue.c_str());
+      xcastor_debug("xs_type=%s, xs_val=%s", mXsType.c_str(), mXsValue.c_str());
 
     // Get also the size of the file
     if (XrdOfsOss->Stat(newpath.c_str(), &mStatInfo, 0, mEnvOpaque))
@@ -973,7 +969,7 @@ XrdxCastor2OfsFile::VerifyChecksum()
   std::string xs_val;
   std::string xs_type;
 
-  if ((mXsValue != "") && (mXsType != ""))
+  if (!mXsValue.empty() && !mXsType.empty())
   {
     char ckSumbuf[32 + 1];
     sprintf(ckSumbuf, "%x", mAdlerXs);
@@ -982,13 +978,13 @@ XrdxCastor2OfsFile::VerifyChecksum()
 
     if (xs_val != mXsValue)
     {
-      gSrv->Emsg("VerifyChecksum", error, EIO, "checksum value wrong");
+      gSrv->Emsg("VerifyChecksum", error, EIO, "access the file, checksum mismatch");
       rc = false;
     }
 
     if (xs_type != mXsType)
     {
-      gSrv->Emsg("VerifyChecksum", error, EIO, "wrong checksum type");
+      gSrv->Emsg("VerifyChecksum", error, EIO, "access the file, checksum type mismatch");
       rc = false;
     }
 
@@ -1029,7 +1025,7 @@ XrdxCastor2OfsFile::read(XrdSfsFileOffset fileOffset,
                          char*            buffer,
                          XrdSfsXferSize   buffer_size)
 {
-  xcastor_debug("off=%llu, len=%i", fileOffset, buffer_size);
+  xcastor_debug("off=%llu, adler_off=%llu, len=%i", fileOffset, mAdlerOffset, buffer_size);
 
   // If we once got an adler checksum error, we fail all reads
   if (mHasAdlerErr)
