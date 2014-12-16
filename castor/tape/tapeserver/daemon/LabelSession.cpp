@@ -110,22 +110,25 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   drive::DriveInterface &drive = *drivePtr.get();
 
   waitUntilTapeLoaded(drive, 60); // 60 = 60 seconds
-
-  checkTapeIsWritable(drive);
-
-  rewindDrive(drive);
-
-  // If the user is trying to label a non-empty tape without the force option
-  if(!m_force && !drive.isTapeBlank()) {
-    const std::string message = "Cannot label a non-empty tape without the"
-      " force option";
+  
+  if(drive.isWriteProtected()) {
+    const std::string message = "Cannot label the tape because the drive is write-protected";
     notifyTapeserverOfUserError(message);
-
-  // Else the labeling can go ahead
-  } else {
-    writeLabelToTape(drive);
   }
+  else {
+    rewindDrive(drive);
 
+    // If the user is trying to label a non-empty tape without the force option
+    if(!m_force && !drive.isTapeBlank()) {
+      const std::string message = "Cannot label a non-empty tape without the"
+        " force option";
+      notifyTapeserverOfUserError(message);
+
+    // Else the labeling can go ahead
+    } else {
+      writeLabelToTape(drive);
+    }
+  }
   unloadTape(m_request.vid, drive);
   dismountTape(m_request.vid);
 
@@ -218,27 +221,6 @@ void castor::tape::tapeserver::daemon::LabelSession::waitUntilTapeLoaded(
       ne.getMessage().str();
     throw ex;
   }
-}
-
-//------------------------------------------------------------------------------
-// checkTapeIsWritable
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::LabelSession::checkTapeIsWritable(
-  drive::DriveInterface &drive) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("uid", m_request.uid));
-  params.push_back(log::Param("gid", m_request.gid));
-  params.push_back(log::Param("TPVID", m_request.vid));
-  params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("dgn", m_request.dgn));
-  params.push_back(log::Param("force", boolToStr(m_force)));
-
-  if(drive.isWriteProtected()) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Tape to be labeled in write protected";
-    throw ex;
-  }
-  m_log(LOG_INFO, "Label session detected tape is writable", params);
 }
 
 //------------------------------------------------------------------------------

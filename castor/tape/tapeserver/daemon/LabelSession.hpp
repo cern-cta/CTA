@@ -178,13 +178,6 @@ private:
     const int timeoutSecond);
 
   /**
-   * Checks that the now loaded tape is writable.
-   *
-   * @param drive Object representing the drive hardware.
-   */
-  void checkTapeIsWritable(drive::DriveInterface &drive);
-
-  /**
    * Rewinds the specified tape drive.
    *
    * @param drive The tape drive.
