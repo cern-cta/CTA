@@ -65,8 +65,9 @@
 
   Package Changes
   ---------------
-  - xrootd-4.1
-  - rpyc-3.3
+  This release introduces a number of changes with respect to packaging. In particular:
+  - The xrootd packages need to be upgraded from 3.3 to 4.1 in all nodes.
+  - The RPyC package needs to be upgraded to version 3.3.
   - ceph
   - zmq
   - python-crypto
@@ -78,16 +79,15 @@
       
   Configuration changes
   ---------------------
-  Change of key location and names (not -int anymore):
-  + /etc/grid-security/castor-gridftp-dsi/castor-gridftp-dsi-cert.pem
-  + /etc/grid-security/castor-gridftp-dsi/castor-gridftp-dsi-key.pem
+  
+  - Because of the GridFTP plugin rename, the server keys for all disk servers have now to be stored as:
+     /etc/grid-security/castor-gridftp-dsi/castor-gridftp-dsi-cert.pem
+     /etc/grid-security/castor-gridftp-dsi/castor-gridftp-dsi-key.pem
 
-  Database configuration
-  ----------------------
-  Ask your DBA to run the following snippet, providing your stager account name:
-
-
-  Oracle client configuration: ~/.sqlnet.ora should contain DIAG_DDE_ENABLED=FALSE
+  - A number of new configuration parameters have been introduced with this release,
+    and suitable default values have been provided. Nevertheless it is recommended to review
+    the example configuration file in /etc/castor/castor.conf.example and adapt the configuration
+    management tools to reflect the changes.
 
   Upgrade Instructions from 2.1.14-15
   -----------------------------------
@@ -144,45 +144,51 @@
       Instructions
       ------------
 
-      1. Stop all CASTOR daemons on all diskservers and headnodes.
+       1. Stop all CASTOR daemons on all diskservers and headnodes.
 
-      2. Ask your Oracle DBA to run the following code snippet, providing your stager account:
+       2. Ask your Oracle DBA to run the following code snippet, providing your stager account:
 
-         DECLARE
-           stager_account VARCHAR2(100) := '<your stager account>';
-         BEGIN
-           EXECUTE IMMEDIATE 'GRANT CONNECT, RESOURCE, aq_administrator_role TO ' || stager_account;
-           EXECUTE IMMEDIATE 'GRANT EXECUTE ON dbms_aq TO ' || stager_account;
-           EXECUTE IMMEDIATE 'GRANT EXECUTE ON dbms_aqadm TO ' || stager_account;
-           DBMS_AQADM.grant_system_privilege('ENQUEUE_ANY', stager_account, FALSE);
-           DBMS_AQADM.grant_system_privilege('DEQUEUE_ANY', stager_account, FALSE);
-         END;
-         /
+          DECLARE
+            stager_account VARCHAR2(100) := '<your stager account>';
+          BEGIN
+            EXECUTE IMMEDIATE 'GRANT CONNECT, RESOURCE, aq_administrator_role TO ' || stager_account;
+            EXECUTE IMMEDIATE 'GRANT EXECUTE ON dbms_aq TO ' || stager_account;
+            EXECUTE IMMEDIATE 'GRANT EXECUTE ON dbms_aqadm TO ' || stager_account;
+            DBMS_AQADM.grant_system_privilege('ENQUEUE_ANY', stager_account, FALSE);
+            DBMS_AQADM.grant_system_privilege('DEQUEUE_ANY', stager_account, FALSE);
+          END;
+          /
 
-      3. Upgrade the STAGER database using the stager_2.1.14-15_to_2.1.15-0.sql
-         upgrade script available from:
-         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-0/dbupgrades
-         This step may take several minutes. You can proceed to step 4 at the same time.
+       3. Upgrade the STAGER database using the stager_2.1.14-15_to_2.1.15-0.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-0/dbupgrades
+          This step may take several minutes. You can proceed to step 4 at the same time.
 
-      4. Upgrade the software on the headnodes and diskservers to 2.1.15-0. Note that the new
-         RPMs bring in a number of new dependencies, as listed in the Package changes section above.
+       4. Upgrade the software on the headnodes and diskservers to 2.1.15-0. Note that the new
+          RPMs bring in a number of new dependencies, as listed in the Package changes section above.
 
-      5. Start all the daemons which were stopped in step 1.
+       5. In the headnodes, create a file named ~stage/.sqlnet.ora containing the following line:
 
-         Note: If you have a concept of private and public request handlers
-               you should start only the private ones to test/validate the
-               installation without user interference.
+          DIAG_DDE_ENABLED=FALSE
 
-      6. Wait a few seconds to give time for the diskservers to send a heartbeat
-         message to the transfermanager daemon.
+          The ~stage directory should be located locally in the headnodes, not in a remote filesystem.
 
-      7. Test the instance by running the test suite available from:
-         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-0/testsuite
+       6. Start all the daemons which were stopped in step 1.
 
-      8. Start the public request handlers (if applicable)
+          Note: If you have a concept of private and public request handlers
+                you should start only the private ones to test/validate the
+                installation without user interference.
 
-      9. Congratulations you have successfully upgraded to the 2.1.15-0 release
-         of CASTOR.
+       7. Wait a few seconds to give time for the diskservers to send a heartbeat
+          message to the transfermanager daemon.
+
+       8. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-0/testsuite
+
+       9. Start the public request handlers (if applicable)
+
+      10. Congratulations you have successfully upgraded to the 2.1.15-0 release
+          of CASTOR.
 
   Tape servers
   ------------
