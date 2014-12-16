@@ -102,8 +102,7 @@ class RunningTransfersSet(object):
         dlf.writenotice(msgs.FAILTOQUERYXROOT, Message=st_stat.message)
       else:
         # this is the list of currently running transfers according to xroot
-        resp = ast.literal_eval(resp)
-        for t in resp:
+        for t in ast.literal_eval(resp):
           rTransfer = xrootiface.xrootTupleToTransfer(scheduler, t)
           if type(rTransfer) == TapeTransfer:
             self.tapeTransfers.append(rTransfer)
@@ -332,7 +331,7 @@ class RunningTransfersSet(object):
         pid = self.leftOverTransfers[transferId]
         os.kill(pid, 0)
         # a process with this pid exists, now is it really our guy or something new ?
-        cmdline = open(os.path.sep+os.path.join('proc', str(pid), 'cmdline'), 'rb').read().split('\0')
+        cmdline = open(os.path.sep+os.path.join('proc', str(pid), 'cmdline'), 'rb').read()
         if transferId != cmdLineToTransferId(cmdline, pid):
           # it's a new one, not our guy
           isEnded = True
@@ -540,7 +539,7 @@ class RunningTransfersSet(object):
     attempt = 0
     while True:
       try:
-        # "transfer ended" message
+        # "Transfer ended" message
         dlf.write(msgs.TRANSFERENDED, subreqId=transfer.transferId, reqId=transfer.reqId, flags=transfer.flags, errCode=errCode, \
                   errMessage=errMessage, fileId=transfer.fileId, elapsedTime=(closeTime-transfer.creationTime), totalTime=(closeTime-transfer.submissionTime))
         rc_unused, msg_unused = connectionpool.connections.transferEnded(scheduler, \
