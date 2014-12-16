@@ -73,7 +73,7 @@ BEGIN
     -- Something went wrong when aborting: log and fail
     UPDATE StageRepackRequest SET status = tconst.REPACK_FAILED WHERE reqId = parentUUID;
     logToDLF(parentUUID, dlf.LVL_ERROR, dlf.REPACK_ABORTED_FAILED, 0, '', 'repackd', 'TPVID=' || varVID
-      || ' errorMessage="' || SQLERRM || '" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
+      || ' errorMessage="' || SQLERRM || '" stackTrace="' || dbms_utility.format_call_stack ||'"');
     COMMIT;
     RAISE;
   END;
@@ -308,7 +308,7 @@ BEGIN
       varSrErrorMsg := 'Oracle error caught : ' || SQLERRM;
       logToDLF(NULL, dlf.LVL_ERROR, dlf.REPACK_UNEXPECTED_EXCEPTION, segment.fileId, nsHostName, 'repackd',
         'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || varSrErrorMsg
-        ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
+        ||'" stackTrace="' || dbms_utility.format_call_stack ||'"');
       -- cleanup and fail SubRequest
       IF varWasRecalled = 0 THEN
         DELETE FROM RecallJob WHERE castorFile = cfId;

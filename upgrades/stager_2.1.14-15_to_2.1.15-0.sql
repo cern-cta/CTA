@@ -652,7 +652,7 @@ BEGIN
 EXCEPTION WHEN OTHERS THEN
   logToDLF(NULL, dlf.LVL_ALERT, dlf.DBJOB_UNEXPECTED_EXCEPTION, 0, '', source,
     'jobCode="'|| jobCode ||'" errorCode=' || to_char(SQLCODE) ||' errorMessage="' || SQLERRM
-    ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
+    ||'" stackTrace="' || dbms_utility.format_call_stack ||'"');
 END;
 /
 
@@ -7904,7 +7904,7 @@ BEGIN
     -- Something went wrong when aborting: log and fail
     UPDATE StageRepackRequest SET status = tconst.REPACK_FAILED WHERE reqId = parentUUID;
     logToDLF(parentUUID, dlf.LVL_ERROR, dlf.REPACK_ABORTED_FAILED, 0, '', 'repackd', 'TPVID=' || varVID
-      || ' errorMessage="' || SQLERRM || '" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
+      || ' errorMessage="' || SQLERRM || '" stackTrace="' || dbms_utility.format_call_stack ||'"');
     COMMIT;
     RAISE;
   END;
@@ -8139,7 +8139,7 @@ BEGIN
       varSrErrorMsg := 'Oracle error caught : ' || SQLERRM;
       logToDLF(NULL, dlf.LVL_ERROR, dlf.REPACK_UNEXPECTED_EXCEPTION, segment.fileId, nsHostName, 'repackd',
         'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || varSrErrorMsg
-        ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
+        ||'" stackTrace="' || dbms_utility.format_call_stack ||'"');
       -- cleanup and fail SubRequest
       IF varWasRecalled = 0 THEN
         DELETE FROM RecallJob WHERE castorFile = cfId;
@@ -11210,7 +11210,7 @@ BEGIN
     varErrorMsg := 'Oracle error caught : ' || SQLERRM;
     logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_MISSING_COPY_ERROR, inFileId, inNsHost, 'stagerd',
       'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || varErrorMsg
-      ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
+      ||'" stackTrace="' || dbms_utility.format_call_stack ||'"');
   END;
   RETURN 0;
 END;
