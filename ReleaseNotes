@@ -68,14 +68,18 @@
   This release introduces a number of changes with respect to packaging. In particular:
   - The xrootd packages need to be upgraded from 3.3 to 4.1 in all nodes.
   - The RPyC package needs to be upgraded to version 3.3.
-  - ceph
-  - zmq
-  - python-crypto
-  - xrootd-python
-  - rtcpd, taped and tapebridged obsoleted by tapeserverd
-  - Dropped castor-job
-  - change of package name for gridFTP plugins (-int disappears)
-  - dependency on radosstriper in many places (gc, rfio, gridFTP). Must be release >= giant
+  - On the disk servers, castor-job has been incorporated into castor-diskmserver-manager.
+    Furthermore, new dependencies have been introduced to the python-crypto and xrootd-python
+    packages.
+  - On the disk servers, all movers (rfio, gridFTP, and xrootd) and the gcd daemon depend
+    on the libradosstriper1 RPM from Ceph (Giant release or newer), that must be available
+    even if Ceph is not used.
+  - The gridFTP plugin for CASTOR has been renamed to castor-gridftp-dsi, which corresponds
+    to the once called 'internal mode' plugin.
+  - On the tape servers, a new castor-tapeserver-server package provides the new
+    tapeserverd daemon, which obsoletes taped, rtcpd, and tapebridged. Likewise, the tape
+    clients are provided by a castor-tapeserver-client package, which obsoletes castor-tapebridge-client.
+    Furthermore, new dependencies have been introduced to the zeromq3 and cryptopp packages.
       
   Configuration changes
   ---------------------
@@ -88,6 +92,9 @@
     and suitable default values have been provided. Nevertheless it is recommended to review
     the example configuration file in /etc/castor/castor.conf.example and adapt the configuration
     management tools to reflect the changes.
+
+  - The format of the /etc/castor/TPCONFIG file has been simplified from 7 to 4 columns, namely
+    unit name, dgn, dev filename and library slot.
 
   Upgrade Instructions from 2.1.14-15
   -----------------------------------
@@ -189,10 +196,6 @@
 
       10. Congratulations you have successfully upgraded to the 2.1.15-0 release
           of CASTOR.
-
-  Tape servers
-  ------------
-  
 
 
 -------------
