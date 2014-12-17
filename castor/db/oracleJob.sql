@@ -483,9 +483,10 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
   varDcGcWeight NUMBER := 0;
   varDcImportance NUMBER := 0;
   varNewDcStatus INTEGER := dconst.DISKCOPY_VALID;
-  varLogMsg VARCHAR2(2048);
+  varLogMsg VARCHAR2(2048) := dlf.D2D_D2DDONE_OK;
   varComment VARCHAR2(2048);
   varDrainingJob VARCHAR2(2048);
+  varErrorMessage VARCHAR2(2048) := inErrorMessage;
 BEGIN
   BEGIN
     IF inDestPath IS NOT NULL THEN
@@ -523,87 +524,86 @@ BEGIN
       RETURN;
     END;
   END;
-  varLogMsg := CASE WHEN inErrorMessage IS NULL THEN dlf.D2D_D2DDONE_OK ELSE dlf.D2D_D2DFAILED END;
+  -- check the filesize
+  IF inReplicaFileSize != varFileSize THEN
+    -- replication went wrong !
+    varNewDcStatus := dconst.DISKCOPY_INVALID;
+    IF varErrorMessage IS NULL THEN
+      varErrorMessage := 'File size mismatch during replication';
+    END IF;
+  END IF;
   -- lock the castor file (and get logging info)
   SELECT fileid, nsHost, fileSize INTO varFileId, varNsHost, varFileSize
     FROM CastorFile
    WHERE id = varCfId
      FOR UPDATE;
-  -- check the filesize
-  IF inReplicaFileSize != varFileSize THEN
-    -- replication went wrong !
-    IF varLogMsg = dlf.D2D_D2DDONE_OK THEN
-      varLogMsg := dlf.D2D_D2DDONE_BADSIZE;
-      varNewDcStatus := dconst.DISKCOPY_INVALID;
-    END IF;
-  END IF;
   -- Log success or failure of the replication
+  IF varLogMsg = dlf.D2D_D2DDONE_OK AND varErrorMessage IS NOT NULL THEN
+    varLogMsg := dlf.D2D_D2DFAILED;
+  END IF;
   varComment := 'transferId="' || inTransferId ||
          '" destSvcClass=' || getSvcClassName(varDestSvcClass) ||
          ' dstDcId=' || TO_CHAR(varDestDcId) || ' destPath="' || inDestPath ||
          '" euid=' || TO_CHAR(varUid) || ' egid=' || TO_CHAR(varGid) ||
          ' fileSize=' || TO_CHAR(varFileSize);
-  IF inErrorMessage IS NOT NULL THEN
+  IF varErrorMessage IS NOT NULL THEN
     varComment := varComment || ' replicaFileSize=' || TO_CHAR(inReplicaFileSize) ||
-                  ' errorMessage="' || inErrorMessage || '"';
+                  ' errorCode=' || inErrorCode || ' errorMessage="' || varErrorMessage || '"';
+    varNewDcStatus := dconst.DISKCOPY_INVALID;
   END IF;
   logToDLF(NULL, dlf.LVL_SYSTEM, varLogMsg, varFileId, varNsHost, 'transfermanagerd', varComment);
-  -- if success, create new DiskCopy, restart waiting requests, cleanup and handle replicate on close
-  IF inErrorMessage IS NULL THEN
+  IF varErrorMessage IS NULL THEN
+    -- compute GcWeight and importance of the new copy
+    DECLARE
+      varGcwProc VARCHAR2(2048);
+    BEGIN
+      varGcwProc := castorGC.getCopyWeight(varDestSvcClass);
+      EXECUTE IMMEDIATE
+        'BEGIN :newGcw := ' || varGcwProc || '(:size); END;'
+        USING OUT varDcGcWeight, IN varFileSize;
+      SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */
+             COUNT(*)+1 INTO varDCImportance FROM DiskCopy
+       WHERE castorFile=varCfId AND status = dconst.DISKCOPY_VALID;
+    END;
+  END IF;
+  -- create the new DiskCopy in all cases
+  INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
+                        owneruid, ownergid, id, gcType, fileSystem, datapool, castorFile,
+                        status, importance)
+  VALUES (varDestPath, varDcGcWeight, getTime(), getTime(), varFileSize, 0,
+          varUid, varGid, varDestDcId,
+          CASE varNewDcStatus WHEN dconst.DISKCOPY_INVALID
+                              THEN dconst.GCTYPE_FAILEDD2D
+                              ELSE NULL END,
+          varDestFsId, varDestDpId, varCfId, varNewDcStatus, varDCImportance);
+  -- if success, restart waiting requests, cleanup and handle replicate on close
+  IF varErrorMessage IS NULL THEN
     -- In case of draining, update DrainingJob: this is done before the rest to respect the locking order
     IF varDrainingJob IS NOT NULL THEN
       updateDrainingJobOnD2dEnd(varDrainingJob, varFileSize, False);
     END IF;
-    -- compute GcWeight and importance of the new copy
-    IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
-      DECLARE
-        varGcwProc VARCHAR2(2048);
-      BEGIN
-        varGcwProc := castorGC.getCopyWeight(varDestSvcClass);
-        EXECUTE IMMEDIATE
-          'BEGIN :newGcw := ' || varGcwProc || '(:size); END;'
-          USING OUT varDcGcWeight, IN varFileSize;
-        SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */
-               COUNT(*)+1 INTO varDCImportance FROM DiskCopy
-         WHERE castorFile=varCfId AND status = dconst.DISKCOPY_VALID;
-      END;
-    END IF;
-    -- create the new DiskCopy
-    INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
-                          owneruid, ownergid, id, gcType, fileSystem, datapool, castorFile,
-                          status, importance)
-    VALUES (varDestPath, varDcGcWeight, getTime(), getTime(), varFileSize, 0,
-            varUid, varGid, varDestDcId,
-            CASE varNewDcStatus WHEN dconst.DISKCOPY_INVALID
-                                THEN dconst.GCTYPE_FAILEDD2D
-                                ELSE NULL END,
-            varDestFsId, varDestDpId, varCfId, varNewDcStatus, varDCImportance);
     -- Wake up waiting subrequests
     UPDATE SubRequest
        SET status = dconst.SUBREQUEST_RESTART,
-           getNextStatus = CASE WHEN inErrorMessage IS NULL THEN dconst.GETNEXTSTATUS_FILESTAGED ELSE getNextStatus END,
+           getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
            lastModificationTime = getTime()
-           -- XXX due to bug #103715 requests for disk-to-disk copies actually stay in WAITTAPERECALL,
-           -- XXX so we have to restart also those. This will go with the refactoring of the stager.
-     WHERE status IN (dconst.SUBREQUEST_WAITSUBREQ, dconst.SUBREQUEST_WAITTAPERECALL)
+     WHERE status = dconst.SUBREQUEST_WAITSUBREQ
        AND castorfile = varCfId;
     alertSignalNoLock('wakeUpJobReqSvc');
     -- delete the disk2diskCopyJob
     DELETE FROM Disk2DiskCopyJob WHERE transferId = inTransferId;
     -- In case of valid new copy
-    IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
-      IF varDropSource = 1 THEN
-        -- drop source if requested
-        UPDATE DiskCopy
-           SET status = dconst.DISKCOPY_INVALID, gcType=dconst.GCTYPE_DRAINING
-         WHERE id = varSrcDcId;
-      ELSE
-        -- update importance of other DiskCopies if it's an additional one
-        UPDATE DiskCopy SET importance = varDCImportance WHERE castorFile = varCfId;
-      END IF;
-      -- trigger the creation of additional copies of the file, if any
-      replicateOnClose(varCfId, varUid, varGid, varDestSvcClass);
+    IF varDropSource = 1 THEN
+      -- drop source if requested
+      UPDATE DiskCopy
+         SET status = dconst.DISKCOPY_INVALID, gcType=dconst.GCTYPE_DRAINING
+       WHERE id = varSrcDcId;
+    ELSE
+      -- update importance of other DiskCopies if it's an additional one
+      UPDATE DiskCopy SET importance = varDCImportance WHERE castorFile = varCfId;
     END IF;
+    -- trigger the creation of additional copies of the file, if any
+    replicateOnClose(varCfId, varUid, varGid, varDestSvcClass);
   ELSE
     -- failure
     DECLARE
@@ -631,7 +631,7 @@ BEGIN
           -- and remember the error in case of draining
           IF varDrainingJob IS NOT NULL THEN
             INSERT INTO DrainingErrors (drainingJob, errorMsg, fileId, nsHost, castorFile, timeStamp)
-            VALUES (varDrainingJob, inErrorMessage, varFileId, varNsHost, varCfId, getTime());
+            VALUES (varDrainingJob, varErrorMessage, varFileId, varNsHost, varCfId, getTime());
           END IF;
         EXCEPTION WHEN NO_DATA_FOUND THEN
           -- the Disk2DiskCopyJob was already dropped (e.g. because of an interrupted draining)
@@ -646,7 +646,7 @@ BEGIN
                lastModificationTime = getTime(),
                errorCode = serrno.SEINTERNAL,
                errorMessage = 'Disk to disk copy failed after ' || TO_CHAR(varMaxNbD2dRetries) ||
-                              'retries. Last error was : ' || inErrorMessage
+                              'retries. Last error was : ' || varErrorMessage
          WHERE status = dconst.SUBREQUEST_WAITSUBREQ
            AND castorfile = varCfId;
       END IF;
