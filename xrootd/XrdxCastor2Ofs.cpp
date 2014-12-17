@@ -487,9 +487,11 @@ XrdxCastor2OfsFile::open(const char*         path,
     // Get existing checksum - we don't check errors here
     nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.type",
                                 buf, 32);
+    buf[nattr] = '\0';
     mXsType = buf;
     nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.value",
                                 buf, 32);
+    buf[nattr] = '\0';
     mXsValue = buf;
 
     if (!mXsType.empty() || !mXsValue.empty())
