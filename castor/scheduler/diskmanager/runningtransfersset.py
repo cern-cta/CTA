@@ -92,10 +92,9 @@ class RunningTransfersSet(object):
         # process we were looking at. We only ignore this process as it has probably
         # finished in the mean time
         pass
-    # then query xroot for its transfers
+    # then query xroot for its transfers: this query is only allowed on localhost and it does not need to be secured
     try:
-      # XXX TODO replace socket.getfqdn() with 'localhost' after deploying the new xrootd-python package
-      fs = XrdClient.FileSystem(xrootiface.buildXrootURL(socket.getfqdn(), '', None, ''))
+      fs = XrdClient.FileSystem('root://localhost')   # a full URL would be xrootiface.buildXrootURL('localhost', '', None, '')
       st_stat, resp = fs.query(QueryCode.OPAQUE, "transfers")
       if not st_stat.ok:
         # 'Failed to query xrootd server' message
