@@ -17,6 +17,8 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 #
+cmake_minimum_required (VERSION 2.6)
+
 find_package( ZLIB REQUIRED )
 
 add_library(castorTapeServerDaemon 

@@ -17,8 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-#
-# Steven.Murray@cern.ch
+# @author Castor Dev team, castor-dev@cern.ch
 #
 cmake_minimum_required (VERSION 2.6)
 
