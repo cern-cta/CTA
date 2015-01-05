@@ -99,12 +99,23 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
 
       m_stats.dataVolume += mb->m_payload.size();
 
-      //we either read at full capacity (ie size=capacity) or if there different,
-      //it should be the end => migratingFileSize should be 0. If it not, error
+      //we either read at full capacity (ie size=capacity, i.e. fill up the block),
+      // or if there different, it should be the end of the file=> migratingFileSize 
+      // should be 0. If it not, it is an error
       currentErrorToCount = "Error_diskUnexpectedSizeWhenReading";
       if(mb->m_payload.size() != mb->m_payload.totalCapacity() && migratingFileSize>0){
-        std::string erroMsg = "Error while reading a file. Did not read at full capacity but the file is not fully read";
+        std::string erroMsg = "Error while reading a file: memory block not filled up, but the file is not fully read yet";
+        // Log the error
+        log::ScopedParamContainer params(lc);
+        params.add("bytesInBlock", mb->m_payload.size())
+              .add("BlockCapacity", mb->m_payload.totalCapacity())
+              .add("BytesNotYetRead", migratingFileSize);
+        lc.log(LOG_ERR, "Error while reading a file: memory block not filled up, but the file is not fully read yet");
+        // Mark the block as failed
         mb->markAsFailed(erroMsg,SEINTERNAL);
+        // Transmit to the tape write task, which will finish the session
+        m_nextTask.pushDataBlock(mb);
+        // Fail the disk side.
         throw castor::exception::Exception(erroMsg);
       }
       currentErrorToCount = "";
