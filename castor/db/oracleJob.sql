@@ -555,7 +555,7 @@ BEGIN
          '" destSvcClass=' || getSvcClassName(varDestSvcClass) ||
          ' dstDcId=' || TO_CHAR(varDestDcId) || ' destPath="' || inDestPath ||
          '" euid=' || TO_CHAR(varUid) || ' egid=' || TO_CHAR(varGid) ||
-         ' fileSize=' || TO_CHAR(varFileSize);
+         ' fileSize=' || TO_CHAR(varFileSize) || ' checksum=' || inCksumValue;
   IF varErrorMessage IS NOT NULL THEN
     varComment := varComment || ' replicaFileSize=' || TO_CHAR(inReplicaFileSize) ||
                   ' errorCode=' || inErrorCode || ' errorMessage="' || varErrorMessage || '"';
@@ -618,6 +618,7 @@ BEGIN
     -- failure
     DECLARE
       varMaxNbD2dRetries INTEGER := to_number(getConfigOption('D2dCopy', 'MaxNbRetries', 2));
+      varNewDestDcId INTEGER := ids_seq.nextval();
     BEGIN
       -- shall we try again ?
       -- we should not when the job was deliberately killed, neither when we reach the maximum
@@ -626,6 +627,7 @@ BEGIN
         -- yes, so let's restart the Disk2DiskCopyJob
         UPDATE Disk2DiskCopyJob
            SET status = dconst.DISK2DISKCOPYJOB_PENDING,
+               destDcId = varNewDestDcId,
                retryCounter = varRetryCounter + 1
          WHERE transferId = inTransferId;
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.D2D_D2DDONE_RETRIED, varFileId, varNsHost, 'transfermanagerd', varComment ||
@@ -656,7 +658,7 @@ BEGIN
                lastModificationTime = getTime(),
                errorCode = serrno.SEINTERNAL,
                errorMessage = 'Disk to disk copy failed after ' || TO_CHAR(varMaxNbD2dRetries) ||
-                              'retries. Last error was : ' || varErrorMessage
+                              ' retries. Last error was : ' || varErrorMessage
          WHERE status = dconst.SUBREQUEST_WAITSUBREQ
            AND castorfile = varCfId;
       END IF;
