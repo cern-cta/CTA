@@ -150,7 +150,7 @@ class MoverReqHandlerThread(threading.Thread):
           # a destination disk-to-disk copy needs to be notified to the scheduler, with no return code
           connectionpool.connections.d2dEnded(t.scheduler,
                                               tuple([(transferid, t.transfer.reqId, t.transfer.fileId,
-                                                      socket.getfqdn(), t.localPath, int(fSize), errCode, errMessage)]),
+                                                      socket.getfqdn(), t.localPath, int(fSize), cksumValue, errCode, errMessage)]),
                                               timeout=timeout)
           return '0\n'
         elif t.transfer.transferType == TransferType.D2DSRC:
