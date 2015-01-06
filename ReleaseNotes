@@ -2,7 +2,29 @@
 - 2.1.15-0 -
 ------------
 
-  DRAFT NOTES
+  Summary of major features
+  -------------------------
+
+  - Replacement of the taped/rtcpd/tapebriged suite by a single tapeserverd daemon.
+    The new tape software is able to talk rfio or xroot as a protocol and is
+    backward compatible with 2.1.14
+  - Use of xroot for internal transfers : disk to disk copies are only xroot while
+    tape transfers can be configured with xroot or rfio so to ensure compatibility
+    with 2.1.14 and easy upgrade path (see upgrade instructions)
+  - A concept of DataPool has been introduced that allows usage of object stores or
+    distributed filesystems for the disk cache. The first implementation of it will
+    be the usage of ceph as a backend. The code for a ceph usage is actually present
+    and functionnal in the release but should not be used as it has not yet be fully
+    tested.
+  - Drop of the stagerJob process. It has been integrated into the diskmanager one
+  - Better implementation of the handling od multiple replicas on disk. Replicas are
+    now always created at file creation (equivalent to replicateOnClose=true in 2.1.14)
+    and are respecting the configuration of the service class used at creation time
+  - gridFTP's external plugin has been dropped
+  - Several improvements have been done in the stager lowering the DB usage by ~50%.
+    Also the dbms_alert package has been abandonned and relaced with advanced queuing
+    leading to better performances.
+  - The code has been adapeted to xroot 4.1
 
   Stager
   ------
