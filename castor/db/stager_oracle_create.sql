@@ -582,7 +582,6 @@ AS
   D2D_DEST_NOT_PRODUCTION      CONSTANT VARCHAR2(2048) := 'disk2DiskCopyStart : Destination diskserver/filesystem not in PRODUCTION any longer';
   D2D_START_OK                 CONSTANT VARCHAR2(2048) := 'disk2DiskCopyStart completed successfully';
   D2D_D2DDONE_CANCEL           CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : Invalidating new copy as job was canceled';
-  D2D_D2DDONE_BADSIZE          CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : File replication size mismatch';
   D2D_D2DDONE_OK               CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : Replication successful';
   D2D_D2DDONE_RETRIED          CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : Retrying disk to disk copy';
   D2D_D2DDONE_NORETRY          CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : no retry, giving up';
@@ -1016,7 +1015,7 @@ CREATE TABLE SubRequest (retryCounter NUMBER,
                          errorCode NUMBER, 
                          errorMessage VARCHAR2(2048),
                          id NUMBER CONSTRAINT NN_SubRequest_Id NOT NULL,
-                         diskcopy INTEGER,
+                         diskCopy INTEGER,
                          diskServer INTEGER,
                          castorFile INTEGER,
                          status INTEGER,
@@ -1031,17 +1030,20 @@ CREATE TABLE SubRequest (retryCounter NUMBER,
   SUBPARTITION BY HASH(ID) SUBPARTITIONS 5
    (
     PARTITION P_STATUS_START    VALUES (0, 1, 2),
-    PARTITION P_STATUS_ACTIVE   VALUES (3, 4, 5, 6, 12),
+    PARTITION P_STATUS_ACTIVE   VALUES (3, 4, 5, 6),
     PARTITION P_STATUS_FAILED   VALUES (7),
     PARTITION P_STATUS_FINISHED VALUES (8, 9, 10, 11),
-    PARTITION P_STATUS_SCHED    VALUES (13, 14)
+    PARTITION P_STATUS_SCHED    VALUES (13, 14),
+    PARTITION P_STATUS_REPACK   VALUES (12)
    );
 
 ALTER TABLE SubRequest
   ADD CONSTRAINT PK_SubRequest_Id PRIMARY KEY (ID);
 CREATE INDEX I_SubRequest_Svc_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL;
 CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,NULL,9,NULL,status));
-CREATE INDEX I_SubRequest_Castorfile ON SubRequest (castorFile);
+CREATE INDEX I_SubRequest_CastorFile ON SubRequest (castorFile);
+ALTER TABLE SubRequest
+  ADD CONSTRAINT FK_SubRequest_CastorFile FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 CREATE INDEX I_SubRequest_DiskCopy ON SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_DiskServer ON SubRequest (diskServer);
 CREATE INDEX I_SubRequest_Request ON SubRequest (request);
@@ -2457,7 +2459,7 @@ BEGIN
 EXCEPTION WHEN OTHERS THEN
   logToDLF(NULL, dlf.LVL_ALERT, dlf.DBJOB_UNEXPECTED_EXCEPTION, 0, '', source,
     'jobCode="'|| jobCode ||'" errorCode=' || to_char(SQLCODE) ||' errorMessage="' || SQLERRM
-    ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
+    ||'" stackTrace="' || dbms_utility.format_call_stack ||'"');
 END;
 /
 
@@ -3110,7 +3112,7 @@ BEGIN
     -- Something went wrong when aborting: log and fail
     UPDATE StageRepackRequest SET status = tconst.REPACK_FAILED WHERE reqId = parentUUID;
     logToDLF(parentUUID, dlf.LVL_ERROR, dlf.REPACK_ABORTED_FAILED, 0, '', 'repackd', 'TPVID=' || varVID
-      || ' errorMessage="' || SQLERRM || '" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
+      || ' errorMessage="' || SQLERRM || '" stackTrace="' || dbms_utility.format_call_stack ||'"');
     COMMIT;
     RAISE;
   END;
@@ -3345,7 +3347,7 @@ BEGIN
       varSrErrorMsg := 'Oracle error caught : ' || SQLERRM;
       logToDLF(NULL, dlf.LVL_ERROR, dlf.REPACK_UNEXPECTED_EXCEPTION, segment.fileId, nsHostName, 'repackd',
         'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || varSrErrorMsg
-        ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
+        ||'" stackTrace="' || dbms_utility.format_call_stack ||'"');
       -- cleanup and fail SubRequest
       IF varWasRecalled = 0 THEN
         DELETE FROM RecallJob WHERE castorFile = cfId;
@@ -3881,7 +3883,6 @@ CREATE OR REPLACE PROCEDURE checkNbReplicas AS
   varCfId INTEGER;
   varReplicaNb NUMBER;
   varNbFiles NUMBER;
-  varDidSth BOOLEAN;
 BEGIN
   -- Loop over the CastorFiles to be processed
   LOOP
@@ -3900,7 +3901,6 @@ BEGIN
     SELECT replicaNb INTO varReplicaNb
       FROM SvcClass WHERE id = varSvcClassId;
     -- Produce a list of diskcopies to invalidate should too many replicas be online.
-    varDidSth := False;
     FOR b IN (SELECT id FROM (
                 SELECT rownum ind, id FROM (
                   SELECT * FROM (
@@ -3948,16 +3948,14 @@ BEGIN
          SET status = dconst.DISKCOPY_INVALID,
              gcType = dconst.GCTYPE_TOOMANYREPLICAS
        WHERE id = b.id;
-      varDidSth := True;
       -- update importance of remaining diskcopies
       UPDATE DiskCopy SET importance = importance + 1
        WHERE castorFile = varCfId
          AND status = dconst.DISKCOPY_VALID;
     END LOOP;
-    IF varDidSth THEN COMMIT; END IF;
-  END LOOP;
-  -- commit the deletions in case no modification was done that commited them before
+  -- either commit the deletions or release the lock on castorFile
   COMMIT;
+  END LOOP;
 END;
 /
 
@@ -6419,7 +6417,7 @@ BEGIN
     varErrorMsg := 'Oracle error caught : ' || SQLERRM;
     logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_MISSING_COPY_ERROR, inFileId, inNsHost, 'stagerd',
       'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || varErrorMsg
-      ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
+      ||'" stackTrace="' || dbms_utility.format_call_stack ||'"');
   END;
   RETURN 0;
 END;
@@ -7818,10 +7816,11 @@ BEGIN
    WHERE id = varCfId;
   IF inoutErrorCode = 0 THEN
     -- no error, archive and log
-    archiveSubReq(varSrId, 8);  -- FINISHED
+    archiveSubReq(varSrId, dconst.SUBREQUEST_FINISHED);
     logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETENDED, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| inTransferId);
   ELSE
-    -- request failed, log
+    -- request failed, fail and log
+    archiveSubReq(varSrId, dconst.SUBREQUEST_FAILED_FINISHED);
     logToDLF(NULL, dlf.LVL_NOTICE, dlf.STAGER_GETENDED, varFileId, varNsHost, 'stagerd',
       'SUBREQID='|| inTransferId ||' errorMessage="'|| errmsg ||'" errorCode='|| inoutErrorCode);
     -- and return 0, the error has been handled
@@ -8032,13 +8031,13 @@ END;
 /
 
 /* PL/SQL method implementing disk2DiskCopyEnded
- * Note that inDestDsName, inDestPath and inReplicaFileSize are not used when inErrorMessage is not NULL
+ * Note that inDestDsName, inDestPath, inReplicaFileSize and inCksumValue are not used when inErrorMessage is not NULL
  * inErrorCode is used in case of error to decide whether to retry and also to invalidate
  * the source diskCopy if the error is an ENOENT
  */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
 (inTransferId IN VARCHAR2, inDestDsName IN VARCHAR2, inDestPath IN VARCHAR2,
- inReplicaFileSize IN INTEGER, inErrorCode IN INTEGER, inErrorMessage IN VARCHAR2) AS
+ inReplicaFileSize IN INTEGER, inCksumValue IN VARCHAR2, inErrorCode IN INTEGER, inErrorMessage IN VARCHAR2) AS
   varCfId INTEGER;
   varUid INTEGER := -1;
   varGid INTEGER := -1;
@@ -8050,6 +8049,7 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
   varRetryCounter INTEGER;
   varFileId INTEGER;
   varNsHost VARCHAR2(2048);
+  varFCksum VARCHAR2(10);
   varFileSize INTEGER;
   varDestPath VARCHAR2(2048);
   varDestFsId INTEGER;
@@ -8057,9 +8057,10 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
   varDcGcWeight NUMBER := 0;
   varDcImportance NUMBER := 0;
   varNewDcStatus INTEGER := dconst.DISKCOPY_VALID;
-  varLogMsg VARCHAR2(2048);
+  varLogMsg VARCHAR2(2048) := dlf.D2D_D2DDONE_OK;
   varComment VARCHAR2(2048);
   varDrainingJob VARCHAR2(2048);
+  varErrorMessage VARCHAR2(2048) := inErrorMessage;
 BEGIN
   BEGIN
     IF inDestPath IS NOT NULL THEN
@@ -8097,99 +8098,109 @@ BEGIN
       RETURN;
     END;
   END;
-  varLogMsg := CASE WHEN inErrorMessage IS NULL THEN dlf.D2D_D2DDONE_OK ELSE dlf.D2D_D2DFAILED END;
+  -- on success, check the filesize and the checksum
+  IF varErrorMessage IS NULL THEN
+    BEGIN
+      SELECT csumValue INTO varFCksum
+        FROM Cns_file_metadata@remoteNS
+       WHERE fileId = varFileId;
+      IF inReplicaFileSize != varFileSize OR to_number(inCksumValue, 'XXXXXXXX') != to_number(varFCksum, 'XXXXXXXX') THEN
+        -- replication went wrong !
+        varNewDcStatus := dconst.DISKCOPY_INVALID;
+        varErrorMessage := 'File size/checksum mismatch during replication, the source file is probably corrupted';
+      END IF;
+    EXCEPTION WHEN INVALID_NUMBER THEN
+      -- the checksum is not a number?!
+      varNewDcStatus := dconst.DISKCOPY_INVALID;
+      varErrorMessage := 'Invalid checksum value "' || inCksumValue || '", giving up';
+    END;
+  END IF;
   -- lock the castor file (and get logging info)
   SELECT fileid, nsHost, fileSize INTO varFileId, varNsHost, varFileSize
     FROM CastorFile
    WHERE id = varCfId
      FOR UPDATE;
-  -- check the filesize
-  IF inReplicaFileSize != varFileSize THEN
-    -- replication went wrong !
-    IF varLogMsg = dlf.D2D_D2DDONE_OK THEN
-      varLogMsg := dlf.D2D_D2DDONE_BADSIZE;
-      varNewDcStatus := dconst.DISKCOPY_INVALID;
-    END IF;
-  END IF;
   -- Log success or failure of the replication
+  IF varLogMsg = dlf.D2D_D2DDONE_OK AND varErrorMessage IS NOT NULL THEN
+    varLogMsg := dlf.D2D_D2DFAILED;
+  END IF;
   varComment := 'transferId="' || inTransferId ||
          '" destSvcClass=' || getSvcClassName(varDestSvcClass) ||
          ' dstDcId=' || TO_CHAR(varDestDcId) || ' destPath="' || inDestPath ||
          '" euid=' || TO_CHAR(varUid) || ' egid=' || TO_CHAR(varGid) ||
-         ' fileSize=' || TO_CHAR(varFileSize);
-  IF inErrorMessage IS NOT NULL THEN
+         ' fileSize=' || TO_CHAR(varFileSize) || ' checksum=' || inCksumValue;
+  IF varErrorMessage IS NOT NULL THEN
     varComment := varComment || ' replicaFileSize=' || TO_CHAR(inReplicaFileSize) ||
-                  ' errorMessage="' || inErrorMessage || '"';
+                  ' errorCode=' || inErrorCode || ' errorMessage="' || varErrorMessage || '"';
+    varNewDcStatus := dconst.DISKCOPY_INVALID;
   END IF;
   logToDLF(NULL, dlf.LVL_SYSTEM, varLogMsg, varFileId, varNsHost, 'transfermanagerd', varComment);
-  -- if success, create new DiskCopy, restart waiting requests, cleanup and handle replicate on close
-  IF inErrorMessage IS NULL THEN
+  IF varErrorMessage IS NULL THEN
+    -- compute GcWeight and importance of the new copy
+    DECLARE
+      varGcwProc VARCHAR2(2048);
+    BEGIN
+      varGcwProc := castorGC.getCopyWeight(varDestSvcClass);
+      EXECUTE IMMEDIATE
+        'BEGIN :newGcw := ' || varGcwProc || '(:size); END;'
+        USING OUT varDcGcWeight, IN varFileSize;
+      SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */
+             COUNT(*)+1 INTO varDCImportance FROM DiskCopy
+       WHERE castorFile=varCfId AND status = dconst.DISKCOPY_VALID;
+    END;
+  END IF;
+  -- create the new DiskCopy in all cases
+  INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
+                        owneruid, ownergid, id, gcType, fileSystem, datapool, castorFile,
+                        status, importance)
+  VALUES (varDestPath, varDcGcWeight, getTime(), getTime(), varFileSize, 0,
+          varUid, varGid, varDestDcId,
+          CASE varNewDcStatus WHEN dconst.DISKCOPY_INVALID
+                              THEN dconst.GCTYPE_FAILEDD2D
+                              ELSE NULL END,
+          varDestFsId, varDestDpId, varCfId, varNewDcStatus, varDCImportance);
+  -- if success, restart waiting requests, cleanup and handle replicate on close
+  IF varErrorMessage IS NULL THEN
     -- In case of draining, update DrainingJob: this is done before the rest to respect the locking order
     IF varDrainingJob IS NOT NULL THEN
       updateDrainingJobOnD2dEnd(varDrainingJob, varFileSize, False);
     END IF;
-    -- compute GcWeight and importance of the new copy
-    IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
-      DECLARE
-        varGcwProc VARCHAR2(2048);
-      BEGIN
-        varGcwProc := castorGC.getCopyWeight(varDestSvcClass);
-        EXECUTE IMMEDIATE
-          'BEGIN :newGcw := ' || varGcwProc || '(:size); END;'
-          USING OUT varDcGcWeight, IN varFileSize;
-        SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */
-               COUNT(*)+1 INTO varDCImportance FROM DiskCopy
-         WHERE castorFile=varCfId AND status = dconst.DISKCOPY_VALID;
-      END;
-    END IF;
-    -- create the new DiskCopy
-    INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
-                          owneruid, ownergid, id, gcType, fileSystem, datapool, castorFile,
-                          status, importance)
-    VALUES (varDestPath, varDcGcWeight, getTime(), getTime(), varFileSize, 0,
-            varUid, varGid, varDestDcId,
-            CASE varNewDcStatus WHEN dconst.DISKCOPY_INVALID
-                                THEN dconst.GCTYPE_FAILEDD2D
-                                ELSE NULL END,
-            varDestFsId, varDestDpId, varCfId, varNewDcStatus, varDCImportance);
     -- Wake up waiting subrequests
     UPDATE SubRequest
        SET status = dconst.SUBREQUEST_RESTART,
-           getNextStatus = CASE WHEN inErrorMessage IS NULL THEN dconst.GETNEXTSTATUS_FILESTAGED ELSE getNextStatus END,
+           getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
            lastModificationTime = getTime()
-           -- XXX due to bug #103715 requests for disk-to-disk copies actually stay in WAITTAPERECALL,
-           -- XXX so we have to restart also those. This will go with the refactoring of the stager.
-     WHERE status IN (dconst.SUBREQUEST_WAITSUBREQ, dconst.SUBREQUEST_WAITTAPERECALL)
+     WHERE status = dconst.SUBREQUEST_WAITSUBREQ
        AND castorfile = varCfId;
     alertSignalNoLock('wakeUpJobReqSvc');
     -- delete the disk2diskCopyJob
     DELETE FROM Disk2DiskCopyJob WHERE transferId = inTransferId;
     -- In case of valid new copy
-    IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
-      IF varDropSource = 1 THEN
-        -- drop source if requested
-        UPDATE DiskCopy
-           SET status = dconst.DISKCOPY_INVALID, gcType=dconst.GCTYPE_DRAINING
-         WHERE id = varSrcDcId;
-      ELSE
-        -- update importance of other DiskCopies if it's an additional one
-        UPDATE DiskCopy SET importance = varDCImportance WHERE castorFile = varCfId;
-      END IF;
-      -- trigger the creation of additional copies of the file, if any
-      replicateOnClose(varCfId, varUid, varGid, varDestSvcClass);
+    IF varDropSource = 1 THEN
+      -- drop source if requested
+      UPDATE DiskCopy
+         SET status = dconst.DISKCOPY_INVALID, gcType=dconst.GCTYPE_DRAINING
+       WHERE id = varSrcDcId;
+    ELSE
+      -- update importance of other DiskCopies if it's an additional one
+      UPDATE DiskCopy SET importance = varDCImportance WHERE castorFile = varCfId;
     END IF;
+    -- trigger the creation of additional copies of the file, if any
+    replicateOnClose(varCfId, varUid, varGid, varDestSvcClass);
   ELSE
     -- failure
     DECLARE
-      varMaxNbD2dRetries INTEGER := TO_NUMBER(getConfigOption('D2dCopy', 'MaxNbRetries', 2));
+      varMaxNbD2dRetries INTEGER := to_number(getConfigOption('D2dCopy', 'MaxNbRetries', 2));
+      varNewDestDcId INTEGER := ids_seq.nextval();
     BEGIN
       -- shall we try again ?
       -- we should not when the job was deliberately killed, neither when we reach the maximum
       -- number of attempts
-      IF varRetryCounter < varMaxNbD2dRetries AND inErrorCode != serrno.ESTKILLED THEN
+      IF varRetryCounter + 1 < varMaxNbD2dRetries AND inErrorCode != serrno.ESTKILLED THEN
         -- yes, so let's restart the Disk2DiskCopyJob
         UPDATE Disk2DiskCopyJob
            SET status = dconst.DISK2DISKCOPYJOB_PENDING,
+               destDcId = varNewDestDcId,
                retryCounter = varRetryCounter + 1
          WHERE transferId = inTransferId;
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.D2D_D2DDONE_RETRIED, varFileId, varNsHost, 'transfermanagerd', varComment ||
@@ -8205,7 +8216,7 @@ BEGIN
           -- and remember the error in case of draining
           IF varDrainingJob IS NOT NULL THEN
             INSERT INTO DrainingErrors (drainingJob, errorMsg, fileId, nsHost, castorFile, timeStamp)
-            VALUES (varDrainingJob, inErrorMessage, varFileId, varNsHost, varCfId, getTime());
+            VALUES (varDrainingJob, varErrorMessage, varFileId, varNsHost, varCfId, getTime());
           END IF;
         EXCEPTION WHEN NO_DATA_FOUND THEN
           -- the Disk2DiskCopyJob was already dropped (e.g. because of an interrupted draining)
@@ -8220,7 +8231,7 @@ BEGIN
                lastModificationTime = getTime(),
                errorCode = serrno.SEINTERNAL,
                errorMessage = 'Disk to disk copy failed after ' || TO_CHAR(varMaxNbD2dRetries) ||
-                              'retries. Last error was : ' || inErrorMessage
+                              ' retries. Last error was : ' || varErrorMessage
          WHERE status = dconst.SUBREQUEST_WAITSUBREQ
            AND castorfile = varCfId;
       END IF;
@@ -8297,7 +8308,7 @@ BEGIN
              ' destMountPoint=' || inDestMountPoint || ' srcDiskServer=' || inSrcDiskServerName ||
              ' srcMountPoint=' || inSrcMountPoint);
     -- end the disktodisk copy (may be retried)
-    disk2DiskCopyEnded(inTransferId, '', '', 0, 0, dlf.D2D_SOURCE_GONE);
+    disk2DiskCopyEnded(inTransferId, '', '', 0, '', 0, dlf.D2D_SOURCE_GONE);
     COMMIT; -- commit or raise_application_error will roll back for us :-(
     -- raise exception for the scheduling part
     raise_application_error(-20110, dlf.D2D_SOURCE_GONE);
@@ -8315,7 +8326,7 @@ BEGIN
              'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inSrcDiskServerName ||
              ' fileSystem=' || inSrcMountPoint);
     -- fail d2d transfer
-    disk2DiskCopyEnded(inTransferId, '', '', 0, 0, 'Source was disabled');
+    disk2DiskCopyEnded(inTransferId, '', '', 0, '', 0, 'Source was disabled');
     COMMIT; -- commit or raise_application_error will roll back for us :-(
     -- raise exception
     raise_application_error(-20110, dlf.D2D_SRC_DISABLED);
@@ -8341,7 +8352,7 @@ BEGIN
     logToDLF(NULL, dlf.LVL_WARNING, dlf.D2D_DEST_NOT_PRODUCTION, inFileId, inNsHost, 'transfermanagerd',
              'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inDestDiskServerName);
     -- fail d2d transfer
-    disk2DiskCopyEnded(inTransferId, '', '', 0, 0, 'Destination not in production');
+    disk2DiskCopyEnded(inTransferId, '', '', 0, '', 0, 'Destination not in production');
     COMMIT; -- commit or raise_application_error will roll back for us :-(
     -- raise exception
     raise_application_error(-20110, dlf.D2D_DEST_NOT_PRODUCTION);
@@ -8361,7 +8372,7 @@ BEGIN
       logToDLF(NULL, dlf.LVL_ERROR, dlf.D2D_MULTIPLE_COPIES_ON_DS, inFileId, inNsHost, 'transfermanagerd',
                'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inDestDiskServerName);
       -- fail d2d transfer
-      disk2DiskCopyEnded(inTransferId, '', '', 0, 0, 'Copy found on diskserver');
+      disk2DiskCopyEnded(inTransferId, '', '', 0, '', 0, 'Copy found on diskserver');
       COMMIT; -- commit or raise_application_error will roll back for us :-(
       -- raise exception
       raise_application_error(-20110, dlf.D2D_MULTIPLE_COPIES_ON_DS);
@@ -8490,9 +8501,9 @@ BEGIN
       errNo := errnos(i);
       errMsg := errmsgs(i);
       IF rType = 40 THEN      -- StagePutRequest
-       putEnded(subReqIds(i), 0, 0, '', '', errNo, errMsg);
+        putEnded(subReqIds(i), 0, 0, '', '', errNo, errMsg);
       ELSE                    -- StageGetRequest
-       getEnded(subReqIds(i), errNo, errMsg);
+        getEnded(subReqIds(i), errNo, errMsg);
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       BEGIN
@@ -8501,7 +8512,7 @@ BEGIN
       EXCEPTION WHEN NO_DATA_FOUND THEN
         CONTINUE;  -- The SubRequest/disk2DiskCopyJob may have been removed, nothing to be done.
       END;
-      disk2DiskCopyEnded(subReqIds(i), '', '', 0, errnos(i), errmsgs(i));
+      disk2DiskCopyEnded(subReqIds(i), '', '', 0, '', errnos(i), errmsgs(i));
     END;
     -- Release locks
     COMMIT;
@@ -8548,7 +8559,7 @@ BEGIN
         CONTINUE;  -- The SubRequest/disk2DiskCopyJob may have be removed, nothing to be done.
       END;
       -- found it, call disk2DiskCopyEnded
-      disk2DiskCopyEnded(subReqIds(i), '', '', 0, errnos(i), errmsgs(i));
+      disk2DiskCopyEnded(subReqIds(i), '', '', 0, '', errnos(i), errmsgs(i));
     END;
   END LOOP;
 END;
@@ -8918,8 +8929,10 @@ BEGIN
   FORALL i IN transfers.FIRST .. transfers.LAST
     INSERT INTO SyncRunningTransfersHelper (subreqId) VALUES (transfers(i));
   -- Go through all running transfers from the DB point of view for the given diskserver
-  FOR SR IN (SELECT SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
-               FROM SubRequest, DiskCopy, FileSystem, DiskServer
+  FOR SR IN (SELECT /*+ LEADING(SubRequest DiskCopy FileSystem DiskServer)
+                        USE_NL(SubRequest DiskCopy FileSystem DiskServer) */
+                    SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
+               FROM SubRequest PARTITION (P_STATUS_ACTIVE), DiskCopy, FileSystem, DiskServer
               WHERE SubRequest.status = dconst.SUBREQUEST_READY
                 AND Subrequest.reqType IN (35, 37)  -- StageGet/PutRequest
                 AND Subrequest.diskCopy = DiskCopy.id
@@ -8927,8 +8940,9 @@ BEGIN
                 AND FileSystem.diskServer = DiskServer.id
                 AND DiskServer.name = machine
               UNION
-             SELECT SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
-               FROM SubRequest, DiskServer
+             SELECT /*+ LEADING(DiskServer SubRequest) USE_NL(DiskServer SubRequest) */
+                    SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
+               FROM SubRequest PARTITION (P_STATUS_ACTIVE), DiskServer
               WHERE SubRequest.status = dconst.SUBREQUEST_READY
                 AND Subrequest.reqType IN (35, 37)  -- StageGet/PutRequest
                 AND Subrequest.diskServer = DiskServer.id
@@ -12126,7 +12140,7 @@ CREATE OR REPLACE PROCEDURE filesDeletedProc
   nsh VARCHAR2(2048);
   nb INTEGER;
   CONSTRAINT_VIOLATED EXCEPTION;
-  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -2292);
 BEGIN
   IF dcIds.COUNT > 0 THEN
     -- List the castorfiles to be cleaned up afterwards
@@ -12631,9 +12645,11 @@ BEGIN
                            CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
                           (dj.fileMask = dconst.DRAIN_FILEMASK_ALL))
                      AND DiskCopy.status = dconst.DISKCOPY_VALID
-                     AND NOT EXISTS (SELECT 1 FROM DrainingErrors WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
+                     AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(DrainingErrors I_DrainingErrors_DJ_CF) */ 1
+                                       FROM DrainingErrors WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
                      -- don't recreate disk-to-disk copy jobs for the ones already done in previous rounds
-                     AND NOT EXISTS (SELECT 1 FROM Disk2DiskCopyJob WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
+                     AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(Disk2DiskCopyJob I_Disk2DiskCopyJob_DrainJob) */ 1
+                                       FROM Disk2DiskCopyJob WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
                    ORDER BY DiskCopy.importance DESC)
                  WHERE ROWNUM <= varMaxNbFilesScheduled-varNbRunningJobs) LOOP
         -- Do not schedule more that varMaxAmountOfSchedD2dPerDrain

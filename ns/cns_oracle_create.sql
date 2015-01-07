@@ -209,7 +209,7 @@ AS
  *****************************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_14_2'
+UPDATE UpgradeLog SET schemaVersion = '2_1_15_0'
  WHERE startDate = (SELECT max(startDate) FROM UpgradeLog);
 
 /* Package holding type declarations for the NameServer PL/SQL API */
@@ -977,6 +977,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
   outRC := serrno.ENOENT;
   outMsg := serrno.ENOENT_MSG;
+  ROLLBACK;  -- this is a no-op, but it's needed to close the autonomous transaction and avoid ORA-06519 errors
 END;
 /
 
