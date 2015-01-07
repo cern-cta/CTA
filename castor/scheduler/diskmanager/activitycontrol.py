@@ -76,7 +76,7 @@ class ActivityControlThread(threading.Thread):
     # build command line
     transferType = 'd2d' + D2DTransferType.toStr(transfer.replicationType)
     srcDS, srcPath = srcDcPath.split(':', 1)
-    cmdLine = ['xrdcp', buildXrootURL(srcDS, srcPath, transfer.transferId, transferType), \
+    cmdLine = ['xrdcp', '-N', buildXrootURL(srcDS, srcPath, transfer.transferId, transferType), \
                         buildXrootURL('localhost', destDcPath, transfer.transferId, transferType)]
     # "Transfer starting" message
     dlf.write(msgs.TRANSFERSTARTING, subreqid=transfer.transferId,
@@ -86,7 +86,7 @@ class ActivityControlThread(threading.Thread):
     # start transfer process
     process = 0
     try:
-      process = subprocess.Popen(cmdLine, close_fds=True, stderr=subprocess.PIPE)
+      process = subprocess.Popen(cmdLine, close_fds=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except Exception, e:
       # avoid raising standard exception, as some are used for dedicated purposes
       raise Exception(str(e))

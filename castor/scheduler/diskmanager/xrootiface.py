@@ -76,7 +76,7 @@ def buildXrootURL(diskserver, path, transferId, transferType):
 def xrootTupleToTransfer(scheduler, xrootTuple):
   '''Parse an xroot tuple describing a transfer and returns a running or tape transfer object.
   The tuple must have the following format (cf. moverhandler.py):
-  ('tident', 'physicalPath', 'transferType', isWriteFlag, 'transferId')
+  ('tident', 'physicalPath', 'transferType', 'isWriteFlag', 'transferId')
   '''
   tident, physicalPath, transferType, isWriteFlag, transferid = xrootTuple
   # for the time being xroot does not provide the start time of the transfer, therefore take current time

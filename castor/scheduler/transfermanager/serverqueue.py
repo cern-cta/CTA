@@ -368,7 +368,7 @@ class ServerQueue(dict):
                           Type=str(e.__class__), Message=str(e))
 
   def d2dend(self, transfer, transferCancelation=False):
-    '''called when a d2d copy ends in order to inform the source.
+    '''called when a d2d copy ends in order to remove it from our lists.
     When called for a transfer cancelation, second parameter should be
     true so that we do not take the lock again and do not cleanup twice'''
     if not transferCancelation:
@@ -398,22 +398,6 @@ class ServerQueue(dict):
     finally:
       if not transferCancelation:
         self.lock.release()
-    # inform the source diskServer
-    try:
-      connectionpool.connections.d2dend(srcDiskServer, transfer.asTuple())
-    except Exception, e:
-      # "Failed to inform diskServer that a d2d copy is over"
-      dlf.writenotice(msgs.D2DOVERINFORMFAILED, DiskServer=srcDiskServer, subreqId=transfer.transferId,
-                      reqId=transfer.reqId, fileId=transfer.fileId, Type=str(e.__class__), Message=str(e))
-      # add back the transfer to the local lists
-      if not transferCancelation:
-        self.lock.acquire()
-      try:
-        self[srcDiskServer][transfer.transferId] = transfer
-        self.d2dsrcrunning[transfer.transferId] = srcTransfer
-      finally:
-        if not transferCancelation:
-          self.lock.release()
 
   def d2dendById(self, transferId):
     '''Equivalent to d2dend but taking only the transferId rather than the transfer object'''

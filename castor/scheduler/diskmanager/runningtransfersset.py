@@ -85,7 +85,7 @@ class RunningTransfersSet(object):
           # keep in memory that this was a rebuilt entry
           leftOvers[rTransfer.transfer.transferId] = int(pid)
           # 'Found transfer already running' message
-          dlf.write(msgs.FOUNDTRANSFERALREADYRUNNING, transferType= 'user', subreqId=rTransfer.transfer.transferId,
+          dlf.write(msgs.FOUNDTRANSFERALREADYRUNNING, transferType='user', subreqId=rTransfer.transfer.transferId,
                     fileid=rTransfer.transfer.fileId, startTime=rTransfer.startTime)
       except Exception:
         # exceptions caught here mean we could not get the info we wanted on the
@@ -347,6 +347,15 @@ class RunningTransfersSet(object):
       try:
         rc = rTransfer.process.poll()
         isEnded = (rc != None)
+        if isEnded and rTransfer.transfer.transferType == TransferType.D2DDST:
+          # only for disk-to-disk copies, check the xrdcp subprocess output for logging
+          if rc != 0:
+            # log "Failed to end the transfer"
+            dlf.writenotice(msgs.TRANSFERENDEDFAILED, subreqId=transferId,
+                            reqId=rTransfer.transfer.reqId, errCode=rc, output=rTransfer.process.stdout.read())
+          else:
+            # log "Transfer ended"
+            dlf.writedebug(msgs.TRANSFERENDED, subreqId=transferId, output=rTransfer.process.stdout.read())
       except AttributeError:
         # this is a running (xrootd) transfer for which we have no process associated, so we can't poll():
         # in this case we must assume the transfer is still running
@@ -366,108 +375,60 @@ class RunningTransfersSet(object):
 
   def poll(self):
     '''checks for finished transfers and clean them up'''
-    killedTransfers = {}
-    failedTransfers = []
+    failedTransfers = {}
     self.lock.acquire()
     try:
       ended = []
-      d2dEnded = {}
       for rTransfer in self.transfers:
         transferId = rTransfer.transfer.transferId
         isEnded, rc = self._isTransferOver(rTransfer)
         if isEnded:
-          # "transfer ended" message
+          # "Transfer ended" message
           dlf.writedebug(msgs.TRANSFERENDED, subreqId=transferId, reqId=rTransfer.transfer.reqId,
                          fileid=rTransfer.transfer.fileId, returnCode=rc)
           # append to list of ended transfers
           ended.append(transferId)
-          # in case of disk to disk copy, remember to inform source
-          if rTransfer.transfer.transferType == TransferType.D2DDST:
-            # inform the scheduler so that source is told and disk2DiskCopyDone/Failed is called in the DB
-            if rTransfer.scheduler not in d2dEnded:
-              d2dEnded[rTransfer.scheduler] = []
-            errMsg = ''
-            if rc != 0 and rTransfer.process:
-              errMsg = rTransfer.process.stderr.read().replace('\n', ' ')
-            # Determine the size of the newly created file replica
-            try:
-              replicaFileSize = os.stat(rTransfer.localPath).st_size
-            except OSError, e:
-              # not able to find file
-              replicaFileSize = 0
-              if errMsg == '':
-                errMsg = 'Not able to stat new file : %s' % str(e)
-                rc = 2  # ENOENT
-            d2dEnded[rTransfer.scheduler].append((rTransfer.transfer, rTransfer.localPath,
-                                                  replicaFileSize, rc, errMsg))
-          elif rc == None:
-            # the transfer didn't take place
-            failedTransfers.append((rTransfer.scheduler, rTransfer.transfer, \
-                                    1004, 'Timed out waiting for client connection'))  # SETIMEDOUT
-          elif rc < 0:         # in case of transfers killed by a signal, remember to inform the DB
-            if rTransfer.scheduler not in killedTransfers:
-              killedTransfers[rTransfer.scheduler] = []
-            errMsg = 'Transfer has been killed'
-            killedTransfers[rTransfer.scheduler].append((rTransfer.transfer.transferId,
-                                                         rTransfer.transfer.fileId, rc, errMsg,
+          # for transfers that failed without being able to inform a moverhandler thread, clean them up
+          if not rTransfer.ended:
+            if rc == None:
+              # the transfer didn't take place
+              errCode = 1004  # SETIMEDOUT
+              errMsg = 'Timed out waiting for client connection'
+            elif rc < 0:         # in case of transfers killed by a signal, remember to inform the DB
+              errMsg = 'Transfer has been killed by signal %d' % (-rc)
+              errCode = 1015  # SEINTERNAL
+            elif rc > 0:         # these are transfers that got interrupted or somehow failed
+              errMsg =  'Mover exited with failure, rc=%d' % rc
+              errCode = 1015  # SEINTERNAL
+            if rTransfer.scheduler not in failedTransfers:
+              failedTransfers[rTransfer.scheduler] = []
+            failedTransfers[rTransfer.scheduler].append((rTransfer.transfer.transferId,
+                                                         rTransfer.transfer.fileId, errCode, errMsg,
                                                          rTransfer.transfer.reqId))
-          elif rc > 0:         # these are transfers that got interrupted or somehow failed
-            failedTransfers.append((rTransfer.scheduler, rTransfer.transfer,
-                                    1015, 'Mover exited with failure, rc=%d' % rc))  # SEINTERNAL
       # cleanup ended transfers
       self.transfers = set(rTransfer for rTransfer in self.transfers if rTransfer.transfer.transferId not in ended)
     finally:
       self.lock.release()
     # get the admin timeout
     timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
-    # inform schedulers of d2d copy that ended
-    for scheduler in d2dEnded:
-      try:
-        connectionpool.connections.d2dEnded(scheduler,
-                                            tuple([(transfer.transferId, transfer.reqId, transfer.fileId,
-                                                    socket.getfqdn(), localPath, fileSize, errCode, errMsg) \
-                                                    for transfer, localPath, fileSize, errCode, errMsg \
-                                                     in d2dEnded[scheduler]]), timeout=timeout)
-      except connectionpool.Timeout, e:
-        for transfer, localPath, fileSize, errCode, errMsg in d2dEnded[scheduler]:
-          # "Failed to inform scheduler that a d2d transfer is over" message
-          dlf.writenotice(msgs.INFORMTRANSFERISOVERFAILED, Scheduler=scheduler,
-                          subreqId=transfer.transferId, reqId=transfer.reqId,
-                          fileid=transfer.fileId, localPath=localPath,
-                          Type=str(e.__class__), errCode=errCode, errMessage=str(e))
-      except Exception, e:
-        for transfer, localPath, fileSize, errCode, errMsg in d2dEnded[scheduler]:
-          # "Failed to inform scheduler that a d2d transfer is over" message
-          dlf.writeerr(msgs.INFORMTRANSFERISOVERFAILED, Scheduler=scheduler,
-                       subreqId=transfer.transferId, reqId=transfer.reqId,
-                       fileid=transfer.fileId, localPath=localPath,
-                       Type=str(e.__class__), errCode=errCode, errMessage=str(e))
     # inform schedulers of killed transfers
-    for scheduler in killedTransfers:
+    for scheduler in failedTransfers:
       try:
-        connectionpool.connections.transfersKilled(scheduler, tuple(killedTransfers[scheduler]), timeout=timeout)
-        for transferId, fileId, rc, msg, reqId in killedTransfers[scheduler]:
-          # "Informed scheduler that transfer was killed by a signal" message
-          dlf.write(msgs.INFORMTRANSFERKILLED, Scheduler=scheduler, subreqId=transferId,
-                    reqId=reqId, fileid=fileId, signal=(-rc if rc else None), Message=msg)
+        connectionpool.connections.transfersKilled(scheduler, tuple(failedTransfers[scheduler]), timeout=timeout)
+        for transferId, fileId, rc, msg, reqId in failedTransfers[scheduler]:
+          # "Informed scheduler that transfer failed" message
+          dlf.write(msgs.INFORMTRANSFERFAILED, Scheduler=scheduler, subreqId=transferId,
+                    reqId=reqId, fileid=fileId, errCode=rc, Message=msg)
       except connectionpool.Timeout, e:
-        for transferId, fileId, rc, msg, reqId in killedTransfers[scheduler]:
-          # "Failed to inform scheduler that transfer was killed by a signal" message
-          dlf.writenotice(msgs.INFORMTRANSFERKILLEDFAILED, Scheduler=scheduler,
+        for transferId, fileId, rc, msg, reqId in failedTransfers[scheduler]:
+          # "Failed to inform scheduler that transfer failed" message
+          dlf.writenotice(msgs.INFORMTRANSFERFAILEDFAILED, Scheduler=scheduler,
                           subreqId=transferId, reqId=reqId, fileid=fileId, Message=msg)
       except Exception, e:
-        for transferId, fileId, rc, msg, reqId in killedTransfers[scheduler]:
-          # "Failed to inform scheduler that transfer was killed by a signal" message
-          dlf.writeerr(msgs.INFORMTRANSFERKILLEDFAILED, Scheduler=scheduler,
+        for transferId, fileId, rc, msg, reqId in failedTransfers[scheduler]:
+          # "Failed to inform scheduler that transfer failed" message
+          dlf.writeerr(msgs.INFORMTRANSFERFAILEDFAILED, Scheduler=scheduler,
                        subreqId=transferId, reqId=reqId, fileid=fileId, Message=msg)
-    # inform scheduler of failed transfers: this is not bulk for now, we have a priori few such cases
-    for scheduler, transfer, rc, msg in failedTransfers:
-      try:
-        # try to fail the transfer on our side
-        self.failTransfer(scheduler, transfer, rc, msg)
-      except Exception, e:
-        # "Failed to end the transfer" message
-        dlf.writeerr(msgs.TRANSFERENDEDFAILED, type=str(e.__class__), message=str(e), originalErrorMessage=msg)
 
 
   def listTransfers(self, reqUser=None):
@@ -528,30 +489,3 @@ class RunningTransfersSet(object):
       return False
     finally:
       self.lock.release()
-
-  def failTransfer(self, scheduler, transfer, errCode, errMessage):
-    '''Fail a transfer with the given error code and message. The transfer is assumed to have already been dropped
-    from the list of running transfers, and thus no lock is taken for this operation.'''
-    # get the admin timeout
-    timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
-    closeTime = time.time()
-    # call transferEnded to fail the transfer
-    attempt = 0
-    while True:
-      try:
-        # "Transfer ended" message
-        dlf.write(msgs.TRANSFERENDED, subreqId=transfer.transferId, reqId=transfer.reqId, flags=transfer.flags, errCode=errCode, \
-                  errMessage=errMessage, fileId=transfer.fileId, elapsedTime=(closeTime-transfer.creationTime), totalTime=(closeTime-transfer.submissionTime))
-        rc_unused, msg_unused = connectionpool.connections.transferEnded(scheduler, \
-                                                                         (transfer.transferId, transfer.reqId, transfer.fileId, \
-                                                                          transfer.flags, 0, closeTime, '', '', errCode, errMessage),
-                                                                         timeout=timeout)
-        return
-      except connectionpool.Timeout:
-        # as long as we get a timeout, we retry up to 3 times
-        attempt += 1
-        if attempt < 3:
-          time.sleep(attempt)
-        else:
-          # give up
-          raise IOError('Timeout attempting to end transfer %s in scheduler %s' % (transfer.transferId, scheduler))

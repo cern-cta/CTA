@@ -386,3 +386,5 @@ class RunningTransfer(object):
     self.startTime = startTime
     self.transfer = transfer
     self.localPath = localPath
+    # this flag is set to True by a moverhandler thread when a CLOSE call takes place
+    self.ended = False

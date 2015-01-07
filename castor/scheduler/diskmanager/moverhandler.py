@@ -25,10 +25,10 @@
 
 """mover handler thread of the disk server manager daemon of CASTOR."""
 
-import threading, socket, time, Queue, ast
+import threading, socket, time, Queue, ast, subprocess
 import connectionpool, dlf
 from diskmanagerdlf import msgs
-from transfer import TransferType, TapeTransfer, D2DTransferType
+from transfer import TransferType, TapeTransfer
 from xrootiface import xrootTupleToTransfer
 
 class MoverReqHandlerThread(threading.Thread):
@@ -51,11 +51,38 @@ class MoverReqHandlerThread(threading.Thread):
     # this makes sure we drain the queue and exit only when empty
     self.workQueue.put(None)
 
+  def _failTransfer(self, scheduler, transfer, errCode, errMessage):
+    '''Fail a transfer with the given error code and message. The transfer is assumed to have already been dropped
+    from the list of running transfers, and thus no lock is taken for this operation.'''
+    # get the admin timeout
+    timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
+    closeTime = time.time()
+    # call transferEnded to fail the transfer
+    attempt = 0
+    while True:
+      try:
+        # "Transfer ended" message
+        dlf.write(msgs.TRANSFERENDED, subreqId=transfer.transferId, reqId=transfer.reqId, flags=transfer.flags, errCode=errCode, \
+                  errMessage=errMessage, fileId=transfer.fileId, elapsedTime=(closeTime-transfer.creationTime), totalTime=(closeTime-transfer.submissionTime))
+        rc_unused, msg_unused = connectionpool.connections.transferEnded(scheduler, \
+                                                                         (transfer.transferId, transfer.reqId, transfer.fileId, \
+                                                                          transfer.flags, 0, closeTime, '', '', errCode, errMessage),
+                                                                         timeout=timeout)
+        return
+      except connectionpool.Timeout:
+        # as long as we get a timeout, we retry up to 3 times
+        attempt += 1
+        if attempt < 3:
+          time.sleep(attempt)
+        else:
+          # give up
+          raise IOError('Timeout attempting to end transfer %s in scheduler %s' % (transfer.transferId, scheduler))
+
   def handleOpen(self, payload):
     '''handle an OPEN call. The protocol is as follows:
     - The mover connects to localhost:15511 [DiskManager/MoverHandlerPort in castor.conf]
     - It sends a single string like
-      OPEN errorCode ('tident', 'physicalPath', 'transferType', isWriteFlag, 'transferId')
+      OPEN errorCode ('tident', 'physicalPath', 'transferType', 'isWriteFlag', 'transferId')
       where errorCode is non-0 in case the transfer is to be cancelled
             tident has the format: username.clientPid:fd@clientHost
             transferType is one of tape, user, d2duser, d2dinternal, d2ddraining, d2drebalance
@@ -84,10 +111,12 @@ class MoverReqHandlerThread(threading.Thread):
       if errCode != 0:
         # this is a user transfer that has to be failed as we got an error from xroot
         self.runningTransfers.remove(t)
-        self.runningTransfers.failTransfer(t.scheduler, t.transfer, errCode, 'Error while opening the file')
+        self._failTransfer(t.scheduler, t.transfer, errCode, 'Error while opening the file')
       else:
-        # No xroot error and we found it: set process to something not None, see runningtransferset.py
-        self.runningTransfers.setProcess(transferid, 0)
+        # No xroot error and we found it: if this is a user transfer,
+        # set process to something not None (see runningtransferset.py)
+        if transferType == 'user':
+          self.runningTransfers.setProcess(transferid, 0)
     elif transferType == 'tape':
       # tape transfers: convert the xroot tuple and take note of this tape transfer
       tTransfer = xrootTupleToTransfer(None, (tident, physicalPath, transferType, isWriteFlag, transferid))
@@ -95,7 +124,7 @@ class MoverReqHandlerThread(threading.Thread):
     else:
       # any other transferType is unknown, this should never happen
       raise ValueError
-    return '0\n'
+    return 0
 
   def handleClose(self, payload):
     '''handle a CLOSE call. The protocol is as follows:
@@ -118,11 +147,11 @@ class MoverReqHandlerThread(threading.Thread):
       cksumType = 'AD'
     # find transfer in runningTransfers, raise KeyError if not found
     t = self.runningTransfers.get(transferid)
-    # remove it from there as it is not running any longer
-    self.runningTransfers.remove(t)
-    # in case of a tape transfer, nothing else to do
-    if type(t) == TapeTransfer:
-      return '0\n'
+    if type(t.process) != subprocess.Popen:
+      # movers for which a process exists need to be kept, so that
+      # runningTransfers.poll() can clean them up. All others can be
+      # dropped from the list of running transfers at this time.
+      self.runningTransfers.remove(t)
     # get the admin timeout
     timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
     closeTime = time.time()
@@ -140,22 +169,24 @@ class MoverReqHandlerThread(threading.Thread):
                                                                 (transferid, t.transfer.reqId, t.transfer.fileId, t.transfer.flags, \
                                                                  int(fSize), closeTime, cksumType, cksumValue, int(errCode), errMessage), \
                                                                 timeout=timeout)
+          t.ended = True
           if rc != 0:
             # log "Failed to end the transfer"
             dlf.writenotice(msgs.TRANSFERENDEDFAILED, subreqId=transferid, reqId=t.transfer.reqId, errCode=rc, errMessage=errMsg)
           else:
             dlf.writedebug(msgs.TRANSFERENDED, subreqId=transferid, errCode=0)
-          return '%d %s\n' % (rc, errMsg)
+          return '%d %s' % (rc, errMsg)
         elif t.transfer.transferType == TransferType.D2DDST:
           # a destination disk-to-disk copy needs to be notified to the scheduler, with no return code
           connectionpool.connections.d2dEnded(t.scheduler,
                                               tuple([(transferid, t.transfer.reqId, t.transfer.fileId,
                                                       socket.getfqdn(), t.localPath, int(fSize), cksumValue, errCode, errMessage)]),
                                               timeout=timeout)
-          return '0\n'
-        elif t.transfer.transferType == TransferType.D2DSRC:
-          # a source disk-to-disk copy does not need to be notified
-          return '0\n'
+          t.ended = True
+          return 0
+        elif t.transfer.transferType == TransferType.D2DSRC or type(t) == transfer.TapeTransfer:
+          # nothing else to be done for sources and tape transfers
+          return 0
         else:
           raise ValueError('Invalid transfer type %d for transfer %s' % (t.transfer.transferType, transferid))
       except connectionpool.Timeout, e:
@@ -167,13 +198,13 @@ class MoverReqHandlerThread(threading.Thread):
         else:
           # give up, inform mover
           dlf.writeerr(msgs.MOVERHANDLEREXCEPTION, Message='Timeout attempting to end transfer %s in scheduler %s' % (transferid, t.scheduler))
-          return '%d %s\n' % (1015, 'Error closing the file in the stager')
+          return '%d %s' % (1015, 'Error closing the file in the stager')
       except Exception, e:
         # any other error, we give up and inform the mover
         # "Caught exception in MoverHandler thread" message, error = SEINTERNAL
         dlf.writeerr(msgs.MOVERHANDLEREXCEPTION, Type=str(e.__class__), Message=str(e))
         # report error to the mover
-        return '%d %s\n' % (1015, 'Error closing the file in the stager')
+        return '%d %s' % (1015, 'Error closing the file in the stager')
 
   def handleRequest(self, data):
     '''
@@ -185,28 +216,28 @@ class MoverReqHandlerThread(threading.Thread):
       key, payload = data.split(' ', 1)
       dlf.writedebug(msgs.MOVERCALL, operation=key, payload=payload)
       if key == 'OPEN':
-        return self.handleOpen(payload)
+        return str(self.handleOpen(payload))
       elif key == 'CLOSE':
-        return self.handleClose(payload)
+        return str(self.handleClose(payload))
       else:
         raise ValueError
     except (ValueError, TypeError):
       # invalid format, error = EINVAL
-      return '%d Invalid format in %s\n' % (22, data)
+      return '%d Invalid format in %s' % (22, data)
     except KeyError:
       # if not found, error = ENOENT
-      return '%d Transfer has disappeared from the scheduling system\n' % (2)
+      return '%d Transfer has disappeared from the scheduling system' % (2)
     except IndexError:
       # thrown by split() when not enough parameters, error = EINVAL
-      return '%d Not enough parameters in %s\n' % (22, data)
+      return '%d Not enough parameters in %s' % (22, data)
     except Exception, e:
       # something else went wrong, log "Caught exception in MoverHandler thread"
       dlf.writeerr(msgs.MOVERHANDLEREXCEPTION, Type=str(e.__class__), Message=str(e))
       # still return something, error = SEINTERNAL
-      return '%d Internal error: %s\n' % (1015, str(e))
+      return '%d Internal error: %s' % (1015, str(e))
 
   def run(self):
-    '''main method to the threads. Only get work from the queue and do it'''
+    '''main method for the threads. Only get work from the queue and do it'''
     while True:
       try:
         clientsock = self.workQueue.get(True)
@@ -215,7 +246,7 @@ class MoverReqHandlerThread(threading.Thread):
           return
         req = clientsock.recv(1024)
         res = self.handleRequest(req)
-        clientsock.send(res)
+        clientsock.send('%s\n' % res)
         clientsock.close()
       except Exception, e:
         # "Caught exception in Worker thread" message
