@@ -19,7 +19,7 @@
 #include <sqlcpr.h>
 
 static sql_context ctx[CNS_MAXNBTHREADS];
-static const char *const CNSSCHEMAVERSION = "2_1_14_2";
+static const char *const CNSSCHEMAVERSION = "2_1_15_0";
 
 int Cns_init_dbpkg()
 {
