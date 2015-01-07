@@ -623,7 +623,7 @@ BEGIN
       -- shall we try again ?
       -- we should not when the job was deliberately killed, neither when we reach the maximum
       -- number of attempts
-      IF varRetryCounter < varMaxNbD2dRetries AND inErrorCode != serrno.ESTKILLED THEN
+      IF varRetryCounter + 1 < varMaxNbD2dRetries AND inErrorCode != serrno.ESTKILLED THEN
         -- yes, so let's restart the Disk2DiskCopyJob
         UPDATE Disk2DiskCopyJob
            SET status = dconst.DISK2DISKCOPYJOB_PENDING,
