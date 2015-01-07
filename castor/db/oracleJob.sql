@@ -928,9 +928,9 @@ BEGIN
       errNo := errnos(i);
       errMsg := errmsgs(i);
       IF rType = 40 THEN      -- StagePutRequest
-       putEnded(subReqIds(i), 0, 0, '', '', errNo, errMsg);
+        putEnded(subReqIds(i), 0, 0, '', '', errNo, errMsg);
       ELSE                    -- StageGetRequest
-       getEnded(subReqIds(i), errNo, errMsg);
+        getEnded(subReqIds(i), errNo, errMsg);
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       BEGIN
@@ -1356,8 +1356,10 @@ BEGIN
   FORALL i IN transfers.FIRST .. transfers.LAST
     INSERT INTO SyncRunningTransfersHelper (subreqId) VALUES (transfers(i));
   -- Go through all running transfers from the DB point of view for the given diskserver
-  FOR SR IN (SELECT SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
-               FROM SubRequest, DiskCopy, FileSystem, DiskServer
+  FOR SR IN (SELECT /*+ LEADING(SubRequest DiskCopy FileSystem DiskServer)
+                        USE_NL(SubRequest DiskCopy FileSystem DiskServer) */
+                    SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
+               FROM SubRequest PARTITION (P_STATUS_ACTIVE), DiskCopy, FileSystem, DiskServer
               WHERE SubRequest.status = dconst.SUBREQUEST_READY
                 AND Subrequest.reqType IN (35, 37)  -- StageGet/PutRequest
                 AND Subrequest.diskCopy = DiskCopy.id
@@ -1365,8 +1367,9 @@ BEGIN
                 AND FileSystem.diskServer = DiskServer.id
                 AND DiskServer.name = machine
               UNION
-             SELECT SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
-               FROM SubRequest, DiskServer
+             SELECT /*+ LEADING(DiskServer SubRequest) USE_NL(DiskServer SubRequest) */
+                    SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
+               FROM SubRequest PARTITION (P_STATUS_ACTIVE), DiskServer
               WHERE SubRequest.status = dconst.SUBREQUEST_READY
                 AND Subrequest.reqType IN (35, 37)  -- StageGet/PutRequest
                 AND Subrequest.diskServer = DiskServer.id

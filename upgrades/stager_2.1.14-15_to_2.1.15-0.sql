@@ -122,10 +122,11 @@ CREATE TABLE SubRequest (retryCounter NUMBER,
   SUBPARTITION BY HASH(ID) SUBPARTITIONS 5
    (
     PARTITION P_STATUS_START    VALUES (0, 1, 2),
-    PARTITION P_STATUS_ACTIVE   VALUES (3, 4, 5, 6, 12),
+    PARTITION P_STATUS_ACTIVE   VALUES (3, 4, 5, 6),
     PARTITION P_STATUS_FAILED   VALUES (7),
     PARTITION P_STATUS_FINISHED VALUES (8, 9, 10, 11),
-    PARTITION P_STATUS_SCHED    VALUES (13, 14)
+    PARTITION P_STATUS_SCHED    VALUES (13, 14),
+    PARTITION P_STATUS_REPACK   VALUES (12)
    );
 
 ALTER TABLE SubRequest
@@ -6106,8 +6107,10 @@ BEGIN
   FORALL i IN transfers.FIRST .. transfers.LAST
     INSERT INTO SyncRunningTransfersHelper (subreqId) VALUES (transfers(i));
   -- Go through all running transfers from the DB point of view for the given diskserver
-  FOR SR IN (SELECT SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
-               FROM SubRequest, DiskCopy, FileSystem, DiskServer
+  FOR SR IN (SELECT /*+ LEADING(SubRequest DiskCopy FileSystem DiskServer)
+                        USE_NL(SubRequest DiskCopy FileSystem DiskServer) */
+                    SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
+               FROM SubRequest PARTITION (P_STATUS_ACTIVE), DiskCopy, FileSystem, DiskServer
               WHERE SubRequest.status = dconst.SUBREQUEST_READY
                 AND Subrequest.reqType IN (35, 37)  -- StageGet/PutRequest
                 AND Subrequest.diskCopy = DiskCopy.id
@@ -6115,8 +6118,9 @@ BEGIN
                 AND FileSystem.diskServer = DiskServer.id
                 AND DiskServer.name = machine
               UNION
-             SELECT SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
-               FROM SubRequest, DiskServer
+             SELECT /*+ LEADING(DiskServer SubRequest) USE_NL(DiskServer SubRequest) */
+                    SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
+               FROM SubRequest PARTITION (P_STATUS_ACTIVE), DiskServer
               WHERE SubRequest.status = dconst.SUBREQUEST_READY
                 AND Subrequest.reqType IN (35, 37)  -- StageGet/PutRequest
                 AND Subrequest.diskServer = DiskServer.id
