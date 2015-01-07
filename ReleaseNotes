@@ -17,14 +17,14 @@
     and functionnal in the release but should not be used as it has not yet be fully
     tested.
   - Drop of the stagerJob process. It has been integrated into the diskmanager one
-  - Better implementation of the handling od multiple replicas on disk. Replicas are
+  - Better implementation of the handling of multiple replicas on disk. Replicas are
     now always created at file creation (equivalent to replicateOnClose=true in 2.1.14)
     and are respecting the configuration of the service class used at creation time
   - gridFTP's external plugin has been dropped
   - Several improvements have been done in the stager lowering the DB usage by ~50%.
-    Also the dbms_alert package has been abandonned and relaced with advanced queuing
+    Also the dbms_alert package has been abandoned and replaced with advanced queuing
     leading to better performances.
-  - The code has been adapeted to xroot 4.1
+  - The code has been adapted to xroot 4.1
 
   Stager
   ------
@@ -92,7 +92,7 @@
 
   - The RPyC package needs to be upgraded to version 3.3.
 
-  - On the disk servers, castor-job has been incorporated into castor-diskmserver-manager.
+  - On the disk servers, castor-job has been incorporated into castor-diskserver-manager.
     Furthermore, new dependencies have been introduced to the python-crypto and xrootd-python
     packages.
 
@@ -238,6 +238,17 @@
 
       11. Congratulations you have successfully upgraded to the 2.1.15-0 release
           of CASTOR.
+
+  Switch tape servers to xroot
+  ----------------------------
+
+  - Once all stagers run 2.1.15, a tape server can be switched to talk xroot by modifying
+    the following configuration line in castor.conf:
+
+    #TapeServer RemoteFileProtocol RFIO
+
+    Where possible values are RFIO and XROOT. Note that an xroot-enabled tape server fails
+    to interact with a 2.1.14 disk server.
 
 
 -------------
