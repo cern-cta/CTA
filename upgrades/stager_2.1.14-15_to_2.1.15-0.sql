@@ -158,10 +158,9 @@ DROP TABLE GetUpdateFailed;
 DROP TABLE PutStartRequest;
 DROP TABLE MoverCloseRequest;
 DROP TABLE PutFailed;
-DROP TABLE DISK2DISKCOPYDONEREQUEST;
-DROP TABLE DISK2DISKCOPYSTARTREQUEST;
-
 -- obsolete for long
+DROP TABLE Disk2DiskCopyDoneRequest;
+DROP TABLE Disk2DiskCopyStartRequest;
 DROP TABLE GCLocalFile;
 
 DROP PROCEDURE firstByteWrittenProc;
@@ -5220,13 +5219,13 @@ END;
 /
 
 /* PL/SQL method implementing disk2DiskCopyEnded
- * Note that inDestDsName, inDestPath and inReplicaFileSize are not used when inErrorMessage is not NULL
+ * Note that inDestDsName, inDestPath, inReplicaFileSize and inCksumValue are not used when inErrorMessage is not NULL
  * inErrorCode is used in case of error to decide whether to retry and also to invalidate
  * the source diskCopy if the error is an ENOENT
  */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
 (inTransferId IN VARCHAR2, inDestDsName IN VARCHAR2, inDestPath IN VARCHAR2,
- inReplicaFileSize IN INTEGER, inErrorCode IN INTEGER, inErrorMessage IN VARCHAR2) AS
+ inReplicaFileSize IN INTEGER, inCksumValue IN VARCHAR2, inErrorCode IN INTEGER, inErrorMessage IN VARCHAR2) AS
   varCfId INTEGER;
   varUid INTEGER := -1;
   varGid INTEGER := -1;
@@ -5238,6 +5237,7 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
   varRetryCounter INTEGER;
   varFileId INTEGER;
   varNsHost VARCHAR2(2048);
+  varFCksum VARCHAR2(10);
   varFileSize INTEGER;
   varDestPath VARCHAR2(2048);
   varDestFsId INTEGER;
@@ -5286,13 +5286,22 @@ BEGIN
       RETURN;
     END;
   END;
-  -- check the filesize
-  IF inReplicaFileSize != varFileSize THEN
-    -- replication went wrong !
-    varNewDcStatus := dconst.DISKCOPY_INVALID;
-    IF varErrorMessage IS NULL THEN
-      varErrorMessage := 'File size mismatch during replication';
-    END IF;
+  -- on success, check the filesize and the checksum
+  IF varErrorMessage IS NULL THEN
+    BEGIN
+      SELECT csumValue INTO varFCksum
+        FROM Cns_file_metadata@remoteNS
+       WHERE fileId = varFileId;
+      IF inReplicaFileSize != varFileSize OR to_number(inCksumValue, 'XXXXXXXX') != to_number(varFCksum, 'XXXXXXXX') THEN
+        -- replication went wrong !
+        varNewDcStatus := dconst.DISKCOPY_INVALID;
+        varErrorMessage := 'File size/checksum mismatch during replication, the source file is probably corrupted';
+      END IF;
+    EXCEPTION WHEN INVALID_NUMBER THEN
+      -- the checksum is not a number?!
+      varNewDcStatus := dconst.DISKCOPY_INVALID;
+      varErrorMessage := 'Invalid checksum value "' || inCksumValue || '", giving up';
+    END;
   END IF;
   -- lock the castor file (and get logging info)
   SELECT fileid, nsHost, fileSize INTO varFileId, varNsHost, varFileSize
@@ -5307,7 +5316,7 @@ BEGIN
          '" destSvcClass=' || getSvcClassName(varDestSvcClass) ||
          ' dstDcId=' || TO_CHAR(varDestDcId) || ' destPath="' || inDestPath ||
          '" euid=' || TO_CHAR(varUid) || ' egid=' || TO_CHAR(varGid) ||
-         ' fileSize=' || TO_CHAR(varFileSize);
+         ' fileSize=' || TO_CHAR(varFileSize) || ' checksum=' || inCksumValue;
   IF varErrorMessage IS NOT NULL THEN
     varComment := varComment || ' replicaFileSize=' || TO_CHAR(inReplicaFileSize) ||
                   ' errorCode=' || inErrorCode || ' errorMessage="' || varErrorMessage || '"';
@@ -5369,15 +5378,17 @@ BEGIN
   ELSE
     -- failure
     DECLARE
-      varMaxNbD2dRetries INTEGER := TO_NUMBER(getConfigOption('D2dCopy', 'MaxNbRetries', 2));
+      varMaxNbD2dRetries INTEGER := to_number(getConfigOption('D2dCopy', 'MaxNbRetries', 2));
+      varNewDestDcId INTEGER := ids_seq.nextval();
     BEGIN
       -- shall we try again ?
       -- we should not when the job was deliberately killed, neither when we reach the maximum
       -- number of attempts
-      IF varRetryCounter < varMaxNbD2dRetries AND inErrorCode != serrno.ESTKILLED THEN
+      IF varRetryCounter + 1 < varMaxNbD2dRetries AND inErrorCode != serrno.ESTKILLED THEN
         -- yes, so let's restart the Disk2DiskCopyJob
         UPDATE Disk2DiskCopyJob
            SET status = dconst.DISK2DISKCOPYJOB_PENDING,
+               destDcId = varNewDestDcId,
                retryCounter = varRetryCounter + 1
          WHERE transferId = inTransferId;
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.D2D_D2DDONE_RETRIED, varFileId, varNsHost, 'transfermanagerd', varComment ||
@@ -5408,7 +5419,7 @@ BEGIN
                lastModificationTime = getTime(),
                errorCode = serrno.SEINTERNAL,
                errorMessage = 'Disk to disk copy failed after ' || TO_CHAR(varMaxNbD2dRetries) ||
-                              'retries. Last error was : ' || varErrorMessage
+                              ' retries. Last error was : ' || varErrorMessage
          WHERE status = dconst.SUBREQUEST_WAITSUBREQ
            AND castorfile = varCfId;
       END IF;
@@ -5416,6 +5427,7 @@ BEGIN
   END IF;
 END;
 /
+
 
 
 /* PL/SQL method implementing disk2DiskCopyStart
