@@ -93,12 +93,14 @@
 
   - The RPyC package needs to be upgraded to version 3.3.
 
+  - The Oracle instantclient packages need to be upgraded to version 11.2.0.4.
+
   - On the disk servers, castor-job has been incorporated into castor-diskserver-manager.
     Furthermore, new dependencies have been introduced to the python-crypto and xrootd-python
     packages.
 
   - On the disk servers, all movers (rfio, gridFTP, and xrootd) and the gcd daemon depend
-    on the libradosstriper1 RPM from Ceph (Giant release or newer), that must be available
+    on the libradosstriper1 RPM from Ceph (Giant release), that must be available
     even if Ceph is not used.
 
   - The gridFTP plugin for CASTOR has been renamed to castor-gridftp-dsi, which corresponds
