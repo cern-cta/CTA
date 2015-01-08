@@ -5429,7 +5429,6 @@ END;
 /
 
 
-
 /* PL/SQL method implementing disk2DiskCopyStart
  * Note that cfId is only needed for proper logging in case the replication has been canceled.
  */
@@ -5498,7 +5497,7 @@ BEGIN
              ' destMountPoint=' || inDestMountPoint || ' srcDiskServer=' || inSrcDiskServerName ||
              ' srcMountPoint=' || inSrcMountPoint);
     -- end the disktodisk copy (may be retried)
-    disk2DiskCopyEnded(inTransferId, '', '', 0, 0, dlf.D2D_SOURCE_GONE);
+    disk2DiskCopyEnded(inTransferId, '', '', 0, '', 0, dlf.D2D_SOURCE_GONE);
     COMMIT; -- commit or raise_application_error will roll back for us :-(
     -- raise exception for the scheduling part
     raise_application_error(-20110, dlf.D2D_SOURCE_GONE);
@@ -5516,7 +5515,7 @@ BEGIN
              'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inSrcDiskServerName ||
              ' fileSystem=' || inSrcMountPoint);
     -- fail d2d transfer
-    disk2DiskCopyEnded(inTransferId, '', '', 0, 0, 'Source was disabled');
+    disk2DiskCopyEnded(inTransferId, '', '', 0, '', 0, 'Source was disabled');
     COMMIT; -- commit or raise_application_error will roll back for us :-(
     -- raise exception
     raise_application_error(-20110, dlf.D2D_SRC_DISABLED);
@@ -5542,7 +5541,7 @@ BEGIN
     logToDLF(NULL, dlf.LVL_WARNING, dlf.D2D_DEST_NOT_PRODUCTION, inFileId, inNsHost, 'transfermanagerd',
              'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inDestDiskServerName);
     -- fail d2d transfer
-    disk2DiskCopyEnded(inTransferId, '', '', 0, 0, 'Destination not in production');
+    disk2DiskCopyEnded(inTransferId, '', '', 0, '', 0, 'Destination not in production');
     COMMIT; -- commit or raise_application_error will roll back for us :-(
     -- raise exception
     raise_application_error(-20110, dlf.D2D_DEST_NOT_PRODUCTION);
@@ -5562,7 +5561,7 @@ BEGIN
       logToDLF(NULL, dlf.LVL_ERROR, dlf.D2D_MULTIPLE_COPIES_ON_DS, inFileId, inNsHost, 'transfermanagerd',
                'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inDestDiskServerName);
       -- fail d2d transfer
-      disk2DiskCopyEnded(inTransferId, '', '', 0, 0, 'Copy found on diskserver');
+      disk2DiskCopyEnded(inTransferId, '', '', 0, '', 0, 'Copy found on diskserver');
       COMMIT; -- commit or raise_application_error will roll back for us :-(
       -- raise exception
       raise_application_error(-20110, dlf.D2D_MULTIPLE_COPIES_ON_DS);
@@ -5691,9 +5690,9 @@ BEGIN
       errNo := errnos(i);
       errMsg := errmsgs(i);
       IF rType = 40 THEN      -- StagePutRequest
-       putEnded(subReqIds(i), 0, 0, '', '', errNo, errMsg);
+        putEnded(subReqIds(i), 0, 0, '', '', errNo, errMsg);
       ELSE                    -- StageGetRequest
-       getEnded(subReqIds(i), errNo, errMsg);
+        getEnded(subReqIds(i), errNo, errMsg);
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       BEGIN
@@ -5702,7 +5701,7 @@ BEGIN
       EXCEPTION WHEN NO_DATA_FOUND THEN
         CONTINUE;  -- The SubRequest/disk2DiskCopyJob may have been removed, nothing to be done.
       END;
-      disk2DiskCopyEnded(subReqIds(i), '', '', 0, errnos(i), errmsgs(i));
+      disk2DiskCopyEnded(subReqIds(i), '', '', 0, '', errnos(i), errmsgs(i));
     END;
     -- Release locks
     COMMIT;
@@ -5749,7 +5748,7 @@ BEGIN
         CONTINUE;  -- The SubRequest/disk2DiskCopyJob may have be removed, nothing to be done.
       END;
       -- found it, call disk2DiskCopyEnded
-      disk2DiskCopyEnded(subReqIds(i), '', '', 0, errnos(i), errmsgs(i));
+      disk2DiskCopyEnded(subReqIds(i), '', '', 0, '', errnos(i), errmsgs(i));
     END;
   END LOOP;
 END;
