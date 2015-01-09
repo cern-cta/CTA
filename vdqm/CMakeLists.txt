@@ -35,7 +35,6 @@ target_link_libraries (castorvdqm castorcommon)
 install (TARGETS castorvdqm LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
   NAMELINK_SKIP)
 CastorInstallLibManPage (vdqm_Connect)
-CastorInstallLibManPage (vdqm_DelDrive)
 CastorInstallLibManPage (vdqm_DelVolumeReq)
 CastorInstallLibManPage (vdqm_Disconnect)
 CastorInstallLibManPage (vdqm_NextDrive)

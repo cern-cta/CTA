@@ -199,25 +199,6 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(vdqmHdr_t *header,
     }
   }
   
-  if ( ADMINREQ(reqtype) ) {
-    // ADMIN request
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("reqtype", reqtype),
-        castor::dlf::Param("h_name", hp->h_name)};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, VDQM_ADMIN_REQUEST, 2,
-      params);
-
-    if ( (isadminhost(m_socket.socket(),hp->h_name) != 0) ) {
-      serrno = EPERM;
-      castor::exception::Exception ex(serrno);
-      ex.getMessage() << "OldProtocolInterpreter::readProtocol(): "
-                      << "unauthorised ADMIN request (0x" << std::hex << reqtype 
-                      << ") from " << hp->h_name << std::endl;
-      throw ex;
-
-    }   
-  }
-  
   p = buf;
   if ( REQTYPE(VOL,reqtype) && volumeRequest != NULL ) {
     DO_MARSHALL(LONG,p,volumeRequest->VolReqID,ReceiveFrom);
@@ -388,9 +369,6 @@ int castor::vdqm::OldProtocolInterpreter::sendToOldClient(vdqmHdr_t *header,
   }
   else if ( REQTYPE(DRV,reqtype) ) {
     len = VDQM_DRVREQLEN(driveRequest);
-  }
-  else if ( ADMINREQ(reqtype) ) {
-    len = 0;
   }
   else if ( header != NULL ) {
     len = header->len;

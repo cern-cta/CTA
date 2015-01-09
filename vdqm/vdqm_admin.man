@@ -7,9 +7,6 @@ vdqm_admin \- administrate VDQM server
 .SH SYNOPSIS
 .B vdqm_admin
 .RB [ -ping ]
-.RB [ -shutdown ]
-.RB [ -hold ]
-.RB [ -release ]
 .RB [ -dedicate ]
 .RB [ -deldrv ]
 .RB [ -delvol ]
@@ -19,7 +16,7 @@ vdqm_admin \- administrate VDQM server
 .B vdqm_admin
 permits various administrative operation on the VDQM server itself as well as
 some actions on drive and volume requests managed by the VDQM server. The
-command syntax consist of a switch describing the action (e.g. ping, shutdown)
+command syntax consist of a switch describing the action (e.g. ping)
 followed by a
 .I option value ...
 pairs that depend on the requested action. Possible options-value pairs are
@@ -42,7 +39,7 @@ Here follows a description of the individual actions and the associated
 option-value pair.
 .PP
 .BI "-ping"
-\- ping the VDQM server to detect whether it is ALIVE, HOLD or DEAD. The
+\- ping the VDQM server to detect whether it is ALIVE or DEAD. The
 following option-value pairs can be specified: 
 .sp
 .BI "-dgn " device_group
@@ -53,15 +50,6 @@ following option-value pairs can be specified:
 .RS
 In this case the queue position for that volume request is given.
 .RE
-.sp
-.BI "-shutdown"
-\- shutdown the VDQM server.
-.sp
-.BI "-hold"
-\- put the VDQM server in HOLD mode (no further requests will be accepted).
-.sp
-.BI "-release"
-\- release the VDQM server from HOLD mode.
 .sp
 .BI "-dedicate"
 \- dedicate the specified drive to clients matching the dedication expression.
@@ -112,10 +100,6 @@ The following option-value pairs must be provided:
 .ft CW
 % vdqm_admin -ping
 ALIVE
-% vdqm_admin -hold
-% vdqm_admin -ping
-HOLD
-% vdqm_admin -release
 % showqueues -g SD3R
 drv1@test (1220 MB) status FREE vid:  last update Jun 15 17:22:09
 drv2@test (14525 MB) status FREE vid:  last update Jun 15 17:22:09

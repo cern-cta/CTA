@@ -80,9 +80,6 @@ const char *vdqmReqTypeToStr(const uint32_t type) {
   case VDQM_DRV_REQ      : return "VDQM_DRV_REQ";
   case VDQM_PING         : return "VDQM_PING";
   case VDQM_CLIENTINFO   : return "VDQM_CLIENTINFO";
-  case VDQM_SHUTDOWN     : return "VDQM_SHUTDOWN";
-  case VDQM_HOLD         : return "VDQM_HOLD";
-  case VDQM_RELEASE      : return "VDQM_RELEASE";
   case VDQM_REPLICA      : return "VDQM_REPLICA";
   case VDQM_RESCHEDULE   : return "VDQM_RESCHEDULE";
   case VDQM_ROLLBACK     : return "VDQM_ROLLBACK";

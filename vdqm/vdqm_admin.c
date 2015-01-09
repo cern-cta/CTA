@@ -37,9 +37,6 @@ int main(int argc, char *argv[]) {
     int j,k;
 
     char cmds[][20] =  {"-ping",
-                        "-shutdown",
-                        "-hold",
-                        "-release",
                         "-dedicate",
                         "-deldrv",
                         "-delvol",
@@ -54,9 +51,6 @@ int main(int argc, char *argv[]) {
                         "-port",
                         ""};
     int icmds[] = {VDQM_PING,
-                   VDQM_SHUTDOWN,
-                   VDQM_HOLD,
-                   VDQM_RELEASE,
                    VDQM_DEDICATE_DRV,
                    VDQM_DEL_DRVREQ,
                    VDQM_DEL_VOLREQ,
@@ -97,15 +91,6 @@ int main(int argc, char *argv[]) {
     }
 
     switch (icmds[i]) {
-    case VDQM_SHUTDOWN:
-    case VDQM_HOLD:
-    case VDQM_RELEASE:
-        if ( argc > 2 ) {
-            usage(argv[0],cmds);
-            exit(2);
-        }
-        rc = vdqm_admin(NULL,icmds[i]);
-        break;
     case VDQM_PING:
     case VDQM_DEDICATE_DRV:
     case VDQM_DEL_VOLREQ:

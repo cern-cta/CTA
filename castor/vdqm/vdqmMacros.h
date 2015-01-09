@@ -34,9 +34,6 @@
  * Some useful macros, taken from the old vdqm code, 
  * to do the (un)marshalling
  */
-#define ADMINREQ(X) ( X == VDQM_HOLD || X == VDQM_RELEASE || \
-    X == VDQM_SHUTDOWN )
-
 #define DO_MARSHALL(X,Y,Z,W) { \
     if ( W == SendTo ) {marshall_##X(Y,Z);} \
     else {unmarshall_##X(Y,Z);} }

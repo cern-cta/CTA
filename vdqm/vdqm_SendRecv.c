@@ -35,8 +35,6 @@ extern char *getconfent();
     X == VDQM_DEL_##Y##REQ || \
     X == VDQM_GET_##Y##QUEUE || (!strcmp(#Y,"VOL") && X == VDQM_PING) || \
     (!strcmp(#Y,"DRV") && X == VDQM_DEDICATE_DRV) )
-#define ADMINREQ(X) ( X == VDQM_HOLD || X == VDQM_RELEASE || \
-    X == VDQM_SHUTDOWN )
 
 typedef enum direction {SendTo,ReceiveFrom} direction_t;
 
@@ -143,12 +141,6 @@ static int vdqm_Transfer(vdqmnw_t *nw,
                     *domain = '\0';
             }
         }
-        if ( ADMINREQ(reqtype) ) {
-          if ( (isadminhost(s,hp->h_name) != 0) ) {
-            serrno = EPERM;
-            return(-1);
-          }   
-        }
     }
     if ( whereto == SendTo ) {
         if ( hdr != NULL && VDQM_VALID_REQTYPE(hdr->reqtype) ) reqtype = hdr->reqtype;
@@ -215,7 +207,6 @@ static int vdqm_Transfer(vdqmnw_t *nw,
              len = VDQM_VOLREQLEN(volreq);
         else if ( REQTYPE(DRV,reqtype) ) 
                len = VDQM_DRVREQLEN(drvreq);
-        else if ( ADMINREQ(reqtype) ) len = 0;
         else if ( hdr != NULL ) len = hdr->len;
         p = hdrbuf;
         DO_MARSHALL(LONG,p,magic,whereto);

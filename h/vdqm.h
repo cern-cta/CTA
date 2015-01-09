@@ -167,7 +167,6 @@ int vdqm_GetVolQueue (char *, vdqmVolReq_t *, void **, void **);
 int vdqm_GetDrvQueue (char *, vdqmDrvReq_t *, void **, void **);
 int vdqm_GetQueuePos (vdqmVolReq_t *);
 int vdqm_QueueOpRollback (vdqmVolReq_t *, vdqmDrvReq_t *);
-int vdqm_DedicateDrv (vdqmDrvReq_t *);
 /*
  * Administrative operations
  */

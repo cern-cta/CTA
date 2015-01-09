@@ -144,7 +144,6 @@ debian/castor/usr/share/man/man3/rmc_read_elem_status.3castor.gz
 debian/castor/usr/share/man/man3/rmc_seterrbuf.3castor.gz
 debian/castor/usr/share/man/man3/serrno.3castor.gz
 debian/castor/usr/share/man/man3/vdqm_Connect.3castor.gz
-debian/castor/usr/share/man/man3/vdqm_DelDrive.3castor.gz
 debian/castor/usr/share/man/man3/vdqm_DelVolumeReq.3castor.gz
 debian/castor/usr/share/man/man3/vdqm_Disconnect.3castor.gz
 debian/castor/usr/share/man/man3/vdqm_NextDrive.3castor.gz
