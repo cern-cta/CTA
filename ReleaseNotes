@@ -61,6 +61,7 @@
   Tape
   ----
 
+    CASTOR-4861: Remove the redundant -shutdown -hold -release options from vdqm_admin
     CASTOR-4835: tapeserverd should check for blank tapes for cleaner sessions
     CASTOR-4829: tapegateway should request positioning by blockid for recalls instead of fseq
     CASTOR-4816: RFE: 2.1.15-x should provide castor-tape-acs-dismount
