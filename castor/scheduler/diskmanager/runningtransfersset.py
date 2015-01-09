@@ -203,7 +203,6 @@ class RunningTransfersSet(object):
     finally:
       self.tapelock.release()
 
-
   def nbTransfers(self, reqUser=None, detailed=False):
     '''returns number of running transfers and number of running slots, plus details
     per protocol if the detailed parameter is true.
@@ -398,7 +397,7 @@ class RunningTransfersSet(object):
               errMsg = 'Transfer has been killed by signal %d' % (-rc)
               errCode = 1015  # SEINTERNAL
             elif rc > 0:         # these are transfers that got interrupted or somehow failed
-              errMsg =  'Mover exited with failure, rc=%d' % rc
+              errMsg = 'Mover exited with failure, rc=%d' % rc
               errCode = 1015  # SEINTERNAL
             if rTransfer.scheduler not in failedTransfers:
               failedTransfers[rTransfer.scheduler] = []
@@ -419,7 +418,7 @@ class RunningTransfersSet(object):
           # "Informed scheduler that transfer failed" message
           dlf.write(msgs.INFORMTRANSFERFAILED, Scheduler=scheduler, subreqId=transferId,
                     reqId=reqId, fileid=fileId, errCode=rc, Message=msg)
-      except connectionpool.Timeout, e:
+      except connectionpool.Timeout:
         for transferId, fileId, rc, msg, reqId in failedTransfers[scheduler]:
           # "Failed to inform scheduler that transfer failed" message
           dlf.writenotice(msgs.INFORMTRANSFERFAILEDFAILED, Scheduler=scheduler,
@@ -428,7 +427,7 @@ class RunningTransfersSet(object):
         for transferId, fileId, rc, msg, reqId in failedTransfers[scheduler]:
           # "Failed to inform scheduler that transfer failed" message
           dlf.writeerr(msgs.INFORMTRANSFERFAILEDFAILED, Scheduler=scheduler,
-                       subreqId=transferId, reqId=reqId, fileid=fileId, Message=msg)
+                       subreqId=transferId, reqId=reqId, fileid=fileId, Message=msg, error=e)
 
 
   def listTransfers(self, reqUser=None):

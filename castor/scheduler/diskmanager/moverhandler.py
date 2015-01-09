@@ -106,7 +106,7 @@ class MoverReqHandlerThread(threading.Thread):
       except KeyError:
         # transfer not found: assume it already timed out, raise error
         # "Transfer slot timed out" message
-        dlf.writenotice(msgs.TRANSFERTIMEDOUT, subreqId=transferid)
+        dlf.writenotice(msgs.TRANSFERTIMEDOUT, subreqId=transferid, transferType=transferType)
         raise
       if errCode != 0:
         # this is a user transfer that has to be failed as we got an error from xroot
@@ -184,7 +184,7 @@ class MoverReqHandlerThread(threading.Thread):
                                               timeout=timeout)
           t.ended = True
           return 0
-        elif t.transfer.transferType == TransferType.D2DSRC or type(t) == transfer.TapeTransfer:
+        elif t.transfer.transferType == TransferType.D2DSRC or type(t) == TapeTransfer:
           # nothing else to be done for sources and tape transfers
           return 0
         else:
