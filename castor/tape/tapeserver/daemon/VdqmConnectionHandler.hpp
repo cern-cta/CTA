@@ -134,6 +134,75 @@ private:
   bool connectionIsAuthorized() throw();
 
   /**
+   * Returns the host name of the peer the specified socket.
+   *
+   * @param sockFd The file descriptor of the socket.
+   */
+  std::string getPeerHostName(const int sockFd);
+
+  /**
+   * C++ wrapper around the C function getpeername().  This wrapper converts an
+   * error into an exception.
+   *
+   * @param sockFd The file descriptor of the socket.
+   * @param addr Out parameter: The peer address.
+   * @param addrLen In/Out parameter: The length of the peer address passed in and
+   * the final length when passed back out.
+   */
+  void getPeerName(const int sockFd, struct sockaddr *const addr,
+    socklen_t *const addrLen);
+
+  /**
+   * C++ wrapper around the C function getaddrinfo().  This wrapper converts an
+   * error into an exception.
+   *
+   * @param sa See the manual page of getnameinfo().
+   * @param saLen See the manual page of getnameinfo().
+   * @param host See the manual page of getnameinfo().
+   * @param hostLen See the manual page of getnameinfo().
+   * @param serv See the manual page of getnameinfo().
+   * @param servLen See the manual page of getnameinfo().
+   * @param flags See the manual page of getnameinfo().
+   */
+  void getNameInfo(
+    const struct sockaddr *const sa,
+    const socklen_t saLen,
+    char *const host,
+    const size_t hostLen,
+    char *const serv,
+    const size_t servLen,
+    const int flags);
+
+  /**
+   * Thread-safe method that returns a string reprsentation of the specified
+   * integer value returned by a call to the C function getnameinfo().
+   *
+   * @param rc The integer return value;
+   * @return The string representation of the integer return value.
+   */
+  const char *getNameInfoRcToString(const int rc);
+
+  /**
+   * Returns the host name of this end (as apposed to the peer end) of the
+   * specified socket.
+   *
+   * @param sockFd The file descriptor of the socket.
+   */
+  std::string getSockHostName(const int sockFd);
+
+  /**
+   * C++ wrapper around the C function getsockname().  This wrapper converts an
+   * error into an exception.
+   *
+   * @param sockFd The file descriptor of the socket.
+   * @param addr Out parameter: The address.
+   * @param addrLen In/Out parameter: The length of the address passed in and
+   * the final length when passed back out.
+   */
+  void getSockName(const int sockFd, struct sockaddr *const addr,
+    socklen_t *const addrLen);
+
+  /**
    * Logs the reception of the specified job message from the vdqmd daemon.
    */
   void logVdqmJobReception(const legacymsg::RtcpJobRqstMsgBody &job)

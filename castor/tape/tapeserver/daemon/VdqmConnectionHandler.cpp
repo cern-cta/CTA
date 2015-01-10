@@ -19,6 +19,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmConnectionHandler.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/common.h"
@@ -129,7 +130,19 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::
 //------------------------------------------------------------------------------
 // connectionIsAuthorized
 //------------------------------------------------------------------------------
-bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::connectionIsAuthorized() throw() {
+bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::
+  connectionIsAuthorized() throw() {
+  try {
+    const std::string peerHost = getPeerHostName(m_fd);
+    const std::string thisHost = getSockHostName(m_fd);
+
+    log::Param params[] = {
+      log::Param("peerHost", peerHost),
+      log::Param("thisHost", thisHost)};
+    m_log(LOG_INFO, "Received connection" ,params);
+  } catch(...) {
+  }
+
   // isadminhost fills in peerHost
   char peerHost[CA_MAXHOSTNAMELEN+1];
   memset(peerHost, '\0', sizeof(peerHost));
@@ -161,6 +174,117 @@ bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::connectionIsAuthor
     m_log(LOG_ERR, "Failed to authorize vdqm host", params);
 
     return false; // Connection is not authorized
+  }
+}
+
+//------------------------------------------------------------------------------
+// getPeerHostName
+//------------------------------------------------------------------------------
+std::string castor::tape::tapeserver::daemon::VdqmConnectionHandler::
+  getPeerHostName(const int sockFd) {
+  try {
+    struct sockaddr_in addr;
+    socklen_t addrLen = sizeof(addr);
+    getPeerName(sockFd, (struct sockaddr *)&addr, &addrLen);
+
+    char host[NI_MAXHOST];
+    getNameInfo((struct sockaddr *)&addr, addrLen, host, sizeof(host), NULL, 0,
+      NI_NAMEREQD);
+
+    return host;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "getPeerHostName() failed: " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getPeerName
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmConnectionHandler::getPeerName(
+  const int sockFd, struct sockaddr *const addr, socklen_t *const addrLen) {
+  if(getpeername(sockFd, addr, addrLen)) {
+    const std::string errMsg = castor::utils::errnoToString(errno);
+    castor::exception::Exception ex;
+    ex.getMessage() << "getpeername failed: sockFd=" << sockFd << ": " <<
+      errMsg;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getNameInfo
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmConnectionHandler::getNameInfo(
+  const struct sockaddr *const sa,
+  const socklen_t saLen,
+  char *const host,
+  const size_t hostLen,
+  char *const serv,
+  const size_t servLen,
+  const int flags) {
+  const int rc = getnameinfo(sa, saLen, host, hostLen, serv, servLen, flags);
+  if(rc) {
+    const std::string errMsg = getNameInfoRcToString(rc);
+    castor::exception::Exception ex;
+    ex.getMessage() << "getnameinfo failed: " << errMsg;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getNameInfoRcToString
+//------------------------------------------------------------------------------
+const char *castor::tape::tapeserver::daemon::VdqmConnectionHandler::
+  getNameInfoRcToString(const int rc) {
+  switch(rc) {
+  case 0: return "Success";
+  case EAI_AGAIN: return "Try again";
+  case EAI_BADFLAGS: return "Invalid flags";
+  case EAI_FAIL: return "Non-recoverable error";
+  case EAI_FAMILY: return "Invalid address family";
+  case EAI_MEMORY: return "Out of memory";
+  case EAI_NONAME: return "Name does not resolve";
+  case EAI_OVERFLOW: return "Either host of serv buffer was too small";
+  case EAI_SYSTEM: return "System error";
+  default: return "Unknown";
+  }
+}
+
+//------------------------------------------------------------------------------
+// getSockHostName
+//------------------------------------------------------------------------------
+std::string castor::tape::tapeserver::daemon::VdqmConnectionHandler::
+  getSockHostName(const int sockFd) {
+  try {
+    struct sockaddr_in addr;
+    socklen_t addrLen = sizeof(addr);
+    getSockName(sockFd, (struct sockaddr *)&addr, &addrLen);
+
+    char host[NI_MAXHOST];
+    getNameInfo((struct sockaddr *)&addr, addrLen, host, sizeof(host), NULL, 0,
+      NI_NAMEREQD);
+
+    return host;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "getSockHostName() failed: " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getSockName
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmConnectionHandler::getSockName(
+  const int sockFd, struct sockaddr *const addr, socklen_t *const addrLen) {
+  if(getsockname(sockFd, addr, addrLen)) {
+    const std::string errMsg = castor::utils::errnoToString(errno);
+    castor::exception::Exception ex;
+    ex.getMessage() << "getsockname failed: sockFd=" << sockFd << ": " <<
+      errMsg;
+    throw ex;
   }
 }
 
