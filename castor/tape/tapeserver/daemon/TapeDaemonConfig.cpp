@@ -21,7 +21,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/common/CastorConfiguration.hpp"
 #include "castor/tape/tapeserver/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemonConfig.hpp"
@@ -63,8 +62,27 @@ castor::tape::tapeserver::daemon::TapeDaemonConfig
     TAPESERVER_LABEL_PORT, log);
   config.internalPort = castorConf.getConfEntInt("TapeServer", "InternalPort",
     TAPESERVER_INTERNAL_PORT, log);
+  config.vdqmHosts = createVdqmHostsFromCastorConf(log, castorConf);
 
   config.dataTransfer = DataTransferConfig::createFromCastorConf(log);
   
   return config;
+}
+
+//------------------------------------------------------------------------------
+// createVdqmHostsFromCastorConf
+//------------------------------------------------------------------------------
+std::vector<std::string> castor::tape::tapeserver::daemon::TapeDaemonConfig::
+  createVdqmHostsFromCastorConf(log::Logger *const log,
+  common::CastorConfiguration &castorConf) {
+  const std::string rawVdqmHosts = castorConf.getConfEntString("TapeServer",
+    "VdqmHosts", log);
+  const std::string trimmedVdqmHosts = utils::trimString(rawVdqmHosts);
+  const std::string singleSpacedVdqmHosts =
+    utils::singleSpaceString(trimmedVdqmHosts);
+
+  std::vector<std::string> vdqmHostsVector;
+  utils::splitString(singleSpacedVdqmHosts, ' ', vdqmHostsVector);
+
+  return vdqmHostsVector;
 }

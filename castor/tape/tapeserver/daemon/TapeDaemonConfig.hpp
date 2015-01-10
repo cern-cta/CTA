@@ -23,12 +23,14 @@
 
 #pragma once
 
+#include "castor/common/CastorConfiguration.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueConfig.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
 
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 namespace castor {
 namespace tape {
@@ -90,6 +92,11 @@ struct TapeDaemonConfig {
   unsigned short internalPort;
 
   /**
+   * The trusted vdqm hosts.
+   */
+  std::vector<std::string> vdqmHosts;
+
+  /**
    * The configuration parameters required by a data-transfer session.
    */
   DataTransferConfig dataTransfer;
@@ -97,8 +104,8 @@ struct TapeDaemonConfig {
   /**
    * Constructor.
    *
-   * Initializes all integer values to 0 and all string values to the empty
-   * string.
+   * Initializes all integer values to 0, all string values to the empty
+   * string and all collections to empty.
    */
   TapeDaemonConfig();
 
@@ -106,11 +113,23 @@ struct TapeDaemonConfig {
    * Returns a configuration structure based on the contents of
    * /etc/castor/castor.conf and compile-time constants.
    *
-   * @param log pointer to NULL or an optional logger object.
+   * @param log Pointer to NULL or an optional logger object.
    * @return The configuration structure.
    */
   static TapeDaemonConfig createFromCastorConf(
     log::Logger *const log = NULL);
+
+private:
+
+  /**
+   * Gets the trusted vdqm hosts from castor.conf.
+   *
+   * @param log Pointer to NULL or an optional logger object.
+   * @param castorConf Object representing castor.conf.
+   * @return The trusted vdqm hosts.
+   */
+  static std::vector<std::string> createVdqmHostsFromCastorConf(
+    log::Logger *const log, common::CastorConfiguration &castorConf);
 
 }; // TapeDaemonConfig
 

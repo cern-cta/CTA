@@ -87,6 +87,15 @@ int main(const int argc, char **const argv) {
 }
 
 //------------------------------------------------------------------------------
+// Writes the specified vdqm hosts to the logging system.  These hosts
+// should have been parsed from the contents of the TapeServer:VdqmHosts
+// entry (if there is one) in the CASTOR configuration file
+// /etc/castor/castor.conf.
+//------------------------------------------------------------------------------
+static void logParsedTrustedVdqmHosts(castor::log::Logger &log,
+  const std::vector<std::string> &vdqmHosts);
+
+//------------------------------------------------------------------------------
 // Writes the specified TPCONFIG lines to the specified logging system.
 //
 // @param log The logging system.
@@ -114,6 +123,7 @@ static int exceptionThrowingMain(const int argc, char **const argv,
   // Parse /etc/castor/castor.conf
   const tape::tapeserver::daemon::TapeDaemonConfig tapeDaemonConfig =
     tape::tapeserver::daemon::TapeDaemonConfig::createFromCastorConf(&log);
+  logParsedTrustedVdqmHosts(log, tapeDaemonConfig.vdqmHosts);
 
   // Parse /etc/castor/TPCONFIG
   const tape::tapeserver::daemon::TpconfigLines tpconfigLines =
@@ -154,6 +164,26 @@ static int exceptionThrowingMain(const int argc, char **const argv,
 
   // Run the tapeserverd daemon
   return daemon.main();
+}
+
+//------------------------------------------------------------------------------
+// logParsedTrustedVdqmHosts
+//------------------------------------------------------------------------------
+static void logParsedTrustedVdqmHosts(castor::log::Logger &log,
+  const std::vector<std::string> &vdqmHosts) {
+  std::ostringstream oss;
+  for(std::vector<std::string>::const_iterator itor = vdqmHosts.begin();
+    itor != vdqmHosts.end(); itor++) {
+    if(itor != vdqmHosts.begin()) {
+      oss << " ";
+    }
+    oss << *itor;
+  }
+
+  castor::log::Param params[] = {
+    castor::log::Param("nbVdqmHosts", vdqmHosts.size()),
+    castor::log::Param("vdqmHosts", oss.str())};
+  log(LOG_INFO, "Parsed trusted vdqm hosts", params);
 }
 
 //------------------------------------------------------------------------------

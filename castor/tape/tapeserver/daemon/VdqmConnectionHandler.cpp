@@ -32,13 +32,14 @@ castor::tape::tapeserver::daemon::VdqmConnectionHandler::VdqmConnectionHandler(
   const int fd,
   reactor::ZMQReactor &reactor,
   log::Logger &log,
-  Catalogue &driveCatalogue) throw():
-    m_fd(fd),
-    m_reactor(reactor),
-    m_log(log),
-    m_driveCatalogue(driveCatalogue),
-    m_netTimeout(1) // Timeout in seconds
-{
+  Catalogue &driveCatalogue,
+  const TapeDaemonConfig &tapeDaemonConfig) throw():
+  m_fd(fd),
+  m_reactor(reactor),
+  m_log(log),
+  m_driveCatalogue(driveCatalogue),
+  m_tapeDaemonConfig(tapeDaemonConfig),
+  m_netTimeout(1) { // Timeout in seconds
 }
 
 //------------------------------------------------------------------------------
@@ -80,7 +81,7 @@ bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
   std::list<log::Param> params;
   params.push_back(log::Param("fd", m_fd));
 
-  if(!connectionIsAuthorized()) {
+  if(!connectionIsFromTrustedVdqmHost()) {
     return true; // Ask reactor to remove and delete this handler
   }
 
@@ -128,53 +129,34 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::
 }
 
 //------------------------------------------------------------------------------
-// connectionIsAuthorized
+// connectionIsFromTrustedVdqmHost
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::
-  connectionIsAuthorized() throw() {
+  connectionIsFromTrustedVdqmHost() throw() {
   try {
-    const std::string peerHost = getPeerHostName(m_fd);
-    const std::string thisHost = getSockHostName(m_fd);
+    const std::string vdqmHost = getPeerHostName(m_fd);
 
-    log::Param params[] = {
-      log::Param("peerHost", peerHost),
-      log::Param("thisHost", thisHost)};
-    m_log(LOG_INFO, "Received connection" ,params);
-  } catch(...) {
-  }
+    std::list<log::Param> params;
+    params.push_back(log::Param("vdqmHost", vdqmHost));
+    m_log(LOG_INFO, "Received a vdqm connection" ,params);
 
-  // isadminhost fills in peerHost
-  char peerHost[CA_MAXHOSTNAMELEN+1];
-  memset(peerHost, '\0', sizeof(peerHost));
-
-  // Unfortunately isadminhost can either set errno or serrno
-  serrno = 0;
-  errno = 0;
-  const int rc = isadminhost(m_fd, peerHost);
-  if(0 == rc) {
-    log::Param params[] = {
-      log::Param("host", peerHost[0] != '\0' ? peerHost : "UNKNOWN")};
-    m_log(LOG_INFO, "Received connection from authorized admin host", params);
-    return true; // Connection is authorized
-  } else {
-    // Give preference to serrno over errno when it comes to isadminhost()
-    const int savedErrno = errno;
-    const int savedSerrno = serrno;
-    std::string errorMessage;
-    if(0 != serrno) {
-      errorMessage = castor::utils::serrnoToString(savedSerrno);
-    } else if(0 != errno) {
-      errorMessage = castor::utils::errnoToString(savedErrno);
-    } else {
-      errorMessage = "UNKNOWN";
+    const std::vector<std::string> &vdqmHosts = m_tapeDaemonConfig.vdqmHosts;
+    for(std::vector<std::string>::const_iterator itor = vdqmHosts.begin();
+      itor != vdqmHosts.end(); itor++) {
+      if(vdqmHost == *itor) {
+        return true;
+      }
     }
-    log::Param params[] = {
-      log::Param("host", peerHost[0] != '\0' ? peerHost : "UNKNOWN"),
-      log::Param("message", errorMessage)};
-    m_log(LOG_ERR, "Failed to authorize vdqm host", params);
 
-    return false; // Connection is not authorized
+    m_log(LOG_WARNING, "Vdqm host is not trusted"
+      ": Check the TapeServer:VdqmHosts parameter of castor.conf", params);
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "Failed to determine if connection is from a trusted vdqm"
+      " host", params);
   }
+
+  return false;
 }
 
 //------------------------------------------------------------------------------
@@ -190,6 +172,7 @@ std::string castor::tape::tapeserver::daemon::VdqmConnectionHandler::
     char host[NI_MAXHOST];
     getNameInfo((struct sockaddr *)&addr, addrLen, host, sizeof(host), NULL, 0,
       NI_NAMEREQD);
+    host[sizeof(host) - 1] = '\0';
 
     return host;
   } catch(castor::exception::Exception &ne) {
@@ -249,42 +232,6 @@ const char *castor::tape::tapeserver::daemon::VdqmConnectionHandler::
   case EAI_OVERFLOW: return "Either host of serv buffer was too small";
   case EAI_SYSTEM: return "System error";
   default: return "Unknown";
-  }
-}
-
-//------------------------------------------------------------------------------
-// getSockHostName
-//------------------------------------------------------------------------------
-std::string castor::tape::tapeserver::daemon::VdqmConnectionHandler::
-  getSockHostName(const int sockFd) {
-  try {
-    struct sockaddr_in addr;
-    socklen_t addrLen = sizeof(addr);
-    getSockName(sockFd, (struct sockaddr *)&addr, &addrLen);
-
-    char host[NI_MAXHOST];
-    getNameInfo((struct sockaddr *)&addr, addrLen, host, sizeof(host), NULL, 0,
-      NI_NAMEREQD);
-
-    return host;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "getSockHostName() failed: " << ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// getSockName
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmConnectionHandler::getSockName(
-  const int sockFd, struct sockaddr *const addr, socklen_t *const addrLen) {
-  if(getsockname(sockFd, addr, addrLen)) {
-    const std::string errMsg = castor::utils::errnoToString(errno);
-    castor::exception::Exception ex;
-    ex.getMessage() << "getsockname failed: sockFd=" << sockFd << ": " <<
-      errMsg;
-    throw ex;
   }
 }
 

@@ -37,12 +37,14 @@ castor::tape::tapeserver::daemon::VdqmAcceptHandler::VdqmAcceptHandler(
   const int fd,
   reactor::ZMQReactor &reactor,
   log::Logger &log,
-  Catalogue &driveCatalogue)
+  Catalogue &driveCatalogue,
+  const TapeDaemonConfig &tapeDaemonConfig)
   throw():
     m_fd(fd),
     m_reactor(reactor),
     m_log(log),
-    m_driveCatalogue(driveCatalogue) {
+    m_driveCatalogue(driveCatalogue),
+    m_tapeDaemonConfig(tapeDaemonConfig) {
 }
 
 //------------------------------------------------------------------------------
@@ -102,7 +104,7 @@ bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
   std::auto_ptr<VdqmConnectionHandler> connectionHandler;
   try {
     connectionHandler.reset(new VdqmConnectionHandler(connection.get(),
-      m_reactor, m_log, m_driveCatalogue));
+      m_reactor, m_log, m_driveCatalogue, m_tapeDaemonConfig));
     connection.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;

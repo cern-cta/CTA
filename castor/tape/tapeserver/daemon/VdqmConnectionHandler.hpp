@@ -31,6 +31,7 @@
 #include "castor/tape/reactor/PollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
+#include "castor/tape/tapeserver/daemon/TapeDaemonConfig.hpp"
 #include "h/vdqm_constants.h"
 #include "h/rtcp_constants.h"
 
@@ -54,12 +55,15 @@ public:
    * @param log The object representing the API of the CASTOR logging system.
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
+   * @param tapeDaemonConfig The CASTOR configuration parameters to be used by
+   * the tape daemon.
    */
   VdqmConnectionHandler(
     const int fd,
     reactor::ZMQReactor &reactor,
     log::Logger &log,
-    Catalogue &driveCatalogue) throw();
+    Catalogue &driveCatalogue,
+    const TapeDaemonConfig &tapeDaemonConfig) throw();
 
   /**
    * Returns the human-readable name this event handler.
@@ -107,6 +111,11 @@ private:
    * The catalogue of tape drives controlled by the tape server daemon.
    */
   Catalogue &m_driveCatalogue;
+
+  /**
+   * The CASTOR configuration parameters to be used by the tape daemon.
+   */
+  const TapeDaemonConfig &m_tapeDaemonConfig;
   
   /**
    * The timeout in seconds to be applied when performing network read and
@@ -128,10 +137,9 @@ private:
   void checkHandleEventFd(const int fd) ;
 
   /**
-   * Returns true if the peer host of the connection being handled is
-   * authorized.
+   * Returns true if the peer hosts a trusted vdqm host.
    */
-  bool connectionIsAuthorized() throw();
+  bool connectionIsFromTrustedVdqmHost() throw();
 
   /**
    * Returns the host name of the peer the specified socket.
@@ -146,8 +154,8 @@ private:
    *
    * @param sockFd The file descriptor of the socket.
    * @param addr Out parameter: The peer address.
-   * @param addrLen In/Out parameter: The length of the peer address passed in and
-   * the final length when passed back out.
+   * @param addrLen In/Out parameter: The length of the peer address passed in
+   * and the final length when passed back out.
    */
   void getPeerName(const int sockFd, struct sockaddr *const addr,
     socklen_t *const addrLen);
@@ -181,26 +189,6 @@ private:
    * @return The string representation of the integer return value.
    */
   const char *getNameInfoRcToString(const int rc);
-
-  /**
-   * Returns the host name of this end (as apposed to the peer end) of the
-   * specified socket.
-   *
-   * @param sockFd The file descriptor of the socket.
-   */
-  std::string getSockHostName(const int sockFd);
-
-  /**
-   * C++ wrapper around the C function getsockname().  This wrapper converts an
-   * error into an exception.
-   *
-   * @param sockFd The file descriptor of the socket.
-   * @param addr Out parameter: The address.
-   * @param addrLen In/Out parameter: The length of the address passed in and
-   * the final length when passed back out.
-   */
-  void getSockName(const int sockFd, struct sockaddr *const addr,
-    socklen_t *const addrLen);
 
   /**
    * Logs the reception of the specified job message from the vdqmd daemon.

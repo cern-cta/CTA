@@ -662,8 +662,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
       ex.getMessage() <<
-        "Failed to create event handler for communicating with the ProcessForker"
-        ": " << ba.what();
+        "Failed to create event handler for communicating with the"
+        " ProcessForker: " << ba.what();
       throw ex;
     }
     m_reactor.registerHandler(handler.get());
@@ -688,20 +688,22 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
       listenSock.reset(io::createListenerSock(m_tapeDaemonConfig.jobPort));
     } catch(castor::exception::Exception &ne) {
       castor::exception::Exception ex(ne.code());
-      ex.getMessage() << "Failed to create socket to listen for vdqm connections"
-        ": " << ne.getMessage().str();
+      ex.getMessage() <<
+        "Failed to create socket to listen for vdqm connections: " <<
+        ne.getMessage().str();
       throw ex;
     }
     {
       log::Param params[] = {
         log::Param("listeningPort", m_tapeDaemonConfig.jobPort)};
-      m_log(LOG_INFO, "Listening for connections from the vdqmd daemon", params);
+      m_log(LOG_INFO, "Listening for connections from the vdqmd daemon",
+        params);
     }
 
     std::auto_ptr<VdqmAcceptHandler> handler;
     try {
       handler.reset(new VdqmAcceptHandler(listenSock.get(), m_reactor, m_log,
-        *m_catalogue));
+        *m_catalogue,m_tapeDaemonConfig));
       listenSock.release();
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
@@ -793,8 +795,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
 
     std::auto_ptr<LabelCmdAcceptHandler> handler;
     try {
-      handler.reset(new LabelCmdAcceptHandler(listenSock.get(), m_reactor, m_log,
-        *m_catalogue, m_hostName, m_vdqm, m_vmgr));
+      handler.reset(new LabelCmdAcceptHandler(listenSock.get(), m_reactor,
+        m_log, *m_catalogue, m_hostName, m_vdqm, m_vmgr));
       listenSock.release();
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;

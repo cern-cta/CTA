@@ -25,6 +25,7 @@
 #include "castor/tape/reactor/PollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
+#include "castor/tape/tapeserver/daemon/TapeDaemonConfig.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -48,9 +49,12 @@ public:
    * @param log The object representing the API of the CASTOR logging system.
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
+   * @param tapeDaemonConfig The CASTOR configuration parameters to be used by
+   * the tape daemon.
    */
   VdqmAcceptHandler(const int fd, reactor::ZMQReactor &reactor,
-    log::Logger &log, Catalogue &driveCatalogue) throw();
+    log::Logger &log, Catalogue &driveCatalogue,
+    const TapeDaemonConfig &tapeDaemonConfig) throw();
 
   /**
    * Returns the human-readable name this event handler.
@@ -113,6 +117,11 @@ private:
    * The catalogue of tape drives controlled by the tape server daemon.
    */
   Catalogue &m_driveCatalogue;
+
+  /**
+   * The CASTOR configuration parameters to be used by the tape daemon. 
+   */
+  const TapeDaemonConfig &m_tapeDaemonConfig;
 
 }; // class VdqmAcceptHandler
 

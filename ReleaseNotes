@@ -61,6 +61,7 @@
   Tape
   ----
 
+    CASTOR-4862: Tape server of 2.1.15-x will use TapeServer:VdqmHosts instead of Admin:Hosts
     CASTOR-4861: Remove the redundant -shutdown -hold -release options from vdqm_admin
     CASTOR-4835: tapeserverd should check for blank tapes for cleaner sessions
     CASTOR-4829: tapegateway should request positioning by blockid for recalls instead of fseq
@@ -133,6 +134,11 @@
 
   - The format of the /etc/castor/TPCONFIG file has been simplified from 7 to 4 columns, namely
     unit name, dgn, dev filename and library slot.
+
+  - The tapeserverd daemon uses the TapeServer:VdqmHosts configuration parameter
+    as opposed to ADMIN:HOSTS in order to determine the list of trusted vdqm
+    hosts.  The TapeServer:VdqmHosts configuration parameter is mandatory.  The
+    tapeserverd daemon will refuse to start if the parameter is not set.
 
   - Monitoring based on log file parsing needs to be revised due to the introduction
     of a number of new daemons.
