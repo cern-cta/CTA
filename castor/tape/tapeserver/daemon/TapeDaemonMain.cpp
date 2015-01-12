@@ -37,6 +37,8 @@
 #include "h/vdqm_constants.h"
 #include "h/vmgr_constants.h"
 
+#include <google/protobuf/stubs/common.h>
+#include <memory>
 #include <sstream>
 #include <string>
 
@@ -58,16 +60,16 @@ static int exceptionThrowingMain(const int argc, char **const argv,
 //------------------------------------------------------------------------------
 int main(const int argc, char **const argv) {
   // Try to instantiate the logging system API
-  castor::log::Logger *logPtr = NULL;
+  std::auto_ptr<castor::log::SyslogLogger> logPtr;
   try {
-    logPtr = new castor::log::SyslogLogger("tapeserverd");
+    logPtr.reset(new castor::log::SyslogLogger("tapeserverd"));
   } catch(castor::exception::Exception &ex) {
     std::cerr <<
       "Failed to instantiate object representing CASTOR logging system: " <<
       ex.getMessage().str() << std::endl;
     return 1;
   }
-  castor::log::Logger &log = *logPtr;
+  castor::log::Logger &log = *logPtr.get();
 
   int programRc = 1; // Be pessimistic
   try {
@@ -83,6 +85,7 @@ int main(const int argc, char **const argv) {
     log(LOG_ERR, "Caught an unexpected and unknown exception");
   }
 
+  google::protobuf::ShutdownProtobufLibrary();
   return programRc;
 }
 
