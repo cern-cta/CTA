@@ -113,23 +113,6 @@ class D2DTransferType(object):
       raise ValueError('Invalid replication type %s' % strType)
 
 
-def getProcessStartTime(pid):
-  '''Little utility able to get the start time of a process
-  Note that this is linux specific code'''
-  timeasstr = subprocess.Popen(['ps', '-o', 'etime=', '-p', str(pid)],
-                               stdout=subprocess.PIPE).stdout.read().strip()
-  m = re.match('(?:(?:(\\d+)?-)?(\\d+):)?(\\d+):(\\d+)', timeasstr)
-  if m:
-    elapsed = int(m.group(3))*60+int(m.group(4))
-    if m.group(1):
-      elapsed += int(m.group(1))*86400
-    if m.group(2):
-      elapsed += int(m.group(2))*3600
-    return time.time() - elapsed
-  else:
-    raise ValueError('No such process')
-
-
 def cmdLineToTransfer(cmdLine, scheduler, pid):
   '''creates a RunningTransfer object from the command line that launched the transfer.
   Depending on the command, the appropriate type of transfer will be created inside the
