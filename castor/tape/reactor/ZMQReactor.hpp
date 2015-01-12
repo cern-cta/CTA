@@ -33,7 +33,7 @@ namespace tape {
 namespace reactor {
 
 /**
- * This reactor wraps the poll() system call.
+ * This reactor wraps the zmq_poll() function.
  *
  * This class is part of an implementation of the Reactor architecture pattern
  * described in the following book:
@@ -57,12 +57,12 @@ public:
   /**
    * Destructor.
    */
-  ~ZMQReactor() throw();
+  virtual ~ZMQReactor() throw();
 
   /**
    * Removes and deletes all of the event handlers registered with the reactor.
    */
-  void clear();
+  virtual void clear();
 
   /**
    * Registers the specified handler.
@@ -74,14 +74,14 @@ public:
    * MUST be allocated on the heap because the reactor will own the handler
    * and therefore delete it as needed.
    */
-  void registerHandler(ZMQPollEventHandler *const handler);
+  virtual void registerHandler(ZMQPollEventHandler *const handler);
 
   /**
    * Handles any pending events.
    *
    * @param timeout Timeout in milliseconds.
    */
-  void handleEvents(const int timeout);
+  virtual void handleEvents(const int timeout);
   
 private:
   

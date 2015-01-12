@@ -164,6 +164,7 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/daemon/TapeDaemonTest.cpp
   ../castor/tape/tapeserver/daemon/VdqmAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/VdqmConnectionHandler.cpp
+  ../castor/tape/tapeserver/daemon/VdqmConnectionHandlerTest.cpp
   ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp
   ../castor/tape/tapeserver/daemon/MigrationReportPackerTest.cpp
   ../castor/tape/tapeserver/daemon/RecallReportPackerTest.cpp

@@ -90,7 +90,7 @@ public:
    */
   ~VdqmConnectionHandler() throw();
 
-private:
+protected:
 
   /**
    * The file descriptor of the vdqm connection.

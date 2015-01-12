@@ -23,6 +23,7 @@ cmake_minimum_required (VERSION 2.6)
 # Rules to build the reactor code that is common to both rmcd and tapeserverd
 ################################################################################
 set (REACTOR_SRC_FILES
+  DummyZMQReactor.cpp
   PollEventHandler.cpp
   PollReactor.cpp
   PollReactorImpl.cpp
