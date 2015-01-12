@@ -120,6 +120,7 @@ TEST_F(castor_tape_tapeserver_daemon_VdqmConnectionHandlerTest, connectionIsFrom
     m_config);
 
   ASSERT_NO_THROW(handler.connectionIsFromTrustedVdqmHost());
+  ASSERT_FALSE(handler.connectionIsFromTrustedVdqmHost());
 }
 
 } // namespace unitTests
