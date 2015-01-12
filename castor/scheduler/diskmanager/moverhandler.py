@@ -147,10 +147,14 @@ class MoverReqHandlerThread(threading.Thread):
       cksumType = 'AD'
     # find transfer in runningTransfers, raise KeyError if not found
     t = self.runningTransfers.get(transferid)
-    if type(t.process) != subprocess.Popen:
-      # movers for which a process exists need to be kept, so that
-      # runningTransfers.poll() can clean them up. All others can be
-      # dropped from the list of running transfers at this time.
+    if type(t) == TapeTransfer:
+      # acknowledge that the transfer completed and return
+      self.runningTransfers.remove(t)
+      return 0
+    if t.process == None or t.process == 0:
+      # this transfer has no subprocess attached to it (case of xroot and d2d src transfers),
+      # so it can be dropped from the list of running transfers at this time.
+      # Others are kept so that runningTransfers.poll() 'bcan clean them up.
       self.runningTransfers.remove(t)
     # get the admin timeout
     timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
@@ -184,8 +188,8 @@ class MoverReqHandlerThread(threading.Thread):
                                               timeout=timeout)
           t.ended = True
           return 0
-        elif t.transfer.transferType == TransferType.D2DSRC or type(t) == TapeTransfer:
-          # nothing else to be done for sources and tape transfers
+        elif t.transfer.transferType == TransferType.D2DSRC:
+          # nothing else to be done for d2d sources
           return 0
         else:
           raise ValueError('Invalid transfer type %d for transfer %s' % (t.transfer.transferType, transferid))
