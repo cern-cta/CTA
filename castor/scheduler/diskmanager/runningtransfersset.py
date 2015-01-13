@@ -152,13 +152,21 @@ class RunningTransfersSet(object):
 
   def get(self, transferid):
     '''get a transfer by transferid. Raise KeyError if not found'''
-    for t in self.transfers:
-      if t.transfer.transferId == transferid:
-        return t
+    self.lock.acquire()
+    try:
+      for t in self.transfers:
+        if t.transfer.transferId == transferid:
+          return t
+    finally:
+      self.lock.release()
     # try a tape transfer
-    for t in self.tapeTransfers:
-      if t.transferId == transferid:
-        return t
+    self.tapelock.acquire()
+    try:
+      for t in self.tapeTransfers:
+        if t.transferId == transferid:
+          return t
+    finally:
+      self.tapelock.acquire()
     raise KeyError
 
   def setProcess(self, transferid, process):
