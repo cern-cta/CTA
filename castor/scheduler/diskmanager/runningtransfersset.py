@@ -166,7 +166,7 @@ class RunningTransfersSet(object):
         if t.transferId == transferid:
           return t
     finally:
-      self.tapelock.acquire()
+      self.tapelock.release()
     raise KeyError
 
   def setProcess(self, transferid, process):
