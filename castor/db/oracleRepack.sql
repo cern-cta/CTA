@@ -123,7 +123,6 @@ CREATE OR REPLACE PROCEDURE handleRepackRequest(inReqUUID IN VARCHAR2,
   varReqId INTEGER;
   cfId INTEGER;
   dcId INTEGER;
-  repackProtocol VARCHAR2(2048);
   nsHostName VARCHAR2(2048);
   lastKnownFileName VARCHAR2(2048);
   varRecallGroupId INTEGER;
@@ -142,8 +141,6 @@ BEGIN
   COMMIT;
   outNbFilesProcessed := 0;
   outNbFailures := 0;
-  -- Check which protocol should be used for writing files to disk
-  repackProtocol := getConfigOption('Repack', 'Protocol', 'rfio');
   -- creation time for the subrequests
   varCreationTime := getTime();
   -- name server host name
@@ -218,7 +215,7 @@ BEGIN
       -- create  subrequest for this file.
       -- Note that the svcHandler is not set. It will actually never be used as repacks are handled purely in PL/SQL
       INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, status, request, getNextStatus, reqType)
-      VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, varCreationTime, varCreationTime, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, dconst.SUBREQUEST_START, varReqId, 0, 119)
+      VALUES (0, lastKnownFileName, 'notNullNeeded', segment.segSize, 0, uuidGen(), 0, 0, varCreationTime, varCreationTime, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, dconst.SUBREQUEST_START, varReqId, 0, 119)
       RETURNING id, subReqId INTO varSubreqId, varSubreqUUID;
       -- if the file is being overwritten, fail
       SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
