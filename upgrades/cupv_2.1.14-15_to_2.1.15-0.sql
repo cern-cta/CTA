@@ -52,7 +52,7 @@ END;
 /
 
 INSERT INTO UpgradeLog (schemaVersion, release, type)
-VALUES ('2_1_9_3', '2_1_15_0', 'NON');
+VALUES ('2_1_9_3', '2_1_15_0', 'TRANSPARENT');
 COMMIT;
 
 
