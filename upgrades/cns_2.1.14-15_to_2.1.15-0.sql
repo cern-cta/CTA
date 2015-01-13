@@ -75,9 +75,9 @@ DROP PROCEDURE update2114Data;
 -- enforce constraint on stagerTime. NOVALIDATE makes the operation transparent.
 ALTER TABLE Cns_file_metadata MODIFY (stagerTime CONSTRAINT NN_File_stagerTime NOT NULL NOVALIDATE);
 
-
-/* PL/SQL code update */
-/* This procedure implements the Cns_closex API */
+/* This procedure implements the Cns_closex API.
+ * inCksumType can be either 'AD' or 'NO' for no checksum.
+ */
 CREATE OR REPLACE PROCEDURE closex(inFid IN INTEGER,
                                    inFileSize IN INTEGER,
                                    inCksumType IN VARCHAR2,
@@ -120,7 +120,7 @@ BEGIN
     RETURN;
   END IF;
   -- Validate checksum type
-  IF inCksumType != 'AD' THEN
+  IF inCksumType != 'AD' AND inCksumType != 'NO' THEN
     outRC := serrno.EINVAL;
     outMsg := serrno.EINVAL_MSG ||' : incorrect checksum type detected '|| inCksumType;
     ROLLBACK;
@@ -146,8 +146,8 @@ BEGIN
   -- All right, update file size and other metadata
   UPDATE Cns_file_metadata
      SET fileSize = inFileSize,
-         csumType = inCksumType,
-         csumValue = inCksumValue,
+         csumType = CASE WHEN inCksumType != 'NO' THEN inCksumType ELSE NULL END,
+         csumValue = CASE WHEN inCksumType != 'NO' THEN inCksumValue ELSE NULL END,
          ctime = inMTime,
          mtime = inMTime
    WHERE fileId = inFid;
@@ -162,7 +162,6 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   ROLLBACK;  -- this is a no-op, but it's needed to close the autonomous transaction and avoid ORA-06519 errors
 END;
 /
-
 
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
