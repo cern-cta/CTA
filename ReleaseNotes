@@ -26,6 +26,17 @@
     leading to better performances.
   - The code has been adapted to xroot 4.1
 
+  Notes
+  -----
+
+  - Similarly to release 2.1.12-*, 2.1.13-* and 2.1.14-* some test cases will still
+    fail in the testsuite, namely :
+       touch_updateFileAccess,
+       touch_updateFileModification
+    see details in the release notes of release 2.1.12-1
+    On top, the test noWritePermsParentDir will only pass if the user launching the
+    test suite is not an ns admin in the cupv database
+
   Stager
   ------
 
