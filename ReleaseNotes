@@ -138,6 +138,10 @@
     /etc/grid-security/castor-gridftp-dsi/castor-gridftp-dsi-cert.pem
     /etc/grid-security/castor-gridftp-dsi/castor-gridftp-dsi-key.pem
 
+  - Private xroot keys need to be install on the diskservers now, on top of the public one.
+    This is because diskservers now act also as xroot clients, in the scope of disk to disk copipes.
+    By default, this private key is stored in /opt/xrootd/keys/key.pem file
+
   - A number of new configuration parameters have been introduced with this release,
     and suitable default values have been provided. Nevertheless it is recommended to review
     the example configuration file in /etc/castor/castor.conf.example and adapt the configuration
@@ -190,8 +194,8 @@
        4. Apply the vdqm_2.1.14-15_to_2.1.15-0.sql database upgrade script to the VDQM DB from:
           http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-0/dbupgrades
 
-       5. Make sure the ownership of the log files is correctly set as described in the
-          Configuration changes section above.
+       5. Make sure the ownership of the log files and the permission on the containing directory
+          are correctly set as described in the Configuration changes section above.
 
        6. Update the software to use the 2.1.15-0 RPMs on the central nodes. All daemons will
           automatically restart.
@@ -239,24 +243,27 @@
 
           The ~stage directory should be located locally in the headnodes, not in a remote filesystem.
 
-       6. Make sure the ownership of the log files is correctly set as described in the
-          Configuration changes section above.
+       6. On the diskservers, install the xrootd private key on top of the public one. By default
+          this is stored in the /opt/xrootd/keys/key.pem file
 
-       7. Start all the daemons which were stopped in step 1.
+       7. Make sure the ownership of the log files and the permission on the containing directory
+          are correctly set as described in the Configuration changes section above.
+
+       8. Start all the daemons which were stopped in step 1.
 
           Note: If you have a concept of private and public request handlers
                 you should start only the private ones to test/validate the
                 installation without user interference.
 
-       8. Wait a few seconds to give time for the diskservers to send a heartbeat
+       9. Wait a few seconds to give time for the diskservers to send a heartbeat
           message to the transfermanager daemon.
 
-       9. Test the instance by running the test suite available from:
+      10. Test the instance by running the test suite available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-0/testsuite
 
-      10. Start the public request handlers (if applicable)
+      11. Start the public request handlers (if applicable)
 
-      11. Congratulations you have successfully upgraded to the 2.1.15-0 release
+      12. Congratulations you have successfully upgraded to the 2.1.15-0 release
           of CASTOR.
 
   Switch tape servers to xroot
