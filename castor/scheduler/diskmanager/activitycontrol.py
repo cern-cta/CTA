@@ -202,7 +202,7 @@ class ActivityControlThread(threading.Thread):
           except TransferCanceled, e:
             # for d2d sources remember to drop the transfer from the list of running ones
             if transfer.transferType == TransferType.D2DSRC:
-              self.runningTransfers.remove(self.runningTranfers.get(transfer.transferId))
+              self.runningTransfers.remove(self.runningTransfers.get(transfer.transferId))
             # 'Transfer start canceled' message
             dlf.writedebug(msgs.TRANSFERSTARTCANCELED, reason=e.args, subreqId=transfer.transferId, fileId=transfer.fileId)
             # the transfer has already started somewhere else, or has been canceled, so give up
