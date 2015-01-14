@@ -40,6 +40,7 @@
   Stager
   ------
 
+    CASTOR-4863: Closure of transfer protocol not working
     CASTOR-4849: Issues with aborting when the same file is mentioned more than once
     CASTOR-3454: draindiskserver -q -f broken
     CASTOR-3453: Fixed display of percentages where None is given
