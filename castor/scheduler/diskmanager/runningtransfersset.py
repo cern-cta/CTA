@@ -173,8 +173,11 @@ class RunningTransfersSet(object):
     '''set the process object to the existing running transfer'''
     self.lock.acquire()
     try:
-      t = self.get(transferid)
-      t.process = process
+      for t in self.transfers:
+        if t.transfer.transferId == transferid:
+          t.process = process
+          return
+      raise KeyError
     finally:
       self.lock.release()
 
