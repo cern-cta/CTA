@@ -787,7 +787,7 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Rebalancing', 'Sensitivity', '5', 'The rebalancing sensitivity (in percent) : if a fileSystem is at least this percentage fuller than the average of the diskpool where it lives, rebalancing will fire.');
 INSERT INTO CastorConfig
-  VALUES ('Stager', 'Protocols', 'rfio rfio3 root gsiftp xroot', 'The list of protocols accepted by the system.');
+  VALUES ('Stager', 'Protocols', 'rfio rfio3 gsiftp xroot', 'The list of protocols accepted by the system.');
 /* Create the AdminUsers table */
 CREATE TABLE AdminUsers (euid NUMBER, egid NUMBER);
 ALTER TABLE AdminUsers ADD CONSTRAINT UN_AdminUsers_euid_egid UNIQUE (euid, egid);
@@ -13336,7 +13336,7 @@ BEGIN
   -- do prechecks and get the service class
   svcClassId := insertPreChecks(euid, egid, svcClassName, inReqType);
   -- get the list of valid protocols
-  protocols := getConfigOption('Stager', 'Protocols', 'rfio|rfio3|gsiftp|xroot');
+  protocols := ' ' || getConfigOption('Stager', 'Protocols', 'rfio rfio3 gsiftp xroot') || ' ';
   -- get unique ids for the request and the client and get current time
   SELECT ids_seq.nextval INTO reqId FROM DUAL;
   SELECT ids_seq.nextval INTO clientId FROM DUAL;
@@ -13375,7 +13375,7 @@ BEGIN
   -- Loop on subrequests
   FOR i IN srFileNames.FIRST .. srFileNames.LAST LOOP
     -- check protocol validity
-    IF INSTR(protocols, srProtocols(i)) = 0 THEN
+    IF INSTR(protocols, ' ' || srProtocols(i) || ' ') = 0 THEN
       raise_application_error(-20122, 'Unsupported protocol in insertFileRequest : ' || srProtocols(i));
     END IF;
     -- get unique ids for the subrequest

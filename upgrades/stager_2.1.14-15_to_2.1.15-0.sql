@@ -1950,7 +1950,7 @@ BEGIN
   -- do prechecks and get the service class
   svcClassId := insertPreChecks(euid, egid, svcClassName, inReqType);
   -- get the list of valid protocols
-  protocols := getConfigOption('Stager', 'Protocols', 'rfio|rfio3|gsiftp|xroot');
+  protocols := ' ' || getConfigOption('Stager', 'Protocols', 'rfio rfio3 gsiftp xroot') || ' ';
   -- get unique ids for the request and the client and get current time
   SELECT ids_seq.nextval INTO reqId FROM DUAL;
   SELECT ids_seq.nextval INTO clientId FROM DUAL;
@@ -1989,7 +1989,7 @@ BEGIN
   -- Loop on subrequests
   FOR i IN srFileNames.FIRST .. srFileNames.LAST LOOP
     -- check protocol validity
-    IF INSTR(protocols, srProtocols(i)) = 0 THEN
+    IF INSTR(protocols, ' ' || srProtocols(i) || ' ') = 0 THEN
       raise_application_error(-20122, 'Unsupported protocol in insertFileRequest : ' || srProtocols(i));
     END IF;
     -- get unique ids for the subrequest
@@ -2012,51 +2012,6 @@ BEGIN
   END CASE;
 END;
 /
-
-/* inserts VersionQuery requests in the stager DB */ 	 
-CREATE OR REPLACE PROCEDURE insertVersionQueryRequest
-  (machine IN VARCHAR2,
-   euid IN INTEGER,
-   egid IN INTEGER,
-   pid IN INTEGER,
-   userName IN VARCHAR2,
-   svcClassName IN VARCHAR2,
-   reqUUID IN VARCHAR2,
-   reqType IN INTEGER,
-   clientIP IN INTEGER,
-   clientPort IN INTEGER,
-   clientVersion IN INTEGER,
-   clientSecure IN INTEGER) AS
-  svcClassId NUMBER;
-  reqId NUMBER;
-  queryParamId NUMBER;
-  clientId NUMBER;
-  creationTime NUMBER;
-BEGIN
-  -- do prechecks and get the service class
-  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
-  -- get unique ids for the request and the client and get current time
-  SELECT ids_seq.nextval INTO reqId FROM DUAL;
-  SELECT ids_seq.nextval INTO clientId FROM DUAL;
-  creationTime := getTime();
-  -- insert the request itself
-  CASE
-    WHEN reqType = 131 THEN -- VersionQuery
-      INSERT INTO VersionQuery (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
-      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
-    ELSE
-      raise_application_error(-20122, 'Unsupported request type in insertVersionQueryRequest : ' || TO_CHAR(reqType));
-  END CASE;
-  -- insert the client information
-  INSERT INTO Client (ipAddress, port, version, secure, id)
-  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert a row into newRequests table to trigger the processing of the request
-  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
-  -- send an alert to accelerate the processing of the request
-  alertSignalNoLock('wakeUpQueryReqSvc');
-END;
-/
-
 /* inserts StageFileQueryRequest requests in the stager DB */ 	 
 CREATE OR REPLACE PROCEDURE insertStageFileQueryRequest
   (machine IN VARCHAR2,
@@ -11798,20 +11753,11 @@ BEGIN
   IF inDoSchedule THEN
     RETURN 0; -- do not answer client, the diskserver will
   ELSE
-    -- Check whether it was the last subrequest in the request
-    DECLARE
-      varRemainingSR INTEGER;
-    BEGIN
-      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Request)*/ 1 INTO varRemainingSR
-        FROM SubRequest
-       WHERE request = varReqId
-         AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
-         AND answered = 0
-         AND ROWNUM < 2;
-      RETURN 1; -- answer but this is not the last one
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      RETURN 2; -- answer anf this is the last answer
-    END;
+    -- first lock the request. Note that we are always in a case of PrepareToPut as
+    -- we will answer the client.
+    SELECT id INTO varReqId FROM StagePrepareToPutRequest WHERE id = varReqId FOR UPDATE;
+    -- now do the check on whether we were the last subrequest
+    RETURN wasLastSubRequest(varReqId);
   END IF;
 END;
 /
@@ -12196,6 +12142,28 @@ BEGIN
 END;
 /
 
+/* PL/SQL method implementing wasLastSubRequest
+ * returns whether the given request still has ongoing subrequests
+ * output is 1 if not, 2 if yes
+ * WARNING : you need to hold a lock on the given request for this function
+ * to be safe.
+ */
+CREATE OR REPLACE FUNCTION wasLastSubRequest(inReqId IN INTEGER) RETURN INTEGER AS
+  -- Check whether it was the last subrequest in the request
+  varRemainingSR INTEGER;
+BEGIN
+  SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Request)*/ 1 INTO varRemainingSR
+    FROM SubRequest
+   WHERE request = inReqId
+     AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
+     AND answered = 0
+     AND ROWNUM < 2;
+  RETURN 1; -- answer but this is not the last one
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  RETURN 2; -- answer and this is the last answer
+END;
+/
+
 /* PL/SQL method implementing handlePrepareToGet
  * returns whether the client should be answered
  */
@@ -12208,15 +12176,17 @@ RETURN INTEGER AS
   varEgid NUMBER;
   varSvcClassId NUMBER;
   varReqUUID VARCHAR(2048);
+  varReqId INTEGER;
   varSrUUID VARCHAR(2048);
+  varIsAnswered INTEGER;
 BEGIN
   -- lock the castorFile to be safe in case of concurrent subrequests
   SELECT nsOpenTime INTO varNsOpenTime FROM CastorFile WHERE id = inCfId FOR UPDATE;
   -- retrieve the svcClass, user and log data for this subrequest
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
          Request.euid, Request.egid, Request.svcClass,
-         Request.reqId, SubRequest.subreqId
-    INTO varEuid, varEgid, varSvcClassId, varReqUUID, varSrUUID
+         Request.reqId, Request.id, SubRequest.subreqId, SubRequest.answered
+    INTO varEuid, varEgid, varSvcClassId, varReqUUID, varReqId, varSrUUID, varIsAnswered
     FROM (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
                  id, euid, egid, svcClass, reqId from StagePrepareToGetRequest) Request,
          SubRequest
@@ -12274,20 +12244,26 @@ BEGIN
               'SUBREQID=' || varSrUUID);
       -- update SubRequest
       archiveSubReq(inSrId, dconst.SUBREQUEST_FINISHED);
-      -- all went fine, we should answer to client
-      RETURN 1;
+      -- all went fine, answer to client if needed
+      IF varIsAnswered > 0 THEN
+         RETURN 0;
+      END IF;
+    ELSE
+      IF triggerD2dOrRecall(inCfId, varNsOpenTime, inSrId, inFileId, inNsHost, varEuid, varEgid,
+                            varSvcClassId, inFileSize, varReqUUID, varSrUUID) != 0 THEN
+        -- recall started, we are done, update subrequest and answer to client
+        UPDATE SubRequest SET status = dconst.SUBREQUEST_WAITTAPERECALL, answered=1 WHERE id = inSrId;
+      ELSE
+        -- could not start recall, SubRequest has been marked as FAILED, no need to answer
+        RETURN 0;
+      END IF;
     END IF;
+    -- first lock the request. Note that we are always in a case of PrepareToPut as
+    -- we will answer the client.
+    SELECT id INTO varReqId FROM StagePrepareToGetRequest WHERE id = varReqId FOR UPDATE;
+    -- now do the check on whether we were the last subrequest
+    RETURN wasLastSubRequest(varReqId);
   END;
-
-  IF triggerD2dOrRecall(inCfId, varNsOpenTime, inSrId, inFileId, inNsHost, varEuid, varEgid,
-                        varSvcClassId, inFileSize, varReqUUID, varSrUUID) != 0 THEN
-    -- recall started, we are done, update subrequest and answer to client
-    UPDATE SubRequest SET status = dconst.SUBREQUEST_WAITTAPERECALL WHERE id = inSrId;
-    RETURN 1;
-  ELSE
-    -- could not start recall, SubRequest has been marked as FAILED, no need to answer
-    RETURN 0;
-  END IF;
 END;
 /
 
