@@ -81,7 +81,7 @@ BEGIN
   -- do prechecks and get the service class
   svcClassId := insertPreChecks(euid, egid, svcClassName, inReqType);
   -- get the list of valid protocols
-  protocols := getConfigOption('Stager', 'Protocols', 'rfio|rfio3|gsiftp|xroot');
+  protocols := ' ' || getConfigOption('Stager', 'Protocols', 'rfio rfio3 gsiftp xroot') || ' ';
   -- get unique ids for the request and the client and get current time
   SELECT ids_seq.nextval INTO reqId FROM DUAL;
   SELECT ids_seq.nextval INTO clientId FROM DUAL;
@@ -120,7 +120,7 @@ BEGIN
   -- Loop on subrequests
   FOR i IN srFileNames.FIRST .. srFileNames.LAST LOOP
     -- check protocol validity
-    IF INSTR(protocols, srProtocols(i)) = 0 THEN
+    IF INSTR(protocols, ' ' || srProtocols(i) || ' ') = 0 THEN
       raise_application_error(-20122, 'Unsupported protocol in insertFileRequest : ' || srProtocols(i));
     END IF;
     -- get unique ids for the subrequest
