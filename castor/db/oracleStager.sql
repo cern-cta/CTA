@@ -3353,20 +3353,11 @@ BEGIN
   IF inDoSchedule THEN
     RETURN 0; -- do not answer client, the diskserver will
   ELSE
-    -- Check whether it was the last subrequest in the request
-    DECLARE
-      varRemainingSR INTEGER;
-    BEGIN
-      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Request)*/ 1 INTO varRemainingSR
-        FROM SubRequest
-       WHERE request = varReqId
-         AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
-         AND answered = 0
-         AND ROWNUM < 2;
-      RETURN 1; -- answer but this is not the last one
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      RETURN 2; -- answer anf this is the last answer
-    END;
+    -- first lock the request. Note that we are always in a case of PrepareToPut as
+    -- we will answer the client.
+    SELECT id INTO varReqId FROM StagePrepareToPutRequest WHERE id = varReqId FOR UPDATE;
+    -- now do the check on whether we were the last subrequest
+    RETURN wasLastSubRequest(varReqId);
   END IF;
 END;
 /
@@ -3751,6 +3742,28 @@ BEGIN
 END;
 /
 
+/* PL/SQL method implementing wasLastSubRequest
+ * returns whether the given request still has ongoing subrequests
+ * output is 1 if not, 2 if yes
+ * WARNING : you need to hold a lock on the given request for this function
+ * to be safe.
+ */
+CREATE OR REPLACE FUNCTION wasLastSubRequest(inReqId IN INTEGER) RETURN INTEGER AS
+  -- Check whether it was the last subrequest in the request
+  varRemainingSR INTEGER;
+BEGIN
+  SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Request)*/ 1 INTO varRemainingSR
+    FROM SubRequest
+   WHERE request = inReqId
+     AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
+     AND answered = 0
+     AND ROWNUM < 2;
+  RETURN 1; -- answer but this is not the last one
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  RETURN 2; -- answer and this is the last answer
+END;
+/
+
 /* PL/SQL method implementing handlePrepareToGet
  * returns whether the client should be answered
  */
@@ -3763,15 +3776,17 @@ RETURN INTEGER AS
   varEgid NUMBER;
   varSvcClassId NUMBER;
   varReqUUID VARCHAR(2048);
+  varReqId INTEGER;
   varSrUUID VARCHAR(2048);
+  varIsAnswered INTEGER;
 BEGIN
   -- lock the castorFile to be safe in case of concurrent subrequests
   SELECT nsOpenTime INTO varNsOpenTime FROM CastorFile WHERE id = inCfId FOR UPDATE;
   -- retrieve the svcClass, user and log data for this subrequest
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
          Request.euid, Request.egid, Request.svcClass,
-         Request.reqId, SubRequest.subreqId
-    INTO varEuid, varEgid, varSvcClassId, varReqUUID, varSrUUID
+         Request.reqId, Request.id, SubRequest.subreqId, SubRequest.answered
+    INTO varEuid, varEgid, varSvcClassId, varReqUUID, varReqId, varSrUUID, varIsAnswered
     FROM (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
                  id, euid, egid, svcClass, reqId from StagePrepareToGetRequest) Request,
          SubRequest
@@ -3829,20 +3844,26 @@ BEGIN
               'SUBREQID=' || varSrUUID);
       -- update SubRequest
       archiveSubReq(inSrId, dconst.SUBREQUEST_FINISHED);
-      -- all went fine, we should answer to client
-      RETURN 1;
+      -- all went fine, answer to client if needed
+      IF varIsAnswered > 0 THEN
+         RETURN 0;
+      END IF;
+    ELSE
+      IF triggerD2dOrRecall(inCfId, varNsOpenTime, inSrId, inFileId, inNsHost, varEuid, varEgid,
+                            varSvcClassId, inFileSize, varReqUUID, varSrUUID) != 0 THEN
+        -- recall started, we are done, update subrequest and answer to client
+        UPDATE SubRequest SET status = dconst.SUBREQUEST_WAITTAPERECALL, answered=1 WHERE id = inSrId;
+      ELSE
+        -- could not start recall, SubRequest has been marked as FAILED, no need to answer
+        RETURN 0;
+      END IF;
     END IF;
+    -- first lock the request. Note that we are always in a case of PrepareToPut as
+    -- we will answer the client.
+    SELECT id INTO varReqId FROM StagePrepareToGetRequest WHERE id = varReqId FOR UPDATE;
+    -- now do the check on whether we were the last subrequest
+    RETURN wasLastSubRequest(varReqId);
   END;
-
-  IF triggerD2dOrRecall(inCfId, varNsOpenTime, inSrId, inFileId, inNsHost, varEuid, varEgid,
-                        varSvcClassId, inFileSize, varReqUUID, varSrUUID) != 0 THEN
-    -- recall started, we are done, update subrequest and answer to client
-    UPDATE SubRequest SET status = dconst.SUBREQUEST_WAITTAPERECALL WHERE id = inSrId;
-    RETURN 1;
-  ELSE
-    -- could not start recall, SubRequest has been marked as FAILED, no need to answer
-    RETURN 0;
-  END IF;
 END;
 /
 
