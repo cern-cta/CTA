@@ -10,6 +10,12 @@ if not os.environ.has_key('LD_LIBRARY_PATH'):
 else:
     os.environ[pathVar] = os.environ['XROOTSYS'] + os.sep + 'lib' + os.pathsep + os.environ[pathVar]
 
+def rootbin(self):
+    if not os.environ.has_key('ROOTSYS'):
+        raise AssertionError("ROOTSYS environment variable is not defined nor given in test suite configuration")
+    return os.environ['ROOTSYS'] + os.sep + 'bin' + os.sep + 'root -b -l'
+Setup.getTag_rootbin = rootbin
+
 def xrootURL(self, nb=0):
     snb = ''
     if nb > 0: snb = str(nb)
