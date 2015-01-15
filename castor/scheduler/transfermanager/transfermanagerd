@@ -26,7 +26,7 @@
 
 """transfer manager daemon of CASTOR."""
 
-import sys, getopt, threading, socket, daemon, Queue
+import sys, getopt, socket, daemon, Queue
 import rpyc, rpyc.utils.server
 import castor_tools, connectionpool, dispatcher, serverqueue, aborter
 from commonexceptions import TransferCanceled, TransferFailed

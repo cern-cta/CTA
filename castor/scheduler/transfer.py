@@ -26,7 +26,7 @@
 '''small class defining a CASTOR transfer.
    BaseTransfer is the common abstract class while Transfer and D2dTransfer are the two real types'''
 
-import pwd, subprocess, re, time, os, stat
+import pwd, time, os, stat
 import castor_tools
 
 class TransferType(object):
