@@ -566,6 +566,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
     {
       std::list<log::Param> params;
       params.push_back(log::Param("unitName", m_config.getUnitName()));
+      params.push_back(log::Param("TPVID", session->getVid()));
       m_log(LOG_INFO, "Putting drive DOWN in vdqm because session succeeded"
         " and was in the WAITDOWN state", params);
     }
@@ -578,6 +579,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
     {
       std::list<log::Param> params;
       params.push_back(log::Param("unitName", m_config.getUnitName()));
+      params.push_back(log::Param("TPVID", session->getVid()));
       m_log(LOG_INFO, "Putting drive DOWN in vdqm because session succeeded"
         " and tape server is shutting down", params);
     }
@@ -590,6 +592,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
     {
       std::list<log::Param> params;
       params.push_back(log::Param("unitName", m_config.getUnitName()));
+      params.push_back(log::Param("TPVID", session->getVid()));
       m_log(LOG_INFO, "Putting drive DOWN in vdqm because cleaner succeeded"
         " and tape server is shutting down", params);
     }
@@ -672,6 +675,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
 
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", m_config.getUnitName()));
+  params.push_back(log::Param("TPVID", session->getVid()));
   m_log(LOG_INFO, "Putting drive DOWN in vdqm because running session failed "
     "and requested drive DOWN", params);
   m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
@@ -694,6 +698,7 @@ runningSessionKilled(uint32_t signal) {
     changeState(DRIVE_STATE_DOWN);
     std::list<log::Param> params;
     params.push_back(log::Param("unitName", m_config.getUnitName()));
+    params.push_back(log::Param("TPVID", session->getVid()));
     m_log(LOG_INFO, "Putting drive DOWN in vdqm because cleaner was killed",
       params);
     m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
@@ -784,6 +789,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
 
     std::list<log::Param> params;
     params.push_back(log::Param("unitName", m_config.getUnitName()));
+    params.push_back(log::Param("TPVID", session->getVid()));
     m_log(LOG_INFO, "Putting drive DOWN in vdqm because cleaner failed",
       params);
     m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
@@ -1021,6 +1027,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::killSession() {
   params.push_back(log::Param("unitName", m_config.getUnitName()));
   params.push_back(log::Param("sessionType", sessionTypeStr));
   params.push_back(log::Param("sessionPid", sessionPid));
+  params.push_back(log::Param("TPVID", m_session->getVid()));
 
   if(kill(sessionPid, SIGKILL)) {
     const std::string errorStr = castor::utils::errnoToString(errno);
