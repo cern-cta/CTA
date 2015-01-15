@@ -205,7 +205,7 @@ public:
    * Informs catalogue drive that the current tape session completed in a failed
    * state (tape not unloaded, usually) and the drive should be marked as down.
    */
-  void sessionFailed();
+  void sessionFailedAndRequestedDriveDown();
   
   /**
    * Informs catalogue drive that the current tape session was killed (either 
@@ -217,7 +217,7 @@ public:
    * Informs catalogue drive that the current tape session has failed and that
    * it has requested a CleanerSession.
    */
-  void sessionFailedAndRequestsCleaner();
+  void sessionFailedAndRequestedCleaner();
 
   /**
    * Gets the tpstat representation of the tape drive.
@@ -511,9 +511,10 @@ private:
 
   /**
    * Called when a running session (DRIVE_STATE_RUNNING or DRIVE_STATE_WAITDOWN)
-   * has competed with an error return value.
+   * has competed with an error return value and the drive should be marked as
+   * down.
    */
-  void runningSessionFailed();
+  void runningSessionFailedAndRequestedDriveDown();
   
   /**
    * Called when a running session (DRIVE_STATE_RUNNING or DRIVE_STATE_WAITDOWN)

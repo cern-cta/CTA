@@ -235,9 +235,9 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     case Session::MARK_DRIVE_AS_UP:
       return drive.sessionSucceeded();
     case Session::MARK_DRIVE_AS_DOWN:
-      return drive.sessionFailed();
+      return drive.sessionFailedAndRequestedDriveDown();
     case Session::CLEAN_DRIVE:
-      return drive.sessionFailedAndRequestsCleaner();
+      return drive.sessionFailedAndRequestedCleaner();
     default:
       // Should never happen
       {
