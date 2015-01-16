@@ -253,8 +253,9 @@ END;
 CREATE OR REPLACE PROCEDURE checkNbReplicas AS
   varSvcClassId INTEGER;
   varCfId INTEGER;
-  varReplicaNb NUMBER;
+  varMaxReplicaNb NUMBER;
   varNbFiles NUMBER;
+  varDidSth BOOLEAN;
 BEGIN
   -- Loop over the CastorFiles to be processed
   LOOP
@@ -266,41 +267,36 @@ BEGIN
       -- we can exit, we went though all files to be processed
       EXIT;
     END IF;
-    -- Lock the castorfile
-    SELECT id INTO varCfId FROM CastorFile
-     WHERE id = varCfId FOR UPDATE;
+    BEGIN
+      -- Lock the castorfile
+      SELECT id INTO varCfId FROM CastorFile
+       WHERE id = varCfId FOR UPDATE;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- the file was dropped meanwhile, ignore and continue
+      CONTINUE;
+    END;
     -- Get the max replica number of the service class
-    SELECT replicaNb INTO varReplicaNb
+    SELECT maxReplicaNb INTO varMaxReplicaNb
       FROM SvcClass WHERE id = varSvcClassId;
     -- Produce a list of diskcopies to invalidate should too many replicas be online.
+    varDidSth := False;
     FOR b IN (SELECT id FROM (
                 SELECT rownum ind, id FROM (
-                  SELECT * FROM (
-                    SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_Castorfile) */
-                           FileSystem.status AS FsStatus, DiskServer.status AS DsStatus,
-                           DiskCopy.gcWeight, DiskCopy.id
-                      FROM DiskCopy, FileSystem, DiskPool2SvcClass,
-                           DiskServer
-                     WHERE DiskCopy.filesystem = FileSystem.id
-                       AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                       AND FileSystem.diskserver = DiskServer.id
-                       AND DiskPool2SvcClass.child = varSvcClassId
-                       AND DiskCopy.castorfile = varCfId
-                       AND DiskCopy.status = dconst.DISKCOPY_VALID
-                     UNION ALL
-                    SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_Castorfile) */
-                           0 AS FsStatus,
-                           (SELECT MIN(status) FROM DiskServer
-                             WHERE dataPool = DiskCopy.dataPool) AS DsStatus,
-                           DiskCopy.gcWeight, DiskCopy.id
-                      FROM DiskCopy, DataPool2SvcClass
-                     WHERE DiskCopy.dataPool = DataPool2SvcClass.parent
-                       AND DataPool2SvcClass.child = varSvcClassId
-                       AND DiskCopy.castorfile = varCfId
-                       AND DiskCopy.status = dconst.DISKCOPY_VALID)
+                  SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_Castorfile) */ DiskCopy.id
+                    FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass,
+                         DiskServer
+                   WHERE DiskCopy.filesystem = FileSystem.id
+                     AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                     AND FileSystem.diskserver = DiskServer.id
+                     AND DiskPool2SvcClass.child = SvcClass.id
+                     AND DiskCopy.castorfile = varCfId
+                     AND DiskCopy.status = dconst.DISKCOPY_VALID
+                     AND SvcClass.id = varSvcClassId
                    -- Select non-PRODUCTION hardware first
-                   ORDER BY decode(fsStatus, 0, decode(dsStatus, 0, 0, 1), 1) ASC, gcWeight DESC))
-               WHERE ind > varReplicaNb)
+                   ORDER BY decode(FileSystem.status, 0,
+                            decode(DiskServer.status, 0, 0, 1), 1) ASC,
+                            DiskCopy.gcWeight DESC))
+               WHERE ind > varMaxReplicaNb)
     LOOP
       -- Sanity check, make sure that the last copy is never dropped!
       SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ count(*) INTO varNbFiles
@@ -320,14 +316,16 @@ BEGIN
          SET status = dconst.DISKCOPY_INVALID,
              gcType = dconst.GCTYPE_TOOMANYREPLICAS
        WHERE id = b.id;
+      varDidSth := True;
       -- update importance of remaining diskcopies
       UPDATE DiskCopy SET importance = importance + 1
        WHERE castorFile = varCfId
          AND status = dconst.DISKCOPY_VALID;
     END LOOP;
-  -- either commit the deletions or release the lock on castorFile
-  COMMIT;
+    IF varDidSth THEN COMMIT; END IF;
   END LOOP;
+  -- commit the deletions in case no modification was done that commited them before
+  COMMIT;
 END;
 /
 
