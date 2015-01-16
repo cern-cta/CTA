@@ -253,7 +253,7 @@ END;
 CREATE OR REPLACE PROCEDURE checkNbReplicas AS
   varSvcClassId INTEGER;
   varCfId INTEGER;
-  varMaxReplicaNb NUMBER;
+  varReplicaNb NUMBER;
   varNbFiles NUMBER;
   varDidSth BOOLEAN;
 BEGIN
@@ -276,7 +276,7 @@ BEGIN
       CONTINUE;
     END;
     -- Get the max replica number of the service class
-    SELECT maxReplicaNb INTO varMaxReplicaNb
+    SELECT replicaNb INTO varReplicaNb
       FROM SvcClass WHERE id = varSvcClassId;
     -- Produce a list of diskcopies to invalidate should too many replicas be online.
     varDidSth := False;
@@ -296,7 +296,7 @@ BEGIN
                    ORDER BY decode(FileSystem.status, 0,
                             decode(DiskServer.status, 0, 0, 1), 1) ASC,
                             DiskCopy.gcWeight DESC))
-               WHERE ind > varMaxReplicaNb)
+               WHERE ind > varReplicaNb)
     LOOP
       -- Sanity check, make sure that the last copy is never dropped!
       SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ count(*) INTO varNbFiles
