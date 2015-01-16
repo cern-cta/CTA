@@ -266,9 +266,14 @@ BEGIN
       -- we can exit, we went though all files to be processed
       EXIT;
     END IF;
-    -- Lock the castorfile
-    SELECT id INTO varCfId FROM CastorFile
-     WHERE id = varCfId FOR UPDATE;
+    BEGIN
+      -- Lock the castorfile
+      SELECT id INTO varCfId FROM CastorFile
+       WHERE id = varCfId FOR UPDATE;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- the file was dropped meanwhile, ignore and continue
+      CONTINUE;
+    END;
     -- Get the max replica number of the service class
     SELECT maxReplicaNb INTO varMaxReplicaNb
       FROM SvcClass WHERE id = varSvcClassId;
