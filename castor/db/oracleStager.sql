@@ -2470,8 +2470,9 @@ END;
 CREATE OR REPLACE PROCEDURE createMJForMissingSegments(inCfId IN INTEGER,
                                                        inFileSize IN INTEGER,
                                                        inFileClassId IN INTEGER,
-                                                       inAllCopyNbs IN "numList",
-                                                       inAllVIDs IN strListTable,
+                                                       inAllValidCopyNbs IN "numList",
+                                                       inAllValidVIDs IN strListTable,
+                                                       inNbExistingSegments IN INTEGER,
                                                        inFileId IN INTEGER,
                                                        inNsHost IN VARCHAR2,
                                                        inLogParams IN VARCHAR2) AS
@@ -2482,7 +2483,7 @@ CREATE OR REPLACE PROCEDURE createMJForMissingSegments(inCfId IN INTEGER,
 BEGIN
   -- check whether there are missing segments and whether we should create new ones
   SELECT nbCopies INTO varExpectedNbCopies FROM FileClass WHERE id = inFileClassId;
-  IF varExpectedNbCopies > inAllCopyNbs.COUNT THEN
+  IF varExpectedNbCopies > inNbExistingSegments THEN
     -- some copies are missing
     DECLARE
       unused INTEGER;
@@ -2494,7 +2495,7 @@ BEGIN
       -- another recall group.
       -- log "detected missing copies on tape, but migrations ongoing"
       logToDLF(NULL, dlf.LVL_DEBUG, dlf.RECALL_MISSING_COPIES_NOOP, inFileId, inNsHost, 'stagerd',
-               inLogParams || ' nbMissingCopies=' || TO_CHAR(varExpectedNbCopies-inAllCopyNbs.COUNT));
+               inLogParams || ' nbMissingCopies=' || TO_CHAR(varExpectedNbCopies-inNbExistingSegments));
       RETURN;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- we need to remigrate this file
@@ -2502,12 +2503,12 @@ BEGIN
     END;
     -- log "detected missing copies on tape"
     logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_MISSING_COPIES, inFileId, inNsHost, 'stagerd',
-             inLogParams || ' nbMissingCopies=' || TO_CHAR(varExpectedNbCopies-inAllCopyNbs.COUNT));
+             inLogParams || ' nbMissingCopies=' || TO_CHAR(varExpectedNbCopies-inNbExistingSegments));
     -- copies are missing, try to recreate them
-    WHILE varExpectedNbCopies > inAllCopyNbs.COUNT + varCreatedMJs AND varNextCopyNb <= varExpectedNbCopies LOOP
+    WHILE varExpectedNbCopies > inNbExistingSegments + varCreatedMJs AND varNextCopyNb <= varExpectedNbCopies LOOP
       BEGIN
         -- check whether varNextCopyNb is already in use by a valid copy
-        SELECT * INTO varNb FROM TABLE(inAllCopyNbs) WHERE COLUMN_VALUE=varNextCopyNb;
+        SELECT * INTO varNb FROM TABLE(inAllValidCopyNbs) WHERE COLUMN_VALUE=varNextCopyNb;
         -- this copy number is in use, go to next one
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- copy number is not in use, create a migrationJob using it (may throw exceptions)
@@ -2520,19 +2521,19 @@ BEGIN
       varNextCopyNb := varNextCopyNb + 1;
     END LOOP;
     -- Did we create new copies ?
-    IF varExpectedNbCopies > inAllCopyNbs.COUNT + varCreatedMJs THEN
+    IF varExpectedNbCopies > inNbExistingSegments + varCreatedMJs THEN
       -- We did not create enough new copies, this means that we did not find enough
       -- valid copy numbers. Odd... Log something !
       logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_COPY_STILL_MISSING, inFileId, inNsHost, 'stagerd',
                inLogParams || ' nbCopiesStillMissing=' ||
-               TO_CHAR(varExpectedNbCopies - inAllCopyNbs.COUNT - varCreatedMJs));
+               TO_CHAR(varExpectedNbCopies - inAllValidCopyNbs.COUNT - varCreatedMJs));
     ELSE
       -- Yes, then create migrated segments for the existing segments if there are none
       SELECT count(*) INTO varNb FROM MigratedSegment WHERE castorFile = inCfId;
       IF varNb = 0 THEN
-        FOR i IN inAllCopyNbs.FIRST .. inAllCopyNbs.LAST LOOP
+        FOR i IN inAllValidCopyNbs.FIRST .. inAllValidCopyNbs.LAST LOOP
           INSERT INTO MigratedSegment (castorFile, copyNb, VID)
-          VALUES (inCfId, inAllCopyNbs(i), inAllVIDs(i));
+          VALUES (inCfId, inAllValidCopyNbs(i), inAllValidVIDs(i));
         END LOOP;
       END IF;
     END IF;
@@ -2556,8 +2557,9 @@ CREATE OR REPLACE FUNCTION createRecallJobs(inCfId IN INTEGER,
                                             inRequestTime IN NUMBER,
                                             inLogParams IN VARCHAR2) RETURN INTEGER AS
   -- list of all valid segments, whatever the tape status. Used to trigger remigrations
-  varAllCopyNbs "numList" := "numList"();
-  varAllVIDs strListTable := strListTable();
+  varAllValidCopyNbs "numList" := "numList"();
+  varAllValidVIDs strListTable := strListTable();
+  varNbExistingSegments INTEGER := 0;
   -- whether we found a segment at all (valid or not). Used to detect potentially lost files
   varFoundSeg boolean := FALSE;
   varI INTEGER := 1;
@@ -2582,10 +2584,10 @@ BEGIN
            BITAND(varSeg.tapeStatus, tconst.TAPE_EXPORTED) = 0 AND
            BITAND(varSeg.tapeStatus, tconst.TAPE_ARCHIVED) = 0 THEN
           -- remember the copy number and tape
-          varAllCopyNbs.EXTEND;
-          varAllCopyNbs(varI) := varSeg.copyno;
-          varAllVIDs.EXTEND;
-          varAllVIDs(varI) := varSeg.vid;
+          varAllValidCopyNbs.EXTEND;
+          varAllValidCopyNbs(varI) := varSeg.copyno;
+          varAllValidVIDs.EXTEND;
+          varAllValidVIDs(varI) := varSeg.vid;
           varI := varI + 1;
           -- create recallJob
           INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
@@ -2593,15 +2595,29 @@ BEGIN
           VALUES (ids_seq.nextval, inCfId, varSeg.copyno, inRecallGroupId, inSvcClassId,
                   inEuid, inEgid, varSeg.vid, varSeg.fseq, tconst.RECALLJOB_PENDING, inFileSize, inRequestTime,
                   varSeg.blockId, NULL);
+          varNbExistingSegments := varNbExistingSegments + 1;
           -- log "created new RecallJob"
           logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
                    inLogParams || ' copyNb=' || TO_CHAR(varSeg.copyno) || ' TPVID=' || varSeg.vid ||
                    ' fseq=' || TO_CHAR(varSeg.fseq || ' FileSize=' || TO_CHAR(inFileSize)));
         ELSE
-          -- invalid tape found. Log it.
-          -- "createRecallCandidate: found segment on unusable tape"
-          logToDLF(NULL, dlf.LVL_DEBUG, dlf.RECALL_UNUSABLE_TAPE, inFileId, inNsHost, 'stagerd',
-                   inLogParams || ' segStatus=OK tapeStatus=' || tapeStatusToString(varSeg.tapeStatus));
+          -- Should the segment be counted in the count of existing segments ?
+          -- In other terms, should we recreate a segment for replacing this one ?
+          -- Yes if the segment in on an EXPORTED tape.
+          IF BITAND(varSeg.tapeStatus, tconst.TAPE_EXPORTED) = 0 THEN
+            -- invalid tape found with segments that are counting for the total count.
+            -- "createRecallCandidate: found segment on unusable tape"
+            logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_UNUSABLE_TAPE, inFileId, inNsHost, 'stagerd',
+                     inLogParams || ' segStatus=OK tapeStatus=' || tapeStatusToString(varSeg.tapeStatus) ||
+                     ' recreatingSegment=No');
+            varNbExistingSegments := varNbExistingSegments + 1;
+          ELSE
+            -- invalid tape found with segments that will be completely ignored.
+            -- "createRecallCandidate: found segment on unusable tape"
+            logToDLF(NULL, dlf.LVL_DEBUG, dlf.RECALL_UNUSABLE_TAPE, inFileId, inNsHost, 'stagerd',
+                     inLogParams || ' segStatus=OK tapeStatus=' || tapeStatusToString(varSeg.tapeStatus) ||
+                     ' recreatingSegment=Yes');
+          END IF;
         END IF;
       ELSE
         -- invalid segment tape found. Log it.
@@ -2626,15 +2642,15 @@ BEGIN
     RETURN serrno.ESTNOSEGFOUND;
   END IF;
   -- If we found no valid segment (but some disabled ones), log a warning
-  IF varAllCopyNbs.COUNT = 0 THEN
+  IF varAllValidCopyNbs.COUNT = 0 THEN
     -- log "createRecallCandidate: no valid segment to recall found"
     logToDLF(NULL, dlf.LVL_WARNING, dlf.RECALL_NO_SEG_FOUND, inFileId, inNsHost, 'stagerd', inLogParams);
     RETURN serrno.ESTNOSEGFOUND;
   END IF;
   BEGIN
     -- create missing segments if needed
-    createMJForMissingSegments(inCfId, inFileSize, inFileClassId, varAllCopyNbs,
-                               varAllVIDs, inFileId, inNsHost, inLogParams);
+    createMJForMissingSegments(inCfId, inFileSize, inFileClassId, varAllValidCopyNbs,
+                               varAllValidVIDs, varNbExistingSegments, inFileId, inNsHost, inLogParams);
   EXCEPTION WHEN NO_TAPE_ROUTE THEN
     -- there's at least a missing segment and we cannot recreate it!
     -- log a "no route to tape defined for missing copy" error, but don't fail the recall

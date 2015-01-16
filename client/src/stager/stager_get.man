@@ -39,6 +39,12 @@ pre-stages a list of CASTOR HSM files from tape to disk. The command
 only supports asychronous stage-in operation meaning that it returns immediately
 after the stager has stored and acknowledged the request. The command does not wait for the
 files to be staged in and it is supposed to be used in conjunction with the
+
+Note that this command will also trigger the remigration/repair of missing segments for the involved
+files be repacked. A typical case is when the second copy of a two copies file has been lost and
+stager_get recalls the first copy. Also note that segments on EXPORTED tapes will be considered as
+lost and thus remigrated/repaired. This is different behavior repack for which they will not be.
+
 .B stager_qry(1castor)
 command to check the progress of the request.
 
@@ -99,6 +105,7 @@ failed.
 .SH SEE ALSO
 .BR stager_qry(1castor) ,
 .BR stager_update(1castor)
+.BR repack(1castor)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

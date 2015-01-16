@@ -445,12 +445,12 @@ CREATE OR REPLACE PROCEDURE triggerRepackRecall
 (inCfId IN INTEGER, inFileId IN INTEGER, inNsHost IN VARCHAR2, inBlock IN RAW,
  inFseq IN INTEGER, inCopynb IN INTEGER, inEuid IN INTEGER, inEgid IN INTEGER,
  inRecallGroupId IN INTEGER, inSvcClassId IN INTEGER, inVid IN VARCHAR2, inFileSize IN INTEGER,
- inFileClass IN INTEGER, inAllSegments IN VARCHAR2, inReqUUID IN VARCHAR2,
+ inFileClass IN INTEGER, inAllValidSegments IN VARCHAR2, inReqUUID IN VARCHAR2,
  inSubReqUUID IN VARCHAR2, inRecallGroupName IN VARCHAR2) AS
   varLogParam VARCHAR2(2048);
-  varAllCopyNbs "numList" := "numList"();
-  varAllVIDs strListTable := strListTable();
-  varAllSegments strListTable;
+  varAllValidCopyNbs "numList" := "numList"();
+  varAllValidVIDs strListTable := strListTable();
+  varAllValidSegments strListTable;
   varFileClassId INTEGER;
 BEGIN
   -- create recallJob for the given VID, copyNb, etc.
@@ -465,18 +465,22 @@ BEGIN
            varLogParam || ' fileClass=' || TO_CHAR(inFileClass) || ' copyNb=' || TO_CHAR(inCopynb)
            || ' TPVID=' || inVid || ' fseq=' || TO_CHAR(inFseq) || ' FileSize=' || TO_CHAR(inFileSize));
   -- create missing segments if needed
-  SELECT * BULK COLLECT INTO varAllSegments
-    FROM TABLE(strTokenizer(inAllSegments));
-  FOR i IN 1 .. varAllSegments.COUNT/2 LOOP
-    varAllCopyNbs.EXTEND;
-    varAllCopyNbs(i) := TO_NUMBER(varAllSegments(2*i-1));
-    varAllVIDs.EXTEND;
-    varAllVIDs(i) := varAllSegments(2*i);
+  SELECT * BULK COLLECT INTO varAllValidSegments
+    FROM TABLE(strTokenizer(inAllValidSegments));
+  FOR i IN 1 .. varAllValidSegments.COUNT/2 LOOP
+    varAllValidCopyNbs.EXTEND;
+    varAllValidCopyNbs(i) := TO_NUMBER(varAllValidSegments(2*i-1));
+    varAllValidVIDs.EXTEND;
+    varAllValidVIDs(i) := varAllValidSegments(2*i);
   END LOOP;
   SELECT id INTO varFileClassId
     FROM FileClass WHERE classId = inFileClass;
-  createMJForMissingSegments(inCfId, inFileSize, varFileClassId, varAllCopyNbs,
-                             varAllVIDs, inFileId, inNsHost, varLogParam);
+  -- Note that the number given here for the number of existing segments is the total number of
+  -- segment, without removing the ones on  EXPORTED tapes. This means that repack will not
+  -- recreate new segments for files that have some copies on EXPORTED tapes.
+  -- This is different from standard recalls that would recreate segments on EXPORTED tapes.
+  createMJForMissingSegments(inCfId, inFileSize, varFileClassId, varAllValidCopyNbs,
+                             varAllValidVIDs, varAllValidCopyNbs.COUNT, inFileId, inNsHost, varLogParam);
 END;
 /
 
