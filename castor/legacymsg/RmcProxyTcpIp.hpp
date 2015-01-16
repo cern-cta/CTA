@@ -114,7 +114,7 @@ protected:
   /**
    * The maximum number of attempts a retriable RMC request should be issued.
    */
-  static const int RMC_MAXATTEMPTS = 3;
+  static const int RMC_MAXATTEMPTS = 10;
 
   /**
    * The TCP/IP port on which the rmcd daemon is listening.
