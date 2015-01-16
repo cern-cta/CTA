@@ -61,6 +61,12 @@ status may be repacked.
 When the repack process has been successfully completed (FINISHED status), the volume can be
 reclaimed using the reclaim command.
 
+Note that repack will also trigger the remigration/repair of missing segments for the files that will
+be repacked. A typical case is when the second copy of a two copies file has been lost and
+the tape containing the first copy is repacked.
+However, segments on EXPORTED tapes will not be considered as lost. This is different behavior
+from standard recalls triggered e.g. by stager_get for which they will be.
+
 .SH OPTIONS
 
 .TP
@@ -209,6 +215,9 @@ Output restricted to 2 errors. There are more errors for this tape
 .SH NOTES
 This command requires database client access to the stager catalogue.
 Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR stager_get(1castor) ,
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch
