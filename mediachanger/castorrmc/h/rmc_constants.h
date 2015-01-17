@@ -24,6 +24,8 @@
 
 #define RMC_PORT 5014
 
+#define RMC_MAXRQSTATTEMPTS 10 /* Maximum number of attempts a retriable RMC request should be issued */
+
 			/* SCSI media changer utilities exit codes */
 
 #define	USERR	  1	/* user error */
