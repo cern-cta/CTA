@@ -51,6 +51,10 @@ operations.
 The host on which the rmcd daemon is running.
 
 .TP
+\fBRMC MAXRQSTATTEMPTS
+Maximum number of attempts a retriable RMC request should be issued.
+
+.TP
 \fBTapeServer AdminPort
 The TCP/IP port on which the tape server daemon listens for incoming
 connections from the tpconfig admin command.
