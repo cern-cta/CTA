@@ -68,6 +68,11 @@ struct TapeDaemonConfig {
   unsigned short rmcPort;
 
   /**
+   * The maximum number of attempts a retriable RMC request should be issued.
+   */
+  unsigned int rmcMaxRqstAttempts;
+
+  /**
    * The TCP/IP port on which the tape server daemon listens for incoming
    * connections from the VDQM server.
    */

@@ -31,10 +31,13 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::legacymsg::RmcProxyTcpIp::RmcProxyTcpIp(const unsigned short rmcPort,
-  const int netTimeout) throw():
+castor::legacymsg::RmcProxyTcpIp::RmcProxyTcpIp(
+  const unsigned short rmcPort,
+  const int netTimeout,
+  const unsigned int maxRqstAttempts) throw():
   m_rmcPort(rmcPort),
-  m_netTimeout(netTimeout) {
+  m_netTimeout(netTimeout),
+  m_maxRqstAttempts(maxRqstAttempts) {
 } 
 
 //------------------------------------------------------------------------------
@@ -64,7 +67,7 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeReadWrite(
     castor::utils::copyString(rqstBody.vid, vid);
     rqstBody.drvOrd = librarySlot.getDrvOrd();
 
-    rmcSendRecvNbAttempts(RMC_MAXATTEMPTS, librarySlot.getRmcHostName(),
+    rmcSendRecvNbAttempts(m_maxRqstAttempts, librarySlot.getRmcHostName(),
       rqstBody);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -89,7 +92,7 @@ void castor::legacymsg::RmcProxyTcpIp::dismountTape(const std::string &vid,
     rqstBody.drvOrd = librarySlot.getDrvOrd();
     rqstBody.force = 0;
 
-    rmcSendRecvNbAttempts(RMC_MAXATTEMPTS, librarySlot.getRmcHostName(),
+    rmcSendRecvNbAttempts(m_maxRqstAttempts, librarySlot.getRmcHostName(),
       rqstBody);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;

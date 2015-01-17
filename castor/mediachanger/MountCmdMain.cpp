@@ -98,11 +98,14 @@ static int exceptionThrowingMain(const int argc, char *const *const argv) {
   const unsigned short rmcPort = castorConf.getConfEntInt("RMC", "PORT",
     (unsigned short)RMC_PORT);
 
+  const unsigned int rmcMaxRqstAttempts = castorConf.getConfEntInt("RMC",
+    "MAXRQSTATTEMPTS", (unsigned int)RMC_MAXRQSTATTEMPTS);
+
   // The network timeout of rmc communications should be several minutes due
   // to the time it takes to mount and unmount tapes
   const int rmcNetTimeout = 600; // Timeout in seconds
 
-  legacymsg::RmcProxyTcpIp rmc(rmcPort, rmcNetTimeout);
+  legacymsg::RmcProxyTcpIp rmc(rmcPort, rmcNetTimeout, rmcMaxRqstAttempts);
 
   mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   

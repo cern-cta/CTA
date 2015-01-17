@@ -49,8 +49,13 @@ public:
    * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
+   * @parm maxRqstAttempts The maximum number of attempts a retriable RMC
+   * request should be issued.
    */
-  RmcProxyTcpIp(const unsigned short rmcPort, const int netTimeout) throw();
+  RmcProxyTcpIp(
+    const unsigned short rmcPort,
+    const int netTimeout,
+    const unsigned int maxRqstAttempts) throw();
 
   /**
    * Destructor.
@@ -112,11 +117,6 @@ protected:
   static const int RMC_MSGBUFSIZ = 256;
 
   /**
-   * The maximum number of attempts a retriable RMC request should be issued.
-   */
-  static const int RMC_MAXATTEMPTS = 10;
-
-  /**
    * The TCP/IP port on which the rmcd daemon is listening.
    */
   const unsigned short m_rmcPort;
@@ -126,6 +126,11 @@ protected:
    * write operations.
    */
   const int m_netTimeout;
+
+  /**
+   * The maximum number of attempts a retriable RMC request should be issued.
+   */
+  const unsigned int m_maxRqstAttempts;
 
   /**
    * Connects to the rmcd daemon.

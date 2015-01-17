@@ -480,7 +480,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     // The network timeout of rmc communications should be several minutes due
     // to the time it takes to mount and unmount tapes
     const int rmcNetTimeout = 600; // Timeout in seconds
-    legacymsg::RmcProxyTcpIp rmc(m_config.rmcPort, rmcNetTimeout);
+
+    legacymsg::RmcProxyTcpIp rmc(m_config.rmcPort, rmcNetTimeout,
+      m_config.rmcMaxRqstAttempts);
 
     mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
 
@@ -534,7 +536,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // The network timeout of rmc communications should be several minutes due
   // to the time it takes to mount and unmount tapes
   const int rmcNetTimeout = 600; // Timeout in seconds
-  legacymsg::RmcProxyTcpIp rmc(m_config.rmcPort, rmcNetTimeout);
+
+  legacymsg::RmcProxyTcpIp rmc(m_config.rmcPort, rmcNetTimeout,
+    m_config.rmcMaxRqstAttempts);
 
   mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
 
@@ -857,7 +861,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     // The network timeout of rmc communications should be several minutes due
     // to the time it takes to mount and unmount tapes
     const int rmcNetTimeout = 600; // Timeout in seconds
-    legacymsg::RmcProxyTcpIp rmc(m_config.rmcPort, rmcNetTimeout);
+
+    legacymsg::RmcProxyTcpIp rmc(m_config.rmcPort, rmcNetTimeout,
+      m_config.rmcMaxRqstAttempts);
 
     mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
 

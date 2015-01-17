@@ -31,6 +31,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeDaemonConfig::TapeDaemonConfig():
   rmcPort(0),
+  rmcMaxRqstAttempts(0),
   jobPort(0),
   adminPort(0),
   labelPort(0),
@@ -54,6 +55,8 @@ castor::tape::tapeserver::daemon::TapeDaemonConfig
   config.vmgrHost = castorConf.getConfEntString("VMGR", "HOST", log);
   config.rmcPort = castorConf.getConfEntInt("RMC", "PORT",
     (unsigned short)RMC_PORT, log);
+  config.rmcMaxRqstAttempts = castorConf.getConfEntInt("RMC",
+    "MAXRQSTATTEMPTS", (unsigned int)RMC_MAXRQSTATTEMPTS, log);
   config.jobPort = castorConf.getConfEntInt("TapeServer", "JobPort",
     TAPESERVER_JOB_PORT, log);
   config.adminPort = castorConf.getConfEntInt("TapeServer", "AdminPort",
