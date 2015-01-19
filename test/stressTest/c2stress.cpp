@@ -71,7 +71,7 @@
 #define DEFAULT_NUM_ITERATIONS    10
 #define DEFAULT_NUM_FILES         20
 
-#define DEFAULT_RFCP_BUFFERSIZE   128 * 1024
+#define DEFAULT_BUFFERSIZE        256 * 1024
 #define DEFAULT_FILESIZE          3 * 1024
 
 #define DEFAULT_STAGER_HOST       "lxcastordevXX"
@@ -96,7 +96,7 @@
 
 // Definitions (Maximum)
 #define MAX_NBTHREADS             100
-#define MAX_RFIO_BUFFERSIZE       512 * 1024
+#define MAX_BUFFERSIZE            10 * 1024 * 1024
 #define MAX_NBREADS               30
 
 // Definitions (Minimum)
@@ -106,7 +106,7 @@
 static std::string baseDirectory  = "";
 static std::string stagerHost     = DEFAULT_STAGER_HOST;
 static std::string stagerSvcClass = DEFAULT_STAGER_SVCCLASS;
-static uint64_t    rfioBufferSize = DEFAULT_RFCP_BUFFERSIZE;
+static uint64_t    fileBufferSize = DEFAULT_BUFFERSIZE;
 static uint64_t    iterations     = DEFAULT_NUM_ITERATIONS;
 static uint64_t    nbfiles        = DEFAULT_NUM_FILES;
 static uint64_t    writeFileSize  = DEFAULT_FILESIZE;
@@ -222,7 +222,7 @@ int readFileUsingRFIO(const std::string &filepath,
 
   // Create the temporary buffer for storing data before rfio_write
   std::string buffer;
-  std::string::size_type bufsize = (size_t)rfioBufferSize;
+  std::string::size_type bufsize = (size_t)fileBufferSize;
 
   // If the expectedFileSize is less than the buffer reset the size and then
   // reserve the amount of storage required.
@@ -305,7 +305,7 @@ int writeFileUsingRFIO(const std::string &filepath,
 
   // Create the temporary buffer for storing data before rfio_write
   std::string buffer;
-  std::string::size_type bufsize = (size_t)rfioBufferSize;
+  std::string::size_type bufsize = (size_t)fileBufferSize;
 
   // If the fileSize is less than the buffer reset the size and then reserve
   // the amount of storage required.
@@ -469,19 +469,14 @@ int writeFileUsingXROOTD(const std::string &filepath,
                          const uint64_t fileSize) {
   // Create the temporary buffer for storing data before write
   uint64_t offset = 0;
-  const uint32_t MB = 1024*1024;
-  std::string::size_type bufsize = (size_t)(4*MB);
+  std::string::size_type bufsize = (size_t)fileBufferSize;
   std::string buffer;
   serrno = 0;
-
-  // If the fileSize is less than the buffer reset the size and then reserve
-  // the amount of storage required.
-  if (bufsize > fileSize) {
-    bufsize = fileSize;
-  }
   buffer.reserve(bufsize);
 
-  // The buffer should contain random data
+  // The buffer should contain random data. It would have been nice here
+  // to generate random buffers every time but the CPU cost is too expensive
+  // and results in poor bandwidth.
   generate_n(std::back_inserter(buffer), bufsize - buffer.length(), randAlnum());
 
   XrdCl::File f; 
@@ -1263,11 +1258,11 @@ int main (int argc, char **argv) {
       stagerSvcClass = optarg;
       break;
     case OPTION_BUFFERSIZE:
-      rfioBufferSize = atoi(optarg);
-      if (rfioBufferSize > MAX_RFIO_BUFFERSIZE) {
+      fileBufferSize = atoi(optarg);
+      if (fileBufferSize > MAX_BUFFERSIZE) {
         std::cerr << "Invalid argument: " << optarg
                   << " for option --buffer-size, must be > 0 and < "
-                  << MAX_RFIO_BUFFERSIZE
+                  << MAX_BUFFERSIZE
                   << std::endl;
         return 2;
       }
@@ -1408,7 +1403,7 @@ int main (int argc, char **argv) {
             << std::endl << "Stager SvcClass:    " << stagerSvcClass
             << std::endl << "NameServer Host:    " << stagerHost
             << std::endl
-            << std::endl << "RFIO Buffer Size:   " << rfioBufferSize 
+            << std::endl << "RFIO Buffer Size:   " << fileBufferSize 
             << std::endl << "HSM Base Directory: " << baseDirectory
             << std::endl << "File Size:          " << writeFileSize
             << std::endl << "Nb Threads:         " << nbthreads
