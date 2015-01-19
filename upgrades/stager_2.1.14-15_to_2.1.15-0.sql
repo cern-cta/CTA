@@ -11217,7 +11217,7 @@ BEGIN
     varErrorMsg := 'Oracle error caught : ' || SQLERRM;
     logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_MISSING_COPY_ERROR, inFileId, inNsHost, 'stagerd',
       'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || varErrorMsg
-      ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
+      ||'" stackTrace="' || dbms_utility.format_call_stack ||'"');
   END;
   RETURN 0;
 END;
