@@ -282,20 +282,31 @@ BEGIN
     varDidSth := False;
     FOR b IN (SELECT id FROM (
                 SELECT rownum ind, id FROM (
-                  SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_Castorfile) */ DiskCopy.id
-                    FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass,
-                         DiskServer
-                   WHERE DiskCopy.filesystem = FileSystem.id
-                     AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                     AND FileSystem.diskserver = DiskServer.id
-                     AND DiskPool2SvcClass.child = SvcClass.id
-                     AND DiskCopy.castorfile = varCfId
-                     AND DiskCopy.status = dconst.DISKCOPY_VALID
-                     AND SvcClass.id = varSvcClassId
+                  SELECT * FROM (
+                    SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_Castorfile) */
+                           FileSystem.status AS FsStatus, DiskServer.status AS DsStatus,
+                           DiskCopy.gcWeight, DiskCopy.id
+                      FROM DiskCopy, FileSystem, DiskPool2SvcClass,
+                           DiskServer
+                     WHERE DiskCopy.filesystem = FileSystem.id
+                       AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                       AND FileSystem.diskserver = DiskServer.id
+                       AND DiskPool2SvcClass.child = varSvcClassId
+                       AND DiskCopy.castorfile = varCfId
+                       AND DiskCopy.status = dconst.DISKCOPY_VALID
+                     UNION ALL
+                    SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_Castorfile) */
+                           0 AS FsStatus,
+                           (SELECT MIN(status) FROM DiskServer
+                             WHERE dataPool = DiskCopy.dataPool) AS DsStatus,
+                           DiskCopy.gcWeight, DiskCopy.id
+                      FROM DiskCopy, DataPool2SvcClass
+                     WHERE DiskCopy.dataPool = DataPool2SvcClass.parent
+                       AND DataPool2SvcClass.child = varSvcClassId
+                       AND DiskCopy.castorfile = varCfId
+                       AND DiskCopy.status = dconst.DISKCOPY_VALID)
                    -- Select non-PRODUCTION hardware first
-                   ORDER BY decode(FileSystem.status, 0,
-                            decode(DiskServer.status, 0, 0, 1), 1) ASC,
-                            DiskCopy.gcWeight DESC))
+                   ORDER BY decode(fsStatus, 0, decode(dsStatus, 0, 0, 1), 1) ASC, gcWeight DESC))
                WHERE ind > varReplicaNb)
     LOOP
       -- Sanity check, make sure that the last copy is never dropped!
