@@ -357,14 +357,22 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
 // configureUp
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::configureUp() {
+  bool vdqmNeedsUpdate = false;
   switch(m_state) {
   case DRIVE_STATE_UP:
+    // It is safe to refresh the status of the vdqm to up, so let's to it.
+    vdqmNeedsUpdate = true;
+    break;
   case DRIVE_STATE_RUNNING:
+    // We are in RUNNING in the VDQM: leave it like that.
     break;
   case DRIVE_STATE_DOWN:
     changeState(DRIVE_STATE_UP);
+    vdqmNeedsUpdate = true;
     break;
   case DRIVE_STATE_WAITDOWN:
+    // We are in RUNNING in the VDQM: leave it like that.
+    // We just cancel the WAIT DOWN internally.
     changeState(DRIVE_STATE_RUNNING);
     break;
   default:
@@ -376,7 +384,8 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureUp() {
       throw ex;
     }
   }
-  m_vdqm.setDriveUp(m_hostName, m_config.getUnitName(), m_config.getDgn());
+  if (vdqmNeedsUpdate)
+    m_vdqm.setDriveUp(m_hostName, m_config.getUnitName(), m_config.getDgn());
 }
 
 //-----------------------------------------------------------------------------
