@@ -308,6 +308,301 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE PROCEDURE processBulkAbortFileReqs
+(origReqId IN INTEGER, fileIds IN "numList", nsHosts IN strListTable, reqType IN NUMBER) AS
+  nbItems NUMBER;
+  nbItemsDone NUMBER := 0;
+  SrLocked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (SrLocked, -54);
+  unused NUMBER;
+  firstOne BOOLEAN := TRUE;
+  commitWork BOOLEAN := FALSE;
+BEGIN
+  -- Gather the list of subrequests to abort
+  IF fileIds.count() = 0 THEN
+    -- handle the case of an empty request, meaning that all files should be aborted
+    INSERT INTO ProcessBulkAbortFileReqsHelper (srId, cfId, fileId, nsHost, uuid) (
+      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Request)*/
+             SubRequest.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SubRequest.subreqId
+        FROM SubRequest, CastorFile
+       WHERE SubRequest.castorFile = CastorFile.id
+         AND request = origReqId);
+  ELSE
+    -- handle the case of selective abort
+    FOR i IN fileIds.FIRST .. fileIds.LAST LOOP
+      DECLARE
+        CONSTRAINT_VIOLATED EXCEPTION;
+        PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+      BEGIN
+        -- note that we may insert several rows in one go in case the abort request contains
+        -- several times the same file
+        INSERT INTO processBulkAbortFileReqsHelper
+          (SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_CastorFile)*/
+                  DISTINCT SubRequest.id, CastorFile.id, fileIds(i), nsHosts(i), SubRequest.subreqId
+             FROM SubRequest, CastorFile
+            WHERE request = origReqId
+              AND SubRequest.castorFile = CastorFile.id
+              AND CastorFile.fileid = fileIds(i)
+              AND CastorFile.nsHost = nsHosts(i));
+        -- check that we found something
+        IF SQL%ROWCOUNT = 0 THEN
+          -- this fileid/nshost did not exist in the request, send an error back
+          INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
+          VALUES (fileIds(i), nsHosts(i), serrno.ENOENT, 'No subRequest found for this fileId/nsHost');
+        END IF;
+      EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+        -- the insertion in ProcessBulkRequestHelper triggered a violation of the
+        -- primary key. This primary key being the subrequest id, this means that
+        -- this subrequest is already in the list of the ones to be aborted. So
+        -- nothing left to be done
+        NULL;
+      END;
+    END LOOP;
+  END IF;
+  SELECT COUNT(*) INTO nbItems FROM processBulkAbortFileReqsHelper;
+  -- handle aborts in bulk while avoiding deadlocks
+  WHILE nbItems > 0 LOOP
+    FOR sr IN (SELECT srId, cfId, fileId, nsHost, uuid FROM processBulkAbortFileReqsHelper) LOOP
+      BEGIN
+        IF firstOne THEN
+          -- on the first item, we take a blocking lock as we are sure that we will not
+          -- deadlock and we would like to process at least one item to not loop endlessly
+          SELECT id INTO unused FROM CastorFile WHERE id = sr.cfId FOR UPDATE;
+          firstOne := FALSE;
+        ELSE
+          -- on the other items, we go for a non blocking lock. If we get it, that's
+          -- good and we process this extra subrequest within the same session. If
+          -- we do not get the lock, then we close the session here and go for a new
+          -- one. This will prevent dead locks while ensuring that a minimal number of
+          -- commits is performed.
+          SELECT id INTO unused FROM CastorFile WHERE id = sr.cfId FOR UPDATE NOWAIT;
+        END IF;
+        -- we got the lock on the Castorfile, we can handle the abort for this subrequest
+        CASE reqType
+          WHEN 1 THEN processAbortForGet(sr);
+          WHEN 2 THEN processAbortForPut(sr);
+        END CASE;
+        DELETE FROM processBulkAbortFileReqsHelper WHERE srId = sr.srId;
+        -- make the scheduler aware so that it can remove the transfer from the queues if needed
+        INSERT INTO TransfersToAbort (uuid) VALUES (sr.uuid);
+        nbItemsDone := nbItemsDone + 1;
+      EXCEPTION WHEN SrLocked THEN
+        commitWork := TRUE;
+      END;
+      -- commit anyway from time to time, to avoid too long redo logs
+      IF commitWork OR nbItemsDone >= 1000 THEN
+        -- exit the current loop and restart a new one, in order to commit without getting invalid ROWID errors
+        EXIT;
+      END IF;
+    END LOOP;
+    -- commit
+    COMMIT;
+    -- wake up the scheduler so that it can remove the transfer from the queues
+    alertSignalNoLock('transfersToAbort');
+    -- reset all counters
+    nbItems := nbItems - nbItemsDone;
+    nbItemsDone := 0;
+    firstOne := TRUE;
+    commitWork := FALSE;
+  END LOOP;
+END;
+/
+
+/* inserts file Requests in the stager DB.
+ * This handles StageGetRequest, StagePrepareToGetRequest, StagePutRequest,
+ * StagePrepareToPutRequest, StageUpdateRequest, StagePrepareToUpdateRequest,
+ * StagePutDoneRequest, StagePrepareToUpdateRequest, and StageRmRequest requests.
+ */ 	 
+CREATE OR REPLACE PROCEDURE insertFileRequest
+  (userTag IN VARCHAR2,
+   machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   mask IN INTEGER,
+   userName IN VARCHAR2,
+   flags IN INTEGER,
+   svcClassName IN VARCHAR2,
+   reqUUID IN VARCHAR2,
+   inReqType IN INTEGER,
+   clientIP IN INTEGER,
+   clientPort IN INTEGER,
+   clientVersion IN INTEGER,
+   clientSecure IN INTEGER,
+   freeStrParam IN VARCHAR2,
+   freeNumParam IN NUMBER,
+   srFileNames IN castor."strList",
+   srProtocols IN castor."strList",
+   srXsizes IN castor."cnumList",
+   srFlags IN castor."cnumList",
+   srModeBits IN castor."cnumList") AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  subreqId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+  svcHandler VARCHAR2(100);
+  protocols VARCHAR2(100);
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, inReqType);
+  -- get the list of valid protocols
+  protocols := ' ' || getConfigOption('Stager', 'Protocols', 'rfio rfio3 gsiftp xroot') || ' ';
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  CASE
+    WHEN inReqType = 35 THEN -- StageGetRequest
+      INSERT INTO StageGetRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN inReqType = 36 THEN -- StagePrepareToGetRequest
+      INSERT INTO StagePrepareToGetRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN inReqType = 40 THEN -- StagePutRequest
+      INSERT INTO StagePutRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN inReqType = 37 THEN -- StagePrepareToPutRequest
+      INSERT INTO StagePrepareToPutRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN inReqType = 44 THEN -- StageUpdateRequest
+      INSERT INTO StageUpdateRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN inReqType = 38 THEN -- StagePrepareToUpdateRequest
+      INSERT INTO StagePrepareToUpdateRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN inReqType = 42 THEN -- StageRmRequest
+      INSERT INTO StageRmRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN inReqType = 39 THEN -- StagePutDoneRequest
+      INSERT INTO StagePutDoneRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, parentUuid, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,freeStrParam,reqId,svcClassId,clientId);
+    WHEN inReqType = 95 THEN -- SetFileGCWeight
+      INSERT INTO SetFileGCWeight (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, weight, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,freeNumParam,reqId,svcClassId,clientId);
+    ELSE
+      raise_application_error(-20122, 'Unsupported request type in insertFileRequest : ' || TO_CHAR(inReqType));
+  END CASE;
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
+  -- get the request's service handler
+  SELECT svcHandler INTO svcHandler FROM Type2Obj WHERE type=inReqType;
+  -- Loop on subrequests
+  FOR i IN srFileNames.FIRST .. srFileNames.LAST LOOP
+    -- check protocol validity
+    IF INSTR(protocols, ' ' || srProtocols(i) || ' ') = 0 THEN
+      raise_application_error(-20122, 'Unsupported protocol in insertFileRequest : ' || srProtocols(i));
+    END IF;
+    -- get unique ids for the subrequest
+    SELECT ids_seq.nextval INTO subreqId FROM DUAL;
+    -- insert the subrequest
+    INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, status, request, getNextStatus, reqType)
+    VALUES (0, srFileNames(i), srProtocols(i), srXsizes(i), 0, NULL, srFlags(i), srModeBits(i), creationTime, creationTime, 0, 0, '', NULL, svcHandler, subreqId, NULL, NULL, dconst.SUBREQUEST_START, reqId, 0, inReqType);
+  END LOOP;
+  -- send one single alert to accelerate the processing of the request
+  CASE
+  WHEN inReqType = 35 OR   -- StageGetRequest
+       inReqType = 40 OR   -- StagePutRequest
+       inReqType = 44 THEN -- StageUpdateRequest
+    alertSignalNoLock('wakeUpJobReqSvc');
+  WHEN inReqType = 36 OR   -- StagePrepareToGetRequest
+       inReqType = 37 OR   -- StagePrepareToPutRequest
+       inReqType = 38 THEN -- StagePrepareToUpdateRequest
+    alertSignalNoLock('wakeUpPrepReqSvc');
+  WHEN inReqType = 42 OR   -- StageRmRequest
+       inReqType = 39 OR   -- StagePutDoneRequest
+       inReqType = 95 THEN -- SetFileGCWeight
+    alertSignalNoLock('wakeUpStageReqSvc');
+  END CASE;
+END;
+/
+
+/* This procedure is used to check if the maxReplicaNb has been exceeded
+ * for some CastorFiles. It checks all the files listed in TooManyReplicasHelper
+ * This is called from a DB job and is fed by the tr_DiskCopy_Created trigger
+ * on creation of new diskcopies
+ */
+CREATE OR REPLACE PROCEDURE checkNbReplicas AS
+  varSvcClassId INTEGER;
+  varCfId INTEGER;
+  varMaxReplicaNb NUMBER;
+  varNbFiles NUMBER;
+  varDidSth BOOLEAN;
+BEGIN
+  -- Loop over the CastorFiles to be processed
+  LOOP
+    varCfId := NULL;
+    DELETE FROM TooManyReplicasHelper
+     WHERE ROWNUM < 2
+    RETURNING svcClass, castorFile INTO varSvcClassId, varCfId;
+    IF varCfId IS NULL THEN
+      -- we can exit, we went though all files to be processed
+      EXIT;
+    END IF;
+    BEGIN
+      -- Lock the castorfile
+      SELECT id INTO varCfId FROM CastorFile
+       WHERE id = varCfId FOR UPDATE;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- the file was dropped meanwhile, ignore and continue
+      CONTINUE;
+    END;
+    -- Get the max replica number of the service class
+    SELECT maxReplicaNb INTO varMaxReplicaNb
+      FROM SvcClass WHERE id = varSvcClassId;
+    -- Produce a list of diskcopies to invalidate should too many replicas be online.
+    varDidSth := False;
+    FOR b IN (SELECT id FROM (
+                SELECT rownum ind, id FROM (
+                  SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_Castorfile) */ DiskCopy.id
+                    FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass,
+                         DiskServer
+                   WHERE DiskCopy.filesystem = FileSystem.id
+                     AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                     AND FileSystem.diskserver = DiskServer.id
+                     AND DiskPool2SvcClass.child = SvcClass.id
+                     AND DiskCopy.castorfile = varCfId
+                     AND DiskCopy.status = dconst.DISKCOPY_VALID
+                     AND SvcClass.id = varSvcClassId
+                   -- Select non-PRODUCTION hardware first
+                   ORDER BY decode(FileSystem.status, 0,
+                            decode(DiskServer.status, 0, 0, 1), 1) ASC,
+                            DiskCopy.gcWeight DESC))
+               WHERE ind > varMaxReplicaNb)
+    LOOP
+      -- Sanity check, make sure that the last copy is never dropped!
+      SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ count(*) INTO varNbFiles
+        FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass, DiskServer
+       WHERE DiskCopy.filesystem = FileSystem.id
+         AND FileSystem.diskpool = DiskPool2SvcClass.parent
+         AND FileSystem.diskserver = DiskServer.id
+         AND DiskPool2SvcClass.child = SvcClass.id
+         AND DiskCopy.castorfile = varCfId
+         AND DiskCopy.status = dconst.DISKCOPY_VALID
+         AND SvcClass.id = varSvcClassId;
+      IF varNbFiles = 1 THEN
+        EXIT;  -- Last file, so exit the loop
+      END IF;
+      -- Invalidate the diskcopy
+      UPDATE DiskCopy
+         SET status = dconst.DISKCOPY_INVALID,
+             gcType = dconst.GCTYPE_TOOMANYREPLICAS
+       WHERE id = b.id;
+      varDidSth := True;
+      -- update importance of remaining diskcopies
+      UPDATE DiskCopy SET importance = importance + 1
+       WHERE castorFile = varCfId
+         AND status = dconst.DISKCOPY_VALID;
+    END LOOP;
+    IF varDidSth THEN COMMIT; END IF;
+  END LOOP;
+  -- commit the deletions in case no modification was done that commited them before
+  COMMIT;
+END;
+/
+
 /* revalidate all code */
 BEGIN
   recompileAll();
