@@ -116,10 +116,12 @@ class RunningTransfersSet(object):
     except Exception, e:
       dlf.writeerr(msgs.FAILTOQUERYXROOT, Type=str(e.__class__), Message=str(e))
 
-    # send the list of running transfers to the stager DB for synchronization
+    # 'Synchronizing running transfers with schedulers' message
+    dlf.write(msgs.SYNCRUNNINGTRANSFERS);
     try:
       while True:
         try:
+          # send the list of running transfers to the stager DB for synchronization
           timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
           connectionpool.connections.syncRunningTransfers(scheduler, socket.getfqdn(),
                                                           tuple(leftOvers.keys()), timeout=timeout)

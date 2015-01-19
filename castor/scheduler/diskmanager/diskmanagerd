@@ -168,6 +168,8 @@ class DiskServerManagerService(rpyc.Service):
 
 def initQueues():
   '''Initializes the queue of pending transfers by rebuilding it from the knowledge of the transfermanagers'''
+  # 'Initializing queues from schedulers' message
+  dlf.write(msgs.INITQUEUES)
   # we will timeout after 30secs per machine. Note that in this case, we refuse to start
   # and thus raise a SystemExit exception.
   timeout = 30
@@ -222,8 +224,6 @@ try:
       sys.exit(1)
     # setup logging
     dlf.init('diskmanagerd')
-    # 'DiskManager Daemon started'
-    dlf.write(msgs.DISKMANAGERDSTARTED)
     # set umask to execute movers
     os.umask(stat.S_IWGRP|stat.S_IWOTH)
     # create a list of running Transfers
@@ -258,6 +258,8 @@ try:
        port=configuration.getValue('DiskManager', 'Port', 15011, int),
        auto_register=False,
        nbThreads=len(configuration.getValue('DiskManager', 'ServerHosts').split())+1)
+    # 'DiskManager Daemon started'
+    dlf.write(msgs.DISKMANAGERDSTARTED)
     t.daemon = True
     t.start()
     # we reach this point when the service has stopped
