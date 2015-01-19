@@ -94,8 +94,8 @@ class RunningTransfersSet(object):
         pass
     # then query xroot for its transfers: this query is only allowed on localhost and it does not need to be secured
     try:
-      fs = XrdClient.FileSystem('root://localhost')   # a full URL would be xrootiface.buildXrootURL('localhost', '', None, '')
-      st_stat, resp = fs.query(QueryCode.OPAQUE, "transfers")
+      fs = XrdClient.FileSystem('root://localhost:1095')   # a full URL would be xrootiface.buildXrootURL('localhost', '', None, '')
+      st_stat, resp = fs.query(QueryCode.OPAQUE, "/transfers")
       if not st_stat.ok:
         # 'Failed to query xrootd server' message
         dlf.writenotice(msgs.FAILTOQUERYXROOT, Message=st_stat.message)

@@ -264,7 +264,7 @@ XrdxCastor2Ofs::FSctl(const int cmd,
     return SFS_ERROR;
   }
 
-  if (cmd == SFS_FSCTL_PLUGIN)
+  if (cmd == SFS_FSCTL_PLUGIO)
   {
     if (strncmp(args.Arg1, "/transfers", args.Arg1Len) == 0)
     {
