@@ -187,11 +187,18 @@ int unlinkFile(const std::string &filepath,
 // RandAlnum (Helper)
 // Credit: http://stackoverflow.com/questions/440133/how-do-i-create-a-random-alpha-numeric-string-in-c
 //-----------------------------------------------------------------------------
-char randAlnum() {
-  char c;
-  while (!std::isalnum(c = static_cast<char>(std::rand())));
-  return c;
-}
+struct randAlnum {
+  randAlnum(char const* range = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+           : range(range), len(std::strlen(range)) { }
+
+  char operator ()() const {
+    return range[static_cast<std::size_t>(std::rand() * (1.0 / (RAND_MAX + 1.0 )) * len)];
+  }
+
+  private:
+    char const* range;
+    std::size_t len;
+};
 
 //-----------------------------------------------------------------------------
 // ReadFileUsingRFIO
@@ -316,7 +323,7 @@ int writeFileUsingRFIO(const std::string &filepath,
   buffer += " ";
 
   // The rest of the buffer should contain random data
-  generate_n(std::back_inserter(buffer), bufsize - buffer.length(), randAlnum);
+  generate_n(std::back_inserter(buffer), bufsize - buffer.length(), randAlnum());
 
   // Write the first buffer
   int64_t bytessent = 0;
@@ -342,7 +349,7 @@ int writeFileUsingRFIO(const std::string &filepath,
   if (bufsize > (fileSize - bytessent)) {
     bufsize = (fileSize - bytessent);
   }
-  generate_n(std::back_inserter(buffer), bufsize, randAlnum);
+  generate_n(std::back_inserter(buffer), bufsize, randAlnum());
   
   // Write the second buffer to the file until we reach the desired fileSize or
   // an error is encountered.
@@ -475,7 +482,7 @@ int writeFileUsingXROOTD(const std::string &filepath,
   buffer.reserve(bufsize);
 
   // The buffer should contain random data
-  generate_n(std::back_inserter(buffer), bufsize - buffer.length(), randAlnum);
+  generate_n(std::back_inserter(buffer), bufsize - buffer.length(), randAlnum());
 
   XrdCl::File f; 
   XrdCl::XRootDStatus status;
