@@ -72,7 +72,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
               .add("actualURL", sourceFile->URL());
     currentErrorToCount = "Error_diskFileToReadSizeMismatch";
     if(migratingFileSize != sourceFile->size()){
-      throw castor::exception::Exception("Mismtach between size given by the client "
+      throw castor::exception::Exception("Mismatch between size given by the client "
               "and the real one");
     }
     currentErrorToCount = "";
