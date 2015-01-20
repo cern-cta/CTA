@@ -491,8 +491,8 @@ BEGIN
   SELECT svcHandler INTO svcHandler FROM Type2Obj WHERE type=inReqType;
   -- Loop on subrequests
   FOR i IN srFileNames.FIRST .. srFileNames.LAST LOOP
-    -- check protocol validity
-    IF INSTR(protocols, ' ' || srProtocols(i) || ' ') = 0 THEN
+    -- check protocol validity for Get/Update/Put requests only, for other requests the protocol is irrelevant
+    IF inReqType IN (35, 40, 44) AND INSTR(protocols, ' ' || srProtocols(i) || ' ') = 0 THEN
       raise_application_error(-20122, 'Unsupported protocol in insertFileRequest : ' || srProtocols(i));
     END IF;
     -- get unique ids for the subrequest
