@@ -10,7 +10,7 @@
 # server side is only supported on x86_64 / SLC6
 %define compile_server 0
 %else
-%if "%{?dist}" == ".el6"
+%if "%{?dist}" == ".slc6"
 # rpmbuild --define "clientonly 1" ...
 %if 0%{?clientonly:1} > 0 
 %define compile_server 0
