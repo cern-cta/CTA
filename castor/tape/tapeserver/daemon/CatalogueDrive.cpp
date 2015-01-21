@@ -972,6 +972,8 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::shutdown() {
     // Create a cleaner process to make 100% sure the tape drive is empty
     const std::string vid = ""; // Empty string means VID is not known
     const time_t assignmentTime = time(NULL);
+    // Setting driveReadyDelayInSeconds to 0 has the special meaning of
+    // NOT testing to see if the drive contains a tape
     const uint32_t driveReadyDelayInSeconds = 0;
     m_session = createCleaner(vid, assignmentTime, driveReadyDelayInSeconds);
 
