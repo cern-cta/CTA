@@ -89,25 +89,27 @@ namespace drive {
      */
     virtual positionInfo getPositionInfo() ;
     
-  private:
+  public:
     /**
-     * Utility getting the tape alert codes in a vector.
-     * @return vector of the tape alert codes.
+     * Get tape alert information from the drive. There is a quite long list of possible tape alerts.
+     * They are described in SSC-4, section 4.2.20: TapeAlert application client interface
+     * @return list of vector alerts codes. They can be translated to strings with
+     *  getTapeAlerts and getTapeAlertsCompact.
      */
     std::vector<uint16_t> getTapeAlertCodes();
-  public:
+
     /**
      * Get tape alert information from the drive. There is a quite long list of possible tape alerts.
      * They are described in SSC-4, section 4.2.20: TapeAlert application client interface
      * @return list of tape alerts descriptions. They are simply used for logging.
      */
-    virtual std::vector<std::string> getTapeAlerts();
+    virtual std::vector<std::string> getTapeAlerts(const std::vector<uint16_t>& codes);
     
     /**
      * Get tape alert information from the drive. This is the same as getTapeAlerts,
      * but providing the alert strings in compact form (mixed case single word).
      */
-    virtual std::vector<std::string> getTapeAlertsCompact();
+    virtual std::vector<std::string> getTapeAlertsCompact(const std::vector<uint16_t> & codes);
 
     /**
      * Set the tape density and compression. 

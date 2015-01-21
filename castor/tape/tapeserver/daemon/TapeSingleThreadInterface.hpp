@@ -183,10 +183,11 @@ protected:
    * @return true if any alert was detected
    */
   bool logTapeAlerts() {
-    std::vector<std::string> tapeAlerts = m_drive.getTapeAlerts();
-    if (tapeAlerts.empty()) return false;
+    std::vector<uint16_t> tapeAlertCodes = m_drive.getTapeAlertCodes();
+    if (tapeAlertCodes.empty()) return false;
     size_t alertNumber = 0;
     // Log tape alerts in the logs.
+    std::vector<std::string> tapeAlerts = m_drive.getTapeAlerts(tapeAlertCodes);
     for (std::vector<std::string>::iterator ta=tapeAlerts.begin();
             ta!=tapeAlerts.end();ta++)
     {
@@ -197,7 +198,7 @@ protected:
       m_logContext.log(LOG_WARNING, "Tape alert detected");
     }
     // Add tape alerts in the tape log parameters
-    std::vector<std::string> tapeAlertsCompact = m_drive.getTapeAlertsCompact();
+    std::vector<std::string> tapeAlertsCompact = m_drive.getTapeAlertsCompact(tapeAlertCodes);
     for (std::vector<std::string>::iterator tac=tapeAlertsCompact.begin();
             tac!=tapeAlertsCompact.end();tac++)
     {

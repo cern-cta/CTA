@@ -278,36 +278,26 @@ std::vector<uint16_t> drive::DriveGeneric::getTapeAlertCodes(){
 }
 
 /**
- * Get tape alert information from the drive. There is a quite long list of possible tape alerts.
- * They are described in SSC-4, section 4.2.20: TapeAlert application client interface.
- * Section is 4.2.17 in SSC-3. This version gives the standard strings from SSC-4.
- * @return list of tape alerts descriptions. They are simply used for logging.
+ * Translate  tape alert codes into strings.
  */
-std::vector<std::string> drive::DriveGeneric::getTapeAlerts(){
+std::vector<std::string> drive::DriveGeneric::getTapeAlerts(const std::vector<uint16_t>& tacs){
   /* return vector */
   std::vector<std::string> ret;
-  /* The tape alerts */
-  std::vector<uint16_t> tacs = getTapeAlertCodes();
   /* convert tape alert codes to strings */
-  for (std::vector<uint16_t>::iterator code =  tacs.begin(); code!= tacs.end(); code++) {
+  for (std::vector<uint16_t>::const_iterator code =  tacs.begin(); code!= tacs.end(); code++) {
     ret.push_back(SCSI::tapeAlertToString(*code));
   }
   return ret;
 }
 
 /**
- * Get tape alert information from the drive. There is a quite long list of possible tape alerts.
- * They are described in SSC-4, section 4.2.20: TapeAlert application client interface.
- * Section is 4.2.17 in SSC-3. This version gives the standard strings from SSC-4.
- * @return list of tape alerts descriptions, shortened in single words with mixed case.
+ * Translate tape alert codes into compact strings.
  */
-std::vector<std::string> drive::DriveGeneric::getTapeAlertsCompact(){
+std::vector<std::string> drive::DriveGeneric::getTapeAlertsCompact(const std::vector<uint16_t>& tacs){
   /* return vector */
   std::vector<std::string> ret;
-  /* The tape alerts */
-  std::vector<uint16_t> tacs = getTapeAlertCodes();
   /* convert tape alert codes to strings */
-  for (std::vector<uint16_t>::iterator code =  tacs.begin(); code!= tacs.end(); code++) {
+  for (std::vector<uint16_t>::const_iterator code =  tacs.begin(); code!= tacs.end(); code++) {
     ret.push_back(SCSI::tapeAlertToCompactString(*code));
   }
   return ret;

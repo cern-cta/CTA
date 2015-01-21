@@ -155,8 +155,9 @@ namespace drive {
     virtual std::string getSerialNumber()  = 0;
     virtual void positionToLogicalObject(uint32_t blockId)  = 0;
     virtual positionInfo getPositionInfo()  = 0;
-    virtual std::vector<std::string> getTapeAlerts()  = 0;
-    virtual std::vector<std::string> getTapeAlertsCompact () = 0;
+    virtual std::vector<uint16_t> getTapeAlertCodes() = 0;
+    virtual std::vector<std::string> getTapeAlerts(const std::vector<uint16_t>&) = 0;
+    virtual std::vector<std::string> getTapeAlertsCompact (const std::vector<uint16_t>&) = 0;
     virtual void setDensityAndCompression(bool compression = true,
     unsigned char densityCode = 0)  = 0;
     virtual driveStatus getDriveStatus()  = 0;

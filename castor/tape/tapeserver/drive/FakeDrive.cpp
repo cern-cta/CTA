@@ -78,12 +78,20 @@ castor::tape::tapeserver::drive::positionInfo castor::tape::tapeserver::drive::F
   pos.oldestDirtyObject = 0;
   return pos;
 }
-std::vector<std::string> castor::tape::tapeserver::drive::FakeDrive::getTapeAlerts()  {
+
+std::vector<uint16_t> castor::tape::tapeserver::drive::FakeDrive::getTapeAlertCodes() {
+  std::vector<uint16_t> empty;
+  return empty;
+}
+
+std::vector<std::string> castor::tape::tapeserver::drive::FakeDrive::getTapeAlerts(
+  const std::vector<uint16_t>&)  {
   std::vector<std::string> empty;
   return empty;
 }
 
-std::vector<std::string> castor::tape::tapeserver::drive::FakeDrive::getTapeAlertsCompact()  {
+std::vector<std::string> castor::tape::tapeserver::drive::FakeDrive::getTapeAlertsCompact(
+  const std::vector<uint16_t>&)  {
   std::vector<std::string> empty;
   return empty;
 }

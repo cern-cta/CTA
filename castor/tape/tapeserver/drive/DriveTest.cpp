@@ -372,7 +372,7 @@ TEST(castor_tape_drive_Drive, getTapeAlerts) {
           std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
             castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
-          std::vector<std::string> alerts = drive->getTapeAlerts();
+          std::vector<std::string> alerts = drive->getTapeAlerts(drive->getTapeAlertCodes());
           ASSERT_EQ(3U, alerts.size());
           ASSERT_FALSE(alerts.end() == 
               find(alerts.begin(), alerts.end(), 

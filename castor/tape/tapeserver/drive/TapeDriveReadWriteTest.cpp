@@ -197,7 +197,7 @@ int main ()
                   << "----------------------------------------------" << std::endl;
         }
 
-        std::vector<std::string> Alerts(drive->getTapeAlerts());
+        std::vector<std::string> Alerts(drive->getTapeAlerts(drive->getTapeAlertCodes()));
         while (Alerts.size()) {
           std::cout << "Tape alert: " << Alerts.back() << std::endl;
           Alerts.pop_back();
