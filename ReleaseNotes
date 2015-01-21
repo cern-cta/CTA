@@ -40,16 +40,12 @@
   Stager
   ------
 
-    CASTOR-4863: Closure of transfer protocol not working
-    CASTOR-4849: Issues with aborting when the same file is mentioned more than once
+    CASTOR-4856: ORA-00001: unique constraint (CASTOR_STAGER.PK_DISKCOPY_ID)
     CASTOR-3454: draindiskserver -q -f broken
     CASTOR-3453: Fixed display of percentages where None is given
     CASTOR-3419: rhd should run as stage:st
-    CASTOR-3287: Problem found when trying to change fileclass: classid/classname not resolved
     CASTOR-3151: RFE: listtransfers - show/use originating user for d2d transfers
     CASTOR-3043: RFE: strutou64 should handle XiB in addition to G/T/P suffixes. Fractional numbers would be nice too.
-    CASTOR-3016: rhd craches if given the configuration parameter RH DefaultThreshold 500/25
-    CASTOR-2924: stagerd core dump in case of loss of db connection
     CASTOR-2759: CM: enhancements in the core framework
     CASTOR-2582: RFE: NbReplicas should be respected in svcClasses with shared disk pools
 
@@ -66,8 +62,6 @@
   Protocols
   ---------
 
-    CASTOR-4624: RFIO client library incorrectly processes local URLS of the form host:path?transfertype=tape
-    CASTOR-3343: Be more clever in xcastor2.stagermap mapping regarding machine names
     CASTOR-3295: RFE: xrootd should directly talk to diskmanagerd without a stagerjob process in the way
 
   Tape
@@ -93,7 +87,6 @@
     CASTOR-4767: RFE: tpconfig default drive selection
     CASTOR-4740: tapeserverd: DriveGeneric::waitUntilReady() should be based on SCSI call TEST UNIT READY instead of st driver.
     CASTOR-4641: RFE: Tapeserverd should abort if NB_BUFS (memory size) is not set
-    CASTOR-3456: RFE: Add -f option to taped
     CASTOR-3424: RFE: showqueues should report an error when failing to connect to vdqm
     CASTOR-3411: Remove redundant RMC HOST configuration parameter
 
