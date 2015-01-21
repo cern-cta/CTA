@@ -1,3 +1,28 @@
+---------------
+- 2.1.14-15-1 -
+---------------
+
+  Summary
+  -------
+
+  This is an hot-fix release that fixes the following bugs:
+
+    CASTOR-4849: Issues with aborting when the same file is mentioned more than once
+    CASTOR-4858: Oracle no data found errors in checkNbReplicas
+    CASTOR-4863: Closure of transfer protocol not working
+    CASTOR-4865: Castor should not recreate segments for ARCHIVED tapes
+
+  Upgrade Instructions from 2.1.14-15
+  -----------------------------------
+
+    Stager
+    ------
+
+    The upgrade of the stager database to 2.1.14-15-1 can be performed online while the system is running.
+    Upgrade the STAGER database using the stager_2.1.14-15_to_2.1.14-15-1.sql script available from:
+      http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-15/dbupgrades.
+
+
 -------------
 - 2.1.14-15 -
 -------------

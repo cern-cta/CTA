@@ -55,9 +55,6 @@ INSERT INTO UpgradeLog (schemaVersion, release, type)
 VALUES ('2_1_14_2', '2_1_14_15_1', 'TRANSPARENT');
 COMMIT;
 
-/* Schema changes go here */
-/**************************/
-
 /* Update and revalidation of PL-SQL code */
 /******************************************/
 
