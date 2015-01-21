@@ -7,14 +7,18 @@
 # Partial compilations
 #---------------------
 %ifnarch x86_64
-# server side is only supported on x86_64
+# server side is only supported on x86_64 / SLC6
 %define compile_server 0
 %else
+%if 0%{?dist} == "slc6"
 # rpmbuild --define "clientonly 1" ...
 %if 0%{?clientonly:1} > 0 
 %define compile_server 0
 %else
 %define compile_server @COMPILE_SERVER@
+%endif
+%else
+%define compile_server 0
 %endif
 %endif
 
