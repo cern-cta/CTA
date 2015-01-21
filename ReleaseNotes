@@ -97,7 +97,6 @@
     CASTOR-3424: RFE: showqueues should report an error when failing to connect to vdqm
     CASTOR-3411: Remove redundant RMC HOST configuration parameter
 
-
   Package Changes
   ---------------
   This release introduces a number of changes with respect to packaging. In particular:
@@ -277,6 +276,28 @@
 
     Where possible values are RFIO and XROOT. Note that an xroot-enabled tape server fails
     to interact with a 2.1.14 disk server.
+
+
+---------------
+- 2.1.14-15-1 -
+---------------
+
+  Summary
+  -------
+
+  This is an hot-fix release that fixes the following bugs:
+
+    CASTOR-4849: Issues with aborting when the same file is mentioned more than once
+    CASTOR-4858: Oracle no data found errors in checkNbReplicas
+    CASTOR-4863: Closure of transfer protocol not working
+    CASTOR-4865: Castor should not recreate segments for ARCHIVED tapes
+
+  Stager
+  ------
+
+    The upgrade of the stager database to 2.1.14-15-1 can be performed online while the system is running.
+    Upgrade the STAGER database using the stager_2.1.14-15_to_2.1.14-15-1.sql script available from:
+      http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-15/dbupgrades.
 
 
 -------------
