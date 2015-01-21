@@ -877,7 +877,11 @@ void drive::DriveGeneric::testUnitReady() const {
 //------------------------------------------------------------------------------
 bool drive::DriveGeneric::waitUntilReady(int timeoutSecond)  {
   std::string lastTestUnitReadyExceptionMsg("");
+  
   for (castor::utils::Timer t; t.secs() < timeoutSecond;) {
+    // testUnitReady() uses SG_IO TEST_UNIT_READY to avoid calling open on the
+    // st driver, because the open of the st driver is not as tolerant of
+    // certain types of error
     try {
       testUnitReady();           
     } catch (castor::tape::SCSI::NotReadyException &ex){

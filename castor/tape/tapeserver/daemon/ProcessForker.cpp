@@ -32,6 +32,7 @@
 #include "castor/messages/ForkCleaner.pb.h"
 #include "castor/messages/ForkDataTransfer.pb.h"
 #include "castor/messages/ForkLabel.pb.h"
+#include "castor/messages/ForkProbe.pb.h"
 #include "castor/messages/ForkSucceeded.pb.h"
 #include "castor/messages/ProcessCrashed.pb.h"
 #include "castor/messages/ProcessExited.pb.h"
@@ -44,6 +45,7 @@
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
+#include "castor/tape/tapeserver/daemon/ProbeSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForker.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
 #include "castor/utils/SmartArrayPtr.hpp"
@@ -256,6 +258,8 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   switch(frame.type) {
   case messages::MSG_TYPE_FORKCLEANER:
     return handleForkCleanerMsg(frame);
+  case messages::MSG_TYPE_FORKPROBE:
+    return handleForkProbeMsg(frame);
   case messages::MSG_TYPE_FORKDATATRANSFER:
     return handleForkDataTransferMsg(frame);
   case messages::MSG_TYPE_FORKLABEL:
@@ -324,6 +328,62 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
       log::Param params[] = {log::Param("message",
         "Caught an unknown exception")};
       m_log(LOG_ERR, "Cleaner session failed", params);
+    }
+    exit(Session::MARK_DRIVE_AS_DOWN);
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleForkProbeMsg
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult 
+  castor::tape::tapeserver::daemon::ProcessForker::handleForkProbeMsg(
+  const ProcessForkerFrame &frame) {
+
+  // Parse the incoming request
+  messages::ForkProbe rqst;
+  ProcessForkerUtils::parsePayload(frame, rqst);
+
+  // Log the contents of the incomming request
+  std::list<log::Param> params;
+  params.push_back(log::Param("unitName", rqst.unitname()));
+  params.push_back(log::Param("driveReadyDelayInSeconds",
+    rqst.drivereadydelayinseconds()));
+  m_log(LOG_INFO, "ProcessForker handling ForkProbe message", params);
+
+  // Fork a label session
+  const pid_t forkRc = fork();
+
+  // If fork failed
+  if(0 > forkRc) {
+    return createExceptionResult(SEINTERNAL,
+      "Failed to fork probe session for tape drive", true);
+
+  // Else if this is the parent process
+  } else if(0 < forkRc) {
+    log::Param params[] = {log::Param("pid", forkRc)};
+    m_log(LOG_INFO, "ProcessForker forked probe session", params);
+
+    return createForkSucceededResult(forkRc, true);
+
+  // Else this is the child process
+  } else {
+    closeCmdReceiverSocket();
+
+    castor::utils::setProcessNameAndCmdLine(m_argv0, "probe");
+
+    try {
+      exit(runProbeSession(rqst));
+    } catch(castor::exception::Exception &ne) {
+      log::Param params[] = {log::Param("message", ne.getMessage().str())};
+      m_log(LOG_ERR, "Probe session failed", params);
+    } catch(std::exception &ne) {
+      log::Param params[] = {log::Param("message", ne.what())};
+      m_log(LOG_ERR, "Probe session failed", params);
+    } catch(...) {
+      log::Param params[] = {log::Param("message",
+        "Caught an unknown exception")};
+      m_log(LOG_ERR, "Probe session failed", params);
     }
     exit(Session::MARK_DRIVE_AS_DOWN);
   }
@@ -496,6 +556,47 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       rqst.vid(),
       rqst.drivereadydelayinseconds());
     return cleanerSession.execute();
+  } catch(castor::exception::Exception &ex) {
+    throw ex;
+  } catch(std::exception &se) {
+    castor::exception::Exception ex;
+    ex.getMessage() << se.what();
+    throw ex;
+  } catch(...) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Caught an unknown exception";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// runProbeSession
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::Session::EndOfSessionAction
+  castor::tape::tapeserver::daemon::ProcessForker::runProbeSession(
+  const messages::ForkProbe &rqst) {
+  try {
+    server::ProcessCap capUtils;
+
+    const DriveConfig driveConfig = getDriveConfig(rqst);
+    std::list<log::Param> params;
+    params.push_back(log::Param("unitName", driveConfig.getUnitName()));
+    m_log(LOG_INFO, "Probe-session child-process started", params);
+
+    const int sizeOfIOThreadPoolForZMQ = 1;
+    messages::SmartZmqContext
+      zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
+
+    messages::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
+
+    castor::tape::System::realWrapper sWrapper;
+    ProbeSession probeSession(
+      capUtils,
+      m_log,
+      driveConfig,
+      sWrapper,
+      rqst.drivereadydelayinseconds());
+    return probeSession.execute();
   } catch(castor::exception::Exception &ex) {
     throw ex;
   } catch(std::exception &se) {

@@ -28,6 +28,7 @@
 #include "castor/messages/ForkCleaner.pb.h"
 #include "castor/messages/ForkDataTransfer.pb.h"
 #include "castor/messages/ForkLabel.pb.h"
+#include "castor/messages/ForkProbe.pb.h"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerFrame.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemonConfig.hpp"
@@ -219,6 +220,14 @@ private:
    * @return The result of the message handler.
    */
   MsgHandlerResult handleForkCleanerMsg(const ProcessForkerFrame &frame);
+  
+  /**
+   * Handles a ForkProbe message.
+   *
+   * @param frame The frame containing the message.
+   * @return The result of the message handler.
+   */
+  MsgHandlerResult handleForkProbeMsg(const ProcessForkerFrame &frame);
 
   /**
    * Runs a cleaner session.  This method is to be called within the child
@@ -228,6 +237,15 @@ private:
    * @return The value to be used when exiting the child process.
    */
   Session::EndOfSessionAction runCleanerSession(const messages::ForkCleaner &rqst);
+  
+  /**
+   * Runs a probe session.  This method is to be called within the child
+   * process responsible for running the probe session.
+   *
+   * @param rqst The ForkProbe message.
+   * @return The value to be used when exiting the child process.
+   */
+  Session::EndOfSessionAction runProbeSession(const messages::ForkProbe &rqst);
 
   /**
    * Runs a data-transfer session.  This method is to be called within the

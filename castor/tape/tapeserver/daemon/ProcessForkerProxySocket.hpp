@@ -103,11 +103,22 @@ public:
    * identifier is known.  If the volume identifier is not known then this
    * parameter should be set to an empty string.
    * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
-   * the drive to be raedy with a tape inside of it.
+   * the drive to be ready with a tape inside of it.
    * @return The process identifier of the newly forked session.
    */
   pid_t forkCleaner(const DriveConfig &driveConfig,
     const std::string &vid, const uint32_t driveReadyDelayInSeconds);
+  
+  /**
+   * Forks a probe session for the specified tape drive.
+   *
+   * @param driveConfig The configuration of the tape drive.
+   * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
+   * the drive to be ready with a tape inside of it.
+   * @return The process identifier of the newly forked session.
+   */
+  virtual pid_t forkProbe(const DriveConfig &driveConfig, 
+    const uint32_t driveReadyDelayInSeconds);
 
 private:
 
@@ -189,8 +200,8 @@ private:
   }
 
   /**
-   * Creates a ForkDataLabel message from the specified tape-drive
-   * configuration and label job.
+   * Creates a ForkCleaner message from the specified tape-drive
+   * configuration and cleaner job.
    *
    * @param driveConfig The configuration of the tape drive.
    * @param vid The volume identifier of the tape associated with the tape
@@ -203,6 +214,19 @@ private:
     const DriveConfig &driveConfig, const std::string &vid,
     const uint32_t driveReadyDelayInSeconds);
 
+  /**
+   * Creates a ForkProbe message from the specified tape-drive
+   * configuration and probe job.
+   *
+   * @param driveConfig The configuration of the tape drive.
+   * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
+   * the drive to be raedy with a tape inside of it.
+   * @return The message.
+   */
+  messages::ForkProbe createForkProbeMsg(
+    const DriveConfig &driveConfig,
+    const uint32_t driveReadyDelayInSeconds);
+  
 }; // class ProcessForkerProxySocket
 
 } // namespace daemon

@@ -28,6 +28,7 @@
 #include "castor/messages/ForkCleaner.pb.h"
 #include "castor/messages/ForkDataTransfer.pb.h"
 #include "castor/messages/ForkLabel.pb.h"
+#include "castor/messages/ForkProbe.pb.h"
 #include "castor/messages/ForkSucceeded.pb.h"
 #include "castor/messages/ProcessCrashed.pb.h"
 #include "castor/messages/ProcessExited.pb.h"
@@ -75,6 +76,18 @@ public:
    */
   static void serializePayload(ProcessForkerFrame &frame,
     const messages::ForkCleaner &msg);
+  
+  /**
+   * Serializes the specified message into the specified frame.
+   *
+   * Please note that this method sets both the type and payload fields of the
+   * frame.
+   *
+   * @param frame Output parameter: The frame.
+   * @param msg The message.
+   */
+  static void serializePayload(ProcessForkerFrame &frame,
+    const messages::ForkProbe &msg);
 
   /**
    * Serializes the specified message into the specified frame.
@@ -182,6 +195,18 @@ public:
    * logging system.
    */
   static void writeFrame(const int fd, const messages::ForkCleaner &msg,
+    log::Logger *const log = NULL);
+  
+  /**
+   * Writes a frame with the specified message as its payload to the specified
+   * file descriptor.
+   *
+   * @param fd The file descriptor to be written to.
+   * @param msg The message to sent as the payload of the frame.
+   * @param log Optional parameter: Object representing the API of the CASTOR
+   * logging system.
+   */
+  static void writeFrame(const int fd, const messages::ForkProbe &msg,
     log::Logger *const log = NULL);
 
   /**
@@ -319,6 +344,16 @@ public:
    */
   static void parsePayload(const ProcessForkerFrame &frame,
     messages::ForkCleaner &msg);
+  
+  /**
+   * Parses the payload of the specified frame.
+   *
+   * @param frame The frame.
+   * @param msg Output parameter: The message contained within the payload of
+   * the frame.
+   */
+  static void parsePayload(const ProcessForkerFrame &frame,
+    messages::ForkProbe &msg);
 
   /**
    * Parses the payload of the specified frame.

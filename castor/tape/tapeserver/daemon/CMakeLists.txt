@@ -33,6 +33,7 @@ add_library(castorTapeServerDaemon
   CatalogueTransferSession.cpp
   CatalogueCleanerSession.cpp
   CatalogueConfig.cpp
+  CleanerSession.cpp
   DataTransferConfig.cpp
   DiskReadThreadPool.cpp
   DiskReadTask.cpp
@@ -44,11 +45,11 @@ add_library(castorTapeServerDaemon
   LabelCmdAcceptHandler.cpp
   LabelCmdConnectionHandler.cpp
   LabelSession.cpp
-  CleanerSession.cpp
   MigrationMemoryManager.cpp
   MigrationReportPacker.cpp 
   MigrationTaskInjector.cpp
   DataTransferSession.cpp
+  ProbeSession.cpp
   ProcessForker.cpp
   ProcessForkerConnectionHandler.cpp
   ProcessForkerProxy.cpp

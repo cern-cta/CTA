@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "castor/messages/ForkCleaner.pb.h"
+#include "castor/messages/ForkProbe.pb.h"
 #include "castor/messages/ForkSucceeded.pb.h"
 #include "castor/messages/StopProcessForker.pb.h"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxySocket.hpp"
@@ -216,6 +217,47 @@ castor::messages::ForkCleaner castor::tape::tapeserver::daemon::
 
   // Description of the tape
   msg.set_vid(vid);
+
+  // Description of the cleaner job
+  msg.set_drivereadydelayinseconds(driveReadyDelayInSeconds);
+
+  return msg;
+}
+
+//------------------------------------------------------------------------------
+// forkProbe
+//------------------------------------------------------------------------------
+pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
+  forkProbe(const DriveConfig &driveConfig, 
+  const uint32_t driveReadyDelayInSeconds) {
+
+  // Request the process forker to fork a probe session
+  const messages::ForkProbe rqst = createForkProbeMsg(driveConfig,
+    driveReadyDelayInSeconds);
+  ProcessForkerUtils::writeFrame(m_socketFd, rqst);
+
+  // Read back the reply
+  const int timeout = 10; // Timeout in seconds
+  messages::ForkSucceeded reply;
+  ProcessForkerUtils::readReplyOrEx(m_socketFd, timeout, reply);
+  log::Param params[] = {log::Param("pid", reply.pid())};
+  m_log(LOG_INFO,
+    "Got process ID of the probe session from the ProcessForker", params);
+
+  return reply.pid();
+}
+
+//------------------------------------------------------------------------------
+// createForkProbeMsg
+//------------------------------------------------------------------------------
+castor::messages::ForkProbe castor::tape::tapeserver::daemon::
+  ProcessForkerProxySocket::createForkProbeMsg(
+  const DriveConfig &driveConfig, 
+  const uint32_t driveReadyDelayInSeconds) {
+  messages::ForkProbe msg;
+
+  // Description of the tape drive
+  fillMsgWithDriveConfig(msg, driveConfig);
 
   // Description of the cleaner job
   msg.set_drivereadydelayinseconds(driveReadyDelayInSeconds);

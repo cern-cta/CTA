@@ -87,6 +87,17 @@ public:
    */
   virtual pid_t forkCleaner(const DriveConfig &driveConfig,
     const std::string &vid, const uint32_t driveReadyDelayInSeconds) = 0;
+  
+  /**
+   * Forks a probe session for the specified tape drive.
+   *
+   * @param driveConfig The configuration of the tape drive.
+   * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
+   * the drive to be raedy with a tape inside of it.
+   * @return The process identifier of the newly forked session.
+   */
+  virtual pid_t forkProbe(const DriveConfig &driveConfig, 
+    const uint32_t driveReadyDelayInSeconds) = 0;
 
 }; // class ProcessForkerProxy
 

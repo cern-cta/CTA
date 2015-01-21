@@ -142,8 +142,13 @@ namespace drive {
     virtual void testUnitReady() const;
    
     /**
-     * Detects readiness of the drive by calling ioctl MTIOCGET and checks if 
-     * the status is GMT_ONLINE. Throws exceptions if the drive is not ready for
+     * Detects readiness of the drive by calling SG_IO TEST_UNIT_READY in a
+     * loop until happy, then open() and MTIOCGET in a loop until happy.
+     * SG_IO TEST_UNIT_READY is used before open() because the open() of the st
+     * driver cannot handle as many errors as SG_IO TEST_UNIT_READY.  open() is
+     * called before MTIOCGET because MTIOCGET reads out the cached status of
+     * the drive and open() refreshes it.  The result of MTIOCGET is checked for
+     * the status GMT_ONLINE. Throws exceptions if the drive is not ready for
      * at least timeoutSeconds or any errors occurred. We consider any not GOOD 
      * SCSI replay with sense keys not equals to NotReady or UnitAttention as 
      * errors.

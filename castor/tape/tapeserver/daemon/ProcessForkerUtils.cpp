@@ -48,6 +48,20 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::serializePayload(
 // serializePayload
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::serializePayload(
+  ProcessForkerFrame &frame, const messages::ForkProbe &msg) {
+  frame.type = messages::MSG_TYPE_FORKPROBE;
+  if(!msg.SerializeToString(&frame.payload)) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to serialize ForkProbe payload"
+      ": SerializeToString() returned false";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// serializePayload
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::ProcessForkerUtils::serializePayload(
   ProcessForkerFrame &frame, const messages::ForkDataTransfer &msg) {
   frame.type = messages::MSG_TYPE_FORKDATATRANSFER;
   if(!msg.SerializeToString(&frame.payload)) {
@@ -162,6 +176,14 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::serializePayload(
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::writeFrame(
   const int fd, const messages::ForkCleaner &msg, log::Logger *const log) {
   writeFrame(fd, messages::MSG_TYPE_FORKCLEANER, msg, log);
+}
+
+//------------------------------------------------------------------------------
+// writeFrame
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::ProcessForkerUtils::writeFrame(
+  const int fd, const messages::ForkProbe &msg, log::Logger *const log) {
+  writeFrame(fd, messages::MSG_TYPE_FORKPROBE, msg, log);
 }
 
 //------------------------------------------------------------------------------
@@ -519,6 +541,27 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::parsePayload(
   if(!msg.ParseFromString(frame.payload)) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to parse ForkCleaner payload"
+      ": ParseString() returned false: payloadLen="  << frame.payload.length();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// parsePayload
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::ProcessForkerUtils::parsePayload(
+  const ProcessForkerFrame &frame, messages::ForkProbe &msg) {
+  if(messages::MSG_TYPE_FORKPROBE != frame.type) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to parse ForkProbe payload"
+      ": Unexpected message type: type=" <<
+      messages::msgTypeToString(frame.type);
+    throw ex;
+  }
+
+  if(!msg.ParseFromString(frame.payload)) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to parse ForkProbe payload"
       ": ParseString() returned false: payloadLen="  << frame.payload.length();
     throw ex;
   }
