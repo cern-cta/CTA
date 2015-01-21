@@ -56,7 +56,9 @@ namespace daemon {
      * @param vid The volume identifier of the mounted tape if known,
      * else the empty string.
      * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
-     * the drive to be raedy with a tape inside of it.
+     * the drive to be ready with a tape inside of it.  Warning, setting this
+     * value to 0 has the special meaning of NOT testing to see if the drive
+     * contains a tape.
      */
     CleanerSession(
       server::ProcessCap &capUtils,
@@ -111,7 +113,8 @@ namespace daemon {
 
     /**
      * The maximum number of seconds to wait for the drive to be raedy with a
-     * tape inside of it.
+     * tape inside of it.  Warning, setting this value to 0 has the special
+     * meaning of NOT testing to see if the drive contains a tape.
      */
     const uint32_t m_driveReadyDelayInSeconds;
 

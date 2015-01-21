@@ -143,6 +143,8 @@ std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CleanerSession::waitUntilDriveIsReady(
   drive::DriveInterface &drive) {
+  // Warning, setting m_driveReadyDelayInSeconds to 0 has the special meaning of
+  // NOT testing to see if the drive contains a tape.
   if(0 != m_driveReadyDelayInSeconds) {
     std::list<log::Param> params;
     params.push_back(log::Param("TPVID", m_vid));

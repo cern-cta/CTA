@@ -82,7 +82,9 @@ public:
    * identifier is known.  If the volume identifier is not known then this
    * parameter should be set to an empty string.
    * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
-   * the drive to be raedy with a tape inside of it.
+   * the drive to be ready with a tape inside of it.  Warning, setting this
+   * value to 0 has the special meaning of NOT testing to see if the drive
+   * contains a tape.
    * @return The process identifier of the newly forked session.
    */
   virtual pid_t forkCleaner(const DriveConfig &driveConfig,
