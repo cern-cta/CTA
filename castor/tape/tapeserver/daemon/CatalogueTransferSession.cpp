@@ -313,13 +313,19 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
     throw ex;
   }
 
+  // Store the VID before checking whether or not the user can actually recall
+  // files from the tape.  This is needed when the user is not permitted, the
+  // the corresponding exception is thrown and the exception logging logic
+  // comes back to the CatalogueTransferSession to ask for the
+  // the VID tape.
+  m_vid = vid;
+
   checkUserCanRecallFromTape(vid);
 
   m_mountStartTime = time(0);
   m_state = WAIT_MOUNTED;
 
   m_mode = WRITE_DISABLE;
-  m_vid = vid;
 }
 
 //-----------------------------------------------------------------------------
@@ -387,13 +393,19 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
     throw ex;
   }
 
+  // Store the VID before checking whether or not the user can actually migrate
+  // files to the tape.  This is needed when the user is not permitted, the
+  // the corresponding exception is thrown and the exception logging logic
+  // comes back to the CatalogueTransferSession to ask for the
+  // the VID tape.
+  m_vid = vid;
+
   checkUserCanMigrateToTape(vid);
 
   m_mountStartTime = time(0);
   m_state = WAIT_MOUNTED;
 
   m_mode = WRITE_ENABLE;
-  m_vid = vid;
 }
 
 //-----------------------------------------------------------------------------
@@ -471,14 +483,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 //------------------------------------------------------------------------------
 std::string castor::tape::tapeserver::daemon::CatalogueTransferSession::
   getVid() const {
-  switch(m_state) {
-  case WAIT_MOUNTED:
-  case RUNNING:
-  case WAIT_TIMEOUT_KILL:
-    return m_vid;
-  default:
-    return "";
-  }
+  return m_vid;
 }
 
 //------------------------------------------------------------------------------
