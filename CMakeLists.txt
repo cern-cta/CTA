@@ -70,9 +70,9 @@ endif (NOT DEFINED COMPILE_SERVER)
 
 # Generate the compilation variables, if needed
 if (NOT DEFINED SKIP_UNIT_TESTS)
-  message (STATUS "Setting SKIP_UNIT_TESTS to the value of 0")
-  message (STATUS "Override with -DSKIP_UNIT_TESTS:STRING=1")
-  set(SKIP_UNIT_TESTS 0)
+  message (STATUS "Setting SKIP_UNIT_TESTS to the value of 1")
+  message (STATUS "Override with -DSKIP_UNIT_TESTS:STRING=0")
+  set(SKIP_UNIT_TESTS 1)
 else (NOT DEFINED SKIP_UNIT_TESTS)
   message (STATUS "Already set: SKIP_UNIT_TESTS=${SKIP_UNIT_TESTS}")
 endif (NOT DEFINED SKIP_UNIT_TESTS)
