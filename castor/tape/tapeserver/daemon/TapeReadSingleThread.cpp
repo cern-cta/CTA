@@ -50,6 +50,8 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   //then we log/notify
   m_this.m_logContext.log(LOG_DEBUG, "Starting session cleanup. Signaled end of session to task injector.");
   m_this.m_stats.waitReportingTime += m_timer.secs(castor::utils::Timer::resetCounter);
+  // Log (safely, exception-wise) the tape alerts (if any) at the end of the session
+  try { m_this.logTapeAlerts(); } catch (...) {}
   // This out-of-try-catch variables allows us to record the stage of the 
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
