@@ -91,14 +91,6 @@ public:
     const std::string &vid, const bool waitMediaInDrive,
     const uint32_t waitMediaInDriveTimeout) = 0;
   
-  /**
-   * Forks a probe session for the specified tape drive.
-   *
-   * @param driveConfig The configuration of the tape drive.
-   * @return The process identifier of the newly forked session.
-   */
-  virtual pid_t forkProbe(const DriveConfig &driveConfig) = 0;
-
 }; // class ProcessForkerProxy
 
 } // namespace daemon

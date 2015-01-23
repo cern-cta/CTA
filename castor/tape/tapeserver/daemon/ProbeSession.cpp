@@ -27,11 +27,9 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::ProbeSession::ProbeSession(
-  server::ProcessCap &capUtils,
   castor::log::Logger &log,
   const DriveConfig &driveConfig,
   System::virtualWrapper &sysWrapper):
-  m_capUtils(capUtils),
   m_log(log),
   m_driveConfig(driveConfig),
   m_sysWrapper(sysWrapper) {
@@ -70,30 +68,15 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
 
-  setProcessCapabilities("cap_sys_rawio+ep");
-
   std::auto_ptr<drive::DriveInterface> drivePtr = createDrive();
   drive::DriveInterface &drive = *drivePtr.get();
 
   if(drive.hasTapeInPlace()) {
     m_log(LOG_INFO, "Probe found tape drive with a tape inside", params);
     return MARK_DRIVE_AS_DOWN;
-  }
-
-  return MARK_DRIVE_AS_UP;
-}
-
-//------------------------------------------------------------------------------
-// setProcessCapabilities
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProbeSession::setProcessCapabilities(
-  const std::string &capabilities) {
-  m_capUtils.setProcText(capabilities);
-  {
-    log::Param params[] = {
-      log::Param("capabilities", m_capUtils.getProcText())};
-    m_log(LOG_INFO, "Probe set process capabilities for using tape",
-      params);
+  } else {
+    m_log(LOG_INFO, "Probe found tape drive is empty", params);
+    return MARK_DRIVE_AS_UP;
   }
 }
 

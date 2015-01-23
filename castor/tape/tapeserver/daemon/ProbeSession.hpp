@@ -26,7 +26,6 @@
 #include "castor/log/LogContext.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
-#include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
@@ -40,21 +39,22 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   /**
-   * Class responsible for probing a tape drive.
+   * Class responsible for probing a tape drive to see if it empty and
+   * accessible.  If the drive satisfies both of these criteria then the probe
+   * will recommend that the state of the drive should be marked as UP, else
+   * it will recommend DOWN.
    */
   class ProbeSession : public Session {
-    
   public:
+
     /**
      * Constructor
      * 
-     * @param capUtils Object providing support for UNIX capabilities.
      * @param log Object representing the API to the CASTOR logging system.
      * @param driveConfig Configuration of the tape drive to be probed.
      * @param sysWrapper Object representing the operating system.
      */
     ProbeSession(
-      server::ProcessCap &capUtils,
       castor::log::Logger &log,
       const DriveConfig &driveConfig,
       System::virtualWrapper &sysWrapper);
@@ -71,14 +71,9 @@ namespace daemon {
   private:
 
     /**
-     * Object providing support for UNIX capabilities.
-     */
-    server::ProcessCap &m_capUtils;
-    
-    /**
      * The logging object     
      */
-    castor::log::Logger & m_log;
+    castor::log::Logger &m_log;
     
     /**
      * The configuration of the tape drive to be probed.
@@ -88,7 +83,7 @@ namespace daemon {
     /**
      * The system wrapper used to find the device and instantiate the drive object
      */
-    System::virtualWrapper & m_sysWrapper;
+    System::virtualWrapper &m_sysWrapper;
 
     /** 
      * Execute the session and return the type of action to be performed
@@ -98,13 +93,6 @@ namespace daemon {
      * completed.
      */
     EndOfSessionAction exceptionThrowingExecute();
-
-    /**
-     * Sets the capabilities of the process and logs the result.
-     *
-     * @param capabilities The string representation of the capabilities.
-     */
-    void setProcessCapabilities(const std::string &capabilities);
 
     /**
      * Creates and returns the object that represents the tape drive to be

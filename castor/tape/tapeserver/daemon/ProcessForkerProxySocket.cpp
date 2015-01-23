@@ -226,38 +226,3 @@ castor::messages::ForkCleaner castor::tape::tapeserver::daemon::
 
   return msg;
 }
-
-//------------------------------------------------------------------------------
-// forkProbe
-//------------------------------------------------------------------------------
-pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
-  forkProbe(const DriveConfig &driveConfig) {
-
-  // Request the process forker to fork a probe session
-  const messages::ForkProbe rqst = createForkProbeMsg(driveConfig);
-  ProcessForkerUtils::writeFrame(m_socketFd, rqst);
-
-  // Read back the reply
-  const int timeout = 10; // Timeout in seconds
-  messages::ForkSucceeded reply;
-  ProcessForkerUtils::readReplyOrEx(m_socketFd, timeout, reply);
-  log::Param params[] = {log::Param("pid", reply.pid())};
-  m_log(LOG_INFO,
-    "Got process ID of the probe session from the ProcessForker", params);
-
-  return reply.pid();
-}
-
-//------------------------------------------------------------------------------
-// createForkProbeMsg
-//------------------------------------------------------------------------------
-castor::messages::ForkProbe castor::tape::tapeserver::daemon::
-  ProcessForkerProxySocket::createForkProbeMsg(
-  const DriveConfig &driveConfig) {
-  messages::ForkProbe msg;
-
-  // Description of the tape drive
-  fillMsgWithDriveConfig(msg, driveConfig);
-
-  return msg;
-}

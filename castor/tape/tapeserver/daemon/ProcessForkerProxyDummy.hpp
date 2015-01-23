@@ -74,7 +74,6 @@ public:
    * @param labelJob The job received from the tape-labeling command-line tool.
    * @return The process identifier of the newly forked session which will
    * always be 0 because this is a dummy method.
-
    */
   pid_t forkLabel(const DriveConfig &driveConfig,
     const legacymsg::TapeLabelRqstMsgBody &labelJob);
@@ -97,15 +96,7 @@ public:
     const std::string &vid, const bool waitMediaInDrive,
     const uint32_t waitMediaInDriveTimeout);
   
-  /**
-   * Forks a probe session for the specified tape drive.
-   *
-   * @param driveConfig The configuration of the tape drive.
-   * @return The process identifier of the newly forked session.
-   */
-  virtual pid_t forkProbe(const DriveConfig &driveConfig);
-
-}; // class ProcessForkerProxySocket
+}; // class ProcessForkerProxyDummy
 
 } // namespace daemon
 } // namespace tapeserver

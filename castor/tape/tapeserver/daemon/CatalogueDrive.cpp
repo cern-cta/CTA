@@ -24,6 +24,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueDrive.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "castor/tape/tapeserver/daemon/ProbeSession.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/rmc_constants.h"
@@ -357,22 +358,17 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
 // configureUp
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::configureUp() {
-  bool vdqmNeedsUpdate = false;
   switch(m_state) {
   case DRIVE_STATE_UP:
-    // It is safe to refresh the status of the vdqm to up, so let's to it.
-    vdqmNeedsUpdate = true;
-    break;
   case DRIVE_STATE_RUNNING:
-    // We are in RUNNING in the VDQM: leave it like that.
+    // This state transition is idempotent
     break;
   case DRIVE_STATE_DOWN:
-    changeState(DRIVE_STATE_UP);
-    vdqmNeedsUpdate = true;
+    transitionFromDownToUp();
     break;
   case DRIVE_STATE_WAITDOWN:
-    // We are in RUNNING in the VDQM: leave it like that.
-    // We just cancel the WAIT DOWN internally.
+    // Leave state in vdqm as RUNNING, just update internally state to reflect
+    // the  future intention of transitioning to DOWN
     changeState(DRIVE_STATE_RUNNING);
     break;
   default:
@@ -384,8 +380,32 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureUp() {
       throw ex;
     }
   }
-  if (vdqmNeedsUpdate)
-    m_vdqm.setDriveUp(m_hostName, m_config.getUnitName(), m_config.getDgn());
+}
+
+//-----------------------------------------------------------------------------
+// transitionFromDownToUp
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueDrive::
+  transitionFromDownToUp() {
+  checkDriveIsEmpty();
+  changeState(DRIVE_STATE_UP);
+  m_vdqm.setDriveUp(m_hostName, m_config.getUnitName(), m_config.getDgn());
+}
+
+//-----------------------------------------------------------------------------
+// checkDriveIsEmpty
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueDrive::checkDriveIsEmpty() {
+  castor::tape::System::realWrapper sWrapper;
+  ProbeSession probeSession(m_log, m_config, sWrapper);
+
+  const int probeSessionExitCode = probeSession.execute();
+
+  if(Session::MARK_DRIVE_AS_UP != probeSessionExitCode) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Drive " << m_config.getUnitName() << " is not empty";
+    throw ex;
+  }
 }
 
 //-----------------------------------------------------------------------------

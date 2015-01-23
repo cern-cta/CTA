@@ -323,6 +323,16 @@ private:
   CatalogueDrive& operator=(const CatalogueDrive&);
 
   /**
+   * Transition from DRIVE_STATE_DOWN to DRIVE_STATE_UP.
+   */
+  void transitionFromDownToUp();
+
+  /**
+   * Throws an exception if the physical tape drive is not empty.
+   */
+  void checkDriveIsEmpty();
+
+  /**
    * Timeout in seconds to be used when performing network I/O.
    */
   const int m_netTimeout;

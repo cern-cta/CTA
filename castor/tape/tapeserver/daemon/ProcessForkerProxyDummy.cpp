@@ -60,12 +60,3 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
   // This is a dummy method and so intentionally does nothing
   return 0;
 }
-
-//------------------------------------------------------------------------------
-// forkProbe
-//------------------------------------------------------------------------------
-pid_t castor::tape::tapeserver::daemon::ProcessForkerProxyDummy::
-  forkProbe(const DriveConfig &driveConfig) {
-  // This is a dummy method and so intentionally does nothing
-  return 0;
-}

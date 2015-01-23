@@ -110,14 +110,6 @@ public:
    */
   pid_t forkCleaner(const DriveConfig &driveConfig,
     const std::string &vid, const bool waitMediaInDrive, const uint32_t waitMediaInDriveTimeout);
-  
-  /**
-   * Forks a probe session for the specified tape drive.
-   *
-   * @param driveConfig The configuration of the tape drive.
-   * @return The process identifier of the newly forked session.
-   */
-  virtual pid_t forkProbe(const DriveConfig &driveConfig);
 
 private:
 
@@ -216,16 +208,6 @@ private:
     const bool waitMediaInDrive,
     const uint32_t waitMediaInDriveTimeout);
 
-  /**
-   * Creates a ForkProbe message from the specified tape-drive
-   * configuration and probe job.
-   *
-   * @param driveConfig The configuration of the tape drive.
-   * @return The message.
-   */
-  messages::ForkProbe createForkProbeMsg(
-    const DriveConfig &driveConfig);
-  
 }; // class ProcessForkerProxySocket
 
 } // namespace daemon
