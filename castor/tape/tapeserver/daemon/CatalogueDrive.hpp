@@ -39,6 +39,7 @@
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmDriveSynchronizer.hpp"
+#include "castor/tape/tapeserver/system/Wrapper.hpp"
 
 #include <iostream>
 #include <memory>
@@ -76,6 +77,7 @@ public:
    * @param state The initial state of the tape drive.
    * @param catalogueConfig The CASTOR configuration parameters to be used by
    * the catalogue.
+   * @param sysWrapper Object representing the operating system.
    */
   CatalogueDrive(
     const int netTimeout,
@@ -87,7 +89,8 @@ public:
     const std::string &hostName,
     const DriveConfig &config,
     const CatalogueDriveState state,
-    const CatalogueConfig &catalogueConfig) throw();
+    const CatalogueConfig &catalogueConfig,
+    System::virtualWrapper &sysWrapper) throw();
 
   /**
    * Destructor
@@ -372,6 +375,11 @@ private:
    * The configuration of the tape-drive.
    */
   DriveConfig m_config;
+
+  /**
+   * Object representing the operating system.
+   */
+  System::virtualWrapper &m_sysWrapper;
 
   /**
    * The current state of the tape drive.

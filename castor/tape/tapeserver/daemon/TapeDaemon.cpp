@@ -212,6 +212,7 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   m_processForkerPid = forkProcessForker(cmdPair, reaperPair);
 
   m_processForker = new ProcessForkerProxySocket(m_log, cmdPair.tapeDaemon);
+  castor::tape::System::realWrapper sysWrapper;
   m_catalogue = new Catalogue(
     m_netTimeout,
     m_log,
@@ -220,7 +221,9 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
     m_vdqm,
     m_vmgr,
     m_hostName,
-    m_tapeDaemonConfig.catalogueConfig);
+    m_tapeDaemonConfig.catalogueConfig,
+    sysWrapper
+  );
 
   m_catalogue->populate(m_driveConfigs);
 

@@ -27,6 +27,7 @@
 #include "castor/log/DummyLogger.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxyDummy.hpp"
 #include "castor/tape/tapeserver/daemon/TestingVdqmConnectionHandler.hpp"
+#include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/reactor/DummyZMQReactor.hpp"
 #include "castor/utils/SmartFd.hpp"
 
@@ -52,7 +53,8 @@ protected:
       m_vdqm,
       m_vmgr,
       "hostName",
-      m_catalogueConfig) {
+      m_catalogueConfig,
+      m_mockWrapper) {
   }
 
   castor::log::DummyLogger m_log;
@@ -72,6 +74,8 @@ protected:
   castor::legacymsg::VmgrProxyDummy m_vmgr;
 
   castor::tape::tapeserver::daemon::CatalogueConfig m_catalogueConfig;
+
+  castor::tape::System::mockWrapper m_mockWrapper;
 
   castor::tape::tapeserver::daemon::Catalogue m_catalogue;
 

@@ -48,7 +48,8 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   const std::string &hostName,
   const DriveConfig &config,
   const CatalogueDriveState state,
-  const CatalogueConfig &catalogueConfig)
+  const CatalogueConfig &catalogueConfig,
+  System::virtualWrapper &sysWrapper)
   throw():
   m_netTimeout(netTimeout),
   m_log(log),
@@ -58,6 +59,7 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   m_vmgr(vmgr),
   m_hostName(hostName),
   m_config(config),
+  m_sysWrapper(sysWrapper),
   m_state(state),
   m_waitJobTimeoutSecs(catalogueConfig.waitJobTimeoutSecs),
   m_mountTimeoutSecs(catalogueConfig.mountTimeoutSecs),
@@ -396,8 +398,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
 // checkDriveIsEmpty
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::checkDriveIsEmpty() {
-  castor::tape::System::realWrapper sWrapper;
-  ProbeSession probeSession(m_log, m_config, sWrapper);
+  ProbeSession probeSession(m_log, m_config, m_sysWrapper);
 
   const int probeSessionExitCode = probeSession.execute();
 

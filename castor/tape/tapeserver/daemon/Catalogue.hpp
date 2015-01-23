@@ -66,6 +66,7 @@ public:
    * name is needed to fill in messages to be sent to the vdqmd daemon.
    * @param catalogueConfig The CASTOR configuration parameters to be used by
    * the catalogue.
+   * @param sysWrapper Object representing the operating system.
    */
   Catalogue(
     const int netTimeout,
@@ -75,7 +76,8 @@ public:
     legacymsg::VdqmProxy &vdqm,
     legacymsg::VmgrProxy &vmgr,
     const std::string &hostName,
-    const CatalogueConfig &catalogueConfig);
+    const CatalogueConfig &catalogueConfig,
+    System::virtualWrapper &sysWrapper);
 
   /**
    * Destructor.
@@ -211,6 +213,11 @@ private:
    * The CASTOR configuration parameters to be used by the catalogue.
    */
   const CatalogueConfig m_catalogueConfig;
+
+  /**
+   * Object representing the operating system.
+   */ 
+  System::virtualWrapper &m_sysWrapper;
 
   /**
    * Type that maps the unit name of a tape drive to the catalogue entry of
