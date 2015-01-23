@@ -36,10 +36,11 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession *
   ProcessForkerProxy &processForker,
   const std::string &vid,
   const time_t assignmentTime,
-  const uint32_t driveReadyDelayInSeconds) {
+  const bool waitMediaInDrive,
+  const uint32_t waitMediaInDriveTimeout) {
 
-  const pid_t pid = processForker.forkCleaner(driveConfig, vid,
-    driveReadyDelayInSeconds);
+  const pid_t pid = processForker.forkCleaner(driveConfig, vid, waitMediaInDrive,
+      waitMediaInDriveTimeout);
 
   return new CatalogueCleanerSession(
     log,

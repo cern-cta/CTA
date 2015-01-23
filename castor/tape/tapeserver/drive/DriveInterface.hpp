@@ -182,7 +182,7 @@ namespace drive {
     virtual void readExactBlock(void * data, size_t count, std::string context)  = 0;
     virtual void readFileMark(std::string context)  = 0;
     
-    virtual bool waitUntilReady(int timeoutSecond)  = 0;    
+    virtual void waitUntilReady(const uint32_t timeoutSecond)  = 0;    
     
     virtual bool isWriteProtected()  = 0;
     virtual bool isAtBOT()  = 0;

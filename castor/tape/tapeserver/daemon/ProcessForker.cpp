@@ -291,8 +291,10 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", rqst.unitname()));
   params.push_back(log::Param("TPVID", rqst.vid()));
-  params.push_back(log::Param("driveReadyDelayInSeconds",
-    rqst.drivereadydelayinseconds()));
+  params.push_back(log::Param("waitMediaInDrive",
+    rqst.waitmediaindrive()));
+  params.push_back(log::Param("waitMediaInDriveTimeout",
+    rqst.waitmediaindrivetimeout()));
   m_log(LOG_INFO, "ProcessForker handling ForkCleaner message", params);
 
   // Fork a label session
@@ -347,8 +349,6 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   // Log the contents of the incomming request
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", rqst.unitname()));
-  params.push_back(log::Param("driveReadyDelayInSeconds",
-    rqst.drivereadydelayinseconds()));
   m_log(LOG_INFO, "ProcessForker handling ForkProbe message", params);
 
   // Fork a label session
@@ -527,6 +527,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     std::list<log::Param> params;
     params.push_back(log::Param("unitName", driveConfig.getUnitName()));
     params.push_back(log::Param("TPVID", rqst.vid()));
+    params.push_back(log::Param("waitMediaInDrive", rqst.waitmediaindrive()));
+    params.push_back(log::Param("waitMediaInDriveTimeout", rqst.waitmediaindrivetimeout()));
     m_log(LOG_INFO, "Cleaner-session child-process started", params);
 
     const int sizeOfIOThreadPoolForZMQ = 1;
@@ -554,7 +556,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       driveConfig,
       sWrapper,
       rqst.vid(),
-      rqst.drivereadydelayinseconds());
+      rqst.waitmediaindrive(),
+      rqst.waitmediaindrivetimeout());
     return cleanerSession.execute();
   } catch(castor::exception::Exception &ex) {
     throw ex;
@@ -594,8 +597,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       capUtils,
       m_log,
       driveConfig,
-      sWrapper,
-      rqst.drivereadydelayinseconds());
+      sWrapper);
     return probeSession.execute();
   } catch(castor::exception::Exception &ex) {
     throw ex;

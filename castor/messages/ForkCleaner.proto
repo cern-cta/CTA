@@ -31,7 +31,6 @@ message ForkCleaner {
   required string vid = 5;
 
   // Description of the cleaner job
-  // Warning, setting this value to 0 has the special meaning of NOT testing to
-  // see if the drive contains a tape.
-  required uint32 drivereadydelayinseconds = 6;
+  required bool waitMediaInDrive = 6;
+  required uint32 waitMediaInDriveTimeout = 7;
 }

@@ -52,7 +52,7 @@ TEST(castor_tape_drive_Drive, OpensCorrectly) {
   EXPECT_CALL(sysWrapper, open(_, _)).Times(21);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
-  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
+  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(0);
   EXPECT_CALL(sysWrapper, close(_)).Times(21);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
@@ -92,7 +92,7 @@ TEST(castor_tape_drive_Drive, getPositionInfoAndPositionToLogicalObject) {
   EXPECT_CALL(sysWrapper, open(_, _)).Times(21);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
-  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
+  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(0);
   EXPECT_CALL(sysWrapper, close(_)).Times(21);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
@@ -141,7 +141,7 @@ TEST(castor_tape_drive_Drive, setDensityAndCompression) {
   EXPECT_CALL(sysWrapper, open(_, _)).Times(21);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
-  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
+  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(0);
   EXPECT_CALL(sysWrapper, close(_)).Times(21);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
@@ -186,7 +186,7 @@ TEST(castor_tape_drive_Drive, setStDriverOptions) {
   EXPECT_CALL(sysWrapper, open(_, _)).Times(21);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
-  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
+  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(0);
   EXPECT_CALL(sysWrapper, close(_)).Times(21);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
@@ -221,7 +221,7 @@ TEST(castor_tape_drive_Drive, getDeviceInfo) {
   EXPECT_CALL(sysWrapper, open(_, _)).Times(21);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
-  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
+  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(0);
   EXPECT_CALL(sysWrapper, close(_)).Times(21);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
@@ -260,7 +260,7 @@ TEST(castor_tape_drive_Drive, getCompressionAndClearCompressionStats) {
   EXPECT_CALL(sysWrapper, open(_, _)).Times(25);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
-  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(6);
+  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(0);
   EXPECT_CALL(sysWrapper, close(_)).Times(25);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
@@ -359,7 +359,7 @@ TEST(castor_tape_drive_Drive, getTapeAlerts) {
       EXPECT_CALL(sysWrapper, open(_, _)).Times(AtLeast(21));
       EXPECT_CALL(sysWrapper, read(_, _, _)).Times(AtLeast(38));
       EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
-      EXPECT_CALL(sysWrapper, ioctl(_, _, An<mtget*>())).Times(2);
+      EXPECT_CALL(sysWrapper, ioctl(_, _, An<mtget*>())).Times(0);
       EXPECT_CALL(sysWrapper, close(_)).Times(AtLeast(21));
       EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(AtLeast(3));
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(7));

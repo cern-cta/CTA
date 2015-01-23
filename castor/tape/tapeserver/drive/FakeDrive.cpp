@@ -230,10 +230,9 @@ void castor::tape::tapeserver::drive::FakeDrive::readFileMark(std::string contex
   }
   m_currentPosition++;  
 }
-bool castor::tape::tapeserver::drive::FakeDrive::waitUntilReady(int timeoutSecond)  {
+void castor::tape::tapeserver::drive::FakeDrive::waitUntilReady(const uint32_t timeoutSecond)  {
   if (m_failToMount)
     throw castor::exception::Exception("In FakeDrive::waitUntilReady: Failed to mount the tape");
-  return true;
 }  
 bool castor::tape::tapeserver::drive::FakeDrive::isWriteProtected()  {
   return false;

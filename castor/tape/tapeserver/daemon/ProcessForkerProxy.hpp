@@ -81,25 +81,23 @@ public:
    * tape in the drive if there is in fact a tape in the drive and its volume
    * identifier is known.  If the volume identifier is not known then this
    * parameter should be set to an empty string.
-   * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
-   * the drive to be ready with a tape inside of it.  Warning, setting this
-   * value to 0 has the special meaning of NOT testing to see if the drive
-   * contains a tape.
+   * @param waitMediaInDrive true if we want to check the presence of the media in the drive before cleaning,
+   * false otherwise.
+   * @param waitMediaInDriveTimeout The maximum number of seconds to wait for
+   * the media to be ready for operations inside the drive.
    * @return The process identifier of the newly forked session.
    */
   virtual pid_t forkCleaner(const DriveConfig &driveConfig,
-    const std::string &vid, const uint32_t driveReadyDelayInSeconds) = 0;
+    const std::string &vid, const bool waitMediaInDrive,
+    const uint32_t waitMediaInDriveTimeout) = 0;
   
   /**
    * Forks a probe session for the specified tape drive.
    *
    * @param driveConfig The configuration of the tape drive.
-   * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
-   * the drive to be raedy with a tape inside of it.
    * @return The process identifier of the newly forked session.
    */
-  virtual pid_t forkProbe(const DriveConfig &driveConfig, 
-    const uint32_t driveReadyDelayInSeconds) = 0;
+  virtual pid_t forkProbe(const DriveConfig &driveConfig) = 0;
 
 }; // class ProcessForkerProxy
 

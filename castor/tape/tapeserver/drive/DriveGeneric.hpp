@@ -155,30 +155,57 @@ namespace drive {
      * SCSI replay with sense keys not equals to NotReady or UnitAttention as 
      * errors.
      * 
+     * This method will at least query the tape drive once.
+     * 
      * @param timeoutSecond The time in seconds for which it waits the drive to 
      *                      be ready.
      * @return true if the drive has the status GMT_ONLINE.
      */
-    virtual bool waitUntilReady(int timeoutSecond);
+    virtual void waitUntilReady(const uint32_t timeoutSecond);
     
     virtual bool hasTapeInPlace() {
-      UpdateDriveStatus();
-      return m_driveStatus.hasTapeInPlace;
+
+      struct mtget mtInfo;
+
+      /* Read drive status */
+      castor::exception::Errnum::throwOnMinusOne(
+      m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo), 
+      std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
+      return GMT_DR_OPEN(mtInfo.mt_gstat) == 0;
     }
     
     virtual bool isWriteProtected()  {
-      UpdateDriveStatus();
-      return m_driveStatus.writeProtection;
+
+      struct mtget mtInfo;
+
+      /* Read drive status */
+      castor::exception::Errnum::throwOnMinusOne(
+      m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo), 
+      std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
+      return GMT_WR_PROT(mtInfo.mt_gstat)!=0;
     }
     
     virtual bool isAtBOT()  {
-      UpdateDriveStatus();
-      return m_driveStatus.bot;
+
+      struct mtget mtInfo;
+
+      /* Read drive status */
+      castor::exception::Errnum::throwOnMinusOne(
+      m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo), 
+      std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
+
+      return GMT_BOT(mtInfo.mt_gstat)!=0;
     }
     
     virtual bool isAtEOD()  {
-      UpdateDriveStatus();
-      return m_driveStatus.eod;
+
+      struct mtget mtInfo;
+
+      /* Read drive status */
+      castor::exception::Errnum::throwOnMinusOne(
+      m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo), 
+      std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
+      return GMT_EOD(mtInfo.mt_gstat)!=0;
     }    
         
     /**
@@ -328,8 +355,6 @@ namespace drive {
     SCSI::DeviceInfo m_SCSIInfo;
     int m_tapeFD; 
     castor::tape::System::virtualWrapper & m_sysWrapper;
-    struct mtget m_mtInfo;
-    struct driveStatus m_driveStatus;
     /**
      * Set the MTFastEOM option of the ST driver. This function is used only internally in 
      * mounttape (in CAStor), so it could be a private function, not visible to 
@@ -339,9 +364,9 @@ namespace drive {
     virtual void setSTFastMTEOM(bool fastMTEOM) ;
     
     /**
-     * Update the drive status member.
+     * Time based loop around "test unit ready" command
      */
-    virtual void UpdateDriveStatus() ;
+    void waitTestUnitReady(const uint32_t timeoutSecond);
   };
 
   class DriveT10000 : public DriveGeneric {

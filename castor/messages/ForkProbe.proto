@@ -26,7 +26,4 @@ message ForkProbe {
   required string dgn = 2;
   required string devfilename = 3;
   required string libraryslot = 4;
-
-  // Description of the probe job
-  required uint32 drivereadydelayinseconds = 6;
 }

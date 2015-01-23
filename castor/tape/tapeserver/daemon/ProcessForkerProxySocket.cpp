@@ -185,11 +185,12 @@ castor::messages::ForkLabel castor::tape::tapeserver::daemon::
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   forkCleaner(const DriveConfig &driveConfig, const std::string &vid,
-  const uint32_t driveReadyDelayInSeconds) {
+  const bool waitMediaInDrive,
+  const uint32_t waitMediaInDriveTimeout) {
 
   // Request the process forker to fork a label session
-  const messages::ForkCleaner rqst = createForkCleanerMsg(driveConfig, vid,
-    driveReadyDelayInSeconds);
+  const messages::ForkCleaner rqst = createForkCleanerMsg(driveConfig, vid, waitMediaInDrive,
+    waitMediaInDriveTimeout);
   ProcessForkerUtils::writeFrame(m_socketFd, rqst);
 
   // Read back the reply
@@ -209,7 +210,8 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
 castor::messages::ForkCleaner castor::tape::tapeserver::daemon::
   ProcessForkerProxySocket::createForkCleanerMsg(
   const DriveConfig &driveConfig, const std::string &vid,
-  const uint32_t driveReadyDelayInSeconds) {
+  const bool waitMediaInDrive,
+  const uint32_t waitMediaInDriveTimeout) {
   messages::ForkCleaner msg;
 
   // Description of the tape drive
@@ -219,7 +221,8 @@ castor::messages::ForkCleaner castor::tape::tapeserver::daemon::
   msg.set_vid(vid);
 
   // Description of the cleaner job
-  msg.set_drivereadydelayinseconds(driveReadyDelayInSeconds);
+  msg.set_waitmediaindrive(waitMediaInDrive);
+  msg.set_waitmediaindrivetimeout(waitMediaInDriveTimeout);
 
   return msg;
 }
@@ -228,12 +231,10 @@ castor::messages::ForkCleaner castor::tape::tapeserver::daemon::
 // forkProbe
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
-  forkProbe(const DriveConfig &driveConfig, 
-  const uint32_t driveReadyDelayInSeconds) {
+  forkProbe(const DriveConfig &driveConfig) {
 
   // Request the process forker to fork a probe session
-  const messages::ForkProbe rqst = createForkProbeMsg(driveConfig,
-    driveReadyDelayInSeconds);
+  const messages::ForkProbe rqst = createForkProbeMsg(driveConfig);
   ProcessForkerUtils::writeFrame(m_socketFd, rqst);
 
   // Read back the reply
@@ -252,15 +253,11 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
 //------------------------------------------------------------------------------
 castor::messages::ForkProbe castor::tape::tapeserver::daemon::
   ProcessForkerProxySocket::createForkProbeMsg(
-  const DriveConfig &driveConfig, 
-  const uint32_t driveReadyDelayInSeconds) {
+  const DriveConfig &driveConfig) {
   messages::ForkProbe msg;
 
   // Description of the tape drive
   fillMsgWithDriveConfig(msg, driveConfig);
-
-  // Description of the cleaner job
-  msg.set_drivereadydelayinseconds(driveReadyDelayInSeconds);
 
   return msg;
 }

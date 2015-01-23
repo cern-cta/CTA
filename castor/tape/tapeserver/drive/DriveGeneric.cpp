@@ -62,20 +62,6 @@ m_tapeFD(-1),  m_sysWrapper(sw) {
   castor::exception::Errnum::throwOnMinusOne(
       m_tapeFD = m_sysWrapper.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
       std::string("Could not open device file: ") + m_SCSIInfo.nst_dev);
-  UpdateDriveStatus();
-}
-
-void drive::DriveGeneric::UpdateDriveStatus()  {
-  /* Read drive status */
-  castor::exception::Errnum::throwOnMinusOne(
-  m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &m_mtInfo), 
-  std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
-  
-  if(GMT_BOT(m_mtInfo.mt_gstat)) m_driveStatus.bot=true; else m_driveStatus.bot=false;
-  if(GMT_EOD(m_mtInfo.mt_gstat)) m_driveStatus.eod=true; else m_driveStatus.eod=false;
-  if(GMT_WR_PROT(m_mtInfo.mt_gstat)) m_driveStatus.writeProtection=true; else m_driveStatus.writeProtection=false;
-  if(GMT_ONLINE(m_mtInfo.mt_gstat)) m_driveStatus.ready=true; else m_driveStatus.ready=false;
-  if(GMT_DR_OPEN(m_mtInfo.mt_gstat)) m_driveStatus.hasTapeInPlace=false; else m_driveStatus.hasTapeInPlace=true;
 }
 
 /**
@@ -379,10 +365,12 @@ bool drive::DriveGeneric::isTapeBlank() {
   mtCmd2.mt_op = MTFSR;
   mtCmd2.mt_count = 1;
  
+  struct mtget mtInfo;
+  
   if((0 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd1)) && (0 != m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd2))) {
     //we are doing it the old CASTOR way (see readlbl.c)
-    if(m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &m_mtInfo)>=0) {
-      if(GMT_EOD(m_mtInfo.mt_gstat) && GMT_BOT(m_mtInfo.mt_gstat)) {
+    if(m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo)>=0) {
+      if(GMT_EOD(mtInfo.mt_gstat) && GMT_BOT(mtInfo.mt_gstat)) {
         return true;
       }
     }    
@@ -865,44 +853,60 @@ void drive::DriveGeneric::testUnitReady() const {
 //------------------------------------------------------------------------------
 // waitUntilReady
 //------------------------------------------------------------------------------
-bool drive::DriveGeneric::waitUntilReady(int timeoutSecond)  {
+void drive::DriveGeneric::waitUntilReady(const uint32_t timeoutSecond)  {
+    
+  waitTestUnitReady(timeoutSecond);
+
+  // we need to reopen the drive to update the GMT_ONLINE cache of the st driver
+  castor::exception::Errnum::throwOnMinusOne(m_sysWrapper.close(m_tapeFD),
+    std::string("Could not close device file: ") + m_SCSIInfo.nst_dev);
+  castor::exception::Errnum::throwOnMinusOne(
+    m_tapeFD = m_sysWrapper.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
+          std::string("Could not open device file: ") + m_SCSIInfo.nst_dev);
+
+  struct mtget mtInfo;
+
+  /* Read drive status */
+  castor::exception::Errnum::throwOnMinusOne(
+  m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo), 
+  std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
+
+  if(GMT_ONLINE(mtInfo.mt_gstat)==0) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Tape drive empty after waiting " <<
+      timeoutSecond << " seconds.";
+    throw ex;
+  }
+}
+
+void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond)  {
   std::string lastTestUnitReadyExceptionMsg("");
-  
-  for (castor::utils::Timer t; t.secs() < timeoutSecond;) {
+  castor::utils::Timer t;
+  // Query the tape drive at least once hence a do while loop/
+  do  {
     // testUnitReady() uses SG_IO TEST_UNIT_READY to avoid calling open on the
     // st driver, because the open of the st driver is not as tolerant of
-    // certain types of error
+    // certain types of error such as when an incompatible media type is mounted
+    // into a drive
     try {
-      testUnitReady();           
+      testUnitReady();
+      return;
     } catch (castor::tape::SCSI::NotReadyException &ex){
       lastTestUnitReadyExceptionMsg = ex.getMessage().str();
-      usleep(100 * 1000); // 1/10 second
-      continue;
     } catch (castor::tape::SCSI::UnitAttentionException &ex){
       lastTestUnitReadyExceptionMsg = ex.getMessage().str();
-      usleep(100 * 1000); // 1/10 second
-      continue;
     } catch (...) {
       throw;
-    }; 
-    // Test Unit Ready finished with a GOOD status.
-    // we need to reopen the drive to have the GMT_ONLINE check working (see "man st")
-    castor::exception::Errnum::throwOnMinusOne(m_sysWrapper.close(m_tapeFD),
-      std::string("Could not close device file: ") + m_SCSIInfo.nst_dev);
-    castor::exception::Errnum::throwOnMinusOne(
-      m_tapeFD = m_sysWrapper.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
-            std::string("Could not open device file: ") + m_SCSIInfo.nst_dev);
-    UpdateDriveStatus();
-    if(m_driveStatus.ready) {
-      return m_driveStatus.ready;
     }
-  }
+    
+    usleep(100 * 1000); // 1/10 second
+  } while(t.secs() < timeoutSecond);
 
+  // Throw an exception for the last tolerated exception that exceeded the timer
   castor::exception::Exception ex;
-  ex.getMessage() << "Cant get the drive ready after waiting " <<
+  ex.getMessage() << "Failed to test unit ready after waiting " <<
     timeoutSecond << " seconds: " << lastTestUnitReadyExceptionMsg;
   throw ex;
 }
 
 }}}
-

@@ -33,14 +33,16 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   const DriveConfig &driveConfig,
   System::virtualWrapper &sysWrapper,
   const std::string &vid,
-  const uint32_t driveReadyDelayInSeconds):
+  const bool waitMediaInDrive,
+  const uint32_t waitMediaInDriveTimeout):
   m_capUtils(capUtils),
   m_mc(mc),
   m_log(log),
   m_driveConfig(driveConfig),
   m_sysWrapper(sysWrapper),
   m_vid(vid),
-  m_driveReadyDelayInSeconds(driveReadyDelayInSeconds) {
+  m_waitMediaInDrive(waitMediaInDrive),
+  m_waitMediaInDriveTimeout(waitMediaInDriveTimeout) {
 }
 
 //------------------------------------------------------------------------------
@@ -83,7 +85,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   std::auto_ptr<drive::DriveInterface> drivePtr = createDrive();
   drive::DriveInterface &drive = *drivePtr.get();
 
-  waitUntilDriveIsReady(drive);
+  if(m_waitMediaInDrive) {
+    waitUntilMediaIsReady(drive);
+  }
 
   if(!drive.hasTapeInPlace()) {
     m_log(LOG_INFO, "Cleaner found tape drive empty", params);
@@ -141,26 +145,22 @@ std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
 //------------------------------------------------------------------------------
 // waitUntilDriveIsReady
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CleanerSession::waitUntilDriveIsReady(
-  drive::DriveInterface &drive) {
-  // Warning, setting m_driveReadyDelayInSeconds to 0 has the special meaning of
-  // NOT testing to see if the drive contains a tape.
-  if(0 != m_driveReadyDelayInSeconds) {
-    std::list<log::Param> params;
-    params.push_back(log::Param("TPVID", m_vid));
-    params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
-    params.push_back(log::Param("driveReadyDelayInSeconds",
-      m_driveReadyDelayInSeconds));
+void castor::tape::tapeserver::daemon::CleanerSession::waitUntilMediaIsReady(
+  drive::DriveInterface &drive) {  
+  std::list<log::Param> params;
+  params.push_back(log::Param("TPVID", m_vid));
+  params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
+  params.push_back(log::Param("waitMediaInDriveTimeout",
+    m_waitMediaInDriveTimeout));
 
-    try {
-      m_log(LOG_INFO, "Cleaner waiting for drive to be ready", params);
-      drive.waitUntilReady(m_driveReadyDelayInSeconds);
-      m_log(LOG_INFO, "Cleaner detected drive is ready", params);
-    } catch (castor::exception::Exception &ex) {
-      params.push_back(log::Param("message", ex.getMessage().str()));
-      m_log(LOG_INFO, "Cleaner caught non-fatal exception whilst waiting for"
-        " drive to become ready", params);
-    }
+  try {
+    m_log(LOG_INFO, "Cleaner waiting for drive to be ready", params);
+    drive.waitUntilReady(m_waitMediaInDriveTimeout);
+    m_log(LOG_INFO, "Cleaner detected drive is ready", params);
+  } catch (castor::exception::Exception &ex) {
+    params.push_back(log::Param("message", ex.getMessage().str()));
+    m_log(LOG_INFO, "Cleaner caught non-fatal exception whilst waiting for"
+      " drive to become ready", params);
   }
 }
 

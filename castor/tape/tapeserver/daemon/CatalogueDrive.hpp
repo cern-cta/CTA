@@ -547,12 +547,15 @@ private:
    * @param The assignment time associated with the tape drive or 0 if not
    * known.  The assignment time is given as the number of seconds elapsed
    * since the Epoch.
-   * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
-   * the drive to be raedy with a tape inside of it.
+   * @param waitMediaInDrive true if we want to check the presence of the media in the drive before cleaning,
+   * false otherwise.
+   * @param waitMediaInDriveTimeout The maximum number of seconds to wait for
+   * the media to be ready for operations inside the drive.
    * @return The catalogue cleaner-session.
    */
   CatalogueCleanerSession *createCleaner(const std::string &vid,
-    const time_t assignmentTime, const uint32_t driveReadyDelayInSeconds) const;
+    const time_t assignmentTime, const bool waitMediaInDrive,
+    const uint32_t waitMediaInDriveTimeout) const;
 
 }; // class CatalogueDrive
 

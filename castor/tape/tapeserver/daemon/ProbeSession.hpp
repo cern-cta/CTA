@@ -52,15 +52,12 @@ namespace daemon {
      * @param log Object representing the API to the CASTOR logging system.
      * @param driveConfig Configuration of the tape drive to be probed.
      * @param sysWrapper Object representing the operating system.
-     * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
-     * the drive to be raedy with a tape inside of it.
      */
     ProbeSession(
       server::ProcessCap &capUtils,
       castor::log::Logger &log,
       const DriveConfig &driveConfig,
-      System::virtualWrapper &sysWrapper,
-      const uint32_t driveReadyDelayInSeconds);
+      System::virtualWrapper &sysWrapper);
     
     /** 
      * Execute the session and return the type of action to be performed
@@ -93,12 +90,6 @@ namespace daemon {
      */
     System::virtualWrapper & m_sysWrapper;
 
-    /**
-     * The maximum number of seconds to wait for the drive to be ready with a
-     * tape inside of it.
-     */
-    const uint32_t m_driveReadyDelayInSeconds;
-
     /** 
      * Execute the session and return the type of action to be performed
      * immediately after the session has completed.
@@ -122,13 +113,6 @@ namespace daemon {
      * @return The tape drive.
      */
     std::auto_ptr<drive::DriveInterface> createDrive();
-
-    /**
-     * Waits for the specified drive to be ready.
-     *
-     * @param drive The tape drive.
-     */
-    void waitUntilDriveIsReady(drive::DriveInterface &drive);
     
   }; // class ProbeSession
 

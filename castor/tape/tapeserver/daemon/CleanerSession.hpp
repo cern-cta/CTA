@@ -55,10 +55,10 @@ namespace daemon {
      * @param sysWrapper Object representing the operating system.
      * @param vid The volume identifier of the mounted tape if known,
      * else the empty string.
-     * @param driveReadyDelayInSeconds The maximum number of seconds to wait for
-     * the drive to be ready with a tape inside of it.  Warning, setting this
-     * value to 0 has the special meaning of NOT testing to see if the drive
-     * contains a tape.
+     * @param waitMediaInDrive true if we want to check the presence of the media in the drive before cleaning,
+     * false otherwise.
+     * @param waitMediaInDriveTimeout The maximum number of seconds to wait for
+     * the media to be ready for operations inside the drive.
      */
     CleanerSession(
       server::ProcessCap &capUtils,
@@ -67,7 +67,8 @@ namespace daemon {
       const DriveConfig &driveConfig,
       System::virtualWrapper &sysWrapper,
       const std::string &vid,
-      const uint32_t driveReadyDelayInSeconds);
+      const bool waitMediaInDrive,
+      const uint32_t waitMediaInDriveTimeout);
     
     /** 
      * Execute the session and return the type of action to be performed
@@ -112,11 +113,16 @@ namespace daemon {
     const std::string m_vid;
 
     /**
-     * The maximum number of seconds to wait for the drive to be raedy with a
-     * tape inside of it.  Warning, setting this value to 0 has the special
-     * meaning of NOT testing to see if the drive contains a tape.
+     * true if we want to check the presence of the media in the drive before cleaning,
+     * false otherwise.
+     */    
+    const bool m_waitMediaInDrive;
+    
+    /**
+     * The maximum number of seconds to wait for
+     * the media to be ready for operations inside the drive.
      */
-    const uint32_t m_driveReadyDelayInSeconds;
+    const uint32_t m_waitMediaInDriveTimeout;
 
     /** 
      * Execute the session and return the type of action to be performed
@@ -147,7 +153,7 @@ namespace daemon {
      *
      * @param drive The tape drive.
      */
-    void waitUntilDriveIsReady(drive::DriveInterface &drive);
+    void waitUntilMediaIsReady(drive::DriveInterface &drive);
 
     /**
      * Rewinds the specified tape drive.

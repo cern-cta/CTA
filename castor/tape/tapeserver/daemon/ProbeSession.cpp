@@ -30,13 +30,11 @@ castor::tape::tapeserver::daemon::ProbeSession::ProbeSession(
   server::ProcessCap &capUtils,
   castor::log::Logger &log,
   const DriveConfig &driveConfig,
-  System::virtualWrapper &sysWrapper,
-  const uint32_t driveReadyDelayInSeconds):
+  System::virtualWrapper &sysWrapper):
   m_capUtils(capUtils),
   m_log(log),
   m_driveConfig(driveConfig),
-  m_sysWrapper(sysWrapper),
-  m_driveReadyDelayInSeconds(driveReadyDelayInSeconds) {
+  m_sysWrapper(sysWrapper) {
 }
 
 //------------------------------------------------------------------------------
@@ -76,8 +74,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
   std::auto_ptr<drive::DriveInterface> drivePtr = createDrive();
   drive::DriveInterface &drive = *drivePtr.get();
-
-  waitUntilDriveIsReady(drive);
 
   if(drive.hasTapeInPlace()) {
     m_log(LOG_INFO, "Probe found tape drive with a tape inside", params);
@@ -120,27 +116,4 @@ std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
   } 
     
   return drive;
-}
-
-//------------------------------------------------------------------------------
-// waitUntilDriveIsReady
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::ProbeSession::waitUntilDriveIsReady(
-  drive::DriveInterface &drive) {
-  if(0 != m_driveReadyDelayInSeconds) {
-    std::list<log::Param> params;
-    params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
-    params.push_back(log::Param("driveReadyDelayInSeconds",
-      m_driveReadyDelayInSeconds));
-
-    try {
-      m_log(LOG_INFO, "Probe waiting for drive to be ready", params);
-      drive.waitUntilReady(m_driveReadyDelayInSeconds);
-      m_log(LOG_INFO, "Probe detected drive is ready", params);
-    } catch (castor::exception::Exception &ex) {
-      params.push_back(log::Param("message", ex.getMessage().str()));
-      m_log(LOG_INFO, "Probe caught non-fatal exception whilst waiting for"
-        " drive to become ready", params);
-    }
-  }
 }

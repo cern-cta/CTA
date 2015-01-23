@@ -536,7 +536,8 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
 castor::tape::tapeserver::daemon::CatalogueCleanerSession
   *castor::tape::tapeserver::daemon::CatalogueDrive::createCleaner(
   const std::string &vid, const time_t assignmentTime,
-  const uint32_t driveReadyDelayInSeconds) const {
+  const bool waitMediaInDrive,
+  const uint32_t waitMediaInDriveTimeout) const {
   try {
     return CatalogueCleanerSession::create(
       m_log,
@@ -545,7 +546,8 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession
       m_processForker,
       vid,
       assignmentTime,
-      driveReadyDelayInSeconds);
+      waitMediaInDrive,
+      waitMediaInDriveTimeout);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to create cleaner session: " <<
@@ -700,9 +702,10 @@ runningSessionKilled(uint32_t signal) {
   session->sessionKilled(signal);
 
   if(CatalogueSession::SESSION_TYPE_CLEANER != session->getType()) {
-    const uint32_t driveReadyDelayInSeconds = 60;
+    const uint32_t waitMediaInDriveTimeout = 60;
+    const bool waitMediaInDrive = true;
     m_session = createCleaner(session->getVid(), session->getAssignmentTime(),
-      driveReadyDelayInSeconds);
+      waitMediaInDrive, waitMediaInDriveTimeout);
   } else {
     changeState(DRIVE_STATE_DOWN);
     std::list<log::Param> params;
@@ -725,9 +728,10 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
   session->sessionFailed();
 
   changeState(DRIVE_STATE_WAITSHUTDOWNCLEANER);
-  const uint32_t driveReadyDelayInSeconds = 60;
+  const uint32_t waitMediaInDriveTimeout = 60;
+  const bool waitMediaInDrive = true;
   m_session = createCleaner(session->getVid(), session->getAssignmentTime(),
-    driveReadyDelayInSeconds);
+    waitMediaInDrive, waitMediaInDriveTimeout);
 }
 
 //------------------------------------------------------------------------------
@@ -790,9 +794,10 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
   session->sessionFailed();
 
   if(CatalogueSession::SESSION_TYPE_CLEANER != session->getType()) {
-    const uint32_t driveReadyDelayInSeconds = 60;
+    const uint32_t waitMediaInDriveTimeout = 60;
+    const bool waitMediaInDrive = true;
     m_session = createCleaner(session->getVid(), session->getAssignmentTime(),
-      driveReadyDelayInSeconds);
+      waitMediaInDrive, waitMediaInDriveTimeout);
   } else {
     changeState(DRIVE_STATE_DOWN);
 
@@ -972,10 +977,11 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::shutdown() {
     // Create a cleaner process to make 100% sure the tape drive is empty
     const std::string vid = ""; // Empty string means VID is not known
     const time_t assignmentTime = time(NULL);
-    // Setting driveReadyDelayInSeconds to 0 has the special meaning of
-    // NOT testing to see if the drive contains a tape
-    const uint32_t driveReadyDelayInSeconds = 0;
-    m_session = createCleaner(vid, assignmentTime, driveReadyDelayInSeconds);
+    
+    const uint32_t waitMediaInDriveTimeout = 0;
+    const bool waitMediaInDrive = false;
+    m_session = createCleaner(vid, assignmentTime,
+      waitMediaInDrive, waitMediaInDriveTimeout);
 
   // Else there is a running session
   } else {
