@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/messages/ForkCleaner.pb.h"
-#include "castor/messages/ForkProbe.pb.h"
 #include "castor/messages/ForkSucceeded.pb.h"
 #include "castor/messages/StopProcessForker.pb.h"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxySocket.hpp"
