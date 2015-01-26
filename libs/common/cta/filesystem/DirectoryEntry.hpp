@@ -3,11 +3,11 @@
 #include <string>
 
 namespace cta {
-namespace common {
+namespace filesystem {
 
 struct DirectoryEntry {
   std::string name;
 }; // DirectoryEntry
 
-} // namespace common
+} // namespace filesystem
 } // namespace cta

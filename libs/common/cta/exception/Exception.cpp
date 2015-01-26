@@ -1,21 +1,21 @@
-#include "cta/common/Exception.hpp"
+#include "cta/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::Exception::Exception(const std::string &message):
+cta::exception::Exception::Exception(const std::string &message):
   m_message(message) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::common::Exception::~Exception() throw() {
+cta::exception::Exception::~Exception() throw() {
 }
 
 //------------------------------------------------------------------------------
 // what
 //------------------------------------------------------------------------------
-const char *cta::common::Exception::what() const throw() {
+const char *cta::exception::Exception::what() const throw() {
   return m_message.c_str();
 }

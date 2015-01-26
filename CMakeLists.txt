@@ -7,6 +7,6 @@ project(cta)
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g")
 
-include_directories(${CMAKE_SOURCE_DIR})
-
-add_subdirectory(cta)
+add_subdirectory(libs)
+add_subdirectory(xroot_clients)
+add_subdirectory(xroot_plugins)

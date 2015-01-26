@@ -1,9 +1,9 @@
 #pragma once
 
-#include "cta/common/DirectoryEntry.hpp"
+#include "cta/filesystem/DirectoryEntry.hpp"
 
 namespace cta {
-namespace common {
+namespace filesystem {
 
 /**
  * Instances of ths class should be used in the following way to iterate
@@ -39,5 +39,5 @@ public:
 
 }; // DirectoryConstIterator
 
-} // namespace common
+} // namespace filesystem
 } // namespace cta
