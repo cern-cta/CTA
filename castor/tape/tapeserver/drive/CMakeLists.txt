@@ -32,6 +32,6 @@ target_link_libraries(TapeDriveReadWriteTest
   castorcommon
   castorclient
   castorTapeServerDaemon
-  ${GTEST_LIBRARY}
+  gtest
   gmock
   pthread)

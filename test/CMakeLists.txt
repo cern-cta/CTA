@@ -201,7 +201,7 @@ target_link_libraries(castorUnitTests
   castortapegatewayprotocol
   castorTapeServerDaemonTestDummies
   castorTapeServerDaemon
-  ${GTEST_LIBRARY}
+  gtest
   gmock
   pthread
   castorcommon
@@ -249,7 +249,7 @@ target_link_libraries(castorThreadedUnitTests
   castorvmgr
   castorrfio
   gmock
-  ${GTEST_LIBRARY}
+  gtest
   pthread
   TapeDrive
   SCSI
@@ -271,7 +271,7 @@ target_link_libraries(castorMultiprocessUnitTests
   System 
   Utils File 
   castorserver
-  ${GTEST_LIBRARY} gmock pthread castorcommon castorclient)
+  gtest gmock pthread castorcommon castorclient)
 
 install(TARGETS
   castorUnitTests
