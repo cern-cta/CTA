@@ -8,5 +8,6 @@ set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g")
 
 add_subdirectory(libs)
+add_subdirectory(unit_tests)
 add_subdirectory(xroot_clients)
 add_subdirectory(xroot_plugins)
