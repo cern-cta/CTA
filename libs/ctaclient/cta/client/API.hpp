@@ -1,5 +1,8 @@
 #pragma once
 
+#include "cta/StorageClass.hpp"
+#include "cta/StorageClassList.hpp"
+
 #include <list>
 #include <stdint.h>
 #include <string>
@@ -8,18 +11,15 @@ namespace cta {
 namespace client {
 
 /**
- * A singleton class representing the entry point to the client API of the CERN
- * Tape Archive project.
+ * Abstract class that specifies the client API of the CERN Tape Archive project.
  */
 class API {
 public:
 
   /**
-   * Returns a pointer to the entry point of the client API.
-   *
-   * @return A pointer to the entry point of the client API.
+   * Destructor.
    */
-  static API *instance();
+  virtual ~API() throw() = 0;
 
   /**
    * Creates the specified storage class.
@@ -30,21 +30,21 @@ public:
    */
   virtual void createStorageClass(
     const std::string &name,
-    const uint8_t nbCopies);
+    const uint8_t nbCopies) = 0;
 
   /**
    * Deletes the specified storage class.
    *
    * @param name The name of the storage class.
    */
-  virtual void deleteStorageClass(const std::string &name);
+  virtual void deleteStorageClass(const std::string &name) = 0;
 
   /**
    * Gets the current list of storage classes in lexicographical order.
    *
    * @return The current list of storage classes in lexicographical order.
    */
-  virtual std::list<std::string> getStorageClasses();
+  virtual StorageClassList getStorageClasses() const = 0;
 
   /**
    * Archives the specified list of source files to the specified destination
@@ -64,24 +64,7 @@ public:
    * @return The identifier of the archive job.
    */
   virtual std::string archiveToTape(const std::list<std::string> &srcUrls,
-    std::string dst);
-
-private:
-
-  /**
-   * Constructor.
-   */
-  API();
-
-  /**
-   * Destructor.
-   */
-  ~API();
-
-  /**
-   * Pointer to the entry point of the client API.
-   */
-  static API *s_instance;
+    std::string dst) = 0;
 
 }; // class API
 
