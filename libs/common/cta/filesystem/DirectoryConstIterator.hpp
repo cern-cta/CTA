@@ -23,6 +23,11 @@ class DirectoryConstIterator {
 public:
 
   /**
+   * Destructor.
+   */
+  virtual ~DirectoryConstIterator() throw();
+
+  /**
    * Returns true if there are more directory entries.
    *
    * @return True if there are more directory entries.
