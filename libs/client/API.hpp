@@ -1,14 +1,14 @@
 #pragma once
 
-#include "cta/StorageClass.hpp"
-#include "cta/StorageClassList.hpp"
+#include "DirectoryIterator.hpp"
+#include "StorageClass.hpp"
+#include "StorageClassList.hpp"
 
 #include <list>
 #include <stdint.h>
 #include <string>
 
 namespace cta {
-namespace client {
 
 /**
  * Abstract class that specifies the client API of the CERN Tape Archive project.
@@ -47,6 +47,15 @@ public:
   virtual StorageClassList getStorageClasses() const = 0;
 
   /**
+   * Gets an iterator over the entries of the specified directory.
+   *
+   * @param dirPath The full path of the directory.
+   * @return The iterator.
+   */
+  virtual DirectoryIterator getDirectoryIterator(
+    const std::string &dirPath) const = 0;
+
+  /**
    * Archives the specified list of source files to the specified destination
    * within the archive namespace.
    *
@@ -68,5 +77,4 @@ public:
 
 }; // class API
 
-} // namespace client
 } // namespace cta

@@ -1,4 +1,4 @@
-#include "cta/StorageClass.hpp"
+#include "StorageClass.hpp"
 
 //------------------------------------------------------------------------------
 // constructor

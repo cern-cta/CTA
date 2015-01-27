@@ -1,4 +1,4 @@
-#include "cta/client/MockAPI.hpp"
+#include "MockAPI.hpp"
 
 #include <gtest/gtest.h>
 
@@ -15,7 +15,7 @@ protected:
 };
 
 TEST_F(cta_client_MockAPITest, createStorageClass_new) {
-  using namespace cta::client;
+  using namespace cta;
 
   MockAPI api;
 
@@ -33,7 +33,7 @@ TEST_F(cta_client_MockAPITest, createStorageClass_new) {
 }
 
 TEST_F(cta_client_MockAPITest, createStorageClass_already_existing) {
-  using namespace cta::client;
+  using namespace cta;
 
   MockAPI api;
 
@@ -52,8 +52,33 @@ TEST_F(cta_client_MockAPITest, createStorageClass_already_existing) {
   ASSERT_THROW(api.createStorageClass(name, nbCopies), std::exception);
 }
 
+TEST_F(cta_client_MockAPITest, createStorageClass_lexicographical_order) {
+  using namespace cta;
+
+  MockAPI api;
+
+  ASSERT_TRUE(api.getStorageClasses().empty());
+  
+  ASSERT_NO_THROW(api.createStorageClass("d", 1));
+  ASSERT_NO_THROW(api.createStorageClass("b", 1));
+  ASSERT_NO_THROW(api.createStorageClass("a", 1));
+  ASSERT_NO_THROW(api.createStorageClass("c", 1));
+  
+  ASSERT_EQ(4, api.getStorageClasses().size());
+
+  cta::StorageClassList storageClasses = api.getStorageClasses();
+
+  ASSERT_EQ(std::string("a"), storageClasses.front().name);
+  storageClasses.pop_front();
+  ASSERT_EQ(std::string("b"), storageClasses.front().name);
+  storageClasses.pop_front();
+  ASSERT_EQ(std::string("c"), storageClasses.front().name);
+  storageClasses.pop_front();
+  ASSERT_EQ(std::string("d"), storageClasses.front().name);
+}
+
 TEST_F(cta_client_MockAPITest, deleteStorageClass_existing) {
-  using namespace cta::client;
+  using namespace cta;
 
   MockAPI api;
 
@@ -75,7 +100,7 @@ TEST_F(cta_client_MockAPITest, deleteStorageClass_existing) {
 }
 
 TEST_F(cta_client_MockAPITest, deleteStorageClass_non_existing) {
-  using namespace cta::client;
+  using namespace cta;
 
   MockAPI api;
 
@@ -85,6 +110,14 @@ TEST_F(cta_client_MockAPITest, deleteStorageClass_non_existing) {
   ASSERT_THROW(api.deleteStorageClass(name), std::exception);
 
   ASSERT_TRUE(api.getStorageClasses().empty());
+}
+
+TEST_F(cta_client_MockAPITest, getDirectoryIterator_empty) {
+  using namespace cta;
+
+  MockAPI api;
+
+  ASSERT_NO_THROW(api.getDirectoryIterator("/"));
 }
 
 } // namespace unitTests

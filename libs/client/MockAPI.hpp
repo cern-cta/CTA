@@ -1,11 +1,10 @@
 #pragma once
 
-#include "cta/client/API.hpp"
+#include "API.hpp"
 
 #include <map>
 
 namespace cta {
-namespace client {
 
 /**
  * A mock entry point to the client API of the CERN Tape Archive project.
@@ -47,6 +46,15 @@ public:
    * @return The current list of storage classes in lexicographical order.
    */
   StorageClassList getStorageClasses() const;
+
+  /**
+   * Gets an iterator over the entries of the specified directory.
+   *
+   * @param dirPath The full path of the directory.
+   * @return The iterator.
+   */
+  DirectoryIterator getDirectoryIterator(
+    const std::string &dirPath) const;
 
   /**
    * Archives the specified list of source files to the specified destination
@@ -91,5 +99,4 @@ private:
 
 }; // class MockAPI
 
-} // namespace client
 } // namespace cta
