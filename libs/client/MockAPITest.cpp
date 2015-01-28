@@ -1,10 +1,10 @@
-#include "MockAPI.hpp"
+#include "MockClientAPI.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-class cta_client_MockAPITest: public ::testing::Test {
+class cta_client_MockClientAPITest: public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -14,10 +14,10 @@ protected:
   }
 };
 
-TEST_F(cta_client_MockAPITest, createStorageClass_new) {
+TEST_F(cta_client_MockClientAPITest, createStorageClass_new) {
   using namespace cta;
 
-  MockAPI api;
+  MockClientAPI api;
 
   ASSERT_TRUE(api.getStorageClasses().empty());
 
@@ -32,10 +32,10 @@ TEST_F(cta_client_MockAPITest, createStorageClass_new) {
   ASSERT_EQ(nbCopies, storageClass.nbCopies);
 }
 
-TEST_F(cta_client_MockAPITest, createStorageClass_already_existing) {
+TEST_F(cta_client_MockClientAPITest, createStorageClass_already_existing) {
   using namespace cta;
 
-  MockAPI api;
+  MockClientAPI api;
 
   ASSERT_TRUE(api.getStorageClasses().empty());
   
@@ -52,10 +52,10 @@ TEST_F(cta_client_MockAPITest, createStorageClass_already_existing) {
   ASSERT_THROW(api.createStorageClass(name, nbCopies), std::exception);
 }
 
-TEST_F(cta_client_MockAPITest, createStorageClass_lexicographical_order) {
+TEST_F(cta_client_MockClientAPITest, createStorageClass_lexicographical_order) {
   using namespace cta;
 
-  MockAPI api;
+  MockClientAPI api;
 
   ASSERT_TRUE(api.getStorageClasses().empty());
   
@@ -77,10 +77,10 @@ TEST_F(cta_client_MockAPITest, createStorageClass_lexicographical_order) {
   ASSERT_EQ(std::string("d"), storageClasses.front().name);
 }
 
-TEST_F(cta_client_MockAPITest, deleteStorageClass_existing) {
+TEST_F(cta_client_MockClientAPITest, deleteStorageClass_existing) {
   using namespace cta;
 
-  MockAPI api;
+  MockClientAPI api;
 
   ASSERT_TRUE(api.getStorageClasses().empty());
   
@@ -99,10 +99,10 @@ TEST_F(cta_client_MockAPITest, deleteStorageClass_existing) {
   ASSERT_TRUE(api.getStorageClasses().empty());
 }
 
-TEST_F(cta_client_MockAPITest, deleteStorageClass_non_existing) {
+TEST_F(cta_client_MockClientAPITest, deleteStorageClass_non_existing) {
   using namespace cta;
 
-  MockAPI api;
+  MockClientAPI api;
 
   ASSERT_TRUE(api.getStorageClasses().empty());
 
@@ -112,10 +112,10 @@ TEST_F(cta_client_MockAPITest, deleteStorageClass_non_existing) {
   ASSERT_TRUE(api.getStorageClasses().empty());
 }
 
-TEST_F(cta_client_MockAPITest, getDirectoryIterator_empty) {
+TEST_F(cta_client_MockClientAPITest, getDirectoryIterator_empty) {
   using namespace cta;
 
-  MockAPI api;
+  MockClientAPI api;
 
   ASSERT_NO_THROW(api.getDirectoryIterator("/"));
 }
