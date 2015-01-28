@@ -44,6 +44,13 @@ struct TpConfigCmdLine {
   /**
    * Constructor.
    *
+   * Initializes status to 0.
+   */
+  TpConfigCmdLine() throw();
+
+  /**
+   * Constructor.
+   *
    * @param unitName The unit name of the tape drive to be configured.
    * @param status The status that the tape drive should be moved to.
    */

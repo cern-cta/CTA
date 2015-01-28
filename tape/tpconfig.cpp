@@ -27,12 +27,20 @@ static void configureDrive(const tape::TpConfigCmdLine &cmdLine);
 int main(const int argc, const char **argv) {
   using namespace tape;
 
+  TpConfigCmdLine cmdLine;
   try {
-    const TpConfigCmdLine cmdLine = TpConfigCmdLine::parse(argc, argv);
+    cmdLine = TpConfigCmdLine::parse(argc, argv);
+  } catch(TpConfigException &ex) {
+    std::cerr << "Failed to parse the command line: " << ex.what() << std::endl;
+    std::cerr << "usage: tpconfig [unit_name] status" << std::endl;
+    return ex.exitValue();
+  }
+
+  try {
     configureDrive(cmdLine);
   } catch(TpConfigException &ex) {
     std::cerr << ex.what() << std::endl;
-    std::cerr << "usage: tpconfig [unit_name] status" << std::endl;
+    std::cerr << "Failed to configure drive" << std::endl;
     return ex.exitValue();
   }
 

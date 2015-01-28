@@ -31,6 +31,12 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
+tape::TpConfigCmdLine::TpConfigCmdLine() throw() : status(0) {
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
 tape::TpConfigCmdLine::TpConfigCmdLine(const std::string &unitName,
   const int status) throw() : unitName(unitName), status(status) {
 }

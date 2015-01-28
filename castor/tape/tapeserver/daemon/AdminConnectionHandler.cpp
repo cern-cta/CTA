@@ -154,10 +154,10 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::handleRequest(
   const legacymsg::MessageHeader &header) {
   switch(header.reqType) {
   case TPCONF:
-    handleConfigRequest(header);
+    handleConfigRequestAndReply(header);
     break;
   case TPSTAT:
-    handleStatRequest(header);
+    handleStatRequestAndReply(header);
     break;
   default:
     {
@@ -166,6 +166,21 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::handleRequest(
         ": reqType=" << header.reqType;
       throw ex;
     }
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleConfigRequestAndReply
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::AdminConnectionHandler::
+  handleConfigRequestAndReply(const legacymsg::MessageHeader &header) {
+  try {
+    handleConfigRequest(header);
+    writeTapeRcReplyMsg(0); // Return code of 0 means success
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {log::Param("message", ex.getMessage())};
+    m_log(LOG_ERR, "Failed to handle config request", params);
+    writeTapeRcReplyMsg(ex.code());
   }
 }
 
@@ -182,7 +197,7 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
   logTapeConfigJobReception(body);
 
   const std::string unitName(body.drive);
-  
+
   CatalogueDrive &drive = m_driveCatalogue.findDrive(unitName);
   const DriveConfig &driveConfig = drive.getConfig();
 
@@ -207,8 +222,6 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
       throw ex;
     }
   }
-  
-  writeTapeRcReplyMsg(0); // Return code of 0 means success
 }
 
 //------------------------------------------------------------------------------
@@ -323,18 +336,31 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
 }
 
 //------------------------------------------------------------------------------
+// handleStatRequestAndReply
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::AdminConnectionHandler::
+  handleStatRequestAndReply(const legacymsg::MessageHeader &header) {
+  try {
+    handleStatRequest(header);
+    writeTapeStatReplyMsg();
+    writeTapeRcReplyMsg(0); // Return value of 0 means success
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {log::Param("message", ex.getMessage())};
+    m_log(LOG_ERR, "Failed to handle stat request", params);
+    writeTapeRcReplyMsg(ex.code());
+  }
+}
+
+//------------------------------------------------------------------------------
 // handleStatRequest
 //------------------------------------------------------------------------------
-void
-  castor::tape::tapeserver::daemon::AdminConnectionHandler::handleStatRequest(
-  const legacymsg::MessageHeader &header) {
+void castor::tape::tapeserver::daemon::AdminConnectionHandler::
+  handleStatRequest(const legacymsg::MessageHeader &header) {
   const uint32_t totalLen = header.lenOrStatus;
   const uint32_t headerLen = 3 * sizeof(uint32_t); // magic, type and len
   const uint32_t bodyLen = totalLen - headerLen;
   const legacymsg::TapeStatRequestMsgBody body = readTapeStatMsgBody(bodyLen);
   logTapeStatJobReception(body);
-  writeTapeStatReplyMsg();
-  writeTapeRcReplyMsg(0); // Return value of 0 means success
 }
 
 //------------------------------------------------------------------------------

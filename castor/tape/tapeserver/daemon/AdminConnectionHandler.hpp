@@ -133,11 +133,25 @@ private:
   void handleRequest(const legacymsg::MessageHeader &header);
 
   /**
+   * Handles the specified config request-message and sends a reply.
+   *
+   * @param header The header of the request message.
+   */
+  void handleConfigRequestAndReply(const legacymsg::MessageHeader &header);
+
+  /**
    * Handles the specified config request-message.
    *
    * @param header The header of the request message.
    */
   void handleConfigRequest(const legacymsg::MessageHeader &header);
+
+  /**
+   * Handles the specified stat request-message and sends a reply.
+   *
+   * @param header The header of the request message.
+   */
+  void handleStatRequestAndReply(const legacymsg::MessageHeader &header);
 
   /**
    * Handles the specified stat request-message.

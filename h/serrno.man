@@ -770,6 +770,21 @@ The following error values are returned only by the tape package:
 .TP
 .B ETINVALIDTFSIZE
 (1940) Invalid tape-file file-size
+.TP
+.B ETMOUNTFAILED
+(1941) Failed to mount volume
+.TP
+.B ETDISMOUNTFAILED
+(1942) Failed to dismount volume
+.TP
+.B ETQUERYVOLFAILED
+(1943) Failed to query volume
+.TP
+.B ETFDISMOUNTFAILED
+(1944) Failed to force dismount volume
+.TP
+.B ETDRVNOTREADYFORMNT
+(1945) Drive not ready for mount
 
 .SH VMGR ERRORS
 The following error values are returned only by the volume manager package:

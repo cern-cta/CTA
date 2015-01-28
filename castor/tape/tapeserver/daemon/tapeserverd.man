@@ -171,11 +171,14 @@ The file hosting the Xroot private key, needed to sign Xroot URLs.
 
 .SH FILES
 .TP
+.B /etc/castor/TPCONFIG
+The tape drive configuration file.
+.TP
 .B /etc/castor/castor.conf
-Default location of the CASTOR configuration file.
+The CASTOR configuration file.
 .TP
 .B /var/log/castor/tapeserverd.log
-Default location of the tape tapeserver log file.
+The tape tapeserver log file.
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

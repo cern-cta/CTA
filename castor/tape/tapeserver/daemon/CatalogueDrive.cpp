@@ -28,6 +28,7 @@
 #include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/rmc_constants.h"
+#include "h/serrno.h"
 #include "h/vdqm_constants.h"
 
 #include <errno.h>
@@ -403,7 +404,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::checkDriveIsEmpty() {
   const int probeSessionExitCode = probeSession.execute();
 
   if(Session::MARK_DRIVE_AS_UP != probeSessionExitCode) {
-    castor::exception::Exception ex;
+    castor::exception::Exception ex(ETDRVNOTREADYFORMNT);
     ex.getMessage() << "Drive " << m_config.getUnitName() << " is not empty";
     throw ex;
   }
