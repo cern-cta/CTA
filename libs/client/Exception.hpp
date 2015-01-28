@@ -4,7 +4,6 @@
 #include <string>
 
 namespace cta {
-namespace exception {
 
 /**
  * Class representing an exception.
@@ -33,5 +32,4 @@ private:
 
 }; // class Exception
 
-} // namespace exception
 } // namespace cta

@@ -1,25 +1,26 @@
 #pragma once
 
-#include <list>
-#include <stdint.h>
-#include <string>
+#include "API.hpp"
+
+#include <map>
 
 namespace cta {
-namespace client {
 
 /**
- * A singleton class representing the entry point to the client API of the CERN
- * Tape Archive project.
+ * A mock entry point to the client API of the CERN Tape Archive project.
  */
-class API {
+class MockAPI: public API {
 public:
 
   /**
-   * Returns a pointer to the entry point of the client API.
-   *
-   * @return A pointer to the entry point of the client API.
+   * Constructor.
    */
-  static API *instance();
+  MockAPI();
+
+  /**
+   * Destructor.
+   */
+  ~MockAPI() throw();
 
   /**
    * Creates the specified storage class.
@@ -28,7 +29,7 @@ public:
    * @param nbCopies The number of copies a file associated with this storage
    * class should have on tape.
    */
-  virtual void createStorageClass(
+  void createStorageClass(
     const std::string &name,
     const uint8_t nbCopies);
 
@@ -37,14 +38,23 @@ public:
    *
    * @param name The name of the storage class.
    */
-  virtual void deleteStorageClass(const std::string &name);
+  void deleteStorageClass(const std::string &name);
 
   /**
    * Gets the current list of storage classes in lexicographical order.
    *
    * @return The current list of storage classes in lexicographical order.
    */
-  virtual std::list<std::string> getStorageClasses();
+  StorageClassList getStorageClasses() const;
+
+  /**
+   * Gets an iterator over the entries of the specified directory.
+   *
+   * @param dirPath The full path of the directory.
+   * @return The iterator.
+   */
+  DirectoryIterator getDirectoryIterator(
+    const std::string &dirPath) const;
 
   /**
    * Archives the specified list of source files to the specified destination
@@ -63,27 +73,30 @@ public:
    * @param dst Destination file or directory within the archive namespace.
    * @return The identifier of the archive job.
    */
-  virtual std::string archiveToTape(const std::list<std::string> &srcUrls,
+  std::string archiveToTape(const std::list<std::string> &srcUrls,
     std::string dst);
 
 private:
 
   /**
-   * Constructor.
+   * The current list of storage classes.
    */
-  API();
+  std::map<std::string, StorageClass> m_storageClasses;
 
   /**
-   * Destructor.
+   * Throws an exception if the specified storage class already exists.
+   *
+   * @param name The name of teh storage class.
    */
-  ~API();
+  void checkStorageClassDoesNotAlreadyExist(const std::string &name) const;
 
   /**
-   * Pointer to the entry point of the client API.
+   * Throws an exception if the specified storage class does not exist.
+   *
+   * @param name The name of teh storage class.
    */
-  static API *s_instance;
+  void checkStorageClassExists(const std::string &name) const;
 
-}; // class API
+}; // class MockAPI
 
-} // namespace client
 } // namespace cta

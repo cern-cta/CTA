@@ -1,16 +1,17 @@
 #pragma once
 
-#include "cta/filesystem/DirectoryEntry.hpp"
+#include "DirectoryEntry.hpp"
+
+#include <list>
 
 namespace cta {
-namespace filesystem {
 
 /**
  * Instances of ths class should be used in the following way to iterate
  * through the contents of a directory.
  *
  * \code
- * DirectoryConstIterator &itor = ...
+ * DirectoryIterator &itor = ...
  *
  * while(itor.hasMore())) {
  *   const DirectoryEntry &entry = itor.next();
@@ -19,20 +20,27 @@ namespace filesystem {
  * }
  * \endcode
  */
-class DirectoryConstIterator {
+class DirectoryIterator {
 public:
+
+  /**
+   * Constructor.
+   *
+   * @param entries The directory entries.
+   */
+  DirectoryIterator(const std::list<DirectoryEntry> &entries);
 
   /**
    * Destructor.
    */
-  virtual ~DirectoryConstIterator() throw();
+  ~DirectoryIterator() throw();
 
   /**
    * Returns true if there are more directory entries.
    *
    * @return True if there are more directory entries.
    */
-  virtual bool hasMore() = 0;
+  bool hasMore();
 
   /**
    * Returns a reference to the next directory entry or throws an exception if
@@ -40,9 +48,15 @@ public:
    *
    * @return The next directory entry.
    */
-  virtual const DirectoryEntry &next() = 0;
+  const DirectoryEntry next();
 
-}; // DirectoryConstIterator
+private:
 
-} // namespace filesystem
+  /**
+   * The directory entries.
+   */
+  std::list<DirectoryEntry> m_entries;
+
+}; // DirectoryIterator
+
 } // namespace cta

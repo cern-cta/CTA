@@ -1,11 +1,7 @@
-#include "ArchiveCmd.hpp"
+#include "API.hpp"
 
 //------------------------------------------------------------------------------
-// main
+// destructor
 //------------------------------------------------------------------------------
-int main(int argc, char **argv) {
-
-  ArchiveCmd command;
-  
-  return command.main(argc, argv);
+cta::API::~API() throw() {
 }
