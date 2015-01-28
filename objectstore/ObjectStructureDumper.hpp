@@ -6,14 +6,14 @@
 
 class ObjectStrucutreDumper {
 public:
-  std::string dump(ObjectStore & os, ContextHandle & context) {
+  std::string dump(Agent & agent) {
     std::stringstream ret;
     ret << "<< Structure dump start" << std::endl;
-    RootEntry re(os, context);
-    ret << re.dump(context);
+    RootEntry re(agent);
+    ret << re.dump(agent);
     try {
-      Register ar(os, re.getAgentRegister(context), context);
-      ret << ar.dump("root->agentRegister", context);
+      Register ar(re.getAgentRegister(agent), agent);
+      ret << ar.dump("root->agentRegister", agent);
     } catch (RootEntry::NotAllocatedEx &) {}
     ret << ">> Structure dump end" << std::endl;
     return ret.str();

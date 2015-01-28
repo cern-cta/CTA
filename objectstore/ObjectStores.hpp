@@ -10,6 +10,8 @@
 #include <sys/syscall.h>
 #include <fstream>
 #include <rados/librados.hpp>
+#include "exception/Exception.hpp"
+#include "exception/Errnum.hpp"
 
 class ContextHandle {
 public:
@@ -30,6 +32,7 @@ public:
   virtual void lockShared(std::string name, ContextHandle & context) = 0;
   virtual void lockExclusive(std::string name, ContextHandle & context) = 0;
   virtual void unlock(std::string name, ContextHandle & context) = 0;
+  virtual void remove(std::string name) = 0;
   virtual std::string path() { return ""; }
   virtual std::string user() { return ""; }
   virtual std::string pool() { return ""; }
@@ -93,6 +96,7 @@ public:
       ::rename(tempPath.c_str(), targetPath.c_str()),
       "In ObjectStoreVFS::atomicOverwrite, failed to rename the file");
   }
+  
   virtual std::string read(std::string name) {
     std::string path = m_root+"/" + name;
     std::string ret;
@@ -108,6 +112,11 @@ public:
       ret.append(buff,file.gcount());
     }
     return ret;
+  }
+  
+  virtual void remove(std::string name) {
+    std::string path = m_root+"/" + name;
+    cta::exception::Errnum::throwOnNonZero(unlink(name.c_str()));
   }
   
   void lockHelper(std::string name, ContextHandle & context, int type) {
@@ -209,8 +218,11 @@ public:
     bl.copy(0, size, ret);
     return ret;
   }
-
-
+  
+  virtual void remove(std::string name) {
+    cta::exception::Errnum::throwOnNegative(m_radosCtx.remove(name));
+  }
+  
   virtual void lockExclusive(std::string name, ContextHandle & context) {
     // Build a unique client name: host:thread
     char buff[200];

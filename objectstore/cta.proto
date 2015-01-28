@@ -18,6 +18,12 @@ message Register {
   repeated string elements = 100;
 }
 
+// The agent register needs an intent log in addition
+message AgentRegister {
+  repeated string elements = 110;
+  repeated string intendedElements = 111;
+}
+
 // A basic FIFO
 // poping is done by increasing the read pointer, and from time to time
 // collapsing the name array.

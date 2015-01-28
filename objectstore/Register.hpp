@@ -5,12 +5,12 @@
 
 class Register: private ObjectOps<cta::objectstore::Register> {
 public:
-  Register(ObjectStore & os, const std::string & name, ContextHandle & context):
-  ObjectOps<cta::objectstore::Register>(os, name) {
+  Register(const std::string & name, Agent & agent):
+  ObjectOps<cta::objectstore::Register>(agent.objectStore(), name) {
     // Check that the entry is present and readable (depending on implementation
     // of object store, locking might or might not succeed)
     cta::objectstore::Register rs;
-    updateFromObjectStore(rs, context);
+    updateFromObjectStore(rs, agent.getFreeContext());
   }
   
   void addElement (std::string name, ContextHandle & context) {
@@ -40,9 +40,9 @@ public:
     unlock(context);
   }
   
-  std::list<std::string> getElements(ContextHandle & context) {
+  std::list<std::string> getElements(Agent & agent) {
     cta::objectstore::Register rs;
-    updateFromObjectStore(rs, context);
+    updateFromObjectStore(rs, agent.getFreeContext());
     std::list<std::string> ret;
     for (int i=0; i<rs.elements_size(); i++) {
       ret.push_back(rs.elements(i));
@@ -50,9 +50,9 @@ public:
     return ret;
   }
   
-  std::string dump(const std::string & title, ContextHandle & context) {
+  std::string dump(const std::string & title, Agent & agent) {
     cta::objectstore::Register rs;
-    updateFromObjectStore(rs, context);
+    updateFromObjectStore(rs, agent.getFreeContext());
     std::stringstream ret;
     ret<< "<<<< Register " << title << " dump start" << std::endl
       << "Array size=" << rs.elements_size() << std::endl;

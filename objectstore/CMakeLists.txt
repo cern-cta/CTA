@@ -12,6 +12,9 @@ PROTOBUF_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
 
 add_executable (tapeResourceMangerTest tapeResourceManagerTest.cpp
   ${CTAProtoSources}
+  RootEntry.cpp
+  Agent.cpp
+  AgentRegister.cpp
   exception/Backtrace.cpp
   exception/Errnum.cpp
   exception/Exception.cpp

@@ -1,28 +1,86 @@
 #pragma once
 
-#include "ObjectStores.hpp"
+#include "ObjectStoreChoice.hpp"
+#include "ObjectOps.hpp"
 #include "ContextHandle.hpp"
+#include "objectstore/cta.pb.h"
 
-class Agent {
+/**
+ * Class containing agent information and managing the update of the 
+ * agent's persitent representation in the object store.
+ * This object also manages the object id generator, and keeps track of
+ * a ContextHandles
+ * In all the agent is the case class for all actions.
+ * It handles (in the base class):
+ */
+
+class Agent: protected ObjectOps<cta::objectstore::Agent> {
 public:
-  Agent(ObjectStore & os): m_objectStore(os) {};
-  ~Agent() {
-    for (size_t i=0; i < c_handleCount; i++) {
-      m_contexts[i].release();
-    }
-  }
-  void act() {
+  Agent(ObjectStore & os);
+  
+  Agent(ObjectStore & os, const std::string & typeName);
+  
+  void setup(const std::string & typeName);
+  
+  class SetupNotDone: public cta::exception::Exception {
+  public:
+    SetupNotDone(const std::string & w): cta::exception::Exception(w) {}
+  };
+  
+  class CreationNotDone: public cta::exception::Exception {
+  public:
+    CreationNotDone(const std::string & w): cta::exception::Exception(w) {}
+  };
+  
+  void create();
+  
+  std::string type();
+  
+  std::string name();
+  
+  ~Agent();
+  
+  std::string nextId(const std::string & childType);
+  
+  ContextHandleImplementation<myOS> & getFreeContext();
+  
+  void addToIntend (std::string container, std::string name, std::string typeName);
+  
+  void removeFromIntent (std::string container, std::string name, std::string typeName);
+  
+  void addToOwnership(std::string name, std::string typeName);
+  
+  void removeFromOwnership(std::string name, std::string typeName);
+  
+  class intentEntry {
+  public:
+    intentEntry(const std::string & c,
+                const std::string & n,
+                const std::string & t):container(c), name(n), typeName(t) {}
+    std::string container;
+    std::string name;
+    std::string typeName;
+  };
     
-  }
+  class ownershipEntry {
+  public:
+    ownershipEntry(const std::string & n,
+                   const std::string & t):name(n), typeName(t) {}
+    std::string name;
+    std::string typeName;
+  };
+  
+  std::list<intentEntry> getIntentLog();
+  
+  std::list<ownershipEntry> getOwnershipLog();
+  
+  ObjectStore & objectStore();
+  
 private:
-  ObjectStore & m_objectStore;
+  std::string m_typeName;
+  bool m_setupDone;
+  bool m_creationDone;
+  uint64_t m_nextId;
   static const size_t c_handleCount = 100;
   ContextHandleImplementation<myOS> m_contexts[c_handleCount];
-  ContextHandleImplementation<myOS> getFreeContext() {
-    for (size_t i=0; i < c_handleCount; i++) {
-      if (!m_contexts[i].isSet())
-        return m_contexts[i];
-    }
-    throw cta::exception::Exception("Could not find free context slot");
-  }
 };
