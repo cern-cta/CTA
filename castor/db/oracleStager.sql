@@ -784,7 +784,7 @@ BEGIN
          AND request = origReqId);
   ELSE
     -- handle the case of selective abort
-    FOR i IN fileIds.FIRST .. fileIds.LAST LOOP
+    FOR i IN 1..fileIds.COUNT LOOP
       DECLARE
         CONSTRAINT_VIOLATED EXCEPTION;
         PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
@@ -2531,7 +2531,7 @@ BEGIN
       -- Yes, then create migrated segments for the existing segments if there are none
       SELECT count(*) INTO varNb FROM MigratedSegment WHERE castorFile = inCfId;
       IF varNb = 0 THEN
-        FOR i IN inAllValidCopyNbs.FIRST .. inAllValidCopyNbs.LAST LOOP
+        FOR i IN 1..inAllValidCopyNbs.COUNT LOOP
           INSERT INTO MigratedSegment (castorFile, copyNb, VID)
           VALUES (inCfId, inAllValidCopyNbs(i), inAllValidVIDs(i));
         END LOOP;
@@ -2781,7 +2781,7 @@ CREATE OR REPLACE PROCEDURE deleteDiskCopies(inDcIds IN castor."cnumList", inFil
 BEGIN
   DELETE FROM DeleteDiskCopyHelper;
   -- Insert all data in bulk for efficiency reasons
-  FORALL i IN inFileIds.FIRST .. inFileIds.LAST
+  FORALL i IN 1..inFileIds.COUNT
     INSERT INTO DeleteDiskCopyHelper (dcId, fileId, fStatus, rc)
     VALUES (inDcIds(i), inFileIds(i), 'd', -1);
   -- And now gather all remote Nameserver statuses. This could not be
@@ -2963,7 +2963,7 @@ BEGIN
   -- and strListTable is not supported as argument type...
   varDSs.EXTEND(inDiskServers.COUNT);
   varFSs.EXTEND(inMountPoints.COUNT);
-  FOR i IN inDiskServers.FIRST .. inDiskServers.LAST LOOP
+  FOR i IN 1..inDiskServers.COUNT LOOP
     varDSs(i) := inDiskServers(i);
     varFSs(i) := inMountPoints(i);
   END LOOP;

@@ -377,7 +377,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     varAllCopyNbs "numList" := "numList"();
     varAllVIDs strListTable := strListTable();
   BEGIN
-    FOR i IN varAllSegments.FIRST .. varAllSegments.LAST/2 LOOP
+    FOR i IN 1..varAllSegments.COUNT/2 LOOP
       varAllCopyNbs.EXTEND;
       varAllCopyNbs(i) := TO_NUMBER(varAllSegments(2*i-1));
       varAllVIDs.EXTEND;
@@ -423,7 +423,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       FROM MigratedSegment
      WHERE castorFile = cfId;
     IF varNb = 0 THEN
-      FOR i IN varAllCopyNbs.FIRST .. varAllCopyNbs.LAST LOOP
+      FOR i IN 1..varAllCopyNbs.COUNT LOOP
         INSERT INTO MigratedSegment (castorFile, copyNb, VID)
         VALUES (cfId, varAllCopyNbs(i), varAllVIDs(i));
       END LOOP;

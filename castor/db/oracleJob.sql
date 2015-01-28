@@ -901,7 +901,7 @@ CREATE OR REPLACE PROCEDURE getFileIdsForSrs
   fid NUMBER;
   nh VARCHAR(2048);
 BEGIN
-  FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
+  FOR i IN 1..subReqIds.COUNT LOOP
     BEGIN
       SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_SubreqId)*/ fileid, nsHost INTO fid, nh
         FROM Castorfile, SubRequest
@@ -943,7 +943,7 @@ BEGIN
   -- give up if nothing to be done
   IF subReqIds.COUNT = 0 THEN RETURN; END IF;
   -- Loop over all transfers to fail
-  FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
+  FOR i IN 1..subReqIds.COUNT LOOP
     BEGIN
       -- Get the necessary information needed about the request.
       SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_SubreqId)*/ id, diskCopy, reqType, castorFile
@@ -991,7 +991,7 @@ AS
   dcId  NUMBER;
   rType NUMBER;
 BEGIN
-  FOR i IN subReqId.FIRST .. subReqId.LAST LOOP
+  FOR i IN 1..subReqId.COUNT LOOP
     BEGIN
       -- Get the necessary information needed about the request.
       SELECT id, diskCopy, reqType
@@ -1366,7 +1366,7 @@ BEGIN
   -- cleanup from previous round
   DELETE FROM SyncRunningTransfersHelper2;
   -- insert the list of running transfers into a temporary table for easy access
-  FORALL i IN transfers.FIRST .. transfers.LAST
+  FORALL i IN 1..transfers.COUNT
     INSERT INTO SyncRunningTransfersHelper (subreqId) VALUES (transfers(i));
   -- Go through all running transfers from the DB point of view for the given diskserver
   FOR SR IN (SELECT SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request

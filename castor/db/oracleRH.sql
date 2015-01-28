@@ -182,7 +182,7 @@ BEGIN
   -- get the request's service handler
   SELECT svcHandler INTO svcHandler FROM Type2Obj WHERE type=inReqType;
   -- Loop on subrequests
-  FOR i IN srFileNames.FIRST .. srFileNames.LAST LOOP
+  FOR i IN 1..srFileNames.COUNT LOOP
     -- check protocol validity for Get/Update/Put requests only, for other requests the protocol is irrelevant
     IF inReqType IN (35, 40, 44) AND INSTR(protocols, ' ' || srProtocols(i) || ' ') = 0 THEN
       raise_application_error(-20122, 'Unsupported protocol in insertFileRequest : ' || srProtocols(i));
@@ -350,7 +350,7 @@ BEGIN
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
   -- Loop on query parameters. Note that the array is never empty (see the C++ calling method).
-  FOR i IN qpValues.FIRST .. qpValues.LAST LOOP
+  FOR i IN 1..qpValues.COUNT LOOP
     -- get unique ids for the query parameter
     SELECT ids_seq.nextval INTO queryParamId FROM DUAL;
     -- insert the query parameter
@@ -591,7 +591,7 @@ BEGIN
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
   -- Loop on fileids
-  FOR i IN fileids.FIRST .. fileids.LAST LOOP
+  FOR i IN 1..fileids.COUNT LOOP
     -- ignore fake items passed only because ORACLE does not like empty arrays
     IF nsHosts(i) IS NULL THEN EXIT; END IF;
     -- get unique ids for the fileid
@@ -659,7 +659,7 @@ BEGIN
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
   -- Loop on diskCopies
-  FOR i IN diskCopyIds.FIRST .. diskCopyIds.LAST LOOP
+  FOR i IN 1..diskCopyIds.COUNT LOOP
     -- get unique ids for the diskCopy
     SELECT ids_seq.nextval INTO gcFileId FROM DUAL;
     -- insert the fileid
@@ -715,7 +715,7 @@ BEGIN
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
   -- Loop on request types
-  FOR i IN reqTypes.FIRST .. reqTypes.LAST LOOP
+  FOR i IN 1..reqTypes.COUNT LOOP
     -- get unique ids for the request type
     SELECT ids_seq.nextval INTO subobjId FROM DUAL;
     -- insert the request type
@@ -723,7 +723,7 @@ BEGIN
     VALUES (reqTypes(i), subobjId, reqId);
   END LOOP;
   -- Loop on BWUsers
-  FOR i IN euids.FIRST .. euids.LAST LOOP
+  FOR i IN 1..euids.COUNT LOOP
     -- get unique ids for the request type
     SELECT ids_seq.nextval INTO subobjId FROM DUAL;
     -- insert the BWUser
