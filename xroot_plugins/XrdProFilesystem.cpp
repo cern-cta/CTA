@@ -31,7 +31,7 @@ bool XrdProFilesystem::isDir(const char *path) throw() {
 //------------------------------------------------------------------------------
 // checkClient
 //------------------------------------------------------------------------------
-int XrdProFilesystem::checkClient(XrdOucErrInfo &eInfo, const XrdSecEntity *client) {
+int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eInfo) {
   /*
   std::cout << "Calling FSctl with:\ncmd=" << cmd << "\narg=" << args.Arg1 << std::endl;
   std::cout << "Client info:\n"
@@ -86,30 +86,27 @@ int XrdProFilesystem::checkClient(XrdOucErrInfo &eInfo, const XrdSecEntity *clie
 //------------------------------------------------------------------------------
 // parseArchiveRequest
 //------------------------------------------------------------------------------
-int XrdProFilesystem::parseArchiveRequest(const XrdSfsFSctl &args, ParsedArchiveCmdLine &cmdLine) {
-  if(strncmp(args.Arg1, "/archive?", strlen("/archive?")) == 0)
-  {  
-    std::stringstream ss(args.Arg1);
-    std::string s;
-    getline(ss, s, '?');
-    while (getline(ss, s, '+')) {
-      cmdLine.srcFiles.push_back(s);
-    }
-    cmdLine.srcFiles.pop_back();
-    cmdLine.dstPath = s;
-    return SFS_OK;
+int XrdProFilesystem::parseArchiveRequest(const XrdSfsFSctl &args, ParsedArchiveCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
+  std::stringstream ss(args.Arg1);
+  std::string s;
+  getline(ss, s, '?');
+  while (getline(ss, s, '+')) {
+    cmdLine.srcFiles.push_back(s);
   }
-  else
-  {
-    std::cout << "[ERROR] Unknown plugin request string received" << std::endl;
+  cmdLine.srcFiles.pop_back();
+  cmdLine.dstPath = s;
+  if(cmdLine.srcFiles.empty() || cmdLine.dstPath.empty()) {
+    eInfo.setErrInfo(EINVAL, "[ERROR] Wrong arguments supplied");
     return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // executeArchiveCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeArchiveCommand(ParsedArchiveCmdLine &cmdLine) {
+int XrdProFilesystem::executeArchiveCommand(ParsedArchiveCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
+  std::cout << "archive request received:\n";
   for(std::list<std::string>::iterator it = cmdLine.srcFiles.begin(); it != cmdLine.srcFiles.end(); it++) {
     std::cout << "SRC: " << *it << std::endl;
   }  
@@ -118,27 +115,89 @@ int XrdProFilesystem::executeArchiveCommand(ParsedArchiveCmdLine &cmdLine) {
 }
 
 //------------------------------------------------------------------------------
+// parseCreateStorageClassRequest
+//------------------------------------------------------------------------------
+int XrdProFilesystem::parseCreateStorageClassRequest(const XrdSfsFSctl &args, ParsedCreateStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
+  std::stringstream ss(args.Arg1);
+  std::string s;
+  getline(ss, s, '?');
+  getline(ss, s, '+');
+  cmdLine.storageClassName = s;
+  if(cmdLine.storageClassName.empty()) {
+    eInfo.setErrInfo(EINVAL, "[ERROR] Wrong arguments supplied");
+    return SFS_ERROR;
+  }
+  return SFS_OK;
+}
+
+//------------------------------------------------------------------------------
+// executeCreateStorageClassCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeCreateStorageClassCommand(ParsedCreateStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
+  std::cout << "create-storage-class request received:\n";
+  std::cout << "NAME: " << cmdLine.storageClassName << std::endl;
+  return SFS_OK;
+}
+
+//------------------------------------------------------------------------------
+// dispatchRequest
+//------------------------------------------------------------------------------
+int XrdProFilesystem::dispatchRequest(XrdSfsFSctl &args, XrdOucErrInfo &eInfo) {
+  if(strncmp(args.Arg1, "/archive?", strlen("/archive?")) == 0)
+  {  
+    ParsedArchiveCmdLine cmdLine;
+    int checkParse = parseArchiveRequest(args, cmdLine, eInfo);
+    if(SFS_OK!=checkParse) {
+      return checkParse;
+    }
+    int checkExecute = executeArchiveCommand(cmdLine, eInfo);
+    if(SFS_OK!=checkExecute) {
+      return checkExecute;
+    }
+    return SFS_OK;
+  }
+  else if(strncmp(args.Arg1, "/create-storage-class?", strlen("/create-storage-class?")) == 0)
+  {  
+    ParsedCreateStorageClassCmdLine cmdLine;
+    int checkParse = parseCreateStorageClassRequest(args, cmdLine, eInfo);
+    if(SFS_OK!=checkParse) {
+      return checkParse;
+    }
+    int checkExecute = executeCreateStorageClassCommand(cmdLine, eInfo);
+    if(SFS_OK!=checkExecute) {
+      return checkExecute;
+    }
+    return SFS_OK;
+  }
+  else
+  {
+    eInfo.setErrInfo(EINVAL, "[ERROR] Unknown plugin request string received");
+    return SFS_ERROR;
+  }
+}
+
+//------------------------------------------------------------------------------
 // FSctl
 //------------------------------------------------------------------------------
 int XrdProFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const XrdSecEntity *client)
 {
-  int checkResult = checkClient(eInfo, client);
-  if(checkResult!=SFS_OK){
-    return SFS_ERROR;
+  int checkResult = checkClient(client, eInfo);
+  if(SFS_OK!=checkResult) {
+    return checkResult;
   }
   if(cmd == SFS_FSCTL_PLUGIO)
   {
-    ParsedArchiveCmdLine cmdLine;
-    parseArchiveRequest(args, cmdLine);
-    executeArchiveCommand(cmdLine);
-    
+    int checkDispatch = dispatchRequest(args, eInfo);
+    if(SFS_OK!=checkDispatch) {
+      return checkDispatch;
+    }
     std::string response = "Request logged!";
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
   else
   {
-    std::cout << "[ERROR] Unknown query request received" << std::endl;
+    eInfo.setErrInfo(EINVAL, "[ERROR] Unknown query request received");
     return SFS_ERROR;
   }
 }

@@ -2,7 +2,8 @@
 
 #include "XrdSfs/XrdSfsInterface.hh"
 
-#include "xroot_utils/ParsedArchiveCmdLine.hpp"
+#include "ParsedArchiveCmdLine.hpp"
+#include "ParsedCreateStorageClassCmdLine.hpp"
 
 class XrdProFilesystem : public XrdSfsFileSystem {
 public:
@@ -41,26 +42,56 @@ protected:
   /**
    * Checks whether client has correct permissions
    * 
-   * @param eInfo  Error information
    * @param client client information
+   * @param eInfo  Error information
    * @return SFS_OK in case check is passed, SFS_ERROR otherwise
    */
-  int checkClient(XrdOucErrInfo &eInfo, const XrdSecEntity *client);
+  int checkClient(const XrdSecEntity *client, XrdOucErrInfo &eInfo);
   
   /**
    * Parses the archive request into the command line structure
    * 
-   * @param args     the archive request string
+   * @param args     the request string
    * @param cmdLine  the resulting command line structure
+   * @param eInfo    Error information
    * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
    */
-  int parseArchiveRequest(const XrdSfsFSctl &args, ParsedArchiveCmdLine &cmdLine);
+  int parseArchiveRequest(const XrdSfsFSctl &args, ParsedArchiveCmdLine &cmdLine, XrdOucErrInfo &eInfo);
   
   /**
    * Executes the command contained within the command line structure
    * 
    * @param cmdLine command to execute
+   * @param eInfo   Error information
    * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
    */
-  int executeArchiveCommand(ParsedArchiveCmdLine &cmdLine);
+  int executeArchiveCommand(ParsedArchiveCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  
+  /**
+   * Parses the create-storage-class request into the command line structure
+   * 
+   * @param args     the request string
+   * @param cmdLine  the resulting command line structure
+   * @param eInfo    Error information
+   * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
+   */
+  int parseCreateStorageClassRequest(const XrdSfsFSctl &args, ParsedCreateStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  
+  /**
+   * Executes the command contained within the command line structure
+   * 
+   * @param cmdLine command to execute
+   * @param eInfo   Error information
+   * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
+   */
+  int executeCreateStorageClassCommand(ParsedCreateStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  
+  /**
+   * Dispatches the request based on the query
+   * 
+   * @param args     the archive request string
+   * @param eInfo    Error information
+   * @return SFS_OK in case dispatching is done correctly, SFS_ERROR otherwise
+   */
+  int dispatchRequest(XrdSfsFSctl &args, XrdOucErrInfo &eInfo);
 };

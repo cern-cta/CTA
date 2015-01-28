@@ -1,11 +1,11 @@
-#include "ArchiveCmd.hpp"
+#include "CTACmd.hpp"
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 int main(int argc, char **argv) {
 
-  ArchiveCmd command;
+  CTACmd command;
   
   return command.main(argc, argv);
 }
