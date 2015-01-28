@@ -197,7 +197,7 @@ std::string castor::tape::SCSI::tapeAlertToCompactString(uint16_t parameterCode)
     case 0x09:
       return "tapeAlertWriteProtect";
     case 0x0A:
-      return "tapeAlertVolumePemovalPrevented";
+      return "tapeAlertVolumeRemovalPrevented";
     case 0x0B:
       return "tapeAlertCleaningVolume";
     case 0x0C:
