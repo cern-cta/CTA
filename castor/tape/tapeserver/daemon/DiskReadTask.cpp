@@ -135,7 +135,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
   }
   catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
    
-    lc.log(LOG_INFO,"DiskReadTask: a previous file has failed for migration "
+    lc.log(LOG_DEBUG,"DiskReadTask: a previous file has failed for migration "
     "Do nothing except circulating blocks");
     circulateAllBlocks(blockId,mb);
   }

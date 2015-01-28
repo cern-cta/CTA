@@ -140,7 +140,7 @@ namespace daemon {
     catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
       // We end up there because another task has failed 
       // so we just log, circulate blocks and don't even send a report 
-      lc.log(LOG_INFO,"TapeWriteTask: a previous file has failed for migration "
+      lc.log(LOG_DEBUG,"TapeWriteTask: a previous file has failed for migration "
       "Do nothing except circulating blocks");
       circulateMemBlocks();
       
