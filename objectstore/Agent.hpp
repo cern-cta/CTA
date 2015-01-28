@@ -20,6 +20,8 @@ public:
   
   Agent(ObjectStore & os, const std::string & typeName);
   
+  Agent(const std::string & name, Agent & agent);
+  
   void setup(const std::string & typeName);
   
   class SetupNotDone: public cta::exception::Exception {
@@ -30,6 +32,11 @@ public:
   class CreationNotDone: public cta::exception::Exception {
   public:
     CreationNotDone(const std::string & w): cta::exception::Exception(w) {}
+  };
+  
+  class ObserverOnly: public cta::exception::Exception {
+  public:
+    ObserverOnly(const std::string & w): cta::exception::Exception(w) {}
   };
   
   void create();
@@ -76,10 +83,13 @@ public:
   
   ObjectStore & objectStore();
   
+  std::string dump(Agent & agent);
+  
 private:
   std::string m_typeName;
   bool m_setupDone;
   bool m_creationDone;
+  bool m_observerVersion;
   uint64_t m_nextId;
   static const size_t c_handleCount = 100;
   ContextHandleImplementation<myOS> m_contexts[c_handleCount];

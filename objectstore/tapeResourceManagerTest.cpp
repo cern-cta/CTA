@@ -9,6 +9,7 @@
 #include "ContextHandle.hpp"
 #include "ObjectStructureDumper.hpp"
 #include "JobPool.hpp"
+#include "AgentRegister.hpp"
 
 
 
@@ -64,7 +65,7 @@ int main(void){
     // Get hold of the root entry
     RootEntry re(self);
     // Create and populate the job queues
-    Register agentRegister(re.allocateOrGetAgentRegister(self), self);
+    AgentRegister agentRegister(re.allocateOrGetAgentRegister(self), self);
     JobPool jobPool(re.allocateOrGetJobPool(self), self);
     // Dump again
     std::cout << osd.dump(self) << std::endl;
