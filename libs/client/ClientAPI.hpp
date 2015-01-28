@@ -11,15 +11,15 @@
 namespace cta {
 
 /**
- * Abstract class that specifies the client API of the CERN Tape Archive project.
+ * Abstract class that specifies the client ClientAPI of the CERN Tape Archive project.
  */
-class API {
+class ClientAPI {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~API() throw() = 0;
+  virtual ~ClientAPI() throw() = 0;
 
   /**
    * Creates the specified storage class.
@@ -75,6 +75,6 @@ public:
   virtual std::string archiveToTape(const std::list<std::string> &srcUrls,
     std::string dst) = 0;
 
-}; // class API
+}; // class ClientAPI
 
 } // namespace cta

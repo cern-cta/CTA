@@ -16,6 +16,11 @@ struct ParsedCreateStorageClassCmdLine {
   std::string storageClassName;
   
   /**
+   * The number of copies on tape
+   */
+  int numberOfCopies;
+  
+  /**
    * Constructor.
    */
   ParsedCreateStorageClassCmdLine() throw();

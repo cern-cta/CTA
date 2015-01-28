@@ -123,7 +123,9 @@ int XrdProFilesystem::parseCreateStorageClassRequest(const XrdSfsFSctl &args, Pa
   getline(ss, s, '?');
   getline(ss, s, '+');
   cmdLine.storageClassName = s;
-  if(cmdLine.storageClassName.empty()) {
+  getline(ss, s, '+');
+  cmdLine.numberOfCopies = atoi(s.c_str());
+  if(cmdLine.storageClassName.empty() || cmdLine.numberOfCopies==0) {
     eInfo.setErrInfo(EINVAL, "[ERROR] Wrong arguments supplied");
     return SFS_ERROR;
   }
@@ -136,6 +138,110 @@ int XrdProFilesystem::parseCreateStorageClassRequest(const XrdSfsFSctl &args, Pa
 int XrdProFilesystem::executeCreateStorageClassCommand(ParsedCreateStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
   std::cout << "create-storage-class request received:\n";
   std::cout << "NAME: " << cmdLine.storageClassName << std::endl;
+  std::cout << "Number of copies on tape: " << cmdLine.numberOfCopies << std::endl;
+  return SFS_OK;
+}
+
+//------------------------------------------------------------------------------
+// parseChangeStorageClassRequest
+//------------------------------------------------------------------------------
+int XrdProFilesystem::parseChangeStorageClassRequest(const XrdSfsFSctl &args, ParsedChangeStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
+  std::stringstream ss(args.Arg1);
+  std::string s;
+  getline(ss, s, '?');
+  getline(ss, s, '+');
+  cmdLine.dirName = s;
+  getline(ss, s, '+');
+  cmdLine.storageClassName = s;
+  if(cmdLine.storageClassName.empty() || cmdLine.dirName.empty()) {
+    eInfo.setErrInfo(EINVAL, "[ERROR] Wrong arguments supplied");
+    return SFS_ERROR;
+  }
+  return SFS_OK;
+}
+
+//------------------------------------------------------------------------------
+// executeCreateStorageClassCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeChangeStorageClassCommand(ParsedChangeStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
+  std::cout << "change-storage-class request received:\n";
+  std::cout << "DIR: " << cmdLine.dirName << std::endl;
+  std::cout << "NAME: " << cmdLine.storageClassName << std::endl;
+  return SFS_OK;
+}
+
+//------------------------------------------------------------------------------
+// parseDeleteStorageClassRequest
+//------------------------------------------------------------------------------
+int XrdProFilesystem::parseDeleteStorageClassRequest(const XrdSfsFSctl &args, ParsedDeleteStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
+  std::stringstream ss(args.Arg1);
+  std::string s;
+  getline(ss, s, '?');
+  getline(ss, s, '+');
+  cmdLine.storageClassName = s;
+  if(cmdLine.storageClassName.empty()) {
+    eInfo.setErrInfo(EINVAL, "[ERROR] Wrong arguments supplied");
+    return SFS_ERROR;
+  }
+  return SFS_OK;
+}
+
+//------------------------------------------------------------------------------
+// executeDeleteStorageClassCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeDeleteStorageClassCommand(ParsedDeleteStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
+  std::cout << "delete-storage-class request received:\n";
+  std::cout << "NAME: " << cmdLine.storageClassName << std::endl;
+  return SFS_OK;
+}
+
+//------------------------------------------------------------------------------
+// parseMkdirRequest
+//------------------------------------------------------------------------------
+int XrdProFilesystem::parseMkdirRequest(const XrdSfsFSctl &args, ParsedMkdirCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
+  std::stringstream ss(args.Arg1);
+  std::string s;
+  getline(ss, s, '?');
+  getline(ss, s, '+');
+  cmdLine.dirName = s;
+  if(cmdLine.dirName.empty()) {
+    eInfo.setErrInfo(EINVAL, "[ERROR] Wrong arguments supplied");
+    return SFS_ERROR;
+  }
+  return SFS_OK;
+}
+
+//------------------------------------------------------------------------------
+// executeMkdirCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeMkdirCommand(ParsedMkdirCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
+  std::cout << "mkdir request received:\n";
+  std::cout << "DIR: " << cmdLine.dirName << std::endl;
+  return SFS_OK;
+}
+
+//------------------------------------------------------------------------------
+// parseRmdirRequest
+//------------------------------------------------------------------------------
+int XrdProFilesystem::parseRmdirRequest(const XrdSfsFSctl &args, ParsedRmdirCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
+  std::stringstream ss(args.Arg1);
+  std::string s;
+  getline(ss, s, '?');
+  getline(ss, s, '+');
+  cmdLine.dirName = s;
+  if(cmdLine.dirName.empty()) {
+    eInfo.setErrInfo(EINVAL, "[ERROR] Wrong arguments supplied");
+    return SFS_ERROR;
+  }
+  return SFS_OK;
+}
+
+//------------------------------------------------------------------------------
+// executeRmdirCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeRmdirCommand(ParsedRmdirCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
+  std::cout << "rmdir request received:\n";
+  std::cout << "DIR: " << cmdLine.dirName << std::endl;
   return SFS_OK;
 }
 
@@ -164,6 +270,58 @@ int XrdProFilesystem::dispatchRequest(XrdSfsFSctl &args, XrdOucErrInfo &eInfo) {
       return checkParse;
     }
     int checkExecute = executeCreateStorageClassCommand(cmdLine, eInfo);
+    if(SFS_OK!=checkExecute) {
+      return checkExecute;
+    }
+    return SFS_OK;
+  }  
+  else if(strncmp(args.Arg1, "/change-storage-class?", strlen("/change-storage-class?")) == 0)
+  {  
+    ParsedChangeStorageClassCmdLine cmdLine;
+    int checkParse = parseChangeStorageClassRequest(args, cmdLine, eInfo);
+    if(SFS_OK!=checkParse) {
+      return checkParse;
+    }
+    int checkExecute = executeChangeStorageClassCommand(cmdLine, eInfo);
+    if(SFS_OK!=checkExecute) {
+      return checkExecute;
+    }
+    return SFS_OK;
+  }
+  else if(strncmp(args.Arg1, "/delete-storage-class?", strlen("/delete-storage-class?")) == 0)
+  {  
+    ParsedDeleteStorageClassCmdLine cmdLine;
+    int checkParse = parseDeleteStorageClassRequest(args, cmdLine, eInfo);
+    if(SFS_OK!=checkParse) {
+      return checkParse;
+    }
+    int checkExecute = executeDeleteStorageClassCommand(cmdLine, eInfo);
+    if(SFS_OK!=checkExecute) {
+      return checkExecute;
+    }
+    return SFS_OK;
+  }
+  else if(strncmp(args.Arg1, "/mkdir?", strlen("/mkdir?")) == 0)
+  {  
+    ParsedMkdirCmdLine cmdLine;
+    int checkParse = parseMkdirRequest(args, cmdLine, eInfo);
+    if(SFS_OK!=checkParse) {
+      return checkParse;
+    }
+    int checkExecute = executeMkdirCommand(cmdLine, eInfo);
+    if(SFS_OK!=checkExecute) {
+      return checkExecute;
+    }
+    return SFS_OK;
+  }  
+  else if(strncmp(args.Arg1, "/rmdir?", strlen("/rmdir?")) == 0)
+  {  
+    ParsedRmdirCmdLine cmdLine;
+    int checkParse = parseRmdirRequest(args, cmdLine, eInfo);
+    if(SFS_OK!=checkParse) {
+      return checkParse;
+    }
+    int checkExecute = executeRmdirCommand(cmdLine, eInfo);
     if(SFS_OK!=checkExecute) {
       return checkExecute;
     }

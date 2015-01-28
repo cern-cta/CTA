@@ -4,6 +4,10 @@
 
 #include "ParsedArchiveCmdLine.hpp"
 #include "ParsedCreateStorageClassCmdLine.hpp"
+#include "ParsedDeleteStorageClassCmdLine.hpp"
+#include "ParsedChangeStorageClassCmdLine.hpp"
+#include "ParsedMkdirCmdLine.hpp"
+#include "ParsedRmdirCmdLine.hpp"
 
 class XrdProFilesystem : public XrdSfsFileSystem {
 public:
@@ -85,6 +89,82 @@ protected:
    * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
    */
   int executeCreateStorageClassCommand(ParsedCreateStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  
+  /**
+   * Parses the change-storage-class request into the command line structure
+   * 
+   * @param args     the request string
+   * @param cmdLine  the resulting command line structure
+   * @param eInfo    Error information
+   * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
+   */
+  int parseChangeStorageClassRequest(const XrdSfsFSctl &args, ParsedChangeStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  
+  /**
+   * Executes the command contained within the command line structure
+   * 
+   * @param cmdLine command to execute
+   * @param eInfo   Error information
+   * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
+   */
+  int executeChangeStorageClassCommand(ParsedChangeStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  
+  /**
+   * Parses the delete-storage-class request into the command line structure
+   * 
+   * @param args     the request string
+   * @param cmdLine  the resulting command line structure
+   * @param eInfo    Error information
+   * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
+   */
+  int parseDeleteStorageClassRequest(const XrdSfsFSctl &args, ParsedDeleteStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  
+  /**
+   * Executes the command contained within the command line structure
+   * 
+   * @param cmdLine command to execute
+   * @param eInfo   Error information
+   * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
+   */
+  int executeDeleteStorageClassCommand(ParsedDeleteStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  
+  /**
+   * Parses the mkdir request into the command line structure
+   * 
+   * @param args     the request string
+   * @param cmdLine  the resulting command line structure
+   * @param eInfo    Error information
+   * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
+   */
+  int parseMkdirRequest(const XrdSfsFSctl &args, ParsedMkdirCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  
+  /**
+   * Executes the command contained within the command line structure
+   * 
+   * @param cmdLine command to execute
+   * @param eInfo   Error information
+   * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
+   */
+  int executeMkdirCommand(ParsedMkdirCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  
+  /**
+   * Parses the rmdir request into the command line structure
+   * 
+   * @param args     the request string
+   * @param cmdLine  the resulting command line structure
+   * @param eInfo    Error information
+   * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
+   */
+  int parseRmdirRequest(const XrdSfsFSctl &args, ParsedRmdirCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  
+  /**
+   * Executes the command contained within the command line structure
+   * 
+   * @param cmdLine command to execute
+   * @param eInfo   Error information
+   * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
+   */
+  int executeRmdirCommand(ParsedRmdirCmdLine &cmdLine, XrdOucErrInfo &eInfo);
   
   /**
    * Dispatches the request based on the query

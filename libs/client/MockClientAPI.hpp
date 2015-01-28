@@ -1,26 +1,26 @@
 #pragma once
 
-#include "API.hpp"
+#include "ClientAPI.hpp"
 
 #include <map>
 
 namespace cta {
 
 /**
- * A mock entry point to the client API of the CERN Tape Archive project.
+ * A mock entry point to the client ClientAPI of the CERN Tape Archive project.
  */
-class MockAPI: public API {
+class MockClientAPI: public ClientAPI {
 public:
 
   /**
    * Constructor.
    */
-  MockAPI();
+  MockClientAPI();
 
   /**
    * Destructor.
    */
-  ~MockAPI() throw();
+  ~MockClientAPI() throw();
 
   /**
    * Creates the specified storage class.
@@ -97,6 +97,6 @@ private:
    */
   void checkStorageClassExists(const std::string &name) const;
 
-}; // class MockAPI
+}; // class MockClientAPI
 
 } // namespace cta

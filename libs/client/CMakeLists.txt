@@ -1,11 +1,11 @@
 cmake_minimum_required (VERSION 2.6)
 
 set (CLIENT_LIB_SRC_FILES
-  API.cpp
+  ClientAPI.cpp
   DirectoryEntry.cpp
   DirectoryIterator.cpp
   Exception.cpp
-  MockAPI.cpp
+  MockClientAPI.cpp
   MockAPITest.cpp
   StorageClass.cpp)
 

@@ -1,4 +1,4 @@
-#include "MockAPI.hpp"
+#include "MockClientAPI.hpp"
 #include "Exception.hpp"
 
 #include <sstream>
@@ -6,19 +6,19 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MockAPI::MockAPI() {
+cta::MockClientAPI::MockClientAPI() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::MockAPI::~MockAPI() throw() {
+cta::MockClientAPI::~MockClientAPI() throw() {
 }
 
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void cta::MockAPI::createStorageClass(const std::string &name,
+void cta::MockClientAPI::createStorageClass(const std::string &name,
   const uint8_t nbCopies) {
   try {
     checkStorageClassDoesNotAlreadyExist(name);
@@ -33,7 +33,7 @@ void cta::MockAPI::createStorageClass(const std::string &name,
 //------------------------------------------------------------------------------
 // checkStorageClassDoesNotAlreadyExist
 //------------------------------------------------------------------------------
-void cta::MockAPI::checkStorageClassDoesNotAlreadyExist(
+void cta::MockClientAPI::checkStorageClassDoesNotAlreadyExist(
   const std::string &name) const {
   std::map<std::string, StorageClass>::const_iterator itor = 
     m_storageClasses.find(name);
@@ -47,7 +47,7 @@ void cta::MockAPI::checkStorageClassDoesNotAlreadyExist(
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
-void cta::MockAPI::deleteStorageClass(const std::string &name) {
+void cta::MockClientAPI::deleteStorageClass(const std::string &name) {
   try {
     checkStorageClassExists(name);
     m_storageClasses.erase(name);
@@ -60,7 +60,7 @@ void cta::MockAPI::deleteStorageClass(const std::string &name) {
 //------------------------------------------------------------------------------
 // checkStorageClassExists
 //------------------------------------------------------------------------------
-void cta::MockAPI::checkStorageClassExists(
+void cta::MockClientAPI::checkStorageClassExists(
   const std::string &name) const {
   std::map<std::string, StorageClass>::const_iterator itor =
     m_storageClasses.find(name);
@@ -74,7 +74,7 @@ void cta::MockAPI::checkStorageClassExists(
 //------------------------------------------------------------------------------
 // getStorageClasses
 //------------------------------------------------------------------------------
-std::list<cta::StorageClass> cta::MockAPI::getStorageClasses() const {
+std::list<cta::StorageClass> cta::MockClientAPI::getStorageClasses() const {
   std::list<StorageClass> storageClasses;
   for(std::map<std::string, StorageClass>::const_iterator itor =
     m_storageClasses.begin(); itor != m_storageClasses.end(); itor++) {
@@ -86,7 +86,7 @@ std::list<cta::StorageClass> cta::MockAPI::getStorageClasses() const {
 //------------------------------------------------------------------------------
 // getDirectoryIterator
 //------------------------------------------------------------------------------
-cta::DirectoryIterator cta::MockAPI::
+cta::DirectoryIterator cta::MockClientAPI::
   getDirectoryIterator(const std::string &dirPath) const {
 
   std::list<DirectoryEntry> entries;
@@ -97,7 +97,7 @@ cta::DirectoryIterator cta::MockAPI::
 //------------------------------------------------------------------------------
 // archiveToTape
 //------------------------------------------------------------------------------
-std::string cta::MockAPI::archiveToTape(
+std::string cta::MockClientAPI::archiveToTape(
   const std::list<std::string> &srcUrls, std::string dst) {
   return "Funny_Job_ID";
 }

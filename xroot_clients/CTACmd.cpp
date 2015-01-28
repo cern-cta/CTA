@@ -19,7 +19,11 @@ CTACmd::CTACmd() throw(): m_programName("CTA_cmd") {
 void CTACmd::usage(std::ostream &os) const throw() {
   os <<
     "Usage:\n"
-    "\t" << m_programName << " archive <source_file1> [<source_file2> [<source_file3> [...]]] <destination_path>\n";
+    "\t" << m_programName << " archive <source_file1> [<source_file2> [<source_file3> [...]]] <destination_path>\n"
+    "\t" << m_programName << " create-storage-class <storage_class_name> <number_of_tape_copies>\n"
+    "\t" << m_programName << " delete-storage-class <storage_class_name>\n"
+    "\t" << m_programName << " mkdir <directory_name>\n"
+    "\t" << m_programName << " rmdir <directory_name>\n";
 }
 
 //------------------------------------------------------------------------------

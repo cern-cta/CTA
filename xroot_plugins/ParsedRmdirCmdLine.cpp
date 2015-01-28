@@ -1,9 +1,9 @@
-#include "ParsedCreateStorageClassCmdLine.hpp"
+#include "ParsedRmdirCmdLine.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ParsedCreateStorageClassCmdLine::ParsedCreateStorageClassCmdLine() throw(): numberOfCopies(0)
+ParsedRmdirCmdLine::ParsedRmdirCmdLine() throw()
 {
   
 }
