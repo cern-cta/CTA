@@ -21,7 +21,9 @@ void CTACmd::usage(std::ostream &os) const throw() {
     "Usage:\n"
     "\t" << m_programName << " archive <source_file1> [<source_file2> [<source_file3> [...]]] <destination_path>\n"
     "\t" << m_programName << " create-storage-class <storage_class_name> <number_of_tape_copies>\n"
+    "\t" << m_programName << " change-storage-class <directory_name> <storage_class_name>\n"
     "\t" << m_programName << " delete-storage-class <storage_class_name>\n"
+    "\t" << m_programName << " list-storage-class\n"
     "\t" << m_programName << " mkdir <directory_name>\n"
     "\t" << m_programName << " rmdir <directory_name>\n";
 }
@@ -30,7 +32,7 @@ void CTACmd::usage(std::ostream &os) const throw() {
 // main
 //------------------------------------------------------------------------------
 int CTACmd::main(const int argc, char **argv) throw() {
-  if(argc < 3) {
+  if(argc < 2) {
     usage(std::cerr);
     return 1;
   }
@@ -68,8 +70,7 @@ int CTACmd::executeCommand(const int argc, char **argv)  {
   XrdCl::XRootDStatus status = fs.Query(XrdCl::QueryCode::Opaque, arg, response);
   if(status.IsOK())
   {
-    std::string sresult = response->GetBuffer();
-    std::cout << "Result string: " << sresult << std::endl;
+    std::cout << response->GetBuffer() << std::endl;
   }
   else
   {
