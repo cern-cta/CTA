@@ -70,8 +70,7 @@ int CTACmd::executeCommand(const int argc, char **argv)  {
   XrdCl::XRootDStatus status = fs.Query(XrdCl::QueryCode::Opaque, arg, response);
   if(status.IsOK())
   {
-    std::string sresult = response->GetBuffer();
-    std::cout << "Result string: " << sresult << std::endl;
+    std::cout << response->GetBuffer() << std::endl;
   }
   else
   {

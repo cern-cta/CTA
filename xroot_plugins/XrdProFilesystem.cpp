@@ -43,6 +43,7 @@ int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eIn
   {
     std::string response = "[ERROR] malloc of the buffer failed";
     eInfo.setErrInfo(response.length(), response.c_str());
+    free(buf);
     return SFS_DATA;
   }
   int rc = getpwnam_r(client->name, &pwd, buf, bufsize, &result);
@@ -54,12 +55,14 @@ int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eIn
       response += client->name;
       response += " not found";
       eInfo.setErrInfo(response.length(), response.c_str());
+      free(buf);
       return SFS_DATA;
     }
     else
     {
       std::string response = "[ERROR] getpwnam_r failed";
       eInfo.setErrInfo(response.length(), response.c_str());
+      free(buf);
       return SFS_DATA;
     }
   }
@@ -96,12 +99,17 @@ int XrdProFilesystem::executeArchiveCommand(ParsedRequest &req, XrdOucErrInfo &e
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::cout << "archive request received:\n";
+  std::string response = "[OK] Requested archival of the following files:\n";
   for(int i=0; i<req.args.size()-1; i++) {
-    std::cout << "SRC: " << req.args.at(i) << std::endl;
+    response += "[OK]\t";
+    response += req.args.at(i);
+    response += "\n";
   }  
-  std::cout << "DST: " << req.args.at(req.args.size()-1) << std::endl;
-  return SFS_OK;
+  response += "[OK] To the following directory:\n";
+  response += "[OK]\t";
+  response += req.args.at(req.args.size()-1);
+  eInfo.setErrInfo(response.length(), response.c_str());
+  return SFS_DATA;
 }
 
 //------------------------------------------------------------------------------
@@ -113,10 +121,13 @@ int XrdProFilesystem::executeCreateStorageClassCommand(ParsedRequest &req, XrdOu
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::cout << "create-storage-class request received:\n";
-  std::cout << "NAME: " << req.args.at(0) << std::endl;
-  std::cout << "Number of copies on tape: " << req.args.at(1) << std::endl;
-  return SFS_OK;
+  std::string response = "[OK] Created storage class ";
+  response += req.args.at(0);
+  response += " with ";
+  response += req.args.at(1);
+  response += " tape copies";
+  eInfo.setErrInfo(response.length(), response.c_str());
+  return SFS_DATA;
 }
 
 //------------------------------------------------------------------------------
@@ -128,10 +139,12 @@ int XrdProFilesystem::executeChangeStorageClassCommand(ParsedRequest &req, XrdOu
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::cout << "change-storage-class request received:\n";
-  std::cout << "DIR: " << req.args.at(0) << std::endl;
-  std::cout << "NAME: " << req.args.at(1) << std::endl;
-  return SFS_OK;
+  std::string response = "[OK] Changed storage class of directory ";
+  response += req.args.at(0);
+  response += " to ";
+  response += req.args.at(1);
+  eInfo.setErrInfo(response.length(), response.c_str());
+  return SFS_DATA;
 }
 
 //------------------------------------------------------------------------------
@@ -143,9 +156,11 @@ int XrdProFilesystem::executeDeleteStorageClassCommand(ParsedRequest &req, XrdOu
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::cout << "delete-storage-class request received:\n";
-  std::cout << "NAME: " << req.args.at(0) << std::endl;
-  return SFS_OK;
+  std::string response = "[OK] Storage class ";
+  response += req.args.at(0);
+  response += " deleted";
+  eInfo.setErrInfo(response.length(), response.c_str());
+  return SFS_DATA;
 }
 
 //------------------------------------------------------------------------------
@@ -157,8 +172,9 @@ int XrdProFilesystem::executeListStorageClassCommand(ParsedRequest &req, XrdOucE
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::cout << "list-storage-class request received:\n";
-  return SFS_OK;
+  std::string response = "[OK] Requested listing of the storage classes";
+  eInfo.setErrInfo(response.length(), response.c_str());
+  return SFS_DATA;
 }
 
 //------------------------------------------------------------------------------
@@ -170,9 +186,11 @@ int XrdProFilesystem::executeMkdirCommand(ParsedRequest &req, XrdOucErrInfo &eIn
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::cout << "mkdir request received:\n";
-  std::cout << "DIR: " << req.args.at(0) << std::endl;
-  return SFS_OK;
+  std::string response = "[OK] Directory ";
+  response += req.args.at(0);
+  response += " created";
+  eInfo.setErrInfo(response.length(), response.c_str());
+  return SFS_DATA;
 }
 
 //------------------------------------------------------------------------------
@@ -184,9 +202,11 @@ int XrdProFilesystem::executeRmdirCommand(ParsedRequest &req, XrdOucErrInfo &eIn
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::cout << "rmdir request received:\n";
-  std::cout << "DIR: " << req.args.at(0) << std::endl;
-  return SFS_OK;
+  std::string response = "[OK] Directory ";
+  response += req.args.at(0);
+  response += " removed";
+  eInfo.setErrInfo(response.length(), response.c_str());
+  return SFS_DATA;
 }
 
 //------------------------------------------------------------------------------
