@@ -65,8 +65,14 @@ int main(void){
     // Get hold of the root entry
     RootEntry re(self);
     // Create and populate the job queues
+    std::cout << "About to add agentRegister" << std::endl;
     AgentRegister agentRegister(re.allocateOrGetAgentRegister(self), self);
+    std::cout << osd.dump(self) << std::endl;
+    
+    // Create the job pool
+    std::cout << "About to add job pool" << std::endl;
     JobPool jobPool(re.allocateOrGetJobPool(self), self);
+    std::cout << osd.dump(self) << std::endl;
     // Dump again
     std::cout << osd.dump(self) << std::endl;
   } catch (std::exception &e) {

@@ -41,10 +41,10 @@ void Agent::setup(const std::string & typeName) {
     << 1900 + localNow.tm_year
     << std::setfill('0') << std::setw(2) 
     << 1 + localNow.tm_mon
-    << localNow.tm_mday << "-"
-    << localNow.tm_hour << ":"
-    << localNow.tm_min << ":"
-    << localNow.tm_sec;
+    << std::setw(2) << localNow.tm_mday << "-"
+    << std::setw(2) << localNow.tm_hour << ":"
+    << std::setw(2) << localNow.tm_min << ":"
+    << std::setw(2) << localNow.tm_sec;
   ObjectOps<cta::objectstore::Agent>::setName(aid.str());
   m_setupDone = true;
 }
@@ -78,7 +78,7 @@ Agent::~Agent() {
   for (size_t i=0; i < c_handleCount; i++) {
     m_contexts[i].release();
   }
-  if (m_creationDone) {
+  if (m_creationDone && !m_observerVersion) {
     try {
       remove();
       RootEntry re(*this);
