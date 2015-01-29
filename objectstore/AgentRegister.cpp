@@ -100,11 +100,11 @@ std::list<std::string> AgentRegister::getElements(Agent & agent) {
   return ret;
 }
 
-std::string AgentRegister::dump(const std::string & title, Agent & agent) {
+std::string AgentRegister::dump(Agent & agent) {
   cta::objectstore::AgentRegister rs;
   updateFromObjectStore(rs, agent.getFreeContext());
   std::stringstream ret;
-  ret<< "<<<< AgentRegister " << title << " dump start" << std::endl
+  ret<< "<<<< AgentRegister " << selfName() << " dump start" << std::endl
     << "Array size=" << rs.elements_size() << std::endl;
   for (int i=0; i<rs.elements_size(); i++) {
     ret << "element[" << i << "]=" << rs.elements(i) << std::endl;
@@ -113,6 +113,6 @@ std::string AgentRegister::dump(const std::string & title, Agent & agent) {
   for (int i=0; i<rs.intendedelements_size(); i++) {
     ret << "intendedElement[" << i << "]=" << rs.intendedelements(i) << std::endl;
   }
-  ret<< ">>>> AgentRegister " << title << " dump end" << std::endl;
+  ret<< ">>>> AgentRegister " << selfName() << " dump end" << std::endl;
   return ret.str();
 }

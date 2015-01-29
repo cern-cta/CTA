@@ -13,5 +13,5 @@ public:
   void upgradeIntendedElementToActual(std::string name, Agent & agent);
   void removeIntendedElement (const std::string  & name, Agent & agent);
   std::list<std::string> getElements(Agent & agent);
-  std::string dump(const std::string & title, Agent & agent);
+  std::string dump(Agent & agent);
 };

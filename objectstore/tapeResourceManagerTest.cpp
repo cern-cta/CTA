@@ -70,11 +70,11 @@ int main(void){
     std::cout << osd.dump(self) << std::endl;
     
     // Create the job pool
-    std::cout << "About to add job pool" << std::endl;
+    std::cout << "=============== About to add job pool" << std::endl;
     JobPool jobPool(re.allocateOrGetJobPool(self), self);
-    std::cout << osd.dump(self) << std::endl;
     // Dump again
     std::cout << osd.dump(self) << std::endl;
+    
   } catch (std::exception &e) {
     std::cout << "got exception: " << e.what() << std::endl;
   }

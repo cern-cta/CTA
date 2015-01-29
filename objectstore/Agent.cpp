@@ -218,7 +218,7 @@ std::string Agent::dump(Agent & agent) {
   updateFromObjectStore(as, agent.getFreeContext());
   std::stringstream ret;
   ret<< "<<<< Agent " << selfName() << " dump start" << std::endl
-    << "name=" << as.name()
+    << "name=" << as.name() << std::endl
     << "Ownership intent size=" << as.ownershipintent_size() << std::endl;
   for (int i=0; i<as.ownershipintent_size(); i++) {
     ret << "ownershipIntent[" << i << "]: name=" << as.ownershipintent(i).name() 
@@ -230,6 +230,6 @@ std::string Agent::dump(Agent & agent) {
         << " type=" << as.creationintent(i).type() 
         << " container=" << as.creationintent(i).container() << std::endl;
   }
-  ret<< ">>>> AgentRegister " << selfName() << " dump end" << std::endl;
+  ret<< ">>>> Agent " << selfName() << " dump end" << std::endl;
   return ret.str();
 }

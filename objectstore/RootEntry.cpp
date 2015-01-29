@@ -104,7 +104,7 @@ std::string RootEntry::allocateOrGetJobPool(Agent & agent) {
     agent.addToIntend(s_rootEntryName, jpName, "jobPool");
     // The potential object can now be garbage collected if we die from here.
     // Create the object, then lock. The name should be unique, so no race.
-    cta::objectstore::jobPool jps;
+    cta::objectstore::JobPool jps;
     jps.set_migration("");
     jps.set_recall("");
     writeChild(jpName, jps);
@@ -127,6 +127,7 @@ std::string RootEntry::dump (Agent & agent) {
   updateFromObjectStore(res, agent.getFreeContext());
   ret << "<<<< Root entry dump start" << std::endl;
   if (res.has_agentregister()) ret << "agentRegister=" << res.agentregister() << std::endl;
+  ret << "agentRegister Intent Log size=" << res.agentregisterintentlog_size() << std::endl;
   for (int i=0; i<res.agentregisterintentlog_size(); i++) {
     ret << "agentRegisterIntentLog=" << res.agentregisterintentlog(i) << std::endl;
   }

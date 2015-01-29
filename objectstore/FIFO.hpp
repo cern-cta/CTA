@@ -1,42 +1,56 @@
 #pragma once
 
 #include "ObjectOps.hpp"
+#include "Agent.hpp"
 #include "exception/Exception.hpp"
 
 class FIFO: private ObjectOps<cta::objectstore::FIFO> {
 public:
-  FIFO(ObjectStore & os, const std::string & name, ContextHandle & context):
-  ObjectOps<cta::objectstore::FIFO>(os, name),
-  m_locked(false) {
+  FIFO(const std::string & name, Agent & agent):
+  ObjectOps<cta::objectstore::FIFO>(agent.objectStore(), name) {
     cta::objectstore::FIFO fs;
-    updateFromObjectStore(fs, context);
+    updateFromObjectStore(fs, agent.getFreeContext());
   }
   
-  void lock(ContextHandle & context) {
-    if (m_locked) throw cta::exception::Exception(
-      "In FIFO::lock: already locked");
-    lockExclusiveAndRead(m_currentState, context);
-    m_locked = true;
+private:
+  void lock(ContextHandle & ctx) {
+    lockExclusiveAndRead(m_currentState, ctx);
   }
   
-  std::string peek() {
-    std::string ret;
-    if (!m_locked) throw cta::exception::Exception(
-      "In FIFO::pop: FIFO should be locked");
-    return m_currentState.name(m_currentState.readpointer());
-    return ret;
-  }
-  
-  void popAndUnlock(ContextHandle & context) {
-    if (!m_locked) throw cta::exception::Exception(
-      "In FIFO::pop: FIFO should be locked");
-    m_currentState.set_readpointer(m_currentState.readpointer()+1);
-    if (m_currentState.readpointer() > 100) {
-      compactCurrentState();
+public:
+  friend class Transaction;  
+  class Transaction {
+  public:
+    Transaction(FIFO & fifo, Agent & agent):
+    m_fifo(fifo), m_ctx(agent.getFreeContext()), m_writeDone(false) {
+      m_fifo.lock(m_ctx);
     }
-    write(m_currentState);
-    unlock(context);
-    m_locked = false;
+    
+    std::string peek() {
+      if (m_writeDone)
+        throw cta::exception::Exception("In FIFO::Transaction::peek: write already occurred");
+      return m_fifo.m_currentState.name(m_fifo.m_currentState.readpointer());
+    }
+    
+    void popAndUnlock() {
+      if (m_writeDone)
+        throw cta::exception::Exception("In FIFO::Transaction::popAndUnlock: write already occurred");
+      m_fifo.m_currentState.set_readpointer(m_fifo.m_currentState.readpointer()+1);
+      if (m_fifo.m_currentState.readpointer() > 100) {
+        m_fifo.compactCurrentState();
+      }
+      m_fifo.write(m_fifo.m_currentState);
+      m_fifo.unlock(m_ctx);
+      m_writeDone = true;
+    }
+  private:
+    FIFO & m_fifo;
+    ContextHandle & m_ctx;
+    bool m_writeDone;
+  };
+  
+  Transaction startTransaction(Agent & agent) {
+    return Transaction(*this, agent);
   }
   
   void push(std::string name, ContextHandle & context) {
@@ -47,9 +61,9 @@ public:
     unlock(context);
   }
   
-  std::string dump(ContextHandle & context) {
+  std::string dump(Agent & agent) {
     cta::objectstore::FIFO fs;
-    updateFromObjectStore(fs, context);
+    updateFromObjectStore(fs, agent.getFreeContext());
     std::stringstream ret;
     ret<< "<<<< FIFO dump start" << std::endl
       << "Read pointer=" << fs.readpointer() << std::endl
@@ -63,7 +77,6 @@ public:
   }
   
 private:
-  bool m_locked;
   cta::objectstore::FIFO m_currentState;
   
   void compactCurrentState() {

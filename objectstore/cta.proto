@@ -81,7 +81,7 @@ message RecallJob {
 }
 
 // The job pool
-message jobPool {
+message JobPool {
   required string migration = 7001;
   required string recall = 7002;
 }
