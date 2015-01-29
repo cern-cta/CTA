@@ -31,12 +31,12 @@ public:
 protected:
     
   /**
-   * Parses the rmdir request into the command line structure
+   * Parses the query into the request structure
    * 
-   * @param args     the request string
+   * @param args     the query strings
    * @param req      resulting parsed request
    * @param eInfo    Error information
-   * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
+   * @return SFS_OK in case parsing is done correctly, SFS_DATA otherwise
    */
   int parseRequest(const XrdSfsFSctl &args, ParsedRequest &req, XrdOucErrInfo &eInfo);
   
@@ -44,71 +44,71 @@ protected:
    * Checks whether client has correct permissions
    * 
    * @param req     parsed request
-   * @param eInfo  Error information
-   * @return SFS_OK in case check is passed, SFS_ERROR otherwise
+   * @param eInfo   Error information
+   * @return SFS_OK in case check is passed, SFS_DATA otherwise
    */
   int checkClient(const XrdSecEntity *client, XrdOucErrInfo &eInfo);
   
   /**
-   * Executes the command contained within the command line structure
+   * Executes the command contained within the request structure
    * 
    * @param req     parsed request
    * @param eInfo   Error information
-   * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
+   * @return SFS_DATA
    */
   int executeArchiveCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
-   * Executes the command contained within the command line structure
+   * Executes the command contained within the request structure
    * 
    * @param req     parsed request
    * @param eInfo   Error information
-   * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
+   * @return SFS_DATA
    */
   int executeCreateStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
-   * Executes the command contained within the command line structure
+   * Executes the command contained within the request structure
    * 
    * @param req     parsed request
    * @param eInfo   Error information
-   * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
+   * @return SFS_DATA
    */
   int executeChangeStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
-   * Executes the command contained within the command line structure
+   * Executes the command contained within the request structure
    * 
    * @param req     parsed request
    * @param eInfo   Error information
-   * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
+   * @return SFS_DATA
    */
   int executeDeleteStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
-   * Executes the command contained within the command line structure
+   * Executes the command contained within the request structure
    * 
    * @param req     parsed request
    * @param eInfo   Error information
-   * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
+   * @return SFS_DATA
    */
   int executeListStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
-   * Executes the command contained within the command line structure
+   * Executes the command contained within the request structure
    * 
    * @param req     parsed request
    * @param eInfo   Error information
-   * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
+   * @return SFS_DATA
    */
   int executeMkdirCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
-   * Executes the command contained within the command line structure
+   * Executes the command contained within the request structure
    * 
    * @param req     parsed request
    * @param eInfo   Error information
-   * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
+   * @return SFS_DATA
    */
   int executeRmdirCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
@@ -117,7 +117,7 @@ protected:
    * 
    * @param args     the archive request string
    * @param eInfo    Error information
-   * @return SFS_OK in case dispatching is done correctly, SFS_ERROR otherwise
+   * @return SFS_OK in case dispatching is done correctly, SFS_DATA otherwise
    */
   int dispatchRequest(XrdSfsFSctl &args, XrdOucErrInfo &eInfo);
 };
