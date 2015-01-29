@@ -6,6 +6,7 @@
 #include "ParsedCreateStorageClassCmdLine.hpp"
 #include "ParsedDeleteStorageClassCmdLine.hpp"
 #include "ParsedChangeStorageClassCmdLine.hpp"
+#include "ParsedListStorageClassCmdLine.hpp"
 #include "ParsedMkdirCmdLine.hpp"
 #include "ParsedRmdirCmdLine.hpp"
 
@@ -127,6 +128,25 @@ protected:
    * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
    */
   int executeDeleteStorageClassCommand(ParsedDeleteStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  
+  /**
+   * Parses the list-storage-class request into the command line structure
+   * 
+   * @param args     the request string
+   * @param cmdLine  the resulting command line structure
+   * @param eInfo    Error information
+   * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
+   */
+  int parseListStorageClassRequest(const XrdSfsFSctl &args, ParsedListStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  
+  /**
+   * Executes the command contained within the command line structure
+   * 
+   * @param cmdLine command to execute
+   * @param eInfo   Error information
+   * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
+   */
+  int executeListStorageClassCommand(ParsedListStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
   
   /**
    * Parses the mkdir request into the command line structure

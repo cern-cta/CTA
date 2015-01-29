@@ -196,6 +196,21 @@ int XrdProFilesystem::executeDeleteStorageClassCommand(ParsedDeleteStorageClassC
 }
 
 //------------------------------------------------------------------------------
+// parseListStorageClassRequest
+//------------------------------------------------------------------------------
+int XrdProFilesystem::parseListStorageClassRequest(const XrdSfsFSctl &args, ParsedListStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
+  return SFS_OK;
+}
+
+//------------------------------------------------------------------------------
+// executeListStorageClassCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeListStorageClassCommand(ParsedListStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
+  std::cout << "list-storage-class request received:\n";
+  return SFS_OK;
+}
+
+//------------------------------------------------------------------------------
 // parseMkdirRequest
 //------------------------------------------------------------------------------
 int XrdProFilesystem::parseMkdirRequest(const XrdSfsFSctl &args, ParsedMkdirCmdLine &cmdLine, XrdOucErrInfo &eInfo) {
@@ -296,6 +311,19 @@ int XrdProFilesystem::dispatchRequest(XrdSfsFSctl &args, XrdOucErrInfo &eInfo) {
       return checkParse;
     }
     int checkExecute = executeDeleteStorageClassCommand(cmdLine, eInfo);
+    if(SFS_OK!=checkExecute) {
+      return checkExecute;
+    }
+    return SFS_OK;
+  }
+  else if(strncmp(args.Arg1, "/list-storage-class?", strlen("/list-storage-class?")) == 0)
+  {  
+    ParsedListStorageClassCmdLine cmdLine;
+    int checkParse = parseListStorageClassRequest(args, cmdLine, eInfo);
+    if(SFS_OK!=checkParse) {
+      return checkParse;
+    }
+    int checkExecute = executeListStorageClassCommand(cmdLine, eInfo);
     if(SFS_OK!=checkExecute) {
       return checkExecute;
     }

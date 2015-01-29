@@ -4,4 +4,4 @@ list (APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package (xrootd REQUIRED)
 include_directories (${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
-add_library (XrdProFst MODULE XrdProFilesystem.cpp ParsedArchiveCmdLine.cpp ParsedCreateStorageClassCmdLine.cpp ParsedDeleteStorageClassCmdLine.cpp ParsedMkdirCmdLine.cpp ParsedRmdirCmdLine.cpp ParsedChangeStorageClassCmdLine.cpp)
+add_library (XrdProFst MODULE XrdProFilesystem.cpp ParsedArchiveCmdLine.cpp ParsedCreateStorageClassCmdLine.cpp ParsedDeleteStorageClassCmdLine.cpp ParsedListStorageClassCmdLine.cpp ParsedMkdirCmdLine.cpp ParsedRmdirCmdLine.cpp ParsedChangeStorageClassCmdLine.cpp)
