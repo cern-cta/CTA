@@ -48,6 +48,7 @@ message Agent {
   required string name = 1000;
   repeated ObjectCreationIntent creationintent = 1001;
   repeated ObjectOwnershipIntent ownershipintent = 1002;
+  required int64 heartbeatcount = 1003;
 }
 
 // The tape record

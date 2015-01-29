@@ -10,6 +10,8 @@
 #include "ObjectStructureDumper.hpp"
 #include "JobPool.hpp"
 #include "AgentRegister.hpp"
+#include "RecallJob.hpp"
+#include "Register.hpp"
 
 
 

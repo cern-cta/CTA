@@ -8,7 +8,7 @@
 
 namespace cta { namespace objectstore {
 
-class RootEntry: private ObjectOps<cta::objectstore::serializers::RootEntry> {
+class RootEntry: private ObjectOps<serializers::RootEntry> {
 public:
   // Initializer.
   static void init(ObjectStore & os);

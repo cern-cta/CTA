@@ -6,11 +6,11 @@
 
 namespace cta { namespace objectstore {
 
-class FIFO: private ObjectOps<cta::objectstore::serializers::FIFO> {
+class FIFO: private ObjectOps<serializers::FIFO> {
 public:
   FIFO(const std::string & name, Agent & agent):
-  ObjectOps<cta::objectstore::serializers::FIFO>(agent.objectStore(), name) {
-    cta::objectstore::serializers::FIFO fs;
+  ObjectOps<serializers::FIFO>(agent.objectStore(), name) {
+    serializers::FIFO fs;
     updateFromObjectStore(fs, agent.getFreeContext());
   }
   
@@ -20,6 +20,11 @@ private:
   }
   
 public:
+  class FIFOEmpty: public cta::exception::Exception {
+  public:
+    FIFOEmpty(const std::string & context): cta::exception::Exception(context) {}
+  };
+  
   friend class Transaction;  
   class Transaction {
   public:
@@ -28,15 +33,26 @@ public:
       m_fifo.lock(m_ctx);
     }
     
+    ~Transaction() {
+      try {
+        if(!m_writeDone)
+          m_fifo.unlock(m_ctx);
+      } catch (...) {}
+    }
+    
     std::string peek() {
       if (m_writeDone)
         throw cta::exception::Exception("In FIFO::Transaction::peek: write already occurred");
+      if (m_fifo.m_currentState.readpointer() >= m_fifo.m_currentState.name_size())
+        throw FIFOEmpty("In FIFO::Transaction::peek: FIFO empty");
       return m_fifo.m_currentState.name(m_fifo.m_currentState.readpointer());
     }
     
     void popAndUnlock() {
       if (m_writeDone)
         throw cta::exception::Exception("In FIFO::Transaction::popAndUnlock: write already occurred");
+      if (m_fifo.m_currentState.readpointer() >= m_fifo.m_currentState.name_size())
+        throw FIFOEmpty("In FIFO::Transaction::popAndUnlock: FIFO empty");
       m_fifo.m_currentState.set_readpointer(m_fifo.m_currentState.readpointer()+1);
       if (m_fifo.m_currentState.readpointer() > 100) {
         m_fifo.compactCurrentState();
@@ -56,7 +72,7 @@ public:
   }
   
   void push(std::string name, Agent & agent) {
-    cta::objectstore::serializers::FIFO fs;
+    serializers::FIFO fs;
     ContextHandle & context = agent.getFreeContext();
     lockExclusiveAndRead(fs, context);
     fs.add_name(name);
@@ -65,7 +81,7 @@ public:
   }
   
   std::string dump(Agent & agent) {
-    cta::objectstore::serializers::FIFO fs;
+    serializers::FIFO fs;
     updateFromObjectStore(fs, agent.getFreeContext());
     std::stringstream ret;
     ret<< "<<<< FIFO dump start" << std::endl
@@ -80,7 +96,7 @@ public:
   }
   
 private:
-  cta::objectstore::serializers::FIFO m_currentState;
+  serializers::FIFO m_currentState;
   
   void compactCurrentState() {
     uint64_t oldReadPointer = m_currentState.readpointer();

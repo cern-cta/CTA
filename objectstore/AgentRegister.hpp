@@ -6,7 +6,7 @@
 
 namespace cta { namespace objectstore {
 
-class AgentRegister: private ObjectOps<cta::objectstore::serializers::AgentRegister> {
+class AgentRegister: private ObjectOps<serializers::AgentRegister> {
 public:
   AgentRegister(const std::string & name, Agent & agent);
   void addElement (std::string name, Agent & agent);

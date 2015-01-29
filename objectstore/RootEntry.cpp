@@ -9,22 +9,22 @@ void cta::objectstore::RootEntry::init(ObjectStore & os) {
     os.read(s_rootEntryName);
     throw cta::exception::Exception("In RootEntry::init: root entry already exists");
   } catch (...) {}
-  cta::objectstore::serializers::RootEntry res;
+  serializers::RootEntry res;
   os.atomicOverwrite(s_rootEntryName, res.SerializeAsString());
 }
 // construtor, when the backend store exists.
 // Checks the existence and correctness of the root entry
 cta::objectstore::RootEntry::RootEntry(Agent & agent):
-  ObjectOps<cta::objectstore::serializers::RootEntry>(agent.objectStore(), s_rootEntryName) {
+  ObjectOps<serializers::RootEntry>(agent.objectStore(), s_rootEntryName) {
   // Check that the root entry is readable.
-  cta::objectstore::serializers::RootEntry res;
+  serializers::RootEntry res;
   updateFromObjectStore(res, agent.getFreeContext());
 }
 
 // Get the name of the agent register (or exception if not available)
 std::string cta::objectstore::RootEntry::getAgentRegister(Agent & agent) {
   // Check if the agent register exists
-  cta::objectstore::serializers::RootEntry res;
+  serializers::RootEntry res;
   updateFromObjectStore(res, agent.getFreeContext());
   // If the registry is defined, return it, job done.
   if (res.agentregister().size())
@@ -40,7 +40,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetAgentRegister(Agent & agen
   } catch (NotAllocatedEx &) {
     // If we get here, the agent register is not created yet, so we have to do it:
     // lock the entry again, for writing
-    cta::objectstore::serializers::RootEntry res;
+    serializers::RootEntry res;
     ContextHandle & context = agent.getFreeContext();
     lockExclusiveAndRead(res, context);
     // If the registry is already defined, somebody was faster. We're done.
@@ -57,7 +57,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetAgentRegister(Agent & agen
     write(res);
     // The potential object can now be garbage collected if we die from here.
     // Create the object, then lock. The name should be unique, so no race.
-    cta::objectstore::serializers::Register ars;
+    serializers::Register ars;
     writeChild(arName, ars);
     // If we lived that far, we can update the root entry to point to our
     // new agent register, and remove the name from the intent log.
@@ -73,7 +73,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetAgentRegister(Agent & agen
 // Get the name of the JobPool (or exception if not available)
 std::string cta::objectstore::RootEntry::getJobPool(Agent & agent) {
   // Check if the job pool exists
-  cta::objectstore::serializers::RootEntry res;
+  serializers::RootEntry res;
   updateFromObjectStore(res, agent.getFreeContext());
   // If the registry is defined, return it, job done.
   if (res.jobpool().size())
@@ -89,7 +89,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetJobPool(Agent & agent) {
   } catch (NotAllocatedEx &) {
     // If we get here, the job pool is not created yet, so we have to do it:
     // lock the entry again, for writing
-    cta::objectstore::serializers::RootEntry res;
+    serializers::RootEntry res;
     ContextHandle & context = agent.getFreeContext();
     lockExclusiveAndRead(res, context);
     // If the registry is already defined, somebody was faster. We're done.
@@ -104,7 +104,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetJobPool(Agent & agent) {
     agent.addToIntend(s_rootEntryName, jpName, "jobPool");
     // The potential object can now be garbage collected if we die from here.
     // Create the object, then lock. The name should be unique, so no race.
-    cta::objectstore::serializers::JobPool jps;
+    serializers::JobPool jps;
     jps.set_migration("");
     jps.set_recall("");
     writeChild(jpName, jps);
@@ -123,7 +123,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetJobPool(Agent & agent) {
 // Dump the root entry
 std::string cta::objectstore::RootEntry::dump (Agent & agent) {
   std::stringstream ret;
-  cta::objectstore::serializers::RootEntry res;
+  serializers::RootEntry res;
   updateFromObjectStore(res, agent.getFreeContext());
   ret << "<<<< Root entry dump start" << std::endl;
   if (res.has_agentregister()) ret << "agentRegister=" << res.agentregister() << std::endl;

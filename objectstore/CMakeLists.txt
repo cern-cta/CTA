@@ -21,7 +21,8 @@ add_executable (tapeResourceMangerTest tapeResourceManagerTest.cpp
   exception/strerror_r_wrapper.cpp
   threading/ChildProcess.cpp
   threading/Mutex.cpp
-  threading/Threading.cpp)
+  threading/Threading.cpp
+  utils/Timer.cpp)
 
 target_link_libraries(tapeResourceMangerTest
   protobuf

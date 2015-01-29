@@ -4,6 +4,7 @@
 #include "ObjectOps.hpp"
 #include "ContextHandle.hpp"
 #include "objectstore/cta.pb.h"
+#include "utils/Timer.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -16,7 +17,7 @@ namespace cta { namespace objectstore {
  * It handles (in the base class):
  */
 
-class Agent: protected ObjectOps<cta::objectstore::serializers::Agent> {
+class Agent: protected ObjectOps<serializers::Agent> {
 public:
   Agent(ObjectStore & os);
   
@@ -40,6 +41,7 @@ public:
   public:
     ObserverOnly(const std::string & w): cta::exception::Exception(w) {}
   };
+
   
   void create();
   
@@ -87,6 +89,10 @@ public:
   
   std::string dump(Agent & agent);
   
+  void heartbeat(Agent & agent);
+  
+  uint64_t getHeartbeatCount(Agent & agent);
+  
 private:
   std::string m_typeName;
   bool m_setupDone;
@@ -97,4 +103,14 @@ private:
   ContextHandleImplementation<myOS> m_contexts[c_handleCount];
 };
 
+class AgentWatchdog {
+public:
+  AgentWatchdog(const std::string & agentName, Agent & agent);
+  bool checkAlive(Agent & agent);
+private:
+  cta::utils::Timer m_timer;
+  Agent m_agentVisitor;
+  uint64_t m_hearbeatCounter;
+};
+  
 }}

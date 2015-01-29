@@ -6,11 +6,11 @@
 
 namespace cta { namespace objectstore {
 
-class JobPool: private ObjectOps<cta::objectstore::serializers::JobPool> {
+class JobPool: private ObjectOps<serializers::JobPool> {
 public:
   JobPool(const std::string & name, Agent & agent):
-  ObjectOps<cta::objectstore::serializers::JobPool>(agent.objectStore(), name) {
-    cta::objectstore::serializers::JobPool jps;
+  ObjectOps<serializers::JobPool>(agent.objectStore(), name) {
+    serializers::JobPool jps;
     updateFromObjectStore(jps, agent.getFreeContext());
   }
   
@@ -25,7 +25,7 @@ public:
   };
   
   std::string dump(Agent & agent) {
-    cta::objectstore::serializers::JobPool jps;
+    serializers::JobPool jps;
     updateFromObjectStore(jps, agent.getFreeContext());
     std::stringstream ret;
     ret << "<<<< JobPool " << selfName() << " dump start" << std::endl
@@ -37,7 +37,7 @@ public:
   
   std::string getRecallFIFO (Agent & agent) {
     // Check if the recall FIFO exists
-    cta::objectstore::serializers::JobPool res;
+    serializers::JobPool res;
     updateFromObjectStore(res, agent.getFreeContext());
     // If the registry is defined, return it, job done.
     if (res.recall().size())
@@ -53,7 +53,7 @@ public:
     } catch (NotAllocatedEx &) {
       // If we get here, the job pool is not created yet, so we have to do it:
       // lock the entry again, for writing
-      cta::objectstore::serializers::JobPool res;
+      serializers::JobPool res;
       ContextHandle ctx = agent.getFreeContext();
       lockExclusiveAndRead(res, ctx);
       // If the registry is already defined, somebody was faster. We're done.
@@ -68,7 +68,7 @@ public:
       agent.addToIntend(selfName(), FIFOName, "recallFIFO");
       // The potential object can now be garbage collected if we die from here.
       // Create the object, then lock. The name should be unique, so no race.
-      cta::objectstore::serializers::JobPool jps;
+      serializers::JobPool jps;
       jps.set_migration("");
       jps.set_recall("");
       writeChild(FIFOName, jps);
