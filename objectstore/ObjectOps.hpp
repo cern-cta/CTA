@@ -2,6 +2,8 @@
 
 #include "ObjectStores.hpp"
 
+namespace cta { namespace objectstore {
+
 template <class C>
 class ObjectOps {
 public:
@@ -76,3 +78,5 @@ private:
   std::string m_name;
   ObjectStore & m_objectStore;
 };
+
+}}

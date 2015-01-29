@@ -6,7 +6,9 @@
 #include "ObjectOps.hpp"
 #include "Agent.hpp"
 
-class RootEntry: private ObjectOps<cta::objectstore::RootEntry> {
+namespace cta { namespace objectstore {
+
+class RootEntry: private ObjectOps<cta::objectstore::serializers::RootEntry> {
 public:
   // Initializer.
   static void init(ObjectStore & os);
@@ -38,5 +40,7 @@ public:
   private:
     static const std::string s_rootEntryName;
 };
+
+}}
 
 

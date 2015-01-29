@@ -1,4 +1,4 @@
-package cta.objectstore;
+package cta.objectstore.serializers;
 
 // The root entry: it point to an agent register and a job pool register.
 // There is an integrated intent log, but the updates should be very rare (besides first registers creation).

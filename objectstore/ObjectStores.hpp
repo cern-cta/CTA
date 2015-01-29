@@ -13,6 +13,8 @@
 #include "exception/Exception.hpp"
 #include "exception/Errnum.hpp"
 
+namespace cta { namespace objectstore {
+
 class ContextHandle {
 public:
   template <typename T>
@@ -291,3 +293,5 @@ private:
   librados::Rados m_cluster;
   librados::IoCtx m_radosCtx;
 };
+
+}}

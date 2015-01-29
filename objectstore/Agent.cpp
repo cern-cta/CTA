@@ -6,27 +6,27 @@
 #include <sys/syscall.h>
 #include <ctime>
 
-Agent::Agent(ObjectStore & os): 
-  ObjectOps<cta::objectstore::Agent>(os), 
+cta::objectstore::Agent::Agent(ObjectStore & os): 
+  ObjectOps<cta::objectstore::serializers::Agent>(os), 
   m_nextId(0), m_setupDone(false), m_creationDone(false), m_observerVersion(false) {};
 
-Agent::Agent(ObjectStore & os, const std::string & typeName): 
-  ObjectOps<cta::objectstore::Agent>(os), 
+cta::objectstore::Agent::Agent(ObjectStore & os, const std::string & typeName): 
+  ObjectOps<cta::objectstore::serializers::Agent>(os), 
   m_nextId(0), m_setupDone(false), m_creationDone(false), m_observerVersion(false) {
   setup(typeName);
 }
 
 // Passive constructor, used for looking at existing agent records
-Agent::Agent(const std::string & name, Agent & agent):
-  ObjectOps<cta::objectstore::Agent>(agent.objectStore(), name),
+cta::objectstore::Agent::Agent(const std::string & name, Agent & agent):
+  ObjectOps<cta::objectstore::serializers::Agent>(agent.objectStore(), name),
   m_nextId(0), m_setupDone(true), m_creationDone(true), m_observerVersion(true)
 {
   // check the presence of the entry
-  cta::objectstore::Agent as;
+  cta::objectstore::serializers::Agent as;
   updateFromObjectStore(as, agent.getFreeContext());
 }
 
-void Agent::setup(const std::string & typeName) {
+void cta::objectstore::Agent::setup(const std::string & typeName) {
   std::stringstream aid;
   // Get time
   time_t now = time(0);
@@ -45,36 +45,36 @@ void Agent::setup(const std::string & typeName) {
     << std::setw(2) << localNow.tm_hour << ":"
     << std::setw(2) << localNow.tm_min << ":"
     << std::setw(2) << localNow.tm_sec;
-  ObjectOps<cta::objectstore::Agent>::setName(aid.str());
+  ObjectOps<cta::objectstore::serializers::Agent>::setName(aid.str());
   m_setupDone = true;
 }
 
-void Agent::create() {
+void cta::objectstore::Agent::create() {
   if (!m_setupDone)
     throw SetupNotDone("In Agent::create(): setup() not yet done");
   RootEntry re(*this);
   AgentRegister ar(re.allocateOrGetAgentRegister(*this), *this);
   ar.addIntendedElement(selfName(), *this);
-  cta::objectstore::Agent as;
+  cta::objectstore::serializers::Agent as;
   as.set_name(selfName());
   writeChild(selfName(), as);
   ar.upgradeIntendedElementToActual(selfName(), *this);
   m_creationDone = true;
 }
 
-std::string Agent::type() {
+std::string cta::objectstore::Agent::type() {
   if (!m_setupDone)
     throw SetupNotDone("In Agent::type(): setup() not yet done");
   return m_typeName;
 }
 
-std::string Agent::name() {
+std::string cta::objectstore::Agent::name() {
   if (!m_setupDone)
     throw SetupNotDone("In Agent::name(): setup() not yet done");
   return selfName();
 }
 
-Agent::~Agent() {
+cta::objectstore::Agent::~Agent() {
   for (size_t i=0; i < c_handleCount; i++) {
     m_contexts[i].release();
   }
@@ -88,7 +88,7 @@ Agent::~Agent() {
   }
 }
 
-std::string Agent::nextId(const std::string & childType) {
+std::string cta::objectstore::Agent::nextId(const std::string & childType) {
   if (!m_setupDone)
     throw SetupNotDone("In Agent::nextId(): setup() not yet done");
   if (m_observerVersion)
@@ -98,7 +98,8 @@ std::string Agent::nextId(const std::string & childType) {
   return id.str();
 }
 
-ContextHandleImplementation<myOS> & Agent::getFreeContext() {
+cta::objectstore::ContextHandleImplementation<myOS> & 
+  cta::objectstore::Agent::getFreeContext() {
   for (size_t i=0; i < c_handleCount; i++) {
     if (!m_contexts[i].isSet())
       return m_contexts[i];
@@ -106,13 +107,13 @@ ContextHandleImplementation<myOS> & Agent::getFreeContext() {
   throw cta::exception::Exception("Could not find free context slot");
 }
 
-void Agent::addToIntend (std::string container, std::string name, std::string typeName) {
+void cta::objectstore::Agent::addToIntend (std::string container, std::string name, std::string typeName) {
   if (!m_creationDone)
     throw CreationNotDone("In Agent::addToIntend(): creation() not yet done");
-  cta::objectstore::Agent as;
+  cta::objectstore::serializers::Agent as;
   ContextHandle & ctx = getFreeContext();
   lockExclusiveAndRead(as, ctx);
-  cta::objectstore::ObjectCreationIntent * oca = 
+  cta::objectstore::serializers::ObjectCreationIntent * oca = 
     as.mutable_creationintent()->Add();
   oca->set_container(container);
   oca->set_name(name);
@@ -121,10 +122,10 @@ void Agent::addToIntend (std::string container, std::string name, std::string ty
   unlock(ctx);
 }
 
-void Agent::removeFromIntent (std::string container, std::string name, std::string typeName) {
+void cta::objectstore::Agent::removeFromIntent (std::string container, std::string name, std::string typeName) {
   if (!m_creationDone)
     throw CreationNotDone("In Agent::removeFromIntent(): creation() not yet done");
-  cta::objectstore::Agent as;
+  cta::objectstore::serializers::Agent as;
   ContextHandle & ctx = getFreeContext();
   lockExclusiveAndRead(as, ctx);
   bool found;
@@ -145,13 +146,13 @@ void Agent::removeFromIntent (std::string container, std::string name, std::stri
   unlock(ctx);
 }
 
-void Agent::addToOwnership(std::string name, std::string typeName) {
+void cta::objectstore::Agent::addToOwnership(std::string name, std::string typeName) {
   if (!m_creationDone)
     throw CreationNotDone("In Agent::addToOwnership(): creation() not yet done");
-  cta::objectstore::Agent as;
+  cta::objectstore::serializers::Agent as;
   ContextHandle & ctx = getFreeContext();
   lockExclusiveAndRead(as, ctx);
-  cta::objectstore::ObjectOwnershipIntent * ooi = 
+  cta::objectstore::serializers::ObjectOwnershipIntent * ooi = 
     as.mutable_ownershipintent()->Add();
   ooi->set_name(name);
   ooi->set_type(typeName);
@@ -159,10 +160,10 @@ void Agent::addToOwnership(std::string name, std::string typeName) {
   unlock(ctx);
 }
 
-void Agent::removeFromOwnership(std::string name, std::string typeName) {
+void cta::objectstore::Agent::removeFromOwnership(std::string name, std::string typeName) {
   if (!m_creationDone)
     throw CreationNotDone("In Agent::removeFromOwnership(): creation() not yet done");
-  cta::objectstore::Agent as;
+  cta::objectstore::serializers::Agent as;
   ContextHandle & ctx = getFreeContext();
   lockExclusiveAndRead(as, ctx);
   bool found;
@@ -182,10 +183,11 @@ void Agent::removeFromOwnership(std::string name, std::string typeName) {
   unlock(ctx);
 }
 
-std::list<Agent::intentEntry> Agent::getIntentLog() {
+std::list<cta::objectstore::Agent::intentEntry> 
+  cta::objectstore::Agent::getIntentLog() {
   if (!m_creationDone)
     throw CreationNotDone("In Agent::getIntentLog(): creation() not yet done");
-  cta::objectstore::Agent as;
+  cta::objectstore::serializers::Agent as;
   updateFromObjectStore(as, getFreeContext());
   std::list<intentEntry> ret;
   for (int i=0; i<as.creationintent_size(); i++) {
@@ -196,10 +198,11 @@ std::list<Agent::intentEntry> Agent::getIntentLog() {
   return ret;
 }
 
-std::list<Agent::ownershipEntry> Agent::getOwnershipLog() {
+std::list<cta::objectstore::Agent::ownershipEntry>
+  cta::objectstore::Agent::getOwnershipLog() {
   if (!m_creationDone)
     throw CreationNotDone("In Agent::getOwnershipLog(): creation() not yet done");
-  cta::objectstore::Agent as;
+  cta::objectstore::serializers::Agent as;
   updateFromObjectStore(as, getFreeContext());
   std::list<ownershipEntry> ret;
   for (int i=0; i<as.creationintent_size(); i++) {
@@ -209,12 +212,12 @@ std::list<Agent::ownershipEntry> Agent::getOwnershipLog() {
   return ret;
 }
 
-ObjectStore & Agent::objectStore() {
-  return ObjectOps<cta::objectstore::Agent>::objectStore();
+cta::objectstore::ObjectStore & cta::objectstore::Agent::objectStore() {
+  return ObjectOps<cta::objectstore::serializers::Agent>::objectStore();
 }
 
-std::string Agent::dump(Agent & agent) {
-  cta::objectstore::Agent as;
+std::string cta::objectstore::Agent::dump(Agent & agent) {
+  cta::objectstore::serializers::Agent as;
   updateFromObjectStore(as, agent.getFreeContext());
   std::stringstream ret;
   ret<< "<<<< Agent " << selfName() << " dump start" << std::endl

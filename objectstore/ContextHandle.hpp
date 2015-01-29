@@ -2,6 +2,8 @@
 
 #include "ObjectStores.hpp"
 
+namespace cta { namespace objectstore {
+
 template <class C>
 class ContextHandleImplementation: public ContextHandle {};
 
@@ -30,3 +32,5 @@ public:
 private:
   bool m_set;
 };
+
+}}

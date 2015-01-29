@@ -1,15 +1,15 @@
 #include "AgentRegister.hpp"
 
-AgentRegister::AgentRegister(const std::string & name, Agent & agent):
-ObjectOps<cta::objectstore::AgentRegister>(agent.objectStore(), name) {
+cta::objectstore::AgentRegister::AgentRegister(const std::string & name, Agent & agent):
+ObjectOps<cta::objectstore::serializers::AgentRegister>(agent.objectStore(), name) {
   // Check that the entry is present and readable (depending on implementation
   // of object store, locking might or might not succeed)
-  cta::objectstore::AgentRegister rs;
+  cta::objectstore::serializers::AgentRegister rs;
   updateFromObjectStore(rs, agent.getFreeContext());
 }
 
-void AgentRegister::addElement (std::string name, Agent & agent) {
-  cta::objectstore::AgentRegister rs;
+void cta::objectstore::AgentRegister::addElement (std::string name, Agent & agent) {
+  cta::objectstore::serializers::AgentRegister rs;
   ContextHandle & context = agent.getFreeContext();
   lockExclusiveAndRead(rs, context);
   rs.add_elements(name);
@@ -17,8 +17,8 @@ void AgentRegister::addElement (std::string name, Agent & agent) {
   unlock(context);
 }
 
-void AgentRegister::removeElement (const std::string  & name, Agent & agent) {
-  cta::objectstore::AgentRegister rs;
+void cta::objectstore::AgentRegister::removeElement (const std::string  & name, Agent & agent) {
+  cta::objectstore::serializers::AgentRegister rs;
   ContextHandle & context = agent.getFreeContext();
   lockExclusiveAndRead(rs, context);
   bool found;
@@ -37,8 +37,8 @@ void AgentRegister::removeElement (const std::string  & name, Agent & agent) {
   unlock(context);
 }
 
-void AgentRegister::addIntendedElement(std::string name, Agent& agent) {
-  cta::objectstore::AgentRegister rs;
+void cta::objectstore::AgentRegister::addIntendedElement(std::string name, Agent& agent) {
+  cta::objectstore::serializers::AgentRegister rs;
   ContextHandle & context = agent.getFreeContext();
   lockExclusiveAndRead(rs, context);
   rs.add_intendedelements(name);
@@ -46,8 +46,8 @@ void AgentRegister::addIntendedElement(std::string name, Agent& agent) {
   unlock(context);
 }
 
-void AgentRegister::upgradeIntendedElementToActual(std::string name, Agent& agent) {
-  cta::objectstore::AgentRegister rs;
+void cta::objectstore::AgentRegister::upgradeIntendedElementToActual(std::string name, Agent& agent) {
+  cta::objectstore::serializers::AgentRegister rs;
   ContextHandle & context = agent.getFreeContext();
   lockExclusiveAndRead(rs, context);
   bool found;
@@ -68,8 +68,8 @@ void AgentRegister::upgradeIntendedElementToActual(std::string name, Agent& agen
 }
 
 
-void AgentRegister::removeIntendedElement(const std::string& name, Agent& agent) {
-  cta::objectstore::AgentRegister rs;
+void cta::objectstore::AgentRegister::removeIntendedElement(const std::string& name, Agent& agent) {
+  cta::objectstore::serializers::AgentRegister rs;
   ContextHandle & context = agent.getFreeContext();
   lockExclusiveAndRead(rs, context);
   bool found;
@@ -90,8 +90,8 @@ void AgentRegister::removeIntendedElement(const std::string& name, Agent& agent)
 
 
 
-std::list<std::string> AgentRegister::getElements(Agent & agent) {
-  cta::objectstore::AgentRegister rs;
+std::list<std::string> cta::objectstore::AgentRegister::getElements(Agent & agent) {
+  cta::objectstore::serializers::AgentRegister rs;
   updateFromObjectStore(rs, agent.getFreeContext());
   std::list<std::string> ret;
   for (int i=0; i<rs.elements_size(); i++) {
@@ -100,8 +100,8 @@ std::list<std::string> AgentRegister::getElements(Agent & agent) {
   return ret;
 }
 
-std::string AgentRegister::dump(Agent & agent) {
-  cta::objectstore::AgentRegister rs;
+std::string cta::objectstore::AgentRegister::dump(Agent & agent) {
+  cta::objectstore::serializers::AgentRegister rs;
   updateFromObjectStore(rs, agent.getFreeContext());
   std::stringstream ret;
   ret<< "<<<< AgentRegister " << selfName() << " dump start" << std::endl

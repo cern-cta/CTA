@@ -15,18 +15,20 @@
 
 class jobExecutorThread: public cta::threading::Thread {
 public:
-  jobExecutorThread(Action & a): cta::threading::Thread(), m_action(a) {}
+  jobExecutorThread(cta::objectstore::Action & a): 
+    cta::threading::Thread(), m_action(a) {}
 private:
   virtual void run () {
     // make the agent act
     m_action.execute();
   }
-  Action & m_action;
+  cta::objectstore::Action & m_action;
 };
 
 class jobExecutorProcess: public cta::threading::ChildProcess {
 public:
-  jobExecutorProcess(Action & a): cta::threading::ChildProcess(), m_action(a) {}
+  jobExecutorProcess(cta::objectstore::Action & a):
+    cta::threading::ChildProcess(), m_action(a) {}
 private:
   virtual int run () {
     // increase 100 time root entry's 
@@ -39,7 +41,7 @@ private:
     }
     return 0;
   }
-  Action & m_action;
+  cta::objectstore::Action & m_action;
 };
 
 class dummyCleanup: public cta::threading::ChildProcess::Cleanup {
@@ -53,25 +55,25 @@ int main(void){
     std::cout << "os.path=" << os.path() << " os.user=" << os.user() 
       << "os.pool=" << os.pool() << std::endl;
     // Initialize the root entry
-    RootEntry::init(os);
+    cta::objectstore::RootEntry::init(os);
     
     // Create our own agent representation
-    Agent self(os, "masterProcess");
+    cta::objectstore::Agent self(os, "masterProcess");
     self.create();
-    ContextHandleImplementation<myOS> ctx;
+    cta::objectstore::ContextHandleImplementation<myOS> ctx;
     // Dump the structure
-    ObjectStrucutreDumper osd;
+    cta::objectstore::ObjectStrucutreDumper osd;
     std::cout << osd.dump(self) << std::endl;
     // Get hold of the root entry
-    RootEntry re(self);
+    cta::objectstore::RootEntry re(self);
     // Create and populate the job queues
     std::cout << "About to add agentRegister" << std::endl;
-    AgentRegister agentRegister(re.allocateOrGetAgentRegister(self), self);
+    cta::objectstore::AgentRegister agentRegister(re.allocateOrGetAgentRegister(self), self);
     std::cout << osd.dump(self) << std::endl;
     
     // Create the job pool
     std::cout << "=============== About to add job pool" << std::endl;
-    JobPool jobPool(re.allocateOrGetJobPool(self), self);
+    cta::objectstore::JobPool jobPool(re.allocateOrGetJobPool(self), self);
     // Dump again
     std::cout << osd.dump(self) << std::endl;
     

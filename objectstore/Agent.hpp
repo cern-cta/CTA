@@ -5,6 +5,8 @@
 #include "ContextHandle.hpp"
 #include "objectstore/cta.pb.h"
 
+namespace cta { namespace objectstore {
+
 /**
  * Class containing agent information and managing the update of the 
  * agent's persitent representation in the object store.
@@ -14,7 +16,7 @@
  * It handles (in the base class):
  */
 
-class Agent: protected ObjectOps<cta::objectstore::Agent> {
+class Agent: protected ObjectOps<cta::objectstore::serializers::Agent> {
 public:
   Agent(ObjectStore & os);
   
@@ -94,3 +96,5 @@ private:
   static const size_t c_handleCount = 100;
   ContextHandleImplementation<myOS> m_contexts[c_handleCount];
 };
+
+}}

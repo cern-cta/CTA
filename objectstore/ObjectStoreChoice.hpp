@@ -1,4 +1,4 @@
 #pragma once
 
 #include "ObjectOps.hpp"
-typedef ObjectStoreRados myOS;
+typedef cta::objectstore::ObjectStoreRados myOS;

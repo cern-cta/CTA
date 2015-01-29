@@ -3,18 +3,20 @@
 #include "ObjectOps.hpp"
 #include <algorithm>
 
-class Register: private ObjectOps<cta::objectstore::Register> {
+namespace cta { namespace objectstore {
+
+class Register: private ObjectOps<cta::objectstore::serializers::Register> {
 public:
   Register(const std::string & name, Agent & agent):
-  ObjectOps<cta::objectstore::Register>(agent.objectStore(), name) {
+  ObjectOps<cta::objectstore::serializers::Register>(agent.objectStore(), name) {
     // Check that the entry is present and readable (depending on implementation
     // of object store, locking might or might not succeed)
-    cta::objectstore::Register rs;
+    cta::objectstore::serializers::Register rs;
     updateFromObjectStore(rs, agent.getFreeContext());
   }
   
   void addElement (std::string name, ContextHandle & context) {
-    cta::objectstore::Register rs;
+    cta::objectstore::serializers::Register rs;
     lockExclusiveAndRead(rs, context);
     rs.add_elements(name);
     write(rs);
@@ -22,7 +24,7 @@ public:
   }
   
   void removeElement (const std::string  & name, ContextHandle & context) {
-    cta::objectstore::Register rs;
+    cta::objectstore::serializers::Register rs;
     lockExclusiveAndRead(rs, context);
     bool found;
     do {
@@ -41,7 +43,7 @@ public:
   }
   
   std::list<std::string> getElements(Agent & agent) {
-    cta::objectstore::Register rs;
+    cta::objectstore::serializers::Register rs;
     updateFromObjectStore(rs, agent.getFreeContext());
     std::list<std::string> ret;
     for (int i=0; i<rs.elements_size(); i++) {
@@ -51,7 +53,7 @@ public:
   }
   
   std::string dump(const std::string & title, Agent & agent) {
-    cta::objectstore::Register rs;
+    cta::objectstore::serializers::Register rs;
     updateFromObjectStore(rs, agent.getFreeContext());
     std::stringstream ret;
     ret<< "<<<< Register " << title << " dump start" << std::endl
@@ -63,3 +65,5 @@ public:
     return ret.str();
   }
 };
+
+}}

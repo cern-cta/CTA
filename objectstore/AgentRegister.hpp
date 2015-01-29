@@ -4,7 +4,9 @@
 #include "Agent.hpp"
 #include <algorithm>
 
-class AgentRegister: private ObjectOps<cta::objectstore::AgentRegister> {
+namespace cta { namespace objectstore {
+
+class AgentRegister: private ObjectOps<cta::objectstore::serializers::AgentRegister> {
 public:
   AgentRegister(const std::string & name, Agent & agent);
   void addElement (std::string name, Agent & agent);
@@ -15,3 +17,5 @@ public:
   std::list<std::string> getElements(Agent & agent);
   std::string dump(Agent & agent);
 };
+
+}}

@@ -6,6 +6,8 @@
 #include "JobPool.hpp"
 #include <iostream>
 
+namespace cta { namespace objectstore {
+
 class ObjectStrucutreDumper {
 public:
   std::string dump(Agent & agent) {
@@ -34,3 +36,5 @@ public:
     return ret.str();
   }
 };
+
+}}

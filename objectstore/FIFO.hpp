@@ -4,11 +4,13 @@
 #include "Agent.hpp"
 #include "exception/Exception.hpp"
 
-class FIFO: private ObjectOps<cta::objectstore::FIFO> {
+namespace cta { namespace objectstore {
+
+class FIFO: private ObjectOps<cta::objectstore::serializers::FIFO> {
 public:
   FIFO(const std::string & name, Agent & agent):
-  ObjectOps<cta::objectstore::FIFO>(agent.objectStore(), name) {
-    cta::objectstore::FIFO fs;
+  ObjectOps<cta::objectstore::serializers::FIFO>(agent.objectStore(), name) {
+    cta::objectstore::serializers::FIFO fs;
     updateFromObjectStore(fs, agent.getFreeContext());
   }
   
@@ -53,8 +55,9 @@ public:
     return Transaction(*this, agent);
   }
   
-  void push(std::string name, ContextHandle & context) {
-    cta::objectstore::FIFO fs;
+  void push(std::string name, Agent & agent) {
+    cta::objectstore::serializers::FIFO fs;
+    ContextHandle & context = agent.getFreeContext();
     lockExclusiveAndRead(fs, context);
     fs.add_name(name);
     write(fs);
@@ -62,7 +65,7 @@ public:
   }
   
   std::string dump(Agent & agent) {
-    cta::objectstore::FIFO fs;
+    cta::objectstore::serializers::FIFO fs;
     updateFromObjectStore(fs, agent.getFreeContext());
     std::stringstream ret;
     ret<< "<<<< FIFO dump start" << std::endl
@@ -77,7 +80,7 @@ public:
   }
   
 private:
-  cta::objectstore::FIFO m_currentState;
+  cta::objectstore::serializers::FIFO m_currentState;
   
   void compactCurrentState() {
     uint64_t oldReadPointer = m_currentState.readpointer();
@@ -103,3 +106,5 @@ private:
     }
   }
 };
+
+}}
