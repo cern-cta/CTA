@@ -1,9 +1,9 @@
-#include "ParsedListStorageClassCmdLine.hpp"
+#include "ParsedRequest.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ParsedListStorageClassCmdLine::ParsedListStorageClassCmdLine() throw()
+ParsedRequest::ParsedRequest() throw()
 {
   
 }

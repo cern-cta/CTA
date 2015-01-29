@@ -2,13 +2,7 @@
 
 #include "XrdSfs/XrdSfsInterface.hh"
 
-#include "ParsedArchiveCmdLine.hpp"
-#include "ParsedCreateStorageClassCmdLine.hpp"
-#include "ParsedDeleteStorageClassCmdLine.hpp"
-#include "ParsedChangeStorageClassCmdLine.hpp"
-#include "ParsedListStorageClassCmdLine.hpp"
-#include "ParsedMkdirCmdLine.hpp"
-#include "ParsedRmdirCmdLine.hpp"
+#include "ParsedRequest.hpp"
 
 class XrdProFilesystem : public XrdSfsFileSystem {
 public:
@@ -35,156 +29,88 @@ public:
   ~XrdProFilesystem();
   
 protected:
-  
+    
   /**
-   * Function that checks whether a path is a directory or not
+   * Parses the rmdir request into the command line structure
    * 
-   * @param path to be checked
-   * @return true if it's a directory false otherwise
+   * @param args     the request string
+   * @param req      resulting parsed request
+   * @param eInfo    Error information
+   * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
    */
-  bool isDir(const char *path) throw();
+  int parseRequest(const XrdSfsFSctl &args, ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
    * Checks whether client has correct permissions
    * 
-   * @param client client information
+   * @param req     parsed request
    * @param eInfo  Error information
    * @return SFS_OK in case check is passed, SFS_ERROR otherwise
    */
   int checkClient(const XrdSecEntity *client, XrdOucErrInfo &eInfo);
   
   /**
-   * Parses the archive request into the command line structure
+   * Executes the command contained within the command line structure
    * 
-   * @param args     the request string
-   * @param cmdLine  the resulting command line structure
-   * @param eInfo    Error information
-   * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
    */
-  int parseArchiveRequest(const XrdSfsFSctl &args, ParsedArchiveCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  int executeArchiveCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
    * Executes the command contained within the command line structure
    * 
-   * @param cmdLine command to execute
+   * @param req     parsed request
    * @param eInfo   Error information
    * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
    */
-  int executeArchiveCommand(ParsedArchiveCmdLine &cmdLine, XrdOucErrInfo &eInfo);
-  
-  /**
-   * Parses the create-storage-class request into the command line structure
-   * 
-   * @param args     the request string
-   * @param cmdLine  the resulting command line structure
-   * @param eInfo    Error information
-   * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
-   */
-  int parseCreateStorageClassRequest(const XrdSfsFSctl &args, ParsedCreateStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  int executeCreateStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
    * Executes the command contained within the command line structure
    * 
-   * @param cmdLine command to execute
+   * @param req     parsed request
    * @param eInfo   Error information
    * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
    */
-  int executeCreateStorageClassCommand(ParsedCreateStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
-  
-  /**
-   * Parses the change-storage-class request into the command line structure
-   * 
-   * @param args     the request string
-   * @param cmdLine  the resulting command line structure
-   * @param eInfo    Error information
-   * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
-   */
-  int parseChangeStorageClassRequest(const XrdSfsFSctl &args, ParsedChangeStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  int executeChangeStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
    * Executes the command contained within the command line structure
    * 
-   * @param cmdLine command to execute
+   * @param req     parsed request
    * @param eInfo   Error information
    * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
    */
-  int executeChangeStorageClassCommand(ParsedChangeStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
-  
-  /**
-   * Parses the delete-storage-class request into the command line structure
-   * 
-   * @param args     the request string
-   * @param cmdLine  the resulting command line structure
-   * @param eInfo    Error information
-   * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
-   */
-  int parseDeleteStorageClassRequest(const XrdSfsFSctl &args, ParsedDeleteStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  int executeDeleteStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
    * Executes the command contained within the command line structure
    * 
-   * @param cmdLine command to execute
+   * @param req     parsed request
    * @param eInfo   Error information
    * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
    */
-  int executeDeleteStorageClassCommand(ParsedDeleteStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
-  
-  /**
-   * Parses the list-storage-class request into the command line structure
-   * 
-   * @param args     the request string
-   * @param cmdLine  the resulting command line structure
-   * @param eInfo    Error information
-   * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
-   */
-  int parseListStorageClassRequest(const XrdSfsFSctl &args, ParsedListStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  int executeListStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
    * Executes the command contained within the command line structure
    * 
-   * @param cmdLine command to execute
+   * @param req     parsed request
    * @param eInfo   Error information
    * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
    */
-  int executeListStorageClassCommand(ParsedListStorageClassCmdLine &cmdLine, XrdOucErrInfo &eInfo);
-  
-  /**
-   * Parses the mkdir request into the command line structure
-   * 
-   * @param args     the request string
-   * @param cmdLine  the resulting command line structure
-   * @param eInfo    Error information
-   * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
-   */
-  int parseMkdirRequest(const XrdSfsFSctl &args, ParsedMkdirCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  int executeMkdirCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
    * Executes the command contained within the command line structure
    * 
-   * @param cmdLine command to execute
+   * @param req     parsed request
    * @param eInfo   Error information
    * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
    */
-  int executeMkdirCommand(ParsedMkdirCmdLine &cmdLine, XrdOucErrInfo &eInfo);
-  
-  /**
-   * Parses the rmdir request into the command line structure
-   * 
-   * @param args     the request string
-   * @param cmdLine  the resulting command line structure
-   * @param eInfo    Error information
-   * @return SFS_OK in case parsing is done correctly, SFS_ERROR otherwise
-   */
-  int parseRmdirRequest(const XrdSfsFSctl &args, ParsedRmdirCmdLine &cmdLine, XrdOucErrInfo &eInfo);
-  
-  /**
-   * Executes the command contained within the command line structure
-   * 
-   * @param cmdLine command to execute
-   * @param eInfo   Error information
-   * @return SFS_OK in case executed correctly, SFS_ERROR otherwise
-   */
-  int executeRmdirCommand(ParsedRmdirCmdLine &cmdLine, XrdOucErrInfo &eInfo);
+  int executeRmdirCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
    * Dispatches the request based on the query
