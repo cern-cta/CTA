@@ -23,19 +23,11 @@ extern "C"
 // checkClient
 //------------------------------------------------------------------------------
 int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eInfo) {
-  /*
-  std::cout << "Calling FSctl with:\ncmd=" << cmd << "\narg=" << args.Arg1 << std::endl;
-  std::cout << "Client info:\n"
-          << "\nclient->host: " << client->host
-          << "\nclient->name: " << client->name
-          << "\nclient->prot: " << client->prot
-          << "\nclient->sessvar: " << client->sessvar
-          << "\nclient->tident: " << client->tident << std::endl;
-   */
   if(!client || !client->host || strncmp(client->host, "localhost", 9))
   {
-    eInfo.setErrInfo(EACCES, "[ERROR] operation possible only from localhost");
-    return SFS_ERROR;
+    std::string response = "[ERROR] operation possible only from localhost";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
   struct passwd pwd;
   struct passwd *result;
@@ -49,27 +41,29 @@ int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eIn
   buf = (char *)malloc(bufsize);
   if(buf == NULL)
   {
-    eInfo.setErrInfo(ENOMEM, "[ERROR] malloc of the buffer failed");
-    return SFS_ERROR;
+    std::string response = "[ERROR] malloc of the buffer failed";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
   int rc = getpwnam_r(client->name, &pwd, buf, bufsize, &result);
   if(result == NULL)
   {
     if (rc == 0)
     {
-      XrdOucString errString = "[ERROR] User ";
-      errString += client->name;
-      errString += " not found";
-      eInfo.setErrInfo(EACCES, errString.c_str());
-      return SFS_ERROR;
+      std::string response = "[ERROR] User ";
+      response += client->name;
+      response += " not found";
+      eInfo.setErrInfo(response.length(), response.c_str());
+      return SFS_DATA;
     }
     else
     {
-      eInfo.setErrInfo(EACCES, "[ERROR] getpwnam_r failed");
-      return SFS_ERROR;
+      std::string response = "[ERROR] getpwnam_r failed";
+      eInfo.setErrInfo(response.length(), response.c_str());
+      return SFS_DATA;
     }
   }
-  //std::cout << "Logging request received from client. Username: " << client->name << " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
+  std::cout << "Request received from client. Username: " << client->name << " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
   free(buf);
   return SFS_OK;
 }
@@ -86,8 +80,9 @@ int XrdProFilesystem::parseRequest(const XrdSfsFSctl &args, ParsedRequest &req, 
     req.args.push_back(s);
   }
   if(req.cmd.empty()) {
-    eInfo.setErrInfo(EINVAL, "[ERROR] No command supplied");
-    return SFS_ERROR;
+    std::string response = "[ERROR] No command supplied";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
   return SFS_OK;
 }
@@ -97,8 +92,9 @@ int XrdProFilesystem::parseRequest(const XrdSfsFSctl &args, ParsedRequest &req, 
 //------------------------------------------------------------------------------
 int XrdProFilesystem::executeArchiveCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
   if(req.args.size() < 2) {
-    eInfo.setErrInfo(EINVAL, "[ERROR] Too few arguments provided");
-    return SFS_ERROR;
+    std::string response = "[ERROR] Too few arguments provided";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
   std::cout << "archive request received:\n";
   for(int i=0; i<req.args.size()-1; i++) {
@@ -113,8 +109,9 @@ int XrdProFilesystem::executeArchiveCommand(ParsedRequest &req, XrdOucErrInfo &e
 //------------------------------------------------------------------------------
 int XrdProFilesystem::executeCreateStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
   if(req.args.size() != 2) {
-    eInfo.setErrInfo(EINVAL, "[ERROR] Wrong number of arguments provided");
-    return SFS_ERROR;
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
   std::cout << "create-storage-class request received:\n";
   std::cout << "NAME: " << req.args.at(0) << std::endl;
@@ -127,8 +124,9 @@ int XrdProFilesystem::executeCreateStorageClassCommand(ParsedRequest &req, XrdOu
 //------------------------------------------------------------------------------
 int XrdProFilesystem::executeChangeStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
   if(req.args.size() != 2) {
-    eInfo.setErrInfo(EINVAL, "[ERROR] Wrong number of arguments provided");
-    return SFS_ERROR;
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
   std::cout << "change-storage-class request received:\n";
   std::cout << "DIR: " << req.args.at(0) << std::endl;
@@ -141,8 +139,9 @@ int XrdProFilesystem::executeChangeStorageClassCommand(ParsedRequest &req, XrdOu
 //------------------------------------------------------------------------------
 int XrdProFilesystem::executeDeleteStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
   if(req.args.size() != 1) {
-    eInfo.setErrInfo(EINVAL, "[ERROR] Wrong number of arguments provided");
-    return SFS_ERROR;
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
   std::cout << "delete-storage-class request received:\n";
   std::cout << "NAME: " << req.args.at(0) << std::endl;
@@ -154,8 +153,9 @@ int XrdProFilesystem::executeDeleteStorageClassCommand(ParsedRequest &req, XrdOu
 //------------------------------------------------------------------------------
 int XrdProFilesystem::executeListStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
   if(req.args.size() != 0) {
-    eInfo.setErrInfo(EINVAL, "[ERROR] Wrong number of arguments provided");
-    return SFS_ERROR;
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
   std::cout << "list-storage-class request received:\n";
   return SFS_OK;
@@ -166,8 +166,9 @@ int XrdProFilesystem::executeListStorageClassCommand(ParsedRequest &req, XrdOucE
 //------------------------------------------------------------------------------
 int XrdProFilesystem::executeMkdirCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
   if(req.args.size() != 1) {
-    eInfo.setErrInfo(EINVAL, "[ERROR] Wrong number of arguments provided");
-    return SFS_ERROR;
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
   std::cout << "mkdir request received:\n";
   std::cout << "DIR: " << req.args.at(0) << std::endl;
@@ -179,8 +180,9 @@ int XrdProFilesystem::executeMkdirCommand(ParsedRequest &req, XrdOucErrInfo &eIn
 //------------------------------------------------------------------------------
 int XrdProFilesystem::executeRmdirCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
   if(req.args.size() != 1) {
-    eInfo.setErrInfo(EINVAL, "[ERROR] Wrong number of arguments provided");
-    return SFS_ERROR;
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
   std::cout << "rmdir request received:\n";
   std::cout << "DIR: " << req.args.at(0) << std::endl;
@@ -226,8 +228,9 @@ int XrdProFilesystem::dispatchRequest(XrdSfsFSctl &args, XrdOucErrInfo &eInfo) {
   }
   else
   {
-    eInfo.setErrInfo(EINVAL, "[ERROR] Unknown command received");
-    return SFS_ERROR;
+    std::string response = "[ERROR] Unknown command received";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
 }
 
@@ -242,18 +245,13 @@ int XrdProFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
   }
   if(cmd == SFS_FSCTL_PLUGIO)
   {
-    int checkDispatch = dispatchRequest(args, eInfo);
-    if(SFS_OK!=checkDispatch) {
-      return checkDispatch;
-    }
-    std::string response = "Request logged!";
-    eInfo.setErrInfo(response.length(), response.c_str());
-    return SFS_DATA;
+    return dispatchRequest(args, eInfo);
   }
   else
   {
-    eInfo.setErrInfo(EINVAL, "[ERROR] Unknown query request received");
-    return SFS_ERROR;
+    std::string response = "[ERROR] Unknown query request received";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
 }
 
