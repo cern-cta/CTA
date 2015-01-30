@@ -67,7 +67,7 @@ BEGIN
        'Size mismatch for arrays: inStartFseqs.COUNT='||inStartFseqs.COUNT
        ||' inTapeVids.COUNT='||inTapeVids.COUNT);
   END IF;
-  FORALL i IN inMountIds.FIRST .. inMountIds.LAST
+  FORALL i IN 1..inMountIds.COUNT
     UPDATE MigrationMount
        SET VID = inTapeVids(i),
            lastFseq = inStartFseqs(i),
@@ -368,7 +368,7 @@ END;
 CREATE OR REPLACE
 PROCEDURE tg_restartLostReqs(inMountTransactionIds IN castor."cnumList") AS
 BEGIN
- FOR i IN inMountTransactionIds.FIRST .. inMountTransactionIds.LAST LOOP   
+ FOR i IN 1..inMountTransactionIds.COUNT LOOP
    tg_endTapeSession(inMountTransactionIds(i), 0);
  END LOOP;
  COMMIT;
@@ -1496,7 +1496,7 @@ BEGIN
   varReqId := uuidGen();
   -- Get the NS host name
   varNsHost := getConfigOption('stager', 'nsHost', '');
-  FOR i IN inFileTrIds.FIRST .. inFileTrIds.LAST LOOP
+  FOR i IN 1..inFileTrIds.COUNT LOOP
     BEGIN
       -- Collect additional data. Note that this is NOT bulk
       -- to preserve the order in the input arrays.
@@ -1949,7 +1949,7 @@ BEGIN
     FROM RecallMount
    WHERE mountTransactionId = inMountTrId;
   -- Loop over the input
-  FOR i IN inFileIds.FIRST .. inFileIds.LAST LOOP
+  FOR i IN 1..inFileIds.COUNT LOOP
     BEGIN
       -- Find and lock related castorFile
       SELECT id INTO varCfId

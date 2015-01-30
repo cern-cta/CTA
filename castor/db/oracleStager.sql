@@ -899,7 +899,7 @@ BEGIN
          AND request = origReqId);
   ELSE
     -- handle the case of selective abort
-    FOR i IN fileIds.FIRST .. fileIds.LAST LOOP
+    FOR i IN 1..fileIds.COUNT LOOP
       DECLARE
         CONSTRAINT_VIOLATED EXCEPTION;
         PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
@@ -2685,7 +2685,7 @@ BEGIN
       -- Yes, then create migrated segments for the existing segments if there are none
       SELECT count(*) INTO varNb FROM MigratedSegment WHERE castorFile = inCfId;
       IF varNb = 0 THEN
-        FOR i IN inAllValidCopyNbs.FIRST .. inAllValidCopyNbs.LAST LOOP
+        FOR i IN 1..inAllValidCopyNbs.COUNT LOOP
           INSERT INTO MigratedSegment (castorFile, copyNb, VID)
           VALUES (inCfId, inAllValidCopyNbs(i), inAllValidVIDs(i));
         END LOOP;
@@ -3168,7 +3168,7 @@ BEGIN
   -- 2 formats are accepted :
   --    host:/mountpoint : drop all files on a given FileSystem
   --    host:<fullFilePath> : drop the given file
-  FOR i IN inArgs.FIRST .. inArgs.LAST LOOP
+  FOR i IN 1..inArgs.COUNT LOOP
     DECLARE
       varMountPoint VARCHAR2(2048);
       varDataPool VARCHAR2(2048);

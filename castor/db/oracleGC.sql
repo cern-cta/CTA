@@ -453,7 +453,7 @@ CREATE OR REPLACE PROCEDURE filesDeletedProc
 BEGIN
   IF dcIds.COUNT > 0 THEN
     -- List the castorfiles to be cleaned up afterwards
-    FORALL i IN dcIds.FIRST .. dcIds.LAST
+    FORALL i IN 1..dcIds.COUNT
       INSERT INTO FilesDeletedProcHelper (cfId, dcId) (
         SELECT castorFile, id FROM DiskCopy
          WHERE id = dcIds(i));
@@ -509,7 +509,7 @@ CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
 BEGIN
   IF dcIds.COUNT > 0 THEN
     -- Loop over the files
-    FORALL i IN dcIds.FIRST .. dcIds.LAST
+    FORALL i IN 1..dcIds.COUNT
       UPDATE DiskCopy SET status = 4 -- FAILED
        WHERE id = dcIds(i);
   END IF;
