@@ -3,6 +3,7 @@
 #include "XrdOuc/XrdOucString.hh"
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdVersion.hh"
+#include "libs/client/Exception.hpp"
 
 #include <iostream>
 #include <pwd.h>
@@ -99,17 +100,37 @@ int XrdProFilesystem::executeArchiveCommand(ParsedRequest &req, XrdOucErrInfo &e
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::string response = "[OK] Requested archival of the following files:\n";
-  for(int i=0; i<req.args.size()-1; i++) {
+  try {
+    std::list<std::string> sourceFiles;
+    std::string destinationPath = req.args.at(req.args.size()-1);
+    for(int i=0; i<req.args.size()-1; i++) {
+      sourceFiles.push_back(req.args.at(i));
+    }
+    std::string jobID = m_clientAPI->archiveToTape(sourceFiles, destinationPath);
+    std::string response = "[OK] Requested archival of the following files:\n\n";
+    for(std::list<std::string>::iterator it = sourceFiles.begin(); it != sourceFiles.end(); it++) {
+      response += "[OK]\t";
+      response += *it;
+      response += "\n";
+    }
+    response += "\n[OK] To the following directory:\n\n";
     response += "[OK]\t";
-    response += req.args.at(i);
-    response += "\n";
-  }  
-  response += "[OK] To the following directory:\n";
-  response += "[OK]\t";
-  response += req.args.at(req.args.size()-1);
-  eInfo.setErrInfo(response.length(), response.c_str());
-  return SFS_DATA;
+    response += destinationPath;   
+    response += "\n\n[OK] JobID: ";
+    response += jobID;
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -121,13 +142,29 @@ int XrdProFilesystem::executeCreateStorageClassCommand(ParsedRequest &req, XrdOu
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::string response = "[OK] Created storage class ";
-  response += req.args.at(0);
-  response += " with ";
-  response += req.args.at(1);
-  response += " tape copies";
-  eInfo.setErrInfo(response.length(), response.c_str());
-  return SFS_DATA;
+  try {
+    uint8_t numberOfCopies;
+    std::istringstream ss(req.args.at(1));
+    ss >> numberOfCopies;
+    m_clientAPI->createStorageClass(req.args.at(0), numberOfCopies);
+    std::string response = "[OK] Created storage class ";
+    response += req.args.at(0);
+    response += " with ";
+    response += req.args.at(1);
+    response += " tape copies";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -139,12 +176,24 @@ int XrdProFilesystem::executeChangeStorageClassCommand(ParsedRequest &req, XrdOu
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::string response = "[OK] Changed storage class of directory ";
-  response += req.args.at(0);
-  response += " to ";
-  response += req.args.at(1);
-  eInfo.setErrInfo(response.length(), response.c_str());
-  return SFS_DATA;
+  try {
+    std::string response = "[OK] Changed storage class of directory ";
+    response += req.args.at(0);
+    response += " to ";
+    response += req.args.at(1);
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -156,11 +205,24 @@ int XrdProFilesystem::executeDeleteStorageClassCommand(ParsedRequest &req, XrdOu
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::string response = "[OK] Storage class ";
-  response += req.args.at(0);
-  response += " deleted";
-  eInfo.setErrInfo(response.length(), response.c_str());
-  return SFS_DATA;
+  try {
+    m_clientAPI->deleteStorageClass(req.args.at(0));
+    std::string response = "[OK] Storage class ";
+    response += req.args.at(0);
+    response += " deleted";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -172,9 +234,28 @@ int XrdProFilesystem::executeListStorageClassCommand(ParsedRequest &req, XrdOucE
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::string response = "[OK] Requested listing of the storage classes";
-  eInfo.setErrInfo(response.length(), response.c_str());
-  return SFS_DATA;
+  try {
+    cta::StorageClassList stgList = m_clientAPI->getStorageClasses();
+    std::string response = "[OK] Listing of the storage class names and no of copies:";
+    for(cta::StorageClassList::iterator it = stgList.begin(); it != stgList.end(); it++) {
+      response += "\n";
+      response += it->name;
+      response += " ";
+      response += it->nbCopies;
+    }
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -186,11 +267,23 @@ int XrdProFilesystem::executeMkdirCommand(ParsedRequest &req, XrdOucErrInfo &eIn
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::string response = "[OK] Directory ";
-  response += req.args.at(0);
-  response += " created";
-  eInfo.setErrInfo(response.length(), response.c_str());
-  return SFS_DATA;
+  try {
+    std::string response = "[OK] Directory ";
+    response += req.args.at(0);
+    response += " created";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -202,11 +295,23 @@ int XrdProFilesystem::executeRmdirCommand(ParsedRequest &req, XrdOucErrInfo &eIn
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::string response = "[OK] Directory ";
-  response += req.args.at(0);
-  response += " removed";
-  eInfo.setErrInfo(response.length(), response.c_str());
-  return SFS_DATA;
+  try {
+    std::string response = "[OK] Directory ";
+    response += req.args.at(0);
+    response += " removed";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -449,9 +554,13 @@ void XrdProFilesystem::EnvInfo(XrdOucEnv *envP)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-XrdProFilesystem::XrdProFilesystem() {}
+XrdProFilesystem::XrdProFilesystem() {
+  m_clientAPI = new cta::MockClientAPI();
+}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-XrdProFilesystem::~XrdProFilesystem() {}
+XrdProFilesystem::~XrdProFilesystem() {
+  delete m_clientAPI;
+}

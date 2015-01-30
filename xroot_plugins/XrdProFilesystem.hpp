@@ -1,5 +1,6 @@
 #pragma once
 
+#include "libs/client/MockClientAPI.hpp"
 #include "XrdSfs/XrdSfsInterface.hh"
 
 #include "ParsedRequest.hpp"
@@ -29,6 +30,11 @@ public:
   ~XrdProFilesystem();
   
 protected:
+  
+  /**
+   * Pointer to the client API object
+   */
+  cta::ClientAPI *m_clientAPI;
     
   /**
    * Parses the query into the request structure

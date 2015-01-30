@@ -57,13 +57,14 @@ int CTACmd::executeCommand(const int argc, char **argv)  {
   XrdCl::FileSystem fs(XrdCl::URL("localhost"));
   std::string queryString = "/";
   queryString += argv[1];
-  queryString += "?";  
-  for(int i=2; i<argc-1; i++) {
-    queryString += argv[i];
-    queryString += "+";
-  }  
-  queryString += argv[argc-1];
-          
+  queryString += "?";
+  if(argc > 2) {  
+    for(int i=2; i<argc-1; i++) {
+      queryString += argv[i];
+      queryString += "+";
+    }  
+    queryString += argv[argc-1];
+  }        
   XrdCl::Buffer arg;
   arg.FromString(queryString.c_str());
   XrdCl::Buffer* response = 0;
