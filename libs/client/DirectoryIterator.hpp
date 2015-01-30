@@ -25,6 +25,11 @@ public:
 
   /**
    * Constructor.
+   */
+  DirectoryIterator();
+
+  /**
+   * Constructor.
    *
    * @param entries The directory entries.
    */

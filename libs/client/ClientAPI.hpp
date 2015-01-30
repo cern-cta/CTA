@@ -46,6 +46,13 @@ public:
   virtual std::list<StorageClass> getStorageClasses() const = 0;
 
   /**
+   * Creates the specified directory.
+   *
+   * @param dirPath The full path of the directory.
+   */
+  virtual void createDirectory(const std::string &dirPath) = 0;
+
+  /**
    * Gets an iterator over the entries of the specified directory.
    *
    * @param dirPath The full path of the directory.

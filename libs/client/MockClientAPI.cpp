@@ -84,6 +84,97 @@ std::list<cta::StorageClass> cta::MockClientAPI::getStorageClasses() const {
 }
 
 //------------------------------------------------------------------------------
+// createDirectory
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::createDirectory(const std::string &dirPath) {
+  checkAbsolutePathSyntax(dirPath);
+}
+
+//------------------------------------------------------------------------------
+// checkAbsolutePathSyntax
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::checkAbsolutePathSyntax(const std::string &path) {
+  try {
+    checkPathStartsWithASlash(path);
+    checkPathContainsValidChars(path);
+    checkPathDoesContainConsecutiveSlashes(path);
+  } catch(std::exception &ex) {
+    std::ostringstream message;
+    message << "Absolute path \"" << path << "\" contains a syntax error: " <<
+      ex.what();
+    throw Exception(message.str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkPathStartsWithASlash
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::checkPathStartsWithASlash(const std::string &path) {
+  if(path.empty()) {
+    throw Exception("Path is an empty string");
+  }
+
+  if('/' != path[0]) {
+    throw Exception("Path does not start with a '/' character");
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkPathContainsValidChars
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::checkPathContainsValidChars(const std::string &path) {
+  for(std::string::const_iterator itor = path.begin(); itor != path.end();
+    itor++) {
+    checkValidPathChar(*itor);
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkValidPathChar
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::checkValidPathChar(const char c) {
+  if(!isValidPathChar(c)) {
+    std::ostringstream message;
+    message << "The '" << c << "' character cannot be used within a path";
+    throw Exception(message.str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// isValidPathChar
+//------------------------------------------------------------------------------
+bool cta::MockClientAPI::isValidPathChar(const char c) {
+  return ('0' <= c && c <= '9') ||
+         ('A' <= c && c <= 'Z') ||
+         ('a' <= c && c <= 'z') ||
+         c == '_'               ||
+         c == '/';
+}
+
+//------------------------------------------------------------------------------
+// checkPathDoesContainConsecutiveSlashes
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::checkPathDoesContainConsecutiveSlashes(
+  const std::string &path) {
+  char previousChar = '\0';
+
+  for(std::string::const_iterator itor = path.begin(); itor != path.end();
+    itor++) {
+    const char &currentChar  = *itor;
+    if(previousChar == '/' && currentChar == '/') {
+      throw Exception("Path contains consecutive slashes");
+    }
+    previousChar = currentChar;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getEnclosingDirPath
+//------------------------------------------------------------------------------
+std::string cta::MockClientAPI::getEnclosingDirPath(const std::string &path) {
+}
+
+//------------------------------------------------------------------------------
 // getDirectoryIterator
 //------------------------------------------------------------------------------
 cta::DirectoryIterator cta::MockClientAPI::

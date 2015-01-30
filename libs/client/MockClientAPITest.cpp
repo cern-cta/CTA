@@ -112,12 +112,39 @@ TEST_F(cta_client_MockClientAPITest, deleteStorageClass_non_existing) {
   ASSERT_TRUE(api.getStorageClasses().empty());
 }
 
-TEST_F(cta_client_MockClientAPITest, getDirectoryIterator_empty) {
+TEST_F(cta_client_MockClientAPITest, getDirectoryIterator_root_dir_is_empty) {
   using namespace cta;
 
   MockClientAPI api;
 
-  ASSERT_NO_THROW(api.getDirectoryIterator("/"));
+  DirectoryIterator itor;
+
+  ASSERT_NO_THROW(itor = api.getDirectoryIterator("/"));
+  ASSERT_FALSE(itor.hasMore());
+}
+
+TEST_F(cta_client_MockClientAPITest, createDirectory_empty_string) {
+  using namespace cta;
+
+  MockClientAPI api;
+
+  ASSERT_THROW(api.createDirectory(""), std::exception);
+}
+
+TEST_F(cta_client_MockClientAPITest, createDirectory_consecutive_slashes) {
+  using namespace cta;
+
+  MockClientAPI api;
+
+  ASSERT_THROW(api.createDirectory("//"), std::exception);
+}
+
+TEST_F(cta_client_MockClientAPITest, createDirectory_invalid_chars) {
+  using namespace cta;
+
+  MockClientAPI api;
+  
+  ASSERT_THROW(api.createDirectory("/grandparent/?parent"), std::exception);
 }
 
 } // namespace unitTests
