@@ -12,6 +12,7 @@
 #include "AgentRegister.hpp"
 #include "RecallJob.hpp"
 #include "Register.hpp"
+#include "AgentVisitor.hpp"
 
 
 

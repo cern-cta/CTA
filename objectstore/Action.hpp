@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Agent.hpp"
+#include "AgentVisitor.hpp"
 #include "RootEntry.hpp"
 #include "RecallJob.hpp"
 #include "JobPool.hpp"
@@ -149,11 +149,24 @@ private:
   Agent & m_agent;
   void collectGarbage(const std::string & agentName) {
     // When collecting the garbage of an agent, we have to iterate through its
-    // intended and owned objects, validate that they are still owned by the dead
-    // agent, and re-post them to the container where they should be (and ownership)
-    // is re-set to the container.
-    Agent ag(agentName, m_agent);
-    std::list<Agent::intentEntry> intendedObjects = ag.getIntentLog();
+    // intended and owned objects, validate that they still exist, are owned by 
+    // the dead agent, and re-post them to the container where they should be.
+    try {
+      // If the agent entry does not exist anymore, we're done.
+      AgentVisitor ag(agentName, m_agent);
+      std::list<AgentVisitor::intentEntry> intendedObjects = ag.getIntentLog(m_agent);
+      for (std::list<AgentVisitor::intentEntry>::iterator i=intendedObjects.begin();
+            i != intendedObjects.end(); i++) {
+        switch (i->typeName) {
+          case "recallFIFO":
+            break;
+          case "RecallJob":
+            break;
+          case "jobPool":
+            breal;
+        }
+      }
+    } catch (...) {}
   }
 };
 

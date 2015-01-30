@@ -23,8 +23,6 @@ public:
   
   Agent(ObjectStore & os, const std::string & typeName);
   
-  Agent(const std::string & name, Agent & agent);
-  
   void setup(const std::string & typeName);
   
   class SetupNotDone: public cta::exception::Exception {
@@ -101,16 +99,6 @@ private:
   uint64_t m_nextId;
   static const size_t c_handleCount = 100;
   ContextHandleImplementation<myOS> m_contexts[c_handleCount];
-};
-
-class AgentWatchdog {
-public:
-  AgentWatchdog(const std::string & agentName, Agent & agent);
-  bool checkAlive(Agent & agent);
-private:
-  cta::utils::Timer m_timer;
-  Agent m_agentVisitor;
-  uint64_t m_hearbeatCounter;
 };
   
 }}

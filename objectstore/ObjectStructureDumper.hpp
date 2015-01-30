@@ -20,7 +20,7 @@ public:
       ret << ar.dump(agent) << std::endl;
       std::list<std::string> agList = ar.getElements(agent);
       for (std::list<std::string>::iterator i=agList.begin(); i!=agList.end(); i++) {
-        Agent a(*i, agent);
+        AgentVisitor a(*i, agent);
         ret << a.dump(agent) << std::endl;
       }
     } catch (RootEntry::NotAllocatedEx &) {}

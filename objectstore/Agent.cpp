@@ -16,16 +16,6 @@ cta::objectstore::Agent::Agent(ObjectStore & os, const std::string & typeName):
   setup(typeName);
 }
 
-// Passive constructor, used for looking at existing agent records
-cta::objectstore::Agent::Agent(const std::string & name, Agent & agent):
-  ObjectOps<serializers::Agent>(agent.objectStore(), name),
-  m_nextId(0), m_setupDone(true), m_creationDone(true), m_observerVersion(true)
-{
-  // check the presence of the entry
-  serializers::Agent as;
-  updateFromObjectStore(as, agent.getFreeContext());
-}
-
 void cta::objectstore::Agent::setup(const std::string & typeName) {
   std::stringstream aid;
   // Get time
@@ -216,27 +206,6 @@ cta::objectstore::ObjectStore & cta::objectstore::Agent::objectStore() {
   return ObjectOps<serializers::Agent>::objectStore();
 }
 
-std::string cta::objectstore::Agent::dump(Agent & agent) {
-  serializers::Agent as;
-  updateFromObjectStore(as, agent.getFreeContext());
-  std::stringstream ret;
-  ret<< "<<<< Agent " << selfName() << " dump start" << std::endl
-    << "name=" << as.name() << std::endl
-    << "Ownership intent size=" << as.ownershipintent_size() << std::endl;
-  for (int i=0; i<as.ownershipintent_size(); i++) {
-    ret << "ownershipIntent[" << i << "]: name=" << as.ownershipintent(i).name() 
-        << " type=" << as.ownershipintent(i).type() << std::endl;
-  }
-  ret << "Creation intent size=" << as.creationintent_size() << std::endl;
-  for (int i=0; i<as.creationintent_size(); i++) {
-    ret << "creationIntent[" << i << "]: name=" << as.creationintent(i).name() 
-        << " type=" << as.creationintent(i).type() 
-        << " container=" << as.creationintent(i).container() << std::endl;
-  }
-  ret<< ">>>> Agent " << selfName() << " dump end" << std::endl;
-  return ret.str();
-}
-
 void cta::objectstore::Agent::heartbeat(Agent& agent) {
   ContextHandle & context = agent.getFreeContext();
   serializers::Agent as;
@@ -246,19 +215,5 @@ void cta::objectstore::Agent::heartbeat(Agent& agent) {
 uint64_t cta::objectstore::Agent::getHeartbeatCount(Agent& agent) {
   serializers::Agent as;
   updateFromObjectStore(as, agent.getFreeContext());
+  return as.heartbeatcount();
 }
-
-
-cta::objectstore::AgentWatchdog::AgentWatchdog(const std::string& agentName, Agent& agent):
-m_agentVisitor(agentName, agent) {
-  m_hearbeatCounter = m_agentVisitor.getHeartbeatCount(agent);
-}
-
-bool cta::objectstore::AgentWatchdog::checkAlive(Agent& agent) {
-  uint64_t newHeartBeatCount = m_agentVisitor.getHeartbeatCount(agent);
-  if (newHeartBeatCount == m_hearbeatCounter && m_timer.secs() > 0.1)
-    return false;
-  m_hearbeatCounter = newHeartBeatCount;
-  return true;
-}
-
