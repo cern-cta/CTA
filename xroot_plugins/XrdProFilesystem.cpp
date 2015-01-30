@@ -107,16 +107,16 @@ int XrdProFilesystem::executeArchiveCommand(ParsedRequest &req, XrdOucErrInfo &e
       sourceFiles.push_back(req.args.at(i));
     }
     std::string jobID = m_clientAPI->archiveToTape(sourceFiles, destinationPath);
-    std::string response = "[OK] Requested archival of the following files:\n\n";
+    std::string response = "[OK] Requested archival of the following files:\n";
     for(std::list<std::string>::iterator it = sourceFiles.begin(); it != sourceFiles.end(); it++) {
       response += "[OK]\t";
       response += *it;
       response += "\n";
     }
-    response += "\n[OK] To the following directory:\n\n";
+    response += "[OK] To the following directory:\n";
     response += "[OK]\t";
     response += destinationPath;   
-    response += "\n\n[OK] JobID: ";
+    response += "\n[OK] JobID: ";
     response += jobID;
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
