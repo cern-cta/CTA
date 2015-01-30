@@ -159,11 +159,30 @@ private:
             i != intendedObjects.end(); i++) {
         switch (i->objectType) {
           case serializers::RecallFIFO_t:
+            // We need to check that this recall FIFO is plugged in the job pool
+            // structure
+          {
+            RootEntry re(m_agent);
+            JobPool jp(re.getJobPool(m_agent), m_agent);
+            if (i->name != jp.getRecallFIFO(m_agent))
+              m_agent.objectStore().remove(i->name);
             break;
+          }
           case serializers::RecallJob_t:
+          {
+            // The recall job here can only think of on FIFO it could be in. This
+            // will be more varied in the future.
+            RecallJob rj(i->name, m_agent);
+            FIFO RecallFIFO(rj.owner(m_agent), m_agent);
+            // We repost the job unconditionally in the FIFO. In case of an attempted
+            // pop, the actual ownership (should be the FIFO) will be checked by
+            // the consumer. If the owner is not right, 
             break;
+          }
           case serializers::JobPool_t:
+          {
             break;
+          }
         }
       }
     } catch (...) {}

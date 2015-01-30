@@ -39,6 +39,13 @@ public:
     updateFromObjectStore(rjs, agent.getFreeContext());
     return rjs.destination();
   }
+  
+  
+  std::string owner(Agent & agent) {
+    serializers::RecallJob rjs;
+    updateFromObjectStore(rjs, agent.getFreeContext());
+    return rjs.owner();
+  }
 };
  
 }}
