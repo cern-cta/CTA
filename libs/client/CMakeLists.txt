@@ -6,7 +6,6 @@ set (CLIENT_LIB_SRC_FILES
   DirectoryIterator.cpp
   Exception.cpp
   FileAttribute.cpp
-  MockAPITest.cpp
   MockClientAPI.cpp
   StorageClass.cpp)
 
