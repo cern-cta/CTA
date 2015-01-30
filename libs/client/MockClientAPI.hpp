@@ -25,42 +25,59 @@ public:
   /**
    * Creates the specified storage class.
    *
+   * @param requester The identity of the user requesting the creation of the
+   * storage class.
    * @param name The name of the storage class.
    * @param nbCopies The number of copies a file associated with this storage
    * class should have on tape.
    */
   void createStorageClass(
+    const UserIdentity &requester,
     const std::string &name,
     const uint8_t nbCopies);
 
   /**
    * Deletes the specified storage class.
    *
+   * @param requester The identity of the user requesting the deletion of the
+   * storage class.
    * @param name The name of the storage class.
    */
-  void deleteStorageClass(const std::string &name);
+  void deleteStorageClass(
+    const UserIdentity &requester,
+    const std::string &name);
 
   /**
    * Gets the current list of storage classes in lexicographical order.
    *
+   * @param requester The identity of the user requesting list of storage
+   * classes.
    * @return The current list of storage classes in lexicographical order.
    */
-  std::list<StorageClass> getStorageClasses() const;
+  std::list<StorageClass> getStorageClasses(
+    const UserIdentity &requester) const;
 
   /**
    * Creates the specified directory.
    *
-   * @param dirPath The absolute path of the directory to be created.
+   * @param requester The identity of the user requesting the creation of the
+   * directory.
+   * @param dirPath The full path of the directory.
    */
-  void createDirectory(const std::string &dirPath);
+  void createDirectory(
+    const UserIdentity &requester,
+    const std::string &dirPath);
 
   /**
-   * Gets an iterator over the entries of the specified directory.
+   * Gets the contents of the specified directory.
    *
-   * @param dirPath The absolute path of the directory.
-   * @return The iterator.
+   * @param requester The identity of the user requesting the contents of the
+   * directory.
+   * @param dirPath The full path of the directory.
+   * @return An iterator over the contents of the directory.
    */
-  DirectoryIterator getDirectoryIterator(
+  DirectoryIterator getDirectoryContents(
+    const UserIdentity &requester,
     const std::string &dirPath) const;
 
   /**
@@ -76,12 +93,14 @@ public:
    * The storage class of the archived file will be inherited from its
    * destination directory.
    *
+   * @param requester The identity of the user requesting the archival.
    * @param srcUrls List of one or more source files.
-   * @param dst The absolute path of the destination file or directory within
-   * the archive namespace.
+   * @param dst Destination file or directory within the archive namespace.
    * @return The identifier of the archive job.
    */
-  std::string archiveToTape(const std::list<std::string> &srcUrls,
+  std::string archiveToTape(
+    const UserIdentity &requester,
+    const std::list<std::string> &srcUrls,
     std::string dst);
 
 private:

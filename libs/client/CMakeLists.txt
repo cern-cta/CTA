@@ -7,7 +7,8 @@ set (CLIENT_LIB_SRC_FILES
   Exception.cpp
   FileAttribute.cpp
   MockClientAPI.cpp
-  StorageClass.cpp)
+  StorageClass.cpp
+  UserIdentity.cpp)
 
 add_library (ctaclient SHARED
   ${CLIENT_LIB_SRC_FILES})

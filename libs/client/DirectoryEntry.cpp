@@ -16,5 +16,11 @@ const char *cta::DirectoryEntry::typeToString(const EntryType enumValue)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::DirectoryEntry::DirectoryEntry(): entryType(NONE) {
+cta::DirectoryEntry::DirectoryEntry():
+  entryType(NONE),
+  ownerId(0),
+  groupId(0),
+  ownerPerms(0),
+  groupPerms(0),
+  otherPerms(0) {
 }

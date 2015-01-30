@@ -106,7 +106,8 @@ int XrdProFilesystem::executeArchiveCommand(ParsedRequest &req, XrdOucErrInfo &e
     for(int i=0; i<req.args.size()-1; i++) {
       sourceFiles.push_back(req.args.at(i));
     }
-    std::string jobID = m_clientAPI->archiveToTape(sourceFiles, destinationPath);
+    cta::UserIdentity requester;
+    std::string jobID = m_clientAPI->archiveToTape(requester, sourceFiles, destinationPath);
     std::string response = "[OK] Requested archival of the following files:\n";
     for(std::list<std::string>::iterator it = sourceFiles.begin(); it != sourceFiles.end(); it++) {
       response += "[OK]\t";
@@ -146,7 +147,8 @@ int XrdProFilesystem::executeCreateStorageClassCommand(ParsedRequest &req, XrdOu
     uint8_t numberOfCopies;
     std::istringstream ss(req.args.at(1));
     ss >> numberOfCopies;
-    m_clientAPI->createStorageClass(req.args.at(0), numberOfCopies);
+    cta::UserIdentity requester;
+    m_clientAPI->createStorageClass(requester, req.args.at(0), numberOfCopies);
     std::string response = "[OK] Created storage class ";
     response += req.args.at(0);
     response += " with ";
@@ -206,7 +208,8 @@ int XrdProFilesystem::executeDeleteStorageClassCommand(ParsedRequest &req, XrdOu
     return SFS_DATA;
   }
   try {
-    m_clientAPI->deleteStorageClass(req.args.at(0));
+    cta::UserIdentity requester;
+    m_clientAPI->deleteStorageClass(requester, req.args.at(0));
     std::string response = "[OK] Storage class ";
     response += req.args.at(0);
     response += " deleted";
@@ -235,7 +238,8 @@ int XrdProFilesystem::executeListStorageClassCommand(ParsedRequest &req, XrdOucE
     return SFS_DATA;
   }
   try {
-    std::list<cta::StorageClass> stgList = m_clientAPI->getStorageClasses();
+    cta::UserIdentity requester;
+    std::list<cta::StorageClass> stgList = m_clientAPI->getStorageClasses(requester);
     std::string response = "[OK] Listing of the storage class names and no of copies:";
     for(std::list<cta::StorageClass>::iterator it = stgList.begin(); it != stgList.end(); it++) {
       response += "\n";

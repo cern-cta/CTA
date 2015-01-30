@@ -18,8 +18,8 @@ cta::MockClientAPI::~MockClientAPI() throw() {
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::createStorageClass(const std::string &name,
-  const uint8_t nbCopies) {
+void cta::MockClientAPI::createStorageClass(const UserIdentity &requester,
+  const std::string &name, const uint8_t nbCopies) {
   try {
     checkStorageClassDoesNotAlreadyExist(name);
     StorageClass storageClass(name, nbCopies);
@@ -47,7 +47,8 @@ void cta::MockClientAPI::checkStorageClassDoesNotAlreadyExist(
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::deleteStorageClass(const std::string &name) {
+void cta::MockClientAPI::deleteStorageClass(const UserIdentity &requester,
+  const std::string &name) {
   try {
     checkStorageClassExists(name);
     m_storageClasses.erase(name);
@@ -74,7 +75,8 @@ void cta::MockClientAPI::checkStorageClassExists(
 //------------------------------------------------------------------------------
 // getStorageClasses
 //------------------------------------------------------------------------------
-std::list<cta::StorageClass> cta::MockClientAPI::getStorageClasses() const {
+std::list<cta::StorageClass> cta::MockClientAPI::getStorageClasses(
+  const UserIdentity &requester) const {
   std::list<StorageClass> storageClasses;
   for(std::map<std::string, StorageClass>::const_iterator itor =
     m_storageClasses.begin(); itor != m_storageClasses.end(); itor++) {
@@ -86,7 +88,8 @@ std::list<cta::StorageClass> cta::MockClientAPI::getStorageClasses() const {
 //------------------------------------------------------------------------------
 // createDirectory
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::createDirectory(const std::string &dirPath) {
+void cta::MockClientAPI::createDirectory(const UserIdentity &requester,
+  const std::string &dirPath) {
   checkAbsolutePathSyntax(dirPath);
 }
 
@@ -175,11 +178,10 @@ std::string cta::MockClientAPI::getEnclosingDirPath(const std::string &path) {
 }
 
 //------------------------------------------------------------------------------
-// getDirectoryIterator
+// getDirectoryContents
 //------------------------------------------------------------------------------
-cta::DirectoryIterator cta::MockClientAPI::
-  getDirectoryIterator(const std::string &dirPath) const {
-
+cta::DirectoryIterator cta::MockClientAPI::getDirectoryContents(
+  const UserIdentity &requester, const std::string &dirPath) const {
   std::list<DirectoryEntry> entries;
   DirectoryIterator itor(entries);
   return itor;
@@ -188,7 +190,7 @@ cta::DirectoryIterator cta::MockClientAPI::
 //------------------------------------------------------------------------------
 // archiveToTape
 //------------------------------------------------------------------------------
-std::string cta::MockClientAPI::archiveToTape(
+std::string cta::MockClientAPI::archiveToTape(const UserIdentity &requester,
   const std::list<std::string> &srcUrls, std::string dst) {
   return "Funny_Job_ID";
 }
