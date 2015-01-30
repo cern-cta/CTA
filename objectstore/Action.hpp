@@ -40,7 +40,7 @@ public:
       // Post the job
       fifo.push(rjName, m_agent);
       // We can now release it from the intent log
-      m_agent.removeFromIntent(fifoName, rjName, "RecallJob");
+      m_agent.removeFromIntent(fifoName, rjName, serializers::RecallJob_t);
       std::cout << rjName << " created" << std::endl;
       m_achieved++;
     }
@@ -70,7 +70,7 @@ public:
         // Pop a job from the FIFO
         FIFO::Transaction tr = fifo.startTransaction(m_agent);
         std::string rjName = tr.peek();
-        m_agent.addToOwnership(tr.peek(), "RecallJob");
+        m_agent.addToOwnership(tr.peek(), serializers::RecallJob_t);
         tr.popAndUnlock();
         RecallJob rj(rjName, m_agent);
         // Sleep on it for a while
@@ -157,13 +157,13 @@ private:
       std::list<AgentVisitor::intentEntry> intendedObjects = ag.getIntentLog(m_agent);
       for (std::list<AgentVisitor::intentEntry>::iterator i=intendedObjects.begin();
             i != intendedObjects.end(); i++) {
-        switch (i->typeName) {
-          case "recallFIFO":
+        switch (i->objectType) {
+          case serializers::RecallFIFO_t:
             break;
-          case "RecallJob":
+          case serializers::RecallJob_t:
             break;
-          case "jobPool":
-            breal;
+          case serializers::JobPool_t:
+            break;
         }
       }
     } catch (...) {}

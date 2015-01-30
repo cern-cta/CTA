@@ -65,7 +65,7 @@ public:
       // decide on the object's name
       std::string FIFOName (agent.nextId("recallFIFO-"));
       // Record the FIFO in the intent log
-      agent.addToIntend(selfName(), FIFOName, "recallFIFO");
+      agent.addToIntend(selfName(), FIFOName, serializers::RecallFIFO_t);
       // The potential object can now be garbage collected if we die from here.
       // Create the object, then lock. The name should be unique, so no race.
       serializers::JobPool jps;
@@ -74,7 +74,7 @@ public:
       writeChild(FIFOName, jps);
       // If we lived that far, we can update the jop pool to point to the FIFO
       res.set_recall(FIFOName);
-      agent.removeFromIntent(selfName(), FIFOName, "recallFIFO");
+      agent.removeFromIntent(selfName(), FIFOName, serializers::RecallFIFO_t);
       write(res);
       // release the lock, and return the register name
       unlock(ctx);

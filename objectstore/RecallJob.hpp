@@ -14,7 +14,7 @@ public:
     rjs.set_source(source);
     rjs.set_destination(destination);
     std::string ret = agent.nextId("RecallJob");
-    agent.addToIntend(container, ret, "RecallJob");
+    agent.addToIntend(container, ret, serializers::RecallJob_t);
     agent.objectStore().atomicOverwrite(ret, rjs.SerializeAsString());
   }
   

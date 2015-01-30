@@ -97,7 +97,7 @@ cta::objectstore::ContextHandleImplementation<myOS> &
   throw cta::exception::Exception("Could not find free context slot");
 }
 
-void cta::objectstore::Agent::addToIntend (std::string container, std::string name, std::string typeName) {
+void cta::objectstore::Agent::addToIntend (std::string container, std::string name, serializers::ObjectType objectType) {
   if (!m_creationDone)
     throw CreationNotDone("In Agent::addToIntend(): creation() not yet done");
   serializers::Agent as;
@@ -107,12 +107,12 @@ void cta::objectstore::Agent::addToIntend (std::string container, std::string na
     as.mutable_creationintent()->Add();
   oca->set_container(container);
   oca->set_name(name);
-  oca->set_type(typeName);
+  oca->set_type(objectType);
   write(as);
   unlock(ctx);
 }
 
-void cta::objectstore::Agent::removeFromIntent (std::string container, std::string name, std::string typeName) {
+void cta::objectstore::Agent::removeFromIntent (std::string container, std::string name, serializers::ObjectType objectType) {
   if (!m_creationDone)
     throw CreationNotDone("In Agent::removeFromIntent(): creation() not yet done");
   serializers::Agent as;
@@ -124,7 +124,7 @@ void cta::objectstore::Agent::removeFromIntent (std::string container, std::stri
     for (int i=0; i<as.creationintent_size(); i++) {
       if (container == as.creationintent(i).container() &&
           name == as.creationintent(i).name() &&
-          typeName == as.creationintent(i).type()) {
+          objectType == as.creationintent(i).type()) {
         found = true;
         as.mutable_creationintent()->SwapElements(i, as.creationintent_size()-1);
         as.mutable_creationintent()->RemoveLast();
@@ -136,7 +136,7 @@ void cta::objectstore::Agent::removeFromIntent (std::string container, std::stri
   unlock(ctx);
 }
 
-void cta::objectstore::Agent::addToOwnership(std::string name, std::string typeName) {
+void cta::objectstore::Agent::addToOwnership(std::string name, serializers::ObjectType objectType) {
   if (!m_creationDone)
     throw CreationNotDone("In Agent::addToOwnership(): creation() not yet done");
   serializers::Agent as;
@@ -145,12 +145,12 @@ void cta::objectstore::Agent::addToOwnership(std::string name, std::string typeN
   serializers::ObjectOwnershipIntent * ooi = 
     as.mutable_ownershipintent()->Add();
   ooi->set_name(name);
-  ooi->set_type(typeName);
+  ooi->set_type(objectType);
   write(as);
   unlock(ctx);
 }
 
-void cta::objectstore::Agent::removeFromOwnership(std::string name, std::string typeName) {
+void cta::objectstore::Agent::removeFromOwnership(std::string name, serializers::ObjectType objectType) {
   if (!m_creationDone)
     throw CreationNotDone("In Agent::removeFromOwnership(): creation() not yet done");
   serializers::Agent as;
@@ -161,7 +161,7 @@ void cta::objectstore::Agent::removeFromOwnership(std::string name, std::string 
     found = false;
     for (int i=0; i<as.ownershipintent_size(); i++) {
       if (name == as.ownershipintent(i).name() &&
-          typeName == as.ownershipintent(i).type()) {
+          objectType == as.ownershipintent(i).type()) {
         found = true;
         as.mutable_creationintent()->SwapElements(i, as.ownershipintent_size()-1);
         as.mutable_creationintent()->RemoveLast();

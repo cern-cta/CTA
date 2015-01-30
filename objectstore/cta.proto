@@ -31,15 +31,25 @@ message FIFO {
   repeated string name = 201;
 }
 
+enum ObjectType {
+  RootEntry_t = 0;
+  AgentRegister_t = 1;
+  Agent_t = 2;
+  JobPool_t = 3;
+  RecallFIFO_t = 4;
+  MigrationFIFO_t = 5;
+  RecallJob_t = 6;
+}
+
 // The agents's elements:
 message ObjectCreationIntent {
-  required string type = 1101;
+  required ObjectType type = 1101;
   required string name = 1102;
   required string container = 1103;
 }
 
 message ObjectOwnershipIntent {
-  required string type = 1111;
+  required ObjectType type = 1111;
   required string name = 1112;
 }
 

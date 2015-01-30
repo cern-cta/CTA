@@ -24,7 +24,7 @@ public:
   }
   
   void removeFromIntent (std::string container, std::string name, 
-    std::string typeName, Agent & agent) {
+    serializers::ObjectType objectType, Agent & agent) {
     ContextHandle & context = agent.getFreeContext();
     serializers::Agent as;
     lockExclusiveAndRead(as, context);
@@ -34,7 +34,7 @@ public:
       for (int i=0; i<as.creationintent_size(); i++) {
         if (container == as.creationintent(i).container() &&
             name == as.creationintent(i).name() &&
-            typeName == as.creationintent(i).type()) {
+            objectType == as.creationintent(i).type()) {
           found = true;
           as.mutable_creationintent()->SwapElements(i, as.creationintent_size()-1);
           as.mutable_creationintent()->RemoveLast();
@@ -46,7 +46,7 @@ public:
     unlock(context);
   }
 
-  void removeFromOwnership(std::string name, std::string typeName, Agent & agent) {
+  void removeFromOwnership(std::string name, serializers::ObjectType objectType, Agent & agent) {
     serializers::Agent as;
     ContextHandle & context = agent.getFreeContext();
     lockExclusiveAndRead(as, context);
@@ -55,7 +55,7 @@ public:
       found = false;
       for (int i=0; i<as.ownershipintent_size(); i++) {
         if (name == as.ownershipintent(i).name() &&
-            typeName == as.ownershipintent(i).type()) {
+            objectType == as.ownershipintent(i).type()) {
           found = true;
           as.mutable_creationintent()->SwapElements(i, as.ownershipintent_size()-1);
           as.mutable_creationintent()->RemoveLast();
@@ -71,18 +71,18 @@ public:
   public:
     intentEntry(const std::string & c,
                 const std::string & n,
-                const std::string & t):container(c), name(n), typeName(t) {}
+                serializers::ObjectType t):container(c), name(n), objectType(t) {}
     std::string container;
     std::string name;
-    std::string typeName;
+    serializers::ObjectType objectType;
   };
     
   class ownershipEntry {
   public:
     ownershipEntry(const std::string & n,
-                   const std::string & t):name(n), typeName(t) {}
+                   serializers::ObjectType t):name(n), objectType(t) {}
     std::string name;
-    std::string typeName;
+    serializers::ObjectType objectType;
   };
   
   std::list<intentEntry> getIntentLog(Agent & agent) {

@@ -101,7 +101,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetJobPool(Agent & agent) {
     // decide on the object's name
     std::string jpName (agent.nextId("jobPool"));
     // Record the agent in the intent log
-    agent.addToIntend(s_rootEntryName, jpName, "jobPool");
+    agent.addToIntend(s_rootEntryName, jpName, serializers::JobPool_t);
     // The potential object can now be garbage collected if we die from here.
     // Create the object, then lock. The name should be unique, so no race.
     serializers::JobPool jps;
@@ -115,7 +115,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetJobPool(Agent & agent) {
     // release the lock, and return the register name
     unlock(context);
     // Clear intent log
-    agent.removeFromIntent(s_rootEntryName, jpName, "jobPool");
+    agent.removeFromIntent(s_rootEntryName, jpName, serializers::JobPool_t);
     return jpName;
   }
 }

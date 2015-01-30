@@ -53,30 +53,30 @@ public:
   
   ContextHandleImplementation<myOS> & getFreeContext();
   
-  void addToIntend (std::string container, std::string name, std::string typeName);
+  void addToIntend (std::string container, std::string name, serializers::ObjectType objectType);
   
-  void removeFromIntent (std::string container, std::string name, std::string typeName);
+  void removeFromIntent (std::string container, std::string name, serializers::ObjectType objectType);
   
-  void addToOwnership(std::string name, std::string typeName);
+  void addToOwnership(std::string name, serializers::ObjectType objectType);
   
-  void removeFromOwnership(std::string name, std::string typeName);
+  void removeFromOwnership(std::string name, serializers::ObjectType objectType);
   
   class intentEntry {
   public:
     intentEntry(const std::string & c,
                 const std::string & n,
-                const std::string & t):container(c), name(n), typeName(t) {}
+                serializers::ObjectType t):container(c), name(n), objectType(t) {}
     std::string container;
     std::string name;
-    std::string typeName;
+    serializers::ObjectType objectType;
   };
     
   class ownershipEntry {
   public:
     ownershipEntry(const std::string & n,
-                   const std::string & t):name(n), typeName(t) {}
+                   serializers::ObjectType t):name(n), objectType(t) {}
     std::string name;
-    std::string typeName;
+    serializers::ObjectType objectType;
   };
   
   std::list<intentEntry> getIntentLog();
