@@ -3,12 +3,12 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileAtribute::FileAtribute() {
+cta::FileAttribute::FileAttribute() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileAtribute::FileAtribute(const std::string &name,
+cta::FileAttribute::FileAttribute(const std::string &name,
   const std::string &value): name(name), value(value) {
 }

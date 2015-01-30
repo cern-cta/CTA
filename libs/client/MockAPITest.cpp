@@ -26,7 +26,7 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_new) {
   ASSERT_NO_THROW(api.createStorageClass(name, nbCopies));
 
   ASSERT_EQ(1, api.getStorageClasses().size());
-  cta::StorageClass storageClass;
+  StorageClass storageClass;
   ASSERT_NO_THROW(storageClass = api.getStorageClasses().front());
   ASSERT_EQ(name, storageClass.name);
   ASSERT_EQ(nbCopies, storageClass.nbCopies);
@@ -44,7 +44,7 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_already_existing) {
   ASSERT_NO_THROW(api.createStorageClass(name, nbCopies));
   
   ASSERT_EQ(1, api.getStorageClasses().size());
-  cta::StorageClass storageClass;
+  StorageClass storageClass;
   ASSERT_NO_THROW(storageClass = api.getStorageClasses().front());
   ASSERT_EQ(name, storageClass.name);
   ASSERT_EQ(nbCopies, storageClass.nbCopies);
@@ -66,7 +66,7 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_lexicographical_order) {
   
   ASSERT_EQ(4, api.getStorageClasses().size());
 
-  cta::StorageClassList storageClasses = api.getStorageClasses();
+  std::list<StorageClass> storageClasses = api.getStorageClasses();
 
   ASSERT_EQ(std::string("a"), storageClasses.front().name);
   storageClasses.pop_front();
@@ -89,7 +89,7 @@ TEST_F(cta_client_MockClientAPITest, deleteStorageClass_existing) {
   ASSERT_NO_THROW(api.createStorageClass(name, nbCopies));
   
   ASSERT_EQ(1, api.getStorageClasses().size());
-  cta::StorageClass storageClass;
+  StorageClass storageClass;
   ASSERT_NO_THROW(storageClass = api.getStorageClasses().front());
   ASSERT_EQ(name, storageClass.name);
   ASSERT_EQ(nbCopies, storageClass.nbCopies);

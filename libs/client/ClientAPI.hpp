@@ -2,7 +2,6 @@
 
 #include "DirectoryIterator.hpp"
 #include "StorageClass.hpp"
-#include "StorageClassList.hpp"
 
 #include <list>
 #include <stdint.h>
@@ -44,7 +43,7 @@ public:
    *
    * @return The current list of storage classes in lexicographical order.
    */
-  virtual StorageClassList getStorageClasses() const = 0;
+  virtual std::list<StorageClass> getStorageClasses() const = 0;
 
   /**
    * Gets an iterator over the entries of the specified directory.

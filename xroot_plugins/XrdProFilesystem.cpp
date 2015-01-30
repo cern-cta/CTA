@@ -235,9 +235,9 @@ int XrdProFilesystem::executeListStorageClassCommand(ParsedRequest &req, XrdOucE
     return SFS_DATA;
   }
   try {
-    cta::StorageClassList stgList = m_clientAPI->getStorageClasses();
+    std::list<cta::StorageClass> stgList = m_clientAPI->getStorageClasses();
     std::string response = "[OK] Listing of the storage class names and no of copies:";
-    for(cta::StorageClassList::iterator it = stgList.begin(); it != stgList.end(); it++) {
+    for(std::list<cta::StorageClass>::iterator it = stgList.begin(); it != stgList.end(); it++) {
       response += "\n";
       response += it->name;
       response += " ";

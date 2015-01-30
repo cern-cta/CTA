@@ -45,7 +45,7 @@ public:
    *
    * @return The current list of storage classes in lexicographical order.
    */
-  StorageClassList getStorageClasses() const;
+  std::list<StorageClass> getStorageClasses() const;
 
   /**
    * Gets an iterator over the entries of the specified directory.

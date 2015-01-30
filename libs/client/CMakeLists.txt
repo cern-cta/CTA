@@ -5,8 +5,9 @@ set (CLIENT_LIB_SRC_FILES
   DirectoryEntry.cpp
   DirectoryIterator.cpp
   Exception.cpp
+  FileAttribute.cpp
+  MockAPITest.cpp
   MockClientAPI.cpp
-#  MockAPITest.cpp
   StorageClass.cpp)
 
 add_library (ctaclient SHARED
