@@ -994,7 +994,7 @@ BEGIN
   FOR i IN 1..subReqId.COUNT LOOP
     BEGIN
       -- Get the necessary information needed about the request.
-      SELECT id, diskCopy, reqType
+      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_SubreqId)*/ id, diskCopy, reqType
         INTO srId, dcId, rType
         FROM SubRequest
        WHERE subReqId = subReqId(i)
