@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <string>
 
 namespace cta {
 
@@ -18,6 +19,11 @@ struct UserIdentity {
    * The group ID of the user.
    */
   uint32_t gid;
+
+  /**
+   * The host from which the user is communicating.
+   */
+  std::string host;
 
   /**
    * Constructor.
