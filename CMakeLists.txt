@@ -5,6 +5,7 @@ project(cta)
 set(CMAKE_C_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter")
 set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -Wno-long-long")
 
+
 # Explicitly setting the C and C++ compiler flags for the RelWithDebInfo build
 # in order to prevent the -O2 flag from being used.
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g")
