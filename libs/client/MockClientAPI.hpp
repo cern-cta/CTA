@@ -1,8 +1,10 @@
 #pragma once
 
 #include "ClientAPI.hpp"
+#include "FileSystemNode.hpp"
 
 #include <map>
+#include <vector>
 
 namespace cta {
 
@@ -14,6 +16,9 @@ public:
 
   /**
    * Constructor.
+   *
+   * Creates the root directory "/" owned by user root and with no file
+   * attributes or permissions.
    */
   MockClientAPI();
 
@@ -126,6 +131,17 @@ public:
     const std::string &dirPath);
 
   /**
+   * Deletes the specified directory.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * directory.
+   * @param dirPath The full path of the directory.
+   */
+  void deleteDirectory(
+    const UserIdentity &requester,
+    const std::string &dirPath);
+
+  /**
    * Gets the contents of the specified directory.
    *
    * @param requester The identity of the user requesting the contents of the
@@ -173,9 +189,19 @@ protected:
   std::list<std::string> m_adminHosts;
 
   /**
-   * The current list of storage classes.
+   * The current mapping from storage class name to storage classes.
    */
   std::map<std::string, StorageClass> m_storageClasses;
+
+  /**
+   * The current mapping from absolute file path to directory entry.
+   */
+  std::map<std::string, DirectoryEntry> m_directoryEntries;
+
+  /**
+   * The root node of the file-system.
+   */
+  FileSystemNode m_fileSystemRoot;
 
   /**
    * Throws an exception if the specified administrator already exists.
@@ -211,14 +237,14 @@ protected:
    *
    * @param path The Absolute path.
    */
-  void checkAbsolutePathSyntax(const std::string &path);
+  void checkAbsolutePathSyntax(const std::string &path) const;
 
   /**
    * Throws an exception if the specified path does not start with a slash.
    *
    * @param path The path.
    */
-  void checkPathStartsWithASlash(const std::string &path);
+  void checkPathStartsWithASlash(const std::string &path) const;
 
   /**
    * Throws an exception if the specified path does not contain valid
@@ -226,7 +252,7 @@ protected:
    *
    * @param path The path.
    */
-  void checkPathContainsValidChars(const std::string &path);
+  void checkPathContainsValidChars(const std::string &path) const;
 
   /**
    * Throws an exception if the specified character cannot be used within a
@@ -234,12 +260,12 @@ protected:
    *
    * @param c The character to be tested.
    */
-  void checkValidPathChar(const char c);
+  void checkValidPathChar(const char c) const;
 
   /**
    * Returns true of the specified character can be used within a path.
    */
-  bool isValidPathChar(const char c);
+  bool isValidPathChar(const char c) const;
 
   /**
    * Throws an exception if the specified path contains consective slashes.  For
@@ -248,7 +274,14 @@ protected:
    *
    * @param path The path.
    */
-  void checkPathDoesContainConsecutiveSlashes(const std::string &path);
+  void checkPathDoesContainConsecutiveSlashes(const std::string &path) const;
+
+  /**
+   * Throws an exception if the specified absolute path already exists.
+   *
+   * @param path The absolute path.
+   */
+  void checkAbsolutePathDoesNotAlreadyExist(const std::string &path) const;
 
   /**
    * Returns the path of the enclosing directory of the specified path.
@@ -262,7 +295,21 @@ protected:
    * @param path The path.
    * @return The path of the enclosing directory.
    */
-  std::string getEnclosingDirPath(const std::string &path);
+  std::string getEnclosingDirPath(const std::string &path) const;
+
+  /**
+   * Splits the specified string into a vector of strings using the specified
+   * separator.
+   *
+   * Please note that the string to be split is NOT modified.
+   *
+   * @param str The string to be split.
+   * @param separator The separator to be used to split the specified string.
+   * @param result The vector when the result of spliting the string will be
+   * stored.
+   */
+  void splitString(const std::string &str, const char separator,
+    std::vector<std::string> &result) const throw();
 
 }; // class MockClientAPI
 

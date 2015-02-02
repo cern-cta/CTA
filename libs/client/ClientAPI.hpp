@@ -128,6 +128,17 @@ public:
     const std::string &dirPath) = 0;
 
   /**
+   * Deletes the specified directory.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * directory.
+   * @param dirPath The full path of the directory.
+   */
+  virtual void deleteDirectory(
+    const UserIdentity &requester,
+    const std::string &dirPath) = 0;
+
+  /**
    * Gets the contents of the specified directory.
    *
    * @param requester The identity of the user requesting the contents of the

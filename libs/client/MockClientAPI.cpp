@@ -1,12 +1,16 @@
 #include "Exception.hpp"
 #include "MockClientAPI.hpp"
 
+#include <iostream>
 #include <sstream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MockClientAPI::MockClientAPI() {
+cta::MockClientAPI::MockClientAPI(): m_fileSystemRoot(DirectoryEntry("/")) {
 }
 
 //------------------------------------------------------------------------------
@@ -199,12 +203,28 @@ std::list<cta::StorageClass> cta::MockClientAPI::getStorageClasses(
 void cta::MockClientAPI::createDirectory(const UserIdentity &requester,
   const std::string &dirPath) {
   checkAbsolutePathSyntax(dirPath);
+
+  if(dirPath == "/") {
+    throw Exception("Root directory already exists");
+  }
+
+  std::vector<std::string> pathComponents;
+  splitString(dirPath, '/', pathComponents);
+
+  for(std::vector<std::string>::const_iterator itor = pathComponents.begin();
+    itor != pathComponents.end(); itor++) {
+
+  }
+  checkAbsolutePathDoesNotAlreadyExist(dirPath);
+  DirectoryEntry entry;
+  m_directoryEntries[dirPath] = entry;
 }
 
 //------------------------------------------------------------------------------
 // checkAbsolutePathSyntax
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkAbsolutePathSyntax(const std::string &path) {
+void cta::MockClientAPI::checkAbsolutePathSyntax(const std::string &path)
+  const {
   try {
     checkPathStartsWithASlash(path);
     checkPathContainsValidChars(path);
@@ -220,7 +240,8 @@ void cta::MockClientAPI::checkAbsolutePathSyntax(const std::string &path) {
 //------------------------------------------------------------------------------
 // checkPathStartsWithASlash
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkPathStartsWithASlash(const std::string &path) {
+void cta::MockClientAPI::checkPathStartsWithASlash(const std::string &path)
+  const {
   if(path.empty()) {
     throw Exception("Path is an empty string");
   }
@@ -233,7 +254,8 @@ void cta::MockClientAPI::checkPathStartsWithASlash(const std::string &path) {
 //------------------------------------------------------------------------------
 // checkPathContainsValidChars
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkPathContainsValidChars(const std::string &path) {
+void cta::MockClientAPI::checkPathContainsValidChars(const std::string &path)
+  const {
   for(std::string::const_iterator itor = path.begin(); itor != path.end();
     itor++) {
     checkValidPathChar(*itor);
@@ -243,7 +265,7 @@ void cta::MockClientAPI::checkPathContainsValidChars(const std::string &path) {
 //------------------------------------------------------------------------------
 // checkValidPathChar
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkValidPathChar(const char c) {
+void cta::MockClientAPI::checkValidPathChar(const char c) const {
   if(!isValidPathChar(c)) {
     std::ostringstream message;
     message << "The '" << c << "' character cannot be used within a path";
@@ -254,7 +276,7 @@ void cta::MockClientAPI::checkValidPathChar(const char c) {
 //------------------------------------------------------------------------------
 // isValidPathChar
 //------------------------------------------------------------------------------
-bool cta::MockClientAPI::isValidPathChar(const char c) {
+bool cta::MockClientAPI::isValidPathChar(const char c) const {
   return ('0' <= c && c <= '9') ||
          ('A' <= c && c <= 'Z') ||
          ('a' <= c && c <= 'z') ||
@@ -266,7 +288,7 @@ bool cta::MockClientAPI::isValidPathChar(const char c) {
 // checkPathDoesContainConsecutiveSlashes
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::checkPathDoesContainConsecutiveSlashes(
-  const std::string &path) {
+  const std::string &path) const {
   char previousChar = '\0';
 
   for(std::string::const_iterator itor = path.begin(); itor != path.end();
@@ -280,9 +302,24 @@ void cta::MockClientAPI::checkPathDoesContainConsecutiveSlashes(
 }
 
 //------------------------------------------------------------------------------
+// checkAbsolutePathDoesNotAlreadyExist
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::checkAbsolutePathDoesNotAlreadyExist(
+  const std::string &path) const {
+  std::map<std::string, DirectoryEntry>::const_iterator itor =
+    m_directoryEntries.find(path);
+  if(itor != m_directoryEntries.end()) {
+    std::ostringstream message;
+    message << "The absolute path " << path << " already exists";
+    throw Exception(message.str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // getEnclosingDirPath
 //------------------------------------------------------------------------------
-std::string cta::MockClientAPI::getEnclosingDirPath(const std::string &path) {
+std::string cta::MockClientAPI::getEnclosingDirPath(const std::string &path)
+  const {
   const std::string::size_type last_slash_idx = path.find_last_of('/');
   if(std::string::npos == last_slash_idx) {
     throw Exception("Path does not contain a slash");
@@ -291,13 +328,81 @@ std::string cta::MockClientAPI::getEnclosingDirPath(const std::string &path) {
 }
 
 //------------------------------------------------------------------------------
+// deleteDirectory
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::deleteDirectory(const UserIdentity &requester,
+  const std::string &dirPath) {
+  checkAbsolutePathSyntax(dirPath);
+
+  if(dirPath == "/") {
+    throw Exception("The root directory can never be deleted");
+  }
+}
+
+//------------------------------------------------------------------------------
 // getDirectoryContents
 //------------------------------------------------------------------------------
 cta::DirectoryIterator cta::MockClientAPI::getDirectoryContents(
   const UserIdentity &requester, const std::string &dirPath) const {
+  std::cout << "getDirectoryContents: dirPath=" << dirPath << std::endl;
+  checkAbsolutePathSyntax(dirPath);
+
+  std::vector<std::string> pathComponents;
+  splitString(dirPath, '/', pathComponents);
+
+  if(dirPath == "/") {
+    return DirectoryIterator(m_fileSystemRoot.getDirectoryEntries());
+  }
+
+  for(std::vector<std::string>::const_iterator itor = pathComponents.begin();
+    itor != pathComponents.end(); itor++) {
+    std::cout << "getDirectoryContents: itor=" << *itor << std::endl;
+  }
+
+  std::map<std::string, DirectoryEntry>::const_iterator itor =
+    m_directoryEntries.find(dirPath);
+  if(itor == m_directoryEntries.end()) {
+    std::ostringstream message;
+    message << "The absolute path " << dirPath << " does not exist";
+    throw Exception(message.str());
+  }
+
+  const DirectoryEntry &entry = itor->second;
+
+  if(!S_ISDIR(entry.mode)) {
+    std::ostringstream message;
+    message << "The absolute path " << dirPath << " is not a directory";
+    throw(message.str());
+  }
+
   std::list<DirectoryEntry> entries;
-  DirectoryIterator itor(entries);
-  return itor;
+  return DirectoryIterator(entries);
+}
+
+//-----------------------------------------------------------------------------
+// splitString
+//-----------------------------------------------------------------------------
+void cta::MockClientAPI::splitString(const std::string &str,
+  const char separator, std::vector<std::string> &result) const throw() {
+
+  if(str.empty()) {
+    return;
+  }
+
+  std::string::size_type beginIndex = 0;
+  std::string::size_type endIndex   = str.find(separator);
+
+  while(endIndex != std::string::npos) {
+    result.push_back(str.substr(beginIndex, endIndex - beginIndex));
+    beginIndex = ++endIndex;
+    endIndex = str.find(separator, endIndex);
+  }
+
+  // If no separator could not be found then simply append the whole input
+  // string to the result
+  if(endIndex == std::string::npos) {
+    result.push_back(str.substr(beginIndex, str.length()));
+  }
 }
 
 //------------------------------------------------------------------------------

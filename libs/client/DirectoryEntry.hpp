@@ -14,7 +14,7 @@ namespace cta {
 struct DirectoryEntry {
 
   /**
-   * The name of the directory.
+   * The name of the directory entry.
    */
   std::string name;
 
@@ -43,10 +43,18 @@ struct DirectoryEntry {
   /**
    * Constructor.
    *
-   * Initialises the entry type of the DirectoryEntry to NONE and all integer
-   * member-variables to 0.
+   * Initialises all integer member-variables to 0.
    */
   DirectoryEntry();
+
+  /**
+   * Constructor.
+   *
+   * Initialises all integer member-variables to 0.
+   *
+   * @param name The name of the directory entry.
+   */
+  DirectoryEntry(const std::string &name);
 
 }; // DirectoryEntry
 
