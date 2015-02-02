@@ -141,7 +141,7 @@ int XrdProFilesystem::executeArchiveCommand(ParsedRequest &req, XrdOucErrInfo &e
 //------------------------------------------------------------------------------
 // executeCreateStorageClassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeCreateStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeMkclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -180,7 +180,7 @@ int XrdProFilesystem::executeCreateStorageClassCommand(ParsedRequest &req, XrdOu
 //------------------------------------------------------------------------------
 // executeCreateStorageClassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeChangeStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeChclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -213,7 +213,7 @@ int XrdProFilesystem::executeChangeStorageClassCommand(ParsedRequest &req, XrdOu
 //------------------------------------------------------------------------------
 // executeDeleteStorageClassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeDeleteStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeRmclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -247,7 +247,7 @@ int XrdProFilesystem::executeDeleteStorageClassCommand(ParsedRequest &req, XrdOu
 //------------------------------------------------------------------------------
 // executeListStorageClassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeListStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeLsclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
   if(req.args.size() != 0) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -292,6 +292,8 @@ int XrdProFilesystem::executeMkdirCommand(ParsedRequest &req, XrdOucErrInfo &eIn
     return SFS_DATA;
   }
   try {
+    cta::UserIdentity requester;
+    m_clientAPI->createDirectory(requester, req.args.at(0));
     std::string response = "[OK] Directory ";
     response += req.args.at(0);
     response += " created";
@@ -347,6 +349,63 @@ int XrdProFilesystem::executeRmdirCommand(ParsedRequest &req, XrdOucErrInfo &eIn
 }
 
 //------------------------------------------------------------------------------
+// executeLsCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeLsCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+  if(req.args.size() != 1) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    cta::UserIdentity requester;
+    std::string response;
+    cta::DirectoryIterator itor = m_clientAPI->getDirectoryContents(requester, req.args.at(0));
+    while(itor.hasMore()) {
+      const cta::DirectoryEntry &entry = itor.next();
+      response += "\n";
+      switch(entry.entryType) {
+        case cta::DirectoryEntry::FILE_ENTRY:
+          response += "-";
+          break;
+        case cta::DirectoryEntry::DIRECTORY_ENTRY:
+          response += "d";
+          break;
+        case cta::DirectoryEntry::NONE:
+        default:          
+          response += "n";
+          break;
+      }
+      response += entry.ownerPerms;
+      response += entry.groupPerms;
+      response += entry.otherPerms;
+      response += " ";
+      response += entry.ownerId;
+      response += " ";
+      response += entry.groupId;
+      response += " ";
+      response += entry.name;
+    }
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
 // dispatchRequest
 //------------------------------------------------------------------------------
 int XrdProFilesystem::dispatchRequest(XrdSfsFSctl &args, XrdOucErrInfo &eInfo) {
@@ -359,21 +418,21 @@ int XrdProFilesystem::dispatchRequest(XrdSfsFSctl &args, XrdOucErrInfo &eInfo) {
   {  
     return executeArchiveCommand(req, eInfo);
   }
-  else if(strcmp(req.cmd.c_str(), "/create-storage-class") == 0)
+  else if(strcmp(req.cmd.c_str(), "/mkclass") == 0)
   {  
-    return executeCreateStorageClassCommand(req, eInfo);
+    return executeMkclassCommand(req, eInfo);
   }  
-  else if(strcmp(req.cmd.c_str(), "/change-storage-class") == 0)
+  else if(strcmp(req.cmd.c_str(), "/chclass") == 0)
   {  
-    return executeChangeStorageClassCommand(req, eInfo);
+    return executeChclassCommand(req, eInfo);
   }
-  else if(strcmp(req.cmd.c_str(), "/delete-storage-class") == 0)
+  else if(strcmp(req.cmd.c_str(), "/rmclass") == 0)
   {  
-    return executeDeleteStorageClassCommand(req, eInfo);
+    return executeRmclassCommand(req, eInfo);
   }
-  else if(strcmp(req.cmd.c_str(), "/list-storage-class") == 0)
+  else if(strcmp(req.cmd.c_str(), "/lsclass") == 0)
   {  
-    return executeListStorageClassCommand(req, eInfo);
+    return executeLsclassCommand(req, eInfo);
   }
   else if(strcmp(req.cmd.c_str(), "/mkdir") == 0)
   {  
@@ -382,6 +441,10 @@ int XrdProFilesystem::dispatchRequest(XrdSfsFSctl &args, XrdOucErrInfo &eInfo) {
   else if(strcmp(req.cmd.c_str(), "/rmdir") == 0)
   {  
     return executeRmdirCommand(req, eInfo);
+  }  
+  else if(strcmp(req.cmd.c_str(), "/ls") == 0)
+  {  
+    return executeLsCommand(req, eInfo);
   }
   else
   {
