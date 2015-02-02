@@ -533,7 +533,7 @@ BEGIN
   nsHostName := getConfigOption('stager', 'nsHost', nh);
   -- Loop over the deleted files and split the orphan ones
   -- from the normal ones
-  FOR fid in fileIds.FIRST .. fileIds.LAST LOOP
+  FOR fid in 1..fileIds.COUNT LOOP
     BEGIN
       SELECT id INTO unused FROM CastorFile
        WHERE fileid = fileIds(fid) AND nsHost = nsHostName;
@@ -562,7 +562,7 @@ BEGIN
     RETURN;
   END IF;
   -- Insert diskcopy ids into a temporary table
-  FORALL i IN dcIds.FIRST..dcIds.LAST
+  FORALL i IN 1..dcIds.COUNT
    INSERT INTO StgFilesDeletedOrphans (diskCopyId) VALUES (dcIds(i));
   -- Return a list of diskcopy ids which no longer exist
   OPEN stgOrphans FOR
