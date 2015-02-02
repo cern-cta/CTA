@@ -131,6 +131,10 @@ int XrdProFilesystem::executeArchiveCommand(ParsedRequest &req, XrdOucErrInfo &e
     response += ex.what();
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
 }
 
@@ -166,6 +170,10 @@ int XrdProFilesystem::executeCreateStorageClassCommand(ParsedRequest &req, XrdOu
     response += ex.what();
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
 }
 
@@ -193,6 +201,10 @@ int XrdProFilesystem::executeChangeStorageClassCommand(ParsedRequest &req, XrdOu
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
@@ -223,6 +235,10 @@ int XrdProFilesystem::executeDeleteStorageClassCommand(ParsedRequest &req, XrdOu
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
@@ -259,6 +275,10 @@ int XrdProFilesystem::executeListStorageClassCommand(ParsedRequest &req, XrdOucE
     response += ex.what();
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
 }
 
@@ -287,6 +307,10 @@ int XrdProFilesystem::executeMkdirCommand(ParsedRequest &req, XrdOucErrInfo &eIn
     response += ex.what();
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
   }
 }
 
@@ -313,6 +337,10 @@ int XrdProFilesystem::executeRmdirCommand(ParsedRequest &req, XrdOucErrInfo &eIn
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
