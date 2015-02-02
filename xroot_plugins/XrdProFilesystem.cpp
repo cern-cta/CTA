@@ -10,7 +10,7 @@
 #include <sstream>
 #include <sys/types.h>
 
-XrdVERSIONINFO(XrdSfsGetFileSystem,XrdPro);
+XrdVERSIONINFO(XrdSfsGetFileSystem,XrdPro)
 
 extern "C"
 {
@@ -33,13 +33,13 @@ int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eIn
   struct passwd pwd;
   struct passwd *result;
   char *buf;
-  size_t bufsize;
+  long bufsize;
   bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
   if (bufsize == -1)
   {
     bufsize = 16384;
   }
-  buf = (char *)malloc(bufsize);
+  buf = (char *)malloc((size_t)bufsize);
   if(buf == NULL)
   {
     std::string response = "[ERROR] malloc of the buffer failed";
@@ -103,7 +103,7 @@ int XrdProFilesystem::executeArchiveCommand(ParsedRequest &req, XrdOucErrInfo &e
   try {
     std::list<std::string> sourceFiles;
     std::string destinationPath = req.args.at(req.args.size()-1);
-    for(int i=0; i<req.args.size()-1; i++) {
+    for(size_t i=0; i<req.args.size()-1; i++) {
       sourceFiles.push_back(req.args.at(i));
     }
     cta::UserIdentity requester;
