@@ -22,7 +22,7 @@ public:
     cta::threading::Thread(), m_action(a) {}
 private:
   virtual void run () {
-    // make the agent act
+    // execute the action
     m_action.execute();
   }
   cta::objectstore::Action & m_action;
@@ -34,7 +34,7 @@ public:
     cta::threading::ChildProcess(), m_action(a) {}
 private:
   virtual int run () {
-    // increase 100 time root entry's 
+    // execute the action 
     try {
       m_action.execute();
     } catch (std::exception & e) {
@@ -51,7 +51,13 @@ class dummyCleanup: public cta::threading::ChildProcess::Cleanup {
   virtual void operator()() {}
 } dc;
 
+typedef jobExecutorProcess jobExecutor;
+
 int main(void){
+  std::vector<cta::objectstore::ObjectStore *> recallObjectStores;
+  std::vector<cta::objectstore::Agent *> recallAgents;
+  std::vector<cta::objectstore::Action *> recallActions;
+  std::vector<jobExecutor *> recallJobs;
   try {
     myOS os("", "tapetest", "tapetest");
     //myOS os;
@@ -77,12 +83,45 @@ int main(void){
     // Create the job pool
     std::cout << "=============== About to add job pool" << std::endl;
     cta::objectstore::JobPool jobPool(re.allocateOrGetJobPool(self), self);
+    
+    // Create the recall FIFO
+    std::cout << "=============== About to add recall FIFO" << std::endl;
+    cta::objectstore::FIFO recallFIFO(jobPool.allocateOrGetRecallFIFO(self), self);
     // Dump again
     std::cout << osd.dump(self) << std::endl;
+    
+    // start the job injector
+    myOS injectorObjectStore(os.path(), os.user(), os.pool());
+    cta::objectstore::Agent injectorAgent(injectorObjectStore, "injectorProcess");
+    cta::objectstore::JobPoster injectorAction(injectorAgent, 0, 100);
+    jobExecutor injectorProcess(injectorAction);
+    injectorProcess.start(dc);
+    
+    // start the garbage collector
+    myOS gcObjectStore(os.path(), os.user(), os.pool());
+    cta::objectstore::Agent gcAgent(injectorObjectStore, "injectorProcess");
+    cta::objectstore::GarbageCollector gcAction(injectorAgent);
+    jobExecutor gcProcess(injectorAction);
+    injectorProcess.start(dc);
+    
+    // Look start-kill the recallers
+    // get hold of the recall FIFO
+    // create 10 recallers
+    //int recallerNumber = 0;
+    for (int i=0; i< 10 ; i++) {
+      
+    }
+    usleep (100*1000);
+//    while(recallFIFO.size(self)) {
+//      
+//    }
     
   } catch (std::exception &e) {
     std::cout << "got exception: " << e.what() << std::endl;
   }
+  
+  // Create the job poster
+  
   
   return 0;
 }

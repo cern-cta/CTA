@@ -158,13 +158,40 @@ private:
       for (std::list<AgentVisitor::intentEntry>::iterator i=intendedObjects.begin();
             i != intendedObjects.end(); i++) {
         switch (i->objectType) {
+          case serializers::JobPool_t:
+          {
+            // We need to check whether the job pool is plugged into the
+            // root entry and just discard it if it is not.
+            RootEntry re(m_agent);
+            std::string jopPoolName;
+            try {
+              jopPoolName = re.getJobPool(m_agent);
+            } catch (...) {
+              // If we cannot find a reference to any job pool, then
+              // this one is not referenced
+              m_agent.objectStore().remove(i->name);
+              break;
+            }
+            if (jopPoolName != i->name)
+              m_agent.objectStore().remove(i->name);
+            break;
+          }
           case serializers::RecallFIFO_t:
             // We need to check that this recall FIFO is plugged in the job pool
             // structure
           {
             RootEntry re(m_agent);
-            JobPool jp(re.getJobPool(m_agent), m_agent);
-            if (i->name != jp.getRecallFIFO(m_agent))
+            std::string recallFIFOName;
+            try {
+              JobPool jp(re.getJobPool(m_agent), m_agent);
+              recallFIFOName = jp.getRecallFIFO(m_agent);
+            } catch (...) {
+              // If we cannot find a reference to any recall FIFO, then
+              // this one is not referenced
+              m_agent.objectStore().remove(i->name);
+              break;
+            }
+            if (recallFIFOName != i->name)
               m_agent.objectStore().remove(i->name);
             break;
           }
@@ -176,14 +203,22 @@ private:
             FIFO RecallFIFO(rj.owner(m_agent), m_agent);
             // We repost the job unconditionally in the FIFO. In case of an attempted
             // pop, the actual ownership (should be the FIFO) will be checked by
-            // the consumer. If the owner is not right, 
+            // the consumer. If the owner is not right, FIFO entry will simply be 
+            // discarded.
+            RecallFIFO.push(i->name, m_agent);
             break;
           }
-          case serializers::JobPool_t:
-          {
+          case serializers::RootEntry_t:
+            std::cout << "Unexpected entry type in garbage collection: RootEntry" << std::endl;
             break;
-          }
-          default:
+          case serializers::AgentRegister_t:
+            std::cout << "Unexpected entry type in garbage collection: AgentRegister" << std::endl;
+            break;
+          case serializers::Agent_t:
+            std::cout << "Unexpected entry type in garbage collection: Agent" << std::endl;
+            break;
+          case serializers::MigrationFIFO_t:
+            std::cout << "Unexpected entry type in garbage collection: MigrationFIFO" << std::endl;
             break;
         }
       }
