@@ -1,5 +1,6 @@
 #pragma once
 
+#include "libs/client/MockClientAPI.hpp"
 #include "XrdSfs/XrdSfsInterface.hh"
 
 #include "ParsedRequest.hpp"
@@ -29,6 +30,11 @@ public:
   ~XrdProFilesystem();
   
 protected:
+  
+  /**
+   * Pointer to the client API object
+   */
+  cta::ClientAPI *m_clientAPI;
     
   /**
    * Parses the query into the request structure
@@ -65,7 +71,7 @@ protected:
    * @param eInfo   Error information
    * @return SFS_DATA
    */
-  int executeCreateStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
+  int executeMkclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
    * Executes the command contained within the request structure
@@ -74,7 +80,7 @@ protected:
    * @param eInfo   Error information
    * @return SFS_DATA
    */
-  int executeChangeStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
+  int executeChclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
    * Executes the command contained within the request structure
@@ -83,7 +89,7 @@ protected:
    * @param eInfo   Error information
    * @return SFS_DATA
    */
-  int executeDeleteStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
+  int executeRmclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
    * Executes the command contained within the request structure
@@ -92,7 +98,7 @@ protected:
    * @param eInfo   Error information
    * @return SFS_DATA
    */
-  int executeListStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
+  int executeLsclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
    * Executes the command contained within the request structure
@@ -111,6 +117,15 @@ protected:
    * @return SFS_DATA
    */
   int executeRmdirCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @return SFS_DATA
+   */
+  int executeLsCommand(ParsedRequest &req, XrdOucErrInfo &eInfo);
   
   /**
    * Dispatches the request based on the query

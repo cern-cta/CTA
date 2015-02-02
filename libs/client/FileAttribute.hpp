@@ -7,7 +7,7 @@ namespace cta {
 /**
  * Class representing a file atrribute.
  */
-struct FileAtribute {
+struct FileAttribute {
 
   /**
    * The name of the attribute.
@@ -22,7 +22,7 @@ struct FileAtribute {
   /**
    * Constructor.
    */
-  FileAtribute();
+  FileAttribute();
 
   /**
    * Constructor.
@@ -30,8 +30,8 @@ struct FileAtribute {
    * @param name The name of the attribute.
    * @param value value of the attribute.
    */
-  FileAtribute(const std::string &name, const std::string &value);
+  FileAttribute(const std::string &name, const std::string &value);
 
-}; // struct FileAtribute
+}; // struct FileAttribute
 
 } // namespace cta

@@ -1,14 +1,22 @@
-#include "FileAttribute.hpp"
+#include "UserIdentity.hpp"
+
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileAttribute::FileAttribute() {
+cta::UserIdentity::UserIdentity() throw():
+  uid(0),
+  gid(0) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileAttribute::FileAttribute(const std::string &name,
-  const std::string &value): name(name), value(value) {
+cta::UserIdentity::UserIdentity(
+  const uint32_t uid,
+  const uint32_t gid,
+  const std::string &host) throw():
+  uid(uid),
+  gid(gid),
+  host(host) {
 }

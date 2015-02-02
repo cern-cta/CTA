@@ -3,6 +3,7 @@
 #include "XrdOuc/XrdOucString.hh"
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdVersion.hh"
+#include "libs/client/Exception.hpp"
 
 #include <iostream>
 #include <pwd.h>
@@ -99,82 +100,186 @@ int XrdProFilesystem::executeArchiveCommand(ParsedRequest &req, XrdOucErrInfo &e
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::string response = "[OK] Requested archival of the following files:\n";
-  for(int i=0; i<req.args.size()-1; i++) {
+  try {
+    std::list<std::string> sourceFiles;
+    std::string destinationPath = req.args.at(req.args.size()-1);
+    for(int i=0; i<req.args.size()-1; i++) {
+      sourceFiles.push_back(req.args.at(i));
+    }
+    cta::UserIdentity requester;
+    std::string jobID = m_clientAPI->archiveToTape(requester, sourceFiles, destinationPath);
+    std::string response = "[OK] Requested archival of the following files:\n";
+    for(std::list<std::string>::iterator it = sourceFiles.begin(); it != sourceFiles.end(); it++) {
+      response += "[OK]\t";
+      response += *it;
+      response += "\n";
+    }
+    response += "[OK] To the following directory:\n";
     response += "[OK]\t";
-    response += req.args.at(i);
-    response += "\n";
-  }  
-  response += "[OK] To the following directory:\n";
-  response += "[OK]\t";
-  response += req.args.at(req.args.size()-1);
-  eInfo.setErrInfo(response.length(), response.c_str());
-  return SFS_DATA;
+    response += destinationPath;   
+    response += "\n[OK] JobID: ";
+    response += jobID;
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
 }
 
 //------------------------------------------------------------------------------
 // executeCreateStorageClassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeCreateStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeMkclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::string response = "[OK] Created storage class ";
-  response += req.args.at(0);
-  response += " with ";
-  response += req.args.at(1);
-  response += " tape copies";
-  eInfo.setErrInfo(response.length(), response.c_str());
-  return SFS_DATA;
+  try {
+    uint8_t numberOfCopies;
+    std::istringstream ss(req.args.at(1));
+    ss >> numberOfCopies;
+    cta::UserIdentity requester;
+    m_clientAPI->createStorageClass(requester, req.args.at(0), numberOfCopies);
+    std::string response = "[OK] Created storage class ";
+    response += req.args.at(0);
+    response += " with ";
+    response += req.args.at(1);
+    response += " tape copies";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
 }
 
 //------------------------------------------------------------------------------
 // executeCreateStorageClassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeChangeStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeChclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::string response = "[OK] Changed storage class of directory ";
-  response += req.args.at(0);
-  response += " to ";
-  response += req.args.at(1);
-  eInfo.setErrInfo(response.length(), response.c_str());
-  return SFS_DATA;
+  try {
+    std::string response = "[OK] Changed storage class of directory ";
+    response += req.args.at(0);
+    response += " to ";
+    response += req.args.at(1);
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
 }
 
 //------------------------------------------------------------------------------
 // executeDeleteStorageClassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeDeleteStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeRmclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::string response = "[OK] Storage class ";
-  response += req.args.at(0);
-  response += " deleted";
-  eInfo.setErrInfo(response.length(), response.c_str());
-  return SFS_DATA;
+  try {
+    cta::UserIdentity requester;
+    m_clientAPI->deleteStorageClass(requester, req.args.at(0));
+    std::string response = "[OK] Storage class ";
+    response += req.args.at(0);
+    response += " deleted";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
 }
 
 //------------------------------------------------------------------------------
 // executeListStorageClassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeListStorageClassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeLsclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
   if(req.args.size() != 0) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::string response = "[OK] Requested listing of the storage classes";
-  eInfo.setErrInfo(response.length(), response.c_str());
-  return SFS_DATA;
+  try {
+    cta::UserIdentity requester;
+    std::list<cta::StorageClass> stgList = m_clientAPI->getStorageClasses(requester);
+    std::string response = "[OK] Listing of the storage class names and no of copies:";
+    for(std::list<cta::StorageClass>::iterator it = stgList.begin(); it != stgList.end(); it++) {
+      response += "\n";
+      response += it->name;
+      response += " ";
+      response += it->nbCopies;
+    }
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -186,11 +291,29 @@ int XrdProFilesystem::executeMkdirCommand(ParsedRequest &req, XrdOucErrInfo &eIn
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::string response = "[OK] Directory ";
-  response += req.args.at(0);
-  response += " created";
-  eInfo.setErrInfo(response.length(), response.c_str());
-  return SFS_DATA;
+  try {
+    cta::UserIdentity requester;
+    m_clientAPI->createDirectory(requester, req.args.at(0));
+    std::string response = "[OK] Directory ";
+    response += req.args.at(0);
+    response += " created";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -202,11 +325,84 @@ int XrdProFilesystem::executeRmdirCommand(ParsedRequest &req, XrdOucErrInfo &eIn
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
-  std::string response = "[OK] Directory ";
-  response += req.args.at(0);
-  response += " removed";
-  eInfo.setErrInfo(response.length(), response.c_str());
-  return SFS_DATA;
+  try {
+    std::string response = "[OK] Directory ";
+    response += req.args.at(0);
+    response += " removed";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeLsCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeLsCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+  if(req.args.size() != 1) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    cta::UserIdentity requester;
+    std::string response;
+    cta::DirectoryIterator itor = m_clientAPI->getDirectoryContents(requester, req.args.at(0));
+    while(itor.hasMore()) {
+      const cta::DirectoryEntry &entry = itor.next();
+      response += "\n";
+      switch(entry.entryType) {
+        case cta::DirectoryEntry::FILE_ENTRY:
+          response += "-";
+          break;
+        case cta::DirectoryEntry::DIRECTORY_ENTRY:
+          response += "d";
+          break;
+        case cta::DirectoryEntry::NONE:
+        default:          
+          response += "n";
+          break;
+      }
+      response += entry.ownerPerms;
+      response += entry.groupPerms;
+      response += entry.otherPerms;
+      response += " ";
+      response += entry.ownerId;
+      response += " ";
+      response += entry.groupId;
+      response += " ";
+      response += entry.name;
+    }
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -222,21 +418,21 @@ int XrdProFilesystem::dispatchRequest(XrdSfsFSctl &args, XrdOucErrInfo &eInfo) {
   {  
     return executeArchiveCommand(req, eInfo);
   }
-  else if(strcmp(req.cmd.c_str(), "/create-storage-class") == 0)
+  else if(strcmp(req.cmd.c_str(), "/mkclass") == 0)
   {  
-    return executeCreateStorageClassCommand(req, eInfo);
+    return executeMkclassCommand(req, eInfo);
   }  
-  else if(strcmp(req.cmd.c_str(), "/change-storage-class") == 0)
+  else if(strcmp(req.cmd.c_str(), "/chclass") == 0)
   {  
-    return executeChangeStorageClassCommand(req, eInfo);
+    return executeChclassCommand(req, eInfo);
   }
-  else if(strcmp(req.cmd.c_str(), "/delete-storage-class") == 0)
+  else if(strcmp(req.cmd.c_str(), "/rmclass") == 0)
   {  
-    return executeDeleteStorageClassCommand(req, eInfo);
+    return executeRmclassCommand(req, eInfo);
   }
-  else if(strcmp(req.cmd.c_str(), "/list-storage-class") == 0)
+  else if(strcmp(req.cmd.c_str(), "/lsclass") == 0)
   {  
-    return executeListStorageClassCommand(req, eInfo);
+    return executeLsclassCommand(req, eInfo);
   }
   else if(strcmp(req.cmd.c_str(), "/mkdir") == 0)
   {  
@@ -245,6 +441,10 @@ int XrdProFilesystem::dispatchRequest(XrdSfsFSctl &args, XrdOucErrInfo &eInfo) {
   else if(strcmp(req.cmd.c_str(), "/rmdir") == 0)
   {  
     return executeRmdirCommand(req, eInfo);
+  }  
+  else if(strcmp(req.cmd.c_str(), "/ls") == 0)
+  {  
+    return executeLsCommand(req, eInfo);
   }
   else
   {
@@ -449,9 +649,13 @@ void XrdProFilesystem::EnvInfo(XrdOucEnv *envP)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-XrdProFilesystem::XrdProFilesystem() {}
+XrdProFilesystem::XrdProFilesystem() {
+  m_clientAPI = new cta::MockClientAPI();
+}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-XrdProFilesystem::~XrdProFilesystem() {}
+XrdProFilesystem::~XrdProFilesystem() {
+  delete m_clientAPI;
+}

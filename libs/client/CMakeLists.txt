@@ -5,9 +5,10 @@ set (CLIENT_LIB_SRC_FILES
   DirectoryEntry.cpp
   DirectoryIterator.cpp
   Exception.cpp
+  FileAttribute.cpp
   MockClientAPI.cpp
-  MockAPITest.cpp
-  StorageClass.cpp)
+  StorageClass.cpp
+  UserIdentity.cpp)
 
 add_library (ctaclient SHARED
   ${CLIENT_LIB_SRC_FILES})

@@ -2,7 +2,7 @@
 
 #include "DirectoryIterator.hpp"
 #include "StorageClass.hpp"
-#include "StorageClassList.hpp"
+#include "UserIdentity.hpp"
 
 #include <list>
 #include <stdint.h>
@@ -11,7 +11,8 @@
 namespace cta {
 
 /**
- * Abstract class that specifies the client ClientAPI of the CERN Tape Archive project.
+ * Abstract class that specifies the client ClientAPI of the CERN Tape Archive
+ * project.
  */
 class ClientAPI {
 public:
@@ -22,37 +23,120 @@ public:
   virtual ~ClientAPI() throw() = 0;
 
   /**
+   * Creates the specified administrator.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * administrator.
+   * @param admin The identity of the administrator.
+   */
+  virtual void createAdminUser(
+    const UserIdentity &requester,
+    const UserIdentity &admin) = 0;
+
+  /**
+   * Deletes the specified administrator.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * administrator.
+   * @param admin The identity of the administrator.
+   */
+  virtual void deleteAdminUser(
+    const UserIdentity &requester,
+    const UserIdentity &admin) = 0;
+
+  /**
+   * Returns the current list of administrators.
+   *
+   * @param requester The identity of the user requesting the list.
+   */
+  virtual std::list<UserIdentity> getAdminUsers(const UserIdentity &requester)
+   const = 0;
+
+  /**
+   * Creates the specified administration host.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * administration host.
+   * @param adminHost The network name of the administration host.
+   */
+  virtual void createAdminHost(
+    const UserIdentity &requester,
+    const std::string &adminHost) = 0;
+
+  /**
+   * Deletes the specified administration host.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * administration host.
+   * @param adminHost The network name of the administration host.
+   */
+  virtual void deleteAdminHost(
+    const UserIdentity &requester,
+    const std::string &adminHost) = 0;
+
+  /**
+   * Returns the current list of administration hosts.
+   *
+   * @param requester The identity of the user requesting the list.
+   */
+  virtual std::list<std::string> getAdminHosts(const UserIdentity &requester)
+   const  = 0;
+
+  /**
    * Creates the specified storage class.
    *
+   * @param requester The identity of the user requesting the creation of the
+   * storage class.
    * @param name The name of the storage class.
    * @param nbCopies The number of copies a file associated with this storage
    * class should have on tape.
    */
   virtual void createStorageClass(
+    const UserIdentity &requester,
     const std::string &name,
     const uint8_t nbCopies) = 0;
 
   /**
    * Deletes the specified storage class.
    *
+   * @param requester The identity of the user requesting the deletion of the
+   * storage class.
    * @param name The name of the storage class.
    */
-  virtual void deleteStorageClass(const std::string &name) = 0;
+  virtual void deleteStorageClass(
+    const UserIdentity &requester,
+    const std::string &name) = 0;
 
   /**
    * Gets the current list of storage classes in lexicographical order.
    *
+   * @param requester The identity of the user requesting list.
    * @return The current list of storage classes in lexicographical order.
    */
-  virtual StorageClassList getStorageClasses() const = 0;
+  virtual std::list<StorageClass> getStorageClasses(
+    const UserIdentity &requester) const = 0;
 
   /**
-   * Gets an iterator over the entries of the specified directory.
+   * Creates the specified directory.
    *
+   * @param requester The identity of the user requesting the creation of the
+   * directory.
    * @param dirPath The full path of the directory.
-   * @return The iterator.
    */
-  virtual DirectoryIterator getDirectoryIterator(
+  virtual void createDirectory(
+    const UserIdentity &requester,
+    const std::string &dirPath) = 0;
+
+  /**
+   * Gets the contents of the specified directory.
+   *
+   * @param requester The identity of the user requesting the contents of the
+   * directory.
+   * @param dirPath The full path of the directory.
+   * @return An iterator over the contents of the directory.
+   */
+  virtual DirectoryIterator getDirectoryContents(
+    const UserIdentity &requester,
     const std::string &dirPath) const = 0;
 
   /**
@@ -68,11 +152,14 @@ public:
    * The storage class of the archived file will be inherited from its
    * destination directory.
    *
+   * @param requester The identity of the user requesting the archival.
    * @param srcUrls List of one or more source files.
    * @param dst Destination file or directory within the archive namespace.
    * @return The identifier of the archive job.
    */
-  virtual std::string archiveToTape(const std::list<std::string> &srcUrls,
+  virtual std::string archiveToTape(
+    const UserIdentity &requester,
+    const std::list<std::string> &srcUrls,
     std::string dst) = 0;
 
 }; // class ClientAPI
