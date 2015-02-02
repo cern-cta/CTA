@@ -364,21 +364,16 @@ int XrdProFilesystem::executeLsCommand(ParsedRequest &req, XrdOucErrInfo &eInfo)
     while(itor.hasMore()) {
       const cta::DirectoryEntry &entry = itor.next();
       response += "\n";
-      switch(entry.entryType) {
-        case cta::DirectoryEntry::FILE_ENTRY:
-          response += "-";
-          break;
-        case cta::DirectoryEntry::DIRECTORY_ENTRY:
-          response += "d";
-          break;
-        case cta::DirectoryEntry::NONE:
-        default:          
-          response += "n";
-          break;
-      }
-      response += entry.ownerPerms;
-      response += entry.groupPerms;
-      response += entry.otherPerms;
+      response += (S_ISDIR(entry.mode)) ? "d" : "-";
+      response += (entry.mode & S_IRUSR) ? "r" : "-";
+      response += (entry.mode & S_IWUSR) ? "w" : "-";
+      response += (entry.mode & S_IXUSR) ? "x" : "-";
+      response += (entry.mode & S_IRGRP) ? "r" : "-";
+      response += (entry.mode & S_IWGRP) ? "w" : "-";
+      response += (entry.mode & S_IXGRP) ? "x" : "-";
+      response += (entry.mode & S_IROTH) ? "r" : "-";
+      response += (entry.mode & S_IWOTH) ? "w" : "-";
+      response += (entry.mode & S_IXOTH) ? "x" : "-";
       response += " ";
       response += entry.ownerId;
       response += " ";
