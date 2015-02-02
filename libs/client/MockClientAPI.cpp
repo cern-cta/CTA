@@ -1,5 +1,5 @@
-#include "MockClientAPI.hpp"
 #include "Exception.hpp"
+#include "MockClientAPI.hpp"
 
 #include <sstream>
 
@@ -13,6 +13,54 @@ cta::MockClientAPI::MockClientAPI() {
 // destructor
 //------------------------------------------------------------------------------
 cta::MockClientAPI::~MockClientAPI() throw() {
+}
+
+//------------------------------------------------------------------------------
+// createAdminUser
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::createAdminUser(
+  const UserIdentity &requester,
+  const UserIdentity &admin) {
+}
+  
+//------------------------------------------------------------------------------
+// deleteAdminUser
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::deleteAdminUser(
+  const UserIdentity &requester,
+  const UserIdentity &admin) {
+}
+  
+//------------------------------------------------------------------------------
+// getAdminUsers
+//------------------------------------------------------------------------------
+std::list<cta::UserIdentity> cta::MockClientAPI::getAdminUsers(
+  const UserIdentity &requester) const {
+  return m_adminUsers;
+}
+
+//------------------------------------------------------------------------------
+// createAdminHost
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::createAdminHost(
+  const UserIdentity &requester,
+  const std::string &adminHost) {
+}
+
+//------------------------------------------------------------------------------
+// deleteAdminHost
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::deleteAdminHost(
+  const UserIdentity &requester,
+  const std::string &adminHost) {
+}
+  
+//------------------------------------------------------------------------------
+// getAdminHosts
+//------------------------------------------------------------------------------
+std::list<std::string> cta::MockClientAPI::getAdminHosts(
+  const UserIdentity &requester) const {
+  return m_adminHosts;
 }
 
 //------------------------------------------------------------------------------
@@ -175,6 +223,11 @@ void cta::MockClientAPI::checkPathDoesContainConsecutiveSlashes(
 // getEnclosingDirPath
 //------------------------------------------------------------------------------
 std::string cta::MockClientAPI::getEnclosingDirPath(const std::string &path) {
+  const std::string::size_type last_slash_idx = path.find_last_of('/');
+  if(std::string::npos == last_slash_idx) {
+    throw Exception("Path does not contain a slash");
+  }
+  return path.substr(0, last_slash_idx);
 }
 
 //------------------------------------------------------------------------------

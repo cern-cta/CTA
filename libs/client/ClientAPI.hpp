@@ -11,7 +11,8 @@
 namespace cta {
 
 /**
- * Abstract class that specifies the client ClientAPI of the CERN Tape Archive project.
+ * Abstract class that specifies the client ClientAPI of the CERN Tape Archive
+ * project.
  */
 class ClientAPI {
 public:
@@ -20,6 +21,66 @@ public:
    * Destructor.
    */
   virtual ~ClientAPI() throw() = 0;
+
+  /**
+   * Creates the specified administrator.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * administrator.
+   * @param admin The identity of the administrator.
+   */
+  virtual void createAdminUser(
+    const UserIdentity &requester,
+    const UserIdentity &admin) = 0;
+
+  /**
+   * Deletes the specified administrator.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * administrator.
+   * @param admin The identity of the administrator.
+   */
+  virtual void deleteAdminUser(
+    const UserIdentity &requester,
+    const UserIdentity &admin) = 0;
+
+  /**
+   * Returns the current list of administrators.
+   *
+   * @param requester The identity of the user requesting the list.
+   */
+  virtual std::list<UserIdentity> getAdminUsers(const UserIdentity &requester)
+   const = 0;
+
+  /**
+   * Creates the specified administration host.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * administration host.
+   * @param adminHost The network name of the administration host.
+   */
+  virtual void createAdminHost(
+    const UserIdentity &requester,
+    const std::string &adminHost) = 0;
+
+  /**
+   * Deletes the specified administration host.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * administration host.
+   * @param adminHost The network name of the administration host.
+   */
+  virtual void deleteAdminHost(
+    const UserIdentity &requester,
+    const std::string &adminHost) = 0;
+
+  /**
+   * Returns the current list of administration hosts.
+   *
+   * @param requester The identity of the user requesting the list.
+   */
+  virtual std::list<std::string> getAdminHosts(const UserIdentity &requester)
+   const  = 0;
 
   /**
    * Creates the specified storage class.
@@ -49,8 +110,7 @@ public:
   /**
    * Gets the current list of storage classes in lexicographical order.
    *
-   * @param requester The identity of the user requesting list of storage
-   * classes.
+   * @param requester The identity of the user requesting list.
    * @return The current list of storage classes in lexicographical order.
    */
   virtual std::list<StorageClass> getStorageClasses(

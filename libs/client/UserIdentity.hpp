@@ -37,8 +37,10 @@ struct UserIdentity {
    *
    * @param uid The user ID of the user.
    * @param gid The group ID of the user.
+   * @param host The host from which the user is communicating.
    */
-  UserIdentity(const uint32_t uid, const uint32_t gid) throw();
+  UserIdentity(const uint32_t uid, const uint32_t gid, const std::string &host)
+    throw();
 
 }; // struct UserIdentity
 

@@ -23,6 +23,64 @@ public:
   ~MockClientAPI() throw();
 
   /**
+   * Creates the specified administrator.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * administrator.
+   * @param admin The identity of the administrator.
+   */
+  void createAdminUser(
+    const UserIdentity &requester,
+    const UserIdentity &admin);
+
+  /**
+   * Deletes the specified administrator.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * administrator.
+   * @param admin The identity of the administrator.
+   */
+  void deleteAdminUser(
+    const UserIdentity &requester,
+    const UserIdentity &admin);
+
+  /**
+   * Returns the current list of administrators.
+   *
+   * @param requester The identity of the user requesting the list.
+   */
+  std::list<UserIdentity> getAdminUsers(const UserIdentity &requester) const;
+
+  /**
+   * Creates the specified administration host.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * administration host.
+   * @param adminHost The network name of the administration host.
+   */
+  void createAdminHost(
+    const UserIdentity &requester,
+    const std::string &adminHost);
+
+  /**
+   * Deletes the specified administration host.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * administration host.
+   * @param adminHost The network name of the administration host.
+   */
+  void deleteAdminHost(
+    const UserIdentity &requester,
+    const std::string &adminHost);
+
+  /**
+   * Returns the current list of administration hosts.
+   *
+   * @param requester The identity of the user requesting the list.
+   */
+  std::list<std::string> getAdminHosts(const UserIdentity &requester) const;
+
+  /**
    * Creates the specified storage class.
    *
    * @param requester The identity of the user requesting the creation of the
@@ -50,8 +108,7 @@ public:
   /**
    * Gets the current list of storage classes in lexicographical order.
    *
-   * @param requester The identity of the user requesting list of storage
-   * classes.
+   * @param requester The identity of the user requesting the list.
    * @return The current list of storage classes in lexicographical order.
    */
   std::list<StorageClass> getStorageClasses(
@@ -103,7 +160,17 @@ public:
     const std::list<std::string> &srcUrls,
     std::string dst);
 
-private:
+protected:
+
+  /**
+   * The current list of administrators.
+   */
+  std::list<UserIdentity> m_adminUsers;
+
+  /**
+   * The current list of administration hosts.
+   */
+  std::list<std::string> m_adminHosts;
 
   /**
    * The current list of storage classes.

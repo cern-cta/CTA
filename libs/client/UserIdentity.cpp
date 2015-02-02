@@ -12,7 +12,11 @@ cta::UserIdentity::UserIdentity() throw():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::UserIdentity::UserIdentity(const uint32_t uid, const uint32_t gid) throw():
+cta::UserIdentity::UserIdentity(
+  const uint32_t uid,
+  const uint32_t gid,
+  const std::string &host) throw():
   uid(uid),
-  gid(gid) {
+  gid(gid),
+  host(host) {
 }
