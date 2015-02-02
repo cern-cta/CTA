@@ -43,7 +43,7 @@ public:
     std::string peek() {
       if (m_writeDone)
         throw cta::exception::Exception("In FIFO::Transaction::peek: write already occurred");
-      if (m_fifo.m_currentState.readpointer() >= m_fifo.m_currentState.name_size())
+      if (m_fifo.m_currentState.readpointer() >= (uint64_t)m_fifo.m_currentState.name_size())
         throw FIFOEmpty("In FIFO::Transaction::peek: FIFO empty");
       return m_fifo.m_currentState.name(m_fifo.m_currentState.readpointer());
     }
@@ -51,7 +51,7 @@ public:
     void popAndUnlock() {
       if (m_writeDone)
         throw cta::exception::Exception("In FIFO::Transaction::popAndUnlock: write already occurred");
-      if (m_fifo.m_currentState.readpointer() >= m_fifo.m_currentState.name_size())
+      if (m_fifo.m_currentState.readpointer() >= (uint64_t)m_fifo.m_currentState.name_size())
         throw FIFOEmpty("In FIFO::Transaction::popAndUnlock: FIFO empty");
       m_fifo.m_currentState.set_readpointer(m_fifo.m_currentState.readpointer()+1);
       if (m_fifo.m_currentState.readpointer() > 100) {

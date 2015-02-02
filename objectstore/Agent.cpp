@@ -8,11 +8,11 @@
 
 cta::objectstore::Agent::Agent(ObjectStore & os): 
   ObjectOps<serializers::Agent>(os), 
-  m_nextId(0), m_setupDone(false), m_creationDone(false), m_observerVersion(false) {};
+  m_setupDone(false), m_creationDone(false), m_observerVersion(false), m_nextId(0) {}
 
 cta::objectstore::Agent::Agent(ObjectStore & os, const std::string & typeName): 
   ObjectOps<serializers::Agent>(os), 
-  m_nextId(0), m_setupDone(false), m_creationDone(false), m_observerVersion(false) {
+  m_setupDone(false), m_creationDone(false), m_observerVersion(false), m_nextId(0) {
   setup(typeName);
 }
 

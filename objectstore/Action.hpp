@@ -183,6 +183,8 @@ private:
           {
             break;
           }
+          default:
+            break;
         }
       }
     } catch (...) {}

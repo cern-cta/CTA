@@ -42,7 +42,7 @@ Errnum::Errnum(int err, std::string what):Exception("") {
 void Errnum::ErrnumConstructorBottomHalf(const std::string & what) {
   char buf[100];
 
-  if(int ret = strerror_r_wrapper(m_errnum, buf, sizeof(buf))) {
+  if(strerror_r_wrapper(m_errnum, buf, sizeof(buf))) {
     // sstrerror_r() failed
     const int new_errno = errno;
     std::stringstream w;
