@@ -2,8 +2,8 @@ cmake_minimum_required (VERSION 2.6)
 
 project(cta)
 
-set(CMAKE_C_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter")
-set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter")
+set(CMAKE_C_FLAGS "-fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
+set(CMAKE_CXX_FLAGS "-fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
 
 # Explicitly setting the C and C++ compiler flags for the RelWithDebInfo build
 # in order to prevent the -O2 flag from being used.
