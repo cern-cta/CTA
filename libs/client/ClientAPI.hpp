@@ -27,22 +27,22 @@ public:
    *
    * @param requester The identity of the user requesting the creation of the
    * administrator.
-   * @param admin The identity of the administrator.
+   * @param adminUser The identity of the administrator.
    */
   virtual void createAdminUser(
     const UserIdentity &requester,
-    const UserIdentity &admin) = 0;
+    const UserIdentity &adminUser) = 0;
 
   /**
    * Deletes the specified administrator.
    *
    * @param requester The identity of the user requesting the deletion of the
    * administrator.
-   * @param admin The identity of the administrator.
+   * @param adminUser The identity of the administrator.
    */
   virtual void deleteAdminUser(
     const UserIdentity &requester,
-    const UserIdentity &admin) = 0;
+    const UserIdentity &adminUser) = 0;
 
   /**
    * Returns the current list of administrators.

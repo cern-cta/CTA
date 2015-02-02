@@ -27,22 +27,22 @@ public:
    *
    * @param requester The identity of the user requesting the creation of the
    * administrator.
-   * @param admin The identity of the administrator.
+   * @param adminUser The identity of the administrator.
    */
   void createAdminUser(
     const UserIdentity &requester,
-    const UserIdentity &admin);
+    const UserIdentity &adminUser);
 
   /**
    * Deletes the specified administrator.
    *
    * @param requester The identity of the user requesting the deletion of the
    * administrator.
-   * @param admin The identity of the administrator.
+   * @param adminUser The identity of the administrator.
    */
   void deleteAdminUser(
     const UserIdentity &requester,
-    const UserIdentity &admin);
+    const UserIdentity &adminUser);
 
   /**
    * Returns the current list of administrators.
@@ -176,6 +176,20 @@ protected:
    * The current list of storage classes.
    */
   std::map<std::string, StorageClass> m_storageClasses;
+
+  /**
+   * Throws an exception if the specified administrator already exists.
+   *
+   * @param adminUser The identity of the administrator.
+   */
+  void checkAdminUserDoesNotAlreadyExist(const UserIdentity &adminUser);
+
+  /**
+   * Throws an exception if the specified administration host already exists.
+   *
+   * @param adminHost The network name of the administration host.
+   */
+  void checkAdminHostDoesNotAlreadyExist(const std::string &adminHost);
 
   /**
    * Throws an exception if the specified storage class already exists.

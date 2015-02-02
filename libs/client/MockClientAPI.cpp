@@ -20,7 +20,25 @@ cta::MockClientAPI::~MockClientAPI() throw() {
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::createAdminUser(
   const UserIdentity &requester,
-  const UserIdentity &admin) {
+  const UserIdentity &adminUser) {
+  checkAdminUserDoesNotAlreadyExist(adminUser);
+  m_adminUsers.push_back(adminUser);
+}
+
+//------------------------------------------------------------------------------
+// checkAdminUserDoesNotAlreadyExist
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::checkAdminUserDoesNotAlreadyExist(
+  const UserIdentity &adminUser) {
+  for(std::list<UserIdentity>::const_iterator itor = m_adminUsers.begin();
+    itor != m_adminUsers.end(); itor++) {
+    if(adminUser.uid == itor->uid) {
+      std::ostringstream message;
+      message << "Administrator with uid " << adminUser.uid <<
+        " already exists";
+      throw(Exception(message.str()));
+    }
+  }
 }
   
 //------------------------------------------------------------------------------
@@ -28,7 +46,19 @@ void cta::MockClientAPI::createAdminUser(
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::deleteAdminUser(
   const UserIdentity &requester,
-  const UserIdentity &admin) {
+  const UserIdentity &adminUser) {
+  for(std::list<UserIdentity>::iterator itor = m_adminUsers.begin();
+    itor != m_adminUsers.end(); itor++) {
+    if(adminUser.uid == itor->uid) {
+      m_adminUsers.erase(itor);
+      return;
+    }
+  }
+
+  // Reaching this point means the administrator to be deleted does not exist
+  std::ostringstream message;
+  message << "Administration with uid " << adminUser.uid << " does not exist";
+  throw Exception(message.str());
 }
   
 //------------------------------------------------------------------------------
@@ -45,6 +75,23 @@ std::list<cta::UserIdentity> cta::MockClientAPI::getAdminUsers(
 void cta::MockClientAPI::createAdminHost(
   const UserIdentity &requester,
   const std::string &adminHost) {
+  checkAdminHostDoesNotAlreadyExist(adminHost);
+  m_adminHosts.push_back(adminHost);
+}
+
+//------------------------------------------------------------------------------
+// checkAdminHostDoesNotAlreadyExist
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::checkAdminHostDoesNotAlreadyExist(
+  const std::string &adminHost) {
+  for(std::list<std::string>::const_iterator itor = m_adminHosts.begin();
+    itor != m_adminHosts.end(); itor++) {
+    if(adminHost == *itor) {
+      std::ostringstream message;
+      message << "Administration host " << adminHost << " already exists";
+      throw(Exception(message.str()));
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -53,6 +100,19 @@ void cta::MockClientAPI::createAdminHost(
 void cta::MockClientAPI::deleteAdminHost(
   const UserIdentity &requester,
   const std::string &adminHost) {
+  for(std::list<std::string>::iterator itor = m_adminHosts.begin();
+    itor != m_adminHosts.end(); itor++) {
+    if(adminHost == *itor) {
+      m_adminHosts.erase(itor);
+      return;
+    }
+  }
+
+  // Reaching this point means the administration host to be deleted does not
+  // exist
+  std::ostringstream message;
+  message << "Administration host " << adminHost << " does not exist";
+  throw Exception(message.str());
 }
   
 //------------------------------------------------------------------------------
