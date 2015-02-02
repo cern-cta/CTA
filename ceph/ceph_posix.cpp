@@ -142,11 +142,11 @@ off64_t ceph_lseek64(CephFileRef &fr, off64_t offset, int whence) {
     errno = EINVAL;
     return -1;
   }
-  return 0;
+  return fr.offset;
 }
 
 ssize_t ceph_write(CephFileRef &fr, const char *buf, size_t count) {
-  if ((fr.flags & O_WRONLY) == 0) {
+  if ((fr.flags & (O_WRONLY|O_RDWR)) == 0) {
     errno = EBADF;
     return -1;
   }
