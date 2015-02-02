@@ -124,6 +124,9 @@ class ReporterThread(threading.Thread):
                   raise Exception("No data found for datapool %s - May be missing quota" % dataPool)
       except ValueError, e:
         raise Exception("Error caught in trying to build report for Datapools : %s" % e)
+    if len(reports) == 0:
+      # no mount points nor data pool configured, log a warning
+      dlf.writenotice(msgs.EMPTYREPORT)
     return tuple(reports)
 
   def run(self):

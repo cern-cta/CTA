@@ -49,7 +49,7 @@ msgs = dlf.enum('INVOKINGSCHEDULETRANSFER', 'INVOKINGSUMMARIZETRANSFERS',
                 'MOVERHANDLEREXCEPTION', 'CLIENTSREPLIEREXCEPTION', 'CLIENTSLISTENEREXCEPTION',
                 'MOVERSTARTING', 'MOVERSTARTFAILED', 'MOVERCALL',
                 'TRANSFERTIMEDOUT', 'FAILTOQUERYXROOT',
-                'SYNCRUNNINGTRANSFERS', 'INITQUEUES')
+                'SYNCRUNNINGTRANSFERS', 'INITQUEUES', 'EMPTYREPORT')
 
 # initialization of the messages
 dlf.addmessages({msgs.INVOKINGSCHEDULETRANSFER : 'Invoking scheduleTransfer',
@@ -108,6 +108,7 @@ dlf.addmessages({msgs.INVOKINGSCHEDULETRANSFER : 'Invoking scheduleTransfer',
                  msgs.TRANSFERTIMEDOUT : 'Transfer slot timed out',
                  msgs.FAILTOQUERYXROOT : 'Failed to query xrootd server',
                  msgs.SYNCRUNNINGTRANSFERS : 'Synchronizing running transfers with schedulers',
-                 msgs.INITQUEUES : 'Initializing queues from schedulers'
+                 msgs.INITQUEUES : 'Initializing queues from schedulers',
+                 msgs.EMPTYREPORT : 'Reporter found no mount points nor data pools to report, leaving diskserver offline'
                  })
 
