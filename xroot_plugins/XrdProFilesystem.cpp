@@ -182,8 +182,78 @@ int XrdProFilesystem::executeChdirclassCommand(const ParsedRequest &req, XrdOucE
     return SFS_DATA;
   }
   try {
+    m_clientAPI->setDirectoryStorageClass(req.args.at(0), req.args.at(1));
     std::ostringstream responseSS;
     responseSS << "[OK] Changed storage class of directory " << req.args.at(0) << " to " << req.args.at(1);
+    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeCldirclassCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeCldirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+  if(req.args.size() != 1) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    m_clientAPI->clearDirectoryStorageClass(req.args.at(0));
+    std::ostringstream responseSS;
+    responseSS << "[OK] Cleared storage class of directory " << req.args.at(0);
+    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeGetdirclassCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeGetdirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+  if(req.args.size() != 1) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length(), response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    std::string stgClass = m_clientAPI->getDirectoryStorageClass(req.args.at(0));
+    std::ostringstream responseSS;
+    if(stgClass.empty()) {
+      responseSS << "[OK] Directory " << req.args.at(0) << " does not have a storage class";      
+    }
+    else {
+      responseSS << "[OK] Directory " << req.args.at(0) << " has the " << stgClass << " storage class";
+    }
     eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
@@ -611,6 +681,14 @@ int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eI
   else if(strcmp(req.cmd.c_str(), "/chdirclass") == 0)
   {  
     return executeChdirclassCommand(req, eInfo, requester);
+  }  
+  else if(strcmp(req.cmd.c_str(), "/cldirclass") == 0)
+  {  
+    return executeCldirclassCommand(req, eInfo, requester);
+  }    
+  else if(strcmp(req.cmd.c_str(), "/getdirclass") == 0)
+  {  
+    return executeGetdirclassCommand(req, eInfo, requester);
   }
   else if(strcmp(req.cmd.c_str(), "/rmclass") == 0)
   {  
