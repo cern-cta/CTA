@@ -312,6 +312,7 @@ int XrdProFilesystem::executeRmdirCommand(const ParsedRequest &req, XrdOucErrInf
     return SFS_DATA;
   }
   try {
+    m_clientAPI->deleteDirectory(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Directory " << req.args.at(0) << " removed";
     eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
