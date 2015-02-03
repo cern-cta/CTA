@@ -57,7 +57,7 @@ void cta::threading::Thread::wait()
 //------------------------------------------------------------------------------
 //cancel
 //------------------------------------------------------------------------------
-void cta::threading::Thread::cancel()
+void cta::threading::Thread::kill()
  {
   cta::exception::Errnum::throwOnReturnedErrno(
     pthread_cancel(m_thread),

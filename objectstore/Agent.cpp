@@ -47,6 +47,7 @@ void cta::objectstore::Agent::create() {
   ar.addIntendedElement(selfName(), *this);
   serializers::Agent as;
   as.set_name(selfName());
+  as.set_heartbeatcount(0);
   writeChild(selfName(), as);
   ar.upgradeIntendedElementToActual(selfName(), *this);
   m_creationDone = true;

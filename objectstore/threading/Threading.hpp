@@ -53,7 +53,7 @@ namespace threading {
     virtual ~Thread () {}
     void start() ;
     void wait() ;
-    void cancel();
+    void kill();
   protected:
     virtual void run () = 0;
   private:

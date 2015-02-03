@@ -35,6 +35,7 @@ public:
     m_objectStore.lockExclusive(m_name, context);
     // Re-read to get latest version (lock upgrade could be useful here)
     std::string reStr = m_objectStore.read(m_name);
+    if (reStr.size())
     val.ParseFromString(reStr);
   }
   

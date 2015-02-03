@@ -95,6 +95,12 @@ public:
     return ret.str();
   }
   
+  uint64_t size(Agent & agent) {
+    serializers::FIFO fs;
+    updateFromObjectStore(fs, agent.getFreeContext());
+    return fs.name_size();
+  }
+  
 private:
   serializers::FIFO m_currentState;
   

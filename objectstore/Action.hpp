@@ -29,7 +29,7 @@ public:
     JobPool jp(re.getJobPool(m_agent), m_agent);
     std::string fifoName = jp.getRecallFIFO(m_agent);
     FIFO fifo(fifoName, m_agent);
-    std::cout << name << " starting";
+    std::cout << name.str() << " starting" << std::endl;
     while (m_achieved < m_objective) {
       std::stringstream src, dst;
       src << "S-" << m_number << "-" << m_achieved;
@@ -44,7 +44,7 @@ public:
       std::cout << rjName << " created" << std::endl;
       m_achieved++;
     }
-    std::cout << name << " complete" << std::endl;
+    std::cout << name.str() << " complete" << std::endl;
   }
 private:
   Agent & m_agent;
@@ -64,7 +64,7 @@ public:
     RootEntry re(m_agent);
     JobPool jp(re.getJobPool(m_agent), m_agent);
     FIFO fifo(jp.getRecallFIFO(m_agent), m_agent);
-    std::cout << name << " starting";
+    std::cout << name.str() << " starting";
     while (true) {
       try {
         // Pop a job from the FIFO
@@ -80,7 +80,7 @@ public:
                   << rj.destination(m_agent) << " is done" << std::endl;
         rj.remove();
       } catch (FIFO::FIFOEmpty &) { break; }
-      std::cout << name << "complete: FIFO empty" << std::endl;
+      std::cout << name.str() << "complete: FIFO empty" << std::endl;
     }
   }
 

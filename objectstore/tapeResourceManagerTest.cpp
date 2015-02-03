@@ -13,6 +13,7 @@
 #include "RecallJob.hpp"
 #include "Register.hpp"
 #include "AgentVisitor.hpp"
+#include <math.h>
 
 
 
@@ -47,17 +48,18 @@ private:
   cta::objectstore::Action & m_action;
 };
 
-class dummyCleanup: public cta::threading::ChildProcess::Cleanup {
-  virtual void operator()() {}
-} dc;
-
-typedef jobExecutorProcess jobExecutor;
+#define USE_PROCESS 0
+#if(USE_PROCESS)
+  class dummyCleanup: public cta::threading::ChildProcess::Cleanup {
+    virtual void operator()() {}
+  } dc;
+  typedef jobExecutorProcess jobExecutor;
+#else
+  #define dc
+  typedef jobExecutorThread jobExecutor;
+#endif
 
 int main(void){
-  std::vector<cta::objectstore::ObjectStore *> recallObjectStores;
-  std::vector<cta::objectstore::Agent *> recallAgents;
-  std::vector<cta::objectstore::Action *> recallActions;
-  std::vector<jobExecutor *> recallJobs;
   try {
     myOS os("", "tapetest", "tapetest");
     //myOS os;
@@ -104,18 +106,72 @@ int main(void){
     jobExecutor gcProcess(injectorAction);
     injectorProcess.start(dc);
     
-    // Look start-kill the recallers
+    std::vector<cta::objectstore::ObjectStore *> recallObjectStores;
+    std::vector<cta::objectstore::Agent *> recallAgents;
+    std::vector<cta::objectstore::Action *> recallActions;
+    std::vector<jobExecutor *> recallJobs;
+  
+    // Loop start-kill the recallers
     // get hold of the recall FIFO
     // create 10 recallers
-    //int recallerNumber = 0;
+    int recallerNumber = 0;
     for (int i=0; i< 10 ; i++) {
-      
+      // Prepare the object stores and agents for the recaller
+      recallObjectStores.push_back(new myOS(os.path(), os.user(), os.pool()));
+      recallAgents.push_back(new cta::objectstore::Agent(*recallObjectStores[i]));
+      recallActions.push_back(new cta::objectstore::Recaller(*recallAgents[i], recallerNumber++));
+      recallJobs.push_back(new jobExecutor(*recallActions[i]));
+      recallJobs.back()->start(dc);
     }
     usleep (100*1000);
-//    while(recallFIFO.size(self)) {
-//      
-//    }
+    struct random_data seed;
+    char seedStr[]="1234";
+    initstate_r(1,seedStr, sizeof(seedStr), &seed);
+    while(recallFIFO.size(self)) {
+      // Kill a recaller, start another one
+      int32_t ranInt;
+      random_r(&seed, &ranInt);
+      size_t i = floor(1.0 * ranInt / RAND_MAX * recallJobs.size());
+      if (i >= recallJobs.size()) i= recallJobs.size() - 1;
+      // Kill the job
+      recallJobs[i]->kill();
+      recallJobs[i]->wait();
+      delete recallJobs[i];
+      recallJobs.erase(recallJobs.begin() + i);
+      delete recallActions[i];
+      recallActions.erase(recallActions.begin() + i);
+      delete recallAgents[i];
+      recallAgents.erase(recallAgents.begin() + i);
+      delete recallObjectStores[i];
+      recallObjectStores.erase(recallObjectStores.begin() + i);
+      // start a new one
+      i = recallJobs.size();
+      // Prepare the object stores and agents for the recaller
+      recallObjectStores.push_back(new myOS(os.path(), os.user(), os.pool()));
+      recallAgents.push_back(new cta::objectstore::Agent(*recallObjectStores[i]));
+      recallActions.push_back(new cta::objectstore::Recaller(*recallAgents[i], recallerNumber++));
+      recallJobs.push_back(new jobExecutor(*recallActions[i]));
+      recallJobs.back()->start(dc);
+    }
+    // wait for completion of all processes
+    while (recallJobs.size()) {
+      // Kill the job
+      recallJobs.back()->wait();
+      delete recallJobs.back();
+      recallJobs.pop_back();
+      delete recallActions.back();
+      recallActions.pop_back();
+      delete recallAgents.back();
+      recallAgents.pop_back();
+      delete recallObjectStores.back();
+      recallObjectStores.pop_back();
+    }
     
+    injectorProcess.wait();
+    gcProcess.wait();
+    
+    // And see the state or affairs
+    std::cout << osd.dump(self) << std::endl;
   } catch (std::exception &e) {
     std::cout << "got exception: " << e.what() << std::endl;
   }
