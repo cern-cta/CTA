@@ -137,6 +137,66 @@ protected:
   int executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
   
   /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
+  int executeMkadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
+  int executeRmadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
+  int executeLsadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
+  int executeMkadminhostCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
+  int executeRmadminhostCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
+  int executeLsadminhostCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  
+  /**
    * Dispatches the request based on the query
    * 
    * @param args     the archive request string

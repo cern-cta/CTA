@@ -26,7 +26,13 @@ void CTACmd::usage(std::ostream &os) const throw() {
     "\t" << m_programName << " lsclass\n"
     "\t" << m_programName << " mkdir <directory_name>\n"
     "\t" << m_programName << " rmdir <directory_name>\n"
-    "\t" << m_programName << " ls <directory_name>\n";
+    "\t" << m_programName << " ls <directory_name>\n"
+    "\t" << m_programName << " mkadminuser <uid> <gid>\n"
+    "\t" << m_programName << " rmadminuser <uid> <gid>\n"
+    "\t" << m_programName << " lsadminuser\n"
+    "\t" << m_programName << " mkadminhost <host_name>\n"
+    "\t" << m_programName << " rmadminhost <host_name>\n"
+    "\t" << m_programName << " lsadminhost\n";
 }
 
 //------------------------------------------------------------------------------
