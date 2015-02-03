@@ -490,7 +490,122 @@ TEST_F(cta_client_MockClientAPITest, deleteDirectory_root) {
   const std::string dirPath = "/";
 
   ASSERT_THROW(api.deleteDirectory(requester, "/"), std::exception);
+}
 
+TEST_F(cta_client_MockClientAPITest, deleteDirectory_existing_top_level) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+  const std::string dirPath = "/grandparent";
+  
+  ASSERT_NO_THROW(api.createDirectory(requester, dirPath));
+
+  {
+    DirectoryIterator itor;
+
+    ASSERT_NO_THROW(itor = api.getDirectoryContents(requester, "/"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirectoryEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("grandparent"), entry.name);
+  }
+
+  ASSERT_NO_THROW(api.deleteDirectory(requester, "/grandparent"));
+
+  {
+    DirectoryIterator itor;
+  
+    ASSERT_NO_THROW(itor = api.getDirectoryContents(requester, "/"));
+  
+    ASSERT_FALSE(itor.hasMore());
+  }
+}
+
+TEST_F(cta_client_MockClientAPITest, deleteDirectory_non_empty_top_level) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    const std::string topLevelDirPath = "/grandparent";
+
+    ASSERT_NO_THROW(api.createDirectory(requester, topLevelDirPath));
+
+    DirectoryIterator itor;
+
+    ASSERT_NO_THROW(itor = api.getDirectoryContents(requester, "/"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirectoryEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("grandparent"), entry.name);
+  }
+
+  {
+    const std::string secondLevelDirPath = "/grandparent/parent";
+
+    ASSERT_NO_THROW(api.createDirectory(requester, secondLevelDirPath));
+
+    DirectoryIterator itor;
+
+    ASSERT_NO_THROW(itor = api.getDirectoryContents(requester, "/"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirectoryEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("grandparent"), entry.name);
+  }
+
+  {
+    DirectoryIterator itor;
+
+    ASSERT_NO_THROW(itor = api.getDirectoryContents(requester, "/grandparent"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirectoryEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("parent"), entry.name);
+  }
+
+  ASSERT_THROW(api.deleteDirectory(requester, "/grandparent"), std::exception);
+
+  {
+    DirectoryIterator itor;
+
+    ASSERT_NO_THROW(itor = api.getDirectoryContents(requester, "/grandparent"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirectoryEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("parent"), entry.name);
+  }
+}
+
+TEST_F(cta_client_MockClientAPITest, deleteDirectory_non_existing_top_level) {
+  using namespace cta;
+  
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  ASSERT_THROW(api.deleteDirectory(requester, "/grandparent"), std::exception);
 }
 
 TEST_F(cta_client_MockClientAPITest, setDirectoryStorageClass_top_level) {

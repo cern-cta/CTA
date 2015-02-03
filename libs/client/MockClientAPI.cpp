@@ -394,6 +394,21 @@ void cta::MockClientAPI::deleteDirectory(const SecurityIdentity &requester,
   if(dirPath == "/") {
     throw Exception("The root directory can never be deleted");
   }
+
+  FileSystemNode &dirNode = getFileSystemNode(dirPath);
+
+  if(DirectoryEntry::ENTRYTYPE_DIRECTORY != dirNode.getEntry().entryType) {
+    std::ostringstream message;
+    message << "The absolute path " << dirPath << " is not a directory";
+    throw(message.str());
+  }
+
+  if(dirNode.hasAtLeastOneChild()) {
+    throw Exception("Directory is not empty");
+  }
+
+  FileSystemNode &parentNode = dirNode.getParent();
+  parentNode.deleteChild(dirNode.getEntry().name);
 }
 
 //------------------------------------------------------------------------------
