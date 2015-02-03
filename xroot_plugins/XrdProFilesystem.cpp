@@ -140,7 +140,7 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
 }
 
 //------------------------------------------------------------------------------
-// executeCreateStorageClassCommand
+// executeMkclassCommand
 //------------------------------------------------------------------------------
 int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
   if(req.args.size() != 2) {
@@ -179,9 +179,9 @@ int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrI
 }
 
 //------------------------------------------------------------------------------
-// executeCreateStorageClassCommand
+// executeChdirclassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeChclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
+int XrdProFilesystem::executeChdirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -212,7 +212,7 @@ int XrdProFilesystem::executeChclassCommand(const ParsedRequest &req, XrdOucErrI
 }
 
 //------------------------------------------------------------------------------
-// executeDeleteStorageClassCommand
+// executeRmclassCommand
 //------------------------------------------------------------------------------
 int XrdProFilesystem::executeRmclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
   if(req.args.size() != 1) {
@@ -245,7 +245,7 @@ int XrdProFilesystem::executeRmclassCommand(const ParsedRequest &req, XrdOucErrI
 }
 
 //------------------------------------------------------------------------------
-// executeListStorageClassCommand
+// executeLsclassCommand
 //------------------------------------------------------------------------------
 int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
   if(req.args.size() != 0) {
@@ -414,9 +414,9 @@ int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eI
   {  
     return executeMkclassCommand(req, eInfo, requester);
   }  
-  else if(strcmp(req.cmd.c_str(), "/chclass") == 0)
+  else if(strcmp(req.cmd.c_str(), "/chdirclass") == 0)
   {  
-    return executeChclassCommand(req, eInfo, requester);
+    return executeChdirclassCommand(req, eInfo, requester);
   }
   else if(strcmp(req.cmd.c_str(), "/rmclass") == 0)
   {  

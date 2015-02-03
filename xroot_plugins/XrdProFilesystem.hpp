@@ -84,7 +84,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeChclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const;
+  int executeChdirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const;
   
   /**
    * Executes the command contained within the request structure
