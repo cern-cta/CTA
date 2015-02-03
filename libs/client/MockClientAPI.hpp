@@ -1,8 +1,10 @@
 #pragma once
 
 #include "ClientAPI.hpp"
+#include "FileSystemNode.hpp"
 
 #include <map>
+#include <vector>
 
 namespace cta {
 
@@ -14,6 +16,9 @@ public:
 
   /**
    * Constructor.
+   *
+   * Creates the root directory "/" owned by user root and with no file
+   * attributes or permissions.
    */
   MockClientAPI();
 
@@ -30,7 +35,7 @@ public:
    * @param adminUser The identity of the administrator.
    */
   void createAdminUser(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const UserIdentity &adminUser);
 
   /**
@@ -41,7 +46,7 @@ public:
    * @param adminUser The identity of the administrator.
    */
   void deleteAdminUser(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const UserIdentity &adminUser);
 
   /**
@@ -49,7 +54,7 @@ public:
    *
    * @param requester The identity of the user requesting the list.
    */
-  std::list<UserIdentity> getAdminUsers(const UserIdentity &requester) const;
+  std::list<UserIdentity> getAdminUsers(const SecurityIdentity &requester) const;
 
   /**
    * Creates the specified administration host.
@@ -59,7 +64,7 @@ public:
    * @param adminHost The network name of the administration host.
    */
   void createAdminHost(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &adminHost);
 
   /**
@@ -70,7 +75,7 @@ public:
    * @param adminHost The network name of the administration host.
    */
   void deleteAdminHost(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &adminHost);
 
   /**
@@ -78,7 +83,7 @@ public:
    *
    * @param requester The identity of the user requesting the list.
    */
-  std::list<std::string> getAdminHosts(const UserIdentity &requester) const;
+  std::list<std::string> getAdminHosts(const SecurityIdentity &requester) const;
 
   /**
    * Creates the specified storage class.
@@ -90,7 +95,7 @@ public:
    * class should have on tape.
    */
   void createStorageClass(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &name,
     const uint8_t nbCopies);
 
@@ -102,7 +107,7 @@ public:
    * @param name The name of the storage class.
    */
   void deleteStorageClass(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &name);
 
   /**
@@ -112,7 +117,7 @@ public:
    * @return The current list of storage classes in lexicographical order.
    */
   std::list<StorageClass> getStorageClasses(
-    const UserIdentity &requester) const;
+    const SecurityIdentity &requester) const;
 
   /**
    * Creates the specified directory.
@@ -122,7 +127,18 @@ public:
    * @param dirPath The full path of the directory.
    */
   void createDirectory(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
+    const std::string &dirPath);
+
+  /**
+   * Deletes the specified directory.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * directory.
+   * @param dirPath The full path of the directory.
+   */
+  void deleteDirectory(
+    const SecurityIdentity &requester,
     const std::string &dirPath);
 
   /**
@@ -134,7 +150,7 @@ public:
    * @return An iterator over the contents of the directory.
    */
   DirectoryIterator getDirectoryContents(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &dirPath) const;
 
   /**
@@ -156,7 +172,7 @@ public:
    * @return The identifier of the archive job.
    */
   std::string archiveToTape(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::list<std::string> &srcUrls,
     std::string dst);
 
@@ -173,9 +189,19 @@ protected:
   std::list<std::string> m_adminHosts;
 
   /**
-   * The current list of storage classes.
+   * The current mapping from storage class name to storage classes.
    */
   std::map<std::string, StorageClass> m_storageClasses;
+
+  /**
+   * The current mapping from absolute file path to directory entry.
+   */
+  std::map<std::string, DirectoryEntry> m_directoryEntries;
+
+  /**
+   * The root node of the file-system.
+   */
+  FileSystemNode m_fileSystemRoot;
 
   /**
    * Throws an exception if the specified administrator already exists.
@@ -211,14 +237,14 @@ protected:
    *
    * @param path The Absolute path.
    */
-  void checkAbsolutePathSyntax(const std::string &path);
+  void checkAbsolutePathSyntax(const std::string &path) const;
 
   /**
    * Throws an exception if the specified path does not start with a slash.
    *
    * @param path The path.
    */
-  void checkPathStartsWithASlash(const std::string &path);
+  void checkPathStartsWithASlash(const std::string &path) const;
 
   /**
    * Throws an exception if the specified path does not contain valid
@@ -226,7 +252,7 @@ protected:
    *
    * @param path The path.
    */
-  void checkPathContainsValidChars(const std::string &path);
+  void checkPathContainsValidChars(const std::string &path) const;
 
   /**
    * Throws an exception if the specified character cannot be used within a
@@ -234,12 +260,12 @@ protected:
    *
    * @param c The character to be tested.
    */
-  void checkValidPathChar(const char c);
+  void checkValidPathChar(const char c) const;
 
   /**
    * Returns true of the specified character can be used within a path.
    */
-  bool isValidPathChar(const char c);
+  bool isValidPathChar(const char c) const;
 
   /**
    * Throws an exception if the specified path contains consective slashes.  For
@@ -248,7 +274,14 @@ protected:
    *
    * @param path The path.
    */
-  void checkPathDoesContainConsecutiveSlashes(const std::string &path);
+  void checkPathDoesContainConsecutiveSlashes(const std::string &path) const;
+
+  /**
+   * Throws an exception if the specified absolute path already exists.
+   *
+   * @param path The absolute path.
+   */
+  void checkAbsolutePathDoesNotAlreadyExist(const std::string &path) const;
 
   /**
    * Returns the path of the enclosing directory of the specified path.
@@ -262,7 +295,38 @@ protected:
    * @param path The path.
    * @return The path of the enclosing directory.
    */
-  std::string getEnclosingDirPath(const std::string &path);
+  std::string getEnclosingDirPath(const std::string &path) const;
+
+  /**
+   * Gets the file system node corresponding to the specified path.
+   *
+   * @path The path.
+   * @return The corresponding file system node.
+   */
+  FileSystemNode &getFileSystemNode(const std::string &path);
+
+  /**
+   * Returns the result of trimming both left and right slashes from the
+   * specified string.
+   *
+   * @param s The string to be trimmed.
+   * @return The result of trimming the string.
+   */
+  std::string trimSlashes(const std::string &s) const throw();
+
+  /**
+   * Splits the specified string into a vector of strings using the specified
+   * separator.
+   *
+   * Please note that the string to be split is NOT modified.
+   *
+   * @param str The string to be split.
+   * @param separator The separator to be used to split the specified string.
+   * @param result The vector when the result of spliting the string will be
+   * stored.
+   */
+  void splitString(const std::string &str, const char separator,
+    std::vector<std::string> &result) const throw();
 
 }; // class MockClientAPI
 

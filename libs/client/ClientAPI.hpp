@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DirectoryIterator.hpp"
+#include "SecurityIdentity.hpp"
 #include "StorageClass.hpp"
 #include "UserIdentity.hpp"
 
@@ -30,7 +31,7 @@ public:
    * @param adminUser The identity of the administrator.
    */
   virtual void createAdminUser(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const UserIdentity &adminUser) = 0;
 
   /**
@@ -41,7 +42,7 @@ public:
    * @param adminUser The identity of the administrator.
    */
   virtual void deleteAdminUser(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const UserIdentity &adminUser) = 0;
 
   /**
@@ -49,7 +50,7 @@ public:
    *
    * @param requester The identity of the user requesting the list.
    */
-  virtual std::list<UserIdentity> getAdminUsers(const UserIdentity &requester)
+  virtual std::list<UserIdentity> getAdminUsers(const SecurityIdentity &requester)
    const = 0;
 
   /**
@@ -60,7 +61,7 @@ public:
    * @param adminHost The network name of the administration host.
    */
   virtual void createAdminHost(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &adminHost) = 0;
 
   /**
@@ -71,7 +72,7 @@ public:
    * @param adminHost The network name of the administration host.
    */
   virtual void deleteAdminHost(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &adminHost) = 0;
 
   /**
@@ -79,7 +80,7 @@ public:
    *
    * @param requester The identity of the user requesting the list.
    */
-  virtual std::list<std::string> getAdminHosts(const UserIdentity &requester)
+  virtual std::list<std::string> getAdminHosts(const SecurityIdentity &requester)
    const  = 0;
 
   /**
@@ -92,7 +93,7 @@ public:
    * class should have on tape.
    */
   virtual void createStorageClass(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &name,
     const uint8_t nbCopies) = 0;
 
@@ -104,7 +105,7 @@ public:
    * @param name The name of the storage class.
    */
   virtual void deleteStorageClass(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &name) = 0;
 
   /**
@@ -114,7 +115,7 @@ public:
    * @return The current list of storage classes in lexicographical order.
    */
   virtual std::list<StorageClass> getStorageClasses(
-    const UserIdentity &requester) const = 0;
+    const SecurityIdentity &requester) const = 0;
 
   /**
    * Creates the specified directory.
@@ -124,7 +125,18 @@ public:
    * @param dirPath The full path of the directory.
    */
   virtual void createDirectory(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
+    const std::string &dirPath) = 0;
+
+  /**
+   * Deletes the specified directory.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * directory.
+   * @param dirPath The full path of the directory.
+   */
+  virtual void deleteDirectory(
+    const SecurityIdentity &requester,
     const std::string &dirPath) = 0;
 
   /**
@@ -136,7 +148,7 @@ public:
    * @return An iterator over the contents of the directory.
    */
   virtual DirectoryIterator getDirectoryContents(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &dirPath) const = 0;
 
   /**
@@ -158,7 +170,7 @@ public:
    * @return The identifier of the archive job.
    */
   virtual std::string archiveToTape(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::list<std::string> &srcUrls,
     std::string dst) = 0;
 

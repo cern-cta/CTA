@@ -1,20 +1,14 @@
-#include "UserIdentity.hpp"
-
+#include "SecurityIdentity.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::UserIdentity::UserIdentity() throw():
-  uid(0),
-  gid(0) {
+cta::SecurityIdentity::SecurityIdentity() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::UserIdentity::UserIdentity(
-  const uint32_t uid,
-  const uint32_t gid) throw():
-  uid(uid),
-  gid(gid) {
+cta::SecurityIdentity::SecurityIdentity(const UserIdentity &user,
+  const std::string &host): user(user), host(host) {
 }

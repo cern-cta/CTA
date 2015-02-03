@@ -18,7 +18,7 @@ TEST_F(cta_client_MockClientAPITest, createAdminUser_new) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
 
   {
     std::list<UserIdentity> adminUsers;
@@ -28,7 +28,7 @@ TEST_F(cta_client_MockClientAPITest, createAdminUser_new) {
 
   const uint16_t adminUser1Uid = 1234;
   const uint16_t adminUser1Gid = 5678;
-  const UserIdentity adminUser1(adminUser1Uid, adminUser1Gid, "");
+  const UserIdentity adminUser1(adminUser1Uid, adminUser1Gid);
   ASSERT_NO_THROW(api.createAdminUser(requester, adminUser1));
 
   {
@@ -45,7 +45,7 @@ TEST_F(cta_client_MockClientAPITest, createAdminUser_already_existing) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
 
   {
     std::list<UserIdentity> adminUsers;
@@ -55,7 +55,7 @@ TEST_F(cta_client_MockClientAPITest, createAdminUser_already_existing) {
 
   const uint16_t adminUser1Uid = 1234;
   const uint16_t adminUser1Gid = 5678;
-  const UserIdentity adminUser1(adminUser1Uid, adminUser1Gid, "");
+  const UserIdentity adminUser1(adminUser1Uid, adminUser1Gid);
   ASSERT_NO_THROW(api.createAdminUser(requester, adminUser1));
 
   {
@@ -80,7 +80,7 @@ TEST_F(cta_client_MockClientAPITest, deleteAdminUser_existing) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
 
   {
     std::list<UserIdentity> adminUsers;
@@ -90,7 +90,7 @@ TEST_F(cta_client_MockClientAPITest, deleteAdminUser_existing) {
 
   const uint16_t adminUser1Uid = 1234;
   const uint16_t adminUser1Gid = 5678;
-  const UserIdentity adminUser1(adminUser1Uid, adminUser1Gid, "");
+  const UserIdentity adminUser1(adminUser1Uid, adminUser1Gid);
   ASSERT_NO_THROW(api.createAdminUser(requester, adminUser1));
 
   {
@@ -114,7 +114,7 @@ TEST_F(cta_client_MockClientAPITest, deleteAdminUser_non_existing) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
 
   {
     std::list<UserIdentity> adminUsers;
@@ -124,7 +124,7 @@ TEST_F(cta_client_MockClientAPITest, deleteAdminUser_non_existing) {
   
   const uint16_t adminUser1Uid = 1234;
   const uint16_t adminUser1Gid = 5678;
-  const UserIdentity adminUser1(adminUser1Uid, adminUser1Gid, "");
+  const UserIdentity adminUser1(adminUser1Uid, adminUser1Gid);
   ASSERT_THROW(api.deleteAdminUser(requester, adminUser1), std::exception);
 
   {
@@ -138,7 +138,7 @@ TEST_F(cta_client_MockClientAPITest, createAdminHost_new) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
 
   {
     std::list<std::string> adminHosts;
@@ -162,7 +162,7 @@ TEST_F(cta_client_MockClientAPITest, deleteAdminHost_existing) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
 
   {
     std::list<std::string> adminHosts;
@@ -194,7 +194,7 @@ TEST_F(cta_client_MockClientAPITest, deleteAdminHost_non_existing) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
   
   {
     std::list<std::string> adminHosts;
@@ -216,7 +216,7 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_new) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
 
   {
     std::list<StorageClass> storageClasses;
@@ -244,7 +244,7 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_already_existing) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
 
   {
     std::list<StorageClass> storageClasses;
@@ -275,7 +275,7 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_lexicographical_order) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
 
   {
     std::list<StorageClass> storageClasses;
@@ -307,7 +307,7 @@ TEST_F(cta_client_MockClientAPITest, deleteStorageClass_existing) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
 
   {
     std::list<StorageClass> storageClasses;
@@ -343,7 +343,7 @@ TEST_F(cta_client_MockClientAPITest, deleteStorageClass_non_existing) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
 
   {
     std::list<StorageClass> storageClasses;
@@ -365,7 +365,7 @@ TEST_F(cta_client_MockClientAPITest, getDirectoryContents_root_dir_is_empty) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
   const std::string dirPath = "/";
 
   DirectoryIterator itor;
@@ -377,7 +377,7 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_empty_string) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
   const std::string dirPath = "";
 
   ASSERT_THROW(api.createDirectory(requester, dirPath), std::exception);
@@ -387,7 +387,7 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_consecutive_slashes) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
   const std::string dirPath = "//";
 
   ASSERT_THROW(api.createDirectory(requester, dirPath), std::exception);
@@ -397,7 +397,7 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_invalid_chars) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
   const std::string dirPath = "/grandparent/?parent";
   
   ASSERT_THROW(api.createDirectory(requester, dirPath), std::exception);
@@ -407,7 +407,7 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_top_level) {
   using namespace cta;
 
   TestingMockClientAPI api;
-  const UserIdentity requester;
+  const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
   
   ASSERT_NO_THROW(api.createDirectory(requester, dirPath));
@@ -423,6 +423,173 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_top_level) {
   ASSERT_NO_THROW(entry = itor.next());
 
   ASSERT_EQ(std::string("grandparent"), entry.name);
+}
+
+TEST_F(cta_client_MockClientAPITest, deleteDirectory_root) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+  const std::string dirPath = "/";
+
+  ASSERT_THROW(api.deleteDirectory(requester, "/"), std::exception);
+
+}
+TEST_F(cta_client_MockClientAPITest, trimSlashes_emptyString) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const std::string s;
+  const std::string trimmedString = api.trimSlashes(s);
+  ASSERT_EQ(s, trimmedString);
+}
+
+TEST_F(cta_client_MockClientAPITest, trimSlashes_noSlashes) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const std::string s("NO_SLASHES");
+  const std::string trimmedString = api.trimSlashes(s);
+  ASSERT_EQ(s, trimmedString);
+}
+
+TEST_F(cta_client_MockClientAPITest, trimSlashes_oneLeftSlash) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const std::string s("/VALUE");
+  const std::string trimmedString = api.trimSlashes(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(cta_client_MockClientAPITest, trimSlashes_twoLeftSlashes) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const std::string s("//VALUE");
+  const std::string trimmedString = api.trimSlashes(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(cta_client_MockClientAPITest, trimSlashes_oneRightSlash) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const std::string s("VALUE/");
+  const std::string trimmedString = api.trimSlashes(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(cta_client_MockClientAPITest, trimSlashes_twoRightSlashes) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const std::string s("VALUE//");
+  const std::string trimmedString = api.trimSlashes(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(cta_client_MockClientAPITest, trimSlashes_oneLeftAndOneRightSlash) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const std::string s("/VALUE/");
+  const std::string trimmedString = api.trimSlashes(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(cta_client_MockClientAPITest, trimSlashes_twoLeftAndTwoRightSlashes) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const std::string s("//VALUE//");
+  const std::string trimmedString = api.trimSlashes(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_empty_string) {
+  using namespace cta;
+    
+  TestingMockClientAPI api;
+  const std::string dirPath = "";
+
+  ASSERT_THROW(api.getEnclosingDirPath(dirPath), std::exception);
+}
+
+TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_root) {
+  using namespace cta;
+    
+  TestingMockClientAPI api;
+  const std::string dirPath = "/";
+
+  std::string enclosingDirPath;
+  ASSERT_NO_THROW(enclosingDirPath = api.getEnclosingDirPath(dirPath));
+  ASSERT_TRUE(enclosingDirPath.empty());
+}
+
+TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_grandparent_parent) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const std::string dirPath = "/grandparent/parent";
+
+  std::string enclosingDirPath;
+  ASSERT_NO_THROW(enclosingDirPath = api.getEnclosingDirPath(dirPath));
+  ASSERT_EQ(std::string("/grandparent"), enclosingDirPath);
+}
+
+TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_grandparent_parent_child) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const std::string dirPath = "/grandparent/parent/child";
+
+  std::string enclosingDirPath;
+  ASSERT_NO_THROW(enclosingDirPath = api.getEnclosingDirPath(dirPath));
+  ASSERT_EQ(std::string("/grandparent/parent"), enclosingDirPath);
+}
+
+TEST_F(cta_client_MockClientAPITest, splitString_goodDay) {
+  using namespace cta;
+  const std::string line("col0 col1 col2 col3 col4 col5 col6 col7");
+  std::vector<std::string> columns;
+
+  TestingMockClientAPI api;
+
+  ASSERT_NO_THROW(api.splitString(line, ' ', columns));
+  ASSERT_EQ((std::vector<std::string>::size_type)8, columns.size());
+  ASSERT_EQ(std::string("col0"), columns[0]);
+  ASSERT_EQ(std::string("col1"), columns[1]);
+  ASSERT_EQ(std::string("col2"), columns[2]);
+  ASSERT_EQ(std::string("col3"), columns[3]);
+  ASSERT_EQ(std::string("col4"), columns[4]);
+  ASSERT_EQ(std::string("col5"), columns[5]);
+  ASSERT_EQ(std::string("col6"), columns[6]);
+  ASSERT_EQ(std::string("col7"), columns[7]);
+}
+
+TEST_F(cta_client_MockClientAPITest, splitString_emptyString) {
+  using namespace cta;
+  const std::string emptyString;
+  std::vector<std::string> columns;
+
+  TestingMockClientAPI api;
+
+  ASSERT_NO_THROW(api.splitString(emptyString, ' ', columns));
+  ASSERT_EQ((std::vector<std::string>::size_type)0, columns.size());
+}
+
+TEST_F(cta_client_MockClientAPITest, splitString_noSeparatorInString) {
+  using namespace cta;
+  const std::string stringContainingNoSeparator =
+    "stringContainingNoSeparator";
+  std::vector<std::string> columns;
+
+  TestingMockClientAPI api;
+
+  ASSERT_NO_THROW(api.splitString(stringContainingNoSeparator, ' ', columns));
+  ASSERT_EQ((std::vector<std::string>::size_type)1, columns.size());
+  ASSERT_EQ(stringContainingNoSeparator, columns[0]);
 }
 
 } // namespace unitTests
