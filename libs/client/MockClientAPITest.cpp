@@ -369,7 +369,7 @@ TEST_F(cta_client_MockClientAPITest, getDirectoryContents_root_dir_is_empty) {
   const std::string dirPath = "/";
 
   DirectoryIterator itor;
-  ASSERT_NO_THROW(itor = api.getDirectoryContents(requester,"/"));
+  ASSERT_NO_THROW(itor = api.getDirectoryContents(requester, "/"));
   ASSERT_FALSE(itor.hasMore());
 }
 
@@ -468,7 +468,7 @@ TEST_F(cta_client_MockClientAPITest, setDirectoryStorageClass_top_level) {
   ASSERT_NO_THROW(api.createStorageClass(requester, storageClassName,
     nbCopies));
 
-  ASSERT_NO_THROW(api.setDirectoryStorageClass(dirPath,storageClassName));
+  ASSERT_NO_THROW(api.setDirectoryStorageClass(dirPath, storageClassName));
 
   {
     std::string name;
@@ -509,7 +509,7 @@ TEST_F(cta_client_MockClientAPITest, clearDirectoryStorageClass_top_level) {
   ASSERT_NO_THROW(api.createStorageClass(requester, storageClassName,
     nbCopies));
 
-  ASSERT_NO_THROW(api.setDirectoryStorageClass(dirPath,storageClassName));
+  ASSERT_NO_THROW(api.setDirectoryStorageClass(dirPath, storageClassName));
 
   {
     std::string name;
@@ -614,8 +614,19 @@ TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_root) {
   const std::string dirPath = "/";
 
   std::string enclosingDirPath;
+  ASSERT_THROW(enclosingDirPath = api.getEnclosingDirPath(dirPath),
+    std::exception);
+}
+
+TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_grandparent) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const std::string dirPath = "/grandparent";
+    
+  std::string enclosingDirPath;
   ASSERT_NO_THROW(enclosingDirPath = api.getEnclosingDirPath(dirPath));
-  ASSERT_TRUE(enclosingDirPath.empty());
+  ASSERT_EQ(std::string("/"), enclosingDirPath);
 }
 
 TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_grandparent_parent) {
@@ -626,7 +637,7 @@ TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_grandparent_parent) {
 
   std::string enclosingDirPath;
   ASSERT_NO_THROW(enclosingDirPath = api.getEnclosingDirPath(dirPath));
-  ASSERT_EQ(std::string("/grandparent"), enclosingDirPath);
+  ASSERT_EQ(std::string("/grandparent/"), enclosingDirPath);
 }
 
 TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_grandparent_parent_child) {
@@ -637,7 +648,7 @@ TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_grandparent_parent_chil
 
   std::string enclosingDirPath;
   ASSERT_NO_THROW(enclosingDirPath = api.getEnclosingDirPath(dirPath));
-  ASSERT_EQ(std::string("/grandparent/parent"), enclosingDirPath);
+  ASSERT_EQ(std::string("/grandparent/parent/"), enclosingDirPath);
 }
 
 TEST_F(cta_client_MockClientAPITest, splitString_goodDay) {

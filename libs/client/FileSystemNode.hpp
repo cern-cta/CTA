@@ -34,6 +34,13 @@ public:
    *
    * @return The description of this node in the form of a DirectoryEntry.
    */
+  DirectoryEntry &getEntry() throw();
+
+  /**
+   * Returns the description of this node in the form of a DirectoryEntry.
+   *
+   * @return The description of this node in the form of a DirectoryEntry.
+   */
   const DirectoryEntry &getEntry() const throw();
 
   /**
@@ -48,9 +55,12 @@ public:
   /**
    * Adds the specified node to the children of this node.
    *
+   * This method takes ownership of the specified node even in the event of the
+   * method throwing an exception.
+   *
    * @param node The node to be added.
    */
-  void addChild(const FileSystemNode *child);
+  void addChild(FileSystemNode *const child);
 
   /**
    * Returns true if the specified child node exists.

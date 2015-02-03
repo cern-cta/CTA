@@ -221,11 +221,6 @@ protected:
   std::map<std::string, StorageClass> m_storageClasses;
 
   /**
-   * The current mapping from absolute file path to directory entry.
-   */
-  std::map<std::string, DirectoryEntry> m_directoryEntries;
-
-  /**
    * The root node of the file-system.
    */
   FileSystemNode m_fileSystemRoot;
@@ -302,13 +297,6 @@ protected:
    * @param path The path.
    */
   void checkPathDoesContainConsecutiveSlashes(const std::string &path) const;
-
-  /**
-   * Throws an exception if the specified absolute path already exists.
-   *
-   * @param path The absolute path.
-   */
-  void checkAbsolutePathDoesNotAlreadyExist(const std::string &path) const;
 
   /**
    * Returns the path of the enclosing directory of the specified path.

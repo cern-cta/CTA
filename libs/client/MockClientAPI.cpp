@@ -2,15 +2,14 @@
 #include "MockClientAPI.hpp"
 
 #include <iostream>
+#include <memory>
 #include <sstream>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MockClientAPI::MockClientAPI(): m_fileSystemRoot(DirectoryEntry("/")) {
+cta::MockClientAPI::MockClientAPI():
+  m_fileSystemRoot(DirectoryEntry(DirectoryEntry::ENTRYTYPE_DIRECTORY, "/")) {
 }
 
 //------------------------------------------------------------------------------
@@ -211,37 +210,21 @@ void cta::MockClientAPI::createDirectory(const SecurityIdentity &requester,
   const std::string enclosingPath = getEnclosingDirPath(dirPath);
 
   FileSystemNode &enclosingNode = getFileSystemNode(enclosingPath);
-  if(!S_ISDIR(enclosingNode.getEntry().mode)) {
+  if(DirectoryEntry::ENTRYTYPE_DIRECTORY !=
+    enclosingNode.getEntry().entryType) {
     std::ostringstream message;
     message << enclosingPath << " is not a directory";
     throw Exception(message.str());
   }
 
-  const std::string enclosedName = getEnclosedName(dirPath);
+  const std::string dirName = getEnclosedName(dirPath);
 
-  if(enclosingNode.childExists(enclosedName)) {
-    FileSystemNode &enclosedNode = enclosingNode.getChild(enclosedName);
-
-    std::ostringstream message;
-    if(S_ISDIR(enclosedNode.getEntry().mode)) {
-      throw Exception("A directory already exists with the same name");
-    } else {
-      throw Exception("A file already exists with the same name");
-    }
+  if(enclosingNode.childExists(dirName)) {
+    throw Exception("A file or directory already exists with the same name");
   }
 
-  //enclosingNode.createChild();
-
-  std::vector<std::string> pathComponents;
-  splitString(dirPath, '/', pathComponents);
-
-  for(std::vector<std::string>::const_iterator itor = pathComponents.begin();
-    itor != pathComponents.end(); itor++) {
-
-  }
-  checkAbsolutePathDoesNotAlreadyExist(dirPath);
-  DirectoryEntry entry;
-  m_directoryEntries[dirPath] = entry;
+  DirectoryEntry dirEntry(DirectoryEntry::ENTRYTYPE_DIRECTORY, dirName);
+  enclosingNode.addChild(new FileSystemNode(dirEntry));
 }
 
 //------------------------------------------------------------------------------
@@ -326,29 +309,19 @@ void cta::MockClientAPI::checkPathDoesContainConsecutiveSlashes(
 }
 
 //------------------------------------------------------------------------------
-// checkAbsolutePathDoesNotAlreadyExist
-//------------------------------------------------------------------------------
-void cta::MockClientAPI::checkAbsolutePathDoesNotAlreadyExist(
-  const std::string &path) const {
-  std::map<std::string, DirectoryEntry>::const_iterator itor =
-    m_directoryEntries.find(path);
-  if(itor != m_directoryEntries.end()) {
-    std::ostringstream message;
-    message << "The absolute path " << path << " already exists";
-    throw Exception(message.str());
-  }
-}
-
-//------------------------------------------------------------------------------
 // getEnclosingDirPath
 //------------------------------------------------------------------------------
 std::string cta::MockClientAPI::getEnclosingDirPath(const std::string &path)
   const {
-  const std::string::size_type last_slash_idx = path.find_last_of('/');
-  if(std::string::npos == last_slash_idx) {
+  if(path == "/") {
+    throw Exception("Root directory does not have a parent");
+  }
+
+  const std::string::size_type lastSlashIndex = path.find_last_of('/');
+  if(std::string::npos == lastSlashIndex) {
     throw Exception("Path does not contain a slash");
   }
-  return path.substr(0, last_slash_idx);
+  return path.substr(0, lastSlashIndex + 1);
 }
 
 //------------------------------------------------------------------------------
@@ -359,7 +332,11 @@ std::string cta::MockClientAPI::getEnclosedName(const std::string &path) const {
   if(std::string::npos == last_slash_idx) {
     return path;
   } else {
-    return path.substr(last_slash_idx);
+    if(path.length() == 1) {
+      return "";
+    } else {
+      return path.substr(last_slash_idx + 1);
+    }
   }
 }
 
@@ -380,7 +357,7 @@ cta::FileSystemNode &cta::MockClientAPI::getFileSystemNode(
 
   for(std::vector<std::string>::const_iterator itor = pathComponents.begin();
     itor != pathComponents.end(); itor++) {
-    *node = node->getChild(*itor);
+    node = &node->getChild(*itor);
   }
   return *node;
 }
@@ -424,43 +401,21 @@ void cta::MockClientAPI::deleteDirectory(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 cta::DirectoryIterator cta::MockClientAPI::getDirectoryContents(
   const SecurityIdentity &requester, const std::string &dirPath) const {
-  std::cout << "getDirectoryContents: dirPath=" << dirPath << std::endl;
   checkAbsolutePathSyntax(dirPath);
 
   if(dirPath == "/") {
     return DirectoryIterator(m_fileSystemRoot.getDirectoryEntries());
   }
 
-  const std::string trimmedDirPath = trimSlashes(dirPath);
-  std::cout << "getDirectoryContents: trimmedDirPath=" << trimmedDirPath <<
-    std::endl;
+  const FileSystemNode &dirNode = getFileSystemNode(dirPath);
 
-  std::vector<std::string> pathComponents;
-  splitString(trimmedDirPath, '/', pathComponents);
-
-  for(std::vector<std::string>::const_iterator itor = pathComponents.begin();
-    itor != pathComponents.end(); itor++) {
-    std::cout << "getDirectoryContents: itor=" << *itor << std::endl;
-  }
-
-  std::map<std::string, DirectoryEntry>::const_iterator itor =
-    m_directoryEntries.find(dirPath);
-  if(itor == m_directoryEntries.end()) {
-    std::ostringstream message;
-    message << "The absolute path " << dirPath << " does not exist";
-    throw Exception(message.str());
-  }
-
-  const DirectoryEntry &entry = itor->second;
-
-  if(!S_ISDIR(entry.mode)) {
+  if(DirectoryEntry::ENTRYTYPE_DIRECTORY != dirNode.getEntry().entryType) {
     std::ostringstream message;
     message << "The absolute path " << dirPath << " is not a directory";
     throw(message.str());
   }
 
-  std::list<DirectoryEntry> entries;
-  return DirectoryIterator(entries);
+  return DirectoryIterator(dirNode.getDirectoryEntries());
 }
 
 //-----------------------------------------------------------------------------
@@ -520,6 +475,16 @@ void cta::MockClientAPI::splitString(const std::string &str,
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::setDirectoryStorageClass(const std::string &dirPath,
   const std::string &storageClassName) {
+  checkStorageClassExists(storageClassName);
+
+  FileSystemNode &dirNode = getFileSystemNode(dirPath);
+  if(DirectoryEntry::ENTRYTYPE_DIRECTORY != dirNode.getEntry().entryType) {
+    std::ostringstream message;
+    message << dirPath << " is not a directory";
+    throw Exception(message.str());
+  }
+
+  dirNode.getEntry().storageClassName = storageClassName;
 }
 
 //------------------------------------------------------------------------------
@@ -527,6 +492,14 @@ void cta::MockClientAPI::setDirectoryStorageClass(const std::string &dirPath,
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::clearDirectoryStorageClass(
   const std::string &dirPath) {
+  FileSystemNode &dirNode = getFileSystemNode(dirPath);
+  if(DirectoryEntry::ENTRYTYPE_DIRECTORY != dirNode.getEntry().entryType) {
+    std::ostringstream message;
+    message << dirPath << " is not a directory";
+    throw Exception(message.str());
+  }
+
+  dirNode.getEntry().storageClassName = "";
 }
   
 //------------------------------------------------------------------------------
@@ -534,7 +507,14 @@ void cta::MockClientAPI::clearDirectoryStorageClass(
 //------------------------------------------------------------------------------
 std::string cta::MockClientAPI::getDirectoryStorageClass(
   const std::string &dirPath) {
-  return "Funny_storage_class_name";
+  FileSystemNode &dirNode = getFileSystemNode(dirPath);
+  if(DirectoryEntry::ENTRYTYPE_DIRECTORY != dirNode.getEntry().entryType) {
+    std::ostringstream message;
+    message << dirPath << " is not a directory";
+    throw Exception(message.str());
+  }
+
+  return dirNode.getEntry().storageClassName;
 }
 
 //------------------------------------------------------------------------------

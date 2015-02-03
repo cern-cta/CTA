@@ -28,6 +28,13 @@ cta::FileSystemNode::~FileSystemNode() throw() {
 //------------------------------------------------------------------------------
 // getEntry
 //------------------------------------------------------------------------------
+cta::DirectoryEntry &cta::FileSystemNode::getEntry() throw() {
+  return m_entry;
+}
+
+//------------------------------------------------------------------------------
+// getEntry
+//------------------------------------------------------------------------------
 const cta::DirectoryEntry &cta::FileSystemNode::getEntry() const throw() {
   return m_entry;
 }
@@ -43,6 +50,18 @@ std::list<cta::DirectoryEntry> cta::FileSystemNode::getDirectoryEntries()
     entries.push_back(itor->second->getEntry());
   }
   return entries;
+}
+
+//------------------------------------------------------------------------------
+// addChild
+//------------------------------------------------------------------------------
+void cta::FileSystemNode::addChild(FileSystemNode *const child) {
+  if(childExists(child->getEntry().name)) {
+    delete child;
+    throw Exception("FileSystemNode already exists");
+  }
+
+  m_children[child->getEntry().name] = child;
 }
 
 //------------------------------------------------------------------------------
