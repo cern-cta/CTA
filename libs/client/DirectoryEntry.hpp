@@ -36,6 +36,12 @@ struct DirectoryEntry {
   uint16_t mode;
 
   /**
+   * The name of the directory's storage class or an empty string if the
+   * directory does not have a storage class.
+   */
+  std::string storageClassName;
+
+  /**
    * The attributes of the directory.
    */
   std::list<FileAttribute> attributes;
