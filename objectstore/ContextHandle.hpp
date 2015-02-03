@@ -21,6 +21,7 @@ private:
   volatile int m_fd;
 };
 
+
 template <>
 class ContextHandleImplementation <ObjectStoreRados>: public ContextHandle {
 public:

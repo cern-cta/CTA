@@ -48,7 +48,7 @@ private:
   cta::objectstore::Action & m_action;
 };
 
-#define USE_PROCESS 0
+#define USE_PROCESS 1
 #if(USE_PROCESS)
   class dummyCleanup: public cta::threading::ChildProcess::Cleanup {
     virtual void operator()() {}
@@ -101,10 +101,10 @@ int main(void){
     
     // start the garbage collector
     myOS gcObjectStore(os.path(), os.user(), os.pool());
-    cta::objectstore::Agent gcAgent(injectorObjectStore, "injectorProcess");
-    cta::objectstore::GarbageCollector gcAction(injectorAgent);
-    jobExecutor gcProcess(injectorAction);
-    injectorProcess.start(dc);
+    cta::objectstore::Agent gcAgent(gcObjectStore, "injectorProcess");
+    cta::objectstore::GarbageCollector gcAction(gcAgent);
+    jobExecutor gcProcess(gcAction);
+    gcProcess.start(dc);
     
     std::vector<cta::objectstore::ObjectStore *> recallObjectStores;
     std::vector<cta::objectstore::Agent *> recallAgents;

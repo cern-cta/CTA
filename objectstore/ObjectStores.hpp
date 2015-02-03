@@ -235,17 +235,15 @@ public:
     client << buff << ":" << tid;
     struct timeval tv;
     tv.tv_usec = 0;
-    tv.tv_sec = 60;
+    tv.tv_sec = 10;
     int rc;
     do {
       rc=m_radosCtx.lock_exclusive(name, "lock", client.str(), "", &tv, 0);
     } while (-EBUSY==rc);
-    if (0!=rc) {
-      std::cout << "Oh-oh, rc=" << rc << std::endl;
-    }
-    cta::exception::Errnum::throwOnNonZero(rc,
-      std::string("In ObjectStoreRados::lockExclusive,  failed to lock_exclusive ")+
-      name);
+    cta::exception::Errnum::throwOnReturnedErrno(-rc,
+      std::string("In ObjectStoreRados::lockExclusive, failed to librados::IoCtx::lock_exclusive: ")+
+      name + "/" + "lock" + "/" + client.str() + "//");
+    std::cout << "LockedExclusive: " << name << "/" << "lock" << "/" << client.str() << "//" << std::endl;
   }
 
 
@@ -259,17 +257,15 @@ public:
     client << buff << ":" << tid;
     struct timeval tv;
     tv.tv_usec = 0;
-    tv.tv_sec = 60;
+    tv.tv_sec = 10;
     int rc;
     do {
       rc=m_radosCtx.lock_shared(name, "lock", client.str(), "", "", &tv, 0);
     } while (-EBUSY==rc);
-    if (0!=rc) {
-      std::cout << "Oh-oh, rc=" << rc << std::endl;
-    }
-    cta::exception::Errnum::throwOnNonZero(rc,
-      std::string("In ObjectStoreRados::lockShared,  failed to lock_shared ")+
-      name);
+    cta::exception::Errnum::throwOnReturnedErrno(-rc,
+      std::string("In ObjectStoreRados::lockShared, failed to librados::IoCtx::lock_shared: ")+
+      name + "/" + "lock" + "/" + client.str() + "//");
+    std::cout << "LockedShared: " << name << "/" << "lock" << "/" << client.str() << "//" << std::endl;
   }
 
   virtual void unlock(std::string name, ContextHandle & context) {
@@ -280,10 +276,11 @@ public:
     pid_t tid = syscall(SYS_gettid);
     std::stringstream client;
     client << buff << ":" << tid;
-    cta::exception::Errnum::throwOnNonZero(
-      m_radosCtx.unlock(name, "lock", client.str()),
+    cta::exception::Errnum::throwOnReturnedErrno(
+      -m_radosCtx.unlock(name, "lock", client.str()),
       std::string("In ObjectStoreRados::lockExclusive,  failed to lock_exclusive ")+
       name);
+    std::cout << "Unlocked: " << name << "/" << "lock" << "/" << client.str() << "//" << std::endl;
   }
 
 

@@ -31,6 +31,7 @@ public:
     FIFO fifo(fifoName, m_agent);
     std::cout << name.str() << " starting" << std::endl;
     while (m_achieved < m_objective) {
+      m_agent.heartbeat(m_agent);
       std::stringstream src, dst;
       src << "S-" << m_number << "-" << m_achieved;
       dst << "D-" << m_number << "-" << m_achieved;
@@ -64,9 +65,10 @@ public:
     RootEntry re(m_agent);
     JobPool jp(re.getJobPool(m_agent), m_agent);
     FIFO fifo(jp.getRecallFIFO(m_agent), m_agent);
-    std::cout << name.str() << " starting";
+    std::cout << name.str() << " starting" << std::endl; 
     while (true) {
       try {
+        m_agent.heartbeat(m_agent);
         // Pop a job from the FIFO
         FIFO::Transaction tr = fifo.startTransaction(m_agent);
         std::string rjName = tr.peek();
@@ -79,8 +81,20 @@ public:
         std::cout << "RecallJob " << rj.source(m_agent) << " => " 
                   << rj.destination(m_agent) << " is done" << std::endl;
         rj.remove();
-      } catch (FIFO::FIFOEmpty &) { break; }
-      std::cout << name.str() << "complete: FIFO empty" << std::endl;
+      } catch (FIFO::FIFOEmpty &) {
+        cta::utils::Timer timeout;
+        while (timeout.secs() < 1.0) {
+          try {
+            if (fifo.size(m_agent) > 0) {
+              continue;
+            } else {
+              usleep (100 * 1000);
+            }
+          } catch (...) {}
+        }
+        std::cout << name.str() << " complete: FIFO empty" << std::endl;
+        break; 
+      }
     }
   }
 
@@ -99,10 +113,11 @@ public:
     m_agent.create();
     RootEntry re(m_agent);
     AgentRegister ar(re.getAgentRegister(m_agent), m_agent);
-    std::cout << name << " starting";
+    std::cout << name.str() << " starting" << std::endl;
     utils::Timer noAgentTimer;
     std::map<std::string, AgentWatchdog *> watchdogs;
     while (true) {
+      m_agent.heartbeat(m_agent);
       // Get the list of current agents
       std::list<std::string> agentNames = ar.getElements(m_agent);
       // If no one is running, go away after a delay
