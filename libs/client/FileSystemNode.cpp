@@ -46,6 +46,15 @@ std::list<cta::DirectoryEntry> cta::FileSystemNode::getDirectoryEntries()
 }
 
 //------------------------------------------------------------------------------
+// childExists
+//------------------------------------------------------------------------------
+bool cta::FileSystemNode::childExists(const std::string &name) const {
+  std::map<std::string, FileSystemNode*>::const_iterator itor =
+    m_children.find(name);
+  return m_children.end() != itor;
+}
+
+//------------------------------------------------------------------------------
 // getChild
 //------------------------------------------------------------------------------
 cta::FileSystemNode &cta::FileSystemNode::getChild(const std::string &name) {

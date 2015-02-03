@@ -154,6 +154,33 @@ public:
     const std::string &dirPath) const;
 
   /**
+   * Sets the storage class of the specified directory to the specified value.
+   *
+   * @param dirPath The absolute path of the directory.
+   * @param storageClassName The name of the storage class.
+   */
+  void setDirectoryStorageClass(const std::string &dirPath, 
+    const std::string &storageClassName);
+
+  /**
+   * Clears the storage class of the specified directory.
+   *
+   * @param dirPath The absolute path of the directory.
+   * @param storageClassName The name of the storage class.
+   */
+  void clearDirectoryStorageClass(const std::string &dirPath);
+
+  /**
+   * Gets the storage class if of the specified directory if the directory has
+   * one.
+   *
+   * @param dirPath The absolute path of the directory.
+   * @return The name of the storage class if the directory has one, else an
+   * empty string.
+   */
+  std::string getDirectoryStorageClass(const std::string &dirPath);
+
+  /**
    * Archives the specified list of source files to the specified destination
    * within the archive namespace.
    *
@@ -298,12 +325,28 @@ protected:
   std::string getEnclosingDirPath(const std::string &path) const;
 
   /**
+   * Returns the name of the enclosed file or directory of the specified path.
+   *
+   * @param path The path.
+   * @return The name of the enclosed file or directory.
+   */
+  std::string getEnclosedName(const std::string &path) const;
+
+  /**
    * Gets the file system node corresponding to the specified path.
    *
    * @path The path.
    * @return The corresponding file system node.
    */
   FileSystemNode &getFileSystemNode(const std::string &path);
+
+  /**
+   * Gets the file system node corresponding to the specified path.
+   *
+   * @path The path.
+   * @return The corresponding file system node.
+   */
+  const FileSystemNode &getFileSystemNode(const std::string &path) const;
 
   /**
    * Returns the result of trimming both left and right slashes from the

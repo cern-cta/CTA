@@ -435,6 +435,97 @@ TEST_F(cta_client_MockClientAPITest, deleteDirectory_root) {
   ASSERT_THROW(api.deleteDirectory(requester, "/"), std::exception);
 
 }
+
+TEST_F(cta_client_MockClientAPITest, setDirectoryStorageClass_top_level) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+  const std::string dirPath = "/grandparent";
+
+  ASSERT_NO_THROW(api.createDirectory(requester, dirPath));
+
+  DirectoryIterator itor;
+
+  ASSERT_NO_THROW(itor = api.getDirectoryContents(requester, "/"));
+
+  ASSERT_TRUE(itor.hasMore());
+
+  DirectoryEntry entry;
+
+  ASSERT_NO_THROW(entry = itor.next());
+
+  ASSERT_EQ(std::string("grandparent"), entry.name);
+
+  {
+    std::string name;
+    ASSERT_NO_THROW(name = api.getDirectoryStorageClass(dirPath));
+    ASSERT_TRUE(name.empty());
+  }
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint8_t nbCopies = 2;
+  ASSERT_NO_THROW(api.createStorageClass(requester, storageClassName,
+    nbCopies));
+
+  ASSERT_NO_THROW(api.setDirectoryStorageClass(dirPath,storageClassName));
+
+  {
+    std::string name;
+    ASSERT_NO_THROW(name = api.getDirectoryStorageClass(dirPath));
+    ASSERT_EQ(storageClassName, name);
+  }
+}
+
+TEST_F(cta_client_MockClientAPITest, clearDirectoryStorageClass_top_level) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+  const std::string dirPath = "/grandparent";
+
+  ASSERT_NO_THROW(api.createDirectory(requester, dirPath));
+
+  DirectoryIterator itor;
+
+  ASSERT_NO_THROW(itor = api.getDirectoryContents(requester, "/"));
+
+  ASSERT_TRUE(itor.hasMore());
+
+  DirectoryEntry entry;
+
+  ASSERT_NO_THROW(entry = itor.next());
+
+  ASSERT_EQ(std::string("grandparent"), entry.name);
+
+  {
+    std::string name;
+    ASSERT_NO_THROW(name = api.getDirectoryStorageClass(dirPath));
+    ASSERT_TRUE(name.empty());
+  }
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint8_t nbCopies = 2;
+  ASSERT_NO_THROW(api.createStorageClass(requester, storageClassName,
+    nbCopies));
+
+  ASSERT_NO_THROW(api.setDirectoryStorageClass(dirPath,storageClassName));
+
+  {
+    std::string name;
+    ASSERT_NO_THROW(name = api.getDirectoryStorageClass(dirPath));
+    ASSERT_EQ(storageClassName, name);
+  }
+
+  ASSERT_NO_THROW(api.clearDirectoryStorageClass(dirPath));
+
+  {
+    std::string name;
+    ASSERT_NO_THROW(name = api.getDirectoryStorageClass(dirPath));
+    ASSERT_TRUE(name.empty());
+  }
+}
+
 TEST_F(cta_client_MockClientAPITest, trimSlashes_emptyString) {
   using namespace cta;
 

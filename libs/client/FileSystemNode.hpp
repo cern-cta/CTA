@@ -46,6 +46,21 @@ public:
   std::list<DirectoryEntry> getDirectoryEntries() const;
 
   /**
+   * Adds the specified node to the children of this node.
+   *
+   * @param node The node to be added.
+   */
+  void addChild(const FileSystemNode *child);
+
+  /**
+   * Returns true if the specified child node exists.
+   *
+   * @param name The name of the child node.
+   * @return True if the child node exists.
+   */
+  bool childExists(const std::string &name) const;
+
+  /**
    * Gets the child file-system node corresponding to the specified name.
    */
   FileSystemNode &getChild(const std::string &name);

@@ -210,13 +210,27 @@ void cta::MockClientAPI::createDirectory(const SecurityIdentity &requester,
 
   const std::string enclosingPath = getEnclosingDirPath(dirPath);
 
-/*
-  FileSystemNode enclosingNode = getFileSystemNode(enclosingPath);
-
-  if(!enclosingNode.isDirectory()) {
-    
+  FileSystemNode &enclosingNode = getFileSystemNode(enclosingPath);
+  if(!S_ISDIR(enclosingNode.getEntry().mode)) {
+    std::ostringstream message;
+    message << enclosingPath << " is not a directory";
+    throw Exception(message.str());
   }
-*/
+
+  const std::string enclosedName = getEnclosedName(dirPath);
+
+  if(enclosingNode.childExists(enclosedName)) {
+    FileSystemNode &enclosedNode = enclosingNode.getChild(enclosedName);
+
+    std::ostringstream message;
+    if(S_ISDIR(enclosedNode.getEntry().mode)) {
+      throw Exception("A directory already exists with the same name");
+    } else {
+      throw Exception("A file already exists with the same name");
+    }
+  }
+
+  //enclosingNode.createChild();
 
   std::vector<std::string> pathComponents;
   splitString(dirPath, '/', pathComponents);
@@ -338,25 +352,59 @@ std::string cta::MockClientAPI::getEnclosingDirPath(const std::string &path)
 }
 
 //------------------------------------------------------------------------------
+// getEnclosedName
+//------------------------------------------------------------------------------
+std::string cta::MockClientAPI::getEnclosedName(const std::string &path) const {
+  const std::string::size_type last_slash_idx = path.find_last_of('/');
+  if(std::string::npos == last_slash_idx) {
+    return path;
+  } else {
+    return path.substr(last_slash_idx);
+  }
+}
+
+//------------------------------------------------------------------------------
 // getFileSystemNode
 //------------------------------------------------------------------------------
 cta::FileSystemNode &cta::MockClientAPI::getFileSystemNode(
   const std::string &path) {
-  FileSystemNode &node = m_fileSystemRoot;
+  FileSystemNode *node = &m_fileSystemRoot;
 
   if(path == "/") {
-    return node;
+    return *node;
   }
 
   const std::string trimmedDirPath = trimSlashes(path);
   std::vector<std::string> pathComponents;
   splitString(trimmedDirPath, '/', pathComponents);
 
-  for(std::vector<std::string>::iterator itor = pathComponents.begin();
+  for(std::vector<std::string>::const_iterator itor = pathComponents.begin();
     itor != pathComponents.end(); itor++) {
-    node = node.getChild(*itor);
+    *node = node->getChild(*itor);
   }
-  return node;
+  return *node;
+}
+
+//------------------------------------------------------------------------------
+// getFileSystemNode
+//------------------------------------------------------------------------------
+const cta::FileSystemNode &cta::MockClientAPI::getFileSystemNode(
+  const std::string &path) const {
+  const FileSystemNode *node = &m_fileSystemRoot;
+
+  if(path == "/") {
+    return *node;
+  }
+
+  const std::string trimmedDirPath = trimSlashes(path);
+  std::vector<std::string> pathComponents;
+  splitString(trimmedDirPath, '/', pathComponents);
+
+  for(std::vector<std::string>::const_iterator itor = pathComponents.begin();
+    itor != pathComponents.end(); itor++) {
+    node = &node->getChild(*itor);
+  }
+  return *node;
 }
 
 //------------------------------------------------------------------------------
@@ -465,6 +513,28 @@ void cta::MockClientAPI::splitString(const std::string &str,
   if(endIndex == std::string::npos) {
     result.push_back(str.substr(beginIndex, str.length()));
   }
+}
+
+//------------------------------------------------------------------------------
+// setDirectoryStorageClass
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::setDirectoryStorageClass(const std::string &dirPath,
+  const std::string &storageClassName) {
+}
+
+//------------------------------------------------------------------------------
+// clearDirectoryStorageClass
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::clearDirectoryStorageClass(
+  const std::string &dirPath) {
+}
+  
+//------------------------------------------------------------------------------
+// getDirectoryStorageClass
+//------------------------------------------------------------------------------
+std::string cta::MockClientAPI::getDirectoryStorageClass(
+  const std::string &dirPath) {
+  return "Funny_storage_class_name";
 }
 
 //------------------------------------------------------------------------------

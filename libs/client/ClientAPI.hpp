@@ -122,7 +122,7 @@ public:
    *
    * @param requester The identity of the user requesting the creation of the
    * directory.
-   * @param dirPath The full path of the directory.
+   * @param dirPath The absolute path of the directory.
    */
   virtual void createDirectory(
     const SecurityIdentity &requester,
@@ -133,7 +133,7 @@ public:
    *
    * @param requester The identity of the user requesting the deletion of the
    * directory.
-   * @param dirPath The full path of the directory.
+   * @param dirPath The absolute path of the directory.
    */
   virtual void deleteDirectory(
     const SecurityIdentity &requester,
@@ -144,12 +144,39 @@ public:
    *
    * @param requester The identity of the user requesting the contents of the
    * directory.
-   * @param dirPath The full path of the directory.
+   * @param dirPath The absolute path of the directory.
    * @return An iterator over the contents of the directory.
    */
   virtual DirectoryIterator getDirectoryContents(
     const SecurityIdentity &requester,
     const std::string &dirPath) const = 0;
+
+  /**
+   * Sets the storage class of the specified directory to the specified value.
+   *
+   * @param dirPath The absolute path of the directory.
+   * @param storageClassName The name of the storage class.
+   */
+  virtual void setDirectoryStorageClass(const std::string &dirPath,
+    const std::string &storageClassName) = 0;
+
+  /**
+   * Clears the storage class of the specified directory.
+   *
+   * @param dirPath The absolute path of the directory.
+   * @param storageClassName The name of the storage class.
+   */
+  virtual void clearDirectoryStorageClass(const std::string &dirPath) = 0;
+
+  /**
+   * Gets the storage class if of the specified directory if the directory has
+   * one.
+   *
+   * @param dirPath The absolute path of the directory.
+   * @return The name of the storage class if the directory has one, else an
+   * empty string.
+   */
+  virtual std::string getDirectoryStorageClass(const std::string &dirPath) = 0;
 
   /**
    * Archives the specified list of source files to the specified destination
