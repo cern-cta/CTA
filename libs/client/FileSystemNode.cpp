@@ -1,3 +1,4 @@
+#include "Exception.hpp"
 #include "FileSystemNode.hpp"
 
 //------------------------------------------------------------------------------
@@ -42,4 +43,34 @@ std::list<cta::DirectoryEntry> cta::FileSystemNode::getDirectoryEntries()
     entries.push_back(itor->second->getEntry());
   }
   return entries;
+}
+
+//------------------------------------------------------------------------------
+// getChild
+//------------------------------------------------------------------------------
+cta::FileSystemNode &cta::FileSystemNode::getChild(const std::string &name) {
+  std::map<std::string, FileSystemNode*>::iterator itor = m_children.find(name);
+  if(m_children.end() == itor) {
+    throw Exception("No such file or directory");
+  }
+  if(NULL == itor->second) {
+    throw Exception("Unexpected NULL pointer");
+  }
+  return *(itor->second);
+}
+
+//------------------------------------------------------------------------------
+// getChild
+//------------------------------------------------------------------------------
+const cta::FileSystemNode &cta::FileSystemNode::getChild(
+  const std::string &name) const {
+  std::map<std::string, FileSystemNode*>::const_iterator itor = 
+    m_children.find(name);
+  if(m_children.end() == itor) {
+    throw Exception("No such file or directory");
+  }
+  if(NULL == itor->second) {
+    throw Exception("Unexpected NULL pointer");
+  }
+  return *(itor->second);
 }

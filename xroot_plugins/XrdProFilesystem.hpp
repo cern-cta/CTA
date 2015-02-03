@@ -54,7 +54,7 @@ protected:
    * @param requester The structure to be filled
    * @return SFS_OK in case check is passed, SFS_DATA otherwise
    */
-  int checkClient(const XrdSecEntity *client, XrdOucErrInfo &eInfo, cta::UserIdentity &requester) const;
+  int checkClient(const XrdSecEntity *client, XrdOucErrInfo &eInfo, cta::SecurityIdentity &requester) const;
   
   /**
    * Executes the command contained within the request structure
@@ -64,7 +64,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeArchiveCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const;
+  int executeArchiveCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
   
   /**
    * Executes the command contained within the request structure
@@ -74,7 +74,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeMkclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const;
+  int executeMkclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
   
   /**
    * Executes the command contained within the request structure
@@ -84,7 +84,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeChdirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const;
+  int executeChdirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
   
   /**
    * Executes the command contained within the request structure
@@ -94,7 +94,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeRmclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const;
+  int executeRmclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
   
   /**
    * Executes the command contained within the request structure
@@ -104,7 +104,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeLsclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const;
+  int executeLsclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
   
   /**
    * Executes the command contained within the request structure
@@ -114,7 +114,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeMkdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const;
+  int executeMkdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
   
   /**
    * Executes the command contained within the request structure
@@ -124,7 +124,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeRmdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const;
+  int executeRmdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
   
   /**
    * Executes the command contained within the request structure
@@ -134,7 +134,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const;
+  int executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
   
   /**
    * Dispatches the request based on the query
@@ -144,5 +144,5 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_OK in case dispatching is done correctly, SFS_DATA otherwise
    */
-  int dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const;
+  int dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
 };

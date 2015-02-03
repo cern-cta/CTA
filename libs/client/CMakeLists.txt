@@ -8,6 +8,7 @@ set (CLIENT_LIB_SRC_FILES
   FileAttribute.cpp
   FileSystemNode.cpp
   MockClientAPI.cpp
+  SecurityIdentity.cpp
   StorageClass.cpp
   UserIdentity.cpp)
 

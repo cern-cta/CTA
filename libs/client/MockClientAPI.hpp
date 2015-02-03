@@ -35,7 +35,7 @@ public:
    * @param adminUser The identity of the administrator.
    */
   void createAdminUser(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const UserIdentity &adminUser);
 
   /**
@@ -46,7 +46,7 @@ public:
    * @param adminUser The identity of the administrator.
    */
   void deleteAdminUser(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const UserIdentity &adminUser);
 
   /**
@@ -54,7 +54,7 @@ public:
    *
    * @param requester The identity of the user requesting the list.
    */
-  std::list<UserIdentity> getAdminUsers(const UserIdentity &requester) const;
+  std::list<UserIdentity> getAdminUsers(const SecurityIdentity &requester) const;
 
   /**
    * Creates the specified administration host.
@@ -64,7 +64,7 @@ public:
    * @param adminHost The network name of the administration host.
    */
   void createAdminHost(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &adminHost);
 
   /**
@@ -75,7 +75,7 @@ public:
    * @param adminHost The network name of the administration host.
    */
   void deleteAdminHost(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &adminHost);
 
   /**
@@ -83,7 +83,7 @@ public:
    *
    * @param requester The identity of the user requesting the list.
    */
-  std::list<std::string> getAdminHosts(const UserIdentity &requester) const;
+  std::list<std::string> getAdminHosts(const SecurityIdentity &requester) const;
 
   /**
    * Creates the specified storage class.
@@ -95,7 +95,7 @@ public:
    * class should have on tape.
    */
   void createStorageClass(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &name,
     const uint8_t nbCopies);
 
@@ -107,7 +107,7 @@ public:
    * @param name The name of the storage class.
    */
   void deleteStorageClass(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &name);
 
   /**
@@ -117,7 +117,7 @@ public:
    * @return The current list of storage classes in lexicographical order.
    */
   std::list<StorageClass> getStorageClasses(
-    const UserIdentity &requester) const;
+    const SecurityIdentity &requester) const;
 
   /**
    * Creates the specified directory.
@@ -127,7 +127,7 @@ public:
    * @param dirPath The full path of the directory.
    */
   void createDirectory(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &dirPath);
 
   /**
@@ -138,7 +138,7 @@ public:
    * @param dirPath The full path of the directory.
    */
   void deleteDirectory(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &dirPath);
 
   /**
@@ -150,7 +150,7 @@ public:
    * @return An iterator over the contents of the directory.
    */
   DirectoryIterator getDirectoryContents(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::string &dirPath) const;
 
   /**
@@ -172,7 +172,7 @@ public:
    * @return The identifier of the archive job.
    */
   std::string archiveToTape(
-    const UserIdentity &requester,
+    const SecurityIdentity &requester,
     const std::list<std::string> &srcUrls,
     std::string dst);
 
@@ -296,6 +296,23 @@ protected:
    * @return The path of the enclosing directory.
    */
   std::string getEnclosingDirPath(const std::string &path) const;
+
+  /**
+   * Gets the file system node corresponding to the specified path.
+   *
+   * @path The path.
+   * @return The corresponding file system node.
+   */
+  FileSystemNode &getFileSystemNode(const std::string &path);
+
+  /**
+   * Returns the result of trimming both left and right slashes from the
+   * specified string.
+   *
+   * @param s The string to be trimmed.
+   * @return The result of trimming the string.
+   */
+  std::string trimSlashes(const std::string &s) const throw();
 
   /**
    * Splits the specified string into a vector of strings using the specified

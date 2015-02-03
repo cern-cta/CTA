@@ -23,7 +23,7 @@ extern "C"
 //------------------------------------------------------------------------------
 // checkClient
 //------------------------------------------------------------------------------
-int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eInfo, cta::UserIdentity &requester) const {
+int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eInfo, cta::SecurityIdentity &requester) const {
   if(!client || !client->host || strncmp(client->host, "localhost", 9))
   {
     std::string response = "[ERROR] operation possible only from localhost";
@@ -68,8 +68,8 @@ int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eIn
   }
   std::cout << "Request received from client. Username: " << client->name << " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
   requester.host = client->host;
-  requester.uid = pwd.pw_uid;
-  requester.gid = pwd.pw_gid;
+  requester.user.uid = pwd.pw_uid;
+  requester.user.gid = pwd.pw_gid;
   free(buf);
   return SFS_OK;
 }
@@ -96,7 +96,7 @@ int XrdProFilesystem::parseRequest(const XrdSfsFSctl &args, ParsedRequest &req, 
 //------------------------------------------------------------------------------
 // executeArchiveCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
+int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() < 2) {
     std::string response = "[ERROR] Too few arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -142,7 +142,7 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
 //------------------------------------------------------------------------------
 // executeMkclassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
+int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -152,7 +152,7 @@ int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrI
     uint8_t numberOfCopies;
     std::istringstream ss(req.args.at(1));
     ss >> numberOfCopies;
-    cta::UserIdentity requester;
+    cta::SecurityIdentity requester;
     m_clientAPI->createStorageClass(requester, req.args.at(0), numberOfCopies);
     std::string response = "[OK] Created storage class ";
     response += req.args.at(0);
@@ -181,7 +181,7 @@ int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrI
 //------------------------------------------------------------------------------
 // executeChdirclassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeChdirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
+int XrdProFilesystem::executeChdirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -214,7 +214,7 @@ int XrdProFilesystem::executeChdirclassCommand(const ParsedRequest &req, XrdOucE
 //------------------------------------------------------------------------------
 // executeRmclassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeRmclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
+int XrdProFilesystem::executeRmclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -247,7 +247,7 @@ int XrdProFilesystem::executeRmclassCommand(const ParsedRequest &req, XrdOucErrI
 //------------------------------------------------------------------------------
 // executeLsclassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
+int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 0) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -284,7 +284,7 @@ int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrI
 //------------------------------------------------------------------------------
 // executeMkdirCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeMkdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
+int XrdProFilesystem::executeMkdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -317,7 +317,7 @@ int XrdProFilesystem::executeMkdirCommand(const ParsedRequest &req, XrdOucErrInf
 //------------------------------------------------------------------------------
 // executeRmdirCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeRmdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
+int XrdProFilesystem::executeRmdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -349,7 +349,7 @@ int XrdProFilesystem::executeRmdirCommand(const ParsedRequest &req, XrdOucErrInf
 //------------------------------------------------------------------------------
 // executeLsCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
+int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -400,7 +400,7 @@ int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &
 //------------------------------------------------------------------------------
 // dispatchRequest
 //------------------------------------------------------------------------------
-int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
+int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   ParsedRequest req;
   int checkParse = parseRequest(args, req, eInfo);
   if(SFS_OK!=checkParse) {
@@ -451,7 +451,7 @@ int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eI
 //------------------------------------------------------------------------------
 int XrdProFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const XrdSecEntity *client)
 {
-  cta::UserIdentity requester;
+  cta::SecurityIdentity requester;
   int checkResult = checkClient(client, eInfo, requester);
   if(SFS_OK!=checkResult) {
     return checkResult;

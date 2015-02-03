@@ -23,7 +23,7 @@ cta::MockClientAPI::~MockClientAPI() throw() {
 // createAdminUser
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::createAdminUser(
-  const UserIdentity &requester,
+  const SecurityIdentity &requester,
   const UserIdentity &adminUser) {
   checkAdminUserDoesNotAlreadyExist(adminUser);
   m_adminUsers.push_back(adminUser);
@@ -49,7 +49,7 @@ void cta::MockClientAPI::checkAdminUserDoesNotAlreadyExist(
 // deleteAdminUser
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::deleteAdminUser(
-  const UserIdentity &requester,
+  const SecurityIdentity &requester,
   const UserIdentity &adminUser) {
   for(std::list<UserIdentity>::iterator itor = m_adminUsers.begin();
     itor != m_adminUsers.end(); itor++) {
@@ -69,7 +69,7 @@ void cta::MockClientAPI::deleteAdminUser(
 // getAdminUsers
 //------------------------------------------------------------------------------
 std::list<cta::UserIdentity> cta::MockClientAPI::getAdminUsers(
-  const UserIdentity &requester) const {
+  const SecurityIdentity &requester) const {
   return m_adminUsers;
 }
 
@@ -77,7 +77,7 @@ std::list<cta::UserIdentity> cta::MockClientAPI::getAdminUsers(
 // createAdminHost
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::createAdminHost(
-  const UserIdentity &requester,
+  const SecurityIdentity &requester,
   const std::string &adminHost) {
   checkAdminHostDoesNotAlreadyExist(adminHost);
   m_adminHosts.push_back(adminHost);
@@ -102,7 +102,7 @@ void cta::MockClientAPI::checkAdminHostDoesNotAlreadyExist(
 // deleteAdminHost
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::deleteAdminHost(
-  const UserIdentity &requester,
+  const SecurityIdentity &requester,
   const std::string &adminHost) {
   for(std::list<std::string>::iterator itor = m_adminHosts.begin();
     itor != m_adminHosts.end(); itor++) {
@@ -123,14 +123,14 @@ void cta::MockClientAPI::deleteAdminHost(
 // getAdminHosts
 //------------------------------------------------------------------------------
 std::list<std::string> cta::MockClientAPI::getAdminHosts(
-  const UserIdentity &requester) const {
+  const SecurityIdentity &requester) const {
   return m_adminHosts;
 }
 
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::createStorageClass(const UserIdentity &requester,
+void cta::MockClientAPI::createStorageClass(const SecurityIdentity &requester,
   const std::string &name, const uint8_t nbCopies) {
   try {
     checkStorageClassDoesNotAlreadyExist(name);
@@ -159,7 +159,7 @@ void cta::MockClientAPI::checkStorageClassDoesNotAlreadyExist(
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::deleteStorageClass(const UserIdentity &requester,
+void cta::MockClientAPI::deleteStorageClass(const SecurityIdentity &requester,
   const std::string &name) {
   try {
     checkStorageClassExists(name);
@@ -188,7 +188,7 @@ void cta::MockClientAPI::checkStorageClassExists(
 // getStorageClasses
 //------------------------------------------------------------------------------
 std::list<cta::StorageClass> cta::MockClientAPI::getStorageClasses(
-  const UserIdentity &requester) const {
+  const SecurityIdentity &requester) const {
   std::list<StorageClass> storageClasses;
   for(std::map<std::string, StorageClass>::const_iterator itor =
     m_storageClasses.begin(); itor != m_storageClasses.end(); itor++) {
@@ -200,13 +200,23 @@ std::list<cta::StorageClass> cta::MockClientAPI::getStorageClasses(
 //------------------------------------------------------------------------------
 // createDirectory
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::createDirectory(const UserIdentity &requester,
+void cta::MockClientAPI::createDirectory(const SecurityIdentity &requester,
   const std::string &dirPath) {
   checkAbsolutePathSyntax(dirPath);
 
   if(dirPath == "/") {
     throw Exception("Root directory already exists");
   }
+
+  const std::string enclosingPath = getEnclosingDirPath(dirPath);
+
+/*
+  FileSystemNode enclosingNode = getFileSystemNode(enclosingPath);
+
+  if(!enclosingNode.isDirectory()) {
+    
+  }
+*/
 
   std::vector<std::string> pathComponents;
   splitString(dirPath, '/', pathComponents);
@@ -328,9 +338,31 @@ std::string cta::MockClientAPI::getEnclosingDirPath(const std::string &path)
 }
 
 //------------------------------------------------------------------------------
+// getFileSystemNode
+//------------------------------------------------------------------------------
+cta::FileSystemNode &cta::MockClientAPI::getFileSystemNode(
+  const std::string &path) {
+  FileSystemNode &node = m_fileSystemRoot;
+
+  if(path == "/") {
+    return node;
+  }
+
+  const std::string trimmedDirPath = trimSlashes(path);
+  std::vector<std::string> pathComponents;
+  splitString(trimmedDirPath, '/', pathComponents);
+
+  for(std::vector<std::string>::iterator itor = pathComponents.begin();
+    itor != pathComponents.end(); itor++) {
+    node = node.getChild(*itor);
+  }
+  return node;
+}
+
+//------------------------------------------------------------------------------
 // deleteDirectory
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::deleteDirectory(const UserIdentity &requester,
+void cta::MockClientAPI::deleteDirectory(const SecurityIdentity &requester,
   const std::string &dirPath) {
   checkAbsolutePathSyntax(dirPath);
 
@@ -343,16 +375,20 @@ void cta::MockClientAPI::deleteDirectory(const UserIdentity &requester,
 // getDirectoryContents
 //------------------------------------------------------------------------------
 cta::DirectoryIterator cta::MockClientAPI::getDirectoryContents(
-  const UserIdentity &requester, const std::string &dirPath) const {
+  const SecurityIdentity &requester, const std::string &dirPath) const {
   std::cout << "getDirectoryContents: dirPath=" << dirPath << std::endl;
   checkAbsolutePathSyntax(dirPath);
-
-  std::vector<std::string> pathComponents;
-  splitString(dirPath, '/', pathComponents);
 
   if(dirPath == "/") {
     return DirectoryIterator(m_fileSystemRoot.getDirectoryEntries());
   }
+
+  const std::string trimmedDirPath = trimSlashes(dirPath);
+  std::cout << "getDirectoryContents: trimmedDirPath=" << trimmedDirPath <<
+    std::endl;
+
+  std::vector<std::string> pathComponents;
+  splitString(trimmedDirPath, '/', pathComponents);
 
   for(std::vector<std::string>::const_iterator itor = pathComponents.begin();
     itor != pathComponents.end(); itor++) {
@@ -378,6 +414,32 @@ cta::DirectoryIterator cta::MockClientAPI::getDirectoryContents(
   std::list<DirectoryEntry> entries;
   return DirectoryIterator(entries);
 }
+
+//-----------------------------------------------------------------------------
+// trimSlashes
+//-----------------------------------------------------------------------------
+std::string cta::MockClientAPI::trimSlashes(const std::string &s)
+  const throw() {
+  // Find first non slash character
+  size_t beginpos = s.find_first_not_of("/");
+  std::string::const_iterator it1;
+  if (std::string::npos != beginpos) {
+    it1 = beginpos + s.begin();
+  } else {
+    it1 = s.begin();
+  }
+
+  // Find last non slash chararacter
+  std::string::const_iterator it2;
+  size_t endpos = s.find_last_not_of("/");
+  if (std::string::npos != endpos) {
+    it2 = endpos + 1 + s.begin();
+  } else {
+    it2 = s.end();
+  }
+  
+  return std::string(it1, it2);
+} 
 
 //-----------------------------------------------------------------------------
 // splitString
@@ -408,7 +470,7 @@ void cta::MockClientAPI::splitString(const std::string &str,
 //------------------------------------------------------------------------------
 // archiveToTape
 //------------------------------------------------------------------------------
-std::string cta::MockClientAPI::archiveToTape(const UserIdentity &requester,
+std::string cta::MockClientAPI::archiveToTape(const SecurityIdentity &requester,
   const std::list<std::string> &srcUrls, std::string dst) {
   return "Funny_Job_ID";
 }

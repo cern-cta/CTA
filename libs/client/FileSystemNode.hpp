@@ -45,6 +45,16 @@ public:
    */
   std::list<DirectoryEntry> getDirectoryEntries() const;
 
+  /**
+   * Gets the child file-system node corresponding to the specified name.
+   */
+  FileSystemNode &getChild(const std::string &name);
+
+  /**
+   * Gets the child file-system node corresponding to the specified name.
+   */
+  const FileSystemNode &getChild(const std::string &name) const;
+
 protected:
 
   /**
