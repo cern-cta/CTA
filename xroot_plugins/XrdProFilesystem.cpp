@@ -23,7 +23,7 @@ extern "C"
 //------------------------------------------------------------------------------
 // checkClient
 //------------------------------------------------------------------------------
-int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eInfo, cta::UserIdentity &requester) const {
   if(!client || !client->host || strncmp(client->host, "localhost", 9))
   {
     std::string response = "[ERROR] operation possible only from localhost";
@@ -33,8 +33,7 @@ int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eIn
   struct passwd pwd;
   struct passwd *result;
   char *buf;
-  long bufsize;
-  bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
+  long bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
   if (bufsize == -1)
   {
     bufsize = 16384;
@@ -68,6 +67,9 @@ int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eIn
     }
   }
   std::cout << "Request received from client. Username: " << client->name << " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
+  requester.host = client->host;
+  requester.uid = pwd.pw_uid;
+  requester.gid = pwd.pw_gid;
   free(buf);
   return SFS_OK;
 }
@@ -75,7 +77,7 @@ int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eIn
 //------------------------------------------------------------------------------
 // parseArchiveRequest
 //------------------------------------------------------------------------------
-int XrdProFilesystem::parseRequest(const XrdSfsFSctl &args, ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::parseRequest(const XrdSfsFSctl &args, ParsedRequest &req, XrdOucErrInfo &eInfo) const {
   std::stringstream ss(args.Arg1);
   std::string s;
   getline(ss, s, '?');
@@ -94,7 +96,7 @@ int XrdProFilesystem::parseRequest(const XrdSfsFSctl &args, ParsedRequest &req, 
 //------------------------------------------------------------------------------
 // executeArchiveCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeArchiveCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
   if(req.args.size() < 2) {
     std::string response = "[ERROR] Too few arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -106,7 +108,6 @@ int XrdProFilesystem::executeArchiveCommand(ParsedRequest &req, XrdOucErrInfo &e
     for(size_t i=0; i<req.args.size()-1; i++) {
       sourceFiles.push_back(req.args.at(i));
     }
-    cta::UserIdentity requester;
     std::string jobID = m_clientAPI->archiveToTape(requester, sourceFiles, destinationPath);
     std::string response = "[OK] Requested archival of the following files:\n";
     for(std::list<std::string>::iterator it = sourceFiles.begin(); it != sourceFiles.end(); it++) {
@@ -141,7 +142,7 @@ int XrdProFilesystem::executeArchiveCommand(ParsedRequest &req, XrdOucErrInfo &e
 //------------------------------------------------------------------------------
 // executeCreateStorageClassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeMkclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -180,7 +181,7 @@ int XrdProFilesystem::executeMkclassCommand(ParsedRequest &req, XrdOucErrInfo &e
 //------------------------------------------------------------------------------
 // executeCreateStorageClassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeChclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeChclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -213,14 +214,13 @@ int XrdProFilesystem::executeChclassCommand(ParsedRequest &req, XrdOucErrInfo &e
 //------------------------------------------------------------------------------
 // executeDeleteStorageClassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeRmclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeRmclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
   try {
-    cta::UserIdentity requester;
     m_clientAPI->deleteStorageClass(requester, req.args.at(0));
     std::string response = "[OK] Storage class ";
     response += req.args.at(0);
@@ -247,14 +247,13 @@ int XrdProFilesystem::executeRmclassCommand(ParsedRequest &req, XrdOucErrInfo &e
 //------------------------------------------------------------------------------
 // executeListStorageClassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeLsclassCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
   if(req.args.size() != 0) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
   try {
-    cta::UserIdentity requester;
     std::list<cta::StorageClass> stgList = m_clientAPI->getStorageClasses(requester);
     std::string response = "[OK] Listing of the storage class names and no of copies:";
     for(std::list<cta::StorageClass>::iterator it = stgList.begin(); it != stgList.end(); it++) {
@@ -285,14 +284,13 @@ int XrdProFilesystem::executeLsclassCommand(ParsedRequest &req, XrdOucErrInfo &e
 //------------------------------------------------------------------------------
 // executeMkdirCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeMkdirCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeMkdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
   try {
-    cta::UserIdentity requester;
     m_clientAPI->createDirectory(requester, req.args.at(0));
     std::string response = "[OK] Directory ";
     response += req.args.at(0);
@@ -319,7 +317,7 @@ int XrdProFilesystem::executeMkdirCommand(ParsedRequest &req, XrdOucErrInfo &eIn
 //------------------------------------------------------------------------------
 // executeRmdirCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeRmdirCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeRmdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
@@ -351,14 +349,13 @@ int XrdProFilesystem::executeRmdirCommand(ParsedRequest &req, XrdOucErrInfo &eIn
 //------------------------------------------------------------------------------
 // executeLsCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeLsCommand(ParsedRequest &req, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length(), response.c_str());
     return SFS_DATA;
   }
   try {
-    cta::UserIdentity requester;
     std::string response;
     cta::DirectoryIterator itor = m_clientAPI->getDirectoryContents(requester, req.args.at(0));
     while(itor.hasMore()) {
@@ -403,7 +400,7 @@ int XrdProFilesystem::executeLsCommand(ParsedRequest &req, XrdOucErrInfo &eInfo)
 //------------------------------------------------------------------------------
 // dispatchRequest
 //------------------------------------------------------------------------------
-int XrdProFilesystem::dispatchRequest(XrdSfsFSctl &args, XrdOucErrInfo &eInfo) {
+int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const cta::UserIdentity &requester) const {
   ParsedRequest req;
   int checkParse = parseRequest(args, req, eInfo);
   if(SFS_OK!=checkParse) {
@@ -411,35 +408,35 @@ int XrdProFilesystem::dispatchRequest(XrdSfsFSctl &args, XrdOucErrInfo &eInfo) {
   }
   if(strcmp(req.cmd.c_str(), "/archive") == 0)
   {  
-    return executeArchiveCommand(req, eInfo);
+    return executeArchiveCommand(req, eInfo, requester);
   }
   else if(strcmp(req.cmd.c_str(), "/mkclass") == 0)
   {  
-    return executeMkclassCommand(req, eInfo);
+    return executeMkclassCommand(req, eInfo, requester);
   }  
   else if(strcmp(req.cmd.c_str(), "/chclass") == 0)
   {  
-    return executeChclassCommand(req, eInfo);
+    return executeChclassCommand(req, eInfo, requester);
   }
   else if(strcmp(req.cmd.c_str(), "/rmclass") == 0)
   {  
-    return executeRmclassCommand(req, eInfo);
+    return executeRmclassCommand(req, eInfo, requester);
   }
   else if(strcmp(req.cmd.c_str(), "/lsclass") == 0)
   {  
-    return executeLsclassCommand(req, eInfo);
+    return executeLsclassCommand(req, eInfo, requester);
   }
   else if(strcmp(req.cmd.c_str(), "/mkdir") == 0)
   {  
-    return executeMkdirCommand(req, eInfo);
+    return executeMkdirCommand(req, eInfo, requester);
   }  
   else if(strcmp(req.cmd.c_str(), "/rmdir") == 0)
   {  
-    return executeRmdirCommand(req, eInfo);
+    return executeRmdirCommand(req, eInfo, requester);
   }  
   else if(strcmp(req.cmd.c_str(), "/ls") == 0)
   {  
-    return executeLsCommand(req, eInfo);
+    return executeLsCommand(req, eInfo, requester);
   }
   else
   {
@@ -454,13 +451,14 @@ int XrdProFilesystem::dispatchRequest(XrdSfsFSctl &args, XrdOucErrInfo &eInfo) {
 //------------------------------------------------------------------------------
 int XrdProFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const XrdSecEntity *client)
 {
-  int checkResult = checkClient(client, eInfo);
+  cta::UserIdentity requester;
+  int checkResult = checkClient(client, eInfo, requester);
   if(SFS_OK!=checkResult) {
     return checkResult;
   }
   if(cmd == SFS_FSCTL_PLUGIO)
   {
-    return dispatchRequest(args, eInfo);
+    return dispatchRequest(args, eInfo, requester);
   }
   else
   {
