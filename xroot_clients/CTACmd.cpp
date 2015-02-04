@@ -86,5 +86,6 @@ int CTACmd::executeCommand(const int argc, char **argv)  {
   {
     std::cout << "Query error" << std::endl;
   }
+  delete response;
   return 0;
 }

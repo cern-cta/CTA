@@ -254,7 +254,7 @@ int XrdProFilesystem::executeGetdirclassCommand(const ParsedRequest &req, XrdOuc
     else {
       responseSS << "[OK] Directory " << req.args.at(0) << " has the " << stgClass << " storage class";
     }
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
