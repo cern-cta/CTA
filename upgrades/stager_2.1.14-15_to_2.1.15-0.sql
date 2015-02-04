@@ -205,11 +205,24 @@ DROP INDEX I_DiskCopy_FS_GCW;
 DROP INDEX I_DiskCopy_Status_7_FS;
 CREATE INDEX I_DiskCopy_FS_DP_GCW ON DiskCopy (nvl(fileSystem,0)+nvl(dataPool,0), gcWeight);
 CREATE INDEX I_DiskCopy_Status_7_FS_DP ON DiskCopy (decode(status,7,status,NULL), nvl(fileSystem,0)+nvl(dataPool,0));
-ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_FileSystem
-  FOREIGN KEY (FileSystem) REFERENCES FileSystem (id);
 ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_DataPool
   FOREIGN KEY (DataPool) REFERENCES DataPool (id);
 
+/* add missing constraint on DiskCopy.fileSystem */
+DECLARE
+  dcIds "numList";
+BEGIN
+  -- first clean up broken FKs
+  DELETE FROM DiskCopy WHERE fileSystem = 0
+  RETURNING id BULK COLLECT INTO dcIds;
+  UPDATE SubRequest SET status = 7
+   WHERE diskCopy IN (SELECT * FROM TABLE(dcIds));
+END;
+/
+ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_FileSystem
+  FOREIGN KEY (FileSystem) REFERENCES FileSystem (id);
+
+/* modifications for deleteDiskCopy */
 ALTER TABLE DeleteDiskCopyHelper ADD (msg VARCHAR2(2048));
 DROP PROCEDURE deleteDiskCopiesInFSs;
 
