@@ -114,7 +114,7 @@ private:
     uint64_t oldSize = m_currentState.name_size();
     // Copy the elements at position oldReadPointer + i to i (squash all)
     // before the read pointer
-    for (int i = oldReadPointer; i<m_currentState.name_size(); i++) {
+    for (int i = oldReadPointer; i<m_currentState.mutable_name()->size(); i++) {
       *m_currentState.mutable_name(i-oldReadPointer) = m_currentState.name(i);
     }
     // Shorten the name array by oldReadPointer elements

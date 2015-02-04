@@ -29,8 +29,8 @@ public:
     bool found;
     do {
       found = false;
-      for (int i=0; i<rs.elements_size(); i++) {
-        if (name == rs.elements(i)) {
+      for (int i=0; i<rs.mutable_elements()->size(); i++) {
+        if (name == *rs.mutable_elements(i)) {
           found = true;
           rs.mutable_elements()->SwapElements(i, rs.elements_size()-1);
           rs.mutable_elements()->RemoveLast();

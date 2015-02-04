@@ -24,8 +24,8 @@ void cta::objectstore::AgentRegister::removeElement (const std::string  & name, 
   bool found;
   do {
     found = false;
-    for (int i=0; i<rs.elements_size(); i++) {
-      if (name == rs.elements(i)) {
+    for (int i=0; i<rs.mutable_elements()->size(); i++) {
+      if (name == *rs.mutable_elements(i)) {
         found = true;
         rs.mutable_elements()->SwapElements(i, rs.elements_size()-1);
         rs.mutable_elements()->RemoveLast();
@@ -53,8 +53,8 @@ void cta::objectstore::AgentRegister::upgradeIntendedElementToActual(std::string
   bool found;
   do {
     found = false;
-    for (int i=0; i<rs.intendedelements_size(); i++) {
-      if (name == rs.intendedelements(i)) {
+    for (int i=0; i<rs.mutable_intendedelements()->size(); i++) {
+      if (name == *rs.mutable_intendedelements(i)) {
         found = true;
         rs.mutable_intendedelements()->SwapElements(i, rs.intendedelements_size()-1);
         rs.mutable_intendedelements()->RemoveLast();
@@ -75,8 +75,8 @@ void cta::objectstore::AgentRegister::removeIntendedElement(const std::string& n
   bool found;
   do {
     found = false;
-    for (int i=0; i<rs.intendedelements_size(); i++) {
-      if (name == rs.intendedelements(i)) {
+    for (int i=0; i<rs.mutable_intendedelements()->size(); i++) {
+      if (name == *rs.mutable_intendedelements(i)) {
         found = true;
         rs.mutable_intendedelements()->SwapElements(i, rs.intendedelements_size()-1);
         rs.mutable_intendedelements()->RemoveLast();

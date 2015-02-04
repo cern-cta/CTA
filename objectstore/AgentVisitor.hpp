@@ -31,10 +31,10 @@ public:
     bool found;
     do {
       found = false;
-      for (int i=0; i<as.creationintent_size(); i++) {
-        if (container == as.creationintent(i).container() &&
-            name == as.creationintent(i).name() &&
-            objectType == as.creationintent(i).type()) {
+      for (int i=0; i<as.mutable_creationintent()->size(); i++) {
+        if (container == as.mutable_creationintent(i)->container() &&
+            name == as.mutable_creationintent(i)->name() &&
+            objectType == as.mutable_creationintent(i)->type()) {
           found = true;
           as.mutable_creationintent()->SwapElements(i, as.creationintent_size()-1);
           as.mutable_creationintent()->RemoveLast();
@@ -53,9 +53,9 @@ public:
     bool found;
     do {
       found = false;
-      for (int i=0; i<as.ownershipintent_size(); i++) {
-        if (name == as.ownershipintent(i).name() &&
-            objectType == as.ownershipintent(i).type()) {
+      for (int i=0; i<as.mutable_ownershipintent()->size(); i++) {
+        if (name == as.mutable_ownershipintent(i)->name() &&
+            objectType == as.mutable_ownershipintent(i)->type()) {
           found = true;
           as.mutable_creationintent()->SwapElements(i, as.ownershipintent_size()-1);
           as.mutable_creationintent()->RemoveLast();

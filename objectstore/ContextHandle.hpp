@@ -15,7 +15,8 @@ public:
   virtual int get(int) { return m_fd; }
   virtual void reset() { m_set = false; m_fd = -1; __sync_synchronize(); }
   virtual bool isSet() { return m_set; }
-  virtual void release() { __sync_synchronize(); if (m_set && -1 != m_fd) ::close(m_fd); reset(); } 
+  virtual void release() { __sync_synchronize(); if (m_set && -1 != m_fd) ::close(m_fd); reset(); }
+  virtual ~ContextHandleImplementation() {}
 private:
   bool m_set;
   volatile int m_fd;
@@ -31,6 +32,7 @@ public:
   virtual void reset() { m_set = false; }
   virtual bool isSet() { return m_set; }
   virtual void release() { reset(); }
+  virtual ~ContextHandleImplementation() {}
 private:
   bool m_set;
 };
