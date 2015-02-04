@@ -90,6 +90,8 @@ public:
             } else {
               usleep (100 * 1000);
             }
+          } catch (abi::__forced_unwind&) {
+            throw;
           } catch (...) {}
         }
         std::cout << name.str() << " complete: FIFO empty" << std::endl;
@@ -181,6 +183,8 @@ private:
             std::string jopPoolName;
             try {
               jopPoolName = re.getJobPool(m_agent);
+            } catch (abi::__forced_unwind&) {
+              throw;
             } catch (...) {
               // If we cannot find a reference to any job pool, then
               // this one is not referenced
@@ -200,6 +204,8 @@ private:
             try {
               JobPool jp(re.getJobPool(m_agent), m_agent);
               recallFIFOName = jp.getRecallFIFO(m_agent);
+            } catch (abi::__forced_unwind&) {
+              throw;
             } catch (...) {
               // If we cannot find a reference to any recall FIFO, then
               // this one is not referenced
@@ -237,6 +243,8 @@ private:
             break;
         }
       }
+    } catch (abi::__forced_unwind&) {
+            throw;
     } catch (...) {}
   }
 };

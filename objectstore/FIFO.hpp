@@ -3,6 +3,7 @@
 #include "ObjectOps.hpp"
 #include "Agent.hpp"
 #include "exception/Exception.hpp"
+#include <cxxabi.h>
 
 namespace cta { namespace objectstore {
 
@@ -16,7 +17,7 @@ public:
   
 private:
   void lock(ContextHandle & ctx) {
-    lockExclusiveAndRead(m_currentState, ctx);
+    lockExclusiveAndRead(m_currentState, ctx, __func__);
   }
   
 public:
@@ -37,22 +38,26 @@ public:
       try {
         if(!m_writeDone)
           m_fifo.unlock(m_ctx);
+      } catch (abi::__forced_unwind&) {
+            throw;
       } catch (...) {}
     }
     
     std::string peek() {
       if (m_writeDone)
         throw cta::exception::Exception("In FIFO::Transaction::peek: write already occurred");
-      if (m_fifo.m_currentState.readpointer() >= (uint64_t)m_fifo.m_currentState.name_size())
+      if (m_fifo.m_currentState.readpointer() >= (uint64_t)m_fifo.m_currentState.name_size()) {
         throw FIFOEmpty("In FIFO::Transaction::peek: FIFO empty");
+      }
       return m_fifo.m_currentState.name(m_fifo.m_currentState.readpointer());
     }
     
     void popAndUnlock() {
       if (m_writeDone)
         throw cta::exception::Exception("In FIFO::Transaction::popAndUnlock: write already occurred");
-      if (m_fifo.m_currentState.readpointer() >= (uint64_t)m_fifo.m_currentState.name_size())
+      if (m_fifo.m_currentState.readpointer() >= (uint64_t)m_fifo.m_currentState.name_size()) {
         throw FIFOEmpty("In FIFO::Transaction::popAndUnlock: FIFO empty");
+      }
       m_fifo.m_currentState.set_readpointer(m_fifo.m_currentState.readpointer()+1);
       if (m_fifo.m_currentState.readpointer() > 100) {
         m_fifo.compactCurrentState();
@@ -74,7 +79,7 @@ public:
   void push(std::string name, Agent & agent) {
     serializers::FIFO fs;
     ContextHandle & context = agent.getFreeContext();
-    lockExclusiveAndRead(fs, context);
+    lockExclusiveAndRead(fs, context, __func__);
     fs.add_name(name);
     write(fs);
     unlock(context);

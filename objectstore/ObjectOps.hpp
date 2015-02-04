@@ -30,9 +30,9 @@ public:
     val.ParseFromString(reStr);
   }
   
-  void lockExclusiveAndRead (C & val, ContextHandle & context) {
+  void lockExclusiveAndRead (C & val, ContextHandle & context, std::string where) {
     if(!m_nameSet) throw NameNotSet("In ObjectOps<>::updateFromObjectStore: name not set");
-    m_objectStore.lockExclusive(m_name, context);
+    m_objectStore.lockExclusive(m_name, context, where);
     // Re-read to get latest version (lock upgrade could be useful here)
     std::string reStr = m_objectStore.read(m_name);
     if (reStr.size())
@@ -44,10 +44,10 @@ public:
     m_objectStore.atomicOverwrite(m_name, val.SerializeAsString());
   }
   
-  void unlock (ContextHandle & context) {
+  void unlock (ContextHandle & context, std::string where="") {
     if(!m_nameSet) throw NameNotSet("In ObjectOps<>::updateFromObjectStore: name not set");
     // release the lock, and return the register name
-    m_objectStore.unlock(m_name, context);
+    m_objectStore.unlock(m_name, context, where);
   }
   
   void remove () {

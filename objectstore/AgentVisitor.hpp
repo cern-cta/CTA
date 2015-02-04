@@ -27,7 +27,7 @@ public:
     serializers::ObjectType objectType, Agent & agent) {
     ContextHandle & context = agent.getFreeContext();
     serializers::Agent as;
-    lockExclusiveAndRead(as, context);
+    lockExclusiveAndRead(as, context, __func__);
     bool found;
     do {
       found = false;
@@ -49,7 +49,7 @@ public:
   void removeFromOwnership(std::string name, serializers::ObjectType objectType, Agent & agent) {
     serializers::Agent as;
     ContextHandle & context = agent.getFreeContext();
-    lockExclusiveAndRead(as, context);
+    lockExclusiveAndRead(as, context, __func__);
     bool found;
     do {
       found = false;

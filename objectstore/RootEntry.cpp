@@ -1,6 +1,7 @@
 #include "RootEntry.hpp"
 
 #include "Agent.hpp"
+#include <cxxabi.h>
 
 // Initializer.
 void cta::objectstore::RootEntry::init(ObjectStore & os) {
@@ -8,6 +9,8 @@ void cta::objectstore::RootEntry::init(ObjectStore & os) {
   try {
     os.read(s_rootEntryName);
     throw cta::exception::Exception("In RootEntry::init: root entry already exists");
+  } catch (abi::__forced_unwind&) {
+    throw;
   } catch (...) {}
   serializers::RootEntry res;
   os.atomicOverwrite(s_rootEntryName, res.SerializeAsString());
@@ -42,7 +45,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetAgentRegister(Agent & agen
     // lock the entry again, for writing
     serializers::RootEntry res;
     ContextHandle & context = agent.getFreeContext();
-    lockExclusiveAndRead(res, context);
+    lockExclusiveAndRead(res, context, "RootEntry::allocateOrGetAgentRegister");
     // If the registry is already defined, somebody was faster. We're done.
     if (res.agentregister().size()) {
       unlock(context);
@@ -91,7 +94,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetJobPool(Agent & agent) {
     // lock the entry again, for writing
     serializers::RootEntry res;
     ContextHandle & context = agent.getFreeContext();
-    lockExclusiveAndRead(res, context);
+    lockExclusiveAndRead(res, context, "RootEntry::allocateOrGetJobPool");
     // If the registry is already defined, somebody was faster. We're done.
     if (res.jobpool().size()) {
       unlock(context);

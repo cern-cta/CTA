@@ -30,6 +30,8 @@ public:
       try {
         FIFO rf(jp.getRecallFIFO(agent), agent);
         ret << rf.dump(agent) << std::endl;
+      } catch (abi::__forced_unwind&) {
+            throw;
       } catch (...) {}
     } catch (RootEntry::NotAllocatedEx &) {}
     ret << ">> Structure dump end" << std::endl;

@@ -54,8 +54,8 @@ public:
       // If we get here, the job pool is not created yet, so we have to do it:
       // lock the entry again, for writing
       serializers::JobPool res;
-      ContextHandle ctx = agent.getFreeContext();
-      lockExclusiveAndRead(res, ctx);
+      ContextHandle & ctx = agent.getFreeContext();
+      lockExclusiveAndRead(res, ctx, __func__);
       // If the registry is already defined, somebody was faster. We're done.
       if (res.recall().size()) {
         unlock(ctx);

@@ -5,6 +5,7 @@
 #include <sstream>
 #include <sys/syscall.h>
 #include <ctime>
+#include <cxxabi.h>
 
 cta::objectstore::Agent::Agent(ObjectStore & os): 
   ObjectOps<serializers::Agent>(os), 
@@ -75,7 +76,9 @@ cta::objectstore::Agent::~Agent() {
       RootEntry re(*this);
       AgentRegister ar(re.getAgentRegister(*this), *this);
       ar.removeElement(selfName(),*this);
-    } catch(...) {}
+    } catch (abi::__forced_unwind&) {
+      throw;
+    } catch (...) {}
   }
 }
 
@@ -103,14 +106,14 @@ void cta::objectstore::Agent::addToIntend (std::string container, std::string na
     throw CreationNotDone("In Agent::addToIntend(): creation() not yet done");
   serializers::Agent as;
   ContextHandle & ctx = getFreeContext();
-  lockExclusiveAndRead(as, ctx);
+  lockExclusiveAndRead(as, ctx, "Agent::addToIntend");
   serializers::ObjectCreationIntent * oca = 
     as.mutable_creationintent()->Add();
   oca->set_container(container);
   oca->set_name(name);
   oca->set_type(objectType);
   write(as);
-  unlock(ctx);
+  unlock(ctx, "Agent::addToIntend");
 }
 
 void cta::objectstore::Agent::removeFromIntent (std::string container, std::string name, serializers::ObjectType objectType) {
@@ -118,7 +121,7 @@ void cta::objectstore::Agent::removeFromIntent (std::string container, std::stri
     throw CreationNotDone("In Agent::removeFromIntent(): creation() not yet done");
   serializers::Agent as;
   ContextHandle & ctx = getFreeContext();
-  lockExclusiveAndRead(as, ctx);
+  lockExclusiveAndRead(as, ctx, "Agent::removeFromIntent");
   bool found;
   do {
     found = false;
@@ -134,7 +137,7 @@ void cta::objectstore::Agent::removeFromIntent (std::string container, std::stri
     }
   } while (found);
   write(as);
-  unlock(ctx);
+  unlock(ctx, "Agent::removeFromIntent");
 }
 
 void cta::objectstore::Agent::addToOwnership(std::string name, serializers::ObjectType objectType) {
@@ -142,7 +145,7 @@ void cta::objectstore::Agent::addToOwnership(std::string name, serializers::Obje
     throw CreationNotDone("In Agent::addToOwnership(): creation() not yet done");
   serializers::Agent as;
   ContextHandle & ctx = getFreeContext();
-  lockExclusiveAndRead(as, ctx);
+  lockExclusiveAndRead(as, ctx, __func__);
   serializers::ObjectOwnershipIntent * ooi = 
     as.mutable_ownershipintent()->Add();
   ooi->set_name(name);
@@ -156,7 +159,7 @@ void cta::objectstore::Agent::removeFromOwnership(std::string name, serializers:
     throw CreationNotDone("In Agent::removeFromOwnership(): creation() not yet done");
   serializers::Agent as;
   ContextHandle & ctx = getFreeContext();
-  lockExclusiveAndRead(as, ctx);
+  lockExclusiveAndRead(as, ctx, __func__);
   bool found;
   do {
     found = false;
@@ -210,7 +213,10 @@ cta::objectstore::ObjectStore & cta::objectstore::Agent::objectStore() {
 void cta::objectstore::Agent::heartbeat(Agent& agent) {
   ContextHandle & context = agent.getFreeContext();
   serializers::Agent as;
-  lockExclusiveAndRead(as, context);
+  lockExclusiveAndRead(as, context, __func__);
+  as.set_heartbeatcount(as.has_heartbeatcount()+1);
+  write(as);
+  unlock(context);
 }
 
 uint64_t cta::objectstore::Agent::getHeartbeatCount(Agent& agent) {

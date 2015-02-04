@@ -17,7 +17,7 @@ public:
   
   void addElement (std::string name, ContextHandle & context) {
     serializers::Register rs;
-    lockExclusiveAndRead(rs, context);
+    lockExclusiveAndRead(rs, context, __func__);
     rs.add_elements(name);
     write(rs);
     unlock(context);
@@ -25,7 +25,7 @@ public:
   
   void removeElement (const std::string  & name, ContextHandle & context) {
     serializers::Register rs;
-    lockExclusiveAndRead(rs, context);
+    lockExclusiveAndRead(rs, context, __func__);
     bool found;
     do {
       found = false;

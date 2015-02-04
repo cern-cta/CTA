@@ -17,13 +17,12 @@ namespace cta { namespace objectstore {
 
 class ContextHandle {
 public:
-  template <typename T>
-  void set(T);
-  template <typename T>
-  T get(T);
-  void reset();
-  bool isSet();
-  void release();
+  virtual void set(int) = 0;
+  virtual int get(int) = 0;
+  virtual void reset() = 0;
+  virtual bool isSet() = 0;
+  virtual void release() = 0;
+  virtual ~ContextHandle() {};
 };
 
 class ObjectStore {
@@ -31,9 +30,9 @@ public:
   virtual ~ObjectStore() {}
   virtual void atomicOverwrite(std::string name, std::string content) = 0;
   virtual std::string read(std::string name) = 0;
-  virtual void lockShared(std::string name, ContextHandle & context) = 0;
-  virtual void lockExclusive(std::string name, ContextHandle & context) = 0;
-  virtual void unlock(std::string name, ContextHandle & context) = 0;
+  virtual void lockShared(std::string name, ContextHandle & context, std::string where="") = 0;
+  virtual void lockExclusive(std::string name, ContextHandle & context, std::string where="") = 0;
+  virtual void unlock(std::string name, ContextHandle & context, std::string where="") = 0;
   virtual void remove(std::string name) = 0;
   virtual std::string path() { return ""; }
   virtual std::string user() { return ""; }
@@ -130,19 +129,22 @@ public:
       "In ObjectStoreVFS::lockHelper, failed to flock the lock file.");
   }
   
-  virtual void lockExclusive(std::string name, ContextHandle & context) {
+  virtual void lockExclusive(std::string name, ContextHandle & context, std::string where) {
     lockHelper(name, context, LOCK_EX);
+    //std::cout << "LockedExclusive " << name << " with fd=" << context.get(0) << " @" << where << std::endl;
   }
 
-  virtual void lockShared(std::string name, ContextHandle & context) {
+  virtual void lockShared(std::string name, ContextHandle & context, std::string where) {
     lockHelper(name, context, LOCK_SH);
+    //std::cout << "LockedShared " << name << " with fd=" << context.get(0) << " @" << where << std::endl;
   }
 
-  virtual void unlock(std::string name, ContextHandle & context) {
+  virtual void unlock(std::string name, ContextHandle & context, std::string where) {
     ::flock(context.get(0), LOCK_UN);
     int fd= context.get(0);
     context.reset();
     ::close(fd);
+    //std::cout << "Unlocked " << name << " with fd=" << fd << " @" << where << std::endl;
   }
   
 
@@ -225,7 +227,7 @@ public:
     cta::exception::Errnum::throwOnNegative(m_radosCtx.remove(name));
   }
   
-  virtual void lockExclusive(std::string name, ContextHandle & context) {
+  virtual void lockExclusive(std::string name, ContextHandle & context, std::string where) {
     // Build a unique client name: host:thread
     char buff[200];
     cta::exception::Errnum::throwOnMinusOne(gethostname(buff, sizeof(buff)),
@@ -243,11 +245,11 @@ public:
     cta::exception::Errnum::throwOnReturnedErrno(-rc,
       std::string("In ObjectStoreRados::lockExclusive, failed to librados::IoCtx::lock_exclusive: ")+
       name + "/" + "lock" + "/" + client.str() + "//");
-    std::cout << "LockedExclusive: " << name << "/" << "lock" << "/" << client.str() << "//" << std::endl;
+    std::cout << "LockedExclusive: " << name << "/" << "lock" << "/" << client.str() << "//@" << where << std::endl;
   }
 
 
-  virtual void lockShared(std::string name, ContextHandle & context) {
+  virtual void lockShared(std::string name, ContextHandle & context, std::string where) {
     // Build a unique client name: host:thread
     char buff[200];
     cta::exception::Errnum::throwOnMinusOne(gethostname(buff, sizeof(buff)),
@@ -265,10 +267,10 @@ public:
     cta::exception::Errnum::throwOnReturnedErrno(-rc,
       std::string("In ObjectStoreRados::lockShared, failed to librados::IoCtx::lock_shared: ")+
       name + "/" + "lock" + "/" + client.str() + "//");
-    std::cout << "LockedShared: " << name << "/" << "lock" << "/" << client.str() << "//" << std::endl;
+    std::cout << "LockedShared: " << name << "/" << "lock" << "/" << client.str() << "//@" << where << std::endl;
   }
 
-  virtual void unlock(std::string name, ContextHandle & context) {
+  virtual void unlock(std::string name, ContextHandle & context, std::string where) {
     // Build a unique client name: host:thread
     char buff[200];
     cta::exception::Errnum::throwOnMinusOne(gethostname(buff, sizeof(buff)),
@@ -280,7 +282,7 @@ public:
       -m_radosCtx.unlock(name, "lock", client.str()),
       std::string("In ObjectStoreRados::lockExclusive,  failed to lock_exclusive ")+
       name);
-    std::cout << "Unlocked: " << name << "/" << "lock" << "/" << client.str() << "//" << std::endl;
+    std::cout << "Unlocked: " << name << "/" << "lock" << "/" << client.str() << "//@" << where << std::endl;
   }
 
 

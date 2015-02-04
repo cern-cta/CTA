@@ -40,6 +40,8 @@ private:
       m_action.execute();
     } catch (std::exception & e) {
       std::cout << e.what() << std::endl;
+    } catch (abi::__forced_unwind&) {
+      throw;
     } catch (...) {
       return -1;
     }
@@ -48,7 +50,7 @@ private:
   cta::objectstore::Action & m_action;
 };
 
-#define USE_PROCESS 1
+#define USE_PROCESS 0
 #if(USE_PROCESS)
   class dummyCleanup: public cta::threading::ChildProcess::Cleanup {
     virtual void operator()() {}
@@ -61,8 +63,11 @@ private:
 
 int main(void){
   try {
+#if USE_RADOS
     myOS os("", "tapetest", "tapetest");
-    //myOS os;
+#else
+    myOS os;
+#endif
     std::cout << "os.path=" << os.path() << " os.user=" << os.user() 
       << "os.pool=" << os.pool() << std::endl;
     // Initialize the root entry

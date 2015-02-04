@@ -91,6 +91,8 @@ void * cta::threading::Thread::pthread_runner (void * arg) {
     }
     free(demangled);
     _this->m_what = e.what();
+  } catch (abi::__forced_unwind&) {
+    throw;
   } catch (...) {
     _this->m_hadException = true;
     _this->m_type = "unknown";

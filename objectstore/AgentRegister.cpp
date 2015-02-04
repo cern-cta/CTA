@@ -11,7 +11,7 @@ ObjectOps<serializers::AgentRegister>(agent.objectStore(), name) {
 void cta::objectstore::AgentRegister::addElement (std::string name, Agent & agent) {
   serializers::AgentRegister rs;
   ContextHandle & context = agent.getFreeContext();
-  lockExclusiveAndRead(rs, context);
+  lockExclusiveAndRead(rs, context, __func__);
   rs.add_elements(name);
   write(rs);
   unlock(context);
@@ -20,7 +20,7 @@ void cta::objectstore::AgentRegister::addElement (std::string name, Agent & agen
 void cta::objectstore::AgentRegister::removeElement (const std::string  & name, Agent & agent) {
   serializers::AgentRegister rs;
   ContextHandle & context = agent.getFreeContext();
-  lockExclusiveAndRead(rs, context);
+  lockExclusiveAndRead(rs, context, __func__);
   bool found;
   do {
     found = false;
@@ -40,7 +40,7 @@ void cta::objectstore::AgentRegister::removeElement (const std::string  & name, 
 void cta::objectstore::AgentRegister::addIntendedElement(std::string name, Agent& agent) {
   serializers::AgentRegister rs;
   ContextHandle & context = agent.getFreeContext();
-  lockExclusiveAndRead(rs, context);
+  lockExclusiveAndRead(rs, context, __func__);
   rs.add_intendedelements(name);
   write(rs);
   unlock(context);
@@ -49,7 +49,7 @@ void cta::objectstore::AgentRegister::addIntendedElement(std::string name, Agent
 void cta::objectstore::AgentRegister::upgradeIntendedElementToActual(std::string name, Agent& agent) {
   serializers::AgentRegister rs;
   ContextHandle & context = agent.getFreeContext();
-  lockExclusiveAndRead(rs, context);
+  lockExclusiveAndRead(rs, context, __func__);
   bool found;
   do {
     found = false;
@@ -71,7 +71,7 @@ void cta::objectstore::AgentRegister::upgradeIntendedElementToActual(std::string
 void cta::objectstore::AgentRegister::removeIntendedElement(const std::string& name, Agent& agent) {
   serializers::AgentRegister rs;
   ContextHandle & context = agent.getFreeContext();
-  lockExclusiveAndRead(rs, context);
+  lockExclusiveAndRead(rs, context, __func__);
   bool found;
   do {
     found = false;
