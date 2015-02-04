@@ -10,6 +10,7 @@ set (CLIENT_LIB_SRC_FILES
   MockClientAPI.cpp
   SecurityIdentity.cpp
   StorageClass.cpp
+  StorageClassAndUsageCount.cpp
   UserIdentity.cpp)
 
 add_library (ctaclient SHARED
