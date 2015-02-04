@@ -25,9 +25,10 @@ cta::DirectoryEntry::DirectoryEntry():
 // constructor
 //------------------------------------------------------------------------------
 cta::DirectoryEntry::DirectoryEntry(const EntryType entryType,
-  const std::string &name):
+  const std::string &name, const std::string &storageClassName):
   entryType(entryType),
   name(name),
   ownerId(0),
-  groupId(0) {
+  groupId(0),
+  storageClassName(storageClassName) {
 }

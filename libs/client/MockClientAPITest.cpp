@@ -431,11 +431,15 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_second_level) {
   TestingMockClientAPI api;
   const SecurityIdentity requester;
 
+  ASSERT_TRUE(api.getDirectoryStorageClass(requester, "/").empty());
+
   {
     const std::string topLevelDirPath = "/grandparent";
 
     ASSERT_NO_THROW(api.createDirectory(requester, topLevelDirPath));
+  }
 
+  {
     DirectoryIterator itor;
 
     ASSERT_NO_THROW(itor = api.getDirectoryContents(requester, "/"));
@@ -449,11 +453,15 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_second_level) {
     ASSERT_EQ(std::string("grandparent"), entry.name);
   }
 
+  ASSERT_TRUE(api.getDirectoryStorageClass(requester, "/grandparent").empty());
+
   {
     const std::string secondLevelDirPath = "/grandparent/parent";
 
     ASSERT_NO_THROW(api.createDirectory(requester, secondLevelDirPath));
+  }
 
+  {
     DirectoryIterator itor;
 
     ASSERT_NO_THROW(itor = api.getDirectoryContents(requester, "/"));
@@ -480,6 +488,8 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_second_level) {
 
     ASSERT_EQ(std::string("parent"), entry.name);
   }
+
+  ASSERT_TRUE(api.getDirectoryStorageClass(requester, "/grandparent/parent").empty());
 }
 
 TEST_F(cta_client_MockClientAPITest, createDirectory_inherit_storage_class) {
@@ -488,11 +498,21 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_inherit_storage_class) {
   TestingMockClientAPI api;
   const SecurityIdentity requester;
 
+  ASSERT_TRUE(api.getDirectoryStorageClass(requester, "/").empty());
+
+  {
+    const std::string name = "TestStorageClass";
+    const uint8_t nbCopies = 2;
+    ASSERT_NO_THROW(api.createStorageClass(requester, name, nbCopies));
+  }
+
   {
     const std::string topLevelDirPath = "/grandparent";
 
     ASSERT_NO_THROW(api.createDirectory(requester, topLevelDirPath));
+  }
 
+  {
     DirectoryIterator itor;
 
     ASSERT_NO_THROW(itor = api.getDirectoryContents(requester, "/"));
@@ -506,13 +526,21 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_inherit_storage_class) {
     ASSERT_EQ(std::string("grandparent"), entry.name);
 
     ASSERT_TRUE(api.getDirectoryStorageClass(requester, "/grandparent").empty());
+
+    ASSERT_NO_THROW(api.setDirectoryStorageClass(requester, "/grandparent",
+      "TestStorageClass"));
   }
+
+  ASSERT_EQ(std::string("TestStorageClass"),
+    api.getDirectoryStorageClass(requester, "/grandparent"));
 
   {
     const std::string secondLevelDirPath = "/grandparent/parent";
 
     ASSERT_NO_THROW(api.createDirectory(requester, secondLevelDirPath));
+  }
 
+  {
     DirectoryIterator itor;
 
     ASSERT_NO_THROW(itor = api.getDirectoryContents(requester, "/"));
@@ -539,6 +567,9 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_inherit_storage_class) {
 
     ASSERT_EQ(std::string("parent"), entry.name);
   }
+
+  ASSERT_EQ(std::string("TestStorageClass"),
+    api.getDirectoryStorageClass(requester, "/grandparent/parent"));
 }
 
 TEST_F(cta_client_MockClientAPITest, deleteDirectory_root) {

@@ -9,7 +9,8 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::MockClientAPI::MockClientAPI():
-  m_fileSystemRoot(DirectoryEntry(DirectoryEntry::ENTRYTYPE_DIRECTORY, "/")) {
+  m_fileSystemRoot(DirectoryEntry(DirectoryEntry::ENTRYTYPE_DIRECTORY, "/", ""))
+  {
 }
 
 //------------------------------------------------------------------------------
@@ -223,7 +224,8 @@ void cta::MockClientAPI::createDirectory(const SecurityIdentity &requester,
     throw Exception("A file or directory already exists with the same name");
   }
 
-  DirectoryEntry dirEntry(DirectoryEntry::ENTRYTYPE_DIRECTORY, dirName);
+  DirectoryEntry dirEntry(DirectoryEntry::ENTRYTYPE_DIRECTORY, dirName,
+    enclosingNode.getEntry().storageClassName);
   enclosingNode.addChild(new FileSystemNode(dirEntry));
 }
 

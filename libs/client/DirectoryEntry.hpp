@@ -76,8 +76,11 @@ struct DirectoryEntry {
    *
    * @param entryType The type of the entry.
    * @param name The name of the directory entry.
+   * @param storageClassName The name of the directory's storage class or an
+   * empty string if the directory does not have a storage class.
    */
-  DirectoryEntry(const EntryType entryType, const std::string &name);
+  DirectoryEntry(const EntryType entryType, const std::string &name,
+    const std::string &storageClassName);
 
 }; // DirectoryEntry
 
