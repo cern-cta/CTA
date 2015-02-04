@@ -488,7 +488,9 @@ void cta::MockClientAPI::splitString(const std::string &str,
 //------------------------------------------------------------------------------
 // setDirectoryStorageClass
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::setDirectoryStorageClass(const std::string &dirPath,
+void cta::MockClientAPI::setDirectoryStorageClass(
+  const SecurityIdentity &requester,
+  const std::string &dirPath,
   const std::string &storageClassName) {
   checkStorageClassExists(storageClassName);
 
@@ -506,6 +508,7 @@ void cta::MockClientAPI::setDirectoryStorageClass(const std::string &dirPath,
 // clearDirectoryStorageClass
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::clearDirectoryStorageClass(
+  const SecurityIdentity &requester,
   const std::string &dirPath) {
   FileSystemNode &dirNode = getFileSystemNode(dirPath);
   if(DirectoryEntry::ENTRYTYPE_DIRECTORY != dirNode.getEntry().entryType) {
@@ -521,6 +524,7 @@ void cta::MockClientAPI::clearDirectoryStorageClass(
 // getDirectoryStorageClass
 //------------------------------------------------------------------------------
 std::string cta::MockClientAPI::getDirectoryStorageClass(
+  const SecurityIdentity &requester,
   const std::string &dirPath) {
   FileSystemNode &dirNode = getFileSystemNode(dirPath);
   if(DirectoryEntry::ENTRYTYPE_DIRECTORY != dirNode.getEntry().entryType) {

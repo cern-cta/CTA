@@ -182,7 +182,7 @@ int XrdProFilesystem::executeChdirclassCommand(const ParsedRequest &req, XrdOucE
     return SFS_DATA;
   }
   try {
-    m_clientAPI->setDirectoryStorageClass(req.args.at(0), req.args.at(1));
+    m_clientAPI->setDirectoryStorageClass(requester, req.args.at(0), req.args.at(1));
     std::ostringstream responseSS;
     responseSS << "[OK] Changed storage class of directory " << req.args.at(0) << " to " << req.args.at(1);
     eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
@@ -214,7 +214,7 @@ int XrdProFilesystem::executeCldirclassCommand(const ParsedRequest &req, XrdOucE
     return SFS_DATA;
   }
   try {
-    m_clientAPI->clearDirectoryStorageClass(req.args.at(0));
+    m_clientAPI->clearDirectoryStorageClass(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Cleared storage class of directory " << req.args.at(0);
     eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
@@ -246,7 +246,7 @@ int XrdProFilesystem::executeGetdirclassCommand(const ParsedRequest &req, XrdOuc
     return SFS_DATA;
   }
   try {
-    std::string stgClass = m_clientAPI->getDirectoryStorageClass(req.args.at(0));
+    std::string stgClass = m_clientAPI->getDirectoryStorageClass(requester, req.args.at(0));
     std::ostringstream responseSS;
     if(stgClass.empty()) {
       responseSS << "[OK] Directory " << req.args.at(0) << " does not have a storage class";      
