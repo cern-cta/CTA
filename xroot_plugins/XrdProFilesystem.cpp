@@ -27,7 +27,7 @@ int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eIn
   if(!client || !client->host || strncmp(client->host, "localhost", 9))
   {
     std::string response = "[ERROR] operation possible only from localhost";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   struct passwd pwd;
@@ -42,7 +42,7 @@ int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eIn
   if(buf == NULL)
   {
     std::string response = "[ERROR] malloc of the buffer failed";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     free(buf);
     return SFS_DATA;
   }
@@ -54,14 +54,14 @@ int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eIn
       std::string response = "[ERROR] User ";
       response += client->name;
       response += " not found";
-      eInfo.setErrInfo(response.length(), response.c_str());
+      eInfo.setErrInfo(response.length()+1, response.c_str());
       free(buf);
       return SFS_DATA;
     }
     else
     {
       std::string response = "[ERROR] getpwnam_r failed";
-      eInfo.setErrInfo(response.length(), response.c_str());
+      eInfo.setErrInfo(response.length()+1, response.c_str());
       free(buf);
       return SFS_DATA;
     }
@@ -87,7 +87,7 @@ int XrdProFilesystem::parseRequest(const XrdSfsFSctl &args, ParsedRequest &req, 
   }
   if(req.cmd.empty()) {
     std::string response = "[ERROR] No command supplied";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   return SFS_OK;
@@ -99,7 +99,7 @@ int XrdProFilesystem::parseRequest(const XrdSfsFSctl &args, ParsedRequest &req, 
 int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() < 2) {
     std::string response = "[ERROR] Too few arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
@@ -117,21 +117,21 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
     responseSS << "[OK] To the following directory:\n";
     responseSS << "[OK]\t" << destinationPath << "\n";
     responseSS << "[OK] JobID: " << jobID;
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -142,7 +142,7 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
 int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
@@ -153,21 +153,21 @@ int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrI
     m_clientAPI->createStorageClass(requester, req.args.at(0), numberOfCopies);
     std::ostringstream responseSS;
     responseSS << "[OK] Created storage class " << req.args.at(0) << " with " << req.args.at(1) << " tape copies";
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -178,28 +178,28 @@ int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrI
 int XrdProFilesystem::executeChdirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
     m_clientAPI->setDirectoryStorageClass(requester, req.args.at(0), req.args.at(1));
     std::ostringstream responseSS;
     responseSS << "[OK] Changed storage class of directory " << req.args.at(0) << " to " << req.args.at(1);
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -210,28 +210,28 @@ int XrdProFilesystem::executeChdirclassCommand(const ParsedRequest &req, XrdOucE
 int XrdProFilesystem::executeCldirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
     m_clientAPI->clearDirectoryStorageClass(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Cleared storage class of directory " << req.args.at(0);
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -242,7 +242,7 @@ int XrdProFilesystem::executeCldirclassCommand(const ParsedRequest &req, XrdOucE
 int XrdProFilesystem::executeGetdirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
@@ -259,16 +259,16 @@ int XrdProFilesystem::executeGetdirclassCommand(const ParsedRequest &req, XrdOuc
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -279,28 +279,28 @@ int XrdProFilesystem::executeGetdirclassCommand(const ParsedRequest &req, XrdOuc
 int XrdProFilesystem::executeRmclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
     m_clientAPI->deleteStorageClass(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Storage class " << req.args.at(0) << " deleted";
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -311,7 +311,7 @@ int XrdProFilesystem::executeRmclassCommand(const ParsedRequest &req, XrdOucErrI
 int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 0) {
     std::string response = "[ERROR] Wrong number of arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
@@ -321,21 +321,21 @@ int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrI
     for(std::list<cta::StorageClass>::iterator it = stgList.begin(); it != stgList.end(); it++) {
       responseSS << "\n" << it->name << " " << it->nbCopies;
     }
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -346,28 +346,28 @@ int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrI
 int XrdProFilesystem::executeMkdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
     m_clientAPI->createDirectory(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Directory " << req.args.at(0) << " created";
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -378,28 +378,28 @@ int XrdProFilesystem::executeMkdirCommand(const ParsedRequest &req, XrdOucErrInf
 int XrdProFilesystem::executeRmdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
     m_clientAPI->deleteDirectory(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Directory " << req.args.at(0) << " removed";
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -410,7 +410,7 @@ int XrdProFilesystem::executeRmdirCommand(const ParsedRequest &req, XrdOucErrInf
 int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
@@ -436,21 +436,21 @@ int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &
       responseSS << " ";
       responseSS << entry.name;
     }
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -461,7 +461,7 @@ int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &
 int XrdProFilesystem::executeMkadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
@@ -471,21 +471,21 @@ int XrdProFilesystem::executeMkadminuserCommand(const ParsedRequest &req, XrdOuc
     m_clientAPI->createAdminUser(requester, adminUser);
     std::ostringstream responseSS;
     responseSS << "[OK] Admin user with uid " << req.args.at(0) << " and gid " << req.args.at(1) << " created";
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -496,7 +496,7 @@ int XrdProFilesystem::executeMkadminuserCommand(const ParsedRequest &req, XrdOuc
 int XrdProFilesystem::executeRmadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
@@ -508,21 +508,21 @@ int XrdProFilesystem::executeRmadminuserCommand(const ParsedRequest &req, XrdOuc
     m_clientAPI->deleteAdminUser(requester, adminUser);
     std::ostringstream responseSS;
     responseSS << "[OK] Admin user with uid " << req.args.at(0) << " and gid " << req.args.at(1) << " deleted";
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -533,7 +533,7 @@ int XrdProFilesystem::executeRmadminuserCommand(const ParsedRequest &req, XrdOuc
 int XrdProFilesystem::executeLsadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 0) {
     std::string response = "[ERROR] Wrong number of arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
@@ -543,21 +543,21 @@ int XrdProFilesystem::executeLsadminuserCommand(const ParsedRequest &req, XrdOuc
     for(std::list<cta::UserIdentity>::iterator it = userIdList.begin(); it != userIdList.end(); it++) {
       responseSS << "\n" << it->uid << " " << it->gid;
     }
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -568,28 +568,28 @@ int XrdProFilesystem::executeLsadminuserCommand(const ParsedRequest &req, XrdOuc
 int XrdProFilesystem::executeMkadminhostCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
     m_clientAPI->createAdminHost(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Admin host " << req.args.at(0) << " created";
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -600,28 +600,28 @@ int XrdProFilesystem::executeMkadminhostCommand(const ParsedRequest &req, XrdOuc
 int XrdProFilesystem::executeRmadminhostCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
     m_clientAPI->deleteAdminHost(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Admin host " << req.args.at(0) << " removed";
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -632,7 +632,7 @@ int XrdProFilesystem::executeRmadminhostCommand(const ParsedRequest &req, XrdOuc
 int XrdProFilesystem::executeLsadminhostCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
   if(req.args.size() != 0) {
     std::string response = "[ERROR] Wrong number of arguments provided";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
@@ -642,21 +642,21 @@ int XrdProFilesystem::executeLsadminhostCommand(const ParsedRequest &req, XrdOuc
     for(std::list<std::string>::iterator it = hostList.begin(); it != hostList.end(); it++) {
       responseSS << "\n" << *it;
     }
-    eInfo.setErrInfo(responseSS.str().length(), responseSS.str().c_str());
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (std::exception &ex) {
     std::string response = "[ERROR] Exception caught: ";
     response += ex.what();
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   } catch (...) {
     std::string response = "[ERROR] Unknown exception caught!";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -737,7 +737,7 @@ int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eI
   else
   {
     std::string response = "[ERROR] Unknown command received";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
@@ -759,7 +759,7 @@ int XrdProFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
   else
   {
     std::string response = "[ERROR] Unknown query request received";
-    eInfo.setErrInfo(response.length(), response.c_str());
+    eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
 }
