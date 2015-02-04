@@ -2,6 +2,8 @@
 
 #include "ClientAPI.hpp"
 #include "FileSystemNode.hpp"
+#include "StorageClass.hpp"
+#include "StorageClassAndUsageCount.hpp"
 
 #include <map>
 #include <vector>
@@ -227,9 +229,10 @@ protected:
   std::list<std::string> m_adminHosts;
 
   /**
-   * The current mapping from storage class name to storage classes.
+   * The current mapping from storage class names to storage classes and their
+   * usage counts.
    */
-  std::map<std::string, StorageClass> m_storageClasses;
+  std::map<std::string, StorageClassAndUsageCount> m_storageClasses;
 
   /**
    * The root node of the file-system.
@@ -376,6 +379,14 @@ protected:
    */
   void splitString(const std::string &str, const char separator,
     std::vector<std::string> &result) const throw();
+
+  /**
+   * Increments the usage count of the specified storage class.
+   *
+   * @param name The name of the storage class.  If this parameter is set to the
+   * empty string then this method does nothing.
+   */
+  void incStorageClassUsageCount(const std::string &name);
 
 }; // class MockClientAPI
 

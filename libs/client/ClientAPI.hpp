@@ -12,7 +12,7 @@
 namespace cta {
 
 /**
- * Abstract class that specifies the client ClientAPI of the CERN Tape Archive
+ * Abstract class that specifies the client API of the CERN Tape Archive
  * project.
  */
 class ClientAPI {
