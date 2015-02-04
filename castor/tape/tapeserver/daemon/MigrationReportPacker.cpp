@@ -202,6 +202,14 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
 
   if(!reportPacker.m_errorHappened){
     tapeserver::client::ClientInterface::RequestReport chrono;
+    // We can receive double flushes when the periodic flush happens
+    // right before the end of session (which triggers also a flush)
+    // We refrain from sending an empty report to the client in this case.
+    if (0 == reportPacker.m_listReports->successfulMigrations().size() +
+             reportPacker.m_listReports->failedMigrations().size()) {
+      reportPacker.m_lc.log(LOG_INFO,"Received a flush report from tape, but had no file to report to client. Doing nothing.");
+      return;
+    }
     try{
 
       computeCompressedSize(reportPacker.m_listReports->successfulMigrations().begin(),
