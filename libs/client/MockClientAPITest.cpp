@@ -339,6 +339,49 @@ TEST_F(cta_client_MockClientAPITest, deleteStorageClass_existing) {
   }
 }
 
+TEST_F(cta_client_MockClientAPITest, deleteStorageClass_in_use) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<StorageClass> storageClasses;
+    ASSERT_NO_THROW(storageClasses = api.getStorageClasses(requester));
+    ASSERT_TRUE(storageClasses.empty());
+  }
+
+  const std::string name = "TestStorageClass";
+  const uint8_t nbCopies = 2;
+  ASSERT_NO_THROW(api.createStorageClass(requester, name, nbCopies));
+
+  {
+    std::list<StorageClass> storageClasses;
+    ASSERT_NO_THROW(storageClasses = api.getStorageClasses(requester));
+    ASSERT_EQ(1, storageClasses.size());
+
+    StorageClass storageClass;
+    ASSERT_NO_THROW(storageClass = storageClasses.front());
+    ASSERT_EQ(name, storageClass.name);
+    ASSERT_EQ(nbCopies, storageClass.nbCopies);
+  }
+
+  ASSERT_NO_THROW(api.setDirectoryStorageClass(requester, "/", name));
+
+  ASSERT_THROW(api.deleteStorageClass(requester, name), std::exception);
+
+  {
+    std::list<StorageClass> storageClasses;
+    ASSERT_NO_THROW(storageClasses = api.getStorageClasses(requester));
+    ASSERT_EQ(1, storageClasses.size());
+
+    StorageClass storageClass;
+    ASSERT_NO_THROW(storageClass = storageClasses.front());
+    ASSERT_EQ(name, storageClass.name);
+    ASSERT_EQ(nbCopies, storageClass.nbCopies);
+  }
+}
+
 TEST_F(cta_client_MockClientAPITest, deleteStorageClass_non_existing) {
   using namespace cta;
 

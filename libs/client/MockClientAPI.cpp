@@ -163,6 +163,7 @@ void cta::MockClientAPI::deleteStorageClass(const SecurityIdentity &requester,
   const std::string &name) {
   try {
     checkStorageClassExists(name);
+    checkStorageClassIsNotInUse(name);
     m_storageClasses.erase(name);
   } catch(std::exception &ex) {
     throw Exception(std::string("Failed to delete storage class: ") +
@@ -183,6 +184,13 @@ void cta::MockClientAPI::checkStorageClassExists(
     throw Exception(msg.str());
   }
 } 
+
+//------------------------------------------------------------------------------
+// checkStorageClassIsNotInUse
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::checkStorageClassIsNotInUse(
+  const std::string &name) const {
+}
 
 //------------------------------------------------------------------------------
 // getStorageClasses

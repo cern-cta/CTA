@@ -265,6 +265,13 @@ protected:
   void checkStorageClassExists(const std::string &name) const;
 
   /**
+   * Throws an exception if the specified storage class is use.
+   *
+   * @param name The name of the storage class.
+   */
+  void checkStorageClassIsNotInUse(const std::string &name) const;
+
+  /**
    * Throws an exception if the specified absolute path constains a
    * syntax error.
    *
