@@ -156,29 +156,40 @@ public:
   /**
    * Sets the storage class of the specified directory to the specified value.
    *
+   * @param requester The identity of the user requesting the setting of the
+   * directory's storage class.
    * @param dirPath The absolute path of the directory.
    * @param storageClassName The name of the storage class.
    */
-  void setDirectoryStorageClass(const std::string &dirPath, 
+  void setDirectoryStorageClass(
+    const SecurityIdentity &requester,
+    const std::string &dirPath,
     const std::string &storageClassName);
 
   /**
    * Clears the storage class of the specified directory.
    *
+   * @param requester The identity of the user requesting the storage class of
+   * the directory to be cleared.
    * @param dirPath The absolute path of the directory.
-   * @param storageClassName The name of the storage class.
    */
-  void clearDirectoryStorageClass(const std::string &dirPath);
+  void clearDirectoryStorageClass(
+    const SecurityIdentity &requester,
+    const std::string &dirPath);
 
   /**
    * Gets the storage class if of the specified directory if the directory has
    * one.
    *
+   * @param requester The identity of the user requesting the storage class of
+   * the directory.
    * @param dirPath The absolute path of the directory.
    * @return The name of the storage class if the directory has one, else an
    * empty string.
    */
-  std::string getDirectoryStorageClass(const std::string &dirPath);
+  std::string getDirectoryStorageClass(
+    const SecurityIdentity &requester,
+    const std::string &dirPath);
 
   /**
    * Archives the specified list of source files to the specified destination
@@ -221,11 +232,6 @@ protected:
   std::map<std::string, StorageClass> m_storageClasses;
 
   /**
-   * The current mapping from absolute file path to directory entry.
-   */
-  std::map<std::string, DirectoryEntry> m_directoryEntries;
-
-  /**
    * The root node of the file-system.
    */
   FileSystemNode m_fileSystemRoot;
@@ -257,6 +263,13 @@ protected:
    * @param name The name of the storage class.
    */
   void checkStorageClassExists(const std::string &name) const;
+
+  /**
+   * Throws an exception if the specified storage class is use.
+   *
+   * @param name The name of the storage class.
+   */
+  void checkStorageClassIsNotInUse(const std::string &name) const;
 
   /**
    * Throws an exception if the specified absolute path constains a
@@ -302,13 +315,6 @@ protected:
    * @param path The path.
    */
   void checkPathDoesContainConsecutiveSlashes(const std::string &path) const;
-
-  /**
-   * Throws an exception if the specified absolute path already exists.
-   *
-   * @param path The absolute path.
-   */
-  void checkAbsolutePathDoesNotAlreadyExist(const std::string &path) const;
 
   /**
    * Returns the path of the enclosing directory of the specified path.

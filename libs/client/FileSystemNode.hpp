@@ -30,6 +30,25 @@ public:
   ~FileSystemNode() throw();
 
   /**
+   * Gets the parent of this node or throiws an exception if this node does not
+   * have a parent.
+   */
+  FileSystemNode &getParent();
+
+  /**
+   * Gets the parent of this node or throiws an exception if this node does not
+   * have a parent.
+   */
+  const FileSystemNode &getParent() const;
+
+  /**
+   * Returns the description of this node in the form of a DirectoryEntry.
+   *
+   * @return The description of this node in the form of a DirectoryEntry.
+   */
+  DirectoryEntry &getEntry() throw();
+
+  /**
    * Returns the description of this node in the form of a DirectoryEntry.
    *
    * @return The description of this node in the form of a DirectoryEntry.
@@ -48,9 +67,19 @@ public:
   /**
    * Adds the specified node to the children of this node.
    *
+   * This method takes ownership of the specified node even in the event of the
+   * method throwing an exception.
+   *
    * @param node The node to be added.
    */
-  void addChild(const FileSystemNode *child);
+  void addChild(FileSystemNode *const child);
+
+  /**
+   * Returns true if this node has at least one child.
+   *
+   * @return True if this node has at least one child.
+   */
+  bool hasAtLeastOneChild() const;
 
   /**
    * Returns true if the specified child node exists.
@@ -62,15 +91,31 @@ public:
 
   /**
    * Gets the child file-system node corresponding to the specified name.
+   *
+   * @param name The name of the child node.
    */
   FileSystemNode &getChild(const std::string &name);
 
   /**
    * Gets the child file-system node corresponding to the specified name.
+   *
+   * @param name The name of the child node.
    */
   const FileSystemNode &getChild(const std::string &name) const;
 
+  /**
+   * Deletes the child with the specified name.
+   *
+   * @param name The name of the child node.
+   */
+  void deleteChild(const std::string &name);
+
 protected:
+
+  /**
+   * Pointer to the parent of this node.
+   */
+  FileSystemNode *m_parent;
 
   /**
    * The description of the node in the form of a DirectoryEntry.

@@ -154,29 +154,40 @@ public:
   /**
    * Sets the storage class of the specified directory to the specified value.
    *
+   * @param requester The identity of the user requesting the setting of the
+   * directory's storage class.
    * @param dirPath The absolute path of the directory.
    * @param storageClassName The name of the storage class.
    */
-  virtual void setDirectoryStorageClass(const std::string &dirPath,
+  virtual void setDirectoryStorageClass(
+    const SecurityIdentity &requester,
+    const std::string &dirPath,
     const std::string &storageClassName) = 0;
 
   /**
    * Clears the storage class of the specified directory.
    *
+   * @param requester The identity of the user requesting the storage class of
+   * the directory to be cleared.
    * @param dirPath The absolute path of the directory.
-   * @param storageClassName The name of the storage class.
    */
-  virtual void clearDirectoryStorageClass(const std::string &dirPath) = 0;
+  virtual void clearDirectoryStorageClass(
+    const SecurityIdentity &requester,
+    const std::string &dirPath) = 0;
 
   /**
    * Gets the storage class if of the specified directory if the directory has
    * one.
    *
+   * @param requester The identity of the user requesting the storage class of
+   * the directory.
    * @param dirPath The absolute path of the directory.
    * @return The name of the storage class if the directory has one, else an
    * empty string.
    */
-  virtual std::string getDirectoryStorageClass(const std::string &dirPath) = 0;
+  virtual std::string getDirectoryStorageClass(
+    const SecurityIdentity &requester,
+    const std::string &dirPath) = 0;
 
   /**
    * Archives the specified list of source files to the specified destination
