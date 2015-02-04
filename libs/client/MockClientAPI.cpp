@@ -147,7 +147,7 @@ void cta::MockClientAPI::createStorageClass(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::checkStorageClassDoesNotAlreadyExist(
   const std::string &name) const {
-  std::map<std::string, StorageClass>::const_iterator itor = 
+  std::map<std::string, StorageClassAndUsageCount>::const_iterator itor = 
     m_storageClasses.find(name);
   if(itor != m_storageClasses.end()) {
     std::ostringstream msg;
@@ -176,7 +176,7 @@ void cta::MockClientAPI::deleteStorageClass(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::checkStorageClassExists(
   const std::string &name) const {
-  std::map<std::string, StorageClass>::const_iterator itor =
+  std::map<std::string, StorageClassAndUsageCount>::const_iterator itor =
     m_storageClasses.find(name);
   if(itor == m_storageClasses.end()) {
     std::ostringstream msg;
@@ -190,6 +190,19 @@ void cta::MockClientAPI::checkStorageClassExists(
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::checkStorageClassIsNotInUse(
   const std::string &name) const {
+  std::map<std::string, StorageClassAndUsageCount>::const_iterator itor =
+    m_storageClasses.find(name);
+
+  // If the storage class does not exists then it cannot be in use
+  if(itor == m_storageClasses.end()) {
+    return;
+  }
+
+  if(itor->second.getUsageCount() > 0) {
+    std::ostringstream message;
+    message << "Storage class " << name << " is in use";
+    throw Exception(message.str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -198,9 +211,9 @@ void cta::MockClientAPI::checkStorageClassIsNotInUse(
 std::list<cta::StorageClass> cta::MockClientAPI::getStorageClasses(
   const SecurityIdentity &requester) const {
   std::list<StorageClass> storageClasses;
-  for(std::map<std::string, StorageClass>::const_iterator itor =
+  for(std::map<std::string, StorageClassAndUsageCount>::const_iterator itor =
     m_storageClasses.begin(); itor != m_storageClasses.end(); itor++) {
-    storageClasses.push_back(itor->second);
+    storageClasses.push_back(itor->second.getStorageClass());
   }
   return storageClasses;
 }
@@ -392,6 +405,28 @@ const cta::FileSystemNode &cta::MockClientAPI::getFileSystemNode(
     node = &node->getChild(*itor);
   }
   return *node;
+}
+
+//------------------------------------------------------------------------------
+// incStorageClassUsageCount
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::incStorageClassUsageCount(const std::string &name) {
+  // If no storage class has been specified then there is no usage count to
+  // increment
+  if(name.empty()) {
+    return;
+  }
+
+  std::map<std::string, StorageClassAndUsageCount>::iterator itor =
+    m_storageClasses.find(name);
+
+  if(itor == m_storageClasses.end()) {
+    std::ostringstream message;
+    message << "Storage class " << name << " does not exist";
+    throw Exception(message.str());
+  }
+
+  itor->second.incUsageCount();
 }
 
 //------------------------------------------------------------------------------

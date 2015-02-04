@@ -36,7 +36,7 @@ public:
   FileSystemNode &getParent();
 
   /**
-   * Gets the parent of this node or throiws an exception if this node does not
+   * Gets the parent of this node or throws an exception if this node does not
    * have a parent.
    */
   const FileSystemNode &getParent() const;
