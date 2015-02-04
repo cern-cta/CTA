@@ -1324,7 +1324,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setBulkFileRecallResult 
       pathes.push_back((*s)->path());
       checksumNames.push_back((*s)->checksumName());
       checksums.push_back(occiNumber((*s)->checksum()));
-                          fileSizes.push_back(occiNumber((*s)->fileSize()));
+      fileSizes.push_back(occiNumber((*s)->fileSize()));
       errorCodes.push_back(0);
       errorMessages.push_back(std::string(""));
     }
@@ -1336,6 +1336,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setBulkFileRecallResult 
       fileIds.push_back(occiNumber((*f)->fileid()));
       fileTransactionIds.push_back(occiNumber((*f)->fileTransactionId()));
       fSeqs.push_back(occiNumber((*f)->fseq()));
+      pathes.push_back(std::string(""));
       checksumNames.push_back(std::string(""));
       checksums.push_back(0);
       fileSizes.push_back(0);
