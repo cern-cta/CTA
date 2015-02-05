@@ -38,9 +38,8 @@ public:
       try {
         if(!m_writeDone)
           m_fifo.unlock(m_ctx);
-      } catch (abi::__forced_unwind&) {
-            throw;
-      } catch (...) {}
+      } catch (std::exception&) {
+      } catch (...) {throw;}
     }
     
     std::string peek() {

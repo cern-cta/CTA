@@ -69,9 +69,8 @@ public:
     ~ScopedIntent() {
       try {
         removeFromIntent();
-      } catch (abi::__forced_unwind &) {
-        throw;
-      } catch (...) {}
+      } catch (std::exception &) {
+      } catch (...) {throw;}
     }
   private:
     Agent & m_agent;
@@ -96,9 +95,8 @@ public:
     ~ScopedOwnership() {
       try {
         removeFromOwnership();
-      } catch (abi::__forced_unwind &) {
-        throw;
-      } catch (...) {}
+      } catch (std::exception &) {
+      } catch (...) {throw;}
     }
   private:
     Agent & m_agent;

@@ -39,8 +39,6 @@ private:
       m_action.execute();
     } catch (std::exception & e) {
       std::cout << e.what() << std::endl;
-    } catch (abi::__forced_unwind&) {
-      throw;
     } catch (...) {
       return -1;
     }
@@ -128,35 +126,35 @@ int main(void){
       recallJobs.back()->start(dc);
     }
     usleep (100*1000);
-//    struct random_data seed;
-//    char seedStr[]="1234";
-//    initstate_r(1,seedStr, sizeof(seedStr), &seed);
-//    while(recallFIFO.size(self)) {
-//      // Kill a recaller, start another one
-//      int32_t ranInt;
-//      random_r(&seed, &ranInt);
-//      size_t i = floor(1.0 * ranInt / RAND_MAX * recallJobs.size());
-//      if (i >= recallJobs.size()) i= recallJobs.size() - 1;
-//      // Kill the job
-//      recallJobs[i]->kill();
-//      recallJobs[i]->wait();
-//      delete recallJobs[i];
-//      recallJobs.erase(recallJobs.begin() + i);
-//      delete recallActions[i];
-//      recallActions.erase(recallActions.begin() + i);
-//      delete recallAgents[i];
-//      recallAgents.erase(recallAgents.begin() + i);
-//      delete recallObjectStores[i];
-//      recallObjectStores.erase(recallObjectStores.begin() + i);
-//      // start a new one
-//      i = recallJobs.size();
-//      // Prepare the object stores and agents for the recaller
-//      recallObjectStores.push_back(new myOS(os.path(), os.user(), os.pool()));
-//      recallAgents.push_back(new cta::objectstore::Agent(*recallObjectStores[i]));
-//      recallActions.push_back(new cta::objectstore::Recaller(*recallAgents[i], recallerNumber++));
-//      recallJobs.push_back(new jobExecutor(*recallActions[i]));
-//      recallJobs.back()->start(dc);
-//    }
+    struct random_data seed;
+    char seedStr[]="1234";
+    initstate_r(1,seedStr, sizeof(seedStr), &seed);
+    while(recallFIFO.size(self)) {
+      // Kill a recaller, start another one
+      int32_t ranInt;
+      random_r(&seed, &ranInt);
+      size_t i = floor(1.0 * ranInt / RAND_MAX * recallJobs.size());
+      if (i >= recallJobs.size()) i= recallJobs.size() - 1;
+      // Kill the job
+      recallJobs[i]->kill();
+      recallJobs[i]->wait();
+      delete recallJobs[i];
+      recallJobs.erase(recallJobs.begin() + i);
+      delete recallActions[i];
+      recallActions.erase(recallActions.begin() + i);
+      delete recallAgents[i];
+      recallAgents.erase(recallAgents.begin() + i);
+      delete recallObjectStores[i];
+      recallObjectStores.erase(recallObjectStores.begin() + i);
+      // start a new one
+      i = recallJobs.size();
+      // Prepare the object stores and agents for the recaller
+      recallObjectStores.push_back(new myOS(os.path(), os.user(), os.pool()));
+      recallAgents.push_back(new cta::objectstore::Agent(*recallObjectStores[i]));
+      recallActions.push_back(new cta::objectstore::Recaller(*recallAgents[i], recallerNumber++));
+      recallJobs.push_back(new jobExecutor(*recallActions[i]));
+      recallJobs.back()->start(dc);
+    }
     // wait for FIFO to be empty
     while (recallFIFO.size(self)) {
       usleep (100 * 1000);

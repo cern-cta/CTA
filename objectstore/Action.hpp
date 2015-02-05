@@ -65,7 +65,8 @@ public:
     RootEntry re(m_agent);
     JobPool jp(re.getJobPool(m_agent), m_agent);
     FIFO fifo(jp.getRecallFIFO(m_agent), m_agent);
-    std::cout << name.str() << " starting" << std::endl; 
+    std::cout << name.str() << " starting" << std::endl;
+    cta::utils::Timer timeout;
     while (true) {
       try {
         m_agent.heartbeat(m_agent);
@@ -74,6 +75,7 @@ public:
         std::string rjName = tr.peek();
         m_agent.addToOwnership(rjName, serializers::RecallJob_t);
         tr.popAndUnlock();
+        timeout.reset();
         RecallJob rj(rjName, m_agent);
         // Sleep on it for a while
         usleep(100 * 1000);
@@ -85,26 +87,10 @@ public:
         rj.remove();
         m_agent.removeFromOwnership(rjName, serializers::RecallJob_t);
       } catch (FIFO::FIFOEmpty &) {
-        cta::utils::Timer timeout;
-        bool somethingMore = false;
-        while (timeout.secs() < 1.0) {
-          try {
-            if (fifo.size(m_agent) > 0) {
-              somethingMore = true;
-              break;
-            } else {
-              usleep (100 * 1000);
-            }
-          } catch (abi::__forced_unwind&) {
-            throw;
-          } catch (...) {}
-        }
-        if (somethingMore) continue;
-        std::cout << name.str() << " complete: FIFO empty" << std::endl;
-        break; 
-      } catch (abi::__forced_unwind&) {
-        throw;
-      } catch (...) {}
+        if (timeout.secs() > 1.0) break;
+        usleep(100 * 1000);
+      } catch (std::exception&) {
+      }
     }
   }
 
@@ -181,7 +167,7 @@ public:
                 
 private:
   Agent & m_agent;
-  void collectGarbage(const std::string & agentName) {
+  void collectGarbage(const std::string & agentName)  {
     // When collecting the garbage of an agent, we have to iterate through its
     // intended and owned objects, validate that they still exist, are owned by 
     // the dead agent, and re-post them to the container where they should be.
@@ -195,9 +181,8 @@ private:
         JobPool jp(re.getJobPool(m_agent), m_agent);
         FIFO rf(jp.getRecallFIFO(m_agent), m_agent);
         std::cout << rf.dump(m_agent) << std::endl;
-      } catch (abi::__forced_unwind&) {
-        throw;
-      } catch (...) {}
+      } catch (std::exception&) {
+      } 
       AgentVisitor ag(agentName, m_agent);
       std::list<AgentVisitor::intentEntry> intendedObjects = ag.getIntentLog(m_agent);
       for (std::list<AgentVisitor::intentEntry>::iterator i=intendedObjects.begin();
@@ -211,9 +196,7 @@ private:
             std::string jopPoolName;
             try {
               jopPoolName = re.getJobPool(m_agent);
-            } catch (abi::__forced_unwind&) {
-              throw;
-            } catch (...) {
+            } catch (std::exception&) {
               // If we cannot find a reference to any job pool, then
               // this one is not referenced
               m_agent.objectStore().remove(i->name);
@@ -232,9 +215,7 @@ private:
             try {
               JobPool jp(re.getJobPool(m_agent), m_agent);
               recallFIFOName = jp.getRecallFIFO(m_agent);
-            } catch (abi::__forced_unwind&) {
-              throw;
-            } catch (...) {
+            } catch (std::exception&) {
               // If we cannot find a reference to any recall FIFO, then
               // this one is not referenced
               m_agent.objectStore().remove(i->name);
@@ -278,12 +259,10 @@ private:
         JobPool jp(re.getJobPool(m_agent), m_agent);
         FIFO rf(jp.getRecallFIFO(m_agent), m_agent);
         std::cout << rf.dump(m_agent) << std::endl;
-      } catch (abi::__forced_unwind&) {
-        throw;
-      } catch (...) {}
-    } catch (abi::__forced_unwind&) {
-            throw;
-    } catch (...) {}
+      } catch (std::exception&) {
+      }
+    } catch (std::exception&) {
+    }
   }
 };
 

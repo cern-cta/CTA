@@ -9,9 +9,8 @@ void cta::objectstore::RootEntry::init(ObjectStore & os) {
   try {
     os.read(s_rootEntryName);
     throw cta::exception::Exception("In RootEntry::init: root entry already exists");
-  } catch (abi::__forced_unwind&) {
-    throw;
-  } catch (...) {}
+  } catch (std::exception&) {
+  }
   serializers::RootEntry res;
   os.create(s_rootEntryName, res.SerializeAsString());
 }

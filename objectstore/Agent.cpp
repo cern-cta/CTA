@@ -82,9 +82,8 @@ cta::objectstore::Agent::~Agent() {
       RootEntry re(*this);
       AgentRegister ar(re.getAgentRegister(*this), *this);
       ar.removeElement(selfName(),*this);
-    } catch (abi::__forced_unwind&) {
-      throw;
-    } catch (...) {}
+    } catch (std::exception&) {
+    }
   }
 }
 
