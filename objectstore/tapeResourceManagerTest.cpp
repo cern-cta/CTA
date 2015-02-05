@@ -6,7 +6,6 @@
 #include "ObjectStoreChoice.hpp"
 #include "RootEntry.hpp"
 #include "Action.hpp"
-#include "ContextHandle.hpp"
 #include "ObjectStructureDumper.hpp"
 #include "JobPool.hpp"
 #include "AgentRegister.hpp"
@@ -76,7 +75,7 @@ int main(void){
     // Create our own agent representation
     cta::objectstore::Agent self(os, "masterProcess");
     self.create();
-    cta::objectstore::ContextHandleImplementation<myOS> ctx;
+    cta::objectstore::ContextHandle ctx;
     // Dump the structure
     cta::objectstore::ObjectStrucutreDumper osd;
     std::cout << osd.dump(self) << std::endl;
@@ -158,7 +157,11 @@ int main(void){
 //      recallJobs.push_back(new jobExecutor(*recallActions[i]));
 //      recallJobs.back()->start(dc);
 //    }
-    // wait for completion of all processes
+    // wait for FIFO to be empty
+    while (recallFIFO.size(self)) {
+      usleep (100 * 1000);
+    }
+
     while (recallJobs.size()) {
       // Wait for completion the job
       recallJobs.back()->wait();
@@ -173,7 +176,9 @@ int main(void){
     }
     
     injectorProcess.wait();
+    gcProcess.kill();
     gcProcess.wait();
+    gcAgent.flushContexts();
     
     // And see the state or affairs
     std::cout << osd.dump(self) << std::endl;

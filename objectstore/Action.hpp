@@ -72,21 +72,26 @@ public:
         // Pop a job from the FIFO
         FIFO::Transaction tr = fifo.startTransaction(m_agent);
         std::string rjName = tr.peek();
-        m_agent.addToOwnership(tr.peek(), serializers::RecallJob_t);
+        m_agent.addToOwnership(rjName, serializers::RecallJob_t);
         tr.popAndUnlock();
         RecallJob rj(rjName, m_agent);
         // Sleep on it for a while
         usleep(100 * 1000);
         // Log the deletion
         std::cout << "RecallJob " << rj.source(m_agent) << " => " 
-                  << rj.destination(m_agent) << " is done" << std::endl;
+                  << rj.destination(m_agent) << " is done by recaller " 
+                  << m_number << " (tid=" << syscall(SYS_gettid) << ")" 
+                  << std::endl;
         rj.remove();
+        m_agent.removeFromOwnership(rjName, serializers::RecallJob_t);
       } catch (FIFO::FIFOEmpty &) {
         cta::utils::Timer timeout;
+        bool somethingMore = false;
         while (timeout.secs() < 1.0) {
           try {
             if (fifo.size(m_agent) > 0) {
-              continue;
+              somethingMore = true;
+              break;
             } else {
               usleep (100 * 1000);
             }
@@ -94,6 +99,7 @@ public:
             throw;
           } catch (...) {}
         }
+        if (somethingMore) continue;
         std::cout << name.str() << " complete: FIFO empty" << std::endl;
         break; 
       }
@@ -141,21 +147,30 @@ public:
           i++;
         }
       }
-      // On a second pass, check that we are acquaint with all processes
+      // On a second pass, check that we are acquainted with all processes
       for (std::list<std::string>::iterator i=agentNames.begin(); 
            i != agentNames.end(); i++) {
         if(watchdogs.find(*i) == watchdogs.end()) {
-          watchdogs[*i] = new AgentWatchdog(*i, m_agent);
+          try {
+            watchdogs[*i] = new AgentWatchdog(*i, m_agent);
+          } catch ( cta::exception::Exception & ) {}
         }
       }
       // And now check the heartbeats of the agents
       for (std::map<std::string, AgentWatchdog *>::iterator i=watchdogs.begin();
           i != watchdogs.end();) {
-        if (!i->second->checkAlive(m_agent)) {
-          collectGarbage(i->first);
+        try {
+          if (!i->second->checkAlive(m_agent)) {
+            collectGarbage(i->first);
+            delete i->second;
+            // The post-increment returns the iterator to erase, 
+            // but sets i to the next value, which will remain valid.
+            watchdogs.erase(i++);
+          } else {
+            i++;
+          }
+        } catch ( cta::exception::Exception & ) {
           delete i->second;
-          // The post-increment returns the iterator to erase, 
-          // but sets i to the next value, which will remain valid.
           watchdogs.erase(i++);
         }
       }
@@ -169,7 +184,18 @@ private:
     // intended and owned objects, validate that they still exist, are owned by 
     // the dead agent, and re-post them to the container where they should be.
     try {
+      std::cout << "In garbage collector, found a dead agent: " << agentName << std::endl;
       // If the agent entry does not exist anymore, we're done.
+      // print the recall FIFO
+      std::cout << "FIFO before garbage collection:" << std::endl;
+      try {
+        RootEntry re(m_agent);
+        JobPool jp(re.getJobPool(m_agent), m_agent);
+        FIFO rf(jp.getRecallFIFO(m_agent), m_agent);
+        std::cout << rf.dump(m_agent) << std::endl;
+      } catch (abi::__forced_unwind&) {
+        throw;
+      } catch (...) {}
       AgentVisitor ag(agentName, m_agent);
       std::list<AgentVisitor::intentEntry> intendedObjects = ag.getIntentLog(m_agent);
       for (std::list<AgentVisitor::intentEntry>::iterator i=intendedObjects.begin();
@@ -243,6 +269,16 @@ private:
             break;
         }
       }
+      // print the recall FIFO
+      std::cout << "FIFO before garbage collection:" << std::endl;
+      try {
+        RootEntry re(m_agent);
+        JobPool jp(re.getJobPool(m_agent), m_agent);
+        FIFO rf(jp.getRecallFIFO(m_agent), m_agent);
+        std::cout << rf.dump(m_agent) << std::endl;
+      } catch (abi::__forced_unwind&) {
+        throw;
+      } catch (...) {}
     } catch (abi::__forced_unwind&) {
             throw;
     } catch (...) {}

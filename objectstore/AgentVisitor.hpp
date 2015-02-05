@@ -150,7 +150,7 @@ public:
   
   bool checkAlive(Agent & agent) {
     uint64_t newHeartBeatCount = m_agentVisitor.getHeartbeatCount(agent);
-    if (newHeartBeatCount == m_hearbeatCounter && m_timer.secs() > 0.1)
+    if (newHeartBeatCount == m_hearbeatCounter && m_timer.secs() > 120)
       return false;
     m_hearbeatCounter = newHeartBeatCount;
     return true;

@@ -2,7 +2,6 @@
 
 #include "ObjectStoreChoice.hpp"
 #include "ObjectOps.hpp"
-#include "ContextHandle.hpp"
 #include "objectstore/cta.pb.h"
 #include "utils/Timer.hpp"
 
@@ -47,11 +46,13 @@ public:
   
   std::string name();
   
+  void flushContexts();
+  
   ~Agent();
   
   std::string nextId(const std::string & childType);
   
-  ContextHandleImplementation<myOS> & getFreeContext();
+  ContextHandle & getFreeContext();
   
   void addToIntend (std::string container, std::string name, serializers::ObjectType objectType);
   
@@ -98,7 +99,7 @@ private:
   bool m_observerVersion;
   uint64_t m_nextId;
   static const size_t c_handleCount = 100;
-  ContextHandleImplementation<myOS> m_contexts[c_handleCount];
+  ContextHandle m_contexts[c_handleCount];
 };
   
 }}

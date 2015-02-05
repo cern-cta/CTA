@@ -17,12 +17,18 @@ namespace cta { namespace objectstore {
 
 class ContextHandle {
 public:
-  virtual void set(int) = 0;
-  virtual int get(int) = 0;
-  virtual void reset() = 0;
-  virtual bool isSet() = 0;
-  virtual void release() = 0;
-  virtual ~ContextHandle() {};
+  ContextHandle(): m_set(false), m_hasFd(false), m_fd(-1) {}
+  void set(int fd) { m_set = true;  m_fd = fd; m_hasFd = true; __sync_synchronize(); }
+  void set() { m_set = true; }
+  int get(int) { return m_fd; }
+  void reset() { m_set = false; m_fd = -1; m_hasFd = false; __sync_synchronize(); }
+  bool isSet() { return m_set; }
+  void release() { if (!m_hasFd) return; __sync_synchronize(); if (m_set && -1 != m_fd) ::close(m_fd); reset(); }
+  ~ContextHandle() { release(); }
+private:
+  bool m_set;
+  bool m_hasFd;
+  volatile int m_fd;
 };
 
 class ObjectStore {
@@ -117,12 +123,12 @@ public:
   
   virtual void remove(std::string name) {
     std::string path = m_root+"/" + name;
-    cta::exception::Errnum::throwOnNonZero(unlink(name.c_str()));
+    cta::exception::Errnum::throwOnNonZero(unlink(path.c_str()));
   }
   
   void lockHelper(std::string name, ContextHandle & context, int type) {
-    std::string path = m_root + "/" + name + ".lock";
-    context.set(::open(path.c_str(), O_CREAT, S_IRWXU));
+    std::string path = m_root + "/" + name;
+    context.set(::open(path.c_str(), O_RDONLY, S_IRWXU));
     cta::exception::Errnum::throwOnMinusOne(context.get(0),
       "In ObjectStoreVFS::lockHelper, failed to open the lock file.");
     cta::exception::Errnum::throwOnMinusOne(::flock(context.get(0), LOCK_EX),
@@ -245,6 +251,7 @@ public:
     cta::exception::Errnum::throwOnReturnedErrno(-rc,
       std::string("In ObjectStoreRados::lockExclusive, failed to librados::IoCtx::lock_exclusive: ")+
       name + "/" + "lock" + "/" + client.str() + "//");
+    context.set();
     std::cout << "LockedExclusive: " << name << "/" << "lock" << "/" << client.str() << "//@" << where << std::endl;
   }
 
@@ -267,6 +274,7 @@ public:
     cta::exception::Errnum::throwOnReturnedErrno(-rc,
       std::string("In ObjectStoreRados::lockShared, failed to librados::IoCtx::lock_shared: ")+
       name + "/" + "lock" + "/" + client.str() + "//");
+    context.set();
     std::cout << "LockedShared: " << name << "/" << "lock" << "/" << client.str() << "//@" << where << std::endl;
   }
 
@@ -282,6 +290,7 @@ public:
       -m_radosCtx.unlock(name, "lock", client.str()),
       std::string("In ObjectStoreRados::lockExclusive,  failed to lock_exclusive ")+
       name);
+    context.reset();
     std::cout << "Unlocked: " << name << "/" << "lock" << "/" << client.str() << "//@" << where << std::endl;
   }
 

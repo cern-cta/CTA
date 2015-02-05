@@ -103,7 +103,8 @@ public:
   uint64_t size(Agent & agent) {
     serializers::FIFO fs;
     updateFromObjectStore(fs, agent.getFreeContext());
-    return fs.name_size();
+    uint64_t ret = fs.name_size() - fs.readpointer();
+    return ret;
   }
   
 private:

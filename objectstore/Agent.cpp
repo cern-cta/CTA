@@ -66,6 +66,12 @@ std::string cta::objectstore::Agent::name() {
   return selfName();
 }
 
+void cta::objectstore::Agent::flushContexts() {
+  for(size_t i=0; i< c_handleCount; i++) {
+    m_contexts[i].release();
+  }
+}
+
 cta::objectstore::Agent::~Agent() {
   for (size_t i=0; i < c_handleCount; i++) {
     m_contexts[i].release();
@@ -92,7 +98,7 @@ std::string cta::objectstore::Agent::nextId(const std::string & childType) {
   return id.str();
 }
 
-cta::objectstore::ContextHandleImplementation<myOS> & 
+cta::objectstore::ContextHandle & 
   cta::objectstore::Agent::getFreeContext() {
   for (size_t i=0; i < c_handleCount; i++) {
     if (!m_contexts[i].isSet())
@@ -167,8 +173,8 @@ void cta::objectstore::Agent::removeFromOwnership(std::string name, serializers:
       if (name == as.mutable_ownershipintent(i)->name() &&
           objectType == as.mutable_ownershipintent(i)->type()) {
         found = true;
-        as.mutable_creationintent()->SwapElements(i, as.ownershipintent_size()-1);
-        as.mutable_creationintent()->RemoveLast();
+        as.mutable_ownershipintent()->SwapElements(i, as.ownershipintent_size()-1);
+        as.mutable_ownershipintent()->RemoveLast();
         break;
       }
     }
