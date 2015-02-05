@@ -359,14 +359,6 @@ protected:
   void splitString(const std::string &str, const char separator,
     std::vector<std::string> &result) const throw();
 
-  /**
-   * Increments the usage count of the specified storage class.
-   *
-   * @param name The name of the storage class.  If this parameter is set to the
-   * empty string then this method does nothing.
-   */
-  void incStorageClassUsageCount(const std::string &name);
-
 }; // class MockClientAPI
 
 } // namespace cta

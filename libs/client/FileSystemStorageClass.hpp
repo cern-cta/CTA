@@ -10,9 +10,12 @@
 
 namespace cta {
 
+// Forward declaration of FileSystemStorageClasses
+class FileSystemStorageClasses;
+
 /**
- * Class used to store a storage class together with the other information
- * required by the file system.
+ * Class used to store a storage class and to provide other information and/or
+ * features required by the file system.
  */
 class FileSystemStorageClass {
 public:
@@ -52,6 +55,11 @@ public:
   void decUsageCount();
 
 private:
+
+  /**
+   * The storage classes used in the file system.
+   */
+  FileSystemStorageClasses *m_storageClasses;
 
   /**
    * The storage class.

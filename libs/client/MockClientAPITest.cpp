@@ -469,7 +469,7 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_top_level) {
 
   ASSERT_NO_THROW(entry = itor.next());
 
-  ASSERT_EQ(std::string("grandparent"), entry.name);
+  ASSERT_EQ(std::string("grandparent"), entry.getName());
 }
 
 TEST_F(cta_client_MockClientAPITest, createDirectory_second_level) {
@@ -497,7 +497,7 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_second_level) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("grandparent"), entry.name);
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
   }
 
   ASSERT_TRUE(api.getDirectoryStorageClass(requester, "/grandparent").empty());
@@ -519,7 +519,7 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_second_level) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("grandparent"), entry.name);
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
   }
 
   {
@@ -533,7 +533,7 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_second_level) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("parent"), entry.name);
+    ASSERT_EQ(std::string("parent"), entry.getName());
   }
 
   ASSERT_TRUE(api.getDirectoryStorageClass(requester, "/grandparent/parent").empty());
@@ -571,7 +571,7 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_inherit_storage_class) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("grandparent"), entry.name);
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
 
     ASSERT_TRUE(api.getDirectoryStorageClass(requester, "/grandparent").empty());
 
@@ -599,7 +599,7 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_inherit_storage_class) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("grandparent"), entry.name);
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
   }
 
   {
@@ -613,7 +613,7 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_inherit_storage_class) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("parent"), entry.name);
+    ASSERT_EQ(std::string("parent"), entry.getName());
   }
 
   ASSERT_EQ(std::string("TestStorageClass"),
@@ -650,7 +650,7 @@ TEST_F(cta_client_MockClientAPITest, deleteDirectory_existing_top_level) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("grandparent"), entry.name);
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
   }
 
   ASSERT_NO_THROW(api.deleteDirectory(requester, "/grandparent"));
@@ -685,7 +685,7 @@ TEST_F(cta_client_MockClientAPITest, deleteDirectory_non_empty_top_level) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("grandparent"), entry.name);
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
   }
 
   {
@@ -703,7 +703,7 @@ TEST_F(cta_client_MockClientAPITest, deleteDirectory_non_empty_top_level) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("grandparent"), entry.name);
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
   }
 
   {
@@ -717,7 +717,7 @@ TEST_F(cta_client_MockClientAPITest, deleteDirectory_non_empty_top_level) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("parent"), entry.name);
+    ASSERT_EQ(std::string("parent"), entry.getName());
   }
 
   ASSERT_THROW(api.deleteDirectory(requester, "/grandparent"), std::exception);
@@ -733,7 +733,7 @@ TEST_F(cta_client_MockClientAPITest, deleteDirectory_non_empty_top_level) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("parent"), entry.name);
+    ASSERT_EQ(std::string("parent"), entry.getName());
   }
 }
 
@@ -765,7 +765,7 @@ TEST_F(cta_client_MockClientAPITest, setDirectoryStorageClass_top_level) {
 
   ASSERT_NO_THROW(entry = itor.next());
 
-  ASSERT_EQ(std::string("grandparent"), entry.name);
+  ASSERT_EQ(std::string("grandparent"), entry.getName());
 
   {
     std::string name;
@@ -808,7 +808,7 @@ TEST_F(cta_client_MockClientAPITest, clearDirectoryStorageClass_top_level) {
 
   ASSERT_NO_THROW(entry = itor.next());
 
-  ASSERT_EQ(std::string("grandparent"), entry.name);
+  ASSERT_EQ(std::string("grandparent"), entry.getName());
 
   {
     std::string name;
@@ -831,6 +831,9 @@ TEST_F(cta_client_MockClientAPITest, clearDirectoryStorageClass_top_level) {
     ASSERT_EQ(storageClassName, name);
   }
 
+  ASSERT_THROW(api.deleteStorageClass(requester, storageClassName),
+    std::exception);
+
   ASSERT_NO_THROW(api.clearDirectoryStorageClass(requester, dirPath));
 
   {
@@ -838,6 +841,8 @@ TEST_F(cta_client_MockClientAPITest, clearDirectoryStorageClass_top_level) {
     ASSERT_NO_THROW(name = api.getDirectoryStorageClass(requester, dirPath));
     ASSERT_TRUE(name.empty());
   }
+
+  ASSERT_NO_THROW(api.deleteStorageClass(requester, storageClassName));
 }
 
 TEST_F(cta_client_MockClientAPITest, trimSlashes_emptyString) {

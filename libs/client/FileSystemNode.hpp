@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DirectoryEntry.hpp"
+#include "FileSystemDirectoryEntry.hpp"
 #include "FileSystemStorageClasses.hpp"
 
 #include <map>
@@ -17,13 +17,6 @@ public:
    * Constructor.
    */
   FileSystemNode();
-
-  /**
-   * Constructor.
-   *
-   * @param entry The description of the node in the form of a DirectoryEntry.
-   */
-  FileSystemNode(const DirectoryEntry &entry);
 
   /**
    * Constructor.
@@ -52,18 +45,18 @@ public:
   const FileSystemNode &getParent() const;
 
   /**
-   * Returns the description of this node in the form of a DirectoryEntry.
+   * Returns the file-system directory-entry.
    *
-   * @return The description of this node in the form of a DirectoryEntry.
+   * @return The file-system directory-entry.
    */
-  DirectoryEntry &getEntry() throw();
+  FileSystemDirectoryEntry &getFileSystemEntry() throw();
 
   /**
-   * Returns the description of this node in the form of a DirectoryEntry.
+   * Returns the file-system directory-entry.
    *
-   * @return The description of this node in the form of a DirectoryEntry.
+   * @return The file-system directory-entry.
    */
-  const DirectoryEntry &getEntry() const throw();
+  const FileSystemDirectoryEntry &getFileSystemEntry() const throw();
 
   /**
    * Gets the contents of this file system node in the form of a list of
@@ -120,7 +113,7 @@ public:
    */
   void deleteChild(const std::string &name);
 
-protected:
+private:
 
   /**
    * The storage classes used in the file system.
@@ -133,20 +126,14 @@ protected:
   FileSystemNode *m_parent;
 
   /**
-   * The description of the node in the form of a DirectoryEntry.
+   * The file-system diretcory-entry.
    */
-  DirectoryEntry m_entry;
+  FileSystemDirectoryEntry m_entry;
 
   /**
    * The child nodes as a map from name to node.
    */
   std::map<std::string, FileSystemNode*> m_children;
-
-  /**
-   * If the file system storage classes are known then this method decremenets
-   * the usage count of the storage classs associated with this node.
-   */
-  void decStorageClassUsageCount();
 
   /**
    * Deletes and clears the child nodes.
