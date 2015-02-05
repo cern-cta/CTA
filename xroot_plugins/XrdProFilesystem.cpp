@@ -418,8 +418,9 @@ int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &
     cta::DirectoryIterator itor = m_clientAPI->getDirectoryContents(requester, req.args.at(0));
     while(itor.hasMore()) {
       const cta::DirectoryEntry &entry = itor.next();
+      
       responseSS << "\n";
-      responseSS << ((S_ISDIR(entry.mode)) ? "d" : "-");
+      responseSS << ((entry.entryType == cta::DirectoryEntry::ENTRYTYPE_DIRECTORY) ? "d" : "-");
       responseSS << ((entry.mode & S_IRUSR) ? "r" : "-");
       responseSS << ((entry.mode & S_IWUSR) ? "w" : "-");
       responseSS << ((entry.mode & S_IXUSR) ? "x" : "-");
