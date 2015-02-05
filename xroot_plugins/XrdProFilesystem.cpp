@@ -140,7 +140,7 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
 // executeMkclassCommand
 //------------------------------------------------------------------------------
 int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
-  if(req.args.size() != 2) {
+  if(req.args.size() != 3) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
@@ -150,10 +150,9 @@ int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrI
     std::istringstream ss(req.args.at(1));
     ss >> numberOfCopies;
     cta::SecurityIdentity requester;
-    const std::string comment = "Comment"; // TO BE DONE
-    m_clientAPI->createStorageClass(requester, req.args.at(0), numberOfCopies, comment);
+    m_clientAPI->createStorageClass(requester, req.args.at(0), numberOfCopies, req.args.at(2));
     std::ostringstream responseSS;
-    responseSS << "[OK] Created storage class " << req.args.at(0) << " with " << req.args.at(1) << " tape copies";
+    responseSS << "[OK] Created storage class " << req.args.at(0) << " with " << req.args.at(1) << " tape copies with the following comment: \"" << req.args.at(2) << "\"" ;
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
@@ -320,7 +319,9 @@ int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrI
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the storage class names and no of copies:";
     for(std::list<cta::StorageClass>::iterator it = stgList.begin(); it != stgList.end(); it++) {
-      responseSS << "\n" << it->getName() << " " << it->getNbCopies();
+      responseSS << "\n" << it->getName() << " " << it->getNbCopies() << " " 
+              << it->getCreator().uid << " " << it->getCreator().gid << " " 
+              << it->getCreationTime() << " " << it->getComment();
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
