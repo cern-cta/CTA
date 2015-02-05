@@ -59,7 +59,7 @@ public:
         throw FIFOEmpty("In FIFO::Transaction::popAndUnlock: FIFO empty");
       }
       m_fifo.m_currentState.set_readpointer(m_fifo.m_currentState.readpointer()+1);
-      if (m_fifo.m_currentState.readpointer() > 100) {
+      if (m_fifo.m_currentState.readpointer() > 50) {
         m_fifo.compactCurrentState();
       }
       m_fifo.write(m_fifo.m_currentState);

@@ -34,6 +34,7 @@ private:
 class ObjectStore {
 public:
   virtual ~ObjectStore() {}
+  virtual void create(std::string name, std::string content) = 0;
   virtual void atomicOverwrite(std::string name, std::string content) = 0;
   virtual std::string read(std::string name) = 0;
   virtual void lockShared(std::string name, ContextHandle & context, std::string where="") = 0;
@@ -83,6 +84,32 @@ public:
   virtual std::string path() {
     return m_root;
   }
+  virtual void create(std::string name, std::string content){
+    std::string path = m_root+ "/" + name;
+    std::string lockPath = m_root + "/." + name + ".lock";
+    try {
+      int fd= ::creat(path.c_str(), S_IRWXU);
+      // Create and fill up the path
+      cta::exception::Errnum::throwOnMinusOne(fd,
+        "In ObjectStoreVFS::create, failed to creat the file");
+      cta::exception::Errnum::throwOnMinusOne(
+        ::write(fd, content.c_str(), content.size()),
+        "In ObjectStoreVFS::create, failed to write to file");
+      cta::exception::Errnum::throwOnMinusOne(::close(fd),
+        "In ObjectStoreVFS::create, failed to close the file");
+      // Create the lock file
+      int fdLock= ::creat(lockPath.c_str(), S_IRWXU);
+      cta::exception::Errnum::throwOnMinusOne(fdLock,
+        "In ObjectStoreVFS::create, failed to creat the lock file");
+      cta::exception::Errnum::throwOnMinusOne(::close(fdLock),
+        "In ObjectStoreVFS::create, failed to close the lock file");
+    } catch (...) {
+      unlink(path.c_str());
+      unlink(lockPath.c_str());
+      throw;
+    }
+  }
+  
   virtual void atomicOverwrite(std::string name, std::string content) {
     // When entering here, we should hold an exclusive lock on the *context
     // file descriptor. We will create a new file, lock it immediately exclusively,
@@ -99,9 +126,12 @@ public:
       "In ObjectStoreVFS::atomicOverwrite, failed to write to the pre-overwrite file");
     cta::exception::Errnum::throwOnMinusOne(::close(fd),
       "In ObjectStoreVFS::atomicOverwrite, failed to close the pre-overwrite file");
+    std::stringstream err;
+    err << "In ObjectStoreVFS::atomicOverwrite, failed to rename the file"
+        << " tempPath=" << tempPath << " targetPath=" << targetPath << " tid=" << syscall(SYS_gettid);
     cta::exception::Errnum::throwOnMinusOne(
       ::rename(tempPath.c_str(), targetPath.c_str()),
-      "In ObjectStoreVFS::atomicOverwrite, failed to rename the file");
+      err.str());
   }
   
   virtual std::string read(std::string name) {
@@ -123,11 +153,13 @@ public:
   
   virtual void remove(std::string name) {
     std::string path = m_root+"/" + name;
-    cta::exception::Errnum::throwOnNonZero(unlink(path.c_str()));
+    std::string lockPath = m_root+"/." + name + ".lock";
+    cta::exception::Errnum::throwOnNonZero(unlink(path.c_str()), "Failed to remove object file");
+    cta::exception::Errnum::throwOnNonZero(unlink(lockPath.c_str()), "Failed to remove lock file.");
   }
   
   void lockHelper(std::string name, ContextHandle & context, int type) {
-    std::string path = m_root + "/" + name;
+    std::string path = m_root + "/." + name + ".lock";
     context.set(::open(path.c_str(), O_RDONLY, S_IRWXU));
     cta::exception::Errnum::throwOnMinusOne(context.get(0),
       "In ObjectStoreVFS::lockHelper, failed to open the lock file.");
@@ -137,12 +169,12 @@ public:
   
   virtual void lockExclusive(std::string name, ContextHandle & context, std::string where) {
     lockHelper(name, context, LOCK_EX);
-    //std::cout << "LockedExclusive " << name << " with fd=" << context.get(0) << " @" << where << std::endl;
+    std::cout << "LockedExclusive " << name << " with fd=" << context.get(0) << " @" << where << " tid=" << syscall(SYS_gettid) << std::endl;
   }
 
   virtual void lockShared(std::string name, ContextHandle & context, std::string where) {
     lockHelper(name, context, LOCK_SH);
-    //std::cout << "LockedShared " << name << " with fd=" << context.get(0) << " @" << where << std::endl;
+    std::cout << "LockedShared " << name << " with fd=" << context.get(0) << " @" << where << " tid=" << syscall(SYS_gettid) << std::endl;
   }
 
   virtual void unlock(std::string name, ContextHandle & context, std::string where) {
@@ -150,7 +182,7 @@ public:
     int fd= context.get(0);
     context.reset();
     ::close(fd);
-    //std::cout << "Unlocked " << name << " with fd=" << fd << " @" << where << std::endl;
+    std::cout << "Unlocked " << name << " with fd=" << fd << " @" << where << " tid=" << syscall(SYS_gettid) << std::endl;
   }
   
 

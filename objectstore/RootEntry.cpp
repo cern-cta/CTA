@@ -13,7 +13,7 @@ void cta::objectstore::RootEntry::init(ObjectStore & os) {
     throw;
   } catch (...) {}
   serializers::RootEntry res;
-  os.atomicOverwrite(s_rootEntryName, res.SerializeAsString());
+  os.create(s_rootEntryName, res.SerializeAsString());
 }
 // construtor, when the backend store exists.
 // Checks the existence and correctness of the root entry

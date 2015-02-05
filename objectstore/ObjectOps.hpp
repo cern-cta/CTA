@@ -58,7 +58,7 @@ public:
   
   template <class C2>
   void writeChild (const std::string & name, C2 & val) {
-    m_objectStore.atomicOverwrite(name, val.SerializeAsString());
+    m_objectStore.create(name, val.SerializeAsString());
   }
   
   void removeOther(const std::string & name) {
