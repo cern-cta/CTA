@@ -10,7 +10,7 @@
 namespace cta {
 
 /**
- * Container ofthe storage classes current used in the file system.
+ * The storage classes used in the file system.
  */
 class FileSystemStorageClasses {
 public:

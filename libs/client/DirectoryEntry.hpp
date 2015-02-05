@@ -1,7 +1,5 @@
 #pragma once
 
-#include "FileAttribute.hpp"
-
 #include <list>
 #include <stdint.h>
 #include <string>
@@ -9,14 +7,16 @@
 namespace cta {
 
 /**
- * The structure of a directory entry.
+ * A directory entry.
  */
-struct DirectoryEntry {
+class DirectoryEntry {
+public:
 
   /**
    * Enumeration of the different possible type so directory entry.
    */
   enum EntryType {
+    ENTRYTYPE_NONE,
     ENTRYTYPE_FILE,
     ENTRYTYPE_DIRECTORY};
 
@@ -25,42 +25,6 @@ struct DirectoryEntry {
    * enumeration value.
    */
   static const char *entryTypeToStr(const EntryType enumValue) throw();
-
-  /**
-   * The type of the entry.
-   */
-  EntryType entryType;
-
-  /**
-   * The name of the directory entry.
-   */
-  std::string name;
-
-  /**
-   * The user ID of the file's owner.
-   */
-  uint32_t ownerId;
-
-  /**
-   * The group ID of the file.
-   */
-  uint32_t groupId;
-
-  /**
-   * The mode bits of the file.
-   */
-  uint16_t mode;
-
-  /**
-   * The name of the directory's storage class or an empty string if the
-   * directory does not have a storage class.
-   */
-  std::string storageClassName;
-
-  /**
-   * The attributes of the directory.
-   */
-  std::list<FileAttribute> attributes;
 
   /**
    * Constructor.
@@ -81,6 +45,90 @@ struct DirectoryEntry {
    */
   DirectoryEntry(const EntryType entryType, const std::string &name,
     const std::string &storageClassName);
+
+  /**
+   * Returns the type of the directory entry.
+   *
+   * @return The type of the directory entry.
+   */
+  EntryType getEntryType() const throw();
+
+  /**
+   * Returns the name of the directory entry.
+   *
+   * @return The name of the directory entry.
+   */
+  const std::string &getName() const throw();
+
+  /**
+   * Returns the user ID of the directory entry's owner.
+   *
+   * @return The user ID of the directory entry's owner.
+   */
+  uint32_t getOwnerId() const throw();
+
+  /**
+   * Returns The group ID of the directory entry.
+   *
+   * @return The group ID of the directory entry.
+   */
+  uint32_t getGroupId() const throw();
+
+  /**
+   * Returns The mode bits of the directory entry.
+   *
+   * @return The mode bits of the directory entry.
+   */
+  uint16_t getMode() const throw();
+
+  /**
+   * Sets the name of the storage class.
+   *
+   * @param storageClassName The name of the storage class.
+   */
+  void setStorageClassName(const std::string &storageClassName);
+
+  /**
+   * Returns the name of the directory's storage class or an empty string if the
+   * directory does not have a storage class.
+   *
+   * @return The name of the directory's storage class or an empty string if the
+   * directory does not have a storage class.
+   */
+  const std::string &getStorageClassName() const throw();
+
+private:
+
+  /**
+   * The type of the directory entry.
+   */
+  EntryType m_entryType;
+
+  /**
+   * The name of the directory entry.
+   */
+  std::string m_name;
+
+  /**
+   * The user ID of the directory entry's owner.
+   */
+  uint32_t m_ownerId;
+
+  /**
+   * The group ID of the directory entry.
+   */
+  uint32_t m_groupId;
+
+  /**
+   * The mode bits of the directory entry.
+   */
+  uint16_t m_mode;
+
+  /**
+   * The name of the directory's storage class or an empty string if the
+   * directory does not have a storage class.
+   */
+  std::string m_storageClassName;
 
 }; // DirectoryEntry
 

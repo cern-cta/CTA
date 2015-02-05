@@ -9,8 +9,8 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::MockClientAPI::MockClientAPI():
-  m_fileSystemRoot(DirectoryEntry(DirectoryEntry::ENTRYTYPE_DIRECTORY, "/", ""))
-  {
+  m_fileSystemRoot(m_storageClasses,
+    DirectoryEntry(DirectoryEntry::ENTRYTYPE_DIRECTORY, "/", "")) {
 }
 
 //------------------------------------------------------------------------------
@@ -166,7 +166,7 @@ void cta::MockClientAPI::createDirectory(const SecurityIdentity &requester,
 
   FileSystemNode &enclosingNode = getFileSystemNode(enclosingPath);
   if(DirectoryEntry::ENTRYTYPE_DIRECTORY !=
-    enclosingNode.getEntry().entryType) {
+    enclosingNode.getFileSystemEntry().getEntry().getEntryType()) {
     std::ostringstream message;
     message << enclosingPath << " is not a directory";
     throw Exception(message.str());
@@ -178,9 +178,11 @@ void cta::MockClientAPI::createDirectory(const SecurityIdentity &requester,
     throw Exception("A file or directory already exists with the same name");
   }
 
+  const std::string inheritedStorageClassName =
+    enclosingNode.getFileSystemEntry().getEntry().getStorageClassName();
   DirectoryEntry dirEntry(DirectoryEntry::ENTRYTYPE_DIRECTORY, dirName,
-    enclosingNode.getEntry().storageClassName);
-  enclosingNode.addChild(new FileSystemNode(dirEntry));
+    inheritedStorageClassName);
+  enclosingNode.addChild(new FileSystemNode(m_storageClasses, dirEntry));
 }
 
 //------------------------------------------------------------------------------
@@ -353,7 +355,8 @@ void cta::MockClientAPI::deleteDirectory(const SecurityIdentity &requester,
 
   FileSystemNode &dirNode = getFileSystemNode(dirPath);
 
-  if(DirectoryEntry::ENTRYTYPE_DIRECTORY != dirNode.getEntry().entryType) {
+  if(DirectoryEntry::ENTRYTYPE_DIRECTORY !=
+    dirNode.getFileSystemEntry().getEntry().getEntryType()) {
     std::ostringstream message;
     message << "The absolute path " << dirPath << " is not a directory";
     throw(message.str());
@@ -364,7 +367,7 @@ void cta::MockClientAPI::deleteDirectory(const SecurityIdentity &requester,
   }
 
   FileSystemNode &parentNode = dirNode.getParent();
-  parentNode.deleteChild(dirNode.getEntry().name);
+  parentNode.deleteChild(dirNode.getFileSystemEntry().getEntry().getName());
 }
 
 //------------------------------------------------------------------------------
@@ -380,7 +383,8 @@ cta::DirectoryIterator cta::MockClientAPI::getDirectoryContents(
 
   const FileSystemNode &dirNode = getFileSystemNode(dirPath);
 
-  if(DirectoryEntry::ENTRYTYPE_DIRECTORY != dirNode.getEntry().entryType) {
+  if(DirectoryEntry::ENTRYTYPE_DIRECTORY !=
+    dirNode.getFileSystemEntry().getEntry().getEntryType()) {
     std::ostringstream message;
     message << "The absolute path " << dirPath << " is not a directory";
     throw(message.str());
@@ -451,13 +455,14 @@ void cta::MockClientAPI::setDirectoryStorageClass(
   m_storageClasses.checkStorageClassExists(storageClassName);
 
   FileSystemNode &dirNode = getFileSystemNode(dirPath);
-  if(DirectoryEntry::ENTRYTYPE_DIRECTORY != dirNode.getEntry().entryType) {
+  if(DirectoryEntry::ENTRYTYPE_DIRECTORY !=
+    dirNode.getFileSystemEntry().getEntry().getEntryType()) {
     std::ostringstream message;
     message << dirPath << " is not a directory";
     throw Exception(message.str());
   }
 
-  dirNode.getEntry().storageClassName = storageClassName;
+  dirNode.getFileSystemEntry().setStorageClassName(storageClassName);
 }
 
 //------------------------------------------------------------------------------
@@ -467,13 +472,14 @@ void cta::MockClientAPI::clearDirectoryStorageClass(
   const SecurityIdentity &requester,
   const std::string &dirPath) {
   FileSystemNode &dirNode = getFileSystemNode(dirPath);
-  if(DirectoryEntry::ENTRYTYPE_DIRECTORY != dirNode.getEntry().entryType) {
+  if(DirectoryEntry::ENTRYTYPE_DIRECTORY !=
+    dirNode.getFileSystemEntry().getEntry().getEntryType()) {
     std::ostringstream message;
     message << dirPath << " is not a directory";
     throw Exception(message.str());
   }
 
-  dirNode.getEntry().storageClassName = "";
+  dirNode.getFileSystemEntry().setStorageClassName("");
 }
   
 //------------------------------------------------------------------------------
@@ -483,13 +489,14 @@ std::string cta::MockClientAPI::getDirectoryStorageClass(
   const SecurityIdentity &requester,
   const std::string &dirPath) {
   FileSystemNode &dirNode = getFileSystemNode(dirPath);
-  if(DirectoryEntry::ENTRYTYPE_DIRECTORY != dirNode.getEntry().entryType) {
+  if(DirectoryEntry::ENTRYTYPE_DIRECTORY !=
+    dirNode.getFileSystemEntry().getEntry().getEntryType()) {
     std::ostringstream message;
     message << dirPath << " is not a directory";
     throw Exception(message.str());
   }
 
-  return dirNode.getEntry().storageClassName;
+  return dirNode.getFileSystemEntry().getEntry().getStorageClassName();
 }
 
 //------------------------------------------------------------------------------

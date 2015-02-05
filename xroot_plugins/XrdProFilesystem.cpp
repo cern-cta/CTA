@@ -422,22 +422,22 @@ int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &
       const cta::DirectoryEntry &entry = itor.next();
       
       responseSS << "\n";
-      responseSS << ((entry.entryType == cta::DirectoryEntry::ENTRYTYPE_DIRECTORY) ? "d" : "-");
-      responseSS << ((entry.mode & S_IRUSR) ? "r" : "-");
-      responseSS << ((entry.mode & S_IWUSR) ? "w" : "-");
-      responseSS << ((entry.mode & S_IXUSR) ? "x" : "-");
-      responseSS << ((entry.mode & S_IRGRP) ? "r" : "-");
-      responseSS << ((entry.mode & S_IWGRP) ? "w" : "-");
-      responseSS << ((entry.mode & S_IXGRP) ? "x" : "-");
-      responseSS << ((entry.mode & S_IROTH) ? "r" : "-");
-      responseSS << ((entry.mode & S_IWOTH) ? "w" : "-");
-      responseSS << ((entry.mode & S_IXOTH) ? "x" : "-");
+      responseSS << ((entry.getEntryType() == cta::DirectoryEntry::ENTRYTYPE_DIRECTORY) ? "d" : "-");
+      responseSS << ((entry.getMode() & S_IRUSR) ? "r" : "-");
+      responseSS << ((entry.getMode() & S_IWUSR) ? "w" : "-");
+      responseSS << ((entry.getMode() & S_IXUSR) ? "x" : "-");
+      responseSS << ((entry.getMode() & S_IRGRP) ? "r" : "-");
+      responseSS << ((entry.getMode() & S_IWGRP) ? "w" : "-");
+      responseSS << ((entry.getMode() & S_IXGRP) ? "x" : "-");
+      responseSS << ((entry.getMode() & S_IROTH) ? "r" : "-");
+      responseSS << ((entry.getMode() & S_IWOTH) ? "w" : "-");
+      responseSS << ((entry.getMode() & S_IXOTH) ? "x" : "-");
       responseSS << " ";
-      responseSS << entry.ownerId;
+      responseSS << entry.getOwnerId();
       responseSS << " ";
-      responseSS << entry.groupId;
+      responseSS << entry.getGroupId();
       responseSS << " ";
-      responseSS << entry.name;
+      responseSS << entry.getName();
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;

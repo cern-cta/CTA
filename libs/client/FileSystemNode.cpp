@@ -5,21 +5,33 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::FileSystemNode::FileSystemNode():
+  m_storageClasses(NULL),
   m_parent(NULL) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileSystemNode::FileSystemNode(const DirectoryEntry& entry):
-  m_parent(NULL),
-  m_entry(entry) {
+cta::FileSystemNode::FileSystemNode(FileSystemStorageClasses &storageclasses, 
+  const DirectoryEntry &entry):
+  m_storageClasses(&storageclasses),
+  m_entry(FileSystemDirectoryEntry(storageclasses, entry)) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 cta::FileSystemNode::~FileSystemNode() throw() {
+  try {
+    deleteAndClearChildren();
+  } catch(...) {
+  }
+}
+
+//------------------------------------------------------------------------------
+// deleteAndClearChildren
+//------------------------------------------------------------------------------
+void cta::FileSystemNode::deleteAndClearChildren() {
   for(std::map<std::string, FileSystemNode*>::const_iterator itor =
     m_children.begin(); itor != m_children.end(); itor++) {
     delete(itor->second);
@@ -50,16 +62,18 @@ const cta::FileSystemNode &cta::FileSystemNode::getParent() const {
 }
 
 //------------------------------------------------------------------------------
-// getEntry
+// getFileSystemEntry
 //------------------------------------------------------------------------------
-cta::DirectoryEntry &cta::FileSystemNode::getEntry() throw() {
+cta::FileSystemDirectoryEntry &cta::FileSystemNode::getFileSystemEntry()
+  throw() {
   return m_entry;
 }
 
 //------------------------------------------------------------------------------
-// getEntry
+// getFileSystemEntry
 //------------------------------------------------------------------------------
-const cta::DirectoryEntry &cta::FileSystemNode::getEntry() const throw() {
+const cta::FileSystemDirectoryEntry &cta::FileSystemNode::getFileSystemEntry()
+  const throw() {
   return m_entry;
 }
 
@@ -71,7 +85,13 @@ std::list<cta::DirectoryEntry> cta::FileSystemNode::getDirectoryEntries()
   std::list<DirectoryEntry> entries;
   for(std::map<std::string, FileSystemNode*>::const_iterator itor =
     m_children.begin(); itor != m_children.end(); itor++) {
-    entries.push_back(itor->second->getEntry());
+    const FileSystemNode *const childNode = itor->second;
+    if(NULL == childNode) {
+      throw(Exception("getDirectoryEntries encountered a NULL child pointer"));
+    }
+    const cta::FileSystemDirectoryEntry &childEntry =
+      childNode->getFileSystemEntry();
+    entries.push_back(childEntry.getEntry());
   }
   return entries;
 }
@@ -80,13 +100,13 @@ std::list<cta::DirectoryEntry> cta::FileSystemNode::getDirectoryEntries()
 // addChild
 //------------------------------------------------------------------------------
 void cta::FileSystemNode::addChild(FileSystemNode *const child) {
-  if(childExists(child->getEntry().name)) {
+  if(childExists(child->getFileSystemEntry().getEntry().getName())) {
     delete child;
     throw Exception("FileSystemNode already exists");
   }
 
   child->m_parent = this;
-  m_children[child->getEntry().name] = child;
+  m_children[child->getFileSystemEntry().getEntry().getName()] = child;
 }
 
 //------------------------------------------------------------------------------
