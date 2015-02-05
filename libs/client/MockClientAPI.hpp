@@ -4,9 +4,7 @@
 #include "FileSystemNode.hpp"
 #include "FileSystemStorageClasses.hpp"
 #include "StorageClass.hpp"
-#include "StorageClassAndUsageCount.hpp"
 
-#include <map>
 #include <vector>
 
 namespace cta {

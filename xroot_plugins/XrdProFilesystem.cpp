@@ -319,7 +319,7 @@ int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrI
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the storage class names and no of copies:";
     for(std::list<cta::StorageClass>::iterator it = stgList.begin(); it != stgList.end(); it++) {
-      responseSS << "\n" << it->name << " " << it->nbCopies;
+      responseSS << "\n" << it->getName() << " " << it->getNbCopies();
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;

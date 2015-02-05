@@ -25,7 +25,7 @@ void cta::FileSystemStorageClasses::createStorageClass(
 //------------------------------------------------------------------------------
 void cta::FileSystemStorageClasses::checkStorageClassDoesNotAlreadyExist(
   const std::string &name) const {
-  std::map<std::string, StorageClassAndUsageCount>::const_iterator itor = 
+  std::map<std::string, FileSystemStorageClass>::const_iterator itor = 
     m_storageClasses.find(name);
   if(itor != m_storageClasses.end()) {
     std::ostringstream msg;
@@ -54,7 +54,7 @@ void cta::FileSystemStorageClasses::deleteStorageClass(
 //------------------------------------------------------------------------------
 void cta::FileSystemStorageClasses::checkStorageClassExists(
   const std::string &name) const {
-  std::map<std::string, StorageClassAndUsageCount>::const_iterator itor =
+  std::map<std::string, FileSystemStorageClass>::const_iterator itor =
     m_storageClasses.find(name);
   if(itor == m_storageClasses.end()) {
     std::ostringstream msg;
@@ -68,7 +68,7 @@ void cta::FileSystemStorageClasses::checkStorageClassExists(
 //------------------------------------------------------------------------------
 void cta::FileSystemStorageClasses::checkStorageClassIsNotInUse(
   const std::string &name) const {
-  std::map<std::string, StorageClassAndUsageCount>::const_iterator itor =
+  std::map<std::string, FileSystemStorageClass>::const_iterator itor =
     m_storageClasses.find(name);
 
   // If the storage class does not exists then it cannot be in use
@@ -89,7 +89,7 @@ void cta::FileSystemStorageClasses::checkStorageClassIsNotInUse(
 std::list<cta::StorageClass> cta::FileSystemStorageClasses::getStorageClasses()
   const {
   std::list<StorageClass> storageClasses;
-  for(std::map<std::string, StorageClassAndUsageCount>::const_iterator itor =
+  for(std::map<std::string, FileSystemStorageClass>::const_iterator itor =
     m_storageClasses.begin(); itor != m_storageClasses.end(); itor++) {
     storageClasses.push_back(itor->second.getStorageClass());
   }
@@ -107,7 +107,7 @@ void cta::FileSystemStorageClasses::incStorageClassUsageCount(
     return;
   }
 
-  std::map<std::string, StorageClassAndUsageCount>::iterator itor =
+  std::map<std::string, FileSystemStorageClass>::iterator itor =
     m_storageClasses.find(name);
 
   if(itor == m_storageClasses.end()) {
@@ -130,7 +130,7 @@ void cta::FileSystemStorageClasses::decStorageClassUsageCount(
     return;
   }
 
-  std::map<std::string, StorageClassAndUsageCount>::iterator itor =
+  std::map<std::string, FileSystemStorageClass>::iterator itor =
     m_storageClasses.find(name);
 
   if(itor == m_storageClasses.end()) {

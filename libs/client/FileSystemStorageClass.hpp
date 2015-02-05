@@ -2,15 +2,19 @@
 
 #include "Exception.hpp"
 #include "StorageClass.hpp"
+#include "UserIdentity.hpp"
 
 #include <sstream>
+#include <string>
+#include <time.h>
 
 namespace cta {
 
 /**
- * Class used to store a storage class and it usage count.
+ * Class used to store a storage class together with the other information
+ * required by the file system.
  */
-class StorageClassAndUsageCount {
+class FileSystemStorageClass {
 public:
 
   /**
@@ -18,14 +22,14 @@ public:
    *
    * Initialisez the usage count to 0.
    */
-  StorageClassAndUsageCount();
+  FileSystemStorageClass();
 
   /**
    * Constructor.
    *
    * Initialisez the usage count to 0.
    */
-  StorageClassAndUsageCount(const StorageClass &storageClass);
+  FileSystemStorageClass(const StorageClass &storageClass);
 
   /**
    * Returns the storage class.
@@ -59,6 +63,6 @@ private:
    */
   uint64_t m_usageCount;
 
-}; // class StorageClassAndUsageCount
+}; // class FileSystemStorageClass
 
 } // namespace cta

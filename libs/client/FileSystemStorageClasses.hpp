@@ -1,7 +1,7 @@
 #pragma once
 
+#include "FileSystemStorageClass.hpp"
 #include "SecurityIdentity.hpp"
-#include "StorageClassAndUsageCount.hpp"
 
 #include <list>
 #include <map>
@@ -81,7 +81,7 @@ protected:
    * The current mapping from storage class names to storage classes and their
    * usage counts.
    */
-  std::map<std::string, StorageClassAndUsageCount> m_storageClasses;
+  std::map<std::string, FileSystemStorageClass> m_storageClasses;
 
   /**
    * Throws an exception if the specified storage class already exists.

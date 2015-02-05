@@ -235,8 +235,8 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_new) {
 
     StorageClass storageClass;
     ASSERT_NO_THROW(storageClass = storageClasses.front());
-    ASSERT_EQ(name, storageClass.name);
-    ASSERT_EQ(nbCopies, storageClass.nbCopies);
+    ASSERT_EQ(name, storageClass.getName());
+    ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
 }
 
@@ -263,8 +263,8 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_already_existing) {
 
     StorageClass storageClass;
     ASSERT_NO_THROW(storageClass = storageClasses.front());
-    ASSERT_EQ(name, storageClass.name);
-    ASSERT_EQ(nbCopies, storageClass.nbCopies);
+    ASSERT_EQ(name, storageClass.getName());
+    ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
   
   ASSERT_THROW(api.createStorageClass(requester, name, nbCopies),
@@ -293,13 +293,13 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_lexicographical_order) {
     ASSERT_NO_THROW(storageClasses = api.getStorageClasses(requester));
     ASSERT_EQ(4, storageClasses.size());
 
-    ASSERT_EQ(std::string("a"), storageClasses.front().name);
+    ASSERT_EQ(std::string("a"), storageClasses.front().getName());
     storageClasses.pop_front();
-    ASSERT_EQ(std::string("b"), storageClasses.front().name);
+    ASSERT_EQ(std::string("b"), storageClasses.front().getName());
     storageClasses.pop_front();
-    ASSERT_EQ(std::string("c"), storageClasses.front().name);
+    ASSERT_EQ(std::string("c"), storageClasses.front().getName());
     storageClasses.pop_front();
-    ASSERT_EQ(std::string("d"), storageClasses.front().name);
+    ASSERT_EQ(std::string("d"), storageClasses.front().getName());
   }
 }
 
@@ -326,8 +326,8 @@ TEST_F(cta_client_MockClientAPITest, deleteStorageClass_existing) {
   
     StorageClass storageClass;
     ASSERT_NO_THROW(storageClass = storageClasses.front());
-    ASSERT_EQ(name, storageClass.name);
-    ASSERT_EQ(nbCopies, storageClass.nbCopies);
+    ASSERT_EQ(name, storageClass.getName());
+    ASSERT_EQ(nbCopies, storageClass.getNbCopies());
 
     ASSERT_NO_THROW(api.deleteStorageClass(requester, name));
   }
@@ -362,8 +362,8 @@ TEST_F(cta_client_MockClientAPITest, deleteStorageClass_in_use) {
 
     StorageClass storageClass;
     ASSERT_NO_THROW(storageClass = storageClasses.front());
-    ASSERT_EQ(name, storageClass.name);
-    ASSERT_EQ(nbCopies, storageClass.nbCopies);
+    ASSERT_EQ(name, storageClass.getName());
+    ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
 
   ASSERT_NO_THROW(api.setDirectoryStorageClass(requester, "/", name));
@@ -377,8 +377,8 @@ TEST_F(cta_client_MockClientAPITest, deleteStorageClass_in_use) {
 
     StorageClass storageClass;
     ASSERT_NO_THROW(storageClass = storageClasses.front());
-    ASSERT_EQ(name, storageClass.name);
-    ASSERT_EQ(nbCopies, storageClass.nbCopies);
+    ASSERT_EQ(name, storageClass.getName());
+    ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
 }
 
