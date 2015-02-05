@@ -10,7 +10,8 @@ namespace cta {
 /**
  * Class representing an archive storage-class.
  */
-struct StorageClass {
+class StorageClass {
+public:
 
   /**
    * Constructor.
@@ -97,6 +98,6 @@ private:
    */
   std::string m_comment;
 
-}; // struct StorageClass
+}; // class StorageClass
 
 } // namespace cta
