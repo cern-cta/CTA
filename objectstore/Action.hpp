@@ -102,7 +102,9 @@ public:
         if (somethingMore) continue;
         std::cout << name.str() << " complete: FIFO empty" << std::endl;
         break; 
-      }
+      } catch (abi::__forced_unwind&) {
+        throw;
+      } catch (...) {}
     }
   }
 

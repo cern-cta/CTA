@@ -4,6 +4,7 @@
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include "utils/Timer.hpp"
+#include <cxxabi.h>
 
 namespace cta { namespace objectstore {
 
@@ -38,7 +39,6 @@ public:
   public:
     ObserverOnly(const std::string & w): cta::exception::Exception(w) {}
   };
-
   
   void create();
   
@@ -53,6 +53,59 @@ public:
   std::string nextId(const std::string & childType);
   
   ContextHandle & getFreeContext();
+  
+  class ScopedIntent {
+  public:
+    ScopedIntent(Agent & agent, std::string container, std::string name, serializers::ObjectType objectType):
+    m_agent(agent), m_container(container), m_name(name), m_objectType(objectType), m_present(false) {
+      m_agent.addToIntend(m_container, m_name, m_objectType);
+      m_present = true;
+    }
+    void removeFromIntent() {
+      if(!m_present) return;
+      m_agent.removeFromIntent(m_container, m_name, m_objectType);
+      m_present = false;
+    }
+    ~ScopedIntent() {
+      try {
+        removeFromIntent();
+      } catch (abi::__forced_unwind &) {
+        throw;
+      } catch (...) {}
+    }
+  private:
+    Agent & m_agent;
+    std::string m_container;
+    std::string m_name;
+    serializers::ObjectType m_objectType;
+    bool m_present;
+  };
+  
+  class ScopedOwnership {
+  public:
+    ScopedOwnership(Agent & agent, std::string name, serializers::ObjectType objectType):
+    m_agent(agent), m_name(name), m_objectType(objectType), m_present(false) {
+      m_agent.addToOwnership(m_name, m_objectType);
+      m_present = true;
+    }
+    void removeFromOwnership() {
+      if(!m_present) return;
+      m_agent.removeFromOwnership( m_name, m_objectType);
+      m_present = false;
+    }
+    ~ScopedOwnership() {
+      try {
+        removeFromOwnership();
+      } catch (abi::__forced_unwind &) {
+        throw;
+      } catch (...) {}
+    }
+  private:
+    Agent & m_agent;
+    std::string m_name;
+    serializers::ObjectType m_objectType;
+    bool m_present;
+  };
   
   void addToIntend (std::string container, std::string name, serializers::ObjectType objectType);
   
