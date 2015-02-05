@@ -7,6 +7,7 @@ set (CLIENT_LIB_SRC_FILES
   Exception.cpp
   FileAttribute.cpp
   FileSystemNode.cpp
+  FileSystemStorageClasses.cpp
   MockClientAPI.cpp
   SecurityIdentity.cpp
   StorageClass.cpp

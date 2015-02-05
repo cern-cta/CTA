@@ -2,6 +2,7 @@
 
 #include "ClientAPI.hpp"
 #include "FileSystemNode.hpp"
+#include "FileSystemStorageClasses.hpp"
 #include "StorageClass.hpp"
 #include "StorageClassAndUsageCount.hpp"
 
@@ -229,10 +230,9 @@ protected:
   std::list<std::string> m_adminHosts;
 
   /**
-   * The current mapping from storage class names to storage classes and their
-   * usage counts.
+   * Container of the storage classes used by the file system.
    */
-  std::map<std::string, StorageClassAndUsageCount> m_storageClasses;
+  FileSystemStorageClasses m_storageClasses;
 
   /**
    * The root node of the file-system.
@@ -252,27 +252,6 @@ protected:
    * @param adminHost The network name of the administration host.
    */
   void checkAdminHostDoesNotAlreadyExist(const std::string &adminHost);
-
-  /**
-   * Throws an exception if the specified storage class already exists.
-   *
-   * @param name The name of teh storage class.
-   */
-  void checkStorageClassDoesNotAlreadyExist(const std::string &name) const;
-
-  /**
-   * Throws an exception if the specified storage class does not exist.
-   *
-   * @param name The name of the storage class.
-   */
-  void checkStorageClassExists(const std::string &name) const;
-
-  /**
-   * Throws an exception if the specified storage class is use.
-   *
-   * @param name The name of the storage class.
-   */
-  void checkStorageClassIsNotInUse(const std::string &name) const;
 
   /**
    * Throws an exception if the specified absolute path constains a
