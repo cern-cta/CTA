@@ -150,7 +150,8 @@ int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrI
     std::istringstream ss(req.args.at(1));
     ss >> numberOfCopies;
     cta::SecurityIdentity requester;
-    m_clientAPI->createStorageClass(requester, req.args.at(0), numberOfCopies);
+    const std::string comment = "Comment"; // TO BE DONE
+    m_clientAPI->createStorageClass(requester, req.args.at(0), numberOfCopies, comment);
     std::ostringstream responseSS;
     responseSS << "[OK] Created storage class " << req.args.at(0) << " with " << req.args.at(1) << " tape copies";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -319,7 +320,7 @@ int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrI
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the storage class names and no of copies:";
     for(std::list<cta::StorageClass>::iterator it = stgList.begin(); it != stgList.end(); it++) {
-      responseSS << "\n" << it->name << " " << it->nbCopies;
+      responseSS << "\n" << it->getName() << " " << it->getNbCopies();
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
@@ -418,8 +419,9 @@ int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &
     cta::DirectoryIterator itor = m_clientAPI->getDirectoryContents(requester, req.args.at(0));
     while(itor.hasMore()) {
       const cta::DirectoryEntry &entry = itor.next();
+      
       responseSS << "\n";
-      responseSS << ((S_ISDIR(entry.mode)) ? "d" : "-");
+      responseSS << ((entry.entryType == cta::DirectoryEntry::ENTRYTYPE_DIRECTORY) ? "d" : "-");
       responseSS << ((entry.mode & S_IRUSR) ? "r" : "-");
       responseSS << ((entry.mode & S_IWUSR) ? "w" : "-");
       responseSS << ((entry.mode & S_IXUSR) ? "x" : "-");

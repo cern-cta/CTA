@@ -7,10 +7,11 @@ set (CLIENT_LIB_SRC_FILES
   Exception.cpp
   FileAttribute.cpp
   FileSystemNode.cpp
+  FileSystemStorageClass.cpp
+  FileSystemStorageClasses.cpp
   MockClientAPI.cpp
   SecurityIdentity.cpp
   StorageClass.cpp
-  StorageClassAndUsageCount.cpp
   UserIdentity.cpp)
 
 add_library (ctaclient SHARED
