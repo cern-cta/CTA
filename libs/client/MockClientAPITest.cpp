@@ -226,7 +226,8 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_new) {
 
   const std::string name = "TestStorageClass";
   const uint8_t nbCopies = 2;
-  ASSERT_NO_THROW(api.createStorageClass(requester, name, nbCopies));
+  const std::string comment = "Comment";
+  ASSERT_NO_THROW(api.createStorageClass(requester, name, nbCopies, comment));
 
   {
     std::list<StorageClass> storageClasses;
@@ -254,7 +255,8 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_already_existing) {
 
   const std::string name = "TestStorageClass";
   const uint8_t nbCopies = 2;
-  ASSERT_NO_THROW(api.createStorageClass(requester, name, nbCopies));
+  const std::string comment = "Comment";
+  ASSERT_NO_THROW(api.createStorageClass(requester, name, nbCopies, comment));
 
   {
     std::list<StorageClass> storageClasses;
@@ -267,7 +269,7 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_already_existing) {
     ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
   
-  ASSERT_THROW(api.createStorageClass(requester, name, nbCopies),
+  ASSERT_THROW(api.createStorageClass(requester, name, nbCopies, comment),
     std::exception);
 }
 
@@ -283,10 +285,10 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_lexicographical_order) {
     ASSERT_TRUE(storageClasses.empty());
   }
 
-  ASSERT_NO_THROW(api.createStorageClass(requester, "d", 1));
-  ASSERT_NO_THROW(api.createStorageClass(requester, "b", 1));
-  ASSERT_NO_THROW(api.createStorageClass(requester, "a", 1));
-  ASSERT_NO_THROW(api.createStorageClass(requester, "c", 1));
+  ASSERT_NO_THROW(api.createStorageClass(requester, "d", 1, "Comment d"));
+  ASSERT_NO_THROW(api.createStorageClass(requester, "b", 1, "Comment b"));
+  ASSERT_NO_THROW(api.createStorageClass(requester, "a", 1, "Comment a"));
+  ASSERT_NO_THROW(api.createStorageClass(requester, "c", 1, "Comment c"));
   
   {
     std::list<StorageClass> storageClasses;
@@ -317,7 +319,8 @@ TEST_F(cta_client_MockClientAPITest, deleteStorageClass_existing) {
 
   const std::string name = "TestStorageClass";
   const uint8_t nbCopies = 2;
-  ASSERT_NO_THROW(api.createStorageClass(requester, name, nbCopies));
+  const std::string comment = "Comment";
+  ASSERT_NO_THROW(api.createStorageClass(requester, name, nbCopies, comment));
 
   {
     std::list<StorageClass> storageClasses;
@@ -353,7 +356,8 @@ TEST_F(cta_client_MockClientAPITest, deleteStorageClass_in_use) {
 
   const std::string name = "TestStorageClass";
   const uint8_t nbCopies = 2;
-  ASSERT_NO_THROW(api.createStorageClass(requester, name, nbCopies));
+  const std::string comment = "Comment";
+  ASSERT_NO_THROW(api.createStorageClass(requester, name, nbCopies, comment));
 
   {
     std::list<StorageClass> storageClasses;
@@ -546,7 +550,8 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_inherit_storage_class) {
   {
     const std::string name = "TestStorageClass";
     const uint8_t nbCopies = 2;
-    ASSERT_NO_THROW(api.createStorageClass(requester, name, nbCopies));
+    const std::string comment = "Comment";
+    ASSERT_NO_THROW(api.createStorageClass(requester, name, nbCopies, comment));
   }
 
   {
@@ -770,8 +775,9 @@ TEST_F(cta_client_MockClientAPITest, setDirectoryStorageClass_top_level) {
 
   const std::string storageClassName = "TestStorageClass";
   const uint8_t nbCopies = 2;
+    const std::string comment = "Comment";
   ASSERT_NO_THROW(api.createStorageClass(requester, storageClassName,
-    nbCopies));
+    nbCopies, comment));
 
   ASSERT_NO_THROW(api.setDirectoryStorageClass(requester, dirPath,
     storageClassName));
@@ -812,8 +818,9 @@ TEST_F(cta_client_MockClientAPITest, clearDirectoryStorageClass_top_level) {
 
   const std::string storageClassName = "TestStorageClass";
   const uint8_t nbCopies = 2;
+  const std::string comment = "Comment";
   ASSERT_NO_THROW(api.createStorageClass(requester, storageClassName,
-    nbCopies));
+    nbCopies, comment));
 
   ASSERT_NO_THROW(api.setDirectoryStorageClass(requester, dirPath,
     storageClassName));

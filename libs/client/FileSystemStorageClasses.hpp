@@ -5,6 +5,7 @@
 
 #include <list>
 #include <map>
+#include <string>
 
 namespace cta {
 
@@ -17,16 +18,17 @@ public:
   /**
    * Creates the specified storage class.
    *
-   * @param requester The identity of the user requesting the creation of the
-   * storage class.
    * @param name The name of the storage class.
    * @param nbCopies The number of copies a file associated with this storage
    * class should have on tape.
+   * @param creator The identity of the user that created the storage class.
+   * @param comment The comment describing the storage class.
    */
   void createStorageClass(
-    const SecurityIdentity &requester,
     const std::string &name,
-    const uint8_t nbCopies);
+    const uint8_t nbCopies,
+    const UserIdentity &creator,
+    const std::string &comment);
 
   /**
    * Deletes the specified storage class.

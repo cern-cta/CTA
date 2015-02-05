@@ -23,15 +23,6 @@ struct StorageClass {
    * @param name The name of the storage class.
    * @param nbCopies The number of copies a file associated with this storage
    * class should have on tape.
-   */
-  StorageClass(const std::string &name, const uint8_t nbCopies);
-
-  /**
-   * Constructor.
-   *
-   * @param name The name of the storage class.
-   * @param nbCopies The number of copies a file associated with this storage
-   * class should have on tape.
    * @param creator The identity of the user that created the storage class.
    * @param comment The comment describing the storage class.
    */

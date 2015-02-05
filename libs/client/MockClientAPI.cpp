@@ -131,8 +131,8 @@ std::list<std::string> cta::MockClientAPI::getAdminHosts(
 // createStorageClass
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::createStorageClass(const SecurityIdentity &requester,
-  const std::string &name, const uint8_t nbCopies) {
-  m_storageClasses.createStorageClass(requester, name, nbCopies);
+  const std::string &name, const uint8_t nbCopies, const std::string &comment) {
+  m_storageClasses.createStorageClass(name, nbCopies, requester.user, comment);
 }
 
 //------------------------------------------------------------------------------

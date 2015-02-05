@@ -94,11 +94,13 @@ public:
    * @param name The name of the storage class.
    * @param nbCopies The number of copies a file associated with this storage
    * class should have on tape.
+   * @param comment The comment describing the storage class.
    */
   void createStorageClass(
     const SecurityIdentity &requester,
     const std::string &name,
-    const uint8_t nbCopies);
+    const uint8_t nbCopies,
+    const std::string &comment);
 
   /**
    * Deletes the specified storage class.

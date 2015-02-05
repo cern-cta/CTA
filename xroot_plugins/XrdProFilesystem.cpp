@@ -150,7 +150,8 @@ int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrI
     std::istringstream ss(req.args.at(1));
     ss >> numberOfCopies;
     cta::SecurityIdentity requester;
-    m_clientAPI->createStorageClass(requester, req.args.at(0), numberOfCopies);
+    const std::string comment = "Comment"; // TO BE DONE
+    m_clientAPI->createStorageClass(requester, req.args.at(0), numberOfCopies, comment);
     std::ostringstream responseSS;
     responseSS << "[OK] Created storage class " << req.args.at(0) << " with " << req.args.at(1) << " tape copies";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());

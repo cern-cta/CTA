@@ -11,16 +11,6 @@ cta::StorageClass::StorageClass():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::StorageClass::StorageClass(const std::string &name,
-  const uint8_t nbCopies):
-  m_name(name),
-  m_nbCopies(nbCopies),
-  m_creationTime(time(NULL)) {
-}
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
 cta::StorageClass::StorageClass(
   const std::string &name,
   const uint8_t nbCopies,
