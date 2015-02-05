@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DirectoryEntry.hpp"
+#include "FileSystemStorageClasses.hpp"
 
 #include <map>
 
@@ -22,7 +23,16 @@ public:
    *
    * @param entry The description of the node in the form of a DirectoryEntry.
    */
-  FileSystemNode(const DirectoryEntry& entry);
+  FileSystemNode(const DirectoryEntry &entry);
+
+  /**
+   * Constructor.
+   *
+   * @param The storage classes used in the file system.
+   * @param entry The description of the node in the form of a DirectoryEntry.
+   */
+  FileSystemNode(FileSystemStorageClasses &storageclasses,
+    const DirectoryEntry &entry);
 
   /**
    * Destructor.
@@ -113,6 +123,11 @@ public:
 protected:
 
   /**
+   * The storage classes used in the file system.
+   */
+  FileSystemStorageClasses *m_storageClasses;
+
+  /**
    * Pointer to the parent of this node.
    */
   FileSystemNode *m_parent;
@@ -127,6 +142,17 @@ protected:
    */
   std::map<std::string, FileSystemNode*> m_children;
 
-};
+  /**
+   * If the file system storage classes are known then this method decremenets
+   * the usage count of the storage classs associated with this node.
+   */
+  void decStorageClassUsageCount();
+
+  /**
+   * Deletes and clears the child nodes.
+   */
+  void deleteAndClearChildren();
+
+}; // class FileSystemNode
 
 } // namespace cta

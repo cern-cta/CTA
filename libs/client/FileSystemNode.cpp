@@ -5,21 +5,57 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::FileSystemNode::FileSystemNode():
+  m_storageClasses(NULL),
   m_parent(NULL) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileSystemNode::FileSystemNode(const DirectoryEntry& entry):
+cta::FileSystemNode::FileSystemNode(const DirectoryEntry &entry):
+  m_storageClasses(NULL),
   m_parent(NULL),
   m_entry(entry) {
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::FileSystemNode::FileSystemNode(FileSystemStorageClasses &storageclasses, 
+  const DirectoryEntry &entry):
+  m_storageClasses(&storageclasses),
+  m_entry(entry) {
+  storageclasses.incStorageClassUsageCount(entry.storageClassName);
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 cta::FileSystemNode::~FileSystemNode() throw() {
+  try {
+    decStorageClassUsageCount();
+  } catch(...) {
+  }
+
+  try {
+    deleteAndClearChildren();
+  } catch(...) {
+  }
+}
+
+//------------------------------------------------------------------------------
+// decStorageClassUsageCount
+//------------------------------------------------------------------------------
+void cta::FileSystemNode::decStorageClassUsageCount() {
+  if(m_storageClasses) {
+    m_storageClasses->decStorageClassUsageCount(m_entry.storageClassName);
+  }
+}
+
+//------------------------------------------------------------------------------
+// deleteAndClearChildren
+//------------------------------------------------------------------------------
+void cta::FileSystemNode::deleteAndClearChildren() {
   for(std::map<std::string, FileSystemNode*>::const_iterator itor =
     m_children.begin(); itor != m_children.end(); itor++) {
     delete(itor->second);
