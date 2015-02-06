@@ -164,6 +164,36 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
+  int executeMkpoolCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
+  int executeRmpoolCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
+  int executeLspoolCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
   int executeMkadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
   
   /**

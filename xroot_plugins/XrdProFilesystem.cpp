@@ -459,6 +459,106 @@ int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &
 }
 
 //------------------------------------------------------------------------------
+// executeMkpoolCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeMkpoolCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+  if(req.args.size() != 2) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    m_clientAPI->createTapePool(requester, req.args.at(0), req.args.at(1));
+    std::ostringstream responseSS;
+    responseSS << "[OK] Tape pool " << req.args.at(0) << " created with comment \"" << req.args.at(1) << "\"";
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeRmpoolCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeRmpoolCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+  if(req.args.size() != 1) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    m_clientAPI->deleteTapePool(requester, req.args.at(0));
+    std::ostringstream responseSS;
+    responseSS << "[OK] Tape pool " << req.args.at(0) << " removed";
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeLspoolCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeLspoolCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+  if(req.args.size() != 0) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    std::list<cta::TapePool> poolList = m_clientAPI->getTapePools(requester);
+    std::ostringstream responseSS;
+    responseSS << "[OK] Listing of the tape pools:";
+    for(std::list<cta::TapePool>::iterator it = poolList.begin(); it != poolList.end(); it++) {
+      responseSS << "\n" << it->getName() << " " << it->getCreator().uid << " " << it->getCreator().gid << " " 
+              << it->getCreationTime() << " " << it->getComment();
+    }
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
 // executeMkadminuserCommand
 //------------------------------------------------------------------------------
 int XrdProFilesystem::executeMkadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
@@ -712,6 +812,18 @@ int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eI
   else if(strcmp(req.cmd.c_str(), "/ls") == 0)
   {  
     return executeLsCommand(req, eInfo, requester);
+  }  
+  else if(strcmp(req.cmd.c_str(), "/mkpool") == 0)
+  {  
+    return executeMkpoolCommand(req, eInfo, requester);
+  }  
+  else if(strcmp(req.cmd.c_str(), "/rmpool") == 0)
+  {  
+    return executeRmpoolCommand(req, eInfo, requester);
+  }  
+  else if(strcmp(req.cmd.c_str(), "/lspool") == 0)
+  {  
+    return executeLspoolCommand(req, eInfo, requester);
   }  
   else if(strcmp(req.cmd.c_str(), "/mkadminuser") == 0)
   {  
