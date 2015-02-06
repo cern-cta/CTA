@@ -755,7 +755,8 @@ TEST_F(cta_client_MockClientAPITest, deleteMigrationRoute_non_existing) {
   ASSERT_NO_THROW(api.createTapePool(requester, tapePoolName, comment));
 
   const uint8_t copyNb = 1;
-  ASSERT_NO_THROW(api.deleteMigrationRoute(requester, tapePoolName, copyNb));
+  ASSERT_THROW(api.deleteMigrationRoute(requester, tapePoolName, copyNb),
+    std::exception);
 }
 
 TEST_F(cta_client_MockClientAPITest, getDirectoryContents_root_dir_is_empty) {

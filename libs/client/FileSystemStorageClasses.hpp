@@ -1,7 +1,7 @@
 #pragma once
 
 #include "FileSystemStorageClass.hpp"
-#include "SecurityIdentity.hpp"
+#include "UserIdentity.hpp"
 
 #include <list>
 #include <map>

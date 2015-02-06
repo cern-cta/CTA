@@ -211,6 +211,12 @@ void cta::MockClientAPI::createMigrationRoute(
   const uint8_t copyNb,
   const std::string &tapePoolName,
   const std::string &comment) {
+  return m_migrationRoutes.createMigrationRoute(
+    storageClassName,
+    copyNb,
+    tapePoolName,
+    requester.user,
+    comment);
 }
 
 //------------------------------------------------------------------------------
@@ -220,6 +226,7 @@ void cta::MockClientAPI::deleteMigrationRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint8_t copyNb) {
+  return m_migrationRoutes.deleteMigrationRoute(storageClassName, copyNb);
 }
 
 //------------------------------------------------------------------------------
@@ -227,8 +234,7 @@ void cta::MockClientAPI::deleteMigrationRoute(
 //------------------------------------------------------------------------------
 std::list<cta::MigrationRoute> cta::MockClientAPI::getMigrationRoutes(
   const SecurityIdentity &requester) const {
-  std::list<MigrationRoute> migrationRoutes;
-  return migrationRoutes;
+  return m_migrationRoutes.getMigrationRoutes();
 }
 
 //------------------------------------------------------------------------------

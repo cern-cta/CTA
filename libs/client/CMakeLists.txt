@@ -11,6 +11,8 @@ set (CLIENT_LIB_SRC_FILES
   FileSystemStorageClass.cpp
   FileSystemStorageClasses.cpp
   MigrationRoute.cpp
+  MigrationRouteId.cpp
+  MigrationRoutes.cpp
   MockClientAPI.cpp
   SecurityIdentity.cpp
   StorageClass.cpp

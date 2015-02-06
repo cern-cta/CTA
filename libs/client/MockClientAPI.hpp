@@ -3,6 +3,7 @@
 #include "ClientAPI.hpp"
 #include "FileSystemNode.hpp"
 #include "FileSystemStorageClasses.hpp"
+#include "MigrationRoutes.hpp"
 #include "StorageClass.hpp"
 
 #include <vector>
@@ -311,6 +312,11 @@ protected:
    * Mapping from tape pool name to tape pool.
    */
   std::map<std::string, TapePool> m_tapePools;
+
+  /**
+   * Container of migration routes.
+   */
+  MigrationRoutes m_migrationRoutes;
 
   /**
    * The root node of the file-system.
