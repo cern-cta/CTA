@@ -531,7 +531,6 @@ TEST_F(cta_client_MockClientAPITest, deleteTapePool_existing) {
   }
 }
 
-/*
 TEST_F(cta_client_MockClientAPITest, deleteTapePool_in_use) {
   using namespace cta;
 
@@ -539,43 +538,52 @@ TEST_F(cta_client_MockClientAPITest, deleteTapePool_in_use) {
   const SecurityIdentity requester;
 
   {
-    std::list<TapePool> tapePools;
-    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
-    ASSERT_TRUE(tapePools.empty());
+    std::list<MigrationRoute> migrationRoutes;
+    ASSERT_NO_THROW(migrationRoutes = api.getMigrationRoutes(requester));
+    ASSERT_TRUE(migrationRoutes.empty());
   }
 
-  const std::string name = "TestTapePool";
-  const uint8_t nbCopies = 2;
+  const std::string storageClassName = "TestStorageClass";
   const std::string comment = "Comment";
-  ASSERT_NO_THROW(api.createTapePool(requester, name, nbCopies, comment));
-
   {
-    std::list<TapePool> tapePools;
-    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
-    ASSERT_EQ(1, tapePools.size());
-
-    TapePool tapePool;
-    ASSERT_NO_THROW(tapePool = tapePools.front());
-    ASSERT_EQ(name, tapePool.getName());
-    ASSERT_EQ(nbCopies, tapePool.getNbCopies());
+    const uint8_t nbCopies = 2;
+    ASSERT_NO_THROW(api.createStorageClass(requester, storageClassName,
+      nbCopies, comment));
   }
 
-  ASSERT_NO_THROW(api.setDirectoryTapePool(requester, "/", name));
+  const std::string tapePoolName = "TestTapePool";
+  ASSERT_NO_THROW(api.createTapePool(requester, tapePoolName, comment));
 
-  ASSERT_THROW(api.deleteTapePool(requester, name), std::exception);
+  const uint8_t copyNb = 1;
+  ASSERT_NO_THROW(api.createMigrationRoute(requester, storageClassName,
+    copyNb, tapePoolName, comment));
 
   {
-    std::list<TapePool> tapePools;
-    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
-    ASSERT_EQ(1, tapePools.size());
+    std::list<MigrationRoute> migrationRoutes;
+    ASSERT_NO_THROW(migrationRoutes = api.getMigrationRoutes(requester));
+    ASSERT_EQ(1, migrationRoutes.size());
 
-    TapePool tapePool;
-    ASSERT_NO_THROW(tapePool = tapePools.front());
-    ASSERT_EQ(name, tapePool.getName());
-    ASSERT_EQ(nbCopies, tapePool.getNbCopies());
+    MigrationRoute migrationRoute;
+    ASSERT_NO_THROW(migrationRoute = migrationRoutes.front());
+    ASSERT_EQ(storageClassName, migrationRoute.getStorageClassName());
+    ASSERT_EQ(copyNb, migrationRoute.getCopyNb());
+    ASSERT_EQ(tapePoolName, migrationRoute.getTapePoolName());
+  }
+
+  ASSERT_THROW(api.deleteTapePool(requester, tapePoolName), std::exception);
+
+  {
+    std::list<MigrationRoute> migrationRoutes;
+    ASSERT_NO_THROW(migrationRoutes = api.getMigrationRoutes(requester));
+    ASSERT_EQ(1, migrationRoutes.size());
+
+    MigrationRoute migrationRoute;
+    ASSERT_NO_THROW(migrationRoute = migrationRoutes.front());
+    ASSERT_EQ(storageClassName, migrationRoute.getStorageClassName());
+    ASSERT_EQ(copyNb, migrationRoute.getCopyNb());
+    ASSERT_EQ(tapePoolName, migrationRoute.getTapePoolName());
   }
 }
-*/
 
 TEST_F(cta_client_MockClientAPITest, deleteTapePool_non_existing) {
   using namespace cta;
