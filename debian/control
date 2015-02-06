@@ -5,6 +5,7 @@ Maintainer: CERN CASTOR Team <castor.support@cern.ch>
 
 Package: castor-config
 Architecture: any
+Depends: castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  castor.conf example
 
