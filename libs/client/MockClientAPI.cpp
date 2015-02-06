@@ -185,7 +185,20 @@ void cta::MockClientAPI::deleteTapePool(const SecurityIdentity &requester,
     message << "The " << name << " tape pool does not exist";
     throw Exception(message.str());
   }
+  checkTapePoolIsNotInUse(name);
   m_tapePools.erase(itor);
+}
+
+//------------------------------------------------------------------------------
+// checkTapePoolIsNotInUse
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::checkTapePoolIsNotInUse(const std::string &name)
+  const {
+  if(m_migrationRoutes.tapePoolIsInAMigrationRoute(name)) {
+    std::ostringstream message;
+    message << "The " << name << " tape pool is in use";
+    throw Exception(message.str());
+  }
 }
 
 //------------------------------------------------------------------------------

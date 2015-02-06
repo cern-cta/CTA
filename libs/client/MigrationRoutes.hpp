@@ -61,6 +61,14 @@ public:
   void checkMigrationRouteExists(const std::string &storageClassName,
     const uint8_t copyNb) const;
 
+  /**
+   * Returns true if the specified tape pool is in one of the current migration
+   * routes.
+   *
+   * @param name The name of the tape pool.
+   */
+  bool tapePoolIsInAMigrationRoute(const std::string &name) const;
+
 private:
 
   /**

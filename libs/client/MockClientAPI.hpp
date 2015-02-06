@@ -446,9 +446,16 @@ protected:
   /**
    * Throws an exception if the specified tape pool already exixts.
    *
-   * @paran name The name of the tape pool.
+   * @param name The name of the tape pool.
    */
   void checkTapePoolDoesNotAlreadyExists(const std::string &name) const;
+
+  /**
+   * Throws an exception if the specified tape pool is in use.
+   *
+   * @param name The name of the tape pool.
+   */
+  void checkTapePoolIsNotInUse(const std::string &name) const;
 
 }; // class MockClientAPI
 

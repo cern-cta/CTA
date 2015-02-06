@@ -77,3 +77,17 @@ std::list<cta::MigrationRoute> cta::MigrationRoutes::getMigrationRoutes()
 void cta::MigrationRoutes::checkMigrationRouteExists(
   const std::string &storageClassName, const uint8_t copyNb) const {
 }
+
+//------------------------------------------------------------------------------
+// tapePoolIsInAMigrationRoute
+//------------------------------------------------------------------------------
+bool cta::MigrationRoutes::tapePoolIsInAMigrationRoute(
+  const std::string &name) const {
+  for(std::map<MigrationRouteId, MigrationRoute>::const_iterator itor =
+    m_migrationRoutes.begin(); itor != m_migrationRoutes.end(); itor++) {
+    if(name == itor->second.getTapePoolName()) {
+      return true;
+    }
+  }
+  return false;
+}
