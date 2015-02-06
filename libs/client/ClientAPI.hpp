@@ -3,6 +3,7 @@
 #include "DirectoryIterator.hpp"
 #include "SecurityIdentity.hpp"
 #include "StorageClass.hpp"
+#include "TapePool.hpp"
 #include "UserIdentity.hpp"
 
 #include <list>
@@ -113,10 +114,43 @@ public:
   /**
    * Gets the current list of storage classes in lexicographical order.
    *
-   * @param requester The identity of the user requesting list.
+   * @param requester The identity of the user requesting the list.
    * @return The current list of storage classes in lexicographical order.
    */
   virtual std::list<StorageClass> getStorageClasses(
+    const SecurityIdentity &requester) const = 0;
+
+  /**
+   * Creates a tape pool with the specifed name.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * tape pool.
+   * @param name The name of the tape pool.
+   * @param comment The comment describing the tape pool.
+   */
+  virtual void createTapePool(
+    const SecurityIdentity &requester,
+    const std::string &name,
+    const std::string &comment) = 0;
+
+  /**
+   * Delete the tape pool with the specifed name.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * tape pool.
+   * @param name The name of the tape pool.
+   */
+  virtual void deleteTapePool(
+    const SecurityIdentity &requester,
+    const std::string &name) = 0;
+
+  /**
+   * Gets the current list of tape pools in lexicographical order.
+   *
+   * @param requester The identity of the user requesting the list.
+   * @return The current list of tape pools in lexicographical order.
+   */
+  virtual std::list<TapePool> getTapePools(
     const SecurityIdentity &requester) const = 0;
 
   /**

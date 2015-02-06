@@ -152,6 +152,29 @@ std::list<cta::StorageClass> cta::MockClientAPI::getStorageClasses(
 }
 
 //------------------------------------------------------------------------------
+// createTapePool
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::createTapePool(const SecurityIdentity &requester,
+  const std::string &name, const std::string &comment) {
+}
+
+//------------------------------------------------------------------------------
+// deleteTapePool
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::deleteTapePool(const SecurityIdentity &requester,
+  const std::string &name) {
+}
+
+//------------------------------------------------------------------------------
+// getTapePools
+//------------------------------------------------------------------------------
+std::list<cta::TapePool> cta::MockClientAPI::getTapePools(
+  const SecurityIdentity &requester) const {
+  std::list<cta::TapePool> tapePools;
+  return tapePools;
+}
+
+//------------------------------------------------------------------------------
 // createDirectory
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::createDirectory(const SecurityIdentity &requester,

@@ -408,6 +408,197 @@ TEST_F(cta_client_MockClientAPITest, deleteStorageClass_non_existing) {
   }
 }
 
+TEST_F(cta_client_MockClientAPITest, createTapePool_new) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<TapePool> tapePools;
+    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
+    ASSERT_TRUE(tapePools.empty());
+  }
+
+  const std::string name = "TestTapePool";
+  const std::string comment = "Comment";
+  ASSERT_NO_THROW(api.createTapePool(requester, name, comment));
+
+  {
+    std::list<TapePool> tapePools;
+    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
+    ASSERT_EQ(1, tapePools.size());
+
+    TapePool tapePool;
+    ASSERT_NO_THROW(tapePool = tapePools.front());
+    ASSERT_EQ(name, tapePool.getName());
+  }
+}
+
+TEST_F(cta_client_MockClientAPITest, createTapePool_already_existing) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<TapePool> tapePools;
+    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
+    ASSERT_TRUE(tapePools.empty());
+  }
+
+  const std::string name = "TestTapePool";
+  const std::string comment = "Comment";
+  ASSERT_NO_THROW(api.createTapePool(requester, name, comment));
+
+  {
+    std::list<TapePool> tapePools;
+    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
+    ASSERT_EQ(1, tapePools.size());
+
+    TapePool tapePool;
+    ASSERT_NO_THROW(tapePool = tapePools.front());
+    ASSERT_EQ(name, tapePool.getName());
+  }
+  
+  ASSERT_THROW(api.createTapePool(requester, name, comment), std::exception);
+}
+
+TEST_F(cta_client_MockClientAPITest, createTapePool_lexicographical_order) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<TapePool> tapePools;
+    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
+    ASSERT_TRUE(tapePools.empty());
+  }
+
+  ASSERT_NO_THROW(api.createTapePool(requester, "d", "Comment d"));
+  ASSERT_NO_THROW(api.createTapePool(requester, "b", "Comment b"));
+  ASSERT_NO_THROW(api.createTapePool(requester, "a", "Comment a"));
+  ASSERT_NO_THROW(api.createTapePool(requester, "c", "Comment c"));
+  
+  {
+    std::list<TapePool> tapePools;
+    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
+    ASSERT_EQ(4, tapePools.size());
+
+    ASSERT_EQ(std::string("a"), tapePools.front().getName());
+    tapePools.pop_front();
+    ASSERT_EQ(std::string("b"), tapePools.front().getName());
+    tapePools.pop_front();
+    ASSERT_EQ(std::string("c"), tapePools.front().getName());
+    tapePools.pop_front();
+    ASSERT_EQ(std::string("d"), tapePools.front().getName());
+  }
+}
+
+TEST_F(cta_client_MockClientAPITest, deleteTapePool_existing) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<TapePool> tapePools;
+    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
+    ASSERT_TRUE(tapePools.empty());
+  }
+
+  const std::string name = "TestTapePool";
+  const std::string comment = "Comment";
+  ASSERT_NO_THROW(api.createTapePool(requester, name, comment));
+
+  {
+    std::list<TapePool> tapePools;
+    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
+    ASSERT_EQ(1, tapePools.size());
+  
+    TapePool tapePool;
+    ASSERT_NO_THROW(tapePool = tapePools.front());
+    ASSERT_EQ(name, tapePool.getName());
+
+    ASSERT_NO_THROW(api.deleteTapePool(requester, name));
+  }
+
+  {
+    std::list<TapePool> tapePools;
+    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
+    ASSERT_TRUE(tapePools.empty());
+  }
+}
+
+/*
+TEST_F(cta_client_MockClientAPITest, deleteTapePool_in_use) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<TapePool> tapePools;
+    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
+    ASSERT_TRUE(tapePools.empty());
+  }
+
+  const std::string name = "TestTapePool";
+  const uint8_t nbCopies = 2;
+  const std::string comment = "Comment";
+  ASSERT_NO_THROW(api.createTapePool(requester, name, nbCopies, comment));
+
+  {
+    std::list<TapePool> tapePools;
+    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
+    ASSERT_EQ(1, tapePools.size());
+
+    TapePool tapePool;
+    ASSERT_NO_THROW(tapePool = tapePools.front());
+    ASSERT_EQ(name, tapePool.getName());
+    ASSERT_EQ(nbCopies, tapePool.getNbCopies());
+  }
+
+  ASSERT_NO_THROW(api.setDirectoryTapePool(requester, "/", name));
+
+  ASSERT_THROW(api.deleteTapePool(requester, name), std::exception);
+
+  {
+    std::list<TapePool> tapePools;
+    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
+    ASSERT_EQ(1, tapePools.size());
+
+    TapePool tapePool;
+    ASSERT_NO_THROW(tapePool = tapePools.front());
+    ASSERT_EQ(name, tapePool.getName());
+    ASSERT_EQ(nbCopies, tapePool.getNbCopies());
+  }
+}
+*/
+
+TEST_F(cta_client_MockClientAPITest, deleteTapePool_non_existing) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<TapePool> tapePools;
+    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
+    ASSERT_TRUE(tapePools.empty());
+  }
+
+  const std::string name = "TestTapePool";
+  ASSERT_THROW(api.deleteTapePool(requester, name), std::exception);
+
+  {
+    std::list<TapePool> tapePools;
+    ASSERT_NO_THROW(tapePools = api.getTapePools(requester));
+    ASSERT_TRUE(tapePools.empty());
+  }
+}
+
 TEST_F(cta_client_MockClientAPITest, getDirectoryContents_root_dir_is_empty) {
   using namespace cta;
 

@@ -123,6 +123,39 @@ public:
     const SecurityIdentity &requester) const;
 
   /**
+   * Creates a tape pool with the specifed name.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * tape pool.
+   * @param name The name of the tape pool.
+   * @param comment The comment describing the tape pool.
+   */
+  void createTapePool(
+    const SecurityIdentity &requester,
+    const std::string &name,
+    const std::string &comment);
+
+  /**
+   * Delete the tape pool with the specifed name.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * tape pool.
+   * @param name The name of the tape pool.
+   */
+  void deleteTapePool(
+    const SecurityIdentity &requester,
+    const std::string &name);
+
+  /**
+   * Gets the current list of tape pools in lexicographical order.
+   *
+   * @param requester The identity of the user requesting the list.
+   * @return The current list of tape pools in lexicographical order.
+   */
+  std::list<TapePool> getTapePools(
+    const SecurityIdentity &requester) const;
+
+  /**
    * Creates the specified directory.
    *
    * @param requester The identity of the user requesting the creation of the
