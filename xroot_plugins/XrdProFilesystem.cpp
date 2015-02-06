@@ -149,7 +149,6 @@ int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrI
     uint8_t numberOfCopies;
     std::istringstream ss(req.args.at(1));
     ss >> numberOfCopies;
-    cta::SecurityIdentity requester;
     m_clientAPI->createStorageClass(requester, req.args.at(0), numberOfCopies, req.args.at(2));
     std::ostringstream responseSS;
     responseSS << "[OK] Created storage class " << req.args.at(0) << " with " << req.args.at(1) << " tape copies with the following comment: \"" << req.args.at(2) << "\"" ;
@@ -321,7 +320,7 @@ int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrI
     for(std::list<cta::StorageClass>::iterator it = stgList.begin(); it != stgList.end(); it++) {
       responseSS << "\n" << it->getName() << " " << it->getNbCopies() << " " 
               << it->getCreator().uid << " " << it->getCreator().gid << " " 
-              << it->getCreationTime() << " " << it->getComment();
+              << it->getCreationTime() << " \"" << it->getComment() << "\"";
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
@@ -537,7 +536,116 @@ int XrdProFilesystem::executeLspoolCommand(const ParsedRequest &req, XrdOucErrIn
     responseSS << "[OK] Listing of the tape pools:";
     for(std::list<cta::TapePool>::iterator it = poolList.begin(); it != poolList.end(); it++) {
       responseSS << "\n" << it->getName() << " " << it->getCreator().uid << " " << it->getCreator().gid << " " 
-              << it->getCreationTime() << " " << it->getComment();
+              << it->getCreationTime() << " \"" << it->getComment() << "\"";
+    }
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeMkrouteCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeMkrouteCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+  if(req.args.size() != 4) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    uint8_t copyNo;
+    std::istringstream ss(req.args.at(1));
+    ss >> copyNo;
+    m_clientAPI->createMigrationRoute(requester, req.args.at(0), copyNo, req.args.at(2), req.args.at(3));
+    std::ostringstream responseSS;
+    responseSS << "[OK] Migration route from storage class " << req.args.at(0) << " with copy number " << copyNo << " to tape pool " << req.args.at(2) << " created with comment \"" << req.args.at(3) << "\"";
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeRmrouteCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeRmrouteCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+  if(req.args.size() != 2) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    uint8_t copyNo;
+    std::istringstream ss(req.args.at(1));
+    ss >> copyNo;
+    m_clientAPI->deleteMigrationRoute(requester, req.args.at(0), copyNo);
+    std::ostringstream responseSS;
+    responseSS << "[OK] Migration route from storage class " << req.args.at(0) << " with copy number " << copyNo << " removed";
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeLsrouteCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeLsrouteCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+  if(req.args.size() != 0) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    std::list<cta::MigrationRoute> routeList = m_clientAPI->getMigrationRoutes(requester);
+    std::ostringstream responseSS;
+    responseSS << "[OK] Listing of the migration routes:";
+    for(std::list<cta::MigrationRoute>::iterator it = routeList.begin(); it != routeList.end(); it++) {
+      responseSS << "\n" << it->getStorageClassName() << ":" << it->getCopyNb() 
+              << " " << it->getTapePoolName()
+              << " " << it->getCreator().uid 
+              << " " << it->getCreator().gid 
+              << " \"" << it->getComment() << "\"";
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
@@ -824,6 +932,18 @@ int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eI
   else if(strcmp(req.cmd.c_str(), "/lspool") == 0)
   {  
     return executeLspoolCommand(req, eInfo, requester);
+  }  
+  else if(strcmp(req.cmd.c_str(), "/mkroute") == 0)
+  {  
+    return executeMkrouteCommand(req, eInfo, requester);
+  }  
+  else if(strcmp(req.cmd.c_str(), "/rmroute") == 0)
+  {  
+    return executeRmrouteCommand(req, eInfo, requester);
+  }  
+  else if(strcmp(req.cmd.c_str(), "/lsroute") == 0)
+  {  
+    return executeLsrouteCommand(req, eInfo, requester);
   }  
   else if(strcmp(req.cmd.c_str(), "/mkadminuser") == 0)
   {  

@@ -194,6 +194,36 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
+  int executeMkrouteCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
+  int executeRmrouteCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
+  int executeLsrouteCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
   int executeMkadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
   
   /**
