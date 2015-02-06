@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DirectoryIterator.hpp"
+#include "MigrationRoute.hpp"
 #include "SecurityIdentity.hpp"
 #include "StorageClass.hpp"
 #include "TapePool.hpp"
@@ -151,6 +152,46 @@ public:
    * @return The current list of tape pools in lexicographical order.
    */
   virtual std::list<TapePool> getTapePools(
+    const SecurityIdentity &requester) const = 0;
+
+  /**
+   * Creates the specified migration route.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * migration route.
+   * @param storageClassName The name of the storage class that identifies the
+   * source disk files.
+   * @param copyNb The tape copy number.
+   * @param tapePoolName The name of the destination tape pool.
+   * @param comment The comment describing the migration roue.
+   */
+  virtual void createMigrationRoute(
+    const SecurityIdentity &requester,
+    const std::string &storageClassName,
+    const uint8_t copyNb,
+    const std::string &tapePoolName,
+    const std::string &comment) = 0;
+
+  /**
+   * Deletes the specified migration route.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * migration route.
+   * @param storageClassName The name of the storage class that identifies the
+   * source disk files.
+   * @param copyNb The tape copy number.
+   */
+  virtual void deleteMigrationRoute(
+    const SecurityIdentity &requester,
+    const std::string &storageClassName,
+    const uint8_t copyNb) = 0;
+
+  /**
+   * Gets the current list of migration routes.
+   *
+   * @param requester The identity of the user requesting the list.
+   */
+  virtual std::list<MigrationRoute> getMigrationRoutes(
     const SecurityIdentity &requester) const = 0;
 
   /**

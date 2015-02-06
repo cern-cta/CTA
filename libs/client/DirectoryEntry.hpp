@@ -68,14 +68,14 @@ public:
   uint32_t getOwnerId() const throw();
 
   /**
-   * Returns The group ID of the directory entry.
+   * Returns the group ID of the directory entry.
    *
    * @return The group ID of the directory entry.
    */
   uint32_t getGroupId() const throw();
 
   /**
-   * Returns The mode bits of the directory entry.
+   * Returns the mode bits of the directory entry.
    *
    * @return The mode bits of the directory entry.
    */
@@ -130,6 +130,6 @@ private:
    */
   std::string m_storageClassName;
 
-}; // DirectoryEntry
+}; // class DirectoryEntry
 
 } // namespace cta

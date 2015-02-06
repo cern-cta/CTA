@@ -203,6 +203,35 @@ std::list<cta::TapePool> cta::MockClientAPI::getTapePools(
 }
 
 //------------------------------------------------------------------------------
+// createMigrationRoute
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::createMigrationRoute(
+  const SecurityIdentity &requester,
+  const std::string &storageClassName,
+  const uint8_t copyNb,
+  const std::string &tapePoolName,
+  const std::string &comment) {
+}
+
+//------------------------------------------------------------------------------
+// deleteMigrationRoute
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::deleteMigrationRoute(
+  const SecurityIdentity &requester,
+  const std::string &storageClassName,
+  const uint8_t copyNb) {
+}
+
+//------------------------------------------------------------------------------
+// getMigrationRoutes
+//------------------------------------------------------------------------------
+std::list<cta::MigrationRoute> cta::MockClientAPI::getMigrationRoutes(
+  const SecurityIdentity &requester) const {
+  std::list<MigrationRoute> migrationRoutes;
+  return migrationRoutes;
+}
+
+//------------------------------------------------------------------------------
 // createDirectory
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::createDirectory(const SecurityIdentity &requester,

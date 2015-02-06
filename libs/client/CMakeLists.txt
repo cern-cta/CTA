@@ -10,6 +10,7 @@ set (CLIENT_LIB_SRC_FILES
   FileSystemNode.cpp
   FileSystemStorageClass.cpp
   FileSystemStorageClasses.cpp
+  MigrationRoute.cpp
   MockClientAPI.cpp
   SecurityIdentity.cpp
   StorageClass.cpp

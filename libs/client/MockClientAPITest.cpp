@@ -599,6 +599,165 @@ TEST_F(cta_client_MockClientAPITest, deleteTapePool_non_existing) {
   }
 }
 
+TEST_F(cta_client_MockClientAPITest, createMigrationRoute_new) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<MigrationRoute> migrationRoutes;
+    ASSERT_NO_THROW(migrationRoutes = api.getMigrationRoutes(requester));
+    ASSERT_TRUE(migrationRoutes.empty());
+  }
+
+  const std::string storageClassName = "TestStorageClass";
+  const std::string comment = "Comment";
+  {
+    const uint8_t nbCopies = 2;
+    ASSERT_NO_THROW(api.createStorageClass(requester, storageClassName,
+      nbCopies, comment));
+  }
+
+  const std::string tapePoolName = "TestTapePool";
+  ASSERT_NO_THROW(api.createTapePool(requester, tapePoolName, comment));
+
+  const uint8_t copyNb = 1;
+  ASSERT_NO_THROW(api.createMigrationRoute(requester, storageClassName,
+    copyNb, tapePoolName, comment));
+
+  {
+    std::list<MigrationRoute> migrationRoutes;
+    ASSERT_NO_THROW(migrationRoutes = api.getMigrationRoutes(requester));
+    ASSERT_EQ(1, migrationRoutes.size());
+
+    MigrationRoute migrationRoute;
+    ASSERT_NO_THROW(migrationRoute = migrationRoutes.front());
+    ASSERT_EQ(storageClassName, migrationRoute.getStorageClassName());
+    ASSERT_EQ(copyNb, migrationRoute.getCopyNb());
+    ASSERT_EQ(tapePoolName, migrationRoute.getTapePoolName());
+  }
+}
+
+TEST_F(cta_client_MockClientAPITest, createMigrationRoute_already_existing) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<MigrationRoute> migrationRoutes;
+    ASSERT_NO_THROW(migrationRoutes = api.getMigrationRoutes(requester));
+    ASSERT_TRUE(migrationRoutes.empty());
+  }
+
+  const std::string storageClassName = "TestStorageClass";
+  const std::string comment = "Comment";
+  {
+    const uint8_t nbCopies = 2;
+    ASSERT_NO_THROW(api.createStorageClass(requester, storageClassName,
+      nbCopies, comment));
+  }
+
+  const std::string tapePoolName = "TestTapePool";
+  ASSERT_NO_THROW(api.createTapePool(requester, tapePoolName, comment));
+
+  const uint8_t copyNb = 1;
+  ASSERT_NO_THROW(api.createMigrationRoute(requester, storageClassName,
+    copyNb, tapePoolName, comment));
+
+  {
+    std::list<MigrationRoute> migrationRoutes;
+    ASSERT_NO_THROW(migrationRoutes = api.getMigrationRoutes(requester));
+    ASSERT_EQ(1, migrationRoutes.size());
+
+    MigrationRoute migrationRoute;
+    ASSERT_NO_THROW(migrationRoute = migrationRoutes.front());
+    ASSERT_EQ(storageClassName, migrationRoute.getStorageClassName());
+    ASSERT_EQ(copyNb, migrationRoute.getCopyNb());
+    ASSERT_EQ(tapePoolName, migrationRoute.getTapePoolName());
+  }
+
+  ASSERT_THROW(api.createMigrationRoute(requester, storageClassName,
+    copyNb, tapePoolName, comment), std::exception);
+}
+
+TEST_F(cta_client_MockClientAPITest, deleteMigrationRoute_existing) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<MigrationRoute> migrationRoutes;
+    ASSERT_NO_THROW(migrationRoutes = api.getMigrationRoutes(requester));
+    ASSERT_TRUE(migrationRoutes.empty());
+  }
+
+  const std::string storageClassName = "TestStorageClass";
+  const std::string comment = "Comment";
+  {
+    const uint8_t nbCopies = 2;
+    ASSERT_NO_THROW(api.createStorageClass(requester, storageClassName,
+      nbCopies, comment));
+  }
+
+  const std::string tapePoolName = "TestTapePool";
+  ASSERT_NO_THROW(api.createTapePool(requester, tapePoolName, comment));
+
+  const uint8_t copyNb = 1;
+  ASSERT_NO_THROW(api.createMigrationRoute(requester, storageClassName,
+    copyNb, tapePoolName, comment));
+
+  {
+    std::list<MigrationRoute> migrationRoutes;
+    ASSERT_NO_THROW(migrationRoutes = api.getMigrationRoutes(requester));
+    ASSERT_EQ(1, migrationRoutes.size());
+
+    MigrationRoute migrationRoute;
+    ASSERT_NO_THROW(migrationRoute = migrationRoutes.front());
+    ASSERT_EQ(storageClassName, migrationRoute.getStorageClassName());
+    ASSERT_EQ(copyNb, migrationRoute.getCopyNb());
+    ASSERT_EQ(tapePoolName, migrationRoute.getTapePoolName());
+  }
+
+  ASSERT_NO_THROW(api.deleteMigrationRoute(requester, storageClassName,
+    copyNb));
+
+  {
+    std::list<MigrationRoute> migrationRoutes;
+    ASSERT_NO_THROW(migrationRoutes = api.getMigrationRoutes(requester));
+    ASSERT_TRUE(migrationRoutes.empty());
+  } 
+}
+
+TEST_F(cta_client_MockClientAPITest, deleteMigrationRoute_non_existing) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<MigrationRoute> migrationRoutes;
+    ASSERT_NO_THROW(migrationRoutes = api.getMigrationRoutes(requester));
+    ASSERT_TRUE(migrationRoutes.empty());
+  }
+
+  const std::string storageClassName = "TestStorageClass";
+  const std::string comment = "Comment";
+  {
+    const uint8_t nbCopies = 2;
+    ASSERT_NO_THROW(api.createStorageClass(requester, storageClassName,
+      nbCopies, comment));
+  }
+
+  const std::string tapePoolName = "TestTapePool";
+  ASSERT_NO_THROW(api.createTapePool(requester, tapePoolName, comment));
+
+  const uint8_t copyNb = 1;
+  ASSERT_NO_THROW(api.deleteMigrationRoute(requester, tapePoolName, copyNb));
+}
+
 TEST_F(cta_client_MockClientAPITest, getDirectoryContents_root_dir_is_empty) {
   using namespace cta;
 
