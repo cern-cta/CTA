@@ -156,6 +156,22 @@ std::list<cta::StorageClass> cta::MockClientAPI::getStorageClasses(
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::createTapePool(const SecurityIdentity &requester,
   const std::string &name, const std::string &comment) {
+  checkTapePoolDoesNotAlreadyExists(name);
+  TapePool tapePool(name, requester.user, comment);
+  m_tapePools[name] = tapePool;
+}
+
+//------------------------------------------------------------------------------
+// checkTapePoolDoesNotAlreadyExists
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::checkTapePoolDoesNotAlreadyExists(
+  const std::string &name) const {
+  std::map<std::string, TapePool>::const_iterator itor = m_tapePools.find(name);
+  if(itor != m_tapePools.end()) {
+    std::ostringstream message;
+    message << "The " << name << " tape pool already exists";
+    throw Exception(message.str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -163,6 +179,13 @@ void cta::MockClientAPI::createTapePool(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::deleteTapePool(const SecurityIdentity &requester,
   const std::string &name) {
+  std::map<std::string, TapePool>::iterator itor = m_tapePools.find(name);
+  if(itor == m_tapePools.end()) {
+    std::ostringstream message;
+    message << "The " << name << " tape pool does not exist";
+    throw Exception(message.str());
+  }
+  m_tapePools.erase(itor);
 }
 
 //------------------------------------------------------------------------------
@@ -171,6 +194,11 @@ void cta::MockClientAPI::deleteTapePool(const SecurityIdentity &requester,
 std::list<cta::TapePool> cta::MockClientAPI::getTapePools(
   const SecurityIdentity &requester) const {
   std::list<cta::TapePool> tapePools;
+
+  for(std::map<std::string, TapePool>::const_iterator itor =
+    m_tapePools.begin(); itor != m_tapePools.end(); itor++) {
+    tapePools.push_back(itor->second);
+  }
   return tapePools;
 }
 

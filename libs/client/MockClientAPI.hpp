@@ -268,6 +268,11 @@ protected:
   FileSystemStorageClasses m_storageClasses;
 
   /**
+   * Mapping from tape pool name to tape pool.
+   */
+  std::map<std::string, TapePool> m_tapePools;
+
+  /**
    * The root node of the file-system.
    */
   FileSystemNode m_fileSystemRoot;
@@ -391,6 +396,13 @@ protected:
    */
   void splitString(const std::string &str, const char separator,
     std::vector<std::string> &result) const throw();
+
+  /**
+   * Throws an exception if the specified tape pool already exixts.
+   *
+   * @paran name The name of the tape pool.
+   */
+  void checkTapePoolDoesNotAlreadyExists(const std::string &name) const;
 
 }; // class MockClientAPI
 
