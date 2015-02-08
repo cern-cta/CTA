@@ -91,3 +91,17 @@ bool cta::MigrationRoutes::tapePoolIsInAMigrationRoute(
   }
   return false;
 }
+
+//------------------------------------------------------------------------------
+// storageClassIsInAMigrationRoute
+//------------------------------------------------------------------------------
+bool cta::MigrationRoutes::storageClassIsInAMigrationRoute(
+  const std::string &name) const {
+  for(std::map<MigrationRouteId, MigrationRoute>::const_iterator itor =
+    m_migrationRoutes.begin(); itor != m_migrationRoutes.end(); itor++) {
+    if(name == itor->second.getStorageClassName()) {
+      return true;
+    }
+  }
+  return false;
+}

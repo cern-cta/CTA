@@ -69,6 +69,14 @@ public:
    */
   bool tapePoolIsInAMigrationRoute(const std::string &name) const;
 
+  /**
+   * Returns true if the specified storage class is in one of the current
+   * migration routes.
+   *
+   * @param name The name of the storage class.
+   */
+  bool storageClassIsInAMigrationRoute(const std::string &name) const;
+
 private:
 
   /**

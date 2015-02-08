@@ -140,7 +140,20 @@ void cta::MockClientAPI::createStorageClass(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 void cta::MockClientAPI::deleteStorageClass(const SecurityIdentity &requester,
   const std::string &name) {
+  checkStorageClassIsNotInAMigrationRoute(name);
   m_storageClasses.deleteStorageClass(name);
+}
+
+//------------------------------------------------------------------------------
+// checkStorageClassIsNotInAMigrationRoute
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::checkStorageClassIsNotInAMigrationRoute(
+  const std::string &name) const {
+  if(m_migrationRoutes.storageClassIsInAMigrationRoute(name)) {
+    std::ostringstream message;
+    message << "The " << name << " storage class is in use";
+    throw Exception(message.str());
+  }
 }
 
 //------------------------------------------------------------------------------
