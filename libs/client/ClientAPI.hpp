@@ -291,17 +291,17 @@ public:
     const std::string &dst) = 0;
 
   /**
-   * Gets the current list of archive jobs associated with the specified tape
-   * pool.
+   * Gets the current list of archive jobs associated with the specified device
+   * group.
    *
    * @param requester The identity of the user requesting the list.
-   * @param tapePoolName The name of the tape pool.
+   * @param deviceGroupName The name of the device groupdevice group.
    * @return The list of jobs sorted by creation time in ascending order
    * (oldest first).
    */
   virtual std::list<ArchiveJob> getArchiveJobs(
     const SecurityIdentity &requester,
-    const std::string &tapePoolName) = 0;
+    const std::string &deviceGroupName) = 0;
 
 }; // class ClientAPI
 

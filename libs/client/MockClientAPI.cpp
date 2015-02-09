@@ -687,7 +687,7 @@ void cta::MockClientAPI::checkUserIsAuthorisedToArchive(
 //------------------------------------------------------------------------------
 std::list<cta::ArchiveJob> cta::MockClientAPI::getArchiveJobs(
   const SecurityIdentity &requester,
-  const std::string &tapePoolName) {
+  const std::string &deviceGroupName) {
   std::list<cta::ArchiveJob> jobs;
   return jobs;
 }
