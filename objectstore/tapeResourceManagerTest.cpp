@@ -12,6 +12,7 @@
 #include "RecallJob.hpp"
 #include "Register.hpp"
 #include "AgentVisitor.hpp"
+#include "Counter.hpp"
 #include <math.h>
 
 
@@ -75,7 +76,7 @@ int main(void){
     self.create();
     cta::objectstore::ContextHandle ctx;
     // Dump the structure
-    cta::objectstore::ObjectStrucutreDumper osd;
+    cta::objectstore::ObjectStructureDumper osd;
     std::cout << osd.dump(self) << std::endl;
     // Get hold of the root entry
     cta::objectstore::RootEntry re(self);
@@ -91,6 +92,9 @@ int main(void){
     // Create the recall FIFO
     std::cout << "=============== About to add recall FIFO" << std::endl;
     cta::objectstore::FIFO recallFIFO(jobPool.allocateOrGetRecallFIFO(self), self);
+    // Create the counter
+    std::cout << "=============== About to add recall counter" << std::endl;
+    cta::objectstore::Counter recallCounter(jobPool.allocateOrGetRecallCounter(self), self);
     // Dump again
     std::cout << osd.dump(self) << std::endl;
     
@@ -125,20 +129,38 @@ int main(void){
       recallJobs.push_back(new jobExecutor(*recallActions[i]));
       recallJobs.back()->start(dc);
     }
+    std::cout << "Initial jobs creation done."
+      << " recallJobs.size()=" << recallJobs.size()
+      << " recallActions.size()=" << recallActions.size()
+      << " recallAgents.size()=" << recallAgents.size()
+      << " recallObjectStores.size()=" << recallObjectStores.size() << std::endl;
     usleep (100*1000);
     struct random_data seed;
-    char seedStr[]="1234";
+    memset(&seed, 0, sizeof(seed));
+    char seedStr[]="1234567890abcdef";
     initstate_r(1,seedStr, sizeof(seedStr), &seed);
     while(recallFIFO.size(self)) {
+      std::cout << "Kill-restart recaller, checkpoint 1" << std::endl;
       // Kill a recaller, start another one
       int32_t ranInt;
       random_r(&seed, &ranInt);
       size_t i = floor(1.0 * ranInt / RAND_MAX * recallJobs.size());
+      std::cout << "Kill-restart recaller, checkpoint 2" << std::endl;
       if (i >= recallJobs.size()) i= recallJobs.size() - 1;
       // Kill the job
+      std::cout << "Kill-restart recaller, checkpoint 3 i=" << i << std::endl;
       recallJobs[i]->kill();
-      recallJobs[i]->wait();
+      std::cout << "Kill-restart recaller, checkpoint 4" << std::endl;
+      try {
+        recallJobs[i]->wait();
+      } catch (cta::exception::Exception & e) {
+        std::cout << "Got exception while waiting (after killing) for recallJobs[" << i << "]:"
+            << std::endl
+            << e.what();
+      }
+      std::cout << "Kill-restart recaller, checkpoint 5" << std::endl;
       delete recallJobs[i];
+      std::cout << "Kill-restart recaller, checkpoint 6" << std::endl;
       recallJobs.erase(recallJobs.begin() + i);
       delete recallActions[i];
       recallActions.erase(recallActions.begin() + i);
@@ -155,14 +177,25 @@ int main(void){
       recallJobs.push_back(new jobExecutor(*recallActions[i]));
       recallJobs.back()->start(dc);
     }
-    // wait for FIFO to be empty
-    while (recallFIFO.size(self)) {
+    // wait for recalls to be done
+    while (recallCounter.get(self) < 100) {
       usleep (100 * 1000);
     }
 
     while (recallJobs.size()) {
       // Wait for completion the job
-      recallJobs.back()->wait();
+      try {
+        recallJobs.back()->wait();
+      } catch (cta::exception::Exception & e) {
+        std::cout << "Got exception while waiting for recallJobs[" << recallJobs.size() -1 << "]:"
+            << std::endl
+            << e.what();
+      }
+      std::cout << "recallJobs[" << recallJobs.size()-1 << "] completed. Starting cleanup with"
+        << " recallJobs.size()=" << recallJobs.size()
+        << " recallActions.size()=" << recallActions.size()
+        << " recallAgents.size()=" << recallAgents.size()
+        << " recallObjectStores.size()=" << recallObjectStores.size() << std::endl;
       delete recallJobs.back();
       recallJobs.pop_back();
       delete recallActions.back();
@@ -171,17 +204,34 @@ int main(void){
       recallAgents.pop_back();
       delete recallObjectStores.back();
       recallObjectStores.pop_back();
+      std::cout << "Cleanup done with"
+        << " recallJobs.size()=" << recallJobs.size()
+        << " recallActions.size()=" << recallActions.size()
+        << " recallAgents.size()=" << recallAgents.size()
+        << " recallObjectStores.size()=" << recallObjectStores.size() << std::endl;
     }
     
-    injectorProcess.wait();
+    try {
+      injectorProcess.wait();
+    } catch (cta::exception::Exception & e) {
+      std::cout << "Got exception while waiting for injectorProcess:"
+          << std::endl
+          << e.what();
+    }
     gcProcess.kill();
-    gcProcess.wait();
+    try {
+      gcProcess.wait();
+    } catch (cta::exception::Exception & e) {
+      std::cout << "Got exception while waiting for gcProcess:"
+          << std::endl
+          << e.what();
+    }
     gcAgent.flushContexts();
     
     // And see the state or affairs
     std::cout << osd.dump(self) << std::endl;
   } catch (std::exception &e) {
-    std::cout << "got exception: " << e.what() << std::endl;
+    std::cout << "At top level of resource manager test, got exception: " << e.what() << std::endl;
   }
   
   // Create the job poster

@@ -109,6 +109,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetJobPool(Agent & agent) {
     serializers::JobPool jps;
     jps.set_migration("");
     jps.set_recall("");
+    jps.set_recallcounter("");
     writeChild(jpName, jps);
     // If we lived that far, we can update the root entry to point to our
     // new agent register, and remove the name from the intent log.

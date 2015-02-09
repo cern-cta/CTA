@@ -4,11 +4,12 @@
 #include "AgentRegister.hpp"
 #include "Agent.hpp"
 #include "JobPool.hpp"
+#include "Counter.hpp"
 #include <iostream>
 
 namespace cta { namespace objectstore {
 
-class ObjectStrucutreDumper {
+class ObjectStructureDumper {
 public:
   std::string dump(Agent & agent) {
     std::stringstream ret;
@@ -30,6 +31,11 @@ public:
       try {
         FIFO rf(jp.getRecallFIFO(agent), agent);
         ret << rf.dump(agent) << std::endl;
+      } catch (std::exception&) {
+      }
+      try {
+        Counter rc(jp.getRecallCounter(agent), agent);
+        ret << "Recall Counter=" << rc.get(agent) << std::endl;
       } catch (std::exception&) {
       }
     } catch (RootEntry::NotAllocatedEx &) {}

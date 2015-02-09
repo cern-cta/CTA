@@ -49,7 +49,7 @@ namespace threading {
    */
   class Thread {
   public:
-    Thread(): m_hadException(false), m_what("") {}
+    Thread(): m_hadException(false), m_what(""), m_started(false) {}
     virtual ~Thread () {}
     void start() ;
     void wait() ;
@@ -62,6 +62,7 @@ namespace threading {
     std::string m_what;
     std::string m_type;
     static void * pthread_runner (void * arg);
+    bool m_started;
   };
   
 }}

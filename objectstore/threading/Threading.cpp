@@ -26,6 +26,7 @@
 #include <typeinfo>
 #include <stdlib.h>
 #include <cxxabi.h>
+#include <iostream>
 
 /* Implmentations of the threading primitives */
 //------------------------------------------------------------------------------
@@ -36,16 +37,19 @@ void cta::threading::Thread::start()
   cta::exception::Errnum::throwOnReturnedErrno(
     pthread_create(&m_thread, NULL, pthread_runner, this),
       "Error from pthread_create in cta::threading::Thread::start()");
+  std::cout << "Started thread:" << m_thread << " (0x" << std::hex << m_thread << std::dec << ")" << std::endl;
+  m_started = true;
 }
 //------------------------------------------------------------------------------
 //wait
 //------------------------------------------------------------------------------
 void cta::threading::Thread::wait()
  {
+  void *res;
   cta::exception::Errnum::throwOnReturnedErrno(
-    pthread_join(m_thread, NULL),
+    pthread_join(m_thread, &res),
       "Error from pthread_join in cta::threading::Thread::wait()");
-  if (m_hadException) {
+  if (m_hadException && res != PTHREAD_CANCELED) {
     std::string w = "Uncaught exception of type \"";
     w += m_type;
     w += "\" in Thread.run():\n>>>>\n";
@@ -59,6 +63,8 @@ void cta::threading::Thread::wait()
 //------------------------------------------------------------------------------
 void cta::threading::Thread::kill()
  {
+  if (!m_started) throw cta::exception::Exception("Trying to kill a non-started thread!");
+  std::cout << "About to kill thread:" << m_thread << " (0x" << std::hex << m_thread << std::dec << ")" << std::endl;
   cta::exception::Errnum::throwOnReturnedErrno(
     pthread_cancel(m_thread),
       "Error from pthread_cancel in cta::threading::Thread::cancel()");

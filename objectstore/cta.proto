@@ -39,6 +39,12 @@ enum ObjectType {
   RecallFIFO_t = 4;
   MigrationFIFO_t = 5;
   RecallJob_t = 6;
+  Counter_t = 7;
+}
+
+// A basic shared counter
+message Counter {
+  required uint64 count = 300;
 }
 
 // The agents's elements:
@@ -95,4 +101,5 @@ message RecallJob {
 message JobPool {
   required string migration = 7001;
   required string recall = 7002;
+  required string recallcounter = 7003;
 }

@@ -169,12 +169,12 @@ public:
   
   virtual void lockExclusive(std::string name, ContextHandle & context, std::string where) {
     lockHelper(name, context, LOCK_EX);
-    std::cout << "LockedExclusive " << name << " with fd=" << context.get(0) << " @" << where << " tid=" << syscall(SYS_gettid) << std::endl;
+    //std::cout << "LockedExclusive " << name << " with fd=" << context.get(0) << " @" << where << " tid=" << syscall(SYS_gettid) << std::endl;
   }
 
   virtual void lockShared(std::string name, ContextHandle & context, std::string where) {
     lockHelper(name, context, LOCK_SH);
-    std::cout << "LockedShared " << name << " with fd=" << context.get(0) << " @" << where << " tid=" << syscall(SYS_gettid) << std::endl;
+    //std::cout << "LockedShared " << name << " with fd=" << context.get(0) << " @" << where << " tid=" << syscall(SYS_gettid) << std::endl;
   }
 
   virtual void unlock(std::string name, ContextHandle & context, std::string where) {
@@ -182,7 +182,7 @@ public:
     int fd= context.get(0);
     context.reset();
     ::close(fd);
-    std::cout << "Unlocked " << name << " with fd=" << fd << " @" << where << " tid=" << syscall(SYS_gettid) << std::endl;
+    //std::cout << "Unlocked " << name << " with fd=" << fd << " @" << where << " tid=" << syscall(SYS_gettid) << std::endl;
   }
   
 
@@ -238,6 +238,12 @@ public:
   virtual std::string pool() {
     return m_pool;
   }
+  
+
+  virtual void create(std::string name, std::string content) {
+    atomicOverwrite(name, content);
+  }
+  
   virtual void atomicOverwrite(std::string name, std::string content) {
     ceph::bufferlist bl;
     bl.append(content.c_str(), content.size());
@@ -284,7 +290,7 @@ public:
       std::string("In ObjectStoreRados::lockExclusive, failed to librados::IoCtx::lock_exclusive: ")+
       name + "/" + "lock" + "/" + client.str() + "//");
     context.set();
-    std::cout << "LockedExclusive: " << name << "/" << "lock" << "/" << client.str() << "//@" << where << std::endl;
+    //std::cout << "LockedExclusive: " << name << "/" << "lock" << "/" << client.str() << "//@" << where << std::endl;
   }
 
 
@@ -307,7 +313,7 @@ public:
       std::string("In ObjectStoreRados::lockShared, failed to librados::IoCtx::lock_shared: ")+
       name + "/" + "lock" + "/" + client.str() + "//");
     context.set();
-    std::cout << "LockedShared: " << name << "/" << "lock" << "/" << client.str() << "//@" << where << std::endl;
+    //std::cout << "LockedShared: " << name << "/" << "lock" << "/" << client.str() << "//@" << where << std::endl;
   }
 
   virtual void unlock(std::string name, ContextHandle & context, std::string where) {
@@ -323,7 +329,7 @@ public:
       std::string("In ObjectStoreRados::lockExclusive,  failed to lock_exclusive ")+
       name);
     context.reset();
-    std::cout << "Unlocked: " << name << "/" << "lock" << "/" << client.str() << "//@" << where << std::endl;
+    //std::cout << "Unlocked: " << name << "/" << "lock" << "/" << client.str() << "//@" << where << std::endl;
   }
 
 

@@ -6,6 +6,7 @@
 #include "JobPool.hpp"
 #include "FIFO.hpp"
 #include "AgentRegister.hpp"
+#include "Counter.hpp"
 #include <unistd.h>
 
 namespace cta { namespace objectstore {
@@ -65,6 +66,7 @@ public:
     RootEntry re(m_agent);
     JobPool jp(re.getJobPool(m_agent), m_agent);
     FIFO fifo(jp.getRecallFIFO(m_agent), m_agent);
+    Counter rc(jp.getRecallCounter(m_agent), m_agent);
     std::cout << name.str() << " starting" << std::endl;
     cta::utils::Timer timeout;
     while (true) {
@@ -85,11 +87,15 @@ public:
                   << m_number << " (tid=" << syscall(SYS_gettid) << ")" 
                   << std::endl;
         rj.remove();
+        // Count the deletion
+        rc.inc(m_agent);
         m_agent.removeFromOwnership(rjName, serializers::RecallJob_t);
       } catch (FIFO::FIFOEmpty &) {
         if (timeout.secs() > 1.0) break;
         usleep(100 * 1000);
       } catch (std::exception&) {
+      } catch (...) {
+        throw;
       }
     }
   }
@@ -249,6 +255,9 @@ private:
             break;
           case serializers::MigrationFIFO_t:
             std::cout << "Unexpected entry type in garbage collection: MigrationFIFO" << std::endl;
+            break;
+          case serializers::Counter_t:
+            std::cout << "Unexpected entry type in garbage collection: Counter" << std::endl;
             break;
         }
       }

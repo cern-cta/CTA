@@ -30,7 +30,8 @@ public:
     std::stringstream ret;
     ret << "<<<< JobPool " << selfName() << " dump start" << std::endl
         << "Migration=" << jps.migration() << std::endl
-        << "Recall=" << jps.recall() << std::endl;
+        << "Recall=" << jps.recall() << std::endl
+        << "RecallCounter=" << jps.recallcounter() << std::endl;
     ret << ">>>> JobPool " << selfName() << " dump end" << std::endl;
     return ret.str();
   }
@@ -78,6 +79,51 @@ public:
       // release the lock, and return the register name
       unlock(ctx);
       return FIFOName;
+    }
+  }
+  
+  std::string getRecallCounter (Agent & agent) {
+    // Check if the recall FIFO exists
+    serializers::JobPool res;
+    updateFromObjectStore(res, agent.getFreeContext());
+    // If the registry is defined, return it, job done.
+    if (res.recallcounter().size())
+      return res.recall();
+    throw NotAllocatedEx("In RootEntry::getRecallCounter: recallCounter not yet allocated");
+  }
+  
+  std::string allocateOrGetRecallCounter(Agent & agent) {
+    // Check if the counter exists
+    try {
+      return getRecallCounter(agent);
+    } catch (NotAllocatedEx &) {
+      // If we get here, the job pool is not created yet, so we have to do it:
+      // lock the entry again, for writing
+      serializers::JobPool res;
+      ContextHandle & ctx = agent.getFreeContext();
+      lockExclusiveAndRead(res, ctx, __func__);
+      // If the registry is already defined, somebody was faster. We're done.
+      if (res.recallcounter().size()) {
+        unlock(ctx);
+        return res.recallcounter();
+      }
+      // We will really create the register
+      // decide on the object's name
+      std::string recallCounterName (agent.nextId("recallCounter"));
+      // Record the FIFO in the intent log
+      agent.addToIntend(selfName(), recallCounterName, serializers::RecallFIFO_t);
+      // The potential object can now be garbage collected if we die from here.
+      // Create the object, then lock. The name should be unique, so no race.
+      serializers::Counter cs;
+      cs.set_count(0);
+      writeChild(recallCounterName, cs);
+      // If we lived that far, we can update the jop pool to point to the FIFO
+      res.set_recallcounter(recallCounterName);
+      agent.removeFromIntent(selfName(), recallCounterName, serializers::RecallFIFO_t);
+      write(res);
+      // release the lock, and return the register name
+      unlock(ctx);
+      return recallCounterName;
     }
   }
   
