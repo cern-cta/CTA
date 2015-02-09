@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ArchiveJob.hpp"
 #include "DirectoryIterator.hpp"
 #include "MigrationRoute.hpp"
 #include "SecurityIdentity.hpp"
@@ -288,6 +289,19 @@ public:
     const SecurityIdentity &requester,
     const std::list<std::string> &srcUrls,
     const std::string &dst) = 0;
+
+  /**
+   * Gets the current list of archive jobs associated with the specified tape
+   * pool.
+   *
+   * @param requester The identity of the user requesting the list.
+   * @param tapePoolName The name of the tape pool.
+   * @return The list of jobs sorted by creation time in ascending order
+   * (oldest first).
+   */
+  virtual std::list<ArchiveJob> getArchiveJobs(
+    const SecurityIdentity &requester,
+    const std::string &tapePoolName) = 0;
 
 }; // class ClientAPI
 

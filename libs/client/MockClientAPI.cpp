@@ -681,3 +681,13 @@ void cta::MockClientAPI::checkUserIsAuthorisedToArchive(
   const FileSystemNode &dstDir) {
   // TO BE DONE
 }
+
+//------------------------------------------------------------------------------
+// getArchiveJobs
+//------------------------------------------------------------------------------
+std::list<cta::ArchiveJob> cta::MockClientAPI::getArchiveJobs(
+  const SecurityIdentity &requester,
+  const std::string &tapePoolName) {
+  std::list<cta::ArchiveJob> jobs;
+  return jobs;
+}
