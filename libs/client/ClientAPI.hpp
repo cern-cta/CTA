@@ -264,7 +264,7 @@ public:
    */
   virtual std::string getDirectoryStorageClass(
     const SecurityIdentity &requester,
-    const std::string &dirPath) = 0;
+    const std::string &dirPath) const = 0;
 
   /**
    * Archives the specified list of source files to the specified destination
@@ -282,12 +282,12 @@ public:
    * @param requester The identity of the user requesting the archival.
    * @param srcUrls List of one or more source files.
    * @param dst Destination file or directory within the archive namespace.
-   * @return The identifier of the archive job.
+   * @return The string identifier of the archive job.
    */
-  virtual std::string archiveToTape(
+  virtual std::string archive(
     const SecurityIdentity &requester,
     const std::list<std::string> &srcUrls,
-    std::string dst) = 0;
+    const std::string &dst) = 0;
 
 }; // class ClientAPI
 

@@ -35,9 +35,9 @@ cta::DirectoryEntry::DirectoryEntry(const EntryType entryType,
 }
 
 //------------------------------------------------------------------------------
-// getEntryType
+// getType
 //------------------------------------------------------------------------------
-cta::DirectoryEntry::EntryType cta::DirectoryEntry::getEntryType()
+cta::DirectoryEntry::EntryType cta::DirectoryEntry::getType()
   const throw() {
   return m_entryType;
 }

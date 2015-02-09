@@ -278,7 +278,7 @@ void cta::MockClientAPI::createDirectory(const SecurityIdentity &requester,
 
   FileSystemNode &enclosingNode = getFileSystemNode(enclosingPath);
   if(DirectoryEntry::ENTRYTYPE_DIRECTORY !=
-    enclosingNode.getFileSystemEntry().getEntry().getEntryType()) {
+    enclosingNode.getFileSystemEntry().getEntry().getType()) {
     std::ostringstream message;
     message << enclosingPath << " is not a directory";
     throw Exception(message.str());
@@ -468,7 +468,7 @@ void cta::MockClientAPI::deleteDirectory(const SecurityIdentity &requester,
   FileSystemNode &dirNode = getFileSystemNode(dirPath);
 
   if(DirectoryEntry::ENTRYTYPE_DIRECTORY !=
-    dirNode.getFileSystemEntry().getEntry().getEntryType()) {
+    dirNode.getFileSystemEntry().getEntry().getType()) {
     std::ostringstream message;
     message << "The absolute path " << dirPath << " is not a directory";
     throw(message.str());
@@ -496,7 +496,7 @@ cta::DirectoryIterator cta::MockClientAPI::getDirectoryContents(
   const FileSystemNode &dirNode = getFileSystemNode(dirPath);
 
   if(DirectoryEntry::ENTRYTYPE_DIRECTORY !=
-    dirNode.getFileSystemEntry().getEntry().getEntryType()) {
+    dirNode.getFileSystemEntry().getEntry().getType()) {
     std::ostringstream message;
     message << "The absolute path " << dirPath << " is not a directory";
     throw(message.str());
@@ -568,7 +568,7 @@ void cta::MockClientAPI::setDirectoryStorageClass(
 
   FileSystemNode &dirNode = getFileSystemNode(dirPath);
   if(DirectoryEntry::ENTRYTYPE_DIRECTORY !=
-    dirNode.getFileSystemEntry().getEntry().getEntryType()) {
+    dirNode.getFileSystemEntry().getEntry().getType()) {
     std::ostringstream message;
     message << dirPath << " is not a directory";
     throw Exception(message.str());
@@ -585,7 +585,7 @@ void cta::MockClientAPI::clearDirectoryStorageClass(
   const std::string &dirPath) {
   FileSystemNode &dirNode = getFileSystemNode(dirPath);
   if(DirectoryEntry::ENTRYTYPE_DIRECTORY !=
-    dirNode.getFileSystemEntry().getEntry().getEntryType()) {
+    dirNode.getFileSystemEntry().getEntry().getType()) {
     std::ostringstream message;
     message << dirPath << " is not a directory";
     throw Exception(message.str());
@@ -599,10 +599,10 @@ void cta::MockClientAPI::clearDirectoryStorageClass(
 //------------------------------------------------------------------------------
 std::string cta::MockClientAPI::getDirectoryStorageClass(
   const SecurityIdentity &requester,
-  const std::string &dirPath) {
-  FileSystemNode &dirNode = getFileSystemNode(dirPath);
+  const std::string &dirPath) const {
+  const FileSystemNode &dirNode = getFileSystemNode(dirPath);
   if(DirectoryEntry::ENTRYTYPE_DIRECTORY !=
-    dirNode.getFileSystemEntry().getEntry().getEntryType()) {
+    dirNode.getFileSystemEntry().getEntry().getType()) {
     std::ostringstream message;
     message << dirPath << " is not a directory";
     throw Exception(message.str());
@@ -612,9 +612,72 @@ std::string cta::MockClientAPI::getDirectoryStorageClass(
 }
 
 //------------------------------------------------------------------------------
-// archiveToTape
+// archive
 //------------------------------------------------------------------------------
-std::string cta::MockClientAPI::archiveToTape(const SecurityIdentity &requester,
-  const std::list<std::string> &srcUrls, std::string dst) {
-  return "Funny_Job_ID";
+std::string cta::MockClientAPI::archive(const SecurityIdentity &requester,
+  const std::list<std::string> &srcUrls, const std::string &dst) {
+  checkAbsolutePathSyntax(dst);
+  if(isAnExistingDirectory(dst)) {
+    return archiveToDirectory(requester, srcUrls, dst);
+  } else {
+    return archiveToFile(requester, srcUrls, dst);
+  }
+}
+
+//------------------------------------------------------------------------------
+// isAnExistingDirectory
+//------------------------------------------------------------------------------
+bool cta::MockClientAPI::isAnExistingDirectory(const std::string &path)
+  const throw() {
+  try {
+    const FileSystemNode &node = getFileSystemNode(path);
+    const DirectoryEntry &entry = node.getFileSystemEntry().getEntry();
+    if(DirectoryEntry::ENTRYTYPE_DIRECTORY == entry.getType()) {
+      return true;
+    }
+  } catch(...) {
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
+// archiveToDirectory
+//------------------------------------------------------------------------------
+std::string cta::MockClientAPI::archiveToDirectory(
+  const SecurityIdentity &requester,
+  const std::list<std::string> &srcUrls,
+  const std::string &dstDir) {
+  if(0 == srcUrls.size()) {
+    throw Exception("At least one source file should be provided");
+  }
+
+  FileSystemNode &dstDirNode = getFileSystemNode(dstDir);
+  checkUserIsAuthorisedToArchive(requester, dstDirNode);
+  return "Funny_archive_to_dir_ID";
+}
+
+//------------------------------------------------------------------------------
+// archiveToFile
+//------------------------------------------------------------------------------
+std::string cta::MockClientAPI::archiveToFile(
+  const SecurityIdentity &requester,
+  const std::list<std::string> &srcUrls,
+  const std::string &dstFile) {
+  if(1 != srcUrls.size()) {
+    throw Exception("One and only one source file must be provided when "
+      "archiving to a single destination file");
+  }
+
+  FileSystemNode &enclosingDirNode = getFileSystemNode(dstFile);
+  checkUserIsAuthorisedToArchive(requester, enclosingDirNode);
+  return "Funny_archive_to_file_ID";
+}
+
+//------------------------------------------------------------------------------
+// checkUserIsAuthorisedToArchive
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::checkUserIsAuthorisedToArchive(
+  const SecurityIdentity &user,
+  const FileSystemNode &dstDir) {
+  // TO BE DONE
 }
