@@ -266,7 +266,7 @@ public:
    */
   std::string getDirectoryStorageClass(
     const SecurityIdentity &requester,
-    const std::string &dirPath);
+    const std::string &dirPath) const;
 
   /**
    * Archives the specified list of source files to the specified destination
@@ -284,12 +284,12 @@ public:
    * @param requester The identity of the user requesting the archival.
    * @param srcUrls List of one or more source files.
    * @param dst Destination file or directory within the archive namespace.
-   * @return The identifier of the archive job.
+   * @return The string identifier of the archive job.
    */
-  std::string archiveToTape(
+  std::string archive(
     const SecurityIdentity &requester,
     const std::list<std::string> &srcUrls,
-    std::string dst);
+    const std::string &dst);
 
 protected:
 
@@ -464,6 +464,65 @@ protected:
    * @param name The name of the storage class.
    */
   void checkStorageClassIsNotInAMigrationRoute(const std::string &name) const;
+
+  /**
+   * Returns true if the specified absolute path is that of an existing
+   * directory within the archive namepsace.
+   *
+   * @param path The specified absolute path.
+   * @return True if the specified absolute path is that of an existing
+   * directory within the archive namepsace.
+   */
+  bool isAnExistingDirectory(const std::string &path) const throw();
+
+  /**
+   * Archives the specified list of source files to the specified destination
+   * directory within the archive namespace.
+   *
+   * The list of source files should contain at least one file.
+   *
+   * The storage class of the archived file will be inherited from its
+   * destination directory.
+   *
+   * @param requester The identity of the user requesting the archival.
+   * @param srcUrls List of one or more source files.
+   * @param dstDir Destination directory within the archive namespace.
+   * @return The string identifier of the archive job.
+   */
+  std::string archiveToDirectory(
+    const SecurityIdentity &requester,
+    const std::list<std::string> &srcUrls,
+    const std::string &dstDir);
+
+  /**
+   * Archives the specified list of source files to the specified destination
+   * file within the archive namespace.
+   *
+   * The list of source files should contain one and only one file.
+   *
+   * The storage class of the archived file will be inherited from its
+   * destination directory.
+   *
+   * @param requester The identity of the user requesting the archival.
+   * @param srcUrls List of one or more source files.
+   * @param dstFile Destination file within the archive namespace.
+   * @return The string identifier of the archive job.
+   */
+  std::string archiveToFile(
+    const SecurityIdentity &requester,
+    const std::list<std::string> &srcUrls,
+    const std::string &dstFile);
+
+  /**
+   * Throws an exception if the specified requester is not authorised to archive
+   * a file to the specified destination directory within the archive namespace.
+   *
+   * @param requester The identity of the user requesting the archival.
+   * @param dstDir Destination directory within the archive namespace.
+   */
+  void checkUserIsAuthorisedToArchive(
+    const SecurityIdentity &user,
+    const FileSystemNode &dstDir);
 
 }; // class MockClientAPI
 

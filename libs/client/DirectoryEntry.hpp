@@ -51,7 +51,7 @@ public:
    *
    * @return The type of the directory entry.
    */
-  EntryType getEntryType() const throw();
+  EntryType getType() const throw();
 
   /**
    * Returns the name of the directory entry.

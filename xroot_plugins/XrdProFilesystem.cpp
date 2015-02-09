@@ -108,7 +108,7 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
     for(size_t i=0; i<req.args.size()-1; i++) {
       sourceFiles.push_back(req.args.at(i));
     }
-    std::string jobID = m_clientAPI->archiveToTape(requester, sourceFiles, destinationPath);
+    std::string jobID = m_clientAPI->archive(requester, sourceFiles, destinationPath);
     std::ostringstream responseSS;
     responseSS << "[OK] Requested archival of the following files:\n";
     for(std::list<std::string>::iterator it = sourceFiles.begin(); it != sourceFiles.end(); it++) {
@@ -421,7 +421,7 @@ int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &
       const cta::DirectoryEntry &entry = itor.next();
       
       responseSS << "\n";
-      responseSS << ((entry.getEntryType() == cta::DirectoryEntry::ENTRYTYPE_DIRECTORY) ? "d" : "-");
+      responseSS << ((entry.getType() == cta::DirectoryEntry::ENTRYTYPE_DIRECTORY) ? "d" : "-");
       responseSS << ((entry.getMode() & S_IRUSR) ? "r" : "-");
       responseSS << ((entry.getMode() & S_IWUSR) ? "w" : "-");
       responseSS << ((entry.getMode() & S_IXUSR) ? "x" : "-");
