@@ -167,17 +167,21 @@ std::list<cta::StorageClass> cta::MockClientAPI::getStorageClasses(
 //------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::createTapePool(const SecurityIdentity &requester,
-  const std::string &name, const std::string &comment) {
-  checkTapePoolDoesNotAlreadyExists(name);
-  TapePool tapePool(name, requester.user, comment);
+void cta::MockClientAPI::createTapePool(
+  const SecurityIdentity &requester,
+  const std::string &name,
+  const uint16_t nbDrives,
+  const uint32_t nbPartialTapes,
+  const std::string &comment) {
+  checkTapePoolDoesNotAlreadyExist(name);
+  TapePool tapePool(name, nbDrives, nbPartialTapes,requester.user, comment);
   m_tapePools[name] = tapePool;
 }
 
 //------------------------------------------------------------------------------
-// checkTapePoolDoesNotAlreadyExists
+// checkTapePoolDoesNotAlreadyExist
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkTapePoolDoesNotAlreadyExists(
+void cta::MockClientAPI::checkTapePoolDoesNotAlreadyExist(
   const std::string &name) const {
   std::map<std::string, TapePool>::const_iterator itor = m_tapePools.find(name);
   if(itor != m_tapePools.end()) {
@@ -612,55 +616,28 @@ std::string cta::MockClientAPI::getDirectoryStorageClass(
 }
 
 //------------------------------------------------------------------------------
-// createDeviceGroup
+// createLogicalLibrary
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::createDeviceGroup(
+void cta::MockClientAPI::createLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name,
   const std::string &comment) {
 }
 
 //------------------------------------------------------------------------------
-// deleteDeviceGroup
+// deleteLogicalLibrary
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::deleteDeviceGroup(
+void cta::MockClientAPI::deleteLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name) {
 }
 
 //------------------------------------------------------------------------------
-// getDeviceGroups
+// getLogicalLibraries
 //------------------------------------------------------------------------------
-std::list<cta::DeviceGroup> cta::MockClientAPI::getDeviceGroups(
-  const SecurityIdentity &requester) {
-  std::list<DeviceGroup> groups;
-  return groups;
-}
-
-//------------------------------------------------------------------------------
-// createLibrary
-//------------------------------------------------------------------------------
-void cta::MockClientAPI::createLibrary(
-  const SecurityIdentity &requester,
-  const std::string &name,
-  const std::string &deviceGroupName,
-  const std::string &comment) {
-}
-
-//------------------------------------------------------------------------------
-// deleteLibrary
-//------------------------------------------------------------------------------
-void cta::MockClientAPI::deleteLibrary(
-  const SecurityIdentity &requester,
-  const std::string &name) {
-}
-
-//------------------------------------------------------------------------------
-// getLibraries
-//------------------------------------------------------------------------------
-std::list<cta::Library> cta::MockClientAPI::getLibraries(
-  const SecurityIdentity &requester) {
-  std::list<Library> libraries;
+std::list<cta::LogicalLibrary> cta::MockClientAPI::getLogicalLibraries(
+  const SecurityIdentity &requester) const {
+  std::list<LogicalLibrary> libraries;
   return libraries;
 }
 
@@ -740,7 +717,7 @@ void cta::MockClientAPI::checkUserIsAuthorisedToArchive(
 //------------------------------------------------------------------------------
 std::list<cta::ArchiveJob> cta::MockClientAPI::getArchiveJobs(
   const SecurityIdentity &requester,
-  const std::string &deviceGroupName) {
+  const std::string &tapePoolName) {
   std::list<cta::ArchiveJob> jobs;
   return jobs;
 }

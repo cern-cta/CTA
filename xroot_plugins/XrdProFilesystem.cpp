@@ -467,7 +467,9 @@ int XrdProFilesystem::executeMkpoolCommand(const ParsedRequest &req, XrdOucErrIn
     return SFS_DATA;
   }
   try {
-    m_clientAPI->createTapePool(requester, req.args.at(0), req.args.at(1));
+    const uint16_t nbDrives = 1;
+    const uint32_t nbPartialTapes = 1;
+    m_clientAPI->createTapePool(requester, req.args.at(0), nbDrives, nbPartialTapes, req.args.at(1));
     std::ostringstream responseSS;
     responseSS << "[OK] Tape pool " << req.args.at(0) << " created with comment \"" << req.args.at(1) << "\"";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
