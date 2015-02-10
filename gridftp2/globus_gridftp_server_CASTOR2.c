@@ -211,9 +211,9 @@ static void globus_castor_close(const char* func,
  *  defined data structure.  This pointer will be passed as the void *
  *  user_arg parameter to all other interface functions.
  *
- *  NOTE: at nice wrapper function should exist that hides the details
+ *  NOTE: a nice wrapper function should exist that hides the details
  *        of the finished_info structure, but it currently does not.
- *        The DSI developer should jsut follow this template for now
+ *        The DSI developer should just follow this template for now
  ************************************************************************/
 static void globus_l_gfs_CASTOR2_start(globus_gfs_operation_t op,
                                        globus_gfs_session_info_t *session_info) {
