@@ -2,7 +2,6 @@
 
 #include "UserIdentity.hpp"
 
-#include <stdint.h>
 #include <string>
 
 namespace cta {

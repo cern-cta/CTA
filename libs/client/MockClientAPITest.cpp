@@ -1475,4 +1475,157 @@ TEST_F(cta_client_MockClientAPITest, splitString_noSeparatorInString) {
   ASSERT_EQ(stringContainingNoSeparator, columns[0]);
 }
 
+TEST_F(cta_client_MockClientAPITest, createDeviceGroup_new) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<DeviceGroup> deviceGroups;
+    ASSERT_NO_THROW(deviceGroups = api.getDeviceGroups(requester));
+    ASSERT_TRUE(deviceGroups.empty());
+  }
+
+  const std::string deviceGroupName = "TestDeviceGroup";
+  const std::string deviceGroupComment = "Comment";
+  ASSERT_NO_THROW(api.createDeviceGroup(requester, deviceGroupName,
+    deviceGroupComment));
+
+  {
+    std::list<DeviceGroup> deviceGroups;
+    ASSERT_NO_THROW(deviceGroups = api.getDeviceGroups(requester));
+    ASSERT_EQ(1, deviceGroups.size());
+
+    DeviceGroup deviceGroup;
+    ASSERT_NO_THROW(deviceGroup = deviceGroups.front());
+    ASSERT_EQ(deviceGroupName, deviceGroup.getName());
+    ASSERT_EQ(deviceGroupComment, deviceGroup.getComment());
+  }
+}
+
+TEST_F(cta_client_MockClientAPITest, createDeviceGroup_already_existing) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<DeviceGroup> deviceGroups;
+    ASSERT_NO_THROW(deviceGroups = api.getDeviceGroups(requester));
+    ASSERT_TRUE(deviceGroups.empty());
+  }
+
+  const std::string deviceGroupName = "TestDeviceGroup";
+  const std::string deviceGroupComment = "Comment";
+  ASSERT_NO_THROW(api.createDeviceGroup(requester, deviceGroupName,
+    deviceGroupComment));
+
+  {
+    std::list<DeviceGroup> deviceGroups;
+    ASSERT_NO_THROW(deviceGroups = api.getDeviceGroups(requester));
+    ASSERT_EQ(1, deviceGroups.size());
+
+    DeviceGroup deviceGroup;
+    ASSERT_NO_THROW(deviceGroup = deviceGroups.front());
+    ASSERT_EQ(deviceGroupName, deviceGroup.getName());
+    ASSERT_EQ(deviceGroupComment, deviceGroup.getComment());
+  }
+  
+  ASSERT_THROW(api.createDeviceGroup(requester, deviceGroupName,
+    deviceGroupComment), std::exception);
+}
+
+TEST_F(cta_client_MockClientAPITest, createDeviceGroup_lexicographical_order) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<DeviceGroup> deviceGroups;
+    ASSERT_NO_THROW(deviceGroups = api.getDeviceGroups(requester));
+    ASSERT_TRUE(deviceGroups.empty());
+  }
+
+  ASSERT_NO_THROW(api.createDeviceGroup(requester, "d", "Comment d"));
+  ASSERT_NO_THROW(api.createDeviceGroup(requester, "b", "Comment b"));
+  ASSERT_NO_THROW(api.createDeviceGroup(requester, "a", "Comment a"));
+  ASSERT_NO_THROW(api.createDeviceGroup(requester, "c", "Comment c"));
+  
+  {
+    std::list<DeviceGroup> deviceGroups;
+    ASSERT_NO_THROW(deviceGroups = api.getDeviceGroups(requester));
+    ASSERT_EQ(4, deviceGroups.size());
+
+    ASSERT_EQ(std::string("a"), deviceGroups.front().getName());
+    deviceGroups.pop_front();
+    ASSERT_EQ(std::string("b"), deviceGroups.front().getName());
+    deviceGroups.pop_front();
+    ASSERT_EQ(std::string("c"), deviceGroups.front().getName());
+    deviceGroups.pop_front();
+    ASSERT_EQ(std::string("d"), deviceGroups.front().getName());
+  }
+}
+
+TEST_F(cta_client_MockClientAPITest, deleteDeviceGroup_existing) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<DeviceGroup> deviceGroups;
+    ASSERT_NO_THROW(deviceGroups = api.getDeviceGroups(requester));
+    ASSERT_TRUE(deviceGroups.empty());
+  }
+
+  const std::string deviceGroupName = "TestDeviceGroup";
+  const std::string deviceGroupComment = "Comment";
+  ASSERT_NO_THROW(api.createDeviceGroup(requester, deviceGroupName,
+    deviceGroupComment));
+
+  {
+    std::list<DeviceGroup> deviceGroups;
+    ASSERT_NO_THROW(deviceGroups = api.getDeviceGroups(requester));
+    ASSERT_EQ(1, deviceGroups.size());
+  
+    DeviceGroup deviceGroup;
+    ASSERT_NO_THROW(deviceGroup = deviceGroups.front());
+    ASSERT_EQ(deviceGroupName, deviceGroup.getName());
+    ASSERT_EQ(deviceGroupComment, deviceGroup.getComment());
+
+    ASSERT_NO_THROW(api.deleteDeviceGroup(requester, deviceGroupName));
+  }
+
+  {
+    std::list<DeviceGroup> deviceGroups;
+    ASSERT_NO_THROW(deviceGroups = api.getDeviceGroups(requester));
+    ASSERT_TRUE(deviceGroups.empty());
+  }
+}
+
+TEST_F(cta_client_MockClientAPITest, deleteDeviceGroup_non_existing) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<DeviceGroup> deviceGroups;
+    ASSERT_NO_THROW(deviceGroups = api.getDeviceGroups(requester));
+    ASSERT_TRUE(deviceGroups.empty());
+  }
+
+  const std::string deviceGroupName = "TestDeviceGroup";
+  ASSERT_THROW(api.deleteDeviceGroup(requester, deviceGroupName),
+    std::exception);
+
+  {
+    std::list<DeviceGroup> deviceGroups;
+    ASSERT_NO_THROW(deviceGroups = api.getDeviceGroups(requester));
+    ASSERT_TRUE(deviceGroups.empty());
+  }
+}
+
 } // namespace unitTests

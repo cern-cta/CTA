@@ -612,6 +612,32 @@ std::string cta::MockClientAPI::getDirectoryStorageClass(
 }
 
 //------------------------------------------------------------------------------
+// createDeviceGroup
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::createDeviceGroup(
+  const SecurityIdentity &requester,
+  const std::string &name,
+  const std::string &comment) {
+}
+
+//------------------------------------------------------------------------------
+// deleteDeviceGroup
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::deleteDeviceGroup(
+  const SecurityIdentity &requester,
+  const std::string &name) {
+}
+
+//------------------------------------------------------------------------------
+// getDeviceGroups
+//------------------------------------------------------------------------------
+std::list<cta::DeviceGroup> cta::MockClientAPI::getDeviceGroups(
+  const SecurityIdentity &requester) {
+  std::list<DeviceGroup> groups;
+  return groups;
+}
+
+//------------------------------------------------------------------------------
 // archive
 //------------------------------------------------------------------------------
 std::string cta::MockClientAPI::archive(const SecurityIdentity &requester,
