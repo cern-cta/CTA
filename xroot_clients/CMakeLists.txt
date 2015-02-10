@@ -6,3 +6,6 @@ include_directories (${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR} ${CMAKE
 
 add_executable (CTA_cmd CTACmdMain.cpp CTACmd.cpp)
 target_link_libraries (CTA_cmd ${XROOTD_XRDCL_LIB})
+
+add_executable (CTA_copycmd CTACopyCmdMain.cpp CTACopyCmd.cpp)
+target_link_libraries (CTA_copycmd ${XROOTD_XRDCL_LIB})

@@ -4,5 +4,5 @@ list (APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package (xrootd REQUIRED)
 include_directories (${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
-add_library (XrdProFst MODULE XrdProFilesystem.cpp ParsedRequest.cpp)
+add_library (XrdProFst MODULE XrdProFilesystem.cpp XrdProFile.cpp ParsedRequest.cpp)
 target_link_libraries (XrdProFst ctaclient)
