@@ -165,7 +165,7 @@ public:
    * source disk files.
    * @param copyNb The tape copy number.
    * @param tapePoolName The name of the destination tape pool.
-   * @param comment The comment describing the migration roue.
+   * @param comment The comment describing the migration route.
    */
   void createMigrationRoute(
     const SecurityIdentity &requester,
@@ -269,6 +269,76 @@ public:
     const std::string &dirPath) const;
 
   /**
+   * Creates a device group with the specified name.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * device group.
+   * @param name The name of the device group.
+   * @param comment The comment describing the device group.
+   */
+  void createDeviceGroup(
+    const SecurityIdentity &requester,
+    const std::string &name,
+    const std::string &comment);
+
+  /**
+   * Deletes the device group with the specified name.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * device group.
+   * @param name The name of the device group.
+   */
+  void deleteDeviceGroup(
+    const SecurityIdentity &requester,
+    const std::string &name);
+
+  /**
+   * Returns the current list of device groups in lexicographical order.
+   *
+   * @param requester The identity of the user requesting the list.
+   * @return The current list of device groups in lexicographical order.
+   */
+  std::list<DeviceGroup> getDeviceGroups(
+    const SecurityIdentity &requester);
+
+  /**
+   * Creates a library with the specified name and device group.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * library.
+   * @param name The name of the library.
+   * @param deviceGroupName The name of the device group to which the library
+   * belongs. An empty string means that the library does not belong to any
+   * device group.
+   * @param comment The comment describing the library.
+   */
+  void createLibrary(
+    const SecurityIdentity &requester,
+    const std::string &name,
+    const std::string &deviceGroupName,
+    const std::string &comment);
+
+  /**
+   * Deletes the library with the specified name.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * library.
+   * @param name The name of the library.
+   */
+  void deleteLibrary(
+    const SecurityIdentity &requester,
+    const std::string &name);
+
+  /**
+   * Returns the current list of libraries in lexicographical order.
+   *
+   * @param requester The identity of the user requesting the list.
+   * @return The current list of libraries in lexicographical order.
+   */
+  std::list<Library> getLibraries(
+    const SecurityIdentity &requester);
+
+  /**
    * Archives the specified list of source files to the specified destination
    * within the archive namespace.
    *
@@ -292,17 +362,17 @@ public:
     const std::string &dst);
 
   /**
-   * Gets the current list of archive jobs associated with the specified tape
-   * pool.
+   * Gets the current list of archive jobs associated with the specified device
+   * group.
    *
    * @param requester The identity of the user requesting the list.
-   * @param tapePoolName The name of the tape pool.
+   * @param deviceGroupName The name of the device groupdevice group.
    * @return The list of jobs sorted by creation time in ascending order
    * (oldest first).
    */
   std::list<ArchiveJob> getArchiveJobs(
     const SecurityIdentity &requester,
-    const std::string &tapePoolName);
+    const std::string &deviceGroupName);
 
 protected:
 
