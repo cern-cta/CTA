@@ -23,14 +23,13 @@
 
 '''command line deleting the given diskcopies and potentially removing the corresponding namespace entries'''
 
-import sys, getopt, re, subprocess
+import sys, getopt, subprocess
 import castor_tools
 import cx_Oracle
 from cStringIO import StringIO
 
-# usage function
 def usage(exitCode):
-    '''usage'''
+    '''usage function'''
     print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--force] [-d|--dry-run] [<fullPhysicalPath>|<mountPoint> [...]]'
     print '        fullPhysicalPath must follow the CASTOR internal format host:/mountpoint/path/fileid@nameserver.diskcopyid'
     print '        alternatively, mountPoint shall be specified as host:/mountpoint/ to include all its files. Use with care!'
@@ -38,7 +37,38 @@ def usage(exitCode):
 
 # possible return codes
 def enum(**enums):
+    '''a little utility function'''
     return type('Enum', (), enums)
+
+nsstats = {}
+def dealWithLostFile(fileId):
+    '''removes a file from the namespace and populates the global nsstats dict with its metadata.
+       Does nothing if the file does not exists.'''
+    global nsstats
+    try:
+      castorFilename = subprocess.Popen(['nsgetpath', str(fileId)], stdout=subprocess.PIPE).stdout.read().rstrip()
+      if castorFilename.find('/castor') == -1:
+        # the file was already dropped, ignore
+        return
+      # get metadata and drop from namespace. It is assumed the user has full rights to do so
+      nsstat = subprocess.Popen(['nsls', '-li', '--class', '--checksum', castorFilename],
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
+      u = nsstat.split()[4]  # collect outputs per user
+      try:
+        nsstats[u].write(nsstat)
+      except KeyError:
+        nsstats[u] = StringIO()
+        nsstats[u].write(nsstat)
+      if not dryrun:
+        p = subprocess.Popen(['nsrm', '-r', castorFilename], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p.wait()
+        if p.returncode:
+          print 'Error removing file', castorFilename, ':', p.stdout.read()
+    except Exception, e:
+      print '*** failed to get nameserver metadata:', e
+      if verbose:
+        import traceback
+        traceback.print_exc()
 
 # first parse the options
 try:
@@ -61,36 +91,10 @@ for f, v in options:
     else:
         print "unknown option : " + f
         usage(1)
-
-if len(args) == 0 == 0:
+if len(args) == 0:
     print 'missing argument(s)'
     usage(1)
 
-nsstats = {}
-def dealWithLostFile(fileId):
-    global nsstats
-    try:
-      castorFilename = subprocess.Popen(['nsgetpath', str(fileId)], stdout=subprocess.PIPE).stdout.read().rstrip()
-      # get metadata and drop from namespace. It is assumed the user has full rights to do so
-      nsstat = subprocess.Popen(['nsls', '-li', '--class', '--checksum', castorFilename],
-                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
-      u = nsstat.split()[4]  # collect outputs per user
-      try:
-        nsstats[u].write(nsstat)
-      except KeyError:
-        nsstats[u] = StringIO()
-        nsstats[u].write(nsstat)
-      if not dryrun:
-        p = subprocess.Popen(['nsrm', '-r', castorFilename], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        p.wait()
-        if p.returncode:
-          print 'Error removing file', castorFilename, ':', p.stdout.read()
-    except Exception, e:
-      print '*** failed to get nameserver metadata:', e
-      if verbose:
-        import traceback
-        traceback.print_exc()
-    
 try:
     if dryrun:
       print 'DRY RUN option enabled, no modification will actually take place!'
@@ -123,9 +127,9 @@ except Exception, e:
         error, = e.args
         if isinstance(error, cx_Oracle._Error):
             errorcode = error.code
-            if (errorcode == 20100):
+            if errorcode == 20100:
                 # print only useful part of message
-                print error.message.split('\n')[0].replace('ORA-20100: ','')
+                print error.message.split('\n')[0].replace('ORA-20100: ', '')
                 sys.exit(-1)
     # internal error
     print e
