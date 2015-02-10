@@ -12,6 +12,7 @@ set (CLIENT_LIB_SRC_FILES
   FileSystemNode.cpp
   FileSystemStorageClass.cpp
   FileSystemStorageClasses.cpp
+  Library.cpp
   MigrationRoute.cpp
   MigrationRouteId.cpp
   MigrationRoutes.cpp

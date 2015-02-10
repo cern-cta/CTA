@@ -638,6 +638,33 @@ std::list<cta::DeviceGroup> cta::MockClientAPI::getDeviceGroups(
 }
 
 //------------------------------------------------------------------------------
+// createLibrary
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::createLibrary(
+  const SecurityIdentity &requester,
+  const std::string &name,
+  const std::string &deviceGroupName,
+  const std::string &comment) {
+}
+
+//------------------------------------------------------------------------------
+// deleteLibrary
+//------------------------------------------------------------------------------
+void cta::MockClientAPI::deleteLibrary(
+  const SecurityIdentity &requester,
+  const std::string &name) {
+}
+
+//------------------------------------------------------------------------------
+// getLibraries
+//------------------------------------------------------------------------------
+std::list<cta::Library> cta::MockClientAPI::getLibraries(
+  const SecurityIdentity &requester) {
+  std::list<Library> libraries;
+  return libraries;
+}
+
+//------------------------------------------------------------------------------
 // archive
 //------------------------------------------------------------------------------
 std::string cta::MockClientAPI::archive(const SecurityIdentity &requester,

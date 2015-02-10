@@ -1628,4 +1628,185 @@ TEST_F(cta_client_MockClientAPITest, deleteDeviceGroup_non_existing) {
   }
 }
 
+
+TEST_F(cta_client_MockClientAPITest, createLibrary_new) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<Library> libraries;
+    ASSERT_NO_THROW(libraries = api.getLibraries(requester));
+    ASSERT_TRUE(libraries.empty());
+  }
+
+  const std::string deviceGroupName = "TestDeviceGroup";
+  const std::string deviceGroupComment = "Comment";
+  ASSERT_NO_THROW((api.createDeviceGroup(requester, deviceGroupName,
+    deviceGroupComment)));
+
+  const std::string libraryName = "TestLibrary";
+  const std::string libraryComment = "Comment";
+  ASSERT_NO_THROW(api.createLibrary(requester, libraryName, deviceGroupName,
+    libraryComment));
+
+  {
+    std::list<Library> libraries;
+    ASSERT_NO_THROW(libraries = api.getLibraries(requester));
+    ASSERT_EQ(1, libraries.size());
+
+    Library Library;
+    ASSERT_NO_THROW(Library = libraries.front());
+    ASSERT_EQ(libraryName, Library.getName());
+    ASSERT_EQ(deviceGroupName, Library.getDeviceGroupName());
+    ASSERT_EQ(libraryComment, Library.getComment());
+  }
+}
+
+TEST_F(cta_client_MockClientAPITest, createLibrary_already_existing) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<Library> libraries;
+    ASSERT_NO_THROW(libraries = api.getLibraries(requester));
+    ASSERT_TRUE(libraries.empty());
+  }
+
+  const std::string deviceGroupName = "TestDeviceGroup";
+  const std::string deviceGroupComment = "Comment";
+  ASSERT_NO_THROW((api.createDeviceGroup(requester, deviceGroupName, 
+    deviceGroupComment)));
+
+  const std::string libraryName = "TestLibrary";
+  const std::string libraryComment = "Comment";
+  ASSERT_NO_THROW(api.createLibrary(requester, libraryName, deviceGroupName,
+    libraryComment));
+
+  {
+    std::list<Library> libraries;
+    ASSERT_NO_THROW(libraries = api.getLibraries(requester));
+    ASSERT_EQ(1, libraries.size());
+
+    Library Library;
+    ASSERT_NO_THROW(Library = libraries.front());
+    ASSERT_EQ(libraryName, Library.getName());
+    ASSERT_EQ(deviceGroupName, Library.getDeviceGroupName());
+    ASSERT_EQ(libraryComment, Library.getComment());
+  }
+  
+  ASSERT_THROW(api.createLibrary(requester, libraryName, deviceGroupName,
+    libraryComment), std::exception);
+}
+
+TEST_F(cta_client_MockClientAPITest, createLibrary_lexicographical_order) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<Library> libraries;
+    ASSERT_NO_THROW(libraries = api.getLibraries(requester));
+    ASSERT_TRUE(libraries.empty());
+  }
+
+  const std::string deviceGroupName = "TestDeviceGroup";
+  const std::string deviceGroupComment = "Comment";
+  ASSERT_NO_THROW((api.createDeviceGroup(requester, deviceGroupName,
+    deviceGroupComment)));
+
+  ASSERT_NO_THROW(api.createLibrary(requester, "d", deviceGroupName,
+    "Comment d"));
+  ASSERT_NO_THROW(api.createLibrary(requester, "b", deviceGroupName,
+    "Comment b"));
+  ASSERT_NO_THROW(api.createLibrary(requester, "a", deviceGroupName,
+    "Comment a"));
+  ASSERT_NO_THROW(api.createLibrary(requester, "c", deviceGroupName,
+    "Comment c"));
+  
+  {
+    std::list<Library> libraries;
+    ASSERT_NO_THROW(libraries = api.getLibraries(requester));
+    ASSERT_EQ(4, libraries.size());
+
+    ASSERT_EQ(std::string("a"), libraries.front().getName());
+    libraries.pop_front();
+    ASSERT_EQ(std::string("b"), libraries.front().getName());
+    libraries.pop_front();
+    ASSERT_EQ(std::string("c"), libraries.front().getName());
+    libraries.pop_front();
+    ASSERT_EQ(std::string("d"), libraries.front().getName());
+  }
+}
+
+TEST_F(cta_client_MockClientAPITest, deleteLibrary_existing) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<Library> libraries;
+    ASSERT_NO_THROW(libraries = api.getLibraries(requester));
+    ASSERT_TRUE(libraries.empty());
+  }
+
+  const std::string deviceGroupName = "TestDeviceGroup";
+  const std::string deviceGroupComment = "Comment";
+  ASSERT_NO_THROW((api.createDeviceGroup(requester, deviceGroupName,
+    deviceGroupComment)));
+
+  const std::string libraryName = "TestLibrary";
+  const std::string libraryComment = "Comment";
+  ASSERT_NO_THROW(api.createLibrary(requester, libraryName, deviceGroupName,
+    libraryComment));
+
+  {
+    std::list<Library> libraries;
+    ASSERT_NO_THROW(libraries = api.getLibraries(requester));
+    ASSERT_EQ(1, libraries.size());
+  
+    Library Library;
+    ASSERT_NO_THROW(Library = libraries.front());
+    ASSERT_EQ(libraryName, Library.getName());
+    ASSERT_EQ(deviceGroupName, Library.getDeviceGroupName());
+    ASSERT_EQ(libraryComment, Library.getComment());
+
+    ASSERT_NO_THROW(api.deleteLibrary(requester, libraryName));
+  }
+
+  {
+    std::list<Library> libraries;
+    ASSERT_NO_THROW(libraries = api.getLibraries(requester));
+    ASSERT_TRUE(libraries.empty());
+  }
+}
+
+TEST_F(cta_client_MockClientAPITest, deleteLibrary_non_existing) {
+  using namespace cta;
+
+  TestingMockClientAPI api;
+  const SecurityIdentity requester;
+
+  {
+    std::list<Library> libraries;
+    ASSERT_NO_THROW(libraries = api.getLibraries(requester));
+    ASSERT_TRUE(libraries.empty());
+  }
+
+  const std::string libraryName = "TestLibrary";
+  ASSERT_THROW(api.deleteLibrary(requester, libraryName),
+    std::exception);
+
+  {
+    std::list<Library> libraries;
+    ASSERT_NO_THROW(libraries = api.getLibraries(requester));
+    ASSERT_TRUE(libraries.empty());
+  }
+}
+
 } // namespace unitTests

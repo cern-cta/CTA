@@ -3,6 +3,7 @@
 #include "ArchiveJob.hpp"
 #include "DeviceGroup.hpp"
 #include "DirectoryIterator.hpp"
+#include "Library.hpp"
 #include "MigrationRoute.hpp"
 #include "SecurityIdentity.hpp"
 #include "StorageClass.hpp"
@@ -282,7 +283,7 @@ public:
     const std::string &comment) = 0;
 
   /**
-   * DeleteCreates a device group with the specified name.
+   * Delete the device group with the specified name.
    *
    * @param requester The identity of the user requesting the deletion of the
    * device group.
@@ -299,6 +300,43 @@ public:
    * @return The current list of device groups in lexicographical order.
    */
   virtual std::list<DeviceGroup> getDeviceGroups(
+    const SecurityIdentity &requester) = 0;
+
+  /**
+   * Creates a library with the specified name and device group.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * library.
+   * @param name The name of the library.
+   * @param deviceGroupName The name of the device group to which the library
+   * belongs. An empty string means that the library does not belong to any
+   * device group.
+   * @param comment The comment describing the library.
+   */
+  virtual void createLibrary(
+    const SecurityIdentity &requester,
+    const std::string &name,
+    const std::string &deviceGroupName,
+    const std::string &comment) = 0;
+
+  /**
+   * Deletes the library with the specified name.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * library.
+   * @param name The name of the library.
+   */
+  virtual void deleteLibrary(
+    const SecurityIdentity &requester,
+    const std::string &name) = 0;
+
+  /**
+   * Returns the current list of libraries in lexicographical order.
+   *
+   * @param requester The identity of the user requesting the list.
+   * @return The current list of libraries in lexicographical order.
+   */
+  virtual std::list<Library> getLibraries(
     const SecurityIdentity &requester) = 0;
 
   /**
