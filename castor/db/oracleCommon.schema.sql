@@ -1375,18 +1375,44 @@ ALTER TABLE Disk2DiskCopyJob
  * and for which migration is pending for more than 24h.
  */
 CREATE VIEW LateMigrationsView AS
-  SELECT /*+ LEADING(CF DC MJ CnsFile) INDEX_RS_ASC(CF I_CastorFile_TapeStatus) INDEX_RS_ASC(DC I_DiskCopy_CastorFile) INDEX_RS_ASC(MJ I_MigrationJob_CastorFile) */
-         CF.fileId, CF.lastKnownFileName as filePath, DC.creationTime as dcCreationTime,
-         decode(MJ.creationTime, NULL, -1, getTime() - MJ.creationTime) as mjElapsedTime, nvl(MJ.status, -1) as mjStatus
-    FROM CastorFile CF, DiskCopy DC, MigrationJob MJ, cns_file_metadata@remotens CnsFile
+  SELECT /*+ LEADING(CF DC FileSystem DiskServer MJ CnsFile)
+             USE_NL(CF DC FileSystem DiskServer MJ CnsFile)
+             INDEX_RS_ASC(CF I_CastorFile_TapeStatus) INDEX_RS_ASC(DC I_DiskCopy_CastorFile) INDEX_RS_ASC(MJ I_MigrationJob_CastorFile) */
+         CF.fileId, CF.lastKnownFileName AS filePath,
+         decode(MJ.creationTime, NULL, -1, getTime() - MJ.creationTime) AS mjElapsedTime, nvl(MJ.status, -1) AS mjStatus,
+         DC.creationTime AS dcCreationTime, DiskServer.name || ':' || FileSystem.mountPoint || DC.path AS location,
+         decode(DiskServer.hwOnline, 0, 'N',
+           decode(DiskServer.status, 2, 'N',
+             decode(FileSystem.status, 2, 'N', 'Y'))) AS available
+    FROM CastorFile CF, DiskCopy DC, MigrationJob MJ, cns_file_metadata@remotens CnsFile,
+         FileSystem, DiskServer
    WHERE CF.fileId = CnsFile.fileId
      AND DC.castorFile = CF.id
      AND MJ.castorFile(+) = CF.id
+     AND DC.fileSystem = FileSystem.id
+     AND FileSystem.diskServer = DiskServer.id
      AND CF.tapeStatus = 0  -- CASTORFILE_NOTONTAPE
      AND DC.status = 0  -- DISKCOPY_VALID
      AND CF.fileSize > 0
      AND DC.creationTime < getTime() - 86400
-  ORDER BY DC.creationTime DESC;
+  UNION
+  SELECT /*+ LEADING(CF DC DataPool MJ CnsFile
+             USE_NL(CF DC FileSystem DataPool MJ CnsFile)
+             INDEX_RS_ASC(CF I_CastorFile_TapeStatus) INDEX_RS_ASC(DC I_DiskCopy_CastorFile) INDEX_RS_ASC(MJ I_MigrationJob_CastorFile) */
+         CF.fileId, CF.lastKnownFileName AS filePath,
+         decode(MJ.creationTime, NULL, -1, getTime() - MJ.creationTime) AS mjElapsedTime, nvl(MJ.status, -1) AS mjStatus,
+         DC.creationTime AS dcCreationTime, 'ceph://' || DataPool.name || ':' || DC.path AS location, 'Y' as available
+    FROM CastorFile CF, DiskCopy DC, MigrationJob MJ, DataPool, cns_file_metadata@remotens CnsFile
+   WHERE CF.fileId = CnsFile.fileId
+     AND DC.castorFile = CF.id
+     AND MJ.castorFile(+) = CF.id
+     AND DC.dataPool = DataPool.id
+     AND CF.tapeStatus = 0  -- CASTORFILE_NOTONTAPE
+     AND DC.status = 0  -- DISKCOPY_VALID
+     AND CF.fileSize > 0
+     AND DC.creationTime < getTime() - 86400
+  ORDER BY dcCreationTime DESC;
+
 
 /*****************/
 /* logon trigger */
