@@ -10,7 +10,7 @@ set (CTAProtoFiles
 
 PROTOBUF_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
 
-add_executable (tapeResourceMangerTest tapeResourceManagerTest.cpp
+add_library (CTAObjectStore 
   ${CTAProtoSources}
   RootEntry.cpp
   Agent.cpp
@@ -24,6 +24,26 @@ add_executable (tapeResourceMangerTest tapeResourceManagerTest.cpp
   threading/Threading.cpp
   utils/Timer.cpp)
 
-target_link_libraries(tapeResourceMangerTest
-  protobuf
-  rados)
+add_executable(tapeResourceManagerTest tapeResourceManagerTest.cpp)
+target_link_libraries(tapeResourceManagerTest
+  protobuf rados CTAObjectStore)
+
+add_executable(dumpStructure dumpStructure.cpp)
+target_link_libraries(dumpStructure
+  protobuf rados CTAObjectStore)
+
+add_executable(jobPoster jobPoster.cpp)
+target_link_libraries(jobPoster
+  protobuf rados CTAObjectStore)
+
+add_executable(recaller recaller.cpp)
+target_link_libraries(recaller
+  protobuf rados CTAObjectStore)
+
+add_executable(garbageCollector garbageCollector.cpp)
+target_link_libraries(garbageCollector
+  protobuf rados CTAObjectStore)
+
+add_executable(createEnvironment createEnvironment.cpp)
+target_link_libraries(createEnvironment
+  protobuf rados CTAObjectStore)

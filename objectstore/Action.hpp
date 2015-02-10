@@ -115,7 +115,7 @@ public:
     m_agent.create();
     RootEntry re(m_agent);
     AgentRegister ar(re.getAgentRegister(m_agent), m_agent);
-    std::cout << name.str() << " starting" << std::endl;
+    std::cout << m_agent.name() << " starting" << std::endl;
     utils::Timer noAgentTimer;
     std::map<std::string, AgentWatchdog *> watchdogs;
     while (true) {
@@ -133,6 +133,7 @@ public:
       for (std::map<std::string, AgentWatchdog *>::iterator i=watchdogs.begin();
           i != watchdogs.end();) {
         if (std::find(agentNames.begin(), agentNames.end(), i->first) == agentNames.end()) {
+          std::cout << "Stopping to watch completed agent: " << i->first << std::endl;
           delete i->second;
           // The post-increment returns the iterator to erase, 
           // but sets i to the next value, which will remain valid.
@@ -146,8 +147,13 @@ public:
            i != agentNames.end(); i++) {
         if(watchdogs.find(*i) == watchdogs.end()) {
           try {
+            std::cout << "Trying to check for agent " << *i << "... ";
             watchdogs[*i] = new AgentWatchdog(*i, m_agent);
-          } catch ( cta::exception::Exception & ) {}
+            std::cout << "OK" << std::endl;
+          } catch ( cta::exception::Exception & ) {
+            std::cout << "The agent structure is gone. Removing it from register." << std::endl;
+            ar.removeElement(*i, m_agent);
+          }
         }
       }
       // And now check the heartbeats of the agents
@@ -157,6 +163,10 @@ public:
           if (!i->second->checkAlive(m_agent)) {
             collectGarbage(i->first);
             delete i->second;
+            // Delete the agent record and de-reference it
+            std::cout << "Deleting agent " << i->first << " and removing it from register" << std::endl;
+            try { m_agent.objectStore().remove(i->first); } catch (std::exception &) {}
+            try { ar.removeElement(i->first, m_agent); } catch (std::exception &) {}
             // The post-increment returns the iterator to erase, 
             // but sets i to the next value, which will remain valid.
             watchdogs.erase(i++);
@@ -168,6 +178,7 @@ public:
           watchdogs.erase(i++);
         }
       }
+      usleep(100*1000);
     }
   }
                 
@@ -181,7 +192,7 @@ private:
       std::cout << "In garbage collector, found a dead agent: " << agentName << std::endl;
       // If the agent entry does not exist anymore, we're done.
       // print the recall FIFO
-      std::cout << "FIFO before garbage collection:" << std::endl;
+      std::cout << "Recall FIFO before garbage collection:" << std::endl;
       try {
         RootEntry re(m_agent);
         JobPool jp(re.getJobPool(m_agent), m_agent);
@@ -190,79 +201,22 @@ private:
       } catch (std::exception&) {
       } 
       AgentVisitor ag(agentName, m_agent);
+      // Iterate on intended objects
       std::list<AgentVisitor::intentEntry> intendedObjects = ag.getIntentLog(m_agent);
       for (std::list<AgentVisitor::intentEntry>::iterator i=intendedObjects.begin();
             i != intendedObjects.end(); i++) {
-        switch (i->objectType) {
-          case serializers::JobPool_t:
-          {
-            // We need to check whether the job pool is plugged into the
-            // root entry and just discard it if it is not.
-            RootEntry re(m_agent);
-            std::string jopPoolName;
-            try {
-              jopPoolName = re.getJobPool(m_agent);
-            } catch (std::exception&) {
-              // If we cannot find a reference to any job pool, then
-              // this one is not referenced
-              m_agent.objectStore().remove(i->name);
-              break;
-            }
-            if (jopPoolName != i->name)
-              m_agent.objectStore().remove(i->name);
-            break;
-          }
-          case serializers::RecallFIFO_t:
-            // We need to check that this recall FIFO is plugged in the job pool
-            // structure
-          {
-            RootEntry re(m_agent);
-            std::string recallFIFOName;
-            try {
-              JobPool jp(re.getJobPool(m_agent), m_agent);
-              recallFIFOName = jp.getRecallFIFO(m_agent);
-            } catch (std::exception&) {
-              // If we cannot find a reference to any recall FIFO, then
-              // this one is not referenced
-              m_agent.objectStore().remove(i->name);
-              break;
-            }
-            if (recallFIFOName != i->name)
-              m_agent.objectStore().remove(i->name);
-            break;
-          }
-          case serializers::RecallJob_t:
-          {
-            // The recall job here can only think of on FIFO it could be in. This
-            // will be more varied in the future.
-            RecallJob rj(i->name, m_agent);
-            FIFO RecallFIFO(rj.owner(m_agent), m_agent);
-            // We repost the job unconditionally in the FIFO. In case of an attempted
-            // pop, the actual ownership (should be the FIFO) will be checked by
-            // the consumer. If the owner is not right, FIFO entry will simply be 
-            // discarded.
-            RecallFIFO.push(i->name, m_agent);
-            break;
-          }
-          case serializers::RootEntry_t:
-            std::cout << "Unexpected entry type in garbage collection: RootEntry" << std::endl;
-            break;
-          case serializers::AgentRegister_t:
-            std::cout << "Unexpected entry type in garbage collection: AgentRegister" << std::endl;
-            break;
-          case serializers::Agent_t:
-            std::cout << "Unexpected entry type in garbage collection: Agent" << std::endl;
-            break;
-          case serializers::MigrationFIFO_t:
-            std::cout << "Unexpected entry type in garbage collection: MigrationFIFO" << std::endl;
-            break;
-          case serializers::Counter_t:
-            std::cout << "Unexpected entry type in garbage collection: Counter" << std::endl;
-            break;
-        }
+        collectIntendedObject(*i);
+      }
+      // Iterate on owned objects
+      std::list<AgentVisitor::ownershipEntry> ownedObjects = ag.getOwnershipLog(m_agent);
+      for (std::list<AgentVisitor::ownershipEntry>::iterator i=ownedObjects.begin();
+              i != ownedObjects.end(); i++) {
+        collectOwnedObject(*i);
+        std::cout << "Considering owned object " << i->name 
+                << " (type:" << i->objectType << ")" << std::endl;
       }
       // print the recall FIFO
-      std::cout << "FIFO before garbage collection:" << std::endl;
+      std::cout << "Recall FIFO after garbage collection:" << std::endl;
       try {
         RootEntry re(m_agent);
         JobPool jp(re.getJobPool(m_agent), m_agent);
@@ -271,6 +225,135 @@ private:
       } catch (std::exception&) {
       }
     } catch (std::exception&) {
+    }
+  }
+  
+  void collectIntendedObject(AgentVisitor::intentEntry & i) {
+    std::cout << "Considering intended object " << i.name << " (container:" << i.container
+            << " type:" << i.objectType << ")" << std::endl;
+    switch (i.objectType) {
+      case serializers::JobPool_t:
+      {
+        // We need to check whether the job pool is plugged into the
+        // root entry and just discard it if it is not.
+        RootEntry re(m_agent);
+        std::string jopPoolName;
+        try {
+          jopPoolName = re.getJobPool(m_agent);
+        } catch (std::exception&) {
+          // If we cannot find a reference to any job pool, then
+          // this one is not referenced
+          std::cout << "Could not get the job pool name from the root entry."
+                  << " Deleting this job pool." << std::endl;
+          m_agent.objectStore().remove(i.name);
+          break;
+        }
+        if (jopPoolName != i.name) {
+          std::cout << "This job pool is not the one referenced in the root entry. (root's="
+                  << jopPoolName << ")"
+                  << " Deleting this job pool." << std::endl;
+          m_agent.objectStore().remove(i.name);
+        }
+        break;
+      }
+      case serializers::RecallFIFO_t:
+        // We need to check that this recall FIFO is plugged in the job pool
+        // structure
+      {
+        RootEntry re(m_agent);
+        std::string recallFIFOName;
+        try {
+          JobPool jp(re.getJobPool(m_agent), m_agent);
+          recallFIFOName = jp.getRecallFIFO(m_agent);
+        } catch (std::exception&) {
+          std::cout << "Could not get the recall FIFO name from the job pool."
+                  << " Deleting this recallFIFO." << std::endl;
+          // If we cannot find a reference to any recall FIFO, then
+          // this one is not referenced
+          m_agent.objectStore().remove(i.name);
+          break;
+        }
+        if (recallFIFOName != i.name) {
+          std::cout << "This recallFIFO is not the one referenced in the job pool entry. (jp's="
+                  << recallFIFOName << ")"
+                  << " Deleting this recall FIFO." << std::endl;
+          m_agent.objectStore().remove(i.name);
+        }
+        break;
+      }
+      case serializers::RecallJob_t:
+      {
+        // The recall job here can only think of on FIFO it could be in. This
+        // will be more varied in the future.
+        RecallJob rj(i.name, m_agent);
+        std::string owner = rj.owner(m_agent);
+        std::cout << "Will post the recall job back to its owner FIFO." << std::endl;
+        FIFO RecallFIFO(owner, m_agent);
+        // We repost the job unconditionally in the FIFO. In case of an attempted
+        // pop, the actual ownership (should be the FIFO) will be checked by
+        // the consumer. If the owner is not right, FIFO entry will simply be 
+        // discarded.
+        RecallFIFO.push(i.name, m_agent);
+        break;
+      }
+      case serializers::RootEntry_t:
+        std::cout << "Unexpected entry type in garbage collection: RootEntry" << std::endl;
+        break;
+      case serializers::AgentRegister_t:
+        std::cout << "Unexpected entry type in garbage collection: AgentRegister" << std::endl;
+        break;
+      case serializers::Agent_t:
+        std::cout << "Unexpected entry type in garbage collection: Agent" << std::endl;
+        break;
+      case serializers::MigrationFIFO_t:
+        std::cout << "Unexpected entry type in garbage collection: MigrationFIFO" << std::endl;
+        break;
+      case serializers::Counter_t:
+        std::cout << "Unexpected entry type in garbage collection: Counter" << std::endl;
+        break;
+    }
+  }
+  
+  void collectOwnedObject(AgentVisitor::ownershipEntry & i) {
+    std::cout << "Considering owned object " << i.name 
+            << " (type:" << i.objectType << ")" << std::endl;
+    switch (i.objectType) {
+      case serializers::JobPool_t:
+        std::cout << "Unexpected entry type in garbage collection: JobPool" << std::endl;
+        break;
+      case serializers::RecallFIFO_t:
+        std::cout << "Unexpected entry type in garbage collection: RecallFIFO" << std::endl;
+        break;
+      case serializers::RecallJob_t:
+      {
+        // The recall job here can only think of on FIFO it could be in. This
+        // will be more varied in the future.
+        RecallJob rj(i.name, m_agent);
+        std::string owner = rj.owner(m_agent);
+        std::cout << "Will post the recall job back to its owner FIFO: "  << owner << std::endl;
+        FIFO RecallFIFO(owner, m_agent);
+        // We repost the job unconditionally in the FIFO. In case of an attempted
+        // pop, the actual ownership (should be the FIFO) will be checked by
+        // the consumer. If the owner is not right, FIFO entry will simply be 
+        // discarded.
+        RecallFIFO.push(i.name, m_agent);
+        break;
+      }
+      case serializers::RootEntry_t:
+        std::cout << "Unexpected entry type in garbage collection: RootEntry" << std::endl;
+        break;
+      case serializers::AgentRegister_t:
+        std::cout << "Unexpected entry type in garbage collection: AgentRegister" << std::endl;
+        break;
+      case serializers::Agent_t:
+        std::cout << "Unexpected entry type in garbage collection: Agent" << std::endl;
+        break;
+      case serializers::MigrationFIFO_t:
+        std::cout << "Unexpected entry type in garbage collection: MigrationFIFO" << std::endl;
+        break;
+      case serializers::Counter_t:
+        std::cout << "Unexpected entry type in garbage collection: Counter" << std::endl;
+        break;
     }
   }
 };

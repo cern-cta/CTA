@@ -73,6 +73,11 @@ public:
       throw cta::exception::Errnum("Failed to create temporary directory"); 
     }
   }
+  
+  void noDeleteOnExit() {
+    m_deleteOnExit = false;
+  }
+  
   ObjectStoreVFS(std::string path, std::string user, std::string pool): 
     m_root(path), m_deleteOnExit(false) {}
   virtual ~ObjectStoreVFS() {

@@ -2,6 +2,7 @@
 
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
+#include "Agent.hpp"
 #include <string>
 
 namespace cta { namespace objectstore {
@@ -101,9 +102,9 @@ public:
     serializers::Agent as;
     updateFromObjectStore(as, agent.getFreeContext());
     std::list<ownershipEntry> ret;
-    for (int i=0; i<as.creationintent_size(); i++) {
-      ret.push_back(ownershipEntry(as.creationintent(i).name(),
-                                   as.creationintent(i).type()));
+    for (int i=0; i<as.ownershipintent_size(); i++) {
+      ret.push_back(ownershipEntry(as.ownershipintent(i).name(),
+                                   as.ownershipintent(i).type()));
     }
     return ret;
   }
@@ -124,6 +125,7 @@ public:
     std::stringstream ret;
     ret<< "<<<< Agent " << selfName() << " dump start" << std::endl
       << "name=" << as.name() << std::endl
+      << "hearbeat=" << as.heartbeatcount() << std::endl
       << "Ownership intent size=" << as.ownershipintent_size() << std::endl;
     for (int i=0; i<as.ownershipintent_size(); i++) {
       ret << "ownershipIntent[" << i << "]: name=" << as.ownershipintent(i).name() 
@@ -150,7 +152,7 @@ public:
   
   bool checkAlive(Agent & agent) {
     uint64_t newHeartBeatCount = m_agentVisitor.getHeartbeatCount(agent);
-    if (newHeartBeatCount == m_hearbeatCounter && m_timer.secs() > 120)
+    if (newHeartBeatCount == m_hearbeatCounter && m_timer.secs() > 5)
       return false;
     m_hearbeatCounter = newHeartBeatCount;
     return true;

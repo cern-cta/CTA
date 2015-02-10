@@ -219,7 +219,7 @@ void cta::objectstore::Agent::heartbeat(Agent& agent) {
   ContextHandle & context = agent.getFreeContext();
   serializers::Agent as;
   lockExclusiveAndRead(as, context, __func__);
-  as.set_heartbeatcount(as.has_heartbeatcount()+1);
+  as.set_heartbeatcount(as.heartbeatcount()+1);
   write(as);
   unlock(context);
 }

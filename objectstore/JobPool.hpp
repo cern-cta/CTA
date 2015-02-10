@@ -88,7 +88,7 @@ public:
     updateFromObjectStore(res, agent.getFreeContext());
     // If the registry is defined, return it, job done.
     if (res.recallcounter().size())
-      return res.recall();
+      return res.recallcounter();
     throw NotAllocatedEx("In RootEntry::getRecallCounter: recallCounter not yet allocated");
   }
   

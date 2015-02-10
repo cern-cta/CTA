@@ -5,6 +5,7 @@
 #include "Agent.hpp"
 #include "JobPool.hpp"
 #include "Counter.hpp"
+#include "AgentVisitor.hpp"
 #include <iostream>
 
 namespace cta { namespace objectstore {
