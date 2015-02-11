@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ObjectOps.hpp"
-#define USE_RADOS 0
+#define USE_RADOS 1
 #if USE_RADOS
 typedef cta::objectstore::ObjectStoreRados myOS;
 #else

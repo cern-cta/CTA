@@ -91,10 +91,10 @@ public:
     ret<< "<<<< FIFO dump start" << std::endl
       << "Read pointer=" << fs.readpointer() << std::endl
       << "Array size=" << fs.name_size() << std::endl;
-    for (int i=fs.readpointer(); i<fs.name_size(); i++) {
-      ret << "name[phys=" << i << " ,log=" << i-fs.readpointer()
-          << "]=" << fs.name(i) << std::endl;
-    }
+//    for (int i=fs.readpointer(); i<fs.name_size(); i++) {
+//      ret << "name[phys=" << i << " ,log=" << i-fs.readpointer()
+//          << "]=" << fs.name(i) << std::endl;
+//    }
     ret<< ">>>> FIFO dump end." << std::endl;
     return ret.str();
   }

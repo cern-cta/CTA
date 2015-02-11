@@ -95,8 +95,9 @@ public:
           std::cout << "The recall FIFO was empty for more than a second. Exiting." << std::endl;
           break;
         }
-        usleep(100 * 1000);
-      } catch (std::exception&) {
+        usleep(10 * 1000);
+      } catch (std::exception& e) {
+        std::cout << "Got exception while getting a recall job:" << e.what() << std::endl;
       } catch (...) {
         throw;
       }
@@ -215,8 +216,6 @@ private:
       for (std::list<AgentVisitor::ownershipEntry>::iterator i=ownedObjects.begin();
               i != ownedObjects.end(); i++) {
         collectOwnedObject(*i);
-        std::cout << "Considering owned object " << i->name 
-                << " (type:" << i->objectType << ")" << std::endl;
       }
       // print the recall FIFO
       std::cout << "Recall FIFO after garbage collection:" << std::endl;

@@ -16,7 +16,7 @@ public:
     rjs.set_status("OK");
     std::string ret = agent.nextId("RecallJob");
     agent.addToIntend(container, ret, serializers::RecallJob_t);
-    agent.objectStore().atomicOverwrite(ret, rjs.SerializeAsString());
+    agent.objectStore().create(ret, rjs.SerializeAsString());
     return ret;
   }
   
