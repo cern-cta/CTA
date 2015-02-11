@@ -97,6 +97,7 @@ castor::mediachanger::DismountCmdLine::DismountCmdLine(
   const DismountCmdLine &obj):
   m_debug(obj.m_debug),
   m_help(obj.m_help),
+  m_vid(obj.m_vid),
   m_driveLibrarySlot(0 == obj.m_driveLibrarySlot ? 0 :
     obj.m_driveLibrarySlot->clone()),
   m_force(obj.m_force) {
@@ -121,9 +122,10 @@ castor::mediachanger::DismountCmdLine &castor::mediachanger::DismountCmdLine::
 
     m_debug = rhs.m_debug;
     m_help  = rhs.m_help;
-    m_force = rhs.m_force;
+    m_vid   = rhs.m_vid;
     m_driveLibrarySlot = 0 == rhs.m_driveLibrarySlot ? 0 :
       rhs.m_driveLibrarySlot->clone();
+    m_force = rhs.m_force;
   }
 
   return *this;
