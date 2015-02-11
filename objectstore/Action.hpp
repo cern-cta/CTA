@@ -91,7 +91,10 @@ public:
         rc.inc(m_agent);
         m_agent.removeFromOwnership(rjName, serializers::RecallJob_t);
       } catch (FIFO::FIFOEmpty &) {
-        if (timeout.secs() > 1.0) break;
+        if (timeout.secs() > 1.0) {
+          std::cout << "The recall FIFO was empty for more than a second. Exiting." << std::endl;
+          break;
+        }
         usleep(100 * 1000);
       } catch (std::exception&) {
       } catch (...) {

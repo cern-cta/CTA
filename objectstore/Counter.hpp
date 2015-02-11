@@ -21,6 +21,7 @@ public:
     ContextHandle & ctx = agent.getFreeContext();
     lockExclusiveAndRead(cs, ctx, __func__);
     cs.set_count(cs.count()+1);
+    write(cs);
     unlock(ctx, __func__);
   }
   
