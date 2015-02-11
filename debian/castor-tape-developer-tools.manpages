@@ -3,3 +3,4 @@ debian/castor/usr/share/man/man1/castor-tape-acs-mount.1castor.gz
 debian/castor/usr/share/man/man1/castor-tape-acs-queryvolume.1castor.gz
 debian/castor/usr/share/man/man1/castor-tape-mediachanger-dismount.1castor.gz
 debian/castor/usr/share/man/man1/castor-tape-mediachanger-mount.1castor.gz
+debian/castor/usr/share/man/man1/writetp.1castor.gz

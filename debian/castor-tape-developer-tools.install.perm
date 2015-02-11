@@ -3,3 +3,4 @@
 %attr(0755,root,root) usr/bin/castor-tape-acs-queryvolume
 %attr(0755,root,root) usr/bin/castor-tape-mediachanger-dismount
 %attr(0755,root,root) usr/bin/castor-tape-mediachanger-mount
+%attr(0755,root,root) usr/bin/writetp

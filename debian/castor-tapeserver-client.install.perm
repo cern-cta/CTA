@@ -1,2 +1,1 @@
 %attr(0755,root,root) usr/bin/readtp
-%attr(0755,root,root) usr/bin/writetp
