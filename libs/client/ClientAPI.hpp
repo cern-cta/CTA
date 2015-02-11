@@ -1,9 +1,8 @@
 #pragma once
 
 #include "ArchiveJob.hpp"
-#include "DeviceGroup.hpp"
 #include "DirectoryIterator.hpp"
-#include "Library.hpp"
+#include "LogicalLibrary.hpp"
 #include "MigrationRoute.hpp"
 #include "SecurityIdentity.hpp"
 #include "StorageClass.hpp"
@@ -86,7 +85,7 @@ public:
    * @param requester The identity of the user requesting the list.
    */
   virtual std::list<std::string> getAdminHosts(const SecurityIdentity &requester)
-   const  = 0;
+   const = 0;
 
   /**
    * Creates the specified storage class.
@@ -130,11 +129,18 @@ public:
    * @param requester The identity of the user requesting the creation of the
    * tape pool.
    * @param name The name of the tape pool.
+   * @param nbDrives The maximum number of drives that can be concurrently
+   * assigned to this pool independent of whether they are archiving or
+   * retrieving files.
+   * @param nbPartialTapes The maximum number of tapes that can be partially
+   * full at any moment in time.
    * @param comment The comment describing the tape pool.
    */
   virtual void createTapePool(
     const SecurityIdentity &requester,
     const std::string &name,
+    const uint16_t nbDrives,
+    const uint32_t nbPartialTapes,
     const std::string &comment) = 0;
 
   /**
@@ -270,63 +276,26 @@ public:
     const std::string &dirPath) const = 0;
 
   /**
-   * Creates a device group with the specified name.
+   * Creates a logical library with the specified name and device group.
    *
    * @param requester The identity of the user requesting the creation of the
-   * device group.
-   * @param name The name of the device group.
-   * @param comment The comment describing the device group.
+   * logical library.
+   * @param name The name of the logical library.
+   * @param comment The comment describing the logical library.
    */
-  virtual void createDeviceGroup(
+  virtual void createLogicalLibrary(
     const SecurityIdentity &requester,
     const std::string &name,
     const std::string &comment) = 0;
 
   /**
-   * Delete the device group with the specified name.
+   * Deletes the logical library with the specified name.
    *
    * @param requester The identity of the user requesting the deletion of the
-   * device group.
-   * @param name The name of the device group.
+   * logical library.
+   * @param name The name of the logical library.
    */
-  virtual void deleteDeviceGroup(
-    const SecurityIdentity &requester,
-    const std::string &name) = 0;
-
-  /**
-   * Returns the current list of device groups in lexicographical order.
-   *
-   * @param requester The identity of the user requesting the list.
-   * @return The current list of device groups in lexicographical order.
-   */
-  virtual std::list<DeviceGroup> getDeviceGroups(
-    const SecurityIdentity &requester) = 0;
-
-  /**
-   * Creates a library with the specified name and device group.
-   *
-   * @param requester The identity of the user requesting the creation of the
-   * library.
-   * @param name The name of the library.
-   * @param deviceGroupName The name of the device group to which the library
-   * belongs. An empty string means that the library does not belong to any
-   * device group.
-   * @param comment The comment describing the library.
-   */
-  virtual void createLibrary(
-    const SecurityIdentity &requester,
-    const std::string &name,
-    const std::string &deviceGroupName,
-    const std::string &comment) = 0;
-
-  /**
-   * Deletes the library with the specified name.
-   *
-   * @param requester The identity of the user requesting the deletion of the
-   * library.
-   * @param name The name of the library.
-   */
-  virtual void deleteLibrary(
+  virtual void deleteLogicalLibrary(
     const SecurityIdentity &requester,
     const std::string &name) = 0;
 
@@ -336,8 +305,8 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of libraries in lexicographical order.
    */
-  virtual std::list<Library> getLibraries(
-    const SecurityIdentity &requester) = 0;
+  virtual std::list<LogicalLibrary> getLogicalLibraries(
+    const SecurityIdentity &requester) const = 0;
 
   /**
    * Archives the specified list of source files to the specified destination
@@ -367,13 +336,13 @@ public:
    * group.
    *
    * @param requester The identity of the user requesting the list.
-   * @param deviceGroupName The name of the device groupdevice group.
+   * @param tapePoolName The name of the tape pool.
    * @return The list of jobs sorted by creation time in ascending order
    * (oldest first).
    */
   virtual std::list<ArchiveJob> getArchiveJobs(
     const SecurityIdentity &requester,
-    const std::string &deviceGroupName) = 0;
+    const std::string &tapePoolName) = 0;
 
 }; // class ClientAPI
 

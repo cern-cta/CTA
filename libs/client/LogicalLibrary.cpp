@@ -1,22 +1,20 @@
-#include "Library.hpp"
+#include "LogicalLibrary.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::Library::Library():
+cta::LogicalLibrary::LogicalLibrary():
   m_creationTime(time(NULL)) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::Library::Library(
+cta::LogicalLibrary::LogicalLibrary(
   const std::string &name,
-  const std::string &deviceGroupName,
   const UserIdentity &creator,
   const std::string &comment):
   m_name(name),
-  m_deviceGroupName(deviceGroupName),
   m_creationTime(time(NULL)),
   m_creator(creator),
   m_comment(comment) {
@@ -25,28 +23,21 @@ cta::Library::Library(
 //------------------------------------------------------------------------------
 // getName
 //------------------------------------------------------------------------------
-const std::string &cta::Library::getName() const throw() {
+const std::string &cta::LogicalLibrary::getName() const throw() {
   return m_name;
-}
-
-//------------------------------------------------------------------------------
-// getDeviceGroupName
-//------------------------------------------------------------------------------
-const std::string &cta::Library::getDeviceGroupName() const throw() {
-  return m_deviceGroupName;
 }
 
 //------------------------------------------------------------------------------
 // getCreationTime
 //------------------------------------------------------------------------------
-time_t cta::Library::getCreationTime() const throw() {
+time_t cta::LogicalLibrary::getCreationTime() const throw() {
   return m_creationTime;
 }
 
 //------------------------------------------------------------------------------
 // getCreator
 //------------------------------------------------------------------------------
-const cta::UserIdentity &cta::Library::getCreator()
+const cta::UserIdentity &cta::LogicalLibrary::getCreator()
   const throw() {
   return m_creator;
 }
@@ -54,6 +45,6 @@ const cta::UserIdentity &cta::Library::getCreator()
 //------------------------------------------------------------------------------
 // getComment
 //------------------------------------------------------------------------------
-const std::string &cta::Library::getComment() const throw() {
+const std::string &cta::LogicalLibrary::getComment() const throw() {
   return m_comment;
 }

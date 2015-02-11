@@ -3,7 +3,6 @@ cmake_minimum_required (VERSION 2.6)
 set (CLIENT_LIB_SRC_FILES
   ArchiveJob.cpp
   ClientAPI.cpp
-  DeviceGroup.cpp
   DirectoryEntry.cpp
   DirectoryIterator.cpp
   Exception.cpp
@@ -12,7 +11,7 @@ set (CLIENT_LIB_SRC_FILES
   FileSystemNode.cpp
   FileSystemStorageClass.cpp
   FileSystemStorageClasses.cpp
-  Library.cpp
+  LogicalLibrary.cpp
   MigrationRoute.cpp
   MigrationRouteId.cpp
   MigrationRoutes.cpp
