@@ -48,7 +48,6 @@ set (CASTOR_LEGACYMSG_LIB_SRC_FILES
   RtcpJobReplyMsgBody.cpp
   RtcpMarshal.cpp
   RtcpErrorAppendix.cpp
-  TapeBridgeMarshal.cpp
   TapeConfigRequestMsgBody.cpp
   TapeLabelRqstMsgBody.cpp
   TapeStatDriveEntry.cpp
