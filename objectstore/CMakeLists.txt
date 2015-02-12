@@ -12,9 +12,10 @@ PROTOBUF_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
 
 add_library (CTAObjectStore 
   ${CTAProtoSources}
-  RootEntry.cpp
-  Agent.cpp
-  AgentRegister.cpp
+#  RootEntry.cpp
+#  Agent.cpp
+#  AgentRegister.cpp
+  BackendVFS.cpp
   exception/Backtrace.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
@@ -24,26 +25,30 @@ add_library (CTAObjectStore
   threading/Threading.cpp
   utils/Timer.cpp)
 
-add_executable(tapeResourceManagerTest tapeResourceManagerTest.cpp)
-target_link_libraries(tapeResourceManagerTest
-  protobuf rados CTAObjectStore)
+# add_executable(tapeResourceManagerTest tapeResourceManagerTest.cpp)
+# target_link_libraries(tapeResourceManagerTest
+#   protobuf rados CTAObjectStore)
+# 
+# add_executable(dumpStructure dumpStructure.cpp)
+# target_link_libraries(dumpStructure
+#   protobuf rados CTAObjectStore)
+# 
+# add_executable(jobPoster jobPoster.cpp)
+# target_link_libraries(jobPoster
+#   protobuf rados CTAObjectStore)
+# 
+# add_executable(recaller recaller.cpp)
+# target_link_libraries(recaller
+#   protobuf rados CTAObjectStore)
+# 
+# add_executable(garbageCollector garbageCollector.cpp)
+# target_link_libraries(garbageCollector
+#   protobuf rados CTAObjectStore)
+# 
+# add_executable(createEnvironment createEnvironment.cpp)
+# target_link_libraries(createEnvironment
+#   protobuf rados CTAObjectStore)
 
-add_executable(dumpStructure dumpStructure.cpp)
-target_link_libraries(dumpStructure
-  protobuf rados CTAObjectStore)
-
-add_executable(jobPoster jobPoster.cpp)
-target_link_libraries(jobPoster
-  protobuf rados CTAObjectStore)
-
-add_executable(recaller recaller.cpp)
-target_link_libraries(recaller
-  protobuf rados CTAObjectStore)
-
-add_executable(garbageCollector garbageCollector.cpp)
-target_link_libraries(garbageCollector
-  protobuf rados CTAObjectStore)
-
-add_executable(createEnvironment createEnvironment.cpp)
-target_link_libraries(createEnvironment
+add_executable(unitTests unitTests.cpp)
+target_link_libraries(unitTests
   protobuf rados CTAObjectStore)

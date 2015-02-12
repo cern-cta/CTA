@@ -4,7 +4,7 @@
 #include <cxxabi.h>
 
 // Initializer.
-void cta::objectstore::RootEntry::init(ObjectStore & os) {
+void cta::objectstore::RootEntry::init(Backend & os) {
   // check existence of root entry before creating it. We expect read to fail.
   try {
     os.read(s_rootEntryName);

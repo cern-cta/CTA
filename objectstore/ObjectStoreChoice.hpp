@@ -5,5 +5,5 @@
 #if USE_RADOS
 typedef cta::objectstore::ObjectStoreRados myOS;
 #else
-typedef cta::objectstore::ObjectStoreVFS myOS;
+typedef cta::objectstore::BackendVFS myOS;
 #endif

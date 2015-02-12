@@ -112,7 +112,7 @@ int main(void){
     jobExecutor gcProcess(gcAction);
     gcProcess.start(dc);
     
-    std::vector<cta::objectstore::ObjectStore *> recallObjectStores;
+    std::vector<cta::objectstore::Backend *> recallObjectStores;
     std::vector<cta::objectstore::Agent *> recallAgents;
     std::vector<cta::objectstore::Action *> recallActions;
     std::vector<jobExecutor *> recallJobs;

@@ -1,13 +1,68 @@
 package cta.objectstore.serializers;
 
-// The root entry: it point to an agent register and a job pool register.
-// There is an integrated intent log, but the updates should be very rare (besides first registers creation).
+// The types of the objects. It will be used to allow introspection
+// for the contents.
+enum ObjectType {
+  RootEntry_t = 0;
+  AgentRegister_t = 1;
+  Agent_t = 2;
+  JobPool_t = 3;
+  RecallFIFO_t = 4;
+  MigrationFIFO_t = 5;
+  RecallJob_t = 6;
+  Counter_t = 7;
+}
+
+// The base object header. This will allow introspection and automatic
+// "garbage collection", i.e. returning an unprocessed object belonging
+// to a dead agent to the right queue or container.
+// - The type allows automatic management of the content without knowing its
+// payload.
+// - The version allows multi schema to be used at the object level (smooth schema 
+// evolution, on an object by object basis).
+// - The owner is the authoritative source of ownership for the object.
+// It allows arbitration of the actual owner in case the object is pointed
+// to by several containers (during a transition, or after a failure).
+// - The backup owner allows the object to be returned to a previous container
+// in case of failure of a owner (when it is an agent).
+message ObjectHeader {
+  required ObjectType type = 1;
+  required uint64 version = 2;
+  required string owner = 3;
+  required string backupowner = 4;
+  required string payload = 5;
+}
+
+// The agent object represents a running process. It is a payload to an object
+// itself, and it can be owned by a watchdog or a global agent registry, which
+// lists the agents not yet watched by a watchdog.
+// - The description is a freetext string used for logging.
+// - The watchdogs themselves own the agents they are watching, so the agents can
+// be returned to the agent registry when they fail.
+// - The heartbeat is incremented from time to time by the agent.
+// - The timeout_us is the amount of microseconds after which the absence of
+// change to the heartbeat can be interpreted as agent failure.
+// - The ownedobject list is an ownership intent log that points to the objects
+// that the agent is about to create, intends to own, or fully owns.
+// The objects in this list can be considered for being returned to a backup
+// owner.
+message Agent {
+  required string description = 50;
+  required uint64 heartbeat = 51;
+  required uint64 timeout_us = 52;
+  repeated string ownedobjects = 53;
+}
+
+// The root entry: it points to an agent register and a job pool register.
+// There is an integrated intent log for the agent register, but the updates 
+// should be very rare (besides first register creation). All other objects
+// can be covered by the agents's ownership logs.
 message RootEntry {
-  optional string agentregister = 1;
-  repeated string agentregisterintentlog = 2;
-  optional string jobpool = 3;
-  optional string driveregister = 4;
-  optional string taperegister = 5;
+  optional string agentregister = 91;
+  repeated string agentregisterintentlog = 92;
+  optional string jobpool = 93;
+  optional string driveregister = 94;
+  optional string taperegister = 95;
 }
 
 // The registers (simple name arrays)
@@ -31,17 +86,6 @@ message FIFO {
   repeated string name = 201;
 }
 
-enum ObjectType {
-  RootEntry_t = 0;
-  AgentRegister_t = 1;
-  Agent_t = 2;
-  JobPool_t = 3;
-  RecallFIFO_t = 4;
-  MigrationFIFO_t = 5;
-  RecallJob_t = 6;
-  Counter_t = 7;
-}
-
 // A basic shared counter
 message Counter {
   required uint64 count = 300;
@@ -57,14 +101,6 @@ message ObjectCreationIntent {
 message ObjectOwnershipIntent {
   required ObjectType type = 1111;
   required string name = 1112;
-}
-
-// The agent (session) record.
-message Agent {
-  required string name = 1000;
-  repeated ObjectCreationIntent creationintent = 1001;
-  repeated ObjectOwnershipIntent ownershipintent = 1002;
-  required int64 heartbeatcount = 1003;
 }
 
 // The tape record

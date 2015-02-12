@@ -2,7 +2,7 @@
 
 #include "objectstore/cta.pb.h"
 
-#include "ObjectStores.hpp"
+#include "BackendStore.hpp.hpp"
 #include "ObjectOps.hpp"
 #include "Agent.hpp"
 
@@ -11,7 +11,7 @@ namespace cta { namespace objectstore {
 class RootEntry: private ObjectOps<serializers::RootEntry> {
 public:
   // Initializer.
-  static void init(ObjectStore & os);
+  static void init(Backend & os);
   
   // construtor, when the backend store exists.
   // Checks the existence and correctness of the root entry

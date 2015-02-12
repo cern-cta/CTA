@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ObjectStores.hpp"
+#include "BackendStore.hpp.hpp"
 
 namespace cta { namespace objectstore {
 
