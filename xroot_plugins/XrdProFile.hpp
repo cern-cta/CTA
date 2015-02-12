@@ -2,6 +2,8 @@
 
 #include "XrdSfs/XrdSfsInterface.hh"
 
+#include <string>
+
 class XrdProFile : public XrdSfsFile {
 public:
   XrdOucErrInfo  error;
@@ -23,5 +25,5 @@ public:
   XrdProFile(const char *user=0, int MonID=0);
   ~XrdProFile();
 protected:
-  
+  std::string m_data;
 };

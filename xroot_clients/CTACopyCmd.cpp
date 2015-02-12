@@ -49,8 +49,9 @@ int CTACopyCmd::main(const int argc, char **argv) throw() {
 //------------------------------------------------------------------------------
 int CTACopyCmd::executeCommand(const int argc, char **argv)  {
   XrdCl::PropertyList properties;
-  properties.Set("source", "/afs/cern.ch/user/d/dkruse/vmgrlisttape.txt2");
-  properties.Set("target", "/afs/cern.ch/user/d/dkruse/vmgrlisttape.txt3");  
+  properties.Set("source", "root://localhost//himama");
+  properties.Set("target", "/afs/cern.ch/user/d/dkruse/lola.txt"); 
+  properties.Set("force", true);
   XrdCl::PropertyList results;
   XrdCl::CopyProcess copyProcess;
   
