@@ -164,6 +164,7 @@ namespace castor {
                   m_session->getCurrentFilePart() != Header){
             m_session->setCorrupted();
           }
+          m_session->release();
           throw;
         }
       }
