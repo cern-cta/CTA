@@ -1,4 +1,5 @@
 #include "XrdProFilesystem.hpp"
+#include "XrdProFile.hpp"
 
 #include "XrdOuc/XrdOucString.hh"
 #include "XrdSec/XrdSecEntity.hh"
@@ -1002,6 +1003,14 @@ int XrdProFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
 }
 
 //------------------------------------------------------------------------------
+// newFile
+//------------------------------------------------------------------------------
+XrdSfsFile * XrdProFilesystem::newFile(char *user, int MonID)
+{  
+  return new XrdProFile(user, MonID);
+}
+
+//------------------------------------------------------------------------------
 // fsctl
 //------------------------------------------------------------------------------
 int XrdProFilesystem::fsctl(const int cmd, const char *args, XrdOucErrInfo &eInfo, const XrdSecEntity *client)
@@ -1122,15 +1131,6 @@ int XrdProFilesystem::truncate(const char *path, XrdSfsFileOffset fsize, XrdOucE
 // newDir
 //------------------------------------------------------------------------------
 XrdSfsDirectory * XrdProFilesystem::newDir(char *user, int MonID)
-{
-  (void)user; (void)MonID;
-  return NULL;
-}
-
-//------------------------------------------------------------------------------
-// newFile
-//------------------------------------------------------------------------------
-XrdSfsFile * XrdProFilesystem::newFile(char *user, int MonID)
 {
   (void)user; (void)MonID;
   return NULL;

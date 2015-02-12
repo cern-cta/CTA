@@ -1,28 +1,26 @@
 #include "XrdProFile.hpp"
 
+#include <iostream>
+
 //------------------------------------------------------------------------------
 // open
 //------------------------------------------------------------------------------
-int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client, const char *opaque){
-  
-  error.setErrInfo(ENOTSUP, "Not supported.");
-  return SFS_ERROR;
+int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client, const char *opaque) {
+  m_data = "Hello this is my data";
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // close
 //------------------------------------------------------------------------------
-int XrdProFile::close(){
-  
-  error.setErrInfo(ENOTSUP, "Not supported.");
-  return SFS_ERROR;
+int XrdProFile::close() {
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // fctl
 //------------------------------------------------------------------------------
-int XrdProFile::fctl(const int cmd, const char *args, XrdOucErrInfo &eInfo){
-  
+int XrdProFile::fctl(const int cmd, const char *args, XrdOucErrInfo &eInfo) {  
   error.setErrInfo(ENOTSUP, "Not supported.");
   return SFS_ERROR;
 }
@@ -30,8 +28,7 @@ int XrdProFile::fctl(const int cmd, const char *args, XrdOucErrInfo &eInfo){
 //------------------------------------------------------------------------------
 // FName
 //------------------------------------------------------------------------------
-const char* XrdProFile::FName(){
-  
+const char* XrdProFile::FName() {
   error.setErrInfo(ENOTSUP, "Not supported.");
   return NULL;
 }
@@ -39,17 +36,15 @@ const char* XrdProFile::FName(){
 //------------------------------------------------------------------------------
 // getMmap
 //------------------------------------------------------------------------------
-int XrdProFile::getMmap(void **Addr, off_t &Size){
-  
-  error.setErrInfo(ENOTSUP, "Not supported.");
+int XrdProFile::getMmap(void **Addr, off_t &Size) {
+  *Addr = const_cast<char *>(m_data.c_str()); Size = m_data.length();
   return SFS_ERROR;
 }
 
 //------------------------------------------------------------------------------
 // read
 //------------------------------------------------------------------------------
-XrdSfsXferSize XrdProFile::read(XrdSfsFileOffset offset, XrdSfsXferSize size){
-  
+XrdSfsXferSize XrdProFile::read(XrdSfsFileOffset offset, XrdSfsXferSize size) {
   error.setErrInfo(ENOTSUP, "Not supported.");
   return 0;
 }
@@ -57,17 +52,21 @@ XrdSfsXferSize XrdProFile::read(XrdSfsFileOffset offset, XrdSfsXferSize size){
 //------------------------------------------------------------------------------
 // read
 //------------------------------------------------------------------------------
-XrdSfsXferSize XrdProFile::read(XrdSfsFileOffset offset, char *buffer, XrdSfsXferSize size){
-  
-  error.setErrInfo(ENOTSUP, "Not supported.");
-  return 0;
+XrdSfsXferSize XrdProFile::read(XrdSfsFileOffset offset, char *buffer, XrdSfsXferSize size) {
+  if((unsigned long)offset<m_data.length()) {
+    strncpy(buffer, m_data.c_str()+offset, size);
+    return m_data.length()-offset;
+  }
+  else {
+    buffer = NULL;
+    return 0;
+  }
 }
 
 //------------------------------------------------------------------------------
 // read
 //------------------------------------------------------------------------------
-XrdSfsXferSize XrdProFile::read(XrdSfsAio *aioparm){
-  
+XrdSfsXferSize XrdProFile::read(XrdSfsAio *aioparm) {
   error.setErrInfo(ENOTSUP, "Not supported.");
   return 0;
 }
@@ -75,8 +74,7 @@ XrdSfsXferSize XrdProFile::read(XrdSfsAio *aioparm){
 //------------------------------------------------------------------------------
 // write
 //------------------------------------------------------------------------------
-XrdSfsXferSize XrdProFile::write(XrdSfsFileOffset offset, const char *buffer, XrdSfsXferSize size){
-  
+XrdSfsXferSize XrdProFile::write(XrdSfsFileOffset offset, const char *buffer, XrdSfsXferSize size) {
   error.setErrInfo(ENOTSUP, "Not supported.");
   return 0;
 }
@@ -84,8 +82,7 @@ XrdSfsXferSize XrdProFile::write(XrdSfsFileOffset offset, const char *buffer, Xr
 //------------------------------------------------------------------------------
 // write
 //------------------------------------------------------------------------------
-int XrdProFile::write(XrdSfsAio *aioparm){
-  
+int XrdProFile::write(XrdSfsAio *aioparm) {
   error.setErrInfo(ENOTSUP, "Not supported.");
   return SFS_ERROR;
 }
@@ -93,8 +90,15 @@ int XrdProFile::write(XrdSfsAio *aioparm){
 //------------------------------------------------------------------------------
 // stat
 //------------------------------------------------------------------------------
-int XrdProFile::stat(struct stat *buf){
-  
+int XrdProFile::stat(struct stat *buf) {
+  buf->st_size=m_data.length();
+  return SFS_OK;
+}
+
+//------------------------------------------------------------------------------
+// sync
+//------------------------------------------------------------------------------
+int XrdProFile::sync() {
   error.setErrInfo(ENOTSUP, "Not supported.");
   return SFS_ERROR;
 }
@@ -102,17 +106,7 @@ int XrdProFile::stat(struct stat *buf){
 //------------------------------------------------------------------------------
 // sync
 //------------------------------------------------------------------------------
-int XrdProFile::sync(){
-  
-  error.setErrInfo(ENOTSUP, "Not supported.");
-  return SFS_ERROR;
-}
-
-//------------------------------------------------------------------------------
-// sync
-//------------------------------------------------------------------------------
-int XrdProFile::sync(XrdSfsAio *aiop){
-  
+int XrdProFile::sync(XrdSfsAio *aiop) {
   error.setErrInfo(ENOTSUP, "Not supported.");
   return SFS_ERROR;
 }
@@ -120,8 +114,7 @@ int XrdProFile::sync(XrdSfsAio *aiop){
 //------------------------------------------------------------------------------
 // truncate
 //------------------------------------------------------------------------------
-int XrdProFile::truncate(XrdSfsFileOffset fsize){
-  
+int XrdProFile::truncate(XrdSfsFileOffset fsize) {
   error.setErrInfo(ENOTSUP, "Not supported.");
   return SFS_ERROR;
 }
@@ -129,8 +122,7 @@ int XrdProFile::truncate(XrdSfsFileOffset fsize){
 //------------------------------------------------------------------------------
 // getCXinfo
 //------------------------------------------------------------------------------
-int XrdProFile::getCXinfo(char cxtype[4], int &cxrsz){
-  
+int XrdProFile::getCXinfo(char cxtype[4], int &cxrsz) {
   error.setErrInfo(ENOTSUP, "Not supported.");
   return SFS_ERROR;
 }
@@ -138,13 +130,11 @@ int XrdProFile::getCXinfo(char cxtype[4], int &cxrsz){
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-XrdProFile::XrdProFile(const char *user, int MonID): error(user, MonID){
-  
+XrdProFile::XrdProFile(const char *user, int MonID): error(user, MonID) {  
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-XrdProFile::~XrdProFile(){
-  
+XrdProFile::~XrdProFile() {  
 }
