@@ -58,7 +58,6 @@ XrdSfsXferSize XrdProFile::read(XrdSfsFileOffset offset, char *buffer, XrdSfsXfe
     return m_data.length()-offset;
   }
   else {
-    buffer = NULL;
     return 0;
   }
 }
