@@ -1,10 +1,10 @@
-#include "TestingMockClientAPI.hpp"
+#include "TestingMockMiddleTierAdmin.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-class cta_client_MockClientAPITest: public ::testing::Test {
+class cta_client_MockMiddleTierAdminTest: public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -14,10 +14,10 @@ protected:
   }
 };
 
-TEST_F(cta_client_MockClientAPITest, createAdminUser_new) {
+TEST_F(cta_client_MockMiddleTierAdminTest, createAdminUser_new) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -41,10 +41,10 @@ TEST_F(cta_client_MockClientAPITest, createAdminUser_new) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, createAdminUser_already_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest, createAdminUser_already_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -76,10 +76,10 @@ TEST_F(cta_client_MockClientAPITest, createAdminUser_already_existing) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteAdminUser_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteAdminUser_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -110,10 +110,10 @@ TEST_F(cta_client_MockClientAPITest, deleteAdminUser_existing) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteAdminUser_non_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteAdminUser_non_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -134,10 +134,10 @@ TEST_F(cta_client_MockClientAPITest, deleteAdminUser_non_existing) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, createAdminHost_new) {
+TEST_F(cta_client_MockMiddleTierAdminTest, createAdminHost_new) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -158,10 +158,10 @@ TEST_F(cta_client_MockClientAPITest, createAdminHost_new) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteAdminHost_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteAdminHost_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -190,10 +190,10 @@ TEST_F(cta_client_MockClientAPITest, deleteAdminHost_existing) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteAdminHost_non_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteAdminHost_non_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
   
   {
@@ -212,10 +212,10 @@ TEST_F(cta_client_MockClientAPITest, deleteAdminHost_non_existing) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, createStorageClass_new) {
+TEST_F(cta_client_MockMiddleTierAdminTest, createStorageClass_new) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -241,10 +241,11 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_new) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, createStorageClass_already_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  createStorageClass_already_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -273,10 +274,11 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_already_existing) {
     std::exception);
 }
 
-TEST_F(cta_client_MockClientAPITest, createStorageClass_lexicographical_order) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  createStorageClass_lexicographical_order) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -305,10 +307,10 @@ TEST_F(cta_client_MockClientAPITest, createStorageClass_lexicographical_order) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteStorageClass_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteStorageClass_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -342,10 +344,11 @@ TEST_F(cta_client_MockClientAPITest, deleteStorageClass_existing) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteStorageClass_in_use_by_directory) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  deleteStorageClass_in_use_by_directory) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -399,10 +402,10 @@ TEST_F(cta_client_MockClientAPITest, deleteStorageClass_in_use_by_directory) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteStorageClass_in_use_by_route) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteStorageClass_in_use_by_route) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -492,10 +495,10 @@ TEST_F(cta_client_MockClientAPITest, deleteStorageClass_in_use_by_route) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteStorageClass_non_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteStorageClass_non_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -514,10 +517,10 @@ TEST_F(cta_client_MockClientAPITest, deleteStorageClass_non_existing) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, createTapePool_new) {
+TEST_F(cta_client_MockMiddleTierAdminTest, createTapePool_new) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -545,10 +548,10 @@ TEST_F(cta_client_MockClientAPITest, createTapePool_new) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, createTapePool_already_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest, createTapePool_already_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -579,10 +582,10 @@ TEST_F(cta_client_MockClientAPITest, createTapePool_already_existing) {
     nbPartialTapes, comment), std::exception);
 }
 
-TEST_F(cta_client_MockClientAPITest, createTapePool_lexicographical_order) {
+TEST_F(cta_client_MockMiddleTierAdminTest, createTapePool_lexicographical_order) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -618,10 +621,10 @@ TEST_F(cta_client_MockClientAPITest, createTapePool_lexicographical_order) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteTapePool_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteTapePool_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -657,10 +660,10 @@ TEST_F(cta_client_MockClientAPITest, deleteTapePool_existing) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteTapePool_in_use) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteTapePool_in_use) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -714,10 +717,10 @@ TEST_F(cta_client_MockClientAPITest, deleteTapePool_in_use) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteTapePool_non_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteTapePool_non_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -736,10 +739,10 @@ TEST_F(cta_client_MockClientAPITest, deleteTapePool_non_existing) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, createMigrationRoute_new) {
+TEST_F(cta_client_MockMiddleTierAdminTest, createMigrationRoute_new) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -779,10 +782,11 @@ TEST_F(cta_client_MockClientAPITest, createMigrationRoute_new) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, createMigrationRoute_already_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  createMigrationRoute_already_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -825,10 +829,10 @@ TEST_F(cta_client_MockClientAPITest, createMigrationRoute_already_existing) {
     copyNb, tapePoolName, comment), std::exception);
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteMigrationRoute_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteMigrationRoute_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -877,10 +881,10 @@ TEST_F(cta_client_MockClientAPITest, deleteMigrationRoute_existing) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteMigrationRoute_non_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteMigrationRoute_non_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -908,10 +912,11 @@ TEST_F(cta_client_MockClientAPITest, deleteMigrationRoute_non_existing) {
     std::exception);
 }
 
-TEST_F(cta_client_MockClientAPITest, getDirectoryContents_root_dir_is_empty) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  getDirectoryContents_root_dir_is_empty) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
   const std::string dirPath = "/";
 
@@ -920,40 +925,41 @@ TEST_F(cta_client_MockClientAPITest, getDirectoryContents_root_dir_is_empty) {
   ASSERT_FALSE(itor.hasMore());
 }
 
-TEST_F(cta_client_MockClientAPITest, createDirectory_empty_string) {
+TEST_F(cta_client_MockMiddleTierAdminTest, createDirectory_empty_string) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
   const std::string dirPath = "";
 
   ASSERT_THROW(api.createDirectory(requester, dirPath), std::exception);
 }
 
-TEST_F(cta_client_MockClientAPITest, createDirectory_consecutive_slashes) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  createDirectory_consecutive_slashes) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
   const std::string dirPath = "//";
 
   ASSERT_THROW(api.createDirectory(requester, dirPath), std::exception);
 }
 
-TEST_F(cta_client_MockClientAPITest, createDirectory_invalid_chars) {
+TEST_F(cta_client_MockMiddleTierAdminTest, createDirectory_invalid_chars) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent/?parent";
   
   ASSERT_THROW(api.createDirectory(requester, dirPath), std::exception);
 }
 
-TEST_F(cta_client_MockClientAPITest, createDirectory_top_level) {
+TEST_F(cta_client_MockMiddleTierAdminTest, createDirectory_top_level) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
   
@@ -972,10 +978,10 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_top_level) {
   ASSERT_EQ(std::string("grandparent"), entry.getName());
 }
 
-TEST_F(cta_client_MockClientAPITest, createDirectory_second_level) {
+TEST_F(cta_client_MockMiddleTierAdminTest, createDirectory_second_level) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   ASSERT_TRUE(api.getDirectoryStorageClass(requester, "/").empty());
@@ -1036,13 +1042,15 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_second_level) {
     ASSERT_EQ(std::string("parent"), entry.getName());
   }
 
-  ASSERT_TRUE(api.getDirectoryStorageClass(requester, "/grandparent/parent").empty());
+  ASSERT_TRUE(api.getDirectoryStorageClass(requester,
+    "/grandparent/parent").empty());
 }
 
-TEST_F(cta_client_MockClientAPITest, createDirectory_inherit_storage_class) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  createDirectory_inherit_storage_class) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   ASSERT_TRUE(api.getDirectoryStorageClass(requester, "/").empty());
@@ -1120,20 +1128,20 @@ TEST_F(cta_client_MockClientAPITest, createDirectory_inherit_storage_class) {
     api.getDirectoryStorageClass(requester, "/grandparent/parent"));
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteDirectory_root) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteDirectory_root) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
   const std::string dirPath = "/";
 
   ASSERT_THROW(api.deleteDirectory(requester, "/"), std::exception);
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteDirectory_existing_top_level) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteDirectory_existing_top_level) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
   
@@ -1164,10 +1172,11 @@ TEST_F(cta_client_MockClientAPITest, deleteDirectory_existing_top_level) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteDirectory_non_empty_top_level) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  deleteDirectory_non_empty_top_level) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -1237,19 +1246,20 @@ TEST_F(cta_client_MockClientAPITest, deleteDirectory_non_empty_top_level) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteDirectory_non_existing_top_level) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  deleteDirectory_non_existing_top_level) {
   using namespace cta;
   
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   ASSERT_THROW(api.deleteDirectory(requester, "/grandparent"), std::exception);
 }
 
-TEST_F(cta_client_MockClientAPITest, setDirectoryStorageClass_top_level) {
+TEST_F(cta_client_MockMiddleTierAdminTest, setDirectoryStorageClass_top_level) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
 
@@ -1289,10 +1299,11 @@ TEST_F(cta_client_MockClientAPITest, setDirectoryStorageClass_top_level) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, clearDirectoryStorageClass_top_level) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  clearDirectoryStorageClass_top_level) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
 
@@ -1345,91 +1356,93 @@ TEST_F(cta_client_MockClientAPITest, clearDirectoryStorageClass_top_level) {
   ASSERT_NO_THROW(api.deleteStorageClass(requester, storageClassName));
 }
 
-TEST_F(cta_client_MockClientAPITest, trimSlashes_emptyString) {
+TEST_F(cta_client_MockMiddleTierAdminTest, trimSlashes_emptyString) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const std::string s;
   const std::string trimmedString = api.trimSlashes(s);
   ASSERT_EQ(s, trimmedString);
 }
 
-TEST_F(cta_client_MockClientAPITest, trimSlashes_noSlashes) {
+TEST_F(cta_client_MockMiddleTierAdminTest, trimSlashes_noSlashes) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const std::string s("NO_SLASHES");
   const std::string trimmedString = api.trimSlashes(s);
   ASSERT_EQ(s, trimmedString);
 }
 
-TEST_F(cta_client_MockClientAPITest, trimSlashes_oneLeftSlash) {
+TEST_F(cta_client_MockMiddleTierAdminTest, trimSlashes_oneLeftSlash) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const std::string s("/VALUE");
   const std::string trimmedString = api.trimSlashes(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
-TEST_F(cta_client_MockClientAPITest, trimSlashes_twoLeftSlashes) {
+TEST_F(cta_client_MockMiddleTierAdminTest, trimSlashes_twoLeftSlashes) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const std::string s("//VALUE");
   const std::string trimmedString = api.trimSlashes(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
-TEST_F(cta_client_MockClientAPITest, trimSlashes_oneRightSlash) {
+TEST_F(cta_client_MockMiddleTierAdminTest, trimSlashes_oneRightSlash) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const std::string s("VALUE/");
   const std::string trimmedString = api.trimSlashes(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
-TEST_F(cta_client_MockClientAPITest, trimSlashes_twoRightSlashes) {
+TEST_F(cta_client_MockMiddleTierAdminTest, trimSlashes_twoRightSlashes) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const std::string s("VALUE//");
   const std::string trimmedString = api.trimSlashes(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
-TEST_F(cta_client_MockClientAPITest, trimSlashes_oneLeftAndOneRightSlash) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  trimSlashes_oneLeftAndOneRightSlash) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const std::string s("/VALUE/");
   const std::string trimmedString = api.trimSlashes(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
-TEST_F(cta_client_MockClientAPITest, trimSlashes_twoLeftAndTwoRightSlashes) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  trimSlashes_twoLeftAndTwoRightSlashes) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const std::string s("//VALUE//");
   const std::string trimmedString = api.trimSlashes(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
-TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_empty_string) {
+TEST_F(cta_client_MockMiddleTierAdminTest, getEnclosingDirPath_empty_string) {
   using namespace cta;
     
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const std::string dirPath = "";
 
   ASSERT_THROW(api.getEnclosingDirPath(dirPath), std::exception);
 }
 
-TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_root) {
+TEST_F(cta_client_MockMiddleTierAdminTest, getEnclosingDirPath_root) {
   using namespace cta;
     
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const std::string dirPath = "/";
 
   std::string enclosingDirPath;
@@ -1437,10 +1450,10 @@ TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_root) {
     std::exception);
 }
 
-TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_grandparent) {
+TEST_F(cta_client_MockMiddleTierAdminTest, getEnclosingDirPath_grandparent) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const std::string dirPath = "/grandparent";
     
   std::string enclosingDirPath;
@@ -1448,10 +1461,11 @@ TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_grandparent) {
   ASSERT_EQ(std::string("/"), enclosingDirPath);
 }
 
-TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_grandparent_parent) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  getEnclosingDirPath_grandparent_parent) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const std::string dirPath = "/grandparent/parent";
 
   std::string enclosingDirPath;
@@ -1459,10 +1473,11 @@ TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_grandparent_parent) {
   ASSERT_EQ(std::string("/grandparent/"), enclosingDirPath);
 }
 
-TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_grandparent_parent_child) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  getEnclosingDirPath_grandparent_parent_child) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const std::string dirPath = "/grandparent/parent/child";
 
   std::string enclosingDirPath;
@@ -1470,12 +1485,12 @@ TEST_F(cta_client_MockClientAPITest, getEnclosingDirPath_grandparent_parent_chil
   ASSERT_EQ(std::string("/grandparent/parent/"), enclosingDirPath);
 }
 
-TEST_F(cta_client_MockClientAPITest, splitString_goodDay) {
+TEST_F(cta_client_MockMiddleTierAdminTest, splitString_goodDay) {
   using namespace cta;
   const std::string line("col0 col1 col2 col3 col4 col5 col6 col7");
   std::vector<std::string> columns;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
 
   ASSERT_NO_THROW(api.splitString(line, ' ', columns));
   ASSERT_EQ((std::vector<std::string>::size_type)8, columns.size());
@@ -1489,34 +1504,34 @@ TEST_F(cta_client_MockClientAPITest, splitString_goodDay) {
   ASSERT_EQ(std::string("col7"), columns[7]);
 }
 
-TEST_F(cta_client_MockClientAPITest, splitString_emptyString) {
+TEST_F(cta_client_MockMiddleTierAdminTest, splitString_emptyString) {
   using namespace cta;
   const std::string emptyString;
   std::vector<std::string> columns;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
 
   ASSERT_NO_THROW(api.splitString(emptyString, ' ', columns));
   ASSERT_EQ((std::vector<std::string>::size_type)0, columns.size());
 }
 
-TEST_F(cta_client_MockClientAPITest, splitString_noSeparatorInString) {
+TEST_F(cta_client_MockMiddleTierAdminTest, splitString_noSeparatorInString) {
   using namespace cta;
   const std::string stringContainingNoSeparator =
     "stringContainingNoSeparator";
   std::vector<std::string> columns;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
 
   ASSERT_NO_THROW(api.splitString(stringContainingNoSeparator, ' ', columns));
   ASSERT_EQ((std::vector<std::string>::size_type)1, columns.size());
   ASSERT_EQ(stringContainingNoSeparator, columns[0]);
 }
 
-TEST_F(cta_client_MockClientAPITest, createLogicalLibrary_new) {
+TEST_F(cta_client_MockMiddleTierAdminTest, createLogicalLibrary_new) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -1542,10 +1557,11 @@ TEST_F(cta_client_MockClientAPITest, createLogicalLibrary_new) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, createLogicalLibrary_already_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  createLogicalLibrary_already_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -1574,10 +1590,11 @@ TEST_F(cta_client_MockClientAPITest, createLogicalLibrary_already_existing) {
     libraryComment), std::exception);
 }
 
-TEST_F(cta_client_MockClientAPITest, createLogicalLibrary_lexicographical_order) {
+TEST_F(cta_client_MockMiddleTierAdminTest,
+  createLogicalLibrary_lexicographical_order) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -1606,10 +1623,10 @@ TEST_F(cta_client_MockClientAPITest, createLogicalLibrary_lexicographical_order)
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteLogicalLibrary_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteLogicalLibrary_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {
@@ -1643,10 +1660,10 @@ TEST_F(cta_client_MockClientAPITest, deleteLogicalLibrary_existing) {
   }
 }
 
-TEST_F(cta_client_MockClientAPITest, deleteLogicalLibrary_non_existing) {
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteLogicalLibrary_non_existing) {
   using namespace cta;
 
-  TestingMockClientAPI api;
+  TestingMockMiddleTierAdmin api;
   const SecurityIdentity requester;
 
   {

@@ -16,16 +16,15 @@
 namespace cta {
 
 /**
- * Abstract class that specifies the client API of the CERN Tape Archive
- * project.
+ * Abstract class that defines the administration API of the the middle-tier.
  */
-class ClientAPI {
+class MiddleTierAdmin {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~ClientAPI() throw() = 0;
+  virtual ~MiddleTierAdmin() throw() = 0;
 
   /**
    * Creates the specified administrator.
@@ -344,6 +343,6 @@ public:
     const SecurityIdentity &requester,
     const std::string &tapePoolName) = 0;
 
-}; // class ClientAPI
+}; // class MiddleTierAdmin
 
 } // namespace cta

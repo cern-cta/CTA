@@ -1,5 +1,5 @@
 #include "Exception.hpp"
-#include "MockClientAPI.hpp"
+#include "MockMiddleTierAdmin.hpp"
 
 #include <iostream>
 #include <memory>
@@ -8,7 +8,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MockClientAPI::MockClientAPI():
+cta::MockMiddleTierAdmin::MockMiddleTierAdmin():
   m_fileSystemRoot(m_storageClasses,
     DirectoryEntry(DirectoryEntry::ENTRYTYPE_DIRECTORY, "/", "")) {
 }
@@ -16,13 +16,13 @@ cta::MockClientAPI::MockClientAPI():
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::MockClientAPI::~MockClientAPI() throw() {
+cta::MockMiddleTierAdmin::~MockMiddleTierAdmin() throw() {
 }
 
 //------------------------------------------------------------------------------
 // createAdminUser
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::createAdminUser(
+void cta::MockMiddleTierAdmin::createAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &adminUser) {
   checkAdminUserDoesNotAlreadyExist(adminUser);
@@ -32,7 +32,7 @@ void cta::MockClientAPI::createAdminUser(
 //------------------------------------------------------------------------------
 // checkAdminUserDoesNotAlreadyExist
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkAdminUserDoesNotAlreadyExist(
+void cta::MockMiddleTierAdmin::checkAdminUserDoesNotAlreadyExist(
   const UserIdentity &adminUser) {
   for(std::list<UserIdentity>::const_iterator itor = m_adminUsers.begin();
     itor != m_adminUsers.end(); itor++) {
@@ -48,7 +48,7 @@ void cta::MockClientAPI::checkAdminUserDoesNotAlreadyExist(
 //------------------------------------------------------------------------------
 // deleteAdminUser
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::deleteAdminUser(
+void cta::MockMiddleTierAdmin::deleteAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &adminUser) {
   for(std::list<UserIdentity>::iterator itor = m_adminUsers.begin();
@@ -68,7 +68,7 @@ void cta::MockClientAPI::deleteAdminUser(
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
-std::list<cta::UserIdentity> cta::MockClientAPI::getAdminUsers(
+std::list<cta::UserIdentity> cta::MockMiddleTierAdmin::getAdminUsers(
   const SecurityIdentity &requester) const {
   return m_adminUsers;
 }
@@ -76,7 +76,7 @@ std::list<cta::UserIdentity> cta::MockClientAPI::getAdminUsers(
 //------------------------------------------------------------------------------
 // createAdminHost
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::createAdminHost(
+void cta::MockMiddleTierAdmin::createAdminHost(
   const SecurityIdentity &requester,
   const std::string &adminHost) {
   checkAdminHostDoesNotAlreadyExist(adminHost);
@@ -86,7 +86,7 @@ void cta::MockClientAPI::createAdminHost(
 //------------------------------------------------------------------------------
 // checkAdminHostDoesNotAlreadyExist
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkAdminHostDoesNotAlreadyExist(
+void cta::MockMiddleTierAdmin::checkAdminHostDoesNotAlreadyExist(
   const std::string &adminHost) {
   for(std::list<std::string>::const_iterator itor = m_adminHosts.begin();
     itor != m_adminHosts.end(); itor++) {
@@ -101,7 +101,7 @@ void cta::MockClientAPI::checkAdminHostDoesNotAlreadyExist(
 //------------------------------------------------------------------------------
 // deleteAdminHost
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::deleteAdminHost(
+void cta::MockMiddleTierAdmin::deleteAdminHost(
   const SecurityIdentity &requester,
   const std::string &adminHost) {
   for(std::list<std::string>::iterator itor = m_adminHosts.begin();
@@ -122,7 +122,7 @@ void cta::MockClientAPI::deleteAdminHost(
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
-std::list<std::string> cta::MockClientAPI::getAdminHosts(
+std::list<std::string> cta::MockMiddleTierAdmin::getAdminHosts(
   const SecurityIdentity &requester) const {
   return m_adminHosts;
 }
@@ -130,7 +130,7 @@ std::list<std::string> cta::MockClientAPI::getAdminHosts(
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::createStorageClass(const SecurityIdentity &requester,
+void cta::MockMiddleTierAdmin::createStorageClass(const SecurityIdentity &requester,
   const std::string &name, const uint8_t nbCopies, const std::string &comment) {
   m_storageClasses.createStorageClass(name, nbCopies, requester.user, comment);
 }
@@ -138,7 +138,7 @@ void cta::MockClientAPI::createStorageClass(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::deleteStorageClass(const SecurityIdentity &requester,
+void cta::MockMiddleTierAdmin::deleteStorageClass(const SecurityIdentity &requester,
   const std::string &name) {
   checkStorageClassIsNotInAMigrationRoute(name);
   m_storageClasses.deleteStorageClass(name);
@@ -147,7 +147,7 @@ void cta::MockClientAPI::deleteStorageClass(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 // checkStorageClassIsNotInAMigrationRoute
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkStorageClassIsNotInAMigrationRoute(
+void cta::MockMiddleTierAdmin::checkStorageClassIsNotInAMigrationRoute(
   const std::string &name) const {
   if(m_migrationRoutes.storageClassIsInAMigrationRoute(name)) {
     std::ostringstream message;
@@ -159,7 +159,7 @@ void cta::MockClientAPI::checkStorageClassIsNotInAMigrationRoute(
 //------------------------------------------------------------------------------
 // getStorageClasses
 //------------------------------------------------------------------------------
-std::list<cta::StorageClass> cta::MockClientAPI::getStorageClasses(
+std::list<cta::StorageClass> cta::MockMiddleTierAdmin::getStorageClasses(
   const SecurityIdentity &requester) const {
   return m_storageClasses.getStorageClasses();
 }
@@ -167,7 +167,7 @@ std::list<cta::StorageClass> cta::MockClientAPI::getStorageClasses(
 //------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::createTapePool(
+void cta::MockMiddleTierAdmin::createTapePool(
   const SecurityIdentity &requester,
   const std::string &name,
   const uint16_t nbDrives,
@@ -181,7 +181,7 @@ void cta::MockClientAPI::createTapePool(
 //------------------------------------------------------------------------------
 // checkTapePoolDoesNotAlreadyExist
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkTapePoolDoesNotAlreadyExist(
+void cta::MockMiddleTierAdmin::checkTapePoolDoesNotAlreadyExist(
   const std::string &name) const {
   std::map<std::string, TapePool>::const_iterator itor = m_tapePools.find(name);
   if(itor != m_tapePools.end()) {
@@ -194,7 +194,7 @@ void cta::MockClientAPI::checkTapePoolDoesNotAlreadyExist(
 //------------------------------------------------------------------------------
 // deleteTapePool
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::deleteTapePool(const SecurityIdentity &requester,
+void cta::MockMiddleTierAdmin::deleteTapePool(const SecurityIdentity &requester,
   const std::string &name) {
   std::map<std::string, TapePool>::iterator itor = m_tapePools.find(name);
   if(itor == m_tapePools.end()) {
@@ -209,7 +209,7 @@ void cta::MockClientAPI::deleteTapePool(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 // checkTapePoolIsNotInUse
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkTapePoolIsNotInUse(const std::string &name)
+void cta::MockMiddleTierAdmin::checkTapePoolIsNotInUse(const std::string &name)
   const {
   if(m_migrationRoutes.tapePoolIsInAMigrationRoute(name)) {
     std::ostringstream message;
@@ -221,7 +221,7 @@ void cta::MockClientAPI::checkTapePoolIsNotInUse(const std::string &name)
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
-std::list<cta::TapePool> cta::MockClientAPI::getTapePools(
+std::list<cta::TapePool> cta::MockMiddleTierAdmin::getTapePools(
   const SecurityIdentity &requester) const {
   std::list<cta::TapePool> tapePools;
 
@@ -235,7 +235,7 @@ std::list<cta::TapePool> cta::MockClientAPI::getTapePools(
 //------------------------------------------------------------------------------
 // createMigrationRoute
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::createMigrationRoute(
+void cta::MockMiddleTierAdmin::createMigrationRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint8_t copyNb,
@@ -252,7 +252,7 @@ void cta::MockClientAPI::createMigrationRoute(
 //------------------------------------------------------------------------------
 // deleteMigrationRoute
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::deleteMigrationRoute(
+void cta::MockMiddleTierAdmin::deleteMigrationRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint8_t copyNb) {
@@ -262,7 +262,7 @@ void cta::MockClientAPI::deleteMigrationRoute(
 //------------------------------------------------------------------------------
 // getMigrationRoutes
 //------------------------------------------------------------------------------
-std::list<cta::MigrationRoute> cta::MockClientAPI::getMigrationRoutes(
+std::list<cta::MigrationRoute> cta::MockMiddleTierAdmin::getMigrationRoutes(
   const SecurityIdentity &requester) const {
   return m_migrationRoutes.getMigrationRoutes();
 }
@@ -270,7 +270,7 @@ std::list<cta::MigrationRoute> cta::MockClientAPI::getMigrationRoutes(
 //------------------------------------------------------------------------------
 // createDirectory
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::createDirectory(const SecurityIdentity &requester,
+void cta::MockMiddleTierAdmin::createDirectory(const SecurityIdentity &requester,
   const std::string &dirPath) {
   checkAbsolutePathSyntax(dirPath);
 
@@ -304,7 +304,7 @@ void cta::MockClientAPI::createDirectory(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 // checkAbsolutePathSyntax
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkAbsolutePathSyntax(const std::string &path)
+void cta::MockMiddleTierAdmin::checkAbsolutePathSyntax(const std::string &path)
   const {
   try {
     checkPathStartsWithASlash(path);
@@ -321,7 +321,7 @@ void cta::MockClientAPI::checkAbsolutePathSyntax(const std::string &path)
 //------------------------------------------------------------------------------
 // checkPathStartsWithASlash
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkPathStartsWithASlash(const std::string &path)
+void cta::MockMiddleTierAdmin::checkPathStartsWithASlash(const std::string &path)
   const {
   if(path.empty()) {
     throw Exception("Path is an empty string");
@@ -335,7 +335,7 @@ void cta::MockClientAPI::checkPathStartsWithASlash(const std::string &path)
 //------------------------------------------------------------------------------
 // checkPathContainsValidChars
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkPathContainsValidChars(const std::string &path)
+void cta::MockMiddleTierAdmin::checkPathContainsValidChars(const std::string &path)
   const {
   for(std::string::const_iterator itor = path.begin(); itor != path.end();
     itor++) {
@@ -346,7 +346,7 @@ void cta::MockClientAPI::checkPathContainsValidChars(const std::string &path)
 //------------------------------------------------------------------------------
 // checkValidPathChar
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkValidPathChar(const char c) const {
+void cta::MockMiddleTierAdmin::checkValidPathChar(const char c) const {
   if(!isValidPathChar(c)) {
     std::ostringstream message;
     message << "The '" << c << "' character cannot be used within a path";
@@ -357,7 +357,7 @@ void cta::MockClientAPI::checkValidPathChar(const char c) const {
 //------------------------------------------------------------------------------
 // isValidPathChar
 //------------------------------------------------------------------------------
-bool cta::MockClientAPI::isValidPathChar(const char c) const {
+bool cta::MockMiddleTierAdmin::isValidPathChar(const char c) const {
   return ('0' <= c && c <= '9') ||
          ('A' <= c && c <= 'Z') ||
          ('a' <= c && c <= 'z') ||
@@ -368,7 +368,7 @@ bool cta::MockClientAPI::isValidPathChar(const char c) const {
 //------------------------------------------------------------------------------
 // checkPathDoesContainConsecutiveSlashes
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkPathDoesContainConsecutiveSlashes(
+void cta::MockMiddleTierAdmin::checkPathDoesContainConsecutiveSlashes(
   const std::string &path) const {
   char previousChar = '\0';
 
@@ -385,7 +385,7 @@ void cta::MockClientAPI::checkPathDoesContainConsecutiveSlashes(
 //------------------------------------------------------------------------------
 // getEnclosingDirPath
 //------------------------------------------------------------------------------
-std::string cta::MockClientAPI::getEnclosingDirPath(const std::string &path)
+std::string cta::MockMiddleTierAdmin::getEnclosingDirPath(const std::string &path)
   const {
   if(path == "/") {
     throw Exception("Root directory does not have a parent");
@@ -401,7 +401,7 @@ std::string cta::MockClientAPI::getEnclosingDirPath(const std::string &path)
 //------------------------------------------------------------------------------
 // getEnclosedName
 //------------------------------------------------------------------------------
-std::string cta::MockClientAPI::getEnclosedName(const std::string &path) const {
+std::string cta::MockMiddleTierAdmin::getEnclosedName(const std::string &path) const {
   const std::string::size_type last_slash_idx = path.find_last_of('/');
   if(std::string::npos == last_slash_idx) {
     return path;
@@ -417,7 +417,7 @@ std::string cta::MockClientAPI::getEnclosedName(const std::string &path) const {
 //------------------------------------------------------------------------------
 // getFileSystemNode
 //------------------------------------------------------------------------------
-cta::FileSystemNode &cta::MockClientAPI::getFileSystemNode(
+cta::FileSystemNode &cta::MockMiddleTierAdmin::getFileSystemNode(
   const std::string &path) {
   FileSystemNode *node = &m_fileSystemRoot;
 
@@ -439,7 +439,7 @@ cta::FileSystemNode &cta::MockClientAPI::getFileSystemNode(
 //------------------------------------------------------------------------------
 // getFileSystemNode
 //------------------------------------------------------------------------------
-const cta::FileSystemNode &cta::MockClientAPI::getFileSystemNode(
+const cta::FileSystemNode &cta::MockMiddleTierAdmin::getFileSystemNode(
   const std::string &path) const {
   const FileSystemNode *node = &m_fileSystemRoot;
 
@@ -461,7 +461,7 @@ const cta::FileSystemNode &cta::MockClientAPI::getFileSystemNode(
 //------------------------------------------------------------------------------
 // deleteDirectory
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::deleteDirectory(const SecurityIdentity &requester,
+void cta::MockMiddleTierAdmin::deleteDirectory(const SecurityIdentity &requester,
   const std::string &dirPath) {
   checkAbsolutePathSyntax(dirPath);
 
@@ -489,7 +489,7 @@ void cta::MockClientAPI::deleteDirectory(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 // getDirectoryContents
 //------------------------------------------------------------------------------
-cta::DirectoryIterator cta::MockClientAPI::getDirectoryContents(
+cta::DirectoryIterator cta::MockMiddleTierAdmin::getDirectoryContents(
   const SecurityIdentity &requester, const std::string &dirPath) const {
   checkAbsolutePathSyntax(dirPath);
 
@@ -512,7 +512,7 @@ cta::DirectoryIterator cta::MockClientAPI::getDirectoryContents(
 //-----------------------------------------------------------------------------
 // trimSlashes
 //-----------------------------------------------------------------------------
-std::string cta::MockClientAPI::trimSlashes(const std::string &s)
+std::string cta::MockMiddleTierAdmin::trimSlashes(const std::string &s)
   const throw() {
   // Find first non slash character
   size_t beginpos = s.find_first_not_of("/");
@@ -538,7 +538,7 @@ std::string cta::MockClientAPI::trimSlashes(const std::string &s)
 //-----------------------------------------------------------------------------
 // splitString
 //-----------------------------------------------------------------------------
-void cta::MockClientAPI::splitString(const std::string &str,
+void cta::MockMiddleTierAdmin::splitString(const std::string &str,
   const char separator, std::vector<std::string> &result) const throw() {
 
   if(str.empty()) {
@@ -564,7 +564,7 @@ void cta::MockClientAPI::splitString(const std::string &str,
 //------------------------------------------------------------------------------
 // setDirectoryStorageClass
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::setDirectoryStorageClass(
+void cta::MockMiddleTierAdmin::setDirectoryStorageClass(
   const SecurityIdentity &requester,
   const std::string &dirPath,
   const std::string &storageClassName) {
@@ -584,7 +584,7 @@ void cta::MockClientAPI::setDirectoryStorageClass(
 //------------------------------------------------------------------------------
 // clearDirectoryStorageClass
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::clearDirectoryStorageClass(
+void cta::MockMiddleTierAdmin::clearDirectoryStorageClass(
   const SecurityIdentity &requester,
   const std::string &dirPath) {
   FileSystemNode &dirNode = getFileSystemNode(dirPath);
@@ -601,7 +601,7 @@ void cta::MockClientAPI::clearDirectoryStorageClass(
 //------------------------------------------------------------------------------
 // getDirectoryStorageClass
 //------------------------------------------------------------------------------
-std::string cta::MockClientAPI::getDirectoryStorageClass(
+std::string cta::MockMiddleTierAdmin::getDirectoryStorageClass(
   const SecurityIdentity &requester,
   const std::string &dirPath) const {
   const FileSystemNode &dirNode = getFileSystemNode(dirPath);
@@ -618,7 +618,7 @@ std::string cta::MockClientAPI::getDirectoryStorageClass(
 //------------------------------------------------------------------------------
 // createLogicalLibrary
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::createLogicalLibrary(
+void cta::MockMiddleTierAdmin::createLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name,
   const std::string &comment) {
@@ -627,7 +627,7 @@ void cta::MockClientAPI::createLogicalLibrary(
 //------------------------------------------------------------------------------
 // deleteLogicalLibrary
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::deleteLogicalLibrary(
+void cta::MockMiddleTierAdmin::deleteLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name) {
 }
@@ -635,7 +635,7 @@ void cta::MockClientAPI::deleteLogicalLibrary(
 //------------------------------------------------------------------------------
 // getLogicalLibraries
 //------------------------------------------------------------------------------
-std::list<cta::LogicalLibrary> cta::MockClientAPI::getLogicalLibraries(
+std::list<cta::LogicalLibrary> cta::MockMiddleTierAdmin::getLogicalLibraries(
   const SecurityIdentity &requester) const {
   std::list<LogicalLibrary> libraries;
   return libraries;
@@ -644,7 +644,7 @@ std::list<cta::LogicalLibrary> cta::MockClientAPI::getLogicalLibraries(
 //------------------------------------------------------------------------------
 // archive
 //------------------------------------------------------------------------------
-std::string cta::MockClientAPI::archive(const SecurityIdentity &requester,
+std::string cta::MockMiddleTierAdmin::archive(const SecurityIdentity &requester,
   const std::list<std::string> &srcUrls, const std::string &dst) {
   checkAbsolutePathSyntax(dst);
   if(isAnExistingDirectory(dst)) {
@@ -657,7 +657,7 @@ std::string cta::MockClientAPI::archive(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 // isAnExistingDirectory
 //------------------------------------------------------------------------------
-bool cta::MockClientAPI::isAnExistingDirectory(const std::string &path)
+bool cta::MockMiddleTierAdmin::isAnExistingDirectory(const std::string &path)
   const throw() {
   try {
     const FileSystemNode &node = getFileSystemNode(path);
@@ -673,7 +673,7 @@ bool cta::MockClientAPI::isAnExistingDirectory(const std::string &path)
 //------------------------------------------------------------------------------
 // archiveToDirectory
 //------------------------------------------------------------------------------
-std::string cta::MockClientAPI::archiveToDirectory(
+std::string cta::MockMiddleTierAdmin::archiveToDirectory(
   const SecurityIdentity &requester,
   const std::list<std::string> &srcUrls,
   const std::string &dstDir) {
@@ -689,7 +689,7 @@ std::string cta::MockClientAPI::archiveToDirectory(
 //------------------------------------------------------------------------------
 // archiveToFile
 //------------------------------------------------------------------------------
-std::string cta::MockClientAPI::archiveToFile(
+std::string cta::MockMiddleTierAdmin::archiveToFile(
   const SecurityIdentity &requester,
   const std::list<std::string> &srcUrls,
   const std::string &dstFile) {
@@ -706,7 +706,7 @@ std::string cta::MockClientAPI::archiveToFile(
 //------------------------------------------------------------------------------
 // checkUserIsAuthorisedToArchive
 //------------------------------------------------------------------------------
-void cta::MockClientAPI::checkUserIsAuthorisedToArchive(
+void cta::MockMiddleTierAdmin::checkUserIsAuthorisedToArchive(
   const SecurityIdentity &user,
   const FileSystemNode &dstDir) {
   // TO BE DONE
@@ -715,7 +715,7 @@ void cta::MockClientAPI::checkUserIsAuthorisedToArchive(
 //------------------------------------------------------------------------------
 // getArchiveJobs
 //------------------------------------------------------------------------------
-std::list<cta::ArchiveJob> cta::MockClientAPI::getArchiveJobs(
+std::list<cta::ArchiveJob> cta::MockMiddleTierAdmin::getArchiveJobs(
   const SecurityIdentity &requester,
   const std::string &tapePoolName) {
   std::list<cta::ArchiveJob> jobs;

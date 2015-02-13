@@ -1,7 +1,7 @@
-#include "ClientAPI.hpp"
+#include "MiddleTierAdmin.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::ClientAPI::~ClientAPI() throw() {
+cta::MiddleTierAdmin::~MiddleTierAdmin() throw() {
 }
