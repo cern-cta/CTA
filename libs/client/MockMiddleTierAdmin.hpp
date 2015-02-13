@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ClientAPI.hpp"
 #include "FileSystemNode.hpp"
 #include "FileSystemStorageClasses.hpp"
+#include "MiddleTierAdmin.hpp"
 #include "MigrationRoutes.hpp"
 #include "StorageClass.hpp"
 
@@ -11,9 +11,9 @@
 namespace cta {
 
 /**
- * A mock entry point to the client ClientAPI of the CERN Tape Archive project.
+ * A mock administration API for the CERN Tape Archive project.
  */
-class MockClientAPI: public ClientAPI {
+class MockMiddleTierAdmin: public MiddleTierAdmin {
 public:
 
   /**
@@ -22,12 +22,12 @@ public:
    * Creates the root directory "/" owned by user root and with no file
    * attributes or permissions.
    */
-  MockClientAPI();
+  MockMiddleTierAdmin();
 
   /**
    * Destructor.
    */
-  ~MockClientAPI() throw();
+  ~MockMiddleTierAdmin() throw();
 
   /**
    * Creates the specified administrator.
@@ -577,6 +577,6 @@ protected:
     const SecurityIdentity &user,
     const FileSystemNode &dstDir);
 
-}; // class MockClientAPI
+}; // class MockMiddleTierAdmin
 
 } // namespace cta

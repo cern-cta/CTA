@@ -1,6 +1,6 @@
 #pragma once
 
-#include "libs/client/MockClientAPI.hpp"
+#include "libs/client/MockMiddleTierAdmin.hpp"
 #include "XrdSfs/XrdSfsInterface.hh"
 
 #include "ParsedRequest.hpp"
@@ -34,7 +34,7 @@ protected:
   /**
    * Pointer to the client API object
    */
-  cta::ClientAPI *m_clientAPI;
+  cta::MiddleTierAdmin *m_clientAPI;
     
   /**
    * Parses the query into the request structure

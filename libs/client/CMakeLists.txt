@@ -2,7 +2,6 @@ cmake_minimum_required (VERSION 2.6)
 
 set (CLIENT_LIB_SRC_FILES
   ArchiveJob.cpp
-  ClientAPI.cpp
   DirectoryEntry.cpp
   DirectoryIterator.cpp
   Exception.cpp
@@ -12,10 +11,11 @@ set (CLIENT_LIB_SRC_FILES
   FileSystemStorageClass.cpp
   FileSystemStorageClasses.cpp
   LogicalLibrary.cpp
+  MiddleTierAdmin.cpp
   MigrationRoute.cpp
   MigrationRouteId.cpp
   MigrationRoutes.cpp
-  MockClientAPI.cpp
+  MockMiddleTierAdmin.cpp
   SecurityIdentity.cpp
   StorageClass.cpp
   TapePool.cpp

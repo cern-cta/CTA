@@ -1176,7 +1176,7 @@ void XrdProFilesystem::EnvInfo(XrdOucEnv *envP)
 // constructor
 //------------------------------------------------------------------------------
 XrdProFilesystem::XrdProFilesystem() {
-  m_clientAPI = new cta::MockClientAPI();
+  m_clientAPI = new cta::MockMiddleTierAdmin();
 }
 
 //------------------------------------------------------------------------------
