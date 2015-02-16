@@ -1,6 +1,7 @@
 #pragma once
 
 #include "libs/client/MockMiddleTierAdmin.hpp"
+#include "libs/client/MockMiddleTierUser.hpp"
 #include "XrdSfs/XrdSfsInterface.hh"
 
 #include "ParsedRequest.hpp"
@@ -30,11 +31,21 @@ public:
   ~XrdProFilesystem();
   
 protected:
+
+  /**
+   * The middle-tier database.
+   */
+  cta::MockMiddleTierDatabase m_db;
   
   /**
-   * Pointer to the client API object
+   * The middle-tier administration API
    */
-  cta::MiddleTierAdmin *m_clientAPI;
+  cta::MockMiddleTierAdmin m_adminApi;
+
+  /**
+   * The middle-tier user API
+   */
+  cta::MockMiddleTierUser m_userApi;
     
   /**
    * Parses the query into the request structure
@@ -64,7 +75,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeArchiveCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int executeArchiveCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
@@ -74,7 +85,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeMkclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int executeMkclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
@@ -84,7 +95,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeChdirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int executeChdirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
@@ -94,7 +105,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeCldirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int executeCldirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
@@ -114,7 +125,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeRmclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int executeRmclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
@@ -134,7 +145,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeMkdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int executeMkdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
@@ -144,7 +155,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeRmdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int executeRmdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
@@ -164,7 +175,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeMkpoolCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int executeMkpoolCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
@@ -174,7 +185,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeRmpoolCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int executeRmpoolCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
@@ -194,7 +205,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeMkrouteCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int executeMkrouteCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
@@ -204,7 +215,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeRmrouteCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int executeRmrouteCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
@@ -224,7 +235,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeMkadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int executeMkadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
@@ -234,7 +245,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeRmadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int executeRmadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
@@ -254,7 +265,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeMkadminhostCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int executeMkadminhostCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
@@ -264,7 +275,7 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeRmadminhostCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int executeRmadminhostCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
@@ -284,5 +295,5 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_OK in case dispatching is done correctly, SFS_DATA otherwise
    */
-  int dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  int dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
 };

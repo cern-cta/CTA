@@ -97,7 +97,7 @@ int XrdProFilesystem::parseRequest(const XrdSfsFSctl &args, ParsedRequest &req, 
 //------------------------------------------------------------------------------
 // executeArchiveCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() < 2) {
     std::string response = "[ERROR] Too few arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -109,7 +109,7 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
     for(size_t i=0; i<req.args.size()-1; i++) {
       sourceFiles.push_back(req.args.at(i));
     }
-    std::string jobID = m_clientAPI->archive(requester, sourceFiles, destinationPath);
+    std::string jobID = m_userApi.archive(requester, sourceFiles, destinationPath);
     std::ostringstream responseSS;
     responseSS << "[OK] Requested archival of the following files:\n";
     for(std::list<std::string>::iterator it = sourceFiles.begin(); it != sourceFiles.end(); it++) {
@@ -140,7 +140,7 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
 //------------------------------------------------------------------------------
 // executeMkclassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() != 3) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -150,7 +150,7 @@ int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrI
     uint8_t numberOfCopies;
     std::istringstream ss(req.args.at(1));
     ss >> numberOfCopies;
-    m_clientAPI->createStorageClass(requester, req.args.at(0), numberOfCopies, req.args.at(2));
+    m_adminApi.createStorageClass(requester, req.args.at(0), numberOfCopies, req.args.at(2));
     std::ostringstream responseSS;
     responseSS << "[OK] Created storage class " << req.args.at(0) << " with " << req.args.at(1) << " tape copies with the following comment: \"" << req.args.at(2) << "\"" ;
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -175,14 +175,14 @@ int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrI
 //------------------------------------------------------------------------------
 // executeChdirclassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeChdirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::executeChdirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
-    m_clientAPI->setDirectoryStorageClass(requester, req.args.at(0), req.args.at(1));
+    m_userApi.setDirectoryStorageClass(requester, req.args.at(0), req.args.at(1));
     std::ostringstream responseSS;
     responseSS << "[OK] Changed storage class of directory " << req.args.at(0) << " to " << req.args.at(1);
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -207,14 +207,14 @@ int XrdProFilesystem::executeChdirclassCommand(const ParsedRequest &req, XrdOucE
 //------------------------------------------------------------------------------
 // executeCldirclassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeCldirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::executeCldirclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
-    m_clientAPI->clearDirectoryStorageClass(requester, req.args.at(0));
+    m_userApi.clearDirectoryStorageClass(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Cleared storage class of directory " << req.args.at(0);
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -246,7 +246,7 @@ int XrdProFilesystem::executeGetdirclassCommand(const ParsedRequest &req, XrdOuc
     return SFS_DATA;
   }
   try {
-    std::string stgClass = m_clientAPI->getDirectoryStorageClass(requester, req.args.at(0));
+    std::string stgClass = m_userApi.getDirectoryStorageClass(requester, req.args.at(0));
     std::ostringstream responseSS;
     if(stgClass.empty()) {
       responseSS << "[OK] Directory " << req.args.at(0) << " does not have a storage class";      
@@ -276,14 +276,14 @@ int XrdProFilesystem::executeGetdirclassCommand(const ParsedRequest &req, XrdOuc
 //------------------------------------------------------------------------------
 // executeRmclassCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeRmclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::executeRmclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
-    m_clientAPI->deleteStorageClass(requester, req.args.at(0));
+    m_adminApi.deleteStorageClass(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Storage class " << req.args.at(0) << " deleted";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -315,7 +315,7 @@ int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrI
     return SFS_DATA;
   }
   try {
-    std::list<cta::StorageClass> stgList = m_clientAPI->getStorageClasses(requester);
+    std::list<cta::StorageClass> stgList = m_adminApi.getStorageClasses(requester);
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the storage class names and no of copies:";
     for(std::list<cta::StorageClass>::iterator it = stgList.begin(); it != stgList.end(); it++) {
@@ -345,14 +345,14 @@ int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrI
 //------------------------------------------------------------------------------
 // executeMkdirCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeMkdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::executeMkdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
-    m_clientAPI->createDirectory(requester, req.args.at(0));
+    m_userApi.createDirectory(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Directory " << req.args.at(0) << " created";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -377,14 +377,14 @@ int XrdProFilesystem::executeMkdirCommand(const ParsedRequest &req, XrdOucErrInf
 //------------------------------------------------------------------------------
 // executeRmdirCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeRmdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::executeRmdirCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
-    m_clientAPI->deleteDirectory(requester, req.args.at(0));
+    m_userApi.deleteDirectory(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Directory " << req.args.at(0) << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -417,7 +417,7 @@ int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &
   }
   try {
     std::ostringstream responseSS;
-    cta::DirectoryIterator itor = m_clientAPI->getDirectoryContents(requester, req.args.at(0));
+    cta::DirectoryIterator itor = m_userApi.getDirectoryContents(requester, req.args.at(0));
     while(itor.hasMore()) {
       const cta::DirectoryEntry &entry = itor.next();
       
@@ -461,7 +461,7 @@ int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &
 //------------------------------------------------------------------------------
 // executeMkpoolCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeMkpoolCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::executeMkpoolCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -470,7 +470,7 @@ int XrdProFilesystem::executeMkpoolCommand(const ParsedRequest &req, XrdOucErrIn
   try {
     const uint16_t nbDrives = 1;
     const uint32_t nbPartialTapes = 1;
-    m_clientAPI->createTapePool(requester, req.args.at(0), nbDrives, nbPartialTapes, req.args.at(1));
+    m_adminApi.createTapePool(requester, req.args.at(0), nbDrives, nbPartialTapes, req.args.at(1));
     std::ostringstream responseSS;
     responseSS << "[OK] Tape pool " << req.args.at(0) << " created with comment \"" << req.args.at(1) << "\"";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -495,14 +495,14 @@ int XrdProFilesystem::executeMkpoolCommand(const ParsedRequest &req, XrdOucErrIn
 //------------------------------------------------------------------------------
 // executeRmpoolCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeRmpoolCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::executeRmpoolCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
-    m_clientAPI->deleteTapePool(requester, req.args.at(0));
+    m_adminApi.deleteTapePool(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Tape pool " << req.args.at(0) << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -534,7 +534,7 @@ int XrdProFilesystem::executeLspoolCommand(const ParsedRequest &req, XrdOucErrIn
     return SFS_DATA;
   }
   try {
-    std::list<cta::TapePool> poolList = m_clientAPI->getTapePools(requester);
+    std::list<cta::TapePool> poolList = m_adminApi.getTapePools(requester);
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the tape pools:";
     for(std::list<cta::TapePool>::iterator it = poolList.begin(); it != poolList.end(); it++) {
@@ -563,7 +563,7 @@ int XrdProFilesystem::executeLspoolCommand(const ParsedRequest &req, XrdOucErrIn
 //------------------------------------------------------------------------------
 // executeMkrouteCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeMkrouteCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::executeMkrouteCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() != 4) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -573,7 +573,7 @@ int XrdProFilesystem::executeMkrouteCommand(const ParsedRequest &req, XrdOucErrI
     uint8_t copyNo;
     std::istringstream ss(req.args.at(1));
     ss >> copyNo;
-    m_clientAPI->createMigrationRoute(requester, req.args.at(0), copyNo, req.args.at(2), req.args.at(3));
+    m_adminApi.createMigrationRoute(requester, req.args.at(0), copyNo, req.args.at(2), req.args.at(3));
     std::ostringstream responseSS;
     responseSS << "[OK] Migration route from storage class " << req.args.at(0) << " with copy number " << copyNo << " to tape pool " << req.args.at(2) << " created with comment \"" << req.args.at(3) << "\"";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -598,7 +598,7 @@ int XrdProFilesystem::executeMkrouteCommand(const ParsedRequest &req, XrdOucErrI
 //------------------------------------------------------------------------------
 // executeRmrouteCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeRmrouteCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::executeRmrouteCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -608,7 +608,7 @@ int XrdProFilesystem::executeRmrouteCommand(const ParsedRequest &req, XrdOucErrI
     uint8_t copyNo;
     std::istringstream ss(req.args.at(1));
     ss >> copyNo;
-    m_clientAPI->deleteMigrationRoute(requester, req.args.at(0), copyNo);
+    m_adminApi.deleteMigrationRoute(requester, req.args.at(0), copyNo);
     std::ostringstream responseSS;
     responseSS << "[OK] Migration route from storage class " << req.args.at(0) << " with copy number " << copyNo << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -640,7 +640,7 @@ int XrdProFilesystem::executeLsrouteCommand(const ParsedRequest &req, XrdOucErrI
     return SFS_DATA;
   }
   try {
-    std::list<cta::MigrationRoute> routeList = m_clientAPI->getMigrationRoutes(requester);
+    std::list<cta::MigrationRoute> routeList = m_adminApi.getMigrationRoutes(requester);
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the migration routes:";
     for(std::list<cta::MigrationRoute>::iterator it = routeList.begin(); it != routeList.end(); it++) {
@@ -672,7 +672,7 @@ int XrdProFilesystem::executeLsrouteCommand(const ParsedRequest &req, XrdOucErrI
 //------------------------------------------------------------------------------
 // executeMkadminuserCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeMkadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::executeMkadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -682,7 +682,7 @@ int XrdProFilesystem::executeMkadminuserCommand(const ParsedRequest &req, XrdOuc
     cta::UserIdentity adminUser;
     std::istringstream i0(req.args.at(0)); i0 >> adminUser.uid;
     std::istringstream i1(req.args.at(1)); i1 >> adminUser.gid;
-    m_clientAPI->createAdminUser(requester, adminUser);
+    m_adminApi.createAdminUser(requester, adminUser);
     std::ostringstream responseSS;
     responseSS << "[OK] Admin user with uid " << req.args.at(0) << " and gid " << req.args.at(1) << " created";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -707,7 +707,7 @@ int XrdProFilesystem::executeMkadminuserCommand(const ParsedRequest &req, XrdOuc
 //------------------------------------------------------------------------------
 // executeRmadminuserCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeRmadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::executeRmadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() != 2) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -719,7 +719,7 @@ int XrdProFilesystem::executeRmadminuserCommand(const ParsedRequest &req, XrdOuc
     ssArg0 >> adminUser.uid;
     std::stringstream ssArg1(req.args.at(1));
     ssArg0 >> adminUser.gid;
-    m_clientAPI->deleteAdminUser(requester, adminUser);
+    m_adminApi.deleteAdminUser(requester, adminUser);
     std::ostringstream responseSS;
     responseSS << "[OK] Admin user with uid " << req.args.at(0) << " and gid " << req.args.at(1) << " deleted";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -751,7 +751,7 @@ int XrdProFilesystem::executeLsadminuserCommand(const ParsedRequest &req, XrdOuc
     return SFS_DATA;
   }
   try {
-    std::list<cta::UserIdentity> userIdList = m_clientAPI->getAdminUsers(requester);
+    std::list<cta::UserIdentity> userIdList = m_adminApi.getAdminUsers(requester);
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the admin user uids and gids:";
     for(std::list<cta::UserIdentity>::iterator it = userIdList.begin(); it != userIdList.end(); it++) {
@@ -779,14 +779,14 @@ int XrdProFilesystem::executeLsadminuserCommand(const ParsedRequest &req, XrdOuc
 //------------------------------------------------------------------------------
 // executeMkadminhostCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeMkadminhostCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::executeMkadminhostCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
-    m_clientAPI->createAdminHost(requester, req.args.at(0));
+    m_adminApi.createAdminHost(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Admin host " << req.args.at(0) << " created";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -811,14 +811,14 @@ int XrdProFilesystem::executeMkadminhostCommand(const ParsedRequest &req, XrdOuc
 //------------------------------------------------------------------------------
 // executeRmadminhostCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeRmadminhostCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::executeRmadminhostCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
-    m_clientAPI->deleteAdminHost(requester, req.args.at(0));
+    m_adminApi.deleteAdminHost(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Admin host " << req.args.at(0) << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -850,7 +850,7 @@ int XrdProFilesystem::executeLsadminhostCommand(const ParsedRequest &req, XrdOuc
     return SFS_DATA;
   }
   try {
-    std::list<std::string> hostList = m_clientAPI->getAdminHosts(requester);
+    std::list<std::string> hostList = m_adminApi.getAdminHosts(requester);
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the admin hosts:";
     for(std::list<std::string>::iterator it = hostList.begin(); it != hostList.end(); it++) {
@@ -878,7 +878,7 @@ int XrdProFilesystem::executeLsadminhostCommand(const ParsedRequest &req, XrdOuc
 //------------------------------------------------------------------------------
 // dispatchRequest
 //------------------------------------------------------------------------------
-int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   ParsedRequest req;
   int checkParse = parseRequest(args, req, eInfo);
   if(SFS_OK!=checkParse) {
@@ -1175,13 +1175,11 @@ void XrdProFilesystem::EnvInfo(XrdOucEnv *envP)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-XrdProFilesystem::XrdProFilesystem() {
-  m_clientAPI = new cta::MockMiddleTierAdmin();
+XrdProFilesystem::XrdProFilesystem(): m_adminApi(m_db), m_userApi(m_db) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 XrdProFilesystem::~XrdProFilesystem() {
-  delete m_clientAPI;
 }

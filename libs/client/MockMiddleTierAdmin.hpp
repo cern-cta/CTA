@@ -1,17 +1,12 @@
 #pragma once
 
-#include "FileSystemNode.hpp"
-#include "FileSystemStorageClasses.hpp"
 #include "MiddleTierAdmin.hpp"
-#include "MigrationRoutes.hpp"
-#include "StorageClass.hpp"
-
-#include <vector>
+#include "MockMiddleTierDatabase.hpp"
 
 namespace cta {
 
 /**
- * A mock administration API for the CERN Tape Archive project.
+ * The administration API of the mock middle-tier.
  */
 class MockMiddleTierAdmin: public MiddleTierAdmin {
 public:
@@ -19,10 +14,9 @@ public:
   /**
    * Constructor.
    *
-   * Creates the root directory "/" owned by user root and with no file
-   * attributes or permissions.
+   * @param db The database of the mock middle-tier.
    */
-  MockMiddleTierAdmin();
+  MockMiddleTierAdmin(MockMiddleTierDatabase &db);
 
   /**
    * Destructor.
@@ -204,78 +198,6 @@ public:
     const SecurityIdentity &requester) const;
 
   /**
-   * Creates the specified directory.
-   *
-   * @param requester The identity of the user requesting the creation of the
-   * directory.
-   * @param dirPath The full path of the directory.
-   */
-  void createDirectory(
-    const SecurityIdentity &requester,
-    const std::string &dirPath);
-
-  /**
-   * Deletes the specified directory.
-   *
-   * @param requester The identity of the user requesting the deletion of the
-   * directory.
-   * @param dirPath The full path of the directory.
-   */
-  void deleteDirectory(
-    const SecurityIdentity &requester,
-    const std::string &dirPath);
-
-  /**
-   * Gets the contents of the specified directory.
-   *
-   * @param requester The identity of the user requesting the contents of the
-   * directory.
-   * @param dirPath The full path of the directory.
-   * @return An iterator over the contents of the directory.
-   */
-  DirectoryIterator getDirectoryContents(
-    const SecurityIdentity &requester,
-    const std::string &dirPath) const;
-
-  /**
-   * Sets the storage class of the specified directory to the specified value.
-   *
-   * @param requester The identity of the user requesting the setting of the
-   * directory's storage class.
-   * @param dirPath The absolute path of the directory.
-   * @param storageClassName The name of the storage class.
-   */
-  void setDirectoryStorageClass(
-    const SecurityIdentity &requester,
-    const std::string &dirPath,
-    const std::string &storageClassName);
-
-  /**
-   * Clears the storage class of the specified directory.
-   *
-   * @param requester The identity of the user requesting the storage class of
-   * the directory to be cleared.
-   * @param dirPath The absolute path of the directory.
-   */
-  void clearDirectoryStorageClass(
-    const SecurityIdentity &requester,
-    const std::string &dirPath);
-
-  /**
-   * Gets the storage class if of the specified directory if the directory has
-   * one.
-   *
-   * @param requester The identity of the user requesting the storage class of
-   * the directory.
-   * @param dirPath The absolute path of the directory.
-   * @return The name of the storage class if the directory has one, else an
-   * empty string.
-   */
-  std::string getDirectoryStorageClass(
-    const SecurityIdentity &requester,
-    const std::string &dirPath) const;
-
-  /**
    * Creates a logical library with the specified name and device group.
    *
    * @param requester The identity of the user requesting the creation of the
@@ -308,73 +230,7 @@ public:
   std::list<LogicalLibrary> getLogicalLibraries(
     const SecurityIdentity &requester) const;
 
-  /**
-   * Archives the specified list of source files to the specified destination
-   * within the archive namespace.
-   *
-   * If there is more than one source file then the destination must be a
-   * directory.
-   *
-   * If there is only one source file then the destination can be either a file
-   * or a directory.
-   *
-   * The storage class of the archived file will be inherited from its
-   * destination directory.
-   *
-   * @param requester The identity of the user requesting the archival.
-   * @param srcUrls List of one or more source files.
-   * @param dst Destination file or directory within the archive namespace.
-   * @return The string identifier of the archive job.
-   */
-  std::string archive(
-    const SecurityIdentity &requester,
-    const std::list<std::string> &srcUrls,
-    const std::string &dst);
-
-  /**
-   * Gets the current list of archive jobs associated with the specified device
-   * group.
-   *
-   * @param requester The identity of the user requesting the list.
-   * @param tapePoolName The name of the tape pool.
-   * @return The list of jobs sorted by creation time in ascending order
-   * (oldest first).
-   */
-  std::list<ArchiveJob> getArchiveJobs(
-    const SecurityIdentity &requester,
-    const std::string &tapePoolName);
-
 protected:
-
-  /**
-   * The current list of administrators.
-   */
-  std::list<UserIdentity> m_adminUsers;
-
-  /**
-   * The current list of administration hosts.
-   */
-  std::list<std::string> m_adminHosts;
-
-  /**
-   * Container of the storage classes used by the file system.
-   */
-  FileSystemStorageClasses m_storageClasses;
-
-  /**
-   * Mapping from tape pool name to tape pool.
-   */
-  std::map<std::string, TapePool> m_tapePools;
-
-  /**
-   * Container of migration routes.
-   */
-  MigrationRoutes m_migrationRoutes;
-
-  /**
-   * The root node of the file-system.
-   */
-  FileSystemNode m_fileSystemRoot;
 
   /**
    * Throws an exception if the specified administrator already exists.
@@ -391,73 +247,6 @@ protected:
   void checkAdminHostDoesNotAlreadyExist(const std::string &adminHost);
 
   /**
-   * Throws an exception if the specified absolute path constains a
-   * syntax error.
-   *
-   * @param path The Absolute path.
-   */
-  void checkAbsolutePathSyntax(const std::string &path) const;
-
-  /**
-   * Throws an exception if the specified path does not start with a slash.
-   *
-   * @param path The path.
-   */
-  void checkPathStartsWithASlash(const std::string &path) const;
-
-  /**
-   * Throws an exception if the specified path does not contain valid
-   * characters.
-   *
-   * @param path The path.
-   */
-  void checkPathContainsValidChars(const std::string &path) const;
-
-  /**
-   * Throws an exception if the specified character cannot be used within a
-   * path.
-   *
-   * @param c The character to be tested.
-   */
-  void checkValidPathChar(const char c) const;
-
-  /**
-   * Returns true of the specified character can be used within a path.
-   */
-  bool isValidPathChar(const char c) const;
-
-  /**
-   * Throws an exception if the specified path contains consective slashes.  For
-   * example the path "/just_before_consectuive_slashes//file" would cause this
-   * method to throw an exception.
-   *
-   * @param path The path.
-   */
-  void checkPathDoesContainConsecutiveSlashes(const std::string &path) const;
-
-  /**
-   * Returns the path of the enclosing directory of the specified path.
-   *
-   * For example:
-   *
-   * * path="/grandparent/parent/child" would return "/grandparent/parent"
-   * * path="/grandparent" would return "/grandparent"
-   * * path="/" would return "" where empty string means no enclosing directoyr
-   *
-   * @param path The path.
-   * @return The path of the enclosing directory.
-   */
-  std::string getEnclosingDirPath(const std::string &path) const;
-
-  /**
-   * Returns the name of the enclosed file or directory of the specified path.
-   *
-   * @param path The path.
-   * @return The name of the enclosed file or directory.
-   */
-  std::string getEnclosedName(const std::string &path) const;
-
-  /**
    * Gets the file system node corresponding to the specified path.
    *
    * @path The path.
@@ -472,29 +261,6 @@ protected:
    * @return The corresponding file system node.
    */
   const FileSystemNode &getFileSystemNode(const std::string &path) const;
-
-  /**
-   * Returns the result of trimming both left and right slashes from the
-   * specified string.
-   *
-   * @param s The string to be trimmed.
-   * @return The result of trimming the string.
-   */
-  std::string trimSlashes(const std::string &s) const throw();
-
-  /**
-   * Splits the specified string into a vector of strings using the specified
-   * separator.
-   *
-   * Please note that the string to be split is NOT modified.
-   *
-   * @param str The string to be split.
-   * @param separator The separator to be used to split the specified string.
-   * @param result The vector when the result of spliting the string will be
-   * stored.
-   */
-  void splitString(const std::string &str, const char separator,
-    std::vector<std::string> &result) const throw();
 
   /**
    * Throws an exception if the specified tape pool already exixts.
@@ -576,6 +342,11 @@ protected:
   void checkUserIsAuthorisedToArchive(
     const SecurityIdentity &user,
     const FileSystemNode &dstDir);
+
+  /**
+   * The database of the mock middle-tier.
+   */
+  MockMiddleTierDatabase &m_db;
 
 }; // class MockMiddleTierAdmin
 

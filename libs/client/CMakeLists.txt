@@ -12,14 +12,19 @@ set (CLIENT_LIB_SRC_FILES
   FileSystemStorageClasses.cpp
   LogicalLibrary.cpp
   MiddleTierAdmin.cpp
+  MiddleTierUser.cpp
   MigrationRoute.cpp
   MigrationRouteId.cpp
   MigrationRoutes.cpp
+  MockMiddleTierDatabase.cpp
   MockMiddleTierAdmin.cpp
+  MockMiddleTierUser.cpp
+  MockMiddleTierUser.cpp
   SecurityIdentity.cpp
   StorageClass.cpp
   TapePool.cpp
-  UserIdentity.cpp)
+  UserIdentity.cpp
+  Utils.cpp)
 
 add_library (ctaclient SHARED
   ${CLIENT_LIB_SRC_FILES})
