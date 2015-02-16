@@ -283,13 +283,13 @@ void castor::gc::SynchronizationThread::syncDataPools() {
       continue;
     }
     // Loop over objects in the pool
-    for (librados::ObjectIterator objIt = ioCtx->objects_begin();
-         objIt != ioCtx->objects_end();
+    for (librados::NObjectIterator objIt = ioCtx->nobjects_begin();
+         objIt != ioCtx->nobjects_end();
          objIt++) {
       // only check "first" objects, that is objects with names
       // ending with '.0000000000000000'
-      if (objIt->first.compare(objIt->first.size()-17, 17, ".0000000000000000")) continue;
-      std::string fileName = objIt->first.substr(0, objIt->first.size()-17);
+      if (objIt->get_oid().compare(objIt->get_oid().size()-17, 17, ".0000000000000000")) continue;
+      std::string fileName = objIt->get_oid().substr(0, objIt->get_oid().size()-17);
       syncCephFile(fileName, paths);
     }
     // Synchronize the remaining files not yet checked for this dataPool
