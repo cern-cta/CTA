@@ -332,8 +332,9 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
   failedMigration->setErrorMessage(m_error_msg);
   failedMigration->setFseq(m_migratedFile.fseq());
   failedMigration->setFileTransactionId(m_migratedFile.fileTransactionId());
-  failedMigration->setId(m_migratedFile.id());
+  failedMigration->setFileid(m_migratedFile.fileid());
   failedMigration->setNshost(m_migratedFile.nshost());
+  failedMigration->setPositionCommandCode(m_migratedFile.positionCommandCode());
   
   reportPacker.m_listReports->addFailedMigrations(failedMigration.release());
   reportPacker.m_errorHappened=true;
