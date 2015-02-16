@@ -41,6 +41,7 @@ add_library(castorTapeServerDaemon
   DiskWriteThreadPool.cpp
   DriveConfig.cpp
   DriveConfigMap.cpp
+  EmptyDriveProbe.cpp
   TapeServerReporter.cpp
   LabelCmdAcceptHandler.cpp
   LabelCmdConnectionHandler.cpp
@@ -49,7 +50,6 @@ add_library(castorTapeServerDaemon
   MigrationReportPacker.cpp 
   MigrationTaskInjector.cpp
   DataTransferSession.cpp
-  ProbeSession.cpp
   ProcessForker.cpp
   ProcessForkerConnectionHandler.cpp
   ProcessForkerProxy.cpp

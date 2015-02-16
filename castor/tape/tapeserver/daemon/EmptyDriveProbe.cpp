@@ -21,12 +21,12 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/ProbeSession.hpp"
+#include "castor/tape/tapeserver/daemon/EmptyDriveProbe.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::ProbeSession::ProbeSession(
+castor::tape::tapeserver::daemon::EmptyDriveProbe::EmptyDriveProbe(
   castor::log::Logger &log,
   const DriveConfig &driveConfig,
   System::virtualWrapper &sysWrapper):
@@ -36,14 +36,13 @@ castor::tape::tapeserver::daemon::ProbeSession::ProbeSession(
 }
 
 //------------------------------------------------------------------------------
-// execute
+// driveIsEmpty()
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-  castor::tape::tapeserver::daemon::ProbeSession::execute() throw() {
+bool castor::tape::tapeserver::daemon::EmptyDriveProbe::driveIsEmpty() throw() {
   std::string errorMessage;
 
   try {
-    return exceptionThrowingExecute();
+    return exceptionThrowingDriveIsEmpty();
   } catch(castor::exception::Exception &ex) {
     errorMessage = ex.getMessage().str();
   } catch(std::exception &se) {
@@ -57,14 +56,14 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     log::Param("unitName", m_driveConfig.getUnitName()),
     log::Param("message", errorMessage)};
   m_log(LOG_ERR, "Probe failed", params);
-  return MARK_DRIVE_AS_DOWN;
+  return false;
 }
 
 //------------------------------------------------------------------------------
-// exceptionThrowingExecute
+// exceptionThrowingDriveIsEmpty
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-  castor::tape::tapeserver::daemon::ProbeSession::exceptionThrowingExecute() {
+bool castor::tape::tapeserver::daemon::EmptyDriveProbe::
+  exceptionThrowingDriveIsEmpty() {
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
 
@@ -73,10 +72,10 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
   if(drive.hasTapeInPlace()) {
     m_log(LOG_INFO, "Probe found tape drive with a tape inside", params);
-    return MARK_DRIVE_AS_DOWN;
+    return false;
   } else {
     m_log(LOG_INFO, "Probe found tape drive is empty", params);
-    return MARK_DRIVE_AS_UP;
+    return true;
   }
 }
 
@@ -84,7 +83,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 // createDrive
 //------------------------------------------------------------------------------
 std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
-  castor::tape::tapeserver::daemon::ProbeSession::createDrive() {
+  castor::tape::tapeserver::daemon::EmptyDriveProbe::createDrive() {
   SCSI::DeviceVector dv(m_sysWrapper);
   SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.getDevFilename());
   

@@ -27,7 +27,6 @@
 #include "castor/log/Logger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
-#include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
@@ -41,11 +40,9 @@ namespace tapeserver {
 namespace daemon {
   /**
    * Class responsible for probing a tape drive to see if it empty and
-   * accessible.  If the drive satisfies both of these criteria then the probe
-   * will recommend that the state of the drive should be marked as UP, else
-   * it will recommend DOWN.
+   * accessible.
    */
-  class ProbeSession : public Session {
+  class EmptyDriveProbe {
   public:
 
     /**
@@ -55,19 +52,17 @@ namespace daemon {
      * @param driveConfig Configuration of the tape drive to be probed.
      * @param sysWrapper Object representing the operating system.
      */
-    ProbeSession(
+    EmptyDriveProbe(
       castor::log::Logger &log,
       const DriveConfig &driveConfig,
       System::virtualWrapper &sysWrapper);
     
     /** 
-     * Execute the session and return the type of action to be performed
-     * immediately after the session has completed.
+     * Probes the tape drive to determine whether it is empty and accessible.
      *
-     * @return Returns the type of action to be performed after the session has
-     * completed.
+     * @return True if the drive is empty and accessible.
      */
-    EndOfSessionAction execute() throw();
+    bool driveIsEmpty() throw();
     
   private:
 
@@ -87,13 +82,11 @@ namespace daemon {
     System::virtualWrapper &m_sysWrapper;
 
     /** 
-     * Execute the session and return the type of action to be performed
-     * immediately after the session has completed.
+     * Probes the tape drive to determine whether it is empty and accessible.
      *
-     * @return Returns the type of action to be performed after the session has
-     * completed.
+     * @return True if the drive is empty and accessible.
      */
-    EndOfSessionAction exceptionThrowingExecute();
+    bool exceptionThrowingDriveIsEmpty();
 
     /**
      * Creates and returns the object that represents the tape drive to be
@@ -103,7 +96,7 @@ namespace daemon {
      */
     std::auto_ptr<drive::DriveInterface> createDrive();
     
-  }; // class ProbeSession
+  }; // class EmptyDriveProbe
 
 } // namespace daemon
 } // namespace tapeserver
