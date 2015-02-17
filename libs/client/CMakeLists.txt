@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 2.6)
 
 set (CLIENT_LIB_SRC_FILES
+  AdminHost.cpp
+  AdminUser.cpp
   ArchiveJob.cpp
   DirectoryEntry.cpp
   DirectoryIterator.cpp

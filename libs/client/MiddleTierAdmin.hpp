@@ -1,5 +1,7 @@
 #pragma once
 
+#include "AdminHost.hpp"
+#include "AdminUser.hpp"
 #include "ArchiveJob.hpp"
 #include "DirectoryIterator.hpp"
 #include "LogicalLibrary.hpp"
@@ -31,29 +33,32 @@ public:
    *
    * @param requester The identity of the user requesting the creation of the
    * administrator.
-   * @param adminUser The identity of the administrator.
+   * @param user The identity of the administrator.
+   * @param comment The comment describing the sministrator.
    */
   virtual void createAdminUser(
     const SecurityIdentity &requester,
-    const UserIdentity &adminUser) = 0;
+    const UserIdentity &user,
+    const std::string &comment) = 0;
 
   /**
    * Deletes the specified administrator.
    *
    * @param requester The identity of the user requesting the deletion of the
    * administrator.
-   * @param adminUser The identity of the administrator.
+   * @param user The identity of the administrator.
    */
   virtual void deleteAdminUser(
     const SecurityIdentity &requester,
-    const UserIdentity &adminUser) = 0;
+    const UserIdentity &user) = 0;
 
   /**
-   * Returns the current list of administrators.
+   * Returns the current list of administrators in lexicographical order.
    *
    * @param requester The identity of the user requesting the list.
+   * @return The current list of administrators in lexicographical order.
    */
-  virtual std::list<UserIdentity> getAdminUsers(const SecurityIdentity &requester)
+  virtual std::list<AdminUser> getAdminUsers(const SecurityIdentity &requester)
    const = 0;
 
   /**
@@ -61,29 +66,33 @@ public:
    *
    * @param requester The identity of the user requesting the creation of the
    * administration host.
-   * @param adminHost The network name of the administration host.
+   * @param hostName The network name of the administration host.
+   * @param comment The comment describing the administration host.
    */
   virtual void createAdminHost(
     const SecurityIdentity &requester,
-    const std::string &adminHost) = 0;
+    const std::string &hostName,
+    const std::string &comment) = 0;
 
   /**
    * Deletes the specified administration host.
    *
    * @param requester The identity of the user requesting the deletion of the
    * administration host.
-   * @param adminHost The network name of the administration host.
+   * @param hostName The network name of the administration host.
+   * @param comment The comment describing the administration host.
    */
   virtual void deleteAdminHost(
     const SecurityIdentity &requester,
-    const std::string &adminHost) = 0;
+    const std::string &hostName) = 0;
 
   /**
-   * Returns the current list of administration hosts.
+   * Returns the current list of administration hosts in lexicographical order.
    *
    * @param requester The identity of the user requesting the list.
+   * @return The current list of administration hosts in lexicographical order.
    */
-  virtual std::list<std::string> getAdminHosts(const SecurityIdentity &requester)
+  virtual std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester)
    const = 0;
 
   /**

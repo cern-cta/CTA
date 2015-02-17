@@ -23,7 +23,7 @@ TEST_F(cta_client_MockMiddleTierAdminTest, createAdminUser_new) {
   const SecurityIdentity requester;
 
   {
-    std::list<UserIdentity> adminUsers;
+    std::list<AdminUser> adminUsers;
     ASSERT_NO_THROW(adminUsers = adminApi.getAdminUsers(requester));
     ASSERT_TRUE(adminUsers.empty());
   }
@@ -31,15 +31,17 @@ TEST_F(cta_client_MockMiddleTierAdminTest, createAdminUser_new) {
   const uint16_t adminUser1Uid = 1234;
   const uint16_t adminUser1Gid = 5678;
   const UserIdentity adminUser1(adminUser1Uid, adminUser1Gid);
-  ASSERT_NO_THROW(adminApi.createAdminUser(requester, adminUser1));
+  const std::string comment = "Comment";
+  ASSERT_NO_THROW(adminApi.createAdminUser(requester, adminUser1, comment));
 
   {
-    std::list<UserIdentity> adminUsers;
+    std::list<AdminUser> adminUsers;
     ASSERT_NO_THROW(adminUsers = adminApi.getAdminUsers(requester));
     ASSERT_EQ(1, adminUsers.size());
 
-    ASSERT_EQ(adminUser1Uid, adminUsers.front().uid);
-    ASSERT_EQ(adminUser1Gid, adminUsers.front().gid);
+    ASSERT_EQ(adminUser1Uid, adminUsers.front().getUser().uid);
+    ASSERT_EQ(adminUser1Gid, adminUsers.front().getUser().gid);
+    ASSERT_EQ(comment, adminUsers.front().getComment());
   }
 }
 
@@ -51,7 +53,7 @@ TEST_F(cta_client_MockMiddleTierAdminTest, createAdminUser_already_existing) {
   const SecurityIdentity requester;
 
   {
-    std::list<UserIdentity> adminUsers;
+    std::list<AdminUser> adminUsers;
     ASSERT_NO_THROW(adminUsers = adminApi.getAdminUsers(requester));
     ASSERT_TRUE(adminUsers.empty());
   }
@@ -59,21 +61,24 @@ TEST_F(cta_client_MockMiddleTierAdminTest, createAdminUser_already_existing) {
   const uint16_t adminUser1Uid = 1234;
   const uint16_t adminUser1Gid = 5678;
   const UserIdentity adminUser1(adminUser1Uid, adminUser1Gid);
-  ASSERT_NO_THROW(adminApi.createAdminUser(requester, adminUser1));
+  const std::string comment = "Comment";
+  ASSERT_NO_THROW(adminApi.createAdminUser(requester, adminUser1, comment));
 
   {
-    std::list<UserIdentity> adminUsers;
+    std::list<AdminUser> adminUsers;
     ASSERT_NO_THROW(adminUsers = adminApi.getAdminUsers(requester));
     ASSERT_EQ(1, adminUsers.size());
 
-    ASSERT_EQ(adminUser1Uid, adminUsers.front().uid);
-    ASSERT_EQ(adminUser1Gid, adminUsers.front().gid);
+    ASSERT_EQ(adminUser1Uid, adminUsers.front().getUser().uid);
+    ASSERT_EQ(adminUser1Gid, adminUsers.front().getUser().gid);
+    ASSERT_EQ(comment, adminUsers.front().getComment());
   }
 
-  ASSERT_THROW(adminApi.createAdminUser(requester, adminUser1), std::exception);
+  ASSERT_THROW(adminApi.createAdminUser(requester, adminUser1, comment),
+    std::exception);
 
   {
-    std::list<UserIdentity> adminUsers;
+    std::list<AdminUser> adminUsers;
     ASSERT_NO_THROW(adminUsers = adminApi.getAdminUsers(requester));
     ASSERT_EQ(1, adminUsers.size());
   }
@@ -87,7 +92,7 @@ TEST_F(cta_client_MockMiddleTierAdminTest, deleteAdminUser_existing) {
   const SecurityIdentity requester;
 
   {
-    std::list<UserIdentity> adminUsers;
+    std::list<AdminUser> adminUsers;
     ASSERT_NO_THROW(adminUsers = adminApi.getAdminUsers(requester));
     ASSERT_TRUE(adminUsers.empty());
   }
@@ -95,20 +100,22 @@ TEST_F(cta_client_MockMiddleTierAdminTest, deleteAdminUser_existing) {
   const uint16_t adminUser1Uid = 1234;
   const uint16_t adminUser1Gid = 5678;
   const UserIdentity adminUser1(adminUser1Uid, adminUser1Gid);
-  ASSERT_NO_THROW(adminApi.createAdminUser(requester, adminUser1));
+  const std::string comment = "Comment";
+  ASSERT_NO_THROW(adminApi.createAdminUser(requester, adminUser1, comment));
 
   {
-    std::list<UserIdentity> adminUsers;
+    std::list<AdminUser> adminUsers;
     ASSERT_NO_THROW(adminUsers = adminApi.getAdminUsers(requester));
     ASSERT_EQ(1, adminUsers.size());
 
-    ASSERT_EQ(adminUser1Uid, adminUsers.front().uid);
-    ASSERT_EQ(adminUser1Gid, adminUsers.front().gid);
+    ASSERT_EQ(adminUser1Uid, adminUsers.front().getUser().uid);
+    ASSERT_EQ(adminUser1Gid, adminUsers.front().getUser().gid);
+    ASSERT_EQ(comment, adminUsers.front().getComment());
   }
 
   ASSERT_NO_THROW(adminApi.deleteAdminUser(requester, adminUser1));
   {
-    std::list<UserIdentity> adminUsers;
+    std::list<AdminUser> adminUsers;
     ASSERT_NO_THROW(adminUsers = adminApi.getAdminUsers(requester));
     ASSERT_TRUE(adminUsers.empty());
   }
@@ -122,7 +129,7 @@ TEST_F(cta_client_MockMiddleTierAdminTest, deleteAdminUser_non_existing) {
   const SecurityIdentity requester;
 
   {
-    std::list<UserIdentity> adminUsers;
+    std::list<AdminUser> adminUsers;
     ASSERT_NO_THROW(adminUsers = adminApi.getAdminUsers(requester));
     ASSERT_TRUE(adminUsers.empty());
   } 
@@ -133,7 +140,7 @@ TEST_F(cta_client_MockMiddleTierAdminTest, deleteAdminUser_non_existing) {
   ASSERT_THROW(adminApi.deleteAdminUser(requester, adminUser1), std::exception);
 
   {
-    std::list<UserIdentity> adminUsers;
+    std::list<AdminUser> adminUsers;
     ASSERT_NO_THROW(adminUsers = adminApi.getAdminUsers(requester));
     ASSERT_TRUE(adminUsers.empty());
   }
@@ -147,20 +154,22 @@ TEST_F(cta_client_MockMiddleTierAdminTest, createAdminHost_new) {
   const SecurityIdentity requester;
 
   {
-    std::list<std::string> adminHosts;
+    std::list<AdminHost> adminHosts;
     ASSERT_NO_THROW(adminHosts = adminApi.getAdminHosts(requester));
     ASSERT_TRUE(adminHosts.empty());
   }
 
   const std::string adminHost1 = "adminHost1";
-  ASSERT_NO_THROW(adminApi.createAdminHost(requester, adminHost1));
+  const std::string comment = "Comment";
+  ASSERT_NO_THROW(adminApi.createAdminHost(requester, adminHost1, comment));
 
   {
-    std::list<std::string> adminHosts;
+    std::list<AdminHost> adminHosts;
     ASSERT_NO_THROW(adminHosts = adminApi.getAdminHosts(requester));
     ASSERT_EQ(1, adminHosts.size());
 
-    ASSERT_EQ(adminHost1, adminHosts.front());
+    ASSERT_EQ(adminHost1, adminHosts.front().getName());
+    ASSERT_EQ(comment, adminHosts.front().getComment());
   }
 }
 
@@ -172,26 +181,28 @@ TEST_F(cta_client_MockMiddleTierAdminTest, deleteAdminHost_existing) {
   const SecurityIdentity requester;
 
   {
-    std::list<std::string> adminHosts;
+    std::list<AdminHost> adminHosts;
     ASSERT_NO_THROW(adminHosts = adminApi.getAdminHosts(requester));
     ASSERT_TRUE(adminHosts.empty());
   }
 
   const std::string adminHost1 = "adminHost1";
-  ASSERT_NO_THROW(adminApi.createAdminHost(requester, adminHost1));
+  const std::string comment = "Comment";
+  ASSERT_NO_THROW(adminApi.createAdminHost(requester, adminHost1, comment));
 
   {
-    std::list<std::string> adminHosts;
+    std::list<AdminHost> adminHosts;
     ASSERT_NO_THROW(adminHosts = adminApi.getAdminHosts(requester));
     ASSERT_EQ(1, adminHosts.size());
 
-    ASSERT_EQ(adminHost1, adminHosts.front());
+    ASSERT_EQ(adminHost1, adminHosts.front().getName());
+    ASSERT_EQ(comment, adminHosts.front().getComment());
   }
 
   ASSERT_NO_THROW(adminApi.deleteAdminHost(requester, adminHost1));
 
   {
-    std::list<std::string> adminHosts;
+    std::list<AdminHost> adminHosts;
     ASSERT_NO_THROW(adminHosts = adminApi.getAdminHosts(requester));
     ASSERT_TRUE(adminHosts.empty());
   }
@@ -205,7 +216,7 @@ TEST_F(cta_client_MockMiddleTierAdminTest, deleteAdminHost_non_existing) {
   const SecurityIdentity requester;
   
   {
-    std::list<std::string> adminHosts;
+    std::list<AdminHost> adminHosts;
     ASSERT_NO_THROW(adminHosts = adminApi.getAdminHosts(requester));
     ASSERT_TRUE(adminHosts.empty());
   }
@@ -214,7 +225,7 @@ TEST_F(cta_client_MockMiddleTierAdminTest, deleteAdminHost_non_existing) {
   ASSERT_THROW(adminApi.deleteAdminHost(requester, adminHost1), std::exception);
 
   {
-    std::list<std::string> adminHosts;
+    std::list<AdminHost> adminHosts;
     ASSERT_NO_THROW(adminHosts = adminApi.getAdminHosts(requester));
     ASSERT_TRUE(adminHosts.empty());
   }

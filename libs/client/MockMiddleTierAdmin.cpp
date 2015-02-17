@@ -23,24 +23,25 @@ cta::MockMiddleTierAdmin::~MockMiddleTierAdmin() throw() {
 //------------------------------------------------------------------------------
 void cta::MockMiddleTierAdmin::createAdminUser(
   const SecurityIdentity &requester,
-  const UserIdentity &adminUser) {
-  checkAdminUserDoesNotAlreadyExist(adminUser);
-  m_db.adminUsers.push_back(adminUser);
+  const UserIdentity &user,
+  const std::string &comment) {
+  checkAdminUserDoesNotAlreadyExist(user);
+  AdminUser adminUser(user, requester.user, comment);
+  m_db.adminUsers[user.uid] = adminUser;
 }
 
 //------------------------------------------------------------------------------
 // checkAdminUserDoesNotAlreadyExist
 //------------------------------------------------------------------------------
 void cta::MockMiddleTierAdmin::checkAdminUserDoesNotAlreadyExist(
-  const UserIdentity &adminUser) {
-  for(std::list<UserIdentity>::const_iterator itor = m_db.adminUsers.begin();
-    itor != m_db.adminUsers.end(); itor++) {
-    if(adminUser.uid == itor->uid) {
-      std::ostringstream message;
-      message << "Administrator with uid " << adminUser.uid <<
-        " already exists";
-      throw(Exception(message.str()));
-    }
+  const UserIdentity &user) const {
+  std::map<uint32_t, AdminUser>::const_iterator itor =
+    m_db.adminUsers.find(user.uid);
+  if(itor != m_db.adminUsers.end()) {
+    std::ostringstream message;
+    message << "Administrator with uid " << user.uid <<
+      " already exists";
+    throw(Exception(message.str()));
   }
 }
   
@@ -49,10 +50,10 @@ void cta::MockMiddleTierAdmin::checkAdminUserDoesNotAlreadyExist(
 //------------------------------------------------------------------------------
 void cta::MockMiddleTierAdmin::deleteAdminUser(
   const SecurityIdentity &requester,
-  const UserIdentity &adminUser) {
-  for(std::list<UserIdentity>::iterator itor = m_db.adminUsers.begin();
+  const UserIdentity &user) {
+  for(std::map<uint32_t, AdminUser>::iterator itor = m_db.adminUsers.begin();
     itor != m_db.adminUsers.end(); itor++) {
-    if(adminUser.uid == itor->uid) {
+    if(user.uid == itor->first) {
       m_db.adminUsers.erase(itor);
       return;
     }
@@ -60,16 +61,21 @@ void cta::MockMiddleTierAdmin::deleteAdminUser(
 
   // Reaching this point means the administrator to be deleted does not exist
   std::ostringstream message;
-  message << "Administration with uid " << adminUser.uid << " does not exist";
+  message << "Administration with uid " << user.uid << " does not exist";
   throw Exception(message.str());
 }
   
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
-std::list<cta::UserIdentity> cta::MockMiddleTierAdmin::getAdminUsers(
+std::list<cta::AdminUser> cta::MockMiddleTierAdmin::getAdminUsers(
   const SecurityIdentity &requester) const {
-  return m_db.adminUsers;
+  std::list<cta::AdminUser> users;
+  for(std::map<uint32_t, AdminUser>::const_iterator itor =
+    m_db.adminUsers.begin(); itor != m_db.adminUsers.end(); itor++) {
+    users.push_back(itor->second);
+  }
+  return users;
 }
 
 //------------------------------------------------------------------------------
@@ -77,23 +83,24 @@ std::list<cta::UserIdentity> cta::MockMiddleTierAdmin::getAdminUsers(
 //------------------------------------------------------------------------------
 void cta::MockMiddleTierAdmin::createAdminHost(
   const SecurityIdentity &requester,
-  const std::string &adminHost) {
-  checkAdminHostDoesNotAlreadyExist(adminHost);
-  m_db.adminHosts.push_back(adminHost);
+  const std::string &hostName,
+  const std::string &comment) {
+  checkAdminHostDoesNotAlreadyExist(hostName);
+  AdminHost adminHost(hostName, requester.user, comment);
+  m_db.adminHosts[hostName] = adminHost;
 }
 
 //------------------------------------------------------------------------------
 // checkAdminHostDoesNotAlreadyExist
 //------------------------------------------------------------------------------
 void cta::MockMiddleTierAdmin::checkAdminHostDoesNotAlreadyExist(
-  const std::string &adminHost) {
-  for(std::list<std::string>::const_iterator itor = m_db.adminHosts.begin();
-    itor != m_db.adminHosts.end(); itor++) {
-    if(adminHost == *itor) {
-      std::ostringstream message;
-      message << "Administration host " << adminHost << " already exists";
-      throw(Exception(message.str()));
-    }
+  const std::string &hostName) const {
+  std::map<std::string, AdminHost>::const_iterator itor =
+    m_db.adminHosts.find(hostName);
+  if(itor != m_db.adminHosts.end()) {
+    std::ostringstream message;
+    message << "Administration host " << hostName << " already exists";
+    throw(Exception(message.str()));
   }
 }
 
@@ -102,10 +109,10 @@ void cta::MockMiddleTierAdmin::checkAdminHostDoesNotAlreadyExist(
 //------------------------------------------------------------------------------
 void cta::MockMiddleTierAdmin::deleteAdminHost(
   const SecurityIdentity &requester,
-  const std::string &adminHost) {
-  for(std::list<std::string>::iterator itor = m_db.adminHosts.begin();
+  const std::string &hostName) {
+  for(std::map<std::string, AdminHost>::iterator itor = m_db.adminHosts.begin();
     itor != m_db.adminHosts.end(); itor++) {
-    if(adminHost == *itor) {
+    if(hostName == itor->first) {
       m_db.adminHosts.erase(itor);
       return;
     }
@@ -114,16 +121,21 @@ void cta::MockMiddleTierAdmin::deleteAdminHost(
   // Reaching this point means the administration host to be deleted does not
   // exist
   std::ostringstream message;
-  message << "Administration host " << adminHost << " does not exist";
+  message << "Administration host " << hostName << " does not exist";
   throw Exception(message.str());
 }
   
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
-std::list<std::string> cta::MockMiddleTierAdmin::getAdminHosts(
+std::list<cta::AdminHost> cta::MockMiddleTierAdmin::getAdminHosts(
   const SecurityIdentity &requester) const {
-  return m_db.adminHosts;
+  std::list<cta::AdminHost> hosts;
+  for(std::map<std::string, AdminHost>::const_iterator itor =
+    m_db.adminHosts.begin(); itor != m_db.adminHosts.end(); itor++) {
+    hosts.push_back(itor->second);
+  }
+  return hosts;
 }
 
 //------------------------------------------------------------------------------
@@ -276,14 +288,45 @@ void cta::MockMiddleTierAdmin::createLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name,
   const std::string &comment) {
+  checkLogicalLibraryDoesNotAlreadyExist(name);
+  LogicalLibrary logicalLibrary(name, requester.user, comment);
+  m_db.libraries[name] = logicalLibrary;
 }
 
+//------------------------------------------------------------------------------
+// checkLogicalLibraryDoesNotAlreadyExist
+//------------------------------------------------------------------------------
+void cta::MockMiddleTierAdmin::checkLogicalLibraryDoesNotAlreadyExist(
+  const std::string &name) const {
+  std::map<std::string, LogicalLibrary>::const_iterator itor =
+    m_db.libraries.find(name);
+  if(itor != m_db.libraries.end()) {
+    std::ostringstream message;
+    message << "Logical library " << name << " already exists";
+    throw(Exception(message.str()));
+  }
+}
+  
 //------------------------------------------------------------------------------
 // deleteLogicalLibrary
 //------------------------------------------------------------------------------
 void cta::MockMiddleTierAdmin::deleteLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name) {
+  for(std::map<std::string, LogicalLibrary>::iterator itor =
+    m_db.libraries.begin(); itor != m_db.libraries.end();
+    itor++) {
+    if(name == itor->first) {
+      m_db.libraries.erase(itor);
+      return;
+    }
+  }
+
+  // Reaching this point means the logical library to be deleted does not
+  // exist
+  std::ostringstream message;
+  message << "Logical library " << name << " does not exist";
+  throw Exception(message.str());
 }
 
 //------------------------------------------------------------------------------
@@ -292,5 +335,11 @@ void cta::MockMiddleTierAdmin::deleteLogicalLibrary(
 std::list<cta::LogicalLibrary> cta::MockMiddleTierAdmin::getLogicalLibraries(
   const SecurityIdentity &requester) const {
   std::list<LogicalLibrary> libraries;
+
+  for(std::map<std::string, LogicalLibrary>::const_iterator itor =
+    m_db.libraries.begin(); itor != m_db.libraries.end();
+    itor++) {
+    libraries.push_back(itor->second);
+  }
   return libraries;
 }

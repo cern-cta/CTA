@@ -1,11 +1,16 @@
 #pragma once
 
+#include "AdminHost.hpp"
+#include "AdminUser.hpp"
 #include "FileSystemNode.hpp"
 #include "FileSystemStorageClasses.hpp"
+#include "LogicalLibrary.hpp"
 #include "MiddleTierUser.hpp"
 #include "MigrationRoutes.hpp"
 #include "StorageClass.hpp"
 
+#include <stdint.h>
+#include <string>
 #include <vector>
 
 namespace cta {
@@ -30,14 +35,14 @@ public:
   ~MockMiddleTierDatabase() throw();
 
   /**
-   * The current list of administrators.
+   * Mapping from administrator uid to administrator.
    */
-  std::list<UserIdentity> adminUsers;
+  std::map<uint32_t, AdminUser> adminUsers;
 
   /**
-   * The current list of administration hosts.
+   * Mapping from administration host-name to administration host.
    */
-  std::list<std::string> adminHosts;
+  std::map<std::string, AdminHost> adminHosts;
 
   /**
    * Container of the storage classes used by the file system.
@@ -58,6 +63,11 @@ public:
    * The root node of the file-system.
    */
   FileSystemNode fileSystemRoot;
+
+  /**
+   * Mapping from logical-library name to logical library.
+   */
+  std::map<std::string, LogicalLibrary> libraries;
 
 }; // class MockMiddleTierDatabase
 

@@ -28,58 +28,64 @@ public:
    *
    * @param requester The identity of the user requesting the creation of the
    * administrator.
-   * @param adminUser The identity of the administrator.
+   * @param user The identity of the administrator.
+   * @param comment The comment describing te administator.
    */
   void createAdminUser(
     const SecurityIdentity &requester,
-    const UserIdentity &adminUser);
+    const UserIdentity &user,
+    const std::string &comment);
 
   /**
    * Deletes the specified administrator.
    *
    * @param requester The identity of the user requesting the deletion of the
    * administrator.
-   * @param adminUser The identity of the administrator.
+   * @param user The identity of the administrator.
    */
   void deleteAdminUser(
     const SecurityIdentity &requester,
-    const UserIdentity &adminUser);
+    const UserIdentity &user);
 
   /**
-   * Returns the current list of administrators.
+   * Returns the current list of administrators in lexicographical order.
    *
    * @param requester The identity of the user requesting the list.
+   * @return The current list of administrators in lexicographical order.
    */
-  std::list<UserIdentity> getAdminUsers(const SecurityIdentity &requester) const;
+  std::list<AdminUser> getAdminUsers(const SecurityIdentity &requester) const;
 
   /**
    * Creates the specified administration host.
    *
    * @param requester The identity of the user requesting the creation of the
    * administration host.
-   * @param adminHost The network name of the administration host.
+   * @param hostName The network name of the administration host.
+   * @param comment The comment describing the administration host.
    */
   void createAdminHost(
     const SecurityIdentity &requester,
-    const std::string &adminHost);
+    const std::string &hostName,
+    const std::string &comment);
 
   /**
    * Deletes the specified administration host.
    *
    * @param requester The identity of the user requesting the deletion of the
    * administration host.
-   * @param adminHost The network name of the administration host.
+   * @param hostName The network name of the administration host.
+   * @param comment The comment describing the administration host.
    */
   void deleteAdminHost(
     const SecurityIdentity &requester,
-    const std::string &adminHost);
+    const std::string &hostName);
 
   /**
    * Returns the current list of administration hosts.
    *
    * @param requester The identity of the user requesting the list.
    */
-  std::list<std::string> getAdminHosts(const SecurityIdentity &requester) const;
+  std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester) const;
 
   /**
    * Creates the specified storage class.
@@ -235,16 +241,16 @@ protected:
   /**
    * Throws an exception if the specified administrator already exists.
    *
-   * @param adminUser The identity of the administrator.
+   * @param user The identity of the administrator.
    */
-  void checkAdminUserDoesNotAlreadyExist(const UserIdentity &adminUser);
+  void checkAdminUserDoesNotAlreadyExist(const UserIdentity &user) const;
 
   /**
    * Throws an exception if the specified administration host already exists.
    *
-   * @param adminHost The network name of the administration host.
+   * @param hostName The network name of the administration host.
    */
-  void checkAdminHostDoesNotAlreadyExist(const std::string &adminHost);
+  void checkAdminHostDoesNotAlreadyExist(const std::string &hostName) const;
 
   /**
    * Gets the file system node corresponding to the specified path.
@@ -342,6 +348,13 @@ protected:
   void checkUserIsAuthorisedToArchive(
     const SecurityIdentity &user,
     const FileSystemNode &dstDir);
+
+  /**
+   * Throws an exception if the specified logical library already exists.
+   *
+   * @param name The name of the logical library.
+   */
+  void checkLogicalLibraryDoesNotAlreadyExist(const std::string &name) const;
 
   /**
    * The database of the mock middle-tier.

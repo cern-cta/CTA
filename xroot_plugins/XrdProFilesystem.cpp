@@ -682,7 +682,8 @@ int XrdProFilesystem::executeMkadminuserCommand(const ParsedRequest &req, XrdOuc
     cta::UserIdentity adminUser;
     std::istringstream i0(req.args.at(0)); i0 >> adminUser.uid;
     std::istringstream i1(req.args.at(1)); i1 >> adminUser.gid;
-    m_adminApi.createAdminUser(requester, adminUser);
+    const std::string comment = "TO BE DONE";
+    m_adminApi.createAdminUser(requester, adminUser, comment);
     std::ostringstream responseSS;
     responseSS << "[OK] Admin user with uid " << req.args.at(0) << " and gid " << req.args.at(1) << " created";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -751,11 +752,11 @@ int XrdProFilesystem::executeLsadminuserCommand(const ParsedRequest &req, XrdOuc
     return SFS_DATA;
   }
   try {
-    std::list<cta::UserIdentity> userIdList = m_adminApi.getAdminUsers(requester);
+    std::list<cta::AdminUser> userIdList = m_adminApi.getAdminUsers(requester);
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the admin user uids and gids:";
-    for(std::list<cta::UserIdentity>::iterator it = userIdList.begin(); it != userIdList.end(); it++) {
-      responseSS << "\n" << it->uid << " " << it->gid;
+    for(std::list<cta::AdminUser>::iterator it = userIdList.begin(); it != userIdList.end(); it++) {
+      responseSS << "\n" << it->getUser().uid << " " << it->getUser().gid;
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
@@ -786,7 +787,8 @@ int XrdProFilesystem::executeMkadminhostCommand(const ParsedRequest &req, XrdOuc
     return SFS_DATA;
   }
   try {
-    m_adminApi.createAdminHost(requester, req.args.at(0));
+    const std::string comment = "TO BE DONE";
+    m_adminApi.createAdminHost(requester, req.args.at(0), comment);
     std::ostringstream responseSS;
     responseSS << "[OK] Admin host " << req.args.at(0) << " created";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -850,11 +852,11 @@ int XrdProFilesystem::executeLsadminhostCommand(const ParsedRequest &req, XrdOuc
     return SFS_DATA;
   }
   try {
-    std::list<std::string> hostList = m_adminApi.getAdminHosts(requester);
+    std::list<cta::AdminHost> hostList = m_adminApi.getAdminHosts(requester);
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the admin hosts:";
-    for(std::list<std::string>::iterator it = hostList.begin(); it != hostList.end(); it++) {
-      responseSS << "\n" << *it;
+    for(std::list<cta::AdminHost>::iterator it = hostList.begin(); it != hostList.end(); it++) {
+      responseSS << "\n" << it->getName();
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
