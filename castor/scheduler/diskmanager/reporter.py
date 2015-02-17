@@ -69,13 +69,17 @@ class ReporterThread(threading.Thread):
     streamCount = self.runningTransfers.getStreamCount()
     reports = []
     for mountPoint in mountPoints:
-      # check we really have a mount point, abort if not
-      if not os.path.ismount(mountPoint):
-        raise Exception("mountPoint %s is not a physical mount point" % mountPoint)
-      # get total and free space
-      stat = os.statvfs(mountPoint)
-      totalSpace = stat.f_blocks*stat.f_bsize
-      freeSpace = stat.f_bavail*stat.f_bsize
+      # check we really have a mount point
+      if os.path.ismount(mountPoint):
+        # get total and free space
+        stat = os.statvfs(mountPoint)
+        totalSpace = stat.f_blocks*stat.f_bsize
+        freeSpace = stat.f_bavail*stat.f_bsize
+      else:
+        # it's not: report it with 0 space and log a warning, it may have been temporarily unmounted
+        # because of an hardware failure
+        dlf.writenotice(msgs.NOTAMOUNTPOINT, diskServer=diskServerName, mountPoint=mountPoint)
+        totalSpace = freeSpace = 0
       # get number of streams of each kind
       try:
         sc = streamCount[mountPoint]
@@ -87,12 +91,13 @@ class ReporterThread(threading.Thread):
                       totalSpace, freeSpace, sc.nbReads, sc.nbWrites, sc.nbRecalls, sc.nbMigrations))
       # check whether we should create subdirectories in the mountPoints, that is
       # whether this is a brand new mountPoints that we should populate
-      try:
-        os.stat(os.sep.join([mountPoint, '01']))
-      except OSError:
-        # no, then let's create the missing directories
-        for i in range(100):
-          os.mkdir(os.sep.join([mountPoint, '%02d' % i]))
+      if os.path.ismount(mountPoint):
+        try:
+          os.stat(os.sep.join([mountPoint, '01']))
+        except OSError:
+          # no, then let's create the missing directories
+          for i in range(100):
+            os.mkdir(os.sep.join([mountPoint, '%02d' % i]))
     # now handle dataPools if any
     if dataPools:
       try:
