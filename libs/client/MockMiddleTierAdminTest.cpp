@@ -39,8 +39,8 @@ TEST_F(cta_client_MockMiddleTierAdminTest, createAdminUser_new) {
     ASSERT_NO_THROW(adminUsers = adminApi.getAdminUsers(requester));
     ASSERT_EQ(1, adminUsers.size());
 
-    ASSERT_EQ(adminUser1Uid, adminUsers.front().getUser().uid);
-    ASSERT_EQ(adminUser1Gid, adminUsers.front().getUser().gid);
+    ASSERT_EQ(adminUser1Uid, adminUsers.front().getUser().getUid());
+    ASSERT_EQ(adminUser1Gid, adminUsers.front().getUser().getGid());
     ASSERT_EQ(comment, adminUsers.front().getComment());
   }
 }
@@ -69,8 +69,8 @@ TEST_F(cta_client_MockMiddleTierAdminTest, createAdminUser_already_existing) {
     ASSERT_NO_THROW(adminUsers = adminApi.getAdminUsers(requester));
     ASSERT_EQ(1, adminUsers.size());
 
-    ASSERT_EQ(adminUser1Uid, adminUsers.front().getUser().uid);
-    ASSERT_EQ(adminUser1Gid, adminUsers.front().getUser().gid);
+    ASSERT_EQ(adminUser1Uid, adminUsers.front().getUser().getUid());
+    ASSERT_EQ(adminUser1Gid, adminUsers.front().getUser().getGid());
     ASSERT_EQ(comment, adminUsers.front().getComment());
   }
 
@@ -108,8 +108,8 @@ TEST_F(cta_client_MockMiddleTierAdminTest, deleteAdminUser_existing) {
     ASSERT_NO_THROW(adminUsers = adminApi.getAdminUsers(requester));
     ASSERT_EQ(1, adminUsers.size());
 
-    ASSERT_EQ(adminUser1Uid, adminUsers.front().getUser().uid);
-    ASSERT_EQ(adminUser1Gid, adminUsers.front().getUser().gid);
+    ASSERT_EQ(adminUser1Uid, adminUsers.front().getUser().getUid());
+    ASSERT_EQ(adminUser1Gid, adminUsers.front().getUser().getGid());
     ASSERT_EQ(comment, adminUsers.front().getComment());
   }
 

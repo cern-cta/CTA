@@ -69,8 +69,8 @@ int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eIn
   }
   std::cout << "Request received from client. Username: " << client->name << " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
   requester.host = client->host;
-  requester.user.uid = pwd.pw_uid;
-  requester.user.gid = pwd.pw_gid;
+  requester.user.setUid(pwd.pw_uid);
+  requester.user.setGid(pwd.pw_gid);
   free(buf);
   return SFS_OK;
 }
@@ -320,7 +320,7 @@ int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrI
     responseSS << "[OK] Listing of the storage class names and no of copies:";
     for(std::list<cta::StorageClass>::iterator it = stgList.begin(); it != stgList.end(); it++) {
       responseSS << "\n" << it->getName() << " " << it->getNbCopies() << " " 
-              << it->getCreator().uid << " " << it->getCreator().gid << " " 
+              << it->getCreator().getUid() << " " << it->getCreator().getGid() << " " 
               << it->getCreationTime() << " \"" << it->getComment() << "\"";
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -538,7 +538,7 @@ int XrdProFilesystem::executeLspoolCommand(const ParsedRequest &req, XrdOucErrIn
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the tape pools:";
     for(std::list<cta::TapePool>::iterator it = poolList.begin(); it != poolList.end(); it++) {
-      responseSS << "\n" << it->getName() << " " << it->getCreator().uid << " " << it->getCreator().gid << " " 
+      responseSS << "\n" << it->getName() << " " << it->getCreator().getUid() << " " << it->getCreator().getGid() << " " 
               << it->getCreationTime() << " \"" << it->getComment() << "\"";
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -646,8 +646,8 @@ int XrdProFilesystem::executeLsrouteCommand(const ParsedRequest &req, XrdOucErrI
     for(std::list<cta::MigrationRoute>::iterator it = routeList.begin(); it != routeList.end(); it++) {
       responseSS << "\n" << it->getStorageClassName() << ":" << it->getCopyNb() 
               << " " << it->getTapePoolName()
-              << " " << it->getCreator().uid 
-              << " " << it->getCreator().gid 
+              << " " << it->getCreator().getUid()
+              << " " << it->getCreator().getGid()
               << " \"" << it->getComment() << "\"";
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -680,8 +680,14 @@ int XrdProFilesystem::executeMkadminuserCommand(const ParsedRequest &req, XrdOuc
   }
   try {
     cta::UserIdentity adminUser;
-    std::istringstream i0(req.args.at(0)); i0 >> adminUser.uid;
-    std::istringstream i1(req.args.at(1)); i1 >> adminUser.gid;
+    std::istringstream i0(req.args.at(0));
+    int uid = 0;
+    i0 >> uid;
+    adminUser.setUid(uid);
+    std::istringstream i1(req.args.at(1));
+    int gid = 0;
+    i1 >> gid;
+    adminUser.setGid(gid);
     const std::string comment = "TO BE DONE";
     m_adminApi.createAdminUser(requester, adminUser, comment);
     std::ostringstream responseSS;
@@ -717,9 +723,13 @@ int XrdProFilesystem::executeRmadminuserCommand(const ParsedRequest &req, XrdOuc
   try {
     cta::UserIdentity adminUser;
     std::stringstream ssArg0(req.args.at(0));
-    ssArg0 >> adminUser.uid;
+    int uid = 0;
+    ssArg0 >> uid;
+    adminUser.setUid(uid);
     std::stringstream ssArg1(req.args.at(1));
-    ssArg0 >> adminUser.gid;
+    int gid = 0;
+    ssArg0 >> gid;
+    adminUser.setGid(gid);
     m_adminApi.deleteAdminUser(requester, adminUser);
     std::ostringstream responseSS;
     responseSS << "[OK] Admin user with uid " << req.args.at(0) << " and gid " << req.args.at(1) << " deleted";
@@ -756,7 +766,7 @@ int XrdProFilesystem::executeLsadminuserCommand(const ParsedRequest &req, XrdOuc
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the admin user uids and gids:";
     for(std::list<cta::AdminUser>::iterator it = userIdList.begin(); it != userIdList.end(); it++) {
-      responseSS << "\n" << it->getUser().uid << " " << it->getUser().gid;
+      responseSS << "\n" << it->getUser().getUid() << " " << it->getUser().getGid();
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;

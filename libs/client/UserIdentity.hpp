@@ -8,17 +8,8 @@ namespace cta {
 /**
  * Class reprsenting the identity of a user.
  */
-struct UserIdentity {
-
-  /**
-   * The user ID of the user.
-   */
-  uint32_t uid;
-
-  /**
-   * The group ID of the user.
-   */
-  uint32_t gid;
+class UserIdentity {
+public:
 
   /**
    * Constructor.
@@ -35,6 +26,43 @@ struct UserIdentity {
    */
   UserIdentity(const uint32_t uid, const uint32_t gid) throw();
 
-}; // struct UserIdentity
+  /**
+   * Sets the user ID of the user.
+   *
+   * @patam uid The user ID of the user.
+   */
+  void setUid(const uint32_t uid) throw();
+
+  /**
+   * Returns the user ID of the user.
+   */
+  uint32_t getUid() const throw();
+
+  /**
+   * Sets the group ID of the user.
+   *
+   * @param gid The group ID of the user.
+   */
+  void setGid(const uint32_t gid) throw();
+
+  /**
+   * Returns the group ID of the user.
+   */
+  uint32_t getGid() const throw();
+
+private:
+
+  /**
+   * The user ID of the user.
+   */
+  uint32_t m_uid;
+
+  /**
+   * The group ID of the user.
+   */
+  uint32_t m_gid;
+
+
+}; // class UserIdentity
 
 } // namespace cta

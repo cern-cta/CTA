@@ -27,7 +27,7 @@ void cta::MockMiddleTierAdmin::createAdminUser(
   const std::string &comment) {
   checkAdminUserDoesNotAlreadyExist(user);
   AdminUser adminUser(user, requester.user, comment);
-  m_db.adminUsers[user.uid] = adminUser;
+  m_db.adminUsers[user.getUid()] = adminUser;
 }
 
 //------------------------------------------------------------------------------
@@ -36,10 +36,10 @@ void cta::MockMiddleTierAdmin::createAdminUser(
 void cta::MockMiddleTierAdmin::checkAdminUserDoesNotAlreadyExist(
   const UserIdentity &user) const {
   std::map<uint32_t, AdminUser>::const_iterator itor =
-    m_db.adminUsers.find(user.uid);
+    m_db.adminUsers.find(user.getUid());
   if(itor != m_db.adminUsers.end()) {
     std::ostringstream message;
-    message << "Administrator with uid " << user.uid <<
+    message << "Administrator with uid " << user.getUid() <<
       " already exists";
     throw(Exception(message.str()));
   }
@@ -53,7 +53,7 @@ void cta::MockMiddleTierAdmin::deleteAdminUser(
   const UserIdentity &user) {
   for(std::map<uint32_t, AdminUser>::iterator itor = m_db.adminUsers.begin();
     itor != m_db.adminUsers.end(); itor++) {
-    if(user.uid == itor->first) {
+    if(user.getUid() == itor->first) {
       m_db.adminUsers.erase(itor);
       return;
     }
@@ -61,7 +61,7 @@ void cta::MockMiddleTierAdmin::deleteAdminUser(
 
   // Reaching this point means the administrator to be deleted does not exist
   std::ostringstream message;
-  message << "Administration with uid " << user.uid << " does not exist";
+  message << "Administration with uid " << user.getUid() << " does not exist";
   throw Exception(message.str());
 }
   
