@@ -2550,7 +2550,8 @@ BEGIN
                nbReadStreams = inNumParams(8*i+5),
                nbWriteStreams = inNumParams(8*i+6),
                nbRecallerStreams = inNumParams(8*i+7),
-               nbMigratorStreams = inNumParams(8*i+8)
+               nbMigratorStreams = inNumParams(8*i+8),
+               status = CASE totalSize WHEN 0 THEN dconst.FILESYSTEM_DISABLED ELSE status END
          WHERE diskServer=varDsId AND mountPoint=inStrParams(2*i+2)
         RETURNING id INTO varFsId;
         -- if it did not exist, create it
