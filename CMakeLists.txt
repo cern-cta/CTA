@@ -30,7 +30,7 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 add_subdirectory(libs)
-#add_subdirectory(objectstore)
+add_subdirectory(objectstore)
 add_subdirectory(tests)
 add_subdirectory(xroot_clients)
 add_subdirectory(xroot_plugins)
