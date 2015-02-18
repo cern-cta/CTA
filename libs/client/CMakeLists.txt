@@ -24,6 +24,7 @@ set (CLIENT_LIB_SRC_FILES
   MockMiddleTierUser.cpp
   SecurityIdentity.cpp
   StorageClass.cpp
+  Tape.cpp
   TapePool.cpp
   UserIdentity.cpp
   Utils.cpp)

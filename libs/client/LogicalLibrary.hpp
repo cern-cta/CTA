@@ -37,13 +37,6 @@ public:
   const std::string &getName() const throw();
 
   /**
-   * Returns the name of the device group.
-   *
-   * @return The name of the device group.
-   */
-  const std::string &getDeviceGroupName() const throw();
-
-  /**
    * Returns the time when the logical library was created.
    *
    * @return The time when the logical library was created.
