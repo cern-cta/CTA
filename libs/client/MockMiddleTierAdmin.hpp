@@ -204,7 +204,7 @@ public:
     const SecurityIdentity &requester) const;
 
   /**
-   * Creates a logical library with the specified name and device group.
+   * Creates a logical library with the specified name.
    *
    * @param requester The identity of the user requesting the creation of the
    * logical library.
@@ -234,6 +234,48 @@ public:
    * @return The current list of libraries in lexicographical order.
    */
   std::list<LogicalLibrary> getLogicalLibraries(
+    const SecurityIdentity &requester) const;
+
+  /**
+   * Creates a tape.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * tape.
+   * @param vid The volume identifier of the tape.
+   * @param logicalLibrary The name of the logical library to which the tape
+   * belongs.
+   * @param tapePoolName The name of the tape pool to which the tape belongs.
+   * @param capacityInBytes The capacity of the tape.
+   * @param comment The comment describing the logical library.
+   */
+  void createTape(
+    const SecurityIdentity &requester,
+    const std::string &vid,
+    const std::string &logicalLibraryName,
+    const std::string &tapePoolName,
+    const uint64_t capacityInBytes,
+    const std::string &comment);
+
+  /**
+   * Deletes the tape with the specified volume identifier.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * tape.
+   * @param vid The volume identifier of the tape.
+   */
+  void deleteTape(
+    const SecurityIdentity &requester,
+    const std::string &vid);
+
+  /**
+   * Returns the current list of tapes in the lexicographical order of their
+   * volume identifiers.
+   *
+   * @param requester The identity of the user requesting the list.
+   * @return The current list of tapes in the lexicographical order of their
+   * volume identifiers.
+   */
+  std::list<Tape> getTapes(
     const SecurityIdentity &requester) const;
 
 protected:
@@ -299,55 +341,6 @@ protected:
    * directory within the archive namepsace.
    */
   bool isAnExistingDirectory(const std::string &path) const throw();
-
-  /**
-   * Archives the specified list of source files to the specified destination
-   * directory within the archive namespace.
-   *
-   * The list of source files should contain at least one file.
-   *
-   * The storage class of the archived file will be inherited from its
-   * destination directory.
-   *
-   * @param requester The identity of the user requesting the archival.
-   * @param srcUrls List of one or more source files.
-   * @param dstDir Destination directory within the archive namespace.
-   * @return The string identifier of the archive job.
-   */
-  std::string archiveToDirectory(
-    const SecurityIdentity &requester,
-    const std::list<std::string> &srcUrls,
-    const std::string &dstDir);
-
-  /**
-   * Archives the specified list of source files to the specified destination
-   * file within the archive namespace.
-   *
-   * The list of source files should contain one and only one file.
-   *
-   * The storage class of the archived file will be inherited from its
-   * destination directory.
-   *
-   * @param requester The identity of the user requesting the archival.
-   * @param srcUrls List of one or more source files.
-   * @param dstFile Destination file within the archive namespace.
-   * @return The string identifier of the archive job.
-   */
-  std::string archiveToFile(
-    const SecurityIdentity &requester,
-    const std::list<std::string> &srcUrls,
-    const std::string &dstFile);
-
-  /**
-   * Throws an exception if the specified requester is not authorised to archive
-   * a file to the specified destination directory within the archive namespace.
-   *
-   * @param requester The identity of the user requesting the archival.
-   * @param dstDir Destination directory within the archive namespace.
-   */
-  void checkUserIsAuthorisedToArchive(
-    const SecurityIdentity &user,
-    const FileSystemNode &dstDir);
 
   /**
    * Throws an exception if the specified logical library already exists.

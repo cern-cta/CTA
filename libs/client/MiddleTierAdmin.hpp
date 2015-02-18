@@ -8,6 +8,7 @@
 #include "MigrationRoute.hpp"
 #include "SecurityIdentity.hpp"
 #include "StorageClass.hpp"
+#include "Tape.hpp"
 #include "TapePool.hpp"
 #include "UserIdentity.hpp"
 
@@ -212,7 +213,7 @@ public:
     const SecurityIdentity &requester) const = 0;
 
   /**
-   * Creates a logical library with the specified name and device group.
+   * Creates a logical library with the specified name.
    *
    * @param requester The identity of the user requesting the creation of the
    * logical library.
@@ -242,6 +243,48 @@ public:
    * @return The current list of libraries in lexicographical order.
    */
   virtual std::list<LogicalLibrary> getLogicalLibraries(
+    const SecurityIdentity &requester) const = 0;
+
+  /**
+   * Creates a tape.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * tape.
+   * @param vid The volume identifier of the tape.
+   * @param logicalLibrary The name of the logical library to which the tape
+   * belongs.
+   * @param tapePoolName The name of the tape pool to which the tape belongs.
+   * @param capacityInBytes The capacity of the tape.
+   * @param comment The comment describing the logical library.
+   */
+  virtual void createTape(
+    const SecurityIdentity &requester,
+    const std::string &vid,
+    const std::string &logicalLibraryName,
+    const std::string &tapePoolName,
+    const uint64_t capacityInBytes,
+    const std::string &comment) = 0;
+
+  /**
+   * Deletes the tape with the specified volume identifier.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * tape.
+   * @param vid The volume identifier of the tape.
+   */
+  virtual void deleteTape(
+    const SecurityIdentity &requester,
+    const std::string &vid) = 0;
+
+  /**
+   * Returns the current list of tapes in the lexicographical order of their
+   * volume identifiers.
+   *
+   * @param requester The identity of the user requesting the list.
+   * @return The current list of tapes in the lexicographical order of their
+   * volume identifiers.
+   */
+  virtual std::list<Tape> getTapes(
     const SecurityIdentity &requester) const = 0;
 
 }; // class MiddleTierAdmin

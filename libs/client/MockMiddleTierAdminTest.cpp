@@ -972,10 +972,10 @@ TEST_F(cta_client_MockMiddleTierAdminTest, createLogicalLibrary_new) {
     ASSERT_NO_THROW(libraries = adminApi.getLogicalLibraries(requester));
     ASSERT_EQ(1, libraries.size());
 
-    LogicalLibrary LogicalLibrary;
-    ASSERT_NO_THROW(LogicalLibrary = libraries.front());
-    ASSERT_EQ(libraryName, LogicalLibrary.getName());
-    ASSERT_EQ(libraryComment, LogicalLibrary.getComment());
+    LogicalLibrary logicalLibrary;
+    ASSERT_NO_THROW(logicalLibrary = libraries.front());
+    ASSERT_EQ(libraryName, logicalLibrary.getName());
+    ASSERT_EQ(libraryComment, logicalLibrary.getComment());
   }
 }
 
@@ -1003,10 +1003,10 @@ TEST_F(cta_client_MockMiddleTierAdminTest,
     ASSERT_NO_THROW(libraries = adminApi.getLogicalLibraries(requester));
     ASSERT_EQ(1, libraries.size());
 
-    LogicalLibrary LogicalLibrary;
-    ASSERT_NO_THROW(LogicalLibrary = libraries.front());
-    ASSERT_EQ(libraryName, LogicalLibrary.getName());
-    ASSERT_EQ(libraryComment, LogicalLibrary.getComment());
+    LogicalLibrary logicalLibrary;
+    ASSERT_NO_THROW(logicalLibrary = libraries.front());
+    ASSERT_EQ(libraryName, logicalLibrary.getName());
+    ASSERT_EQ(libraryComment, logicalLibrary.getComment());
   }
   
   ASSERT_THROW(adminApi.createLogicalLibrary(requester, libraryName,
@@ -1106,6 +1106,249 @@ TEST_F(cta_client_MockMiddleTierAdminTest, deleteLogicalLibrary_non_existing) {
     std::list<LogicalLibrary> libraries;
     ASSERT_NO_THROW(libraries = adminApi.getLogicalLibraries(requester));
     ASSERT_TRUE(libraries.empty());
+  }
+}
+
+TEST_F(cta_client_MockMiddleTierAdminTest, createTape_new) {
+  using namespace cta;
+
+  MockMiddleTierDatabase db;
+  MockMiddleTierAdmin adminApi(db);
+  const SecurityIdentity requester;
+
+  {
+    std::list<Tape> tapes;
+    ASSERT_NO_THROW(tapes = adminApi.getTapes(requester));
+    ASSERT_TRUE(tapes.empty());
+  }
+
+  const std::string libraryName = "TestLogicalLibrary";
+  const std::string libraryComment = "Library comment";
+  ASSERT_NO_THROW(adminApi.createLogicalLibrary(requester, libraryName,
+    libraryComment));
+
+  const std::string poolName = "TestTapePool";
+  const uint16_t nbDrives = 1;
+  const uint32_t nbPartialTapes = 1;
+  const std::string poolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(adminApi.createTapePool(requester, poolName, nbDrives,
+    nbPartialTapes, poolComment));
+
+  const std::string vid = "TestVid";
+  const uint64_t capacityInBytes = 12345678;
+  const std::string tapeComment = "Tape comment";
+  ASSERT_NO_THROW(adminApi.createTape(requester, vid, libraryName, poolName,
+    capacityInBytes, tapeComment));
+
+  {
+    std::list<Tape> tapes;
+    ASSERT_NO_THROW(tapes = adminApi.getTapes(requester));
+    ASSERT_EQ(1, tapes.size());
+
+    Tape tape;
+    ASSERT_NO_THROW(tape = tapes.front());
+    ASSERT_EQ(vid, tape.getVid());
+    ASSERT_EQ(libraryName, tape.getLogicalLibraryName());
+    ASSERT_EQ(poolName, tape.getTapePoolName());
+    ASSERT_EQ(capacityInBytes, tape.getCapacityInBytes());
+    ASSERT_EQ(0, tape.getDataOnTapeInBytes());
+    ASSERT_EQ(tapeComment, tape.getComment());
+  }
+}
+
+TEST_F(cta_client_MockMiddleTierAdminTest, createTape_already_existing) {
+  using namespace cta;
+
+  MockMiddleTierDatabase db;
+  MockMiddleTierAdmin adminApi(db);
+  const SecurityIdentity requester;
+
+  {
+    std::list<Tape> tapes;
+    ASSERT_NO_THROW(tapes = adminApi.getTapes(requester));
+    ASSERT_TRUE(tapes.empty());
+  }
+
+  const std::string libraryName = "TestLogicalLibrary";
+  const std::string libraryComment = "Library comment";
+  ASSERT_NO_THROW(adminApi.createLogicalLibrary(requester, libraryName,
+    libraryComment));
+
+  const std::string poolName = "TestTapePool";
+  const uint16_t nbDrives = 1;
+  const uint32_t nbPartialTapes = 1;
+  const std::string poolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(adminApi.createTapePool(requester, poolName, nbDrives,
+    nbPartialTapes, poolComment));
+
+  const std::string vid = "TestVid";
+  const uint64_t capacityInBytes = 12345678;
+  const std::string tapeComment = "Tape comment";
+  ASSERT_NO_THROW(adminApi.createTape(requester, vid, libraryName, poolName,
+    capacityInBytes, tapeComment));
+
+  {
+    std::list<Tape> tapes;
+    ASSERT_NO_THROW(tapes = adminApi.getTapes(requester));
+    ASSERT_EQ(1, tapes.size());
+
+    Tape tape;
+    ASSERT_NO_THROW(tape = tapes.front());
+    ASSERT_EQ(vid, tape.getVid());
+    ASSERT_EQ(libraryName, tape.getLogicalLibraryName());
+    ASSERT_EQ(poolName, tape.getTapePoolName());
+    ASSERT_EQ(capacityInBytes, tape.getCapacityInBytes());
+    ASSERT_EQ(0, tape.getDataOnTapeInBytes());
+    ASSERT_EQ(tapeComment, tape.getComment());
+  }
+  
+  ASSERT_THROW(adminApi.createTape(requester, vid, libraryName, poolName,
+    capacityInBytes, tapeComment), std::exception);
+
+  {
+    std::list<Tape> tapes;
+    ASSERT_NO_THROW(tapes = adminApi.getTapes(requester));
+    ASSERT_EQ(1, tapes.size());
+
+    Tape tape;
+    ASSERT_NO_THROW(tape = tapes.front());
+    ASSERT_EQ(vid, tape.getVid());
+    ASSERT_EQ(libraryName, tape.getLogicalLibraryName());
+    ASSERT_EQ(poolName, tape.getTapePoolName());
+    ASSERT_EQ(capacityInBytes, tape.getCapacityInBytes());
+    ASSERT_EQ(0, tape.getDataOnTapeInBytes());
+    ASSERT_EQ(tapeComment, tape.getComment());
+  }
+}
+
+TEST_F(cta_client_MockMiddleTierAdminTest, createTape_lexicographical_order) {
+  using namespace cta;
+
+  MockMiddleTierDatabase db;
+  MockMiddleTierAdmin adminApi(db);
+  const SecurityIdentity requester;
+
+  {
+    std::list<Tape> tapes;
+    ASSERT_NO_THROW(tapes = adminApi.getTapes(requester));
+    ASSERT_TRUE(tapes.empty());
+  }
+
+  const std::string libraryName = "TestLogicalLibrary";
+  const std::string libraryComment = "Library comment";
+  ASSERT_NO_THROW(adminApi.createLogicalLibrary(requester, libraryName,
+    libraryComment));
+
+  const std::string poolName = "TestTapePool";
+  const uint16_t nbDrives = 1;
+  const uint32_t nbPartialTapes = 1;
+  const std::string poolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(adminApi.createTapePool(requester, poolName, nbDrives,
+    nbPartialTapes, poolComment));
+
+  const uint64_t capacityInBytes = 12345678;
+  ASSERT_NO_THROW(adminApi.createTape(requester, "d", libraryName, poolName, capacityInBytes,
+    "Comment d"));
+  ASSERT_NO_THROW(adminApi.createTape(requester, "b", libraryName, poolName, capacityInBytes,
+    "Comment b"));
+  ASSERT_NO_THROW(adminApi.createTape(requester, "a", libraryName, poolName, capacityInBytes,
+    "Comment a"));
+  ASSERT_NO_THROW(adminApi.createTape(requester, "c", libraryName, poolName, capacityInBytes,
+    "Comment c"));
+
+  {
+    std::list<Tape> tapes;
+    ASSERT_NO_THROW(tapes = adminApi.getTapes(requester));
+    ASSERT_EQ(4, tapes.size());
+
+    ASSERT_EQ(std::string("a"), tapes.front().getVid());
+    tapes.pop_front();
+    ASSERT_EQ(std::string("b"), tapes.front().getVid());
+    tapes.pop_front();
+    ASSERT_EQ(std::string("c"), tapes.front().getVid());
+    tapes.pop_front();
+    ASSERT_EQ(std::string("d"), tapes.front().getVid());
+  }
+}
+
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteTape_existing) {
+  using namespace cta;
+
+  MockMiddleTierDatabase db;
+  MockMiddleTierAdmin adminApi(db);
+  const SecurityIdentity requester;
+
+  {
+    std::list<Tape> tapes;
+    ASSERT_NO_THROW(tapes = adminApi.getTapes(requester));
+    ASSERT_TRUE(tapes.empty());
+  }
+
+  const std::string libraryName = "TestLogicalLibrary";
+  const std::string libraryComment = "Library comment";
+  ASSERT_NO_THROW(adminApi.createLogicalLibrary(requester, libraryName,
+    libraryComment));
+
+  const std::string poolName = "TestTapePool";
+  const uint16_t nbDrives = 1;
+  const uint32_t nbPartialTapes = 1;
+  const std::string poolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(adminApi.createTapePool(requester, poolName, nbDrives,
+    nbPartialTapes, poolComment));
+
+  const std::string vid = "TestVid";
+  const uint64_t capacityInBytes = 12345678;
+  const std::string tapeComment = "Tape comment";
+  ASSERT_NO_THROW(adminApi.createTape(requester, vid, libraryName, poolName,
+    capacityInBytes, tapeComment));
+
+  {
+    std::list<Tape> tapes;
+    ASSERT_NO_THROW(tapes = adminApi.getTapes(requester));
+    ASSERT_EQ(1, tapes.size());
+
+    Tape tape;
+    ASSERT_NO_THROW(tape = tapes.front());
+    ASSERT_EQ(vid, tape.getVid());
+    ASSERT_EQ(libraryName, tape.getLogicalLibraryName());
+    ASSERT_EQ(poolName, tape.getTapePoolName());
+    ASSERT_EQ(capacityInBytes, tape.getCapacityInBytes());
+    ASSERT_EQ(0, tape.getDataOnTapeInBytes());
+    ASSERT_EQ(tapeComment, tape.getComment());
+  }
+  
+  ASSERT_THROW(adminApi.createTape(requester, vid, libraryName, poolName,
+    capacityInBytes, tapeComment), std::exception);
+
+  ASSERT_NO_THROW(adminApi.deleteLogicalLibrary(requester, vid));
+
+  {
+    std::list<Tape> tapes;
+    ASSERT_NO_THROW(tapes = adminApi.getTapes(requester));
+    ASSERT_TRUE(tapes.empty());
+  }
+}
+
+TEST_F(cta_client_MockMiddleTierAdminTest, deleteTape_non_existing) {
+  using namespace cta;
+
+  MockMiddleTierDatabase db;
+  MockMiddleTierAdmin adminApi(db);
+  const SecurityIdentity requester;
+
+  {
+    std::list<Tape> tapes;
+    ASSERT_NO_THROW(tapes = adminApi.getTapes(requester));
+    ASSERT_TRUE(tapes.empty());
+  }
+
+  const std::string vid = "TestVid";
+  ASSERT_THROW(adminApi.deleteTape(requester, vid), std::exception);
+
+  {
+    std::list<Tape> tapes;
+    ASSERT_NO_THROW(tapes = adminApi.getTapes(requester));
+    ASSERT_TRUE(tapes.empty());
   }
 }
 

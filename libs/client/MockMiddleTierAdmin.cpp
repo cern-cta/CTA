@@ -343,3 +343,32 @@ std::list<cta::LogicalLibrary> cta::MockMiddleTierAdmin::getLogicalLibraries(
   }
   return libraries;
 }
+
+//------------------------------------------------------------------------------
+// createTape
+//------------------------------------------------------------------------------
+void cta::MockMiddleTierAdmin::createTape(
+  const SecurityIdentity &requester,
+  const std::string &vid,
+  const std::string &logicalLibraryName,
+  const std::string &tapePoolName,
+  const uint64_t capacityInBytes,
+  const std::string &comment) {
+}
+
+//------------------------------------------------------------------------------
+// deleteTape
+//------------------------------------------------------------------------------
+void cta::MockMiddleTierAdmin::deleteTape(
+  const SecurityIdentity &requester,
+  const std::string &vid) {
+}
+
+//------------------------------------------------------------------------------
+// getTapes
+//------------------------------------------------------------------------------
+std::list<cta::Tape> cta::MockMiddleTierAdmin::getTapes(
+  const SecurityIdentity &requester) const {
+  std::list<cta::Tape> tapes;
+  return tapes;
+}
