@@ -31,6 +31,7 @@ set(GCBIN_SRCS
   DeletionThread.cpp
   SynchronizationThread.cpp
   CephGlobals.cpp)
+set_property(SOURCE SynchronizationThread.cpp APPEND PROPERTY COMPILE_FLAGS -Wno-deprecated-declarations)
 add_executable (gcd ${GCBIN_SRCS})
 target_link_libraries (gcd
   castorcommon
