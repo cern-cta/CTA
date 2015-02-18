@@ -85,6 +85,16 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
+  int executeGetArchiveJobsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
   int executeMkclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
@@ -226,6 +236,36 @@ protected:
    * @return SFS_DATA
    */
   int executeLsrouteCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
+  int executeMkllibCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
+  int executeRmllibCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
+  int executeLsllibCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const;
   
   /**
    * Executes the command contained within the request structure

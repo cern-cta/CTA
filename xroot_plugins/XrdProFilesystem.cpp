@@ -139,6 +139,48 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
 }
 
 //------------------------------------------------------------------------------
+// executeGetArchiveJobsCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeGetArchiveJobsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
+  if(req.args.size() != 1) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    std::list<cta::ArchiveJob> jobs = m_userApi.getArchiveJobs(requester, req.args.at(0));
+    std::ostringstream responseSS;
+    responseSS << "[OK] List of archive jobs for tape pool " << req.args.at(0) << ":\n";
+    for(std::list<cta::ArchiveJob>::iterator it = jobs.begin(); it != jobs.end(); it++) {
+      responseSS << "[OK]\t" << it->getId() 
+              << " " << it->getCreator().getUid()
+              << " " << it->getCreator().getGid() 
+              << " " << it->getCreationTime()
+              << " " << it->getState() 
+              << " " << it->getNbFailedFileTransfers() 
+              << " " << it->getTotalNbFileTransfers() 
+              << " " << it->getComment()<< "\n";
+    }
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
 // executeMkclassCommand
 //------------------------------------------------------------------------------
 int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
@@ -671,6 +713,109 @@ int XrdProFilesystem::executeLsrouteCommand(const ParsedRequest &req, XrdOucErrI
 }
 
 //------------------------------------------------------------------------------
+// executeMkllibCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeMkllibCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
+  if(req.args.size() != 2) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    m_adminApi.createLogicalLibrary(requester, req.args.at(0), req.args.at(1));
+    std::ostringstream responseSS;
+    responseSS << "[OK] Logical library " << req.args.at(0) << " created with comment \"" << req.args.at(1) << "\"";
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeRmllibCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeRmllibCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
+  if(req.args.size() != 1) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    m_adminApi.deleteLogicalLibrary(requester, req.args.at(0));
+    std::ostringstream responseSS;
+    responseSS << "[OK] Logical library " << req.args.at(0) << " removed";
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeLsllibCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeLsllibCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+  if(req.args.size() != 0) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    std::list<cta::LogicalLibrary> llibs = m_adminApi.getLogicalLibraries(requester);
+    std::ostringstream responseSS;
+    responseSS << "[OK] Listing of the migration routes:";
+    for(std::list<cta::LogicalLibrary>::iterator it = llibs.begin(); it != llibs.end(); it++) {
+      responseSS  << "\n" << it->getName()
+              << " " << it->getCreator().getUid()
+              << " " << it->getCreator().getGid() 
+              << " " << it->getCreationTime()
+              << " \"" << it->getComment() << "\"";
+    }
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
 // executeMkadminuserCommand
 //------------------------------------------------------------------------------
 int XrdProFilesystem::executeMkadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
@@ -901,6 +1046,10 @@ int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eI
   {  
     return executeArchiveCommand(req, eInfo, requester);
   }
+  else if(strcmp(req.cmd.c_str(), "/getarchivejobs") == 0)
+  {  
+    return executeGetArchiveJobsCommand(req, eInfo, requester);
+  }
   else if(strcmp(req.cmd.c_str(), "/mkclass") == 0)
   {  
     return executeMkclassCommand(req, eInfo, requester);
@@ -960,6 +1109,18 @@ int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eI
   else if(strcmp(req.cmd.c_str(), "/lsroute") == 0)
   {  
     return executeLsrouteCommand(req, eInfo, requester);
+  } 
+  else if(strcmp(req.cmd.c_str(), "/mkllib") == 0)
+  {  
+    return executeMkllibCommand(req, eInfo, requester);
+  }  
+  else if(strcmp(req.cmd.c_str(), "/rmllib") == 0)
+  {  
+    return executeRmllibCommand(req, eInfo, requester);
+  }  
+  else if(strcmp(req.cmd.c_str(), "/lsllib") == 0)
+  {  
+    return executeLsllibCommand(req, eInfo, requester);
   }  
   else if(strcmp(req.cmd.c_str(), "/mkadminuser") == 0)
   {  
