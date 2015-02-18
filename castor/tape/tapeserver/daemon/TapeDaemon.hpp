@@ -146,21 +146,6 @@ protected:
   void exceptionThrowingMain(const int argc, char **const argv);
 
   /**
-   * Logs the start of the daemon.
-   */
-  void logStartOfDaemon(const int argc, const char *const *const argv) throw();
-
-  /**
-   * Creates a string that contains the specified command-line arguments
-   * separated by single spaces.
-   *
-   * @param argc The number of command-line arguments.
-   * @param argv The array of command-line arguments.
-   */
-  std::string argvToString(const int argc, const char *const *const argv)
-    throw();
-
-  /**
    * Idempotent method that destroys the ZMQ context.
    */
   void destroyZmqContext() throw();

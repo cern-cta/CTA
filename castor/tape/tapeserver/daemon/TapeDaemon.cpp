@@ -188,7 +188,6 @@ int castor::tape::tapeserver::daemon::TapeDaemon::main() throw() {
 //------------------------------------------------------------------------------
 void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   const int argc, char **const argv)  {
-  logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
 
   if(m_driveConfigs.empty()) {
@@ -237,37 +236,6 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   setUpReactor(reaperPair.tapeDaemon);
   registerTapeDrivesWithVdqm();
   mainEventLoop();
-}
-
-//------------------------------------------------------------------------------
-// logStartOfDaemon
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::logStartOfDaemon(
-  const int argc, const char *const *const argv) throw() {
-  const std::string concatenatedArgs = argvToString(argc, argv);
-  std::ostringstream msg;
-  msg << m_programName << " started";
-
-  log::Param params[] = {
-    log::Param("argv", concatenatedArgs)};
-  m_log(LOG_INFO, msg.str(), params);
-}
-
-//------------------------------------------------------------------------------
-// argvToString
-//------------------------------------------------------------------------------
-std::string castor::tape::tapeserver::daemon::TapeDaemon::argvToString(
-  const int argc, const char *const *const argv) throw() {
-  std::string str;
-
-  for(int i=0; i < argc; i++) {
-    if(i != 0) {
-      str += " ";
-    }
-
-    str += argv[i];
-  }
-  return str;
 }
 
 //------------------------------------------------------------------------------

@@ -33,6 +33,7 @@
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Cupv_constants.h"
+#include "h/patchlevel.h"
 #include "h/rmc_constants.h"
 #include "h/vdqm_constants.h"
 #include "h/vmgr_constants.h"
@@ -90,6 +91,21 @@ int main(const int argc, char **const argv) {
 }
 
 //------------------------------------------------------------------------------
+// Logs the start of the daemon.
+//------------------------------------------------------------------------------
+static void logStartOfDaemon(castor::log::Logger &log, const int argc,
+  const char *const *const argv);
+
+//------------------------------------------------------------------------------
+// Creates a string that contains the specified command-line arguments
+// separated by single spaces.
+//
+// @param argc The number of command-line arguments.
+// @param argv The array of command-line arguments.
+//------------------------------------------------------------------------------
+static std::string argvToString(const int argc, const char *const *const argv);
+
+//------------------------------------------------------------------------------
 // Writes the specified vdqm hosts to the logging system.  These hosts
 // should have been parsed from the contents of the TapeServer:VdqmHosts
 // entry (if there is one) in the CASTOR configuration file
@@ -122,6 +138,8 @@ static void logTpconfigLine(castor::log::Logger &log,
 static int exceptionThrowingMain(const int argc, char **const argv,
   castor::log::Logger &log) {
   using namespace castor;
+
+  logStartOfDaemon(log, argc, argv);
 
   // Parse /etc/castor/castor.conf
   const tape::tapeserver::daemon::TapeDaemonConfig tapeDaemonConfig =
@@ -167,6 +185,39 @@ static int exceptionThrowingMain(const int argc, char **const argv,
 
   // Run the tapeserverd daemon
   return daemon.main();
+}
+
+//------------------------------------------------------------------------------
+// logStartOfDaemon
+//------------------------------------------------------------------------------
+static void logStartOfDaemon(castor::log::Logger &log, const int argc,
+  const char *const *const argv) {
+  using namespace castor;
+
+  const std::string concatenatedArgs = argvToString(argc, argv);
+  std::ostringstream version;
+  version << MAJORVERSION << "." << MINORVERSION << "." << MAJORRELEASE << "-"
+    << MINORRELEASE;
+  log::Param params[] = {
+    log::Param("version", version.str()),
+    log::Param("argv", concatenatedArgs)};
+  log(LOG_INFO, "tapeserverd started", params);
+}
+
+//------------------------------------------------------------------------------
+// argvToString
+//------------------------------------------------------------------------------
+static std::string argvToString(const int argc, const char *const *const argv) {
+  std::string str;
+
+  for(int i=0; i < argc; i++) {
+    if(i != 0) {
+      str += " ";
+    }
+
+    str += argv[i];
+  }
+  return str;
 }
 
 //------------------------------------------------------------------------------
