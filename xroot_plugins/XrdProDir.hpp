@@ -5,7 +5,7 @@
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdSfs/XrdSfsInterface.hh"
 
-#include "libs/client/MockMiddleTierAdmin.hpp"
+#include "libs/client/MockMiddleTierUser.hpp"
 
 class XrdProDir : public XrdSfsDirectory
 {
@@ -15,7 +15,7 @@ public:
   virtual const char *nextEntry();
   virtual int close();
   virtual const char *FName();
-  XrdProDir(cta::MiddleTierAdmin *clientAPI, const char *user=0, int MonID=0);
+  XrdProDir(cta::MockMiddleTierUser &userApi, const char *user=0, int MonID=0);
   virtual ~XrdProDir();
 protected:
   
@@ -25,9 +25,9 @@ protected:
   cta::DirectoryIterator m_itor;
   
   /**
-   * Pointer to the client API object
+   * Pointer to the user API object
    */
-  cta::MiddleTierAdmin *m_clientAPI;
+  cta::MockMiddleTierUser &m_userApi;
   
   /**
    * Checks whether client has correct permissions and fills the UserIdentity structure

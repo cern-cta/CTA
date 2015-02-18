@@ -47,8 +47,8 @@ int XrdProDir::checkClient(const XrdSecEntity *client, cta::SecurityIdentity &re
   }
   std::cout << "Dir request received from client. Username: " << client->name << " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
   requester.host = client->host;
-  requester.user.uid = pwd.pw_uid;
-  requester.user.gid = pwd.pw_gid;
+  requester.user.setUid(pwd.pw_uid);
+  requester.user.setGid(pwd.pw_gid);
   free(buf);
   return SFS_OK;
 }
@@ -62,7 +62,7 @@ int XrdProDir::open(const char *path, const XrdSecEntity *client, const char *op
   if(SFS_OK!=checkResult) {
     return checkResult;
   }
-  m_itor = m_clientAPI->getDirectoryContents(requester, path);
+  m_itor = m_userApi.getDirectoryContents(requester, path);
   return SFS_OK;
 }
 
@@ -95,8 +95,7 @@ const char * XrdProDir::FName() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-XrdProDir::XrdProDir(cta::MiddleTierAdmin *clientAPI, const char *user, int MonID): error(user, MonID) {
-  m_clientAPI = clientAPI;  
+XrdProDir::XrdProDir(cta::MockMiddleTierUser &userApi, const char *user, int MonID): error(user, MonID), m_userApi(userApi) {
 }
 
 //------------------------------------------------------------------------------

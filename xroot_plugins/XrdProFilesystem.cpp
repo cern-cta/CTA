@@ -18,7 +18,7 @@ extern "C"
 {
   XrdSfsFileSystem *XrdSfsGetFileSystem (XrdSfsFileSystem* native_fs, XrdSysLogger* lp, const char* configfn)
   {
-    return new XrdProFilesystem;
+    return new XrdProFilesystem();
   }
 }
 
@@ -1028,7 +1028,7 @@ XrdSfsFile * XrdProFilesystem::newFile(char *user, int MonID)
 //------------------------------------------------------------------------------
 XrdSfsDirectory * XrdProFilesystem::newDir(char *user, int MonID)
 {
-  return new XrdProDir(m_clientAPI, user, MonID);
+  return new XrdProDir(m_userApi, user, MonID);
 }
 
 //------------------------------------------------------------------------------
