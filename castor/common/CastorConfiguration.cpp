@@ -162,7 +162,7 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
             log::Param("key", key),
             log::Param("value", entIt->second),
             log::Param("source", m_fileName)};
-          (*log)(LOG_INFO, "Got configuration entry", params);
+          (*log)(LOG_INFO, "Configuration entry", params);
         }
         return entIt->second;
       }
@@ -173,9 +173,8 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
         log::Param("category", category),
         log::Param("key", key),
         log::Param("value", defaultValue),
-        log::Param("source", "DEFAULT"),
-        log::Param("reasonForUsingDefault", "No entry found")};
-      (*log)(LOG_INFO, "Got configuration entry", params);
+        log::Param("source", "DEFAULT")};
+      (*log)(LOG_INFO, "Configuration entry", params);
     }
     // Unlock and return default
     pthread_rwlock_unlock(&m_lock);
@@ -188,9 +187,8 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
         log::Param("category", category),
         log::Param("key", key),
         log::Param("value", defaultValue),
-        log::Param("source", "DEFAULT"),
-        log::Param("reasonForUsingDefault", ex.getMessage().str())};
-      (*log)(LOG_INFO, "Got configuration entry", params);
+        log::Param("source", "DEFAULT")};
+      (*log)(LOG_INFO, "Configuration entry", params);
     }
   } catch (...) {
     // release the lock
@@ -240,8 +238,9 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
       log::Param params[] = {
         log::Param("category", category),
         log::Param("key", key),
-        log::Param("value", entIt->second)};
-      (*log)(LOG_INFO, "Got configuration entry", params);
+        log::Param("value", entIt->second),
+        log::Param("source", m_fileName)};
+      (*log)(LOG_INFO, "Configuration entry", params);
     }
 
     // release the lock

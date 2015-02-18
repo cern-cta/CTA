@@ -147,9 +147,8 @@ namespace castor {
               log::Param("category", category),
               log::Param("key", key),
               log::Param("value", defaultValue),
-              log::Param("source", "DEFAULT"),
-              log::Param("reasonForUsingDefault", ex.getMessage().str())};
-            (*log)(LOG_INFO, "Got configuration entry", params);
+              log::Param("source", "DEFAULT")};
+            (*log)(LOG_INFO, "Configuration entry", params);
           }
           return defaultValue;
         }
@@ -174,7 +173,7 @@ namespace castor {
             log::Param("key", key),
             log::Param("value", value),
             log::Param("source", m_fileName)};
-          (*log)(LOG_INFO, "Got configuration entry", params);
+          (*log)(LOG_INFO, "Configuration entry", params);
         }
 
         return value;
@@ -216,7 +215,7 @@ namespace castor {
             log::Param("key", key),
             log::Param("value", value),
             log::Param("source", m_fileName)};
-          (*log)(LOG_INFO, "Got configuration entry", params);
+          (*log)(LOG_INFO, "Configuration entry", params);
         }
 
         return value;
