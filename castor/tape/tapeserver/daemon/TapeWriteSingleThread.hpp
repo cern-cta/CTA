@@ -103,6 +103,15 @@ private:
       std::string currentErrorToCount = "Error_tapeUnload";
       try{
         // Do the final cleanup
+        // First check that a tape is actually present in the drive. We can get here
+        // after failing to mount (library error) in which case there is nothing to
+        // do (and trying to unmount will only lead to a failure.)
+        const uint32_t waitMediaInDriveTimeout = 60;
+        m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
+        if (!m_this.m_drive.hasTapeInPlace()) {
+          m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread: No tape to unload");
+          goto done;
+        }
         // in the special case of a "manual" mode tape, we should skip the unload too.
         if (mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType()) {
           m_this.m_drive.unloadTape();
@@ -146,7 +155,7 @@ private:
           }
         } catch (...) {}
       }
-      
+      done:
       //then we terminate the global status reporter
       m_this.m_initialProcess.finish();
     }
