@@ -1,5 +1,6 @@
 #include "XrdProFilesystem.hpp"
 #include "XrdProFile.hpp"
+#include "XrdProDir.hpp"
 
 #include "XrdOuc/XrdOucString.hh"
 #include "XrdSec/XrdSecEntity.hh"
@@ -1023,6 +1024,14 @@ XrdSfsFile * XrdProFilesystem::newFile(char *user, int MonID)
 }
 
 //------------------------------------------------------------------------------
+// newDir
+//------------------------------------------------------------------------------
+XrdSfsDirectory * XrdProFilesystem::newDir(char *user, int MonID)
+{
+  return new XrdProDir(m_clientAPI, user, MonID);
+}
+
+//------------------------------------------------------------------------------
 // fsctl
 //------------------------------------------------------------------------------
 int XrdProFilesystem::fsctl(const int cmd, const char *args, XrdOucErrInfo &eInfo, const XrdSecEntity *client)
@@ -1137,15 +1146,6 @@ int XrdProFilesystem::truncate(const char *path, XrdSfsFileOffset fsize, XrdOucE
   (void)path; (void)fsize; (void)eInfo; (void)client; (void)opaque;
   eInfo.setErrInfo(ENOTSUP, "Not supported.");
   return SFS_ERROR;
-}
-
-//------------------------------------------------------------------------------
-// newDir
-//------------------------------------------------------------------------------
-XrdSfsDirectory * XrdProFilesystem::newDir(char *user, int MonID)
-{
-  (void)user; (void)MonID;
-  return NULL;
 }
 
 //------------------------------------------------------------------------------
