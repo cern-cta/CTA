@@ -5,4 +5,4 @@ find_package (xrootd REQUIRED)
 include_directories (${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
 add_library (XrdProFst MODULE XrdProFilesystem.cpp XrdProFile.cpp XrdProDir.cpp ParsedRequest.cpp)
-target_link_libraries (XrdProFst ctaclient)
+target_link_libraries (XrdProFst ctamiddletier)

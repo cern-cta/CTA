@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.6)
 
-set (CLIENT_LIB_SRC_FILES
+set (MIDDLE_TIER_LIB_SRC_FILES
   AdminHost.cpp
   AdminUser.cpp
   ArchiveJob.cpp
@@ -29,5 +29,13 @@ set (CLIENT_LIB_SRC_FILES
   UserIdentity.cpp
   Utils.cpp)
 
-add_library (ctaclient SHARED
-  ${CLIENT_LIB_SRC_FILES})
+add_library (ctamiddletier SHARED
+  ${MIDDLE_TIER_LIB_SRC_FILES})
+
+set (MIDDLE_TIER_UNIT_TESTS_LIB_SRC_FILES
+  MockMiddleTierAdminTest.cpp
+  MockMiddleTierUserTest.cpp
+  UtilsTest.cpp)
+
+add_library (ctamiddletierunittests SHARED
+  ${MIDDLE_TIER_UNIT_TESTS_LIB_SRC_FILES})

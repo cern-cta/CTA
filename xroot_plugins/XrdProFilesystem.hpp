@@ -1,7 +1,7 @@
 #pragma once
 
-#include "libs/client/MockMiddleTierAdmin.hpp"
-#include "libs/client/MockMiddleTierUser.hpp"
+#include "libs/middletier/MockMiddleTierAdmin.hpp"
+#include "libs/middletier/MockMiddleTierUser.hpp"
 #include "XrdSfs/XrdSfsInterface.hh"
 
 #include "ParsedRequest.hpp"

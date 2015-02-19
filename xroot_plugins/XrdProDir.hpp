@@ -5,7 +5,7 @@
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdSfs/XrdSfsInterface.hh"
 
-#include "libs/client/MockMiddleTierUser.hpp"
+#include "libs/middletier/MockMiddleTierUser.hpp"
 
 class XrdProDir : public XrdSfsDirectory
 {

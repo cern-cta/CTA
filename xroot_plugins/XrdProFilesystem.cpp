@@ -5,7 +5,7 @@
 #include "XrdOuc/XrdOucString.hh"
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdVersion.hh"
-#include "libs/client/Exception.hpp"
+#include "libs/middletier/Exception.hpp"
 
 #include <iostream>
 #include <pwd.h>
