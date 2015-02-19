@@ -3,11 +3,8 @@
 #include "FileSystemNode.hpp"
 #include "FileSystemStorageClasses.hpp"
 #include "MiddleTierUser.hpp"
-#include "MigrationRoutes.hpp"
-#include "MockMiddleTierDatabase.hpp"
+#include "MockDatabase.hpp"
 #include "StorageClass.hpp"
-
-#include <vector>
 
 namespace cta {
 
@@ -22,7 +19,7 @@ public:
    *
    * @param db The database of the mock middle-tier.
    */
-  MockMiddleTierUser(MockMiddleTierDatabase &db);
+  MockMiddleTierUser(MockDatabase &db);
 
   /**
    * Destructor.
@@ -142,7 +139,7 @@ private:
   /**
    * The database of the mock middle-tier.
    */
-  MockMiddleTierDatabase &m_db;
+  MockDatabase &m_db;
 
   /**
    * Gets the file system node corresponding to the specified path.

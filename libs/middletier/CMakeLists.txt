@@ -17,11 +17,16 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   MiddleTierUser.cpp
   MigrationRoute.cpp
   MigrationRouteId.cpp
-  MigrationRoutes.cpp
-  MockMiddleTierDatabase.cpp
+  MockAdminHostDatabase.cpp
+  MockAdminUserDatabase.cpp
+  MockDatabase.cpp
+  MockLogicalLibraryDatabase.cpp
   MockMiddleTierAdmin.cpp
   MockMiddleTierUser.cpp
   MockMiddleTierUser.cpp
+  MockMigrationRouteDatabase.cpp
+  MockTapeDatabase.cpp
+  MockTapePoolDatabase.cpp
   SecurityIdentity.cpp
   StorageClass.cpp
   Tape.cpp
@@ -33,8 +38,13 @@ add_library (ctamiddletier SHARED
   ${MIDDLE_TIER_LIB_SRC_FILES})
 
 set (MIDDLE_TIER_UNIT_TESTS_LIB_SRC_FILES
+  MockAdminHostDatabaseTest.cpp
+  MockAdminUserDatabaseTest.cpp
+  MockLogicalLibraryDatabaseTest.cpp
   MockMiddleTierAdminTest.cpp
   MockMiddleTierUserTest.cpp
+  MockTapeDatabaseTest.cpp
+  MockTapePoolDatabaseTest.cpp
   UtilsTest.cpp)
 
 add_library (ctamiddletierunittests SHARED

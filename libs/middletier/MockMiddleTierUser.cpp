@@ -9,7 +9,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MockMiddleTierUser::MockMiddleTierUser(MockMiddleTierDatabase &db):
+cta::MockMiddleTierUser::MockMiddleTierUser(MockDatabase &db):
   m_db(db) {
 }
 

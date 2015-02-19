@@ -1,5 +1,5 @@
 #include "Exception.hpp"
-#include "MockMiddleTierDatabase.hpp"
+#include "MockDatabase.hpp"
 
 #include <iostream>
 #include <memory>
@@ -8,7 +8,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MockMiddleTierDatabase::MockMiddleTierDatabase():
+cta::MockDatabase::MockDatabase():
   fileSystemRoot(storageClasses,
     DirectoryEntry(DirectoryEntry::ENTRYTYPE_DIRECTORY, "/", "")) {
 }
@@ -16,5 +16,5 @@ cta::MockMiddleTierDatabase::MockMiddleTierDatabase():
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::MockMiddleTierDatabase::~MockMiddleTierDatabase() throw() {
+cta::MockDatabase::~MockDatabase() throw() {
 }

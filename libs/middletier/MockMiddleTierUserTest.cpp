@@ -19,7 +19,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   getDirectoryContents_root_dir_is_empty) {
   using namespace cta;
 
-  MockMiddleTierDatabase db;
+  MockDatabase db;
   MockMiddleTierUser api(db);
   const SecurityIdentity requester;
   const std::string dirPath = "/";
@@ -32,7 +32,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
 TEST_F(cta_client_MockMiddleTierUserTest, createDirectory_empty_string) {
   using namespace cta;
 
-  MockMiddleTierDatabase db;
+  MockDatabase db;
   MockMiddleTierUser api(db);
   const SecurityIdentity requester;
   const std::string dirPath = "";
@@ -44,7 +44,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   createDirectory_consecutive_slashes) {
   using namespace cta;
 
-  MockMiddleTierDatabase db;
+  MockDatabase db;
   MockMiddleTierUser api(db);
   const SecurityIdentity requester;
   const std::string dirPath = "//";
@@ -55,7 +55,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
 TEST_F(cta_client_MockMiddleTierUserTest, createDirectory_invalid_chars) {
   using namespace cta;
 
-  MockMiddleTierDatabase db;
+  MockDatabase db;
   MockMiddleTierUser api(db);
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent/?parent";
@@ -66,7 +66,7 @@ TEST_F(cta_client_MockMiddleTierUserTest, createDirectory_invalid_chars) {
 TEST_F(cta_client_MockMiddleTierUserTest, createDirectory_top_level) {
   using namespace cta;
 
-  MockMiddleTierDatabase db;
+  MockDatabase db;
   MockMiddleTierUser api(db);
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
@@ -89,7 +89,7 @@ TEST_F(cta_client_MockMiddleTierUserTest, createDirectory_top_level) {
 TEST_F(cta_client_MockMiddleTierUserTest, createDirectory_second_level) {
   using namespace cta;
 
-  MockMiddleTierDatabase db;
+  MockDatabase db;
   MockMiddleTierUser api(db);
   const SecurityIdentity requester;
 
@@ -159,7 +159,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   createDirectory_inherit_storage_class) {
   using namespace cta;
 
-  MockMiddleTierDatabase db;
+  MockDatabase db;
   MockMiddleTierUser userApi(db);
   const SecurityIdentity requester;
 
@@ -242,7 +242,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
 TEST_F(cta_client_MockMiddleTierUserTest, deleteDirectory_root) {
   using namespace cta;
 
-  MockMiddleTierDatabase db;
+  MockDatabase db;
   MockMiddleTierUser api(db);
   const SecurityIdentity requester;
   const std::string dirPath = "/";
@@ -253,7 +253,7 @@ TEST_F(cta_client_MockMiddleTierUserTest, deleteDirectory_root) {
 TEST_F(cta_client_MockMiddleTierUserTest, deleteDirectory_existing_top_level) {
   using namespace cta;
 
-  MockMiddleTierDatabase db;
+  MockDatabase db;
   MockMiddleTierUser api(db);
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
@@ -289,7 +289,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   deleteDirectory_non_empty_top_level) {
   using namespace cta;
 
-  MockMiddleTierDatabase db;
+  MockDatabase db;
   MockMiddleTierUser api(db);
   const SecurityIdentity requester;
 
@@ -364,7 +364,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   deleteDirectory_non_existing_top_level) {
   using namespace cta;
   
-  MockMiddleTierDatabase db;
+  MockDatabase db;
   MockMiddleTierUser api(db);
   const SecurityIdentity requester;
 
@@ -374,7 +374,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
 TEST_F(cta_client_MockMiddleTierUserTest, setDirectoryStorageClass_top_level) {
   using namespace cta;
 
-  MockMiddleTierDatabase db;
+  MockDatabase db;
   MockMiddleTierUser api(db);
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
@@ -422,7 +422,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   clearDirectoryStorageClass_top_level) {
   using namespace cta;
 
-  MockMiddleTierDatabase db;
+  MockDatabase db;
   MockMiddleTierUser api(db);
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";

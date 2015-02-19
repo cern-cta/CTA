@@ -35,7 +35,7 @@ protected:
   /**
    * The middle-tier database.
    */
-  cta::MockMiddleTierDatabase m_db;
+  cta::MockDatabase m_db;
   
   /**
    * The middle-tier administration API

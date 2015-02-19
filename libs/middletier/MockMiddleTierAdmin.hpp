@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MiddleTierAdmin.hpp"
-#include "MockMiddleTierDatabase.hpp"
+#include "MockDatabase.hpp"
 
 namespace cta {
 
@@ -16,7 +16,7 @@ public:
    *
    * @param db The database of the mock middle-tier.
    */
-  MockMiddleTierAdmin(MockMiddleTierDatabase &db);
+  MockMiddleTierAdmin(MockDatabase &db);
 
   /**
    * Destructor.
@@ -281,20 +281,6 @@ public:
 protected:
 
   /**
-   * Throws an exception if the specified administrator already exists.
-   *
-   * @param user The identity of the administrator.
-   */
-  void checkAdminUserDoesNotAlreadyExist(const UserIdentity &user) const;
-
-  /**
-   * Throws an exception if the specified administration host already exists.
-   *
-   * @param hostName The network name of the administration host.
-   */
-  void checkAdminHostDoesNotAlreadyExist(const std::string &hostName) const;
-
-  /**
    * Gets the file system node corresponding to the specified path.
    *
    * @path The path.
@@ -309,13 +295,6 @@ protected:
    * @return The corresponding file system node.
    */
   const FileSystemNode &getFileSystemNode(const std::string &path) const;
-
-  /**
-   * Throws an exception if the specified tape pool already exixts.
-   *
-   * @param name The name of the tape pool.
-   */
-  void checkTapePoolDoesNotAlreadyExist(const std::string &name) const;
 
   /**
    * Throws an exception if the specified tape pool is in use.
@@ -343,23 +322,9 @@ protected:
   bool isAnExistingDirectory(const std::string &path) const throw();
 
   /**
-   * Throws an exception if the specified logical library already exists.
-   *
-   * @param name The name of the logical library.
-   */
-  void checkLogicalLibraryDoesNotAlreadyExist(const std::string &name) const;
-
-  /**
-   * Throws an exception if the specified tape already exists.
-   *
-   * @param vid The volume identifier of the tape.
-   */
-  void checkTapeDoesNotAlreadyExist(const std::string &vid) const;
-
-  /**
    * The database of the mock middle-tier.
    */
-  MockMiddleTierDatabase &m_db;
+  MockDatabase &m_db;
 
 }; // class MockMiddleTierAdmin
 

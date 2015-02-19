@@ -11,9 +11,9 @@
 namespace cta {
 
 /**
- * Container of migration routes.
+ * Mock database of migration routes.
  */
-class MigrationRoutes {
+class MockMigrationRouteDatabase {
 public:
 
   /**
@@ -92,6 +92,6 @@ private:
   void checkMigrationRouteDoesNotAlreadyExists(const MigrationRouteId &routeId)
     const;
 
-}; // class MigrationRoutes
+}; // class MockMigrationRouteDatabase
 
 } // namespace cta
