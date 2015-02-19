@@ -354,6 +354,29 @@ void cta::MockMiddleTierAdmin::createTape(
   const std::string &tapePoolName,
   const uint64_t capacityInBytes,
   const std::string &comment) {
+  checkTapeDoesNotAlreadyExist(vid);
+  Tape tape(
+    vid,
+    logicalLibraryName,
+    tapePoolName,
+    capacityInBytes,
+    requester.user,
+    comment);
+  m_db.tapes[vid] = tape;
+}
+
+//------------------------------------------------------------------------------
+// checkTapeDoesNotAlreadyExist
+//------------------------------------------------------------------------------
+void cta::MockMiddleTierAdmin::checkTapeDoesNotAlreadyExist(
+  const std::string &vid) const {
+  std::map<std::string, Tape>::const_iterator itor =
+    m_db.tapes.find(vid);
+  if(itor != m_db.tapes.end()) {
+    std::ostringstream message;
+    message << "Tape with vid " << vid << " already exists";
+    throw(Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -362,6 +385,19 @@ void cta::MockMiddleTierAdmin::createTape(
 void cta::MockMiddleTierAdmin::deleteTape(
   const SecurityIdentity &requester,
   const std::string &vid) {
+  for(std::map<std::string, Tape>::iterator itor = m_db.tapes.begin();
+    itor != m_db.tapes.end(); itor++) {
+    if(vid == itor->first) {
+      m_db.tapes.erase(itor);
+      return;
+    }
+  }
+
+  // Reaching this point means the tape to be deleted does not
+  // exist
+  std::ostringstream message;
+  message << "Tape iwith volume identifier " << vid << " does not exist";
+  throw Exception(message.str());
 }
 
 //------------------------------------------------------------------------------
@@ -370,5 +406,11 @@ void cta::MockMiddleTierAdmin::deleteTape(
 std::list<cta::Tape> cta::MockMiddleTierAdmin::getTapes(
   const SecurityIdentity &requester) const {
   std::list<cta::Tape> tapes;
+
+  for(std::map<std::string, Tape>::const_iterator itor = m_db.tapes.begin();
+    itor != m_db.tapes.end(); itor++) {
+    tapes.push_back(itor->second);
+  }
+
   return tapes;
 }

@@ -1320,7 +1320,7 @@ TEST_F(cta_client_MockMiddleTierAdminTest, deleteTape_existing) {
   ASSERT_THROW(adminApi.createTape(requester, vid, libraryName, poolName,
     capacityInBytes, tapeComment), std::exception);
 
-  ASSERT_NO_THROW(adminApi.deleteLogicalLibrary(requester, vid));
+  ASSERT_NO_THROW(adminApi.deleteTape(requester, vid));
 
   {
     std::list<Tape> tapes;

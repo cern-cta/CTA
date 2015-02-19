@@ -350,6 +350,13 @@ protected:
   void checkLogicalLibraryDoesNotAlreadyExist(const std::string &name) const;
 
   /**
+   * Throws an exception if the specified tape already exists.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  void checkTapeDoesNotAlreadyExist(const std::string &vid) const;
+
+  /**
    * The database of the mock middle-tier.
    */
   MockMiddleTierDatabase &m_db;

@@ -8,6 +8,7 @@
 #include "MiddleTierUser.hpp"
 #include "MigrationRoutes.hpp"
 #include "StorageClass.hpp"
+#include "Tape.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -68,6 +69,11 @@ public:
    * Mapping from logical-library name to logical library.
    */
   std::map<std::string, LogicalLibrary> libraries;
+
+  /**
+   * Mapping from volume identiifer to tape.
+   */
+  std::map<std::string, Tape> tapes;
 
 }; // class MockMiddleTierDatabase
 
