@@ -1,12 +1,12 @@
 #include "Exception.hpp"
-#include "MockMigrationRouteDatabase.hpp"
+#include "MockMigrationRouteTable.hpp"
 
 #include <sstream>
 
 //------------------------------------------------------------------------------
 // createMigrationRoute
 //------------------------------------------------------------------------------
-void cta::MockMigrationRouteDatabase::createMigrationRoute(
+void cta::MockMigrationRouteTable::createMigrationRoute(
   const std::string &storageClassName,
   const uint8_t copyNb,
   const std::string &tapePoolName,
@@ -26,7 +26,7 @@ void cta::MockMigrationRouteDatabase::createMigrationRoute(
 //------------------------------------------------------------------------------
 // checkMigrationRouteDoesNotAlreadyExists
 //------------------------------------------------------------------------------
-void cta::MockMigrationRouteDatabase::checkMigrationRouteDoesNotAlreadyExists(
+void cta::MockMigrationRouteTable::checkMigrationRouteDoesNotAlreadyExists(
   const MigrationRouteId &routeId) const {
   std::map<MigrationRouteId, MigrationRoute>::const_iterator itor =
     m_migrationRoutes.find(routeId);
@@ -42,7 +42,7 @@ void cta::MockMigrationRouteDatabase::checkMigrationRouteDoesNotAlreadyExists(
 //------------------------------------------------------------------------------
 // deleteMigrationRoute
 //------------------------------------------------------------------------------
-void cta::MockMigrationRouteDatabase::deleteMigrationRoute(
+void cta::MockMigrationRouteTable::deleteMigrationRoute(
   const std::string &storageClassName,
   const uint8_t copyNb) {
   const MigrationRouteId routeId(storageClassName, copyNb);
@@ -61,7 +61,7 @@ void cta::MockMigrationRouteDatabase::deleteMigrationRoute(
 //------------------------------------------------------------------------------
 // getMigrationRoutes
 //------------------------------------------------------------------------------
-std::list<cta::MigrationRoute> cta::MockMigrationRouteDatabase::
+std::list<cta::MigrationRoute> cta::MockMigrationRouteTable::
   getMigrationRoutes() const {
   std::list<cta::MigrationRoute> routes;
   for(std::map<MigrationRouteId, MigrationRoute>::const_iterator itor =
@@ -74,14 +74,14 @@ std::list<cta::MigrationRoute> cta::MockMigrationRouteDatabase::
 //------------------------------------------------------------------------------
 // checkMigrationRouteExists
 //------------------------------------------------------------------------------
-void cta::MockMigrationRouteDatabase::checkMigrationRouteExists(
+void cta::MockMigrationRouteTable::checkMigrationRouteExists(
   const std::string &storageClassName, const uint8_t copyNb) const {
 }
 
 //------------------------------------------------------------------------------
 // tapePoolIsInAMigrationRoute
 //------------------------------------------------------------------------------
-bool cta::MockMigrationRouteDatabase::tapePoolIsInAMigrationRoute(
+bool cta::MockMigrationRouteTable::tapePoolIsInAMigrationRoute(
   const std::string &name) const {
   for(std::map<MigrationRouteId, MigrationRoute>::const_iterator itor =
     m_migrationRoutes.begin(); itor != m_migrationRoutes.end(); itor++) {
@@ -95,7 +95,7 @@ bool cta::MockMigrationRouteDatabase::tapePoolIsInAMigrationRoute(
 //------------------------------------------------------------------------------
 // storageClassIsInAMigrationRoute
 //------------------------------------------------------------------------------
-bool cta::MockMigrationRouteDatabase::storageClassIsInAMigrationRoute(
+bool cta::MockMigrationRouteTable::storageClassIsInAMigrationRoute(
   const std::string &name) const {
   for(std::map<MigrationRouteId, MigrationRoute>::const_iterator itor =
     m_migrationRoutes.begin(); itor != m_migrationRoutes.end(); itor++) {

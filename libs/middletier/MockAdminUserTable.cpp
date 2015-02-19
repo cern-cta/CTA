@@ -1,5 +1,5 @@
 #include "Exception.hpp"
-#include "MockAdminUserDatabase.hpp"
+#include "MockAdminUserTable.hpp"
 
 #include <iostream>
 #include <memory>
@@ -8,7 +8,7 @@
 //------------------------------------------------------------------------------
 // createAdminUser
 //------------------------------------------------------------------------------
-void cta::MockAdminUserDatabase::createAdminUser(
+void cta::MockAdminUserTable::createAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user,
   const std::string &comment) {
@@ -20,7 +20,7 @@ void cta::MockAdminUserDatabase::createAdminUser(
 //------------------------------------------------------------------------------
 // checkAdminUserDoesNotAlreadyExist
 //------------------------------------------------------------------------------
-void cta::MockAdminUserDatabase::checkAdminUserDoesNotAlreadyExist(
+void cta::MockAdminUserTable::checkAdminUserDoesNotAlreadyExist(
   const UserIdentity &user) const {
   std::map<uint32_t, AdminUser>::const_iterator itor =
     m_adminUsers.find(user.getUid());
@@ -35,7 +35,7 @@ void cta::MockAdminUserDatabase::checkAdminUserDoesNotAlreadyExist(
 //------------------------------------------------------------------------------
 // deleteAdminUser
 //------------------------------------------------------------------------------
-void cta::MockAdminUserDatabase::deleteAdminUser(
+void cta::MockAdminUserTable::deleteAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user) {
   for(std::map<uint32_t, AdminUser>::iterator itor = m_adminUsers.begin();
@@ -55,7 +55,7 @@ void cta::MockAdminUserDatabase::deleteAdminUser(
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
-std::list<cta::AdminUser> cta::MockAdminUserDatabase::getAdminUsers(
+std::list<cta::AdminUser> cta::MockAdminUserTable::getAdminUsers(
   const SecurityIdentity &requester) const {
   std::list<cta::AdminUser> users;
   for(std::map<uint32_t, AdminUser>::const_iterator itor =

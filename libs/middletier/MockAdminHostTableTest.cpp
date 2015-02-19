@@ -1,10 +1,10 @@
-#include "MockAdminHostDatabase.hpp"
+#include "MockAdminHostTable.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-class cta_client_MockAdminHostDatabaseTest: public ::testing::Test {
+class cta_client_MockAdminHostTableTest: public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -14,10 +14,10 @@ protected:
   }
 };
 
-TEST_F(cta_client_MockAdminHostDatabaseTest, createAdminHost_new) {
+TEST_F(cta_client_MockAdminHostTableTest, createAdminHost_new) {
   using namespace cta;
 
-  MockAdminHostDatabase db;
+  MockAdminHostTable db;
   const SecurityIdentity requester;
 
   {
@@ -40,10 +40,10 @@ TEST_F(cta_client_MockAdminHostDatabaseTest, createAdminHost_new) {
   }
 }
 
-TEST_F(cta_client_MockAdminHostDatabaseTest, deleteAdminHost_existing) {
+TEST_F(cta_client_MockAdminHostTableTest, deleteAdminHost_existing) {
   using namespace cta;
 
-  MockAdminHostDatabase db;
+  MockAdminHostTable db;
   const SecurityIdentity requester;
 
   {
@@ -74,10 +74,10 @@ TEST_F(cta_client_MockAdminHostDatabaseTest, deleteAdminHost_existing) {
   }
 }
 
-TEST_F(cta_client_MockAdminHostDatabaseTest, deleteAdminHost_non_existing) {
+TEST_F(cta_client_MockAdminHostTableTest, deleteAdminHost_non_existing) {
   using namespace cta;
 
-  MockAdminHostDatabase db;
+  MockAdminHostTable db;
   const SecurityIdentity requester;
   
   {

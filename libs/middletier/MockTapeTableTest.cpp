@@ -1,10 +1,10 @@
-#include "MockTapeDatabase.hpp"
+#include "MockTapeTable.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-class cta_client_MockTapeDatabaseTest: public ::testing::Test {
+class cta_client_MockTapeTableTest: public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -14,10 +14,10 @@ protected:
   }
 };
 
-TEST_F(cta_client_MockTapeDatabaseTest, createTape_new) {
+TEST_F(cta_client_MockTapeTableTest, createTape_new) {
   using namespace cta;
 
-  MockTapeDatabase db;
+  MockTapeTable db;
   const SecurityIdentity requester;
 
   {
@@ -50,10 +50,10 @@ TEST_F(cta_client_MockTapeDatabaseTest, createTape_new) {
   }
 }
 
-TEST_F(cta_client_MockTapeDatabaseTest, createTape_already_existing) {
+TEST_F(cta_client_MockTapeTableTest, createTape_already_existing) {
   using namespace cta;
 
-  MockTapeDatabase db;
+  MockTapeTable db;
   const SecurityIdentity requester;
 
   {
@@ -104,10 +104,10 @@ TEST_F(cta_client_MockTapeDatabaseTest, createTape_already_existing) {
   }
 }
 
-TEST_F(cta_client_MockTapeDatabaseTest, createTape_lexicographical_order) {
+TEST_F(cta_client_MockTapeTableTest, createTape_lexicographical_order) {
   using namespace cta;
 
-  MockTapeDatabase db;
+  MockTapeTable db;
   const SecurityIdentity requester;
 
   {
@@ -143,10 +143,10 @@ TEST_F(cta_client_MockTapeDatabaseTest, createTape_lexicographical_order) {
   }
 }
 
-TEST_F(cta_client_MockTapeDatabaseTest, deleteTape_existing) {
+TEST_F(cta_client_MockTapeTableTest, deleteTape_existing) {
   using namespace cta;
 
-  MockTapeDatabase db;
+  MockTapeTable db;
   const SecurityIdentity requester;
 
   {
@@ -190,10 +190,10 @@ TEST_F(cta_client_MockTapeDatabaseTest, deleteTape_existing) {
   }
 }
 
-TEST_F(cta_client_MockTapeDatabaseTest, deleteTape_non_existing) {
+TEST_F(cta_client_MockTapeTableTest, deleteTape_non_existing) {
   using namespace cta;
 
-  MockTapeDatabase db;
+  MockTapeTable db;
   const SecurityIdentity requester;
 
   {

@@ -1,5 +1,5 @@
 #include "Exception.hpp"
-#include "MockLogicalLibraryDatabase.hpp"
+#include "MockLogicalLibraryTable.hpp"
 
 #include <iostream>
 #include <memory>
@@ -8,7 +8,7 @@
 //------------------------------------------------------------------------------
 // createLogicalLibrary
 //------------------------------------------------------------------------------
-void cta::MockLogicalLibraryDatabase::createLogicalLibrary(
+void cta::MockLogicalLibraryTable::createLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name,
   const std::string &comment) {
@@ -20,7 +20,7 @@ void cta::MockLogicalLibraryDatabase::createLogicalLibrary(
 //------------------------------------------------------------------------------
 // checkLogicalLibraryDoesNotAlreadyExist
 //------------------------------------------------------------------------------
-void cta::MockLogicalLibraryDatabase::checkLogicalLibraryDoesNotAlreadyExist(
+void cta::MockLogicalLibraryTable::checkLogicalLibraryDoesNotAlreadyExist(
   const std::string &name) const {
   std::map<std::string, LogicalLibrary>::const_iterator itor =
     m_libraries.find(name);
@@ -34,7 +34,7 @@ void cta::MockLogicalLibraryDatabase::checkLogicalLibraryDoesNotAlreadyExist(
 //------------------------------------------------------------------------------
 // deleteLogicalLibrary
 //------------------------------------------------------------------------------
-void cta::MockLogicalLibraryDatabase::deleteLogicalLibrary(
+void cta::MockLogicalLibraryTable::deleteLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name) {
   for(std::map<std::string, LogicalLibrary>::iterator itor =
@@ -56,7 +56,7 @@ void cta::MockLogicalLibraryDatabase::deleteLogicalLibrary(
 //------------------------------------------------------------------------------
 // getLogicalLibraries
 //------------------------------------------------------------------------------
-std::list<cta::LogicalLibrary> cta::MockLogicalLibraryDatabase::getLogicalLibraries(
+std::list<cta::LogicalLibrary> cta::MockLogicalLibraryTable::getLogicalLibraries(
   const SecurityIdentity &requester) const {
   std::list<LogicalLibrary> libraries;
 

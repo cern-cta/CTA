@@ -1,11 +1,11 @@
-#include "MockAdminUserDatabase.hpp"
+#include "MockAdminUserTable.hpp"
 #include "MockMiddleTierUser.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-class cta_client_MockAdminUserDatabaseTest: public ::testing::Test {
+class cta_client_MockAdminUserTableTest: public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -15,10 +15,10 @@ protected:
   }
 };
 
-TEST_F(cta_client_MockAdminUserDatabaseTest, createAdminUser_new) {
+TEST_F(cta_client_MockAdminUserTableTest, createAdminUser_new) {
   using namespace cta;
 
-  MockAdminUserDatabase db;
+  MockAdminUserTable db;
   const SecurityIdentity requester;
 
   {
@@ -44,10 +44,10 @@ TEST_F(cta_client_MockAdminUserDatabaseTest, createAdminUser_new) {
   }
 }
 
-TEST_F(cta_client_MockAdminUserDatabaseTest, createAdminUser_already_existing) {
+TEST_F(cta_client_MockAdminUserTableTest, createAdminUser_already_existing) {
   using namespace cta;
 
-  MockAdminUserDatabase db;
+  MockAdminUserTable db;
   const SecurityIdentity requester;
 
   {
@@ -82,10 +82,10 @@ TEST_F(cta_client_MockAdminUserDatabaseTest, createAdminUser_already_existing) {
   }
 }
 
-TEST_F(cta_client_MockAdminUserDatabaseTest, deleteAdminUser_existing) {
+TEST_F(cta_client_MockAdminUserTableTest, deleteAdminUser_existing) {
   using namespace cta;
 
-  MockAdminUserDatabase db;
+  MockAdminUserTable db;
   const SecurityIdentity requester;
 
   {
@@ -118,10 +118,10 @@ TEST_F(cta_client_MockAdminUserDatabaseTest, deleteAdminUser_existing) {
   }
 }
 
-TEST_F(cta_client_MockAdminUserDatabaseTest, deleteAdminUser_non_existing) {
+TEST_F(cta_client_MockAdminUserTableTest, deleteAdminUser_non_existing) {
   using namespace cta;
 
-  MockAdminUserDatabase db;
+  MockAdminUserTable db;
   const SecurityIdentity requester;
 
   {

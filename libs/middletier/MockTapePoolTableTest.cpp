@@ -1,10 +1,10 @@
-#include "MockTapePoolDatabase.hpp"
+#include "MockTapePoolTable.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-class cta_client_MockTapePoolDatabaseTest: public ::testing::Test {
+class cta_client_MockTapePoolTableTest: public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -14,10 +14,10 @@ protected:
   }
 };
 
-TEST_F(cta_client_MockTapePoolDatabaseTest, createTapePool_new) {
+TEST_F(cta_client_MockTapePoolTableTest, createTapePool_new) {
   using namespace cta;
 
-  MockTapePoolDatabase db;
+  MockTapePoolTable db;
   const SecurityIdentity requester;
 
   {
@@ -45,10 +45,10 @@ TEST_F(cta_client_MockTapePoolDatabaseTest, createTapePool_new) {
   }
 }
 
-TEST_F(cta_client_MockTapePoolDatabaseTest, createTapePool_already_existing) {
+TEST_F(cta_client_MockTapePoolTableTest, createTapePool_already_existing) {
   using namespace cta;
 
-  MockTapePoolDatabase db;
+  MockTapePoolTable db;
   const SecurityIdentity requester;
 
   {
@@ -79,10 +79,10 @@ TEST_F(cta_client_MockTapePoolDatabaseTest, createTapePool_already_existing) {
     nbPartialTapes, comment), std::exception);
 }
 
-TEST_F(cta_client_MockTapePoolDatabaseTest, createTapePool_lexicographical_order) {
+TEST_F(cta_client_MockTapePoolTableTest, createTapePool_lexicographical_order) {
   using namespace cta;
 
-  MockTapePoolDatabase db;
+  MockTapePoolTable db;
   const SecurityIdentity requester;
 
   {
@@ -118,10 +118,10 @@ TEST_F(cta_client_MockTapePoolDatabaseTest, createTapePool_lexicographical_order
   }
 }
 
-TEST_F(cta_client_MockTapePoolDatabaseTest, deleteTapePool_existing) {
+TEST_F(cta_client_MockTapePoolTableTest, deleteTapePool_existing) {
   using namespace cta;
 
-  MockTapePoolDatabase db;
+  MockTapePoolTable db;
   const SecurityIdentity requester;
 
   {
@@ -157,10 +157,10 @@ TEST_F(cta_client_MockTapePoolDatabaseTest, deleteTapePool_existing) {
   }
 }
 
-TEST_F(cta_client_MockTapePoolDatabaseTest, deleteTapePool_non_existing) {
+TEST_F(cta_client_MockTapePoolTableTest, deleteTapePool_non_existing) {
   using namespace cta;
 
-  MockTapePoolDatabase db;
+  MockTapePoolTable db;
   const SecurityIdentity requester;
 
   {

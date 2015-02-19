@@ -10,9 +10,9 @@
 namespace cta {
 
 /**
- * Mock database of tapes.
+ * Mock database-table of tapes.
  */
-class MockTapeDatabase {
+class MockTapeTable {
 public:
 
   /**
@@ -71,6 +71,6 @@ private:
    */
   std::map<std::string, Tape> m_tapes;
 
-}; // class MockTapeDatabase
+}; // class MockTapeTable
 
 } // namespace cta

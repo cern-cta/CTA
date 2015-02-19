@@ -1,12 +1,12 @@
 #include "Exception.hpp"
-#include "MockTapePoolDatabase.hpp"
+#include "MockTapePoolTable.hpp"
 
 #include <sstream>
 
 //------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
-void cta::MockTapePoolDatabase::createTapePool(
+void cta::MockTapePoolTable::createTapePool(
   const SecurityIdentity &requester,
   const std::string &name,
   const uint16_t nbDrives,
@@ -20,7 +20,7 @@ void cta::MockTapePoolDatabase::createTapePool(
 //------------------------------------------------------------------------------
 // checkTapePoolDoesNotAlreadyExist
 //------------------------------------------------------------------------------
-void cta::MockTapePoolDatabase::checkTapePoolDoesNotAlreadyExist(
+void cta::MockTapePoolTable::checkTapePoolDoesNotAlreadyExist(
   const std::string &name) const {
   std::map<std::string, TapePool>::const_iterator itor =
     m_tapePools.find(name);
@@ -34,7 +34,7 @@ void cta::MockTapePoolDatabase::checkTapePoolDoesNotAlreadyExist(
 //------------------------------------------------------------------------------
 // deleteTapePool
 //------------------------------------------------------------------------------
-void cta::MockTapePoolDatabase::deleteTapePool(const SecurityIdentity &requester,
+void cta::MockTapePoolTable::deleteTapePool(const SecurityIdentity &requester,
   const std::string &name) {
   std::map<std::string, TapePool>::iterator itor = m_tapePools.find(name);
   if(itor == m_tapePools.end()) {
@@ -48,7 +48,7 @@ void cta::MockTapePoolDatabase::deleteTapePool(const SecurityIdentity &requester
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
-std::list<cta::TapePool> cta::MockTapePoolDatabase::getTapePools(
+std::list<cta::TapePool> cta::MockTapePoolTable::getTapePools(
   const SecurityIdentity &requester) const {
   std::list<cta::TapePool> tapePools;
 

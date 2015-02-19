@@ -1,12 +1,12 @@
 #include "Exception.hpp"
-#include "MockTapeDatabase.hpp"
+#include "MockTapeTable.hpp"
 
 #include <sstream>
 
 //------------------------------------------------------------------------------
 // createTape
 //------------------------------------------------------------------------------
-void cta::MockTapeDatabase::createTape(
+void cta::MockTapeTable::createTape(
   const SecurityIdentity &requester,
   const std::string &vid,
   const std::string &logicalLibraryName,
@@ -27,7 +27,7 @@ void cta::MockTapeDatabase::createTape(
 //------------------------------------------------------------------------------
 // checkTapeDoesNotAlreadyExist
 //------------------------------------------------------------------------------
-void cta::MockTapeDatabase::checkTapeDoesNotAlreadyExist(
+void cta::MockTapeTable::checkTapeDoesNotAlreadyExist(
   const std::string &vid) const {
   std::map<std::string, Tape>::const_iterator itor =
     m_tapes.find(vid);
@@ -41,7 +41,7 @@ void cta::MockTapeDatabase::checkTapeDoesNotAlreadyExist(
 //------------------------------------------------------------------------------
 // deleteTape
 //------------------------------------------------------------------------------
-void cta::MockTapeDatabase::deleteTape(
+void cta::MockTapeTable::deleteTape(
   const SecurityIdentity &requester,
   const std::string &vid) {
   for(std::map<std::string, Tape>::iterator itor = m_tapes.begin();
@@ -62,7 +62,7 @@ void cta::MockTapeDatabase::deleteTape(
 //------------------------------------------------------------------------------
 // getTapes
 //------------------------------------------------------------------------------
-std::list<cta::Tape> cta::MockTapeDatabase::getTapes(
+std::list<cta::Tape> cta::MockTapeTable::getTapes(
   const SecurityIdentity &requester) const {
   std::list<cta::Tape> tapes;
 

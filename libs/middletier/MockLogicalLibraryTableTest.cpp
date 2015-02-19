@@ -1,10 +1,10 @@
-#include "MockLogicalLibraryDatabase.hpp"
+#include "MockLogicalLibraryTable.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-class cta_client_MockLogicalLibraryDatabaseTest: public ::testing::Test {
+class cta_client_MockLogicalLibraryTableTest: public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -14,10 +14,10 @@ protected:
   }
 };
 
-TEST_F(cta_client_MockLogicalLibraryDatabaseTest, createLogicalLibrary_new) {
+TEST_F(cta_client_MockLogicalLibraryTableTest, createLogicalLibrary_new) {
   using namespace cta;
 
-  MockLogicalLibraryDatabase db;
+  MockLogicalLibraryTable db;
   const SecurityIdentity requester;
 
   {
@@ -43,11 +43,11 @@ TEST_F(cta_client_MockLogicalLibraryDatabaseTest, createLogicalLibrary_new) {
   }
 }
 
-TEST_F(cta_client_MockLogicalLibraryDatabaseTest,
+TEST_F(cta_client_MockLogicalLibraryTableTest,
   createLogicalLibrary_already_existing) {
   using namespace cta;
 
-  MockLogicalLibraryDatabase db;
+  MockLogicalLibraryTable db;
   const SecurityIdentity requester;
 
   {
@@ -76,11 +76,11 @@ TEST_F(cta_client_MockLogicalLibraryDatabaseTest,
     libraryComment), std::exception);
 }
 
-TEST_F(cta_client_MockLogicalLibraryDatabaseTest,
+TEST_F(cta_client_MockLogicalLibraryTableTest,
   createLogicalLibrary_lexicographical_order) {
   using namespace cta;
 
-  MockLogicalLibraryDatabase db;
+  MockLogicalLibraryTable db;
   const SecurityIdentity requester;
 
   {
@@ -109,10 +109,10 @@ TEST_F(cta_client_MockLogicalLibraryDatabaseTest,
   }
 }
 
-TEST_F(cta_client_MockLogicalLibraryDatabaseTest, deleteLogicalLibrary_existing) {
+TEST_F(cta_client_MockLogicalLibraryTableTest, deleteLogicalLibrary_existing) {
   using namespace cta;
 
-  MockLogicalLibraryDatabase db;
+  MockLogicalLibraryTable db;
   const SecurityIdentity requester;
 
   {
@@ -146,11 +146,11 @@ TEST_F(cta_client_MockLogicalLibraryDatabaseTest, deleteLogicalLibrary_existing)
   }
 }
 
-TEST_F(cta_client_MockLogicalLibraryDatabaseTest,
+TEST_F(cta_client_MockLogicalLibraryTableTest,
   deleteLogicalLibrary_non_existing) {
   using namespace cta;
 
-  MockLogicalLibraryDatabase db;
+  MockLogicalLibraryTable db;
   const SecurityIdentity requester;
 
   {

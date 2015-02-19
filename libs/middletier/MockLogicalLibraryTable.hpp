@@ -10,9 +10,9 @@
 namespace cta {
 
 /**
- * Mock middle-tier.
+ * Mock database-table logical libraries.
  */
-class MockLogicalLibraryDatabase {
+class MockLogicalLibraryTable {
 public:
 
   /**
@@ -62,6 +62,6 @@ private:
    */
   std::map<std::string, LogicalLibrary> m_libraries;
 
-}; // class MockLogicalLibraryDatabase
+}; // class MockLogicalLibraryTable
 
 } // namespace cta

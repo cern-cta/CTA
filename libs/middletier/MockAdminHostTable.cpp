@@ -1,12 +1,12 @@
 #include "Exception.hpp"
-#include "MockAdminHostDatabase.hpp"
+#include "MockAdminHostTable.hpp"
 
 #include <sstream>
 
 //------------------------------------------------------------------------------
 // createAdminHost
 //------------------------------------------------------------------------------
-void cta::MockAdminHostDatabase::createAdminHost(
+void cta::MockAdminHostTable::createAdminHost(
   const SecurityIdentity &requester,
   const std::string &hostName,
   const std::string &comment) {
@@ -18,7 +18,7 @@ void cta::MockAdminHostDatabase::createAdminHost(
 //------------------------------------------------------------------------------
 // checkAdminHostDoesNotAlreadyExist
 //------------------------------------------------------------------------------
-void cta::MockAdminHostDatabase::checkAdminHostDoesNotAlreadyExist(
+void cta::MockAdminHostTable::checkAdminHostDoesNotAlreadyExist(
   const std::string &hostName) const {
   std::map<std::string, AdminHost>::const_iterator itor =
     m_adminHosts.find(hostName);
@@ -32,7 +32,7 @@ void cta::MockAdminHostDatabase::checkAdminHostDoesNotAlreadyExist(
 //------------------------------------------------------------------------------
 // deleteAdminHost
 //------------------------------------------------------------------------------
-void cta::MockAdminHostDatabase::deleteAdminHost(
+void cta::MockAdminHostTable::deleteAdminHost(
   const SecurityIdentity &requester,
   const std::string &hostName) {
   for(std::map<std::string, AdminHost>::iterator itor = m_adminHosts.begin();
@@ -53,7 +53,7 @@ void cta::MockAdminHostDatabase::deleteAdminHost(
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
-std::list<cta::AdminHost> cta::MockAdminHostDatabase::getAdminHosts(
+std::list<cta::AdminHost> cta::MockAdminHostTable::getAdminHosts(
   const SecurityIdentity &requester) const {
   std::list<cta::AdminHost> hosts;
   for(std::map<std::string, AdminHost>::const_iterator itor =

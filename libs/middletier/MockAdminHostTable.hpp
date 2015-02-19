@@ -10,9 +10,9 @@
 namespace cta {
 
 /**
- * Mock database of administration hosts.
+ * Mock database-table of administration hosts.
  */
-class MockAdminHostDatabase {
+class MockAdminHostTable {
 public:
 
   /**
@@ -61,6 +61,6 @@ private:
    */
   std::map<std::string, AdminHost> m_adminHosts;
 
-}; // class MockAdminHostDatabase
+}; // class MockAdminHostTable
 
 } // namespace cta

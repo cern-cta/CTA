@@ -10,9 +10,9 @@
 namespace cta {
 
 /**
- * Mock database of admin users.
+ * Mock database-table of admin users.
  */
-class MockAdminUserDatabase {
+class MockAdminUserTable {
 public:
 
   /**
@@ -61,6 +61,6 @@ private:
    */
   std::map<uint32_t, AdminUser> m_adminUsers;
 
-}; // MockAdminUserDatabase
+}; // MockAdminUserTable
 
 } // namespace cta

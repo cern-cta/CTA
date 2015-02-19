@@ -2,12 +2,12 @@
 
 #include "FileSystemNode.hpp"
 #include "FileSystemStorageClasses.hpp"
-#include "MockAdminHostDatabase.hpp"
-#include "MockAdminUserDatabase.hpp"
-#include "MockLogicalLibraryDatabase.hpp"
-#include "MockMigrationRouteDatabase.hpp"
-#include "MockTapeDatabase.hpp"
-#include "MockTapePoolDatabase.hpp"
+#include "MockAdminHostTable.hpp"
+#include "MockAdminUserTable.hpp"
+#include "MockLogicalLibraryTable.hpp"
+#include "MockMigrationRouteTable.hpp"
+#include "MockTapeTable.hpp"
+#include "MockTapePoolTable.hpp"
 
 namespace cta {
 
@@ -29,14 +29,14 @@ struct MockDatabase {
   ~MockDatabase() throw();
 
   /**
-   * Database of administrators.
+   * Table of administrators.
    */
-  MockAdminUserDatabase adminUsers;
+  MockAdminUserTable adminUsers;
 
   /**
-   * Database of administration hosts.
+   * Table of administration hosts.
    */
-  MockAdminHostDatabase adminHosts;
+  MockAdminHostTable adminHosts;
 
   /**
    * Container of the storage classes used by the file system.
@@ -44,14 +44,14 @@ struct MockDatabase {
   FileSystemStorageClasses storageClasses;
 
   /**
-   * Database of tape pools.
+   * Table of tape pools.
    */
-  MockTapePoolDatabase tapePools;
+  MockTapePoolTable tapePools;
 
   /**
    * Container of migration routes.
    */
-  MockMigrationRouteDatabase migrationRoutes;
+  MockMigrationRouteTable migrationRoutes;
 
   /**
    * The root node of the file-system.
@@ -59,14 +59,14 @@ struct MockDatabase {
   FileSystemNode fileSystemRoot;
 
   /**
-   * Database of logical libraries.
+   * Table of logical libraries.
    */
-  MockLogicalLibraryDatabase libraries;
+  MockLogicalLibraryTable libraries;
 
   /**
-   * Database of tapes.
+   * Table of tapes.
    */
-  MockTapeDatabase tapes;
+  MockTapeTable tapes;
 
 }; // struct MockDatabase
 
