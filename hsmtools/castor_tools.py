@@ -66,7 +66,7 @@ class DBConnection(object):
         self.connection = None
         self.connectionLock = threading.Lock()
         # the following ORA error codes are known (see OraCnvSvc.cpp) to be raised when the Oracle connection drops
-        self.errorCodesForReconnect = [28, 3113, 3114, 32102, 3135, 12170, 12541, 1012, 1003, 12571, 1033, 1089, 24338, 12537] + range(25401, 25410)
+        self.errorCodesForReconnect = [28, 3113, 3114, 32102, 3135, 12170, 12541, 1012, 1003, 12571, 1033, 1089, 24338, 12537, 1008] + range(25401, 25410)
     
     def _initConnection(self):
         '''Instantiates an Oracle connection and checks the schema version defined in the db against the code one.
