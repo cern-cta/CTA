@@ -91,6 +91,10 @@ void BackendVFS::atomicOverwrite(std::string name, std::string content) {
   // file descriptor.
   std::string tempPath = m_root + "/." + name + ".pre-overwrite";
   std::string targetPath = m_root + "/" + name;
+  // Make sure the file exists first
+  if (!exists(name)) {
+    throw cta::exception::Exception("In BackendVFS::atomicOverwrite, trying to update a non-existing object");
+  }
   // Create the new version of the file, make sure it's visible, lock it.
   int fd = ::creat(tempPath.c_str(), S_IRWXU);
   cta::exception::Errnum::throwOnMinusOne(fd,
@@ -134,7 +138,8 @@ void BackendVFS::remove(std::string name) {
 
 bool BackendVFS::exists(std::string name) {
   std::string path = m_root + "/" + name;
-  if (::access(path.c_str(), F_OK))
+  std::string lockPath = m_root + "/." + name + ".lock";
+  if (::access(path.c_str(), F_OK) || ::access(lockPath.c_str(), F_OK))
     return false;
   return true;
 }
