@@ -179,7 +179,7 @@ namespace castor      {
           ;
 
           // To delete migartion mounts with wrong tapepool
-          virtual void deleteMigrationMountWithBadTapePool(
+          virtual void deleteMigrationMount(
               const u_signed64 migrationMountId)
           ;
 

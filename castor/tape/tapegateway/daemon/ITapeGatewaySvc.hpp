@@ -213,7 +213,7 @@ namespace castor      {
         /**
          *  delete migration mounts with wrong tapepool
          */
-        virtual void deleteMigrationMountWithBadTapePool(const u_signed64 migrationMountId)
+        virtual void deleteMigrationMount(const u_signed64 migrationMountId)
           =0;
       
         /**

@@ -155,7 +155,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
           // TODO: can probably be improved by adding autonomous transaction
           // in this SQL procedure.
           // Wrapper has no side-effect
-          oraSvc->deleteMigrationMountWithBadTapePool(item->migrationMountId);
+          oraSvc->deleteMigrationMount(item->migrationMountId);
         } catch (castor::exception::Exception &e){
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_CANNOT_UPDATE_DB, params);
         }
@@ -186,6 +186,16 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
       } else if(e.code() == ENOSPC) {
         // no free tape on this pool, log a warning
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, LINKER_NO_TAPE_AVAILABLE, params);
+        try {
+          // This PL/SQL does not commit yet. Commit will happen only on global
+          // completion after calling oraSvc->attachTapesToMigMounts
+          // TODO: can probably be improved by adding autonomous transaction
+          // in this SQL procedure.
+          // Wrapper has no side-effect
+          oraSvc->deleteMigrationMount(item->migrationMountId);
+        } catch (castor::exception::Exception &e){
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_CANNOT_UPDATE_DB, params);
+        }
       } else {
         // anything else coming from VMGR is an error
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_NO_TAPE_AVAILABLE, params);

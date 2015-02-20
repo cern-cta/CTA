@@ -936,7 +936,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::cancelMigrationOrRecall
 //----------------------------------------------------------------------------
 // deleteMigrationMountWithBadTapePool
 //----------------------------------------------------------------------------
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::deleteMigrationMountWithBadTapePool(const u_signed64 migrationMountId) 
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::deleteMigrationMount(const u_signed64 migrationMountId) 
   {
   try {
     // Check whether the statements are ok
