@@ -816,6 +816,116 @@ int XrdProFilesystem::executeLsllibCommand(const ParsedRequest &req, XrdOucErrIn
 }
 
 //------------------------------------------------------------------------------
+// executeMktapeCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeMktapeCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
+  if(req.args.size() != 5) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    uint64_t capacity;
+    std::istringstream ss(req.args.at(3));
+    ss >> capacity;
+    m_adminApi.createTape(requester, req.args.at(0), req.args.at(1), req.args.at(2), capacity, req.args.at(4));
+    std::ostringstream responseSS;
+    responseSS << "[OK] Tape " << req.args.at(0) << " of logical library " << req.args.at(1) << " of " << capacity << " bytes of capacity " << " was created in tapepool " << req.args.at(2) << " with comment \"" << req.args.at(4) << "\"";
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeRmtapeCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeRmtapeCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
+  if(req.args.size() != 1) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    m_adminApi.deleteTape(requester, req.args.at(0));
+    std::ostringstream responseSS;
+    responseSS << "[OK] Tape " << req.args.at(0) << " removed";
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeLstapeCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeLstapeCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) const {
+  if(req.args.size() != 0) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    std::list<cta::Tape> tapes = m_adminApi.getTapes(requester);
+    std::ostringstream responseSS;
+    responseSS << "[OK] Listing of tapes:";
+    for(std::list<cta::Tape>::iterator it = tapes.begin(); it != tapes.end(); it++) {
+      responseSS  << "\n" << it->getVid()
+              << " " << it->getCapacityInBytes()
+              << " " << it->getDataOnTapeInBytes()
+              << " " << it->getLogicalLibraryName()
+              << " " << it->getTapePoolName()
+              << " " << it->getCreator().getUid()
+              << " " << it->getCreator().getGid() 
+              << " " << it->getCreationTime()
+              << " \"" << it->getComment() << "\"";
+    }
+    eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+    return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
 // executeMkadminuserCommand
 //------------------------------------------------------------------------------
 int XrdProFilesystem::executeMkadminuserCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
@@ -1121,6 +1231,18 @@ int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eI
   else if(strcmp(req.cmd.c_str(), "/lsllib") == 0)
   {  
     return executeLsllibCommand(req, eInfo, requester);
+  }   
+  else if(strcmp(req.cmd.c_str(), "/mktape") == 0)
+  {  
+    return executeMktapeCommand(req, eInfo, requester);
+  }  
+  else if(strcmp(req.cmd.c_str(), "/rmtape") == 0)
+  {  
+    return executeRmtapeCommand(req, eInfo, requester);
+  }  
+  else if(strcmp(req.cmd.c_str(), "/lstape") == 0)
+  {  
+    return executeLstapeCommand(req, eInfo, requester);
   }  
   else if(strcmp(req.cmd.c_str(), "/mkadminuser") == 0)
   {  
