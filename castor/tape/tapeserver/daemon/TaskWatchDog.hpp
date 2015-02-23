@@ -376,7 +376,7 @@ private:
 // improvement: track disk transfers as well)
 // 
 //    castor::log::ScopedParamContainer params(m_lc);
-//    params.addTiming("TimeSinceLastBlockMove", m_blockMovementTimer.usecs())
+//    params.addTiming("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
 //          .add("Path",m_file.path())
 //          .add("FILEID",m_file.fileid())
 //          .add("fSeq",m_file.fseq());
@@ -422,7 +422,7 @@ private:
   
   virtual void logStuckFile() {
     castor::log::ScopedParamContainer params(m_lc);
-    params.add("TimeSinceLastBlockMove", m_blockMovementTimer.usecs())
+    params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
           .add("path",m_file.path())
           .add("NSFILEID",m_file.fileid())
           .add("fSeq",m_file.fseq());
