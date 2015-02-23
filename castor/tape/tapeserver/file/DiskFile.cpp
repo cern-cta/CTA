@@ -308,7 +308,24 @@ RfioReadFile::RfioReadFile(const std::string &rfioUrl)  {
 }
 
 size_t RfioReadFile::read(void *data, const size_t size) const {
-  return rfio_read(m_fd, data, size);
+  int ret = rfio_read(m_fd, data, size);
+  castor::exception::SErrnum::throwOnMinusOne(ret, 
+    std::string("In RfioReadFile::read failed rfio_read() on ") + m_URL);
+  if (ret >= 0 && (unsigned int) ret > size) {
+    std::stringstream err;
+    err << "In RfioReadFile::read, rfio_read() returned a size ("
+        << ret << ") bigger than what was asked for ("
+        << size << ") on " << m_URL;
+    throw castor::exception::Exception(err.str());
+  }
+  // -1 was already covered higher. This is just a sanity check
+  if (ret < 0) {
+    std::stringstream err;
+    err << "In RfioReadFile::read, rfio_read() returned an unexpected value ("
+        << ret << ") on " << m_URL;
+    throw castor::exception::Exception(err.str());
+  }
+  return ret;
 }
 
 size_t RfioReadFile::size() const {
@@ -345,7 +362,30 @@ RfioWriteFile::RfioWriteFile(const std::string &rfioUrl)  : m_closeTried(false){
 }
 
 void RfioWriteFile::write(const void *data, const size_t size)  {
-  rfio_write(m_fd, (void *)data, size);
+  int ret = rfio_write(m_fd, (void *)data, size);
+  castor::exception::SErrnum::throwOnMinusOne(ret, 
+    std::string("In RfioWriteFile::write failed rfio_write() on ") + m_URL);
+  if (ret >= 0 && (unsigned int) ret > size) {
+    std::stringstream err;
+    err << "In RfioWriteFile::write, rfio_write() returned a size ("
+        << ret << ") bigger than what was asked for ("
+        << size << ") on " << m_URL;
+    throw castor::exception::Exception(err.str());
+  }
+  // -1 was already covered higher. This is just a sanity check
+  if (ret < 0) {
+    std::stringstream err;
+    err << "In RfioWriteFile::write, rfio_write() returned an unexpected value ("
+        << ret << ") on " << m_URL;
+    throw castor::exception::Exception(err.str());
+  }
+  // And bomb out if we fail to write what we wanted to
+  if ((unsigned int) ret != size) {
+    std::stringstream err;
+    err << "In RfioWriteFile::write, in rfio_write() could not write ("
+        << ret << ") as much as wanted (" << size << ") on " << m_URL;
+    throw castor::exception::Exception(err.str());
+  }
 }
 
 void RfioWriteFile::close()  {
