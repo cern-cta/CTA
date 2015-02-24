@@ -145,6 +145,17 @@ public:
     const std::string &tapePoolName) const;
 
   /**
+   * Deletes the specified archival job.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * tape.
+   * @param dstPath The full path of the destination file within the archive.
+   */
+  void deleteArchivalJob(
+    const SecurityIdentity &requester,
+    const std::string &dstPath);
+
+  /**
    * Creates a retrieval job to asynchronously retrieve the specified archived
    * files and copy them to the specified destination URL.
    *
@@ -186,6 +197,17 @@ public:
   std::list<RetrievalJob> getRetrievalJobs(
     const SecurityIdentity &requester,
     const std::string &vid) const;
+
+  /**
+   * Deletes the specified retrieval job.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * tape.
+   * @param dstUrl The URL of the destination file or directory.
+   */
+  void deleteRetrievalJob(
+    const SecurityIdentity &requester,
+    const std::string &dstUrl);
 
 private:
 

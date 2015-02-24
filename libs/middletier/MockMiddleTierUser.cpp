@@ -292,6 +292,14 @@ std::list<cta::ArchivalJob> cta::MockMiddleTierUser::getArchivalJobs(
 }
 
 //------------------------------------------------------------------------------
+// deleteArchivalJob
+//------------------------------------------------------------------------------
+void cta::MockMiddleTierUser::deleteArchivalJob(
+  const SecurityIdentity &requester,
+  const std::string &dstPath) {
+}
+
+//------------------------------------------------------------------------------
 // retrieve
 //------------------------------------------------------------------------------
 void cta::MockMiddleTierUser::retrieve(
@@ -318,4 +326,12 @@ std::list<cta::RetrievalJob> cta::MockMiddleTierUser::getRetrievalJobs(
   const std::string &vid) const {
   std::list<cta::RetrievalJob> jobs;
   return jobs;
+}
+
+//------------------------------------------------------------------------------
+// deleteRetrievalJob
+//------------------------------------------------------------------------------
+void cta::MockMiddleTierUser::deleteRetrievalJob(
+  const SecurityIdentity &requester,
+  const std::string &dstUrl) {
 }
