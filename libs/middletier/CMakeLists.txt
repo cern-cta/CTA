@@ -3,11 +3,13 @@ cmake_minimum_required (VERSION 2.6)
 set (MIDDLE_TIER_LIB_SRC_FILES
   AdminHost.cpp
   AdminUser.cpp
-  ArchiveJob.cpp
+  ArchivalJob.cpp
   DirectoryEntry.cpp
   DirectoryIterator.cpp
   Exception.cpp
+  FileArchivalJob.cpp
   FileAttribute.cpp
+  FileRetrievalJob.cpp
   FileSystemDirectoryEntry.cpp
   FileSystemNode.cpp
   FileSystemStorageClass.cpp

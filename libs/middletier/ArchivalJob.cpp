@@ -1,9 +1,9 @@
-#include "ArchiveJob.hpp"
+#include "ArchivalJob.hpp"
 
 //------------------------------------------------------------------------------
 // JobStateToStr
 //------------------------------------------------------------------------------
-const char *cta::ArchiveJob::JobStateToStr(const JobState enumValue) throw() {
+const char *cta::ArchivalJob::JobStateToStr(const JobState enumValue) throw() {
   switch(enumValue) {
   case JOBSTATE_NONE   : return "NONE";
   case JOBSTATE_PENDING: return "PENDING";
@@ -16,7 +16,7 @@ const char *cta::ArchiveJob::JobStateToStr(const JobState enumValue) throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveJob::ArchiveJob():
+cta::ArchivalJob::ArchivalJob():
   m_state(JOBSTATE_NONE),
   m_totalNbFileTransfers(0),
   m_nbFailedFileTransfers(0),
@@ -26,7 +26,7 @@ cta::ArchiveJob::ArchiveJob():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveJob::ArchiveJob(
+cta::ArchivalJob::ArchivalJob(
   const std::string &id,
   const JobState state,
   const uint32_t totalNbFileTransfers,
@@ -44,42 +44,42 @@ cta::ArchiveJob::ArchiveJob(
 //------------------------------------------------------------------------------
 // getId
 //------------------------------------------------------------------------------
-const std::string &cta::ArchiveJob::getId() const throw() {
+const std::string &cta::ArchivalJob::getId() const throw() {
   return m_id;
 }
 
 //------------------------------------------------------------------------------
 // getState
 //------------------------------------------------------------------------------
-cta::ArchiveJob::JobState cta::ArchiveJob::getState() const throw() {
+cta::ArchivalJob::JobState cta::ArchivalJob::getState() const throw() {
   return m_state;
 } 
 
 //------------------------------------------------------------------------------
 // getTotalNbFileTransfers
 //------------------------------------------------------------------------------
-uint32_t cta::ArchiveJob::getTotalNbFileTransfers() const throw() {
+uint32_t cta::ArchivalJob::getTotalNbFileTransfers() const throw() {
   return m_totalNbFileTransfers;
 }
 
 //------------------------------------------------------------------------------
 // getNbFailedFileTransfers
 //------------------------------------------------------------------------------
-uint32_t cta::ArchiveJob::getNbFailedFileTransfers() const throw() {
+uint32_t cta::ArchivalJob::getNbFailedFileTransfers() const throw() {
   return m_nbFailedFileTransfers;
 }
 
 //------------------------------------------------------------------------------
 // getCreationTime
 //------------------------------------------------------------------------------
-time_t cta::ArchiveJob::getCreationTime() const throw() {
+time_t cta::ArchivalJob::getCreationTime() const throw() {
   return m_creationTime;
 }
 
 //------------------------------------------------------------------------------
 // getCreator
 //------------------------------------------------------------------------------
-const cta::UserIdentity &cta::ArchiveJob::getCreator()
+const cta::UserIdentity &cta::ArchivalJob::getCreator()
   const throw() {
   return m_creator;
 }
@@ -87,6 +87,6 @@ const cta::UserIdentity &cta::ArchiveJob::getCreator()
 //------------------------------------------------------------------------------
 // getComment
 //------------------------------------------------------------------------------
-const std::string &cta::ArchiveJob::getComment() const throw() {
+const std::string &cta::ArchivalJob::getComment() const throw() {
   return m_comment;
 }

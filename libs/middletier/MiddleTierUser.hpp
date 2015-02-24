@@ -1,7 +1,9 @@
 #pragma once
 
-#include "ArchiveJob.hpp"
+#include "ArchivalJob.hpp"
 #include "DirectoryIterator.hpp"
+#include "FileArchivalJob.hpp"
+#include "FileRetrievalJob.hpp"
 #include "LogicalLibrary.hpp"
 #include "MigrationRoute.hpp"
 #include "SecurityIdentity.hpp"
@@ -99,8 +101,8 @@ public:
     const std::string &dirPath) const = 0;
 
   /**
-   * Archives the specified list of source files to the specified destination
-   * within the archive namespace.
+   * Creates an archival job to asynchronously archive the specified source
+   * files to the specified destination within the archive.
    *
    * If there is more than one source file then the destination must be a
    * directory.
@@ -114,7 +116,7 @@ public:
    * @param requester The identity of the user requesting the archival.
    * @param srcUrls List of one or more source files.
    * @param dst Destination file or directory within the archive namespace.
-   * @return The string identifier of the archive job.
+   * @return The string identifier of the archival job.
    */
   virtual std::string archive(
     const SecurityIdentity &requester,
@@ -122,17 +124,60 @@ public:
     const std::string &dst) = 0;
 
   /**
-   * Gets the current list of archive jobs associated with the specified device
-   * group.
+   * Gets the list of archival jobs associated with the specified tape pool.
    *
    * @param requester The identity of the user requesting the list.
    * @param tapePoolName The name of the tape pool.
    * @return The list of jobs sorted by creation time in ascending order
    * (oldest first).
    */
-  virtual std::list<ArchiveJob> getArchiveJobs(
+  virtual std::list<ArchivalJob> getArchivalJobs(
     const SecurityIdentity &requester,
     const std::string &tapePoolName) = 0;
+
+  /**
+   * Returns the individual file archival jobs associated with the specified
+   * archive job.
+   *
+   * @param requester The identity of the user requesting the list.
+   * @param archiveJobId The string identifer of the archive job.
+   * @return The individual file archival jobs.
+   */
+  virtual std::list<FileArchivalJob> getFileArchivalJobs(
+    const SecurityIdentity &requester,
+    const std::string &archiveJobId) = 0;
+
+  /**
+   * Creates a retrieval job to asynchronously retrieve the specified archived
+   * files and copy them to the specified destination URL.
+   *
+   * If there is more than one archived file then the destination must be a
+   * directory.
+   *
+   * If there is only one archived file then the destination can be either a
+   * file or a directory.
+   *
+   * @param requester The identity of the user requesting the retrieval.
+   * @param srcPaths The list of one of more archived files.
+   * @param dstUrl The URL of the destination file or directory.
+   * @return The string identifier of the retrieval job.
+   */
+  virtual std::string retrieve(
+    const SecurityIdentity &requester,
+    const std::list<std::string> &srcPaths,
+    const std::string &dstUrl) = 0;
+
+  /**
+   * Gets the individual file retrieval jobs associated with the specified
+   * retrieval job.
+   *
+   * @param requester The identity of the user requesting the list.
+   * @param retrievalJobId The string identifer of the retrieval job.
+   * @return The list of individual file retrieval jobs.
+   */
+  virtual std::list<FileRetrievalJob> getFileRetrievalJobs(
+    const SecurityIdentity &requester,
+    const std::string &vretrievalJobId) = 0;
 
 }; // class MiddleTierUser
 

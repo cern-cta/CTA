@@ -139,19 +139,19 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
 }
 
 //------------------------------------------------------------------------------
-// executeGetArchiveJobsCommand
+// executeGetArchivalJobsCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeGetArchiveJobsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
+int XrdProFilesystem::executeGetArchivalJobsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
   if(req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
-    std::list<cta::ArchiveJob> jobs = m_userApi.getArchiveJobs(requester, req.args.at(0));
+    std::list<cta::ArchivalJob> jobs = m_userApi.getArchivalJobs(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] List of archive jobs for tape pool " << req.args.at(0) << ":\n";
-    for(std::list<cta::ArchiveJob>::iterator it = jobs.begin(); it != jobs.end(); it++) {
+    for(std::list<cta::ArchivalJob>::iterator it = jobs.begin(); it != jobs.end(); it++) {
       responseSS << "[OK]\t" << it->getId() 
               << " " << it->getCreator().getUid()
               << " " << it->getCreator().getGid() 
@@ -1158,7 +1158,7 @@ int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eI
   }
   else if(strcmp(req.cmd.c_str(), "/getarchivejobs") == 0)
   {  
-    return executeGetArchiveJobsCommand(req, eInfo, requester);
+    return executeGetArchivalJobsCommand(req, eInfo, requester);
   }
   else if(strcmp(req.cmd.c_str(), "/mkclass") == 0)
   {  

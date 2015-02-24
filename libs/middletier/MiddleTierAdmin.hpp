@@ -2,7 +2,7 @@
 
 #include "AdminHost.hpp"
 #include "AdminUser.hpp"
-#include "ArchiveJob.hpp"
+#include "ArchivalJob.hpp"
 #include "DirectoryIterator.hpp"
 #include "LogicalLibrary.hpp"
 #include "MigrationRoute.hpp"
