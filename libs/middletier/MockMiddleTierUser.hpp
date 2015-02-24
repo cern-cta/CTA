@@ -148,7 +148,7 @@ public:
    * Deletes the specified archival job.
    *
    * @param requester The identity of the user requesting the deletion of the
-   * tape.
+   * job.
    * @param dstPath The full path of the destination file within the archive.
    */
   void deleteArchivalJob(
@@ -202,7 +202,7 @@ public:
    * Deletes the specified retrieval job.
    *
    * @param requester The identity of the user requesting the deletion of the
-   * tape.
+   * job.
    * @param dstUrl The URL of the destination file or directory.
    */
   void deleteRetrievalJob(

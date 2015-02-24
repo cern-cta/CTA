@@ -18,6 +18,7 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   MiddleTierUser.cpp
   MigrationRoute.cpp
   MigrationRouteId.cpp
+  MockArchivalJobTable.cpp
   MockAdminHostTable.cpp
   MockAdminUserTable.cpp
   MockDatabase.cpp
@@ -26,6 +27,7 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   MockMiddleTierUser.cpp
   MockMiddleTierUser.cpp
   MockMigrationRouteTable.cpp
+  MockRetrievalJobTable.cpp
   MockTapeTable.cpp
   MockTapePoolTable.cpp
   RetrievalJob.cpp

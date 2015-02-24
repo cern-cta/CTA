@@ -277,8 +277,7 @@ void cta::MockMiddleTierUser::checkUserIsAuthorisedToArchive(
 std::map<cta::TapePool, std::list<cta::ArchivalJob> >
   cta::MockMiddleTierUser::getArchivalJobs(
   const SecurityIdentity &requester) const {
-  std::map<TapePool, std::list<cta::ArchivalJob> > jobs;
-  return jobs;
+  return m_db.archivalJobs.getArchivalJobs(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -287,8 +286,7 @@ std::map<cta::TapePool, std::list<cta::ArchivalJob> >
 std::list<cta::ArchivalJob> cta::MockMiddleTierUser::getArchivalJobs(
   const SecurityIdentity &requester,
   const std::string &tapePoolName) const {
-  std::list<cta::ArchivalJob> jobs;
-  return jobs;
+  return m_db.archivalJobs.getArchivalJobs(requester, tapePoolName);
 }
 
 //------------------------------------------------------------------------------
@@ -297,6 +295,7 @@ std::list<cta::ArchivalJob> cta::MockMiddleTierUser::getArchivalJobs(
 void cta::MockMiddleTierUser::deleteArchivalJob(
   const SecurityIdentity &requester,
   const std::string &dstPath) {
+  m_db.archivalJobs.deleteArchivalJob(requester, dstPath);
 }
 
 //------------------------------------------------------------------------------
@@ -314,8 +313,7 @@ void cta::MockMiddleTierUser::retrieve(
 std::map<cta::Tape, std::list<cta::RetrievalJob> >
   cta::MockMiddleTierUser::getRetrievalJobs(
   const SecurityIdentity &requester) const {
-  std::map<Tape, std::list<RetrievalJob> > jobs;
-  return jobs;
+  return m_db.retrievalJobs.getRetrievalJobs(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -324,8 +322,7 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> >
 std::list<cta::RetrievalJob> cta::MockMiddleTierUser::getRetrievalJobs(
   const SecurityIdentity &requester,
   const std::string &vid) const {
-  std::list<cta::RetrievalJob> jobs;
-  return jobs;
+  return m_db.retrievalJobs.getRetrievalJobs(requester, vid);
 }
 
 //------------------------------------------------------------------------------
@@ -334,4 +331,5 @@ std::list<cta::RetrievalJob> cta::MockMiddleTierUser::getRetrievalJobs(
 void cta::MockMiddleTierUser::deleteRetrievalJob(
   const SecurityIdentity &requester,
   const std::string &dstUrl) {
+  m_db.retrievalJobs.deleteRetrievalJob(requester, dstUrl);
 }

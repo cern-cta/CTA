@@ -4,8 +4,10 @@
 #include "FileSystemStorageClasses.hpp"
 #include "MockAdminHostTable.hpp"
 #include "MockAdminUserTable.hpp"
+#include "MockArchivalJobTable.hpp"
 #include "MockLogicalLibraryTable.hpp"
 #include "MockMigrationRouteTable.hpp"
+#include "MockRetrievalJobTable.hpp"
 #include "MockTapeTable.hpp"
 #include "MockTapePoolTable.hpp"
 
@@ -67,6 +69,16 @@ struct MockDatabase {
    * Table of tapes.
    */
   MockTapeTable tapes;
+
+  /**
+   * Table of archival jobs.
+   */
+  MockArchivalJobTable archivalJobs;
+
+  /**
+   * Table of retrieval jobs.
+   */
+  MockRetrievalJobTable retrievalJobs;
 
 }; // struct MockDatabase
 
