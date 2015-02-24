@@ -110,7 +110,6 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
     for(size_t i=0; i<req.args.size()-1; i++) {
       sourceFiles.push_back(req.args.at(i));
     }
-    std::string jobID = "NO LONGER EXISTS";
     m_userApi.archive(requester, sourceFiles, destinationPath);
     std::ostringstream responseSS;
     responseSS << "[OK] Requested archival of the following files:\n";
@@ -118,8 +117,7 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
       responseSS << "[OK]\t" << *it << "\n";
     }
     responseSS << "[OK] To the following directory:\n";
-    responseSS << "[OK]\t" << destinationPath << "\n";
-    responseSS << "[OK] JobID: " << jobID;
+    responseSS << "[OK]\t" << destinationPath;
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
   } catch (cta::Exception &ex) {
@@ -140,28 +138,148 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
 }
 
 //------------------------------------------------------------------------------
-// executeGetArchivalJobsCommand
+// executeLsArchiveJobsCommand
 //------------------------------------------------------------------------------
-int XrdProFilesystem::executeGetArchivalJobsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
-  if(req.args.size() != 1) {
+int XrdProFilesystem::executeLsArchiveJobsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
+  if(req.args.size() != 0 && req.args.size() != 1) {
     std::string response = "[ERROR] Wrong number of arguments provided";
     eInfo.setErrInfo(response.length()+1, response.c_str());
     return SFS_DATA;
   }
   try {
-    std::list<cta::ArchivalJob> jobs = m_userApi.getArchivalJobs(requester, req.args.at(0));
-    std::ostringstream responseSS;
-    responseSS << "[OK] List of archive jobs for tape pool " << req.args.at(0) << ":\n";
-    for(std::list<cta::ArchivalJob>::iterator it = jobs.begin(); it != jobs.end(); it++) {
-      responseSS << "[OK]\t" << it->getCreator().getUid()
-              << " " << it->getCreator().getGid() 
-              << " " << it->getCreationTime()
-              << " " << it->getStateStr() 
-              << " " << it->getSrcUrl() 
-              << " " << it->getDstPath() << "\n";
+    if(req.args.size() == 1) {      
+      std::list<cta::ArchivalJob> jobs = m_userApi.getArchivalJobs(requester, req.args.at(0));
+      std::ostringstream responseSS;
+      responseSS << "[OK] List of archive jobs for tape pool " << req.args.at(0) << ":\n";
+      for(std::list<cta::ArchivalJob>::const_iterator it = jobs.begin(); it != jobs.end(); it++) {
+        responseSS << "[OK]\t" << it->getCreator().getUid()
+                << " " << it->getCreator().getGid() 
+                << " " << it->getCreationTime()
+                << " " << it->getStateStr() 
+                << " " << it->getSrcUrl() 
+                << " " << it->getDstPath() << "\n";
+      }
+      eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+      return SFS_DATA;
     }
+    else {
+      std::map<cta::TapePool, std::list<cta::ArchivalJob> > pools = m_userApi.getArchivalJobs(requester);
+      std::ostringstream responseSS;
+      for(std::map<cta::TapePool, std::list<cta::ArchivalJob> >::const_iterator pool=pools.begin(); pool!=pools.end(); pool++) {
+        responseSS << "[OK] List of archive jobs for tape pool " << (pool->first).getName() << ":\n";
+        for(std::list<cta::ArchivalJob>::const_iterator it = (pool->second).begin(); it != (pool->second).end(); it++) {
+          responseSS << "[OK]\t" << it->getCreator().getUid()
+                  << " " << it->getCreator().getGid() 
+                  << " " << it->getCreationTime()
+                  << " " << it->getStateStr() 
+                  << " " << it->getSrcUrl() 
+                  << " " << it->getDstPath() << "\n";
+        }
+      }
+      eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+      return SFS_DATA;
+    }
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeRetrieveCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeRetrieveCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
+  if(req.args.size() < 2) {
+    std::string response = "[ERROR] Too few arguments provided";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    std::list<std::string> sourceFiles;
+    std::string destinationPath = req.args.at(req.args.size()-1);
+    for(size_t i=0; i<req.args.size()-1; i++) {
+      sourceFiles.push_back(req.args.at(i));
+    }
+    m_userApi.retrieve(requester, sourceFiles, destinationPath);
+    std::ostringstream responseSS;
+    responseSS << "[OK] Requested retrieval of the following files:\n";
+    for(std::list<std::string>::iterator it = sourceFiles.begin(); it != sourceFiles.end(); it++) {
+      responseSS << "[OK]\t" << *it << "\n";
+    }
+    responseSS << "[OK] To the following directory:\n";
+    responseSS << "[OK]\t" << destinationPath;
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
+  } catch (cta::Exception &ex) {
+    std::string response = "[ERROR] CTA exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (std::exception &ex) {
+    std::string response = "[ERROR] Exception caught: ";
+    response += ex.what();
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  } catch (...) {
+    std::string response = "[ERROR] Unknown exception caught!";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeLsRetrieveJobsCommand
+//------------------------------------------------------------------------------
+int XrdProFilesystem::executeLsRetrieveJobsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester) {
+  if(req.args.size() != 0 && req.args.size() != 1) {
+    std::string response = "[ERROR] Wrong number of arguments provided";
+    eInfo.setErrInfo(response.length()+1, response.c_str());
+    return SFS_DATA;
+  }
+  try {
+    if(req.args.size() != 1) {      
+      std::list<cta::RetrievalJob> jobs = m_userApi.getRetrievalJobs(requester, req.args.at(0));
+      std::ostringstream responseSS;
+      responseSS << "[OK] List of retrieve jobs for vid " << req.args.at(0) << ":\n";
+      for(std::list<cta::RetrievalJob>::const_iterator it = jobs.begin(); it != jobs.end(); it++) {
+        responseSS << "[OK]\t" << it->getCreator().getUid()
+                << " " << it->getCreator().getGid() 
+                << " " << it->getCreationTime()
+                << " " << it->getStateStr() 
+                << " " << it->getSrcPath() 
+                << " " << it->getDstUrl() << "\n";
+      }
+      eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+      return SFS_DATA;
+    }
+    else {
+      std::map<cta::Tape, std::list<cta::RetrievalJob> > tapes = m_userApi.getRetrievalJobs(requester);
+      std::ostringstream responseSS;
+      for(std::map<cta::Tape, std::list<cta::RetrievalJob> >::const_iterator tape=tapes.begin(); tape!=tapes.end(); tape++) {
+        responseSS << "[OK] List of retrieve jobs for vid " << (tape->first).getVid() << ":\n";
+        for(std::list<cta::RetrievalJob>::const_iterator it = (tape->second).begin(); it != (tape->second).end(); it++) {
+          responseSS << "[OK]\t" << it->getCreator().getUid()
+                  << " " << it->getCreator().getGid() 
+                  << " " << it->getCreationTime()
+                  << " " << it->getStateStr() 
+                  << " " << it->getSrcPath() 
+                  << " " << it->getDstUrl() << "\n";
+        }
+      }
+      eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
+      return SFS_DATA;
+    }
   } catch (cta::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
@@ -1155,9 +1273,17 @@ int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eI
   {  
     return executeArchiveCommand(req, eInfo, requester);
   }
-  else if(strcmp(req.cmd.c_str(), "/getarchivejobs") == 0)
+  else if(strcmp(req.cmd.c_str(), "/lsarchivejobs") == 0)
   {  
-    return executeGetArchivalJobsCommand(req, eInfo, requester);
+    return executeLsArchiveJobsCommand(req, eInfo, requester);
+  }
+  if(strcmp(req.cmd.c_str(), "/retrieve") == 0)
+  {  
+    return executeRetrieveCommand(req, eInfo, requester);
+  }
+  else if(strcmp(req.cmd.c_str(), "/lsretrievejobs") == 0)
+  {  
+    return executeLsRetrieveJobsCommand(req, eInfo, requester);
   }
   else if(strcmp(req.cmd.c_str(), "/mkclass") == 0)
   {  

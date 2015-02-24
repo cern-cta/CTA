@@ -20,7 +20,9 @@ void CTACmd::usage(std::ostream &os) const throw() {
   os <<
     "Usage:\n"
     "\t" << m_programName << " archive <source_file1> [<source_file2> [<source_file3> [...]]] <destination_path>\n"
-    "\t" << m_programName << " getarchivejobs <tape_pool>\n"
+    "\t" << m_programName << " lsarchivejobs [<tape_pool>]\n"
+    "\t" << m_programName << " retrieve <source_file1> [<source_file2> [<source_file3> [...]]] <destination_path>\n"
+    "\t" << m_programName << " lsretrievejobs [<vid>]\n"
     "\t" << m_programName << " chdirclass <directory_name> <storage_class_name>\n"
     "\t" << m_programName << " cldirclass <directory_name>\n"
     "\t" << m_programName << " getdirclass <directory_name>\n"

@@ -85,7 +85,27 @@ protected:
    * @param requester The UserIdentity structure of the requester
    * @return SFS_DATA
    */
-  int executeGetArchivalJobsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
+  int executeLsArchiveJobsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
+  int executeRetrieveCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
+  
+  /**
+   * Executes the command contained within the request structure
+   * 
+   * @param req     parsed request
+   * @param eInfo   Error information
+   * @param requester The UserIdentity structure of the requester
+   * @return SFS_DATA
+   */
+  int executeLsRetrieveJobsCommand(const ParsedRequest &req, XrdOucErrInfo &eInfo, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the command contained within the request structure
