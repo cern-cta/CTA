@@ -1,6 +1,7 @@
 #include "BackendAbstractTests.hpp"
 #include "BackendVFS.hpp"
 #include "BackendRados.hpp"
+#include "exception/Exception.hpp"
 
 TEST_P(BackendAbstractTest, BasicReadWrite) {
   std::cout << "Type=" << m_os->typeName() << std::endl;
@@ -11,7 +12,7 @@ TEST_P(BackendAbstractTest, BasicReadWrite) {
   ASSERT_EQ(false, m_os->exists(testObjectName));
   // Check that an update attempt fails on a non-existing object
   ASSERT_THROW(m_os->atomicOverwrite(testObjectName, testSecondValue), cta::exception::Exception);
-  // Check the creation of the obecjt
+  // Check the creation of the object
   m_os->create(testObjectName, testValue);
   // Check that re-creating an existing object throws exception
   ASSERT_THROW(m_os->create(testObjectName, testValue), cta::exception::Exception);

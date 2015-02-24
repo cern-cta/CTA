@@ -16,6 +16,7 @@ add_library (CTAObjectStore
 #  Agent.cpp
 #  AgentRegister.cpp
   BackendVFS.cpp
+  BackendRados.cpp
   exception/Backtrace.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
