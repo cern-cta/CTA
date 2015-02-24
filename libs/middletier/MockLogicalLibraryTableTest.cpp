@@ -27,6 +27,9 @@ TEST_F(cta_client_MockLogicalLibraryTableTest, createLogicalLibrary_new) {
   }
 
   const std::string libraryName = "TestLogicalLibrary";
+
+  ASSERT_THROW(db.checkLogicalLibraryExists(libraryName), std::exception);
+
   const std::string libraryComment = "Comment";
   ASSERT_NO_THROW(db.createLogicalLibrary(requester, libraryName,
     libraryComment));
@@ -41,6 +44,8 @@ TEST_F(cta_client_MockLogicalLibraryTableTest, createLogicalLibrary_new) {
     ASSERT_EQ(libraryName, logicalLibrary.getName());
     ASSERT_EQ(libraryComment, logicalLibrary.getComment());
   }
+
+  ASSERT_NO_THROW(db.checkLogicalLibraryExists(libraryName));
 }
 
 TEST_F(cta_client_MockLogicalLibraryTableTest,

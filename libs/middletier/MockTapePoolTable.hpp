@@ -36,11 +36,18 @@ public:
     const std::string &comment);
 
   /**
-   * Throws an exception if the specified tape pool already exixts.
+   * Throws an exception if the specified tape pool already exists.
    *
    * @param name The name of the tape pool.
    */
   void checkTapePoolDoesNotAlreadyExist(const std::string &name) const;
+
+  /**
+   * Throws an exception if the specified tape pool does not exist.
+   *
+   * @param name The name of the tape pool.
+   */
+  void checkTapePoolExists(const std::string &name) const;
 
   /**
    * Delete the tape pool with the specifed name.

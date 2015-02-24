@@ -32,6 +32,20 @@ void cta::MockTapePoolTable::checkTapePoolDoesNotAlreadyExist(
 }
 
 //------------------------------------------------------------------------------
+// checkTapePoolExists
+//------------------------------------------------------------------------------
+void cta::MockTapePoolTable::checkTapePoolExists(
+  const std::string &name) const {
+  std::map<std::string, TapePool>::const_iterator itor =
+    m_tapePools.find(name);
+  if(itor == m_tapePools.end()) {
+    std::ostringstream message;
+    message << "The " << name << " tape pool does not exist";
+    throw Exception(message.str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // deleteTapePool
 //------------------------------------------------------------------------------
 void cta::MockTapePoolTable::deleteTapePool(const SecurityIdentity &requester,

@@ -36,6 +36,13 @@ public:
   void checkLogicalLibraryDoesNotAlreadyExist(const std::string &name) const;
 
   /**
+   * Throws an exception if the specified logical library does not exists.
+   *
+   * @param name The name of the logical library.
+   */
+  void checkLogicalLibraryExists(const std::string &name) const;
+
+  /**
    * Deletes the logical library with the specified name.
    *
    * @param requester The identity of the user requesting the deletion of the

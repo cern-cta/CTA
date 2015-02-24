@@ -30,6 +30,20 @@ void cta::MockLogicalLibraryTable::checkLogicalLibraryDoesNotAlreadyExist(
     throw(Exception(message.str()));
   }
 }
+
+//------------------------------------------------------------------------------
+// checkLogicalLibraryExists
+//------------------------------------------------------------------------------
+void cta::MockLogicalLibraryTable::checkLogicalLibraryExists(
+  const std::string &name) const {
+  std::map<std::string, LogicalLibrary>::const_iterator itor =
+    m_libraries.find(name);
+  if(itor == m_libraries.end()) {
+    std::ostringstream message;
+    message << "Logical library " << name << " does not exist";
+    throw(Exception(message.str()));
+  }
+}
   
 //------------------------------------------------------------------------------
 // deleteLogicalLibrary

@@ -27,6 +27,9 @@ TEST_F(cta_client_MockTapePoolTableTest, createTapePool_new) {
   }
 
   const std::string tapePoolName = "TestTapePool";
+
+  ASSERT_THROW(db.checkTapePoolExists(tapePoolName), std::exception);
+
   const uint16_t nbDrives = 1;
   const uint16_t nbPartialTapes = 1;
   const std::string comment = "Comment";
@@ -43,6 +46,8 @@ TEST_F(cta_client_MockTapePoolTableTest, createTapePool_new) {
     ASSERT_EQ(tapePoolName, tapePool.getName());
     ASSERT_EQ(comment, tapePool.getComment());
   }
+
+  ASSERT_NO_THROW(db.checkTapePoolExists(tapePoolName));
 }
 
 TEST_F(cta_client_MockTapePoolTableTest, createTapePool_already_existing) {
