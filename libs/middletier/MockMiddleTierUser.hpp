@@ -129,7 +129,7 @@ public:
    * sorted by creation time in ascending order (oldest first).
    */
   std::map<TapePool, std::list<ArchivalJob> > getArchivalJobs(
-    const SecurityIdentity &requester);
+    const SecurityIdentity &requester) const;
 
   /**
    * Returns the list of archival jobs associated with the specified tape pool
@@ -142,7 +142,7 @@ public:
    */
   std::list<ArchivalJob> getArchivalJobs(
     const SecurityIdentity &requester,
-    const std::string &tapePoolName);
+    const std::string &tapePoolName) const;
 
   /**
    * Creates a retrieval job to asynchronously retrieve the specified archived
@@ -172,7 +172,7 @@ public:
    * sorted by creation time in ascending order (oldest first).
    */
   std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs(
-    const SecurityIdentity &requester);
+    const SecurityIdentity &requester) const;
 
   /**
    * Returns the list of retrieval jobs associated with the specified tape
@@ -185,7 +185,7 @@ public:
    */
   std::list<RetrievalJob> getRetrievalJobs(
     const SecurityIdentity &requester,
-    const std::string &vid);
+    const std::string &vid) const;
 
 private:
 

@@ -132,7 +132,7 @@ public:
    * sorted by creation time in ascending order (oldest first).
    */
   virtual std::map<TapePool, std::list<ArchivalJob> > getArchivalJobs(
-    const SecurityIdentity &requester) = 0;
+    const SecurityIdentity &requester) const = 0;
 
   /**
    * Returns the list of archival jobs associated with the specified tape pool
@@ -145,7 +145,7 @@ public:
    */
   virtual std::list<ArchivalJob> getArchivalJobs(
     const SecurityIdentity &requester,
-    const std::string &tapePoolName) = 0;
+    const std::string &tapePoolName) const = 0;
 
   /**
    * Creates a retrieval job to asynchronously retrieve the specified archived
@@ -175,7 +175,7 @@ public:
    * sorted by creation time in ascending order (oldest first).
    */
   virtual std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs(
-    const SecurityIdentity &requester) = 0;
+    const SecurityIdentity &requester) const = 0;
 
   /**
    * Returns the list of retrieval jobs associated with the specified tape
@@ -188,7 +188,7 @@ public:
    */
   virtual std::list<RetrievalJob> getRetrievalJobs(
     const SecurityIdentity &requester,
-    const std::string &vid) = 0;
+    const std::string &vid) const = 0;
 
 }; // class MiddleTierUser
 

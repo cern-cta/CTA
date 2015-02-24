@@ -276,7 +276,7 @@ void cta::MockMiddleTierUser::checkUserIsAuthorisedToArchive(
 //------------------------------------------------------------------------------
 std::map<cta::TapePool, std::list<cta::ArchivalJob> >
   cta::MockMiddleTierUser::getArchivalJobs(
-  const SecurityIdentity &requester) {
+  const SecurityIdentity &requester) const {
   std::map<TapePool, std::list<cta::ArchivalJob> > jobs;
   return jobs;
 }
@@ -286,7 +286,7 @@ std::map<cta::TapePool, std::list<cta::ArchivalJob> >
 //------------------------------------------------------------------------------
 std::list<cta::ArchivalJob> cta::MockMiddleTierUser::getArchivalJobs(
   const SecurityIdentity &requester,
-  const std::string &tapePoolName) {
+  const std::string &tapePoolName) const {
   std::list<cta::ArchivalJob> jobs;
   return jobs;
 }
@@ -305,7 +305,7 @@ void cta::MockMiddleTierUser::retrieve(
 //------------------------------------------------------------------------------
 std::map<cta::Tape, std::list<cta::RetrievalJob> >
   cta::MockMiddleTierUser::getRetrievalJobs(
-  const SecurityIdentity &requester) {
+  const SecurityIdentity &requester) const {
   std::map<Tape, std::list<RetrievalJob> > jobs;
   return jobs;
 }
@@ -315,7 +315,7 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> >
 //------------------------------------------------------------------------------
 std::list<cta::RetrievalJob> cta::MockMiddleTierUser::getRetrievalJobs(
   const SecurityIdentity &requester,
-  const std::string &vid) {
+  const std::string &vid) const {
   std::list<cta::RetrievalJob> jobs;
   return jobs;
 }
