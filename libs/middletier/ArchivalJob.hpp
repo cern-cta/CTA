@@ -1,35 +1,18 @@
 #pragma once
 
+#include "ArchivalJobState.hpp"
 #include "UserIdentity.hpp"
 
-#include <stdint.h>
 #include <string>
+#include <time.h>
 
 namespace cta {
 
 /**
- * Class representing an archival job.
+ * Class representing the job of archiving a file to tape.
  */
 class ArchivalJob {
 public:
-
-  /**
-   * Enumeration of the possible states of an archival job.
-   */
-  enum JobState {
-    JOBSTATE_NONE,
-    JOBSTATE_PENDING,
-    JOBSTATE_SUCCESS,
-    JOBSTATE_ERROR};
-
-  /**
-   * Thread safe method that returns the string representation of the
-   * enumeration value.
-   *
-   * @param enumValue The enumeration value.
-   * @return The string representation.
-   */
-  static const char *JobStateToStr(const JobState enumValue) throw();
 
   /**
    * Constructor.
@@ -39,106 +22,94 @@ public:
   /**
    * Constructor.
    *
-   * @param id The identification string of the archival job.
    * @param state The state of the archival job.
-   * @param totalNbFileTransfers The total number of file transfers
-   * represented by the archival job.
-   * @param creator The identity of the user that created the archival job.
-   * @param comment The comment describing the archival job.
+   * @param srcUrl The URL of the source file.
+   * @param dstPath The full path of the destination file within the archive.
+   * @param creator The identity of the user that created the job.
    */
   ArchivalJob(
-    const std::string &id,
-    const JobState state,
-    const uint32_t totalNbFileTransfers,
-    const UserIdentity &creator,
-    const std::string &comment);
+    const ArchivalJobState::Enum state,
+    const std::string &srcUrl,
+    const std::string &dstPath,
+    const UserIdentity &creator);
 
   /**
-   * Returns the identification string of the archival job.
+   * Sets the state of the archival job.
    *
-   * @return The identification string of the archival job.
+   * @param state The new state of the archival job.
    */
-  const std::string &getId() const throw();
+  void setState(const ArchivalJobState::Enum state);
 
   /**
    * Returns the state of the archival job.
    *
    * @return The state of the archival job.
    */
-  JobState getState() const throw();
+  ArchivalJobState::Enum getState() const throw();
 
   /**
-   * Returns the total number of file transfers represented by the archival job.
+   * Thread safe method that returns the string representation of the state of
+   * the archival job.
    *
-   * @return The total number of file transfers represented by the archival job.
+   * @return The string representation of the state of the archival job.
    */
-  uint32_t getTotalNbFileTransfers() const throw();
+  const char *getStateStr() const throw();
 
   /**
-   * Returns the number of failed file transfers.
+   * Returns the URL of the source file.
    *
-   * @return The number of failed file transfers.
+   * @return The URL of the source file.
    */
-  uint32_t getNbFailedFileTransfers() const throw();
+  const std::string &getSrcUrl() const throw();
 
   /**
-   * Returns the time when the archival job was created.
+   * Returns the full path of the destination file within the archive.
    *
-   * @return The time when the archival job was created.
+   * @return The full path of the destination file within the archive.
+   */
+  const std::string &getDstPath() const throw();
+
+  /**
+   * Returns the time when the job was created.
+   *
+   * @return The time when the job was created.
    */
   time_t getCreationTime() const throw();
 
   /**
-   * Returns the identity of the user that created the archival job.
+   * Returns the identity of the user that created the job.
    *
-   * @return The identity of the user that created the archival job.
+   * @return The identity of the user that created the job.
    */
   const UserIdentity &getCreator() const throw();
-
-  /**
-   * Returns the comment describing the archival job.
-   *
-   * @return The comment describing the archival job.
-   */
-  const std::string &getComment() const throw();
 
 private:
 
   /**
-   * The identification string of the archival job.
-   */
-  std::string m_id;
-
-  /**
    * The state of the archival job.
    */
-  JobState m_state;
+  ArchivalJobState::Enum m_state;
 
   /**
-   * The total number of file transfers repesented by this archival job.
+   * The URL of the source file.
    */
-  uint32_t m_totalNbFileTransfers;
+  std::string m_srcUrl;
 
   /**
-   * The number of failed file transfers.
+   * The full path of the destination file within the archive.
    */
-  uint32_t m_nbFailedFileTransfers;
+  std::string m_dstPath;
 
   /**
-   * The time when the archival job was created.
+   * The time when the job was created.
    */
   time_t m_creationTime;
 
   /**
-   * The identity of the user that created the archival job.
+   * The identity of the user that created the job.
    */
   UserIdentity m_creator;
 
-  /**
-   * Comment describing the archival job.
-   */
-  std::string m_comment;
-
-}; // class ArchivalJob
+}; // class FileArchival
 
 } // namespace cta

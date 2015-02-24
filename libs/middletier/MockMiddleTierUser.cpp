@@ -205,7 +205,7 @@ std::string cta::MockMiddleTierUser::getDirectoryStorageClass(
 //------------------------------------------------------------------------------
 // archive
 //------------------------------------------------------------------------------
-std::string cta::MockMiddleTierUser::archive(const SecurityIdentity &requester,
+void cta::MockMiddleTierUser::archive(const SecurityIdentity &requester,
   const std::list<std::string> &srcUrls, const std::string &dst) {
   Utils::checkAbsolutePathSyntax(dst);
   if(isAnExistingDirectory(dst)) {
@@ -234,7 +234,7 @@ bool cta::MockMiddleTierUser::isAnExistingDirectory(const std::string &path)
 //------------------------------------------------------------------------------
 // archiveToDirectory
 //------------------------------------------------------------------------------
-std::string cta::MockMiddleTierUser::archiveToDirectory(
+void cta::MockMiddleTierUser::archiveToDirectory(
   const SecurityIdentity &requester,
   const std::list<std::string> &srcUrls,
   const std::string &dstDir) {
@@ -244,13 +244,12 @@ std::string cta::MockMiddleTierUser::archiveToDirectory(
 
   FileSystemNode &dstDirNode = getFileSystemNode(dstDir);
   checkUserIsAuthorisedToArchive(requester, dstDirNode);
-  return "Funny_archive_to_dir_ID";
 }
 
 //------------------------------------------------------------------------------
 // archiveToFile
 //------------------------------------------------------------------------------
-std::string cta::MockMiddleTierUser::archiveToFile(
+void cta::MockMiddleTierUser::archiveToFile(
   const SecurityIdentity &requester,
   const std::list<std::string> &srcUrls,
   const std::string &dstFile) {
@@ -261,7 +260,6 @@ std::string cta::MockMiddleTierUser::archiveToFile(
 
   FileSystemNode &enclosingDirNode = getFileSystemNode(dstFile);
   checkUserIsAuthorisedToArchive(requester, enclosingDirNode);
-  return "Funny_archive_to_file_ID";
 }
 
 //------------------------------------------------------------------------------
@@ -276,6 +274,16 @@ void cta::MockMiddleTierUser::checkUserIsAuthorisedToArchive(
 //------------------------------------------------------------------------------
 // getArchivalJobs
 //------------------------------------------------------------------------------
+std::map<cta::TapePool, std::list<cta::ArchivalJob> >
+  cta::MockMiddleTierUser::getArchivalJobs(
+  const SecurityIdentity &requester) {
+  std::map<TapePool, std::list<cta::ArchivalJob> > jobs;
+  return jobs;
+}
+
+//------------------------------------------------------------------------------
+// getArchivalJobs
+//------------------------------------------------------------------------------
 std::list<cta::ArchivalJob> cta::MockMiddleTierUser::getArchivalJobs(
   const SecurityIdentity &requester,
   const std::string &tapePoolName) {
@@ -284,31 +292,30 @@ std::list<cta::ArchivalJob> cta::MockMiddleTierUser::getArchivalJobs(
 }
 
 //------------------------------------------------------------------------------
-// getFileArchivalJobs
-//------------------------------------------------------------------------------
-std::list<cta::FileArchivalJob> cta::MockMiddleTierUser::getFileArchivalJobs(
-  const SecurityIdentity &requester,
-  const std::string &archiveJobId) {
-  std::list<cta::FileArchivalJob> fileJobs;
-  return fileJobs;
-}
-
-//------------------------------------------------------------------------------
 // retrieve
 //------------------------------------------------------------------------------
-std::string cta::MockMiddleTierUser::retrieve(
+void cta::MockMiddleTierUser::retrieve(
   const SecurityIdentity &requester,
   const std::list<std::string> &srcPaths,
   const std::string &dstUrl) {
-  return "Funny_retrieval_job_ID";
 }
 
 //------------------------------------------------------------------------------
-// getFileRetrievalJobs
+// getRetrievalJobs
 //------------------------------------------------------------------------------
-std::list<cta::FileRetrievalJob> cta::MockMiddleTierUser::getFileRetrievalJobs(
+std::map<cta::Tape, std::list<cta::RetrievalJob> >
+  cta::MockMiddleTierUser::getRetrievalJobs(
+  const SecurityIdentity &requester) {
+  std::map<Tape, std::list<RetrievalJob> > jobs;
+  return jobs;
+}
+
+//------------------------------------------------------------------------------
+// getRetrievalJobs
+//------------------------------------------------------------------------------
+std::list<cta::RetrievalJob> cta::MockMiddleTierUser::getRetrievalJobs(
   const SecurityIdentity &requester,
-  const std::string &vretrievalJobId) {
-  std::list<FileRetrievalJob> fileJobs;
-  return fileJobs;
+  const std::string &vid) {
+  std::list<cta::RetrievalJob> jobs;
+  return jobs;
 }

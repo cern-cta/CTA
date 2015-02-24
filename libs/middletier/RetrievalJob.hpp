@@ -1,5 +1,6 @@
 #pragma once
 
+#include "RetrievalJobState.hpp"
 #include "UserIdentity.hpp"
 
 #include <string>
@@ -10,25 +11,47 @@ namespace cta {
 /**
  * Class representing the job of retrieving a file from tape.
  */
-class FileRetrievalJob {
+class RetrievalJob {
 public:
 
   /**
    * Constructor.
    */
-  FileRetrievalJob();
+  RetrievalJob();
 
   /**
    * Constructor.
    *
+   * @param state The state of the retrieval job.
    * @param srcPath The full path of the source file within the archive.
    * @param dstUrl The URL of the destination file.
    * @param creator The identity of the user that created the job.
    */
-  FileRetrievalJob(
+  RetrievalJob(
+    const RetrievalJobState::Enum state,
     const std::string &srcPath,
     const std::string &dstUrl,
     const UserIdentity &creator);
+
+  /**
+   * Sets the state of the retrieval job.
+   */
+  void setState(const RetrievalJobState::Enum state);
+
+  /**
+   * Return sthe state of the retrieval job.
+   *
+   * @return sthe state of the retrieval job.
+   */
+  RetrievalJobState::Enum getState() const throw();
+
+  /**
+   * Thread safe method that returns the string representation of the state of
+   * the retrieval job.
+   *
+   * @return The string representation of the state of the retrieval job.
+   */
+  const char *getStateStr() const throw();
 
   /**
    * Returns the full path of the source file within the archive.
@@ -59,6 +82,11 @@ public:
   const UserIdentity &getCreator() const throw();
 
 private:
+
+  /**
+   * The state of the retrieval job.
+   */
+  RetrievalJobState::Enum m_state;
 
   /**
    * The full path of the source file within the archive.

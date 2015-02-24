@@ -1,25 +1,10 @@
 #include "ArchivalJob.hpp"
 
 //------------------------------------------------------------------------------
-// JobStateToStr
-//------------------------------------------------------------------------------
-const char *cta::ArchivalJob::JobStateToStr(const JobState enumValue) throw() {
-  switch(enumValue) {
-  case JOBSTATE_NONE   : return "NONE";
-  case JOBSTATE_PENDING: return "PENDING";
-  case JOBSTATE_SUCCESS: return "SUCCESS";
-  case JOBSTATE_ERROR  : return "ERROR";
-  default              : return "UNKNOWN";
-  }
-}
-
-//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::ArchivalJob::ArchivalJob():
-  m_state(JOBSTATE_NONE),
-  m_totalNbFileTransfers(0),
-  m_nbFailedFileTransfers(0),
+  m_state(ArchivalJobState::NONE),
   m_creationTime(time(NULL)) {
 }
 
@@ -27,46 +12,50 @@ cta::ArchivalJob::ArchivalJob():
 // constructor
 //------------------------------------------------------------------------------
 cta::ArchivalJob::ArchivalJob(
-  const std::string &id,
-  const JobState state,
-  const uint32_t totalNbFileTransfers,
-  const UserIdentity &creator,
-  const std::string &comment):
-  m_id(id),
+  const ArchivalJobState::Enum state,
+  const std::string &srcUrl,
+  const std::string &dstPath,
+  const UserIdentity &creator):
   m_state(state),
-  m_totalNbFileTransfers(totalNbFileTransfers),
-  m_nbFailedFileTransfers(0),
+  m_srcUrl(srcUrl),
+  m_dstPath(dstPath),
   m_creationTime(time(NULL)),
-  m_creator(creator),
-  m_comment(comment) {
+  m_creator(creator) {
 }
 
 //------------------------------------------------------------------------------
-// getId
+// setState
 //------------------------------------------------------------------------------
-const std::string &cta::ArchivalJob::getId() const throw() {
-  return m_id;
+void cta::ArchivalJob::setState(const ArchivalJobState::Enum state) {
+  m_state = state;
 }
 
 //------------------------------------------------------------------------------
 // getState
 //------------------------------------------------------------------------------
-cta::ArchivalJob::JobState cta::ArchivalJob::getState() const throw() {
+cta::ArchivalJobState::Enum cta::ArchivalJob::getState() const throw() {
   return m_state;
-} 
-
-//------------------------------------------------------------------------------
-// getTotalNbFileTransfers
-//------------------------------------------------------------------------------
-uint32_t cta::ArchivalJob::getTotalNbFileTransfers() const throw() {
-  return m_totalNbFileTransfers;
 }
 
 //------------------------------------------------------------------------------
-// getNbFailedFileTransfers
+// getStateStr
 //------------------------------------------------------------------------------
-uint32_t cta::ArchivalJob::getNbFailedFileTransfers() const throw() {
-  return m_nbFailedFileTransfers;
+const char *cta::ArchivalJob::getStateStr() const throw() {
+  return ArchivalJobState::toStr(m_state);
+}
+
+//------------------------------------------------------------------------------
+// getSrcUrl
+//------------------------------------------------------------------------------
+const std::string &cta::ArchivalJob::getSrcUrl() const throw() {
+  return m_srcUrl;
+}
+
+//------------------------------------------------------------------------------
+// getDstPath
+//------------------------------------------------------------------------------
+const std::string &cta::ArchivalJob::getDstPath() const throw() {
+  return m_dstPath;
 }
 
 //------------------------------------------------------------------------------
@@ -79,14 +68,6 @@ time_t cta::ArchivalJob::getCreationTime() const throw() {
 //------------------------------------------------------------------------------
 // getCreator
 //------------------------------------------------------------------------------
-const cta::UserIdentity &cta::ArchivalJob::getCreator()
-  const throw() {
+const cta::UserIdentity &cta::ArchivalJob::getCreator() const throw() {
   return m_creator;
-}
-
-//------------------------------------------------------------------------------
-// getComment
-//------------------------------------------------------------------------------
-const std::string &cta::ArchivalJob::getComment() const throw() {
-  return m_comment;
 }

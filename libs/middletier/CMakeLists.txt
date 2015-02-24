@@ -4,12 +4,11 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   AdminHost.cpp
   AdminUser.cpp
   ArchivalJob.cpp
+  ArchivalJobState.cpp
   DirectoryEntry.cpp
   DirectoryIterator.cpp
   Exception.cpp
-  FileArchivalJob.cpp
   FileAttribute.cpp
-  FileRetrievalJob.cpp
   FileSystemDirectoryEntry.cpp
   FileSystemNode.cpp
   FileSystemStorageClass.cpp
@@ -29,6 +28,8 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   MockMigrationRouteTable.cpp
   MockTapeTable.cpp
   MockTapePoolTable.cpp
+  RetrievalJob.cpp
+  RetrievalJobState.cpp
   SecurityIdentity.cpp
   StorageClass.cpp
   Tape.cpp

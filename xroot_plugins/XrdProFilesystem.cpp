@@ -110,7 +110,8 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
     for(size_t i=0; i<req.args.size()-1; i++) {
       sourceFiles.push_back(req.args.at(i));
     }
-    std::string jobID = m_userApi.archive(requester, sourceFiles, destinationPath);
+    std::string jobID = "NO LONGER EXISTS";
+    m_userApi.archive(requester, sourceFiles, destinationPath);
     std::ostringstream responseSS;
     responseSS << "[OK] Requested archival of the following files:\n";
     for(std::list<std::string>::iterator it = sourceFiles.begin(); it != sourceFiles.end(); it++) {
@@ -152,14 +153,12 @@ int XrdProFilesystem::executeGetArchivalJobsCommand(const ParsedRequest &req, Xr
     std::ostringstream responseSS;
     responseSS << "[OK] List of archive jobs for tape pool " << req.args.at(0) << ":\n";
     for(std::list<cta::ArchivalJob>::iterator it = jobs.begin(); it != jobs.end(); it++) {
-      responseSS << "[OK]\t" << it->getId() 
-              << " " << it->getCreator().getUid()
+      responseSS << "[OK]\t" << it->getCreator().getUid()
               << " " << it->getCreator().getGid() 
               << " " << it->getCreationTime()
-              << " " << it->getState() 
-              << " " << it->getNbFailedFileTransfers() 
-              << " " << it->getTotalNbFileTransfers() 
-              << " " << it->getComment()<< "\n";
+              << " " << it->getStateStr() 
+              << " " << it->getSrcUrl() 
+              << " " << it->getDstPath() << "\n";
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;

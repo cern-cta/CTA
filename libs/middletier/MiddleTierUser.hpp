@@ -2,16 +2,17 @@
 
 #include "ArchivalJob.hpp"
 #include "DirectoryIterator.hpp"
-#include "FileArchivalJob.hpp"
-#include "FileRetrievalJob.hpp"
 #include "LogicalLibrary.hpp"
 #include "MigrationRoute.hpp"
+#include "RetrievalJob.hpp"
 #include "SecurityIdentity.hpp"
 #include "StorageClass.hpp"
+#include "Tape.hpp"
 #include "TapePool.hpp"
 #include "UserIdentity.hpp"
 
 #include <list>
+#include <map>
 #include <stdint.h>
 #include <string>
 
@@ -116,36 +117,35 @@ public:
    * @param requester The identity of the user requesting the archival.
    * @param srcUrls List of one or more source files.
    * @param dst Destination file or directory within the archive namespace.
-   * @return The string identifier of the archival job.
    */
-  virtual std::string archive(
+  virtual void archive(
     const SecurityIdentity &requester,
     const std::list<std::string> &srcUrls,
     const std::string &dst) = 0;
 
   /**
-   * Gets the list of archival jobs associated with the specified tape pool.
+   * Returns all of the existing archival jobs grouped by tape pool and then
+   * sorted by creation time in ascending order (oldest first).
+   *
+   * @param requester The identity of the user requesting the list.
+   * @return All of the existing archival jobs grouped by tape pool and then
+   * sorted by creation time in ascending order (oldest first).
+   */
+  virtual std::map<TapePool, std::list<ArchivalJob> > getArchivalJobs(
+    const SecurityIdentity &requester) = 0;
+
+  /**
+   * Returns the list of archival jobs associated with the specified tape pool
+   * sorted by creation time in ascending order (oldest first).
    *
    * @param requester The identity of the user requesting the list.
    * @param tapePoolName The name of the tape pool.
-   * @return The list of jobs sorted by creation time in ascending order
-   * (oldest first).
+   * @return The list of archival jobs associated with the specified tape pool
+   * sorted by creation time in ascending order (oldest first).
    */
   virtual std::list<ArchivalJob> getArchivalJobs(
     const SecurityIdentity &requester,
     const std::string &tapePoolName) = 0;
-
-  /**
-   * Returns the individual file archival jobs associated with the specified
-   * archive job.
-   *
-   * @param requester The identity of the user requesting the list.
-   * @param archiveJobId The string identifer of the archive job.
-   * @return The individual file archival jobs.
-   */
-  virtual std::list<FileArchivalJob> getFileArchivalJobs(
-    const SecurityIdentity &requester,
-    const std::string &archiveJobId) = 0;
 
   /**
    * Creates a retrieval job to asynchronously retrieve the specified archived
@@ -160,24 +160,35 @@ public:
    * @param requester The identity of the user requesting the retrieval.
    * @param srcPaths The list of one of more archived files.
    * @param dstUrl The URL of the destination file or directory.
-   * @return The string identifier of the retrieval job.
    */
-  virtual std::string retrieve(
+  virtual void retrieve(
     const SecurityIdentity &requester,
     const std::list<std::string> &srcPaths,
     const std::string &dstUrl) = 0;
 
   /**
-   * Gets the individual file retrieval jobs associated with the specified
-   * retrieval job.
+   * Returns all of the existing retrieval jobs grouped by tape and then
+   * sorted by creation time in ascending order (oldest first).
    *
    * @param requester The identity of the user requesting the list.
-   * @param retrievalJobId The string identifer of the retrieval job.
-   * @return The list of individual file retrieval jobs.
+   * @return All of the existing retrieval jobs grouped by tape and then
+   * sorted by creation time in ascending order (oldest first).
    */
-  virtual std::list<FileRetrievalJob> getFileRetrievalJobs(
+  virtual std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs(
+    const SecurityIdentity &requester) = 0;
+
+  /**
+   * Returns the list of retrieval jobs associated with the specified tape
+   * sorted by creation time in ascending order (oldest first).
+   *
+   * @param requester The identity of the user requesting the list.
+   * @param vid The volume identifier of the tape.
+   * @return The list of retrieval jobs associated with the specified tape
+   * sorted by creation time in ascending order (oldest first).
+   */
+  virtual std::list<RetrievalJob> getRetrievalJobs(
     const SecurityIdentity &requester,
-    const std::string &vretrievalJobId) = 0;
+    const std::string &vid) = 0;
 
 }; // class MiddleTierUser
 

@@ -114,36 +114,35 @@ public:
    * @param requester The identity of the user requesting the archival.
    * @param srcUrls List of one or more source files.
    * @param dst Destination file or directory within the archive namespace.
-   * @return The string identifier of the archival job.
    */
-  std::string archive(
+  void archive(
     const SecurityIdentity &requester,
     const std::list<std::string> &srcUrls,
     const std::string &dst);
 
   /**
-   * Gets the list of archival jobs associated with the specified tape pool.
+   * Returns all of the existing archival jobs grouped by tape pool and then
+   * sorted by creation time in ascending order (oldest first).
+   *
+   * @param requester The identity of the user requesting the list.
+   * @return All of the existing archival jobs grouped by tape pool and then
+   * sorted by creation time in ascending order (oldest first).
+   */
+  std::map<TapePool, std::list<ArchivalJob> > getArchivalJobs(
+    const SecurityIdentity &requester);
+
+  /**
+   * Returns the list of archival jobs associated with the specified tape pool
+   * sorted by creation time in ascending order (oldest first).
    *
    * @param requester The identity of the user requesting the list.
    * @param tapePoolName The name of the tape pool.
-   * @return The list of jobs sorted by creation time in ascending order
-   * (oldest first).
+   * @return The list of archival jobs associated with the specified tape pool
+   * sorted by creation time in ascending order (oldest first).
    */
   std::list<ArchivalJob> getArchivalJobs(
     const SecurityIdentity &requester,
     const std::string &tapePoolName);
-
-  /**
-   * Returns the individual file archival jobs associated with the specified
-   * archive job.
-   *
-   * @param requester The identity of the user requesting the list.
-   * @param archiveJobId The string identifer of the archive job.
-   * @return The individual file archival jobs.
-   */
-  std::list<FileArchivalJob> getFileArchivalJobs(
-    const SecurityIdentity &requester,
-    const std::string &archiveJobId);
 
   /**
    * Creates a retrieval job to asynchronously retrieve the specified archived
@@ -158,24 +157,35 @@ public:
    * @param requester The identity of the user requesting the retrieval.
    * @param srcPaths The list of one of more archived files.
    * @param dstUrl The URL of the destination file or directory.
-   * @return The string identifier of the retrieval job.
    */
-  std::string retrieve(
+  void retrieve(
     const SecurityIdentity &requester,
     const std::list<std::string> &srcPaths,
     const std::string &dstUrl);
 
   /**
-   * Gets the individual file retrieval jobs associated with the specified
-   * retrieval job.
+   * Returns all of the existing retrieval jobs grouped by tape and then
+   * sorted by creation time in ascending order (oldest first).
    *
    * @param requester The identity of the user requesting the list.
-   * @param retrievalJobId The string identifer of the retrieval job.
-   * @return The list of individual file retrieval jobs.
+   * @return All of the existing retrieval jobs grouped by tape and then
+   * sorted by creation time in ascending order (oldest first).
    */
-  std::list<FileRetrievalJob> getFileRetrievalJobs(
+  std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs(
+    const SecurityIdentity &requester);
+
+  /**
+   * Returns the list of retrieval jobs associated with the specified tape
+   * sorted by creation time in ascending order (oldest first).
+   *
+   * @param requester The identity of the user requesting the list.
+   * @param vid The volume identifier of the tape.
+   * @return The list of retrieval jobs associated with the specified tape
+   * sorted by creation time in ascending order (oldest first).
+   */
+  std::list<RetrievalJob> getRetrievalJobs(
     const SecurityIdentity &requester,
-    const std::string &vretrievalJobId);
+    const std::string &vid);
 
 private:
 
@@ -222,9 +232,8 @@ private:
    * @param requester The identity of the user requesting the archival.
    * @param srcUrls List of one or more source files.
    * @param dstDir Destination directory within the archive namespace.
-   * @return The string identifier of the archive job.
    */
-  std::string archiveToDirectory(
+  void archiveToDirectory(
     const SecurityIdentity &requester,
     const std::list<std::string> &srcUrls,
     const std::string &dstDir);
@@ -241,9 +250,8 @@ private:
    * @param requester The identity of the user requesting the archival.
    * @param srcUrls List of one or more source files.
    * @param dstFile Destination file within the archive namespace.
-   * @return The string identifier of the archive job.
    */
-  std::string archiveToFile(
+  void archiveToFile(
     const SecurityIdentity &requester,
     const std::list<std::string> &srcUrls,
     const std::string &dstFile);
