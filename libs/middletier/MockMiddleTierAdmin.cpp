@@ -225,6 +225,8 @@ void cta::MockMiddleTierAdmin::createTape(
   const std::string &tapePoolName,
   const uint64_t capacityInBytes,
   const std::string &comment) {
+  m_db.libraries.checkLogicalLibraryExists(logicalLibraryName);
+  m_db.tapePools.checkTapePoolExists(tapePoolName);
   m_db.tapes.createTape(requester, vid, logicalLibraryName, tapePoolName,
     capacityInBytes, comment);
 }

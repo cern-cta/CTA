@@ -17,22 +17,22 @@ protected:
 TEST_F(cta_client_MockAdminHostTableTest, createAdminHost_new) {
   using namespace cta;
 
-  MockAdminHostTable db;
+  MockAdminHostTable table;
   const SecurityIdentity requester;
 
   {
     std::list<AdminHost> adminHosts;
-    ASSERT_NO_THROW(adminHosts = db.getAdminHosts(requester));
+    ASSERT_NO_THROW(adminHosts = table.getAdminHosts(requester));
     ASSERT_TRUE(adminHosts.empty());
   }
 
   const std::string adminHost1 = "adminHost1";
   const std::string comment = "Comment";
-  ASSERT_NO_THROW(db.createAdminHost(requester, adminHost1, comment));
+  ASSERT_NO_THROW(table.createAdminHost(requester, adminHost1, comment));
 
   {
     std::list<AdminHost> adminHosts;
-    ASSERT_NO_THROW(adminHosts = db.getAdminHosts(requester));
+    ASSERT_NO_THROW(adminHosts = table.getAdminHosts(requester));
     ASSERT_EQ(1, adminHosts.size());
 
     ASSERT_EQ(adminHost1, adminHosts.front().getName());
@@ -43,33 +43,33 @@ TEST_F(cta_client_MockAdminHostTableTest, createAdminHost_new) {
 TEST_F(cta_client_MockAdminHostTableTest, deleteAdminHost_existing) {
   using namespace cta;
 
-  MockAdminHostTable db;
+  MockAdminHostTable table;
   const SecurityIdentity requester;
 
   {
     std::list<AdminHost> adminHosts;
-    ASSERT_NO_THROW(adminHosts = db.getAdminHosts(requester));
+    ASSERT_NO_THROW(adminHosts = table.getAdminHosts(requester));
     ASSERT_TRUE(adminHosts.empty());
   }
 
   const std::string adminHost1 = "adminHost1";
   const std::string comment = "Comment";
-  ASSERT_NO_THROW(db.createAdminHost(requester, adminHost1, comment));
+  ASSERT_NO_THROW(table.createAdminHost(requester, adminHost1, comment));
 
   {
     std::list<AdminHost> adminHosts;
-    ASSERT_NO_THROW(adminHosts = db.getAdminHosts(requester));
+    ASSERT_NO_THROW(adminHosts = table.getAdminHosts(requester));
     ASSERT_EQ(1, adminHosts.size());
 
     ASSERT_EQ(adminHost1, adminHosts.front().getName());
     ASSERT_EQ(comment, adminHosts.front().getComment());
   }
 
-  ASSERT_NO_THROW(db.deleteAdminHost(requester, adminHost1));
+  ASSERT_NO_THROW(table.deleteAdminHost(requester, adminHost1));
 
   {
     std::list<AdminHost> adminHosts;
-    ASSERT_NO_THROW(adminHosts = db.getAdminHosts(requester));
+    ASSERT_NO_THROW(adminHosts = table.getAdminHosts(requester));
     ASSERT_TRUE(adminHosts.empty());
   }
 }
@@ -77,21 +77,21 @@ TEST_F(cta_client_MockAdminHostTableTest, deleteAdminHost_existing) {
 TEST_F(cta_client_MockAdminHostTableTest, deleteAdminHost_non_existing) {
   using namespace cta;
 
-  MockAdminHostTable db;
+  MockAdminHostTable table;
   const SecurityIdentity requester;
   
   {
     std::list<AdminHost> adminHosts;
-    ASSERT_NO_THROW(adminHosts = db.getAdminHosts(requester));
+    ASSERT_NO_THROW(adminHosts = table.getAdminHosts(requester));
     ASSERT_TRUE(adminHosts.empty());
   }
 
   const std::string adminHost1 = "adminHost1";
-  ASSERT_THROW(db.deleteAdminHost(requester, adminHost1), std::exception);
+  ASSERT_THROW(table.deleteAdminHost(requester, adminHost1), std::exception);
 
   {
     std::list<AdminHost> adminHosts;
-    ASSERT_NO_THROW(adminHosts = db.getAdminHosts(requester));
+    ASSERT_NO_THROW(adminHosts = table.getAdminHosts(requester));
     ASSERT_TRUE(adminHosts.empty());
   }
 }

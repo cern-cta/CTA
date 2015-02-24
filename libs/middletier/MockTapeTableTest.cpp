@@ -17,12 +17,12 @@ protected:
 TEST_F(cta_client_MockTapeTableTest, createTape_new) {
   using namespace cta;
 
-  MockTapeTable db;
+  MockTapeTable table;
   const SecurityIdentity requester;
 
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = db.getTapes(requester));
+    ASSERT_NO_THROW(tapes = table.getTapes(requester));
     ASSERT_TRUE(tapes.empty());
   }
 
@@ -31,12 +31,12 @@ TEST_F(cta_client_MockTapeTableTest, createTape_new) {
   const std::string vid = "TestVid";
   const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
-  ASSERT_NO_THROW(db.createTape(requester, vid, libraryName, poolName,
+  ASSERT_NO_THROW(table.createTape(requester, vid, libraryName, poolName,
     capacityInBytes, tapeComment));
 
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = db.getTapes(requester));
+    ASSERT_NO_THROW(tapes = table.getTapes(requester));
     ASSERT_EQ(1, tapes.size());
 
     Tape tape;
@@ -53,12 +53,12 @@ TEST_F(cta_client_MockTapeTableTest, createTape_new) {
 TEST_F(cta_client_MockTapeTableTest, createTape_already_existing) {
   using namespace cta;
 
-  MockTapeTable db;
+  MockTapeTable table;
   const SecurityIdentity requester;
 
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = db.getTapes(requester));
+    ASSERT_NO_THROW(tapes = table.getTapes(requester));
     ASSERT_TRUE(tapes.empty());
   }
 
@@ -67,12 +67,12 @@ TEST_F(cta_client_MockTapeTableTest, createTape_already_existing) {
   const std::string vid = "TestVid";
   const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
-  ASSERT_NO_THROW(db.createTape(requester, vid, libraryName, poolName,
+  ASSERT_NO_THROW(table.createTape(requester, vid, libraryName, poolName,
     capacityInBytes, tapeComment));
 
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = db.getTapes(requester));
+    ASSERT_NO_THROW(tapes = table.getTapes(requester));
     ASSERT_EQ(1, tapes.size());
 
     Tape tape;
@@ -85,12 +85,12 @@ TEST_F(cta_client_MockTapeTableTest, createTape_already_existing) {
     ASSERT_EQ(tapeComment, tape.getComment());
   }
   
-  ASSERT_THROW(db.createTape(requester, vid, libraryName, poolName,
+  ASSERT_THROW(table.createTape(requester, vid, libraryName, poolName,
     capacityInBytes, tapeComment), std::exception);
 
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = db.getTapes(requester));
+    ASSERT_NO_THROW(tapes = table.getTapes(requester));
     ASSERT_EQ(1, tapes.size());
 
     Tape tape;
@@ -107,30 +107,30 @@ TEST_F(cta_client_MockTapeTableTest, createTape_already_existing) {
 TEST_F(cta_client_MockTapeTableTest, createTape_lexicographical_order) {
   using namespace cta;
 
-  MockTapeTable db;
+  MockTapeTable table;
   const SecurityIdentity requester;
 
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = db.getTapes(requester));
+    ASSERT_NO_THROW(tapes = table.getTapes(requester));
     ASSERT_TRUE(tapes.empty());
   }
 
   const std::string libraryName = "TestLogicalLibrary";
   const std::string poolName = "TestTapePool";
   const uint64_t capacityInBytes = 12345678;
-  ASSERT_NO_THROW(db.createTape(requester, "d", libraryName, poolName, capacityInBytes,
+  ASSERT_NO_THROW(table.createTape(requester, "d", libraryName, poolName, capacityInBytes,
     "Comment d"));
-  ASSERT_NO_THROW(db.createTape(requester, "b", libraryName, poolName, capacityInBytes,
+  ASSERT_NO_THROW(table.createTape(requester, "b", libraryName, poolName, capacityInBytes,
     "Comment b"));
-  ASSERT_NO_THROW(db.createTape(requester, "a", libraryName, poolName, capacityInBytes,
+  ASSERT_NO_THROW(table.createTape(requester, "a", libraryName, poolName, capacityInBytes,
     "Comment a"));
-  ASSERT_NO_THROW(db.createTape(requester, "c", libraryName, poolName, capacityInBytes,
+  ASSERT_NO_THROW(table.createTape(requester, "c", libraryName, poolName, capacityInBytes,
     "Comment c"));
 
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = db.getTapes(requester));
+    ASSERT_NO_THROW(tapes = table.getTapes(requester));
     ASSERT_EQ(4, tapes.size());
 
     ASSERT_EQ(std::string("a"), tapes.front().getVid());
@@ -146,12 +146,12 @@ TEST_F(cta_client_MockTapeTableTest, createTape_lexicographical_order) {
 TEST_F(cta_client_MockTapeTableTest, deleteTape_existing) {
   using namespace cta;
 
-  MockTapeTable db;
+  MockTapeTable table;
   const SecurityIdentity requester;
 
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = db.getTapes(requester));
+    ASSERT_NO_THROW(tapes = table.getTapes(requester));
     ASSERT_TRUE(tapes.empty());
   }
 
@@ -160,12 +160,12 @@ TEST_F(cta_client_MockTapeTableTest, deleteTape_existing) {
   const std::string vid = "TestVid";
   const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
-  ASSERT_NO_THROW(db.createTape(requester, vid, libraryName, poolName,
+  ASSERT_NO_THROW(table.createTape(requester, vid, libraryName, poolName,
     capacityInBytes, tapeComment));
 
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = db.getTapes(requester));
+    ASSERT_NO_THROW(tapes = table.getTapes(requester));
     ASSERT_EQ(1, tapes.size());
 
     Tape tape;
@@ -178,14 +178,14 @@ TEST_F(cta_client_MockTapeTableTest, deleteTape_existing) {
     ASSERT_EQ(tapeComment, tape.getComment());
   }
   
-  ASSERT_THROW(db.createTape(requester, vid, libraryName, poolName,
+  ASSERT_THROW(table.createTape(requester, vid, libraryName, poolName,
     capacityInBytes, tapeComment), std::exception);
 
-  ASSERT_NO_THROW(db.deleteTape(requester, vid));
+  ASSERT_NO_THROW(table.deleteTape(requester, vid));
 
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = db.getTapes(requester));
+    ASSERT_NO_THROW(tapes = table.getTapes(requester));
     ASSERT_TRUE(tapes.empty());
   }
 }
@@ -193,21 +193,21 @@ TEST_F(cta_client_MockTapeTableTest, deleteTape_existing) {
 TEST_F(cta_client_MockTapeTableTest, deleteTape_non_existing) {
   using namespace cta;
 
-  MockTapeTable db;
+  MockTapeTable table;
   const SecurityIdentity requester;
 
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = db.getTapes(requester));
+    ASSERT_NO_THROW(tapes = table.getTapes(requester));
     ASSERT_TRUE(tapes.empty());
   }
 
   const std::string vid = "TestVid";
-  ASSERT_THROW(db.deleteTape(requester, vid), std::exception);
+  ASSERT_THROW(table.deleteTape(requester, vid), std::exception);
 
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = db.getTapes(requester));
+    ASSERT_NO_THROW(tapes = table.getTapes(requester));
     ASSERT_TRUE(tapes.empty());
   }
 }
