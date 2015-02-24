@@ -97,6 +97,12 @@ public:
    * @return pointer to the newly created representation.
    */
   virtual Parameters * getParams() = 0;
+  
+  /**
+   * Return the name of the class. Mostly usefull in tests
+   * @return name of the class
+   */
+  virtual std::string typeName() = 0;
 };
 
 }} // end of cta::objectstore

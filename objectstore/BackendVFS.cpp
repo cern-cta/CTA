@@ -61,25 +61,29 @@ BackendVFS::~BackendVFS() {
 void BackendVFS::create(std::string name, std::string content) {
   std::string path = m_root + "/" + name;
   std::string lockPath = m_root + "/." + name + ".lock";
+  bool fileCreated = false;
+  bool lockCreated = false;
   try {
-    int fd = ::creat(path.c_str(), S_IRWXU);
+    int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU);
     // Create and fill up the path
     cta::exception::Errnum::throwOnMinusOne(fd,
-        "In ObjectStoreVFS::create, failed to creat the file");
+        "In ObjectStoreVFS::create, failed to open the file");
+    fileCreated = true;
     cta::exception::Errnum::throwOnMinusOne(
         ::write(fd, content.c_str(), content.size()),
         "In ObjectStoreVFS::create, failed to write to file");
     cta::exception::Errnum::throwOnMinusOne(::close(fd),
         "In ObjectStoreVFS::create, failed to close the file");
     // Create the lock file
-    int fdLock = ::creat(lockPath.c_str(), S_IRWXU);
+    int fdLock = ::open(lockPath.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU);
+    lockCreated = true;
     cta::exception::Errnum::throwOnMinusOne(fdLock,
         "In ObjectStoreVFS::create, failed to creat the lock file");
     cta::exception::Errnum::throwOnMinusOne(::close(fdLock),
         "In ObjectStoreVFS::create, failed to close the lock file");
   } catch (...) {
-    unlink(path.c_str());
-    unlink(lockPath.c_str());
+    if (fileCreated) unlink(path.c_str());
+    if (lockCreated) unlink(lockPath.c_str());
     throw;
   }
 }

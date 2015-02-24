@@ -87,6 +87,12 @@ public:
   };
   
   virtual Parameters * getParams();
+  
+
+  virtual std::string typeName() {
+    return "cta::objectstore::BackendVFS";
+  }
+
 
 private:
   std::string m_root;

@@ -2,7 +2,7 @@
 
 #include "objectstore/cta.pb.h"
 
-#include "BackendStore.hpp.hpp"
+#include "Backend.hpp"
 #include "ObjectOps.hpp"
 #include "Agent.hpp"
 

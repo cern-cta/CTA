@@ -49,6 +49,11 @@ add_library (CTAObjectStore
 # target_link_libraries(createEnvironment
 #   protobuf rados CTAObjectStore)
 
-add_executable(unitTests unitTests.cpp BackendVFSTest.cpp)
+set(ObjectStoreUnitTests
+  BackendVFSTest.cpp
+  BackendAbstractTests.cpp)
+#  RootEntryTest.cpp)
+
+add_executable(unitTests unitTests.cpp ${ObjectStoreUnitTests})
 target_link_libraries(unitTests
   protobuf rados CTAObjectStore gtest gmock)

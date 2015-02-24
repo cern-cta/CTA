@@ -3,6 +3,6 @@
 #include "exception/Exception.hpp"
 #include "RootEntry.hpp"
 
-TEST(RootEntry.BasicAccess) {
+TEST(RootEntry, BasicAccess) {
   
-}
+};

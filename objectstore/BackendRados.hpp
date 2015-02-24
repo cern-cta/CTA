@@ -1,12 +1,24 @@
 #pragma once
 
 #include "Backend.hpp"
+#include "exception/Errnum.hpp"
+#include <rados/librados.hpp>
+#include <sys/syscall.h>
+#include <errno.h>
 
 namespace cta { namespace objectstore {
-
-class ObjectStoreRados: public Backend {
+/**
+ * An implementation of the object store primitives, using Rados.
+ */
+class BackendRados: public Backend {
 public:
-  ObjectStoreRados(std::string path, std::string userId, std::string pool): 
+  /**
+   * The constructor, connecting to the storage pool 'pool' using the user id
+   * 'userId'
+   * @param userId
+   * @param pool
+   */
+  BackendRados(std::string userId, std::string pool): 
     m_user(userId), m_pool(pool), m_cluster(), m_radosCtx() {
     cta::exception::Errnum::throwOnNonZero(m_cluster.init(userId.c_str()),
       "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.init");
@@ -24,7 +36,7 @@ public:
       throw;
     }
   }
-  virtual ~ObjectStoreRados() {
+  virtual ~BackendRados() {
     m_radosCtx.close();
     m_cluster.shutdown();
   }
@@ -37,14 +49,25 @@ public:
   
 
   virtual void create(std::string name, std::string content) {
-    atomicOverwrite(name, content);
+    librados::ObjectWriteOperation wop;
+    const bool createExclusive = true;
+    wop.create(createExclusive);
+    ceph::bufferlist bl;
+    bl.append(content.c_str(), content.size());
+    wop.write_full(bl);
+    cta::exception::Errnum::throwOnNonZero(m_radosCtx.operate(name, &wop),
+      std::string("In ObjectStoreRados::create, failed to create exclusively or write ")
+      + name);
   }
   
   virtual void atomicOverwrite(std::string name, std::string content) {
+    librados::ObjectWriteOperation wop;
+    wop.assert_exists();
     ceph::bufferlist bl;
     bl.append(content.c_str(), content.size());
-    cta::exception::Errnum::throwOnNonZero(m_radosCtx.write_full(name, bl),
-      std::string("In ObjectStoreRados::atomicOverwrite, failed to write_full ")
+    wop.write_full(bl);
+    cta::exception::Errnum::throwOnNonZero(m_radosCtx.operate(name, &wop),
+      std::string("In ObjectStoreRados::atomicOverwrite, failed to assert existence or write ")
       + name);
   }
 
@@ -67,7 +90,43 @@ public:
     cta::exception::Errnum::throwOnNegative(m_radosCtx.remove(name));
   }
   
-  virtual void lockExclusive(std::string name, ContextHandle & context, std::string where) {
+  virtual bool exists(std::string name) {
+    uint64_t size;
+    time_t date;
+    if (m_radosCtx.stat(name, &size, &date)) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+  
+  class ScopedLock: public Backend::ScopedLock {
+    friend class BackendRados;
+  public:
+    virtual void release() {
+      if (!m_lockSet) return;
+      cta::exception::Errnum::throwOnReturnedErrno(
+        -m_context.unlock(m_oid, "lock", m_clientId),
+        std::string("In cta::objectstore::ScopedLock::release, failed unlock ")+
+      m_oid);
+      m_lockSet = false;
+    }
+    virtual ~ScopedLock() { release(); }
+  private:
+    ScopedLock(librados::IoCtx & ioCtx): m_lockSet(false), m_context(ioCtx) {}
+    void set(const std::string & oid, const std::string clientId) {
+      m_oid = oid;
+      m_clientId = clientId;\
+      m_lockSet = true;
+    }
+    bool m_lockSet;
+    librados::IoCtx & m_context;
+    std::string m_clientId;
+    std::string m_oid;
+  };
+  
+private:
+  std::string createUniqueClientId() {
     // Build a unique client name: host:thread
     char buff[200];
     cta::exception::Errnum::throwOnMinusOne(gethostname(buff, sizeof(buff)),
@@ -75,60 +134,73 @@ public:
     pid_t tid = syscall(SYS_gettid);
     std::stringstream client;
     client << buff << ":" << tid;
+    return client.str();
+  }
+  
+public:  
+  virtual ScopedLock * lockExclusive(std::string name) {
+    std::string client = createUniqueClientId();
     struct timeval tv;
     tv.tv_usec = 0;
     tv.tv_sec = 10;
     int rc;
+    std::auto_ptr<ScopedLock> ret(new ScopedLock(m_radosCtx));
     do {
-      rc=m_radosCtx.lock_exclusive(name, "lock", client.str(), "", &tv, 0);
+      rc=m_radosCtx.lock_exclusive(name, "lock", client, "", &tv, 0);
     } while (-EBUSY==rc);
     cta::exception::Errnum::throwOnReturnedErrno(-rc,
       std::string("In ObjectStoreRados::lockExclusive, failed to librados::IoCtx::lock_exclusive: ")+
-      name + "/" + "lock" + "/" + client.str() + "//");
-    context.set();
-    //std::cout << "LockedExclusive: " << name << "/" << "lock" << "/" << client.str() << "//@" << where << std::endl;
+      name + "/" + "lock" + "/" + client + "//");
+    ret->set(name, client);
+    return ret.release();
   }
 
 
-  virtual void lockShared(std::string name, ContextHandle & context, std::string where) {
-    // Build a unique client name: host:thread
-    char buff[200];
-    cta::exception::Errnum::throwOnMinusOne(gethostname(buff, sizeof(buff)),
-      "In ObjectStoreRados::lockExclusive:  failed to gethostname");
-    pid_t tid = syscall(SYS_gettid);
-    std::stringstream client;
-    client << buff << ":" << tid;
+  virtual ScopedLock * lockShared(std::string name) {
+    std::string client = createUniqueClientId();
     struct timeval tv;
     tv.tv_usec = 0;
     tv.tv_sec = 10;
     int rc;
+    std::auto_ptr<ScopedLock> ret(new ScopedLock(m_radosCtx));
     do {
-      rc=m_radosCtx.lock_shared(name, "lock", client.str(), "", "", &tv, 0);
+      rc=m_radosCtx.lock_shared(name, "lock", client, "", "", &tv, 0);
     } while (-EBUSY==rc);
     cta::exception::Errnum::throwOnReturnedErrno(-rc,
       std::string("In ObjectStoreRados::lockShared, failed to librados::IoCtx::lock_shared: ")+
-      name + "/" + "lock" + "/" + client.str() + "//");
-    context.set();
-    //std::cout << "LockedShared: " << name << "/" << "lock" << "/" << client.str() << "//@" << where << std::endl;
+      name + "/" + "lock" + "/" + client + "//");
+    ret->set(name, client);
+    return ret.release();
+  }
+  
+  class Parameters: public Backend::Parameters {
+    friend class BackendRados;
+  public:
+    /**
+     * The standard-issue params to string for logging
+     * @return a string representation of the parameters for logging
+     */
+    virtual std::string toStr() {
+      std::stringstream ret;
+      ret << "userId=" << m_userId << " pool=" << m_pool;
+      return ret.str();
+    }
+  private:
+    std::string m_userId;
+    std::string m_pool;
+  };
+  
+  virtual Parameters * getParams() {
+    std::auto_ptr<Parameters> ret (new Parameters);
+    ret->m_pool = m_pool;
+    ret->m_userId = m_user;
+    return ret.release();
   }
 
-  virtual void unlock(std::string name, ContextHandle & context, std::string where) {
-    // Build a unique client name: host:thread
-    char buff[200];
-    cta::exception::Errnum::throwOnMinusOne(gethostname(buff, sizeof(buff)),
-      "In ObjectStoreRados::lockExclusive:  failed to gethostname");
-    pid_t tid = syscall(SYS_gettid);
-    std::stringstream client;
-    client << buff << ":" << tid;
-    cta::exception::Errnum::throwOnReturnedErrno(
-      -m_radosCtx.unlock(name, "lock", client.str()),
-      std::string("In ObjectStoreRados::lockExclusive,  failed to lock_exclusive ")+
-      name);
-    context.reset();
-    //std::cout << "Unlocked: " << name << "/" << "lock" << "/" << client.str() << "//@" << where << std::endl;
+  virtual std::string typeName() {
+    return "cta::objectstore::BackendRados";
   }
-
-
+  
 private:
   std::string m_user;
   std::string m_pool;
