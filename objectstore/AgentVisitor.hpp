@@ -15,12 +15,12 @@ public:
   {
     // check the presence of the entry
     serializers::Agent as;
-    updateFromObjectStore(as, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(as, agent.getFreeContext());
   }
   
   std::string name(Agent & agent) {
     serializers::Agent as;
-    updateFromObjectStore(as, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(as, agent.getFreeContext());
     return as.name();
   }
   
@@ -88,7 +88,7 @@ public:
   
   std::list<intentEntry> getIntentLog(Agent & agent) {
     serializers::Agent as;
-    updateFromObjectStore(as, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(as, agent.getFreeContext());
     std::list<intentEntry> ret;
     for (int i=0; i<as.creationintent_size(); i++) {
       ret.push_back(intentEntry(as.creationintent(i).container(),
@@ -100,7 +100,7 @@ public:
   
   std::list<ownershipEntry> getOwnershipLog(Agent & agent) {
     serializers::Agent as;
-    updateFromObjectStore(as, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(as, agent.getFreeContext());
     std::list<ownershipEntry> ret;
     for (int i=0; i<as.ownershipintent_size(); i++) {
       ret.push_back(ownershipEntry(as.ownershipintent(i).name(),
@@ -115,13 +115,13 @@ public:
   
   uint64_t getHeartbeatCount(Agent& agent) {
     serializers::Agent as;
-    updateFromObjectStore(as, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(as, agent.getFreeContext());
     return as.heartbeatcount();
   }
   
   std::string dump(Agent & agent) {
     serializers::Agent as;
-    updateFromObjectStore(as, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(as, agent.getFreeContext());
     std::stringstream ret;
     ret<< "<<<< Agent " << selfName() << " dump start" << std::endl
       << "name=" << as.name() << std::endl

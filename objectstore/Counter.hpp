@@ -13,7 +13,7 @@ public:
   {
     // check the presence of the entry
     serializers::Counter cs;
-    updateFromObjectStore(cs, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(cs, agent.getFreeContext());
   }
   
   void inc(Agent & agent) {
@@ -27,7 +27,7 @@ public:
   
   uint64_t get(Agent & agent) {
     serializers::Counter cs;
-    updateFromObjectStore(cs, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(cs, agent.getFreeContext());
     return cs.count();
   }
 };

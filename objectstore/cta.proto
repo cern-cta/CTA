@@ -139,3 +139,9 @@ message JobPool {
   required string recall = 7002;
   required string recallcounter = 7003;
 }
+
+message RecallFIFO {}
+
+message MigrationFIFO {}
+
+

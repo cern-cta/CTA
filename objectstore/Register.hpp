@@ -12,7 +12,7 @@ public:
     // Check that the entry is present and readable (depending on implementation
     // of object store, locking might or might not succeed)
     serializers::Register rs;
-    updateFromObjectStore(rs, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(rs, agent.getFreeContext());
   }
   
   void addElement (std::string name, ContextHandle & context) {
@@ -44,7 +44,7 @@ public:
   
   std::list<std::string> getElements(Agent & agent) {
     serializers::Register rs;
-    updateFromObjectStore(rs, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(rs, agent.getFreeContext());
     std::list<std::string> ret;
     for (int i=0; i<rs.elements_size(); i++) {
       ret.push_back(rs.elements(i));
@@ -54,7 +54,7 @@ public:
   
   std::string dump(const std::string & title, Agent & agent) {
     serializers::Register rs;
-    updateFromObjectStore(rs, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(rs, agent.getFreeContext());
     std::stringstream ret;
     ret<< "<<<< Register " << title << " dump start" << std::endl
       << "Array size=" << rs.elements_size() << std::endl;

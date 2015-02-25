@@ -12,11 +12,12 @@ PROTOBUF_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
 
 add_library (CTAObjectStore 
   ${CTAProtoSources}
-  RootEntry.cpp
-  Agent.cpp
-  AgentRegister.cpp
+#  RootEntry.cpp
+#  Agent.cpp
+#  AgentRegister.cpp
   BackendVFS.cpp
   BackendRados.cpp
+  ObjectOps.cpp
   exception/Backtrace.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
@@ -51,8 +52,8 @@ add_library (CTAObjectStore
 #   protobuf rados CTAObjectStore)
 
 set(ObjectStoreUnitTests
-  BackendTest.cpp
-  RootEntryTest.cpp)
+  BackendTest.cpp)
+#  RootEntryTest.cpp)
 
 add_executable(unitTests unitTests.cpp ${ObjectStoreUnitTests})
 target_link_libraries(unitTests

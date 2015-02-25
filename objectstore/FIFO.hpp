@@ -12,7 +12,7 @@ public:
   FIFO(const std::string & name, Agent & agent):
   ObjectOps<serializers::FIFO>(agent.objectStore(), name) {
     serializers::FIFO fs;
-    updateFromObjectStore(fs, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(fs, agent.getFreeContext());
   }
   
 private:
@@ -86,7 +86,7 @@ public:
   
   std::string dump(Agent & agent) {
     serializers::FIFO fs;
-    updateFromObjectStore(fs, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(fs, agent.getFreeContext());
     std::stringstream ret;
     ret<< "<<<< FIFO dump start" << std::endl
       << "Read pointer=" << fs.readpointer() << std::endl
@@ -101,7 +101,7 @@ public:
   
   uint64_t size(Agent & agent) {
     serializers::FIFO fs;
-    updateFromObjectStore(fs, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(fs, agent.getFreeContext());
     uint64_t ret = fs.name_size() - fs.readpointer();
     return ret;
   }

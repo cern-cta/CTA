@@ -8,14 +8,10 @@
 
 namespace cta { namespace objectstore {
 
-class RootEntry: private ObjectOps<serializers::RootEntry> {
+class RootEntry: public ObjectOps<serializers::RootEntry> {
 public:
-  // Initializer.
-  static void init(Backend & os);
-  
-  // construtor, when the backend store exists.
-  // Checks the existence and correctness of the root entry
-  RootEntry(Agent & agent);
+  // construtor
+  RootEntry(Backend & os);
   
   class NotAllocatedEx: public cta::exception::Exception {
   public:
@@ -23,19 +19,19 @@ public:
   };
   
   // Get the name of the agent register (or exception if not available)
-  std::string getAgentRegister(Agent & agent);
+  std::string getAgentRegister();
   
   // Get the name of a (possibly freshly created) agent register
   std::string allocateOrGetAgentRegister(Agent & agent);
   
   // Get the name of the JobPool (or exception if not available)
-  std::string getJobPool(Agent & agent);
+  std::string getJobPool();
   
   // Get the name of a (possibly freshly created) job pool
   std::string allocateOrGetJobPool(Agent & agent);
   
   // Dump the root entry
-  std::string dump (Agent & agent);
+  std::string dump ();
 
   private:
     static const std::string s_rootEntryName;

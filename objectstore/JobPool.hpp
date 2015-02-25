@@ -11,7 +11,7 @@ public:
   JobPool(const std::string & name, Agent & agent):
   ObjectOps<serializers::JobPool>(agent.objectStore(), name) {
     serializers::JobPool jps;
-    updateFromObjectStore(jps, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(jps, agent.getFreeContext());
   }
   
   void PostRecallJob (const std::string & job, Agent & agent) {
@@ -26,7 +26,7 @@ public:
   
   std::string dump(Agent & agent) {
     serializers::JobPool jps;
-    updateFromObjectStore(jps, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(jps, agent.getFreeContext());
     std::stringstream ret;
     ret << "<<<< JobPool " << selfName() << " dump start" << std::endl
         << "Migration=" << jps.migration() << std::endl
@@ -39,7 +39,7 @@ public:
   std::string getRecallFIFO (Agent & agent) {
     // Check if the recall FIFO exists
     serializers::JobPool res;
-    updateFromObjectStore(res, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(res, agent.getFreeContext());
     // If the registry is defined, return it, job done.
     if (res.recall().size())
       return res.recall();
@@ -85,7 +85,7 @@ public:
   std::string getRecallCounter (Agent & agent) {
     // Check if the recall FIFO exists
     serializers::JobPool res;
-    updateFromObjectStore(res, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(res, agent.getFreeContext());
     // If the registry is defined, return it, job done.
     if (res.recallcounter().size())
       return res.recallcounter();

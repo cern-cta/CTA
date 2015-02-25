@@ -1,36 +1,20 @@
 #include "RootEntry.hpp"
 
-#include "Agent.hpp"
 #include <cxxabi.h>
 
-// Initializer.
-void cta::objectstore::RootEntry::init(Backend & os) {
-  // check existence of root entry before creating it. We expect read to fail.
-  try {
-    os.read(s_rootEntryName);
-    throw cta::exception::Exception("In RootEntry::init: root entry already exists");
-  } catch (std::exception&) {
-  }
-  serializers::RootEntry res;
-  os.create(s_rootEntryName, res.SerializeAsString());
-}
 // construtor, when the backend store exists.
 // Checks the existence and correctness of the root entry
-cta::objectstore::RootEntry::RootEntry(Agent & agent):
-  ObjectOps<serializers::RootEntry>(agent.objectStore(), s_rootEntryName) {
-  // Check that the root entry is readable.
-  serializers::RootEntry res;
-  updateFromObjectStore(res);
-}
+cta::objectstore::RootEntry::RootEntry(Backend & os):
+  ObjectOps<serializers::RootEntry>(os, s_rootEntryName) {}
 
 // Get the name of the agent register (or exception if not available)
-std::string cta::objectstore::RootEntry::getAgentRegister(Agent & agent) {
-  // Check if the agent register exists
-  serializers::RootEntry res;
-  updateFromObjectStore(res);
+std::string cta::objectstore::RootEntry::getAgentRegister() {
+  // Check that the fetch was done
+  if (!m_payloadInterpreted)
+    throw ObjectOpsBase::NotFetched("In RootEntry::getAgentRegister: object not yet fetched")
   // If the registry is defined, return it, job done.
-  if (res.agentregister().size())
-    return res.agentregister();
+  if (m_payload.agentregister().size())
+    return m_payload.agentregister();
   throw NotAllocatedEx("In RootEntry::getAgentRegister: agentRegister not yet allocated");
 }
 
@@ -75,7 +59,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetAgentRegister(Agent & agen
 std::string cta::objectstore::RootEntry::getJobPool(Agent & agent) {
   // Check if the job pool exists
   serializers::RootEntry res;
-  updateFromObjectStore(res);
+  getPayloadFromObjectStoreAutoLock(res);
   // If the registry is defined, return it, job done.
   if (res.jobpool().size())
     return res.jobpool();
@@ -125,7 +109,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetJobPool(Agent & agent) {
 std::string cta::objectstore::RootEntry::dump (Agent & agent) {
   std::stringstream ret;
   serializers::RootEntry res;
-  updateFromObjectStore(res);
+  getPayloadFromObjectStoreAutoLock(res);
   ret << "<<<< Root entry dump start" << std::endl;
   if (res.has_agentregister()) ret << "agentRegister=" << res.agentregister() << std::endl;
   ret << "agentRegister Intent Log size=" << res.agentregisterintentlog_size() << std::endl;

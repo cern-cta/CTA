@@ -124,7 +124,7 @@ std::list<std::string>
   if (!m_creationDone)
     throw CreationNotDone("In Agent::getIntentLog(): creation() not yet done");
   serializers::Agent as;
-  updateFromObjectStore(as);
+  getPayloadFromObjectStoreAutoLock(as);
   std::list<std::string> ret;
   for (int i=0; i<as.ownedobjects_size(); i++) {
     ret.push_back(as.ownedobjects(i));
@@ -146,6 +146,6 @@ void cta::objectstore::Agent::heartbeat(Agent& agent) {
 
 uint64_t cta::objectstore::Agent::getHeartbeatCount(Agent& agent) {
   serializers::Agent as;
-  updateFromObjectStore(as);
+  getPayloadFromObjectStoreAutoLock(as);
   return as.heartbeat();
 }

@@ -5,7 +5,7 @@ ObjectOps<serializers::AgentRegister>(agent.objectStore(), name) {
   // Check that the entry is present and readable (depending on implementation
   // of object store, locking might or might not succeed)
   serializers::AgentRegister rs;
-  updateFromObjectStore(rs);
+  getPayloadFromObjectStoreAutoLock(rs);
 }
 
 void cta::objectstore::AgentRegister::addElement (std::string name, Agent & agent) {
@@ -87,7 +87,7 @@ void cta::objectstore::AgentRegister::removeIntendedElement(const std::string& n
 
 std::list<std::string> cta::objectstore::AgentRegister::getElements(Agent & agent) {
   serializers::AgentRegister rs;
-  updateFromObjectStore(rs);
+  getPayloadFromObjectStoreAutoLock(rs);
   std::list<std::string> ret;
   for (int i=0; i<rs.elements_size(); i++) {
     ret.push_back(rs.elements(i));
@@ -97,7 +97,7 @@ std::list<std::string> cta::objectstore::AgentRegister::getElements(Agent & agen
 
 std::string cta::objectstore::AgentRegister::dump(Agent & agent) {
   serializers::AgentRegister rs;
-  updateFromObjectStore(rs);
+  getPayloadFromObjectStoreAutoLock(rs);
   std::stringstream ret;
   ret<< "<<<< AgentRegister " << selfName() << " dump start" << std::endl
     << "Array size=" << rs.elements_size() << std::endl;

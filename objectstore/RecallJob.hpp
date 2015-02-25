@@ -23,7 +23,7 @@ public:
   RecallJob(const std::string & name, Agent & agent):
     ObjectOps<serializers::RecallJob>(agent.objectStore(), name){
     serializers::RecallJob rjs;
-    updateFromObjectStore(rjs, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(rjs, agent.getFreeContext());
   }
   
   void remove() {
@@ -32,20 +32,20 @@ public:
   
   std::string source(Agent & agent) {
     serializers::RecallJob rjs;
-    updateFromObjectStore(rjs, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(rjs, agent.getFreeContext());
     return rjs.source();
   }
   
   std::string destination(Agent & agent) {
     serializers::RecallJob rjs;
-    updateFromObjectStore(rjs, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(rjs, agent.getFreeContext());
     return rjs.destination();
   }
   
   
   std::string owner(Agent & agent) {
     serializers::RecallJob rjs;
-    updateFromObjectStore(rjs, agent.getFreeContext());
+    getPayloadFromObjectStoreAutoLock(rjs, agent.getFreeContext());
     return rjs.owner();
   }
 };
