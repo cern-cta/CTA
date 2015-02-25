@@ -1,5 +1,8 @@
 cmake_minimum_required (VERSION 2.6)
 
+find_package (sqlite REQUIRED)
+include_directories (${SQLITE3_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
+
 set (MIDDLE_TIER_LIB_SRC_FILES
   AdminHost.cpp
   AdminUser.cpp
@@ -33,6 +36,8 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   RetrievalJob.cpp
   RetrievalJobState.cpp
   SecurityIdentity.cpp
+  SqliteDatabase.cpp
+  SqliteMiddleTierAdmin.cpp
   StorageClass.cpp
   Tape.cpp
   TapePool.cpp
@@ -41,6 +46,8 @@ set (MIDDLE_TIER_LIB_SRC_FILES
 
 add_library (ctamiddletier SHARED
   ${MIDDLE_TIER_LIB_SRC_FILES})
+
+target_link_libraries (ctamiddletier ${SQLITE3_LIBRARY_RELEASE})
 
 set (MIDDLE_TIER_UNIT_TESTS_LIB_SRC_FILES
   MockAdminHostTableTest.cpp
