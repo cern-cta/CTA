@@ -493,28 +493,8 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_new_file) {
 
   const std::string dirPath = "/grandparent";
   ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
-  {
-    DirectoryIterator itor;
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
-    ASSERT_TRUE(itor.hasMore());
-    DirectoryEntry entry;
-    ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
-  }
-  {
-    std::string name;
-    ASSERT_NO_THROW(name = userApi.getDirectoryStorageClass(requester,
-      dirPath));
-    ASSERT_TRUE(name.empty());
-  }
   ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
     storageClassName));
-  {
-    std::string name;
-    ASSERT_NO_THROW(name = userApi.getDirectoryStorageClass(requester,
-      dirPath));
-    ASSERT_EQ(storageClassName, name);
-  }
 
   const std::string tapePoolName = "TestTapePool";
   const uint16_t nbDrives = 1;
@@ -527,17 +507,6 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_new_file) {
   const std::string migrationRouteComment = "Migration-route comment";
   ASSERT_NO_THROW(adminApi.createMigrationRoute(requester, storageClassName,
     copyNb, tapePoolName, migrationRouteComment));
-  {
-    std::list<MigrationRoute> migrationRoutes;
-    ASSERT_NO_THROW(migrationRoutes = adminApi.getMigrationRoutes(requester));
-    ASSERT_EQ(1, migrationRoutes.size());
-
-    MigrationRoute migrationRoute;
-    ASSERT_NO_THROW(migrationRoute = migrationRoutes.front());
-    ASSERT_EQ(storageClassName, migrationRoute.getStorageClassName());
-    ASSERT_EQ(copyNb, migrationRoute.getCopyNb());
-    ASSERT_EQ(tapePoolName, migrationRoute.getTapePoolName());
-  }
 
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl");
