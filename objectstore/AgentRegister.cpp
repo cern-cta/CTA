@@ -5,22 +5,20 @@ ObjectOps<serializers::AgentRegister>(agent.objectStore(), name) {
   // Check that the entry is present and readable (depending on implementation
   // of object store, locking might or might not succeed)
   serializers::AgentRegister rs;
-  updateFromObjectStore(rs, agent.getFreeContext());
+  updateFromObjectStore(rs);
 }
 
 void cta::objectstore::AgentRegister::addElement (std::string name, Agent & agent) {
   serializers::AgentRegister rs;
-  ContextHandle & context = agent.getFreeContext();
-  lockExclusiveAndRead(rs, context, __func__);
+  lockExclusiveAndRead(rs);
   rs.add_elements(name);
   write(rs);
-  unlock(context);
+  unlock();
 }
 
 void cta::objectstore::AgentRegister::removeElement (const std::string  & name, Agent & agent) {
   serializers::AgentRegister rs;
-  ContextHandle & context = agent.getFreeContext();
-  lockExclusiveAndRead(rs, context, __func__);
+  lockExclusiveAndRead(rs);
   bool found;
   do {
     found = false;
@@ -34,22 +32,20 @@ void cta::objectstore::AgentRegister::removeElement (const std::string  & name, 
     }
   } while (found);
   write(rs);
-  unlock(context);
+  unlock();
 }
 
 void cta::objectstore::AgentRegister::addIntendedElement(std::string name, Agent& agent) {
   serializers::AgentRegister rs;
-  ContextHandle & context = agent.getFreeContext();
-  lockExclusiveAndRead(rs, context, __func__);
+  lockExclusiveAndRead(rs);
   rs.add_intendedelements(name);
   write(rs);
-  unlock(context);
+  unlock();
 }
 
 void cta::objectstore::AgentRegister::upgradeIntendedElementToActual(std::string name, Agent& agent) {
   serializers::AgentRegister rs;
-  ContextHandle & context = agent.getFreeContext();
-  lockExclusiveAndRead(rs, context, __func__);
+  lockExclusiveAndRead(rs);
   bool found;
   do {
     found = false;
@@ -64,14 +60,13 @@ void cta::objectstore::AgentRegister::upgradeIntendedElementToActual(std::string
   } while (found);
   rs.add_elements(name);
   write(rs);
-  unlock(context);
+  unlock();
 }
 
 
 void cta::objectstore::AgentRegister::removeIntendedElement(const std::string& name, Agent& agent) {
   serializers::AgentRegister rs;
-  ContextHandle & context = agent.getFreeContext();
-  lockExclusiveAndRead(rs, context, __func__);
+  lockExclusiveAndRead(rs);
   bool found;
   do {
     found = false;
@@ -85,14 +80,14 @@ void cta::objectstore::AgentRegister::removeIntendedElement(const std::string& n
     }
   } while (found);
   write(rs);
-  unlock(context);
+  unlock();
 }
 
 
 
 std::list<std::string> cta::objectstore::AgentRegister::getElements(Agent & agent) {
   serializers::AgentRegister rs;
-  updateFromObjectStore(rs, agent.getFreeContext());
+  updateFromObjectStore(rs);
   std::list<std::string> ret;
   for (int i=0; i<rs.elements_size(); i++) {
     ret.push_back(rs.elements(i));
@@ -102,7 +97,7 @@ std::list<std::string> cta::objectstore::AgentRegister::getElements(Agent & agen
 
 std::string cta::objectstore::AgentRegister::dump(Agent & agent) {
   serializers::AgentRegister rs;
-  updateFromObjectStore(rs, agent.getFreeContext());
+  updateFromObjectStore(rs);
   std::stringstream ret;
   ret<< "<<<< AgentRegister " << selfName() << " dump start" << std::endl
     << "Array size=" << rs.elements_size() << std::endl;

@@ -20,14 +20,14 @@ cta::objectstore::RootEntry::RootEntry(Agent & agent):
   ObjectOps<serializers::RootEntry>(agent.objectStore(), s_rootEntryName) {
   // Check that the root entry is readable.
   serializers::RootEntry res;
-  updateFromObjectStore(res, agent.getFreeContext());
+  updateFromObjectStore(res);
 }
 
 // Get the name of the agent register (or exception if not available)
 std::string cta::objectstore::RootEntry::getAgentRegister(Agent & agent) {
   // Check if the agent register exists
   serializers::RootEntry res;
-  updateFromObjectStore(res, agent.getFreeContext());
+  updateFromObjectStore(res);
   // If the registry is defined, return it, job done.
   if (res.agentregister().size())
     return res.agentregister();
@@ -43,11 +43,10 @@ std::string cta::objectstore::RootEntry::allocateOrGetAgentRegister(Agent & agen
     // If we get here, the agent register is not created yet, so we have to do it:
     // lock the entry again, for writing
     serializers::RootEntry res;
-    ContextHandle & context = agent.getFreeContext();
-    lockExclusiveAndRead(res, context, "RootEntry::allocateOrGetAgentRegister");
+    lockExclusiveAndRead(res);
     // If the registry is already defined, somebody was faster. We're done.
     if (res.agentregister().size()) {
-      unlock(context);
+      unlock();
       return res.agentregister();
     }
     // We will really create the register
@@ -67,7 +66,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetAgentRegister(Agent & agen
     res.mutable_agentregisterintentlog()->RemoveLast();
     write(res);
     // release the lock, and return the register name
-    unlock(context);
+    unlock();
     return arName;
   }
 }
@@ -76,7 +75,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetAgentRegister(Agent & agen
 std::string cta::objectstore::RootEntry::getJobPool(Agent & agent) {
   // Check if the job pool exists
   serializers::RootEntry res;
-  updateFromObjectStore(res, agent.getFreeContext());
+  updateFromObjectStore(res);
   // If the registry is defined, return it, job done.
   if (res.jobpool().size())
     return res.jobpool();
@@ -92,18 +91,17 @@ std::string cta::objectstore::RootEntry::allocateOrGetJobPool(Agent & agent) {
     // If we get here, the job pool is not created yet, so we have to do it:
     // lock the entry again, for writing
     serializers::RootEntry res;
-    ContextHandle & context = agent.getFreeContext();
-    lockExclusiveAndRead(res, context, "RootEntry::allocateOrGetJobPool");
+    lockExclusiveAndRead(res);
     // If the registry is already defined, somebody was faster. We're done.
     if (res.jobpool().size()) {
-      unlock(context);
+      unlock();
       return res.jobpool();
     }
     // We will really create the register
     // decide on the object's name
     std::string jpName (agent.nextId("jobPool"));
     // Record the agent in the intent log
-    agent.addToIntend(s_rootEntryName, jpName, serializers::JobPool_t);
+    agent.addToOwnership(jpName);
     // The potential object can now be garbage collected if we die from here.
     // Create the object, then lock. The name should be unique, so no race.
     serializers::JobPool jps;
@@ -116,9 +114,9 @@ std::string cta::objectstore::RootEntry::allocateOrGetJobPool(Agent & agent) {
     res.set_jobpool(jpName);
     write(res);
     // release the lock, and return the register name
-    unlock(context);
+    unlock();
     // Clear intent log
-    agent.removeFromIntent(s_rootEntryName, jpName, serializers::JobPool_t);
+    agent.removeFromOwnership(jpName);
     return jpName;
   }
 }
@@ -127,7 +125,7 @@ std::string cta::objectstore::RootEntry::allocateOrGetJobPool(Agent & agent) {
 std::string cta::objectstore::RootEntry::dump (Agent & agent) {
   std::stringstream ret;
   serializers::RootEntry res;
-  updateFromObjectStore(res, agent.getFreeContext());
+  updateFromObjectStore(res);
   ret << "<<<< Root entry dump start" << std::endl;
   if (res.has_agentregister()) ret << "agentRegister=" << res.agentregister() << std::endl;
   ret << "agentRegister Intent Log size=" << res.agentregisterintentlog_size() << std::endl;

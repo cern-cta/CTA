@@ -4,5 +4,9 @@
 #include "RootEntry.hpp"
 
 TEST(RootEntry, BasicAccess) {
-  
-};
+  cta::objectstore::BackendVFS be;
+  // Try to create the root entry
+  cta::objectstore::RootEntry::init(be);
+  // Delete the root entry
+  be.remove("root");
+}

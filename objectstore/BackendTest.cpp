@@ -1,4 +1,4 @@
-#include "BackendAbstractTests.hpp"
+#include "BackendTest.hpp"
 #include "BackendVFS.hpp"
 #include "BackendRados.hpp"
 #include "exception/Exception.hpp"
@@ -29,6 +29,31 @@ TEST_P(BackendAbstractTest, BasicReadWrite) {
   ASSERT_NO_THROW(m_os->remove(testObjectName));
   // Check that the object is actually gone
   ASSERT_EQ(false, m_os->exists(testObjectName));
+}
+
+TEST_P(BackendAbstractTest, LockingInterface) {
+  std::cout << "Type=" << m_os->typeName() << std::endl;
+  const std::string testObjectName = "testObject";
+  m_os->create(testObjectName, "");
+  {
+    // If we don't scope the object, the release will blow up after
+    // removal of the file.
+    std::auto_ptr<cta::objectstore::Backend::ScopedLock> lock( 
+      m_os->lockExclusive(testObjectName));
+  }
+  {
+    std::auto_ptr<cta::objectstore::Backend::ScopedLock> lock( 
+      m_os->lockExclusive(testObjectName));
+    lock->release();
+  }
+  m_os->remove(testObjectName);
+}
+
+TEST_P(BackendAbstractTest, ParametersInterface) {
+  std::cout << "Type=" << m_os->typeName() << std::endl;
+  std::auto_ptr<cta::objectstore::Backend::Parameters> params(
+    m_os->getParams());
+  std::cout << params->toStr() << std::endl;
 }
 
 cta::objectstore::BackendVFS osVFS;
