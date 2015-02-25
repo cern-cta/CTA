@@ -45,6 +45,7 @@ add_library (ctamiddletier SHARED
 set (MIDDLE_TIER_UNIT_TESTS_LIB_SRC_FILES
   MockAdminHostTableTest.cpp
   MockAdminUserTableTest.cpp
+  MockArchivalJobTableTest.cpp
   MockLogicalLibraryTableTest.cpp
   MockMiddleTierAdminTest.cpp
   MockMiddleTierUserTest.cpp

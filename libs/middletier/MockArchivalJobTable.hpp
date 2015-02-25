@@ -21,11 +21,13 @@ public:
    *
    * @param requester The identity of the user requesting the creation of the
    * job.
+   * @param tapePoolName The name of the destination tape pool.
    * @param srcUrl The URL of the source file.
    * @param dstPath The full path of the destination file within the archive.
    */
   void createArchivalJob(
     const SecurityIdentity &requester,
+    const std::string &tapePoolName,
     const std::string &srcUrl,
     const std::string &dstPath);
 
@@ -48,15 +50,15 @@ public:
     const std::string &dstPath);
 
   /**
-   * Returns all of the existing archival jobs grouped by tape pool and then
-   * sorted by creation time in ascending order (oldest first).
+   * Returns all of the existing archival jobs grouped by tape pool name and
+   * then sorted by creation time in ascending order (oldest first).
    *
    * @param requester The identity of the user requesting the list.
    * @return All of the existing archival jobs grouped by tape pool and then
    * sorted by creation time in ascending order (oldest first).
    */
-  const std::map<TapePool, std::list<ArchivalJob> > getArchivalJobs(
-    const SecurityIdentity &requester) const;
+  const std::map<std::string, std::map<time_t, ArchivalJob> >
+    &getArchivalJobs(const SecurityIdentity &requester) const;
 
   /**
    * Returns the list of archival jobs associated with the specified tape pool
@@ -74,10 +76,10 @@ public:
 private:
 
   /**
-   * All of the existing archival jobs grouped by tape pool and then
+   * All of the existing archival jobs grouped by tape pool name and then
    * sorted by creation time in ascending order (oldest first).
    */
-  std::map<TapePool, std::map<time_t, ArchivalJob> > m_jobs;
+  std::map<std::string, std::map<time_t, ArchivalJob> > m_jobsTree;
 
 }; // class MockArchivalJobTable
 

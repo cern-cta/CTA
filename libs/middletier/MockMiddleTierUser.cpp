@@ -277,7 +277,8 @@ void cta::MockMiddleTierUser::checkUserIsAuthorisedToArchive(
 std::map<cta::TapePool, std::list<cta::ArchivalJob> >
   cta::MockMiddleTierUser::getArchivalJobs(
   const SecurityIdentity &requester) const {
-  return m_db.archivalJobs.getArchivalJobs(requester);
+  std::map<cta::TapePool, std::list<cta::ArchivalJob> > jobs;
+  return jobs;
 }
 
 //------------------------------------------------------------------------------
