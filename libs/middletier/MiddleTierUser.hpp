@@ -64,6 +64,20 @@ public:
     const std::string &dirPath) const = 0;
 
   /**
+   * Returns the directory entry information for the specified directory or file
+   * within the archive namespace.
+   *
+   * @param requester The identity of the user requesting the directory entry.
+   * @param path The absolute path of the directory or file within the archive
+   * namespace.
+   * @return The directory entry information for the specified directory or file
+   * within the archive namespace.
+   */
+  virtual DirectoryEntry stat(
+    const SecurityIdentity &requester,
+    const std::string path) const = 0;
+
+  /**
    * Sets the storage class of the specified directory to the specified value.
    *
    * @param requester The identity of the user requesting the setting of the
@@ -116,12 +130,13 @@ public:
    *
    * @param requester The identity of the user requesting the archival.
    * @param srcUrls List of one or more source files.
-   * @param dst Destination file or directory within the archive namespace.
+   * @param dstPath The absolute path of the destination file or directory
+   * within the archive namespace.
    */
   virtual void archive(
     const SecurityIdentity &requester,
     const std::list<std::string> &srcUrls,
-    const std::string &dst) = 0;
+    const std::string &dstPath) = 0;
 
   /**
    * Returns all of the existing archival jobs grouped by tape pool and then
@@ -152,7 +167,8 @@ public:
    *
    * @param requester The identity of the user requesting the deletion of the
    * tape.
-   * @param dstPath The full path of the destination file within the archive.
+   * @param dstPath The absolute path of the destination file within the
+   * archive namespace.
    */
   virtual void deleteArchivalJob(
     const SecurityIdentity &requester,

@@ -31,7 +31,7 @@ public:
    *
    * @param requester The identity of the user requesting the creation of the
    * directory.
-   * @param dirPath The full path of the directory.
+   * @param dirPath The absolute path of the directory.
    */
   void createDirectory(
     const SecurityIdentity &requester,
@@ -42,7 +42,7 @@ public:
    *
    * @param requester The identity of the user requesting the deletion of the
    * directory.
-   * @param dirPath The full path of the directory.
+   * @param dirPath The absolute path of the directory.
    */
   void deleteDirectory(
     const SecurityIdentity &requester,
@@ -53,12 +53,26 @@ public:
    *
    * @param requester The identity of the user requesting the contents of the
    * directory.
-   * @param dirPath The full path of the directory.
+   * @param dirPath The absolute path of the directory.
    * @return An iterator over the contents of the directory.
    */
   DirectoryIterator getDirectoryContents(
     const SecurityIdentity &requester,
     const std::string &dirPath) const;
+
+  /**
+   * Returns the directory entry information for the specified directory or file
+   * within the archive namespace.
+   *
+   * @param requester The identity of the user requesting the directory entry.
+   * @param path The absolute path of the directory or file within the archive
+   * namespace.
+   * @return The directory entry information for the specified directory or file
+   * within the archive namespace.
+   */
+  DirectoryEntry stat(
+    const SecurityIdentity &requester,
+    const std::string path) const;
 
   /**
    * Sets the storage class of the specified directory to the specified value.
@@ -113,12 +127,13 @@ public:
    *
    * @param requester The identity of the user requesting the archival.
    * @param srcUrls List of one or more source files.
-   * @param dst Destination file or directory within the archive namespace.
+   * @param dstPath The absolute path of the destination file or directory
+   * within the archive namespace.
    */
   void archive(
     const SecurityIdentity &requester,
     const std::list<std::string> &srcUrls,
-    const std::string &dst);
+    const std::string &dstPath);
 
   /**
    * Returns all of the existing archival jobs grouped by tape pool and then
@@ -149,7 +164,8 @@ public:
    *
    * @param requester The identity of the user requesting the deletion of the
    * job.
-   * @param dstPath The full path of the destination file within the archive.
+   * @param dstPath The absolute path of the destination file within the
+   * archive namespace.
    */
   void deleteArchivalJob(
     const SecurityIdentity &requester,

@@ -149,6 +149,18 @@ cta::DirectoryIterator cta::MockMiddleTierUser::getDirectoryContents(
 }
 
 //------------------------------------------------------------------------------
+// stat
+//------------------------------------------------------------------------------
+cta::DirectoryEntry cta::MockMiddleTierUser::stat(
+  const SecurityIdentity &requester,
+  const std::string path) const {
+  Utils::checkAbsolutePathSyntax(path);
+
+  const FileSystemNode &node = getFileSystemNode(path);
+  return node.getFileSystemEntry().getEntry();
+}
+
+//------------------------------------------------------------------------------
 // setDirectoryStorageClass
 //------------------------------------------------------------------------------
 void cta::MockMiddleTierUser::setDirectoryStorageClass(
@@ -206,12 +218,12 @@ std::string cta::MockMiddleTierUser::getDirectoryStorageClass(
 // archive
 //------------------------------------------------------------------------------
 void cta::MockMiddleTierUser::archive(const SecurityIdentity &requester,
-  const std::list<std::string> &srcUrls, const std::string &dst) {
-  Utils::checkAbsolutePathSyntax(dst);
-  if(isAnExistingDirectory(dst)) {
-    return archiveToDirectory(requester, srcUrls, dst);
+  const std::list<std::string> &srcUrls, const std::string &dstPath) {
+  Utils::checkAbsolutePathSyntax(dstPath);
+  if(isAnExistingDirectory(dstPath)) {
+    return archiveToDirectory(requester, srcUrls, dstPath);
   } else {
-    return archiveToFile(requester, srcUrls, dst);
+    return archiveToFile(requester, srcUrls, dstPath);
   }
 }
 
@@ -258,8 +270,22 @@ void cta::MockMiddleTierUser::archiveToFile(
       "archiving to a single destination file");
   }
 
-  FileSystemNode &enclosingDirNode = getFileSystemNode(dstFile);
-  checkUserIsAuthorisedToArchive(requester, enclosingDirNode);
+  const std::string enclosingDir = Utils::getEnclosingDirPath(dstFile);
+  const std::string enclosedName = Utils::getEnclosedName(dstFile);
+  FileSystemNode &enclosingNode = getFileSystemNode(enclosingDir);
+  checkUserIsAuthorisedToArchive(requester, enclosingNode);
+  if(enclosingNode.childExists(enclosedName)) {
+    std::ostringstream message;
+    message << "A file or directory with the name " << enclosedName <<
+      " already exists";
+    throw Exception(message.str());
+  }
+
+  const std::string inheritedStorageClassName =
+    enclosingNode.getFileSystemEntry().getEntry().getStorageClassName();
+  DirectoryEntry dirEntry(DirectoryEntry::ENTRYTYPE_FILE, enclosedName,
+    inheritedStorageClassName);
+  enclosingNode.addChild(new FileSystemNode(m_db.storageClasses, dirEntry));
 }
 
 //------------------------------------------------------------------------------
