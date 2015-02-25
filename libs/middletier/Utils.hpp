@@ -1,5 +1,6 @@
 #pragma once
 
+#include <list>
 #include <string>
 #include <vector>
 
@@ -40,6 +41,17 @@ public:
    * @return The name of the enclosed file or directory.
    */
   static std::string getEnclosedName(const std::string &path);
+
+  /**
+   * Returns the names of the enclosed file or directory of each of the
+   * specified paths.
+   *
+   * @param paths The path
+   * @return The names of the enclosed file or directory of each of the
+   * specified paths.
+   */
+  static std::list<std::string> getEnclosedNames(
+    const std::list<std::string> &paths);
 
   /**
    * Returns the result of trimming both left and right slashes from the

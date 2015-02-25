@@ -256,6 +256,37 @@ void cta::MockMiddleTierUser::archiveToDirectory(
 
   FileSystemNode &dstDirNode = getFileSystemNode(dstDir);
   checkUserIsAuthorisedToArchive(requester, dstDirNode);
+
+  const std::string inheritedStorageClassName = dstDirNode.getFileSystemEntry().
+    getEntry().getStorageClassName();
+  const std::list<std::string> dstFileNames = Utils::getEnclosedNames(srcUrls);
+  checkDirNodeDoesNotContainFiles(dstDir, dstDirNode, dstFileNames);
+
+  for(std::list<std::string>::const_iterator itor = dstFileNames.begin();
+    itor != dstFileNames.end(); itor++) {
+    const std::string &dstFileName = *itor;
+    DirectoryEntry dirEntry(DirectoryEntry::ENTRYTYPE_FILE, dstFileName,
+      inheritedStorageClassName);
+    dstDirNode.addChild(new FileSystemNode(m_db.storageClasses, dirEntry));
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkDirNodeDoesNotContainFiles
+//------------------------------------------------------------------------------
+void cta::MockMiddleTierUser::checkDirNodeDoesNotContainFiles(
+  const std::string &dirPath,
+  const FileSystemNode &dirNode,
+  const std::list<std::string> &fileNames) {
+  for(std::list<std::string>::const_iterator itor = fileNames.begin();
+    itor != fileNames.end(); itor++) {
+    const std::string &fileName = *itor;
+    if(dirNode.childExists(fileName)) {
+      std::ostringstream message;
+      message << dirPath << fileName << " already exists";
+      throw(Exception(message.str()));
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

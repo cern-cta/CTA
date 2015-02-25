@@ -130,6 +130,45 @@ TEST_F(cta_client_UtilsTest,
   ASSERT_EQ(std::string("/grandparent/parent/"), enclosingDirPath);
 }
 
+TEST_F(cta_client_UtilsTest, getEnclosedName) {
+  using namespace cta;
+
+  const std::string enclosingDirPath = "/grandparent/parent/";
+  const std::string enclosedName = "child";
+  const std::string absoluteFilePath = enclosingDirPath + enclosedName;
+  std::string result;
+  ASSERT_NO_THROW(result = Utils::getEnclosedName(absoluteFilePath));
+  ASSERT_EQ(enclosedName, result);
+}
+
+TEST_F(cta_client_UtilsTest, getEnclosedNames) {
+  using namespace cta;
+
+  const std::string enclosingDirPath = "/grandparent/parent/";
+  const std::string enclosedName1 = "child1";
+  const std::string enclosedName2 = "child2";
+  const std::string enclosedName3 = "child3";
+  const std::string enclosedName4 = "child4";
+  std::list<std::string> absoluteFilePaths;
+  absoluteFilePaths.push_back(enclosingDirPath + enclosedName1);
+  absoluteFilePaths.push_back(enclosingDirPath + enclosedName2);
+  absoluteFilePaths.push_back(enclosingDirPath + enclosedName3);
+  absoluteFilePaths.push_back(enclosingDirPath + enclosedName4);
+  std::list<std::string> results;
+  ASSERT_NO_THROW(results = Utils::getEnclosedNames(absoluteFilePaths));
+  ASSERT_EQ(4, results.size());
+  std::set<std::string> resultSet;
+  for(std::list<std::string>::const_iterator itor = results.begin();
+    itor != results.end(); itor++) {
+    resultSet.insert(*itor);
+  }
+  ASSERT_EQ(4, resultSet.size());
+  ASSERT_FALSE(resultSet.find(enclosedName1) == resultSet.end());
+  ASSERT_FALSE(resultSet.find(enclosedName2) == resultSet.end());
+  ASSERT_FALSE(resultSet.find(enclosedName3) == resultSet.end());
+  ASSERT_FALSE(resultSet.find(enclosedName4) == resultSet.end());
+}
+
 TEST_F(cta_client_UtilsTest, splitString_goodDay) {
   using namespace cta;
   const std::string line("col0 col1 col2 col3 col4 col5 col6 col7");

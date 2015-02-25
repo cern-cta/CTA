@@ -113,6 +113,21 @@ std::string cta::Utils::getEnclosedName(const std::string &path) {
 }
 
 //-----------------------------------------------------------------------------
+// getEnclosedNames
+//-----------------------------------------------------------------------------
+std::list<std::string> cta::Utils::getEnclosedNames(
+  const std::list<std::string> &paths) {
+  std::list<std::string> names;
+
+  for(std::list<std::string>::const_iterator itor = paths.begin();
+    itor != paths.end(); itor++) {
+    names.push_back(getEnclosedName(*itor));
+  }
+
+  return names;
+}
+
+//-----------------------------------------------------------------------------
 // trimSlashes
 //-----------------------------------------------------------------------------
 std::string cta::Utils::trimSlashes(const std::string &s) {

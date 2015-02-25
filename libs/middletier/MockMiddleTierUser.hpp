@@ -305,6 +305,19 @@ private:
     const SecurityIdentity &user,
     const FileSystemNode &dstDir);
 
+  /**
+   * Throws an exception if at least one of the the specified file names are
+   * contained within the specified directory.
+   *
+   * @param dirPath The absolute path of the directory.
+   * @param dirNode The file-system node representing the directory.
+   * @param fileNames The file names to be searched for.
+   */
+void checkDirNodeDoesNotContainFiles(
+  const std::string &dirPath,
+  const FileSystemNode &dirNode, 
+  const std::list<std::string> &fileNames);
+
 }; // class MockMiddleTierUser
 
 } // namespace cta
