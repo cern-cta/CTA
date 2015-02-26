@@ -30,7 +30,7 @@ message ObjectHeader {
   required uint64 version = 2;
   required string owner = 3;
   required string backupowner = 4;
-  required string payload = 5;
+  required bytes payload = 5;
 }
 
 // The agent object represents a running process. It is a payload to an object
