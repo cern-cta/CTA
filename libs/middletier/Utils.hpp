@@ -25,9 +25,10 @@ public:
    *
    * For example:
    *
-   * * path="/grandparent/parent/child" would return "/grandparent/parent"
-   * * path="/grandparent" would return "/grandparent"
-   * * path="/" would return "" where empty string means no enclosing directoyr
+   * * path="/grandparent/parent/child" would return "/grandparent/parent/"
+   * * path="/grandparent/parent" would return "/grandparent/"
+   * * path="/grandparent" would return "/"
+   * * path="/" would throw an exception
    *
    * @param path The path.
    * @return The path of the enclosing directory.
