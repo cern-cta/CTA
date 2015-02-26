@@ -216,10 +216,36 @@ void cta::SqliteDatabase::insertFile(const SecurityIdentity &requester, const st
 }
 
 //------------------------------------------------------------------------------
-// getStorageClass
+// getDirectoryStorageClass
 //------------------------------------------------------------------------------
-std::string cta::SqliteDatabase::getStorageClass(const std::string &path){
-  return "";
+std::string cta::SqliteDatabase::getDirectoryStorageClass(const std::string &path){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  std::list<cta::TapePool> pools;
+  query << "SELECT STORAGECLASS_NAME FROM DIRECTORY WHERE PATH='" << path << "';";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  int res = sqlite3_step(statement);
+  if(res==SQLITE_ROW) {
+    return std::string((char *)sqlite3_column_text(statement,0));
+  }
+  else if(res==SQLITE_DONE){
+    std::ostringstream message;
+    message << "PATH: " << path << " does not exist";
+    throw(Exception(message.str()));    
+  }
+  else {
+    std::ostringstream message;
+    message << "SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));    
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -229,16 +255,16 @@ void cta::SqliteDatabase::insertDirectory(const SecurityIdentity &requester, con
   std::string s_pathname = sanitizePathname(pathname);
   std::string path = getPath(s_pathname);
   std::string name = getName(s_pathname);
-  std::string storageClass = getStorageClass(path);
+  std::string storageClass = getDirectoryStorageClass(path);
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "INSERT INTO DIRECTORY VALUES('" << s_pathname << "','" << storageClass << "'," << requester.user.getUid() << "," << requester.user.getGid() << "," << (int)mode << ");";
   int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
-      std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      throw(Exception(message.str()));
+    std::ostringstream message;
+    message << "SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));
   }
 }
 
@@ -251,10 +277,10 @@ void cta::SqliteDatabase::insertTapePool(const SecurityIdentity &requester, cons
   query << "INSERT INTO TAPEPOOL VALUES('" << name << "'," << (int)nbDrives << "," << (int)nbPartialTapes << "," << requester.user.getUid() << "," << requester.user.getGid() << ",'" << comment << "');";
   int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
-      std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      throw(Exception(message.str()));
+    std::ostringstream message;
+    message << "SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));
   }
 }
 

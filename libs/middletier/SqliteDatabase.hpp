@@ -77,7 +77,7 @@ private:
   
   std::string getName(const std::string &pathname);
   
-  std::string getStorageClass(const std::string &path);
+  std::string getDirectoryStorageClass(const std::string &path);
   
 }; // struct SqliteDatabase
 
