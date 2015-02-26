@@ -19,6 +19,7 @@ add_library (CTAObjectStore
   BackendRados.cpp
   ObjectOps.cpp
   ProtocolBuffersAlgorithms.cpp
+  FIFO.cpp
   exception/Backtrace.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
@@ -55,6 +56,7 @@ add_library (CTAObjectStore
 set(ObjectStoreUnitTests
   BackendTest.cpp
   RootEntryTest.cpp
+  FIFOTest.cpp
 )
 
 add_executable(unitTests unitTests.cpp ${ObjectStoreUnitTests})

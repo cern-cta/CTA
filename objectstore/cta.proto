@@ -11,6 +11,7 @@ enum ObjectType {
   MigrationFIFO_t = 5;
   RecallJob_t = 6;
   Counter_t = 7;
+  FIFO_t = 8;
 }
 
 // The base object header. This will allow introspection and automatic
