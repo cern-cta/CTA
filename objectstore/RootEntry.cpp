@@ -1,6 +1,9 @@
 #include "RootEntry.hpp"
-
+#include "AgentRegister.hpp"
+#include "Agent.hpp"
+#include "JobPool.hpp"
 #include <cxxabi.h>
+#include "ProtcolBuffersAlgorithms.hpp"
 
 // construtor, when the backend store exists.
 // Checks the existence and correctness of the root entry
@@ -11,7 +14,7 @@ cta::objectstore::RootEntry::RootEntry(Backend & os):
 std::string cta::objectstore::RootEntry::getAgentRegister() {
   // Check that the fetch was done
   if (!m_payloadInterpreted)
-    throw ObjectOpsBase::NotFetched("In RootEntry::getAgentRegister: object not yet fetched")
+    throw ObjectOpsBase::NotFetched("In RootEntry::getAgentRegister: object not yet fetched");
   // If the registry is defined, return it, job done.
   if (m_payload.agentregister().size())
     return m_payload.agentregister();
@@ -19,50 +22,60 @@ std::string cta::objectstore::RootEntry::getAgentRegister() {
 }
 
 // Get the name of a (possibly freshly created) agent register
-std::string cta::objectstore::RootEntry::allocateOrGetAgentRegister(Agent & agent) {
+std::string cta::objectstore::RootEntry::allocateOrGetAgentRegister(Agent & agent ) {
   // Check if the agent register exists
   try {
-    return getAgentRegister(agent);
+    return getAgentRegister();
   } catch (NotAllocatedEx &) {
     // If we get here, the agent register is not created yet, so we have to do it:
-    // lock the entry again, for writing
-    serializers::RootEntry res;
-    lockExclusiveAndRead(res);
+    // lock the entry again, for writing. We take the lock ourselves if needed
+    // This will make an autonomous transaction
+    std::auto_ptr<ScopedExclusiveLock> lockPtr;
+    if (!m_locksForWriteCount)
+      lockPtr.reset(new ScopedExclusiveLock(*this));
     // If the registry is already defined, somebody was faster. We're done.
-    if (res.agentregister().size()) {
-      unlock();
-      return res.agentregister();
+    fetch();
+    if (m_payload.agentregister().size()) {
+      lockPtr.reset(NULL);
+      return m_payload.agentregister();
     }
     // We will really create the register
     // decide on the object's name
     std::string arName (agent.nextId("agentRegister"));
-    // Record the agent in the intent log
-    res.add_agentregisterintentlog(arName);
-    // Commit the intents
-    write(res);
-    // The potential object can now be garbage collected if we die from here.
-    // Create the object, then lock. The name should be unique, so no race.
-    serializers::Register ars;
-    writeChild(arName, ars);
-    // If we lived that far, we can update the root entry to point to our
-    // new agent register, and remove the name from the intent log.
-    res.set_agentregister(arName);
-    res.mutable_agentregisterintentlog()->RemoveLast();
-    write(res);
-    // release the lock, and return the register name
-    unlock();
+    // Record the agent registry in our own intent
+    addIntendedAgentRegistry(arName);
+    commit();
+    // Create the agent registry
+    AgentRegister ar(arName, m_objectStore);
+    ar.initialize();
+    // There is no garbage collection for an agent registry: if it is not
+    // plugged to the root entry, it does not exist.
+    ar.setOwner("");
+    ar.setBackupOwner("");
+    ar.insert();
+    // Take a lock on agent registry
+    ScopedExclusiveLock arLock(ar);
+    // Move agent registry from intent to official
+    setAgentRegister(arName);
+    deleteFromIntendedAgentRegistry(arName);
+    commit();
+    // Record completion in agent registry
+    ar.setOwner(getNameIfSet());
+    ar.setBackupOwner(getNameIfSet());
+    ar.commit();
+    // And we are done. Release locks
+    lockPtr.reset(NULL);
+    arLock.release();
     return arName;
   }
 }
 
 // Get the name of the JobPool (or exception if not available)
-std::string cta::objectstore::RootEntry::getJobPool(Agent & agent) {
-  // Check if the job pool exists
-  serializers::RootEntry res;
-  getPayloadFromObjectStoreAutoLock(res);
+std::string cta::objectstore::RootEntry::getJobPool() {
+  checkPayloadReadable();
   // If the registry is defined, return it, job done.
-  if (res.jobpool().size())
-    return res.jobpool();
+  if (m_payload.jobpool().size())
+    return m_payload.jobpool();
   throw NotAllocatedEx("In RootEntry::getJobPool: jobPool not yet allocated");
 }
 
@@ -70,55 +83,87 @@ std::string cta::objectstore::RootEntry::getJobPool(Agent & agent) {
 std::string cta::objectstore::RootEntry::allocateOrGetJobPool(Agent & agent) {
   // Check if the job pool exists
   try {
-    return getJobPool(agent);
+    return getJobPool();
   } catch (NotAllocatedEx &) {
     // If we get here, the job pool is not created yet, so we have to do it:
     // lock the entry again, for writing
-    serializers::RootEntry res;
-    lockExclusiveAndRead(res);
+    ScopedExclusiveLock lock(*this);
+    fetch();
     // If the registry is already defined, somebody was faster. We're done.
-    if (res.jobpool().size()) {
-      unlock();
-      return res.jobpool();
+    if (m_payload.jobpool().size()) {
+      lock.release();
+      return m_payload.jobpool();
     }
     // We will really create the register
     // decide on the object's name
     std::string jpName (agent.nextId("jobPool"));
     // Record the agent in the intent log
-    agent.addToOwnership(jpName);
-    // The potential object can now be garbage collected if we die from here.
-    // Create the object, then lock. The name should be unique, so no race.
-    serializers::JobPool jps;
-    jps.set_migration("");
-    jps.set_recall("");
-    jps.set_recallcounter("");
-    writeChild(jpName, jps);
-    // If we lived that far, we can update the root entry to point to our
-    // new agent register, and remove the name from the intent log.
-    res.set_jobpool(jpName);
-    write(res);
-    // release the lock, and return the register name
-    unlock();
-    // Clear intent log
-    agent.removeFromOwnership(jpName);
+    addIntendedJobPool(jpName);
+    // Create and populate the object
+    JobPool jp(jpName, m_objectStore);
+    jp.initialize();
+    jp.setOwner("");
+    jp.setBackupOwner("");
+    jp.insert();
+    // Take a lock on the newly created job pool
+    ScopedExclusiveLock jpLock(jp);
+    // Move job pool from intent to official
+    setJobPool(jpName);
+    commit();
+    // Record completion on the job pool
+    jp.setOwner(getNameIfSet());
+    jp.setBackupOwner(getNameIfSet());
+    jp.commit();
+    // and we are done
     return jpName;
   }
 }
 
+void cta::objectstore::RootEntry::addIntendedAgentRegistry(const std::string& name) {
+  checkPayloadWritable();
+  std::string * reg = m_payload.mutable_agentregisterintentlog()->Add();
+  *reg = name;
+}
+
+void cta::objectstore::RootEntry::deleteFromIntendedAgentRegistry(const std::string& name) {
+  checkPayloadWritable();
+  serializers::removeString(m_payload.mutable_agentregisterintentlog(), name);
+}
+
+void cta::objectstore::RootEntry::addIntendedJobPool(const std::string& name) {
+  checkPayloadWritable();
+  std::string * jp = m_payload.mutable_jobpoolintentlog()->Add();
+  *jp = name;
+}
+
+void cta::objectstore::RootEntry::deleteFromIntendedJobPool(const std::string& name) {
+  checkPayloadWritable();
+  serializers::removeString(m_payload.mutable_jobpoolintentlog(), name);
+}
+
+void cta::objectstore::RootEntry::setAgentRegister(const std::string& name) {
+  checkPayloadWritable();
+  m_payload.set_agentregister(name);
+}
+
+void cta::objectstore::RootEntry::setJobPool(const std::string& name) {
+  checkPayloadWritable();
+  m_payload.set_jobpool(name);
+}
+
 // Dump the root entry
-std::string cta::objectstore::RootEntry::dump (Agent & agent) {
+std::string cta::objectstore::RootEntry::dump () {
+  checkPayloadReadable();
   std::stringstream ret;
-  serializers::RootEntry res;
-  getPayloadFromObjectStoreAutoLock(res);
   ret << "<<<< Root entry dump start" << std::endl;
-  if (res.has_agentregister()) ret << "agentRegister=" << res.agentregister() << std::endl;
-  ret << "agentRegister Intent Log size=" << res.agentregisterintentlog_size() << std::endl;
-  for (int i=0; i<res.agentregisterintentlog_size(); i++) {
-    ret << "agentRegisterIntentLog=" << res.agentregisterintentlog(i) << std::endl;
+  if (m_payload.has_agentregister()) ret << "agentRegister=" << m_payload.agentregister() << std::endl;
+  ret << "agentRegister Intent Log size=" << m_payload.agentregisterintentlog_size() << std::endl;
+  for (int i=0; i<m_payload.agentregisterintentlog_size(); i++) {
+    ret << "agentRegisterIntentLog=" << m_payload.agentregisterintentlog(i) << std::endl;
   }
-  if (res.has_jobpool()) ret << "jobPool=" << res.jobpool() << std::endl;
-  if (res.has_driveregister()) ret << "driveRegister=" << res.driveregister() << std::endl;
-  if (res.has_taperegister()) ret << "tapeRegister=" << res.taperegister() << std::endl;
+  if (m_payload.has_jobpool()) ret << "jobPool=" << m_payload.jobpool() << std::endl;
+/*  if (m_payload.has_driveregister()) ret << "driveRegister=" << m_payload.driveregister() << std::endl;
+  if (m_payload.has_taperegister()) ret << "tapeRegister=" << m_payload.taperegister() << std::endl;*/
   ret << ">>>> Root entry dump start" << std::endl;
   return ret.str();
 }

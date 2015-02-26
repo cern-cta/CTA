@@ -14,7 +14,9 @@ class ObjectOpsBase {
   friend class ScopedExclusiveLock;
 protected:
   ObjectOpsBase(Backend & os): m_nameSet(false), m_objectStore(os), 
-    m_headerInterpreted(false), m_payloadInterpreted(false) {}
+    m_headerInterpreted(false), m_payloadInterpreted(false),
+    m_existingObject(false), m_locksCount(0),
+    m_locksForWriteCount(0) {}
   
   class NameNotSet: public cta::exception::Exception {
   public:
@@ -36,9 +38,14 @@ protected:
     WrongType(const std::string & w): cta::exception::Exception(w) {}
   };
   
-  class NotNew: public cta::exception::Exception {
+  class NotNewObject: public cta::exception::Exception {
   public:
-    NotNew(const std::string & w): cta::exception::Exception(w) {}
+    NotNewObject(const std::string & w): cta::exception::Exception(w) {}
+  };
+  
+  class NewObject: public cta::exception::Exception {
+  public:
+    NewObject(const std::string & w): cta::exception::Exception(w) {}
   };
   
   class NotFetched: public cta::exception::Exception {
@@ -46,7 +53,55 @@ protected:
     NotFetched(const std::string & w): cta::exception::Exception(w) {}
   };
   
+  class NotInitialized: public cta::exception::Exception {
+  public:
+    NotInitialized(const std::string & w): cta::exception::Exception(w) {}
+  };
+  
+  class NameAlreadySet: public cta::exception::Exception {
+  public:
+    NameAlreadySet(const std::string & w): cta::exception::Exception(w) {}
+  };
+  
+  void checkHeaderWritable() {
+    if (!m_headerInterpreted) 
+      throw NotFetched("In ObjectOps::checkHeaderWritable: header not yet fetched or initialized");
+    checkWritable();
+  }
+  
+  void checkHeaderReadable() {
+    if (!m_headerInterpreted) 
+      throw NotFetched("In ObjectOps::checkHeaderReadable: header not yet fetched or initialized");
+    checkReadable();
+  }
+  
+  void checkPayloadWritable() {
+    if (!m_payloadInterpreted) 
+      throw NotFetched("In ObjectOps::checkPayloadWritable: header not yet fetched or initialized");
+    checkWritable();
+  }
+  
+  void checkPayloadReadable() {
+    if (!m_payloadInterpreted) 
+      throw NotFetched("In ObjectOps::checkPayloadReadable: header not yet fetched or initialized");
+    checkReadable();
+  }
+  
+  void checkWritable() {
+    if (m_existingObject && !m_locksForWriteCount)
+      throw NotLocked("In ObjectOps::checkWritable: object not locked for write");
+  }
+  
+  void checkReadable() {
+    if (!m_locksCount)
+      throw NotLocked("In ObjectOps::checkReadable: object not locked");
+  }
+  
+public:
+  
   void setName(const std::string & name) {
+    if (m_nameSet)
+      throw NameAlreadySet("In ObjectOps::setName: trying to overwrite an already set name");
     m_name = name;
     m_nameSet = true;
   }
@@ -57,6 +112,35 @@ protected:
     }
     return m_name;
   }
+  
+  void remove () {
+    checkWritable();
+    m_objectStore.remove(getNameIfSet());
+    m_existingObject = false;
+    m_headerInterpreted = false;
+    m_payloadInterpreted = false;
+  }
+  
+  void setOwner(const std::string & owner) {
+    checkHeaderWritable();
+    m_header.set_owner(owner);
+  }
+  
+  std::string getOwner() {
+    checkHeaderReadable();
+    return m_header.owner();
+  }
+  
+  void setBackupOwner(const std::string & owner) {
+    checkHeaderWritable();
+    m_header.set_backupowner(owner);
+  }
+  
+  std::string getBackupOwner() {
+    checkHeaderReadable();
+    return m_header.backupowner();
+  }
+
 protected:
   bool m_nameSet;
   std::string m_name;
@@ -64,8 +148,9 @@ protected:
   serializers::ObjectHeader m_header;
   bool m_headerInterpreted;
   bool m_payloadInterpreted;
-  bool m_locked;
-  bool m_lockedForWrite;
+  bool m_existingObject;
+  int m_locksCount;
+  int m_locksForWriteCount;
   std::auto_ptr<Backend::ScopedLock> m_writeLock;
 };
 
@@ -73,16 +158,14 @@ class ScopedLock {
 public:
   void release() {
     m_lock.reset(NULL);
+    m_objectOps.m_locksCount--;
+    m_objectOps.m_locksForWriteCount--;
   }
   virtual ~ScopedLock() {
-    m_objectOps.m_locked = false;
-    m_objectOps.m_lockedForWrite = false;
+    release();
   }
 protected:
-  ScopedLock(ObjectOpsBase & oo): m_objectOps(oo) {
-    if (m_objectOps.m_locked)
-      throw ObjectOpsBase::AlreadyLocked("In ScopedLock::ScopedLock: object already locked");
-  }
+  ScopedLock(ObjectOpsBase & oo): m_objectOps(oo) {}
   std::auto_ptr<Backend::ScopedLock> m_lock;
   ObjectOpsBase & m_objectOps;
 };
@@ -91,7 +174,7 @@ class ScopedSharedLock: public ScopedLock {
 public:
   ScopedSharedLock(ObjectOpsBase & oo): ScopedLock(oo) {
     m_lock.reset(m_objectOps.m_objectStore.lockShared(m_objectOps.getNameIfSet()));
-    m_objectOps.m_locked = true;
+    m_objectOps.m_locksCount++;
   }
 };
 
@@ -99,8 +182,8 @@ class ScopedExclusiveLock: public ScopedLock {
 public:
   ScopedExclusiveLock(ObjectOpsBase & oo): ScopedLock(oo) {
     m_lock.reset(m_objectOps.m_objectStore.lockExclusive(m_objectOps.getNameIfSet()));
-    m_objectOps.m_locked = true;
-    m_objectOps.m_lockedForWrite = true;
+    m_objectOps.m_locksCount++;
+    m_objectOps.m_locksForWriteCount++;
   }
 };
 
@@ -116,8 +199,9 @@ protected:
 public:
   void fetch() {
     // Check that the object is locked, one way or another
-    if(!m_locked)
+    if(!m_locksCount)
       throw NotLocked("In ObjectOps::fetch(): object not locked");
+    m_existingObject = true;
     // Get the header from the object store
     getHeaderFromObjectStore();
     // Interpret the data
@@ -125,16 +209,22 @@ public:
   }
   
   void commit() {
-    // Check that the object is locked for writing
-    if (!m_locked || !m_lockedForWrite)
-      throw NotLocked("In ObjectOps::commit(): object not locked for write");
+    checkWritable();
+    if (!m_existingObject) 
+      throw NewObject("In ObjectOps::commit: trying to update a new object");
     // Serialise the payload into the header
     m_header.set_payload(m_payload.SerializeAsString());
-    // Write the payload
+    // Write the object
     m_objectStore.atomicOverwrite(getNameIfSet(), m_header.SerializeAsString());
   }
   
 protected:
+  
+  void getPayloadFromHeader () {
+    m_payload.ParseFromString(m_header.payload());
+    m_payloadInterpreted = true;
+  }
+
   void getHeaderFromObjectStore () {
     m_header.ParseFromString(m_objectStore.read(getNameIfSet()));
     if (m_header.type() != typeId) {
@@ -146,34 +236,34 @@ protected:
     m_headerInterpreted = true;
   }
   
-  void getPayloadFromHeader () {
-    m_payload.ParseFromString(m_header.payload());
-    m_payloadInterpreted = true;
-  }
-  
 public:
-  
-  void remove () {
-    if (!m_lockedForWrite)
-      throw NotLocked("In ObjectOps::remove: not locked for write");
-    m_objectStore.remove(getNameIfSet());
-  }
-  
   /**
    * Fill up the header and object with its default contents
    */
   void initialize() {
-    if (m_headerInterpreted)
-      throw NotNew("In ObjectOps::initialize: trying to initialize an exitsting object");
+    if (m_headerInterpreted || m_existingObject)
+      throw NotNewObject("In ObjectOps::initialize: trying to initialize an exitsting object");
     m_header.set_type(typeId);
+    m_header.set_version(0);
+    m_header.set_owner("");
+    m_header.set_backupowner("");
+    m_headerInterpreted = true;
   }
   
   void insert() {
+    // Check that we are not dealing with an existing object
+    if (m_existingObject)
+      throw NotNewObject("In ObjectOps::insert: trying to insert an already exitsting object");
     // Push the payload into the header and write the object
     // We don't require locking here, as the object does not exist
     // yet in the object store (and this is ensured by the )
     m_header.set_payload(m_payload.SerializeAsString());
     m_objectStore.create(getNameIfSet(), m_header.SerializeAsString());
+    m_existingObject = true;
+  }
+  
+  bool exists() {
+    return m_objectStore.exists(getNameIfSet());
   }
   
 private:

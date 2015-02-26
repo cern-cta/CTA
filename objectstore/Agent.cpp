@@ -2,6 +2,7 @@
 #include "AgentRegister.hpp"
 #include "RootEntry.hpp"
 #include "exception/Errnum.hpp"
+#include "ProtcolBuffersAlgorithms.hpp"
 #include <string>
 #include <sstream>
 #include <iomanip>
@@ -10,16 +11,9 @@
 #include <cxxabi.h>
 
 cta::objectstore::Agent::Agent(Backend & os): 
-  ObjectOps<serializers::Agent>(os), 
-  m_setupDone(false), m_creationDone(false), m_nextId(0) {}
+  ObjectOps<serializers::Agent>(os), m_nextId(0) {}
 
-cta::objectstore::Agent::Agent(Backend & os, const std::string & typeName): 
-  ObjectOps<serializers::Agent>(os), 
-  m_setupDone(false), m_creationDone(false), m_nextId(0) {
-  setup(typeName);
-}
-
-void cta::objectstore::Agent::setup(const std::string & typeName) {
+void cta::objectstore::Agent::generateName(const std::string & typeName) {
   std::stringstream aid;
   // Get time
   time_t now = time(0);
@@ -38,114 +32,69 @@ void cta::objectstore::Agent::setup(const std::string & typeName) {
     << std::setw(2) << localNow.tm_hour << ":"
     << std::setw(2) << localNow.tm_min << ":"
     << std::setw(2) << localNow.tm_sec;
-  ObjectOps<serializers::Agent>::setName(aid.str());
-  m_setupDone = true;
+  setName(aid.str());
 }
 
-void cta::objectstore::Agent::create() {
+/*void cta::objectstore::Agent::create() {
   if (!m_setupDone)
     throw SetupNotDone("In Agent::create(): setup() not yet done");
-  RootEntry re(*this);
-  AgentRegister ar(re.allocateOrGetAgentRegister(*this), *this);
+  RootEntry re(m_objectStore);
+  AgentRegister ar(re.allocateOrGetAgentRegister(*this), m_objectStore);
   ar.addIntendedElement(selfName(), *this);
   serializers::Agent as;
   as.set_heartbeat(0);
   writeChild(selfName(), as);
   ar.upgradeIntendedElementToActual(selfName(), *this);
   m_creationDone = true;
-}
-
-std::string cta::objectstore::Agent::type() {
-  if (!m_setupDone)
-    throw SetupNotDone("In Agent::type(): setup() not yet done");
-  return m_typeName;
-}
-
-std::string cta::objectstore::Agent::name() {
-  if (!m_setupDone)
-    throw SetupNotDone("In Agent::name(): setup() not yet done");
-  return selfName();
-}
-
-cta::objectstore::Agent::~Agent() {
-  if (m_creationDone) {
-    try {
-      remove();
-      RootEntry re(*this);
-      AgentRegister ar(re.getAgentRegister(*this), *this);
-      ar.removeElement(selfName(),*this);
-    } catch (std::exception&) {
-    }
-  }
-}
+}*/
 
 std::string cta::objectstore::Agent::nextId(const std::string & childType) {
-  if (!m_setupDone)
-    throw SetupNotDone("In Agent::nextId(): setup() not yet done");
   std::stringstream id;
-  id << childType << "-" << name() << "-" << m_nextId++;
+  id << childType << "-" << getNameIfSet() << "-" << m_nextId++;
   return id.str();
 }
 
 void cta::objectstore::Agent::addToOwnership(std::string name) {
-  if (!m_creationDone)
-    throw CreationNotDone("In Agent::addToOwnership(): creation() not yet done");
-  serializers::Agent as;
-  lockExclusiveAndRead(as);
-  std::string * owned = as.mutable_ownedobjects()->Add();
+  checkPayloadWritable();
+  std::string * owned = m_payload.mutable_ownedobjects()->Add();
   *owned = name;
-  write(as);
-  unlock();
 }
 
 void cta::objectstore::Agent::removeFromOwnership(std::string name) {
-  if (!m_creationDone)
-    throw CreationNotDone("In Agent::removeFromOwnership(): creation() not yet done");
-  serializers::Agent as;
-  lockExclusiveAndRead(as);
+  checkPayloadWritable();
+  serializers::removeString(m_payload.mutable_ownedobjects(), name);
+  /*
   bool found;
   do {
     found = false;
-    for (int i=0; i<as.mutable_ownedobjects()->size(); i++) {
-      if (name == *as.mutable_ownedobjects(i)) {
+    for (int i=0; i<m_payload.mutable_ownedobjects()->size(); i++) {
+      if (name == *m_payload.mutable_ownedobjects(i)) {
         found = true;
-        as.mutable_ownedobjects()->SwapElements(i, as.mutable_ownedobjects()->size()-1);
-        as.mutable_ownedobjects()->RemoveLast();
+        m_payload.mutable_ownedobjects()->SwapElements(i, m_payload.mutable_ownedobjects()->size()-1);
+        m_payload.mutable_ownedobjects()->RemoveLast();
         break;
       }
     }
-  } while (found);
-  write(as);
-  unlock();
+  } while (found);*/
 }
 
 std::list<std::string> 
-  cta::objectstore::Agent::getOwnershipLog() {
-  if (!m_creationDone)
-    throw CreationNotDone("In Agent::getIntentLog(): creation() not yet done");
-  serializers::Agent as;
-  getPayloadFromObjectStoreAutoLock(as);
+  cta::objectstore::Agent::getOwnershipList() {
+  checkPayloadReadable();
   std::list<std::string> ret;
-  for (int i=0; i<as.ownedobjects_size(); i++) {
-    ret.push_back(as.ownedobjects(i));
+  for (int i=0; i<m_payload.ownedobjects_size(); i++) {
+    ret.push_back(m_payload.ownedobjects(i));
   }
   return ret;
 }
 
-cta::objectstore::Backend & cta::objectstore::Agent::objectStore() {
-  return ObjectOps<serializers::Agent>::objectStore();
+void cta::objectstore::Agent::bumpHeartbeat() {
+  checkPayloadWritable();
+  m_payload.set_heartbeat(m_payload.heartbeat()+1);
 }
 
-void cta::objectstore::Agent::heartbeat(Agent& agent) {
-  serializers::Agent as;
-  lockExclusiveAndRead(as);
-  as.set_heartbeat(as.heartbeat()+1);
-  write(as);
-  unlock();
+uint64_t cta::objectstore::Agent::getHeartbeatCount() {
+  checkPayloadReadable();
+  return m_payload.heartbeat();
 }
 
-uint64_t cta::objectstore::Agent::getHeartbeatCount(Agent& agent) {
-  serializers::Agent as;
-  getPayloadFromObjectStoreAutoLock(as);
-  return as.heartbeat();
-}

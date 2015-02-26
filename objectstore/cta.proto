@@ -61,8 +61,7 @@ message RootEntry {
   optional string agentregister = 91;
   repeated string agentregisterintentlog = 92;
   optional string jobpool = 93;
-  optional string driveregister = 94;
-  optional string taperegister = 95;
+  repeated string jobpoolintentlog = 94;
 }
 
 // The registers (simple name arrays)

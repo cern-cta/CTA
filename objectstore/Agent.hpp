@@ -20,39 +20,14 @@ namespace cta { namespace objectstore {
 class Agent: protected ObjectOps<serializers::Agent> {
 public:
   Agent(Backend & os);
-  
-  Agent(Backend & os, const std::string & typeName);
-  
-  void setup(const std::string & typeName);
-  
-  class SetupNotDone: public cta::exception::Exception {
-  public:
-    SetupNotDone(const std::string & w): cta::exception::Exception(w) {}
-  };
-  
-  class CreationNotDone: public cta::exception::Exception {
-  public:
-    CreationNotDone(const std::string & w): cta::exception::Exception(w) {}
-  };
-  
-  class ObserverOnly: public cta::exception::Exception {
-  public:
-    ObserverOnly(const std::string & w): cta::exception::Exception(w) {}
-  };
-  
-  void create();
-  
-  std::string type();
-  
-  std::string name();
-  
-  void flushContexts();
-  
-  ~Agent();
+
+  void generateName(const std::string & typeName);
   
   std::string nextId(const std::string & childType);
   
-  class ScopedIntent {
+  void registerSelf();
+  
+ /* class ScopedIntent {
   public:
     ScopedIntent(Agent & agent, std::string container, std::string name, serializers::ObjectType objectType):
     m_agent(agent), m_container(container), m_name(name), m_objectType(objectType), m_present(false) {
@@ -76,9 +51,9 @@ public:
     std::string m_name;
     serializers::ObjectType m_objectType;
     bool m_present;
-  };
+  };*/
   
-  class ScopedOwnership {
+  /*class ScopedOwnership {
   public:
     ScopedOwnership(Agent & agent, std::string name):
     m_agent(agent), m_name(name), m_present(false) {
@@ -100,34 +75,21 @@ public:
     Agent & m_agent;
     std::string m_name;
     bool m_present;
-  };
+  };*/
   
   void addToOwnership(std::string name);
   
   void removeFromOwnership(std::string name);
   
-  class ownedObject {
-  public:
-    ownedObject(const std::string & c,
-                const std::string & n):container(c), name(n) {}
-    std::string container;
-    std::string name;
-  };
+  std::list<std::string> getOwnershipList();
   
-  std::list<std::string> getOwnershipLog();
+  std::string dump();
   
-  Backend & objectStore();
+  void bumpHeartbeat();
   
-  std::string dump(Agent & agent);
-  
-  void heartbeat(Agent & agent);
-  
-  uint64_t getHeartbeatCount(Agent & agent);
+  uint64_t getHeartbeatCount();
   
 private:
-  std::string m_typeName;
-  bool m_setupDone;
-  bool m_creationDone;
   uint64_t m_nextId;
 };
   

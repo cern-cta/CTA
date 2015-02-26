@@ -1,22 +1,18 @@
 #pragma once
 
+#include "Backend.hpp"
 #include "ObjectOps.hpp"
-#include "FIFO.hpp"
-#include "Agent.hpp"
 
 namespace cta { namespace objectstore {
 
-class JobPool: private ObjectOps<serializers::JobPool> {
+class JobPool: public ObjectOps<serializers::JobPool> {
 public:
-  JobPool(const std::string & name, Agent & agent):
-  ObjectOps<serializers::JobPool>(agent.objectStore(), name) {
-    serializers::JobPool jps;
-    getPayloadFromObjectStoreAutoLock(jps, agent.getFreeContext());
-  }
+  JobPool(const std::string & name, Backend & os):
+  ObjectOps<serializers::JobPool>(os, name) {}
   
   void PostRecallJob (const std::string & job, Agent & agent) {
-    FIFO recallFIFO(allocateOrGetRecallFIFO(agent), agent);
-    recallFIFO.push(job, agent);
+    /*FIFO recallFIFO(allocateOrGetRecallFIFO(agent), agent);
+    recallFIFO.push(job, agent);*/
   }
   
   class NotAllocatedEx: public cta::exception::Exception {
@@ -25,24 +21,20 @@ public:
   };
   
   std::string dump(Agent & agent) {
-    serializers::JobPool jps;
-    getPayloadFromObjectStoreAutoLock(jps, agent.getFreeContext());
+    checkPayloadReadable();
     std::stringstream ret;
-    ret << "<<<< JobPool " << selfName() << " dump start" << std::endl
-        << "Migration=" << jps.migration() << std::endl
-        << "Recall=" << jps.recall() << std::endl
-        << "RecallCounter=" << jps.recallcounter() << std::endl;
-    ret << ">>>> JobPool " << selfName() << " dump end" << std::endl;
+    ret << "<<<< JobPool " << getNameIfSet() << " dump start" << std::endl
+        << "Migration=" << m_payload.migration() << std::endl
+        << "Recall=" << m_payload.recall() << std::endl
+        << "RecallCounter=" << m_payload.recallcounter() << std::endl;
+    ret << ">>>> JobPool " << getNameIfSet() << " dump end" << std::endl;
     return ret.str();
   }
   
-  std::string getRecallFIFO (Agent & agent) {
-    // Check if the recall FIFO exists
-    serializers::JobPool res;
-    getPayloadFromObjectStoreAutoLock(res, agent.getFreeContext());
-    // If the registry is defined, return it, job done.
-    if (res.recall().size())
-      return res.recall();
+  std::string getRecallFIFO () {
+    checkPayloadReadable();
+    if (m_payload.recall().size())
+      return m_payload.recall();
     throw NotAllocatedEx("In RootEntry::getJobPool: jobPool not yet allocated");
   }
   
@@ -50,9 +42,10 @@ public:
   std::string allocateOrGetRecallFIFO(Agent & agent) {
     // Check if the job pool exists
     try {
-      return getRecallFIFO(agent);
+      return getRecallFIFO();
     } catch (NotAllocatedEx &) {
-      // If we get here, the job pool is not created yet, so we have to do it:
+      throw;
+      /*// If we get here, the job pool is not created yet, so we have to do it:
       // lock the entry again, for writing
       serializers::JobPool res;
       ContextHandle & ctx = agent.getFreeContext();
@@ -78,17 +71,14 @@ public:
       write(res);
       // release the lock, and return the register name
       unlock(ctx);
-      return FIFOName;
+      return FIFOName;*/
     }
   }
   
   std::string getRecallCounter (Agent & agent) {
-    // Check if the recall FIFO exists
-    serializers::JobPool res;
-    getPayloadFromObjectStoreAutoLock(res, agent.getFreeContext());
-    // If the registry is defined, return it, job done.
-    if (res.recallcounter().size())
-      return res.recallcounter();
+    checkPayloadReadable();
+    if (m_payload.recallcounter().size())
+      return m_payload.recallcounter();
     throw NotAllocatedEx("In RootEntry::getRecallCounter: recallCounter not yet allocated");
   }
   
@@ -97,6 +87,7 @@ public:
     try {
       return getRecallCounter(agent);
     } catch (NotAllocatedEx &) {
+      throw;/*
       // If we get here, the job pool is not created yet, so we have to do it:
       // lock the entry again, for writing
       serializers::JobPool res;
@@ -123,7 +114,7 @@ public:
       write(res);
       // release the lock, and return the register name
       unlock(ctx);
-      return recallCounterName;
+      return recallCounterName;*/
     }
   }
   

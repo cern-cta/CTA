@@ -4,10 +4,11 @@
 
 #include "Backend.hpp"
 #include "ObjectOps.hpp"
-#include "Agent.hpp"
 
 namespace cta { namespace objectstore {
 
+class Agent;
+  
 class RootEntry: public ObjectOps<serializers::RootEntry> {
 public:
   // construtor
@@ -30,6 +31,20 @@ public:
   // Get the name of a (possibly freshly created) job pool
   std::string allocateOrGetJobPool(Agent & agent);
   
+private:
+  void addIntendedAgentRegistry(const std::string & name);
+  
+  void deleteFromIntendedAgentRegistry(const std::string & name);
+  
+  void setAgentRegister(const std::string & name);
+  
+  void addIntendedJobPool(const std::string & name);
+  
+  void deleteFromIntendedJobPool(const std::string & name);
+  
+  void setJobPool(const std::string & name);
+  
+public:
   // Dump the root entry
   std::string dump ();
 
