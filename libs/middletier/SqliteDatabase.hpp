@@ -29,6 +29,28 @@ public:
    * Destructor.
    */
   ~SqliteDatabase() throw();
+  
+  void insertTapePool(const SecurityIdentity &requester, const std::string &name, const uint16_t nbDrives, const uint32_t nbPartialTapes, const std::string &comment);
+  
+  void insertStorageClass(const SecurityIdentity &requester, const std::string &name, const uint8_t nbCopies, const std::string &comment);
+  
+  void insertMigrationRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint8_t copyNb, const std::string &tapePoolName, const std::string &comment);
+  
+  void insertFile(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode);
+  
+  void insertDirectory(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode);
+  
+  void deleteTapePool(const SecurityIdentity &requester, const std::string &name);
+  
+  void deleteStorageClass(const SecurityIdentity &requester, const std::string &name);
+
+  void deleteMigrationRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint8_t copyNb);
+  
+  std::list<cta::TapePool> selectAllTapePools(const SecurityIdentity &requester);
+
+  std::list<cta::StorageClass> selectAllStorageClasses(const SecurityIdentity &requester);
+
+  std::list<cta::MigrationRoute> selectAllMigrationRoutes(const SecurityIdentity &requester);
 
 private:
   
@@ -42,26 +64,20 @@ private:
   void createStorageClassTable();
 
   void createTapePoolTable();
+  
+  void createDirectoryTable();
+  
+  void createFileTable();
 
   void createSchema();
   
-  void insertTapePool(const SecurityIdentity &requester, const std::string &name, const uint16_t nbDrives, const uint32_t nbPartialTapes, const std::string &comment);
+  std::string sanitizePathname(const std::string &pathname);
   
-  void insertStorageClass(const SecurityIdentity &requester, const std::string &name, const uint8_t nbCopies, const std::string &comment);
+  std::string getPath(const std::string &pathname);
   
-  void insertMigrationRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint8_t copyNb, const std::string &tapePoolName, const std::string &comment);
+  std::string getName(const std::string &pathname);
   
-  void deleteTapePool(const SecurityIdentity &requester, const std::string &name);
-  
-  void deleteStorageClass(const SecurityIdentity &requester, const std::string &name);
-
-  void deleteMigrationRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint8_t copyNb);
-  
-  std::list<cta::TapePool> selectAllTapePools(const SecurityIdentity &requester);
-
-  std::list<cta::StorageClass> selectAllStorageClasses(const SecurityIdentity &requester);
-
-  std::list<cta::MigrationRoute> selectAllMigrationRoutes(const SecurityIdentity &requester);
+  std::string getStorageClass(const std::string &path);
   
 }; // struct SqliteDatabase
 

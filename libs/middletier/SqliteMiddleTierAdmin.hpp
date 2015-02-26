@@ -305,14 +305,6 @@ protected:
   void checkTapePoolIsNotInUse(const std::string &name) const;
 
   /**
-   * Throws an exception if the specified storage class is used in a migration
-   * route.
-   *
-   * @param name The name of the storage class.
-   */
-  void checkStorageClassIsNotInAMigrationRoute(const std::string &name) const;
-
-  /**
    * Returns true if the specified absolute path is that of an existing
    * directory within the archive namepsace.
    *

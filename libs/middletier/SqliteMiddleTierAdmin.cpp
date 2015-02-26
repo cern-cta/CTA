@@ -78,8 +78,7 @@ std::list<cta::AdminHost> cta::SqliteMiddleTierAdmin::getAdminHosts(
 void cta::SqliteMiddleTierAdmin::createStorageClass(
   const SecurityIdentity &requester, const std::string &name,
   const uint8_t nbCopies, const std::string &comment) {
-  m_db.storageClasses.createStorageClass(name, nbCopies, requester.user,
-    comment);
+  m_sqlite_db.insertStorageClass(requester, name, nbCopies, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -87,20 +86,7 @@ void cta::SqliteMiddleTierAdmin::createStorageClass(
 //------------------------------------------------------------------------------
 void cta::SqliteMiddleTierAdmin::deleteStorageClass(const SecurityIdentity &requester,
   const std::string &name) {
-  checkStorageClassIsNotInAMigrationRoute(name);
-  m_db.storageClasses.deleteStorageClass(name);
-}
-
-//------------------------------------------------------------------------------
-// checkStorageClassIsNotInAMigrationRoute
-//------------------------------------------------------------------------------
-void cta::SqliteMiddleTierAdmin::checkStorageClassIsNotInAMigrationRoute(
-  const std::string &name) const {
-  if(m_db.migrationRoutes.storageClassIsInAMigrationRoute(name)) {
-    std::ostringstream message;
-    message << "The " << name << " storage class is in use";
-    throw Exception(message.str());
-  }
+  m_sqlite_db.deleteStorageClass(requester, name);
 }
 
 //------------------------------------------------------------------------------
@@ -108,7 +94,7 @@ void cta::SqliteMiddleTierAdmin::checkStorageClassIsNotInAMigrationRoute(
 //------------------------------------------------------------------------------
 std::list<cta::StorageClass> cta::SqliteMiddleTierAdmin::getStorageClasses(
   const SecurityIdentity &requester) const {
-  return m_db.storageClasses.getStorageClasses();
+  return m_sqlite_db.selectAllStorageClasses(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -120,8 +106,7 @@ void cta::SqliteMiddleTierAdmin::createTapePool(
   const uint16_t nbDrives,
   const uint32_t nbPartialTapes,
   const std::string &comment) {
-  m_db.tapePools.createTapePool(requester, name, nbDrives, nbPartialTapes,
-    comment);
+  m_sqlite_db.insertTapePool(requester, name, nbDrives, nbPartialTapes, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -129,20 +114,7 @@ void cta::SqliteMiddleTierAdmin::createTapePool(
 //------------------------------------------------------------------------------
 void cta::SqliteMiddleTierAdmin::deleteTapePool(const SecurityIdentity &requester,
   const std::string &name) {
-  checkTapePoolIsNotInUse(name);
-  m_db.tapePools.deleteTapePool(requester, name);
-}
-
-//------------------------------------------------------------------------------
-// checkTapePoolIsNotInUse
-//------------------------------------------------------------------------------
-void cta::SqliteMiddleTierAdmin::checkTapePoolIsNotInUse(const std::string &name)
-  const {
-  if(m_db.migrationRoutes.tapePoolIsInAMigrationRoute(name)) {
-    std::ostringstream message;
-    message << "The " << name << " tape pool is in use";
-    throw Exception(message.str());
-  }
+  m_sqlite_db.deleteTapePool(requester, name);
 }
 
 //------------------------------------------------------------------------------
@@ -150,7 +122,7 @@ void cta::SqliteMiddleTierAdmin::checkTapePoolIsNotInUse(const std::string &name
 //------------------------------------------------------------------------------
 std::list<cta::TapePool> cta::SqliteMiddleTierAdmin::getTapePools(
   const SecurityIdentity &requester) const {
-  return m_db.tapePools.getTapePools(requester);
+  return m_sqlite_db.selectAllTapePools(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -162,12 +134,7 @@ void cta::SqliteMiddleTierAdmin::createMigrationRoute(
   const uint8_t copyNb,
   const std::string &tapePoolName,
   const std::string &comment) {
-  return m_db.migrationRoutes.createMigrationRoute(
-    storageClassName,
-    copyNb,
-    tapePoolName,
-    requester.user,
-    comment);
+  return m_sqlite_db.insertMigrationRoute(requester, storageClassName, copyNb, tapePoolName, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -177,7 +144,7 @@ void cta::SqliteMiddleTierAdmin::deleteMigrationRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint8_t copyNb) {
-  return m_db.migrationRoutes.deleteMigrationRoute(storageClassName, copyNb);
+  return m_sqlite_db.deleteMigrationRoute(requester, storageClassName, copyNb);
 }
 
 //------------------------------------------------------------------------------
@@ -185,7 +152,7 @@ void cta::SqliteMiddleTierAdmin::deleteMigrationRoute(
 //------------------------------------------------------------------------------
 std::list<cta::MigrationRoute> cta::SqliteMiddleTierAdmin::getMigrationRoutes(
   const SecurityIdentity &requester) const {
-  return m_db.migrationRoutes.getMigrationRoutes();
+  return m_sqlite_db.selectAllMigrationRoutes(requester);
 }
 
 //------------------------------------------------------------------------------
