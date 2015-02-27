@@ -25,6 +25,8 @@ public:
   
   void push(std::string name);
   
+  void pushIfNotPresent (std::string name);
+  
   std::string dump();
   
   uint64_t size();

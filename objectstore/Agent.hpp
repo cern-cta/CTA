@@ -20,6 +20,8 @@ namespace cta { namespace objectstore {
 class Agent: public ObjectOps<serializers::Agent> {
 public:
   Agent(Backend & os);
+  
+  Agent(const std::string & name, Backend & os);
 
   void generateName(const std::string & typeName);
   

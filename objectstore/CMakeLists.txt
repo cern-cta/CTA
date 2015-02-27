@@ -60,6 +60,7 @@ set(ObjectStoreUnitTests
   BackendTest.cpp
   RootEntryTest.cpp
   FIFOTest.cpp
+  GarbageCollectorTest.cpp
 )
 
 add_executable(unitTests unitTests.cpp ${ObjectStoreUnitTests})

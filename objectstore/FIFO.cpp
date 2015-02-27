@@ -1,4 +1,5 @@
 #include "FIFO.hpp"
+#include "ProtcolBuffersAlgorithms.hpp"
 
 const size_t cta::objectstore::FIFO::c_compactionSize = 50;
 
@@ -54,6 +55,15 @@ void cta::objectstore::FIFO::compact() {
 void cta::objectstore::FIFO::push(std::string name) {
   checkPayloadWritable();
   m_payload.add_name(name);
+}
+
+void cta::objectstore::FIFO::pushIfNotPresent(std::string name) {
+  checkPayloadWritable();
+  try {
+    serializers::findString(m_payload.mutable_name(), name);
+  } catch (serializers::NotFound &) {
+    m_payload.add_name(name);
+  }
 }
 
 uint64_t cta::objectstore::FIFO::size() {
