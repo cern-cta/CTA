@@ -125,7 +125,7 @@ public:
     while (true) {
       m_agent.heartbeat(m_agent);
       // Get the list of current agents
-      std::list<std::string> agentNames = ar.getElements(m_agent);
+      std::list<std::string> agentNames = ar.getAgents(m_agent);
       // If no one is running, go away after a delay
       if(!agentNames.size()) {
         if (noAgentTimer.secs() > 1.0)

@@ -12,6 +12,7 @@ enum ObjectType {
   RecallJob_t = 6;
   Counter_t = 7;
   FIFO_t = 8;
+  GenericObject_t = 1000;
 }
 
 // The base object header. This will allow introspection and automatic
@@ -32,6 +33,10 @@ message ObjectHeader {
   required string owner = 3;
   required string backupowner = 4;
   required bytes payload = 5;
+}
+
+// A placeholder object for the implementation of neutral object handlers
+message GenericObject {
 }
 
 // The agent object represents a running process. It is a payload to an object
@@ -70,10 +75,11 @@ message Register {
   repeated string elements = 100;
 }
 
-// The agent register needs an intent log in addition
+// The agent register holds 2 lists:
+// a full list, and a list of agents not yet watched
 message AgentRegister {
-  repeated string elements = 110;
-  repeated string intendedElements = 111;
+  repeated string agents = 110;
+  repeated string untrackedagents = 111;
 }
 
 // A basic FIFO

@@ -15,11 +15,14 @@ add_library (CTAObjectStore
   RootEntry.cpp
   Agent.cpp
   AgentRegister.cpp
+  AgentWatchdog.cpp
   BackendVFS.cpp
   BackendRados.cpp
   ObjectOps.cpp
   ProtocolBuffersAlgorithms.cpp
   FIFO.cpp
+  GenericObject.cpp
+  GarbageCollector.cpp
   exception/Backtrace.cpp
   exception/Errnum.cpp
   exception/Exception.cpp

@@ -17,7 +17,7 @@ namespace cta { namespace objectstore {
  * It handles (in the base class):
  */
 
-class Agent: protected ObjectOps<serializers::Agent> {
+class Agent: public ObjectOps<serializers::Agent> {
 public:
   Agent(Backend & os);
 
@@ -26,6 +26,8 @@ public:
   std::string nextId(const std::string & childType);
   
   void registerSelf();
+  
+  void unregisterSelf();
   
  /* class ScopedIntent {
   public:

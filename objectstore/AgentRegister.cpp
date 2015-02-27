@@ -1,46 +1,59 @@
 #include "AgentRegister.hpp"
 #include "ProtcolBuffersAlgorithms.hpp"
 
+cta::objectstore::AgentRegister::AgentRegister(Backend & os):
+ObjectOps<serializers::AgentRegister>(os) {}
+
 cta::objectstore::AgentRegister::AgentRegister(const std::string & name, Backend & os):
 ObjectOps<serializers::AgentRegister>(os, name) {}
 
-void cta::objectstore::AgentRegister::addElement (std::string name) {
+void cta::objectstore::AgentRegister::addAgent (std::string name) {
   checkPayloadWritable();
-  std::string * ag = m_payload.mutable_elements()->Add();
-  *ag = name;
+  m_payload.add_agents(name);
+  m_payload.add_untrackedagents(name);
 }
 
-void cta::objectstore::AgentRegister::removeElement (const std::string  & name) {
+void cta::objectstore::AgentRegister::removeAgent (const std::string  & name) {
   checkPayloadReadable();
-  serializers::removeString(m_payload.mutable_elements(), name);
+  serializers::removeString(m_payload.mutable_agents(), name);
+  serializers::removeString(m_payload.mutable_untrackedagents(), name);
 }
 
 
-void cta::objectstore::AgentRegister::addIntendedElement(std::string name) {
+void cta::objectstore::AgentRegister::trackAgent(std::string name) {
   checkPayloadWritable();
-  std::string * ag = m_payload.mutable_intendedelements()->Add();
-  *ag = name;
+  // Check that the agent is present (next statement throws an exception
+  // if the agent is not known)
+  serializers::findString(m_payload.mutable_agents(), name);
+  serializers::removeString(m_payload.mutable_untrackedagents(), name);
 }
 
-void cta::objectstore::AgentRegister::upgradeIntendedElementToActual(std::string name) {
+void cta::objectstore::AgentRegister::untrackAgent(std::string name) {
   checkPayloadWritable();
-  serializers::removeString(m_payload.mutable_intendedelements(), name);
-  std::string * ag = m_payload.mutable_elements()->Add();
-  *ag = name;
+  // Check that the agent is present (next statement throws an exception
+  // if the agent is not known)
+  serializers::findString(m_payload.mutable_agents(), name);
+  // Check that the agent is not already in the list to prevent double
+  // inserts
+  try {
+    serializers::findString(m_payload.mutable_untrackedagents(), name);
+  } catch (serializers::NotFound &) {
+    m_payload.add_untrackedagents(name);
+  }
 }
 
-
-void cta::objectstore::AgentRegister::removeIntendedElement(const std::string& name) {
-  checkPayloadWritable();
-  serializers::removeString(m_payload.mutable_intendedelements(), name);
-}
-
-
-
-std::list<std::string> cta::objectstore::AgentRegister::getElements() {
+std::list<std::string> cta::objectstore::AgentRegister::getAgents() {
   std::list<std::string> ret;
-  for (int i=0; i<m_payload.elements_size(); i++) {
-    ret.push_back(m_payload.elements(i));
+  for (int i=0; i<m_payload.agents_size(); i++) {
+    ret.push_back(m_payload.agents(i));
+  }
+  return ret;
+}
+
+std::list<std::string> cta::objectstore::AgentRegister::getUntrackedAgents() {
+  std::list<std::string> ret;
+  for (int i=0; i<m_payload.untrackedagents_size(); i++) {
+    ret.push_back(m_payload.untrackedagents(i));
   }
   return ret;
 }
@@ -49,13 +62,13 @@ std::string cta::objectstore::AgentRegister::dump() {
   checkPayloadReadable();
   std::stringstream ret;
   ret<< "<<<< AgentRegister " << getNameIfSet() << " dump start" << std::endl
-    << "Array size=" << m_payload.elements_size() << std::endl;
-  for (int i=0; i<m_payload.elements_size(); i++) {
-    ret << "element[" << i << "]=" << m_payload.elements(i) << std::endl;
+    << "Agents array size=" << m_payload.agents_size() << std::endl;
+  for (int i=0; i<m_payload.agents_size(); i++) {
+    ret << "element[" << i << "]=" << m_payload.agents(i) << std::endl;
   }
-  ret << "Intent array size=" << m_payload.intendedelements_size() << std::endl;
-  for (int i=0; i<m_payload.intendedelements_size(); i++) {
-    ret << "intendedElement[" << i << "]=" << m_payload.intendedelements(i) << std::endl;
+  ret << "Untracked agents array size=" << m_payload.untrackedagents_size() << std::endl;
+  for (int i=0; i<m_payload.untrackedagents_size(); i++) {
+    ret << "intendedElement[" << i << "]=" << m_payload.untrackedagents(i) << std::endl;
   }
   ret<< ">>>> AgentRegister " << getNameIfSet() << " dump end" << std::endl;
   return ret.str();

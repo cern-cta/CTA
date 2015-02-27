@@ -209,7 +209,7 @@ public:
   }
   
   void commit() {
-    checkWritable();
+    checkPayloadWritable();
     if (!m_existingObject) 
       throw NewObject("In ObjectOps::commit: trying to update a new object");
     // Serialise the payload into the header

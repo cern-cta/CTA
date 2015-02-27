@@ -20,7 +20,7 @@ public:
     try {
       AgentRegister ar(re.getAgentRegister(agent), agent);
       ret << ar.dump(agent) << std::endl;
-      std::list<std::string> agList = ar.getElements(agent);
+      std::list<std::string> agList = ar.getAgents(agent);
       for (std::list<std::string>::iterator i=agList.begin(); i!=agList.end(); i++) {
         AgentVisitor a(*i, agent);
         ret << a.dump(agent) << std::endl;
