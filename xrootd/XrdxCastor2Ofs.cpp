@@ -469,13 +469,9 @@ XrdxCastor2OfsFile::open(const char*         path,
     BuildTransferId(client, mEnvOpaque);
   }
 
-  TIMING("OFS_OPEN", &open_timing);
-  int rc = XrdOfsFile::open(newpath.c_str(), open_mode, create_mode, client,
-                            newopaque.c_str());
-
-  if (rc == SFS_OK)
+  // Try to get the file checksum type and value if file exists
+  if (!XrdOfsOss->Stat(newpath.c_str(), &mStatInfo, 0, mEnvOpaque))
   {
-    // Try to get the file checksum from the filesystem
     int nattr = 0;
     char buf[32];
     // Deal with ceph pool if any
@@ -487,23 +483,32 @@ XrdxCastor2OfsFile::open(const char*         path,
     // Get existing checksum - we don't check errors here
     nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.type",
                                 buf, 32);
-    buf[nattr] = '\0';
-    mXsType = buf;
+    if (nattr >= 0)
+    {
+      buf[nattr] = '\0';
+      mXsType = buf;
+    }
+
     nattr = ceph_posix_getxattr(poolAndPath.c_str(), "user.castor.checksum.value",
                                 buf, 32);
-    buf[nattr] = '\0';
-    mXsValue = buf;
+    if (nattr >= 0)
+    {
+      buf[nattr] = '\0';
+      mXsValue = buf;
+    }
 
     if (!mXsType.empty() || !mXsValue.empty())
       xcastor_debug("xs_type=%s, xs_val=%s", mXsType.c_str(), mXsValue.c_str());
-
-    // Get also the size of the file
-    if (XrdOfsOss->Stat(newpath.c_str(), &mStatInfo, 0, mEnvOpaque))
-    {
-      xcastor_err("error getting file stat information path=%s", newpath.c_str());
-      rc = SFS_ERROR;
-    }
   }
+  else
+  {
+    // Initial file size is 0
+    mStatInfo.st_size = 0;
+  }
+
+  TIMING("OFS_OPEN", &open_timing);
+  int rc = XrdOfsFile::open(newpath.c_str(), open_mode, create_mode, client,
+                            newopaque.c_str());
 
   // Notify the diskmanager
   if (!mTransferId.empty())
