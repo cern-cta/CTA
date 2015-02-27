@@ -15,11 +15,12 @@ cta::ArchivalJob::ArchivalJob(
   const ArchivalJobState::Enum state,
   const std::string &srcUrl,
   const std::string &dstPath,
-  const UserIdentity &creator):
+  const UserIdentity &creator,
+  const time_t creationTime):
   m_state(state),
   m_srcUrl(srcUrl),
   m_dstPath(dstPath),
-  m_creationTime(time(NULL)),
+  m_creationTime(creationTime),
   m_creator(creator) {
 }
 

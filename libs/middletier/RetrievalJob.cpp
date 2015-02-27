@@ -15,10 +15,11 @@ cta::RetrievalJob::RetrievalJob(
   const RetrievalJobState::Enum state,
   const std::string &srcPath,
   const std::string &dstUrl,
-  const UserIdentity &creator):
+  const UserIdentity &creator,
+  const time_t creationTime):
   m_srcPath(srcPath),
   m_dstUrl(dstUrl),
-  m_creationTime(time(NULL)),
+  m_creationTime(creationTime),
   m_creator(creator) {
 }
 

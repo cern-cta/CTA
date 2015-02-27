@@ -31,6 +31,7 @@ public:
     const std::string &name,
     const uint8_t nbCopies,
     const UserIdentity &creator,
+    const time_t creationTime,
     const std::string &comment);
 
   /**

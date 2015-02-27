@@ -17,14 +17,16 @@ cta::Tape::Tape(
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
+    const uint64_t dataOnTapeInBytes,
     const UserIdentity &creator,
+    const time_t creationTime,
     const std::string &comment):
     m_vid(vid),
     m_logicalLibraryName(logicalLibraryName),
     m_tapePoolName(tapePoolName),
     m_capacityInBytes(capacityInBytes),
-    m_dataOnTapeInBytes(0),
-    m_creationTime(time(NULL)),
+    m_dataOnTapeInBytes(dataOnTapeInBytes),
+    m_creationTime(creationTime),
     m_creator(creator),
     m_comment(comment) {
 }

@@ -1,6 +1,7 @@
 #include "MockMiddleTierAdmin.hpp"
 #include "MockMiddleTierUser.hpp"
 #include "SqliteMiddleTierAdmin.hpp"
+#include "SqliteMiddleTierUser.hpp"
 
 #include <gtest/gtest.h>
 
@@ -189,7 +190,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
     ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
 
-  MockMiddleTierUser userApi(db);
+  SqliteMiddleTierUser userApi(db,sqlitedb);
   ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, "/",
     storageClassName));
 

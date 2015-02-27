@@ -31,7 +31,8 @@ public:
     const ArchivalJobState::Enum state,
     const std::string &srcUrl,
     const std::string &dstPath,
-    const UserIdentity &creator);
+    const UserIdentity &creator,
+    const time_t creationTime);
 
   /**
    * Sets the state of the archival job.

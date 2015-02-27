@@ -16,11 +16,12 @@ cta::MigrationRoute::MigrationRoute(
   const uint8_t copyNb,
   const std::string &tapePoolName,
   const UserIdentity &creator,
+  const time_t creationTime,
   const std::string &comment):
   m_storageClassName(storageClassName),
   m_copyNb(copyNb),
   m_tapePoolName(tapePoolName),
-  m_creationTime(time(NULL)),
+  m_creationTime(creationTime),
   m_creator(creator),
   m_comment(comment) {
 }

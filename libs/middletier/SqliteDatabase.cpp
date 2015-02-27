@@ -1,5 +1,6 @@
 #include "Exception.hpp"
 #include "SqliteDatabase.hpp"
+#include "Utils.hpp"
 
 #include <iostream>
 #include <memory>
@@ -20,7 +21,7 @@ cta::SqliteDatabase::SqliteDatabase() {
     rc = sqlite3_exec(m_dbHandle, "PRAGMA foreign_keys = ON;", 0, 0, &zErrMsg);
     if(rc!=SQLITE_OK) {    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "SqliteDatabase() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
     }
@@ -50,6 +51,7 @@ void cta::SqliteDatabase::createMigrationRouteTable() {
             "TAPEPOOL_NAME     TEXT,"
             "UID               INTEGER,"
             "GID               INTEGER,"
+            "CREATIONTIME      INTEGER,"
             "COMMENT           TEXT,"
             "PRIMARY KEY (STORAGECLASS_NAME, COPYNB),"
             "FOREIGN KEY(STORAGECLASS_NAME) REFERENCES STORAGECLASS(NAME),"
@@ -58,7 +60,7 @@ void cta::SqliteDatabase::createMigrationRouteTable() {
           0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "createMigrationRouteTable() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
@@ -75,12 +77,13 @@ void cta::SqliteDatabase::createStorageClassTable() {
             "NBCOPIES       INTEGER,"
             "UID            INTEGER,"
             "GID            INTEGER,"
+            "CREATIONTIME   INTEGER,"
             "COMMENT        TEXT"
             ");",
           0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "createStorageClassTable() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
@@ -98,12 +101,13 @@ void cta::SqliteDatabase::createTapePoolTable() {
             "NBPARTIALTAPES INTEGER,"
             "UID            INTEGER,"
             "GID            INTEGER,"
+            "CREATIONTIME   INTEGER,"
             "COMMENT        TEXT"
             ");",
           0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "createTapePoolTable() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
@@ -120,20 +124,23 @@ void cta::SqliteDatabase::createDirectoryTable() {
             "STORAGECLASS_NAME TEXT,"
             "UID               INTEGER,"
             "GID               INTEGER,"
+            "CREATIONTIME      INTEGER,"
             "MODE              INTEGER,"
             "FOREIGN KEY (STORAGECLASS_NAME) REFERENCES STORAGECLASS(NAME)"
             ");",
           0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "createDirectoryTable() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
-  rc = sqlite3_exec(m_dbHandle, "INSERT INTO TAPEPOOL VALUES('/','',0,0,0);", 0, 0, &zErrMsg);
+  std::ostringstream query;
+  query << "INSERT INTO DIRECTORY VALUES('/',NULL,0,0," << (int)time(NULL) << ",0);";
+  rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "createDirectoryTable() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
@@ -150,6 +157,7 @@ void cta::SqliteDatabase::createFileTable() {
             "NAME           TEXT,"
             "UID            INTEGER,"
             "GID            INTEGER,"
+            "CREATIONTIME   INTEGER,"
             "MODE           INTEGER,"
             "PRIMARY KEY (PATH, NAME),"
             "FOREIGN KEY (PATH) REFERENCES DIRECTORY(PATH)"
@@ -157,7 +165,153 @@ void cta::SqliteDatabase::createFileTable() {
           0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "createFileTable() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+
+//------------------------------------------------------------------------------
+// createTapeTable
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::createTapeTable() {
+  char *zErrMsg = 0;
+  int rc = sqlite3_exec(m_dbHandle, 
+          "CREATE TABLE TAPE("
+            "VID                 TEXT,"
+            "LOGICALLIBRARY_NAME TEXT,"
+            "TAPEPOOL_NAME       TEXT,"
+            "CAPACITY_BYTES      INTEGER,"
+            "DATAONTAPE_BYTES    INTEGER,"
+            "UID                 INTEGER,"
+            "GID                 INTEGER,"
+            "CREATIONTIME        INTEGER,"
+            "COMMENT             TEXT,"
+            "PRIMARY KEY (VID),"
+            "FOREIGN KEY (LOGICALLIBRARY_NAME) REFERENCES LOGICALLIBRARY(NAME),"
+            "FOREIGN KEY (TAPEPOOL_NAME) REFERENCES TAPEPOOL(NAME)"
+            ");",
+          0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "createTapeTable() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+
+//------------------------------------------------------------------------------
+// createLogicalLibraryTable
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::createLogicalLibraryTable() {
+  char *zErrMsg = 0;
+  int rc = sqlite3_exec(m_dbHandle, 
+          "CREATE TABLE LOGICALLIBRARY("
+            "NAME           TEXT,"
+            "UID            INTEGER,"
+            "GID            INTEGER,"
+            "CREATIONTIME   INTEGER,"
+            "COMMENT        TEXT,"
+            "PRIMARY KEY (NAME)"
+            ");",
+          0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "createLogicalLibraryTable() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+
+//------------------------------------------------------------------------------
+// createAdminUserTable
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::createAdminUserTable() {
+  char *zErrMsg = 0;
+  int rc = sqlite3_exec(m_dbHandle, 
+          "CREATE TABLE ADMINUSER("
+            "USER           TEXT,"
+            "UID            INTEGER,"
+            "GID            INTEGER,"
+            "CREATIONTIME   INTEGER,"
+            "COMMENT        TEXT,"
+            "PRIMARY KEY (USER)"
+            ");",
+          0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "createAdminUserTable() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+
+//------------------------------------------------------------------------------
+// createAdminHostTable
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::createAdminHostTable() {
+  char *zErrMsg = 0;
+  int rc = sqlite3_exec(m_dbHandle, 
+          "CREATE TABLE ADMINHOST("
+            "NAME           TEXT,"
+            "UID            INTEGER,"
+            "GID            INTEGER,"
+            "CREATIONTIME   INTEGER,"
+            "COMMENT        TEXT,"
+            "PRIMARY KEY (NAME)"
+            ");",
+          0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "createAdminHostTable() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+
+//------------------------------------------------------------------------------
+// createArchivalJobTable
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::createArchivalJobTable() {
+  char *zErrMsg = 0;
+  int rc = sqlite3_exec(m_dbHandle, 
+          "CREATE TABLE ARCHIVALJOB("
+            "STATE          INTEGER,"
+            "SRCURL         TEXT,"
+            "DSTPATH        TEXT,"
+            "UID            INTEGER,"
+            "GID            INTEGER,"
+            "CREATIONTIME   INTEGER,"
+            "PRIMARY KEY (DSTPATH)"
+            ");",
+          0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "createArchivalJobTable() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+
+//------------------------------------------------------------------------------
+// createRetrievalJobTable
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::createRetrievalJobTable() {
+  char *zErrMsg = 0;
+  int rc = sqlite3_exec(m_dbHandle, 
+          "CREATE TABLE RETRIEVALJOB("
+            "STATE          INTEGER,"
+            "SRCPATH        TEXT,"
+            "DSTURL         TEXT,"
+            "UID            INTEGER,"
+            "GID            INTEGER,"
+            "CREATIONTIME   INTEGER,"
+            "PRIMARY KEY (SRCPATH, DSTURL)"
+            ");",
+          0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "createRetrievalJobTable() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
@@ -172,44 +326,81 @@ void cta::SqliteDatabase::createSchema() {
   createMigrationRouteTable();
   createDirectoryTable();
   createFileTable();
+  createLogicalLibraryTable();
+  createTapeTable();
+  createAdminUserTable();  
+  createAdminHostTable();
+  createArchivalJobTable();
+  createRetrievalJobTable();
 }
-
-//------------------------------------------------------------------------------
-// sanitizePathname
-//------------------------------------------------------------------------------
-std::string cta::SqliteDatabase::sanitizePathname(const std::string &pathname){
-  return pathname.substr(0, pathname.find_last_not_of('/')+1);
-}
-
-//------------------------------------------------------------------------------
-// getPath
-//------------------------------------------------------------------------------
-std::string cta::SqliteDatabase::getPath(const std::string &pathname){
-  return pathname.substr(0, pathname.find_last_of('/'));
-}
-
-//------------------------------------------------------------------------------
-// getName
-//------------------------------------------------------------------------------
-std::string cta::SqliteDatabase::getName(const std::string &pathname){
-  size_t last = pathname.find_last_of('/');
-  return pathname.substr(last+1, pathname.length()-last);
-}
-
+  
 //------------------------------------------------------------------------------
 // insertFile
 //------------------------------------------------------------------------------
 void cta::SqliteDatabase::insertFile(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode) {
-  std::string s_pathname = sanitizePathname(pathname);
-  std::string path = getPath(s_pathname);
-  std::string name = getName(s_pathname);
+  cta::Utils::checkAbsolutePathSyntax(pathname);
+  std::string path = cta::Utils::getEnclosingDirPath(pathname);
+  std::string name = cta::Utils::getEnclosedName(pathname);
+  getDirectoryStorageClass(requester, path); //just check if the path exists
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "INSERT INTO FILE VALUES('" << path << "','" << name << "',"<< requester.user.getUid() << "," << requester.user.getGid() << "," << (int)mode << ");";
+  query << "INSERT INTO FILE VALUES('" << path << "','" << name << "',"<< requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << "," << (int)mode << ");";
   int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "insertFile() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkFileExists
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::checkFileExists(const std::string &path, const std::string &name){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "SELECT * FROM FILE WHERE NAME='" << name << "' AND PATH='" << path << "';";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "checkFileExists() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  int res = sqlite3_step(statement);
+  if(res==SQLITE_ROW) {
+    return;
+  } 
+  else if(res==SQLITE_DONE){
+    std::ostringstream message;
+    message << "FILE: " << path << "/" << name << " does not exist";
+    throw(Exception(message.str()));    
+  }
+  else {
+    std::ostringstream message;
+    message << "checkFileExists() - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));    
+  }  
+}
+
+//------------------------------------------------------------------------------
+// deleteFile
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::deleteFile(const SecurityIdentity &requester, const std::string &pathname) {
+  cta::Utils::checkAbsolutePathSyntax(pathname);
+  std::string path = cta::Utils::getEnclosingDirPath(pathname);
+  std::string name = cta::Utils::getEnclosedName(pathname);
+  checkFileExists(path, name);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM FILE WHERE NAME='" << name << "' AND PATH='" << path << "';";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "deleteFile() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
@@ -218,7 +409,7 @@ void cta::SqliteDatabase::insertFile(const SecurityIdentity &requester, const st
 //------------------------------------------------------------------------------
 // getDirectoryStorageClass
 //------------------------------------------------------------------------------
-std::string cta::SqliteDatabase::getDirectoryStorageClass(const std::string &path){
+std::string cta::SqliteDatabase::getDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path){
   char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::TapePool> pools;
@@ -227,7 +418,7 @@ std::string cta::SqliteDatabase::getDirectoryStorageClass(const std::string &pat
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "getDirectoryStorageClass() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
@@ -242,9 +433,156 @@ std::string cta::SqliteDatabase::getDirectoryStorageClass(const std::string &pat
   }
   else {
     std::ostringstream message;
-    message << "SQLite error: " << zErrMsg;
+    message << "getDirectoryStorageClass() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
     throw(Exception(message.str()));    
+  }
+}
+
+//------------------------------------------------------------------------------
+// setDirectoryStorageClass
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::setDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path, const std::string &storageClassName){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "UPDATE DIRECTORY SET STORAGECLASS_NAME='" << storageClassName << "' WHERE PATH='" << path << "';";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "setDirectoryStorageClass() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+
+//------------------------------------------------------------------------------
+// clearDirectoryStorageClass
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::clearDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "UPDATE DIRECTORY SET STORAGECLASS_NAME=NULL WHERE PATH='" << path << "';";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "clearDirectoryStorageClass() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkDirectoryExists
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::checkDirectoryExists(const std::string &path){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "SELECT * FROM DIRECTORY WHERE PATH='" << path << "';";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "checkDirectoryExists() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  int res = sqlite3_step(statement);
+  if(res==SQLITE_ROW) {
+    return;
+  } 
+  else if(res==SQLITE_DONE){
+    std::ostringstream message;
+    message << "DIRECTORY: " << path << " does not exist";
+    throw(Exception(message.str()));    
+  }
+  else {
+    std::ostringstream message;
+    message << "checkDirectoryExists() - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));    
+  }  
+}
+
+//------------------------------------------------------------------------------
+// checkDirectoryContainsNoDirectories
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::checkDirectoryContainsNoDirectories(const std::string &path){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "SELECT * FROM DIRECTORY WHERE PATH LIKE '" << path << "%';";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "checkDirectoryContainsNoDirectories() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  sqlite3_step(statement); // we will have at least one match: the directory itself. so we skip the first result!
+  int res = sqlite3_step(statement);
+  if(res==SQLITE_ROW) {
+    std::ostringstream message;
+    message << "DIRECTORY " << path << " not empty: contains at least one directory";
+    throw(Exception(message.str()));
+  } 
+  else if(res==SQLITE_DONE){ //OK
+  }
+  else {
+    std::ostringstream message;
+    message << "checkDirectoryContainsNoDirectories() - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));    
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkDirectoryContainsNoFiles
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::checkDirectoryContainsNoFiles(const std::string &path){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "SELECT * FROM FILE WHERE PATH='" << path << "%';";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "checkDirectoryContainsNoFiles() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  int res = sqlite3_step(statement);
+  if(res==SQLITE_ROW) {
+    std::ostringstream message;
+    message << "DIRECTORY " << path << " not empty: contains at least one file";
+    throw(Exception(message.str()));
+  } 
+  else if(res==SQLITE_DONE){ //OK
+  }
+  else {
+    std::ostringstream message;
+    message << "checkDirectoryContainsNoFiles() - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));    
+  }
+}
+
+//------------------------------------------------------------------------------
+// deleteDirectory
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::deleteDirectory(const SecurityIdentity &requester, const std::string &pathname) {
+  cta::Utils::checkAbsolutePathSyntax(pathname);
+  checkDirectoryExists(pathname);
+  checkDirectoryContainsNoDirectories(pathname);
+  checkDirectoryContainsNoFiles(pathname);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM DIRECTORY WHERE PATH='" << pathname << "';";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "deleteDirectory() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
   }
 }
 
@@ -252,17 +590,22 @@ std::string cta::SqliteDatabase::getDirectoryStorageClass(const std::string &pat
 // insertDirectory
 //------------------------------------------------------------------------------
 void cta::SqliteDatabase::insertDirectory(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode) {
-  std::string s_pathname = sanitizePathname(pathname);
-  std::string path = getPath(s_pathname);
-  std::string name = getName(s_pathname);
-  std::string storageClass = getDirectoryStorageClass(path);
+  cta::Utils::checkAbsolutePathSyntax(pathname);
+  std::string path = cta::Utils::getEnclosingDirPath(pathname);
+  std::string name = cta::Utils::getEnclosedName(pathname);
+  std::string storageClass = getDirectoryStorageClass(requester, path);
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "INSERT INTO DIRECTORY VALUES('" << s_pathname << "','" << storageClass << "'," << requester.user.getUid() << "," << requester.user.getGid() << "," << (int)mode << ");";
+  if(storageClass!="") {
+    query << "INSERT INTO DIRECTORY VALUES('" << pathname << "','" << storageClass << "'," << requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << "," << (int)mode << ");";
+  }
+  else {
+    query << "INSERT INTO DIRECTORY VALUES('" << pathname << "',NULL," << requester.user.getUid() << "," << requester.user.getGid() << "," << (int)mode << ");";
+  }
   int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
     std::ostringstream message;
-    message << "SQLite error: " << zErrMsg;
+    message << "insertDirectory() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
     throw(Exception(message.str()));
   }
@@ -274,11 +617,11 @@ void cta::SqliteDatabase::insertDirectory(const SecurityIdentity &requester, con
 void cta::SqliteDatabase::insertTapePool(const SecurityIdentity &requester, const std::string &name, const uint16_t nbDrives, const uint32_t nbPartialTapes, const std::string &comment) {
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "INSERT INTO TAPEPOOL VALUES('" << name << "'," << (int)nbDrives << "," << (int)nbPartialTapes << "," << requester.user.getUid() << "," << requester.user.getGid() << ",'" << comment << "');";
+  query << "INSERT INTO TAPEPOOL VALUES('" << name << "'," << (int)nbDrives << "," << (int)nbPartialTapes << "," << requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << ",'" << comment << "');";
   int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
     std::ostringstream message;
-    message << "SQLite error: " << zErrMsg;
+    message << "insertTapePool() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
     throw(Exception(message.str()));
   }
@@ -290,11 +633,11 @@ void cta::SqliteDatabase::insertTapePool(const SecurityIdentity &requester, cons
 void cta::SqliteDatabase::insertStorageClass(const SecurityIdentity &requester, const std::string &name, const uint8_t nbCopies, const std::string &comment) {
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "INSERT INTO STORAGECLASS VALUES('" << name << "'," << (int)nbCopies << "," << requester.user.getUid() << "," << requester.user.getGid() << ",'" << comment << "');";
+  query << "INSERT INTO STORAGECLASS VALUES('" << name << "'," << (int)nbCopies << "," << requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << ",'" << comment << "');";
   int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "insertStorageClass() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
@@ -306,11 +649,11 @@ void cta::SqliteDatabase::insertStorageClass(const SecurityIdentity &requester, 
 void cta::SqliteDatabase::insertMigrationRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint8_t copyNb, const std::string &tapePoolName, const std::string &comment) {
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "INSERT INTO MIGRATIONROUTE VALUES('" << storageClassName << "'," << (int)copyNb << ",'" << tapePoolName << "'," << requester.user.getUid() << "," << requester.user.getGid() << ",'" << comment << "');";
+  query << "INSERT INTO MIGRATIONROUTE VALUES('" << storageClassName << "'," << (int)copyNb << ",'" << tapePoolName << "'," << requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << ",'" << comment << "');";
   int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "insertMigrationRoute() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
@@ -320,13 +663,14 @@ void cta::SqliteDatabase::insertMigrationRoute(const SecurityIdentity &requester
 // deleteTapePool
 //------------------------------------------------------------------------------
 void cta::SqliteDatabase::deleteTapePool(const SecurityIdentity &requester, const std::string &name) {
+  checkTapePoolExists(name);
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "DELETE FROM TAPEPOOL WHERE NAME='" << name << "';";
   int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "deleteTapePool() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
@@ -336,13 +680,14 @@ void cta::SqliteDatabase::deleteTapePool(const SecurityIdentity &requester, cons
 // deleteStorageClass
 //------------------------------------------------------------------------------
 void cta::SqliteDatabase::deleteStorageClass(const SecurityIdentity &requester, const std::string &name) {
+  checkStorageClassExists(name);
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "DELETE FROM STORAGECLASS WHERE NAME='" << name << "';";
   int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "deleteStorageClass() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
@@ -352,16 +697,112 @@ void cta::SqliteDatabase::deleteStorageClass(const SecurityIdentity &requester, 
 // deleteMigrationRoute
 //------------------------------------------------------------------------------
 void cta::SqliteDatabase::deleteMigrationRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint8_t copyNb) {
+  checkMigrationRouteExists(storageClassName, copyNb);
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "DELETE FROM MIGRATIONROUTE WHERE NAME='" << storageClassName << "' AND COPYNB=" << (int)copyNb << ";";
+  query << "DELETE FROM MIGRATIONROUTE WHERE STORAGECLASS_NAME='" << storageClassName << "' AND COPYNB=" << (int)copyNb << ";";
   int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
+}
+
+//------------------------------------------------------------------------------
+// checkTapePoolExists
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::checkTapePoolExists(const std::string &name){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "SELECT * FROM TAPEPOOL WHERE NAME='" << name << "';";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "checkTapePoolExists() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  int res = sqlite3_step(statement);
+  if(res==SQLITE_ROW) {
+    return;
+  } 
+  else if(res==SQLITE_DONE){
+    std::ostringstream message;
+    message << "TAPEPOOL: " << name << " does not exist";
+    throw(Exception(message.str()));    
+  }
+  else {
+    std::ostringstream message;
+    message << "checkTapePoolExists() - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));    
+  }  
+}
+ 
+//------------------------------------------------------------------------------
+// checkStorageClassExists
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::checkStorageClassExists(const std::string &name){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "SELECT * FROM STORAGECLASS WHERE NAME='" << name << "';";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "checkStorageClassExists() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  int res = sqlite3_step(statement);
+  if(res==SQLITE_ROW) {
+    return;
+  } 
+  else if(res==SQLITE_DONE){
+    std::ostringstream message;
+    message << "STORAGECLASS: " << name << " does not exist";
+    throw(Exception(message.str()));    
+  }
+  else {
+    std::ostringstream message;
+    message << "checkStorageClassExists() - SQLite error: " << res << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));    
+  }  
+}
+ 
+//------------------------------------------------------------------------------
+// checkMigrationRouteExists
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::checkMigrationRouteExists(const std::string &name, const uint8_t copyNb){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "SELECT * FROM MIGRATIONROUTE WHERE STORAGECLASS_NAME='" << name << "' AND COPYNB=" << (int)copyNb << ";";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "checkMigrationRouteExists() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  int res = sqlite3_step(statement);
+  if(res==SQLITE_ROW) {
+    return;
+  } 
+  else if(res==SQLITE_DONE){
+    std::ostringstream message;
+    message << "MIGRATIONROUTE: " << name << " with COPYNB: " << (int)copyNb << " does not exist";
+    throw(Exception(message.str()));    
+  }
+  else {
+    std::ostringstream message;
+    message << "checkMigrationRouteExists() - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));    
+  }  
 }
 
 //------------------------------------------------------------------------------
@@ -376,7 +817,7 @@ std::list<cta::TapePool> cta::SqliteDatabase::selectAllTapePools(const SecurityI
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "selectAllTapePools() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
@@ -386,7 +827,8 @@ std::list<cta::TapePool> cta::SqliteDatabase::selectAllTapePools(const SecurityI
             sqlite3_column_int(statement,1),
             sqlite3_column_int(statement,2),
             cta::UserIdentity(sqlite3_column_int(statement,3),sqlite3_column_int(statement,4)),
-            std::string((char *)sqlite3_column_text(statement,5))
+            time_t(sqlite3_column_int(statement,5)),
+            std::string((char *)sqlite3_column_text(statement,6))
       ));
   }
   sqlite3_finalize(statement);  
@@ -405,7 +847,7 @@ std::list<cta::StorageClass> cta::SqliteDatabase::selectAllStorageClasses(const 
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "selectAllStorageClasses() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
@@ -414,7 +856,8 @@ std::list<cta::StorageClass> cta::SqliteDatabase::selectAllStorageClasses(const 
             std::string((char *)sqlite3_column_text(statement,0)),
             sqlite3_column_int(statement,1),
             cta::UserIdentity(sqlite3_column_int(statement,2),sqlite3_column_int(statement,3)),
-            std::string((char *)sqlite3_column_text(statement,4))
+            time_t(sqlite3_column_int(statement,4)),
+            std::string((char *)sqlite3_column_text(statement,5))
       ));
   }
   sqlite3_finalize(statement);  
@@ -433,7 +876,7 @@ std::list<cta::MigrationRoute>  cta::SqliteDatabase::selectAllMigrationRoutes(co
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "SQLite error: " << zErrMsg;
+      message << "selectAllMigrationRoutes() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
@@ -443,7 +886,8 @@ std::list<cta::MigrationRoute>  cta::SqliteDatabase::selectAllMigrationRoutes(co
             sqlite3_column_int(statement,1),
             std::string((char *)sqlite3_column_text(statement,2)),
             cta::UserIdentity(sqlite3_column_int(statement,3),sqlite3_column_int(statement,4)),
-            std::string((char *)sqlite3_column_text(statement,5))
+            time_t(sqlite3_column_int(statement,5)),
+            std::string((char *)sqlite3_column_text(statement,6))
       ));
   }
   sqlite3_finalize(statement);

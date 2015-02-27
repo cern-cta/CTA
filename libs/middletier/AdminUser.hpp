@@ -27,6 +27,7 @@ public:
   AdminUser(
     const UserIdentity &user,
     const UserIdentity &creator,
+    const time_t creationTime,
     const std::string &comment);
 
   /**

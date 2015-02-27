@@ -31,7 +31,8 @@ public:
     const RetrievalJobState::Enum state,
     const std::string &srcPath,
     const std::string &dstUrl,
-    const UserIdentity &creator);
+    const UserIdentity &creator,
+    const time_t creationTime);
 
   /**
    * Sets the state of the retrieval job.

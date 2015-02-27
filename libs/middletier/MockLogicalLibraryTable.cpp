@@ -13,7 +13,7 @@ void cta::MockLogicalLibraryTable::createLogicalLibrary(
   const std::string &name,
   const std::string &comment) {
   checkLogicalLibraryDoesNotAlreadyExist(name);
-  LogicalLibrary logicalLibrary(name, requester.user, comment);
+  LogicalLibrary logicalLibrary(name, requester.user, time(NULL), comment);
   m_libraries[name] = logicalLibrary;
 }
 

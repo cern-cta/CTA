@@ -46,11 +46,21 @@ public:
 
   void deleteMigrationRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint8_t copyNb);
   
+  void deleteFile(const SecurityIdentity &requester, const std::string &pathname);
+  
+  void deleteDirectory(const SecurityIdentity &requester, const std::string &pathname);
+  
   std::list<cta::TapePool> selectAllTapePools(const SecurityIdentity &requester);
 
   std::list<cta::StorageClass> selectAllStorageClasses(const SecurityIdentity &requester);
 
   std::list<cta::MigrationRoute> selectAllMigrationRoutes(const SecurityIdentity &requester);
+  
+  void setDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path, const std::string &storageClassName);
+  
+  void clearDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path);
+  
+  std::string getDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path);
 
 private:
   
@@ -68,16 +78,34 @@ private:
   void createDirectoryTable();
   
   void createFileTable();
+  
+  void createTapeTable();
+  
+  void createAdminUserTable();
+    
+  void createAdminHostTable();
+  
+  void createArchivalJobTable();
+  
+  void createRetrievalJobTable();
+  
+  void createLogicalLibraryTable();
 
   void createSchema();
   
-  std::string sanitizePathname(const std::string &pathname);
+  void checkTapePoolExists(const std::string &name);
   
-  std::string getPath(const std::string &pathname);
+  void checkStorageClassExists(const std::string &name);
   
-  std::string getName(const std::string &pathname);
+  void checkMigrationRouteExists(const std::string &name, const uint8_t copyNb);
   
-  std::string getDirectoryStorageClass(const std::string &path);
+  void checkFileExists(const std::string &path, const std::string &name);
+  
+  void checkDirectoryExists(const std::string &path);
+  
+  void checkDirectoryContainsNoDirectories(const std::string &path);
+  
+  void checkDirectoryContainsNoFiles(const std::string &path);
   
 }; // struct SqliteDatabase
 

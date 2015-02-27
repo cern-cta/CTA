@@ -13,7 +13,7 @@ void cta::MockTapePoolTable::createTapePool(
   const uint32_t nbPartialTapes,
   const std::string &comment) {
   checkTapePoolDoesNotAlreadyExist(name);
-  TapePool tapePool(name, nbDrives, nbPartialTapes,requester.user, comment);
+  TapePool tapePool(name, nbDrives, nbPartialTapes,requester.user, time(NULL), comment);
   m_tapePools[name] = tapePool;
 }
 

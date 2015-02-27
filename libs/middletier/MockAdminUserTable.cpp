@@ -13,7 +13,7 @@ void cta::MockAdminUserTable::createAdminUser(
   const UserIdentity &user,
   const std::string &comment) {
   checkAdminUserDoesNotAlreadyExist(user);
-  AdminUser adminUser(user, requester.user, comment);
+  AdminUser adminUser(user, requester.user, time(NULL), comment);
   m_adminUsers[user.getUid()] = adminUser;
 }
 

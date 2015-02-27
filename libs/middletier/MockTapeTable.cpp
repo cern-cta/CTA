@@ -19,7 +19,9 @@ void cta::MockTapeTable::createTape(
     logicalLibraryName,
     tapePoolName,
     capacityInBytes,
+    0,
     requester.user,
+    time(NULL),
     comment);
   m_tapes[vid] = tape;
 }

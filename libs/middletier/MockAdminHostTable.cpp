@@ -11,7 +11,7 @@ void cta::MockAdminHostTable::createAdminHost(
   const std::string &hostName,
   const std::string &comment) {
   checkAdminHostDoesNotAlreadyExist(hostName);
-  AdminHost adminHost(hostName, requester.user, comment);
+  AdminHost adminHost(hostName, requester.user, time(NULL), comment);
   m_adminHosts[hostName] = adminHost;
 }
 

@@ -34,6 +34,7 @@ public:
     const uint8_t copyNb,
     const std::string &tapePoolName,
     const UserIdentity &creator,
+    const time_t creationTime,
     const std::string &comment);
 
   /**

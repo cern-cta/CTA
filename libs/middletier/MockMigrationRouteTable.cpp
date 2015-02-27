@@ -18,7 +18,8 @@ void cta::MockMigrationRouteTable::createMigrationRoute(
     storageClassName,
     copyNb,
     tapePoolName,
-    creator,
+    creator, 
+    time(NULL),
     comment);
   m_migrationRoutes[routeId] = route;
 }

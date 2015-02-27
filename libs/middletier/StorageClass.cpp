@@ -15,10 +15,11 @@ cta::StorageClass::StorageClass(
   const std::string &name,
   const uint8_t nbCopies,
   const UserIdentity &creator,
+  const time_t creationTime,
   const std::string &comment):
   m_name(name),
   m_nbCopies(nbCopies),
-  m_creationTime(time(NULL)),
+  m_creationTime(creationTime),
   m_creator(creator),
   m_comment(comment) {
 }

@@ -34,6 +34,7 @@ public:
     const uint16_t nbDrives,
     const uint32_t nbPartialTapes,
     const UserIdentity &creator,
+    const time_t creationTime,
     const std::string &comment);
 
   /**

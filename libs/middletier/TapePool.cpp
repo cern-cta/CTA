@@ -17,11 +17,12 @@ cta::TapePool::TapePool(
   const uint16_t nbDrives,
   const uint32_t nbPartialTapes,
   const UserIdentity &creator,
+  const time_t creationTime,
   const std::string &comment):
   m_name(name),
   m_nbDrives(nbDrives),
   m_nbPartialTapes(nbPartialTapes),
-  m_creationTime(time(NULL)),
+  m_creationTime(creationTime),
   m_creator(creator),
   m_comment(comment) {
 }

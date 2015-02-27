@@ -38,6 +38,7 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   SecurityIdentity.cpp
   SqliteDatabase.cpp
   SqliteMiddleTierAdmin.cpp
+  SqliteMiddleTierUser.cpp
   StorageClass.cpp
   Tape.cpp
   TapePool.cpp
@@ -58,6 +59,8 @@ set (MIDDLE_TIER_UNIT_TESTS_LIB_SRC_FILES
   MockMiddleTierUserTest.cpp
   MockTapeTableTest.cpp
   MockTapePoolTableTest.cpp
+  SqliteMiddleTierAdminTest.cpp
+  SqliteMiddleTierUserTest.cpp
   UtilsTest.cpp)
 
 add_library (ctamiddletierunittests SHARED

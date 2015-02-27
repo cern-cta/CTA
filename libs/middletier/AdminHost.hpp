@@ -27,6 +27,7 @@ public:
   AdminHost(
     const std::string &name,
     const UserIdentity &creator,
+    const time_t creationTime,
     const std::string &comment);
 
   /**

@@ -13,9 +13,10 @@ cta::AdminUser::AdminUser():
 cta::AdminUser::AdminUser(
   const UserIdentity &user,
   const UserIdentity &creator,
+  const time_t creationTime,
   const std::string &comment):
   m_user(user),
-  m_creationTime(time(NULL)),
+  m_creationTime(creationTime),
   m_creator(creator),
   m_comment(comment) {
 }

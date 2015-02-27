@@ -33,7 +33,9 @@ public:
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
+    const uint64_t dataOnTapeInBytes,
     const UserIdentity &creator,
+    const time_t creationTime,
     const std::string &comment);
 
   /**

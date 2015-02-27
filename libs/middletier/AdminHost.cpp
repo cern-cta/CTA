@@ -13,9 +13,10 @@ cta::AdminHost::AdminHost():
 cta::AdminHost::AdminHost(
   const std::string &name,
   const UserIdentity &creator,
+  const time_t creationTime,
   const std::string &comment):
   m_name(name),
-  m_creationTime(time(NULL)),
+  m_creationTime(creationTime),
   m_creator(creator),
   m_comment(comment) {
 }
