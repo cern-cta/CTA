@@ -58,7 +58,6 @@ set (MIDDLE_TIER_UNIT_TESTS_LIB_SRC_FILES
   MockMiddleTierUserTest.cpp
   MockTapeTableTest.cpp
   MockTapePoolTableTest.cpp
-  SqliteMiddleTierAdminTest.cpp
   UtilsTest.cpp)
 
 add_library (ctamiddletierunittests SHARED
