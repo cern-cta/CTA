@@ -505,9 +505,9 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_new_file) {
     nbPartialTapes, tapePoolComment));
 
   const uint8_t copyNb = 1;
-  const std::string migrationRouteComment = "Migration-route comment";
-  ASSERT_NO_THROW(adminApi.createMigrationRoute(requester, storageClassName,
-    copyNb, tapePoolName, migrationRouteComment));
+  const std::string archiveRouteComment = "Archive-route comment";
+  ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
+    copyNb, tapePoolName, archiveRouteComment));
 
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl");
@@ -571,9 +571,9 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_directory) {
     nbPartialTapes, tapePoolComment));
 
   const uint8_t copyNb = 1;
-  const std::string migrationRouteComment = "Migration-route comment";
-  ASSERT_NO_THROW(adminApi.createMigrationRoute(requester, storageClassName,
-    copyNb, tapePoolName, migrationRouteComment));
+  const std::string archiveRouteComment = "Archive-route comment";
+  ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
+    copyNb, tapePoolName, archiveRouteComment));
 
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl1");

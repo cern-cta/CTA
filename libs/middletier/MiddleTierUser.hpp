@@ -1,9 +1,9 @@
 #pragma once
 
 #include "ArchivalJob.hpp"
+#include "ArchiveRoute.hpp"
 #include "DirectoryIterator.hpp"
 #include "LogicalLibrary.hpp"
-#include "MigrationRoute.hpp"
 #include "RetrievalJob.hpp"
 #include "SecurityIdentity.hpp"
 #include "StorageClass.hpp"

@@ -5,8 +5,8 @@
 #include "MockAdminHostTable.hpp"
 #include "MockAdminUserTable.hpp"
 #include "MockArchivalJobTable.hpp"
+#include "MockArchiveRouteTable.hpp"
 #include "MockLogicalLibraryTable.hpp"
-#include "MockMigrationRouteTable.hpp"
 #include "MockRetrievalJobTable.hpp"
 #include "MockTapeTable.hpp"
 #include "MockTapePoolTable.hpp"
@@ -51,9 +51,9 @@ struct MockDatabase {
   MockTapePoolTable tapePools;
 
   /**
-   * Container of migration routes.
+   * Container of archive routes.
    */
-  MockMigrationRouteTable migrationRoutes;
+  MockArchiveRouteTable archiveRoutes;
 
   /**
    * The root node of the file-system.

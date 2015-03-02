@@ -1,9 +1,9 @@
-#include "MigrationRoute.hpp"
+#include "ArchiveRoute.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MigrationRoute::MigrationRoute():
+cta::ArchiveRoute::ArchiveRoute():
   m_copyNb(0),
   m_creationTime(time(NULL)) {
 }
@@ -11,7 +11,7 @@ cta::MigrationRoute::MigrationRoute():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MigrationRoute::MigrationRoute(
+cta::ArchiveRoute::ArchiveRoute(
   const std::string &storageClassName,
   const uint8_t copyNb,
   const std::string &tapePoolName,
@@ -29,34 +29,34 @@ cta::MigrationRoute::MigrationRoute(
 //------------------------------------------------------------------------------
 // getStorageClassName
 //------------------------------------------------------------------------------
-const std::string &cta::MigrationRoute::getStorageClassName() const throw() {
+const std::string &cta::ArchiveRoute::getStorageClassName() const throw() {
   return m_storageClassName;
 }
 
 //------------------------------------------------------------------------------
 // getCopyNb
 //------------------------------------------------------------------------------
-uint8_t cta::MigrationRoute::getCopyNb() const throw() {
+uint8_t cta::ArchiveRoute::getCopyNb() const throw() {
   return m_copyNb;
 }
 
 //------------------------------------------------------------------------------
 // getTapePoolName
 //------------------------------------------------------------------------------
-const std::string &cta::MigrationRoute::getTapePoolName() const throw() {
+const std::string &cta::ArchiveRoute::getTapePoolName() const throw() {
   return m_tapePoolName;
 }
 
 //------------------------------------------------------------------------------
 // getCreator
 //------------------------------------------------------------------------------
-const cta::UserIdentity &cta::MigrationRoute::getCreator() const throw() {
+const cta::UserIdentity &cta::ArchiveRoute::getCreator() const throw() {
   return m_creator;
 }
 
 //------------------------------------------------------------------------------
 // getComment
 //------------------------------------------------------------------------------
-const std::string &cta::MigrationRoute::getComment() const throw() {
+const std::string &cta::ArchiveRoute::getComment() const throw() {
   return m_comment;
 }

@@ -9,15 +9,15 @@
 namespace cta {
 
 /**
- * A migration route.
+ * An archive route.
  */
-class MigrationRoute {
+class ArchiveRoute {
 public:
 
   /**
    * Constructor.
    */
-  MigrationRoute();
+  ArchiveRoute();
 
   /**
    * Constructor.
@@ -29,7 +29,7 @@ public:
    * @param creator The identity of the user that created the storage class.
    * @param comment Comment describing the storage class.
    */
-  MigrationRoute(
+  ArchiveRoute(
     const std::string &storageClassName,
     const uint8_t copyNb,
     const std::string &tapePoolName,
@@ -106,6 +106,6 @@ private:
    */
   std::string m_comment;
 
-}; // class MigrationRoute
+}; // class ArchiveRoute
 
 } // namespace cta

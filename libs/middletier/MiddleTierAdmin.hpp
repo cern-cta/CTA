@@ -3,9 +3,9 @@
 #include "AdminHost.hpp"
 #include "AdminUser.hpp"
 #include "ArchivalJob.hpp"
+#include "ArchiveRoute.hpp"
 #include "DirectoryIterator.hpp"
 #include "LogicalLibrary.hpp"
-#include "MigrationRoute.hpp"
 #include "SecurityIdentity.hpp"
 #include "StorageClass.hpp"
 #include "Tape.hpp"
@@ -173,17 +173,17 @@ public:
     const SecurityIdentity &requester) const = 0;
 
   /**
-   * Creates the specified migration route.
+   * Creates the specified archive route.
    *
    * @param requester The identity of the user requesting the creation of the
-   * migration route.
+   * archive route.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
    * @param tapePoolName The name of the destination tape pool.
-   * @param comment The comment describing the migration route.
+   * @param comment The comment describing the archive route.
    */
-  virtual void createMigrationRoute(
+  virtual void createArchiveRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint8_t copyNb,
@@ -191,25 +191,25 @@ public:
     const std::string &comment) = 0;
 
   /**
-   * Deletes the specified migration route.
+   * Deletes the specified archive route.
    *
    * @param requester The identity of the user requesting the deletion of the
-   * migration route.
+   * archive route.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
    */
-  virtual void deleteMigrationRoute(
+  virtual void deleteArchiveRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint8_t copyNb) = 0;
 
   /**
-   * Gets the current list of migration routes.
+   * Gets the current list of archive routes.
    *
    * @param requester The identity of the user requesting the list.
    */
-  virtual std::list<MigrationRoute> getMigrationRoutes(
+  virtual std::list<ArchiveRoute> getArchiveRoutes(
     const SecurityIdentity &requester) const = 0;
 
   /**

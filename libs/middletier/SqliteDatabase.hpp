@@ -6,8 +6,8 @@
 #include "FileSystemStorageClasses.hpp"
 #include "MockAdminHostTable.hpp"
 #include "MockAdminUserTable.hpp"
+#include "MockArchiveRouteTable.hpp"
 #include "MockLogicalLibraryTable.hpp"
-#include "MockMigrationRouteTable.hpp"
 #include "MockTapeTable.hpp"
 #include "MockTapePoolTable.hpp"
 
@@ -34,7 +34,7 @@ public:
   
   void insertStorageClass(const SecurityIdentity &requester, const std::string &name, const uint8_t nbCopies, const std::string &comment);
   
-  void insertMigrationRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint8_t copyNb, const std::string &tapePoolName, const std::string &comment);
+  void insertArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint8_t copyNb, const std::string &tapePoolName, const std::string &comment);
   
   void insertFile(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode);
   
@@ -44,7 +44,7 @@ public:
   
   void deleteStorageClass(const SecurityIdentity &requester, const std::string &name);
 
-  void deleteMigrationRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint8_t copyNb);
+  void deleteArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint8_t copyNb);
   
   void deleteFile(const SecurityIdentity &requester, const std::string &pathname);
   
@@ -54,7 +54,7 @@ public:
 
   std::list<cta::StorageClass> selectAllStorageClasses(const SecurityIdentity &requester);
 
-  std::list<cta::MigrationRoute> selectAllMigrationRoutes(const SecurityIdentity &requester);
+  std::list<cta::ArchiveRoute> selectAllArchiveRoutes(const SecurityIdentity &requester);
   
   void setDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path, const std::string &storageClassName);
   
@@ -69,7 +69,7 @@ private:
    */
   sqlite3 *m_dbHandle;
   
-  void createMigrationRouteTable();
+  void createArchiveRouteTable();
 
   void createStorageClassTable();
 
@@ -97,7 +97,7 @@ private:
   
   void checkStorageClassExists(const std::string &name);
   
-  void checkMigrationRouteExists(const std::string &name, const uint8_t copyNb);
+  void checkArchiveRouteExists(const std::string &name, const uint8_t copyNb);
   
   void checkFileExists(const std::string &path, const std::string &name);
   

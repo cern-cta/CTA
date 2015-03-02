@@ -1,39 +1,39 @@
 #include "Exception.hpp"
-#include "MockMigrationRouteTable.hpp"
+#include "MockArchiveRouteTable.hpp"
 
 #include <sstream>
 
 //------------------------------------------------------------------------------
-// createMigrationRoute
+// createArchiveRoute
 //------------------------------------------------------------------------------
-void cta::MockMigrationRouteTable::createMigrationRoute(
+void cta::MockArchiveRouteTable::createArchiveRoute(
   const std::string &storageClassName,
   const uint8_t copyNb,
   const std::string &tapePoolName,
   const UserIdentity &creator,
   const std::string &comment) {
-  const MigrationRouteId routeId(storageClassName, copyNb);
-  checkMigrationRouteDoesNotAlreadyExists(routeId);
-  MigrationRoute route(
+  const ArchiveRouteId routeId(storageClassName, copyNb);
+  checkArchiveRouteDoesNotAlreadyExists(routeId);
+  ArchiveRoute route(
     storageClassName,
     copyNb,
     tapePoolName,
     creator, 
     time(NULL),
     comment);
-  m_migrationRoutes[routeId] = route;
+  m_archiveRoutes[routeId] = route;
 }
 
 //------------------------------------------------------------------------------
-// checkMigrationRouteDoesNotAlreadyExists
+// checkArchiveRouteDoesNotAlreadyExists
 //------------------------------------------------------------------------------
-void cta::MockMigrationRouteTable::checkMigrationRouteDoesNotAlreadyExists(
-  const MigrationRouteId &routeId) const {
-  std::map<MigrationRouteId, MigrationRoute>::const_iterator itor =
-    m_migrationRoutes.find(routeId);
-  if(itor != m_migrationRoutes.end()) {
+void cta::MockArchiveRouteTable::checkArchiveRouteDoesNotAlreadyExists(
+  const ArchiveRouteId &routeId) const {
+  std::map<ArchiveRouteId, ArchiveRoute>::const_iterator itor =
+    m_archiveRoutes.find(routeId);
+  if(itor != m_archiveRoutes.end()) {
     std::ostringstream message;
-    message << "A migration route for storage class " <<
+    message << "A archive route for storage class " <<
       routeId.getStorageClassName() << " and copy number " <<
       routeId.getCopyNb() << " already exists";
     throw Exception(message.str());
@@ -41,51 +41,51 @@ void cta::MockMigrationRouteTable::checkMigrationRouteDoesNotAlreadyExists(
 }
 
 //------------------------------------------------------------------------------
-// deleteMigrationRoute
+// deleteArchiveRoute
 //------------------------------------------------------------------------------
-void cta::MockMigrationRouteTable::deleteMigrationRoute(
+void cta::MockArchiveRouteTable::deleteArchiveRoute(
   const std::string &storageClassName,
   const uint8_t copyNb) {
-  const MigrationRouteId routeId(storageClassName, copyNb);
-  std::map<MigrationRouteId, MigrationRoute>::iterator itor =
-    m_migrationRoutes.find(routeId);
-  if(itor == m_migrationRoutes.end()) {
+  const ArchiveRouteId routeId(storageClassName, copyNb);
+  std::map<ArchiveRouteId, ArchiveRoute>::iterator itor =
+    m_archiveRoutes.find(routeId);
+  if(itor == m_archiveRoutes.end()) {
     std::ostringstream message;
-    message << "A migration route for storage class " <<
+    message << "A archive route for storage class " <<
       routeId.getStorageClassName() << " and copy number " <<
       routeId.getCopyNb() << " does not exist";
     throw Exception(message.str());
   }
-  m_migrationRoutes.erase(routeId);
+  m_archiveRoutes.erase(routeId);
 }
 
 //------------------------------------------------------------------------------
-// getMigrationRoutes
+// getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<cta::MigrationRoute> cta::MockMigrationRouteTable::
-  getMigrationRoutes() const {
-  std::list<cta::MigrationRoute> routes;
-  for(std::map<MigrationRouteId, MigrationRoute>::const_iterator itor =
-    m_migrationRoutes.begin(); itor != m_migrationRoutes.end(); itor++) {
+std::list<cta::ArchiveRoute> cta::MockArchiveRouteTable::
+  getArchiveRoutes() const {
+  std::list<cta::ArchiveRoute> routes;
+  for(std::map<ArchiveRouteId, ArchiveRoute>::const_iterator itor =
+    m_archiveRoutes.begin(); itor != m_archiveRoutes.end(); itor++) {
     routes.push_back(itor->second);
   }
   return routes;
 }
 
 //------------------------------------------------------------------------------
-// checkMigrationRouteExists
+// checkArchiveRouteExists
 //------------------------------------------------------------------------------
-void cta::MockMigrationRouteTable::checkMigrationRouteExists(
+void cta::MockArchiveRouteTable::checkArchiveRouteExists(
   const std::string &storageClassName, const uint8_t copyNb) const {
 }
 
 //------------------------------------------------------------------------------
-// tapePoolIsInAMigrationRoute
+// tapePoolIsInAArchiveRoute
 //------------------------------------------------------------------------------
-bool cta::MockMigrationRouteTable::tapePoolIsInAMigrationRoute(
+bool cta::MockArchiveRouteTable::tapePoolIsInAArchiveRoute(
   const std::string &name) const {
-  for(std::map<MigrationRouteId, MigrationRoute>::const_iterator itor =
-    m_migrationRoutes.begin(); itor != m_migrationRoutes.end(); itor++) {
+  for(std::map<ArchiveRouteId, ArchiveRoute>::const_iterator itor =
+    m_archiveRoutes.begin(); itor != m_archiveRoutes.end(); itor++) {
     if(name == itor->second.getTapePoolName()) {
       return true;
     }
@@ -94,12 +94,12 @@ bool cta::MockMigrationRouteTable::tapePoolIsInAMigrationRoute(
 }
 
 //------------------------------------------------------------------------------
-// storageClassIsInAMigrationRoute
+// storageClassIsInAArchiveRoute
 //------------------------------------------------------------------------------
-bool cta::MockMigrationRouteTable::storageClassIsInAMigrationRoute(
+bool cta::MockArchiveRouteTable::storageClassIsInAArchiveRoute(
   const std::string &name) const {
-  for(std::map<MigrationRouteId, MigrationRoute>::const_iterator itor =
-    m_migrationRoutes.begin(); itor != m_migrationRoutes.end(); itor++) {
+  for(std::map<ArchiveRouteId, ArchiveRoute>::const_iterator itor =
+    m_archiveRoutes.begin(); itor != m_archiveRoutes.end(); itor++) {
     if(name == itor->second.getStorageClassName()) {
       return true;
     }

@@ -126,33 +126,33 @@ std::list<cta::TapePool> cta::SqliteMiddleTierAdmin::getTapePools(
 }
 
 //------------------------------------------------------------------------------
-// createMigrationRoute
+// createArchiveRoute
 //------------------------------------------------------------------------------
-void cta::SqliteMiddleTierAdmin::createMigrationRoute(
+void cta::SqliteMiddleTierAdmin::createArchiveRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint8_t copyNb,
   const std::string &tapePoolName,
   const std::string &comment) {
-  return m_sqlite_db.insertMigrationRoute(requester, storageClassName, copyNb, tapePoolName, comment);
+  return m_sqlite_db.insertArchiveRoute(requester, storageClassName, copyNb, tapePoolName, comment);
 }
 
 //------------------------------------------------------------------------------
-// deleteMigrationRoute
+// deleteArchiveRoute
 //------------------------------------------------------------------------------
-void cta::SqliteMiddleTierAdmin::deleteMigrationRoute(
+void cta::SqliteMiddleTierAdmin::deleteArchiveRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint8_t copyNb) {
-  return m_sqlite_db.deleteMigrationRoute(requester, storageClassName, copyNb);
+  return m_sqlite_db.deleteArchiveRoute(requester, storageClassName, copyNb);
 }
 
 //------------------------------------------------------------------------------
-// getMigrationRoutes
+// getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<cta::MigrationRoute> cta::SqliteMiddleTierAdmin::getMigrationRoutes(
+std::list<cta::ArchiveRoute> cta::SqliteMiddleTierAdmin::getArchiveRoutes(
   const SecurityIdentity &requester) const {
-  return m_sqlite_db.selectAllMigrationRoutes(requester);
+  return m_sqlite_db.selectAllArchiveRoutes(requester);
 }
 
 //------------------------------------------------------------------------------

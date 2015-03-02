@@ -267,19 +267,19 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteStorageClass_in_use_by_route)
   }
 
   const uint8_t copyNb = 1;
-  ASSERT_NO_THROW(adminApi.createMigrationRoute(requester, storageClassName,
+  ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
     copyNb, tapePoolName, comment));
 
   {
-    std::list<MigrationRoute> migrationRoutes;
-    ASSERT_NO_THROW(migrationRoutes = adminApi.getMigrationRoutes(requester));
-    ASSERT_EQ(1, migrationRoutes.size());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = adminApi.getArchiveRoutes(requester));
+    ASSERT_EQ(1, archiveRoutes.size());
 
-    MigrationRoute migrationRoute;
-    ASSERT_NO_THROW(migrationRoute = migrationRoutes.front());
-    ASSERT_EQ(storageClassName, migrationRoute.getStorageClassName());
-    ASSERT_EQ(copyNb, migrationRoute.getCopyNb());
-    ASSERT_EQ(tapePoolName, migrationRoute.getTapePoolName());
+    ArchiveRoute archiveRoute;
+    ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
+    ASSERT_EQ(storageClassName, archiveRoute.getStorageClassName());
+    ASSERT_EQ(copyNb, archiveRoute.getCopyNb());
+    ASSERT_EQ(tapePoolName, archiveRoute.getTapePoolName());
   }
 
   ASSERT_THROW(adminApi.deleteStorageClass(requester, storageClassName),
@@ -296,13 +296,13 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteStorageClass_in_use_by_route)
     ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
 
-  ASSERT_NO_THROW(adminApi.deleteMigrationRoute(requester, storageClassName,
+  ASSERT_NO_THROW(adminApi.deleteArchiveRoute(requester, storageClassName,
     copyNb));
 
   {
-    std::list<MigrationRoute> migrationRoutes;
-    ASSERT_NO_THROW(migrationRoutes = adminApi.getMigrationRoutes(requester));
-    ASSERT_TRUE(migrationRoutes.empty());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = adminApi.getArchiveRoutes(requester));
+    ASSERT_TRUE(archiveRoutes.empty());
   }
 
   ASSERT_NO_THROW(adminApi.deleteStorageClass(requester, storageClassName));
@@ -347,9 +347,9 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteTapePool_in_use) {
   const SecurityIdentity requester;
 
   {
-    std::list<MigrationRoute> migrationRoutes;
-    ASSERT_NO_THROW(migrationRoutes = adminApi.getMigrationRoutes(requester));
-    ASSERT_TRUE(migrationRoutes.empty());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = adminApi.getArchiveRoutes(requester));
+    ASSERT_TRUE(archiveRoutes.empty());
   }
 
   const std::string storageClassName = "TestStorageClass";
@@ -367,37 +367,37 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteTapePool_in_use) {
     nbPartialTapes, comment));
 
   const uint8_t copyNb = 1;
-  ASSERT_NO_THROW(adminApi.createMigrationRoute(requester, storageClassName,
+  ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
     copyNb, tapePoolName, comment));
 
   {
-    std::list<MigrationRoute> migrationRoutes;
-    ASSERT_NO_THROW(migrationRoutes = adminApi.getMigrationRoutes(requester));
-    ASSERT_EQ(1, migrationRoutes.size());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = adminApi.getArchiveRoutes(requester));
+    ASSERT_EQ(1, archiveRoutes.size());
 
-    MigrationRoute migrationRoute;
-    ASSERT_NO_THROW(migrationRoute = migrationRoutes.front());
-    ASSERT_EQ(storageClassName, migrationRoute.getStorageClassName());
-    ASSERT_EQ(copyNb, migrationRoute.getCopyNb());
-    ASSERT_EQ(tapePoolName, migrationRoute.getTapePoolName());
+    ArchiveRoute archiveRoute;
+    ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
+    ASSERT_EQ(storageClassName, archiveRoute.getStorageClassName());
+    ASSERT_EQ(copyNb, archiveRoute.getCopyNb());
+    ASSERT_EQ(tapePoolName, archiveRoute.getTapePoolName());
   }
 
   ASSERT_THROW(adminApi.deleteTapePool(requester, tapePoolName), std::exception);
 
   {
-    std::list<MigrationRoute> migrationRoutes;
-    ASSERT_NO_THROW(migrationRoutes = adminApi.getMigrationRoutes(requester));
-    ASSERT_EQ(1, migrationRoutes.size());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = adminApi.getArchiveRoutes(requester));
+    ASSERT_EQ(1, archiveRoutes.size());
 
-    MigrationRoute migrationRoute;
-    ASSERT_NO_THROW(migrationRoute = migrationRoutes.front());
-    ASSERT_EQ(storageClassName, migrationRoute.getStorageClassName());
-    ASSERT_EQ(copyNb, migrationRoute.getCopyNb());
-    ASSERT_EQ(tapePoolName, migrationRoute.getTapePoolName());
+    ArchiveRoute archiveRoute;
+    ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
+    ASSERT_EQ(storageClassName, archiveRoute.getStorageClassName());
+    ASSERT_EQ(copyNb, archiveRoute.getCopyNb());
+    ASSERT_EQ(tapePoolName, archiveRoute.getTapePoolName());
   }
 }
 
-TEST_F(cta_client_SqliteMiddleTierAdminTest, createMigrationRoute_new) {
+TEST_F(cta_client_SqliteMiddleTierAdminTest, createArchiveRoute_new) {
   using namespace cta;
 
   MockDatabase db;
@@ -406,9 +406,9 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, createMigrationRoute_new) {
   const SecurityIdentity requester;
 
   {
-    std::list<MigrationRoute> migrationRoutes;
-    ASSERT_NO_THROW(migrationRoutes = adminApi.getMigrationRoutes(requester));
-    ASSERT_TRUE(migrationRoutes.empty());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = adminApi.getArchiveRoutes(requester));
+    ASSERT_TRUE(archiveRoutes.empty());
   }
 
   const std::string storageClassName = "TestStorageClass";
@@ -426,24 +426,24 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, createMigrationRoute_new) {
     nbPartialTapes, comment));
 
   const uint8_t copyNb = 1;
-  ASSERT_NO_THROW(adminApi.createMigrationRoute(requester, storageClassName,
+  ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
     copyNb, tapePoolName, comment));
 
   {
-    std::list<MigrationRoute> migrationRoutes;
-    ASSERT_NO_THROW(migrationRoutes = adminApi.getMigrationRoutes(requester));
-    ASSERT_EQ(1, migrationRoutes.size());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = adminApi.getArchiveRoutes(requester));
+    ASSERT_EQ(1, archiveRoutes.size());
 
-    MigrationRoute migrationRoute;
-    ASSERT_NO_THROW(migrationRoute = migrationRoutes.front());
-    ASSERT_EQ(storageClassName, migrationRoute.getStorageClassName());
-    ASSERT_EQ(copyNb, migrationRoute.getCopyNb());
-    ASSERT_EQ(tapePoolName, migrationRoute.getTapePoolName());
+    ArchiveRoute archiveRoute;
+    ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
+    ASSERT_EQ(storageClassName, archiveRoute.getStorageClassName());
+    ASSERT_EQ(copyNb, archiveRoute.getCopyNb());
+    ASSERT_EQ(tapePoolName, archiveRoute.getTapePoolName());
   }
 }
 
 TEST_F(cta_client_SqliteMiddleTierAdminTest,
-  createMigrationRoute_already_existing) {
+  createArchiveRoute_already_existing) {
   using namespace cta;
 
   MockDatabase db;
@@ -452,9 +452,9 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
   const SecurityIdentity requester;
 
   {
-    std::list<MigrationRoute> migrationRoutes;
-    ASSERT_NO_THROW(migrationRoutes = adminApi.getMigrationRoutes(requester));
-    ASSERT_TRUE(migrationRoutes.empty());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = adminApi.getArchiveRoutes(requester));
+    ASSERT_TRUE(archiveRoutes.empty());
   }
 
   const std::string storageClassName = "TestStorageClass";
@@ -472,26 +472,26 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
     nbPartialTapes, comment));
 
   const uint8_t copyNb = 1;
-  ASSERT_NO_THROW(adminApi.createMigrationRoute(requester, storageClassName,
+  ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
     copyNb, tapePoolName, comment));
 
   {
-    std::list<MigrationRoute> migrationRoutes;
-    ASSERT_NO_THROW(migrationRoutes = adminApi.getMigrationRoutes(requester));
-    ASSERT_EQ(1, migrationRoutes.size());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = adminApi.getArchiveRoutes(requester));
+    ASSERT_EQ(1, archiveRoutes.size());
 
-    MigrationRoute migrationRoute;
-    ASSERT_NO_THROW(migrationRoute = migrationRoutes.front());
-    ASSERT_EQ(storageClassName, migrationRoute.getStorageClassName());
-    ASSERT_EQ(copyNb, migrationRoute.getCopyNb());
-    ASSERT_EQ(tapePoolName, migrationRoute.getTapePoolName());
+    ArchiveRoute archiveRoute;
+    ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
+    ASSERT_EQ(storageClassName, archiveRoute.getStorageClassName());
+    ASSERT_EQ(copyNb, archiveRoute.getCopyNb());
+    ASSERT_EQ(tapePoolName, archiveRoute.getTapePoolName());
   }
 
-  ASSERT_THROW(adminApi.createMigrationRoute(requester, storageClassName,
+  ASSERT_THROW(adminApi.createArchiveRoute(requester, storageClassName,
     copyNb, tapePoolName, comment), std::exception);
 }
 
-TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteMigrationRoute_existing) {
+TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteArchiveRoute_existing) {
   using namespace cta;
 
   MockDatabase db;
@@ -500,9 +500,9 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteMigrationRoute_existing) {
   const SecurityIdentity requester;
 
   {
-    std::list<MigrationRoute> migrationRoutes;
-    ASSERT_NO_THROW(migrationRoutes = adminApi.getMigrationRoutes(requester));
-    ASSERT_TRUE(migrationRoutes.empty());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = adminApi.getArchiveRoutes(requester));
+    ASSERT_TRUE(archiveRoutes.empty());
   }
 
   const std::string storageClassName = "TestStorageClass";
@@ -520,32 +520,32 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteMigrationRoute_existing) {
     nbPartialTapes, comment));
 
   const uint8_t copyNb = 1;
-  ASSERT_NO_THROW(adminApi.createMigrationRoute(requester, storageClassName,
+  ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
     copyNb, tapePoolName, comment));
 
   {
-    std::list<MigrationRoute> migrationRoutes;
-    ASSERT_NO_THROW(migrationRoutes = adminApi.getMigrationRoutes(requester));
-    ASSERT_EQ(1, migrationRoutes.size());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = adminApi.getArchiveRoutes(requester));
+    ASSERT_EQ(1, archiveRoutes.size());
 
-    MigrationRoute migrationRoute;
-    ASSERT_NO_THROW(migrationRoute = migrationRoutes.front());
-    ASSERT_EQ(storageClassName, migrationRoute.getStorageClassName());
-    ASSERT_EQ(copyNb, migrationRoute.getCopyNb());
-    ASSERT_EQ(tapePoolName, migrationRoute.getTapePoolName());
+    ArchiveRoute archiveRoute;
+    ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
+    ASSERT_EQ(storageClassName, archiveRoute.getStorageClassName());
+    ASSERT_EQ(copyNb, archiveRoute.getCopyNb());
+    ASSERT_EQ(tapePoolName, archiveRoute.getTapePoolName());
   }
 
-  ASSERT_NO_THROW(adminApi.deleteMigrationRoute(requester, storageClassName,
+  ASSERT_NO_THROW(adminApi.deleteArchiveRoute(requester, storageClassName,
     copyNb));
 
   {
-    std::list<MigrationRoute> migrationRoutes;
-    ASSERT_NO_THROW(migrationRoutes = adminApi.getMigrationRoutes(requester));
-    ASSERT_TRUE(migrationRoutes.empty());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = adminApi.getArchiveRoutes(requester));
+    ASSERT_TRUE(archiveRoutes.empty());
   }
 }
 
-TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteMigrationRoute_non_existing) {
+TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteArchiveRoute_non_existing) {
   using namespace cta;
 
   MockDatabase db;
@@ -554,9 +554,9 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteMigrationRoute_non_existing) 
   const SecurityIdentity requester;
 
   {
-    std::list<MigrationRoute> migrationRoutes;
-    ASSERT_NO_THROW(migrationRoutes = adminApi.getMigrationRoutes(requester));
-    ASSERT_TRUE(migrationRoutes.empty());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = adminApi.getArchiveRoutes(requester));
+    ASSERT_TRUE(archiveRoutes.empty());
   }
 
   const std::string storageClassName = "TestStorageClass";
@@ -574,7 +574,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteMigrationRoute_non_existing) 
     nbPartialTapes, comment));
 
   const uint8_t copyNb = 1;
-  ASSERT_THROW(adminApi.deleteMigrationRoute(requester, tapePoolName, copyNb),
+  ASSERT_THROW(adminApi.deleteArchiveRoute(requester, tapePoolName, copyNb),
     std::exception);
 }
 

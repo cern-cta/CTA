@@ -87,16 +87,16 @@ void cta::MockMiddleTierAdmin::createStorageClass(
 //------------------------------------------------------------------------------
 void cta::MockMiddleTierAdmin::deleteStorageClass(const SecurityIdentity &requester,
   const std::string &name) {
-  checkStorageClassIsNotInAMigrationRoute(name);
+  checkStorageClassIsNotInAArchiveRoute(name);
   m_db.storageClasses.deleteStorageClass(name);
 }
 
 //------------------------------------------------------------------------------
-// checkStorageClassIsNotInAMigrationRoute
+// checkStorageClassIsNotInAArchiveRoute
 //------------------------------------------------------------------------------
-void cta::MockMiddleTierAdmin::checkStorageClassIsNotInAMigrationRoute(
+void cta::MockMiddleTierAdmin::checkStorageClassIsNotInAArchiveRoute(
   const std::string &name) const {
-  if(m_db.migrationRoutes.storageClassIsInAMigrationRoute(name)) {
+  if(m_db.archiveRoutes.storageClassIsInAArchiveRoute(name)) {
     std::ostringstream message;
     message << "The " << name << " storage class is in use";
     throw Exception(message.str());
@@ -138,7 +138,7 @@ void cta::MockMiddleTierAdmin::deleteTapePool(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 void cta::MockMiddleTierAdmin::checkTapePoolIsNotInUse(const std::string &name)
   const {
-  if(m_db.migrationRoutes.tapePoolIsInAMigrationRoute(name)) {
+  if(m_db.archiveRoutes.tapePoolIsInAArchiveRoute(name)) {
     std::ostringstream message;
     message << "The " << name << " tape pool is in use";
     throw Exception(message.str());
@@ -154,15 +154,15 @@ std::list<cta::TapePool> cta::MockMiddleTierAdmin::getTapePools(
 }
 
 //------------------------------------------------------------------------------
-// createMigrationRoute
+// createArchiveRoute
 //------------------------------------------------------------------------------
-void cta::MockMiddleTierAdmin::createMigrationRoute(
+void cta::MockMiddleTierAdmin::createArchiveRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint8_t copyNb,
   const std::string &tapePoolName,
   const std::string &comment) {
-  return m_db.migrationRoutes.createMigrationRoute(
+  return m_db.archiveRoutes.createArchiveRoute(
     storageClassName,
     copyNb,
     tapePoolName,
@@ -171,21 +171,21 @@ void cta::MockMiddleTierAdmin::createMigrationRoute(
 }
 
 //------------------------------------------------------------------------------
-// deleteMigrationRoute
+// deleteArchiveRoute
 //------------------------------------------------------------------------------
-void cta::MockMiddleTierAdmin::deleteMigrationRoute(
+void cta::MockMiddleTierAdmin::deleteArchiveRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint8_t copyNb) {
-  return m_db.migrationRoutes.deleteMigrationRoute(storageClassName, copyNb);
+  return m_db.archiveRoutes.deleteArchiveRoute(storageClassName, copyNb);
 }
 
 //------------------------------------------------------------------------------
-// getMigrationRoutes
+// getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<cta::MigrationRoute> cta::MockMiddleTierAdmin::getMigrationRoutes(
+std::list<cta::ArchiveRoute> cta::MockMiddleTierAdmin::getArchiveRoutes(
   const SecurityIdentity &requester) const {
-  return m_db.migrationRoutes.getMigrationRoutes();
+  return m_db.archiveRoutes.getArchiveRoutes();
 }
 
 //------------------------------------------------------------------------------

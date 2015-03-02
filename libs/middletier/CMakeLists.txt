@@ -8,6 +8,8 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   AdminUser.cpp
   ArchivalJob.cpp
   ArchivalJobState.cpp
+  ArchiveRoute.cpp
+  ArchiveRouteId.cpp
   DirectoryEntry.cpp
   DirectoryIterator.cpp
   Exception.cpp
@@ -19,9 +21,8 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   LogicalLibrary.cpp
   MiddleTierAdmin.cpp
   MiddleTierUser.cpp
-  MigrationRoute.cpp
-  MigrationRouteId.cpp
   MockArchivalJobTable.cpp
+  MockArchiveRouteTable.cpp
   MockAdminHostTable.cpp
   MockAdminUserTable.cpp
   MockDatabase.cpp
@@ -29,7 +30,6 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   MockMiddleTierAdmin.cpp
   MockMiddleTierUser.cpp
   MockMiddleTierUser.cpp
-  MockMigrationRouteTable.cpp
   MockRetrievalJobTable.cpp
   MockTapeTable.cpp
   MockTapePoolTable.cpp

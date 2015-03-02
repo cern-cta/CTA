@@ -1,7 +1,7 @@
 #pragma once
 
-#include "MigrationRoute.hpp"
-#include "MigrationRouteId.hpp"
+#include "ArchiveRoute.hpp"
+#include "ArchiveRouteId.hpp"
 
 #include <list>
 #include <map>
@@ -11,13 +11,13 @@
 namespace cta {
 
 /**
- * Mock database-table of migration routes.
+ * Mock database-table of archive routes.
  */
-class MockMigrationRouteTable {
+class MockArchiveRouteTable {
 public:
 
   /**
-   * Creates the specified migration route.
+   * Creates the specified archive route.
    *
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
@@ -26,7 +26,7 @@ public:
    * @param creator The identity of the user that created the storage class.
    * @param comment Comment describing the storage class.
    */
-  void createMigrationRoute(
+  void createArchiveRoute(
     const std::string &storageClassName,
     const uint8_t copyNb,
     const std::string &tapePoolName,
@@ -34,64 +34,64 @@ public:
     const std::string &comment);
 
   /**
-   * Deletes the specified migration route.
+   * Deletes the specified archive route.
    *
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
    */
-  void deleteMigrationRoute(
+  void deleteArchiveRoute(
     const std::string &storageClassName,
     const uint8_t copyNb);
 
   /**
-   * Gets the current list of migration routes.
+   * Gets the current list of archive routes.
    *
-   * @return The current list of migration routes.
+   * @return The current list of archive routes.
    */
-  std::list<MigrationRoute> getMigrationRoutes() const;
+  std::list<ArchiveRoute> getArchiveRoutes() const;
 
   /**
-   * Throws an exception if the specified migration route does not exist.
+   * Throws an exception if the specified archive route does not exist.
    *
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
    */
-  void checkMigrationRouteExists(const std::string &storageClassName,
+  void checkArchiveRouteExists(const std::string &storageClassName,
     const uint8_t copyNb) const;
 
   /**
-   * Returns true if the specified tape pool is in one of the current migration
+   * Returns true if the specified tape pool is in one of the current archive
    * routes.
    *
    * @param name The name of the tape pool.
    */
-  bool tapePoolIsInAMigrationRoute(const std::string &name) const;
+  bool tapePoolIsInAArchiveRoute(const std::string &name) const;
 
   /**
    * Returns true if the specified storage class is in one of the current
-   * migration routes.
+   * archive routes.
    *
    * @param name The name of the storage class.
    */
-  bool storageClassIsInAMigrationRoute(const std::string &name) const;
+  bool storageClassIsInAArchiveRoute(const std::string &name) const;
 
 private:
 
   /**
-   * The current mapping from migration-route identifier to migration route.
+   * The current mapping from archive-route identifier to archive route.
    */
-  std::map<MigrationRouteId, MigrationRoute> m_migrationRoutes;
+  std::map<ArchiveRouteId, ArchiveRoute> m_archiveRoutes;
 
   /**
-   * Throws an exception if the specified migration route already exists.
+   * Throws an exception if the specified archive route already exists.
    *
-   * @param routeId The identity of the migration route.
+   * @param routeId The identity of the archive route.
    */
-  void checkMigrationRouteDoesNotAlreadyExists(const MigrationRouteId &routeId)
+  void checkArchiveRouteDoesNotAlreadyExists(const ArchiveRouteId &routeId)
     const;
 
-}; // class MockMigrationRouteTable
+}; // class MockArchiveRouteTable
 
 } // namespace cta
