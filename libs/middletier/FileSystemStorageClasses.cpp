@@ -98,6 +98,21 @@ std::list<cta::StorageClass> cta::FileSystemStorageClasses::getStorageClasses()
 }
 
 //------------------------------------------------------------------------------
+// getStorageClass
+//------------------------------------------------------------------------------
+const cta::StorageClass &cta::FileSystemStorageClasses::getStorageClass(
+  const std::string &name) const {
+  std::map<std::string, FileSystemStorageClass>::const_iterator itor =
+    m_storageClasses.find(name);
+  if(itor == m_storageClasses.end()) {
+    std::ostringstream message;
+    message << "Storage class " << name << " does not exist";
+    throw Exception(message.str());
+  }
+  return itor->second.getStorageClass();
+}
+
+//------------------------------------------------------------------------------
 // incStorageClassUsageCount
 //------------------------------------------------------------------------------
 void cta::FileSystemStorageClasses::incStorageClassUsageCount(

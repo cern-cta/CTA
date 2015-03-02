@@ -277,6 +277,13 @@ private:
     const std::string &dstDir);
 
   /**
+   * Throws an exception if the specified storage class is not fully routed.
+   *
+   * @param storageClass The storage class;
+   */
+  void checkStorageClassIsFullyRouted(const StorageClass &storageClass) const;
+
+  /**
    * Archives the specified list of source files to the specified destination
    * file within the archive namespace.
    *
@@ -313,10 +320,10 @@ private:
    * @param dirNode The file-system node representing the directory.
    * @param fileNames The file names to be searched for.
    */
-void checkDirNodeDoesNotContainFiles(
-  const std::string &dirPath,
-  const FileSystemNode &dirNode, 
-  const std::list<std::string> &fileNames);
+  void checkDirNodeDoesNotContainFiles(
+    const std::string &dirPath,
+    const FileSystemNode &dirNode, 
+    const std::list<std::string> &fileNames);
 
 }; // class MockMiddleTierUser
 

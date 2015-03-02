@@ -24,7 +24,7 @@ public:
    *
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
-   * @param copyNb The tape copy number.
+   * @param copyNb The tape copy number.  Copy numbers start from 1.
    * @param tapePoolName The name of the destination tape pool.
    * @param creator The identity of the user that created the storage class.
    * @param comment Comment describing the storage class.

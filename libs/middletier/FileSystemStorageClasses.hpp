@@ -48,6 +48,14 @@ public:
   std::list<StorageClass> getStorageClasses() const;
 
   /**
+   * Returns the specified storage class.
+   *
+   * @param name The name of the storage class.
+   * @return The specified storage class.
+   */
+  const StorageClass &getStorageClass(const std::string &name) const;
+
+  /**
    * Throws an exception if the specified storage class does not exist.
    *
    * @param name The name of the storage class.

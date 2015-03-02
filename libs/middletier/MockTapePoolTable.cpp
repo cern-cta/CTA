@@ -72,3 +72,17 @@ std::list<cta::TapePool> cta::MockTapePoolTable::getTapePools(
   }
   return tapePools;
 }
+
+//------------------------------------------------------------------------------
+// getTapePool
+//------------------------------------------------------------------------------
+const cta::TapePool &cta::MockTapePoolTable::getTapePool(
+  const std::string &name) const {
+  std::map<std::string, TapePool>::const_iterator itor = m_tapePools.find(name);
+  if(itor == m_tapePools.end()) {
+    std::ostringstream message;
+    message << "Tape pool " << name << " does not exist";
+    throw(Exception(message.str()));
+  }
+  return itor->second;
+}

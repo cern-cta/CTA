@@ -13,7 +13,8 @@ void cta::MockArchivalJobTable::createArchivalJob(
   const std::string &dstPath) {
   checkArchivalJobDoesNotAlreadyExist(dstPath);
 
-  ArchivalJob job(ArchivalJobState::NONE, srcUrl, dstPath, requester.user, time(NULL));
+  ArchivalJob job(ArchivalJobState::PENDING, srcUrl, dstPath, requester.user,
+    time(NULL));
 
   std::map<std::string, std::map<time_t, ArchivalJob> >::iterator poolItor =
     m_jobsTree.find(tapePoolName);

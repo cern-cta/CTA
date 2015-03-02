@@ -52,6 +52,18 @@ public:
   std::list<ArchiveRoute> getArchiveRoutes() const;
 
   /**
+   * Returns the specified archive route.
+   *
+   * @param storageClassName The name of the storage class that identifies the
+   * source disk files.
+   * @param copyNb The tape copy number.
+   * @return The specified archive route.
+   */
+  const ArchiveRoute &getArchiveRoute(
+    const std::string &storageClassName,
+    const uint8_t copyNb) const;
+
+  /**
    * Throws an exception if the specified archive route does not exist.
    *
    * @param storageClassName The name of the storage class that identifies the

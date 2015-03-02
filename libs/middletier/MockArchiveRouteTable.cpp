@@ -73,6 +73,24 @@ std::list<cta::ArchiveRoute> cta::MockArchiveRouteTable::
 }
 
 //------------------------------------------------------------------------------
+// getArchiveRoute
+//------------------------------------------------------------------------------
+const cta::ArchiveRoute &cta::MockArchiveRouteTable::getArchiveRoute(
+  const std::string &storageClassName,
+  const uint8_t copyNb) const {
+  const ArchiveRouteId routeId(storageClassName, copyNb);
+  std::map<ArchiveRouteId, ArchiveRoute>::const_iterator itor =
+    m_archiveRoutes.find(routeId);
+  if(itor == m_archiveRoutes.end()) {
+    std::ostringstream message;
+    message << "No archive route for storage class " << storageClassName <<
+      " copy number " << copyNb;
+    throw Exception(message.str());
+  }
+  return itor->second;
+}
+
+//------------------------------------------------------------------------------
 // checkArchiveRouteExists
 //------------------------------------------------------------------------------
 void cta::MockArchiveRouteTable::checkArchiveRouteExists(

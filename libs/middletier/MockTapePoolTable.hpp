@@ -69,6 +69,14 @@ public:
   std::list<TapePool> getTapePools(
     const SecurityIdentity &requester) const;
 
+  /**
+   * Returns the specified tape pool.
+   *
+   * @param name The name of the tape pool.
+   * @return The specified tape pool.
+   */
+  const TapePool &getTapePool(const std::string &name) const;
+
 private:
 
   /**

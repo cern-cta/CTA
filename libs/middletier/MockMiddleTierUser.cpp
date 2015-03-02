@@ -259,12 +259,41 @@ void cta::MockMiddleTierUser::archiveToDirectory(
 
   const std::string inheritedStorageClassName = dstDirNode.getFileSystemEntry().
     getEntry().getStorageClassName();
+  if(inheritedStorageClassName.empty()) {
+    std::ostringstream message;
+    message << "Directory " << inheritedStorageClassName << " does not have a "
+      "storage class";
+    throw Exception(message.str());
+  }
+
+  const StorageClass storageClass = m_db.storageClasses.getStorageClass(
+    inheritedStorageClassName);
+  if(0 == storageClass.getNbCopies()) {
+    std::ostringstream message;
+    message << "Storage class " << inheritedStorageClassName << " of directory "
+      << dstDir << " has zero tape copies";
+    throw Exception(message.str());
+  }
+
+  checkStorageClassIsFullyRouted(storageClass);
+
   const std::list<std::string> dstFileNames = Utils::getEnclosedNames(srcUrls);
   checkDirNodeDoesNotContainFiles(dstDir, dstDirNode, dstFileNames);
 
-  for(std::list<std::string>::const_iterator itor = dstFileNames.begin();
-    itor != dstFileNames.end(); itor++) {
-    const std::string &dstFileName = *itor;
+  std::list<std::string>::const_iterator srcItor = srcUrls.begin();
+  for(std::list<std::string>::const_iterator dstItor = dstFileNames.begin();
+    dstItor != dstFileNames.end(); srcItor++, dstItor++) {
+    const std::string &srcUrl = *srcItor;
+    const std::string &dstFileName = *dstItor;
+    const std::string dstPath = dstDir + dstFileName;
+
+    for(uint8_t copyNb = 1; copyNb <= storageClass.getNbCopies(); copyNb++) {
+      const ArchiveRoute &route = m_db.archiveRoutes.getArchiveRoute(
+        inheritedStorageClassName, copyNb);
+      m_db.archivalJobs.createArchivalJob(requester, route.getTapePoolName(),
+        srcUrl, dstPath);
+    }
+
     DirectoryEntry dirEntry(DirectoryEntry::ENTRYTYPE_FILE, dstFileName,
       inheritedStorageClassName);
     dstDirNode.addChild(new FileSystemNode(m_db.storageClasses, dirEntry));
@@ -286,6 +315,17 @@ void cta::MockMiddleTierUser::checkDirNodeDoesNotContainFiles(
       message << dirPath << fileName << " already exists";
       throw(Exception(message.str()));
     }
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkStorageClassIsFullyRouted
+//------------------------------------------------------------------------------
+void cta::MockMiddleTierUser::checkStorageClassIsFullyRouted(
+  const StorageClass &storageClass) const {
+  for(uint8_t copyNb = 1; copyNb <= storageClass.getNbCopies(); copyNb++) {
+    m_db.archiveRoutes.checkArchiveRouteExists(storageClass.getName(),
+      copyNb);
   }
 }
 
@@ -314,6 +354,33 @@ void cta::MockMiddleTierUser::archiveToFile(
 
   const std::string inheritedStorageClassName =
     enclosingNode.getFileSystemEntry().getEntry().getStorageClassName();
+
+  if(inheritedStorageClassName.empty()) {
+    std::ostringstream message;
+    message << "Directory " << inheritedStorageClassName << " does not have a "
+      "storage class";
+    throw Exception(message.str());
+  }
+
+  const StorageClass &storageClass = m_db.storageClasses.getStorageClass(
+    inheritedStorageClassName);
+  if(0 == storageClass.getNbCopies()) {
+    std::ostringstream message;
+    message << "Storage class " << inheritedStorageClassName << " of directory "
+      << enclosingDir << " has zero tape copies";
+    throw Exception(message.str());
+  }
+
+  checkStorageClassIsFullyRouted(storageClass);
+
+  const std::string &srcUrl = srcUrls.front();
+  for(uint8_t copyNb = 1; copyNb <= storageClass.getNbCopies(); copyNb++) {
+    const ArchiveRoute &route = m_db.archiveRoutes.getArchiveRoute(
+      inheritedStorageClassName, copyNb);
+    m_db.archivalJobs.createArchivalJob(requester, route.getTapePoolName(),
+      srcUrl, dstFile);
+  }
+
   DirectoryEntry dirEntry(DirectoryEntry::ENTRYTYPE_FILE, enclosedName,
     inheritedStorageClassName);
   enclosingNode.addChild(new FileSystemNode(m_db.storageClasses, dirEntry));
@@ -334,18 +401,29 @@ void cta::MockMiddleTierUser::checkUserIsAuthorisedToArchive(
 std::map<cta::TapePool, std::list<cta::ArchivalJob> >
   cta::MockMiddleTierUser::getArchivalJobs(
   const SecurityIdentity &requester) const {
-  const std::map<std::string, std::map<time_t, cta::ArchivalJob> >
+  const std::map<std::string, std::map<time_t, ArchivalJob> >
    jobsByPoolName = m_db.archivalJobs.getArchivalJobs(requester);
 
-  std::map<cta::TapePool, std::list<cta::ArchivalJob> > jobs;
+  std::map<TapePool, std::list<ArchivalJob> > allJobs;
 
-  for(std::map<std::string, std::map<time_t, cta::ArchivalJob> >::const_iterator
-    byPoolNameItor = jobsByPoolName.begin();
-    byPoolNameItor != jobsByPoolName.end();
-    byPoolNameItor++) {
+  for(std::map<std::string, std::map<time_t, ArchivalJob> >::const_iterator
+    poolItor = jobsByPoolName.begin();
+    poolItor != jobsByPoolName.end();
+    poolItor++) {
+    const std::string &tapePoolName = poolItor->first;
+    const std::map<time_t, ArchivalJob> &timeToJobMap = poolItor->second;
+    if(!timeToJobMap.empty()) {
+      const TapePool tapePool = m_db.tapePools.getTapePool(tapePoolName);
+      std::list<cta::ArchivalJob> poolJobs;
+      for(std::map<time_t, ArchivalJob>::const_iterator jobItor =
+        timeToJobMap.begin(); jobItor != timeToJobMap.end(); jobItor++) {
+        poolJobs.push_back(jobItor->second);
+      }
+      allJobs[tapePool] = poolJobs;
+    }
   }
 
-  return jobs;
+  return allJobs;
 }
 
 //------------------------------------------------------------------------------

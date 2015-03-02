@@ -38,6 +38,13 @@ public:
     const std::string &comment);
 
   /**
+   * Less than operator.
+   *
+   * @param rhs The right-hand side of the operator.
+   */
+  bool operator<(const TapePool &rhs) const throw();
+
+  /**
    * Returns the name of the tape pool.
    *
    * @return The name of the tape pool.
