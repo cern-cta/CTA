@@ -527,7 +527,8 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_new_file) {
 
   {
     DirectoryIterator itor;
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/grandparent"));
+    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester,
+      "/grandparent"));
     ASSERT_TRUE(itor.hasMore());
     DirectoryEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
@@ -541,6 +542,55 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_new_file) {
     ASSERT_NO_THROW(entry = userApi.stat(requester, dstPath));
     ASSERT_EQ(DirectoryEntry::ENTRYTYPE_FILE, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    const std::map<TapePool, std::list<ArchivalJob> > allJobs =
+      userApi.getArchivalJobs(requester);
+    ASSERT_EQ(1, allJobs.size());
+    std::map<TapePool, std::list<ArchivalJob> >::const_iterator
+      poolItor = allJobs.begin();
+    ASSERT_FALSE(poolItor == allJobs.end());
+    const TapePool &pool = poolItor->first;
+    ASSERT_TRUE(tapePoolName == pool.getName());
+    const std::list<ArchivalJob> &poolJobs = poolItor->second;
+    ASSERT_EQ(1, poolJobs.size());
+    std::set<std::string> srcUrls;
+    std::set<std::string> dstPaths;
+    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
+      jobItor != poolJobs.end(); jobItor++) {
+      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
+      srcUrls.insert(jobItor->getSrcUrl());
+      dstPaths.insert(jobItor->getDstPath());
+    }
+    ASSERT_EQ(1, srcUrls.size());
+    ASSERT_FALSE(srcUrls.find("diskUrl") == srcUrls.end());
+    ASSERT_EQ(1, dstPaths.size());
+    ASSERT_FALSE(dstPaths.find("/grandparent/parent_file") == dstPaths.end());
+  }
+
+  {
+    const std::list<ArchivalJob> poolJobs = userApi.getArchivalJobs(requester,
+      tapePoolName);
+    ASSERT_EQ(4, poolJobs.size());
+    std::set<std::string> srcUrls;
+    std::set<std::string> dstPaths;
+    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
+      jobItor != poolJobs.end(); jobItor++) {
+      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
+      srcUrls.insert(jobItor->getSrcUrl());
+      dstPaths.insert(jobItor->getDstPath());
+    }
+    ASSERT_EQ(4, srcUrls.size());
+    ASSERT_FALSE(srcUrls.find("diskUrl1") == srcUrls.end());
+    ASSERT_FALSE(srcUrls.find("diskUrl2") == srcUrls.end());
+    ASSERT_FALSE(srcUrls.find("diskUrl3") == srcUrls.end());
+    ASSERT_FALSE(srcUrls.find("diskUrl4") == srcUrls.end());
+    ASSERT_EQ(4, dstPaths.size());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl1") == dstPaths.end());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl2") == dstPaths.end());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl3") == dstPaths.end());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl4") == dstPaths.end());
   }
 }
 
@@ -655,36 +705,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl");
   const std::string dstPath  = "/grandparent/parent_file";
-  ASSERT_NO_THROW(userApi.archive(requester, srcUrls, dstPath));
-
-  {
-    DirectoryIterator itor;
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
-    ASSERT_TRUE(itor.hasMore());
-    DirectoryEntry entry;
-    ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(DirectoryEntry::ENTRYTYPE_DIRECTORY, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStorageClassName());
-  }
-
-  {
-    DirectoryIterator itor;
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/grandparent"));
-    ASSERT_TRUE(itor.hasMore());
-    DirectoryEntry entry;
-    ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("parent_file"), entry.getName());
-    ASSERT_EQ(DirectoryEntry::ENTRYTYPE_FILE, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStorageClassName());
-  }
-
-  {
-    DirectoryEntry entry;
-    ASSERT_NO_THROW(entry = userApi.stat(requester, dstPath));
-    ASSERT_EQ(DirectoryEntry::ENTRYTYPE_FILE, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStorageClassName());
-  }
+  ASSERT_THROW(userApi.archive(requester, srcUrls, dstPath), std::exception);
 }
 
 TEST_F(cta_client_MockMiddleTierUserTest, archive_to_directory) {
@@ -740,7 +761,8 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_directory) {
   {
     std::set<std::string> archiveFileNames;
     DirectoryIterator itor;
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/grandparent"));
+    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester,
+      "/grandparent"));
     while(itor.hasMore()) {
       const DirectoryEntry entry = itor.next();
       archiveFileNames.insert(entry.getName());
@@ -750,6 +772,61 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_directory) {
     ASSERT_TRUE(archiveFileNames.find("diskUrl2") != archiveFileNames.end());
     ASSERT_TRUE(archiveFileNames.find("diskUrl3") != archiveFileNames.end());
     ASSERT_TRUE(archiveFileNames.find("diskUrl4") != archiveFileNames.end());
+  }
+
+  {
+    const std::map<TapePool, std::list<ArchivalJob> > allJobs =
+      userApi.getArchivalJobs(requester);
+    ASSERT_EQ(1, allJobs.size());
+    std::map<TapePool, std::list<ArchivalJob> >::const_iterator
+      poolItor = allJobs.begin();
+    ASSERT_FALSE(poolItor == allJobs.end());
+    const TapePool &pool = poolItor->first;
+    ASSERT_TRUE(tapePoolName == pool.getName());
+    const std::list<ArchivalJob> &poolJobs = poolItor->second;
+    ASSERT_EQ(4, poolJobs.size());
+    std::set<std::string> srcUrls;
+    std::set<std::string> dstPaths;
+    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
+      jobItor != poolJobs.end(); jobItor++) {
+      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
+      srcUrls.insert(jobItor->getSrcUrl());
+      dstPaths.insert(jobItor->getDstPath());
+    }
+    ASSERT_EQ(4, srcUrls.size());
+    ASSERT_FALSE(srcUrls.find("diskUrl1") == srcUrls.end());
+    ASSERT_FALSE(srcUrls.find("diskUrl2") == srcUrls.end());
+    ASSERT_FALSE(srcUrls.find("diskUrl3") == srcUrls.end());
+    ASSERT_FALSE(srcUrls.find("diskUrl4") == srcUrls.end());
+    ASSERT_EQ(4, dstPaths.size());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl1") == srcUrls.end());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl2") == srcUrls.end());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl3") == srcUrls.end());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl4") == srcUrls.end());
+  }
+
+  {
+    const std::list<ArchivalJob> poolJobs = userApi.getArchivalJobs(requester,
+      tapePoolName);
+    ASSERT_EQ(4, poolJobs.size());
+    std::set<std::string> srcUrls;
+    std::set<std::string> dstPaths;
+    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
+      jobItor != poolJobs.end(); jobItor++) {
+      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
+      srcUrls.insert(jobItor->getSrcUrl());
+      dstPaths.insert(jobItor->getDstPath());
+    }
+    ASSERT_EQ(4, srcUrls.size());
+    ASSERT_FALSE(srcUrls.find("diskUrl1") == srcUrls.end());
+    ASSERT_FALSE(srcUrls.find("diskUrl2") == srcUrls.end());
+    ASSERT_FALSE(srcUrls.find("diskUrl3") == srcUrls.end());
+    ASSERT_FALSE(srcUrls.find("diskUrl4") == srcUrls.end());
+    ASSERT_EQ(4, dstPaths.size());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl1") == srcUrls.end());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl2") == srcUrls.end());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl3") == srcUrls.end());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl4") == srcUrls.end());
   }
 }
 
@@ -876,33 +953,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   srcUrls.push_back("diskUrl3");
   srcUrls.push_back("diskUrl4");
   const std::string dstPath  = "/grandparent";
-  ASSERT_NO_THROW(userApi.archive(requester, srcUrls, dstPath));
-
-  {
-    DirectoryIterator itor;
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
-    ASSERT_TRUE(itor.hasMore());
-    DirectoryEntry entry;
-    ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(DirectoryEntry::ENTRYTYPE_DIRECTORY, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStorageClassName());
-  }
-
-  {
-    std::set<std::string> archiveFileNames;
-    DirectoryIterator itor;
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/grandparent"));
-    while(itor.hasMore()) {
-      const DirectoryEntry entry = itor.next();
-      archiveFileNames.insert(entry.getName());
-    }
-    ASSERT_EQ(4, archiveFileNames.size());
-    ASSERT_TRUE(archiveFileNames.find("diskUrl1") != archiveFileNames.end());
-    ASSERT_TRUE(archiveFileNames.find("diskUrl2") != archiveFileNames.end());
-    ASSERT_TRUE(archiveFileNames.find("diskUrl3") != archiveFileNames.end());
-    ASSERT_TRUE(archiveFileNames.find("diskUrl4") != archiveFileNames.end());
-  }
+  ASSERT_THROW(userApi.archive(requester, srcUrls, dstPath), std::exception);
 }
 
 } // namespace unitTests
