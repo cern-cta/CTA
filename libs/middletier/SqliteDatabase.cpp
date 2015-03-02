@@ -45,7 +45,7 @@ cta::SqliteDatabase::~SqliteDatabase() throw() {
 void cta::SqliteDatabase::createArchiveRouteTable() {
   char *zErrMsg = 0;
   int rc = sqlite3_exec(m_dbHandle, 
-          "CREATE TABLE MIGRATIONROUTE("
+          "CREATE TABLE ARCHIVEROUTE("
             "STORAGECLASS_NAME TEXT,"
             "COPYNB            INTEGER,"
             "TAPEPOOL_NAME     TEXT,"
@@ -649,7 +649,7 @@ void cta::SqliteDatabase::insertStorageClass(const SecurityIdentity &requester, 
 void cta::SqliteDatabase::insertArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint8_t copyNb, const std::string &tapePoolName, const std::string &comment) {
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "INSERT INTO MIGRATIONROUTE VALUES('" << storageClassName << "'," << (int)copyNb << ",'" << tapePoolName << "'," << requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << ",'" << comment << "');";
+  query << "INSERT INTO ARCHIVEROUTE VALUES('" << storageClassName << "'," << (int)copyNb << ",'" << tapePoolName << "'," << requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << ",'" << comment << "');";
   int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
@@ -700,7 +700,7 @@ void cta::SqliteDatabase::deleteArchiveRoute(const SecurityIdentity &requester, 
   checkArchiveRouteExists(storageClassName, copyNb);
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "DELETE FROM MIGRATIONROUTE WHERE STORAGECLASS_NAME='" << storageClassName << "' AND COPYNB=" << (int)copyNb << ";";
+  query << "DELETE FROM ARCHIVEROUTE WHERE STORAGECLASS_NAME='" << storageClassName << "' AND COPYNB=" << (int)copyNb << ";";
   int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
@@ -779,7 +779,7 @@ void cta::SqliteDatabase::checkStorageClassExists(const std::string &name){
 void cta::SqliteDatabase::checkArchiveRouteExists(const std::string &name, const uint8_t copyNb){
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "SELECT * FROM MIGRATIONROUTE WHERE STORAGECLASS_NAME='" << name << "' AND COPYNB=" << (int)copyNb << ";";
+  query << "SELECT * FROM ARCHIVEROUTE WHERE STORAGECLASS_NAME='" << name << "' AND COPYNB=" << (int)copyNb << ";";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
@@ -794,7 +794,7 @@ void cta::SqliteDatabase::checkArchiveRouteExists(const std::string &name, const
   } 
   else if(res==SQLITE_DONE){
     std::ostringstream message;
-    message << "MIGRATIONROUTE: " << name << " with COPYNB: " << (int)copyNb << " does not exist";
+    message << "ARCHIVEROUTE: " << name << " with COPYNB: " << (int)copyNb << " does not exist";
     throw(Exception(message.str()));    
   }
   else {
@@ -871,7 +871,7 @@ std::list<cta::ArchiveRoute>  cta::SqliteDatabase::selectAllArchiveRoutes(const 
   char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::ArchiveRoute> routes;
-  query << "SELECT * FROM MIGRATIONROUTE ORDER BY STORAGECLASS_NAME, COPYNB;";
+  query << "SELECT * FROM ARCHIVEROUTE ORDER BY STORAGECLASS_NAME, COPYNB;";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
