@@ -10,6 +10,14 @@
 cta::objectstore::RootEntry::RootEntry(Backend & os):
   ObjectOps<serializers::RootEntry>(os, s_rootEntryName) {}
 
+// Initialiser. This uses the base object's initialiser and sets the defaults 
+// of payload.
+void cta::objectstore::RootEntry::initialize() {
+  ObjectOps<serializers::RootEntry>::initialize();
+  // There is nothing to do for the payload.
+  m_payloadInterpreted = true;
+}
+
 // Get the name of the agent register (or exception if not available)
 std::string cta::objectstore::RootEntry::getAgentRegister() {
   // Check that the fetch was done

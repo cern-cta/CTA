@@ -19,8 +19,14 @@ TEST(GarbageCollector, BasicFuctionnality) {
   re.allocateOrGetAgentRegister(agent);
   // Create 2 agents, A and B and register them
   cta::objectstore::Agent agA(be), agB(be);
+  agA.initialize();
   agA.generateName("unitTestAgentA");
+  agA.insert();
+  agA.insertAndRegisterSelf();
+  agB.initialize();
   agB.generateName("unitTestAgentB");
+  agB.insert();
+  agB.insertAndRegisterSelf();
   // Create target FIFO
   std::string fifoName = agent.nextId("FIFO");
   std::list<std::string> expectedData;
@@ -49,6 +55,9 @@ TEST(GarbageCollector, BasicFuctionnality) {
       newFIFO.setBackupOwner(fifoName);
       newFIFO.insert();
     }
+  }
+  for (int i=0; i<10; i++) {
+    
   }
   // TODO: take ownership of FIFO contents in agA and agB, and then garbage collect.
   // The FIFO should get all its objects back.

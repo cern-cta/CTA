@@ -27,9 +27,9 @@ public:
   
   std::string nextId(const std::string & childType);
   
-  void registerSelf();
+  void insertAndRegisterSelf();
   
-  void unregisterSelf();
+  void deleteAndUnregisterSelf();
   
  /* class ScopedIntent {
   public:
@@ -92,6 +92,89 @@ public:
   void bumpHeartbeat();
   
   uint64_t getHeartbeatCount();
+  
+  
+  /**
+   * Helper function to transfer ownership of the next valid head object of a
+   * container to the agent.
+   * The object is returned locked on the lock passed as reference.
+   * @param container
+   * @param object
+   */
+  template <class Cont, class Obj>
+  void popFromContainer (Cont & container, Obj & object, ScopedExclusiveLock & objLock) {
+    // Lock the container for write first.
+    ScopedExclusiveLock contLock(container);
+    while(true) {
+      // Check there is an object to pop.
+      // This throws an exception if nothing's available, we just let it through
+      std::string nextObjName = container.peek();
+      // Check that the object exists, is of the right type (implicit), etc...
+      // Set the name of the object
+      object.setName(nextObjName);
+      // Validate that the object exists.
+      // If not, it is a dangling pointer. Pop and continue
+      if (!object.exists()) {
+        container.pop();
+        continue;
+      }
+      // Try to lock the object. Exception will be let through
+      objLock.lock(object);
+      // Fetch the object. Exception will be let through.
+      object.fetch();
+      // Check that the container owns the object. If not, it is a dangling pointer
+      if (container.getNameIfSet() != object.getOwner()) {
+        objLock.release();
+        container.pop();
+        continue;
+      }
+      // If we get here, then we can proceed with the ownership transfer
+      // First, add a pointer to the object on the agent
+      ScopedExclusiveLock agentLock(*this);
+      fetch();
+      addToOwnership(nextObjName);
+      commit();
+      agentLock.release();
+      // Then make the pointer agent's ownership official
+      object.setOwner(getNameIfSet());
+      // The container should be the backup owner, so let's make sure!
+      object.setBackupOwner(container.getNameIfSet());
+      // Commit the object
+      object.commit();
+      // Job done.
+      return;
+    }
+  }
+  
+  class AgentDoesNotOwnObject: public cta::exception::Exception {
+  public:
+    AgentDoesNotOwnObject(const std::string & context): cta::exception::Exception(context) {}
+  };
+  
+  template <class Cont, class Obj>
+  void pushToContainer (Cont & container, Obj & object) {
+    // Lock the object for write
+    ScopedExclusiveLock objLock(object);
+    object.fetch();
+    // Check that the object is indeed ours
+    if (object.getOwner() != getNameIfSet())
+      throw AgentDoesNotOwnObject("In Agent::pushToContainer: agent is not the owner of the object");
+    // Lock the container for write
+    ScopedExclusiveLock contLock(container);
+    // Add a pointer to the object in the container
+    container.fetch();
+    container.push(object.getNameIfSet());
+    container.commit();
+    // Note: we retain the lock on the container until the ownership if official
+    // in the object. Otherwise, there would be a race condition, and pointer could
+    // be lost.
+    object.setOwner(container.getNameIfSet());
+    object.setBackupOwner(container.getNameIfSet());
+    object.commit();
+    objLock.release();
+    contLock.release();
+  }
+
   
 private:
   uint64_t m_nextId;

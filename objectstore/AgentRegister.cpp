@@ -7,6 +7,12 @@ ObjectOps<serializers::AgentRegister>(os) {}
 cta::objectstore::AgentRegister::AgentRegister(const std::string & name, Backend & os):
 ObjectOps<serializers::AgentRegister>(os, name) {}
 
+void cta::objectstore::AgentRegister::initialize() {
+  ObjectOps<serializers::AgentRegister>::initialize();
+  // There is nothing to do for the payload.
+  m_payloadInterpreted = true;
+}
+
 void cta::objectstore::AgentRegister::addAgent (std::string name) {
   checkPayloadWritable();
   m_payload.add_agents(name);

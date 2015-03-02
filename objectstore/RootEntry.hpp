@@ -19,6 +19,9 @@ public:
     NotAllocatedEx(const std::string & w): cta::exception::Exception(w) {}
   };
   
+  // In memory initialiser
+  void initialize();
+  
   // Get the name of the agent register (or exception if not available)
   std::string getAgentRegister();
   

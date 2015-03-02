@@ -157,33 +157,78 @@ protected:
 class ScopedLock {
 public:
   void release() {
-    m_lock.reset(NULL);
-    m_objectOps.m_locksCount--;
-    m_objectOps.m_locksForWriteCount--;
+    checkLocked();
+    releaseIfNeeded();
   }
+  
   virtual ~ScopedLock() {
-    release();
+    releaseIfNeeded();
   }
+  class AlreadyLocked: public cta::exception::Exception {
+  public:
+    AlreadyLocked(const std::string & w): cta::exception::Exception(w) {}
+  };
+  
+  class NotLocked: public cta::exception::Exception {
+  public:
+    NotLocked(const std::string & w): cta::exception::Exception(w) {}
+  };
+  
 protected:
-  ScopedLock(ObjectOpsBase & oo): m_objectOps(oo) {}
+  ScopedLock(): m_objectOps(NULL), m_locked(false) {}
   std::auto_ptr<Backend::ScopedLock> m_lock;
-  ObjectOpsBase & m_objectOps;
+  ObjectOpsBase * m_objectOps;
+  bool m_locked;
+  void checkNotLocked() {
+    if (m_locked)
+      throw AlreadyLocked("In ScopedLock::checkNotLocked: trying to lock an already locked lock");
+  }
+  void checkLocked() {
+    if (!m_locked)
+      throw NotLocked("In ScopedLock::checkLocked: trying to unlock an unlocked lock");
+  }
+  virtual void releaseIfNeeded() {
+    if(!m_locked) return;
+    m_lock.reset(NULL);
+    m_objectOps->m_locksCount--;
+    m_locked = false;
+  }
 };
   
 class ScopedSharedLock: public ScopedLock {
 public:
-  ScopedSharedLock(ObjectOpsBase & oo): ScopedLock(oo) {
-    m_lock.reset(m_objectOps.m_objectStore.lockShared(m_objectOps.getNameIfSet()));
-    m_objectOps.m_locksCount++;
+  ScopedSharedLock() {}
+  ScopedSharedLock(ObjectOpsBase & oo) {
+    lock(oo);
+  }
+  void lock(ObjectOpsBase & oo) {
+    checkNotLocked();
+    m_objectOps  = & oo;
+    m_lock.reset(m_objectOps->m_objectStore.lockShared(m_objectOps->getNameIfSet()));
+    m_objectOps->m_locksCount++;
+    m_locked = true;
   }
 };
 
 class ScopedExclusiveLock: public ScopedLock {
 public:
-  ScopedExclusiveLock(ObjectOpsBase & oo): ScopedLock(oo) {
-    m_lock.reset(m_objectOps.m_objectStore.lockExclusive(m_objectOps.getNameIfSet()));
-    m_objectOps.m_locksCount++;
-    m_objectOps.m_locksForWriteCount++;
+  ScopedExclusiveLock() {}
+  ScopedExclusiveLock(ObjectOpsBase & oo) {
+    lock(oo);
+  }
+  void lock(ObjectOpsBase & oo) {
+    checkNotLocked();
+    m_objectOps = &oo;
+    m_lock.reset(m_objectOps->m_objectStore.lockExclusive(m_objectOps->getNameIfSet()));
+    m_objectOps->m_locksCount++;
+    m_objectOps->m_locksForWriteCount++;
+    m_locked = true;
+  }
+protected:
+  void releaseIfNeeded() {
+    if (!m_locked) return;
+    ScopedLock::releaseIfNeeded();
+    m_objectOps->m_locksForWriteCount--;
   }
 };
 
@@ -254,6 +299,9 @@ public:
     // Check that we are not dealing with an existing object
     if (m_existingObject)
       throw NotNewObject("In ObjectOps::insert: trying to insert an already exitsting object");
+    // Check that the object is ready in memory
+    if (!m_headerInterpreted || !m_payloadInterpreted)
+      throw NotInitialized("In ObjectOps::insert: trying to insert an uninitialized object");
     // Push the payload into the header and write the object
     // We don't require locking here, as the object does not exist
     // yet in the object store (and this is ensured by the )

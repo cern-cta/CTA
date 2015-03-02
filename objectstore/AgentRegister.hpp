@@ -12,6 +12,7 @@ class AgentRegister: public ObjectOps<serializers::AgentRegister> {
 public:
   AgentRegister(Backend & os);
   AgentRegister(const std::string & name, Backend & os);
+  void initialize();
   void addAgent (std::string name);
   void removeAgent (const std::string  & name);
   void trackAgent (std::string name);

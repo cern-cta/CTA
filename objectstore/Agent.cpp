@@ -38,6 +38,47 @@ void cta::objectstore::Agent::generateName(const std::string & typeName) {
   setName(aid.str());
 }
 
+void cta::objectstore::Agent::insertAndRegisterSelf() {
+  // We suppose initialize was already called, and that the agent name
+  // is set.
+  // We need to get hold of the agent register, which we suppose is available
+  RootEntry re(m_objectStore);
+  ScopedSharedLock reLock(re);
+  re.fetch();
+  AgentRegister ar(re.getAgentRegister(), m_objectStore);
+  reLock.release();
+  // Then we should first create a pointer to our agent
+  ScopedExclusiveLock arLock(ar);
+  ar.fetch();
+  ar.addAgent(getNameIfSet());
+  ar.commit();
+  // Set the agent register as owner and backup owner
+  setBackupOwner(ar.getNameIfSet());
+  setOwner(ar.getNameIfSet());
+  // Create the agent
+  insert();
+  // And release the agent register's lock
+  arLock.release();
+}
+
+void cta::objectstore::Agent::deleteAndUnregisterSelf() {
+  // First delete ourselves
+  remove();
+  // Then we remove the dangling pointer about ourselves in the agent register.
+  // We need to get hold of the agent register, which we suppose is available
+  RootEntry re(m_objectStore);
+  ScopedSharedLock reLock(re);
+  re.fetch();
+  AgentRegister ar(re.getAgentRegister(), m_objectStore);
+  reLock.release();
+  // Then we should first create a pointer to our agent
+  ScopedExclusiveLock arLock(ar);
+  ar.fetch();
+  ar.removeAgent(getNameIfSet());
+  ar.commit();
+  arLock.release();
+}
+
 /*void cta::objectstore::Agent::create() {
   if (!m_setupDone)
     throw SetupNotDone("In Agent::create(): setup() not yet done");
