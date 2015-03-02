@@ -488,7 +488,150 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_new_file) {
 
   const std::string storageClassName = "TestStorageClass";
   const uint8_t nbCopies = 1;
-  const std::string storageClassComment = "Storage-class omment";
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
+  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+    storageClassName));
+
+  const std::string tapePoolName = "TestTapePool";
+  const uint16_t nbDrives = 1;
+  const uint16_t nbPartialTapes = 1;
+  const std::string tapePoolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(adminApi.createTapePool(requester, tapePoolName, nbDrives,
+    nbPartialTapes, tapePoolComment));
+
+  const uint8_t copyNb = 1;
+  const std::string archiveRouteComment = "Archive-route comment";
+  ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
+    copyNb, tapePoolName, archiveRouteComment));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl");
+  const std::string dstPath  = "/grandparent/parent_file";
+  ASSERT_NO_THROW(userApi.archive(requester, srcUrls, dstPath));
+
+  {
+    DirectoryIterator itor;
+    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+    ASSERT_TRUE(itor.hasMore());
+    DirectoryEntry entry;
+    ASSERT_NO_THROW(entry = itor.next());
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(DirectoryEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    DirectoryIterator itor;
+    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/grandparent"));
+    ASSERT_TRUE(itor.hasMore());
+    DirectoryEntry entry;
+    ASSERT_NO_THROW(entry = itor.next());
+    ASSERT_EQ(std::string("parent_file"), entry.getName());
+    ASSERT_EQ(DirectoryEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    DirectoryEntry entry;
+    ASSERT_NO_THROW(entry = userApi.stat(requester, dstPath));
+    ASSERT_EQ(DirectoryEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+}
+
+TEST_F(cta_client_MockMiddleTierUserTest,
+  archive_to_new_file_with_no_storage_class) {
+  using namespace cta;
+
+  MockDatabase db;
+  MockMiddleTierAdmin adminApi(db);
+  MockMiddleTierUser userApi(db);
+  const SecurityIdentity requester;
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl");
+  const std::string dstPath  = "/grandparent/parent_file";
+  ASSERT_THROW(userApi.archive(requester, srcUrls, dstPath), std::exception);
+}
+
+TEST_F(cta_client_MockMiddleTierUserTest,
+  archive_to_new_file_with_zero_copy_storage_class) {
+  using namespace cta;
+
+  MockDatabase db;
+  MockMiddleTierAdmin adminApi(db);
+  MockMiddleTierUser userApi(db);
+  const SecurityIdentity requester;
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint8_t nbCopies = 0;
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
+  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+    storageClassName));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl");
+  const std::string dstPath  = "/grandparent/parent_file";
+  ASSERT_THROW(userApi.archive(requester, srcUrls, dstPath), std::exception);
+}
+
+TEST_F(cta_client_MockMiddleTierUserTest, archive_to_new_file_with_no_route) {
+  using namespace cta;
+
+  MockDatabase db;
+  MockMiddleTierAdmin adminApi(db);
+  MockMiddleTierUser userApi(db);
+  const SecurityIdentity requester;
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint8_t nbCopies = 1;
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
+  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+    storageClassName));
+
+  const std::string tapePoolName = "TestTapePool";
+  const uint16_t nbDrives = 1;
+  const uint16_t nbPartialTapes = 1;
+  const std::string tapePoolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(adminApi.createTapePool(requester, tapePoolName, nbDrives,
+    nbPartialTapes, tapePoolComment));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl");
+  const std::string dstPath  = "/grandparent/parent_file";
+  ASSERT_THROW(userApi.archive(requester, srcUrls, dstPath), std::exception);
+}
+
+TEST_F(cta_client_MockMiddleTierUserTest,
+  archive_to_new_file_with_incomplete_routing) {
+  using namespace cta;
+
+  MockDatabase db;
+  MockMiddleTierAdmin adminApi(db);
+  MockMiddleTierUser userApi(db);
+  const SecurityIdentity requester;
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint8_t nbCopies = 2;
+  const std::string storageClassComment = "Storage-class comment";
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
     nbCopies, storageClassComment));
 
@@ -554,7 +697,159 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_directory) {
 
   const std::string storageClassName = "TestStorageClass";
   const uint8_t nbCopies = 1;
-  const std::string storageClassComment = "Storage-class omment";
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
+  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+    storageClassName));
+
+  const std::string tapePoolName = "TestTapePool";
+  const uint16_t nbDrives = 1;
+  const uint16_t nbPartialTapes = 1;
+  const std::string tapePoolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(adminApi.createTapePool(requester, tapePoolName, nbDrives,
+    nbPartialTapes, tapePoolComment));
+
+  const uint8_t copyNb = 1;
+  const std::string archiveRouteComment = "Archive-route comment";
+  ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
+    copyNb, tapePoolName, archiveRouteComment));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl1");
+  srcUrls.push_back("diskUrl2");
+  srcUrls.push_back("diskUrl3");
+  srcUrls.push_back("diskUrl4");
+  const std::string dstPath  = "/grandparent";
+  ASSERT_NO_THROW(userApi.archive(requester, srcUrls, dstPath));
+
+  {
+    DirectoryIterator itor;
+    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+    ASSERT_TRUE(itor.hasMore());
+    DirectoryEntry entry;
+    ASSERT_NO_THROW(entry = itor.next());
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(DirectoryEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    std::set<std::string> archiveFileNames;
+    DirectoryIterator itor;
+    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/grandparent"));
+    while(itor.hasMore()) {
+      const DirectoryEntry entry = itor.next();
+      archiveFileNames.insert(entry.getName());
+    }
+    ASSERT_EQ(4, archiveFileNames.size());
+    ASSERT_TRUE(archiveFileNames.find("diskUrl1") != archiveFileNames.end());
+    ASSERT_TRUE(archiveFileNames.find("diskUrl2") != archiveFileNames.end());
+    ASSERT_TRUE(archiveFileNames.find("diskUrl3") != archiveFileNames.end());
+    ASSERT_TRUE(archiveFileNames.find("diskUrl4") != archiveFileNames.end());
+  }
+}
+
+TEST_F(cta_client_MockMiddleTierUserTest,
+  archive_to_directory_without_storage_class) {
+  using namespace cta;
+
+  MockDatabase db;
+  MockMiddleTierAdmin adminApi(db);
+  MockMiddleTierUser userApi(db);
+  const SecurityIdentity requester;
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl1");
+  srcUrls.push_back("diskUrl2");
+  srcUrls.push_back("diskUrl3");
+  srcUrls.push_back("diskUrl4");
+  const std::string dstPath  = "/grandparent";
+  ASSERT_THROW(userApi.archive(requester, srcUrls, dstPath), std::exception);
+}
+
+TEST_F(cta_client_MockMiddleTierUserTest,
+  archive_to_directory_with_zero_copy_storage_class) {
+  using namespace cta;
+
+  MockDatabase db;
+  MockMiddleTierAdmin adminApi(db);
+  MockMiddleTierUser userApi(db);
+  const SecurityIdentity requester;
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint8_t nbCopies = 0;
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
+  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+    storageClassName));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl1");
+  srcUrls.push_back("diskUrl2");
+  srcUrls.push_back("diskUrl3");
+  srcUrls.push_back("diskUrl4");
+  const std::string dstPath  = "/grandparent";
+  ASSERT_THROW(userApi.archive(requester, srcUrls, dstPath), std::exception);
+}
+
+TEST_F(cta_client_MockMiddleTierUserTest, archive_to_directory_with_no_route) {
+  using namespace cta;
+
+  MockDatabase db;
+  MockMiddleTierAdmin adminApi(db);
+  MockMiddleTierUser userApi(db);
+  const SecurityIdentity requester;
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint8_t nbCopies = 1;
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
+  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+    storageClassName));
+
+  const std::string tapePoolName = "TestTapePool";
+  const uint16_t nbDrives = 1;
+  const uint16_t nbPartialTapes = 1;
+  const std::string tapePoolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(adminApi.createTapePool(requester, tapePoolName, nbDrives,
+    nbPartialTapes, tapePoolComment));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl1");
+  srcUrls.push_back("diskUrl2");
+  srcUrls.push_back("diskUrl3");
+  srcUrls.push_back("diskUrl4");
+  const std::string dstPath  = "/grandparent";
+  ASSERT_THROW(userApi.archive(requester, srcUrls, dstPath), std::exception);
+}
+
+TEST_F(cta_client_MockMiddleTierUserTest,
+  archive_to_directory_with_incomplete_routing) {
+  using namespace cta;
+
+  MockDatabase db;
+  MockMiddleTierAdmin adminApi(db);
+  MockMiddleTierUser userApi(db);
+  const SecurityIdentity requester;
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint8_t nbCopies = 2;
+  const std::string storageClassComment = "Storage-class comment";
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
     nbCopies, storageClassComment));
 
