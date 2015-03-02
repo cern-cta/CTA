@@ -23,6 +23,8 @@ public:
   
   Agent(const std::string & name, Backend & os);
 
+  void initialize();
+
   void generateName(const std::string & typeName);
   
   std::string nextId(const std::string & childType);
@@ -116,6 +118,7 @@ public:
       // If not, it is a dangling pointer. Pop and continue
       if (!object.exists()) {
         container.pop();
+        container.commit();
         continue;
       }
       // Try to lock the object. Exception will be let through
@@ -126,6 +129,7 @@ public:
       if (container.getNameIfSet() != object.getOwner()) {
         objLock.release();
         container.pop();
+        container.commit();
         continue;
       }
       // If we get here, then we can proceed with the ownership transfer
@@ -141,7 +145,9 @@ public:
       object.setBackupOwner(container.getNameIfSet());
       // Commit the object
       object.commit();
-      // Job done.
+      // And remove the now dangling pointer from the container
+      container.pop();
+      container.commit();
       return;
     }
   }

@@ -15,4 +15,7 @@ class NotFound: public cta::exception::Exception {
 size_t findString(::google::protobuf::RepeatedPtrField< ::std::string>* field, 
   const std::string & value);
 
+size_t findStringFrom(::google::protobuf::RepeatedPtrField< ::std::string>* field,
+  size_t fromIndex, const std::string & value);
+
 }}}

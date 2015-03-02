@@ -16,6 +16,10 @@ GarbageCollector::GarbageCollector(Backend & os, Agent & agent):
   ScopedSharedLock arLock(m_agentRegister);
   m_agentRegister.fetch();
 }
+
+void GarbageCollector::setTimeout(double timeout) {
+  m_timeout = timeout;
+}
   
 void GarbageCollector::runOnePass() {
   // Bump our own heart beat
@@ -60,8 +64,8 @@ void GarbageCollector::aquireTargets() {
   std::list<std::string>::const_iterator c = candidatesList.begin();
   // We can now take ownership of new agents, up to our max...
   // and we don't monitor ourselves!
-  while (m_watchedAgents.size() < c_maxWatchedAgentsPerGC
-         && c!=candidatesList.end()) {
+  for (;m_watchedAgents.size() < c_maxWatchedAgentsPerGC
+         && c!=candidatesList.end(); c++) {
     // We don't monitor ourselves
     if (*c != m_ourAgent.getNameIfSet()) {
       // So we have a candidate we might want to monitor
@@ -97,9 +101,16 @@ void GarbageCollector::aquireTargets() {
       // (we hold an exclusive lock all along)
       m_agentRegister.trackAgent(ag.getNameIfSet());
       m_agentRegister.commit();
-      // Agent is now officially ours, let's track it
-      m_watchedAgents[ag.getNameIfSet()] =
-        new AgentWatchdog(ag.getNameIfSet(), m_objectStore);
+      // Agent is officially our, we can remove it from the untracked agent's
+      // list
+      m_agentRegister.trackAgent(ag.getNameIfSet());
+      // Agent is now officially ours, let's track it. We have the release the 
+      // lock to the agent before constructing the watchdog, which builds
+      // its own agent objects (and need to lock the object store representation)
+      std::string agentName = ag.getNameIfSet();
+      agLock.release();
+      m_watchedAgents[agentName] =
+        new AgentWatchdog(agentName, m_objectStore);
       m_watchedAgents[ag.getNameIfSet()]->setTimeout(m_timeout);
     }
   }
@@ -157,8 +168,9 @@ void GarbageCollector::checkHeartbeats() {
      }
      ScopedSharedLock gContLock(gContainter);
      gContainter.fetch();
+     serializers::ObjectType containerType = gContainter.type();
      gContLock.release();
-     switch(gContainter.type()) {
+     switch(containerType) {
        case serializers::FIFO_t: {
          FIFO fifo(go.getBackupOwner(), m_objectStore);
          ScopedExclusiveLock ffLock(fifo);
@@ -170,19 +182,15 @@ void GarbageCollector::checkHeartbeats() {
          go.commit();
          ffLock.release();
          goLock.release();
+         break;
        }
        default: {
          throw cta::exception::Exception("In GarbageCollector::cleanupDeadAgent: unexpected container type!");
        }
      }
-     // We now processed all the owned objects. We can delete the agent's entry
-     agent.remove();
-     // And remove the (dangling) pointers to it
-     ScopedExclusiveLock arLock(m_agentRegister);
-     m_agentRegister.fetch();
-     m_agentRegister.removeAgent(name);
-     m_agentRegister.commit();
    }
+   // We now processed all the owned objects. We can delete the agent's entry
+   agent.deleteAndUnregisterSelf();
  }
 
 

@@ -60,7 +60,8 @@ void cta::objectstore::FIFO::push(std::string name) {
 void cta::objectstore::FIFO::pushIfNotPresent(std::string name) {
   checkPayloadWritable();
   try {
-    serializers::findString(m_payload.mutable_name(), name);
+    serializers::findStringFrom(m_payload.mutable_name(), m_payload.readpointer(),
+      name);
   } catch (serializers::NotFound &) {
     m_payload.add_name(name);
   }

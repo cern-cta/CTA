@@ -16,6 +16,14 @@ cta::objectstore::Agent::Agent(Backend & os):
 cta::objectstore::Agent::Agent(const std::string & name, Backend & os): 
   ObjectOps<serializers::Agent>(os, name), m_nextId(0) {}
 
+void cta::objectstore::Agent::initialize() {
+  ObjectOps<serializers::Agent>::initialize();
+  m_payload.set_heartbeat(0);
+  m_payload.set_timeout_us(60*1000*1000);
+  m_payload.set_description("");
+  m_payloadInterpreted = true;
+}
+
 void cta::objectstore::Agent::generateName(const std::string & typeName) {
   std::stringstream aid;
   // Get time

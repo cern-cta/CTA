@@ -21,21 +21,19 @@ TEST(GarbageCollector, BasicFuctionnality) {
   cta::objectstore::Agent agA(be), agB(be);
   agA.initialize();
   agA.generateName("unitTestAgentA");
-  agA.insert();
   agA.insertAndRegisterSelf();
   agB.initialize();
   agB.generateName("unitTestAgentB");
-  agB.insert();
   agB.insertAndRegisterSelf();
   // Create target FIFO
   std::string fifoName = agent.nextId("FIFO");
   std::list<std::string> expectedData;
-  { 
-    // Try to create the FIFO entry
-    cta::objectstore::FIFO ff(fifoName,be);
-    ff.initialize();
-    ff.insert();
-  }
+  // Try to create the FIFO entry
+  cta::objectstore::FIFO ff(fifoName,be);
+  ff.initialize();
+  ff.insert();
+  // And lock it for later
+  cta::objectstore::ScopedExclusiveLock ffLock;
   {
     for (int i=0; i<100; i++) {
       // We create FIFOs here, but any object can do.
@@ -45,7 +43,7 @@ TEST(GarbageCollector, BasicFuctionnality) {
       cta::objectstore::FIFO centralFifo(fifoName, be);
       cta::objectstore::ScopedExclusiveLock lock(centralFifo);
       centralFifo.fetch();
-      expectedData.push_back(agent.nextId("TestData"));
+      expectedData.push_back(newFIFO.getNameIfSet());
       centralFifo.push(expectedData.back());
       centralFifo.commit();
       lock.release();
@@ -56,9 +54,30 @@ TEST(GarbageCollector, BasicFuctionnality) {
       newFIFO.insert();
     }
   }
+  ffLock.lock(ff);
+  ff.fetch();
+  ASSERT_EQ(100, ff.size());
+  ffLock.release();
   for (int i=0; i<10; i++) {
-    
+    cta::objectstore::ScopedExclusiveLock objALock, objBLock;
+    cta::objectstore::FIFO objA(be), objB(be); 
+    agA.popFromContainer(ff, objA, objALock);
+    agB.popFromContainer(ff, objB, objBLock);
   }
-  // TODO: take ownership of FIFO contents in agA and agB, and then garbage collect.
-  // The FIFO should get all its objects back.
+  ffLock.lock(ff);
+  ff.fetch();
+  ASSERT_EQ(80, ff.size());
+  ffLock.release();
+  // Create the garbage colletor and run it twice.
+  cta::objectstore::Agent gcAgent(be);
+  gcAgent.initialize();
+  gcAgent.generateName("unitTestGarbageCollector");
+  gcAgent.insertAndRegisterSelf();
+  cta::objectstore::GarbageCollector gc(be, gcAgent);
+  gc.setTimeout(0);
+  gc.runOnePass();
+  gc.runOnePass();
+  ffLock.lock(ff);
+  ff.fetch();
+  ASSERT_EQ(100, ff.size());
 }

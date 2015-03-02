@@ -9,6 +9,7 @@ namespace cta { namespace objectstore {
 
 class FIFO: public ObjectOps<serializers::FIFO> {
 public:
+  FIFO(Backend & os): ObjectOps<serializers::FIFO>(os) {}
   FIFO(const std::string & name, Backend & os):
   ObjectOps<serializers::FIFO>(os, name) {}
  

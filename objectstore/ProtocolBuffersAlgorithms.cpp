@@ -26,3 +26,14 @@ size_t cta::objectstore::serializers::findString(
   }
   throw NotFound("In cta::objectstore::serializers::findString: string not found");
 }
+
+size_t cta::objectstore::serializers::findStringFrom(
+  ::google::protobuf::RepeatedPtrField< ::std::string>* field, size_t fromIndex,
+  const std::string& value) {
+  for (size_t i=fromIndex; i<(size_t)field->size(); i++) {
+    if (value == field->Get(i)) {
+      return i;
+    }
+  }
+  throw NotFound("In cta::objectstore::serializers::findString: string not found");
+}
