@@ -246,7 +246,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_15_0');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_15_1');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -760,8 +760,6 @@ INSERT INTO CastorConfig
   VALUES ('cleaning', 'outOfDateStageOutDCsTimeout', '72', 'Timeout for STAGEOUT diskCopies in hours');
 INSERT INTO CastorConfig
   VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hours');
-INSERT INTO CastorConfig
-  VALUES ('Repack', 'Protocol', 'rfio', 'The protocol that repack should use for writing files to disk');
 INSERT INTO CastorConfig
   VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
 INSERT INTO CastorConfig
@@ -2014,18 +2012,44 @@ ALTER TABLE Disk2DiskCopyJob
  * and for which migration is pending for more than 24h.
  */
 CREATE VIEW LateMigrationsView AS
-  SELECT /*+ LEADING(CF DC MJ CnsFile) INDEX_RS_ASC(CF I_CastorFile_TapeStatus) INDEX_RS_ASC(DC I_DiskCopy_CastorFile) INDEX_RS_ASC(MJ I_MigrationJob_CastorFile) */
-         CF.fileId, CF.lastKnownFileName as filePath, DC.creationTime as dcCreationTime,
-         decode(MJ.creationTime, NULL, -1, getTime() - MJ.creationTime) as mjElapsedTime, nvl(MJ.status, -1) as mjStatus
-    FROM CastorFile CF, DiskCopy DC, MigrationJob MJ, cns_file_metadata@remotens CnsFile
+  SELECT /*+ LEADING(CF DC FileSystem DiskServer MJ CnsFile)
+             USE_NL(CF DC FileSystem DiskServer MJ CnsFile)
+             INDEX_RS_ASC(CF I_CastorFile_TapeStatus) INDEX_RS_ASC(DC I_DiskCopy_CastorFile) INDEX_RS_ASC(MJ I_MigrationJob_CastorFile) */
+         CF.fileId, CF.lastKnownFileName AS filePath,
+         decode(MJ.creationTime, NULL, -1, getTime() - MJ.creationTime) AS mjElapsedTime, nvl(MJ.status, -1) AS mjStatus,
+         DC.creationTime AS dcCreationTime, DiskServer.name || ':' || FileSystem.mountPoint || DC.path AS location,
+         decode(DiskServer.hwOnline, 0, 'N',
+           decode(DiskServer.status, 2, 'N',
+             decode(FileSystem.status, 2, 'N', 'Y'))) AS available
+    FROM CastorFile CF, DiskCopy DC, MigrationJob MJ, cns_file_metadata@remotens CnsFile,
+         FileSystem, DiskServer
    WHERE CF.fileId = CnsFile.fileId
      AND DC.castorFile = CF.id
      AND MJ.castorFile(+) = CF.id
+     AND DC.fileSystem = FileSystem.id
+     AND FileSystem.diskServer = DiskServer.id
      AND CF.tapeStatus = 0  -- CASTORFILE_NOTONTAPE
      AND DC.status = 0  -- DISKCOPY_VALID
      AND CF.fileSize > 0
      AND DC.creationTime < getTime() - 86400
-  ORDER BY DC.creationTime DESC;
+  UNION
+  SELECT /*+ LEADING(CF DC DataPool MJ CnsFile
+             USE_NL(CF DC FileSystem DataPool MJ CnsFile)
+             INDEX_RS_ASC(CF I_CastorFile_TapeStatus) INDEX_RS_ASC(DC I_DiskCopy_CastorFile) INDEX_RS_ASC(MJ I_MigrationJob_CastorFile) */
+         CF.fileId, CF.lastKnownFileName AS filePath,
+         decode(MJ.creationTime, NULL, -1, getTime() - MJ.creationTime) AS mjElapsedTime, nvl(MJ.status, -1) AS mjStatus,
+         DC.creationTime AS dcCreationTime, 'ceph://' || DataPool.name || ':' || DC.path AS location, 'Y' as available
+    FROM CastorFile CF, DiskCopy DC, MigrationJob MJ, DataPool, cns_file_metadata@remotens CnsFile
+   WHERE CF.fileId = CnsFile.fileId
+     AND DC.castorFile = CF.id
+     AND MJ.castorFile(+) = CF.id
+     AND DC.dataPool = DataPool.id
+     AND CF.tapeStatus = 0  -- CASTORFILE_NOTONTAPE
+     AND DC.status = 0  -- DISKCOPY_VALID
+     AND CF.fileSize > 0
+     AND DC.creationTime < getTime() - 86400
+  ORDER BY dcCreationTime DESC;
+
 
 /*****************/
 /* logon trigger */
@@ -3162,7 +3186,6 @@ CREATE OR REPLACE PROCEDURE handleRepackRequest(inReqUUID IN VARCHAR2,
   varReqId INTEGER;
   cfId INTEGER;
   dcId INTEGER;
-  repackProtocol VARCHAR2(2048);
   nsHostName VARCHAR2(2048);
   lastKnownFileName VARCHAR2(2048);
   varRecallGroupId INTEGER;
@@ -3181,8 +3204,6 @@ BEGIN
   COMMIT;
   outNbFilesProcessed := 0;
   outNbFailures := 0;
-  -- Check which protocol should be used for writing files to disk
-  repackProtocol := getConfigOption('Repack', 'Protocol', 'rfio');
   -- creation time for the subrequests
   varCreationTime := getTime();
   -- name server host name
@@ -3257,7 +3278,7 @@ BEGIN
       -- create  subrequest for this file.
       -- Note that the svcHandler is not set. It will actually never be used as repacks are handled purely in PL/SQL
       INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, status, request, getNextStatus, reqType)
-      VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, varCreationTime, varCreationTime, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, dconst.SUBREQUEST_START, varReqId, 0, 119)
+      VALUES (0, lastKnownFileName, 'notNullNeeded', segment.segSize, 0, uuidGen(), 0, 0, varCreationTime, varCreationTime, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, dconst.SUBREQUEST_START, varReqId, 0, 119)
       RETURNING id, subReqId INTO varSubreqId, varSubreqUUID;
       -- if the file is being overwritten, fail
       SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
@@ -3421,7 +3442,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     varAllCopyNbs "numList" := "numList"();
     varAllVIDs strListTable := strListTable();
   BEGIN
-    FOR i IN varAllSegments.FIRST .. varAllSegments.LAST/2 LOOP
+    FOR i IN 1..varAllSegments.COUNT/2 LOOP
       varAllCopyNbs.EXTEND;
       varAllCopyNbs(i) := TO_NUMBER(varAllSegments(2*i-1));
       varAllVIDs.EXTEND;
@@ -3467,7 +3488,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       FROM MigratedSegment
      WHERE castorFile = cfId;
     IF varNb = 0 THEN
-      FOR i IN varAllCopyNbs.FIRST .. varAllCopyNbs.LAST LOOP
+      FOR i IN 1..varAllCopyNbs.COUNT LOOP
         INSERT INTO MigratedSegment (castorFile, copyNb, VID)
         VALUES (cfId, varAllCopyNbs(i), varAllVIDs(i));
       END LOOP;
@@ -4531,7 +4552,7 @@ BEGIN
          AND request = origReqId);
   ELSE
     -- handle the case of selective abort
-    FOR i IN fileIds.FIRST .. fileIds.LAST LOOP
+    FOR i IN 1..fileIds.COUNT LOOP
       DECLARE
         CONSTRAINT_VIOLATED EXCEPTION;
         PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
@@ -6182,7 +6203,8 @@ BEGIN
                nbReadStreams = inNumParams(8*i+5),
                nbWriteStreams = inNumParams(8*i+6),
                nbRecallerStreams = inNumParams(8*i+7),
-               nbMigratorStreams = inNumParams(8*i+8)
+               nbMigratorStreams = inNumParams(8*i+8),
+               status = CASE totalSize WHEN 0 THEN dconst.FILESYSTEM_DISABLED ELSE status END
          WHERE diskServer=varDsId AND mountPoint=inStrParams(2*i+2)
         RETURNING id INTO varFsId;
         -- if it did not exist, create it
@@ -6317,7 +6339,7 @@ BEGIN
       -- Yes, then create migrated segments for the existing segments if there are none
       SELECT count(*) INTO varNb FROM MigratedSegment WHERE castorFile = inCfId;
       IF varNb = 0 THEN
-        FOR i IN inAllValidCopyNbs.FIRST .. inAllValidCopyNbs.LAST LOOP
+        FOR i IN 1..inAllValidCopyNbs.COUNT LOOP
           INSERT INTO MigratedSegment (castorFile, copyNb, VID)
           VALUES (inCfId, inAllValidCopyNbs(i), inAllValidVIDs(i));
         END LOOP;
@@ -6800,7 +6822,7 @@ BEGIN
   -- 2 formats are accepted :
   --    host:/mountpoint : drop all files on a given FileSystem
   --    host:<fullFilePath> : drop the given file
-  FOR i IN inArgs.FIRST .. inArgs.LAST LOOP
+  FOR i IN 1..inArgs.COUNT LOOP
     DECLARE
       varMountPoint VARCHAR2(2048);
       varDataPool VARCHAR2(2048);
@@ -8488,7 +8510,7 @@ CREATE OR REPLACE PROCEDURE getFileIdsForSrs
   fid NUMBER;
   nh VARCHAR(2048);
 BEGIN
-  FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
+  FOR i IN 1..subReqIds.COUNT LOOP
     BEGIN
       SELECT /*+ INDEX_RS_ASC(SubRequest I_Subrequest_SubreqId)*/ fileid, nsHost INTO fid, nh
         FROM Castorfile, SubRequest
@@ -8532,7 +8554,7 @@ BEGIN
   -- give up if nothing to be done
   IF subReqIds.COUNT = 0 THEN RETURN; END IF;
   -- Loop over all transfers to fail
-  FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
+  FOR i IN 1..subReqIds.COUNT LOOP
     BEGIN
       -- Get the necessary information needed about the request.
       SELECT /*+ INDEX_RS_ASC(SubRequest I_Subrequest_SubreqId)*/ id, diskCopy, reqType, castorFile
@@ -8584,10 +8606,10 @@ AS
   errNo INTEGER;
   errMsg VARCHAR2(2048);
 BEGIN
-  FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
+  FOR i IN 1..subReqIds.COUNT LOOP
     BEGIN
       -- Get the necessary information needed about the request.
-      SELECT id, diskCopy, reqType
+      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_SubreqId)*/ id, diskCopy, reqType
         INTO srId, dcId, rType
         FROM SubRequest
        WHERE subReqId = subReqIds(i)
@@ -8976,7 +8998,7 @@ BEGIN
   -- cleanup from previous round
   DELETE FROM SyncRunningTransfersHelper2;
   -- insert the list of running transfers into a temporary table for easy access
-  FORALL i IN transfers.FIRST .. transfers.LAST
+  FORALL i IN 1..transfers.COUNT
     INSERT INTO SyncRunningTransfersHelper (subreqId) VALUES (transfers(i));
   -- Go through all running transfers from the DB point of view for the given diskserver
   FOR SR IN (SELECT /*+ LEADING(SubRequest DiskCopy FileSystem DiskServer)
@@ -9783,7 +9805,7 @@ BEGIN
        'Size mismatch for arrays: inStartFseqs.COUNT='||inStartFseqs.COUNT
        ||' inTapeVids.COUNT='||inTapeVids.COUNT);
   END IF;
-  FORALL i IN inMountIds.FIRST .. inMountIds.LAST
+  FORALL i IN 1..inMountIds.COUNT
     UPDATE MigrationMount
        SET VID = inTapeVids(i),
            lastFseq = inStartFseqs(i),
@@ -10084,7 +10106,7 @@ END;
 CREATE OR REPLACE
 PROCEDURE tg_restartLostReqs(inMountTransactionIds IN castor."cnumList") AS
 BEGIN
- FOR i IN inMountTransactionIds.FIRST .. inMountTransactionIds.LAST LOOP   
+ FOR i IN 1..inMountTransactionIds.COUNT LOOP
    tg_endTapeSession(inMountTransactionIds(i), 0);
  END LOOP;
  COMMIT;
@@ -11212,7 +11234,7 @@ BEGIN
   varReqId := uuidGen();
   -- Get the NS host name
   varNsHost := getConfigOption('stager', 'nsHost', '');
-  FOR i IN inFileTrIds.FIRST .. inFileTrIds.LAST LOOP
+  FOR i IN 1..inFileTrIds.COUNT LOOP
     BEGIN
       -- Collect additional data. Note that this is NOT bulk
       -- to preserve the order in the input arrays.
@@ -11665,7 +11687,7 @@ BEGIN
     FROM RecallMount
    WHERE mountTransactionId = inMountTrId;
   -- Loop over the input
-  FOR i IN inFileIds.FIRST .. inFileIds.LAST LOOP
+  FOR i IN 1..inFileIds.COUNT LOOP
     BEGIN
       -- Find and lock related castorFile
       SELECT id INTO varCfId
@@ -12194,7 +12216,7 @@ CREATE OR REPLACE PROCEDURE filesDeletedProc
 BEGIN
   IF dcIds.COUNT > 0 THEN
     -- List the castorfiles to be cleaned up afterwards
-    FORALL i IN dcIds.FIRST .. dcIds.LAST
+    FORALL i IN 1..dcIds.COUNT
       INSERT INTO FilesDeletedProcHelper (cfId, dcId) (
         SELECT castorFile, id FROM DiskCopy
          WHERE id = dcIds(i));
@@ -12250,7 +12272,7 @@ CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
 BEGIN
   IF dcIds.COUNT > 0 THEN
     -- Loop over the files
-    FORALL i IN dcIds.FIRST .. dcIds.LAST
+    FORALL i IN 1..dcIds.COUNT
       UPDATE DiskCopy SET status = 4 -- FAILED
        WHERE id = dcIds(i);
   END IF;
@@ -12274,7 +12296,7 @@ BEGIN
   nsHostName := getConfigOption('stager', 'nsHost', nh);
   -- Loop over the deleted files and split the orphan ones
   -- from the normal ones
-  FOR fid in fileIds.FIRST .. fileIds.LAST LOOP
+  FOR fid in 1..fileIds.COUNT LOOP
     BEGIN
       SELECT id INTO unused FROM CastorFile
        WHERE fileid = fileIds(fid) AND nsHost = nsHostName;
@@ -12303,7 +12325,7 @@ BEGIN
     RETURN;
   END IF;
   -- Insert diskcopy ids into a temporary table
-  FORALL i IN dcIds.FIRST..dcIds.LAST
+  FORALL i IN 1..dcIds.COUNT
    INSERT INTO StgFilesDeletedOrphans (diskCopyId) VALUES (dcIds(i));
   -- Return a list of diskcopy ids which no longer exist
   OPEN stgOrphans FOR
@@ -13402,9 +13424,9 @@ BEGIN
   -- get the request's service handler
   SELECT svcHandler INTO svcHandler FROM Type2Obj WHERE type=inReqType;
   -- Loop on subrequests
-  FOR i IN srFileNames.FIRST .. srFileNames.LAST LOOP
-    -- check protocol validity
-    IF INSTR(protocols, ' ' || srProtocols(i) || ' ') = 0 THEN
+  FOR i IN 1..srFileNames.COUNT LOOP
+    -- check protocol validity for Get/Put requests only, for other requests the protocol is irrelevant
+    IF inReqType IN (35, 40) AND INSTR(protocols, ' ' || srProtocols(i) || ' ') = 0 THEN
       raise_application_error(-20122, 'Unsupported protocol in insertFileRequest : ' || srProtocols(i));
     END IF;
     -- get unique ids for the subrequest
@@ -13513,7 +13535,7 @@ BEGIN
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
   -- Loop on query parameters. Note that the array is never empty (see the C++ calling method).
-  FOR i IN qpValues.FIRST .. qpValues.LAST LOOP
+  FOR i IN 1..qpValues.COUNT LOOP
     -- get unique ids for the query parameter
     SELECT ids_seq.nextval INTO queryParamId FROM DUAL;
     -- insert the query parameter
@@ -13704,7 +13726,7 @@ BEGIN
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
   -- Loop on fileids
-  FOR i IN fileids.FIRST .. fileids.LAST LOOP
+  FOR i IN 1..fileids.COUNT LOOP
     -- ignore fake items passed only because ORACLE does not like empty arrays
     IF nsHosts(i) IS NULL THEN EXIT; END IF;
     -- get unique ids for the fileid
@@ -13772,7 +13794,7 @@ BEGIN
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
   -- Loop on diskCopies
-  FOR i IN diskCopyIds.FIRST .. diskCopyIds.LAST LOOP
+  FOR i IN 1..diskCopyIds.COUNT LOOP
     -- get unique ids for the diskCopy
     SELECT ids_seq.nextval INTO gcFileId FROM DUAL;
     -- insert the fileid
@@ -13828,7 +13850,7 @@ BEGIN
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
   -- Loop on request types
-  FOR i IN reqTypes.FIRST .. reqTypes.LAST LOOP
+  FOR i IN 1..reqTypes.COUNT LOOP
     -- get unique ids for the request type
     SELECT ids_seq.nextval INTO subobjId FROM DUAL;
     -- insert the request type
@@ -13836,7 +13858,7 @@ BEGIN
     VALUES (reqTypes(i), subobjId, reqId);
   END LOOP;
   -- Loop on BWUsers
-  FOR i IN euids.FIRST .. euids.LAST LOOP
+  FOR i IN 1..euids.COUNT LOOP
     -- get unique ids for the request type
     SELECT ids_seq.nextval INTO subobjId FROM DUAL;
     -- insert the BWUser
