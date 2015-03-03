@@ -57,7 +57,7 @@ public:
    * @return All of the existing archival jobs grouped by tape pool and then
    * sorted by creation time in ascending order (oldest first).
    */
-  const std::map<std::string, std::map<time_t, ArchivalJob> >
+  const std::map<std::string, std::list<ArchivalJob> >
     &getArchivalJobs(const SecurityIdentity &requester) const;
 
   /**
@@ -79,7 +79,7 @@ private:
    * All of the existing archival jobs grouped by tape pool name and then
    * sorted by creation time in ascending order (oldest first).
    */
-  std::map<std::string, std::map<time_t, ArchivalJob> > m_jobsTree;
+  std::map<std::string, std::list<ArchivalJob> > m_jobsTree;
 
 }; // class MockArchivalJobTable
 

@@ -21,7 +21,7 @@ TEST_F(cta_client_MockArchivalJobTableTest, createArchivalJob_new) {
   const SecurityIdentity requester;
 
   {
-    std::map<std::string, std::map<time_t, ArchivalJob> > pools;
+    std::map<std::string, std::list<ArchivalJob> > pools;
     ASSERT_NO_THROW(pools = table.getArchivalJobs(requester));
     ASSERT_TRUE(pools.empty());
   }
@@ -33,17 +33,15 @@ TEST_F(cta_client_MockArchivalJobTableTest, createArchivalJob_new) {
     dstPath));
 
   {
-    std::map<std::string, std::map<time_t, ArchivalJob> > pools;
+    std::map<std::string, std::list<ArchivalJob> > pools;
     ASSERT_NO_THROW(pools = table.getArchivalJobs(requester));
     ASSERT_EQ(1, pools.size());
-    std::map<std::string, std::map<time_t, ArchivalJob> >::const_iterator
+    std::map<std::string, std::list<ArchivalJob> >::const_iterator
       poolItor = pools.find(tapePoolName);
     ASSERT_FALSE(poolItor == pools.end());
-    const std::map<time_t, ArchivalJob> &jobs = poolItor->second;
+    const std::list<ArchivalJob> &jobs = poolItor->second;
     ASSERT_EQ(1, jobs.size());
-    const std::map<time_t, ArchivalJob>::const_iterator jobItor = jobs.begin();
-    ASSERT_FALSE(jobItor == jobs.end());
-    const ArchivalJob &job = jobItor->second;
+    const ArchivalJob &job = jobs.front();
     ASSERT_EQ(srcUrl, job.getSrcUrl());
     ASSERT_EQ(dstPath, job.getDstPath());
   }
@@ -65,7 +63,7 @@ TEST_F(cta_client_MockArchivalJobTableTest, createArchivalJob_already_existing) 
   const SecurityIdentity requester;
 
   {
-    std::map<std::string, std::map<time_t, ArchivalJob> > pools;
+    std::map<std::string, std::list<ArchivalJob> > pools;
     ASSERT_NO_THROW(pools = table.getArchivalJobs(requester));
     ASSERT_TRUE(pools.empty());
   }
@@ -77,17 +75,15 @@ TEST_F(cta_client_MockArchivalJobTableTest, createArchivalJob_already_existing) 
     dstPath));
 
   {
-    std::map<std::string, std::map<time_t, ArchivalJob> > pools;
+    std::map<std::string, std::list<ArchivalJob> > pools;
     ASSERT_NO_THROW(pools = table.getArchivalJobs(requester));
     ASSERT_EQ(1, pools.size());
-    std::map<std::string, std::map<time_t, ArchivalJob> >::const_iterator
+    std::map<std::string, std::list<ArchivalJob> >::const_iterator
       poolItor = pools.find(tapePoolName);
     ASSERT_FALSE(poolItor == pools.end());
-    const std::map<time_t, ArchivalJob> &jobs = poolItor->second;
+    const std::list<ArchivalJob> &jobs = poolItor->second;
     ASSERT_EQ(1, jobs.size());
-    const std::map<time_t, ArchivalJob>::const_iterator jobItor = jobs.begin();
-    ASSERT_FALSE(jobItor == jobs.end());
-    const ArchivalJob &job = jobItor->second;
+    const ArchivalJob &job = jobs.front();
     ASSERT_EQ(srcUrl, job.getSrcUrl());
     ASSERT_EQ(dstPath, job.getDstPath());
   }     
@@ -112,7 +108,7 @@ TEST_F(cta_client_MockArchivalJobTableTest, deleteTape_existing) {
   const SecurityIdentity requester;
 
   {
-    std::map<std::string, std::map<time_t, ArchivalJob> > pools;
+    std::map<std::string, std::list<ArchivalJob> > pools;
     ASSERT_NO_THROW(pools = table.getArchivalJobs(requester));
     ASSERT_TRUE(pools.empty());
   }
@@ -124,17 +120,15 @@ TEST_F(cta_client_MockArchivalJobTableTest, deleteTape_existing) {
     dstPath));
 
   {
-    std::map<std::string, std::map<time_t, ArchivalJob> > pools;
+    std::map<std::string, std::list<ArchivalJob> > pools;
     ASSERT_NO_THROW(pools = table.getArchivalJobs(requester));
     ASSERT_EQ(1, pools.size());
-    std::map<std::string, std::map<time_t, ArchivalJob> >::const_iterator
+    std::map<std::string, std::list<ArchivalJob> >::const_iterator
       poolItor = pools.find(tapePoolName);
     ASSERT_FALSE(poolItor == pools.end());
-    const std::map<time_t, ArchivalJob> &jobs = poolItor->second;
+    const std::list<ArchivalJob> &jobs = poolItor->second;
     ASSERT_EQ(1, jobs.size());
-    const std::map<time_t, ArchivalJob>::const_iterator jobItor = jobs.begin();
-    ASSERT_FALSE(jobItor == jobs.end());
-    const ArchivalJob &job = jobItor->second;
+    const ArchivalJob &job = jobs.front();
     ASSERT_EQ(srcUrl, job.getSrcUrl());
     ASSERT_EQ(dstPath, job.getDstPath());
   }     
@@ -151,7 +145,7 @@ TEST_F(cta_client_MockArchivalJobTableTest, deleteTape_existing) {
   ASSERT_NO_THROW(table.deleteArchivalJob(requester, dstPath));
 
   {
-    std::map<std::string, std::map<time_t, ArchivalJob> > pools;
+    std::map<std::string, std::list<ArchivalJob> > pools;
     ASSERT_NO_THROW(pools = table.getArchivalJobs(requester));
     ASSERT_TRUE(pools.empty());
   }

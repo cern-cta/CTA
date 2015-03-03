@@ -281,11 +281,13 @@ void cta::MockMiddleTierUser::archiveToDirectory(
   checkDirNodeDoesNotContainFiles(dstDir, dstDirNode, dstFileNames);
 
   std::list<std::string>::const_iterator srcItor = srcUrls.begin();
+  const bool dstPathEndsWithASlash = dstDir.rfind('/') == dstDir.size() - 1;
   for(std::list<std::string>::const_iterator dstItor = dstFileNames.begin();
     dstItor != dstFileNames.end(); srcItor++, dstItor++) {
     const std::string &srcUrl = *srcItor;
     const std::string &dstFileName = *dstItor;
-    const std::string dstPath = dstDir + dstFileName;
+    const std::string dstPath = dstPathEndsWithASlash ? dstDir + dstFileName :
+      dstDir + "/" + dstFileName;
 
     for(uint16_t copyNb = 1; copyNb <= storageClass.getNbCopies(); copyNb++) {
       const ArchiveRoute &route = m_db.archiveRoutes.getArchiveRoute(
@@ -401,24 +403,19 @@ void cta::MockMiddleTierUser::checkUserIsAuthorisedToArchive(
 std::map<cta::TapePool, std::list<cta::ArchivalJob> >
   cta::MockMiddleTierUser::getArchivalJobs(
   const SecurityIdentity &requester) const {
-  const std::map<std::string, std::map<time_t, ArchivalJob> >
-   jobsByPoolName = m_db.archivalJobs.getArchivalJobs(requester);
+  const std::map<std::string, std::list<ArchivalJob> > jobsByPoolName =
+    m_db.archivalJobs.getArchivalJobs(requester);
 
   std::map<TapePool, std::list<ArchivalJob> > allJobs;
 
-  for(std::map<std::string, std::map<time_t, ArchivalJob> >::const_iterator
+  for(std::map<std::string, std::list<ArchivalJob> >::const_iterator
     poolItor = jobsByPoolName.begin();
     poolItor != jobsByPoolName.end();
     poolItor++) {
     const std::string &tapePoolName = poolItor->first;
-    const std::map<time_t, ArchivalJob> &timeToJobMap = poolItor->second;
-    if(!timeToJobMap.empty()) {
+    const std::list<ArchivalJob> &poolJobs = poolItor->second;
+    if(!poolJobs.empty()) {
       const TapePool tapePool = m_db.tapePools.getTapePool(tapePoolName);
-      std::list<cta::ArchivalJob> poolJobs;
-      for(std::map<time_t, ArchivalJob>::const_iterator jobItor =
-        timeToJobMap.begin(); jobItor != timeToJobMap.end(); jobItor++) {
-        poolJobs.push_back(jobItor->second);
-      }
       allJobs[tapePool] = poolJobs;
     }
   }

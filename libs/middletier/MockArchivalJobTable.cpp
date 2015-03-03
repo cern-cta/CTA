@@ -1,6 +1,7 @@
 #include "Exception.hpp"
 #include "MockArchivalJobTable.hpp"
 
+#include <iostream>
 #include <sstream>
 
 //------------------------------------------------------------------------------
@@ -16,15 +17,16 @@ void cta::MockArchivalJobTable::createArchivalJob(
   ArchivalJob job(ArchivalJobState::PENDING, srcUrl, dstPath, requester.user,
     time(NULL));
 
-  std::map<std::string, std::map<time_t, ArchivalJob> >::iterator poolItor =
+  std::map<std::string, std::list<ArchivalJob> >::iterator poolItor =
     m_jobsTree.find(tapePoolName);
 
   if(poolItor == m_jobsTree.end()) {
-    std::map<time_t, ArchivalJob> jobs;
-    jobs[job.getCreationTime()] = job;
+    std::list<ArchivalJob> jobs;
+    jobs.push_back(job);
     m_jobsTree[tapePoolName] = jobs;
   } else {
-    poolItor->second[job.getCreationTime()] = job;
+    std::list<ArchivalJob> &jobs = poolItor->second;
+    jobs.push_back(job);
   }
 }
 
@@ -33,12 +35,12 @@ void cta::MockArchivalJobTable::createArchivalJob(
 //------------------------------------------------------------------------------
 void cta::MockArchivalJobTable::checkArchivalJobDoesNotAlreadyExist(
   const std::string &dstPath) const {
-  for(std::map<std::string, std::map<time_t, ArchivalJob> >::const_iterator
+  for(std::map<std::string, std::list<ArchivalJob> >::const_iterator
     poolItor = m_jobsTree.begin(); poolItor != m_jobsTree.end(); poolItor++) {
-    const std::map<time_t, ArchivalJob> &jobs = poolItor->second;
-    for(std::map<time_t, ArchivalJob>::const_iterator jobItor =
-      jobs.begin(); jobItor != jobs.end(); jobItor++) {
-      const ArchivalJob &job = jobItor->second;
+    const std::list<ArchivalJob> &jobs = poolItor->second;
+    for(std::list<ArchivalJob>::const_iterator jobItor = jobs.begin();
+      jobItor != jobs.end(); jobItor++) {
+      const ArchivalJob &job = *jobItor;
       if(dstPath == job.getDstPath()) {
         std::ostringstream message;
         message << "An archival job for destination path " << dstPath <<
@@ -55,12 +57,12 @@ void cta::MockArchivalJobTable::checkArchivalJobDoesNotAlreadyExist(
 void cta::MockArchivalJobTable::deleteArchivalJob(
   const SecurityIdentity &requester,
   const std::string &dstPath) {
-  for(std::map<std::string, std::map<time_t, ArchivalJob> >::iterator
+  for(std::map<std::string, std::list<ArchivalJob> >::iterator
     poolItor = m_jobsTree.begin(); poolItor != m_jobsTree.end(); poolItor++) {
-    std::map<time_t, ArchivalJob> &jobs = poolItor->second;
-    for(std::map<time_t, ArchivalJob>::iterator jobItor =
-      jobs.begin(); jobItor != jobs.end(); jobItor++) {
-      const ArchivalJob &job = jobItor->second;
+    std::list<ArchivalJob> &jobs = poolItor->second;
+    for(std::list<ArchivalJob>::iterator jobItor = jobs.begin();
+      jobItor != jobs.end(); jobItor++) {
+      const ArchivalJob &job = *jobItor;
       if(dstPath == job.getDstPath()) {
         jobs.erase(jobItor);
         if(jobs.empty()) {
@@ -80,7 +82,7 @@ void cta::MockArchivalJobTable::deleteArchivalJob(
 //------------------------------------------------------------------------------
 // getArchivalJobs
 //------------------------------------------------------------------------------
-const std::map<std::string, std::map<time_t, cta::ArchivalJob> >
+const std::map<std::string, std::list<cta::ArchivalJob> >
   &cta::MockArchivalJobTable::getArchivalJobs(
   const SecurityIdentity &requester) const {
   return m_jobsTree;
@@ -92,17 +94,7 @@ const std::map<std::string, std::map<time_t, cta::ArchivalJob> >
 std::list<cta::ArchivalJob> cta::MockArchivalJobTable::getArchivalJobs(
   const SecurityIdentity &requester,
   const std::string &tapePoolName) const {
-  std::list<cta::ArchivalJob> jobs;
-  const std::map<std::string, std::map<time_t, ArchivalJob> >::const_iterator
+  const std::map<std::string, std::list<ArchivalJob> >::const_iterator
     poolItor = m_jobsTree.find(tapePoolName);
-
-  if(poolItor != m_jobsTree.end()) {
-    const std::map<time_t, ArchivalJob> &jobMap = poolItor->second;
-    for(std::map<time_t, ArchivalJob>::const_iterator jobItor =
-      jobMap.begin(); jobItor != jobMap.end(); jobItor++) {
-      jobs.push_back(jobItor->second);
-    }
-  }
-
-  return jobs;
+  return poolItor->second;
 }
