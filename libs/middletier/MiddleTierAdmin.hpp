@@ -109,7 +109,7 @@ public:
   virtual void createStorageClass(
     const SecurityIdentity &requester,
     const std::string &name,
-    const uint8_t nbCopies,
+    const uint16_t nbCopies,
     const std::string &comment) = 0;
 
   /**
@@ -186,7 +186,7 @@ public:
   virtual void createArchiveRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
-    const uint8_t copyNb,
+    const uint16_t copyNb,
     const std::string &tapePoolName,
     const std::string &comment) = 0;
 
@@ -202,7 +202,7 @@ public:
   virtual void deleteArchiveRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
-    const uint8_t copyNb) = 0;
+    const uint16_t copyNb) = 0;
 
   /**
    * Gets the current list of archive routes.

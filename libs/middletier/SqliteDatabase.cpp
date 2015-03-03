@@ -630,7 +630,7 @@ void cta::SqliteDatabase::insertTapePool(const SecurityIdentity &requester, cons
 //------------------------------------------------------------------------------
 // insertStorageClass
 //------------------------------------------------------------------------------
-void cta::SqliteDatabase::insertStorageClass(const SecurityIdentity &requester, const std::string &name, const uint8_t nbCopies, const std::string &comment) {
+void cta::SqliteDatabase::insertStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies, const std::string &comment) {
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "INSERT INTO STORAGECLASS VALUES('" << name << "'," << (int)nbCopies << "," << requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << ",'" << comment << "');";
@@ -646,7 +646,7 @@ void cta::SqliteDatabase::insertStorageClass(const SecurityIdentity &requester, 
 //------------------------------------------------------------------------------
 // insertArchiveRoute
 //------------------------------------------------------------------------------
-void cta::SqliteDatabase::insertArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint8_t copyNb, const std::string &tapePoolName, const std::string &comment) {
+void cta::SqliteDatabase::insertArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName, const std::string &comment) {
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "INSERT INTO ARCHIVEROUTE VALUES('" << storageClassName << "'," << (int)copyNb << ",'" << tapePoolName << "'," << requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << ",'" << comment << "');";
@@ -696,7 +696,7 @@ void cta::SqliteDatabase::deleteStorageClass(const SecurityIdentity &requester, 
 //------------------------------------------------------------------------------
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
-void cta::SqliteDatabase::deleteArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint8_t copyNb) {
+void cta::SqliteDatabase::deleteArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb) {
   checkArchiveRouteExists(storageClassName, copyNb);
   char *zErrMsg = 0;
   std::ostringstream query;
@@ -776,7 +776,7 @@ void cta::SqliteDatabase::checkStorageClassExists(const std::string &name){
 //------------------------------------------------------------------------------
 // checkArchiveRouteExists
 //------------------------------------------------------------------------------
-void cta::SqliteDatabase::checkArchiveRouteExists(const std::string &name, const uint8_t copyNb){
+void cta::SqliteDatabase::checkArchiveRouteExists(const std::string &name, const uint16_t copyNb){
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "SELECT * FROM ARCHIVEROUTE WHERE STORAGECLASS_NAME='" << name << "' AND COPYNB=" << (int)copyNb << ";";

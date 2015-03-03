@@ -28,7 +28,7 @@ public:
    */
   void createArchiveRoute(
     const std::string &storageClassName,
-    const uint8_t copyNb,
+    const uint16_t copyNb,
     const std::string &tapePoolName,
     const UserIdentity &creator,
     const std::string &comment);
@@ -42,7 +42,7 @@ public:
    */
   void deleteArchiveRoute(
     const std::string &storageClassName,
-    const uint8_t copyNb);
+    const uint16_t copyNb);
 
   /**
    * Gets the current list of archive routes.
@@ -61,7 +61,7 @@ public:
    */
   const ArchiveRoute &getArchiveRoute(
     const std::string &storageClassName,
-    const uint8_t copyNb) const;
+    const uint16_t copyNb) const;
 
   /**
    * Throws an exception if the specified archive route does not exist.
@@ -71,7 +71,7 @@ public:
    * @param copyNb The tape copy number.
    */
   void checkArchiveRouteExists(const std::string &storageClassName,
-    const uint8_t copyNb) const;
+    const uint16_t copyNb) const;
 
   /**
    * Returns true if the specified tape pool is in one of the current archive

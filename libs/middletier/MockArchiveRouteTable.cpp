@@ -8,7 +8,7 @@
 //------------------------------------------------------------------------------
 void cta::MockArchiveRouteTable::createArchiveRoute(
   const std::string &storageClassName,
-  const uint8_t copyNb,
+  const uint16_t copyNb,
   const std::string &tapePoolName,
   const UserIdentity &creator,
   const std::string &comment) {
@@ -45,7 +45,7 @@ void cta::MockArchiveRouteTable::checkArchiveRouteDoesNotAlreadyExists(
 //------------------------------------------------------------------------------
 void cta::MockArchiveRouteTable::deleteArchiveRoute(
   const std::string &storageClassName,
-  const uint8_t copyNb) {
+  const uint16_t copyNb) {
   const ArchiveRouteId routeId(storageClassName, copyNb);
   std::map<ArchiveRouteId, ArchiveRoute>::iterator itor =
     m_archiveRoutes.find(routeId);
@@ -77,7 +77,7 @@ std::list<cta::ArchiveRoute> cta::MockArchiveRouteTable::
 //------------------------------------------------------------------------------
 const cta::ArchiveRoute &cta::MockArchiveRouteTable::getArchiveRoute(
   const std::string &storageClassName,
-  const uint8_t copyNb) const {
+  const uint16_t copyNb) const {
   const ArchiveRouteId routeId(storageClassName, copyNb);
   std::map<ArchiveRouteId, ArchiveRoute>::const_iterator itor =
     m_archiveRoutes.find(routeId);
@@ -94,7 +94,7 @@ const cta::ArchiveRoute &cta::MockArchiveRouteTable::getArchiveRoute(
 // checkArchiveRouteExists
 //------------------------------------------------------------------------------
 void cta::MockArchiveRouteTable::checkArchiveRouteExists(
-  const std::string &storageClassName, const uint8_t copyNb) const {
+  const std::string &storageClassName, const uint16_t copyNb) const {
 }
 
 //------------------------------------------------------------------------------

@@ -13,7 +13,7 @@ cta::ArchiveRoute::ArchiveRoute():
 //------------------------------------------------------------------------------
 cta::ArchiveRoute::ArchiveRoute(
   const std::string &storageClassName,
-  const uint8_t copyNb,
+  const uint16_t copyNb,
   const std::string &tapePoolName,
   const UserIdentity &creator,
   const time_t creationTime,
@@ -36,7 +36,7 @@ const std::string &cta::ArchiveRoute::getStorageClassName() const throw() {
 //------------------------------------------------------------------------------
 // getCopyNb
 //------------------------------------------------------------------------------
-uint8_t cta::ArchiveRoute::getCopyNb() const throw() {
+uint16_t cta::ArchiveRoute::getCopyNb() const throw() {
   return m_copyNb;
 }
 

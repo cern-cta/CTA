@@ -29,7 +29,7 @@ public:
    */
   StorageClass(
     const std::string &name,
-    const uint8_t nbCopies,
+    const uint16_t nbCopies,
     const UserIdentity &creator,
     const time_t creationTime,
     const std::string &comment);
@@ -48,7 +48,7 @@ public:
    * @return The number of copies a file associated with this storage
    * class should have on tape.
    */
-  uint8_t getNbCopies() const throw();
+  uint16_t getNbCopies() const throw();
 
   /**
    * Returns the time when the storage class was created.
@@ -82,7 +82,7 @@ private:
    * The number of copies a file associated with this storage
    * class should have on tape.
    */
-  uint8_t m_nbCopies;
+  uint16_t m_nbCopies;
 
   /**
    * The time when the storage class was created.

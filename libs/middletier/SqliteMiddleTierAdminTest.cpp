@@ -32,7 +32,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, createStorageClass_new) {
   }
 
   const std::string name = "TestStorageClass";
-  const uint8_t nbCopies = 2;
+  const uint16_t nbCopies = 2;
   const std::string comment = "Comment";
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, name, nbCopies,
     comment));
@@ -65,7 +65,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
   }
 
   const std::string name = "TestStorageClass";
-  const uint8_t nbCopies = 2;
+  const uint16_t nbCopies = 2;
   const std::string comment = "Comment";
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, name, nbCopies, comment));
 
@@ -134,7 +134,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteStorageClass_existing) {
   }
 
   const std::string name = "TestStorageClass";
-  const uint8_t nbCopies = 2;
+  const uint16_t nbCopies = 2;
   const std::string comment = "Comment";
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, name, nbCopies, comment));
 
@@ -174,7 +174,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
   }
 
   const std::string storageClassName = "TestStorageClass";
-  const uint8_t nbCopies = 2;
+  const uint16_t nbCopies = 2;
   const std::string comment = "Comment";
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName, nbCopies,
     comment));
@@ -234,7 +234,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteStorageClass_in_use_by_route)
   }
 
   const std::string storageClassName = "TestStorageClass";
-  const uint8_t nbCopies = 2;
+  const uint16_t nbCopies = 2;
   const std::string comment = "Comment";
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName, nbCopies,
     comment));
@@ -266,7 +266,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteStorageClass_in_use_by_route)
     ASSERT_EQ(tapePoolName, tapePool.getName());
   }
 
-  const uint8_t copyNb = 1;
+  const uint16_t copyNb = 1;
   ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
     copyNb, tapePoolName, comment));
 
@@ -355,7 +355,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteTapePool_in_use) {
   const std::string storageClassName = "TestStorageClass";
   const std::string comment = "Comment";
   {
-    const uint8_t nbCopies = 2;
+    const uint16_t nbCopies = 2;
     ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
       nbCopies, comment));
   }
@@ -366,7 +366,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteTapePool_in_use) {
   ASSERT_NO_THROW(adminApi.createTapePool(requester, tapePoolName, nbDrives,
     nbPartialTapes, comment));
 
-  const uint8_t copyNb = 1;
+  const uint16_t copyNb = 1;
   ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
     copyNb, tapePoolName, comment));
 
@@ -414,7 +414,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, createArchiveRoute_new) {
   const std::string storageClassName = "TestStorageClass";
   const std::string comment = "Comment";
   {
-    const uint8_t nbCopies = 2;
+    const uint16_t nbCopies = 2;
     ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
       nbCopies, comment));
   }
@@ -425,7 +425,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, createArchiveRoute_new) {
   ASSERT_NO_THROW(adminApi.createTapePool(requester, tapePoolName, nbDrives,
     nbPartialTapes, comment));
 
-  const uint8_t copyNb = 1;
+  const uint16_t copyNb = 1;
   ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
     copyNb, tapePoolName, comment));
 
@@ -460,7 +460,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
   const std::string storageClassName = "TestStorageClass";
   const std::string comment = "Comment";
   {
-    const uint8_t nbCopies = 2;
+    const uint16_t nbCopies = 2;
     ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
       nbCopies, comment));
   }
@@ -471,7 +471,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
   ASSERT_NO_THROW(adminApi.createTapePool(requester, tapePoolName, nbDrives,
     nbPartialTapes, comment));
 
-  const uint8_t copyNb = 1;
+  const uint16_t copyNb = 1;
   ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
     copyNb, tapePoolName, comment));
 
@@ -508,7 +508,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteArchiveRoute_existing) {
   const std::string storageClassName = "TestStorageClass";
   const std::string comment = "Comment";
   {
-    const uint8_t nbCopies = 2;
+    const uint16_t nbCopies = 2;
     ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
       nbCopies, comment));
   }
@@ -519,7 +519,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteArchiveRoute_existing) {
   ASSERT_NO_THROW(adminApi.createTapePool(requester, tapePoolName, nbDrives,
     nbPartialTapes, comment));
 
-  const uint8_t copyNb = 1;
+  const uint16_t copyNb = 1;
   ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
     copyNb, tapePoolName, comment));
 
@@ -562,7 +562,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteArchiveRoute_non_existing) {
   const std::string storageClassName = "TestStorageClass";
   const std::string comment = "Comment";
   {
-    const uint8_t nbCopies = 2;
+    const uint16_t nbCopies = 2;
     ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
       nbCopies, comment));
   }
@@ -573,7 +573,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteArchiveRoute_non_existing) {
   ASSERT_NO_THROW(adminApi.createTapePool(requester, tapePoolName, nbDrives,
     nbPartialTapes, comment));
 
-  const uint8_t copyNb = 1;
+  const uint16_t copyNb = 1;
   ASSERT_THROW(adminApi.deleteArchiveRoute(requester, tapePoolName, copyNb),
     std::exception);
 }

@@ -77,7 +77,7 @@ std::list<cta::AdminHost> cta::MockMiddleTierAdmin::getAdminHosts(
 //------------------------------------------------------------------------------
 void cta::MockMiddleTierAdmin::createStorageClass(
   const SecurityIdentity &requester, const std::string &name,
-  const uint8_t nbCopies, const std::string &comment) {
+  const uint16_t nbCopies, const std::string &comment) {
   m_db.storageClasses.createStorageClass(name, nbCopies, requester.user,
     comment);
 }
@@ -159,7 +159,7 @@ std::list<cta::TapePool> cta::MockMiddleTierAdmin::getTapePools(
 void cta::MockMiddleTierAdmin::createArchiveRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
-  const uint8_t copyNb,
+  const uint16_t copyNb,
   const std::string &tapePoolName,
   const std::string &comment) {
   return m_db.archiveRoutes.createArchiveRoute(
@@ -176,7 +176,7 @@ void cta::MockMiddleTierAdmin::createArchiveRoute(
 void cta::MockMiddleTierAdmin::deleteArchiveRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
-  const uint8_t copyNb) {
+  const uint16_t copyNb) {
   return m_db.archiveRoutes.deleteArchiveRoute(storageClassName, copyNb);
 }
 

@@ -25,7 +25,7 @@ public:
    */
   ArchiveRouteId(
     const std::string &storageClassName,
-    const uint8_t copyNb);
+    const uint16_t copyNb);
 
   /**
    * Less than operator.
@@ -48,7 +48,7 @@ public:
    *
    * @return The tape copy number.
    */
-  uint8_t getCopyNb() const throw();
+  uint16_t getCopyNb() const throw();
 
 private:
 
@@ -60,7 +60,7 @@ private:
   /**
    * The tape copy number.
    */
-  uint8_t m_copyNb;
+  uint16_t m_copyNb;
 
 }; // class ArchiveRouteId
 

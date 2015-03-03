@@ -169,7 +169,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   {
     MockMiddleTierAdmin adminApi(db);
     const std::string name = "TestStorageClass";
-    const uint8_t nbCopies = 2;
+    const uint16_t nbCopies = 2;
     const std::string comment = "Comment";
     ASSERT_NO_THROW(adminApi.createStorageClass(requester, name, nbCopies, comment));
   }
@@ -401,7 +401,7 @@ TEST_F(cta_client_MockMiddleTierUserTest, setDirectoryStorageClass_top_level) {
   }
 
   const std::string storageClassName = "TestStorageClass";
-  const uint8_t nbCopies = 2;
+  const uint16_t nbCopies = 2;
     const std::string comment = "Comment";
   {
     MockMiddleTierAdmin adminApi(db);
@@ -449,7 +449,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   }
 
   const std::string storageClassName = "TestStorageClass";
-  const uint8_t nbCopies = 2;
+  const uint16_t nbCopies = 2;
   const std::string comment = "Comment";
   MockMiddleTierAdmin adminApi(db);
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
@@ -487,7 +487,7 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_new_file) {
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";
-  const uint8_t nbCopies = 1;
+  const uint16_t nbCopies = 1;
   const std::string storageClassComment = "Storage-class comment";
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
     nbCopies, storageClassComment));
@@ -504,7 +504,7 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_new_file) {
   ASSERT_NO_THROW(adminApi.createTapePool(requester, tapePoolName, nbDrives,
     nbPartialTapes, tapePoolComment));
 
-  const uint8_t copyNb = 1;
+  const uint16_t copyNb = 1;
   const std::string archiveRouteComment = "Archive-route comment";
   ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
     copyNb, tapePoolName, archiveRouteComment));
@@ -616,7 +616,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";
-  const uint8_t nbCopies = 0;
+  const uint16_t nbCopies = 0;
   const std::string storageClassComment = "Storage-class comment";
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
     nbCopies, storageClassComment));
@@ -641,7 +641,7 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_new_file_with_no_route) {
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";
-  const uint8_t nbCopies = 1;
+  const uint16_t nbCopies = 1;
   const std::string storageClassComment = "Storage-class comment";
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
     nbCopies, storageClassComment));
@@ -674,7 +674,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";
-  const uint8_t nbCopies = 2;
+  const uint16_t nbCopies = 2;
   const std::string storageClassComment = "Storage-class comment";
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
     nbCopies, storageClassComment));
@@ -691,7 +691,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   ASSERT_NO_THROW(adminApi.createTapePool(requester, tapePoolName, nbDrives,
     nbPartialTapes, tapePoolComment));
 
-  const uint8_t copyNb = 1;
+  const uint16_t copyNb = 1;
   const std::string archiveRouteComment = "Archive-route comment";
   ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
     copyNb, tapePoolName, archiveRouteComment));
@@ -711,7 +711,7 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_directory) {
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";
-  const uint8_t nbCopies = 1;
+  const uint16_t nbCopies = 1;
   const std::string storageClassComment = "Storage-class comment";
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
     nbCopies, storageClassComment));
@@ -728,7 +728,7 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_directory) {
   ASSERT_NO_THROW(adminApi.createTapePool(requester, tapePoolName, nbDrives,
     nbPartialTapes, tapePoolComment));
 
-  const uint8_t copyNb = 1;
+  const uint16_t copyNb = 1;
   const std::string archiveRouteComment = "Archive-route comment";
   ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
     copyNb, tapePoolName, archiveRouteComment));
@@ -855,7 +855,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";
-  const uint8_t nbCopies = 0;
+  const uint16_t nbCopies = 0;
   const std::string storageClassComment = "Storage-class comment";
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
     nbCopies, storageClassComment));
@@ -883,7 +883,7 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_directory_with_no_route) {
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";
-  const uint8_t nbCopies = 1;
+  const uint16_t nbCopies = 1;
   const std::string storageClassComment = "Storage-class comment";
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
     nbCopies, storageClassComment));
@@ -919,7 +919,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";
-  const uint8_t nbCopies = 2;
+  const uint16_t nbCopies = 2;
   const std::string storageClassComment = "Storage-class comment";
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
     nbCopies, storageClassComment));
@@ -936,7 +936,7 @@ TEST_F(cta_client_MockMiddleTierUserTest,
   ASSERT_NO_THROW(adminApi.createTapePool(requester, tapePoolName, nbDrives,
     nbPartialTapes, tapePoolComment));
 
-  const uint8_t copyNb = 1;
+  const uint16_t copyNb = 1;
   const std::string archiveRouteComment = "Archive-route comment";
   ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
     copyNb, tapePoolName, archiveRouteComment));

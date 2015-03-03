@@ -13,7 +13,7 @@ cta::StorageClass::StorageClass():
 //------------------------------------------------------------------------------
 cta::StorageClass::StorageClass(
   const std::string &name,
-  const uint8_t nbCopies,
+  const uint16_t nbCopies,
   const UserIdentity &creator,
   const time_t creationTime,
   const std::string &comment):
@@ -34,7 +34,7 @@ const std::string &cta::StorageClass::getName() const throw() {
 //------------------------------------------------------------------------------
 // getNbCopies
 //------------------------------------------------------------------------------
-uint8_t cta::StorageClass::getNbCopies() const throw() {
+uint16_t cta::StorageClass::getNbCopies() const throw() {
   return m_nbCopies;
 }
 

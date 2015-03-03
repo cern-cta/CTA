@@ -287,7 +287,7 @@ void cta::MockMiddleTierUser::archiveToDirectory(
     const std::string &dstFileName = *dstItor;
     const std::string dstPath = dstDir + dstFileName;
 
-    for(uint8_t copyNb = 1; copyNb <= storageClass.getNbCopies(); copyNb++) {
+    for(uint16_t copyNb = 1; copyNb <= storageClass.getNbCopies(); copyNb++) {
       const ArchiveRoute &route = m_db.archiveRoutes.getArchiveRoute(
         inheritedStorageClassName, copyNb);
       m_db.archivalJobs.createArchivalJob(requester, route.getTapePoolName(),
@@ -323,7 +323,7 @@ void cta::MockMiddleTierUser::checkDirNodeDoesNotContainFiles(
 //------------------------------------------------------------------------------
 void cta::MockMiddleTierUser::checkStorageClassIsFullyRouted(
   const StorageClass &storageClass) const {
-  for(uint8_t copyNb = 1; copyNb <= storageClass.getNbCopies(); copyNb++) {
+  for(uint16_t copyNb = 1; copyNb <= storageClass.getNbCopies(); copyNb++) {
     m_db.archiveRoutes.checkArchiveRouteExists(storageClass.getName(),
       copyNb);
   }
@@ -374,7 +374,7 @@ void cta::MockMiddleTierUser::archiveToFile(
   checkStorageClassIsFullyRouted(storageClass);
 
   const std::string &srcUrl = srcUrls.front();
-  for(uint8_t copyNb = 1; copyNb <= storageClass.getNbCopies(); copyNb++) {
+  for(uint16_t copyNb = 1; copyNb <= storageClass.getNbCopies(); copyNb++) {
     const ArchiveRoute &route = m_db.archiveRoutes.getArchiveRoute(
       inheritedStorageClassName, copyNb);
     m_db.archivalJobs.createArchivalJob(requester, route.getTapePoolName(),

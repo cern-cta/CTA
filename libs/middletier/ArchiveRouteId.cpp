@@ -12,7 +12,7 @@ cta::ArchiveRouteId::ArchiveRouteId():
 //------------------------------------------------------------------------------
 cta::ArchiveRouteId::ArchiveRouteId(
   const std::string &storageClassName,
-  const uint8_t copyNb):
+  const uint16_t copyNb):
   m_storageClassName(storageClassName),
   m_copyNb(copyNb) {
 }
@@ -38,6 +38,6 @@ const std::string &cta::ArchiveRouteId::getStorageClassName() const throw() {
 //------------------------------------------------------------------------------
 // getCopyNb
 //------------------------------------------------------------------------------
-uint8_t cta::ArchiveRouteId::getCopyNb() const throw() {
+uint16_t cta::ArchiveRouteId::getCopyNb() const throw() {
   return m_copyNb;
 }

@@ -26,7 +26,7 @@ public:
    */
   void createStorageClass(
     const std::string &name,
-    const uint8_t nbCopies,
+    const uint16_t nbCopies,
     const UserIdentity &creator,
     const std::string &comment);
 

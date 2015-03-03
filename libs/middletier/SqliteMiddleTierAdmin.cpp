@@ -77,7 +77,7 @@ std::list<cta::AdminHost> cta::SqliteMiddleTierAdmin::getAdminHosts(
 //------------------------------------------------------------------------------
 void cta::SqliteMiddleTierAdmin::createStorageClass(
   const SecurityIdentity &requester, const std::string &name,
-  const uint8_t nbCopies, const std::string &comment) {
+  const uint16_t nbCopies, const std::string &comment) {
   m_sqlite_db.insertStorageClass(requester, name, nbCopies, comment);
 }
 
@@ -131,7 +131,7 @@ std::list<cta::TapePool> cta::SqliteMiddleTierAdmin::getTapePools(
 void cta::SqliteMiddleTierAdmin::createArchiveRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
-  const uint8_t copyNb,
+  const uint16_t copyNb,
   const std::string &tapePoolName,
   const std::string &comment) {
   return m_sqlite_db.insertArchiveRoute(requester, storageClassName, copyNb, tapePoolName, comment);
@@ -143,7 +143,7 @@ void cta::SqliteMiddleTierAdmin::createArchiveRoute(
 void cta::SqliteMiddleTierAdmin::deleteArchiveRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
-  const uint8_t copyNb) {
+  const uint16_t copyNb) {
   return m_sqlite_db.deleteArchiveRoute(requester, storageClassName, copyNb);
 }
 

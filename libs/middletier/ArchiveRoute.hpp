@@ -31,7 +31,7 @@ public:
    */
   ArchiveRoute(
     const std::string &storageClassName,
-    const uint8_t copyNb,
+    const uint16_t copyNb,
     const std::string &tapePoolName,
     const UserIdentity &creator,
     const time_t creationTime,
@@ -51,7 +51,7 @@ public:
    *
    * @return The tape copy number.
    */
-  uint8_t getCopyNb() const throw();
+  uint16_t getCopyNb() const throw();
 
   /**
    * Returns the name of the destination tape pool.
