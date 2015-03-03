@@ -572,7 +572,7 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_new_file) {
   {
     const std::list<ArchivalJob> poolJobs = userApi.getArchivalJobs(requester,
       tapePoolName);
-    ASSERT_EQ(4, poolJobs.size());
+    ASSERT_EQ(1, poolJobs.size());
     std::set<std::string> srcUrls;
     std::set<std::string> dstPaths;
     for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
@@ -581,16 +581,10 @@ TEST_F(cta_client_MockMiddleTierUserTest, archive_to_new_file) {
       srcUrls.insert(jobItor->getSrcUrl());
       dstPaths.insert(jobItor->getDstPath());
     }
-    ASSERT_EQ(4, srcUrls.size());
-    ASSERT_FALSE(srcUrls.find("diskUrl1") == srcUrls.end());
-    ASSERT_FALSE(srcUrls.find("diskUrl2") == srcUrls.end());
-    ASSERT_FALSE(srcUrls.find("diskUrl3") == srcUrls.end());
-    ASSERT_FALSE(srcUrls.find("diskUrl4") == srcUrls.end());
-    ASSERT_EQ(4, dstPaths.size());
-    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl1") == dstPaths.end());
-    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl2") == dstPaths.end());
-    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl3") == dstPaths.end());
-    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl4") == dstPaths.end());
+    ASSERT_EQ(1, srcUrls.size());
+    ASSERT_FALSE(srcUrls.find("diskUrl") == srcUrls.end());
+    ASSERT_EQ(1, dstPaths.size());
+    ASSERT_FALSE(dstPaths.find("/grandparent/parent_file") == dstPaths.end());
   }
 }
 
