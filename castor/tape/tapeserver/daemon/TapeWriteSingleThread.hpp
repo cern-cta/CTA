@@ -100,6 +100,8 @@ private:
       // process we're in, and to count the error if it occurs.
       // We will not record errors for an empty string. This will allow us to
       // prevent counting where error happened upstream.
+      // Log (safely, exception-wise) the tape alerts (if any) at the end of the session
+      try { m_this.logTapeAlerts(); } catch (...) {}
       std::string currentErrorToCount = "Error_tapeUnload";
       try{
         // Do the final cleanup

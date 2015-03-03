@@ -48,7 +48,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   // will hence be no more requests for more.
   m_this.m_taskInjector->finish();
   //then we log/notify
-  m_this.m_logContext.log(LOG_DEBUG, "Starting session cleanup. Signaled end of session to task injector.");
+  m_this.m_logContext.log(LOG_DEBUG, "Starting session cleanup. Signalled end of session to task injector.");
   m_this.m_stats.waitReportingTime += m_timer.secs(castor::utils::Timer::resetCounter);
   // Log (safely, exception-wise) the tape alerts (if any) at the end of the session
   try { m_this.logTapeAlerts(); } catch (...) {}
