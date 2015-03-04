@@ -4,6 +4,8 @@
 #include "RootEntry.hpp"
 #include "Agent.hpp"
 
+namespace unitTests {
+
 TEST(RootEntry, BasicAccess) {
   cta::objectstore::BackendVFS be;
   { 
@@ -39,4 +41,6 @@ TEST(RootEntry, BasicAccess) {
   cta::objectstore::ScopedExclusiveLock lock(re);
   re.remove();
   ASSERT_EQ(false, re.exists());
+}
+
 }

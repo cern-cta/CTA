@@ -34,6 +34,12 @@ public:
   // Get the name of a (possibly freshly created) job pool
   std::string allocateOrGetJobPool(Agent & agent);
   
+  // Get the name of the AdminUsersList (or exception if not available)
+  std::string getAdminUsersList();
+  
+  // Get the name of a (possibly freshly created) AdminUsersList
+  std::string allocateOrGetAdminUsersList(Agent & agent);
+  
 private:
   void addIntendedAgentRegistry(const std::string & name);
   

@@ -3,6 +3,8 @@
 #include "BackendRados.hpp"
 #include "exception/Exception.hpp"
 
+namespace unitTests {
+
 TEST_P(BackendAbstractTest, BasicReadWrite) {
   std::cout << "Type=" << m_os->typeName() << std::endl;
   const std::string testValue = "1234";
@@ -64,3 +66,5 @@ INSTANTIATE_TEST_CASE_P(BackendTest, BackendAbstractTest, ::testing::Values(&osV
 #else
 INSTANTIATE_TEST_CASE_P(BackendTest, BackendAbstractTest, ::testing::Values((cta::objectstore::Backend*)&osVFS));
 #endif
+
+}

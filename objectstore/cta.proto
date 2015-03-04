@@ -12,6 +12,7 @@ enum ObjectType {
   RecallJob_t = 6;
   Counter_t = 7;
   FIFO_t = 8;
+  AdminUsersList_t = 9;
   GenericObject_t = 1000;
 }
 
@@ -68,6 +69,8 @@ message RootEntry {
   repeated string agentregisterintentlog = 92;
   optional string jobpool = 93;
   repeated string jobpoolintentlog = 94;
+  optional string adminuserslist = 95;
+  repeated string adminuserslistintentlog = 96;
 }
 
 // The registers (simple name arrays)
@@ -149,5 +152,21 @@ message JobPool {
 message RecallFIFO {}
 
 message MigrationFIFO {}
+
+message UserIdentity {
+  required uint32 uid = 8001;
+  required uint32 gid = 8002;
+}
+
+message AdminUser  {
+  required UserIdentity user = 8010;
+  required UserIdentity creator = 8011;
+  required uint64 creationTime = 8012;
+  required string comment = 8013;
+}
+
+message AdminUsersList {
+  repeated AdminUser element = 8020;
+}
 
 

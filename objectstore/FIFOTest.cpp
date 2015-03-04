@@ -4,6 +4,8 @@
 #include "FIFO.hpp"
 #include "Agent.hpp"
 
+namespace unitTests {
+
 TEST(FIFO, BasicFuctionnality) {
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);
@@ -68,4 +70,6 @@ TEST(FIFO, BasicFuctionnality) {
   ASSERT_EQ(0, ff.size());
   ff.remove();
   ASSERT_EQ(false, ff.exists());
+}
+
 }

@@ -7,6 +7,8 @@
 #include "AgentRegister.hpp"
 #include "RootEntry.hpp"
 
+namespace unitTests {
+
 TEST(GarbageCollector, BasicFuctionnality) {
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);
@@ -80,4 +82,6 @@ TEST(GarbageCollector, BasicFuctionnality) {
   ffLock.lock(ff);
   ff.fetch();
   ASSERT_EQ(100, ff.size());
+}
+
 }

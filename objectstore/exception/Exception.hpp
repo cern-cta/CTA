@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "exception/Backtrace.hpp"
+#include "objectstore/exception/Backtrace.hpp"
 
 #include <exception>
 #include <sstream>

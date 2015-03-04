@@ -16,6 +16,7 @@ add_library (CTAObjectStore
   Agent.cpp
   AgentRegister.cpp
   AgentWatchdog.cpp
+  AdminUsersList.cpp
   BackendVFS.cpp
   BackendRados.cpp
   ObjectOps.cpp

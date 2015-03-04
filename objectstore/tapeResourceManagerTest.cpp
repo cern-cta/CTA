@@ -15,7 +15,7 @@
 #include "Counter.hpp"
 #include <math.h>
 
-
+namespace systemTests { 
 
 class jobExecutorThread: public cta::threading::Thread {
 public:
@@ -238,4 +238,6 @@ int main(void){
   
   
   return 0;
+}
+
 }

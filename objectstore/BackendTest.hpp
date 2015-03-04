@@ -3,6 +3,8 @@
 #include <gtest/gtest.h>
 #include "Backend.hpp"
 
+namespace unitTests {
+
 class BackendAbstractTest: public ::testing::TestWithParam<cta::objectstore::Backend *> {
 protected:
   BackendAbstractTest() {}
@@ -11,3 +13,6 @@ protected:
   }
   cta::objectstore::Backend * m_os;
 };
+
+}
+
