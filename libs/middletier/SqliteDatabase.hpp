@@ -38,10 +38,6 @@ public:
   
   void insertArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName, const std::string &comment);
   
-  void insertFile(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode);
-  
-  void insertDirectory(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode);  
-  
   void insertTape(const SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, const std::string &comment);
   
   void insertAdminUser(const SecurityIdentity &requester, const UserIdentity &user, const std::string &comment);
@@ -60,10 +56,6 @@ public:
 
   void deleteArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb);
   
-  void deleteFile(const SecurityIdentity &requester, const std::string &pathname);
-  
-  void deleteDirectory(const SecurityIdentity &requester, const std::string &pathname);  
-  
   void deleteTape(const SecurityIdentity &requester, const std::string &vid);
   
   void deleteAdminUser(const SecurityIdentity &requester, const UserIdentity &user);
@@ -80,15 +72,7 @@ public:
 
   std::list<cta::StorageClass> selectAllStorageClasses(const SecurityIdentity &requester);
 
-  std::list<cta::ArchiveRoute> selectAllArchiveRoutes(const SecurityIdentity &requester);
-  
-  void setDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path, const std::string &storageClassName);
-  
-  void clearDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path);
-  
-  std::string getDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path);
-  
-  
+  std::list<cta::ArchiveRoute> selectAllArchiveRoutes(const SecurityIdentity &requester);  
   
   std::list<cta::Tape> selectAllTapes(const SecurityIdentity &requester);
 
@@ -101,6 +85,23 @@ public:
   std::list<cta::RetrievalJob> selectAllRetrievalJobs(const SecurityIdentity &requester);
 
   std::list<cta::LogicalLibrary> selectAllLogicalLibraries(const SecurityIdentity &requester);
+  
+  
+  
+  
+  void setDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path, const std::string &storageClassName);
+  
+  void clearDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path);
+  
+  std::string getDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path);
+  
+  void insertFile(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode);
+  
+  void insertDirectory(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode);
+  
+  void deleteFile(const SecurityIdentity &requester, const std::string &pathname);
+  
+  void deleteDirectory(const SecurityIdentity &requester, const std::string &pathname);    
   
 //  cta::DirectoryIterator getDirectoryContents(const SecurityIdentity &requester, const std::string &dirPath);
   
@@ -118,10 +119,6 @@ private:
   void createStorageClassTable();
 
   void createTapePoolTable();
-  
-  void createDirectoryTable();
-  
-  void createFileTable();
   
   void createTapeTable();
   
@@ -143,14 +140,6 @@ private:
   
   void checkArchiveRouteExists(const std::string &name, const uint16_t copyNb);
   
-  void checkFileExists(const std::string &path, const std::string &name);
-  
-  void checkDirectoryExists(const std::string &path);
-  
-  void checkDirectoryContainsNoDirectories(const std::string &path);
-  
-  void checkDirectoryContainsNoFiles(const std::string &path);
-  
   void checkTapeExists(const std::string &vid);
   
   void checkAdminUserExists(const cta::UserIdentity &user);
@@ -162,6 +151,21 @@ private:
   void checkRetrievalJobExists(const std::string &dstUrl);
   
   void checkLogicalLibraryExists(const std::string &name);
+  
+  
+  
+  
+  void checkFileExists(const std::string &path, const std::string &name);
+  
+  void checkDirectoryExists(const std::string &path);
+  
+  void checkDirectoryContainsNoDirectories(const std::string &path);
+  
+  void checkDirectoryContainsNoFiles(const std::string &path);
+  
+  void createDirectoryTable();
+  
+  void createFileTable();
   
 }; // struct SqliteDatabase
 
