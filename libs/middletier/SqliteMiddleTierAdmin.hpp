@@ -17,7 +17,7 @@ public:
    *
    * @param db The database of the mock middle-tier.
    */
-  SqliteMiddleTierAdmin(MockDatabase &db, SqliteDatabase &sqlite_db);
+  SqliteMiddleTierAdmin(SqliteDatabase &sqlite_db);
 
   /**
    * Destructor.
@@ -313,11 +313,6 @@ protected:
    * directory within the archive namepsace.
    */
   bool isAnExistingDirectory(const std::string &path) const throw();
-
-  /**
-   * The database of the mock middle-tier.
-   */
-  MockDatabase &m_db;
   
   SqliteDatabase &m_sqlite_db;
 

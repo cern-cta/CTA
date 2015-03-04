@@ -230,12 +230,13 @@ void cta::SqliteDatabase::createAdminUserTable() {
   char *zErrMsg = 0;
   int rc = sqlite3_exec(m_dbHandle, 
           "CREATE TABLE ADMINUSER("
-            "USER           TEXT,"
+            "ADMIN_UID      INTEGER,"
+            "ADMIN_GID      INTEGER,"
             "UID            INTEGER,"
             "GID            INTEGER,"
             "CREATIONTIME   INTEGER,"
             "COMMENT        TEXT,"
-            "PRIMARY KEY (USER)"
+            "PRIMARY KEY (ADMIN_UID,ADMIN_GID)"
             ");",
           0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
@@ -306,7 +307,7 @@ void cta::SqliteDatabase::createRetrievalJobTable() {
             "UID            INTEGER,"
             "GID            INTEGER,"
             "CREATIONTIME   INTEGER,"
-            "PRIMARY KEY (SRCPATH, DSTURL)"
+            "PRIMARY KEY (DSTURL)"
             ");",
           0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
@@ -332,6 +333,102 @@ void cta::SqliteDatabase::createSchema() {
   createAdminHostTable();
   createArchivalJobTable();
   createRetrievalJobTable();
+}  
+  
+//------------------------------------------------------------------------------
+// insertTape
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::insertTape(const SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, const std::string &comment) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "INSERT INTO TAPE VALUES('" << vid << "','" << logicalLibraryName << "','" << tapePoolName << "',"<< (long unsigned int)capacityInBytes << ",0,"<< requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << ",'" << comment << "');";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "insertTape() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+  
+//------------------------------------------------------------------------------
+// insertAdminUser
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::insertAdminUser(const SecurityIdentity &requester, const UserIdentity &user, const std::string &comment) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "INSERT INTO ADMINUSER VALUES(" << user.getUid() << "," << user.getGid() << ","<< requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << ",'" << comment << "');";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "insertAdminUser() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+  
+//------------------------------------------------------------------------------
+// insertAdminHost
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::insertAdminHost(const SecurityIdentity &requester, const std::string &hostName, const std::string &comment) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "INSERT INTO ADMINHOST VALUES('" << hostName << "',"<< requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << ",'" << comment << "');";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "insertAdminHost() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+  
+//------------------------------------------------------------------------------
+// insertArchivalJob
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::insertArchivalJob(const SecurityIdentity &requester, const std::string &srcUrl, const std::string &dstPath) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "INSERT INTO ARCHIVALJOB VALUES(0,'" << srcUrl << "','" << dstPath << "',"<< requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << ");";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "insertArchivalJob() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+  
+//------------------------------------------------------------------------------
+// insertRetrievalJob
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::insertRetrievalJob(const SecurityIdentity &requester, const std::string &srcPath, const std::string &dstUrl) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "INSERT INTO RETRIEVALJOB VALUES(0,'" << srcPath << "','" << dstUrl << "',"<< requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << ");";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "insertRetrievalJob() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+  
+//------------------------------------------------------------------------------
+// insertLogicalLibrary
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::insertLogicalLibrary(const SecurityIdentity &requester, const std::string &name, const std::string &comment) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "INSERT INTO LOGICALLIBRARY VALUES('" << name << "',"<< requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << ",'" << comment << "');";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "insertLogicalLibrary() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
 }
   
 //------------------------------------------------------------------------------
@@ -704,9 +801,304 @@ void cta::SqliteDatabase::deleteArchiveRoute(const SecurityIdentity &requester, 
   int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
+      message << "deleteMigrationRoute() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
+}
+
+//------------------------------------------------------------------------------
+// deleteTape
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::deleteTape(const SecurityIdentity &requester, const std::string &vid) {
+  checkTapeExists(vid);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM TAPE WHERE NAME='" << vid << "';";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "deleteTape() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+  
+//------------------------------------------------------------------------------
+// deleteAdminUser
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::deleteAdminUser(const SecurityIdentity &requester, const UserIdentity &user) {
+  checkAdminUserExists(user);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM ADMINUSER WHERE ADMIN_UID=" << user.getUid() << " AND ADMIN_GID=" << user.getGid() <<";";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "deleteAdminUser() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+  
+//------------------------------------------------------------------------------
+// deleteAdminHost
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::deleteAdminHost(const SecurityIdentity &requester, const std::string &hostName) {
+  checkAdminHostExists(hostName);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM ADMINHOST WHERE NAME='" << hostName << "';";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "deleteAdminHost() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+  
+//------------------------------------------------------------------------------
+// deleteArchivalJob
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::deleteArchivalJob(const SecurityIdentity &requester, const std::string &dstPath) {
+  checkArchivalJobExists(dstPath);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM ARCHIVALJOB WHERE DSTPATH='" << dstPath << "';";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "deleteArchivalJob() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+  
+//------------------------------------------------------------------------------
+// deleteRetrievalJob
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::deleteRetrievalJob(const SecurityIdentity &requester, const std::string &dstUrl) {
+  checkRetrievalJobExists(dstUrl);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM RETRIEVALJOB WHERE DSTURL='" << dstUrl << "';";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "deleteRetrievalJob() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+  
+//------------------------------------------------------------------------------
+// deleteLogicalLibrary
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::deleteLogicalLibrary(const SecurityIdentity &requester, const std::string &name) {
+  checkLogicalLibraryExists(name);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM LOGICALLIBRARY WHERE NAME='" << name << "';";
+  int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "deleteLogicalLibrary() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkTapeExists
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::checkTapeExists(const std::string &vid){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "SELECT * FROM TAPE WHERE NAME='" << vid << "';";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "checkTapeExists() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  int res = sqlite3_step(statement);
+  if(res==SQLITE_ROW) {
+    return;
+  } 
+  else if(res==SQLITE_DONE){
+    std::ostringstream message;
+    message << "TAPE: " << vid << " does not exist";
+    throw(Exception(message.str()));    
+  }
+  else {
+    std::ostringstream message;
+    message << "checkTapeExists() - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));    
+  }  
+}
+  
+//------------------------------------------------------------------------------
+// checkAdminUserExists
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::checkAdminUserExists(const cta::UserIdentity &user){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "SELECT * FROM ADMINUSER WHERE ADMIN_UID=" << user.getUid() << " AND ADMIN_GID=" << user.getGid() <<";";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "checkAdminUserExists() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  int res = sqlite3_step(statement);
+  if(res==SQLITE_ROW) {
+    return;
+  } 
+  else if(res==SQLITE_DONE){
+    std::ostringstream message;
+    message << "ADMINUSER: " << user.getUid() << ":" << user.getGid()<< " does not exist";
+    throw(Exception(message.str()));    
+  }
+  else {
+    std::ostringstream message;
+    message << "checkAdminUserExists() - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));    
+  }  
+}
+  
+//------------------------------------------------------------------------------
+// checkAdminHostExists
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::checkAdminHostExists(const std::string &hostName){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "SELECT * FROM ADMINHOST WHERE NAME='" << hostName << "';";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "checkAdminHostExists() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  int res = sqlite3_step(statement);
+  if(res==SQLITE_ROW) {
+    return;
+  } 
+  else if(res==SQLITE_DONE){
+    std::ostringstream message;
+    message << "ADMINHOST: " << hostName << " does not exist";
+    throw(Exception(message.str()));    
+  }
+  else {
+    std::ostringstream message;
+    message << "checkAdminHostExists() - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));    
+  }  
+}
+  
+//------------------------------------------------------------------------------
+// checkArchivalJobExists
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::checkArchivalJobExists(const std::string &dstPath){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "SELECT * FROM ARCHIVALJOB WHERE DSTPATH='" << dstPath << "';";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "checkArchivalJobExists() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  int res = sqlite3_step(statement);
+  if(res==SQLITE_ROW) {
+    return;
+  } 
+  else if(res==SQLITE_DONE){
+    std::ostringstream message;
+    message << "ARCHIVALJOB: " << dstPath << " does not exist";
+    throw(Exception(message.str()));    
+  }
+  else {
+    std::ostringstream message;
+    message << "checkArchivalJobExists() - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));    
+  }  
+}
+  
+//------------------------------------------------------------------------------
+// checkRetrievalJobExists
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::checkRetrievalJobExists(const std::string &dstUrl){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "SELECT * FROM RETRIEVALJOB WHERE DSTURL='" << dstUrl << "';";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "checkRetrievalJobExists() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  int res = sqlite3_step(statement);
+  if(res==SQLITE_ROW) {
+    return;
+  } 
+  else if(res==SQLITE_DONE){
+    std::ostringstream message;
+    message << "RETRIEVALJOB: " << dstUrl << " does not exist";
+    throw(Exception(message.str()));    
+  }
+  else {
+    std::ostringstream message;
+    message << "checkRetrievalJobExists() - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));    
+  }  
+}
+  
+//------------------------------------------------------------------------------
+// checkLogicalLibraryExists
+//------------------------------------------------------------------------------
+void cta::SqliteDatabase::checkLogicalLibraryExists(const std::string &name){
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "SELECT * FROM LOGICALLIBRARY WHERE NAME='" << name << "';";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "checkLogicalLibraryExists() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  int res = sqlite3_step(statement);
+  if(res==SQLITE_ROW) {
+    return;
+  } 
+  else if(res==SQLITE_DONE){
+    std::ostringstream message;
+    message << "LOGICALLIBRARY: " << name << " does not exist";
+    throw(Exception(message.str()));    
+  }
+  else {
+    std::ostringstream message;
+    message << "checkLogicalLibraryExists() - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(Exception(message.str()));    
+  }  
 }
 
 //------------------------------------------------------------------------------
@@ -892,4 +1284,178 @@ std::list<cta::ArchiveRoute>  cta::SqliteDatabase::selectAllArchiveRoutes(const 
   }
   sqlite3_finalize(statement);
   return routes;
+}
+
+//------------------------------------------------------------------------------
+// selectAllTapes
+//------------------------------------------------------------------------------
+std::list<cta::Tape> cta::SqliteDatabase::selectAllTapes(const SecurityIdentity &requester) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  std::list<cta::Tape> tapes;
+  query << "SELECT * FROM TAPE ORDER BY VID;";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "selectAllTapes() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  while(sqlite3_step(statement)==SQLITE_ROW) {
+    tapes.push_back(cta::Tape(
+            std::string((char *)sqlite3_column_text(statement,0)),
+            std::string((char *)sqlite3_column_text(statement,1)),
+            std::string((char *)sqlite3_column_text(statement,2)),
+            sqlite3_column_int(statement,3),
+            sqlite3_column_int(statement,4),
+            cta::UserIdentity(sqlite3_column_int(statement,5),sqlite3_column_int(statement,6)),
+            time_t(sqlite3_column_int(statement,7)),
+            std::string((char *)sqlite3_column_text(statement,8))
+      ));
+  }
+  sqlite3_finalize(statement);
+  return tapes;
+}
+
+//------------------------------------------------------------------------------
+// selectAllAdminUsers
+//------------------------------------------------------------------------------
+std::list<cta::AdminUser> cta::SqliteDatabase::selectAllAdminUsers(const SecurityIdentity &requester) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  std::list<cta::AdminUser> list;
+  query << "SELECT * FROM ADMINUSER ORDER BY ADMIN_UID, ADMIN_GID;";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "selectAllAdminUsers() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  while(sqlite3_step(statement)==SQLITE_ROW) {
+    list.push_back(cta::AdminUser(
+            cta::UserIdentity(sqlite3_column_int(statement,0),sqlite3_column_int(statement,1)),
+            cta::UserIdentity(sqlite3_column_int(statement,2),sqlite3_column_int(statement,3)),
+            time_t(sqlite3_column_int(statement,4)),
+            std::string((char *)sqlite3_column_text(statement,5))
+      ));
+  }
+  sqlite3_finalize(statement);
+  return list;
+}
+
+//------------------------------------------------------------------------------
+// selectAllAdminHosts
+//------------------------------------------------------------------------------
+std::list<cta::AdminHost> cta::SqliteDatabase::selectAllAdminHosts(const SecurityIdentity &requester) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  std::list<cta::AdminHost> list;
+  query << "SELECT * FROM ADMINHOST ORDER BY NAME;";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "selectAllAdminHosts() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  while(sqlite3_step(statement)==SQLITE_ROW) {
+    list.push_back(cta::AdminHost(
+            std::string((char *)sqlite3_column_text(statement,0)),
+            cta::UserIdentity(sqlite3_column_int(statement,1),sqlite3_column_int(statement,2)),
+            time_t(sqlite3_column_int(statement,3)),
+            std::string((char *)sqlite3_column_text(statement,4))
+      ));
+  }
+  sqlite3_finalize(statement);
+  return list;
+}
+  
+//------------------------------------------------------------------------------
+// selectAllArchivalJobs
+//------------------------------------------------------------------------------
+std::list<cta::ArchivalJob> cta::SqliteDatabase::selectAllArchivalJobs(const SecurityIdentity &requester) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  std::list<cta::ArchivalJob> list;
+  query << "SELECT * FROM ARCHIVALJOB ORDER BY DSTPATH;";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "selectAllArchivalJobs() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  while(sqlite3_step(statement)==SQLITE_ROW) {
+    list.push_back(cta::ArchivalJob(
+            (cta::ArchivalJobState::Enum)sqlite3_column_int(statement,0),
+            std::string((char *)sqlite3_column_text(statement,1)),
+            std::string((char *)sqlite3_column_text(statement,2)),
+            cta::UserIdentity(sqlite3_column_int(statement,3),sqlite3_column_int(statement,4)),
+            time_t(sqlite3_column_int(statement,5))
+      ));
+  }
+  sqlite3_finalize(statement);
+  return list;
+}
+
+//------------------------------------------------------------------------------
+// selectAllRetrievalJobs
+//------------------------------------------------------------------------------
+std::list<cta::RetrievalJob> cta::SqliteDatabase::selectAllRetrievalJobs(const SecurityIdentity &requester) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  std::list<cta::RetrievalJob> list;
+  query << "SELECT * FROM RETRIEVALJOB ORDER BY DSTURL;";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "selectAllRetrievalJobs() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  while(sqlite3_step(statement)==SQLITE_ROW) {
+    list.push_back(cta::RetrievalJob(
+            (cta::RetrievalJobState::Enum)sqlite3_column_int(statement,0),
+            std::string((char *)sqlite3_column_text(statement,1)),
+            std::string((char *)sqlite3_column_text(statement,2)),
+            cta::UserIdentity(sqlite3_column_int(statement,3),sqlite3_column_int(statement,4)),
+            time_t(sqlite3_column_int(statement,5))
+      ));
+  }
+  sqlite3_finalize(statement);
+  return list;
+}
+
+//------------------------------------------------------------------------------
+// selectAllLogicalLibraries
+//------------------------------------------------------------------------------
+std::list<cta::LogicalLibrary> cta::SqliteDatabase::selectAllLogicalLibraries(const SecurityIdentity &requester) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  std::list<cta::LogicalLibrary> list;
+  query << "SELECT * FROM LOGICALLIBRARY ORDER BY NAME;";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "selectAllLogicalLibraries() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  while(sqlite3_step(statement)==SQLITE_ROW) {
+    list.push_back(cta::LogicalLibrary(
+            std::string((char *)sqlite3_column_text(statement,0)),
+            cta::UserIdentity(sqlite3_column_int(statement,1),sqlite3_column_int(statement,2)),
+            time_t(sqlite3_column_int(statement,3)),
+            std::string((char *)sqlite3_column_text(statement,4))
+      ));
+  }
+  sqlite3_finalize(statement);
+  return list;
 }

@@ -2,6 +2,8 @@
 
 #include <sqlite3.h>
 
+#include "ArchivalJob.hpp"
+#include "RetrievalJob.hpp"
 #include "FileSystemNode.hpp"
 #include "FileSystemStorageClasses.hpp"
 #include "MockAdminHostTable.hpp"
@@ -38,7 +40,19 @@ public:
   
   void insertFile(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode);
   
-  void insertDirectory(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode);
+  void insertDirectory(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode);  
+  
+  void insertTape(const SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, const std::string &comment);
+  
+  void insertAdminUser(const SecurityIdentity &requester, const UserIdentity &user, const std::string &comment);
+  
+  void insertAdminHost(const SecurityIdentity &requester, const std::string &hostName, const std::string &comment);
+  
+  void insertArchivalJob(const SecurityIdentity &requester, const std::string &srcUrl, const std::string &dstPath);
+  
+  void insertRetrievalJob(const SecurityIdentity &requester, const std::string &srcPath, const std::string &dstUrl);
+  
+  void insertLogicalLibrary(const SecurityIdentity &requester, const std::string &name, const std::string &comment);  
   
   void deleteTapePool(const SecurityIdentity &requester, const std::string &name);
   
@@ -48,7 +62,19 @@ public:
   
   void deleteFile(const SecurityIdentity &requester, const std::string &pathname);
   
-  void deleteDirectory(const SecurityIdentity &requester, const std::string &pathname);
+  void deleteDirectory(const SecurityIdentity &requester, const std::string &pathname);  
+  
+  void deleteTape(const SecurityIdentity &requester, const std::string &vid);
+  
+  void deleteAdminUser(const SecurityIdentity &requester, const UserIdentity &user);
+  
+  void deleteAdminHost(const SecurityIdentity &requester, const std::string &hostName);
+  
+  void deleteArchivalJob(const SecurityIdentity &requester, const std::string &dstPath);
+  
+  void deleteRetrievalJob(const SecurityIdentity &requester, const std::string &dstUrl);
+  
+  void deleteLogicalLibrary(const SecurityIdentity &requester, const std::string &name);  
   
   std::list<cta::TapePool> selectAllTapePools(const SecurityIdentity &requester);
 
@@ -61,6 +87,24 @@ public:
   void clearDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path);
   
   std::string getDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path);
+  
+  
+  
+  std::list<cta::Tape> selectAllTapes(const SecurityIdentity &requester);
+
+  std::list<cta::AdminUser> selectAllAdminUsers(const SecurityIdentity &requester);
+
+  std::list<cta::AdminHost> selectAllAdminHosts(const SecurityIdentity &requester);
+  
+  std::list<cta::ArchivalJob> selectAllArchivalJobs(const SecurityIdentity &requester);
+
+  std::list<cta::RetrievalJob> selectAllRetrievalJobs(const SecurityIdentity &requester);
+
+  std::list<cta::LogicalLibrary> selectAllLogicalLibraries(const SecurityIdentity &requester);
+  
+//  cta::DirectoryIterator getDirectoryContents(const SecurityIdentity &requester, const std::string &dirPath);
+  
+  
 
 private:
   
@@ -106,6 +150,18 @@ private:
   void checkDirectoryContainsNoDirectories(const std::string &path);
   
   void checkDirectoryContainsNoFiles(const std::string &path);
+  
+  void checkTapeExists(const std::string &vid);
+  
+  void checkAdminUserExists(const cta::UserIdentity &user);
+  
+  void checkAdminHostExists(const std::string &hostName);
+  
+  void checkArchivalJobExists(const std::string &dstPath);
+  
+  void checkRetrievalJobExists(const std::string &dstUrl);
+  
+  void checkLogicalLibraryExists(const std::string &name);
   
 }; // struct SqliteDatabase
 
