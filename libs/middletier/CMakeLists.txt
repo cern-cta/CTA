@@ -43,7 +43,8 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   Tape.cpp
   TapePool.cpp
   UserIdentity.cpp
-  Utils.cpp)
+  Utils.cpp
+  Vfs.cpp)
 
 add_library (ctamiddletier SHARED
   ${MIDDLE_TIER_LIB_SRC_FILES})

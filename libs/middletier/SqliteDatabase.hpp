@@ -1,17 +1,19 @@
 #pragma once
 
+#include <list>
+
 #include <sqlite3.h>
 
+#include "AdminHost.hpp"
+#include "AdminUser.hpp"
 #include "ArchivalJob.hpp"
+#include "ArchiveRoute.hpp"
+#include "LogicalLibrary.hpp"
 #include "RetrievalJob.hpp"
-#include "FileSystemNode.hpp"
-#include "FileSystemStorageClasses.hpp"
-#include "MockAdminHostTable.hpp"
-#include "MockAdminUserTable.hpp"
-#include "MockArchiveRouteTable.hpp"
-#include "MockLogicalLibraryTable.hpp"
-#include "MockTapeTable.hpp"
-#include "MockTapePoolTable.hpp"
+#include "SecurityIdentity.hpp"
+#include "StorageClass.hpp"
+#include "Tape.hpp"
+#include "TapePool.hpp"
 
 namespace cta {
 
