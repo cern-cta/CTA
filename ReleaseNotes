@@ -126,6 +126,8 @@
     do not use rsyslog: the owner of the log files nsd.log, rmcd.log and vmgrd.log has to be
     manually changed to stage:st, otherwise nothing will be logged by the corresponding
     daemons after the upgrade.
+    Furthermore, if you run a secure Nameserver daemon, the /etc/krb5.keytab should
+    change ownership from root:root to stage:root.
 
   - Because of the GridFTP plugin rename, the server keys for all disk servers have now to be stored as:
     /etc/grid-security/castor-gridftp-dsi/castor-gridftp-dsi-cert.pem
@@ -215,8 +217,9 @@
             stager_account VARCHAR2(100) := '<your stager account>';
           BEGIN
             EXECUTE IMMEDIATE 'GRANT CONNECT, RESOURCE, aq_administrator_role TO ' || stager_account;
-            EXECUTE IMMEDIATE 'GRANT EXECUTE ON dbms_aq TO ' || stager_account;
-            EXECUTE IMMEDIATE 'GRANT EXECUTE ON dbms_aqadm TO ' || stager_account;
+            EXECUTE IMMEDIATE 'GRANT EXECUTE ON DBMS_AQ TO ' || stager_account;
+            EXECUTE IMMEDIATE 'GRANT EXECUTE ON DBMS_AQADM TO ' || stager_account;
+            EXECUTE IMMEDIATE 'GRANT EXECUTE ON DBMS_AQ_BQVIEW TO ' || stager_account;
             DBMS_AQADM.grant_system_privilege('ENQUEUE_ANY', stager_account, FALSE);
             DBMS_AQADM.grant_system_privilege('DEQUEUE_ANY', stager_account, FALSE);
           END;
