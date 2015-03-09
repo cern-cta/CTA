@@ -3358,8 +3358,7 @@ BEGIN
                           THEN (SELECT defaultFileSize FROM SvcClass WHERE id = inSvcClassId)
                           ELSE xsize
                      END,
-             status = dconst.SUBREQUEST_READYFORSCHED,
-             getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED
+             status = dconst.SUBREQUEST_READYFORSCHED
        WHERE id = inSrId;
     ELSE
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
@@ -3465,8 +3464,7 @@ BEGIN
                         THEN (SELECT defaultFileSize FROM SvcClass WHERE id = inSvcClassId)
                         ELSE xsize
                    END,
-           status = dconst.SUBREQUEST_READYFORSCHED,
-           getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED
+           status = dconst.SUBREQUEST_READYFORSCHED
      WHERE id = inSrId;
     -- reset the castorfile size, lastUpdateTime and nsOpenTime as the file was truncated
     UPDATE CastorFile
@@ -3868,7 +3866,10 @@ BEGIN
       -- some available diskcopy was found.
       logToDLF(varReqUUID, dlf.LVL_DEBUG, dlf.STAGER_DISKCOPY_FOUND, inFileId, inNsHost, 'stagerd',
               'SUBREQID=' || varSrUUID);
-      -- update SubRequest
+      -- update and archive SubRequest
+      UPDATE SubRequest
+         SET getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED
+       WHERE id = inSrId;
       archiveSubReq(inSrId, dconst.SUBREQUEST_FINISHED);
       -- all went fine, answer to client if needed
       IF varIsAnswered > 0 THEN
