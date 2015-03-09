@@ -50,6 +50,8 @@ private:
   
   void checkPathnameDoesNotExist(const std::string &dirPath);
   
+  std::list<cta::DirectoryEntry> getDirectoryEntries(const SecurityIdentity &requester, const std::string &dirPath);
+  
 }; // struct Vfs
 
 } // namespace cta

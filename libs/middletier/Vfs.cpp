@@ -66,7 +66,15 @@ cta::Vfs::Vfs() {
     std::ostringstream message;
     message << "Vfs() - mkdir " << m_fsDir << " error. Reason: \n" << strerror_r(errno, buf, 256);
     throw(Exception(message.str()));
-  }  
+  }
+  
+  rc = setxattr(m_fsDir.c_str(), "CTAStorageClass", (void *)"", 0, XATTR_REPLACE);
+  if(rc != 0) {
+    char buf[256];
+    std::ostringstream message;
+    message << "Vfs() - " << m_fsDir << " setxattr error. Reason: " << strerror_r(errno, buf, 256);
+    throw(Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -159,6 +167,7 @@ void cta::Vfs::createDirectory(const SecurityIdentity &requester, const std::str
   std::string path = cta::Utils::getEnclosingDirPath(pathname);
   std::string name = cta::Utils::getEnclosedName(pathname);
   checkDirectoryExists(m_fsDir+path);
+  std::string inheritedStorageClass = getDirectoryStorageClass(requester, path);
   
   int rc = mkdir((m_fsDir+pathname).c_str(), 0777);
   if(rc != 0) {
@@ -167,6 +176,8 @@ void cta::Vfs::createDirectory(const SecurityIdentity &requester, const std::str
     message << "createDirectory() - mkdir " << m_fsDir+pathname << " error. Reason: \n" << strerror_r(errno, buf, 256);
     throw(Exception(message.str()));
   }
+  
+  setDirectoryStorageClass(requester, pathname, inheritedStorageClass);
 }  
 
 //------------------------------------------------------------------------------
@@ -200,15 +211,75 @@ void cta::Vfs::deleteDirectory(const SecurityIdentity &requester, const std::str
 }  
 
 //------------------------------------------------------------------------------
-// stat
+// statDirectoryEntry
 //------------------------------------------------------------------------------
 cta::DirectoryEntry cta::Vfs::statDirectoryEntry(const SecurityIdentity &requester, const std::string &pathname) {
-  throw(Exception("statDirectoryEntry() - Not implemented!"));
-}  
+  std::string name = cta::Utils::getEnclosedName(pathname);
+  std::string path = cta::Utils::getEnclosingDirPath(pathname);
+  
+  struct stat stat_result;
+  int rc;
+  
+  rc = stat((m_fsDir+pathname).c_str(), &stat_result);
+  if(rc != 0) {
+    char buf[256];
+    std::ostringstream message;
+    message << "statDirectoryEntry() - " << m_fsDir+pathname << " stat error. Reason: " << strerror_r(errno, buf, 256);
+    throw(Exception(message.str()));
+  }
+  
+  cta::DirectoryEntry::EntryType entryType;
+  std::string storageClassName;
+  
+  if(S_ISDIR(stat_result.st_mode)) {
+    entryType = cta::DirectoryEntry::ENTRYTYPE_DIRECTORY;
+    storageClassName = getDirectoryStorageClass(requester, pathname);
+  }
+  else if(S_ISREG(stat_result.st_mode)) {
+    entryType = cta::DirectoryEntry::ENTRYTYPE_FILE;
+    storageClassName = getDirectoryStorageClass(requester, path);
+  }
+  else {
+    std::ostringstream message;
+    message << "statDirectoryEntry() - " << m_fsDir+pathname << " is not a directory nor a regular file";
+    throw(Exception(message.str()));
+  } 
+  
+  return cta::DirectoryEntry(entryType, name, storageClassName);
+}
+
+//------------------------------------------------------------------------------
+// getDirectoryEntries
+//------------------------------------------------------------------------------
+std::list<cta::DirectoryEntry> cta::Vfs::getDirectoryEntries(const SecurityIdentity &requester, const std::string &dirPath) {
+  struct dirent *entry;
+  DIR *dp;
+  dp = opendir((m_fsDir+dirPath).c_str());
+  if(dp == NULL) {   
+    char buf[256];
+    std::ostringstream message;
+    message << "getDirectoryEntries() - opendir " << m_fsDir+dirPath << " error. Reason: \n" << strerror_r(errno, buf, 256);
+    throw(Exception(message.str()));
+  }
+  
+  std::list<DirectoryEntry> entries;
+  
+  while((entry = readdir(dp))) {
+    if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+      const std::string dirEntryPathname = m_fsDir+dirPath+(entry->d_name);
+      entries.push_back(statDirectoryEntry(requester, dirEntryPathname));
+    }
+  }
+  
+  closedir(dp);  
+  return entries;
+}
 
 //------------------------------------------------------------------------------
 // getDirectoryContents
 //------------------------------------------------------------------------------
 cta::DirectoryIterator cta::Vfs::getDirectoryContents(const SecurityIdentity &requester, const std::string &dirPath) {
-  throw(Exception("statDirectoryEntry() - Not implemented!"));
+  cta::Utils::checkAbsolutePathSyntax(dirPath);
+  checkDirectoryExists(dirPath);
+  return cta::DirectoryIterator(getDirectoryEntries(requester, dirPath));
 }
