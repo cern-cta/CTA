@@ -68,7 +68,7 @@ cta::Vfs::Vfs() {
     throw(Exception(message.str()));
   }
   
-  rc = setxattr(m_fsDir.c_str(), "CTAStorageClass", (void *)"", 0, XATTR_REPLACE);
+  rc = setxattr(m_fsDir.c_str(), "user.CTAStorageClass", (void *)"", 0, 0);
   if(rc != 0) {
     char buf[256];
     std::ostringstream message;
@@ -91,7 +91,7 @@ void cta::Vfs::setDirectoryStorageClass(const SecurityIdentity &requester, const
   cta::Utils::checkAbsolutePathSyntax(path);
   checkDirectoryExists(m_fsDir+path);
   
-  int rc = setxattr((m_fsDir+path).c_str(), "CTAStorageClass", (void *)(storageClassName.c_str()), storageClassName.length(), XATTR_REPLACE);
+  int rc = setxattr((m_fsDir+path).c_str(), "user.CTAStorageClass", (void *)(storageClassName.c_str()), storageClassName.length(), 0);
   if(rc != 0) {
     char buf[256];
     std::ostringstream message;
@@ -107,7 +107,7 @@ void cta::Vfs::clearDirectoryStorageClass(const SecurityIdentity &requester, con
   cta::Utils::checkAbsolutePathSyntax(path);
   checkDirectoryExists(m_fsDir+path);
   
-  int rc = removexattr((m_fsDir+path).c_str(), "CTAStorageClass");
+  int rc = removexattr((m_fsDir+path).c_str(), "user.CTAStorageClass");
   if(rc != 0) {
     char buf[256];
     std::ostringstream message;
@@ -124,11 +124,11 @@ std::string cta::Vfs::getDirectoryStorageClass(const SecurityIdentity &requester
   checkDirectoryExists(m_fsDir+path);
   
   char value[1024];
-  int rc = getxattr((m_fsDir+path).c_str(), "CTAStorageClass", (void *)value, 1024);
+  int rc = getxattr((m_fsDir+path).c_str(), "user.CTAStorageClass", (void *)value, 1024);
   if(rc != 0) {
     char buf[256];
     std::ostringstream message;
-    message << "setDirectoryStorageClass() - " << m_fsDir+path << " setxattr error. Reason: " << strerror_r(errno, buf, 256);
+    message << "setDirectoryStorageClass() - " << m_fsDir+path << " getxattr error. Reason: " << strerror_r(errno, buf, 256);
     throw(Exception(message.str()));
   }
   return std::string(value);
