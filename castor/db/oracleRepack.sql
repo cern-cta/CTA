@@ -282,6 +282,9 @@ BEGIN
           END IF;
           isOngoing := True;
         EXCEPTION WHEN noValidCopyNbFound OR noMigrationRoute THEN
+          -- log
+          logToDLF(NULL, dlf.LVL_ERROR, dlf.REPACK_UNEXPECTED_EXCEPTION, segment.fileId, nsHostName, 'repackd',
+                   'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || SQLERRM ||'"');
           -- cleanup recall part if needed
           IF varWasRecalled = 0 THEN
             DELETE FROM RecallJob WHERE castorFile = cfId;

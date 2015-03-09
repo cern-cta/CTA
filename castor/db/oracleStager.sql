@@ -1806,8 +1806,19 @@ BEGIN
        AND MR.copyNb = destCopyNb
        AND (MR.isSmallFile = (CASE WHEN datasize < varSizeThreshold THEN 1 ELSE 0 END) OR MR.isSmallFile IS NULL);
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- No routing rule found means a user-visible error on the putDone or on the file close operation
-    raise_application_error(-20100, 'Cannot find an appropriate tape routing for this file, aborting');
+    DECLARE
+      varFileClassName VARCHAR2(2048);
+      varID INTEGER;
+      varClassId INTEGER;
+    BEGIN
+      SELECT id, classId, name INTO varID, varClassId, varFileClassName
+        FROM FileClass
+       WHERE id = (SELECT FileClass FROM CastorFile WHERE id = cfId);
+      -- No routing rule found means a user-visible error on the putDone or on the file close operation
+      raise_application_error(-20100, 'Cannot find an appropriate tape routing for this file, aborting - '
+                              || 'fileclass was ' || varFileClassName || ' (id ' || varId
+                              || ', classId ' || varClassId || ')');
+    END;
   END;
   -- Create tape copy and attach to the appropriate tape pool
   INSERT INTO MigrationJob (fileSize, creationTime, castorFile, originalVID, originalCopyNb, destCopyNb,
