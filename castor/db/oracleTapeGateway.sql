@@ -55,8 +55,7 @@ END;
 /
 
 /* attach the tapes to the migration mounts  */
-CREATE OR REPLACE
-PROCEDURE tg_attachTapesToMigMounts (
+CREATE OR REPLACE PROCEDURE tg_attachTapesToMigMounts (
   inStartFseqs IN castor."cnumList",
   inMountIds   IN castor."cnumList",
   inTapeVids   IN castor."strList") AS
@@ -81,50 +80,87 @@ END;
 /* update the db when a tape session is ended */
 CREATE OR REPLACE PROCEDURE tg_endTapeSession(inMountTransactionId IN NUMBER,
                                               inErrorCode IN INTEGER) AS
-  varMjIds "numList";    -- recall/migration job Ids
   varMountId INTEGER;
+  varVID VARCHAR2(2048);
+  varFirstOne BOOLEAN := TRUE;
+  varCfIds "numList";
+  varCfId INTEGER;
+  varMig BOOLEAN := FALSE;
+  RowLocked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (RowLocked, -54);
 BEGIN
   -- Let's assume this is a migration mount
   SELECT id INTO varMountId
     FROM MigrationMount
    WHERE mountTransactionId = inMountTransactionId
    FOR UPDATE;
-  -- yes, it's a migration mount: delete it and detach all selected jobs
-  UPDATE MigrationJob
-     SET status = tconst.MIGRATIONJOB_PENDING,
-         VID = NULL,
-         mountTransactionId = NULL
+  -- yes, it's a migration mount: select all jobs to be detached
+  varMig := TRUE;
+  SELECT castorFile BULK COLLECT INTO varCfIds
+    FROM MigrationJob
    WHERE mountTransactionId = inMountTransactionId
      AND status = tconst.MIGRATIONJOB_SELECTED;
-  DELETE FROM MigrationMount
-   WHERE id = varMountId;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- was not a migration session, let's try a recall one
-  DECLARE
-    varVID VARCHAR2(2048);
-    varRjIds "numList";
   BEGIN
     SELECT vid INTO varVID
       FROM RecallMount
      WHERE mountTransactionId = inMountTransactionId
      FOR UPDATE;
-    -- it was a recall mount
-    -- find and reset the all RecallJobs of files for this VID
-    UPDATE RecallJob
-       SET status = tconst.RECALLJOB_PENDING
-     WHERE castorFile IN (SELECT castorFile
-                            FROM RecallJob
-                           WHERE VID = varVID
-                             AND (status = tconst.RECALLJOB_SELECTED
-                               OR status = tconst.RECALLJOB_RETRYMOUNT));
-    DELETE FROM RecallMount WHERE vid = varVID;
+    -- it was a recall mount: find all RecallJobs of files for this VID
+    SELECT castorFile BULK COLLECT INTO varCfIds
+      FROM RecallJob
+     WHERE VID = varVID
+       AND (status = tconst.RECALLJOB_SELECTED
+            OR status = tconst.RECALLJOB_RETRYMOUNT);
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- reaching this point means that the tape session was already ended by somebody else
     -- This can typically be the VDQMChecker of the tapegateway. We log a warning and
     -- return ok, as there is nothing to do anyway
     logToDLF(NULL, dlf.LVL_NOTICE, 'endTapeSession: no recall or migration mount found',
              0, '', 'tapegatewayd', 'mountTransactionId=' || TO_CHAR(inMountTransactionId));
+    RETURN;
   END;
+  -- Now perform the update, taking a lock for each castorFile
+  FOR i IN 1..varCfIds.COUNT LOOP
+    BEGIN
+      IF varFirstOne THEN
+        -- on the first item, we take a blocking lock as we are sure that we will not
+        -- deadlock and we would like to process at least one item to not loop endlessly
+        SELECT id INTO varCfId FROM CastorFile WHERE id = varCfIds(i) FOR UPDATE;
+        varFirstOne := FALSE;
+      ELSE
+        -- on the other items, we go for a non blocking lock. If we get it, that's good
+        -- and we process this entry within the same session. If we do not get the lock,
+        -- then we close the session here and go for a new one.
+        -- This will prevent dead locks while ensuring that a minimal number of
+        -- commits is performed.
+        SELECT id INTO varCfId FROM CastorFile WHERE id = varCfIds(i) FOR UPDATE NOWAIT;
+      END IF;
+      IF varMig THEN
+        UPDATE MigrationJob
+           SET status = tconst.MIGRATIONJOB_PENDING,
+               VID = NULL,
+               mountTransactionId = NULL
+         WHERE castorFile = varCfId;
+      ELSE
+        UPDATE RecallJob
+           SET status = tconst.RECALLJOB_PENDING
+         WHERE castorFile = varCfId;
+      END IF;
+    EXCEPTION WHEN RowLocked THEN
+      -- Release previous locks
+      COMMIT;
+      varFirstOne := TRUE;
+    END;
+  END LOOP;
+  -- Finally delete the mount and do the final commit
+  IF varMig THEN
+    DELETE FROM MigrationMount WHERE id = varMountId;
+  ELSE
+    DELETE FROM RecallMount WHERE vid = varVID;
+  END IF;
+  COMMIT;
 END;
 /
 
@@ -135,7 +171,6 @@ CREATE OR REPLACE PROCEDURE tg_endTapeSessionAT(inMountTransactionId IN NUMBER,
   PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
   tg_endTapeSession(inMountTransactionId, inErrorCode);
-  COMMIT;
 END;
 /
 
@@ -371,7 +406,6 @@ BEGIN
  FOR i IN 1..inMountTransactionIds.COUNT LOOP
    tg_endTapeSession(inMountTransactionIds(i), 0);
  END LOOP;
- COMMIT;
 END;
 /
 
