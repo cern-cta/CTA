@@ -6,6 +6,7 @@
 #include "MockDatabase.hpp"
 #include "SqliteDatabase.hpp"
 #include "StorageClass.hpp"
+#include "Vfs.hpp"
 
 namespace cta {
 
@@ -20,7 +21,7 @@ public:
    *
    * @param db The database of the mock middle-tier.
    */
-  SqliteMiddleTierUser(MockDatabase &db, SqliteDatabase &sqlite_db);
+  SqliteMiddleTierUser(Vfs &vfs, SqliteDatabase &sqlite_db);
 
   /**
    * Destructor.
@@ -227,13 +228,10 @@ public:
     const std::string &dstUrl);
 
 private:
-
-  /**
-   * The database of the mock middle-tier.
-   */
-  MockDatabase &m_db;
   
   SqliteDatabase &m_sqlite_db;
+  
+  Vfs &m_vfs;
 
   /**
    * Gets the file system node corresponding to the specified path.
@@ -307,19 +305,6 @@ private:
   void checkUserIsAuthorisedToArchive(
     const SecurityIdentity &user,
     const FileSystemNode &dstDir);
-
-  /**
-   * Throws an exception if at least one of the the specified file names are
-   * contained within the specified directory.
-   *
-   * @param dirPath The absolute path of the directory.
-   * @param dirNode The file-system node representing the directory.
-   * @param fileNames The file names to be searched for.
-   */
-void checkDirNodeDoesNotContainFiles(
-  const std::string &dirPath,
-  const FileSystemNode &dirNode, 
-  const std::list<std::string> &fileNames);
 
 }; // class SqliteMiddleTierUser
 

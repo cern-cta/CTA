@@ -185,8 +185,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
     ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
 
-  MockDatabase db;
-  SqliteMiddleTierUser userApi(db,sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierUser userApi(vfs,sqlitedb);
   ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, "/",
     storageClassName));
 

@@ -37,6 +37,26 @@ void cta::Vfs::checkDirectoryExists(const std::string &dirPath) {
 }
 
 //------------------------------------------------------------------------------
+// isExistingDirectory
+//------------------------------------------------------------------------------
+bool cta::Vfs::isExistingDirectory(const SecurityIdentity &requester, const std::string &dirPath) {
+  cta::Utils::checkAbsolutePathSyntax(dirPath);
+  struct stat stat_result;
+  int rc;
+  
+  rc = stat((m_fsDir+dirPath).c_str(), &stat_result);
+  if(rc != 0) {
+    return false;
+  }
+  
+  if(!S_ISDIR(stat_result.st_mode)) {
+    return false;
+  }
+  
+  return true;
+}
+
+//------------------------------------------------------------------------------
 // checkPathnameDoesNotExist
 //------------------------------------------------------------------------------
 void cta::Vfs::checkPathnameDoesNotExist(const std::string &dirPath) {

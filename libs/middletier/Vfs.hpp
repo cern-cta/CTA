@@ -38,7 +38,9 @@ public:
   
   cta::DirectoryEntry statDirectoryEntry(const SecurityIdentity &requester, const std::string &pathname);
   
-  cta::DirectoryIterator getDirectoryContents(const SecurityIdentity &requester, const std::string &dirPath); 
+  cta::DirectoryIterator getDirectoryContents(const SecurityIdentity &requester, const std::string &dirPath);
+  
+  bool isExistingDirectory(const SecurityIdentity &requester, const std::string &dirPath);
 
 private:
   
