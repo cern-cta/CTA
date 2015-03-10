@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <iostream>
 #include <sstream>
 #include <stdlib.h>
 #include <string.h>
@@ -68,7 +69,7 @@ cta::Vfs::Vfs() {
     throw(Exception(message.str()));
   }
   
-  rc = setxattr(m_fsDir.c_str(), "user.CTAStorageClass", (void *)"", 0, 0);
+  rc = setxattr(m_fsDir.c_str(), "user.CTAStorageClass", "", 0, 0);
   if(rc != 0) {
     char buf[256];
     std::ostringstream message;
@@ -91,7 +92,7 @@ void cta::Vfs::setDirectoryStorageClass(const SecurityIdentity &requester, const
   cta::Utils::checkAbsolutePathSyntax(path);
   checkDirectoryExists(m_fsDir+path);
   
-  int rc = setxattr((m_fsDir+path).c_str(), "user.CTAStorageClass", (void *)(storageClassName.c_str()), storageClassName.length(), 0);
+  int rc = setxattr((m_fsDir+path).c_str(), "user.CTAStorageClass", storageClassName.c_str(), storageClassName.length(), 0);
   if(rc != 0) {
     char buf[256];
     std::ostringstream message;
@@ -107,11 +108,11 @@ void cta::Vfs::clearDirectoryStorageClass(const SecurityIdentity &requester, con
   cta::Utils::checkAbsolutePathSyntax(path);
   checkDirectoryExists(m_fsDir+path);
   
-  int rc = removexattr((m_fsDir+path).c_str(), "user.CTAStorageClass");
+  int rc = setxattr((m_fsDir+path).c_str(), "user.CTAStorageClass", "", 0, 0);
   if(rc != 0) {
     char buf[256];
     std::ostringstream message;
-    message << "setDirectoryStorageClass() - " << m_fsDir+path << " setxattr error. Reason: " << strerror_r(errno, buf, 256);
+    message << "clearDirectoryStorageClass() - " << m_fsDir+path << " setxattr error. Reason: " << strerror_r(errno, buf, 256);
     throw(Exception(message.str()));
   }
 }  
@@ -124,11 +125,12 @@ std::string cta::Vfs::getDirectoryStorageClass(const SecurityIdentity &requester
   checkDirectoryExists(m_fsDir+path);
   
   char value[1024];
-  int rc = getxattr((m_fsDir+path).c_str(), "user.CTAStorageClass", (void *)value, 1024);
-  if(rc != 0) {
+  bzero(value, 1024);
+  int rc = getxattr((m_fsDir+path).c_str(), "user.CTAStorageClass", value, 1024);
+  if(rc == -1) {
     char buf[256];
     std::ostringstream message;
-    message << "setDirectoryStorageClass() - " << m_fsDir+path << " getxattr error. Reason: " << strerror_r(errno, buf, 256);
+    message << "getDirectoryStorageClass() - " << m_fsDir+path << " getxattr error. Reason: " << strerror_r(errno, buf, 256);
     throw(Exception(message.str()));
   }
   return std::string(value);
@@ -142,8 +144,8 @@ void cta::Vfs::createFile(const SecurityIdentity &requester, const std::string &
   std::string path = cta::Utils::getEnclosingDirPath(pathname);
   std::string name = cta::Utils::getEnclosedName(pathname);
   checkDirectoryExists(m_fsDir+path);
-  
-  int fd = open((m_fsDir+pathname).c_str(), O_WRONLY|O_CREAT|O_NOCTTY|O_NONBLOCK, 0666);
+  checkPathnameDoesNotExist(m_fsDir+pathname);
+  int fd = open((m_fsDir+pathname).c_str(), O_WRONLY|O_CREAT|O_NOCTTY|O_NONBLOCK, mode);
   if(fd<0) {
     char buf[256];
     std::ostringstream message;
@@ -169,7 +171,7 @@ void cta::Vfs::createDirectory(const SecurityIdentity &requester, const std::str
   checkDirectoryExists(m_fsDir+path);
   std::string inheritedStorageClass = getDirectoryStorageClass(requester, path);
   
-  int rc = mkdir((m_fsDir+pathname).c_str(), 0777);
+  int rc = mkdir((m_fsDir+pathname).c_str(), mode);
   if(rc != 0) {
     char buf[256];
     std::ostringstream message;
@@ -251,11 +253,10 @@ cta::DirectoryEntry cta::Vfs::statDirectoryEntry(const SecurityIdentity &request
 //------------------------------------------------------------------------------
 // getDirectoryEntries
 //------------------------------------------------------------------------------
-std::list<cta::DirectoryEntry> cta::Vfs::getDirectoryEntries(const SecurityIdentity &requester, const std::string &dirPath) {
-  struct dirent *entry;
+std::list<cta::DirectoryEntry> cta::Vfs::getDirectoryEntries(const SecurityIdentity &requester, const std::string &dirPath) {  
   DIR *dp;
   dp = opendir((m_fsDir+dirPath).c_str());
-  if(dp == NULL) {   
+  if(dp == NULL) {
     char buf[256];
     std::ostringstream message;
     message << "getDirectoryEntries() - opendir " << m_fsDir+dirPath << " error. Reason: \n" << strerror_r(errno, buf, 256);
@@ -263,10 +264,11 @@ std::list<cta::DirectoryEntry> cta::Vfs::getDirectoryEntries(const SecurityIdent
   }
   
   std::list<DirectoryEntry> entries;
+  struct dirent *entry;
   
   while((entry = readdir(dp))) {
     if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-      const std::string dirEntryPathname = m_fsDir+dirPath+(entry->d_name);
+      const std::string dirEntryPathname = dirPath+(entry->d_name);
       entries.push_back(statDirectoryEntry(requester, dirEntryPathname));
     }
   }
