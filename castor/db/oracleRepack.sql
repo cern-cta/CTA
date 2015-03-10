@@ -497,31 +497,25 @@ CREATE OR REPLACE PROCEDURE repackManager AS
   varRepackVID VARCHAR2(10);
   varStartTime NUMBER;
   varTapeStartTime NUMBER;
-  varNbRepacks INTEGER;
+  varNbRepacks INTEGER := 0;
   varNbFiles INTEGER;
   varNbFailures INTEGER;
 BEGIN
-  SELECT count(*) INTO varNbRepacks
-    FROM StageRepackRequest
-   WHERE status = tconst.REPACK_STARTING;
-  IF varNbRepacks > 0 THEN
-    -- this shouldn't happen, possibly this procedure is running in parallel: give up and log
-    -- "repackManager: Repack processes still starting, no new ones will be started for this round"
-    logToDLF(NULL, dlf.LVL_NOTICE, dlf.REPACK_JOB_ONGOING, 0, '', 'repackd', '');
-    RETURN;
-  END IF;
   varStartTime := getTime();
   WHILE TRUE LOOP
     varTapeStartTime := getTime();
     BEGIN
       -- get an outstanding repack to start, and lock to prevent
-      -- a concurrent abort (there cannot be anyone else)
+      -- a concurrent abort (there cannot be anyone else).
+      -- Note that we include repack requests in status STARTING,
+      -- which means requests that got somehow interrupted in their
+      -- processing.
       SELECT reqId, repackVID INTO varReqUUID, varRepackVID
         FROM StageRepackRequest
        WHERE id = (SELECT id
                      FROM (SELECT id
                              FROM StageRepackRequest
-                            WHERE status = tconst.REPACK_SUBMITTED
+                            WHERE status IN (tconst.REPACK_SUBMITTED, tconst.REPACK_STARTING)
                             ORDER BY creationTime ASC)
                     WHERE ROWNUM < 2)
          FOR UPDATE;
