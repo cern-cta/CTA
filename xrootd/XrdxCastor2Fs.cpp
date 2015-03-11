@@ -34,6 +34,7 @@
 #include "XrdSys/XrdSysPlugin.hh"
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdSfs/XrdSfsAio.hh"
+#include "XrdSfs/XrdSfsFlags.hh"
 #include "XrdCl/XrdClFileSystem.hh"
 #include "XrdOuc/XrdOucTList.hh"
 #include "XrdOuc/XrdOucStream.hh"
@@ -1087,10 +1088,9 @@ XrdxCastor2Fs::stat(const char* path,
       buf->st_mode = static_cast<mode_t>(0);
       buf->st_dev  = 0;
       buf->st_ino  = 0;
-      // TODO: enable this after XRootD 4.0.2 - extend querying support for
-      // files on tape by returning also the backup exists flag
-      // buf->st_rdev = XRDSFS_HASBKUP;
-      // buf->st_rdev &= XRDSFS_OFFLINE;
+      // Extend querying support for files on tape by returning also the
+      // backup exists and is offline flags
+      buf->st_rdev = XRDSFS_HASBKUP | XRDSFS_OFFLINE;
     }
 
     xcastor_debug("map_path=%s, stage_status=%s",
