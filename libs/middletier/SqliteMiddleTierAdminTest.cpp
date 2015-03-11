@@ -21,7 +21,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, createStorageClass_new) {
   using namespace cta;
 
   SqliteDatabase sqlitedb;
-  SqliteMiddleTierAdmin adminApi(sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierAdmin adminApi(vfs, sqlitedb);
   const SecurityIdentity requester;
 
   {
@@ -53,7 +54,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
   using namespace cta;
 
   SqliteDatabase sqlitedb;
-  SqliteMiddleTierAdmin adminApi(sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierAdmin adminApi(vfs, sqlitedb);
   const SecurityIdentity requester;
 
   {
@@ -87,7 +89,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
   using namespace cta;
 
   SqliteDatabase sqlitedb;
-  SqliteMiddleTierAdmin adminApi(sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierAdmin adminApi(vfs, sqlitedb);
   const SecurityIdentity requester;
 
   {
@@ -120,7 +123,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteStorageClass_existing) {
   using namespace cta;
 
   SqliteDatabase sqlitedb;
-  SqliteMiddleTierAdmin adminApi(sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierAdmin adminApi(vfs, sqlitedb);
   const SecurityIdentity requester;
 
   {
@@ -159,7 +163,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
   using namespace cta;
 
   SqliteDatabase sqlitedb;
-  SqliteMiddleTierAdmin adminApi(sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierAdmin adminApi(vfs, sqlitedb);
   const SecurityIdentity requester;
 
   {
@@ -185,7 +190,6 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
     ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
 
-  Vfs vfs;
   SqliteMiddleTierUser userApi(vfs,sqlitedb);
   ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, "/",
     storageClassName));
@@ -219,7 +223,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteStorageClass_in_use_by_route)
   using namespace cta;
 
   SqliteDatabase sqlitedb;
-  SqliteMiddleTierAdmin adminApi(sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierAdmin adminApi(vfs, sqlitedb);
   const SecurityIdentity requester;
 
   {
@@ -313,7 +318,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteStorageClass_non_existing) {
   using namespace cta;
 
   SqliteDatabase sqlitedb;
-  SqliteMiddleTierAdmin adminApi(sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierAdmin adminApi(vfs, sqlitedb);
   const SecurityIdentity requester;
 
   {
@@ -336,7 +342,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteTapePool_in_use) {
   using namespace cta;
 
   SqliteDatabase sqlitedb;
-  SqliteMiddleTierAdmin adminApi(sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierAdmin adminApi(vfs, sqlitedb);
   const SecurityIdentity requester;
 
   {
@@ -394,7 +401,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, createArchiveRoute_new) {
   using namespace cta;
 
   SqliteDatabase sqlitedb;
-  SqliteMiddleTierAdmin adminApi(sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierAdmin adminApi(vfs, sqlitedb);
   const SecurityIdentity requester;
 
   {
@@ -439,7 +447,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
   using namespace cta;
 
   SqliteDatabase sqlitedb;
-  SqliteMiddleTierAdmin adminApi(sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierAdmin adminApi(vfs, sqlitedb);
   const SecurityIdentity requester;
 
   {
@@ -486,7 +495,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteArchiveRoute_existing) {
   using namespace cta;
 
   SqliteDatabase sqlitedb;
-  SqliteMiddleTierAdmin adminApi(sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierAdmin adminApi(vfs, sqlitedb);
   const SecurityIdentity requester;
 
   {
@@ -539,7 +549,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, deleteArchiveRoute_non_existing) {
   using namespace cta;
 
   SqliteDatabase sqlitedb;
-  SqliteMiddleTierAdmin adminApi(sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierAdmin adminApi(vfs, sqlitedb);
   const SecurityIdentity requester;
 
   {
@@ -571,7 +582,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, createTape_new) {
   using namespace cta;
 
   SqliteDatabase sqlitedb;
-  SqliteMiddleTierAdmin adminApi(sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierAdmin adminApi(vfs, sqlitedb);
   const SecurityIdentity requester;
 
   {
@@ -650,7 +662,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
   using namespace cta;
 
   SqliteDatabase sqlitedb;
-  SqliteMiddleTierAdmin adminApi(sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierAdmin adminApi(vfs, sqlitedb);
   const SecurityIdentity requester;
 
   {
@@ -701,7 +714,8 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest, createTape_new_non_existing_pool) {
   using namespace cta;
 
   SqliteDatabase sqlitedb;
-  SqliteMiddleTierAdmin adminApi(sqlitedb);
+  Vfs vfs;
+  SqliteMiddleTierAdmin adminApi(vfs, sqlitedb);
   const SecurityIdentity requester;
 
   {

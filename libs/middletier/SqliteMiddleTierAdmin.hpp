@@ -3,6 +3,7 @@
 #include "MiddleTierAdmin.hpp"
 #include "MockDatabase.hpp"
 #include "SqliteDatabase.hpp"
+#include "Vfs.hpp"
 
 namespace cta {
 
@@ -17,7 +18,7 @@ public:
    *
    * @param db The database of the mock middle-tier.
    */
-  SqliteMiddleTierAdmin(SqliteDatabase &sqlite_db);
+  SqliteMiddleTierAdmin(Vfs &vfs, SqliteDatabase &sqlite_db);
 
   /**
    * Destructor.
@@ -315,6 +316,8 @@ protected:
   bool isAnExistingDirectory(const std::string &path) const throw();
   
   SqliteDatabase &m_sqlite_db;
+  
+  Vfs &m_vfs;
 
 }; // class SqliteMiddleTierAdmin
 

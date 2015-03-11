@@ -72,6 +72,35 @@ void cta::Vfs::checkPathnameDoesNotExist(const std::string &dirPath) {
 }
 
 //------------------------------------------------------------------------------
+// checkStorageClassIsNotInUse
+//------------------------------------------------------------------------------
+void cta::Vfs::checkStorageClassIsNotInUse(const SecurityIdentity &requester, const std::string &storageClass, const std::string &dirPath) {
+  if(getDirectoryStorageClass(requester, dirPath)==storageClass) {
+    std::ostringstream message;
+    message << "checkStorageClassIsNotInUse() - " << dirPath << " has the " << storageClass << " storage class.";
+    throw(Exception(message.str()));
+  }
+  
+  struct dirent *entry;
+  DIR *dp = opendir((m_fsDir+dirPath).c_str());
+  if (dp == NULL) {
+    char buf[256];
+    std::ostringstream message;
+    message << "checkStorageClassIsNotInUse() - opendir " << m_fsDir+dirPath << " error. Reason: \n" << strerror_r(errno, buf, 256);
+    throw(Exception(message.str()));
+  }
+   
+  while((entry = readdir(dp))) {
+    if(entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+      const std::string dirEntryPathname = dirPath+(entry->d_name);
+      checkStorageClassIsNotInUse(requester, storageClass, dirEntryPathname);
+    }
+  }
+
+  closedir(dp);
+}
+
+//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::Vfs::Vfs() {  

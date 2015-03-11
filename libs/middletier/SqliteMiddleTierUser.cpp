@@ -24,7 +24,7 @@ cta::SqliteMiddleTierUser::~SqliteMiddleTierUser() throw() {
 //------------------------------------------------------------------------------
 void cta::SqliteMiddleTierUser::createDirectory(const SecurityIdentity &requester,
   const std::string &dirPath) {
-  m_vfs.clearDirectoryStorageClass(requester, dirPath);
+  m_vfs.createDirectory(requester, dirPath, 0777);
 }
 
 //------------------------------------------------------------------------------

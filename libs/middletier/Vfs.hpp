@@ -43,6 +43,8 @@ public:
   bool isExistingDirectory(const SecurityIdentity &requester, const std::string &dirPath);
   
   std::string getVidOfFile(const SecurityIdentity &requester, const std::string &pathname, uint16_t copyNb);
+  
+  void checkStorageClassIsNotInUse(const SecurityIdentity &requester, const std::string &storageClass, const std::string &dirPath);
 
 private:
   

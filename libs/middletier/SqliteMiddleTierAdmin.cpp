@@ -8,8 +8,8 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::SqliteMiddleTierAdmin::SqliteMiddleTierAdmin(SqliteDatabase &sqlite_db):
-  m_sqlite_db(sqlite_db) {
+cta::SqliteMiddleTierAdmin::SqliteMiddleTierAdmin(Vfs &vfs, SqliteDatabase &sqlite_db):
+  m_sqlite_db(sqlite_db), m_vfs(vfs) {
 }
 
 //------------------------------------------------------------------------------
@@ -86,6 +86,7 @@ void cta::SqliteMiddleTierAdmin::createStorageClass(
 //------------------------------------------------------------------------------
 void cta::SqliteMiddleTierAdmin::deleteStorageClass(const SecurityIdentity &requester,
   const std::string &name) {
+  m_vfs.checkStorageClassIsNotInUse(requester, name, "/");
   m_sqlite_db.deleteStorageClass(requester, name);
 }
 

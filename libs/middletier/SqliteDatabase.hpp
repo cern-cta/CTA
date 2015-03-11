@@ -93,28 +93,7 @@ public:
   
   cta::TapePool getTapePoolByName(const SecurityIdentity &requester, const std::string &name);
   
-  cta::Tape getTapeByVid(const SecurityIdentity &requester, const std::string &vid);
-  
-  
-  
-  
-  void setDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path, const std::string &storageClassName);
-  
-  void clearDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path);
-  
-  std::string getDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path);
-  
-  void insertFile(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode);
-  
-  void insertDirectory(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode);
-  
-  void deleteFile(const SecurityIdentity &requester, const std::string &pathname);
-  
-  void deleteDirectory(const SecurityIdentity &requester, const std::string &pathname);    
-  
-//  cta::DirectoryIterator getDirectoryContents(const SecurityIdentity &requester, const std::string &dirPath);
-  
-  
+  cta::Tape getTapeByVid(const SecurityIdentity &requester, const std::string &vid);  
 
 private:
   
@@ -160,21 +139,6 @@ private:
   void checkRetrievalJobExists(const std::string &dstUrl);
   
   void checkLogicalLibraryExists(const std::string &name);
-  
-  
-  
-  
-  void checkFileExists(const std::string &path, const std::string &name);
-  
-  void checkDirectoryExists(const std::string &path);
-  
-  void checkDirectoryContainsNoDirectories(const std::string &path);
-  
-  void checkDirectoryContainsNoFiles(const std::string &path);
-  
-  void createDirectoryTable();
-  
-  void createFileTable();
   
 }; // struct SqliteDatabase
 
