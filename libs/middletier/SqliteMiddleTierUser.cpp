@@ -109,10 +109,11 @@ void cta::SqliteMiddleTierUser::archiveToDirectory(
     const std::string &dstFileName = *itor;
     m_vfs.createFile(requester, dstDir+dstFileName, 0666);
   }
-  
+  std::string storageClass = m_vfs.getDirectoryStorageClass(requester, dstDir);
+  cta::ArchiveRoute route = m_sqlite_db.getArchiveRouteOfStorageClass(requester, storageClass, 1);
   for(std::list<std::string>::const_iterator itor = srcUrls.begin(); itor != srcUrls.end(); itor++) {
     const std::string &srcFileName = *itor;
-    m_sqlite_db.insertArchivalJob(requester, srcFileName, dstDir);
+    m_sqlite_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstDir);
   }
 }
 
@@ -131,7 +132,9 @@ void cta::SqliteMiddleTierUser::archiveToFile(
   const std::string &srcFileName = srcUrls.front();
   
   m_vfs.createFile(requester, dstFile, 0666);
-  m_sqlite_db.insertArchivalJob(requester, srcFileName, dstFile);
+  std::string storageClass = m_vfs.getDirectoryStorageClass(requester, cta::Utils::getEnclosingDirPath(dstFile));
+  cta::ArchiveRoute route = m_sqlite_db.getArchiveRouteOfStorageClass(requester, storageClass, 1);
+  m_sqlite_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstFile);
 }
 
 //------------------------------------------------------------------------------
@@ -140,7 +143,7 @@ void cta::SqliteMiddleTierUser::archiveToFile(
 std::map<cta::TapePool, std::list<cta::ArchivalJob> >
   cta::SqliteMiddleTierUser::getArchivalJobs(
   const SecurityIdentity &requester) const {
-  throw(Exception("Not Implemented!"));
+  return m_sqlite_db.selectAllArchivalJobs(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -149,8 +152,7 @@ std::map<cta::TapePool, std::list<cta::ArchivalJob> >
 std::list<cta::ArchivalJob> cta::SqliteMiddleTierUser::getArchivalJobs(
   const SecurityIdentity &requester,
   const std::string &tapePoolName) const {
-  //TODO
-  return m_sqlite_db.selectAllArchivalJobs(requester);
+  return (m_sqlite_db.selectAllArchivalJobs(requester))[m_sqlite_db.getTapePoolByName(requester, tapePoolName)];
 }
 
 //------------------------------------------------------------------------------
@@ -168,8 +170,11 @@ void cta::SqliteMiddleTierUser::deleteArchivalJob(
 void cta::SqliteMiddleTierUser::retrieve(
   const SecurityIdentity &requester,
   const std::list<std::string> &srcPaths,
-  const std::string &dstUrl) {
-  //TODO
+  const std::string &dstUrl) { //we consider only the case in which dstUrl is a directory so that we accept multiple source files
+  for(std::list<std::string>::const_iterator it=srcPaths.begin(); it!=srcPaths.end(); it++) {
+    std::string vid = m_vfs.getVidOfFile(requester, *it, 1); //we only consider 1st copy
+    m_sqlite_db.insertRetrievalJob(requester, vid, *it, dstUrl);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -178,7 +183,7 @@ void cta::SqliteMiddleTierUser::retrieve(
 std::map<cta::Tape, std::list<cta::RetrievalJob> >
   cta::SqliteMiddleTierUser::getRetrievalJobs(
   const SecurityIdentity &requester) const {
-  throw(Exception("Not Implemented!"));
+  return m_sqlite_db.selectAllRetrievalJobs(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -187,8 +192,7 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> >
 std::list<cta::RetrievalJob> cta::SqliteMiddleTierUser::getRetrievalJobs(
   const SecurityIdentity &requester,
   const std::string &vid) const {
-  //TODO
-  return m_sqlite_db.selectAllRetrievalJobs(requester);
+  return m_sqlite_db.selectAllRetrievalJobs(requester)[m_sqlite_db.getTapeByVid(requester, vid)];
 }
 
 //------------------------------------------------------------------------------

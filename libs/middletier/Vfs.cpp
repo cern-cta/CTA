@@ -305,3 +305,10 @@ cta::DirectoryIterator cta::Vfs::getDirectoryContents(const SecurityIdentity &re
   checkDirectoryExists(dirPath);
   return cta::DirectoryIterator(getDirectoryEntries(requester, dirPath));
 }
+
+//------------------------------------------------------------------------------
+// getDirectoryContents
+//------------------------------------------------------------------------------
+std::string cta::Vfs::getVidOfFile(const SecurityIdentity &requester, const std::string &pathname, uint16_t copyNb) {
+  return "T00001"; //everything is on one tape for the moment:)
+}

@@ -41,6 +41,8 @@ public:
   cta::DirectoryIterator getDirectoryContents(const SecurityIdentity &requester, const std::string &dirPath);
   
   bool isExistingDirectory(const SecurityIdentity &requester, const std::string &dirPath);
+  
+  std::string getVidOfFile(const SecurityIdentity &requester, const std::string &pathname, uint16_t copyNb);
 
 private:
   

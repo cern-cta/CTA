@@ -1,6 +1,7 @@
 #pragma once
 
 #include <list>
+#include <map>
 
 #include <sqlite3.h>
 
@@ -46,9 +47,9 @@ public:
   
   void insertAdminHost(const SecurityIdentity &requester, const std::string &hostName, const std::string &comment);
   
-  void insertArchivalJob(const SecurityIdentity &requester, const std::string &srcUrl, const std::string &dstPath);
+  void insertArchivalJob(const SecurityIdentity &requester, const std::string &tapepool, const std::string &srcUrl, const std::string &dstPath);
   
-  void insertRetrievalJob(const SecurityIdentity &requester, const std::string &srcPath, const std::string &dstUrl);
+  void insertRetrievalJob(const SecurityIdentity &requester, const std::string &vid, const std::string &srcPath, const std::string &dstUrl);
   
   void insertLogicalLibrary(const SecurityIdentity &requester, const std::string &name, const std::string &comment);  
   
@@ -82,11 +83,17 @@ public:
 
   std::list<cta::AdminHost> selectAllAdminHosts(const SecurityIdentity &requester);
   
-  std::list<cta::ArchivalJob> selectAllArchivalJobs(const SecurityIdentity &requester);
+  std::map<cta::TapePool, std::list<cta::ArchivalJob> > selectAllArchivalJobs(const SecurityIdentity &requester);
 
-  std::list<cta::RetrievalJob> selectAllRetrievalJobs(const SecurityIdentity &requester);
+  std::map<cta::Tape, std::list<cta::RetrievalJob> > selectAllRetrievalJobs(const SecurityIdentity &requester);
 
   std::list<cta::LogicalLibrary> selectAllLogicalLibraries(const SecurityIdentity &requester);
+  
+  cta::ArchiveRoute getArchiveRouteOfStorageClass(const SecurityIdentity &requester, const std::string &storageClassName, const  uint16_t copyNb);
+  
+  cta::TapePool getTapePoolByName(const SecurityIdentity &requester, const std::string &name);
+  
+  cta::Tape getTapeByVid(const SecurityIdentity &requester, const std::string &vid);
   
   
   

@@ -39,6 +39,13 @@ public:
     const std::string &comment);
 
   /**
+   * Less than operator.
+   *
+   * @param rhs The right-hand side of the operator.
+   */
+  bool operator<(const Tape &rhs) const throw();
+
+  /**
    * Returns the volume identifier of the tape.
    *
    * @return The volume identifier of the tape.
