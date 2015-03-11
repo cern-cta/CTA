@@ -143,7 +143,7 @@ try:
         rjsd = {None:'NORECALLJOB', 1:'RECALLJOB PENDING', 2:'RECALLJOB SELECTED', 3:'RECALLJOB RETRYMOUNT'}
         cftsd = {None:'NOCASTORFILE', 0:'CASTORFILE_NOTONTAPE', 1:'CASTORFILE_ONTAPE', 2:'CASTORFILE_DISKONLY'}
 
-        output = 'DiskCopy: %s (%s) DiskCopySize: %s CastorfileId: %s CastorfileSize: %s CastorfileTapeStatus: %s CastorfileLastMTime: %s CastorfileNSOpenTime: %1.6f Svcclass: %s DiskCopyPath: %s:%s%s (%s/%s) FileClass: %s GcWeight: %d' \
+        output = 'DiskCopy: %s (%s) DiskCopySize: %s CastorfileId: %s CastorfileSize: %s CastorfileTapeStatus: %s CastorfileLastMTime: %s CastorfileNSOpenTime: %1.6f Svcclass: %s DiskCopyPath: %s:%s%s (%s/%s) FileClass: %s GcWeight: %s' \
                  % (did, dscsd[dst], dcs, dcf, cfs, cftsd[cftapestatus], castor_tools.secsToDate(cfctime), cfnsopentime, svcname, dsn,fmt,dp, dssd[dss], fssd[fss], cmfc, dcgcw)
         print '<-- Disk Cache Information -->'
         print output
