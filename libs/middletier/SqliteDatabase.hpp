@@ -93,7 +93,9 @@ public:
   
   cta::TapePool getTapePoolByName(const SecurityIdentity &requester, const std::string &name);
   
-  cta::Tape getTapeByVid(const SecurityIdentity &requester, const std::string &vid);  
+  cta::Tape getTapeByVid(const SecurityIdentity &requester, const std::string &vid);
+  
+  cta::StorageClass getStorageClassByName(const SecurityIdentity &requester, const std::string &name);
 
 private:
   

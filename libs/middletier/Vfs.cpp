@@ -92,7 +92,13 @@ void cta::Vfs::checkStorageClassIsNotInUse(const SecurityIdentity &requester, co
    
   while((entry = readdir(dp))) {
     if(entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-      const std::string dirEntryPathname = dirPath+(entry->d_name);
+      std::string dirEntryPathname;
+      if(dirPath.at(dirPath.length()-1) == '/') {
+        dirEntryPathname = dirPath+(entry->d_name);
+      }
+      else {
+        dirEntryPathname = dirPath+"/"+(entry->d_name);
+      }
       checkStorageClassIsNotInUse(requester, storageClass, dirEntryPathname);
     }
   }
@@ -249,7 +255,12 @@ void cta::Vfs::deleteFile(const SecurityIdentity &requester, const std::string &
 //------------------------------------------------------------------------------
 // deleteDirectory
 //------------------------------------------------------------------------------
-void cta::Vfs::deleteDirectory(const SecurityIdentity &requester, const std::string &pathname) {  
+void cta::Vfs::deleteDirectory(const SecurityIdentity &requester, const std::string &pathname) {
+  if(pathname=="/") {    
+    std::ostringstream message;
+    message << "deleteDirectory() - Cannot delete root directory";
+    throw(Exception(message.str()));
+  }
   cta::Utils::checkAbsolutePathSyntax(pathname);
   
   int rc = rmdir((m_fsDir+pathname).c_str());
@@ -317,7 +328,13 @@ std::list<cta::DirectoryEntry> cta::Vfs::getDirectoryEntries(const SecurityIdent
   
   while((entry = readdir(dp))) {
     if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-      const std::string dirEntryPathname = dirPath+(entry->d_name);
+      std::string dirEntryPathname;
+      if(dirPath.at(dirPath.length()-1) == '/') {
+        dirEntryPathname = dirPath+(entry->d_name);
+      }
+      else {
+        dirEntryPathname = dirPath+"/"+(entry->d_name);
+      }
       entries.push_back(statDirectoryEntry(requester, dirEntryPathname));
     }
   }
@@ -331,8 +348,9 @@ std::list<cta::DirectoryEntry> cta::Vfs::getDirectoryEntries(const SecurityIdent
 //------------------------------------------------------------------------------
 cta::DirectoryIterator cta::Vfs::getDirectoryContents(const SecurityIdentity &requester, const std::string &dirPath) {
   cta::Utils::checkAbsolutePathSyntax(dirPath);
-  checkDirectoryExists(dirPath);
-  return cta::DirectoryIterator(getDirectoryEntries(requester, dirPath));
+  checkDirectoryExists(m_fsDir+dirPath);
+  cta::DirectoryIterator it = getDirectoryEntries(requester, dirPath);
+  return it;
 }
 
 //------------------------------------------------------------------------------

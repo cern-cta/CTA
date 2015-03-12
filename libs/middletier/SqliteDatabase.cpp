@@ -339,6 +339,7 @@ void cta::SqliteDatabase::insertArchivalJob(const SecurityIdentity &requester, c
       std::ostringstream message;
       message << "insertArchivalJob() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      std::cout << message.str() << std::endl;
       throw(Exception(message.str()));
   }
 }
@@ -959,7 +960,7 @@ std::list<cta::ArchiveRoute>  cta::SqliteDatabase::selectAllArchiveRoutes(const 
 cta::ArchiveRoute cta::SqliteDatabase::getArchiveRouteOfStorageClass(const SecurityIdentity &requester, const std::string &storageClassName, const  uint16_t copyNb) {
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "SELECT TAPEPOOL_NAME FROM ARCHIVEROUTE WHERE STORAGECLASS_NAME='"<< storageClassName <<"' AND COPYNB="<< (int)copyNb <<";";
+  query << "SELECT * FROM ARCHIVEROUTE WHERE STORAGECLASS_NAME='"<< storageClassName <<"' AND COPYNB="<< (int)copyNb <<";";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
@@ -980,12 +981,12 @@ cta::ArchiveRoute cta::SqliteDatabase::getArchiveRouteOfStorageClass(const Secur
             std::string((char *)sqlite3_column_text(statement,6))
       );
   }
-  else if(res==SQLITE_DONE) {    
+  else if(res==SQLITE_DONE) {
     std::ostringstream message;
     message << "getArchiveRouteOfStorageClass() - No archive route found for storage class: " << storageClassName << " and copynb: "<< (int)copyNb;
     throw(Exception(message.str()));
   }
-  else {    
+  else {
     std::ostringstream message;
     message << "getArchiveRouteOfStorageClass() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
@@ -1154,6 +1155,49 @@ cta::TapePool cta::SqliteDatabase::getTapePoolByName(const SecurityIdentity &req
   }
   sqlite3_finalize(statement);
   return pool;
+}
+
+//------------------------------------------------------------------------------
+// getStorageClassByName
+//------------------------------------------------------------------------------
+cta::StorageClass cta::SqliteDatabase::getStorageClassByName(const SecurityIdentity &requester, const std::string &name) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  cta::StorageClass stgClass;
+  query << "SELECT * FROM STORAGECLASS WHERE NAME='" << name << "';";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){    
+      std::ostringstream message;
+      message << "getStorageClassByName() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(Exception(message.str()));
+  }
+  int res = sqlite3_step(statement);
+  if(res==SQLITE_ROW) {
+    stgClass = cta::StorageClass(
+            std::string((char *)sqlite3_column_text(statement,0)),
+            sqlite3_column_int(statement,1),
+            cta::UserIdentity(sqlite3_column_int(statement,2),sqlite3_column_int(statement,3)),
+            time_t(sqlite3_column_int(statement,4)),
+            std::string((char *)sqlite3_column_text(statement,5))
+      );
+  }
+  else if(res==SQLITE_DONE) {    
+    std::ostringstream message;
+    message << "getStorageClassByName() - No storage class found with name: " << name;
+    sqlite3_finalize(statement);
+    throw(Exception(message.str()));
+  }
+  else {    
+    std::ostringstream message;
+    message << "getStorageClassByName() - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
+    throw(Exception(message.str()));
+  }
+  sqlite3_finalize(statement);
+  return stgClass;
 }
 
 //------------------------------------------------------------------------------
