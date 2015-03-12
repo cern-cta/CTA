@@ -115,7 +115,8 @@ XrdxCastor2Fs::XrdxCastor2Fs():
   LogId(),
   mIssueCapability(false),
   mProc(0),
-  mStagerHost("")
+  mStagerHost(""),
+  mSkipAbort(false)
 {
   ConfigFN  = 0;
   mLogLevel = LOG_INFO; // default log level
@@ -182,7 +183,6 @@ XrdxCastor2Fs::Disc(const XrdSecEntity* client)
   if (!client)
     return;
 
-  xcastor_debug("Client diconnect tident=%s", client->tident);
   std::vector<xcastor::XrdxCastorClient::ReqElement*>
     req_abrt = msCastorClient->GetUserRequests(client->tident);
 
@@ -192,17 +192,29 @@ XrdxCastor2Fs::Disc(const XrdSecEntity* client)
   GetIdMapping(client, client_uid, client_gid);
   bool status = true;
   XrdOucErrInfo error;
-  xcastor_info("tident=%s abort %i requests", client->tident, req_abrt.size());
+  xcastor_info("tident=%s %s %i requests", client->tident,
+	       (mSkipAbort ? "skip aborting" : "abort"), req_abrt.size());
 
-  // We also need to delete the elements from the vector
+  // Delete the request objects and also abort them if needed
   for (std::vector<xcastor::XrdxCastorClient::ReqElement*>::iterator iter =
-         req_abrt.begin();
+	 req_abrt.begin();
        iter != req_abrt.end(); ++iter)
   {
-    xcastor_debug("aborting req_uuid=%s", (*iter)->mRequest->reqId().c_str());
-    status = XrdxCastor2Stager::StageAbortRequest((*iter)->mRequest->reqId(),
-                                                  (*iter)->mRequest->svcClassName(),
-                                                  client_uid, client_gid, error);
+    if (mSkipAbort == false)
+    {
+      xcastor_debug("aborting req_uuid=%s", (*iter)->mRequest->reqId().c_str());
+      status = XrdxCastor2Stager::StageAbortRequest((*iter)->mRequest->reqId(),
+						    (*iter)->mRequest->svcClassName(),
+						    client_uid, client_gid, error);
+
+      // Log any error while doing the stage abort
+      if (!status)
+      {
+	xcastor_err("stage abort request failed for req_uuid=%s",
+		    (*iter)->mRequest->reqId().c_str());
+      }
+    }
+
     delete (*iter);
   }
 }
@@ -1881,6 +1893,15 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
   xCastor2FsDelayRead = 0;
   xCastor2FsDelayWrite = 0;
   long myPort = 0;
+  // Helper structure to decide if configuration value is boolean
+  std::set<std::string> true_set, false_set, bool_set;
+  true_set.insert("true");
+  true_set.insert("1");
+  false_set.insert("false");
+  false_set.insert("0");
+  bool_set.insert(true_set.begin(), true_set.end());
+  bool_set.insert(false_set.begin(), false_set.end());
+
   {
     // Borrowed from XrdOfs
     unsigned int myIPaddr = 0;
@@ -1979,10 +2000,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
             NoGo = 1;
           }
           else
-          {
-            Eroute.Say("=====> xcastor2.targetport: ", val, "");
-            mSrvTargetPort = val;
-          }
+	    mSrvTargetPort = val;
         }
 
         // Get the debug level
@@ -2065,7 +2083,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         }
 
         // Get proc location and options
-        if (!strcmp("proc", var))
+        if (!strncmp("proc", var, 4))
         {
           if (!(val = config_stream.GetWord()))
           {
@@ -2092,11 +2110,12 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
               }
             }
 
-            if (proc_filesystem_sync)
-              Eroute.Say("=====> xcastor2.proc: ", proc_filesystem.c_str(), " sync");
-            else
-              Eroute.Say("=====> xcastor2.proc: ", proc_filesystem.c_str(), " async");
-          }
+	    if (!NoGo)
+	    {
+	      Eroute.Say("=====> xcastor2.proc: ", proc_filesystem.c_str(),
+			 (proc_filesystem_sync ? " sync" : " async"));
+	    }
+	  }
         }
 
         // Get role map
@@ -2126,7 +2145,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         }
 
         // Capability
-        if (!strcmp("capability", var))
+        if (!strncmp("capability", var, 10))
         {
           if (!(val = config_stream.GetWord()))
           {
@@ -2151,7 +2170,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         }
 
         // Get grace period for clients
-        if (!strcmp("tokenlocktime", var))
+        if (!strncmp("tokenlocktime", var, 13))
         {
           if (!(val = config_stream.GetWord()))
           {
@@ -2279,7 +2298,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
 
         // The following two directives set up the authrization plugin at the redirector
         // they are only used for ALICE
-        if (!strcmp("authlib", var))
+        if (!strncmp("authlib", var, 7))
         {
           if ((!(val = config_stream.GetWord())) || (::access(val, R_OK)))
           {
@@ -2293,27 +2312,52 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         }
 
         // Decide if authorization is enforced
-        if (!strcmp("authorize", var))
+        if (!strncmp("authorize", var, 9))
         {
-          if ((!(val = config_stream.GetWord())) ||
-              (strcmp("true", val) && strcmp("false", val) &&
-               strcmp("1", val) && strcmp("0", val)))
-          {
-            Eroute.Emsg("Config", "argument 2 for authorize ilegal or missing. "
-                        "Must be <true>,<false>,<1> or <0>!");
-            NoGo = 1;
-          }
-          else
-          {
-            if ((!strcmp("true", val) || (!strcmp("1", val))))
-              authorize = true;
-          }
+	  if ((val = config_stream.GetWord()))
+	  {
+	    if (!bool_set.count(val))
+	    {
+	      NoGo = 1;
+	      Eroute.Emsg("Config", "argument for authorize illegal. "
+			  "Must be <true>, <false>, <1> or <0>.");
+	    }
+	    else
+	    {
+	      if (true_set.count(val))
+		authorize = true;
+	    }
+	  }
+	  else
+	  {
+	    NoGo = 1;
+	    Eroute.Emsg("Config", "argument for authorize missing. "
+			"Must be <true>, <false>, <1> or <0>.");
+	  }
 
-          if (authorize)
-            Eroute.Say("=====> xcastor2.authorize : true");
-          else
-            Eroute.Say("=====> xcastor2.authorize : false");
-        }
+	  Eroute.Say("=====> xcastor2.authorize: ", (authorize ? "true" : "false"));
+	}
+
+	// If skipabort option set then we no longer issue a stage abort request
+	// if the client disconnects while waiting for the file to be staged
+	if (!strncmp("skipabort", var, 9))
+	{
+	  if ((val = config_stream.GetWord()))
+	  {
+	    if (!bool_set.count(val))
+	    {
+	      Eroute.Emsg("Config", "argument for skipabort illegal. Must be "
+			  "<true>, <false>, <1> or <0>. Using default value: "
+			  "false.");
+	      NoGo = 1;
+	    }
+	    else
+	    {
+	      if (true_set.count(val))
+                mSkipAbort = true;
+	    }
+	  }
+	}
       }
     }
   }
@@ -2321,17 +2365,18 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
   // Check that the stager host is set
   if (mStagerHost.empty())
   {
-    Eroute.Say("Config error: no stagerhost has been defined");
+    Eroute.Emsg("Config", "no stagerhost has been defined");
     NoGo =1;
   }
 
   // We need to specify this if the server was not started with the explicit
   // manager option ... e.g. see XrdOfs. The variable is needed in the
   // XrdxCastor2Acc to find out which keys are required to be loaded
-  Eroute.Say("=====> all.role: ", role.c_str(), "");
+  Eroute.Say("<====> all.role: ", role.c_str(), "");
   XrdOucString sTokenLockTime = "";
   sTokenLockTime += msTokenLockTime;
-  Eroute.Say("=====> xcastor2.tokenlocktime: ", sTokenLockTime.c_str(), "");
+  Eroute.Say("<====> xcastor2.tokenlocktime: ", sTokenLockTime.c_str());
+  Eroute.Say("<====> xcastor2.skipabort: ", (mSkipAbort ? "true" : "false"));
 
   // Setup the circular in-memory logging buffer
   XrdOucString unit = "rdr@";

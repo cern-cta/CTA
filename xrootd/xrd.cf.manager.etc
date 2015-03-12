@@ -52,6 +52,10 @@ xcastor2.privatekey /opt/xrootd/keys/key.pem
 xcastor2.tokenlocktime 60
 xcastor2.proc /var/log/xroot/manager
 
+# If "skipabort" option is true then we no longer abort requests for which
+# the client disconnected in before getting the file. Default value is "false".
+# xcastor2.skipabort true
+
 #-------------------------------------------------------------------------------
 # Security plugins
 #-------------------------------------------------------------------------------

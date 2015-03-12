@@ -613,13 +613,13 @@ private:
   XrdSysMutex mMutexFsSet; ///< mutex for the set of known diskservers
   std::map<std::string, std::string> mNsMap; ///< namespace mapping
   //! Map path to allowed svcClasses and the no_hsm option
-  std::map< std::string,
-            std::pair<std::list<std::string>, bool> > mStageMap;
+  std::map< std::string, std::pair<std::list<std::string>, bool> > mStageMap;
   XrdOucHash<struct passwd>* mPasswdStore; ///< cache passwd struct info
   std::map<std::string, std::string> mRoleMap; ///< user role map
   XrdSysMutex mMutexPasswd; ///< mutex for the passwd store
   XrdAccAuthorize* mAuthorization; ///< authorization service used only by ALICE
   std::string mStagerHost; ///< stager host to which requests are sent
+  bool mSkipAbort; ///< if true no abort is issued on client disconnect
 };
 
 extern XrdxCastor2Fs* gMgr; ///< global instance of the redirector OFS subsystem
