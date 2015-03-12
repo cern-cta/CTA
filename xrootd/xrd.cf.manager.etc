@@ -18,15 +18,15 @@ oss.fdlimit 16384 32768
 #xcastor2.debugfilter some_function
 
 #-------------------------------------------------------------------------------
-# Namespace mapping 
+# Namespace mapping
 #-------------------------------------------------------------------------------
 xcastor2.nsmap / /
 
 #-------------------------------------------------------------------------------
 # Mapping between paths and svcClasses. The path "/" is considered as the
-# default mapping. SvcClasses need to be separated by commas and at the end 
-# there is the posibility to specify the "nohsm" option. SvcClasses are listed 
-# in order of their priority. The special character "*" means that any svcClass 
+# default mapping. SvcClasses need to be separated by commas and at the end
+# there is the posibility to specify the "nohsm" option. SvcClasses are listed
+# in order of their priority. The special character "*" means that any svcClass
 # provided by the client is accepted.
 #-------------------------------------------------------------------------------
 xcastor2.stagermap /castor/cern.ch/dev/  default,dev,diskonly,*   nohsm
@@ -38,7 +38,7 @@ xcastor2.stagermap /                     default
 #xcastor2.role user1 user2
 
 #-------------------------------------------------------------------------------
-# Set the stagerhost which the XRootD daemon contacts. It must be a fully 
+# Set the stagerhost which the XRootD daemon contacts. It must be a fully
 # qualified domain name.
 #-------------------------------------------------------------------------------
 #xcastor2.stagerhost mystager.cern.ch
@@ -79,4 +79,3 @@ sec.protocol gsi -crl:1 -cert:/etc/grid-security/xrootd-server/xrootd-server-cer
 
 # Configure gsi+krb5 only at CERN
 #sec.protbind *.cern.ch only krb5 gsi
-

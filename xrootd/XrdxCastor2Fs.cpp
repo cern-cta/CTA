@@ -193,25 +193,25 @@ XrdxCastor2Fs::Disc(const XrdSecEntity* client)
   bool status = true;
   XrdOucErrInfo error;
   xcastor_info("tident=%s %s %i requests", client->tident,
-	       (mSkipAbort ? "skip aborting" : "abort"), req_abrt.size());
+               (mSkipAbort ? "skip aborting" : "abort"), req_abrt.size());
 
   // Delete the request objects and also abort them if needed
   for (std::vector<xcastor::XrdxCastorClient::ReqElement*>::iterator iter =
-	 req_abrt.begin();
+         req_abrt.begin();
        iter != req_abrt.end(); ++iter)
   {
     if (mSkipAbort == false)
     {
       xcastor_debug("aborting req_uuid=%s", (*iter)->mRequest->reqId().c_str());
       status = XrdxCastor2Stager::StageAbortRequest((*iter)->mRequest->reqId(),
-						    (*iter)->mRequest->svcClassName(),
-						    client_uid, client_gid, error);
+                                                    (*iter)->mRequest->svcClassName(),
+                                                    client_uid, client_gid, error);
 
       // Log any error while doing the stage abort
       if (!status)
       {
-	xcastor_err("stage abort request failed for req_uuid=%s",
-		    (*iter)->mRequest->reqId().c_str());
+        xcastor_err("stage abort request failed for req_uuid=%s",
+                    (*iter)->mRequest->reqId().c_str());
       }
     }
 
@@ -2000,7 +2000,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
             NoGo = 1;
           }
           else
-	    mSrvTargetPort = val;
+            mSrvTargetPort = val;
         }
 
         // Get the debug level
@@ -2110,12 +2110,12 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
               }
             }
 
-	    if (!NoGo)
-	    {
-	      Eroute.Say("=====> xcastor2.proc: ", proc_filesystem.c_str(),
-			 (proc_filesystem_sync ? " sync" : " async"));
-	    }
-	  }
+            if (!NoGo)
+            {
+              Eroute.Say("=====> xcastor2.proc: ", proc_filesystem.c_str(),
+                         (proc_filesystem_sync ? " sync" : " async"));
+            }
+          }
         }
 
         // Get role map
@@ -2314,50 +2314,50 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         // Decide if authorization is enforced
         if (!strncmp("authorize", var, 9))
         {
-	  if ((val = config_stream.GetWord()))
-	  {
-	    if (!bool_set.count(val))
-	    {
-	      NoGo = 1;
-	      Eroute.Emsg("Config", "argument for authorize illegal. "
-			  "Must be <true>, <false>, <1> or <0>.");
-	    }
-	    else
-	    {
-	      if (true_set.count(val))
-		authorize = true;
-	    }
-	  }
-	  else
-	  {
-	    NoGo = 1;
-	    Eroute.Emsg("Config", "argument for authorize missing. "
-			"Must be <true>, <false>, <1> or <0>.");
-	  }
+          if ((val = config_stream.GetWord()))
+          {
+            if (!bool_set.count(val))
+            {
+              NoGo = 1;
+              Eroute.Emsg("Config", "argument for authorize illegal. "
+                          "Must be <true>, <false>, <1> or <0>.");
+            }
+            else
+            {
+              if (true_set.count(val))
+                authorize = true;
+            }
+          }
+          else
+          {
+            NoGo = 1;
+            Eroute.Emsg("Config", "argument for authorize missing. "
+                        "Must be <true>, <false>, <1> or <0>.");
+          }
 
-	  Eroute.Say("=====> xcastor2.authorize: ", (authorize ? "true" : "false"));
-	}
+          Eroute.Say("=====> xcastor2.authorize: ", (authorize ? "true" : "false"));
+        }
 
-	// If skipabort option set then we no longer issue a stage abort request
-	// if the client disconnects while waiting for the file to be staged
-	if (!strncmp("skipabort", var, 9))
-	{
-	  if ((val = config_stream.GetWord()))
-	  {
-	    if (!bool_set.count(val))
-	    {
-	      Eroute.Emsg("Config", "argument for skipabort illegal. Must be "
-			  "<true>, <false>, <1> or <0>. Using default value: "
-			  "false.");
-	      NoGo = 1;
-	    }
-	    else
-	    {
-	      if (true_set.count(val))
+        // If skipabort option set then we no longer issue a stage abort request
+        // if the client disconnects while waiting for the file to be staged
+        if (!strncmp("skipabort", var, 9))
+        {
+          if ((val = config_stream.GetWord()))
+          {
+            if (!bool_set.count(val))
+            {
+              Eroute.Emsg("Config", "argument for skipabort illegal. Must be "
+                          "<true>, <false>, <1> or <0>. Using default value: "
+                          "false.");
+              NoGo = 1;
+            }
+            else
+            {
+              if (true_set.count(val))
                 mSkipAbort = true;
-	    }
-	  }
-	}
+            }
+          }
+        }
       }
     }
   }
