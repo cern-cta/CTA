@@ -307,7 +307,7 @@ int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrI
     return SFS_DATA;
   }
   try {
-    uint8_t numberOfCopies;
+    uint16_t numberOfCopies;
     std::istringstream ss(req.args.at(1));
     ss >> numberOfCopies;
     m_adminApi.createStorageClass(requester, req.args.at(0), numberOfCopies, req.args.at(2));
@@ -730,7 +730,7 @@ int XrdProFilesystem::executeMkrouteCommand(const ParsedRequest &req, XrdOucErrI
     return SFS_DATA;
   }
   try {
-    uint8_t copyNo;
+    uint16_t copyNo;
     std::istringstream ss(req.args.at(1));
     ss >> copyNo;
     m_adminApi.createArchiveRoute(requester, req.args.at(0), copyNo, req.args.at(2), req.args.at(3));
@@ -765,7 +765,7 @@ int XrdProFilesystem::executeRmrouteCommand(const ParsedRequest &req, XrdOucErrI
     return SFS_DATA;
   }
   try {
-    uint8_t copyNo;
+    uint16_t copyNo;
     std::istringstream ss(req.args.at(1));
     ss >> copyNo;
     m_adminApi.deleteArchiveRoute(requester, req.args.at(0), copyNo);
@@ -1595,7 +1595,7 @@ void XrdProFilesystem::EnvInfo(XrdOucEnv *envP)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-XrdProFilesystem::XrdProFilesystem(): m_adminApi(m_db), m_userApi(m_db) {
+XrdProFilesystem::XrdProFilesystem(): m_adminApi(m_vfs, m_db), m_userApi(m_vfs, m_db) {
 }
 
 //------------------------------------------------------------------------------

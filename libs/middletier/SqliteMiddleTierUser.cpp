@@ -102,19 +102,6 @@ void cta::SqliteMiddleTierUser::archiveToDirectory(
   if(0 == srcUrls.size()) {
     throw Exception("At least one source file should be provided");
   }
-  const std::list<std::string> dstFileNames = Utils::getEnclosedNames(srcUrls);
-
-  for(std::list<std::string>::const_iterator itor = dstFileNames.begin(); itor != dstFileNames.end(); itor++) {
-    const std::string &dstFileName = *itor;
-    std::string dstPathname;
-    if(dstDir.at(dstDir.length()-1) == '/') {
-      dstPathname = dstDir+dstFileName;
-    }
-    else {
-      dstPathname = dstDir+"/"+dstFileName;
-    }
-    m_vfs.createFile(requester, dstPathname, 0666);
-  }
   std::string storageClassName = m_vfs.getDirectoryStorageClass(requester, dstDir);
   cta::StorageClass storageClass = m_sqlite_db.getStorageClassByName(requester, storageClassName);
   if(storageClass.getNbCopies()==0) {       
@@ -136,6 +123,20 @@ void cta::SqliteMiddleTierUser::archiveToDirectory(
       m_sqlite_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstPathname);
     }
   }
+  
+  const std::list<std::string> dstFileNames = Utils::getEnclosedNames(srcUrls);
+
+  for(std::list<std::string>::const_iterator itor = dstFileNames.begin(); itor != dstFileNames.end(); itor++) {
+    const std::string &dstFileName = *itor;
+    std::string dstPathname;
+    if(dstDir.at(dstDir.length()-1) == '/') {
+      dstPathname = dstDir+dstFileName;
+    }
+    else {
+      dstPathname = dstDir+"/"+dstFileName;
+    }
+    m_vfs.createFile(requester, dstPathname, 0666);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -151,8 +152,6 @@ void cta::SqliteMiddleTierUser::archiveToFile(
   }
   
   const std::string &srcFileName = srcUrls.front();
-  
-  m_vfs.createFile(requester, dstFile, 0666);
   std::string storageClassName = m_vfs.getDirectoryStorageClass(requester, cta::Utils::getEnclosingDirPath(dstFile));
   cta::StorageClass storageClass = m_sqlite_db.getStorageClassByName(requester, storageClassName);
   if(storageClass.getNbCopies()==0) {       
@@ -164,6 +163,8 @@ void cta::SqliteMiddleTierUser::archiveToFile(
     cta::ArchiveRoute route = m_sqlite_db.getArchiveRouteOfStorageClass(requester, storageClassName, i);
     m_sqlite_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstFile);
   }
+  
+  m_vfs.createFile(requester, dstFile, 0666);
 }
 
 //------------------------------------------------------------------------------

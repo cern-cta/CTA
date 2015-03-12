@@ -226,7 +226,7 @@ void cta::SqliteDatabase::createArchivalJobTable() {
             "UID            INTEGER,"
             "GID            INTEGER,"
             "CREATIONTIME   INTEGER,"
-            "PRIMARY KEY (DSTPATH),"
+            "PRIMARY KEY (DSTPATH, TAPEPOOL_NAME),"
             "FOREIGN KEY (TAPEPOOL_NAME) REFERENCES TAPEPOOL(NAME)"
             ");",
           0, 0, &zErrMsg);
@@ -252,7 +252,7 @@ void cta::SqliteDatabase::createRetrievalJobTable() {
             "UID            INTEGER,"
             "GID            INTEGER,"
             "CREATIONTIME   INTEGER,"
-            "PRIMARY KEY (DSTURL),"
+            "PRIMARY KEY (DSTURL, VID),"
             "FOREIGN KEY (VID) REFERENCES TAPE(VID)"
             ");",
           0, 0, &zErrMsg);

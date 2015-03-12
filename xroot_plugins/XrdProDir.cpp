@@ -95,7 +95,7 @@ const char * XrdProDir::FName() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-XrdProDir::XrdProDir(cta::MockMiddleTierUser &userApi, const char *user, int MonID): error(user, MonID), m_userApi(userApi) {
+XrdProDir::XrdProDir(cta::SqliteMiddleTierUser &userApi, const char *user, int MonID): error(user, MonID), m_userApi(userApi) {
 }
 
 //------------------------------------------------------------------------------

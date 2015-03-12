@@ -1,7 +1,7 @@
 #pragma once
 
-#include "libs/middletier/MockMiddleTierAdmin.hpp"
-#include "libs/middletier/MockMiddleTierUser.hpp"
+#include "libs/middletier/SqliteMiddleTierAdmin.hpp"
+#include "libs/middletier/SqliteMiddleTierUser.hpp"
 #include "XrdSfs/XrdSfsInterface.hh"
 
 #include "ParsedRequest.hpp"
@@ -35,17 +35,22 @@ protected:
   /**
    * The middle-tier database.
    */
-  cta::MockDatabase m_db;
+  cta::SqliteDatabase m_db;
+  
+  /**
+   * The Virtual FileSystem object
+   */
+  cta::Vfs m_vfs;
   
   /**
    * The middle-tier administration API
    */
-  cta::MockMiddleTierAdmin m_adminApi;
+  cta::SqliteMiddleTierAdmin m_adminApi;
 
   /**
    * The middle-tier user API
    */
-  cta::MockMiddleTierUser m_userApi;
+  cta::SqliteMiddleTierUser m_userApi;
     
   /**
    * Parses the query into the request structure
