@@ -63,11 +63,7 @@ namespace castor {
     OBJ_QryRequest = 46,
     OBJ_StageAbortRequest = 50,
     OBJ_DiskCopyForRecall = 58,
-    OBJ_GetUpdateStartRequest = 60,
     OBJ_BaseAddress = 62,
-    OBJ_MoverCloseRequest = 65,
-    OBJ_StartRequest = 66,
-    OBJ_PutStartRequest = 67,
     OBJ_IObject = 69,
     OBJ_IAddress = 70,
     OBJ_QueryParameter = 71,
@@ -75,9 +71,6 @@ namespace castor {
     OBJ_Files2Delete = 73,
     OBJ_FilesDeleted = 74,
     OBJ_GCLocalFile = 76,
-    OBJ_GetUpdateDone = 78,
-    OBJ_GetUpdateFailed = 79,
-    OBJ_PutFailed = 80,
     OBJ_GCFile = 81,
     OBJ_GCFileList = 82,
     OBJ_FilesDeletionFailed = 83,
@@ -93,10 +86,6 @@ namespace castor {
     OBJ_TapeDriveCompatibility = 92,
 
     OBJ_SetFileGCWeight = 95,
-    OBJ_RepackRequest = 96,
-    OBJ_RepackSubRequest = 97,
-    OBJ_RepackSegment = 98,
-    OBJ_RepackAck = 99,
 
     OBJ_DiskServerDescription = 101,
     OBJ_FileSystemDescription = 102,
@@ -109,33 +98,20 @@ namespace castor {
     OBJ_Response = 107,
     OBJ_IOResponse = 108,
     OBJ_AbortResponse = 109,
-    OBJ_GetUpdateStartResponse = 113,
     OBJ_BasicResponse = 114,
-    OBJ_StartResponse = 115,
     OBJ_GCFilesResponse = 116,
     OBJ_FileQryResponse = 117,
     OBJ_DiskPoolQueryResponse = 118,
 
     OBJ_Client = 129,
 
-    OBJ_JobSubmissionRequest = 130,
     OBJ_VersionQuery = 131,
     OBJ_VersionResponse = 132,
-    OBJ_StageDiskCopyReplicaRequest = 133,
-    OBJ_RepackResponse = 134,
-    OBJ_RepackFileQry = 135,
-    OBJ_CnsInfoMigrationPolicy = 136,
-    OBJ_DbInfoMigrationPolicy = 137,
-    OBJ_CnsInfoRecallPolicy = 138,
-    OBJ_DbInfoRecallPolicy = 139,
-    OBJ_DbInfoStreamPolicy = 140,
-    OBJ_PolicyObj = 141,
 
     OBJ_NsFilesDeleted = 142,
     OBJ_NsFilesDeletedResponse = 143,
 
     OBJ_ThreadNotification = 146,
-    OBJ_FirstByteWritten = 147,
 
     /* VDQM objects to be moved to a different range */
     OBJ_VdqmTape = 148,
@@ -159,16 +135,9 @@ namespace castor {
     OBJ_VectorAddress = 159,
 
     /* VDQM objects to be moved to a different range */
-
     OBJ_Tape2DriveDedication = 160,
 
-    /* Special constant used by the B/W list to determine if a user has rights
-     * to issue tape recalls.
-     */
-    OBJ_TapeRecall = 161,
-
     /* TapeGateWay Objects */
- 
     OBJ_FileMigratedNotification = 162,
     OBJ_FileRecalledNotification = 163,
     OBJ_FileToMigrateRequest = 164,

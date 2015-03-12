@@ -97,6 +97,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "DELETED TYPE",
   "DELETED TYPE",
   "DELETED TYPE",
+  "DELETED TYPE",
   "IObject",
   "IAddress",
   "QueryParameter",
@@ -152,7 +153,6 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "DiskPoolQueryResponse",
 
   "DELETED TYPE",
-
   "DELETED TYPE",
   "DELETED TYPE",
   "DELETED TYPE",
@@ -165,10 +165,10 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
 
   "Client",
 
-  "JobSubmissionRequest",
+  "DELETED TYPE",
   "VersionQuery",
   "VersionResponse",
-  "DELETED TYPE", 
+  "DiskCopyReplication",
   "DELETED TYPE", 
   "DELETED TYPE", 
   "DELETED TYPE", 

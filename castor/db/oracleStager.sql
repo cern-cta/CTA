@@ -2362,12 +2362,7 @@ BEGIN
                                  dconst.SUBREQUEST_WAITSUBREQ, dconst.SUBREQUEST_READY,
                                  dconst.SUBREQUEST_READYFORSCHED)) LOOP
       UPDATE SubRequest
-         SET status = CASE WHEN status IN (dconst.SUBREQUEST_READY, dconst.SUBREQUEST_READYFORSCHED)
-                            AND reqType = 133  -- DiskCopyReplicaRequests
-                           THEN dconst.SUBREQUEST_FAILED_FINISHED
-                           ELSE dconst.SUBREQUEST_FAILED END,
-             -- user requests in status WAITSUBREQ are always marked FAILED
-             -- even if they wait on a replication
+         SET status = dconst.SUBREQUEST_FAILED,
              errorCode = serrno.EINTR,
              errorMessage = 'Canceled by another user request'
        WHERE id = sr.id
