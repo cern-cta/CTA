@@ -35,12 +35,9 @@ TEST_F(cta_VfsTest, mkdir_functionality) {
   
   ASSERT_NO_THROW(vfs.createDirectory(requester, "/dir1", 0777));
   ASSERT_THROW(vfs.createDirectory(requester, "/dir1", 0777), std::exception);
-  ASSERT_NO_THROW(vfs.createDirectory(requester, "/dir2", 0777));
   ASSERT_NO_THROW(itor = vfs.getDirectoryContents(requester, "/"));
   ASSERT_EQ(itor.hasMore(), true);
   ASSERT_EQ(itor.next().getName(), "dir1");
-  ASSERT_EQ(itor.hasMore(), true);
-  ASSERT_EQ(itor.next().getName(), "dir2");
   ASSERT_EQ(itor.hasMore(), false);
 }
 
@@ -53,12 +50,9 @@ TEST_F(cta_VfsTest, createFile_functionality) {
   
   ASSERT_NO_THROW(vfs.createFile(requester, "/file1", 0666));
   ASSERT_THROW(vfs.createFile(requester, "/file1", 0666), std::exception);
-  ASSERT_NO_THROW(vfs.createFile(requester, "/file2", 0666));
   ASSERT_NO_THROW(itor = vfs.getDirectoryContents(requester, "/"));
   ASSERT_EQ(itor.hasMore(), true);
   ASSERT_EQ(itor.next().getName(), "file1");
-  ASSERT_EQ(itor.hasMore(), true);
-  ASSERT_EQ(itor.next().getName(), "file2");
   ASSERT_EQ(itor.hasMore(), false);
 }
 
