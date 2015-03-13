@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MiddleTierAdmin.hpp"
-#include "MockDatabase.hpp"
 #include "SqliteDatabase.hpp"
 #include "Vfs.hpp"
 
@@ -281,39 +280,6 @@ public:
     const SecurityIdentity &requester) const;
 
 protected:
-
-  /**
-   * Gets the file system node corresponding to the specified path.
-   *
-   * @path The path.
-   * @return The corresponding file system node.
-   */
-  FileSystemNode &getFileSystemNode(const std::string &path);
-
-  /**
-   * Gets the file system node corresponding to the specified path.
-   *
-   * @path The path.
-   * @return The corresponding file system node.
-   */
-  const FileSystemNode &getFileSystemNode(const std::string &path) const;
-
-  /**
-   * Throws an exception if the specified tape pool is in use.
-   *
-   * @param name The name of the tape pool.
-   */
-  void checkTapePoolIsNotInUse(const std::string &name) const;
-
-  /**
-   * Returns true if the specified absolute path is that of an existing
-   * directory within the archive namepsace.
-   *
-   * @param path The specified absolute path.
-   * @return True if the specified absolute path is that of an existing
-   * directory within the archive namepsace.
-   */
-  bool isAnExistingDirectory(const std::string &path) const throw();
   
   SqliteDatabase &m_sqlite_db;
   

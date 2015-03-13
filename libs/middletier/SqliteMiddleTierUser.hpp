@@ -3,7 +3,6 @@
 #include "FileSystemNode.hpp"
 #include "FileSystemStorageClasses.hpp"
 #include "MiddleTierUser.hpp"
-#include "MockDatabase.hpp"
 #include "SqliteDatabase.hpp"
 #include "StorageClass.hpp"
 #include "Vfs.hpp"
@@ -232,22 +231,6 @@ private:
   SqliteDatabase &m_sqlite_db;
   
   Vfs &m_vfs;
-
-  /**
-   * Gets the file system node corresponding to the specified path.
-   *
-   * @path The path.
-   * @return The corresponding file system node.
-   */
-  FileSystemNode &getFileSystemNode(const std::string &path);
-
-  /**
-   * Gets the file system node corresponding to the specified path.
-   *
-   * @path The path.
-   * @return The corresponding file system node.
-   */
-  const FileSystemNode &getFileSystemNode(const std::string &path) const;
 
   /**
    * Returns true if the specified absolute path is that of an existing

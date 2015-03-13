@@ -21,18 +21,6 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   LogicalLibrary.cpp
   MiddleTierAdmin.cpp
   MiddleTierUser.cpp
-  MockArchivalJobTable.cpp
-  MockArchiveRouteTable.cpp
-  MockAdminHostTable.cpp
-  MockAdminUserTable.cpp
-  MockDatabase.cpp
-  MockLogicalLibraryTable.cpp
-  MockMiddleTierAdmin.cpp
-  MockMiddleTierUser.cpp
-  MockMiddleTierUser.cpp
-  MockRetrievalJobTable.cpp
-  MockTapeTable.cpp
-  MockTapePoolTable.cpp
   RetrievalJob.cpp
   RetrievalJobState.cpp
   SecurityIdentity.cpp
@@ -52,14 +40,6 @@ add_library (ctamiddletier SHARED
 target_link_libraries (ctamiddletier ${SQLITE3_LIBRARY_RELEASE})
 
 set (MIDDLE_TIER_UNIT_TESTS_LIB_SRC_FILES
-  MockAdminHostTableTest.cpp
-  MockAdminUserTableTest.cpp
-  MockArchivalJobTableTest.cpp
-  MockLogicalLibraryTableTest.cpp
-  MockMiddleTierAdminTest.cpp
-  MockMiddleTierUserTest.cpp
-  MockTapeTableTest.cpp
-  MockTapePoolTableTest.cpp
   SqliteMiddleTierAdminTest.cpp
   SqliteMiddleTierUserTest.cpp
   UtilsTest.cpp
