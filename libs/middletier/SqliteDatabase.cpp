@@ -40,11 +40,11 @@ cta::SqliteDatabase::~SqliteDatabase() throw() {
 }
 
 //------------------------------------------------------------------------------
-// createArchiveRouteTable
+// createSchema
 //------------------------------------------------------------------------------
-void cta::SqliteDatabase::createArchiveRouteTable() {
+void cta::SqliteDatabase::createSchema() {  
   char *zErrMsg = 0;
-  int rc = sqlite3_exec(m_dbHandle, 
+  int rc = sqlite3_exec(m_dbHandle,
           "CREATE TABLE ARCHIVEROUTE("
             "STORAGECLASS_NAME TEXT,"
             "COPYNB            INTEGER,"
@@ -56,22 +56,7 @@ void cta::SqliteDatabase::createArchiveRouteTable() {
             "PRIMARY KEY (STORAGECLASS_NAME, COPYNB),"
             "FOREIGN KEY(STORAGECLASS_NAME) REFERENCES STORAGECLASS(NAME),"
             "FOREIGN KEY(TAPEPOOL_NAME)     REFERENCES TAPEPOOL(NAME)"
-            ");",
-          0, 0, &zErrMsg);
-  if(rc!=SQLITE_OK){    
-      std::ostringstream message;
-      message << "createArchiveRouteTable() - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      throw(Exception(message.str()));
-  }
-}
-
-//------------------------------------------------------------------------------
-// createStorageClassTable
-//------------------------------------------------------------------------------
-void cta::SqliteDatabase::createStorageClassTable() {
-  char *zErrMsg = 0;
-  int rc = sqlite3_exec(m_dbHandle, 
+            ");"
           "CREATE TABLE STORAGECLASS("
             "NAME           TEXT     PRIMARY KEY,"
             "NBCOPIES       INTEGER,"
@@ -79,22 +64,7 @@ void cta::SqliteDatabase::createStorageClassTable() {
             "GID            INTEGER,"
             "CREATIONTIME   INTEGER,"
             "COMMENT        TEXT"
-            ");",
-          0, 0, &zErrMsg);
-  if(rc!=SQLITE_OK){    
-      std::ostringstream message;
-      message << "createStorageClassTable() - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      throw(Exception(message.str()));
-  }
-}
-
-//------------------------------------------------------------------------------
-// createTapePoolTable
-//------------------------------------------------------------------------------
-void cta::SqliteDatabase::createTapePoolTable() {
-  char *zErrMsg = 0;
-  int rc = sqlite3_exec(m_dbHandle, 
+            ");"
           "CREATE TABLE TAPEPOOL("
             "NAME           TEXT     PRIMARY KEY,"
             "NBDRIVES       INTEGER,"
@@ -103,22 +73,7 @@ void cta::SqliteDatabase::createTapePoolTable() {
             "GID            INTEGER,"
             "CREATIONTIME   INTEGER,"
             "COMMENT        TEXT"
-            ");",
-          0, 0, &zErrMsg);
-  if(rc!=SQLITE_OK){    
-      std::ostringstream message;
-      message << "createTapePoolTable() - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      throw(Exception(message.str()));
-  }
-}
-
-//------------------------------------------------------------------------------
-// createTapeTable
-//------------------------------------------------------------------------------
-void cta::SqliteDatabase::createTapeTable() {
-  char *zErrMsg = 0;
-  int rc = sqlite3_exec(m_dbHandle, 
+            ");"
           "CREATE TABLE TAPE("
             "VID                 TEXT,"
             "LOGICALLIBRARY_NAME TEXT,"
@@ -132,22 +87,7 @@ void cta::SqliteDatabase::createTapeTable() {
             "PRIMARY KEY (VID),"
             "FOREIGN KEY (LOGICALLIBRARY_NAME) REFERENCES LOGICALLIBRARY(NAME),"
             "FOREIGN KEY (TAPEPOOL_NAME) REFERENCES TAPEPOOL(NAME)"
-            ");",
-          0, 0, &zErrMsg);
-  if(rc!=SQLITE_OK){    
-      std::ostringstream message;
-      message << "createTapeTable() - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      throw(Exception(message.str()));
-  }
-}
-
-//------------------------------------------------------------------------------
-// createLogicalLibraryTable
-//------------------------------------------------------------------------------
-void cta::SqliteDatabase::createLogicalLibraryTable() {
-  char *zErrMsg = 0;
-  int rc = sqlite3_exec(m_dbHandle, 
+            ");"
           "CREATE TABLE LOGICALLIBRARY("
             "NAME           TEXT,"
             "UID            INTEGER,"
@@ -155,22 +95,7 @@ void cta::SqliteDatabase::createLogicalLibraryTable() {
             "CREATIONTIME   INTEGER,"
             "COMMENT        TEXT,"
             "PRIMARY KEY (NAME)"
-            ");",
-          0, 0, &zErrMsg);
-  if(rc!=SQLITE_OK){    
-      std::ostringstream message;
-      message << "createLogicalLibraryTable() - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      throw(Exception(message.str()));
-  }
-}
-
-//------------------------------------------------------------------------------
-// createAdminUserTable
-//------------------------------------------------------------------------------
-void cta::SqliteDatabase::createAdminUserTable() {
-  char *zErrMsg = 0;
-  int rc = sqlite3_exec(m_dbHandle, 
+            ");"
           "CREATE TABLE ADMINUSER("
             "ADMIN_UID      INTEGER,"
             "ADMIN_GID      INTEGER,"
@@ -179,22 +104,7 @@ void cta::SqliteDatabase::createAdminUserTable() {
             "CREATIONTIME   INTEGER,"
             "COMMENT        TEXT,"
             "PRIMARY KEY (ADMIN_UID,ADMIN_GID)"
-            ");",
-          0, 0, &zErrMsg);
-  if(rc!=SQLITE_OK){    
-      std::ostringstream message;
-      message << "createAdminUserTable() - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      throw(Exception(message.str()));
-  }
-}
-
-//------------------------------------------------------------------------------
-// createAdminHostTable
-//------------------------------------------------------------------------------
-void cta::SqliteDatabase::createAdminHostTable() {
-  char *zErrMsg = 0;
-  int rc = sqlite3_exec(m_dbHandle, 
+            ");"
           "CREATE TABLE ADMINHOST("
             "NAME           TEXT,"
             "UID            INTEGER,"
@@ -202,22 +112,7 @@ void cta::SqliteDatabase::createAdminHostTable() {
             "CREATIONTIME   INTEGER,"
             "COMMENT        TEXT,"
             "PRIMARY KEY (NAME)"
-            ");",
-          0, 0, &zErrMsg);
-  if(rc!=SQLITE_OK){    
-      std::ostringstream message;
-      message << "createAdminHostTable() - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      throw(Exception(message.str()));
-  }
-}
-
-//------------------------------------------------------------------------------
-// createArchivalJobTable
-//------------------------------------------------------------------------------
-void cta::SqliteDatabase::createArchivalJobTable() {
-  char *zErrMsg = 0;
-  int rc = sqlite3_exec(m_dbHandle, 
+            ");"
           "CREATE TABLE ARCHIVALJOB("
             "STATE          INTEGER,"
             "SRCURL         TEXT,"
@@ -228,22 +123,7 @@ void cta::SqliteDatabase::createArchivalJobTable() {
             "CREATIONTIME   INTEGER,"
             "PRIMARY KEY (DSTPATH, TAPEPOOL_NAME),"
             "FOREIGN KEY (TAPEPOOL_NAME) REFERENCES TAPEPOOL(NAME)"
-            ");",
-          0, 0, &zErrMsg);
-  if(rc!=SQLITE_OK){    
-      std::ostringstream message;
-      message << "createArchivalJobTable() - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      throw(Exception(message.str()));
-  }
-}
-
-//------------------------------------------------------------------------------
-// createRetrievalJobTable
-//------------------------------------------------------------------------------
-void cta::SqliteDatabase::createRetrievalJobTable() {
-  char *zErrMsg = 0;
-  int rc = sqlite3_exec(m_dbHandle, 
+            ");"
           "CREATE TABLE RETRIEVALJOB("
             "STATE          INTEGER,"
             "SRCPATH        TEXT,"
@@ -262,21 +142,6 @@ void cta::SqliteDatabase::createRetrievalJobTable() {
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
-}
-
-//------------------------------------------------------------------------------
-// createSchema
-//------------------------------------------------------------------------------
-void cta::SqliteDatabase::createSchema() {
-  createStorageClassTable();
-  createTapePoolTable();
-  createArchiveRouteTable();
-  createLogicalLibraryTable();
-  createTapeTable();
-  createAdminUserTable();  
-  createAdminHostTable();
-  createArchivalJobTable();
-  createRetrievalJobTable();
 }  
   
 //------------------------------------------------------------------------------

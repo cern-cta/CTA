@@ -103,24 +103,6 @@ private:
    * SQLite DB handle  
    */
   sqlite3 *m_dbHandle;
-  
-  void createArchiveRouteTable();
-
-  void createStorageClassTable();
-
-  void createTapePoolTable();
-  
-  void createTapeTable();
-  
-  void createAdminUserTable();
-    
-  void createAdminHostTable();
-  
-  void createArchivalJobTable();
-  
-  void createRetrievalJobTable();
-  
-  void createLogicalLibraryTable();
 
   void createSchema();
   
