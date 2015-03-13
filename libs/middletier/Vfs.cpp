@@ -99,7 +99,12 @@ void cta::Vfs::checkStorageClassIsNotInUse(const SecurityIdentity &requester, co
       else {
         dirEntryPathname = dirPath+"/"+(entry->d_name);
       }
-      checkStorageClassIsNotInUse(requester, storageClass, dirEntryPathname);
+      try {
+        checkStorageClassIsNotInUse(requester, storageClass, dirEntryPathname);
+      } catch (...) {
+        closedir(dp);
+        throw;
+      }
     }
   }
 

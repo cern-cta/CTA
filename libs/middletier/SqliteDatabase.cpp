@@ -590,23 +590,28 @@ void cta::SqliteDatabase::checkTapeExists(const std::string &vid){
       std::ostringstream message;
       message << "checkTapeExists() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   int res = sqlite3_step(statement);
   if(res==SQLITE_ROW) {
+    sqlite3_finalize(statement);
     return;
   } 
   else if(res==SQLITE_DONE){
     std::ostringstream message;
     message << "TAPE: " << vid << " does not exist";
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
   }
   else {
     std::ostringstream message;
     message << "checkTapeExists() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
-  }  
+  }
+  sqlite3_finalize(statement);
 }
   
 //------------------------------------------------------------------------------
@@ -622,23 +627,28 @@ void cta::SqliteDatabase::checkAdminUserExists(const cta::UserIdentity &user){
       std::ostringstream message;
       message << "checkAdminUserExists() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   int res = sqlite3_step(statement);
   if(res==SQLITE_ROW) {
+    sqlite3_finalize(statement);
     return;
   } 
   else if(res==SQLITE_DONE){
     std::ostringstream message;
     message << "ADMINUSER: " << user.getUid() << ":" << user.getGid()<< " does not exist";
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
   }
   else {
     std::ostringstream message;
     message << "checkAdminUserExists() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
-  }  
+  }
+  sqlite3_finalize(statement);
 }
   
 //------------------------------------------------------------------------------
@@ -654,23 +664,28 @@ void cta::SqliteDatabase::checkAdminHostExists(const std::string &hostName){
       std::ostringstream message;
       message << "checkAdminHostExists() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   int res = sqlite3_step(statement);
   if(res==SQLITE_ROW) {
+    sqlite3_finalize(statement);
     return;
   } 
   else if(res==SQLITE_DONE){
     std::ostringstream message;
     message << "ADMINHOST: " << hostName << " does not exist";
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
   }
   else {
     std::ostringstream message;
     message << "checkAdminHostExists() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
-  }  
+  }
+  sqlite3_finalize(statement);
 }
   
 //------------------------------------------------------------------------------
@@ -686,23 +701,28 @@ void cta::SqliteDatabase::checkArchivalJobExists(const std::string &dstPath){
       std::ostringstream message;
       message << "checkArchivalJobExists() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   int res = sqlite3_step(statement);
   if(res==SQLITE_ROW) {
+    sqlite3_finalize(statement);
     return;
   } 
   else if(res==SQLITE_DONE){
     std::ostringstream message;
     message << "ARCHIVALJOB: " << dstPath << " does not exist";
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
   }
   else {
     std::ostringstream message;
     message << "checkArchivalJobExists() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
-  }  
+  }
+  sqlite3_finalize(statement);  
 }
   
 //------------------------------------------------------------------------------
@@ -718,23 +738,28 @@ void cta::SqliteDatabase::checkRetrievalJobExists(const std::string &dstUrl){
       std::ostringstream message;
       message << "checkRetrievalJobExists() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   int res = sqlite3_step(statement);
   if(res==SQLITE_ROW) {
+    sqlite3_finalize(statement);
     return;
   } 
   else if(res==SQLITE_DONE){
     std::ostringstream message;
     message << "RETRIEVALJOB: " << dstUrl << " does not exist";
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
   }
   else {
     std::ostringstream message;
     message << "checkRetrievalJobExists() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
-  }  
+  }
+  sqlite3_finalize(statement);
 }
   
 //------------------------------------------------------------------------------
@@ -750,23 +775,28 @@ void cta::SqliteDatabase::checkLogicalLibraryExists(const std::string &name){
       std::ostringstream message;
       message << "checkLogicalLibraryExists() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   int res = sqlite3_step(statement);
   if(res==SQLITE_ROW) {
+    sqlite3_finalize(statement);
     return;
   } 
   else if(res==SQLITE_DONE){
     std::ostringstream message;
     message << "LOGICALLIBRARY: " << name << " does not exist";
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
   }
   else {
     std::ostringstream message;
     message << "checkLogicalLibraryExists() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
-  }  
+  }
+  sqlite3_finalize(statement);
 }
 
 //------------------------------------------------------------------------------
@@ -782,23 +812,28 @@ void cta::SqliteDatabase::checkTapePoolExists(const std::string &name){
       std::ostringstream message;
       message << "checkTapePoolExists() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   int res = sqlite3_step(statement);
   if(res==SQLITE_ROW) {
+    sqlite3_finalize(statement);
     return;
   } 
   else if(res==SQLITE_DONE){
     std::ostringstream message;
     message << "TAPEPOOL: " << name << " does not exist";
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
   }
   else {
     std::ostringstream message;
     message << "checkTapePoolExists() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
-  }  
+  }
+  sqlite3_finalize(statement);
 }
  
 //------------------------------------------------------------------------------
@@ -814,6 +849,7 @@ void cta::SqliteDatabase::checkStorageClassExists(const std::string &name){
       std::ostringstream message;
       message << "checkStorageClassExists() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   int res = sqlite3_step(statement);
@@ -823,14 +859,17 @@ void cta::SqliteDatabase::checkStorageClassExists(const std::string &name){
   else if(res==SQLITE_DONE){
     std::ostringstream message;
     message << "STORAGECLASS: " << name << " does not exist";
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
   }
   else {
     std::ostringstream message;
     message << "checkStorageClassExists() - SQLite error: " << res << zErrMsg;
     sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
-  }  
+  }
+  sqlite3_finalize(statement);
 }
  
 //------------------------------------------------------------------------------
@@ -846,6 +885,7 @@ void cta::SqliteDatabase::checkArchiveRouteExists(const std::string &name, const
       std::ostringstream message;
       message << "checkArchiveRouteExists() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   int res = sqlite3_step(statement);
@@ -855,14 +895,17 @@ void cta::SqliteDatabase::checkArchiveRouteExists(const std::string &name, const
   else if(res==SQLITE_DONE){
     std::ostringstream message;
     message << "ARCHIVEROUTE: " << name << " with COPYNB: " << (int)copyNb << " does not exist";
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
   }
   else {
     std::ostringstream message;
     message << "checkArchiveRouteExists() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));    
-  }  
+  }
+  sqlite3_finalize(statement);
 }
 
 //------------------------------------------------------------------------------
@@ -879,6 +922,7 @@ std::list<cta::TapePool> cta::SqliteDatabase::selectAllTapePools(const SecurityI
       std::ostringstream message;
       message << "selectAllTapePools() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
@@ -909,6 +953,7 @@ std::list<cta::StorageClass> cta::SqliteDatabase::selectAllStorageClasses(const 
       std::ostringstream message;
       message << "selectAllStorageClasses() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
@@ -938,6 +983,7 @@ std::list<cta::ArchiveRoute>  cta::SqliteDatabase::selectAllArchiveRoutes(const 
     std::ostringstream message;
     message << "selectAllArchiveRoutes() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
@@ -967,6 +1013,7 @@ cta::ArchiveRoute cta::SqliteDatabase::getArchiveRouteOfStorageClass(const Secur
       std::ostringstream message;
       message << "getArchiveRouteOfStorageClass() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   cta::ArchiveRoute route;
@@ -984,12 +1031,14 @@ cta::ArchiveRoute cta::SqliteDatabase::getArchiveRouteOfStorageClass(const Secur
   else if(res==SQLITE_DONE) {
     std::ostringstream message;
     message << "getArchiveRouteOfStorageClass() - No archive route found for storage class: " << storageClassName << " and copynb: "<< (int)copyNb;
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));
   }
   else {
     std::ostringstream message;
     message << "getArchiveRouteOfStorageClass() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));
   }
   sqlite3_finalize(statement);
@@ -1010,6 +1059,7 @@ std::list<cta::Tape> cta::SqliteDatabase::selectAllTapes(const SecurityIdentity 
       std::ostringstream message;
       message << "selectAllTapes() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
@@ -1042,6 +1092,7 @@ std::list<cta::AdminUser> cta::SqliteDatabase::selectAllAdminUsers(const Securit
       std::ostringstream message;
       message << "selectAllAdminUsers() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
@@ -1070,6 +1121,7 @@ std::list<cta::AdminHost> cta::SqliteDatabase::selectAllAdminHosts(const Securit
       std::ostringstream message;
       message << "selectAllAdminHosts() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
@@ -1098,6 +1150,7 @@ std::map<cta::TapePool, std::list<cta::ArchivalJob> > cta::SqliteDatabase::selec
       std::ostringstream message;
       message << "selectAllArchivalJobs() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
@@ -1127,6 +1180,7 @@ cta::TapePool cta::SqliteDatabase::getTapePoolByName(const SecurityIdentity &req
       std::ostringstream message;
       message << "getTapePoolByName() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   int res = sqlite3_step(statement);
@@ -1171,6 +1225,7 @@ cta::StorageClass cta::SqliteDatabase::getStorageClassByName(const SecurityIdent
       std::ostringstream message;
       message << "getStorageClassByName() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   int res = sqlite3_step(statement);
@@ -1214,6 +1269,7 @@ cta::Tape cta::SqliteDatabase::getTapeByVid(const SecurityIdentity &requester, c
     std::ostringstream message;
     message << "getTapeByVid() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
     throw(Exception(message.str()));
   }
   int res = sqlite3_step(statement);
@@ -1260,6 +1316,7 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::SqliteDatabase::selectAl
       std::ostringstream message;
       message << "selectAllRetrievalJobs() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
@@ -1289,6 +1346,7 @@ std::list<cta::LogicalLibrary> cta::SqliteDatabase::selectAllLogicalLibraries(co
       std::ostringstream message;
       message << "selectAllLogicalLibraries() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
