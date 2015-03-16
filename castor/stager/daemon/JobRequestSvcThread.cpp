@@ -190,7 +190,6 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* reque
   signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
   // "Request processed"
   castor::dlf::Param params[] = {
-    castor::dlf::Param(sr->requestUuid),
     castor::dlf::Param("Type", castor::ObjectsIdStrings[sr->reqType]),
     castor::dlf::Param("Filename", sr->fileName),
     castor::dlf::Param("uid", sr->euid),
