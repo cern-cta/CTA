@@ -205,7 +205,7 @@ try:
     stcur.execute(insertFCSQL, name=svcclassname, defaultFileSize=defaultfilesize,
                   replicaNb=replicanb, gcPolicy=gcpolicy, disk1Behavior=disk1behavior,
                   failJobsWhenNoSpace=failjobswhennospace, forcedFileClass=forcedfileclass,
-                  skPoolIds=diskPoolIds, dataPoolIds=dataPoolIds, lastEditor=lasteditor)
+                  diskPoolIds=diskPoolIds, dataPoolIds=dataPoolIds, lastEditor=lasteditor)
     # commit insertion and tell user
     stconn.commit()
     print 'inserted service class %s successfully' % svcclassname
