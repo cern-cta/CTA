@@ -108,7 +108,7 @@ void castor::stager::daemon::BulkStageReqSvcThread::process
       switch (result->reqType()) {
       case castor::OBJ_StageAbortRequest:
         // "Abort processed" message
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+        castor::dlf::dlf_writep(result->reqId(), DLF_LVL_SYSTEM,
                                 castor::stager::daemon::STAGER_BLKSTGSVC_ABORT,
                                 it->fileId(), it->nsHost());
         break;
