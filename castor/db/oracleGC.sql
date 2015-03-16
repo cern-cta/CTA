@@ -873,7 +873,7 @@ BEGIN
   deleteOutOfDateStageOutDCs(t*3600);
   t := TO_NUMBER(getConfigOption('cleaning', 'failedDCsTimeout', '72'));
   deleteFailedDiskCopies(t*3600);
-  t := TO_NUMBER(getConfigOption('cleaning', 'staleDisk2DiskCopyJobsTimeout', '6'))
+  t := TO_NUMBER(getConfigOption('cleaning', 'staleDisk2DiskCopyJobsTimeout', '6'));
   deleteStaleDisk2DiskCopyJobs(t*3600);
 END;
 /
