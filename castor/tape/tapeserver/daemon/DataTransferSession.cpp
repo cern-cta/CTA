@@ -340,6 +340,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       try {
         nbOfFileOnTape = tsr.gotWriteMountDetailsFromClient();
       } catch (castor::exception::Exception & e) {
+        log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", e.getMessage().str()));
         lc.log(LOG_INFO, "Aborting the session after problem with mount details. Notifying the client.");
         mrp.synchronousReportEndWithErrors(e.getMessageValue(), SEINTERNAL);
         return MARK_DRIVE_AS_UP;
