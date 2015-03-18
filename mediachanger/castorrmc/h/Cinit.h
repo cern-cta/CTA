@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "h/osdep.h"
+#include "osdep.h"
 
 	/* structure to be used with Cinitdaemon()/Cinitservice() */
 

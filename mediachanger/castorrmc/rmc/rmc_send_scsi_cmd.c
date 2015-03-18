@@ -31,9 +31,9 @@
 #endif
 #include "/usr/include/scsi/sg.h"
 #include <sys/stat.h>
-#include "h/scsictl.h"
-#include "h/serrno.h"
-#include "h/rmc_send_scsi_cmd.h"
+#include "scsictl.h"
+#include "serrno.h"
+#include "rmc_send_scsi_cmd.h"
 static char rmc_err_msgbuf[132];
 static const char *sk_msg[] = {
         "No sense",

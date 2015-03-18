@@ -9,10 +9,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <netinet/in.h>
-#include "h/marshall.h"
-#include "h/rmc_api.h"
-#include "h/rmc_constants.h"
-#include "h/serrno.h"
+#include "marshall.h"
+#include "rmc_api.h"
+#include "rmc_constants.h"
+#include "serrno.h"
 int rmc_import(const char *const server, const char *const vid)
 {
 	int c;

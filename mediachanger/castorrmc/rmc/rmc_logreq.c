@@ -3,9 +3,9 @@
  * All rights reserved
  */
  
-#include "h/rmc_constants.h"
-#include "h/rmc_logit.h"
-#include "h/rmc_logreq.h"
+#include "rmc_constants.h"
+#include "rmc_logit.h"
+#include "rmc_logreq.h"
 
 #include <string.h>
  

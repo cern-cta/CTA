@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "h/osdep.h"
-#include "h/smc_struct.h"
+#include "osdep.h"
+#include "smc_struct.h"
 
 EXTERN_C int rmc_marshall_element (char **const sbpp, const struct smc_element_info *const element_info);
 

@@ -17,22 +17,22 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "h/Cinit.h"
-#include "h/getconfent.h"
-#include "h/marshall.h"
-#include "h/net.h"
-#include "h/rbtsubr_constants.h"
-#include "h/rmc_constants.h"
-#include "h/rmc_logit.h"
-#include "h/rmc_procreq.h"
-#include "h/rmc_sendrep.h"
-#include "h/rmc_smcsubr.h"
-#include "h/scsictl.h"
-#include "h/serrno.h"
-#include "h/Cdomainname.h"
+#include "Cinit.h"
+#include "getconfent.h"
+#include "marshall.h"
+#include "net.h"
+#include "rbtsubr_constants.h"
+#include "rmc_constants.h"
+#include "rmc_logit.h"
+#include "rmc_procreq.h"
+#include "rmc_sendrep.h"
+#include "rmc_smcsubr.h"
+#include "scsictl.h"
+#include "serrno.h"
+#include "Cdomainname.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "h/rmc_send_scsi_cmd.h"
+#include "rmc_send_scsi_cmd.h"
 
 /* Forward declaration */
 static int rmc_getreq(const int s, int *const req_type, char *const req_data,

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "h/osdep.h"
+#include "osdep.h"
 
 EXTERN_C int rmc_send_scsi_cmd (
   const int tapefd,

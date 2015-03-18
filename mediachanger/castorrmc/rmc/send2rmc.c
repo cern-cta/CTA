@@ -10,12 +10,12 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include "h/Cnetdb.h"
-#include "h/marshall.h"
-#include "h/net.h"
-#include "h/rmc_api.h"
-#include "h/rmc_constants.h"
-#include "h/serrno.h"
+#include "Cnetdb.h"
+#include "marshall.h"
+#include "net.h"
+#include "rmc_api.h"
+#include "rmc_constants.h"
+#include "serrno.h"
 
 /* send2tpd - send a request to the SCSI media changer server and wait for the reply */
 
