@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "h/serrno.h"
+#include "serrno.h"
 #include "castor/exception/NoValue.hpp"
 
 

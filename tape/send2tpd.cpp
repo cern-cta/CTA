@@ -6,13 +6,13 @@
  */
 
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
-#include "h/Cnetdb.h"
-#include "h/Ctape.h"
-#include "h/Ctape_api.h"
-#include "h/getconfent.h"
-#include "h/marshall.h"
-#include "h/net.h"
-#include "h/serrno.h"
+#include "Cnetdb.h"
+#include "Ctape.h"
+#include "Ctape_api.h"
+#include "getconfent.h"
+#include "marshall.h"
+#include "net.h"
+#include "serrno.h"
 
 #include <errno.h>
 #include <sys/types.h>

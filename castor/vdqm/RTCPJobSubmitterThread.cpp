@@ -39,7 +39,7 @@
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
-#include "h/rtcp_constants.h"
+#include "rtcp_constants.h"
 
 #include <memory>
 #include <time.h>

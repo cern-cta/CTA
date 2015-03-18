@@ -4,9 +4,9 @@
  */
 
 /* serror.c     Global error reporting routines                         */
-#include "h/serrno.h"   /* special error numbers and codes              */
-#include "h/Cglobals.h"
-#include "h/strerror_r_wrapper.h"
+#include "serrno.h"   /* special error numbers and codes              */
+#include "Cglobals.h"
+#include "strerror_r_wrapper.h"
 
 #include <stdio.h>      /* standard input/output                        */
 #include <errno.h>      /* error numbers and codes                      */

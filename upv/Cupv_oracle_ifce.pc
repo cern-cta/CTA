@@ -3,10 +3,10 @@
  * All rights reserved
  */
 
-#include "h/serrno.h"
-#include "h/u64subr.h"
-#include "h/Cupv.h"
-#include "h/Cupv_server.h"
+#include "serrno.h"
+#include "u64subr.h"
+#include "Cupv.h"
+#include "Cupv_server.h"
 
 #include <stdio.h>
 #include <errno.h>

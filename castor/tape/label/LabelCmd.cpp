@@ -31,9 +31,9 @@
 #include "castor/tape/label/ParsedTpLabelCommandLine.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
-#include "h/Ctape.h"
-#include "h/Ctape_api.h"
-#include "h/serrno.h"
+#include "Ctape.h"
+#include "Ctape_api.h"
+#include "serrno.h"
 
 #include <getopt.h>
 #include <iostream>

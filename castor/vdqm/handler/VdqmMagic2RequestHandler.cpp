@@ -24,7 +24,7 @@
 #include "castor/exception/NotSupported.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/handler/VdqmMagic2RequestHandler.hpp"
-#include "h/vdqm_constants.h"
+#include "vdqm_constants.h"
 
 #include <iostream>
 

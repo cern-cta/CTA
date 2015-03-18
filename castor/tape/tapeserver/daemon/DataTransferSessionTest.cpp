@@ -49,8 +49,8 @@
 #include "castor/server/Threading.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
-#include "h/Ctape.h"
-#include "h/smc_struct.h"
+#include "Ctape.h"
+#include "smc_struct.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>

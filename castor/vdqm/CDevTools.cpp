@@ -1,6 +1,6 @@
 #include "castor/vdqm/CDevTools.hpp"
-#include "h/rtcp_constants.h"
-#include "h/vdqm_constants.h"
+#include "rtcp_constants.h"
+#include "vdqm_constants.h"
 
 #include <stdio.h>
 #include <arpa/inet.h>

@@ -37,9 +37,9 @@
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
-#include "h/log.h"
-#include "h/serrno.h"
-#include "h/stager_client_commandline.h"
+#include "log.h"
+#include "serrno.h"
+#include "stager_client_commandline.h"
 
 #include <google/protobuf/stubs/common.h>
 #include <memory>

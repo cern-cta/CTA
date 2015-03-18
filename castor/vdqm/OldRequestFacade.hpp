@@ -27,7 +27,7 @@
 //Include files
 #include "castor/BaseObject.hpp"
 #include "castor/exception/PermissionDenied.hpp"
-#include "h/vdqm_messages.h"
+#include "vdqm_messages.h"
 
 #include <string>
 

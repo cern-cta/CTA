@@ -23,7 +23,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmDriveSynchronizer.hpp"
-#include "h/vdqm_constants.h"
+#include "vdqm_constants.h"
 
 //------------------------------------------------------------------------------
 // constructor

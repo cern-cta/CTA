@@ -26,8 +26,8 @@
 #include "castor/vdqm/ProtocolFacade.hpp"
 #include "castor/vdqm/RequestHandlerThread.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
-#include "h/serrno.h"
-#include "h/vdqm_constants.h"
+#include "serrno.h"
+#include "vdqm_constants.h"
 
 
 //-----------------------------------------------------------------------------

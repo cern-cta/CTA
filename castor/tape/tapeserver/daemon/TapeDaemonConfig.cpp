@@ -24,7 +24,7 @@
 #include "castor/tape/tapeserver/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemonConfig.hpp"
-#include "h/rmc_constants.h"
+#include "rmc_constants.h"
 
 //------------------------------------------------------------------------------
 // constructor

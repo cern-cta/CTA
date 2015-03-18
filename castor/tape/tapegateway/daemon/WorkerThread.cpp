@@ -52,11 +52,11 @@
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/WorkerThread.hpp"
 #include "castor/utils/Timer.hpp"
-#include "h/Cns_api.h" // for log only
-#include "h/Ctape_constants.h" // for log only
-#include "h/getconfent.h"
-#include "h/serrno.h"
-#include "h/u64subr.h"
+#include "Cns_api.h" // for log only
+#include "Ctape_constants.h" // for log only
+#include "getconfent.h"
+#include "serrno.h"
+#include "u64subr.h"
 
 #include <errno.h>
 #include <sys/time.h>

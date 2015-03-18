@@ -33,9 +33,9 @@
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/handler/TapeDriveHandler.hpp"
 #include "castor/vdqm/handler/TapeRequestHandler.hpp"
-#include "h/Cupv_api.h"
-#include "h/net.h"
-#include "h/vdqm_constants.h"
+#include "Cupv_api.h"
+#include "net.h"
+#include "vdqm_constants.h"
 
 #include <sstream>
 #include <string>

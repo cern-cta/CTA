@@ -8,9 +8,9 @@
  */
 
 #pragma once
-#include "h/Cns_constants.h"
-#include "h/Cns_struct.h"
-#include "h/osdep.h"
+#include "Cns_constants.h"
+#include "Cns_struct.h"
+#include "osdep.h"
 
 #include <utime.h>
 #include <sys/stat.h>

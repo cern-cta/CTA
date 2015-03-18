@@ -40,7 +40,7 @@
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
 #include "castor/stager/daemon/ErrorSvcThread.hpp"
-#include "h/serrno.h"
+#include "serrno.h"
 
 #include <sstream>
 

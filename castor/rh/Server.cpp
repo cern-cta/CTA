@@ -35,8 +35,8 @@
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/Services.hpp"
 #include "castor/System.hpp"
-#include "h/common.h"   // for getconfent
-#include "h/patchlevel.h"
+#include "common.h"   // for getconfent
+#include "patchlevel.h"
 
 #include <iostream>
 #include <dlfcn.h>

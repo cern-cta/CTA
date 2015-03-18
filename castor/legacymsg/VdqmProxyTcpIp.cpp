@@ -26,8 +26,8 @@
 #include "castor/legacymsg/VdqmProxyTcpIp.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/rtcp_constants.h"
-#include "h/vdqm_constants.h"
+#include "rtcp_constants.h"
+#include "vdqm_constants.h"
 
 //------------------------------------------------------------------------------
 // constructor

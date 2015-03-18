@@ -35,7 +35,7 @@
 #include "castor/exception/BadVersion.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "h/serrno.h"
+#include "serrno.h"
 
 #include <sstream>
 #include <iomanip>

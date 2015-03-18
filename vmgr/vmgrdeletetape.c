@@ -10,9 +10,9 @@
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
-#include "h/Cns.h"
-#include "h/Cns_api.h"
-#include "h/getconfent.h"
+#include "Cns.h"
+#include "Cns_api.h"
+#include "getconfent.h"
 #include "serrno.h"
 #include "vmgr_api.h"
 extern	char	*optarg;

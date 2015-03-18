@@ -28,10 +28,10 @@
 #include "castor/tape/tapeserver/daemon/AdminConnectionHandler.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/common.h"
-#include "h/serrno.h"
-#include "h/Ctape.h"
-#include "h/vdqm_api.h"
+#include "common.h"
+#include "serrno.h"
+#include "Ctape.h"
+#include "vdqm_api.h"
 
 #include <errno.h>
 #include <memory>

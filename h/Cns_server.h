@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "h/Cns_struct.h"
-#include "h/Cuuid.h"
-#include "h/Csec_api.h"
+#include "Cns_struct.h"
+#include "Cuuid.h"
+#include "Csec_api.h"
 
 /* name server constants and macros */
 

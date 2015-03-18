@@ -25,7 +25,7 @@
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/VmgrMarshal.hpp"
-#include "h/vmgr.h"
+#include "vmgr.h"
 
 #include <errno.h>
 #include <iostream>

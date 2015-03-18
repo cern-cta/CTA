@@ -25,7 +25,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ServerSocket.hpp"
-#include "h/vdqm_messages.h"
+#include "vdqm_messages.h"
 
 
 namespace castor {

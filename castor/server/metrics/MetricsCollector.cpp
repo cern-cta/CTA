@@ -26,7 +26,7 @@
 #include "castor/server/metrics/InternalCounter.hpp"
 #include "castor/server/metrics/MetricsCollector.hpp"
 #include "castor/server/metrics/UpdateThread.hpp"
-#include "h/getconfent.h"
+#include "getconfent.h"
 
 #include <fstream>
 #include <time.h>

@@ -33,9 +33,9 @@
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/Helper.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
-#include "h/Castor_limits.h"
-#include "h/serrno.h"
-#include "h/vmgr_api.h"
+#include "Castor_limits.h"
+#include "serrno.h"
+#include "vmgr_api.h"
 
 #include <iostream>
 #include <list>

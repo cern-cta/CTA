@@ -26,9 +26,9 @@
 #include "castor/rh/UserCounter.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
-#include "h/Cgrp.h"
-#include "h/Cpwd.h"
-#include "h/serrno.h"
+#include "Cgrp.h"
+#include "Cpwd.h"
+#include "serrno.h"
 
 #include <errno.h>
 #include <string.h>

@@ -41,14 +41,14 @@
 #include "castor/tape/tpcp/TapeFseqRangeListSequence.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/Cgetopt.h"
-#include "h/common.h"
-#include "h/Ctape_constants.h"
-#include "h/Cupv_api.h"
-#include "h/Cupv_constants.h"
-#include "h/serrno.h"
-#include "h/vdqm_api.h"
-#include "h/vmgr_api.h"
+#include "Cgetopt.h"
+#include "common.h"
+#include "Ctape_constants.h"
+#include "Cupv_api.h"
+#include "Cupv_constants.h"
+#include "serrno.h"
+#include "vdqm_api.h"
+#include "vmgr_api.h"
 
 #include <ctype.h>
 #include <exception>

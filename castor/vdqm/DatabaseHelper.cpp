@@ -31,7 +31,7 @@
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
-#include "h/serrno.h"
+#include "serrno.h"
 
 #include <string>
 #include <vector>

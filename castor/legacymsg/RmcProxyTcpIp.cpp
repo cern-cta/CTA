@@ -25,8 +25,8 @@
 #include "castor/legacymsg/RmcProxyTcpIp.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/Castor_limits.h"
-#include "h/rmc_constants.h"
+#include "Castor_limits.h"
+#include "rmc_constants.h"
 
 //------------------------------------------------------------------------------
 // constructor

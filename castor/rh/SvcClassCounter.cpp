@@ -26,8 +26,8 @@
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/rh/SvcClassCounter.hpp"
-#include "h/Cgrp.h"
-#include "h/Cpwd.h"
+#include "Cgrp.h"
+#include "Cpwd.h"
 
 #include <errno.h>
 

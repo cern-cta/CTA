@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "h/osdep.h"
-#include "h/smc_struct.h"
+#include "osdep.h"
+#include "smc_struct.h"
 
 EXTERN_C int smc_get_geometry(
   const int fd,

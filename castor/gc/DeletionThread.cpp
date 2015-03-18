@@ -29,8 +29,8 @@
 #include "castor/stager/IGCSvc.hpp"
 #include "castor/stager/GCLocalFile.hpp"
 #include "castor/System.hpp"
-#include "h/getconfent.h"
-#include "h/serrno.h"
+#include "getconfent.h"
+#include "serrno.h"
 
 #include <radosstriper/libradosstriper.hpp>
 

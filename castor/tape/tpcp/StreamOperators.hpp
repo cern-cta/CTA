@@ -27,7 +27,7 @@
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
 #include "castor/tape/tpcp/TapeFseqRange.hpp"
 #include "castor/tape/tpcp/TapeFseqRangeList.hpp"
-#include "h/vmgr_api.h"
+#include "vmgr_api.h"
 
 #include <ostream>
 

@@ -9,11 +9,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "h/rbtsubr_constants.h"
-#include "h/rmc_api.h"
-#include "h/serrno.h"
-#include "h/smc_constants.h"
-#include "h/getconfent.h"
+#include "rbtsubr_constants.h"
+#include "rmc_api.h"
+#include "serrno.h"
+#include "smc_constants.h"
+#include "getconfent.h"
 
 #include <ctype.h>
 			/* exit codes */

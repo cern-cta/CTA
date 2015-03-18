@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "h/osdep.h"
-#include "h/vdqmClientInfoMsgBody.h"
+#include "osdep.h"
+#include "vdqmClientInfoMsgBody.h"
 
 #include <stddef.h>
 #include <stdint.h>

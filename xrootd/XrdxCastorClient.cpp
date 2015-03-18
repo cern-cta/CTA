@@ -41,8 +41,8 @@
 #include "castor/Constants.hpp"
 #include "castor/client/BaseClient.hpp"
 /*-----------------------------------------------------------------------------*/
-#include "h/getconfent.h"
-#include "h/serrno.h"
+#include "getconfent.h"
+#include "serrno.h"
 #include <string>
 /*-----------------------------------------------------------------------------*/
 

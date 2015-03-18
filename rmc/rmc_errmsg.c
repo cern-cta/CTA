@@ -9,7 +9,7 @@
 #include <stdarg.h>
 #include <sys/types.h>
 
-#include "h/rmc_constants.h"
+#include "rmc_constants.h"
 
 static char *errbufp = NULL;
 static int errbuflen;

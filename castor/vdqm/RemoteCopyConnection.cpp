@@ -31,11 +31,11 @@
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/vdqmMacros.h"  // Needed for marshalling
-#include "h/net.h"
-#include "h/osdep.h" //for LONGSIZE
-#include "h/rtcp_constants.h" /* Definition of RTCOPY_MAGIC   */
-#include "h/serrno.h"
-#include "h/vdqm_messages.h"
+#include "net.h"
+#include "osdep.h" //for LONGSIZE
+#include "rtcp_constants.h" /* Definition of RTCOPY_MAGIC   */
+#include "serrno.h"
+#include "vdqm_messages.h"
 #include <sys/socket.h>
 
 #include <errno.h>

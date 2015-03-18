@@ -32,8 +32,8 @@
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemonConfig.hpp"
-#include "h/vdqm_constants.h"
-#include "h/rtcp_constants.h"
+#include "vdqm_constants.h"
+#include "rtcp_constants.h"
 
 namespace castor     {
 namespace tape       {

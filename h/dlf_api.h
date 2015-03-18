@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "h/Cuuid.h"
-#include "h/Cns_api.h"
-#include "h/osdep.h"
+#include "Cuuid.h"
+#include "Cns_api.h"
+#include "osdep.h"
 
 #include <syslog.h>
 

@@ -24,7 +24,7 @@
 #define _XOPEN_SOURCE 600
 
 #include "castor/exception/Exception.hpp"
-#include "h/serrno.h"
+#include "serrno.h"
 
 //------------------------------------------------------------------------------
 // constructor

@@ -24,8 +24,8 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/utils/Timer.hpp"
-#include "h/log.h"
-#include "h/serrno.h"
+#include "log.h"
+#include "serrno.h"
 
 #include <memory>
 #include <sstream>

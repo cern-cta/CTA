@@ -24,7 +24,7 @@
  *****************************************************************************/
 
 #include "castor/server/metrics/Counter.hpp"
-#include "h/getconfent.h"
+#include "getconfent.h"
 
 #include <errno.h>
 #include <iomanip>

@@ -36,9 +36,9 @@
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/handler/TapeDriveStatusHandler.hpp"
-#include "h/net.h"
-#include "h/rtcp_constants.h"
-#include "h/vdqm_constants.h"
+#include "net.h"
+#include "rtcp_constants.h"
+#include "vdqm_constants.h"
 #include <string.h>
 
 

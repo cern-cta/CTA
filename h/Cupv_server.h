@@ -10,14 +10,14 @@
 #pragma once
 
 #ifdef UPVCSEC
-#include "h/Csec_api.h"
+#include "Csec_api.h"
 #endif
 
-#include "h/Cupv_struct.h"
-#include "h/Cuuid.h"
-#include "h/Cupv_constants.h"
-#include "h/Cupv_util.h"
-#include "h/Cupv.h"
+#include "Cupv_struct.h"
+#include "Cuuid.h"
+#include "Cupv_constants.h"
+#include "Cupv_util.h"
+#include "Cupv.h"
 
                         /* UPV constants and macros */
 

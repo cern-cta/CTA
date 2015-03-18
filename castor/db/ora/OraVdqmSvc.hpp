@@ -26,7 +26,7 @@
 #include "castor/db/DbBaseObj.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
-#include "h/vdqm_messages.h"
+#include "vdqm_messages.h"
 
 #include "occi.h"
 #include <map>

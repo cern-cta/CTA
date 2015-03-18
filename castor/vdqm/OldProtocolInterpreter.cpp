@@ -22,11 +22,11 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "h/common.h"
-#include "h/Cnetdb.h"
-#include "h/net.h"
-#include "h/osdep.h" //for LONGSIZE
-#include "h/serrno.h"
+#include "common.h"
+#include "Cnetdb.h"
+#include "net.h"
+#include "osdep.h" //for LONGSIZE
+#include "serrno.h"
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"

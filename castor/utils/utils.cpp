@@ -20,9 +20,9 @@
  *****************************************************************************/
 
 #include "castor/utils/utils.hpp"
-#include "h/serrno.h"
-#include "h/strerror_r_wrapper.h"
-#include "h/vmgr_constants.h"
+#include "serrno.h"
+#include "strerror_r_wrapper.h"
+#include "vmgr_constants.h"
 
 #include <algorithm>
 #include <errno.h>

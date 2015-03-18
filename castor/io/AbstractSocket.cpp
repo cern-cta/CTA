@@ -28,8 +28,8 @@
 #include "castor/Services.hpp"
 #include "castor/io/AbstractSocket.hpp"
 #include "castor/io/StreamAddress.hpp"
-#include "h/net.h"
-#include "h/Cnetdb.h"
+#include "net.h"
+#include "Cnetdb.h"
 
 #include <unistd.h>
 #include <errno.h>

@@ -12,17 +12,17 @@
 #include <time.h>
 #include <sys/types.h>
 #include <netinet/in.h>
-#include "h/Cupv_api.h"
-#include "h/marshall.h"
-#include "h/serrno.h"
-#include "h/rmc_constants.h"
-#include "h/rmc_logit.h"
-#include "h/rmc_logreq.h"
-#include "h/rmc_marshall_element.h"
-#include "h/rmc_procreq.h"
-#include "h/rmc_smcsubr.h"
-#include "h/rmc_smcsubr2.h"
-#include "h/rmc_sendrep.h"
+#include "Cupv_api.h"
+#include "marshall.h"
+#include "serrno.h"
+#include "rmc_constants.h"
+#include "rmc_logit.h"
+#include "rmc_logreq.h"
+#include "rmc_marshall_element.h"
+#include "rmc_procreq.h"
+#include "rmc_smcsubr.h"
+#include "rmc_smcsubr2.h"
+#include "rmc_sendrep.h"
 #include <string.h>
 extern struct extended_robot_info extended_robot_info;
  

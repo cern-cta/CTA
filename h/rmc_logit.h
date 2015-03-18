@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "h/osdep.h"
+#include "osdep.h"
 
 EXTERN_C int rmc_logit(const char *const func, const char *const msg, ...);
 

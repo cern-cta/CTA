@@ -30,9 +30,9 @@
 #include "castor/vdqm/DriveSchedulerThread.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
-#include "h/getconfent.h"
-#include "h/rtcp_constants.h"
-#include "h/vdqm_constants.h"
+#include "getconfent.h"
+#include "rtcp_constants.h"
+#include "vdqm_constants.h"
 
 #include <stdlib.h>
 

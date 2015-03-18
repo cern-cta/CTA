@@ -28,9 +28,9 @@
 #include "castor/stager/TapeTpModeCodes.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
-#include "h/serrno.h"
-#include "h/u64subr.h"
-#include "h/vmgr_api.h"
+#include "serrno.h"
+#include "u64subr.h"
+#include "vmgr_api.h"
 
 #include <errno.h>
 #include <sys/types.h>

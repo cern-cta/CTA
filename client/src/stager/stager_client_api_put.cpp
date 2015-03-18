@@ -22,9 +22,9 @@
 #include "castor/rh/Response.hpp"
 #include "castor/rh/FileResponse.hpp"
 #include "castor/rh/IOResponse.hpp"
-#include "h/serrno.h"
-#include "h/stager_client_api.h"
-#include "h/stager_client_api_common.hpp"
+#include "serrno.h"
+#include "stager_client_api.h"
+#include "stager_client_api_common.hpp"
 
 // To be removed when getting rid of
 // request printing

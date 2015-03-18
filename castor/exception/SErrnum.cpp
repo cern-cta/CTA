@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #include "castor/exception/SErrnum.hpp"
-#include "h/serrno.h"
+#include "serrno.h"
 
 #include <errno.h>
 #include <string.h>

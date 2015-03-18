@@ -26,8 +26,8 @@
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
 #include "castor/log/Logger.hpp"
-#include "h/log.h"
-#include "h/serrno.h"
+#include "log.h"
+#include "serrno.h"
 
 #include <signal.h>
 

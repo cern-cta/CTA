@@ -25,8 +25,8 @@
 #include "castor/vdqm/Utils.hpp"
 #include "castor/vdqm/vdqmMacros.h"
 #include "castor/vdqm/VdqmMagic4ProtocolInterpreter.hpp"
-#include "h/serrno.h"
-#include "h/vdqm_constants.h"
+#include "serrno.h"
+#include "vdqm_constants.h"
 
 
 //------------------------------------------------------------------------------

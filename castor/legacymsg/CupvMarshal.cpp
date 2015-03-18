@@ -24,7 +24,7 @@
 
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CupvMarshal.hpp"
-#include "h/Cupv.h"
+#include "Cupv.h"
 
 #include <string.h>
 

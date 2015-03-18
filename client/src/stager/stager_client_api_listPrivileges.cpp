@@ -30,9 +30,9 @@
 #include "castor/bwlist/ListPrivileges.hpp"
 #include "castor/bwlist/Privilege.hpp"
 #include "castor/rh/BasicResponse.hpp"
-#include "h/serrno.h"
-#include "h/stager_client_api.h"
-#include "h/stager_client_api_common.hpp"
+#include "serrno.h"
+#include "stager_client_api.h"
+#include "stager_client_api_common.hpp"
 
 #include <errno.h>
 #include <vector>

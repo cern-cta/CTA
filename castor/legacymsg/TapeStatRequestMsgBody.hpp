@@ -24,8 +24,8 @@
 #pragma once
 
 #include "castor/legacymsg/RtcpErrorAppendix.hpp"
-#include "h/Castor_limits.h"
-#include "h/Cuuid.h"
+#include "Castor_limits.h"
+#include "Cuuid.h"
 
 #include <stdint.h>
 

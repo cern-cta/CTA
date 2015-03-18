@@ -11,8 +11,8 @@
 
                         /* name server constants */
 
-#include "h/Cns_constants.h"
-#include "h/osdep.h"
+#include "Cns_constants.h"
+#include "osdep.h"
 
 #define CNS_SCE                 "CNS"
 #define CNS_SVC                 "cns"

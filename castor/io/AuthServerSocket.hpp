@@ -28,10 +28,10 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Security.hpp"
 #include "castor/io/ServerSocket.hpp"
-#include "h/net.h"
+#include "net.h"
 
 extern "C" {
-#include "h/Csecloader.h"
+#include "Csecloader.h"
 }
 
 #include <string>

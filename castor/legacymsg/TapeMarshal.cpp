@@ -25,10 +25,10 @@
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
-#include "h/rtcp_constants.h"
-#include "h/vdqm_constants.h"
-#include "h/Ctape.h"
-#include "h/serrno.h"
+#include "rtcp_constants.h"
+#include "vdqm_constants.h"
+#include "Ctape.h"
+#include "serrno.h"
 
 #include <errno.h>
 #include <string.h>

@@ -11,11 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "h/Cns_api.h"
-#include "h/Cns.h"
-#include "h/getconfent.h"
-#include "h/serrno.h"
-#include "h/vmgr_api.h"
+#include "Cns_api.h"
+#include "Cns.h"
+#include "getconfent.h"
+#include "serrno.h"
+#include "vmgr_api.h"
 
 extern  char  *optarg;
 extern  int  optind;

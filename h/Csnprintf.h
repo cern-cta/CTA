@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "h/osdep.h"
+#include "osdep.h"
 
 #include <stdio.h>
 #include <stdarg.h>

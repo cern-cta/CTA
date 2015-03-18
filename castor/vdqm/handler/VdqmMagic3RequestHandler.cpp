@@ -26,8 +26,8 @@
 #include "castor/vdqm/SocketHelper.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/handler/VdqmMagic3RequestHandler.hpp"
-#include "h/Cupv_api.h"
-#include "h/vdqm_constants.h"
+#include "Cupv_api.h"
+#include "vdqm_constants.h"
 
 #include <iostream>
 

@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #include "castor/exception/Errnum.hpp"
-#include "h/serrno.h"
+#include "serrno.h"
 
 #include <errno.h>
 #include <string.h>

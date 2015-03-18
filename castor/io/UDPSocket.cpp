@@ -28,8 +28,8 @@
 #include "castor/exception/TooBig.hpp"
 #include "castor/exception/OutOfMemory.hpp"
 #include "castor/io/UDPSocket.hpp"
-#include "h/net.h"
-#include "h/serrno.h"
+#include "net.h"
+#include "serrno.h"
 
 #include <netdb.h>
 #include <unistd.h>

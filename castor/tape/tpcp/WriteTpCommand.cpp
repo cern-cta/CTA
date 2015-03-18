@@ -38,8 +38,8 @@
 #include "castor/tape/tpcp/Helper.hpp"
 #include "castor/tape/tpcp/WriteTpCommand.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/Ctape_constants.h"
-#include "h/Cupv_api.h"
+#include "Ctape_constants.h"
+#include "Cupv_api.h"
 
 #include <errno.h>
 #include <getopt.h>

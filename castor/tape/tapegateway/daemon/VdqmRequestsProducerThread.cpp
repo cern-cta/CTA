@@ -34,9 +34,9 @@
 #include "castor/tape/tapegateway/ScopedTransaction.hpp"
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 #include "castor/utils/Timer.hpp"
-#include "h/Ctape_constants.h"
-#include "h/serrno.h"
-#include "h/u64subr.h"
+#include "Ctape_constants.h"
+#include "serrno.h"
+#include "u64subr.h"
 
 #include <errno.h>
 #include <stdlib.h>

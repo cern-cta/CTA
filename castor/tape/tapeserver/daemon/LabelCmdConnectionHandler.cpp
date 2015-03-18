@@ -28,11 +28,11 @@
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "castor/tape/tapeserver/daemon/LabelCmdConnectionHandler.hpp"
 #include "castor/utils/SmartFd.hpp"
-#include "h/common.h"
-#include "h/Ctape.h"
-#include "h/serrno.h"
-#include "h/vdqm_api.h"
-#include "h/vmgr_constants.h"
+#include "common.h"
+#include "Ctape.h"
+#include "serrno.h"
+#include "vdqm_api.h"
+#include "vmgr_constants.h"
 
 #include <errno.h>
 #include <fcntl.h>

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "h/osdep.h"
+#include "osdep.h"
 
 #ifdef __cplusplus
  extern "C" {

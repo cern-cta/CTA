@@ -35,11 +35,11 @@
 #include "castor/vdqm/Utils.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/VdqmServer.hpp"
-#include "h/Cgetopt.h"
-#include "h/Cinit.h"
-#include "h/Cuuid.h"
-#include "h/common.h"
-#include "h/net.h"
+#include "Cgetopt.h"
+#include "Cinit.h"
+#include "Cuuid.h"
+#include "common.h"
+#include "net.h"
 
 #include <errno.h>
 #include <stdio.h>

@@ -37,10 +37,10 @@
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
-#include "h/Cuuid.h"
-#include "h/net.h"
-#include "h/serrno.h"
-#include "h/vdqm_constants.h"
+#include "Cuuid.h"
+#include "net.h"
+#include "serrno.h"
+#include "vdqm_constants.h"
 
 #include <occi.h>
 #include <errno.h>

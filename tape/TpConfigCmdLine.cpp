@@ -21,8 +21,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "h/Ctape_api.h"
-#include "h/Ctape_constants.h"
+#include "Ctape_api.h"
+#include "Ctape_constants.h"
 #include "tape/TpConfigCmdLine.hpp"
 #include "tape/TpConfigException.hpp"
 

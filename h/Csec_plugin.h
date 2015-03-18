@@ -1,9 +1,9 @@
 #pragma once
 
-#include "h/Csec_common.h"
-#include "h/Cpwd.h"
-#include "h/Cmutex.h"
-#include "h/serrno.h"
+#include "Csec_common.h"
+#include "Cpwd.h"
+#include "Cmutex.h"
+#include "serrno.h"
 
 #define CSEC_METHOD_NAME_X(METH, MECH) __CONCAT(METH,MECH)
 #define CSEC_METHOD_NAME(METH, MECH) CSEC_METHOD_NAME_X(METH, MECH)

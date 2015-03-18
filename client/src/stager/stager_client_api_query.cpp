@@ -21,10 +21,10 @@
 #include "castor/query/DiskServerDescription.hpp"
 #include "castor/query/FileSystemDescription.hpp"
 #include "client/src/stager/stager_client_api_query.hpp"
-#include "h/serrno.h"
-#include "h/stager_client_api.h"
-#include "h/stager_client_api_common.hpp"
-#include "h/u64subr.h"
+#include "serrno.h"
+#include "stager_client_api.h"
+#include "stager_client_api_common.hpp"
+#include "u64subr.h"
 
 #include <errno.h>
 #include <string.h>

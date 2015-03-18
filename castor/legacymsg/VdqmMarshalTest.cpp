@@ -24,7 +24,7 @@
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/VdqmMarshal.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/vdqm_constants.h"
+#include "vdqm_constants.h"
 
 #include <gtest/gtest.h>
 

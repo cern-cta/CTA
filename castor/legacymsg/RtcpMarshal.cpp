@@ -25,8 +25,8 @@
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/RtcpMarshal.hpp"
-#include "h/rtcp_constants.h"
-#include "h/vdqm_constants.h"
+#include "rtcp_constants.h"
+#include "vdqm_constants.h"
 
 #include <errno.h>
 #include <iostream>

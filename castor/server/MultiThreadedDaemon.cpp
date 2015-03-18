@@ -22,8 +22,8 @@
 #include "castor/server/metrics/MetricsCollector.hpp"
 #include "castor/server/MultiThreadedDaemon.hpp"
 #include "castor/server/UDPListenerThreadPool.hpp"
-#include "h/Cgetopt.h"
-#include "h/Cthread_api.h"
+#include "Cgetopt.h"
+#include "Cthread_api.h"
 
 #include <signal.h>
 #include <sys/wait.h>

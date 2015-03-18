@@ -27,8 +27,8 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/biniostream.h"
 #include "castor/io/StreamAddress.hpp"
-#include "h/net.h"
-#include "h/serrno.h"
+#include "net.h"
+#include "serrno.h"
 
 #include <netdb.h>
 #include <errno.h>

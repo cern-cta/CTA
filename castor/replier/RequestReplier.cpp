@@ -31,8 +31,8 @@
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/rh/Client.hpp"
 #include "castor/Services.hpp"
-#include "h/Cthread_api.h"
-#include "h/serrno.h"
+#include "Cthread_api.h"
+#include "serrno.h"
 
 #include <sys/poll.h>
 #include <unistd.h>

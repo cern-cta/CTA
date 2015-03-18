@@ -24,7 +24,7 @@
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/RmcMarshal.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/rmc_constants.h"
+#include "rmc_constants.h"
 
 #include <gtest/gtest.h>
 

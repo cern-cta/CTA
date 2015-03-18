@@ -33,8 +33,8 @@
 #include "castor/tape/tapegateway/daemon/VdqmTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 #include "castor/utils/Timer.hpp"
-#include "h/Ctape_constants.h"
-#include "h/serrno.h"
+#include "Ctape_constants.h"
+#include "serrno.h"
 
 #include <errno.h>
 #include <stdlib.h>

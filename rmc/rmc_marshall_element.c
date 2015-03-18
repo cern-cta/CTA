@@ -3,8 +3,8 @@
  * All rights reserved
  */
  
-#include "h/marshall.h"
-#include "h/rmc_marshall_element.h"
+#include "marshall.h"
+#include "rmc_marshall_element.h"
  
 int rmc_marshall_element (
 	char **const sbpp,

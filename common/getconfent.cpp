@@ -21,8 +21,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "h/getconfent.h"
-#include "h/serrno.h"
+#include "getconfent.h"
+#include "serrno.h"
 #include "castor/common/CastorConfiguration.hpp"
 
 #include <stdlib.h>

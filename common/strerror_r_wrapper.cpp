@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "h/strerror_r_wrapper.h"
+#include "strerror_r_wrapper.h"
 
 #if defined(linux)
 /*

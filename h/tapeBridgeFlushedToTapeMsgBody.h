@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "h/Castor_limits.h"
-#include "h/osdep.h"
+#include "Castor_limits.h"
+#include "osdep.h"
 
 #include <stdint.h>
 

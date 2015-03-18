@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "h/net.h"
+#include "net.h"
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
 

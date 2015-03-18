@@ -12,17 +12,17 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "h/getconfent.h"
-#include "h/rbtsubr_constants.h"
-#include "h/rmc_constants.h"
-#include "h/rmc_logit.h"
-#include "h/rmc_send_scsi_cmd.h"
-#include "h/rmc_sendrep.h"
-#include "h/rmc_smcsubr.h"
-#include "h/rmc_smcsubr2.h"
-#include "h/scsictl.h"
-#include "h/serrno.h"
-#include "h/smc_constants.h"
+#include "getconfent.h"
+#include "rbtsubr_constants.h"
+#include "rmc_constants.h"
+#include "rmc_logit.h"
+#include "rmc_send_scsi_cmd.h"
+#include "rmc_sendrep.h"
+#include "rmc_smcsubr.h"
+#include "rmc_smcsubr2.h"
+#include "scsictl.h"
+#include "serrno.h"
+#include "smc_constants.h"
 
 #define	RBT_XTRA_PROC 10
 static struct smc_status smc_status;

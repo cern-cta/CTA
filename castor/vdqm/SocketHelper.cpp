@@ -25,13 +25,13 @@
 #include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/SocketHelper.hpp"
 #include "castor/vdqm/vdqmMacros.h"  // Needed for marshalling
-#include "h/Cnetdb.h"
-#include "h/common.h"
-#include "h/Cupv_api.h"
-#include "h/net.h"
-#include "h/osdep.h" //for LONGSIZE
-#include "h/serrno.h"
-#include "h/vdqm_constants.h"
+#include "Cnetdb.h"
+#include "common.h"
+#include "Cupv_api.h"
+#include "net.h"
+#include "osdep.h" //for LONGSIZE
+#include "serrno.h"
+#include "vdqm_constants.h"
 
 #include <netdb.h>
 #include <errno.h>

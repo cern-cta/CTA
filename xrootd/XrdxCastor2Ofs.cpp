@@ -28,8 +28,8 @@
 #include <sys/stat.h>
 #include <grp.h>
 #include <fcntl.h>
-#include "h/Cns_api.h"
-#include "h/serrno.h"
+#include "Cns_api.h"
+#include "serrno.h"
 #include <string.h>
 #include <zlib.h>
 #include "ceph/ceph_posix.h"

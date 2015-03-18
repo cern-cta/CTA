@@ -25,8 +25,8 @@
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/utils/SmartFd.hpp"
-#include "h/common.h"
-#include "h/serrno.h"
+#include "common.h"
+#include "serrno.h"
 
 //------------------------------------------------------------------------------
 // constructor

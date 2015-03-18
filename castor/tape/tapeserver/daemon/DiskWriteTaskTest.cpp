@@ -33,7 +33,7 @@
 #include "castor/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "h/serrno.h"
+#include "serrno.h"
 
 #include <gtest/gtest.h>
 

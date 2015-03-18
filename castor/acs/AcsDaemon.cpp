@@ -26,7 +26,7 @@
 #include "castor/acs/Constants.hpp"
 #include "castor/acs/AcsDaemon.hpp"
 #include "castor/acs/AcsMessageHandler.hpp"
-#include "h/serrno.h"
+#include "serrno.h"
 
 #include <memory>
 #include <signal.h>

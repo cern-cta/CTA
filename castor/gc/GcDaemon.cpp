@@ -32,8 +32,8 @@
 #include "castor/log/SyslogLogger.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/BaseThreadPool.hpp"
-#include "h/Cgetopt.h"
-#include "h/getconfent.h"
+#include "Cgetopt.h"
+#include "getconfent.h"
 
 #include <iostream>
 #include <sys/time.h>

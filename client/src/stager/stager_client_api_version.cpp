@@ -11,9 +11,9 @@
 #include "castor/query/VersionQuery.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Communication.hpp"
-#include "h/serrno.h"
-#include "h/stager_client_api_common.hpp"
-#include "h/stager_client_api.h"
+#include "serrno.h"
+#include "stager_client_api_common.hpp"
+#include "stager_client_api.h"
 
 #include <errno.h>
 

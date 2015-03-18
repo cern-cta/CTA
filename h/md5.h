@@ -41,9 +41,9 @@
  ***********************************************************************
  */
 
-#include "h/marshall.h"
-#include "h/osdep.h"
-#include "h/Cdb_limits.h"
+#include "marshall.h"
+#include "osdep.h"
+#include "Cdb_limits.h"
 
 #include <sys/types.h>
 

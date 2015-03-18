@@ -28,7 +28,7 @@
 #include "castor/dlf/TimeStamp.hpp"
 #include "castor/IObject.hpp"
 #include "castor/stager/TapeVid.hpp"
-#include "h/dlf_api.h"
+#include "dlf_api.h"
 
 #include <string.h>
 #include <stdlib.h>

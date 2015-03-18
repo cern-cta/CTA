@@ -11,8 +11,8 @@
 
                         /* UPV constants */
 
-#include "h/Cupv_constants.h"
-#include "h/osdep.h"
+#include "Cupv_constants.h"
+#include "osdep.h"
 
 #define CUPV_MAGIC          0x7770777
 #define CUPV_LISTTIMEOUT    300         /* timeout while waiting for the next list sub-req */

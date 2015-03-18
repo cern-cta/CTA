@@ -10,13 +10,13 @@
 #pragma once
 
 #ifdef VMGRCSEC
-#include "h/Csec_api.h"
+#include "Csec_api.h"
 #endif
 
-#include "h/vmgr_struct.h"
-#include "h/Cuuid.h"
-#include "h/vmgr_constants.h"
-#include "h/vmgr.h"
+#include "vmgr_struct.h"
+#include "Cuuid.h"
+#include "vmgr_constants.h"
+#include "vmgr.h"
 
                         /* volume manager constants and macros */
 

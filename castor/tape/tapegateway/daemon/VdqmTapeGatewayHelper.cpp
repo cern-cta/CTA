@@ -23,8 +23,8 @@
 
 #include "castor/Services.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmTapeGatewayHelper.hpp"
-#include "h/serrno.h"
-#include "h/vdqm_api.h"
+#include "serrno.h"
+#include "vdqm_api.h"
 
 #include <sys/types.h>
 #include <stdlib.h>

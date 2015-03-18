@@ -22,9 +22,9 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/NsProxyTcpIp.hpp"
-#include "h/Cns.h"
-#include "h/getconfent.h"
-#include "h/Cns_api.h"
+#include "Cns.h"
+#include "getconfent.h"
+#include "Cns_api.h"
 
 //------------------------------------------------------------------------------
 // constructor

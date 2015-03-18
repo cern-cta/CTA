@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "h/osdep.h"
-#include "h/Cupv_constants.h"
-#include "h/Cupv_struct.h"
-#include "h/Cupv_util.h"
+#include "osdep.h"
+#include "Cupv_constants.h"
+#include "Cupv_struct.h"
+#include "Cupv_util.h"
 
 #include <sys/types.h>
 

@@ -25,7 +25,7 @@
 #include "castor/server/Daemon.hpp"
 #include "castor/server/ThreadNotification.hpp"
 #include "castor/System.hpp"
-#include "h/Cgetopt.h"
+#include "Cgetopt.h"
 
 #include <signal.h>
 #include <stdio.h>

@@ -26,10 +26,10 @@
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/EmptyDriveProbe.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/Ctape_constants.h"
-#include "h/rmc_constants.h"
-#include "h/serrno.h"
-#include "h/vdqm_constants.h"
+#include "Ctape_constants.h"
+#include "rmc_constants.h"
+#include "serrno.h"
+#include "vdqm_constants.h"
 
 #include <errno.h>
 #include <signal.h>

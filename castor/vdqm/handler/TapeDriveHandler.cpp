@@ -42,10 +42,10 @@
 #include "castor/vdqm/handler/TapeDriveHandler.hpp"
 #include "castor/vdqm/handler/TapeDriveConsistencyChecker.hpp" // Friend
 #include "castor/vdqm/handler/TapeDriveStatusHandler.hpp" // Friend
-#include "h/Ctape_constants.h" // For WRITE_ENABLE WRITE_DISABLE
-#include "h/net.h"
-#include "h/vdqm_constants.h"
-#include "h/vmgr_api.h" // For VMGR
+#include "Ctape_constants.h" // For WRITE_ENABLE WRITE_DISABLE
+#include "net.h"
+#include "vdqm_constants.h"
+#include "vmgr_api.h" // For VMGR
 
 #include <memory>
 #include <vector>

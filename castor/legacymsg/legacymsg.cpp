@@ -26,7 +26,7 @@
 #include "castor/legacymsg/legacymsg.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/legacymsg/GenericReplyMsgBody.hpp"
-#include "h/Ctape.h"
+#include "Ctape.h"
 #include "castor/utils/utils.hpp"
 #include "GenericMarshal.hpp"
 

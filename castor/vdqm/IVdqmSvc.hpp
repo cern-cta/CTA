@@ -26,7 +26,7 @@
 
 #include "castor/IService.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
-#include "h/vdqm_messages.h"
+#include "vdqm_messages.h"
 
 #include <list>
 #include <string>

@@ -46,13 +46,13 @@
 
 #define VDQMSERV 1
 
-#include "h/common.h" //for getconfent
-#include "h/Ctape_constants.h"
-#include "h/Cupv_constants.h"
-#include "h/net.h"
-#include "h/vdqm_constants.h"
-#include "h/vmgr_api.h"
-#include "h/vmgr_struct.h"
+#include "common.h" //for getconfent
+#include "Ctape_constants.h"
+#include "Cupv_constants.h"
+#include "net.h"
+#include "vdqm_constants.h"
+#include "vmgr_api.h"
+#include "vmgr_struct.h"
  
 #include <sys/types.h>
 #include <memory>

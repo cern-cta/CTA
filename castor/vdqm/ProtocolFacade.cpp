@@ -41,7 +41,7 @@
 #include "castor/vdqm/handler/VdqmMagic2RequestHandler.hpp"
 #include "castor/vdqm/handler/VdqmMagic3RequestHandler.hpp"
 #include "castor/vdqm/handler/VdqmMagic4RequestHandler.hpp"
-#include "h/vdqm_constants.h"
+#include "vdqm_constants.h"
 
 #include <sstream>
 

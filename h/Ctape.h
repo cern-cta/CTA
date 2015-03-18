@@ -15,8 +15,8 @@
 
 			/* tape daemon constants and macros */
 
-#include "h/Ctape_constants.h"
-#include "h/osdep.h"
+#include "Ctape_constants.h"
+#include "osdep.h"
 
 #define CHECKI     10	     /* max interval to check for work to be done */
 #define CLNREQI   180	     /* interval to check for jobs that have died */

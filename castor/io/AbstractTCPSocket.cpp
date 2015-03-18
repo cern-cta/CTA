@@ -26,9 +26,9 @@
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/AbstractTCPSocket.hpp"
-#include "h/getconfent.h"
-#include "h/net.h"
-#include "h/serrno.h"
+#include "getconfent.h"
+#include "net.h"
+#include "serrno.h"
 
 #include <limits.h>
 #include <netdb.h>

@@ -40,9 +40,9 @@
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/Ctape.h"
-#include "h/serrno.h"
-#include "h/vmgr_constants.h"
+#include "Ctape.h"
+#include "serrno.h"
+#include "vmgr_constants.h"
 
 #include <sstream>
 #include <iomanip>

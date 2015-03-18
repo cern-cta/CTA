@@ -9,7 +9,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <sys/types.h>
-#include "h/Ctape.h"
+#include "Ctape.h"
 
 static char *errbufp = NULL;
 static int errbuflen;

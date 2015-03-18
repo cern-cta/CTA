@@ -32,9 +32,9 @@
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/ScopedTransaction.hpp"
-#include "h/serrno.h"
-#include "h/u64subr.h"
-#include "h/vdqm_api.h"
+#include "serrno.h"
+#include "u64subr.h"
+#include "vdqm_api.h"
 
 #include <errno.h>
 #include <stdlib.h>

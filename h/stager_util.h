@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "h/osdep.h"
-#include "h/Cns_api.h"
+#include "osdep.h"
+#include "Cns_api.h"
 
 #include <sys/types.h>
 #include <time.h>

@@ -26,10 +26,10 @@
 #include "castor/legacymsg/CupvProxy.hpp"
 #include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueTransferSession.hpp"
-#include "h/Ctape_constants.h"
-#include "h/Cupv_constants.h"
-#include "h/rmc_constants.h"
-#include "h/vmgr_constants.h"
+#include "Ctape_constants.h"
+#include "Cupv_constants.h"
+#include "rmc_constants.h"
+#include "vmgr_constants.h"
 
 #include <sys/types.h>
 #include <signal.h>

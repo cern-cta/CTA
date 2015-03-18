@@ -26,7 +26,7 @@
 #include <typeinfo>
 #include <stdlib.h>
 #include <cxxabi.h>
-#include "h/Cthread_api.h"
+#include "Cthread_api.h"
 #include "castor/BaseObject.hpp"
 
 /* Implmentations of the threading primitives */

@@ -24,7 +24,7 @@
 
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/VdqmMarshal.hpp"
-#include "h/vdqm_constants.h"
+#include "vdqm_constants.h"
 
 #include <errno.h>
 #include <iostream>

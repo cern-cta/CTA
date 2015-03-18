@@ -31,8 +31,8 @@
 #include "castor/io/biniostream.h"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/io/StreamAddress.hpp"
-#include "h/net.h"
-#include "h/serrno.h"
+#include "net.h"
+#include "serrno.h"
 
 #include <time.h>
 #include <sys/time.h>

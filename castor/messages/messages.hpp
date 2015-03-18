@@ -31,7 +31,7 @@
 #include "castor/messages/ZmqMsg.hpp"
 #include "castor/messages/ZmqSocket.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
-#include "h/Ctape.h"
+#include "Ctape.h"
 
 #include <openssl/rsa.h>
 #include <openssl/evp.h>

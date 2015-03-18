@@ -25,8 +25,8 @@
 #include "castor/legacymsg/VmgrTapeMountedMsgBody.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/Ctape_constants.h"
-#include "h/vmgr.h"
+#include "Ctape_constants.h"
+#include "vmgr.h"
 
 #include <unistd.h>
 #include <sys/types.h>

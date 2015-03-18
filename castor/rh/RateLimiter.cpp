@@ -27,10 +27,10 @@
 #include "castor/exception/OutOfMemory.hpp"
 #include "castor/rh/RateLimiter.hpp"
 #include "castor/rh/RatingGroup.hpp"
-#include "h/Cpwd.h"
-#include "h/getconfent.h"
-#include "h/Cgrp.h"
-#include "h/serrno.h"
+#include "Cpwd.h"
+#include "getconfent.h"
+#include "Cgrp.h"
+#include "serrno.h"
 
 #include <dlfcn.h>
 #include <errno.h>

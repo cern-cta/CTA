@@ -26,7 +26,7 @@
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "h/serrno.h"
+#include "serrno.h"
 
 #include <memory>
 #include <numeric>

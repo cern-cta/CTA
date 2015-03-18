@@ -5,9 +5,9 @@
 
 #include "castor/vdqm/CDevTools.hpp"
 #include "castor/vdqm/DevTools.hpp"
-#include "h/Castor_limits.h"
-#include "h/vdqm_constants.h"
-#include "h/rtcp_constants.h"
+#include "Castor_limits.h"
+#include "vdqm_constants.h"
+#include "rtcp_constants.h"
 
 
 //------------------------------------------------------------------------------

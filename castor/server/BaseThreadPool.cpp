@@ -26,9 +26,9 @@
 #include "castor/server/metrics/MetricsCollector.hpp"
 #include "castor/server/metrics/InternalCounter.hpp"
 #include "castor/Services.hpp"
-#include "h/Cinit.h"
-#include "h/Cuuid.h"
-#include "h/serrno.h"
+#include "Cinit.h"
+#include "Cuuid.h"
+#include "serrno.h"
 
 #include <signal.h>
 #include <sstream>

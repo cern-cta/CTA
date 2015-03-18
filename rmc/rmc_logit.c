@@ -11,8 +11,8 @@
 #include <time.h>
 #include <stdarg.h>
 #include <unistd.h>
-#include "h/rmc_constants.h"
-#include "h/rmc_logit.h"
+#include "rmc_constants.h"
+#include "rmc_logit.h"
 extern int jid;
 
 int rmc_logit(const char *const func, const char *const msg, ...)

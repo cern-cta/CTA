@@ -32,11 +32,11 @@
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/Cupv_constants.h"
-#include "h/patchlevel.h"
-#include "h/rmc_constants.h"
-#include "h/vdqm_constants.h"
-#include "h/vmgr_constants.h"
+#include "Cupv_constants.h"
+#include "patchlevel.h"
+#include "rmc_constants.h"
+#include "vdqm_constants.h"
+#include "vmgr_constants.h"
 
 #include <google/protobuf/stubs/common.h>
 #include <memory>

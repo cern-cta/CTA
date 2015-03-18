@@ -33,7 +33,7 @@
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
 #include "castor/vdqm/handler/BaseRequestHandler.hpp"
-#include "h/vdqm_messages.h"
+#include "vdqm_messages.h"
 
 
 namespace castor {

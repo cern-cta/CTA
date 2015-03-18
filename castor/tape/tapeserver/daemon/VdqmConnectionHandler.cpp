@@ -22,8 +22,8 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmConnectionHandler.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/common.h"
-#include "h/serrno.h"
+#include "common.h"
+#include "serrno.h"
 
 //------------------------------------------------------------------------------
 // constructor

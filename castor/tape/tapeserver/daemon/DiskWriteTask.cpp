@@ -26,7 +26,7 @@
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/utils/Timer.hpp"
-#include "h/serrno.h"
+#include "serrno.h"
 
 namespace castor {
 namespace tape {

@@ -31,7 +31,7 @@
 #include "castor/messages/AcsProxyZmq.hpp"
 #include "castor/messages/SmartZmqContext.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/rmc_constants.h"
+#include "rmc_constants.h"
 
 #include <exception>
 #include <iostream>

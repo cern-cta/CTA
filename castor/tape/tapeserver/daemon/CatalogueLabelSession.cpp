@@ -24,9 +24,9 @@
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/legacymsg.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueLabelSession.hpp"
-#include "h/Ctape_constants.h"
-#include "h/Cupv_constants.h"
-#include "h/serrno.h"
+#include "Ctape_constants.h"
+#include "Cupv_constants.h"
+#include "serrno.h"
 
 //------------------------------------------------------------------------------
 // create

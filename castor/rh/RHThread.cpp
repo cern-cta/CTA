@@ -41,7 +41,7 @@
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
-#include "h/getconfent.h"
+#include "getconfent.h"
 
 #include <algorithm>
 #include <errno.h>

@@ -15,9 +15,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "h/Ctape.h"
-#include "h/Ctape_api.h"
-#include "h/serrno.h"
+#include "Ctape.h"
+#include "Ctape_api.h"
+#include "serrno.h"
 #include "tape/TpConfigCmdLine.hpp"
 #include "tape/TpConfigException.hpp"
 

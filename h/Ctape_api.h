@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "h/Ctape_constants.h"
-#include "h/osdep.h"
+#include "Ctape_constants.h"
+#include "osdep.h"
 
 #include <sys/types.h>
 

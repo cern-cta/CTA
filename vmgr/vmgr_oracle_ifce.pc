@@ -3,10 +3,10 @@
  * All rights reserved
  */
 
-#include "h/serrno.h"
-#include "h/u64subr.h"
-#include "h/vmgr.h"
-#include "h/vmgr_server.h"
+#include "serrno.h"
+#include "u64subr.h"
+#include "vmgr.h"
+#include "vmgr_server.h"
 
 #include <errno.h>
 #include <string.h>

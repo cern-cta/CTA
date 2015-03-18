@@ -44,9 +44,9 @@
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/Ctape.h"
-#include "h/rmc_constants.h"
-#include "h/serrno.h"
+#include "Ctape.h"
+#include "rmc_constants.h"
+#include "serrno.h"
 
 #include <algorithm>
 #include <errno.h>

@@ -26,7 +26,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/vdqm/handler/BaseRequestHandler.hpp"
-#include "h/vdqm_messages.h"
+#include "vdqm_messages.h"
 
 
 namespace castor {

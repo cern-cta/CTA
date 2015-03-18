@@ -27,8 +27,8 @@
 #include "castor/io/io.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/serrno.h"
-#include "h/net.h"
+#include "serrno.h"
+#include "net.h"
 
 #include <arpa/inet.h>
 #include <fcntl.h>
