@@ -178,7 +178,7 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
     handleConfigRequest(header);
     writeTapeRcReplyMsg(0); // Return code of 0 means success
   } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {log::Param("message", ex.getMessage())};
+    log::Param params[] = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "Failed to handle config request", params);
     writeTapeRcReplyMsg(ex.code());
   }
@@ -345,7 +345,7 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
     writeTapeStatReplyMsg();
     writeTapeRcReplyMsg(0); // Return value of 0 means success
   } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {log::Param("message", ex.getMessage())};
+    log::Param params[] = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "Failed to handle stat request", params);
     writeTapeRcReplyMsg(ex.code());
   }
