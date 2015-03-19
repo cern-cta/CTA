@@ -269,7 +269,8 @@ void RecallReportPacker::WorkerThread::run(){
             //reportEndOfSessionWithError might throw 
             m_parent.m_client.reportEndOfSessionWithError(e.getMessageValue(),SEINTERNAL,chrono);
             m_parent.logRequestReport(chrono,"Successfully closed client's session after the failed report RecallResult");
-            
+            m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
+            m_parent.m_watchdog->addParameter(log::Param("status","failure"));
             // We need to wait until the end of session is signaled from upsteam
             while (!isItTheEnd) {
               std::auto_ptr<Report> r(m_parent.m_fifo.pop());
