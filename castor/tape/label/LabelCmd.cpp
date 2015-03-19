@@ -37,6 +37,7 @@
 
 #include <getopt.h>
 #include <iostream>
+#include <sstream>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -255,7 +256,9 @@ int castor::tape::label::LabelCmd::main(const int argc, char **argv) throw() {
       }
     }
     if(!dgn_found) {
-      displayErrorMsgAndExit("The drive you specified was not found in TPCONFIG", 1);
+      std::ostringstream message;
+      message << "Drive " << m_cmdLine.drive << " not found in TPCONFIG";
+      displayErrorMsgAndExit(message.str(), 1);
     }
   }
 
@@ -387,13 +390,15 @@ castor::legacymsg::GenericReplyMsgBody castor::tape::label::LabelCmd::readTapeLa
 //------------------------------------------------------------------------------
 // displayErrorMsgAndExit
 //------------------------------------------------------------------------------
-void castor::tape::label::LabelCmd::displayErrorMsgAndExit(const char *msg, const int errnum) throw() {
+void castor::tape::label::LabelCmd::displayErrorMsgAndExit(
+  const std::string &msg, const int errnum) const {
 
   // Display error message
   {
     const time_t now = time(NULL);
     castor::utils::writeTime(std::cerr, now, castor::tape::tpcp::TIMEFORMAT);
-    std::cerr << " " << m_programName << " failed: " << msg << std::endl << "Exit code: " << errnum << std::endl;
+    std::cerr << " " << m_programName << " failed: " << msg << std::endl <<
+      "Exit code: " << errnum << std::endl;
   }
   exit(errnum); // Error
 }

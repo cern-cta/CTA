@@ -93,7 +93,7 @@ protected:
    * @param msg    The string containing the error message
    * @param errnum The error number
    */
-  void displayErrorMsgAndExit(const char *msg, const int errnum) throw();
+  void displayErrorMsgAndExit(const std::string &msg, const int errnum) const;
   
   /**
    * Sends the label request and waits for the reply
