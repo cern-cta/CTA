@@ -317,6 +317,21 @@ BEGIN
 END;
 /
 
+/* PL/SQL method deleting recall jobs of a castorfile */
+CREATE OR REPLACE PROCEDURE deleteRecallJobsKeeSelected(cfId NUMBER) AS
+  varUnused INTEGER;
+BEGIN
+  -- Loop over the recall jobs
+  DELETE FROM RecallJob WHERE castorfile = cfId AND status != tconst.RECALLJOB_SELECTED;
+  -- check whether we still have a RecallJob
+  SELECT id INTO varUnused FROM RecallJob WHERE castorfile = cfId AND ROWNUM < 2;
+  -- a recall job is still around, we are done
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- no more recallJob, deal with potential waiting migrationJobs
+  deleteMigrationJobsForRecall(cfId);
+END;
+/
+
 /* PL/SQL method to delete a CastorFile only when no DiskCopy, no MigrationJob and no RecallJob are left for it */
 /* Internally used in filesDeletedProc, putFailedProc and deleteOutOfDateDiskCopies */
 CREATE OR REPLACE PROCEDURE deleteCastorFile(cfId IN NUMBER) AS

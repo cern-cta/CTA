@@ -637,7 +637,7 @@ BEGIN
      AND status = dconst.SUBREQUEST_WAITTAPERECALL;
   IF varNbSrs = 0 THEN
     -- no other subrequests, so drop recalls
-    deleteRecallJobs(inCfId);
+    deleteRecallJobsKeepSelected(inCfId);
   END IF;
 END;
 /
