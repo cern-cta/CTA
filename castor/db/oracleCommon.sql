@@ -318,7 +318,7 @@ END;
 /
 
 /* PL/SQL method deleting recall jobs of a castorfile */
-CREATE OR REPLACE PROCEDURE deleteRecallJobsKeeSelected(cfId NUMBER) AS
+CREATE OR REPLACE PROCEDURE deleteRecallJobsKeepSelected(cfId NUMBER) AS
   varUnused INTEGER;
 BEGIN
   -- Loop over the recall jobs
