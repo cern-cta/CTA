@@ -67,6 +67,7 @@ void castor::server::MultiThreadedDaemon::parseCommandLine(int argc,
   longopts[3].has_arg = NO_ARGUMENT;
   longopts[3].flag = NULL;
   longopts[3].val = 'h';
+  m_cmdLineParams << "fc:mh";
 
   std::map<const char, castor::server::BaseThreadPool*>::const_iterator tp;
   unsigned i = 4;
