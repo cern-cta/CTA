@@ -246,7 +246,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_15_1');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_15_3');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -478,6 +478,7 @@ AS
   FILE_DROPPED_BY_CLEANING     CONSTANT VARCHAR2(2048) := 'deleteOutOfDateStageOutDCs: File was dropped by internal cleaning';
   PUTDONE_ENFORCED_BY_CLEANING CONSTANT VARCHAR2(2048) := 'deleteOutOfDateStageOutDCs: PutDone enforced by internal cleaning';
   DELETING_REQUESTS            CONSTANT VARCHAR2(2048) := 'deleteTerminatedRequests: Cleaning up completed requests';
+  D2D_DROPPED_BY_CLEANING      CONSTANT VARCHAR2(2048) := 'deleteStaleDisk2DiskCopyJobs: D2D job removed by internal cleaning';
   
   DBJOB_UNEXPECTED_EXCEPTION   CONSTANT VARCHAR2(2048) := 'Unexpected exception caught in DB job';
 
@@ -535,7 +536,6 @@ AS
   REPACK_ABORTING              CONSTANT VARCHAR2(2048) := 'Aborting Repack request';
   REPACK_ABORTED               CONSTANT VARCHAR2(2048) := 'Repack request aborted';
   REPACK_ABORTED_FAILED        CONSTANT VARCHAR2(2048) := 'Aborting Repack request failed, dropping it';
-  REPACK_JOB_ONGOING           CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes still starting, no new ones will be started for this round';
   REPACK_STARTED               CONSTANT VARCHAR2(2048) := 'repackManager: Repack process started';
   REPACK_JOB_STATS             CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes statistics';
   REPACK_UNEXPECTED_EXCEPTION  CONSTANT VARCHAR2(2048) := 'handleRepackRequest: unexpected exception caught';
@@ -760,6 +760,8 @@ INSERT INTO CastorConfig
   VALUES ('cleaning', 'outOfDateStageOutDCsTimeout', '72', 'Timeout for STAGEOUT diskCopies in hours');
 INSERT INTO CastorConfig
   VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hours');
+INSERT INTO CastorConfig
+  VALUES ('cleaning', 'staleDisk2DiskCopyJobsTimeout', '6', 'Timeout for stuck disk2diskCopyJobs in hours');
 INSERT INTO CastorConfig
   VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
 INSERT INTO CastorConfig
@@ -2380,6 +2382,21 @@ BEGIN
 END;
 /
 
+/* PL/SQL method deleting recall jobs of a castorfile */
+CREATE OR REPLACE PROCEDURE deleteRecallJobsKeepSelected(cfId NUMBER) AS
+  varUnused INTEGER;
+BEGIN
+  -- Loop over the recall jobs
+  DELETE FROM RecallJob WHERE castorfile = cfId AND status != tconst.RECALLJOB_SELECTED;
+  -- check whether we still have a RecallJob
+  SELECT id INTO varUnused FROM RecallJob WHERE castorfile = cfId AND ROWNUM < 2;
+  -- a recall job is still around, we are done
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- no more recallJob, deal with potential waiting migrationJobs
+  deleteMigrationJobsForRecall(cfId);
+END;
+/
+
 /* PL/SQL method to delete a CastorFile only when no DiskCopy, no MigrationJob and no RecallJob are left for it */
 /* Internally used in filesDeletedProc, putFailedProc and deleteOutOfDateDiskCopies */
 CREATE OR REPLACE PROCEDURE deleteCastorFile(cfId IN NUMBER) AS
@@ -2483,7 +2500,7 @@ BEGIN
 EXCEPTION WHEN OTHERS THEN
   logToDLF(NULL, dlf.LVL_ALERT, dlf.DBJOB_UNEXPECTED_EXCEPTION, 0, '', source,
     'jobCode="'|| jobCode ||'" errorCode=' || to_char(SQLCODE) ||' errorMessage="' || SQLERRM
-    ||'" stackTrace="' || dbms_utility.format_call_stack ||'"');
+    ||'" stackTrace="' || dbms_utility.format_error_backtrace() ||'"');
 END;
 /
 
@@ -3136,7 +3153,7 @@ BEGIN
     -- Something went wrong when aborting: log and fail
     UPDATE StageRepackRequest SET status = tconst.REPACK_FAILED WHERE reqId = parentUUID;
     logToDLF(parentUUID, dlf.LVL_ERROR, dlf.REPACK_ABORTED_FAILED, 0, '', 'repackd', 'TPVID=' || varVID
-      || ' errorMessage="' || SQLERRM || '" stackTrace="' || dbms_utility.format_call_stack ||'"');
+      || ' errorMessage="' || SQLERRM || '" stackTrace="' || dbms_utility.format_error_backtrace() ||'"');
     COMMIT;
     RAISE;
   END;
@@ -3345,6 +3362,9 @@ BEGIN
           END IF;
           isOngoing := True;
         EXCEPTION WHEN noValidCopyNbFound OR noMigrationRoute THEN
+          -- log
+          logToDLF(NULL, dlf.LVL_ERROR, dlf.REPACK_UNEXPECTED_EXCEPTION, segment.fileId, nsHostName, 'repackd',
+                   'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || SQLERRM ||'"');
           -- cleanup recall part if needed
           IF varWasRecalled = 0 THEN
             DELETE FROM RecallJob WHERE castorFile = cfId;
@@ -3368,7 +3388,7 @@ BEGIN
       varSrErrorMsg := 'Oracle error caught : ' || SQLERRM;
       logToDLF(NULL, dlf.LVL_ERROR, dlf.REPACK_UNEXPECTED_EXCEPTION, segment.fileId, nsHostName, 'repackd',
         'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || varSrErrorMsg
-        ||'" stackTrace="' || dbms_utility.format_call_stack ||'"');
+        ||'" stackTrace="' || dbms_utility.format_error_backtrace() ||'"');
       -- cleanup and fail SubRequest
       IF varWasRecalled = 0 THEN
         DELETE FROM RecallJob WHERE castorFile = cfId;
@@ -3557,31 +3577,25 @@ CREATE OR REPLACE PROCEDURE repackManager AS
   varRepackVID VARCHAR2(10);
   varStartTime NUMBER;
   varTapeStartTime NUMBER;
-  varNbRepacks INTEGER;
+  varNbRepacks INTEGER := 0;
   varNbFiles INTEGER;
   varNbFailures INTEGER;
 BEGIN
-  SELECT count(*) INTO varNbRepacks
-    FROM StageRepackRequest
-   WHERE status = tconst.REPACK_STARTING;
-  IF varNbRepacks > 0 THEN
-    -- this shouldn't happen, possibly this procedure is running in parallel: give up and log
-    -- "repackManager: Repack processes still starting, no new ones will be started for this round"
-    logToDLF(NULL, dlf.LVL_NOTICE, dlf.REPACK_JOB_ONGOING, 0, '', 'repackd', '');
-    RETURN;
-  END IF;
   varStartTime := getTime();
   WHILE TRUE LOOP
     varTapeStartTime := getTime();
     BEGIN
       -- get an outstanding repack to start, and lock to prevent
-      -- a concurrent abort (there cannot be anyone else)
+      -- a concurrent abort (there cannot be anyone else).
+      -- Note that we include repack requests in status STARTING,
+      -- which means requests that got somehow interrupted in their
+      -- processing.
       SELECT reqId, repackVID INTO varReqUUID, varRepackVID
         FROM StageRepackRequest
        WHERE id = (SELECT id
                      FROM (SELECT id
                              FROM StageRepackRequest
-                            WHERE status = tconst.REPACK_SUBMITTED
+                            WHERE status IN (tconst.REPACK_SUBMITTED, tconst.REPACK_STARTING)
                             ORDER BY creationTime ASC)
                     WHERE ROWNUM < 2)
          FOR UPDATE;
@@ -4290,7 +4304,7 @@ BEGIN
      AND status = dconst.SUBREQUEST_WAITTAPERECALL;
   IF varNbSrs = 0 THEN
     -- no other subrequests, so drop recalls
-    deleteRecallJobs(inCfId);
+    deleteRecallJobsKeepSelected(inCfId);
   END IF;
 END;
 /
@@ -5459,8 +5473,19 @@ BEGIN
        AND MR.copyNb = destCopyNb
        AND (MR.isSmallFile = (CASE WHEN datasize < varSizeThreshold THEN 1 ELSE 0 END) OR MR.isSmallFile IS NULL);
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- No routing rule found means a user-visible error on the putDone or on the file close operation
-    raise_application_error(-20100, 'Cannot find an appropriate tape routing for this file, aborting');
+    DECLARE
+      varFileClassName VARCHAR2(2048);
+      varID INTEGER;
+      varClassId INTEGER;
+    BEGIN
+      SELECT id, classId, name INTO varID, varClassId, varFileClassName
+        FROM FileClass
+       WHERE id = (SELECT FileClass FROM CastorFile WHERE id = cfId);
+      -- No routing rule found means a user-visible error on the putDone or on the file close operation
+      raise_application_error(-20100, 'Cannot find an appropriate tape routing for this file, aborting - '
+                              || 'fileclass was ' || varFileClassName || ' (id ' || varId
+                              || ', classId ' || varClassId || ')');
+    END;
   END;
   -- Create tape copy and attach to the appropriate tape pool
   INSERT INTO MigrationJob (fileSize, creationTime, castorFile, originalVID, originalCopyNb, destCopyNb,
@@ -6004,12 +6029,7 @@ BEGIN
                                  dconst.SUBREQUEST_WAITSUBREQ, dconst.SUBREQUEST_READY,
                                  dconst.SUBREQUEST_READYFORSCHED)) LOOP
       UPDATE SubRequest
-         SET status = CASE WHEN status IN (dconst.SUBREQUEST_READY, dconst.SUBREQUEST_READYFORSCHED)
-                            AND reqType = 133  -- DiskCopyReplicaRequests
-                           THEN dconst.SUBREQUEST_FAILED_FINISHED
-                           ELSE dconst.SUBREQUEST_FAILED END,
-             -- user requests in status WAITSUBREQ are always marked FAILED
-             -- even if they wait on a replication
+         SET status = dconst.SUBREQUEST_FAILED,
              errorCode = serrno.EINTR,
              errorMessage = 'Canceled by another user request'
        WHERE id = sr.id
@@ -6468,7 +6488,7 @@ BEGIN
     varErrorMsg := 'Oracle error caught : ' || SQLERRM;
     logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_MISSING_COPY_ERROR, inFileId, inNsHost, 'stagerd',
       'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || varErrorMsg
-      ||'" stackTrace="' || dbms_utility.format_call_stack ||'"');
+      ||'" stackTrace="' || dbms_utility.format_error_backtrace() ||'"');
   END;
   RETURN 0;
 END;
@@ -7011,8 +7031,7 @@ BEGIN
                           THEN (SELECT defaultFileSize FROM SvcClass WHERE id = inSvcClassId)
                           ELSE xsize
                      END,
-             status = dconst.SUBREQUEST_READYFORSCHED,
-             getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED
+             status = dconst.SUBREQUEST_READYFORSCHED
        WHERE id = inSrId;
     ELSE
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
@@ -7118,8 +7137,7 @@ BEGIN
                         THEN (SELECT defaultFileSize FROM SvcClass WHERE id = inSvcClassId)
                         ELSE xsize
                    END,
-           status = dconst.SUBREQUEST_READYFORSCHED,
-           getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED
+           status = dconst.SUBREQUEST_READYFORSCHED
      WHERE id = inSrId;
     -- reset the castorfile size, lastUpdateTime and nsOpenTime as the file was truncated
     UPDATE CastorFile
@@ -7521,7 +7539,10 @@ BEGIN
       -- some available diskcopy was found.
       logToDLF(varReqUUID, dlf.LVL_DEBUG, dlf.STAGER_DISKCOPY_FOUND, inFileId, inNsHost, 'stagerd',
               'SUBREQID=' || varSrUUID);
-      -- update SubRequest
+      -- update and archive SubRequest
+      UPDATE SubRequest
+         SET getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED
+       WHERE id = inSrId;
       archiveSubReq(inSrId, dconst.SUBREQUEST_FINISHED);
       -- all went fine, answer to client if needed
       IF varIsAnswered > 0 THEN
@@ -7733,7 +7754,8 @@ BEGIN
     outPath := selectedMountPoint || outPath;
   END IF;
   -- Log successful completion
-  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_PUTSTART, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| inTransferId);
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_PUTSTART, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| inTransferId
+    || 'destinationPath=' || selectedDiskServer ||':'|| selectedMountPoint);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
 END;
@@ -7854,7 +7876,8 @@ BEGIN
     outPath := '/dev/null';
   END IF;
   -- Log successful completion
-  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETSTART, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| inTransferId);
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETSTART, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| inTransferId
+    || 'destinationPath=' || selectedDiskServer ||':'|| selectedMountPoint);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- No disk copy found on selected FileSystem, or subRequest not valid any longer.
   -- This can happen if a diskcopy was available and got disabled, or if an abort came,
@@ -12592,6 +12615,40 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE PROCEDURE deleteStaleDisk2DiskCopyJobs(timeOut IN NUMBER) AS
+-- Select stale Disk2DiskCopyJob entries, that is either already scheduled/running
+-- or still pending but originated by a user request (other types of replication may take very long)
+  CURSOR s IS
+    SELECT id FROM Disk2DiskCopyJob
+     WHERE (replicationType = dconst.REPLICATIONTYPE_USER
+         OR status IN (dconst.DISK2DISKCOPYJOB_SCHEDULED, dconst.DISK2DISKCOPYJOB_RUNNING))
+       AND creationTime < getTime() - timeOut;
+  ids "numList";
+  varCfId INTEGER;
+  varFileId INTEGER;
+  varNsHost VARCHAR2(100);
+BEGIN
+  OPEN s;
+  LOOP
+    FETCH s BULK COLLECT INTO ids LIMIT 10000;
+    EXIT WHEN ids.count = 0;
+    FOR i IN 1..ids.COUNT LOOP
+      SELECT castorFile INTO varCfId FROM Disk2DiskCopyJob WHERE id = ids(i);
+      SELECT fileid, nsHost INTO varFileId, varNsHost FROM CastorFile
+       WHERE id = varCfId
+       FOR UPDATE;
+      DELETE FROM Disk2DiskCopyJob WHERE id = ids(i);
+      UPDATE SubRequest
+         SET status = dconst.SUBREQUEST_RESTART
+       WHERE status = dconst.SUBREQUEST_WAITSUBREQ
+         AND castorFile = varCfId;
+      COMMIT;
+      logToDLF(NULL, dlf.LVL_WARNING, dlf.D2D_DROPPED_BY_CLEANING, varFileId, varNsHost, 'stagerd', '');
+    END LOOP;
+  END LOOP;
+END;
+/
+
 /* Runs cleanup operations */
 CREATE OR REPLACE PROCEDURE cleanup AS
   t INTEGER;
@@ -12602,6 +12659,8 @@ BEGIN
   deleteOutOfDateStageOutDCs(t*3600);
   t := TO_NUMBER(getConfigOption('cleaning', 'failedDCsTimeout', '72'));
   deleteFailedDiskCopies(t*3600);
+  t := TO_NUMBER(getConfigOption('cleaning', 'staleDisk2DiskCopyJobsTimeout', '6'));
+  deleteStaleDisk2DiskCopyJobs(t*3600);
 END;
 /
 

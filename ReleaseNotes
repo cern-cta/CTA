@@ -1,4 +1,94 @@
 ------------
+- 2.1.15-3 -
+------------
+
+  Summary
+  -------
+
+  This is a minor release bringing a number of bug fixes and enhancements.
+
+  Stager
+  ------
+
+    CASTOR-4941: entersvcclass generates ORA-01036: illegal variable name/number
+    CASTOR-4940: stager_abort should not abort recall jobs that have already been selected
+    CASTOR-4939: The privilege (B/W) list display is broken when dealing with replication requests
+    CASTOR-4935: prepareToGet requests for STAGED files don't set the getNextStatus flag
+    CASTOR-4907: RFE: Reading of configuration entries should log category, key, value and source
+    CASTOR-4905: Unable to drain server when one mountpoint is offline
+
+  Tape
+  ----
+
+    CASTOR-4936: The failed creation of a migration job for repack is NOT logged
+    CASTOR-4910: Cancelled repack of T51208 has not stopped requests for more tapes
+    CASTOR-4909: tapeserverd tries to unmount the tape when the mount failed...
+    CASTOR-4908: "tapeserverd started" log message should be at the start
+    CASTOR-4904: tapeserverd appears not to report the ids of migration files that have disk-server file-size mismatches
+    CASTOR-4902: Do NOT put the drive DOWN when tape cartridge stuck in another drive
+    CASTOR-4901: VDQM and tapeserverd state not synchronized
+    CASTOR-4896: RFE: tapeserverd should explicitly log why it puts a drive DOWN in the vdqm
+    CASTOR-4891: Log TPVID when a user does not have the rights to recall from a DISABLED tape
+    CASTOR-4890: RFE: tpconfig up should check the drive is ready for a mount
+    CASTOR-4869: Drive not ready vs. tpconfig up
+    CASTOR-4842: RFE: CASTOR 2.1.15-x should have a generic dismount command
+    CASTOR-4841: RFE: CASTOR 2.1.15-x should have a generic mount command
+    CASTOR-4802: RFE: 2.1.15-x should provide castor-tape-acs-queryvolume
+    CASTOR-4627: RFE: Move writetp to the castor-tape-developer-tools rpm of 2.1.15-x
+    CASTOR-3413: rmcd listening port should not be the result of getservbyname()
+
+  Misc
+  ----
+
+    CASTOR-4968: Daemons' short arguments are not taken into account
+    CASTOR-4965: Users cannot compile CASTOR v15
+
+  Upgrade Instructions from 2.1.15-3
+  ----------------------------------
+
+    Stager
+    ------
+
+    The upgrade of the stager to 2.1.15-3 can be performed online while the system is running.
+
+      Instructions
+      ------------
+
+       1. Upgrade the STAGER database using the stager_2.1.15-0_to_2.1.15-3.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-3/dbupgrades
+
+       2. Upgrade the software on the head nodes.
+          Note: All daemons involved in the upgrade will be restarted automatically.
+
+       3. Upgrade the software on the diskservers.
+          Note: All daemons involved in the upgrade will be restarted automatically.
+
+       4. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-3/testsuite
+
+       5. Congratulations you have successfully upgraded to the 2.1.15-3 release
+          of CASTOR.
+
+    Central services (CUPV, VMGR, VDQM, Nameserver)
+    -----------------------------------------------
+
+      The upgrade of the central services to 2.1.15-3 can be performed online while
+      the system is running.
+
+      Instructions
+      ------------
+
+       1. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-3/dbupgrades
+
+       2. Update the software to use the 2.1.15-3 RPMs. Note: All
+          daemons involved in the upgrade will be restarted automatically.
+
+       3. Upgrade complete.
+
+
+------------
 - 2.1.15-0 -
 ------------
 
@@ -115,10 +205,10 @@
     tapeserverd daemon, which obsoletes taped, rtcpd, and tapebridged. Likewise, the tape
     clients are provided by a castor-tapeserver-client package, which obsoletes castor-tapebridge-client.
     Furthermore, new dependencies have been introduced to the zeromq3 and cryptopp packages.
-      
+
   Configuration changes
   ---------------------
-  
+
   - All castor daemons except for cupvd now run as the unix user stage:st. This means the
     /var/log/castor directory should be owned by stage:st. A manual change of ownership for
     this directory is therefore required during the upgrade.
@@ -461,7 +551,7 @@
     #104892 Concurrent repack of dual copy files does not generate two racing recall jobs
     #105032 RFE: tapegatewayd should log "no more space on device" events from the vmgr as warnings
     #105037 RFE: vmgr should be able to log errors
-  
+
   Clients
   -------
     #76759  nsgetpath should fall back to use default nameserver "castorns"
