@@ -3093,7 +3093,51 @@ BEGIN
 END;
 /
 
-
+/* PL/SQL procedure implementing triggerRepackRecall
+ * this triggers a recall in the repack context
+ */
+CREATE OR REPLACE PROCEDURE triggerRepackRecall
+(inCfId IN INTEGER, inFileId IN INTEGER, inNsHost IN VARCHAR2, inBlock IN RAW,
+ inFseq IN INTEGER, inCopynb IN INTEGER, inEuid IN INTEGER, inEgid IN INTEGER,
+ inRecallGroupId IN INTEGER, inSvcClassId IN INTEGER, inVid IN VARCHAR2, inFileSize IN INTEGER,
+ inFileClass IN INTEGER, inAllValidSegments IN VARCHAR2, inReqUUID IN VARCHAR2,
+ inSubReqUUID IN VARCHAR2, inRecallGroupName IN VARCHAR2) AS
+  varLogParam VARCHAR2(2048);
+  varAllValidCopyNbs "numList" := "numList"();
+  varAllValidVIDs strListTable := strListTable();
+  varAllValidSegments strListTable;
+  varFileClassId INTEGER;
+BEGIN
+  -- create recallJob for the given VID, copyNb, etc.
+  INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
+                         vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
+  VALUES (ids_seq.nextval, inCfId, inCopynb, inRecallGroupId, inSvcClassId,
+          inEuid, inEgid, inVid, inFseq, tconst.RECALLJOB_PENDING, inFileSize, getTime(),
+          inBlock, NULL);
+  -- log "created new RecallJob"
+  varLogParam := 'SUBREQID=' || inSubReqUUID || ' RecallGroup=' || inRecallGroupName;
+  logToDLF(inReqUUID, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
+           varLogParam || ' fileClass=' || TO_CHAR(inFileClass) || ' copyNb=' || TO_CHAR(inCopynb)
+           || ' TPVID=' || inVid || ' fseq=' || TO_CHAR(inFseq) || ' FileSize=' || TO_CHAR(inFileSize));
+  -- create missing segments if needed
+  SELECT * BULK COLLECT INTO varAllValidSegments
+    FROM TABLE(strTokenizer(inAllValidSegments));
+  FOR i IN 1 .. varAllValidSegments.COUNT/2 LOOP
+    varAllValidCopyNbs.EXTEND;
+    varAllValidCopyNbs(i) := TO_NUMBER(varAllValidSegments(2*i-1));
+    varAllValidVIDs.EXTEND;
+    varAllValidVIDs(i) := varAllValidSegments(2*i);
+  END LOOP;
+  SELECT id INTO varFileClassId
+    FROM FileClass WHERE classId = inFileClass;
+  -- Note that the number given here for the number of existing segments is the total number of
+  -- segment, without removing the ones on  EXPORTED tapes. This means that repack will not
+  -- recreate new segments for files that have some copies on EXPORTED tapes.
+  -- This is different from standard recalls that would recreate segments on EXPORTED tapes.
+  createMJForMissingSegments(inCfId, inFileSize, varFileClassId, varAllValidCopyNbs,
+                             varAllValidVIDs, varAllValidCopyNbs.COUNT, inFileId, inNsHost, varLogParam);
+END;
+/
 
 /* revalidate all code */
 BEGIN
