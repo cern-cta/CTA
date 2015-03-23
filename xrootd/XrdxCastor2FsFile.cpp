@@ -420,7 +420,7 @@ XrdxCastor2FsFile::open(const char*         path,
            allowed_iter != list_svc->end(); /* no increment */)
       {
         // Give priority to the desired svc if present
-        if (!tried_desired && (desired_svc != ""))
+        if (!tried_desired && !desired_svc.empty())
         {
           tried_desired = true;
           allowed_svc = desired_svc;
@@ -430,12 +430,12 @@ XrdxCastor2FsFile::open(const char*         path,
           allowed_svc = *allowed_iter;
           ++allowed_iter;
 
-          // Skip the desired on as it was tried first and also "*"
+          // Skip the desired one as it was tried first and also "*"
           if ((allowed_svc == desired_svc) || (allowed_svc == "*"))
             continue;
         }
 
-        xcastor_debug("trying service class:%s", allowed_svc.c_str());
+        xcastor_debug("trying svc=%s", allowed_svc.c_str());
         TIMING("PREP2GET", &opentiming);
 
         // Do a stager_qry for the current allowed_svc
@@ -448,14 +448,30 @@ XrdxCastor2FsFile::open(const char*         path,
         // Check if file offline and we want transparent staging
         if (stage_status != "STAGED" &&
             stage_status != "CANBEMIGR" &&
-            stage_status != "STAGEOUT" && no_hsm)
+            stage_status != "STAGEOUT")
         {
-          xcastor_debug("stage_status=%s, continue ...", stage_status.c_str());
-          continue;
+	  if (no_hsm)
+	  {
+	    if (!desired_svc.empty() && (allowed_svc == desired_svc))
+	    {
+	      xcastor_debug("svc=%s, stage_status=%s, no_hsm mode, file not in "
+			    "desired svcClass - fail", allowed_svc.c_str(),
+			    stage_status.c_str());
+	      break;
+	    }
+	    else
+	    {
+	      xcastor_debug("svc=%s, stage_status=%s, no_hsm mode, no desired "
+			    "service class, continue searching",
+			    allowed_svc.c_str(), stage_status.c_str());
+	      continue;
+	    }
+	  }
         }
         else
         {
-          xcastor_debug("stage_status=%s, break ...", stage_status.c_str());
+          xcastor_debug("file found in svc=%s, stage_status=%s",allowed_svc.c_str(),
+			stage_status.c_str());
           possible = true;
           XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
           break;
@@ -471,17 +487,35 @@ XrdxCastor2FsFile::open(const char*         path,
         }
 
         XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
-        return gMgr->Emsg(epname, error, EINVAL,
-                          "access file in ANY stager (all stager queries failed)");
+
+	// Refine the error message depending on the current configuration
+	if (no_hsm)
+        {
+	  if (desired_svc.empty())
+	  {
+	    return gMgr->Emsg(epname, error, EINVAL, "access file in ANY stager "
+			      "- all stager queries failed");
+	  }
+	  else
+	  {
+	    return gMgr->Emsg(epname, error, EINVAL, "access file in service class ",
+			      desired_svc.c_str());
+	  }
+	}
+	else
+        {
+	  return gMgr->Emsg(epname, error, EINVAL, "access file in ANY stager "
+			    "- all stager queries failed");
+	}
       }
       else
       {
+        xcastor_debug("file staged in svc=%s, try to read it through svc=%s",
+                      allowed_svc.c_str(), desired_svc.c_str());
+
         // File is staged somewhere, try to access it through the desired svcClass
         if (!desired_svc.empty())
           allowed_svc = desired_svc;
-
-        xcastor_debug("file staged in svc=%s, try to read it through svc=%s",
-                      allowed_svc.c_str(), desired_svc.c_str());
       }
     }
 
@@ -503,9 +537,6 @@ XrdxCastor2FsFile::open(const char*         path,
       ret_val = gMgr->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()),
                             "request queue full or response not ready");
     }
-
-    if (resp_info.mStageStatus != "READY")
-      ret_val = gMgr->Emsg(epname, error, EINVAL, "access stager (GET request failed)");
 
     if (ret_val != SFS_OK)
     {
