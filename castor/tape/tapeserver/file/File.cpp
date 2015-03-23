@@ -346,10 +346,16 @@ namespace castor {
         if(!m_vid.compare("")) {
           throw castor::exception::InvalidArgument();
         }
+        
+        if(m_drive.isTapeBlank()) {
+          castor::exception::Exception ex;
+          ex.getMessage() << "[WriteSession::WriteSession()] - Tape is blank, cannot proceed with constructing the WriteSession";
+          throw ex;
+        }
 
         m_drive.rewind();
         VOL1 vol1;
-        m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[WriteSession::checkVOL1()] - Reading VOL1");
+        m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[WriteSession::WriteSession()] - Reading VOL1");
         try {
           vol1.verify();
         } catch (std::exception & e) {

@@ -587,7 +587,7 @@ void drive::DriveGeneric::readExactBlock(void * data, size_t count, std::string 
     throw UnexpectedSize(context);
   // Generic handling of other errors
   castor::exception::Errnum::throwOnMinusOne(res, 
-      "Failed ST read in DriveGeneric::readExactBlock");
+      context+": Failed ST read in DriveGeneric::readExactBlock");
   // Handle block too small
   if ((size_t) res != count)
     throw UnexpectedSize(context);
@@ -606,7 +606,7 @@ void drive::DriveGeneric::readFileMark(std::string context)  {
     throw NotAFileMark(context);
   // Generic handling of other errors
   castor::exception::Errnum::throwOnMinusOne(res, 
-      "Failed ST read in DriveGeneric::readFileMark");
+      context+": Failed ST read in DriveGeneric::readFileMark");
   // Handle the unlikely case when the block fits
   if (res)
     throw NotAFileMark(context);
