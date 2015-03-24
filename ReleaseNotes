@@ -20,6 +20,7 @@
   Tape
   ----
 
+    CASTOR-4971: tapeserverd should detect empty tapes and recommend labelling them
     CASTOR-4936: The failed creation of a migration job for repack is NOT logged
     CASTOR-4910: Cancelled repack of T51208 has not stopped requests for more tapes
     CASTOR-4909: tapeserverd tries to unmount the tape when the mount failed...
