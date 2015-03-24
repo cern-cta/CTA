@@ -1,5 +1,4 @@
     **** : trace level set to 3
-    stager: stage_rm
     stager: Looking up RH host - Using <rhhost>
     stager: Looking up RH port - Using <rhport>
     stager: Looking up service class - Using bogusSvcClass
