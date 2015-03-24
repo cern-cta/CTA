@@ -1957,7 +1957,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         {
           if (!(val = config_stream.GetWord()))
           {
-            Eroute.Emsg("Config", "argument for all.role missing.");
+            Eroute.Emsg("Config", "Error - argument for all.role missing");
             NoGo = 1;
           }
           else
@@ -1996,7 +1996,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         {
           if (!(val = config_stream.GetWord()))
           {
-            Eroute.Emsg("Config", "argument for fs invalid.");
+            Eroute.Emsg("Config", "Error - argument for targetport invalid");
             NoGo = 1;
           }
           else
@@ -2008,7 +2008,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         {
           if (!(val = config_stream.GetWord()))
           {
-            Eroute.Emsg("Config", "argument for debug level invalid set to ERR.");
+            Eroute.Emsg("Config", "Warn - argument for debug level invalid set to INFO");
             mLogLevel = LOG_INFO;
           }
           else
@@ -2041,7 +2041,10 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         if (!strncmp("debugfilter", var, 11))
         {
           if (!(val = config_stream.GetWord()))
-            Eroute.Emsg("Config", "argument for debug filter invalid set to none.");
+	  {
+            Eroute.Emsg("Config", "Warn - argument for debug filter invalid, "
+			"set to none.");
+	  }
           else
           {
             Logging::SetFilter(val);
@@ -2057,7 +2060,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
 
           if (!(val = config_stream.GetWord()))
           {
-            Eroute.Emsg("Config", "argument 1 for nsmap missing");
+            Eroute.Emsg("Config", "Error - argument 1 for nsmap missing");
             NoGo = 1;
           }
           else
@@ -2065,7 +2068,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
 
           if (!(val = config_stream.GetWord()))
           {
-            Eroute.Emsg("Config", "argument 2 for nsmap missing");
+            Eroute.Emsg("Config", "Error - argument 2 for nsmap missing");
             NoGo = 1;
           }
           else
@@ -2087,7 +2090,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         {
           if (!(val = config_stream.GetWord()))
           {
-            Eroute.Emsg("Config", "argument for proc invalid.");
+            Eroute.Emsg("Config", "Error - argument for proc invalid.");
             NoGo = 1;
           }
           else
@@ -2105,7 +2108,8 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
                 proc_filesystem_sync = false;
               else
               {
-                Eroute.Emsg("Config", "argument for proc invalid. Specify xcastor2.proc [sync|async]");
+                Eroute.Emsg("Config", "Error - argument for proc invalid. Specify"
+			    " xcastor2.proc [sync|async]");
                 NoGo = 1;
               }
             }
@@ -2126,7 +2130,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
 
           if (!(val = config_stream.GetWord()))
           {
-            Eroute.Emsg("Config", "argument for role invalid.");
+            Eroute.Emsg("Config", "Error - argument for role invalid.");
             NoGo = 1;
           }
           else
@@ -2134,7 +2138,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
 
           if (!(val = config_stream.GetWord()))
           {
-            Eroute.Emsg("Config", "argument 2 for role missing.");
+            Eroute.Emsg("Config", "Error - argument 2 for role missing");
             NoGo = 1;
           }
           else
@@ -2149,7 +2153,8 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         {
           if (!(val = config_stream.GetWord()))
           {
-            Eroute.Emsg("Config", "argument 2 for capbility missing. Can be true/lazy/1 or false/0");
+            Eroute.Emsg("Config", "Error - argument 2 for capbility missing. "
+			"Can be true/lazy/1 or false/0");
             NoGo = 1;
           }
           else
@@ -2162,7 +2167,8 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
                 mIssueCapability = false;
               else
               {
-                Eroute.Emsg("Config", "argument 2 for capbility invalid. Can be <true>/1 or <false>/0");
+                Eroute.Emsg("Config", "Error - argument 2 for capbility invalid. "
+			    "Can be <true>/1 or <false>/0");
                 NoGo = 1;
               }
             }
@@ -2174,8 +2180,8 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         {
           if (!(val = config_stream.GetWord()))
           {
-            Eroute.Emsg("Config", "argument 2 for tokenlocktime missing. "
-                        "Specifies the grace period for a client to show up "
+            Eroute.Emsg("Config", "Error - argument 2 for tokenlocktime missing."
+			" Specifies the grace period for a client to show up "
                         "with a write on a disk server in seconds.");
             NoGo = 1;
           }
@@ -2185,9 +2191,9 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
 
             if (msTokenLockTime == 0)
             {
-              Eroute.Emsg("Config", "argument 2 for tokenlocktime is 0/illegal. "
-                          "Specify the grace period for a client to show up with "
-                          "a write on a disk server in seconds.");
+              Eroute.Emsg("Config", "Error - argument 2 for tokenlocktime is "
+			  "0/illegal. Specify the grace period for a client "
+			  "to show up with a write on a disk server in seconds.");
               NoGo = 1;
             }
           }
@@ -2198,7 +2204,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         {
           if (!(val = config_stream.GetWord()))
           {
-            Eroute.Emsg("Config", "no stagerhost provided");
+            Eroute.Emsg("Config", "Error - no stagerhost provided");
             NoGo = 1;
           }
           else
@@ -2213,7 +2219,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         {
           if (!(val = config_stream.GetWord()))
           {
-            Eroute.Emsg("Config:", "stagermap - provide a path and the service"
+            Eroute.Emsg("Config:", "Error - stagermap needs a path and the service"
                         " class(es) to assign");
             NoGo = 1;
           }
@@ -2223,7 +2229,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
 
             if (!(val = config_stream.GetWord()))
             {
-              Eroute.Emsg("Config:", "stagermap - provide a path and the service"
+              Eroute.Emsg("Config:", "Error - stagermap needs a path and the service"
                           " class(es) to assign");
               NoGo = 1;
             }
@@ -2280,7 +2286,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
                   }
                   else
                   {
-                    Eroute.Emsg("Config:", "stagermap - unknown option: ", val,
+                    Eroute.Emsg("Config", "Error - stagermap unknown option: ", val,
                                 " maybe set to \"nohsm\" ...");
                     NoGo = 1;
                   }
@@ -2290,7 +2296,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
                 Eroute.Say("=====> xcastor2.", oss.str().c_str());
               }
               else
-                Eroute.Emsg("Config:", "stagermap - already contains stage path: ",
+                Eroute.Emsg("Config", "Warn - stagermap already contains stage path: ",
                             stage_path.c_str());
             }
           }
@@ -2302,7 +2308,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         {
           if ((!(val = config_stream.GetWord())) || (::access(val, R_OK)))
           {
-            Eroute.Emsg("Config", "cannot acccess the authorization library!");
+            Eroute.Emsg("Config", "Error - cannot acccess the authorization library!");
             NoGo = 1;
           }
           else
@@ -2319,7 +2325,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
             if (!bool_set.count(val))
             {
               NoGo = 1;
-              Eroute.Emsg("Config", "argument for authorize illegal. "
+              Eroute.Emsg("Config", "Error - argument for authorize illegal. "
                           "Must be <true>, <false>, <1> or <0>.");
             }
             else
@@ -2331,7 +2337,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
           else
           {
             NoGo = 1;
-            Eroute.Emsg("Config", "argument for authorize missing. "
+            Eroute.Emsg("Config", "Error - argument for authorize missing. "
                         "Must be <true>, <false>, <1> or <0>.");
           }
 
@@ -2346,10 +2352,10 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
           {
             if (!bool_set.count(val))
             {
-              Eroute.Emsg("Config", "argument for skipabort illegal. Must be "
-                          "<true>, <false>, <1> or <0>. Using default value: "
-                          "false.");
-              NoGo = 1;
+	      NoGo = 1;
+              Eroute.Emsg("Config", "Error - argument for skipabort illegal. "
+			  "Must be <true>, <false>, <1> or <0>. Using default "
+			  "value: false.");
             }
             else
             {
@@ -2365,8 +2371,16 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
   // Check that the stager host is set
   if (mStagerHost.empty())
   {
-    Eroute.Emsg("Config", "no stagerhost has been defined");
+    Eroute.Emsg("Config", "Error - no stagerhost has been defined");
     NoGo =1;
+  }
+
+  // Check that we have at least one entry in the stagermap
+  if (mStageMap.empty())
+  {
+    Eroute.Emsg("Config", "Error - missing stagermap directive, it needs at "
+		"least one entry e.g: xcastor2.stagermap / *");
+    NoGo = 1;
   }
 
   // We need to specify this if the server was not started with the explicit
