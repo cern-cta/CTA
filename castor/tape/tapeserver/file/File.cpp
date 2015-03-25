@@ -54,6 +54,17 @@ namespace castor {
               tapeserver::client::ClientInterface::VolumeInfo volInfo)  : 
       m_drive(drive), m_vid(volInfo.vid), m_corrupted(false), m_locked(false), 
       m_fseq(1), m_currentFilePart(Header),m_volInfo(volInfo) { 
+
+        if(!m_vid.compare("")) {
+          throw castor::exception::InvalidArgument();
+        }
+        
+        if(m_drive.isTapeBlank()) {
+          castor::exception::Exception ex;
+          ex.getMessage() << "[ReadSession::ReadSession()] - Tape is blank, cannot proceed with constructing the ReadSession";
+          throw ex;
+        }
+        
         m_drive.rewind();
         VOL1 vol1;
         m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
