@@ -191,7 +191,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
     RecallReportPacker rrp(m_clientProxy,
-        m_castorConf.bulkRequestMigrationMaxFiles,
+        m_castorConf.bulkRequestRecallMaxFiles,
         lc);
 
     // If we talk to a command line client, we do not batch report
