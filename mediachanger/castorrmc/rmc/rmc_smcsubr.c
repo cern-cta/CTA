@@ -342,16 +342,14 @@ int smc_read_elem_status(
 	struct smc_element_info element_info[])
 {
 	char func[16];
-	int rc;
 
 	strncpy(func, "read_elem_statu", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
-	rc = get_element_info (0xB8, fd, rbtdev, type, start, nbelem, element_info);
-	return (rc);
+	return get_element_info (0xB8, fd, rbtdev, type, start, nbelem, element_info);
 }
 
-int smc_find_cartridge2 (
+int smc_find_cartridgeWithoutSendVolumeTag (
 	const int fd,
 	const char *const rbtdev,
 	const char *const find_template,
@@ -360,23 +358,26 @@ int smc_find_cartridge2 (
 	const int nbelem,
 	struct smc_element_info element_info[])
 {
-	int c;
 	static char err_msgbuf[132];
-	int found;
+	int nbFound = 0;
 	char func[16];
 	int i;
 	struct smc_element_info *inventory_info; 
 	char *msgaddr;
-	int pm = 0;
+	const int patternMatching = strchr (find_template, '*') || strchr (find_template, '?');
 	struct robot_info robot_info;
-	int tot_nbelem;
+	int tot_nbelem = 0;
+	int nbElementsInReport = 0;
 
-  (void)nbelem;
-	strncpy(func, "find_cartridge2", sizeof(func));
+	strncpy(func, "findWithoutVT", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
-	if ((c = smc_get_geometry (fd, rbtdev, &robot_info)))
-		return (c);
+	{
+		const int smc_get_geometry_rc = smc_get_geometry (fd, rbtdev, &robot_info);
+		if(smc_get_geometry_rc) {
+			return smc_get_geometry_rc;
+		}
+	}
 
 	tot_nbelem = robot_info.transport_count + robot_info.slot_count +
 		robot_info.port_count + robot_info.device_count;
@@ -389,32 +390,31 @@ int smc_find_cartridge2 (
 		return (-1);
 	}
 
-	if ((c = smc_read_elem_status (fd, rbtdev, type, start, tot_nbelem, inventory_info)) < 0) {
+	nbElementsInReport = smc_read_elem_status (fd, rbtdev, type, start, tot_nbelem, inventory_info);
+	if(0 > nbElementsInReport) {
 		free (inventory_info);
-		return (c);
+		return (nbElementsInReport);
 	}
-	found = 0;	
-	if (strchr (find_template, '*') || strchr (find_template, '?'))	/* pattern matching */
-		pm++;
-	for (i = 0 ; i < tot_nbelem ; i++)
+	for (i = 0 ; i < nbElementsInReport && nbFound < nbelem; i++) {
 		if (inventory_info[i].state & 0x1) {
-			if (! pm) {
+			if (patternMatching) {
+				if (vmatch (find_template, inventory_info[i].name) == 0) {
+					memcpy (&element_info[nbFound], &inventory_info[i],
+						sizeof(struct smc_element_info));
+					nbFound++;
+				}
+			} else {
 				if (strcmp (find_template, inventory_info[i].name) == 0) {
 					memcpy (element_info, &inventory_info[i],
 						sizeof(struct smc_element_info));
-					found++;
+					nbFound = 1;
 					break;
-				}
-			} else {
-				if (vmatch (find_template, inventory_info[i].name) == 0) {
-					memcpy (&element_info[found], &inventory_info[i],
-						sizeof(struct smc_element_info));
-					found++;
 				}
 			}
 		}
+	}
 	free (inventory_info);
-	return (found);
+	return (nbFound);
 }
 
 
@@ -438,7 +438,7 @@ int smc_find_cartridge(
         int nretries = 0;
         char *smcLibraryType;
 
-	strncpy(func, "find_cartridge", sizeof(func));
+	strncpy(func, "findWithVT", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
         
         /* for Spectra like library we will skip 0xB6 cdb command as soon as
@@ -446,7 +446,7 @@ int smc_find_cartridge(
         smcLibraryType = getconfent("SMC","LIBRARY_TYPE",0);
         if (NULL != smcLibraryType &&
             0 == strcasecmp(smcLibraryType,"SPECTRA")) {
-          rc = smc_find_cartridge2 (fd, rbtdev, find_template, type, start, nbelem,
+          rc = smc_find_cartridgeWithoutSendVolumeTag (fd, rbtdev, find_template, type, start, nbelem,
                                     element_info);
           if (rc >= 0)
             return (rc);
@@ -483,15 +483,14 @@ int smc_find_cartridge(
 	if (rc < 0) {
                 save_error (rc, nb_sense_ret, sense, msgaddr);
 		if (rc == -4 && nb_sense_ret >= 14 && (sense[2] & 0xF) == 5) {
-			rc = smc_find_cartridge2 (fd, rbtdev, find_template, type,
+			rc = smc_find_cartridgeWithoutSendVolumeTag (fd, rbtdev, find_template, type,
 			    start, nbelem, element_info);
 			if (rc >= 0)
 				return (rc);
 		}
 		return (-1);
 	}
-	rc = get_element_info (0xB5, fd, rbtdev, type, start, nbelem, element_info);
-	return (rc);
+	return get_element_info (0xB5, fd, rbtdev, type, start, nbelem, element_info);
 }
 
 
@@ -769,26 +768,28 @@ int smc_export (
 	struct robot_info *const robot_info,
 	const char *const vid)
 {
-        int c;
         struct smc_element_info element_info;
 	char func[16];
-	int i;
+	int i = 0;
         struct smc_element_info *impexp_info;
-	const char *msgaddr;
-	int nbelem;
+	const char *msgaddr = NULL;
+	int nbelem = 0;
 	struct smc_status smc_status;
  
 	strncpy (func, "smc_export", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
-	if ((c = smc_find_cartridge (fd, loader, vid, 0, 0, 1, &element_info)) < 0) {
-		c = smc_lasterror (&smc_status, &msgaddr);
-		rmc_usrmsg ( rpfd, func, SR017, "find_cartridge", vid, msgaddr);
-		return (c);
-	}
-	if (c == 0) {
-		rmc_usrmsg ( rpfd, func, SR017, "export", vid, "volume not in library");
-		return (RBT_NORETRY);
+	{
+		const int smc_find_cartridge_rc = smc_find_cartridge (fd, loader, vid, 0, 0, 1, &element_info);
+		if (0 > smc_find_cartridge_rc) {
+			const int smc_lasterror_rc = smc_lasterror (&smc_status, &msgaddr);
+			rmc_usrmsg ( rpfd, func, SR017, "find_cartridge", vid, msgaddr);
+			return (smc_lasterror_rc);
+		}
+		if (0 == smc_find_cartridge_rc) {
+			rmc_usrmsg ( rpfd, func, SR017, "export", vid, "volume not in library");
+			return (RBT_NORETRY);
+		}
 	}
 	if (element_info.element_type != 2) {
 		rmc_usrmsg ( rpfd, func, SR017, "export", vid, "volume in use");
@@ -802,30 +803,40 @@ int smc_export (
 		return (RBT_NORETRY);
 	}
 
-	if ((c = smc_read_elem_status (fd, loader, 3, robot_info->port_start,
-	    nbelem, impexp_info)) < 0) {
-		c = smc_lasterror (&smc_status, &msgaddr);
-		rmc_usrmsg ( rpfd, func, SR020, "read_elem_status", msgaddr);
-		free (impexp_info);
-		return (c);
-	}
-	for (i = 0; i < nbelem; i++) {
-		if (((impexp_info+i)->state & 0x1) == 0)	/* element free */
-			break;
-	}
-	if (i >= nbelem) {	/* export slots are full */
-		rmc_usrmsg ( rpfd, func, SR013);
-		free (impexp_info);
-		return (RBT_NORETRY);
+	{
+		int foundAFreeExportSlot = 0;
+		const int nbElementsInReport = smc_read_elem_status (fd, loader, 3, robot_info->port_start,
+	    		nbelem, impexp_info);
+		if (0 > nbElementsInReport) {
+			const int smc_lasterror_rc = smc_lasterror (&smc_status, &msgaddr);
+			rmc_usrmsg ( rpfd, func, SR020, "read_elem_status", msgaddr);
+			free (impexp_info);
+			return (smc_lasterror_rc);
+		}
+		for (i = 0; i < nbElementsInReport; i++) {
+			if (((impexp_info+i)->state & 0x1) == 0) {
+				foundAFreeExportSlot = 1;
+				break;
+			}
+		}
+		if (!foundAFreeExportSlot) {
+			rmc_usrmsg ( rpfd, func, SR013);
+			free (impexp_info);
+			return (RBT_NORETRY);
+		}
 	}
 
-	if ((c = smc_move_medium (fd, loader, element_info.element_address,
-	    (impexp_info+i)->element_address, 0)) < 0) {
-		c = smc_lasterror (&smc_status, &msgaddr);
-		rmc_usrmsg ( rpfd, func, SR017, "export", vid, msgaddr);
-		free (impexp_info);
-		return (c);
+	{
+		const int smc_move_medium_rc = smc_move_medium (fd, loader, element_info.element_address,
+	    		(impexp_info+i)->element_address, 0);
+		if (0 > smc_move_medium_rc) {
+			const int smc_lasterror_rc = smc_lasterror (&smc_status, &msgaddr);
+			rmc_usrmsg ( rpfd, func, SR017, "export", vid, msgaddr);
+			free (impexp_info);
+			return (smc_lasterror_rc);
+		}
 	}
+
 	free (impexp_info);
 	return (0);
 }

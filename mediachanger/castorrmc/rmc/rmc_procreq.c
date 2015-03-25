@@ -136,7 +136,7 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 		    extended_robot_info.smc_ldr, template, type, startaddr,
 		    nbelem, element_info);
 	else
-		c = smc_find_cartridge2 (extended_robot_info.smc_fd,
+		c = smc_find_cartridgeWithoutSendVolumeTag (extended_robot_info.smc_fd,
 		    extended_robot_info.smc_ldr, template, type, startaddr,
 		    nbelem, element_info);
 	if (c < 0) {

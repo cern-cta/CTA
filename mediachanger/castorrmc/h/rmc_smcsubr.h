@@ -39,7 +39,7 @@ EXTERN_C int smc_read_elem_status(
   const int nbelem,
   struct smc_element_info element_info[]);
 
-EXTERN_C int smc_find_cartridge2 (
+EXTERN_C int smc_find_cartridgeWithoutSendVolumeTag (
   const int fd,
   const char *const rbtdev,
   const char *const find_template,
