@@ -57,6 +57,10 @@ DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
   // Lowercase the protocol string
   std::transform(m_remoteFileProtocol.begin(), m_remoteFileProtocol.end(),
     m_remoteFileProtocol.begin(), ::tolower);
+  // Set the global RFIO option to STREAM (RFIOv3)
+  int pval=RFIO_STREAM;
+  exception::Errnum::throwOnNonZero(rfiosetopt(RFIO_READOPT, &pval,0),
+      "In DiskFileFactory::DiskFileFactory: failed to set RFIO_STREAM mode");
 }
 
 const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootPrivateKey() {
