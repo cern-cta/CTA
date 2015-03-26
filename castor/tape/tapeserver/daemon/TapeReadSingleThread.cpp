@@ -63,7 +63,9 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     // after failing to mount (library error) in which case there is nothing to
     // do (and trying to unmount will only lead to a failure.)
     const uint32_t waitMediaInDriveTimeout = 60;
-    m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
+    try {
+      m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
+    } catch (castor::exception::Exception &) {}
     if (!m_this.m_drive.hasTapeInPlace()) {
       m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread: No tape to unload");
       goto done;
