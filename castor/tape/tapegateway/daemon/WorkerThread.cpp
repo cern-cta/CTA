@@ -784,16 +784,12 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
     } catch (castor::exception::Exception& e){
       logMigrationVmgrFailure(nullCuuid, requester, fileMigrationReportList, vid,
         tapePool, e);
-      // Attempt to move the tape to read only as a stuck fseq is the worst we can get in
-      // terms of data protection: what got written will potentially be overwritten.
-      try {
-        VmgrTapeGatewayHelper::setTapeAsReadonlyAndUnbusy(vid, m_shuttingDown);
-        logTapeReadOnly(nullCuuid, requester, fileMigrationReportList,
-            tapePool, vid);
-      } catch (castor::exception::Exception e) {
-        logCannotReadOnly(nullCuuid, requester, fileMigrationReportList,
-            tapePool, vid, e);
-      }
+      // We stop processing here. Unfortunately, the data we just wrote is not
+      // protected by the VMGR's fseq record, so we cannot reference it in the 
+      // name server. The older data is protected on the next mount by both
+      // previously updated VMGR's fseq and ns information, which are crossed
+      // in the tape gateway before mounting for write.
+      
       // We could not update the VMGR for this tape: better leave it alone and stop the session
       EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
       errorReport->setErrorCode(EIO);
