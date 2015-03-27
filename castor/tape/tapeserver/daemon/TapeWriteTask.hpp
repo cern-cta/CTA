@@ -65,7 +65,7 @@ public:
   /**
    * @return the size of the file in byte
    */
-  virtual int fileSize();
+  virtual uint64_t fileSize();
     
   /**
    * Main execution routine
