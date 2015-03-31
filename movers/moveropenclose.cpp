@@ -75,6 +75,7 @@ extern "C" {
         n++;
       }
     }
+    readBuf[n] = '\0';
     // ok, we got the reply, return it to the caller
     if(*rc != 0) {
       *errormsg = strdup(readBuf);
@@ -99,7 +100,9 @@ extern "C" {
         sockfd = connectToDiskmanager(port);
         n = write(sockfd, writeBuf.str().c_str(), writeBuf.str().length());
         if (n != (int)writeBuf.str().length()) {
-          throw std::runtime_error("Failed to send OPEN message");
+          std::ostringstream ss << "Failed to send OPEN message, expected length was "
+                                << writeBuf.str().length() << ", real length was " << n;
+          throw std::runtime_error(ss.str());
         }
         // synchronously read and parse answer
         parseAnswer(sockfd, errorcode, errormsg);
@@ -143,7 +146,9 @@ extern "C" {
         sockfd = connectToDiskmanager(port);
         n = write(sockfd, writeBuf.str().c_str(), writeBuf.str().length());
         if (n != (int)writeBuf.str().length()) {
-          throw std::runtime_error("Failed to send CLOSE message");
+          std::ostringstream ss << "Failed to send CLOSE message, expected length was "
+                                << writeBuf.str().length() << ", real length was " << n;
+          throw std::runtime_error(ss.str());
         }
         // synchronously read and parse answer
         parseAnswer(sockfd, errorcode, errormsg);
