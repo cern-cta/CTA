@@ -100,8 +100,9 @@ extern "C" {
         sockfd = connectToDiskmanager(port);
         n = write(sockfd, writeBuf.str().c_str(), writeBuf.str().length());
         if (n != (int)writeBuf.str().length()) {
-          std::ostringstream ss << "Failed to send OPEN message, expected length was "
-                                << writeBuf.str().length() << ", real length was " << n;
+          std::ostringstream ss;
+          ss << "Failed to send OPEN message, expected length was "
+             << writeBuf.str().length() << ", real length was " << n;
           throw std::runtime_error(ss.str());
         }
         // synchronously read and parse answer
@@ -146,8 +147,9 @@ extern "C" {
         sockfd = connectToDiskmanager(port);
         n = write(sockfd, writeBuf.str().c_str(), writeBuf.str().length());
         if (n != (int)writeBuf.str().length()) {
-          std::ostringstream ss << "Failed to send CLOSE message, expected length was "
-                                << writeBuf.str().length() << ", real length was " << n;
+          std::ostringstream ss;
+          ss << "Failed to send CLOSE message, expected length was "
+             << writeBuf.str().length() << ", real length was " << n;
           throw std::runtime_error(ss.str());
         }
         // synchronously read and parse answer
