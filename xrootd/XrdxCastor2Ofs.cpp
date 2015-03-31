@@ -521,7 +521,8 @@ XrdxCastor2OfsFile::open(const char*         path,
     // If failed to commit to diskmanager then return error
     if (dm_errno)
     {
-      rc = gSrv->Emsg("open", error, dm_errno, "open due to diskmanager error");
+      rc = gSrv->Emsg("open", error, dm_errno, "open due to diskmanager error: ",
+		      errmsg);
     }
     else
     {
