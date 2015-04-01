@@ -1782,7 +1782,7 @@ BEGIN
   FOR varI IN (varNbCopies+1)..varExpectedNbCopies LOOP
     BEGIN
       -- Trigger a replication request.
-      createDisk2DiskCopyJob(inCfId, varNsOpenTime, inSvcClassId, inUid, inGid, dconst.REPLICATIONTYPE_USER, NULL, FALSE, NULL, TRUE);
+      createDisk2DiskCopyJob(inCfId, varNsOpenTime, inSvcClassId, inUid, inGid, dconst.REPLICATIONTYPE_USER, NULL, FALSE, NULL, FALSE);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- No copies to replicate from
     END;
