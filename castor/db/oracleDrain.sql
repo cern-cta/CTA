@@ -223,7 +223,7 @@ BEGIN
     -- also note the use of decode and the extra totalSize > 0 to protect
     -- us against division by 0. The decode is needed in case this filter
     -- is applied first, before the totalSize > 0
-    SELECT AVG(free/decode(totalSize, 0, 1, totalSize)) INTO varFreeRef
+    SELECT SUM(free)/decode(SUM(totalSize), 0, 1, SUM(totalSize)) INTO varFreeRef
       FROM FileSystem, DiskPool2SvcClass, DiskServer
      WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
        AND DiskPool2SvcClass.child = SC.id
