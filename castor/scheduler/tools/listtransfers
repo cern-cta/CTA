@@ -166,7 +166,7 @@ def _buildProtocolList(summaryreport):
 def _buildTitleAndCoStrings(presubtitle, preformat, preformatnodata, protocols):
   '''helper function to build title, subtitle and format string for the display in processHostListing
   and processPoolListing'''
-  subtitleblock = 'NBTPEND NBSPEND NBTRUN  NBSRUN '
+  subtitleblock = 'NBTPEND NBSPEND  NBTRUN  NBSRUN'
   stblocklen = len(subtitleblock)
   title = ' ' * len(presubtitle)
   subtitle = presubtitle
@@ -188,8 +188,10 @@ def processHostListing():
   summaryreport = rpconn.root.summarizeTransfersPerHost(reqpool, requser, extra)
   # compute the max length of the machine names we got and deduce the title and printf args
   maxMachineNameLen = max([0] + [len(s[0]) for s in summaryreport])
-  machineHead = 'DISKSERVER ' + ' '*(maxMachineNameLen-10)
+  maxNbSlotsLen = max([0] + [len(str(s[1])) for s in summaryreport])
+  machineHead = 'DISKSERVER ' + ' '*(maxMachineNameLen-10) + 'NBSLOTS' + ' '*(maxNbSlotsLen-7)
   machineHeadLen = max(maxMachineNameLen+1, 11)
+  slotsLen = max(maxNbSlotsLen, 7)
   if extra:
     # summaryreport is a tuple of reports of this form :
     # (hostname, nbslots,
@@ -201,7 +203,7 @@ def processHostListing():
     # first we need to build a set of protocols to be displayed for the per protocol numbers
     protocols = _buildProtocolList(summaryreport)
     # now build the title lines and the format line
-    title, subtitle, dataformat, nodataformat = _buildTitleAndCoStrings(machineHead + 'NBSLOTS', '%-*s%4d', '%-*s%4s', protocols)
+    title, subtitle, dataformat, nodataformat = _buildTitleAndCoStrings(machineHead , '%-*s%-*d', '%-*s%-*s', protocols)
     # display title and subtitle
     print title
     print subtitle
@@ -218,7 +220,7 @@ def processHostListing():
         nbQueueingSlots, nbQueueingSlotsPerProto, nbRunningTransfers, \
         nbRunningTransfersPerProto, nbRunningSlots, nbRunningSlotsPerProto = summary
       # start with non protocol specific data
-      data = [machineHeadLen, hostname, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots]
+      data = [machineHeadLen, hostname, slotsLen, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots]
       # do not display idle machines in clean mode
       if clean and nbQueueingTransfers == 0 and nbRunningTransfers == 0:
         continue
@@ -239,23 +241,25 @@ def processHostListing():
     # summaryreport is a tuple of reports of this form :
     # (hostname, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots)
     # or (hostname, None) if the host could not be contacted
-    print machineHead + 'NBSLOTS NBTPEND NBSPEND NBTRUN  NBSRUN'
+    print machineHead + ' NBTPEND NBSPEND  NBTRUN  NBSRUN'
     for summary in summaryreport:
       if len(summary) > 2:
        # do not display idle machines in clean mode
        if clean and summary[2] == 0 and summary[4] == 0:
          continue
-       print '%-*s%4d %7d %7d %7d %7d' % ((machineHeadLen,) + summary)
+       print '%-*s%-*d %7d %7d %7d %7d' % ((machineHeadLen, summary[0], slotsLen) + summary[1:])
       else:
-        print '%-*s%4s %7s %7s %7s %7s' % (machineHeadLen, summary[0], '-', '-', '-', '-', '-')
+        print '%-*s%-*s %7s %7s %7s %7s' % (machineHeadLen, summary[0], slotsLen, '-', '-', '-', '-', '-')
 
 def processPoolListing():
   '''retrieves and display summary of the running transfers per pool for the given pool and user'''
   summaryreport, errorMsg = rpconn.root.summarizeTransfersPerPool(reqpool, requser, extra)
   # compute the max length of the pools we got and deduce the title and printf args
   maxPoolNameLen = max([4] + [len(s[0]) for s in summaryreport])
+  maxNbSlotsLen = max([0] + [len(str(s[2])) for s in summaryreport])
   poolHeadLen = max(maxPoolNameLen + 4, 12)
-  poolHead = 'POOL ' + ' '*(poolHeadLen-5)
+  poolHead = 'POOL ' + ' '*(poolHeadLen-5) + 'NBSLOTS' + ' '*(maxNbSlotsLen-7)
+  slotsLen = max(maxNbSlotsLen, 7)
   # depending on the extra flag, the output will differ
   if extra:
     # summaryreport is a tuple of reports of this form :
@@ -269,7 +273,7 @@ def processPoolListing():
     # the (very weak) parsing of _buildProtocolList
     protocols = _buildProtocolList([report[:-1] for report in summaryreport])
     # build title, subtitle and format strings
-    title, subtitle, dataformat = _buildTitleAndCoStrings(poolHead + 'NBSLOTS  NBUTPEND', '%-*s%5d%9s', '%-*s%5s%9s', protocols)[0:3]
+    title, subtitle, dataformat = _buildTitleAndCoStrings(poolHead + ' NBUTPEND', '%-*s%-*d%9s', '%-*s%-*s%9s', protocols)[0:3]
     # display title and subtitle
     print title
     print subtitle
@@ -278,7 +282,7 @@ def processPoolListing():
     for s in summaryreport:
       # start with non protocol specific data
       if len(s) == 1:
-        data = [poolHeadLen, s[0], '-', '0'] + [0] * (4 + len(protocols) * 4)
+        data = [poolHeadLen, s[0], slotsLen, '-', '0'] + [0] * (4 + len(protocols) * 4)
         print dataformat % tuple(data)
       else:
         poolname, nbUniqueQueueingTransfers, nbslots, nbQueueingTransfers, \
@@ -288,7 +292,7 @@ def processPoolListing():
         if unreachableMachines:
           allUnreachableMachines[poolname] = unreachableMachines
           poolname = poolname + '(*)'
-        data = [poolHeadLen, poolname, nbslots, str(nbUniqueQueueingTransfers), nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots]
+        data = [poolHeadLen, poolname, slotsLen, nbslots, str(nbUniqueQueueingTransfers), nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots]
         # and for each protocol
         for protocol in protocols:
           # gather specific data
@@ -301,17 +305,17 @@ def processPoolListing():
     # (poolName, nbUniqueTransfers, nbslots,
     #  nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots,
     #  (unreachableMachine,...))
-    print poolHead + 'NBSLOTS  NBTPEND  NBUTPEND NBSPEND  NBTRUN   NBSRUN'
+    print poolHead + '  NBTPEND NBUTPEND  NBSPEND   NBTRUN   NBSRUN'
     allUnreachableMachines = {}
     for s in summaryreport:
       if len(s) == 1:
-        print '%-*s%5d %8d %8d %8d %8d %8d' % (poolHeadLen, s[0], 0, 0, 0, 0, 0, 0)
+        print '%-*s%-*d %8d %8d %8d %8d %8d' % (poolHeadLen, s[0], slotsLen, 0, 0, 0, 0, 0, 0)
       else:
         poolName, nbUniqueTransfers, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots, unreachableMachines = s
         if unreachableMachines:
           allUnreachableMachines[poolName] = unreachableMachines
           poolName = poolName + '(*)'
-        print '%-*s%5d %8d %8s %8d %8d %8d' % (poolHeadLen, poolName, nbslots, nbQueueingTransfers, str(nbUniqueTransfers), nbQueueingSlots, nbRunningTransfers, nbRunningSlots)
+        print '%-*s%-*d %8d %8s %8d %8d %8d' % (poolHeadLen, poolName, slotsLen, nbslots, nbQueueingTransfers, str(nbUniqueTransfers), nbQueueingSlots, nbRunningTransfers, nbRunningSlots)
   # deal with unreachable machines if any
   if allUnreachableMachines:
     print '(*) Note that these numbers are incomplete as the following machines were unreachable :'
