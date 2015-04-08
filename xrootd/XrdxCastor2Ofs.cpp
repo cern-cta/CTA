@@ -927,15 +927,15 @@ XrdxCastor2OfsFile::ExtractTransferInfo(XrdOucEnv& env_opaque)
   }
 
   std::string connect_info = val;
-  int pos1, pos2;
+  size_t pos1, pos2;
 
   // Syntax for request is: <id:diskmanagerport:subReqId> out of which only the
   // last two values are used for the moment
-  if ((pos1 = connect_info.find(":")) != STR_NPOS)
+  if ((pos1 = connect_info.find(":")) != std::string::npos)
   {
-    if ((pos2 = connect_info.find(":", pos1 + 1)) != STR_NPOS)
+    if ((pos2 = connect_info.find(":", pos1 + 1)) != std::string::npos)
     {
-      std::string sport(connect_info, pos1 + 1, pos2 - 1);
+      std::string sport(connect_info, pos1 + 1, pos2 - pos1 - 1);
       mDiskMgrPort = atoi(sport.c_str());
       mReqId.assign(connect_info, pos2 + 1, std::string::npos);
     }
