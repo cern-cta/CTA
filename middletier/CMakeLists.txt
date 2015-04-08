@@ -26,6 +26,7 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/MiddleTierUser.cpp
   cta/Mount.cpp
   cta/RetrievalJob.cpp
+  cta/RetrievalJobQueues.cpp
   cta/RetrievalJobState.cpp
   cta/RetrievalMount.cpp
   cta/SecurityIdentity.cpp
