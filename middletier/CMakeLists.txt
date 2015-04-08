@@ -7,11 +7,14 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/AdminHost.cpp
   cta/AdminUser.cpp
   cta/ArchivalJob.cpp
+  cta/ArchivalJobQueues.cpp
   cta/ArchivalJobState.cpp
+  cta/ArchivalMount.cpp
   cta/ArchiveRoute.cpp
   cta/ArchiveRouteId.cpp
   cta/DirectoryEntry.cpp
   cta/DirectoryIterator.cpp
+  cta/DiskException.cpp
   cta/Exception.cpp
   cta/FileAttribute.cpp
   cta/FileSystemDirectoryEntry.cpp
@@ -21,14 +24,17 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/LogicalLibrary.cpp
   cta/MiddleTierAdmin.cpp
   cta/MiddleTierUser.cpp
+  cta/Mount.cpp
   cta/RetrievalJob.cpp
   cta/RetrievalJobState.cpp
+  cta/RetrievalMount.cpp
   cta/SecurityIdentity.cpp
   cta/SqliteDatabase.cpp
   cta/SqliteMiddleTierAdmin.cpp
   cta/SqliteMiddleTierUser.cpp
   cta/StorageClass.cpp
   cta/Tape.cpp
+  cta/TapeException.cpp
   cta/TapePool.cpp
   cta/UserIdentity.cpp
   cta/Utils.cpp
