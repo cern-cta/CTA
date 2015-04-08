@@ -486,11 +486,11 @@ XrdxCastor2FsFile::open(const char*         path,
           TIMING("RETURN", &opentiming);
         }
 
-        XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
-
 	// Refine the error message depending on the current configuration
 	if (no_hsm)
         {
+	  XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
+
 	  if (desired_svc.empty())
 	  {
 	    return gMgr->Emsg(epname, error, EINVAL, "access file in ANY stager "
@@ -504,8 +504,13 @@ XrdxCastor2FsFile::open(const char*         path,
 	}
 	else
         {
-	  return gMgr->Emsg(epname, error, EINVAL, "access file in ANY stager "
-			    "- all stager queries failed");
+	  xcastor_debug("file not staged anywhere, no_hsm=false, read it from tape");
+
+	  // Recall the file from tape
+	  if (!desired_svc.empty())
+	    allowed_svc = desired_svc;
+	  else
+	    allowed_svc = gMgr->GetAllowedSvc(map_path.c_str(), desired_svc);
 	}
       }
       else
