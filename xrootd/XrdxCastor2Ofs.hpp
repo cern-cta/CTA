@@ -178,6 +178,16 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
   //----------------------------------------------------------------------------
   void BuildTransferId(const XrdSecEntity* client, XrdOucEnv* env);
 
+  //----------------------------------------------------------------------------
+  //! Sanitize the opaque information
+  //!
+  //! @param opque string opaque information with tokens separated by '&',
+  //!        which will hold the sanitized info at the end of the function
+  //! @param is_tpc true if this is a TPC transfer, otherwise false
+  //!
+  //----------------------------------------------------------------------------
+  void SanitizeOpaque(XrdOucString& opaque, bool& is_tpc);
+
 
   static const int sKeyExpiry; ///< validity time of a tpc key
   struct stat mStatInfo; ///< file stat info

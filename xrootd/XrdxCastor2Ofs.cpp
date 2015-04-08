@@ -406,35 +406,13 @@ XrdxCastor2OfsFile::open(const char*         path,
   XrdOucString newopaque = opaque;
 
   // If there is explicit user opaque information we find two ?,
-  // so we just replace it with a seperator.
+  // so we just replace it with a seperator
   while (newopaque.replace("?", "&")) { };
   while (newopaque.replace("&&", "&")) { };
 
-  // Check if there are several redirection tokens
-  int firstpos = 0;
-  int lastpos = 0;
-  int newpos = 0;
-  firstpos = newopaque.find("castor.sfn", 0);
-  lastpos = firstpos + 1;
-
-  while ((newpos = newopaque.find("castor.sfn", lastpos)) != STR_NPOS)
-    lastpos = newpos + 1;
-
-  // Erase from the beginning to the last token start
-  if (lastpos > (firstpos + 1))
-    newopaque.erase(firstpos, lastpos - 2 - firstpos);
-
-  // Erase the tried parameter from the opaque information
-  int tried_pos = newopaque.find("tried=");
-  int amp_pos = newopaque.find('&', tried_pos);
-
-  if (tried_pos != STR_NPOS)
-  {
-    if (amp_pos != STR_NPOS)
-      newopaque.erase(tried_pos, amp_pos - tried_pos);
-    else
-      newopaque.erase(tried_pos, newopaque.length() - tried_pos);
-  }
+  // Sanitize the opaque information and check if this is a TPC transfer
+  bool is_tpc = false;
+  SanitizeOpaque(newopaque, is_tpc);
 
   // Set the open flags and type of operation rd_only/rdwr
   mEnvOpaque = new XrdOucEnv(newopaque.c_str());
@@ -449,8 +427,8 @@ XrdxCastor2OfsFile::open(const char*         path,
   xcastor_info("path=%s, opaque=%s, isRW=%d, open_mode=%x", path, opaque,
                mIsRW, open_mode);
 
-  // Deal with native TPC transfers which are passed directly to the OFS layer
-  if (newopaque.find("tpc.") != STR_NPOS)
+  // Native TPC transfers are passed directly to the OFS layer
+  if (is_tpc)
   {
     if (PrepareTPC(newpath, newopaque, client))
       return SFS_ERROR;
@@ -964,6 +942,64 @@ XrdxCastor2OfsFile::ExtractTransferInfo(XrdOucEnv& env_opaque)
   }
 
   return SFS_OK;
+}
+
+
+//----------------------------------------------------------------------------
+//! Sanitize the opaque information
+//----------------------------------------------------------------------------
+void
+XrdxCastor2OfsFile::SanitizeOpaque(XrdOucString& opaque, bool& is_tpc)
+{
+  size_t pos;
+  char delim = '&';
+  std::istringstream iss(std::string(opaque.c_str()));
+  std::string token, key, val;
+  std::map<std::string, std::string> map_opaque;
+
+  while (std::getline(iss, token, delim))
+  {
+    pos = token.find('=');
+
+    // If not in "key=value" format then skip
+    if (pos == std::string::npos)
+      continue;
+
+    key = token.substr(0, pos);
+    val = token.substr(pos + 1);
+
+    // We discard any "tried" tokens
+    if (key == "tried")
+      continue;
+
+    // Detect if this is a tpc transfer
+    if (key.find("tpc.") == 0)
+      is_tpc = true;
+
+    std::pair<std::string, std::string> pair = std::make_pair(key, val);
+    std::pair<std::map<std::string, std::string>::iterator, bool> ret_insert;
+    ret_insert = map_opaque.insert(pair);
+
+    // If element already in map, remove it and insert the last occurence
+    // note: useful in case we have several castor.sfn tokens in the opaque info
+    if (!ret_insert.second)
+    {
+      map_opaque.erase(ret_insert.first);
+      ret_insert = map_opaque.insert(pair);
+    }
+  }
+
+  std::ostringstream oss;
+  oss << "&";
+
+  // Construct new opaque info
+  for (std::map<std::string, std::string>::iterator it = map_opaque.begin();
+       it != map_opaque.end(); ++it)
+  {
+    oss << it->first << "=" << it->second << "&";
+  }
+
+  opaque = oss.str().c_str();
 }
 
 
