@@ -1,8 +1,8 @@
 #pragma once
 
+#include "cta/AdminUser.hpp"
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
-#include "libs/middletier/AdminUser.hpp"
 
 namespace cta { namespace objectstore {
 

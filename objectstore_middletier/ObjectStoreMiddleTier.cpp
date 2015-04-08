@@ -1,8 +1,8 @@
+#include "cta/Exception.hpp"
 #include "ObjectStoreMiddleTier.hpp"
 #include "objectstore/Backend.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/AdminUsersList.hpp"
-#include "../libs/middletier/Exception.hpp"
 
 namespace cta {
 

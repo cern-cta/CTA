@@ -1,28 +1,28 @@
 #pragma once
 
 #include "cta/MiddleTierAdmin.hpp"
+#include "cta/SqliteDatabase.hpp"
+#include "cta/Vfs.hpp"
 
 namespace cta {
 
-namespace objectstore {
-  class Backend;
-}
-  
 /**
- * The administration API of the the middle-tier.
- * ObjectStore based implementation
+ * The administration API of the mock middle-tier.
  */
-class OStoreMiddleTierAdmin: public MiddleTierAdmin {
+class SqliteMiddleTierAdmin: public MiddleTierAdmin {
 public:
+
   /**
-   * Contructor
+   * Constructor.
+   *
+   * @param db The database of the mock middle-tier.
    */
-  OStoreMiddleTierAdmin(objectstore::Backend & backend);
-  
+  SqliteMiddleTierAdmin(Vfs &vfs, SqliteDatabase &sqlite_db);
+
   /**
-   * Destructor
+   * Destructor.
    */
-  virtual ~OStoreMiddleTierAdmin() throw();
+  ~SqliteMiddleTierAdmin() throw();
 
   /**
    * Creates the specified administrator.
@@ -30,9 +30,9 @@ public:
    * @param requester The identity of the user requesting the creation of the
    * administrator.
    * @param user The identity of the administrator.
-   * @param comment The comment describing the sministrator.
+   * @param comment The comment describing te administator.
    */
-  virtual void createAdminUser(
+  void createAdminUser(
     const SecurityIdentity &requester,
     const UserIdentity &user,
     const std::string &comment);
@@ -44,7 +44,7 @@ public:
    * administrator.
    * @param user The identity of the administrator.
    */
-  virtual void deleteAdminUser(
+  void deleteAdminUser(
     const SecurityIdentity &requester,
     const UserIdentity &user);
 
@@ -54,8 +54,7 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of administrators in lexicographical order.
    */
-  virtual std::list<AdminUser> getAdminUsers(const SecurityIdentity &requester)
-   const;
+  std::list<AdminUser> getAdminUsers(const SecurityIdentity &requester) const;
 
   /**
    * Creates the specified administration host.
@@ -65,7 +64,7 @@ public:
    * @param hostName The network name of the administration host.
    * @param comment The comment describing the administration host.
    */
-  virtual void createAdminHost(
+  void createAdminHost(
     const SecurityIdentity &requester,
     const std::string &hostName,
     const std::string &comment);
@@ -78,18 +77,16 @@ public:
    * @param hostName The network name of the administration host.
    * @param comment The comment describing the administration host.
    */
-  virtual void deleteAdminHost(
+  void deleteAdminHost(
     const SecurityIdentity &requester,
     const std::string &hostName);
 
   /**
-   * Returns the current list of administration hosts in lexicographical order.
+   * Returns the current list of administration hosts.
    *
    * @param requester The identity of the user requesting the list.
-   * @return The current list of administration hosts in lexicographical order.
    */
-  virtual std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester)
-   const;
+  std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester) const;
 
   /**
    * Creates the specified storage class.
@@ -101,10 +98,10 @@ public:
    * class should have on tape.
    * @param comment The comment describing the storage class.
    */
-  virtual void createStorageClass(
+  void createStorageClass(
     const SecurityIdentity &requester,
     const std::string &name,
-    const uint8_t nbCopies,
+    const uint16_t nbCopies,
     const std::string &comment);
 
   /**
@@ -114,7 +111,7 @@ public:
    * storage class.
    * @param name The name of the storage class.
    */
-  virtual void deleteStorageClass(
+  void deleteStorageClass(
     const SecurityIdentity &requester,
     const std::string &name);
 
@@ -124,7 +121,7 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of storage classes in lexicographical order.
    */
-  virtual std::list<StorageClass> getStorageClasses(
+  std::list<StorageClass> getStorageClasses(
     const SecurityIdentity &requester) const;
 
   /**
@@ -140,7 +137,7 @@ public:
    * full at any moment in time.
    * @param comment The comment describing the tape pool.
    */
-  virtual void createTapePool(
+  void createTapePool(
     const SecurityIdentity &requester,
     const std::string &name,
     const uint16_t nbDrives,
@@ -154,7 +151,7 @@ public:
    * tape pool.
    * @param name The name of the tape pool.
    */
-  virtual void deleteTapePool(
+  void deleteTapePool(
     const SecurityIdentity &requester,
     const std::string &name);
 
@@ -164,7 +161,7 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of tape pools in lexicographical order.
    */
-  virtual std::list<TapePool> getTapePools(
+  std::list<TapePool> getTapePools(
     const SecurityIdentity &requester) const;
 
   /**
@@ -178,10 +175,10 @@ public:
    * @param tapePoolName The name of the destination tape pool.
    * @param comment The comment describing the archive route.
    */
-  virtual void createArchiveRoute(
+  void createArchiveRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
-    const uint8_t copyNb,
+    const uint16_t copyNb,
     const std::string &tapePoolName,
     const std::string &comment);
 
@@ -194,17 +191,17 @@ public:
    * source disk files.
    * @param copyNb The tape copy number.
    */
-  virtual void deleteArchiveRoute(
+  void deleteArchiveRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
-    const uint8_t copyNb);
+    const uint16_t copyNb);
 
   /**
    * Gets the current list of archive routes.
    *
    * @param requester The identity of the user requesting the list.
    */
-  virtual std::list<ArchiveRoute> getArchiveRoutes(
+  std::list<ArchiveRoute> getArchiveRoutes(
     const SecurityIdentity &requester) const;
 
   /**
@@ -215,7 +212,7 @@ public:
    * @param name The name of the logical library.
    * @param comment The comment describing the logical library.
    */
-  virtual void createLogicalLibrary(
+  void createLogicalLibrary(
     const SecurityIdentity &requester,
     const std::string &name,
     const std::string &comment);
@@ -227,7 +224,7 @@ public:
    * logical library.
    * @param name The name of the logical library.
    */
-  virtual void deleteLogicalLibrary(
+  void deleteLogicalLibrary(
     const SecurityIdentity &requester,
     const std::string &name);
 
@@ -237,7 +234,7 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of libraries in lexicographical order.
    */
-  virtual std::list<LogicalLibrary> getLogicalLibraries(
+  std::list<LogicalLibrary> getLogicalLibraries(
     const SecurityIdentity &requester) const;
 
   /**
@@ -252,7 +249,7 @@ public:
    * @param capacityInBytes The capacity of the tape.
    * @param comment The comment describing the logical library.
    */
-  virtual void createTape(
+  void createTape(
     const SecurityIdentity &requester,
     const std::string &vid,
     const std::string &logicalLibraryName,
@@ -267,7 +264,7 @@ public:
    * tape.
    * @param vid The volume identifier of the tape.
    */
-  virtual void deleteTape(
+  void deleteTape(
     const SecurityIdentity &requester,
     const std::string &vid);
 
@@ -279,15 +276,15 @@ public:
    * @return The current list of tapes in the lexicographical order of their
    * volume identifiers.
    */
-  virtual std::list<Tape> getTapes(
+  std::list<Tape> getTapes(
     const SecurityIdentity &requester) const;
+
+protected:
   
-private:
-  /**
-   * Reference to the backend used for storing objects
-   */
-  objectstore::Backend & m_backend;
-};
+  SqliteDatabase &m_sqlite_db;
+  
+  Vfs &m_vfs;
 
-}
+}; // class SqliteMiddleTierAdmin
 
+} // namespace cta

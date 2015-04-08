@@ -1,11 +1,10 @@
 #pragma once
 
-#include <iostream>
-
+#include "cta/SqliteMiddleTierUser.hpp"
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdSfs/XrdSfsInterface.hh"
 
-#include "libs/middletier/SqliteMiddleTierUser.hpp"
+#include <iostream>
 
 class XrdProDir : public XrdSfsDirectory
 {

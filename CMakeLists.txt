@@ -29,9 +29,7 @@ set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-include_directories(${CMAKE_SOURCE_DIR})
-
-add_subdirectory(libs)
+add_subdirectory(middletier)
 add_subdirectory(objectstore)
 add_subdirectory(objectstore_middletier)
 add_subdirectory(tests)

@@ -23,11 +23,12 @@
 
 #pragma once
 
+#include "objectstore/exception/Errnum.hpp"
+#include "objectstore/exception/Exception.hpp"
+#include "objectstore/threading/Mutex.hpp"
+
 #include <pthread.h>
 #include <semaphore.h>
-#include "exception/Errnum.hpp"
-#include "exception/Exception.hpp"
-#include "threading/Mutex.hpp"
 
 namespace cta {
 namespace threading { 

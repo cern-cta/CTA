@@ -1,6 +1,6 @@
-#include "threading/Mutex.hpp"
-#include "exception/Errnum.hpp"
-#include "exception/Exception.hpp"
+#include "objectstore/threading/Mutex.hpp"
+#include "objectstore/exception/Errnum.hpp"
+#include "objectstore/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 //constructor

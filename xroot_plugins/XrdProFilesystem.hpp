@@ -1,7 +1,7 @@
 #pragma once
 
-#include "libs/middletier/SqliteMiddleTierAdmin.hpp"
-#include "libs/middletier/SqliteMiddleTierUser.hpp"
+#include "cta/SqliteMiddleTierAdmin.hpp"
+#include "cta/SqliteMiddleTierUser.hpp"
 #include "XrdSfs/XrdSfsInterface.hh"
 
 #include "ParsedRequest.hpp"

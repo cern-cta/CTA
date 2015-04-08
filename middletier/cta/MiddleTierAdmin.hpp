@@ -1,28 +1,33 @@
 #pragma once
 
-#include "cta/MiddleTierAdmin.hpp"
+#include "cta/AdminHost.hpp"
+#include "cta/AdminUser.hpp"
+#include "cta/ArchivalJob.hpp"
+#include "cta/ArchiveRoute.hpp"
+#include "cta/DirectoryIterator.hpp"
+#include "cta/LogicalLibrary.hpp"
+#include "cta/SecurityIdentity.hpp"
+#include "cta/StorageClass.hpp"
+#include "cta/Tape.hpp"
+#include "cta/TapePool.hpp"
+#include "cta/UserIdentity.hpp"
+
+#include <list>
+#include <stdint.h>
+#include <string>
 
 namespace cta {
 
-namespace objectstore {
-  class Backend;
-}
-  
 /**
  * The administration API of the the middle-tier.
- * ObjectStore based implementation
  */
-class OStoreMiddleTierAdmin: public MiddleTierAdmin {
+class MiddleTierAdmin {
 public:
+
   /**
-   * Contructor
+   * Destructor.
    */
-  OStoreMiddleTierAdmin(objectstore::Backend & backend);
-  
-  /**
-   * Destructor
-   */
-  virtual ~OStoreMiddleTierAdmin() throw();
+  virtual ~MiddleTierAdmin() throw() = 0;
 
   /**
    * Creates the specified administrator.
@@ -35,7 +40,7 @@ public:
   virtual void createAdminUser(
     const SecurityIdentity &requester,
     const UserIdentity &user,
-    const std::string &comment);
+    const std::string &comment) = 0;
 
   /**
    * Deletes the specified administrator.
@@ -46,7 +51,7 @@ public:
    */
   virtual void deleteAdminUser(
     const SecurityIdentity &requester,
-    const UserIdentity &user);
+    const UserIdentity &user) = 0;
 
   /**
    * Returns the current list of administrators in lexicographical order.
@@ -55,7 +60,7 @@ public:
    * @return The current list of administrators in lexicographical order.
    */
   virtual std::list<AdminUser> getAdminUsers(const SecurityIdentity &requester)
-   const;
+   const = 0;
 
   /**
    * Creates the specified administration host.
@@ -68,7 +73,7 @@ public:
   virtual void createAdminHost(
     const SecurityIdentity &requester,
     const std::string &hostName,
-    const std::string &comment);
+    const std::string &comment) = 0;
 
   /**
    * Deletes the specified administration host.
@@ -80,7 +85,7 @@ public:
    */
   virtual void deleteAdminHost(
     const SecurityIdentity &requester,
-    const std::string &hostName);
+    const std::string &hostName) = 0;
 
   /**
    * Returns the current list of administration hosts in lexicographical order.
@@ -89,7 +94,7 @@ public:
    * @return The current list of administration hosts in lexicographical order.
    */
   virtual std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester)
-   const;
+   const = 0;
 
   /**
    * Creates the specified storage class.
@@ -104,8 +109,8 @@ public:
   virtual void createStorageClass(
     const SecurityIdentity &requester,
     const std::string &name,
-    const uint8_t nbCopies,
-    const std::string &comment);
+    const uint16_t nbCopies,
+    const std::string &comment) = 0;
 
   /**
    * Deletes the specified storage class.
@@ -116,7 +121,7 @@ public:
    */
   virtual void deleteStorageClass(
     const SecurityIdentity &requester,
-    const std::string &name);
+    const std::string &name) = 0;
 
   /**
    * Gets the current list of storage classes in lexicographical order.
@@ -125,7 +130,7 @@ public:
    * @return The current list of storage classes in lexicographical order.
    */
   virtual std::list<StorageClass> getStorageClasses(
-    const SecurityIdentity &requester) const;
+    const SecurityIdentity &requester) const = 0;
 
   /**
    * Creates a tape pool with the specifed name.
@@ -145,7 +150,7 @@ public:
     const std::string &name,
     const uint16_t nbDrives,
     const uint32_t nbPartialTapes,
-    const std::string &comment);
+    const std::string &comment) = 0;
 
   /**
    * Delete the tape pool with the specifed name.
@@ -156,7 +161,7 @@ public:
    */
   virtual void deleteTapePool(
     const SecurityIdentity &requester,
-    const std::string &name);
+    const std::string &name) = 0;
 
   /**
    * Gets the current list of tape pools in lexicographical order.
@@ -165,7 +170,7 @@ public:
    * @return The current list of tape pools in lexicographical order.
    */
   virtual std::list<TapePool> getTapePools(
-    const SecurityIdentity &requester) const;
+    const SecurityIdentity &requester) const = 0;
 
   /**
    * Creates the specified archive route.
@@ -181,9 +186,9 @@ public:
   virtual void createArchiveRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
-    const uint8_t copyNb,
+    const uint16_t copyNb,
     const std::string &tapePoolName,
-    const std::string &comment);
+    const std::string &comment) = 0;
 
   /**
    * Deletes the specified archive route.
@@ -197,7 +202,7 @@ public:
   virtual void deleteArchiveRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
-    const uint8_t copyNb);
+    const uint16_t copyNb) = 0;
 
   /**
    * Gets the current list of archive routes.
@@ -205,7 +210,7 @@ public:
    * @param requester The identity of the user requesting the list.
    */
   virtual std::list<ArchiveRoute> getArchiveRoutes(
-    const SecurityIdentity &requester) const;
+    const SecurityIdentity &requester) const = 0;
 
   /**
    * Creates a logical library with the specified name.
@@ -218,7 +223,7 @@ public:
   virtual void createLogicalLibrary(
     const SecurityIdentity &requester,
     const std::string &name,
-    const std::string &comment);
+    const std::string &comment) = 0;
 
   /**
    * Deletes the logical library with the specified name.
@@ -229,7 +234,7 @@ public:
    */
   virtual void deleteLogicalLibrary(
     const SecurityIdentity &requester,
-    const std::string &name);
+    const std::string &name) = 0;
 
   /**
    * Returns the current list of libraries in lexicographical order.
@@ -238,7 +243,7 @@ public:
    * @return The current list of libraries in lexicographical order.
    */
   virtual std::list<LogicalLibrary> getLogicalLibraries(
-    const SecurityIdentity &requester) const;
+    const SecurityIdentity &requester) const = 0;
 
   /**
    * Creates a tape.
@@ -258,7 +263,7 @@ public:
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
-    const std::string &comment);
+    const std::string &comment) = 0;
 
   /**
    * Deletes the tape with the specified volume identifier.
@@ -269,7 +274,7 @@ public:
    */
   virtual void deleteTape(
     const SecurityIdentity &requester,
-    const std::string &vid);
+    const std::string &vid) = 0;
 
   /**
    * Returns the current list of tapes in the lexicographical order of their
@@ -280,14 +285,8 @@ public:
    * volume identifiers.
    */
   virtual std::list<Tape> getTapes(
-    const SecurityIdentity &requester) const;
-  
-private:
-  /**
-   * Reference to the backend used for storing objects
-   */
-  objectstore::Backend & m_backend;
-};
+    const SecurityIdentity &requester) const = 0;
 
-}
+}; // class MiddleTierAdmin
 
+} // namespace cta
