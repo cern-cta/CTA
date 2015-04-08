@@ -93,11 +93,10 @@ public:
    * that it is the responsibility of the caller to deallocate any returned
    * ArchivalMount object.
    */
-  virtual ArchivalMount *getNextMount(const std::string &tapePoolName)
-    = 0;
+  virtual ArchivalMount *getNextMount(const std::string &tapePoolName) = 0;
 
   /**
-   * Returns the next batch of archival jobs for the specified on going tape
+   * Returns the next batch of archival jobs for the specified on-going tape
    * mount.
    *
    * @param mountId The identifier of the mount.
