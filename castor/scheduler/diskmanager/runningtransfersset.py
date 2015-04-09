@@ -117,7 +117,7 @@ class RunningTransfersSet(object):
       dlf.writeerr(msgs.FAILTOQUERYXROOT, Type=str(e.__class__), Message=str(e))
 
     # 'Synchronizing running transfers with schedulers' message
-    dlf.write(msgs.SYNCRUNNINGTRANSFERS);
+    dlf.write(msgs.SYNCRUNNINGTRANSFERS)
     try:
       while True:
         try:
@@ -441,6 +441,30 @@ class RunningTransfersSet(object):
           dlf.writeerr(msgs.INFORMTRANSFERFAILEDFAILED, Scheduler=scheduler,
                        subreqId=transferId, reqId=reqId, fileid=fileId, Message=msg, error=e)
 
+  def checkForCanceledRunningD2dSrc(self):
+    '''Check which running d2d src transfers have been canceled'''
+    dlf.writedebug(msgs.D2DRUNNINGSYNC)
+    # get scheduler point of view
+    allSchedRunningD2dSrc = []
+    timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
+    for scheduler in self.config.getValue('DiskManager', 'ServerHosts').split():
+      allSchedRunningD2dSrc.extend(connectionpool.connections.getRunningD2dSourceTransferIds(scheduler, socket.getfqdn(), timeout=timeout))
+    # filter out d2dsrc that are not know to the scheduler
+    self.lock.acquire()
+    try:
+      # first pass to log
+      for t in [t for t in self.transfers
+                if t.transfer.transferType == TransferType.D2DSRC and
+                t.transfer.transferId not in allSchedRunningD2dSrc]:
+          # d2dsrc transfer cleaned up as it is no more in the transfermanager
+          dlf.writenotice(msgs.D2DRUNNINGSRCDROPPED, subreqId = t.transfer.transferId,
+                          reqId=t.transfer.reqId, fileid = t.transfer.fileId)
+      # real cleanup
+      self.transfers = set([t for t in self.transfers
+                          if t.transfer.transferType != TransferType.D2DSRC or
+                          t.transfer.transferId in allSchedRunningD2dSrc])
+    finally:
+      self.lock.release()
 
   def listTransfers(self, reqUser=None):
     '''lists running transfers'''

@@ -417,6 +417,12 @@ class TransferManagerService(rpyc.Service):
     dlf.writedebug(msgs.INVOKINGGETRUNNINGD2DSOURCETRANSFERS, DiskServer=diskserver)
     return tuple(queueingTransfers.listRunningD2dSources(diskserver))
 
+  def exposed_getRunningD2dSourceTransferIds(self, diskserver):
+    '''called to synchronize list of running d2dsrc transfers on
+       he diskservers to the one know to the transfermanager'''
+    dlf.writedebug(msgs.INVOKINGGETRUNNINGD2DSOURCETRANSFERIDS, DiskServer=diskserver)
+    return tuple(queueingTransfers.listRunningD2dSourcesIds(diskserver))
+
   def exposed_getAllRunningD2dSourceTransfers(self):
     '''called by synchronization to list running d2dsrc transfers'''
     dlf.writedebug(msgs.INVOKINGGETALLRUNNINGD2DSOURCETRANSFERS)

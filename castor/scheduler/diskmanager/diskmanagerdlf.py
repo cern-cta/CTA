@@ -50,7 +50,7 @@ msgs = dlf.enum('INVOKINGSCHEDULETRANSFER', 'INVOKINGSUMMARIZETRANSFERS',
                 'MOVERSTARTING', 'MOVERSTARTFAILED', 'MOVERCALL',
                 'TRANSFERTIMEDOUT', 'FAILTOQUERYXROOT',
                 'SYNCRUNNINGTRANSFERS', 'INITQUEUES', 'EMPTYREPORT',
-                'NOTAMOUNTPOINT')
+                'NOTAMOUNTPOINT', 'D2DRUNNINGSYNC', 'D2DRUNNINGSRCDROPPED')
 
 # initialization of the messages
 dlf.addmessages({msgs.INVOKINGSCHEDULETRANSFER : 'Invoking scheduleTransfer',
@@ -111,6 +111,8 @@ dlf.addmessages({msgs.INVOKINGSCHEDULETRANSFER : 'Invoking scheduleTransfer',
                  msgs.SYNCRUNNINGTRANSFERS : 'Synchronizing running transfers with schedulers',
                  msgs.INITQUEUES : 'Initializing queues from schedulers',
                  msgs.EMPTYREPORT : 'Reporter found no mount points nor data pools to report, leaving diskserver offline',
-                 msgs.NOTAMOUNTPOINT : 'Path is not a mount point, reporting 0 space'
+                 msgs.NOTAMOUNTPOINT : 'Path is not a mount point, reporting 0 space',
+                 msgs.D2DRUNNINGSYNC : 'running synchronization of d2dsrc transfers running',
+                 msgs.D2DRUNNINGSRCDROPPED : 'd2dsrc transfer cleaned up as it is no more in the transfermanager'
                  })
 

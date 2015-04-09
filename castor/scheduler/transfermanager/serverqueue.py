@@ -535,6 +535,14 @@ class ServerQueue(dict):
       self.lock.release()
     return res
 
+  def listRunningD2dSourcesIds(self, diskServer=None):
+    '''lists ids of running d2dsrc transfers for a given diskServer'''
+    self.lock.acquire()
+    try:
+      return [transferId for transferId in self.d2dsrcrunning if self.d2dsrcrunning[transferId].srcTransfer.diskServer == diskServer]
+    finally:
+      self.lock.release()
+
   def transfersCanceled(self, transfers):
     '''cancels transfers in the queues and informs the stager in case there is no
     remaining machines where it could run'''
