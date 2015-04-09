@@ -1,0 +1,8 @@
+# introduced after bug CASTOR-4987 : reading files with xrdcp does not trigger recalls
+<corexrdcp> <localFileName> <simpleXrdcpTapeURL>
+status=`stager_qry -M <tapeFileName> | tail -1 | awk '{print $NF;}'`; while [[ $status == 'CANBEMIGR' ]]; do sleep 15; status=`stager_qry -M <tapeFileName> | tail -1 | awk '{print $NF;}'` ; done
+stager_rm -M <tapeFileName>
+stager_qry -M <tapeFileName>
+<xrdcp> -f <simpleXrdcpTapeURL> <tmpLocalFileName>
+stager_qry -M <tapeFileName>
+nsrm <tapeFileName>
