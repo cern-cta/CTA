@@ -245,6 +245,8 @@ EXECUTE DBMS_AQADM.START_QUEUE ('transfersToAbort');
  *     when the file is accessed for the first time. Can be NULL.
  *   - accessHook : the name of the PL/SQL function to be called
  *     when the file is accessed (except for the first time). Can be NULL.
+ *   - prepareHook : the name of the PL/SQL function to be called
+ *     when the file is subject to prepareToGet. Can be NULL.
  *   - userSetGCWeight : the name of the PL/SQL function to be called
  *     when a setFileGcWeight user request is processed can be NULL.
  * All functions return a number that is the new gcWeight.
@@ -254,6 +256,7 @@ EXECUTE DBMS_AQADM.START_QUEUE ('transfersToAbort');
  *   copyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
  *   firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
  *   accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
+ *   prepareHook()
  *   userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
  */
 CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT NN_GcPolicy_Name NOT NULL CONSTRAINT PK_GcPolicy_Name PRIMARY KEY,
@@ -262,6 +265,7 @@ CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT NN_GcPolicy_Name NOT NULL 
                        copyWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_CopyWeight NOT NULL,
                        firstAccessHook VARCHAR2(2048) DEFAULT NULL,
                        accessHook VARCHAR2(2048) DEFAULT NULL,
+                       prepareHook VARCHAR2(2048) DEFAULT NULL,
                        userSetGCWeight VARCHAR2(2048) DEFAULT NULL);
 
 /* Default policy, mainly based on file sizes */
@@ -271,11 +275,13 @@ INSERT INTO GcPolicy VALUES ('default',
                              'castorGC.sizeRelatedCopyWeight',
                              'castorGC.dayBonusFirstAccessHook',
                              'castorGC.halfHourBonusAccessHook',
+                             NULL,
                              'castorGC.cappedUserSetGCWeight');
 INSERT INTO GcPolicy VALUES ('FIFO',
                              'castorGC.creationTimeUserWeight',
                              'castorGC.creationTimeRecallWeight',
                              'castorGC.creationTimeCopyWeight',
+                             NULL,
                              NULL,
                              NULL,
                              NULL);
@@ -285,6 +291,7 @@ INSERT INTO GcPolicy VALUES ('LRU',
                              'castorGC.creationTimeCopyWeight',
                              'castorGC.LRUFirstAccessHook',
                              'castorGC.LRUAccessHook',
+                             'castorGC.LRUPrepareHook',
                              NULL);
 INSERT INTO GcPolicy VALUES ('LRUpin',
                              'castorGC.creationTimeUserWeight',
@@ -292,6 +299,7 @@ INSERT INTO GcPolicy VALUES ('LRUpin',
                              'castorGC.creationTimeCopyWeight',
                              'castorGC.LRUFirstAccessHook',
                              'castorGC.LRUAccessHook',
+                             'castorGC.LRUPrepareHook',
                              'castorGC.LRUpinUserSetGCWeight');
 
 

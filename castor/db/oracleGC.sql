@@ -25,6 +25,7 @@ CREATE OR REPLACE PACKAGE castorGC AS
   FUNCTION getCopyWeight(svcClassId NUMBER) RETURN VARCHAR2;
   FUNCTION getFirstAccessHook(svcClassId NUMBER) RETURN VARCHAR2;
   FUNCTION getAccessHook(svcClassId NUMBER) RETURN VARCHAR2;
+  FUNCTION getPrepareHook(svcClassId NUMBER) RETURN VARCHAR2;
   FUNCTION getUserSetGCWeight(svcClassId NUMBER) RETURN VARCHAR2;
   -- compute gcWeight from size
   FUNCTION size2GCWeight(s NUMBER) RETURN NUMBER;
@@ -42,6 +43,7 @@ CREATE OR REPLACE PACKAGE castorGC AS
   -- LRU gc policy
   FUNCTION LRUFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER;
   FUNCTION LRUAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER;
+  FUNCTION LRUPrepareHook RETURN NUMBER;
   FUNCTION LRUpinUserSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER) RETURN NUMBER;
 END castorGC;
 /
@@ -112,6 +114,18 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
     ret VARCHAR2(2048);
   BEGIN
     SELECT accessHook INTO ret
+      FROM SvcClass, GcPolicy
+     WHERE SvcClass.id = svcClassId
+       AND SvcClass.gcPolicy = GcPolicy.name;
+    RETURN ret;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    RETURN NULL;
+  END;
+
+  FUNCTION getPrepareHook(svcClassId NUMBER) RETURN VARCHAR2 AS
+    ret VARCHAR2(2048);
+  BEGIN
+    SELECT prepareHook INTO ret
       FROM SvcClass, GcPolicy
      WHERE SvcClass.id = svcClassId
        AND SvcClass.gcPolicy = GcPolicy.name;
@@ -198,6 +212,11 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
   END;
 
   FUNCTION LRUAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER AS
+  BEGIN
+    RETURN getTime();
+  END;
+
+  FUNCTION LRUPrepareHook RETURN NUMBER AS
   BEGIN
     RETURN getTime();
   END;

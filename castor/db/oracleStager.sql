@@ -3838,9 +3838,9 @@ BEGIN
   -- First look for available diskcopies. Note that we never wait on other requests.
   -- and we include Disk2DiskCopyJobs as they are going to produce available DiskCopies.
   DECLARE
-    varNbDCs INTEGER;
+    varDcIds castor."cnumList";
   BEGIN
-    SELECT COUNT(*) INTO varNbDCs FROM (
+    SELECT * BULK COLLECT INTO varDcIds FROM (
       SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */ DiskCopy.id
         FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
        WHERE DiskCopy.castorfile = inCfId
@@ -3868,7 +3868,7 @@ BEGIN
         FROM Disk2DiskCopyJob
        WHERE destSvcclass = varSvcClassId
          AND castorfile = inCfId);
-    IF varNbDCs > 0 THEN
+    IF varDcIds.COUNT > 0 THEN
       -- some available diskcopy was found.
       logToDLF(varReqUUID, dlf.LVL_DEBUG, dlf.STAGER_DISKCOPY_FOUND, inFileId, inNsHost, 'stagerd',
               'SUBREQID=' || varSrUUID);
@@ -3877,6 +3877,18 @@ BEGIN
          SET getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED
        WHERE id = inSrId;
       archiveSubReq(inSrId, dconst.SUBREQUEST_FINISHED);
+      -- update gcWeight of the existing diskcopies
+      DECLARE
+        gcwProc VARCHAR2(2048);
+        gcw NUMBER;
+      BEGIN
+        gcwProc := castorGC.getPrepareHook(varSvcClassId);
+        IF gcwProc IS NOT NULL THEN
+          EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(); END;' USING OUT gcw;
+          FORALL i IN 1..vardcIds.COUNT
+            UPDATE DiskCopy SET gcWeight = gcw WHERE id = varDcIds(i);
+        END IF;
+      END;
       -- all went fine, answer to client if needed
       IF varIsAnswered > 0 THEN
          RETURN 0;

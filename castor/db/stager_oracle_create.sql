@@ -246,7 +246,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_15_3');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_15_5');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -884,6 +884,8 @@ EXECUTE DBMS_AQADM.START_QUEUE ('transfersToAbort');
  *     when the file is accessed for the first time. Can be NULL.
  *   - accessHook : the name of the PL/SQL function to be called
  *     when the file is accessed (except for the first time). Can be NULL.
+ *   - prepareHook : the name of the PL/SQL function to be called
+ *     when the file is subject to prepareToGet. Can be NULL.
  *   - userSetGCWeight : the name of the PL/SQL function to be called
  *     when a setFileGcWeight user request is processed can be NULL.
  * All functions return a number that is the new gcWeight.
@@ -893,6 +895,7 @@ EXECUTE DBMS_AQADM.START_QUEUE ('transfersToAbort');
  *   copyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
  *   firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
  *   accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
+ *   prepareHook()
  *   userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
  */
 CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT NN_GcPolicy_Name NOT NULL CONSTRAINT PK_GcPolicy_Name PRIMARY KEY,
@@ -901,6 +904,7 @@ CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT NN_GcPolicy_Name NOT NULL 
                        copyWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_CopyWeight NOT NULL,
                        firstAccessHook VARCHAR2(2048) DEFAULT NULL,
                        accessHook VARCHAR2(2048) DEFAULT NULL,
+                       prepareHook VARCHAR2(2048) DEFAULT NULL,
                        userSetGCWeight VARCHAR2(2048) DEFAULT NULL);
 
 /* Default policy, mainly based on file sizes */
@@ -910,11 +914,13 @@ INSERT INTO GcPolicy VALUES ('default',
                              'castorGC.sizeRelatedCopyWeight',
                              'castorGC.dayBonusFirstAccessHook',
                              'castorGC.halfHourBonusAccessHook',
+                             NULL,
                              'castorGC.cappedUserSetGCWeight');
 INSERT INTO GcPolicy VALUES ('FIFO',
                              'castorGC.creationTimeUserWeight',
                              'castorGC.creationTimeRecallWeight',
                              'castorGC.creationTimeCopyWeight',
+                             NULL,
                              NULL,
                              NULL,
                              NULL);
@@ -924,6 +930,7 @@ INSERT INTO GcPolicy VALUES ('LRU',
                              'castorGC.creationTimeCopyWeight',
                              'castorGC.LRUFirstAccessHook',
                              'castorGC.LRUAccessHook',
+                             'castorGC.LRUPrepareHook',
                              NULL);
 INSERT INTO GcPolicy VALUES ('LRUpin',
                              'castorGC.creationTimeUserWeight',
@@ -931,6 +938,7 @@ INSERT INTO GcPolicy VALUES ('LRUpin',
                              'castorGC.creationTimeCopyWeight',
                              'castorGC.LRUFirstAccessHook',
                              'castorGC.LRUAccessHook',
+                             'castorGC.LRUPrepareHook',
                              'castorGC.LRUpinUserSetGCWeight');
 
 
@@ -5449,7 +5457,7 @@ BEGIN
   FOR varI IN (varNbCopies+1)..varExpectedNbCopies LOOP
     BEGIN
       -- Trigger a replication request.
-      createDisk2DiskCopyJob(inCfId, varNsOpenTime, inSvcClassId, inUid, inGid, dconst.REPLICATIONTYPE_USER, NULL, FALSE, NULL, TRUE);
+      createDisk2DiskCopyJob(inCfId, varNsOpenTime, inSvcClassId, inUid, inGid, dconst.REPLICATIONTYPE_USER, NULL, FALSE, NULL, FALSE);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- No copies to replicate from
     END;
@@ -7505,9 +7513,9 @@ BEGIN
   -- First look for available diskcopies. Note that we never wait on other requests.
   -- and we include Disk2DiskCopyJobs as they are going to produce available DiskCopies.
   DECLARE
-    varNbDCs INTEGER;
+    varDcIds castor."cnumList";
   BEGIN
-    SELECT COUNT(*) INTO varNbDCs FROM (
+    SELECT * BULK COLLECT INTO varDcIds FROM (
       SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */ DiskCopy.id
         FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
        WHERE DiskCopy.castorfile = inCfId
@@ -7535,7 +7543,7 @@ BEGIN
         FROM Disk2DiskCopyJob
        WHERE destSvcclass = varSvcClassId
          AND castorfile = inCfId);
-    IF varNbDCs > 0 THEN
+    IF varDcIds.COUNT > 0 THEN
       -- some available diskcopy was found.
       logToDLF(varReqUUID, dlf.LVL_DEBUG, dlf.STAGER_DISKCOPY_FOUND, inFileId, inNsHost, 'stagerd',
               'SUBREQID=' || varSrUUID);
@@ -7544,6 +7552,18 @@ BEGIN
          SET getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED
        WHERE id = inSrId;
       archiveSubReq(inSrId, dconst.SUBREQUEST_FINISHED);
+      -- update gcWeight of the existing diskcopies
+      DECLARE
+        gcwProc VARCHAR2(2048);
+        gcw NUMBER;
+      BEGIN
+        gcwProc := castorGC.getPrepareHook(varSvcClassId);
+        IF gcwProc IS NOT NULL THEN
+          EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(); END;' USING OUT gcw;
+          FORALL i IN 1..vardcIds.COUNT
+            UPDATE DiskCopy SET gcWeight = gcw WHERE id = varDcIds(i);
+        END IF;
+      END;
       -- all went fine, answer to client if needed
       IF varIsAnswered > 0 THEN
          RETURN 0;
@@ -11811,6 +11831,7 @@ CREATE OR REPLACE PACKAGE castorGC AS
   FUNCTION getCopyWeight(svcClassId NUMBER) RETURN VARCHAR2;
   FUNCTION getFirstAccessHook(svcClassId NUMBER) RETURN VARCHAR2;
   FUNCTION getAccessHook(svcClassId NUMBER) RETURN VARCHAR2;
+  FUNCTION getPrepareHook(svcClassId NUMBER) RETURN VARCHAR2;
   FUNCTION getUserSetGCWeight(svcClassId NUMBER) RETURN VARCHAR2;
   -- compute gcWeight from size
   FUNCTION size2GCWeight(s NUMBER) RETURN NUMBER;
@@ -11828,6 +11849,7 @@ CREATE OR REPLACE PACKAGE castorGC AS
   -- LRU gc policy
   FUNCTION LRUFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER;
   FUNCTION LRUAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER;
+  FUNCTION LRUPrepareHook RETURN NUMBER;
   FUNCTION LRUpinUserSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER) RETURN NUMBER;
 END castorGC;
 /
@@ -11898,6 +11920,18 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
     ret VARCHAR2(2048);
   BEGIN
     SELECT accessHook INTO ret
+      FROM SvcClass, GcPolicy
+     WHERE SvcClass.id = svcClassId
+       AND SvcClass.gcPolicy = GcPolicy.name;
+    RETURN ret;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    RETURN NULL;
+  END;
+
+  FUNCTION getPrepareHook(svcClassId NUMBER) RETURN VARCHAR2 AS
+    ret VARCHAR2(2048);
+  BEGIN
+    SELECT prepareHook INTO ret
       FROM SvcClass, GcPolicy
      WHERE SvcClass.id = svcClassId
        AND SvcClass.gcPolicy = GcPolicy.name;
@@ -11984,6 +12018,11 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
   END;
 
   FUNCTION LRUAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER AS
+  BEGIN
+    RETURN getTime();
+  END;
+
+  FUNCTION LRUPrepareHook RETURN NUMBER AS
   BEGIN
     RETURN getTime();
   END;
@@ -12937,7 +12976,7 @@ BEGIN
     -- also note the use of decode and the extra totalSize > 0 to protect
     -- us against division by 0. The decode is needed in case this filter
     -- is applied first, before the totalSize > 0
-    SELECT AVG(free/decode(totalSize, 0, 1, totalSize)) INTO varFreeRef
+    SELECT SUM(free)/decode(SUM(totalSize), 0, 1, SUM(totalSize)) INTO varFreeRef
       FROM FileSystem, DiskPool2SvcClass, DiskServer
      WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
        AND DiskPool2SvcClass.child = SC.id
