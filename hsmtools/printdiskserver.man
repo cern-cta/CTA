@@ -28,31 +28,30 @@ Restricts the set of diskservers/filesystems displayed to the listed DiskServers
 .nf
 .ft CW
 # printdiskserver
-            DSNAME NBMOUNTPOINTS                STATUS ONLINE   FREE   %FREE    SIZE NBRD NBWR NBMIGR NBREC               POOL ID
----------------------------------------------------------------------------------------------------------------------------------
-lxc2dev1d1.cern.ch            10 DISKSERVER_PRODUCTION    YES 259GiB 94.18 %  275GiB    0    0      0     0            default  6
-lxc2dev1d2.cern.ch            10 DISKSERVER_PRODUCTION    YES 259GiB 94.18 %  275GiB    0    0      0     0              extra  7
-lxc2dev1d3.cern.ch               DISKSERVER_PRODUCTION    YES      -       -       -    -    -      -     -               test 19
----------------------------------------------------------------------------------------------------------------------------------
-      TOTAL NB : 2            20                              519GiB 94.18 %  551GiB    0    0      0     0 default,extra,test   
+            DSNAME NBMOUNTPOINTS                STATUS ONLINE   FREE   %FREE MINFREE MAXFREE   SIZE NBRD NBWR NBMIGR NBREC          POOL ID
+-------------------------------------------------------------------------------------------------------------------------------------------
+lxc2dev1d1.cern.ch            10 DISKSERVER_PRODUCTION    YES 259GiB 94.18 %      5%     15% 275GiB    0    0      0     0       default  6
+lxc2dev1d2.cern.ch            10 DISKSERVER_PRODUCTION    YES 259GiB 94.18 %      5%     15% 275GiB    0    0      0     0         extra  7
+-------------------------------------------------------------------------------------------------------------------------------------------
+      TOTAL NB : 2            20                              519GiB 94.18 %      5%     15% 551GiB    0    0      0     0 default,extra   
 
 
 # printdiskserver default nonexisting
-            DSNAME NBMOUNTPOINTS                STATUS ONLINE   FREE   %FREE   SIZE NBRD NBWR NBMIGR NBREC     POOL ID
-----------------------------------------------------------------------------------------------------------------------
-lxc2dev1d1.cern.ch            10 DISKSERVER_PRODUCTION    YES 259GiB 94.18 % 275GiB    0    0      0     0  default  6
-----------------------------------------------------------------------------------------------------------------------
-      TOTAL NB : 1            10                              259GiB 94.18 % 275GiB    0    0      0     0  default   
+            DSNAME NBMOUNTPOINTS                STATUS ONLINE   FREE   %FREE MINFREE MAXFREE   SIZE NBRD NBWR NBMIGR NBREC     POOL ID
+--------------------------------------------------------------------------------------------------------------------------------------
+lxc2dev1d1.cern.ch            10 DISKSERVER_PRODUCTION    YES 259GiB 94.18 %      5%     15% 275GiB    0    0      0     0  default  6
+--------------------------------------------------------------------------------------------------------------------------------------
+      TOTAL NB : 1            10                              259GiB 94.18 %      5%     15% 275GiB    0    0      0     0  default   
 WARNING : the following diskpools/diskservers do not exist : nonexisting
 
 
 # printdiskserver lxc2dev1d1.cern.ch extra
-            DSNAME NBMOUNTPOINTS                STATUS ONLINE   FREE   %FREE   SIZE NBRD NBWR NBMIGR NBREC          POOL ID
----------------------------------------------------------------------------------------------------------------------------
-lxc2dev1d1.cern.ch            10 DISKSERVER_PRODUCTION     NO 259GiB 94.18 % 275GiB    0    0      0     0       default  6
-lxc2dev1d2.cern.ch            10 DISKSERVER_PRODUCTION    YES 259GiB 94.18 % 275GiB    0    0      0     0         extra  7
----------------------------------------------------------------------------------------------------------------------------
-      TOTAL NB : 2            20                              519GiB 94.18 % 551GiB    0    0      0     0 default,extra   
+            DSNAME NBMOUNTPOINTS                STATUS ONLINE   FREE   %FREE MINFREE MAXFREE   SIZE NBRD NBWR NBMIGR NBREC          POOL ID
+-------------------------------------------------------------------------------------------------------------------------------------------
+lxc2dev1d1.cern.ch            10 DISKSERVER_PRODUCTION     NO 259GiB 94.18 %      5%     15% 275GiB    0    0      0     0       default  6
+lxc2dev1d2.cern.ch            10 DISKSERVER_PRODUCTION    YES 259GiB 94.18 %      5%     15% 275GiB    0    0      0     0         extra  7
+-------------------------------------------------------------------------------------------------------------------------------------------
+      TOTAL NB : 2            20                              519GiB 94.18 %      5%     15% 551GiB    0    0      0     0 default,extra   
 
 # printdiskserver -f
             DSNAME      MOUNTPOINT                STATUS ONLINE   FREE   %FREE MINFREE MAXFREE   SIZE NBRD NBWR NBMIGR NBREC               POOL ID

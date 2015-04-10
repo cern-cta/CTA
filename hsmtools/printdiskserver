@@ -72,9 +72,9 @@ def sqlRowToPrintRow(sqlrow, displayFS):
         return (dsname or '', nbmountpoints,
                 status or '', hwOnline or '',
                 castor_tools.nbToDataAmount(free),
-                castor_tools.printPercentage(free or 0, size or 0),
-                castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec, ','.join(diskpools),
-                dsid or '')
+                minfree, maxfree, castor_tools.printPercentage(free or 0, size or 0),
+                castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec,
+                ','.join(diskpools), dsid or '')
 
 def getFSRelatedItems(diskServerIds, diskPoolIds):
     # build statement for filesystem based pools/diskservers
@@ -223,8 +223,8 @@ try:
         titles = ('DSNAME', 'MOUNTPOINT', 'STATUS', 'ONLINE', 'FREE', 'MINFREE', 'MAXFREE',
                   '%FREE', 'SIZE', 'NBRD', 'NBWR', 'NBMIGR', 'NBREC', 'POOL', 'ID')
     else:
-        titles = ('DSNAME', 'NBMOUNTPOINTS', 'STATUS', 'ONLINE', 'FREE', '%FREE', 'SIZE', 'NBRD',
-                  'NBWR', 'NBMIGR', 'NBREC', 'POOL', 'ID')
+        titles = ('DSNAME', 'NBMOUNTPOINTS', 'STATUS', 'ONLINE', 'FREE', 'MINFREE', 'MAXFREE',
+                  '%FREE', 'SIZE', 'NBRD', 'NBWR', 'NBMIGR', 'NBREC', 'POOL', 'ID')
     if FSRows:
         summary = FSRows[-1]
         if displayFS:
