@@ -459,9 +459,10 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
     castor::stager::RequestQueryType ptype = (*it)->queryType();
     std::string pval = (*it)->value();
     castor::stager::SvcClass* svcClass = 0;
+    u_signed64 fid = 0;
+    std::string nshost;
     try {
-      std::string nshost, reqidtag;
-      u_signed64 fid = 0;
+      std::string reqidtag;
       bool pall = false;
       if(REQUESTQUERYTYPE_FILEID == ptype) {
         std::string::size_type idx = pval.find('@');
@@ -592,16 +593,22 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
          castor::dlf::Param("Code", e.code()),
          castor::dlf::Param("Message", e.getMessage().str()),
          castor::dlf::Param("SvcClass", svcClass ? svcClass->name(): "-")};
-      switch(e.code()) {
-      case ENOENT:
-        castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 4, params);
-        break;
-      case EINVAL:
-        castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_QRYSVC_INVARG, 4, params);
-        break;
-      default:
-        castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 4, params);
-        break;
+      unsigned int errMsg = STAGER_QRYSVC_EXCEPT;
+      unsigned int errLevel = DLF_LVL_USER_ERROR;
+      if (ENOENT == e.code()) {
+        errMsg = STAGER_USER_NONFILE;
+      } else if (EINVAL == e.code()) {
+        errMsg = STAGER_QRYSVC_INVARG;
+      } else {
+        errLevel = DLF_LVL_ERROR;
+      }
+      if (fid > 0) {
+        Cns_fileid fileId;
+        strncpy(fileId.server, nshost.c_str(), CA_MAXHOSTNAMELEN+1);
+        fileId.fileid = fid;
+        castor::dlf::dlf_writep(uuid, errLevel, errMsg, 4, params, &fileId);
+      } else {
+        castor::dlf::dlf_writep(uuid, errLevel, errMsg, 4, params);
       }
       // Send the exception to the client
       castor::rh::FileQryResponse res;
