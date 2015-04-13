@@ -53,7 +53,7 @@ msgs = dlf.enum('ABORTEREXCEPTION', 'SYNCHROFAILED', 'SYNCHROEXCEPTION',
                 'D2DENDEXCEPTION', 'D2DDESTRESTARTERROR', 'INVOKINGTRANSFERBACKTOQUEUE',
                 'TRANSFERSRCCANCELED', 'REPORTMANAGEREXCEPTION', 'INVOKINGMODIFYDISKSERVERS',
                 'MODIFYDISKSERVERSEXCEPTION', 'INITQUEUES', 'INITQUEUESENDED',
-                'INITQUEUELISTRUNNING', 'INITQUEUELISTPENDING')
+                'INITQUEUELISTRUNNING', 'INITQUEUELISTPENDING', 'IGNORINGPUTBACK')
 
 
 # initialization of the messages
@@ -129,5 +129,6 @@ dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.INITQUEUES : 'Initializing Queues from the diskmanagers\' ones',
                  msgs.INITQUEUESENDED : 'Initialization of queues completed',
                  msgs.INITQUEUELISTRUNNING : 'Queue initialization : Getting running jobs',
-                 msgs.INITQUEUELISTPENDING : 'Queue initialization : Getting pending jobs'})
+                 msgs.INITQUEUELISTPENDING : 'Queue initialization : Getting pending jobs',
+                 msgs.IGNORINGPUTBACK : 'Ignoring call to transferBackToQueue as transfer started somewhere else'})
 

@@ -70,6 +70,13 @@ class RecentSchedules(object):
     return (transferid in self.schedulesInCurrentSlot and self.schedulesInCurrentSlot[transferid] == diskServer) or \
            (transferid in self.schedulesInPreviousSlot and self.schedulesInPreviousSlot[transferid] == diskServer)
 
+  def wasScheduled(self, transferid):
+    '''Checks whether the given job has been already scheduled recently and returns the machine name'''
+    if transferid in self.schedulesInCurrentSlot:
+      return self.schedulesInCurrentSlot[transferid]
+    if transferid in self.schedulesInPreviousSlot:
+      return self.schedulesInPreviousSlot[transferid]
+    return None
 
 class SrcRunningTransfer(object):
   '''little container describing a running source d2d transfer'''
@@ -108,7 +115,7 @@ class ServerQueue(dict):
          transfer.transferId not in self.d2dsrcrunning:
         # a d2ddest wants to (re)start but no source exists in the queuing nor in the running lists:
         # we probably have a race condition with a d2ddest that was put back in the queue too late
-        dlf.writenotice(msgs.D2DDESTRESTARTERROR, subreqId=transfer.transferId)
+        dlf.writenotice(msgs.D2DDESTRESTARTERROR, fileId=transfer.fileId, subreqId=transfer.transferId)
         return
 
       # in case we put back a d2dsrc transfer, drop source from running job if it's already
@@ -124,6 +131,17 @@ class ServerQueue(dict):
           for ds in self.transfersLocations[(transfer.transferId, TransferType.D2DDST)]:
             self[ds][transfer.transferId].isSrcRunning = False
 
+      # in case we put back a transfer, check that the transfer has not been started
+      # on another diskserver in the meantime so that we avoid scheduling it twice,
+      # on 2 destinations (see bug CASTOR-4991)
+      if putBack:
+        dest = self.recentlyScheduled.wasScheduled(transfer.transferId)
+        if dest and dest != transfer.diskServer:
+          # Ignoring call to transferBackToQueue as transfer started somewhere else
+          dlf.writedebug(msgs.IGNORINGPUTBACK, fileId=transfer.fileId, subreqId=transfer.transferId,
+                         startedOn=dest)
+          return
+            
       # add transfer to the list of queueing transfers on the diskServer,
       # with right value for isSrcRunning for D2DDST (it can be a put back
       # where src is running for long or simply that the source had already
