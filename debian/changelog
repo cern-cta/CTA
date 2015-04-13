@@ -1,3 +1,9 @@
+castor (2.1.15-5) unstable; urgency=low
+
+  * Third 2.1.15 production release
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch> Mon, 13 Apr 2015 10:05:00 +0100
+
 castor (2.1.15-4) unstable; urgency=low
 
   * Internal release

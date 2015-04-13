@@ -408,6 +408,135 @@ BEGIN
 END;
 /
 
+/* Procedure responsible for rebalancing of data on nodes within diskpools */
+CREATE OR REPLACE PROCEDURE rebalancingManager AS
+  varFreeRef NUMBER;
+  varSensitivity NUMBER;
+  varNbDS INTEGER;
+  varAlreadyRebalancing INTEGER;
+  varMaxDataScheduled INTEGER;
+BEGIN
+  -- go through all service classes
+  FOR SC IN (SELECT id FROM SvcClass) LOOP
+    -- check if we are already rebalancing
+    SELECT count(*) INTO varAlreadyRebalancing
+      FROM Disk2DiskCopyJob
+     WHERE destSvcClass = SC.id
+       AND replicationType = dconst.REPLICATIONTYPE_REBALANCE
+       AND ROWNUM < 2;
+    -- if yes, do nothing for this round
+    IF varAlreadyRebalancing > 0 THEN
+      CONTINUE;
+    END IF;
+    -- check that we have more than one diskserver online
+    SELECT count(unique DiskServer.name) INTO varNbDS
+      FROM FileSystem, DiskPool2SvcClass, DiskServer
+     WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
+       AND DiskPool2SvcClass.child = SC.id
+       AND DiskServer.id = FileSystem.diskServer
+       AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+       AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+       AND DiskServer.hwOnline = 1;
+    -- if only 1 diskserver available, do nothing for this round
+    IF varNbDS < 2 THEN
+      CONTINUE;
+    END IF;
+    -- compute average filling of filesystems on production machines
+    -- note that read only ones are not taken into account as they cannot
+    -- be filled anymore
+    -- also note the use of decode and the extra totalSize > 0 to protect
+    -- us against division by 0. The decode is needed in case this filter
+    -- is applied first, before the totalSize > 0
+    SELECT SUM(free)/decode(SUM(totalSize), 0, 1, SUM(totalSize)) INTO varFreeRef
+      FROM FileSystem, DiskPool2SvcClass, DiskServer
+     WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
+       AND DiskPool2SvcClass.child = SC.id
+       AND DiskServer.id = FileSystem.diskServer
+       AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+       AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+       AND FileSystem.totalSize > 0
+       AND DiskServer.hwOnline = 1
+     GROUP BY SC.id;
+    -- get sensitivity of the rebalancing
+    varSensitivity := TO_NUMBER(getConfigOption('Rebalancing', 'Sensitivity', '5'))/100;
+    -- get max data to move in a single round
+    varMaxDataScheduled := TO_NUMBER(getConfigOption('Rebalancing', 'MaxDataScheduled', '10000000000')); -- 10 GB
+    -- for each filesystem too full compared to average, rebalance
+    -- note that we take the read only ones into account here
+    -- also note the use of decode and the extra totalSize > 0 to protect
+    -- us against division by 0. The decode is needed in case this filter
+    -- is applied first, before the totalSize > 0
+    FOR FS IN (SELECT FileSystem.id, varFreeRef*decode(totalSize, 0, 1, totalSize)-free dataToMove,
+                      DiskServer.name ds, FileSystem.mountPoint
+                 FROM FileSystem, DiskPool2SvcClass, DiskServer
+                WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
+                  AND DiskPool2SvcClass.child = SC.id
+                  AND varFreeRef - free/totalSize > varSensitivity
+                  AND DiskServer.id = FileSystem.diskServer
+                  AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
+                  AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+                  AND FileSystem.totalSize > 0
+                  AND DiskServer.hwOnline = 1) LOOP
+      rebalance(FS.id, LEAST(varMaxDataScheduled, FS.dataToMove), SC.id, FS.ds, FS.mountPoint);
+    END LOOP;
+  END LOOP;
+END;
+/
+
+
+/* PL/SQL method implementing replicateOnClose */
+CREATE OR REPLACE PROCEDURE replicateOnClose(inCfId IN INTEGER,
+                                             inUid IN INTEGER,
+                                             inGid IN INTEGER,
+                                             inSvcClassId IN INTEGER) AS
+  varNsOpenTime NUMBER;
+  varNbCopies INTEGER;
+  varExpectedNbCopies INTEGER;
+BEGIN
+  -- Lock the castorfile and take the nsOpenTime
+  SELECT nsOpenTime INTO varNsOpenTime FROM CastorFile WHERE id = inCfId FOR UPDATE;
+  -- Determine the number of copies of the file in the given service class
+  SELECT count(*) INTO varNbCopies FROM (
+    SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ 1
+      FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+     WHERE DiskCopy.castorfile = inCfId
+       AND FileSystem.id = DiskCopy.filesystem
+       AND DiskServer.id = FileSystem.diskserver
+       AND DiskPool2SvcClass.parent = FileSystem.diskpool
+       AND DiskPool2SvcClass.child = inSvcClassId
+       AND DiskCopy.status = dconst.DISKCOPY_VALID
+       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION,
+                                 dconst.FILESYSTEM_DRAINING,
+                                 dconst.FILESYSTEM_READONLY)
+       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                 dconst.DISKSERVER_DRAINING,
+                                 dconst.DISKSERVER_READONLY)
+     UNION ALL
+    SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ 1
+      FROM DiskCopy, DataPool2SvcClass
+     WHERE DiskCopy.castorfile = inCfId
+       AND DiskCopy.status = dconst.DISKCOPY_VALID
+       AND DataPool2SvcClass.parent = DiskCopy.dataPool
+       AND DataPool2SvcClass.child = inSvcClassId
+       AND EXISTS (SELECT 1 FROM DiskServer
+                    WHERE DiskServer.dataPool = DiskCopy.dataPool
+                      AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                                dconst.DISKSERVER_DRAINING,
+                                                dconst.DISKSERVER_READONLY)));
+  -- Determine expected number of copies
+  SELECT replicaNb INTO varExpectedNbCopies FROM SvcClass WHERE id = inSvcClassId;
+  -- Trigger additional copies if needed
+  FOR varI IN (varNbCopies+1)..varExpectedNbCopies LOOP
+    BEGIN
+      -- Trigger a replication request.
+      createDisk2DiskCopyJob(inCfId, varNsOpenTime, inSvcClassId, inUid, inGid, dconst.REPLICATIONTYPE_USER, NULL, FALSE, NULL, FALSE);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      NULL;  -- No copies to replicate from
+    END;
+  END LOOP;
+END;
+/
+
 /* revalidate all code */
 BEGIN
   recompileAll();
