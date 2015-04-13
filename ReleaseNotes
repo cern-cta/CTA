@@ -38,7 +38,7 @@
     CASTOR-4929 RFE: "printdiskserver" command should display MINFREE and MAXFREE fields
 
 
-  Upgrade Instructions from 2.1.15-5
+  Upgrade Instructions from 2.1.15-3
   ----------------------------------
 
     Stager
