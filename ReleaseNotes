@@ -10,6 +10,7 @@
   Stager
   ------
 
+    CASTOR-4991 Possible double scheduling in case of error in TransferStarting
     CASTOR-4990 stager_get has no influence on gcweight
     CASTOR-4986 synchronize running d2dsrc between diskmanager and transfermanager
     CASTOR-4984 Missing the parsing of NSFILEID in stagerd logs
