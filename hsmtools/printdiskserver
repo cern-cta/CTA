@@ -244,8 +244,7 @@ try:
             summary = ('', '', 0, '', '', dataPoolFree, '', '',
                        dataPoolSpace, 0, 0, 0, 0, dataPools, '', '')
         data.extend([(dsname, '', status, hwOnline, '-') + 
-                      (('-', '-') if displayFS else ()) +
-                      ('-', '-', '-', '-', '-', '-',
+                      ('-', '-', '-', '-', '-', '-', '-', '-',
                       ','.join(datapools), dsid)
                      for dsname, status, hwOnline, datapools, dsid in DSRows])
     summary = sqlRowToPrintRow(summary, displayFS)
