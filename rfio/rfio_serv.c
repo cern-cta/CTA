@@ -559,6 +559,26 @@ int main (int     argc,
       (*logfunc)(LOG_ERR, "getpeername: %s\n",strerror(errno));
       exit(1);
     }
+
+    // compute value of max_rcvbuf/max_sndbuf
+    // if not done, they will be used with 0 and performance will be bad
+    // See CASTOR-5009
+    max_rcvbuf = setsock_ceiling;
+    max_sndbuf = setsock_ceiling;
+    for (i = setsock_ceiling ; i >= 16 * 1024 ; i >>= 1) {
+      if (set_rcv_sockparam(0, i) == i) {
+        max_rcvbuf = i;
+        break;
+      }
+    }
+    for (i = setsock_ceiling ; i >= 16 * 1024 ; i >>= 1) {
+      if (set_snd_sockparam(0,i) == i) {
+        max_sndbuf = i;
+        break;
+      }
+    }
+    (*logfunc)(LOG_DEBUG,"setsockopt maxsnd=%d, maxrcv=%d\n", max_sndbuf, max_rcvbuf);
+
     doit(0, &from, uid, gid);
   }
   // disconnect form ceph (if ever connected)
