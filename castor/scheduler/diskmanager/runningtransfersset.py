@@ -411,6 +411,13 @@ class RunningTransfersSet(object):
             elif rc > 0:         # these are transfers that got interrupted or somehow failed
               errMsg = 'Mover exited with failure, rc=%d' % rc
               errCode = 1015  # SEINTERNAL
+            else:
+              # rc == 0: this is a transfer that completed without errors, yet
+              # we didn't receive the CLOSE call to end the transfer.
+              # A case for this is a gridftp client attempting an unsupported operation (e.g. CKSM),
+              # for which the gridftp server exits straight with rc = 0.
+              errMsg = 'Mover exited with rc=0 but no CLOSE call received'
+              errCode = 22    # EINVAL
             if rTransfer.scheduler not in failedTransfers:
               failedTransfers[rTransfer.scheduler] = []
             failedTransfers[rTransfer.scheduler].append((rTransfer.transfer.transferId,
