@@ -165,6 +165,18 @@ public :
 
 
   //----------------------------------------------------------------------------
+  //! Enable/disable the capability of the castor client to send stage abort
+  //! requests.
+  //!
+  //! @param do_abort if true the castor client is also responsible for
+  //!                 sending a stage abort for requests that are no longer
+  //!                 in the map (i.e. the client disconnected) but we still
+  //!                 received a response for them
+  //----------------------------------------------------------------------------
+  void DoSendAbort(bool do_abort);
+
+
+  //----------------------------------------------------------------------------
   //! The ReqElement structure encapsulates the request object sent to the stager
   //! and also the response handler. These objects are stored in the mMapRequests
   //! and are accessed by both the asyn thread polling for responses and also
@@ -240,6 +252,9 @@ private:
   struct pollfd mFds[1024]; ///< set of file descriptors to wait on
   nfds_t mNfds; ///< number of pollfs structs in the mFds array
   std::vector<castor::io::ServerSocket*> mConnected; ///< accepted connections
+  //! abort request for which the client already disconnected, but this is on
+  //! only if the skipAbort option in the manager is enabled
+  bool mDoAbort;
   bool mDoStop; ///< flag when to terminate the poller thread
   bool mIsZombie; ///< status of the poller thread
   pthread_t mPollerTid; ///< thread accepting responses from the stager

@@ -23,6 +23,7 @@
 
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastorClient.hpp"
+#include "XrdxCastor2Stager.hpp"
 /*-----------------------------------------------------------------------------*/
 #include "XrdSfs/XrdSfsInterface.hh"
 /*-----------------------------------------------------------------------------*/
@@ -54,6 +55,7 @@ XCASTORNAMESPACE_BEGIN
 XrdxCastorClient::XrdxCastorClient():
   LogId(),
   mNfds(0),
+  mDoAbort(false),
   mDoStop(false),
   mIsZombie(false)
 {
@@ -134,6 +136,17 @@ XrdxCastorClient::Create()
   }
 
   return client;
+}
+
+
+//------------------------------------------------------------------------------
+// Enable/disable the capability of the castor client to send stage abort
+// requests
+//------------------------------------------------------------------------------
+void
+XrdxCastorClient::DoSendAbort(bool do_abort)
+{
+  mDoAbort = do_abort;
 }
 
 
@@ -611,6 +624,7 @@ XrdxCastorClient::PollResponses()
           {
             // "Communication error reading from Castor" message
             xcastor_err("received response was not an IOResponse");
+	    delete obj;
           }
 
           continue;
@@ -623,9 +637,22 @@ XrdxCastorClient::PollResponses()
 
         if ((iter = mMapRequests.find(req_id)) == mMapRequests.end())
         {
-          xcastor_warning("received requ_id that is no longer in map", req_id.c_str());
           mMutexMaps.UnLock();  // <--
-        }
+
+	  // If the manager does not abort the requests for disconnected clients,
+	  // we can do this here as we know the client will never come back for
+	  // this request as it's not found in the map. This is to free up slots
+	  // faster and prevent a snowball effect.
+	  if (mDoAbort)
+	  {
+	    XrdOucErrInfo error;
+	    xcastor_warning("request not in map, aborting req_uuid=%s", req_id.c_str());
+	    bool status = XrdxCastor2Stager::StageAbortRequest(req_id, "*", 0, 0, error);
+
+	    if (!status)
+	      xcastor_err("stage abort request failed for req_uuid=%s",req_id.c_str());
+	  }
+	}
         else
         {
           // Handle the response
@@ -637,6 +664,9 @@ XrdxCastorClient::PollResponses()
           xcastor_debug("signal received response");
           mCondResponse.Broadcast();
         }
+
+	// Clean up
+	delete obj;
       }
     }
 

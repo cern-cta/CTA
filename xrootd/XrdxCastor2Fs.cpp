@@ -2383,6 +2383,10 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
     NoGo = 1;
   }
 
+  // Set the castor client capability of whether or not it must send stage
+  // abort requests for already disconnected clients
+  msCastorClient->DoSendAbort(mSkipAbort);
+
   // We need to specify this if the server was not started with the explicit
   // manager option ... e.g. see XrdOfs. The variable is needed in the
   // XrdxCastor2Acc to find out which keys are required to be loaded
