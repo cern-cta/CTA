@@ -23,7 +23,9 @@
 
 #include "castor/exception/Exception.hpp"
 
+#include <unistd.h>
 #include <string>
+#include <sys/types.h>
 
 namespace castor {
 namespace legacymsg {
