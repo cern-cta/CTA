@@ -62,12 +62,19 @@ class MoverReqHandlerThread(threading.Thread):
     while True:
       try:
         # "Transfer ended" message
-        dlf.write(msgs.TRANSFERENDED, subreqId=transfer.transferId, reqId=transfer.reqId, flags=transfer.flags, errCode=errCode, \
-                  errMessage=errMessage, fileId=transfer.fileId, elapsedTime=(closeTime-transfer.creationTime), totalTime=(closeTime-transfer.submissionTime))
-        rc_unused, msg_unused = connectionpool.connections.transferEnded(scheduler, \
-                                                                         (transfer.transferId, transfer.reqId, transfer.fileId, \
-                                                                          transfer.flags, 0, closeTime, '', '', errCode, errMessage),
-                                                                         timeout=timeout)
+        dlf.write(msgs.TRANSFERENDED, subreqId=transfer.transferId, reqId=transfer.reqId, fileId=transfer.fileId, \
+                  transferType=TransferType.toPreciseStr(transfer), errCode=errCode, errMessage=errMessage, \
+                  totalTime="%.6f" % (closeTime-transfer.creationTime), schedulerTime="%.6f" % (closeTime-transfer.submissionTime))
+        if transfer.transferType == TransferType.STD:
+          rc_unused, msg_unused = connectionpool.connections.transferEnded(scheduler, \
+                                                                           (transfer.transferId, transfer.reqId, transfer.fileId, \
+                                                                            transfer.flags, 0, closeTime, '', '', errCode, errMessage),
+                                                                           timeout=timeout)
+        else:
+          connectionpool.connections.d2dEnded(scheduler,
+                                              tuple([(transfer.transferId, transfer.reqId, transfer.fileId,
+                                                      socket.getfqdn(), '', 0, '', errCode, errMessage)]),
+                                              timeout=timeout)
         return
       except connectionpool.Timeout:
         # as long as we get a timeout, we retry up to 3 times
@@ -109,7 +116,7 @@ class MoverReqHandlerThread(threading.Thread):
         dlf.writenotice(msgs.TRANSFERTIMEDOUT, subreqId=transferid, transferType=transferType)
         raise
       if errCode != 0:
-        # this is a user transfer that has to be failed as we got an error from xroot
+        # this transfer has to be failed because we got an error from xroot
         self.runningTransfers.remove(t)
         self._failTransfer(t.scheduler, t.transfer, errCode, 'Error while opening the file')
       else:
