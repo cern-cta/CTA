@@ -80,8 +80,8 @@ public:
    *
    * @param mountId The identifier of the mount.
    */
-  virtual std::list<RetrievalJob> getNextJobsForMount(const std::string &mountId)
-    = 0;
+  virtual std::list<RetrievalJob> getNextJobsForMount(
+    const std::string &mountId) = 0;
 
   /**
    * Requests this object to execute any time dependent and asynchronous logic.
