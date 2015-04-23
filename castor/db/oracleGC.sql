@@ -275,15 +275,15 @@ BEGIN
 
   -- Loop on all concerned fileSystems/DataPools in a random order.
   totalCount := 0;
-  FOR fs IN (SELECT * FROM (SELECT FileSystem.id AS fsId
+  FOR fs IN (SELECT * FROM (SELECT DBMS_Random.value, FileSystem.id AS fsId
                               FROM FileSystem, DiskServer
                              WHERE FileSystem.diskServer = DiskServer.id
                                AND DiskServer.name = diskServerName
                              UNION ALL
-                            SELECT DiskServer.dataPool AS fsId
+                            SELECT DBMS_Random.value, DiskServer.dataPool AS fsId
                               FROM DiskServer
                              WHERE DiskServer.name = diskServerName)
-             ORDER BY dbms_random.value) LOOP
+             ORDER BY 1) LOOP
     -- Count the number of diskcopies on this filesystem that are in a
     -- BEINGDELETED state. These need to be reselected in any case.
     freed := 0;

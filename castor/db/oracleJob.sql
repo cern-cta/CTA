@@ -1010,7 +1010,7 @@ BEGIN
   -- note that we discard READONLY hardware and filter only the PRODUCTION one.
   FOR line IN
     (SELECT candidate FROM
-       (SELECT * FROM
+       (SELECT DBMS_Random.value, candidate FROM
          (SELECT UNIQUE FIRST_VALUE (DiskServer.name || ':' || FileSystem.mountPoint)
                    OVER (PARTITION BY DiskServer.id ORDER BY DBMS_Random.value) AS candidate
             FROM DiskServer, FileSystem, DiskPool2SvcClass
@@ -1035,7 +1035,7 @@ BEGIN
              AND DiskServer.hwOnline = 1
              AND DataPool.id = DataPool2SvcClass.parent
              AND DataPool.free - DataPool.minAllowedFreeSpace * DataPool.totalSize > inMinFreeSpace)
-         ORDER BY DBMS_Random.value)
+         ORDER BY 1)
       WHERE ROWNUM <= 3) LOOP
     IF LENGTH(varResult) IS NOT NULL THEN varResult := varResult || '|'; END IF;
     varResult := varResult || line.candidate;
@@ -1051,8 +1051,8 @@ BEGIN
   -- in this case we take any non DISABLED hardware
   FOR line IN
     (SELECT candidate FROM
-       (SELECT * FROM
-         (SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ 
+       (SELECT DBMS_Random.value, candidate FROM
+         (SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */
                  UNIQUE FIRST_VALUE (DiskServer.name || ':' || FileSystem.mountPoint)
                    OVER (PARTITION BY DiskServer.id ORDER BY DBMS_Random.value) AS candidate
             FROM DiskServer, FileSystem, DiskCopy
@@ -1064,7 +1064,7 @@ BEGIN
              AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
              AND DiskServer.hwOnline = 1
            UNION
-          SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ 
+          SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */
                  DiskServer.name || ':' AS candidate
             FROM DiskServer, DiskCopy
            WHERE DiskCopy.castorFile = inCfId
@@ -1072,7 +1072,7 @@ BEGIN
              AND DiskCopy.dataPool = DiskServer.dataPool
              AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
              AND DiskServer.hwOnline = 1)
-         ORDER BY DBMS_Random.value)
+         ORDER BY 1)
       WHERE ROWNUM <= 3) LOOP
     IF LENGTH(varResult) IS NOT NULL THEN varResult := varResult || '|'; END IF;
     varResult := varResult || line.candidate;

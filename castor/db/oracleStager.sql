@@ -1674,7 +1674,7 @@ BEGIN
   SELECT fsId, dpId, svcClass, euid, egid, name || ':' || mountpoint
     INTO fsId, dpId, svcClassId, ouid, ogid, fsPath
     FROM (SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
-                 FileSystem.id AS FsId, NULL AS dpId, Request.svcClass,
+                 DBMS_Random.value, FileSystem.id AS FsId, NULL AS dpId, Request.svcClass,
                  Request.euid, Request.egid, DiskServer.name, FileSystem.mountpoint
             FROM DiskServer, FileSystem, DiskPool2SvcClass,
                  (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
@@ -1692,7 +1692,7 @@ BEGIN
              AND DiskServer.hwOnline = 1
            UNION ALL
           SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
-                 NULL AS FsId, DataPool2SvcClass.parent AS dpId,
+                 DBMS_Random.value, NULL AS FsId, DataPool2SvcClass.parent AS dpId,
                  Request.svcClass, Request.euid, Request.egid, DiskServer.name, ''
             FROM DiskServer, DataPool2SvcClass,
                  (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
@@ -1706,8 +1706,7 @@ BEGIN
              AND DiskServer.datapool = DataPool2SvcClass.parent
              AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
              AND DiskServer.hwOnline = 1
-        ORDER BY -- use randomness to scatter filesystem/DiskServer usage
-                 DBMS_Random.value)
+        ORDER BY 1) -- use randomness to scatter filesystem/DiskServer usage
    WHERE ROWNUM < 2;
   -- compute it's gcWeight
   gcwProc := castorGC.getRecallWeight(svcClassId);
