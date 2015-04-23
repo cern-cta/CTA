@@ -391,9 +391,6 @@ XrdxCastor2FsFile::open(const char*         path,
                          "request queue full or response not ready yet");
     }
 
-    // Clean-up any possible delay tag remainings
-    XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
-
     if (resp_info.mStageStatus != "READY")
     {
       if (gMgr->mLogLevel == LOG_DEBUG)
@@ -413,6 +410,7 @@ XrdxCastor2FsFile::open(const char*         path,
     std::string stage_status;
     bool no_hsm = false;
     std::list<std::string>* list_svc = gMgr->GetAllAllowedSvc(map_path.c_str(), no_hsm);
+    delaytag += ":get";
 
     if (!stall_comeback)
     {
@@ -473,7 +471,6 @@ XrdxCastor2FsFile::open(const char*         path,
           xcastor_debug("file found in svc=%s, stage_status=%s",allowed_svc.c_str(),
 			stage_status.c_str());
           possible = true;
-          XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
           break;
         }
       }
@@ -489,8 +486,6 @@ XrdxCastor2FsFile::open(const char*         path,
 	// Refine the error message depending on the current configuration
 	if (no_hsm)
         {
-	  XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
-
 	  if (desired_svc.empty())
 	  {
 	    return gMgr->Emsg(epname, error, EINVAL, "access file in ANY stager "
@@ -530,7 +525,6 @@ XrdxCastor2FsFile::open(const char*         path,
 
     TIMING("GET", &opentiming);
     int status = XrdxCastor2Stager::DoAsyncReq(error, "get", &req_info, resp_info);
-    delaytag += ":get";
     int ret_val = SFS_OK;
 
     if (status == SFS_ERROR)
