@@ -555,7 +555,7 @@ BEGIN
   END IF;
   varComment := 'transferId="' || inTransferId ||
          '" destSvcClass=' || getSvcClassName(varDestSvcClass) ||
-         ' dstDcId=' || TO_CHAR(varDestDcId) || ' destPath="' || inDestPath ||
+         ' destDcId=' || TO_CHAR(varDestDcId) || ' destPath="' || inDestPath ||
          '" euid=' || TO_CHAR(varUid) || ' egid=' || TO_CHAR(varGid) ||
          ' fileSize=' || TO_CHAR(varFileSize) || ' checksum=' || inCksumValue;
   IF varErrorMessage IS NOT NULL THEN

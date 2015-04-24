@@ -212,7 +212,7 @@ class BaseTransfer(object):
 
   @property
   def user(self):
-    '''get user name, build form euid and local users'''
+    '''get user name, built from euid and local users'''
     try:
       return pwd.getpwuid(self.euid)[0]
     except KeyError:

@@ -83,7 +83,7 @@ class ActivityControlThread(threading.Thread):
       dlf.write(msgs.TRANSFERSTARTING, subreqid=transfer.transferId,
                 reqid=transfer.reqId, fileId=transfer.fileId,
                 transferType=TransferType.toStr(transfer.transferType),
-                cmdLine=' '.join(cmdLine))
+                cmdLine='"' + ' '.join(cmdLine) + '"')
       self.runningTransfers.add(RunningTransfer(scheduler, None, time.time(), transfer, destDcPath))
       # start transfer process and store it in our set of running transfers
       process = subprocess.Popen(cmdLine, close_fds=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
