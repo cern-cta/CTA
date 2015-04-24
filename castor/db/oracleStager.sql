@@ -1885,8 +1885,12 @@ BEGIN
       NULL;   -- ignore the missing subrequest
     END;
   END IF;
-  -- Trigger the creation of additional copies of the file, if necessary.
-  replicateOnClose(cfId, ouid, ogid, svcClassId);
+  IF svcClassId > 0 THEN
+    -- Trigger the creation of additional copies of the file, if necessary.
+    -- For this, we must know the service class: as the automatic putDone
+    -- cleaning does not provide it, we skip this step in that case.
+    replicateOnClose(cfId, ouid, ogid, svcClassId);
+  END IF;
 END;
 /
 
