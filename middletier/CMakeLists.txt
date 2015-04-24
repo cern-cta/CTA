@@ -16,6 +16,7 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/ArchiveRouteId.cpp
   cta/ArchiveToDirRequest.cpp
   cta/ArchiveToFileRequest.cpp
+  cta/ConfigurationEntry.cpp
   cta/DirectoryEntry.cpp
   cta/DirectoryIterator.cpp
   cta/DiskException.cpp
