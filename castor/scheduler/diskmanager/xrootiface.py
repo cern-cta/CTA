@@ -96,7 +96,7 @@ def xrootTupleToTransfer(scheduler, xrootTuple):
   elif transferType[0:3] == 'd2d':
     # any disk-to-disk copy goes here
     t = D2DTransfer(transferid, '-', fileid, -1, -1, 'unknownSvcClass', startTime,
-                    TransferType.D2DDST if isWriteFlag else TransferType.D2DSRC,
+                    TransferType.D2DDST if isWriteFlag == '1' else TransferType.D2DSRC,
                     D2DTransferType.toType(transferType[3:]), clientHost, mountPoint)
   else:
     # any other transferType is unknown
