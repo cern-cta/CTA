@@ -3,6 +3,7 @@
 #include "cta/SecurityIdentity.hpp"
 
 #include <string>
+#include <time.h>
 
 namespace cta {
 
@@ -44,6 +45,13 @@ public:
    */
   const SecurityIdentity &getUser() const throw();
 
+  /**
+   * Returns the time at which the user request was created.
+   *
+   * @return The time at which the user request was created.
+   */
+  time_t getCreationTime() const throw();
+
 private:
 
   /**
@@ -55,6 +63,11 @@ private:
    * The identity of the user who made the request.
    */
   SecurityIdentity m_user;
+
+  /**
+   * The time at which the user request was created.
+   */
+  time_t m_creationTime;
 
 }; // class UserRequest
 

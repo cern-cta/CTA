@@ -1,37 +1,36 @@
-#include "cta/ArchivalRequest.hpp"
+#include "cta/ArchivalFileTransfer.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalRequest::ArchivalRequest():
-  m_priority(0) {
+cta::ArchivalFileTransfer::ArchivalFileTransfer() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::ArchivalRequest::~ArchivalRequest() throw() {
+cta::ArchivalFileTransfer::~ArchivalFileTransfer() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalRequest::ArchivalRequest(const std::string &tapePoolName,
-  const uint64_t priority):
-  m_tapePoolName(tapePoolName),
-  m_priority(priority) {
+cta::ArchivalFileTransfer::ArchivalFileTransfer(const std::string &remoteFile,
+  const std::string &vid):
+  m_remoteFile(remoteFile),
+  m_vid(vid) {
 }
 
 //------------------------------------------------------------------------------
-// getTapePoolName
+// getRemoteFile
 //------------------------------------------------------------------------------
-const std::string &cta::ArchivalRequest::getTapePoolName() const throw() {
-  return m_tapePoolName;
+const std::string &cta::ArchivalFileTransfer::getRemoteFile() const throw() {
+  return m_remoteFile;
 }
 
 //------------------------------------------------------------------------------
-// getTapePoolName
+// getVid
 //------------------------------------------------------------------------------
-uint64_t cta::ArchivalRequest::getPriority() const throw() {
-  return m_priority;
+const std::string &cta::ArchivalFileTransfer::getVid() const throw() {
+  return m_vid;
 }

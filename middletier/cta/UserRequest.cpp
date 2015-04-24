@@ -3,7 +3,9 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::UserRequest::UserRequest() {
+cta::UserRequest::UserRequest():
+  m_id(0),
+  m_creationTime(time(NULL)) {
 }
 
 //------------------------------------------------------------------------------
@@ -12,7 +14,8 @@ cta::UserRequest::UserRequest() {
 cta::UserRequest::UserRequest(const std::string &id,
   const SecurityIdentity &user):
   m_id(id),
-  m_user(user) {
+  m_user(user),
+  m_creationTime(time(NULL)) {
 }
 
 //------------------------------------------------------------------------------
@@ -33,4 +36,11 @@ const std::string &cta::UserRequest::getId() const throw() {
 //------------------------------------------------------------------------------
 const cta::SecurityIdentity &cta::UserRequest::getUser() const throw() {
   return m_user;
+}
+
+//------------------------------------------------------------------------------
+// getCreationTime
+//------------------------------------------------------------------------------
+time_t cta::UserRequest::getCreationTime() const throw() {
+  return m_creationTime;
 }

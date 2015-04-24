@@ -6,6 +6,7 @@ include_directories (${SQLITE3_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 set (MIDDLE_TIER_LIB_SRC_FILES
   cta/AdminHost.cpp
   cta/AdminUser.cpp
+  cta/ArchivalFileTransfer.cpp
   cta/ArchivalJob.cpp
   cta/ArchivalJobQueues.cpp
   cta/ArchivalJobState.cpp
@@ -24,6 +25,7 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/FileSystemNode.cpp
   cta/FileSystemStorageClass.cpp
   cta/FileSystemStorageClasses.cpp
+  cta/FileTransfer.cpp
   cta/LogicalLibrary.cpp
   cta/MiddleTierAdmin.cpp
   cta/MiddleTierUser.cpp

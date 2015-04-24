@@ -1,37 +1,45 @@
-#include "cta/ArchivalRequest.hpp"
+#include "cta/FileTransfer.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalRequest::ArchivalRequest():
-  m_priority(0) {
+cta::FileTransfer::FileTransfer():
+  m_copyNb(0) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::ArchivalRequest::~ArchivalRequest() throw() {
+cta::FileTransfer::~FileTransfer() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalRequest::ArchivalRequest(const std::string &tapePoolName,
-  const uint64_t priority):
-  m_tapePoolName(tapePoolName),
-  m_priority(priority) {
+cta::FileTransfer::FileTransfer(const std::string &id,
+  const std::string &userRequestId, const uint32_t copyNb):
+  m_id(id),
+  m_userRequestId(userRequestId),
+  m_copyNb(copyNb) {
 }
 
 //------------------------------------------------------------------------------
-// getTapePoolName
+// getId
 //------------------------------------------------------------------------------
-const std::string &cta::ArchivalRequest::getTapePoolName() const throw() {
-  return m_tapePoolName;
+const std::string &cta::FileTransfer::getId() const throw() {
+  return m_id;
 }
 
 //------------------------------------------------------------------------------
-// getTapePoolName
+// getUserRequestId
 //------------------------------------------------------------------------------
-uint64_t cta::ArchivalRequest::getPriority() const throw() {
-  return m_priority;
+const std::string &cta::FileTransfer::getUserRequestId() const throw() {
+  return m_userRequestId;
+}
+
+//------------------------------------------------------------------------------
+// getCopyNb
+//------------------------------------------------------------------------------
+uint32_t cta::FileTransfer::getCopyNb() const throw() {
+  return m_copyNb;
 }
