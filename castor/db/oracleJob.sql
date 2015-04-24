@@ -211,7 +211,7 @@ BEGIN
   END IF;
   -- Log successful completion
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETSTART, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| inTransferId
-    || 'destinationPath=' || selectedDiskServer ||':'|| selectedMountPoint);
+    || ' destinationPath=' || selectedDiskServer ||':'|| selectedMountPoint);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- No disk copy found on selected FileSystem, or subRequest not valid any longer.
   -- This can happen if a diskcopy was available and got disabled, or if an abort came,
