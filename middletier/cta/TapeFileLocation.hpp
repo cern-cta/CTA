@@ -38,14 +38,14 @@ public:
    *
    * @return The sequence number of the file.
    */
-  uint64_t &getFseq() const throw();
+  uint64_t getFseq() const throw();
 
   /**
    * Returns the block identifier of the file.
    *
    * @return The block identifier of the file.
    */
-  uint64_t &getBlockId() const throw();
+  uint64_t getBlockId() const throw();
 
 private:
 
@@ -66,4 +66,4 @@ private:
 
 }; // class TapeFileLocation
 
-}; // namepsace cta
+} // namepsace cta

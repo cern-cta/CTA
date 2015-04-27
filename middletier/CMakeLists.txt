@@ -31,6 +31,7 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/MiddleTierAdmin.cpp
   cta/MiddleTierUser.cpp
   cta/Mount.cpp
+  cta/RetrievalFileTransfer.cpp
   cta/RetrievalJob.cpp
   cta/RetrievalJobQueues.cpp
   cta/RetrievalJobState.cpp
@@ -45,6 +46,7 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/StorageClass.cpp
   cta/Tape.cpp
   cta/TapeException.cpp
+  cta/TapeFileLocation.cpp
   cta/TapePool.cpp
   cta/UserIdentity.cpp
   cta/UserRequest.cpp
