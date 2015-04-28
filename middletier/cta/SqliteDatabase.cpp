@@ -833,9 +833,10 @@ std::list<cta::TapePool> cta::SqliteDatabase::selectAllTapePools(const SecurityI
             std::string((char *)sqlite3_column_text(statement,cm("NAME"))),
             sqlite3_column_int(statement,cm("NBDRIVES")),
             sqlite3_column_int(statement,cm("NBPARTIALTAPES")),
-            cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),sqlite3_column_int(statement,cm("GID"))),
-            time_t(sqlite3_column_int(statement,cm("CREATIONTIME"))),
-            std::string((char *)sqlite3_column_text(statement,cm("COMMENT")))
+            cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),
+            sqlite3_column_int(statement,cm("GID"))),
+            std::string((char *)sqlite3_column_text(statement,cm("COMMENT"))),
+            time_t(sqlite3_column_int(statement,cm("CREATIONTIME")))
       ));
   }
   sqlite3_finalize(statement);  
@@ -1102,8 +1103,8 @@ cta::TapePool cta::SqliteDatabase::getTapePoolByName(const SecurityIdentity &req
             sqlite3_column_int(statement,cm("NBDRIVES")),
             sqlite3_column_int(statement,cm("NBPARTIALTAPES")),
             cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),sqlite3_column_int(statement,cm("GID"))),
-            time_t(sqlite3_column_int(statement,cm("CREATIONTIME"))),
-            std::string((char *)sqlite3_column_text(statement,cm("COMMENT")))
+            std::string((char *)sqlite3_column_text(statement,cm("COMMENT"))),
+            time_t(sqlite3_column_int(statement,cm("CREATIONTIME")))
       );
   }
   else if(res==SQLITE_DONE) {    

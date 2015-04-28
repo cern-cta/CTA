@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cta/ConfigurationItem.hpp"
 #include "cta/UserIdentity.hpp"
 
 #include <string>
@@ -9,13 +10,18 @@ namespace cta {
 /**
  * Class representing a tape pool.
  */
-class TapePool {
+class TapePool: public ConfigurationItem {
 public:
 
   /**
    * Constructor.
    */
   TapePool();
+
+  /**
+   * Destructor.
+   */
+  ~TapePool() throw();
 
   /**
    * Constructor.
@@ -28,14 +34,17 @@ public:
    * full at any moment in time.
    * @param creator The identity of the user that created the tape pool.
    * @param comment The comment describing the tape pool.
+   * @param creationTime Optionally the absolute time at which the
+   * configuration item was created.  If no value is given then the current
+   * time is used.
    */
   TapePool(
     const std::string &name,
     const uint16_t nbDrives,
     const uint32_t nbPartialTapes,
     const UserIdentity &creator,
-    const time_t creationTime,
-    const std::string &comment);
+    const std::string &comment,
+    const time_t creationTime = time(NULL));
 
   /**
    * Less than operator.
@@ -71,27 +80,6 @@ public:
    */
   uint32_t getNbPartialTapes() const throw();
 
-  /**
-   * Returns the time when the tape pool was created.
-   *
-   * @return The time when the tape pool was created.
-   */
-  time_t getCreationTime() const throw();
-
-  /**
-   * Returns the identity of the user that created the tape pool.
-   *
-   * @return The identity of the user that created the tape pool.
-   */
-  const UserIdentity &getCreator() const throw();
-
-  /**
-   * Returns the comment describing the tape pool.
-   *
-   * @return The comment describing the tape pool.
-   */
-  const std::string &getComment() const throw();
-
 private:
 
   /**
@@ -110,21 +98,6 @@ private:
    * time.
    */
   uint32_t m_nbPartialTapes;
-
-  /**
-   * The time when the tape pool was created.
-   */
-  time_t m_creationTime;
-
-  /**
-   * The identity of the user that created the tape pool.
-   */
-  UserIdentity m_creator;
-
-  /**
-   * Comment describing the tape pool.
-   */
-  std::string m_comment;
 
 }; // class TapePool
 
