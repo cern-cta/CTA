@@ -780,7 +780,7 @@ std::list<cta::TapePool> cta::SqliteDatabase::selectAllTapePools(const SecurityI
   char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::TapePool> pools;
-  query << "SELECT * FROM TAPEPOOL ORDER BY NAME;";
+  query << "SELECT NAME, NBDRIVES, NBPARTIALTAPES, UID, GID, CREATIONTIME, COMMENT FROM TAPEPOOL ORDER BY NAME;";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
@@ -811,7 +811,7 @@ std::list<cta::StorageClass> cta::SqliteDatabase::selectAllStorageClasses(const 
   char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::StorageClass> classes;
-  query << "SELECT * FROM STORAGECLASS ORDER BY NAME;";
+  query << "SELECT NAME, NBCOPIES, UID, GID, CREATIONTIME, COMMENT FROM STORAGECLASS ORDER BY NAME;";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
@@ -841,7 +841,7 @@ std::list<cta::ArchiveRoute>  cta::SqliteDatabase::selectAllArchiveRoutes(const 
   char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::ArchiveRoute> routes;
-  query << "SELECT * FROM ARCHIVEROUTE ORDER BY STORAGECLASS_NAME, COPYNB;";
+  query << "SELECT STORAGECLASS_NAME, COPYNB, TAPEPOOL_NAME, UID, GID, CREATIONTIME, COMMENT FROM ARCHIVEROUTE ORDER BY STORAGECLASS_NAME, COPYNB;";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
@@ -871,7 +871,7 @@ std::list<cta::ArchiveRoute>  cta::SqliteDatabase::selectAllArchiveRoutes(const 
 cta::ArchiveRoute cta::SqliteDatabase::getArchiveRouteOfStorageClass(const SecurityIdentity &requester, const std::string &storageClassName, const  uint16_t copyNb) {
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "SELECT * FROM ARCHIVEROUTE WHERE STORAGECLASS_NAME='"<< storageClassName <<"' AND COPYNB="<< (int)copyNb <<";";
+  query << "SELECT STORAGECLASS_NAME, COPYNB, TAPEPOOL_NAME, UID, GID, CREATIONTIME, COMMENT FROM ARCHIVEROUTE WHERE STORAGECLASS_NAME='"<< storageClassName <<"' AND COPYNB="<< (int)copyNb <<";";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
@@ -917,7 +917,7 @@ std::list<cta::Tape> cta::SqliteDatabase::selectAllTapes(const SecurityIdentity 
   char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::Tape> tapes;
-  query << "SELECT * FROM TAPE ORDER BY VID;";
+  query << "SELECT VID, LOGICALLIBRARY_NAME, TAPEPOOL_NAME, CAPACITY_BYTES, DATAONTAPE_BYTES, UID, GID, CREATIONTIME, COMMENT FROM TAPE ORDER BY VID;";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
@@ -951,7 +951,7 @@ std::list<cta::AdminUser> cta::SqliteDatabase::selectAllAdminUsers(const Securit
   char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::AdminUser> list;
-  query << "SELECT * FROM ADMINUSER ORDER BY ADMIN_UID, ADMIN_GID;";
+  query << "SELECT ADMIN_UID, ADMIN_GID, UID, GID, CREATIONTIME, COMMENT FROM ADMINUSER ORDER BY ADMIN_UID, ADMIN_GID;";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
@@ -980,7 +980,7 @@ std::list<cta::AdminHost> cta::SqliteDatabase::selectAllAdminHosts(const Securit
   char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::AdminHost> list;
-  query << "SELECT * FROM ADMINHOST ORDER BY NAME;";
+  query << "SELECT NAME, UID, GID, CREATIONTIME, COMMENT FROM ADMINHOST ORDER BY NAME;";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
@@ -1009,7 +1009,7 @@ std::map<cta::TapePool, std::list<cta::ArchivalJob> > cta::SqliteDatabase::selec
   char *zErrMsg = 0;
   std::ostringstream query;
   std::map<cta::TapePool, std::list<cta::ArchivalJob> > map;
-  query << "SELECT * FROM ARCHIVALJOB ORDER BY DSTPATH;";
+  query << "SELECT STATE, SRCURL, DSTPATH, TAPEPOOL_NAME, UID, GID, CREATIONTIME FROM ARCHIVALJOB ORDER BY DSTPATH;";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
@@ -1039,7 +1039,7 @@ cta::TapePool cta::SqliteDatabase::getTapePoolByName(const SecurityIdentity &req
   char *zErrMsg = 0;
   std::ostringstream query;
   cta::TapePool pool;
-  query << "SELECT * FROM TAPEPOOL WHERE NAME='" << name << "';";
+  query << "SELECT NAME, NBDRIVES, NBPARTIALTAPES, UID, GID, CREATIONTIME, COMMENT FROM TAPEPOOL WHERE NAME='" << name << "';";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
@@ -1084,7 +1084,7 @@ cta::StorageClass cta::SqliteDatabase::getStorageClassByName(const SecurityIdent
   char *zErrMsg = 0;
   std::ostringstream query;
   cta::StorageClass stgClass;
-  query << "SELECT * FROM STORAGECLASS WHERE NAME='" << name << "';";
+  query << "SELECT NAME, NBCOPIES, UID, GID, CREATIONTIME, COMMENT FROM STORAGECLASS WHERE NAME='" << name << "';";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
@@ -1128,7 +1128,7 @@ cta::Tape cta::SqliteDatabase::getTapeByVid(const SecurityIdentity &requester, c
   char *zErrMsg = 0;
   std::ostringstream query;
   cta::Tape tape;
-  query << "SELECT * FROM TAPE WHERE VID='" << vid << "';";
+  query << "SELECT VID, LOGICALLIBRARY_NAME, TAPEPOOL_NAME, CAPACITY_BYTES, DATAONTAPE_BYTES, UID, GID, CREATIONTIME, COMMENT FROM TAPE WHERE VID='" << vid << "';";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){
@@ -1176,7 +1176,7 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::SqliteDatabase::selectAl
   char *zErrMsg = 0;
   std::ostringstream query;
   std::map<cta::Tape, std::list<cta::RetrievalJob> > map;
-  query << "SELECT * FROM RETRIEVALJOB ORDER BY DSTURL;";
+  query << "SELECT STATE, SRCPATH, DSTURL, VID, UID, GID, CREATIONTIME FROM RETRIEVALJOB ORDER BY DSTURL;";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
@@ -1206,7 +1206,7 @@ std::list<cta::LogicalLibrary> cta::SqliteDatabase::selectAllLogicalLibraries(co
   char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::LogicalLibrary> list;
-  query << "SELECT * FROM LOGICALLIBRARY ORDER BY NAME;";
+  query << "SELECT NAME, UID, GID, CREATIONTIME, COMMENT FROM LOGICALLIBRARY ORDER BY NAME;";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
