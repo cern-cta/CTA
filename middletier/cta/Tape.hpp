@@ -1,7 +1,9 @@
 #pragma once
 
+#include "cta/ConfigurationItem.hpp"
 #include "cta/UserIdentity.hpp"
 
+#include <stdint.h>
 #include <string>
 
 namespace cta {
@@ -9,13 +11,18 @@ namespace cta {
 /**
  * Class representing a tape.
  */
-class Tape {
+class Tape: public ConfigurationItem {
 public:
 
   /**
    * Constructor.
    */
   Tape();
+
+  /**
+   * Destructor.
+   */
+  ~Tape() throw();
 
   /**
    * Constructor.
@@ -27,6 +34,9 @@ public:
    * @param capacityInBytes The capacity of the tape.
    * @param creator The identity of the user that created the tape.
    * @param comment The comment describing the tape.
+   * @param creationTime Optionally the absolute time at which the
+   * configuration item was created.  If no value is given then the current
+   * time is used.
    */
   Tape(
     const std::string &vid,
@@ -35,8 +45,8 @@ public:
     const uint64_t capacityInBytes,
     const uint64_t dataOnTapeInBytes,
     const UserIdentity &creator,
-    const time_t creationTime,
-    const std::string &comment);
+    const std::string &comment,
+    const time_t creationTime = time(NULL));
 
   /**
    * Less than operator.
@@ -80,27 +90,6 @@ public:
    */
   uint64_t getDataOnTapeInBytes() const throw();
 
-  /**
-   * Returns the time when the tape was created.
-   *
-   * @return The time when the tape was created.
-   */
-  time_t getCreationTime() const throw();
-
-  /**
-   * Returns the identity of the user that created the tape.
-   *
-   * @return The identity of the user that created the tape.
-   */
-  const UserIdentity &getCreator() const throw();
-
-  /**
-   * Returns the comment describing the tape.
-   *
-   * @return The comment describing the tape.
-   */
-  const std::string &getComment() const throw();
-
 private:
 
   /**
@@ -127,21 +116,6 @@ private:
    * The amount of data on the tape.
    */
   uint64_t m_dataOnTapeInBytes;
-
-  /**
-   * The time when the tape was created.
-   */
-  time_t m_creationTime;
-
-  /**
-   * The identity of the user that created the tape.
-   */
-  UserIdentity m_creator;
-
-  /**
-   * Comment describing the tape.
-   */
-  std::string m_comment;
 
 }; // class Tape
 

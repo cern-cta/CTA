@@ -5,8 +5,13 @@
 //------------------------------------------------------------------------------
 cta::Tape::Tape():
     m_capacityInBytes(0),
-    m_dataOnTapeInBytes(0),
-    m_creationTime(time(NULL)) {
+    m_dataOnTapeInBytes(0) {
+}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+cta::Tape::~Tape() throw() {
 }
 
 //------------------------------------------------------------------------------
@@ -19,16 +24,14 @@ cta::Tape::Tape(
     const uint64_t capacityInBytes,
     const uint64_t dataOnTapeInBytes,
     const UserIdentity &creator,
-    const time_t creationTime,
-    const std::string &comment):
+    const std::string &comment,
+    const time_t creationTime):
+    ConfigurationItem(creator, comment, creationTime),
     m_vid(vid),
     m_logicalLibraryName(logicalLibraryName),
     m_tapePoolName(tapePoolName),
     m_capacityInBytes(capacityInBytes),
-    m_dataOnTapeInBytes(dataOnTapeInBytes),
-    m_creationTime(creationTime),
-    m_creator(creator),
-    m_comment(comment) {
+    m_dataOnTapeInBytes(dataOnTapeInBytes) {
 }
 
 //------------------------------------------------------------------------------
@@ -71,26 +74,4 @@ uint64_t cta::Tape::getCapacityInBytes() const throw() {
 //------------------------------------------------------------------------------
 uint64_t cta::Tape::getDataOnTapeInBytes() const throw() {
   return m_dataOnTapeInBytes;
-}
-
-//------------------------------------------------------------------------------
-// getCreationTime
-//------------------------------------------------------------------------------
-time_t cta::Tape::getCreationTime() const throw() {
-  return m_creationTime;
-}
-
-//------------------------------------------------------------------------------
-// getCreator
-//------------------------------------------------------------------------------
-const cta::UserIdentity &cta::Tape::getCreator()
-  const throw() {
-  return m_creator;
-}
-
-//------------------------------------------------------------------------------
-// getComment
-//------------------------------------------------------------------------------
-const std::string &cta::Tape::getComment() const throw() {
-  return m_comment;
 }

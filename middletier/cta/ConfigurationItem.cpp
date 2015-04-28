@@ -1,44 +1,44 @@
-#include "cta/ConfigurationEntry.hpp"
+#include "cta/ConfigurationItem.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ConfigurationEntry::ConfigurationEntry() {
+cta::ConfigurationItem::ConfigurationItem() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::ConfigurationEntry::~ConfigurationEntry() throw() {
+cta::ConfigurationItem::~ConfigurationItem() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ConfigurationEntry::ConfigurationEntry(const UserIdentity &creator,
-  const std::string &comment):
-  m_creationTime(time(NULL)),
+cta::ConfigurationItem::ConfigurationItem(const UserIdentity &creator,
+  const std::string &comment, const time_t creationTime):
   m_creator(creator),
-  m_comment(comment) {
-}
-
-//------------------------------------------------------------------------------
-// getCreationTime
-//------------------------------------------------------------------------------
-time_t cta::ConfigurationEntry::getCreationTime() const throw() {
-  return m_creationTime;
+  m_comment(comment),
+  m_creationTime(creationTime) {
 }
 
 //------------------------------------------------------------------------------
 // getCreator
 //------------------------------------------------------------------------------
-const cta::UserIdentity &cta::ConfigurationEntry::getCreator() const throw() {
+const cta::UserIdentity &cta::ConfigurationItem::getCreator() const throw() {
   return m_creator;
 }
 
 //------------------------------------------------------------------------------
 // getComment
 //------------------------------------------------------------------------------
-const std::string &cta::ConfigurationEntry::getComment() const throw() {
+const std::string &cta::ConfigurationItem::getComment() const throw() {
   return m_comment;
+}
+
+//------------------------------------------------------------------------------
+// getCreationTime
+//------------------------------------------------------------------------------
+time_t cta::ConfigurationItem::getCreationTime() const throw() {
+  return m_creationTime;
 }

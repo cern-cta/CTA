@@ -934,9 +934,10 @@ std::list<cta::Tape> cta::SqliteDatabase::selectAllTapes(const SecurityIdentity 
             std::string((char *)sqlite3_column_text(statement,2)),
             sqlite3_column_int(statement,3),
             sqlite3_column_int(statement,4),
-            cta::UserIdentity(sqlite3_column_int(statement,5),sqlite3_column_int(statement,6)),
-            time_t(sqlite3_column_int(statement,7)),
-            std::string((char *)sqlite3_column_text(statement,8))
+            cta::UserIdentity(sqlite3_column_int(statement,5),
+            sqlite3_column_int(statement,6)),
+            std::string((char *)sqlite3_column_text(statement,8)),
+            time_t(sqlite3_column_int(statement,7))
       ));
   }
   sqlite3_finalize(statement);
@@ -1145,9 +1146,10 @@ cta::Tape cta::SqliteDatabase::getTapeByVid(const SecurityIdentity &requester, c
             std::string((char *)sqlite3_column_text(statement,2)),
             sqlite3_column_int(statement,3),
             sqlite3_column_int(statement,4),
-            cta::UserIdentity(sqlite3_column_int(statement,5),sqlite3_column_int(statement,6)),
-            time_t(sqlite3_column_int(statement,7)),
-            std::string((char *)sqlite3_column_text(statement,8))
+            cta::UserIdentity(sqlite3_column_int(statement,5),
+            sqlite3_column_int(statement,6)),
+            std::string((char *)sqlite3_column_text(statement,8),
+            time_t(sqlite3_column_int(statement,7)))
       );
   }
   else if(res==SQLITE_DONE) {    
