@@ -3,7 +3,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-/* deletes a DrainingJob and related objects */
+/* Procedure to delete a DrainingJob and related objects. Directly used by draindiskserver */
 CREATE OR REPLACE PROCEDURE deleteDrainingJob(inDjId IN INTEGER) AS
   varUnused INTEGER;
 BEGIN
@@ -32,66 +32,53 @@ BEGIN
   -- loop over draining jobs
   FOR dj IN (SELECT id, fileSystem, svcClass, fileMask, euid, egid
                FROM DrainingJob WHERE status = dconst.DRAININGJOB_RUNNING) LOOP
-    DECLARE
-      CONSTRAINT_VIOLATED EXCEPTION;
-      PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -2292);
     BEGIN
-      BEGIN
-        -- lock the draining job first
-        SELECT id INTO varUnused FROM DrainingJob WHERE id = dj.id FOR UPDATE;
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- it was (already!) canceled, go to the next one
-        CONTINUE;
-      END;
-      -- check how many disk2DiskCopyJobs are already running for this draining job
-      SELECT count(*), nvl(sum(CastorFile.fileSize), 0) INTO varNbRunningJobs, varDataRunningJobs
-        FROM Disk2DiskCopyJob, CastorFile
-       WHERE Disk2DiskCopyJob.drainingJob = dj.id
-         AND CastorFile.id = Disk2DiskCopyJob.castorFile;
-      -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running
-      -- ones into account. Also take the most important jobs first
-      logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_REFILL, 0, '', 'stagerd',
-               'svcClass=' || getSvcClassName(dj.svcClass) || ' DrainReq=' ||
-               TO_CHAR(dj.id) || ' MaxNewJobsCount=' || TO_CHAR(varMaxNbFilesScheduled-varNbRunningJobs));
-      FOR F IN (SELECT * FROM
-                 (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
-                    FROM DiskCopy, CastorFile
-                   WHERE DiskCopy.fileSystem = dj.fileSystem
-                     AND CastorFile.id = DiskCopy.castorFile
-                     AND ((dj.fileMask = dconst.DRAIN_FILEMASK_NOTONTAPE AND
-                           CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
-                          (dj.fileMask = dconst.DRAIN_FILEMASK_ALL))
-                     AND DiskCopy.status = dconst.DISKCOPY_VALID
-                     AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(DrainingErrors I_DrainingErrors_DJ_CF) */ 1
-                                       FROM DrainingErrors WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
-                     -- don't recreate disk-to-disk copy jobs for the ones already done in previous rounds
-                     AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(Disk2DiskCopyJob I_Disk2DiskCopyJob_DrainJob) */ 1
-                                       FROM Disk2DiskCopyJob WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
-                   ORDER BY DiskCopy.importance DESC)
-                 WHERE ROWNUM <= varMaxNbFilesScheduled-varNbRunningJobs) LOOP
-        -- Do not schedule more that varMaxAmountOfSchedD2dPerDrain
-        IF varDataRunningJobs <= varMaxDataScheduled THEN
-          createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
-                                 dconst.REPLICATIONTYPE_DRAINING, F.dcId, TRUE, dj.id, FALSE);
-          varDataRunningJobs := varDataRunningJobs + F.fileSize;
-        ELSE
-          -- enough data amount, we stop scheduling
-          EXIT;
-        END IF;
-      END LOOP;
-      UPDATE DrainingJob
-         SET lastModificationTime = getTime()
-       WHERE id = dj.id;
-      COMMIT;
-    EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-      -- check that the constraint violated is due to deletion of the drainingJob
-      IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DISK2DISKCOPYJOB_DRAINJOB) violated%' THEN
-        -- give up with this DrainingJob as it was canceled
-        ROLLBACK;
-      ELSE
-        RAISE;
-      END IF;
+      -- lock the draining job first
+      SELECT id INTO varUnused FROM DrainingJob WHERE id = dj.id FOR UPDATE;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- it was (already!) canceled, go to the next one
+      CONTINUE;
     END;
+    -- check how many disk2DiskCopyJobs are already running for this draining job
+    SELECT count(*), nvl(sum(CastorFile.fileSize), 0) INTO varNbRunningJobs, varDataRunningJobs
+      FROM Disk2DiskCopyJob, CastorFile
+     WHERE Disk2DiskCopyJob.drainingJob = dj.id
+       AND CastorFile.id = Disk2DiskCopyJob.castorFile;
+    -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running
+    -- ones into account. Also take the most important jobs first
+    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_REFILL, 0, '', 'stagerd',
+             'svcClass=' || getSvcClassName(dj.svcClass) || ' DrainReq=' ||
+             TO_CHAR(dj.id) || ' MaxNewJobsCount=' || TO_CHAR(varMaxNbFilesScheduled-varNbRunningJobs));
+    FOR F IN (SELECT * FROM
+               (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
+                  FROM DiskCopy, CastorFile
+                 WHERE DiskCopy.fileSystem = dj.fileSystem
+                   AND CastorFile.id = DiskCopy.castorFile
+                   AND ((dj.fileMask = dconst.DRAIN_FILEMASK_NOTONTAPE AND
+                         CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
+                        (dj.fileMask = dconst.DRAIN_FILEMASK_ALL))
+                   AND DiskCopy.status = dconst.DISKCOPY_VALID
+                   AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(DrainingErrors I_DrainingErrors_DJ_CF) */ 1
+                                     FROM DrainingErrors WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
+                   -- don't recreate disk-to-disk copy jobs for the ones already done in previous rounds
+                   AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(Disk2DiskCopyJob I_Disk2DiskCopyJob_DrainJob) */ 1
+                                     FROM Disk2DiskCopyJob WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
+                 ORDER BY DiskCopy.importance DESC)
+               WHERE ROWNUM <= varMaxNbFilesScheduled-varNbRunningJobs) LOOP
+      -- Do not schedule more that varMaxAmountOfSchedD2dPerDrain
+      IF varDataRunningJobs <= varMaxDataScheduled THEN
+        createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
+                               dconst.REPLICATIONTYPE_DRAINING, F.dcId, TRUE, dj.id, FALSE);
+        varDataRunningJobs := varDataRunningJobs + F.fileSize;
+      ELSE
+        -- enough data amount, we stop scheduling
+        EXIT;
+      END IF;
+    END LOOP;
+    UPDATE DrainingJob
+       SET lastModificationTime = getTime()
+     WHERE id = dj.id;
+    COMMIT;
   END LOOP;
 END;
 /
@@ -101,13 +88,25 @@ END;
 CREATE OR REPLACE PROCEDURE drainManager AS
   varTFiles INTEGER;
   varTBytes INTEGER;
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -2292);
 BEGIN
   -- Delete the COMPLETED jobs older than 7 days
-  DELETE FROM DrainingJob
-   WHERE status = dconst.DRAININGJOB_FINISHED
-     AND lastModificationTime < getTime() - (7 * 86400);
-  COMMIT;
-
+  BEGIN
+    DELETE FROM DrainingJob
+     WHERE status = dconst.DRAININGJOB_FINISHED
+       AND lastModificationTime < getTime() - (7 * 86400);
+    COMMIT;
+  EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+    -- check that the constraint violated is due to deleting a drainingJob
+    IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DISK2DISKCOPYJOB_DRAINJOB) violated%' THEN
+      -- yes, ignore and move on
+      NULL;
+    ELSE
+      -- no, raise error and stop here
+      RAISE;
+    END IF;
+  END;
   -- Start new DrainingJobs if needed
   FOR dj IN (SELECT id, fileSystem, fileMask
                FROM DrainingJob WHERE status = dconst.DRAININGJOB_SUBMITTED) LOOP
