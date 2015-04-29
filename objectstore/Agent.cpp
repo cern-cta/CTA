@@ -9,6 +9,7 @@
 #include <sys/syscall.h>
 #include <ctime>
 #include <cxxabi.h>
+#include <unistd.h>
 
 cta::objectstore::Agent::Agent(Backend & os): 
   ObjectOps<serializers::Agent>(os), m_nextId(0) {}
