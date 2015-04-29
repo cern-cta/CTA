@@ -237,9 +237,8 @@ END castorGC;
    This is the standard garbage collector: it sorts VALID diskcopies
    that do not need to go to tape by gcWeight and selects them for deletion up to
    the desired free space watermark */
-CREATE OR REPLACE
-PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
-                             files OUT castorGC.SelectFiles2DeleteLine_Cur) AS
+CREATE OR REPLACE PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
+                                               files OUT castorGC.SelectFiles2DeleteLine_Cur) AS
   dcIds "numList";
   freed INTEGER;
   deltaFree INTEGER;
