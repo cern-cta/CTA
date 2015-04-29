@@ -3,6 +3,7 @@
 #include <rados/librados.hpp>
 #include <sys/syscall.h>
 #include <errno.h>
+#include <unistd.h>
 
 namespace cta { namespace objectstore {
 
