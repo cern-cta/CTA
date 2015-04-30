@@ -71,11 +71,6 @@ BEGIN
 END;
 /
 
-/* Schema changes go here */
-/**************************/
-
-ALTER TABLE GCPolicy ADD (prepareHook VARCHAR2(2048) DEFAULT NULL);
-
 
 /* Update and revalidation of PL-SQL code */
 /******************************************/
