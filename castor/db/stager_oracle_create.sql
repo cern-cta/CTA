@@ -246,7 +246,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_15_5');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_15_6');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -5349,7 +5349,7 @@ BEGIN
   SELECT fsId, dpId, svcClass, euid, egid, name || ':' || mountpoint
     INTO fsId, dpId, svcClassId, ouid, ogid, fsPath
     FROM (SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
-                 FileSystem.id AS FsId, NULL AS dpId, Request.svcClass,
+                 DBMS_Random.value, FileSystem.id AS FsId, NULL AS dpId, Request.svcClass,
                  Request.euid, Request.egid, DiskServer.name, FileSystem.mountpoint
             FROM DiskServer, FileSystem, DiskPool2SvcClass,
                  (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
@@ -5367,7 +5367,7 @@ BEGIN
              AND DiskServer.hwOnline = 1
            UNION ALL
           SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
-                 NULL AS FsId, DataPool2SvcClass.parent AS dpId,
+                 DBMS_Random.value, NULL AS FsId, DataPool2SvcClass.parent AS dpId,
                  Request.svcClass, Request.euid, Request.egid, DiskServer.name, ''
             FROM DiskServer, DataPool2SvcClass,
                  (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
@@ -5381,8 +5381,7 @@ BEGIN
              AND DiskServer.datapool = DataPool2SvcClass.parent
              AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
              AND DiskServer.hwOnline = 1
-        ORDER BY -- use randomness to scatter filesystem/DiskServer usage
-                 DBMS_Random.value)
+        ORDER BY 1) -- use randomness to scatter filesystem/DiskServer usage
    WHERE ROWNUM < 2;
   -- compute it's gcWeight
   gcwProc := castorGC.getRecallWeight(svcClassId);
@@ -5561,8 +5560,12 @@ BEGIN
       NULL;   -- ignore the missing subrequest
     END;
   END IF;
-  -- Trigger the creation of additional copies of the file, if necessary.
-  replicateOnClose(cfId, ouid, ogid, svcClassId);
+  IF svcClassId > 0 THEN
+    -- Trigger the creation of additional copies of the file, if necessary.
+    -- For this, we must know the service class: as the automatic putDone
+    -- cleaning does not provide it, we skip this step in that case.
+    replicateOnClose(cfId, ouid, ogid, svcClassId);
+  END IF;
 END;
 /
 
@@ -7897,7 +7900,7 @@ BEGIN
   END IF;
   -- Log successful completion
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETSTART, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| inTransferId
-    || 'destinationPath=' || selectedDiskServer ||':'|| selectedMountPoint);
+    || ' destinationPath=' || selectedDiskServer ||':'|| selectedMountPoint);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- No disk copy found on selected FileSystem, or subRequest not valid any longer.
   -- This can happen if a diskcopy was available and got disabled, or if an abort came,
@@ -8241,7 +8244,7 @@ BEGIN
   END IF;
   varComment := 'transferId="' || inTransferId ||
          '" destSvcClass=' || getSvcClassName(varDestSvcClass) ||
-         ' dstDcId=' || TO_CHAR(varDestDcId) || ' destPath="' || inDestPath ||
+         ' destDcId=' || TO_CHAR(varDestDcId) || ' destPath="' || inDestPath ||
          '" euid=' || TO_CHAR(varUid) || ' egid=' || TO_CHAR(varGid) ||
          ' fileSize=' || TO_CHAR(varFileSize) || ' checksum=' || inCksumValue;
   IF varErrorMessage IS NOT NULL THEN
@@ -8502,10 +8505,10 @@ BEGIN
   buildPathFromFileId(inFileId, inNsHost, varSrcDcId, outSrcDcPath, inSrcMountPoint IS NOT NULL);
   outSrcDcPath := inSrcDiskServerName || ':' || inSrcMountPoint || outSrcDcPath;
 
-  -- log "disk2DiskCopyStart returned successfully"
+  -- log "disk2DiskCopyStart completed successfully"
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.D2D_START_OK, inFileId, inNsHost, 'transfermanagerd',
            'TransferId=' || TO_CHAR(inTransferId) || ' srcPath=' || outSrcDcPath ||
-           ' destPath=' || outDestDcPath);
+           ' destPath=' || inDestDiskServerName || ':' || outDestDcPath);
 END;
 /
 
@@ -8696,7 +8699,7 @@ BEGIN
   -- note that we discard READONLY hardware and filter only the PRODUCTION one.
   FOR line IN
     (SELECT candidate FROM
-       (SELECT * FROM
+       (SELECT DBMS_Random.value, candidate FROM
          (SELECT UNIQUE FIRST_VALUE (DiskServer.name || ':' || FileSystem.mountPoint)
                    OVER (PARTITION BY DiskServer.id ORDER BY DBMS_Random.value) AS candidate
             FROM DiskServer, FileSystem, DiskPool2SvcClass
@@ -8721,7 +8724,7 @@ BEGIN
              AND DiskServer.hwOnline = 1
              AND DataPool.id = DataPool2SvcClass.parent
              AND DataPool.free - DataPool.minAllowedFreeSpace * DataPool.totalSize > inMinFreeSpace)
-         ORDER BY DBMS_Random.value)
+         ORDER BY 1)
       WHERE ROWNUM <= 3) LOOP
     IF LENGTH(varResult) IS NOT NULL THEN varResult := varResult || '|'; END IF;
     varResult := varResult || line.candidate;
@@ -8737,8 +8740,8 @@ BEGIN
   -- in this case we take any non DISABLED hardware
   FOR line IN
     (SELECT candidate FROM
-       (SELECT * FROM
-         (SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ 
+       (SELECT DBMS_Random.value, candidate FROM
+         (SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */
                  UNIQUE FIRST_VALUE (DiskServer.name || ':' || FileSystem.mountPoint)
                    OVER (PARTITION BY DiskServer.id ORDER BY DBMS_Random.value) AS candidate
             FROM DiskServer, FileSystem, DiskCopy
@@ -8750,7 +8753,7 @@ BEGIN
              AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
              AND DiskServer.hwOnline = 1
            UNION
-          SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ 
+          SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */
                  DiskServer.name || ':' AS candidate
             FROM DiskServer, DiskCopy
            WHERE DiskCopy.castorFile = inCfId
@@ -8758,7 +8761,7 @@ BEGIN
              AND DiskCopy.dataPool = DiskServer.dataPool
              AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
              AND DiskServer.hwOnline = 1)
-         ORDER BY DBMS_Random.value)
+         ORDER BY 1)
       WHERE ROWNUM <= 3) LOOP
     IF LENGTH(varResult) IS NOT NULL THEN varResult := varResult || '|'; END IF;
     varResult := varResult || line.candidate;
@@ -12043,9 +12046,8 @@ END castorGC;
    This is the standard garbage collector: it sorts VALID diskcopies
    that do not need to go to tape by gcWeight and selects them for deletion up to
    the desired free space watermark */
-CREATE OR REPLACE
-PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
-                             files OUT castorGC.SelectFiles2DeleteLine_Cur) AS
+CREATE OR REPLACE PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
+                                               files OUT castorGC.SelectFiles2DeleteLine_Cur) AS
   dcIds "numList";
   freed INTEGER;
   deltaFree INTEGER;
@@ -12081,15 +12083,15 @@ BEGIN
 
   -- Loop on all concerned fileSystems/DataPools in a random order.
   totalCount := 0;
-  FOR fs IN (SELECT * FROM (SELECT FileSystem.id AS fsId
+  FOR fs IN (SELECT * FROM (SELECT DBMS_Random.value, FileSystem.id AS fsId
                               FROM FileSystem, DiskServer
                              WHERE FileSystem.diskServer = DiskServer.id
                                AND DiskServer.name = diskServerName
                              UNION ALL
-                            SELECT DiskServer.dataPool AS fsId
+                            SELECT DBMS_Random.value, DiskServer.dataPool AS fsId
                               FROM DiskServer
                              WHERE DiskServer.name = diskServerName)
-             ORDER BY dbms_random.value) LOOP
+             ORDER BY 1) LOOP
     -- Count the number of diskcopies on this filesystem that are in a
     -- BEINGDELETED state. These need to be reselected in any case.
     freed := 0;
@@ -12756,7 +12758,7 @@ END;
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-/* deletes a DrainingJob and related objects */
+/* Procedure to delete a DrainingJob and related objects. Directly used by draindiskserver */
 CREATE OR REPLACE PROCEDURE deleteDrainingJob(inDjId IN INTEGER) AS
   varUnused INTEGER;
 BEGIN
@@ -12785,66 +12787,53 @@ BEGIN
   -- loop over draining jobs
   FOR dj IN (SELECT id, fileSystem, svcClass, fileMask, euid, egid
                FROM DrainingJob WHERE status = dconst.DRAININGJOB_RUNNING) LOOP
-    DECLARE
-      CONSTRAINT_VIOLATED EXCEPTION;
-      PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -2292);
     BEGIN
-      BEGIN
-        -- lock the draining job first
-        SELECT id INTO varUnused FROM DrainingJob WHERE id = dj.id FOR UPDATE;
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- it was (already!) canceled, go to the next one
-        CONTINUE;
-      END;
-      -- check how many disk2DiskCopyJobs are already running for this draining job
-      SELECT count(*), nvl(sum(CastorFile.fileSize), 0) INTO varNbRunningJobs, varDataRunningJobs
-        FROM Disk2DiskCopyJob, CastorFile
-       WHERE Disk2DiskCopyJob.drainingJob = dj.id
-         AND CastorFile.id = Disk2DiskCopyJob.castorFile;
-      -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running
-      -- ones into account. Also take the most important jobs first
-      logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_REFILL, 0, '', 'stagerd',
-               'svcClass=' || getSvcClassName(dj.svcClass) || ' DrainReq=' ||
-               TO_CHAR(dj.id) || ' MaxNewJobsCount=' || TO_CHAR(varMaxNbFilesScheduled-varNbRunningJobs));
-      FOR F IN (SELECT * FROM
-                 (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
-                    FROM DiskCopy, CastorFile
-                   WHERE DiskCopy.fileSystem = dj.fileSystem
-                     AND CastorFile.id = DiskCopy.castorFile
-                     AND ((dj.fileMask = dconst.DRAIN_FILEMASK_NOTONTAPE AND
-                           CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
-                          (dj.fileMask = dconst.DRAIN_FILEMASK_ALL))
-                     AND DiskCopy.status = dconst.DISKCOPY_VALID
-                     AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(DrainingErrors I_DrainingErrors_DJ_CF) */ 1
-                                       FROM DrainingErrors WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
-                     -- don't recreate disk-to-disk copy jobs for the ones already done in previous rounds
-                     AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(Disk2DiskCopyJob I_Disk2DiskCopyJob_DrainJob) */ 1
-                                       FROM Disk2DiskCopyJob WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
-                   ORDER BY DiskCopy.importance DESC)
-                 WHERE ROWNUM <= varMaxNbFilesScheduled-varNbRunningJobs) LOOP
-        -- Do not schedule more that varMaxAmountOfSchedD2dPerDrain
-        IF varDataRunningJobs <= varMaxDataScheduled THEN
-          createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
-                                 dconst.REPLICATIONTYPE_DRAINING, F.dcId, TRUE, dj.id, FALSE);
-          varDataRunningJobs := varDataRunningJobs + F.fileSize;
-        ELSE
-          -- enough data amount, we stop scheduling
-          EXIT;
-        END IF;
-      END LOOP;
-      UPDATE DrainingJob
-         SET lastModificationTime = getTime()
-       WHERE id = dj.id;
-      COMMIT;
-    EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-      -- check that the constraint violated is due to deletion of the drainingJob
-      IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DISK2DISKCOPYJOB_DRAINJOB) violated%' THEN
-        -- give up with this DrainingJob as it was canceled
-        ROLLBACK;
-      ELSE
-        RAISE;
-      END IF;
+      -- lock the draining job first
+      SELECT id INTO varUnused FROM DrainingJob WHERE id = dj.id FOR UPDATE;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- it was (already!) canceled, go to the next one
+      CONTINUE;
     END;
+    -- check how many disk2DiskCopyJobs are already running for this draining job
+    SELECT count(*), nvl(sum(CastorFile.fileSize), 0) INTO varNbRunningJobs, varDataRunningJobs
+      FROM Disk2DiskCopyJob, CastorFile
+     WHERE Disk2DiskCopyJob.drainingJob = dj.id
+       AND CastorFile.id = Disk2DiskCopyJob.castorFile;
+    -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running
+    -- ones into account. Also take the most important jobs first
+    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_REFILL, 0, '', 'stagerd',
+             'svcClass=' || getSvcClassName(dj.svcClass) || ' DrainReq=' ||
+             TO_CHAR(dj.id) || ' MaxNewJobsCount=' || TO_CHAR(varMaxNbFilesScheduled-varNbRunningJobs));
+    FOR F IN (SELECT * FROM
+               (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
+                  FROM DiskCopy, CastorFile
+                 WHERE DiskCopy.fileSystem = dj.fileSystem
+                   AND CastorFile.id = DiskCopy.castorFile
+                   AND ((dj.fileMask = dconst.DRAIN_FILEMASK_NOTONTAPE AND
+                         CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
+                        (dj.fileMask = dconst.DRAIN_FILEMASK_ALL))
+                   AND DiskCopy.status = dconst.DISKCOPY_VALID
+                   AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(DrainingErrors I_DrainingErrors_DJ_CF) */ 1
+                                     FROM DrainingErrors WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
+                   -- don't recreate disk-to-disk copy jobs for the ones already done in previous rounds
+                   AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(Disk2DiskCopyJob I_Disk2DiskCopyJob_DrainJob) */ 1
+                                     FROM Disk2DiskCopyJob WHERE castorFile = CastorFile.id AND drainingJob = dj.id)
+                 ORDER BY DiskCopy.importance DESC)
+               WHERE ROWNUM <= varMaxNbFilesScheduled-varNbRunningJobs) LOOP
+      -- Do not schedule more that varMaxAmountOfSchedD2dPerDrain
+      IF varDataRunningJobs <= varMaxDataScheduled THEN
+        createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
+                               dconst.REPLICATIONTYPE_DRAINING, F.dcId, TRUE, dj.id, FALSE);
+        varDataRunningJobs := varDataRunningJobs + F.fileSize;
+      ELSE
+        -- enough data amount, we stop scheduling
+        EXIT;
+      END IF;
+    END LOOP;
+    UPDATE DrainingJob
+       SET lastModificationTime = getTime()
+     WHERE id = dj.id;
+    COMMIT;
   END LOOP;
 END;
 /
@@ -12854,13 +12843,25 @@ END;
 CREATE OR REPLACE PROCEDURE drainManager AS
   varTFiles INTEGER;
   varTBytes INTEGER;
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -2292);
 BEGIN
   -- Delete the COMPLETED jobs older than 7 days
-  DELETE FROM DrainingJob
-   WHERE status = dconst.DRAININGJOB_FINISHED
-     AND lastModificationTime < getTime() - (7 * 86400);
-  COMMIT;
-
+  BEGIN
+    DELETE FROM DrainingJob
+     WHERE status = dconst.DRAININGJOB_FINISHED
+       AND lastModificationTime < getTime() - (7 * 86400);
+    COMMIT;
+  EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+    -- check that the constraint violated is due to deleting a drainingJob
+    IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DISK2DISKCOPYJOB_DRAINJOB) violated%' THEN
+      -- yes, ignore and move on
+      NULL;
+    ELSE
+      -- no, raise error and stop here
+      RAISE;
+    END IF;
+  END;
   -- Start new DrainingJobs if needed
   FOR dj IN (SELECT id, fileSystem, fileMask
                FROM DrainingJob WHERE status = dconst.DRAININGJOB_SUBMITTED) LOOP
