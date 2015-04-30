@@ -819,7 +819,7 @@ BEGIN
   -- log "disk2DiskCopyStart completed successfully"
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.D2D_START_OK, inFileId, inNsHost, 'transfermanagerd',
            'TransferId=' || TO_CHAR(inTransferId) || ' srcPath=' || outSrcDcPath ||
-           ' destPath=' || outDestDcPath);
+           ' destPath=' || inDestDiskServerName || ':' || outDestDcPath);
 END;
 /
 

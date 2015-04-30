@@ -980,6 +980,160 @@ BEGIN
 END;
 /
 
+/* PL/SQL method implementing disk2DiskCopyStart
+ * Note that cfId is only needed for proper logging in case the replication has been canceled.
+ */
+CREATE OR REPLACE PROCEDURE disk2DiskCopyStart
+ (inTransferId IN VARCHAR2, inFileId IN INTEGER, inNsHost IN VARCHAR2,
+  inDestDiskServerName IN VARCHAR2, inDestMountPoint IN VARCHAR2,
+  inSrcDiskServerName IN VARCHAR2, inSrcMountPoint IN VARCHAR2,
+  outDestDcPath OUT VARCHAR2, outSrcDcPath OUT VARCHAR2) AS
+  varCfId INTEGER;
+  varDestDcId INTEGER;
+  varDestDsId INTEGER;
+  varSrcDcId INTEGER;
+  varSrcFsId INTEGER := NULL;
+  varSrcDpId INTEGER := NULL;
+  varNbCopies INTEGER;
+  varSrcFsStatus INTEGER := dconst.FILESYSTEM_PRODUCTION;
+  varSrcDsStatus INTEGER;
+  varSrcHwOnline INTEGER;
+  varDestFsStatus INTEGER := dconst.FILESYSTEM_PRODUCTION;
+  varDestDsStatus INTEGER;
+  varDestHwOnline INTEGER;
+BEGIN
+  -- check the Disk2DiskCopyJob status and check that it was not canceled in the mean time
+  BEGIN
+    SELECT castorFile, destDcId INTO varCfId, varDestDcId
+      FROM Disk2DiskCopyJob
+     WHERE transferId = inTransferId
+       AND status = dconst.DISK2DISKCOPYJOB_SCHEDULED
+       FOR UPDATE;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- log "disk2DiskCopyStart : Replication request canceled while queuing in scheduler or transfer already started"
+    logToDLF(NULL, dlf.LVL_USER_ERROR, dlf.D2D_CANCELED_AT_START, inFileId, inNsHost, 'transfermanagerd',
+             'TransferId=' || TO_CHAR(inTransferId) || ' destDiskServer=' || inDestDiskServerName ||
+             ' destMountPoint=' || inDestMountPoint || ' srcDiskServer=' || inSrcDiskServerName ||
+             ' srcMountPoint=' || inSrcMountPoint);
+    -- raise exception
+    raise_application_error(-20110, dlf.D2D_CANCELED_AT_START || '');
+  END;
+
+  -- identify the source DiskCopy and diskserver/filesystem/datapool and check that it is still valid
+  BEGIN
+    IF inSrcMountPoint IS NULL THEN
+      SELECT DiskServer.dataPool, DiskCopy.id, DiskServer.status, DiskServer.hwOnline
+        INTO varSrcDpId, varSrcDcId, varSrcDsStatus, varSrcHwOnline
+        FROM DiskServer, DiskCopy
+       WHERE name = inSrcDiskServerName
+         AND DiskServer.dataPool = DiskCopy.dataPool
+         AND DiskCopy.castorFile = varCfId
+         AND ROWNUM < 2;
+    ELSE
+      SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
+             FileSystem.id, DiskCopy.id, FileSystem.status, DiskServer.status, DiskServer.hwOnline
+        INTO varSrcFsId, varSrcDcId, varSrcFsStatus, varSrcDsStatus, varSrcHwOnline
+        FROM DiskServer, FileSystem, DiskCopy
+       WHERE DiskServer.name = inSrcDiskServerName
+         AND DiskServer.id = FileSystem.diskServer
+         AND FileSystem.mountPoint = inSrcMountPoint
+         AND DiskCopy.FileSystem = FileSystem.id
+         AND DiskCopy.status = dconst.DISKCOPY_VALID
+         AND DiskCopy.castorFile = varCfId;
+    END IF;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- log "disk2DiskCopyStart : Source has disappeared while queuing in scheduler, retrying"
+    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.D2D_SOURCE_GONE, inFileId, inNsHost, 'transfermanagerd',
+             'TransferId=' || TO_CHAR(inTransferId) || ' destDiskServer=' || inDestDiskServerName ||
+             ' destMountPoint=' || inDestMountPoint || ' srcDiskServer=' || inSrcDiskServerName ||
+             ' srcMountPoint=' || inSrcMountPoint);
+    -- end the disktodisk copy (may be retried)
+    disk2DiskCopyEnded(inTransferId, '', '', 0, '', 0, dlf.D2D_SOURCE_GONE);
+    COMMIT; -- commit or raise_application_error will roll back for us :-(
+    -- raise exception for the scheduling part
+    raise_application_error(-20110, dlf.D2D_SOURCE_GONE);
+  END;
+
+  -- update the Disk2DiskCopyJob status and filesystem
+  UPDATE Disk2DiskCopyJob
+     SET status = dconst.DISK2DISKCOPYJOB_RUNNING
+   WHERE transferId = inTransferId;
+
+  IF (varSrcDsStatus = dconst.DISKSERVER_DISABLED OR varSrcFsStatus = dconst.FILESYSTEM_DISABLED
+      OR varSrcHwOnline = 0) THEN
+    -- log "disk2DiskCopyStart : Source diskserver/filesystem was DISABLED meanwhile"
+    logToDLF(NULL, dlf.LVL_WARNING, dlf.D2D_SRC_DISABLED, inFileId, inNsHost, 'transfermanagerd',
+             'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inSrcDiskServerName ||
+             ' fileSystem=' || inSrcMountPoint);
+    -- fail d2d transfer
+    disk2DiskCopyEnded(inTransferId, '', '', 0, '', 0, 'Source was disabled');
+    COMMIT; -- commit or raise_application_error will roll back for us :-(
+    -- raise exception
+    raise_application_error(-20110, dlf.D2D_SRC_DISABLED);
+  END IF;
+
+  -- get destination diskServer/filesystem and check its status
+  IF inDestMountPoint IS NULL THEN
+    SELECT DiskServer.id, DiskServer.status, DiskServer.hwOnline
+      INTO varDestDsId, varDestDsStatus, varDestHwOnline
+      FROM DiskServer
+     WHERE name = inDestDiskServerName;
+  ELSE
+    SELECT DiskServer.id, DiskServer.status, FileSystem.status, DiskServer.hwOnline
+      INTO varDestDsId, varDestDsStatus, varDestFsStatus, varDestHwOnline
+      FROM DiskServer, FileSystem
+     WHERE DiskServer.name = inDestDiskServerName
+       AND FileSystem.mountPoint = inDestMountPoint
+       AND FileSystem.diskServer = DiskServer.id;
+  END IF;
+  IF (varDestDsStatus != dconst.DISKSERVER_PRODUCTION OR varDestFsStatus != dconst.FILESYSTEM_PRODUCTION
+      OR varDestHwOnline = 0) THEN
+    -- log "disk2DiskCopyStart : Destination diskserver/filesystem not in PRODUCTION any longer"
+    logToDLF(NULL, dlf.LVL_WARNING, dlf.D2D_DEST_NOT_PRODUCTION, inFileId, inNsHost, 'transfermanagerd',
+             'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inDestDiskServerName);
+    -- fail d2d transfer
+    disk2DiskCopyEnded(inTransferId, '', '', 0, '', 0, 'Destination not in production');
+    COMMIT; -- commit or raise_application_error will roll back for us :-(
+    -- raise exception
+    raise_application_error(-20110, dlf.D2D_DEST_NOT_PRODUCTION);
+  END IF;
+
+  IF inDestMountPoint IS NULL THEN
+    -- Prevent multiple copies of the file to be created on the same diskserver when
+    -- running in standard mode (with filesystems, no datapools)
+    SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ count(*) INTO varNbCopies
+      FROM DiskCopy, FileSystem
+     WHERE DiskCopy.filesystem = FileSystem.id
+       AND FileSystem.diskserver = varDestDsId
+       AND DiskCopy.castorfile = varCfId
+       AND DiskCopy.status = dconst.DISKCOPY_VALID;
+    IF varNbCopies > 0 THEN
+      -- log "disk2DiskCopyStart : Multiple copies of this file already found on this diskserver"
+      logToDLF(NULL, dlf.LVL_ERROR, dlf.D2D_MULTIPLE_COPIES_ON_DS, inFileId, inNsHost, 'transfermanagerd',
+               'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inDestDiskServerName);
+      -- fail d2d transfer
+      disk2DiskCopyEnded(inTransferId, '', '', 0, '', 0, 'Copy found on diskserver');
+      COMMIT; -- commit or raise_application_error will roll back for us :-(
+      -- raise exception
+      raise_application_error(-20110, dlf.D2D_MULTIPLE_COPIES_ON_DS);
+    END IF;
+  END IF;
+
+  -- build full path of destination copy
+  buildPathFromFileId(inFileId, inNsHost, varDestDcId, outDestDcPath, inDestMountPoint IS NOT NULL);
+  outDestDcPath := inDestMountPoint || outDestDcPath;
+
+  -- build full path of source copy
+  buildPathFromFileId(inFileId, inNsHost, varSrcDcId, outSrcDcPath, inSrcMountPoint IS NOT NULL);
+  outSrcDcPath := inSrcDiskServerName || ':' || inSrcMountPoint || outSrcDcPath;
+
+  -- log "disk2DiskCopyStart completed successfully"
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.D2D_START_OK, inFileId, inNsHost, 'transfermanagerd',
+           'TransferId=' || TO_CHAR(inTransferId) || ' srcPath=' || outSrcDcPath ||
+           ' destPath=' || inDestDiskServerName || ':' || outDestDcPath);
+END;
+/
+
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
