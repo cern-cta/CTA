@@ -22,7 +22,7 @@
 
     CASTOR-5014 CC7 build: geteuid/getegid not declared in castor/legacymsg/CupvProxyTcpIp.cpp
 
-  Upgrade Instructions from 2.1.15-3
+  Upgrade Instructions from 2.1.15-5
   ----------------------------------
 
     Stager
