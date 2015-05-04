@@ -104,10 +104,9 @@ std::list<cta::StorageClass> cta::SqliteMiddleTierAdmin::getStorageClasses(
 void cta::SqliteMiddleTierAdmin::createTapePool(
   const SecurityIdentity &requester,
   const std::string &name,
-  const uint16_t nbDrives,
   const uint32_t nbPartialTapes,
   const std::string &comment) {
-  m_sqlite_db.insertTapePool(requester, name, nbDrives, nbPartialTapes, comment);
+  m_sqlite_db.insertTapePool(requester, name, nbPartialTapes, comment);
 }
 
 //------------------------------------------------------------------------------

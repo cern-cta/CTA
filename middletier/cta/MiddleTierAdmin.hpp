@@ -138,9 +138,6 @@ public:
    * @param requester The identity of the user requesting the creation of the
    * tape pool.
    * @param name The name of the tape pool.
-   * @param nbDrives The maximum number of drives that can be concurrently
-   * assigned to this pool independent of whether they are archiving or
-   * retrieving files.
    * @param nbPartialTapes The maximum number of tapes that can be partially
    * full at any moment in time.
    * @param comment The comment describing the tape pool.
@@ -148,7 +145,6 @@ public:
   virtual void createTapePool(
     const SecurityIdentity &requester,
     const std::string &name,
-    const uint16_t nbDrives,
     const uint32_t nbPartialTapes,
     const std::string &comment) = 0;
 
