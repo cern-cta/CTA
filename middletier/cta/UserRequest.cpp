@@ -12,10 +12,10 @@ cta::UserRequest::UserRequest():
 // constructor
 //------------------------------------------------------------------------------
 cta::UserRequest::UserRequest(const std::string &id,
-  const SecurityIdentity &user):
+  const SecurityIdentity &user, const time_t creationTime):
   m_id(id),
   m_user(user),
-  m_creationTime(time(NULL)) {
+  m_creationTime(creationTime) {
 }
 
 //------------------------------------------------------------------------------

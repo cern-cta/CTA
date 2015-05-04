@@ -16,7 +16,10 @@ cta::RetrievalRequest::~RetrievalRequest() throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrievalRequest::RetrievalRequest(const uint64_t priority):
+cta::RetrievalRequest::RetrievalRequest(const uint64_t priority,
+  const std::string &id, const SecurityIdentity &user,
+  const time_t creationTime):
+  UserRequest(id, user, creationTime),
   m_priority(priority) {
 }
 

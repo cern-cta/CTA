@@ -17,7 +17,9 @@ cta::ArchivalRequest::~ArchivalRequest() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::ArchivalRequest::ArchivalRequest(const std::string &storageClassName,
-  const uint64_t priority):
+  const uint64_t priority, const std::string &id, const SecurityIdentity &user, 
+  const time_t creationTime):
+  UserRequest(id, user, creationTime),
   m_storageClassName(storageClassName),
   m_priority(priority) {
 }
