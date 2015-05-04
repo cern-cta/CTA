@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cta/UserIdentity.hpp"
+#include "cta/ConfigurationItem.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -10,13 +10,18 @@ namespace cta {
 /**
  * Class representing an archive storage-class.
  */
-class StorageClass {
+class StorageClass: public ConfigurationItem {
 public:
 
   /**
    * Constructor.
    */
   StorageClass();
+
+  /**
+   * Destructor.
+   */
+  ~StorageClass() throw();
 
   /**
    * Constructor.
@@ -26,13 +31,16 @@ public:
    * class should have on tape.
    * @param creator The identity of the user that created the storage class.
    * @param comment The comment describing the storage class.
+   * @param creationTime Optionally the absolute time at which the
+   * configuration item was created.  If no value is given then the current
+   * time is used.
    */
   StorageClass(
     const std::string &name,
     const uint16_t nbCopies,
     const UserIdentity &creator,
-    const time_t creationTime,
-    const std::string &comment);
+    const std::string &comment,
+    const time_t creationTime = time(NULL));
 
   /**
    * Returns the name of the storage class.
@@ -50,27 +58,6 @@ public:
    */
   uint16_t getNbCopies() const throw();
 
-  /**
-   * Returns the time when the storage class was created.
-   *
-   * @return The time when the storage class was created.
-   */
-  time_t getCreationTime() const throw();
-
-  /**
-   * Returns the identity of the user that created the storage class.
-   *
-   * @return The identity of the user that created the storage class.
-   */
-  const UserIdentity &getCreator() const throw();
-
-  /**
-   * Returns the comment describing the storage class.
-   *
-   * @return The comment describing the storage class.
-   */
-  const std::string &getComment() const throw();
-
 private:
 
   /**
@@ -83,21 +70,6 @@ private:
    * class should have on tape.
    */
   uint16_t m_nbCopies;
-
-  /**
-   * The time when the storage class was created.
-   */
-  time_t m_creationTime;
-
-  /**
-   * The identity of the user that created the storage class.
-   */
-  UserIdentity m_creator;
-
-  /**
-   * Comment describing the storage class.
-   */
-  std::string m_comment;
 
 }; // class StorageClass
 

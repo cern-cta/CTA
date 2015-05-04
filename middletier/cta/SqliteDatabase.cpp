@@ -830,8 +830,8 @@ std::list<cta::StorageClass> cta::SqliteDatabase::selectAllStorageClasses(const 
             std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
             sqlite3_column_int(statement,idx("NBCOPIES")),
             cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID"))),
-            time_t(sqlite3_column_int(statement,idx("CREATIONTIME"))),
-            std::string((char *)sqlite3_column_text(statement,idx("COMMENT")))
+            std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
       ));
   }
   sqlite3_finalize(statement);  
@@ -1112,8 +1112,8 @@ cta::StorageClass cta::SqliteDatabase::getStorageClassByName(const SecurityIdent
             std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
             sqlite3_column_int(statement,idx("NBCOPIES")),
             cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID"))),
-            time_t(sqlite3_column_int(statement,idx("CREATIONTIME"))),
-            std::string((char *)sqlite3_column_text(statement,idx("COMMENT")))
+            std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
       );
   }
   else if(res==SQLITE_DONE) {    
