@@ -110,7 +110,7 @@ void cta::SqliteMiddleTierUser::archiveToDirectory(
     throw(Exception(message.str()));
   }
   for(int i=1; i<=storageClass.getNbCopies(); i++) {
-    cta::ArchiveRoute route = m_sqlite_db.getArchiveRouteOfStorageClass(requester, storageClassName, i);
+    cta::ArchivalRoute route = m_sqlite_db.getArchivalRouteOfStorageClass(requester, storageClassName, i);
     for(std::list<std::string>::const_iterator itor = srcUrls.begin(); itor != srcUrls.end(); itor++) {
       const std::string &srcFileName = *itor;
       std::string dstPathname;
@@ -160,7 +160,7 @@ void cta::SqliteMiddleTierUser::archiveToFile(
     throw(Exception(message.str()));
   }
   for(int i=1; i<=storageClass.getNbCopies(); i++) {
-    cta::ArchiveRoute route = m_sqlite_db.getArchiveRouteOfStorageClass(requester, storageClassName, i);
+    cta::ArchivalRoute route = m_sqlite_db.getArchivalRouteOfStorageClass(requester, storageClassName, i);
     m_sqlite_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstFile);
   }
   

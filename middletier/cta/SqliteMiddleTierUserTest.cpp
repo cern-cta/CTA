@@ -519,9 +519,9 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, archive_to_new_file) {
     nbPartialTapes, tapePoolComment));
 
   const uint16_t copyNb = 1;
-  const std::string archiveRouteComment = "Archive-route comment";
-  ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
-    copyNb, tapePoolName, archiveRouteComment));
+  const std::string archivalRouteComment = "Archival-route comment";
+  ASSERT_NO_THROW(adminApi.createArchivalRoute(requester, storageClassName,
+    copyNb, tapePoolName, archivalRouteComment));
 
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl");
@@ -710,9 +710,9 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
     nbPartialTapes, tapePoolComment));
 
   const uint16_t copyNb = 1;
-  const std::string archiveRouteComment = "Archive-route comment";
-  ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
-    copyNb, tapePoolName, archiveRouteComment));
+  const std::string archivalRouteComment = "Archival-route comment";
+  ASSERT_NO_THROW(adminApi.createArchivalRoute(requester, storageClassName,
+    copyNb, tapePoolName, archivalRouteComment));
 
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl");
@@ -748,9 +748,9 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, archive_to_directory) {
     nbPartialTapes, tapePoolComment));
 
   const uint16_t copyNb = 1;
-  const std::string archiveRouteComment = "Archive-route comment";
-  ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
-    copyNb, tapePoolName, archiveRouteComment));
+  const std::string archivalRouteComment = "Archival-route comment";
+  ASSERT_NO_THROW(adminApi.createArchivalRoute(requester, storageClassName,
+    copyNb, tapePoolName, archivalRouteComment));
 
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl1");
@@ -960,9 +960,9 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
     nbPartialTapes, tapePoolComment));
 
   const uint16_t copyNb = 1;
-  const std::string archiveRouteComment = "Archive-route comment";
-  ASSERT_NO_THROW(adminApi.createArchiveRoute(requester, storageClassName,
-    copyNb, tapePoolName, archiveRouteComment));
+  const std::string archivalRouteComment = "Archival-route comment";
+  ASSERT_NO_THROW(adminApi.createArchivalRoute(requester, storageClassName,
+    copyNb, tapePoolName, archivalRouteComment));
 
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl1");

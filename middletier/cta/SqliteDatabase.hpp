@@ -1,20 +1,19 @@
 #pragma once
 
-#include <list>
-#include <map>
-
-#include <sqlite3.h>
-
 #include "cta/AdminHost.hpp"
 #include "cta/AdminUser.hpp"
 #include "cta/ArchivalJob.hpp"
-#include "cta/ArchiveRoute.hpp"
+#include "cta/ArchivalRoute.hpp"
 #include "cta/LogicalLibrary.hpp"
 #include "cta/RetrievalJob.hpp"
 #include "cta/SecurityIdentity.hpp"
 #include "cta/StorageClass.hpp"
 #include "cta/Tape.hpp"
 #include "cta/TapePool.hpp"
+
+#include <list>
+#include <map>
+#include <sqlite3.h>
 
 namespace cta {
 
@@ -39,7 +38,7 @@ public:
   
   void insertStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies, const std::string &comment);
   
-  void insertArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName, const std::string &comment);
+  void insertArchivalRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName, const std::string &comment);
   
   void insertTape(const SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, const std::string &comment);
   
@@ -57,7 +56,7 @@ public:
   
   void deleteStorageClass(const SecurityIdentity &requester, const std::string &name);
 
-  void deleteArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb);
+  void deleteArchivalRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb);
   
   void deleteTape(const SecurityIdentity &requester, const std::string &vid);
   
@@ -75,7 +74,7 @@ public:
 
   std::list<cta::StorageClass> selectAllStorageClasses(const SecurityIdentity &requester);
 
-  std::list<cta::ArchiveRoute> selectAllArchiveRoutes(const SecurityIdentity &requester);  
+  std::list<cta::ArchivalRoute> selectAllArchivalRoutes(const SecurityIdentity &requester);  
   
   std::list<cta::Tape> selectAllTapes(const SecurityIdentity &requester);
 
@@ -89,7 +88,7 @@ public:
 
   std::list<cta::LogicalLibrary> selectAllLogicalLibraries(const SecurityIdentity &requester);
   
-  cta::ArchiveRoute getArchiveRouteOfStorageClass(const SecurityIdentity &requester, const std::string &storageClassName, const  uint16_t copyNb);
+  cta::ArchivalRoute getArchivalRouteOfStorageClass(const SecurityIdentity &requester, const std::string &storageClassName, const  uint16_t copyNb);
   
   cta::TapePool getTapePoolByName(const SecurityIdentity &requester, const std::string &name);
   
@@ -110,7 +109,7 @@ private:
   
   void checkStorageClassExists(const std::string &name);
   
-  void checkArchiveRouteExists(const std::string &name, const uint16_t copyNb);
+  void checkArchivalRouteExists(const std::string &name, const uint16_t copyNb);
   
   void checkTapeExists(const std::string &vid);
   

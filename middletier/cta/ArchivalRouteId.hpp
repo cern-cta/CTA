@@ -6,15 +6,15 @@
 namespace cta {
 
 /**
- * Class used to identify an archive route.
+ * Class used to identify an archival route.
  */
-class ArchiveRouteId {
+class ArchivalRouteId {
 public:
 
   /**
    * Constructor.
    */
-  ArchiveRouteId();
+  ArchivalRouteId();
 
   /**
    * Constructor.
@@ -23,7 +23,7 @@ public:
    * source disk files.
    * @param copyNb The tape copy number.
    */
-  ArchiveRouteId(
+  ArchivalRouteId(
     const std::string &storageClassName,
     const uint16_t copyNb);
 
@@ -32,7 +32,7 @@ public:
    *
    * @param rhs The object on the right hand side of the operator.
    */
-  bool operator<(const ArchiveRouteId &rhs) const;
+  bool operator<(const ArchivalRouteId &rhs) const;
 
   /**
    * Returns the name of the storage class that identifies the source disk
@@ -62,6 +62,6 @@ private:
    */
   uint16_t m_copyNb;
 
-}; // class ArchiveRouteId
+}; // class ArchivalRouteId
 
 } // namespace cta

@@ -1,16 +1,16 @@
-#include "cta/ArchiveRouteId.hpp"
+#include "cta/ArchivalRouteId.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveRouteId::ArchiveRouteId():
+cta::ArchivalRouteId::ArchivalRouteId():
   m_copyNb(0) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveRouteId::ArchiveRouteId(
+cta::ArchivalRouteId::ArchivalRouteId(
   const std::string &storageClassName,
   const uint16_t copyNb):
   m_storageClassName(storageClassName),
@@ -20,7 +20,7 @@ cta::ArchiveRouteId::ArchiveRouteId(
 //------------------------------------------------------------------------------
 // operator<
 //------------------------------------------------------------------------------
-bool cta::ArchiveRouteId::operator<(const ArchiveRouteId &rhs) const {
+bool cta::ArchivalRouteId::operator<(const ArchivalRouteId &rhs) const {
   if(m_storageClassName != rhs.m_storageClassName) {
     return m_storageClassName < rhs.m_storageClassName;
   } else {
@@ -31,13 +31,13 @@ bool cta::ArchiveRouteId::operator<(const ArchiveRouteId &rhs) const {
 //------------------------------------------------------------------------------
 // getStorageClassName
 //------------------------------------------------------------------------------
-const std::string &cta::ArchiveRouteId::getStorageClassName() const throw() {
+const std::string &cta::ArchivalRouteId::getStorageClassName() const throw() {
   return m_storageClassName;
 }
 
 //------------------------------------------------------------------------------
 // getCopyNb
 //------------------------------------------------------------------------------
-uint16_t cta::ArchiveRouteId::getCopyNb() const throw() {
+uint16_t cta::ArchivalRouteId::getCopyNb() const throw() {
   return m_copyNb;
 }

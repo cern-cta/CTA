@@ -178,7 +178,7 @@ public:
    * @param tapePoolName The name of the destination tape pool.
    * @param comment The comment describing the archive route.
    */
-  virtual void createArchiveRoute(
+  virtual void createArchivalRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint8_t copyNb,
@@ -194,7 +194,7 @@ public:
    * source disk files.
    * @param copyNb The tape copy number.
    */
-  virtual void deleteArchiveRoute(
+  virtual void deleteArchivalRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint8_t copyNb);
@@ -204,7 +204,7 @@ public:
    *
    * @param requester The identity of the user requesting the list.
    */
-  virtual std::list<ArchiveRoute> getArchiveRoutes(
+  virtual std::list<ArchivalRoute> getArchivalRoutes(
     const SecurityIdentity &requester) const;
 
   /**

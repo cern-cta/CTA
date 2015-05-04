@@ -734,7 +734,7 @@ int XrdProFilesystem::executeMkrouteCommand(const ParsedRequest &req, XrdOucErrI
     uint16_t copyNo;
     std::istringstream ss(req.args.at(1));
     ss >> copyNo;
-    m_adminApi.createArchiveRoute(requester, req.args.at(0), copyNo, req.args.at(2), req.args.at(3));
+    m_adminApi.createArchivalRoute(requester, req.args.at(0), copyNo, req.args.at(2), req.args.at(3));
     std::ostringstream responseSS;
     responseSS << "[OK] Archive route from storage class " << req.args.at(0) << " with copy number " << copyNo << " to tape pool " << req.args.at(2) << " created with comment \"" << req.args.at(3) << "\"";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -769,7 +769,7 @@ int XrdProFilesystem::executeRmrouteCommand(const ParsedRequest &req, XrdOucErrI
     uint16_t copyNo;
     std::istringstream ss(req.args.at(1));
     ss >> copyNo;
-    m_adminApi.deleteArchiveRoute(requester, req.args.at(0), copyNo);
+    m_adminApi.deleteArchivalRoute(requester, req.args.at(0), copyNo);
     std::ostringstream responseSS;
     responseSS << "[OK] Archive route from storage class " << req.args.at(0) << " with copy number " << copyNo << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -801,10 +801,10 @@ int XrdProFilesystem::executeLsrouteCommand(const ParsedRequest &req, XrdOucErrI
     return SFS_DATA;
   }
   try {
-    std::list<cta::ArchiveRoute> routeList = m_adminApi.getArchiveRoutes(requester);
+    std::list<cta::ArchivalRoute> routeList = m_adminApi.getArchivalRoutes(requester);
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the archive routes:";
-    for(std::list<cta::ArchiveRoute>::iterator it = routeList.begin(); it != routeList.end(); it++) {
+    for(std::list<cta::ArchivalRoute>::iterator it = routeList.begin(); it != routeList.end(); it++) {
       responseSS << "\n" << it->getStorageClassName() << ":" << it->getCopyNb() 
               << " " << it->getTapePoolName()
               << " " << it->getCreator().getUid()

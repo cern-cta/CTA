@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cta/ConfigurationItem.hpp"
 #include "cta/UserIdentity.hpp"
 
 #include <stdint.h>
@@ -9,15 +10,20 @@
 namespace cta {
 
 /**
- * An archive route.
+ * An archival route.
  */
-class ArchiveRoute {
+class ArchivalRoute: public ConfigurationItem {
 public:
 
   /**
    * Constructor.
    */
-  ArchiveRoute();
+  ArchivalRoute();
+
+  /**
+   * Destructor.
+   */
+  ~ArchivalRoute() throw();
 
   /**
    * Constructor.
@@ -28,14 +34,16 @@ public:
    * @param tapePoolName The name of the destination tape pool.
    * @param creator The identity of the user that created the storage class.
    * @param comment Comment describing the storage class.
+   * @param creationTime The absolute time at which the configuration item was
+   * created.
    */
-  ArchiveRoute(
+  ArchivalRoute(
     const std::string &storageClassName,
     const uint16_t copyNb,
     const std::string &tapePoolName,
     const UserIdentity &creator,
-    const time_t creationTime,
-    const std::string &comment);
+    const std::string &comment,
+    const time_t creationTime = time(NULL));
 
   /**
    * Returns the name of the storage class that identifies the source disk
@@ -60,20 +68,6 @@ public:
    */
   const std::string &getTapePoolName() const throw();
 
-  /**
-   * Returns the identity of the user that created the storage class.
-   *
-   * @return The identity of the user that created the storage class.
-   */
-  const UserIdentity &getCreator() const throw();
-
-  /**
-   * Returns the comment describing the storage class.
-   *
-   * @return The comment describing the storage class.
-   */
-  const std::string &getComment() const throw();
-
 private:
 
   /**
@@ -91,21 +85,6 @@ private:
    */
   std::string m_tapePoolName;
 
-  /**
-   * The time when the storage class was created.
-   */
-  time_t m_creationTime;
-
-  /**
-   * The identity of the user that created the storage class.
-   */
-  UserIdentity m_creator;
-
-  /**
-   * Comment describing the storage class.
-   */
-  std::string m_comment;
-
-}; // class ArchiveRoute
+}; // class ArchivalRoute
 
 } // namespace cta

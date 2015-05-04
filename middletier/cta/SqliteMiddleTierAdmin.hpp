@@ -165,17 +165,17 @@ public:
     const SecurityIdentity &requester) const;
 
   /**
-   * Creates the specified archive route.
+   * Creates the specified archival route.
    *
    * @param requester The identity of the user requesting the creation of the
-   * archive route.
+   * archival route.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
    * @param tapePoolName The name of the destination tape pool.
-   * @param comment The comment describing the archive route.
+   * @param comment The comment describing the archival route.
    */
-  void createArchiveRoute(
+  void createArchivalRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint16_t copyNb,
@@ -183,25 +183,25 @@ public:
     const std::string &comment);
 
   /**
-   * Deletes the specified archive route.
+   * Deletes the specified archival route.
    *
    * @param requester The identity of the user requesting the deletion of the
-   * archive route.
+   * archival route.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
    */
-  void deleteArchiveRoute(
+  void deleteArchivalRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint16_t copyNb);
 
   /**
-   * Gets the current list of archive routes.
+   * Gets the current list of archival routes.
    *
    * @param requester The identity of the user requesting the list.
    */
-  std::list<ArchiveRoute> getArchiveRoutes(
+  std::list<ArchivalRoute> getArchivalRoutes(
     const SecurityIdentity &requester) const;
 
   /**

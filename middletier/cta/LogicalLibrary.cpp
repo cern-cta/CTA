@@ -3,8 +3,13 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::LogicalLibrary::LogicalLibrary():
-  m_creationTime(time(NULL)) {
+cta::LogicalLibrary::LogicalLibrary() {
+}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+cta::LogicalLibrary::~LogicalLibrary() throw() {
 }
 
 //------------------------------------------------------------------------------
@@ -13,12 +18,10 @@ cta::LogicalLibrary::LogicalLibrary():
 cta::LogicalLibrary::LogicalLibrary(
   const std::string &name,
   const UserIdentity &creator,
-  const time_t creationTime,
-  const std::string &comment):
-  m_name(name),
-  m_creationTime(creationTime),
-  m_creator(creator),
-  m_comment(comment) {
+  const std::string &comment,
+  const time_t creationTime):
+  ConfigurationItem(creator, comment, creationTime),
+  m_name(name) {
 }
 
 //------------------------------------------------------------------------------
@@ -26,26 +29,4 @@ cta::LogicalLibrary::LogicalLibrary(
 //------------------------------------------------------------------------------
 const std::string &cta::LogicalLibrary::getName() const throw() {
   return m_name;
-}
-
-//------------------------------------------------------------------------------
-// getCreationTime
-//------------------------------------------------------------------------------
-time_t cta::LogicalLibrary::getCreationTime() const throw() {
-  return m_creationTime;
-}
-
-//------------------------------------------------------------------------------
-// getCreator
-//------------------------------------------------------------------------------
-const cta::UserIdentity &cta::LogicalLibrary::getCreator()
-  const throw() {
-  return m_creator;
-}
-
-//------------------------------------------------------------------------------
-// getComment
-//------------------------------------------------------------------------------
-const std::string &cta::LogicalLibrary::getComment() const throw() {
-  return m_comment;
 }

@@ -1,62 +1,51 @@
-#include "cta/ArchiveRoute.hpp"
+#include "cta/ArchivalRoute.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveRoute::ArchiveRoute():
-  m_copyNb(0),
-  m_creationTime(time(NULL)) {
+cta::ArchivalRoute::ArchivalRoute():
+  m_copyNb(0) {
+}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+cta::ArchivalRoute::~ArchivalRoute() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveRoute::ArchiveRoute(
+cta::ArchivalRoute::ArchivalRoute(
   const std::string &storageClassName,
   const uint16_t copyNb,
   const std::string &tapePoolName,
   const UserIdentity &creator,
-  const time_t creationTime,
-  const std::string &comment):
+  const std::string &comment,
+  const time_t creationTime):
+  ConfigurationItem(creator, comment, creationTime),
   m_storageClassName(storageClassName),
   m_copyNb(copyNb),
-  m_tapePoolName(tapePoolName),
-  m_creationTime(creationTime),
-  m_creator(creator),
-  m_comment(comment) {
+  m_tapePoolName(tapePoolName) {
 }
 
 //------------------------------------------------------------------------------
 // getStorageClassName
 //------------------------------------------------------------------------------
-const std::string &cta::ArchiveRoute::getStorageClassName() const throw() {
+const std::string &cta::ArchivalRoute::getStorageClassName() const throw() {
   return m_storageClassName;
 }
 
 //------------------------------------------------------------------------------
 // getCopyNb
 //------------------------------------------------------------------------------
-uint16_t cta::ArchiveRoute::getCopyNb() const throw() {
+uint16_t cta::ArchivalRoute::getCopyNb() const throw() {
   return m_copyNb;
 }
 
 //------------------------------------------------------------------------------
 // getTapePoolName
 //------------------------------------------------------------------------------
-const std::string &cta::ArchiveRoute::getTapePoolName() const throw() {
+const std::string &cta::ArchivalRoute::getTapePoolName() const throw() {
   return m_tapePoolName;
-}
-
-//------------------------------------------------------------------------------
-// getCreator
-//------------------------------------------------------------------------------
-const cta::UserIdentity &cta::ArchiveRoute::getCreator() const throw() {
-  return m_creator;
-}
-
-//------------------------------------------------------------------------------
-// getComment
-//------------------------------------------------------------------------------
-const std::string &cta::ArchiveRoute::getComment() const throw() {
-  return m_comment;
 }

@@ -1,47 +1,11 @@
 #include "cta/Exception.hpp"
+#include "cta/SqliteColumnNameToIndex.hpp"
 #include "cta/SqliteDatabase.hpp"
 #include "cta/Utils.hpp"
 
 #include <iostream>
 #include <memory>
 #include <sstream>
-
-//------------------------------------------------------------------------------
-// functor that given a string returns the index of the corresponding column or an exception
-//------------------------------------------------------------------------------
-struct cm {  
-  cm(sqlite3_stmt *statement) {
-    int col_count = sqlite3_column_count(statement);
-    if(col_count==0) {
-      std::ostringstream message;
-      message << "cm() - SQLite error: sqlite3_column_count() returned 0";
-      throw(cta::Exception(message.str()));
-    }
-    for(int i=0; i<col_count; i++) {
-      const char *col_name = sqlite3_column_origin_name(statement,i);
-      if(col_name == NULL) {
-        std::ostringstream message;
-        message << "cm() - SQLite error: sqlite3_column_origin_name() returned NULL";
-        throw(cta::Exception(message.str()));
-      }
-      m_col_map[std::string(col_name)] = i;
-    }
-  }
-  int operator()(const std::string &col_name) {
-    std::map<std::string, int>::iterator it = m_col_map.find(col_name);
-    if(it != m_col_map.end())
-    {
-      return it->second;
-    }
-    else {
-      std::ostringstream message;
-      message << "cm() - column " << col_name << " does not exist";
-      throw(cta::Exception(message.str()));
-    }
-  }
-private:
-  std::map<std::string, int> m_col_map;
-};
 
 //------------------------------------------------------------------------------
 // constructor
@@ -311,16 +275,16 @@ void cta::SqliteDatabase::insertStorageClass(const SecurityIdentity &requester, 
 }
 
 //------------------------------------------------------------------------------
-// insertArchiveRoute
+// insertArchivalRoute
 //------------------------------------------------------------------------------
-void cta::SqliteDatabase::insertArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName, const std::string &comment) {
+void cta::SqliteDatabase::insertArchivalRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName, const std::string &comment) {
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "INSERT INTO ARCHIVEROUTE VALUES('" << storageClassName << "'," << (int)copyNb << ",'" << tapePoolName << "'," << requester.user.getUid() << "," << requester.user.getGid() << "," << (int)time(NULL) << ",'" << comment << "');";
   int rc = sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0, &zErrMsg);
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "insertArchiveRoute() - SQLite error: " << zErrMsg;
+      message << "insertArchivalRoute() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(Exception(message.str()));
   }
@@ -361,10 +325,10 @@ void cta::SqliteDatabase::deleteStorageClass(const SecurityIdentity &requester, 
 }
 
 //------------------------------------------------------------------------------
-// deleteArchiveRoute
+// deleteArchivalRoute
 //------------------------------------------------------------------------------
-void cta::SqliteDatabase::deleteArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb) {
-  checkArchiveRouteExists(storageClassName, copyNb);
+void cta::SqliteDatabase::deleteArchivalRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb) {
+  checkArchivalRouteExists(storageClassName, copyNb);
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "DELETE FROM ARCHIVEROUTE WHERE STORAGECLASS_NAME='" << storageClassName << "' AND COPYNB=" << (int)copyNb << ";";
@@ -775,9 +739,9 @@ void cta::SqliteDatabase::checkStorageClassExists(const std::string &name){
 }
  
 //------------------------------------------------------------------------------
-// checkArchiveRouteExists
+// checkArchivalRouteExists
 //------------------------------------------------------------------------------
-void cta::SqliteDatabase::checkArchiveRouteExists(const std::string &name, const uint16_t copyNb){
+void cta::SqliteDatabase::checkArchivalRouteExists(const std::string &name, const uint16_t copyNb){
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "SELECT * FROM ARCHIVEROUTE WHERE STORAGECLASS_NAME='" << name << "' AND COPYNB=" << (int)copyNb << ";";
@@ -785,7 +749,7 @@ void cta::SqliteDatabase::checkArchiveRouteExists(const std::string &name, const
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "checkArchiveRouteExists() - SQLite error: " << zErrMsg;
+      message << "checkArchivalRouteExists() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       sqlite3_finalize(statement);
       throw(Exception(message.str()));
@@ -802,7 +766,7 @@ void cta::SqliteDatabase::checkArchiveRouteExists(const std::string &name, const
   }
   else {
     std::ostringstream message;
-    message << "checkArchiveRouteExists() - SQLite error: " << zErrMsg;
+    message << "checkArchivalRouteExists() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
     sqlite3_finalize(statement);
     throw(Exception(message.str()));    
@@ -828,15 +792,15 @@ std::list<cta::TapePool> cta::SqliteDatabase::selectAllTapePools(const SecurityI
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
-    cm cm(statement);
+    SqliteColumnNameToIndex idx(statement);
     pools.push_back(cta::TapePool(
-            std::string((char *)sqlite3_column_text(statement,cm("NAME"))),
-            sqlite3_column_int(statement,cm("NBDRIVES")),
-            sqlite3_column_int(statement,cm("NBPARTIALTAPES")),
-            cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),
-            sqlite3_column_int(statement,cm("GID"))),
-            std::string((char *)sqlite3_column_text(statement,cm("COMMENT"))),
-            time_t(sqlite3_column_int(statement,cm("CREATIONTIME")))
+            std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
+            sqlite3_column_int(statement,idx("NBDRIVES")),
+            sqlite3_column_int(statement,idx("NBPARTIALTAPES")),
+            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),
+            sqlite3_column_int(statement,idx("GID"))),
+            std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
       ));
   }
   sqlite3_finalize(statement);  
@@ -861,13 +825,13 @@ std::list<cta::StorageClass> cta::SqliteDatabase::selectAllStorageClasses(const 
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
-    cm cm(statement);
+    SqliteColumnNameToIndex idx(statement);
     classes.push_back(cta::StorageClass(
-            std::string((char *)sqlite3_column_text(statement,cm("NAME"))),
-            sqlite3_column_int(statement,cm("NBCOPIES")),
-            cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),sqlite3_column_int(statement,cm("GID"))),
-            time_t(sqlite3_column_int(statement,cm("CREATIONTIME"))),
-            std::string((char *)sqlite3_column_text(statement,cm("COMMENT")))
+            std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
+            sqlite3_column_int(statement,idx("NBCOPIES")),
+            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID"))),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME"))),
+            std::string((char *)sqlite3_column_text(statement,idx("COMMENT")))
       ));
   }
   sqlite3_finalize(statement);  
@@ -875,31 +839,31 @@ std::list<cta::StorageClass> cta::SqliteDatabase::selectAllStorageClasses(const 
 }
 
 //------------------------------------------------------------------------------
-// selectAllArchiveRoutes
+// selectAllArchivalRoutes
 //------------------------------------------------------------------------------
-std::list<cta::ArchiveRoute>  cta::SqliteDatabase::selectAllArchiveRoutes(const SecurityIdentity &requester) {
+std::list<cta::ArchivalRoute>  cta::SqliteDatabase::selectAllArchivalRoutes(const SecurityIdentity &requester) {
   char *zErrMsg = 0;
   std::ostringstream query;
-  std::list<cta::ArchiveRoute> routes;
+  std::list<cta::ArchivalRoute> routes;
   query << "SELECT STORAGECLASS_NAME, COPYNB, TAPEPOOL_NAME, UID, GID, CREATIONTIME, COMMENT FROM ARCHIVEROUTE ORDER BY STORAGECLASS_NAME, COPYNB;";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
     std::ostringstream message;
-    message << "selectAllArchiveRoutes() - SQLite error: " << zErrMsg;
+    message << "selectAllArchivalRoutes() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
     sqlite3_finalize(statement);
     throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
-    cm cm(statement);
-    routes.push_back(cta::ArchiveRoute(
-            std::string((char *)sqlite3_column_text(statement,cm("STORAGECLASS_NAME"))),
-            sqlite3_column_int(statement,cm("COPYNB")),
-            std::string((char *)sqlite3_column_text(statement,cm("TAPEPOOL_NAME"))),
-            cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),sqlite3_column_int(statement,cm("GID"))),
-            time_t(sqlite3_column_int(statement,cm("CREATIONTIME"))),
-            std::string((char *)sqlite3_column_text(statement,cm("COMMENT")))
+    SqliteColumnNameToIndex idx(statement);
+    routes.push_back(cta::ArchivalRoute(
+            std::string((char *)sqlite3_column_text(statement,idx("STORAGECLASS_NAME"))),
+            sqlite3_column_int(statement,idx("COPYNB")),
+            std::string((char *)sqlite3_column_text(statement,idx("TAPEPOOL_NAME"))),
+            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID"))),
+            std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
       ));
   }
   sqlite3_finalize(statement);
@@ -907,9 +871,9 @@ std::list<cta::ArchiveRoute>  cta::SqliteDatabase::selectAllArchiveRoutes(const 
 }
 
 //------------------------------------------------------------------------------
-// getArchiveRouteOfStorageClass
+// getArchivalRouteOfStorageClass
 //------------------------------------------------------------------------------
-cta::ArchiveRoute cta::SqliteDatabase::getArchiveRouteOfStorageClass(const SecurityIdentity &requester, const std::string &storageClassName, const  uint16_t copyNb) {
+cta::ArchivalRoute cta::SqliteDatabase::getArchivalRouteOfStorageClass(const SecurityIdentity &requester, const std::string &storageClassName, const  uint16_t copyNb) {
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "SELECT STORAGECLASS_NAME, COPYNB, TAPEPOOL_NAME, UID, GID, CREATIONTIME, COMMENT FROM ARCHIVEROUTE WHERE STORAGECLASS_NAME='"<< storageClassName <<"' AND COPYNB="<< (int)copyNb <<";";
@@ -917,33 +881,33 @@ cta::ArchiveRoute cta::SqliteDatabase::getArchiveRouteOfStorageClass(const Secur
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
       std::ostringstream message;
-      message << "getArchiveRouteOfStorageClass() - SQLite error: " << zErrMsg;
+      message << "getArchivalRouteOfStorageClass() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       sqlite3_finalize(statement);
       throw(Exception(message.str()));
   }
-  cta::ArchiveRoute route;
+  cta::ArchivalRoute route;
   int res = sqlite3_step(statement);
   if(res==SQLITE_ROW) {
-    cm cm(statement);
-    route = cta::ArchiveRoute(
-            std::string((char *)sqlite3_column_text(statement,cm("STORAGECLASS_NAME"))),
-            sqlite3_column_int(statement,cm("COPYNB")),
-            std::string((char *)sqlite3_column_text(statement,cm("TAPEPOOL_NAME"))),
-            cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),sqlite3_column_int(statement,cm("GID"))),
-            time_t(sqlite3_column_int(statement,cm("CREATIONTIME"))),
-            std::string((char *)sqlite3_column_text(statement,cm("COMMENT")))
+    SqliteColumnNameToIndex idx(statement);
+    route = cta::ArchivalRoute(
+            std::string((char *)sqlite3_column_text(statement,idx("STORAGECLASS_NAME"))),
+            sqlite3_column_int(statement,idx("COPYNB")),
+            std::string((char *)sqlite3_column_text(statement,idx("TAPEPOOL_NAME"))),
+            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID"))),
+            std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
       );
   }
   else if(res==SQLITE_DONE) {
     std::ostringstream message;
-    message << "getArchiveRouteOfStorageClass() - No archive route found for storage class: " << storageClassName << " and copynb: "<< (int)copyNb;
+    message << "getArchivalRouteOfStorageClass() - No archive route found for storage class: " << storageClassName << " and copynb: "<< (int)copyNb;
     sqlite3_finalize(statement);
     throw(Exception(message.str()));
   }
   else {
     std::ostringstream message;
-    message << "getArchiveRouteOfStorageClass() - SQLite error: " << zErrMsg;
+    message << "getArchivalRouteOfStorageClass() - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
     sqlite3_finalize(statement);
     throw(Exception(message.str()));
@@ -970,17 +934,17 @@ std::list<cta::Tape> cta::SqliteDatabase::selectAllTapes(const SecurityIdentity 
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
-    cm cm(statement);
+    SqliteColumnNameToIndex idx(statement);
     tapes.push_back(cta::Tape(
-            std::string((char *)sqlite3_column_text(statement,cm("VID"))),
-            std::string((char *)sqlite3_column_text(statement,cm("LOGICALLIBRARY_NAME"))),
-            std::string((char *)sqlite3_column_text(statement,cm("TAPEPOOL_NAME"))),
-            sqlite3_column_int(statement,cm("CAPACITY_BYTES")),
-            sqlite3_column_int(statement,cm("DATAONTAPE_BYTES")),
-            cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),
-            sqlite3_column_int(statement,cm("GID"))),
-            std::string((char *)sqlite3_column_text(statement,cm("COMMENT"))),
-            time_t(sqlite3_column_int(statement,cm("CREATIONTIME")))
+            std::string((char *)sqlite3_column_text(statement,idx("VID"))),
+            std::string((char *)sqlite3_column_text(statement,idx("LOGICALLIBRARY_NAME"))),
+            std::string((char *)sqlite3_column_text(statement,idx("TAPEPOOL_NAME"))),
+            sqlite3_column_int(statement,idx("CAPACITY_BYTES")),
+            sqlite3_column_int(statement,idx("DATAONTAPE_BYTES")),
+            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),
+            sqlite3_column_int(statement,idx("GID"))),
+            std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
       ));
   }
   sqlite3_finalize(statement);
@@ -1005,12 +969,12 @@ std::list<cta::AdminUser> cta::SqliteDatabase::selectAllAdminUsers(const Securit
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
-    cm cm(statement);
+    SqliteColumnNameToIndex idx(statement);
     list.push_back(cta::AdminUser(
-            cta::UserIdentity(sqlite3_column_int(statement,cm("ADMIN_UID")),sqlite3_column_int(statement,cm("ADMIN_GID"))),
-            cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),sqlite3_column_int(statement,cm("GID"))),
-            time_t(sqlite3_column_int(statement,cm("CREATIONTIME"))),
-            std::string((char *)sqlite3_column_text(statement,cm("COMMENT")))
+            cta::UserIdentity(sqlite3_column_int(statement,idx("ADMIN_UID")),sqlite3_column_int(statement,idx("ADMIN_GID"))),
+            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID"))),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME"))),
+            std::string((char *)sqlite3_column_text(statement,idx("COMMENT")))
       ));
   }
   sqlite3_finalize(statement);
@@ -1035,12 +999,12 @@ std::list<cta::AdminHost> cta::SqliteDatabase::selectAllAdminHosts(const Securit
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
-    cm cm(statement);
+    SqliteColumnNameToIndex idx(statement);
     list.push_back(cta::AdminHost(
-            std::string((char *)sqlite3_column_text(statement,cm("NAME"))),
-            cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),sqlite3_column_int(statement,cm("GID"))),
-            time_t(sqlite3_column_int(statement,cm("CREATIONTIME"))),
-            std::string((char *)sqlite3_column_text(statement,cm("COMMENT")))
+            std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
+            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID"))),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME"))),
+            std::string((char *)sqlite3_column_text(statement,idx("COMMENT")))
       ));
   }
   sqlite3_finalize(statement);
@@ -1065,13 +1029,13 @@ std::map<cta::TapePool, std::list<cta::ArchivalJob> > cta::SqliteDatabase::selec
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
-    cm cm(statement);
-    map[getTapePoolByName(requester, std::string((char *)sqlite3_column_text(statement,cm("TAPEPOOL_NAME"))))].push_back(cta::ArchivalJob(
-            (cta::ArchivalJobState::Enum)sqlite3_column_int(statement,cm("STATE")),
-            std::string((char *)sqlite3_column_text(statement,cm("SRCURL"))),
-            std::string((char *)sqlite3_column_text(statement,cm("DSTPATH"))),
-            cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),sqlite3_column_int(statement,cm("GID"))),
-            time_t(sqlite3_column_int(statement,cm("CREATIONTIME")))
+    SqliteColumnNameToIndex idx(statement);
+    map[getTapePoolByName(requester, std::string((char *)sqlite3_column_text(statement,idx("TAPEPOOL_NAME"))))].push_back(cta::ArchivalJob(
+            (cta::ArchivalJobState::Enum)sqlite3_column_int(statement,idx("STATE")),
+            std::string((char *)sqlite3_column_text(statement,idx("SRCURL"))),
+            std::string((char *)sqlite3_column_text(statement,idx("DSTPATH"))),
+            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID"))),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
       ));
   }
   sqlite3_finalize(statement);
@@ -1097,14 +1061,14 @@ cta::TapePool cta::SqliteDatabase::getTapePoolByName(const SecurityIdentity &req
   }
   int res = sqlite3_step(statement);
   if(res==SQLITE_ROW) {
-    cm cm(statement);
+    SqliteColumnNameToIndex idx(statement);
     pool = cta::TapePool(
-            std::string((char *)sqlite3_column_text(statement,cm("NAME"))),
-            sqlite3_column_int(statement,cm("NBDRIVES")),
-            sqlite3_column_int(statement,cm("NBPARTIALTAPES")),
-            cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),sqlite3_column_int(statement,cm("GID"))),
-            std::string((char *)sqlite3_column_text(statement,cm("COMMENT"))),
-            time_t(sqlite3_column_int(statement,cm("CREATIONTIME")))
+            std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
+            sqlite3_column_int(statement,idx("NBDRIVES")),
+            sqlite3_column_int(statement,idx("NBPARTIALTAPES")),
+            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID"))),
+            std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
       );
   }
   else if(res==SQLITE_DONE) {    
@@ -1143,13 +1107,13 @@ cta::StorageClass cta::SqliteDatabase::getStorageClassByName(const SecurityIdent
   }
   int res = sqlite3_step(statement);
   if(res==SQLITE_ROW) {
-    cm cm(statement);
+    SqliteColumnNameToIndex idx(statement);
     stgClass = cta::StorageClass(
-            std::string((char *)sqlite3_column_text(statement,cm("NAME"))),
-            sqlite3_column_int(statement,cm("NBCOPIES")),
-            cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),sqlite3_column_int(statement,cm("GID"))),
-            time_t(sqlite3_column_int(statement,cm("CREATIONTIME"))),
-            std::string((char *)sqlite3_column_text(statement,cm("COMMENT")))
+            std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
+            sqlite3_column_int(statement,idx("NBCOPIES")),
+            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID"))),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME"))),
+            std::string((char *)sqlite3_column_text(statement,idx("COMMENT")))
       );
   }
   else if(res==SQLITE_DONE) {    
@@ -1188,17 +1152,17 @@ cta::Tape cta::SqliteDatabase::getTapeByVid(const SecurityIdentity &requester, c
   }
   int res = sqlite3_step(statement);
   if(res==SQLITE_ROW) {
-    cm cm(statement);
+    SqliteColumnNameToIndex idx(statement);
     tape = cta::Tape(
-            std::string((char *)sqlite3_column_text(statement,cm("VID"))),
-            std::string((char *)sqlite3_column_text(statement,cm("LOGICALLIBRARY_NAME"))),
-            std::string((char *)sqlite3_column_text(statement,cm("TAPEPOOL_NAME"))),
-            sqlite3_column_int(statement,cm("CAPACITY_BYTES")),
-            sqlite3_column_int(statement,cm("DATAONTAPE_BYTES")),
-            cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),
-            sqlite3_column_int(statement,cm("GID"))),
-            std::string((char *)sqlite3_column_text(statement,cm("COMMENT")),
-            time_t(sqlite3_column_int(statement,cm("CREATIONTIME"))))
+            std::string((char *)sqlite3_column_text(statement,idx("VID"))),
+            std::string((char *)sqlite3_column_text(statement,idx("LOGICALLIBRARY_NAME"))),
+            std::string((char *)sqlite3_column_text(statement,idx("TAPEPOOL_NAME"))),
+            sqlite3_column_int(statement,idx("CAPACITY_BYTES")),
+            sqlite3_column_int(statement,idx("DATAONTAPE_BYTES")),
+            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),
+            sqlite3_column_int(statement,idx("GID"))),
+            std::string((char *)sqlite3_column_text(statement,idx("COMMENT")),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME"))))
       );
   }
   else if(res==SQLITE_DONE) {    
@@ -1236,13 +1200,13 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::SqliteDatabase::selectAl
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
-    cm cm(statement);
-    map[getTapeByVid(requester, std::string((char *)sqlite3_column_text(statement,cm("VID"))))].push_back(cta::RetrievalJob(
-            (cta::RetrievalJobState::Enum)sqlite3_column_int(statement,cm("STATE")),
-            std::string((char *)sqlite3_column_text(statement,cm("SRCPATH"))),
-            std::string((char *)sqlite3_column_text(statement,cm("DSTURL"))),
-            cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),sqlite3_column_int(statement,cm("GID"))),
-            time_t(sqlite3_column_int(statement,cm("CREATIONTIME")))
+    SqliteColumnNameToIndex idx(statement);
+    map[getTapeByVid(requester, std::string((char *)sqlite3_column_text(statement,idx("VID"))))].push_back(cta::RetrievalJob(
+            (cta::RetrievalJobState::Enum)sqlite3_column_int(statement,idx("STATE")),
+            std::string((char *)sqlite3_column_text(statement,idx("SRCPATH"))),
+            std::string((char *)sqlite3_column_text(statement,idx("DSTURL"))),
+            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID"))),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
       ));
   }
   sqlite3_finalize(statement);
@@ -1267,12 +1231,12 @@ std::list<cta::LogicalLibrary> cta::SqliteDatabase::selectAllLogicalLibraries(co
       throw(Exception(message.str()));
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
-    cm cm(statement);
+    SqliteColumnNameToIndex idx(statement);
     list.push_back(cta::LogicalLibrary(
-            std::string((char *)sqlite3_column_text(statement,cm("NAME"))),
-            cta::UserIdentity(sqlite3_column_int(statement,cm("UID")),sqlite3_column_int(statement,cm("GID"))),
-            time_t(sqlite3_column_int(statement,cm("CREATIONTIME"))),
-            std::string((char *)sqlite3_column_text(statement,cm("COMMENT")))
+            std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
+            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID"))),
+            std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
       ));
   }
   sqlite3_finalize(statement);

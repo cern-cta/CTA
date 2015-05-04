@@ -12,14 +12,15 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/ArchivalJobState.cpp
   cta/ArchivalMount.cpp
   cta/ArchivalRequest.cpp
-  cta/ArchiveRoute.cpp
-  cta/ArchiveRouteId.cpp
+  cta/ArchivalRoute.cpp
+  cta/ArchivalRouteId.cpp
   cta/ArchiveToDirRequest.cpp
   cta/ArchiveToFileRequest.cpp
   cta/ConfigurationItem.cpp
   cta/DirectoryEntry.cpp
   cta/DirectoryIterator.cpp
   cta/DiskException.cpp
+  cta/EosRemoteStorage.cpp
   cta/Exception.cpp
   cta/FileAttribute.cpp
   cta/FileSystemDirectoryEntry.cpp
@@ -31,6 +32,7 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/MiddleTierAdmin.cpp
   cta/MiddleTierUser.cpp
   cta/Mount.cpp
+  cta/RemoteStorage.cpp
   cta/RetrievalFileTransfer.cpp
   cta/RetrievalJob.cpp
   cta/RetrievalJobQueues.cpp
@@ -40,6 +42,7 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/RetrieveToDirRequest.cpp
   cta/RetrieveToFileRequest.cpp
   cta/SecurityIdentity.cpp
+  cta/SqliteColumnNameToIndex.cpp
   cta/SqliteDatabase.cpp
   cta/SqliteMiddleTierAdmin.cpp
   cta/SqliteMiddleTierUser.cpp

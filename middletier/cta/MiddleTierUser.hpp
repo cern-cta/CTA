@@ -1,7 +1,7 @@
 #pragma once
 
 #include "cta/ArchivalJob.hpp"
-#include "cta/ArchiveRoute.hpp"
+#include "cta/ArchivalRoute.hpp"
 #include "cta/DirectoryIterator.hpp"
 #include "cta/LogicalLibrary.hpp"
 #include "cta/RetrievalJob.hpp"

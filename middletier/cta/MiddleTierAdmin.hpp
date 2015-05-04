@@ -3,7 +3,7 @@
 #include "cta/AdminHost.hpp"
 #include "cta/AdminUser.hpp"
 #include "cta/ArchivalJob.hpp"
-#include "cta/ArchiveRoute.hpp"
+#include "cta/ArchivalRoute.hpp"
 #include "cta/DirectoryIterator.hpp"
 #include "cta/LogicalLibrary.hpp"
 #include "cta/SecurityIdentity.hpp"
@@ -173,17 +173,17 @@ public:
     const SecurityIdentity &requester) const = 0;
 
   /**
-   * Creates the specified archive route.
+   * Creates the specified archival route.
    *
    * @param requester The identity of the user requesting the creation of the
-   * archive route.
+   * archival route.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
    * @param tapePoolName The name of the destination tape pool.
-   * @param comment The comment describing the archive route.
+   * @param comment The comment describing the archival route.
    */
-  virtual void createArchiveRoute(
+  virtual void createArchivalRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint16_t copyNb,
@@ -191,25 +191,25 @@ public:
     const std::string &comment) = 0;
 
   /**
-   * Deletes the specified archive route.
+   * Deletes the specified archival route.
    *
    * @param requester The identity of the user requesting the deletion of the
-   * archive route.
+   * archival route.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
    */
-  virtual void deleteArchiveRoute(
+  virtual void deleteArchivalRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint16_t copyNb) = 0;
 
   /**
-   * Gets the current list of archive routes.
+   * Gets the current list of archival routes.
    *
    * @param requester The identity of the user requesting the list.
    */
-  virtual std::list<ArchiveRoute> getArchiveRoutes(
+  virtual std::list<ArchivalRoute> getArchivalRoutes(
     const SecurityIdentity &requester) const = 0;
 
   /**

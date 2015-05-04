@@ -1,15 +1,16 @@
 #pragma once
 
-#include "cta/UserIdentity.hpp"
+#include "cta/ConfigurationItem.hpp"
 
 #include <string>
+#include <time.h>
 
 namespace cta {
 
 /**
  * Class representing a logical library.
  */
-class LogicalLibrary {
+class LogicalLibrary: public ConfigurationItem {
 public:
 
   /**
@@ -18,17 +19,25 @@ public:
   LogicalLibrary();
 
   /**
+   * Destructor.
+   */
+  ~LogicalLibrary() throw();
+
+  /**
    * Constructor.
    *
    * @param name The name of the logical library.
    * @param creator The identity of the user that created the logical library.
    * @param comment The comment describing the logical library.
+   * @param creationTime Optionally the absolute time at which the
+   * configuration item was created.  If no value is given then the current
+   * time is used.
    */
   LogicalLibrary(
     const std::string &name,
     const UserIdentity &creator,
-    const time_t creationTime,
-    const std::string &comment);
+    const std::string &comment,
+    const time_t creationTime = time(NULL));
 
   /**
    * Returns the name of the logical library.
@@ -37,48 +46,12 @@ public:
    */
   const std::string &getName() const throw();
 
-  /**
-   * Returns the time when the logical library was created.
-   *
-   * @return The time when the logical library was created.
-   */
-  time_t getCreationTime() const throw();
-
-  /**
-   * Returns the identity of the user that created the logical library.
-   *
-   * @return The identity of the user that created the logical library.
-   */
-  const UserIdentity &getCreator() const throw();
-
-  /**
-   * Returns the comment describing the logical library.
-   *
-   * @return The comment describing the logical library.
-   */
-  const std::string &getComment() const throw();
-
 private:
 
   /**
    * The name of the logical library.
    */
   std::string m_name;
-
-  /**
-   * The time when the logical library was created.
-   */
-  time_t m_creationTime;
-
-  /**
-   * The identity of the user that created the logical library.
-   */
-  UserIdentity m_creator;
-
-  /**
-   * Comment describing the logical library.
-   */
-  std::string m_comment;
 
 }; // class LogicalLibrary
 
