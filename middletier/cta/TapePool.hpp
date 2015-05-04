@@ -1,7 +1,6 @@
 #pragma once
 
 #include "cta/ConfigurationItem.hpp"
-#include "cta/UserIdentity.hpp"
 
 #include <string>
 

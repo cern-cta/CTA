@@ -54,7 +54,8 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/UserIdentity.cpp
   cta/UserRequest.cpp
   cta/Utils.cpp
-  cta/Vfs.cpp)
+  cta/Vfs.cpp
+  cta/VO.cpp)
 
 add_library (ctamiddletier SHARED
   ${MIDDLE_TIER_LIB_SRC_FILES})
