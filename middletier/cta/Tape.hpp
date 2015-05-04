@@ -32,9 +32,10 @@ public:
    * belongs.
    * @param tapePoolName The name of the tape pool to which the tape belongs.
    * @param capacityInBytes The capacity of the tape.
-   * @param creator The identity of the user that created the tape.
-   * @param comment The comment describing the tape.
-   * @param creationTime Optionally the absolute time at which the
+   * @param creator The identity of the user that created this configuration
+   * item.
+   * @param comment The comment describing this configuration item.
+   * @param creationTime Optionally the absolute time at which this
    * configuration item was created.  If no value is given then the current
    * time is used.
    */

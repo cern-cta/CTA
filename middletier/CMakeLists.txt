@@ -20,6 +20,7 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/DirectoryEntry.cpp
   cta/DirectoryIterator.cpp
   cta/DiskException.cpp
+  cta/DriveQuota.cpp
   cta/EosRemoteStorage.cpp
   cta/Exception.cpp
   cta/FileAttribute.cpp
@@ -32,6 +33,7 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/MiddleTierAdmin.cpp
   cta/MiddleTierUser.cpp
   cta/Mount.cpp
+  cta/MountCriteria.cpp
   cta/RemoteStorage.cpp
   cta/RetrievalFileTransfer.cpp
   cta/RetrievalJob.cpp
@@ -52,6 +54,7 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/TapeFileLocation.cpp
   cta/TapePool.cpp
   cta/UserIdentity.cpp
+  cta/UserGroup.cpp
   cta/UserRequest.cpp
   cta/Utils.cpp
   cta/Vfs.cpp

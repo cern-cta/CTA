@@ -26,11 +26,11 @@ public:
   /**
    * Constructor.
    *
-   * @param creator The identity of the user that created the configuration
+   * @param creator The identity of the user that created this configuration
    * item.
-   * @param comment The comment made by the creator of the configuration
-   * request.
-   * @param creationTime Optionally the absolute time at which the
+   * @param comment The comment made by the creator of this configuration
+   * item.
+   * @param creationTime Optionally the absolute time at which this
    * configuration item was created.  If no value is given then the current
    * time is used.
    */
@@ -38,40 +38,40 @@ public:
     const time_t creationTime = time(NULL));
 
   /**
-   * Returns the identity of the user that created the configuration item.
+   * Returns the identity of the user that created this configuration item.
    *
-   * @return The identity of the user that created the configuration item.
+   * @return The identity of the user that created this configuration item.
    */
   const UserIdentity &getCreator() const throw();
 
   /**
-   * Returns the comment made by the creator of the configuration request.
+   * Returns the comment made by the creator of this configuration request.
    *
-   * @return The comment made by the creator of the configuration request.
+   * @return The comment made by the creator of this configuration request.
    */
   const std::string &getComment() const throw();
 
   /**
-   * Returns the absolute time at which the configuration item was created.
+   * Returns the absolute time at which this configuration item was created.
    *
-   * @return The absolute time at which the configuration item was created.
+   * @return The absolute time at which this configuration item was created.
    */
   time_t getCreationTime() const throw();
 
 private:
 
   /**
-   * The identity of the user that created the configuration item.
+   * The identity of the user that created this configuration item.
    */
   UserIdentity m_creator;
 
   /**
-   * The comment made by the creator of the configuration request.
+   * The comment made by the creator of this configuration request.
    */
   std::string m_comment;
 
   /**
-   * The absolute time at which the configuration item was created.
+   * The absolute time at which this configuration item was created.
    */
   time_t m_creationTime;
 

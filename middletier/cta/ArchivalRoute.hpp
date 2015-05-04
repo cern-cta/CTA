@@ -32,10 +32,12 @@ public:
    * source disk files.
    * @param copyNb The tape copy number.  Copy numbers start from 1.
    * @param tapePoolName The name of the destination tape pool.
-   * @param creator The identity of the user that created the storage class.
-   * @param comment Comment describing the storage class.
-   * @param creationTime The absolute time at which the configuration item was
-   * created.
+   * @param creator The identity of the user that created this configuration
+   * item.
+   * @param comment Comment describing this configuration item.
+   * @param creationTime Optionally the absolute time at which this
+   * configuration item was created.  If no value is given then the current
+   * time is used.
    */
   ArchivalRoute(
     const std::string &storageClassName,

@@ -28,9 +28,10 @@ public:
    * @param name The name of the tape pool.
    * @param nbPartialTapes The maximum number of tapes that can be partially
    * full at any moment in time.
-   * @param creator The identity of the user that created the tape pool.
-   * @param comment The comment describing the tape pool.
-   * @param creationTime Optionally the absolute time at which the
+   * @param creator The identity of the user that created this configuration
+   * item.
+   * @param comment The comment describing this configuration item.
+   * @param creationTime Optionally the absolute time at which this
    * configuration item was created.  If no value is given then the current
    * time is used.
    */
