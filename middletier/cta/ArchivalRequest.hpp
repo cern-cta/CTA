@@ -3,6 +3,7 @@
 #include "cta/UserRequest.hpp"
 
 #include <stdint.h>
+#include <string>
 
 namespace cta {
 
@@ -25,17 +26,17 @@ public:
   /**
    * Constructor.
    *
-   * @param tapePoolName The name of the destination tape pool.
+   * @param storageClassName The name of the storage class.
    * @param priority The priority of the request.
    */
-  ArchivalRequest(const std::string &tapePoolName, const uint64_t priority);
+  ArchivalRequest(const std::string &storageClassName, const uint64_t priority);
 
   /**
-   * Returns the name of the destination tape pool.
+   * Returns the name of the storage class.
    *
-   * @return The name of the destination tape pool.
+   * @return The name of the storage class.
    */
-  const std::string &getTapePoolName() const throw();
+  const std::string &getStorageClassName() const throw();
 
   /**
    * Returns the priority of the request.
@@ -47,9 +48,9 @@ public:
 private:
 
   /**
-   * The name of the destination tape pool.
+   * The name of the storage class.
    */
-  std::string m_tapePoolName;
+  std::string m_storageClassName;
 
   /**
    * The priority of the request.

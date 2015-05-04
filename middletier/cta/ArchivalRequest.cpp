@@ -16,21 +16,21 @@ cta::ArchivalRequest::~ArchivalRequest() throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalRequest::ArchivalRequest(const std::string &tapePoolName,
+cta::ArchivalRequest::ArchivalRequest(const std::string &storageClassName,
   const uint64_t priority):
-  m_tapePoolName(tapePoolName),
+  m_storageClassName(storageClassName),
   m_priority(priority) {
 }
 
 //------------------------------------------------------------------------------
-// getTapePoolName
+// getStorageClassName
 //------------------------------------------------------------------------------
-const std::string &cta::ArchivalRequest::getTapePoolName() const throw() {
-  return m_tapePoolName;
+const std::string &cta::ArchivalRequest::getStorageClassName() const throw() {
+  return m_storageClassName;
 }
 
 //------------------------------------------------------------------------------
-// getTapePoolName
+// getPriority
 //------------------------------------------------------------------------------
 uint64_t cta::ArchivalRequest::getPriority() const throw() {
   return m_priority;
