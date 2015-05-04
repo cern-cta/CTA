@@ -27,9 +27,6 @@ public:
    * Constructor.
    *
    * @param name The name of the tape pool.
-   * @param nbDrives The maximum number of drives that can be concurrently
-   * assigned to this pool independent of whether they are archiving or
-   * retrieving files.
    * @param nbPartialTapes The maximum number of tapes that can be partially
    * full at any moment in time.
    * @param creator The identity of the user that created the tape pool.
@@ -40,7 +37,6 @@ public:
    */
   TapePool(
     const std::string &name,
-    const uint16_t nbDrives,
     const uint32_t nbPartialTapes,
     const UserIdentity &creator,
     const std::string &comment,
@@ -61,17 +57,6 @@ public:
   const std::string &getName() const throw();
 
   /**
-   * Returns the maximum number of drives that can be concurrently
-   * assigned to this pool independent of whether they are archiving or
-   * retrieving files.
-   *
-   * @return The maximum number of drives that can be concurrently
-   * assigned to this pool independent of whether they are archiving or
-   * retrieving files.
-   */
-  uint16_t getNbDrives() const throw();
-
-  /**
    * Returns the maximum number of tapes that can be partially full at any
    * moment in time.
    *
@@ -86,12 +71,6 @@ private:
    * The name of the tape pool.
    */
   std::string m_name;
-
-  /**
-   * The maximum number of drives that can be concurrently assigned to this
-   * pool independent of whether they are archiving or retrieving files.
-   */
-  uint16_t m_nbDrives;
 
   /**
    * The maximum number of tapes that can be partially full at any moment in

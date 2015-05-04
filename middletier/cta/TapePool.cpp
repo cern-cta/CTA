@@ -4,7 +4,6 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::TapePool::TapePool():
-  m_nbDrives(0),
   m_nbPartialTapes(0) {
 }
 
@@ -19,14 +18,12 @@ cta::TapePool::~TapePool() throw() {
 //------------------------------------------------------------------------------
 cta::TapePool::TapePool(
   const std::string &name,
-  const uint16_t nbDrives,
   const uint32_t nbPartialTapes,
   const UserIdentity &creator,
   const std::string &comment,
   const time_t creationTime):
   ConfigurationItem(creator, comment, creationTime),
   m_name(name),
-  m_nbDrives(nbDrives),
   m_nbPartialTapes(nbPartialTapes) {
 }
 
@@ -42,13 +39,6 @@ bool cta::TapePool::operator<(const TapePool &rhs) const throw() {
 //------------------------------------------------------------------------------
 const std::string &cta::TapePool::getName() const throw() {
   return m_name;
-}
-
-//------------------------------------------------------------------------------
-// getNbDrives
-//------------------------------------------------------------------------------
-uint16_t cta::TapePool::getNbDrives() const throw() {
-  return m_nbDrives;
 }
 
 //------------------------------------------------------------------------------

@@ -68,7 +68,6 @@ void cta::SqliteDatabase::createSchema() {
             ");"
           "CREATE TABLE TAPEPOOL("
             "NAME           TEXT     PRIMARY KEY,"
-            "NBDRIVES       INTEGER,"
             "NBPARTIALTAPES INTEGER,"
             "UID            INTEGER,"
             "GID            INTEGER,"
@@ -781,7 +780,7 @@ std::list<cta::TapePool> cta::SqliteDatabase::selectAllTapePools(const SecurityI
   char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::TapePool> pools;
-  query << "SELECT NAME, NBDRIVES, NBPARTIALTAPES, UID, GID, CREATIONTIME, COMMENT FROM TAPEPOOL ORDER BY NAME;";
+  query << "SELECT NAME, NBPARTIALTAPES, UID, GID, CREATIONTIME, COMMENT FROM TAPEPOOL ORDER BY NAME;";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
@@ -795,7 +794,6 @@ std::list<cta::TapePool> cta::SqliteDatabase::selectAllTapePools(const SecurityI
     SqliteColumnNameToIndex idx(statement);
     pools.push_back(cta::TapePool(
             std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
-            sqlite3_column_int(statement,idx("NBDRIVES")),
             sqlite3_column_int(statement,idx("NBPARTIALTAPES")),
             cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),
             sqlite3_column_int(statement,idx("GID"))),
@@ -1049,7 +1047,7 @@ cta::TapePool cta::SqliteDatabase::getTapePoolByName(const SecurityIdentity &req
   char *zErrMsg = 0;
   std::ostringstream query;
   cta::TapePool pool;
-  query << "SELECT NAME, NBDRIVES, NBPARTIALTAPES, UID, GID, CREATIONTIME, COMMENT FROM TAPEPOOL WHERE NAME='" << name << "';";
+  query << "SELECT NAME, NBPARTIALTAPES, UID, GID, CREATIONTIME, COMMENT FROM TAPEPOOL WHERE NAME='" << name << "';";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){    
@@ -1064,7 +1062,6 @@ cta::TapePool cta::SqliteDatabase::getTapePoolByName(const SecurityIdentity &req
     SqliteColumnNameToIndex idx(statement);
     pool = cta::TapePool(
             std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
-            sqlite3_column_int(statement,idx("NBDRIVES")),
             sqlite3_column_int(statement,idx("NBPARTIALTAPES")),
             cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID"))),
             std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
