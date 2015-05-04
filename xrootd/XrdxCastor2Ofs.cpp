@@ -485,22 +485,29 @@ XrdxCastor2OfsFile::open(const char*         path,
   }
 
   TIMING("OFS_OPEN", &open_timing);
-  int rc = XrdOfsFile::open(newpath.c_str(), open_mode, create_mode, client,
+  int openrc = XrdOfsFile::open(newpath.c_str(), open_mode, create_mode, client,
                             newopaque.c_str());
+  int rc = openrc;
 
   // Notify the diskmanager
   if (!mTransferId.empty())
   {
     TIMING("NOTIFY_DM", &open_timing);
     char* errmsg = (char*)0;
-    xcastor_debug("send_dm errc=%i, tx_id=%s", rc, mTransferId.c_str());
+    xcastor_debug("send_dm errc=%i, tx_id=%s", openrc, mTransferId.c_str());
     int dm_errno = mover_open_file(mDiskMgrPort, mTransferId.c_str(), &rc, &errmsg);
 
-    // If failed to commit to diskmanager then return error
+    // the diskmanager got a failure, return error
     if (dm_errno)
     {
-      rc = gSrv->Emsg("open", error, dm_errno, "open due to diskmanager error: ",
-		      errmsg);
+      gSrv->Emsg("open", error, dm_errno, "open due to diskmanager error: ", errmsg);
+      rc = dm_errno;
+
+    }
+    else if (openrc)
+    {
+      gSrv->Emsg("open", error, openrc, "open due to failed local open", "");
+      rc = openrc;
     }
     else
     {

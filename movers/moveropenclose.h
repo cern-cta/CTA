@@ -46,8 +46,10 @@ extern "C" {
                     with a non-zero value when the operation fails
  * errormsg         a pointer to a buffer for the error message if the operation failed
  *
- * The return value is 0 for success, SETIMEDOUT if the slot had timed out meanwhile
- * or SEINTERNAL for any other error.
+ * errorcode and errormsg are then populated with the result of the operation:
+ * if errorcode == 0 the operation was successful, otherwise errormsg contains
+ * a useful string to be sent to the client or logged by the mover.
+ * The return value is equal to errorcode.
  */
 int mover_open_file(const int port, const char* transferMetaData, int* errorcode, char** errormsg);
 
