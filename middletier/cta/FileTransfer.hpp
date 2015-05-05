@@ -26,10 +26,16 @@ public:
    *
    * @param id The identifier of the file transfer.
    * @param userRequestId The identifier of the associated user request.
-   * @prama copyNb The copy number
+   * @param copyNb The copy number.
+   * @param remoteFile The URL of the remote file that depending on the
+   * direction of the data transfer may be either the source or the
+   * destination of the file transfer.
    */
-  FileTransfer(const std::string &id, const std::string &userRequestId,
-    const uint32_t copyNb);
+  FileTransfer(
+    const std::string &id,
+    const std::string &userRequestId,
+    const uint32_t copyNb,
+    const std::string &remoteFile);
 
   /**
    * Returns the identifier of the file transfer.
@@ -52,6 +58,17 @@ public:
    */
   uint32_t getCopyNb() const throw();
 
+  /**
+   * Returns the URL of the remote file that depending on the direction of the
+   * data transfer may be either the source or the destination of the file
+   * transfer.
+   *
+   * @return The URL of the remote file that depending on the direction of the
+   * data transfer may be either the source or the destination of the file
+   * transfer.
+   */
+  const std::string &getRemoteFile() const throw();
+
 private:
 
   /**
@@ -68,6 +85,12 @@ private:
    * The copy number.
    */
   uint32_t m_copyNb;
+
+  /**
+   * The URL of the remote file that depending on the direction of the data
+   * transfer may be either the source or the destination of the file transfer.
+   */
+  std::string m_remoteFile;
 
 }; // class FileTransfer
 

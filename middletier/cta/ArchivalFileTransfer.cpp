@@ -15,22 +15,19 @@ cta::ArchivalFileTransfer::~ArchivalFileTransfer() throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalFileTransfer::ArchivalFileTransfer(const std::string &remoteFile,
-  const std::string &vid):
-  m_remoteFile(remoteFile),
-  m_vid(vid) {
+cta::ArchivalFileTransfer::ArchivalFileTransfer(
+  const std::string &tapePoolName,
+  const std::string &id,
+  const std::string &userRequestId,
+  const uint32_t copyNb,
+  const std::string &remoteFile):
+  FileTransfer(id, userRequestId, copyNb, remoteFile),
+  m_tapePoolName(tapePoolName) {
 }
 
 //------------------------------------------------------------------------------
-// getRemoteFile
+// getTapePoolName
 //------------------------------------------------------------------------------
-const std::string &cta::ArchivalFileTransfer::getRemoteFile() const throw() {
-  return m_remoteFile;
-}
-
-//------------------------------------------------------------------------------
-// getVid
-//------------------------------------------------------------------------------
-const std::string &cta::ArchivalFileTransfer::getVid() const throw() {
-  return m_vid;
+const std::string &cta::ArchivalFileTransfer::getTapePoolName() const throw() {
+  return m_tapePoolName;
 }

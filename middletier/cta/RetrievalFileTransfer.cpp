@@ -16,9 +16,13 @@ cta::RetrievalFileTransfer::~RetrievalFileTransfer() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::RetrievalFileTransfer::RetrievalFileTransfer(
-  const TapeFileLocation &tapeFile, const std::string &remoteFile):
-  m_tapeFile(tapeFile),
-  m_remoteFile(remoteFile) {
+  const TapeFileLocation &tapeFile,
+  const std::string &id, 
+  const std::string &userRequestId,
+  const uint32_t copyNb,
+  const std::string &remoteFile):
+  FileTransfer(id, userRequestId, copyNb, remoteFile),
+  m_tapeFile(tapeFile) {
 }
 
 //------------------------------------------------------------------------------
@@ -27,11 +31,4 @@ cta::RetrievalFileTransfer::RetrievalFileTransfer(
 const cta::TapeFileLocation &cta::RetrievalFileTransfer::getTapeFile() const
   throw() {
   return m_tapeFile;
-}
-
-//------------------------------------------------------------------------------
-// getRemoteFile
-//------------------------------------------------------------------------------
-const std::string &cta::RetrievalFileTransfer::getRemoteFile() const throw() {
-  return m_remoteFile;
 }

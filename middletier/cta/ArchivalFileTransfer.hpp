@@ -1,5 +1,8 @@
 #pragma once
 
+#include "cta/FileTransfer.hpp"
+
+#include <stdint.h>
 #include <string>
 
 namespace cta {
@@ -7,7 +10,7 @@ namespace cta {
 /**
  * Class representing the transfer of a single copy of a remote file to tape.
  */
-class ArchivalFileTransfer {
+class ArchivalFileTransfer: public FileTransfer {
 public:
 
   /**
@@ -23,36 +26,32 @@ public:
   /**
    * Constructor.
    *
+   * @param tapePoolName The name of the destination tape pool.
+   * @param id The identifier of the file transfer.
+   * @param userRequestId The identifier of the associated user request.
+   * @param copyNb The copy number.
    * @param remoteFile The URL of the remote source file.
-   * @param vid The volume identifier of the destination tape.
    */
-  ArchivalFileTransfer(const std::string &remoteFile, const std::string &vid);
+  ArchivalFileTransfer(
+    const std::string &tapePoolName,
+    const std::string &id,
+    const std::string &userRequestId,
+    const uint32_t copyNb,
+    const std::string &remoteFile);
 
   /**
-   * Returns the URL of the remote source file.
+   * Returns the name of the destination tape pool.
    *
-   * @return the URL of the remote source file.
+   * @return the name of the destination tape pool.
    */
-  const std::string &getRemoteFile() const throw();
-
-  /**
-   * Returns the volume identifier of the destination tape.
-   *
-   * @return the volume identifier of the destination tape.
-   */
-  const std::string &getVid() const throw();
+  const std::string &getTapePoolName() const throw();
 
 private:
 
   /**
-   * The URL of the remote source file.
+   * The name of the destination tape pool.
    */
-  std::string m_remoteFile;
-
-  /**
-   * The volume identifier of the destination tape.
-   */
-  std::string m_vid;
+  std::string m_tapePoolName;
 
 }; // class ArchivalFileTransfer
 
