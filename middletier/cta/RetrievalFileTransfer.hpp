@@ -27,7 +27,7 @@ public:
   /**
    * Constructor.
    *
-   * @param tapeFileLocation The location of the source tape file.
+   * @param tapeFile The location of the source tape file.
    * @param id The identifier of the file transfer.
    * @param userRequestId The identifier of the associated user request.
    * @param copyNb The copy number.

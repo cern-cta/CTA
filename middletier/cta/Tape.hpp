@@ -28,10 +28,12 @@ public:
    * Constructor.
    *
    * @param vid The volume identifier of the tape.
-   * @param logicalLibrary The name of the logical library to which the tape
+   * @param logicalLibraryName The name of the logical library to which the tape
    * belongs.
    * @param tapePoolName The name of the tape pool to which the tape belongs.
    * @param capacityInBytes The capacity of the tape.
+   * @param dataOnTapeInBytes The amount of data currently stored on the tape in
+   * bytes.
    * @param creator The identity of the user that created this configuration
    * item.
    * @param comment The comment describing this configuration item.

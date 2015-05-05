@@ -15,9 +15,10 @@ public:
   /**
    * Constructor.
    *
+   * @param vfs The virtual file-system of the mock middle-tier.
    * @param db The database of the mock middle-tier.
    */
-  SqliteMiddleTierAdmin(Vfs &vfs, SqliteDatabase &sqlite_db);
+  SqliteMiddleTierAdmin(Vfs &vfs, SqliteDatabase &db);
 
   /**
    * Destructor.
@@ -75,7 +76,6 @@ public:
    * @param requester The identity of the user requesting the deletion of the
    * administration host.
    * @param hostName The network name of the administration host.
-   * @param comment The comment describing the administration host.
    */
   void deleteAdminHost(
     const SecurityIdentity &requester,
@@ -239,7 +239,7 @@ public:
    * @param requester The identity of the user requesting the creation of the
    * tape.
    * @param vid The volume identifier of the tape.
-   * @param logicalLibrary The name of the logical library to which the tape
+   * @param logicalLibraryName The name of the logical library to which the tape
    * belongs.
    * @param tapePoolName The name of the tape pool to which the tape belongs.
    * @param capacityInBytes The capacity of the tape.
@@ -276,10 +276,16 @@ public:
     const SecurityIdentity &requester) const;
 
 protected:
-  
-  SqliteDatabase &m_sqlite_db;
-  
+
+  /**
+   * The virtual filesystem of the mock middle-tier.
+   */
   Vfs &m_vfs;
+  
+  /**
+   * The database of the mock middle-tier.
+   */
+  SqliteDatabase &m_db;
 
 }; // class SqliteMiddleTierAdmin
 

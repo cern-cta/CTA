@@ -26,6 +26,7 @@ public:
    * @param srcPath The full path of the source file within the archive.
    * @param dstUrl The URL of the destination file.
    * @param creator The identity of the user that created the job.
+   * @param creationTime The absolute time when the retrieval job was created.
    */
   RetrievalJob(
     const RetrievalJobState::Enum state,

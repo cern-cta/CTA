@@ -19,8 +19,9 @@ public:
    * Constructor.
    *
    * @param db The database of the mock middle-tier.
+   * @param vfs The virtual file-system of the mock middle-tier.
    */
-  SqliteMiddleTierUser(Vfs &vfs, SqliteDatabase &sqlite_db);
+  SqliteMiddleTierUser(Vfs &vfs, SqliteDatabase &db);
 
   /**
    * Destructor.
@@ -228,8 +229,14 @@ public:
 
 private:
   
-  SqliteDatabase &m_sqlite_db;
+  /**
+   * The database of the mock middle-tier.
+   */
+  SqliteDatabase &m_db;
   
+  /**
+   * The virtual file-system of the mock middle-tier.
+   */
   Vfs &m_vfs;
 
   /**
@@ -282,7 +289,7 @@ private:
    * Throws an exception if the specified requester is not authorised to archive
    * a file to the specified destination directory within the archive namespace.
    *
-   * @param requester The identity of the user requesting the archival.
+   * @param user The identity of the user requesting the archival.
    * @param dstDir Destination directory within the archive namespace.
    */
   void checkUserIsAuthorisedToArchive(

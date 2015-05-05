@@ -21,7 +21,10 @@ public:
    * Constructor.
    *
    * @param name The network name of the administration host.
-   * @param creator The identity of the user that created the administration host.
+   * @param creator The identity of the user that created the administration
+   * host.
+   * @param creationTime The absolute time at which the admin host entry was
+   * created.
    * @param comment The comment describing the administration host.
    */
   AdminHost(

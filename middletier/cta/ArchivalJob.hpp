@@ -26,6 +26,8 @@ public:
    * @param srcUrl The URL of the source file.
    * @param dstPath The full path of the destination file within the archive.
    * @param creator The identity of the user that created the job.
+   * @param creationTime The absolute time at which the archival job was
+   * vreated.
    */
   ArchivalJob(
     const ArchivalJobState::Enum state,

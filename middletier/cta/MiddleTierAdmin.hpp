@@ -81,7 +81,6 @@ public:
    * @param requester The identity of the user requesting the deletion of the
    * administration host.
    * @param hostName The network name of the administration host.
-   * @param comment The comment describing the administration host.
    */
   virtual void deleteAdminHost(
     const SecurityIdentity &requester,
@@ -247,7 +246,7 @@ public:
    * @param requester The identity of the user requesting the creation of the
    * tape.
    * @param vid The volume identifier of the tape.
-   * @param logicalLibrary The name of the logical library to which the tape
+   * @param logicalLibraryName The name of the logical library to which the tape
    * belongs.
    * @param tapePoolName The name of the tape pool to which the tape belongs.
    * @param capacityInBytes The capacity of the tape.

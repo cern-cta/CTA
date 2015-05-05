@@ -22,6 +22,8 @@ public:
    *
    * @param user The identity of the administrator.
    * @param creator The identity of the user that created the administrator.
+   * @param creationTime The absolute time at which the admin user entry was
+   * created.
    * @param comment The comment describing the administrator.
    */
   AdminUser(

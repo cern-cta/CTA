@@ -8,8 +8,8 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::SqliteMiddleTierAdmin::SqliteMiddleTierAdmin(Vfs &vfs, SqliteDatabase &sqlite_db):
-  m_sqlite_db(sqlite_db), m_vfs(vfs) {
+cta::SqliteMiddleTierAdmin::SqliteMiddleTierAdmin(Vfs &vfs, SqliteDatabase &db):
+   m_vfs(vfs), m_db(db) {
 }
 
 //------------------------------------------------------------------------------
@@ -25,7 +25,7 @@ void cta::SqliteMiddleTierAdmin::createAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user,
   const std::string &comment) {
-  m_sqlite_db.insertAdminUser(requester, user, comment);
+  m_db.insertAdminUser(requester, user, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -34,7 +34,7 @@ void cta::SqliteMiddleTierAdmin::createAdminUser(
 void cta::SqliteMiddleTierAdmin::deleteAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user) {
-  m_sqlite_db.deleteAdminUser(requester, user);
+  m_db.deleteAdminUser(requester, user);
 }
   
 //------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ void cta::SqliteMiddleTierAdmin::deleteAdminUser(
 //------------------------------------------------------------------------------
 std::list<cta::AdminUser> cta::SqliteMiddleTierAdmin::getAdminUsers(
   const SecurityIdentity &requester) const {
-  return m_sqlite_db.selectAllAdminUsers(requester);
+  return m_db.selectAllAdminUsers(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -52,7 +52,7 @@ void cta::SqliteMiddleTierAdmin::createAdminHost(
   const SecurityIdentity &requester,
   const std::string &hostName,
   const std::string &comment) {
-  m_sqlite_db.insertAdminHost(requester, hostName, comment);
+  m_db.insertAdminHost(requester, hostName, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -61,7 +61,7 @@ void cta::SqliteMiddleTierAdmin::createAdminHost(
 void cta::SqliteMiddleTierAdmin::deleteAdminHost(
   const SecurityIdentity &requester,
   const std::string &hostName) {
-  m_sqlite_db.deleteAdminHost(requester, hostName);
+  m_db.deleteAdminHost(requester, hostName);
 }
   
 //------------------------------------------------------------------------------
@@ -69,7 +69,7 @@ void cta::SqliteMiddleTierAdmin::deleteAdminHost(
 //------------------------------------------------------------------------------
 std::list<cta::AdminHost> cta::SqliteMiddleTierAdmin::getAdminHosts(
   const SecurityIdentity &requester) const {
-  return m_sqlite_db.selectAllAdminHosts(requester);
+  return m_db.selectAllAdminHosts(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ std::list<cta::AdminHost> cta::SqliteMiddleTierAdmin::getAdminHosts(
 void cta::SqliteMiddleTierAdmin::createStorageClass(
   const SecurityIdentity &requester, const std::string &name,
   const uint16_t nbCopies, const std::string &comment) {
-  m_sqlite_db.insertStorageClass(requester, name, nbCopies, comment);
+  m_db.insertStorageClass(requester, name, nbCopies, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -87,7 +87,7 @@ void cta::SqliteMiddleTierAdmin::createStorageClass(
 void cta::SqliteMiddleTierAdmin::deleteStorageClass(const SecurityIdentity &requester,
   const std::string &name) {
   m_vfs.checkStorageClassIsNotInUse(requester, name, "/");
-  m_sqlite_db.deleteStorageClass(requester, name);
+  m_db.deleteStorageClass(requester, name);
 }
 
 //------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ void cta::SqliteMiddleTierAdmin::deleteStorageClass(const SecurityIdentity &requ
 //------------------------------------------------------------------------------
 std::list<cta::StorageClass> cta::SqliteMiddleTierAdmin::getStorageClasses(
   const SecurityIdentity &requester) const {
-  return m_sqlite_db.selectAllStorageClasses(requester);
+  return m_db.selectAllStorageClasses(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -106,7 +106,7 @@ void cta::SqliteMiddleTierAdmin::createTapePool(
   const std::string &name,
   const uint32_t nbPartialTapes,
   const std::string &comment) {
-  m_sqlite_db.insertTapePool(requester, name, nbPartialTapes, comment);
+  m_db.insertTapePool(requester, name, nbPartialTapes, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -114,7 +114,7 @@ void cta::SqliteMiddleTierAdmin::createTapePool(
 //------------------------------------------------------------------------------
 void cta::SqliteMiddleTierAdmin::deleteTapePool(const SecurityIdentity &requester,
   const std::string &name) {
-  m_sqlite_db.deleteTapePool(requester, name);
+  m_db.deleteTapePool(requester, name);
 }
 
 //------------------------------------------------------------------------------
@@ -122,7 +122,7 @@ void cta::SqliteMiddleTierAdmin::deleteTapePool(const SecurityIdentity &requeste
 //------------------------------------------------------------------------------
 std::list<cta::TapePool> cta::SqliteMiddleTierAdmin::getTapePools(
   const SecurityIdentity &requester) const {
-  return m_sqlite_db.selectAllTapePools(requester);
+  return m_db.selectAllTapePools(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -134,7 +134,7 @@ void cta::SqliteMiddleTierAdmin::createArchivalRoute(
   const uint16_t copyNb,
   const std::string &tapePoolName,
   const std::string &comment) {
-  return m_sqlite_db.insertArchivalRoute(requester, storageClassName, copyNb, tapePoolName, comment);
+  return m_db.insertArchivalRoute(requester, storageClassName, copyNb, tapePoolName, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -144,7 +144,7 @@ void cta::SqliteMiddleTierAdmin::deleteArchivalRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint16_t copyNb) {
-  return m_sqlite_db.deleteArchivalRoute(requester, storageClassName, copyNb);
+  return m_db.deleteArchivalRoute(requester, storageClassName, copyNb);
 }
 
 //------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ void cta::SqliteMiddleTierAdmin::deleteArchivalRoute(
 //------------------------------------------------------------------------------
 std::list<cta::ArchivalRoute> cta::SqliteMiddleTierAdmin::getArchivalRoutes(
   const SecurityIdentity &requester) const {
-  return m_sqlite_db.selectAllArchivalRoutes(requester);
+  return m_db.selectAllArchivalRoutes(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -162,7 +162,7 @@ void cta::SqliteMiddleTierAdmin::createLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name,
   const std::string &comment) {
-  m_sqlite_db.insertLogicalLibrary(requester, name, comment);
+  m_db.insertLogicalLibrary(requester, name, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -171,7 +171,7 @@ void cta::SqliteMiddleTierAdmin::createLogicalLibrary(
 void cta::SqliteMiddleTierAdmin::deleteLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name) {
-  m_sqlite_db.deleteLogicalLibrary(requester, name);
+  m_db.deleteLogicalLibrary(requester, name);
 }
 
 //------------------------------------------------------------------------------
@@ -179,7 +179,7 @@ void cta::SqliteMiddleTierAdmin::deleteLogicalLibrary(
 //------------------------------------------------------------------------------
 std::list<cta::LogicalLibrary> cta::SqliteMiddleTierAdmin::getLogicalLibraries(
   const SecurityIdentity &requester) const {
-  return m_sqlite_db.selectAllLogicalLibraries(requester);
+  return m_db.selectAllLogicalLibraries(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -192,7 +192,7 @@ void cta::SqliteMiddleTierAdmin::createTape(
   const std::string &tapePoolName,
   const uint64_t capacityInBytes,
   const std::string &comment) {
-  m_sqlite_db.insertTape(requester, vid, logicalLibraryName, tapePoolName,
+  m_db.insertTape(requester, vid, logicalLibraryName, tapePoolName,
     capacityInBytes, comment);
 }
 
@@ -202,7 +202,7 @@ void cta::SqliteMiddleTierAdmin::createTape(
 void cta::SqliteMiddleTierAdmin::deleteTape(
   const SecurityIdentity &requester,
   const std::string &vid) {
-  m_sqlite_db.deleteTape(requester, vid);
+  m_db.deleteTape(requester, vid);
 }
 
 //------------------------------------------------------------------------------
@@ -210,5 +210,5 @@ void cta::SqliteMiddleTierAdmin::deleteTape(
 //------------------------------------------------------------------------------
 std::list<cta::Tape> cta::SqliteMiddleTierAdmin::getTapes(
   const SecurityIdentity &requester) const {
-  return m_sqlite_db.selectAllTapes(requester);
+  return m_db.selectAllTapes(requester);
 }

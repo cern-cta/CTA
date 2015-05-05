@@ -29,7 +29,7 @@ public:
   /**
    * Sets the user ID of the user.
    *
-   * @patam uid The user ID of the user.
+   * @param uid The user ID of the user.
    */
   void setUid(const uint32_t uid) throw();
 

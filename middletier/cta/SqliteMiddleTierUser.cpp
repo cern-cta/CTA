@@ -9,8 +9,8 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::SqliteMiddleTierUser::SqliteMiddleTierUser(Vfs &vfs, SqliteDatabase &sqlite_db):
-  m_sqlite_db(sqlite_db), m_vfs(vfs) {
+cta::SqliteMiddleTierUser::SqliteMiddleTierUser(Vfs &vfs, SqliteDatabase &db):
+  m_db(db), m_vfs(vfs) {
 }
 
 //------------------------------------------------------------------------------
@@ -103,14 +103,14 @@ void cta::SqliteMiddleTierUser::archiveToDirectory(
     throw Exception("At least one source file should be provided");
   }
   std::string storageClassName = m_vfs.getDirectoryStorageClass(requester, dstDir);
-  cta::StorageClass storageClass = m_sqlite_db.getStorageClassByName(requester, storageClassName);
+  cta::StorageClass storageClass = m_db.getStorageClassByName(requester, storageClassName);
   if(storageClass.getNbCopies()==0) {       
     std::ostringstream message;
     message << "archiveToDirectory() - Storage class " << storageClassName << " has 0 copies";
     throw(Exception(message.str()));
   }
   for(int i=1; i<=storageClass.getNbCopies(); i++) {
-    cta::ArchivalRoute route = m_sqlite_db.getArchivalRouteOfStorageClass(requester, storageClassName, i);
+    cta::ArchivalRoute route = m_db.getArchivalRouteOfStorageClass(requester, storageClassName, i);
     for(std::list<std::string>::const_iterator itor = srcUrls.begin(); itor != srcUrls.end(); itor++) {
       const std::string &srcFileName = *itor;
       std::string dstPathname;
@@ -120,7 +120,7 @@ void cta::SqliteMiddleTierUser::archiveToDirectory(
       else {
         dstPathname = dstDir+"/"+srcFileName;
       }
-      m_sqlite_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstPathname);
+      m_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstPathname);
     }
   }
   
@@ -153,15 +153,15 @@ void cta::SqliteMiddleTierUser::archiveToFile(
   
   const std::string &srcFileName = srcUrls.front();
   std::string storageClassName = m_vfs.getDirectoryStorageClass(requester, cta::Utils::getEnclosingDirPath(dstFile));
-  cta::StorageClass storageClass = m_sqlite_db.getStorageClassByName(requester, storageClassName);
+  cta::StorageClass storageClass = m_db.getStorageClassByName(requester, storageClassName);
   if(storageClass.getNbCopies()==0) {       
     std::ostringstream message;
     message << "archiveToFile() - Storage class " << storageClassName << " has 0 copies";
     throw(Exception(message.str()));
   }
   for(int i=1; i<=storageClass.getNbCopies(); i++) {
-    cta::ArchivalRoute route = m_sqlite_db.getArchivalRouteOfStorageClass(requester, storageClassName, i);
-    m_sqlite_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstFile);
+    cta::ArchivalRoute route = m_db.getArchivalRouteOfStorageClass(requester, storageClassName, i);
+    m_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstFile);
   }
   
   m_vfs.createFile(requester, dstFile, 0666);
@@ -173,7 +173,7 @@ void cta::SqliteMiddleTierUser::archiveToFile(
 std::map<cta::TapePool, std::list<cta::ArchivalJob> >
   cta::SqliteMiddleTierUser::getArchivalJobs(
   const SecurityIdentity &requester) const {
-  return m_sqlite_db.selectAllArchivalJobs(requester);
+  return m_db.selectAllArchivalJobs(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -182,7 +182,7 @@ std::map<cta::TapePool, std::list<cta::ArchivalJob> >
 std::list<cta::ArchivalJob> cta::SqliteMiddleTierUser::getArchivalJobs(
   const SecurityIdentity &requester,
   const std::string &tapePoolName) const {
-  return (m_sqlite_db.selectAllArchivalJobs(requester))[m_sqlite_db.getTapePoolByName(requester, tapePoolName)];
+  return (m_db.selectAllArchivalJobs(requester))[m_db.getTapePoolByName(requester, tapePoolName)];
 }
 
 //------------------------------------------------------------------------------
@@ -191,7 +191,7 @@ std::list<cta::ArchivalJob> cta::SqliteMiddleTierUser::getArchivalJobs(
 void cta::SqliteMiddleTierUser::deleteArchivalJob(
   const SecurityIdentity &requester,
   const std::string &dstPath) {
-  m_sqlite_db.deleteArchivalJob(requester, dstPath);
+  m_db.deleteArchivalJob(requester, dstPath);
 }
 
 //------------------------------------------------------------------------------
@@ -203,7 +203,7 @@ void cta::SqliteMiddleTierUser::retrieve(
   const std::string &dstUrl) { //we consider only the case in which dstUrl is a directory so that we accept multiple source files
   for(std::list<std::string>::const_iterator it=srcPaths.begin(); it!=srcPaths.end(); it++) {
     std::string vid = m_vfs.getVidOfFile(requester, *it, 1); //we only consider 1st copy
-    m_sqlite_db.insertRetrievalJob(requester, vid, *it, dstUrl);
+    m_db.insertRetrievalJob(requester, vid, *it, dstUrl);
   }
 }
 
@@ -213,7 +213,7 @@ void cta::SqliteMiddleTierUser::retrieve(
 std::map<cta::Tape, std::list<cta::RetrievalJob> >
   cta::SqliteMiddleTierUser::getRetrievalJobs(
   const SecurityIdentity &requester) const {
-  return m_sqlite_db.selectAllRetrievalJobs(requester);
+  return m_db.selectAllRetrievalJobs(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -222,7 +222,7 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> >
 std::list<cta::RetrievalJob> cta::SqliteMiddleTierUser::getRetrievalJobs(
   const SecurityIdentity &requester,
   const std::string &vid) const {
-  return m_sqlite_db.selectAllRetrievalJobs(requester)[m_sqlite_db.getTapeByVid(requester, vid)];
+  return m_db.selectAllRetrievalJobs(requester)[m_db.getTapeByVid(requester, vid)];
 }
 
 //------------------------------------------------------------------------------
@@ -231,5 +231,5 @@ std::list<cta::RetrievalJob> cta::SqliteMiddleTierUser::getRetrievalJobs(
 void cta::SqliteMiddleTierUser::deleteRetrievalJob(
   const SecurityIdentity &requester,
   const std::string &dstUrl) {
-  m_sqlite_db.deleteRetrievalJob(requester, dstUrl);
+  m_db.deleteRetrievalJob(requester, dstUrl);
 }

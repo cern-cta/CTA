@@ -26,8 +26,8 @@ public:
   /**
    * Renames the specified remote file to the specified new name.
    *
-   * @oldRemoteFile The current URL of teh remote file.
-   * @newRemoteFile The new URL of teh remote file.
+   * @param remoteFile The current URL of the remote file.
+   * @param newRemoteFile The new URL of the remote file.
    */
   void rename(const std::string &remoteFile,
     const std::string &newRemoteFile);

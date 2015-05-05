@@ -33,8 +33,6 @@ public:
   /**
    * Deletes the specified storage class.
    *
-   * @param requester The identity of the user requesting the deletion of the
-   * storage class.
    * @param name The name of the storage class.
    */
   void deleteStorageClass(const std::string &name);
@@ -42,7 +40,6 @@ public:
   /**
    * Gets the current list of storage classes in lexicographical order.
    *
-   * @param requester The identity of the user requesting the list.
    * @return The current list of storage classes in lexicographical order.
    */
   std::list<StorageClass> getStorageClasses() const;

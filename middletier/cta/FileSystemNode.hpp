@@ -21,7 +21,7 @@ public:
   /**
    * Constructor.
    *
-   * @param The storage classes used in the file system.
+   * @param storageclasses The storage classes used in the file system.
    * @param entry The description of the node in the form of a DirectoryEntry.
    */
   FileSystemNode(FileSystemStorageClasses &storageclasses,
@@ -73,7 +73,7 @@ public:
    * This method takes ownership of the specified node even in the event of the
    * method throwing an exception.
    *
-   * @param node The node to be added.
+   * @param child The child node to be added.
    */
   void addChild(FileSystemNode *const child);
 
