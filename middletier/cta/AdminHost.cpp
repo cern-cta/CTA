@@ -3,8 +3,13 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::AdminHost::AdminHost():
-  m_creationTime(time(NULL)) {
+cta::AdminHost::AdminHost() {
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::AdminHost::~AdminHost() throw() {
 }
 
 //------------------------------------------------------------------------------
@@ -13,12 +18,10 @@ cta::AdminHost::AdminHost():
 cta::AdminHost::AdminHost(
   const std::string &name,
   const UserIdentity &creator,
-  const time_t creationTime,
-  const std::string &comment):
-  m_name(name),
-  m_creationTime(creationTime),
-  m_creator(creator),
-  m_comment(comment) {
+  const std::string &comment,
+  const time_t creationTime):
+  ConfigurationItem(creator, comment, creationTime),
+  m_name(name) {
 }
 
 //------------------------------------------------------------------------------
@@ -26,26 +29,4 @@ cta::AdminHost::AdminHost(
 //------------------------------------------------------------------------------
 const std::string &cta::AdminHost::getName() const throw() {
   return m_name;
-}
-
-//------------------------------------------------------------------------------
-// getCreationTime
-//------------------------------------------------------------------------------
-time_t cta::AdminHost::getCreationTime() const throw() {
-  return m_creationTime;
-}
-
-//------------------------------------------------------------------------------
-// getCreator
-//------------------------------------------------------------------------------
-const cta::UserIdentity &cta::AdminHost::getCreator()
-  const throw() {
-  return m_creator;
-}
-
-//------------------------------------------------------------------------------
-// getComment
-//------------------------------------------------------------------------------
-const std::string &cta::AdminHost::getComment() const throw() {
-  return m_comment;
 }

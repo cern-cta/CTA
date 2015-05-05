@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cta/ConfigurationItem.hpp"
 #include "cta/UserIdentity.hpp"
 
 #include <string>
@@ -9,7 +10,7 @@ namespace cta {
 /**
  * Class representing a administration host.
  */
-class AdminHost {
+class AdminHost: public ConfigurationItem {
 public:
 
   /**
@@ -18,20 +19,27 @@ public:
   AdminHost();
 
   /**
+   * Destructor.
+   */
+  ~AdminHost() throw();
+
+  /**
    * Constructor.
    *
    * @param name The network name of the administration host.
-   * @param creator The identity of the user that created the administration
-   * host.
-   * @param creationTime The absolute time at which the admin host entry was
-   * created.
-   * @param comment The comment describing the administration host.
+   * @param creator The identity of the user that created this configuration
+   * item.
+   * @param comment The comment made by the creator of this configuration
+   * item.
+   * @param creationTime Optionally the absolute time at which this
+   * configuration item was created.  If no value is given then the current
+   * time is used.
    */
   AdminHost(
     const std::string &name,
     const UserIdentity &creator,
-    const time_t creationTime,
-    const std::string &comment);
+    const std::string &comment,
+    const time_t creationTime = time(NULL));
 
   /**
    * Returns the network name of the administration host.
@@ -40,48 +48,12 @@ public:
    */
   const std::string &getName() const throw();
 
-  /**
-   * Returns the time when the administration host was created.
-   *
-   * @return The time when the administration host was created.
-   */
-  time_t getCreationTime() const throw();
-
-  /**
-   * Returns the identity of the user that created the administration host.
-   *
-   * @return The identity of the user that created the administration host.
-   */
-  const UserIdentity &getCreator() const throw();
-
-  /**
-   * Returns the comment describing the administration host.
-   *
-   * @return The comment describing the administration host.
-   */
-  const std::string &getComment() const throw();
-
 private:
 
   /**
    * The network name of the administration host.
    */
   std::string m_name;
-
-  /**
-   * The time when the administration host was created.
-   */
-  time_t m_creationTime;
-
-  /**
-   * The identity of the user that created the administration host.
-   */
-  UserIdentity m_creator;
-
-  /**
-   * Comment describing the administration host.
-   */
-  std::string m_comment;
 
 }; // class AdminHost
 
