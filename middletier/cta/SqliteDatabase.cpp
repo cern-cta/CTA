@@ -1048,12 +1048,16 @@ std::list<cta::AdminUser> cta::SqliteDatabase::selectAllAdminUsers(const Securit
   }
   while(sqlite3_step(statement)==SQLITE_ROW) {
     SqliteColumnNameToIndex idx(statement);
+    const UserIdentity user(sqlite3_column_int(statement,idx("ADMIN_UID")),
+      sqlite3_column_int(statement,idx("ADMIN_GID")));
+    const UserIdentity creator(sqlite3_column_int(statement,idx("UID")),
+            sqlite3_column_int(statement,idx("GID")));
     list.push_back(cta::AdminUser(
-            cta::UserIdentity(sqlite3_column_int(statement,idx("ADMIN_UID")),sqlite3_column_int(statement,idx("ADMIN_GID"))),
-            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID"))),
-            time_t(sqlite3_column_int(statement,idx("CREATIONTIME"))),
-            std::string((char *)sqlite3_column_text(statement,idx("COMMENT")))
-      ));
+      user,
+      creator,
+      std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+      time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
+    ));
   }
   sqlite3_finalize(statement);
   return list;

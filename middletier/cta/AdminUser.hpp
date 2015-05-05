@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cta/ConfigurationItem.hpp"
 #include "cta/UserIdentity.hpp"
 
 #include <string>
@@ -9,7 +10,7 @@ namespace cta {
 /**
  * Class representing an administrator.
  */
-class AdminUser {
+class AdminUser: public ConfigurationItem {
 public:
 
   /**
@@ -18,19 +19,27 @@ public:
   AdminUser();
 
   /**
+   * Destructor.
+   */
+  ~AdminUser() throw();
+
+  /**
    * Constructor.
    *
    * @param user The identity of the administrator.
-   * @param creator The identity of the user that created the administrator.
-   * @param creationTime The absolute time at which the admin user entry was
-   * created.
-   * @param comment The comment describing the administrator.
+   * @param creator The identity of the user that created this configuration
+   * item.
+   * @param comment The comment made by the creator of this configuration
+   * item.
+   * @param creationTime Optionally the absolute time at which this
+   * configuration item was created.  If no value is given then the current
+   * time is used.
    */
   AdminUser(
     const UserIdentity &user,
     const UserIdentity &creator,
-    const time_t creationTime,
-    const std::string &comment);
+    const std::string &comment,
+    const time_t creationTime = time(NULL));
 
   /**
    * Returns the identity of the administrator.
@@ -39,48 +48,12 @@ public:
    */
   const UserIdentity &getUser() const throw();
 
-  /**
-   * Returns the time when the administrator was created.
-   *
-   * @return The time when the administrator was created.
-   */
-  time_t getCreationTime() const throw();
-
-  /**
-   * Returns the identity of the user that created the administrator.
-   *
-   * @return The identity of the user that created the administrator.
-   */
-  const UserIdentity &getCreator() const throw();
-
-  /**
-   * Returns the comment describing the administrator.
-   *
-   * @return The comment describing the administrator.
-   */
-  const std::string &getComment() const throw();
-
 private:
 
   /**
    * The identity of the administrator.
    */
   UserIdentity m_user;
-
-  /**
-   * The time when the administrator was created.
-   */
-  time_t m_creationTime;
-
-  /**
-   * The identity of the user that created the administrator.
-   */
-  UserIdentity m_creator;
-
-  /**
-   * Comment describing the administrator.
-   */
-  std::string m_comment;
 
 }; // class AdminUser
 

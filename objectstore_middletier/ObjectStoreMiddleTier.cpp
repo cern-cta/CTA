@@ -39,7 +39,7 @@ void OStoreMiddleTierAdmin::createAdminUser(
   reLock.release();
   objectstore::ScopedExclusiveLock auLock(aul);
   aul.fetch();
-  AdminUser au(user, requester.user, time(NULL), comment);
+  AdminUser au(user, requester.user, comment);
   aul.add(au);
   aul.commit();
 }
