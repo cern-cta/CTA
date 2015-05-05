@@ -500,14 +500,12 @@ XrdxCastor2OfsFile::open(const char*         path,
     // the diskmanager got a failure, return error
     if (dm_errno)
     {
-      gSrv->Emsg("open", error, dm_errno, "open due to diskmanager error: ", errmsg);
-      rc = dm_errno;
-
+      rc = gSrv->Emsg("open", error, dm_errno, "open due to diskmanager error: ", errmsg); // rc is set to -1
     }
+    // the local open failed, return error
     else if (openrc)
     {
-      gSrv->Emsg("open", error, openrc, "open due to failed local open", "");
-      rc = openrc;
+      rc = gSrv->Emsg("open", error, openrc, "open due to failed local open", "");  // rc is set to -1
     }
     else
     {
@@ -530,7 +528,7 @@ XrdxCastor2OfsFile::open(const char*         path,
     open_timing.Print();
   }
 
-  return rc;
+  return rc;   // -1 in case of any error, 0 for success
 }
 
 
