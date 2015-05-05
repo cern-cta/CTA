@@ -15,7 +15,13 @@ cta::RetrieveToDirRquest::~RetrieveToDirRquest() throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrieveToDirRquest::RetrieveToDirRquest(const std::string &remoteDir):
+cta::RetrieveToDirRquest::RetrieveToDirRquest(
+  const std::string &remoteDir,
+  const std::string &id,
+  const uint64_t priority,
+  const SecurityIdentity &user,
+  const time_t creationTime):
+  RetrievalRequest(id, priority, user, creationTime),
   m_remoteDir(remoteDir) {
 }
 

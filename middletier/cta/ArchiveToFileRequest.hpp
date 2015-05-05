@@ -30,9 +30,22 @@ public:
    * @param remoteFile The URL of the source remote file to be archived.
    * @param archiveFile The full path of the destination archive file.
    * @param nbCopies The number of archive copies to be created.
+   * @param storageClassName The name of the storage class.
+   * @param id The identifier of the request.
+   * @param priority The priority of the request.
+   * @param user The identity of the user who made the request.
+   * @param creationTime Optionally the absolute time at which the user request
+   * was created.  If no value is given then the current time is used.
    */
-  ArchiveToFileRequest(const std::string &remoteFile,
-    const std::string &archiveFile, const uint32_t nbCopies);
+  ArchiveToFileRequest(
+    const std::string &remoteFile,
+    const std::string &archiveFile,
+    const uint32_t nbCopies,
+    const std::string &storageClassName,
+    const std::string &id, 
+    const uint64_t priority,
+    const SecurityIdentity &user, 
+    const time_t creationTime = time(NULL));
 
   /**
    * Returns the URL of the source remote file to be archived.

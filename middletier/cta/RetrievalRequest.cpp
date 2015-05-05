@@ -3,8 +3,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrievalRequest::RetrievalRequest():
-  m_priority(0) {
+cta::RetrievalRequest::RetrievalRequest() {
 }
 
 //------------------------------------------------------------------------------
@@ -16,16 +15,10 @@ cta::RetrievalRequest::~RetrievalRequest() throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrievalRequest::RetrievalRequest(const uint64_t priority,
-  const std::string &id, const SecurityIdentity &user,
+cta::RetrievalRequest::RetrievalRequest(
+  const std::string &id,
+  const uint64_t priority,
+  const SecurityIdentity &user,
   const time_t creationTime):
-  UserRequest(id, user, creationTime),
-  m_priority(priority) {
-}
-
-//------------------------------------------------------------------------------
-// getPriority
-//------------------------------------------------------------------------------
-uint64_t cta::RetrievalRequest::getPriority() const throw() {
-  return m_priority;
+  UserRequest(id, priority, user, creationTime) {
 }

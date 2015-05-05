@@ -3,8 +3,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalRequest::ArchivalRequest():
-  m_priority(0) {
+cta::ArchivalRequest::ArchivalRequest() {
 }
 
 //------------------------------------------------------------------------------
@@ -16,12 +15,14 @@ cta::ArchivalRequest::~ArchivalRequest() throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalRequest::ArchivalRequest(const std::string &storageClassName,
-  const uint64_t priority, const std::string &id, const SecurityIdentity &user, 
+cta::ArchivalRequest::ArchivalRequest(
+  const std::string &storageClassName,
+  const std::string &id,
+  const uint64_t priority,
+  const SecurityIdentity &user, 
   const time_t creationTime):
-  UserRequest(id, user, creationTime),
-  m_storageClassName(storageClassName),
-  m_priority(priority) {
+  UserRequest(id, priority, user, creationTime),
+  m_storageClassName(storageClassName) {
 }
 
 //------------------------------------------------------------------------------
@@ -29,11 +30,4 @@ cta::ArchivalRequest::ArchivalRequest(const std::string &storageClassName,
 //------------------------------------------------------------------------------
 const std::string &cta::ArchivalRequest::getStorageClassName() const throw() {
   return m_storageClassName;
-}
-
-//------------------------------------------------------------------------------
-// getPriority
-//------------------------------------------------------------------------------
-uint64_t cta::ArchivalRequest::getPriority() const throw() {
-  return m_priority;
 }

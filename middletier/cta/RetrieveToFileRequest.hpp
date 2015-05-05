@@ -28,9 +28,19 @@ public:
    *
    * @param archiveFile The full path of the source archive file.
    * @param remoteFile The URL of the destination remote file.
+   * @param id The identifier of the request.
+   * @param priority The priority of the request.
+   * @param user The identity of the user who made the request.
+   * @param creationTime Optionally the absolute time at which the user request
+   * was created.  If no value is given then the current time is used.
    */
-  RetrieveToFileRequest(const std::string &archiveFile,
-    const std::string &remoteFile);
+  RetrieveToFileRequest(
+    const std::string &archiveFile,
+    const std::string &remoteFile,
+    const std::string &id, 
+    const uint64_t priority,
+    const SecurityIdentity &user, 
+    const time_t creationTime = time(NULL));
 
   /**
    * Returns the full path of the source archive file.
