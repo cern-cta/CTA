@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cta/DirectoryIterator.hpp"
+#include "cta/DirIterator.hpp"
 #include "cta/SecurityIdentity.hpp"
 
 namespace cta {
@@ -22,25 +22,25 @@ public:
    */
   ~Vfs() throw();  
   
-  void setDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path, const std::string &storageClassName);
+  void setDirStorageClass(const SecurityIdentity &requester, const std::string &path, const std::string &storageClassName);
   
-  void clearDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path);
+  void clearDirStorageClass(const SecurityIdentity &requester, const std::string &path);
   
-  std::string getDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path);
+  std::string getDirStorageClass(const SecurityIdentity &requester, const std::string &path);
   
   void createFile(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode);
   
-  void createDirectory(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode);
+  void createDir(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode);
   
   void deleteFile(const SecurityIdentity &requester, const std::string &pathname);
   
-  void deleteDirectory(const SecurityIdentity &requester, const std::string &pathname);
+  void deleteDir(const SecurityIdentity &requester, const std::string &pathname);
   
-  cta::DirectoryEntry statDirectoryEntry(const SecurityIdentity &requester, const std::string &pathname);
+  cta::DirEntry statDirEntry(const SecurityIdentity &requester, const std::string &pathname);
   
-  cta::DirectoryIterator getDirectoryContents(const SecurityIdentity &requester, const std::string &dirPath);
+  cta::DirIterator getDirContents(const SecurityIdentity &requester, const std::string &dirPath);
   
-  bool isExistingDirectory(const SecurityIdentity &requester, const std::string &dirPath);
+  bool isExistingDir(const SecurityIdentity &requester, const std::string &dirPath);
   
   std::string getVidOfFile(const SecurityIdentity &requester, const std::string &pathname, uint16_t copyNb);
   
@@ -56,7 +56,7 @@ private:
   
   void checkPathnameDoesNotExist(const std::string &dirPath);
   
-  std::list<cta::DirectoryEntry> getDirectoryEntries(const SecurityIdentity &requester, const std::string &dirPath);
+  std::list<cta::DirEntry> getDirEntries(const SecurityIdentity &requester, const std::string &dirPath);
   
 }; // struct Vfs
 

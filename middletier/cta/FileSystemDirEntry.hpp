@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cta/DirectoryEntry.hpp"
+#include "cta/DirEntry.hpp"
 #include "cta/FileSystemStorageClasses.hpp"
 
 namespace cta {
@@ -9,13 +9,13 @@ namespace cta {
  * Class used to store a directory entry and to provide other information and/or
  * features required by the file system.
  */
-class FileSystemDirectoryEntry {
+class FileSystemDirEntry {
 public:
 
   /**
    * Constructor.
    */
-  FileSystemDirectoryEntry();
+  FileSystemDirEntry();
 
   /**
    * Constructor.
@@ -23,15 +23,15 @@ public:
    * @param storageClasses The storage classes used by the file system.
    * @param entry The directory entry.
    */
-  FileSystemDirectoryEntry(FileSystemStorageClasses &storageClasses,
-    const DirectoryEntry &entry);
+  FileSystemDirEntry(FileSystemStorageClasses &storageClasses,
+    const DirEntry &entry);
 
   /**
    * Returns the directory entry.
    *
    * @return The directory entry.
    */
-  const DirectoryEntry &getEntry() const throw();
+  const DirEntry &getEntry() const throw();
 
   /**
    * Sets the name of the storage class.
@@ -50,8 +50,8 @@ private:
   /**
    * The directory entry.
    */
-  DirectoryEntry m_entry;
+  DirEntry m_entry;
 
-}; // FileSystemDirectoryEntry
+}; // FileSystemDirEntry
 
 } // namespace cta

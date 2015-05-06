@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cta/FileSystemDirectoryEntry.hpp"
+#include "cta/FileSystemDirEntry.hpp"
 #include "cta/FileSystemStorageClasses.hpp"
 
 #include <map>
@@ -22,10 +22,10 @@ public:
    * Constructor.
    *
    * @param storageclasses The storage classes used in the file system.
-   * @param entry The description of the node in the form of a DirectoryEntry.
+   * @param entry The description of the node in the form of a DirEntry.
    */
   FileSystemNode(FileSystemStorageClasses &storageclasses,
-    const DirectoryEntry &entry);
+    const DirEntry &entry);
 
   /**
    * Destructor.
@@ -49,14 +49,14 @@ public:
    *
    * @return The file-system directory-entry.
    */
-  FileSystemDirectoryEntry &getFileSystemEntry() throw();
+  FileSystemDirEntry &getFileSystemEntry() throw();
 
   /**
    * Returns the file-system directory-entry.
    *
    * @return The file-system directory-entry.
    */
-  const FileSystemDirectoryEntry &getFileSystemEntry() const throw();
+  const FileSystemDirEntry &getFileSystemEntry() const throw();
 
   /**
    * Gets the contents of this file system node in the form of a list of
@@ -65,7 +65,7 @@ public:
    * @return The contents of this file system node in the form of a list of
    * DirectoryEntries.
    */
-  std::list<DirectoryEntry> getDirectoryEntries() const;
+  std::list<DirEntry> getDirEntries() const;
 
   /**
    * Adds the specified node to the children of this node.
@@ -128,7 +128,7 @@ private:
   /**
    * The file-system diretcory-entry.
    */
-  FileSystemDirectoryEntry m_entry;
+  FileSystemDirEntry m_entry;
 
   /**
    * The child nodes as a map from name to node.

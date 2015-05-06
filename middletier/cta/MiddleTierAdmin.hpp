@@ -4,7 +4,7 @@
 #include "cta/AdminUser.hpp"
 #include "cta/ArchivalJob.hpp"
 #include "cta/ArchivalRoute.hpp"
-#include "cta/DirectoryIterator.hpp"
+#include "cta/DirIterator.hpp"
 #include "cta/LogicalLibrary.hpp"
 #include "cta/SecurityIdentity.hpp"
 #include "cta/StorageClass.hpp"

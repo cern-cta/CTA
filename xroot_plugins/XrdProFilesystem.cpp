@@ -343,7 +343,7 @@ int XrdProFilesystem::executeChdirclassCommand(const ParsedRequest &req, XrdOucE
     return SFS_DATA;
   }
   try {
-    m_userApi.setDirectoryStorageClass(requester, req.args.at(0), req.args.at(1));
+    m_userApi.setDirStorageClass(requester, req.args.at(0), req.args.at(1));
     std::ostringstream responseSS;
     responseSS << "[OK] Changed storage class of directory " << req.args.at(0) << " to " << req.args.at(1);
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -375,7 +375,7 @@ int XrdProFilesystem::executeCldirclassCommand(const ParsedRequest &req, XrdOucE
     return SFS_DATA;
   }
   try {
-    m_userApi.clearDirectoryStorageClass(requester, req.args.at(0));
+    m_userApi.clearDirStorageClass(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Cleared storage class of directory " << req.args.at(0);
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -407,7 +407,7 @@ int XrdProFilesystem::executeGetdirclassCommand(const ParsedRequest &req, XrdOuc
     return SFS_DATA;
   }
   try {
-    std::string stgClass = m_userApi.getDirectoryStorageClass(requester, req.args.at(0));
+    std::string stgClass = m_userApi.getDirStorageClass(requester, req.args.at(0));
     std::ostringstream responseSS;
     if(stgClass.empty()) {
       responseSS << "[OK] Directory " << req.args.at(0) << " does not have a storage class";      
@@ -513,7 +513,7 @@ int XrdProFilesystem::executeMkdirCommand(const ParsedRequest &req, XrdOucErrInf
     return SFS_DATA;
   }
   try {
-    m_userApi.createDirectory(requester, req.args.at(0));
+    m_userApi.createDir(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Directory " << req.args.at(0) << " created";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -545,7 +545,7 @@ int XrdProFilesystem::executeRmdirCommand(const ParsedRequest &req, XrdOucErrInf
     return SFS_DATA;
   }
   try {
-    m_userApi.deleteDirectory(requester, req.args.at(0));
+    m_userApi.deleteDir(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Directory " << req.args.at(0) << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -578,12 +578,12 @@ int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &
   }
   try {
     std::ostringstream responseSS;
-    cta::DirectoryIterator itor = m_userApi.getDirectoryContents(requester, req.args.at(0));
+    cta::DirIterator itor = m_userApi.getDirContents(requester, req.args.at(0));
     while(itor.hasMore()) {
-      const cta::DirectoryEntry &entry = itor.next();
+      const cta::DirEntry &entry = itor.next();
       
       responseSS << "\n";
-      responseSS << ((entry.getType() == cta::DirectoryEntry::ENTRYTYPE_DIRECTORY) ? "d" : "-");
+      responseSS << ((entry.getType() == cta::DirEntry::ENTRYTYPE_DIRECTORY) ? "d" : "-");
       responseSS << ((entry.getMode() & S_IRUSR) ? "r" : "-");
       responseSS << ((entry.getMode() & S_IWUSR) ? "w" : "-");
       responseSS << ((entry.getMode() & S_IXUSR) ? "x" : "-");

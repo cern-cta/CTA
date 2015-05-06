@@ -62,7 +62,7 @@ int XrdProDir::open(const char *path, const XrdSecEntity *client, const char *op
   if(SFS_OK!=checkResult) {
     return checkResult;
   }
-  m_itor = m_userApi.getDirectoryContents(requester, path);
+  m_itor = m_userApi.getDirContents(requester, path);
   return SFS_OK;
 }
 

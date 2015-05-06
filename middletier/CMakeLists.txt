@@ -17,14 +17,14 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/ArchiveToDirRequest.cpp
   cta/ArchiveToFileRequest.cpp
   cta/ConfigurationItem.cpp
-  cta/DirectoryEntry.cpp
-  cta/DirectoryIterator.cpp
+  cta/DirEntry.cpp
+  cta/DirIterator.cpp
   cta/DiskException.cpp
   cta/DriveQuota.cpp
   cta/EosRemoteStorage.cpp
   cta/Exception.cpp
   cta/FileAttribute.cpp
-  cta/FileSystemDirectoryEntry.cpp
+  cta/FileSystemDirEntry.cpp
   cta/FileSystemNode.cpp
   cta/FileSystemStorageClass.cpp
   cta/FileSystemStorageClasses.cpp

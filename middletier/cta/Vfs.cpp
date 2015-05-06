@@ -37,9 +37,9 @@ void cta::Vfs::checkDirectoryExists(const std::string &dirPath) {
 }
 
 //------------------------------------------------------------------------------
-// isExistingDirectory
+// isExistingDir
 //------------------------------------------------------------------------------
-bool cta::Vfs::isExistingDirectory(const SecurityIdentity &requester, const std::string &dirPath) {
+bool cta::Vfs::isExistingDir(const SecurityIdentity &requester, const std::string &dirPath) {
   cta::Utils::checkAbsolutePathSyntax(dirPath);
   struct stat stat_result;
   int rc;
@@ -75,7 +75,7 @@ void cta::Vfs::checkPathnameDoesNotExist(const std::string &dirPath) {
 // checkStorageClassIsNotInUse
 //------------------------------------------------------------------------------
 void cta::Vfs::checkStorageClassIsNotInUse(const SecurityIdentity &requester, const std::string &storageClass, const std::string &dirPath) {
-  if(getDirectoryStorageClass(requester, dirPath)==storageClass) {
+  if(getDirStorageClass(requester, dirPath)==storageClass) {
     std::ostringstream message;
     message << "checkStorageClassIsNotInUse() - " << dirPath << " has the " << storageClass << " storage class.";
     throw(Exception(message.str()));
@@ -146,9 +146,9 @@ cta::Vfs::~Vfs() throw() {
 }  
 
 //------------------------------------------------------------------------------
-// setDirectoryStorageClass
+// setDirStorageClass
 //------------------------------------------------------------------------------
-void cta::Vfs::setDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path, const std::string &storageClassName) {
+void cta::Vfs::setDirStorageClass(const SecurityIdentity &requester, const std::string &path, const std::string &storageClassName) {
   cta::Utils::checkAbsolutePathSyntax(path);
   checkDirectoryExists(m_fsDir+path);
   
@@ -156,15 +156,15 @@ void cta::Vfs::setDirectoryStorageClass(const SecurityIdentity &requester, const
   if(rc != 0) {
     char buf[256];
     std::ostringstream message;
-    message << "setDirectoryStorageClass() - " << m_fsDir+path << " setxattr error. Reason: " << strerror_r(errno, buf, 256);
+    message << "setDirStorageClass() - " << m_fsDir+path << " setxattr error. Reason: " << strerror_r(errno, buf, 256);
     throw(Exception(message.str()));
   }
 }  
 
 //------------------------------------------------------------------------------
-// clearDirectoryStorageClass
+// clearDirStorageClass
 //------------------------------------------------------------------------------
-void cta::Vfs::clearDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path) {
+void cta::Vfs::clearDirStorageClass(const SecurityIdentity &requester, const std::string &path) {
   cta::Utils::checkAbsolutePathSyntax(path);
   checkDirectoryExists(m_fsDir+path);
   
@@ -172,15 +172,15 @@ void cta::Vfs::clearDirectoryStorageClass(const SecurityIdentity &requester, con
   if(rc != 0) {
     char buf[256];
     std::ostringstream message;
-    message << "clearDirectoryStorageClass() - " << m_fsDir+path << " setxattr error. Reason: " << strerror_r(errno, buf, 256);
+    message << "clearDirStorageClass() - " << m_fsDir+path << " setxattr error. Reason: " << strerror_r(errno, buf, 256);
     throw(Exception(message.str()));
   }
 }  
 
 //------------------------------------------------------------------------------
-// getDirectoryStorageClass
+// getDirStorageClass
 //------------------------------------------------------------------------------
-std::string cta::Vfs::getDirectoryStorageClass(const SecurityIdentity &requester, const std::string &path) {
+std::string cta::Vfs::getDirStorageClass(const SecurityIdentity &requester, const std::string &path) {
   cta::Utils::checkAbsolutePathSyntax(path);
   checkDirectoryExists(m_fsDir+path);
   
@@ -190,7 +190,7 @@ std::string cta::Vfs::getDirectoryStorageClass(const SecurityIdentity &requester
   if(rc == -1) {
     char buf[256];
     std::ostringstream message;
-    message << "getDirectoryStorageClass() - " << m_fsDir+path << " getxattr error. Reason: " << strerror_r(errno, buf, 256);
+    message << "getDirStorageClass() - " << m_fsDir+path << " getxattr error. Reason: " << strerror_r(errno, buf, 256);
     throw(Exception(message.str()));
   }
   return std::string(value);
@@ -222,24 +222,24 @@ void cta::Vfs::createFile(const SecurityIdentity &requester, const std::string &
 }  
 
 //------------------------------------------------------------------------------
-// createDirectory
+// createDir
 //------------------------------------------------------------------------------
-void cta::Vfs::createDirectory(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode) {  
+void cta::Vfs::createDir(const SecurityIdentity &requester, const std::string &pathname, const uint16_t mode) {  
   cta::Utils::checkAbsolutePathSyntax(pathname);  
   std::string path = cta::Utils::getEnclosingDirPath(pathname);
   std::string name = cta::Utils::getEnclosedName(pathname);
   checkDirectoryExists(m_fsDir+path);
-  std::string inheritedStorageClass = getDirectoryStorageClass(requester, path);
+  std::string inheritedStorageClass = getDirStorageClass(requester, path);
   
   int rc = mkdir((m_fsDir+pathname).c_str(), mode);
   if(rc != 0) {
     char buf[256];
     std::ostringstream message;
-    message << "createDirectory() - mkdir " << m_fsDir+pathname << " error. Reason: \n" << strerror_r(errno, buf, 256);
+    message << "createDir() - mkdir " << m_fsDir+pathname << " error. Reason: \n" << strerror_r(errno, buf, 256);
     throw(Exception(message.str()));
   }
   
-  setDirectoryStorageClass(requester, pathname, inheritedStorageClass);
+  setDirStorageClass(requester, pathname, inheritedStorageClass);
 }  
 
 //------------------------------------------------------------------------------
@@ -258,12 +258,12 @@ void cta::Vfs::deleteFile(const SecurityIdentity &requester, const std::string &
 }  
 
 //------------------------------------------------------------------------------
-// deleteDirectory
+// deleteDir
 //------------------------------------------------------------------------------
-void cta::Vfs::deleteDirectory(const SecurityIdentity &requester, const std::string &pathname) {
+void cta::Vfs::deleteDir(const SecurityIdentity &requester, const std::string &pathname) {
   if(pathname=="/") {    
     std::ostringstream message;
-    message << "deleteDirectory() - Cannot delete root directory";
+    message << "deleteDir() - Cannot delete root directory";
     throw(Exception(message.str()));
   }
   cta::Utils::checkAbsolutePathSyntax(pathname);
@@ -272,15 +272,15 @@ void cta::Vfs::deleteDirectory(const SecurityIdentity &requester, const std::str
   if(rc != 0) {
     char buf[256];
     std::ostringstream message;
-    message << "deleteDirectory() - rmdir " << m_fsDir+pathname << " error. Reason: \n" << strerror_r(errno, buf, 256);
+    message << "deleteDir() - rmdir " << m_fsDir+pathname << " error. Reason: \n" << strerror_r(errno, buf, 256);
     throw(Exception(message.str()));
   }  
 }  
 
 //------------------------------------------------------------------------------
-// statDirectoryEntry
+// statDirEntry
 //------------------------------------------------------------------------------
-cta::DirectoryEntry cta::Vfs::statDirectoryEntry(const SecurityIdentity &requester, const std::string &pathname) {
+cta::DirEntry cta::Vfs::statDirEntry(const SecurityIdentity &requester, const std::string &pathname) {
   std::string name = cta::Utils::getEnclosedName(pathname);
   std::string path = cta::Utils::getEnclosingDirPath(pathname);
   
@@ -291,44 +291,44 @@ cta::DirectoryEntry cta::Vfs::statDirectoryEntry(const SecurityIdentity &request
   if(rc != 0) {
     char buf[256];
     std::ostringstream message;
-    message << "statDirectoryEntry() - " << m_fsDir+pathname << " stat error. Reason: " << strerror_r(errno, buf, 256);
+    message << "statDirEntry() - " << m_fsDir+pathname << " stat error. Reason: " << strerror_r(errno, buf, 256);
     throw(Exception(message.str()));
   }
   
-  cta::DirectoryEntry::EntryType entryType;
+  cta::DirEntry::EntryType entryType;
   std::string storageClassName;
   
   if(S_ISDIR(stat_result.st_mode)) {
-    entryType = cta::DirectoryEntry::ENTRYTYPE_DIRECTORY;
-    storageClassName = getDirectoryStorageClass(requester, pathname);
+    entryType = cta::DirEntry::ENTRYTYPE_DIRECTORY;
+    storageClassName = getDirStorageClass(requester, pathname);
   }
   else if(S_ISREG(stat_result.st_mode)) {
-    entryType = cta::DirectoryEntry::ENTRYTYPE_FILE;
-    storageClassName = getDirectoryStorageClass(requester, path);
+    entryType = cta::DirEntry::ENTRYTYPE_FILE;
+    storageClassName = getDirStorageClass(requester, path);
   }
   else {
     std::ostringstream message;
-    message << "statDirectoryEntry() - " << m_fsDir+pathname << " is not a directory nor a regular file";
+    message << "statDirEntry() - " << m_fsDir+pathname << " is not a directory nor a regular file";
     throw(Exception(message.str()));
   } 
   
-  return cta::DirectoryEntry(entryType, name, storageClassName);
+  return cta::DirEntry(entryType, name, storageClassName);
 }
 
 //------------------------------------------------------------------------------
-// getDirectoryEntries
+// getDirEntries
 //------------------------------------------------------------------------------
-std::list<cta::DirectoryEntry> cta::Vfs::getDirectoryEntries(const SecurityIdentity &requester, const std::string &dirPath) {  
+std::list<cta::DirEntry> cta::Vfs::getDirEntries(const SecurityIdentity &requester, const std::string &dirPath) {  
   DIR *dp;
   dp = opendir((m_fsDir+dirPath).c_str());
   if(dp == NULL) {
     char buf[256];
     std::ostringstream message;
-    message << "getDirectoryEntries() - opendir " << m_fsDir+dirPath << " error. Reason: \n" << strerror_r(errno, buf, 256);
+    message << "getDirEntries() - opendir " << m_fsDir+dirPath << " error. Reason: \n" << strerror_r(errno, buf, 256);
     throw(Exception(message.str()));
   }
   
-  std::list<DirectoryEntry> entries;
+  std::list<DirEntry> entries;
   struct dirent *entry;
   
   while((entry = readdir(dp))) {
@@ -340,7 +340,7 @@ std::list<cta::DirectoryEntry> cta::Vfs::getDirectoryEntries(const SecurityIdent
       else {
         dirEntryPathname = dirPath+"/"+(entry->d_name);
       }
-      entries.push_back(statDirectoryEntry(requester, dirEntryPathname));
+      entries.push_back(statDirEntry(requester, dirEntryPathname));
     }
   }
   
@@ -349,17 +349,17 @@ std::list<cta::DirectoryEntry> cta::Vfs::getDirectoryEntries(const SecurityIdent
 }
 
 //------------------------------------------------------------------------------
-// getDirectoryContents
+// getDirContents
 //------------------------------------------------------------------------------
-cta::DirectoryIterator cta::Vfs::getDirectoryContents(const SecurityIdentity &requester, const std::string &dirPath) {
+cta::DirIterator cta::Vfs::getDirContents(const SecurityIdentity &requester, const std::string &dirPath) {
   cta::Utils::checkAbsolutePathSyntax(dirPath);
   checkDirectoryExists(m_fsDir+dirPath);
-  cta::DirectoryIterator it = getDirectoryEntries(requester, dirPath);
+  cta::DirIterator it = getDirEntries(requester, dirPath);
   return it;
 }
 
 //------------------------------------------------------------------------------
-// getDirectoryContents
+// getDirContents
 //------------------------------------------------------------------------------
 std::string cta::Vfs::getVidOfFile(const SecurityIdentity &requester, const std::string &pathname, uint16_t copyNb) {
   return "T00001"; //everything is on one tape for the moment:)

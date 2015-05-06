@@ -20,64 +20,64 @@ cta::SqliteMiddleTierUser::~SqliteMiddleTierUser() throw() {
 }
 
 //------------------------------------------------------------------------------
-// createDirectory
+// createDir
 //------------------------------------------------------------------------------
-void cta::SqliteMiddleTierUser::createDirectory(const SecurityIdentity &requester,
+void cta::SqliteMiddleTierUser::createDir(const SecurityIdentity &requester,
   const std::string &dirPath) {
-  m_vfs.createDirectory(requester, dirPath, 0777);
+  m_vfs.createDir(requester, dirPath, 0777);
 }
 
 //------------------------------------------------------------------------------
-// deleteDirectory
+// deleteDir
 //------------------------------------------------------------------------------
-void cta::SqliteMiddleTierUser::deleteDirectory(const SecurityIdentity &requester,
+void cta::SqliteMiddleTierUser::deleteDir(const SecurityIdentity &requester,
   const std::string &dirPath) {
-  m_vfs.deleteDirectory(requester, dirPath);
+  m_vfs.deleteDir(requester, dirPath);
 }
 
 //------------------------------------------------------------------------------
-// getDirectoryContents
+// getDirContents
 //------------------------------------------------------------------------------
-cta::DirectoryIterator cta::SqliteMiddleTierUser::getDirectoryContents(
+cta::DirIterator cta::SqliteMiddleTierUser::getDirContents(
   const SecurityIdentity &requester, const std::string &dirPath) const {
-  return m_vfs.getDirectoryContents(requester, dirPath);
+  return m_vfs.getDirContents(requester, dirPath);
 }
 
 //------------------------------------------------------------------------------
 // stat
 //------------------------------------------------------------------------------
-cta::DirectoryEntry cta::SqliteMiddleTierUser::stat(
+cta::DirEntry cta::SqliteMiddleTierUser::stat(
   const SecurityIdentity &requester,
   const std::string path) const {
-  return m_vfs.statDirectoryEntry(requester, path);
+  return m_vfs.statDirEntry(requester, path);
 }
 
 //------------------------------------------------------------------------------
-// setDirectoryStorageClass
+// setDirStorageClass
 //------------------------------------------------------------------------------
-void cta::SqliteMiddleTierUser::setDirectoryStorageClass(
+void cta::SqliteMiddleTierUser::setDirStorageClass(
   const SecurityIdentity &requester,
   const std::string &dirPath,
   const std::string &storageClassName) {
-  m_vfs.setDirectoryStorageClass(requester, dirPath, storageClassName);
+  m_vfs.setDirStorageClass(requester, dirPath, storageClassName);
 }
 
 //------------------------------------------------------------------------------
-// clearDirectoryStorageClass
+// clearDirStorageClass
 //------------------------------------------------------------------------------
-void cta::SqliteMiddleTierUser::clearDirectoryStorageClass(
+void cta::SqliteMiddleTierUser::clearDirStorageClass(
   const SecurityIdentity &requester,
   const std::string &dirPath) {
-  m_vfs.clearDirectoryStorageClass(requester, dirPath);
+  m_vfs.clearDirStorageClass(requester, dirPath);
 }
   
 //------------------------------------------------------------------------------
-// getDirectoryStorageClass
+// getDirStorageClass
 //------------------------------------------------------------------------------
-std::string cta::SqliteMiddleTierUser::getDirectoryStorageClass(
+std::string cta::SqliteMiddleTierUser::getDirStorageClass(
   const SecurityIdentity &requester,
   const std::string &dirPath) const {
-  return m_vfs.getDirectoryStorageClass(requester, dirPath);
+  return m_vfs.getDirStorageClass(requester, dirPath);
 }
 
 //------------------------------------------------------------------------------
@@ -85,28 +85,28 @@ std::string cta::SqliteMiddleTierUser::getDirectoryStorageClass(
 //------------------------------------------------------------------------------
 void cta::SqliteMiddleTierUser::archive(const SecurityIdentity &requester,
   const std::list<std::string> &srcUrls, const std::string &dstPath) {
-  if(m_vfs.isExistingDirectory(requester, dstPath)) {
-    return archiveToDirectory(requester, srcUrls, dstPath);
+  if(m_vfs.isExistingDir(requester, dstPath)) {
+    return archiveToDir(requester, srcUrls, dstPath);
   } else {
     return archiveToFile(requester, srcUrls, dstPath);
   }
 }
 
 //------------------------------------------------------------------------------
-// archiveToDirectory
+// archiveToDir
 //------------------------------------------------------------------------------
-void cta::SqliteMiddleTierUser::archiveToDirectory(
+void cta::SqliteMiddleTierUser::archiveToDir(
   const SecurityIdentity &requester,
   const std::list<std::string> &srcUrls,
   const std::string &dstDir) {
   if(0 == srcUrls.size()) {
     throw Exception("At least one source file should be provided");
   }
-  std::string storageClassName = m_vfs.getDirectoryStorageClass(requester, dstDir);
+  std::string storageClassName = m_vfs.getDirStorageClass(requester, dstDir);
   cta::StorageClass storageClass = m_db.getStorageClassByName(requester, storageClassName);
   if(storageClass.getNbCopies()==0) {       
     std::ostringstream message;
-    message << "archiveToDirectory() - Storage class " << storageClassName << " has 0 copies";
+    message << "archiveToDir() - Storage class " << storageClassName << " has 0 copies";
     throw(Exception(message.str()));
   }
   for(int i=1; i<=storageClass.getNbCopies(); i++) {
@@ -152,7 +152,7 @@ void cta::SqliteMiddleTierUser::archiveToFile(
   }
   
   const std::string &srcFileName = srcUrls.front();
-  std::string storageClassName = m_vfs.getDirectoryStorageClass(requester, cta::Utils::getEnclosingDirPath(dstFile));
+  std::string storageClassName = m_vfs.getDirStorageClass(requester, cta::Utils::getEnclosingDirPath(dstFile));
   cta::StorageClass storageClass = m_db.getStorageClassByName(requester, storageClassName);
   if(storageClass.getNbCopies()==0) {       
     std::ostringstream message;

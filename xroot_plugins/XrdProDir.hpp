@@ -21,7 +21,7 @@ protected:
   /**
    * Iterator holding contents of the directory
    */
-  cta::DirectoryIterator m_itor;
+  cta::DirIterator m_itor;
   
   /**
    * Pointer to the user API object

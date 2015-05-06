@@ -13,9 +13,9 @@ cta::FileSystemNode::FileSystemNode():
 // constructor
 //------------------------------------------------------------------------------
 cta::FileSystemNode::FileSystemNode(FileSystemStorageClasses &storageclasses, 
-  const DirectoryEntry &entry):
+  const DirEntry &entry):
   m_storageClasses(&storageclasses),
-  m_entry(FileSystemDirectoryEntry(storageclasses, entry)) {
+  m_entry(FileSystemDirEntry(storageclasses, entry)) {
 }
 
 //------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ const cta::FileSystemNode &cta::FileSystemNode::getParent() const {
 //------------------------------------------------------------------------------
 // getFileSystemEntry
 //------------------------------------------------------------------------------
-cta::FileSystemDirectoryEntry &cta::FileSystemNode::getFileSystemEntry()
+cta::FileSystemDirEntry &cta::FileSystemNode::getFileSystemEntry()
   throw() {
   return m_entry;
 }
@@ -72,24 +72,24 @@ cta::FileSystemDirectoryEntry &cta::FileSystemNode::getFileSystemEntry()
 //------------------------------------------------------------------------------
 // getFileSystemEntry
 //------------------------------------------------------------------------------
-const cta::FileSystemDirectoryEntry &cta::FileSystemNode::getFileSystemEntry()
+const cta::FileSystemDirEntry &cta::FileSystemNode::getFileSystemEntry()
   const throw() {
   return m_entry;
 }
 
 //------------------------------------------------------------------------------
-// getDirectoryEntries
+// getDirEntries
 //------------------------------------------------------------------------------
-std::list<cta::DirectoryEntry> cta::FileSystemNode::getDirectoryEntries()
+std::list<cta::DirEntry> cta::FileSystemNode::getDirEntries()
   const {
-  std::list<DirectoryEntry> entries;
+  std::list<DirEntry> entries;
   for(std::map<std::string, FileSystemNode*>::const_iterator itor =
     m_children.begin(); itor != m_children.end(); itor++) {
     const FileSystemNode *const childNode = itor->second;
     if(NULL == childNode) {
-      throw(Exception("getDirectoryEntries encountered a NULL child pointer"));
+      throw(Exception("getDirEntries encountered a NULL child pointer"));
     }
-    const cta::FileSystemDirectoryEntry &childEntry =
+    const cta::FileSystemDirEntry &childEntry =
       childNode->getFileSystemEntry();
     entries.push_back(childEntry.getEntry());
   }

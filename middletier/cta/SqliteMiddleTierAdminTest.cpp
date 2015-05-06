@@ -189,7 +189,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
   }
 
   SqliteMiddleTierUser userApi(vfs,sqlitedb);
-  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, "/",
+  ASSERT_NO_THROW(userApi.setDirStorageClass(requester, "/",
     storageClassName));
 
   ASSERT_THROW(adminApi.deleteStorageClass(requester, storageClassName),
@@ -206,7 +206,7 @@ TEST_F(cta_client_SqliteMiddleTierAdminTest,
     ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
 
-  ASSERT_NO_THROW(userApi.clearDirectoryStorageClass(requester, "/"));
+  ASSERT_NO_THROW(userApi.clearDirStorageClass(requester, "/"));
 
   ASSERT_NO_THROW(adminApi.deleteStorageClass(requester, storageClassName));
 

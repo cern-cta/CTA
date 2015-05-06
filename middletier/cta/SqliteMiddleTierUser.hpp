@@ -35,7 +35,7 @@ public:
    * directory.
    * @param dirPath The absolute path of the directory.
    */
-  void createDirectory(
+  void createDir(
     const SecurityIdentity &requester,
     const std::string &dirPath);
 
@@ -46,7 +46,7 @@ public:
    * directory.
    * @param dirPath The absolute path of the directory.
    */
-  void deleteDirectory(
+  void deleteDir(
     const SecurityIdentity &requester,
     const std::string &dirPath);
 
@@ -58,7 +58,7 @@ public:
    * @param dirPath The absolute path of the directory.
    * @return An iterator over the contents of the directory.
    */
-  DirectoryIterator getDirectoryContents(
+  DirIterator getDirContents(
     const SecurityIdentity &requester,
     const std::string &dirPath) const;
 
@@ -72,7 +72,7 @@ public:
    * @return The directory entry information for the specified directory or file
    * within the archive namespace.
    */
-  DirectoryEntry stat(
+  DirEntry stat(
     const SecurityIdentity &requester,
     const std::string path) const;
 
@@ -84,7 +84,7 @@ public:
    * @param dirPath The absolute path of the directory.
    * @param storageClassName The name of the storage class.
    */
-  void setDirectoryStorageClass(
+  void setDirStorageClass(
     const SecurityIdentity &requester,
     const std::string &dirPath,
     const std::string &storageClassName);
@@ -96,7 +96,7 @@ public:
    * the directory to be cleared.
    * @param dirPath The absolute path of the directory.
    */
-  void clearDirectoryStorageClass(
+  void clearDirStorageClass(
     const SecurityIdentity &requester,
     const std::string &dirPath);
 
@@ -110,7 +110,7 @@ public:
    * @return The name of the storage class if the directory has one, else an
    * empty string.
    */
-  std::string getDirectoryStorageClass(
+  std::string getDirStorageClass(
     const SecurityIdentity &requester,
     const std::string &dirPath) const;
 
@@ -247,7 +247,7 @@ private:
    * @return True if the specified absolute path is that of an existing
    * directory within the archive namepsace.
    */
-  bool isAnExistingDirectory(const std::string &path) const throw();
+  bool isAnExistingDir(const std::string &path) const throw();
 
   /**
    * Archives the specified list of source files to the specified destination
@@ -262,7 +262,7 @@ private:
    * @param srcUrls List of one or more source files.
    * @param dstDir Destination directory within the archive namespace.
    */
-  void archiveToDirectory(
+  void archiveToDir(
     const SecurityIdentity &requester,
     const std::list<std::string> &srcUrls,
     const std::string &dstDir);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cta/DirectoryEntry.hpp"
+#include "cta/DirEntry.hpp"
 
 #include <list>
 
@@ -11,34 +11,34 @@ namespace cta {
  * through the contents of a directory.
  *
  * \code
- * DirectoryIterator &itor = ...
+ * DirIterator &itor = ...
  *
  * while(itor.hasMore())) {
- *   const DirectoryEntry &entry = itor.next();
+ *   const DirEntry &entry = itor.next();
  *
  *   // Do something with entry
  * }
  * \endcode
  */
-class DirectoryIterator {
+class DirIterator {
 public:
 
   /**
    * Constructor.
    */
-  DirectoryIterator();
+  DirIterator();
 
   /**
    * Constructor.
    *
    * @param entries The directory entries.
    */
-  DirectoryIterator(const std::list<DirectoryEntry> &entries);
+  DirIterator(const std::list<DirEntry> &entries);
 
   /**
    * Destructor.
    */
-  ~DirectoryIterator() throw();
+  ~DirIterator() throw();
 
   /**
    * Returns true if there are more directory entries.
@@ -53,15 +53,15 @@ public:
    *
    * @return The next directory entry.
    */
-  const DirectoryEntry next();
+  const DirEntry next();
 
 private:
 
   /**
    * The directory entries.
    */
-  std::list<DirectoryEntry> m_entries;
+  std::list<DirEntry> m_entries;
 
-}; // DirectoryIterator
+}; // DirIterator
 
 } // namespace cta

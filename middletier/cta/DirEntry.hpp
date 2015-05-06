@@ -9,7 +9,7 @@ namespace cta {
 /**
  * A directory entry.
  */
-class DirectoryEntry {
+class DirEntry {
 public:
 
   /**
@@ -31,7 +31,7 @@ public:
    *
    * Initialises all integer member-variables to 0.
    */
-  DirectoryEntry();
+  DirEntry();
 
   /**
    * Constructor.
@@ -43,7 +43,7 @@ public:
    * @param storageClassName The name of the directory's storage class or an
    * empty string if the directory does not have a storage class.
    */
-  DirectoryEntry(const EntryType entryType, const std::string &name,
+  DirEntry(const EntryType entryType, const std::string &name,
     const std::string &storageClassName);
 
   /**
@@ -130,6 +130,6 @@ private:
    */
   std::string m_storageClassName;
 
-}; // class DirectoryEntry
+}; // class DirEntry
 
 } // namespace cta

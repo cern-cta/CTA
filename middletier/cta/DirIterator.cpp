@@ -1,41 +1,41 @@
-#include "cta/DirectoryIterator.hpp"
+#include "cta/DirIterator.hpp"
 #include "cta/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::DirectoryIterator::DirectoryIterator() {
+cta::DirIterator::DirIterator() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::DirectoryIterator::DirectoryIterator(
-  const std::list<DirectoryEntry> &entries): m_entries(entries) {
+cta::DirIterator::DirIterator(
+  const std::list<DirEntry> &entries): m_entries(entries) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::DirectoryIterator::~DirectoryIterator() throw() {
+cta::DirIterator::~DirIterator() throw() {
 }
 
 //------------------------------------------------------------------------------
 // hasMore
 //------------------------------------------------------------------------------
-bool cta::DirectoryIterator::hasMore() {
+bool cta::DirIterator::hasMore() {
   return !m_entries.empty();
 }
 
 //------------------------------------------------------------------------------
 // next
 //------------------------------------------------------------------------------
-const cta::DirectoryEntry cta::DirectoryIterator::next() {
+const cta::DirEntry cta::DirIterator::next() {
   if(m_entries.empty()) {
     throw Exception("Out of bounds: There are no more directory entries");
   }
 
-  DirectoryEntry entry = m_entries.front();
+  DirEntry entry = m_entries.front();
   m_entries.pop_front();
   return entry;
 }

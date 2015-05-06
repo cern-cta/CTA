@@ -1,9 +1,9 @@
-#include "cta/DirectoryEntry.hpp"
+#include "cta/DirEntry.hpp"
 
 //------------------------------------------------------------------------------
 // entryTypeToStr
 //------------------------------------------------------------------------------
-const char *cta::DirectoryEntry::entryTypeToStr(const EntryType enumValue)
+const char *cta::DirEntry::entryTypeToStr(const EntryType enumValue)
   throw() {
   switch(enumValue) {
   case ENTRYTYPE_NONE     : return "NONE";
@@ -16,7 +16,7 @@ const char *cta::DirectoryEntry::entryTypeToStr(const EntryType enumValue)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::DirectoryEntry::DirectoryEntry():
+cta::DirEntry::DirEntry():
   m_ownerId(0),
   m_groupId(0),
   m_mode(0) {
@@ -25,7 +25,7 @@ cta::DirectoryEntry::DirectoryEntry():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::DirectoryEntry::DirectoryEntry(const EntryType entryType,
+cta::DirEntry::DirEntry(const EntryType entryType,
   const std::string &name, const std::string &storageClassName):
   m_entryType(entryType),
   m_name(name),
@@ -37,7 +37,7 @@ cta::DirectoryEntry::DirectoryEntry(const EntryType entryType,
 //------------------------------------------------------------------------------
 // getType
 //------------------------------------------------------------------------------
-cta::DirectoryEntry::EntryType cta::DirectoryEntry::getType()
+cta::DirEntry::EntryType cta::DirEntry::getType()
   const throw() {
   return m_entryType;
 }
@@ -45,35 +45,35 @@ cta::DirectoryEntry::EntryType cta::DirectoryEntry::getType()
 //------------------------------------------------------------------------------
 // getName
 //------------------------------------------------------------------------------
-const std::string &cta::DirectoryEntry::getName() const throw() {
+const std::string &cta::DirEntry::getName() const throw() {
   return m_name;
 }
 
 //------------------------------------------------------------------------------
 // getOwnerId
 //------------------------------------------------------------------------------
-uint32_t cta::DirectoryEntry::getOwnerId() const throw() {
+uint32_t cta::DirEntry::getOwnerId() const throw() {
   return m_ownerId;
 }
 
 //------------------------------------------------------------------------------
 // getGroupId
 //------------------------------------------------------------------------------
-uint32_t cta::DirectoryEntry::getGroupId() const throw() {
+uint32_t cta::DirEntry::getGroupId() const throw() {
   return m_groupId;
 }
 
 //------------------------------------------------------------------------------
 // getMode
 //------------------------------------------------------------------------------
-uint16_t cta::DirectoryEntry::getMode() const throw() {
+uint16_t cta::DirEntry::getMode() const throw() {
   return m_mode;
 }
 
 //------------------------------------------------------------------------------
 // setStorageClassName
 //------------------------------------------------------------------------------
-void cta::DirectoryEntry::setStorageClassName(
+void cta::DirEntry::setStorageClassName(
   const std::string &storageClassName) {
   m_storageClassName = storageClassName;
 }
@@ -81,6 +81,6 @@ void cta::DirectoryEntry::setStorageClassName(
 //------------------------------------------------------------------------------
 // getStorageClassName
 //------------------------------------------------------------------------------
-const std::string &cta::DirectoryEntry::getStorageClassName() const throw() {
+const std::string &cta::DirEntry::getStorageClassName() const throw() {
   return m_storageClassName;
 }

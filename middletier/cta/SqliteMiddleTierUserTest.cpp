@@ -17,7 +17,7 @@ protected:
 };
 
 TEST_F(cta_client_SqliteMiddleTierUserTest,
-  getDirectoryContents_root_dir_is_empty) {
+  getDirContents_root_dir_is_empty) {
   using namespace cta;
 
   SqliteDatabase db;
@@ -26,12 +26,12 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
   const SecurityIdentity requester;
   const std::string dirPath = "/";
 
-  DirectoryIterator itor;
-  ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+  DirIterator itor;
+  ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/"));
   ASSERT_FALSE(itor.hasMore());
 }
 
-TEST_F(cta_client_SqliteMiddleTierUserTest, createDirectory_empty_string) {
+TEST_F(cta_client_SqliteMiddleTierUserTest, createDir_empty_string) {
   using namespace cta;
 
   SqliteDatabase db;
@@ -40,11 +40,11 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, createDirectory_empty_string) {
   const SecurityIdentity requester;
   const std::string dirPath = "";
 
-  ASSERT_THROW(userApi.createDirectory(requester, dirPath), std::exception);
+  ASSERT_THROW(userApi.createDir(requester, dirPath), std::exception);
 }
 
 TEST_F(cta_client_SqliteMiddleTierUserTest,
-  createDirectory_consecutive_slashes) {
+  createDir_consecutive_slashes) {
   using namespace cta;
 
   SqliteDatabase db;
@@ -53,10 +53,10 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
   const SecurityIdentity requester;
   const std::string dirPath = "//";
 
-  ASSERT_THROW(userApi.createDirectory(requester, dirPath), std::exception);
+  ASSERT_THROW(userApi.createDir(requester, dirPath), std::exception);
 }
 
-TEST_F(cta_client_SqliteMiddleTierUserTest, createDirectory_invalid_chars) {
+TEST_F(cta_client_SqliteMiddleTierUserTest, createDir_invalid_chars) {
   using namespace cta;
 
   SqliteDatabase db;
@@ -65,10 +65,10 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, createDirectory_invalid_chars) {
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent/?parent";
   
-  ASSERT_THROW(userApi.createDirectory(requester, dirPath), std::exception);
+  ASSERT_THROW(userApi.createDir(requester, dirPath), std::exception);
 }
 
-TEST_F(cta_client_SqliteMiddleTierUserTest, createDirectory_top_level) {
+TEST_F(cta_client_SqliteMiddleTierUserTest, createDir_top_level) {
   using namespace cta;
 
   SqliteDatabase db;
@@ -77,22 +77,22 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, createDirectory_top_level) {
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
   
-  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
+  ASSERT_NO_THROW(userApi.createDir(requester, dirPath));
 
-  DirectoryIterator itor;
+  DirIterator itor;
 
-  ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+  ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/"));
 
   ASSERT_TRUE(itor.hasMore());
 
-  DirectoryEntry entry;
+  DirEntry entry;
 
   ASSERT_NO_THROW(entry = itor.next());
 
   ASSERT_EQ(std::string("grandparent"), entry.getName());
 }
 
-TEST_F(cta_client_SqliteMiddleTierUserTest, createDirectory_second_level) {
+TEST_F(cta_client_SqliteMiddleTierUserTest, createDir_second_level) {
   using namespace cta;
 
   SqliteDatabase db;
@@ -100,44 +100,44 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, createDirectory_second_level) {
   SqliteMiddleTierUser userApi(vfs, db);
   const SecurityIdentity requester;
 
-  ASSERT_TRUE(userApi.getDirectoryStorageClass(requester, "/").empty());
+  ASSERT_TRUE(userApi.getDirStorageClass(requester, "/").empty());
 
   {
     const std::string topLevelDirPath = "/grandparent";
 
-    ASSERT_NO_THROW(userApi.createDirectory(requester, topLevelDirPath));
+    ASSERT_NO_THROW(userApi.createDir(requester, topLevelDirPath));
   }
 
   {
-    DirectoryIterator itor;
+    DirIterator itor;
 
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/"));
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirectoryEntry entry;
+    DirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
     ASSERT_EQ(std::string("grandparent"), entry.getName());
   }
 
-  ASSERT_TRUE(userApi.getDirectoryStorageClass(requester, "/grandparent").empty());
+  ASSERT_TRUE(userApi.getDirStorageClass(requester, "/grandparent").empty());
 
   {
     const std::string secondLevelDirPath = "/grandparent/parent";
 
-    ASSERT_NO_THROW(userApi.createDirectory(requester, secondLevelDirPath));
+    ASSERT_NO_THROW(userApi.createDir(requester, secondLevelDirPath));
   }
 
   {
-    DirectoryIterator itor;
+    DirIterator itor;
 
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/"));
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirectoryEntry entry;
+    DirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -145,25 +145,25 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, createDirectory_second_level) {
   }
 
   {
-    DirectoryIterator itor;
+    DirIterator itor;
 
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/grandparent"));
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/grandparent"));
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirectoryEntry entry;
+    DirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
     ASSERT_EQ(std::string("parent"), entry.getName());
   }
 
-  ASSERT_TRUE(userApi.getDirectoryStorageClass(requester,
+  ASSERT_TRUE(userApi.getDirStorageClass(requester,
     "/grandparent/parent").empty());
 }
 
 TEST_F(cta_client_SqliteMiddleTierUserTest,
-  createDirectory_inherit_storage_class) {
+  createDir_inherit_storage_class) {
   using namespace cta;
 
   SqliteDatabase db;
@@ -171,7 +171,7 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
   SqliteMiddleTierUser userApi(vfs, db);
   const SecurityIdentity requester;
 
-  ASSERT_TRUE(userApi.getDirectoryStorageClass(requester, "/").empty());
+  ASSERT_TRUE(userApi.getDirStorageClass(requester, "/").empty());
 
   {
     SqliteMiddleTierAdmin adminApi(vfs, db);
@@ -184,45 +184,45 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
   {
     const std::string topLevelDirPath = "/grandparent";
 
-    ASSERT_NO_THROW(userApi.createDirectory(requester, topLevelDirPath));
+    ASSERT_NO_THROW(userApi.createDir(requester, topLevelDirPath));
   }
 
   {
-    DirectoryIterator itor;
+    DirIterator itor;
 
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/"));
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirectoryEntry entry;
+    DirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
     ASSERT_EQ(std::string("grandparent"), entry.getName());
 
-    ASSERT_TRUE(userApi.getDirectoryStorageClass(requester, "/grandparent").empty());
+    ASSERT_TRUE(userApi.getDirStorageClass(requester, "/grandparent").empty());
 
-    ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, "/grandparent",
+    ASSERT_NO_THROW(userApi.setDirStorageClass(requester, "/grandparent",
       "TestStorageClass"));
   }
 
   ASSERT_EQ(std::string("TestStorageClass"),
-    userApi.getDirectoryStorageClass(requester, "/grandparent"));
+    userApi.getDirStorageClass(requester, "/grandparent"));
 
   {
     const std::string secondLevelDirPath = "/grandparent/parent";
 
-    ASSERT_NO_THROW(userApi.createDirectory(requester, secondLevelDirPath));
+    ASSERT_NO_THROW(userApi.createDir(requester, secondLevelDirPath));
   }
 
   {
-    DirectoryIterator itor;
+    DirIterator itor;
 
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/"));
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirectoryEntry entry;
+    DirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -230,13 +230,13 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
   }
 
   {
-    DirectoryIterator itor;
+    DirIterator itor;
 
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/grandparent"));
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/grandparent"));
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirectoryEntry entry;
+    DirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -244,10 +244,10 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
   }
 
   ASSERT_EQ(std::string("TestStorageClass"),
-    userApi.getDirectoryStorageClass(requester, "/grandparent/parent"));
+    userApi.getDirStorageClass(requester, "/grandparent/parent"));
 }
 
-TEST_F(cta_client_SqliteMiddleTierUserTest, deleteDirectory_root) {
+TEST_F(cta_client_SqliteMiddleTierUserTest, deleteDir_root) {
   using namespace cta;
 
   SqliteDatabase db;
@@ -256,10 +256,10 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, deleteDirectory_root) {
   const SecurityIdentity requester;
   const std::string dirPath = "/";
 
-  ASSERT_THROW(userApi.deleteDirectory(requester, "/"), std::exception);
+  ASSERT_THROW(userApi.deleteDir(requester, "/"), std::exception);
 }
 
-TEST_F(cta_client_SqliteMiddleTierUserTest, deleteDirectory_existing_top_level) {
+TEST_F(cta_client_SqliteMiddleTierUserTest, deleteDir_existing_top_level) {
   using namespace cta;
 
   SqliteDatabase db;
@@ -268,35 +268,35 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, deleteDirectory_existing_top_level) 
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
   
-  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
+  ASSERT_NO_THROW(userApi.createDir(requester, dirPath));
 
   {
-    DirectoryIterator itor;
+    DirIterator itor;
 
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/"));
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirectoryEntry entry;
+    DirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
     ASSERT_EQ(std::string("grandparent"), entry.getName());
   }
 
-  ASSERT_NO_THROW(userApi.deleteDirectory(requester, "/grandparent"));
+  ASSERT_NO_THROW(userApi.deleteDir(requester, "/grandparent"));
 
   {
-    DirectoryIterator itor;
+    DirIterator itor;
   
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/"));
   
     ASSERT_FALSE(itor.hasMore());
   }
 }
 
 TEST_F(cta_client_SqliteMiddleTierUserTest,
-  deleteDirectory_non_empty_top_level) {
+  deleteDir_non_empty_top_level) {
   using namespace cta;
 
   SqliteDatabase db;
@@ -307,15 +307,15 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
   {
     const std::string topLevelDirPath = "/grandparent";
 
-    ASSERT_NO_THROW(userApi.createDirectory(requester, topLevelDirPath));
+    ASSERT_NO_THROW(userApi.createDir(requester, topLevelDirPath));
 
-    DirectoryIterator itor;
+    DirIterator itor;
 
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/"));
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirectoryEntry entry;
+    DirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -325,15 +325,15 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
   {
     const std::string secondLevelDirPath = "/grandparent/parent";
 
-    ASSERT_NO_THROW(userApi.createDirectory(requester, secondLevelDirPath));
+    ASSERT_NO_THROW(userApi.createDir(requester, secondLevelDirPath));
 
-    DirectoryIterator itor;
+    DirIterator itor;
 
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/"));
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirectoryEntry entry;
+    DirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -341,29 +341,29 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
   }
 
   {
-    DirectoryIterator itor;
+    DirIterator itor;
 
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/grandparent"));
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/grandparent"));
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirectoryEntry entry;
+    DirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
     ASSERT_EQ(std::string("parent"), entry.getName());
   }
 
-  ASSERT_THROW(userApi.deleteDirectory(requester, "/grandparent"), std::exception);
+  ASSERT_THROW(userApi.deleteDir(requester, "/grandparent"), std::exception);
 
   {
-    DirectoryIterator itor;
+    DirIterator itor;
 
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/grandparent"));
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/grandparent"));
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirectoryEntry entry;
+    DirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -372,7 +372,7 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
 }
 
 TEST_F(cta_client_SqliteMiddleTierUserTest,
-  deleteDirectory_non_existing_top_level) {
+  deleteDir_non_existing_top_level) {
   using namespace cta;
   
   SqliteDatabase db;
@@ -380,10 +380,10 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
   SqliteMiddleTierUser userApi(vfs, db);
   const SecurityIdentity requester;
 
-  ASSERT_THROW(userApi.deleteDirectory(requester, "/grandparent"), std::exception);
+  ASSERT_THROW(userApi.deleteDir(requester, "/grandparent"), std::exception);
 }
 
-TEST_F(cta_client_SqliteMiddleTierUserTest, setDirectoryStorageClass_top_level) {
+TEST_F(cta_client_SqliteMiddleTierUserTest, setDirStorageClass_top_level) {
   using namespace cta;
 
   SqliteDatabase db;
@@ -392,15 +392,15 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, setDirectoryStorageClass_top_level) 
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
 
-  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
+  ASSERT_NO_THROW(userApi.createDir(requester, dirPath));
 
-  DirectoryIterator itor;
+  DirIterator itor;
 
-  ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+  ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/"));
 
   ASSERT_TRUE(itor.hasMore());
 
-  DirectoryEntry entry;
+  DirEntry entry;
 
   ASSERT_NO_THROW(entry = itor.next());
 
@@ -408,7 +408,7 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, setDirectoryStorageClass_top_level) 
 
   {
     std::string name;
-    ASSERT_NO_THROW(name = userApi.getDirectoryStorageClass(requester, dirPath));
+    ASSERT_NO_THROW(name = userApi.getDirStorageClass(requester, dirPath));
     ASSERT_TRUE(name.empty());
   }
 
@@ -421,18 +421,18 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, setDirectoryStorageClass_top_level) 
       nbCopies, comment));
   }
 
-  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+  ASSERT_NO_THROW(userApi.setDirStorageClass(requester, dirPath,
     storageClassName));
 
   {
     std::string name;
-    ASSERT_NO_THROW(name = userApi.getDirectoryStorageClass(requester, dirPath));
+    ASSERT_NO_THROW(name = userApi.getDirStorageClass(requester, dirPath));
     ASSERT_EQ(storageClassName, name);
   }
 }
 
 TEST_F(cta_client_SqliteMiddleTierUserTest,
-  clearDirectoryStorageClass_top_level) {
+  clearDirStorageClass_top_level) {
   using namespace cta;
 
   SqliteDatabase db;
@@ -441,15 +441,15 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
 
-  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
+  ASSERT_NO_THROW(userApi.createDir(requester, dirPath));
 
-  DirectoryIterator itor;
+  DirIterator itor;
 
-  ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+  ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/"));
 
   ASSERT_TRUE(itor.hasMore());
 
-  DirectoryEntry entry;
+  DirEntry entry;
 
   ASSERT_NO_THROW(entry = itor.next());
 
@@ -457,7 +457,7 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
 
   {
     std::string name;
-    ASSERT_NO_THROW(name = userApi.getDirectoryStorageClass(requester, dirPath));
+    ASSERT_NO_THROW(name = userApi.getDirStorageClass(requester, dirPath));
     ASSERT_TRUE(name.empty());
   }
 
@@ -468,23 +468,23 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
   ASSERT_NO_THROW(adminApi.createStorageClass(requester, storageClassName,
     nbCopies, comment));
 
-  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+  ASSERT_NO_THROW(userApi.setDirStorageClass(requester, dirPath,
     storageClassName));
 
   {
     std::string name;
-    ASSERT_NO_THROW(name = userApi.getDirectoryStorageClass(requester, dirPath));
+    ASSERT_NO_THROW(name = userApi.getDirStorageClass(requester, dirPath));
     ASSERT_EQ(storageClassName, name);
   }
 
   ASSERT_THROW(adminApi.deleteStorageClass(requester, storageClassName),
     std::exception);
 
-  ASSERT_NO_THROW(userApi.clearDirectoryStorageClass(requester, dirPath));
+  ASSERT_NO_THROW(userApi.clearDirStorageClass(requester, dirPath));
 
   {
     std::string name;
-    ASSERT_NO_THROW(name = userApi.getDirectoryStorageClass(requester, dirPath));
+    ASSERT_NO_THROW(name = userApi.getDirStorageClass(requester, dirPath));
     ASSERT_TRUE(name.empty());
   }
 
@@ -507,8 +507,8 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, archive_to_new_file) {
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
-  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+  ASSERT_NO_THROW(userApi.createDir(requester, dirPath));
+  ASSERT_NO_THROW(userApi.setDirStorageClass(requester, dirPath,
     storageClassName));
 
   const std::string tapePoolName = "TestTapePool";
@@ -528,32 +528,32 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, archive_to_new_file) {
   ASSERT_NO_THROW(userApi.archive(requester, srcUrls, dstPath));
 
   {
-    DirectoryIterator itor;
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/"));
     ASSERT_TRUE(itor.hasMore());
-    DirectoryEntry entry;
+    DirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
     ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(DirectoryEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(DirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStorageClassName());
   }
 
   {
-    DirectoryIterator itor;
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester,
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester,
       "/grandparent"));
     ASSERT_TRUE(itor.hasMore());
-    DirectoryEntry entry;
+    DirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
     ASSERT_EQ(std::string("parent_file"), entry.getName());
-    ASSERT_EQ(DirectoryEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStorageClassName());
   }
 
   {
-    DirectoryEntry entry;
+    DirEntry entry;
     ASSERT_NO_THROW(entry = userApi.stat(requester, dstPath));
-    ASSERT_EQ(DirectoryEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStorageClassName());
   }
 
@@ -612,7 +612,7 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
   const SecurityIdentity requester;
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
+  ASSERT_NO_THROW(userApi.createDir(requester, dirPath));
 
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl");
@@ -637,8 +637,8 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
-  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+  ASSERT_NO_THROW(userApi.createDir(requester, dirPath));
+  ASSERT_NO_THROW(userApi.setDirStorageClass(requester, dirPath,
     storageClassName));
 
   std::list<std::string> srcUrls;
@@ -663,8 +663,8 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, archive_to_new_file_with_no_route) {
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
-  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+  ASSERT_NO_THROW(userApi.createDir(requester, dirPath));
+  ASSERT_NO_THROW(userApi.setDirStorageClass(requester, dirPath,
     storageClassName));
 
   const std::string tapePoolName = "TestTapePool";
@@ -696,8 +696,8 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
-  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+  ASSERT_NO_THROW(userApi.createDir(requester, dirPath));
+  ASSERT_NO_THROW(userApi.setDirStorageClass(requester, dirPath,
     storageClassName));
 
   const std::string tapePoolName = "TestTapePool";
@@ -733,8 +733,8 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, archive_to_directory) {
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
-  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+  ASSERT_NO_THROW(userApi.createDir(requester, dirPath));
+  ASSERT_NO_THROW(userApi.setDirStorageClass(requester, dirPath,
     storageClassName));
 
   const std::string tapePoolName = "TestTapePool";
@@ -757,23 +757,23 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, archive_to_directory) {
   ASSERT_NO_THROW(userApi.archive(requester, srcUrls, dstPath));
 
   {
-    DirectoryIterator itor;
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester, "/"));
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester, "/"));
     ASSERT_TRUE(itor.hasMore());
-    DirectoryEntry entry;
+    DirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
     ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(DirectoryEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(DirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStorageClassName());
   }
 
   {
     std::set<std::string> archiveFileNames;
-    DirectoryIterator itor;
-    ASSERT_NO_THROW(itor = userApi.getDirectoryContents(requester,
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = userApi.getDirContents(requester,
       "/grandparent"));
     while(itor.hasMore()) {
-      const DirectoryEntry entry = itor.next();
+      const DirEntry entry = itor.next();
       archiveFileNames.insert(entry.getName());
     }
     ASSERT_EQ(4, archiveFileNames.size());
@@ -850,7 +850,7 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
   const SecurityIdentity requester;
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
+  ASSERT_NO_THROW(userApi.createDir(requester, dirPath));
 
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl1");
@@ -878,8 +878,8 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
-  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+  ASSERT_NO_THROW(userApi.createDir(requester, dirPath));
+  ASSERT_NO_THROW(userApi.setDirStorageClass(requester, dirPath,
     storageClassName));
 
   std::list<std::string> srcUrls;
@@ -907,8 +907,8 @@ TEST_F(cta_client_SqliteMiddleTierUserTest, archive_to_directory_with_no_route) 
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
-  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+  ASSERT_NO_THROW(userApi.createDir(requester, dirPath));
+  ASSERT_NO_THROW(userApi.setDirStorageClass(requester, dirPath,
     storageClassName));
 
   const std::string tapePoolName = "TestTapePool";
@@ -943,8 +943,8 @@ TEST_F(cta_client_SqliteMiddleTierUserTest,
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(userApi.createDirectory(requester, dirPath));
-  ASSERT_NO_THROW(userApi.setDirectoryStorageClass(requester, dirPath,
+  ASSERT_NO_THROW(userApi.createDir(requester, dirPath));
+  ASSERT_NO_THROW(userApi.setDirStorageClass(requester, dirPath,
     storageClassName));
 
   const std::string tapePoolName = "TestTapePool";

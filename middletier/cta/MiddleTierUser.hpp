@@ -2,7 +2,7 @@
 
 #include "cta/ArchivalJob.hpp"
 #include "cta/ArchivalRoute.hpp"
-#include "cta/DirectoryIterator.hpp"
+#include "cta/DirIterator.hpp"
 #include "cta/LogicalLibrary.hpp"
 #include "cta/RetrievalJob.hpp"
 #include "cta/SecurityIdentity.hpp"
@@ -36,7 +36,7 @@ public:
    * directory.
    * @param dirPath The absolute path of the directory.
    */
-  virtual void createDirectory(
+  virtual void createDir(
     const SecurityIdentity &requester,
     const std::string &dirPath) = 0;
 
@@ -47,7 +47,7 @@ public:
    * directory.
    * @param dirPath The absolute path of the directory.
    */
-  virtual void deleteDirectory(
+  virtual void deleteDir(
     const SecurityIdentity &requester,
     const std::string &dirPath) = 0;
 
@@ -59,7 +59,7 @@ public:
    * @param dirPath The absolute path of the directory.
    * @return An iterator over the contents of the directory.
    */
-  virtual DirectoryIterator getDirectoryContents(
+  virtual DirIterator getDirContents(
     const SecurityIdentity &requester,
     const std::string &dirPath) const = 0;
 
@@ -73,7 +73,7 @@ public:
    * @return The directory entry information for the specified directory or file
    * within the archive namespace.
    */
-  virtual DirectoryEntry stat(
+  virtual DirEntry stat(
     const SecurityIdentity &requester,
     const std::string path) const = 0;
 
@@ -85,7 +85,7 @@ public:
    * @param dirPath The absolute path of the directory.
    * @param storageClassName The name of the storage class.
    */
-  virtual void setDirectoryStorageClass(
+  virtual void setDirStorageClass(
     const SecurityIdentity &requester,
     const std::string &dirPath,
     const std::string &storageClassName) = 0;
@@ -97,7 +97,7 @@ public:
    * the directory to be cleared.
    * @param dirPath The absolute path of the directory.
    */
-  virtual void clearDirectoryStorageClass(
+  virtual void clearDirStorageClass(
     const SecurityIdentity &requester,
     const std::string &dirPath) = 0;
 
@@ -111,7 +111,7 @@ public:
    * @return The name of the storage class if the directory has one, else an
    * empty string.
    */
-  virtual std::string getDirectoryStorageClass(
+  virtual std::string getDirStorageClass(
     const SecurityIdentity &requester,
     const std::string &dirPath) const = 0;
 

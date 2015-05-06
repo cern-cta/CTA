@@ -1,17 +1,17 @@
-#include "cta/FileSystemDirectoryEntry.hpp"
+#include "cta/FileSystemDirEntry.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileSystemDirectoryEntry::FileSystemDirectoryEntry():
+cta::FileSystemDirEntry::FileSystemDirEntry():
   m_storageClasses(NULL) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileSystemDirectoryEntry::FileSystemDirectoryEntry(
-  FileSystemStorageClasses &storageClasses, const DirectoryEntry &entry):
+cta::FileSystemDirEntry::FileSystemDirEntry(
+  FileSystemStorageClasses &storageClasses, const DirEntry &entry):
   m_storageClasses(&storageClasses),
   m_entry(entry) {
   setStorageClassName(entry.getStorageClassName());
@@ -20,7 +20,7 @@ cta::FileSystemDirectoryEntry::FileSystemDirectoryEntry(
 //------------------------------------------------------------------------------
 // getEntry
 //------------------------------------------------------------------------------
-const cta::DirectoryEntry &cta::FileSystemDirectoryEntry::getEntry()
+const cta::DirEntry &cta::FileSystemDirEntry::getEntry()
   const throw() {
   return m_entry;
 }
@@ -28,7 +28,7 @@ const cta::DirectoryEntry &cta::FileSystemDirectoryEntry::getEntry()
 //------------------------------------------------------------------------------
 // setStorageClassName
 //------------------------------------------------------------------------------
-void cta::FileSystemDirectoryEntry::setStorageClassName(
+void cta::FileSystemDirEntry::setStorageClassName(
   const std::string &storageClassName) {
   const std::string previousStorageClassName = m_entry.getStorageClassName();
 
