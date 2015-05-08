@@ -32,8 +32,10 @@ set (MIDDLE_TIER_LIB_SRC_FILES
   cta/LogicalLibrary.cpp
   cta/MiddleTierAdmin.cpp
   cta/MiddleTierUser.cpp
+  cta/MockNameServer.cpp
   cta/Mount.cpp
   cta/MountCriteria.cpp
+  cta/NameServer.cpp
   cta/RemoteStorage.cpp
   cta/RetrievalFileTransfer.cpp
   cta/RetrievalJob.cpp
@@ -69,7 +71,7 @@ set (MIDDLE_TIER_UNIT_TESTS_LIB_SRC_FILES
   cta/SqliteMiddleTierAdminTest.cpp
   cta/SqliteMiddleTierUserTest.cpp
   cta/UtilsTest.cpp
-  cta/VfsTest.cpp)
+  cta/MockNameServerTest.cpp)
 
 add_library (ctamiddletierunittests SHARED
   ${MIDDLE_TIER_UNIT_TESTS_LIB_SRC_FILES})
