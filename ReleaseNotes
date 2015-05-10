@@ -1,4 +1,14 @@
 ------------
+- 2.1.15-7 -
+------------
+
+  Summary
+  -------
+  This release is strictly equivalent to 2.1.15-6. It has been rebuilt to fix a dependency
+  issue with xrootd.
+
+
+------------
 - 2.1.15-6 -
 ------------
 
