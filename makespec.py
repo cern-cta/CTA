@@ -69,6 +69,10 @@ def handleInstallFiles(pkg):
 
 def translateRequires(requires):
   reqlist = [req.strip() for req in requires.split(',')]
+  return '\nRequires: '.join(reqlist)
+    
+def translateBuildRequires(requires):
+  reqlist = [req.strip() for req in requires.split(',')]
   easyreqlist = []
   osdepreqlist = []
   for req in reqlist:
@@ -76,7 +80,7 @@ def translateRequires(requires):
       osdepreqlist.append(req)
     else:
       easyreqlist.append(req)
-  res = ', '.join(easyreqlist)
+  res = '\nBuildRequires: '.join(easyreqlist)
   if osdepreqlist:
     for req in osdepreqlist:
       res += '\n' + osDepRequireTranslator[req]
@@ -97,8 +101,8 @@ for pkg in deb822.Packages.iter_paragraphs(open('debian/control')):
     print 'Summary: Cern Advanced mass STORage'
     print 'Group: Application/Castor'
     # deal with entries of the control file
-    handleDebianEntry(pkg, 'Depends', 'Requires: ')
-    handleDebianEntry(pkg, 'Build-Depends', 'BuildRequires: ', translateRequires)
+    handleDebianEntry(pkg, 'Depends', 'Requires: ', translateRequires)
+    handleDebianEntry(pkg, 'Build-Depends', 'BuildRequires: ', translateBuildRequires)
     handleDebianEntry(pkg, 'Provides')
     handleDebianEntry(pkg, 'Conflicts')
     handleDebianEntry(pkg, 'XBS-Obsoletes', 'Obsoletes: ')
