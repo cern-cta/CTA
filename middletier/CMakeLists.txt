@@ -1,7 +1,8 @@
 cmake_minimum_required (VERSION 2.6)
 
 find_package (sqlite REQUIRED)
-include_directories (${SQLITE3_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories (${SQLITE3_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} 
+  ${PROJECT_SOURCE_DIR})
 
 set (MIDDLE_TIER_LIB_SRC_FILES
   cta/AdminHost.cpp
@@ -65,7 +66,8 @@ set (MIDDLE_TIER_LIB_SRC_FILES
 add_library (ctamiddletier SHARED
   ${MIDDLE_TIER_LIB_SRC_FILES})
 
-target_link_libraries (ctamiddletier ${SQLITE3_LIBRARY_RELEASE})
+target_link_libraries (ctamiddletier ${SQLITE3_LIBRARY_RELEASE}
+  CTAException)
 
 set (MIDDLE_TIER_UNIT_TESTS_LIB_SRC_FILES
   cta/SqliteMiddleTierAdminTest.cpp

@@ -29,6 +29,7 @@
 #include <fcntl.h>
 
 #include "cta/Exception.hpp"
+#include "exception/Errnum.hpp"
 #include "cta/Utils.hpp"
 #include "cta/Vfs.hpp"
 
@@ -132,35 +133,25 @@ void cta::Vfs::checkStorageClassIsNotInUse(const SecurityIdentity &requester, co
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::Vfs::Vfs() {  
-  m_baseDir = "/tmp";  
-  m_fsDir = m_baseDir+"/CTATmpFs";
-  
-  checkDirectoryExists(m_baseDir);
-  checkPathnameDoesNotExist(m_fsDir);
- 
-  int rc = mkdir(m_fsDir.c_str(), 0777);
-  if(rc != 0) {
-    char buf[256];
-    std::ostringstream message;
-    message << "Vfs() - mkdir " << m_fsDir << " error. Reason: \n" << strerror_r(errno, buf, 256);
-    throw(Exception(message.str()));
-  }
-  
-  rc = setxattr(m_fsDir.c_str(), "user.CTAStorageClass", "", 0, 0);
-  if(rc != 0) {
-    char buf[256];
-    std::ostringstream message;
-    message << "Vfs() - " << m_fsDir << " setxattr error. Reason: " << strerror_r(errno, buf, 256);
-    throw(Exception(message.str()));
-  }
+cta::Vfs::Vfs() {
+  char path[100];
+  strncpy(path, "/tmp/CTATmpFsXXXXXX", 100);
+  cta::exception::Errnum::throwOnNull(
+    mkdtemp(path),
+    "Vfs() - Failed to create temporary directory");
+  m_fsDir = path;
+  cta::exception::Errnum::throwOnNonZero(
+    setxattr(m_fsDir.c_str(), "user.CTAStorageClass", "", 0, 0),
+    std::string("Vfs() - Failed to setxattr error for ")+m_fsDir);
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 cta::Vfs::~Vfs() throw() {
-  system("rm -rf /tmp/CTATmpFs");
+  std::string cmd("rm -rf ");
+  cmd += m_fsDir;
+  system(cmd.c_str());
 }  
 
 //------------------------------------------------------------------------------

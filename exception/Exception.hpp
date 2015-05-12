@@ -42,7 +42,7 @@
 
 #pragma once
 
-#include "objectstore/exception/Backtrace.hpp"
+#include "exception/Backtrace.hpp"
 
 #include <exception>
 #include <sstream>

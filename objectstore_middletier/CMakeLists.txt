@@ -15,5 +15,5 @@ set(MiddleTierUnitTests
 
 add_executable(ObjectStoreMiddleTierUnitTests unit_tests.cpp ${MiddleTierUnitTests})
 target_link_libraries(ObjectStoreMiddleTierUnitTests
-  CTAObjectStoreMiddleTier
-  protobuf rados CTAObjectStore gtest gmock ctamiddletier)
+  CTAException CTAObjectStore CTAObjectStoreMiddleTier
+  protobuf rados gtest gmock ctamiddletier)

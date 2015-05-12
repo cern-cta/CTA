@@ -40,7 +40,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "objectstore/exception/Exception.hpp"
+#include "exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor

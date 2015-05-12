@@ -17,8 +17,8 @@
  */
 
 #include "objectstore/threading/Mutex.hpp"
-#include "objectstore/exception/Errnum.hpp"
-#include "objectstore/exception/Exception.hpp"
+#include "exception/Errnum.hpp"
+#include "exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 //constructor

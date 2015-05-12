@@ -5,24 +5,31 @@
 #include "cta/MiddleTierUser.hpp"
 
 namespace unitTests {
-  
-  class MiddleTierFull {
+  class localMiddleTier {
   public:
-    cta::MiddleTierAdmin * admin;
-    cta::MiddleTierUser * user;
-    MiddleTierFull(cta::MiddleTierAdmin * a, cta::MiddleTierUser * u):
-      admin(a), user(u) {}
-    MiddleTierFull(): admin(NULL), user(NULL) {}
+    virtual cta::MiddleTierAdmin & admin() = 0;
+    virtual cta::MiddleTierUser & user() = 0;
+    virtual ~localMiddleTier() {}
+  };
+  
+  class MiddleTierFactory {
+  public:
+    virtual localMiddleTier * allocateLocalMiddleTier() = 0;
+    cta::MiddleTierAdmin & permanentAdmin () { return m_localMiddleTier->admin(); }
+    cta::MiddleTierUser & permanentUser () { return m_localMiddleTier->user(); }
+    virtual ~MiddleTierFactory() {}
+  protected:
+    localMiddleTier * m_localMiddleTier;
   };
 
-class MiddleTierAdminAbstractTest: public ::testing::TestWithParam<MiddleTierFull> {
-protected:
-  MiddleTierAdminAbstractTest() {}
-  virtual void SetUp() {
-    m_middleTier = GetParam();
-  }
-  MiddleTierFull m_middleTier;
-};
+  class MiddleTierAdminAbstractTest: public ::testing::TestWithParam<MiddleTierFactory*> {
+  protected:
+    MiddleTierAdminAbstractTest() {}
+//    virtual void SetUp() {
+//      m_middleTierFactory = GetParam();
+//    }
+//    MiddleTierFactory * m_middleTierFactory;
+  };
 
 }
 

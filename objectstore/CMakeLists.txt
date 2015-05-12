@@ -25,10 +25,6 @@ add_library (CTAObjectStore
   FIFO.cpp
   GenericObject.cpp
   GarbageCollector.cpp
-  exception/Backtrace.cpp
-  exception/Errnum.cpp
-  exception/Exception.cpp
-  exception/strerror_r_wrapper.cpp
   threading/ChildProcess.cpp
   threading/Mutex.cpp
   threading/Threading.cpp
@@ -67,4 +63,4 @@ set(ObjectStoreUnitTests
 
 add_executable(unitTests unitTests.cpp ${ObjectStoreUnitTests})
 target_link_libraries(unitTests
-  protobuf rados CTAObjectStore gtest gmock)
+  protobuf rados CTAObjectStore CTAException gtest gmock)

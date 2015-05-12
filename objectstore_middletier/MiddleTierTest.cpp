@@ -20,8 +20,10 @@
 #include "ObjectStoreMiddleTierAdmin.hpp"
 #include "objectstore/BackendRados.hpp"
 #include "objectstore/BackendVFS.hpp"
+#include "middletier/cta/SqliteDatabase.hpp"
+#include "middletier/cta/Vfs.hpp"
 #include "middletier/cta/SqliteMiddleTierAdmin.hpp"
-
+#include "middletier/cta/SqliteMiddleTierUser.hpp"
 
 #define TEST_RADOS 0
 #define TEST_VFS 0
@@ -45,11 +47,31 @@ cta::objectstore::BackendVFS osVFS;
 #endif
 
 #if TEST_SQL
-cta::SqliteDatabase sqlite;
-cta::Vfs vfs;
-cta::SqliteMiddleTierAdmin mtaSQL(vfs, sqlite);
-MiddleTierFull mtfSQL(&mtaSQL, NULL);
-INSTANTIATE_TEST_CASE_P(MiddleTierSQL, MiddleTierAdminAbstractTest, ::testing::Values(mtfSQL));
+class SQLiteLocalMiddleTier: public localMiddleTier {
+public:
+  SQLiteLocalMiddleTier(): m_vfs(), m_sqLite(), m_admin(m_vfs, m_sqLite), 
+    m_user(m_vfs, m_sqLite) {}
+  virtual cta::MiddleTierAdmin & admin () { return m_admin; }
+  virtual cta::MiddleTierUser & user () { return m_user; }
+private:
+  cta::Vfs m_vfs;
+  cta::SqliteDatabase m_sqLite;
+  cta::SqliteMiddleTierAdmin m_admin;
+  cta::SqliteMiddleTierUser m_user;
+};
+
+class SQLiteMiddleTierFactory: public MiddleTierFactory {
+public:
+  SQLiteMiddleTierFactory() {
+    m_localMiddleTier = allocateLocalMiddleTier();
+  }
+  virtual localMiddleTier * allocateLocalMiddleTier() { 
+    return new SQLiteLocalMiddleTier; }
+} g_SQLiteMiddleTierFactory;
+
+// Macro chokes on implicit casting of pointer so we have to do it ourselves
+INSTANTIATE_TEST_CASE_P(MiddleTierSQL, MiddleTierAdminAbstractTest, ::testing::Values(
+    (MiddleTierFactory*)&g_SQLiteMiddleTierFactory));
 #endif
 
 }
