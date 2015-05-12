@@ -1,14 +1,8 @@
-castor (2.1.15-7) unstable; urgency=low
-
-  * Fifth 2.1.15 production release
-
- -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch> Fri,  8 May 2015 18:00:00 +0200
-
-castor (2.1.15-6) unstable; urgency=low
+castor (2.1.15-8) unstable; urgency=low
 
   * Fourth 2.1.15 production release
 
- -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch> Thu, 30 Apr 2015 16:00:00 +0200
+ -- Sebastien Ponce <sebastien.ponce@cern.ch> Tue, 12 May 2015 10:05:00 +0100
 
 castor (2.1.15-5) unstable; urgency=low
 

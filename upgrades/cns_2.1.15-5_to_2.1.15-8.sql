@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 vmgr_2.1.15-5_to_2.1.15-6.sql
+ *                 cns_2.1.15-5_to_2.1.15-8.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * This script upgrades a CASTOR v2.1.15-5 VMGR database to v2.1.15-6
+ * This script upgrades a CASTOR v2.1.15-5 CNS database to v2.1.15-8
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -32,7 +32,7 @@ BEGIN
   UPDATE UpgradeLog
      SET failureCount = failureCount + 1
    WHERE schemaVersion = '2_1_14_2'
-     AND release = '2_1_15_6'
+     AND release = '2_1_15_8'
      AND state != 'COMPLETE';
   COMMIT;
 END;
@@ -43,16 +43,16 @@ DECLARE
   unused VARCHAR(100);
 BEGIN
   SELECT release INTO unused FROM CastorVersion
-   WHERE schemaName = 'VMGR'
+   WHERE schemaName = 'CNS'
      AND release LIKE '2_1_15_5%';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we cannot apply this script
-  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the VMGR before this one.');
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the CNS before this one.');
 END;
 /
 
 INSERT INTO UpgradeLog (schemaVersion, release, type)
-VALUES ('2_1_14_2', '2_1_15_6', 'NON TRANSPARENT');
+VALUES ('2_1_14_2', '2_1_15_8', 'NON TRANSPARENT');
 COMMIT;
 
 
@@ -66,5 +66,5 @@ END;
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
 UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
- WHERE release = '2_1_15_6';
+ WHERE release = '2_1_15_8';
 COMMIT;
