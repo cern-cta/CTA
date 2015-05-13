@@ -29,6 +29,7 @@
 #include <fcntl.h>
 
 #include "utils/exception/Exception.hpp"
+#include "utils/exception/Errnum.hpp"
 #include "utils/Utils.hpp"
 #include "middletier/interface/MockNameServer.hpp"
 using cta::exception::Exception;
@@ -38,7 +39,7 @@ using cta::exception::Exception;
 //------------------------------------------------------------------------------
 void cta::MockNameServer::assertFsDirExists(const std::string &path) const {
   struct stat stat_result;
-  
+
   if(::stat(path.c_str(), &stat_result)) {
     char buf[256];
     std::ostringstream message;
@@ -46,7 +47,7 @@ void cta::MockNameServer::assertFsDirExists(const std::string &path) const {
       << strerror_r(errno, buf, sizeof(buf));
     throw(Exception(message.str()));
   }
-  
+
   if(!S_ISDIR(stat_result.st_mode)) {
     std::ostringstream message;
     message << "assertFsDirExists() - " << path << " is not a directory";
@@ -137,32 +138,24 @@ void cta::MockNameServer::checkStorageClassIsNotInUse(
 // constructor
 //------------------------------------------------------------------------------
 cta::MockNameServer::MockNameServer() {  
-  m_baseDir = "/tmp";  
-  m_fsDir = m_baseDir + "/CTATmpFs";
-  
-  assertFsDirExists(m_baseDir);
-  assertFsPathDoesNotExist(m_fsDir);
- 
-  if(mkdir(m_fsDir.c_str(), 0777)) {
-    char buf[256];
-    std::ostringstream message;
-    message << "MockNameServer() - mkdir " << m_fsDir << " error. Reason: \n" << strerror_r(errno, buf, sizeof(buf));
-    throw(Exception(message.str()));
-  }
-  
-  if(setxattr(m_fsDir.c_str(), "user.CTAStorageClass", "", 0, 0)) {
-    char buf[256];
-    std::ostringstream message;
-    message << "MockNameServer() - " << m_fsDir << " setxattr error. Reason: " << strerror_r(errno, buf, sizeof(buf));
-    throw(Exception(message.str()));
-  }
+  char path[100];
+  strncpy(path, "/tmp/CTATmpFsXXXXXX", 100);
+  cta::exception::Errnum::throwOnNull(
+    mkdtemp(path),
+    "MockNameServer() - Failed to create temporary directory");
+  m_fsDir = path;
+  cta::exception::Errnum::throwOnNonZero(
+    setxattr(m_fsDir.c_str(), "user.CTAStorageClass", "", 0, 0),
+    std::string("MockNameServer() - Failed to setxattr error for ")+m_fsDir);
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 cta::MockNameServer::~MockNameServer() throw() {
-  system("rm -rf /tmp/CTATmpFs");
+  std::string cmd("rm -rf ");
+  cmd += m_fsDir;
+  system(cmd.c_str());
 }  
 
 //------------------------------------------------------------------------------

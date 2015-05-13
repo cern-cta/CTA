@@ -71,8 +71,6 @@ public:
 
 private:
   
-  std::string m_baseDir;
-  
   std::string m_fsDir;
   
   void assertFsDirExists(const std::string &path) const;
