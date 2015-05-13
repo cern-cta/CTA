@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "cta/SqliteMiddleTierAdmin.hpp"
-#include "cta/SqliteMiddleTierUser.hpp"
+#include "middletier/SQLite/SqliteMiddleTierAdmin.hpp"
+#include "middletier/SQLite/SqliteMiddleTierUser.hpp"
 #include "XrdSfs/XrdSfsInterface.hh"
 
 #include "ParsedRequest.hpp"

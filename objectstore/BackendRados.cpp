@@ -17,7 +17,7 @@
  */
 
 #include "BackendRados.hpp"
-#include "exception/Errnum.hpp"
+#include "utils/exception/Errnum.hpp"
 #include <rados/librados.hpp>
 #include <sys/syscall.h>
 #include <errno.h>

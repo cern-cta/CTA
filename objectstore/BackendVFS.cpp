@@ -17,7 +17,7 @@
  */
 
 #include "BackendVFS.hpp"
-#include "exception/Errnum.hpp"
+#include "utils/exception/Errnum.hpp"
 #include <fstream>
 #include <stdlib.h>
 #include <ftw.h>

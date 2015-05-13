@@ -11,7 +11,7 @@ set (CTAProtoFiles
 
 PROTOBUF_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
 
-add_library (CTAObjectStore 
+add_library (CTAObjectStore SHARED
   ${CTAProtoSources}
   RootEntry.cpp
   Agent.cpp
@@ -24,11 +24,7 @@ add_library (CTAObjectStore
   ProtocolBuffersAlgorithms.cpp
   FIFO.cpp
   GenericObject.cpp
-  GarbageCollector.cpp
-  threading/ChildProcess.cpp
-  threading/Mutex.cpp
-  threading/Threading.cpp
-  utils/Timer.cpp)
+  GarbageCollector.cpp)
 
 # add_executable(tapeResourceManagerTest tapeResourceManagerTest.cpp)
 # target_link_libraries(tapeResourceManagerTest
@@ -61,6 +57,6 @@ set(ObjectStoreUnitTests
   GarbageCollectorTest.cpp
 )
 
-add_executable(unitTests unitTests.cpp ${ObjectStoreUnitTests})
-target_link_libraries(unitTests
-  protobuf rados CTAObjectStore CTAException gtest gmock)
+add_library(ctaobjectstoreunittests SHARED ${ObjectStoreUnitTests})
+target_link_libraries(ctaobjectstoreunittests
+  protobuf rados ctautils gtest gmock)

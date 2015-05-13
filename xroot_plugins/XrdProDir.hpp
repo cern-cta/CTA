@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "cta/SqliteMiddleTierUser.hpp"
+#include "middletier/SQLite/SqliteMiddleTierUser.hpp"
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdSfs/XrdSfsInterface.hh"
 

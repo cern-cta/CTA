@@ -19,7 +19,7 @@
 #pragma once
 
 #include "Backend.hpp"
-#include "exception/Exception.hpp"
+#include "utils/exception/Exception.hpp"
 #include "objectstore/cta.pb.h"
 #include <memory>
 #include <stdint.h>

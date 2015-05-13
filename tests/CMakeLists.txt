@@ -8,8 +8,16 @@ add_executable(unittests
   unit_tests.cpp)
 
 target_link_libraries(unittests
+  ctautils
+  ctautilsunittests
+  CTAObjectStore
+  ctaobjectstoreunittests
   ctamiddletier
   ctamiddletierunittests
+  ctamiddletiersqlite
+  ctamiddletiersqliteunittests
+  ctanamespacevfs
+  ctanamespacevfsunittests
   gmock
   gtest
   pthread)

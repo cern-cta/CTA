@@ -18,7 +18,7 @@
 
 #include <gtest/gtest.h>
 #include "BackendVFS.hpp"
-#include "exception/Exception.hpp"
+#include "utils/exception/Exception.hpp"
 #include "GarbageCollector.hpp"
 #include "FIFO.hpp"
 #include "Agent.hpp"

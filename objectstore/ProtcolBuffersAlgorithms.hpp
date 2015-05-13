@@ -19,7 +19,7 @@
 #pragma once
 
 #include <google/protobuf/repeated_field.h>
-#include "exception/Exception.hpp"
+#include "utils/exception/Exception.hpp"
 
 namespace cta { namespace objectstore { namespace serializers {
 void removeString(::google::protobuf::RepeatedPtrField< ::std::string>* field, 

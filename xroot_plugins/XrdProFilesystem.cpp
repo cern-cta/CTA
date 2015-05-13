@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cta/Exception.hpp"
+#include "utils/exception/Exception.hpp"
 
 #include "XrdProFilesystem.hpp"
 #include "XrdProFile.hpp"
@@ -139,7 +139,7 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
     responseSS << "[OK]\t" << destinationPath;
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -198,7 +198,7 @@ int XrdProFilesystem::executeLsArchiveJobsCommand(const ParsedRequest &req, XrdO
       eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
       return SFS_DATA;
     }
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -240,7 +240,7 @@ int XrdProFilesystem::executeRetrieveCommand(const ParsedRequest &req, XrdOucErr
     responseSS << "[OK]\t" << destinationPath;
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -299,7 +299,7 @@ int XrdProFilesystem::executeLsRetrieveJobsCommand(const ParsedRequest &req, Xrd
       eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
       return SFS_DATA;
     }
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -334,7 +334,7 @@ int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrI
     responseSS << "[OK] Created storage class " << req.args.at(0) << " with " << req.args.at(1) << " tape copies with the following comment: \"" << req.args.at(2) << "\"" ;
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -366,7 +366,7 @@ int XrdProFilesystem::executeChdirclassCommand(const ParsedRequest &req, XrdOucE
     responseSS << "[OK] Changed storage class of directory " << req.args.at(0) << " to " << req.args.at(1);
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -398,7 +398,7 @@ int XrdProFilesystem::executeCldirclassCommand(const ParsedRequest &req, XrdOucE
     responseSS << "[OK] Cleared storage class of directory " << req.args.at(0);
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -435,7 +435,7 @@ int XrdProFilesystem::executeGetdirclassCommand(const ParsedRequest &req, XrdOuc
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -467,7 +467,7 @@ int XrdProFilesystem::executeRmclassCommand(const ParsedRequest &req, XrdOucErrI
     responseSS << "[OK] Storage class " << req.args.at(0) << " deleted";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -504,7 +504,7 @@ int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrI
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -536,7 +536,7 @@ int XrdProFilesystem::executeMkdirCommand(const ParsedRequest &req, XrdOucErrInf
     responseSS << "[OK] Directory " << req.args.at(0) << " created";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -568,7 +568,7 @@ int XrdProFilesystem::executeRmdirCommand(const ParsedRequest &req, XrdOucErrInf
     responseSS << "[OK] Directory " << req.args.at(0) << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -620,7 +620,7 @@ int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -653,7 +653,7 @@ int XrdProFilesystem::executeMkpoolCommand(const ParsedRequest &req, XrdOucErrIn
     responseSS << "[OK] Tape pool " << req.args.at(0) << " created with comment \"" << req.args.at(1) << "\"";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -685,7 +685,7 @@ int XrdProFilesystem::executeRmpoolCommand(const ParsedRequest &req, XrdOucErrIn
     responseSS << "[OK] Tape pool " << req.args.at(0) << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -721,7 +721,7 @@ int XrdProFilesystem::executeLspoolCommand(const ParsedRequest &req, XrdOucErrIn
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -756,7 +756,7 @@ int XrdProFilesystem::executeMkrouteCommand(const ParsedRequest &req, XrdOucErrI
     responseSS << "[OK] Archive route from storage class " << req.args.at(0) << " with copy number " << copyNo << " to tape pool " << req.args.at(2) << " created with comment \"" << req.args.at(3) << "\"";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -791,7 +791,7 @@ int XrdProFilesystem::executeRmrouteCommand(const ParsedRequest &req, XrdOucErrI
     responseSS << "[OK] Archive route from storage class " << req.args.at(0) << " with copy number " << copyNo << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -830,7 +830,7 @@ int XrdProFilesystem::executeLsrouteCommand(const ParsedRequest &req, XrdOucErrI
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -862,7 +862,7 @@ int XrdProFilesystem::executeMkllibCommand(const ParsedRequest &req, XrdOucErrIn
     responseSS << "[OK] Logical library " << req.args.at(0) << " created with comment \"" << req.args.at(1) << "\"";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -894,7 +894,7 @@ int XrdProFilesystem::executeRmllibCommand(const ParsedRequest &req, XrdOucErrIn
     responseSS << "[OK] Logical library " << req.args.at(0) << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -933,7 +933,7 @@ int XrdProFilesystem::executeLsllibCommand(const ParsedRequest &req, XrdOucErrIn
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -968,7 +968,7 @@ int XrdProFilesystem::executeMktapeCommand(const ParsedRequest &req, XrdOucErrIn
     responseSS << "[OK] Tape " << req.args.at(0) << " of logical library " << req.args.at(1) << " of " << capacity << " bytes of capacity " << " was created in tapepool " << req.args.at(2) << " with comment \"" << req.args.at(4) << "\"";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -1000,7 +1000,7 @@ int XrdProFilesystem::executeRmtapeCommand(const ParsedRequest &req, XrdOucErrIn
     responseSS << "[OK] Tape " << req.args.at(0) << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -1043,7 +1043,7 @@ int XrdProFilesystem::executeLstapeCommand(const ParsedRequest &req, XrdOucErrIn
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -1085,7 +1085,7 @@ int XrdProFilesystem::executeMkadminuserCommand(const ParsedRequest &req, XrdOuc
     responseSS << "[OK] Admin user with uid " << req.args.at(0) << " and gid " << req.args.at(1) << " created";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -1126,7 +1126,7 @@ int XrdProFilesystem::executeRmadminuserCommand(const ParsedRequest &req, XrdOuc
     responseSS << "[OK] Admin user with uid " << req.args.at(0) << " and gid " << req.args.at(1) << " deleted";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -1161,7 +1161,7 @@ int XrdProFilesystem::executeLsadminuserCommand(const ParsedRequest &req, XrdOuc
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -1194,7 +1194,7 @@ int XrdProFilesystem::executeMkadminhostCommand(const ParsedRequest &req, XrdOuc
     responseSS << "[OK] Admin host " << req.args.at(0) << " created";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -1226,7 +1226,7 @@ int XrdProFilesystem::executeRmadminhostCommand(const ParsedRequest &req, XrdOuc
     responseSS << "[OK] Admin host " << req.args.at(0) << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
@@ -1261,7 +1261,7 @@ int XrdProFilesystem::executeLsadminhostCommand(const ParsedRequest &req, XrdOuc
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
-  } catch (cta::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     std::string response = "[ERROR] CTA exception caught: ";
     response += ex.what();
     eInfo.setErrInfo(response.length()+1, response.c_str());
