@@ -59,21 +59,13 @@ set (MIDDLE_TIER_INTERFACE_SRC_FILES
 add_library (ctamiddletier SHARED
   ${MIDDLE_TIER_INTERFACE_SRC_FILES})
 
-#target_link_libraries (ctamiddletier ${SQLITE3_LIBRARY_RELEASE}
-#  CTAException)
-
 set (MIDDLE_TIER_INTERFACE_UNIT_TESTS_LIB_SRC_FILES
-#  cta/SqliteMiddleTierAdminTest.cpp
-#  cta/SqliteMiddleTierUserTest.cpp
-#  cta/UtilsTest.cpp
   interface/MockNameServerTest.cpp
   sharedtest/MiddleTierAdminAbstractTest.cpp
   sharedtest/MiddleTierUserAbstractTest.cpp)
 
 add_library (ctamiddletierunittests SHARED
   ${MIDDLE_TIER_INTERFACE_UNIT_TESTS_LIB_SRC_FILES})
-
-#target_link_libraries (ctamiddletierunittests ${SQLITE3_LIBRARY_RELEASE})
 
 add_library (ctamiddletiersqlite SHARED
   SQLite/SqliteColumnNameToIndex.cpp
@@ -85,3 +77,11 @@ target_link_libraries (ctamiddletiersqlite ${SQLITE3_LIBRARY_RELEASE})
 
 add_library (ctamiddletiersqliteunittests SHARED
   SQLite/SqliteMiddleTierTest.cpp)
+
+include_directories(${CMAKE_BINARY_DIR})
+
+add_library(ctamiddletiersqliteobjectstore
+  objectstore/ObjectStoreMiddleTierAdmin.cpp)
+
+#add_library (ctamiddletiersqliteobjectstoreunittests SHARED
+#  objectstore/ObjectStoreMiddleTierTest.cpp)

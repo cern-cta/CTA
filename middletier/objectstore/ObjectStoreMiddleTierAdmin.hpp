@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "cta/MiddleTierAdmin.hpp"
+#include "middletier/interface/MiddleTierAdmin.hpp"
 
 namespace cta {
 
