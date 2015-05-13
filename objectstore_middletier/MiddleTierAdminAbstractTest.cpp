@@ -16,15 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "MiddleTierAdminAbstractTest.hpp"
-#include "cta/SqliteMiddleTierAdmin.hpp"
-#include "cta/SqliteMiddleTierUser.hpp"
+#include "MiddleTierAbstractTest.hpp"
 #include <memory>
 
 #include <gtest/gtest.h>
 namespace unitTests {
 
-TEST_P(MiddleTierAdminAbstractTest, createStorageClass_new) {
+TEST_P(MiddleTierAbstractTest, admin_createStorageClass_new) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -54,8 +52,8 @@ TEST_P(MiddleTierAdminAbstractTest, createStorageClass_new) {
   }
 }
 
-TEST_P(MiddleTierAdminAbstractTest,
-  createStorageClass_already_existing) {
+TEST_P(MiddleTierAbstractTest,
+  admin_createStorageClass_already_existing) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -87,8 +85,8 @@ TEST_P(MiddleTierAdminAbstractTest,
     std::exception);
 }
 
-TEST_P(MiddleTierAdminAbstractTest,
-  createStorageClass_lexicographical_order) {
+TEST_P(MiddleTierAbstractTest,
+  admin_createStorageClass_lexicographical_order) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -120,7 +118,7 @@ TEST_P(MiddleTierAdminAbstractTest,
   }
 }
 
-TEST_P(MiddleTierAdminAbstractTest, deleteStorageClass_existing) {
+TEST_P(MiddleTierAbstractTest, admin_deleteStorageClass_existing) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -157,8 +155,8 @@ TEST_P(MiddleTierAdminAbstractTest, deleteStorageClass_existing) {
   }
 }
 
-TEST_P(MiddleTierAdminAbstractTest,
-  deleteStorageClass_in_use_by_directory) {
+TEST_P(MiddleTierAbstractTest,
+  admin_deleteStorageClass_in_use_by_directory) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -215,7 +213,7 @@ TEST_P(MiddleTierAdminAbstractTest,
   }
 }
 
-TEST_P(MiddleTierAdminAbstractTest, deleteStorageClass_in_use_by_route) {
+TEST_P(MiddleTierAbstractTest, admin_deleteStorageClass_in_use_by_route) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -307,7 +305,7 @@ TEST_P(MiddleTierAdminAbstractTest, deleteStorageClass_in_use_by_route) {
   }
 }
 
-TEST_P(MiddleTierAdminAbstractTest, deleteStorageClass_non_existing) {
+TEST_P(MiddleTierAbstractTest, admin_deleteStorageClass_non_existing) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -329,7 +327,7 @@ TEST_P(MiddleTierAdminAbstractTest, deleteStorageClass_non_existing) {
   }
 }
 
-TEST_P(MiddleTierAdminAbstractTest, deleteTapePool_in_use) {
+TEST_P(MiddleTierAbstractTest, admin_deleteTapePool_in_use) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -385,7 +383,7 @@ TEST_P(MiddleTierAdminAbstractTest, deleteTapePool_in_use) {
   }
 }
 
-TEST_P(MiddleTierAdminAbstractTest, createArchivalRoute_new) {
+TEST_P(MiddleTierAbstractTest, admin_createArchivalRoute_new) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -427,8 +425,8 @@ TEST_P(MiddleTierAdminAbstractTest, createArchivalRoute_new) {
   }
 }
 
-TEST_P(MiddleTierAdminAbstractTest,
-  createArchivalRoute_already_existing) {
+TEST_P(MiddleTierAbstractTest,
+  admin_createArchivalRoute_already_existing) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -473,7 +471,7 @@ TEST_P(MiddleTierAdminAbstractTest,
     copyNb, tapePoolName, comment), std::exception);
 }
 
-TEST_P(MiddleTierAdminAbstractTest, deleteArchivalRoute_existing) {
+TEST_P(MiddleTierAbstractTest, admin_deleteArchivalRoute_existing) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -524,7 +522,7 @@ TEST_P(MiddleTierAdminAbstractTest, deleteArchivalRoute_existing) {
   }
 }
 
-TEST_P(MiddleTierAdminAbstractTest, deleteArchivalRoute_non_existing) {
+TEST_P(MiddleTierAbstractTest, admin_deleteArchivalRoute_non_existing) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -554,7 +552,7 @@ TEST_P(MiddleTierAdminAbstractTest, deleteArchivalRoute_non_existing) {
     std::exception);
 }
 
-TEST_P(MiddleTierAdminAbstractTest, createTape_new) {
+TEST_P(MiddleTierAbstractTest, admin_createTape_new) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -630,8 +628,8 @@ TEST_P(MiddleTierAdminAbstractTest, createTape_new) {
   } 
 }
 
-TEST_P(MiddleTierAdminAbstractTest,
-  createTape_new_non_existing_library) {
+TEST_P(MiddleTierAbstractTest,
+  admin_createTape_new_non_existing_library) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -680,7 +678,7 @@ TEST_P(MiddleTierAdminAbstractTest,
     capacityInBytes, tapeComment), std::exception);
 }
 
-TEST_P(MiddleTierAdminAbstractTest, createTape_new_non_existing_pool) {
+TEST_P(MiddleTierAbstractTest, admin_createTape_new_non_existing_pool) {
   using namespace cta;
 
   const SecurityIdentity requester;

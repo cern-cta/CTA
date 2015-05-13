@@ -22,13 +22,7 @@ namespace unitTests {
     localMiddleTier * m_localMiddleTier;
   };
 
-  class MiddleTierAdminAbstractTest: public ::testing::TestWithParam<MiddleTierFactory*> {
-  protected:
-    MiddleTierAdminAbstractTest() {}
-//    virtual void SetUp() {
-//      m_middleTierFactory = GetParam();
-//    }
-//    MiddleTierFactory * m_middleTierFactory;
+  class MiddleTierAbstractTest: public ::testing::TestWithParam<MiddleTierFactory*> {
   };
 
 }

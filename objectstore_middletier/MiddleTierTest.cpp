@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "MiddleTierAdminAbstractTest.hpp"
+#include "MiddleTierAbstractTest.hpp"
 #include "ObjectStoreMiddleTierAdmin.hpp"
 #include "objectstore/BackendRados.hpp"
 #include "objectstore/BackendVFS.hpp"
@@ -38,7 +38,7 @@ unitTests::MiddleTierFull middleTierRados;
 middleTierRados.admin = &mtaRados;
 middleTierRados.user = NULL;
 
-INSTANTIATE_TEST_CASE_P(MiddleTierRados, MiddleTierAdminAbstractTest , ::testing::Values(middleTierRados));
+INSTANTIATE_TEST_CASE_P(MiddleTierRados, MiddleTierAbstractTest , ::testing::Values(middleTierRados));
 #endif
 
 #if TEST_VFS
@@ -70,7 +70,7 @@ public:
 } g_SQLiteMiddleTierFactory;
 
 // Macro chokes on implicit casting of pointer so we have to do it ourselves
-INSTANTIATE_TEST_CASE_P(MiddleTierSQL, MiddleTierAdminAbstractTest, ::testing::Values(
+INSTANTIATE_TEST_CASE_P(MiddleTierSQL, MiddleTierAbstractTest, ::testing::Values(
     (MiddleTierFactory*)&g_SQLiteMiddleTierFactory));
 #endif
 

@@ -10,6 +10,7 @@ add_library (CTAObjectStoreMiddleTier
 
 set(MiddleTierUnitTests
   MiddleTierAdminAbstractTest.cpp
+  MiddleTierUserAbstractTest.cpp
   MiddleTierTest.cpp
 )
 
