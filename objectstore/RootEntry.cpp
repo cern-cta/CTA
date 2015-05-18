@@ -108,9 +108,9 @@ void cta::objectstore::RootEntry::deleteFromIntendedAgentRegistry(const std::str
 }
 
 void cta::objectstore::RootEntry::setAgentRegister(const std::string& name) {
-  throw cta::exception::Exception("TODO");
+  checkPayloadWritable();
+  m_payload.set_agentregister(name);
 }
-
 
 // Get the name of the JobPool (or exception if not available)
 std::string cta::objectstore::RootEntry::getJobPool() {
