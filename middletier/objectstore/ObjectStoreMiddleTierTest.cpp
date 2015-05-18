@@ -22,8 +22,19 @@
 #include "middletier/objectstore/ObjectStoreMiddleTierAdmin.hpp"
 #include "middletier/objectstore/ObjectStoreMiddleTierUser.hpp"
 #include "objectstore/BackendVFS.hpp"
+#include "objectstore/RootEntry.hpp"
 
 namespace unitTests {
+  
+class InitializedVFS: public cta::objectstore::BackendVFS {
+public:
+  InitializedVFS(): cta::objectstore::BackendVFS() {
+    // Create the root entry
+    cta::objectstore::RootEntry re(*this);
+    re.initialize();
+    re.insert();
+  }
+};
 
 class OStoreVfsMiddleTier: public localMiddleTier {
 public:
@@ -31,7 +42,7 @@ public:
   virtual cta::MiddleTierAdmin & admin () { return m_admin; }
   virtual cta::MiddleTierUser & user () { return m_user; }
 private:
-  cta::objectstore::BackendVFS m_vfs;
+  InitializedVFS m_vfs;
   cta::OStoreMiddleTierAdmin m_admin;
   cta::OStoreMiddleTierUser m_user;
 };
