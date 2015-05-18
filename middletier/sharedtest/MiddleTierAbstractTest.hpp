@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 #include "middletier/interface/MiddleTierAdmin.hpp"
 #include "middletier/interface/MiddleTierUser.hpp"
+#include <memory>
 
 namespace unitTests {
   class localMiddleTier {
@@ -19,7 +20,7 @@ namespace unitTests {
     cta::MiddleTierUser & permanentUser () { return m_localMiddleTier->user(); }
     virtual ~MiddleTierFactory() {}
   protected:
-    localMiddleTier * m_localMiddleTier;
+    std::auto_ptr<localMiddleTier> m_localMiddleTier;
   };
 
   class MiddleTierAbstractTest: public ::testing::TestWithParam<MiddleTierFactory*> {

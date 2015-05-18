@@ -36,17 +36,17 @@ private:
   cta::OStoreMiddleTierUser m_user;
 };
 
-class SQLiteMiddleTierFactory: public MiddleTierFactory {
+class OStoreVfsMiddleTierFactory: public MiddleTierFactory {
 public:
-  SQLiteMiddleTierFactory() {
-    m_localMiddleTier = allocateLocalMiddleTier();
+  OStoreVfsMiddleTierFactory() {
+    m_localMiddleTier.reset(allocateLocalMiddleTier());
   }
   virtual localMiddleTier * allocateLocalMiddleTier() { 
     return new OStoreVfsMiddleTier; }
-} g_SQLiteMiddleTierFactory;
+} g_OStoreMiddleTierFactory;
 
 // Macro chokes on implicit casting of pointer so we have to do it ourselves
-INSTANTIATE_TEST_CASE_P(MiddleTierSQL, MiddleTierAbstractTest, ::testing::Values(
-    (MiddleTierFactory*)&g_SQLiteMiddleTierFactory));
+INSTANTIATE_TEST_CASE_P(MiddleTierOStore, MiddleTierAbstractTest, ::testing::Values(
+    (MiddleTierFactory*)&g_OStoreMiddleTierFactory));
 
 }

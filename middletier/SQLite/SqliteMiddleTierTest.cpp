@@ -43,7 +43,7 @@ private:
 class SQLiteMiddleTierFactory: public MiddleTierFactory {
 public:
   SQLiteMiddleTierFactory() {
-    m_localMiddleTier = allocateLocalMiddleTier();
+    m_localMiddleTier.reset(allocateLocalMiddleTier());
   }
   virtual localMiddleTier * allocateLocalMiddleTier() { 
     return new SQLiteLocalMiddleTier; }

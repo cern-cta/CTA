@@ -16,8 +16,7 @@ target_link_libraries(unittests
   ctamiddletierunittests
   ctamiddletiersqlite
   ctamiddletiersqliteunittests
-  
-  ctamiddletierobjectstoreunittests
+  #ctamiddletierobjectstoreunittests
   ctamiddletierobjectstore
   ctanamespacevfs
   ctanamespacevfsunittests
