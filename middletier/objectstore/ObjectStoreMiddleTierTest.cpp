@@ -20,19 +20,20 @@
 #include "middletier/interface/MiddleTierAdmin.hpp"
 #include "middletier/interface/MiddleTierUser.hpp"
 #include "middletier/objectstore/ObjectStoreMiddleTierAdmin.hpp"
+#include "middletier/objectstore/ObjectStoreMiddleTierUser.hpp"
 #include "objectstore/BackendVFS.hpp"
 
 namespace unitTests {
 
 class OStoreVfsMiddleTier: public localMiddleTier {
 public:
-  OStoreVfsMiddleTier(): m_vfs(), m_admin(m_vfs) {}
+  OStoreVfsMiddleTier(): m_vfs(), m_admin(m_vfs), m_user(m_vfs) {}
   virtual cta::MiddleTierAdmin & admin () { return m_admin; }
-  //virtual cta::MiddleTierUser & user () { return m_user; }
+  virtual cta::MiddleTierUser & user () { return m_user; }
 private:
   cta::objectstore::BackendVFS m_vfs;
   cta::OStoreMiddleTierAdmin m_admin;
-  //cta::OStoreMiddleTierUser m_user;
+  cta::OStoreMiddleTierUser m_user;
 };
 
 class SQLiteMiddleTierFactory: public MiddleTierFactory {

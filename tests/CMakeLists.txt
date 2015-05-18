@@ -16,6 +16,9 @@ target_link_libraries(unittests
   ctamiddletierunittests
   ctamiddletiersqlite
   ctamiddletiersqliteunittests
+  
+  ctamiddletierobjectstoreunittests
+  ctamiddletierobjectstore
   ctanamespacevfs
   ctanamespacevfsunittests
   gmock

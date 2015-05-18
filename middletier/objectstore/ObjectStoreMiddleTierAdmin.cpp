@@ -88,15 +88,18 @@ void OStoreMiddleTierAdmin::createAdminHost(
   const SecurityIdentity& requester,
   const std::string& hostName,
   const std::string& comment) {
+  throw cta::exception::Exception("TODO");
 }
 
 void OStoreMiddleTierAdmin::deleteAdminHost(
   const SecurityIdentity& requester,
   const std::string& hostName) {
+  throw cta::exception::Exception("TODO");
 }
 
 std::list<AdminHost> OStoreMiddleTierAdmin::getAdminHosts(
   const SecurityIdentity& requester) const {
+  throw cta::exception::Exception("TODO");
   std::list<AdminHost> ret;
   return ret;
 }
@@ -106,16 +109,18 @@ void OStoreMiddleTierAdmin::createStorageClass(
   const std::string &name,
   const uint16_t nbCopies,
   const std::string &comment) {
+  throw cta::exception::Exception("TODO");
 }
 
 void OStoreMiddleTierAdmin::deleteStorageClass(
   const SecurityIdentity& requester,
   const std::string& name) { 
-
+  throw cta::exception::Exception("TODO");
 }
 
 std::list<StorageClass> OStoreMiddleTierAdmin::getStorageClasses(
   const SecurityIdentity& requester) const {
+  throw cta::exception::Exception("TODO");
   std::list<StorageClass> ret;
   return ret;
 }
@@ -123,18 +128,20 @@ std::list<StorageClass> OStoreMiddleTierAdmin::getStorageClasses(
 void OStoreMiddleTierAdmin::createTapePool(
   const SecurityIdentity& requester,
   const std::string& name,
-  const uint16_t nbDrives,
   const uint32_t nbPartialTapes,
   const std::string& comment) {
 }
 
+
 void OStoreMiddleTierAdmin::deleteTapePool(
   const SecurityIdentity& requester,
   const std::string& name) {
+  throw cta::exception::Exception("TODO");
 }
 
 std::list<TapePool> OStoreMiddleTierAdmin::getTapePools(
   const SecurityIdentity& requester) const {
+  throw cta::exception::Exception("TODO");
   std::list<TapePool> ret;
   return ret;
 }
@@ -145,16 +152,19 @@ void OStoreMiddleTierAdmin::createArchivalRoute(
   const uint16_t copyNb,
   const std::string &tapePoolName,
   const std::string &comment) {
+  throw cta::exception::Exception("TODO");
 }
 
 void OStoreMiddleTierAdmin::deleteArchivalRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint16_t copyNb) {
+  throw cta::exception::Exception("TODO");
 }
 
 std::list<ArchivalRoute> OStoreMiddleTierAdmin::getArchivalRoutes(
   const SecurityIdentity& requester) const {
+  throw cta::exception::Exception("TODO");
   std::list<ArchivalRoute> ret;
   return ret;
 }
@@ -163,15 +173,18 @@ void OStoreMiddleTierAdmin::createLogicalLibrary(
   const SecurityIdentity& requester,
   const std::string& name,
   const std::string& comment) {
+  throw cta::exception::Exception("TODO");
 }
 
 void OStoreMiddleTierAdmin::deleteLogicalLibrary(
   const SecurityIdentity& requester,
   const std::string& name) {
+  throw cta::exception::Exception("TODO");
 }
 
 std::list<LogicalLibrary> OStoreMiddleTierAdmin::getLogicalLibraries(
   const SecurityIdentity& requester) const {
+  throw cta::exception::Exception("TODO");
   std::list<LogicalLibrary> ret;
   return ret;
 }
@@ -180,9 +193,11 @@ void OStoreMiddleTierAdmin::createTape(
   const SecurityIdentity& requester,
   const std::string& vid,
   const std::string& logicalLibraryName,
-  const std::string& tapePoolName, const uint64_t capacityInBytes, const std::string& comment) {
+  const std::string& tapePoolName, 
+  const uint64_t capacityInBytes, 
+  const std::string& comment) {
+  throw cta::exception::Exception("TODO");
 }
-
 
 void OStoreMiddleTierAdmin::deleteTape(
   const SecurityIdentity& requester,

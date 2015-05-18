@@ -96,6 +96,22 @@ std::string cta::objectstore::RootEntry::allocateOrGetAgentRegister(Agent & agen
   }
 }
 
+void cta::objectstore::RootEntry::addIntendedAgentRegistry(const std::string& name) {
+  checkPayloadWritable();
+  std::string * reg = m_payload.mutable_agentregisterintentlog()->Add();
+  *reg = name;
+}
+
+void cta::objectstore::RootEntry::deleteFromIntendedAgentRegistry(const std::string& name) {
+  checkPayloadWritable();
+  serializers::removeString(m_payload.mutable_agentregisterintentlog(), name);
+}
+
+void cta::objectstore::RootEntry::setAgentRegister(const std::string& name) {
+  throw cta::exception::Exception("TODO");
+}
+
+
 // Get the name of the JobPool (or exception if not available)
 std::string cta::objectstore::RootEntry::getJobPool() {
   checkPayloadReadable();
@@ -145,17 +161,6 @@ std::string cta::objectstore::RootEntry::allocateOrGetJobPool(Agent & agent) {
   }
 }
 
-void cta::objectstore::RootEntry::addIntendedAgentRegistry(const std::string& name) {
-  checkPayloadWritable();
-  std::string * reg = m_payload.mutable_agentregisterintentlog()->Add();
-  *reg = name;
-}
-
-void cta::objectstore::RootEntry::deleteFromIntendedAgentRegistry(const std::string& name) {
-  checkPayloadWritable();
-  serializers::removeString(m_payload.mutable_agentregisterintentlog(), name);
-}
-
 void cta::objectstore::RootEntry::addIntendedJobPool(const std::string& name) {
   checkPayloadWritable();
   std::string * jp = m_payload.mutable_jobpoolintentlog()->Add();
@@ -167,15 +172,38 @@ void cta::objectstore::RootEntry::deleteFromIntendedJobPool(const std::string& n
   serializers::removeString(m_payload.mutable_jobpoolintentlog(), name);
 }
 
-void cta::objectstore::RootEntry::setAgentRegister(const std::string& name) {
-  checkPayloadWritable();
-  m_payload.set_agentregister(name);
-}
-
 void cta::objectstore::RootEntry::setJobPool(const std::string& name) {
   checkPayloadWritable();
   m_payload.set_jobpool(name);
 }
+
+// Get the name of the admin user list (or exception if not available)
+std::string cta::objectstore::RootEntry::getAdminUsersList() {
+  // Check that the fetch was done
+  if (!m_payloadInterpreted)
+    throw ObjectOpsBase::NotFetched("In RootEntry::getAdminUsersList: object not yet fetched");
+  // If the registry is defined, return it, job done.
+  if (m_payload.adminuserslist().size())
+    return m_payload.adminuserslist();
+  throw NotAllocatedEx("In RootEntry::getAdminUsersList: adminUserList not yet allocated");
+}
+
+std::string cta::objectstore::RootEntry::allocateOrGetAdminUsersList(Agent& agent) {
+  throw cta::exception::Exception("TODO");
+}
+
+void cta::objectstore::RootEntry::addIntendedAdminUsersList(const std::string& name) {
+  throw cta::exception::Exception("TODO");
+}
+
+void cta::objectstore::RootEntry::deleteFromIntendedAdminUsersList(const std::string& name) {
+  throw cta::exception::Exception("TODO");
+}
+
+void cta::objectstore::RootEntry::setAdminUsersList(const std::string& name) {
+  throw cta::exception::Exception("TODO");
+}
+
 
 // Dump the root entry
 std::string cta::objectstore::RootEntry::dump () {
