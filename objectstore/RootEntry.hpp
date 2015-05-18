@@ -84,9 +84,6 @@ private:
 public:
   // Dump the root entry
   std::string dump ();
-
-  private:
-    static const std::string s_rootEntryName;
 };
 
 }}

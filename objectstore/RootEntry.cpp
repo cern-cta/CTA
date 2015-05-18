@@ -26,7 +26,7 @@
 // construtor, when the backend store exists.
 // Checks the existence and correctness of the root entry
 cta::objectstore::RootEntry::RootEntry(Backend & os):
-  ObjectOps<serializers::RootEntry>(os, s_rootEntryName) {}
+  ObjectOps<serializers::RootEntry>(os, "root") {}
 
 // Initialiser. This uses the base object's initialiser and sets the defaults 
 // of payload.
@@ -221,5 +221,3 @@ std::string cta::objectstore::RootEntry::dump () {
   ret << ">>>> Root entry dump start" << std::endl;
   return ret.str();
 }
-
-const std::string cta::objectstore::RootEntry::s_rootEntryName("root");
