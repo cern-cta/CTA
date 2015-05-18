@@ -46,4 +46,22 @@ void AdminUsersList::add(const cta::AdminUser& adminUser) {
   newEntry->set_comment(adminUser.getComment());
 }
 
+void AdminUsersList::remove(uint32_t uid, uint32_t gid) {
+  ::google::protobuf::RepeatedPtrField<serializers::AdminUser>* list =
+      m_payload.mutable_element();
+  bool found;
+  do {
+    found = false;
+    for (size_t i=0; i<(size_t)list->size(); i++) {
+      if (uid == list->Get(i).user().uid() && 
+          gid == list->Get(i).user().gid()) {
+        found = true;
+        list->SwapElements(i, list->size()-1);
+        list->RemoveLast();
+        break;
+      }
+    }
+  } while (found);
+}
+
 }}

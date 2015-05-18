@@ -35,6 +35,8 @@ public:
   AdminUsersList(const std::string & name, Backend & os);
   
   void add(const cta::AdminUser & adminUser);
+  
+  void remove(uint32_t uid, uint32_t gid);
 };
 
 }}

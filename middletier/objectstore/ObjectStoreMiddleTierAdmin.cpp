@@ -62,4 +62,137 @@ void OStoreMiddleTierAdmin::createAdminUser(
   aul.commit();
 }
 
+void OStoreMiddleTierAdmin::deleteAdminUser(
+  const SecurityIdentity& requester, 
+  const UserIdentity& user) {
+  // Authz is not handled in this layer. We hence store the new admin user
+  // without checks.
+  objectstore::RootEntry re(m_backend);
+  objectstore::ScopedSharedLock reLock(re);
+  re.fetch();
+  objectstore::AdminUsersList aul(re.getAdminUsersList(), m_backend);
+  reLock.release();
+  objectstore::ScopedExclusiveLock aulLock(aul);
+  aul.fetch();
+  aul.remove(user.getUid(), user.getGid());
+  aul.commit();
+  }
+
+std::list<AdminUser> OStoreMiddleTierAdmin::getAdminUsers(
+  const SecurityIdentity& requester) const {
+  std::list<AdminUser> ret;
+  return ret;
+}
+
+void OStoreMiddleTierAdmin::createAdminHost(
+  const SecurityIdentity& requester,
+  const std::string& hostName,
+  const std::string& comment) {
+}
+
+void OStoreMiddleTierAdmin::deleteAdminHost(
+  const SecurityIdentity& requester,
+  const std::string& hostName) {
+}
+
+std::list<AdminHost> OStoreMiddleTierAdmin::getAdminHosts(
+  const SecurityIdentity& requester) const {
+  std::list<AdminHost> ret;
+  return ret;
+}
+
+void OStoreMiddleTierAdmin::createStorageClass(
+  const SecurityIdentity &requester,
+  const std::string &name,
+  const uint16_t nbCopies,
+  const std::string &comment) {
+}
+
+void OStoreMiddleTierAdmin::deleteStorageClass(
+  const SecurityIdentity& requester,
+  const std::string& name) { 
+
+}
+
+std::list<StorageClass> OStoreMiddleTierAdmin::getStorageClasses(
+  const SecurityIdentity& requester) const {
+  std::list<StorageClass> ret;
+  return ret;
+}
+
+void OStoreMiddleTierAdmin::createTapePool(
+  const SecurityIdentity& requester,
+  const std::string& name,
+  const uint16_t nbDrives,
+  const uint32_t nbPartialTapes,
+  const std::string& comment) {
+}
+
+void OStoreMiddleTierAdmin::deleteTapePool(
+  const SecurityIdentity& requester,
+  const std::string& name) {
+}
+
+std::list<TapePool> OStoreMiddleTierAdmin::getTapePools(
+  const SecurityIdentity& requester) const {
+  std::list<TapePool> ret;
+  return ret;
+}
+
+void OStoreMiddleTierAdmin::createArchivalRoute(
+  const SecurityIdentity &requester,
+  const std::string &storageClassName,
+  const uint16_t copyNb,
+  const std::string &tapePoolName,
+  const std::string &comment) {
+}
+
+void OStoreMiddleTierAdmin::deleteArchivalRoute(
+  const SecurityIdentity &requester,
+  const std::string &storageClassName,
+  const uint16_t copyNb) {
+}
+
+std::list<ArchivalRoute> OStoreMiddleTierAdmin::getArchivalRoutes(
+  const SecurityIdentity& requester) const {
+  std::list<ArchivalRoute> ret;
+  return ret;
+}
+
+void OStoreMiddleTierAdmin::createLogicalLibrary(
+  const SecurityIdentity& requester,
+  const std::string& name,
+  const std::string& comment) {
+}
+
+void OStoreMiddleTierAdmin::deleteLogicalLibrary(
+  const SecurityIdentity& requester,
+  const std::string& name) {
+}
+
+std::list<LogicalLibrary> OStoreMiddleTierAdmin::getLogicalLibraries(
+  const SecurityIdentity& requester) const {
+  std::list<LogicalLibrary> ret;
+  return ret;
+}
+
+void OStoreMiddleTierAdmin::createTape(
+  const SecurityIdentity& requester,
+  const std::string& vid,
+  const std::string& logicalLibraryName,
+  const std::string& tapePoolName, const uint64_t capacityInBytes, const std::string& comment) {
+}
+
+
+void OStoreMiddleTierAdmin::deleteTape(
+  const SecurityIdentity& requester,
+  const std::string& vid) {
+}
+
+std::list<Tape> OStoreMiddleTierAdmin::getTapes(
+  const SecurityIdentity& requester) const {
+  std::list<Tape> ret;
+  return ret;
+}
+
 }

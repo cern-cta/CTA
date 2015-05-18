@@ -122,7 +122,7 @@ public:
   virtual void createStorageClass(
     const SecurityIdentity &requester,
     const std::string &name,
-    const uint8_t nbCopies,
+    const uint16_t nbCopies,
     const std::string &comment);
 
   /**
@@ -144,6 +144,22 @@ public:
    */
   virtual std::list<StorageClass> getStorageClasses(
     const SecurityIdentity &requester) const;
+
+  /**
+   * Creates a tape pool with the specifed name.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * tape pool.
+   * @param name The name of the tape pool.
+   * @param nbPartialTapes The maximum number of tapes that can be partially
+   * full at any moment in time.
+   * @param comment The comment describing the tape pool.
+   */
+  virtual void createTapePool(
+    const SecurityIdentity &requester,
+    const std::string &name,
+    const uint32_t nbPartialTapes,
+    const std::string &comment);
 
   /**
    * Creates a tape pool with the specifed name.
@@ -186,28 +202,28 @@ public:
     const SecurityIdentity &requester) const;
 
   /**
-   * Creates the specified archive route.
+   * Creates the specified archival route.
    *
    * @param requester The identity of the user requesting the creation of the
-   * archive route.
+   * archival route.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
    * @param tapePoolName The name of the destination tape pool.
-   * @param comment The comment describing the archive route.
+   * @param comment The comment describing the archival route.
    */
   virtual void createArchivalRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
-    const uint8_t copyNb,
+    const uint16_t copyNb,
     const std::string &tapePoolName,
     const std::string &comment);
 
   /**
-   * Deletes the specified archive route.
+   * Deletes the specified archival route.
    *
    * @param requester The identity of the user requesting the deletion of the
-   * archive route.
+   * archival route.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
@@ -215,7 +231,7 @@ public:
   virtual void deleteArchivalRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
-    const uint8_t copyNb);
+    const uint16_t copyNb);
 
   /**
    * Gets the current list of archive routes.

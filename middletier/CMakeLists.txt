@@ -83,5 +83,5 @@ include_directories(${CMAKE_BINARY_DIR})
 add_library(ctamiddletiersqliteobjectstore
   objectstore/ObjectStoreMiddleTierAdmin.cpp)
 
-#add_library (ctamiddletiersqliteobjectstoreunittests SHARED
-#  objectstore/ObjectStoreMiddleTierTest.cpp)
+add_library (ctamiddletiersqliteobjectstoreunittests SHARED
+  objectstore/ObjectStoreMiddleTierTest.cpp)
