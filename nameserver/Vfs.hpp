@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "middletier/interface/DirIterator.hpp"
-#include "middletier/interface/SecurityIdentity.hpp"
+#include "middletier/common/DirIterator.hpp"
+#include "middletier/common/SecurityIdentity.hpp"
 
 namespace cta {
 

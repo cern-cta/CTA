@@ -1,8 +1,8 @@
 #pragma once
 
 #include <gtest/gtest.h>
-#include "middletier/interface/MiddleTierAdmin.hpp"
-#include "middletier/interface/MiddleTierUser.hpp"
+#include "middletier/common/MiddleTierAdmin.hpp"
+#include "middletier/common/MiddleTierUser.hpp"
 #include <memory>
 
 namespace unitTests {

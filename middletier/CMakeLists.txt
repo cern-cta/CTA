@@ -4,65 +4,65 @@ find_package (sqlite REQUIRED)
 include_directories (${SQLITE3_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} 
   ${PROJECT_SOURCE_DIR})
 
-set (MIDDLE_TIER_INTERFACE_SRC_FILES
-  interface/AdminHost.cpp
-  interface/AdminUser.cpp
-  interface/ArchivalFileTransfer.cpp
-  interface/ArchivalJob.cpp
-  interface/ArchivalJobQueues.cpp
-  interface/ArchivalJobState.cpp
-  interface/ArchivalMount.cpp
-  interface/ArchivalRequest.cpp
-  interface/ArchivalRoute.cpp
-  interface/ArchivalRouteId.cpp
-  interface/ArchiveToDirRequest.cpp
-  interface/ArchiveToFileRequest.cpp
-  interface/ConfigurationItem.cpp
-  interface/DirEntry.cpp
-  interface/DirIterator.cpp
-  interface/DiskException.cpp
-  interface/DriveQuota.cpp
-  interface/EosRemoteStorage.cpp
-  interface/FileAttribute.cpp
-  interface/FileSystemDirEntry.cpp
-  interface/FileSystemNode.cpp
-  interface/FileSystemStorageClass.cpp
-  interface/FileSystemStorageClasses.cpp
-  interface/FileTransfer.cpp
-  interface/LogicalLibrary.cpp
-  interface/MiddleTierAdmin.cpp
-  interface/MiddleTierUser.cpp
-  interface/Mount.cpp
-  interface/MountCriteria.cpp
-  interface/RemoteStorage.cpp
-  interface/RetrievalFileTransfer.cpp
-  interface/RetrievalJob.cpp
-  interface/RetrievalJobQueues.cpp
-  interface/RetrievalJobState.cpp
-  interface/RetrievalMount.cpp
-  interface/RetrievalRequest.cpp
-  interface/RetrieveToDirRequest.cpp
-  interface/RetrieveToFileRequest.cpp
-  interface/SecurityIdentity.cpp
-  interface/StorageClass.cpp
-  interface/Tape.cpp
-  interface/TapeException.cpp
-  interface/TapeFileLocation.cpp
-  interface/TapePool.cpp
-  interface/UserIdentity.cpp
-  interface/UserGroup.cpp
-  interface/UserRequest.cpp
-  interface/VO.cpp)
+set (MIDDLE_TIER_COMMON_SRC_FILES
+  common/AdminHost.cpp
+  common/AdminUser.cpp
+  common/ArchivalFileTransfer.cpp
+  common/ArchivalJob.cpp
+  common/ArchivalJobQueues.cpp
+  common/ArchivalJobState.cpp
+  common/ArchivalMount.cpp
+  common/ArchivalRequest.cpp
+  common/ArchivalRoute.cpp
+  common/ArchivalRouteId.cpp
+  common/ArchiveToDirRequest.cpp
+  common/ArchiveToFileRequest.cpp
+  common/ConfigurationItem.cpp
+  common/DirEntry.cpp
+  common/DirIterator.cpp
+  common/DiskException.cpp
+  common/DriveQuota.cpp
+  common/EosRemoteStorage.cpp
+  common/FileAttribute.cpp
+  common/FileSystemDirEntry.cpp
+  common/FileSystemNode.cpp
+  common/FileSystemStorageClass.cpp
+  common/FileSystemStorageClasses.cpp
+  common/FileTransfer.cpp
+  common/LogicalLibrary.cpp
+  common/MiddleTierAdmin.cpp
+  common/MiddleTierUser.cpp
+  common/Mount.cpp
+  common/MountCriteria.cpp
+  common/RemoteStorage.cpp
+  common/RetrievalFileTransfer.cpp
+  common/RetrievalJob.cpp
+  common/RetrievalJobQueues.cpp
+  common/RetrievalJobState.cpp
+  common/RetrievalMount.cpp
+  common/RetrievalRequest.cpp
+  common/RetrieveToDirRequest.cpp
+  common/RetrieveToFileRequest.cpp
+  common/SecurityIdentity.cpp
+  common/StorageClass.cpp
+  common/Tape.cpp
+  common/TapeException.cpp
+  common/TapeFileLocation.cpp
+  common/TapePool.cpp
+  common/UserIdentity.cpp
+  common/UserGroup.cpp
+  common/UserRequest.cpp
+  common/VO.cpp)
 
 add_library (ctamiddletier SHARED
-  ${MIDDLE_TIER_INTERFACE_SRC_FILES})
+  ${MIDDLE_TIER_COMMON_SRC_FILES})
 
-set (MIDDLE_TIER_INTERFACE_UNIT_TESTS_LIB_SRC_FILES
+set (MIDDLE_TIER_COMMON_UNIT_TESTS_LIB_SRC_FILES
   sharedtest/MiddleTierAdminAbstractTest.cpp
   sharedtest/MiddleTierUserAbstractTest.cpp)
 
 add_library (ctamiddletierunittests SHARED
-  ${MIDDLE_TIER_INTERFACE_UNIT_TESTS_LIB_SRC_FILES})
+  ${MIDDLE_TIER_COMMON_UNIT_TESTS_LIB_SRC_FILES})
 
 add_library (ctamiddletiersqlite SHARED
   SQLite/SqliteColumnNameToIndex.cpp

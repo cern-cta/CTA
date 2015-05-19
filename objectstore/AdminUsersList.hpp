@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "middletier/interface/AdminUser.hpp"
+#include "middletier/common/AdminUser.hpp"
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 

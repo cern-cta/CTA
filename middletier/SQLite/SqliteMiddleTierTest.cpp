@@ -17,8 +17,8 @@
  */
 
 #include "middletier/sharedtest/MiddleTierAbstractTest.hpp"
-#include "middletier/interface/MiddleTierAdmin.hpp"
-#include "middletier/interface/MiddleTierUser.hpp"
+#include "middletier/common/MiddleTierAdmin.hpp"
+#include "middletier/common/MiddleTierUser.hpp"
 #include "middletier/SQLite/SqliteDatabase.hpp"
 #include "middletier/SQLite/SqliteMiddleTierAdmin.hpp"
 #include "middletier/SQLite/SqliteMiddleTierUser.hpp"

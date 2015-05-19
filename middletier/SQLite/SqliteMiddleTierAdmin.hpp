@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "middletier/interface/MiddleTierAdmin.hpp"
+#include "middletier/common/MiddleTierAdmin.hpp"
 #include "middletier/SQLite/SqliteDatabase.hpp"
 #include "nameserver/Vfs.hpp"
 
