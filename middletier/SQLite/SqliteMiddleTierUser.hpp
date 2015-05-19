@@ -23,7 +23,7 @@
 #include "middletier/interface/MiddleTierUser.hpp"
 #include "middletier/SQLite/SqliteDatabase.hpp"
 #include "middletier/interface/StorageClass.hpp"
-#include "namespace/Vfs.hpp"
+#include "nameserver/Vfs.hpp"
 
 namespace cta {
 

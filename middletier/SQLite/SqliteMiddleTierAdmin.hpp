@@ -20,7 +20,7 @@
 
 #include "middletier/interface/MiddleTierAdmin.hpp"
 #include "middletier/SQLite/SqliteDatabase.hpp"
-#include "namespace/Vfs.hpp"
+#include "nameserver/Vfs.hpp"
 
 namespace cta {
 

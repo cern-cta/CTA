@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "namespace/Vfs.hpp"
+#include "nameserver/Vfs.hpp"
 
 #include <gtest/gtest.h>
 

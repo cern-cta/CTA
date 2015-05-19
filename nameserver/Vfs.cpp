@@ -31,7 +31,7 @@
 #include "utils/exception/Exception.hpp"
 #include "utils/exception/Errnum.hpp"
 #include "utils/Utils.hpp"
-#include "namespace/Vfs.hpp"
+#include "nameserver/Vfs.hpp"
 
 using cta::exception::Exception;
 

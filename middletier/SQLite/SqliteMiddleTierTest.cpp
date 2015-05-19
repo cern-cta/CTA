@@ -22,7 +22,7 @@
 #include "middletier/SQLite/SqliteDatabase.hpp"
 #include "middletier/SQLite/SqliteMiddleTierAdmin.hpp"
 #include "middletier/SQLite/SqliteMiddleTierUser.hpp"
-#include "namespace/Vfs.hpp"
+#include "nameserver/Vfs.hpp"
 
 
 namespace unitTests {
