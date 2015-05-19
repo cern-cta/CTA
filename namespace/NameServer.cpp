@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "middletier/interface/NameServer.hpp"
+#include "namespace/NameServer.hpp"
 
 //------------------------------------------------------------------------------
 // destructor

@@ -19,7 +19,7 @@
 #pragma once
 
 #include "middletier/interface/DirIterator.hpp"
-#include "middletier/interface/NameServer.hpp"
+#include "namespace/NameServer.hpp"
 #include "middletier/interface/SecurityIdentity.hpp"
 
 #include <list>

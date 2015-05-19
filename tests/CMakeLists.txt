@@ -20,6 +20,9 @@ target_link_libraries(unittests
   ctamiddletierobjectstore
   ctanamespacevfs
   ctanamespacevfsunittests
+  ctamocknameservertest
+  ctamocknameserver
+  ctanameserver
   gmock
   gtest
   pthread)

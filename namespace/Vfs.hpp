@@ -66,8 +66,6 @@ public:
 
 private:
   
-  std::string m_baseDir;
-  
   std::string m_fsDir;
   
   void checkDirectoryExists(const std::string &dirPath);

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "middletier/interface/MockNameServer.hpp"
+#include "namespace/MockNameServer.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>

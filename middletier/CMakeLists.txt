@@ -32,10 +32,8 @@ set (MIDDLE_TIER_INTERFACE_SRC_FILES
   interface/LogicalLibrary.cpp
   interface/MiddleTierAdmin.cpp
   interface/MiddleTierUser.cpp
-  interface/MockNameServer.cpp
   interface/Mount.cpp
   interface/MountCriteria.cpp
-  interface/NameServer.cpp
   interface/RemoteStorage.cpp
   interface/RetrievalFileTransfer.cpp
   interface/RetrievalJob.cpp
@@ -60,7 +58,6 @@ add_library (ctamiddletier SHARED
   ${MIDDLE_TIER_INTERFACE_SRC_FILES})
 
 set (MIDDLE_TIER_INTERFACE_UNIT_TESTS_LIB_SRC_FILES
-  interface/MockNameServerTest.cpp
   sharedtest/MiddleTierAdminAbstractTest.cpp
   sharedtest/MiddleTierUserAbstractTest.cpp)
 

@@ -31,7 +31,7 @@
 #include "utils/exception/Exception.hpp"
 #include "utils/exception/Errnum.hpp"
 #include "utils/Utils.hpp"
-#include "middletier/interface/MockNameServer.hpp"
+#include "namespace/MockNameServer.hpp"
 using cta::exception::Exception;
 
 //------------------------------------------------------------------------------
