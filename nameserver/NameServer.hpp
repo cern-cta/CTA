@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "middletier/common/DirIterator.hpp"
-#include "middletier/common/SecurityIdentity.hpp"
+#include "scheduler/DirIterator.hpp"
+#include "scheduler/SecurityIdentity.hpp"
 
 #include <string>
 

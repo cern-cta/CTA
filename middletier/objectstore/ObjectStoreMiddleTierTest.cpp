@@ -17,12 +17,12 @@
  */
 
 #include "middletier/sharedtest/MiddleTierAbstractTest.hpp"
-#include "middletier/common/MiddleTierAdmin.hpp"
-#include "middletier/common/MiddleTierUser.hpp"
 #include "middletier/objectstore/ObjectStoreMiddleTierAdmin.hpp"
 #include "middletier/objectstore/ObjectStoreMiddleTierUser.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/RootEntry.hpp"
+#include "scheduler/MiddleTierAdmin.hpp"
+#include "scheduler/MiddleTierUser.hpp"
 
 namespace unitTests {
   

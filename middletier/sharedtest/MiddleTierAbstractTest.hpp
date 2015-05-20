@@ -1,8 +1,9 @@
 #pragma once
 
+#include "scheduler/MiddleTierAdmin.hpp"
+#include "scheduler/MiddleTierUser.hpp"
+
 #include <gtest/gtest.h>
-#include "middletier/common/MiddleTierAdmin.hpp"
-#include "middletier/common/MiddleTierUser.hpp"
 #include <memory>
 
 namespace unitTests {

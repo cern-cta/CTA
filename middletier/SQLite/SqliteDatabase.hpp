@@ -18,16 +18,16 @@
 
 #pragma once
 
-#include "middletier/common/AdminHost.hpp"
-#include "middletier/common/AdminUser.hpp"
-#include "middletier/common/ArchivalJob.hpp"
-#include "middletier/common/ArchivalRoute.hpp"
-#include "middletier/common/LogicalLibrary.hpp"
-#include "middletier/common/RetrievalJob.hpp"
-#include "middletier/common/SecurityIdentity.hpp"
-#include "middletier/common/StorageClass.hpp"
-#include "middletier/common/Tape.hpp"
-#include "middletier/common/TapePool.hpp"
+#include "scheduler/AdminHost.hpp"
+#include "scheduler/AdminUser.hpp"
+#include "scheduler/ArchivalJob.hpp"
+#include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/LogicalLibrary.hpp"
+#include "scheduler/RetrievalJob.hpp"
+#include "scheduler/SecurityIdentity.hpp"
+#include "scheduler/StorageClass.hpp"
+#include "scheduler/Tape.hpp"
+#include "scheduler/TapePool.hpp"
 
 #include <list>
 #include <map>

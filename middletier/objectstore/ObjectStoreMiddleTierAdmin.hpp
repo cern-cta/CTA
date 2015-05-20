@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "middletier/common/MiddleTierAdmin.hpp"
+#include "scheduler/MiddleTierAdmin.hpp"
 
 namespace cta {
 

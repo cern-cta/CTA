@@ -8,7 +8,7 @@ add_executable(unittests
   unit_tests.cpp)
 
 target_link_libraries(unittests
-  ctacommon
+  ctascheduler
   ctautils
   ctautilsunittests
   CTAObjectStore

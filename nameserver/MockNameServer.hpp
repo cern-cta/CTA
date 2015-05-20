@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include "middletier/common/DirIterator.hpp"
+#include "scheduler/DirIterator.hpp"
 #include "nameserver/NameServer.hpp"
-#include "middletier/common/SecurityIdentity.hpp"
+#include "scheduler/SecurityIdentity.hpp"
 
 #include <list>
 #include <string>

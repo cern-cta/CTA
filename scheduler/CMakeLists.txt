@@ -1,7 +1,54 @@
 cmake_minimum_required (VERSION 2.6)
 
-add_library (ctascheduler SHARED
-  Scheduler.cpp)
+set (CTA_SCHEDULER_SRC_FILES
+  AdminHost.cpp
+  AdminUser.cpp
+  ArchivalFileTransfer.cpp
+  ArchivalJob.cpp
+  ArchivalJobQueues.cpp
+  ArchivalJobState.cpp
+  ArchivalMount.cpp
+  ArchivalRequest.cpp
+  ArchivalRoute.cpp
+  ArchivalRouteId.cpp
+  ArchiveToDirRequest.cpp
+  ArchiveToFileRequest.cpp
+  ConfigurationItem.cpp
+  DirEntry.cpp
+  DirIterator.cpp
+  DiskException.cpp
+  DriveQuota.cpp
+  EosRemoteStorage.cpp
+  FileAttribute.cpp
+  FileSystemDirEntry.cpp
+  FileSystemNode.cpp
+  FileSystemStorageClass.cpp
+  FileSystemStorageClasses.cpp
+  FileTransfer.cpp
+  LogicalLibrary.cpp
+  MiddleTierAdmin.cpp
+  MiddleTierUser.cpp
+  Mount.cpp
+  MountCriteria.cpp
+  RemoteStorage.cpp
+  RetrievalFileTransfer.cpp
+  RetrievalJob.cpp
+  RetrievalJobQueues.cpp
+  RetrievalJobState.cpp
+  RetrievalMount.cpp
+  RetrievalRequest.cpp
+  RetrieveToDirRequest.cpp
+  RetrieveToFileRequest.cpp
+  SecurityIdentity.cpp
+  StorageClass.cpp
+  Tape.cpp
+  TapeException.cpp
+  TapeFileLocation.cpp
+  TapePool.cpp
+  UserIdentity.cpp
+  UserGroup.cpp
+  UserRequest.cpp
+  VO.cpp)
 
-target_link_libraries(ctascheduler
-  ctacommon)
+add_library (ctascheduler SHARED
+  ${CTA_SCHEDULER_SRC_FILES})

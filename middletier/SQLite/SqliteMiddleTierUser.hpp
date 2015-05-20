@@ -18,11 +18,11 @@
 
 #pragma once
 
-#include "middletier/common/FileSystemNode.hpp"
-#include "middletier/common/FileSystemStorageClasses.hpp"
-#include "middletier/common/MiddleTierUser.hpp"
+#include "scheduler/FileSystemNode.hpp"
+#include "scheduler/FileSystemStorageClasses.hpp"
+#include "scheduler/MiddleTierUser.hpp"
 #include "middletier/SQLite/SqliteDatabase.hpp"
-#include "middletier/common/StorageClass.hpp"
+#include "scheduler/StorageClass.hpp"
 #include "nameserver/NameServer.hpp"
 
 namespace cta {

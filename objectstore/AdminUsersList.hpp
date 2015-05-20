@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "middletier/common/AdminUser.hpp"
+#include "scheduler/AdminUser.hpp"
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 
