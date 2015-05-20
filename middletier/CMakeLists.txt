@@ -4,7 +4,7 @@ find_package (sqlite REQUIRED)
 include_directories (${SQLITE3_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} 
   ${PROJECT_SOURCE_DIR})
 
-set (MIDDLE_TIER_COMMON_SRC_FILES
+set (CTA_COMMON_SRC_FILES
   common/AdminHost.cpp
   common/AdminUser.cpp
   common/ArchivalFileTransfer.cpp
@@ -54,8 +54,8 @@ set (MIDDLE_TIER_COMMON_SRC_FILES
   common/UserRequest.cpp
   common/VO.cpp)
 
-add_library (ctamiddletier SHARED
-  ${MIDDLE_TIER_COMMON_SRC_FILES})
+add_library (ctacommon SHARED
+  ${CTA_COMMON_SRC_FILES})
 
 set (MIDDLE_TIER_COMMON_UNIT_TESTS_LIB_SRC_FILES
   sharedtest/MiddleTierAdminAbstractTest.cpp

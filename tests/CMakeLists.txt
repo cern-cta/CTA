@@ -8,11 +8,11 @@ add_executable(unittests
   unit_tests.cpp)
 
 target_link_libraries(unittests
+  ctacommon
   ctautils
   ctautilsunittests
   CTAObjectStore
   ctaobjectstoreunittests
-  ctamiddletier
   ctamiddletierunittests
   ctamiddletiersqlite
   ctamiddletiersqliteunittests

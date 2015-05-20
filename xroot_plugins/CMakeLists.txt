@@ -7,4 +7,4 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../middletier)
 include_directories (${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR})
 
 add_library (XrdProFst MODULE XrdProFilesystem.cpp XrdProFile.cpp XrdProDir.cpp ParsedRequest.cpp)
-target_link_libraries (XrdProFst ctamiddletier)
+target_link_libraries (XrdProFst ctacommon)

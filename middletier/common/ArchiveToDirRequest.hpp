@@ -30,18 +30,18 @@ namespace cta {
  * Class representing a user request to archive one or more remote files to an
  * archive directory.
  */
-class ArchiveToDirRquest: public ArchivalRequest {
+class ArchiveToDirRequest: public ArchivalRequest {
 public:
 
   /**
    * Constructor.
    */
-  ArchiveToDirRquest();
+  ArchiveToDirRequest();
 
   /**
    * Destructor.
    */
-  ~ArchiveToDirRquest() throw();
+  ~ArchiveToDirRequest() throw();
 
   /**
    * Constructor.
@@ -54,7 +54,7 @@ public:
    * @param creationTime Optionally the absolute time at which the user request
    * was created.  If no value is given then the current time is used.
    */
-  ArchiveToDirRquest(
+  ArchiveToDirRequest(
     const std::string &archiveDir,
     const std::string &storageClassName,
     const std::string &id,
@@ -101,6 +101,6 @@ private:
    */
   std::list<ArchiveToFileRequest> m_archiveToFileRequests;
 
-}; // class ArchiveToDirRquest
+}; // class ArchiveToDirRequest
 
 } // namespace cta

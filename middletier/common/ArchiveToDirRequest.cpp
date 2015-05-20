@@ -21,19 +21,19 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveToDirRquest::ArchiveToDirRquest() {
+cta::ArchiveToDirRequest::ArchiveToDirRequest() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::ArchiveToDirRquest::~ArchiveToDirRquest() throw() {
+cta::ArchiveToDirRequest::~ArchiveToDirRequest() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveToDirRquest::ArchiveToDirRquest(
+cta::ArchiveToDirRequest::ArchiveToDirRequest(
   const std::string &archiveDir,
   const std::string &storageClassName,
   const std::string &id,
@@ -47,7 +47,7 @@ cta::ArchiveToDirRquest::ArchiveToDirRquest(
 //------------------------------------------------------------------------------
 // getArchiveToFileRequests
 //------------------------------------------------------------------------------
-const std::list<cta::ArchiveToFileRequest> &cta::ArchiveToDirRquest::
+const std::list<cta::ArchiveToFileRequest> &cta::ArchiveToDirRequest::
   getArchiveToFileRequests() const throw() {
   return m_archiveToFileRequests;
 }
@@ -55,7 +55,7 @@ const std::list<cta::ArchiveToFileRequest> &cta::ArchiveToDirRquest::
 //------------------------------------------------------------------------------
 // getArchiveToFileRequests
 //------------------------------------------------------------------------------
-std::list<cta::ArchiveToFileRequest> &cta::ArchiveToDirRquest::
+std::list<cta::ArchiveToFileRequest> &cta::ArchiveToDirRequest::
   getArchiveToFileRequests() throw() {
   return m_archiveToFileRequests;
 }
