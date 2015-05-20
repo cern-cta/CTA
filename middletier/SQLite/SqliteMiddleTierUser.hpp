@@ -23,7 +23,7 @@
 #include "middletier/common/MiddleTierUser.hpp"
 #include "middletier/SQLite/SqliteDatabase.hpp"
 #include "middletier/common/StorageClass.hpp"
-#include "nameserver/Vfs.hpp"
+#include "nameserver/NameServer.hpp"
 
 namespace cta {
 
@@ -37,9 +37,9 @@ public:
    * Constructor.
    *
    * @param db The database of the mock middle-tier.
-   * @param vfs The virtual file-system of the mock middle-tier.
+   * @param ns The name server that contains the name space of the archive.
    */
-  SqliteMiddleTierUser(Vfs &vfs, SqliteDatabase &db);
+  SqliteMiddleTierUser(NameServer &ns, SqliteDatabase &db);
 
   /**
    * Destructor.
@@ -255,7 +255,7 @@ private:
   /**
    * The virtual file-system of the mock middle-tier.
    */
-  Vfs &m_vfs;
+  NameServer &m_ns;
 
   /**
    * Returns true if the specified absolute path is that of an existing

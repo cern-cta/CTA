@@ -74,7 +74,7 @@ void cta::MockNameServer::assertFsPathDoesNotExist(const std::string &path)
 //------------------------------------------------------------------------------
 bool cta::MockNameServer::dirExists(const SecurityIdentity &requester,
   const std::string &path) const {
-  Utils::checkAbsolutePathSyntax(path);
+  Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   struct stat stat_result;
   
@@ -90,16 +90,16 @@ bool cta::MockNameServer::dirExists(const SecurityIdentity &requester,
 }
 
 //------------------------------------------------------------------------------
-// checkStorageClassIsNotInUse
+// assertStorageClassIsNotInUse
 //------------------------------------------------------------------------------
-void cta::MockNameServer::checkStorageClassIsNotInUse(
+void cta::MockNameServer::assertStorageClassIsNotInUse(
   const SecurityIdentity &requester,
   const std::string &storageClass,
   const std::string &path) const {
 
   if(getDirStorageClass(requester, path) == storageClass) {
     std::ostringstream message;
-    message << "checkStorageClassIsNotInUse() - " << path << " has the " <<
+    message << "assertStorageClassIsNotInUse() - " << path << " has the " <<
       storageClass << " storage class.";
     throw(Exception(message.str()));
   }
@@ -111,7 +111,7 @@ void cta::MockNameServer::checkStorageClassIsNotInUse(
   if (dp == NULL) {
     char buf[256];
     std::ostringstream message;
-    message << "checkStorageClassIsNotInUse() - opendir " << fsPath <<
+    message << "assertStorageClassIsNotInUse() - opendir " << fsPath <<
       " error. Reason: \n" << strerror_r(errno, buf, sizeof(buf));
     throw(Exception(message.str()));
   }
@@ -123,7 +123,7 @@ void cta::MockNameServer::checkStorageClassIsNotInUse(
       const std::string entryPath = pathEndsWithASlash ?
         path + entryName : path + "/" + entryName;
       try {
-        checkStorageClassIsNotInUse(requester, storageClass, entryPath);
+        assertStorageClassIsNotInUse(requester, storageClass, entryPath);
       } catch (...) {
         closedir(dp);
         throw;
@@ -162,7 +162,7 @@ cta::MockNameServer::~MockNameServer() throw() {
 // setDirStorageClass
 //------------------------------------------------------------------------------
 void cta::MockNameServer::setDirStorageClass(const SecurityIdentity &requester, const std::string &path, const std::string &storageClassName) {
-  Utils::checkAbsolutePathSyntax(path);
+  Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsDirExists(fsPath);
   
@@ -180,7 +180,7 @@ void cta::MockNameServer::setDirStorageClass(const SecurityIdentity &requester, 
 void cta::MockNameServer::clearDirStorageClass(
   const SecurityIdentity &requester,
   const std::string &path) {
-  Utils::checkAbsolutePathSyntax(path);
+  Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsDirExists(fsPath);
   
@@ -198,7 +198,7 @@ void cta::MockNameServer::clearDirStorageClass(
 std::string cta::MockNameServer::getDirStorageClass(
   const SecurityIdentity &requester,
   const std::string &path) const {
-  Utils::checkAbsolutePathSyntax(path);
+  Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsDirExists(fsPath);
   
@@ -220,7 +220,7 @@ void cta::MockNameServer::createFile(
   const SecurityIdentity &requester,
   const std::string &path,
   const uint16_t mode) {
-  Utils::checkAbsolutePathSyntax(path);  
+  Utils::assertAbsolutePathSyntax(path);  
   assertFsDirExists(m_fsDir + Utils::getEnclosingDirPath(path));
   const std::string fsPath = m_fsDir + path;
   assertFsPathDoesNotExist(fsPath);
@@ -245,7 +245,7 @@ void cta::MockNameServer::createFile(
 //------------------------------------------------------------------------------
 void cta::MockNameServer::createDir(const SecurityIdentity &requester,
   const std::string &path, const uint16_t mode) {  
-  Utils::checkAbsolutePathSyntax(path);  
+  Utils::assertAbsolutePathSyntax(path);  
   const std::string enclosingDirPath = Utils::getEnclosingDirPath(path);
   assertFsDirExists(m_fsDir + enclosingDirPath);
 
@@ -267,7 +267,7 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
 // deleteFile
 //------------------------------------------------------------------------------
 void cta::MockNameServer::deleteFile(const SecurityIdentity &requester, const std::string &path) {  
-  Utils::checkAbsolutePathSyntax(path);
+  Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   
   if(unlink(fsPath.c_str())) {
@@ -288,7 +288,7 @@ void cta::MockNameServer::deleteDir(const SecurityIdentity &requester, const std
     message << "deleteDir() - Cannot delete root directory";
     throw(Exception(message.str()));
   }
-  Utils::checkAbsolutePathSyntax(path);
+  Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   
   if(rmdir(fsPath.c_str())) {
@@ -306,7 +306,7 @@ void cta::MockNameServer::deleteDir(const SecurityIdentity &requester, const std
 cta::DirEntry cta::MockNameServer::statDirEntry(
   const SecurityIdentity &requester,
   const std::string &path) const {
-  Utils::checkAbsolutePathSyntax(path);
+  Utils::assertAbsolutePathSyntax(path);
   const std::string name = Utils::getEnclosedName(path);
   const std::string enclosingPath = Utils::getEnclosingDirPath(path);
   const std::string fsPath = m_fsDir + path;
@@ -380,7 +380,7 @@ std::list<cta::DirEntry> cta::MockNameServer::getDirEntries(
 //------------------------------------------------------------------------------
 cta::DirIterator cta::MockNameServer::getDirContents(
   const SecurityIdentity &requester, const std::string &path) const {
-  Utils::checkAbsolutePathSyntax(path);
+  Utils::assertAbsolutePathSyntax(path);
   assertFsDirExists(m_fsDir+path);
   return getDirEntries(requester, path);
 }
@@ -391,6 +391,6 @@ cta::DirIterator cta::MockNameServer::getDirContents(
 std::string cta::MockNameServer::getVidOfFile(
   const SecurityIdentity &requester,
   const std::string &path,
-  uint16_t copyNb) const {
+  const uint16_t copyNb) const {
   return "T00001"; //everything is on one tape for the moment:)
 }

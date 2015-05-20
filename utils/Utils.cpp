@@ -24,13 +24,13 @@
 using cta::exception::Exception;
 
 //------------------------------------------------------------------------------
-// checkAbsolutePathSyntax
+// assertAbsolutePathSyntax
 //------------------------------------------------------------------------------
-void cta::Utils::checkAbsolutePathSyntax(const std::string &path) {
+void cta::Utils::assertAbsolutePathSyntax(const std::string &path) {
   try {
-    checkPathStartsWithASlash(path);
-    checkPathContainsValidChars(path);
-    checkPathDoesContainConsecutiveSlashes(path);
+    assertPathStartsWithASlash(path);
+    assertPathContainsValidChars(path);
+    assertPathDoesContainConsecutiveSlashes(path);
   } catch(std::exception &ex) {
     std::ostringstream message;
     message << "Absolute path \"" << path << "\" contains a syntax error: " <<
@@ -40,9 +40,9 @@ void cta::Utils::checkAbsolutePathSyntax(const std::string &path) {
 }
 
 //------------------------------------------------------------------------------
-// checkPathStartsWithASlash
+// assertPathStartsWithASlash
 //------------------------------------------------------------------------------
-void cta::Utils::checkPathStartsWithASlash(const std::string &path) {
+void cta::Utils::assertPathStartsWithASlash(const std::string &path) {
   if(path.empty()) {
     throw Exception("Path is an empty string");
   }
@@ -53,19 +53,19 @@ void cta::Utils::checkPathStartsWithASlash(const std::string &path) {
 }
 
 //------------------------------------------------------------------------------
-// checkPathContainsValidChars
+// assertPathContainsValidChars
 //------------------------------------------------------------------------------
-void cta::Utils::checkPathContainsValidChars(const std::string &path) {
+void cta::Utils::assertPathContainsValidChars(const std::string &path) {
   for(std::string::const_iterator itor = path.begin(); itor != path.end();
     itor++) {
-    checkValidPathChar(*itor);
+    assertValidPathChar(*itor);
   }
 }
 
 //------------------------------------------------------------------------------
-// checkValidPathChar
+// assertValidPathChar
 //------------------------------------------------------------------------------
-void cta::Utils::checkValidPathChar(const char c) {
+void cta::Utils::assertValidPathChar(const char c) {
   if(!isValidPathChar(c)) {
     std::ostringstream message;
     message << "The '" << c << "' character cannot be used within a path";
@@ -85,9 +85,9 @@ bool cta::Utils::isValidPathChar(const char c) {
 }
 
 //------------------------------------------------------------------------------
-// checkPathDoesContainConsecutiveSlashes
+// assertPathDoesContainConsecutiveSlashes
 //------------------------------------------------------------------------------
-void cta::Utils::checkPathDoesContainConsecutiveSlashes(
+void cta::Utils::assertPathDoesContainConsecutiveSlashes(
   const std::string &path) {
   char previousChar = '\0';
 

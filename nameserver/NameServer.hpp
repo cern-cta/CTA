@@ -58,6 +58,19 @@ public:
   virtual void deleteDir(
    const SecurityIdentity &requester,
    const std::string &path) = 0;
+  
+  /**
+   * Returns the volume identifier of the tape on which the specified tape copy
+   * has been archived.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the file.
+   * @param copyNb The copy number of the file.
+   */
+  virtual std::string getVidOfFile(
+    const SecurityIdentity &requester,
+    const std::string &path,
+    const uint16_t copyNb) const = 0;
 
   /**
    * Gets the contents of the specified directory.
@@ -115,6 +128,19 @@ public:
    */
   virtual std::string getDirStorageClass(
     const SecurityIdentity &requester,
+    const std::string &path) const = 0;
+ 
+  /**
+   * Throws an exception if the specified storage class is in use within the
+   * specified file or directory.
+   *
+   * @param requester The identity of the requester.
+   * @param storageClassName The name of the storage class.
+   * @param path The absolute path of the file or directory.
+   */
+  virtual void assertStorageClassIsNotInUse(
+    const SecurityIdentity &requester,
+    const std::string &storageClass,
     const std::string &path) const = 0;
 
   /**

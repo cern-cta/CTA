@@ -26,8 +26,11 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::SqliteMiddleTierAdmin::SqliteMiddleTierAdmin(Vfs &vfs, SqliteDatabase &db):
-   m_vfs(vfs), m_db(db) {
+cta::SqliteMiddleTierAdmin::SqliteMiddleTierAdmin(
+   NameServer &ns,
+   SqliteDatabase &db):
+   m_ns(ns),
+   m_db(db) {
 }
 
 //------------------------------------------------------------------------------
@@ -102,9 +105,10 @@ void cta::SqliteMiddleTierAdmin::createStorageClass(
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
-void cta::SqliteMiddleTierAdmin::deleteStorageClass(const SecurityIdentity &requester,
+void cta::SqliteMiddleTierAdmin::deleteStorageClass(
+  const SecurityIdentity &requester,
   const std::string &name) {
-  m_vfs.checkStorageClassIsNotInUse(requester, name, "/");
+  m_ns.assertStorageClassIsNotInUse(requester, name, "/");
   m_db.deleteStorageClass(requester, name);
 }
 
@@ -130,7 +134,8 @@ void cta::SqliteMiddleTierAdmin::createTapePool(
 //------------------------------------------------------------------------------
 // deleteTapePool
 //------------------------------------------------------------------------------
-void cta::SqliteMiddleTierAdmin::deleteTapePool(const SecurityIdentity &requester,
+void cta::SqliteMiddleTierAdmin::deleteTapePool(
+  const SecurityIdentity &requester,
   const std::string &name) {
   m_db.deleteTapePool(requester, name);
 }
@@ -152,7 +157,8 @@ void cta::SqliteMiddleTierAdmin::createArchivalRoute(
   const uint16_t copyNb,
   const std::string &tapePoolName,
   const std::string &comment) {
-  return m_db.insertArchivalRoute(requester, storageClassName, copyNb, tapePoolName, comment);
+  return m_db.insertArchivalRoute(requester, storageClassName, copyNb,
+    tapePoolName, comment);
 }
 
 //------------------------------------------------------------------------------

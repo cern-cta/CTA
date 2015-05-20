@@ -6,11 +6,11 @@ add_library (ctanameserver SHARED
 add_library (ctamocknameserver SHARED
   MockNameServer.cpp)
 
+target_link_libraries(ctamocknameserver
+  ctanameserver)
+
 add_library (ctamocknameservertest SHARED
   MockNameServerTest.cpp)
 
-add_library (ctanamespacevfs SHARED
-  Vfs.cpp)
-
-add_library (ctanamespacevfsunittests SHARED
-  VfsTest.cpp)
+target_link_libraries(ctamocknameservertest
+  ctamocknameserver)

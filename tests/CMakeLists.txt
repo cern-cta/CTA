@@ -18,8 +18,6 @@ target_link_libraries(unittests
   ctamiddletiersqliteunittests
   #ctamiddletierobjectstoreunittests
   ctamiddletierobjectstore
-  ctanamespacevfs
-  ctanamespacevfsunittests
   ctamocknameservertest
   ctamocknameserver
   ctanameserver

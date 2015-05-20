@@ -36,7 +36,7 @@ public:
    *
    * @param path The Absolute path.
    */
-  static void checkAbsolutePathSyntax(const std::string &path);
+  static void assertAbsolutePathSyntax(const std::string &path);
 
   /**
    * Returns the path of the enclosing directory of the specified path.
@@ -102,7 +102,7 @@ protected:
    *
    * @param path The path.
    */
-  static void checkPathStartsWithASlash(const std::string &path);
+  static void assertPathStartsWithASlash(const std::string &path);
 
   /**
    * Throws an exception if the specified path does not contain valid
@@ -110,7 +110,7 @@ protected:
    *
    * @param path The path.
    */
-  static void checkPathContainsValidChars(const std::string &path);
+  static void assertPathContainsValidChars(const std::string &path);
 
   /**
    * Throws an exception if the specified character cannot be used within a
@@ -118,7 +118,7 @@ protected:
    *
    * @param c The character to be tested.
    */
-  static void checkValidPathChar(const char c);
+  static void assertValidPathChar(const char c);
 
   /**
    * Returns true of the specified character can be used within a path.
@@ -132,7 +132,7 @@ protected:
    *
    * @param path The path.
    */
-  static void checkPathDoesContainConsecutiveSlashes(const std::string &path);
+  static void assertPathDoesContainConsecutiveSlashes(const std::string &path);
 
 }; // class Utils
 

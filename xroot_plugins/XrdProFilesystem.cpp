@@ -1587,8 +1587,12 @@ int XrdProFilesystem::chksum(csFunc Func, const char *csName, const char *path, 
 //------------------------------------------------------------------------------
 // chmod
 //------------------------------------------------------------------------------
-int XrdProFilesystem::chmod(const char *path, XrdSfsMode mode, XrdOucErrInfo &eInfo, const XrdSecEntity *client, const char *opaque)
-{
+int XrdProFilesystem::chmod(
+  const char *path,
+  XrdSfsMode mode,
+  XrdOucErrInfo &eInfo,
+  const XrdSecEntity *client,
+  const char *opaque) {
   (void)path; (void)mode; (void)eInfo; (void)client; (void)opaque;
   eInfo.setErrInfo(ENOTSUP, "Not supported.");
   return SFS_ERROR;
@@ -1613,7 +1617,9 @@ void XrdProFilesystem::EnvInfo(XrdOucEnv *envP)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-XrdProFilesystem::XrdProFilesystem(): m_adminApi(m_vfs, m_db), m_userApi(m_vfs, m_db) {
+XrdProFilesystem::XrdProFilesystem():
+  m_adminApi(m_ns, m_db),
+  m_userApi(m_ns, m_db) {
 }
 
 //------------------------------------------------------------------------------

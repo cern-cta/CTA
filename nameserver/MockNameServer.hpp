@@ -65,9 +65,9 @@ public:
   
   bool dirExists(const SecurityIdentity &requester, const std::string &path) const;
   
-  std::string getVidOfFile(const SecurityIdentity &requester, const std::string &path, uint16_t copyNb) const;
+  std::string getVidOfFile(const SecurityIdentity &requester, const std::string &path, const uint16_t copyNb) const;
   
-  void checkStorageClassIsNotInUse(const SecurityIdentity &requester, const std::string &storageClass, const std::string &path) const;
+  void assertStorageClassIsNotInUse(const SecurityIdentity &requester, const std::string &storageClass, const std::string &path) const;
 
 private:
   

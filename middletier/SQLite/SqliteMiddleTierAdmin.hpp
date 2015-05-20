@@ -20,7 +20,7 @@
 
 #include "middletier/common/MiddleTierAdmin.hpp"
 #include "middletier/SQLite/SqliteDatabase.hpp"
-#include "nameserver/Vfs.hpp"
+#include "nameserver/NameServer.hpp"
 
 namespace cta {
 
@@ -33,10 +33,10 @@ public:
   /**
    * Constructor.
    *
-   * @param vfs The virtual file-system of the mock middle-tier.
+   * @param ns The name server conatining the name space of the archive.
    * @param db The database of the mock middle-tier.
    */
-  SqliteMiddleTierAdmin(Vfs &vfs, SqliteDatabase &db);
+  SqliteMiddleTierAdmin(NameServer &ns, SqliteDatabase &db);
 
   /**
    * Destructor.
@@ -298,7 +298,7 @@ protected:
   /**
    * The virtual filesystem of the mock middle-tier.
    */
-  Vfs &m_vfs;
+  NameServer &m_ns;
   
   /**
    * The database of the mock middle-tier.

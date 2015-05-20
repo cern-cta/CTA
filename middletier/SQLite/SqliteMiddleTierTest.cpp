@@ -22,19 +22,19 @@
 #include "middletier/SQLite/SqliteDatabase.hpp"
 #include "middletier/SQLite/SqliteMiddleTierAdmin.hpp"
 #include "middletier/SQLite/SqliteMiddleTierUser.hpp"
-#include "nameserver/Vfs.hpp"
+#include "nameserver/MockNameServer.hpp"
 
 
 namespace unitTests {
 
 class SQLiteLocalMiddleTier: public localMiddleTier {
 public:
-  SQLiteLocalMiddleTier(): m_vfs(), m_sqLite(), m_admin(m_vfs, m_sqLite), 
-    m_user(m_vfs, m_sqLite) {}
+  SQLiteLocalMiddleTier(): m_ns(), m_sqLite(), m_admin(m_ns, m_sqLite), 
+    m_user(m_ns, m_sqLite) {}
   virtual cta::MiddleTierAdmin & admin () { return m_admin; }
   virtual cta::MiddleTierUser & user () { return m_user; }
 private:
-  cta::Vfs m_vfs;
+  cta::MockNameServer m_ns;
   cta::SqliteDatabase m_sqLite;
   cta::SqliteMiddleTierAdmin m_admin;
   cta::SqliteMiddleTierUser m_user;

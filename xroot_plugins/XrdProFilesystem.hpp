@@ -20,6 +20,7 @@
 
 #include "middletier/SQLite/SqliteMiddleTierAdmin.hpp"
 #include "middletier/SQLite/SqliteMiddleTierUser.hpp"
+#include "nameserver/MockNameServer.hpp"
 #include "XrdSfs/XrdSfsInterface.hh"
 
 #include "ParsedRequest.hpp"
@@ -56,9 +57,9 @@ protected:
   cta::SqliteDatabase m_db;
   
   /**
-   * The Virtual FileSystem object
+   * The name server containing the name space of the archive.
    */
-  cta::Vfs m_vfs;
+  cta::MockNameServer m_ns;
   
   /**
    * The middle-tier administration API

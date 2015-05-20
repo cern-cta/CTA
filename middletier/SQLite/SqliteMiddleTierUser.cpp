@@ -27,8 +27,11 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::SqliteMiddleTierUser::SqliteMiddleTierUser(Vfs &vfs, SqliteDatabase &db):
-  m_db(db), m_vfs(vfs) {
+cta::SqliteMiddleTierUser::SqliteMiddleTierUser(
+  NameServer &ns,
+  SqliteDatabase &db):
+  m_db(db),
+  m_ns(ns) {
 }
 
 //------------------------------------------------------------------------------
@@ -42,7 +45,7 @@ cta::SqliteMiddleTierUser::~SqliteMiddleTierUser() throw() {
 //------------------------------------------------------------------------------
 void cta::SqliteMiddleTierUser::createDir(const SecurityIdentity &requester,
   const std::string &dirPath) {
-  m_vfs.createDir(requester, dirPath, 0777);
+  m_ns.createDir(requester, dirPath, 0777);
 }
 
 //------------------------------------------------------------------------------
@@ -50,7 +53,7 @@ void cta::SqliteMiddleTierUser::createDir(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 void cta::SqliteMiddleTierUser::deleteDir(const SecurityIdentity &requester,
   const std::string &dirPath) {
-  m_vfs.deleteDir(requester, dirPath);
+  m_ns.deleteDir(requester, dirPath);
 }
 
 //------------------------------------------------------------------------------
@@ -58,7 +61,7 @@ void cta::SqliteMiddleTierUser::deleteDir(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 cta::DirIterator cta::SqliteMiddleTierUser::getDirContents(
   const SecurityIdentity &requester, const std::string &dirPath) const {
-  return m_vfs.getDirContents(requester, dirPath);
+  return m_ns.getDirContents(requester, dirPath);
 }
 
 //------------------------------------------------------------------------------
@@ -67,7 +70,7 @@ cta::DirIterator cta::SqliteMiddleTierUser::getDirContents(
 cta::DirEntry cta::SqliteMiddleTierUser::stat(
   const SecurityIdentity &requester,
   const std::string path) const {
-  return m_vfs.statDirEntry(requester, path);
+  return m_ns.statDirEntry(requester, path);
 }
 
 //------------------------------------------------------------------------------
@@ -77,7 +80,7 @@ void cta::SqliteMiddleTierUser::setDirStorageClass(
   const SecurityIdentity &requester,
   const std::string &dirPath,
   const std::string &storageClassName) {
-  m_vfs.setDirStorageClass(requester, dirPath, storageClassName);
+  m_ns.setDirStorageClass(requester, dirPath, storageClassName);
 }
 
 //------------------------------------------------------------------------------
@@ -86,7 +89,7 @@ void cta::SqliteMiddleTierUser::setDirStorageClass(
 void cta::SqliteMiddleTierUser::clearDirStorageClass(
   const SecurityIdentity &requester,
   const std::string &dirPath) {
-  m_vfs.clearDirStorageClass(requester, dirPath);
+  m_ns.clearDirStorageClass(requester, dirPath);
 }
   
 //------------------------------------------------------------------------------
@@ -95,7 +98,7 @@ void cta::SqliteMiddleTierUser::clearDirStorageClass(
 std::string cta::SqliteMiddleTierUser::getDirStorageClass(
   const SecurityIdentity &requester,
   const std::string &dirPath) const {
-  return m_vfs.getDirStorageClass(requester, dirPath);
+  return m_ns.getDirStorageClass(requester, dirPath);
 }
 
 //------------------------------------------------------------------------------
@@ -103,7 +106,7 @@ std::string cta::SqliteMiddleTierUser::getDirStorageClass(
 //------------------------------------------------------------------------------
 void cta::SqliteMiddleTierUser::archive(const SecurityIdentity &requester,
   const std::list<std::string> &srcUrls, const std::string &dstPath) {
-  if(m_vfs.isExistingDir(requester, dstPath)) {
+  if(m_ns.dirExists(requester, dstPath)) {
     return archiveToDir(requester, srcUrls, dstPath);
   } else {
     return archiveToFile(requester, srcUrls, dstPath);
@@ -120,7 +123,7 @@ void cta::SqliteMiddleTierUser::archiveToDir(
   if(0 == srcUrls.size()) {
     throw Exception("At least one source file should be provided");
   }
-  std::string storageClassName = m_vfs.getDirStorageClass(requester, dstDir);
+  std::string storageClassName = m_ns.getDirStorageClass(requester, dstDir);
   cta::StorageClass storageClass = m_db.getStorageClassByName(requester, storageClassName);
   if(storageClass.getNbCopies()==0) {       
     std::ostringstream message;
@@ -153,7 +156,7 @@ void cta::SqliteMiddleTierUser::archiveToDir(
     else {
       dstPathname = dstDir+"/"+dstFileName;
     }
-    m_vfs.createFile(requester, dstPathname, 0666);
+    m_ns.createFile(requester, dstPathname, 0666);
   }
 }
 
@@ -170,7 +173,7 @@ void cta::SqliteMiddleTierUser::archiveToFile(
   }
   
   const std::string &srcFileName = srcUrls.front();
-  std::string storageClassName = m_vfs.getDirStorageClass(requester, cta::Utils::getEnclosingDirPath(dstFile));
+  std::string storageClassName = m_ns.getDirStorageClass(requester, cta::Utils::getEnclosingDirPath(dstFile));
   cta::StorageClass storageClass = m_db.getStorageClassByName(requester, storageClassName);
   if(storageClass.getNbCopies()==0) {       
     std::ostringstream message;
@@ -182,7 +185,7 @@ void cta::SqliteMiddleTierUser::archiveToFile(
     m_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstFile);
   }
   
-  m_vfs.createFile(requester, dstFile, 0666);
+  m_ns.createFile(requester, dstFile, 0666);
 }
 
 //------------------------------------------------------------------------------
@@ -219,8 +222,9 @@ void cta::SqliteMiddleTierUser::retrieve(
   const SecurityIdentity &requester,
   const std::list<std::string> &srcPaths,
   const std::string &dstUrl) { //we consider only the case in which dstUrl is a directory so that we accept multiple source files
-  for(std::list<std::string>::const_iterator it=srcPaths.begin(); it!=srcPaths.end(); it++) {
-    std::string vid = m_vfs.getVidOfFile(requester, *it, 1); //we only consider 1st copy
+  for(std::list<std::string>::const_iterator it=srcPaths.begin();
+    it!=srcPaths.end(); it++) {
+    const std::string vid = m_ns.getVidOfFile(requester, *it, 1); //we only consider 1st copy
     m_db.insertRetrievalJob(requester, vid, *it, dstUrl);
   }
 }
