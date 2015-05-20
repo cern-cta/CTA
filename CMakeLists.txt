@@ -31,11 +31,11 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
+add_subdirectory(cmdline)
 add_subdirectory(common)
 add_subdirectory(objectstore)
 add_subdirectory(middletier)
 add_subdirectory(nameserver)
 add_subdirectory(scheduler)
 add_subdirectory(tests)
-add_subdirectory(ctacmd)
 add_subdirectory(xroot_plugins)
