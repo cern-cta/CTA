@@ -82,6 +82,21 @@ private:
   void setAdminUsersList(const std::string & name);
   
 public:
+  // Get the name of the StorageClassList (or exception if not available)
+  std::string getStorageClassList();
+  
+  // Get the name of a (possibly freshly created) StorageClassList
+  std::string allocateOrGetStorageClassList(Agent & agent);
+  
+private:
+  void addIntendedStorageClassList(const std::string & name);
+  
+  void deleteFromIntendedStorageClassList(const std::string & name);
+  
+  void setStorageClassList(const std::string & name);
+  
+  
+public:
   // Dump the root entry
   std::string dump ();
 };

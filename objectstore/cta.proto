@@ -13,6 +13,7 @@ enum ObjectType {
   Counter_t = 7;
   FIFO_t = 8;
   AdminUsersList_t = 9;
+  StorageClassList_t = 10;
   GenericObject_t = 1000;
 }
 
@@ -65,24 +66,26 @@ message Agent {
 // should be very rare (besides first register creation). All other objects
 // can be covered by the agents's ownership logs.
 message RootEntry {
-  optional string agentregister = 91;
-  repeated string agentregisterintentlog = 92;
-  optional string jobpool = 93;
-  repeated string jobpoolintentlog = 94;
-  optional string adminuserslist = 95;
-  repeated string adminuserslistintentlog = 96;
+  optional string agentregister = 100;
+  repeated string agentregisterintentlog = 101;
+  optional string jobpool = 102;
+  repeated string jobpoolintentlog = 103;
+  optional string adminuserslist = 104;
+  repeated string adminuserslistintentlog = 105;
+  optional string storageclasslist = 106;
+  repeated string storageclasslistintentlog = 107;
 }
 
 // The registers (simple name arrays)
 message Register {
-  repeated string elements = 100;
+  repeated string elements = 150;
 }
 
 // The agent register holds 2 lists:
 // a full list, and a list of agents not yet watched
 message AgentRegister {
-  repeated string agents = 110;
-  repeated string untrackedagents = 111;
+  repeated string agents = 160;
+  repeated string untrackedagents = 161;
 }
 
 // A basic FIFO
@@ -167,6 +170,21 @@ message AdminUser  {
 
 message AdminUsersList {
   repeated AdminUser element = 8020;
+}
+
+message ConfigurationItem {
+  required UserIdentity creator = 9002;
+  optional string comment = 9003;
+}
+
+message StorageClass {
+  required string name = 9000;
+  required uint32 nbCopies = 9001;
+
+}
+
+message StorageClassList {
+  repeated StorageClass element = 9050;
 }
 
 

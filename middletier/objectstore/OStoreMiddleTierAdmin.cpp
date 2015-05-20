@@ -17,7 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "middletier/objectstore/ObjectStoreMiddleTierAdmin.hpp"
+#include "middletier/objectstore/OStoreMiddleTierAdmin.hpp"
 #include "objectstore/Backend.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/AdminUsersList.hpp"
@@ -27,8 +27,9 @@ namespace cta {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OStoreMiddleTierAdmin::OStoreMiddleTierAdmin(objectstore::Backend& backend):
-  m_backend(backend) {
+OStoreMiddleTierAdmin::OStoreMiddleTierAdmin(objectstore::Backend& backend,
+  objectstore::Agent & agent):
+  m_backend(backend), m_agent(agent) {
   // check that we can at least access the root entry
   objectstore::RootEntry re(m_backend);
   objectstore::ScopedSharedLock reLock(re);
@@ -109,7 +110,14 @@ void OStoreMiddleTierAdmin::createStorageClass(
   const std::string &name,
   const uint16_t nbCopies,
   const std::string &comment) {
-  throw cta::exception::Exception("TODO");
+  // Get the root entry
+  objectstore::RootEntry re(m_backend);
+  {
+    objectstore::ScopedSharedLock sl(re);
+    re.fetch();
+  }
+  // Get the storage class list
+  re.allocateOrGetStorageClassList(m_agent);
 }
 
 void OStoreMiddleTierAdmin::deleteStorageClass(

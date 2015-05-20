@@ -17,18 +17,20 @@
  */
 
 #include "middletier/sharedtest/MiddleTierAbstractTest.hpp"
-#include "middletier/objectstore/ObjectStoreMiddleTierAdmin.hpp"
-#include "middletier/objectstore/ObjectStoreMiddleTierUser.hpp"
+#include "middletier/objectstore/OStoreMiddleTierAdmin.hpp"
+#include "middletier/objectstore/OStoreMiddleTierUser.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/RootEntry.hpp"
+#include "objectstore/Agent.hpp"
 #include "scheduler/MiddleTierAdmin.hpp"
 #include "scheduler/MiddleTierUser.hpp"
+#include "nameserver/MockNameServer.hpp"
 
 namespace unitTests {
   
-class InitializedVFS: public cta::objectstore::BackendVFS {
+class InitializedVFSOStore: public cta::objectstore::BackendVFS {
 public:
-  InitializedVFS(): cta::objectstore::BackendVFS() {
+  InitializedVFSOStore(): cta::objectstore::BackendVFS() {
     // Create the root entry
     cta::objectstore::RootEntry re(*this);
     re.initialize();
@@ -38,11 +40,17 @@ public:
 
 class OStoreVfsMiddleTier: public localMiddleTier {
 public:
-  OStoreVfsMiddleTier(): m_vfs(), m_admin(m_vfs), m_user(m_vfs) {}
+  OStoreVfsMiddleTier(): m_vfsOStore(), m_agent(m_vfsOStore),
+    m_mockNameServer(),
+    m_admin(m_vfsOStore, m_agent), m_user(m_vfsOStore, m_mockNameServer) {
+    m_agent.generateName("OStoreVfsMiddleTier");
+  }
   virtual cta::MiddleTierAdmin & admin () { return m_admin; }
   virtual cta::MiddleTierUser & user () { return m_user; }
 private:
-  InitializedVFS m_vfs;
+  InitializedVFSOStore m_vfsOStore;
+  cta::objectstore::Agent m_agent;
+  cta::MockNameServer m_mockNameServer;
   cta::OStoreMiddleTierAdmin m_admin;
   cta::OStoreMiddleTierUser m_user;
 };

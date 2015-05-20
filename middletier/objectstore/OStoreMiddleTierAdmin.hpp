@@ -24,6 +24,7 @@ namespace cta {
 
 namespace objectstore {
   class Backend;
+  class Agent;
 }
   
 /**
@@ -35,7 +36,8 @@ public:
   /**
    * Constructor
    */
-  OStoreMiddleTierAdmin(objectstore::Backend & backend);
+  OStoreMiddleTierAdmin(objectstore::Backend & backend,
+    objectstore::Agent & agent);
   
   /**
    * Destructor
@@ -301,6 +303,11 @@ private:
    * Reference to the backend used for storing objects
    */
   objectstore::Backend & m_backend;
+  
+  /**
+   * Reference to the agent register entry for this execution
+   */
+  objectstore::Agent & m_agent;
 };
 
 }

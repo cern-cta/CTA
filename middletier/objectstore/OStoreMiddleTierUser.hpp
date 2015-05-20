@@ -22,9 +22,12 @@
 
 namespace cta {
 
+// Forward declaration of classes for references.
 namespace objectstore {
   class Backend;
 }
+
+class NameServer;
 
 /**
  * The user API of the the middle-tier.
@@ -34,7 +37,7 @@ public:
   /**
    * Constructor
    */
-  OStoreMiddleTierUser(objectstore::Backend & backend);
+  OStoreMiddleTierUser(objectstore::Backend & backend, NameServer & nameserver);
   
   /**
    * Destructor
@@ -245,6 +248,11 @@ private:
    * Reference to the backend used for storing objects
    */
   objectstore::Backend & m_backend;
+  
+  /**
+   * Reference to the name server  for 
+   */
+  NameServer & m_nameserver;
 
 }; // class OStoreMiddleTierUser
 

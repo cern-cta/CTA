@@ -17,58 +17,59 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "middletier/objectstore/ObjectStoreMiddleTierUser.hpp"
+#include "middletier/objectstore/OStoreMiddleTierUser.hpp"
 #include "objectstore/Backend.hpp"
 #include "objectstore/RootEntry.hpp"
+#include "nameserver/NameServer.hpp"
 
 namespace cta {
 
-OStoreMiddleTierUser::OStoreMiddleTierUser(objectstore::Backend& backend):
-  m_backend(backend) {}
+OStoreMiddleTierUser::OStoreMiddleTierUser(objectstore::Backend& backend,
+    NameServer & nameserver):
+  m_backend(backend), m_nameserver(nameserver) {}
 
 OStoreMiddleTierUser::~OStoreMiddleTierUser() throw() { }
 
 void OStoreMiddleTierUser::createDir(
   const SecurityIdentity& requester,
   const std::string& dirPath) {
-  throw cta::exception::Exception("TODO");
-
+  m_nameserver.createDir(requester, dirPath, 0777);
 }
 void OStoreMiddleTierUser::deleteDir(
   const SecurityIdentity& requester,
   const std::string& dirPath) {
-  throw cta::exception::Exception("TODO");
+  m_nameserver.deleteDir(requester, dirPath);
 }
 
 DirIterator OStoreMiddleTierUser::getDirContents(
   const SecurityIdentity& requester,
   const std::string& dirPath) const {
-  throw cta::exception::Exception("TODO");
+  return m_nameserver.getDirContents(requester, dirPath);
 }
 
 DirEntry OStoreMiddleTierUser::stat(
   const SecurityIdentity& requester,
   const std::string path) const {
-  throw cta::exception::Exception("TODO");
+  return m_nameserver.statDirEntry(requester, path);
 }
 
 void OStoreMiddleTierUser::setDirStorageClass(
   const SecurityIdentity& requester,
   const std::string& dirPath,
   const std::string& storageClassName) {
-  throw cta::exception::Exception("TODO");
+  m_nameserver.setDirStorageClass(requester, dirPath, storageClassName);
 }
 
 void OStoreMiddleTierUser::clearDirStorageClass(
   const SecurityIdentity& requester,
   const std::string& dirPath) {
-  throw cta::exception::Exception("TODO");
+  m_nameserver.clearDirStorageClass(requester, dirPath);
 }
 
 std::string OStoreMiddleTierUser::getDirStorageClass(
   const SecurityIdentity& requester,
   const std::string& dirPath) const {
-  throw cta::exception::Exception("TODO");
+  return m_nameserver.getDirStorageClass(requester, dirPath);
 }
 
 void OStoreMiddleTierUser::archive(

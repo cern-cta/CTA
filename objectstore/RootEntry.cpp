@@ -204,6 +204,68 @@ void cta::objectstore::RootEntry::setAdminUsersList(const std::string& name) {
   throw cta::exception::Exception("TODO");
 }
 
+// Get the name of the admin user list (or exception if not available)
+std::string cta::objectstore::RootEntry::getStorageClassList() {
+  // Check that the fetch was done
+  if (!m_payloadInterpreted)
+    throw ObjectOpsBase::NotFetched("In RootEntry::getStorageClassList: object not yet fetched");
+  // If the registry is defined, return it, job done.
+  if (m_payload.storageclasslist().size())
+    return m_payload.storageclasslist();
+  throw NotAllocatedEx("In RootEntry::getStorageClassList: StorageClassList not yet allocated");
+}
+
+std::string cta::objectstore::RootEntry::allocateOrGetStorageClassList(Agent& agent) {
+//  // Check if the job pool exists
+//  try {
+//    return getStorageClassList();
+//  } catch (NotAllocatedEx &) {
+//    // If we get here, the job pool is not created yet, so we have to do it:
+//    // lock the entry again, for writing
+//    ScopedExclusiveLock lock(*this);
+//    fetch();
+//    // If the registry is already defined, somebody was faster. We're done.
+//    if (m_payload.storageclasslist().size()) {
+//      lock.release();
+//      return m_payload.storageclasslist();
+//    }
+//    // We will really create the register
+//    // decide on the object's name
+//    std::string sclName (agent.nextId("storageClassList"));
+//    // Record the agent in the intent log
+//    addIntendedStorageClassList(sclName);
+//    // Create and populate the object
+//    StorageClassList scl(sclName, m_objectStore);
+//    scl.initialize();
+//    scl.setOwner("");
+//    scl.setBackupOwner("");
+//    scl.insert();
+//    // Take a lock on the newly created job pool
+//    ScopedExclusiveLock sclLock(scl);
+//    // Move job pool from intent to official
+//    setStorageClassList(scl);
+//    commit();
+//    // Record completion on the job pool
+//    scl.setOwner(getNameIfSet());
+//    scl.setBackupOwner(getNameIfSet());
+//    scl.commit();
+//    // and we are done
+//    return scl;
+//  }
+  throw exception::Exception("TODO");
+}
+
+void cta::objectstore::RootEntry::addIntendedStorageClassList(const std::string& name) {
+  throw cta::exception::Exception("TODO");
+}
+
+void cta::objectstore::RootEntry::deleteFromIntendedStorageClassList(const std::string& name) {
+  throw cta::exception::Exception("TODO");
+}
+
+void cta::objectstore::RootEntry::setStorageClassList(const std::string& name) {
+  throw cta::exception::Exception("TODO");
+}
 
 // Dump the root entry
 std::string cta::objectstore::RootEntry::dump () {
