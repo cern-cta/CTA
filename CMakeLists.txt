@@ -31,7 +31,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
-add_subdirectory(utils)
+add_subdirectory(common)
 add_subdirectory(objectstore)
 add_subdirectory(middletier)
 add_subdirectory(nameserver)

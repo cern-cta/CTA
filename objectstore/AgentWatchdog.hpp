@@ -19,7 +19,7 @@
 #pragma once
 
 #include "Agent.hpp"
-#include "utils/Timer.hpp"
+#include "common/Timer.hpp"
 
 namespace cta { namespace objectstore {
 class AgentWatchdog {

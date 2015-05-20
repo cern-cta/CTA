@@ -16,9 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "utils/threading/Mutex.hpp"
-#include "utils/exception/Errnum.hpp"
-#include "utils/exception/Exception.hpp"
+#include "common/threading/Mutex.hpp"
+#include "common/exception/Errnum.hpp"
+#include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 //constructor

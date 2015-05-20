@@ -17,7 +17,7 @@
  */
 
 #include "scheduler/EosRemoteStorage.hpp"
-#include "utils/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 using cta::exception::Exception;
 
 //------------------------------------------------------------------------------

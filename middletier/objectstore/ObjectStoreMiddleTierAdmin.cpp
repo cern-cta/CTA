@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "utils/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include "middletier/objectstore/ObjectStoreMiddleTierAdmin.hpp"
 #include "objectstore/Backend.hpp"
 #include "objectstore/RootEntry.hpp"

@@ -59,4 +59,4 @@ set(ObjectStoreUnitTests
 
 add_library(ctaobjectstoreunittests SHARED ${ObjectStoreUnitTests})
 target_link_libraries(ctaobjectstoreunittests
-  protobuf rados ctautils gtest gmock)
+  protobuf rados ctacommon gtest gmock)

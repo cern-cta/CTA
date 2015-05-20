@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "utils/exception/Exception.hpp"
-#include "utils/Utils.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/Utils.hpp"
 
 #include <sstream>
 

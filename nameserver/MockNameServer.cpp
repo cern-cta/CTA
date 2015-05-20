@@ -28,9 +28,9 @@
 #include <attr/xattr.h>
 #include <fcntl.h>
 
-#include "utils/exception/Exception.hpp"
-#include "utils/exception/Errnum.hpp"
-#include "utils/Utils.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/exception/Errnum.hpp"
+#include "common/Utils.hpp"
 #include "nameserver/MockNameServer.hpp"
 using cta::exception::Exception;
 

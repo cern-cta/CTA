@@ -40,8 +40,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "utils/exception/Errnum.hpp"
-#include "utils/exception/strerror_r_wrapper.h"
+#include "common/exception/Errnum.hpp"
+#include "common/exception/strerror_r_wrapper.h"
 #include <string.h>
 #include <errno.h>
 

@@ -16,10 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "utils/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include "middletier/SQLite/SqliteColumnNameToIndex.hpp"
 #include "middletier/SQLite/SqliteDatabase.hpp"
-#include "utils/Utils.hpp"
+#include "common/Utils.hpp"
 
 #include <iostream>
 #include <memory>

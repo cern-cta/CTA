@@ -19,7 +19,7 @@
 #include "BackendTest.hpp"
 #include "BackendVFS.hpp"
 #include "BackendRados.hpp"
-#include "utils/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace unitTests {
 

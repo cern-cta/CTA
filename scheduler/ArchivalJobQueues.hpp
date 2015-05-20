@@ -20,7 +20,7 @@
 
 #include "scheduler/ArchivalJob.hpp"
 #include "scheduler/ArchivalMount.hpp"
-#include "utils/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <list>
 #include <stdint.h>

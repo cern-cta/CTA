@@ -42,7 +42,7 @@
 
 #pragma once
 
-#include "utils/exception/Backtrace.hpp"
+#include "common/exception/Backtrace.hpp"
 
 #include <exception>
 #include <sstream>

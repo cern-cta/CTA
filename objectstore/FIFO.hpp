@@ -20,7 +20,7 @@
 
 #include "ObjectOps.hpp"
 #include "Agent.hpp"
-#include "utils/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include <cxxabi.h>
 
 namespace cta { namespace objectstore {

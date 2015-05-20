@@ -40,8 +40,8 @@
  *****************************************************************************/
 #pragma once
 
-#include "utils/exception/Errnum.hpp"
-#include "utils/exception/Exception.hpp"
+#include "common/exception/Errnum.hpp"
+#include "common/exception/Exception.hpp"
 #include <unistd.h>
 
 
