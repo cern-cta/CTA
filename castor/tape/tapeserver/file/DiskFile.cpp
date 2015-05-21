@@ -57,10 +57,14 @@ DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
   // Lowercase the protocol string
   std::transform(m_remoteFileProtocol.begin(), m_remoteFileProtocol.end(),
     m_remoteFileProtocol.begin(), ::tolower);
-  // Set the global RFIO option to STREAM (RFIOv3)
-  int pval=RFIO_STREAM;
-  exception::Errnum::throwOnNonZero(rfiosetopt(RFIO_READOPT, &pval,0),
-      "In DiskFileFactory::DiskFileFactory: failed to set RFIO_STREAM mode");
+  {
+    // We take a global lock as rfiosetopt is not thread safe
+    castor::server::MutexLocker rfioLock(&g_rfioOptionsLock);
+    // Set the global RFIO option to STREAM (RFIOv3)
+    int pval=RFIO_STREAM;
+    exception::Errnum::throwOnNonZero(rfiosetopt(RFIO_READOPT, &pval,0),
+        "In DiskFileFactory::DiskFileFactory: failed to set RFIO_STREAM mode");
+  }
 }
 
 const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootPrivateKey() {
@@ -236,6 +240,8 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   throw castor::exception::Exception(
       std::string("In DiskFileFactory::createWriteFile failed to parse URL: ")+path);
 }
+
+castor::server::Mutex DiskFileFactory::g_rfioOptionsLock;
 
 //==============================================================================
 // LOCAL READ FILE

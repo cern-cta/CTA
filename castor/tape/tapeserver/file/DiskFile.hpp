@@ -24,6 +24,7 @@
 #pragma once
 
 #include "castor/tape/tapeserver/utils/Regex.hpp"
+#include "castor/server/Mutex.hpp"
 #include <cryptopp/rsa.h>
 #include <memory>
 #include <stdint.h>
@@ -70,6 +71,7 @@ namespace castor {
         CryptoPP::RSA::PrivateKey m_xrootPrivateKey;
         bool m_xrootPrivateKeyLoaded;
         uint16_t m_moverHandlerPort;
+        static castor::server::Mutex g_rfioOptionsLock;
         
       public:
         /** Return the private key. Read it from the file if necessary. */ 
