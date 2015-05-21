@@ -269,8 +269,10 @@ void RecallReportPacker::WorkerThread::run(){
             //reportEndOfSessionWithError might throw 
             m_parent.m_client.reportEndOfSessionWithError(e.getMessageValue(),SEINTERNAL,chrono);
             m_parent.logRequestReport(chrono,"Successfully closed client's session after the failed report RecallResult");
-            m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-            m_parent.m_watchdog->addParameter(log::Param("status","failure"));
+            if (m_parent.m_watchdog) {
+              m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
+              m_parent.m_watchdog->addParameter(log::Param("status","failure"));
+            }
             // We need to wait until the end of session is signaled from upsteam
             while (!isItTheEnd) {
               std::auto_ptr<Report> r(m_parent.m_fifo.pop());
@@ -296,8 +298,10 @@ void RecallReportPacker::WorkerThread::run(){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
     m_parent.logRequestReport(chrono,"tried to report endOfSession(WithError) and got an exception, cant do much more",LOG_ERR);
-    m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-    m_parent.m_watchdog->addParameter(log::Param("status","failure"));
+    if (m_parent.m_watchdog) {
+      m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
+      m_parent.m_watchdog->addParameter(log::Param("status","failure"));
+    }
   }
   m_parent.m_lc.log(LOG_DEBUG, "Finishing RecallReportPacker thread");
   
