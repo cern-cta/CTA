@@ -132,6 +132,20 @@ namespace daemon {
      * completed.
      */
     EndOfSessionAction exceptionThrowingExecute();
+    
+    /**
+     * Logs and clears (just by reading them...) any outstanding tape alerts
+     *
+     * @param drive The tape drive.
+     */
+    void logAndClearTapeAlerts(drive::DriveInterface &drive) throw();
+    
+    /**
+     * Does the actual steps to clean the drive
+     *
+     * @param drive The tape drive.
+     */
+    void cleanDrive(drive::DriveInterface &drive);
 
     /**
      * Sets the capabilities of the process and logs the result.

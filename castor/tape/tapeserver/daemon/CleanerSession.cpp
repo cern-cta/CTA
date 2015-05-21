@@ -76,22 +76,37 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::CleanerSession::exceptionThrowingExecute() {
-  std::list<log::Param> params;
-  params.push_back(log::Param("TPVID", m_vid));
-  params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
 
   setProcessCapabilities("cap_sys_rawio+ep");
 
   std::auto_ptr<drive::DriveInterface> drivePtr = createDrive();
   drive::DriveInterface &drive = *drivePtr.get();
 
+  try {
+    cleanDrive(drive);
+  } catch(...) {
+    logAndClearTapeAlerts(drive);
+    throw;
+  }
+  
+  logAndClearTapeAlerts(drive);
+  return MARK_DRIVE_AS_UP;
+}
+
+//------------------------------------------------------------------------------
+// cleanDrive
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CleanerSession::cleanDrive(drive::DriveInterface &drive) {
   if(m_waitMediaInDrive) {
     waitUntilMediaIsReady(drive);
   }
 
   if(!drive.hasTapeInPlace()) {
+    std::list<log::Param> params;
+    params.push_back(log::Param("TPVID", m_vid));
+    params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
     m_log(LOG_INFO, "Cleaner found tape drive empty", params);
-    return MARK_DRIVE_AS_UP;
+    return; //return immediately if there is no tape
   }
 
   rewindDrive(drive);
@@ -103,8 +118,43 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   unloadTape(volumeLabelVSN, drive);
 
   dismountTape(volumeLabelVSN);
+}
 
-  return MARK_DRIVE_AS_UP;
+//------------------------------------------------------------------------------
+// logAndClearTapeAlerts
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(drive::DriveInterface &drive) throw() {
+  std::string errorMessage;
+  try{
+    std::vector<uint16_t> tapeAlertCodes = drive.getTapeAlertCodes();
+    if (!tapeAlertCodes.empty()) {
+      size_t alertNumber = 0;
+      // Log tape alerts in the logs.
+      std::vector<std::string> tapeAlerts = drive.getTapeAlerts(tapeAlertCodes);
+      for (std::vector<std::string>::iterator ta=tapeAlerts.begin(); ta!=tapeAlerts.end();ta++)
+      {
+        log::Param params[] = {
+          log::Param("tapeAlert",*ta),
+          log::Param("tapeAlertNumber", alertNumber++),
+          log::Param("tapeAlertCount", tapeAlerts.size())};
+        m_log(LOG_WARNING, "Tape alert detected",params);
+      }
+    }
+    return;
+  } catch(castor::exception::Exception &ex) {
+    errorMessage = ex.getMessage().str();
+  } catch(std::exception &se) {
+    errorMessage = se.what();
+  } catch(...) {
+    errorMessage = "Caught an unknown exception";
+  }
+
+  // Reaching this point means it failed and an exception was thrown (because of the "return" above)
+  log::Param params[] = {
+    log::Param("TPVID", m_vid),
+    log::Param("unitName", m_driveConfig.getUnitName()),
+    log::Param("message", errorMessage)};
+  m_log(LOG_ERR, "Cleaner failed getting tape alerts from the drive", params);  
 }
 
 //------------------------------------------------------------------------------
