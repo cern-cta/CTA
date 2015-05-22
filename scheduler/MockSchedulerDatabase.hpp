@@ -18,149 +18,25 @@
 
 #pragma once
 
-#include <list>
-#include <map>
-#include <stdint.h>
-#include <string>
+#include "scheduler/SchedulerDatabase.hpp"
 
 namespace cta {
 
-// Forward declarations for opaque references.
-class AdminHost;
-class AdminUser;
-class ArchivalJob;
-class ArchivalRoute;
-class ArchiveToDirRequest;
-class ArchiveToFileRequest;
-class LogicalLibrary;
-class NameServer;
-class RetrievalJob;
-class RetrieveToDirRequest;
-class RetrieveToFileRequest;
-class SchedulerDatabase;
-class SecurityIdentity;
-class StorageClass;
-class Tape;
-class TapePool;
-class UserIdentity;
-
 /**
- * Class implementimg a tape resource scheduler.
+ * A mock implementation of the database of a tape resource scheduler.
  */
-class Scheduler {
+class MockSchedulerDatabase: public SchedulerDatabase {
 public:
 
   /**
    * Constructor.
-   *
-   * @param ns The name server containing the namespace of the archive.
-   * @param db The scheduler database.
    */
-  Scheduler(NameServer &ns, SchedulerDatabase &db);
+  MockSchedulerDatabase();
 
   /**
    * Destructor.
    */
-  ~Scheduler() throw();
-
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(const ArchiveToDirRequest &rqst);
-
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(const ArchiveToFileRequest &rqst);
-
-  /**
-   * Returns all of the existing archival jobs grouped by tape pool and then
-   * sorted by creation time in ascending order (oldest first).
-   *
-   * @param requester The identity of the user requesting the list.
-   * @return All of the existing archival jobs grouped by tape pool and then
-   * sorted by creation time in ascending order (oldest first).
-   */
-  std::map<TapePool, std::list<ArchivalJob> > getArchivalJobs(
-    const SecurityIdentity &requester) const;
-
-  /**
-   * Returns the list of archival jobs associated with the specified tape pool
-   * sorted by creation time in ascending order (oldest first).
-   *
-   * @param requester The identity of the user requesting the list.
-   * @param tapePoolName The name of the tape pool.
-   * @return The list of archival jobs associated with the specified tape pool
-   * sorted by creation time in ascending order (oldest first).
-   */
-  std::list<ArchivalJob> getArchivalJobs(
-    const SecurityIdentity &requester,
-    const std::string &tapePoolName) const;
-
-  /**
-   * Deletes the specified archival job.
-   *
-   * @param requester The identity of the user requesting the deletion of the
-   * tape.
-   * @param dstPath The absolute path of the destination file within the
-   * archive namespace.
-   */
-  void deleteArchivalJob(
-    const SecurityIdentity &requester,
-    const std::string &dstPath);
-
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(RetrieveToDirRequest &rqst);
-
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(RetrieveToFileRequest &rqst);
-
-  /**
-   * Returns all of the existing retrieval jobs grouped by tape and then
-   * sorted by creation time in ascending order (oldest first).
-   *
-   * @param requester The identity of the user requesting the list.
-   * @return All of the existing retrieval jobs grouped by tape and then
-   * sorted by creation time in ascending order (oldest first).
-   */
-  std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs(
-    const SecurityIdentity &requester) const;
-
-  /**
-   * Returns the list of retrieval jobs associated with the specified tape
-   * sorted by creation time in ascending order (oldest first).
-   *
-   * @param requester The identity of the user requesting the list.
-   * @param vid The volume identifier of the tape.
-   * @return The list of retrieval jobs associated with the specified tape
-   * sorted by creation time in ascending order (oldest first).
-   */
-  std::list<RetrievalJob> getRetrievalJobs(
-    const SecurityIdentity &requester,
-    const std::string &vid) const;
-  
-  /**
-   * Deletes the specified retrieval job.
-   *
-   * @param requester The identity of the user requesting the deletion of the
-   * tape.
-   * @param dstUrl The URL of the destination file or directory.
-   */
-  void deleteRetrievalJob(
-    const SecurityIdentity &requester,
-    const std::string &dstUrl);
+  ~MockSchedulerDatabase() throw();
 
   /**
    * Creates the specified administrator.
@@ -415,18 +291,6 @@ public:
   std::list<Tape> getTapes(
     const SecurityIdentity &requester) const;
 
-private:
-
-  /**
-   * The name server containing the namespace of the archive.
-   */
-  NameServer &m_ns;
-
-  /**
-   * The scheduler database.
-   */
-  SchedulerDatabase &m_db;
-
-}; // class Scheduler
+}; // class MockSchedulerDatabase
 
 } // namespace cta

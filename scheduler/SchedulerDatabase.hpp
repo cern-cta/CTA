@@ -19,25 +19,18 @@
 #pragma once
 
 #include <list>
-#include <map>
 #include <stdint.h>
 #include <string>
 
 namespace cta {
 
-// Forward declarations for opaque references.
+// Forward declarations for opaque references
 class AdminHost;
 class AdminUser;
 class ArchivalJob;
 class ArchivalRoute;
-class ArchiveToDirRequest;
-class ArchiveToFileRequest;
+class DirIterator;
 class LogicalLibrary;
-class NameServer;
-class RetrievalJob;
-class RetrieveToDirRequest;
-class RetrieveToFileRequest;
-class SchedulerDatabase;
 class SecurityIdentity;
 class StorageClass;
 class Tape;
@@ -45,122 +38,16 @@ class TapePool;
 class UserIdentity;
 
 /**
- * Class implementimg a tape resource scheduler.
+ * Abstract class defining the interface to the database of a tape resource
+ * scheduler.
  */
-class Scheduler {
+class SchedulerDatabase {
 public:
-
-  /**
-   * Constructor.
-   *
-   * @param ns The name server containing the namespace of the archive.
-   * @param db The scheduler database.
-   */
-  Scheduler(NameServer &ns, SchedulerDatabase &db);
 
   /**
    * Destructor.
    */
-  ~Scheduler() throw();
-
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(const ArchiveToDirRequest &rqst);
-
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(const ArchiveToFileRequest &rqst);
-
-  /**
-   * Returns all of the existing archival jobs grouped by tape pool and then
-   * sorted by creation time in ascending order (oldest first).
-   *
-   * @param requester The identity of the user requesting the list.
-   * @return All of the existing archival jobs grouped by tape pool and then
-   * sorted by creation time in ascending order (oldest first).
-   */
-  std::map<TapePool, std::list<ArchivalJob> > getArchivalJobs(
-    const SecurityIdentity &requester) const;
-
-  /**
-   * Returns the list of archival jobs associated with the specified tape pool
-   * sorted by creation time in ascending order (oldest first).
-   *
-   * @param requester The identity of the user requesting the list.
-   * @param tapePoolName The name of the tape pool.
-   * @return The list of archival jobs associated with the specified tape pool
-   * sorted by creation time in ascending order (oldest first).
-   */
-  std::list<ArchivalJob> getArchivalJobs(
-    const SecurityIdentity &requester,
-    const std::string &tapePoolName) const;
-
-  /**
-   * Deletes the specified archival job.
-   *
-   * @param requester The identity of the user requesting the deletion of the
-   * tape.
-   * @param dstPath The absolute path of the destination file within the
-   * archive namespace.
-   */
-  void deleteArchivalJob(
-    const SecurityIdentity &requester,
-    const std::string &dstPath);
-
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(RetrieveToDirRequest &rqst);
-
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(RetrieveToFileRequest &rqst);
-
-  /**
-   * Returns all of the existing retrieval jobs grouped by tape and then
-   * sorted by creation time in ascending order (oldest first).
-   *
-   * @param requester The identity of the user requesting the list.
-   * @return All of the existing retrieval jobs grouped by tape and then
-   * sorted by creation time in ascending order (oldest first).
-   */
-  std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs(
-    const SecurityIdentity &requester) const;
-
-  /**
-   * Returns the list of retrieval jobs associated with the specified tape
-   * sorted by creation time in ascending order (oldest first).
-   *
-   * @param requester The identity of the user requesting the list.
-   * @param vid The volume identifier of the tape.
-   * @return The list of retrieval jobs associated with the specified tape
-   * sorted by creation time in ascending order (oldest first).
-   */
-  std::list<RetrievalJob> getRetrievalJobs(
-    const SecurityIdentity &requester,
-    const std::string &vid) const;
-  
-  /**
-   * Deletes the specified retrieval job.
-   *
-   * @param requester The identity of the user requesting the deletion of the
-   * tape.
-   * @param dstUrl The URL of the destination file or directory.
-   */
-  void deleteRetrievalJob(
-    const SecurityIdentity &requester,
-    const std::string &dstUrl);
+  virtual ~SchedulerDatabase() throw() = 0;
 
   /**
    * Creates the specified administrator.
@@ -170,10 +57,10 @@ public:
    * @param user The identity of the administrator.
    * @param comment The comment describing the sministrator.
    */
-  void createAdminUser(
+  virtual void createAdminUser(
     const SecurityIdentity &requester,
     const UserIdentity &user,
-    const std::string &comment);
+    const std::string &comment) = 0;
 
   /**
    * Deletes the specified administrator.
@@ -182,9 +69,9 @@ public:
    * administrator.
    * @param user The identity of the administrator.
    */
-  void deleteAdminUser(
+  virtual void deleteAdminUser(
     const SecurityIdentity &requester,
-    const UserIdentity &user);
+    const UserIdentity &user) = 0;
 
   /**
    * Returns the current list of administrators in lexicographical order.
@@ -192,8 +79,8 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of administrators in lexicographical order.
    */
-  std::list<AdminUser> getAdminUsers(const SecurityIdentity &requester)
-   const;
+  virtual std::list<AdminUser> getAdminUsers(const SecurityIdentity &requester)
+   const = 0;
 
   /**
    * Creates the specified administration host.
@@ -203,10 +90,10 @@ public:
    * @param hostName The network name of the administration host.
    * @param comment The comment describing the administration host.
    */
-  void createAdminHost(
+  virtual void createAdminHost(
     const SecurityIdentity &requester,
     const std::string &hostName,
-    const std::string &comment);
+    const std::string &comment) = 0;
 
   /**
    * Deletes the specified administration host.
@@ -215,9 +102,9 @@ public:
    * administration host.
    * @param hostName The network name of the administration host.
    */
-  void deleteAdminHost(
+  virtual void deleteAdminHost(
     const SecurityIdentity &requester,
-    const std::string &hostName);
+    const std::string &hostName) = 0;
 
   /**
    * Returns the current list of administration hosts in lexicographical order.
@@ -225,8 +112,8 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of administration hosts in lexicographical order.
    */
-  std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester)
-   const;
+  virtual std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester)
+   const = 0;
 
   /**
    * Creates the specified storage class.
@@ -238,11 +125,11 @@ public:
    * class should have on tape.
    * @param comment The comment describing the storage class.
    */
-  void createStorageClass(
+  virtual void createStorageClass(
     const SecurityIdentity &requester,
     const std::string &name,
     const uint16_t nbCopies,
-    const std::string &comment);
+    const std::string &comment) = 0;
 
   /**
    * Deletes the specified storage class.
@@ -251,9 +138,9 @@ public:
    * storage class.
    * @param name The name of the storage class.
    */
-  void deleteStorageClass(
+  virtual void deleteStorageClass(
     const SecurityIdentity &requester,
-    const std::string &name);
+    const std::string &name) = 0;
 
   /**
    * Gets the current list of storage classes in lexicographical order.
@@ -261,8 +148,8 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of storage classes in lexicographical order.
    */
-  std::list<StorageClass> getStorageClasses(
-    const SecurityIdentity &requester) const;
+  virtual std::list<StorageClass> getStorageClasses(
+    const SecurityIdentity &requester) const = 0;
 
   /**
    * Creates a tape pool with the specifed name.
@@ -274,11 +161,11 @@ public:
    * full at any moment in time.
    * @param comment The comment describing the tape pool.
    */
-  void createTapePool(
+  virtual void createTapePool(
     const SecurityIdentity &requester,
     const std::string &name,
     const uint32_t nbPartialTapes,
-    const std::string &comment);
+    const std::string &comment) = 0;
 
   /**
    * Delete the tape pool with the specifed name.
@@ -287,9 +174,9 @@ public:
    * tape pool.
    * @param name The name of the tape pool.
    */
-  void deleteTapePool(
+  virtual void deleteTapePool(
     const SecurityIdentity &requester,
-    const std::string &name);
+    const std::string &name) = 0;
 
   /**
    * Gets the current list of tape pools in lexicographical order.
@@ -297,8 +184,8 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of tape pools in lexicographical order.
    */
-  std::list<TapePool> getTapePools(
-    const SecurityIdentity &requester) const;
+  virtual std::list<TapePool> getTapePools(
+    const SecurityIdentity &requester) const = 0;
 
   /**
    * Creates the specified archival route.
@@ -311,12 +198,12 @@ public:
    * @param tapePoolName The name of the destination tape pool.
    * @param comment The comment describing the archival route.
    */
-  void createArchivalRoute(
+  virtual void createArchivalRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint16_t copyNb,
     const std::string &tapePoolName,
-    const std::string &comment);
+    const std::string &comment) = 0;
 
   /**
    * Deletes the specified archival route.
@@ -327,18 +214,18 @@ public:
    * source disk files.
    * @param copyNb The tape copy number.
    */
-  void deleteArchivalRoute(
+  virtual void deleteArchivalRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
-    const uint16_t copyNb);
+    const uint16_t copyNb) = 0;
 
   /**
    * Gets the current list of archival routes.
    *
    * @param requester The identity of the user requesting the list.
    */
-  std::list<ArchivalRoute> getArchivalRoutes(
-    const SecurityIdentity &requester) const;
+  virtual std::list<ArchivalRoute> getArchivalRoutes(
+    const SecurityIdentity &requester) const = 0;
 
   /**
    * Creates a logical library with the specified name.
@@ -348,10 +235,10 @@ public:
    * @param name The name of the logical library.
    * @param comment The comment describing the logical library.
    */
-  void createLogicalLibrary(
+  virtual void createLogicalLibrary(
     const SecurityIdentity &requester,
     const std::string &name,
-    const std::string &comment);
+    const std::string &comment) = 0;
 
   /**
    * Deletes the logical library with the specified name.
@@ -360,9 +247,9 @@ public:
    * logical library.
    * @param name The name of the logical library.
    */
-  void deleteLogicalLibrary(
+  virtual void deleteLogicalLibrary(
     const SecurityIdentity &requester,
-    const std::string &name);
+    const std::string &name) = 0;
 
   /**
    * Returns the current list of libraries in lexicographical order.
@@ -370,8 +257,8 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of libraries in lexicographical order.
    */
-  std::list<LogicalLibrary> getLogicalLibraries(
-    const SecurityIdentity &requester) const;
+  virtual std::list<LogicalLibrary> getLogicalLibraries(
+    const SecurityIdentity &requester) const = 0;
 
   /**
    * Creates a tape.
@@ -385,13 +272,13 @@ public:
    * @param capacityInBytes The capacity of the tape.
    * @param comment The comment describing the logical library.
    */
-  void createTape(
+  virtual void createTape(
     const SecurityIdentity &requester,
     const std::string &vid,
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
-    const std::string &comment);
+    const std::string &comment) = 0;
 
   /**
    * Deletes the tape with the specified volume identifier.
@@ -400,9 +287,9 @@ public:
    * tape.
    * @param vid The volume identifier of the tape.
    */
-  void deleteTape(
+  virtual void deleteTape(
     const SecurityIdentity &requester,
-    const std::string &vid);
+    const std::string &vid) = 0;
 
   /**
    * Returns the current list of tapes in the lexicographical order of their
@@ -412,21 +299,9 @@ public:
    * @return The current list of tapes in the lexicographical order of their
    * volume identifiers.
    */
-  std::list<Tape> getTapes(
-    const SecurityIdentity &requester) const;
+  virtual std::list<Tape> getTapes(
+    const SecurityIdentity &requester) const = 0;
 
-private:
-
-  /**
-   * The name server containing the namespace of the archive.
-   */
-  NameServer &m_ns;
-
-  /**
-   * The scheduler database.
-   */
-  SchedulerDatabase &m_db;
-
-}; // class Scheduler
+}; // class SchedulerDatabase
 
 } // namespace cta

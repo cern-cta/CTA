@@ -8,8 +8,7 @@
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY {
-} without even the implied warranty of
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
@@ -17,256 +16,238 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/Scheduler.hpp"
+#include "common/exception/Exception.hpp"
+#include "nameserver/NameServer.hpp"
+#include "scheduler/AdminHost.hpp"
+#include "scheduler/AdminUser.hpp"
+#include "scheduler/ArchivalJob.hpp"
+#include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/DirIterator.hpp"
+#include "scheduler/LogicalLibrary.hpp"
+#include "scheduler/MockSchedulerDatabase.hpp"
+#include "scheduler/SecurityIdentity.hpp"
+#include "scheduler/StorageClass.hpp"
+#include "scheduler/Tape.hpp"
+#include "scheduler/TapePool.hpp"
+#include "scheduler/UserIdentity.hpp"
+
+#include <iostream>
+#include <memory>
+#include <sstream>
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::MockSchedulerDatabase::MockSchedulerDatabase() {
+}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::Scheduler::~Scheduler() throw() {
-}
-
-//------------------------------------------------------------------------------
-// queue
-//------------------------------------------------------------------------------
-void Scheduler::cta::Scheduler::queue(const ArchiveToDirRequest &rqst) {
-}
-
-//------------------------------------------------------------------------------
-// queue
-//------------------------------------------------------------------------------
-void Scheduler::cta::Scheduler::queue(const ArchiveToFileRequest &rqst) {
-}
-
-//------------------------------------------------------------------------------
-// getArchivalJobs
-//------------------------------------------------------------------------------
-std::map<TapePool, std::list<ArchivalJob> > Scheduler::getArchivalJobs(
-  const SecurityIdentity &requester) const {
-}
-
-//------------------------------------------------------------------------------
-// getArchivalJobs
-//------------------------------------------------------------------------------
-std::list<ArchivalJob> Scheduler::getArchivalJobs(
-  const SecurityIdentity &requester,
-  const std::string &tapePoolName) const {
-}
-
-//------------------------------------------------------------------------------
-// deleteArchivalJob
-//------------------------------------------------------------------------------
-void Scheduler::deleteArchivalJob(
-  const SecurityIdentity &requester,
-  const std::string &dstPath) {
-}
-
-//------------------------------------------------------------------------------
-// queue
-//------------------------------------------------------------------------------
-void Scheduler::queue(RetrieveToDirRequest &rqst) {
-}
-
-//------------------------------------------------------------------------------
-// queue
-//------------------------------------------------------------------------------
-void Scheduler::queue(RetrieveToFileRequest &rqst) {
-}
-
-//------------------------------------------------------------------------------
-// getRetrievalJobs
-//------------------------------------------------------------------------------
-std::map<Tape, std::list<RetrievalJob> > Scheduler::getRetrievalJobs(
-  const SecurityIdentity &requester) const {
-}
-
-//------------------------------------------------------------------------------
-// getRetrievalJobs
-//------------------------------------------------------------------------------
-std::list<RetrievalJob> Scheduler::getRetrievalJobs(
-  const SecurityIdentity &requester,
-  const std::string &vid) const {
-}
-  
-//------------------------------------------------------------------------------
-// deleteRetrievalJob
-//------------------------------------------------------------------------------
-void Scheduler::deleteRetrievalJob(
-  const SecurityIdentity &requester,
-  const std::string &dstUrl) {
+cta::MockSchedulerDatabase::~MockSchedulerDatabase() throw() {
 }
 
 //------------------------------------------------------------------------------
 // createAdminUser
 //------------------------------------------------------------------------------
-void Scheduler::createAdminUser(
+void cta::MockSchedulerDatabase::createAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user,
   const std::string &comment) {
+//m_db.insertAdminUser(requester, user, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteAdminUser
 //------------------------------------------------------------------------------
-void Scheduler::deleteAdminUser(
+void cta::MockSchedulerDatabase::deleteAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user) {
+//m_db.deleteAdminUser(requester, user);
 }
-
+  
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
-std::list<AdminUser> Scheduler::getAdminUsers(const SecurityIdentity &requester)
- const {
+std::list<cta::AdminUser> cta::MockSchedulerDatabase::getAdminUsers(
+  const SecurityIdentity &requester) const {
+//return m_db.selectAllAdminUsers(requester);
+  return std::list<cta::AdminUser>();
 }
 
 //------------------------------------------------------------------------------
 // createAdminHost
 //------------------------------------------------------------------------------
-void Scheduler::createAdminHost(
+void cta::MockSchedulerDatabase::createAdminHost(
   const SecurityIdentity &requester,
   const std::string &hostName,
   const std::string &comment) {
+//m_db.insertAdminHost(requester, hostName, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteAdminHost
 //------------------------------------------------------------------------------
-void Scheduler::deleteAdminHost(
+void cta::MockSchedulerDatabase::deleteAdminHost(
   const SecurityIdentity &requester,
   const std::string &hostName) {
+//m_db.deleteAdminHost(requester, hostName);
 }
-
+  
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
-std::list<AdminHost> Scheduler::getAdminHosts(const SecurityIdentity &requester)
- const {
+std::list<cta::AdminHost> cta::MockSchedulerDatabase::getAdminHosts(
+  const SecurityIdentity &requester) const {
+  return std::list<cta::AdminHost>();
+//return m_db.selectAllAdminHosts(requester);
 }
 
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void Scheduler::createStorageClass(
-  const SecurityIdentity &requester,
-  const std::string &name,
-  const uint16_t nbCopies,
-  const std::string &comment) {
+void cta::MockSchedulerDatabase::createStorageClass(
+  const SecurityIdentity &requester, const std::string &name,
+  const uint16_t nbCopies, const std::string &comment) {
+  //m_db.insertStorageClass(requester, name, nbCopies, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
-void Scheduler::deleteStorageClass(
+void cta::MockSchedulerDatabase::deleteStorageClass(
   const SecurityIdentity &requester,
   const std::string &name) {
+  //m_ns.assertStorageClassIsNotInUse(requester, name, "/");
+  //m_db.deleteStorageClass(requester, name);
 }
 
 //------------------------------------------------------------------------------
 // getStorageClasses
 //------------------------------------------------------------------------------
-std::list<StorageClass> Scheduler::getStorageClasses(
+std::list<cta::StorageClass> cta::MockSchedulerDatabase::getStorageClasses(
   const SecurityIdentity &requester) const {
+  //return m_db.selectAllStorageClasses(requester);
+  return std::list<cta::StorageClass>();
 }
 
 //------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
-void Scheduler::createTapePool(
+void cta::MockSchedulerDatabase::createTapePool(
   const SecurityIdentity &requester,
   const std::string &name,
   const uint32_t nbPartialTapes,
   const std::string &comment) {
+  //m_db.insertTapePool(requester, name, nbPartialTapes, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteTapePool
 //------------------------------------------------------------------------------
-void Scheduler::deleteTapePool(
+void cta::MockSchedulerDatabase::deleteTapePool(
   const SecurityIdentity &requester,
   const std::string &name) {
+  //m_db.deleteTapePool(requester, name);
 }
 
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
-std::list<TapePool> Scheduler::getTapePools(
+std::list<cta::TapePool> cta::MockSchedulerDatabase::getTapePools(
   const SecurityIdentity &requester) const {
+  //return m_db.selectAllTapePools(requester);
+  return std::list<cta::TapePool>();
 }
 
 //------------------------------------------------------------------------------
 // createArchivalRoute
 //------------------------------------------------------------------------------
-void Scheduler::createArchivalRoute(
+void cta::MockSchedulerDatabase::createArchivalRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint16_t copyNb,
   const std::string &tapePoolName,
   const std::string &comment) {
+  //return m_db.insertArchivalRoute(requester, storageClassName, copyNb,
+  //  tapePoolName, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteArchivalRoute
 //------------------------------------------------------------------------------
-void Scheduler::deleteArchivalRoute(
+void cta::MockSchedulerDatabase::deleteArchivalRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint16_t copyNb) {
+  //return m_db.deleteArchivalRoute(requester, storageClassName, copyNb);
 }
 
 //------------------------------------------------------------------------------
 // getArchivalRoutes
 //------------------------------------------------------------------------------
-std::list<ArchivalRoute> Scheduler::getArchivalRoutes(
+std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes(
   const SecurityIdentity &requester) const {
+  //return m_db.selectAllArchivalRoutes(requester);
+  return std::list<cta::ArchivalRoute>();
 }
 
 //------------------------------------------------------------------------------
 // createLogicalLibrary
 //------------------------------------------------------------------------------
-void Scheduler::createLogicalLibrary(
+void cta::MockSchedulerDatabase::createLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name,
   const std::string &comment) {
+  //m_db.insertLogicalLibrary(requester, name, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteLogicalLibrary
 //------------------------------------------------------------------------------
-void Scheduler::deleteLogicalLibrary(
+void cta::MockSchedulerDatabase::deleteLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name) {
+  //m_db.deleteLogicalLibrary(requester, name);
 }
 
 //------------------------------------------------------------------------------
 // getLogicalLibraries
 //------------------------------------------------------------------------------
-std::list<LogicalLibrary> Scheduler::getLogicalLibraries(
+std::list<cta::LogicalLibrary> cta::MockSchedulerDatabase::getLogicalLibraries(
   const SecurityIdentity &requester) const {
+  //return m_db.selectAllLogicalLibraries(requester);
+  return std::list<cta::LogicalLibrary>();
 }
 
 //------------------------------------------------------------------------------
 // createTape
 //------------------------------------------------------------------------------
-void Scheduler::createTape(
+void cta::MockSchedulerDatabase::createTape(
   const SecurityIdentity &requester,
   const std::string &vid,
   const std::string &logicalLibraryName,
   const std::string &tapePoolName,
   const uint64_t capacityInBytes,
   const std::string &comment) {
+  //m_db.insertTape(requester, vid, logicalLibraryName, tapePoolName,
+  //capacityInBytes, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteTape
 //------------------------------------------------------------------------------
-void Scheduler::deleteTape(
+void cta::MockSchedulerDatabase::deleteTape(
   const SecurityIdentity &requester,
   const std::string &vid) {
+  //m_db.deleteTape(requester, vid);
 }
 
 //------------------------------------------------------------------------------
 // getTapes
 //------------------------------------------------------------------------------
-std::list<Tape> Scheduler::getTapes(
+std::list<cta::Tape> cta::MockSchedulerDatabase::getTapes(
   const SecurityIdentity &requester) const {
+  //return m_db.selectAllTapes(requester);
+  return std::list<cta::Tape>();
 }
