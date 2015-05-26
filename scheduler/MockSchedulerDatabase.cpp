@@ -25,6 +25,7 @@
 #include "scheduler/DirIterator.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MockSchedulerDatabase.hpp"
+#include "scheduler/RetrievalJob.hpp"
 #include "scheduler/SecurityIdentity.hpp"
 #include "scheduler/SqliteColumnNameToIndex.hpp"
 #include "scheduler/StorageClass.hpp"
@@ -171,6 +172,81 @@ void cta::MockSchedulerDatabase::createSchema() {
 //------------------------------------------------------------------------------
 cta::MockSchedulerDatabase::~MockSchedulerDatabase() throw() {
   sqlite3_close(m_dbHandle);
+}
+
+//------------------------------------------------------------------------------
+// queue
+//------------------------------------------------------------------------------
+void cta::MockSchedulerDatabase::queue(const ArchiveToDirRequest &rqst) {
+}
+
+//------------------------------------------------------------------------------
+// queue
+//------------------------------------------------------------------------------
+void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst) {
+}
+
+//------------------------------------------------------------------------------
+// getArchivalJobs
+//------------------------------------------------------------------------------
+std::map<cta::TapePool, std::list<cta::ArchivalJob> >
+  cta::MockSchedulerDatabase::getArchivalJobs(const SecurityIdentity &requester)
+  const {
+  return std::map<TapePool, std::list<ArchivalJob> >();
+}
+
+//------------------------------------------------------------------------------
+// getArchivalJobs
+//------------------------------------------------------------------------------
+std::list<cta::ArchivalJob> cta::MockSchedulerDatabase::getArchivalJobs(
+  const SecurityIdentity &requester,
+  const std::string &tapePoolName) const {
+  return std::list<ArchivalJob>();
+}
+
+//------------------------------------------------------------------------------
+// deleteArchivalJob
+//------------------------------------------------------------------------------
+void cta::MockSchedulerDatabase::deleteArchivalJob(
+  const SecurityIdentity &requester,
+  const std::string &dstPath) {
+}
+
+//------------------------------------------------------------------------------
+// queue
+//------------------------------------------------------------------------------
+void cta::MockSchedulerDatabase::queue(RetrieveToDirRequest &rqst) {
+}
+
+//------------------------------------------------------------------------------
+// queue
+//------------------------------------------------------------------------------
+void cta::MockSchedulerDatabase::queue(RetrieveToFileRequest &rqst) {
+}
+
+//------------------------------------------------------------------------------
+// getRetrievalJobs
+//------------------------------------------------------------------------------
+std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::MockSchedulerDatabase::
+  getRetrievalJobs(const SecurityIdentity &requester) const {
+  return std::map<Tape, std::list<RetrievalJob> >();
+}
+
+//------------------------------------------------------------------------------
+// getRetrievalJobs
+//------------------------------------------------------------------------------
+std::list<cta::RetrievalJob> cta::MockSchedulerDatabase::getRetrievalJobs(
+  const SecurityIdentity &requester,
+  const std::string &vid) const {
+  return std::list<RetrievalJob>();
+}
+  
+//------------------------------------------------------------------------------
+// deleteRetrievalJob
+//------------------------------------------------------------------------------
+void cta::MockSchedulerDatabase::deleteRetrievalJob(
+  const SecurityIdentity &requester,
+  const std::string &dstUrl) {
 }
 
 //------------------------------------------------------------------------------
