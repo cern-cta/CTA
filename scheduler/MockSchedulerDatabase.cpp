@@ -20,6 +20,7 @@
 #include "nameserver/NameServer.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
+#include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchivalJob.hpp"
 #include "scheduler/ArchivalRoute.hpp"
 #include "scheduler/DirIterator.hpp"
@@ -138,13 +139,13 @@ void cta::MockSchedulerDatabase::createSchema() {
       ");"
     "CREATE TABLE ARCHIVALJOB("
       "STATE          INTEGER,"
-      "SRCURL         TEXT,"
-      "DSTPATH        TEXT,"
+      "REMOTEFILE     TEXT,"
+      "ARCHIVEFILE    TEXT,"
       "TAPEPOOL_NAME  TEXT,"
       "UID            INTEGER,"
       "GID            INTEGER,"
       "CREATIONTIME   INTEGER,"
-      "PRIMARY KEY (DSTPATH, TAPEPOOL_NAME),"
+      "PRIMARY KEY (ARCHIVEFILE, TAPEPOOL_NAME),"
       "FOREIGN KEY (TAPEPOOL_NAME) REFERENCES TAPEPOOL(NAME)"
       ");"
     "CREATE TABLE RETRIEVALJOB("
@@ -178,12 +179,28 @@ cta::MockSchedulerDatabase::~MockSchedulerDatabase() throw() {
 // queue
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::queue(const ArchiveToDirRequest &rqst) {
+
 }
 
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst) {
+  const std::string &tapePoolName = "TO BE DONE";
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "INSERT INTO ARCHIVALJOB(STATE, REMOTEFILE, ARCHIVEFILE, TAPEPOOL_NAME, UID,"
+    " GID, CREATIONTIME) VALUES(" << (int)cta::ArchivalJobState::PENDING << ",'"
+    << rqst.getRemoteFile() << "','" << rqst.getArchiveFile() << "','" <<
+    tapePoolName << "'," << rqst.getUser().user.getUid() << "," <<
+    rqst.getUser().user.getGid() << "," << (int)time(NULL) << ");";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -267,13 +284,6 @@ void cta::MockSchedulerDatabase::createAdminUser(
     std::ostringstream message;
     message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
-    throw(exception::Exception(message.str()));
-  }
-  const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
-    std::ostringstream message;
-    message << "Admin user " << user.getUid() << ":" << user.getGid() <<
-      " already exists";
     throw(exception::Exception(message.str()));
   }
 }
@@ -360,13 +370,6 @@ void cta::MockSchedulerDatabase::createAdminHost(
     sqlite3_free(zErrMsg);
     throw(exception::Exception(message.str()));
   }
-
-  const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
-    std::ostringstream message;
-    message << "Admin host " << hostName << " already exists";
-    throw(exception::Exception(message.str()));
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -446,13 +449,6 @@ void cta::MockSchedulerDatabase::createStorageClass(
       message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(exception::Exception(message.str()));
-  }
-
-  const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
-    std::ostringstream message;
-    message << "Storage class " << name << " already exists";
-    throw(exception::Exception(message.str()));
   }
 }
 
@@ -534,13 +530,6 @@ void cta::MockSchedulerDatabase::createTapePool(
     std::ostringstream message;
     message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
-    throw(exception::Exception(message.str()));
-  }
-
-  const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
-    std::ostringstream message;
-    message << "Tape pool " << name << " already exists";
     throw(exception::Exception(message.str()));
   }
 }
@@ -626,14 +615,6 @@ void cta::MockSchedulerDatabase::createArchivalRoute(
     std::ostringstream message;
     message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
-    throw(exception::Exception(message.str()));
-  }
-
-  const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
-    std::ostringstream message;
-    message << "Archival route for storage class " << storageClassName <<
-      " and copy number " << copyNb << " already exists";
     throw(exception::Exception(message.str()));
   }
 }
@@ -722,13 +703,6 @@ void cta::MockSchedulerDatabase::createLogicalLibrary(
       sqlite3_free(zErrMsg);
       throw(exception::Exception(message.str()));
   }
-
-  const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
-    std::ostringstream message;
-    message << "Logical library " << name << " already exists";
-    throw(exception::Exception(message.str()));
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -812,13 +786,6 @@ void cta::MockSchedulerDatabase::createTape(
     std::ostringstream message;
     message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
-    throw(exception::Exception(message.str()));
-  }
-
-  const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
-    std::ostringstream message;
-    message << "Tape " << vid << " already exists";
     throw(exception::Exception(message.str()));
   }
 }

@@ -60,14 +60,14 @@ public:
    *
    * @param rqst The request to be queued.
    */
-  virtual void queue(const ArchiveToDirRequest &rqst) = 0;
+  // DO NOT IMPLEMENT YET virtual void queue(const ArchiveToDirRequest &rqst) = 0;
 
   /**
    * Queues the specified request.
    *
    * @param rqst The request to be queued.
    */
-  virtual void queue(const ArchiveToFileRequest &rqst) = 0;
+  // DO NOT IMPLEMENT YET virtual void queue(const ArchiveToFileRequest &rqst) = 0;
 
   /**
    * Returns all of the existing archival jobs grouped by tape pool and then
@@ -77,8 +77,8 @@ public:
    * @return All of the existing archival jobs grouped by tape pool and then
    * sorted by creation time in ascending order (oldest first).
    */
-  virtual std::map<TapePool, std::list<ArchivalJob> > getArchivalJobs(
-    const SecurityIdentity &requester) const = 0;
+  // DO NOT IMPLEMENT YET virtual std::map<TapePool, std::list<ArchivalJob> > getArchivalJobs(
+    // DO NOT IMPLEMENT YET const SecurityIdentity &requester) const = 0;
 
   /**
    * Returns the list of archival jobs associated with the specified tape pool
@@ -89,9 +89,9 @@ public:
    * @return The list of archival jobs associated with the specified tape pool
    * sorted by creation time in ascending order (oldest first).
    */
-  virtual std::list<ArchivalJob> getArchivalJobs(
-    const SecurityIdentity &requester,
-    const std::string &tapePoolName) const = 0;
+  // DO NOT IMPLEMENT YET virtual std::list<ArchivalJob> getArchivalJobs(
+    // DO NOT IMPLEMENT YET const SecurityIdentity &requester,
+    // DO NOT IMPLEMENT YET const std::string &tapePoolName) const = 0;
 
   /**
    * Deletes the specified archival job.
@@ -101,23 +101,23 @@ public:
    * @param dstPath The absolute path of the destination file within the
    * archive namespace.
    */
-  virtual void deleteArchivalJob(
-    const SecurityIdentity &requester,
-    const std::string &dstPath) = 0;
+  // DO NOT IMPLEMENT YET virtual void deleteArchivalJob(
+    // DO NOT IMPLEMENT YET const SecurityIdentity &requester,
+    // DO NOT IMPLEMENT YET const std::string &dstPath) = 0;
 
   /**
    * Queues the specified request.
    *
    * @param rqst The request to be queued.
    */
-  virtual void queue(RetrieveToDirRequest &rqst) = 0;
+  // DO NOT IMPLEMENT YET virtual void queue(RetrieveToDirRequest &rqst) = 0;
 
   /**
    * Queues the specified request.
    *
    * @param rqst The request to be queued.
    */
-  virtual void queue(RetrieveToFileRequest &rqst) = 0;
+  // DO NOT IMPLEMENT YET virtual void queue(RetrieveToFileRequest &rqst) = 0;
 
   /**
    * Returns all of the existing retrieval jobs grouped by tape and then
@@ -127,8 +127,8 @@ public:
    * @return All of the existing retrieval jobs grouped by tape and then
    * sorted by creation time in ascending order (oldest first).
    */
-  virtual std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs(
-    const SecurityIdentity &requester) const = 0;
+  // DO NOT IMPLEMENT YET virtual std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs(
+    // DO NOT IMPLEMENT YET const SecurityIdentity &requester) const = 0;
 
   /**
    * Returns the list of retrieval jobs associated with the specified tape
@@ -139,9 +139,9 @@ public:
    * @return The list of retrieval jobs associated with the specified tape
    * sorted by creation time in ascending order (oldest first).
    */
-  virtual std::list<RetrievalJob> getRetrievalJobs(
-    const SecurityIdentity &requester,
-    const std::string &vid) const = 0;
+  // DO NOT IMPLEMENT YET virtual std::list<RetrievalJob> getRetrievalJobs(
+    // DO NOT IMPLEMENT YET const SecurityIdentity &requester,
+    // DO NOT IMPLEMENT YET const std::string &vid) const = 0;
   
   /**
    * Deletes the specified retrieval job.
@@ -150,9 +150,9 @@ public:
    * tape.
    * @param dstUrl The URL of the destination file or directory.
    */
-  virtual void deleteRetrievalJob(
-    const SecurityIdentity &requester,
-    const std::string &dstUrl) = 0;
+  // DO NOT IMPLEMENT YET virtual void deleteRetrievalJob(
+    // DO NOT IMPLEMENT YET const SecurityIdentity &requester,
+    // DO NOT IMPLEMENT YET const std::string &dstUrl) = 0;
 
   /**
    * Creates the specified administrator.
