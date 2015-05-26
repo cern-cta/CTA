@@ -445,7 +445,26 @@ void cta::MockSchedulerDatabase::createTapePool(
   const std::string &name,
   const uint32_t nbPartialTapes,
   const std::string &comment) {
-  //m_db.insertTapePool(requester, name, nbPartialTapes, comment);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "INSERT INTO TAPEPOOL(NAME, NBPARTIALTAPES, UID, GID, CREATIONTIME,"
+    " COMMENT) VALUES('" << name << "'," << (int)nbPartialTapes << "," <<
+    requester.user.getUid() << "," << requester.user.getGid() << "," <<
+    (int)time(NULL) << ",'" << comment << "');";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
+  }
+
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 > nbRowsModified) {
+    std::ostringstream message;
+    message << "Tape pool " << name << " already exists";
+    throw(exception::Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -454,7 +473,23 @@ void cta::MockSchedulerDatabase::createTapePool(
 void cta::MockSchedulerDatabase::deleteTapePool(
   const SecurityIdentity &requester,
   const std::string &name) {
-  //m_db.deleteTapePool(requester, name);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM TAPEPOOL WHERE NAME='" << name << "';";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
+  }
+
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 > nbRowsModified) {
+    std::ostringstream message;
+    message << "Tape pool " << name << " does not exist";
+    throw(exception::Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -462,8 +497,34 @@ void cta::MockSchedulerDatabase::deleteTapePool(
 //------------------------------------------------------------------------------
 std::list<cta::TapePool> cta::MockSchedulerDatabase::getTapePools(
   const SecurityIdentity &requester) const {
-  //return m_db.selectAllTapePools(requester);
-  return std::list<cta::TapePool>();
+
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  std::list<cta::TapePool> pools;
+  query << "SELECT NAME, NBPARTIALTAPES, UID, GID, CREATIONTIME, COMMENT FROM"
+    " TAPEPOOL ORDER BY NAME;";
+  sqlite3_stmt *statement;
+  if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
+    &statement, 0)) {
+      std::ostringstream message;
+      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
+      throw(exception::Exception(message.str()));
+  }
+  while(sqlite3_step(statement)==SQLITE_ROW) {
+    SqliteColumnNameToIndex idx(statement);
+    pools.push_back(cta::TapePool(
+            std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
+            sqlite3_column_int(statement,idx("NBPARTIALTAPES")),
+            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),
+            sqlite3_column_int(statement,idx("GID"))),
+            std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+            time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
+      ));
+  }
+  sqlite3_finalize(statement);
+  return pools;
 }
 
 //------------------------------------------------------------------------------
