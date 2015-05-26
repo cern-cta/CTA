@@ -160,7 +160,7 @@ void cta::MockSchedulerDatabase::createSchema() {
     0, 0, &zErrMsg);
   if(SQLITE_OK != rc) {    
       std::ostringstream message;
-      message << "createRetrievalJobTable() - SQLite error: " << zErrMsg;
+      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(exception::Exception(message.str()));
   }
@@ -189,14 +189,14 @@ void cta::MockSchedulerDatabase::createAdminUser(
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
     std::ostringstream message;
-    message << "insertAdminUser() - SQLite error: " << zErrMsg;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
     throw(exception::Exception(message.str()));
   }
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
   if(0 > nbRowsModified) {
     std::ostringstream message;
-    message << "ADMINUSER: " << user.getUid() << ":" << user.getGid() <<
+    message << "Admin user " << user.getUid() << ":" << user.getGid() <<
       " already exists";
     throw(exception::Exception(message.str()));
   }
@@ -215,14 +215,14 @@ void cta::MockSchedulerDatabase::deleteAdminUser(
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
       std::ostringstream message;
-      message << "deleteAdminUser() - SQLite error: " << zErrMsg;
+      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       throw(exception::Exception(message.str()));
   }
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
   if(0 > nbRowsModified) {
     std::ostringstream message;
-    message << "ADMINUSER: " << user.getUid() << ":" << user.getGid() <<
+    message << "Admin user " << user.getUid() << ":" << user.getGid() <<
       " does not exist";
     throw(exception::Exception(message.str()));
   }
@@ -242,7 +242,7 @@ std::list<cta::AdminUser> cta::MockSchedulerDatabase::getAdminUsers(
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){
       std::ostringstream message;
-      message << "selectAllAdminUsers() - SQLite error: " << zErrMsg;
+      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
       sqlite3_finalize(statement);
       throw(exception::Exception(message.str()));
@@ -271,7 +271,26 @@ void cta::MockSchedulerDatabase::createAdminHost(
   const SecurityIdentity &requester,
   const std::string &hostName,
   const std::string &comment) {
-//m_db.insertAdminHost(requester, hostName, comment);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "INSERT INTO ADMINHOST(NAME, UID, GID, CREATIONTIME, COMMENT)"
+    " VALUES('" << hostName << "',"<< requester.user.getUid() << "," <<
+    requester.user.getGid() << "," << (int)time(NULL) << ",'" << comment <<
+    "');";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
+  }
+
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 > nbRowsModified) {
+    std::ostringstream message;
+    message << "Admin host " << hostName << " already exists";
+    throw(exception::Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -280,7 +299,23 @@ void cta::MockSchedulerDatabase::createAdminHost(
 void cta::MockSchedulerDatabase::deleteAdminHost(
   const SecurityIdentity &requester,
   const std::string &hostName) {
-//m_db.deleteAdminHost(requester, hostName);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM ADMINHOST WHERE NAME='" << hostName << "';";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+      std::ostringstream message;
+      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(exception::Exception(message.str()));
+  }
+
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 > nbRowsModified) {
+    std::ostringstream message;
+    message << "Admin host " << hostName << " does not exist";
+    throw(exception::Exception(message.str()));
+  }
 }
   
 //------------------------------------------------------------------------------
@@ -288,8 +323,31 @@ void cta::MockSchedulerDatabase::deleteAdminHost(
 //------------------------------------------------------------------------------
 std::list<cta::AdminHost> cta::MockSchedulerDatabase::getAdminHosts(
   const SecurityIdentity &requester) const {
-  return std::list<cta::AdminHost>();
-//return m_db.selectAllAdminHosts(requester);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  std::list<cta::AdminHost> list;
+  query << "SELECT NAME, UID, GID, CREATIONTIME, COMMENT FROM ADMINHOST ORDER BY NAME;";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){
+      std::ostringstream message;
+      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
+      throw(exception::Exception(message.str()));
+  }
+  while(sqlite3_step(statement)==SQLITE_ROW) {
+    SqliteColumnNameToIndex idx(statement);
+    const UserIdentity creator(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID")));
+    list.push_back(cta::AdminHost(
+      std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
+      creator,
+      std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+      time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
+    ));
+  }
+  sqlite3_finalize(statement);
+  return list;
 }
 
 //------------------------------------------------------------------------------
