@@ -427,7 +427,7 @@ std::list<cta::StorageClass> cta::MockSchedulerDatabase::getStorageClasses(
     classes.push_back(cta::StorageClass(
       std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
       sqlite3_column_int(statement,idx("NBCOPIES")),
-      cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),
+      UserIdentity(sqlite3_column_int(statement,idx("UID")),
       sqlite3_column_int(statement,idx("GID"))),
       std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
       time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
@@ -517,7 +517,7 @@ std::list<cta::TapePool> cta::MockSchedulerDatabase::getTapePools(
     pools.push_back(cta::TapePool(
       std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
       sqlite3_column_int(statement,idx("NBPARTIALTAPES")),
-      cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),
+      UserIdentity(sqlite3_column_int(statement,idx("UID")),
       sqlite3_column_int(statement,idx("GID"))),
       std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
       time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
@@ -614,7 +614,7 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes(
       std::string((char *)sqlite3_column_text(statement,idx("STORAGECLASS_NAME"))),
       sqlite3_column_int(statement,idx("COPYNB")),
       std::string((char *)sqlite3_column_text(statement,idx("TAPEPOOL_NAME"))),
-      cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),
+      UserIdentity(sqlite3_column_int(statement,idx("UID")),
       sqlite3_column_int(statement,idx("GID"))),
       std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
       time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
@@ -631,7 +631,26 @@ void cta::MockSchedulerDatabase::createLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name,
   const std::string &comment) {
-  //m_db.insertLogicalLibrary(requester, name, comment);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "INSERT INTO LOGICALLIBRARY(NAME, UID, GID, CREATIONTIME, COMMENT)"
+    " VALUES('" << name << "',"<< requester.user.getUid() << "," <<
+    requester.user.getGid() << "," << (int)time(NULL) << ",'" << comment <<
+    "');";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+      std::ostringstream message;
+      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(exception::Exception(message.str()));
+  }
+
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 > nbRowsModified) {
+    std::ostringstream message;
+    message << "Logical library " << name << " already exists";
+    throw(exception::Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -640,7 +659,23 @@ void cta::MockSchedulerDatabase::createLogicalLibrary(
 void cta::MockSchedulerDatabase::deleteLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name) {
-  //m_db.deleteLogicalLibrary(requester, name);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM LOGICALLIBRARY WHERE NAME='" << name << "';";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
+  }
+
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 > nbRowsModified) {
+    std::ostringstream message;
+    message << "Logical library " << name << " does not exist";
+    throw(exception::Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -648,8 +683,32 @@ void cta::MockSchedulerDatabase::deleteLogicalLibrary(
 //------------------------------------------------------------------------------
 std::list<cta::LogicalLibrary> cta::MockSchedulerDatabase::getLogicalLibraries(
   const SecurityIdentity &requester) const {
-  //return m_db.selectAllLogicalLibraries(requester);
-  return std::list<cta::LogicalLibrary>();
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  std::list<cta::LogicalLibrary> list;
+  query << "SELECT NAME, UID, GID, CREATIONTIME, COMMENT"
+    " FROM LOGICALLIBRARY ORDER BY NAME;";
+  sqlite3_stmt *statement;
+  if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
+    &statement, 0)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
+    throw(exception::Exception(message.str()));
+  }
+  while(SQLITE_ROW == sqlite3_step(statement)) {
+    SqliteColumnNameToIndex idx(statement);
+    list.push_back(cta::LogicalLibrary(
+      std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
+      UserIdentity(sqlite3_column_int(statement,idx("UID")),
+      sqlite3_column_int(statement,idx("GID"))),
+      std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+      time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
+    ));
+  }
+  sqlite3_finalize(statement);
+  return list;
 }
 
 //------------------------------------------------------------------------------
