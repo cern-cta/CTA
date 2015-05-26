@@ -697,7 +697,6 @@ XrdxCastor2OfsFile::close()
     close_timing.Print();
   }
 
-  xcastor_info("return %s", (rc ? "ERROR" : "OK"));
   return rc;
 }
 
