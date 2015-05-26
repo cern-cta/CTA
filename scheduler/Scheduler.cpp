@@ -151,6 +151,8 @@ void Scheduler::createStorageClass(
   const std::string &name,
   const uint16_t nbCopies,
   const std::string &comment) {
+  // IMPORTANT
+  // KEEP NS AND DB IN SYNC
 }
 
 //------------------------------------------------------------------------------
@@ -159,6 +161,9 @@ void Scheduler::createStorageClass(
 void Scheduler::deleteStorageClass(
   const SecurityIdentity &requester,
   const std::string &name) {
+  //IMPORTANT
+  //m_ns.assertStorageClassIsNotInUse(requester, name, "/");
+  //m_db.deleteStorageClass(requester, name);
 }
 
 //------------------------------------------------------------------------------
