@@ -256,7 +256,7 @@ std::list<cta::AdminUser> cta::MockSchedulerDatabase::getAdminUsers(
     list.push_back(cta::AdminUser(
       user,
       creator,
-      std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+      (char *)sqlite3_column_text(statement,idx("COMMENT")),
       time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
     ));
   }
@@ -326,7 +326,8 @@ std::list<cta::AdminHost> cta::MockSchedulerDatabase::getAdminHosts(
   char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::AdminHost> list;
-  query << "SELECT NAME, UID, GID, CREATIONTIME, COMMENT FROM ADMINHOST ORDER BY NAME;";
+  query << "SELECT NAME, UID, GID, CREATIONTIME, COMMENT"
+    " FROM ADMINHOST ORDER BY NAME;";
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){
@@ -338,11 +339,12 @@ std::list<cta::AdminHost> cta::MockSchedulerDatabase::getAdminHosts(
   }
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
-    const UserIdentity creator(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID")));
+    const UserIdentity creator(sqlite3_column_int(statement,idx("UID")),
+      sqlite3_column_int(statement,idx("GID")));
     list.push_back(cta::AdminHost(
-      std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
+      (char *)sqlite3_column_text(statement,idx("NAME")),
       creator,
-      std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+      (char *)sqlite3_column_text(statement,idx("COMMENT")),
       time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
     ));
   }
@@ -425,11 +427,11 @@ std::list<cta::StorageClass> cta::MockSchedulerDatabase::getStorageClasses(
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
     classes.push_back(cta::StorageClass(
-      std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
+      (char *)sqlite3_column_text(statement,idx("NAME")),
       sqlite3_column_int(statement,idx("NBCOPIES")),
       UserIdentity(sqlite3_column_int(statement,idx("UID")),
       sqlite3_column_int(statement,idx("GID"))),
-      std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+      (char *)sqlite3_column_text(statement,idx("COMMENT")),
       time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
     ));
   }
@@ -515,11 +517,11 @@ std::list<cta::TapePool> cta::MockSchedulerDatabase::getTapePools(
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
     pools.push_back(cta::TapePool(
-      std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
+      (char *)sqlite3_column_text(statement,idx("NAME")),
       sqlite3_column_int(statement,idx("NBPARTIALTAPES")),
       UserIdentity(sqlite3_column_int(statement,idx("UID")),
       sqlite3_column_int(statement,idx("GID"))),
-      std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+      (char *)sqlite3_column_text(statement,idx("COMMENT")),
       time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
     ));
   }
@@ -611,12 +613,12 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes(
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
     routes.push_back(cta::ArchivalRoute(
-      std::string((char *)sqlite3_column_text(statement,idx("STORAGECLASS_NAME"))),
+      (char *)sqlite3_column_text(statement,idx("STORAGECLASS_NAME")),
       sqlite3_column_int(statement,idx("COPYNB")),
-      std::string((char *)sqlite3_column_text(statement,idx("TAPEPOOL_NAME"))),
+      (char *)sqlite3_column_text(statement,idx("TAPEPOOL_NAME")),
       UserIdentity(sqlite3_column_int(statement,idx("UID")),
       sqlite3_column_int(statement,idx("GID"))),
-      std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+      (char *)sqlite3_column_text(statement,idx("COMMENT")),
       time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
     ));
   }
@@ -700,10 +702,10 @@ std::list<cta::LogicalLibrary> cta::MockSchedulerDatabase::getLogicalLibraries(
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
     list.push_back(cta::LogicalLibrary(
-      std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
+      (char *)sqlite3_column_text(statement,idx("NAME")),
       UserIdentity(sqlite3_column_int(statement,idx("UID")),
       sqlite3_column_int(statement,idx("GID"))),
-      std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+      (char *)sqlite3_column_text(statement,idx("COMMENT")),
       time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
     ));
   }
@@ -793,14 +795,14 @@ std::list<cta::Tape> cta::MockSchedulerDatabase::getTapes(
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
     tapes.push_back(cta::Tape(
-      std::string((char *)sqlite3_column_text(statement,idx("VID"))),
-      std::string((char *)sqlite3_column_text(statement,idx("LOGICALLIBRARY_NAME"))),
-      std::string((char *)sqlite3_column_text(statement,idx("TAPEPOOL_NAME"))),
+      (char *)sqlite3_column_text(statement,idx("VID")),
+      (char *)sqlite3_column_text(statement,idx("LOGICALLIBRARY_NAME")),
+      (char *)sqlite3_column_text(statement,idx("TAPEPOOL_NAME")),
       sqlite3_column_int(statement,idx("CAPACITY_BYTES")),
       sqlite3_column_int(statement,idx("DATAONTAPE_BYTES")),
       UserIdentity(sqlite3_column_int(statement,idx("UID")),
       sqlite3_column_int(statement,idx("GID"))),
-      std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+      (char *)sqlite3_column_text(statement,idx("COMMENT")),
       time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
     ));
   }
