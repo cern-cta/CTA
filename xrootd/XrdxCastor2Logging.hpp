@@ -48,74 +48,74 @@ typedef XrdOucString VirtualIdentity;
                this->cident, LOG_MASK(__XCASTORCOMMON_LOG_PRIORITY__), \
                __VA_ARGS__)
 
-#define xcastor_debug(...)                                         \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
-               this->cident, (LOG_DEBUG)  , __VA_ARGS__)
+#define xcastor_debug(...)                                    \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, \
+               this->cident, (LOG_DEBUG), __VA_ARGS__)
 
-#define xcastor_info(...)                                          \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
-               this->cident, (LOG_INFO)   , __VA_ARGS__)
+#define xcastor_info(...)                                     \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, \
+               this->cident, (LOG_INFO), __VA_ARGS__)
 
-#define xcastor_notice(...)                                        \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
-               this->cident, (LOG_NOTICE) , __VA_ARGS__)
+#define xcastor_notice(...)                                   \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, \
+               this->cident, (LOG_NOTICE), __VA_ARGS__)
 
-#define xcastor_warning(...)                                       \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
+#define xcastor_warning(...)                                  \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, \
                this->cident, (LOG_WARNING), __VA_ARGS__)
 
-#define xcastor_err(...)                                           \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
-               this->cident, (LOG_ERR)    , __VA_ARGS__)
+#define xcastor_err(...)                                      \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, \
+               this->cident, (LOG_ERR), __VA_ARGS__)
 
-#define xcastor_crit(...)                                          \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
+#define xcastor_crit(...)                                     \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, \
                this->cident, (LOG_CRIT)   , __VA_ARGS__)
 
-#define xcastor_alert(...)                                         \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
-               this->cident, (LOG_ALERT)  , __VA_ARGS__)
+#define xcastor_alert(...)                                    \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, \
+               this->cident, (LOG_ALERT), __VA_ARGS__)
 
-#define xcastor_emerg(...)                                         \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, vid, \
-               this->cident, (LOG_EMERG)  , __VA_ARGS__)
+#define xcastor_emerg(...)                                    \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, this->logId, \
+               this->cident, (LOG_EMERG), __VA_ARGS__)
 
 
 //------------------------------------------------------------------------------
 //! Log Macros usable in singleton objects used by individual threads
 //! You should define locally LodId ThreadLogId in the thread function
 //------------------------------------------------------------------------------
-#define xcastor_thread_debug(...)                                        \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
-               ThreadLogId.cident, (LOG_DEBUG)  , __VA_ARGS__)
+#define xcastor_thread_debug(...)                                   \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, \
+               ThreadLogId.cident, (LOG_DEBUG), __VA_ARGS__)
 
-#define xcastor_thread_info(...)                                         \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
-               ThreadLogId.cident, (LOG_INFO)   , __VA_ARGS__)
+#define xcastor_thread_info(...)                                    \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, \
+               ThreadLogId.cident, (LOG_INFO), __VA_ARGS__)
 
-#define xcastor_thread_notice(...)                                       \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
-               ThreadLogId.cident, (LOG_NOTICE) , __VA_ARGS__)
+#define xcastor_thread_notice(...)                                  \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, \
+               ThreadLogId.cident, (LOG_NOTICE), __VA_ARGS__)
 
-#define xcastor_thread_warning(...)                                      \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
+#define xcastor_thread_warning(...)                                 \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, \
                ThreadLogId.cident, (LOG_WARNING), __VA_ARGS__)
 
-#define xcastor_thread_err(...)                                          \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
-               ThreadLogId.cident, (LOG_ERR)    , __VA_ARGS__)
+#define xcastor_thread_err(...)                                     \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, \
+               ThreadLogId.cident, (LOG_ERR), __VA_ARGS__)
 
-#define xcastor_thread_crit(...)                                         \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
-               ThreadLogId.cident, (LOG_CRIT)   , __VA_ARGS__)
+#define xcastor_thread_crit(...)                                    \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, \
+               ThreadLogId.cident, (LOG_CRIT), __VA_ARGS__)
 
-#define xcastor_thread_alert(...)                                        \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
-               ThreadLogId.cident, (LOG_ALERT)  , __VA_ARGS__)
+#define xcastor_thread_alert(...)                                   \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, \
+               ThreadLogId.cident, (LOG_ALERT), __VA_ARGS__)
 
-#define xcastor_thread_emerg(...)                                        \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, vid, \
-               ThreadLogId.cident, (LOG_EMERG)  , __VA_ARGS__)
+#define xcastor_thread_emerg(...)                                   \
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, ThreadLogId.logId, \
+               ThreadLogId.cident, (LOG_EMERG), __VA_ARGS__)
 
 
 //------------------------------------------------------------------------------
@@ -126,36 +126,36 @@ typedef XrdOucString VirtualIdentity;
                (__XCASTORCOMMON_LOG_PRIORITY__) , __VA_ARGS__)
 
 #define xcastor_static_debug(...)                                             \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
-               "", (LOG_DEBUG)  , __VA_ARGS__)
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", "", (LOG_DEBUG),   \
+               __VA_ARGS__)
 
 #define xcastor_static_info(...)                                              \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
-               "", (LOG_INFO)   , __VA_ARGS__)
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", "", (LOG_INFO),    \
+               __VA_ARGS__)
 
 #define xcastor_static_notice(...)                                            \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
-               "", (LOG_NOTICE) , __VA_ARGS__)
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", "", (LOG_NOTICE),  \
+               __VA_ARGS__)
 
 #define xcastor_static_warning(...)                                           \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
-               "", (LOG_WARNING), __VA_ARGS__)
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", "", (LOG_WARNING), \
+               __VA_ARGS__)
 
 #define xcastor_static_err(...)                                               \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
-               "", (LOG_ERR)    , __VA_ARGS__)
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", "", (LOG_ERR),     \
+               __VA_ARGS__)
 
 #define xcastor_static_crit(...)                                              \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
-               "", (LOG_CRIT)   , __VA_ARGS__)
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", "", (LOG_CRIT),    \
+               __VA_ARGS__)
 
 #define xcastor_static_alert(...)                                             \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
-               "", (LOG_ALERT)  , __VA_ARGS__)
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", "", (LOG_ALERT),   \
+               __VA_ARGS__)
 
 #define xcastor_static_emerg(...)                                             \
-  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", Logging::gZeroVid, \
-               "", (LOG_EMERG)  , __VA_ARGS__)
+  Logging::log(__FUNCTION__, __FILE__, __LINE__, "static", "", (LOG_EMERG),   \
+               __VA_ARGS__)
 
 
 //------------------------------------------------------------------------------
@@ -208,7 +208,6 @@ class LogId
 
   char logId[40];       ///< the log Id for message printout
   char cident[256];     ///< the client identifier
-  VirtualIdentity vid;  ///< client identity
 };
 
 
@@ -229,7 +228,6 @@ class Logging
   static LogCircularIndex gLogCircularIndex; ///< global circular index
   static LogArray gLogMemory; ///< global logging memory
   static unsigned long gCircularIndexSize; ///< global circular index size
-  static VirtualIdentity gZeroVid; ///< root vid
   static int gLogMask;       ///< log mask
   static int gPriorityLevel; ///< log priority
   static XrdSysMutex gMutex; ///< global mutex
@@ -291,7 +289,6 @@ class Logging
   //! @param file name of the source file calling
   //! @param line line in the source file
   //! @param logid log message identifier
-  //! @param vid virtual id of the caller
   //! @param cident client identifier
   //! @param priority priority level of the message
   //! @param msg the actual log message
@@ -303,7 +300,6 @@ class Logging
                          const char* file,
                          int line,
                          const char* logid,
-                         const VirtualIdentity& vid ,
                          const char* cident,
                          int priority,
                          const char* msg, ...);

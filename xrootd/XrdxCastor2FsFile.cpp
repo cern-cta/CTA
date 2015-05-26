@@ -94,20 +94,20 @@ XrdxCastor2FsFile::open(const char*         path,
     info_str.erase(qpos);
 
   info = (ininfo ? info_str.c_str() : 0);
-  xcastor_debug("path=%s, info=%s", path, (info ? info : ""));
+  SetLogId(logId, tident);
 
   TIMING("START", &opentiming);
   std::string map_path = gMgr->NsMapping(path);
 
-  if (map_path == "")
+  if (map_path.empty())
   {
+    xcastor_err("no mapping for path=%s", path);
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
   }
 
   TIMING("MAPPING", &opentiming);
-  xcastor_debug("open_mode=%x, fn=%s, opaque=%s, tident=%s, role=%s",
-                Mode, map_path.c_str(), ininfo, client->tident, client->role);
+  xcastor_info("path=%s, mode=%0x, opaque=%s", map_path.c_str(), open_mode, ininfo);
 
   int aop = AOP_Read;
   int retc = 0, open_flag = 0;
@@ -650,7 +650,7 @@ XrdxCastor2FsFile::open(const char*         path,
   if (gMgr->mLogLevel == LOG_DEBUG)
     opentiming.Print();
 
-  xcastor_debug("redirection to:%s", resp_info.mRedirectionHost.c_str());
+  xcastor_debug("redirection to=%s", resp_info.mRedirectionHost.c_str());
   return SFS_REDIRECT;
 }
 

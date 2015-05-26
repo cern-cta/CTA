@@ -39,8 +39,6 @@ unsigned long Logging::gCircularIndexSize;
 XrdSysMutex Logging::gMutex;
 XrdOucString Logging::gUnit = "none";
 XrdOucString Logging::gFilter = "";
-VirtualIdentity Logging::gZeroVid;
-
 
 /******************************************************************************/
 /*                                L o g I d                                   */
@@ -55,7 +53,6 @@ LogId::LogId()
   uuid_generate_time(uuid);
   uuid_unparse(uuid, logId);
   sprintf(cident, "<service>");
-  vid = (int)getuid();
 }
 
 
@@ -86,7 +83,8 @@ LogId::SetLogId(const char* newlogid, const char* td)
   if (newlogid != logId)
     snprintf(logId, sizeof(logId) - 1, "%s", newlogid);
 
-  snprintf(cident, sizeof(cident) - 1, "%s", td);
+  if (td)
+    snprintf(cident, sizeof(cident) - 1, "%s", td);
 }
 
 
@@ -110,8 +108,6 @@ Logging::Init()
     gLogCircularIndex[i] = 0;
     gLogMemory[i].resize(gCircularIndexSize);
   }
-
-  gZeroVid = "-";
 }
 
 
@@ -143,7 +139,6 @@ Logging::log(const char* func,
              const char* file,
              int line,
              const char* logid,
-             const VirtualIdentity& vid,
              const char* cident,
              int priority,
              const char* msg, ...)
@@ -181,15 +176,6 @@ Logging::log(const char* func,
   gettimeofday(&tv, &tz);
   static char linen[16];
   sprintf(linen, "%d", line);
-  static char fcident[1024];
-  XrdOucString truncname = vid;
-
-  // We show only the last 16 bytes of the name
-  if (truncname.length() > 16)
-  {
-    truncname.insert("..", 0);
-    truncname.erase(0, truncname.length() - 16);
-  }
 
   if (gShortFormat)
   {
@@ -204,15 +190,14 @@ Logging::log(const char* func,
   }
   else
   {
-    sprintf(fcident, "tident=%s vid=%s ", cident, vid.c_str());
     tm = localtime(&current_time);
     sprintf(buffer,
             "%02d%02d%02d %02d:%02d:%02d time=%lu.%06lu func=%-24s level=%s "
-            "logid=%s unit=%s tid=%lu source=%s:%-5s %s ", tm->tm_year - 100,
+            "logid=%s unit=%s tid=%lu source=%s:%-5s tident=%s ", tm->tm_year - 100,
             tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec,
             current_time, (unsigned long)tv.tv_usec, func,
             GetPriorityString(priority), logid, gUnit.c_str(),
-            (unsigned long)XrdSysThread::ID(), fpath.c_str(), linen, fcident);
+            (unsigned long)XrdSysThread::ID(), fpath.c_str(), linen, cident);
   }
 
   char*  ptr = buffer + strlen(buffer);

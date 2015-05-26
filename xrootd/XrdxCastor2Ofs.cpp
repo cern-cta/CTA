@@ -424,6 +424,7 @@ XrdxCastor2OfsFile::open(const char*         path,
   if (open_mode & (SFS_O_CREAT | SFS_O_TRUNC | SFS_O_WRONLY | SFS_O_RDWR))
     mIsRW = true;
 
+  SetLogId(logId, error.getErrUser());
   xcastor_info("path=%s, opaque=%s, isRW=%d, open_mode=%x", path, opaque,
                mIsRW, open_mode);
 
@@ -563,7 +564,7 @@ XrdxCastor2OfsFile::close()
     {
       if (now - iter->second.expire > 3600)
       {
-        xcastor_info("expire tpc.key=%s", iter->first.c_str());
+        xcastor_debug("expire tpc.key=%s", iter->first.c_str());
         gSrv->mTpcMap.erase(iter++);
       }
       else
@@ -696,6 +697,7 @@ XrdxCastor2OfsFile::close()
     close_timing.Print();
   }
 
+  xcastor_info("return %s", (rc ? "ERROR" : "OK"));
   return rc;
 }
 
@@ -745,7 +747,7 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
                                const XrdSecEntity* client)
 {
   char* val;
-  xcastor_info("path=%s", path.c_str());
+  xcastor_debug("path=%s", path.c_str());
 
   // Get the current state of the TPC transfer
   if ((val = mEnvOpaque->Get("tpc.stage")))

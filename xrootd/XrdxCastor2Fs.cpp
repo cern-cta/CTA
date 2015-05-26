@@ -192,13 +192,13 @@ XrdxCastor2Fs::Disc(const XrdSecEntity* client)
   GetIdMapping(client, client_uid, client_gid);
   bool status = true;
   XrdOucErrInfo error;
-  xcastor_info("tident=%s %s %i requests", client->tident,
-               (mSkipAbort ? "skip aborting" : "abort"), req_abrt.size());
+  SetLogId(logId, client->tident);
+  xcastor_info("%s %i requests", (mSkipAbort ? "skip aborting" : "abort"),
+	       req_abrt.size());
 
   // Delete the request objects and also abort them if needed
   for (std::vector<xcastor::XrdxCastorClient::ReqElement*>::iterator iter =
-         req_abrt.begin();
-       iter != req_abrt.end(); ++iter)
+         req_abrt.begin(); iter != req_abrt.end(); ++iter)
   {
     if (mSkipAbort == false)
     {
@@ -411,14 +411,16 @@ XrdxCastor2Fs::chmod(const char*         path,
                      const char*         info)
 {
   EPNAME("chmod");
+  SetLogId(logId, error.getErrUser());
+  xcastor_info("path=%s", path);
   mode_t acc_mode = Mode & S_IAMB;
   XrdOucEnv chmod_Env(info);
-  xcastor_debug("path=%s", path);
   AUTHORIZE(client, &chmod_Env, AOP_Chmod, "chmod", path, error)
   std::string map_path = NsMapping(path);
 
   if (map_path.empty())
   {
+    xcastor_err("no mapping for path=%s", path);
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
   }
@@ -448,12 +450,14 @@ XrdxCastor2Fs::exists(const char* path,
 {
   EPNAME("exists");
   XrdOucEnv exists_Env(info);
-  xcastor_debug("path=%s", path);
+  SetLogId(logId, error.getErrUser());
+  xcastor_info("path=%s", path);
   AUTHORIZE(client, &exists_Env, AOP_Stat, "execute exists", path, error)
   std::string map_path = NsMapping(path);
 
   if (map_path.empty())
   {
+    xcastor_err("no mapping for path=%s", path);
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
   }
@@ -515,11 +519,13 @@ XrdxCastor2Fs::mkdir(const char*         path,
                      const char*         info)
 {
   XrdOucEnv mkdir_Env(info);
-  xcastor_debug("path=%s", path);
+  SetLogId(logId, error.getErrUser());
+  xcastor_info("path=%s", path);
   std::string map_path = NsMapping(path);
 
   if (map_path.empty())
   {
+    xcastor_err("no mapping for path=%s", path);
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
   }
@@ -783,15 +789,17 @@ XrdxCastor2Fs::rem(const char*         path,
                    const char*         info)
 {
   EPNAME("rem");
+  SetLogId(logId, error.getErrUser());
+  xcastor_info("path=%s", path);
   xcastor::Timing rmtiming("fileremove");
   TIMING("START", &rmtiming);
   XrdOucEnv env(info);
   AUTHORIZE(client, &env, AOP_Delete, "remove", path, error)
   std::string map_path = NsMapping(path);
-  xcastor_debug("path=%s, map_path=%s", path, map_path.c_str());
 
   if (map_path.empty())
   {
+    xcastor_err("no mapping for path=%s", path);
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
   }
@@ -823,7 +831,7 @@ XrdxCastor2Fs::rem(const char*         path,
     }
 
     // Here we have the allowed stager/service class setting to issue the stage_rm request
-    TIMING("STAGERRM", &rmtiming);
+    TIMING("StageRm", &rmtiming);
 
     if (!XrdxCastor2Stager::Rm(error, (uid_t) client_uid, (gid_t) client_gid,
                                map_path.c_str(), allowed_svc.c_str()))
@@ -833,6 +841,7 @@ XrdxCastor2Fs::rem(const char*         path,
       if (gMgr->mLogLevel == LOG_DEBUG)
         rmtiming.Print();
 
+      xcastor_err("stage_rm failed for path=%s", map_path.c_str());
       return SFS_ERROR;
     }
 
@@ -841,7 +850,7 @@ XrdxCastor2Fs::rem(const char*         path,
 
   int retc = 0;
   retc = _rem(map_path.c_str(), error, info);
-  TIMING("RemoveNamespace", &rmtiming);
+  TIMING("NsRm", &rmtiming);
 
   if (gMgr->mLogLevel == LOG_DEBUG)
     rmtiming.Print();
@@ -859,11 +868,13 @@ XrdxCastor2Fs::_rem(const char*         path,
                     const char*         /*info*/)
 {
   EPNAME("rem");
-  xcastor_debug("path=%s", path);
 
-  // Perform the actual deletion
+  // Do the nsrm
   if (XrdxCastor2FsUFS::Unlink(path))
+  {
+    xcastor_err("nsrm failed for path=%s", path);
     return Emsg(epname, error, serrno, "remove", path);
+  }
 
   return SFS_OK;
 }
@@ -879,13 +890,15 @@ XrdxCastor2Fs::remdir(const char* path,
                       const char* info)
 {
   EPNAME("remdir");
+  SetLogId(logId, error.getErrUser());
+  xcastor_info("path=%s", path);
   XrdOucEnv remdir_Env(info);
-  xcastor_debug("path=%s", path);
   AUTHORIZE(client, &remdir_Env, AOP_Delete, "remove", path, error)
   std::string map_path = NsMapping(path);
 
   if (map_path.empty())
   {
+    xcastor_err("no mapping for path=%s", path);
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
   }
@@ -930,6 +943,8 @@ XrdxCastor2Fs::rename(const char* old_name,
 
 {
   EPNAME("rename");
+  SetLogId(logId, error.getErrUser());
+  xcastor_info("old_name=%s, new_name=%s", old_name, new_name);
   XrdOucString source, destination;
   XrdOucEnv renameo_Env(infoO);
   XrdOucEnv renamen_Env(infoN);
@@ -937,16 +952,18 @@ XrdxCastor2Fs::rename(const char* old_name,
   AUTHORIZE(client, &renamen_Env, AOP_Update, "rename", new_name, error)
   std::string oldn = NsMapping(old_name);
 
-  if (oldn == "")
+  if (oldn.empty())
   {
+    xcastor_err("no mapping for path=%s", old_name);
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
   }
 
   std::string newn = NsMapping(new_name);
 
-  if (newn == "")
+  if (newn.empty())
   {
+    xcastor_err("no mapping for path=%s", new_name);
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
   }
@@ -990,7 +1007,10 @@ XrdxCastor2Fs::rename(const char* old_name,
   }
 
   if (XrdxCastor2FsUFS::Rename(oldn.c_str(), newn.c_str()))
+  {
+    xcastor_err("failed rename %s to %s", oldn.c_str(), newn.c_str());
     return Emsg(epname, error, serrno, "rename", oldn.c_str());
+  }
 
   xcastor_debug("namespace rename done: %s => %s", oldn.c_str(), newn.c_str());
   return SFS_OK;
@@ -1287,8 +1307,9 @@ XrdxCastor2Fs::symlink(const char* path,
   {
     source = NsMapping(path);
 
-    if (source == "")
+    if (source.empty())
     {
+      xcastor_err("no mapping for path=%s", path);
       error.setErrInfo(ENOMEDIUM, "No mapping for file name");
       return SFS_ERROR;
     }
@@ -1296,8 +1317,9 @@ XrdxCastor2Fs::symlink(const char* path,
 
   std::string destination = NsMapping(linkpath);
 
-  if (destination == "")
+  if (destination.empty())
   {
+    xcastor_err("no mapping for path=%s", linkpath);
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
   }
@@ -1346,6 +1368,8 @@ int XrdxCastor2Fs::utimes(const char* path,
                           const char* info)
 {
   EPNAME("utimes");
+  SetLogId(logId, error.getErrUser());
+  xcastor_info("path=%s", path);
   XrdOucEnv utimes_Env(info);
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &utimes_Env, AOP_Update, "set utimes", path, error)
@@ -1353,6 +1377,7 @@ int XrdxCastor2Fs::utimes(const char* path,
 
   if (map_path.empty())
   {
+    xcastor_err("no mapping for path=%s", path);
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
   }
@@ -1433,7 +1458,7 @@ XrdxCastor2Fs::fsctl(const int cmd,
   path.erase(path.find("?"));
   XrdOucEnv env(opaque.c_str());
   const char* scmd;
-  xcastor_debug("cmd=%i, args=%s", cmd, args);
+  SetLogId(logId, error.getErrUser());
 
   if ((cmd & SFS_FSCTL_LOCATE) || (cmd == 16777217))
   {
@@ -1464,6 +1489,8 @@ XrdxCastor2Fs::fsctl(const int cmd,
 
   if (cmd != SFS_FSCTL_PLUGIN)
     return SFS_ERROR;
+
+  xcastor_info("cmd=%i, args=%s", cmd, args);
 
   if ((scmd = env.Get("pcmd")))
   {
@@ -1821,7 +1848,7 @@ XrdxCastor2Fs::chksum(csFunc Func,
                       const char* opaque)
 {
   EPNAME("chksum");
-  xcastor_debug("path=%s", path);
+  SetLogId(logId, error.getErrUser());
   XrdOucEnv chksum_env(opaque);
   AUTHORIZE(client, &chksum_env, AOP_Stat, "chksum", path, error);
   char buff[MAXPATHLEN + 8];
@@ -1846,9 +1873,10 @@ XrdxCastor2Fs::chksum(csFunc Func,
   else if ((Func == XrdSfsFileSystem::csGet) || (Func == XrdSfsFileSystem::csCalc))
   {
     struct Cns_filestatcs fstat;
-    XrdOucString map_path = XrdxCastor2Fs::NsMapping(path).c_str();
+    std::string map_path = XrdxCastor2Fs::NsMapping(path);
+    xcastor_info("path=%s", path);
 
-    if (map_path == "")
+    if (map_path.empty())
     {
       error.setErrInfo(ENOMEDIUM, "no mapping for file");
       return SFS_ERROR;

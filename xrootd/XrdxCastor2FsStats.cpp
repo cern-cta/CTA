@@ -577,6 +577,9 @@ XrdxCastor2FsStats::Update()
             }
           }
 
+	  if (log_level > 7) log_level = 7; // LOG_DEBUG
+	  if (log_level < 3) log_level = 3; // LOG_ERROR
+
           gMgr->SetLogLevel(log_level);
         }
       }
