@@ -721,8 +721,28 @@ void cta::MockSchedulerDatabase::createTape(
   const std::string &tapePoolName,
   const uint64_t capacityInBytes,
   const std::string &comment) {
-  //m_db.insertTape(requester, vid, logicalLibraryName, tapePoolName,
-  //capacityInBytes, comment);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "INSERT INTO TAPE(VID, LOGICALLIBRARY_NAME, TAPEPOOL_NAME,"
+    " CAPACITY_BYTES, DATAONTAPE_BYTES, UID, GID, CREATIONTIME, COMMENT)"
+    " VALUES('" << vid << "','" << logicalLibraryName << "','" << tapePoolName
+    << "',"<< (long unsigned int)capacityInBytes << ",0," <<
+    requester.user.getUid() << "," << requester.user.getGid() << "," <<
+    (int)time(NULL) << ",'" << comment << "');";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
+  }
+
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 > nbRowsModified) {
+    std::ostringstream message;
+    message << "Tape " << vid << " already exists";
+    throw(exception::Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -731,7 +751,23 @@ void cta::MockSchedulerDatabase::createTape(
 void cta::MockSchedulerDatabase::deleteTape(
   const SecurityIdentity &requester,
   const std::string &vid) {
-  //m_db.deleteTape(requester, vid);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM TAPE WHERE NAME='" << vid << "';";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
+  }
+
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 > nbRowsModified) {
+    std::ostringstream message;
+    message << "Tape " << vid << " does not exist";
+    throw(exception::Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -739,6 +775,35 @@ void cta::MockSchedulerDatabase::deleteTape(
 //------------------------------------------------------------------------------
 std::list<cta::Tape> cta::MockSchedulerDatabase::getTapes(
   const SecurityIdentity &requester) const {
-  //return m_db.selectAllTapes(requester);
-  return std::list<cta::Tape>();
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  std::list<cta::Tape> tapes;
+  query << "SELECT VID, LOGICALLIBRARY_NAME, TAPEPOOL_NAME, CAPACITY_BYTES,"
+    " DATAONTAPE_BYTES, UID, GID, CREATIONTIME, COMMENT"
+    " FROM TAPE ORDER BY VID;";
+  sqlite3_stmt *statement;
+  if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
+    &statement, 0)) {
+    std::ostringstream message;
+    message << "selectAllTapes() - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
+    throw(exception::Exception(message.str()));
+  }
+  while(SQLITE_ROW == sqlite3_step(statement)) {
+    SqliteColumnNameToIndex idx(statement);
+    tapes.push_back(cta::Tape(
+      std::string((char *)sqlite3_column_text(statement,idx("VID"))),
+      std::string((char *)sqlite3_column_text(statement,idx("LOGICALLIBRARY_NAME"))),
+      std::string((char *)sqlite3_column_text(statement,idx("TAPEPOOL_NAME"))),
+      sqlite3_column_int(statement,idx("CAPACITY_BYTES")),
+      sqlite3_column_int(statement,idx("DATAONTAPE_BYTES")),
+      UserIdentity(sqlite3_column_int(statement,idx("UID")),
+      sqlite3_column_int(statement,idx("GID"))),
+      std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+      time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
+    ));
+  }
+  sqlite3_finalize(statement);
+  return tapes;
 }
