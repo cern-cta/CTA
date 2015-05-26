@@ -336,7 +336,7 @@ std::list<cta::AdminHost> cta::MockSchedulerDatabase::getAdminHosts(
       sqlite3_finalize(statement);
       throw(exception::Exception(message.str()));
   }
-  while(sqlite3_step(statement)==SQLITE_ROW) {
+  while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
     const UserIdentity creator(sqlite3_column_int(statement,idx("UID")),sqlite3_column_int(statement,idx("GID")));
     list.push_back(cta::AdminHost(
@@ -422,16 +422,16 @@ std::list<cta::StorageClass> cta::MockSchedulerDatabase::getStorageClasses(
       sqlite3_finalize(statement);
       throw(exception::Exception(message.str()));
   }
-  while(sqlite3_step(statement)==SQLITE_ROW) {
+  while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
     classes.push_back(cta::StorageClass(
-            std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
-            sqlite3_column_int(statement,idx("NBCOPIES")),
-            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),
-            sqlite3_column_int(statement,idx("GID"))),
-            std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
-            time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
-      ));
+      std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
+      sqlite3_column_int(statement,idx("NBCOPIES")),
+      cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),
+      sqlite3_column_int(statement,idx("GID"))),
+      std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+      time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
+    ));
   }
   sqlite3_finalize(statement);
   return classes;
@@ -512,16 +512,16 @@ std::list<cta::TapePool> cta::MockSchedulerDatabase::getTapePools(
       sqlite3_finalize(statement);
       throw(exception::Exception(message.str()));
   }
-  while(sqlite3_step(statement)==SQLITE_ROW) {
+  while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
     pools.push_back(cta::TapePool(
-            std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
-            sqlite3_column_int(statement,idx("NBPARTIALTAPES")),
-            cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),
-            sqlite3_column_int(statement,idx("GID"))),
-            std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
-            time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
-      ));
+      std::string((char *)sqlite3_column_text(statement,idx("NAME"))),
+      sqlite3_column_int(statement,idx("NBPARTIALTAPES")),
+      cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),
+      sqlite3_column_int(statement,idx("GID"))),
+      std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+      time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
+    ));
   }
   sqlite3_finalize(statement);
   return pools;
@@ -536,8 +536,28 @@ void cta::MockSchedulerDatabase::createArchivalRoute(
   const uint16_t copyNb,
   const std::string &tapePoolName,
   const std::string &comment) {
-  //return m_db.insertArchivalRoute(requester, storageClassName, copyNb,
-  //  tapePoolName, comment);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "INSERT INTO ARCHIVALROUTE(STORAGECLASS_NAME, COPYNB, TAPEPOOL_NAME,"
+    " UID, GID, CREATIONTIME, COMMENT) VALUES('" << storageClassName << "'," <<
+    (int)copyNb << ",'" << tapePoolName << "'," << requester.user.getUid() <<
+    "," << requester.user.getGid() << "," << (int)time(NULL) << ",'" << comment
+    << "');";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
+  }
+
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 > nbRowsModified) {
+    std::ostringstream message;
+    message << "Archival route for storage class " << storageClassName <<
+      " and copy number " << copyNb << " already exists";
+    throw(exception::Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -547,7 +567,25 @@ void cta::MockSchedulerDatabase::deleteArchivalRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint16_t copyNb) {
-  //return m_db.deleteArchivalRoute(requester, storageClassName, copyNb);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM ARCHIVALROUTE WHERE STORAGECLASS_NAME='" <<
+    storageClassName << "' AND COPYNB=" << (int)copyNb << ";";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+      std::ostringstream message;
+      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(exception::Exception(message.str()));
+  }
+
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 > nbRowsModified) {
+    std::ostringstream message;
+    message << "Archival route for storage class " << storageClassName << 
+      " and copy number " << copyNb << " does not exist";
+    throw(exception::Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -555,8 +593,35 @@ void cta::MockSchedulerDatabase::deleteArchivalRoute(
 //------------------------------------------------------------------------------
 std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes(
   const SecurityIdentity &requester) const {
-  //return m_db.selectAllArchivalRoutes(requester);
-  return std::list<cta::ArchivalRoute>();
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  std::list<cta::ArchivalRoute> routes;
+  query << "SELECT STORAGECLASS_NAME, COPYNB, TAPEPOOL_NAME, UID, GID,"
+    " CREATIONTIME, COMMENT FROM ARCHIVALROUTE ORDER BY STORAGECLASS_NAME,"
+    " COPYNB;";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
+    throw(exception::Exception(message.str()));
+  }
+  while(SQLITE_ROW == sqlite3_step(statement)) {
+    SqliteColumnNameToIndex idx(statement);
+    routes.push_back(cta::ArchivalRoute(
+      std::string((char *)sqlite3_column_text(statement,idx("STORAGECLASS_NAME"))),
+      sqlite3_column_int(statement,idx("COPYNB")),
+      std::string((char *)sqlite3_column_text(statement,idx("TAPEPOOL_NAME"))),
+      cta::UserIdentity(sqlite3_column_int(statement,idx("UID")),
+      sqlite3_column_int(statement,idx("GID"))),
+      std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+      time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
+    ));
+  }
+  sqlite3_finalize(statement);
+  return routes;
 }
 
 //------------------------------------------------------------------------------
