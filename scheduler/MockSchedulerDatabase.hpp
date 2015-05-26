@@ -20,6 +20,8 @@
 
 #include "scheduler/SchedulerDatabase.hpp"
 
+#include <sqlite3.h>
+
 namespace cta {
 
 /**
@@ -290,6 +292,18 @@ public:
    */
   std::list<Tape> getTapes(
     const SecurityIdentity &requester) const;
+
+private:
+
+  /**
+   * SQLite database handle.
+   */
+  sqlite3 *m_dbHandle;
+
+  /**
+   * Creates the database schema.
+   */
+  void createSchema();
 
 }; // class MockSchedulerDatabase
 

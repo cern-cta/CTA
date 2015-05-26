@@ -39,7 +39,131 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::MockSchedulerDatabase::MockSchedulerDatabase() {
+  try {
+    if(sqlite3_open(":memory:", &m_dbHandle)) {
+      std::ostringstream message;
+      message << "SQLite error: Can't open database: " <<
+        sqlite3_errmsg(m_dbHandle);
+      throw(exception::Exception(message.str()));
+    }
+    char *zErrMsg = 0;
+    if(SQLITE_OK != sqlite3_exec(m_dbHandle, "PRAGMA foreign_keys = ON;", 0, 0,
+      &zErrMsg)) {
+      std::ostringstream message;
+      message << "SqliteDatabase() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(exception::Exception(message.str()));
+    }
+    createSchema();
+  } catch (...) {
+    sqlite3_close(m_dbHandle);
+    throw;
+  }
 }
+
+//------------------------------------------------------------------------------
+// createSchema
+//------------------------------------------------------------------------------
+void cta::MockSchedulerDatabase::createSchema() {  
+  char *zErrMsg = 0;
+  const int rc = sqlite3_exec(m_dbHandle,
+    "CREATE TABLE ARCHIVALROUTE("
+      "STORAGECLASS_NAME TEXT,"
+      "COPYNB            INTEGER,"
+      "TAPEPOOL_NAME     TEXT,"
+      "UID               INTEGER,"
+      "GID               INTEGER,"
+      "CREATIONTIME      INTEGER,"
+      "COMMENT           TEXT,"
+      "PRIMARY KEY (STORAGECLASS_NAME, COPYNB),"
+      "FOREIGN KEY(STORAGECLASS_NAME) REFERENCES STORAGECLASS(NAME),"
+      "FOREIGN KEY(TAPEPOOL_NAME)     REFERENCES TAPEPOOL(NAME)"
+      ");"
+    "CREATE TABLE STORAGECLASS("
+      "NAME           TEXT     PRIMARY KEY,"
+      "NBCOPIES       INTEGER,"
+      "UID            INTEGER,"
+      "GID            INTEGER,"
+      "CREATIONTIME   INTEGER,"
+      "COMMENT        TEXT"
+      ");"
+    "CREATE TABLE TAPEPOOL("
+      "NAME           TEXT     PRIMARY KEY,"
+      "NBPARTIALTAPES INTEGER,"
+      "UID            INTEGER,"
+      "GID            INTEGER,"
+      "CREATIONTIME   INTEGER,"
+      "COMMENT        TEXT"
+      ");"
+    "CREATE TABLE TAPE("
+      "VID                 TEXT,"
+      "LOGICALLIBRARY_NAME TEXT,"
+      "TAPEPOOL_NAME       TEXT,"
+      "CAPACITY_BYTES      INTEGER,"
+      "DATAONTAPE_BYTES    INTEGER,"
+      "UID                 INTEGER,"
+      "GID                 INTEGER,"
+      "CREATIONTIME        INTEGER,"
+      "COMMENT             TEXT,"
+      "PRIMARY KEY (VID),"
+      "FOREIGN KEY (LOGICALLIBRARY_NAME) REFERENCES LOGICALLIBRARY(NAME),"
+      "FOREIGN KEY (TAPEPOOL_NAME) REFERENCES TAPEPOOL(NAME)"
+      ");"
+    "CREATE TABLE LOGICALLIBRARY("
+      "NAME           TEXT,"
+      "UID            INTEGER,"
+      "GID            INTEGER,"
+      "CREATIONTIME   INTEGER,"
+      "COMMENT        TEXT,"
+      "PRIMARY KEY (NAME)"
+      ");"
+    "CREATE TABLE ADMINUSER("
+      "ADMIN_UID      INTEGER,"
+      "ADMIN_GID      INTEGER,"
+      "UID            INTEGER,"
+      "GID            INTEGER,"
+      "CREATIONTIME   INTEGER,"
+      "COMMENT        TEXT,"
+      "PRIMARY KEY (ADMIN_UID,ADMIN_GID)"
+      ");"
+    "CREATE TABLE ADMINHOST("
+      "NAME           TEXT,"
+      "UID            INTEGER,"
+      "GID            INTEGER,"
+      "CREATIONTIME   INTEGER,"
+      "COMMENT        TEXT,"
+      "PRIMARY KEY (NAME)"
+      ");"
+    "CREATE TABLE ARCHIVALJOB("
+      "STATE          INTEGER,"
+      "SRCURL         TEXT,"
+      "DSTPATH        TEXT,"
+      "TAPEPOOL_NAME  TEXT,"
+      "UID            INTEGER,"
+      "GID            INTEGER,"
+      "CREATIONTIME   INTEGER,"
+      "PRIMARY KEY (DSTPATH, TAPEPOOL_NAME),"
+      "FOREIGN KEY (TAPEPOOL_NAME) REFERENCES TAPEPOOL(NAME)"
+      ");"
+    "CREATE TABLE RETRIEVALJOB("
+      "STATE          INTEGER,"
+      "SRCPATH        TEXT,"
+      "DSTURL         TEXT,"
+      "VID            TEXT,"
+      "UID            INTEGER,"
+      "GID            INTEGER,"
+      "CREATIONTIME   INTEGER,"
+      "PRIMARY KEY (DSTURL, VID),"
+      "FOREIGN KEY (VID) REFERENCES TAPE(VID)"
+      ");",
+    0, 0, &zErrMsg);
+  if(rc != SQLITE_OK) {    
+      std::ostringstream message;
+      message << "createRetrievalJobTable() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(exception::Exception(message.str()));
+  }
+}  
 
 //------------------------------------------------------------------------------
 // destructor
