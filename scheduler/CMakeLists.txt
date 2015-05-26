@@ -41,6 +41,7 @@ set (CTA_SCHEDULER_SRC_FILES
   RetrieveToFileRequest.cpp
   SchedulerDatabase.cpp
   SecurityIdentity.cpp
+  SqliteColumnNameToIndex.cpp
   StorageClass.cpp
   Tape.cpp
   TapeException.cpp

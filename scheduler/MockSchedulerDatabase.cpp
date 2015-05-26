@@ -26,6 +26,7 @@
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MockSchedulerDatabase.hpp"
 #include "scheduler/SecurityIdentity.hpp"
+#include "scheduler/SqliteColumnNameToIndex.hpp"
 #include "scheduler/StorageClass.hpp"
 #include "scheduler/Tape.hpp"
 #include "scheduler/TapePool.hpp"
@@ -157,7 +158,7 @@ void cta::MockSchedulerDatabase::createSchema() {
       "FOREIGN KEY (VID) REFERENCES TAPE(VID)"
       ");",
     0, 0, &zErrMsg);
-  if(rc != SQLITE_OK) {    
+  if(SQLITE_OK != rc) {    
       std::ostringstream message;
       message << "createRetrievalJobTable() - SQLite error: " << zErrMsg;
       sqlite3_free(zErrMsg);
@@ -169,6 +170,7 @@ void cta::MockSchedulerDatabase::createSchema() {
 // destructor
 //------------------------------------------------------------------------------
 cta::MockSchedulerDatabase::~MockSchedulerDatabase() throw() {
+  sqlite3_close(m_dbHandle);
 }
 
 //------------------------------------------------------------------------------
@@ -178,7 +180,26 @@ void cta::MockSchedulerDatabase::createAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user,
   const std::string &comment) {
-//m_db.insertAdminUser(requester, user, comment);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "INSERT INTO ADMINUSER(ADMIN_UID, ADMIN_GID, UID, GID,"
+    " CREATIONTIME, COMMENT) VALUES(" << user.getUid() << "," << user.getGid()
+    << "," << requester.user.getUid() << "," << requester.user.getGid() << ","
+    << (int)time(NULL) << ",'" << comment << "');";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+    std::ostringstream message;
+    message << "insertAdminUser() - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
+  }
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 > nbRowsModified) {
+    std::ostringstream message;
+    message << "ADMINUSER: " << user.getUid() << ":" << user.getGid() <<
+      " already exists";
+    throw(exception::Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -187,7 +208,24 @@ void cta::MockSchedulerDatabase::createAdminUser(
 void cta::MockSchedulerDatabase::deleteAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user) {
-//m_db.deleteAdminUser(requester, user);
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM ADMINUSER WHERE ADMIN_UID=" << user.getUid() <<
+    " AND ADMIN_GID=" << user.getGid() <<";";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+      std::ostringstream message;
+      message << "deleteAdminUser() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      throw(exception::Exception(message.str()));
+  }
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 > nbRowsModified) {
+    std::ostringstream message;
+    message << "ADMINUSER: " << user.getUid() << ":" << user.getGid() <<
+      " does not exist";
+    throw(exception::Exception(message.str()));
+  }
 }
   
 //------------------------------------------------------------------------------
@@ -195,8 +233,35 @@ void cta::MockSchedulerDatabase::deleteAdminUser(
 //------------------------------------------------------------------------------
 std::list<cta::AdminUser> cta::MockSchedulerDatabase::getAdminUsers(
   const SecurityIdentity &requester) const {
-//return m_db.selectAllAdminUsers(requester);
-  return std::list<cta::AdminUser>();
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  std::list<cta::AdminUser> list;
+  query << "SELECT ADMIN_UID, ADMIN_GID, UID, GID, CREATIONTIME, COMMENT"
+    " FROM ADMINUSER ORDER BY ADMIN_UID, ADMIN_GID;";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){
+      std::ostringstream message;
+      message << "selectAllAdminUsers() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
+      throw(exception::Exception(message.str()));
+  }
+  while(SQLITE_ROW == sqlite3_step(statement)) {
+    SqliteColumnNameToIndex idx(statement);
+    const UserIdentity user(sqlite3_column_int(statement,idx("ADMIN_UID")),
+      sqlite3_column_int(statement,idx("ADMIN_GID")));
+    const UserIdentity creator(sqlite3_column_int(statement,idx("UID")),
+            sqlite3_column_int(statement,idx("GID")));
+    list.push_back(cta::AdminUser(
+      user,
+      creator,
+      std::string((char *)sqlite3_column_text(statement,idx("COMMENT"))),
+      time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
+    ));
+  }
+  sqlite3_finalize(statement);
+  return list;
 }
 
 //------------------------------------------------------------------------------
