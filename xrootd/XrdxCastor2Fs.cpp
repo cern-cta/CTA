@@ -790,7 +790,7 @@ XrdxCastor2Fs::rem(const char*         path,
 {
   EPNAME("rem");
   SetLogId(logId, error.getErrUser());
-  xcastor_info("path=%s", path);
+  xcastor_info("path=%s, opaque=%s", path, info);
   xcastor::Timing rmtiming("fileremove");
   TIMING("START", &rmtiming);
   XrdOucEnv env(info);
