@@ -20,7 +20,6 @@
 #include "middletier/objectstore/OStoreMiddleTierAdmin.hpp"
 #include "objectstore/Backend.hpp"
 #include "objectstore/RootEntry.hpp"
-#include "objectstore/AdminUsersList.hpp"
 
 namespace cta {
 
@@ -49,35 +48,37 @@ void OStoreMiddleTierAdmin::createAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user,
   const std::string &comment) {
-  // Authz is not handled in this layer. We hence store the new admin user
-  // without checks.
-  objectstore::RootEntry re(m_backend);
-  objectstore::ScopedSharedLock reLock(re);
-  re.fetch();
-  objectstore::AdminUsersList aul(re.getAdminUsersList(), m_backend);
-  reLock.release();
-  objectstore::ScopedExclusiveLock aulLock(aul);
-  aul.fetch();
-  AdminUser au(user, requester.user, comment);
-  aul.add(au);
-  aul.commit();
+//  // Authz is not handled in this layer. We hence store the new admin user
+//  // without checks.
+//  objectstore::RootEntry re(m_backend);
+//  objectstore::ScopedSharedLock reLock(re);
+//  re.fetch();
+//  objectstore::AdminUsersList aul(re.getAdminUsersList(), m_backend);
+//  reLock.release();
+//  objectstore::ScopedExclusiveLock aulLock(aul);
+//  aul.fetch();
+//  AdminUser au(user, requester.user, comment);
+//  aul.add(au);
+//  aul.commit();
+  throw exception::Exception("TODO");
 }
 
 void OStoreMiddleTierAdmin::deleteAdminUser(
   const SecurityIdentity& requester, 
   const UserIdentity& user) {
-  // Authz is not handled in this layer. We hence store the new admin user
-  // without checks.
-  objectstore::RootEntry re(m_backend);
-  objectstore::ScopedSharedLock reLock(re);
-  re.fetch();
-  objectstore::AdminUsersList aul(re.getAdminUsersList(), m_backend);
-  reLock.release();
-  objectstore::ScopedExclusiveLock aulLock(aul);
-  aul.fetch();
-  aul.remove(user.getUid(), user.getGid());
-  aul.commit();
-  }
+//  // Authz is not handled in this layer. We hence store the new admin user
+//  // without checks.
+//  objectstore::RootEntry re(m_backend);
+//  objectstore::ScopedSharedLock reLock(re);
+//  re.fetch();
+//  objectstore::AdminUsersList aul(re.getAdminUsersList(), m_backend);
+//  reLock.release();
+//  objectstore::ScopedExclusiveLock aulLock(aul);
+//  aul.fetch();
+//  aul.remove(user.getUid(), user.getGid());
+//  aul.commit();
+  throw exception::Exception("TODO");
+}
 
 std::list<AdminUser> OStoreMiddleTierAdmin::getAdminUsers(
   const SecurityIdentity& requester) const {
@@ -110,14 +111,15 @@ void OStoreMiddleTierAdmin::createStorageClass(
   const std::string &name,
   const uint16_t nbCopies,
   const std::string &comment) {
-  // Get the root entry
-  objectstore::RootEntry re(m_backend);
-  {
-    objectstore::ScopedSharedLock sl(re);
-    re.fetch();
-  }
-  // Get the storage class list
-  re.allocateOrGetStorageClassList(m_agent);
+//  // Get the root entry
+//  objectstore::RootEntry re(m_backend);
+//  {
+//    objectstore::ScopedSharedLock sl(re);
+//    re.fetch();
+//  }
+//  // Get the storage class list
+//  re.createStorageClass();
+  throw cta::exception::Exception("TODO");
 }
 
 void OStoreMiddleTierAdmin::deleteStorageClass(

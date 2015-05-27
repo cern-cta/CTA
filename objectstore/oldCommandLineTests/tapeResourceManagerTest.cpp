@@ -100,7 +100,7 @@ int main(void){
     cta::objectstore::RootEntry re(self);
     // Create and populate the job queues
     std::cout << "About to add agentRegister" << std::endl;
-    cta::objectstore::AgentRegister agentRegister(re.allocateOrGetAgentRegister(self), self);
+    cta::objectstore::AgentRegister agentRegister(re.allocateOrGetAgentRegisterPointer(self), self);
     std::cout << osd.dump(self) << std::endl;
     
     // Create the job pool

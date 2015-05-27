@@ -17,12 +17,12 @@ add_library (CTAObjectStore SHARED
   Agent.cpp
   AgentRegister.cpp
   AgentWatchdog.cpp
-  AdminUsersList.cpp
+  #AdminUsersList.cpp
   BackendVFS.cpp
   BackendRados.cpp
   ObjectOps.cpp
   ProtocolBuffersAlgorithms.cpp
-  FIFO.cpp
+  #FIFO.cpp
   GenericObject.cpp
   GarbageCollector.cpp)
 
@@ -53,7 +53,7 @@ add_library (CTAObjectStore SHARED
 set(ObjectStoreUnitTests
   BackendTest.cpp
   RootEntryTest.cpp
-  FIFOTest.cpp
+  #FIFOTest.cpp
   GarbageCollectorTest.cpp
 )
 

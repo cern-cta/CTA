@@ -49,8 +49,10 @@ TEST(RootEntry, BasicAccess) {
     cta::objectstore::Agent agent(be);
     agent.generateName("unitTest");
     re.fetch();
-    re.allocateOrGetAgentRegister(agent);
-    ASSERT_NO_THROW(re.getAgentRegister());
+    cta::objectstore::CreationLog cl(99, "dummyUser", 99, "dummyGroup", 
+      "unittesthost", time(NULL), "Creation of unit test agent register");
+    re.addOrGetAgentRegisterPointer(agent, cl);
+    ASSERT_NO_THROW(re.getAgentRegisterPointer());
     re.commit();
     //agent.registerSelf();
   }

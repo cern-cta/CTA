@@ -136,7 +136,7 @@ public:
     m_agent.setup(name.str());
     m_agent.create();
     RootEntry re(m_agent);
-    AgentRegister ar(re.getAgentRegister(m_agent), m_agent);
+    AgentRegister ar(re.getAgentRegisterPointer(m_agent), m_agent);
     std::cout << m_agent.name() << " starting" << std::endl;
     utils::Timer noAgentTimer;
     std::map<std::string, AgentWatchdog *> watchdogs;

@@ -18,7 +18,7 @@
 
 #include "GarbageCollector.hpp"
 #include "RootEntry.hpp"
-#include "FIFO.hpp"
+//#include "FIFO.hpp"
 #include <algorithm>
 
 namespace cta { namespace objectstore {
@@ -29,7 +29,7 @@ GarbageCollector::GarbageCollector(Backend & os, Agent & agent):
   RootEntry re(m_objectStore);
   ScopedSharedLock reLock(re);
   re.fetch();
-  m_agentRegister.setName(re.getAgentRegister());
+  m_agentRegister.setName(re.getAgentRegisterPointer());
   reLock.release();
   ScopedSharedLock arLock(m_agentRegister);
   m_agentRegister.fetch();
@@ -189,19 +189,19 @@ void GarbageCollector::checkHeartbeats() {
      serializers::ObjectType containerType = gContainter.type();
      gContLock.release();
      switch(containerType) {
-       case serializers::FIFO_t: {
-         FIFO fifo(go.getBackupOwner(), m_objectStore);
-         ScopedExclusiveLock ffLock(fifo);
-         fifo.fetch();
-         fifo.pushIfNotPresent(go.getNameIfSet());
-         fifo.commit();
-         // We now have a pointer to the object. Make the change official.
-         go.setOwner(go.getBackupOwner());
-         go.commit();
-         ffLock.release();
-         goLock.release();
-         break;
-       }
+//       case serializers::FIFO_t: {
+//         FIFO fifo(go.getBackupOwner(), m_objectStore);
+//         ScopedExclusiveLock ffLock(fifo);
+//         fifo.fetch();
+//         fifo.pushIfNotPresent(go.getNameIfSet());
+//         fifo.commit();
+//         // We now have a pointer to the object. Make the change official.
+//         go.setOwner(go.getBackupOwner());
+//         go.commit();
+//         ffLock.release();
+//         goLock.release();
+//         break;
+//       }
        default: {
          throw cta::exception::Exception("In GarbageCollector::cleanupDeadAgent: unexpected container type!");
        }

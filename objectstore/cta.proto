@@ -41,6 +41,92 @@ message ObjectHeader {
 message GenericObject {
 }
 
+// ===========================  Root Entry =====================================
+// The objects making up the root entry.
+
+// A user information record
+message UserIdentity {
+  required uint32 uid = 10;
+  required string uname = 11;
+  required uint32 gid = 12;
+  required string gname = 13;
+}
+
+// The creation log attached to each element
+message CreationLog {
+  required UserIdentity user = 20;
+  required string host = 21;
+  required uint64 time = 22;
+  optional string comment = 23;
+}
+
+// The admin host
+message AdminHost {
+  required string hostname = 30;
+  required CreationLog log = 31;
+}
+
+message AdminUser {
+  required UserIdentity user = 40;
+  required CreationLog log = 41;
+}
+
+// The Archival route
+message ArchivalRoute {
+  required uint32 copynb = 50;
+  required string tapepool = 51;
+  required CreationLog log = 52;
+}
+
+// The Storage Class
+message StorageClass {
+  required string name = 60;
+  required uint32 copycount = 61;
+  repeated ArchivalRoute routes = 62;
+  required CreationLog log = 63;
+}
+
+// Pointer to a tape pool (tape pool defined further)
+message TapePoolPointer {
+  required string name = 70;
+  required string address  = 71;
+  required CreationLog log = 72;
+}
+
+// Description of a library
+message Library {
+  required string name = 80;
+  required CreationLog log = 81;
+}
+
+// Pointer to the drive register (register defined further)
+message DriveRegisterPointer {
+  required string address = 90;
+  required CreationLog log = 91;
+}
+
+// Pointer to the agent register (register defined further)
+message AgentRegisterPointer {
+  required string address = 100;
+  required CreationLog log = 101;
+}
+
+// The root entry. This entry contains all the most static information, i.e.
+// the admin handled configuration information
+message RootEntry {
+  repeated AdminHost adminhosts = 1000;
+  repeated AdminUser adminusers = 1001;
+  repeated StorageClass storageclasses = 1002;
+  repeated TapePoolPointer tapepoolpointers = 1003;
+  repeated Library libraries = 1004;
+  optional DriveRegisterPointer driveregisterpointer = 1005;
+  optional AgentRegisterPointer agentregisterpointer = 1006;
+  optional string agentregisterintent = 1007;
+}
+
+//=========== Sub-objects ======================================================
+
+
 // The agent object represents a running process. It is a payload to an object
 // itself, and it can be owned by a watchdog or a global agent registry, which
 // lists the agents not yet watched by a watchdog.
@@ -61,130 +147,151 @@ message Agent {
   repeated string ownedobjects = 53;
 }
 
-// The root entry: it points to an agent register and a job pool register.
-// There is an integrated intent log for the agent register, but the updates 
-// should be very rare (besides first register creation). All other objects
-// can be covered by the agents's ownership logs.
-message RootEntry {
-  optional string agentregister = 100;
-  repeated string agentregisterintentlog = 101;
-  optional string jobpool = 102;
-  repeated string jobpoolintentlog = 103;
-  optional string adminuserslist = 104;
-  repeated string adminuserslistintentlog = 105;
-  optional string storageclasslist = 106;
-  repeated string storageclasslistintentlog = 107;
-}
+////// The root entry: it points to an agent register and a job pool register.
+////// There is an integrated intent log for the agent register, but the updates 
+////// should be very rare (besides first register creation). All other objects
+////// can be covered by the agents's ownership logs.
+////message RootEntry {
+////  optional string agentregister = 100;
+////  repeated string agentregisterintentlog = 101;
+////  optional string jobpool = 102;
+////  repeated string jobpoolintentlog = 103;
+////  optional string adminuserslist = 104;
+////  repeated string adminuserslistintentlog = 105;
+////  optional string storageclasslist = 106;
+////  repeated string storageclasslistintentlog = 107;
+////}
 
-// The registers (simple name arrays)
-message Register {
-  repeated string elements = 150;
-}
-
+////// The registers (simple name arrays)
+////message Register {
+////  repeated string elements = 150;
+////}
+////
 // The agent register holds 2 lists:
 // a full list, and a list of agents not yet watched
 message AgentRegister {
   repeated string agents = 160;
   repeated string untrackedagents = 161;
 }
-
-// A basic FIFO
-// poping is done by increasing the read pointer, and from time to time
-// collapsing the name array.
-// There is no write pointer because we always append at the end of the name
-// array.
-message FIFO {
-  required uint64 readPointer = 200;
-  repeated string name = 201;
-}
-
-// A basic shared counter
-message Counter {
-  required uint64 count = 300;
-}
-
-// The agents's elements:
-message ObjectCreationIntent {
-  required ObjectType type = 1101;
-  required string name = 1102;
-  required string container = 1103;
-}
-
-message ObjectOwnershipIntent {
-  required ObjectType type = 1111;
-  required string name = 1112;
-}
-
-// The tape record
-message Tape {
-  required string type = 2001;
-  required string format = 2002;
-  required string vid = 2003;
-  required uint64 maxFseq = 2004;
-  required string status = 2005 ;
-}
-
-// The drive record
-message Drive {
-  required string name = 3001;
-  required string status = 3002;
-}
-
-// The jobs
-message MigrationJob {
-  required string owner = 4001;
-  required string status = 4002;
-  required string source = 4003;
-  required string destination = 4004;
-}
-
-message RecallJob {
-  required string owner = 5001;
-  required string status = 5002;
-  required string source = 5003;
-  required string destination = 5004;
-}
-
-// The job pool
-message JobPool {
-  required string migration = 7001;
-  required string recall = 7002;
-  required string recallcounter = 7003;
-}
-
-message RecallFIFO {}
-
-message MigrationFIFO {}
-
-message UserIdentity {
-  required uint32 uid = 8001;
-  required uint32 gid = 8002;
-}
-
-message AdminUser  {
-  required UserIdentity user = 8010;
-  required UserIdentity creator = 8011;
-  required uint64 creationTime = 8012;
-  required string comment = 8013;
-}
-
-message AdminUsersList {
-  repeated AdminUser element = 8020;
-}
-
-message ConfigurationItem {
-  required UserIdentity creator = 9002;
-  optional string comment = 9003;
-}
-
-message StorageClass {
-  required string name = 9000;
-  required uint32 nbCopies = 9001;
-
-}
-
-message StorageClassList {
-  repeated StorageClass element = 9050;
-}
+////
+////// A basic FIFO
+////// poping is done by increasing the read pointer, and from time to time
+////// collapsing the name array.
+////// There is no write pointer because we always append at the end of the name
+////// array.
+////message FIFO {
+////  required uint64 readPointer = 200;
+////  repeated string name = 201;
+////}
+////
+////// A basic shared counter
+////message Counter {
+////  required uint64 count = 300;
+////}
+////
+////// The agents's elements:
+////message ObjectCreationIntent {
+////  required ObjectType type = 1101;
+////  required string name = 1102;
+////  required string container = 1103;
+////}
+////
+////message ObjectOwnershipIntent {
+////  required ObjectType type = 1111;
+////  required string name = 1112;
+////}
+////
+////// The tape record
+////message Tape {
+////  required string type = 2001;
+////  required string format = 2002;
+////  required string vid = 2003;
+////  required uint64 maxFseq = 2004;
+////  required string status = 2005 ;
+////}
+////
+////// The drive record
+////message Drive {
+////  required string name = 3001;
+////  required string status = 3002;
+////}
+////
+////// The jobs
+////message MigrationJob {
+////  required string owner = 4001;
+////  required string status = 4002;
+////  required string source = 4003;
+////  required string destination = 4004;
+////}
+////
+////message RecallJob {
+////  required string owner = 5001;
+////  required string status = 5002;
+////  required string source = 5003;
+////  required string destination = 5004;
+////}
+////
+////// The job pool
+////message JobPool {
+////  required string migration = 7001;
+////  required string recall = 7002;
+////  required string recallcounter = 7003;
+////}
+////
+////message RecallFIFO {}
+////
+////message MigrationFIFO {}
+////
+////message UserIdentity {
+////  required uint32 uid = 8001;
+////  required uint32 gid = 8002;
+////}
+////
+////message AdminUser  {
+////  required UserIdentity user = 8010;
+////  required UserIdentity creator = 8011;
+////  required uint64 creationTime = 8012;
+////  required string comment = 8013;
+////}
+////
+////// AdminHosts are just strings
+////
+////message ArchivalRoute {
+////  required uint32 copynb = 8100;
+////  required string tapepool = 8101;
+////}
+////
+////message StorageClass {
+////  required string name = 8200;
+////  required uint32 nbcopies = 8201;
+////  repeated ArchivalRoute routes = 8202;
+////}
+////
+////message Tape {
+////  required uint64 capacity = 8300;
+////  required uint64 dataontape = 8301;
+////  required string logicallibrary = 8302;
+////}
+////
+////message TapePool {
+////  
+////}
+////
+////
+////
+////message ConfigurationItem {
+////  required UserIdentity creator = 9002;
+////  optional string comment = 9003;
+////}
+////
+////message StorageClass {
+////  required string name = 9000;
+////  required uint32 nbCopies = 9001;
+////
+////}
+////
+////message StorageClassList {
+////  repeated StorageClass element = 9050;
+////}
 
 

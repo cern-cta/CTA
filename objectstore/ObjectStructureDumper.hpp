@@ -36,7 +36,7 @@ public:
     RootEntry re(agent);
     ret << re.dump(agent) << std::endl;;
     try {
-      AgentRegister ar(re.getAgentRegister(agent), agent);
+      AgentRegister ar(re.getAgentRegisterPointer(agent), agent);
       ret << ar.dump(agent) << std::endl;
       std::list<std::string> agList = ar.getAgents(agent);
       for (std::list<std::string>::iterator i=agList.begin(); i!=agList.end(); i++) {

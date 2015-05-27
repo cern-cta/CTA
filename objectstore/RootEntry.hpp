@@ -22,6 +22,9 @@
 
 #include "Backend.hpp"
 #include "ObjectOps.hpp"
+#include "CreationLog.hpp"
+#include "UserIdentity.hpp"
+#include <list>
 
 namespace cta { namespace objectstore {
 
@@ -40,60 +43,131 @@ public:
   // In memory initialiser
   void initialize();
   
-  // Get the name of the agent register (or exception if not available)
-  std::string getAgentRegister();
+  // Manipulations of AdminHosts
+  void addAdminHost(const std::string & hostname, const CreationLog & log);
+  void removeAdminHost(const std::string & hostname);
+  bool isAdminHost(const std::string & hostname);
+  class AdminHostDump {
+  public:
+    std::string hostname;
+    CreationLog log;
+  };
+  std::list<AdminHostDump> dumpAdminHosts();
   
-  // Get the name of a (possibly freshly created) agent register
-  std::string allocateOrGetAgentRegister(Agent & agent);
+  // Manipulations of Admin Users
+  void addAdminUser(const UserIdentity & user, const CreationLog & log);
+  void removeAdminUser(const UserIdentity & user);
+  bool isAdminUser(const UserIdentity & user);
+  class AdminUserDump {
+  public:
+    UserIdentity user;
+    CreationLog log;
+  };
+  std::list<AdminUserDump> dumpAdminUsers();
+  
+  // Manipulations of Storage Classes and migration routes
+  void addStorageClass(const std::string storageClass, uint16_t copyCount, const CreationLog & log);
+  void removeStorageClass(const std::string storageClass);
+  /** Ordered vector of archive routes */
+  std::vector<std::string> getArchiveRoutes (const std::string storageClass);
+  class StorageClassDump {
+  public:
+    class ArchiveRouteDump {
+    public:
+      uint16_t copyNumber;
+      std::string tapePool;
+      CreationLog log;
+    };
+    std::string storageClass;
+    uint16_t copyCount;
+    std::list<ArchiveRouteDump> routes;
+  };
+  std::list<StorageClassDump> dumpStorageClasses();
+  
+  // Manipulations of libraries
+  void addLibrary(const std::string & library);
+  void removeLibrary(const std::string & library);
+  bool libraryExists(const std::string & library);
+  std::list<std::string> dumpLibraries();
+  
+  // TapePoolManipulations
+  /** This function implicitly creates the tape pool structure and updates 
+   * the pointer to it */
+  void addTapePool(const std::string & tapePool, const CreationLog & log, Agent & agent);
+  /** This function implicitly deletes the tape pool structure. 
+   * Fails if it not empty*/
+  void removeTapePool(const std::string & tapePool, Agent & agent);
+  std::string getTapePoolPointer(const std::string & tapePool);
+  class TapePoolDump {
+  public:
+    std::string tapePool;
+    std::string address;
+    CreationLog log;
+  };
+  std::list<TapePoolDump> dumpTapePool();
+  
+  // Drive register manipulations
+  std::string getDriveRegisterPointer();  
+  std::string addOrGetDriveRegisterPointer(const CreationLog & log, Agent & agent);
+  std::string removeDriveRegister();
+  
+  // Agent register manipulations
+  std::string getAgentRegisterPointer();
+  /** We do pass the agent here even if there is no agent register yet, as it
+   * is used to generate the object name. We have the dedicated agent intent
+   * log for tracking objects being created. */
+  std::string addOrGetAgentRegisterPointer(Agent & agent, const CreationLog & log);
+  std::string removeAgentRegister();
+
 
 private:
-  void addIntendedAgentRegistry(const std::string & name);
+  void addIntendedAgentRegistry(const std::string & address);
   
-  void deleteFromIntendedAgentRegistry(const std::string & name);
+  void deleteIntendedAgentRegistry();
   
-  void setAgentRegister(const std::string & name);
+  void setAgentRegistry(const std::string & address, const CreationLog & cl);
 
-public:  
-  // Get the name of the JobPool (or exception if not available)
-  std::string getJobPool();
-  
-  // Get the name of a (possibly freshly created) job pool
-  std::string allocateOrGetJobPool(Agent & agent);
-  
-private:
-  void addIntendedJobPool(const std::string & name);
-  
-  void deleteFromIntendedJobPool(const std::string & name);
-  
-  void setJobPool(const std::string & name);
+//public:  
+//  // Get the name of the JobPool (or exception if not available)
+//  std::string getJobPool();
+//  
+//  // Get the name of a (possibly freshly created) job pool
+//  std::string allocateOrGetJobPool(Agent & agent);
+//  
+//private:
+//  void addIntendedJobPool(const std::string & name);
+//  
+//  void deleteFromIntendedJobPool(const std::string & name);
+//  
+//  void setJobPool(const std::string & name);
 
-public:  
-  // Get the name of the AdminUsersList (or exception if not available)
-  std::string getAdminUsersList();
+//public:  
+//  // Get the name of the AdminUsersList (or exception if not available)
+//  std::string getAdminUsersList();
+//  
+//  // Get the name of a (possibly freshly created) AdminUsersList
+//  std::string allocateOrGetAdminUsersList(Agent & agent);
+//  
+//private:
+//  void addIntendedAdminUsersList(const std::string & name);
+//  
+//  void deleteFromIntendedAdminUsersList(const std::string & name);
+//  
+//  void setAdminUsersList(const std::string & name);
   
-  // Get the name of a (possibly freshly created) AdminUsersList
-  std::string allocateOrGetAdminUsersList(Agent & agent);
-  
-private:
-  void addIntendedAdminUsersList(const std::string & name);
-  
-  void deleteFromIntendedAdminUsersList(const std::string & name);
-  
-  void setAdminUsersList(const std::string & name);
-  
-public:
-  // Get the name of the StorageClassList (or exception if not available)
-  std::string getStorageClassList();
-  
-  // Get the name of a (possibly freshly created) StorageClassList
-  std::string allocateOrGetStorageClassList(Agent & agent);
-  
-private:
-  void addIntendedStorageClassList(const std::string & name);
-  
-  void deleteFromIntendedStorageClassList(const std::string & name);
-  
-  void setStorageClassList(const std::string & name);
+//public:
+//  // Get the name of the StorageClassList (or exception if not available)
+//  std::string getStorageClassList();
+//  
+//  // Get the name of a (possibly freshly created) StorageClassList
+//  std::string allocateOrGetStorageClassList(Agent & agent);
+//  
+//private:
+//  void addIntendedStorageClassList(const std::string & name);
+//  
+//  void deleteFromIntendedStorageClassList(const std::string & name);
+//  
+//  void setStorageClassList(const std::string & name);
   
   
 public:
