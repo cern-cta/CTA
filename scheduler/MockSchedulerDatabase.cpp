@@ -178,22 +178,24 @@ cta::MockSchedulerDatabase::~MockSchedulerDatabase() throw() {
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::queue(const ArchiveToDirRequest &rqst) {
+void cta::MockSchedulerDatabase::queue(const ArchiveToDirRequest &rqst,
+  const std::string &tapePoolName) {
 
 }
 
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst) {
-  const std::string &tapePoolName = "TO BE DONE";
+void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst,
+  const std::string &tapePoolName) {
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "INSERT INTO ARCHIVALJOB(STATE, REMOTEFILE, ARCHIVEFILE, TAPEPOOL_NAME, UID,"
-    " GID, CREATIONTIME) VALUES(" << (int)cta::ArchivalJobState::PENDING << ",'"
-    << rqst.getRemoteFile() << "','" << rqst.getArchiveFile() << "','" <<
-    tapePoolName << "'," << rqst.getUser().user.getUid() << "," <<
-    rqst.getUser().user.getGid() << "," << (int)time(NULL) << ");";
+  query << "INSERT INTO ARCHIVALJOB(STATE, REMOTEFILE, ARCHIVEFILE,"
+    " TAPEPOOL_NAME, UID, GID, CREATIONTIME) VALUES(" <<
+    (int)cta::ArchivalJobState::PENDING << ",'" << rqst.getRemoteFile() << "','"
+    << rqst.getArchiveFile() << "','" << tapePoolName << "'," <<
+    rqst.getUser().user.getUid() << "," << rqst.getUser().user.getGid() << ","
+    << (int)time(NULL) << ");";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
     std::ostringstream message;
@@ -209,7 +211,90 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst) {
 std::map<cta::TapePool, std::list<cta::ArchivalJob> >
   cta::MockSchedulerDatabase::getArchivalJobs(const SecurityIdentity &requester)
   const {
-  return std::map<TapePool, std::list<ArchivalJob> >();
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  std::map<cta::TapePool, std::list<cta::ArchivalJob> > map;
+  query << "SELECT STATE, REMOTEFILE, ARCHIVEFILE, TAPEPOOL_NAME, UID, GID,"
+    " CREATIONTIME FROM ARCHIVALJOB ORDER BY DSTPATH;";
+  sqlite3_stmt *statement;
+  if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
+    &statement, 0)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
+    throw(exception::Exception(message.str()));
+  }
+  while(SQLITE_ROW == sqlite3_step(statement)) {
+    SqliteColumnNameToIndex idx(statement);
+    const std::string tapePoolName = (char *)sqlite3_column_text(statement,
+      idx("TAPEPOOL_NAME"));
+    const TapePool tapePool = getTapePoolByName(requester, tapePoolName);
+    map[tapePool].push_back(ArchivalJob(
+      (ArchivalJobState::Enum)sqlite3_column_int(statement,idx("STATE")),
+      (char *)sqlite3_column_text(statement,idx("REMOTEFILE")),
+      (char *)sqlite3_column_text(statement,idx("ARCHIVEFILE")),
+      UserIdentity(sqlite3_column_int(statement,idx("UID")),
+      sqlite3_column_int(statement,idx("GID"))),
+      time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
+    ));
+  }
+  sqlite3_finalize(statement);
+  return map;
+}
+
+//------------------------------------------------------------------------------
+// getTapePoolByName
+//------------------------------------------------------------------------------
+cta::TapePool cta::MockSchedulerDatabase::getTapePoolByName(
+  const SecurityIdentity &requester, const std::string &name) const {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  cta::TapePool pool;
+  query << "SELECT NAME, NBPARTIALTAPES, UID, GID, CREATIONTIME, COMMENT"
+    " FROM TAPEPOOL WHERE NAME='" << name << "';";
+  sqlite3_stmt *statement;
+  if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
+    &statement, 0)) {
+    std::ostringstream message;
+    message << __FUNCTION__ <<  " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
+    throw(exception::Exception(message.str()));
+  }
+  switch(sqlite3_step(statement)) {
+  case SQLITE_ROW:
+    {
+      SqliteColumnNameToIndex idx(statement);
+      pool = TapePool(
+        (char *)sqlite3_column_text(statement,idx("NAME")),
+        sqlite3_column_int(statement,idx("NBPARTIALTAPES")),
+        UserIdentity(sqlite3_column_int(statement,idx("UID")),
+          sqlite3_column_int(statement,idx("GID"))),
+        (char *)sqlite3_column_text(statement,idx("COMMENT")),
+        time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
+      );
+    }
+    break;
+  case SQLITE_DONE:
+    {
+      std::ostringstream message;
+      message << __FUNCTION__ << " - No tape pool found with name: " << name;
+      sqlite3_finalize(statement);
+      throw(exception::Exception(message.str()));
+    }
+    break;
+  default:
+    {
+      std::ostringstream message;
+      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
+      throw(exception::Exception(message.str()));
+    }
+  }
+  sqlite3_finalize(statement);
+  return pool;
 }
 
 //------------------------------------------------------------------------------
@@ -218,6 +303,7 @@ std::map<cta::TapePool, std::list<cta::ArchivalJob> >
 std::list<cta::ArchivalJob> cta::MockSchedulerDatabase::getArchivalJobs(
   const SecurityIdentity &requester,
   const std::string &tapePoolName) const {
+  // TO BE DONE OR DROPPED
   return std::list<ArchivalJob>();
 }
 
@@ -226,19 +312,36 @@ std::list<cta::ArchivalJob> cta::MockSchedulerDatabase::getArchivalJobs(
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::deleteArchivalJob(
   const SecurityIdentity &requester,
-  const std::string &dstPath) {
+  const std::string &archiveFile) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM ARCHIVALJOB WHERE ARCHIVEFILE='" << archiveFile << "';";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
+  }
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 > nbRowsModified) {
+    std::ostringstream message;
+    message << "Archival job for archive file " << archiveFile <<
+      " does not exist";
+    throw(exception::Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::queue(RetrieveToDirRequest &rqst) {
+void cta::MockSchedulerDatabase::queue(const RetrieveToDirRequest &rqst) {
 }
 
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::queue(RetrieveToFileRequest &rqst) {
+void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst) {
 }
 
 //------------------------------------------------------------------------------
@@ -339,7 +442,7 @@ std::list<cta::AdminUser> cta::MockSchedulerDatabase::getAdminUsers(
       sqlite3_column_int(statement,idx("ADMIN_GID")));
     const UserIdentity creator(sqlite3_column_int(statement,idx("UID")),
             sqlite3_column_int(statement,idx("GID")));
-    list.push_back(cta::AdminUser(
+    list.push_back(AdminUser(
       user,
       creator,
       (char *)sqlite3_column_text(statement,idx("COMMENT")),
@@ -420,7 +523,7 @@ std::list<cta::AdminHost> cta::MockSchedulerDatabase::getAdminHosts(
     SqliteColumnNameToIndex idx(statement);
     const UserIdentity creator(sqlite3_column_int(statement,idx("UID")),
       sqlite3_column_int(statement,idx("GID")));
-    list.push_back(cta::AdminHost(
+    list.push_back(AdminHost(
       (char *)sqlite3_column_text(statement,idx("NAME")),
       creator,
       (char *)sqlite3_column_text(statement,idx("COMMENT")),
@@ -498,7 +601,7 @@ std::list<cta::StorageClass> cta::MockSchedulerDatabase::getStorageClasses(
   }
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
-    classes.push_back(cta::StorageClass(
+    classes.push_back(StorageClass(
       (char *)sqlite3_column_text(statement,idx("NAME")),
       sqlite3_column_int(statement,idx("NBCOPIES")),
       UserIdentity(sqlite3_column_int(statement,idx("UID")),
@@ -581,7 +684,7 @@ std::list<cta::TapePool> cta::MockSchedulerDatabase::getTapePools(
   }
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
-    pools.push_back(cta::TapePool(
+    pools.push_back(TapePool(
       (char *)sqlite3_column_text(statement,idx("NAME")),
       sqlite3_column_int(statement,idx("NBPARTIALTAPES")),
       UserIdentity(sqlite3_column_int(statement,idx("UID")),
@@ -669,7 +772,7 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes(
   }
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
-    routes.push_back(cta::ArchivalRoute(
+    routes.push_back(ArchivalRoute(
       (char *)sqlite3_column_text(statement,idx("STORAGECLASS_NAME")),
       sqlite3_column_int(statement,idx("COPYNB")),
       (char *)sqlite3_column_text(statement,idx("TAPEPOOL_NAME")),
@@ -751,7 +854,7 @@ std::list<cta::LogicalLibrary> cta::MockSchedulerDatabase::getLogicalLibraries(
   }
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
-    list.push_back(cta::LogicalLibrary(
+    list.push_back(LogicalLibrary(
       (char *)sqlite3_column_text(statement,idx("NAME")),
       UserIdentity(sqlite3_column_int(statement,idx("UID")),
       sqlite3_column_int(statement,idx("GID"))),
@@ -837,7 +940,7 @@ std::list<cta::Tape> cta::MockSchedulerDatabase::getTapes(
   }
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
-    tapes.push_back(cta::Tape(
+    tapes.push_back(Tape(
       (char *)sqlite3_column_text(statement,idx("VID")),
       (char *)sqlite3_column_text(statement,idx("LOGICALLIBRARY_NAME")),
       (char *)sqlite3_column_text(statement,idx("TAPEPOOL_NAME")),

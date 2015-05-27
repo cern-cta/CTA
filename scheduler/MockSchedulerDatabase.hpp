@@ -44,15 +44,17 @@ public:
    * Queues the specified request.
    *
    * @param rqst The request to be queued.
+   * @param tapePoolName The name of the destination tape pool.
    */
-  void queue(const ArchiveToDirRequest &rqst);
+  void queue(const ArchiveToDirRequest &rqst, const std::string &tapePoolName);
 
   /**
    * Queues the specified request.
    *
    * @param rqst The request to be queued.
+   * @param tapePoolName The name of the destination tape pool.
    */
-  void queue(const ArchiveToFileRequest &rqst);
+  void queue(const ArchiveToFileRequest &rqst, const std::string &tapePoolName);
 
   /**
    * Returns all of the existing archival jobs grouped by tape pool and then
@@ -83,26 +85,26 @@ public:
    *
    * @param requester The identity of the user requesting the deletion of the
    * tape.
-   * @param dstPath The absolute path of the destination file within the
+   * @param archiveFile The absolute path of the destination file within the
    * archive namespace.
    */
   void deleteArchivalJob(
     const SecurityIdentity &requester,
-    const std::string &dstPath);
+    const std::string &archiveFile);
 
   /**
    * Queues the specified request.
    *
    * @param rqst The request to be queued.
    */
-  void queue(RetrieveToDirRequest &rqst);
+  void queue(const RetrieveToDirRequest &rqst);
 
   /**
    * Queues the specified request.
    *
    * @param rqst The request to be queued.
    */
-  void queue(RetrieveToFileRequest &rqst);
+  void queue(const RetrieveToFileRequest &rqst);
 
   /**
    * Returns all of the existing retrieval jobs grouped by tape and then
@@ -403,6 +405,16 @@ private:
    * Creates the database schema.
    */
   void createSchema();
+
+  /**
+   * Returns the tape pool with specified name.
+   *
+   * @param requester The identity of the user requesting the list.
+   * @param name The name of teh tape pool.
+   * @return The tape pool with specified name.
+   */
+  TapePool getTapePoolByName(const SecurityIdentity &requester,
+    const std::string &name) const;
 
 }; // class MockSchedulerDatabase
 

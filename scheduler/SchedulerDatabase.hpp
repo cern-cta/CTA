@@ -59,15 +59,20 @@ public:
    * Queues the specified request.
    *
    * @param rqst The request to be queued.
+   * @param tapePoolName The name of the destination tape pool.
    */
-  // DO NOT IMPLEMENT YET virtual void queue(const ArchiveToDirRequest &rqst) = 0;
+  // DO NOT IMPLEMENT YET virtual void queue(const ArchiveToDirRequest &rqst,
+    // DO NOT IMPLEMENT YET const std::string &tapePoolName) = 0;
 
   /**
    * Queues the specified request.
    *
    * @param rqst The request to be queued.
+   * @param tapePoolName The name of the destination tape pool.
    */
-  // DO NOT IMPLEMENT YET virtual void queue(const ArchiveToFileRequest &rqst) = 0;
+  virtual void queue(
+    const ArchiveToFileRequest &rqst,
+    const std::string &tapePoolName) = 0;
 
   /**
    * Returns all of the existing archival jobs grouped by tape pool and then
@@ -98,26 +103,26 @@ public:
    *
    * @param requester The identity of the user requesting the deletion of the
    * tape.
-   * @param dstPath The absolute path of the destination file within the
+   * @param archiveFile The absolute path of the destination file within the
    * archive namespace.
    */
-  // DO NOT IMPLEMENT YET virtual void deleteArchivalJob(
-    // DO NOT IMPLEMENT YET const SecurityIdentity &requester,
-    // DO NOT IMPLEMENT YET const std::string &dstPath) = 0;
+  virtual void deleteArchivalJob(
+    const SecurityIdentity &requester,
+    const std::string &archiveFile) = 0;
 
   /**
    * Queues the specified request.
    *
    * @param rqst The request to be queued.
    */
-  // DO NOT IMPLEMENT YET virtual void queue(RetrieveToDirRequest &rqst) = 0;
+  // DO NOT IMPLEMENT YET virtual void queue(const RetrieveToDirRequest &rqst) = 0;
 
   /**
    * Queues the specified request.
    *
    * @param rqst The request to be queued.
    */
-  // DO NOT IMPLEMENT YET virtual void queue(RetrieveToFileRequest &rqst) = 0;
+  // DO NOT IMPLEMENT YET virtual void queue(const RetrieveToFileRequest &rqst) = 0;
 
   /**
    * Returns all of the existing retrieval jobs grouped by tape and then
