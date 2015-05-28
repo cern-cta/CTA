@@ -41,20 +41,22 @@ public:
   ~MockSchedulerDatabase() throw();
 
   /**
-   * Queues the specified request.
+   * Queues the specified request and its associated file transfers.
    *
-   * @param rqst The request to be queued.
-   * @param tapePoolName The name of the destination tape pool.
+   * @param rqst The request.
+   * @param fileTransfers The file transfers.
    */
-  void queue(const ArchiveToDirRequest &rqst, const std::string &tapePoolName);
+  void queue(const ArchiveToDirRequest &rqst,
+   const std::list<ArchivalFileTransfer> &fileTransfers);
 
   /**
-   * Queues the specified request.
+   * Queues the specified request and its associated file transfers.
    *
-   * @param rqst The request to be queued.
-   * @param tapePoolName The name of the destination tape pool.
+   * @param rqst The request.
+   * @param fileTransfers The file transfers.
    */
-  void queue(const ArchiveToFileRequest &rqst, const std::string &tapePoolName);
+  void queue(const ArchiveToFileRequest &rqst,
+    const std::list<ArchivalFileTransfer> &fileTransfers);
 
   /**
    * Returns all of the existing archival jobs grouped by tape pool and then
@@ -93,18 +95,22 @@ public:
     const std::string &archiveFile);
 
   /**
-   * Queues the specified request.
+   * Queues the specified request and its asscoaited file transfers.
    *
-   * @param rqst The request to be queued.
+   * @param rqst The request.
+   * @param fileTransfers The file transfers.
    */
-  void queue(const RetrieveToDirRequest &rqst);
+  void queue(const RetrieveToDirRequest &rqst,
+    const std::list<RetrievalFileTransfer> &fileTransfers);
 
   /**
-   * Queues the specified request.
+   * Queues the specified request and its associated file transfers.
    *
-   * @param rqst The request to be queued.
+   * @param rqst The request.
+   * @param fileTransfers The file transfers.
    */
-  void queue(const RetrieveToFileRequest &rqst);
+  void queue(const RetrieveToFileRequest &rqst,
+    const std::list<RetrievalFileTransfer> &fileTransfers);
 
   /**
    * Returns all of the existing retrieval jobs grouped by tape and then

@@ -27,6 +27,7 @@
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MockSchedulerDatabase.hpp"
 #include "scheduler/RetrievalJob.hpp"
+#include "scheduler/RetrieveToFileRequest.hpp"
 #include "scheduler/SecurityIdentity.hpp"
 #include "scheduler/SqliteColumnNameToIndex.hpp"
 #include "scheduler/StorageClass.hpp"
@@ -150,13 +151,13 @@ void cta::MockSchedulerDatabase::createSchema() {
       ");"
     "CREATE TABLE RETRIEVALJOB("
       "STATE          INTEGER,"
-      "SRCPATH        TEXT,"
-      "DSTURL         TEXT,"
+      "ARCHIVEFILE    TEXT,"
+      "REMOTEFILE     TEXT,"
       "VID            TEXT,"
       "UID            INTEGER,"
       "GID            INTEGER,"
       "CREATIONTIME   INTEGER,"
-      "PRIMARY KEY (DSTURL, VID),"
+      "PRIMARY KEY (REMOTEFILE, VID),"
       "FOREIGN KEY (VID) REFERENCES TAPE(VID)"
       ");",
     0, 0, &zErrMsg);
@@ -179,23 +180,21 @@ cta::MockSchedulerDatabase::~MockSchedulerDatabase() throw() {
 // queue
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::queue(const ArchiveToDirRequest &rqst,
-  const std::string &tapePoolName) {
-
+  const std::list<ArchivalFileTransfer> &fileTransfers) {
 }
 
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst,
-  const std::string &tapePoolName) {
+  const std::list<ArchivalFileTransfer> &fileTransfers) {
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "INSERT INTO ARCHIVALJOB(STATE, REMOTEFILE, ARCHIVEFILE,"
-    " TAPEPOOL_NAME, UID, GID, CREATIONTIME) VALUES(" <<
+    " UID, GID, CREATIONTIME) VALUES(" <<
     (int)cta::ArchivalJobState::PENDING << ",'" << rqst.getRemoteFile() << "','"
-    << rqst.getArchiveFile() << "','" << tapePoolName << "'," <<
-    rqst.getUser().user.getUid() << "," << rqst.getUser().user.getGid() << ","
-    << (int)time(NULL) << ");";
+    << rqst.getArchiveFile() << "'," << rqst.getUser().user.getUid() << "," <<
+    rqst.getUser().user.getGid() << "," << (int)time(NULL) << ");";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
     std::ostringstream message;
@@ -215,7 +214,7 @@ std::map<cta::TapePool, std::list<cta::ArchivalJob> >
   std::ostringstream query;
   std::map<cta::TapePool, std::list<cta::ArchivalJob> > map;
   query << "SELECT STATE, REMOTEFILE, ARCHIVEFILE, TAPEPOOL_NAME, UID, GID,"
-    " CREATIONTIME FROM ARCHIVALJOB ORDER BY DSTPATH;";
+    " CREATIONTIME FROM ARCHIVALJOB ORDER BY ARCHIVEFILE;";
   sqlite3_stmt *statement;
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
@@ -335,13 +334,31 @@ void cta::MockSchedulerDatabase::deleteArchivalJob(
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::queue(const RetrieveToDirRequest &rqst) {
+void cta::MockSchedulerDatabase::queue(const RetrieveToDirRequest &rqst,
+  const std::list<RetrievalFileTransfer> &fileTransfers) {
 }
 
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst) {
+void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst,
+  const std::list<RetrievalFileTransfer> &fileTransfers) {
+/*
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "INSERT INTO RETRIEVALJOB(STATE, ARCHIVEFILE, REMOTEFILE, VID, UID,"
+    " GID, CREATIONTIME) VALUES(" << (int)cta::RetrievalJobState::PENDING <<
+    ",'" << rqst.getArchiveFile() << "','" << rqst.getRemoteFile() << "','" <<
+    vid << "'," << requester.user.getUid() << "," << requester.user.getGid() <<
+    "," << (int)time(NULL) << ");";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
+  }
+*/
 }
 
 //------------------------------------------------------------------------------
