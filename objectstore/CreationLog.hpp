@@ -18,12 +18,16 @@
 
 #include <string>
 #include <stdint.h>
+#include <limits>
 #include "objectstore/cta.pb.h"
 
 namespace cta { namespace objectstore {
 
 class CreationLog {
 public:
+  CreationLog (): uid(std::numeric_limits<decltype(uid)>::max()),
+          gid(std::numeric_limits<decltype(gid)>::max()),
+          time(std::numeric_limits<decltype(CreationLog::time)>::max()) {}
   CreationLog (uint32_t ui, const std::string & un,
     uint32_t gi, const std::string & gn,
     const std::string & hn, uint64_t t,
@@ -44,6 +48,15 @@ public:
     log.set_host(hostname);
     log.set_time(time);
     log.set_comment(comment);
+  }
+  void deserialize (const cta::objectstore::serializers::CreationLog & log) {
+    uid   = log.user().uid();
+    uname = log.user().uname();
+    gid   = log.user().gid();
+    gname = log.user().gname();
+    hostname = log.host();
+    time  = log.time();
+    comment = log.comment();
   }
 };
   

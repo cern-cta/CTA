@@ -35,6 +35,9 @@ void cta::objectstore::RootEntry::initialize() {
   m_payloadInterpreted = true;
 }
 
+// =============================================================================
+// ================ Agent register manipulation ================================
+// =============================================================================
 // Get the name of the agent register (or exception if not available)
 std::string cta::objectstore::RootEntry::getAgentRegisterPointer() {
   // Check that the fetch was done
@@ -129,6 +132,64 @@ void cta::objectstore::RootEntry::setAgentRegistry(const std::string& address,
   checkPayloadWritable();
   m_payload.mutable_agentregisterpointer()->set_address(address);
   log.serialize(*m_payload.mutable_agentregisterpointer()->mutable_log());
+}
+
+// =============================================================================
+// ================ Admin Users manipulations ==================================
+// =============================================================================
+
+void cta::objectstore::RootEntry::addAdminUser(const UserIdentity& user,
+  const CreationLog& log) {
+  checkPayloadWritable();
+  // Check that the user does not exists already
+  for (size_t i=0; i<(size_t)m_payload.adminusers_size(); i++) {
+    if (user.uid == m_payload.adminusers(i).user().uid()) {
+      throw DuplicateEntry("In RootEntry::addAdminUser: entry already exists");
+    }
+  }
+  serializers::AdminUser * au = m_payload.add_adminusers();
+  user.serialize(*au->mutable_user());
+  log.serialize(*au->mutable_log());
+}
+
+void cta::objectstore::RootEntry::removeAdminUser(const UserIdentity& user) {
+  checkPayloadWritable();
+  bool found;
+  auto *list = m_payload.mutable_adminusers();
+  do {
+    found = false;
+    for (size_t i=0; i<(size_t)list->size(); i++) {
+      if (list->Get(i).user().uid() == user.uid) {
+        found = true;
+        list->SwapElements(i, list->size()-1);
+        list->ReleaseLast();
+        break;
+      }
+    }
+  } while (found);
+}
+
+bool cta::objectstore::RootEntry::isAdminUser(const UserIdentity& user) {
+  checkPayloadReadable();
+  auto &list=m_payload.adminusers();
+  for (auto i=list.begin(); i != list.end(); i++) {
+    if (i->user().uid() == user.uid) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::list<cta::objectstore::RootEntry::AdminUserDump> 
+cta::objectstore::RootEntry::dumpAdminUsers() {
+  std::list<cta::objectstore::RootEntry::AdminUserDump> ret;
+  auto &list=m_payload.adminusers();
+  for (auto i=list.begin(); i != list.end(); i++) {
+    ret.push_back(AdminUserDump());
+    ret.back().log.deserialize(i->log());
+    ret.back().user.deserialize(i->user());
+  }
+  return ret;
 }
 
 //// Get the name of the JobPool (or exception if not available)

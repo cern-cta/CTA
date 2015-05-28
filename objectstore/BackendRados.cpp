@@ -154,7 +154,7 @@ BackendRados::ScopedLock* BackendRados::lockShared(std::string name) {
   tv.tv_usec = 0;
   tv.tv_sec = 10;
   int rc;
-  std::auto_ptr<ScopedLock> ret(new ScopedLock(m_radosCtx));
+  std::unique_ptr<ScopedLock> ret(new ScopedLock(m_radosCtx));
   do {
     rc = m_radosCtx.lock_shared(name, "lock", client, "", "", &tv, 0);
   } while (-EBUSY == rc);

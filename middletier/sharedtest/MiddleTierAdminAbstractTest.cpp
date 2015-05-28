@@ -26,7 +26,7 @@ TEST_P(MiddleTierAbstractTest, admin_createStorageClass_new) {
   using namespace cta;
 
   const SecurityIdentity requester;
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
 
   {
     std::list<StorageClass> storageClasses;
@@ -57,7 +57,7 @@ TEST_P(MiddleTierAbstractTest,
   using namespace cta;
 
   const SecurityIdentity requester;
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   
   {
     std::list<StorageClass> storageClasses;
@@ -90,7 +90,7 @@ TEST_P(MiddleTierAbstractTest,
   using namespace cta;
 
   const SecurityIdentity requester;
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   
   {
     std::list<StorageClass> storageClasses;
@@ -122,7 +122,7 @@ TEST_P(MiddleTierAbstractTest, admin_deleteStorageClass_existing) {
   using namespace cta;
 
   const SecurityIdentity requester;
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   
   {
     std::list<StorageClass> storageClasses;
@@ -160,7 +160,7 @@ TEST_P(MiddleTierAbstractTest,
   using namespace cta;
 
   const SecurityIdentity requester;
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   
   {
     std::list<StorageClass> storageClasses;
@@ -217,7 +217,7 @@ TEST_P(MiddleTierAbstractTest, admin_deleteStorageClass_in_use_by_route) {
   using namespace cta;
 
   const SecurityIdentity requester;
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   
   {
     std::list<StorageClass> storageClasses;
@@ -309,7 +309,7 @@ TEST_P(MiddleTierAbstractTest, admin_deleteStorageClass_non_existing) {
   using namespace cta;
 
   const SecurityIdentity requester;
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   
   {
     std::list<StorageClass> storageClasses;
@@ -331,7 +331,7 @@ TEST_P(MiddleTierAbstractTest, admin_deleteTapePool_in_use) {
   using namespace cta;
 
   const SecurityIdentity requester;
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
 
   {
     std::list<ArchivalRoute> archivalRoutes;
@@ -387,7 +387,7 @@ TEST_P(MiddleTierAbstractTest, admin_createArchivalRoute_new) {
   using namespace cta;
 
   const SecurityIdentity requester;
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
 
   {
     std::list<ArchivalRoute> archivalRoutes;
@@ -430,7 +430,7 @@ TEST_P(MiddleTierAbstractTest,
   using namespace cta;
 
   const SecurityIdentity requester;
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
 
   {
     std::list<ArchivalRoute> archivalRoutes;
@@ -475,7 +475,7 @@ TEST_P(MiddleTierAbstractTest, admin_deleteArchivalRoute_existing) {
   using namespace cta;
 
   const SecurityIdentity requester;
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
 
   {
     std::list<ArchivalRoute> archivalRoutes;
@@ -526,7 +526,7 @@ TEST_P(MiddleTierAbstractTest, admin_deleteArchivalRoute_non_existing) {
   using namespace cta;
 
   const SecurityIdentity requester;
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
 
   {
     std::list<ArchivalRoute> archivalRoutes;
@@ -556,7 +556,7 @@ TEST_P(MiddleTierAbstractTest, admin_createTape_new) {
   using namespace cta;
 
   const SecurityIdentity requester;
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
 
   {
     std::list<LogicalLibrary> libraries;
@@ -633,7 +633,7 @@ TEST_P(MiddleTierAbstractTest,
   using namespace cta;
 
   const SecurityIdentity requester;
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
 
   {
     std::list<LogicalLibrary> libraries;
@@ -682,7 +682,7 @@ TEST_P(MiddleTierAbstractTest, admin_createTape_new_non_existing_pool) {
   using namespace cta;
 
   const SecurityIdentity requester;
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
 
   {
     std::list<LogicalLibrary> libraries;

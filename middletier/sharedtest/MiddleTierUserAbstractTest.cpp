@@ -37,7 +37,7 @@ TEST_P(MiddleTierAbstractTest,
   user_getDirContents_root_dir_is_empty) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
   const std::string dirPath = "/";
 
@@ -49,7 +49,7 @@ TEST_P(MiddleTierAbstractTest,
 TEST_P(MiddleTierAbstractTest, user_createDir_empty_string) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
   const std::string dirPath = "";
 
@@ -60,7 +60,7 @@ TEST_P(MiddleTierAbstractTest,
   user_createDir_consecutive_slashes) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
   const std::string dirPath = "//";
 
@@ -70,7 +70,7 @@ TEST_P(MiddleTierAbstractTest,
 TEST_P(MiddleTierAbstractTest, user_createDir_invalid_chars) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent/?parent";
   
@@ -80,7 +80,7 @@ TEST_P(MiddleTierAbstractTest, user_createDir_invalid_chars) {
 TEST_P(MiddleTierAbstractTest, user_createDir_top_level) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
   
@@ -102,7 +102,7 @@ TEST_P(MiddleTierAbstractTest, user_createDir_top_level) {
 TEST_P(MiddleTierAbstractTest, user_createDir_second_level) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
 
   ASSERT_TRUE(m_middleTier->user().getDirStorageClass(requester, "/").empty());
@@ -171,7 +171,7 @@ TEST_P(MiddleTierAbstractTest,
   user_createDir_inherit_storage_class) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
 
   ASSERT_TRUE(m_middleTier->user().getDirStorageClass(requester, "/").empty());
@@ -252,7 +252,7 @@ TEST_P(MiddleTierAbstractTest,
 TEST_P(MiddleTierAbstractTest, user_deleteDir_root) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
   const std::string dirPath = "/";
 
@@ -262,7 +262,7 @@ TEST_P(MiddleTierAbstractTest, user_deleteDir_root) {
 TEST_P(MiddleTierAbstractTest, user_deleteDir_existing_top_level) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
   
@@ -297,7 +297,7 @@ TEST_P(MiddleTierAbstractTest,
   user_deleteDir_non_empty_top_level) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
 
   {
@@ -371,7 +371,7 @@ TEST_P(MiddleTierAbstractTest,
   user_deleteDir_non_existing_top_level) {
   using namespace cta;
   
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
 
   ASSERT_THROW(m_middleTier->user().deleteDir(requester, "/grandparent"), std::exception);
@@ -380,7 +380,7 @@ TEST_P(MiddleTierAbstractTest,
 TEST_P(MiddleTierAbstractTest, user_setDirStorageClass_top_level) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
 
@@ -426,7 +426,7 @@ TEST_P(MiddleTierAbstractTest,
   user_clearDirStorageClass_top_level) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
   const std::string dirPath = "/grandparent";
 
@@ -482,7 +482,7 @@ TEST_P(MiddleTierAbstractTest,
 TEST_P(MiddleTierAbstractTest, user_archive_to_new_file) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";
@@ -590,7 +590,7 @@ TEST_P(MiddleTierAbstractTest,
   user_archive_to_new_file_with_no_storage_class) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
 
   const std::string dirPath = "/grandparent";
@@ -606,7 +606,7 @@ TEST_P(MiddleTierAbstractTest,
   user_archive_to_new_file_with_zero_copy_storage_class) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";
@@ -629,7 +629,7 @@ TEST_P(MiddleTierAbstractTest,
 TEST_P(MiddleTierAbstractTest, user_archive_to_new_file_with_no_route) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";
@@ -659,7 +659,7 @@ TEST_P(MiddleTierAbstractTest,
   user_archive_to_new_file_with_incomplete_routing) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";
@@ -693,7 +693,7 @@ TEST_P(MiddleTierAbstractTest,
 TEST_P(MiddleTierAbstractTest, user_archive_to_directory) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";
@@ -813,7 +813,7 @@ TEST_P(MiddleTierAbstractTest,
   user_archive_to_directory_without_storage_class) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
 
   const std::string dirPath = "/grandparent";
@@ -832,7 +832,7 @@ TEST_P(MiddleTierAbstractTest,
   user_archive_to_directory_with_zero_copy_storage_class) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";
@@ -858,7 +858,7 @@ TEST_P(MiddleTierAbstractTest,
 TEST_P(MiddleTierAbstractTest, user_archive_to_directory_with_no_route) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";
@@ -891,7 +891,7 @@ TEST_P(MiddleTierAbstractTest,
   user_archive_to_directory_with_incomplete_routing) {
   using namespace cta;
 
-  std::auto_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
   const SecurityIdentity requester;
 
   const std::string storageClassName = "TestStorageClass";

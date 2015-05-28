@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 2.6)
 project(cta)
 
 set(CMAKE_C_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter")
-set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -Wno-long-long")
+set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -Wno-long-long -std=c++0x")
 
 
 # Explicitly setting the C and C++ compiler flags for the RelWithDebInfo build

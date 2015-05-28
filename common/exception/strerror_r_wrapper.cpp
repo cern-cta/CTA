@@ -41,14 +41,12 @@
 
 #include "strerror_r_wrapper.h"
 
-#if defined(linux)
 /*
  * Undefine _GNU_SOURCE and define _XOPEN_SOURCE as being 600 so that the
  * XSI compliant version of strerror_r() will be used
  */
 #undef _GNU_SOURCE
 #define _XOPEN_SOURCE 600
-#endif
 
 #include <string.h>
 

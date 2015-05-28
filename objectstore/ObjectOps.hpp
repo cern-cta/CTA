@@ -194,7 +194,7 @@ public:
   
 protected:
   ScopedLock(): m_objectOps(NULL), m_locked(false) {}
-  std::auto_ptr<Backend::ScopedLock> m_lock;
+  std::unique_ptr<Backend::ScopedLock> m_lock;
   ObjectOpsBase * m_objectOps;
   bool m_locked;
   void checkNotLocked() {

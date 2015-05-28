@@ -54,6 +54,11 @@ public:
   };
   std::list<AdminHostDump> dumpAdminHosts();
   
+  class DuplicateEntry: public cta::exception::Exception {
+  public:
+    DuplicateEntry(const std::string & w): cta::exception::Exception(w) {}
+  };
+  
   // Manipulations of Admin Users
   void addAdminUser(const UserIdentity & user, const CreationLog & log);
   void removeAdminUser(const UserIdentity & user);
@@ -126,7 +131,7 @@ private:
   void deleteIntendedAgentRegistry();
   
   void setAgentRegistry(const std::string & address, const CreationLog & cl);
-
+  
 //public:  
 //  // Get the name of the JobPool (or exception if not available)
 //  std::string getJobPool();

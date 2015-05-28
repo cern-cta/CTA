@@ -36,7 +36,7 @@ protected:
 TEST_F(cta_MockNameServerTest, constructor_consistency) {
   using namespace cta;
 
-  std::auto_ptr<MockNameServer> ns;
+  std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
   cta::SecurityIdentity requester;
@@ -50,7 +50,7 @@ TEST_F(cta_MockNameServerTest, constructor_consistency) {
 TEST_F(cta_MockNameServerTest, mkdir_functionality) {
   using namespace cta;
 
-  std::auto_ptr<MockNameServer> ns;
+  std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
   cta::SecurityIdentity requester;
@@ -67,7 +67,7 @@ TEST_F(cta_MockNameServerTest, mkdir_functionality) {
 TEST_F(cta_MockNameServerTest, createFile_functionality) {
   using namespace cta;
 
-  std::auto_ptr<MockNameServer> ns;
+  std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
   cta::SecurityIdentity requester;
@@ -84,7 +84,7 @@ TEST_F(cta_MockNameServerTest, createFile_functionality) {
 TEST_F(cta_MockNameServerTest, rmdir_functionality) {
   using namespace cta;
 
-  std::auto_ptr<MockNameServer> ns;
+  std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
   cta::SecurityIdentity requester;
@@ -106,7 +106,7 @@ TEST_F(cta_MockNameServerTest, rmdir_functionality) {
 TEST_F(cta_MockNameServerTest, storageClass_functionality) {
   using namespace cta;
 
-  std::auto_ptr<MockNameServer> ns;
+  std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
   cta::SecurityIdentity requester;

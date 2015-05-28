@@ -58,11 +58,11 @@ TEST_P(BackendAbstractTest, LockingInterface) {
   {
     // If we don't scope the object, the release will blow up after
     // removal of the file.
-    std::auto_ptr<cta::objectstore::Backend::ScopedLock> lock( 
+    std::unique_ptr<cta::objectstore::Backend::ScopedLock> lock( 
       m_os->lockExclusive(testObjectName));
   }
   {
-    std::auto_ptr<cta::objectstore::Backend::ScopedLock> lock( 
+    std::unique_ptr<cta::objectstore::Backend::ScopedLock> lock( 
       m_os->lockExclusive(testObjectName));
     lock->release();
   }
@@ -71,7 +71,7 @@ TEST_P(BackendAbstractTest, LockingInterface) {
 
 TEST_P(BackendAbstractTest, ParametersInterface) {
   std::cout << "Type=" << m_os->typeName() << std::endl;
-  std::auto_ptr<cta::objectstore::Backend::Parameters> params(
+  std::unique_ptr<cta::objectstore::Backend::Parameters> params(
     m_os->getParams());
   std::cout << params->toStr() << std::endl;
 }
