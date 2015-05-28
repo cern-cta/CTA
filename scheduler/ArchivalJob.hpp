@@ -41,16 +41,16 @@ public:
    * Constructor.
    *
    * @param state The state of the archival job.
-   * @param srcUrl The URL of the source file.
-   * @param dstPath The full path of the destination file within the archive.
+   * @param remoteFile The URL of the remote source file.
+   * @param archiveFile The full path of the destination file within the archive.
    * @param creator The identity of the user that created the job.
    * @param creationTime The absolute time at which the archival job was
    * vreated.
    */
   ArchivalJob(
     const ArchivalJobState::Enum state,
-    const std::string &srcUrl,
-    const std::string &dstPath,
+    const std::string &remoteFile,
+    const std::string &archiveFile,
     const UserIdentity &creator,
     const time_t creationTime);
 
@@ -77,18 +77,18 @@ public:
   const char *getStateStr() const throw();
 
   /**
-   * Returns the URL of the source file.
+   * Returns the URL of the remote source file.
    *
-   * @return The URL of the source file.
+   * @return The URL of the remote source file.
    */
-  const std::string &getSrcUrl() const throw();
+  const std::string &getRemoteFile() const throw();
 
   /**
    * Returns the full path of the destination file within the archive.
    *
    * @return The full path of the destination file within the archive.
    */
-  const std::string &getDstPath() const throw();
+  const std::string &getArchiveFile() const throw();
 
   /**
    * Returns the time when the job was created.
@@ -112,14 +112,14 @@ private:
   ArchivalJobState::Enum m_state;
 
   /**
-   * The URL of the source file.
+   * The URL of the remote source file.
    */
-  std::string m_srcUrl;
+  std::string m_remoteFile;
 
   /**
    * The full path of the destination file within the archive.
    */
-  std::string m_dstPath;
+  std::string m_archiveFile;
 
   /**
    * The time when the job was created.

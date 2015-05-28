@@ -79,31 +79,30 @@ public:
    * Returns all of the existing archival jobs grouped by tape pool and then
    * sorted by creation time in ascending order (oldest first).
    *
-   * @param requester The identity of the user requesting the list.
+   * @param requester The identity of the requester.
    * @return All of the existing archival jobs grouped by tape pool and then
    * sorted by creation time in ascending order (oldest first).
    */
-  // DO NOT IMPLEMENT YET virtual std::map<TapePool, std::list<ArchivalJob> > getArchivalJobs(
-    // DO NOT IMPLEMENT YET const SecurityIdentity &requester) const = 0;
+  virtual std::map<TapePool, std::list<ArchivalJob> > getArchivalJobs(
+    const SecurityIdentity &requester) const = 0;
 
   /**
    * Returns the list of archival jobs associated with the specified tape pool
    * sorted by creation time in ascending order (oldest first).
    *
-   * @param requester The identity of the user requesting the list.
+   * @param requester The identity of the requester.
    * @param tapePoolName The name of the tape pool.
    * @return The list of archival jobs associated with the specified tape pool
    * sorted by creation time in ascending order (oldest first).
    */
-  // DO NOT IMPLEMENT YET virtual std::list<ArchivalJob> getArchivalJobs(
-    // DO NOT IMPLEMENT YET const SecurityIdentity &requester,
-    // DO NOT IMPLEMENT YET const std::string &tapePoolName) const = 0;
+  virtual std::list<ArchivalJob> getArchivalJobs(
+    const SecurityIdentity &requester,
+    const std::string &tapePoolName) const = 0;
 
   /**
    * Deletes the specified archival job.
    *
-   * @param requester The identity of the user requesting the deletion of the
-   * tape.
+   * @param requester The identity of the requester.
    * @param archiveFile The absolute path of the destination file within the
    * archive namespace.
    */
@@ -133,42 +132,41 @@ public:
    * Returns all of the existing retrieval jobs grouped by tape and then
    * sorted by creation time in ascending order (oldest first).
    *
-   * @param requester The identity of the user requesting the list.
+   * @param requester The identity of the requester.
    * @return All of the existing retrieval jobs grouped by tape and then
    * sorted by creation time in ascending order (oldest first).
    */
-  // DO NOT IMPLEMENT YET virtual std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs(
-    // DO NOT IMPLEMENT YET const SecurityIdentity &requester) const = 0;
+  virtual std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs(
+    const SecurityIdentity &requester) const = 0;
 
   /**
    * Returns the list of retrieval jobs associated with the specified tape
    * sorted by creation time in ascending order (oldest first).
    *
-   * @param requester The identity of the user requesting the list.
+   * @param requester The identity of the requester.
    * @param vid The volume identifier of the tape.
    * @return The list of retrieval jobs associated with the specified tape
    * sorted by creation time in ascending order (oldest first).
    */
-  // DO NOT IMPLEMENT YET virtual std::list<RetrievalJob> getRetrievalJobs(
-    // DO NOT IMPLEMENT YET const SecurityIdentity &requester,
-    // DO NOT IMPLEMENT YET const std::string &vid) const = 0;
+  virtual std::list<RetrievalJob> getRetrievalJobs(
+    const SecurityIdentity &requester,
+    const std::string &vid) const = 0;
   
   /**
    * Deletes the specified retrieval job.
    *
-   * @param requester The identity of the user requesting the deletion of the
+   * @param requester The identity of the requester.
    * tape.
-   * @param dstUrl The URL of the destination file or directory.
+   * @param remoteFile The URL of the destination file.
    */
-  // DO NOT IMPLEMENT YET virtual void deleteRetrievalJob(
-    // DO NOT IMPLEMENT YET const SecurityIdentity &requester,
-    // DO NOT IMPLEMENT YET const std::string &dstUrl) = 0;
+  virtual void deleteRetrievalJob(
+    const SecurityIdentity &requester,
+    const std::string &remoteFile) = 0;
 
   /**
    * Creates the specified administrator.
    *
-   * @param requester The identity of the user requesting the creation of the
-   * administrator.
+   * @param requester The identity of the requester.
    * @param user The identity of the administrator.
    * @param comment The comment describing the sministrator.
    */
@@ -180,8 +178,7 @@ public:
   /**
    * Deletes the specified administrator.
    *
-   * @param requester The identity of the user requesting the deletion of the
-   * administrator.
+   * @param requester The identity of the requester.
    * @param user The identity of the administrator.
    */
   virtual void deleteAdminUser(
@@ -191,7 +188,7 @@ public:
   /**
    * Returns the current list of administrators in lexicographical order.
    *
-   * @param requester The identity of the user requesting the list.
+   * @param requester The identity of the requester.
    * @return The current list of administrators in lexicographical order.
    */
   virtual std::list<AdminUser> getAdminUsers(const SecurityIdentity &requester)
@@ -200,8 +197,7 @@ public:
   /**
    * Creates the specified administration host.
    *
-   * @param requester The identity of the user requesting the creation of the
-   * administration host.
+   * @param requester The identity of the requester.
    * @param hostName The network name of the administration host.
    * @param comment The comment describing the administration host.
    */
@@ -213,8 +209,7 @@ public:
   /**
    * Deletes the specified administration host.
    *
-   * @param requester The identity of the user requesting the deletion of the
-   * administration host.
+   * @param requester The identity of the requester.
    * @param hostName The network name of the administration host.
    */
   virtual void deleteAdminHost(
@@ -224,7 +219,7 @@ public:
   /**
    * Returns the current list of administration hosts in lexicographical order.
    *
-   * @param requester The identity of the user requesting the list.
+   * @param requester The identity of the requester.
    * @return The current list of administration hosts in lexicographical order.
    */
   virtual std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester)
@@ -233,8 +228,7 @@ public:
   /**
    * Creates the specified storage class.
    *
-   * @param requester The identity of the user requesting the creation of the
-   * storage class.
+   * @param requester The identity of the requester.
    * @param name The name of the storage class.
    * @param nbCopies The number of copies a file associated with this storage
    * class should have on tape.
@@ -249,8 +243,7 @@ public:
   /**
    * Deletes the specified storage class.
    *
-   * @param requester The identity of the user requesting the deletion of the
-   * storage class.
+   * @param requester The identity of the requester.
    * @param name The name of the storage class.
    */
   virtual void deleteStorageClass(
@@ -260,7 +253,7 @@ public:
   /**
    * Gets the current list of storage classes in lexicographical order.
    *
-   * @param requester The identity of the user requesting the list.
+   * @param requester The identity of the requester.
    * @return The current list of storage classes in lexicographical order.
    */
   virtual std::list<StorageClass> getStorageClasses(
@@ -269,8 +262,7 @@ public:
   /**
    * Creates a tape pool with the specifed name.
    *
-   * @param requester The identity of the user requesting the creation of the
-   * tape pool.
+   * @param requester The identity of the requester.
    * @param name The name of the tape pool.
    * @param nbPartialTapes The maximum number of tapes that can be partially
    * full at any moment in time.
@@ -285,8 +277,7 @@ public:
   /**
    * Delete the tape pool with the specifed name.
    *
-   * @param requester The identity of the user requesting the deletion of the
-   * tape pool.
+   * @param requester The identity of the requester.
    * @param name The name of the tape pool.
    */
   virtual void deleteTapePool(
@@ -296,7 +287,7 @@ public:
   /**
    * Gets the current list of tape pools in lexicographical order.
    *
-   * @param requester The identity of the user requesting the list.
+   * @param requester The identity of the requester.
    * @return The current list of tape pools in lexicographical order.
    */
   virtual std::list<TapePool> getTapePools(
@@ -305,8 +296,7 @@ public:
   /**
    * Creates the specified archival route.
    *
-   * @param requester The identity of the user requesting the creation of the
-   * archival route.
+   * @param requester The identity of the requester.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
@@ -323,8 +313,7 @@ public:
   /**
    * Deletes the specified archival route.
    *
-   * @param requester The identity of the user requesting the deletion of the
-   * archival route.
+   * @param requester The identity of the requester.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
@@ -337,7 +326,7 @@ public:
   /**
    * Gets the current list of archival routes.
    *
-   * @param requester The identity of the user requesting the list.
+   * @param requester The identity of the requester.
    */
   virtual std::list<ArchivalRoute> getArchivalRoutes(
     const SecurityIdentity &requester) const = 0;
@@ -345,7 +334,7 @@ public:
   /**
    * Creates a logical library with the specified name.
    *
-   * @param requester The identity of the user requesting the creation of the
+   * @param requester The identity of the requester.
    * logical library.
    * @param name The name of the logical library.
    * @param comment The comment describing the logical library.
@@ -358,8 +347,7 @@ public:
   /**
    * Deletes the logical library with the specified name.
    *
-   * @param requester The identity of the user requesting the deletion of the
-   * logical library.
+   * @param requester The identity of the requester.
    * @param name The name of the logical library.
    */
   virtual void deleteLogicalLibrary(
@@ -369,7 +357,7 @@ public:
   /**
    * Returns the current list of libraries in lexicographical order.
    *
-   * @param requester The identity of the user requesting the list.
+   * @param requester The identity of the requester.
    * @return The current list of libraries in lexicographical order.
    */
   virtual std::list<LogicalLibrary> getLogicalLibraries(
@@ -378,8 +366,7 @@ public:
   /**
    * Creates a tape.
    *
-   * @param requester The identity of the user requesting the creation of the
-   * tape.
+   * @param requester The identity of the requester.
    * @param vid The volume identifier of the tape.
    * @param logicalLibraryName The name of the logical library to which the tape
    * belongs.
@@ -398,8 +385,7 @@ public:
   /**
    * Deletes the tape with the specified volume identifier.
    *
-   * @param requester The identity of the user requesting the deletion of the
-   * tape.
+   * @param requester The identity of the requester.
    * @param vid The volume identifier of the tape.
    */
   virtual void deleteTape(
@@ -410,7 +396,7 @@ public:
    * Returns the current list of tapes in the lexicographical order of their
    * volume identifiers.
    *
-   * @param requester The identity of the user requesting the list.
+   * @param requester The identity of the requester.
    * @return The current list of tapes in the lexicographical order of their
    * volume identifiers.
    */

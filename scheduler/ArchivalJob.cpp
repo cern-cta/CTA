@@ -31,13 +31,13 @@ cta::ArchivalJob::ArchivalJob():
 //------------------------------------------------------------------------------
 cta::ArchivalJob::ArchivalJob(
   const ArchivalJobState::Enum state,
-  const std::string &srcUrl,
-  const std::string &dstPath,
+  const std::string &remoteFile,
+  const std::string &archiveFile,
   const UserIdentity &creator,
   const time_t creationTime):
   m_state(state),
-  m_srcUrl(srcUrl),
-  m_dstPath(dstPath),
+  m_remoteFile(remoteFile),
+  m_archiveFile(archiveFile),
   m_creationTime(creationTime),
   m_creator(creator) {
 }
@@ -64,17 +64,17 @@ const char *cta::ArchivalJob::getStateStr() const throw() {
 }
 
 //------------------------------------------------------------------------------
-// getSrcUrl
+// getRemoteFile
 //------------------------------------------------------------------------------
-const std::string &cta::ArchivalJob::getSrcUrl() const throw() {
-  return m_srcUrl;
+const std::string &cta::ArchivalJob::getRemoteFile() const throw() {
+  return m_remoteFile;
 }
 
 //------------------------------------------------------------------------------
-// getDstPath
+// getArchiveFile
 //------------------------------------------------------------------------------
-const std::string &cta::ArchivalJob::getDstPath() const throw() {
-  return m_dstPath;
+const std::string &cta::ArchivalJob::getArchiveFile() const throw() {
+  return m_archiveFile;
 }
 
 //------------------------------------------------------------------------------

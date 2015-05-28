@@ -181,6 +181,7 @@ cta::MockSchedulerDatabase::~MockSchedulerDatabase() throw() {
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::queue(const ArchiveToDirRequest &rqst,
   const std::list<ArchivalFileTransfer> &fileTransfers) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
@@ -269,7 +270,7 @@ cta::TapePool cta::MockSchedulerDatabase::getTapePoolByName(
         (char *)sqlite3_column_text(statement,idx("NAME")),
         sqlite3_column_int(statement,idx("NBPARTIALTAPES")),
         UserIdentity(sqlite3_column_int(statement,idx("UID")),
-          sqlite3_column_int(statement,idx("GID"))),
+        sqlite3_column_int(statement,idx("GID"))),
         (char *)sqlite3_column_text(statement,idx("COMMENT")),
         time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
       );
@@ -302,8 +303,7 @@ cta::TapePool cta::MockSchedulerDatabase::getTapePoolByName(
 std::list<cta::ArchivalJob> cta::MockSchedulerDatabase::getArchivalJobs(
   const SecurityIdentity &requester,
   const std::string &tapePoolName) const {
-  // TO BE DONE OR DROPPED
-  return std::list<ArchivalJob>();
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
@@ -336,6 +336,7 @@ void cta::MockSchedulerDatabase::deleteArchivalJob(
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::queue(const RetrieveToDirRequest &rqst,
   const std::list<RetrievalFileTransfer> &fileTransfers) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
@@ -343,13 +344,12 @@ void cta::MockSchedulerDatabase::queue(const RetrieveToDirRequest &rqst,
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst,
   const std::list<RetrievalFileTransfer> &fileTransfers) {
-/*
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "INSERT INTO RETRIEVALJOB(STATE, ARCHIVEFILE, REMOTEFILE, VID, UID,"
+  query << "INSERT INTO RETRIEVALJOB(STATE, ARCHIVEFILE, REMOTEFILE, UID,"
     " GID, CREATIONTIME) VALUES(" << (int)cta::RetrievalJobState::PENDING <<
-    ",'" << rqst.getArchiveFile() << "','" << rqst.getRemoteFile() << "','" <<
-    vid << "'," << requester.user.getUid() << "," << requester.user.getGid() <<
+    ",'" << rqst.getArchiveFile() << "','" << rqst.getRemoteFile() << "'," <<
+    rqst.getUser().user.getUid() << "," << rqst.getUser().user.getGid() <<
     "," << (int)time(NULL) << ");";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
@@ -358,7 +358,6 @@ void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst,
     sqlite3_free(zErrMsg);
     throw(exception::Exception(message.str()));
   }
-*/
 }
 
 //------------------------------------------------------------------------------
@@ -366,7 +365,93 @@ void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst,
 //------------------------------------------------------------------------------
 std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::MockSchedulerDatabase::
   getRetrievalJobs(const SecurityIdentity &requester) const {
-  return std::map<Tape, std::list<RetrievalJob> >();
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  std::map<cta::Tape, std::list<cta::RetrievalJob> > map;
+  query << "SELECT STATE, ARCHIVEFILE, REMOTEFILE, VID, UID, GID, CREATIONTIME"
+    " FROM RETRIEVALJOB ORDER BY REMOTEFILE;";
+  sqlite3_stmt *statement;
+  if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
+    &statement, 0)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
+    throw(exception::Exception(message.str()));
+  }
+  while(SQLITE_ROW == sqlite3_step(statement)) {
+    SqliteColumnNameToIndex idx(statement);
+    const std::string vid = (char *)sqlite3_column_text(statement,idx("VID"));
+    const Tape tape = getTapeByVid(requester, vid);
+    map[tape].push_back(RetrievalJob(
+      (RetrievalJobState::Enum)sqlite3_column_int(statement,idx("STATE")),
+      (char *)sqlite3_column_text(statement,idx("ARCHIVEFILE")),
+      (char *)sqlite3_column_text(statement,idx("REMOTEFILE")),
+      UserIdentity(sqlite3_column_int(statement,idx("UID")),
+      sqlite3_column_int(statement,idx("GID"))),
+      time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
+    ));
+  }
+  sqlite3_finalize(statement);
+  return map;
+}
+
+//------------------------------------------------------------------------------
+// getTapeByVid
+//------------------------------------------------------------------------------
+cta::Tape cta::MockSchedulerDatabase::getTapeByVid(
+  const SecurityIdentity &requester, const std::string &vid) const {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  cta::Tape tape;
+  query << "SELECT VID, LOGICALLIBRARY_NAME, TAPEPOOL_NAME, CAPACITY_BYTES,"
+    " DATAONTAPE_BYTES, UID, GID, CREATIONTIME, COMMENT FROM TAPE WHERE VID='"
+    << vid << "';";
+  sqlite3_stmt *statement;
+  if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
+    &statement, 0)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
+    throw(exception::Exception(message.str()));
+  }
+  switch(sqlite3_step(statement)) {
+  case SQLITE_ROW:
+    {
+      SqliteColumnNameToIndex idx(statement);
+      tape = Tape(
+        (char *)sqlite3_column_text(statement,idx("VID")),
+        (char *)sqlite3_column_text(statement,idx("LOGICALLIBRARY_NAME")),
+        (char *)sqlite3_column_text(statement,idx("TAPEPOOL_NAME")),
+        sqlite3_column_int(statement,idx("CAPACITY_BYTES")),
+        sqlite3_column_int(statement,idx("DATAONTAPE_BYTES")),
+        UserIdentity(sqlite3_column_int(statement,idx("UID")),
+        sqlite3_column_int(statement,idx("GID"))),
+        (char *)sqlite3_column_text(statement,idx("COMMENT")),
+        time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
+      );
+    }
+    break;
+  case SQLITE_DONE:
+    {
+      std::ostringstream message;
+      message << "getTapeByVid() - No tape found with vid: " << vid;
+      sqlite3_finalize(statement);
+      throw(exception::Exception(message.str()));
+    }
+    break;
+  default:
+    {
+      std::ostringstream message;
+      message << "getTapeByVid() - SQLite error: " << zErrMsg;
+      sqlite3_free(zErrMsg);
+      sqlite3_finalize(statement);
+      throw(exception::Exception(message.str()));
+    }
+  }
+  sqlite3_finalize(statement);
+  return tape;
 }
 
 //------------------------------------------------------------------------------
@@ -375,7 +460,7 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::MockSchedulerDatabase::
 std::list<cta::RetrievalJob> cta::MockSchedulerDatabase::getRetrievalJobs(
   const SecurityIdentity &requester,
   const std::string &vid) const {
-  return std::list<RetrievalJob>();
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
   
 //------------------------------------------------------------------------------
@@ -383,7 +468,25 @@ std::list<cta::RetrievalJob> cta::MockSchedulerDatabase::getRetrievalJobs(
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::deleteRetrievalJob(
   const SecurityIdentity &requester,
-  const std::string &dstUrl) {
+  const std::string &remoteFile) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "DELETE FROM RETRIEVALJOB WHERE REMOTEFILE='" << remoteFile << "';";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
+  }
+
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 > nbRowsModified) {
+    std::ostringstream message;
+    message << "Retrival job for remote file file " << remoteFile <<
+      " does not exist";
+    throw(exception::Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -447,18 +550,18 @@ std::list<cta::AdminUser> cta::MockSchedulerDatabase::getAdminUsers(
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){
-      std::ostringstream message;
-      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      sqlite3_finalize(statement);
-      throw(exception::Exception(message.str()));
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
+    throw(exception::Exception(message.str()));
   }
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
     const UserIdentity user(sqlite3_column_int(statement,idx("ADMIN_UID")),
       sqlite3_column_int(statement,idx("ADMIN_GID")));
     const UserIdentity creator(sqlite3_column_int(statement,idx("UID")),
-            sqlite3_column_int(statement,idx("GID")));
+      sqlite3_column_int(statement,idx("GID")));
     list.push_back(AdminUser(
       user,
       creator,
@@ -530,11 +633,11 @@ std::list<cta::AdminHost> cta::MockSchedulerDatabase::getAdminHosts(
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){
-      std::ostringstream message;
-      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      sqlite3_finalize(statement);
-      throw(exception::Exception(message.str()));
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
+    throw(exception::Exception(message.str()));
   }
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
@@ -565,10 +668,10 @@ void cta::MockSchedulerDatabase::createStorageClass(
     (int)time(NULL) << ",'" << comment << "');";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
-      std::ostringstream message;
-      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      throw(exception::Exception(message.str()));
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
   }
 }
 
@@ -583,10 +686,10 @@ void cta::MockSchedulerDatabase::deleteStorageClass(
   query << "DELETE FROM STORAGECLASS WHERE NAME='" << name << "';";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
-      std::ostringstream message;
-      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      throw(exception::Exception(message.str()));
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
   }
 
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
@@ -610,11 +713,11 @@ std::list<cta::StorageClass> cta::MockSchedulerDatabase::getStorageClasses(
   sqlite3_stmt *statement;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){
-      std::ostringstream message;
-      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      sqlite3_finalize(statement);
-      throw(exception::Exception(message.str()));
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
+    throw(exception::Exception(message.str()));
   }
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
@@ -693,11 +796,11 @@ std::list<cta::TapePool> cta::MockSchedulerDatabase::getTapePools(
   sqlite3_stmt *statement;
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
-      std::ostringstream message;
-      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      sqlite3_finalize(statement);
-      throw(exception::Exception(message.str()));
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    sqlite3_finalize(statement);
+    throw(exception::Exception(message.str()));
   }
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
@@ -752,10 +855,10 @@ void cta::MockSchedulerDatabase::deleteArchivalRoute(
     storageClassName << "' AND COPYNB=" << (int)copyNb << ";";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
-      std::ostringstream message;
-      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      throw(exception::Exception(message.str()));
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
   }
 
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
@@ -818,10 +921,10 @@ void cta::MockSchedulerDatabase::createLogicalLibrary(
     "');";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
-      std::ostringstream message;
-      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
-      throw(exception::Exception(message.str()));
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
   }
 }
 

@@ -558,8 +558,8 @@ TEST_P(MiddleTierAbstractTest, user_archive_to_new_file) {
     for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
       jobItor != poolJobs.end(); jobItor++) {
       ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
-      srcUrls.insert(jobItor->getSrcUrl());
-      dstPaths.insert(jobItor->getDstPath());
+      srcUrls.insert(jobItor->getRemoteFile());
+      dstPaths.insert(jobItor->getArchiveFile());
     }
     ASSERT_EQ(1, srcUrls.size());
     ASSERT_FALSE(srcUrls.find("diskUrl") == srcUrls.end());
@@ -576,8 +576,8 @@ TEST_P(MiddleTierAbstractTest, user_archive_to_new_file) {
     for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
       jobItor != poolJobs.end(); jobItor++) {
       ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
-      srcUrls.insert(jobItor->getSrcUrl());
-      dstPaths.insert(jobItor->getDstPath());
+      srcUrls.insert(jobItor->getRemoteFile());
+      dstPaths.insert(jobItor->getArchiveFile());
     }
     ASSERT_EQ(1, srcUrls.size());
     ASSERT_FALSE(srcUrls.find("diskUrl") == srcUrls.end());
@@ -769,8 +769,8 @@ TEST_P(MiddleTierAbstractTest, user_archive_to_directory) {
     for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
       jobItor != poolJobs.end(); jobItor++) {
       ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
-      srcUrls.insert(jobItor->getSrcUrl());
-      dstPaths.insert(jobItor->getDstPath());
+      srcUrls.insert(jobItor->getRemoteFile());
+      dstPaths.insert(jobItor->getArchiveFile());
     }
     ASSERT_EQ(4, srcUrls.size());
     ASSERT_FALSE(srcUrls.find("diskUrl1") == srcUrls.end());
@@ -793,8 +793,8 @@ TEST_P(MiddleTierAbstractTest, user_archive_to_directory) {
     for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
       jobItor != poolJobs.end(); jobItor++) {
       ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
-      srcUrls.insert(jobItor->getSrcUrl());
-      dstPaths.insert(jobItor->getDstPath());
+      srcUrls.insert(jobItor->getRemoteFile());
+      dstPaths.insert(jobItor->getArchiveFile());
     }
     ASSERT_EQ(4, srcUrls.size());
     ASSERT_FALSE(srcUrls.find("diskUrl1") == srcUrls.end());
