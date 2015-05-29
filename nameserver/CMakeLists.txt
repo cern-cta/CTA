@@ -10,7 +10,8 @@ target_link_libraries(ctamocknameserver
   ctanameserver)
 
 add_library (ctamocknameservertest SHARED
-  MockNameServerTest.cpp)
+  MockNameServerTest.cpp
+  NameServerFactory.cpp)
 
 target_link_libraries(ctamocknameservertest
   ctamocknameserver)
