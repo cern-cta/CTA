@@ -62,7 +62,7 @@ target_link_libraries(ctamockschedulerdb
   ctascheduler)
 
 add_library (ctaschedulertest SHARED
-  SchedulerFactory.cpp)
+  SchedulerDatabaseFactory.cpp)
 
 target_link_libraries(ctaschedulertest
   ctamockschedulerdb)

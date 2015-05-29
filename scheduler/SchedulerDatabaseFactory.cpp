@@ -16,10 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/SchedulerFactory.hpp"
+#include "scheduler/SchedulerDatabaseFactory.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::SchedulerFactory::~SchedulerFactory() throw() {
+cta::SchedulerDatabaseFactory::~SchedulerDatabaseFactory() throw() {
 }

@@ -22,27 +22,28 @@
 
 namespace cta {
 
-// Forward declarations for opaque references.
-class Scheduler;
+// Forward declarations
+class SchedulerDatabase;
 
 /**
- * Asbtract class specifying the interface to a factory of scheduler objects.
+ * Asbtract class specifying the interface to a factory of scheduler database
+ * objects.
  */
-class SchedulerFactory {
+class SchedulerDatabaseFactory {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~SchedulerFactory() throw() = 0;
+  virtual ~SchedulerDatabaseFactory() throw() = 0;
 
   /**
-   * Returns a newly created scheduler object.
+   * Returns a newly created scheduler database object.
    *
-   * @return A newly created scheduler object.
+   * @return A newly created scheduler database object.
    */
-  virtual std::auto_ptr<Scheduler *> create() = 0;
+  virtual std::auto_ptr<SchedulerDatabase *> create() = 0;
 
-}; // class SchedulerFactory
+}; // class SchedulerDatabaseFactory
 
 } // namespace cta
