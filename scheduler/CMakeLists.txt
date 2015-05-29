@@ -59,4 +59,10 @@ add_library (ctamockschedulerdb
   MockSchedulerDatabase.cpp)
 
 target_link_libraries(ctamockschedulerdb
-  ctascedhuler)
+  ctascheduler)
+
+add_library (ctaschedulertest SHARED
+  SchedulerFactory.cpp)
+
+target_link_libraries(ctaschedulertest
+  ctamockschedulerdb)
