@@ -25,6 +25,22 @@ namespace cta { namespace objectstore { namespace serializers {
 void removeString(::google::protobuf::RepeatedPtrField< ::std::string>* field, 
   const std::string & value);
 
+template <class C1, class C2>
+void removeOccurences(::google::protobuf::RepeatedPtrField<C1>* field,
+  const C2 & value) {
+  bool found;
+  do {
+    found=false;
+    for (size_t i=0; i<(size_t)field->size(); i++) {
+      if (value == field->Get(i)) {
+        found = true;
+        field->SwapElements(i, field->size()-1);
+        field->RemoveLast();
+        break;
+      }
+    }
+  } while (found);
+}
 class NotFound: public cta::exception::Exception {
   public:
     NotFound(const std::string & w): cta::exception::Exception(w) {}
@@ -35,5 +51,35 @@ size_t findString(::google::protobuf::RepeatedPtrField< ::std::string>* field,
 
 size_t findStringFrom(::google::protobuf::RepeatedPtrField< ::std::string>* field,
   size_t fromIndex, const std::string & value);
+
+template <class C1, class C2>
+C1 & findElement(::google::protobuf::RepeatedPtrField<C1>* field, const C2 & value) {
+  for (auto i=field->begin(); i!= field->end(); i++) {
+    if (value == *i) {
+      return *i;
+    }
+  }
+  throw NotFound("In cta::objectsotre::serializers::findElement(non-const): element not found");
+}
+
+template <class C1, class C2>
+const C1 & findElement(const ::google::protobuf::RepeatedPtrField<C1>& field, const C2 & value) {
+  for (auto i=field.begin(); i!= field.end(); i++) {
+    if (value == *i) {
+      return *i;
+    }
+  }
+  throw NotFound("In cta::objectsotre::serializers::findElement(const): element not found");
+}
+
+template <class C1, class C2>
+bool isElementPresent(const ::google::protobuf::RepeatedPtrField<C1>& field, const C2 & value) {
+  for (auto i=field.begin(); i!= field.end(); i++) {
+    if (value == *i) {
+      return true;
+    }
+  }
+  return false;
+}
 
 }}}

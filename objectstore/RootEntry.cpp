@@ -36,117 +36,75 @@ void cta::objectstore::RootEntry::initialize() {
 }
 
 // =============================================================================
-// ================ Agent register manipulation ================================
+// ================ Admin Hosts manipulations ==================================
 // =============================================================================
-// Get the name of the agent register (or exception if not available)
-std::string cta::objectstore::RootEntry::getAgentRegisterPointer() {
-  // Check that the fetch was done
-  if (!m_payloadInterpreted)
-    throw ObjectOpsBase::NotFetched("In RootEntry::getAgentRegisterPointer: object not yet fetched");
-  // If the registry is defined, return it, job done.
-  if (m_payload.agentregisterpointer().address().size())
-    return m_payload.agentregisterpointer().address();
-  throw NotAllocatedEx("In RootEntry::getAgentRegister: agentRegister not yet allocated");
+
+// This operator will be used in the following usage of the templated
+// findElement and removeOccurences
+namespace {
+  bool operator==(const std::string & hostName, 
+    const cta::objectstore::serializers::AdminHost & ah) {
+    return ah.hostname() == hostName;
+  }
 }
 
-// Get the name of a (possibly freshly created) agent register
-std::string cta::objectstore::RootEntry::addOrGetAgentRegisterPointer(Agent & agent,
-  const CreationLog & log) {
-  // Check if the agent register exists
+void cta::objectstore::RootEntry::addAdminHost(const std::string& hostname,
+  const CreationLog& log) {
+  checkPayloadWritable();
+  // Check that the host is not listed already
   try {
-    return getAgentRegisterPointer();
-  } catch (NotAllocatedEx &) {
-    // If we get here, the agent register is not created yet, so we have to do it:
-    // lock the entry again, for writing. We take the lock ourselves if needed
-    // This will make an autonomous transaction
-    std::auto_ptr<ScopedExclusiveLock> lockPtr;
-    if (!m_locksForWriteCount)
-      lockPtr.reset(new ScopedExclusiveLock(*this));
-    // If the registry is already defined, somebody was faster. We're done.
-    fetch();
-    if (m_payload.agentregisterpointer().address().size()) {
-      lockPtr.reset(NULL);
-      return m_payload.agentregisterpointer().address();
-    }
-    // We will really create the register
-    // decide on the object's name
-    std::string arName (agent.nextId("agentRegister"));
-    // Record the agent registry in our own intent
-    addIntendedAgentRegistry(arName);
-    commit();
-    // Create the agent registry
-    AgentRegister ar(arName, m_objectStore);
-    ar.initialize();
-    // There is no garbage collection for an agent registry: if it is not
-    // plugged to the root entry, it does not exist.
-    ar.setOwner("");
-    ar.setBackupOwner("");
-    ar.insert();
-    // Take a lock on agent registry
-    ScopedExclusiveLock arLock(ar);
-    // Move agent registry from intent to official
-    setAgentRegistry(arName, log);
-    deleteIntendedAgentRegistry();
-    commit();
-    // Record completion in agent registry
-    ar.setOwner(getNameIfSet());
-    ar.setBackupOwner(getNameIfSet());
-    ar.commit();
-    // And we are done. Release locks
-    lockPtr.reset(NULL);
-    arLock.release();
-    return arName;
-  }
+    serializers::findElement(m_payload.adminhosts(), hostname);
+    throw DuplicateEntry("In RootEntry::addAdminHost: entry already exists");
+  } catch (serializers::NotFound &) {}
+  // Add the host
+  auto * ah = m_payload.add_adminhosts();
+  ah->set_hostname(hostname);
+  log.serialize(*ah->mutable_log());
 }
 
-void cta::objectstore::RootEntry::addIntendedAgentRegistry(const std::string& address) {
+void cta::objectstore::RootEntry::removeAdminHost(const std::string & hostname) {
   checkPayloadWritable();
-  // We are supposed to have only one intended agent registry at a time.
-  // If we got the lock and there is one entry, this means the previous
-  // attempt to create one did not succeed.
-  // When getting here, having a set pointer to the registry is an error.
-  if (m_payload.agentregisterpointer().address().size()) {
-    throw exception::Exception("In cta::objectstore::RootEntry::addIntendedAgentRegistry:"
-        " pointer to registry already set");
-  }
-  if (m_payload.agentregisterintent().size()) {
-    // The intended object might not have made it to the official pointer.
-    // If it did, we just clean up the intent.
-    // If it did not, we clean up the object if present, clean up the intent
-    // and replace it with the new one.
-    // We do not recycle the object, as the state is doubtful.
-    if (ObjectOps<serializers::RootEntry>::m_objectStore.exists(m_payload.agentregisterintent())) {
-      ObjectOps<serializers::RootEntry>::m_objectStore.read(m_payload.agentregisterintent());
-    }
-  }
-  m_payload.set_agentregisterintent(address);
+  serializers::removeOccurences(m_payload.mutable_adminhosts(), hostname);
 }
 
-void cta::objectstore::RootEntry::deleteIntendedAgentRegistry() {
-  checkPayloadWritable();
-  m_payload.set_agentregisterintent("");
+bool cta::objectstore::RootEntry::isAdminHost(const std::string& hostname) {
+  checkPayloadReadable();
+  return serializers::isElementPresent(m_payload.adminhosts(), hostname);
 }
 
-void cta::objectstore::RootEntry::setAgentRegistry(const std::string& address,
-  const CreationLog & log) {
-  checkPayloadWritable();
-  m_payload.mutable_agentregisterpointer()->set_address(address);
-  log.serialize(*m_payload.mutable_agentregisterpointer()->mutable_log());
+auto cta::objectstore::RootEntry::dumpAdminHosts() -> std::list<AdminHostDump> {
+  checkPayloadReadable();
+  std::list<AdminHostDump> ret;
+  auto &list=m_payload.adminhosts();
+  for (auto i=list.begin();i!=list.end(); i++) {
+    ret.push_back(AdminHostDump());
+    ret.back().hostname = i->hostname();
+    ret.back().log.deserialize(i->log());
+  }
+  return ret;
 }
 
 // =============================================================================
 // ================ Admin Users manipulations ==================================
 // =============================================================================
 
+// This operator will be used in the following usage of the templated
+// findElement and removeOccurences
+namespace {
+  bool operator==(const cta::objectstore::UserIdentity & user, 
+    const cta::objectstore::serializers::AdminUser & au) {
+    return au.user().uid() == user.uid;
+  }
+}
+
 void cta::objectstore::RootEntry::addAdminUser(const UserIdentity& user,
   const CreationLog& log) {
   checkPayloadWritable();
   // Check that the user does not exists already
-  for (size_t i=0; i<(size_t)m_payload.adminusers_size(); i++) {
-    if (user.uid == m_payload.adminusers(i).user().uid()) {
-      throw DuplicateEntry("In RootEntry::addAdminUser: entry already exists");
-    }
-  }
+  try {
+    serializers::findElement(m_payload.adminusers(), user);
+    throw DuplicateEntry("In RootEntry::addAdminUser: entry already exists");
+  } catch (...) {}
   serializers::AdminUser * au = m_payload.add_adminusers();
   user.serialize(*au->mutable_user());
   log.serialize(*au->mutable_log());
@@ -154,34 +112,17 @@ void cta::objectstore::RootEntry::addAdminUser(const UserIdentity& user,
 
 void cta::objectstore::RootEntry::removeAdminUser(const UserIdentity& user) {
   checkPayloadWritable();
-  bool found;
-  auto *list = m_payload.mutable_adminusers();
-  do {
-    found = false;
-    for (size_t i=0; i<(size_t)list->size(); i++) {
-      if (list->Get(i).user().uid() == user.uid) {
-        found = true;
-        list->SwapElements(i, list->size()-1);
-        list->ReleaseLast();
-        break;
-      }
-    }
-  } while (found);
+  serializers::removeOccurences(m_payload.mutable_adminusers(), user);
 }
 
 bool cta::objectstore::RootEntry::isAdminUser(const UserIdentity& user) {
   checkPayloadReadable();
-  auto &list=m_payload.adminusers();
-  for (auto i=list.begin(); i != list.end(); i++) {
-    if (i->user().uid() == user.uid) {
-      return true;
-    }
-  }
-  return false;
+  return serializers::isElementPresent(m_payload.adminusers(), user);
 }
 
 std::list<cta::objectstore::RootEntry::AdminUserDump> 
 cta::objectstore::RootEntry::dumpAdminUsers() {
+  checkPayloadReadable();
   std::list<cta::objectstore::RootEntry::AdminUserDump> ret;
   auto &list=m_payload.adminusers();
   for (auto i=list.begin(); i != list.end(); i++) {
@@ -191,6 +132,128 @@ cta::objectstore::RootEntry::dumpAdminUsers() {
   }
   return ret;
 }
+
+// =============================================================================
+// ========== Storage Class and archival routes manipulations ==================
+// =============================================================================
+
+// This operator will be used in the following usage of the templated
+// findElement and removeOccurences
+namespace {
+  bool operator==(const std::string & scName, 
+    const cta::objectstore::serializers::StorageClass & ssc) {
+    return ssc.name() == scName;
+  }
+}
+
+void cta::objectstore::RootEntry::addStorageClass(const std::string storageClass, 
+    uint16_t copyCount, const CreationLog & log) {
+  checkPayloadWritable();
+  // Check the storage class does not exist already
+  try {
+    serializers::findElement(m_payload.storageclasses(), storageClass);
+    throw DuplicateEntry("In RootEntry::addStorageClass: trying to create duplicate entry");
+  } catch (...) {}
+  // Insert the storage class
+  auto * sc = m_payload.mutable_storageclasses()->Add();
+  sc->set_name(storageClass);
+  sc->set_copycount(copyCount);
+  log.serialize(*sc->mutable_log());
+}
+
+void cta::objectstore::RootEntry::removeStorageClass(const std::string storageClass) {
+  checkPayloadWritable();
+  serializers::removeOccurences(m_payload.mutable_storageclasses(), storageClass);
+}
+
+void cta::objectstore::RootEntry::setStorageClassCopyCount(
+  const std::string& storageClass, uint16_t copyCount) {
+  checkPayloadWritable();
+  auto & sc = serializers::findElement(m_payload.mutable_storageclasses(), storageClass);
+  // If we reduce the number of routes, we have to remove the extra ones.
+  if (copyCount < sc.copycount()) {
+    for (size_t i = copyCount; i<sc.copycount(); i++) {
+      serializers::removeOccurences(sc.mutable_routes(), i);
+    }
+  }
+  // and set the count
+  sc.set_copycount(copyCount);
+}
+
+uint16_t cta::objectstore::RootEntry::getStorageClassCopyCount (
+  std::string & storageClass) {
+  checkPayloadReadable();
+  auto & sc = serializers::findElement(m_payload.storageclasses(), storageClass);
+  return sc.copycount();
+}
+
+// This operator will be used in the following usage of the findElement
+// removeOccurences
+namespace {
+  bool operator==(uint16_t copyNb, 
+    const cta::objectstore::serializers::ArchivalRoute & ar) {
+    return ar.copynb() == copyNb;
+  }
+}
+
+void cta::objectstore::RootEntry::setArchiveRoute(const std::string& storageClass,
+  uint16_t copyNb, const std::string& tapePool, const CreationLog& cl) {
+  checkPayloadWritable();
+  // Find the storageClass entry
+  if (copyNb > maxCopyCount) {
+    std::stringstream ss;
+    ss << "In RootEntry::setArchiveRoute: invalid copy number: "  << 
+        copyNb <<  " > " << maxCopyCount;
+    throw InvalidCopyNumber(ss.str());
+  }
+  auto & sc = serializers::findElement(m_payload.mutable_storageclasses(), storageClass);
+  if (copyNb >= sc.copycount()) {
+    std::stringstream ss;
+    ss << "In RootEntry::setArchiveRoute: copy number out of range: " <<
+        copyNb << " >= " << sc.copycount();
+    throw ss.str();
+  }
+  // Find the archival route (if it exists)
+  try {
+    // It does: update in place.
+    auto &ar = serializers::findElement(sc.mutable_routes(), copyNb);
+    // Sanity check: is it the right route?
+    if (ar.copynb() != copyNb) {
+      throw exception::Exception(
+        "In RootEntry::setArchiveRoute: internal error: extracted wrong route");
+    }
+    cl.serialize(*ar.mutable_log());
+    ar.set_tapepool(tapePool);
+  } catch (serializers::NotFound &) {
+    // The route is not present yet. Add it.
+    auto *ar = sc.mutable_routes()->Add();
+    cl.serialize(*ar->mutable_log());
+    ar->set_copynb(copyNb);
+    ar->set_tapepool(tapePool);
+  }
+}
+
+std::vector<std::string> cta::objectstore::RootEntry::getArchiveRoutes(const std::string storageClass) {
+  checkPayloadReadable();
+  auto & sc = serializers::findElement(m_payload.storageclasses(), storageClass);
+  std::vector<std::string> ret;
+  ret.resize(sc.copycount());
+  auto & list = sc.routes();
+  for (auto i = list.begin(); i!= list.end(); i++) {
+    ret[i->copynb()] = i->tapepool();
+  }
+  return ret;
+}
+
+// TODO
+//auto cta::objectstore::RootEntry::dumpStorageClasses() -> std::list<StorageClassDump> {
+//  std::list<StorageClassDump> ret;
+//  
+//}
+
+//void cta::objectstore::RootEntry::
+
+
 
 //// Get the name of the JobPool (or exception if not available)
 //std::string cta::objectstore::RootEntry::getJobPool() {
@@ -346,6 +409,106 @@ cta::objectstore::RootEntry::dumpAdminUsers() {
 //void cta::objectstore::RootEntry::setStorageClassList(const std::string& name) {
 //  throw cta::exception::Exception("TODO");
 //}
+
+// =============================================================================
+// ================ Agent register manipulation ================================
+// =============================================================================
+// Get the name of the agent register (or exception if not available)
+std::string cta::objectstore::RootEntry::getAgentRegisterPointer() {
+  // Check that the fetch was done
+  if (!m_payloadInterpreted)
+    throw ObjectOpsBase::NotFetched("In RootEntry::getAgentRegisterPointer: object not yet fetched");
+  // If the registry is defined, return it, job done.
+  if (m_payload.agentregisterpointer().address().size())
+    return m_payload.agentregisterpointer().address();
+  throw NotAllocatedEx("In RootEntry::getAgentRegister: agentRegister not yet allocated");
+}
+
+// Get the name of a (possibly freshly created) agent register
+std::string cta::objectstore::RootEntry::addOrGetAgentRegisterPointer(Agent & agent,
+  const CreationLog & log) {
+  // Check if the agent register exists
+  try {
+    return getAgentRegisterPointer();
+  } catch (NotAllocatedEx &) {
+    // If we get here, the agent register is not created yet, so we have to do it:
+    // lock the entry again, for writing. We take the lock ourselves if needed
+    // This will make an autonomous transaction
+    std::auto_ptr<ScopedExclusiveLock> lockPtr;
+    if (!m_locksForWriteCount)
+      lockPtr.reset(new ScopedExclusiveLock(*this));
+    // If the registry is already defined, somebody was faster. We're done.
+    fetch();
+    if (m_payload.agentregisterpointer().address().size()) {
+      lockPtr.reset(NULL);
+      return m_payload.agentregisterpointer().address();
+    }
+    // We will really create the register
+    // decide on the object's name
+    std::string arName (agent.nextId("agentRegister"));
+    // Record the agent registry in our own intent
+    addIntendedAgentRegistry(arName);
+    commit();
+    // Create the agent registry
+    AgentRegister ar(arName, m_objectStore);
+    ar.initialize();
+    // There is no garbage collection for an agent registry: if it is not
+    // plugged to the root entry, it does not exist.
+    ar.setOwner("");
+    ar.setBackupOwner("");
+    ar.insert();
+    // Take a lock on agent registry
+    ScopedExclusiveLock arLock(ar);
+    // Move agent registry from intent to official
+    setAgentRegistry(arName, log);
+    deleteIntendedAgentRegistry();
+    commit();
+    // Record completion in agent registry
+    ar.setOwner(getNameIfSet());
+    ar.setBackupOwner(getNameIfSet());
+    ar.commit();
+    // And we are done. Release locks
+    lockPtr.reset(NULL);
+    arLock.release();
+    return arName;
+  }
+}
+
+void cta::objectstore::RootEntry::addIntendedAgentRegistry(const std::string& address) {
+  checkPayloadWritable();
+  // We are supposed to have only one intended agent registry at a time.
+  // If we got the lock and there is one entry, this means the previous
+  // attempt to create one did not succeed.
+  // When getting here, having a set pointer to the registry is an error.
+  if (m_payload.agentregisterpointer().address().size()) {
+    throw exception::Exception("In cta::objectstore::RootEntry::addIntendedAgentRegistry:"
+        " pointer to registry already set");
+  }
+  if (m_payload.agentregisterintent().size()) {
+    // The intended object might not have made it to the official pointer.
+    // If it did, we just clean up the intent.
+    // If it did not, we clean up the object if present, clean up the intent
+    // and replace it with the new one.
+    // We do not recycle the object, as the state is doubtful.
+    if (ObjectOps<serializers::RootEntry>::m_objectStore.exists(m_payload.agentregisterintent())) {
+      ObjectOps<serializers::RootEntry>::m_objectStore.read(m_payload.agentregisterintent());
+    }
+  }
+  m_payload.set_agentregisterintent(address);
+}
+
+void cta::objectstore::RootEntry::deleteIntendedAgentRegistry() {
+  checkPayloadWritable();
+  m_payload.set_agentregisterintent("");
+}
+
+void cta::objectstore::RootEntry::setAgentRegistry(const std::string& address,
+  const CreationLog & log) {
+  checkPayloadWritable();
+  m_payload.mutable_agentregisterpointer()->set_address(address);
+  log.serialize(*m_payload.mutable_agentregisterpointer()->mutable_log());
+}
+
 
 // Dump the root entry
 std::string cta::objectstore::RootEntry::dump () {

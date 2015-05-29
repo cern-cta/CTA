@@ -47,6 +47,17 @@ public:
     gid = user.gid();
     gname = user.gname();
   }
-};  
-  
+  /**
+   * We can compare the UserIdentities between each other, and with the
+   * serialized user identities.
+   * The current actual criteria is numeric uid equility only.
+   */
+  bool operator==(const UserIdentity & o) const {
+    return uid == o.uid;
+  }
+  bool operator==(const cta::objectstore::serializers::UserIdentity & o) const {
+    return uid == o.uid();
+  }
+};
+
 }}

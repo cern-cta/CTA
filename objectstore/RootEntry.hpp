@@ -43,7 +43,7 @@ public:
   // In memory initialiser
   void initialize();
   
-  // Manipulations of AdminHosts
+  // Manipulations of AdminHosts ===============================================
   void addAdminHost(const std::string & hostname, const CreationLog & log);
   void removeAdminHost(const std::string & hostname);
   bool isAdminHost(const std::string & hostname);
@@ -54,12 +54,9 @@ public:
   };
   std::list<AdminHostDump> dumpAdminHosts();
   
-  class DuplicateEntry: public cta::exception::Exception {
-  public:
-    DuplicateEntry(const std::string & w): cta::exception::Exception(w) {}
-  };
+  CTA_GENERATE_EXCEPTION_CLASS(DuplicateEntry);
   
-  // Manipulations of Admin Users
+  // Manipulations of Admin Users ==============================================
   void addAdminUser(const UserIdentity & user, const CreationLog & log);
   void removeAdminUser(const UserIdentity & user);
   bool isAdminUser(const UserIdentity & user);
@@ -70,9 +67,24 @@ public:
   };
   std::list<AdminUserDump> dumpAdminUsers();
   
-  // Manipulations of Storage Classes and migration routes
-  void addStorageClass(const std::string storageClass, uint16_t copyCount, const CreationLog & log);
+  // Manipulations of Storage Classes and archival routes ======================
+  CTA_GENERATE_EXCEPTION_CLASS(MissingEntry);
+  CTA_GENERATE_EXCEPTION_CLASS(IncompleteEntry);
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchStorageClass);
+  CTA_GENERATE_EXCEPTION_CLASS(InvalidCopyNumber);
+  CTA_GENERATE_EXCEPTION_CLASS(CopyNumberOutOfRange);
+private:
+  // Totally arbitrary (but ridiculously high) copy number
+  static const uint16_t maxCopyCount=100;
+public:
+  void addStorageClass(const std::string storageClass, uint16_t copyCount, 
+    const CreationLog & log);
   void removeStorageClass(const std::string storageClass);
+  void setStorageClassCopyCount(const std::string & storageClass, uint16_t copyCount);
+  uint16_t getStorageClassCopyCount(std::string & storageClass);
+  void setArchiveRoute(const std::string & storageClass, uint16_t copyNb, 
+    const std::string & tapePool, const CreationLog & cl);
+
   /** Ordered vector of archive routes */
   std::vector<std::string> getArchiveRoutes (const std::string storageClass);
   class StorageClassDump {
@@ -89,7 +101,7 @@ public:
   };
   std::list<StorageClassDump> dumpStorageClasses();
   
-  // Manipulations of libraries
+  // Manipulations of libraries ================================================
   void addLibrary(const std::string & library);
   void removeLibrary(const std::string & library);
   bool libraryExists(const std::string & library);
@@ -111,12 +123,12 @@ public:
   };
   std::list<TapePoolDump> dumpTapePool();
   
-  // Drive register manipulations
+  // Drive register manipulations ==============================================
   std::string getDriveRegisterPointer();  
   std::string addOrGetDriveRegisterPointer(const CreationLog & log, Agent & agent);
   std::string removeDriveRegister();
   
-  // Agent register manipulations
+  // Agent register manipulations ==============================================
   std::string getAgentRegisterPointer();
   /** We do pass the agent here even if there is no agent register yet, as it
    * is used to generate the object name. We have the dedicated agent intent

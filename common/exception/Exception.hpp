@@ -160,4 +160,10 @@ namespace cta {
 
 } // end of castor namespace
 
+#define CTA_GENERATE_EXCEPTION_CLASS(A)                     \
+class A: public cta::exception::Exception {                 \
+public:                                                     \
+  A(const std::string & w): cta::exception::Exception(w) {} \
+}
+  
 
