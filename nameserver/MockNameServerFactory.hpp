@@ -18,31 +18,29 @@
 
 #pragma once
 
-#include <memory>
+#include "nameserver/NameServerFactory.hpp"
 
 namespace cta {
 
-// Forward declarations
-class NameServer;
-
 /**
- * Asbtract class specifying the interface to a factory of name server objects.
+ * Concrete implementation of a name server factory that creates mock name
+ * server objects.
  */
-class NameServerFactory {
+class MockNameServerFactory: public NameServerFactory {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~NameServerFactory() throw() = 0;
+  ~MockNameServerFactory() throw();
 
   /**
    * Returns a newly created name server object.
    *
    * @return A newly created name server object.
    */
-  virtual std::auto_ptr<NameServer> create() = 0;
+  std::auto_ptr<NameServer> create();
 
-}; // class NameServerFactory
+}; // class MockNameServerFactory
 
 } // namespace cta

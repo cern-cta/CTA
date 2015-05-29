@@ -156,11 +156,11 @@ public:
    *
    * @param requester The identity of the user requesting the deletion of the
    * tape.
-   * @param dstUrl The URL of the destination file or directory.
+   * @param remoteFile The URL of the remote file.
    */
   void deleteRetrievalJob(
     const SecurityIdentity &requester,
-    const std::string &dstUrl);
+    const std::string &remoteFile);
 
   /**
    * Creates the specified administrator.

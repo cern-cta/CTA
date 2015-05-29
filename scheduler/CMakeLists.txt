@@ -39,6 +39,7 @@ set (CTA_SCHEDULER_SRC_FILES
   RetrievalRequest.cpp
   RetrieveToDirRequest.cpp
   RetrieveToFileRequest.cpp
+  Scheduler.cpp
   SchedulerDatabase.cpp
   SecurityIdentity.cpp
   SqliteColumnNameToIndex.cpp
@@ -55,14 +56,11 @@ set (CTA_SCHEDULER_SRC_FILES
 add_library (ctascheduler SHARED
   ${CTA_SCHEDULER_SRC_FILES})
 
-add_library (ctamockschedulerdb
-  MockSchedulerDatabase.cpp)
-
-target_link_libraries(ctamockschedulerdb
-  ctascheduler)
-
 add_library (ctaschedulertest SHARED
-  SchedulerDatabaseFactory.cpp)
+  MockSchedulerDatabase.cpp
+  MockSchedulerDatabaseFactory.cpp
+  SchedulerDatabaseFactory.cpp
+  SchedulerTest.cpp)
 
 target_link_libraries(ctaschedulertest
-  ctamockschedulerdb)
+  ctascheduler)

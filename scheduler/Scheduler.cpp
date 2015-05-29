@@ -8,8 +8,7 @@
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY {
-} without even the implied warranty of
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
@@ -17,7 +16,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "nameserver/NameServer.hpp"
+#include "scheduler/AdminHost.hpp"
+#include "scheduler/AdminUser.hpp"
+#include "scheduler/ArchivalJob.hpp"
+#include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/ArchiveToDirRequest.hpp"
+#include "scheduler/ArchiveToFileRequest.hpp"
+#include "scheduler/LogicalLibrary.hpp"
+#include "scheduler/RetrievalJob.hpp"
+#include "scheduler/RetrieveToDirRequest.hpp"
+#include "scheduler/RetrieveToFileRequest.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/SecurityIdentity.hpp"
+#include "scheduler/StorageClass.hpp"
+#include "scheduler/Tape.hpp"
+#include "scheduler/TapePool.hpp"
+#include "scheduler/UserIdentity.hpp"
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::Scheduler::Scheduler(NameServer &ns, SchedulerDatabase &db):
+  m_ns(ns),
+  m_db(db) {
+}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -28,34 +52,36 @@ cta::Scheduler::~Scheduler() throw() {
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void Scheduler::cta::Scheduler::queue(const ArchiveToDirRequest &rqst) {
+void cta::Scheduler::queue(const ArchiveToDirRequest &rqst) {
 }
 
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void Scheduler::cta::Scheduler::queue(const ArchiveToFileRequest &rqst) {
+void cta::Scheduler::queue(const ArchiveToFileRequest &rqst) {
 }
 
 //------------------------------------------------------------------------------
 // getArchivalJobs
 //------------------------------------------------------------------------------
-std::map<TapePool, std::list<ArchivalJob> > Scheduler::getArchivalJobs(
-  const SecurityIdentity &requester) const {
+std::map<cta::TapePool, std::list<cta::ArchivalJob> > cta::Scheduler::
+  getArchivalJobs(const SecurityIdentity &requester) const {
+  return std::map<TapePool, std::list<ArchivalJob> >();
 }
 
 //------------------------------------------------------------------------------
 // getArchivalJobs
 //------------------------------------------------------------------------------
-std::list<ArchivalJob> Scheduler::getArchivalJobs(
+std::list<cta::ArchivalJob> cta::Scheduler::getArchivalJobs(
   const SecurityIdentity &requester,
   const std::string &tapePoolName) const {
+  return std::list<ArchivalJob>();
 }
 
 //------------------------------------------------------------------------------
 // deleteArchivalJob
 //------------------------------------------------------------------------------
-void Scheduler::deleteArchivalJob(
+void cta::Scheduler::deleteArchivalJob(
   const SecurityIdentity &requester,
   const std::string &dstPath) {
 }
@@ -63,42 +89,44 @@ void Scheduler::deleteArchivalJob(
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void Scheduler::queue(RetrieveToDirRequest &rqst) {
+void cta::Scheduler::queue(RetrieveToDirRequest &rqst) {
 }
 
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void Scheduler::queue(RetrieveToFileRequest &rqst) {
+void cta::Scheduler::queue(RetrieveToFileRequest &rqst) {
 }
 
 //------------------------------------------------------------------------------
 // getRetrievalJobs
 //------------------------------------------------------------------------------
-std::map<Tape, std::list<RetrievalJob> > Scheduler::getRetrievalJobs(
-  const SecurityIdentity &requester) const {
+std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::
+  Scheduler::getRetrievalJobs(const SecurityIdentity &requester) const {
+  return std::map<Tape, std::list<RetrievalJob> >();
 }
 
 //------------------------------------------------------------------------------
 // getRetrievalJobs
 //------------------------------------------------------------------------------
-std::list<RetrievalJob> Scheduler::getRetrievalJobs(
+std::list<cta::RetrievalJob> cta::Scheduler::getRetrievalJobs(
   const SecurityIdentity &requester,
   const std::string &vid) const {
+  return std::list<RetrievalJob>();
 }
   
 //------------------------------------------------------------------------------
 // deleteRetrievalJob
 //------------------------------------------------------------------------------
-void Scheduler::deleteRetrievalJob(
+void cta::Scheduler::deleteRetrievalJob(
   const SecurityIdentity &requester,
-  const std::string &dstUrl) {
+  const std::string &remoteFile) {
 }
 
 //------------------------------------------------------------------------------
 // createAdminUser
 //------------------------------------------------------------------------------
-void Scheduler::createAdminUser(
+void cta::Scheduler::createAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user,
   const std::string &comment) {
@@ -107,7 +135,7 @@ void Scheduler::createAdminUser(
 //------------------------------------------------------------------------------
 // deleteAdminUser
 //------------------------------------------------------------------------------
-void Scheduler::deleteAdminUser(
+void cta::Scheduler::deleteAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user) {
 }
@@ -115,14 +143,15 @@ void Scheduler::deleteAdminUser(
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
-std::list<AdminUser> Scheduler::getAdminUsers(const SecurityIdentity &requester)
- const {
+std::list<cta::AdminUser> cta::Scheduler::getAdminUsers(const SecurityIdentity
+  &requester) const {
+  return std::list<cta::AdminUser>();
 }
 
 //------------------------------------------------------------------------------
 // createAdminHost
 //------------------------------------------------------------------------------
-void Scheduler::createAdminHost(
+void cta::Scheduler::createAdminHost(
   const SecurityIdentity &requester,
   const std::string &hostName,
   const std::string &comment) {
@@ -131,7 +160,7 @@ void Scheduler::createAdminHost(
 //------------------------------------------------------------------------------
 // deleteAdminHost
 //------------------------------------------------------------------------------
-void Scheduler::deleteAdminHost(
+void cta::Scheduler::deleteAdminHost(
   const SecurityIdentity &requester,
   const std::string &hostName) {
 }
@@ -139,14 +168,15 @@ void Scheduler::deleteAdminHost(
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
-std::list<AdminHost> Scheduler::getAdminHosts(const SecurityIdentity &requester)
- const {
+std::list<cta::AdminHost> cta::Scheduler::getAdminHosts(const SecurityIdentity
+  &requester) const {
+  return std::list<AdminHost>();
 }
 
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void Scheduler::createStorageClass(
+void cta::Scheduler::createStorageClass(
   const SecurityIdentity &requester,
   const std::string &name,
   const uint16_t nbCopies,
@@ -158,7 +188,7 @@ void Scheduler::createStorageClass(
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
-void Scheduler::deleteStorageClass(
+void cta::Scheduler::deleteStorageClass(
   const SecurityIdentity &requester,
   const std::string &name) {
   //IMPORTANT
@@ -169,14 +199,15 @@ void Scheduler::deleteStorageClass(
 //------------------------------------------------------------------------------
 // getStorageClasses
 //------------------------------------------------------------------------------
-std::list<StorageClass> Scheduler::getStorageClasses(
+std::list<cta::StorageClass> cta::Scheduler::getStorageClasses(
   const SecurityIdentity &requester) const {
+  return std::list<StorageClass>();
 }
 
 //------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
-void Scheduler::createTapePool(
+void cta::Scheduler::createTapePool(
   const SecurityIdentity &requester,
   const std::string &name,
   const uint32_t nbPartialTapes,
@@ -186,7 +217,7 @@ void Scheduler::createTapePool(
 //------------------------------------------------------------------------------
 // deleteTapePool
 //------------------------------------------------------------------------------
-void Scheduler::deleteTapePool(
+void cta::Scheduler::deleteTapePool(
   const SecurityIdentity &requester,
   const std::string &name) {
 }
@@ -194,14 +225,15 @@ void Scheduler::deleteTapePool(
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
-std::list<TapePool> Scheduler::getTapePools(
+std::list<cta::TapePool> cta::Scheduler::getTapePools(
   const SecurityIdentity &requester) const {
+  return std::list<cta::TapePool>();
 }
 
 //------------------------------------------------------------------------------
 // createArchivalRoute
 //------------------------------------------------------------------------------
-void Scheduler::createArchivalRoute(
+void cta::Scheduler::createArchivalRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint16_t copyNb,
@@ -212,7 +244,7 @@ void Scheduler::createArchivalRoute(
 //------------------------------------------------------------------------------
 // deleteArchivalRoute
 //------------------------------------------------------------------------------
-void Scheduler::deleteArchivalRoute(
+void cta::Scheduler::deleteArchivalRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint16_t copyNb) {
@@ -221,14 +253,15 @@ void Scheduler::deleteArchivalRoute(
 //------------------------------------------------------------------------------
 // getArchivalRoutes
 //------------------------------------------------------------------------------
-std::list<ArchivalRoute> Scheduler::getArchivalRoutes(
+std::list<cta::ArchivalRoute> cta::Scheduler::getArchivalRoutes(
   const SecurityIdentity &requester) const {
+  return std::list<ArchivalRoute>();
 }
 
 //------------------------------------------------------------------------------
 // createLogicalLibrary
 //------------------------------------------------------------------------------
-void Scheduler::createLogicalLibrary(
+void cta::Scheduler::createLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name,
   const std::string &comment) {
@@ -237,7 +270,7 @@ void Scheduler::createLogicalLibrary(
 //------------------------------------------------------------------------------
 // deleteLogicalLibrary
 //------------------------------------------------------------------------------
-void Scheduler::deleteLogicalLibrary(
+void cta::Scheduler::deleteLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name) {
 }
@@ -245,14 +278,15 @@ void Scheduler::deleteLogicalLibrary(
 //------------------------------------------------------------------------------
 // getLogicalLibraries
 //------------------------------------------------------------------------------
-std::list<LogicalLibrary> Scheduler::getLogicalLibraries(
+std::list<cta::LogicalLibrary> cta::Scheduler::getLogicalLibraries(
   const SecurityIdentity &requester) const {
+  return std::list<LogicalLibrary>();
 }
 
 //------------------------------------------------------------------------------
 // createTape
 //------------------------------------------------------------------------------
-void Scheduler::createTape(
+void cta::Scheduler::createTape(
   const SecurityIdentity &requester,
   const std::string &vid,
   const std::string &logicalLibraryName,
@@ -264,7 +298,7 @@ void Scheduler::createTape(
 //------------------------------------------------------------------------------
 // deleteTape
 //------------------------------------------------------------------------------
-void Scheduler::deleteTape(
+void cta::Scheduler::deleteTape(
   const SecurityIdentity &requester,
   const std::string &vid) {
 }
@@ -272,6 +306,7 @@ void Scheduler::deleteTape(
 //------------------------------------------------------------------------------
 // getTapes
 //------------------------------------------------------------------------------
-std::list<Tape> Scheduler::getTapes(
+std::list<cta::Tape> cta::Scheduler::getTapes(
   const SecurityIdentity &requester) const {
+  return std::list<Tape>();
 }

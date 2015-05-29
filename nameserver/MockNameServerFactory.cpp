@@ -16,33 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "nameserver/MockNameServer.hpp"
+#include "nameserver/MockNameServerFactory.hpp"
 
-#include <memory>
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+cta::MockNameServerFactory::~MockNameServerFactory() throw() {
+}
 
-namespace cta {
-
-// Forward declarations
-class NameServer;
-
-/**
- * Asbtract class specifying the interface to a factory of name server objects.
- */
-class NameServerFactory {
-public:
-
-  /**
-   * Destructor.
-   */
-  virtual ~NameServerFactory() throw() = 0;
-
-  /**
-   * Returns a newly created name server object.
-   *
-   * @return A newly created name server object.
-   */
-  virtual std::auto_ptr<NameServer> create() = 0;
-
-}; // class NameServerFactory
-
-} // namespace cta
+//------------------------------------------------------------------------------
+// create
+//------------------------------------------------------------------------------
+std::auto_ptr<cta::NameServer> cta::MockNameServerFactory::create() {
+  return std::auto_ptr<NameServer>(new MockNameServer());
+}

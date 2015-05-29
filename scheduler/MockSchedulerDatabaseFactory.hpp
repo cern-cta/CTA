@@ -18,31 +18,29 @@
 
 #pragma once
 
-#include <memory>
+#include "SchedulerDatabaseFactory.hpp"
 
 namespace cta {
 
-// Forward declarations
-class NameServer;
-
 /**
- * Asbtract class specifying the interface to a factory of name server objects.
+ * A conncret implementation of a scheduler database factory that creates mock
+ * scheduler database objects.
  */
-class NameServerFactory {
+class MockSchedulerDatabaseFactory: public SchedulerDatabaseFactory {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~NameServerFactory() throw() = 0;
+  ~MockSchedulerDatabaseFactory() throw();
 
   /**
-   * Returns a newly created name server object.
+   * Returns a newly created scheduler database object.
    *
-   * @return A newly created name server object.
+   * @return A newly created scheduler database object.
    */
-  virtual std::auto_ptr<NameServer> create() = 0;
+  std::auto_ptr<SchedulerDatabase> create();
 
-}; // class NameServerFactory
+}; // class MockSchedulerDatabaseFactory
 
 } // namespace cta

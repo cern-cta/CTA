@@ -16,33 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "MockSchedulerDatabase.hpp"
+#include "MockSchedulerDatabaseFactory.hpp"
 
-#include <memory>
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+cta::MockSchedulerDatabaseFactory::~MockSchedulerDatabaseFactory() throw() {
+}
 
-namespace cta {
-
-// Forward declarations
-class NameServer;
-
-/**
- * Asbtract class specifying the interface to a factory of name server objects.
- */
-class NameServerFactory {
-public:
-
-  /**
-   * Destructor.
-   */
-  virtual ~NameServerFactory() throw() = 0;
-
-  /**
-   * Returns a newly created name server object.
-   *
-   * @return A newly created name server object.
-   */
-  virtual std::auto_ptr<NameServer> create() = 0;
-
-}; // class NameServerFactory
-
-} // namespace cta
+//------------------------------------------------------------------------------
+// create
+//------------------------------------------------------------------------------
+std::auto_ptr<cta::SchedulerDatabase> cta::MockSchedulerDatabaseFactory::
+  create() {
+  return std::auto_ptr<SchedulerDatabase>(new MockSchedulerDatabase());
+}
