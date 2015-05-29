@@ -245,11 +245,24 @@ std::vector<std::string> cta::objectstore::RootEntry::getArchiveRoutes(const std
   return ret;
 }
 
-// TODO
-//auto cta::objectstore::RootEntry::dumpStorageClasses() -> std::list<StorageClassDump> {
-//  std::list<StorageClassDump> ret;
-//  
-//}
+auto cta::objectstore::RootEntry::dumpStorageClasses() -> std::list<StorageClassDump> {
+  std::list<StorageClassDump> ret;
+  auto & scl = m_payload.storageclasses();
+  for (auto i=scl.begin(); i != scl.end(); i++) {
+    ret.push_back(StorageClassDump());
+    ret.back().copyCount = i->copycount();
+    ret.back().storageClass = i->name();
+    auto & arl = i->routes();
+    for (auto j=arl.begin(); j!= arl.end(); j++) {
+      ret.back().routes.push_back(StorageClassDump::ArchiveRouteDump());
+      auto &r = ret.back().routes.back();
+      r.copyNumber = j->copynb();
+      r.tapePool = j->tapepool();
+      r.log.deserialize(j->log());
+    }
+  }
+  return ret;
+}
 
 //void cta::objectstore::RootEntry::
 
