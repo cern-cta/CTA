@@ -28,9 +28,8 @@ public:
   UserIdentity (): uid(std::numeric_limits<decltype(uid)>::max()),
           gid(std::numeric_limits<decltype(gid)>::max()) {}
   UserIdentity (uint32_t ui, const std::string & un,
-    uint32_t gi, const std::string & gn,
-    const std::string & hn, uint64_t t,
-    const std::string & c): uid(ui), uname(un), gid(gi), gname(gn) {}
+    uint32_t gi, const std::string & gn): 
+    uid(ui), uname(un), gid(gi), gname(gn) {}
   uint32_t uid;
   std::string uname;
   uint32_t gid;

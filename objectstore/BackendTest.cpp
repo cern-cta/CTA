@@ -24,7 +24,7 @@
 namespace unitTests {
 
 TEST_P(BackendAbstractTest, BasicReadWrite) {
-  std::cout << "Type=" << m_os->typeName() << std::endl;
+  //std::cout << "Type=" << m_os->typeName() << std::endl;
   const std::string testValue = "1234";
   const std::string testSecondValue = "1234";
   const std::string testObjectName = "testObject";
@@ -52,7 +52,7 @@ TEST_P(BackendAbstractTest, BasicReadWrite) {
 }
 
 TEST_P(BackendAbstractTest, LockingInterface) {
-  std::cout << "Type=" << m_os->typeName() << std::endl;
+  //std::cout << "Type=" << m_os->typeName() << std::endl;
   const std::string testObjectName = "testObject";
   m_os->create(testObjectName, "");
   {
@@ -70,10 +70,10 @@ TEST_P(BackendAbstractTest, LockingInterface) {
 }
 
 TEST_P(BackendAbstractTest, ParametersInterface) {
-  std::cout << "Type=" << m_os->typeName() << std::endl;
+  //std::cout << "Type=" << m_os->typeName() << std::endl;
   std::unique_ptr<cta::objectstore::Backend::Parameters> params(
     m_os->getParams());
-  std::cout << params->toStr() << std::endl;
+  //std::cout << params->toStr() << std::endl;
 }
 
 cta::objectstore::BackendVFS osVFS;
