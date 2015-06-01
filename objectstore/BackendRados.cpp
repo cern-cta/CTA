@@ -137,7 +137,7 @@ BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name) {
   tv.tv_usec = 0;
   tv.tv_sec = 10;
   int rc;
-  std::auto_ptr<ScopedLock> ret(new ScopedLock(m_radosCtx));
+  std::unique_ptr<ScopedLock> ret(new ScopedLock(m_radosCtx));
   do {
     rc = m_radosCtx.lock_exclusive(name, "lock", client, "", &tv, 0);
   } while (-EBUSY == rc);
@@ -172,7 +172,7 @@ std::string BackendRados::Parameters::toStr() {
 }
 
 BackendRados::Parameters* BackendRados::getParams() {
-  std::auto_ptr<Parameters> ret(new Parameters);
+  std::unique_ptr<Parameters> ret(new Parameters);
   ret->m_pool = m_pool;
   ret->m_userId = m_user;
   return ret.release();

@@ -447,7 +447,7 @@ std::string cta::objectstore::RootEntry::addOrGetAgentRegisterPointer(Agent & ag
     // If we get here, the agent register is not created yet, so we have to do it:
     // lock the entry again, for writing. We take the lock ourselves if needed
     // This will make an autonomous transaction
-    std::auto_ptr<ScopedExclusiveLock> lockPtr;
+    std::unique_ptr<ScopedExclusiveLock> lockPtr;
     if (!m_locksForWriteCount)
       lockPtr.reset(new ScopedExclusiveLock(*this));
     // If the registry is already defined, somebody was faster. We're done.

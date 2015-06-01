@@ -39,7 +39,7 @@ public:
    *
    * @return A newly created name server object.
    */
-  std::auto_ptr<NameServer> create();
+  std::unique_ptr<NameServer> create();
 
 }; // class MockNameServerFactory
 

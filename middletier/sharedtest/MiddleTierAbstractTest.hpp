@@ -21,7 +21,7 @@ namespace unitTests {
     cta::MiddleTierUser & permanentUser () { return m_localMiddleTier->user(); }
     virtual ~MiddleTierFactory() {}
   protected:
-    std::auto_ptr<localMiddleTier> m_localMiddleTier;
+    std::unique_ptr<localMiddleTier> m_localMiddleTier;
   };
 
   class MiddleTierAbstractTest: public ::testing::TestWithParam<MiddleTierFactory*> {

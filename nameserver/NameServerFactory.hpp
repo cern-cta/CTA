@@ -41,7 +41,7 @@ public:
    *
    * @return A newly created name server object.
    */
-  virtual std::auto_ptr<NameServer> create() = 0;
+  virtual std::unique_ptr<NameServer> create() = 0;
 
 }; // class NameServerFactory
 

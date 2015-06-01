@@ -42,7 +42,7 @@ public:
    *
    * @return A newly created scheduler database object.
    */
-  virtual std::auto_ptr<SchedulerDatabase> create() = 0;
+  virtual std::unique_ptr<SchedulerDatabase> create() = 0;
 
 }; // class SchedulerDatabaseFactory
 

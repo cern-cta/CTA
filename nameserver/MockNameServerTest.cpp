@@ -137,7 +137,7 @@ TEST_F(cta_MockNameServerTest, storageClass_functionality) {
 TEST_F(cta_MockNameServerTest, storageClass_inheritance) {
   using namespace cta;
 
-  std::auto_ptr<MockNameServer> ns;
+  std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
   cta::SecurityIdentity requester;

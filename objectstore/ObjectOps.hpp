@@ -169,7 +169,7 @@ protected:
   bool m_existingObject;
   int m_locksCount;
   int m_locksForWriteCount;
-  std::auto_ptr<Backend::ScopedLock> m_writeLock;
+  std::unique_ptr<Backend::ScopedLock> m_writeLock;
 };
 
 class ScopedLock {

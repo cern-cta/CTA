@@ -169,7 +169,7 @@ bool BackendVFS::exists(std::string name) {
 
 
 BackendVFS::Parameters* BackendVFS::getParams() {
-  std::auto_ptr<Parameters> ret(new Parameters);
+  std::unique_ptr<Parameters> ret(new Parameters);
   ret->m_path = m_root;
   return ret.release();
 }
@@ -185,7 +185,7 @@ void BackendVFS::ScopedLock::release() {
 BackendVFS::ScopedLock * BackendVFS::lockHelper(
   std::string name, int type) {
   std::string path = m_root + "/." + name + ".lock";
-  std::auto_ptr<ScopedLock> ret(new ScopedLock);
+  std::unique_ptr<ScopedLock> ret(new ScopedLock);
   ret->set(::open(path.c_str(), O_RDONLY, S_IRWXU));
   cta::exception::Errnum::throwOnMinusOne(ret->m_fd,
       "In BackendStoreVFS::lockHelper, failed to open the lock file.");

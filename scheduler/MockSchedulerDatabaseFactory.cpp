@@ -28,7 +28,7 @@ cta::MockSchedulerDatabaseFactory::~MockSchedulerDatabaseFactory() throw() {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-std::auto_ptr<cta::SchedulerDatabase> cta::MockSchedulerDatabaseFactory::
+std::unique_ptr<cta::SchedulerDatabase> cta::MockSchedulerDatabaseFactory::
   create() {
-  return std::auto_ptr<SchedulerDatabase>(new MockSchedulerDatabase());
+  return std::unique_ptr<SchedulerDatabase>(new MockSchedulerDatabase());
 }

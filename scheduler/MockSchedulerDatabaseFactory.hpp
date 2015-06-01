@@ -39,7 +39,7 @@ public:
    *
    * @return A newly created scheduler database object.
    */
-  std::auto_ptr<SchedulerDatabase> create();
+  std::unique_ptr<SchedulerDatabase> create();
 
 }; // class MockSchedulerDatabaseFactory
 

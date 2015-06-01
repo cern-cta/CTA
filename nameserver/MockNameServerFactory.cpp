@@ -28,6 +28,6 @@ cta::MockNameServerFactory::~MockNameServerFactory() throw() {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-std::auto_ptr<cta::NameServer> cta::MockNameServerFactory::create() {
-  return std::auto_ptr<NameServer>(new MockNameServer());
+std::unique_ptr<cta::NameServer> cta::MockNameServerFactory::create() {
+  return std::unique_ptr<NameServer>(new MockNameServer());
 }
