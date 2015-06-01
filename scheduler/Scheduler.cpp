@@ -181,8 +181,7 @@ void cta::Scheduler::createStorageClass(
   const std::string &name,
   const uint16_t nbCopies,
   const std::string &comment) {
-  // IMPORTANT
-  // KEEP NS AND DB IN SYNC
+  m_db.createStorageClass(requester, name, nbCopies, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -201,7 +200,7 @@ void cta::Scheduler::deleteStorageClass(
 //------------------------------------------------------------------------------
 std::list<cta::StorageClass> cta::Scheduler::getStorageClasses(
   const SecurityIdentity &requester) const {
-  return std::list<StorageClass>();
+  return m_db.getStorageClasses(requester);
 }
 
 //------------------------------------------------------------------------------
