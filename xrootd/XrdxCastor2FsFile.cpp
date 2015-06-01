@@ -107,7 +107,7 @@ XrdxCastor2FsFile::open(const char*         path,
   }
 
   TIMING("MAPPING", &opentiming);
-  xcastor_info("path=%s, mode=%0x, opaque=%s", map_path.c_str(), open_mode, ininfo);
+  xcastor_info("path=%s, mode=%0x", map_path.c_str(), open_mode);
 
   int aop = AOP_Read;
   int retc = 0, open_flag = 0;
