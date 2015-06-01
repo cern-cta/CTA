@@ -486,12 +486,12 @@ void cta::MockSchedulerDatabase::createAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user,
   const std::string &comment) {
-  const uint32_t uid = user.getUid();
-  const uint32_t gid = user.getGid();
+  const uint32_t adminUid = user.getUid();
+  const uint32_t adminGid = user.getGid();
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "INSERT INTO ADMINUSER(ADMIN_UID, ADMIN_GID, UID, GID,"
-    " CREATIONTIME, COMMENT) VALUES(" << uid << "," << gid << "," <<
+    " CREATIONTIME, COMMENT) VALUES(" << adminUid << "," << adminGid << "," <<
     requester.user.getUid() << "," << requester.user.getGid() << ","
     << (int)time(NULL) << ",'" << comment << "');";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
@@ -504,7 +504,8 @@ void cta::MockSchedulerDatabase::createAdminUser(
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
   if(0 >= nbRowsModified) {
     std::ostringstream message;
-    message << "Admin user uid=" << uid << " gid=" << gid << " already exists";
+    message << "Admin user uid=" << adminUid << " gid=" << adminGid <<
+      " already exists";
     throw(exception::Exception(message.str()));
   }
 }
@@ -545,7 +546,7 @@ std::list<cta::AdminUser> cta::MockSchedulerDatabase::getAdminUsers(
   query << "SELECT ADMIN_UID, ADMIN_GID, UID, GID, CREATIONTIME, COMMENT"
     " FROM ADMINUSER ORDER BY ADMIN_UID, ADMIN_GID;";
   sqlite3_stmt *statement;
-  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0);
   if(rc!=SQLITE_OK){
     std::ostringstream message;
     message << __FUNCTION__ << " - SQLite error";
@@ -583,14 +584,13 @@ void cta::MockSchedulerDatabase::assertIsAdminOnAdminHost(
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::assertIsAdmin(const UserIdentity &user)
   const {
-  const uint32_t uid = user.getUid();
-  const uint32_t gid = user.getGid();
+  const uint32_t adminUid = user.getUid();
+  const uint32_t adminGid = user.getGid();
   std::ostringstream query;
-  std::list<cta::AdminHost> list;
-  query << "SELECT COUNT(*) FROM ADMINUSER WHERE UID=" << uid << " AND GID=" <<
-    gid << ";";
+  query << "SELECT COUNT(*) FROM ADMINUSER WHERE ADMIN_UID=" << adminUid <<
+    " AND ADMIN_GID=" << adminGid << ";";
   sqlite3_stmt *statement;
-  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0);
   if(rc!=SQLITE_OK){
     std::ostringstream message;
     message << __FUNCTION__ << " - SQLite error";
@@ -605,7 +605,7 @@ void cta::MockSchedulerDatabase::assertIsAdmin(const UserIdentity &user)
 
   if(0 >= count) {
     std::ostringstream message;
-    message << "User uid=" << user.getUid() << " gid=" << gid <<
+    message << "User uid=" << adminUid << " gid=" << adminGid <<
       " is not an administrator";
     throw exception::Exception(message.str());
   }
@@ -617,10 +617,9 @@ void cta::MockSchedulerDatabase::assertIsAdmin(const UserIdentity &user)
 void cta::MockSchedulerDatabase::assertIsAdminHost(const std::string &host)
   const {
   std::ostringstream query;
-  std::list<cta::AdminHost> list;
   query << "SELECT COUNT(*) FROM ADMINHOST WHERE NAME='" << host << "';";
   sqlite3_stmt *statement;
-  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0);
   if(rc!=SQLITE_OK){
     std::ostringstream message;
     message << __FUNCTION__ << " - SQLite error";
@@ -704,7 +703,7 @@ std::list<cta::AdminHost> cta::MockSchedulerDatabase::getAdminHosts(
   query << "SELECT NAME, UID, GID, CREATIONTIME, COMMENT"
     " FROM ADMINHOST ORDER BY NAME;";
   sqlite3_stmt *statement;
-  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0);
   if(rc!=SQLITE_OK){
     std::ostringstream message;
     message << __FUNCTION__ << " - SQLite error";
@@ -782,7 +781,7 @@ std::list<cta::StorageClass> cta::MockSchedulerDatabase::getStorageClasses(
   query << "SELECT NAME, NBCOPIES, UID, GID, CREATIONTIME, COMMENT FROM"
     " STORAGECLASS ORDER BY NAME;";
   sqlite3_stmt *statement;
-  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0);
   if(rc!=SQLITE_OK){
     std::ostringstream message;
     message << __FUNCTION__ << " - SQLite error";
@@ -949,7 +948,7 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes(
     " CREATIONTIME, COMMENT FROM ARCHIVALROUTE ORDER BY STORAGECLASS_NAME,"
     " COPYNB;";
   sqlite3_stmt *statement;
-  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0);
   if(rc!=SQLITE_OK){
     std::ostringstream message;
     message << __FUNCTION__ << " - SQLite error";
