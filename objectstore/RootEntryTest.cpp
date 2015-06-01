@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 #include "BackendVFS.hpp"
 #include "common/exception/Exception.hpp"
+#include "objectstore/SerializersExceptions.hpp"
 #include "RootEntry.hpp"
 #include "Agent.hpp"
 
@@ -102,7 +103,6 @@ TEST(RootEntry, AdminHosts) {
   }
   {
     // Check that we cannot re-add an existing host
-    // Check that we can remove existing and non-existing hosts
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
@@ -177,7 +177,6 @@ TEST(RootEntry, AdminUsers) {
   }
   {
     // Check that we cannot re-add an existing user
-    // Check that we can remove existing and non-existing hosts
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
@@ -207,4 +206,126 @@ TEST(RootEntry, AdminUsers) {
   ASSERT_EQ(false, re.exists());
 }
 
+TEST(RootEntry, StorageClassesAndArchivalRoutes) {
+  cta::objectstore::BackendVFS be;
+  { 
+    // Try to create the root entry
+    cta::objectstore::RootEntry re(be);
+    re.initialize();
+    re.insert();
+  }
+  cta::objectstore::CreationLog cl(99, "dummyUser", 99, "dummyGroup", 
+    "unittesthost", time(NULL), "Creation of unit test agent register");
+  {
+    // Add 2 storage classes to the root entry
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    ASSERT_NO_THROW(re.fetch());
+    re.addStorageClass("class1", 1, cl);
+    re.addStorageClass("class2", 2, cl);
+    re.addStorageClass("class3", 3, cl);
+    // Check that we cannot add a storage class with 0 copies
+    ASSERT_THROW(re.addStorageClass("class0", 0, cl),
+      cta::objectstore::RootEntry::InvalidCopyNumber);
+    re.commit();
+  }
+  {
+    // Check that the storage classes made it, and that non existing storage
+    // classes show up
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedSharedLock lock(re);
+    re.fetch();
+    ASSERT_NO_THROW(re.getStorageClassCopyCount("class1"));
+    ASSERT_NO_THROW(re.getStorageClassCopyCount("class2"));
+    ASSERT_NO_THROW(re.getStorageClassCopyCount("class3"));
+    ASSERT_THROW(re.getStorageClassCopyCount("class4"),
+      cta::objectstore::serializers::NotFound);
+  }
+  {
+    // Check that we can remove storage class and non-existing ones
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    re.fetch();
+    ASSERT_NO_THROW(re.removeStorageClass("class2"));
+    ASSERT_NO_THROW(re.removeStorageClass("class4"));
+    re.commit();
+  }
+  {
+    // Check that we cannot re-add an existing storage class
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    re.fetch();
+    ASSERT_THROW(re.addStorageClass("class1", 1, cl),
+       cta::objectstore::RootEntry::DuplicateEntry);
+  }
+  {
+    // Check that we got the expected result
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedSharedLock lock(re);
+    re.fetch();
+    ASSERT_NO_THROW(re.getStorageClassCopyCount("class1"));
+    ASSERT_THROW(re.getStorageClassCopyCount("class2"),
+      cta::objectstore::serializers::NotFound);
+    ASSERT_NO_THROW(re.getStorageClassCopyCount("class3"));
+    ASSERT_THROW(re.getStorageClassCopyCount("class4"),
+      cta::objectstore::serializers::NotFound);
+    ASSERT_EQ(2, re.dumpStorageClasses().size());
+    ASSERT_EQ("class1", re.dumpStorageClasses().front().storageClass);
+    ASSERT_EQ("class3", re.dumpStorageClasses().back().storageClass);
+  }
+  {
+    // Check that we can add storage routes
+    // We store an incomplete route for class3
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    re.fetch();
+    re.setArchiveRoute("class1", 0, "pool1_0", cl);
+    re.setArchiveRoute("class3", 2, "pool3_2", cl);
+    re.commit();
+  }
+  {
+    // Check that we can get routes, but not if the routing is incomplete for
+    // the storage class
+    // Check that we can add storage routes
+    // We store an incomplete route for class3
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedSharedLock lock(re);
+    re.fetch();
+    ASSERT_NO_THROW(re.getArchiveRoutes("class1"));
+    ASSERT_THROW(re.getArchiveRoutes("class3"),
+      cta::objectstore::RootEntry::IncompleteEntry);
+  }
+  {
+    //Check that we can complete a storage class, and overwrite the routes
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    re.fetch();
+    re.setArchiveRoute("class3", 0, "pool3_0", cl);
+    re.setArchiveRoute("class3", 1, "pool3_1", cl);
+    re.setArchiveRoute("class3", 2, "pool3_2b", cl);
+    re.commit();
+    re.fetch();
+    ASSERT_NO_THROW(re.getArchiveRoutes("class3"));
+  }
+  {
+    // Check that resizing storage classes down and up work as expected
+    //Check that we can complete a storage class, and overwrite the routes
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    re.fetch();
+    ASSERT_NO_THROW(re.setStorageClassCopyCount("class1", 2, cl));
+    ASSERT_NO_THROW(re.setStorageClassCopyCount("class3", 2, cl));
+    re.commit();
+    re.fetch();
+    ASSERT_THROW(re.getArchiveRoutes("class1"),
+      cta::objectstore::RootEntry::IncompleteEntry);
+    ASSERT_NO_THROW(re.getArchiveRoutes("class3"));
+    ASSERT_EQ(2,re.getArchiveRoutes("class3").size());
+  }
+  // Delete the root entry
+  cta::objectstore::RootEntry re(be);
+  cta::objectstore::ScopedExclusiveLock lock(re);
+  re.remove();
+  ASSERT_EQ(false, re.exists());
+}
 }

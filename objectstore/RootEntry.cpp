@@ -146,6 +146,20 @@ namespace {
   }
 }
 
+void cta::objectstore::RootEntry::checkStorageClassCopyCount(uint16_t copyCount) {
+  // We cannot have a copy count of 0
+  if (copyCount < 1) {
+    throw InvalidCopyNumber(
+      "In RootEntry::checkStorageClassCopyCount: copyCount cannot be less than 1");
+  }
+  if (copyCount > maxCopyCount) {
+    std::stringstream err;
+    err << "In RootEntry::checkStorageClassCopyCount: copyCount cannot be bigger than "
+        << maxCopyCount;
+    throw InvalidCopyNumber(err.str());
+  }
+}
+
 void cta::objectstore::RootEntry::addStorageClass(const std::string storageClass, 
     uint16_t copyCount, const CreationLog & log) {
   checkPayloadWritable();
@@ -154,6 +168,8 @@ void cta::objectstore::RootEntry::addStorageClass(const std::string storageClass
     serializers::findElement(m_payload.storageclasses(), storageClass);
     throw DuplicateEntry("In RootEntry::addStorageClass: trying to create duplicate entry");
   } catch (serializers::NotFound &) {}
+  // Check the copy count is valid
+  checkStorageClassCopyCount(copyCount);
   // Insert the storage class
   auto * sc = m_payload.mutable_storageclasses()->Add();
   sc->set_name(storageClass);
@@ -167,7 +183,7 @@ void cta::objectstore::RootEntry::removeStorageClass(const std::string storageCl
 }
 
 void cta::objectstore::RootEntry::setStorageClassCopyCount(
-  const std::string& storageClass, uint16_t copyCount) {
+  const std::string& storageClass, uint16_t copyCount, const CreationLog & log ) {
   checkPayloadWritable();
   auto & sc = serializers::findElement(m_payload.mutable_storageclasses(), storageClass);
   // If we reduce the number of routes, we have to remove the extra ones.
@@ -176,12 +192,12 @@ void cta::objectstore::RootEntry::setStorageClassCopyCount(
       serializers::removeOccurences(sc.mutable_routes(), i);
     }
   }
-  // and set the count
+  // update the creation log and set the count
   sc.set_copycount(copyCount);
 }
 
 uint16_t cta::objectstore::RootEntry::getStorageClassCopyCount (
-  std::string & storageClass) {
+  const std::string & storageClass) {
   checkPayloadReadable();
   auto & sc = serializers::findElement(m_payload.storageclasses(), storageClass);
   return sc.copycount();
@@ -200,7 +216,7 @@ void cta::objectstore::RootEntry::setArchiveRoute(const std::string& storageClas
   uint16_t copyNb, const std::string& tapePool, const CreationLog& cl) {
   checkPayloadWritable();
   // Find the storageClass entry
-  if (copyNb > maxCopyCount) {
+  if (copyNb >= maxCopyCount) {
     std::stringstream ss;
     ss << "In RootEntry::setArchiveRoute: invalid copy number: "  << 
         copyNb <<  " > " << maxCopyCount;
@@ -211,7 +227,7 @@ void cta::objectstore::RootEntry::setArchiveRoute(const std::string& storageClas
     std::stringstream ss;
     ss << "In RootEntry::setArchiveRoute: copy number out of range: " <<
         copyNb << " >= " << sc.copycount();
-    throw ss.str();
+    throw InvalidCopyNumber(ss.str());
   }
   // Find the archival route (if it exists)
   try {
@@ -238,6 +254,13 @@ std::vector<std::string> cta::objectstore::RootEntry::getArchiveRoutes(const std
   auto & sc = serializers::findElement(m_payload.storageclasses(), storageClass);
   std::vector<std::string> ret;
   ret.resize(sc.copycount());
+  // If the number of routes is not right, fail.
+  if (sc.copycount() != (uint32_t) sc.routes_size()) {
+    std::stringstream err;
+    err << "In RootEntry::getArchiveRoutes: not enough routes defined: "
+        << sc.routes_size() << " found out of " << sc.copycount();
+    throw IncompleteEntry(err.str());
+  }
   auto & list = sc.routes();
   for (auto i = list.begin(); i!= list.end(); i++) {
     ret[i->copynb()] = i->tapepool();

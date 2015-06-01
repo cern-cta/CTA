@@ -76,12 +76,14 @@ public:
 private:
   // Totally arbitrary (but ridiculously high) copy number
   static const uint16_t maxCopyCount=100;
+  void checkStorageClassCopyCount(uint16_t copyCount);
 public:
   void addStorageClass(const std::string storageClass, uint16_t copyCount, 
     const CreationLog & log);
   void removeStorageClass(const std::string storageClass);
-  void setStorageClassCopyCount(const std::string & storageClass, uint16_t copyCount);
-  uint16_t getStorageClassCopyCount(std::string & storageClass);
+  void setStorageClassCopyCount(const std::string & storageClass,
+    uint16_t copyCount, const CreationLog & cl);
+  uint16_t getStorageClassCopyCount(const std::string & storageClass);
   void setArchiveRoute(const std::string & storageClass, uint16_t copyNb, 
     const std::string & tapePool, const CreationLog & cl);
 

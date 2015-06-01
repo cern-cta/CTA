@@ -19,7 +19,7 @@
 #pragma once
 
 #include <google/protobuf/repeated_field.h>
-#include "common/exception/Exception.hpp"
+#include "objectstore/SerializersExceptions.hpp"
 
 namespace cta { namespace objectstore { namespace serializers {
 void removeString(::google::protobuf::RepeatedPtrField< ::std::string>* field, 
@@ -41,10 +41,6 @@ void removeOccurences(::google::protobuf::RepeatedPtrField<C1>* field,
     }
   } while (found);
 }
-class NotFound: public cta::exception::Exception {
-  public:
-    NotFound(const std::string & w): cta::exception::Exception(w) {}
-  };
   
 size_t findString(::google::protobuf::RepeatedPtrField< ::std::string>* field, 
   const std::string & value);
