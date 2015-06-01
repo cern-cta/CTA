@@ -146,19 +146,21 @@ TEST_P(SchedulerTest, createStorageClass_new_as_adminOnAdminHost) {
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(s_adminOnAdminHost));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_TRUE(storageClasses.empty());
   }
 
   const std::string name = "TestStorageClass";
   const uint16_t nbCopies = 2;
   const std::string comment = "Comment";
-  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, name, nbCopies,
-    comment));
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, name,
+    nbCopies, comment));
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(s_adminOnAdminHost));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_EQ(1, storageClasses.size());
 
     StorageClass storageClass;
@@ -175,7 +177,8 @@ TEST_P(SchedulerTest, createStorageClass_new_as_adminOnUserHost) {
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(s_adminOnUserHost));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnUserHost));
     ASSERT_TRUE(storageClasses.empty());
   }
 
@@ -193,7 +196,8 @@ TEST_P(SchedulerTest, createStorageClass_new_as_userOnAdminHost) {
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(s_userOnAdminHost));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_userOnAdminHost));
     ASSERT_TRUE(storageClasses.empty());
   }
 
@@ -211,7 +215,8 @@ TEST_P(SchedulerTest, createStorageClass_new_as_userOnUserHost) {
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(s_userOnUserHost));
+    ASSERT_NO_THROW(storageClasses =
+      scheduler.getStorageClasses(s_userOnUserHost));
     ASSERT_TRUE(storageClasses.empty());
   }
 
@@ -222,59 +227,29 @@ TEST_P(SchedulerTest, createStorageClass_new_as_userOnUserHost) {
     comment), std::exception);
 }
 
-/*
-
-TEST_P(SchedulerTest, admin_createStorageClass_new) {
-  using namespace cta;
-
-  const SecurityIdentity requester;
-  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
-
-  {
-    std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
-    ASSERT_TRUE(storageClasses.empty());
-  }
-
-  const std::string name = "TestStorageClass";
-  const uint16_t nbCopies = 2;
-  const std::string comment = "Comment";
-  ASSERT_NO_THROW(m_middleTier->admin().createStorageClass(requester, name, nbCopies,
-    comment));
-
-  {
-    std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
-    ASSERT_EQ(1, storageClasses.size());
-
-    StorageClass storageClass;
-    ASSERT_NO_THROW(storageClass = storageClasses.front());
-    ASSERT_EQ(name, storageClass.getName());
-    ASSERT_EQ(nbCopies, storageClass.getNbCopies());
-  }
-}
-
 TEST_P(SchedulerTest,
   admin_createStorageClass_already_existing) {
   using namespace cta;
 
-  const SecurityIdentity requester;
-  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
-  
+  Scheduler &scheduler = getScheduler();
+
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_TRUE(storageClasses.empty());
   }
 
   const std::string name = "TestStorageClass";
   const uint16_t nbCopies = 2;
   const std::string comment = "Comment";
-  ASSERT_NO_THROW(m_middleTier->admin().createStorageClass(requester, name, nbCopies, comment));
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, name,
+    nbCopies, comment));
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_EQ(1, storageClasses.size());
 
     StorageClass storageClass;
@@ -283,9 +258,11 @@ TEST_P(SchedulerTest,
     ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
   
-  ASSERT_THROW(m_middleTier->admin().createStorageClass(requester, name, nbCopies, comment),
-    std::exception);
+  ASSERT_THROW(scheduler.createStorageClass(s_adminOnAdminHost, name, nbCopies,
+    comment), std::exception);
 }
+
+/*
 
 TEST_P(SchedulerTest,
   admin_createStorageClass_lexicographical_order) {
