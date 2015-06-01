@@ -104,12 +104,12 @@ public:
   std::list<StorageClassDump> dumpStorageClasses();
   
   // Manipulations of libraries ================================================
-  void addLibrary(const std::string & library);
+  void addLibrary(const std::string & library, const CreationLog & log);
   void removeLibrary(const std::string & library);
   bool libraryExists(const std::string & library);
   std::list<std::string> dumpLibraries();
   
-  // TapePoolManipulations
+  // TapePoolManipulations =====================================================
   /** This function implicitly creates the tape pool structure and updates 
    * the pointer to it */
   void addTapePool(const std::string & tapePool, const CreationLog & log, Agent & agent);

@@ -287,6 +287,57 @@ auto cta::objectstore::RootEntry::dumpStorageClasses() -> std::list<StorageClass
   return ret;
 }
 
+// =============================================================================
+// ========== Libraries manipulations ==========================================
+// =============================================================================
+
+// This operator will be used in the following usage of the findElement
+// removeOccurences
+namespace {
+  bool operator==(const std::string &l,
+    const cta::objectstore::serializers::Library & sl) {
+    return sl.name() == l;
+  }
+}
+
+void cta::objectstore::RootEntry::addLibrary(const std::string& library,
+    const CreationLog & log) {
+  checkPayloadWritable();
+  // Check the library does not exist already
+  try {
+    serializers::findElement(m_payload.libraries(), library);
+    throw DuplicateEntry("In RootEntry::addLibrary: trying to create duplicate entry");
+  } catch (serializers::NotFound &) {}
+  // Insert the library
+  auto * l = m_payload.mutable_libraries()->Add();
+  l->set_name(library);
+  log.serialize(*l->mutable_log());
+}
+
+void cta::objectstore::RootEntry::removeLibrary(const std::string& library) {
+  checkPayloadWritable();
+  serializers::removeOccurences(m_payload.mutable_libraries(), library);
+}
+
+bool cta::objectstore::RootEntry::libraryExists(const std::string& library) {
+  checkPayloadReadable();
+  return serializers::isElementPresent(m_payload.libraries(), library);
+}
+
+std::list<std::string> cta::objectstore::RootEntry::dumpLibraries() {
+  checkPayloadReadable();
+  std::list<std::string> ret;
+  auto & list=m_payload.libraries();
+  for (auto i=list.begin(); i!=list.end(); i++) {
+    ret.push_back(i->name());
+  }
+  return ret;
+}
+
+
+
+
+
 //void cta::objectstore::RootEntry::
 
 

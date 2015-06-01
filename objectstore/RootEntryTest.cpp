@@ -322,6 +322,20 @@ TEST(RootEntry, StorageClassesAndArchivalRoutes) {
     ASSERT_NO_THROW(re.getArchiveRoutes("class3"));
     ASSERT_EQ(2,re.getArchiveRoutes("class3").size());
   }
+  {
+    // Check that dump works in all circumstances
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedSharedLock lock(re);
+    re.fetch();
+    ASSERT_NO_THROW(
+    {
+      re.dumpAdminUsers();
+      re.dumpAdminHosts();
+      re.dumpStorageClasses();
+      re.dumpLibraries();
+      //re.dumpTapePool();
+    });
+  }
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
