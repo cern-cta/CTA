@@ -226,6 +226,14 @@ public:
    const = 0;
 
   /**
+   * Throws an exception if the specified user is not an administrator or if the
+   * user is not sending a request from an adminsitration host.
+   *
+   * @param id The identity of the user.
+   */
+  virtual void assertIsAdminOnAdminHost(const SecurityIdentity &id) const = 0;
+
+  /**
    * Creates the specified storage class.
    *
    * @param requester The identity of the requester.

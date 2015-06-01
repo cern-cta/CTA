@@ -130,6 +130,7 @@ void cta::Scheduler::createAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user,
   const std::string &comment) {
+  m_db.createAdminUser(requester, user, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -155,6 +156,7 @@ void cta::Scheduler::createAdminHost(
   const SecurityIdentity &requester,
   const std::string &hostName,
   const std::string &comment) {
+  m_db.createAdminHost(requester, hostName, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -181,6 +183,7 @@ void cta::Scheduler::createStorageClass(
   const std::string &name,
   const uint16_t nbCopies,
   const std::string &comment) {
+  m_db.assertIsAdminOnAdminHost(requester);
   m_db.createStorageClass(requester, name, nbCopies, comment);
 }
 

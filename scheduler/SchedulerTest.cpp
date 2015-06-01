@@ -52,9 +52,9 @@ struct SchedulerTestParam {
  */
 class SchedulerTest: public
   ::testing::TestWithParam<SchedulerTestParam> {
-protected:
+public:
 
-  SchedulerTest() {
+  SchedulerTest() throw() {
   }
 
   class FailedToGetScheduler: public std::exception {
@@ -65,10 +65,18 @@ protected:
   };
 
   virtual void SetUp() {
+    using namespace cta;
+
     const SchedulerTestParam &param = GetParam();
     m_ns.reset(param.nsFactory.create().release());
     m_db.reset(param.dbFactory.create().release());
     m_scheduler.reset(new cta::Scheduler(*(m_ns.get()), *(m_db.get())));
+
+    SchedulerDatabase &db = *m_db.get();
+    db.createAdminUser(s_systemOnSystemHost, s_admin,
+      "The initial administrator created by the system");
+    db.createAdminHost(s_systemOnSystemHost, s_adminHost,
+      "The initial administration host created by the system");
   }
 
   virtual void TearDown() {
@@ -85,6 +93,22 @@ protected:
     return *ptr;
   }
 
+  static const std::string s_systemHost;
+  static const std::string s_adminHost;
+  static const std::string s_userHost;
+
+  static const cta::UserIdentity s_system;
+  static const cta::UserIdentity s_admin;
+  static const cta::UserIdentity s_user;
+
+  static const cta::SecurityIdentity s_systemOnSystemHost;
+
+  static const cta::SecurityIdentity s_adminOnAdminHost;
+  static const cta::SecurityIdentity s_adminOnUserHost;
+
+  static const cta::SecurityIdentity s_userOnAdminHost;
+  static const cta::SecurityIdentity s_userOnUserHost;
+
 private:
 
   // Prevent copying
@@ -99,27 +123,42 @@ private:
 
 }; // class SchedulerTest
 
-TEST_P(SchedulerTest, createStorageClass_new) {
+const std::string SchedulerTest::s_systemHost = "systemhost";
+const std::string SchedulerTest::s_adminHost = "adminhost";
+const std::string SchedulerTest::s_userHost = "userhost";
+
+const cta::UserIdentity SchedulerTest::s_system(1111, 1111);
+const cta::UserIdentity SchedulerTest::s_admin(2222, 2222);
+const cta::UserIdentity SchedulerTest::s_user(3333, 3333);
+
+const cta::SecurityIdentity SchedulerTest::s_systemOnSystemHost(SchedulerTest::s_system, SchedulerTest::s_systemHost);
+
+const cta::SecurityIdentity SchedulerTest::s_adminOnAdminHost(SchedulerTest::s_admin, SchedulerTest::s_adminHost);
+const cta::SecurityIdentity SchedulerTest::s_adminOnUserHost(SchedulerTest::s_admin, SchedulerTest::s_userHost);
+
+const cta::SecurityIdentity SchedulerTest::s_userOnAdminHost(SchedulerTest::s_user, SchedulerTest::s_adminHost);
+const cta::SecurityIdentity SchedulerTest::s_userOnUserHost(SchedulerTest::s_user, SchedulerTest::s_userHost);
+
+TEST_P(SchedulerTest, createStorageClass_new_as_adminOnAdminHost) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
 
-  const SecurityIdentity requester;
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(s_adminOnAdminHost));
     ASSERT_TRUE(storageClasses.empty());
   }
 
   const std::string name = "TestStorageClass";
   const uint16_t nbCopies = 2;
   const std::string comment = "Comment";
-  ASSERT_NO_THROW(scheduler.createStorageClass(requester, name, nbCopies,
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, name, nbCopies,
     comment));
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(s_adminOnAdminHost));
     ASSERT_EQ(1, storageClasses.size());
 
     StorageClass storageClass;
@@ -129,9 +168,63 @@ TEST_P(SchedulerTest, createStorageClass_new) {
   }
 }
 
+TEST_P(SchedulerTest, createStorageClass_new_as_adminOnUserHost) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  {
+    std::list<StorageClass> storageClasses;
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(s_adminOnUserHost));
+    ASSERT_TRUE(storageClasses.empty());
+  }
+
+  const std::string name = "TestStorageClass";
+  const uint16_t nbCopies = 2;
+  const std::string comment = "Comment";
+  ASSERT_THROW(scheduler.createStorageClass(s_adminOnUserHost, name, nbCopies,
+    comment), std::exception);
+}
+
+TEST_P(SchedulerTest, createStorageClass_new_as_userOnAdminHost) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  {
+    std::list<StorageClass> storageClasses;
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(s_userOnAdminHost));
+    ASSERT_TRUE(storageClasses.empty());
+  }
+
+  const std::string name = "TestStorageClass";
+  const uint16_t nbCopies = 2;
+  const std::string comment = "Comment";
+  ASSERT_THROW(scheduler.createStorageClass(s_userOnAdminHost, name, nbCopies,
+    comment), std::exception);
+}
+
+TEST_P(SchedulerTest, createStorageClass_new_as_userOnUserHost) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  {
+    std::list<StorageClass> storageClasses;
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(s_userOnUserHost));
+    ASSERT_TRUE(storageClasses.empty());
+  }
+
+  const std::string name = "TestStorageClass";
+  const uint16_t nbCopies = 2;
+  const std::string comment = "Comment";
+  ASSERT_THROW(scheduler.createStorageClass(s_userOnUserHost, name, nbCopies,
+    comment), std::exception);
+}
+
 /*
 
-TEST_P(MiddleTierAbstractTest, admin_createStorageClass_new) {
+TEST_P(SchedulerTest, admin_createStorageClass_new) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -161,7 +254,7 @@ TEST_P(MiddleTierAbstractTest, admin_createStorageClass_new) {
   }
 }
 
-TEST_P(MiddleTierAbstractTest,
+TEST_P(SchedulerTest,
   admin_createStorageClass_already_existing) {
   using namespace cta;
 
@@ -194,7 +287,7 @@ TEST_P(MiddleTierAbstractTest,
     std::exception);
 }
 
-TEST_P(MiddleTierAbstractTest,
+TEST_P(SchedulerTest,
   admin_createStorageClass_lexicographical_order) {
   using namespace cta;
 
@@ -227,7 +320,7 @@ TEST_P(MiddleTierAbstractTest,
   }
 }
 
-TEST_P(MiddleTierAbstractTest, admin_deleteStorageClass_existing) {
+TEST_P(SchedulerTest, admin_deleteStorageClass_existing) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -264,7 +357,7 @@ TEST_P(MiddleTierAbstractTest, admin_deleteStorageClass_existing) {
   }
 }
 
-TEST_P(MiddleTierAbstractTest,
+TEST_P(SchedulerTest,
   admin_deleteStorageClass_in_use_by_directory) {
   using namespace cta;
 
@@ -322,7 +415,7 @@ TEST_P(MiddleTierAbstractTest,
   }
 }
 
-TEST_P(MiddleTierAbstractTest, admin_deleteStorageClass_in_use_by_route) {
+TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -414,7 +507,7 @@ TEST_P(MiddleTierAbstractTest, admin_deleteStorageClass_in_use_by_route) {
   }
 }
 
-TEST_P(MiddleTierAbstractTest, admin_deleteStorageClass_non_existing) {
+TEST_P(SchedulerTest, admin_deleteStorageClass_non_existing) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -436,7 +529,7 @@ TEST_P(MiddleTierAbstractTest, admin_deleteStorageClass_non_existing) {
   }
 }
 
-TEST_P(MiddleTierAbstractTest, admin_deleteTapePool_in_use) {
+TEST_P(SchedulerTest, admin_deleteTapePool_in_use) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -492,7 +585,7 @@ TEST_P(MiddleTierAbstractTest, admin_deleteTapePool_in_use) {
   }
 }
 
-TEST_P(MiddleTierAbstractTest, admin_createArchivalRoute_new) {
+TEST_P(SchedulerTest, admin_createArchivalRoute_new) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -534,7 +627,7 @@ TEST_P(MiddleTierAbstractTest, admin_createArchivalRoute_new) {
   }
 }
 
-TEST_P(MiddleTierAbstractTest,
+TEST_P(SchedulerTest,
   admin_createArchivalRoute_already_existing) {
   using namespace cta;
 
@@ -580,7 +673,7 @@ TEST_P(MiddleTierAbstractTest,
     copyNb, tapePoolName, comment), std::exception);
 }
 
-TEST_P(MiddleTierAbstractTest, admin_deleteArchivalRoute_existing) {
+TEST_P(SchedulerTest, admin_deleteArchivalRoute_existing) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -631,7 +724,7 @@ TEST_P(MiddleTierAbstractTest, admin_deleteArchivalRoute_existing) {
   }
 }
 
-TEST_P(MiddleTierAbstractTest, admin_deleteArchivalRoute_non_existing) {
+TEST_P(SchedulerTest, admin_deleteArchivalRoute_non_existing) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -661,7 +754,7 @@ TEST_P(MiddleTierAbstractTest, admin_deleteArchivalRoute_non_existing) {
     std::exception);
 }
 
-TEST_P(MiddleTierAbstractTest, admin_createTape_new) {
+TEST_P(SchedulerTest, admin_createTape_new) {
   using namespace cta;
 
   const SecurityIdentity requester;
@@ -737,7 +830,7 @@ TEST_P(MiddleTierAbstractTest, admin_createTape_new) {
   } 
 }
 
-TEST_P(MiddleTierAbstractTest,
+TEST_P(SchedulerTest,
   admin_createTape_new_non_existing_library) {
   using namespace cta;
 
@@ -787,7 +880,7 @@ TEST_P(MiddleTierAbstractTest,
     capacityInBytes, tapeComment), std::exception);
 }
 
-TEST_P(MiddleTierAbstractTest, admin_createTape_new_non_existing_pool) {
+TEST_P(SchedulerTest, admin_createTape_new_non_existing_pool) {
   using namespace cta;
 
   const SecurityIdentity requester;

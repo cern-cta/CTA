@@ -211,7 +211,6 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst,
 std::map<cta::TapePool, std::list<cta::ArchivalJob> >
   cta::MockSchedulerDatabase::getArchivalJobs(const SecurityIdentity &requester)
   const {
-  char *zErrMsg = 0;
   std::ostringstream query;
   std::map<cta::TapePool, std::list<cta::ArchivalJob> > map;
   query << "SELECT STATE, REMOTEFILE, ARCHIVEFILE, TAPEPOOL_NAME, UID, GID,"
@@ -220,8 +219,7 @@ std::map<cta::TapePool, std::list<cta::ArchivalJob> >
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
     std::ostringstream message;
-    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-    sqlite3_free(zErrMsg);
+    message << __FUNCTION__ << " - SQLite error";
     sqlite3_finalize(statement);
     throw(exception::Exception(message.str()));
   }
@@ -248,7 +246,6 @@ std::map<cta::TapePool, std::list<cta::ArchivalJob> >
 //------------------------------------------------------------------------------
 cta::TapePool cta::MockSchedulerDatabase::getTapePoolByName(
   const SecurityIdentity &requester, const std::string &name) const {
-  char *zErrMsg = 0;
   std::ostringstream query;
   cta::TapePool pool;
   query << "SELECT NAME, NBPARTIALTAPES, UID, GID, CREATIONTIME, COMMENT"
@@ -257,8 +254,7 @@ cta::TapePool cta::MockSchedulerDatabase::getTapePoolByName(
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
     std::ostringstream message;
-    message << __FUNCTION__ <<  " - SQLite error: " << zErrMsg;
-    sqlite3_free(zErrMsg);
+    message << __FUNCTION__ <<  " - SQLite error";
     sqlite3_finalize(statement);
     throw(exception::Exception(message.str()));
   }
@@ -287,8 +283,7 @@ cta::TapePool cta::MockSchedulerDatabase::getTapePoolByName(
   default:
     {
       std::ostringstream message;
-      message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
+      message << __FUNCTION__ << " - SQLite error";
       sqlite3_finalize(statement);
       throw(exception::Exception(message.str()));
     }
@@ -323,7 +318,7 @@ void cta::MockSchedulerDatabase::deleteArchivalJob(
     throw(exception::Exception(message.str()));
   }
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
+  if(0 >= nbRowsModified) {
     std::ostringstream message;
     message << "Archival job for archive file " << archiveFile <<
       " does not exist";
@@ -365,7 +360,6 @@ void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst,
 //------------------------------------------------------------------------------
 std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::MockSchedulerDatabase::
   getRetrievalJobs(const SecurityIdentity &requester) const {
-  char *zErrMsg = 0;
   std::ostringstream query;
   std::map<cta::Tape, std::list<cta::RetrievalJob> > map;
   query << "SELECT STATE, ARCHIVEFILE, REMOTEFILE, VID, UID, GID, CREATIONTIME"
@@ -374,8 +368,7 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::MockSchedulerDatabase::
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
     std::ostringstream message;
-    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-    sqlite3_free(zErrMsg);
+    message << __FUNCTION__ << " - SQLite error";
     sqlite3_finalize(statement);
     throw(exception::Exception(message.str()));
   }
@@ -401,7 +394,6 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::MockSchedulerDatabase::
 //------------------------------------------------------------------------------
 cta::Tape cta::MockSchedulerDatabase::getTapeByVid(
   const SecurityIdentity &requester, const std::string &vid) const {
-  char *zErrMsg = 0;
   std::ostringstream query;
   cta::Tape tape;
   query << "SELECT VID, LOGICALLIBRARY_NAME, TAPEPOOL_NAME, CAPACITY_BYTES,"
@@ -411,8 +403,7 @@ cta::Tape cta::MockSchedulerDatabase::getTapeByVid(
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
     std::ostringstream message;
-    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-    sqlite3_free(zErrMsg);
+    message << __FUNCTION__ << " - SQLite error";
     sqlite3_finalize(statement);
     throw(exception::Exception(message.str()));
   }
@@ -444,8 +435,7 @@ cta::Tape cta::MockSchedulerDatabase::getTapeByVid(
   default:
     {
       std::ostringstream message;
-      message << "getTapeByVid() - SQLite error: " << zErrMsg;
-      sqlite3_free(zErrMsg);
+      message << "getTapeByVid() - SQLite error";
       sqlite3_finalize(statement);
       throw(exception::Exception(message.str()));
     }
@@ -481,7 +471,7 @@ void cta::MockSchedulerDatabase::deleteRetrievalJob(
   }
 
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
+  if(0 >= nbRowsModified) {
     std::ostringstream message;
     message << "Retrival job for remote file file " << remoteFile <<
       " does not exist";
@@ -496,17 +486,25 @@ void cta::MockSchedulerDatabase::createAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user,
   const std::string &comment) {
+  const uint32_t uid = user.getUid();
+  const uint32_t gid = user.getGid();
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "INSERT INTO ADMINUSER(ADMIN_UID, ADMIN_GID, UID, GID,"
-    " CREATIONTIME, COMMENT) VALUES(" << user.getUid() << "," << user.getGid()
-    << "," << requester.user.getUid() << "," << requester.user.getGid() << ","
+    " CREATIONTIME, COMMENT) VALUES(" << uid << "," << gid << "," <<
+    requester.user.getUid() << "," << requester.user.getGid() << ","
     << (int)time(NULL) << ",'" << comment << "');";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
     std::ostringstream message;
     message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
     sqlite3_free(zErrMsg);
+    throw(exception::Exception(message.str()));
+  }
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 >= nbRowsModified) {
+    std::ostringstream message;
+    message << "Admin user uid=" << uid << " gid=" << gid << " already exists";
     throw(exception::Exception(message.str()));
   }
 }
@@ -529,7 +527,7 @@ void cta::MockSchedulerDatabase::deleteAdminUser(
       throw(exception::Exception(message.str()));
   }
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
+  if(0 >= nbRowsModified) {
     std::ostringstream message;
     message << "Admin user " << user.getUid() << ":" << user.getGid() <<
       " does not exist";
@@ -542,7 +540,6 @@ void cta::MockSchedulerDatabase::deleteAdminUser(
 //------------------------------------------------------------------------------
 std::list<cta::AdminUser> cta::MockSchedulerDatabase::getAdminUsers(
   const SecurityIdentity &requester) const {
-  char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::AdminUser> list;
   query << "SELECT ADMIN_UID, ADMIN_GID, UID, GID, CREATIONTIME, COMMENT"
@@ -551,8 +548,7 @@ std::list<cta::AdminUser> cta::MockSchedulerDatabase::getAdminUsers(
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){
     std::ostringstream message;
-    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-    sqlite3_free(zErrMsg);
+    message << __FUNCTION__ << " - SQLite error";
     sqlite3_finalize(statement);
     throw(exception::Exception(message.str()));
   }
@@ -571,6 +567,77 @@ std::list<cta::AdminUser> cta::MockSchedulerDatabase::getAdminUsers(
   }
   sqlite3_finalize(statement);
   return list;
+}
+
+//------------------------------------------------------------------------------
+// assertIsAdminOnAdminHost
+//------------------------------------------------------------------------------
+void cta::MockSchedulerDatabase::assertIsAdminOnAdminHost(
+  const SecurityIdentity &id) const {
+  assertIsAdmin(id.user);
+  assertIsAdminHost(id.host);
+}
+
+//------------------------------------------------------------------------------
+// assertIsAdmin
+//------------------------------------------------------------------------------
+void cta::MockSchedulerDatabase::assertIsAdmin(const UserIdentity &user)
+  const {
+  const uint32_t uid = user.getUid();
+  const uint32_t gid = user.getGid();
+  std::ostringstream query;
+  std::list<cta::AdminHost> list;
+  query << "SELECT COUNT(*) FROM ADMINUSER WHERE UID=" << uid << " AND GID=" <<
+    gid << ";";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error";
+    sqlite3_finalize(statement);
+    throw(exception::Exception(message.str()));
+  }
+  int count = 0;
+  while(SQLITE_ROW == sqlite3_step(statement)) {
+    count = sqlite3_column_int(statement, 0);
+  }
+  sqlite3_finalize(statement);
+
+  if(0 >= count) {
+    std::ostringstream message;
+    message << "User uid=" << user.getUid() << " gid=" << gid <<
+      " is not an administrator";
+    throw exception::Exception(message.str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// assertIsAdminHost
+//------------------------------------------------------------------------------
+void cta::MockSchedulerDatabase::assertIsAdminHost(const std::string &host)
+  const {
+  std::ostringstream query;
+  std::list<cta::AdminHost> list;
+  query << "SELECT COUNT(*) FROM ADMINHOST WHERE NAME='" << host << "';";
+  sqlite3_stmt *statement;
+  int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
+  if(rc!=SQLITE_OK){
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error";
+    sqlite3_finalize(statement);
+    throw(exception::Exception(message.str()));
+  }
+  int count = 0;
+  while(SQLITE_ROW == sqlite3_step(statement)) {
+    count = sqlite3_column_int(statement, 0);
+  }
+  sqlite3_finalize(statement);
+
+  if(0 >= count) {
+    std::ostringstream message;
+    message << "Host " << host << " is not an administration host";
+    throw exception::Exception(message.str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -593,6 +660,13 @@ void cta::MockSchedulerDatabase::createAdminHost(
     sqlite3_free(zErrMsg);
     throw(exception::Exception(message.str()));
   }
+
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 >= nbRowsModified) {
+    std::ostringstream message;
+    message << "Admin host " << hostName << " already exists";
+    throw(exception::Exception(message.str()));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -613,7 +687,7 @@ void cta::MockSchedulerDatabase::deleteAdminHost(
   }
 
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
+  if(0 >= nbRowsModified) {
     std::ostringstream message;
     message << "Admin host " << hostName << " does not exist";
     throw(exception::Exception(message.str()));
@@ -625,7 +699,6 @@ void cta::MockSchedulerDatabase::deleteAdminHost(
 //------------------------------------------------------------------------------
 std::list<cta::AdminHost> cta::MockSchedulerDatabase::getAdminHosts(
   const SecurityIdentity &requester) const {
-  char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::AdminHost> list;
   query << "SELECT NAME, UID, GID, CREATIONTIME, COMMENT"
@@ -634,8 +707,7 @@ std::list<cta::AdminHost> cta::MockSchedulerDatabase::getAdminHosts(
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){
     std::ostringstream message;
-    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-    sqlite3_free(zErrMsg);
+    message << __FUNCTION__ << " - SQLite error";
     sqlite3_finalize(statement);
     throw(exception::Exception(message.str()));
   }
@@ -693,7 +765,7 @@ void cta::MockSchedulerDatabase::deleteStorageClass(
   }
 
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
+  if(0 >= nbRowsModified) {
     std::ostringstream message;
     message << "Storage class " << name << " does not exist";
     throw(exception::Exception(message.str()));
@@ -705,7 +777,6 @@ void cta::MockSchedulerDatabase::deleteStorageClass(
 //------------------------------------------------------------------------------
 std::list<cta::StorageClass> cta::MockSchedulerDatabase::getStorageClasses(
   const SecurityIdentity &requester) const {
-  char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::StorageClass> classes;
   query << "SELECT NAME, NBCOPIES, UID, GID, CREATIONTIME, COMMENT FROM"
@@ -714,8 +785,7 @@ std::list<cta::StorageClass> cta::MockSchedulerDatabase::getStorageClasses(
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){
     std::ostringstream message;
-    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-    sqlite3_free(zErrMsg);
+    message << __FUNCTION__ << " - SQLite error";
     sqlite3_finalize(statement);
     throw(exception::Exception(message.str()));
   }
@@ -775,7 +845,7 @@ void cta::MockSchedulerDatabase::deleteTapePool(
   }
 
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
+  if(0 >= nbRowsModified) {
     std::ostringstream message;
     message << "Tape pool " << name << " does not exist";
     throw(exception::Exception(message.str()));
@@ -788,7 +858,6 @@ void cta::MockSchedulerDatabase::deleteTapePool(
 std::list<cta::TapePool> cta::MockSchedulerDatabase::getTapePools(
   const SecurityIdentity &requester) const {
 
-  char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::TapePool> pools;
   query << "SELECT NAME, NBPARTIALTAPES, UID, GID, CREATIONTIME, COMMENT FROM"
@@ -797,8 +866,7 @@ std::list<cta::TapePool> cta::MockSchedulerDatabase::getTapePools(
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
     std::ostringstream message;
-    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-    sqlite3_free(zErrMsg);
+    message << __FUNCTION__ << " - SQLite error";
     sqlite3_finalize(statement);
     throw(exception::Exception(message.str()));
   }
@@ -862,7 +930,7 @@ void cta::MockSchedulerDatabase::deleteArchivalRoute(
   }
 
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
+  if(0 >= nbRowsModified) {
     std::ostringstream message;
     message << "Archival route for storage class " << storageClassName << 
       " and copy number " << copyNb << " does not exist";
@@ -875,7 +943,6 @@ void cta::MockSchedulerDatabase::deleteArchivalRoute(
 //------------------------------------------------------------------------------
 std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes(
   const SecurityIdentity &requester) const {
-  char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::ArchivalRoute> routes;
   query << "SELECT STORAGECLASS_NAME, COPYNB, TAPEPOOL_NAME, UID, GID,"
@@ -885,8 +952,7 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes(
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0 );
   if(rc!=SQLITE_OK){
     std::ostringstream message;
-    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-    sqlite3_free(zErrMsg);
+    message << __FUNCTION__ << " - SQLite error";
     sqlite3_finalize(statement);
     throw(exception::Exception(message.str()));
   }
@@ -946,7 +1012,7 @@ void cta::MockSchedulerDatabase::deleteLogicalLibrary(
   }
 
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
+  if(0 >= nbRowsModified) {
     std::ostringstream message;
     message << "Logical library " << name << " does not exist";
     throw(exception::Exception(message.str()));
@@ -958,7 +1024,6 @@ void cta::MockSchedulerDatabase::deleteLogicalLibrary(
 //------------------------------------------------------------------------------
 std::list<cta::LogicalLibrary> cta::MockSchedulerDatabase::getLogicalLibraries(
   const SecurityIdentity &requester) const {
-  char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::LogicalLibrary> list;
   query << "SELECT NAME, UID, GID, CREATIONTIME, COMMENT"
@@ -967,8 +1032,7 @@ std::list<cta::LogicalLibrary> cta::MockSchedulerDatabase::getLogicalLibraries(
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
     std::ostringstream message;
-    message << __FUNCTION__ << " - SQLite error: " << zErrMsg;
-    sqlite3_free(zErrMsg);
+    message << __FUNCTION__ << " - SQLite error";
     sqlite3_finalize(statement);
     throw(exception::Exception(message.str()));
   }
@@ -1031,7 +1095,7 @@ void cta::MockSchedulerDatabase::deleteTape(
   }
 
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
-  if(0 > nbRowsModified) {
+  if(0 >= nbRowsModified) {
     std::ostringstream message;
     message << "Tape " << vid << " does not exist";
     throw(exception::Exception(message.str()));
@@ -1043,7 +1107,6 @@ void cta::MockSchedulerDatabase::deleteTape(
 //------------------------------------------------------------------------------
 std::list<cta::Tape> cta::MockSchedulerDatabase::getTapes(
   const SecurityIdentity &requester) const {
-  char *zErrMsg = 0;
   std::ostringstream query;
   std::list<cta::Tape> tapes;
   query << "SELECT VID, LOGICALLIBRARY_NAME, TAPEPOOL_NAME, CAPACITY_BYTES,"
@@ -1053,8 +1116,7 @@ std::list<cta::Tape> cta::MockSchedulerDatabase::getTapes(
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
     std::ostringstream message;
-    message << "selectAllTapes() - SQLite error: " << zErrMsg;
-    sqlite3_free(zErrMsg);
+    message << "selectAllTapes() - SQLite error";
     sqlite3_finalize(statement);
     throw(exception::Exception(message.str()));
   }

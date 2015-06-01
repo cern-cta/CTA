@@ -177,6 +177,14 @@ public:
    const;
 
   /**
+   * Throws an exception if the specified user is not an administrator or if the
+   * user is not sending a request from an adminsitration host.
+   *
+   * @param id The identity of the user together with the host they are on.
+   */
+  void assertIsAdminOnAdminHost(const SecurityIdentity &id) const;
+
+  /**
    * Creates the specified administration host.
    *
    * @param requester The identity of the requester.
@@ -395,6 +403,20 @@ private:
    * Creates the database schema.
    */
   void createSchema();
+
+  /**
+   * Throws an exception if the specified user is not an administrator.
+   *
+   * @param id The identity of the user.
+   */
+  void assertIsAdmin(const UserIdentity &user) const;
+
+  /**
+   * Throws an exception if the specified host is not an administration host.
+   *
+   * @param host The network name of the host.
+   */
+  void assertIsAdminHost(const std::string &host) const;
 
   /**
    * Returns the tape pool with specified name.
