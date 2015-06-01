@@ -101,6 +101,17 @@ TEST(RootEntry, AdminHosts) {
     re.commit();
   }
   {
+    // Check that we cannot re-add an existing host
+    // Check that we can remove existing and non-existing hosts
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    re.fetch();
+    cta::objectstore::CreationLog cl(99, "dummyUser", 99, "dummyGroup", 
+      "unittesthost", time(NULL), "Creation of unit test agent register");
+    ASSERT_THROW(re.addAdminHost("adminHost2", cl),
+       cta::objectstore::RootEntry::DuplicateEntry);
+  }
+  {
     // Check that we got the expected result
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedSharedLock lock(re);
@@ -163,6 +174,17 @@ TEST(RootEntry, AdminUsers) {
     re.removeAdminUser(user1prime);
     re.removeAdminUser(user3);
     re.commit();
+  }
+  {
+    // Check that we cannot re-add an existing user
+    // Check that we can remove existing and non-existing hosts
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    re.fetch();
+    cta::objectstore::CreationLog cl(99, "dummyUser", 99, "dummyGroup", 
+      "unittesthost", time(NULL), "Creation of unit test agent register");
+    ASSERT_THROW(re.addAdminUser(user2, cl),
+       cta::objectstore::RootEntry::DuplicateEntry);
   }
   {
     // Check that we got the expected result

@@ -104,7 +104,7 @@ void cta::objectstore::RootEntry::addAdminUser(const UserIdentity& user,
   try {
     serializers::findElement(m_payload.adminusers(), user);
     throw DuplicateEntry("In RootEntry::addAdminUser: entry already exists");
-  } catch (...) {}
+  } catch (serializers::NotFound &) {}
   serializers::AdminUser * au = m_payload.add_adminusers();
   user.serialize(*au->mutable_user());
   log.serialize(*au->mutable_log());
@@ -153,7 +153,7 @@ void cta::objectstore::RootEntry::addStorageClass(const std::string storageClass
   try {
     serializers::findElement(m_payload.storageclasses(), storageClass);
     throw DuplicateEntry("In RootEntry::addStorageClass: trying to create duplicate entry");
-  } catch (...) {}
+  } catch (serializers::NotFound &) {}
   // Insert the storage class
   auto * sc = m_payload.mutable_storageclasses()->Add();
   sc->set_name(storageClass);
