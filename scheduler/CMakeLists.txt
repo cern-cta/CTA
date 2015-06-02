@@ -33,7 +33,6 @@ set (CTA_SCHEDULER_SRC_FILES
   RemoteStorage.cpp
   RetrievalFileTransfer.cpp
   RetrievalJob.cpp
-  RetrievalJobQueues.cpp
   RetrievalJobState.cpp
   RetrievalMount.cpp
   RetrievalRequest.cpp
