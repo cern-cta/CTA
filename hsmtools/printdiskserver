@@ -59,22 +59,26 @@ if len(args) != 0:
     targets = set(args)
 
 def sqlRowToPrintRow(sqlrow, displayFS):
-    dsname, fsmountpoint, nbmountpoints, status, hwOnline, free, \
-      minfree, maxfree, size, nbrd, nbwr, nbmigr, nbrec, diskpools, dsid, summary = sqlrow
-    if displayFS:
-        return (dsname or '', fsmountpoint or '',
-                status or '', hwOnline or '',
-                castor_tools.nbToDataAmount(free),
-                minfree, maxfree, castor_tools.printPercentage(free or 0, size or 0),
-                castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec,
-                ','.join(diskpools), dsid or '')
-    else:
-        return (dsname or '', nbmountpoints,
-                status or '', hwOnline or '',
-                castor_tools.nbToDataAmount(free),
-                minfree, maxfree, castor_tools.printPercentage(free or 0, size or 0),
-                castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec,
-                ','.join(diskpools), dsid or '')
+    try:
+        dsname, fsmountpoint, nbmountpoints, status, hwOnline, free, \
+          minfree, maxfree, size, nbrd, nbwr, nbmigr, nbrec, diskpools, dsid, summary = sqlrow
+        if displayFS:
+            return (dsname or '', fsmountpoint or '',
+                    status or '', hwOnline or '',
+                    castor_tools.nbToDataAmount(free),
+                    minfree, maxfree, castor_tools.printPercentage(free or 0, size or 0),
+                    castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec,
+                    ','.join(diskpools), dsid or '')
+        else:
+            return (dsname or '', nbmountpoints,
+                    status or '', hwOnline or '',
+                    castor_tools.nbToDataAmount(free),
+                    minfree, maxfree, castor_tools.printPercentage(free or 0, size or 0),
+                    castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec,
+                    ','.join(diskpools), dsid or '')
+    except ValueError:
+        print 'No diskserver found'
+        return None
 
 def getFSRelatedItems(diskServerIds, diskPoolIds):
     # build statement for filesystem based pools/diskservers
