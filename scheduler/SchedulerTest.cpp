@@ -262,29 +262,28 @@ TEST_P(SchedulerTest,
     comment), std::exception);
 }
 
-/*
-
 TEST_P(SchedulerTest,
   admin_createStorageClass_lexicographical_order) {
   using namespace cta;
 
-  const SecurityIdentity requester;
-  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
-  
+  Scheduler &scheduler = getScheduler();
+
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_TRUE(storageClasses.empty());
   }
 
-  ASSERT_NO_THROW(m_middleTier->admin().createStorageClass(requester, "d", 1, "Comment d"));
-  ASSERT_NO_THROW(m_middleTier->admin().createStorageClass(requester, "b", 1, "Comment b"));
-  ASSERT_NO_THROW(m_middleTier->admin().createStorageClass(requester, "a", 1, "Comment a"));
-  ASSERT_NO_THROW(m_middleTier->admin().createStorageClass(requester, "c", 1, "Comment c"));
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, "d", 1, "Comment d"));
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, "b", 1, "Comment b"));
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, "a", 1, "Comment a"));
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, "c", 1, "Comment c"));
   
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_EQ(4, storageClasses.size());
 
     ASSERT_EQ(std::string("a"), storageClasses.front().getName());
@@ -297,26 +296,28 @@ TEST_P(SchedulerTest,
   }
 }
 
+/*
 TEST_P(SchedulerTest, admin_deleteStorageClass_existing) {
   using namespace cta;
 
-  const SecurityIdentity requester;
-  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  Scheduler &scheduler = getScheduler();
   
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_TRUE(storageClasses.empty());
   }
 
   const std::string name = "TestStorageClass";
   const uint16_t nbCopies = 2;
   const std::string comment = "Comment";
-  ASSERT_NO_THROW(m_middleTier->admin().createStorageClass(requester, name, nbCopies, comment));
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, name, nbCopies, comment));
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_EQ(1, storageClasses.size());
   
     StorageClass storageClass;
@@ -324,12 +325,13 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_existing) {
     ASSERT_EQ(name, storageClass.getName());
     ASSERT_EQ(nbCopies, storageClass.getNbCopies());
 
-    ASSERT_NO_THROW(m_middleTier->admin().deleteStorageClass(requester, name));
+    ASSERT_NO_THROW(scheduler.deleteStorageClass(s_adminOnAdminHost, name));
   }
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_TRUE(storageClasses.empty());
   }
 }
@@ -338,24 +340,25 @@ TEST_P(SchedulerTest,
   admin_deleteStorageClass_in_use_by_directory) {
   using namespace cta;
 
-  const SecurityIdentity requester;
-  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  Scheduler &scheduler = getScheduler();
   
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_TRUE(storageClasses.empty());
   }
 
   const std::string storageClassName = "TestStorageClass";
   const uint16_t nbCopies = 2;
   const std::string comment = "Comment";
-  ASSERT_NO_THROW(m_middleTier->admin().createStorageClass(requester, storageClassName, nbCopies,
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName, nbCopies,
     comment));
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_EQ(1, storageClasses.size());
 
     StorageClass storageClass;
@@ -364,15 +367,16 @@ TEST_P(SchedulerTest,
     ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
 
-  ASSERT_NO_THROW(m_middleTier->user().setDirStorageClass(requester, "/",
+  ASSERT_NO_THROW(m_middleTier->user().setDirStorageClass(s_adminOnAdminHost, "/",
     storageClassName));
 
-  ASSERT_THROW(m_middleTier->admin().deleteStorageClass(requester, storageClassName),
+  ASSERT_THROW(scheduler.deleteStorageClass(s_adminOnAdminHost, storageClassName),
     std::exception);
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_EQ(1, storageClasses.size());
 
     StorageClass storageClass;
@@ -381,13 +385,14 @@ TEST_P(SchedulerTest,
     ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
 
-  ASSERT_NO_THROW(m_middleTier->user().clearDirStorageClass(requester, "/"));
+  ASSERT_NO_THROW(m_middleTier->user().clearDirStorageClass(s_adminOnAdminHost, "/"));
 
-  ASSERT_NO_THROW(m_middleTier->admin().deleteStorageClass(requester, storageClassName));
+  ASSERT_NO_THROW(scheduler.deleteStorageClass(s_adminOnAdminHost, storageClassName));
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_TRUE(storageClasses.empty());
   }
 }
@@ -395,24 +400,28 @@ TEST_P(SchedulerTest,
 TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
   using namespace cta;
 
-  const SecurityIdentity requester;
-  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  Scheduler &scheduler = getScheduler();
   
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_TRUE(storageClasses.empty());
   }
 
   const std::string storageClassName = "TestStorageClass";
   const uint16_t nbCopies = 2;
   const std::string comment = "Comment";
-  ASSERT_NO_THROW(m_middleTier->admin().createStorageClass(requester, storageClassName, nbCopies,
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName, nbCopies,
     comment));
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+
+
+
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_EQ(1, storageClasses.size());
 
     StorageClass storageClass;
@@ -423,12 +432,12 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
 
   const std::string tapePoolName = "TestTapePool";
   const uint16_t nbPartialTapes = 1;
-  ASSERT_NO_THROW(m_middleTier->admin().createTapePool(requester, tapePoolName,
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, comment));
 
   {
     std::list<TapePool> tapePools;
-    ASSERT_NO_THROW(tapePools = m_middleTier->admin().getTapePools(requester));
+    ASSERT_NO_THROW(tapePools = scheduler.getTapePools(s_adminOnAdminHost));
     ASSERT_EQ(1, tapePools.size());
 
     TapePool tapePool;
@@ -437,12 +446,13 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
   }
 
   const uint16_t copyNb = 1;
-  ASSERT_NO_THROW(m_middleTier->admin().createArchivalRoute(requester, storageClassName,
+  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, comment));
 
   {
     std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = m_middleTier->admin().getArchivalRoutes(requester));
+    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+      s_adminOnAdminHost));
     ASSERT_EQ(1, archivalRoutes.size());
 
     ArchivalRoute archivalRoute;
@@ -452,12 +462,13 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
     ASSERT_EQ(tapePoolName, archivalRoute.getTapePoolName());
   }
 
-  ASSERT_THROW(m_middleTier->admin().deleteStorageClass(requester, storageClassName),
+  ASSERT_THROW(scheduler.deleteStorageClass(s_adminOnAdminHost, storageClassName),
     std::exception);
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_EQ(1, storageClasses.size());
 
     StorageClass storageClass;
@@ -466,20 +477,22 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
     ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
 
-  ASSERT_NO_THROW(m_middleTier->admin().deleteArchivalRoute(requester, storageClassName,
+  ASSERT_NO_THROW(scheduler.deleteArchivalRoute(s_adminOnAdminHost, storageClassName,
     copyNb));
 
   {
     std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = m_middleTier->admin().getArchivalRoutes(requester));
+    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+      s_adminOnAdminHost));
     ASSERT_TRUE(archivalRoutes.empty());
   }
 
-  ASSERT_NO_THROW(m_middleTier->admin().deleteStorageClass(requester, storageClassName));
+  ASSERT_NO_THROW(scheduler.deleteStorageClass(s_adminOnAdminHost, storageClassName));
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_TRUE(storageClasses.empty());
   }
 }
@@ -487,21 +500,21 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
 TEST_P(SchedulerTest, admin_deleteStorageClass_non_existing) {
   using namespace cta;
 
-  const SecurityIdentity requester;
-  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  Scheduler &scheduler = getScheduler();
   
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(s_adminOnAdminHost));
     ASSERT_TRUE(storageClasses.empty());
   }
 
   const std::string name = "TestStorageClass";
-  ASSERT_THROW(m_middleTier->admin().deleteStorageClass(requester, name), std::exception);
+  ASSERT_THROW(scheduler.deleteStorageClass(s_adminOnAdminHost, name), std::exception);
 
   {
     std::list<StorageClass> storageClasses;
-    ASSERT_NO_THROW(storageClasses = m_middleTier->admin().getStorageClasses(requester));
+    ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
+      s_adminOnAdminHost));
     ASSERT_TRUE(storageClasses.empty());
   }
 }
@@ -509,12 +522,12 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_non_existing) {
 TEST_P(SchedulerTest, admin_deleteTapePool_in_use) {
   using namespace cta;
 
-  const SecurityIdentity requester;
-  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  Scheduler &scheduler = getScheduler();
 
   {
     std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = m_middleTier->admin().getArchivalRoutes(requester));
+    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+      s_adminOnAdminHost));
     ASSERT_TRUE(archivalRoutes.empty());
   }
 
@@ -522,22 +535,23 @@ TEST_P(SchedulerTest, admin_deleteTapePool_in_use) {
   const std::string comment = "Comment";
   {
     const uint16_t nbCopies = 2;
-    ASSERT_NO_THROW(m_middleTier->admin().createStorageClass(requester, storageClassName,
+    ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
       nbCopies, comment));
   }
 
   const std::string tapePoolName = "TestTapePool";
   const uint16_t nbPartialTapes = 1;
-  ASSERT_NO_THROW(m_middleTier->admin().createTapePool(requester, tapePoolName,
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, comment));
 
   const uint16_t copyNb = 1;
-  ASSERT_NO_THROW(m_middleTier->admin().createArchivalRoute(requester, storageClassName,
+  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, comment));
 
   {
     std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = m_middleTier->admin().getArchivalRoutes(requester));
+    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+      s_adminOnAdminHost));
     ASSERT_EQ(1, archivalRoutes.size());
 
     ArchivalRoute archivalRoute;
@@ -547,11 +561,12 @@ TEST_P(SchedulerTest, admin_deleteTapePool_in_use) {
     ASSERT_EQ(tapePoolName, archivalRoute.getTapePoolName());
   }
 
-  ASSERT_THROW(m_middleTier->admin().deleteTapePool(requester, tapePoolName), std::exception);
+  ASSERT_THROW(scheduler.deleteTapePool(s_adminOnAdminHost, tapePoolName), std::exception);
 
   {
     std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = m_middleTier->admin().getArchivalRoutes(requester));
+    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+      s_adminOnAdminHost));
     ASSERT_EQ(1, archivalRoutes.size());
 
     ArchivalRoute archivalRoute;
@@ -565,12 +580,12 @@ TEST_P(SchedulerTest, admin_deleteTapePool_in_use) {
 TEST_P(SchedulerTest, admin_createArchivalRoute_new) {
   using namespace cta;
 
-  const SecurityIdentity requester;
-  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  Scheduler &scheduler = getScheduler();
 
   {
     std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = m_middleTier->admin().getArchivalRoutes(requester));
+    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+      s_adminOnAdminHost));
     ASSERT_TRUE(archivalRoutes.empty());
   }
 
@@ -578,22 +593,23 @@ TEST_P(SchedulerTest, admin_createArchivalRoute_new) {
   const std::string comment = "Comment";
   {
     const uint16_t nbCopies = 2;
-    ASSERT_NO_THROW(m_middleTier->admin().createStorageClass(requester, storageClassName,
+    ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
       nbCopies, comment));
   }
 
   const std::string tapePoolName = "TestTapePool";
   const uint16_t nbPartialTapes = 1;
-  ASSERT_NO_THROW(m_middleTier->admin().createTapePool(requester, tapePoolName,
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, comment));
 
   const uint16_t copyNb = 1;
-  ASSERT_NO_THROW(m_middleTier->admin().createArchivalRoute(requester, storageClassName,
+  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, comment));
 
   {
     std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = m_middleTier->admin().getArchivalRoutes(requester));
+    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+      s_adminOnAdminHost));
     ASSERT_EQ(1, archivalRoutes.size());
 
     ArchivalRoute archivalRoute;
@@ -608,12 +624,11 @@ TEST_P(SchedulerTest,
   admin_createArchivalRoute_already_existing) {
   using namespace cta;
 
-  const SecurityIdentity requester;
-  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  Scheduler &scheduler = getScheduler();
 
   {
     std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = m_middleTier->admin().getArchivalRoutes(requester));
+    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(s_adminOnAdminHost));
     ASSERT_TRUE(archivalRoutes.empty());
   }
 
@@ -621,22 +636,23 @@ TEST_P(SchedulerTest,
   const std::string comment = "Comment";
   {
     const uint16_t nbCopies = 2;
-    ASSERT_NO_THROW(m_middleTier->admin().createStorageClass(requester, storageClassName,
+    ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
       nbCopies, comment));
   }
 
   const std::string tapePoolName = "TestTapePool";
   const uint16_t nbPartialTapes = 1;
-  ASSERT_NO_THROW(m_middleTier->admin().createTapePool(requester, tapePoolName,
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, comment));
 
   const uint16_t copyNb = 1;
-  ASSERT_NO_THROW(m_middleTier->admin().createArchivalRoute(requester, storageClassName,
+  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, comment));
 
   {
     std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = m_middleTier->admin().getArchivalRoutes(requester));
+    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+      s_adminOnAdminHost));
     ASSERT_EQ(1, archivalRoutes.size());
 
     ArchivalRoute archivalRoute;
@@ -646,19 +662,19 @@ TEST_P(SchedulerTest,
     ASSERT_EQ(tapePoolName, archivalRoute.getTapePoolName());
   }
 
-  ASSERT_THROW(m_middleTier->admin().createArchivalRoute(requester, storageClassName,
+  ASSERT_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, comment), std::exception);
 }
 
 TEST_P(SchedulerTest, admin_deleteArchivalRoute_existing) {
   using namespace cta;
 
-  const SecurityIdentity requester;
-  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  Scheduler &scheduler = getScheduler();
 
   {
     std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = m_middleTier->admin().getArchivalRoutes(requester));
+    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+      s_adminOnAdminHost));
     ASSERT_TRUE(archivalRoutes.empty());
   }
 
@@ -666,22 +682,23 @@ TEST_P(SchedulerTest, admin_deleteArchivalRoute_existing) {
   const std::string comment = "Comment";
   {
     const uint16_t nbCopies = 2;
-    ASSERT_NO_THROW(m_middleTier->admin().createStorageClass(requester, storageClassName,
+    ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
       nbCopies, comment));
   }
 
   const std::string tapePoolName = "TestTapePool";
   const uint16_t nbPartialTapes = 1;
-  ASSERT_NO_THROW(m_middleTier->admin().createTapePool(requester, tapePoolName,
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, comment));
 
   const uint16_t copyNb = 1;
-  ASSERT_NO_THROW(m_middleTier->admin().createArchivalRoute(requester, storageClassName,
+  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, comment));
 
   {
     std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = m_middleTier->admin().getArchivalRoutes(requester));
+    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+      s_adminOnAdminHost));
     ASSERT_EQ(1, archivalRoutes.size());
 
     ArchivalRoute archivalRoute;
@@ -691,12 +708,12 @@ TEST_P(SchedulerTest, admin_deleteArchivalRoute_existing) {
     ASSERT_EQ(tapePoolName, archivalRoute.getTapePoolName());
   }
 
-  ASSERT_NO_THROW(m_middleTier->admin().deleteArchivalRoute(requester, storageClassName,
+  ASSERT_NO_THROW(scheduler.deleteArchivalRoute(s_adminOnAdminHost, storageClassName,
     copyNb));
 
   {
     std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = m_middleTier->admin().getArchivalRoutes(requester));
+    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(s_adminOnAdminHost));
     ASSERT_TRUE(archivalRoutes.empty());
   }
 }
@@ -704,12 +721,12 @@ TEST_P(SchedulerTest, admin_deleteArchivalRoute_existing) {
 TEST_P(SchedulerTest, admin_deleteArchivalRoute_non_existing) {
   using namespace cta;
 
-  const SecurityIdentity requester;
-  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  Scheduler &scheduler = getScheduler();
 
   {
     std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = m_middleTier->admin().getArchivalRoutes(requester));
+    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+      s_adminOnAdminHost));
     ASSERT_TRUE(archivalRoutes.empty());
   }
 
@@ -717,51 +734,52 @@ TEST_P(SchedulerTest, admin_deleteArchivalRoute_non_existing) {
   const std::string comment = "Comment";
   {
     const uint16_t nbCopies = 2;
-    ASSERT_NO_THROW(m_middleTier->admin().createStorageClass(requester, storageClassName,
+    ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
       nbCopies, comment));
   }
 
   const std::string tapePoolName = "TestTapePool";
   const uint16_t nbPartialTapes = 1;
-  ASSERT_NO_THROW(m_middleTier->admin().createTapePool(requester, tapePoolName,
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, comment));
 
   const uint16_t copyNb = 1;
-  ASSERT_THROW(m_middleTier->admin().deleteArchivalRoute(requester, tapePoolName, copyNb),
+  ASSERT_THROW(scheduler.deleteArchivalRoute(s_adminOnAdminHost, tapePoolName, copyNb),
     std::exception);
 }
 
 TEST_P(SchedulerTest, admin_createTape_new) {
   using namespace cta;
 
-  const SecurityIdentity requester;
-  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  Scheduler &scheduler = getScheduler();
 
   {
     std::list<LogicalLibrary> libraries;
-    ASSERT_NO_THROW(libraries = m_middleTier->admin().getLogicalLibraries(requester));
+    ASSERT_NO_THROW(libraries = scheduler.getLogicalLibraries(
+      s_adminOnAdminHost));
     ASSERT_TRUE(libraries.empty());
   }
 
   {
     std::list<TapePool> pools;
-    ASSERT_NO_THROW(pools = m_middleTier->admin().getTapePools(requester));
+    ASSERT_NO_THROW(pools = scheduler.getTapePools(s_adminOnAdminHost));
     ASSERT_TRUE(pools.empty());
   }
 
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = m_middleTier->admin().getTapes(requester));
+    ASSERT_NO_THROW(tapes = scheduler.getTapes(s_adminOnAdminHost));
     ASSERT_TRUE(tapes.empty());
   }
 
   const std::string libraryName = "TestLogicalLibrary";
   const std::string libraryComment = "Library comment";
-  ASSERT_NO_THROW(m_middleTier->admin().createLogicalLibrary(requester, libraryName,
+  ASSERT_NO_THROW(scheduler.createLogicalLibrary(s_adminOnAdminHost, libraryName,
     libraryComment));
   {
     std::list<LogicalLibrary> libraries;
-    ASSERT_NO_THROW(libraries = m_middleTier->admin().getLogicalLibraries(requester));
+    ASSERT_NO_THROW(libraries = scheduler.getLogicalLibraries(
+      s_adminOnAdminHost));
     ASSERT_EQ(1, libraries.size());
   
     LogicalLibrary logicalLibrary;
@@ -773,11 +791,11 @@ TEST_P(SchedulerTest, admin_createTape_new) {
   const std::string tapePoolName = "TestTapePool";
   const uint16_t nbPartialTapes = 1;
   const std::string comment = "Tape pool omment";
-  ASSERT_NO_THROW(m_middleTier->admin().createTapePool(requester, tapePoolName,
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, comment));
   {
     std::list<TapePool> tapePools;
-    ASSERT_NO_THROW(tapePools = m_middleTier->admin().getTapePools(requester));
+    ASSERT_NO_THROW(tapePools = scheduler.getTapePools(s_adminOnAdminHost));
     ASSERT_EQ(1, tapePools.size());
     
     TapePool tapePool;
@@ -789,11 +807,11 @@ TEST_P(SchedulerTest, admin_createTape_new) {
   const std::string vid = "TestVid";
   const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
-  ASSERT_NO_THROW(m_middleTier->admin().createTape(requester, vid, libraryName, tapePoolName,
+  ASSERT_NO_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName, tapePoolName,
     capacityInBytes, tapeComment));
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = m_middleTier->admin().getTapes(requester));
+    ASSERT_NO_THROW(tapes = scheduler.getTapes(s_adminOnAdminHost));
     ASSERT_EQ(1, tapes.size()); 
   
     Tape tape;
@@ -811,24 +829,24 @@ TEST_P(SchedulerTest,
   admin_createTape_new_non_existing_library) {
   using namespace cta;
 
-  const SecurityIdentity requester;
-  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  Scheduler &scheduler = getScheduler();
 
   {
     std::list<LogicalLibrary> libraries;
-    ASSERT_NO_THROW(libraries = m_middleTier->admin().getLogicalLibraries(requester));
+    ASSERT_NO_THROW(libraries = scheduler.getLogicalLibraries(
+      s_adminOnAdminHost));
     ASSERT_TRUE(libraries.empty());
   }
 
   {
     std::list<TapePool> pools;
-    ASSERT_NO_THROW(pools = m_middleTier->admin().getTapePools(requester));
+    ASSERT_NO_THROW(pools = scheduler.getTapePools(s_adminOnAdminHost));
     ASSERT_TRUE(pools.empty());
   }
 
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = m_middleTier->admin().getTapes(requester));
+    ASSERT_NO_THROW(tapes = scheduler.getTapes(s_adminOnAdminHost));
     ASSERT_TRUE(tapes.empty());
   }
 
@@ -837,11 +855,12 @@ TEST_P(SchedulerTest,
   const std::string tapePoolName = "TestTapePool";
   const uint16_t nbPartialTapes = 1;
   const std::string comment = "Tape pool omment";
-  ASSERT_NO_THROW(m_middleTier->admin().createTapePool(requester, tapePoolName,
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, comment));
   {
     std::list<TapePool> tapePools;
-    ASSERT_NO_THROW(tapePools = m_middleTier->admin().getTapePools(requester));
+    ASSERT_NO_THROW(tapePools = scheduler.getTapePools(
+      s_adminOnAdminHost));
     ASSERT_EQ(1, tapePools.size());
     
     TapePool tapePool;
@@ -853,41 +872,41 @@ TEST_P(SchedulerTest,
   const std::string vid = "TestVid";
   const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
-  ASSERT_THROW(m_middleTier->admin().createTape(requester, vid, libraryName, tapePoolName,
+  ASSERT_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName, tapePoolName,
     capacityInBytes, tapeComment), std::exception);
 }
 
 TEST_P(SchedulerTest, admin_createTape_new_non_existing_pool) {
   using namespace cta;
 
-  const SecurityIdentity requester;
-  std::unique_ptr<localMiddleTier> m_middleTier(GetParam()->allocateLocalMiddleTier());
+  Scheduler &scheduler = getScheduler();
 
   {
     std::list<LogicalLibrary> libraries;
-    ASSERT_NO_THROW(libraries = m_middleTier->admin().getLogicalLibraries(requester));
+    ASSERT_NO_THROW(libraries = scheduler.getLogicalLibraries(
+      s_adminOnAdminHost));
     ASSERT_TRUE(libraries.empty());
   }
 
   {
     std::list<TapePool> pools;
-    ASSERT_NO_THROW(pools = m_middleTier->admin().getTapePools(requester));
+    ASSERT_NO_THROW(pools = scheduler.getTapePools(s_adminOnAdminHost));
     ASSERT_TRUE(pools.empty());
   }
 
   {
     std::list<Tape> tapes;
-    ASSERT_NO_THROW(tapes = m_middleTier->admin().getTapes(requester));
+    ASSERT_NO_THROW(tapes = scheduler.getTapes(s_adminOnAdminHost));
     ASSERT_TRUE(tapes.empty());
   }
 
   const std::string libraryName = "TestLogicalLibrary";
   const std::string libraryComment = "Library comment";
-  ASSERT_NO_THROW(m_middleTier->admin().createLogicalLibrary(requester, libraryName,
+  ASSERT_NO_THROW(scheduler.createLogicalLibrary(s_adminOnAdminHost, libraryName,
     libraryComment));
   {
     std::list<LogicalLibrary> libraries;
-    ASSERT_NO_THROW(libraries = m_middleTier->admin().getLogicalLibraries(requester));
+    ASSERT_NO_THROW(libraries = scheduler.getLogicalLibraries(s_adminOnAdminHost));
     ASSERT_EQ(1, libraries.size());
   
     LogicalLibrary logicalLibrary;
@@ -901,7 +920,7 @@ TEST_P(SchedulerTest, admin_createTape_new_non_existing_pool) {
   const std::string vid = "TestVid";
   const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
-  ASSERT_THROW(m_middleTier->admin().createTape(requester, vid, libraryName, tapePoolName,
+  ASSERT_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName, tapePoolName,
     capacityInBytes, tapeComment), std::exception);
 }
 */
