@@ -312,3 +312,31 @@ std::list<cta::Tape> cta::Scheduler::getTapes(
   const SecurityIdentity &requester) const {
   return std::list<Tape>();
 }
+
+//------------------------------------------------------------------------------
+// setDirStorageClass
+//------------------------------------------------------------------------------
+void cta::Scheduler::setDirStorageClass(
+  const SecurityIdentity &requester,
+  const std::string &path,
+  const std::string &storageClassName) {
+  m_ns.setDirStorageClass(requester, path, storageClassName);
+}
+
+//------------------------------------------------------------------------------
+// clearDirStorageClass
+//------------------------------------------------------------------------------
+void cta::Scheduler::clearDirStorageClass(
+  const SecurityIdentity &requester,
+  const std::string &path) {
+  m_ns.clearDirStorageClass(requester, path);
+}
+  
+//------------------------------------------------------------------------------
+// getDirStorageClass
+//------------------------------------------------------------------------------
+std::string cta::Scheduler::getDirStorageClass(
+  const SecurityIdentity &requester,
+  const std::string &path) const {
+  return m_ns.getDirStorageClass(requester, path);
+}

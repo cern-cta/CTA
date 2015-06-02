@@ -225,8 +225,7 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of administration hosts in lexicographical order.
    */
-  std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester)
-   const;
+  std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester) const;
 
   /**
    * Creates the specified storage class.
@@ -414,6 +413,39 @@ public:
    */
   std::list<Tape> getTapes(
     const SecurityIdentity &requester) const;
+
+  /**
+   * Sets the storage class of the specified directory to the specified value.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the directory.
+   * @param storageClassName The name of the storage class.
+   */
+  void setDirStorageClass(
+    const SecurityIdentity &requester,
+    const std::string &path,
+    const std::string &storageClassName);
+
+  /**
+   * Clears the storage class of the specified directory.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the directory.
+   */ 
+  void clearDirStorageClass(
+    const SecurityIdentity &requester,
+    const std::string &path);
+
+  /**
+   * Returns the name of the storage class of the specified directory.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the directory.
+   * @return The name of the storage class of the specified directory.
+   */
+  std::string getDirStorageClass(
+    const SecurityIdentity &requester,
+    const std::string &path) const;
 
 private:
 

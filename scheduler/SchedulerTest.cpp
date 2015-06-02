@@ -335,7 +335,6 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_existing) {
   }
 }
 
-/*
 TEST_P(SchedulerTest,
   admin_deleteStorageClass_in_use_by_directory) {
   using namespace cta;
@@ -367,7 +366,7 @@ TEST_P(SchedulerTest,
     ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
 
-  ASSERT_NO_THROW(m_middleTier->user().setDirStorageClass(s_adminOnAdminHost, "/",
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, "/",
     storageClassName));
 
   ASSERT_THROW(scheduler.deleteStorageClass(s_adminOnAdminHost, storageClassName),
@@ -385,7 +384,7 @@ TEST_P(SchedulerTest,
     ASSERT_EQ(nbCopies, storageClass.getNbCopies());
   }
 
-  ASSERT_NO_THROW(m_middleTier->user().clearDirStorageClass(s_adminOnAdminHost, "/"));
+  ASSERT_NO_THROW(scheduler.clearDirStorageClass(s_adminOnAdminHost, "/"));
 
   ASSERT_NO_THROW(scheduler.deleteStorageClass(s_adminOnAdminHost, storageClassName));
 
@@ -397,6 +396,7 @@ TEST_P(SchedulerTest,
   }
 }
 
+/*
 TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
   using namespace cta;
 
