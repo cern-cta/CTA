@@ -118,14 +118,14 @@ public:
    *
    * @param rqst The request to be queued.
    */
-  void queue(RetrieveToDirRequest &rqst);
+  void queue(const RetrieveToDirRequest &rqst);
 
   /**
    * Queues the specified request.
    *
    * @param rqst The request to be queued.
    */
-  void queue(RetrieveToFileRequest &rqst);
+  void queue(const RetrieveToFileRequest &rqst);
 
   /**
    * Returns all of the existing retrieval jobs grouped by tape and then

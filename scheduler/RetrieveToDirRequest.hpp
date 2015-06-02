@@ -30,18 +30,18 @@ namespace cta {
  * Class representing a user request to retrieve one or more archived files to a
  * remote directory.
  */
-class RetrieveToDirRquest: public RetrievalRequest {
+class RetrieveToDirRequest: public RetrievalRequest {
 public:
 
   /**
    * Constructor.
    */
-  RetrieveToDirRquest();
+  RetrieveToDirRequest();
 
   /**
    * Destructor.
    */
-  ~RetrieveToDirRquest() throw();
+  ~RetrieveToDirRequest() throw();
 
   /**
    * Constructor.
@@ -53,7 +53,7 @@ public:
    * @param creationTime Optionally the absolute time at which the user request
    * was created.  If no value is given then the current time is used.
    */
-  RetrieveToDirRquest(
+  RetrieveToDirRequest(
     const std::string &remoteDir,
     const std::string &id,
     const uint64_t priority,
@@ -99,6 +99,6 @@ private:
    */
   std::list<RetrieveToFileRequest> m_retrieveToFileRequests;
 
-}; // class RetrieveToDirRquest
+}; // class RetrieveToDirRequest
 
 } // namespace cta

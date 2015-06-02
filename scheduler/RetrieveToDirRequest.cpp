@@ -21,19 +21,19 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrieveToDirRquest::RetrieveToDirRquest() {
+cta::RetrieveToDirRequest::RetrieveToDirRequest() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::RetrieveToDirRquest::~RetrieveToDirRquest() throw() {
+cta::RetrieveToDirRequest::~RetrieveToDirRequest() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrieveToDirRquest::RetrieveToDirRquest(
+cta::RetrieveToDirRequest::RetrieveToDirRequest(
   const std::string &remoteDir,
   const std::string &id,
   const uint64_t priority,
@@ -46,14 +46,14 @@ cta::RetrieveToDirRquest::RetrieveToDirRquest(
 //------------------------------------------------------------------------------
 // getRemoteDir
 //------------------------------------------------------------------------------
-const std::string &cta::RetrieveToDirRquest::getRemoteDir() const throw() {
+const std::string &cta::RetrieveToDirRequest::getRemoteDir() const throw() {
   return m_remoteDir;
 }
 
 //------------------------------------------------------------------------------
 // getRetrieveToFileRequests
 //------------------------------------------------------------------------------
-const std::list<cta::RetrieveToFileRequest> &cta::RetrieveToDirRquest::
+const std::list<cta::RetrieveToFileRequest> &cta::RetrieveToDirRequest::
   getRetrieveToFileRequests() const throw() {
   return m_retrieveToFileRequests;
 }
@@ -61,7 +61,7 @@ const std::list<cta::RetrieveToFileRequest> &cta::RetrieveToDirRquest::
 //------------------------------------------------------------------------------
 // getRetrieveToFileRequests
 //------------------------------------------------------------------------------
-std::list<cta::RetrieveToFileRequest> &cta::RetrieveToDirRquest::
+std::list<cta::RetrieveToFileRequest> &cta::RetrieveToDirRequest::
   getRetrieveToFileRequests() throw() {
   return m_retrieveToFileRequests;
 }

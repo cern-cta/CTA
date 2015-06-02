@@ -18,11 +18,15 @@
 
 #include "nameserver/MockNameServerFactory.hpp"
 #include "nameserver/NameServer.hpp"
+#include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MockSchedulerDatabaseFactory.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SecurityIdentity.hpp"
 #include "scheduler/StorageClass.hpp"
+#include "scheduler/Tape.hpp"
+#include "scheduler/TapePool.hpp"
 
 #include <exception>
 #include <gtest/gtest.h>
@@ -396,7 +400,6 @@ TEST_P(SchedulerTest,
   }
 }
 
-/*
 TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
   using namespace cta;
 
@@ -923,7 +926,6 @@ TEST_P(SchedulerTest, admin_createTape_new_non_existing_pool) {
   ASSERT_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName, tapePoolName,
     capacityInBytes, tapeComment), std::exception);
 }
-*/
 
 cta::MockNameServerFactory nsFactory;
 cta::MockSchedulerDatabaseFactory dbFactory;

@@ -53,12 +53,16 @@ cta::Scheduler::~Scheduler() throw() {
 // queue
 //------------------------------------------------------------------------------
 void cta::Scheduler::queue(const ArchiveToDirRequest &rqst) {
+  m_db.assertIsAdminOnAdminHost(rqst.getUser());
+  //m_db.queue(rqst);
 }
 
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
 void cta::Scheduler::queue(const ArchiveToFileRequest &rqst) {
+  m_db.assertIsAdminOnAdminHost(rqst.getUser());
+  //m_db.queue(rqst);
 }
 
 //------------------------------------------------------------------------------
@@ -75,7 +79,7 @@ std::map<cta::TapePool, std::list<cta::ArchivalJob> > cta::Scheduler::
 std::list<cta::ArchivalJob> cta::Scheduler::getArchivalJobs(
   const SecurityIdentity &requester,
   const std::string &tapePoolName) const {
-  return std::list<ArchivalJob>();
+  return m_db.getArchivalJobs(requester, tapePoolName);
 }
 
 //------------------------------------------------------------------------------
@@ -84,18 +88,24 @@ std::list<cta::ArchivalJob> cta::Scheduler::getArchivalJobs(
 void cta::Scheduler::deleteArchivalJob(
   const SecurityIdentity &requester,
   const std::string &dstPath) {
+  m_db.assertIsAdminOnAdminHost(requester);
+  m_db.deleteArchivalJob(requester, dstPath);
 }
 
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void cta::Scheduler::queue(RetrieveToDirRequest &rqst) {
+void cta::Scheduler::queue(const RetrieveToDirRequest &rqst) {
+  m_db.assertIsAdminOnAdminHost(rqst.getUser());
+  //m_db.queue(rqst);
 }
 
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void cta::Scheduler::queue(RetrieveToFileRequest &rqst) {
+void cta::Scheduler::queue(const RetrieveToFileRequest &rqst) {
+  m_db.assertIsAdminOnAdminHost(rqst.getUser());
+  //m_db.queue(rqst);
 }
 
 //------------------------------------------------------------------------------
@@ -103,7 +113,7 @@ void cta::Scheduler::queue(RetrieveToFileRequest &rqst) {
 //------------------------------------------------------------------------------
 std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::
   Scheduler::getRetrievalJobs(const SecurityIdentity &requester) const {
-  return std::map<Tape, std::list<RetrievalJob> >();
+  return m_db.getRetrievalJobs(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -112,7 +122,7 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::
 std::list<cta::RetrievalJob> cta::Scheduler::getRetrievalJobs(
   const SecurityIdentity &requester,
   const std::string &vid) const {
-  return std::list<RetrievalJob>();
+  return m_db.getRetrievalJobs(requester, vid);
 }
   
 //------------------------------------------------------------------------------
@@ -121,6 +131,8 @@ std::list<cta::RetrievalJob> cta::Scheduler::getRetrievalJobs(
 void cta::Scheduler::deleteRetrievalJob(
   const SecurityIdentity &requester,
   const std::string &remoteFile) {
+  m_db.assertIsAdminOnAdminHost(requester);
+  m_db.deleteRetrievalJob(requester, remoteFile);
 }
 
 //------------------------------------------------------------------------------
@@ -130,6 +142,7 @@ void cta::Scheduler::createAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user,
   const std::string &comment) {
+  m_db.assertIsAdminOnAdminHost(requester);
   m_db.createAdminUser(requester, user, comment);
 }
 
@@ -139,6 +152,8 @@ void cta::Scheduler::createAdminUser(
 void cta::Scheduler::deleteAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user) {
+  m_db.assertIsAdminOnAdminHost(requester);
+  m_db.deleteAdminUser(requester, user);
 }
 
 //------------------------------------------------------------------------------
@@ -146,7 +161,8 @@ void cta::Scheduler::deleteAdminUser(
 //------------------------------------------------------------------------------
 std::list<cta::AdminUser> cta::Scheduler::getAdminUsers(const SecurityIdentity
   &requester) const {
-  return std::list<cta::AdminUser>();
+  m_db.assertIsAdminOnAdminHost(requester);
+  return m_db.getAdminUsers(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -156,6 +172,7 @@ void cta::Scheduler::createAdminHost(
   const SecurityIdentity &requester,
   const std::string &hostName,
   const std::string &comment) {
+  m_db.assertIsAdminOnAdminHost(requester);
   m_db.createAdminHost(requester, hostName, comment);
 }
 
@@ -165,6 +182,7 @@ void cta::Scheduler::createAdminHost(
 void cta::Scheduler::deleteAdminHost(
   const SecurityIdentity &requester,
   const std::string &hostName) {
+  m_db.assertIsAdminOnAdminHost(requester);
   m_db.deleteAdminHost(requester, hostName);
 }
 
@@ -194,6 +212,7 @@ void cta::Scheduler::createStorageClass(
 void cta::Scheduler::deleteStorageClass(
   const SecurityIdentity &requester,
   const std::string &name) {
+  m_db.assertIsAdminOnAdminHost(requester);
   m_ns.assertStorageClassIsNotInUse(requester, name, "/");
   m_db.deleteStorageClass(requester, name);
 }
@@ -214,6 +233,8 @@ void cta::Scheduler::createTapePool(
   const std::string &name,
   const uint32_t nbPartialTapes,
   const std::string &comment) {
+  m_db.assertIsAdminOnAdminHost(requester);
+  m_db.createTapePool(requester, name, nbPartialTapes, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -222,6 +243,8 @@ void cta::Scheduler::createTapePool(
 void cta::Scheduler::deleteTapePool(
   const SecurityIdentity &requester,
   const std::string &name) {
+  m_db.assertIsAdminOnAdminHost(requester);
+  m_db.deleteTapePool(requester, name);
 }
 
 //------------------------------------------------------------------------------
@@ -229,7 +252,7 @@ void cta::Scheduler::deleteTapePool(
 //------------------------------------------------------------------------------
 std::list<cta::TapePool> cta::Scheduler::getTapePools(
   const SecurityIdentity &requester) const {
-  return std::list<cta::TapePool>();
+  return m_db.getTapePools(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -241,6 +264,9 @@ void cta::Scheduler::createArchivalRoute(
   const uint16_t copyNb,
   const std::string &tapePoolName,
   const std::string &comment) {
+  m_db.assertIsAdminOnAdminHost(requester);
+  m_db.createArchivalRoute(requester, storageClassName, copyNb, tapePoolName,
+    comment);
 }
 
 //------------------------------------------------------------------------------
@@ -250,6 +276,8 @@ void cta::Scheduler::deleteArchivalRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint16_t copyNb) {
+  m_db.assertIsAdminOnAdminHost(requester);
+  m_db.deleteArchivalRoute(requester, storageClassName, copyNb);
 }
 
 //------------------------------------------------------------------------------
@@ -257,7 +285,7 @@ void cta::Scheduler::deleteArchivalRoute(
 //------------------------------------------------------------------------------
 std::list<cta::ArchivalRoute> cta::Scheduler::getArchivalRoutes(
   const SecurityIdentity &requester) const {
-  return std::list<ArchivalRoute>();
+  return m_db.getArchivalRoutes(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -267,6 +295,8 @@ void cta::Scheduler::createLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name,
   const std::string &comment) {
+  m_db.assertIsAdminOnAdminHost(requester);
+  m_db.createLogicalLibrary(requester, name, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -275,6 +305,8 @@ void cta::Scheduler::createLogicalLibrary(
 void cta::Scheduler::deleteLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name) {
+  m_db.assertIsAdminOnAdminHost(requester);
+  m_db.deleteLogicalLibrary(requester, name);
 }
 
 //------------------------------------------------------------------------------
@@ -282,7 +314,7 @@ void cta::Scheduler::deleteLogicalLibrary(
 //------------------------------------------------------------------------------
 std::list<cta::LogicalLibrary> cta::Scheduler::getLogicalLibraries(
   const SecurityIdentity &requester) const {
-  return std::list<LogicalLibrary>();
+  return m_db.getLogicalLibraries(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -295,6 +327,9 @@ void cta::Scheduler::createTape(
   const std::string &tapePoolName,
   const uint64_t capacityInBytes,
   const std::string &comment) {
+  m_db.assertIsAdminOnAdminHost(requester);
+  m_db.createTape(requester, vid, logicalLibraryName, tapePoolName,
+    capacityInBytes, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -303,6 +338,8 @@ void cta::Scheduler::createTape(
 void cta::Scheduler::deleteTape(
   const SecurityIdentity &requester,
   const std::string &vid) {
+  m_db.assertIsAdminOnAdminHost(requester);
+  m_db.deleteTape(requester, vid);
 }
 
 //------------------------------------------------------------------------------
@@ -310,7 +347,7 @@ void cta::Scheduler::deleteTape(
 //------------------------------------------------------------------------------
 std::list<cta::Tape> cta::Scheduler::getTapes(
   const SecurityIdentity &requester) const {
-  return std::list<Tape>();
+  return m_db.getTapes(requester);
 }
 
 //------------------------------------------------------------------------------
