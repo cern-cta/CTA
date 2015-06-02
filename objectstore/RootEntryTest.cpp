@@ -342,4 +342,67 @@ TEST(RootEntry, StorageClassesAndArchivalRoutes) {
   re.remove();
   ASSERT_EQ(false, re.exists());
 }
+
+TEST(RootEntry, Libraries) {
+  cta::objectstore::BackendVFS be;
+  cta::objectstore::CreationLog cl(99, "dummyUser", 99, "dummyGroup", 
+    "unittesthost", time(NULL), "Creation of unit test agent register");
+  { 
+    // Try to create the root entry
+    cta::objectstore::RootEntry re(be);
+    re.initialize();
+    re.insert();
+  }
+  {
+    // Add 2 libraries to the root entry
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    ASSERT_NO_THROW(re.fetch());
+    re.addLibrary("library1", cl);
+    re.addLibrary("library2", cl);
+    re.commit();
+  }
+  {
+    // Check that the admin hosts made it
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedSharedLock lock(re);
+    re.fetch();
+    ASSERT_TRUE(re.libraryExists("library1"));
+    ASSERT_TRUE(re.libraryExists("library2"));
+    ASSERT_FALSE(re.libraryExists("library3"));
+  }
+  {
+    // Check that we can remove existing and non-existing hosts
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    re.fetch();
+    re.removeLibrary("library1");
+    re.removeAdminHost("library3");
+    re.commit();
+  }
+  {
+    // Check that we cannot re-add an existing host
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    re.fetch();
+    ASSERT_THROW(re.addLibrary("library2", cl),
+       cta::objectstore::RootEntry::DuplicateEntry);
+  }
+  {
+    // Check that we got the expected result
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedSharedLock lock(re);
+    re.fetch();
+    ASSERT_FALSE(re.libraryExists("library1"));
+    ASSERT_TRUE(re.libraryExists("library2"));
+    ASSERT_FALSE(re.libraryExists("library3"));
+    ASSERT_EQ(1, re.dumpLibraries().size());
+    ASSERT_EQ("library2", re.dumpLibraries().front());
+  }
+  // Delete the root entry
+  cta::objectstore::RootEntry re(be);
+  cta::objectstore::ScopedExclusiveLock lock(re);
+  re.remove();
+  ASSERT_EQ(false, re.exists());
+}
 }
