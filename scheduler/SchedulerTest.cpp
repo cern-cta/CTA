@@ -927,6 +927,878 @@ TEST_P(SchedulerTest, admin_createTape_new_non_existing_pool) {
     capacityInBytes, tapeComment), std::exception);
 }
 
+TEST_P(SchedulerTest, user_getDirContents_root_dir_is_empty) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+  const std::string dirPath = "/";
+
+  DirIterator itor;
+  ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+  ASSERT_FALSE(itor.hasMore());
+}
+/*
+
+
+TEST_P(SchedulerTest, user_createDir_empty_string) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+  const std::string dirPath = "";
+
+  ASSERT_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath), std::exception);
+}
+
+TEST_P(SchedulerTest,
+  user_createDir_consecutive_slashes) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+  const std::string dirPath = "//";
+
+  ASSERT_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath), std::exception);
+}
+
+TEST_P(SchedulerTest, user_createDir_invalid_chars) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+  const std::string dirPath = "/grandparent/?parent";
+  
+  ASSERT_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath), std::exception);
+}
+
+TEST_P(SchedulerTest, user_createDir_top_level) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+  const std::string dirPath = "/grandparent";
+  
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+
+  DirIterator itor;
+
+  ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+
+  ASSERT_TRUE(itor.hasMore());
+
+  DirEntry entry;
+
+  ASSERT_NO_THROW(entry = itor.next());
+
+  ASSERT_EQ(std::string("grandparent"), entry.getName());
+}
+
+TEST_P(SchedulerTest, user_createDir_second_level) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  ASSERT_TRUE(scheduler.getDirStorageClass(s_adminOnAdminHost, "/").empty());
+
+  {
+    const std::string topLevelDirPath = "/grandparent";
+
+    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, topLevelDirPath));
+  }
+
+  {
+    DirIterator itor;
+
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+  }
+
+  ASSERT_TRUE(scheduler.getDirStorageClass(s_adminOnAdminHost, "/grandparent").empty());
+
+  {
+    const std::string secondLevelDirPath = "/grandparent/parent";
+
+    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, secondLevelDirPath));
+  }
+
+  {
+    DirIterator itor;
+
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+  }
+
+  {
+    DirIterator itor;
+
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/grandparent"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("parent"), entry.getName());
+  }
+
+  ASSERT_TRUE(scheduler.getDirStorageClass(s_adminOnAdminHost,
+    "/grandparent/parent").empty());
+}
+
+TEST_P(SchedulerTest,
+  user_createDir_inherit_storage_class) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  ASSERT_TRUE(scheduler.getDirStorageClass(s_adminOnAdminHost, "/").empty());
+
+  {
+    const std::string name = "TestStorageClass";
+    const uint16_t nbCopies = 2;
+    const std::string comment = "Comment";
+    ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, name, nbCopies, comment));
+  }
+
+  {
+    const std::string topLevelDirPath = "/grandparent";
+
+    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, topLevelDirPath));
+  }
+
+  {
+    DirIterator itor;
+
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+
+    ASSERT_TRUE(scheduler.getDirStorageClass(s_adminOnAdminHost, "/grandparent").empty());
+
+    ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, "/grandparent",
+      "TestStorageClass"));
+  }
+
+  ASSERT_EQ(std::string("TestStorageClass"),
+    scheduler.getDirStorageClass(s_adminOnAdminHost, "/grandparent"));
+
+  {
+    const std::string secondLevelDirPath = "/grandparent/parent";
+
+    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, secondLevelDirPath));
+  }
+
+  {
+    DirIterator itor;
+
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+  }
+
+  {
+    DirIterator itor;
+
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/grandparent"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("parent"), entry.getName());
+  }
+
+  ASSERT_EQ(std::string("TestStorageClass"),
+    scheduler.getDirStorageClass(s_adminOnAdminHost, "/grandparent/parent"));
+}
+
+TEST_P(SchedulerTest, user_deleteDir_root) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+  const std::string dirPath = "/";
+
+  ASSERT_THROW(scheduler.deleteDir(s_adminOnAdminHost, "/"), std::exception);
+}
+
+TEST_P(SchedulerTest, user_deleteDir_existing_top_level) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+  const std::string dirPath = "/grandparent";
+  
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+
+  {
+    DirIterator itor;
+
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+  }
+
+  ASSERT_NO_THROW(scheduler.deleteDir(s_adminOnAdminHost, "/grandparent"));
+
+  {
+    DirIterator itor;
+  
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+  
+    ASSERT_FALSE(itor.hasMore());
+  }
+}
+
+TEST_P(SchedulerTest,
+  user_deleteDir_non_empty_top_level) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  {
+    const std::string topLevelDirPath = "/grandparent";
+
+    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, topLevelDirPath));
+
+    DirIterator itor;
+
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+  }
+
+  {
+    const std::string secondLevelDirPath = "/grandparent/parent";
+
+    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, secondLevelDirPath));
+
+    DirIterator itor;
+
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+  }
+
+  {
+    DirIterator itor;
+
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/grandparent"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("parent"), entry.getName());
+  }
+
+  ASSERT_THROW(scheduler.deleteDir(s_adminOnAdminHost, "/grandparent"), std::exception);
+
+  {
+    DirIterator itor;
+
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/grandparent"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("parent"), entry.getName());
+  }
+}
+
+TEST_P(SchedulerTest,
+  user_deleteDir_non_existing_top_level) {
+  using namespace cta;
+  
+  Scheduler &scheduler = getScheduler();
+
+  ASSERT_THROW(scheduler.deleteDir(s_adminOnAdminHost, "/grandparent"), std::exception);
+}
+
+TEST_P(SchedulerTest, user_setDirStorageClass_top_level) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+  const std::string dirPath = "/grandparent";
+
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+
+  DirIterator itor;
+
+  ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+
+  ASSERT_TRUE(itor.hasMore());
+
+  DirEntry entry;
+
+  ASSERT_NO_THROW(entry = itor.next());
+
+  ASSERT_EQ(std::string("grandparent"), entry.getName());
+
+  {
+    std::string name;
+    ASSERT_NO_THROW(name = scheduler.getDirStorageClass(s_adminOnAdminHost, dirPath));
+    ASSERT_TRUE(name.empty());
+  }
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint16_t nbCopies = 2;
+    const std::string comment = "Comment";
+  {
+    ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
+      nbCopies, comment));
+  }
+
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
+    storageClassName));
+
+  {
+    std::string name;
+    ASSERT_NO_THROW(name = scheduler.getDirStorageClass(s_adminOnAdminHost, dirPath));
+    ASSERT_EQ(storageClassName, name);
+  }
+}
+
+TEST_P(SchedulerTest,
+  user_clearDirStorageClass_top_level) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+  const std::string dirPath = "/grandparent";
+
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+
+  DirIterator itor;
+
+  ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+
+  ASSERT_TRUE(itor.hasMore());
+
+  DirEntry entry;
+
+  ASSERT_NO_THROW(entry = itor.next());
+
+  ASSERT_EQ(std::string("grandparent"), entry.getName());
+
+  {
+    std::string name;
+    ASSERT_NO_THROW(name = scheduler.getDirStorageClass(s_adminOnAdminHost, dirPath));
+    ASSERT_TRUE(name.empty());
+  }
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint16_t nbCopies = 2;
+  const std::string comment = "Comment";
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
+    nbCopies, comment));
+
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
+    storageClassName));
+
+  {
+    std::string name;
+    ASSERT_NO_THROW(name = scheduler.getDirStorageClass(s_adminOnAdminHost, dirPath));
+    ASSERT_EQ(storageClassName, name);
+  }
+
+  ASSERT_THROW(scheduler.deleteStorageClass(s_adminOnAdminHost, storageClassName),
+    std::exception);
+
+  ASSERT_NO_THROW(scheduler.clearDirStorageClass(s_adminOnAdminHost, dirPath));
+
+  {
+    std::string name;
+    ASSERT_NO_THROW(name = scheduler.getDirStorageClass(s_adminOnAdminHost, dirPath));
+    ASSERT_TRUE(name.empty());
+  }
+
+  ASSERT_NO_THROW(scheduler.deleteStorageClass(s_adminOnAdminHost, storageClassName));
+}
+
+TEST_P(SchedulerTest, user_archive_to_new_file) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint16_t nbCopies = 1;
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
+    storageClassName));
+
+  const std::string tapePoolName = "TestTapePool";
+  const uint16_t nbPartialTapes = 1;
+  const std::string tapePoolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
+    nbPartialTapes, tapePoolComment));
+
+  const uint16_t copyNb = 1;
+  const std::string archivalRouteComment = "Archival-route comment";
+  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
+    copyNb, tapePoolName, archivalRouteComment));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl");
+  const std::string dstPath  = "/grandparent/parent_file";
+  ASSERT_NO_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath));
+
+  {
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+    ASSERT_TRUE(itor.hasMore());
+    DirEntry entry;
+    ASSERT_NO_THROW(entry = itor.next());
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(DirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost,
+      "/grandparent"));
+    ASSERT_TRUE(itor.hasMore());
+    DirEntry entry;
+    ASSERT_NO_THROW(entry = itor.next());
+    ASSERT_EQ(std::string("parent_file"), entry.getName());
+    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    DirEntry entry;
+    ASSERT_NO_THROW(entry = scheduler.stat(s_adminOnAdminHost, dstPath));
+    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    const std::map<TapePool, std::list<ArchivalJob> > allJobs =
+      scheduler.getArchivalJobs(s_adminOnAdminHost);
+    ASSERT_EQ(1, allJobs.size());
+    std::map<TapePool, std::list<ArchivalJob> >::const_iterator
+      poolItor = allJobs.begin();
+    ASSERT_FALSE(poolItor == allJobs.end());
+    const TapePool &pool = poolItor->first;
+    ASSERT_TRUE(tapePoolName == pool.getName());
+    const std::list<ArchivalJob> &poolJobs = poolItor->second;
+    ASSERT_EQ(1, poolJobs.size());
+    std::set<std::string> srcUrls;
+    std::set<std::string> dstPaths;
+    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
+      jobItor != poolJobs.end(); jobItor++) {
+      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
+      srcUrls.insert(jobItor->getRemoteFile());
+      dstPaths.insert(jobItor->getArchiveFile());
+    }
+    ASSERT_EQ(1, srcUrls.size());
+    ASSERT_FALSE(srcUrls.find("diskUrl") == srcUrls.end());
+    ASSERT_EQ(1, dstPaths.size());
+    ASSERT_FALSE(dstPaths.find("/grandparent/parent_file") == dstPaths.end());
+  }
+
+  {
+    const std::list<ArchivalJob> poolJobs = scheduler.getArchivalJobs(s_adminOnAdminHost,
+      tapePoolName);
+    ASSERT_EQ(1, poolJobs.size());
+    std::set<std::string> srcUrls;
+    std::set<std::string> dstPaths;
+    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
+      jobItor != poolJobs.end(); jobItor++) {
+      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
+      srcUrls.insert(jobItor->getRemoteFile());
+      dstPaths.insert(jobItor->getArchiveFile());
+    }
+    ASSERT_EQ(1, srcUrls.size());
+    ASSERT_FALSE(srcUrls.find("diskUrl") == srcUrls.end());
+    ASSERT_EQ(1, dstPaths.size());
+    ASSERT_FALSE(dstPaths.find("/grandparent/parent_file") == dstPaths.end());
+  }
+}
+
+TEST_P(SchedulerTest,
+  user_archive_to_new_file_with_no_storage_class) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl");
+  const std::string dstPath  = "/grandparent/parent_file";
+  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+}
+
+TEST_P(SchedulerTest,
+  user_archive_to_new_file_with_zero_copy_storage_class) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint16_t nbCopies = 0;
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
+    storageClassName));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl");
+  const std::string dstPath  = "/grandparent/parent_file";
+  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+}
+
+TEST_P(SchedulerTest, user_archive_to_new_file_with_no_route) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint16_t nbCopies = 1;
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
+    storageClassName));
+
+  const std::string tapePoolName = "TestTapePool";
+  const uint16_t nbPartialTapes = 1;
+  const std::string tapePoolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
+    nbPartialTapes, tapePoolComment));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl");
+  const std::string dstPath  = "/grandparent/parent_file";
+  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+}
+
+TEST_P(SchedulerTest,
+  user_archive_to_new_file_with_incomplete_routing) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint16_t nbCopies = 2;
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
+    storageClassName));
+
+  const std::string tapePoolName = "TestTapePool";
+  const uint16_t nbPartialTapes = 1;
+  const std::string tapePoolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
+    nbPartialTapes, tapePoolComment));
+
+  const uint16_t copyNb = 1;
+  const std::string archivalRouteComment = "Archival-route comment";
+  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
+    copyNb, tapePoolName, archivalRouteComment));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl");
+  const std::string dstPath  = "/grandparent/parent_file";
+  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+}
+
+TEST_P(SchedulerTest, user_archive_to_directory) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint16_t nbCopies = 1;
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
+    storageClassName));
+
+  const std::string tapePoolName = "TestTapePool";
+  const uint16_t nbPartialTapes = 1;
+  const std::string tapePoolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
+    nbPartialTapes, tapePoolComment));
+
+  const uint16_t copyNb = 1;
+  const std::string archivalRouteComment = "Archival-route comment";
+  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
+    copyNb, tapePoolName, archivalRouteComment));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl1");
+  srcUrls.push_back("diskUrl2");
+  srcUrls.push_back("diskUrl3");
+  srcUrls.push_back("diskUrl4");
+  const std::string dstPath  = "/grandparent";
+  ASSERT_NO_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath));
+
+  {
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+    ASSERT_TRUE(itor.hasMore());
+    DirEntry entry;
+    ASSERT_NO_THROW(entry = itor.next());
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(DirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    std::set<std::string> archiveFileNames;
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost,
+      "/grandparent"));
+    while(itor.hasMore()) {
+      const DirEntry entry = itor.next();
+      archiveFileNames.insert(entry.getName());
+    }
+    ASSERT_EQ(4, archiveFileNames.size());
+    ASSERT_TRUE(archiveFileNames.find("diskUrl1") != archiveFileNames.end());
+    ASSERT_TRUE(archiveFileNames.find("diskUrl2") != archiveFileNames.end());
+    ASSERT_TRUE(archiveFileNames.find("diskUrl3") != archiveFileNames.end());
+    ASSERT_TRUE(archiveFileNames.find("diskUrl4") != archiveFileNames.end());
+  }
+
+  {
+    const std::map<TapePool, std::list<ArchivalJob> > allJobs =
+      scheduler.getArchivalJobs(s_adminOnAdminHost);
+    ASSERT_EQ(1, allJobs.size());
+    std::map<TapePool, std::list<ArchivalJob> >::const_iterator
+      poolItor = allJobs.begin();
+    ASSERT_FALSE(poolItor == allJobs.end());
+    const TapePool &pool = poolItor->first;
+    ASSERT_TRUE(tapePoolName == pool.getName());
+    const std::list<ArchivalJob> &poolJobs = poolItor->second;
+    ASSERT_EQ(4, poolJobs.size());
+    std::set<std::string> srcUrls;
+    std::set<std::string> dstPaths;
+    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
+      jobItor != poolJobs.end(); jobItor++) {
+      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
+      srcUrls.insert(jobItor->getRemoteFile());
+      dstPaths.insert(jobItor->getArchiveFile());
+    }
+    ASSERT_EQ(4, srcUrls.size());
+    ASSERT_FALSE(srcUrls.find("diskUrl1") == srcUrls.end());
+    ASSERT_FALSE(srcUrls.find("diskUrl2") == srcUrls.end());
+    ASSERT_FALSE(srcUrls.find("diskUrl3") == srcUrls.end());
+    ASSERT_FALSE(srcUrls.find("diskUrl4") == srcUrls.end());
+    ASSERT_EQ(4, dstPaths.size());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl1") == srcUrls.end());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl2") == srcUrls.end());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl3") == srcUrls.end());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl4") == srcUrls.end());
+  }
+
+  {
+    const std::list<ArchivalJob> poolJobs = scheduler.getArchivalJobs(s_adminOnAdminHost,
+      tapePoolName);
+    ASSERT_EQ(4, poolJobs.size());
+    std::set<std::string> srcUrls;
+    std::set<std::string> dstPaths;
+    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
+      jobItor != poolJobs.end(); jobItor++) {
+      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
+      srcUrls.insert(jobItor->getRemoteFile());
+      dstPaths.insert(jobItor->getArchiveFile());
+    }
+    ASSERT_EQ(4, srcUrls.size());
+    ASSERT_FALSE(srcUrls.find("diskUrl1") == srcUrls.end());
+    ASSERT_FALSE(srcUrls.find("diskUrl2") == srcUrls.end());
+    ASSERT_FALSE(srcUrls.find("diskUrl3") == srcUrls.end());
+    ASSERT_FALSE(srcUrls.find("diskUrl4") == srcUrls.end());
+    ASSERT_EQ(4, dstPaths.size());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl1") == srcUrls.end());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl2") == srcUrls.end());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl3") == srcUrls.end());
+    ASSERT_FALSE(dstPaths.find("/grandparent/diskUrl4") == srcUrls.end());
+  }
+}
+
+TEST_P(SchedulerTest,
+  user_archive_to_directory_without_storage_class) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl1");
+  srcUrls.push_back("diskUrl2");
+  srcUrls.push_back("diskUrl3");
+  srcUrls.push_back("diskUrl4");
+  const std::string dstPath  = "/grandparent";
+  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+}
+
+TEST_P(SchedulerTest,
+  user_archive_to_directory_with_zero_copy_storage_class) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint16_t nbCopies = 0;
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
+    storageClassName));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl1");
+  srcUrls.push_back("diskUrl2");
+  srcUrls.push_back("diskUrl3");
+  srcUrls.push_back("diskUrl4");
+  const std::string dstPath  = "/grandparent";
+  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+}
+
+TEST_P(SchedulerTest, user_archive_to_directory_with_no_route) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint16_t nbCopies = 1;
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
+    storageClassName));
+
+  const std::string tapePoolName = "TestTapePool";
+  const uint16_t nbPartialTapes = 1;
+  const std::string tapePoolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
+    nbPartialTapes, tapePoolComment));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl1");
+  srcUrls.push_back("diskUrl2");
+  srcUrls.push_back("diskUrl3");
+  srcUrls.push_back("diskUrl4");
+  const std::string dstPath  = "/grandparent";
+  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+}
+
+TEST_P(SchedulerTest,
+  user_archive_to_directory_with_incomplete_routing) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint16_t nbCopies = 2;
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
+    storageClassName));
+
+  const std::string tapePoolName = "TestTapePool";
+  const uint16_t nbPartialTapes = 1;
+  const std::string tapePoolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
+    nbPartialTapes, tapePoolComment));
+
+  const uint16_t copyNb = 1;
+  const std::string archivalRouteComment = "Archival-route comment";
+  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
+    copyNb, tapePoolName, archivalRouteComment));
+
+  std::list<std::string> srcUrls;
+  srcUrls.push_back("diskUrl1");
+  srcUrls.push_back("diskUrl2");
+  srcUrls.push_back("diskUrl3");
+  srcUrls.push_back("diskUrl4");
+  const std::string dstPath  = "/grandparent";
+  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+}
+
+*/
+
 cta::MockNameServerFactory nsFactory;
 cta::MockSchedulerDatabaseFactory dbFactory;
 SchedulerTestParam mockSchedulerTestParam(nsFactory, dbFactory);

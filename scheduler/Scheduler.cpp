@@ -351,6 +351,53 @@ std::list<cta::Tape> cta::Scheduler::getTapes(
 }
 
 //------------------------------------------------------------------------------
+// createDir
+//------------------------------------------------------------------------------
+void cta::Scheduler::createDir(
+  const SecurityIdentity &requester,
+  const std::string &path,
+  const uint16_t mode) {
+  m_ns.createDir(requester, path, mode);
+}
+
+//------------------------------------------------------------------------------
+// deleteDir
+//------------------------------------------------------------------------------
+void cta::Scheduler::deleteDir(
+  const SecurityIdentity &requester,
+  const std::string &path) {
+  m_ns.deleteDir(requester, path);
+}
+  
+//------------------------------------------------------------------------------
+// getVidOfFile
+//------------------------------------------------------------------------------
+std::string cta::Scheduler::getVidOfFile(
+  const SecurityIdentity &requester,
+  const std::string &path,
+  const uint16_t copyNb) const {
+  return m_ns.getVidOfFile(requester, path, copyNb);
+}
+
+//------------------------------------------------------------------------------
+// getDirContents
+//------------------------------------------------------------------------------
+cta::DirIterator cta::Scheduler::getDirContents(
+  const SecurityIdentity &requester,
+  const std::string &path) const {
+  return m_ns.getDirContents(requester, path);
+}
+
+//------------------------------------------------------------------------------
+// statDirEntry
+//------------------------------------------------------------------------------
+cta::DirEntry cta::Scheduler::statDirEntry(
+  const SecurityIdentity &requester,
+  const std::string &path) const {
+  return m_ns.statDirEntry(requester, path);
+}
+
+//------------------------------------------------------------------------------
 // setDirStorageClass
 //------------------------------------------------------------------------------
 void cta::Scheduler::setDirStorageClass(

@@ -415,6 +415,66 @@ public:
     const SecurityIdentity &requester) const;
 
   /**
+   * Creates the specified directory.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the directory.
+   * @param mode The mode bits of the directory entry.
+   */
+  void createDir(
+    const SecurityIdentity &requester,
+    const std::string &path,
+    const uint16_t mode);
+
+  /**
+   * Deletes the specified directory.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the directory.
+   */
+  void deleteDir(
+   const SecurityIdentity &requester,
+   const std::string &path);
+  
+  /**
+   * Returns the volume identifier of the tape on which the specified tape copy
+   * has been archived.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the file.
+   * @param copyNb The copy number of the file.
+   */
+  std::string getVidOfFile(
+    const SecurityIdentity &requester,
+    const std::string &path,
+    const uint16_t copyNb) const;
+
+  /**
+   * Gets the contents of the specified directory.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the directory.
+   * @return An iterator over the contents of the directory.
+   */
+  DirIterator getDirContents(
+    const SecurityIdentity &requester,
+    const std::string &path) const;
+
+  /**
+   * Returns the directory entry information for the specified directory or file
+   * within the archive namespace.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the directory or file within the archive
+   * namespace.
+   * @return The directory entry information for the specified directory or file
+   * within the archive namespace.
+   */
+  DirEntry statDirEntry(
+    const SecurityIdentity &requester,
+    const std::string &path) const;
+
+  /**
    * Sets the storage class of the specified directory to the specified value.
    *
    * @param requester The identity of the requester.
