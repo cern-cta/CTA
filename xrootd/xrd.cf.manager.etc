@@ -54,7 +54,7 @@ xcastor2.proc /var/log/xroot/manager
 
 # If "skipabort" option is true then we no longer abort requests for which
 # the client disconnected in before getting the file. Default value is "false".
-# xcastor2.skipabort true
+# xcastor2.skipabort false
 
 #-------------------------------------------------------------------------------
 # Security plugins
