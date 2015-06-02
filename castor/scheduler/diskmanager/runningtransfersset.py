@@ -454,6 +454,7 @@ class RunningTransfersSet(object):
     # get scheduler point of view
     allSchedRunningD2dSrc = []
     timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
+    maxStartTime = time.time() - 3 * timeout
     for scheduler in self.config.getValue('DiskManager', 'ServerHosts').split():
       allSchedRunningD2dSrc.extend(connectionpool.connections.getRunningD2dSourceTransferIds(scheduler, socket.getfqdn(), timeout=timeout))
     # filter out d2dsrc that are not know to the scheduler
@@ -462,14 +463,16 @@ class RunningTransfersSet(object):
       # first pass to log
       for t in [t for t in self.transfers
                 if t.transfer.transferType == TransferType.D2DSRC and
+                t.startTime < maxStartTime and
                 t.transfer.transferId not in allSchedRunningD2dSrc]:
           # d2dsrc transfer cleaned up as it is no more in the transfermanager
-          dlf.writenotice(msgs.D2DRUNNINGSRCDROPPED, subreqId = t.transfer.transferId,
-                          reqId=t.transfer.reqId, fileid = t.transfer.fileId)
+          dlf.writenotice(msgs.D2DRUNNINGSRCDROPPED, subreqId=t.transfer.transferId,
+                          reqId=t.transfer.reqId, fileid=t.transfer.fileId)
       # real cleanup
       self.transfers = set([t for t in self.transfers
-                          if t.transfer.transferType != TransferType.D2DSRC or
-                          t.transfer.transferId in allSchedRunningD2dSrc])
+                            if t.transfer.transferType != TransferType.D2DSRC or
+                            t.startTime >= maxStartTime or
+                            t.transfer.transferId in allSchedRunningD2dSrc])
     finally:
       self.lock.release()
 
