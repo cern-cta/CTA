@@ -6,14 +6,15 @@ enum ObjectType {
   RootEntry_t = 0;
   AgentRegister_t = 1;
   Agent_t = 2;
-  JobPool_t = 3;
-  RecallFIFO_t = 4;
-  MigrationFIFO_t = 5;
-  RecallJob_t = 6;
-  Counter_t = 7;
-  FIFO_t = 8;
-  AdminUsersList_t = 9;
-  StorageClassList_t = 10;
+  TapePool_t = 3;
+//  JobPool_t = 3;
+//  RecallFIFO_t = 4;
+//  MigrationFIFO_t = 5;
+//  RecallJob_t = 6;
+//  Counter_t = 7;
+//  FIFO_t = 8;
+//  AdminUsersList_t = 9;
+//  StorageClassList_t = 10;
   GenericObject_t = 1000;
 }
 
@@ -126,6 +127,7 @@ message RootEntry {
 
 //=========== Sub-objects ======================================================
 
+// ------------- Agent handling ------------------------------------------------
 
 // The agent object represents a running process. It is a payload to an object
 // itself, and it can be owned by a watchdog or a global agent registry, which
@@ -141,26 +143,11 @@ message RootEntry {
 // The objects in this list can be considered for being returned to a backup
 // owner.
 message Agent {
-  required string description = 50;
-  required uint64 heartbeat = 51;
-  required uint64 timeout_us = 52;
-  repeated string ownedobjects = 53;
+  required string description = 2000;
+  required uint64 heartbeat = 2001;
+  required uint64 timeout_us = 2002;
+  repeated string ownedobjects = 2003;
 }
-
-////// The root entry: it points to an agent register and a job pool register.
-////// There is an integrated intent log for the agent register, but the updates 
-////// should be very rare (besides first register creation). All other objects
-////// can be covered by the agents's ownership logs.
-////message RootEntry {
-////  optional string agentregister = 100;
-////  repeated string agentregisterintentlog = 101;
-////  optional string jobpool = 102;
-////  repeated string jobpoolintentlog = 103;
-////  optional string adminuserslist = 104;
-////  repeated string adminuserslistintentlog = 105;
-////  optional string storageclasslist = 106;
-////  repeated string storageclasslistintentlog = 107;
-////}
 
 ////// The registers (simple name arrays)
 ////message Register {
@@ -170,9 +157,36 @@ message Agent {
 // The agent register holds 2 lists:
 // a full list, and a list of agents not yet watched
 message AgentRegister {
-  repeated string agents = 160;
-  repeated string untrackedagents = 161;
+  repeated string agents = 2100;
+  repeated string untrackedagents = 2101;
 }
+
+// ------------- Jobs handling -------------------------------------------------
+
+message ArchivalJobPointer {
+  required uint64 size = 3001;
+  required string address = 3002;
+}
+
+// ------------- Tape pools  ---------------------------------------------------
+
+message TapePointer {
+  required string name = 4000;
+  required string address  = 4001;
+  required CreationLog log = 4002;
+}
+
+message TapePool {
+  required string name = 4100;
+  repeated TapePointer tapes = 4101;
+  repeated ArchivalJobPointer archivaljobs = 4102;
+  required uint64 ArchivalJobsTotalSize = 4103;
+}
+
+// ------------- Drives handling  ----------------------------------------------
+
+
+
 ////
 ////// A basic FIFO
 ////// poping is done by increasing the read pointer, and from time to time

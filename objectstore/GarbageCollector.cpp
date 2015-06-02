@@ -29,7 +29,7 @@ GarbageCollector::GarbageCollector(Backend & os, Agent & agent):
   RootEntry re(m_objectStore);
   ScopedSharedLock reLock(re);
   re.fetch();
-  m_agentRegister.setName(re.getAgentRegisterPointer());
+  m_agentRegister.setAddress(re.getAgentRegisterPointer());
   reLock.release();
   ScopedSharedLock arLock(m_agentRegister);
   m_agentRegister.fetch();
@@ -85,7 +85,7 @@ void GarbageCollector::aquireTargets() {
   for (;m_watchedAgents.size() < c_maxWatchedAgentsPerGC
          && c!=candidatesList.end(); c++) {
     // We don't monitor ourselves
-    if (*c != m_ourAgent.getNameIfSet()) {
+    if (*c != m_ourAgent.getAddressIfSet()) {
       // So we have a candidate we might want to monitor
       // First, check that the agent entry exists, and that ownership
       // is indeed pointing to the agent register
@@ -100,8 +100,8 @@ void GarbageCollector::aquireTargets() {
       ag.fetch();
       // Check that the actual owner is the agent register.
       // otherwise, it should not be listed as an agent to monitor
-      if (ag.getOwner() != m_agentRegister.getNameIfSet()) {
-        m_agentRegister.trackAgent(ag.getNameIfSet());
+      if (ag.getOwner() != m_agentRegister.getAddressIfSet()) {
+        m_agentRegister.trackAgent(ag.getAddressIfSet());
         agLock.release();
         continue;
       }
@@ -110,26 +110,26 @@ void GarbageCollector::aquireTargets() {
       // Lock ours
       ScopedExclusiveLock oaLock(m_ourAgent);
       m_ourAgent.fetch();
-      m_ourAgent.addToOwnership(ag.getNameIfSet());
+      m_ourAgent.addToOwnership(ag.getAddressIfSet());
       m_ourAgent.commit();
       // We now have a pointer to the agent, we can make the ownership official
-      ag.setOwner(m_ourAgent.getNameIfSet());
+      ag.setOwner(m_ourAgent.getAddressIfSet());
       ag.commit();
       // And we can remove the now dangling pointer from the agent register
       // (we hold an exclusive lock all along)
-      m_agentRegister.trackAgent(ag.getNameIfSet());
+      m_agentRegister.trackAgent(ag.getAddressIfSet());
       m_agentRegister.commit();
       // Agent is officially our, we can remove it from the untracked agent's
       // list
-      m_agentRegister.trackAgent(ag.getNameIfSet());
+      m_agentRegister.trackAgent(ag.getAddressIfSet());
       // Agent is now officially ours, let's track it. We have the release the 
       // lock to the agent before constructing the watchdog, which builds
       // its own agent objects (and need to lock the object store representation)
-      std::string agentName = ag.getNameIfSet();
+      std::string agentName = ag.getAddressIfSet();
       agLock.release();
       m_watchedAgents[agentName] =
         new AgentWatchdog(agentName, m_objectStore);
-      m_watchedAgents[ag.getNameIfSet()]->setTimeout(m_timeout);
+      m_watchedAgents[ag.getAddressIfSet()]->setTimeout(m_timeout);
     }
   }
   // Commit all the modifications to the agent register
@@ -160,7 +160,7 @@ void GarbageCollector::checkHeartbeats() {
    Agent agent(name, m_objectStore);
    ScopedExclusiveLock agLock(agent);
    agent.fetch();
-   if (agent.getOwner() != m_ourAgent.getNameIfSet()) {
+   if (agent.getOwner() != m_ourAgent.getAddressIfSet()) {
      throw cta::exception::Exception("In GarbageCollector::cleanupDeadAgent: the ownership is not ours as expected");
    }
    // Return all objects owned by the agent to their respective backup owners

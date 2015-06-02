@@ -85,7 +85,7 @@ std::list<std::string> cta::objectstore::AgentRegister::getUntrackedAgents() {
 std::string cta::objectstore::AgentRegister::dump() {
   checkPayloadReadable();
   std::stringstream ret;
-  ret<< "<<<< AgentRegister " << getNameIfSet() << " dump start" << std::endl
+  ret<< "<<<< AgentRegister " << getAddressIfSet() << " dump start" << std::endl
     << "Agents array size=" << m_payload.agents_size() << std::endl;
   for (int i=0; i<m_payload.agents_size(); i++) {
     ret << "element[" << i << "]=" << m_payload.agents(i) << std::endl;
@@ -94,6 +94,6 @@ std::string cta::objectstore::AgentRegister::dump() {
   for (int i=0; i<m_payload.untrackedagents_size(); i++) {
     ret << "intendedElement[" << i << "]=" << m_payload.untrackedagents(i) << std::endl;
   }
-  ret<< ">>>> AgentRegister " << getNameIfSet() << " dump end" << std::endl;
+  ret<< ">>>> AgentRegister " << getAddressIfSet() << " dump end" << std::endl;
   return ret.str();
 }

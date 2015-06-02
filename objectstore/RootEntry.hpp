@@ -32,7 +32,7 @@ class Agent;
   
 class RootEntry: public ObjectOps<serializers::RootEntry> {
 public:
-  // construtor
+  // Constructor
   RootEntry(Backend & os);
   
   class NotAllocatedEx: public cta::exception::Exception {
@@ -112,7 +112,7 @@ public:
   // TapePoolManipulations =====================================================
   /** This function implicitly creates the tape pool structure and updates 
    * the pointer to it */
-  void addTapePool(const std::string & tapePool, const CreationLog & log, Agent & agent);
+  void addTapePoolAndCommit(const std::string & tapePool, const CreationLog & log, Agent & agent);
   /** This function implicitly deletes the tape pool structure. 
    * Fails if it not empty*/
   void removeTapePool(const std::string & tapePool, Agent & agent);

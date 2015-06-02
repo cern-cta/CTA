@@ -158,7 +158,7 @@ public:
       commit();
       agentLock.release();
       // Then make the pointer agent's ownership official
-      object.setOwner(getNameIfSet());
+      object.setOwner(getAddressIfSet());
       // The container should be the backup owner, so let's make sure!
       object.setBackupOwner(container.getNameIfSet());
       // Commit the object
@@ -181,7 +181,7 @@ public:
     ScopedExclusiveLock objLock(object);
     object.fetch();
     // Check that the object is indeed ours
-    if (object.getOwner() != getNameIfSet())
+    if (object.getOwner() != getAddressIfSet())
       throw AgentDoesNotOwnObject("In Agent::pushToContainer: agent is not the owner of the object");
     // Lock the container for write
     ScopedExclusiveLock contLock(container);

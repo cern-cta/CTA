@@ -36,9 +36,9 @@ protected:
     m_existingObject(false), m_locksCount(0),
     m_locksForWriteCount(0) {}
   
-  class NameNotSet: public cta::exception::Exception {
+  class AddressNotSet: public cta::exception::Exception {
   public:
-    NameNotSet(const std::string & w): cta::exception::Exception(w) {}
+    AddressNotSet(const std::string & w): cta::exception::Exception(w) {}
   };
   
   class NotLocked: public cta::exception::Exception {
@@ -76,9 +76,9 @@ protected:
     NotInitialized(const std::string & w): cta::exception::Exception(w) {}
   };
   
-  class NameAlreadySet: public cta::exception::Exception {
+  class AddressAlreadySet: public cta::exception::Exception {
   public:
-    NameAlreadySet(const std::string & w): cta::exception::Exception(w) {}
+    AddressAlreadySet(const std::string & w): cta::exception::Exception(w) {}
   };
   
   void checkHeaderWritable() {
@@ -117,23 +117,23 @@ protected:
   
 public:
   
-  void setName(const std::string & name) {
+  void setAddress(const std::string & name) {
     if (m_nameSet)
-      throw NameAlreadySet("In ObjectOps::setName: trying to overwrite an already set name");
+      throw AddressAlreadySet("In ObjectOps::setName: trying to overwrite an already set name");
     m_name = name;
     m_nameSet = true;
   }
   
-  std::string & getNameIfSet() {
+  std::string & getAddressIfSet() {
     if (!m_nameSet) {
-      throw NameNotSet("In ObjectOpsBase::getNameIfSet: name not set yet");
+      throw AddressNotSet("In ObjectOpsBase::getNameIfSet: name not set yet");
     }
     return m_name;
   }
   
   void remove () {
     checkWritable();
-    m_objectStore.remove(getNameIfSet());
+    m_objectStore.remove(getAddressIfSet());
     m_existingObject = false;
     m_headerInterpreted = false;
     m_payloadInterpreted = false;
@@ -222,7 +222,7 @@ public:
   void lock(ObjectOpsBase & oo) {
     checkNotLocked();
     m_objectOps  = & oo;
-    m_lock.reset(m_objectOps->m_objectStore.lockShared(m_objectOps->getNameIfSet()));
+    m_lock.reset(m_objectOps->m_objectStore.lockShared(m_objectOps->getAddressIfSet()));
     m_objectOps->m_locksCount++;
     m_locked = true;
   }
@@ -237,7 +237,7 @@ public:
   void lock(ObjectOpsBase & oo) {
     checkNotLocked();
     m_objectOps = &oo;
-    m_lock.reset(m_objectOps->m_objectStore.lockExclusive(m_objectOps->getNameIfSet()));
+    m_lock.reset(m_objectOps->m_objectStore.lockExclusive(m_objectOps->getAddressIfSet()));
     m_objectOps->m_locksCount++;
     m_objectOps->m_locksForWriteCount++;
     m_locked = true;
@@ -254,7 +254,7 @@ template <class C>
 class ObjectOps: public ObjectOpsBase {
 protected:
   ObjectOps(Backend & os, const std::string & name): ObjectOpsBase(os) {
-    setName(name);
+    setAddress(name);
   }
   
   ObjectOps(Backend & os): ObjectOpsBase(os) {}
@@ -278,7 +278,7 @@ public:
     // Serialise the payload into the header
     m_header.set_payload(m_payload.SerializeAsString());
     // Write the object
-    m_objectStore.atomicOverwrite(getNameIfSet(), m_header.SerializeAsString());
+    m_objectStore.atomicOverwrite(getAddressIfSet(), m_header.SerializeAsString());
   }
   
 protected:
@@ -289,7 +289,7 @@ protected:
   }
 
   void getHeaderFromObjectStore () {
-    m_header.ParseFromString(m_objectStore.read(getNameIfSet()));
+    m_header.ParseFromString(m_objectStore.read(getAddressIfSet()));
     if (m_header.type() != typeId) {
       std::stringstream err;
       err << "In ObjectOps::getHeaderFromObjectStore wrong object type: "
@@ -324,12 +324,12 @@ public:
     // We don't require locking here, as the object does not exist
     // yet in the object store (and this is ensured by the )
     m_header.set_payload(m_payload.SerializeAsString());
-    m_objectStore.create(getNameIfSet(), m_header.SerializeAsString());
+    m_objectStore.create(getAddressIfSet(), m_header.SerializeAsString());
     m_existingObject = true;
   }
   
   bool exists() {
-    return m_objectStore.exists(getNameIfSet());
+    return m_objectStore.exists(getAddressIfSet());
   }
   
 private:
@@ -343,7 +343,7 @@ private:
   }
   
   std::string selfName() {
-    if(!m_nameSet) throw NameNotSet("In ObjectOps<>::updateFromObjectStore: name not set");
+    if(!m_nameSet) throw AddressNotSet("In ObjectOps<>::updateFromObjectStore: name not set");
     return m_name;
   }
   

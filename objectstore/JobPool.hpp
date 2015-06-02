@@ -41,11 +41,11 @@ public:
   std::string dump(Agent & agent) {
     checkPayloadReadable();
     std::stringstream ret;
-    ret << "<<<< JobPool " << getNameIfSet() << " dump start" << std::endl
+    ret << "<<<< JobPool " << getAddressIfSet() << " dump start" << std::endl
         << "Migration=" << m_payload.migration() << std::endl
         << "Recall=" << m_payload.recall() << std::endl
         << "RecallCounter=" << m_payload.recallcounter() << std::endl;
-    ret << ">>>> JobPool " << getNameIfSet() << " dump end" << std::endl;
+    ret << ">>>> JobPool " << getAddressIfSet() << " dump end" << std::endl;
     return ret.str();
   }
   

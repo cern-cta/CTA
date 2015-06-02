@@ -62,7 +62,7 @@ void cta::objectstore::Agent::generateName(const std::string & typeName) {
     << std::setw(2) << localNow.tm_hour << ":"
     << std::setw(2) << localNow.tm_min << ":"
     << std::setw(2) << localNow.tm_sec;
-  setName(aid.str());
+  setAddress(aid.str());
 }
 
 void cta::objectstore::Agent::insertAndRegisterSelf() {
@@ -77,11 +77,11 @@ void cta::objectstore::Agent::insertAndRegisterSelf() {
   // Then we should first create a pointer to our agent
   ScopedExclusiveLock arLock(ar);
   ar.fetch();
-  ar.addAgent(getNameIfSet());
+  ar.addAgent(getAddressIfSet());
   ar.commit();
   // Set the agent register as owner and backup owner
-  setBackupOwner(ar.getNameIfSet());
-  setOwner(ar.getNameIfSet());
+  setBackupOwner(ar.getAddressIfSet());
+  setOwner(ar.getAddressIfSet());
   // Create the agent
   insert();
   // And release the agent register's lock
@@ -101,7 +101,7 @@ void cta::objectstore::Agent::deleteAndUnregisterSelf() {
   // Then we should first create a pointer to our agent
   ScopedExclusiveLock arLock(ar);
   ar.fetch();
-  ar.removeAgent(getNameIfSet());
+  ar.removeAgent(getAddressIfSet());
   ar.commit();
   arLock.release();
 }
@@ -121,7 +121,7 @@ void cta::objectstore::Agent::deleteAndUnregisterSelf() {
 
 std::string cta::objectstore::Agent::nextId(const std::string & childType) {
   std::stringstream id;
-  id << childType << "-" << getNameIfSet() << "-" << m_nextId++;
+  id << childType << "-" << getAddressIfSet() << "-" << m_nextId++;
   return id.str();
 }
 

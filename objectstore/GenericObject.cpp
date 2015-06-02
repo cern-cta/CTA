@@ -26,7 +26,7 @@ void GenericObject::fetch() {
     throw NotLocked("In ObjectOps::fetch(): object not locked");
   m_existingObject = true;
   // Get the header from the object store. We don't care for the type
-  m_header.ParseFromString(m_objectStore.read(getNameIfSet()));
+  m_header.ParseFromString(m_objectStore.read(getAddressIfSet()));
   m_headerInterpreted = true;
 }
 
@@ -37,7 +37,7 @@ serializers::ObjectType GenericObject::type() {
 
 void GenericObject::commit() {
   checkHeaderWritable();
-  m_objectStore.atomicOverwrite(getNameIfSet(), m_header.SerializeAsString());
+  m_objectStore.atomicOverwrite(getAddressIfSet(), m_header.SerializeAsString());
 }
 
 void GenericObject::insert() {

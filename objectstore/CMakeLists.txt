@@ -17,6 +17,7 @@ add_library (CTAObjectStore SHARED
   Agent.cpp
   AgentRegister.cpp
   AgentWatchdog.cpp
+  TapePool.cpp
   #AdminUsersList.cpp
   BackendVFS.cpp
   BackendRados.cpp

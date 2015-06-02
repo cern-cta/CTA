@@ -19,6 +19,7 @@
 #include "RootEntry.hpp"
 #include "AgentRegister.hpp"
 #include "Agent.hpp"
+#include "TapePool.hpp"
 #include <cxxabi.h>
 #include "ProtcolBuffersAlgorithms.hpp"
 
@@ -303,7 +304,7 @@ namespace {
 void cta::objectstore::RootEntry::addLibrary(const std::string& library,
     const CreationLog & log) {
   checkPayloadWritable();
-  // Check the library does not exist already
+  // Check the library does not exist aclready
   try {
     serializers::findElement(m_payload.libraries(), library);
     throw DuplicateEntry("In RootEntry::addLibrary: trying to create duplicate entry");
@@ -334,7 +335,56 @@ std::list<std::string> cta::objectstore::RootEntry::dumpLibraries() {
   return ret;
 }
 
+// =============================================================================
+// ========== Tape pools manipulations =========================================
+// =============================================================================
 
+
+// This operator will be used in the following usage of the findElement
+// removeOccurences
+namespace {
+  bool operator==(const std::string &tp,
+    const cta::objectstore::serializers::TapePoolPointer & tpp) {
+    return tpp.name() == tp;
+  }
+}
+
+void cta::objectstore::RootEntry::addTapePoolAndCommit(const std::string& tapePool,
+  const CreationLog& log, Agent& agent) {
+  checkHeaderWritable();
+  // Check the tape pool does not already exist
+  try {
+    serializers::findElement(m_payload.tapepoolpointers(), tapePool);
+    throw DuplicateEntry("In RootEntry::addTapePool: trying to create duplicate entry");
+  } catch (serializers::NotFound &) {}
+  // Insert the tape pool, then its pointer, with agent intent log update
+  // First generate the intent
+  ScopedExclusiveLock al(agent);
+  std::string tapePoolAddress = agent.nextId("tapePool");
+  agent.fetch();
+  agent.addToOwnership(tapePoolAddress);
+  agent.commit();
+  // Then create the tape pool object
+  TapePool tp(tapePoolAddress, ObjectOps<serializers::RootEntry>::m_objectStore);
+  tp.initialize(tapePool);
+  tp.setOwner(agent.getAddressIfSet());
+  tp.setBackupOwner(agent.getAddressIfSet());
+  tp.insert();
+  ScopedExclusiveLock tpl(tp);
+  // Now move the tape pool's ownership to the root entry
+  auto * tpp = m_payload.mutable_tapepoolpointers()->Add();
+  tpp->set_address(tapePoolAddress);
+  tpp->set_name(tapePool);
+  // We must commit here to ensure the tape pool object is referenced.
+  commit();
+  // Now update the tape pool's ownership.
+  tp.setOwner(getAddressIfSet());
+  tp.setBackupOwner(getAddressIfSet());
+  tp.commit();
+  // ... and clean up the agent
+  agent.removeFromOwnership(tapePoolAddress);
+  agent.commit();
+}
 
 
 
@@ -551,8 +601,8 @@ std::string cta::objectstore::RootEntry::addOrGetAgentRegisterPointer(Agent & ag
     deleteIntendedAgentRegistry();
     commit();
     // Record completion in agent registry
-    ar.setOwner(getNameIfSet());
-    ar.setBackupOwner(getNameIfSet());
+    ar.setOwner(getAddressIfSet());
+    ar.setBackupOwner(getAddressIfSet());
     ar.commit();
     // And we are done. Release locks
     lockPtr.reset(NULL);

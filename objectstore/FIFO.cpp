@@ -94,14 +94,14 @@ uint64_t cta::objectstore::FIFO::size() {
 std::string cta::objectstore::FIFO::dump() {
   checkPayloadReadable();
   std::stringstream ret;
-  ret << "<<<< FIFO dump start: " << getNameIfSet() << std::endl
+  ret << "<<<< FIFO dump start: " << getAddressIfSet() << std::endl
       << "Read pointer=" << m_payload.readpointer() << std::endl
       << "Array size=" << m_payload.name_size() << std::endl;
   for (int i = m_payload.readpointer(); i < m_payload.name_size(); i++) {
     ret << "name[phys=" << i << " ,log=" << i - m_payload.readpointer()
         << "]=" << m_payload.name(i) << std::endl;
   }
-  ret << ">>>> FIFO dump end for " << getNameIfSet() << std::endl;
+  ret << ">>>> FIFO dump end for " << getAddressIfSet() << std::endl;
   return ret.str();
 }
 
