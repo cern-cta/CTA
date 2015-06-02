@@ -945,7 +945,7 @@ TEST_P(SchedulerTest, user_createDir_empty_string) {
   Scheduler &scheduler = getScheduler();
   const std::string dirPath = "";
 
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
   ASSERT_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode),
     std::exception);
 }
@@ -957,7 +957,7 @@ TEST_P(SchedulerTest,
   Scheduler &scheduler = getScheduler();
   const std::string dirPath = "//";
 
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
   ASSERT_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode),
     std::exception);
 }
@@ -968,7 +968,7 @@ TEST_P(SchedulerTest, user_createDir_invalid_chars) {
   Scheduler &scheduler = getScheduler();
   const std::string dirPath = "/grandparent/?parent";
   
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
   ASSERT_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode),
     std::exception);
 }
@@ -979,7 +979,7 @@ TEST_P(SchedulerTest, user_createDir_top_level) {
   Scheduler &scheduler = getScheduler();
   const std::string dirPath = "/grandparent";
   
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
 
   DirIterator itor;
@@ -1004,7 +1004,7 @@ TEST_P(SchedulerTest, user_createDir_second_level) {
 
   {
     const std::string topLevelDirPath = "/grandparent";
-    const uint16_t mode = 0;
+    const uint16_t mode = 0777;
 
     ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, topLevelDirPath,
       mode));
@@ -1028,7 +1028,7 @@ TEST_P(SchedulerTest, user_createDir_second_level) {
 
   {
     const std::string secondLevelDirPath = "/grandparent/parent";
-    const uint16_t mode = 0;
+    const uint16_t mode = 0777;
 
     ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, secondLevelDirPath,
       mode));
@@ -1085,7 +1085,7 @@ TEST_P(SchedulerTest,
 
   {
     const std::string topLevelDirPath = "/grandparent";
-    const uint16_t mode = 0;
+    const uint16_t mode = 0777;
 
     ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, topLevelDirPath,
       mode));
@@ -1115,7 +1115,7 @@ TEST_P(SchedulerTest,
 
   {
     const std::string secondLevelDirPath = "/grandparent/parent";
-    const uint16_t mode = 0;
+    const uint16_t mode = 0777;
 
     ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, secondLevelDirPath,
       mode));
@@ -1167,7 +1167,7 @@ TEST_P(SchedulerTest, user_deleteDir_existing_top_level) {
 
   Scheduler &scheduler = getScheduler();
   const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
   
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
 
@@ -1204,7 +1204,7 @@ TEST_P(SchedulerTest,
 
   {
     const std::string topLevelDirPath = "/grandparent";
-    const uint16_t mode = 0;
+    const uint16_t mode = 0777;
 
     ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, topLevelDirPath,
       mode));
@@ -1224,7 +1224,7 @@ TEST_P(SchedulerTest,
 
   {
     const std::string secondLevelDirPath = "/grandparent/parent";
-    const uint16_t mode = 0;
+    const uint16_t mode = 0777;
 
     ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, secondLevelDirPath,
       mode));
@@ -1287,7 +1287,7 @@ TEST_P(SchedulerTest, user_setDirStorageClass_top_level) {
 
   Scheduler &scheduler = getScheduler();
   const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
 
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
 
@@ -1333,7 +1333,7 @@ TEST_P(SchedulerTest,
 
   Scheduler &scheduler = getScheduler();
   const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
 
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
 
@@ -1396,7 +1396,7 @@ TEST_P(SchedulerTest, user_archive_to_new_file) {
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
@@ -1499,7 +1499,7 @@ TEST_P(SchedulerTest,
   Scheduler &scheduler = getScheduler();
 
   const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
 
   std::list<std::string> srcUrls;
@@ -1521,7 +1521,7 @@ TEST_P(SchedulerTest,
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
@@ -1544,7 +1544,7 @@ TEST_P(SchedulerTest, user_archive_to_new_file_with_no_route) {
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
@@ -1574,7 +1574,7 @@ TEST_P(SchedulerTest,
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
@@ -1608,7 +1608,7 @@ TEST_P(SchedulerTest, user_archive_to_directory) {
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
@@ -1722,7 +1722,7 @@ TEST_P(SchedulerTest,
   Scheduler &scheduler = getScheduler();
 
   const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
 
   std::list<std::string> srcUrls;
@@ -1748,7 +1748,7 @@ TEST_P(SchedulerTest,
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
@@ -1775,7 +1775,7 @@ TEST_P(SchedulerTest, user_archive_to_directory_with_no_route) {
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
@@ -1809,7 +1809,7 @@ TEST_P(SchedulerTest,
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0;
+  const uint16_t mode = 0777;
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
