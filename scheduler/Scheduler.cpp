@@ -424,3 +424,12 @@ std::string cta::Scheduler::getDirStorageClass(
   const std::string &path) const {
   return m_ns.getDirStorageClass(requester, path);
 }
+
+//------------------------------------------------------------------------------
+// queueArchivalRequest
+//------------------------------------------------------------------------------
+void cta::Scheduler::queueArchivalRequest(
+  const SecurityIdentity &requester,
+  const std::list<std::string> &srcUrls,
+  const std::string &dstPath) {
+}

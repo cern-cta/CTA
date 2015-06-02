@@ -507,6 +507,28 @@ public:
     const SecurityIdentity &requester,
     const std::string &path) const;
 
+  /**
+   * Queues the specified request to archive one or more remote files.
+   *
+   * If there is more than one source file then the destination must be a
+   * directory.
+   *
+   * If there is only one source file then the destination can be either a file
+   * or a directory.
+   *
+   * The storage class of the archived file(s) will be inherited from the
+   * destination directory.
+   *
+   * @param requester The identity of the user requesting the archival.
+   * @param srcUrls List of one or more source files.
+   * @param dstPath The absolute path of the destination file or directory
+   * within the archive namespace.
+   */
+  void queueArchivalRequest(
+    const SecurityIdentity &requester,
+    const std::list<std::string> &srcUrls,
+    const std::string &dstPath);
+
 private:
 
   /**

@@ -18,6 +18,7 @@
 
 #include "nameserver/MockNameServerFactory.hpp"
 #include "nameserver/NameServer.hpp"
+#include "scheduler/ArchivalJob.hpp"
 #include "scheduler/ArchivalRoute.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MockSchedulerDatabaseFactory.hpp"
@@ -937,8 +938,6 @@ TEST_P(SchedulerTest, user_getDirContents_root_dir_is_empty) {
   ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
   ASSERT_FALSE(itor.hasMore());
 }
-/*
-
 
 TEST_P(SchedulerTest, user_createDir_empty_string) {
   using namespace cta;
@@ -946,7 +945,9 @@ TEST_P(SchedulerTest, user_createDir_empty_string) {
   Scheduler &scheduler = getScheduler();
   const std::string dirPath = "";
 
-  ASSERT_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath), std::exception);
+  const uint16_t mode = 0;
+  ASSERT_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode),
+    std::exception);
 }
 
 TEST_P(SchedulerTest,
@@ -956,7 +957,9 @@ TEST_P(SchedulerTest,
   Scheduler &scheduler = getScheduler();
   const std::string dirPath = "//";
 
-  ASSERT_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath), std::exception);
+  const uint16_t mode = 0;
+  ASSERT_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode),
+    std::exception);
 }
 
 TEST_P(SchedulerTest, user_createDir_invalid_chars) {
@@ -965,7 +968,9 @@ TEST_P(SchedulerTest, user_createDir_invalid_chars) {
   Scheduler &scheduler = getScheduler();
   const std::string dirPath = "/grandparent/?parent";
   
-  ASSERT_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath), std::exception);
+  const uint16_t mode = 0;
+  ASSERT_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode),
+    std::exception);
 }
 
 TEST_P(SchedulerTest, user_createDir_top_level) {
@@ -974,7 +979,8 @@ TEST_P(SchedulerTest, user_createDir_top_level) {
   Scheduler &scheduler = getScheduler();
   const std::string dirPath = "/grandparent";
   
-  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  const uint16_t mode = 0;
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
 
   DirIterator itor;
 
@@ -998,8 +1004,10 @@ TEST_P(SchedulerTest, user_createDir_second_level) {
 
   {
     const std::string topLevelDirPath = "/grandparent";
+    const uint16_t mode = 0;
 
-    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, topLevelDirPath));
+    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, topLevelDirPath,
+      mode));
   }
 
   {
@@ -1020,8 +1028,10 @@ TEST_P(SchedulerTest, user_createDir_second_level) {
 
   {
     const std::string secondLevelDirPath = "/grandparent/parent";
+    const uint16_t mode = 0;
 
-    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, secondLevelDirPath));
+    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, secondLevelDirPath,
+      mode));
   }
 
   {
@@ -1041,7 +1051,8 @@ TEST_P(SchedulerTest, user_createDir_second_level) {
   {
     DirIterator itor;
 
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/grandparent"));
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost,
+      "/grandparent"));
 
     ASSERT_TRUE(itor.hasMore());
 
@@ -1068,13 +1079,16 @@ TEST_P(SchedulerTest,
     const std::string name = "TestStorageClass";
     const uint16_t nbCopies = 2;
     const std::string comment = "Comment";
-    ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, name, nbCopies, comment));
+    ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, name,
+      nbCopies, comment));
   }
 
   {
     const std::string topLevelDirPath = "/grandparent";
+    const uint16_t mode = 0;
 
-    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, topLevelDirPath));
+    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, topLevelDirPath,
+      mode));
   }
 
   {
@@ -1101,8 +1115,10 @@ TEST_P(SchedulerTest,
 
   {
     const std::string secondLevelDirPath = "/grandparent/parent";
+    const uint16_t mode = 0;
 
-    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, secondLevelDirPath));
+    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, secondLevelDirPath,
+      mode));
   }
 
   {
@@ -1151,8 +1167,9 @@ TEST_P(SchedulerTest, user_deleteDir_existing_top_level) {
 
   Scheduler &scheduler = getScheduler();
   const std::string dirPath = "/grandparent";
+  const uint16_t mode = 0;
   
-  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
 
   {
     DirIterator itor;
@@ -1187,8 +1204,10 @@ TEST_P(SchedulerTest,
 
   {
     const std::string topLevelDirPath = "/grandparent";
+    const uint16_t mode = 0;
 
-    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, topLevelDirPath));
+    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, topLevelDirPath,
+      mode));
 
     DirIterator itor;
 
@@ -1205,8 +1224,10 @@ TEST_P(SchedulerTest,
 
   {
     const std::string secondLevelDirPath = "/grandparent/parent";
+    const uint16_t mode = 0;
 
-    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, secondLevelDirPath));
+    ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, secondLevelDirPath,
+      mode));
 
     DirIterator itor;
 
@@ -1266,8 +1287,9 @@ TEST_P(SchedulerTest, user_setDirStorageClass_top_level) {
 
   Scheduler &scheduler = getScheduler();
   const std::string dirPath = "/grandparent";
+  const uint16_t mode = 0;
 
-  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
 
   DirIterator itor;
 
@@ -1311,8 +1333,9 @@ TEST_P(SchedulerTest,
 
   Scheduler &scheduler = getScheduler();
   const std::string dirPath = "/grandparent";
+  const uint16_t mode = 0;
 
-  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
 
   DirIterator itor;
 
@@ -1373,7 +1396,8 @@ TEST_P(SchedulerTest, user_archive_to_new_file) {
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  const uint16_t mode = 0;
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
 
@@ -1391,7 +1415,7 @@ TEST_P(SchedulerTest, user_archive_to_new_file) {
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl");
   const std::string dstPath  = "/grandparent/parent_file";
-  ASSERT_NO_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath));
+  ASSERT_NO_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls, dstPath));
 
   {
     DirIterator itor;
@@ -1418,7 +1442,8 @@ TEST_P(SchedulerTest, user_archive_to_new_file) {
 
   {
     DirEntry entry;
-    ASSERT_NO_THROW(entry = scheduler.stat(s_adminOnAdminHost, dstPath));
+    ASSERT_NO_THROW(entry = scheduler.statDirEntry(s_adminOnAdminHost,
+      dstPath));
     ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStorageClassName());
   }
@@ -1474,12 +1499,13 @@ TEST_P(SchedulerTest,
   Scheduler &scheduler = getScheduler();
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  const uint16_t mode = 0;
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
 
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl");
   const std::string dstPath  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
 }
 
 TEST_P(SchedulerTest,
@@ -1495,14 +1521,15 @@ TEST_P(SchedulerTest,
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  const uint16_t mode = 0;
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
 
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl");
   const std::string dstPath  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
 }
 
 TEST_P(SchedulerTest, user_archive_to_new_file_with_no_route) {
@@ -1517,7 +1544,8 @@ TEST_P(SchedulerTest, user_archive_to_new_file_with_no_route) {
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  const uint16_t mode = 0;
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
 
@@ -1530,7 +1558,7 @@ TEST_P(SchedulerTest, user_archive_to_new_file_with_no_route) {
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl");
   const std::string dstPath  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
 }
 
 TEST_P(SchedulerTest,
@@ -1546,7 +1574,8 @@ TEST_P(SchedulerTest,
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  const uint16_t mode = 0;
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
 
@@ -1564,7 +1593,7 @@ TEST_P(SchedulerTest,
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl");
   const std::string dstPath  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
 }
 
 TEST_P(SchedulerTest, user_archive_to_directory) {
@@ -1579,7 +1608,8 @@ TEST_P(SchedulerTest, user_archive_to_directory) {
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  const uint16_t mode = 0;
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
 
@@ -1600,7 +1630,7 @@ TEST_P(SchedulerTest, user_archive_to_directory) {
   srcUrls.push_back("diskUrl3");
   srcUrls.push_back("diskUrl4");
   const std::string dstPath  = "/grandparent";
-  ASSERT_NO_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath));
+  ASSERT_NO_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls, dstPath));
 
   {
     DirIterator itor;
@@ -1692,7 +1722,8 @@ TEST_P(SchedulerTest,
   Scheduler &scheduler = getScheduler();
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  const uint16_t mode = 0;
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
 
   std::list<std::string> srcUrls;
   srcUrls.push_back("diskUrl1");
@@ -1700,7 +1731,8 @@ TEST_P(SchedulerTest,
   srcUrls.push_back("diskUrl3");
   srcUrls.push_back("diskUrl4");
   const std::string dstPath  = "/grandparent";
-  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls,
+    dstPath), std::exception);
 }
 
 TEST_P(SchedulerTest,
@@ -1716,7 +1748,8 @@ TEST_P(SchedulerTest,
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  const uint16_t mode = 0;
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
 
@@ -1726,7 +1759,8 @@ TEST_P(SchedulerTest,
   srcUrls.push_back("diskUrl3");
   srcUrls.push_back("diskUrl4");
   const std::string dstPath  = "/grandparent";
-  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls,
+    dstPath), std::exception);
 }
 
 TEST_P(SchedulerTest, user_archive_to_directory_with_no_route) {
@@ -1741,7 +1775,8 @@ TEST_P(SchedulerTest, user_archive_to_directory_with_no_route) {
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  const uint16_t mode = 0;
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
 
@@ -1757,7 +1792,8 @@ TEST_P(SchedulerTest, user_archive_to_directory_with_no_route) {
   srcUrls.push_back("diskUrl3");
   srcUrls.push_back("diskUrl4");
   const std::string dstPath  = "/grandparent";
-  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls,
+    dstPath), std::exception);
 }
 
 TEST_P(SchedulerTest,
@@ -1773,7 +1809,8 @@ TEST_P(SchedulerTest,
     nbCopies, storageClassComment));
 
   const std::string dirPath = "/grandparent";
-  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath));
+  const uint16_t mode = 0;
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
 
@@ -1794,10 +1831,8 @@ TEST_P(SchedulerTest,
   srcUrls.push_back("diskUrl3");
   srcUrls.push_back("diskUrl4");
   const std::string dstPath  = "/grandparent";
-  ASSERT_THROW(scheduler.archive(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
+  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
 }
-
-*/
 
 cta::MockNameServerFactory nsFactory;
 cta::MockSchedulerDatabaseFactory dbFactory;
