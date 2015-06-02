@@ -165,6 +165,7 @@ void cta::Scheduler::createAdminHost(
 void cta::Scheduler::deleteAdminHost(
   const SecurityIdentity &requester,
   const std::string &hostName) {
+  m_db.deleteAdminHost(requester, hostName);
 }
 
 //------------------------------------------------------------------------------
@@ -172,7 +173,7 @@ void cta::Scheduler::deleteAdminHost(
 //------------------------------------------------------------------------------
 std::list<cta::AdminHost> cta::Scheduler::getAdminHosts(const SecurityIdentity
   &requester) const {
-  return std::list<AdminHost>();
+  return m_db.getAdminHosts(requester);
 }
 
 //------------------------------------------------------------------------------
@@ -193,9 +194,8 @@ void cta::Scheduler::createStorageClass(
 void cta::Scheduler::deleteStorageClass(
   const SecurityIdentity &requester,
   const std::string &name) {
-  //IMPORTANT
-  //m_ns.assertStorageClassIsNotInUse(requester, name, "/");
-  //m_db.deleteStorageClass(requester, name);
+  m_ns.assertStorageClassIsNotInUse(requester, name, "/");
+  m_db.deleteStorageClass(requester, name);
 }
 
 //------------------------------------------------------------------------------

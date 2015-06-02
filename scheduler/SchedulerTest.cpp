@@ -296,7 +296,6 @@ TEST_P(SchedulerTest,
   }
 }
 
-/*
 TEST_P(SchedulerTest, admin_deleteStorageClass_existing) {
   using namespace cta;
 
@@ -336,6 +335,7 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_existing) {
   }
 }
 
+/*
 TEST_P(SchedulerTest,
   admin_deleteStorageClass_in_use_by_directory) {
   using namespace cta;
