@@ -72,7 +72,7 @@ void cta::objectstore::Agent::insertAndRegisterSelf() {
   RootEntry re(m_objectStore);
   ScopedSharedLock reLock(re);
   re.fetch();
-  AgentRegister ar(re.getAgentRegisterPointer(), m_objectStore);
+  AgentRegister ar(re.getAgentRegisterAddress(), m_objectStore);
   reLock.release();
   // Then we should first create a pointer to our agent
   ScopedExclusiveLock arLock(ar);
@@ -96,7 +96,7 @@ void cta::objectstore::Agent::deleteAndUnregisterSelf() {
   RootEntry re(m_objectStore);
   ScopedSharedLock reLock(re);
   re.fetch();
-  AgentRegister ar(re.getAgentRegisterPointer(), m_objectStore);
+  AgentRegister ar(re.getAgentRegisterAddress(), m_objectStore);
   reLock.release();
   // Then we should first create a pointer to our agent
   ScopedExclusiveLock arLock(ar);

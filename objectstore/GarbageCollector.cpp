@@ -29,7 +29,7 @@ GarbageCollector::GarbageCollector(Backend & os, Agent & agent):
   RootEntry re(m_objectStore);
   ScopedSharedLock reLock(re);
   re.fetch();
-  m_agentRegister.setAddress(re.getAgentRegisterPointer());
+  m_agentRegister.setAddress(re.getAgentRegisterAddress());
   reLock.release();
   ScopedSharedLock arLock(m_agentRegister);
   m_agentRegister.fetch();

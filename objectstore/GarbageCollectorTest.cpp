@@ -38,7 +38,9 @@ TEST(GarbageCollector, BasicFuctionnality) {
   // Create the agent register
   cta::objectstore::CreationLog cl(99, "dummyUser", 99, "dummyGroup", 
       "unittesthost", time(NULL), "Creation of unit test agent register");
-  re.addOrGetAgentRegisterPointer(agent, cl);
+  cta::objectstore::ScopedExclusiveLock rel(re);
+  re.addOrGetAgentRegisterPointerAndCommit(agent, cl);
+  rel.release();
   // Create 2 agents, A and B and register them
   cta::objectstore::Agent agA(be), agB(be);
   agA.initialize();

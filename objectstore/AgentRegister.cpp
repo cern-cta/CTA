@@ -31,6 +31,16 @@ void cta::objectstore::AgentRegister::initialize() {
   m_payloadInterpreted = true;
 }
 
+bool cta::objectstore::AgentRegister::isEmpty() {
+  checkPayloadReadable();
+  if (m_payload.untrackedagents_size())
+    return false;
+  if (m_payload.agents_size())
+    return false;
+  return true;
+}
+
+
 void cta::objectstore::AgentRegister::addAgent (std::string name) {
   checkPayloadWritable();
   m_payload.add_agents(name);

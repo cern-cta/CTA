@@ -36,14 +36,14 @@ public:
     RootEntry re(agent);
     ret << re.dump(agent) << std::endl;;
     try {
-      AgentRegister ar(re.getAgentRegisterPointer(agent), agent);
+      AgentRegister ar(re.getAgentRegisterAddress(agent), agent);
       ret << ar.dump(agent) << std::endl;
       std::list<std::string> agList = ar.getAgents(agent);
       for (std::list<std::string>::iterator i=agList.begin(); i!=agList.end(); i++) {
         AgentVisitor a(*i, agent);
         ret << a.dump(agent) << std::endl;
       }
-    } catch (RootEntry::NotAllocatedEx &) {}
+    } catch (RootEntry::NotAllocated &) {}
     try {
       JobPool jp (re.getJobPool(agent), agent);
       ret << jp.dump(agent) << std::endl;
@@ -57,7 +57,7 @@ public:
         ret << "Recall Counter=" << rc.get(agent) << std::endl;
       } catch (std::exception&) {
       }
-    } catch (RootEntry::NotAllocatedEx &) {}
+    } catch (RootEntry::NotAllocated &) {}
     ret << ">> Structure dump end" << std::endl;
     return ret.str();
   }

@@ -22,6 +22,8 @@
 #include "objectstore/SerializersExceptions.hpp"
 #include "RootEntry.hpp"
 #include "Agent.hpp"
+#include "AgentRegister.hpp"
+#include "TapePool.hpp"
 
 namespace unitTests {
 
@@ -52,8 +54,8 @@ TEST(RootEntry, BasicAccess) {
     re.fetch();
     cta::objectstore::CreationLog cl(99, "dummyUser", 99, "dummyGroup", 
       "unittesthost", time(NULL), "Creation of unit test agent register");
-    re.addOrGetAgentRegisterPointer(agent, cl);
-    ASSERT_NO_THROW(re.getAgentRegisterPointer());
+    re.addOrGetAgentRegisterPointerAndCommit(agent, cl);
+    ASSERT_NO_THROW(re.getAgentRegisterAddress());
     re.commit();
     //agent.registerSelf();
   }
@@ -405,4 +407,51 @@ TEST(RootEntry, Libraries) {
   re.remove();
   ASSERT_EQ(false, re.exists());
 }
+
+TEST (RootEntry, TapePools) {}
+
+TEST (RootEntry, DriveRegister) {}
+
+TEST(RootEntry, AgentRegister) {
+  cta::objectstore::BackendVFS be;
+  { 
+    // Try to create the root entry
+    cta::objectstore::RootEntry re(be);
+    re.initialize();
+    re.insert();
+  }
+  cta::objectstore::CreationLog cl(99, "dummyUser", 99, "dummyGroup", 
+    "unittesthost", time(NULL), "Creation of unit test agent register");
+  cta::objectstore::Agent ag(be);
+  ag.generateName("UnitTests");
+  std::string arAddr;
+  {
+    // Create the agent register
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    re.fetch();
+    ASSERT_THROW(re.getAgentRegisterAddress(),
+      cta::objectstore::RootEntry::NotAllocated);
+    arAddr = re.addOrGetAgentRegisterPointerAndCommit(ag, cl);
+    // Check that we car read it
+    cta::objectstore::AgentRegister ar(arAddr, be);
+    cta::objectstore::ScopedSharedLock arl(ar);
+    ASSERT_NO_THROW(ar.fetch());
+  }
+  {
+    // Create the agent register
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    re.fetch();
+    // Check that we still get the same agent register
+    ASSERT_EQ(arAddr, re.getAgentRegisterAddress());
+    ASSERT_EQ(arAddr, re.addOrGetAgentRegisterPointerAndCommit(ag, cl));
+  }
+  // Delete the root entry
+  cta::objectstore::RootEntry re(be);
+  cta::objectstore::ScopedExclusiveLock lock(re);
+  re.remove();
+  ASSERT_EQ(false, re.exists());
+}
+
 }

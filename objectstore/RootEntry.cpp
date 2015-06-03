@@ -386,208 +386,93 @@ void cta::objectstore::RootEntry::addTapePoolAndCommit(const std::string& tapePo
   agent.commit();
 }
 
+void cta::objectstore::RootEntry::removeTapePoolAndCommit(const std::string& tapePool,
+    Agent& agent) {
+  checkPayloadWritable();
+  // find the address of the tape pool object
+  try {
+    auto tpp = serializers::findElement(m_payload.tapepoolpointers(), tapePool);
+    // Open the tape pool object
+    TapePool tp (tpp.name(), ObjectOps<serializers::RootEntry>::m_objectStore);
+    ScopedExclusiveLock tpl(tp);
+    tp.fetch();
+    // Verify this is the tapepool we're looking for.
+    if (tp.getName() != tapePool) {
+      std::stringstream err;
+      err << "Unexpected tape pool name found in object pointed to for tape pool: "
+          << tapePool << " found: " << tp.getName();
+      throw WrongTapePool(err.str());
+    }
+    // Check the tape pool is empty
+    if (!tp.isEmpty()) {
+      throw TapePoolNotEmpty ("In RootEntry::removeTapePoolAndCommit: trying to "
+          "remove a non-empty tape pool");
+    }
+    // We can delete the pool
+    tp.remove();
+    // ... and remove it from our entry
+    serializers::removeOccurences(m_payload.mutable_tapepoolpointers(), tapePool);
+    // We commit for safety and symmetry with the add operation
+    commit();
+  } catch (serializers::NotFound &) {
+    // No such tape pool. Nothing to to.
+    return;
+  }
+}
 
+std::string cta::objectstore::RootEntry::getTapePoolAddress(const std::string& tapePool) {
+  checkPayloadReadable();
+  auto & tpp = serializers::findElement(m_payload.tapepoolpointers(), tapePool);
+  return tpp.address();
+}
 
-//void cta::objectstore::RootEntry::
-
-
-
-//// Get the name of the JobPool (or exception if not available)
-//std::string cta::objectstore::RootEntry::getJobPool() {
-//  checkPayloadReadable();
-//  // If the registry is defined, return it, job done.
-//  if (m_payload.jobpool().size())
-//    return m_payload.jobpool();
-//  throw NotAllocatedEx("In RootEntry::getJobPool: jobPool not yet allocated");
-//}
-//
-//// Get the name of a (possibly freshly created) job pool
-//std::string cta::objectstore::RootEntry::allocateOrGetJobPool(Agent & agent) {
-//  // Check if the job pool exists
-//  try {
-//    return getJobPool();
-//  } catch (NotAllocatedEx &) {
-//    // If we get here, the job pool is not created yet, so we have to do it:
-//    // lock the entry again, for writing
-//    ScopedExclusiveLock lock(*this);
-//    fetch();
-//    // If the registry is already defined, somebody was faster. We're done.
-//    if (m_payload.jobpool().size()) {
-//      lock.release();
-//      return m_payload.jobpool();
-//    }
-//    // We will really create the register
-//    // decide on the object's name
-//    std::string jpName (agent.nextId("jobPool"));
-//    // Record the agent in the intent log
-//    addIntendedJobPool(jpName);
-//    // Create and populate the object
-//    JobPool jp(jpName, m_objectStore);
-//    jp.initialize();
-//    jp.setOwner("");
-//    jp.setBackupOwner("");
-//    jp.insert();
-//    // Take a lock on the newly created job pool
-//    ScopedExclusiveLock jpLock(jp);
-//    // Move job pool from intent to official
-//    setJobPool(jpName);
-//    commit();
-//    // Record completion on the job pool
-//    jp.setOwner(getNameIfSet());
-//    jp.setBackupOwner(getNameIfSet());
-//    jp.commit();
-//    // and we are done
-//    return jpName;
-//  }
-//}
-//
-//void cta::objectstore::RootEntry::addIntendedJobPool(const std::string& name) {
-//  checkPayloadWritable();
-//  std::string * jp = m_payload.mutable_jobpoolintentlog()->Add();
-//  *jp = name;
-//}
-//
-//void cta::objectstore::RootEntry::deleteFromIntendedJobPool(const std::string& name) {
-//  checkPayloadWritable();
-//  serializers::removeString(m_payload.mutable_jobpoolintentlog(), name);
-//}
-//
-//void cta::objectstore::RootEntry::setJobPool(const std::string& name) {
-//  checkPayloadWritable();
-//  m_payload.set_jobpool(name);
-//}
-
-// Get the name of the admin user list (or exception if not available)
-//std::string cta::objectstore::RootEntry::getAdminUsersListPointer() {
-//  // Check that the fetch was done
-//  if (!m_payloadInterpreted)
-//    throw ObjectOpsBase::NotFetched("In RootEntry::getAdminUsersList: object not yet fetched");
-//  // If the registry is defined, return it, job done.
-//  if (m_payload.adminuserslist().size())
-//    return m_payload.adminuserslist();
-//  throw NotAllocatedEx("In RootEntry::getAdminUsersList: adminUserList not yet allocated");
-//}
-
-//std::string cta::objectstore::RootEntry::allocateOrGetAdminUsersList(Agent& agent) {
-//  throw cta::exception::Exception("TODO");
-//}
-//
-//void cta::objectstore::RootEntry::addIntendedAdminUsersList(const std::string& name) {
-//  throw cta::exception::Exception("TODO");
-//}
-//
-//void cta::objectstore::RootEntry::deleteFromIntendedAdminUsersList(const std::string& name) {
-//  throw cta::exception::Exception("TODO");
-//}
-//
-//void cta::objectstore::RootEntry::setAdminUsersList(const std::string& name) {
-//  throw cta::exception::Exception("TODO");
-//}
-//
-//// Get the name of the admin user list (or exception if not available)
-//std::string cta::objectstore::RootEntry::getStorageClassList() {
-//  // Check that the fetch was done
-//  if (!m_payloadInterpreted)
-//    throw ObjectOpsBase::NotFetched("In RootEntry::getStorageClassList: object not yet fetched");
-//  // If the registry is defined, return it, job done.
-//  if (m_payload.storageclasslist().size())
-//    return m_payload.storageclasslist();
-//  throw NotAllocatedEx("In RootEntry::getStorageClassList: StorageClassList not yet allocated");
-//}
-//
-//std::string cta::objectstore::RootEntry::allocateOrGetStorageClassList(Agent& agent) {
-////  // Check if the job pool exists
-////  try {
-////    return getStorageClassList();
-////  } catch (NotAllocatedEx &) {
-////    // If we get here, the job pool is not created yet, so we have to do it:
-////    // lock the entry again, for writing
-////    ScopedExclusiveLock lock(*this);
-////    fetch();
-////    // If the registry is already defined, somebody was faster. We're done.
-////    if (m_payload.storageclasslist().size()) {
-////      lock.release();
-////      return m_payload.storageclasslist();
-////    }
-////    // We will really create the register
-////    // decide on the object's name
-////    std::string sclName (agent.nextId("storageClassList"));
-////    // Record the agent in the intent log
-////    addIntendedStorageClassList(sclName);
-////    // Create and populate the object
-////    StorageClassList scl(sclName, m_objectStore);
-////    scl.initialize();
-////    scl.setOwner("");
-////    scl.setBackupOwner("");
-////    scl.insert();
-////    // Take a lock on the newly created job pool
-////    ScopedExclusiveLock sclLock(scl);
-////    // Move job pool from intent to official
-////    setStorageClassList(scl);
-////    commit();
-////    // Record completion on the job pool
-////    scl.setOwner(getNameIfSet());
-////    scl.setBackupOwner(getNameIfSet());
-////    scl.commit();
-////    // and we are done
-////    return scl;
-////  }
-//  throw exception::Exception("TODO");
-//}
-//
-//void cta::objectstore::RootEntry::addIntendedStorageClassList(const std::string& name) {
-//  throw cta::exception::Exception("TODO");
-//}
-//
-//void cta::objectstore::RootEntry::deleteFromIntendedStorageClassList(const std::string& name) {
-//  throw cta::exception::Exception("TODO");
-//}
-//
-//void cta::objectstore::RootEntry::setStorageClassList(const std::string& name) {
-//  throw cta::exception::Exception("TODO");
-//}
+auto cta::objectstore::RootEntry::dumpTapePool() -> std::list<TapePoolDump> {
+  checkPayloadReadable();
+  std::list<TapePoolDump> ret;
+  auto & tpl = m_payload.tapepoolpointers();
+  for (auto i = tpl.begin(); i!=tpl.end(); i++) {
+    ret.push_back(TapePoolDump());
+    ret.back().address = i->address();
+    ret.back().tapePool = i->name();
+    ret.back().log.deserialize(i->log());
+  }
+  return ret;
+}
 
 // =============================================================================
 // ================ Agent register manipulation ================================
 // =============================================================================
 // Get the name of the agent register (or exception if not available)
-std::string cta::objectstore::RootEntry::getAgentRegisterPointer() {
-  // Check that the fetch was done
-  if (!m_payloadInterpreted)
-    throw ObjectOpsBase::NotFetched("In RootEntry::getAgentRegisterPointer: object not yet fetched");
+std::string cta::objectstore::RootEntry::getAgentRegisterAddress() {
+  checkPayloadReadable();
   // If the registry is defined, return it, job done.
   if (m_payload.agentregisterpointer().address().size())
     return m_payload.agentregisterpointer().address();
-  throw NotAllocatedEx("In RootEntry::getAgentRegister: agentRegister not yet allocated");
+  throw NotAllocated("In RootEntry::getAgentRegister: agentRegister not yet allocated");
 }
 
 // Get the name of a (possibly freshly created) agent register
-std::string cta::objectstore::RootEntry::addOrGetAgentRegisterPointer(Agent & agent,
+std::string cta::objectstore::RootEntry::addOrGetAgentRegisterPointerAndCommit(Agent & agent,
   const CreationLog & log) {
   // Check if the agent register exists
   try {
-    return getAgentRegisterPointer();
-  } catch (NotAllocatedEx &) {
+    return getAgentRegisterAddress();
+  } catch (NotAllocated &) {
     // If we get here, the agent register is not created yet, so we have to do it:
     // lock the entry again, for writing. We take the lock ourselves if needed
     // This will make an autonomous transaction
-    std::unique_ptr<ScopedExclusiveLock> lockPtr;
-    if (!m_locksForWriteCount)
-      lockPtr.reset(new ScopedExclusiveLock(*this));
-    // If the registry is already defined, somebody was faster. We're done.
+    checkPayloadWritable();
     fetch();
     if (m_payload.agentregisterpointer().address().size()) {
-      lockPtr.reset(NULL);
       return m_payload.agentregisterpointer().address();
     }
-    // We will really create the register
     // decide on the object's name
-    std::string arName (agent.nextId("agentRegister"));
+    std::string arAddress (agent.nextId("agentRegister"));
     // Record the agent registry in our own intent
-    addIntendedAgentRegistry(arName);
+    addIntendedAgentRegistry(arAddress);
     commit();
     // Create the agent registry
-    AgentRegister ar(arName, m_objectStore);
+    AgentRegister ar(arAddress, m_objectStore);
     ar.initialize();
     // There is no garbage collection for an agent registry: if it is not
     // plugged to the root entry, it does not exist.
@@ -597,17 +482,45 @@ std::string cta::objectstore::RootEntry::addOrGetAgentRegisterPointer(Agent & ag
     // Take a lock on agent registry
     ScopedExclusiveLock arLock(ar);
     // Move agent registry from intent to official
-    setAgentRegistry(arName, log);
-    deleteIntendedAgentRegistry();
+    auto * marp = m_payload.mutable_agentregisterpointer();
+    marp->set_address(arAddress);
+    log.serialize(*marp->mutable_log());
+    m_payload.set_agentregisterintent("");
     commit();
     // Record completion in agent registry
     ar.setOwner(getAddressIfSet());
     ar.setBackupOwner(getAddressIfSet());
     ar.commit();
     // And we are done. Release locks
-    lockPtr.reset(NULL);
     arLock.release();
-    return arName;
+    return arAddress;
+  }
+}
+
+void cta::objectstore::RootEntry::removeAgentRegister() {
+  checkPayloadWritable();
+  // Check that we do have an agent register set. Cleanup a potential intent as
+  // well
+  if (m_payload.agentregisterintent().size()) {
+    AgentRegister iar(m_payload.agentregisterintent(),
+      ObjectOps<serializers::RootEntry>::m_objectStore);
+    ScopedExclusiveLock iarl(iar);
+    // An agent register only referenced in the intent should not be used
+    // and hence empty. We'll see that.
+    iar.fetch();
+    if (!iar.isEmpty()) {
+      throw AgentRegisterNotEmpty("In RootEntry::removeAgentRegister: found "
+        "a non-empty intended agent register. Internal error.");
+    }
+    iar.remove();
+  }
+  if (m_payload.agentregisterpointer().address().size()) {
+    AgentRegister ar(m_payload.agentregisterpointer().address(),
+      ObjectOps<serializers::RootEntry>::m_objectStore);
+    ScopedExclusiveLock arl(ar);
+    if (!ar.isEmpty()) {
+      
+    }
   }
 }
 
@@ -627,25 +540,20 @@ void cta::objectstore::RootEntry::addIntendedAgentRegistry(const std::string& ad
     // If it did not, we clean up the object if present, clean up the intent
     // and replace it with the new one.
     // We do not recycle the object, as the state is doubtful.
-    if (ObjectOps<serializers::RootEntry>::m_objectStore.exists(m_payload.agentregisterintent())) {
-      ObjectOps<serializers::RootEntry>::m_objectStore.read(m_payload.agentregisterintent());
+    if (ObjectOps<serializers::RootEntry>::m_objectStore.exists(
+      m_payload.agentregisterintent())) {
+      AgentRegister iar(m_payload.agentregisterintent(),
+        ObjectOps<serializers::RootEntry>::m_objectStore);
+      iar.fetch();
+      if (!iar.isEmpty()) {
+        throw AgentRegisterNotEmpty("In RootEntry::addIntendedAgentRegistry, "
+          "found a non-empty intended agent register. Internal Error.");
+      }
+      iar.remove();
     }
   }
   m_payload.set_agentregisterintent(address);
 }
-
-void cta::objectstore::RootEntry::deleteIntendedAgentRegistry() {
-  checkPayloadWritable();
-  m_payload.set_agentregisterintent("");
-}
-
-void cta::objectstore::RootEntry::setAgentRegistry(const std::string& address,
-  const CreationLog & log) {
-  checkPayloadWritable();
-  m_payload.mutable_agentregisterpointer()->set_address(address);
-  log.serialize(*m_payload.mutable_agentregisterpointer()->mutable_log());
-}
-
 
 // Dump the root entry
 std::string cta::objectstore::RootEntry::dump () {

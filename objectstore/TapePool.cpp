@@ -29,3 +29,26 @@ void cta::objectstore::TapePool::initialize(const std::string& name) {
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
+
+bool cta::objectstore::TapePool::isEmpty() {
+  checkPayloadReadable();
+  // Check we have no tapes in pool
+  if (m_payload.tapes_size())
+    return false;
+  // Check we have no archival jobs pending
+  if (m_payload.archivaljobs_size())
+    return false;
+  // If we made it to here, it seems the pool is indeed empty.
+  return true;
+}
+
+void cta::objectstore::TapePool::setName(const std::string& name) {
+  checkPayloadWritable();
+  m_payload.set_name(name);
+}
+
+std::string cta::objectstore::TapePool::getName() {
+  checkPayloadReadable();
+  return m_payload.name();
+}
+

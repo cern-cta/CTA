@@ -31,6 +31,7 @@ public:
   AgentRegister(Backend & os);
   AgentRegister(const std::string & name, Backend & os);
   void initialize();
+  bool isEmpty();
   void addAgent (std::string name);
   void removeAgent (const std::string  & name);
   void trackAgent (std::string name);
