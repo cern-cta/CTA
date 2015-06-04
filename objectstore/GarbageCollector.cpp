@@ -208,7 +208,7 @@ void GarbageCollector::checkHeartbeats() {
      }
    }
    // We now processed all the owned objects. We can delete the agent's entry
-   agent.deleteAndUnregisterSelf();
+   agent.removeAndUnregisterSelf();
  }
 
 

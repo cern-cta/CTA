@@ -140,22 +140,18 @@ public:
   }
   
   void setOwner(const std::string & owner) {
-    checkHeaderWritable();
     m_header.set_owner(owner);
   }
   
   std::string getOwner() {
-    checkHeaderReadable();
     return m_header.owner();
   }
   
   void setBackupOwner(const std::string & owner) {
-    checkHeaderWritable();
     m_header.set_backupowner(owner);
   }
   
   std::string getBackupOwner() {
-    checkHeaderReadable();
     return m_header.backupowner();
   }
 

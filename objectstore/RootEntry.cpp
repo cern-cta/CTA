@@ -20,6 +20,7 @@
 #include "AgentRegister.hpp"
 #include "Agent.hpp"
 #include "TapePool.hpp"
+#include "DriveRegister.hpp"
 #include <cxxabi.h>
 #include "ProtcolBuffersAlgorithms.hpp"
 
@@ -35,6 +36,31 @@ void cta::objectstore::RootEntry::initialize() {
   // There is nothing to do for the payload.
   m_payloadInterpreted = true;
 }
+
+bool cta::objectstore::RootEntry::isEmpty() {
+  checkPayloadReadable();
+  if (m_payload.storageclasses_size())
+    return false;
+  if (m_payload.tapepoolpointers_size())
+    return false;
+  if (m_payload.driveregisterpointer().address().size())
+    return false;
+  if (m_payload.agentregisterintent().size())
+    return false;
+  if (m_payload.agentregisterpointer().address().size())
+    return false;
+  return true;
+}
+
+void cta::objectstore::RootEntry::removeIfEmpty() {
+  checkPayloadWritable();
+  if (!isEmpty()) {
+    throw NotEmpty("In RootEntry::removeIfEmpty(): root entry not empty");
+  }
+  remove();
+}
+
+
 
 // =============================================================================
 // ================ Admin Hosts manipulations ==================================
@@ -349,17 +375,15 @@ namespace {
   }
 }
 
-void cta::objectstore::RootEntry::addTapePoolAndCommit(const std::string& tapePool,
-  const CreationLog& log, Agent& agent) {
-  checkHeaderWritable();
+std::string cta::objectstore::RootEntry::addOrGetTapePoolAndCommit(const std::string& tapePool,
+  Agent& agent, const CreationLog& log) {
+  checkPayloadWritable();
   // Check the tape pool does not already exist
   try {
-    serializers::findElement(m_payload.tapepoolpointers(), tapePool);
-    throw DuplicateEntry("In RootEntry::addTapePool: trying to create duplicate entry");
+    return serializers::findElement(m_payload.tapepoolpointers(), tapePool).address();
   } catch (serializers::NotFound &) {}
   // Insert the tape pool, then its pointer, with agent intent log update
-  // First generate the intent
-  ScopedExclusiveLock al(agent);
+  // First generate the intent. We expect the agent to be passed locked.
   std::string tapePoolAddress = agent.nextId("tapePool");
   agent.fetch();
   agent.addToOwnership(tapePoolAddress);
@@ -375,6 +399,7 @@ void cta::objectstore::RootEntry::addTapePoolAndCommit(const std::string& tapePo
   auto * tpp = m_payload.mutable_tapepoolpointers()->Add();
   tpp->set_address(tapePoolAddress);
   tpp->set_name(tapePool);
+  log.serialize(*tpp->mutable_log());
   // We must commit here to ensure the tape pool object is referenced.
   commit();
   // Now update the tape pool's ownership.
@@ -384,16 +409,16 @@ void cta::objectstore::RootEntry::addTapePoolAndCommit(const std::string& tapePo
   // ... and clean up the agent
   agent.removeFromOwnership(tapePoolAddress);
   agent.commit();
+  return tapePoolAddress;
 }
 
-void cta::objectstore::RootEntry::removeTapePoolAndCommit(const std::string& tapePool,
-    Agent& agent) {
+void cta::objectstore::RootEntry::removeTapePoolAndCommit(const std::string& tapePool) {
   checkPayloadWritable();
   // find the address of the tape pool object
   try {
     auto tpp = serializers::findElement(m_payload.tapepoolpointers(), tapePool);
     // Open the tape pool object
-    TapePool tp (tpp.name(), ObjectOps<serializers::RootEntry>::m_objectStore);
+    TapePool tp (tpp.address(), ObjectOps<serializers::RootEntry>::m_objectStore);
     ScopedExclusiveLock tpl(tp);
     tp.fetch();
     // Verify this is the tapepool we're looking for.
@@ -422,8 +447,12 @@ void cta::objectstore::RootEntry::removeTapePoolAndCommit(const std::string& tap
 
 std::string cta::objectstore::RootEntry::getTapePoolAddress(const std::string& tapePool) {
   checkPayloadReadable();
-  auto & tpp = serializers::findElement(m_payload.tapepoolpointers(), tapePool);
-  return tpp.address();
+  try {
+    auto & tpp = serializers::findElement(m_payload.tapepoolpointers(), tapePool);
+    return tpp.address();
+  } catch (serializers::NotFound &) {
+    throw NotAllocated("In RootEntry::getTapePoolAddress: tape pool not allocated");
+  }
 }
 
 auto cta::objectstore::RootEntry::dumpTapePool() -> std::list<TapePoolDump> {
@@ -438,6 +467,81 @@ auto cta::objectstore::RootEntry::dumpTapePool() -> std::list<TapePoolDump> {
   }
   return ret;
 }
+
+// =============================================================================
+// ================ Drive register manipulation ================================
+// =============================================================================
+
+std::string cta::objectstore::RootEntry::addOrGetDriveRegisterPointerAndCommit(
+  Agent & agent, const CreationLog & log) {
+  checkPayloadWritable();
+  // Check if the drive register exists
+  try {
+    return getDriveRegisterAddress();
+  } catch (NotAllocated &) {
+    // decide on the object's name and add to agent's intent. We expect the
+    // agent to be passed locked.
+    std::string drAddress (agent.nextId("agentRegister"));
+    ScopedExclusiveLock agl(agent);
+    agent.fetch();
+    agent.addToOwnership(drAddress);
+    agent.commit();
+  // Then create the drive register object
+    DriveRegister dr(drAddress, m_objectStore);
+    dr.initialize();
+    // There is no garbage collection for a drive register: if it is not
+    // plugged to the root entry, it does not exist.
+    dr.setOwner("");
+    dr.setBackupOwner("");
+    dr.insert();
+    // Take a lock on drive registry
+    ScopedExclusiveLock drLock(dr);
+    // Move drive registry ownership to the root entry
+    auto * mdrp = m_payload.mutable_driveregisterpointer();
+    mdrp->set_address(drAddress);
+    log.serialize(*mdrp->mutable_log());
+    commit();
+    // Record completion in drive registry
+    dr.setOwner(getAddressIfSet());
+    dr.setBackupOwner(getAddressIfSet());
+    dr.commit();
+    //... and clean up the agent
+    agent.removeFromOwnership(drAddress);
+    agent.commit();
+    return drAddress;
+  }
+}
+
+void cta::objectstore::RootEntry::removeDriveRegisterAndCommit() {
+  checkPayloadWritable();
+  // Get the address of the drive register (nothing to do if there is none)
+  if (!m_payload.driveregisterpointer().address().size())
+    return;
+  std::string drAddr = m_payload.driveregisterpointer().address();
+  DriveRegister dr(drAddr, ObjectOps<serializers::RootEntry>::m_objectStore);
+  ScopedExclusiveLock drl(dr);
+  dr.fetch();
+  // Check the drive register is empty
+  if (!dr.isEmpty()) {
+    throw DriveRegisterNotEmpty("In RootEntry::removeDriveRegisterAndCommit: "
+      "trying to remove a non-empty drive register");
+  }
+  // we can delete the drive register
+  dr.remove();
+  // And update the root entry
+  m_payload.mutable_driveregisterpointer()->set_address("");
+  // We commit for safety and symmetry with the add operation
+  commit();
+}
+
+std::string cta::objectstore::RootEntry::getDriveRegisterAddress() {
+  checkPayloadWritable();
+  if (m_payload.driveregisterpointer().address().size()) {
+    return m_payload.driveregisterpointer().address();
+  }
+  throw NotAllocated("In RootEntry::getDriveRegisterAddress: drive register not allocated");
+}
+
 
 // =============================================================================
 // ================ Agent register manipulation ================================
@@ -497,7 +601,7 @@ std::string cta::objectstore::RootEntry::addOrGetAgentRegisterPointerAndCommit(A
   }
 }
 
-void cta::objectstore::RootEntry::removeAgentRegister() {
+void cta::objectstore::RootEntry::removeAgentRegisterAndCommit() {
   checkPayloadWritable();
   // Check that we do have an agent register set. Cleanup a potential intent as
   // well
@@ -513,14 +617,21 @@ void cta::objectstore::RootEntry::removeAgentRegister() {
         "a non-empty intended agent register. Internal error.");
     }
     iar.remove();
+    m_payload.set_agentregisterintent("");
+    commit();
   }
   if (m_payload.agentregisterpointer().address().size()) {
     AgentRegister ar(m_payload.agentregisterpointer().address(),
       ObjectOps<serializers::RootEntry>::m_objectStore);
     ScopedExclusiveLock arl(ar);
+    ar.fetch();
     if (!ar.isEmpty()) {
-      
+      throw AgentRegisterNotEmpty("In RootEntry::removeAgentRegister: the agent "
+        "register is not empty. Cannot remove.");
     }
+    ar.remove();
+    m_payload.mutable_agentregisterpointer()->set_address("");
+    commit();
   }
 }
 

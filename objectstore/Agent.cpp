@@ -88,7 +88,13 @@ void cta::objectstore::Agent::insertAndRegisterSelf() {
   arLock.release();
 }
 
-void cta::objectstore::Agent::deleteAndUnregisterSelf() {
+void cta::objectstore::Agent::removeAndUnregisterSelf() {
+  // Check that we own the proper lock
+  checkPayloadWritable();
+  // Check that we are not empty
+  if (!isEmpty()) {
+    throw AgentStillOwnsObjects("In Agent::deleteAndUnregisterSelf: agent still owns objects");
+  }
   // First delete ourselves
   remove();
   // Then we remove the dangling pointer about ourselves in the agent register.
@@ -105,6 +111,14 @@ void cta::objectstore::Agent::deleteAndUnregisterSelf() {
   ar.commit();
   arLock.release();
 }
+
+bool cta::objectstore::Agent::isEmpty() {
+  checkPayloadReadable();
+  if (m_payload.ownedobjects_size())
+    return false;
+  return true;
+}
+
 
 /*void cta::objectstore::Agent::create() {
   if (!m_setupDone)

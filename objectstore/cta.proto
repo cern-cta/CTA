@@ -7,6 +7,7 @@ enum ObjectType {
   AgentRegister_t = 1;
   Agent_t = 2;
   TapePool_t = 3;
+  DriveRegister_t = 4;
 //  JobPool_t = 3;
 //  RecallFIFO_t = 4;
 //  MigrationFIFO_t = 5;
@@ -185,7 +186,9 @@ message TapePool {
 
 // ------------- Drives handling  ----------------------------------------------
 
-
+message DriveRegister {
+  repeated string drivenames = 5000;
+}
 
 ////
 ////// A basic FIFO

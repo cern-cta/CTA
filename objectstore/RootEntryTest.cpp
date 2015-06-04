@@ -62,7 +62,9 @@ TEST(RootEntry, BasicAccess) {
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
-  re.remove();
+  re.fetch();
+  re.removeAgentRegisterAndCommit();
+  re.removeIfEmpty();
   ASSERT_EQ(false, re.exists());
 }
 
@@ -127,7 +129,8 @@ TEST(RootEntry, AdminHosts) {
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
-  re.remove();
+  re.fetch();
+  re.removeIfEmpty();
   ASSERT_EQ(false, re.exists());
 }
   
@@ -204,7 +207,8 @@ TEST(RootEntry, AdminUsers) {
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
-  re.remove();
+  re.fetch();
+  re.removeIfEmpty();
   ASSERT_EQ(false, re.exists());
 }
 
@@ -338,10 +342,20 @@ TEST(RootEntry, StorageClassesAndArchivalRoutes) {
       //re.dumpTapePool();
     });
   }
+  {
+    // remove the remaining storage classes
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    re.fetch();
+    re.removeStorageClass("class1");
+    re.removeStorageClass("class3");
+    re.commit();
+  }
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
-  re.remove();
+  re.fetch();
+  re.removeIfEmpty();
   ASSERT_EQ(false, re.exists());
 }
 
@@ -404,13 +418,124 @@ TEST(RootEntry, Libraries) {
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
-  re.remove();
+  re.fetch();
+  re.removeIfEmpty();
   ASSERT_EQ(false, re.exists());
 }
 
-TEST (RootEntry, TapePools) {}
+TEST (RootEntry, TapePools) {
+  cta::objectstore::BackendVFS be;
+  cta::objectstore::CreationLog cl(99, "dummyUser", 99, "dummyGroup", 
+    "unittesthost", time(NULL), "Creation of unit test agent register");
+  cta::objectstore::Agent ag(be);
+  ag.initialize();
+  ag.generateName("UnitTests");
+  { 
+    // Try to create the root entry and allocate the agent register
+    cta::objectstore::RootEntry re(be);
+    re.initialize();
+    re.insert();
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.addOrGetAgentRegisterPointerAndCommit(ag, cl);
+  }
+  ag.insertAndRegisterSelf();
+  cta::objectstore::ScopedExclusiveLock agl(ag);
+  std::string tpAddr1, tpAddr2;
+  {
+    // Create the tape pools
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    re.fetch();
+    ASSERT_THROW(re.getTapePoolAddress("tapePool1"),
+      cta::objectstore::RootEntry::NotAllocated);
+    tpAddr1 = re.addOrGetTapePoolAndCommit("tapePool1", ag, cl);
+    // Check that we car read it
+    cta::objectstore::TapePool tp(tpAddr1, be);
+    cta::objectstore::ScopedSharedLock tpl(tp);
+    ASSERT_NO_THROW(tp.fetch());
+  }
+  {
+    // Create another pool
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    re.fetch();
+    tpAddr2 = re.addOrGetTapePoolAndCommit("tapePool2", ag, cl);
+    ASSERT_TRUE(be.exists(tpAddr2));
+  }
+  {
+    // Remove the other pool
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock lock(re);
+    re.fetch();
+    re.removeTapePoolAndCommit("tapePool2");
+    ASSERT_FALSE(be.exists(tpAddr2));
+  }
+  // Unregister the agent
+  ag.removeAndUnregisterSelf();
+  // Delete the root entry
+  cta::objectstore::RootEntry re(be);
+  cta::objectstore::ScopedExclusiveLock lock(re);
+  re.fetch();
+  re.removeAgentRegisterAndCommit();
+  re.removeTapePoolAndCommit("tapePool1");
+  ASSERT_FALSE(be.exists(tpAddr1));
+  re.removeIfEmpty();
+  ASSERT_EQ(false, re.exists());
+}
 
-TEST (RootEntry, DriveRegister) {}
+TEST (RootEntry, DriveRegister) {
+  cta::objectstore::BackendVFS be;
+  { 
+    // Try to create the root entry
+    cta::objectstore::RootEntry re(be);
+    re.initialize();
+    re.insert();
+  }
+  cta::objectstore::CreationLog cl(99, "dummyUser", 99, "dummyGroup", 
+    "unittesthost", time(NULL), "Creation of unit test agent register");
+  cta::objectstore::Agent ag(be);
+  ag.initialize();
+  ag.generateName("UnitTests");
+  { 
+    // Try to create the root entry and allocate the agent register
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    re.addOrGetAgentRegisterPointerAndCommit(ag, cl);
+  }
+  ag.insertAndRegisterSelf();
+  std::string driveRegisterAddress;
+  {
+    // create the drive register
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    ASSERT_THROW(re.getDriveRegisterAddress(),
+      cta::objectstore::RootEntry::NotAllocated);
+    ASSERT_NO_THROW(
+      driveRegisterAddress = re.addOrGetDriveRegisterPointerAndCommit(ag, cl));
+    ASSERT_TRUE(be.exists(driveRegisterAddress));
+  }
+  {
+    // delete the drive register
+    // create the drive register
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    re.removeDriveRegisterAndCommit();
+    ASSERT_FALSE(be.exists(driveRegisterAddress));
+  }
+  // Unregister the agent
+  cta::objectstore::ScopedExclusiveLock agl(ag);
+  ag.removeAndUnregisterSelf();
+  // Delete the root entry
+  cta::objectstore::RootEntry re(be);
+  cta::objectstore::ScopedExclusiveLock lock(re);
+  re.fetch();
+  re.removeAgentRegisterAndCommit();
+  re.removeIfEmpty();
+  ASSERT_EQ(false, re.exists());
+}
 
 TEST(RootEntry, AgentRegister) {
   cta::objectstore::BackendVFS be;
@@ -439,18 +564,23 @@ TEST(RootEntry, AgentRegister) {
     ASSERT_NO_THROW(ar.fetch());
   }
   {
-    // Create the agent register
+    // Delete the agent register
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
     // Check that we still get the same agent register
     ASSERT_EQ(arAddr, re.getAgentRegisterAddress());
     ASSERT_EQ(arAddr, re.addOrGetAgentRegisterPointerAndCommit(ag, cl));
+    // Remove it
+    ASSERT_NO_THROW(re.removeAgentRegisterAndCommit());
+    // Check that the object is gone
+    ASSERT_EQ(false, be.exists(arAddr));
   }
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
-  re.remove();
+  re.fetch();
+  re.removeIfEmpty();
   ASSERT_EQ(false, re.exists());
 }
 

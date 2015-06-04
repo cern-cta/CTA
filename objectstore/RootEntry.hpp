@@ -36,9 +36,16 @@ public:
   RootEntry(Backend & os);
   
   CTA_GENERATE_EXCEPTION_CLASS(NotAllocated);
+  CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   
   // In memory initialiser
   void initialize();
+  
+  // Emptyness checker
+  bool isEmpty();
+  
+  // Safe remover
+  void removeIfEmpty();
   
   // Manipulations of AdminHosts ===============================================
   void addAdminHost(const std::string & hostname, const CreationLog & log);
@@ -111,11 +118,11 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(WrongTapePool);
   /** This function implicitly creates the tape pool structure and updates 
    * the pointer to it. It needs to implicitly commit the object to the store. */
-  void addTapePoolAndCommit(const std::string & tapePool, const CreationLog & log, 
-    Agent & agent);
+  std::string addOrGetTapePoolAndCommit(const std::string & tapePool, Agent & agent,
+    const CreationLog & log);
   /** This function implicitly deletes the tape pool structure. 
    * Fails if it not empty*/
-  void removeTapePoolAndCommit(const std::string & tapePool, Agent & agent);
+  void removeTapePoolAndCommit(const std::string & tapePool);
   std::string getTapePoolAddress(const std::string & tapePool);
   class TapePoolDump {
   public:
@@ -126,9 +133,10 @@ public:
   std::list<TapePoolDump> dumpTapePool();
   
   // Drive register manipulations ==============================================
-  std::string getDriveRegisterPointer();  
-  std::string addOrGetDriveRegisterPointer(const CreationLog & log, Agent & agent);
-  std::string removeDriveRegister();
+  CTA_GENERATE_EXCEPTION_CLASS(DriveRegisterNotEmpty);
+  std::string getDriveRegisterAddress();  
+  std::string addOrGetDriveRegisterPointerAndCommit(Agent & agent, const CreationLog & log);
+  void removeDriveRegisterAndCommit();
   
   // Agent register manipulations ==============================================
   CTA_GENERATE_EXCEPTION_CLASS(AgentRegisterNotEmpty);
@@ -139,7 +147,7 @@ public:
    * object name generation, but not yet tracking. */
   std::string addOrGetAgentRegisterPointerAndCommit(Agent & agent,
     const CreationLog & log);
-  void removeAgentRegister();
+  void removeAgentRegisterAndCommit();
 
 private:
   void addIntendedAgentRegistry(const std::string & address);

@@ -37,6 +37,7 @@ namespace cta { namespace objectstore {
 
 class Agent: public ObjectOps<serializers::Agent> {
 public:
+  CTA_GENERATE_EXCEPTION_CLASS(AgentStillOwnsObjects);
   Agent(Backend & os);
   
   Agent(const std::string & name, Backend & os);
@@ -49,7 +50,9 @@ public:
   
   void insertAndRegisterSelf();
   
-  void deleteAndUnregisterSelf();
+  void removeAndUnregisterSelf();
+  
+  bool isEmpty();
   
  /* class ScopedIntent {
   public:

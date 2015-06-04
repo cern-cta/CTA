@@ -26,6 +26,8 @@ void cta::objectstore::TapePool::initialize(const std::string& name) {
   ObjectOps<serializers::TapePool>::initialize();
   // Setup the object so it's valid
   m_payload.set_name(name);
+  // set the archival jobs counter to zero
+  m_payload.set_archivaljobstotalsize(0);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
