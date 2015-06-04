@@ -221,7 +221,7 @@ void cta::MockNameServer::createFile(
   const std::string &path,
   const uint16_t mode) {
   Utils::assertAbsolutePathSyntax(path);  
-  assertFsDirExists(m_fsDir + Utils::getEnclosingDirPath(path));
+  assertFsDirExists(m_fsDir + Utils::getEnclosingPath(path));
   const std::string fsPath = m_fsDir + path;
   assertFsPathDoesNotExist(fsPath);
 
@@ -246,11 +246,11 @@ void cta::MockNameServer::createFile(
 void cta::MockNameServer::createDir(const SecurityIdentity &requester,
   const std::string &path, const uint16_t mode) {  
   Utils::assertAbsolutePathSyntax(path);  
-  const std::string enclosingDirPath = Utils::getEnclosingDirPath(path);
-  assertFsDirExists(m_fsDir + enclosingDirPath);
+  const std::string enclosingPath = Utils::getEnclosingPath(path);
+  assertFsDirExists(m_fsDir + enclosingPath);
 
   const std::string inheritedStorageClass = getDirStorageClass(requester,
-    enclosingDirPath);
+    enclosingPath);
   const std::string fsPath = m_fsDir + path;
   
   if(mkdir(fsPath.c_str(), mode)) {
@@ -308,7 +308,7 @@ cta::DirEntry cta::MockNameServer::statDirEntry(
   const std::string &path) const {
   Utils::assertAbsolutePathSyntax(path);
   const std::string name = Utils::getEnclosedName(path);
-  const std::string enclosingPath = Utils::getEnclosingDirPath(path);
+  const std::string enclosingPath = Utils::getEnclosingPath(path);
   const std::string fsPath = m_fsDir + path;
 
   struct stat stat_result;

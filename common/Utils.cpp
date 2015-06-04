@@ -102,9 +102,9 @@ void cta::Utils::assertPathDoesContainConsecutiveSlashes(
 }
 
 //------------------------------------------------------------------------------
-// getEnclosingDirPath
+// getEnclosingPath
 //------------------------------------------------------------------------------
-std::string cta::Utils::getEnclosingDirPath(const std::string &path) {
+std::string cta::Utils::getEnclosingPath(const std::string &path) {
   if(path == "/") {
     throw Exception("Root directory does not have a parent");
   }

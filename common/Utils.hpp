@@ -51,7 +51,7 @@ public:
    * @param path The path.
    * @return The path of the enclosing directory.
    */
-  static std::string getEnclosingDirPath(const std::string &path);
+  static std::string getEnclosingPath(const std::string &path);
 
   /**
    * Returns the name of the enclosed file or directory of the specified path.

@@ -49,14 +49,13 @@ struct SchedulerTestParam {
     nsFactory(nsFactory),
     dbFactory(dbFactory) {
  }
-}; // struct NSAndSchedulerDBFactories
+}; // struct SchedulerTestParam
 
 /**
  * The scheduler test is a parameterized test.  It takes a pair of name server
  * and scheduler database factories as a parameter.
  */
-class SchedulerTest: public
-  ::testing::TestWithParam<SchedulerTestParam> {
+class SchedulerTest: public ::testing::TestWithParam<SchedulerTestParam> {
 public:
 
   SchedulerTest() throw() {
@@ -1834,10 +1833,9 @@ TEST_P(SchedulerTest,
   ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls, dstPath), std::exception);
 }
 
-cta::MockNameServerFactory nsFactory;
-cta::MockSchedulerDatabaseFactory dbFactory;
-SchedulerTestParam mockSchedulerTestParam(nsFactory, dbFactory);
+static cta::MockNameServerFactory mockNsFactory;
+static cta::MockSchedulerDatabaseFactory mockDbFactory;
 
 INSTANTIATE_TEST_CASE_P(MockSchedulerTest, SchedulerTest,
-  ::testing::Values(mockSchedulerTestParam));
+  ::testing::Values(SchedulerTestParam(mockNsFactory, mockDbFactory)));
 } // namespace unitTests

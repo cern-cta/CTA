@@ -209,13 +209,13 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst,
 // getArchivalJobs
 //------------------------------------------------------------------------------
 std::map<cta::TapePool, std::list<cta::ArchivalJob> >
-  cta::MockSchedulerDatabase::getArchivalJobs(const SecurityIdentity &requester)
+  cta::MockSchedulerDatabase::getArchivalJobs()
   const {
   std::ostringstream query;
   std::map<cta::TapePool, std::list<cta::ArchivalJob> > map;
   query << "SELECT STATE, REMOTEFILE, ARCHIVEFILE, TAPEPOOL_NAME, UID, GID,"
     " CREATIONTIME FROM ARCHIVALJOB ORDER BY ARCHIVEFILE;";
-  sqlite3_stmt *statement;
+  sqlite3_stmt *statement = NULL;
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
     std::ostringstream message;
@@ -227,7 +227,7 @@ std::map<cta::TapePool, std::list<cta::ArchivalJob> >
     SqliteColumnNameToIndex idx(statement);
     const std::string tapePoolName = (char *)sqlite3_column_text(statement,
       idx("TAPEPOOL_NAME"));
-    const TapePool tapePool = getTapePoolByName(requester, tapePoolName);
+    const TapePool tapePool = getTapePool(tapePoolName);
     map[tapePool].push_back(ArchivalJob(
       (ArchivalJobState::Enum)sqlite3_column_int(statement,idx("STATE")),
       (char *)sqlite3_column_text(statement,idx("REMOTEFILE")),
@@ -242,15 +242,15 @@ std::map<cta::TapePool, std::list<cta::ArchivalJob> >
 }
 
 //------------------------------------------------------------------------------
-// getTapePoolByName
+// getTapePool
 //------------------------------------------------------------------------------
-cta::TapePool cta::MockSchedulerDatabase::getTapePoolByName(
-  const SecurityIdentity &requester, const std::string &name) const {
+cta::TapePool cta::MockSchedulerDatabase::getTapePool(const std::string &name)
+  const {
   std::ostringstream query;
   cta::TapePool pool;
   query << "SELECT NAME, NBPARTIALTAPES, UID, GID, CREATIONTIME, COMMENT"
     " FROM TAPEPOOL WHERE NAME='" << name << "';";
-  sqlite3_stmt *statement;
+  sqlite3_stmt *statement = NULL;
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
     std::ostringstream message;
@@ -296,7 +296,6 @@ cta::TapePool cta::MockSchedulerDatabase::getTapePoolByName(
 // getArchivalJobs
 //------------------------------------------------------------------------------
 std::list<cta::ArchivalJob> cta::MockSchedulerDatabase::getArchivalJobs(
-  const SecurityIdentity &requester,
   const std::string &tapePoolName) const {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
@@ -359,12 +358,12 @@ void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst,
 // getRetrievalJobs
 //------------------------------------------------------------------------------
 std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::MockSchedulerDatabase::
-  getRetrievalJobs(const SecurityIdentity &requester) const {
+  getRetrievalJobs() const {
   std::ostringstream query;
   std::map<cta::Tape, std::list<cta::RetrievalJob> > map;
   query << "SELECT STATE, ARCHIVEFILE, REMOTEFILE, VID, UID, GID, CREATIONTIME"
     " FROM RETRIEVALJOB ORDER BY REMOTEFILE;";
-  sqlite3_stmt *statement;
+  sqlite3_stmt *statement = NULL;
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
     std::ostringstream message;
@@ -375,7 +374,7 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::MockSchedulerDatabase::
   while(SQLITE_ROW == sqlite3_step(statement)) {
     SqliteColumnNameToIndex idx(statement);
     const std::string vid = (char *)sqlite3_column_text(statement,idx("VID"));
-    const Tape tape = getTapeByVid(requester, vid);
+    const Tape tape = getTape(vid);
     map[tape].push_back(RetrievalJob(
       (RetrievalJobState::Enum)sqlite3_column_int(statement,idx("STATE")),
       (char *)sqlite3_column_text(statement,idx("ARCHIVEFILE")),
@@ -390,16 +389,15 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::MockSchedulerDatabase::
 }
 
 //------------------------------------------------------------------------------
-// getTapeByVid
+// getTape
 //------------------------------------------------------------------------------
-cta::Tape cta::MockSchedulerDatabase::getTapeByVid(
-  const SecurityIdentity &requester, const std::string &vid) const {
+cta::Tape cta::MockSchedulerDatabase::getTape(const std::string &vid) const {
   std::ostringstream query;
   cta::Tape tape;
   query << "SELECT VID, LOGICALLIBRARY_NAME, TAPEPOOL_NAME, CAPACITY_BYTES,"
     " DATAONTAPE_BYTES, UID, GID, CREATIONTIME, COMMENT FROM TAPE WHERE VID='"
     << vid << "';";
-  sqlite3_stmt *statement;
+  sqlite3_stmt *statement = NULL;
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
     std::ostringstream message;
@@ -448,7 +446,6 @@ cta::Tape cta::MockSchedulerDatabase::getTapeByVid(
 // getRetrievalJobs
 //------------------------------------------------------------------------------
 std::list<cta::RetrievalJob> cta::MockSchedulerDatabase::getRetrievalJobs(
-  const SecurityIdentity &requester,
   const std::string &vid) const {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
@@ -539,13 +536,12 @@ void cta::MockSchedulerDatabase::deleteAdminUser(
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
-std::list<cta::AdminUser> cta::MockSchedulerDatabase::getAdminUsers(
-  const SecurityIdentity &requester) const {
+std::list<cta::AdminUser> cta::MockSchedulerDatabase::getAdminUsers() const {
   std::ostringstream query;
   std::list<cta::AdminUser> list;
   query << "SELECT ADMIN_UID, ADMIN_GID, UID, GID, CREATIONTIME, COMMENT"
     " FROM ADMINUSER ORDER BY ADMIN_UID, ADMIN_GID;";
-  sqlite3_stmt *statement;
+  sqlite3_stmt *statement = NULL;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0);
   if(rc!=SQLITE_OK){
     std::ostringstream message;
@@ -589,7 +585,7 @@ void cta::MockSchedulerDatabase::assertIsAdmin(const UserIdentity &user)
   std::ostringstream query;
   query << "SELECT COUNT(*) FROM ADMINUSER WHERE ADMIN_UID=" << adminUid <<
     " AND ADMIN_GID=" << adminGid << ";";
-  sqlite3_stmt *statement;
+  sqlite3_stmt *statement = NULL;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0);
   if(rc!=SQLITE_OK){
     std::ostringstream message;
@@ -618,7 +614,7 @@ void cta::MockSchedulerDatabase::assertIsAdminHost(const std::string &host)
   const {
   std::ostringstream query;
   query << "SELECT COUNT(*) FROM ADMINHOST WHERE NAME='" << host << "';";
-  sqlite3_stmt *statement;
+  sqlite3_stmt *statement = NULL;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0);
   if(rc!=SQLITE_OK){
     std::ostringstream message;
@@ -696,13 +692,12 @@ void cta::MockSchedulerDatabase::deleteAdminHost(
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
-std::list<cta::AdminHost> cta::MockSchedulerDatabase::getAdminHosts(
-  const SecurityIdentity &requester) const {
+std::list<cta::AdminHost> cta::MockSchedulerDatabase::getAdminHosts() const {
   std::ostringstream query;
   std::list<cta::AdminHost> list;
   query << "SELECT NAME, UID, GID, CREATIONTIME, COMMENT"
     " FROM ADMINHOST ORDER BY NAME;";
-  sqlite3_stmt *statement;
+  sqlite3_stmt *statement = NULL;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0);
   if(rc!=SQLITE_OK){
     std::ostringstream message;
@@ -774,13 +769,13 @@ void cta::MockSchedulerDatabase::deleteStorageClass(
 //------------------------------------------------------------------------------
 // getStorageClasses
 //------------------------------------------------------------------------------
-std::list<cta::StorageClass> cta::MockSchedulerDatabase::getStorageClasses(
-  const SecurityIdentity &requester) const {
+std::list<cta::StorageClass> cta::MockSchedulerDatabase::getStorageClasses()
+  const {
   std::ostringstream query;
   std::list<cta::StorageClass> classes;
   query << "SELECT NAME, NBCOPIES, UID, GID, CREATIONTIME, COMMENT FROM"
     " STORAGECLASS ORDER BY NAME;";
-  sqlite3_stmt *statement;
+  sqlite3_stmt *statement = NULL;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0);
   if(rc!=SQLITE_OK){
     std::ostringstream message;
@@ -801,6 +796,58 @@ std::list<cta::StorageClass> cta::MockSchedulerDatabase::getStorageClasses(
   }
   sqlite3_finalize(statement);
   return classes;
+}
+
+//------------------------------------------------------------------------------
+// getStorageClass
+//------------------------------------------------------------------------------
+cta::StorageClass cta::MockSchedulerDatabase::getStorageClass(
+  const std::string &name) const {
+  std::ostringstream query;
+  query << "SELECT NAME, NBCOPIES, UID, GID, CREATIONTIME, COMMENT"
+    " FROM STORAGECLASS WHERE NAME='" << name << "';";
+  sqlite3_stmt *statement = NULL;
+  if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
+    &statement, 0)) {
+    std::ostringstream message;
+    message << __FUNCTION__ << " - SQLite error";
+    sqlite3_finalize(statement);
+    throw(exception::Exception(message.str()));
+  }
+  StorageClass storageClass;
+  switch(sqlite3_step(statement)) {
+  case SQLITE_ROW:
+    {
+      SqliteColumnNameToIndex idx(statement);
+      storageClass = cta::StorageClass(
+        (char *)sqlite3_column_text(statement,idx("NAME")),
+        sqlite3_column_int(statement,idx("NBCOPIES")),
+        UserIdentity(
+          sqlite3_column_int(statement,idx("UID")),
+          sqlite3_column_int(statement,idx("GID"))),
+        (char *)sqlite3_column_text(statement,idx("COMMENT")),
+        time_t(sqlite3_column_int(statement,idx("CREATIONTIME")))
+      );
+    }
+    break;
+  case SQLITE_DONE:
+    {
+      std::ostringstream message;
+      message << __FUNCTION__ << " - No storage class found with name " << name;
+      sqlite3_finalize(statement);
+      throw(exception::Exception(message.str()));
+    }
+    break;
+  default:
+    {
+      std::ostringstream message;
+      message << __FUNCTION__ << " - SQLite error";
+      sqlite3_finalize(statement);
+      throw(exception::Exception(message.str()));
+    }
+  }
+  sqlite3_finalize(statement);
+  return storageClass;
 }
 
 //------------------------------------------------------------------------------
@@ -854,14 +901,12 @@ void cta::MockSchedulerDatabase::deleteTapePool(
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
-std::list<cta::TapePool> cta::MockSchedulerDatabase::getTapePools(
-  const SecurityIdentity &requester) const {
-
+std::list<cta::TapePool> cta::MockSchedulerDatabase::getTapePools() const {
   std::ostringstream query;
   std::list<cta::TapePool> pools;
   query << "SELECT NAME, NBPARTIALTAPES, UID, GID, CREATIONTIME, COMMENT FROM"
     " TAPEPOOL ORDER BY NAME;";
-  sqlite3_stmt *statement;
+  sqlite3_stmt *statement = NULL;
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
     std::ostringstream message;
@@ -940,14 +985,14 @@ void cta::MockSchedulerDatabase::deleteArchivalRoute(
 //------------------------------------------------------------------------------
 // getArchivalRoutes
 //------------------------------------------------------------------------------
-std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes(
-  const SecurityIdentity &requester) const {
+std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes()
+  const {
   std::ostringstream query;
   std::list<cta::ArchivalRoute> routes;
   query << "SELECT STORAGECLASS_NAME, COPYNB, TAPEPOOL_NAME, UID, GID,"
     " CREATIONTIME, COMMENT FROM ARCHIVALROUTE ORDER BY STORAGECLASS_NAME,"
     " COPYNB;";
-  sqlite3_stmt *statement;
+  sqlite3_stmt *statement = NULL;
   int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &statement, 0);
   if(rc!=SQLITE_OK){
     std::ostringstream message;
@@ -969,6 +1014,14 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes(
   }
   sqlite3_finalize(statement);
   return routes;
+}
+
+//------------------------------------------------------------------------------
+// getArchivalRoutes
+//------------------------------------------------------------------------------
+std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes(
+  const std::string &storageClassName) const {
+  return std::list<cta::ArchivalRoute>();
 }
 
 //------------------------------------------------------------------------------
@@ -1021,13 +1074,13 @@ void cta::MockSchedulerDatabase::deleteLogicalLibrary(
 //------------------------------------------------------------------------------
 // getLogicalLibraries
 //------------------------------------------------------------------------------
-std::list<cta::LogicalLibrary> cta::MockSchedulerDatabase::getLogicalLibraries(
-  const SecurityIdentity &requester) const {
+std::list<cta::LogicalLibrary> cta::MockSchedulerDatabase::getLogicalLibraries()
+  const {
   std::ostringstream query;
   std::list<cta::LogicalLibrary> list;
   query << "SELECT NAME, UID, GID, CREATIONTIME, COMMENT"
     " FROM LOGICALLIBRARY ORDER BY NAME;";
-  sqlite3_stmt *statement;
+  sqlite3_stmt *statement = NULL;
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
     std::ostringstream message;
@@ -1104,14 +1157,13 @@ void cta::MockSchedulerDatabase::deleteTape(
 //------------------------------------------------------------------------------
 // getTapes
 //------------------------------------------------------------------------------
-std::list<cta::Tape> cta::MockSchedulerDatabase::getTapes(
-  const SecurityIdentity &requester) const {
+std::list<cta::Tape> cta::MockSchedulerDatabase::getTapes() const {
   std::ostringstream query;
   std::list<cta::Tape> tapes;
   query << "SELECT VID, LOGICALLIBRARY_NAME, TAPEPOOL_NAME, CAPACITY_BYTES,"
     " DATAONTAPE_BYTES, UID, GID, CREATIONTIME, COMMENT"
     " FROM TAPE ORDER BY VID;";
-  sqlite3_stmt *statement;
+  sqlite3_stmt *statement = NULL;
   if(SQLITE_OK != sqlite3_prepare(m_dbHandle, query.str().c_str(), -1,
     &statement, 0)) {
     std::ostringstream message;

@@ -174,4 +174,4 @@ TEST_F(cta_MockNameServerTest, storageClass_inheritance) {
   }
 }
 
-}
+} // namespace unitTests

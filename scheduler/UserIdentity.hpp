@@ -68,6 +68,22 @@ public:
    */
   uint32_t getGid() const throw();
 
+  /** 
+   * Returns true if the specified right-hand side is equal to this object.
+   *
+   * @param rhs The object on the right-hand side of the == operator.
+   * @return True if the specified right-hand side is equal to this object.
+   */
+  bool operator==(const UserIdentity &rhs) const;
+
+  /**
+   * Returns true if the specified right-hand side is not euqal to this object.
+   *
+   * @param rhs The object on the right-hand side of the != operator.
+   * @return True if the specified right-hand side is not equal to this object.
+   */
+  bool operator!=(const UserIdentity &rhs) const;
+
 private:
 
   /**
@@ -84,3 +100,8 @@ private:
 }; // class UserIdentity
 
 } // namespace cta
+
+/**
+ * Output stream operator for the cta::UserIdentity class.
+ */
+std::ostream &operator<<(std::ostream &os, const cta::UserIdentity &obj);

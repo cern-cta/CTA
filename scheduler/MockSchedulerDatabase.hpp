@@ -62,25 +62,20 @@ public:
    * Returns all of the existing archival jobs grouped by tape pool and then
    * sorted by creation time in ascending order (oldest first).
    *
-   * @param requester The identity of the requester.
    * @return All of the existing archival jobs grouped by tape pool and then
    * sorted by creation time in ascending order (oldest first).
    */
-  std::map<TapePool, std::list<ArchivalJob> > getArchivalJobs(
-    const SecurityIdentity &requester) const;
+  std::map<TapePool, std::list<ArchivalJob> > getArchivalJobs() const;
 
   /**
    * Returns the list of archival jobs associated with the specified tape pool
    * sorted by creation time in ascending order (oldest first).
    *
-   * @param requester The identity of the requester.
    * @param tapePoolName The name of the tape pool.
    * @return The list of archival jobs associated with the specified tape pool
    * sorted by creation time in ascending order (oldest first).
    */
-  std::list<ArchivalJob> getArchivalJobs(
-    const SecurityIdentity &requester,
-    const std::string &tapePoolName) const;
+  std::list<ArchivalJob> getArchivalJobs(const std::string &tapePoolName) const;
 
   /**
    * Deletes the specified archival job.
@@ -115,25 +110,20 @@ public:
    * Returns all of the existing retrieval jobs grouped by tape and then
    * sorted by creation time in ascending order (oldest first).
    *
-   * @param requester The identity of the requester.
    * @return All of the existing retrieval jobs grouped by tape and then
    * sorted by creation time in ascending order (oldest first).
    */
-  std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs(
-    const SecurityIdentity &requester) const;
+  std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs() const;
 
   /**
    * Returns the list of retrieval jobs associated with the specified tape
    * sorted by creation time in ascending order (oldest first).
    *
-   * @param requester The identity of the requester.
    * @param vid The volume identifier of the tape.
    * @return The list of retrieval jobs associated with the specified tape
    * sorted by creation time in ascending order (oldest first).
    */
-  std::list<RetrievalJob> getRetrievalJobs(
-    const SecurityIdentity &requester,
-    const std::string &vid) const;
+  std::list<RetrievalJob> getRetrievalJobs(const std::string &vid) const;
   
   /**
    * Deletes the specified retrieval job.
@@ -170,11 +160,9 @@ public:
   /**
    * Returns the current list of administrators in lexicographical order.
    *
-   * @param requester The identity of the requester.
    * @return The current list of administrators in lexicographical order.
    */
-  std::list<AdminUser> getAdminUsers(const SecurityIdentity &requester)
-   const;
+  std::list<AdminUser> getAdminUsers() const;
 
   /**
    * Throws an exception if the specified user is not an administrator or if the
@@ -209,11 +197,9 @@ public:
   /**
    * Returns the current list of administration hosts in lexicographical order.
    *
-   * @param requester The identity of the requester.
    * @return The current list of administration hosts in lexicographical order.
    */
-  std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester)
-   const;
+  std::list<AdminHost> getAdminHosts() const;
 
   /**
    * Creates the specified storage class.
@@ -241,13 +227,19 @@ public:
     const std::string &name);
 
   /**
-   * Gets the current list of storage classes in lexicographical order.
+   * Returns the current list of storage classes in lexicographical order.
    *
-   * @param requester The identity of the requester.
    * @return The current list of storage classes in lexicographical order.
    */
-  std::list<StorageClass> getStorageClasses(
-    const SecurityIdentity &requester) const;
+  std::list<StorageClass> getStorageClasses() const;
+
+  /**
+   * Returns the storage class with the specified name.
+   *
+   * @param name The name of the storage class.
+   * @return The storage class with the specified name.
+   */
+  StorageClass getStorageClass(const std::string &name) const;
 
   /**
    * Creates a tape pool with the specifed name.
@@ -277,11 +269,9 @@ public:
   /**
    * Gets the current list of tape pools in lexicographical order.
    *
-   * @param requester The identity of the requetsre.
    * @return The current list of tape pools in lexicographical order.
    */
-  std::list<TapePool> getTapePools(
-    const SecurityIdentity &requester) const;
+  std::list<TapePool> getTapePools() const;
 
   /**
    * Creates the specified archival route.
@@ -314,12 +304,25 @@ public:
     const uint16_t copyNb);
 
   /**
-   * Gets the current list of archival routes.
+   * Returns the current list of archival routes.
    *
-   * @param requester The identity of the requester.
+   * @return The current list of archival routes.
+   */
+  std::list<ArchivalRoute> getArchivalRoutes() const;
+
+  /**
+   * Returns the list of archival routes for the specified storage class.
+   *
+   * This method throws an exception if the list of archival routes is
+   * incomplete.  For example this method will throw an exception if the number
+   * of tape copies in the specified storage class is 2 but only one archival
+   * route has been created in the scheduler database for the storage class.
+   *
+   * @param storageClassName The name of the storage class.
+   * @return The list of archival routes for the specified storage class.
    */
   std::list<ArchivalRoute> getArchivalRoutes(
-    const SecurityIdentity &requester) const;
+    const std::string &storageClassName) const;
 
   /**
    * Creates a logical library with the specified name.
@@ -346,11 +349,9 @@ public:
   /**
    * Returns the current list of libraries in lexicographical order.
    *
-   * @param requester The identity of the requester.
    * @return The current list of libraries in lexicographical order.
    */
-  std::list<LogicalLibrary> getLogicalLibraries(
-    const SecurityIdentity &requester) const;
+  std::list<LogicalLibrary> getLogicalLibraries() const;
 
   /**
    * Creates a tape.
@@ -385,12 +386,10 @@ public:
    * Returns the current list of tapes in the lexicographical order of their
    * volume identifiers.
    *
-   * @param requester The identity of the requester.
-   * @return The current list of tapes in the lexicographical order of their
+   * @return The current list of tapes in the lexicographical order of their.
    * volume identifiers.
    */
-  std::list<Tape> getTapes(
-    const SecurityIdentity &requester) const;
+  std::list<Tape> getTapes() const;
 
 private:
 
@@ -421,22 +420,18 @@ private:
   /**
    * Returns the tape pool with specified name.
    *
-   * @param requester The identity of the requester.
    * @param name The name of teh tape pool.
    * @return The tape pool with specified name.
    */
-  TapePool getTapePoolByName(const SecurityIdentity &requester,
-    const std::string &name) const;
+  TapePool getTapePool(const std::string &name) const;
 
   /**
    * Returns the tape with the specified volume identifier.
    *
-   * @param requester The identity of the requester.
    * @param vid The volume identifier of the tape.
    * @return The tape with the specified volume identifier.
    */
-  Tape getTapeByVid(const SecurityIdentity &requester,
-    const std::string &vid) const;
+  Tape getTape(const std::string &vid) const;
 
 }; // class MockSchedulerDatabase
 

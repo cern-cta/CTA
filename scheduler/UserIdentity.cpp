@@ -17,6 +17,7 @@
  */
 
 #include "scheduler/UserIdentity.hpp"
+#include "ostream"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -34,6 +35,20 @@ cta::UserIdentity::UserIdentity(
   const uint32_t gid) throw():
   m_uid(uid),
   m_gid(gid) {
+}
+
+//------------------------------------------------------------------------------
+// operator==
+//------------------------------------------------------------------------------
+bool cta::UserIdentity::operator==(const UserIdentity &rhs) const {
+  return m_uid == rhs.m_uid;
+}
+
+//------------------------------------------------------------------------------
+// operator!=
+//------------------------------------------------------------------------------
+bool cta::UserIdentity::operator!=(const UserIdentity &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
@@ -62,4 +77,12 @@ void cta::UserIdentity::setGid(const uint32_t gid) throw() {
 //------------------------------------------------------------------------------
 uint32_t cta::UserIdentity::getGid() const throw() {
   return m_gid;
+}
+
+//------------------------------------------------------------------------------
+// operator<<
+//------------------------------------------------------------------------------
+std::ostream &operator<<(std::ostream &os, const cta::UserIdentity &obj) {
+  os << "(uid=" << obj.getUid() << " gid=" << obj.getGid() << ")";
+  return os;
 }

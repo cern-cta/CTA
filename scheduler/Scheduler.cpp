@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/exception/Exception.hpp"
+#include "common/Utils.hpp"
 #include "nameserver/NameServer.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
@@ -34,6 +36,8 @@
 #include "scheduler/Tape.hpp"
 #include "scheduler/TapePool.hpp"
 #include "scheduler/UserIdentity.hpp"
+
+#include <sstream>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -79,7 +83,7 @@ std::map<cta::TapePool, std::list<cta::ArchivalJob> > cta::Scheduler::
 std::list<cta::ArchivalJob> cta::Scheduler::getArchivalJobs(
   const SecurityIdentity &requester,
   const std::string &tapePoolName) const {
-  return m_db.getArchivalJobs(requester, tapePoolName);
+  return m_db.getArchivalJobs(tapePoolName);
 }
 
 //------------------------------------------------------------------------------
@@ -113,7 +117,7 @@ void cta::Scheduler::queue(const RetrieveToFileRequest &rqst) {
 //------------------------------------------------------------------------------
 std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::
   Scheduler::getRetrievalJobs(const SecurityIdentity &requester) const {
-  return m_db.getRetrievalJobs(requester);
+  return m_db.getRetrievalJobs();
 }
 
 //------------------------------------------------------------------------------
@@ -122,7 +126,7 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::
 std::list<cta::RetrievalJob> cta::Scheduler::getRetrievalJobs(
   const SecurityIdentity &requester,
   const std::string &vid) const {
-  return m_db.getRetrievalJobs(requester, vid);
+  return m_db.getRetrievalJobs(vid);
 }
   
 //------------------------------------------------------------------------------
@@ -162,7 +166,7 @@ void cta::Scheduler::deleteAdminUser(
 std::list<cta::AdminUser> cta::Scheduler::getAdminUsers(const SecurityIdentity
   &requester) const {
   m_db.assertIsAdminOnAdminHost(requester);
-  return m_db.getAdminUsers(requester);
+  return m_db.getAdminUsers();
 }
 
 //------------------------------------------------------------------------------
@@ -191,7 +195,7 @@ void cta::Scheduler::deleteAdminHost(
 //------------------------------------------------------------------------------
 std::list<cta::AdminHost> cta::Scheduler::getAdminHosts(const SecurityIdentity
   &requester) const {
-  return m_db.getAdminHosts(requester);
+  return m_db.getAdminHosts();
 }
 
 //------------------------------------------------------------------------------
@@ -222,7 +226,7 @@ void cta::Scheduler::deleteStorageClass(
 //------------------------------------------------------------------------------
 std::list<cta::StorageClass> cta::Scheduler::getStorageClasses(
   const SecurityIdentity &requester) const {
-  return m_db.getStorageClasses(requester);
+  return m_db.getStorageClasses();
 }
 
 //------------------------------------------------------------------------------
@@ -252,7 +256,7 @@ void cta::Scheduler::deleteTapePool(
 //------------------------------------------------------------------------------
 std::list<cta::TapePool> cta::Scheduler::getTapePools(
   const SecurityIdentity &requester) const {
-  return m_db.getTapePools(requester);
+  return m_db.getTapePools();
 }
 
 //------------------------------------------------------------------------------
@@ -285,7 +289,7 @@ void cta::Scheduler::deleteArchivalRoute(
 //------------------------------------------------------------------------------
 std::list<cta::ArchivalRoute> cta::Scheduler::getArchivalRoutes(
   const SecurityIdentity &requester) const {
-  return m_db.getArchivalRoutes(requester);
+  return m_db.getArchivalRoutes();
 }
 
 //------------------------------------------------------------------------------
@@ -314,7 +318,7 @@ void cta::Scheduler::deleteLogicalLibrary(
 //------------------------------------------------------------------------------
 std::list<cta::LogicalLibrary> cta::Scheduler::getLogicalLibraries(
   const SecurityIdentity &requester) const {
-  return m_db.getLogicalLibraries(requester);
+  return m_db.getLogicalLibraries();
 }
 
 //------------------------------------------------------------------------------
@@ -347,7 +351,7 @@ void cta::Scheduler::deleteTape(
 //------------------------------------------------------------------------------
 std::list<cta::Tape> cta::Scheduler::getTapes(
   const SecurityIdentity &requester) const {
-  return m_db.getTapes(requester);
+  return m_db.getTapes();
 }
 
 //------------------------------------------------------------------------------
@@ -430,6 +434,118 @@ std::string cta::Scheduler::getDirStorageClass(
 //------------------------------------------------------------------------------
 void cta::Scheduler::queueArchivalRequest(
   const SecurityIdentity &requester,
-  const std::list<std::string> &srcUrls,
-  const std::string &dstPath) {
+  const std::list<std::string> &remoteFiles,
+  const std::string &archiveFileOrDir) {
+  const bool archiveToDir = m_ns.dirExists(requester, archiveFileOrDir);
+  if(archiveToDir) {
+    const std::string &archiveDir = archiveFileOrDir;
+    if(remoteFiles.empty()) {
+      std::ostringstream message;
+      message << "Invalid archive to directory request:"
+        " The must be at least one remote file:"
+        " archiveDir=" << archiveDir;
+      throw exception::Exception(message.str());
+    }
+
+    queueArchiveToDirRequest(requester, remoteFiles, archiveDir);
+
+  // Else archive to a single file
+  } else {
+    const std::string &archiveFile = archiveFileOrDir;
+    if(1 != remoteFiles.size()) {
+      std::ostringstream message;
+      message << "Invalid archive to file request:"
+        " The must be one and only one remote file:"
+        " actual=" << remoteFiles.size() << " archiveFile=" << archiveFile;
+      throw exception::Exception(message.str());
+    }
+
+    queueArchiveToFileRequest(requester, remoteFiles.front(), archiveFile);
+  }
+}
+
+//------------------------------------------------------------------------------
+// queueArchiveToDirRequest
+//------------------------------------------------------------------------------
+void cta::Scheduler::queueArchiveToDirRequest(
+  const SecurityIdentity &requester,
+  const std::list<std::string> &remoteFiles,
+  const std::string &archiveDir) {
+
+  const std::string storageClassName = m_ns.getDirStorageClass(requester,
+    archiveDir);
+  const cta::StorageClass storageClass = m_db.getStorageClass(
+    storageClassName);
+  assertStorageClassHasAtLeastOneCopy(storageClass);
+
+/*
+  for(int i = 1; i <= storageClass.getNbCopies(); i++) {
+    cta::ArchivalRoute route = m_db.getArchivalRouteOfStorageClass(storageClassName, i);
+    for(std::list<std::string>::const_iterator itor = srcUrls.begin(); itor != srcUrls.end(); itor++) {
+      const std::string &srcFileName = *itor;
+      std::string dstPathname;
+      if(dstDir.at(dstDir.length()-1) == '/') {
+        dstPathname = dstDir+srcFileName;
+      }
+      else {
+        dstPathname = dstDir+"/"+srcFileName;
+      }
+      m_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstPathname);
+    }
+  }
+  
+  const std::list<std::string> dstFileNames = Utils::getEnclosedNames(srcUrls);
+
+  for(std::list<std::string>::const_iterator itor = dstFileNames.begin(); itor != dstFileNames.end(); itor++) {
+    const std::string &dstFileName = *itor;
+    std::string dstPathname;
+    if(dstDir.at(dstDir.length()-1) == '/') {
+      dstPathname = dstDir+dstFileName;
+    }
+    else {
+      dstPathname = dstDir+"/"+dstFileName;
+    }
+    m_ns.createFile(requester, dstPathname, 0666);
+  }
+*/
+}
+
+//------------------------------------------------------------------------------
+// assertStorageClassHasAtLeastOneCopy
+//------------------------------------------------------------------------------
+void cta::Scheduler::assertStorageClassHasAtLeastOneCopy(
+  const StorageClass &storageClass) const {
+  if(0 == storageClass.getNbCopies()) {
+    std::ostringstream message;
+    message << "Storage class " << storageClass.getName() <<
+      " has a tape copy count of 0";
+    throw(exception::Exception(message.str()));
+  }
+}
+
+//------------------------------------------------------------------------------
+// queueArchiveToFileRequest
+//------------------------------------------------------------------------------
+void cta::Scheduler::queueArchiveToFileRequest(
+  const SecurityIdentity &requester,
+  const std::string &remoteFile,
+  const std::string &archiveFile) {
+
+  const std::string enclosingPath = Utils::getEnclosingPath(archiveFile);
+  const std::string storageClassName = m_ns.getDirStorageClass(requester,
+     enclosingPath);
+  cta::StorageClass storageClass = m_db.getStorageClass(storageClassName);
+  assertStorageClassHasAtLeastOneCopy(storageClass);
+
+/*
+  const std::list<ArchivalRoute> routes =
+    m_db.getArchivalRoutes(storageClassName);
+
+  for(int i=1; i<=storageClass.getNbCopies(); i++) {
+    const ArchivalRoute route = m_db.getArchivalRouteOfStorageClass(storageClassName, i);
+    m_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstFile);
+  }
+  
+  m_ns.createFile(requester, dstFile, 0666);
+*/
 }

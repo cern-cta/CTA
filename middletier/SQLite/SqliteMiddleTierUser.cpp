@@ -173,7 +173,9 @@ void cta::SqliteMiddleTierUser::archiveToFile(
   }
   
   const std::string &srcFileName = srcUrls.front();
-  std::string storageClassName = m_ns.getDirStorageClass(requester, cta::Utils::getEnclosingDirPath(dstFile));
+  const std::string enclosingPath = Utils::getEnclosingPath(dstFile);
+  const std::string storageClassName = m_ns.getDirStorageClass(requester,
+    enclosingPath);
   cta::StorageClass storageClass = m_db.getStorageClassByName(requester, storageClassName);
   if(storageClass.getNbCopies()==0) {       
     std::ostringstream message;

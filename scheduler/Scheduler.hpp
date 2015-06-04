@@ -64,20 +64,6 @@ public:
   ~Scheduler() throw();
 
   /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(const ArchiveToDirRequest &rqst);
-
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(const ArchiveToFileRequest &rqst);
-
-  /**
    * Returns all of the existing archival jobs grouped by tape pool and then
    * sorted by creation time in ascending order (oldest first).
    *
@@ -112,20 +98,6 @@ public:
   void deleteArchivalJob(
     const SecurityIdentity &requester,
     const std::string &dstPath);
-
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(const RetrieveToDirRequest &rqst);
-
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(const RetrieveToFileRequest &rqst);
 
   /**
    * Returns all of the existing retrieval jobs grouped by tape and then
@@ -520,14 +492,14 @@ public:
    * destination directory.
    *
    * @param requester The identity of the user requesting the archival.
-   * @param srcUrls List of one or more source files.
-   * @param dstPath The absolute path of the destination file or directory
-   * within the archive namespace.
+   * @param remoteFiles The URLs of one or more remote files.
+   * @param archiveFileOrDir The absolute path of the destination file or
+   * directory within the archive namespace.
    */
   void queueArchivalRequest(
     const SecurityIdentity &requester,
-    const std::list<std::string> &srcUrls,
-    const std::string &dstPath);
+    const std::list<std::string> &remoteFiles,
+    const std::string &archiveFileOrDir);
 
 private:
 
@@ -540,6 +512,79 @@ private:
    * The scheduler database.
    */
   SchedulerDatabase &m_db;
+
+  /**
+   * Queues the specified request to archive one or more remote files to an
+   * archive directory.
+   *
+   * The list of source files should contain at least one file.
+   *
+   * The storage class of the archived file will be inherited from its
+   * destination directory.
+   *
+   * @param requester The identity of the user requesting the archival.
+   * @param remoteFiles The URLs of one or more remote files.
+   * @param archiveDir The full path of the destination directory within the
+   * archive namespace.
+   */
+  void queueArchiveToDirRequest(
+    const SecurityIdentity &requester,
+    const std::list<std::string> &remoteFiles,
+    const std::string &archiveDir);
+
+  /**
+   * Throws an exception if the specified storage class has a tape copy count
+   * of 0.
+   *
+   * @param storageClass The storage class.
+   */
+  void assertStorageClassHasAtLeastOneCopy(
+    const StorageClass &storageClass) const;
+
+  /**
+   * Queues the specifed request to archive one remote file to on archive file.
+   *
+   * The storage class of the archived file will be inherited from its
+   * destination directory.
+   *
+   * @param requester The identity of the user requesting the archival.
+   * @param remoteFile The URL of the remote file.
+   * @param archiveFile The full path of the destination file within the
+   * archive namespace.
+   */
+  void queueArchiveToFileRequest(
+    const SecurityIdentity &requester,
+    const std::string &remoteFile,
+    const std::string &archiveFile);
+
+  /**
+   * Queues the specified request.
+   *
+   * @param rqst The request to be queued.
+   */
+  void queue(const ArchiveToDirRequest &rqst);
+
+  /**
+   * Queues the specified request.
+   *
+   * @param rqst The request to be queued.
+   */
+  void queue(const ArchiveToFileRequest &rqst);
+
+  /**
+   * Queues the specified request.
+   *
+   * @param rqst The request to be queued.
+   */
+  void queue(const RetrieveToDirRequest &rqst);
+
+  /**
+   * Queues the specified request.
+   *
+   * @param rqst The request to be queued.
+   */
+  void queue(const RetrieveToFileRequest &rqst);
+
 
 }; // class Scheduler
 

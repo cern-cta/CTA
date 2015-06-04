@@ -98,62 +98,62 @@ TEST_F(cta_client_UtilsTest,
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
-TEST_F(cta_client_UtilsTest, getEnclosingDirPath_empty_string) {
+TEST_F(cta_client_UtilsTest, getEnclosingPath_empty_string) {
   using namespace cta;
     
   const std::string dirPath = "";
 
-  ASSERT_THROW(Utils::getEnclosingDirPath(dirPath), std::exception);
+  ASSERT_THROW(Utils::getEnclosingPath(dirPath), std::exception);
 }
 
-TEST_F(cta_client_UtilsTest, getEnclosingDirPath_root) {
+TEST_F(cta_client_UtilsTest, getEnclosingPath_root) {
   using namespace cta;
     
   const std::string dirPath = "/";
 
-  std::string enclosingDirPath;
-  ASSERT_THROW(enclosingDirPath = Utils::getEnclosingDirPath(dirPath),
+  std::string enclosingPath;
+  ASSERT_THROW(enclosingPath = Utils::getEnclosingPath(dirPath),
     std::exception);
 }
 
-TEST_F(cta_client_UtilsTest, getEnclosingDirPath_grandparent) {
+TEST_F(cta_client_UtilsTest, getEnclosingPath_grandparent) {
   using namespace cta;
 
   const std::string dirPath = "/grandparent";
     
-  std::string enclosingDirPath;
-  ASSERT_NO_THROW(enclosingDirPath = Utils::getEnclosingDirPath(dirPath));
-  ASSERT_EQ(std::string("/"), enclosingDirPath);
+  std::string enclosingPath;
+  ASSERT_NO_THROW(enclosingPath = Utils::getEnclosingPath(dirPath));
+  ASSERT_EQ(std::string("/"), enclosingPath);
 }
 
 TEST_F(cta_client_UtilsTest,
-  getEnclosingDirPath_grandparent_parent) {
+  getEnclosingPath_grandparent_parent) {
   using namespace cta;
 
   const std::string dirPath = "/grandparent/parent";
 
-  std::string enclosingDirPath;
-  ASSERT_NO_THROW(enclosingDirPath = Utils::getEnclosingDirPath(dirPath));
-  ASSERT_EQ(std::string("/grandparent/"), enclosingDirPath);
+  std::string enclosingPath;
+  ASSERT_NO_THROW(enclosingPath = Utils::getEnclosingPath(dirPath));
+  ASSERT_EQ(std::string("/grandparent/"), enclosingPath);
 }
 
 TEST_F(cta_client_UtilsTest,
-  getEnclosingDirPath_grandparent_parent_child) {
+  getEnclosingPath_grandparent_parent_child) {
   using namespace cta;
 
   const std::string dirPath = "/grandparent/parent/child";
 
-  std::string enclosingDirPath;
-  ASSERT_NO_THROW(enclosingDirPath = Utils::getEnclosingDirPath(dirPath));
-  ASSERT_EQ(std::string("/grandparent/parent/"), enclosingDirPath);
+  std::string enclosingPath;
+  ASSERT_NO_THROW(enclosingPath = Utils::getEnclosingPath(dirPath));
+  ASSERT_EQ(std::string("/grandparent/parent/"), enclosingPath);
 }
 
 TEST_F(cta_client_UtilsTest, getEnclosedName) {
   using namespace cta;
 
-  const std::string enclosingDirPath = "/grandparent/parent/";
+  const std::string enclosingPath = "/grandparent/parent/";
   const std::string enclosedName = "child";
-  const std::string absoluteFilePath = enclosingDirPath + enclosedName;
+  const std::string absoluteFilePath = enclosingPath + enclosedName;
   std::string result;
   ASSERT_NO_THROW(result = Utils::getEnclosedName(absoluteFilePath));
   ASSERT_EQ(enclosedName, result);
@@ -162,16 +162,16 @@ TEST_F(cta_client_UtilsTest, getEnclosedName) {
 TEST_F(cta_client_UtilsTest, getEnclosedNames) {
   using namespace cta;
 
-  const std::string enclosingDirPath = "/grandparent/parent/";
+  const std::string enclosingPath = "/grandparent/parent/";
   const std::string enclosedName1 = "child1";
   const std::string enclosedName2 = "child2";
   const std::string enclosedName3 = "child3";
   const std::string enclosedName4 = "child4";
   std::list<std::string> absoluteFilePaths;
-  absoluteFilePaths.push_back(enclosingDirPath + enclosedName1);
-  absoluteFilePaths.push_back(enclosingDirPath + enclosedName2);
-  absoluteFilePaths.push_back(enclosingDirPath + enclosedName3);
-  absoluteFilePaths.push_back(enclosingDirPath + enclosedName4);
+  absoluteFilePaths.push_back(enclosingPath + enclosedName1);
+  absoluteFilePaths.push_back(enclosingPath + enclosedName2);
+  absoluteFilePaths.push_back(enclosingPath + enclosedName3);
+  absoluteFilePaths.push_back(enclosingPath + enclosedName4);
   std::list<std::string> results;
   ASSERT_NO_THROW(results = Utils::getEnclosedNames(absoluteFilePaths));
   ASSERT_EQ(4, results.size());
