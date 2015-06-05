@@ -28,6 +28,7 @@ namespace cta {
 // Forward declarations for opaque references.
 class AdminHost;
 class AdminUser;
+class ArchivalFileTransfer;
 class ArchivalJob;
 class ArchivalRoute;
 class ArchiveToDirRequest;
@@ -556,6 +557,9 @@ private:
     const SecurityIdentity &requester,
     const std::string &remoteFile,
     const std::string &archiveFile);
+
+std::list<ArchivalFileTransfer> createFileTransfers(
+  const std::list<ArchivalRoute> &routes);
 
   /**
    * Queues the specified request.

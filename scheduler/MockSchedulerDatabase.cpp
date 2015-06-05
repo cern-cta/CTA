@@ -964,8 +964,7 @@ void cta::MockSchedulerDatabase::createArchivalRoute(
 void cta::MockSchedulerDatabase::assertTapePoolIsNotAlreadyADestination(
   const std::list<ArchivalRoute> &routes,
   const std::string &tapePoolName) const {
-  for(std::list<ArchivalRoute>::const_iterator itor = routes.begin();
-    itor != routes.end(); itor++) {
+  for(auto itor = routes.begin(); itor != routes.end(); itor++) {
     if(tapePoolName == itor->getTapePoolName()) {
       std::ostringstream message;
       message << "Tape pool " << tapePoolName << " is already an archival"

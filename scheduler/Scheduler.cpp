@@ -21,6 +21,7 @@
 #include "nameserver/NameServer.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
+#include "scheduler/ArchivalFileTransfer.hpp"
 #include "scheduler/ArchivalJob.hpp"
 #include "scheduler/ArchivalRoute.hpp"
 #include "scheduler/ArchiveToDirRequest.hpp"
@@ -481,7 +482,7 @@ void cta::Scheduler::queueArchiveToDirRequest(
 /*
   for(int i = 1; i <= storageClass.getNbCopies(); i++) {
     cta::ArchivalRoute route = m_db.getArchivalRouteOfStorageClass(storageClassName, i);
-    for(std::list<std::string>::const_iterator itor = srcUrls.begin(); itor != srcUrls.end(); itor++) {
+    for(auto itor = srcUrls.begin(); itor != srcUrls.end(); itor++) {
       const std::string &srcFileName = *itor;
       std::string dstPathname;
       if(dstDir.at(dstDir.length()-1) == '/') {
@@ -496,7 +497,7 @@ void cta::Scheduler::queueArchiveToDirRequest(
   
   const std::list<std::string> dstFileNames = Utils::getEnclosedNames(srcUrls);
 
-  for(std::list<std::string>::const_iterator itor = dstFileNames.begin(); itor != dstFileNames.end(); itor++) {
+  for(auto itor = dstFileNames.begin(); itor != dstFileNames.end(); itor++) {
     const std::string &dstFileName = *itor;
     std::string dstPathname;
     if(dstDir.at(dstDir.length()-1) == '/') {
@@ -534,12 +535,14 @@ void cta::Scheduler::queueArchiveToFileRequest(
   const std::string enclosingPath = Utils::getEnclosingPath(archiveFile);
   const std::string storageClassName = m_ns.getDirStorageClass(requester,
      enclosingPath);
-  cta::StorageClass storageClass = m_db.getStorageClass(storageClassName);
+  const StorageClass storageClass = m_db.getStorageClass(storageClassName);
   assertStorageClassHasAtLeastOneCopy(storageClass);
 
-/*
   const std::list<ArchivalRoute> routes =
     m_db.getArchivalRoutes(storageClassName);
+  createFileTransfers(routes);
+
+/*
 
   for(int i=1; i<=storageClass.getNbCopies(); i++) {
     const ArchivalRoute route = m_db.getArchivalRouteOfStorageClass(storageClassName, i);
@@ -548,4 +551,9 @@ void cta::Scheduler::queueArchiveToFileRequest(
   
   m_ns.createFile(requester, dstFile, 0666);
 */
+}
+
+std::list<cta::ArchivalFileTransfer> cta::Scheduler::createFileTransfers(
+  const std::list<ArchivalRoute> &routes) {
+  return std::list<cta::ArchivalFileTransfer>();
 }
