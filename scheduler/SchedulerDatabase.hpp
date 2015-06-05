@@ -30,12 +30,10 @@ class AdminHost;
 class AdminUser;
 class ArchivalJob;
 class ArchivalRoute;
-class ArchivalFileTransfer;
 class ArchiveToDirRequest;
 class ArchiveToFileRequest;
 class DirIterator;
 class LogicalLibrary;
-class RetrievalFileTransfer;
 class RetrievalJob;
 class RetrieveToDirRequest;
 class RetrieveToFileRequest;
@@ -58,22 +56,18 @@ public:
   virtual ~SchedulerDatabase() throw() = 0;
 
   /**
-   * Queues the specified request and its associated file transfers.
+   * Queues the specified request.
    *
    * @param rqst The request.
-   * @param fileTransfers The file transfers.
    */
-  virtual void queue(const ArchiveToDirRequest &rqst,
-   const std::list<ArchivalFileTransfer> &fileTransfers) = 0;
+  virtual void queue(const ArchiveToDirRequest &rqst) = 0;
 
   /**
-   * Queues the specified request and its associated file transfers.
+   * Queues the specified request.
    *
    * @param rqst The request.
-   * @param fileTransfers The file transfers.
    */
-  virtual void queue(const ArchiveToFileRequest &rqst,
-    const std::list<ArchivalFileTransfer> &fileTransfers) = 0;
+  virtual void queue(const ArchiveToFileRequest &rqst) = 0;
 
   /**
    * Returns all of the existing archival jobs grouped by tape pool and then
@@ -108,22 +102,18 @@ public:
     const std::string &archiveFile) = 0;
 
   /**
-   * Queues the specified request and its asscoaited file transfers.
+   * Queues the specified request.
    *
    * @param rqst The request.
-   * @param fileTransfers The file transfers.
    */
-  virtual void queue(const RetrieveToDirRequest &rqst,
-    const std::list<RetrievalFileTransfer> &fileTransfers) = 0;
+  virtual void queue(const RetrieveToDirRequest &rqst) = 0;
 
   /**
-   * Queues the specified request and its associated file transfers.
+   * Queues the specified request.
    *
    * @param rqst The request.
-   * @param fileTransfers The file transfers.
    */
-  virtual void queue(const RetrieveToFileRequest &rqst,
-    const std::list<RetrievalFileTransfer> &fileTransfers) = 0;
+  virtual void queue(const RetrieveToFileRequest &rqst_) = 0;
 
   /**
    * Returns all of the existing retrieval jobs grouped by tape and then

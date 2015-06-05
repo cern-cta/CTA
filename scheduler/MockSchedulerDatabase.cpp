@@ -180,16 +180,14 @@ cta::MockSchedulerDatabase::~MockSchedulerDatabase() throw() {
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::queue(const ArchiveToDirRequest &rqst,
-  const std::list<ArchivalFileTransfer> &fileTransfers) {
+void cta::MockSchedulerDatabase::queue(const ArchiveToDirRequest &rqst) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst,
-  const std::list<ArchivalFileTransfer> &fileTransfers) {
+void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst) {
   char *zErrMsg = 0;
   const SecurityIdentity &requester = rqst.getRequester();
   std::ostringstream query;
@@ -326,18 +324,16 @@ void cta::MockSchedulerDatabase::deleteArchivalJob(
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::queue(const RetrieveToDirRequest &rqst,
-  const std::list<RetrievalFileTransfer> &fileTransfers) {
+void cta::MockSchedulerDatabase::queue(const RetrieveToDirRequest &rqst) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst,
-  const std::list<RetrievalFileTransfer> &fileTransfers) {
+void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst) {
   char *zErrMsg = 0;
- const SecurityIdentity &requester = rqst.getRequester();
+  const SecurityIdentity &requester = rqst.getRequester();
   std::ostringstream query;
   query << "INSERT INTO RETRIEVALJOB(STATE, ARCHIVEFILE, REMOTEFILE, UID,"
     " GID, CREATIONTIME) VALUES(" << (int)cta::RetrievalJobState::PENDING <<

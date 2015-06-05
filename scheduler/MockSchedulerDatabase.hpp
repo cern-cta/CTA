@@ -41,22 +41,18 @@ public:
   ~MockSchedulerDatabase() throw();
 
   /**
-   * Queues the specified request and its associated file transfers.
+   * Queues the specified request.
    *
    * @param rqst The request.
-   * @param fileTransfers The file transfers.
    */
-  void queue(const ArchiveToDirRequest &rqst,
-   const std::list<ArchivalFileTransfer> &fileTransfers);
+  void queue(const ArchiveToDirRequest &rqst);
 
   /**
-   * Queues the specified request and its associated file transfers.
+   * Queues the specified request.
    *
    * @param rqst The request.
-   * @param fileTransfers The file transfers.
    */
-  void queue(const ArchiveToFileRequest &rqst,
-    const std::list<ArchivalFileTransfer> &fileTransfers);
+  void queue(const ArchiveToFileRequest &rqst);
 
   /**
    * Returns all of the existing archival jobs grouped by tape pool and then
@@ -89,22 +85,18 @@ public:
     const std::string &archiveFile);
 
   /**
-   * Queues the specified request and its asscoaited file transfers.
+   * Queues the specified request.
    *
    * @param rqst The request.
-   * @param fileTransfers The file transfers.
    */
-  void queue(const RetrieveToDirRequest &rqst,
-    const std::list<RetrievalFileTransfer> &fileTransfers);
+  void queue(const RetrieveToDirRequest &rqst);
 
   /**
-   * Queues the specified request and its associated file transfers.
+   * Queues the specified request.
    *
    * @param rqst The request.
-   * @param fileTransfers The file transfers.
    */
-  void queue(const RetrieveToFileRequest &rqst,
-    const std::list<RetrievalFileTransfer> &fileTransfers);
+  void queue(const RetrieveToFileRequest &rqst);
 
   /**
    * Returns all of the existing retrieval jobs grouped by tape and then
