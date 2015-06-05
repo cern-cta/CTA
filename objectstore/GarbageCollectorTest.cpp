@@ -28,6 +28,8 @@
 namespace unitTests {
 
 TEST(GarbageCollector, BasicFuctionnality) {
+  // Here we check for the ability to detect dead (but empty agents)
+  // and clean them up.
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);
   agent.generateName("unitTestGarbageCollector");
@@ -42,68 +44,36 @@ TEST(GarbageCollector, BasicFuctionnality) {
   re.addOrGetAgentRegisterPointerAndCommit(agent, cl);
   rel.release();
   // Create 2 agents, A and B and register them
+  // The agents are set with a timeout of 0, so they will be delclared
+  // dead immediately.
   cta::objectstore::Agent agA(be), agB(be);
   agA.initialize();
   agA.generateName("unitTestAgentA");
+  agA.setTimeout_us(0);
   agA.insertAndRegisterSelf();
   agB.initialize();
   agB.generateName("unitTestAgentB");
+  agB.setTimeout_us(0);
   agB.insertAndRegisterSelf();
-  // Create target FIFO
-  std::string fifoName = agent.nextId("FIFO");
-  std::list<std::string> expectedData;
-  // Try to create the FIFO entry
-//  cta::objectstore::FIFO ff(fifoName,be);
-//  ff.initialize();
-//  ff.insert();
-  // And lock it for later
-//  cta::objectstore::ScopedExclusiveLock ffLock;
-//  {
-//    for (int i=0; i<100; i++) {
-//      // We create FIFOs here, but any object can do.
-//      // Create a new object
-//      cta::objectstore::FIFO newFIFO(agent.nextId("RandomObject"), be);
-//      // Small shortcut: insert the link to the new object straight into the FIFO
-//      cta::objectstore::FIFO centralFifo(fifoName, be);
-//      cta::objectstore::ScopedExclusiveLock lock(centralFifo);
-//      centralFifo.fetch();
-//      expectedData.push_back(newFIFO.getNameIfSet());
-//      centralFifo.push(expectedData.back());
-//      centralFifo.commit();
-//      lock.release();
-//      // Then actually create the object
-//      newFIFO.initialize();
-//      newFIFO.setOwner(fifoName);
-//      newFIFO.setBackupOwner(fifoName);
-//      newFIFO.insert();
-//    }
-//  }
-//  ffLock.lock(ff);
-//  ff.fetch();
-//  ASSERT_EQ(100, ff.size());
-//  ffLock.release();
-//  for (int i=0; i<10; i++) {
-//    cta::objectstore::ScopedExclusiveLock objALock, objBLock;
-//    cta::objectstore::FIFO objA(be), objB(be); 
-//    agA.popFromContainer(ff, objA, objALock);
-//    agB.popFromContainer(ff, objB, objBLock);
-//  }
-//  ffLock.lock(ff);
-//  ff.fetch();
-//  ASSERT_EQ(80, ff.size());
-//  ffLock.release();
   // Create the garbage colletor and run it twice.
   cta::objectstore::Agent gcAgent(be);
   gcAgent.initialize();
   gcAgent.generateName("unitTestGarbageCollector");
+  gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf();
-  cta::objectstore::GarbageCollector gc(be, gcAgent);
-  gc.setTimeout(0);
-  gc.runOnePass();
-  gc.runOnePass();
-//  ffLock.lock(ff);
-//  ff.fetch();
-//  ASSERT_EQ(100, ff.size());
+  {
+    cta::objectstore::GarbageCollector gc(be, gcAgent);
+    gc.runOnePass();
+    gc.runOnePass();
+  }
+  // Unregister gc's agent
+  cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
+  gcAgent.removeAndUnregisterSelf();
+  // We should not be able to remove the agent register (as it should be empty)
+  rel.lock(re);
+  re.fetch();
+  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit());
+  ASSERT_NO_THROW(re.removeIfEmpty());
 }
 
 }

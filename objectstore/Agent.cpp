@@ -183,3 +183,13 @@ uint64_t cta::objectstore::Agent::getHeartbeatCount() {
   return m_payload.heartbeat();
 }
 
+double cta::objectstore::Agent::getTimeout() {
+  checkPayloadReadable();
+  return 0.000001 * m_payload.timeout_us();
+}
+
+void cta::objectstore::Agent::setTimeout_us(uint64_t timeout) {
+  checkPayloadWritable();
+  m_payload.set_timeout_us(timeout);
+}
+

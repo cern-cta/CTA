@@ -116,7 +116,11 @@ public:
   
   uint64_t getHeartbeatCount();
   
+  // Timeout in s
+  double getTimeout();
   
+  // We set the timeout as an integer number of us.
+  void setTimeout_us(uint64_t timeout);
   /**
    * Helper function to transfer ownership of the next valid head object of a
    * container to the agent.
@@ -173,10 +177,7 @@ public:
     }
   }
   
-  class AgentDoesNotOwnObject: public cta::exception::Exception {
-  public:
-    AgentDoesNotOwnObject(const std::string & context): cta::exception::Exception(context) {}
-  };
+  CTA_GENERATE_EXCEPTION_CLASS(AgentDoesNotOwnObject);
   
   template <class Cont, class Obj>
   void pushToContainer (Cont & container, Obj & object) {

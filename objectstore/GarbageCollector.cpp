@@ -25,7 +25,7 @@ namespace cta { namespace objectstore {
 const size_t GarbageCollector::c_maxWatchedAgentsPerGC = 2;
 
 GarbageCollector::GarbageCollector(Backend & os, Agent & agent): 
-  m_objectStore(os), m_ourAgent(agent), m_agentRegister(os), m_timeout(5.0) {
+  m_objectStore(os), m_ourAgent(agent), m_agentRegister(os) {
   RootEntry re(m_objectStore);
   ScopedSharedLock reLock(re);
   re.fetch();
@@ -35,10 +35,6 @@ GarbageCollector::GarbageCollector(Backend & os, Agent & agent):
   m_agentRegister.fetch();
 }
 
-void GarbageCollector::setTimeout(double timeout) {
-  m_timeout = timeout;
-}
-  
 void GarbageCollector::runOnePass() {
   // Bump our own heart beat
   {
@@ -126,10 +122,11 @@ void GarbageCollector::aquireTargets() {
       // lock to the agent before constructing the watchdog, which builds
       // its own agent objects (and need to lock the object store representation)
       std::string agentName = ag.getAddressIfSet();
-      agLock.release();
+      double timeout=ag.getTimeout();
+      agLock.release();      
       m_watchedAgents[agentName] =
         new AgentWatchdog(agentName, m_objectStore);
-      m_watchedAgents[ag.getAddressIfSet()]->setTimeout(m_timeout);
+      m_watchedAgents[ag.getAddressIfSet()]->setTimeout(timeout);
     }
   }
   // Commit all the modifications to the agent register
