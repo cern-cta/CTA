@@ -28,7 +28,6 @@ namespace cta {
 // Forward declarations for opaque references.
 class AdminHost;
 class AdminUser;
-class ArchivalFileTransfer;
 class ArchivalJob;
 class ArchivalRoute;
 class ArchiveToDirRequest;

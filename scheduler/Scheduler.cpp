@@ -21,7 +21,6 @@
 #include "nameserver/NameServer.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
-#include "scheduler/ArchivalFileTransfer.hpp"
 #include "scheduler/ArchivalJob.hpp"
 #include "scheduler/ArchivalRoute.hpp"
 #include "scheduler/ArchiveToDirRequest.hpp"
