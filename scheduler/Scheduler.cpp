@@ -510,13 +510,18 @@ void cta::Scheduler::queueArchiveToFileRequest(
 
 routes.size();
 
-/*
+  const std::string id = "hello";
+  const uint64_t priority = 0;
+  const std::map<uint16_t, std::string> copyNbToTapePoolMap;
 
-  for(int i=1; i<=storageClass.getNbCopies(); i++) {
-    const ArchivalRoute route = m_db.getArchivalRouteOfStorageClass(storageClassName, i);
-    m_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstFile);
-  }
-  
-  m_ns.createFile(requester, dstFile, 0666);
-*/
+  m_db.queue(ArchiveToFileRequest(
+    remoteFile,
+    archiveFile,
+    copyNbToTapePoolMap,
+    storageClassName,
+    id,
+    priority, 
+    requester));
+
+  m_ns.createFile(requester, archiveFile, 0666);
 }

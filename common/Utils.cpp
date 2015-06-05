@@ -24,6 +24,67 @@
 using cta::exception::Exception;
 
 //------------------------------------------------------------------------------
+// assertPathStartsWithASlash
+//------------------------------------------------------------------------------
+static void assertPathStartsWithASlash(const std::string &path) {
+  if(path.empty()) {
+    throw Exception("Path is an empty string");
+  }
+
+  if('/' != path[0]) {
+    throw Exception("Path does not start with a '/' character");
+  }
+}
+
+//------------------------------------------------------------------------------
+// isValidPathChar
+//------------------------------------------------------------------------------
+static bool isValidPathChar(const char c) {
+  return ('0' <= c && c <= '9') ||
+         ('A' <= c && c <= 'Z') ||
+         ('a' <= c && c <= 'z') ||
+         c == '_'               ||
+         c == '/';
+}
+
+//------------------------------------------------------------------------------
+// assertValidPathChar
+//------------------------------------------------------------------------------
+static void assertValidPathChar(const char c) {
+  if(!isValidPathChar(c)) {
+    std::ostringstream message;
+    message << "The '" << c << "' character cannot be used within a path";
+    throw Exception(message.str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// assertPathContainsValidChars
+//------------------------------------------------------------------------------
+static void assertPathContainsValidChars(const std::string &path) {
+  for(std::string::const_iterator itor = path.begin(); itor != path.end();
+    itor++) {
+    assertValidPathChar(*itor);
+  }
+}
+
+//------------------------------------------------------------------------------
+// assertPathDoesContainConsecutiveSlashes
+//------------------------------------------------------------------------------
+static void assertPathDoesContainConsecutiveSlashes(const std::string &path) {
+  char previousChar = '\0';
+
+  for(std::string::const_iterator itor = path.begin(); itor != path.end();
+    itor++) {
+    const char &currentChar  = *itor;
+    if(previousChar == '/' && currentChar == '/') {
+      throw Exception("Path contains consecutive slashes");
+    }
+    previousChar = currentChar;
+  }
+}
+
+//------------------------------------------------------------------------------
 // assertAbsolutePathSyntax
 //------------------------------------------------------------------------------
 void cta::Utils::assertAbsolutePathSyntax(const std::string &path) {
@@ -36,68 +97,6 @@ void cta::Utils::assertAbsolutePathSyntax(const std::string &path) {
     message << "Absolute path \"" << path << "\" contains a syntax error: " <<
       ex.what();
     throw Exception(message.str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// assertPathStartsWithASlash
-//------------------------------------------------------------------------------
-void cta::Utils::assertPathStartsWithASlash(const std::string &path) {
-  if(path.empty()) {
-    throw Exception("Path is an empty string");
-  }
-
-  if('/' != path[0]) {
-    throw Exception("Path does not start with a '/' character");
-  }
-}
-
-//------------------------------------------------------------------------------
-// assertPathContainsValidChars
-//------------------------------------------------------------------------------
-void cta::Utils::assertPathContainsValidChars(const std::string &path) {
-  for(std::string::const_iterator itor = path.begin(); itor != path.end();
-    itor++) {
-    assertValidPathChar(*itor);
-  }
-}
-
-//------------------------------------------------------------------------------
-// assertValidPathChar
-//------------------------------------------------------------------------------
-void cta::Utils::assertValidPathChar(const char c) {
-  if(!isValidPathChar(c)) {
-    std::ostringstream message;
-    message << "The '" << c << "' character cannot be used within a path";
-    throw Exception(message.str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// isValidPathChar
-//------------------------------------------------------------------------------
-bool cta::Utils::isValidPathChar(const char c) {
-  return ('0' <= c && c <= '9') ||
-         ('A' <= c && c <= 'Z') ||
-         ('a' <= c && c <= 'z') ||
-         c == '_'               ||
-         c == '/';
-}
-
-//------------------------------------------------------------------------------
-// assertPathDoesContainConsecutiveSlashes
-//------------------------------------------------------------------------------
-void cta::Utils::assertPathDoesContainConsecutiveSlashes(
-  const std::string &path) {
-  char previousChar = '\0';
-
-  for(std::string::const_iterator itor = path.begin(); itor != path.end();
-    itor++) {
-    const char &currentChar  = *itor;
-    if(previousChar == '/' && currentChar == '/') {
-      throw Exception("Path contains consecutive slashes");
-    }
-    previousChar = currentChar;
   }
 }
 

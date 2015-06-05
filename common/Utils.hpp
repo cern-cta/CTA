@@ -95,45 +95,6 @@ public:
   static void splitString(const std::string &str, const char separator,
     std::vector<std::string> &result);
 
-protected:
-
-  /**
-   * Throws an exception if the specified path does not start with a slash.
-   *
-   * @param path The path.
-   */
-  static void assertPathStartsWithASlash(const std::string &path);
-
-  /**
-   * Throws an exception if the specified path does not contain valid
-   * characters.
-   *
-   * @param path The path.
-   */
-  static void assertPathContainsValidChars(const std::string &path);
-
-  /**
-   * Throws an exception if the specified character cannot be used within a
-   * path.
-   *
-   * @param c The character to be tested.
-   */
-  static void assertValidPathChar(const char c);
-
-  /**
-   * Returns true of the specified character can be used within a path.
-   */
-  static bool isValidPathChar(const char c);
-
-  /**
-   * Throws an exception if the specified path contains consective slashes.  For
-   * example the path "/just_before_consectuive_slashes//file" would cause this
-   * method to throw an exception.
-   *
-   * @param path The path.
-   */
-  static void assertPathDoesContainConsecutiveSlashes(const std::string &path);
-
 }; // class Utils
 
 } // namespace cta
