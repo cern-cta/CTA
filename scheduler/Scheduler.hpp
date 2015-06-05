@@ -558,38 +558,6 @@ private:
     const std::string &remoteFile,
     const std::string &archiveFile);
 
-std::list<ArchivalFileTransfer> createFileTransfers(
-  const std::list<ArchivalRoute> &routes);
-
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(const ArchiveToDirRequest &rqst);
-
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(const ArchiveToFileRequest &rqst);
-
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(const RetrieveToDirRequest &rqst);
-
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request to be queued.
-   */
-  void queue(const RetrieveToFileRequest &rqst);
-
-
 }; // class Scheduler
 
 } // namespace cta

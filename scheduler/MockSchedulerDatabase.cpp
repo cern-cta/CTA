@@ -191,12 +191,13 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToDirRequest &rqst,
 void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst,
   const std::list<ArchivalFileTransfer> &fileTransfers) {
   char *zErrMsg = 0;
+  const SecurityIdentity &requester = rqst.getRequester();
   std::ostringstream query;
   query << "INSERT INTO ARCHIVALJOB(STATE, REMOTEFILE, ARCHIVEFILE,"
     " UID, GID, CREATIONTIME) VALUES(" <<
     (int)cta::ArchivalJobState::PENDING << ",'" << rqst.getRemoteFile() << "','"
-    << rqst.getArchiveFile() << "'," << rqst.getUser().user.getUid() << "," <<
-    rqst.getUser().user.getGid() << "," << (int)time(NULL) << ");";
+    << rqst.getArchiveFile() << "'," << requester.user.getUid() << "," <<
+    requester.user.getGid() << "," << (int)time(NULL) << ");";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
     std::ostringstream message;
@@ -336,11 +337,12 @@ void cta::MockSchedulerDatabase::queue(const RetrieveToDirRequest &rqst,
 void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst,
   const std::list<RetrievalFileTransfer> &fileTransfers) {
   char *zErrMsg = 0;
+ const SecurityIdentity &requester = rqst.getRequester();
   std::ostringstream query;
   query << "INSERT INTO RETRIEVALJOB(STATE, ARCHIVEFILE, REMOTEFILE, UID,"
     " GID, CREATIONTIME) VALUES(" << (int)cta::RetrievalJobState::PENDING <<
     ",'" << rqst.getArchiveFile() << "','" << rqst.getRemoteFile() << "'," <<
-    rqst.getUser().user.getUid() << "," << rqst.getUser().user.getGid() <<
+    requester.user.getUid() << "," << requester.user.getGid() <<
     "," << (int)time(NULL) << ");";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {

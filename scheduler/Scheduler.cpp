@@ -55,22 +55,6 @@ cta::Scheduler::~Scheduler() throw() {
 }
 
 //------------------------------------------------------------------------------
-// queue
-//------------------------------------------------------------------------------
-void cta::Scheduler::queue(const ArchiveToDirRequest &rqst) {
-  m_db.assertIsAdminOnAdminHost(rqst.getUser());
-  //m_db.queue(rqst);
-}
-
-//------------------------------------------------------------------------------
-// queue
-//------------------------------------------------------------------------------
-void cta::Scheduler::queue(const ArchiveToFileRequest &rqst) {
-  m_db.assertIsAdminOnAdminHost(rqst.getUser());
-  //m_db.queue(rqst);
-}
-
-//------------------------------------------------------------------------------
 // getArchivalJobs
 //------------------------------------------------------------------------------
 std::map<cta::TapePool, std::list<cta::ArchivalJob> > cta::Scheduler::
@@ -95,22 +79,6 @@ void cta::Scheduler::deleteArchivalJob(
   const std::string &dstPath) {
   m_db.assertIsAdminOnAdminHost(requester);
   m_db.deleteArchivalJob(requester, dstPath);
-}
-
-//------------------------------------------------------------------------------
-// queue
-//------------------------------------------------------------------------------
-void cta::Scheduler::queue(const RetrieveToDirRequest &rqst) {
-  m_db.assertIsAdminOnAdminHost(rqst.getUser());
-  //m_db.queue(rqst);
-}
-
-//------------------------------------------------------------------------------
-// queue
-//------------------------------------------------------------------------------
-void cta::Scheduler::queue(const RetrieveToFileRequest &rqst) {
-  m_db.assertIsAdminOnAdminHost(rqst.getUser());
-  //m_db.queue(rqst);
 }
 
 //------------------------------------------------------------------------------
@@ -540,7 +508,8 @@ void cta::Scheduler::queueArchiveToFileRequest(
 
   const std::list<ArchivalRoute> routes =
     m_db.getArchivalRoutes(storageClassName);
-  createFileTransfers(routes);
+
+routes.size();
 
 /*
 
@@ -551,9 +520,4 @@ void cta::Scheduler::queueArchiveToFileRequest(
   
   m_ns.createFile(requester, dstFile, 0666);
 */
-}
-
-std::list<cta::ArchivalFileTransfer> cta::Scheduler::createFileTransfers(
-  const std::list<ArchivalRoute> &routes) {
-  return std::list<cta::ArchivalFileTransfer>();
 }

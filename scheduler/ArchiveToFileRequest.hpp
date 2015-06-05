@@ -20,6 +20,7 @@
 
 #include "scheduler/ArchivalRequest.hpp"
 
+#include <map>
 #include <stdint.h>
 #include <string>
 
@@ -48,21 +49,23 @@ public:
    * @param remoteFile The URL of the source remote file to be archived.
    * @param archiveFile The full path of the destination archive file.
    * @param nbCopies The number of archive copies to be created.
+   * @param copyNbToTapePoolMap The mapping from archive copy number to
+   * destination tape pool.
    * @param storageClassName The name of the storage class.
    * @param id The identifier of the request.
    * @param priority The priority of the request.
-   * @param user The identity of the user who made the request.
+   * @param requester The identity of the user who made the request.
    * @param creationTime Optionally the absolute time at which the user request
    * was created.  If no value is given then the current time is used.
    */
   ArchiveToFileRequest(
     const std::string &remoteFile,
     const std::string &archiveFile,
-    const uint32_t nbCopies,
+    const std::map<uint16_t, std::string> &copyNbToTapePoolMap,
     const std::string &storageClassName,
     const std::string &id, 
     const uint64_t priority,
-    const SecurityIdentity &user, 
+    const SecurityIdentity &requester, 
     const time_t creationTime = time(NULL));
 
   /**
@@ -80,11 +83,11 @@ public:
   const std::string &getArchiveFile() const throw();
 
   /**
-   * Returns the number of archive copies to be created.
+   * Returns the mapping from archive copy number to destination tape pool.
    *
-   * @return The number of archive copies to be created.
+   * @return the mapping from archive copy number to destination tape pool.
    */
-  uint32_t getNbCopies() const throw();
+  const std::map<uint16_t, std::string> &getCopyNbToTapePoolMap() const throw();
 
 private:
 
@@ -99,9 +102,9 @@ private:
   std::string m_archiveFile;
 
   /**
-   * The number of archive copies to be created.
+   * The mapping from archive copy number to destination tape pool.
    */
-  uint32_t m_nbCopies;
+  std::map<uint16_t, std::string> m_copyNbToTapePoolMap;
 
 }; // class ArchiveToFileRequest
 

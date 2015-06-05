@@ -33,11 +33,11 @@ cta::UserRequest::UserRequest():
 cta::UserRequest::UserRequest(
   const std::string &id,
   const uint64_t priority,
-  const SecurityIdentity &user,
+  const SecurityIdentity &requester,
   const time_t creationTime):
   m_id(id),
   m_priority(priority),
-  m_user(user),
+  m_requester(requester),
   m_creationTime(creationTime) {
 }
 
@@ -55,10 +55,10 @@ const std::string &cta::UserRequest::getId() const throw() {
 }
 
 //------------------------------------------------------------------------------
-// getUser
+// getRequester
 //------------------------------------------------------------------------------
-const cta::SecurityIdentity &cta::UserRequest::getUser() const throw() {
-  return m_user;
+const cta::SecurityIdentity &cta::UserRequest::getRequester() const throw() {
+  return m_requester;
 }
 
 //------------------------------------------------------------------------------

@@ -47,14 +47,14 @@ public:
    *
    * @param id The identifier of the request.
    * @param priority The priority of the request.
-   * @param user The identity of the user who made the request.
+   * @param requester The identity of the user who made the request.
    * @param creationTime Optionally the absolute time at which the user request
    * was created.  If no value is given then the current time is used.
    */
   UserRequest(
     const std::string &id,
     const uint64_t priority,
-    const SecurityIdentity &user,
+    const SecurityIdentity &requester,
     const time_t creationTime = time(NULL));
 
   /**
@@ -76,7 +76,7 @@ public:
    *
    * @return The identity of the user who made the request.
    */
-  const SecurityIdentity &getUser() const throw();
+  const SecurityIdentity &getRequester() const throw();
 
   /**
    * Returns the time at which the user request was created.
@@ -100,7 +100,7 @@ private:
   /**
    * The identity of the user who made the request.
    */
-  SecurityIdentity m_user;
+  SecurityIdentity m_requester;
 
   /**
    * The time at which the user request was created.

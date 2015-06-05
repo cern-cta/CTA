@@ -36,16 +36,16 @@ cta::ArchiveToFileRequest::~ArchiveToFileRequest() throw() {
 cta::ArchiveToFileRequest::ArchiveToFileRequest(
   const std::string &remoteFile,
   const std::string &archiveFile,
-  const uint32_t nbCopies,
+  const std::map<uint16_t, std::string> &copyNbToTapePoolMap,
   const std::string &storageClassName,
   const std::string &id,
   const uint64_t priority,
-  const SecurityIdentity &user, 
+  const SecurityIdentity &requester, 
   const time_t creationTime):
-  ArchivalRequest(storageClassName, id, priority, user, creationTime),
+  ArchivalRequest(storageClassName, id, priority, requester, creationTime),
   m_remoteFile(remoteFile),
   m_archiveFile(archiveFile),
-  m_nbCopies(nbCopies) {
+  m_copyNbToTapePoolMap(copyNbToTapePoolMap) {
 }
 
 //------------------------------------------------------------------------------
@@ -63,8 +63,9 @@ const std::string &cta::ArchiveToFileRequest::getArchiveFile() const throw() {
 }
 
 //------------------------------------------------------------------------------
-// getNbCopies
+// getCopyNbToTapePoolMap
 //------------------------------------------------------------------------------
-uint32_t cta::ArchiveToFileRequest::getNbCopies() const throw() {
-  return m_nbCopies;
+const std::map<uint16_t, std::string> &cta::ArchiveToFileRequest::
+  getCopyNbToTapePoolMap() const throw() {
+  return m_copyNbToTapePoolMap;
 }
