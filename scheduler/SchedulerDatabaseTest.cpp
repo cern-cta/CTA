@@ -334,6 +334,46 @@ TEST_P(SchedulerDatabaseTest, createArchivalRoute_same_tape_pool_name) {
   }
 }
 
+TEST_P(SchedulerDatabaseTest, createArchivalRoute_two_many_routes) {
+  using namespace cta;
+
+  SchedulerDatabase &db = getDb();
+
+  const std::string storageClassName = "TestStorageClass";
+  const std::string comment = "Comment";
+  {
+    const uint16_t nbCopies = 1;
+    ASSERT_NO_THROW(db.createStorageClass(s_adminOnAdminHost, storageClassName,
+      nbCopies, comment));
+  }
+
+  const std::string tapePoolNameA = "TestTapePoolA";
+  {
+    const uint16_t nbPartialTapes = 1;
+    ASSERT_NO_THROW(db.createTapePool(s_adminOnAdminHost, tapePoolNameA,
+      nbPartialTapes, comment));
+  }
+
+  const std::string tapePoolNameB = "TestTapePoolB";
+  {
+    const uint16_t nbPartialTapes = 1;
+    ASSERT_NO_THROW(db.createTapePool(s_adminOnAdminHost, tapePoolNameB,
+      nbPartialTapes, comment));
+  }
+
+  {
+    const uint16_t copyNb = 1;
+    ASSERT_NO_THROW(db.createArchivalRoute(s_adminOnAdminHost, storageClassName,
+      copyNb, tapePoolNameA, comment));
+  }
+
+  {
+    const uint16_t copyNb = 2;
+    ASSERT_THROW(db.createArchivalRoute(s_adminOnAdminHost, storageClassName,
+      copyNb, tapePoolNameB, comment), std::exception);
+  }
+}
+
 static cta::MockSchedulerDatabaseFactory mockDbFactory;
 
 INSTANTIATE_TEST_CASE_P(MockSchedulerDatabaseTest, SchedulerDatabaseTest,

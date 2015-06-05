@@ -433,6 +433,30 @@ private:
    */
   Tape getTape(const std::string &vid) const;
 
+  /**
+   * Returns the list of archival routes for the specified storage class.
+   *
+   * This method does not perfrom any consistency checks.  For example this
+   * method will not throw an exception if the list of archival routes is
+   * incomplete.
+   *
+   * @param storageClassName The name of the storage class.
+   * @return The list of archival routes for the specified storage class.
+   */
+  std::list<ArchivalRoute> getArchivalRoutesWithoutChecks(
+    const std::string &storageClassName) const;
+
+  /**
+   * Throws an exception if the specified tape pool is already a destination in
+   * the specified archival routes.
+   *
+   * @param routes The archival routes.
+   * @param tapePoolName The name of the tape pool.
+   */
+  void assertTapePoolIsNotAlreadyADestination(
+    const std::list<ArchivalRoute> &routes, 
+    const std::string &tapePoolName) const;
+
 }; // class MockSchedulerDatabase
 
 } // namespace cta
