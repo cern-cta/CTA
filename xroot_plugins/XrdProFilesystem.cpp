@@ -923,7 +923,7 @@ int XrdProFilesystem::executeLsllibCommand(const ParsedRequest &req, XrdOucErrIn
   try {
     std::list<cta::LogicalLibrary> llibs = m_adminApi.getLogicalLibraries(requester);
     std::ostringstream responseSS;
-    responseSS << "[OK] Listing of the archive routes:";
+    responseSS << "[OK] Listing of the logical libraries:";
     for(std::list<cta::LogicalLibrary>::iterator it = llibs.begin(); it != llibs.end(); it++) {
       responseSS  << "\n" << it->getName()
               << " " << it->getCreator().getUid()
