@@ -507,12 +507,14 @@ void cta::Scheduler::queueArchiveToFileRequest(
 
   const std::list<ArchivalRoute> routes =
     m_db.getArchivalRoutes(storageClassName);
+  std::map<uint16_t, std::string> copyNbToTapePoolMap;
+  for(auto itor = routes.begin(); itor != routes.end(); itor++) {
+    const ArchivalRoute &route = *itor;
+    copyNbToTapePoolMap[route.getCopyNb()] = route.getTapePoolName();
+  }
 
-routes.size();
-
-  const std::string id = "hello";
+  const std::string id = Utils::generateUuid();
   const uint64_t priority = 0;
-  const std::map<uint16_t, std::string> copyNbToTapePoolMap;
 
   m_db.queue(ArchiveToFileRequest(
     remoteFile,
