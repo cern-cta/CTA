@@ -22,7 +22,7 @@
 
 namespace unitTests {
 
-class cta_client_UtilsTest: public ::testing::Test {
+class cta_UtilsTest: public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -32,7 +32,7 @@ protected:
   }
 };
 
-TEST_F(cta_client_UtilsTest, trimSlashes_emptyString) {
+TEST_F(cta_UtilsTest, trimSlashes_emptyString) {
   using namespace cta;
 
   const std::string s;
@@ -40,7 +40,7 @@ TEST_F(cta_client_UtilsTest, trimSlashes_emptyString) {
   ASSERT_EQ(s, trimmedString);
 }
 
-TEST_F(cta_client_UtilsTest, trimSlashes_noSlashes) {
+TEST_F(cta_UtilsTest, trimSlashes_noSlashes) {
   using namespace cta;
 
   const std::string s("NO_SLASHES");
@@ -48,7 +48,7 @@ TEST_F(cta_client_UtilsTest, trimSlashes_noSlashes) {
   ASSERT_EQ(s, trimmedString);
 }
 
-TEST_F(cta_client_UtilsTest, trimSlashes_oneLeftSlash) {
+TEST_F(cta_UtilsTest, trimSlashes_oneLeftSlash) {
   using namespace cta;
 
   const std::string s("/VALUE");
@@ -56,7 +56,7 @@ TEST_F(cta_client_UtilsTest, trimSlashes_oneLeftSlash) {
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
-TEST_F(cta_client_UtilsTest, trimSlashes_twoLeftSlashes) {
+TEST_F(cta_UtilsTest, trimSlashes_twoLeftSlashes) {
   using namespace cta;
 
   const std::string s("//VALUE");
@@ -64,7 +64,7 @@ TEST_F(cta_client_UtilsTest, trimSlashes_twoLeftSlashes) {
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
-TEST_F(cta_client_UtilsTest, trimSlashes_oneRightSlash) {
+TEST_F(cta_UtilsTest, trimSlashes_oneRightSlash) {
   using namespace cta;
 
   const std::string s("VALUE/");
@@ -72,7 +72,7 @@ TEST_F(cta_client_UtilsTest, trimSlashes_oneRightSlash) {
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
-TEST_F(cta_client_UtilsTest, trimSlashes_twoRightSlashes) {
+TEST_F(cta_UtilsTest, trimSlashes_twoRightSlashes) {
   using namespace cta;
 
   const std::string s("VALUE//");
@@ -80,7 +80,7 @@ TEST_F(cta_client_UtilsTest, trimSlashes_twoRightSlashes) {
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
-TEST_F(cta_client_UtilsTest,
+TEST_F(cta_UtilsTest,
   trimSlashes_oneLeftAndOneRightSlash) {
   using namespace cta;
 
@@ -89,7 +89,7 @@ TEST_F(cta_client_UtilsTest,
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
-TEST_F(cta_client_UtilsTest,
+TEST_F(cta_UtilsTest,
   trimSlashes_twoLeftAndTwoRightSlashes) {
   using namespace cta;
 
@@ -98,7 +98,7 @@ TEST_F(cta_client_UtilsTest,
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
-TEST_F(cta_client_UtilsTest, getEnclosingPath_empty_string) {
+TEST_F(cta_UtilsTest, getEnclosingPath_empty_string) {
   using namespace cta;
     
   const std::string dirPath = "";
@@ -106,7 +106,7 @@ TEST_F(cta_client_UtilsTest, getEnclosingPath_empty_string) {
   ASSERT_THROW(Utils::getEnclosingPath(dirPath), std::exception);
 }
 
-TEST_F(cta_client_UtilsTest, getEnclosingPath_root) {
+TEST_F(cta_UtilsTest, getEnclosingPath_root) {
   using namespace cta;
     
   const std::string dirPath = "/";
@@ -116,7 +116,7 @@ TEST_F(cta_client_UtilsTest, getEnclosingPath_root) {
     std::exception);
 }
 
-TEST_F(cta_client_UtilsTest, getEnclosingPath_grandparent) {
+TEST_F(cta_UtilsTest, getEnclosingPath_grandparent) {
   using namespace cta;
 
   const std::string dirPath = "/grandparent";
@@ -126,7 +126,7 @@ TEST_F(cta_client_UtilsTest, getEnclosingPath_grandparent) {
   ASSERT_EQ(std::string("/"), enclosingPath);
 }
 
-TEST_F(cta_client_UtilsTest,
+TEST_F(cta_UtilsTest,
   getEnclosingPath_grandparent_parent) {
   using namespace cta;
 
@@ -137,7 +137,7 @@ TEST_F(cta_client_UtilsTest,
   ASSERT_EQ(std::string("/grandparent/"), enclosingPath);
 }
 
-TEST_F(cta_client_UtilsTest,
+TEST_F(cta_UtilsTest,
   getEnclosingPath_grandparent_parent_child) {
   using namespace cta;
 
@@ -148,7 +148,7 @@ TEST_F(cta_client_UtilsTest,
   ASSERT_EQ(std::string("/grandparent/parent/"), enclosingPath);
 }
 
-TEST_F(cta_client_UtilsTest, getEnclosedName) {
+TEST_F(cta_UtilsTest, getEnclosedName) {
   using namespace cta;
 
   const std::string enclosingPath = "/grandparent/parent/";
@@ -159,7 +159,7 @@ TEST_F(cta_client_UtilsTest, getEnclosedName) {
   ASSERT_EQ(enclosedName, result);
 }
 
-TEST_F(cta_client_UtilsTest, getEnclosedNames) {
+TEST_F(cta_UtilsTest, getEnclosedNames) {
   using namespace cta;
 
   const std::string enclosingPath = "/grandparent/parent/";
@@ -187,7 +187,7 @@ TEST_F(cta_client_UtilsTest, getEnclosedNames) {
   ASSERT_FALSE(resultSet.find(enclosedName4) == resultSet.end());
 }
 
-TEST_F(cta_client_UtilsTest, splitString_goodDay) {
+TEST_F(cta_UtilsTest, splitString_goodDay) {
   using namespace cta;
   const std::string line("col0 col1 col2 col3 col4 col5 col6 col7");
   std::vector<std::string> columns;
@@ -204,7 +204,7 @@ TEST_F(cta_client_UtilsTest, splitString_goodDay) {
   ASSERT_EQ(std::string("col7"), columns[7]);
 }
 
-TEST_F(cta_client_UtilsTest, splitString_emptyString) {
+TEST_F(cta_UtilsTest, splitString_emptyString) {
   using namespace cta;
   const std::string emptyString;
   std::vector<std::string> columns;
@@ -214,7 +214,7 @@ TEST_F(cta_client_UtilsTest, splitString_emptyString) {
   ASSERT_EQ((std::vector<std::string>::size_type)0, columns.size());
 }
 
-TEST_F(cta_client_UtilsTest, splitString_noSeparatorInString) {
+TEST_F(cta_UtilsTest, splitString_noSeparatorInString) {
   using namespace cta;
   const std::string stringContainingNoSeparator =
     "stringContainingNoSeparator";
@@ -224,6 +224,15 @@ TEST_F(cta_client_UtilsTest, splitString_noSeparatorInString) {
     columns));
   ASSERT_EQ((std::vector<std::string>::size_type)1, columns.size());
   ASSERT_EQ(stringContainingNoSeparator, columns[0]);
+}
+
+TEST_F(cta_UtilsTest, generateUuid) {
+  using namespace cta;
+  std::string uuid1;
+  std::string uuid2;
+  ASSERT_NO_THROW(uuid1 = Utils::generateUuid());
+  ASSERT_NO_THROW(uuid2 = Utils::generateUuid());
+  ASSERT_NE(uuid1, uuid2);
 }
 
 } // namespace unitTests

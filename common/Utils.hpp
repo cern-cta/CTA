@@ -95,6 +95,13 @@ public:
   static void splitString(const std::string &str, const char separator,
     std::vector<std::string> &result);
 
+  /**
+   * Returns uuid in the form of a string.
+   *
+   * @return uuid in the form of a string.
+   */
+  static std::string generateUuid();
+
 }; // class Utils
 
 } // namespace cta

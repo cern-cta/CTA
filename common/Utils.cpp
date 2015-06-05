@@ -20,6 +20,7 @@
 #include "common/Utils.hpp"
 
 #include <sstream>
+#include <uuid/uuid.h>
 
 using cta::exception::Exception;
 
@@ -195,4 +196,17 @@ void cta::Utils::splitString(const std::string &str, const char separator,
   if(endIndex == std::string::npos) {
     result.push_back(str.substr(beginIndex, str.length()));
   }
+}
+
+//-----------------------------------------------------------------------------
+// generateUuid
+//-----------------------------------------------------------------------------
+std::string cta::Utils::generateUuid() {
+  uuid_t uuid;
+  char str[36 + 1];
+
+  uuid_generate(uuid);
+  uuid_unparse_lower(uuid, str);
+
+  return str;
 }

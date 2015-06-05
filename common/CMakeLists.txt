@@ -16,7 +16,8 @@ add_library (ctacommon SHARED
 
 target_link_libraries (ctacommon
   ${SQLITE3_LIBRARY_RELEASE}
-  pthread)
+  pthread
+  uuid)
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   UtilsTest.cpp)
