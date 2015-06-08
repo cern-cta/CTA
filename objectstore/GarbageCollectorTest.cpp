@@ -24,6 +24,7 @@
 #include "Agent.hpp"
 #include "AgentRegister.hpp"
 #include "TapePool.hpp"
+#include "DriveRegister.hpp"
 
 namespace unitTests {
 
@@ -167,6 +168,63 @@ TEST(GarbageCollector, TapePool) {
     agA.addToOwnership(tpName);
     agA.commit();
     tp.insert();
+  }
+  // Create the garbage colletor and run it twice.
+  cta::objectstore::Agent gcAgent(be);
+  gcAgent.initialize();
+  gcAgent.generateName("unitTestGarbageCollector");
+  gcAgent.setTimeout_us(0);
+  gcAgent.insertAndRegisterSelf();
+  {
+    cta::objectstore::GarbageCollector gc(be, gcAgent);
+    gc.runOnePass();
+    gc.runOnePass();
+  }
+  ASSERT_FALSE(be.exists(tpName));
+  // Unregister gc's agent
+  cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
+  gcAgent.removeAndUnregisterSelf();
+  // We should not be able to remove the agent register (as it should be empty)
+  rel.lock(re);
+  re.fetch();
+  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit());
+  ASSERT_NO_THROW(re.removeIfEmpty());
+}
+
+TEST(GarbageCollector, DriveRegister) {
+  // Here we check that can successfully call agentRegister's garbage collector
+  cta::objectstore::BackendVFS be;
+  cta::objectstore::Agent agent(be);
+  agent.generateName("unitTestGarbageCollector");
+  // Create the root entry
+  cta::objectstore::RootEntry re(be);
+  re.initialize();
+  re.insert();
+  // Create the agent register
+  cta::objectstore::CreationLog cl(99, "dummyUser", 99, "dummyGroup", 
+      "unittesthost", time(NULL), "Creation of unit test agent register");
+  cta::objectstore::ScopedExclusiveLock rel(re);
+  re.addOrGetAgentRegisterPointerAndCommit(agent, cl);
+  rel.release();
+  // Create an agent and add and agent register to it as an owned object
+  cta::objectstore::Agent agA(be);
+  agA.initialize();
+  agA.generateName("unitTestAgentA");
+  agA.setTimeout_us(0);
+  agA.insertAndRegisterSelf();
+  // Create a new agent register, owned by agA (by hand as it is not an usual
+  // situation)
+  std::string tpName;
+  {
+    tpName = agA.nextId("TapePool");
+    cta::objectstore::DriveRegister dr(tpName, be);
+    dr.initialize();
+    dr.setOwner(agA.getAddressIfSet());
+    cta::objectstore::ScopedExclusiveLock agl(agA);
+    agA.fetch();
+    agA.addToOwnership(tpName);
+    agA.commit();
+    dr.insert();
   }
   // Create the garbage colletor and run it twice.
   cta::objectstore::Agent gcAgent(be);

@@ -19,6 +19,7 @@
 #include "GenericObject.hpp"
 #include "AgentRegister.hpp"
 #include "TapePool.hpp"
+#include "DriveRegister.hpp"
 
 namespace cta {  namespace objectstore {
 
@@ -76,6 +77,11 @@ void GenericObject::garbageCollect(ScopedExclusiveLock& lock) {
       TapePool tp(*this);
       lock.transfer(tp);
       tp.garbageCollect();
+    } break;
+    case serializers::DriveRegister_t: {
+      DriveRegister dr(*this);
+      lock.transfer(dr);
+      dr.garbageCollect();
     } break;
     default: {
       std::stringstream err;

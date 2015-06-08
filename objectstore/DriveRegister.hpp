@@ -26,12 +26,16 @@ namespace cta { namespace objectstore {
   
 class Backend;
 class Agent;
+class GenericObject;
 
 class DriveRegister: public ObjectOps<serializers::DriveRegister> {
   CTA_GENERATE_EXCEPTION_CLASS(DuplicateEntry);
 public:
   DriveRegister(const std::string & address, Backend & os);
+  DriveRegister(GenericObject & go);
   void initialize();
+  CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
+  void garbageCollect();
   bool isEmpty();
   void addDrive (std::string name);
   void removeDrive (const std::string  & name);
