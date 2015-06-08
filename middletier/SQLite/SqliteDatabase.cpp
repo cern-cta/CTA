@@ -1082,11 +1082,11 @@ std::map<cta::TapePool, std::list<cta::ArchiveToFileRequest> >
     const std::string remoteFile = (char *)sqlite3_column_text(statement.get(),
       idx("REMOTEFILE"));
     const std::string archiveFile = (char *)sqlite3_column_text(statement.get(),
-      idx("REMOTEFILE"));
+      idx("ARCHIVEFILE"));
     const std::string tapePoolName = (char *)sqlite3_column_text(
       statement.get(),idx("TAPEPOOL_NAME"));
     const TapePool tapePool = getTapePoolByName(requester, tapePoolName);
-    const std::map<uint16_t, std::string> copyNbToTapePoolMap;
+    const std::map<uint16_t, std::string> copyNbToPoolMap;
     const uint16_t createUid = sqlite3_column_int(statement.get(), idx("UID"));
     const uint16_t createGid = sqlite3_column_int(statement.get(), idx("GID"));
     const UserIdentity creator(createUid, createGid);
@@ -1096,7 +1096,7 @@ std::map<cta::TapePool, std::list<cta::ArchiveToFileRequest> >
     map[tapePool].push_back(ArchiveToFileRequest(
       remoteFile,
       archiveFile,
-      copyNbToTapePoolMap,
+      copyNbToPoolMap,
       priority,
       creatorAndHost,
       time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME")))

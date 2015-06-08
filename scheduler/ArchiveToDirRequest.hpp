@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "scheduler/ArchivalRequest.hpp"
+#include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 
 #include <list>
@@ -30,7 +30,7 @@ namespace cta {
  * Class representing a user request to archive one or more remote files to an
  * archive directory.
  */
-class ArchiveToDirRequest: public ArchivalRequest {
+class ArchiveToDirRequest: public ArchiveRequest {
 public:
 
   /**

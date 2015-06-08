@@ -16,24 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/ArchivalRequest.hpp"
+#include "scheduler/ArchiveRequest.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalRequest::ArchivalRequest() {
+cta::ArchiveRequest::ArchiveRequest() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::ArchivalRequest::~ArchivalRequest() throw() {
+cta::ArchiveRequest::~ArchiveRequest() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalRequest::ArchivalRequest(
+cta::ArchiveRequest::ArchiveRequest(
   const uint64_t priority,
   const SecurityIdentity &user, 
   const time_t creationTime):

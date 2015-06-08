@@ -55,23 +55,22 @@ public:
   void queue(const ArchiveToFileRequest &rqst);
 
   /**
-   * Returns all of the queued requests to archive files.  The returned requests
-   * are grouped by tape pool and then sorted by creation time in ascending
-   * order (oldest first).
+   * Returns all of the queued archive requests.  The returned requests are
+   * grouped by tape pool and then sorted by creation time, oldest first.
    *
    * @return The queued requests.
    */
-  std::map<TapePool, std::list<ArchiveToFileRequest> >
-    getArchiveToFileRequests() const;
+  std::map<TapePool, std::list<ArchiveToTapeCopyRequest> >
+    getArchiveRequests() const;
 
   /**
-   * Returns the list of queued requests to archive files for the specified tape
-   * pool sorted by creation time in ascending order (oldest first).
+   * Returns the list of queued archive requests for the specified tape pool.
+   * The returned requests are sorted by creation time, oldest first.
    *
    * @param tapePoolName The name of the tape pool.
    * @return The queued requests.
    */
-  std::list<ArchiveToFileRequest> getArchiveToFileRequests(
+  std::list<ArchiveToTapeCopyRequest> getArchiveRequests(
     const std::string &tapePoolName) const;
 
   /**
@@ -450,6 +449,13 @@ private:
   void assertTapePoolIsNotAlreadyADestination(
     const std::list<ArchivalRoute> &routes, 
     const std::string &tapePoolName) const;
+
+  /**
+   * Queues the specified request.
+   *
+   * @param rqst The request.
+   */
+  void queue(const ArchiveToTapeCopyRequest &rqst);
 
 }; // class MockSchedulerDatabase
 

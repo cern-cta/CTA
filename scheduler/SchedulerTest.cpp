@@ -20,6 +20,7 @@
 #include "nameserver/NameServer.hpp"
 #include "scheduler/ArchivalRoute.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
+#include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MockSchedulerDatabaseFactory.hpp"
 #include "scheduler/Scheduler.hpp"
@@ -1411,10 +1412,10 @@ TEST_P(SchedulerTest, user_archive_to_new_file) {
   ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, archivalRouteComment));
 
-  std::list<std::string> srcUrls;
-  srcUrls.push_back("diskUrl");
+  std::list<std::string> remoteFiles;
+  remoteFiles.push_back("diskUrl");
   const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_NO_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls, archiveFile));
+  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile));
 
   {
     DirIterator itor;
@@ -1448,43 +1449,41 @@ TEST_P(SchedulerTest, user_archive_to_new_file) {
   }
 
   {
-    const std::map<TapePool, std::list<ArchiveToFileRequest> > allRqsts =
-      scheduler.getArchiveToFileRequests(s_adminOnAdminHost);
-    ASSERT_EQ(1, allRqsts.size());
-    std::map<TapePool, std::list<ArchiveToFileRequest> >::const_iterator
-      poolItor = allRqsts.begin();
-    ASSERT_FALSE(poolItor == allRqsts.end());
+    const auto rqsts = scheduler.getArchiveRequests(s_adminOnAdminHost);
+    ASSERT_EQ(1, rqsts.size());
+    auto poolItor = rqsts.cbegin();
+    ASSERT_FALSE(poolItor == rqsts.cend());
     const TapePool &pool = poolItor->first;
     ASSERT_TRUE(tapePoolName == pool.getName());
-    const std::list<ArchiveToFileRequest> &poolRqsts = poolItor->second;
+    auto poolRqsts = poolItor->second;
     ASSERT_EQ(1, poolRqsts.size());
-    std::set<std::string> srcUrls;
+    std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
-    for(std::list<ArchiveToFileRequest>::const_iterator jobItor = poolRqsts.begin();
-      jobItor != poolRqsts.end(); jobItor++) {
-      srcUrls.insert(jobItor->getRemoteFile());
+    for(auto jobItor = poolRqsts.cbegin();
+      jobItor != poolRqsts.cend(); jobItor++) {
+      remoteFiles.insert(jobItor->getRemoteFile());
       archiveFiles.insert(jobItor->getArchiveFile());
     }
-    ASSERT_EQ(1, srcUrls.size());
-    ASSERT_FALSE(srcUrls.find("diskUrl") == srcUrls.end());
+    ASSERT_EQ(1, remoteFiles.size());
+    ASSERT_FALSE(remoteFiles.find("diskUrl") == remoteFiles.end());
     ASSERT_EQ(1, archiveFiles.size());
     ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") ==
       archiveFiles.end());
   }
 
   {
-    const std::list<ArchiveToFileRequest> poolRqsts = scheduler.getArchiveToFileRequests(s_adminOnAdminHost,
+    const auto poolRqsts = scheduler.getArchiveRequests(s_adminOnAdminHost,
       tapePoolName);
     ASSERT_EQ(1, poolRqsts.size());
-    std::set<std::string> srcUrls;
+    std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
-    for(std::list<ArchiveToFileRequest>::const_iterator jobItor = poolRqsts.begin();
-      jobItor != poolRqsts.end(); jobItor++) {
-      srcUrls.insert(jobItor->getRemoteFile());
+    for(auto jobItor = poolRqsts.cbegin(); jobItor != poolRqsts.cend();
+      jobItor++) {
+      remoteFiles.insert(jobItor->getRemoteFile());
       archiveFiles.insert(jobItor->getArchiveFile());
     }
-    ASSERT_EQ(1, srcUrls.size());
-    ASSERT_FALSE(srcUrls.find("diskUrl") == srcUrls.end());
+    ASSERT_EQ(1, remoteFiles.size());
+    ASSERT_FALSE(remoteFiles.find("diskUrl") == remoteFiles.end());
     ASSERT_EQ(1, archiveFiles.size());
     ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") == archiveFiles.end());
   }
@@ -1500,10 +1499,10 @@ TEST_P(SchedulerTest,
   const uint16_t mode = 0777;
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
 
-  std::list<std::string> srcUrls;
-  srcUrls.push_back("diskUrl");
+  std::list<std::string> remoteFiles;
+  remoteFiles.push_back("diskUrl");
   const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls, archiveFile), std::exception);
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
 }
 
 TEST_P(SchedulerTest,
@@ -1524,10 +1523,10 @@ TEST_P(SchedulerTest,
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
 
-  std::list<std::string> srcUrls;
-  srcUrls.push_back("diskUrl");
+  std::list<std::string> remoteFiles;
+  remoteFiles.push_back("diskUrl");
   const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls, archiveFile), std::exception);
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
 }
 
 TEST_P(SchedulerTest, user_archive_to_new_file_with_no_route) {
@@ -1553,10 +1552,10 @@ TEST_P(SchedulerTest, user_archive_to_new_file_with_no_route) {
   ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, tapePoolComment));
 
-  std::list<std::string> srcUrls;
-  srcUrls.push_back("diskUrl");
+  std::list<std::string> remoteFiles;
+  remoteFiles.push_back("diskUrl");
   const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls, archiveFile), std::exception);
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
 }
 
 TEST_P(SchedulerTest,
@@ -1588,10 +1587,10 @@ TEST_P(SchedulerTest,
   ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, archivalRouteComment));
 
-  std::list<std::string> srcUrls;
-  srcUrls.push_back("diskUrl");
+  std::list<std::string> remoteFiles;
+  remoteFiles.push_back("diskUrl");
   const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls, archiveFile), std::exception);
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
 }
 
 TEST_P(SchedulerTest, user_archive_to_directory) {
@@ -1622,13 +1621,13 @@ TEST_P(SchedulerTest, user_archive_to_directory) {
   ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, archivalRouteComment));
 
-  std::list<std::string> srcUrls;
-  srcUrls.push_back("diskUrl1");
-  srcUrls.push_back("diskUrl2");
-  srcUrls.push_back("diskUrl3");
-  srcUrls.push_back("diskUrl4");
+  std::list<std::string> remoteFiles;
+  remoteFiles.push_back("diskUrl1");
+  remoteFiles.push_back("diskUrl2");
+  remoteFiles.push_back("diskUrl3");
+  remoteFiles.push_back("diskUrl4");
   const std::string archiveFile  = "/grandparent";
-  ASSERT_NO_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls, archiveFile));
+  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile));
 
   {
     DirIterator itor;
@@ -1658,56 +1657,54 @@ TEST_P(SchedulerTest, user_archive_to_directory) {
   }
 
   {
-    const std::map<TapePool, std::list<ArchiveToFileRequest> > allRqsts =
-      scheduler.getArchiveToFileRequests(s_adminOnAdminHost);
-    ASSERT_EQ(1, allRqsts.size());
-    std::map<TapePool, std::list<ArchiveToFileRequest> >::const_iterator
-      poolItor = allRqsts.begin();
-    ASSERT_FALSE(poolItor == allRqsts.end());
+    const auto rqsts = scheduler.getArchiveRequests(s_adminOnAdminHost);
+    ASSERT_EQ(1, rqsts.size());
+    auto poolItor = rqsts.cbegin();
+    ASSERT_FALSE(poolItor == rqsts.cend());
     const TapePool &pool = poolItor->first;
     ASSERT_TRUE(tapePoolName == pool.getName());
-    const std::list<ArchiveToFileRequest> &poolRqsts = poolItor->second;
+    const auto poolRqsts = poolItor->second;
     ASSERT_EQ(4, poolRqsts.size());
-    std::set<std::string> srcUrls;
+    std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
-    for(std::list<ArchiveToFileRequest>::const_iterator jobItor = poolRqsts.begin();
-      jobItor != poolRqsts.end(); jobItor++) {
-      srcUrls.insert(jobItor->getRemoteFile());
+    for(auto jobItor = poolRqsts.cbegin();
+      jobItor != poolRqsts.cend(); jobItor++) {
+      remoteFiles.insert(jobItor->getRemoteFile());
       archiveFiles.insert(jobItor->getArchiveFile());
     }
-    ASSERT_EQ(4, srcUrls.size());
-    ASSERT_FALSE(srcUrls.find("diskUrl1") == srcUrls.end());
-    ASSERT_FALSE(srcUrls.find("diskUrl2") == srcUrls.end());
-    ASSERT_FALSE(srcUrls.find("diskUrl3") == srcUrls.end());
-    ASSERT_FALSE(srcUrls.find("diskUrl4") == srcUrls.end());
+    ASSERT_EQ(4, remoteFiles.size());
+    ASSERT_FALSE(remoteFiles.find("diskUrl1") == remoteFiles.end());
+    ASSERT_FALSE(remoteFiles.find("diskUrl2") == remoteFiles.end());
+    ASSERT_FALSE(remoteFiles.find("diskUrl3") == remoteFiles.end());
+    ASSERT_FALSE(remoteFiles.find("diskUrl4") == remoteFiles.end());
     ASSERT_EQ(4, archiveFiles.size());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl1") == srcUrls.end());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl2") == srcUrls.end());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl3") == srcUrls.end());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl4") == srcUrls.end());
+    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl1") == remoteFiles.end());
+    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl2") == remoteFiles.end());
+    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl3") == remoteFiles.end());
+    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl4") == remoteFiles.end());
   }
 
   {
-    const std::list<ArchiveToFileRequest> poolRqsts = scheduler.getArchiveToFileRequests(s_adminOnAdminHost,
+    const auto poolRqsts = scheduler.getArchiveRequests(s_adminOnAdminHost,
       tapePoolName);
     ASSERT_EQ(4, poolRqsts.size());
-    std::set<std::string> srcUrls;
+    std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
-    for(std::list<ArchiveToFileRequest>::const_iterator jobItor = poolRqsts.begin();
-      jobItor != poolRqsts.end(); jobItor++) {
-      srcUrls.insert(jobItor->getRemoteFile());
+    for(auto jobItor = poolRqsts.cbegin(); jobItor != poolRqsts.cend();
+      jobItor++) {
+      remoteFiles.insert(jobItor->getRemoteFile());
       archiveFiles.insert(jobItor->getArchiveFile());
     }
-    ASSERT_EQ(4, srcUrls.size());
-    ASSERT_FALSE(srcUrls.find("diskUrl1") == srcUrls.end());
-    ASSERT_FALSE(srcUrls.find("diskUrl2") == srcUrls.end());
-    ASSERT_FALSE(srcUrls.find("diskUrl3") == srcUrls.end());
-    ASSERT_FALSE(srcUrls.find("diskUrl4") == srcUrls.end());
+    ASSERT_EQ(4, remoteFiles.size());
+    ASSERT_FALSE(remoteFiles.find("diskUrl1") == remoteFiles.end());
+    ASSERT_FALSE(remoteFiles.find("diskUrl2") == remoteFiles.end());
+    ASSERT_FALSE(remoteFiles.find("diskUrl3") == remoteFiles.end());
+    ASSERT_FALSE(remoteFiles.find("diskUrl4") == remoteFiles.end());
     ASSERT_EQ(4, archiveFiles.size());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl1") == srcUrls.end());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl2") == srcUrls.end());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl3") == srcUrls.end());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl4") == srcUrls.end());
+    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl1") == remoteFiles.end());
+    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl2") == remoteFiles.end());
+    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl3") == remoteFiles.end());
+    ASSERT_FALSE(archiveFiles.find("/grandparent/diskUrl4") == remoteFiles.end());
   }
 }
 
@@ -1721,13 +1718,13 @@ TEST_P(SchedulerTest,
   const uint16_t mode = 0777;
   ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
 
-  std::list<std::string> srcUrls;
-  srcUrls.push_back("diskUrl1");
-  srcUrls.push_back("diskUrl2");
-  srcUrls.push_back("diskUrl3");
-  srcUrls.push_back("diskUrl4");
+  std::list<std::string> remoteFiles;
+  remoteFiles.push_back("diskUrl1");
+  remoteFiles.push_back("diskUrl2");
+  remoteFiles.push_back("diskUrl3");
+  remoteFiles.push_back("diskUrl4");
   const std::string archiveFile  = "/grandparent";
-  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls,
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles,
     archiveFile), std::exception);
 }
 
@@ -1749,13 +1746,13 @@ TEST_P(SchedulerTest,
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
     storageClassName));
 
-  std::list<std::string> srcUrls;
-  srcUrls.push_back("diskUrl1");
-  srcUrls.push_back("diskUrl2");
-  srcUrls.push_back("diskUrl3");
-  srcUrls.push_back("diskUrl4");
+  std::list<std::string> remoteFiles;
+  remoteFiles.push_back("diskUrl1");
+  remoteFiles.push_back("diskUrl2");
+  remoteFiles.push_back("diskUrl3");
+  remoteFiles.push_back("diskUrl4");
   const std::string archiveFile  = "/grandparent";
-  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls,
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles,
     archiveFile), std::exception);
 }
 
@@ -1782,13 +1779,13 @@ TEST_P(SchedulerTest, user_archive_to_directory_with_no_route) {
   ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, tapePoolComment));
 
-  std::list<std::string> srcUrls;
-  srcUrls.push_back("diskUrl1");
-  srcUrls.push_back("diskUrl2");
-  srcUrls.push_back("diskUrl3");
-  srcUrls.push_back("diskUrl4");
+  std::list<std::string> remoteFiles;
+  remoteFiles.push_back("diskUrl1");
+  remoteFiles.push_back("diskUrl2");
+  remoteFiles.push_back("diskUrl3");
+  remoteFiles.push_back("diskUrl4");
   const std::string archiveFile  = "/grandparent";
-  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls,
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles,
     archiveFile), std::exception);
 }
 
@@ -1821,13 +1818,13 @@ TEST_P(SchedulerTest,
   ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, archivalRouteComment));
 
-  std::list<std::string> srcUrls;
-  srcUrls.push_back("diskUrl1");
-  srcUrls.push_back("diskUrl2");
-  srcUrls.push_back("diskUrl3");
-  srcUrls.push_back("diskUrl4");
+  std::list<std::string> remoteFiles;
+  remoteFiles.push_back("diskUrl1");
+  remoteFiles.push_back("diskUrl2");
+  remoteFiles.push_back("diskUrl3");
+  remoteFiles.push_back("diskUrl4");
   const std::string archiveFile  = "/grandparent";
-  ASSERT_THROW(scheduler.queueArchivalRequest(s_adminOnAdminHost, srcUrls, archiveFile), std::exception);
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
 }
 
 static cta::MockNameServerFactory mockNsFactory;

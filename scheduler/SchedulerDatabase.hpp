@@ -31,6 +31,7 @@ class AdminUser;
 class ArchivalRoute;
 class ArchiveToDirRequest;
 class ArchiveToFileRequest;
+class ArchiveToTapeCopyRequest;
 class DirIterator;
 class LogicalLibrary;
 class RetrievalJob;
@@ -69,23 +70,22 @@ public:
   virtual void queue(const ArchiveToFileRequest &rqst) = 0;
 
   /**
-   * Returns all of the queued requests to archive files.  The returned requests
-   * are grouped by tape pool and then sorted by creation time in ascending
-   * order (oldest first).
+   * Returns all of the queued archive requests.  The returned requests are
+   * grouped by tape pool and then sorted by creation time, oldest first.
    *
    * @return The queued requests.
    */
-  virtual std::map<TapePool, std::list<ArchiveToFileRequest> >
-    getArchiveToFileRequests() const = 0;
+  virtual std::map<TapePool, std::list<ArchiveToTapeCopyRequest> >
+    getArchiveRequests() const = 0;
 
   /**
-   * Returns the list of queued requests to archive files for the specified tape
-   * pool sorted by creation time in ascending order (oldest first).
+   * Returns the list of queued archive requests for the specified tape pool.
+   * The returned requests are sorted by creation time, oldest first.
    *
    * @param tapePoolName The name of the tape pool.
    * @return The queued requests.
    */
-  virtual std::list<ArchiveToFileRequest> getArchiveToFileRequests(
+  virtual std::list<ArchiveToTapeCopyRequest> getArchiveRequests(
     const std::string &tapePoolName) const = 0;
 
   /**

@@ -24,6 +24,7 @@
 #include "scheduler/ArchivalRoute.hpp"
 #include "scheduler/ArchiveToDirRequest.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
+#include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrievalJob.hpp"
 #include "scheduler/RetrieveToDirRequest.hpp"
@@ -53,20 +54,20 @@ cta::Scheduler::~Scheduler() throw() {
 }
 
 //------------------------------------------------------------------------------
-// getArchiveToFileRequests
+// getArchiveRequests
 //------------------------------------------------------------------------------
-std::map<cta::TapePool, std::list<cta::ArchiveToFileRequest> > cta::Scheduler::
-  getArchiveToFileRequests(const SecurityIdentity &requester) const {
-  return m_db.getArchiveToFileRequests();
+std::map<cta::TapePool, std::list<cta::ArchiveToTapeCopyRequest> >
+  cta::Scheduler::getArchiveRequests(const SecurityIdentity &requester) const {
+  return m_db.getArchiveRequests();
 }
 
 //------------------------------------------------------------------------------
-// getArchiveToFileRequests
+// getArchiveRequests
 //------------------------------------------------------------------------------
-std::list<cta::ArchiveToFileRequest> cta::Scheduler::getArchiveToFileRequests(
+std::list<cta::ArchiveToTapeCopyRequest> cta::Scheduler::getArchiveRequests(
   const SecurityIdentity &requester,
   const std::string &tapePoolName) const {
-  return m_db.getArchiveToFileRequests(tapePoolName);
+  return m_db.getArchiveRequests(tapePoolName);
 }
 
 //------------------------------------------------------------------------------
@@ -397,9 +398,9 @@ std::string cta::Scheduler::getDirStorageClass(
 }
 
 //------------------------------------------------------------------------------
-// queueArchivalRequest
+// queueArchiveRequest
 //------------------------------------------------------------------------------
-void cta::Scheduler::queueArchivalRequest(
+void cta::Scheduler::queueArchiveRequest(
   const SecurityIdentity &requester,
   const std::list<std::string> &remoteFiles,
   const std::string &archiveFileOrDir) {
@@ -506,10 +507,10 @@ void cta::Scheduler::queueArchiveToFileRequest(
 
   const std::list<ArchivalRoute> routes =
     m_db.getArchivalRoutes(storageClassName);
-  std::map<uint16_t, std::string> copyNbToTapePoolMap;
+  std::map<uint16_t, std::string> copyNbToPoolMap;
   for(auto itor = routes.begin(); itor != routes.end(); itor++) {
     const ArchivalRoute &route = *itor;
-    copyNbToTapePoolMap[route.getCopyNb()] = route.getTapePoolName();
+    copyNbToPoolMap[route.getCopyNb()] = route.getTapePoolName();
   }
 
   const uint64_t priority = 0;
@@ -517,7 +518,7 @@ void cta::Scheduler::queueArchiveToFileRequest(
   m_db.queue(ArchiveToFileRequest(
     remoteFile,
     archiveFile,
-    copyNbToTapePoolMap,
+    copyNbToPoolMap,
     priority, 
     requester));
 

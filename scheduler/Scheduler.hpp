@@ -31,6 +31,7 @@ class AdminUser;
 class ArchivalRoute;
 class ArchiveToDirRequest;
 class ArchiveToFileRequest;
+class ArchiveToTapeCopyRequest;
 class LogicalLibrary;
 class NameServer;
 class RetrievalJob;
@@ -63,25 +64,24 @@ public:
   ~Scheduler() throw();
 
   /**
-   * Returns all of the queued requests to archive files.  The returned requests
-   * are grouped by tape pool and then sorted by creation time in ascending
-   * order (oldest first).
+   * Returns all of the queued archive requests.  The returned requests are
+   * grouped by tape pool and then sorted by creation time, oldest first.
    *
    * @param requester The identity of the user requesting the list.
    * @return The queued requests.
    */
-  std::map<TapePool, std::list<ArchiveToFileRequest> > getArchiveToFileRequests(
+  std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > getArchiveRequests(
     const SecurityIdentity &requester) const;
 
   /**
-   * Returns the list of queued requests to archive files for the specified tape
-   * pool sorted by creation time in ascending order (oldest first).
+   * Returns the list of queued archive requests for the specified tape pool.
+   * The returned requests are sorted by creation time, oldest first.
    *
    * @param requester The identity of the user requesting the list.
    * @param tapePoolName The name of the tape pool.
    * @return The queued requests.
    */
-  std::list<ArchiveToFileRequest> getArchiveToFileRequests(
+  std::list<ArchiveToTapeCopyRequest> getArchiveRequests(
     const SecurityIdentity &requester,
     const std::string &tapePoolName) const;
 
@@ -494,7 +494,7 @@ public:
    * @param archiveFileOrDir The absolute path of the destination file or
    * directory within the archive namespace.
    */
-  void queueArchivalRequest(
+  void queueArchiveRequest(
     const SecurityIdentity &requester,
     const std::list<std::string> &remoteFiles,
     const std::string &archiveFileOrDir);

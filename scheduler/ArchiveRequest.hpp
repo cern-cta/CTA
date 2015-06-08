@@ -28,18 +28,18 @@ namespace cta {
 /**
  * Abstract class representing a user request to archive some data.
  */
-class ArchivalRequest: public UserRequest {
+class ArchiveRequest: public UserRequest {
 public:
 
   /**
    * Constructor.
    */
-  ArchivalRequest();
+  ArchiveRequest();
 
   /**
    * Destructor.
    */
-  virtual ~ArchivalRequest() throw() = 0;
+  virtual ~ArchiveRequest() throw() = 0;
 
   /**
    * Constructor.
@@ -49,13 +49,13 @@ public:
    * @param creationTime Optionally the absolute time at which the user request
    * was created.  If no value is given then the current time is used.
    */
-  ArchivalRequest(
+  ArchiveRequest(
     const uint64_t priority,
     const SecurityIdentity &user,
     const time_t creationTime = time(NULL));
 
 private:
 
-}; // class ArchivalRequest
+}; // class ArchiveRequest
 
 } // namespace cta

@@ -5,11 +5,12 @@ set (CTA_SCHEDULER_SRC_FILES
   AdminUser.cpp
   ArchivalFileTransfer.cpp
   ArchivalMount.cpp
-  ArchivalRequest.cpp
   ArchivalRoute.cpp
   ArchivalRouteId.cpp
+  ArchiveRequest.cpp
   ArchiveToDirRequest.cpp
   ArchiveToFileRequest.cpp
+  ArchiveToTapeCopyRequest.cpp
   ConfigurationItem.cpp
   DirEntry.cpp
   DirIterator.cpp

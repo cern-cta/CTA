@@ -16,44 +16,63 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/ArchiveToDirRequest.hpp"
+#include "scheduler/ArchiveToTapeCopyRequest.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveToDirRequest::ArchiveToDirRequest() {
+cta::ArchiveToTapeCopyRequest::ArchiveToTapeCopyRequest() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::ArchiveToDirRequest::~ArchiveToDirRequest() throw() {
+cta::ArchiveToTapeCopyRequest::~ArchiveToTapeCopyRequest() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveToDirRequest::ArchiveToDirRequest(
-  const std::string &archiveDir,
+cta::ArchiveToTapeCopyRequest::ArchiveToTapeCopyRequest(
+  const std::string &remoteFile,
+  const std::string &archiveFile,
+  const uint16_t copyNb,
+  const std::string tapePoolName,
   const uint64_t priority,
-  const SecurityIdentity &user,
+  const SecurityIdentity &requester, 
   const time_t creationTime):
-  ArchiveRequest(priority, user, creationTime),
-  m_archiveDir(archiveDir) {
+  ArchiveRequest(priority, requester, creationTime),
+  m_remoteFile(remoteFile),
+  m_archiveFile(archiveFile),
+  m_copyNb(copyNb),
+  m_tapePoolName(tapePoolName) {
 }
 
 //------------------------------------------------------------------------------
-// getArchiveToFileRequests
+// getRemoteFile
 //------------------------------------------------------------------------------
-const std::list<cta::ArchiveToFileRequest> &cta::ArchiveToDirRequest::
-  getArchiveToFileRequests() const throw() {
-  return m_archiveToFileRequests;
+const std::string &cta::ArchiveToTapeCopyRequest::getRemoteFile() const throw() {
+  return m_remoteFile;
 }
 
 //------------------------------------------------------------------------------
-// getArchiveToFileRequests
+// getArchiveFile
 //------------------------------------------------------------------------------
-std::list<cta::ArchiveToFileRequest> &cta::ArchiveToDirRequest::
-  getArchiveToFileRequests() throw() {
-  return m_archiveToFileRequests;
+const std::string &cta::ArchiveToTapeCopyRequest::getArchiveFile() const throw() {
+ return m_archiveFile;
+}
+
+//------------------------------------------------------------------------------
+// getCopyNb
+//------------------------------------------------------------------------------
+uint16_t cta::ArchiveToTapeCopyRequest::getCopyNb() const throw() {
+  return m_copyNb;
+}
+
+//------------------------------------------------------------------------------
+// getTapePoolName
+//------------------------------------------------------------------------------
+const std::string &cta::ArchiveToTapeCopyRequest::getTapePoolName() const
+  throw() {
+  return m_tapePoolName;
 }

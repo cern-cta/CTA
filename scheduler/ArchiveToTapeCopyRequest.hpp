@@ -20,46 +20,44 @@
 
 #include "scheduler/ArchiveRequest.hpp"
 
-#include <map>
 #include <stdint.h>
 #include <string>
 
 namespace cta {
 
 /**
- * Class representing a user request to archive to a single remote file to a
- * single destination archive file.
+ * A user request to archive a remote file to a copy on tape.
  */
-class ArchiveToFileRequest: public ArchiveRequest {
+class ArchiveToTapeCopyRequest: public ArchiveRequest {
 public:
 
   /**
    * Constructor.
    */
-  ArchiveToFileRequest();
+  ArchiveToTapeCopyRequest();
 
   /**
    * Destructor.
    */
-  ~ArchiveToFileRequest() throw();
+  ~ArchiveToTapeCopyRequest() throw();
 
   /**
    * Constructor.
    *
    * @param remoteFile The URL of the source remote file to be archived.
    * @param archiveFile The full path of the destination archive file.
-   * @param nbCopies The number of archive copies to be created.
-   * @param copyNbToPoolMap The mapping from archive copy number to destination
-   * tape pool.
+   * @param copyNb The tape copy number.
+   * @param tapePoolName The name of the destination tape pool.
    * @param priority The priority of the request.
    * @param requester The identity of the user who made the request.
    * @param creationTime Optionally the absolute time at which the user request
    * was created.  If no value is given then the current time is used.
    */
-  ArchiveToFileRequest(
+  ArchiveToTapeCopyRequest(
     const std::string &remoteFile,
     const std::string &archiveFile,
-    const std::map<uint16_t, std::string> &copyNbToPoolMap,
+    const uint16_t copyNb,
+    const std::string tapePoolName,
     const uint64_t priority,
     const SecurityIdentity &requester, 
     const time_t creationTime = time(NULL));
@@ -79,11 +77,18 @@ public:
   const std::string &getArchiveFile() const throw();
 
   /**
-   * Returns the mapping from archive copy number to destination tape pool.
+   * Returns the tape copy number.
    *
-   * @return the mapping from archive copy number to destination tape pool.
+   * @return The tape copy number.
    */
-  const std::map<uint16_t, std::string> &getCopyNbToPoolMap() const throw();
+  uint16_t getCopyNb() const throw();
+
+  /**
+   * Returns the name of the destination tape pool.
+   *
+   * @return the name of the destination tape pool.
+   */
+  const std::string &getTapePoolName() const throw();
 
 private:
 
@@ -98,10 +103,15 @@ private:
   std::string m_archiveFile;
 
   /**
-   * The mapping from archive copy number to destination tape pool.
+   * The tape copy number.
    */
-  std::map<uint16_t, std::string> m_copyNbToPoolMap;
+  uint16_t m_copyNb;
 
-}; // class ArchiveToFileRequest
+  /**
+   * The name of the destination tape pool.
+   */
+  std::string m_tapePoolName;
+
+}; // class ArchiveToTapeCopyRequest
 
 } // namespace cta
