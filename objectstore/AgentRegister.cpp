@@ -18,9 +18,18 @@
 
 #include "AgentRegister.hpp"
 #include "ProtcolBuffersAlgorithms.hpp"
+#include "GenericObject.hpp"
 
 cta::objectstore::AgentRegister::AgentRegister(Backend & os):
 ObjectOps<serializers::AgentRegister>(os) {}
+
+cta::objectstore::AgentRegister::AgentRegister(GenericObject& go): 
+  ObjectOps<serializers::AgentRegister>(go.objectStore()) {
+  // Here we transplant the generic object into the new object
+  go.transplantHeader(*this);
+  // And interpret the header.
+  getPayloadFromHeader();
+}
 
 cta::objectstore::AgentRegister::AgentRegister(const std::string & name, Backend & os):
 ObjectOps<serializers::AgentRegister>(os, name) {}
@@ -30,6 +39,15 @@ void cta::objectstore::AgentRegister::initialize() {
   // There is nothing to do for the payload.
   m_payloadInterpreted = true;
 }
+
+void cta::objectstore::AgentRegister::garbageCollect() {
+  checkPayloadWritable();
+  if (!isEmpty()) {
+    throw (NotEmpty("Trying to garbage collect a non-empty AgentRegister: internal error"));
+  }
+  remove();
+}
+
 
 bool cta::objectstore::AgentRegister::isEmpty() {
   checkPayloadReadable();

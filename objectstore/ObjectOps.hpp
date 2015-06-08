@@ -30,6 +30,7 @@ class ObjectOpsBase {
   friend class ScopedLock;
   friend class ScopedSharedLock;
   friend class ScopedExclusiveLock;
+  friend class GenericObject;
 protected:
   ObjectOpsBase(Backend & os): m_nameSet(false), m_objectStore(os), 
     m_headerInterpreted(false), m_payloadInterpreted(false),
@@ -165,7 +166,6 @@ protected:
   bool m_existingObject;
   int m_locksCount;
   int m_locksForWriteCount;
-  std::unique_ptr<Backend::ScopedLock> m_writeLock;
 };
 
 class ScopedLock {
@@ -175,18 +175,31 @@ public:
     releaseIfNeeded();
   }
   
+  /** Move the locked object reference to a new one. This is done when the locked
+   * object is a GenericObject and the caller instantiated a derived object from
+   * it. The lock follows the move.
+   * We check we move the lock from a Generic object (this is the only allowed
+   * use case).
+   * New object's locks are moved from the old one (referenced in the lock)
+   */
+  void transfer(ObjectOpsBase & newObject) {
+    decltype(m_objectOps) oldObj(m_objectOps);
+    m_objectOps = & newObject;
+    // Transfer the locks from old to new object
+    m_objectOps->m_locksCount = oldObj->m_locksCount;
+    m_objectOps->m_locksForWriteCount = oldObj->m_locksForWriteCount;
+    // The old object is not considered locked anymore and should be
+    // discarded. A previous call the the new object's constructor should
+    oldObj->m_locksCount =  0;
+    oldObj->m_locksForWriteCount = 0;
+  }
+  
   virtual ~ScopedLock() {
     releaseIfNeeded();
   }
-  class AlreadyLocked: public cta::exception::Exception {
-  public:
-    AlreadyLocked(const std::string & w): cta::exception::Exception(w) {}
-  };
   
-  class NotLocked: public cta::exception::Exception {
-  public:
-    NotLocked(const std::string & w): cta::exception::Exception(w) {}
-  };
+  CTA_GENERATE_EXCEPTION_CLASS(AlreadyLocked);
+  CTA_GENERATE_EXCEPTION_CLASS(NotLocked);
   
 protected:
   ScopedLock(): m_objectOps(NULL), m_locked(false) {}
@@ -275,6 +288,15 @@ public:
     m_header.set_payload(m_payload.SerializeAsString());
     // Write the object
     m_objectStore.atomicOverwrite(getAddressIfSet(), m_header.SerializeAsString());
+  }
+  
+  CTA_GENERATE_EXCEPTION_CLASS(WrongTypeForGarbageCollection);
+  /**
+   * This function should be overloaded in the inheriting classes
+   */
+  void garbageCollect() {
+    throw WrongTypeForGarbageCollection("In ObjectOps::garbageCollect. "
+      "This function should have been overloaded in derived class");
   }
   
 protected:

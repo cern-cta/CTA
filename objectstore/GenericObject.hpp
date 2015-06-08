@@ -33,25 +33,51 @@ public:
     ForbiddenOperation(const std::string & w): cta::exception::Exception(w) {}
   };
     
-  // Overload of ObjectOps's implementation: this special object tolerates all
-  // types of objects
+  /** Overload of ObjectOps's implementation: this special object tolerates all
+   * types of objects */
   void fetch();
   
-  // Overload of ObjectOps's implementation: we will leave the payload transparently
-  // untouched and only deal with header parameters
+  /** Overload of ObjectOps's implementation: we will leave the payload transparently
+   * untouched and only deal with header parameters */
   void commit();
   
-  // Get the object's type (type is forced implicitely in other classes)
+  /** Get the object's type (type is forced implicitly in other classes) */
   serializers::ObjectType type();
   
-  // Overload of ObjectOps's implementation: this operation is forbidden. Generic
-  // Object is only used to manipulate existing objects
+  /** Overload of ObjectOps's implementation: this operation is forbidden. Generic
+   * Object is only used to manipulate existing objects */
   void insert();
   
-  // Overload of ObjectOps's implementation: this operation is forbidden. Generic
-  // Object is only used to manipulate existing objects
+  /** Overload of ObjectOps's implementation: this operation is forbidden. Generic
+   * Object is only used to manipulate existing objects */
   void initialize();
   
+  /** This dispatcher function will call the object's garbage collection function.
+   * It also handles the passed lock and returns is unlocked.
+   * The object is expected to be passed exclusive locked and already fetched.
+   * No extra care will be required from the object
+   */
+  void garbageCollect(ScopedExclusiveLock & lock);
+  
+  CTA_GENERATE_EXCEPTION_CLASS(UnsupportedType);
+  /**
+   * This static function is a helper that will garbage collect the object at 
+   * the given address
+   */
+  static void garbageCollect(const std::string & address);
+  
+  /**
+   * This method will extract contents of the generic object's header and
+   * transfer them to the header of the destination
+   * The source (this) will be emptied.
+   * @param destination pointed to the new object's destination
+   */
+  void transplantHeader(ObjectOpsBase & destination);
+  
+  /**
+   * This method exposes the reference to the object store.
+   */
+  Backend & objectStore();
 };
 
 }}

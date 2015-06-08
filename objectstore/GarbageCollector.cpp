@@ -161,48 +161,21 @@ void GarbageCollector::checkHeartbeats() {
      throw cta::exception::Exception("In GarbageCollector::cleanupDeadAgent: the ownership is not ours as expected");
    }
    // Return all objects owned by the agent to their respective backup owners
-   std::list<std::string> ownedObjects = agent.getOwnershipList();
-   for (std::list<std::string>::iterator obj = ownedObjects.begin();
-       obj!= ownedObjects.end(); obj++) {
+   auto ownedObjects = agent.getOwnershipList();
+   for (auto obj = ownedObjects.begin(); obj!= ownedObjects.end(); obj++) {
      // Find the object
      GenericObject go(*obj, m_objectStore);
-     // If the objet does not exist, we're done.
-     if (!go.exists())
-       continue;
-     ScopedExclusiveLock goLock(go);
-     go.fetch();
-     // if the object is already owned by someone else, this was a dangling pointer:
-     // nothing to do.
-     if (go.getOwner() != name)
-       continue;
-     // We reached a point where we have to actually move to ownership to somewhere
-     // else. Find that somewhere else
-     GenericObject gContainter(go.getBackupOwner(), m_objectStore);
-     if (!go.exists()) {
-       throw cta::exception::Exception("In GarbageCollector::cleanupDeadAgent: backup owner does not exist!");
+     // If the object does not exist, we're done.
+     if (go.exists()) {
+       ScopedExclusiveLock goLock(go);
+       go.fetch();
+       // Call GenericOpbject's garbage collect method, which in turn will
+       // delegate to the object type's garbage collector.
+       go.garbageCollect(goLock);
      }
-     ScopedSharedLock gContLock(gContainter);
-     gContainter.fetch();
-     serializers::ObjectType containerType = gContainter.type();
-     gContLock.release();
-     switch(containerType) {
-//       case serializers::FIFO_t: {
-//         FIFO fifo(go.getBackupOwner(), m_objectStore);
-//         ScopedExclusiveLock ffLock(fifo);
-//         fifo.fetch();
-//         fifo.pushIfNotPresent(go.getNameIfSet());
-//         fifo.commit();
-//         // We now have a pointer to the object. Make the change official.
-//         go.setOwner(go.getBackupOwner());
-//         go.commit();
-//         ffLock.release();
-//         goLock.release();
-//         break;
-//       }
-       default: {
-         throw cta::exception::Exception("In GarbageCollector::cleanupDeadAgent: unexpected container type!");
-       }
-     }
+     // In all cases, relinquish ownership for this object
+     agent.removeFromOwnership(*obj);
+     agent.commit();
    }
    // We now processed all the owned objects. We can delete the agent's entry
    agent.removeAndUnregisterSelf();

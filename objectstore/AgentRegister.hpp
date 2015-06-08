@@ -25,12 +25,16 @@ namespace cta { namespace objectstore {
   
 class Backend;
 class Agent;
+class GenericObject;
 
 class AgentRegister: public ObjectOps<serializers::AgentRegister> {
 public:
   AgentRegister(Backend & os);
+  AgentRegister(GenericObject & go);
   AgentRegister(const std::string & name, Backend & os);
   void initialize();
+  CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
+  void garbageCollect();
   bool isEmpty();
   void addAgent (std::string name);
   void removeAgent (const std::string  & name);

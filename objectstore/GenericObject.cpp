@@ -17,6 +17,7 @@
  */
 
 #include "GenericObject.hpp"
+#include "AgentRegister.hpp"
 
 namespace cta {  namespace objectstore {
 
@@ -47,5 +48,38 @@ void GenericObject::insert() {
 void GenericObject::initialize() {
   throw ForbiddenOperation("In GenericObject::initialize: this operation is not possible");
 }
+
+void GenericObject::transplantHeader(ObjectOpsBase& destination) {
+  destination.m_header = m_header;
+  destination.m_existingObject = m_existingObject;
+  destination.m_headerInterpreted = m_headerInterpreted;
+  destination.m_name = m_name;
+  destination.m_nameSet = m_nameSet;
+  destination.m_payloadInterpreted = false;
+    }
+
+Backend& GenericObject::objectStore() {
+  return m_objectStore;
+}
+
+
+void GenericObject::garbageCollect(ScopedExclusiveLock& lock) {
+  checkHeaderWritable();
+  switch(m_header.type()) {
+    case serializers::AgentRegister_t: {
+      AgentRegister ar(*this);
+      lock.transfer(ar);
+      ar.garbageCollect();
+      break;
+    }
+    default: {
+      std::stringstream err;
+      err << "In GenericObject::garbageCollect, unsupported type: "
+          << m_header.type();
+      throw UnsupportedType(err.str());
+    }
+  }
+}
+
 
 }}
