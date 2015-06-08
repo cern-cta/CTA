@@ -18,8 +18,8 @@
 
 #include "nameserver/MockNameServerFactory.hpp"
 #include "nameserver/NameServer.hpp"
-#include "scheduler/ArchivalJob.hpp"
 #include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MockSchedulerDatabaseFactory.hpp"
 #include "scheduler/Scheduler.hpp"
@@ -1448,21 +1448,20 @@ TEST_P(SchedulerTest, user_archive_to_new_file) {
   }
 
   {
-    const std::map<TapePool, std::list<ArchivalJob> > allJobs =
-      scheduler.getArchivalJobs(s_adminOnAdminHost);
-    ASSERT_EQ(1, allJobs.size());
-    std::map<TapePool, std::list<ArchivalJob> >::const_iterator
-      poolItor = allJobs.begin();
-    ASSERT_FALSE(poolItor == allJobs.end());
+    const std::map<TapePool, std::list<ArchiveToFileRequest> > allRqsts =
+      scheduler.getArchiveToFileRequests(s_adminOnAdminHost);
+    ASSERT_EQ(1, allRqsts.size());
+    std::map<TapePool, std::list<ArchiveToFileRequest> >::const_iterator
+      poolItor = allRqsts.begin();
+    ASSERT_FALSE(poolItor == allRqsts.end());
     const TapePool &pool = poolItor->first;
     ASSERT_TRUE(tapePoolName == pool.getName());
-    const std::list<ArchivalJob> &poolJobs = poolItor->second;
-    ASSERT_EQ(1, poolJobs.size());
+    const std::list<ArchiveToFileRequest> &poolRqsts = poolItor->second;
+    ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> srcUrls;
     std::set<std::string> dstPaths;
-    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
-      jobItor != poolJobs.end(); jobItor++) {
-      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
+    for(std::list<ArchiveToFileRequest>::const_iterator jobItor = poolRqsts.begin();
+      jobItor != poolRqsts.end(); jobItor++) {
       srcUrls.insert(jobItor->getRemoteFile());
       dstPaths.insert(jobItor->getArchiveFile());
     }
@@ -1473,14 +1472,13 @@ TEST_P(SchedulerTest, user_archive_to_new_file) {
   }
 
   {
-    const std::list<ArchivalJob> poolJobs = scheduler.getArchivalJobs(s_adminOnAdminHost,
+    const std::list<ArchiveToFileRequest> poolRqsts = scheduler.getArchiveToFileRequests(s_adminOnAdminHost,
       tapePoolName);
-    ASSERT_EQ(1, poolJobs.size());
+    ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> srcUrls;
     std::set<std::string> dstPaths;
-    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
-      jobItor != poolJobs.end(); jobItor++) {
-      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
+    for(std::list<ArchiveToFileRequest>::const_iterator jobItor = poolRqsts.begin();
+      jobItor != poolRqsts.end(); jobItor++) {
       srcUrls.insert(jobItor->getRemoteFile());
       dstPaths.insert(jobItor->getArchiveFile());
     }
@@ -1659,21 +1657,20 @@ TEST_P(SchedulerTest, user_archive_to_directory) {
   }
 
   {
-    const std::map<TapePool, std::list<ArchivalJob> > allJobs =
-      scheduler.getArchivalJobs(s_adminOnAdminHost);
-    ASSERT_EQ(1, allJobs.size());
-    std::map<TapePool, std::list<ArchivalJob> >::const_iterator
-      poolItor = allJobs.begin();
-    ASSERT_FALSE(poolItor == allJobs.end());
+    const std::map<TapePool, std::list<ArchiveToFileRequest> > allRqsts =
+      scheduler.getArchiveToFileRequests(s_adminOnAdminHost);
+    ASSERT_EQ(1, allRqsts.size());
+    std::map<TapePool, std::list<ArchiveToFileRequest> >::const_iterator
+      poolItor = allRqsts.begin();
+    ASSERT_FALSE(poolItor == allRqsts.end());
     const TapePool &pool = poolItor->first;
     ASSERT_TRUE(tapePoolName == pool.getName());
-    const std::list<ArchivalJob> &poolJobs = poolItor->second;
-    ASSERT_EQ(4, poolJobs.size());
+    const std::list<ArchiveToFileRequest> &poolRqsts = poolItor->second;
+    ASSERT_EQ(4, poolRqsts.size());
     std::set<std::string> srcUrls;
     std::set<std::string> dstPaths;
-    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
-      jobItor != poolJobs.end(); jobItor++) {
-      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
+    for(std::list<ArchiveToFileRequest>::const_iterator jobItor = poolRqsts.begin();
+      jobItor != poolRqsts.end(); jobItor++) {
       srcUrls.insert(jobItor->getRemoteFile());
       dstPaths.insert(jobItor->getArchiveFile());
     }
@@ -1690,14 +1687,13 @@ TEST_P(SchedulerTest, user_archive_to_directory) {
   }
 
   {
-    const std::list<ArchivalJob> poolJobs = scheduler.getArchivalJobs(s_adminOnAdminHost,
+    const std::list<ArchiveToFileRequest> poolRqsts = scheduler.getArchiveToFileRequests(s_adminOnAdminHost,
       tapePoolName);
-    ASSERT_EQ(4, poolJobs.size());
+    ASSERT_EQ(4, poolRqsts.size());
     std::set<std::string> srcUrls;
     std::set<std::string> dstPaths;
-    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
-      jobItor != poolJobs.end(); jobItor++) {
-      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
+    for(std::list<ArchiveToFileRequest>::const_iterator jobItor = poolRqsts.begin();
+      jobItor != poolRqsts.end(); jobItor++) {
       srcUrls.insert(jobItor->getRemoteFile());
       dstPaths.insert(jobItor->getArchiveFile());
     }

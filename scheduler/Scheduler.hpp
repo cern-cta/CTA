@@ -28,7 +28,6 @@ namespace cta {
 // Forward declarations for opaque references.
 class AdminHost;
 class AdminUser;
-class ArchivalJob;
 class ArchivalRoute;
 class ArchiveToDirRequest;
 class ArchiveToFileRequest;
@@ -64,38 +63,37 @@ public:
   ~Scheduler() throw();
 
   /**
-   * Returns all of the existing archival jobs grouped by tape pool and then
-   * sorted by creation time in ascending order (oldest first).
+   * Returns all of the queued requests to archive files.  The returned requests
+   * are grouped by tape pool and then sorted by creation time in ascending
+   * order (oldest first).
    *
    * @param requester The identity of the user requesting the list.
-   * @return All of the existing archival jobs grouped by tape pool and then
-   * sorted by creation time in ascending order (oldest first).
+   * @return The queued requests.
    */
-  std::map<TapePool, std::list<ArchivalJob> > getArchivalJobs(
+  std::map<TapePool, std::list<ArchiveToFileRequest> > getArchiveToFileRequests(
     const SecurityIdentity &requester) const;
 
   /**
-   * Returns the list of archival jobs associated with the specified tape pool
-   * sorted by creation time in ascending order (oldest first).
+   * Returns the list of queued requests to archive files for the specified tape
+   * pool sorted by creation time in ascending order (oldest first).
    *
    * @param requester The identity of the user requesting the list.
    * @param tapePoolName The name of the tape pool.
-   * @return The list of archival jobs associated with the specified tape pool
-   * sorted by creation time in ascending order (oldest first).
+   * @return The queued requests.
    */
-  std::list<ArchivalJob> getArchivalJobs(
+  std::list<ArchiveToFileRequest> getArchiveToFileRequests(
     const SecurityIdentity &requester,
     const std::string &tapePoolName) const;
 
   /**
-   * Deletes the specified archival job.
+   * Deletes the specified archive request.
    *
    * @param requester The identity of the user requesting the deletion of the
    * tape.
    * @param dstPath The absolute path of the destination file within the
    * archive namespace.
    */
-  void deleteArchivalJob(
+  void deleteArchiveToFileRequest(
     const SecurityIdentity &requester,
     const std::string &dstPath);
 

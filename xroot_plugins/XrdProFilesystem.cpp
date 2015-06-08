@@ -44,7 +44,10 @@ extern "C"
 //------------------------------------------------------------------------------
 // checkClient
 //------------------------------------------------------------------------------
-int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eInfo, cta::SecurityIdentity &requester) const {
+int XrdProFilesystem::checkClient(
+  const XrdSecEntity *client,
+  XrdOucErrInfo &eInfo,
+  cta::SecurityIdentity &requester) const {
   if(!client || !client->host || strncmp(client->host, "localhost", 9))
   {
     std::string response = "[ERROR] operation possible only from localhost";
@@ -87,10 +90,10 @@ int XrdProFilesystem::checkClient(const XrdSecEntity *client, XrdOucErrInfo &eIn
       return SFS_DATA;
     }
   }
-  std::cout << "Request received from client. Username: " << client->name << " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
-  requester.host = client->host;
-  requester.user.setUid(pwd.pw_uid);
-  requester.user.setGid(pwd.pw_gid);
+  std::cout << "Request received from client. Username: " << client->name <<
+    " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
+  requester = cta::SecurityIdentity(cta::UserIdentity(pwd.pw_uid, pwd.pw_gid),
+    client->host);
   free(buf);
   return SFS_OK;
 }
@@ -167,14 +170,13 @@ int XrdProFilesystem::executeLsArchiveJobsCommand(const ParsedRequest &req, XrdO
   }
   try {
     if(req.args.size() == 1) {      
-      std::list<cta::ArchivalJob> jobs = m_userApi.getArchivalJobs(requester, req.args.at(0));
+      std::list<cta::ArchiveToFileRequest> requests = m_userApi.getArchiveToFileRequests(requester, req.args.at(0));
       std::ostringstream responseSS;
-      responseSS << "[OK] List of archive jobs for tape pool " << req.args.at(0) << ":\n";
-      for(std::list<cta::ArchivalJob>::const_iterator it = jobs.begin(); it != jobs.end(); it++) {
-        responseSS << "[OK]\t" << it->getCreator().getUid()
-                << " " << it->getCreator().getGid() 
+      responseSS << "[OK] List of archive requests for tape pool " << req.args.at(0) << ":\n";
+      for(auto it = requests.begin(); it != requests.end(); it++) {
+        responseSS << "[OK]\t" << it->getRequester().getUser().getUid()
+                << " " << it->getRequester().getUser().getGid() 
                 << " " << it->getCreationTime()
-                << " " << it->getStateStr() 
                 << " " << it->getRemoteFile() 
                 << " " << it->getArchiveFile() << "\n";
       }
@@ -182,15 +184,14 @@ int XrdProFilesystem::executeLsArchiveJobsCommand(const ParsedRequest &req, XrdO
       return SFS_DATA;
     }
     else {
-      std::map<cta::TapePool, std::list<cta::ArchivalJob> > pools = m_userApi.getArchivalJobs(requester);
+      std::map<cta::TapePool, std::list<cta::ArchiveToFileRequest> > pools = m_userApi.getArchiveToFileRequests(requester);
       std::ostringstream responseSS;
-      for(std::map<cta::TapePool, std::list<cta::ArchivalJob> >::const_iterator pool=pools.begin(); pool!=pools.end(); pool++) {
-        responseSS << "[OK] List of archive jobs for tape pool " << (pool->first).getName() << ":\n";
-        for(std::list<cta::ArchivalJob>::const_iterator it = (pool->second).begin(); it != (pool->second).end(); it++) {
-          responseSS << "[OK]\t" << it->getCreator().getUid()
-                  << " " << it->getCreator().getGid() 
+      for(auto pool=pools.begin(); pool!=pools.end(); pool++) {
+        responseSS << "[OK] List of archive requests for tape pool " << (pool->first).getName() << ":\n";
+        for(auto it = (pool->second).begin(); it != (pool->second).end(); it++) {
+          responseSS << "[OK]\t" << it->getRequester().getUser().getUid()
+                  << " " << it->getRequester().getUser().getGid() 
                   << " " << it->getCreationTime()
-                  << " " << it->getStateStr() 
                   << " " << it->getRemoteFile() 
                   << " " << it->getArchiveFile() << "\n";
         }
@@ -233,7 +234,7 @@ int XrdProFilesystem::executeRetrieveCommand(const ParsedRequest &req, XrdOucErr
     m_userApi.retrieve(requester, sourceFiles, destinationPath);
     std::ostringstream responseSS;
     responseSS << "[OK] Requested retrieval of the following files:\n";
-    for(std::list<std::string>::iterator it = sourceFiles.begin(); it != sourceFiles.end(); it++) {
+    for(auto it = sourceFiles.begin(); it != sourceFiles.end(); it++) {
       responseSS << "[OK]\t" << *it << "\n";
     }
     responseSS << "[OK] To the following directory:\n";
@@ -268,10 +269,10 @@ int XrdProFilesystem::executeLsRetrieveJobsCommand(const ParsedRequest &req, Xrd
   }
   try {
     if(req.args.size() != 1) {      
-      std::list<cta::RetrievalJob> jobs = m_userApi.getRetrievalJobs(requester, req.args.at(0));
+      std::list<cta::RetrievalJob> requests = m_userApi.getRetrievalJobs(requester, req.args.at(0));
       std::ostringstream responseSS;
-      responseSS << "[OK] List of retrieve jobs for vid " << req.args.at(0) << ":\n";
-      for(std::list<cta::RetrievalJob>::const_iterator it = jobs.begin(); it != jobs.end(); it++) {
+      responseSS << "[OK] List of retrieve requests for vid " << req.args.at(0) << ":\n";
+      for(auto it = requests.begin(); it != requests.end(); it++) {
         responseSS << "[OK]\t" << it->getCreator().getUid()
                 << " " << it->getCreator().getGid() 
                 << " " << it->getCreationTime()
@@ -285,8 +286,8 @@ int XrdProFilesystem::executeLsRetrieveJobsCommand(const ParsedRequest &req, Xrd
     else {
       std::map<cta::Tape, std::list<cta::RetrievalJob> > tapes = m_userApi.getRetrievalJobs(requester);
       std::ostringstream responseSS;
-      for(std::map<cta::Tape, std::list<cta::RetrievalJob> >::const_iterator tape=tapes.begin(); tape!=tapes.end(); tape++) {
-        responseSS << "[OK] List of retrieve jobs for vid " << (tape->first).getVid() << ":\n";
+      for(auto tape=tapes.begin(); tape!=tapes.end(); tape++) {
+        responseSS << "[OK] List of retrieve requests for vid " << (tape->first).getVid() << ":\n";
         for(std::list<cta::RetrievalJob>::const_iterator it = (tape->second).begin(); it != (tape->second).end(); it++) {
           responseSS << "[OK]\t" << it->getCreator().getUid()
                   << " " << it->getCreator().getGid() 
@@ -1291,7 +1292,7 @@ int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eI
   {  
     return executeArchiveCommand(req, eInfo, requester);
   }
-  else if(strcmp(req.cmd.c_str(), "/lsarchivejobs") == 0)
+  else if(strcmp(req.cmd.c_str(), "/lsarchiverequests") == 0)
   {  
     return executeLsArchiveJobsCommand(req, eInfo, requester);
   }
@@ -1299,7 +1300,7 @@ int XrdProFilesystem::dispatchRequest(const XrdSfsFSctl &args, XrdOucErrInfo &eI
   {  
     return executeRetrieveCommand(req, eInfo, requester);
   }
-  else if(strcmp(req.cmd.c_str(), "/lsretrievejobs") == 0)
+  else if(strcmp(req.cmd.c_str(), "/lsretrieverequests") == 0)
   {  
     return executeLsRetrieveJobsCommand(req, eInfo, requester);
   }

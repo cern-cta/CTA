@@ -4,8 +4,6 @@ set (CTA_SCHEDULER_SRC_FILES
   AdminHost.cpp
   AdminUser.cpp
   ArchivalFileTransfer.cpp
-  ArchivalJob.cpp
-  ArchivalJobState.cpp
   ArchivalMount.cpp
   ArchivalRequest.cpp
   ArchivalRoute.cpp

@@ -34,9 +34,8 @@ cta::RetrievalRequest::~RetrievalRequest() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::RetrievalRequest::RetrievalRequest(
-  const std::string &id,
   const uint64_t priority,
   const SecurityIdentity &user,
   const time_t creationTime):
-  UserRequest(id, priority, user, creationTime) {
+  UserRequest(priority, user, creationTime) {
 }

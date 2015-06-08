@@ -20,7 +20,6 @@
 
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
-#include "scheduler/ArchivalJob.hpp"
 #include "scheduler/ArchivalRoute.hpp"
 #include "scheduler/DirIterator.hpp"
 #include "scheduler/LogicalLibrary.hpp"

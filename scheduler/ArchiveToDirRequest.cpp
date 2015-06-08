@@ -35,12 +35,10 @@ cta::ArchiveToDirRequest::~ArchiveToDirRequest() throw() {
 //------------------------------------------------------------------------------
 cta::ArchiveToDirRequest::ArchiveToDirRequest(
   const std::string &archiveDir,
-  const std::string &storageClassName,
-  const std::string &id,
   const uint64_t priority,
   const SecurityIdentity &user,
   const time_t creationTime):
-  ArchivalRequest(storageClassName, id, priority, user, creationTime),
+  ArchivalRequest(priority, user, creationTime),
   m_archiveDir(archiveDir) {
 }
 

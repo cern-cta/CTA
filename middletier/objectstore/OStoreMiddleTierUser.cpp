@@ -79,18 +79,18 @@ void OStoreMiddleTierUser::archive(
   throw cta::exception::Exception("TODO");
 }
 
-std::map<TapePool, std::list<ArchivalJob> > OStoreMiddleTierUser::getArchivalJobs(
+std::map<cta::TapePool, std::list<cta::ArchiveToFileRequest> > OStoreMiddleTierUser::getArchiveToFileRequests(
   const SecurityIdentity& requester) const {
   throw cta::exception::Exception("TODO");
 }
 
-std::list<ArchivalJob> OStoreMiddleTierUser::getArchivalJobs(
+std::list<cta::ArchiveToFileRequest> OStoreMiddleTierUser::getArchiveToFileRequests(
   const SecurityIdentity& requester,
   const std::string& tapePoolName) const {
   throw cta::exception::Exception("TODO");
 }
 
-void OStoreMiddleTierUser::deleteArchivalJob(
+void OStoreMiddleTierUser::deleteArchiveToFileRequest(
   const SecurityIdentity& requester,
   const std::string& dstPath) {
   throw cta::exception::Exception("TODO");

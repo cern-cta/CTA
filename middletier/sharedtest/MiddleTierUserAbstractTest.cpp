@@ -543,21 +543,20 @@ TEST_P(MiddleTierAbstractTest, user_archive_to_new_file) {
   }
 
   {
-    const std::map<TapePool, std::list<ArchivalJob> > allJobs =
-      m_middleTier->user().getArchivalJobs(requester);
+    const std::map<TapePool, std::list<ArchiveToFileRequest> > allJobs =
+      m_middleTier->user().getArchiveToFileRequests(requester);
     ASSERT_EQ(1, allJobs.size());
-    std::map<TapePool, std::list<ArchivalJob> >::const_iterator
+    std::map<TapePool, std::list<ArchiveToFileRequest> >::const_iterator
       poolItor = allJobs.begin();
     ASSERT_FALSE(poolItor == allJobs.end());
     const TapePool &pool = poolItor->first;
     ASSERT_TRUE(tapePoolName == pool.getName());
-    const std::list<ArchivalJob> &poolJobs = poolItor->second;
+    const std::list<ArchiveToFileRequest> &poolJobs = poolItor->second;
     ASSERT_EQ(1, poolJobs.size());
     std::set<std::string> srcUrls;
     std::set<std::string> dstPaths;
-    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
+    for(std::list<ArchiveToFileRequest>::const_iterator jobItor = poolJobs.begin();
       jobItor != poolJobs.end(); jobItor++) {
-      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
       srcUrls.insert(jobItor->getRemoteFile());
       dstPaths.insert(jobItor->getArchiveFile());
     }
@@ -568,14 +567,13 @@ TEST_P(MiddleTierAbstractTest, user_archive_to_new_file) {
   }
 
   {
-    const std::list<ArchivalJob> poolJobs = m_middleTier->user().getArchivalJobs(requester,
+    const std::list<ArchiveToFileRequest> poolJobs = m_middleTier->user().getArchiveToFileRequests(requester,
       tapePoolName);
     ASSERT_EQ(1, poolJobs.size());
     std::set<std::string> srcUrls;
     std::set<std::string> dstPaths;
-    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
+    for(std::list<ArchiveToFileRequest>::const_iterator jobItor = poolJobs.begin();
       jobItor != poolJobs.end(); jobItor++) {
-      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
       srcUrls.insert(jobItor->getRemoteFile());
       dstPaths.insert(jobItor->getArchiveFile());
     }
@@ -754,21 +752,20 @@ TEST_P(MiddleTierAbstractTest, user_archive_to_directory) {
   }
 
   {
-    const std::map<TapePool, std::list<ArchivalJob> > allJobs =
-      m_middleTier->user().getArchivalJobs(requester);
+    const std::map<TapePool, std::list<ArchiveToFileRequest> > allJobs =
+      m_middleTier->user().getArchiveToFileRequests(requester);
     ASSERT_EQ(1, allJobs.size());
-    std::map<TapePool, std::list<ArchivalJob> >::const_iterator
+    std::map<TapePool, std::list<ArchiveToFileRequest> >::const_iterator
       poolItor = allJobs.begin();
     ASSERT_FALSE(poolItor == allJobs.end());
     const TapePool &pool = poolItor->first;
     ASSERT_TRUE(tapePoolName == pool.getName());
-    const std::list<ArchivalJob> &poolJobs = poolItor->second;
+    const std::list<ArchiveToFileRequest> &poolJobs = poolItor->second;
     ASSERT_EQ(4, poolJobs.size());
     std::set<std::string> srcUrls;
     std::set<std::string> dstPaths;
-    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
+    for(std::list<ArchiveToFileRequest>::const_iterator jobItor = poolJobs.begin();
       jobItor != poolJobs.end(); jobItor++) {
-      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
       srcUrls.insert(jobItor->getRemoteFile());
       dstPaths.insert(jobItor->getArchiveFile());
     }
@@ -785,14 +782,13 @@ TEST_P(MiddleTierAbstractTest, user_archive_to_directory) {
   }
 
   {
-    const std::list<ArchivalJob> poolJobs = m_middleTier->user().getArchivalJobs(requester,
+    const std::list<ArchiveToFileRequest> poolJobs = m_middleTier->user().getArchiveToFileRequests(requester,
       tapePoolName);
     ASSERT_EQ(4, poolJobs.size());
     std::set<std::string> srcUrls;
     std::set<std::string> dstPaths;
-    for(std::list<ArchivalJob>::const_iterator jobItor = poolJobs.begin();
+    for(std::list<ArchiveToFileRequest>::const_iterator jobItor = poolJobs.begin();
       jobItor != poolJobs.end(); jobItor++) {
-      ASSERT_EQ(ArchivalJobState::PENDING, jobItor->getState());
       srcUrls.insert(jobItor->getRemoteFile());
       dstPaths.insert(jobItor->getArchiveFile());
     }

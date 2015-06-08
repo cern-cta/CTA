@@ -141,7 +141,7 @@ void cta::SqliteMiddleTierUser::archiveToDir(
       else {
         dstPathname = dstDir+"/"+srcFileName;
       }
-      m_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstPathname);
+      m_db.insertArchiveToFileRequest(requester, route.getTapePoolName(), srcFileName, dstPathname);
     }
   }
   
@@ -184,37 +184,37 @@ void cta::SqliteMiddleTierUser::archiveToFile(
   }
   for(int i=1; i<=storageClass.getNbCopies(); i++) {
     cta::ArchivalRoute route = m_db.getArchivalRouteOfStorageClass(requester, storageClassName, i);
-    m_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstFile);
+    m_db.insertArchiveToFileRequest(requester, route.getTapePoolName(), srcFileName, dstFile);
   }
   
   m_ns.createFile(requester, dstFile, 0666);
 }
 
 //------------------------------------------------------------------------------
-// getArchivalJobs
+// getArchiveToFileRequests
 //------------------------------------------------------------------------------
-std::map<cta::TapePool, std::list<cta::ArchivalJob> >
-  cta::SqliteMiddleTierUser::getArchivalJobs(
+std::map<cta::TapePool, std::list<cta::ArchiveToFileRequest> >
+  cta::SqliteMiddleTierUser::getArchiveToFileRequests(
   const SecurityIdentity &requester) const {
-  return m_db.selectAllArchivalJobs(requester);
+  return m_db.selectAllArchiveToFileRequests(requester);
 }
 
 //------------------------------------------------------------------------------
-// getArchivalJobs
+// getArchiveToFileRequests
 //------------------------------------------------------------------------------
-std::list<cta::ArchivalJob> cta::SqliteMiddleTierUser::getArchivalJobs(
+std::list<cta::ArchiveToFileRequest> cta::SqliteMiddleTierUser::getArchiveToFileRequests(
   const SecurityIdentity &requester,
   const std::string &tapePoolName) const {
-  return (m_db.selectAllArchivalJobs(requester))[m_db.getTapePoolByName(requester, tapePoolName)];
+  return (m_db.selectAllArchiveToFileRequests(requester))[m_db.getTapePoolByName(requester, tapePoolName)];
 }
 
 //------------------------------------------------------------------------------
-// deleteArchivalJob
+// deleteArchiveToFileRequest
 //------------------------------------------------------------------------------
-void cta::SqliteMiddleTierUser::deleteArchivalJob(
+void cta::SqliteMiddleTierUser::deleteArchiveToFileRequest(
   const SecurityIdentity &requester,
   const std::string &dstPath) {
-  m_db.deleteArchivalJob(requester, dstPath);
+  m_db.deleteArchiveToFileRequest(requester, dstPath);
 }
 
 //------------------------------------------------------------------------------

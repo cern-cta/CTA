@@ -37,12 +37,10 @@ cta::ArchiveToFileRequest::ArchiveToFileRequest(
   const std::string &remoteFile,
   const std::string &archiveFile,
   const std::map<uint16_t, std::string> &copyNbToTapePoolMap,
-  const std::string &storageClassName,
-  const std::string &id,
   const uint64_t priority,
   const SecurityIdentity &requester, 
   const time_t creationTime):
-  ArchivalRequest(storageClassName, id, priority, requester, creationTime),
+  ArchivalRequest(priority, requester, creationTime),
   m_remoteFile(remoteFile),
   m_archiveFile(archiveFile),
   m_copyNbToTapePoolMap(copyNbToTapePoolMap) {

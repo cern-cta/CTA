@@ -31,16 +31,6 @@ namespace cta {
 struct SecurityIdentity {
 
   /**
-   * The identity of the user.
-   */
-  UserIdentity user;
-
-  /**
-   * The network name of the host from which they are submitting a request.
-   */
-  std::string host;
-
-  /**
    * Constructor.
    */
   SecurityIdentity();
@@ -49,6 +39,34 @@ struct SecurityIdentity {
    * Constructor.
    */
   SecurityIdentity(const UserIdentity &user, const std::string &host);
+
+  /**
+   * Returns The identity of the user.
+   *
+   * @return The identity of the user.
+   */
+  const UserIdentity &getUser() const throw();
+
+  /**
+   * Returns the network name of the host from which they are submitting a
+   * request.
+   *
+   * @return The network name of the host from which they are submitting a
+   * request.
+   */
+  const std::string &getHost() const throw();
+
+private:
+
+  /**
+   * The identity of the user.
+   */
+  UserIdentity m_user;
+
+  /**
+   * The network name of the host from which they are submitting a request.
+   */
+  std::string m_host;
 
 }; // struct SecurityIdentity
 

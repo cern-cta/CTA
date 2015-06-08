@@ -28,5 +28,19 @@ cta::SecurityIdentity::SecurityIdentity() {
 // constructor
 //------------------------------------------------------------------------------
 cta::SecurityIdentity::SecurityIdentity(const UserIdentity &user,
-  const std::string &host): user(user), host(host) {
+  const std::string &host): m_user(user), m_host(host) {
+}
+
+//------------------------------------------------------------------------------
+// getUser
+//------------------------------------------------------------------------------
+const cta::UserIdentity &cta::SecurityIdentity::getUser() const throw() {
+  return m_user;
+}
+
+//------------------------------------------------------------------------------
+// getHost
+//------------------------------------------------------------------------------
+const std::string &cta::SecurityIdentity::getHost() const throw() {
+  return m_host;
 }

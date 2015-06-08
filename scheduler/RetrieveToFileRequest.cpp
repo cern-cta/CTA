@@ -36,11 +36,10 @@ cta::RetrieveToFileRequest::~RetrieveToFileRequest() throw() {
 cta::RetrieveToFileRequest::RetrieveToFileRequest(
   const std::string &archiveFile,
   const std::string &remoteFile,
-  const std::string &id, 
   const uint64_t priority,
   const SecurityIdentity &user, 
   const time_t creationTime):
-  RetrievalRequest(id, priority, user, creationTime),
+  RetrievalRequest(priority, user, creationTime),
   m_archiveFile(archiveFile),
   m_remoteFile(remoteFile) {
 }

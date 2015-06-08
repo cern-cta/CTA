@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "scheduler/ArchivalJob.hpp"
 #include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/DirIterator.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrievalJob.hpp"
@@ -157,40 +157,39 @@ public:
     const std::string &dstPath) = 0;
 
   /**
-   * Returns all of the existing archival jobs grouped by tape pool and then
-   * sorted by creation time in ascending order (oldest first).
+   * Returns all of the queued requests to archive files.  The returned requests
+   * are grouped by tape pool and then sorted by creation time in ascending
+   * order (oldest first).
    *
-   * @param requester The identity of the user requesting the list.
-   * @return All of the existing archival jobs grouped by tape pool and then
-   * sorted by creation time in ascending order (oldest first).
+   * @param requester The identity of the requester.
+   * @return The queues requests.
    */
-  virtual std::map<TapePool, std::list<ArchivalJob> > getArchivalJobs(
-    const SecurityIdentity &requester) const = 0;
+  virtual std::map<TapePool, std::list<ArchiveToFileRequest> >
+    getArchiveToFileRequests(const SecurityIdentity &requester) const = 0;
 
   /**
-   * Returns the list of archival jobs associated with the specified tape pool
-   * sorted by creation time in ascending order (oldest first).
+   * Returns the list of queued requests to archive files for the specified tape
+   * pool sorted by creation time in ascending order (oldest first).
    *
-   * @param requester The identity of the user requesting the list.
+   * @param requester The identity of the requester.
    * @param tapePoolName The name of the tape pool.
-   * @return The list of archival jobs associated with the specified tape pool
-   * sorted by creation time in ascending order (oldest first).
+   * @return The queues requests.
    */
-  virtual std::list<ArchivalJob> getArchivalJobs(
+  virtual std::list<ArchiveToFileRequest> getArchiveToFileRequests(
     const SecurityIdentity &requester,
     const std::string &tapePoolName) const = 0;
 
   /**
-   * Deletes the specified archival job.
+   * Deletes the specified archive request.
    *
-   * @param requester The identity of the user requesting the deletion of the
+   * @param requester The identity of the requester.
    * tape.
-   * @param dstPath The absolute path of the destination file within the
+   * @param archiveFile The absolute path of the destination file within the
    * archive namespace.
    */
-  virtual void deleteArchivalJob(
+  virtual void deleteArchiveToFileRequest(
     const SecurityIdentity &requester,
-    const std::string &dstPath) = 0;
+    const std::string &archiveFile) = 0;
 
   /**
    * Creates a retrieval job to asynchronously retrieve the specified archived
@@ -202,7 +201,7 @@ public:
    * If there is only one archived file then the destination can be either a
    * file or a directory.
    *
-   * @param requester The identity of the user requesting the retrieval.
+   * @param requester The identity of the requester.
    * @param srcPaths The list of one of more archived files.
    * @param dstUrl The URL of the destination file or directory.
    */

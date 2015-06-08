@@ -21,7 +21,6 @@
 #include "nameserver/NameServer.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
-#include "scheduler/ArchivalJob.hpp"
 #include "scheduler/ArchivalRoute.hpp"
 #include "scheduler/ArchiveToDirRequest.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
@@ -54,30 +53,30 @@ cta::Scheduler::~Scheduler() throw() {
 }
 
 //------------------------------------------------------------------------------
-// getArchivalJobs
+// getArchiveToFileRequests
 //------------------------------------------------------------------------------
-std::map<cta::TapePool, std::list<cta::ArchivalJob> > cta::Scheduler::
-  getArchivalJobs(const SecurityIdentity &requester) const {
-  return std::map<TapePool, std::list<ArchivalJob> >();
+std::map<cta::TapePool, std::list<cta::ArchiveToFileRequest> > cta::Scheduler::
+  getArchiveToFileRequests(const SecurityIdentity &requester) const {
+  return std::map<TapePool, std::list<ArchiveToFileRequest> >();
 }
 
 //------------------------------------------------------------------------------
-// getArchivalJobs
+// getArchiveToFileRequests
 //------------------------------------------------------------------------------
-std::list<cta::ArchivalJob> cta::Scheduler::getArchivalJobs(
+std::list<cta::ArchiveToFileRequest> cta::Scheduler::getArchiveToFileRequests(
   const SecurityIdentity &requester,
   const std::string &tapePoolName) const {
-  return m_db.getArchivalJobs(tapePoolName);
+  return m_db.getArchiveToFileRequests(tapePoolName);
 }
 
 //------------------------------------------------------------------------------
-// deleteArchivalJob
+// deleteArchiveToFileRequest
 //------------------------------------------------------------------------------
-void cta::Scheduler::deleteArchivalJob(
+void cta::Scheduler::deleteArchiveToFileRequest(
   const SecurityIdentity &requester,
   const std::string &dstPath) {
   m_db.assertIsAdminOnAdminHost(requester);
-  m_db.deleteArchivalJob(requester, dstPath);
+  m_db.deleteArchiveToFileRequest(requester, dstPath);
 }
 
 //------------------------------------------------------------------------------
@@ -458,7 +457,7 @@ void cta::Scheduler::queueArchiveToDirRequest(
       else {
         dstPathname = dstDir+"/"+srcFileName;
       }
-      m_db.insertArchivalJob(requester, route.getTapePoolName(), srcFileName, dstPathname);
+      m_db.insertArchiveToFileRequest(requester, route.getTapePoolName(), srcFileName, dstPathname);
     }
   }
   
@@ -513,15 +512,12 @@ void cta::Scheduler::queueArchiveToFileRequest(
     copyNbToTapePoolMap[route.getCopyNb()] = route.getTapePoolName();
   }
 
-  const std::string id = Utils::generateUuid();
   const uint64_t priority = 0;
 
   m_db.queue(ArchiveToFileRequest(
     remoteFile,
     archiveFile,
     copyNbToTapePoolMap,
-    storageClassName,
-    id,
     priority, 
     requester));
 

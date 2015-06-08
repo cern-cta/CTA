@@ -20,8 +20,8 @@
 
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
-#include "scheduler/ArchivalJob.hpp"
 #include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrievalJob.hpp"
 #include "scheduler/SecurityIdentity.hpp"
@@ -64,7 +64,7 @@ public:
   
   void insertAdminHost(const SecurityIdentity &requester, const std::string &hostName, const std::string &comment);
   
-  void insertArchivalJob(const SecurityIdentity &requester, const std::string &tapepool, const std::string &srcUrl, const std::string &dstPath);
+  void insertArchiveToFileRequest(const SecurityIdentity &requester, const std::string &tapepool, const std::string &remoteFile, const std::string &archiveFile);
   
   void insertRetrievalJob(const SecurityIdentity &requester, const std::string &vid, const std::string &srcPath, const std::string &dstUrl);
   
@@ -82,7 +82,7 @@ public:
   
   void deleteAdminHost(const SecurityIdentity &requester, const std::string &hostName);
   
-  void deleteArchivalJob(const SecurityIdentity &requester, const std::string &dstPath);
+  void deleteArchiveToFileRequest(const SecurityIdentity &requester, const std::string &dstPath);
   
   void deleteRetrievalJob(const SecurityIdentity &requester, const std::string &dstUrl);
   
@@ -100,7 +100,7 @@ public:
 
   std::list<cta::AdminHost> selectAllAdminHosts(const SecurityIdentity &requester);
   
-  std::map<cta::TapePool, std::list<cta::ArchivalJob> > selectAllArchivalJobs(const SecurityIdentity &requester);
+  std::map<cta::TapePool, std::list<cta::ArchiveToFileRequest> > selectAllArchiveToFileRequests(const SecurityIdentity &requester);
 
   std::map<cta::Tape, std::list<cta::RetrievalJob> > selectAllRetrievalJobs(const SecurityIdentity &requester);
 
@@ -134,8 +134,6 @@ private:
   void checkAdminUserExists(const cta::UserIdentity &user);
   
   void checkAdminHostExists(const std::string &hostName);
-  
-  void checkArchivalJobExists(const std::string &dstPath);
   
   void checkRetrievalJobExists(const std::string &dstUrl);
   

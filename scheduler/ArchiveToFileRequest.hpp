@@ -51,8 +51,6 @@ public:
    * @param nbCopies The number of archive copies to be created.
    * @param copyNbToTapePoolMap The mapping from archive copy number to
    * destination tape pool.
-   * @param storageClassName The name of the storage class.
-   * @param id The identifier of the request.
    * @param priority The priority of the request.
    * @param requester The identity of the user who made the request.
    * @param creationTime Optionally the absolute time at which the user request
@@ -62,8 +60,6 @@ public:
     const std::string &remoteFile,
     const std::string &archiveFile,
     const std::map<uint16_t, std::string> &copyNbToTapePoolMap,
-    const std::string &storageClassName,
-    const std::string &id, 
     const uint64_t priority,
     const SecurityIdentity &requester, 
     const time_t creationTime = time(NULL));

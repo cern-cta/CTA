@@ -22,7 +22,6 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::UserRequest::UserRequest():
-  m_id(0),
   m_priority(0),
   m_creationTime(time(NULL)) {
 }
@@ -31,11 +30,9 @@ cta::UserRequest::UserRequest():
 // constructor
 //------------------------------------------------------------------------------
 cta::UserRequest::UserRequest(
-  const std::string &id,
   const uint64_t priority,
   const SecurityIdentity &requester,
   const time_t creationTime):
-  m_id(id),
   m_priority(priority),
   m_requester(requester),
   m_creationTime(creationTime) {
@@ -45,13 +42,6 @@ cta::UserRequest::UserRequest(
 // destructor
 //------------------------------------------------------------------------------
 cta::UserRequest::~UserRequest() throw() {
-}
-
-//------------------------------------------------------------------------------
-// getId
-//------------------------------------------------------------------------------
-const std::string &cta::UserRequest::getId() const throw() {
-  return m_id;
 }
 
 //------------------------------------------------------------------------------

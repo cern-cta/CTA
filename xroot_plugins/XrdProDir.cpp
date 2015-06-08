@@ -23,7 +23,8 @@
 //------------------------------------------------------------------------------
 // checkClient
 //------------------------------------------------------------------------------
-int XrdProDir::checkClient(const XrdSecEntity *client, cta::SecurityIdentity &requester) {
+int XrdProDir::checkClient(const XrdSecEntity *client,
+  cta::SecurityIdentity &requester) {
   if(!client || !client->host || strncmp(client->host, "localhost", 9))
   {
     error.setErrInfo(ENOTSUP, "[ERROR] Operation only possible from localhost.");
@@ -63,10 +64,10 @@ int XrdProDir::checkClient(const XrdSecEntity *client, cta::SecurityIdentity &re
       return SFS_ERROR;
     }
   }
-  std::cout << "Dir request received from client. Username: " << client->name << " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
-  requester.host = client->host;
-  requester.user.setUid(pwd.pw_uid);
-  requester.user.setGid(pwd.pw_gid);
+  std::cout << "Dir request received from client. Username: " << client->name <<
+     " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
+  requester = cta::SecurityIdentity(cta::UserIdentity(pwd.pw_uid, pwd.pw_gid),
+    client->host);
   free(buf);
   return SFS_OK;
 }
