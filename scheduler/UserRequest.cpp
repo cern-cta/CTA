@@ -45,6 +45,13 @@ cta::UserRequest::~UserRequest() throw() {
 }
 
 //------------------------------------------------------------------------------
+// getPriority
+//------------------------------------------------------------------------------
+uint64_t cta::UserRequest::getPriority() const throw() {
+  return m_priority;
+}
+
+//------------------------------------------------------------------------------
 // getRequester
 //------------------------------------------------------------------------------
 const cta::SecurityIdentity &cta::UserRequest::getRequester() const throw() {

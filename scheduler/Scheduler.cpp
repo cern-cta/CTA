@@ -57,7 +57,7 @@ cta::Scheduler::~Scheduler() throw() {
 //------------------------------------------------------------------------------
 std::map<cta::TapePool, std::list<cta::ArchiveToFileRequest> > cta::Scheduler::
   getArchiveToFileRequests(const SecurityIdentity &requester) const {
-  return std::map<TapePool, std::list<ArchiveToFileRequest> >();
+  return m_db.getArchiveToFileRequests();
 }
 
 //------------------------------------------------------------------------------
