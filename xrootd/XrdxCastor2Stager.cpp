@@ -710,7 +710,7 @@ XrdxCastor2Stager::GetDelayValue(const char* tag)
   {
     msLockStore.UnLock(); // <--
     delayval = new XrdOucString();
-    *delayval = 1 + (rand() % 5);
+    *delayval = 2 + (rand() % 5);
     msLockStore.WriteLock(); // -->
     msDelayStore->Add(tag, delayval, 3600);
   }

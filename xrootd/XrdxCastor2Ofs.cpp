@@ -283,21 +283,34 @@ XrdxCastor2Ofs::FSctl(const int cmd,
       oss << "[";
 
       {
-        // Dump all the running transfers
-        XrdSysMutexHelper scope_lock(mMutexTransfers);
+	// Dump all the running transfers
+	XrdSysMutexHelper scope_lock(mMutexTransfers);
 
-        if (!mSetTransfers.empty())
-        {
-          std::set<std::string>::const_iterator iter = mSetTransfers.begin();
-          oss << *iter ;
+	if (!mSetTransfers.empty())
+	{
+	  std::set<std::string>::const_iterator iter = mSetTransfers.begin();
+	  oss << *iter ;
 
-          for (++iter; iter != mSetTransfers.end(); ++iter)
-            oss << ", " << *iter;
-        }
+	  for (++iter; iter != mSetTransfers.end(); ++iter)
+	    oss << ", " << *iter;
+	}
       }
 
       oss << "]";
-      eInfo.setErrInfo(oss.str().length(), oss.str().c_str());
+      size_t buff_sz = oss.str().length();
+      // Ownership transferred to XrdOucBuffer
+      char* buff = (char*)malloc(buff_sz + 1);
+      size_t cpy_sz = strlcpy(buff, oss.str().c_str(), buff_sz + 1);
+
+      if (cpy_sz != buff_sz)
+      {
+	xcastor_err("failed copy response buff_sz=%i, cpy_sz=%i", buff_sz, cpy_sz);
+	return SFS_ERROR;
+      }
+
+      // Ownership transferred to eInfo object
+      XrdOucBuffer* xrd_buff = new XrdOucBuffer(buff, buff_sz + 1);
+      eInfo.setErrInfo(xrd_buff->BuffSize(), xrd_buff);
       return SFS_DATA;
     }
     else
