@@ -24,11 +24,16 @@
 #include "objectstore/cta.pb.h"
 
 namespace cta { namespace objectstore {
+  
+class GenericObject;
 
 class TapePool: public ObjectOps<serializers::TapePool> {
 public:
   // Constructor
   TapePool(const std::string & address, Backend & os);
+  
+  // Upgrader form generic object
+  TapePool(GenericObject & go);
 
   // In memory initialiser
   void initialize(const std::string & name);
@@ -39,6 +44,10 @@ public:
   
   // Check that the tape pool is empty (of both tapes and jobs)
   bool isEmpty();
+ 
+  CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
+  // Garbage collection
+  void garbageCollect();
 };
   
 }}

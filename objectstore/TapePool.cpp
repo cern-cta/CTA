@@ -17,9 +17,19 @@
  */
 
 #include "TapePool.hpp"
+#include "GenericObject.hpp"
 
 cta::objectstore::TapePool::TapePool(const std::string& address, Backend& os):
   ObjectOps<serializers::TapePool>(os, address) { }
+
+cta::objectstore::TapePool::TapePool(GenericObject& go):
+  ObjectOps<serializers::TapePool>(go.objectStore()) {
+  // Here we transplant the generic object into the new object
+  go.transplantHeader(*this);
+  // And interpret the header.
+  getPayloadFromHeader();
+}
+
 
 void cta::objectstore::TapePool::initialize(const std::string& name) {
   // Setup underlying object
@@ -43,6 +53,15 @@ bool cta::objectstore::TapePool::isEmpty() {
   // If we made it to here, it seems the pool is indeed empty.
   return true;
 }
+
+void cta::objectstore::TapePool::garbageCollect() {
+  checkPayloadWritable();
+  if (!isEmpty()) {
+    throw (NotEmpty("Trying to garbage collect a non-empty AgentRegister: internal error"));
+  }
+  remove();
+}
+
 
 void cta::objectstore::TapePool::setName(const std::string& name) {
   checkPayloadWritable();

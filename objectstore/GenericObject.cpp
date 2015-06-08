@@ -18,6 +18,7 @@
 
 #include "GenericObject.hpp"
 #include "AgentRegister.hpp"
+#include "TapePool.hpp"
 
 namespace cta {  namespace objectstore {
 
@@ -70,8 +71,12 @@ void GenericObject::garbageCollect(ScopedExclusiveLock& lock) {
       AgentRegister ar(*this);
       lock.transfer(ar);
       ar.garbageCollect();
-      break;
-    }
+    } break;
+    case serializers::TapePool_t: {
+      TapePool tp(*this);
+      lock.transfer(tp);
+      tp.garbageCollect();
+    } break;
     default: {
       std::stringstream err;
       err << "In GenericObject::garbageCollect, unsupported type: "
