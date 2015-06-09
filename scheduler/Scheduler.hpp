@@ -499,6 +499,25 @@ public:
     const std::list<std::string> &remoteFiles,
     const std::string &archiveFileOrDir);
 
+  /**
+   * Queues the specified request to retrieve one or more archived files.
+   *
+   * If there is more than one archived file then the destination must be a
+   * directory.
+   *
+   * If there is only one archived file then the destination can be either a
+   * file or a directory.
+   *
+   * @param requester The identity of the user requesting the retrieval.
+   * @param archiveFiles The full path of each source file in the archive
+   * namespace.
+   * @param remoteFileOrDir The URL of the destination remote file or directory.
+   */
+  void queueRetrieveRequest(
+    const SecurityIdentity &requester,
+    const std::list<std::string> &archiveFiles,
+    const std::string &remoteFileOrDir);
+
 private:
 
   /**
@@ -554,6 +573,17 @@ private:
     const SecurityIdentity &requester,
     const std::string &remoteFile,
     const std::string &archiveFile);
+
+  /**
+   * Returns the map from tape copy number to tape pool name for the specified
+   * set of archival routes.
+   *
+   * @param routes The archive routes.
+   * @return The map from tape copy number to tape pool name for the specified
+   * set of archival routes.
+   */
+  std::map<uint16_t, std::string> createCopyNbToPoolMap(
+    const std::list<ArchivalRoute> &routes) const;
 
 }; // class Scheduler
 

@@ -449,7 +449,7 @@ void cta::Scheduler::queueArchiveToDirRequest(
 /*
   for(int i = 1; i <= storageClass.getNbCopies(); i++) {
     cta::ArchivalRoute route = m_db.getArchivalRouteOfStorageClass(storageClassName, i);
-    for(auto itor = srcUrls.begin(); itor != srcUrls.end(); itor++) {
+    for(auto itor = remoteFiles.cbegin(); itor != remoteFiles.cend(); itor++) {
       const std::string &srcFileName = *itor;
       std::string dstPathname;
       if(dstDir.at(dstDir.length()-1) == '/') {
@@ -462,16 +462,16 @@ void cta::Scheduler::queueArchiveToDirRequest(
     }
   }
   
-  const std::list<std::string> dstFileNames = Utils::getEnclosedNames(srcUrls);
+  const std::list<std::string> archiveFiles = Utils::getEnclosedNames(remoteFiles);
 
-  for(auto itor = dstFileNames.begin(); itor != dstFileNames.end(); itor++) {
-    const std::string &dstFileName = *itor;
+  for(auto itor = archiveFiles.cbegin(); itor != archiveFiles.cend(); itor++) {
+    const std::string &archiveFile = *itor;
     std::string dstPathname;
     if(dstDir.at(dstDir.length()-1) == '/') {
-      dstPathname = dstDir+dstFileName;
+      dstPathname = dstDir+archiveFile;
     }
     else {
-      dstPathname = dstDir+"/"+dstFileName;
+      dstPathname = dstDir+"/"+archiveFile;
     }
     m_ns.createFile(requester, dstPathname, 0666);
   }
@@ -504,15 +504,8 @@ void cta::Scheduler::queueArchiveToFileRequest(
      enclosingPath);
   const StorageClass storageClass = m_db.getStorageClass(storageClassName);
   assertStorageClassHasAtLeastOneCopy(storageClass);
-
-  const std::list<ArchivalRoute> routes =
-    m_db.getArchivalRoutes(storageClassName);
-  std::map<uint16_t, std::string> copyNbToPoolMap;
-  for(auto itor = routes.begin(); itor != routes.end(); itor++) {
-    const ArchivalRoute &route = *itor;
-    copyNbToPoolMap[route.getCopyNb()] = route.getTapePoolName();
-  }
-
+  const auto routes = m_db.getArchivalRoutes(storageClassName);
+  const auto copyNbToPoolMap = createCopyNbToPoolMap(routes);
   const uint64_t priority = 0;
 
   m_db.queue(ArchiveToFileRequest(
@@ -523,4 +516,26 @@ void cta::Scheduler::queueArchiveToFileRequest(
     requester));
 
   m_ns.createFile(requester, archiveFile, 0666);
+}
+
+//------------------------------------------------------------------------------
+// createCopyNbToPoolMap
+//------------------------------------------------------------------------------
+std::map<uint16_t, std::string> cta::Scheduler::createCopyNbToPoolMap(
+  const std::list<ArchivalRoute> &routes) const {
+  std::map<uint16_t, std::string> copyNbToPoolMap;
+    for(auto itor = routes.begin(); itor != routes.end(); itor++) {
+    const ArchivalRoute &route = *itor;
+    copyNbToPoolMap[route.getCopyNb()] = route.getTapePoolName();
+  }
+  return copyNbToPoolMap;
+}
+
+//------------------------------------------------------------------------------
+// queueRetrieveRequest
+//------------------------------------------------------------------------------
+void cta::Scheduler::queueRetrieveRequest(
+  const SecurityIdentity &requester,
+  const std::list<std::string> &archiveFiles,
+  const std::string &remoteFileOrDir) {
 }

@@ -20,9 +20,13 @@
 
 #include "scheduler/RetrievalRequest.hpp"
 
+#include <list>
 #include <string>
 
 namespace cta {
+
+// Forward declarations
+class TapeFileLocation;
 
 /**
  * Class representing a user request to retrieve a single archived file to a
@@ -45,6 +49,7 @@ public:
    * Constructor.
    *
    * @param archiveFile The full path of the source archive file.
+   * @param tapeCopies The physical location(s) of the archive file on tape.
    * @param remoteFile The URL of the destination remote file.
    * @param priority The priority of the request.
    * @param user The identity of the user who made the request.
@@ -53,6 +58,7 @@ public:
    */
   RetrieveToFileRequest(
     const std::string &archiveFile,
+    const std::list<TapeFileLocation> &tapeCopies,
     const std::string &remoteFile,
     const uint64_t priority,
     const SecurityIdentity &user, 
@@ -64,6 +70,13 @@ public:
    * @return The full path of the source archive file.
    */
   const std::string &getArchiveFile() const throw();
+
+  /**
+   * Returns the physical location(s) of the archive file on tape.
+   *
+   * @return The physical location(s) of the archive file on tape.
+   */
+  const std::list<TapeFileLocation> &getTapeCopies() const throw();
 
   /**
    * Returns the URL of the destination remote file.
@@ -78,6 +91,11 @@ private:
    * The full path of the source archive file.
    */
   std::string m_archiveFile;
+
+  /**
+   * The physical location(s) of the archive file on tape.
+   */
+  std::list<TapeFileLocation> m_tapeCopies;
 
   /**
    * The URL of the destination remote file.
