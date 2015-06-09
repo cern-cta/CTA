@@ -17,6 +17,7 @@
  */
 
 #include "scheduler/ArchiveToDirRequest.hpp"
+#include "scheduler/ArchiveToFileRequest.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -35,11 +36,13 @@ cta::ArchiveToDirRequest::~ArchiveToDirRequest() throw() {
 //------------------------------------------------------------------------------
 cta::ArchiveToDirRequest::ArchiveToDirRequest(
   const std::string &archiveDir,
+  const std::list<ArchiveToFileRequest> &archiveToFileRequests,
   const uint64_t priority,
   const SecurityIdentity &user,
   const time_t creationTime):
   ArchiveRequest(priority, user, creationTime),
-  m_archiveDir(archiveDir) {
+  m_archiveDir(archiveDir),
+  m_archiveToFileRequests(archiveToFileRequests) {
 }
 
 //------------------------------------------------------------------------------

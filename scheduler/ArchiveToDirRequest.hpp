@@ -19,12 +19,14 @@
 #pragma once
 
 #include "scheduler/ArchiveRequest.hpp"
-#include "scheduler/ArchiveToFileRequest.hpp"
 
 #include <list>
 #include <string>
 
 namespace cta {
+
+// Forward declarations
+class ArchiveToFileRequest;
 
 /**
  * Class representing a user request to archive one or more remote files to an
@@ -47,6 +49,8 @@ public:
    * Constructor.
    *
    * @param archiveDir The full path of the destination archive directory.
+   * @param archiveToFileRequests The list of the individual archive to file
+   * requests that make up this archive to directory request.
    * @param priority The priority of the request.
    * @param user The identity of the user who made the request.
    * @param creationTime Optionally the absolute time at which the user request
@@ -54,6 +58,7 @@ public:
    */
   ArchiveToDirRequest(
     const std::string &archiveDir,
+    const std::list<ArchiveToFileRequest> &archiveToFileRequests,
     const uint64_t priority,
     const SecurityIdentity &user,
     const time_t creationTime = time(NULL));

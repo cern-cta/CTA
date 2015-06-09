@@ -440,42 +440,18 @@ void cta::Scheduler::queueArchiveToDirRequest(
   const std::list<std::string> &remoteFiles,
   const std::string &archiveDir) {
 
-  const std::string storageClassName = m_ns.getDirStorageClass(requester,
-    archiveDir);
-  const cta::StorageClass storageClass = m_db.getStorageClass(
-    storageClassName);
+  const auto storageClassName = m_ns.getDirStorageClass(requester, archiveDir);
+  const auto storageClass = m_db.getStorageClass(storageClassName);
   assertStorageClassHasAtLeastOneCopy(storageClass);
 
-/*
-  for(int i = 1; i <= storageClass.getNbCopies(); i++) {
-    cta::ArchivalRoute route = m_db.getArchivalRouteOfStorageClass(storageClassName, i);
-    for(auto itor = remoteFiles.cbegin(); itor != remoteFiles.cend(); itor++) {
-      const std::string &srcFileName = *itor;
-      std::string dstPathname;
-      if(dstDir.at(dstDir.length()-1) == '/') {
-        dstPathname = dstDir+srcFileName;
-      }
-      else {
-        dstPathname = dstDir+"/"+srcFileName;
-      }
-      m_db.insertArchiveToFileRequest(requester, route.getTapePoolName(), srcFileName, dstPathname);
-    }
+  const bool archiveDirEndsWithASlash = Utils::endsWith(archiveDir, '/');
+  for(auto itor = remoteFiles.cbegin(); itor != remoteFiles.cend(); itor++) {
+    const auto remoteFile = *itor;
+    const auto remoteFileName = Utils::getEnclosedName(remoteFile);
+    const std::string archiveFile = archiveDirEndsWithASlash ?
+      archiveDir + remoteFileName : archiveDir + '/' + remoteFileName;
+    queueArchiveToFileRequest(requester, remoteFile, archiveFile);
   }
-  
-  const std::list<std::string> archiveFiles = Utils::getEnclosedNames(remoteFiles);
-
-  for(auto itor = archiveFiles.cbegin(); itor != archiveFiles.cend(); itor++) {
-    const std::string &archiveFile = *itor;
-    std::string dstPathname;
-    if(dstDir.at(dstDir.length()-1) == '/') {
-      dstPathname = dstDir+archiveFile;
-    }
-    else {
-      dstPathname = dstDir+"/"+archiveFile;
-    }
-    m_ns.createFile(requester, dstPathname, 0666);
-  }
-*/
 }
 
 //------------------------------------------------------------------------------
@@ -499,6 +475,19 @@ void cta::Scheduler::queueArchiveToFileRequest(
   const std::string &remoteFile,
   const std::string &archiveFile) {
 
+  m_db.queue(createArchiveToFileRequest(requester, remoteFile, archiveFile));
+
+  m_ns.createFile(requester, archiveFile, 0666);
+}
+
+//------------------------------------------------------------------------------
+// createArchiveToFileRequest
+//------------------------------------------------------------------------------
+cta::ArchiveToFileRequest cta::Scheduler::createArchiveToFileRequest(
+  const SecurityIdentity &requester,
+  const std::string &remoteFile,
+  const std::string &archiveFile) const {
+
   const std::string enclosingPath = Utils::getEnclosingPath(archiveFile);
   const std::string storageClassName = m_ns.getDirStorageClass(requester,
      enclosingPath);
@@ -508,14 +497,12 @@ void cta::Scheduler::queueArchiveToFileRequest(
   const auto copyNbToPoolMap = createCopyNbToPoolMap(routes);
   const uint64_t priority = 0;
 
-  m_db.queue(ArchiveToFileRequest(
+  return ArchiveToFileRequest(
     remoteFile,
     archiveFile,
     copyNbToPoolMap,
-    priority, 
-    requester));
-
-  m_ns.createFile(requester, archiveFile, 0666);
+    priority,
+    requester);
 }
 
 //------------------------------------------------------------------------------

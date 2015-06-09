@@ -575,6 +575,19 @@ private:
     const std::string &archiveFile);
 
   /**
+   * Returns the ArchiveToFileRequest object representing the specifed request.
+   *
+   * @param requester The identity of the user requesting the archival.
+   * @param remoteFile The URL of the remote file.
+   * @param archiveFile The full path of the destination file within the
+   * archive namespace.
+   */
+  ArchiveToFileRequest createArchiveToFileRequest(
+    const SecurityIdentity &requester,
+    const std::string &remoteFile,
+    const std::string &archiveFile) const;
+
+  /**
    * Returns the map from tape copy number to tape pool name for the specified
    * set of archival routes.
    *

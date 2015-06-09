@@ -210,3 +210,14 @@ std::string cta::Utils::generateUuid() {
 
   return str;
 }
+
+//-----------------------------------------------------------------------------
+// endsWith
+//-----------------------------------------------------------------------------
+bool cta::Utils::endsWith(const std::string &str, const char c) {
+  if(str.empty()) {
+    return false;
+  } else {
+    return c == str.at(str.length() - 1);
+  }
+}

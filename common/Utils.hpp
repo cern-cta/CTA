@@ -102,6 +102,15 @@ public:
    */
   static std::string generateUuid();
 
+  /**
+   * Returns true if the specified string ends with the specifie character.
+   *
+   * @param str The string to be tested.
+   * @param c The character to be looked for at the end of the string.
+   * @return True if the specified string ends with the specified character.
+   */
+  static bool endsWith(const std::string &str, const char c);
+
 }; // class Utils
 
 } // namespace cta

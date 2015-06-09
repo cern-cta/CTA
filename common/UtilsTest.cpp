@@ -235,4 +235,28 @@ TEST_F(cta_UtilsTest, generateUuid) {
   ASSERT_NE(uuid1, uuid2);
 }
 
+TEST_F(cta_UtilsTest, endsWith_slash_empty_string) {
+  using namespace cta;
+  const std::string str = "";
+  ASSERT_FALSE(Utils::endsWith(str, '/'));
+}
+
+TEST_F(cta_UtilsTest, endsWith_slash_non_empty_string_without_terminating_slash) {
+  using namespace cta;
+  const std::string str = "abcde";
+  ASSERT_FALSE(Utils::endsWith(str, '/'));
+} 
+
+TEST_F(cta_UtilsTest, endsWith_slash_non_empty_string_with_terminating_slash) {
+  using namespace cta;
+  const std::string str = "abcde/";
+  ASSERT_TRUE(Utils::endsWith(str, '/'));
+}
+
+TEST_F(cta_UtilsTest, endsWith_slash_just_a_slash) {
+  using namespace cta;
+  const std::string str = "/";
+  ASSERT_TRUE(Utils::endsWith(str, '/'));
+} 
+
 } // namespace unitTests
