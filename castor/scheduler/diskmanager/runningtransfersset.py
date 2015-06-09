@@ -114,7 +114,7 @@ class RunningTransfersSet(object):
             dlf.write(msgs.FOUNDTRANSFERALREADYRUNNING, transferType=TransferType.toPreciseStr(rTransfer.transfer),
                       subreqId=rTransfer.transfer.transferId, fileid=rTransfer.transfer.fileId, startTime=rTransfer.startTime)
     except Exception, e:
-      dlf.writeerr(msgs.FAILTOQUERYXROOT, Type=str(e.__class__), Message=str(e))
+      dlf.writeerr(msgs.FAILTOQUERYXROOT, XRootBuffer=resp, Type=str(e.__class__), Message=str(e))
 
     # 'Synchronizing running transfers with schedulers' message
     dlf.write(msgs.SYNCRUNNINGTRANSFERS)

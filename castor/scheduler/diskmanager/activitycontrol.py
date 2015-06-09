@@ -80,9 +80,9 @@ class ActivityControlThread(threading.Thread):
                         buildXrootURL('localhost', destDcPath, transfer.transferId, transferType)]
     try:
       # "Transfer starting" message
-      dlf.write(msgs.TRANSFERSTARTING, subreqid=transfer.transferId,
-                reqid=transfer.reqId, fileId=transfer.fileId,
-                transferType=TransferType.toStr(transfer.transferType),
+      dlf.write(msgs.TRANSFERSTARTING, subreqid=transfer.transferId, reqid=transfer.reqId,
+                fileId=transfer.fileId, transferType=TransferType.toStr(transfer.transferType),
+                queuingTime="%.3f" % (time.time()-transfer.submissionTime),
                 cmdLine='"' + ' '.join(cmdLine) + '"')
       self.runningTransfers.add(RunningTransfer(scheduler, None, time.time(), transfer, destDcPath))
       # start transfer process and store it in our set of running transfers
@@ -145,9 +145,9 @@ class ActivityControlThread(threading.Thread):
               if transfer.transferType == TransferType.D2DSRC:
                 # in this case there's nothing to start for real and we already took note, so that's all
                 # "Transfer starting" message
-                dlf.write(msgs.TRANSFERSTARTING, subreqid=transfer.transferId,
-                          reqid=transfer.reqId, fileId=transfer.fileId,
-                          transferType=TransferType.toStr(transfer.transferType))
+                dlf.write(msgs.TRANSFERSTARTING, subreqid=transfer.transferId, reqid=transfer.reqId,
+                          fileId=transfer.fileId, transferType=TransferType.toStr(transfer.transferType),
+                          queuingTime="%.3f" % (time.time()-transfer.submissionTime))
               elif transfer.transferType == TransferType.D2DDST:
                 # here we have to launch the actual transfer
                 srcPath, dstPath = result
@@ -157,9 +157,9 @@ class ActivityControlThread(threading.Thread):
                 # store the destination path in the transfer object
                 transfer.destDcPath = result
                 # "Transfer starting" message
-                dlf.write(msgs.TRANSFERSTARTING, subreqid=transfer.transferId,
-                          reqid=transfer.reqId, fileId=transfer.fileId,
-                          transferType=TransferType.toStr(transfer.transferType))
+                dlf.write(msgs.TRANSFERSTARTING, subreqid=transfer.transferId, reqid=transfer.reqId,
+                          fileId=transfer.fileId, transferType=TransferType.toStr(transfer.transferType),
+                          queuingTime="%.3f" % (time.time()-transfer.submissionTime))
                 dlf.writedebug(msgs.TRANSFERSTARTING, transfer=transfer)
                 if not self.fake:
                   if transfer.protocol != 'xroot':
