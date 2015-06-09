@@ -68,7 +68,7 @@ void SErrnum::SErrnumConstructorBottomHalf(const std::string & what) {
   } else {
     // degraded case, serrnum is indeed 0, we fall back on the normal error reporting.
     std::stringstream w;
-    w << "Serrno=0. Failling back to errno=" << m_errnum;
+    w << "Serrno=0. Falling back to errno=" << m_errnum;
     char buf[100];
 
     if(sstrerror_r(m_errnum, buf, sizeof(buf))) {
