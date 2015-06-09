@@ -41,7 +41,7 @@ cta::RetrieveToFileRequest::RetrieveToFileRequest(
   const uint64_t priority,
   const SecurityIdentity &user, 
   const time_t creationTime):
-  RetrievalRequest(priority, user, creationTime),
+  RetrieveRequest(priority, user, creationTime),
   m_archiveFile(archiveFile),
   m_tapeCopies(tapeCopies),
   m_remoteFile(remoteFile) {

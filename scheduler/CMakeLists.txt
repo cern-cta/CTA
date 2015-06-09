@@ -33,7 +33,7 @@ set (CTA_SCHEDULER_SRC_FILES
   RetrievalJob.cpp
   RetrievalJobState.cpp
   RetrievalMount.cpp
-  RetrievalRequest.cpp
+  RetrieveRequest.cpp
   RetrieveToDirRequest.cpp
   RetrieveToFileRequest.cpp
   Scheduler.cpp

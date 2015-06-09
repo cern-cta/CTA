@@ -16,24 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/RetrievalRequest.hpp"
+#include "scheduler/RetrieveRequest.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrievalRequest::RetrievalRequest() {
+cta::RetrieveRequest::RetrieveRequest() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::RetrievalRequest::~RetrievalRequest() throw() {
+cta::RetrieveRequest::~RetrieveRequest() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrievalRequest::RetrievalRequest(
+cta::RetrieveRequest::RetrieveRequest(
   const uint64_t priority,
   const SecurityIdentity &user,
   const time_t creationTime):

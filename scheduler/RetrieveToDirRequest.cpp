@@ -38,7 +38,7 @@ cta::RetrieveToDirRequest::RetrieveToDirRequest(
   const uint64_t priority,
   const SecurityIdentity &user,
   const time_t creationTime):
-  RetrievalRequest(priority, user, creationTime),
+  RetrieveRequest(priority, user, creationTime),
   m_remoteDir(remoteDir) {
 }
 
