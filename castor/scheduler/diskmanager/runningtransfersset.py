@@ -101,7 +101,7 @@ class RunningTransfersSet(object):
         dlf.writenotice(msgs.FAILTOQUERYXROOT, Message=st_stat.message)
       else:
         # this is the list of currently running transfers according to xroot
-        for t in ast.literal_eval(resp):
+        for t in ast.literal_eval(resp.rstrip('\000')):
           rTransfer = xrootiface.xrootTupleToTransfer(scheduler, t)
           if type(rTransfer) == TapeTransfer:
             self.tapeTransfers.append(rTransfer)
