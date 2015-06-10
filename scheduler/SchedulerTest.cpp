@@ -928,7 +928,7 @@ TEST_P(SchedulerTest, admin_createTape_new_non_existing_pool) {
     capacityInBytes, tapeComment), std::exception);
 }
 
-TEST_P(SchedulerTest, user_getDirContents_root_dir_is_empty) {
+TEST_P(SchedulerTest, getDirContents_root_dir_is_empty) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -939,7 +939,7 @@ TEST_P(SchedulerTest, user_getDirContents_root_dir_is_empty) {
   ASSERT_FALSE(itor.hasMore());
 }
 
-TEST_P(SchedulerTest, user_createDir_empty_string) {
+TEST_P(SchedulerTest, createDir_empty_string) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -951,7 +951,7 @@ TEST_P(SchedulerTest, user_createDir_empty_string) {
 }
 
 TEST_P(SchedulerTest,
-  user_createDir_consecutive_slashes) {
+  createDir_consecutive_slashes) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -962,7 +962,7 @@ TEST_P(SchedulerTest,
     std::exception);
 }
 
-TEST_P(SchedulerTest, user_createDir_invalid_chars) {
+TEST_P(SchedulerTest, createDir_invalid_chars) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -973,7 +973,7 @@ TEST_P(SchedulerTest, user_createDir_invalid_chars) {
     std::exception);
 }
 
-TEST_P(SchedulerTest, user_createDir_top_level) {
+TEST_P(SchedulerTest, createDir_top_level) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -995,7 +995,7 @@ TEST_P(SchedulerTest, user_createDir_top_level) {
   ASSERT_EQ(std::string("grandparent"), entry.getName());
 }
 
-TEST_P(SchedulerTest, user_createDir_second_level) {
+TEST_P(SchedulerTest, createDir_second_level) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1068,7 +1068,7 @@ TEST_P(SchedulerTest, user_createDir_second_level) {
 }
 
 TEST_P(SchedulerTest,
-  user_createDir_inherit_storage_class) {
+  createDir_inherit_storage_class) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1153,7 +1153,7 @@ TEST_P(SchedulerTest,
     scheduler.getDirStorageClass(s_adminOnAdminHost, "/grandparent/parent"));
 }
 
-TEST_P(SchedulerTest, user_deleteDir_root) {
+TEST_P(SchedulerTest, deleteDir_root) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1162,7 +1162,7 @@ TEST_P(SchedulerTest, user_deleteDir_root) {
   ASSERT_THROW(scheduler.deleteDir(s_adminOnAdminHost, "/"), std::exception);
 }
 
-TEST_P(SchedulerTest, user_deleteDir_existing_top_level) {
+TEST_P(SchedulerTest, deleteDir_existing_top_level) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1197,7 +1197,7 @@ TEST_P(SchedulerTest, user_deleteDir_existing_top_level) {
 }
 
 TEST_P(SchedulerTest,
-  user_deleteDir_non_empty_top_level) {
+  deleteDir_non_empty_top_level) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1274,7 +1274,7 @@ TEST_P(SchedulerTest,
 }
 
 TEST_P(SchedulerTest,
-  user_deleteDir_non_existing_top_level) {
+  deleteDir_non_existing_top_level) {
   using namespace cta;
   
   Scheduler &scheduler = getScheduler();
@@ -1282,7 +1282,7 @@ TEST_P(SchedulerTest,
   ASSERT_THROW(scheduler.deleteDir(s_adminOnAdminHost, "/grandparent"), std::exception);
 }
 
-TEST_P(SchedulerTest, user_setDirStorageClass_top_level) {
+TEST_P(SchedulerTest, setDirStorageClass_top_level) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1328,7 +1328,7 @@ TEST_P(SchedulerTest, user_setDirStorageClass_top_level) {
 }
 
 TEST_P(SchedulerTest,
-  user_clearDirStorageClass_top_level) {
+  clearDirStorageClass_top_level) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1384,7 +1384,7 @@ TEST_P(SchedulerTest,
   ASSERT_NO_THROW(scheduler.deleteStorageClass(s_adminOnAdminHost, storageClassName));
 }
 
-TEST_P(SchedulerTest, user_archive_to_new_file) {
+TEST_P(SchedulerTest, archive_to_new_file) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1486,6 +1486,167 @@ TEST_P(SchedulerTest, user_archive_to_new_file) {
     ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
     ASSERT_EQ(1, archiveFiles.size());
     ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") == archiveFiles.end());
+  }
+}
+
+TEST_P(SchedulerTest, archive_twice_to_same_file) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint16_t nbCopies = 1;
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  const uint16_t mode = 0777;
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
+    storageClassName));
+
+  const std::string tapePoolName = "TestTapePool";
+  const uint16_t nbPartialTapes = 1;
+  const std::string tapePoolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
+    nbPartialTapes, tapePoolComment));
+
+  const uint16_t copyNb = 1;
+  const std::string archivalRouteComment = "Archival-route comment";
+  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
+    copyNb, tapePoolName, archivalRouteComment));
+
+  std::list<std::string> remoteFiles;
+  remoteFiles.push_back("remoteFile");
+  const std::string archiveFile  = "/grandparent/parent_file";
+  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile));
+
+  {
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+    ASSERT_TRUE(itor.hasMore());
+    DirEntry entry;
+    ASSERT_NO_THROW(entry = itor.next());
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(DirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost,
+      "/grandparent"));
+    ASSERT_TRUE(itor.hasMore());
+    DirEntry entry;
+    ASSERT_NO_THROW(entry = itor.next());
+    ASSERT_EQ(std::string("parent_file"), entry.getName());
+    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    DirEntry entry;
+    ASSERT_NO_THROW(entry = scheduler.statDirEntry(s_adminOnAdminHost,
+      archiveFile));
+    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    const auto rqsts = scheduler.getArchiveRequests(s_adminOnAdminHost);
+    ASSERT_EQ(1, rqsts.size());
+    auto poolItor = rqsts.cbegin();
+    ASSERT_FALSE(poolItor == rqsts.cend());
+    const TapePool &pool = poolItor->first;
+    ASSERT_TRUE(tapePoolName == pool.getName());
+    auto poolRqsts = poolItor->second;
+    ASSERT_EQ(1, poolRqsts.size());
+    std::set<std::string> remoteFiles;
+    std::set<std::string> archiveFiles;
+    for(auto jobItor = poolRqsts.cbegin();
+      jobItor != poolRqsts.cend(); jobItor++) {
+      remoteFiles.insert(jobItor->getRemoteFile());
+      archiveFiles.insert(jobItor->getArchiveFile());
+    }
+    ASSERT_EQ(1, remoteFiles.size());
+    ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
+    ASSERT_EQ(1, archiveFiles.size());
+    ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") ==
+      archiveFiles.end());
+  }
+
+  {
+    const auto poolRqsts = scheduler.getArchiveRequests(s_adminOnAdminHost,
+      tapePoolName);
+    ASSERT_EQ(1, poolRqsts.size());
+    std::set<std::string> remoteFiles;
+    std::set<std::string> archiveFiles;
+    for(auto jobItor = poolRqsts.cbegin(); jobItor != poolRqsts.cend();
+      jobItor++) {
+      remoteFiles.insert(jobItor->getRemoteFile());
+      archiveFiles.insert(jobItor->getArchiveFile());
+    }
+    ASSERT_EQ(1, remoteFiles.size());
+    ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
+    ASSERT_EQ(1, archiveFiles.size());
+    ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") == archiveFiles.end());
+  }
+
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
+
+  {
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+    ASSERT_TRUE(itor.hasMore());
+    DirEntry entry;
+    ASSERT_NO_THROW(entry = itor.next());
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(DirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost,
+      "/grandparent"));
+    ASSERT_TRUE(itor.hasMore());
+    DirEntry entry;
+    ASSERT_NO_THROW(entry = itor.next());
+    ASSERT_EQ(std::string("parent_file"), entry.getName());
+    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    DirEntry entry;
+    ASSERT_NO_THROW(entry = scheduler.statDirEntry(s_adminOnAdminHost,
+      archiveFile));
+    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    const auto rqsts = scheduler.getArchiveRequests(s_adminOnAdminHost);
+    ASSERT_EQ(1, rqsts.size());
+    auto poolItor = rqsts.cbegin();
+    ASSERT_FALSE(poolItor == rqsts.cend());
+    const TapePool &pool = poolItor->first;
+    ASSERT_TRUE(tapePoolName == pool.getName());
+    auto poolRqsts = poolItor->second;
+    ASSERT_EQ(1, poolRqsts.size());
+    std::set<std::string> remoteFiles;
+    std::set<std::string> archiveFiles;
+    for(auto jobItor = poolRqsts.cbegin();
+      jobItor != poolRqsts.cend(); jobItor++) {
+      remoteFiles.insert(jobItor->getRemoteFile());
+      archiveFiles.insert(jobItor->getArchiveFile());
+    }
+    ASSERT_EQ(1, remoteFiles.size());
+    ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
+    ASSERT_EQ(1, archiveFiles.size());
+    ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") ==
+      archiveFiles.end());
   }
 }
 
@@ -1611,7 +1772,7 @@ TEST_P(SchedulerTest, delete_archive_request) {
 }
 
 TEST_P(SchedulerTest,
-  user_archive_to_new_file_with_no_storage_class) {
+  archive_to_new_file_with_no_storage_class) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1627,7 +1788,7 @@ TEST_P(SchedulerTest,
 }
 
 TEST_P(SchedulerTest,
-  user_archive_to_new_file_with_zero_copy_storage_class) {
+  archive_to_new_file_with_zero_copy_storage_class) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1650,7 +1811,7 @@ TEST_P(SchedulerTest,
   ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
 }
 
-TEST_P(SchedulerTest, user_archive_to_new_file_with_no_route) {
+TEST_P(SchedulerTest, archive_to_new_file_with_no_route) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1680,7 +1841,7 @@ TEST_P(SchedulerTest, user_archive_to_new_file_with_no_route) {
 }
 
 TEST_P(SchedulerTest,
-  user_archive_to_new_file_with_incomplete_routing) {
+  archive_to_new_file_with_incomplete_routing) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1714,7 +1875,7 @@ TEST_P(SchedulerTest,
   ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
 }
 
-TEST_P(SchedulerTest, user_archive_to_directory) {
+TEST_P(SchedulerTest, archive_to_directory) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1830,7 +1991,7 @@ TEST_P(SchedulerTest, user_archive_to_directory) {
 }
 
 TEST_P(SchedulerTest,
-  user_archive_to_directory_without_storage_class) {
+  archive_to_directory_without_storage_class) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1850,7 +2011,7 @@ TEST_P(SchedulerTest,
 }
 
 TEST_P(SchedulerTest,
-  user_archive_to_directory_with_zero_copy_storage_class) {
+  archive_to_directory_with_zero_copy_storage_class) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1877,7 +2038,7 @@ TEST_P(SchedulerTest,
     archiveFile), std::exception);
 }
 
-TEST_P(SchedulerTest, user_archive_to_directory_with_no_route) {
+TEST_P(SchedulerTest, archive_to_directory_with_no_route) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1911,7 +2072,7 @@ TEST_P(SchedulerTest, user_archive_to_directory_with_no_route) {
 }
 
 TEST_P(SchedulerTest,
-  user_archive_to_directory_with_incomplete_routing) {
+  archive_to_directory_with_incomplete_routing) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
