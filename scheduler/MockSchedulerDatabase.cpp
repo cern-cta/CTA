@@ -26,7 +26,7 @@
 #include "scheduler/DirIterator.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MockSchedulerDatabase.hpp"
-#include "scheduler/RetrievalJob.hpp"
+#include "scheduler/RetrieveFromTapeCopyRequest.hpp"
 #include "scheduler/RetrieveToFileRequest.hpp"
 #include "scheduler/SecurityIdentity.hpp"
 #include "scheduler/SqliteColumnNameToIndex.hpp"
@@ -143,7 +143,7 @@ void cta::MockSchedulerDatabase::createSchema() {
       "STATE          INTEGER,"
       "REMOTEFILE     TEXT,"
       "ARCHIVEFILE    TEXT,"
-      "TAPEPOOL  TEXT,"
+      "TAPEPOOL       TEXT,"
       "COPYNB         INTEGER,"
       "PRIORITY       INTEGER,"
       "UID            INTEGER,"
@@ -153,16 +153,19 @@ void cta::MockSchedulerDatabase::createSchema() {
       "PRIMARY KEY (ARCHIVEFILE, COPYNB),"
       "FOREIGN KEY (TAPEPOOL) REFERENCES TAPEPOOL(NAME)"
       ");"
-    "CREATE TABLE RETRIEVALJOB("
-      "STATE          INTEGER,"
+    "CREATE TABLE RETRIEVEFROMTAPECOPYREQUEST("
       "ARCHIVEFILE    TEXT,"
       "REMOTEFILE     TEXT,"
+      "COPYNB         INTEGER,"
       "VID            TEXT,"
+      "FSEQ           INTEGER,"
+      "BLOCKID        INTEGER,"
       "PRIORITY       INTEGER,"
       "UID            INTEGER,"
       "GID            INTEGER,"
+      "HOST           TEXT,"
       "CREATIONTIME   INTEGER,"
-      "PRIMARY KEY (REMOTEFILE, VID),"
+      "PRIMARY KEY (REMOTEFILE, VID, FSEQ),"
       "FOREIGN KEY (VID) REFERENCES TAPE(VID)"
       ");",
     0, 0, &zErrMsg);
@@ -432,11 +435,12 @@ void cta::MockSchedulerDatabase::queue(const RetrieveToDirRequest &rqst) {
 // queue
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst) {
+/*
   char *zErrMsg = 0;
   const SecurityIdentity &requester = rqst.getRequester();
   std::ostringstream query;
-  query << "INSERT INTO RETRIEVALJOB(STATE, ARCHIVEFILE, REMOTEFILE, UID,"
-    " GID, CREATIONTIME) VALUES(" << (int)cta::RetrievalJobState::PENDING <<
+  query << "INSERT INTO RETRIEVEFROMTAPECOPYREQUEST(ARCHIVEFILE, REMOTEFILE, COPYNB, VID, FSEQ, BLOCKID, PRIORITY, UID,"
+    " GID, HOST, CREATIONTIME) VALUES(" << (int)cta::RetrieveFromTapeCopyRequestState::PENDING <<
     ",'" << rqst.getArchiveFile() << "','" << rqst.getRemoteFile() << "'," <<
     requester.getUser().getUid() << "," << requester.getUser().getGid() <<
     "," << (int)time(NULL) << ");";
@@ -447,17 +451,21 @@ void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst) {
     sqlite3_free(zErrMsg);
     throw(exception::Exception(msg.str()));
   }
+*/
 }
 
 //------------------------------------------------------------------------------
-// getRetrievalJobs
+// getRetrieveRequests
 //------------------------------------------------------------------------------
-std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::MockSchedulerDatabase::
-  getRetrievalJobs() const {
+std::map<cta::Tape, std::list<cta::RetrieveFromTapeCopyRequest> >
+  cta::MockSchedulerDatabase::getRetrieveRequests() const {
+  return std::map<cta::Tape, std::list<cta::RetrieveFromTapeCopyRequest> >();
+/*
   std::ostringstream query;
-  std::map<cta::Tape, std::list<cta::RetrievalJob> > map;
-  query << "SELECT STATE, ARCHIVEFILE, REMOTEFILE, VID, UID, GID, CREATIONTIME"
-    " FROM RETRIEVALJOB ORDER BY REMOTEFILE;";
+  std::map<cta::Tape, std::list<cta::RetrieveFromTapeCopyRequest> > map;
+  query << "SELECT ARCHIVEFILE, REMOTEFILE, COPYNB, VID, FSEQ, BLOCKID,"
+    " PRIORITY, UID, GID, CREATIONTIME FROM RETRIEVEFROMTAPECOPYREQUEST ORDER"
+    " BY REMOTEFILE;";
   sqlite3_stmt *s = NULL;
   const int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &s, 0 );
   std::unique_ptr<sqlite3_stmt, SQLiteStatementDeleter> statement(s);
@@ -470,8 +478,13 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::MockSchedulerDatabase::
     SqliteColumnNameToIndex idx(statement.get());
     const std::string vid = (char *)sqlite3_column_text(statement.get(),idx("VID"));
     const Tape tape = getTape(vid);
-    map[tape].push_back(RetrievalJob(
-      (RetrievalJobState::Enum)sqlite3_column_int(statement.get(),idx("STATE")),
+    const uint16_t requesterUid = sqlite3_column_int(statement.get(),
+      idx("UID"));
+    const uint16_t requesterGid = sqlite3_column_int(statement.get(),
+      idx("GID"));
+    UserIdentity requester(requesterUid, requesterGid);
+    SecurityIdentity requesterAndHost(
+    map[tape].push_back(RetrieveFromTapeCopyRequest(
       (char *)sqlite3_column_text(statement.get(),idx("ARCHIVEFILE")),
       (char *)sqlite3_column_text(statement.get(),idx("REMOTEFILE")),
       UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
@@ -480,6 +493,7 @@ std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::MockSchedulerDatabase::
     ));
   }
   return map;
+*/
 }
 
 //------------------------------------------------------------------------------
@@ -534,22 +548,22 @@ cta::Tape cta::MockSchedulerDatabase::getTape(const std::string &vid) const {
 }
 
 //------------------------------------------------------------------------------
-// getRetrievalJobs
+// getRetrieveRequests
 //------------------------------------------------------------------------------
-std::list<cta::RetrievalJob> cta::MockSchedulerDatabase::getRetrievalJobs(
+std::list<cta::RetrieveFromTapeCopyRequest> cta::MockSchedulerDatabase::getRetrieveRequests(
   const std::string &vid) const {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
   
 //------------------------------------------------------------------------------
-// deleteRetrievalJob
+// deleteRetrieveRequest
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::deleteRetrievalJob(
+void cta::MockSchedulerDatabase::deleteRetrieveRequest(
   const SecurityIdentity &requester,
   const std::string &remoteFile) {
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "DELETE FROM RETRIEVALJOB WHERE REMOTEFILE='" << remoteFile << "';";
+  query << "DELETE FROM RETRIEVEFROMTAPECOPYREQUEST WHERE REMOTEFILE='" << remoteFile << "';";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
     std::ostringstream msg;

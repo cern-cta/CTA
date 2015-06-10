@@ -24,15 +24,15 @@
 namespace cta {
 
 /**
- * Class repsenting the location of a file on a tape.
+ * The location of a tape copy.
  */
-class TapeFileLocation {
+class TapeCopyLocation {
 public:
 
   /**
    * Constructor.
    */
-  TapeFileLocation();
+  TapeCopyLocation();
 
   /**
    * Constructor.
@@ -41,7 +41,7 @@ public:
    * @param fseq The sequence number of the file.
    * @param blockId The block identifier of the file.
    */
-  TapeFileLocation(const std::string &vid, const uint64_t fseq,
+  TapeCopyLocation(const std::string &vid, const uint64_t fseq,
     const uint64_t blockId);
 
   /**
@@ -82,6 +82,6 @@ private:
    */
   uint64_t m_blockId;
 
-}; // class TapeFileLocation
+}; // class TapeCopyLocation
 
 } // namepsace cta

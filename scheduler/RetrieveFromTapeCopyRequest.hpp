@@ -19,46 +19,46 @@
 #pragma once
 
 #include "scheduler/RetrieveRequest.hpp"
+#include "scheduler/TapeCopyLocation.hpp"
 
 #include <list>
 #include <string>
 
 namespace cta {
 
-// Forward declarations
-class TapeCopyLocation;
-
 /**
- * Class representing a user request to retrieve a single archived file to a
- * single remote file.
+ * Class representing a user request to retrieve a single tape copy of an
+ * archived file to a single remote file.
  */
-class RetrieveToFileRequest: public RetrieveRequest {
+class RetrieveFromTapeCopyRequest: public RetrieveRequest {
 public:
 
   /**
    * Constructor.
    */
-  RetrieveToFileRequest();
+  RetrieveFromTapeCopyRequest();
 
   /**
    * Destructor.
    */
-  ~RetrieveToFileRequest() throw();
+  ~RetrieveFromTapeCopyRequest() throw();
 
   /**
    * Constructor.
    *
    * @param archiveFile The full path of the source archive file.
-   * @param tapeCopies The physical location(s) of the archive file on tape.
+   * @param copyNb The tape copy number.
+   * @param tapeCopy The location of the tape copy.
    * @param remoteFile The URL of the destination remote file.
    * @param priority The priority of the request.
    * @param user The identity of the user who made the request.
    * @param creationTime Optionally the absolute time at which the user request
    * was created.  If no value is given then the current time is used.
    */
-  RetrieveToFileRequest(
+  RetrieveFromTapeCopyRequest(
     const std::string &archiveFile,
-    const std::list<TapeCopyLocation> &tapeCopies,
+    const uint64_t copyNb,
+    const TapeCopyLocation &tapeCopy,
     const std::string &remoteFile,
     const uint64_t priority,
     const SecurityIdentity &user, 
@@ -72,11 +72,18 @@ public:
   const std::string &getArchiveFile() const throw();
 
   /**
-   * Returns the physical location(s) of the archive file on tape.
+   * Returns the tape copy number.
    *
-   * @return The physical location(s) of the archive file on tape.
+   * @return The tape copy number.
    */
-  const std::list<TapeCopyLocation> &getTapeCopies() const throw();
+  uint64_t getCopyNb() const throw();
+
+  /**
+   * Returns the physical location of the copy on tape.
+   *
+   * @return The physical location of the copy on tape.
+   */
+  const TapeCopyLocation &getTapeCopy() const throw();
 
   /**
    * Returns the URL of the destination remote file.
@@ -93,15 +100,20 @@ private:
   std::string m_archiveFile;
 
   /**
-   * The physical location(s) of the archive file on tape.
+   * The tape copy number.
    */
-  std::list<TapeCopyLocation> m_tapeCopies;
+  uint64_t m_copyNb;
+
+  /**
+   * The location of the copy on tape.
+   */
+  TapeCopyLocation m_tapeCopy;
 
   /**
    * The URL of the destination remote file.
    */
   std::string m_remoteFile;
 
-}; // class RetrieveToFileRequest
+}; // class RetrieveFromTapeCopyRequest
 
 } // namespace cta

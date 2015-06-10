@@ -17,7 +17,7 @@
  */
 
 #include "scheduler/RetrieveToFileRequest.hpp"
-#include "scheduler/TapeFileLocation.hpp"
+#include "scheduler/TapeCopyLocation.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -36,7 +36,7 @@ cta::RetrieveToFileRequest::~RetrieveToFileRequest() throw() {
 //------------------------------------------------------------------------------
 cta::RetrieveToFileRequest::RetrieveToFileRequest(
   const std::string &archiveFile,
-  const std::list<cta::TapeFileLocation> &tapeCopies,
+  const std::list<cta::TapeCopyLocation> &tapeCopies,
   const std::string &remoteFile,
   const uint64_t priority,
   const SecurityIdentity &user, 
@@ -57,7 +57,7 @@ const std::string &cta::RetrieveToFileRequest::getArchiveFile() const throw() {
 //------------------------------------------------------------------------------
 // getTapeCopies
 //------------------------------------------------------------------------------
-const std::list<cta::TapeFileLocation> &cta::RetrieveToFileRequest::
+const std::list<cta::TapeCopyLocation> &cta::RetrieveToFileRequest::
   getTapeCopies() const throw() {
   return m_tapeCopies;
 }

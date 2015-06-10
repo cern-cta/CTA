@@ -19,7 +19,7 @@
 #pragma once
 
 #include "scheduler/FileTransfer.hpp"
-#include "scheduler/TapeFileLocation.hpp"
+#include "scheduler/TapeCopyLocation.hpp"
 
 #include <string>
 
@@ -52,7 +52,7 @@ public:
    * @param remoteFile The URL of the destination source file.
    */
   RetrievalFileTransfer(
-    const TapeFileLocation &tapeFile,
+    const TapeCopyLocation &tapeFile,
     const std::string &id,
     const std::string &userRequestId,
     const uint32_t copyNb,
@@ -63,14 +63,14 @@ public:
    *
    * @return The location of the source tape file.
    */
-  const TapeFileLocation &getTapeFile() const throw();
+  const TapeCopyLocation &getTapeFile() const throw();
 
 private:
 
   /**
    * The location of the source tape file.
    */
-  const TapeFileLocation m_tapeFile;
+  const TapeCopyLocation m_tapeFile;
 
 }; // class RetrievalFileTransfer
 

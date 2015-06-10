@@ -26,7 +26,7 @@
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/RetrievalJob.hpp"
+#include "scheduler/RetrieveFromTapeCopyRequest.hpp"
 #include "scheduler/RetrieveToDirRequest.hpp"
 #include "scheduler/RetrieveToFileRequest.hpp"
 #include "scheduler/Scheduler.hpp"
@@ -81,30 +81,30 @@ void cta::Scheduler::deleteArchiveToFileRequest(
 }
 
 //------------------------------------------------------------------------------
-// getRetrievalJobs
+// getRetrieveRequests
 //------------------------------------------------------------------------------
-std::map<cta::Tape, std::list<cta::RetrievalJob> > cta::
-  Scheduler::getRetrievalJobs(const SecurityIdentity &requester) const {
-  return m_db.getRetrievalJobs();
+std::map<cta::Tape, std::list<cta::RetrieveFromTapeCopyRequest> > cta::
+  Scheduler::getRetrieveRequests(const SecurityIdentity &requester) const {
+  return m_db.getRetrieveRequests();
 }
 
 //------------------------------------------------------------------------------
-// getRetrievalJobs
+// getRetrieveRequests
 //------------------------------------------------------------------------------
-std::list<cta::RetrievalJob> cta::Scheduler::getRetrievalJobs(
+std::list<cta::RetrieveFromTapeCopyRequest> cta::Scheduler::getRetrieveRequests(
   const SecurityIdentity &requester,
   const std::string &vid) const {
-  return m_db.getRetrievalJobs(vid);
+  return m_db.getRetrieveRequests(vid);
 }
   
 //------------------------------------------------------------------------------
-// deleteRetrievalJob
+// deleteRetrieveRequest
 //------------------------------------------------------------------------------
-void cta::Scheduler::deleteRetrievalJob(
+void cta::Scheduler::deleteRetrieveRequest(
   const SecurityIdentity &requester,
   const std::string &remoteFile) {
   m_db.assertIsAdminOnAdminHost(requester);
-  m_db.deleteRetrievalJob(requester, remoteFile);
+  m_db.deleteRetrieveRequest(requester, remoteFile);
 }
 
 //------------------------------------------------------------------------------

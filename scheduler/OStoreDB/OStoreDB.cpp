@@ -192,15 +192,15 @@ void OStoreDB::queue(const RetrieveToDirRequest& rqst) {
   throw exception::Exception("Not Implemented");
 }
 
-std::list<RetrievalJob> OStoreDB::getRetrievalJobs(const std::string& vid) const {
+std::list<RetrieveFromTapeCopyRequest> OStoreDB::getRetrieveRequests(const std::string& vid) const {
   throw exception::Exception("Not Implemented");
 }
 
-std::map<Tape, std::list<RetrievalJob> > OStoreDB::getRetrievalJobs() const {
+std::map<Tape, std::list<RetrieveFromTapeCopyRequest> > OStoreDB::getRetrieveRequests() const {
   throw exception::Exception("Not Implemented");
 }
 
-void OStoreDB::deleteRetrievalJob(const SecurityIdentity& requester, 
+void OStoreDB::deleteRetrieveRequest(const SecurityIdentity& requester, 
   const std::string& remoteFile) {
   throw exception::Exception("Not Implemented");
 }

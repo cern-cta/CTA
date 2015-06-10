@@ -36,7 +36,7 @@ class DirEntry;
 class DirIterator;
 class LogicalLibrary;
 class NameServer;
-class RetrievalJob;
+class RetrieveFromTapeCopyRequest;
 class RetrieveToDirRequest;
 class RetrieveToFileRequest;
 class SchedulerDatabase;
@@ -100,45 +100,43 @@ public:
     const std::string &dstPath);
 
   /**
-   * Returns all of the existing retrieval jobs grouped by tape and then
-   * sorted by creation time in ascending order (oldest first).
+   * Returns all of the queued retrieve requests.  The returned requests are
+   * grouped by tape and then sorted by creation time, oldest first.
    *
-   * @param requester The identity of the user requesting the list.
-   * @return All of the existing retrieval jobs grouped by tape and then
-   * sorted by creation time in ascending order (oldest first).
+   * @param requester The identity of requester.
+   * @return all of the queued retrieve requests.  The returned requsts are
+   * grouped by tape and then sorted by creation time, oldest first.
    */
-  std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs(
+  std::map<Tape, std::list<RetrieveFromTapeCopyRequest> > getRetrieveRequests(
     const SecurityIdentity &requester) const;
 
   /**
-   * Returns the list of retrieval jobs associated with the specified tape
-   * sorted by creation time in ascending order (oldest first).
+   * Returns the queued retrieve requests for the specified tape.  The
+   * returned requests are sorted by creation time, oldest first.
    *
-   * @param requester The identity of the user requesting the list.
+   * @param requester The identity of the requester.
    * @param vid The volume identifier of the tape.
-   * @return The list of retrieval jobs associated with the specified tape
-   * sorted by creation time in ascending order (oldest first).
+   * @return The queued retrieve requests for the specified tape.  The
+   * returned requests are sorted by creation time, oldest first.
    */
-  std::list<RetrievalJob> getRetrievalJobs(
+  std::list<RetrieveFromTapeCopyRequest> getRetrieveRequests(
     const SecurityIdentity &requester,
     const std::string &vid) const;
   
   /**
-   * Deletes the specified retrieval job.
+   * Deletes the specified retrieve request.
    *
-   * @param requester The identity of the user requesting the deletion of the
-   * tape.
+   * @param requester The identity of the requester.
    * @param remoteFile The URL of the remote file.
    */
-  void deleteRetrievalJob(
+  void deleteRetrieveRequest(
     const SecurityIdentity &requester,
     const std::string &remoteFile);
 
   /**
    * Creates the specified administrator.
    *
-   * @param requester The identity of the user requesting the creation of the
-   * administrator.
+   * @param requester The identity of the requester.
    * @param user The identity of the administrator.
    * @param comment The comment describing the sministrator.
    */

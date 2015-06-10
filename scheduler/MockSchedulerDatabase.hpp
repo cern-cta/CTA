@@ -106,7 +106,8 @@ public:
    * @return All of the existing retrieval jobs grouped by tape and then
    * sorted by creation time in ascending order (oldest first).
    */
-  std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs() const;
+  std::map<Tape, std::list<RetrieveFromTapeCopyRequest> > getRetrieveRequests()
+    const;
 
   /**
    * Returns the list of retrieval jobs associated with the specified tape
@@ -116,15 +117,16 @@ public:
    * @return The list of retrieval jobs associated with the specified tape
    * sorted by creation time in ascending order (oldest first).
    */
-  std::list<RetrievalJob> getRetrievalJobs(const std::string &vid) const;
-  
+  std::list<RetrieveFromTapeCopyRequest> getRetrieveRequests(
+    const std::string &vid) const;
+
   /**
    * Deletes the specified retrieval job.
    *
-   * @param requester The identity of requester.
+   * @param requester The identity of the requester.
    * @param remoteFile The URL of the destination file.
    */
-  void deleteRetrievalJob(
+  void deleteRetrieveRequest(
     const SecurityIdentity &requester,
     const std::string &remoteFile);
 

@@ -129,11 +129,11 @@ public:
 
   virtual void queue(const RetrieveToDirRequest& rqst);
 
-  virtual std::list<RetrievalJob> getRetrievalJobs(const std::string& vid) const;
+  virtual std::list<RetrieveFromTapeCopyRequest> getRetrieveRequests(const std::string& vid) const;
 
-  virtual std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs() const;
+  virtual std::map<Tape, std::list<RetrieveFromTapeCopyRequest> > getRetrieveRequests() const;
 
-  virtual void deleteRetrievalJob(const SecurityIdentity& requester, 
+  virtual void deleteRetrieveRequest(const SecurityIdentity& requester, 
     const std::string& remoteFile);
   
 private:

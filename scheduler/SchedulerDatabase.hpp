@@ -34,7 +34,7 @@ class ArchiveToFileRequest;
 class ArchiveToTapeCopyRequest;
 class DirIterator;
 class LogicalLibrary;
-class RetrievalJob;
+class RetrieveFromTapeCopyRequest;
 class RetrieveToDirRequest;
 class RetrieveToFileRequest;
 class SecurityIdentity;
@@ -121,7 +121,7 @@ public:
    * @return All of the existing retrieval jobs grouped by tape and then
    * sorted by creation time in ascending order (oldest first).
    */
-  virtual std::map<Tape, std::list<RetrievalJob> > getRetrievalJobs()
+  virtual std::map<Tape, std::list<RetrieveFromTapeCopyRequest> > getRetrieveRequests()
     const = 0;
 
   /**
@@ -132,17 +132,16 @@ public:
    * @return The list of retrieval jobs associated with the specified tape
    * sorted by creation time in ascending order (oldest first).
    */
-  virtual std::list<RetrievalJob> getRetrievalJobs(const std::string &vid)
-    const = 0;
+  virtual std::list<RetrieveFromTapeCopyRequest> getRetrieveRequests(
+    const std::string &vid) const = 0;
   
   /**
    * Deletes the specified retrieval job.
    *
    * @param requester The identity of the requester.
-   * tape.
    * @param remoteFile The URL of the destination file.
    */
-  virtual void deleteRetrievalJob(
+  virtual void deleteRetrieveRequest(
     const SecurityIdentity &requester,
     const std::string &remoteFile) = 0;
 

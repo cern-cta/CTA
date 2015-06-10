@@ -34,7 +34,7 @@ cta::RetrievalFileTransfer::~RetrievalFileTransfer() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::RetrievalFileTransfer::RetrievalFileTransfer(
-  const TapeFileLocation &tapeFile,
+  const TapeCopyLocation &tapeFile,
   const std::string &id, 
   const std::string &userRequestId,
   const uint32_t copyNb,
@@ -46,7 +46,7 @@ cta::RetrievalFileTransfer::RetrievalFileTransfer(
 //------------------------------------------------------------------------------
 // getTapeFile
 //------------------------------------------------------------------------------
-const cta::TapeFileLocation &cta::RetrievalFileTransfer::getTapeFile() const
+const cta::TapeCopyLocation &cta::RetrievalFileTransfer::getTapeFile() const
   throw() {
   return m_tapeFile;
 }

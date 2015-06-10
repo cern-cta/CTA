@@ -34,8 +34,6 @@ set (CTA_SCHEDULER_SRC_FILES
   MountCriteria.cpp
   RemoteStorage.cpp
   RetrievalFileTransfer.cpp
-  RetrievalJob.cpp
-  RetrievalJobState.cpp
   RetrievalMount.cpp
   RetrieveRequest.cpp
   RetrieveToDirRequest.cpp
@@ -48,8 +46,8 @@ set (CTA_SCHEDULER_SRC_FILES
   SQLiteStatementDeleter.cpp
   StorageClass.cpp
   Tape.cpp
+  TapeCopyLocation.cpp
   TapeException.cpp
-  TapeFileLocation.cpp
   TapePool.cpp
   UserIdentity.cpp
   UserGroup.cpp

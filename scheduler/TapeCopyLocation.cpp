@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/TapeFileLocation.hpp"
+#include "scheduler/TapeCopyLocation.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::TapeFileLocation::TapeFileLocation():
+cta::TapeCopyLocation::TapeCopyLocation():
   m_fseq(0),
   m_blockId(0) {
 }
@@ -29,7 +29,7 @@ cta::TapeFileLocation::TapeFileLocation():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::TapeFileLocation::TapeFileLocation(const std::string &vid,
+cta::TapeCopyLocation::TapeCopyLocation(const std::string &vid,
   const uint64_t fseq, const uint64_t blockId):
   m_vid(vid),
   m_fseq(0),
@@ -39,20 +39,20 @@ cta::TapeFileLocation::TapeFileLocation(const std::string &vid,
 //------------------------------------------------------------------------------
 // getVid
 //------------------------------------------------------------------------------
-const std::string &cta::TapeFileLocation::getVid() const throw() {
+const std::string &cta::TapeCopyLocation::getVid() const throw() {
   return m_vid;
 }
 
 //------------------------------------------------------------------------------
 // getFseq
 //------------------------------------------------------------------------------
-uint64_t cta::TapeFileLocation::getFseq() const throw() {
+uint64_t cta::TapeCopyLocation::getFseq() const throw() {
   return m_fseq;
 }
 
 //------------------------------------------------------------------------------
 // getBlockId
 //------------------------------------------------------------------------------
-uint64_t cta::TapeFileLocation::getBlockId() const throw() {
+uint64_t cta::TapeCopyLocation::getBlockId() const throw() {
   return m_blockId;
 }

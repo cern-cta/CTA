@@ -16,76 +16,57 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/RetrievalJob.hpp"
+#include "scheduler/RetrieveFromTapeCopyRequest.hpp"
+#include "scheduler/TapeCopyLocation.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrievalJob::RetrievalJob():
-  m_state(RetrievalJobState::NONE),
-  m_creationTime(time(NULL)) {
+cta::RetrieveFromTapeCopyRequest::RetrieveFromTapeCopyRequest() {
+}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+cta::RetrieveFromTapeCopyRequest::~RetrieveFromTapeCopyRequest() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrievalJob::RetrievalJob(
-  const RetrievalJobState::Enum state,
-  const std::string &srcPath,
-  const std::string &dstUrl,
-  const UserIdentity &creator,
+cta::RetrieveFromTapeCopyRequest::RetrieveFromTapeCopyRequest(
+  const std::string &archiveFile,
+  const TapeCopyLocation &tapeCopy,
+  const std::string &remoteFile,
+  const uint64_t priority,
+  const SecurityIdentity &user, 
   const time_t creationTime):
-  m_srcPath(srcPath),
-  m_dstUrl(dstUrl),
-  m_creationTime(creationTime),
-  m_creator(creator) {
+  RetrieveRequest(priority, user, creationTime),
+  m_archiveFile(archiveFile),
+  m_tapeCopy(tapeCopy),
+  m_remoteFile(remoteFile) {
 }
 
 //------------------------------------------------------------------------------
-// setState
+// getArchiveFile
 //------------------------------------------------------------------------------
-void cta::RetrievalJob::setState(const RetrievalJobState::Enum state) {
-  m_state = state;
+const std::string &cta::RetrieveFromTapeCopyRequest::getArchiveFile() const
+  throw() {
+  return m_archiveFile;
 }
 
 //------------------------------------------------------------------------------
-// getState
+// getTapeCopy
 //------------------------------------------------------------------------------
-cta::RetrievalJobState::Enum cta::RetrievalJob::getState() const throw() {
-  return m_state;
+const cta::TapeCopyLocation &cta::RetrieveFromTapeCopyRequest::getTapeCopy()
+  const throw() {
+  return m_tapeCopy;
 }
 
 //------------------------------------------------------------------------------
-// getStateStr
+// getRemoteFile
 //------------------------------------------------------------------------------
-const char *cta::RetrievalJob::getStateStr() const throw() {
-  return RetrievalJobState::toStr(m_state);
-}
-
-//------------------------------------------------------------------------------
-// getSrcPath
-//------------------------------------------------------------------------------
-const std::string &cta::RetrievalJob::getSrcPath() const throw() {
-  return m_srcPath;
-}
-
-//------------------------------------------------------------------------------
-// getDstUrl
-//------------------------------------------------------------------------------
-const std::string &cta::RetrievalJob::getDstUrl() const throw() {
-  return m_dstUrl;
-}
-
-//------------------------------------------------------------------------------
-// getCreationTime
-//------------------------------------------------------------------------------
-time_t cta::RetrievalJob::getCreationTime() const throw() {
-  return m_creationTime;
-}
-
-//------------------------------------------------------------------------------
-// getCreator
-//------------------------------------------------------------------------------
-const cta::UserIdentity &cta::RetrievalJob::getCreator() const throw() {
-  return m_creator;
+const std::string &cta::RetrieveFromTapeCopyRequest::getRemoteFile() const
+  throw() {
+  return m_remoteFile;
 }

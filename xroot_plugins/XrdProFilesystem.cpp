@@ -18,13 +18,6 @@
 
 #include "common/exception/Exception.hpp"
 
-#include "XrdProFilesystem.hpp"
-#include "XrdProFile.hpp"
-#include "XrdProDir.hpp"
-
-#include "XrdOuc/XrdOucString.hh"
-#include "XrdSec/XrdSecEntity.hh"
-#include "XrdVersion.hh"
 #include "nameserver/MockNameServer.hpp"
 #include "nameserver/NameServer.hpp"
 #include "scheduler/AdminHost.hpp"
@@ -33,11 +26,17 @@
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MockSchedulerDatabase.hpp"
-#include "scheduler/RetrievalJob.hpp"
+#include "scheduler/RetrieveFromTapeCopyRequest.hpp"
 #include "scheduler/StorageClass.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/Tape.hpp"
 #include "scheduler/TapePool.hpp"
+#include "XrdProFilesystem.hpp"
+#include "XrdProFile.hpp"
+#include "XrdProDir.hpp"
+#include "XrdOuc/XrdOucString.hh"
+#include "XrdSec/XrdSecEntity.hh"
+#include "XrdVersion.hh"
 
 #include <memory>
 #include <iostream>
@@ -283,32 +282,32 @@ int XrdProFilesystem::executeLsRetrieveJobsCommand(const ParsedRequest &req, Xrd
   }
   try {
     if(req.args.size() != 1) {      
-      std::list<cta::RetrievalJob> requests = m_scheduler->getRetrievalJobs(requester, req.args.at(0));
+      std::list<cta::RetrieveFromTapeCopyRequest> requests = m_scheduler->getRetrieveRequests(requester, req.args.at(0));
       std::ostringstream responseSS;
       responseSS << "[OK] List of retrieve requests for vid " << req.args.at(0) << ":\n";
       for(auto it = requests.begin(); it != requests.end(); it++) {
-        responseSS << "[OK]\t" << it->getCreator().getUid()
-                << " " << it->getCreator().getGid() 
+        responseSS << "[OK]\t" << it->getRequester().getUser().getUid()
+                << " " << it->getRequester().getUser().getGid() 
                 << " " << it->getCreationTime()
-                << " " << it->getStateStr() 
-                << " " << it->getSrcPath() 
-                << " " << it->getDstUrl() << "\n";
+                << " " << it->getArchiveFile()
+                << " " << it->getCopyNb()
+                << " " << it->getRemoteFile() << "\n";
       }
       eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
       return SFS_DATA;
     }
     else {
-      std::map<cta::Tape, std::list<cta::RetrievalJob> > tapes = m_scheduler->getRetrievalJobs(requester);
+      std::map<cta::Tape, std::list<cta::RetrieveFromTapeCopyRequest> > tapes = m_scheduler->getRetrieveRequests(requester);
       std::ostringstream responseSS;
       for(auto tape=tapes.begin(); tape!=tapes.end(); tape++) {
         responseSS << "[OK] List of retrieve requests for vid " << (tape->first).getVid() << ":\n";
-        for(std::list<cta::RetrievalJob>::const_iterator it = (tape->second).begin(); it != (tape->second).end(); it++) {
-          responseSS << "[OK]\t" << it->getCreator().getUid()
-                  << " " << it->getCreator().getGid() 
-                  << " " << it->getCreationTime()
-                  << " " << it->getStateStr() 
-                  << " " << it->getSrcPath() 
-                  << " " << it->getDstUrl() << "\n";
+        for(std::list<cta::RetrieveFromTapeCopyRequest>::const_iterator it = (tape->second).begin(); it != (tape->second).end(); it++) {
+          responseSS << "[OK]\t" << it->getRequester().getUser().getUid()
+                << " " << it->getRequester().getUser().getGid()
+                << " " << it->getCreationTime()
+                << " " << it->getArchiveFile()
+                << " " << it->getCopyNb()
+                << " " << it->getRemoteFile() << "\n";
         }
       }
       eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
