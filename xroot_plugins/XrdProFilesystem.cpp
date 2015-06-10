@@ -191,7 +191,8 @@ int XrdProFilesystem::executeLsArchiveJobsCommand(const ParsedRequest &req, XrdO
                 << " " << it->getRequester().getUser().getGid() 
                 << " " << it->getCreationTime()
                 << " " << it->getRemoteFile() 
-                << " " << it->getArchiveFile() << "\n";
+                << " " << it->getArchiveFile()
+                << " " << it->getCopyNb() << "\n";
       }
       eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
       return SFS_DATA;
@@ -206,7 +207,8 @@ int XrdProFilesystem::executeLsArchiveJobsCommand(const ParsedRequest &req, XrdO
                   << " " << it->getRequester().getUser().getGid() 
                   << " " << it->getCreationTime()
                   << " " << it->getRemoteFile() 
-                  << " " << it->getArchiveFile() << "\n";
+                  << " " << it->getArchiveFile()
+                  << " " << it->getCopyNb() << "\n";
         }
       }
       eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
