@@ -62,5 +62,11 @@ add_library (ctaschedulertest SHARED
   SchedulerTest.cpp
   UserIdentityTest.cpp)
 
+include_directories(${CMAKE_BINARY_DIR})
+add_library(ctaOStoreSchedulerDB SHARED
+  OStoreDB/OStoreDB.cpp
+  OStoreDB/OStoreDBFactory.cpp)
+
 target_link_libraries(ctaschedulertest
-  ctascheduler)
+  ctascheduler
+  ctaOStoreSchedulerDB)

@@ -26,6 +26,9 @@
 #include "scheduler/SecurityIdentity.hpp"
 #include "scheduler/UserIdentity.hpp"
 
+#include "objectstore/BackendVFS.hpp"
+#include "OStoreDB/OStoreDBFactory.hpp"
+
 #include <exception>
 #include <gtest/gtest.h>
 
@@ -378,5 +381,11 @@ static cta::MockSchedulerDatabaseFactory mockDbFactory;
 
 INSTANTIATE_TEST_CASE_P(MockSchedulerDatabaseTest, SchedulerDatabaseTest,
   ::testing::Values(SchedulerDatabaseTestParam(mockDbFactory)));
+
+static cta::objectstore::BackendVFS be;
+static cta::OStoreDBFactory OStoreDBFactory(be);
+
+INSTANTIATE_TEST_CASE_P(OStoreSchedulerDatabaseTest, SchedulerDatabaseTest,
+  ::testing::Values(SchedulerDatabaseTestParam(OStoreDBFactory)));
 
 } // namespace unitTests
