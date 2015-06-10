@@ -399,14 +399,14 @@ std::list<cta::ArchiveToTapeCopyRequest> cta::MockSchedulerDatabase::
 }
 
 //------------------------------------------------------------------------------
-// deleteArchiveToFileRequest
+// deleteArchiveRequest
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::deleteArchiveToFileRequest(
+void cta::MockSchedulerDatabase::deleteArchiveRequest(
   const SecurityIdentity &requester,
   const std::string &archiveFile) {
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "DELETE FROM ARCHIVETOFILEREQUEST WHERE ARCHIVEFILE='" <<
+  query << "DELETE FROM ARCHIVETOTAPECOPYREQUEST WHERE ARCHIVEFILE='" <<
     archiveFile << "';";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
@@ -418,7 +418,7 @@ void cta::MockSchedulerDatabase::deleteArchiveToFileRequest(
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
   if(0 >= nbRowsModified) {
     std::ostringstream msg;
-    msg << "Archival job for archive file " << archiveFile <<
+    msg << "Archive request for archive file " << archiveFile <<
       " does not exist";
     throw(exception::Exception(msg.str()));
   }

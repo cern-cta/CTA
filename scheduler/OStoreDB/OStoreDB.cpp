@@ -169,7 +169,7 @@ void OStoreDB::queue(const ArchiveToDirRequest& rqst) {
   throw exception::Exception("Not Implemented");
 }
 
-void OStoreDB::deleteArchiveToFileRequest(const SecurityIdentity& requester, 
+void OStoreDB::deleteArchiveRequest(const SecurityIdentity& requester, 
   const std::string& archiveFile) {
   throw exception::Exception("Not Implemented");
 }

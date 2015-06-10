@@ -90,14 +90,13 @@ public:
   /**
    * Deletes the specified archive request.
    *
-   * @param requester The identity of the user requesting the deletion of the
-   * tape.
-   * @param dstPath The absolute path of the destination file within the
+   * @param requester The identity of the requester.
+   * @param archiveFile The absolute path of the destination file within the
    * archive namespace.
    */
-  void deleteArchiveToFileRequest(
+  void deleteArchiveRequest(
     const SecurityIdentity &requester,
-    const std::string &dstPath);
+    const std::string &remoteFile);
 
   /**
    * Returns all of the queued retrieve requests.  The returned requests are
@@ -439,6 +438,28 @@ public:
   void deleteDir(
    const SecurityIdentity &requester,
    const std::string &path);
+
+  /**
+   * Returns true if the specified regular file exists.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the file.
+   * @return True if the specified directory exists.
+   */
+  bool regularFileExists(
+    const SecurityIdentity &requester,
+    const std::string &path) const;
+
+  /**
+   * Returns true if the specified directory exists.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the file.
+   * @return True if the specified directory exists.
+   */
+  bool dirExists(
+    const SecurityIdentity &requester,
+    const std::string &path) const;
   
   /**
    * Returns the volume identifier of the tape on which the specified tape copy

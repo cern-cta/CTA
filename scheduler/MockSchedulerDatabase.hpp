@@ -76,12 +76,11 @@ public:
   /**
    * Deletes the specified archive request.
    *
-   * @param requester The identity of the user requesting the deletion of the
-   * tape.
+   * @param requester The identity of the requester.
    * @param archiveFile The absolute path of the destination file within the
    * archive namespace.
    */
-  void deleteArchiveToFileRequest(
+  void deleteArchiveRequest(
     const SecurityIdentity &requester,
     const std::string &archiveFile);
 

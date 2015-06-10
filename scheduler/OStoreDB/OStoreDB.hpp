@@ -115,7 +115,7 @@ public:
 
   virtual void queue(const ArchiveToDirRequest& rqst);
 
-  virtual void deleteArchiveToFileRequest(const SecurityIdentity& requester, 
+  virtual void deleteArchiveRequest(const SecurityIdentity& requester, 
     const std::string& archiveFile);
 
   virtual std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > 

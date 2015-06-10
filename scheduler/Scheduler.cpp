@@ -71,13 +71,14 @@ std::list<cta::ArchiveToTapeCopyRequest> cta::Scheduler::getArchiveRequests(
 }
 
 //------------------------------------------------------------------------------
-// deleteArchiveToFileRequest
+// deleteArchiveRequest
 //------------------------------------------------------------------------------
-void cta::Scheduler::deleteArchiveToFileRequest(
+void cta::Scheduler::deleteArchiveRequest(
   const SecurityIdentity &requester,
-  const std::string &dstPath) {
+  const std::string &archiveFile) {
   m_db.assertIsAdminOnAdminHost(requester);
-  m_db.deleteArchiveToFileRequest(requester, dstPath);
+  m_db.deleteArchiveRequest(requester, archiveFile);
+  m_ns.deleteFile(requester, archiveFile);
 }
 
 //------------------------------------------------------------------------------
@@ -360,6 +361,24 @@ void cta::Scheduler::deleteDir(
   const std::string &path) {
   m_ns.deleteDir(requester, path);
 }
+
+//------------------------------------------------------------------------------
+// regularFileExists
+//------------------------------------------------------------------------------
+bool cta::Scheduler::regularFileExists(
+  const SecurityIdentity &requester,
+  const std::string &path) const {
+  return m_ns.regularFileExists(requester, path);
+}
+
+//------------------------------------------------------------------------------
+// dirExists
+//------------------------------------------------------------------------------
+bool cta::Scheduler::dirExists(
+  const SecurityIdentity &requester,
+  const std::string &path) const {
+  return m_ns.dirExists(requester, path);
+}
   
 //------------------------------------------------------------------------------
 // getVidOfFile
@@ -545,4 +564,32 @@ void cta::Scheduler::queueRetrieveRequest(
   const SecurityIdentity &requester,
   const std::list<std::string> &archiveFiles,
   const std::string &remoteFileOrDir) {
+/*
+  const bool retreiveToDir = m_ns.dirExists(requester, archiveFileOrDir);
+  if(archiveToDir) {
+    const std::string &archiveDir = archiveFileOrDir;
+    if(remoteFiles.empty()) {
+      std::ostringstream message;
+      message << "Invalid archive to directory request:"
+        " The must be at least one remote file:"
+        " archiveDir=" << archiveDir;
+      throw exception::Exception(message.str());
+    }
+
+    queueArchiveToDirRequest(requester, remoteFiles, archiveDir);
+
+  // Else archive to a single file
+  } else {
+    const std::string &archiveFile = archiveFileOrDir;
+    if(1 != remoteFiles.size()) {
+      std::ostringstream message;
+      message << "Invalid archive to file request:"
+        " The must be one and only one remote file:"
+        " actual=" << remoteFiles.size() << " archiveFile=" << archiveFile;
+      throw exception::Exception(message.str());
+    }
+
+    queueArchiveToFileRequest(requester, remoteFiles.front(), archiveFile);
+  }
+*/
 }
