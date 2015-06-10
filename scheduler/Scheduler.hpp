@@ -148,6 +148,24 @@ public:
     const std::string &comment);
 
   /**
+   * Creates the specified administrator without performing any authorisation
+   * checks.
+   *
+   * This method provides a way to bootstrap the list of administrators.
+   * This method does not perform any authorizations checks therefore please
+   * take any necessary precautions before calling this method.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * administrator.
+   * @param user The identity of the administrator.
+   * @param comment The comment describing the sministrator.
+   */
+  void createAdminUserWithoutAuthorizingRequester(
+    const SecurityIdentity &requester,
+    const UserIdentity &user,
+    const std::string &comment);
+
+  /**
    * Deletes the specified administrator.
    *
    * @param requester The identity of the user requesting the deletion of the

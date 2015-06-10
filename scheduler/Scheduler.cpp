@@ -119,6 +119,16 @@ void cta::Scheduler::createAdminUser(
 }
 
 //------------------------------------------------------------------------------
+// createAdminUserWithoutAuthorizingRequester
+//------------------------------------------------------------------------------
+void cta::Scheduler::createAdminUserWithoutAuthorizingRequester(
+  const SecurityIdentity &requester,
+  const UserIdentity &user,
+  const std::string &comment) {
+  m_db.createAdminUser(requester, user, comment);
+}
+
+//------------------------------------------------------------------------------
 // deleteAdminUser
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteAdminUser(
