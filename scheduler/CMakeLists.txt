@@ -59,6 +59,8 @@ set (CTA_SCHEDULER_SRC_FILES
 add_library (ctascheduler SHARED
   ${CTA_SCHEDULER_SRC_FILES})
 
+target_link_libraries (ctascheduler ${SQLITE3_LIBRARY_RELEASE})
+
 add_library (ctaschedulertest SHARED
   MockSchedulerDatabase.cpp
   MockSchedulerDatabaseFactory.cpp
