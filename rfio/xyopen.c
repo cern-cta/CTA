@@ -15,6 +15,14 @@
  * rfio_xyopen(char *filename, char *host, int lun, int lrecl,
  *            char *chopt, int *irc)
  *
+ * FORTRAN bindings :
+ *
+ * XYOPEN(INTEGER*4 LUN, INTEGER*4 LRECL, CHARACTER*(*) CHOPT, INTEGER*4 IRC)
+ * XYOPN(CHARACTER*(*) FILENAME, CHARACTER*(*)HOST, INTEGER*4 LUN,
+ *       INTEGER*4 LRECL, CHARACTER*(*) CHOPT, INTEGER*4 IRC)
+ *
+ * Note that the FORTRAN API is not supported anymore
+ * Any call to FORTRAN API will now result in raising an abort signal 
  */
 
 /*
@@ -29,31 +37,18 @@
 #include <pwd.h>
 #include <Cpwd.h>
 #include <rfio_xy.h>
+#include <sys/types.h>
+#include <signal.h>
 
 RFILE *ftnlun[MAXFTNLUN];       /* Fortran logical units       */
 
 int rfio_xysock(int lun)
 {
+  /*
+   * Not supported any more -> we raise an abort signal
+   */
+  kill(0, SIGABRT);
   return -1 ;
-}
-
-int
-rfio_xyopen_ext(char *name,
-		char *node,
-		int lun,
-		int lrecl,
-		char *chopt,
-		int *irc,
-		uid_t uid,
-		gid_t gid,
-		int key,
-		char *reqhost)
-{
-  INIT_TRACE("RFIO_TRACE");
-  TRACE(2,"--->","OPTIONS: %s , %s, %d,%d,%s,%d,%d,%d,%d,%s",name,node,lun,lrecl,chopt,*irc,uid,gid,key,reqhost);
-  TRACE(1, "rfio", "rfio_xyopen: status: %d", SEOPNOTSUP);
-  END_TRACE();
-  return SEOPNOTSUP;
 }
 
 int rfio_xyopen(char    *name,
@@ -63,7 +58,48 @@ int rfio_xyopen(char    *name,
                 char *chopt,
                 int     *irc)
 {
-  char rh[1];
-  rh[0]='\0';
-  return( rfio_xyopen_ext(name,node,lun,lrecl,chopt,irc,(uid_t)0,(gid_t)0,0,rh) );
+  /*
+   * Not supported any more -> we raise an abort signal
+   */
+  INIT_TRACE("RFIO_TRACE");       /* initialize trace if any      */
+  TRACE(1,"rfio","rfio_xyopen(%d,%d,?,%d)",lun,lrecl,*irc);
+  TRACE(1,"rfio","rfio_xyopen will raise abort signal");
+  END_TRACE();
+  kill(0, SIGABRT);
+  return -1;
+}  
+
+void xyopen_(int     *flun,
+             int *flrecl,
+             char    *fchopt,
+             int *firc,
+             int     fchoptl)
+{
+  /*
+   * Not supported any more -> we raise an abort signal
+   */
+  INIT_TRACE("RFIO_TRACE");       /* initialize trace if any      */
+  TRACE(1,"rfio","XYOPEN(%d,%d,?,%d)",*flun,*flrecl,*firc);
+  TRACE(1,"rfio","xyopen will raise abort signal");
+  END_TRACE();
+  kill(0, SIGABRT);
+  return;
+}
+
+void xyopn_(char    *fname,
+            char  *fnode,
+            int     *flun,
+            int *flrecl,
+            char *fchopt,
+            int *firc,
+            int     fnamel,
+            int fnodel,
+            int fchoptl)
+{
+  INIT_TRACE("RFIO_TRACE");       /* initialize trace if any      */
+  TRACE(1,"rfio","XYOPN(?, ?, %d, %d, ?, %d)", *flun,*flrecl,*firc);
+  TRACE(1,"rfio","xyopn will raise abort signal");
+  END_TRACE();
+  kill(0, SIGABRT);
+  return;
 }
