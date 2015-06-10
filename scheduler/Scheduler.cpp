@@ -159,6 +159,16 @@ void cta::Scheduler::createAdminHost(
 }
 
 //------------------------------------------------------------------------------
+// createAdminHostWithoutAuthorizingRequester
+//------------------------------------------------------------------------------
+void cta::Scheduler::createAdminHostWithoutAuthorizingRequester(
+  const SecurityIdentity &requester,
+  const std::string &hostName,
+  const std::string &comment) {
+  m_db.createAdminHost(requester, hostName, comment);
+}
+
+//------------------------------------------------------------------------------
 // deleteAdminHost
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteAdminHost(

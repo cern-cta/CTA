@@ -188,12 +188,28 @@ public:
   /**
    * Creates the specified administration host.
    *
-   * @param requester The identity of the user requesting the creation of the
-   * administration host.
+   * @param requester The identity of the requester.
    * @param hostName The network name of the administration host.
    * @param comment The comment describing the administration host.
    */
   void createAdminHost(
+    const SecurityIdentity &requester,
+    const std::string &hostName,
+    const std::string &comment);
+
+  /**
+   * Creates the specified administration host with performing any authorisation
+   * checks.
+   *
+   * This method provides a way to bootstrap the list of administration hosts.
+   * This method does not perform any authorizations checks therefore please
+   * take any necessary precautions before calling this method.
+   *
+   * @param requester The identity of the requester.
+   * @param hostName The network name of the administration host.
+   * @param comment The comment describing the administration host.
+   */
+  void createAdminHostWithoutAuthorizingRequester(
     const SecurityIdentity &requester,
     const std::string &hostName,
     const std::string &comment);
