@@ -399,20 +399,28 @@ class ServerQueue(dict):
         # did not yet come.
         # We can ignore these cases, but we still log
         # "Unable to end d2d as it's not in the server list. Probable race condition" message
-        dlf.writewarning(msgs.D2DENDEXCEPTION, subreqId=transfer.transferId, reqId=transfer.reqId)
+        dlf.writewarning(msgs.D2DENDEXCEPTION, fileId=transfer.fileId,
+                         subreqId=transfer.transferId, reqId=transfer.reqId)
         # in case, discard the src transfer from the pending list
         del self.transfersLocations[(transfer.transferId, TransferType.D2DSRC)]
         return
-      # get the source transfer
-      srcTransfer = self.d2dsrcrunning[transfer.transferId]
-      srcDiskServer = srcTransfer.srcTransfer.diskServer
-      # remember the transfer
-      transfer = self[srcDiskServer][transfer.transferId]
-      # remove d2dsrc transfer from the queue
-      if not transferCancelation:
-        del self[srcDiskServer][transfer.transferId]
-      # remove from list of d2dsrcs
-      del self.d2dsrcrunning[transfer.transferId]
+      try:
+        # get the source transfer and remove it from list of d2dsrcs
+        srcTransfer = self.d2dsrcrunning[transfer.transferId]
+        del self.d2dsrcrunning[transfer.transferId]
+      except KeyError:
+        # we did not find the transfer we want to drop - just ignore as it's already gone
+        dlf.writenotice(msgs.D2DENDRUNNINGSRCNOTFOUND, fileId=transfer.fileId,
+                        subreqId=transfer.transferId, reqId=transfer.reqId)
+      try:
+        # remove d2dsrc transfer from the queue
+        if not transferCancelation:
+          srcDiskServer = srcTransfer.srcTransfer.diskServer
+          del self[srcDiskServer][transfer.transferId]
+      except KeyError:
+        # we did not find the transfer we want to drop - just ignore as it's already gone
+        dlf.writenotice(msgs.D2DENDSRCNOTFOUND, fileId=transfer.fileId,
+                        subreqId=transfer.transferId, reqId=transfer.reqId)
     finally:
       if not transferCancelation:
         self.lock.release()

@@ -579,15 +579,49 @@ BEGIN
     END;
   END IF;
   -- create the new DiskCopy in all cases
-  INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
-                        owneruid, ownergid, id, gcType, fileSystem, datapool, castorFile,
-                        status, importance)
-  VALUES (varDestPath, varDcGcWeight, getTime(), getTime(), varFileSize, 0,
-          varUid, varGid, varDestDcId,
-          CASE varNewDcStatus WHEN dconst.DISKCOPY_INVALID
-                              THEN dconst.GCTYPE_FAILEDD2D
-                              ELSE NULL END,
-          varDestFsId, varDestDpId, varCfId, varNewDcStatus, varDCImportance);
+  -- we may try twice in case we get a constraint violated and the violation disappears (see details below)
+  FOR attempts IN 1..2 LOOP
+    DECLARE
+      CONSTRAINT_VIOLATED EXCEPTION;
+      PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+    BEGIN
+      INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
+                            owneruid, ownergid, id, gcType, fileSystem, datapool, castorFile,
+                            status, importance)
+      VALUES (varDestPath, varDcGcWeight, getTime(), getTime(), varFileSize, 0,
+              varUid, varGid, varDestDcId,
+              CASE varNewDcStatus WHEN dconst.DISKCOPY_INVALID
+                                  THEN dconst.GCTYPE_FAILEDD2D
+                                  ELSE NULL END,
+              varDestFsId, varDestDpId, varCfId, varNewDcStatus, varDCImportance);
+      EXIT;
+    EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+      -- we do not manage to create the DiskCopy as another exists with the same id
+      -- this can be due to a kill transfer that came during the transfer and we are
+      -- now processing the end of transfer (a failure) while we have already done
+      -- the job during the kill transfer. We will however double check by looking
+      -- at the status and path of the existing DiskCopy
+      DECLARE
+        varStatus NUMBER;
+        varPath VARCHAR2(2048);
+      BEGIN
+        SELECT path, status INTO varPath, varStatus FROM DiskCopy WHERE id = varDestDcId;
+        IF varPath != varDestPath OR varStatus != varNewDcStatus THEN
+          -- not the expected case, reraise the exception
+          RAISE;
+        END IF;
+        -- Expected case, we are happy, exit the loop
+        EXIT;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- the colliding DiskCopy has disappeared ! Let's go back to our insert, in case
+        -- it was not the case we have described. We do not have anything to do, just let
+        -- the second attempt go through
+        -- Note that there will be no third attempt as nothing can recreate the DiskCopy
+        -- with that id anymore
+        NULL:
+      END;
+    END;
+  END LOOP;
   -- if success, restart waiting requests, cleanup and handle replicate on close
   IF varErrorMessage IS NULL THEN
     -- In case of draining, update DrainingJob: this is done before the rest to respect the locking order
