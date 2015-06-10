@@ -18,6 +18,8 @@
 
 #include "XrdProDir.hpp"
 
+#include "scheduler/SecurityIdentity.hpp"
+
 #include <pwd.h>
 
 //------------------------------------------------------------------------------
@@ -81,7 +83,7 @@ int XrdProDir::open(const char *path, const XrdSecEntity *client, const char *op
   if(SFS_OK!=checkResult) {
     return checkResult;
   }
-  m_itor = m_userApi.getDirContents(requester, path);
+  m_itor = m_scheduler.getDirContents(requester, path);
   return SFS_OK;
 }
 
@@ -114,7 +116,7 @@ const char * XrdProDir::FName() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-XrdProDir::XrdProDir(cta::SqliteMiddleTierUser &userApi, const char *user, int MonID): error(user, MonID), m_userApi(userApi) {
+XrdProDir::XrdProDir(cta::Scheduler &scheduler, const char *user, int MonID): error(user, MonID), m_scheduler(scheduler) {
 }
 
 //------------------------------------------------------------------------------

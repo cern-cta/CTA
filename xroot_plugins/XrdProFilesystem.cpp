@@ -25,7 +25,21 @@
 #include "XrdOuc/XrdOucString.hh"
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdVersion.hh"
+#include "nameserver/MockNameServer.hpp"
+#include "nameserver/NameServer.hpp"
+#include "scheduler/AdminHost.hpp"
+#include "scheduler/AdminUser.hpp"
+#include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/ArchiveToTapeCopyRequest.hpp"
+#include "scheduler/LogicalLibrary.hpp"
+#include "scheduler/MockSchedulerDatabase.hpp"
+#include "scheduler/RetrievalJob.hpp"
+#include "scheduler/StorageClass.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/Tape.hpp"
+#include "scheduler/TapePool.hpp"
 
+#include <memory>
 #include <iostream>
 #include <pwd.h>
 #include <sstream>
@@ -37,7 +51,7 @@ extern "C"
 {
   XrdSfsFileSystem *XrdSfsGetFileSystem (XrdSfsFileSystem* native_fs, XrdSysLogger* lp, const char* configfn)
   {
-    return new XrdProFilesystem();
+    return new XrdProFilesystem(new cta::MockNameServer(), new cta::MockSchedulerDatabase());
   }
 }
 
@@ -132,7 +146,7 @@ int XrdProFilesystem::executeArchiveCommand(const ParsedRequest &req, XrdOucErrI
     for(size_t i=0; i<req.args.size()-1; i++) {
       sourceFiles.push_back(req.args.at(i));
     }
-    m_userApi.archive(requester, sourceFiles, destinationPath);
+    m_scheduler->queueArchiveRequest(requester, sourceFiles, destinationPath);
     std::ostringstream responseSS;
     responseSS << "[OK] Requested archival of the following files:\n";
     for(std::list<std::string>::iterator it = sourceFiles.begin(); it != sourceFiles.end(); it++) {
@@ -170,7 +184,7 @@ int XrdProFilesystem::executeLsArchiveJobsCommand(const ParsedRequest &req, XrdO
   }
   try {
     if(req.args.size() == 1) {      
-      std::list<cta::ArchiveToFileRequest> requests = m_userApi.getArchiveToFileRequests(requester, req.args.at(0));
+      std::list<cta::ArchiveToTapeCopyRequest> requests = m_scheduler->getArchiveRequests(requester, req.args.at(0));
       std::ostringstream responseSS;
       responseSS << "[OK] List of archive requests for tape pool " << req.args.at(0) << ":\n";
       for(auto it = requests.begin(); it != requests.end(); it++) {
@@ -184,7 +198,7 @@ int XrdProFilesystem::executeLsArchiveJobsCommand(const ParsedRequest &req, XrdO
       return SFS_DATA;
     }
     else {
-      std::map<cta::TapePool, std::list<cta::ArchiveToFileRequest> > pools = m_userApi.getArchiveToFileRequests(requester);
+      std::map<cta::TapePool, std::list<cta::ArchiveToTapeCopyRequest> > pools = m_scheduler->getArchiveRequests(requester);
       std::ostringstream responseSS;
       for(auto pool=pools.begin(); pool!=pools.end(); pool++) {
         responseSS << "[OK] List of archive requests for tape pool " << (pool->first).getName() << ":\n";
@@ -231,7 +245,7 @@ int XrdProFilesystem::executeRetrieveCommand(const ParsedRequest &req, XrdOucErr
     for(size_t i=0; i<req.args.size()-1; i++) {
       sourceFiles.push_back(req.args.at(i));
     }
-    m_userApi.retrieve(requester, sourceFiles, destinationPath);
+    m_scheduler->queueRetrieveRequest(requester, sourceFiles, destinationPath);
     std::ostringstream responseSS;
     responseSS << "[OK] Requested retrieval of the following files:\n";
     for(auto it = sourceFiles.begin(); it != sourceFiles.end(); it++) {
@@ -269,7 +283,7 @@ int XrdProFilesystem::executeLsRetrieveJobsCommand(const ParsedRequest &req, Xrd
   }
   try {
     if(req.args.size() != 1) {      
-      std::list<cta::RetrievalJob> requests = m_userApi.getRetrievalJobs(requester, req.args.at(0));
+      std::list<cta::RetrievalJob> requests = m_scheduler->getRetrievalJobs(requester, req.args.at(0));
       std::ostringstream responseSS;
       responseSS << "[OK] List of retrieve requests for vid " << req.args.at(0) << ":\n";
       for(auto it = requests.begin(); it != requests.end(); it++) {
@@ -284,7 +298,7 @@ int XrdProFilesystem::executeLsRetrieveJobsCommand(const ParsedRequest &req, Xrd
       return SFS_DATA;
     }
     else {
-      std::map<cta::Tape, std::list<cta::RetrievalJob> > tapes = m_userApi.getRetrievalJobs(requester);
+      std::map<cta::Tape, std::list<cta::RetrievalJob> > tapes = m_scheduler->getRetrievalJobs(requester);
       std::ostringstream responseSS;
       for(auto tape=tapes.begin(); tape!=tapes.end(); tape++) {
         responseSS << "[OK] List of retrieve requests for vid " << (tape->first).getVid() << ":\n";
@@ -330,7 +344,7 @@ int XrdProFilesystem::executeMkclassCommand(const ParsedRequest &req, XrdOucErrI
     uint16_t numberOfCopies;
     std::istringstream ss(req.args.at(1));
     ss >> numberOfCopies;
-    m_adminApi.createStorageClass(requester, req.args.at(0), numberOfCopies, req.args.at(2));
+    m_scheduler->createStorageClass(requester, req.args.at(0), numberOfCopies, req.args.at(2));
     std::ostringstream responseSS;
     responseSS << "[OK] Created storage class " << req.args.at(0) << " with " << req.args.at(1) << " tape copies with the following comment: \"" << req.args.at(2) << "\"" ;
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -362,7 +376,7 @@ int XrdProFilesystem::executeChdirclassCommand(const ParsedRequest &req, XrdOucE
     return SFS_DATA;
   }
   try {
-    m_userApi.setDirStorageClass(requester, req.args.at(0), req.args.at(1));
+    m_scheduler->setDirStorageClass(requester, req.args.at(0), req.args.at(1));
     std::ostringstream responseSS;
     responseSS << "[OK] Changed storage class of directory " << req.args.at(0) << " to " << req.args.at(1);
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -394,7 +408,7 @@ int XrdProFilesystem::executeCldirclassCommand(const ParsedRequest &req, XrdOucE
     return SFS_DATA;
   }
   try {
-    m_userApi.clearDirStorageClass(requester, req.args.at(0));
+    m_scheduler->clearDirStorageClass(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Cleared storage class of directory " << req.args.at(0);
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -426,7 +440,7 @@ int XrdProFilesystem::executeGetdirclassCommand(const ParsedRequest &req, XrdOuc
     return SFS_DATA;
   }
   try {
-    std::string stgClass = m_userApi.getDirStorageClass(requester, req.args.at(0));
+    std::string stgClass = m_scheduler->getDirStorageClass(requester, req.args.at(0));
     std::ostringstream responseSS;
     if(stgClass.empty()) {
       responseSS << "[OK] Directory " << req.args.at(0) << " does not have a storage class";      
@@ -463,7 +477,7 @@ int XrdProFilesystem::executeRmclassCommand(const ParsedRequest &req, XrdOucErrI
     return SFS_DATA;
   }
   try {
-    m_adminApi.deleteStorageClass(requester, req.args.at(0));
+    m_scheduler->deleteStorageClass(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Storage class " << req.args.at(0) << " deleted";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -495,7 +509,7 @@ int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrI
     return SFS_DATA;
   }
   try {
-    std::list<cta::StorageClass> stgList = m_adminApi.getStorageClasses(requester);
+    std::list<cta::StorageClass> stgList = m_scheduler->getStorageClasses(requester);
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the storage class names and no of copies:";
     for(std::list<cta::StorageClass>::iterator it = stgList.begin(); it != stgList.end(); it++) {
@@ -532,7 +546,7 @@ int XrdProFilesystem::executeMkdirCommand(const ParsedRequest &req, XrdOucErrInf
     return SFS_DATA;
   }
   try {
-    m_userApi.createDir(requester, req.args.at(0));
+    m_scheduler->createDir(requester, req.args.at(0), 0777); //TODO set the modebits correctly
     std::ostringstream responseSS;
     responseSS << "[OK] Directory " << req.args.at(0) << " created";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -564,7 +578,7 @@ int XrdProFilesystem::executeRmdirCommand(const ParsedRequest &req, XrdOucErrInf
     return SFS_DATA;
   }
   try {
-    m_userApi.deleteDir(requester, req.args.at(0));
+    m_scheduler->deleteDir(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Directory " << req.args.at(0) << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -597,7 +611,7 @@ int XrdProFilesystem::executeLsCommand(const ParsedRequest &req, XrdOucErrInfo &
   }
   try {
     std::ostringstream responseSS;
-    cta::DirIterator itor = m_userApi.getDirContents(requester, req.args.at(0));
+    cta::DirIterator itor = m_scheduler->getDirContents(requester, req.args.at(0));
     while(itor.hasMore()) {
       const cta::DirEntry &entry = itor.next();
       
@@ -649,7 +663,7 @@ int XrdProFilesystem::executeMkpoolCommand(const ParsedRequest &req, XrdOucErrIn
   }
   try {
     const uint32_t nbPartialTapes = 1;
-    m_adminApi.createTapePool(requester, req.args.at(0), nbPartialTapes, req.args.at(1));
+    m_scheduler->createTapePool(requester, req.args.at(0), nbPartialTapes, req.args.at(1));
     std::ostringstream responseSS;
     responseSS << "[OK] Tape pool " << req.args.at(0) << " created with comment \"" << req.args.at(1) << "\"";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -681,7 +695,7 @@ int XrdProFilesystem::executeRmpoolCommand(const ParsedRequest &req, XrdOucErrIn
     return SFS_DATA;
   }
   try {
-    m_adminApi.deleteTapePool(requester, req.args.at(0));
+    m_scheduler->deleteTapePool(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Tape pool " << req.args.at(0) << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -713,7 +727,7 @@ int XrdProFilesystem::executeLspoolCommand(const ParsedRequest &req, XrdOucErrIn
     return SFS_DATA;
   }
   try {
-    std::list<cta::TapePool> poolList = m_adminApi.getTapePools(requester);
+    std::list<cta::TapePool> poolList = m_scheduler->getTapePools(requester);
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the tape pools:";
     for(std::list<cta::TapePool>::iterator it = poolList.begin(); it != poolList.end(); it++) {
@@ -752,7 +766,7 @@ int XrdProFilesystem::executeMkrouteCommand(const ParsedRequest &req, XrdOucErrI
     uint16_t copyNo;
     std::istringstream ss(req.args.at(1));
     ss >> copyNo;
-    m_adminApi.createArchivalRoute(requester, req.args.at(0), copyNo, req.args.at(2), req.args.at(3));
+    m_scheduler->createArchivalRoute(requester, req.args.at(0), copyNo, req.args.at(2), req.args.at(3));
     std::ostringstream responseSS;
     responseSS << "[OK] Archive route from storage class " << req.args.at(0) << " with copy number " << copyNo << " to tape pool " << req.args.at(2) << " created with comment \"" << req.args.at(3) << "\"";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -787,7 +801,7 @@ int XrdProFilesystem::executeRmrouteCommand(const ParsedRequest &req, XrdOucErrI
     uint16_t copyNo;
     std::istringstream ss(req.args.at(1));
     ss >> copyNo;
-    m_adminApi.deleteArchivalRoute(requester, req.args.at(0), copyNo);
+    m_scheduler->deleteArchivalRoute(requester, req.args.at(0), copyNo);
     std::ostringstream responseSS;
     responseSS << "[OK] Archive route from storage class " << req.args.at(0) << " with copy number " << copyNo << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -819,7 +833,7 @@ int XrdProFilesystem::executeLsrouteCommand(const ParsedRequest &req, XrdOucErrI
     return SFS_DATA;
   }
   try {
-    std::list<cta::ArchivalRoute> routeList = m_adminApi.getArchivalRoutes(requester);
+    std::list<cta::ArchivalRoute> routeList = m_scheduler->getArchivalRoutes(requester);
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the archive routes:";
     for(std::list<cta::ArchivalRoute>::iterator it = routeList.begin(); it != routeList.end(); it++) {
@@ -858,7 +872,7 @@ int XrdProFilesystem::executeMkllibCommand(const ParsedRequest &req, XrdOucErrIn
     return SFS_DATA;
   }
   try {
-    m_adminApi.createLogicalLibrary(requester, req.args.at(0), req.args.at(1));
+    m_scheduler->createLogicalLibrary(requester, req.args.at(0), req.args.at(1));
     std::ostringstream responseSS;
     responseSS << "[OK] Logical library " << req.args.at(0) << " created with comment \"" << req.args.at(1) << "\"";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -890,7 +904,7 @@ int XrdProFilesystem::executeRmllibCommand(const ParsedRequest &req, XrdOucErrIn
     return SFS_DATA;
   }
   try {
-    m_adminApi.deleteLogicalLibrary(requester, req.args.at(0));
+    m_scheduler->deleteLogicalLibrary(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Logical library " << req.args.at(0) << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -922,7 +936,7 @@ int XrdProFilesystem::executeLsllibCommand(const ParsedRequest &req, XrdOucErrIn
     return SFS_DATA;
   }
   try {
-    std::list<cta::LogicalLibrary> llibs = m_adminApi.getLogicalLibraries(requester);
+    std::list<cta::LogicalLibrary> llibs = m_scheduler->getLogicalLibraries(requester);
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the logical libraries:";
     for(std::list<cta::LogicalLibrary>::iterator it = llibs.begin(); it != llibs.end(); it++) {
@@ -964,7 +978,7 @@ int XrdProFilesystem::executeMktapeCommand(const ParsedRequest &req, XrdOucErrIn
     uint64_t capacity;
     std::istringstream ss(req.args.at(3));
     ss >> capacity;
-    m_adminApi.createTape(requester, req.args.at(0), req.args.at(1), req.args.at(2), capacity, req.args.at(4));
+    m_scheduler->createTape(requester, req.args.at(0), req.args.at(1), req.args.at(2), capacity, req.args.at(4));
     std::ostringstream responseSS;
     responseSS << "[OK] Tape " << req.args.at(0) << " of logical library " << req.args.at(1) << " of " << capacity << " bytes of capacity " << " was created in tapepool " << req.args.at(2) << " with comment \"" << req.args.at(4) << "\"";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -996,7 +1010,7 @@ int XrdProFilesystem::executeRmtapeCommand(const ParsedRequest &req, XrdOucErrIn
     return SFS_DATA;
   }
   try {
-    m_adminApi.deleteTape(requester, req.args.at(0));
+    m_scheduler->deleteTape(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Tape " << req.args.at(0) << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -1028,7 +1042,7 @@ int XrdProFilesystem::executeLstapeCommand(const ParsedRequest &req, XrdOucErrIn
     return SFS_DATA;
   }
   try {
-    std::list<cta::Tape> tapes = m_adminApi.getTapes(requester);
+    std::list<cta::Tape> tapes = m_scheduler->getTapes(requester);
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of tapes:";
     for(std::list<cta::Tape>::iterator it = tapes.begin(); it != tapes.end(); it++) {
@@ -1081,7 +1095,7 @@ int XrdProFilesystem::executeMkadminuserCommand(const ParsedRequest &req, XrdOuc
     i1 >> gid;
     adminUser.setGid(gid);
     const std::string comment = "TO BE DONE";
-    m_adminApi.createAdminUser(requester, adminUser, comment);
+    m_scheduler->createAdminUser(requester, adminUser, comment);
     std::ostringstream responseSS;
     responseSS << "[OK] Admin user with uid " << req.args.at(0) << " and gid " << req.args.at(1) << " created";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -1122,7 +1136,7 @@ int XrdProFilesystem::executeRmadminuserCommand(const ParsedRequest &req, XrdOuc
     int gid = 0;
     ssArg0 >> gid;
     adminUser.setGid(gid);
-    m_adminApi.deleteAdminUser(requester, adminUser);
+    m_scheduler->deleteAdminUser(requester, adminUser);
     std::ostringstream responseSS;
     responseSS << "[OK] Admin user with uid " << req.args.at(0) << " and gid " << req.args.at(1) << " deleted";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -1154,7 +1168,7 @@ int XrdProFilesystem::executeLsadminuserCommand(const ParsedRequest &req, XrdOuc
     return SFS_DATA;
   }
   try {
-    std::list<cta::AdminUser> userIdList = m_adminApi.getAdminUsers(requester);
+    std::list<cta::AdminUser> userIdList = m_scheduler->getAdminUsers(requester);
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the admin user uids and gids:";
     for(std::list<cta::AdminUser>::iterator it = userIdList.begin(); it != userIdList.end(); it++) {
@@ -1190,7 +1204,7 @@ int XrdProFilesystem::executeMkadminhostCommand(const ParsedRequest &req, XrdOuc
   }
   try {
     const std::string comment = "TO BE DONE";
-    m_adminApi.createAdminHost(requester, req.args.at(0), comment);
+    m_scheduler->createAdminHost(requester, req.args.at(0), comment);
     std::ostringstream responseSS;
     responseSS << "[OK] Admin host " << req.args.at(0) << " created";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -1222,7 +1236,7 @@ int XrdProFilesystem::executeRmadminhostCommand(const ParsedRequest &req, XrdOuc
     return SFS_DATA;
   }
   try {
-    m_adminApi.deleteAdminHost(requester, req.args.at(0));
+    m_scheduler->deleteAdminHost(requester, req.args.at(0));
     std::ostringstream responseSS;
     responseSS << "[OK] Admin host " << req.args.at(0) << " removed";
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -1254,7 +1268,7 @@ int XrdProFilesystem::executeLsadminhostCommand(const ParsedRequest &req, XrdOuc
     return SFS_DATA;
   }
   try {
-    std::list<cta::AdminHost> hostList = m_adminApi.getAdminHosts(requester);
+    std::list<cta::AdminHost> hostList = m_scheduler->getAdminHosts(requester);
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the admin hosts:";
     for(std::list<cta::AdminHost>::iterator it = hostList.begin(); it != hostList.end(); it++) {
@@ -1455,7 +1469,7 @@ XrdSfsFile * XrdProFilesystem::newFile(char *user, int MonID)
 //------------------------------------------------------------------------------
 XrdSfsDirectory * XrdProFilesystem::newDir(char *user, int MonID)
 {
-  return new XrdProDir(m_userApi, user, MonID);
+  return new XrdProDir(*m_scheduler, user, MonID);
 }
 
 //------------------------------------------------------------------------------
@@ -1618,13 +1632,14 @@ void XrdProFilesystem::EnvInfo(XrdOucEnv *envP)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-XrdProFilesystem::XrdProFilesystem():
-  m_adminApi(m_ns, m_db),
-  m_userApi(m_ns, m_db) {
+XrdProFilesystem::XrdProFilesystem(cta::NameServer *ns, cta::SchedulerDatabase *scheddb): m_ns(ns), m_scheddb(scheddb), m_scheduler(new cta::Scheduler(*ns, *scheddb)) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 XrdProFilesystem::~XrdProFilesystem() {
+  delete m_scheduler;
+  delete m_ns;
+  delete m_scheddb;
 }

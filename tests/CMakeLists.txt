@@ -12,11 +12,6 @@ target_link_libraries(unittests
   ctacommonunittests
   CTAObjectStore
   ctaobjectstoreunittests
-  ctamiddletierunittests
-  ctamiddletiersqlite
-  ctamiddletiersqliteunittests
-  #ctamiddletierobjectstoreunittests
-  ctamiddletierobjectstore
   ctanameservertest
   ctaschedulertest
   gmock

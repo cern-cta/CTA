@@ -18,7 +18,8 @@
 
 #pragma once
 
-#include "middletier/SQLite/SqliteMiddleTierUser.hpp"
+#include "scheduler/DirIterator.hpp"
+#include "scheduler/Scheduler.hpp"
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdSfs/XrdSfsInterface.hh"
 
@@ -32,7 +33,7 @@ public:
   virtual const char *nextEntry();
   virtual int close();
   virtual const char *FName();
-  XrdProDir(cta::SqliteMiddleTierUser &userApi, const char *user=0, int MonID=0);
+  XrdProDir(cta::Scheduler &scheduler, const char *user=0, int MonID=0);
   virtual ~XrdProDir();
 protected:
   
@@ -44,7 +45,7 @@ protected:
   /**
    * Pointer to the user API object
    */
-  cta::SqliteMiddleTierUser &m_userApi;
+  cta::Scheduler &m_scheduler;
   
   /**
    * Checks whether client has correct permissions and fills the UserIdentity structure

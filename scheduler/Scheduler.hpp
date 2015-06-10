@@ -32,6 +32,8 @@ class ArchivalRoute;
 class ArchiveToDirRequest;
 class ArchiveToFileRequest;
 class ArchiveToTapeCopyRequest;
+class DirEntry;
+class DirIterator;
 class LogicalLibrary;
 class NameServer;
 class RetrievalJob;

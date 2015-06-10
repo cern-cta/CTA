@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include "middletier/SQLite/SqliteMiddleTierAdmin.hpp"
-#include "middletier/SQLite/SqliteMiddleTierUser.hpp"
 #include "nameserver/MockNameServer.hpp"
+#include "scheduler/Scheduler.hpp"
+
 #include "XrdSfs/XrdSfsInterface.hh"
 
 #include "ParsedRequest.hpp"
@@ -46,30 +46,21 @@ public:
   virtual int stat(const char *Name, struct stat *buf, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0,const char *opaque = 0);
   virtual int stat(const char *path, mode_t &mode, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0, const char *opaque = 0);
   virtual int truncate(const char *path, XrdSfsFileOffset fsize, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0, const char *opaque = 0);
-  XrdProFilesystem();
+  XrdProFilesystem(cta::NameServer *ns, cta::SchedulerDatabase *scheddb);
   ~XrdProFilesystem();
   
 protected:
+  
+  cta::NameServer *m_ns;
+  
+  cta::SchedulerDatabase *m_scheddb;
+  
+  
 
   /**
-   * The middle-tier database.
+   * The scheduler.
    */
-  cta::SqliteDatabase m_db;
-  
-  /**
-   * The name server containing the name space of the archive.
-   */
-  cta::MockNameServer m_ns;
-  
-  /**
-   * The middle-tier administration API
-   */
-  cta::SqliteMiddleTierAdmin m_adminApi;
-
-  /**
-   * The middle-tier user API
-   */
-  cta::SqliteMiddleTierUser m_userApi;
+  cta::Scheduler *m_scheduler;
     
   /**
    * Parses the query into the request structure

@@ -24,8 +24,8 @@ set (CTA_SCHEDULER_SRC_FILES
   FileSystemStorageClasses.cpp
   FileTransfer.cpp
   LogicalLibrary.cpp
-  MiddleTierAdmin.cpp
-  MiddleTierUser.cpp
+  MockSchedulerDatabase.cpp
+  MockSchedulerDatabaseFactory.cpp
   Mount.cpp
   MountCriteria.cpp
   RemoteStorage.cpp
@@ -38,6 +38,7 @@ set (CTA_SCHEDULER_SRC_FILES
   RetrieveToFileRequest.cpp
   Scheduler.cpp
   SchedulerDatabase.cpp
+  SchedulerDatabaseFactory.cpp
   SecurityIdentity.cpp
   SqliteColumnNameToIndex.cpp
   SQLiteStatementDeleter.cpp

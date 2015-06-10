@@ -17,7 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "middletier/SQLite/SqliteColumnNameToIndex.hpp"
+#include "scheduler/SqliteColumnNameToIndex.hpp"
 
 #include <sstream>
 
