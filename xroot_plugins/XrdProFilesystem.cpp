@@ -1633,6 +1633,9 @@ void XrdProFilesystem::EnvInfo(XrdOucEnv *envP)
 // constructor
 //------------------------------------------------------------------------------
 XrdProFilesystem::XrdProFilesystem(cta::NameServer *ns, cta::SchedulerDatabase *scheddb): m_ns(ns), m_scheddb(scheddb), m_scheduler(new cta::Scheduler(*ns, *scheddb)) {
+  const cta::SecurityIdentity bootstrap_requester;
+  m_scheduler->createAdminUserWithoutAuthorizingRequester(bootstrap_requester, cta::UserIdentity(getuid(),getgid()), "Bootstrap operator");
+  m_scheduler->createAdminHostWithoutAuthorizingRequester(bootstrap_requester, "localhost", "Bootstrap operator host");
 }
 
 //------------------------------------------------------------------------------
