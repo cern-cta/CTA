@@ -1,5 +1,9 @@
 cmake_minimum_required (VERSION 2.6)
 
+find_package (sqlite REQUIRED)
+include_directories (${SQLITE3_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} 
+  ${PROJECT_SOURCE_DIR})
+
 set (CTA_SCHEDULER_SRC_FILES
   AdminHost.cpp
   AdminUser.cpp
@@ -62,6 +66,8 @@ add_library (ctaschedulertest SHARED
   SchedulerDatabaseTest.cpp
   SchedulerTest.cpp
   UserIdentityTest.cpp)
+
+target_link_libraries (ctaschedulertest ${SQLITE3_LIBRARY_RELEASE})
 
 include_directories(${CMAKE_BINARY_DIR})
 add_library(ctaOStoreSchedulerDB SHARED
