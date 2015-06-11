@@ -27,24 +27,17 @@ class UserIdentity {
 public:
   UserIdentity (): uid(std::numeric_limits<decltype(uid)>::max()),
           gid(std::numeric_limits<decltype(gid)>::max()) {}
-  UserIdentity (uint32_t ui, const std::string & un,
-    uint32_t gi, const std::string & gn): 
-    uid(ui), uname(un), gid(gi), gname(gn) {}
+  UserIdentity (uint32_t ui, uint32_t gi): 
+    uid(ui), gid(gi) {}
   uint32_t uid;
-  std::string uname;
   uint32_t gid;
-  std::string gname;
   void serialize (cta::objectstore::serializers::UserIdentity & user) const {
     user.set_uid(uid);
-    user.set_uname(uname);
     user.set_gid(gid);
-    user.set_gname(gname);
   }
   void deserialize (const cta::objectstore::serializers::UserIdentity & user) {
     uid = user.uid();
-    uname = user.uname();
     gid = user.gid();
-    gname = user.gname();
   }
   /**
    * We can compare the UserIdentities between each other, and with the

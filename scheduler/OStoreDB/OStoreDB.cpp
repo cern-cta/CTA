@@ -21,6 +21,8 @@
 #include "objectstore/RootEntry.hpp"
 #include "common/exception/Exception.hpp"
 #include "scheduler/StorageClass.hpp"
+#include "scheduler/AdminHost.hpp"
+#include "scheduler/AdminUser.hpp"
 
 namespace cta {
   
@@ -46,9 +48,20 @@ void OStoreDB::createAdminHost(const SecurityIdentity& requester,
   re.commit();
   }
 
-  std::list<AdminHost> OStoreDB::getAdminHosts() const {
-    throw exception::Exception("Not Implemented");
+std::list<AdminHost> OStoreDB::getAdminHosts() const {
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  rel.release();
+  std::list<AdminHost> ret;
+  auto hl=re.dumpAdminHosts();
+  for (auto h=hl.begin(); h!=hl.end(); h++) {
+    ret.push_back(AdminHost(h->hostname, 
+        cta::UserIdentity(h->log.uid, h->log.gid),
+        h->log.comment, h->log.time));
   }
+  return ret;
+}
 
 
 void OStoreDB::deleteAdminHost(const SecurityIdentity& requester, 
@@ -62,16 +75,42 @@ void OStoreDB::deleteAdminHost(const SecurityIdentity& requester,
 
 void OStoreDB::createAdminUser(const SecurityIdentity& requester, 
   const cta::UserIdentity& user, const std::string& comment) {
-  throw exception::Exception("Not Implemented");
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  objectstore::CreationLog cl(requester.getUser().getUid(), 
+    requester.getUser().getGid(), requester.getHost(), time(NULL),
+    comment);
+  re.addAdminUser(objectstore::UserIdentity(user.getUid(), user.getGid()), cl);
+  re.commit();
 }
 
 void OStoreDB::deleteAdminUser(const SecurityIdentity& requester, 
   const cta::UserIdentity& user) {
-  throw exception::Exception("Not Implemented");
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  re.removeAdminUser(objectstore::UserIdentity(user.getUid(), user.getGid()));
+  re.commit();
 }
 
 std::list<AdminUser> OStoreDB::getAdminUsers() const {
-  throw exception::Exception("Not Implemented");
+  std::list<AdminUser> ret;
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto aul = re.dumpAdminUsers();
+  for (auto au=aul.begin(); au!=aul.end(); au++) {
+    ret.push_back(
+      AdminUser(
+        cta::UserIdentity(au->user.uid, au->user.gid),
+        cta::UserIdentity(au->log.uid, au->log.gid),
+        au->log.comment,
+        au->log.time
+    ));
+  }
+  rel.release();
+  return ret;
 }
 
 void OStoreDB::assertIsAdminOnAdminHost(const SecurityIdentity& id) const {

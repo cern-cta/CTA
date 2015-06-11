@@ -54,6 +54,13 @@ private:
    * Reference to the backend store.
    */
   objectstore::Backend & m_backend;
+  
+  /**
+   * Lazy initialization flag preventing static initialization of object store.
+   * This is needed as otherwise, we have hard-to-solve dependencies with 
+   * static initializations protocol buffers structures.
+   */
+  mutable bool m_initDone;
 }; // class MockSchedulerDatabaseFactory
 
 } // namespace cta

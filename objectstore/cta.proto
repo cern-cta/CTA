@@ -49,9 +49,7 @@ message GenericObject {
 // A user information record
 message UserIdentity {
   required uint32 uid = 10;
-  required string uname = 11;
-  required uint32 gid = 12;
-  required string gname = 13;
+  required uint32 gid = 11;
 }
 
 // The creation log attached to each element
