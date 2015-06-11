@@ -134,11 +134,26 @@ void OStoreDB::assertIsAdminOnAdminHost(const SecurityIdentity& id) const {
 
 void OStoreDB::createStorageClass(const SecurityIdentity& requester, 
   const std::string& name, const uint16_t nbCopies, const std::string& comment) {
-  throw exception::Exception("Not Implemented");
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  objectstore::CreationLog cl(requester.getUser().getUid(),
+    requester.getUser().getGid(), requester.getHost(),
+    time(NULL), comment);
+  re.addStorageClass(name, nbCopies, cl);
+  re.commit();
 }
 
 StorageClass OStoreDB::getStorageClass(const std::string& name) const {
-  throw exception::Exception("Not Implemented");
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto sc = re.dumpStorageClass(name);
+  return cta::StorageClass(name,
+    sc.copyCount,
+    cta::UserIdentity(sc.log.uid, sc.log.gid),
+    sc.log.comment,
+    sc.log.time);
 }
 
 std::list<StorageClass> OStoreDB::getStorageClasses() const {

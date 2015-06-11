@@ -296,12 +296,14 @@ std::vector<std::string> cta::objectstore::RootEntry::getArchiveRoutes(const std
 }
 
 auto cta::objectstore::RootEntry::dumpStorageClasses() -> std::list<StorageClassDump> {
+  checkPayloadReadable();
   std::list<StorageClassDump> ret;
   auto & scl = m_payload.storageclasses();
   for (auto i=scl.begin(); i != scl.end(); i++) {
     ret.push_back(StorageClassDump());
     ret.back().copyCount = i->copycount();
     ret.back().storageClass = i->name();
+    ret.back().log.deserialize(i->log());
     auto & arl = i->routes();
     for (auto j=arl.begin(); j!= arl.end(); j++) {
       ret.back().routes.push_back(StorageClassDump::ArchiveRouteDump());
@@ -312,6 +314,32 @@ auto cta::objectstore::RootEntry::dumpStorageClasses() -> std::list<StorageClass
     }
   }
   return ret;
+}
+
+auto cta::objectstore::RootEntry::dumpStorageClass(const std::string& name)
+  -> StorageClassDump {
+  checkPayloadReadable();
+  auto & scl = m_payload.storageclasses();
+  for (auto i=scl.begin(); i != scl.end(); i++) {
+    if (i->name() == name) {
+      StorageClassDump ret;
+      ret.copyCount = i->copycount();
+      ret.storageClass = i->name();
+      auto & arl = i->routes();
+      for (auto j=arl.begin(); j!= arl.end(); j++) {
+        ret.routes.push_back(StorageClassDump::ArchiveRouteDump());
+        auto &r = ret.routes.back();
+        r.copyNumber = j->copynb();
+        r.tapePool = j->tapepool();
+        r.log.deserialize(j->log());
+      }
+      return ret;
+    }
+  }
+  std::stringstream err;
+  err << "In RootEntry::dumpStorageClass: no such storage class: "
+      << name;
+  throw NoSuchStorageClass(err.str());
 }
 
 // =============================================================================

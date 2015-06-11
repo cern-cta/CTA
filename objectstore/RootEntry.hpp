@@ -104,8 +104,10 @@ public:
     std::string storageClass;
     uint16_t copyCount;
     std::list<ArchiveRouteDump> routes;
+    CreationLog log;
   };
   std::list<StorageClassDump> dumpStorageClasses();
+  StorageClassDump dumpStorageClass(const std::string & name);
   
   // Manipulations of libraries ================================================
   void addLibrary(const std::string & library, const CreationLog & log);
