@@ -20,6 +20,7 @@
 #include "nameserver/NameServer.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
+#include "scheduler/ArchiveToDirRequest.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/ArchivalRoute.hpp"
@@ -188,7 +189,10 @@ cta::MockSchedulerDatabase::~MockSchedulerDatabase() throw() {
 // queue
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::queue(const ArchiveToDirRequest &rqst) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  for(auto itor = rqst.getArchiveToFileRequests().cbegin();
+    itor != rqst.getArchiveToFileRequests().cend(); itor++) {
+    queue(*itor);
+  }
 }
 
 //------------------------------------------------------------------------------

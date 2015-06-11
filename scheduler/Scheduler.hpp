@@ -636,11 +636,13 @@ private:
    * @param remoteFile The URL of the remote file.
    * @param archiveFile The full path of the destination file within the
    * archive namespace.
+   * @param priority The priority of the request.
    */
   ArchiveToFileRequest createArchiveToFileRequest(
     const SecurityIdentity &requester,
     const std::string &remoteFile,
-    const std::string &archiveFile) const;
+    const std::string &archiveFile,
+    const uint64_t priority) const;
 
   /**
    * Returns the map from tape copy number to tape pool name for the specified

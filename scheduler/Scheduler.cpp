@@ -443,6 +443,7 @@ void cta::Scheduler::queueArchiveRequest(
   const SecurityIdentity &requester,
   const std::list<std::string> &remoteFiles,
   const std::string &archiveFileOrDir) {
+
   const bool archiveToDir = m_ns.dirExists(requester, archiveFileOrDir);
   if(archiveToDir) {
     const std::string &archiveDir = archiveFileOrDir;
@@ -479,17 +480,29 @@ void cta::Scheduler::queueArchiveToDirRequest(
   const std::list<std::string> &remoteFiles,
   const std::string &archiveDir) {
 
+  const uint64_t priority = 0; // TO BE DONE
+
   const auto storageClassName = m_ns.getDirStorageClass(requester, archiveDir);
   const auto storageClass = m_db.getStorageClass(storageClassName);
   assertStorageClassHasAtLeastOneCopy(storageClass);
 
   const bool archiveDirEndsWithASlash = Utils::endsWith(archiveDir, '/');
+  std::list<ArchiveToFileRequest> archiveToFileRequests;
   for(auto itor = remoteFiles.cbegin(); itor != remoteFiles.cend(); itor++) {
     const auto remoteFile = *itor;
     const auto remoteFileName = Utils::getEnclosedName(remoteFile);
     const std::string archiveFile = archiveDirEndsWithASlash ?
       archiveDir + remoteFileName : archiveDir + '/' + remoteFileName;
-    queueArchiveToFileRequest(requester, remoteFile, archiveFile);
+    archiveToFileRequests.push_back(createArchiveToFileRequest(requester,
+      remoteFile, archiveFile, priority));
+  }
+
+  m_db.queue(ArchiveToDirRequest(archiveDir, archiveToFileRequests, priority,
+    requester));
+
+  for(auto itor = archiveToFileRequests.cbegin(); itor !=
+    archiveToFileRequests.cend(); itor++) {
+    m_ns.createFile(requester, itor->getArchiveFile(), 0666);
   }
 }
 
@@ -514,7 +527,10 @@ void cta::Scheduler::queueArchiveToFileRequest(
   const std::string &remoteFile,
   const std::string &archiveFile) {
 
-  m_db.queue(createArchiveToFileRequest(requester, remoteFile, archiveFile));
+  const uint64_t priority = 0; // TO BE DONE
+
+  m_db.queue(createArchiveToFileRequest(requester, remoteFile, archiveFile,
+    priority));
 
   m_ns.createFile(requester, archiveFile, 0666);
 }
@@ -525,7 +541,8 @@ void cta::Scheduler::queueArchiveToFileRequest(
 cta::ArchiveToFileRequest cta::Scheduler::createArchiveToFileRequest(
   const SecurityIdentity &requester,
   const std::string &remoteFile,
-  const std::string &archiveFile) const {
+  const std::string &archiveFile,
+  const uint64_t priority) const {
 
   const std::string enclosingPath = Utils::getEnclosingPath(archiveFile);
   const std::string storageClassName = m_ns.getDirStorageClass(requester,
@@ -534,7 +551,6 @@ cta::ArchiveToFileRequest cta::Scheduler::createArchiveToFileRequest(
   assertStorageClassHasAtLeastOneCopy(storageClass);
   const auto routes = m_db.getArchivalRoutes(storageClassName);
   const auto copyNbToPoolMap = createCopyNbToPoolMap(routes);
-  const uint64_t priority = 0;
 
   return ArchiveToFileRequest(
     remoteFile,
