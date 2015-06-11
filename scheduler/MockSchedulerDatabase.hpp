@@ -85,6 +85,15 @@ public:
     const std::string &archiveFile);
 
   /**
+   * Notifies the scheduler database that the specified file entry has been
+   * created in the archive namepace.
+   *
+   * @param archiveFile The absolute path of the file within the archive
+   * namespace.
+   */
+  void fileEntryCreatedInNS(const std::string &archiveFile);
+
+  /**
    * Queues the specified request.
    *
    * @param rqst The request.

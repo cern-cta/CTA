@@ -118,6 +118,8 @@ public:
   virtual void deleteArchiveRequest(const SecurityIdentity& requester, 
     const std::string& archiveFile);
 
+  virtual void fileEntryCreatedInNS(const std::string &archiveFile);
+
   virtual std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > 
     getArchiveRequests() const;
 

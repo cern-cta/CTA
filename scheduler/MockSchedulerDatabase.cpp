@@ -141,7 +141,7 @@ void cta::MockSchedulerDatabase::createSchema() {
       "PRIMARY KEY (NAME)"
       ");"
     "CREATE TABLE ARCHIVETOTAPECOPYREQUEST("
-      "STATE          INTEGER,"
+      "STATE          TEXT,"
       "REMOTEFILE     TEXT,"
       "ARCHIVEFILE    TEXT,"
       "TAPEPOOL       TEXT,"
@@ -222,12 +222,13 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToTapeCopyRequest &rqst) {
   char *zErrMsg = 0;
   const SecurityIdentity &requester = rqst.getRequester();
   std::ostringstream query;
-  query << "INSERT INTO ARCHIVETOTAPECOPYREQUEST(REMOTEFILE, ARCHIVEFILE,"
-    " TAPEPOOL, COPYNB, PRIORITY, UID, GID, CREATIONTIME) VALUES('" << 
-    rqst.getRemoteFile() << "','" << rqst.getArchiveFile() << "','" <<
-    rqst.getTapePoolName() << "'," << rqst.getCopyNb() << "," <<
-    rqst.getPriority() << "," << requester.getUser().getUid() << "," <<
-    requester.getUser().getGid() << "," << (int)time(NULL) << ");";
+  query << "INSERT INTO ARCHIVETOTAPECOPYREQUEST(STATE, REMOTEFILE,"
+    " ARCHIVEFILE, TAPEPOOL, COPYNB, PRIORITY, UID, GID, CREATIONTIME) VALUES("
+    << "'PENDING_NS','" << rqst.getRemoteFile() << "','" <<
+    rqst.getArchiveFile() << "','" << rqst.getTapePoolName() << "'," <<
+    rqst.getCopyNb() << "," << rqst.getPriority() << "," <<
+    requester.getUser().getUid() << "," << requester.getUser().getGid() << ","
+    << (int)time(NULL) << ");";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
     std::ostringstream msg;
@@ -424,6 +425,31 @@ void cta::MockSchedulerDatabase::deleteArchiveRequest(
     std::ostringstream msg;
     msg << "Archive request for archive file " << archiveFile <<
       " does not exist";
+    throw(exception::Exception(msg.str()));
+  }
+}
+
+//------------------------------------------------------------------------------
+// fileEntryCreatedInNS
+//------------------------------------------------------------------------------
+void cta::MockSchedulerDatabase::fileEntryCreatedInNS(
+  const std::string &archiveFile) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "UPDATE ARCHIVETOTAPECOPYREQUEST SET STATE='PENDING_MOUNT' WHERE"
+    " STATE='PENDING_NS' AND ARCHIVEFILE='" << archiveFile << "';";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(msg.str()));
+  }
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 >= nbRowsModified) {
+    std::ostringstream msg;
+    msg << "There are no archive requests in status PENDING_MOUNT for archive"
+      " file " << archiveFile;
     throw(exception::Exception(msg.str()));
   }
 }

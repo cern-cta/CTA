@@ -614,12 +614,28 @@ private:
     const StorageClass &storageClass) const;
 
   /**
+   * Returns the list of ArchiveToFileRequest objects representing the specified
+   * request to archive multiple files to an archive directory.
+   *
+   * @param requester The identity of the requester.
+   * @param remoteFiles The URLs of the remote files.
+   * @param archiveFile The full path of the destination directory within the
+   * archive namespace.
+   * @param priority The priority of the request.
+   */
+  std::list<ArchiveToFileRequest> createArchiveToFileRequests(
+    const SecurityIdentity &requester,
+    const std::list<std::string> &remoteFiles,
+    const std::string &archiveDir,
+    const uint64_t priority);
+
+  /**
    * Queues the specifed request to archive one remote file to on archive file.
    *
    * The storage class of the archived file will be inherited from its
    * destination directory.
    *
-   * @param requester The identity of the user requesting the archival.
+   * @param requester The identity of the requester.
    * @param remoteFile The URL of the remote file.
    * @param archiveFile The full path of the destination file within the
    * archive namespace.
@@ -630,9 +646,9 @@ private:
     const std::string &archiveFile);
 
   /**
-   * Returns the ArchiveToFileRequest object representing the specifed request.
+   * Returns the ArchiveToFileRequest object representing the specified request.
    *
-   * @param requester The identity of the user requesting the archival.
+   * @param requester The identity of the requester.
    * @param remoteFile The URL of the remote file.
    * @param archiveFile The full path of the destination file within the
    * archive namespace.

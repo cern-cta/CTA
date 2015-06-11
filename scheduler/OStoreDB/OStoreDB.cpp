@@ -116,6 +116,10 @@ void OStoreDB::deleteArchivalRoute(const SecurityIdentity& requester,
   throw exception::Exception("Not Implemented");
 }
 
+void OStoreDB::fileEntryCreatedInNS(const std::string &archiveFile) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+} 
+
 void OStoreDB::createTapePool(const SecurityIdentity& requester, 
   const std::string& name, const uint32_t nbPartialTapes, 
   const std::string& comment) {
