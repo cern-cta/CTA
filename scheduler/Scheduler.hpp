@@ -36,6 +36,7 @@ class DirEntry;
 class DirIterator;
 class LogicalLibrary;
 class NameServer;
+class RemoteStorage;
 class RetrieveFromTapeCopyRequest;
 class RetrieveToDirRequest;
 class RetrieveToFileRequest;
@@ -57,8 +58,12 @@ public:
    *
    * @param ns The name server containing the namespace of the archive.
    * @param db The scheduler database.
+   * @param remoteStorage The remote storage system.
    */
-  Scheduler(NameServer &ns, SchedulerDatabase &db);
+  Scheduler(
+    NameServer &ns,
+    SchedulerDatabase &db,
+    RemoteStorage &remoteStorage);
 
   /**
    * Destructor.
@@ -584,6 +589,11 @@ private:
    * The scheduler database.
    */
   SchedulerDatabase &m_db;
+
+  /**
+   * The remote storage system.
+   */
+  RemoteStorage &m_remoteStorage;
 
   /**
    * Queues the specified request to archive one or more remote files to an

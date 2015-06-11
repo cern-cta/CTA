@@ -16,31 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "remotestorage/MockRemoteStorage.hpp"
+#include "remotestorage/MockRemoteStorageFactory.hpp"
 
-#include "SchedulerDatabaseFactory.hpp"
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+cta::MockRemoteStorageFactory::~MockRemoteStorageFactory() throw() {
+}
 
-namespace cta {
-
-/**
- * A conncret implementation of a scheduler database factory that creates mock
- * objects.
- */
-class MockSchedulerDatabaseFactory: public SchedulerDatabaseFactory {
-public:
-
-  /**
-   * Destructor.
-   */
-  ~MockSchedulerDatabaseFactory() throw();
-
-  /**
-   * Returns a newly created scheduler database object.
-   *
-   * @return A newly created scheduler database object.
-   */
-  std::unique_ptr<SchedulerDatabase> create() const;
-
-}; // class MockSchedulerDatabaseFactory
-
-} // namespace cta
+//------------------------------------------------------------------------------
+// create
+//------------------------------------------------------------------------------
+std::unique_ptr<cta::RemoteStorage> cta::MockRemoteStorageFactory::create() {
+  return std::unique_ptr<RemoteStorage>(new MockRemoteStorage());
+}

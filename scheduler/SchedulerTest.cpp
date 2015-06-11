@@ -18,6 +18,9 @@
 
 #include "nameserver/MockNameServerFactory.hpp"
 #include "nameserver/NameServer.hpp"
+#include "remotestorage/MockRemoteStorageFactory.hpp"
+#include "remotestorage/RemoteStorage.hpp"
+#include "remotestorage/RemoteStorageFactory.hpp"
 #include "scheduler/ArchivalRoute.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
@@ -43,12 +46,15 @@ namespace unitTests {
 struct SchedulerTestParam {
   cta::NameServerFactory &nsFactory;
   cta::SchedulerDatabaseFactory &dbFactory;
+  cta::RemoteStorageFactory &remoteStorageFactory;
 
   SchedulerTestParam(
     cta::NameServerFactory &nsFactory,
-    cta::SchedulerDatabaseFactory &dbFactory):
+    cta::SchedulerDatabaseFactory &dbFactory,
+    cta::RemoteStorageFactory &remoteStorageFactory):
     nsFactory(nsFactory),
-    dbFactory(dbFactory) {
+    dbFactory(dbFactory),
+    remoteStorageFactory(remoteStorageFactory) {
  }
 }; // struct SchedulerTestParam
 
@@ -73,9 +79,11 @@ public:
     using namespace cta;
 
     const SchedulerTestParam &param = GetParam();
-    m_ns.reset(param.nsFactory.create().release());
-    m_db.reset(param.dbFactory.create().release());
-    m_scheduler.reset(new cta::Scheduler(*(m_ns.get()), *(m_db.get())));
+    m_ns = param.nsFactory.create();
+    m_db = param.dbFactory.create();
+    m_remoteStorage = param.remoteStorageFactory.create();
+    m_scheduler.reset(new cta::Scheduler(*(m_ns.get()), *(m_db.get()),
+      *(m_remoteStorage.get())));
 
     SchedulerDatabase &db = *m_db.get();
     db.createAdminUser(s_systemOnSystemHost, s_admin,
@@ -85,9 +93,10 @@ public:
   }
 
   virtual void TearDown() {
-    m_scheduler.release();
-    m_db.release();
-    m_ns.release();
+    m_scheduler.reset();
+    m_remoteStorage.reset();
+    m_db.reset();
+    m_ns.reset();
   }
 
   cta::Scheduler &getScheduler() {
@@ -124,6 +133,7 @@ private:
 
   std::unique_ptr<cta::NameServer> m_ns;
   std::unique_ptr<cta::SchedulerDatabase> m_db;
+  std::unique_ptr<cta::RemoteStorage> m_remoteStorage;
   std::unique_ptr<cta::Scheduler> m_scheduler;
 
 }; // class SchedulerTest
@@ -2111,7 +2121,8 @@ TEST_P(SchedulerTest,
 
 static cta::MockNameServerFactory mockNsFactory;
 static cta::MockSchedulerDatabaseFactory mockDbFactory;
+static cta::MockRemoteStorageFactory mockRemoteStorageFactory;
 
 INSTANTIATE_TEST_CASE_P(MockSchedulerTest, SchedulerTest,
-  ::testing::Values(SchedulerTestParam(mockNsFactory, mockDbFactory)));
+  ::testing::Values(SchedulerTestParam(mockNsFactory, mockDbFactory, mockRemoteStorageFactory)));
 } // namespace unitTests

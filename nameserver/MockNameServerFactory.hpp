@@ -23,8 +23,7 @@
 namespace cta {
 
 /**
- * Concrete implementation of a name server factory that creates mock name
- * server objects.
+ * Concrete implementation of a name server factory that creates mock objects.
  */
 class MockNameServerFactory: public NameServerFactory {
 public:

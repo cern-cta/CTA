@@ -42,9 +42,12 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::Scheduler::Scheduler(NameServer &ns, SchedulerDatabase &db):
+cta::Scheduler::Scheduler(NameServer &ns,
+  SchedulerDatabase &db,
+  RemoteStorage &remoteStorage):
   m_ns(ns),
-  m_db(db) {
+  m_db(db),
+  m_remoteStorage(remoteStorage) {
 }
 
 //------------------------------------------------------------------------------

@@ -20,6 +20,7 @@
 
 #include "nameserver/MockNameServer.hpp"
 #include "nameserver/NameServer.hpp"
+#include "remotestorage/MockRemoteStorage.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
 #include "scheduler/ArchivalRoute.hpp"
@@ -50,7 +51,10 @@ extern "C"
 {
   XrdSfsFileSystem *XrdSfsGetFileSystem (XrdSfsFileSystem* native_fs, XrdSysLogger* lp, const char* configfn)
   {
-    return new XrdProFilesystem(new cta::MockNameServer(), new cta::MockSchedulerDatabase());
+    return new XrdProFilesystem(
+      new cta::MockNameServer(),
+      new cta::MockSchedulerDatabase(),
+      new cta::MockRemoteStorage());
   }
 }
 
@@ -1633,10 +1637,19 @@ void XrdProFilesystem::EnvInfo(XrdOucEnv *envP)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-XrdProFilesystem::XrdProFilesystem(cta::NameServer *ns, cta::SchedulerDatabase *scheddb): m_ns(ns), m_scheddb(scheddb), m_scheduler(new cta::Scheduler(*ns, *scheddb)) {
+XrdProFilesystem::XrdProFilesystem(
+  cta::NameServer *ns,
+  cta::SchedulerDatabase *scheddb,
+  cta::RemoteStorage *remoteStorage):
+  m_ns(ns),
+  m_scheddb(scheddb),
+  m_remoteStorage(remoteStorage),
+  m_scheduler(new cta::Scheduler(*ns, *scheddb, *remoteStorage)) {
   const cta::SecurityIdentity bootstrap_requester;
-  m_scheduler->createAdminUserWithoutAuthorizingRequester(bootstrap_requester, cta::UserIdentity(getuid(),getgid()), "Bootstrap operator");
-  m_scheduler->createAdminHostWithoutAuthorizingRequester(bootstrap_requester, "localhost", "Bootstrap operator host");
+  m_scheduler->createAdminUserWithoutAuthorizingRequester(bootstrap_requester,
+    cta::UserIdentity(getuid(),getgid()), "Bootstrap operator");
+  m_scheduler->createAdminHostWithoutAuthorizingRequester(bootstrap_requester,
+    "localhost", "Bootstrap operator host");
 }
 
 //------------------------------------------------------------------------------
@@ -1646,4 +1659,5 @@ XrdProFilesystem::~XrdProFilesystem() {
   delete m_scheduler;
   delete m_ns;
   delete m_scheddb;
+  delete m_remoteStorage;
 }

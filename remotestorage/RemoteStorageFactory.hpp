@@ -18,29 +18,32 @@
 
 #pragma once
 
-#include "SchedulerDatabaseFactory.hpp"
+#include <memory>
 
 namespace cta {
 
+// Forward declarations
+class RemoteStorage;
+
 /**
- * A conncret implementation of a scheduler database factory that creates mock
+ * Asbtract class specifying the interface to a factory of remote storage-system
  * objects.
  */
-class MockSchedulerDatabaseFactory: public SchedulerDatabaseFactory {
+class RemoteStorageFactory {
 public:
 
   /**
    * Destructor.
    */
-  ~MockSchedulerDatabaseFactory() throw();
+  virtual ~RemoteStorageFactory() throw() = 0;
 
   /**
-   * Returns a newly created scheduler database object.
+   * Returns a newly created remote storage-system object.
    *
-   * @return A newly created scheduler database object.
+   * @return A newly created remote storage-system object.
    */
-  std::unique_ptr<SchedulerDatabase> create() const;
+  virtual std::unique_ptr<RemoteStorage> create() = 0;
 
-}; // class MockSchedulerDatabaseFactory
+}; // class RemoteStorageFactory
 
 } // namespace cta
