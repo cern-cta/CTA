@@ -549,7 +549,21 @@ void cta::Scheduler::queueArchiveToFileRequest(
     remoteFile, archiveFile, priority);
 
   m_db.queue(rqst);
-  m_ns.createFile(requester, archiveFile, 0666);
+  try {
+    m_ns.createFile(requester, archiveFile, 0666);
+  } catch(std::exception &nsEx) {
+    // Try our best to cleanup the scheduler database.  The garbage collection
+    // logic will try again if we fail.
+    try {
+      m_db.deleteArchiveRequest(requester, archiveFile);
+    } catch(...) {
+    }
+
+    // Whether or not we were able to clean up the scheduler database, the real
+    // problem here was the failure to create an entry in the NS
+    throw nsEx;
+  }
+
   m_db.fileEntryCreatedInNS(archiveFile);
 }
 
