@@ -52,9 +52,9 @@ std::list<AdminHost> OStoreDB::getAdminHosts() const {
   RootEntry re(m_objectStore);
   ScopedSharedLock rel(re);
   re.fetch();
-  rel.release();
   std::list<AdminHost> ret;
   auto hl=re.dumpAdminHosts();
+  rel.release();
   for (auto h=hl.begin(); h!=hl.end(); h++) {
     ret.push_back(AdminHost(h->hostname, 
         cta::UserIdentity(h->log.uid, h->log.gid),
@@ -114,7 +114,22 @@ std::list<AdminUser> OStoreDB::getAdminUsers() const {
 }
 
 void OStoreDB::assertIsAdminOnAdminHost(const SecurityIdentity& id) const {
-  throw exception::Exception("Not Implemented");
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  if (!re.isAdminUser(objectstore::UserIdentity(id.getUser().getUid(),
+      id.getUser().getGid()))) {
+    std::ostringstream msg;
+    msg << "User uid=" << id.getUser().getUid() 
+        << " gid=" << id.getUser().getGid()
+        << " is not an administrator";
+    throw exception::Exception(msg.str());
+  }
+  if (!re.isAdminHost(id.getHost())) {
+    std::ostringstream msg;
+    msg << "Host " << id.getHost() << " is not an administration host";
+    throw exception::Exception(msg.str());
+  }
 }
 
 void OStoreDB::createStorageClass(const SecurityIdentity& requester, 

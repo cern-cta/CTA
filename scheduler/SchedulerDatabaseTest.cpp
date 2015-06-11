@@ -382,8 +382,7 @@ static cta::MockSchedulerDatabaseFactory mockDbFactory;
 INSTANTIATE_TEST_CASE_P(MockSchedulerDatabaseTest, SchedulerDatabaseTest,
   ::testing::Values(SchedulerDatabaseTestParam(mockDbFactory)));
 
-static cta::objectstore::BackendVFS be;
-static cta::OStoreDBFactory OStoreDBFactory(be);
+static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactory;
 
 INSTANTIATE_TEST_CASE_P(OStoreSchedulerDatabaseTest, SchedulerDatabaseTest,
   ::testing::Values(SchedulerDatabaseTestParam(OStoreDBFactory)));

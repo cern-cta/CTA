@@ -70,8 +70,7 @@ target_link_libraries (ctaschedulertest ${SQLITE3_LIBRARY_RELEASE})
 
 include_directories(${CMAKE_BINARY_DIR})
 add_library(ctaOStoreSchedulerDB SHARED
-  OStoreDB/OStoreDB.cpp
-  OStoreDB/OStoreDBFactory.cpp)
+  OStoreDB/OStoreDB.cpp)
 
 target_link_libraries(ctaschedulertest
   ctascheduler
