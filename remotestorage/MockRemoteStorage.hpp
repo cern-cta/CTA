@@ -18,28 +18,36 @@
 
 #pragma once
 
-#include <string>
+#include "remotestorage/RemoteStorage.hpp"
 
 namespace cta {
 
 /**
- * Abstract class specifying the interface to a remote storage system.
+ * A mock proxy class for a remote storage system.
  */
-class RemoteStorage {
+class MockRemoteStorage: public RemoteStorage {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~RemoteStorage() throw() = 0;
+  ~MockRemoteStorage() throw();
 
   /**
-   * Returns true if the specified remote file exists or false if not.
+   * Returns true if the specified regular file exists.
    *
-   * @param remoteFile The URL of the remote file.
-   * @return true if the specified remote file exists or false if not.
+   * @param path The absolute path of the file.
+   * @return True if the specified directory exists.
    */
-  virtual bool fileExists(const std::string &remoteFile) = 0;
+  bool regularFileExists(const std::string &path) const;
+
+  /**
+   * Returns true if the specified directory exists.
+   *
+   * @param path The absolute path of the file.
+   * @return True if the specified directory exists.
+   */
+  bool dirExists(const std::string &path) const;
 
   /**
    * Renames the specified remote file to the specified new name.
@@ -47,9 +55,9 @@ public:
    * @param remoteFile The current URL of the remote file.
    * @param newRemoteFile The new URL of the remote file.
    */
-  virtual void rename(const std::string &remoteFile,
-    const std::string &newRemoteFile) = 0;
+  void rename(const std::string &remoteFile,
+    const std::string &newRemoteFile);
 
-}; // class RemoteStorage
+}; // class MockRemoteStorage
 
 } // namespace cta

@@ -16,27 +16,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/EosRemoteStorage.hpp"
 #include "common/exception/Exception.hpp"
-using cta::exception::Exception;
+#include "remotestorage/MockRemoteStorage.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::EosRemoteStorage::~EosRemoteStorage() throw() {
+cta::MockRemoteStorage::~MockRemoteStorage() throw() {
 }
 
 //------------------------------------------------------------------------------
-// fileExists
+// regularFileExists
 //------------------------------------------------------------------------------
-bool cta::EosRemoteStorage::fileExists(const std::string &remoteFile) {
-  throw  Exception("EosRemoteStorage::fileExists() not implemented");
+bool cta::MockRemoteStorage::regularFileExists(const std::string &remoteFile)
+  const {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+//------------------------------------------------------------------------------
+// dirExists
+//------------------------------------------------------------------------------
+bool cta::MockRemoteStorage::dirExists(const std::string &remoteFile) const {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // rename
 //------------------------------------------------------------------------------
-void cta::EosRemoteStorage::rename(const std::string &remoteFile,
+void cta::MockRemoteStorage::rename(const std::string &remoteFile,
   const std::string &newRemoteFile) {
-  throw Exception("EosRemoteStorage::rename() not implemented");
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }

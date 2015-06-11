@@ -20,7 +20,6 @@ set (CTA_SCHEDULER_SRC_FILES
   DirIterator.cpp
   DiskException.cpp
   DriveQuota.cpp
-  EosRemoteStorage.cpp
   FileAttribute.cpp
   FileSystemDirEntry.cpp
   FileSystemNode.cpp
@@ -32,7 +31,6 @@ set (CTA_SCHEDULER_SRC_FILES
   MockSchedulerDatabaseFactory.cpp
   Mount.cpp
   MountCriteria.cpp
-  RemoteStorage.cpp
   RetrievalFileTransfer.cpp
   RetrievalMount.cpp
   RetrieveRequest.cpp
