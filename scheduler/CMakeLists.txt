@@ -33,6 +33,7 @@ set (CTA_SCHEDULER_SRC_FILES
   MountCriteria.cpp
   RetrievalFileTransfer.cpp
   RetrievalMount.cpp
+  RetrieveFromTapeCopyRequest.cpp
   RetrieveRequest.cpp
   RetrieveToDirRequest.cpp
   RetrieveToFileRequest.cpp

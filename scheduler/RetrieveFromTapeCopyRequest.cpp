@@ -36,6 +36,7 @@ cta::RetrieveFromTapeCopyRequest::~RetrieveFromTapeCopyRequest() throw() {
 //------------------------------------------------------------------------------
 cta::RetrieveFromTapeCopyRequest::RetrieveFromTapeCopyRequest(
   const std::string &archiveFile,
+  const uint64_t copyNb,
   const TapeCopyLocation &tapeCopy,
   const std::string &remoteFile,
   const uint64_t priority,
@@ -43,8 +44,16 @@ cta::RetrieveFromTapeCopyRequest::RetrieveFromTapeCopyRequest(
   const time_t creationTime):
   RetrieveRequest(priority, user, creationTime),
   m_archiveFile(archiveFile),
+  m_copyNb(copyNb),
   m_tapeCopy(tapeCopy),
   m_remoteFile(remoteFile) {
+}
+
+//------------------------------------------------------------------------------
+// getCopyNb
+//------------------------------------------------------------------------------
+uint64_t cta::RetrieveFromTapeCopyRequest::getCopyNb() const throw(){
+  return m_copyNb;
 }
 
 //------------------------------------------------------------------------------
