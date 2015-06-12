@@ -24,24 +24,24 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::UserIdentity::UserIdentity() throw():
-  m_uid(std::numeric_limits<decltype(m_uid)>::max()),
-  m_gid(std::numeric_limits<decltype(m_gid)>::max()) {}
+  uid(std::numeric_limits<decltype(uid)>::max()),
+  gid(std::numeric_limits<decltype(gid)>::max()) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::UserIdentity::UserIdentity(
-  const uint32_t uid,
-  const uint32_t gid) throw():
-  m_uid(uid),
-  m_gid(gid) {
+  const uint32_t u,
+  const uint32_t g) throw():
+  uid(u),
+  gid(g) {
 }
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::UserIdentity::operator==(const UserIdentity &rhs) const {
-  return m_uid == rhs.m_uid;
+  return uid == rhs.uid;
 }
 
 //------------------------------------------------------------------------------
@@ -52,37 +52,9 @@ bool cta::UserIdentity::operator!=(const UserIdentity &rhs) const {
 }
 
 //------------------------------------------------------------------------------
-// setUid
-//------------------------------------------------------------------------------
-void cta::UserIdentity::setUid(const uint32_t uid) throw() {
-  m_uid = uid;
-} 
-
-//------------------------------------------------------------------------------
-// getUid
-//------------------------------------------------------------------------------
-uint32_t cta::UserIdentity::getUid() const throw() {
-  return m_uid;
-}
-
-//------------------------------------------------------------------------------
-// setGid
-//------------------------------------------------------------------------------
-void cta::UserIdentity::setGid(const uint32_t gid) throw() {
-  m_gid = gid;
-}
-
-//------------------------------------------------------------------------------
-// getGid
-//------------------------------------------------------------------------------
-uint32_t cta::UserIdentity::getGid() const throw() {
-  return m_gid;
-}
-
-//------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::UserIdentity &obj) {
-  os << "(uid=" << obj.getUid() << " gid=" << obj.getGid() << ")";
+  os << "(uid=" << obj.uid << " gid=" << obj.gid << ")";
   return os;
 }

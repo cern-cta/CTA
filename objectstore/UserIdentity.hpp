@@ -18,19 +18,15 @@
 
 #include <string>
 #include <stdint.h>
-#include <limits>
 #include "objectstore/cta.pb.h"
+#include "scheduler/UserIdentity.hpp"
 
 namespace cta { namespace objectstore {
 
-class UserIdentity {
+class UserIdentity: public cta::UserIdentity {
 public:
-  UserIdentity (): uid(std::numeric_limits<decltype(uid)>::max()),
-          gid(std::numeric_limits<decltype(gid)>::max()) {}
-  UserIdentity (uint32_t ui, uint32_t gi): 
-    uid(ui), gid(gi) {}
-  uint32_t uid;
-  uint32_t gid;
+  UserIdentity (): cta::UserIdentity() {}
+  UserIdentity (uint32_t ui, uint32_t gi): cta::UserIdentity(ui, gi) {}
   void serialize (cta::objectstore::serializers::UserIdentity & user) const {
     user.set_uid(uid);
     user.set_gid(gid);
@@ -38,17 +34,6 @@ public:
   void deserialize (const cta::objectstore::serializers::UserIdentity & user) {
     uid = user.uid();
     gid = user.gid();
-  }
-  /**
-   * We can compare the UserIdentities between each other, and with the
-   * serialized user identities.
-   * The current actual criteria is numeric uid equility only.
-   */
-  bool operator==(const UserIdentity & o) const {
-    return uid == o.uid;
-  }
-  bool operator==(const cta::objectstore::serializers::UserIdentity & o) const {
-    return uid == o.uid();
   }
 };
 

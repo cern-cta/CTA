@@ -227,7 +227,7 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToTapeCopyRequest &rqst) {
     << "'PENDING_NS','" << rqst.getRemoteFile() << "','" <<
     rqst.getArchiveFile() << "','" << rqst.getTapePoolName() << "'," <<
     rqst.getCopyNb() << "," << rqst.getPriority() << "," <<
-    requester.getUser().getUid() << "," << requester.getUser().getGid() << ","
+    requester.getUser().uid << "," << requester.getUser().gid << ","
     << (int)time(NULL) << ");";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
@@ -472,7 +472,7 @@ void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst) {
   query << "INSERT INTO RETRIEVEFROMTAPECOPYREQUEST(ARCHIVEFILE, REMOTEFILE, COPYNB, VID, FSEQ, BLOCKID, PRIORITY, UID,"
     " GID, HOST, CREATIONTIME) VALUES(" << (int)cta::RetrieveFromTapeCopyRequestState::PENDING <<
     ",'" << rqst.getArchiveFile() << "','" << rqst.getRemoteFile() << "'," <<
-    requester.getUser().getUid() << "," << requester.getUser().getGid() <<
+    requester.getUser().uid << "," << requester.getUser().gid <<
     "," << (int)time(NULL) << ");";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
@@ -618,13 +618,13 @@ void cta::MockSchedulerDatabase::createAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user,
   const std::string &comment) {
-  const uint32_t adminUid = user.getUid();
-  const uint32_t adminGid = user.getGid();
+  const uint32_t adminUid = user.uid;
+  const uint32_t adminGid = user.gid;
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "INSERT INTO ADMINUSER(ADMIN_UID, ADMIN_GID, UID, GID,"
     " CREATIONTIME, COMMENT) VALUES(" << adminUid << "," << adminGid << "," <<
-    requester.getUser().getUid() << "," << requester.getUser().getGid() << ","
+    requester.getUser().uid << "," << requester.getUser().gid << ","
     << (int)time(NULL) << ",'" << comment << "');";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
@@ -650,8 +650,8 @@ void cta::MockSchedulerDatabase::deleteAdminUser(
   const UserIdentity &user) {
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "DELETE FROM ADMINUSER WHERE ADMIN_UID=" << user.getUid() <<
-    " AND ADMIN_GID=" << user.getGid() <<";";
+  query << "DELETE FROM ADMINUSER WHERE ADMIN_UID=" << user.uid <<
+    " AND ADMIN_GID=" << user.gid <<";";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
       std::ostringstream msg;
@@ -662,7 +662,7 @@ void cta::MockSchedulerDatabase::deleteAdminUser(
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
   if(0 >= nbRowsModified) {
     std::ostringstream msg;
-    msg << "Admin user " << user.getUid() << ":" << user.getGid() <<
+    msg << "Admin user " << user.uid << ":" << user.gid <<
       " does not exist";
     throw(exception::Exception(msg.str()));
   }
@@ -714,8 +714,8 @@ void cta::MockSchedulerDatabase::assertIsAdminOnAdminHost(
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::assertIsAdmin(const UserIdentity &user)
   const {
-  const uint32_t adminUid = user.getUid();
-  const uint32_t adminGid = user.getGid();
+  const uint32_t adminUid = user.uid;
+  const uint32_t adminGid = user.gid;
   std::ostringstream query;
   query << "SELECT COUNT(*) FROM ADMINUSER WHERE ADMIN_UID=" << adminUid <<
     " AND ADMIN_GID=" << adminGid << ";";
@@ -777,8 +777,8 @@ void cta::MockSchedulerDatabase::createAdminHost(
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "INSERT INTO ADMINHOST(NAME, UID, GID, CREATIONTIME, COMMENT)"
-    " VALUES('" << hostName << "',"<< requester.getUser().getUid() << "," <<
-    requester.getUser().getGid() << "," << (int)time(NULL) << ",'" << comment <<
+    " VALUES('" << hostName << "',"<< requester.getUser().uid << "," <<
+    requester.getUser().gid << "," << (int)time(NULL) << ",'" << comment <<
     "');";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
@@ -861,7 +861,7 @@ void cta::MockSchedulerDatabase::createStorageClass(
   std::ostringstream query;
   query << "INSERT INTO STORAGECLASS(NAME, NBCOPIES, UID, GID, CREATIONTIME,"
     " COMMENT) VALUES('" << name << "'," << (int)nbCopies << "," <<
-    requester.getUser().getUid() << "," << requester.getUser().getGid() << "," <<
+    requester.getUser().uid << "," << requester.getUser().gid << "," <<
     (int)time(NULL) << ",'" << comment << "');";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
@@ -989,7 +989,7 @@ void cta::MockSchedulerDatabase::createTapePool(
   std::ostringstream query;
   query << "INSERT INTO TAPEPOOL(NAME, NBPARTIALTAPES, UID, GID, CREATIONTIME,"
     " COMMENT) VALUES('" << name << "'," << (int)nbPartialTapes << "," <<
-    requester.getUser().getUid() << "," << requester.getUser().getGid() << "," <<
+    requester.getUser().uid << "," << requester.getUser().gid << "," <<
     (int)time(NULL) << ",'" << comment << "');";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
@@ -1080,8 +1080,8 @@ void cta::MockSchedulerDatabase::createArchivalRoute(
   std::ostringstream query;
   query << "INSERT INTO ARCHIVALROUTE(STORAGECLASS_NAME, COPYNB, TAPEPOOL,"
     " UID, GID, CREATIONTIME, COMMENT) VALUES('" << storageClassName << "'," <<
-    (int)copyNb << ",'" << tapePoolName << "'," << requester.getUser().getUid() <<
-    "," << requester.getUser().getGid() << "," << (int)time(NULL) << ",'" << comment
+    (int)copyNb << ",'" << tapePoolName << "'," << requester.getUser().uid <<
+    "," << requester.getUser().gid << "," << (int)time(NULL) << ",'" << comment
     << "');";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
@@ -1240,8 +1240,8 @@ void cta::MockSchedulerDatabase::createLogicalLibrary(
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "INSERT INTO LOGICALLIBRARY(NAME, UID, GID, CREATIONTIME, COMMENT)"
-    " VALUES('" << name << "',"<< requester.getUser().getUid() << "," <<
-    requester.getUser().getGid() << "," << (int)time(NULL) << ",'" << comment <<
+    " VALUES('" << name << "',"<< requester.getUser().uid << "," <<
+    requester.getUser().gid << "," << (int)time(NULL) << ",'" << comment <<
     "');";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
@@ -1323,7 +1323,7 @@ void cta::MockSchedulerDatabase::createTape(
     " CAPACITY_BYTES, DATAONTAPE_BYTES, UID, GID, CREATIONTIME, COMMENT)"
     " VALUES('" << vid << "','" << logicalLibraryName << "','" << tapePoolName
     << "',"<< (long unsigned int)capacityInBytes << ",0," <<
-    requester.getUser().getUid() << "," << requester.getUser().getGid() << ","
+    requester.getUser().uid << "," << requester.getUser().gid << ","
     << (int)time(NULL) << ",'" << comment << "');";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {

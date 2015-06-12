@@ -191,8 +191,8 @@ int XrdProFilesystem::executeLsArchiveJobsCommand(const ParsedRequest &req, XrdO
       std::ostringstream responseSS;
       responseSS << "[OK] List of archive requests for tape pool " << req.args.at(0) << ":\n";
       for(auto it = requests.begin(); it != requests.end(); it++) {
-        responseSS << "[OK]\t" << it->getRequester().getUser().getUid()
-                << " " << it->getRequester().getUser().getGid() 
+        responseSS << "[OK]\t" << it->getRequester().getUser().uid
+                << " " << it->getRequester().getUser().gid 
                 << " " << it->getCreationTime()
                 << " " << it->getRemoteFile() 
                 << " " << it->getArchiveFile()
@@ -207,8 +207,8 @@ int XrdProFilesystem::executeLsArchiveJobsCommand(const ParsedRequest &req, XrdO
       for(auto pool=pools.begin(); pool!=pools.end(); pool++) {
         responseSS << "[OK] List of archive requests for tape pool " << (pool->first).getName() << ":\n";
         for(auto it = (pool->second).begin(); it != (pool->second).end(); it++) {
-          responseSS << "[OK]\t" << it->getRequester().getUser().getUid()
-                  << " " << it->getRequester().getUser().getGid() 
+          responseSS << "[OK]\t" << it->getRequester().getUser().uid
+                  << " " << it->getRequester().getUser().gid 
                   << " " << it->getCreationTime()
                   << " " << it->getRemoteFile() 
                   << " " << it->getArchiveFile()
@@ -292,8 +292,8 @@ int XrdProFilesystem::executeLsRetrieveJobsCommand(const ParsedRequest &req, Xrd
       std::ostringstream responseSS;
       responseSS << "[OK] List of retrieve requests for vid " << req.args.at(0) << ":\n";
       for(auto it = requests.begin(); it != requests.end(); it++) {
-        responseSS << "[OK]\t" << it->getRequester().getUser().getUid()
-                << " " << it->getRequester().getUser().getGid() 
+        responseSS << "[OK]\t" << it->getRequester().getUser().uid
+                << " " << it->getRequester().getUser().gid 
                 << " " << it->getCreationTime()
                 << " " << it->getArchiveFile()
                 << " " << it->getCopyNb()
@@ -308,8 +308,8 @@ int XrdProFilesystem::executeLsRetrieveJobsCommand(const ParsedRequest &req, Xrd
       for(auto tape=tapes.begin(); tape!=tapes.end(); tape++) {
         responseSS << "[OK] List of retrieve requests for vid " << (tape->first).getVid() << ":\n";
         for(std::list<cta::RetrieveFromTapeCopyRequest>::const_iterator it = (tape->second).begin(); it != (tape->second).end(); it++) {
-          responseSS << "[OK]\t" << it->getRequester().getUser().getUid()
-                << " " << it->getRequester().getUser().getGid()
+          responseSS << "[OK]\t" << it->getRequester().getUser().uid
+                << " " << it->getRequester().getUser().gid
                 << " " << it->getCreationTime()
                 << " " << it->getArchiveFile()
                 << " " << it->getCopyNb()
@@ -519,7 +519,7 @@ int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrI
     responseSS << "[OK] Listing of the storage class names and no of copies:";
     for(std::list<cta::StorageClass>::iterator it = stgList.begin(); it != stgList.end(); it++) {
       responseSS << "\n" << it->getName() << " " << it->getNbCopies() << " " 
-              << it->getCreator().getUid() << " " << it->getCreator().getGid() << " " 
+              << it->getCreator().uid << " " << it->getCreator().gid << " " 
               << it->getCreationTime() << " \"" << it->getComment() << "\"";
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -736,7 +736,7 @@ int XrdProFilesystem::executeLspoolCommand(const ParsedRequest &req, XrdOucErrIn
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the tape pools:";
     for(std::list<cta::TapePool>::iterator it = poolList.begin(); it != poolList.end(); it++) {
-      responseSS << "\n" << it->getName() << " " << it->getCreator().getUid() << " " << it->getCreator().getGid() << " " 
+      responseSS << "\n" << it->getName() << " " << it->getCreator().uid << " " << it->getCreator().gid << " " 
               << it->getCreationTime() << " \"" << it->getComment() << "\"";
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -844,8 +844,8 @@ int XrdProFilesystem::executeLsrouteCommand(const ParsedRequest &req, XrdOucErrI
     for(std::list<cta::ArchivalRoute>::iterator it = routeList.begin(); it != routeList.end(); it++) {
       responseSS << "\n" << it->getStorageClassName() << ":" << it->getCopyNb() 
               << " " << it->getTapePoolName()
-              << " " << it->getCreator().getUid()
-              << " " << it->getCreator().getGid()
+              << " " << it->getCreator().uid
+              << " " << it->getCreator().gid
               << " \"" << it->getComment() << "\"";
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
@@ -946,8 +946,8 @@ int XrdProFilesystem::executeLsllibCommand(const ParsedRequest &req, XrdOucErrIn
     responseSS << "[OK] Listing of the logical libraries:";
     for(std::list<cta::LogicalLibrary>::iterator it = llibs.begin(); it != llibs.end(); it++) {
       responseSS  << "\n" << it->getName()
-              << " " << it->getCreator().getUid()
-              << " " << it->getCreator().getGid() 
+              << " " << it->getCreator().uid
+              << " " << it->getCreator().gid 
               << " " << it->getCreationTime()
               << " \"" << it->getComment() << "\"";
     }
@@ -1056,8 +1056,8 @@ int XrdProFilesystem::executeLstapeCommand(const ParsedRequest &req, XrdOucErrIn
               << " " << it->getDataOnTapeInBytes()
               << " " << it->getLogicalLibraryName()
               << " " << it->getTapePoolName()
-              << " " << it->getCreator().getUid()
-              << " " << it->getCreator().getGid() 
+              << " " << it->getCreator().uid
+              << " " << it->getCreator().gid 
               << " " << it->getCreationTime()
               << " \"" << it->getComment() << "\"";
     }
@@ -1094,11 +1094,11 @@ int XrdProFilesystem::executeMkadminuserCommand(const ParsedRequest &req, XrdOuc
     std::istringstream i0(req.args.at(0));
     int uid = 0;
     i0 >> uid;
-    adminUser.setUid(uid);
+    adminUser.uid = uid;
     std::istringstream i1(req.args.at(1));
     int gid = 0;
     i1 >> gid;
-    adminUser.setGid(gid);
+    adminUser.gid = gid;
     const std::string comment = "TO BE DONE";
     m_scheduler->createAdminUser(requester, adminUser, comment);
     std::ostringstream responseSS;
@@ -1136,11 +1136,11 @@ int XrdProFilesystem::executeRmadminuserCommand(const ParsedRequest &req, XrdOuc
     std::stringstream ssArg0(req.args.at(0));
     int uid = 0;
     ssArg0 >> uid;
-    adminUser.setUid(uid);
+    adminUser.uid = uid;
     std::stringstream ssArg1(req.args.at(1));
     int gid = 0;
     ssArg0 >> gid;
-    adminUser.setGid(gid);
+    adminUser.gid = gid;
     m_scheduler->deleteAdminUser(requester, adminUser);
     std::ostringstream responseSS;
     responseSS << "[OK] Admin user with uid " << req.args.at(0) << " and gid " << req.args.at(1) << " deleted";
@@ -1177,7 +1177,7 @@ int XrdProFilesystem::executeLsadminuserCommand(const ParsedRequest &req, XrdOuc
     std::ostringstream responseSS;
     responseSS << "[OK] Listing of the admin user uids and gids:";
     for(std::list<cta::AdminUser>::iterator it = userIdList.begin(); it != userIdList.end(); it++) {
-      responseSS << "\n" << it->getUser().getUid() << " " << it->getUser().getGid();
+      responseSS << "\n" << it->getUser().uid << " " << it->getUser().gid;
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;

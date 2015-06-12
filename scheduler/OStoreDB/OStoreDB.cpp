@@ -54,7 +54,7 @@ std::list<AdminHost> OStoreDB::getAdminHosts() const {
   rel.release();
   for (auto h=hl.begin(); h!=hl.end(); h++) {
     ret.push_back(AdminHost(h->hostname, 
-        cta::UserIdentity(h->log.user.getUid(), h->log.user.getGid()),
+        cta::UserIdentity(h->log.user.uid, h->log.user.gid),
         h->log.comment, h->log.time));
   }
   return ret;
@@ -77,7 +77,7 @@ void OStoreDB::createAdminUser(const SecurityIdentity& requester,
   re.fetch();
   objectstore::CreationLog cl(requester.getUser(), requester.getHost(),
     time(NULL), comment);
-  re.addAdminUser(objectstore::UserIdentity(user.getUid(), user.getGid()), cl);
+  re.addAdminUser(objectstore::UserIdentity(user.uid, user.gid), cl);
   re.commit();
 }
 
@@ -86,7 +86,7 @@ void OStoreDB::deleteAdminUser(const SecurityIdentity& requester,
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  re.removeAdminUser(objectstore::UserIdentity(user.getUid(), user.getGid()));
+  re.removeAdminUser(objectstore::UserIdentity(user.uid, user.gid));
   re.commit();
 }
 
@@ -100,7 +100,7 @@ std::list<AdminUser> OStoreDB::getAdminUsers() const {
     ret.push_back(
       AdminUser(
         cta::UserIdentity(au->user.uid, au->user.gid),
-        cta::UserIdentity(au->log.user.getUid(), au->log.user.getGid()),
+        cta::UserIdentity(au->log.user.uid, au->log.user.gid),
         au->log.comment,
         au->log.time
     ));
@@ -113,11 +113,11 @@ void OStoreDB::assertIsAdminOnAdminHost(const SecurityIdentity& id) const {
   RootEntry re(m_objectStore);
   ScopedSharedLock rel(re);
   re.fetch();
-  if (!re.isAdminUser(objectstore::UserIdentity(id.getUser().getUid(),
-      id.getUser().getGid()))) {
+  if (!re.isAdminUser(objectstore::UserIdentity(id.getUser().uid,
+      id.getUser().gid))) {
     std::ostringstream msg;
-    msg << "User uid=" << id.getUser().getUid() 
-        << " gid=" << id.getUser().getGid()
+    msg << "User uid=" << id.getUser().uid 
+        << " gid=" << id.getUser().gid
         << " is not an administrator";
     throw exception::Exception(msg.str());
   }
@@ -146,7 +146,7 @@ StorageClass OStoreDB::getStorageClass(const std::string& name) const {
   auto sc = re.dumpStorageClass(name);
   return cta::StorageClass(name,
     sc.copyCount,
-    cta::UserIdentity(sc.log.user.getUid(), sc.log.user.getGid()),
+    cta::UserIdentity(sc.log.user.uid, sc.log.user.gid),
     sc.log.comment,
     sc.log.time);
 }

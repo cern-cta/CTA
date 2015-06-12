@@ -34,15 +34,15 @@ public:
     const std::string & c): cta::CreationLog(
       cta::UserIdentity(user),hn ,t, c) {}
   void serialize (cta::objectstore::serializers::CreationLog & log) const {
-    log.mutable_user()->set_uid(user.getUid());
-    log.mutable_user()->set_gid(user.getGid());
+    log.mutable_user()->set_uid(user.uid);
+    log.mutable_user()->set_gid(user.gid);
     log.set_host(host);
     log.set_time(time);
     log.set_comment(comment);
   }
   void deserialize (const cta::objectstore::serializers::CreationLog & log) {
-    user.setUid(log.user().uid());
-    user.setGid(log.user().gid());
+    user.uid=log.user().uid();
+    user.gid=log.user().gid();
     host = log.host();
     time  = log.time();
     comment = log.comment();

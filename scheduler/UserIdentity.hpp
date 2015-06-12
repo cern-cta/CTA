@@ -44,30 +44,6 @@ public:
    */
   UserIdentity(const uint32_t uid, const uint32_t gid) throw();
 
-  /**
-   * Sets the user ID of the user.
-   *
-   * @param uid The user ID of the user.
-   */
-  void setUid(const uint32_t uid) throw();
-
-  /**
-   * Returns the user ID of the user.
-   */
-  uint32_t getUid() const throw();
-
-  /**
-   * Sets the group ID of the user.
-   *
-   * @param gid The group ID of the user.
-   */
-  void setGid(const uint32_t gid) throw();
-
-  /**
-   * Returns the group ID of the user.
-   */
-  uint32_t getGid() const throw();
-
   /** 
    * Returns true if the specified right-hand side is equal to this object.
    *
@@ -84,17 +60,15 @@ public:
    */
   bool operator!=(const UserIdentity &rhs) const;
 
-private:
-
   /**
    * The user ID of the user.
    */
-  uint32_t m_uid;
+  uint32_t uid;
 
   /**
    * The group ID of the user.
    */
-  uint32_t m_gid;
+  uint32_t gid;
 
 
 }; // class UserIdentity
