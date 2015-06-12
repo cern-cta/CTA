@@ -76,6 +76,14 @@ public:
    * class should have on tape.
    */
   uint16_t getNbCopies() const throw();
+  
+  /**
+   * Returns true if the specified right-hand side is greater than this object.
+   *
+   * @param rhs The object on the right-hand side of the < operator.
+   * @return True if the specified right-hand side is greater than this object.
+   */
+  bool operator<(const StorageClass &rhs) const;
 
 private:
 

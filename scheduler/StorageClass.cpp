@@ -58,3 +58,11 @@ const std::string &cta::StorageClass::getName() const throw() {
 uint16_t cta::StorageClass::getNbCopies() const throw() {
   return m_nbCopies;
 }
+
+//------------------------------------------------------------------------------
+// operator<
+//------------------------------------------------------------------------------
+bool cta::StorageClass::operator<(const StorageClass& rhs) const {
+  return m_name < rhs.m_name;
+}
+

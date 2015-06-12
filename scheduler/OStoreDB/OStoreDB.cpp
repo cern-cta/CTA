@@ -23,6 +23,7 @@
 #include "scheduler/StorageClass.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
+#include <algorithm>
 
 namespace cta {
   
@@ -167,6 +168,7 @@ std::list<StorageClass> OStoreDB::getStorageClasses() const {
         sc->copyCount, cta::UserIdentity(sc->log.uid, sc->log.gid),
         sc->log.comment, sc->log.time));
   }
+  ret.sort();
   return ret;
 }
 
