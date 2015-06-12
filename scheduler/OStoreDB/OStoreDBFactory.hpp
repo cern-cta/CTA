@@ -28,6 +28,7 @@
 #include "scheduler/RetrieveFromTapeCopyRequest.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/Agent.hpp"
+#include "objectstore/BackendVFS.hpp"
 
 namespace cta {
   

@@ -21,6 +21,8 @@
 #include "remotestorage/MockRemoteStorageFactory.hpp"
 #include "remotestorage/RemoteStorage.hpp"
 #include "remotestorage/RemoteStorageFactory.hpp"
+#include "scheduler/AdminUser.hpp"
+#include "scheduler/AdminHost.hpp"
 #include "scheduler/ArchivalRoute.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
@@ -32,6 +34,7 @@
 #include "scheduler/StorageClass.hpp"
 #include "scheduler/Tape.hpp"
 #include "scheduler/TapePool.hpp"
+#include "OStoreDB/OStoreDBFactory.hpp"
 
 #include <exception>
 #include <gtest/gtest.h>
@@ -2125,4 +2128,9 @@ static cta::MockRemoteStorageFactory mockRemoteStorageFactory;
 
 INSTANTIATE_TEST_CASE_P(MockSchedulerTest, SchedulerTest,
   ::testing::Values(SchedulerTestParam(mockNsFactory, mockDbFactory, mockRemoteStorageFactory)));
+
+static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactory;
+
+INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTest, SchedulerTest,
+  ::testing::Values(SchedulerTestParam(mockNsFactory, OStoreDBFactory, mockRemoteStorageFactory)));
 } // namespace unitTests

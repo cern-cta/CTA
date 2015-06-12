@@ -285,8 +285,8 @@ TEST(RootEntry, StorageClassesAndArchivalRoutes) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    re.setArchiveRoute("class1", 0, "pool1_0", cl);
-    re.setArchiveRoute("class3", 2, "pool3_2", cl);
+    re.setArchivalRoute("class1", 0, "pool1_0", cl);
+    re.setArchivalRoute("class3", 2, "pool3_2", cl);
     re.commit();
   }
   {
@@ -297,8 +297,8 @@ TEST(RootEntry, StorageClassesAndArchivalRoutes) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedSharedLock lock(re);
     re.fetch();
-    ASSERT_NO_THROW(re.getArchiveRoutes("class1"));
-    ASSERT_THROW(re.getArchiveRoutes("class3"),
+    ASSERT_NO_THROW(re.getArchivalRoutes("class1"));
+    ASSERT_THROW(re.getArchivalRoutes("class3"),
       cta::objectstore::RootEntry::IncompleteEntry);
   }
   {
@@ -306,12 +306,12 @@ TEST(RootEntry, StorageClassesAndArchivalRoutes) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    re.setArchiveRoute("class3", 0, "pool3_0", cl);
-    re.setArchiveRoute("class3", 1, "pool3_1", cl);
-    re.setArchiveRoute("class3", 2, "pool3_2b", cl);
+    re.setArchivalRoute("class3", 0, "pool3_0", cl);
+    re.setArchivalRoute("class3", 1, "pool3_1", cl);
+    re.setArchivalRoute("class3", 2, "pool3_2b", cl);
     re.commit();
     re.fetch();
-    ASSERT_NO_THROW(re.getArchiveRoutes("class3"));
+    ASSERT_NO_THROW(re.getArchivalRoutes("class3"));
   }
   {
     // Check that resizing storage classes down and up work as expected
@@ -323,10 +323,10 @@ TEST(RootEntry, StorageClassesAndArchivalRoutes) {
     ASSERT_NO_THROW(re.setStorageClassCopyCount("class3", 2, cl));
     re.commit();
     re.fetch();
-    ASSERT_THROW(re.getArchiveRoutes("class1"),
+    ASSERT_THROW(re.getArchivalRoutes("class1"),
       cta::objectstore::RootEntry::IncompleteEntry);
-    ASSERT_NO_THROW(re.getArchiveRoutes("class3"));
-    ASSERT_EQ(2,re.getArchiveRoutes("class3").size());
+    ASSERT_NO_THROW(re.getArchivalRoutes("class3"));
+    ASSERT_EQ(2,re.getArchivalRoutes("class3").size());
   }
   {
     // Check that dump works in all circumstances

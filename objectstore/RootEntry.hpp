@@ -88,14 +88,15 @@ public:
   void setStorageClassCopyCount(const std::string & storageClass,
     uint16_t copyCount, const CreationLog & cl);
   uint16_t getStorageClassCopyCount(const std::string & storageClass);
-  void setArchiveRoute(const std::string & storageClass, uint16_t copyNb, 
+  void setArchivalRoute(const std::string & storageClass, uint16_t copyNb, 
     const std::string & tapePool, const CreationLog & cl);
+  void removeArchivalRoute(const std::string & storageClass, uint16_t copyNb);
 
   /** Ordered vector of archive routes */
-  std::vector<std::string> getArchiveRoutes (const std::string storageClass);
+  std::vector<std::string> getArchivalRoutes (const std::string storageClass);
   class StorageClassDump {
   public:
-    class ArchiveRouteDump {
+    class ArchivalRouteDump {
     public:
       uint16_t copyNumber;
       std::string tapePool;
@@ -103,7 +104,7 @@ public:
     };
     std::string storageClass;
     uint16_t copyCount;
-    std::list<ArchiveRouteDump> routes;
+    std::list<ArchivalRouteDump> routes;
     CreationLog log;
   };
   std::list<StorageClassDump> dumpStorageClasses();

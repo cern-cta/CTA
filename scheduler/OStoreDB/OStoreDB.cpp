@@ -157,18 +157,39 @@ StorageClass OStoreDB::getStorageClass(const std::string& name) const {
 }
 
 std::list<StorageClass> OStoreDB::getStorageClasses() const {
-  throw exception::Exception("Not Implemented");
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto scl = re.dumpStorageClasses();
+  decltype (getStorageClasses()) ret;
+  for (auto sc = scl.begin(); sc != scl.end(); sc++) {
+    ret.push_back(StorageClass(sc->storageClass, 
+        sc->copyCount, cta::UserIdentity(sc->log.uid, sc->log.gid),
+        sc->log.comment, sc->log.time));
+  }
+  return ret;
 }
 
 void OStoreDB::deleteStorageClass(const SecurityIdentity& requester, 
   const std::string& name) {
-  throw exception::Exception("Not Implemented");
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  re.removeStorageClass(name);
+  re.commit();
 }
 
 void OStoreDB::createArchivalRoute(const SecurityIdentity& requester, 
   const std::string& storageClassName, const uint16_t copyNb, 
   const std::string& tapePoolName, const std::string& comment) {
-  throw exception::Exception("Not Implemented");
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  objectstore::CreationLog cl(requester.getUser().getUid(),
+      requester.getUser().getUid(), requester.getHost(),
+      time(NULL), comment);
+  re.setArchivalRoute(storageClassName, copyNb, tapePoolName, cl);
+  re.commit();
 }
 
 std::list<ArchivalRoute> 

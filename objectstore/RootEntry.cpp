@@ -239,7 +239,7 @@ namespace {
   }
 }
 
-void cta::objectstore::RootEntry::setArchiveRoute(const std::string& storageClass,
+void cta::objectstore::RootEntry::setArchivalRoute(const std::string& storageClass,
   uint16_t copyNb, const std::string& tapePool, const CreationLog& cl) {
   checkPayloadWritable();
   // Find the storageClass entry
@@ -276,7 +276,7 @@ void cta::objectstore::RootEntry::setArchiveRoute(const std::string& storageClas
   }
 }
 
-std::vector<std::string> cta::objectstore::RootEntry::getArchiveRoutes(const std::string storageClass) {
+std::vector<std::string> cta::objectstore::RootEntry::getArchivalRoutes(const std::string storageClass) {
   checkPayloadReadable();
   auto & sc = serializers::findElement(m_payload.storageclasses(), storageClass);
   std::vector<std::string> ret;
@@ -306,7 +306,7 @@ auto cta::objectstore::RootEntry::dumpStorageClasses() -> std::list<StorageClass
     ret.back().log.deserialize(i->log());
     auto & arl = i->routes();
     for (auto j=arl.begin(); j!= arl.end(); j++) {
-      ret.back().routes.push_back(StorageClassDump::ArchiveRouteDump());
+      ret.back().routes.push_back(StorageClassDump::ArchivalRouteDump());
       auto &r = ret.back().routes.back();
       r.copyNumber = j->copynb();
       r.tapePool = j->tapepool();
@@ -327,7 +327,7 @@ auto cta::objectstore::RootEntry::dumpStorageClass(const std::string& name)
       ret.storageClass = i->name();
       auto & arl = i->routes();
       for (auto j=arl.begin(); j!= arl.end(); j++) {
-        ret.routes.push_back(StorageClassDump::ArchiveRouteDump());
+        ret.routes.push_back(StorageClassDump::ArchivalRouteDump());
         auto &r = ret.routes.back();
         r.copyNumber = j->copynb();
         r.tapePool = j->tapepool();

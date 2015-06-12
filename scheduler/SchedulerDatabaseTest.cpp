@@ -25,8 +25,6 @@
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "scheduler/SecurityIdentity.hpp"
 #include "scheduler/UserIdentity.hpp"
-
-#include "objectstore/BackendVFS.hpp"
 #include "OStoreDB/OStoreDBFactory.hpp"
 
 #include <exception>
