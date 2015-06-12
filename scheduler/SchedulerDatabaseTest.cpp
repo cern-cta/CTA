@@ -240,8 +240,9 @@ TEST_P(SchedulerDatabaseTest, getArchivalRoutes_incomplete) {
   const std::string comment = "Comment";
   {
     const uint16_t nbCopies = 2;
-    ASSERT_NO_THROW(db.createStorageClass(s_adminOnAdminHost, storageClassName,
-      nbCopies, comment));
+    ASSERT_NO_THROW(db.createStorageClass(storageClassName,
+      nbCopies, CreationLog(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(),
+        time(NULL), comment)));
   }
 
   const std::string tapePoolName = "TestTapePool";
@@ -250,8 +251,10 @@ TEST_P(SchedulerDatabaseTest, getArchivalRoutes_incomplete) {
     nbPartialTapes, comment));
 
   const uint16_t copyNb = 1;
-  ASSERT_NO_THROW(db.createArchivalRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, comment));
+  ASSERT_NO_THROW(db.createArchivalRoute(storageClassName,
+    copyNb, tapePoolName,
+    CreationLog(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(),
+    time(NULL), comment)));
 
   ASSERT_THROW(db.getArchivalRoutes(storageClassName), std::exception);
 }
@@ -265,8 +268,11 @@ TEST_P(SchedulerDatabaseTest, getArchivalRoutes_complete) {
   const std::string comment = "Comment";
   {
     const uint16_t nbCopies = 2;
-    ASSERT_NO_THROW(db.createStorageClass(s_adminOnAdminHost, storageClassName,
-      nbCopies, comment));
+    ASSERT_NO_THROW(db.createStorageClass(storageClassName,
+      nbCopies,
+        CreationLog(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(),
+        time(NULL), comment)
+      ));
   }
 
   const std::string tapePoolNameA = "TestTapePoolA";
@@ -285,14 +291,16 @@ TEST_P(SchedulerDatabaseTest, getArchivalRoutes_complete) {
 
   {
     const uint16_t copyNb = 1;
-    ASSERT_NO_THROW(db.createArchivalRoute(s_adminOnAdminHost, storageClassName,
-      copyNb, tapePoolNameA, comment));
+    ASSERT_NO_THROW(db.createArchivalRoute(storageClassName,
+      copyNb, tapePoolNameA, CreationLog(s_adminOnAdminHost.getUser(),
+      s_adminOnAdminHost.getHost(), time(NULL), comment)));
   }
 
   {
     const uint16_t copyNb = 2;
-    ASSERT_NO_THROW(db.createArchivalRoute(s_adminOnAdminHost, storageClassName,
-      copyNb, tapePoolNameB, comment));
+    ASSERT_NO_THROW(db.createArchivalRoute(storageClassName,
+      copyNb, tapePoolNameB, CreationLog(s_adminOnAdminHost.getUser(),
+      s_adminOnAdminHost.getHost(), time(NULL), comment)));
   }
 
   {
@@ -311,8 +319,10 @@ TEST_P(SchedulerDatabaseTest, createArchivalRoute_same_tape_pool_name) {
   const std::string comment = "Comment";
   {
     const uint16_t nbCopies = 2;
-    ASSERT_NO_THROW(db.createStorageClass(s_adminOnAdminHost, storageClassName,
-      nbCopies, comment));
+    ASSERT_NO_THROW(db.createStorageClass(storageClassName,
+      nbCopies,
+      CreationLog(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(),
+        time(NULL), comment)));
   }
 
   const std::string tapePoolName = "TestTapePool";
@@ -324,14 +334,16 @@ TEST_P(SchedulerDatabaseTest, createArchivalRoute_same_tape_pool_name) {
 
   {
     const uint16_t copyNb = 1;
-    ASSERT_NO_THROW(db.createArchivalRoute(s_adminOnAdminHost, storageClassName,
-      copyNb, tapePoolName, comment));
+    ASSERT_NO_THROW(db.createArchivalRoute(storageClassName,
+      copyNb, tapePoolName, CreationLog(s_adminOnAdminHost.getUser(),
+      s_adminOnAdminHost.getHost(), time(NULL), comment)));
   }
 
   {
     const uint16_t copyNb = 2;
-    ASSERT_THROW(db.createArchivalRoute(s_adminOnAdminHost, storageClassName,
-      copyNb, tapePoolName, comment), std::exception);
+    ASSERT_THROW(db.createArchivalRoute(storageClassName,
+      copyNb, tapePoolName, CreationLog(s_adminOnAdminHost.getUser(),
+      s_adminOnAdminHost.getHost(), time(NULL), comment)), std::exception);
   }
 }
 
@@ -344,8 +356,9 @@ TEST_P(SchedulerDatabaseTest, createArchivalRoute_two_many_routes) {
   const std::string comment = "Comment";
   {
     const uint16_t nbCopies = 1;
-    ASSERT_NO_THROW(db.createStorageClass(s_adminOnAdminHost, storageClassName,
-      nbCopies, comment));
+    ASSERT_NO_THROW(db.createStorageClass(storageClassName,
+      nbCopies, CreationLog(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(),
+        time(NULL), comment)));
   }
 
   const std::string tapePoolNameA = "TestTapePoolA";
@@ -364,14 +377,16 @@ TEST_P(SchedulerDatabaseTest, createArchivalRoute_two_many_routes) {
 
   {
     const uint16_t copyNb = 1;
-    ASSERT_NO_THROW(db.createArchivalRoute(s_adminOnAdminHost, storageClassName,
-      copyNb, tapePoolNameA, comment));
+    ASSERT_NO_THROW(db.createArchivalRoute(storageClassName,
+      copyNb, tapePoolNameA, CreationLog(s_adminOnAdminHost.getUser(),
+      s_adminOnAdminHost.getHost(), time(NULL), comment)));
   }
 
   {
     const uint16_t copyNb = 2;
-    ASSERT_THROW(db.createArchivalRoute(s_adminOnAdminHost, storageClassName,
-      copyNb, tapePoolNameB, comment), std::exception);
+    ASSERT_THROW(db.createArchivalRoute(storageClassName,
+      copyNb, tapePoolNameB, CreationLog(s_adminOnAdminHost.getUser(),
+      s_adminOnAdminHost.getHost(), time(NULL), comment)), std::exception);
   }
 }
 

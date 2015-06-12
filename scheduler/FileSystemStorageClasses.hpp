@@ -27,6 +27,8 @@
 
 namespace cta {
 
+class CreationLog;
+  
 /**
  * The storage classes used in the file system.
  */
@@ -45,8 +47,7 @@ public:
   void createStorageClass(
     const std::string &name,
     const uint16_t nbCopies,
-    const UserIdentity &creator,
-    const std::string &comment);
+    const CreationLog &creationLog);
 
   /**
    * Deletes the specified storage class.

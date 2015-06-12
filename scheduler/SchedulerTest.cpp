@@ -177,6 +177,8 @@ TEST_P(SchedulerTest, createStorageClass_new_as_adminOnAdminHost) {
 
   {
     std::list<StorageClass> storageClasses;
+    scheduler.getStorageClasses(
+      s_adminOnAdminHost);
     ASSERT_NO_THROW(storageClasses = scheduler.getStorageClasses(
       s_adminOnAdminHost));
     ASSERT_EQ(1, storageClasses.size());

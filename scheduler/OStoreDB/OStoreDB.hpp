@@ -58,8 +58,8 @@ public:
   virtual void assertIsAdminOnAdminHost(const SecurityIdentity& id) const;
 
   /* === Storage class handling  ============================================ */
-  virtual void createStorageClass(const SecurityIdentity& requester, 
-    const std::string& name, const uint16_t nbCopies, const std::string& comment);
+  virtual void createStorageClass(const std::string& name,
+    const uint16_t nbCopies, const CreationLog& creationLog);
     
 
   virtual StorageClass getStorageClass(const std::string& name) const;
@@ -72,9 +72,9 @@ public:
     const std::string& name);
 
   /* === Archival routes handling  ========================================== */
-  virtual void createArchivalRoute(const SecurityIdentity& requester, 
-    const std::string& storageClassName, const uint16_t copyNb, 
-    const std::string& tapePoolName, const std::string& comment);
+  virtual void createArchivalRoute(const std::string& storageClassName,
+    const uint16_t copyNb, const std::string& tapePoolName,
+    const CreationLog& creationLog);
 
   virtual std::list<ArchivalRoute> getArchivalRoutes(const std::string& storageClassName) const;
 

@@ -17,6 +17,7 @@
  */
 
 #include "scheduler/StorageClass.hpp"
+#include "scheduler/CreationLog.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -37,12 +38,10 @@ cta::StorageClass::~StorageClass() throw() {
 cta::StorageClass::StorageClass(
   const std::string &name,
   const uint16_t nbCopies,
-  const UserIdentity &creator,
-  const std::string &comment,
-  const time_t creationTime):
-  ConfigurationItem(creator, comment, creationTime),
+  const CreationLog &creationLog):
   m_name(name),
-  m_nbCopies(nbCopies) {
+  m_nbCopies(nbCopies),
+  m_creationLog(creationLog) {
 }
 
 //------------------------------------------------------------------------------

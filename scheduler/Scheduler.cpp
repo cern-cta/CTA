@@ -199,7 +199,8 @@ void cta::Scheduler::createStorageClass(
   const uint16_t nbCopies,
   const std::string &comment) {
   m_db.assertIsAdminOnAdminHost(requester);
-  m_db.createStorageClass(requester, name, nbCopies, comment);
+  m_db.createStorageClass(name, nbCopies, CreationLog(requester.getUser(), 
+       requester.getHost(), time(NULL), comment));
 }
 
 //------------------------------------------------------------------------------
@@ -261,8 +262,9 @@ void cta::Scheduler::createArchivalRoute(
   const std::string &tapePoolName,
   const std::string &comment) {
   m_db.assertIsAdminOnAdminHost(requester);
-  m_db.createArchivalRoute(requester, storageClassName, copyNb, tapePoolName,
-    comment);
+  m_db.createArchivalRoute(storageClassName, copyNb, tapePoolName,
+    CreationLog(UserIdentity(requester.getUser()), requester.getHost(),
+    time(NULL), comment));
 }
 
 //------------------------------------------------------------------------------

@@ -18,17 +18,19 @@
 
 #pragma once
 
-#include "scheduler/ConfigurationItem.hpp"
+#include "scheduler/CreationLog.hpp"
 
 #include <stdint.h>
 #include <string>
 
 namespace cta {
+  
+class CreationLog;
 
 /**
  * Class representing an archive storage-class.
  */
-class StorageClass: public ConfigurationItem {
+class StorageClass {
 public:
 
   /**
@@ -57,9 +59,7 @@ public:
   StorageClass(
     const std::string &name,
     const uint16_t nbCopies,
-    const UserIdentity &creator,
-    const std::string &comment,
-    const time_t creationTime = time(NULL));
+    const CreationLog &creationLog);
 
   /**
    * Returns the name of the storage class.
@@ -76,6 +76,12 @@ public:
    * class should have on tape.
    */
   uint16_t getNbCopies() const throw();
+  
+  /**
+   * Get the creation log
+   * @return Reference to the creation log
+   */
+  const CreationLog & getCreationLog() const throw();
   
   /**
    * Returns true if the specified right-hand side is greater than this object.
@@ -97,7 +103,11 @@ private:
    * class should have on tape.
    */
   uint16_t m_nbCopies;
-
+  
+  /**
+   * The record of the entry's creation
+   */
+  CreationLog m_creationLog;
 }; // class StorageClass
 
 } // namespace cta

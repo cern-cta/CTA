@@ -82,16 +82,16 @@ public:
     m_OStoreDB.createAdminUser(requester, user, comment);
   }
 
-  virtual void createArchivalRoute(const SecurityIdentity& requester, const std::string& storageClassName, const uint16_t copyNb, const std::string& tapePoolName, const std::string& comment) {
-    m_OStoreDB.createArchivalRoute(requester, storageClassName, copyNb, tapePoolName, comment);
+  virtual void createArchivalRoute(const std::string& storageClassName, const uint16_t copyNb, const std::string& tapePoolName, const CreationLog& creationLog) {
+    m_OStoreDB.createArchivalRoute(storageClassName, copyNb, tapePoolName, creationLog);
   }
 
   virtual void createLogicalLibrary(const SecurityIdentity& requester, const std::string& name, const std::string& comment) {
     m_OStoreDB.createLogicalLibrary(requester, name, comment);
   }
 
-  virtual void createStorageClass(const SecurityIdentity& requester, const std::string& name, const uint16_t nbCopies, const std::string& comment) {
-    m_OStoreDB.createStorageClass(requester, name, nbCopies, comment);
+  virtual void createStorageClass(const std::string& name, const uint16_t nbCopies, const CreationLog& creationLog) {
+    m_OStoreDB.createStorageClass(name, nbCopies, creationLog);
   }
 
   virtual void createTape(const SecurityIdentity& requester, const std::string& vid, const std::string& logicalLibraryName, const std::string& tapePoolName, const uint64_t capacityInBytes, const std::string& comment) {

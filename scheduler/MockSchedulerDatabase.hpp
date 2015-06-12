@@ -23,7 +23,7 @@
 #include <sqlite3.h>
 
 namespace cta {
-
+  
 /**
  * A mock implementation of the database of a tape resource scheduler.
  */
@@ -214,10 +214,9 @@ public:
    * @param comment The comment describing the storage class.
    */
   void createStorageClass(
-    const SecurityIdentity &requester,
     const std::string &name,
     const uint16_t nbCopies,
-    const std::string &comment);
+    const CreationLog &creationLog);
 
   /**
    * Deletes the specified storage class.
@@ -287,11 +286,10 @@ public:
    * @param comment The comment describing the archival route.
    */
   void createArchivalRoute(
-    const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint16_t copyNb,
     const std::string &tapePoolName,
-    const std::string &comment);
+    const CreationLog &creationLog);
 
   /**
    * Deletes the specified archival route.

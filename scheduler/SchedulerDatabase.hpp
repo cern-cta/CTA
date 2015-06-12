@@ -32,6 +32,7 @@ class ArchivalRoute;
 class ArchiveToDirRequest;
 class ArchiveToFileRequest;
 class ArchiveToTapeCopyRequest;
+class CreationLog;
 class DirIterator;
 class LogicalLibrary;
 class RetrieveFromTapeCopyRequest;
@@ -222,17 +223,15 @@ public:
   /**
    * Creates the specified storage class.
    *
-   * @param requester The identity of the requester.
    * @param name The name of the storage class.
    * @param nbCopies The number of copies a file associated with this storage
    * class should have on tape.
-   * @param comment The comment describing the storage class.
+   * @param creationLog The who, where, when an why of this modification.
    */
   virtual void createStorageClass(
-    const SecurityIdentity &requester,
     const std::string &name,
     const uint16_t nbCopies,
-    const std::string &comment) = 0;
+    const CreationLog &creationLog) = 0;
 
   /**
    * Deletes the specified storage class.
@@ -294,19 +293,17 @@ public:
   /**
    * Creates the specified archival route.
    *
-   * @param requester The identity of the requester.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
    * @param tapePoolName The name of the destination tape pool.
-   * @param comment The comment describing the archival route.
+   * @param creationLog The who, where, when an why of this modification.
    */
   virtual void createArchivalRoute(
-    const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint16_t copyNb,
     const std::string &tapePoolName,
-    const std::string &comment) = 0;
+    const CreationLog &creationLog) = 0;
 
   /**
    * Deletes the specified archival route.

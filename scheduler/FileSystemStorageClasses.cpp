@@ -27,11 +27,10 @@
 void cta::FileSystemStorageClasses::createStorageClass(
   const std::string &name,
   const uint16_t nbCopies,
-  const UserIdentity &creator,
-  const std::string &comment) {
+  const CreationLog & creationLog) {
   try {
     checkStorageClassDoesNotAlreadyExist(name);
-    StorageClass storageClass(name, nbCopies, creator, comment);
+    StorageClass storageClass(name, nbCopies, creationLog);
     m_storageClasses[name] = storageClass;
   } catch(std::exception &ex) {
     throw Exception(std::string("Failed to create storage class: ") +

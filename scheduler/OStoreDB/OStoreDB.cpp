@@ -128,14 +128,12 @@ void OStoreDB::assertIsAdminOnAdminHost(const SecurityIdentity& id) const {
   }
 }
 
-void OStoreDB::createStorageClass(const SecurityIdentity& requester, 
-  const std::string& name, const uint16_t nbCopies, const std::string& comment) {
+void OStoreDB::createStorageClass(const std::string& name,
+  const uint16_t nbCopies, const cta::CreationLog& creationLog) {
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  objectstore::CreationLog cl(requester.getUser(), requester.getHost(),
-    time(NULL), comment);
-  re.addStorageClass(name, nbCopies, cl);
+  re.addStorageClass(name, nbCopies, creationLog);
   re.commit();
 }
 
@@ -146,9 +144,7 @@ StorageClass OStoreDB::getStorageClass(const std::string& name) const {
   auto sc = re.dumpStorageClass(name);
   return cta::StorageClass(name,
     sc.copyCount,
-    cta::UserIdentity(sc.log.user.uid, sc.log.user.gid),
-    sc.log.comment,
-    sc.log.time);
+    sc.log);
 }
 
 std::list<StorageClass> OStoreDB::getStorageClasses() const {
@@ -159,8 +155,7 @@ std::list<StorageClass> OStoreDB::getStorageClasses() const {
   decltype (getStorageClasses()) ret;
   for (auto sc = scl.begin(); sc != scl.end(); sc++) {
     ret.push_back(StorageClass(sc->storageClass, 
-        sc->copyCount, sc->log.user,
-        sc->log.comment, sc->log.time));
+        sc->copyCount, sc->log));
   }
   ret.sort();
   return ret;
@@ -175,15 +170,14 @@ void OStoreDB::deleteStorageClass(const SecurityIdentity& requester,
   re.commit();
 }
 
-void OStoreDB::createArchivalRoute(const SecurityIdentity& requester, 
-  const std::string& storageClassName, const uint16_t copyNb, 
-  const std::string& tapePoolName, const std::string& comment) {
+void OStoreDB::createArchivalRoute(const std::string& storageClassName,
+  const uint16_t copyNb, const std::string& tapePoolName,
+  const cta::CreationLog& creationLog) {
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  objectstore::CreationLog cl(requester.getUser(), requester.getHost(),
-      time(NULL), comment);
-  re.setArchivalRoute(storageClassName, copyNb, tapePoolName, cl);
+  re.setArchivalRoute(storageClassName, copyNb, tapePoolName, 
+    objectstore::CreationLog(creationLog));
   re.commit();
 }
 

@@ -30,6 +30,7 @@ namespace cta { namespace objectstore {
 class CreationLog: public cta::CreationLog {
 public:
   CreationLog (): cta::CreationLog() {}
+  CreationLog (const cta::CreationLog & cl): cta::CreationLog(cl) {}
   CreationLog (const cta::UserIdentity& user, const std::string & hn, uint64_t t,
     const std::string & c): cta::CreationLog(
       cta::UserIdentity(user),hn ,t, c) {}

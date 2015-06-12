@@ -518,8 +518,9 @@ int XrdProFilesystem::executeLsclassCommand(const ParsedRequest &req, XrdOucErrI
     responseSS << "[OK] Listing of the storage class names and no of copies:";
     for(std::list<cta::StorageClass>::iterator it = stgList.begin(); it != stgList.end(); it++) {
       responseSS << "\n" << it->getName() << " " << it->getNbCopies() << " " 
-              << it->getCreator().uid << " " << it->getCreator().gid << " " 
-              << it->getCreationTime() << " \"" << it->getComment() << "\"";
+              << it->getCreationLog().user.uid << " " << it->getCreationLog().user.gid << " " 
+              << it->getCreationLog().host << " "
+              << it->getCreationLog().time << " \"" << it->getCreationLog().comment << "\"";
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;
