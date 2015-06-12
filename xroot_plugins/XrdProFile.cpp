@@ -59,8 +59,7 @@ void XrdProFile::commandDispatcher(const std::vector<std::string> &tokens) {
 //------------------------------------------------------------------------------
 // open
 //------------------------------------------------------------------------------
-int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client, const char *opaque) {
-  
+int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client, const char *opaque) {  
   std::vector<std::string> tokens;
   std::stringstream ss(fileName);
   std::string item;
@@ -69,10 +68,15 @@ int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t c
     tokens.push_back(item);
   }
   
-  if(tokens.size() == 1) {
+  if(tokens.size() == 0) { //this should never happen
+    m_data = getGenericHelp("");
+    return SFS_OK;
+  }
+  if(tokens.size() < 3) {
     m_data = getGenericHelp(tokens[0]);
     return SFS_OK;
   }
+  
   try {
     commandDispatcher(tokens);
     return SFS_OK;
@@ -87,9 +91,7 @@ int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t c
   } catch (...) {
     m_data = "[ERROR] Unknown exception caught!";
     return SFS_OK;
-  } 
-  
-  return SFS_OK;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -237,18 +239,47 @@ void XrdProFile::replaceAll(std::string& str, const std::string& from, const std
 }
 
 //------------------------------------------------------------------------------
+// getOptionValue
+//------------------------------------------------------------------------------
+std::string XrdProFile::getOptionValue(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName) {
+  for(auto it=tokens.begin(); it!=tokens.end(); it++) {
+    if(optionShortName == *it || optionLongName == *it) {
+      
+    }
+  }
+  return "";
+}
+
+//------------------------------------------------------------------------------
 // xCom_operator
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_operator(const std::vector<std::string> &tokens) {
-  std::string help = "";
-  
+  std::stringstream help;
+  help << tokens[0] << " op/operator add/rm/ls:\n";
+  help << "\tadd --uid/-u <uid> --gid/-g <gid>\n";
+  help << "\trm  --uid/-u <uid> --gid/-g <gid>\n";
+  help << "\tls\n";
+  if("add" == tokens[2]) {
+    
+  }
+  else if("rm" == tokens[2]) {
+    
+  }
+  else if("ls" == tokens[2]) {
+    
+  }
 }
   
 //------------------------------------------------------------------------------
 // xCom_operatorhost
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_operatorhost(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " oh/operatorhost add/rm/ls:\n";
+  help << "\tadd --name/-n <host_name>\n";
+  help << "\trm  --name/-n <host_name>\n";
+  help << "\tls\n";
+  
   
 }
   
@@ -256,7 +287,12 @@ void XrdProFile::xCom_operatorhost(const std::vector<std::string> &tokens) {
 // xCom_user
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_user(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " us/user add/rm/ls:\n";
+  help << "\tadd --uid/-u <uid> --gid/-g <gid>\n";
+  help << "\trm  --uid/-u <uid> --gid/-g <gid>\n";
+  help << "\tls\n";
+  
   
 }
   
@@ -264,7 +300,13 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens) {
 // xCom_tapepool
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " tp/tapepool add/ch/rm/ls:\n";
+  help << "\tadd --name/-n <tapepool_name> --comment/-m <\"comment\">\n";
+  help << "\tch  --name/-n <tapepool_name> --comment/-m <\"comment\">\n";
+  help << "\trm  --name/-n <tapepool_name>\n";
+  help << "\tls\n";
+  
   
 }
   
@@ -272,7 +314,13 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens) {
 // xCom_archiveroute
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " ar/archiveroute add/ch/rm/ls:\n";
+  help << "\tadd --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">\n";
+  help << "\tch  --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">\n";
+  help << "\trm  --storageclass/-s <storage_class_name> --copynb/-c <copy_number>\n";
+  help << "\tls\n";
+  
   
 }
   
@@ -280,7 +328,13 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens) {
 // xCom_logicallibrary
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " ll/logicallibrary add/ch/rm/ls:\n";
+  help << "\tadd --name/-n <logical_library_name> --comment/-m <\"comment\">\n";
+  help << "\tch  --name/-n <logical_library_name> --comment/-m <\"comment\">\n";
+  help << "\trm  --name/-n <logical_library_name>\n";
+  help << "\tls\n";
+  
   
 }
   
@@ -288,7 +342,14 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens) {
 // xCom_tape
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_tape(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " ta/tape add/ch/rm/reclaim/ls:\n";
+  help << "\tadd     --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes> --comment/-m <\"comment\">\n";
+  help << "\tch      --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes> --comment/-m <\"comment\">\n";
+  help << "\trm      --vid/-v <vid>\n";
+  help << "\treclaim --vid/-v <vid>\n";
+  help << "\tls\n";
+  
   
 }
   
@@ -296,7 +357,13 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens) {
 // xCom_storageclass
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " sc/storageclass add/ch/rm/ls:\n";
+  help << "\tadd --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">\n";
+  help << "\tch  --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">\n";
+  help << "\trm  --name/-n <storage_class_name>\n";
+  help << "\tls\n";
+  
   
 }
   
@@ -304,7 +371,9 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens) {
 // xCom_listongoingarchivals
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_listongoingarchivals(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " loa/listongoingarchivals\n";
+  
   
 }
   
@@ -312,7 +381,9 @@ void XrdProFile::xCom_listongoingarchivals(const std::vector<std::string> &token
 // xCom_listongoingretrievals
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_listongoingretrievals(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " lor/listongoingretrievals\n";
+  
   
 }
   
@@ -320,7 +391,9 @@ void XrdProFile::xCom_listongoingretrievals(const std::vector<std::string> &toke
 // xCom_listpendingarchivals
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_listpendingarchivals(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " lpa/listpendingarchivals\n";
+  
   
 }
   
@@ -328,7 +401,9 @@ void XrdProFile::xCom_listpendingarchivals(const std::vector<std::string> &token
 // xCom_listpendingretrievals
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_listpendingretrievals(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " lpr/listpendingretrievals\n";
+  
   
 }
   
@@ -336,7 +411,9 @@ void XrdProFile::xCom_listpendingretrievals(const std::vector<std::string> &toke
 // xCom_listdrivestates
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " lds/listdrivestates\n";
+  
   
 }
   
@@ -344,7 +421,9 @@ void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens) {
 // xCom_liststorageclass
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " lsc/liststorageclass\n";
+  
   
 }
   
@@ -352,7 +431,9 @@ void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens) {
 // xCom_setstorageclass
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_setstorageclass(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " ssc/setstorageclass <dirpath> <storage_class_name>\n";
+  
   
 }
   
@@ -360,7 +441,9 @@ void XrdProFile::xCom_setstorageclass(const std::vector<std::string> &tokens) {
 // xCom_clearstorageclass
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_clearstorageclass(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " csc/clearstorageclass <dirpath>\n";
+  
   
 }
   
@@ -368,7 +451,9 @@ void XrdProFile::xCom_clearstorageclass(const std::vector<std::string> &tokens) 
 // xCom_mkdir
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_mkdir(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " mkdir <dirpath>\n";
+  
   
 }
   
@@ -376,7 +461,9 @@ void XrdProFile::xCom_mkdir(const std::vector<std::string> &tokens) {
 // xCom_rmdir
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_rmdir(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " rmdir <dirpath>\n";
+  
   
 }
   
@@ -384,7 +471,9 @@ void XrdProFile::xCom_rmdir(const std::vector<std::string> &tokens) {
 // xCom_ls
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_ls(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " ls <dirpath>\n";
+  
   
 }
   
@@ -392,7 +481,9 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens) {
 // xCom_archive
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_archive(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " a/archive <source_file1> [<source_file2> [<source_file3> [...]]] <destination_path>\n";
+  
   
 }
   
@@ -400,7 +491,9 @@ void XrdProFile::xCom_archive(const std::vector<std::string> &tokens) {
 // xCom_retrieve
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " r/retrieve <source_file1> [<source_file2> [<source_file3> [...]]] <destination_path>\n";
+  
   
 }
   
@@ -408,7 +501,9 @@ void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens) {
 // xCom_deletearchive
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " da/deletearchive <destination_path>\n";
+  
   
 }
   
@@ -416,7 +511,9 @@ void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens) {
 // xCom_cancelretrieval
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_cancelretrieval(const std::vector<std::string> &tokens) {
-  std::string help = "";
+  std::stringstream help;
+  help << tokens[0] << " cr/cancelretrieval <destination_path>\n";
+  
   
 }
 
@@ -424,38 +521,38 @@ void XrdProFile::xCom_cancelretrieval(const std::vector<std::string> &tokens) {
 // getGenericHelp
 //------------------------------------------------------------------------------
 std::string XrdProFile::getGenericHelp(const std::string &programName) const {
-  std::stringstream ss;
-  ss << "CTA ADMIN commands:\n";
-  ss << "\n";
-  ss << "For each command there is a short version and a long one, example: op/operator. Subcommands (add/rm/ls/ch/reclaim) do not have short versions.\n";
-  ss << "\n";
-  ss << programName << " op/operator       add/rm/ls\n";
-  ss << programName << " oh/operatorhost   add/rm/ls\n";
-  ss << programName << " us/user           add/rm/ls\n";
-  ss << programName << " tp/tapepool       add/rm/ls/ch\n";
-  ss << programName << " ar/archiveroute   add/rm/ls/ch\n";
-  ss << programName << " ll/logicallibrary add/rm/ls/ch\n";
-  ss << programName << " ta/tape           add/rm/ls/ch/reclaim\n";
-  ss << programName << " sc/storageclass   add/rm/ls/ch\n";
-  ss << programName << " loa/listongoingarchivals\n";
-  ss << programName << " lor/listongoingretrievals\n";
-  ss << programName << " lpa/listpendingarchivals\n";
-  ss << programName << " lpr/listpendingretrievals\n";
-  ss << programName << " lds/listdrivestates\n";
-  ss << "\n";
-  ss << "CTA USER commands:\n";
-  ss << "\n";
-  ss << "For most commands there is a short version and a long one.\n";
-  ss << "\n";
-  ss << programName << " lsc/liststorageclass\n";
-  ss << programName << " ssc/setstorageclass\n";
-  ss << programName << " csc/clearstorageclass\n";
-  ss << programName << " mkdir\n";
-  ss << programName << " rmdir\n";
-  ss << programName << " ls\n";
-  ss << programName << " a/archive\n";
-  ss << programName << " r/retrieve\n";
-  ss << programName << " da/deletearchive\n";
-  ss << programName << " cr/cancelretrieval\n";
-  return ss.str();
+  std::stringstream help;
+  help << "CTA ADMIN commands:\n";
+  help << "\n";
+  help << "For each command there is a short version and a long one, example: op/operator. Subcommands (add/rm/ls/ch/reclaim) do not have short versions.\n";
+  help << "\n";
+  help << programName << " op/operator       add/rm/ls\n";
+  help << programName << " oh/operatorhost   add/rm/ls\n";
+  help << programName << " us/user           add/rm/ls\n";
+  help << programName << " tp/tapepool       add/rm/ls/ch\n";
+  help << programName << " ar/archiveroute   add/rm/ls/ch\n";
+  help << programName << " ll/logicallibrary add/rm/ls/ch\n";
+  help << programName << " ta/tape           add/rm/ls/ch/reclaim\n";
+  help << programName << " sc/storageclass   add/rm/ls/ch\n";
+  help << programName << " loa/listongoingarchivals\n";
+  help << programName << " lor/listongoingretrievals\n";
+  help << programName << " lpa/listpendingarchivals\n";
+  help << programName << " lpr/listpendingretrievals\n";
+  help << programName << " lds/listdrivestates\n";
+  help << "\n";
+  help << "CTA USER commands:\n";
+  help << "\n";
+  help << "For most commands there is a short version and a long one.\n";
+  help << "\n";
+  help << programName << " lsc/liststorageclass\n";
+  help << programName << " ssc/setstorageclass\n";
+  help << programName << " csc/clearstorageclass\n";
+  help << programName << " mkdir\n";
+  help << programName << " rmdir\n";
+  help << programName << " ls\n";
+  help << programName << " a/archive\n";
+  help << programName << " r/retrieve\n";
+  help << programName << " da/deletearchive\n";
+  help << programName << " cr/cancelretrieval\n";
+  return help.str();
 }

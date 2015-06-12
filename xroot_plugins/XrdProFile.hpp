@@ -67,6 +67,16 @@ protected:
   void commandDispatcher(const std::vector<std::string> &tokens);
   
   /**
+   * Given the command line string vector it returns the value of the specified option or an empty string if absent
+   * 
+   * @param tokens          The command line tokens 
+   * @param optionShortName The short name of the required option
+   * @param optionLongName  The long name of the required option
+   * @return the value of the option or an empty string if absent
+   */
+  std::string getOptionValue(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName);
+  
+  /**
    * Executes the operator command
    * 
    * @param tokens The command line tokens
