@@ -21,6 +21,7 @@
 #include "XrdSfs/XrdSfsInterface.hh"
 
 #include <string>
+#include <vector>
 
 class XrdProFile : public XrdSfsFile {
 public:
@@ -57,4 +58,180 @@ protected:
    * @param to   The replacement string
    */
   void replaceAll(std::string& str, const std::string& from, const std::string& to) const;
+  
+  /**
+   * Parses the command line and dispatches it to the relevant function
+   * 
+   * @param tokens The command line tokens
+   */
+  void commandDispatcher(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the operator command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_operator(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the operatorhost command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_operatorhost(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the user command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_user(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the tapepool command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_tapepool(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the archiveroute command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_archiveroute(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the logicallibrary command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_logicallibrary(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the tape command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_tape(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the storageclass command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_storageclass(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the listongoingarchivals command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_listongoingarchivals(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the listongoingretrievals command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_listongoingretrievals(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the listpendingarchivals command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_listpendingarchivals(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the listpendingretrievals command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_listpendingretrievals(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the listdrivestates command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_listdrivestates(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the liststorageclass command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_liststorageclass(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the setstorageclass command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_setstorageclass(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the clearstorageclass command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_clearstorageclass(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the mkdir command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_mkdir(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the rmdir command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_rmdir(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the ls command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_ls(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the archive command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_archive(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the retrieve command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_retrieve(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the deletearchive command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_deletearchive(const std::vector<std::string> &tokens);
+  
+  /**
+   * Executes the cancelretrieval command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_cancelretrieval(const std::vector<std::string> &tokens);
+  
+  /**
+   * Returns the help string
+   * 
+   * @param  programName The name of the client program
+   * @return the help string
+   */
+  std::string getGenericHelp(const std::string &programName) const;
 };

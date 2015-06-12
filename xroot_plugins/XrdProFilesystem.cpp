@@ -17,7 +17,6 @@
  */
 
 #include "common/exception/Exception.hpp"
-
 #include "nameserver/MockNameServer.hpp"
 #include "nameserver/NameServer.hpp"
 #include "remotestorage/MockRemoteStorage.hpp"

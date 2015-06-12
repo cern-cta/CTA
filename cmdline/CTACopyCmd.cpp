@@ -100,10 +100,10 @@ std::string CTACopyCmd::formatCommandPath(const int argc, const char **argv) con
 //------------------------------------------------------------------------------
 void CTACopyCmd::replaceAll(std::string& str, const std::string& from, const std::string& to) const {
   if(from.empty() || str.empty())
-      return;
+    return;
   size_t start_pos = 0;
   while((start_pos = str.find(from, start_pos)) != std::string::npos) {
-      str.replace(start_pos, from.length(), to);
-      start_pos += to.length();
+    str.replace(start_pos, from.length(), to);
+    start_pos += to.length();
   }
 }
