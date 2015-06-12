@@ -16,10 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "remotestorage/RemoteStorage.hpp"
+#include "remotens/RemoteNSFactory.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::RemoteStorage::~RemoteStorage() throw() {
+cta::RemoteNSFactory::~RemoteNSFactory() throw() {
 }

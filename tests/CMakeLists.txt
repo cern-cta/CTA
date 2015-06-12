@@ -13,7 +13,7 @@ target_link_libraries(unittests
   CTAObjectStore
   ctaobjectstoreunittests
   ctanameservertest
-  ctaremotestoragetest
+  ctaremotenstest
   ctaschedulertest
   gmock
   gtest

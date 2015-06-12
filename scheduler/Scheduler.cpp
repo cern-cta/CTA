@@ -19,6 +19,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/Utils.hpp"
 #include "nameserver/NameServer.hpp"
+#include "remotens/RemoteNS.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
 #include "scheduler/ArchivalRoute.hpp"
@@ -44,10 +45,10 @@
 //------------------------------------------------------------------------------
 cta::Scheduler::Scheduler(NameServer &ns,
   SchedulerDatabase &db,
-  RemoteStorage &remoteStorage):
+  RemoteNS &remoteNS):
   m_ns(ns),
   m_db(db),
-  m_remoteStorage(remoteStorage) {
+  m_remoteNS(remoteNS) {
 }
 
 //------------------------------------------------------------------------------
@@ -617,6 +618,12 @@ void cta::Scheduler::queueRetrieveRequest(
   const SecurityIdentity &requester,
   const std::list<std::string> &archiveFiles,
   const std::string &remoteFileOrDir) {
+
+  const bool retreiveToDir = m_remoteNS.dirExists(remoteFileOrDir);
+  if(retreiveToDir) {
+  // Else retrieve to a single file
+  } else {
+  }
 /*
   const bool retreiveToDir = m_ns.dirExists(requester, archiveFileOrDir);
   if(archiveToDir) {

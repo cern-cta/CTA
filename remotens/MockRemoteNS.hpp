@@ -18,20 +18,20 @@
 
 #pragma once
 
-#include <string>
+#include "remotens/RemoteNS.hpp"
 
 namespace cta {
 
 /**
- * Abstract class specifying the interface to a remote storage system.
+ * A mock proxy class for the namespace of a remote storage system.
  */
-class RemoteStorage {
+class MockRemoteNS: public RemoteNS {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~RemoteStorage() throw() = 0;
+  ~MockRemoteNS() throw();
 
   /**
    * Returns true if the specified regular file exists.
@@ -39,7 +39,7 @@ public:
    * @param path The absolute path of the file.
    * @return True if the specified directory exists.
    */
-  virtual bool regularFileExists(const std::string &path) const = 0;
+  bool regularFileExists(const std::string &path) const;
 
   /**
    * Returns true if the specified directory exists.
@@ -47,7 +47,7 @@ public:
    * @param path The absolute path of the file.
    * @return True if the specified directory exists.
    */
-  virtual bool dirExists(const std::string &path) const = 0;
+  bool dirExists(const std::string &path) const;
 
   /**
    * Renames the specified remote file to the specified new name.
@@ -55,9 +55,9 @@ public:
    * @param remoteFile The current URL of the remote file.
    * @param newRemoteFile The new URL of the remote file.
    */
-  virtual void rename(const std::string &remoteFile,
-    const std::string &newRemoteFile) = 0;
+  void rename(const std::string &remoteFile,
+    const std::string &newRemoteFile);
 
-}; // class RemoteStorage
+}; // class MockRemoteNS
 
 } // namespace cta

@@ -18,20 +18,20 @@
 
 #pragma once
 
-#include "remotestorage/RemoteStorage.hpp"
+#include <string>
 
 namespace cta {
 
 /**
- * Proxy class for a remote EOS storage system.
+ * An Abstract proxy class specifying the interface to a remote storage system.
  */
-class EosRemoteStorage: public RemoteStorage {
+class RemoteNS {
 public:
 
   /**
    * Destructor.
    */
-  ~EosRemoteStorage() throw();
+  virtual ~RemoteNS() throw() = 0;
 
   /**
    * Returns true if the specified regular file exists.
@@ -39,7 +39,7 @@ public:
    * @param path The absolute path of the file.
    * @return True if the specified directory exists.
    */
-  bool regularFileExists(const std::string &path) const;
+  virtual bool regularFileExists(const std::string &path) const = 0;
 
   /**
    * Returns true if the specified directory exists.
@@ -47,7 +47,7 @@ public:
    * @param path The absolute path of the file.
    * @return True if the specified directory exists.
    */
-  bool dirExists(const std::string &path) const;
+  virtual bool dirExists(const std::string &path) const = 0;
 
   /**
    * Renames the specified remote file to the specified new name.
@@ -55,9 +55,9 @@ public:
    * @param remoteFile The current URL of the remote file.
    * @param newRemoteFile The new URL of the remote file.
    */
-  void rename(const std::string &remoteFile,
-    const std::string &newRemoteFile);
+  virtual void rename(const std::string &remoteFile,
+    const std::string &newRemoteFile) = 0;
 
-}; // class EosRemoteStorage
+}; // class RemoteNS
 
 } // namespace cta

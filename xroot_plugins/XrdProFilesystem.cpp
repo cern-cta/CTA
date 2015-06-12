@@ -19,7 +19,7 @@
 #include "common/exception/Exception.hpp"
 #include "nameserver/MockNameServer.hpp"
 #include "nameserver/NameServer.hpp"
-#include "remotestorage/MockRemoteStorage.hpp"
+#include "remotens/MockRemoteNS.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
 #include "scheduler/ArchivalRoute.hpp"
@@ -53,7 +53,7 @@ extern "C"
     return new XrdProFilesystem(
       new cta::MockNameServer(),
       new cta::MockSchedulerDatabase(),
-      new cta::MockRemoteStorage());
+      new cta::MockRemoteNS());
   }
 }
 
@@ -1640,7 +1640,7 @@ void XrdProFilesystem::EnvInfo(XrdOucEnv *envP)
 XrdProFilesystem::XrdProFilesystem(
   cta::NameServer *ns,
   cta::SchedulerDatabase *scheddb,
-  cta::RemoteStorage *remoteStorage):
+  cta::RemoteNS *remoteStorage):
   m_ns(ns),
   m_scheddb(scheddb),
   m_remoteStorage(remoteStorage),

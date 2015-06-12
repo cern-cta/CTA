@@ -16,10 +16,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "remotestorage/RemoteStorageFactory.hpp"
+#pragma once
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::RemoteStorageFactory::~RemoteStorageFactory() throw() {
-}
+#include <memory>
+
+namespace cta {
+
+// Forward declarations
+class RemoteNS;
+
+/**
+ * Asbtract class specifying the interface to a factory of remote namespace
+ * proxies.
+ */
+class RemoteNSFactory {
+public:
+
+  /**
+   * Destructor.
+   */
+  virtual ~RemoteNSFactory() throw() = 0;
+
+  /**
+   * Returns a newly created namespace proxy.
+   *
+   * @return A newly created namespace proxy.
+   */
+  virtual std::unique_ptr<RemoteNS> create() = 0;
+
+}; // class RemoteNSFactory
+
+} // namespace cta

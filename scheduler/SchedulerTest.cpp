@@ -18,9 +18,9 @@
 
 #include "nameserver/MockNameServerFactory.hpp"
 #include "nameserver/NameServer.hpp"
-#include "remotestorage/MockRemoteStorageFactory.hpp"
-#include "remotestorage/RemoteStorage.hpp"
-#include "remotestorage/RemoteStorageFactory.hpp"
+#include "remotens/MockRemoteNSFactory.hpp"
+#include "remotens/RemoteNS.hpp"
+#include "remotens/RemoteNSFactory.hpp"
 #include "scheduler/AdminUser.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/ArchivalRoute.hpp"
@@ -49,12 +49,12 @@ namespace unitTests {
 struct SchedulerTestParam {
   cta::NameServerFactory &nsFactory;
   cta::SchedulerDatabaseFactory &dbFactory;
-  cta::RemoteStorageFactory &remoteStorageFactory;
+  cta::RemoteNSFactory &remoteStorageFactory;
 
   SchedulerTestParam(
     cta::NameServerFactory &nsFactory,
     cta::SchedulerDatabaseFactory &dbFactory,
-    cta::RemoteStorageFactory &remoteStorageFactory):
+    cta::RemoteNSFactory &remoteStorageFactory):
     nsFactory(nsFactory),
     dbFactory(dbFactory),
     remoteStorageFactory(remoteStorageFactory) {
@@ -136,7 +136,7 @@ private:
 
   std::unique_ptr<cta::NameServer> m_ns;
   std::unique_ptr<cta::SchedulerDatabase> m_db;
-  std::unique_ptr<cta::RemoteStorage> m_remoteStorage;
+  std::unique_ptr<cta::RemoteNS> m_remoteStorage;
   std::unique_ptr<cta::Scheduler> m_scheduler;
 
 }; // class SchedulerTest
@@ -2124,15 +2124,129 @@ TEST_P(SchedulerTest,
   ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
 }
 
+/*
+TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint16_t nbCopies = 1;
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  const uint16_t mode = 0777;
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
+    storageClassName));
+
+  const std::string tapePoolName = "TestTapePool";
+  const uint16_t nbPartialTapes = 1;
+  const std::string tapePoolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
+    nbPartialTapes, tapePoolComment));
+
+  const uint16_t copyNb = 1;
+  const std::string archivalRouteComment = "Archival-route comment";
+  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
+    copyNb, tapePoolName, archivalRouteComment));
+
+  std::list<std::string> remoteFiles;
+  remoteFiles.push_back("remoteFile");
+  const std::string archiveFile  = "/grandparent/parent_file";
+  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile));
+
+  {
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+    ASSERT_TRUE(itor.hasMore());
+    DirEntry entry;
+    ASSERT_NO_THROW(entry = itor.next());
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(DirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost,
+      "/grandparent"));
+    ASSERT_TRUE(itor.hasMore());
+    DirEntry entry;
+    ASSERT_NO_THROW(entry = itor.next());
+    ASSERT_EQ(std::string("parent_file"), entry.getName());
+    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    DirEntry entry;
+    ASSERT_NO_THROW(entry = scheduler.statDirEntry(s_adminOnAdminHost,
+      archiveFile));
+    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    const auto rqsts = scheduler.getArchiveRequests(s_adminOnAdminHost);
+    ASSERT_EQ(1, rqsts.size());
+    auto poolItor = rqsts.cbegin();
+    ASSERT_FALSE(poolItor == rqsts.cend());
+    const TapePool &pool = poolItor->first;
+    ASSERT_TRUE(tapePoolName == pool.getName());
+    auto poolRqsts = poolItor->second;
+    ASSERT_EQ(1, poolRqsts.size());
+    std::set<std::string> remoteFiles;
+    std::set<std::string> archiveFiles;
+    for(auto jobItor = poolRqsts.cbegin();
+      jobItor != poolRqsts.cend(); jobItor++) {
+      remoteFiles.insert(jobItor->getRemoteFile());
+      archiveFiles.insert(jobItor->getArchiveFile());
+    }
+    ASSERT_EQ(1, remoteFiles.size());
+    ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
+    ASSERT_EQ(1, archiveFiles.size());
+    ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") ==
+      archiveFiles.end());
+  }
+
+  {
+    const auto poolRqsts = scheduler.getArchiveRequests(s_adminOnAdminHost,
+      tapePoolName);
+    ASSERT_EQ(1, poolRqsts.size());
+    std::set<std::string> remoteFiles;
+    std::set<std::string> archiveFiles;
+    for(auto jobItor = poolRqsts.cbegin(); jobItor != poolRqsts.cend();
+      jobItor++) {
+      remoteFiles.insert(jobItor->getRemoteFile());
+      archiveFiles.insert(jobItor->getArchiveFile());
+    }
+    ASSERT_EQ(1, remoteFiles.size());
+    ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
+    ASSERT_EQ(1, archiveFiles.size());
+    ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") == archiveFiles.end());
+  }
+
+  {
+    std::list<std::string> archiveFiles;
+    archiveFiles.push_back("/grandparent/parent_file");
+    ASSERT_NO_THROW(scheduler.queueRetrieveRequest(s_adminOnAdminHost,
+      archiveFiles, "remoteFile"));
+  }
+}
+*/
+
 static cta::MockNameServerFactory mockNsFactory;
 static cta::MockSchedulerDatabaseFactory mockDbFactory;
-static cta::MockRemoteStorageFactory mockRemoteStorageFactory;
+static cta::MockRemoteNSFactory mockRemoteNSFactory;
 
 INSTANTIATE_TEST_CASE_P(MockSchedulerTest, SchedulerTest,
-  ::testing::Values(SchedulerTestParam(mockNsFactory, mockDbFactory, mockRemoteStorageFactory)));
+  ::testing::Values(SchedulerTestParam(mockNsFactory, mockDbFactory, mockRemoteNSFactory)));
 
 static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactory;
 
 INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTest, SchedulerTest,
-  ::testing::Values(SchedulerTestParam(mockNsFactory, OStoreDBFactory, mockRemoteStorageFactory)));
+  ::testing::Values(SchedulerTestParam(mockNsFactory, OStoreDBFactory, mockRemoteNSFactory)));
 } // namespace unitTests

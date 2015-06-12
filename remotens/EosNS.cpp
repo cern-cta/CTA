@@ -17,18 +17,18 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "remotestorage/EosRemoteStorage.hpp"
+#include "remotens/EosNS.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::EosRemoteStorage::~EosRemoteStorage() throw() {
+cta::EosNS::~EosNS() throw() {
 }
 
 //------------------------------------------------------------------------------
 // regularFileExists
 //------------------------------------------------------------------------------
-bool cta::EosRemoteStorage::regularFileExists(const std::string &remoteFile)
+bool cta::EosNS::regularFileExists(const std::string &remoteFile)
   const {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
@@ -36,14 +36,14 @@ bool cta::EosRemoteStorage::regularFileExists(const std::string &remoteFile)
 //------------------------------------------------------------------------------
 // dirExists
 //------------------------------------------------------------------------------
-bool cta::EosRemoteStorage::dirExists(const std::string &remoteFile) const {
+bool cta::EosNS::dirExists(const std::string &remoteFile) const {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // rename
 //------------------------------------------------------------------------------
-void cta::EosRemoteStorage::rename(const std::string &remoteFile,
+void cta::EosNS::rename(const std::string &remoteFile,
   const std::string &newRemoteFile) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }

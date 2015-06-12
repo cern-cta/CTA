@@ -19,7 +19,7 @@
 #pragma once
 
 #include "nameserver/MockNameServer.hpp"
-#include "remotestorage/RemoteStorage.hpp"
+#include "remotens/RemoteNS.hpp"
 #include "scheduler/Scheduler.hpp"
 
 #include "XrdSfs/XrdSfsInterface.hh"
@@ -47,7 +47,7 @@ public:
   virtual int stat(const char *Name, struct stat *buf, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0,const char *opaque = 0);
   virtual int stat(const char *path, mode_t &mode, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0, const char *opaque = 0);
   virtual int truncate(const char *path, XrdSfsFileOffset fsize, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0, const char *opaque = 0);
-  XrdProFilesystem(cta::NameServer *ns, cta::SchedulerDatabase *scheddb, cta::RemoteStorage *remoteStorage);
+  XrdProFilesystem(cta::NameServer *ns, cta::SchedulerDatabase *scheddb, cta::RemoteNS *remoteStorage);
   ~XrdProFilesystem();
   
 protected:
@@ -56,7 +56,7 @@ protected:
   
   cta::SchedulerDatabase *m_scheddb;
 
-  cta::RemoteStorage *m_remoteStorage;
+  cta::RemoteNS *m_remoteStorage;
 
   /**
    * The scheduler.

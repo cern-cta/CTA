@@ -16,31 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "remotens/RemoteNS.hpp"
 
-#include "remotestorage/RemoteStorageFactory.hpp"
-
-namespace cta {
-
-/**
- * Concrete implementation of a remote storage-system factory that creates mock
- * objects.
- */
-class MockRemoteStorageFactory: public RemoteStorageFactory {
-public:
-
-  /**
-   * Destructor.
-   */
-  ~MockRemoteStorageFactory() throw();
-
-  /**
-   * Returns a newly created remote storage-system object.
-   *
-   * @return A newly created remote storage-system object.
-   */
-  std::unique_ptr<RemoteStorage> create();
-
-}; // class MockRemoteStorageFactory
-
-} // namespace cta
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+cta::RemoteNS::~RemoteNS() throw() {
+}

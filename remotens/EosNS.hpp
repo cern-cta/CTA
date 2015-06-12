@@ -18,20 +18,20 @@
 
 #pragma once
 
-#include "remotestorage/RemoteStorage.hpp"
+#include "remotens/RemoteNS.hpp"
 
 namespace cta {
 
 /**
- * A mock proxy class for a remote storage system.
+ * Proxy class for the namespace of the EOS storage system.
  */
-class MockRemoteStorage: public RemoteStorage {
+class EosNS: public RemoteNS {
 public:
 
   /**
    * Destructor.
    */
-  ~MockRemoteStorage() throw();
+  ~EosNS() throw();
 
   /**
    * Returns true if the specified regular file exists.
@@ -58,6 +58,6 @@ public:
   void rename(const std::string &remoteFile,
     const std::string &newRemoteFile);
 
-}; // class MockRemoteStorage
+}; // class EosNS
 
 } // namespace cta

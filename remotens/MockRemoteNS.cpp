@@ -16,18 +16,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "remotestorage/MockRemoteStorage.hpp"
-#include "remotestorage/MockRemoteStorageFactory.hpp"
+#include "common/exception/Exception.hpp"
+#include "remotens/MockRemoteNS.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::MockRemoteStorageFactory::~MockRemoteStorageFactory() throw() {
+cta::MockRemoteNS::~MockRemoteNS() throw() {
 }
 
 //------------------------------------------------------------------------------
-// create
+// regularFileExists
 //------------------------------------------------------------------------------
-std::unique_ptr<cta::RemoteStorage> cta::MockRemoteStorageFactory::create() {
-  return std::unique_ptr<RemoteStorage>(new MockRemoteStorage());
+bool cta::MockRemoteNS::regularFileExists(const std::string &remoteFile)
+  const {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+//------------------------------------------------------------------------------
+// dirExists
+//------------------------------------------------------------------------------
+bool cta::MockRemoteNS::dirExists(const std::string &remoteFile) const {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+//------------------------------------------------------------------------------
+// rename
+//------------------------------------------------------------------------------
+void cta::MockRemoteNS::rename(const std::string &remoteFile,
+  const std::string &newRemoteFile) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }

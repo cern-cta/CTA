@@ -18,32 +18,28 @@
 
 #pragma once
 
-#include <memory>
+#include "remotens/RemoteNSFactory.hpp"
 
 namespace cta {
 
-// Forward declarations
-class RemoteStorage;
-
 /**
- * Asbtract class specifying the interface to a factory of remote storage-system
- * objects.
+ * Factory for creating mock remote namespaces.
  */
-class RemoteStorageFactory {
+class MockRemoteNSFactory: public RemoteNSFactory {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~RemoteStorageFactory() throw() = 0;
+  ~MockRemoteNSFactory() throw();
 
   /**
-   * Returns a newly created remote storage-system object.
+   * Returns a newly created namespace object.
    *
-   * @return A newly created remote storage-system object.
+   * @return A newly created namespace object.
    */
-  virtual std::unique_ptr<RemoteStorage> create() = 0;
+  std::unique_ptr<RemoteNS> create();
 
-}; // class RemoteStorageFactory
+}; // class MockRemoteNSFactory
 
 } // namespace cta
