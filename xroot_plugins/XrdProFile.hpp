@@ -43,5 +43,18 @@ public:
   XrdProFile(const char *user=0, int MonID=0);
   ~XrdProFile();
 protected:
+  
+  /**
+   * This is the string holding the result of the command
+   */
   std::string m_data;
+  
+  /**
+   * Replaces all occurrences in a string "str" of a substring "from" with the string "to"
+   * 
+   * @param str  The original string
+   * @param from The substring to replace
+   * @param to   The replacement string
+   */
+  void replaceAll(std::string& str, const std::string& from, const std::string& to) const;
 };

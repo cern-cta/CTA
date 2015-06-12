@@ -16,46 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "CTACopyCmd.hpp"
+#include "cmdline/CTACopyCmd.hpp"
+#include "common/exception/Exception.hpp"
 
-#include "XrdCl/XrdClFileSystem.hh"
 #include "XrdCl/XrdClCopyProcess.hh"
-#include "XrdOuc/XrdOucString.hh"
 
-#include <getopt.h>
 #include <iostream>
-#include <string.h>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CTACopyCmd::CTACopyCmd() throw(): m_programName("CTA_copycmd") {
-}
-
-//------------------------------------------------------------------------------
-// usage
-//------------------------------------------------------------------------------
-void CTACopyCmd::usage(std::ostream &os) const throw() {
-  os <<
-    "Usage:\n"
-    "\t" << m_programName << " ls <directory_name>\n";
+CTACopyCmd::CTACopyCmd() throw() {
 }
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int CTACopyCmd::main(const int argc, char **argv) throw() {
-//  if(argc < 2) {
-//    usage(std::cerr);
-//    return 1;
-//  }
+int CTACopyCmd::main(const int argc, const char **argv) const throw() {
+  
   int rc = 1;
   
   // Execute the command
   try {
-    rc = executeCommand(argc, argv);
+    rc = sendCommand(argc, argv);
   } catch(std::exception &ex) {
-    std::cerr << std::endl << "Failed to execute the archive command:\n\n" << ex.what() << std::endl;
+    std::cerr << std::endl << "Failed to execute the command. Reason: " << ex.what() << std::endl;
     return 1;
   }
 
@@ -63,45 +48,62 @@ int CTACopyCmd::main(const int argc, char **argv) throw() {
 }
 
 //------------------------------------------------------------------------------
-// executeCommand
+// sendCommand
 //------------------------------------------------------------------------------
-int CTACopyCmd::executeCommand(const int argc, char **argv)  {
+int CTACopyCmd::sendCommand(const int argc, const char **argv) const {
   XrdCl::PropertyList properties;
-  properties.Set("source", "root://localhost//himama");
-  properties.Set("target", "/afs/cern.ch/user/d/dkruse/lola.txt"); 
-  properties.Set("force", true);
+  properties.Set("source", formatCommandPath(argc, argv));
+  properties.Set("target", "-"); //destination is stdout
   XrdCl::PropertyList results;
   XrdCl::CopyProcess copyProcess;
   
   XrdCl::XRootDStatus status = copyProcess.AddJob(properties, &results);
-  if(status.IsOK())
+  if(!status.IsOK())
   {
-    std::cout << "Job added" << std::endl;
-  }
-  else
-  {
-    std::cout << "Job adding error" << std::endl;
+    throw cta::exception::Exception("Job adding error");
   }
   
   status = copyProcess.Prepare();
-  if(status.IsOK())
+  if(!status.IsOK())
   {
-    std::cout << "Job prepared" << std::endl;
-  }
-  else
-  {
-    std::cout << "Job preparing error" << std::endl;
+    throw cta::exception::Exception("Job preparing error");
   }
   
   XrdCl::CopyProgressHandler copyProgressHandler;
   status = copyProcess.Run(&copyProgressHandler);
-  if(status.IsOK())
+  if(!status.IsOK())
   {
-    std::cout << "Copy OK" << std::endl;
-  }
-  else
-  {
-    std::cout << "Copy error" << std::endl;
+    throw cta::exception::Exception("Copy process run error");
   }
   return 0;
+}
+
+//------------------------------------------------------------------------------
+// formatCommandPath
+//------------------------------------------------------------------------------
+std::string CTACopyCmd::formatCommandPath(const int argc, const char **argv) const {
+  std::string cmdPath = "root://localhost//";
+  std::string arg = argv[0];
+  replaceAll(arg, "&", "_#_and_#_");
+  cmdPath += arg;
+  for(int i=1; i<argc; i++) {
+    std::string arg = argv[i];
+    replaceAll(arg, "&", "_#_and_#_");
+    cmdPath += "&";
+    cmdPath += arg;
+  }
+  return cmdPath;
+}
+
+//------------------------------------------------------------------------------
+// replaceAll
+//------------------------------------------------------------------------------
+void CTACopyCmd::replaceAll(std::string& str, const std::string& from, const std::string& to) const {
+  if(from.empty() || str.empty())
+      return;
+  size_t start_pos = 0;
+  while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+      str.replace(start_pos, from.length(), to);
+      start_pos += to.length();
+  }
 }

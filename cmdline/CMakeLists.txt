@@ -8,7 +8,7 @@ add_executable (CTA_cmd CTACmdMain.cpp CTACmd.cpp)
 target_link_libraries (CTA_cmd ${XROOTD_XRDCL_LIB})
 
 add_executable (CTA_copycmd CTACopyCmdMain.cpp CTACopyCmd.cpp)
-target_link_libraries (CTA_copycmd ${XROOTD_XRDCL_LIB})
+target_link_libraries (CTA_copycmd ${XROOTD_XRDCL_LIB} ctacommon)
 
 add_executable (CTA_dircmd CTADirCmdMain.cpp CTADirCmd.cpp)
 target_link_libraries (CTA_dircmd ${XROOTD_XRDCL_LIB})

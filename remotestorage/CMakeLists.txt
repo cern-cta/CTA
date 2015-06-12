@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 
 set (CTA_REMOTE_STORAGE_SRC_FILES
+  MockRemoteStorage.cpp
   EosRemoteStorage.cpp
   RemoteStorage.cpp)
 

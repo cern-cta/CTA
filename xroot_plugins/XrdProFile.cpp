@@ -18,13 +18,30 @@
 
 #include "XrdProFile.hpp"
 
-#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // open
 //------------------------------------------------------------------------------
 int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client, const char *opaque) {
-  m_data = "Hello this is my data";
+  
+  std::vector<std::string> tokens;
+  std::stringstream ss(fileName);
+  std::string item;
+  while (std::getline(ss, item, '&')) {
+      replaceAll(item, "_#_and_#_", "&");
+      tokens.push_back(item);
+  }
+  
+  m_data = "Hello this is original command received:";
+  for(auto i=tokens.begin(); i!=tokens.end(); i++) {
+    m_data += " ";
+    m_data += *i;
+  }
+  m_data += "\n";
+  
   return SFS_OK;
 }
 
@@ -55,8 +72,9 @@ const char* XrdProFile::FName() {
 // getMmap
 //------------------------------------------------------------------------------
 int XrdProFile::getMmap(void **Addr, off_t &Size) {
-  *Addr = const_cast<char *>(m_data.c_str()); Size = m_data.length();
-  return SFS_ERROR;
+  *Addr = const_cast<char *>(m_data.c_str());
+  Size = m_data.length();
+  return SFS_OK; //change to "return SFS_ERROR;" in case the read function below is wanted
 }
 
 //------------------------------------------------------------------------------
@@ -71,13 +89,15 @@ XrdSfsXferSize XrdProFile::read(XrdSfsFileOffset offset, XrdSfsXferSize size) {
 // read
 //------------------------------------------------------------------------------
 XrdSfsXferSize XrdProFile::read(XrdSfsFileOffset offset, char *buffer, XrdSfsXferSize size) {
-  if((unsigned long)offset<m_data.length()) {
-    strncpy(buffer, m_data.c_str()+offset, size);
-    return m_data.length()-offset;
-  }
-  else {
-    return 0;
-  }
+//  if((unsigned long)offset<m_data.length()) {
+//    strncpy(buffer, m_data.c_str()+offset, size);
+//    return m_data.length()-offset;
+//  }
+//  else {
+//    return 0;
+//  }
+  error.setErrInfo(ENOTSUP, "Not supported.");
+  return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -154,4 +174,17 @@ XrdProFile::XrdProFile(const char *user, int MonID): error(user, MonID) {
 // Destructor
 //------------------------------------------------------------------------------
 XrdProFile::~XrdProFile() {  
+}
+
+//------------------------------------------------------------------------------
+// replaceAll
+//------------------------------------------------------------------------------
+void XrdProFile::replaceAll(std::string& str, const std::string& from, const std::string& to) const {
+  if(from.empty() || str.empty())
+      return;
+  size_t start_pos = 0;
+  while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+      str.replace(start_pos, from.length(), to);
+      start_pos += to.length();
+  }
 }
