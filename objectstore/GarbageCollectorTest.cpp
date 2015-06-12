@@ -39,8 +39,8 @@ TEST(GarbageCollector, BasicFuctionnality) {
   re.initialize();
   re.insert();
   // Create the agent register
-  cta::objectstore::CreationLog cl(99, 99, "unittesthost", time(NULL),
-    "Creation of unit test agent register");
+    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
+      "unittesthost", time(NULL), "Creation of unit test agent register");
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agent, cl);
   rel.release();
@@ -87,8 +87,8 @@ TEST(GarbageCollector, AgentRegister) {
   re.initialize();
   re.insert();
   // Create the agent register
-  cta::objectstore::CreationLog cl(99, 99, "unittesthost", time(NULL),
-    "Creation of unit test agent register");
+    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
+      "unittesthost", time(NULL), "Creation of unit test agent register");
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agent, cl);
   rel.release();
@@ -144,8 +144,8 @@ TEST(GarbageCollector, TapePool) {
   re.initialize();
   re.insert();
   // Create the agent register
-  cta::objectstore::CreationLog cl(99, 99, "unittesthost", time(NULL),
-    "Creation of unit test agent register");
+    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
+      "unittesthost", time(NULL), "Creation of unit test agent register");
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agent, cl);
   rel.release();
@@ -201,8 +201,8 @@ TEST(GarbageCollector, DriveRegister) {
   re.initialize();
   re.insert();
   // Create the agent register
-  cta::objectstore::CreationLog cl(99, 99, "unittesthost", time(NULL),
-    "Creation of unit test agent register");
+    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
+      "unittesthost", time(NULL), "Creation of unit test agent register");
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agent, cl);
   rel.release();

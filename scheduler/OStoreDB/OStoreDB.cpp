@@ -37,17 +37,13 @@ OStoreDB::~OStoreDB() throw() { }
 void OStoreDB::createAdminHost(const SecurityIdentity& requester,
     const std::string& hostName, const std::string& comment) {
   RootEntry re(m_objectStore);
-  CreationLog cl;
-  cl.uid = requester.getUser().getUid();
-  cl.gid = requester.getUser().getGid();
-  cl.hostname = requester.getHost();
-  cl.comment = comment;
-  cl.time = time(NULL);
+  objectstore::CreationLog cl(requester.getUser(), requester.getHost(), 
+    time(NULL), comment);
   ScopedExclusiveLock rel(re);
   re.fetch();
   re.addAdminHost(hostName, cl);
   re.commit();
-  }
+}
 
 std::list<AdminHost> OStoreDB::getAdminHosts() const {
   RootEntry re(m_objectStore);
@@ -58,7 +54,7 @@ std::list<AdminHost> OStoreDB::getAdminHosts() const {
   rel.release();
   for (auto h=hl.begin(); h!=hl.end(); h++) {
     ret.push_back(AdminHost(h->hostname, 
-        cta::UserIdentity(h->log.uid, h->log.gid),
+        cta::UserIdentity(h->log.user.getUid(), h->log.user.getGid()),
         h->log.comment, h->log.time));
   }
   return ret;
@@ -79,9 +75,8 @@ void OStoreDB::createAdminUser(const SecurityIdentity& requester,
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  objectstore::CreationLog cl(requester.getUser().getUid(), 
-    requester.getUser().getGid(), requester.getHost(), time(NULL),
-    comment);
+  objectstore::CreationLog cl(requester.getUser(), requester.getHost(),
+    time(NULL), comment);
   re.addAdminUser(objectstore::UserIdentity(user.getUid(), user.getGid()), cl);
   re.commit();
 }
@@ -105,7 +100,7 @@ std::list<AdminUser> OStoreDB::getAdminUsers() const {
     ret.push_back(
       AdminUser(
         cta::UserIdentity(au->user.uid, au->user.gid),
-        cta::UserIdentity(au->log.uid, au->log.gid),
+        cta::UserIdentity(au->log.user.getUid(), au->log.user.getGid()),
         au->log.comment,
         au->log.time
     ));
@@ -138,8 +133,7 @@ void OStoreDB::createStorageClass(const SecurityIdentity& requester,
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  objectstore::CreationLog cl(requester.getUser().getUid(),
-    requester.getUser().getGid(), requester.getHost(),
+  objectstore::CreationLog cl(requester.getUser(), requester.getHost(),
     time(NULL), comment);
   re.addStorageClass(name, nbCopies, cl);
   re.commit();
@@ -152,7 +146,7 @@ StorageClass OStoreDB::getStorageClass(const std::string& name) const {
   auto sc = re.dumpStorageClass(name);
   return cta::StorageClass(name,
     sc.copyCount,
-    cta::UserIdentity(sc.log.uid, sc.log.gid),
+    cta::UserIdentity(sc.log.user.getUid(), sc.log.user.getGid()),
     sc.log.comment,
     sc.log.time);
 }
@@ -165,7 +159,7 @@ std::list<StorageClass> OStoreDB::getStorageClasses() const {
   decltype (getStorageClasses()) ret;
   for (auto sc = scl.begin(); sc != scl.end(); sc++) {
     ret.push_back(StorageClass(sc->storageClass, 
-        sc->copyCount, cta::UserIdentity(sc->log.uid, sc->log.gid),
+        sc->copyCount, sc->log.user,
         sc->log.comment, sc->log.time));
   }
   ret.sort();
@@ -187,8 +181,7 @@ void OStoreDB::createArchivalRoute(const SecurityIdentity& requester,
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  objectstore::CreationLog cl(requester.getUser().getUid(),
-      requester.getUser().getUid(), requester.getHost(),
+  objectstore::CreationLog cl(requester.getUser(), requester.getHost(),
       time(NULL), comment);
   re.setArchivalRoute(storageClassName, copyNb, tapePoolName, cl);
   re.commit();

@@ -52,8 +52,8 @@ TEST(RootEntry, BasicAccess) {
     cta::objectstore::Agent agent(be);
     agent.generateName("unitTest");
     re.fetch();
-    cta::objectstore::CreationLog cl(99, 99, "unittesthost", time(NULL),
-      "Creation of unit test agent register");
+    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
+      "unittesthost", time(NULL), "Creation of unit test agent register");
     re.addOrGetAgentRegisterPointerAndCommit(agent, cl);
     ASSERT_NO_THROW(re.getAgentRegisterAddress());
     re.commit();
@@ -81,8 +81,8 @@ TEST(RootEntry, AdminHosts) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     ASSERT_NO_THROW(re.fetch());
-    cta::objectstore::CreationLog cl(99, 99, "unittesthost", time(NULL),
-      "Creation of unit test agent register");
+    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
+      "unittesthost", time(NULL), "Creation of unit test agent register");
     re.addAdminHost("adminHost1", cl);
     re.addAdminHost("adminHost2", cl);
     re.commit();
@@ -110,8 +110,8 @@ TEST(RootEntry, AdminHosts) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    cta::objectstore::CreationLog cl(99, 99, "unittesthost", time(NULL),
-      "Creation of unit test agent register");
+    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
+      "unittesthost", time(NULL), "Creation of unit test agent register");
     ASSERT_THROW(re.addAdminHost("adminHost2", cl),
        cta::objectstore::RootEntry::DuplicateEntry);
   }
@@ -152,8 +152,8 @@ TEST(RootEntry, AdminUsers) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     ASSERT_NO_THROW(re.fetch());
-    cta::objectstore::CreationLog cl(99, 99, "unittesthost", time(NULL),
-      "Creation of unit test agent register");
+    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
+      "unittesthost", time(NULL), "Creation of unit test agent register");
     re.addAdminUser(user1, cl);
     re.addAdminUser(user2, cl);
     re.commit();
@@ -185,8 +185,8 @@ TEST(RootEntry, AdminUsers) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    cta::objectstore::CreationLog cl(99, 99, "unittesthost", time(NULL),
-      "Creation of unit test agent register");
+    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
+      "unittesthost", time(NULL), "Creation of unit test agent register");
     ASSERT_THROW(re.addAdminUser(user2, cl),
        cta::objectstore::RootEntry::DuplicateEntry);
   }
@@ -220,8 +220,8 @@ TEST(RootEntry, StorageClassesAndArchivalRoutes) {
     re.initialize();
     re.insert();
   }
-  cta::objectstore::CreationLog cl(99, 99,"unittesthost", time(NULL),
-    "Creation of unit test agent register");
+    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
+      "unittesthost", time(NULL), "Creation of unit test agent register");
   {
     // Add 2 storage classes to the root entry
     cta::objectstore::RootEntry re(be);
@@ -361,8 +361,8 @@ TEST(RootEntry, StorageClassesAndArchivalRoutes) {
 
 TEST(RootEntry, Libraries) {
   cta::objectstore::BackendVFS be;
-  cta::objectstore::CreationLog cl(99, 99, "unittesthost", time(NULL),
-    "Creation of unit test agent register");
+    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
+      "unittesthost", time(NULL), "Creation of unit test agent register");
   { 
     // Try to create the root entry
     cta::objectstore::RootEntry re(be);
@@ -425,8 +425,8 @@ TEST(RootEntry, Libraries) {
 
 TEST (RootEntry, TapePools) {
   cta::objectstore::BackendVFS be;
-  cta::objectstore::CreationLog cl(99, 99, "unittesthost", time(NULL),
-    "Creation of unit test agent register");
+    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
+      "unittesthost", time(NULL), "Creation of unit test agent register");
   cta::objectstore::Agent ag(be);
   ag.initialize();
   ag.generateName("UnitTests");
@@ -491,8 +491,8 @@ TEST (RootEntry, DriveRegister) {
     re.initialize();
     re.insert();
   }
-  cta::objectstore::CreationLog cl(99, 99, "unittesthost", time(NULL),
-    "Creation of unit test agent register");
+    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
+      "unittesthost", time(NULL), "Creation of unit test agent register");
   cta::objectstore::Agent ag(be);
   ag.initialize();
   ag.generateName("UnitTests");
@@ -545,8 +545,8 @@ TEST(RootEntry, AgentRegister) {
     re.initialize();
     re.insert();
   }
-  cta::objectstore::CreationLog cl(99, 99, "unittesthost", time(NULL),
-    "Creation of unit test agent register");
+    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
+      "unittesthost", time(NULL), "Creation of unit test agent register");
   cta::objectstore::Agent ag(be);
   ag.generateName("UnitTests");
   std::string arAddr;

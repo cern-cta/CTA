@@ -32,7 +32,7 @@ public:
   /**
    * Constructor.
    *
-   * Initialises all integer member-variables to 0.
+   * Initialises all integer member-variables to non-valid values (max int).
    */
   UserIdentity() throw();
 

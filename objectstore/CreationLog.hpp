@@ -19,34 +19,31 @@
 #include <string>
 #include <stdint.h>
 #include <limits>
+#include "scheduler/CreationLog.hpp"
+#include "scheduler/UserIdentity.hpp"
 #include "objectstore/cta.pb.h"
 
 namespace cta { namespace objectstore {
-
-class CreationLog {
+/**
+ * A decorator class of scheduler's creation log adding serialization.
+ */
+class CreationLog: public cta::CreationLog {
 public:
-  CreationLog (): uid(std::numeric_limits<decltype(uid)>::max()),
-          gid(std::numeric_limits<decltype(gid)>::max()),
-          time(std::numeric_limits<decltype(CreationLog::time)>::max()) {}
-  CreationLog (uint32_t ui, uint32_t gi, const std::string & hn, uint64_t t,
-    const std::string & c): uid(ui), gid(gi), 
-    hostname(hn), time(t), comment(c) {}
-  uint32_t uid;
-  uint32_t gid;
-  std::string hostname;
-  uint64_t time;
-  std::string comment;
+  CreationLog (): cta::CreationLog() {}
+  CreationLog (const cta::UserIdentity& user, const std::string & hn, uint64_t t,
+    const std::string & c): cta::CreationLog(
+      cta::UserIdentity(user),hn ,t, c) {}
   void serialize (cta::objectstore::serializers::CreationLog & log) const {
-    log.mutable_user()->set_uid(uid);
-    log.mutable_user()->set_gid(gid);
-    log.set_host(hostname);
+    log.mutable_user()->set_uid(user.getUid());
+    log.mutable_user()->set_gid(user.getGid());
+    log.set_host(host);
     log.set_time(time);
     log.set_comment(comment);
   }
   void deserialize (const cta::objectstore::serializers::CreationLog & log) {
-    uid   = log.user().uid();
-    gid   = log.user().gid();
-    hostname = log.host();
+    user.setUid(log.user().uid());
+    user.setGid(log.user().gid());
+    host = log.host();
     time  = log.time();
     comment = log.comment();
   }

@@ -18,14 +18,14 @@
 
 #include "scheduler/UserIdentity.hpp"
 #include "ostream"
+#include <limits>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::UserIdentity::UserIdentity() throw():
-  m_uid(0),
-  m_gid(0) {
-}
+  m_uid(std::numeric_limits<decltype(m_uid)>::max()),
+  m_gid(std::numeric_limits<decltype(m_gid)>::max()) {}
 
 //------------------------------------------------------------------------------
 // constructor

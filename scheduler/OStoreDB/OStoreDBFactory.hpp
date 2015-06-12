@@ -56,7 +56,7 @@ public:
     objectstore::Agent ag(m_backend);
     ag.generateName("OStoreDBFactory");
     ag.initialize();
-    objectstore::CreationLog cl(1111, 1111, "systemhost", 
+    objectstore::CreationLog cl(cta::UserIdentity(1111, 1111), "systemhost", 
       time(NULL), "Initial creation of the  object store structures");
     re.addOrGetAgentRegisterPointerAndCommit(ag,cl);
     rel.release();
