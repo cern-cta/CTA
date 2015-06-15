@@ -499,9 +499,7 @@ void cta::Scheduler::queueArchiveToDirRequest(
 
   for(auto itor = archiveToFileRequests.cbegin(); itor !=
     archiveToFileRequests.cend(); itor++) {
-    const std::string &archiveFile = itor->getArchiveFile();
-    m_ns.createFile(requester, archiveFile, 0666);
-    m_db.fileEntryCreatedInNS(archiveFile);
+    createNSEntryAndUpdateSchedulerDatabase(requester, *itor);
   }
 }
 
@@ -543,6 +541,31 @@ std::list<cta::ArchiveToFileRequest> cta::Scheduler::
 }
 
 //------------------------------------------------------------------------------
+// createNSEntryAndUpdateSchedulerDatabase
+//------------------------------------------------------------------------------
+void cta::Scheduler::createNSEntryAndUpdateSchedulerDatabase(
+  const SecurityIdentity &requester,
+  const ArchiveToFileRequest &rqst) {
+
+  try {
+    m_ns.createFile(requester, rqst.getArchiveFile(), 0666);
+  } catch(std::exception &nsEx) {
+    // Try our best to cleanup the scheduler database.  The garbage collection
+    // logic will try again if we fail.
+    try {
+      m_db.deleteArchiveRequest(requester, rqst.getArchiveFile());
+    } catch(...) {
+    }
+
+    // Whether or not we were able to clean up the scheduler database, the real
+    // problem here was the failure to create an entry in the NS
+    throw nsEx;
+  }
+
+  m_db.fileEntryCreatedInNS(rqst.getArchiveFile());
+}
+
+//------------------------------------------------------------------------------
 // queueArchiveToFileRequest
 //------------------------------------------------------------------------------
 void cta::Scheduler::queueArchiveToFileRequest(
@@ -555,22 +578,7 @@ void cta::Scheduler::queueArchiveToFileRequest(
     remoteFile, archiveFile, priority);
 
   m_db.queue(rqst);
-  try {
-    m_ns.createFile(requester, archiveFile, 0666);
-  } catch(std::exception &nsEx) {
-    // Try our best to cleanup the scheduler database.  The garbage collection
-    // logic will try again if we fail.
-    try {
-      m_db.deleteArchiveRequest(requester, archiveFile);
-    } catch(...) {
-    }
-
-    // Whether or not we were able to clean up the scheduler database, the real
-    // problem here was the failure to create an entry in the NS
-    throw nsEx;
-  }
-
-  m_db.fileEntryCreatedInNS(archiveFile);
+  createNSEntryAndUpdateSchedulerDatabase(requester, rqst);
 }
 
 //------------------------------------------------------------------------------

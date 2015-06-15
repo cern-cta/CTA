@@ -640,6 +640,14 @@ private:
     const uint64_t priority);
 
   /**
+   * Tries to create the entry in the archive namespace corresponding to the
+   * specified archive request and records the result in the scheduler database.
+   */
+  void createNSEntryAndUpdateSchedulerDatabase(
+    const SecurityIdentity &requester,
+    const ArchiveToFileRequest &rqst);
+
+  /**
    * Queues the specifed request to archive one remote file to on archive file.
    *
    * The storage class of the archived file will be inherited from its

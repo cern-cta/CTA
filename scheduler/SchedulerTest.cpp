@@ -147,7 +147,7 @@ const std::string SchedulerTest::s_userHost = "userhost";
 
 const cta::UserIdentity SchedulerTest::s_system(1111, 1111);
 const cta::UserIdentity SchedulerTest::s_admin(2222, 2222);
-const cta::UserIdentity SchedulerTest::s_user(3333, 3333);
+const cta::UserIdentity SchedulerTest::s_user(getuid(), getgid());
 
 const cta::SecurityIdentity SchedulerTest::s_systemOnSystemHost(SchedulerTest::s_system, SchedulerTest::s_systemHost);
 
@@ -1430,7 +1430,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   std::list<std::string> remoteFiles;
   remoteFiles.push_back("remoteFile");
   const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile));
+  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile));
 
   {
     DirIterator itor;
@@ -1504,6 +1504,69 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   }
 }
 
+TEST_P(SchedulerTest, archive_to_new_file_as_admin) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint16_t nbCopies = 1;
+  const std::string storageClassComment = "Storage-class comment";
+  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
+    nbCopies, storageClassComment));
+
+  const std::string dirPath = "/grandparent";
+  const uint16_t mode = 0777;
+  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
+    storageClassName));
+
+  const std::string tapePoolName = "TestTapePool";
+  const uint16_t nbPartialTapes = 1;
+  const std::string tapePoolComment = "Tape-pool comment";
+  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
+    nbPartialTapes, tapePoolComment));
+
+  const uint16_t copyNb = 1;
+  const std::string archivalRouteComment = "Archival-route comment";
+  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
+    copyNb, tapePoolName, archivalRouteComment));
+
+  std::list<std::string> remoteFiles;
+  remoteFiles.push_back("remoteFile");
+  const std::string archiveFile  = "/grandparent/parent_file";
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
+
+  {
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+    ASSERT_TRUE(itor.hasMore());
+    DirEntry entry;
+    ASSERT_NO_THROW(entry = itor.next());
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(DirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+  }
+
+  {
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost,
+      "/grandparent"));
+    ASSERT_FALSE(itor.hasMore());
+  }
+
+  {
+    const auto rqsts = scheduler.getArchiveRequests(s_adminOnAdminHost);
+    ASSERT_TRUE(rqsts.empty());
+  }
+
+  {
+    const auto poolRqsts = scheduler.getArchiveRequests(s_adminOnAdminHost,
+      tapePoolName);
+    ASSERT_TRUE(poolRqsts.empty());
+  }
+}
+
 TEST_P(SchedulerTest, archive_twice_to_same_file) {
   using namespace cta;
 
@@ -1535,7 +1598,7 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
   std::list<std::string> remoteFiles;
   remoteFiles.push_back("remoteFile");
   const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile));
+  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile));
 
   {
     DirIterator itor;
@@ -1608,7 +1671,7 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") == archiveFiles.end());
   }
 
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile), std::exception);
 
   {
     DirIterator itor;
@@ -1696,7 +1759,7 @@ TEST_P(SchedulerTest, delete_archive_request) {
   std::list<std::string> remoteFiles;
   remoteFiles.push_back("remoteFile");
   const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile));
+  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile));
 
   {
     DirIterator itor;
@@ -1799,7 +1862,7 @@ TEST_P(SchedulerTest,
   std::list<std::string> remoteFiles;
   remoteFiles.push_back("remoteFile");
   const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile), std::exception);
 }
 
 TEST_P(SchedulerTest,
@@ -1823,7 +1886,7 @@ TEST_P(SchedulerTest,
   std::list<std::string> remoteFiles;
   remoteFiles.push_back("remoteFile");
   const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile), std::exception);
 }
 
 TEST_P(SchedulerTest, archive_to_new_file_with_no_route) {
@@ -1852,7 +1915,7 @@ TEST_P(SchedulerTest, archive_to_new_file_with_no_route) {
   std::list<std::string> remoteFiles;
   remoteFiles.push_back("remoteFile");
   const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile), std::exception);
 }
 
 TEST_P(SchedulerTest,
@@ -1887,7 +1950,7 @@ TEST_P(SchedulerTest,
   std::list<std::string> remoteFiles;
   remoteFiles.push_back("remoteFile");
   const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile), std::exception);
 }
 
 TEST_P(SchedulerTest, archive_to_directory) {
@@ -1924,7 +1987,7 @@ TEST_P(SchedulerTest, archive_to_directory) {
   remoteFiles.push_back("remoteFile3");
   remoteFiles.push_back("remoteFile4");
   const std::string archiveFile  = "/grandparent";
-  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile));
+  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile));
 
   {
     DirIterator itor;
@@ -2021,7 +2084,7 @@ TEST_P(SchedulerTest,
   remoteFiles.push_back("remoteFile3");
   remoteFiles.push_back("remoteFile4");
   const std::string archiveFile  = "/grandparent";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles,
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles,
     archiveFile), std::exception);
 }
 
@@ -2049,7 +2112,7 @@ TEST_P(SchedulerTest,
   remoteFiles.push_back("remoteFile3");
   remoteFiles.push_back("remoteFile4");
   const std::string archiveFile  = "/grandparent";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles,
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles,
     archiveFile), std::exception);
 }
 
@@ -2082,7 +2145,7 @@ TEST_P(SchedulerTest, archive_to_directory_with_no_route) {
   remoteFiles.push_back("remoteFile3");
   remoteFiles.push_back("remoteFile4");
   const std::string archiveFile  = "/grandparent";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles,
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles,
     archiveFile), std::exception);
 }
 
@@ -2121,7 +2184,7 @@ TEST_P(SchedulerTest,
   remoteFiles.push_back("remoteFile3");
   remoteFiles.push_back("remoteFile4");
   const std::string archiveFile  = "/grandparent";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
+  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile), std::exception);
 }
 
 /*
@@ -2156,7 +2219,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   std::list<std::string> remoteFiles;
   remoteFiles.push_back("remoteFile");
   const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile));
+  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile));
 
   {
     DirIterator itor;
