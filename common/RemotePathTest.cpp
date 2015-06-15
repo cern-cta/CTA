@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/SmartFd.hpp"
+#include "common/RemotePath.hpp"
 
 #include <gtest/gtest.h>
 #include <sys/types.h>
@@ -26,43 +26,21 @@
 
 namespace unitTests {
 
-class cta_SmartFdTest : public ::testing::Test {
+class cta_RemotePathTest : public ::testing::Test {
 protected:
-  static int s_fd;
-  static bool s_closedCallbackWasCalled;
-
   virtual void SetUp() {
-    s_fd = -1;
-    s_closedCallbackWasCalled = false;
   }
 
   virtual void TearDown() {
   }
-
-  static void closedCallback(int closedfd) {
-    s_fd = closedfd;
-    s_closedCallbackWasCalled = true;
-  }
 };
 
-int cta_SmartFdTest::s_fd = -1;
-bool cta_SmartFdTest::s_closedCallbackWasCalled = false;
-
-TEST_F(cta_SmartFdTest, testClosedCallback) {
+TEST_F(cta_RemotePathTest, raw_path_constructor) {
   using namespace cta;
 
-  ASSERT_EQ(-1, s_fd);
-  ASSERT_EQ(false, s_closedCallbackWasCalled);
+  RemotePath remotePath("xroot:the_file");
 
-  int fd = socket(PF_LOCAL, SOCK_STREAM, 0);
-  ASSERT_NE(-1, fd);
-
-  {
-    SmartFd sfd(fd);
-    sfd.setClosedCallback(closedCallback);
-  }
-  ASSERT_EQ(fd, s_fd);
-  ASSERT_EQ(true, s_closedCallbackWasCalled);
+  ASSERT_EQ(std::string("xroot"), remotePath.getProtocol());
 }
 
 } // namespace unitTests

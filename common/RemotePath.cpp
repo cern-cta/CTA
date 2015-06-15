@@ -16,52 +16,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/FileStatus.hpp"
+#include "common/RemotePath.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileStatus::FileStatus():
-  m_mode(0) {
+cta::RemotePath::RemotePath() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileStatus::FileStatus(
-  const UserIdentity &owner,
-  const mode_t mode,
-  const std::string &storageClassName):
-  m_owner(owner),
-  m_mode(mode),
-  m_storageClassName(storageClassName) {
+cta::RemotePath::RemotePath(const std::string &rawPath):
+  m_rawPath(rawPath) {
+  auto pos = rawPath.find(':');
+  if(std::string::npos != pos) {
+    m_protocol = rawPath.substr(0, pos);
+  }
 }
 
 //------------------------------------------------------------------------------
-// getOwner
+// operator==
 //------------------------------------------------------------------------------
-const cta::UserIdentity &cta::FileStatus::getOwner() const throw() {
-  return m_owner;
+bool cta::RemotePath::operator==(const RemotePath &rhs) const {
+  return m_rawPath == rhs.m_rawPath;
 }
 
 //------------------------------------------------------------------------------
-// getMode
+// getRawPath
 //------------------------------------------------------------------------------
-mode_t cta::FileStatus::getMode() const throw() {
-  return m_mode;
+const std::string &cta::RemotePath::getRawPath() const throw() {
+  return m_rawPath;
 }
 
 //------------------------------------------------------------------------------
-// setStorageClassName
+// getProtocol
 //------------------------------------------------------------------------------
-void cta::FileStatus::setStorageClassName(
-  const std::string &storageClassName) {
-  m_storageClassName = storageClassName;
-}
-  
-//------------------------------------------------------------------------------
-// getStorageClassName
-//------------------------------------------------------------------------------
-const std::string &cta::FileStatus::getStorageClassName() const throw() {
-  return m_storageClassName;
+const std::string &cta::RemotePath::getProtocol() const throw() {
+  return m_protocol;
 }

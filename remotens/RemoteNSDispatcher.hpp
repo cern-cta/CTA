@@ -20,18 +20,34 @@
 
 #include "remotens/RemoteNS.hpp"
 
+#include <map>
+#include <memory>
+#include <string>
+
 namespace cta {
 
 /**
- * A mock proxy class for the namespace of a remote storage system.
+ * Dispatches remote namespace requests to the appropriate proxy objects based
+ * on the of the protocol of the request.
  */
-class MockRemoteNS: public RemoteNS {
+class RemoteNSDispatcher: public RemoteNS {
 public:
 
   /**
    * Destructor.
    */
-  ~MockRemoteNS() throw();
+  ~RemoteNSDispatcher() throw();
+
+  /**
+   * Registers the specified proxy object with the specified protocol.
+   *
+   * @param protocol The name of the protocol as it appears URLS.  For example
+   * the protocol name of the URL "xroot://my_dir/m_file" would be "xroot".
+   * @param handler The proxy object to the namespace of teh remote storage
+   * system.
+   */
+  void registerProtocolHandler(const std::string &protocol,
+    std::unique_ptr<RemoteNS> handler);
 
   /**
    * Returns true if the specified regular file exists.
@@ -58,6 +74,27 @@ public:
   void rename(const RemotePath &remoteFile,
     const RemotePath &newRemoteFile);
 
-}; // class MockRemoteNS
+private:
+
+  /**
+   * Mapping from protocol name to protocol handler.
+   */
+  std::map<std::string, RemoteNS*> m_handlers;
+
+  /**
+   * Returns the proxy object to be used to handle the specified protocol.
+   *
+   * @param protocol The name of the protocol.
+   */
+  RemoteNS &getHandler(const std::string &protocol);
+
+  /**
+   * Returns the proxy object to be used to handle the specified protocol.
+   *
+   * @param protocol The name of the protocol.
+   */
+  const RemoteNS &getHandler(const std::string &protocol) const;
+
+}; // class RemoteNSDispatcher
 
 } // namespace cta

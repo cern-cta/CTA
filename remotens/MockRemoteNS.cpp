@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/RemotePath.hpp"
 #include "remotens/MockRemoteNS.hpp"
 
 //------------------------------------------------------------------------------
@@ -28,7 +29,7 @@ cta::MockRemoteNS::~MockRemoteNS() throw() {
 //------------------------------------------------------------------------------
 // regularFileExists
 //------------------------------------------------------------------------------
-bool cta::MockRemoteNS::regularFileExists(const std::string &remoteFile)
+bool cta::MockRemoteNS::regularFileExists(const RemotePath &remoteFile)
   const {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
@@ -36,14 +37,14 @@ bool cta::MockRemoteNS::regularFileExists(const std::string &remoteFile)
 //------------------------------------------------------------------------------
 // dirExists
 //------------------------------------------------------------------------------
-bool cta::MockRemoteNS::dirExists(const std::string &remoteFile) const {
+bool cta::MockRemoteNS::dirExists(const RemotePath &remoteFile) const {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // rename
 //------------------------------------------------------------------------------
-void cta::MockRemoteNS::rename(const std::string &remoteFile,
-  const std::string &newRemoteFile) {
+void cta::MockRemoteNS::rename(const RemotePath &remoteFile,
+  const RemotePath &newRemoteFile) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }

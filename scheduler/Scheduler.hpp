@@ -184,8 +184,7 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of administrators in lexicographical order.
    */
-  std::list<AdminUser> getAdminUsers(const SecurityIdentity &requester)
-   const;
+  std::list<AdminUser> getAdminUsers(const SecurityIdentity &requester) const;
 
   /**
    * Creates the specified administration host.

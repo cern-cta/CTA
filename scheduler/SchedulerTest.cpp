@@ -809,7 +809,7 @@ TEST_P(SchedulerTest, admin_createTape_new) {
 
   const std::string tapePoolName = "TestTapePool";
   const uint16_t nbPartialTapes = 1;
-  const std::string comment = "Tape pool omment";
+  const std::string comment = "Tape pool comment";
   ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, comment));
   {
@@ -873,7 +873,7 @@ TEST_P(SchedulerTest,
 
   const std::string tapePoolName = "TestTapePool";
   const uint16_t nbPartialTapes = 1;
-  const std::string comment = "Tape pool omment";
+  const std::string comment = "Tape pool comment";
   ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, comment));
   {
@@ -1503,10 +1503,10 @@ TEST_P(SchedulerTest, archive_to_new_file) {
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
-    for(auto jobItor = poolRqsts.cbegin();
-      jobItor != poolRqsts.cend(); jobItor++) {
-      remoteFiles.insert(jobItor->getRemoteFile());
-      archiveFiles.insert(jobItor->getArchiveFile());
+    for(auto rqstItor = poolRqsts.cbegin();
+      rqstItor != poolRqsts.cend(); rqstItor++) {
+      remoteFiles.insert(rqstItor->getRemoteFile());
+      archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
@@ -1521,10 +1521,10 @@ TEST_P(SchedulerTest, archive_to_new_file) {
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
-    for(auto jobItor = poolRqsts.cbegin(); jobItor != poolRqsts.cend();
-      jobItor++) {
-      remoteFiles.insert(jobItor->getRemoteFile());
-      archiveFiles.insert(jobItor->getArchiveFile());
+    for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
+      rqstItor++) {
+      remoteFiles.insert(rqstItor->getRemoteFile());
+      archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
@@ -1673,10 +1673,10 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
-    for(auto jobItor = poolRqsts.cbegin();
-      jobItor != poolRqsts.cend(); jobItor++) {
-      remoteFiles.insert(jobItor->getRemoteFile());
-      archiveFiles.insert(jobItor->getArchiveFile());
+    for(auto rqstItor = poolRqsts.cbegin();
+      rqstItor != poolRqsts.cend(); rqstItor++) {
+      remoteFiles.insert(rqstItor->getRemoteFile());
+      archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
@@ -1691,10 +1691,10 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
-    for(auto jobItor = poolRqsts.cbegin(); jobItor != poolRqsts.cend();
-      jobItor++) {
-      remoteFiles.insert(jobItor->getRemoteFile());
-      archiveFiles.insert(jobItor->getArchiveFile());
+    for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
+      rqstItor++) {
+      remoteFiles.insert(rqstItor->getRemoteFile());
+      archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
@@ -1745,10 +1745,10 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
-    for(auto jobItor = poolRqsts.cbegin();
-      jobItor != poolRqsts.cend(); jobItor++) {
-      remoteFiles.insert(jobItor->getRemoteFile());
-      archiveFiles.insert(jobItor->getArchiveFile());
+    for(auto rqstItor = poolRqsts.cbegin();
+      rqstItor != poolRqsts.cend(); rqstItor++) {
+      remoteFiles.insert(rqstItor->getRemoteFile());
+      archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
@@ -1834,10 +1834,10 @@ TEST_P(SchedulerTest, delete_archive_request) {
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
-    for(auto jobItor = poolRqsts.cbegin();
-      jobItor != poolRqsts.cend(); jobItor++) {
-      remoteFiles.insert(jobItor->getRemoteFile());
-      archiveFiles.insert(jobItor->getArchiveFile());
+    for(auto rqstItor = poolRqsts.cbegin();
+      rqstItor != poolRqsts.cend(); rqstItor++) {
+      remoteFiles.insert(rqstItor->getRemoteFile());
+      archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
@@ -1852,10 +1852,10 @@ TEST_P(SchedulerTest, delete_archive_request) {
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
-    for(auto jobItor = poolRqsts.cbegin(); jobItor != poolRqsts.cend();
-      jobItor++) {
-      remoteFiles.insert(jobItor->getRemoteFile());
-      archiveFiles.insert(jobItor->getArchiveFile());
+    for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
+      rqstItor++) {
+      remoteFiles.insert(rqstItor->getRemoteFile());
+      archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
@@ -2066,10 +2066,10 @@ TEST_P(SchedulerTest, archive_to_directory) {
     ASSERT_EQ(4, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
-    for(auto jobItor = poolRqsts.cbegin();
-      jobItor != poolRqsts.cend(); jobItor++) {
-      remoteFiles.insert(jobItor->getRemoteFile());
-      archiveFiles.insert(jobItor->getArchiveFile());
+    for(auto rqstItor = poolRqsts.cbegin();
+      rqstItor != poolRqsts.cend(); rqstItor++) {
+      remoteFiles.insert(rqstItor->getRemoteFile());
+      archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(4, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find("remoteFile1") == remoteFiles.end());
@@ -2089,10 +2089,10 @@ TEST_P(SchedulerTest, archive_to_directory) {
     ASSERT_EQ(4, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
-    for(auto jobItor = poolRqsts.cbegin(); jobItor != poolRqsts.cend();
-      jobItor++) {
-      remoteFiles.insert(jobItor->getRemoteFile());
-      archiveFiles.insert(jobItor->getArchiveFile());
+    for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
+      rqstItor++) {
+      remoteFiles.insert(rqstItor->getRemoteFile());
+      archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(4, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find("remoteFile1") == remoteFiles.end());
@@ -2232,11 +2232,12 @@ TEST_P(SchedulerTest, archive_to_directory_with_incomplete_routing) {
   ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile), std::exception);
 }
 
-/*
 TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
+
+  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
 
   const std::string storageClassName = "TestStorageClass";
   const uint16_t nbCopies = 1;
@@ -2246,8 +2247,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
 
   const std::string dirPath = "/grandparent";
   const uint16_t mode = 0777;
-  ASSERT_NO_THROW(scheduler.createDir(s_adminOnAdminHost, dirPath, mode));
-  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, dirPath,
+  ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_userOnUserHost, dirPath,
     storageClassName));
 
   const std::string tapePoolName = "TestTapePool";
@@ -2255,6 +2256,28 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   const std::string tapePoolComment = "Tape-pool comment";
   ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, tapePoolComment));
+
+  const std::string libraryName = "TestLogicalLibrary";
+  const std::string libraryComment = "Library comment";
+  ASSERT_NO_THROW(scheduler.createLogicalLibrary(s_adminOnAdminHost, libraryName,
+    libraryComment));
+  {
+    std::list<LogicalLibrary> libraries;
+    ASSERT_NO_THROW(libraries = scheduler.getLogicalLibraries(
+      s_adminOnAdminHost));
+    ASSERT_EQ(1, libraries.size());
+  
+    LogicalLibrary logicalLibrary;
+    ASSERT_NO_THROW(logicalLibrary = libraries.front());
+    ASSERT_EQ(libraryName, logicalLibrary.getName());
+    ASSERT_EQ(libraryComment, logicalLibrary.getCreationLog().comment);
+  }
+
+  const std::string vid = "TestVid";
+  const uint64_t capacityInBytes = 12345678;
+  const std::string tapeComment = "Tape comment";
+  ASSERT_NO_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName, tapePoolName,
+    capacityInBytes, tapeComment));
 
   const uint16_t copyNb = 1;
   const std::string archivalRouteComment = "Archival-route comment";
@@ -2268,7 +2291,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
 
   {
     DirIterator itor;
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost, "/"));
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
     ASSERT_TRUE(itor.hasMore());
     DirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
@@ -2279,7 +2302,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
 
   {
     DirIterator itor;
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_adminOnAdminHost,
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost,
       "/grandparent"));
     ASSERT_TRUE(itor.hasMore());
     DirEntry entry;
@@ -2290,15 +2313,14 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   }
 
   {
-    DirEntry entry;
-    ASSERT_NO_THROW(entry = scheduler.statFile(s_adminOnAdminHost,
+    FileStatus status;
+    ASSERT_NO_THROW(status = scheduler.statFile(s_adminOnAdminHost,
       archiveFile));
-    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
+    ASSERT_EQ(storageClassName, status.getStorageClassName());
   }
 
   {
-    const auto rqsts = scheduler.getArchiveRequests(s_adminOnAdminHost);
+    const auto rqsts = scheduler.getArchiveRequests(s_userOnUserHost);
     ASSERT_EQ(1, rqsts.size());
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());
@@ -2308,10 +2330,10 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
-    for(auto jobItor = poolRqsts.cbegin();
-      jobItor != poolRqsts.cend(); jobItor++) {
-      remoteFiles.insert(jobItor->getRemoteFile());
-      archiveFiles.insert(jobItor->getArchiveFile());
+    for(auto rqstItor = poolRqsts.cbegin();
+      rqstItor != poolRqsts.cend(); rqstItor++) {
+      remoteFiles.insert(rqstItor->getRemoteFile());
+      archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
@@ -2321,15 +2343,15 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   }
 
   {
-    const auto poolRqsts = scheduler.getArchiveRequests(s_adminOnAdminHost,
+    const auto poolRqsts = scheduler.getArchiveRequests(s_userOnUserHost,
       tapePoolName);
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
-    for(auto jobItor = poolRqsts.cbegin(); jobItor != poolRqsts.cend();
-      jobItor++) {
-      remoteFiles.insert(jobItor->getRemoteFile());
-      archiveFiles.insert(jobItor->getArchiveFile());
+    for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
+      rqstItor++) {
+      remoteFiles.insert(rqstItor->getRemoteFile());
+      archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
@@ -2340,11 +2362,54 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   {
     std::list<std::string> archiveFiles;
     archiveFiles.push_back("/grandparent/parent_file");
-    ASSERT_NO_THROW(scheduler.queueRetrieveRequest(s_adminOnAdminHost,
+    ASSERT_NO_THROW(scheduler.queueRetrieveRequest(s_userOnUserHost,
       archiveFiles, "remoteFile"));
   }
+
+  {
+    const auto rqsts = scheduler.getRetrieveRequests(s_userOnUserHost);
+    ASSERT_EQ(1, rqsts.size());
+    auto tapeItor = rqsts.cbegin();
+    ASSERT_FALSE(tapeItor == rqsts.cend());
+    const Tape &tape = tapeItor->first;
+    ASSERT_TRUE(vid == tape.getVid());
+    auto tapeRqsts = tapeItor->second;
+    ASSERT_EQ(1, tapeRqsts.size());
+    std::set<std::string> remoteFiles;
+    std::set<std::string> archiveFiles;
+    for(auto rqstItor = tapeRqsts.cbegin(); rqstItor != tapeRqsts.cend();
+      tapeItor++) {
+      remoteFiles.insert(rqstItor->getRemoteFile());
+      archiveFiles.insert(rqstItor->getArchiveFile());
+    }
+    ASSERT_EQ(1, remoteFiles.size());
+    ASSERT_FALSE(remoteFiles.find("remoteFile") == remoteFiles.end());
+    ASSERT_EQ(1, archiveFiles.size());
+    ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") ==
+      archiveFiles.end());
+  }
 }
-*/
+
+TEST_P(SchedulerTest, retrieve_non_existing_file) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
+
+  {
+    DirIterator itor;
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
+    ASSERT_FALSE(itor.hasMore());
+  }
+
+  {
+    std::list<std::string> archiveFiles;
+    archiveFiles.push_back("/non_existing_file");
+    ASSERT_THROW(scheduler.queueRetrieveRequest(s_userOnUserHost,
+      archiveFiles, "remoteFile"), std::exception);
+  }
+}
 
 TEST_P(SchedulerTest, getOwner_no_owner_root) {
   using namespace cta;

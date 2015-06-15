@@ -1,12 +1,13 @@
 cmake_minimum_required (VERSION 2.6)
 
 set (COMMON_LIB_SRC_FILES
+  ArchiveFileStatus.cpp
   DirEntry.cpp
   DirIterator.cpp
   exception/Backtrace.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
-  FileStatus.cpp
+  RemotePath.cpp
   SmartFd.cpp
   strerror_r_wrapper.cpp
   Timer.cpp
@@ -25,6 +26,7 @@ target_link_libraries (ctacommon
   uuid)
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
+  RemotePathTest.cpp
   SmartFdTest.cpp
   UtilsTest.cpp)
 

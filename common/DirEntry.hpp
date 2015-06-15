@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/FileStatus.hpp"
+#include "common/ArchiveFileStatus.hpp"
 
 #include <string>
 

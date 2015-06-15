@@ -15,40 +15,53 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "Timer.hpp"
+
+#include "common/ArchiveFileStatus.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::utils::Timer::Timer() {
-  reset();
+cta::FileStatus::FileStatus():
+  m_mode(0) {
 }
 
 //------------------------------------------------------------------------------
-// usecs
+// constructor
 //------------------------------------------------------------------------------
-int64_t cta::utils::Timer::usecs(reset_t reset) {
-  timeval now;
-  gettimeofday(&now, 0);
-  int64_t ret = ((now.tv_sec * 1000000) + now.tv_usec) - 
-                 ((m_reference.tv_sec * 1000000) + m_reference.tv_usec);
-  if (reset == resetCounter) {
-    m_reference = now;
-  }
-  return ret;
+cta::FileStatus::FileStatus(
+  const UserIdentity &owner,
+  const mode_t mode,
+  const std::string &storageClassName):
+  m_owner(owner),
+  m_mode(mode),
+  m_storageClassName(storageClassName) {
 }
 
 //------------------------------------------------------------------------------
-// secs
+// getOwner
 //------------------------------------------------------------------------------
-double cta::utils::Timer::secs(reset_t reset) {
-  return usecs(reset) * 0.000001;
+const cta::UserIdentity &cta::FileStatus::getOwner() const throw() {
+  return m_owner;
 }
 
 //------------------------------------------------------------------------------
-// reset
+// getMode
 //------------------------------------------------------------------------------
-void cta::utils::Timer::reset() {
-  gettimeofday(&m_reference, 0);
+mode_t cta::FileStatus::getMode() const throw() {
+  return m_mode;
 }
 
+//------------------------------------------------------------------------------
+// setStorageClassName
+//------------------------------------------------------------------------------
+void cta::FileStatus::setStorageClassName(
+  const std::string &storageClassName) {
+  m_storageClassName = storageClassName;
+}
+  
+//------------------------------------------------------------------------------
+// getStorageClassName
+//------------------------------------------------------------------------------
+const std::string &cta::FileStatus::getStorageClassName() const throw() {
+  return m_storageClassName;
+}

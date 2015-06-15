@@ -18,12 +18,13 @@
 
 #pragma once
 
-#include <string>
+#include "common/RemotePath.hpp"
 
 namespace cta {
 
 /**
- * An Abstract proxy class specifying the interface to a remote storage system.
+ * An abstract proxy class specifying the interface to the name space of a
+ * remote storage system.
  */
 class RemoteNS {
 public:
@@ -39,7 +40,7 @@ public:
    * @param path The absolute path of the file.
    * @return True if the specified directory exists.
    */
-  virtual bool regularFileExists(const std::string &path) const = 0;
+  virtual bool regularFileExists(const RemotePath &path) const = 0;
 
   /**
    * Returns true if the specified directory exists.
@@ -47,16 +48,16 @@ public:
    * @param path The absolute path of the file.
    * @return True if the specified directory exists.
    */
-  virtual bool dirExists(const std::string &path) const = 0;
+  virtual bool dirExists(const RemotePath &path) const = 0;
 
   /**
    * Renames the specified remote file to the specified new name.
    *
-   * @param remoteFile The current URL of the remote file.
-   * @param newRemoteFile The new URL of the remote file.
+   * @param remoteFile The current path.
+   * @param newRemoteFile The new path.
    */
-  virtual void rename(const std::string &remoteFile,
-    const std::string &newRemoteFile) = 0;
+  virtual void rename(const RemotePath &remoteFile,
+    const RemotePath &newRemoteFile) = 0;
 
 }; // class RemoteNS
 
