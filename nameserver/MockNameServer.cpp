@@ -33,7 +33,6 @@
 #include "common/SmartFd.hpp"
 #include "common/Utils.hpp"
 #include "nameserver/MockNameServer.hpp"
-using cta::exception::Exception;
 
 //------------------------------------------------------------------------------
 // assertFsDirExists
@@ -42,17 +41,17 @@ void cta::MockNameServer::assertFsDirExists(const std::string &path) const {
   struct stat stat_result;
 
   if(::stat(path.c_str(), &stat_result)) {
-    char buf[256];
-    std::ostringstream message;
-    message << "assertFsDirExists() - " << path << " stat error. Reason: "
-      << strerror_r(errno, buf, sizeof(buf));
-    throw(Exception(message.str()));
+    const int savedErrno = errno;
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - " << path << " stat error. Reason: " <<
+      Utils::errnoToString(savedErrno);
+    throw(exception::Exception(msg.str()));
   }
 
   if(!S_ISDIR(stat_result.st_mode)) {
-    std::ostringstream message;
-    message << "assertFsDirExists() - " << path << " is not a directory";
-    throw(Exception(message.str()));
+    std::ostringstream msg;
+    msg << "assertFsDirExists() - " << path << " is not a directory";
+    throw(exception::Exception(msg.str()));
   }
 }
 
@@ -64,9 +63,9 @@ void cta::MockNameServer::assertFsPathDoesNotExist(const std::string &path)
   struct stat stat_result;
 
   if(::stat(path.c_str(), &stat_result) == 0) {
-    std::ostringstream message;
-    message << "assertFsPathExist() - " << path << " exists.";
-    throw(Exception(message.str()));
+    std::ostringstream msg;
+    msg << "assertFsPathExist() - " << path << " exists.";
+    throw(exception::Exception(msg.str()));
   }
 }
 
@@ -119,10 +118,10 @@ void cta::MockNameServer::assertStorageClassIsNotInUse(
   const std::string &path) const {
 
   if(getDirStorageClass(requester, path) == storageClass) {
-    std::ostringstream message;
-    message << "assertStorageClassIsNotInUse() - " << path << " has the " <<
+    std::ostringstream msg;
+    msg << "assertStorageClassIsNotInUse() - " << path << " has the " <<
       storageClass << " storage class.";
-    throw(Exception(message.str()));
+    throw(exception::Exception(msg.str()));
   }
 
   const std::string fsPath = m_fsDir + path;
@@ -130,11 +129,11 @@ void cta::MockNameServer::assertStorageClassIsNotInUse(
   struct dirent *entry;
   DIR *const dp = opendir(fsPath.c_str());
   if (dp == NULL) {
-    char buf[256];
-    std::ostringstream message;
-    message << "assertStorageClassIsNotInUse() - opendir " << fsPath <<
-      " error. Reason: \n" << strerror_r(errno, buf, sizeof(buf));
-    throw(Exception(message.str()));
+    const int savedErrno = errno;
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - opendir " << fsPath << " error."
+      " Reason: \n" << Utils::errnoToString(savedErrno);
+    throw(exception::Exception(msg.str()));
   }
  
   const bool pathEndsWithASlash = path.at(path.length()-1) == '/';
@@ -161,13 +160,20 @@ void cta::MockNameServer::assertStorageClassIsNotInUse(
 cta::MockNameServer::MockNameServer() {  
   char path[100];
   strncpy(path, "/tmp/CTATmpFsXXXXXX", 100);
-  cta::exception::Errnum::throwOnNull(
+  exception::Errnum::throwOnNull(
     mkdtemp(path),
     "MockNameServer() - Failed to create temporary directory");
   m_fsDir = path;
-  cta::exception::Errnum::throwOnNonZero(
+  exception::Errnum::throwOnNonZero(
     setxattr(m_fsDir.c_str(), "user.CTAStorageClass", "", 0, 0),
-    std::string("MockNameServer() - Failed to setxattr error for ")+m_fsDir);
+    std::string(__FUNCTION__) + " - Failed to setxattr user.CTAStorageClass on "
+      + m_fsDir);
+  exception::Errnum::throwOnNonZero(
+    setxattr(m_fsDir.c_str(), "user.uid", "", 0, 0),
+    std::string(__FUNCTION__) + " - Failed to setxattr user.uid on " + m_fsDir);
+  exception::Errnum::throwOnNonZero(
+    setxattr(m_fsDir.c_str(), "user.gid", "", 0, 0),
+    std::string(__FUNCTION__) + " - Failed to setxattr user.gid on " + m_fsDir);
 }
 
 //------------------------------------------------------------------------------
@@ -188,10 +194,11 @@ void cta::MockNameServer::setDirStorageClass(const SecurityIdentity &requester, 
   assertFsDirExists(fsPath);
   
   if(setxattr(fsPath.c_str(), "user.CTAStorageClass", storageClassName.c_str(), storageClassName.length(), 0)) {
-    char buf[256];
-    std::ostringstream message;
-    message << "setDirStorageClass() - " << fsPath << " setxattr error. Reason: " << strerror_r(errno, buf, sizeof(buf));
-    throw(Exception(message.str()));
+    const int savedErrno = errno;
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - " << fsPath << " setxattr error. Reason: " <<
+      Utils::errnoToString(savedErrno);
+    throw(exception::Exception(msg.str()));
   }
 }  
 
@@ -206,10 +213,11 @@ void cta::MockNameServer::clearDirStorageClass(
   assertFsDirExists(fsPath);
   
   if(setxattr(fsPath.c_str(), "user.CTAStorageClass", "", 0, 0)) {
-    char buf[256];
-    std::ostringstream message;
-    message << "clearDirStorageClass() - " << fsPath << " setxattr error. Reason: " << strerror_r(errno, buf, sizeof(buf));
-    throw(Exception(message.str()));
+    const int savedErrno = errno;
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - " << fsPath << " setxattr error. Reason: " <<
+      Utils::errnoToString(savedErrno);
+    throw(exception::Exception(msg.str()));
   }
 }  
 
@@ -227,9 +235,9 @@ std::string cta::MockNameServer::getDirStorageClass(
   bzero(value, sizeof(value));
   if(0 > getxattr(fsPath.c_str(), "user.CTAStorageClass", value, sizeof(value))) {
     char buf[256];
-    std::ostringstream message;
-    message << "getDirStorageClass() - " << fsPath << " getxattr error. Reason: " << strerror_r(errno, buf, sizeof(buf));
-    throw(Exception(message.str()));
+    std::ostringstream msg;
+    msg << "getDirStorageClass() - " << fsPath << " getxattr error. Reason: " << strerror_r(errno, buf, sizeof(buf));
+    throw(exception::Exception(msg.str()));
   }
   return std::string(value);
 }  
@@ -242,26 +250,94 @@ void cta::MockNameServer::createFile(
   const std::string &path,
   const uint16_t mode) {
   Utils::assertAbsolutePathSyntax(path);  
-  assertFsDirExists(m_fsDir + Utils::getEnclosingPath(path));
+  const std::string dir = Utils::getEnclosingPath(path);
+  assertFsDirExists(m_fsDir + dir);
+  assertIsOwner(requester, requester.getUser(), dir);
+
   const std::string fsPath = m_fsDir + path;
   assertFsPathDoesNotExist(fsPath);
 
   SmartFd fd(open(fsPath.c_str(), O_WRONLY|O_CREAT|O_NOCTTY|O_NONBLOCK, mode));
   if(0 > fd.get()) {
-    char buf[256];
-    std::ostringstream message;
-    message << "createFile() - " << fsPath << " open error. Reason: " << strerror_r(errno, buf, sizeof(buf));
-    throw(Exception(message.str()));
+    const int savedErrno = errno;
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - " << fsPath << " open error. Reason: " <<
+      Utils::errnoToString(savedErrno);
+    throw(exception::Exception(msg.str()));
   }
   fd.reset();
 
+  setOwner(requester, path, requester.getUser());
+
   if(utimensat(AT_FDCWD, fsPath.c_str(), NULL, 0)) {
-    char buf[256];
-    std::ostringstream message;
-    message << "createFile() - " << fsPath << " utimensat error. Reason: " << strerror_r(errno, buf, sizeof(buf));
-    throw(Exception(message.str()));
+    const int savedErrno = errno;
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - " << fsPath << " utimensat error. Reason: "
+      << Utils::errnoToString(savedErrno);
+    throw(exception::Exception(msg.str()));
   }
-}  
+}
+
+//------------------------------------------------------------------------------
+// assertIsOwner
+//------------------------------------------------------------------------------
+void cta::MockNameServer::assertIsOwner(
+  const SecurityIdentity &requester,
+  const UserIdentity &user,
+  const std::string &path) const {
+  Utils::assertAbsolutePathSyntax(path);
+  const UserIdentity owner = getOwner(requester, path);
+
+  if(user != owner) {
+    std::ostringstream msg;
+    msg << "User uid=" << user.uid << " gid=" << user.gid <<
+      " is not the owner of " << path;
+    throw exception::Exception(msg.str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// setOwner
+//------------------------------------------------------------------------------
+void cta::MockNameServer::setOwner(
+  const SecurityIdentity &requester,
+  const std::string &path,
+  const UserIdentity &owner) {
+  Utils::assertAbsolutePathSyntax(path);
+  const std::string uidStr = Utils::toString(owner.uid);
+  const std::string gidStr = Utils::toString(owner.gid);
+  const std::string fsPath = m_fsDir + path;
+
+  exception::Errnum::throwOnNonZero(
+    setxattr(fsPath.c_str(), "user.uid", uidStr.c_str(), uidStr.length(), 0),
+    std::string(__FUNCTION__) + " - Failed to setxattr user.uid on " + fsPath);
+  exception::Errnum::throwOnNonZero(
+    setxattr(fsPath.c_str(), "user.gid", gidStr.c_str(), gidStr.length(), 0),
+    std::string(__FUNCTION__) + " - Failed to setxattr user.gid on " + fsPath);
+}
+
+//------------------------------------------------------------------------------
+// getOwner
+//------------------------------------------------------------------------------
+cta::UserIdentity cta::MockNameServer::getOwner(
+  const SecurityIdentity &requester,
+  const std::string &path) const {
+  Utils::assertAbsolutePathSyntax(path);
+  const std::string fsPath = m_fsDir + path;
+  const std::string uidStr = Utils::getXattr(fsPath, "user.uid");
+  const std::string gidStr = Utils::getXattr(fsPath, "user.gid");
+
+  if(uidStr.empty() || gidStr.empty()) {
+    std::ostringstream msg;
+    msg << path << " has no owner";
+    throw exception::Exception(msg.str());
+  }
+
+  const uint16_t uid = Utils::toUint16(uidStr);
+  const uint16_t gid = Utils::toUint16(gidStr);
+
+  return UserIdentity(uid, gid);
+}
 
 //------------------------------------------------------------------------------
 // createDir
@@ -271,19 +347,30 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
   Utils::assertAbsolutePathSyntax(path);  
   const std::string enclosingPath = Utils::getEnclosingPath(path);
   assertFsDirExists(m_fsDir + enclosingPath);
+  assertIsOwner(requester, requester.getUser(), enclosingPath);
 
   const std::string inheritedStorageClass = getDirStorageClass(requester,
     enclosingPath);
   const std::string fsPath = m_fsDir + path;
   
   if(mkdir(fsPath.c_str(), mode)) {
-    char buf[256];
-    std::ostringstream message;
-    message << "createDir() - mkdir " << fsPath << " error. Reason: \n" << strerror_r(errno, buf, sizeof(buf));
-    throw(Exception(message.str()));
+    const int savedErrno = errno;
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - mkdir " << fsPath << " error. Reason: \n" <<
+      Utils::errnoToString(savedErrno);
+    throw(exception::Exception(msg.str()));
   }
   
   setDirStorageClass(requester, path, inheritedStorageClass);
+
+  const std::string uidStr = Utils::toString(requester.getUser().uid);
+  const std::string gidStr = Utils::toString(requester.getUser().gid);
+  exception::Errnum::throwOnNonZero(
+    setxattr(fsPath.c_str(), "user.uid", uidStr.c_str(), uidStr.length(), 0),
+    std::string(__FUNCTION__) + " - Failed to setxattr user.uid on " + fsPath);
+  exception::Errnum::throwOnNonZero(
+    setxattr(fsPath.c_str(), "user.gid", gidStr.c_str(), gidStr.length(), 0),
+    std::string(__FUNCTION__) + " - Failed to setxattr user.gid on " + fsPath);
 }  
 
 //------------------------------------------------------------------------------
@@ -294,11 +381,11 @@ void cta::MockNameServer::deleteFile(const SecurityIdentity &requester, const st
   const std::string fsPath = m_fsDir + path;
   
   if(unlink(fsPath.c_str())) {
-    char buf[256];
-    std::ostringstream message;
-    message << "deleteFile() - unlink " << fsPath << " error. Reason: \n" <<
-      strerror_r(errno, buf, sizeof(buf));
-    throw(Exception(message.str()));
+    const int savedErrno = errno;
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - unlink " << fsPath << " error. Reason: \n" <<
+      Utils::errnoToString(savedErrno);
+    throw(exception::Exception(msg.str()));
   }  
 }  
 
@@ -307,19 +394,19 @@ void cta::MockNameServer::deleteFile(const SecurityIdentity &requester, const st
 //------------------------------------------------------------------------------
 void cta::MockNameServer::deleteDir(const SecurityIdentity &requester, const std::string &path) {
   if(path == "/") {    
-    std::ostringstream message;
-    message << "deleteDir() - Cannot delete root directory";
-    throw(Exception(message.str()));
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - Cannot delete root directory";
+    throw(exception::Exception(msg.str()));
   }
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   
   if(rmdir(fsPath.c_str())) {
-    char buf[256];
-    std::ostringstream message;
-    message << "deleteDir() - rmdir " << fsPath << " error. Reason: \n" <<
-      strerror_r(errno, buf, sizeof(buf));
-    throw(Exception(message.str()));
+    const int savedErrno = errno;
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - rmdir " << fsPath << " error. Reason: \n" <<
+      Utils::errnoToString(savedErrno);
+    throw(exception::Exception(msg.str()));
   }  
 }  
 
@@ -336,11 +423,11 @@ cta::DirEntry cta::MockNameServer::statDirEntry(
 
   struct stat stat_result;
   if(::stat(fsPath.c_str(), &stat_result)) {
-    char buf[256];
-    std::ostringstream message;
-    message << "statDirEntry() - " << fsPath << " stat error. Reason: " <<
-      strerror_r(errno, buf, sizeof(buf));
-    throw(Exception(message.str()));
+    const int savedErrno = errno;
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - " << fsPath << " stat error. Reason: " <<
+      Utils::errnoToString(savedErrno);
+    throw(exception::Exception(msg.str()));
   }
 
   DirEntry::EntryType entryType;
@@ -355,10 +442,10 @@ cta::DirEntry cta::MockNameServer::statDirEntry(
     storageClassName = getDirStorageClass(requester, enclosingPath);
   }
   else {
-    std::ostringstream message;
-    message << "statDirEntry() - " << m_fsDir+path <<
+    std::ostringstream msg;
+    msg << "statDirEntry() - " << m_fsDir+path <<
       " is not a directory nor a regular file";
-    throw(Exception(message.str()));
+    throw(exception::Exception(msg.str()));
   } 
   
   return DirEntry(entryType, name, storageClassName);
@@ -374,11 +461,11 @@ std::list<cta::DirEntry> cta::MockNameServer::getDirEntries(
   DIR *const dp = opendir(fsPath.c_str());
 
   if(dp == NULL) {
-    char buf[256];
-    std::ostringstream message;
-    message << "getDirEntries() - opendir " << fsPath << " error. Reason: \n" <<
-      strerror_r(errno, buf, sizeof(buf));
-    throw(Exception(message.str()));
+    const int savedErrno = errno;
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - opendir " << fsPath << " error. Reason: \n"
+      << Utils::errnoToString(savedErrno);
+    throw(exception::Exception(msg.str()));
   }
   
   std::list<DirEntry> entries;

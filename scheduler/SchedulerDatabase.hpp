@@ -101,13 +101,41 @@ public:
     const std::string &archiveFile) = 0;
 
   /**
-   * Notifies the scheduler database that the specified file entry has been
-   * created in the archive namepace.
+   * Marks the specified archive request for deletion.  The request can only be
+   * fully deleted once the corresponding entry has been deleted from the
+   * archive namespace.
    *
+   * @param requester The identity of the requester.
+   * @param archiveFile The absolute path of the destination file within the
+   * archive namespace.
+   */
+  virtual void markArchiveRequestForDeletion(
+    const SecurityIdentity &requester,
+    const std::string &archiveFile) = 0;
+
+  /**
+   * Notifies the scheduler database that the specified file entry has been
+   * deleted from the archive namespace.
+   *
+   * @param requester The identity of the requester.
    * @param archiveFile The absolute path of the file within the archive
    * namespace.
    */
-  virtual void fileEntryCreatedInNS(const std::string &archiveFile) = 0;
+  virtual void fileEntryDeletedFromNS(
+    const SecurityIdentity &requester,
+    const std::string &archiveFile) = 0;
+
+  /**
+   * Notifies the scheduler database that the specified file entry has been
+   * created in the archive namepace.
+   *
+   * @param requester The identity of the requester.
+   * @param archiveFile The absolute path of the file within the archive
+   * namespace.
+   */
+  virtual void fileEntryCreatedInNS(
+    const SecurityIdentity &requester,
+    const std::string &archiveFile) = 0;
 
   /**
    * Queues the specified request.

@@ -7,7 +7,7 @@ set (COMMON_LIB_SRC_FILES
   exception/Backtrace.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
-  exception/strerror_r_wrapper.cpp
+  strerror_r_wrapper.cpp
   threading/ChildProcess.cpp
   threading/Mutex.cpp
   threading/Threading.cpp)

@@ -31,7 +31,34 @@ protected:
 
   virtual void TearDown() {
   }
-};
+
+  static const std::string s_adminHost;
+  static const std::string s_userHost;
+
+  static const cta::UserIdentity s_admin;
+  static const cta::UserIdentity s_user;
+
+  static const cta::SecurityIdentity s_systemOnSystemHost;
+
+  static const cta::SecurityIdentity s_adminOnAdminHost;
+  static const cta::SecurityIdentity s_adminOnUserHost;
+
+  static const cta::SecurityIdentity s_userOnAdminHost;
+  static const cta::SecurityIdentity s_userOnUserHost;
+
+}; // class cta_MockNameServerTest
+
+const std::string cta_MockNameServerTest::s_adminHost = "adminhost";
+const std::string cta_MockNameServerTest::s_userHost = "userhost";
+
+const cta::UserIdentity cta_MockNameServerTest::s_admin(2222, 2222);
+const cta::UserIdentity cta_MockNameServerTest::s_user(getuid(), getgid());
+
+const cta::SecurityIdentity cta_MockNameServerTest::s_adminOnAdminHost(cta_MockNameServerTest::s_admin, cta_MockNameServerTest::s_adminHost);
+const cta::SecurityIdentity cta_MockNameServerTest::s_adminOnUserHost(cta_MockNameServerTest::s_admin, cta_MockNameServerTest::s_userHost);
+
+const cta::SecurityIdentity cta_MockNameServerTest::s_userOnAdminHost(cta_MockNameServerTest::s_user, cta_MockNameServerTest::s_adminHost);
+const cta::SecurityIdentity cta_MockNameServerTest::s_userOnUserHost(cta_MockNameServerTest::s_user, cta_MockNameServerTest::s_userHost);
 
 TEST_F(cta_MockNameServerTest, constructor_consistency) {
   using namespace cta;
@@ -39,12 +66,12 @@ TEST_F(cta_MockNameServerTest, constructor_consistency) {
   std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
-  cta::SecurityIdentity requester;
   DirIterator itor;
   
-  ASSERT_NO_THROW(itor = ns->getDirContents(requester, "/"));
+  ASSERT_NO_THROW(ns->setOwner(s_adminOnAdminHost, "/", s_user));
+  ASSERT_NO_THROW(itor = ns->getDirContents(s_userOnUserHost, "/"));
   ASSERT_FALSE(itor.hasMore());
-  ASSERT_EQ(std::string(""), ns->getDirStorageClass(requester, "/"));
+  ASSERT_EQ(std::string(""), ns->getDirStorageClass(s_userOnUserHost, "/"));
 }
 
 TEST_F(cta_MockNameServerTest, mkdir_functionality) {
@@ -53,12 +80,12 @@ TEST_F(cta_MockNameServerTest, mkdir_functionality) {
   std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
-  cta::SecurityIdentity requester;
   DirIterator itor;
-  
-  ASSERT_NO_THROW(ns->createDir(requester, "/dir1", 0777));
-  ASSERT_THROW(ns->createDir(requester, "/dir1", 0777), std::exception);
-  ASSERT_NO_THROW(itor = ns->getDirContents(requester, "/"));
+
+  ASSERT_NO_THROW(ns->setOwner(s_adminOnAdminHost, "/", s_user));
+  ASSERT_NO_THROW(ns->createDir(s_userOnUserHost, "/dir1", 0777));
+  ASSERT_THROW(ns->createDir(s_userOnUserHost, "/dir1", 0777), std::exception);
+  ASSERT_NO_THROW(itor = ns->getDirContents(s_userOnUserHost, "/"));
   ASSERT_EQ(itor.hasMore(), true);
   ASSERT_EQ(itor.next().getName(), "dir1");
   ASSERT_EQ(itor.hasMore(), false);
@@ -70,12 +97,12 @@ TEST_F(cta_MockNameServerTest, createFile_functionality) {
   std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
-  cta::SecurityIdentity requester;
   DirIterator itor;
-  
-  ASSERT_NO_THROW(ns->createFile(requester, "/file1", 0666));
-  ASSERT_THROW(ns->createFile(requester, "/file1", 0666), std::exception);
-  ASSERT_NO_THROW(itor = ns->getDirContents(requester, "/"));
+
+  ASSERT_NO_THROW(ns->setOwner(s_adminOnAdminHost, "/", s_user));
+  ASSERT_NO_THROW(ns->createFile(s_userOnUserHost, "/file1", 0666));
+  ASSERT_THROW(ns->createFile(s_userOnUserHost, "/file1", 0666), std::exception);
+  ASSERT_NO_THROW(itor = ns->getDirContents(s_userOnUserHost, "/"));
   ASSERT_EQ(itor.hasMore(), true);
   ASSERT_EQ(itor.next().getName(), "file1");
   ASSERT_EQ(itor.hasMore(), false);
@@ -87,20 +114,20 @@ TEST_F(cta_MockNameServerTest, rmdir_functionality) {
   std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
-  cta::SecurityIdentity requester;
   DirIterator itor;
   
-  ASSERT_NO_THROW(ns->createDir(requester, "/dir1", 0777));
-  ASSERT_NO_THROW(ns->deleteDir(requester, "/dir1"));
-  ASSERT_THROW(ns->deleteDir(requester, "/dir1"), std::exception);
-  ASSERT_NO_THROW(ns->createDir(requester, "/dir2", 0777));
-  ASSERT_NO_THROW(ns->createFile(requester, "/dir2/file1", 0666));
-  ASSERT_THROW(ns->deleteDir(requester, "/dir2"), std::exception);
-  ASSERT_NO_THROW(ns->deleteFile(requester, "/dir2/file1"));
-  ASSERT_NO_THROW(ns->deleteDir(requester, "/dir2"));
-  ASSERT_NO_THROW(itor = ns->getDirContents(requester, "/"));
+  ASSERT_NO_THROW(ns->setOwner(s_adminOnAdminHost, "/", s_user));
+  ASSERT_NO_THROW(ns->createDir(s_userOnUserHost, "/dir1", 0777));
+  ASSERT_NO_THROW(ns->deleteDir(s_userOnUserHost, "/dir1"));
+  ASSERT_THROW(ns->deleteDir(s_userOnUserHost, "/dir1"), std::exception);
+  ASSERT_NO_THROW(ns->createDir(s_userOnUserHost, "/dir2", 0777));
+  ASSERT_NO_THROW(ns->createFile(s_userOnUserHost, "/dir2/file1", 0666));
+  ASSERT_THROW(ns->deleteDir(s_userOnUserHost, "/dir2"), std::exception);
+  ASSERT_NO_THROW(ns->deleteFile(s_userOnUserHost, "/dir2/file1"));
+  ASSERT_NO_THROW(ns->deleteDir(s_userOnUserHost, "/dir2"));
+  ASSERT_NO_THROW(itor = ns->getDirContents(s_userOnUserHost, "/"));
   ASSERT_FALSE(itor.hasMore());
-  ASSERT_EQ(std::string(""), ns->getDirStorageClass(requester, "/"));  
+  ASSERT_EQ(std::string(""), ns->getDirStorageClass(s_userOnUserHost, "/"));  
 }
 
 TEST_F(cta_MockNameServerTest, storageClass_functionality) {
@@ -109,27 +136,27 @@ TEST_F(cta_MockNameServerTest, storageClass_functionality) {
   std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
-  cta::SecurityIdentity requester;
   DirIterator itor;
   
-  ASSERT_NO_THROW(ns->createDir(requester, "/dir1", 0777));
-  ASSERT_EQ(std::string(""), ns->getDirStorageClass(requester, "/dir1"));
-  ASSERT_NO_THROW(ns->setDirStorageClass(requester, "/dir1", "cms"));
+  ASSERT_NO_THROW(ns->setOwner(s_adminOnAdminHost, "/", s_user));
+  ASSERT_NO_THROW(ns->createDir(s_userOnUserHost, "/dir1", 0777));
+  ASSERT_EQ(std::string(""), ns->getDirStorageClass(s_userOnUserHost, "/dir1"));
+  ASSERT_NO_THROW(ns->setDirStorageClass(s_userOnUserHost, "/dir1", "cms"));
   {
     std::string storageClass;
-    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(requester, "/dir1"));
+    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(s_userOnUserHost, "/dir1"));
     ASSERT_EQ(std::string("cms"), storageClass);
   }
-  ASSERT_NO_THROW(ns->clearDirStorageClass(requester, "/dir1"));
+  ASSERT_NO_THROW(ns->clearDirStorageClass(s_userOnUserHost, "/dir1"));
   {
     std::string storageClass;
-    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(requester, "/dir1"));
+    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(s_userOnUserHost, "/dir1"));
     ASSERT_EQ(std::string(""), storageClass);
   }
-  ASSERT_NO_THROW(ns->setDirStorageClass(requester, "/dir1", "atlas"));
+  ASSERT_NO_THROW(ns->setDirStorageClass(s_userOnUserHost, "/dir1", "atlas"));
   {
     std::string storageClass;
-    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(requester, "/dir1"));
+    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(s_userOnUserHost, "/dir1"));
     ASSERT_EQ(std::string("atlas"), storageClass);
   }
 }
@@ -140,36 +167,36 @@ TEST_F(cta_MockNameServerTest, storageClass_inheritance) {
   std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
-  cta::SecurityIdentity requester;
   DirIterator itor;
   
-  ASSERT_NO_THROW(ns->createDir(requester, "/dir1", 0777));
+  ASSERT_NO_THROW(ns->setOwner(s_adminOnAdminHost, "/", s_user));
+  ASSERT_NO_THROW(ns->createDir(s_userOnUserHost, "/dir1", 0777));
   {
     std::string storageClass;
-    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(requester, "/dir1"));
+    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(s_userOnUserHost, "/dir1"));
     ASSERT_EQ(std::string(""), storageClass);  
   }
-  ASSERT_NO_THROW(ns->createDir(requester, "/dir1/dir1_1", 0777));
+  ASSERT_NO_THROW(ns->createDir(s_userOnUserHost, "/dir1/dir1_1", 0777));
   {
     std::string storageClass;
-    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(requester, "/dir1/dir1_1"));
+    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(s_userOnUserHost, "/dir1/dir1_1"));
     ASSERT_EQ(std::string(""), storageClass);  
   }
-  ASSERT_NO_THROW(ns->setDirStorageClass(requester, "/dir1", "cms"));
+  ASSERT_NO_THROW(ns->setDirStorageClass(s_userOnUserHost, "/dir1", "cms"));
   {
     std::string storageClass;
-    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(requester, "/dir1"));
+    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(s_userOnUserHost, "/dir1"));
     ASSERT_EQ(std::string("cms"), storageClass);
   }
-  ASSERT_NO_THROW(ns->createDir(requester, "/dir1/dir1_2", 0777));
+  ASSERT_NO_THROW(ns->createDir(s_userOnUserHost, "/dir1/dir1_2", 0777));
   {
     std::string storageClass;
-    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(requester, "/dir1/dir1_2"));
+    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(s_userOnUserHost, "/dir1/dir1_2"));
     ASSERT_EQ(std::string("cms"), storageClass);
   }
   {
     std::string storageClass;
-    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(requester, "/dir1/dir1_1"));
+    ASSERT_NO_THROW(storageClass = ns->getDirStorageClass(s_userOnUserHost, "/dir1/dir1_1"));
     ASSERT_EQ(std::string(""), storageClass);
   }
 }

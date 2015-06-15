@@ -19,6 +19,7 @@
 #pragma once
 
 #include <list>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -110,6 +111,63 @@ public:
    * @return True if the specified string ends with the specified character.
    */
   static bool endsWith(const std::string &str, const char c);
+
+  /**
+   * Returns the string reprsentation of the specified value.
+   *
+   * @param value The value whose string representation is to be returned.
+   * @return The string reprsentation of the specified value.
+   */
+  template <typename T> static std::string toString(const T& value) {
+    std::ostringstream oss;
+    oss << value;
+    return oss.str();
+  }
+
+  /**
+   * C++ wrapper around the setxtarr() function.
+   *
+   * @param path The path to file to which the extended attribute belongs.
+   * @param name The name of the extended attribute.
+   * @param value The value of the extended attribute.
+   */
+  static void setXattr(const std::string &path, const std::string &name,
+    const std::string &value);
+
+  /**
+   * C++ wrapper around the getxattr() function.
+   *
+   * @param path The path to file to which the extended attribute belongs.
+   * @param name The name of the extended attribute.
+   * @return The value of the extended attribute.
+   */
+  static std::string getXattr(const std::string &path, const std::string &name);
+
+  /**
+   * Determines the string representation of the specified error number.
+   *
+   * Please note this method is thread safe.
+   *
+   * @param errnoValue The errno value.
+   * @return The string representation.
+   */
+  static std::string errnoToString(const int errnoValue) throw();
+
+  /**
+   * Converts the specified string to an unsigned integer.
+   *
+   * @param str The string.
+   * @return The unisgned integer.
+   */
+  static uint16_t toUint16(const std::string &str);
+
+  /**
+   * Checks if the specified string is a valid unsigned integer.
+   *
+   * @param str The string to be checked.
+   * @returns true if the string is a valid unsigned integer, else false.
+   */
+  static bool isValidUInt(const std::string &str) throw();
 
 }; // class Utils
 

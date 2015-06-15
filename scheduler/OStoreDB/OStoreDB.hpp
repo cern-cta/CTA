@@ -122,16 +122,17 @@ public:
 
   virtual void queue(const ArchiveToDirRequest& rqst);
 
-  virtual void deleteArchiveRequest(const SecurityIdentity& requester, 
-    const std::string& archiveFile);
+  virtual void deleteArchiveRequest(const SecurityIdentity& requester, const std::string& archiveFile);
 
-  virtual void fileEntryCreatedInNS(const std::string &archiveFile);
+  virtual void markArchiveRequestForDeletion(const SecurityIdentity &requester, const std::string &archiveFile);
 
-  virtual std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > 
-    getArchiveRequests() const;
+  virtual void fileEntryDeletedFromNS(const SecurityIdentity &requester, const std::string &archiveFile);
 
-  virtual std::list<ArchiveToTapeCopyRequest> 
-    getArchiveRequests(const std::string& tapePoolName) const;
+  virtual void fileEntryCreatedInNS(const SecurityIdentity &requester, const std::string &archiveFile);
+
+  virtual std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > getArchiveRequests() const;
+
+  virtual std::list<ArchiveToTapeCopyRequest> getArchiveRequests(const std::string& tapePoolName) const;
 
   /* === Retrieve requests handling  ======================================== */
   virtual void queue(const RetrieveToFileRequest& rqst_);

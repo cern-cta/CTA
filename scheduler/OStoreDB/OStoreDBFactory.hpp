@@ -122,6 +122,10 @@ public:
     m_OStoreDB.deleteArchiveRequest(requester, archiveFile);
   }
 
+  virtual void markArchiveRequestForDeletion(const SecurityIdentity &requester, const std::string &archiveFile) {
+    m_OStoreDB.markArchiveRequestForDeletion(requester, archiveFile);
+  }
+
   virtual void deleteLogicalLibrary(const SecurityIdentity& requester, const std::string& name) {
     m_OStoreDB.deleteLogicalLibrary(requester, name);
   }
@@ -142,8 +146,12 @@ public:
     m_OStoreDB.deleteTapePool(requester, name);
   }
 
-  virtual void fileEntryCreatedInNS(const std::string& archiveFile) {
-    m_OStoreDB.fileEntryCreatedInNS(archiveFile);
+  virtual void fileEntryCreatedInNS(const SecurityIdentity& requester, const std::string& archiveFile) {
+    m_OStoreDB.fileEntryCreatedInNS(requester, archiveFile);
+  }
+
+  virtual void fileEntryDeletedFromNS(const SecurityIdentity& requester, const std::string &archiveFile) {
+    m_OStoreDB.fileEntryDeletedFromNS(requester, archiveFile);
   }
 
   virtual std::list<AdminHost> getAdminHosts() const {

@@ -259,4 +259,80 @@ TEST_F(cta_UtilsTest, endsWith_slash_just_a_slash) {
   ASSERT_TRUE(Utils::endsWith(str, '/'));
 } 
 
+TEST_F(cta_UtilsTest, errnoToString_EACCESS) {
+  using namespace cta;
+
+  const std::string str = Utils::errnoToString(EACCES);
+  ASSERT_EQ(std::string("Permission denied"), str);
+}
+
+TEST_F(cta_UtilsTest, toUint16_uint16_t) {
+  using namespace cta;
+
+  uint16_t i = 0;
+
+  ASSERT_NO_THROW(i = Utils::toUint16("12345"));
+  ASSERT_EQ((uint16_t)12345, i);
+}
+
+TEST_F(cta_UtilsTest, toUint16_zero) {
+  using namespace cta;
+
+  uint16_t i = 0;
+
+  ASSERT_NO_THROW(i = Utils::toUint16("0"));
+  ASSERT_EQ((uint16_t)0, i);
+}
+
+TEST_F(cta_UtilsTest, toUint16_65535) {
+  using namespace cta;
+
+  uint16_t i = 0;
+
+  ASSERT_NO_THROW(i = Utils::toUint16("65535"));
+  ASSERT_EQ((uint16_t)65535, i);
+}
+
+TEST_F(cta_UtilsTest, toUint16_empty_string) {
+  using namespace cta;
+
+  ASSERT_THROW(Utils::toUint16(""), std::exception);
+}
+
+TEST_F(cta_UtilsTest, toUint16_negative) {
+  using namespace cta;
+
+  ASSERT_THROW(Utils::toUint16("-12345"), std::exception);
+}
+
+TEST_F(cta_UtilsTest, toUint16_too_big) {
+  using namespace cta;
+
+  ASSERT_THROW(Utils::toUint16("65536"), std::exception);
+}
+
+TEST_F(cta_UtilsTest, isValidUInt_unsigned_int) {
+  using namespace cta;
+
+  ASSERT_TRUE(Utils::isValidUInt("12345"));
+}
+
+TEST_F(cta_UtilsTest, isValidUInt_empty_string) {
+  using namespace cta;
+
+  ASSERT_FALSE(Utils::isValidUInt(""));
+}
+
+TEST_F(cta_UtilsTest, isValidUInt_signed_int) {
+  using namespace cta;
+
+  ASSERT_FALSE(Utils::isValidUInt("-12345"));
+}
+
+TEST_F(cta_UtilsTest, isValidUInt_not_a_number) {
+  using namespace cta;
+
+  ASSERT_FALSE(Utils::isValidUInt("one"));
+}
+
 } // namespace unitTests

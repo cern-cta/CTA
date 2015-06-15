@@ -41,7 +41,7 @@
  *****************************************************************************/
 
 #include "common/exception/Errnum.hpp"
-#include "common/exception/strerror_r_wrapper.h"
+#include "common/strerror_r_wrapper.hpp"
 #include <string.h>
 #include <errno.h>
 

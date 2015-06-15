@@ -231,7 +231,7 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToTapeCopyRequest &rqst) {
   std::ostringstream query;
   query << "INSERT INTO ARCHIVETOTAPECOPYREQUEST(STATE, REMOTEFILE,"
     " ARCHIVEFILE, TAPEPOOL, COPYNB, PRIORITY, UID, GID, CREATIONTIME) VALUES("
-    << "'PENDING_NS','" << rqst.getRemoteFile() << "','" <<
+    << "'PENDING_NS_CREATION','" << rqst.getRemoteFile() << "','" <<
     rqst.getArchiveFile() << "','" << rqst.getTapePoolName() << "'," <<
     rqst.getCopyNb() << "," << rqst.getPriority() << "," <<
     requester.getUser().uid << "," << requester.getUser().gid << ","
@@ -440,14 +440,49 @@ void cta::MockSchedulerDatabase::deleteArchiveRequest(
 }
 
 //------------------------------------------------------------------------------
+// markArchiveRequestForDeletion
+//------------------------------------------------------------------------------
+void cta::MockSchedulerDatabase::markArchiveRequestForDeletion(
+  const SecurityIdentity &requester,
+  const std::string &archiveFile) {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "UPDATE ARCHIVETOTAPECOPYREQUEST SET STATE='PENDING_NS_DELETION'"
+    " WHERE ARCHIVEFILE='" << archiveFile << "';";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(msg.str()));
+  }
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 >= nbRowsModified) {
+    std::ostringstream msg;
+    msg << "An archive requests for archive file " << archiveFile <<
+      " does not exist";
+    throw(exception::Exception(msg.str()));
+  }
+}
+
+//------------------------------------------------------------------------------
+// fileEntryDeletedFromNS
+//------------------------------------------------------------------------------
+void cta::MockSchedulerDatabase::fileEntryDeletedFromNS(
+  const SecurityIdentity &requester, const std::string &archiveFile) {
+  deleteArchiveRequest(requester, archiveFile);
+}
+
+//------------------------------------------------------------------------------
 // fileEntryCreatedInNS
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::fileEntryCreatedInNS(
+  const SecurityIdentity &requester,
   const std::string &archiveFile) {
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "UPDATE ARCHIVETOTAPECOPYREQUEST SET STATE='PENDING_MOUNT' WHERE"
-    " STATE='PENDING_NS' AND ARCHIVEFILE='" << archiveFile << "';";
+    " STATE='PENDING_NS_CREATION' AND ARCHIVEFILE='" << archiveFile << "';";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
     std::ostringstream msg;

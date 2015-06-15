@@ -17,9 +17,14 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/strerror_r_wrapper.hpp"
 #include "common/Utils.hpp"
 
+#include <attr/xattr.h>
+#include <memory>
 #include <sstream>
+#include <stdlib.h>
+#include <sys/types.h>
 #include <uuid/uuid.h>
 
 using cta::exception::Exception;
@@ -220,4 +225,143 @@ bool cta::Utils::endsWith(const std::string &str, const char c) {
   } else {
     return c == str.at(str.length() - 1);
   }
+}
+
+//------------------------------------------------------------------------------
+// setXattr
+//------------------------------------------------------------------------------
+void cta::Utils::setXattr(const std::string &path, const std::string &name,
+  const std::string &value) {
+  if(setxattr(path.c_str(), name.c_str(), value.c_str(), value.length(), 0)) {
+    const int savedErrno = errno;
+    std::ostringstream msg;
+    msg << "Call to setxattr() failed: path=" << path << " name=" << name <<
+      " value=" << value << ": " << Utils::errnoToString(savedErrno);
+    throw exception::Exception(msg.str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// getXattr
+//------------------------------------------------------------------------------
+std::string cta::Utils::getXattr(const std::string &path,
+  const std::string &name) {
+  const auto sizeOfValue = getxattr(path.c_str(), name.c_str(), NULL, 0);
+  if(0 > sizeOfValue) {
+    const int savedErrno = errno;
+    std::stringstream msg;
+    msg << "Call to getxattr() failed: path=" << path << " name=" << name <<
+      ": " << Utils::errnoToString(savedErrno);
+    throw exception::Exception(msg.str());
+  }
+
+  if(0 == sizeOfValue) {
+    return "";
+  }
+
+  std::unique_ptr<char[]> value(new char[sizeOfValue]);
+
+  if(0 > getxattr(path.c_str(), name.c_str(), (void *)value.get(),
+    sizeOfValue)) {
+    const int savedErrno = errno;
+    std::stringstream msg;      
+    msg << "Call to getxattr() failed: path=" << path << " name=" << name << 
+      ": " << Utils::errnoToString(savedErrno);
+    throw exception::Exception(msg.str());
+  }
+
+  return value.get();
+}
+
+//------------------------------------------------------------------------------
+// errnoToString
+//------------------------------------------------------------------------------
+std::string cta::Utils::errnoToString(const int errnoValue) throw() {
+  char buf[100];
+
+  if(!strerror_r_wrapper(errnoValue, buf, sizeof(buf))) {
+    return buf;
+  } else {
+    const int errnoSetByStrerror_r_wrapper = errno;
+    std::ostringstream oss;
+
+    switch(errnoSetByStrerror_r_wrapper) {
+    case EINVAL:
+      oss << "Failed to convert errnoValue to string: Invalid errnoValue"
+        ": errnoValue=" << errnoValue;
+      break;
+    case ERANGE:
+      oss << "Failed to convert errnoValue to string"
+        ": Destination buffer for error string is too small"
+        ": errnoValue=" << errnoValue;
+      break;
+    default:
+      oss << "Failed to convert errnoValue to string"
+        ": strerror_r_wrapper failed in an unknown way"
+        ": errnoValue=" << errnoValue;
+      break;
+    }
+
+    return oss.str();
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// toUint16
+//------------------------------------------------------------------------------
+uint16_t cta::Utils::toUint16(const std::string &str) {
+  if(str.empty()) {
+    std::ostringstream msg;
+    msg << "Failed to convert empty string to uint16_t: An empty string is not"
+      " a valid unsigned integer";
+    throw exception::Exception(msg.str());
+  }
+
+  errno = 0;
+  const long int value = strtol(str.c_str(), (char **) NULL, 10);
+  const int savedErrno = errno;
+  if(savedErrno) {
+    std::ostringstream msg;
+    msg << "Failed to convert \'" << str << "' to uint16_t: " <<
+      errnoToString(savedErrno);
+    throw exception::Exception(msg.str());
+  }
+
+  if(0 > value) {
+    std::ostringstream msg;
+    msg << "Failed to convert \'" << str << "' to uint16_t: Negative number";
+    throw exception::Exception(msg.str());
+  }
+
+  if(65535 < value) {
+    std::ostringstream msg;
+    msg << "Failed to convert \'" << str << "' to uint16_t: Number too big";
+    throw exception::Exception(msg.str());
+  } 
+
+  return value;
+}
+
+//------------------------------------------------------------------------------
+// isValidUInt
+//------------------------------------------------------------------------------
+bool cta::Utils::isValidUInt(const std::string &str)
+  throw() {
+  // An empty string is not a valid unsigned integer
+  if(str.empty()) {
+    return false;
+  }
+
+  // For each character in the string
+  for(std::string::const_iterator itor = str.begin(); itor != str.end();
+    itor++) {
+
+    // If the current character is not a valid numerical digit
+    if(*itor < '0' || *itor > '9') {
+      return false;
+    }
+  }
+
+  return true;
 }

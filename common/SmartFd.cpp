@@ -19,7 +19,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/SmartFd.hpp"
 
-#include <errno.h>
 #include <unistd.h>
 
 //-----------------------------------------------------------------------------

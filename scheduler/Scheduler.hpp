@@ -433,6 +433,29 @@ public:
     const SecurityIdentity &requester,
     const std::string &path,
     const uint16_t mode);
+  
+  /**
+   * Sets the owner of the specified file or directory entry.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the file or directory.
+   * @param owner The owner.
+   */
+  void setOwner(
+    const SecurityIdentity &requester,
+    const std::string &path,
+    const UserIdentity &owner);
+    
+  /**
+   * Returns the owner of the specified file or directory entry.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the file or directory.
+   * @return The owner of the specified file or directory entry.
+   */
+  virtual UserIdentity getOwner(
+    const SecurityIdentity &requester,
+    const std::string &path) const;
 
   /**
    * Deletes the specified directory.

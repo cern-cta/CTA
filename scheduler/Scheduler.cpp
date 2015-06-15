@@ -80,9 +80,9 @@ std::list<cta::ArchiveToTapeCopyRequest> cta::Scheduler::getArchiveRequests(
 void cta::Scheduler::deleteArchiveRequest(
   const SecurityIdentity &requester,
   const std::string &archiveFile) {
-  m_db.assertIsAdminOnAdminHost(requester);
-  m_db.deleteArchiveRequest(requester, archiveFile);
+  m_db.markArchiveRequestForDeletion(requester, archiveFile);
   m_ns.deleteFile(requester, archiveFile);
+  m_db.fileEntryDeletedFromNS(requester, archiveFile);
 }
 
 //------------------------------------------------------------------------------
@@ -362,6 +362,25 @@ void cta::Scheduler::createDir(
 }
 
 //------------------------------------------------------------------------------
+// setOwner
+//------------------------------------------------------------------------------
+void cta::Scheduler::setOwner(
+  const SecurityIdentity &requester,
+  const std::string &path,
+  const UserIdentity &owner) {
+  m_ns.setOwner(requester, path, owner);
+}
+
+//------------------------------------------------------------------------------
+// getOwner
+//------------------------------------------------------------------------------
+cta::UserIdentity cta::Scheduler::getOwner(
+  const SecurityIdentity &requester,
+  const std::string &path) const {
+  return m_ns.getOwner(requester, path);
+}
+
+//------------------------------------------------------------------------------
 // deleteDir
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteDir(
@@ -564,7 +583,7 @@ void cta::Scheduler::createNSEntryAndUpdateSchedulerDatabase(
     throw nsEx;
   }
 
-  m_db.fileEntryCreatedInNS(rqst.getArchiveFile());
+  m_db.fileEntryCreatedInNS(requester, rqst.getArchiveFile());
 }
 
 //------------------------------------------------------------------------------

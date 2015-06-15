@@ -236,6 +236,16 @@ void OStoreDB::deleteArchivalRoute(const SecurityIdentity& requester,
   re.commit();
 }
 
+void OStoreDB::fileEntryCreatedInNS(const SecurityIdentity& requester,
+  const std::string &archiveFile) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+} 
+
+void OStoreDB::fileEntryDeletedFromNS(const SecurityIdentity& requester,
+  const std::string &archiveFile) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
 void OStoreDB::createTapePool(const std::string& name,
   const uint32_t nbPartialTapes, const cta::CreationLog &creationLog) {
   RootEntry re(m_objectStore);
@@ -323,11 +333,12 @@ void OStoreDB::queue(const ArchiveToDirRequest& rqst) {
   throw exception::Exception("Not Implemented");
 }
 
-void OStoreDB::fileEntryCreatedInNS(const std::string &archiveFile) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
-} 
-
 void OStoreDB::deleteArchiveRequest(const SecurityIdentity& requester, 
+  const std::string& archiveFile) {
+  throw exception::Exception("Not Implemented");
+}
+
+void OStoreDB::markArchiveRequestForDeletion(const SecurityIdentity& requester,
   const std::string& archiveFile) {
   throw exception::Exception("Not Implemented");
 }

@@ -21,6 +21,7 @@
 #include "scheduler/DirIterator.hpp"
 #include "nameserver/NameServer.hpp"
 #include "scheduler/SecurityIdentity.hpp"
+#include "scheduler/UserIdentity.hpp"
 
 #include <list>
 #include <string>
@@ -52,6 +53,10 @@ public:
   std::string getDirStorageClass(const SecurityIdentity &requester, const std::string &path) const;
   
   void createFile(const SecurityIdentity &requester, const std::string &path, const uint16_t mode);
+
+  void setOwner(const SecurityIdentity &requester, const std::string &path, const UserIdentity &owner);
+
+  UserIdentity getOwner(const SecurityIdentity &requester, const std::string &path) const;
   
   void createDir(const SecurityIdentity &requester, const std::string &path, const uint16_t mode);
   
@@ -80,6 +85,15 @@ private:
   void assertFsPathDoesNotExist(const std::string &path) const;
   
   std::list<cta::DirEntry> getDirEntries(const SecurityIdentity &requester, const std::string &path) const;
+
+  /**
+   * Throws an exception if the specified user is not the owner of the
+   * specified namepsace entry.
+   *
+   * @param user The user.
+   * @param path The absolute path of the namespace entry.
+   */
+  void assertIsOwner(const SecurityIdentity &requester, const UserIdentity &user, const std::string &path) const;
   
 }; // class MockNameServer
 

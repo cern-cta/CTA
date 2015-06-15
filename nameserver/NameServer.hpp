@@ -156,6 +156,29 @@ public:
     const uint16_t mode) = 0;
 
   /**
+   * Sets the owner of the specified file or directory entry.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the file or directory.
+   * @param owner The owner.
+   */
+  virtual void setOwner(
+    const SecurityIdentity &requester,
+    const std::string &path,
+    const UserIdentity &owner) = 0;
+
+  /**
+   * Returns the owner of the specified file or directory entry.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the file or directory.
+   * @return The owner of the specified file or directory entry.
+   */
+  virtual UserIdentity getOwner(
+    const SecurityIdentity &requester,
+    const std::string &path) const = 0;
+
+  /**
    * Deletes the specified file entry.
    *
    * @param requester The identity of the requester.
