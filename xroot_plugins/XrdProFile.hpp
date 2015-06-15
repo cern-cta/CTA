@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "scheduler/Scheduler.hpp"
+
 #include "XrdSfs/XrdSfsInterface.hh"
 
 #include <string>
@@ -41,14 +43,28 @@ public:
   virtual int sync(XrdSfsAio *aiop);
   virtual int truncate(XrdSfsFileOffset fsize);
   virtual int getCXinfo(char cxtype[4], int &cxrsz);
-  XrdProFile(const char *user=0, int MonID=0);
+  XrdProFile(cta::Scheduler *scheduler, const char *user=0, int MonID=0);
   ~XrdProFile();
 protected:
+  
+  /**
+   * The scheduler object pointer
+   */
+  cta::Scheduler *m_scheduler;
   
   /**
    * This is the string holding the result of the command
    */
   std::string m_data;
+  
+  /**
+   * Checks whether client has correct permissions and fills the SecurityIdentity structure
+   * 
+   * @param req     parsed request
+   * @param requester The structure to be filled
+   * @return SFS_OK in case check is passed, SFS_ERROR otherwise
+   */
+  int checkClient(const XrdSecEntity *client, cta::SecurityIdentity &requester);
   
   /**
    * Replaces all occurrences in a string "str" of a substring "from" with the string "to"
@@ -64,7 +80,7 @@ protected:
    * 
    * @param tokens The command line tokens
    */
-  void commandDispatcher(const std::vector<std::string> &tokens);
+  void commandDispatcher(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Given the command line string vector it returns the value of the specified option or an empty string if absent
@@ -77,165 +93,165 @@ protected:
   std::string getOptionValue(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName);
   
   /**
-   * Executes the operator command
+   * Executes the admin command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_operator(const std::vector<std::string> &tokens);
+  void xCom_admin(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
-   * Executes the operatorhost command
+   * Executes the adminhost command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_operatorhost(const std::vector<std::string> &tokens);
+  void xCom_adminhost(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the user command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_user(const std::vector<std::string> &tokens);
+  void xCom_user(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the tapepool command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_tapepool(const std::vector<std::string> &tokens);
+  void xCom_tapepool(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the archiveroute command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_archiveroute(const std::vector<std::string> &tokens);
+  void xCom_archiveroute(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the logicallibrary command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_logicallibrary(const std::vector<std::string> &tokens);
+  void xCom_logicallibrary(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the tape command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_tape(const std::vector<std::string> &tokens);
+  void xCom_tape(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the storageclass command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_storageclass(const std::vector<std::string> &tokens);
+  void xCom_storageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the listongoingarchivals command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_listongoingarchivals(const std::vector<std::string> &tokens);
+  void xCom_listongoingarchivals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the listongoingretrievals command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_listongoingretrievals(const std::vector<std::string> &tokens);
+  void xCom_listongoingretrievals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the listpendingarchivals command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_listpendingarchivals(const std::vector<std::string> &tokens);
+  void xCom_listpendingarchivals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the listpendingretrievals command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_listpendingretrievals(const std::vector<std::string> &tokens);
+  void xCom_listpendingretrievals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the listdrivestates command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_listdrivestates(const std::vector<std::string> &tokens);
+  void xCom_listdrivestates(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the liststorageclass command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_liststorageclass(const std::vector<std::string> &tokens);
+  void xCom_liststorageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the setstorageclass command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_setstorageclass(const std::vector<std::string> &tokens);
+  void xCom_setstorageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the clearstorageclass command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_clearstorageclass(const std::vector<std::string> &tokens);
+  void xCom_clearstorageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the mkdir command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_mkdir(const std::vector<std::string> &tokens);
+  void xCom_mkdir(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the rmdir command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_rmdir(const std::vector<std::string> &tokens);
+  void xCom_rmdir(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the ls command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_ls(const std::vector<std::string> &tokens);
+  void xCom_ls(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the archive command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_archive(const std::vector<std::string> &tokens);
+  void xCom_archive(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the retrieve command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_retrieve(const std::vector<std::string> &tokens);
+  void xCom_retrieve(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the deletearchive command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_deletearchive(const std::vector<std::string> &tokens);
+  void xCom_deletearchive(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the cancelretrieval command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_cancelretrieval(const std::vector<std::string> &tokens);
+  void xCom_cancelretrieval(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Returns the help string

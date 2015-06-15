@@ -1468,7 +1468,7 @@ int XrdProFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
 //------------------------------------------------------------------------------
 XrdSfsFile * XrdProFilesystem::newFile(char *user, int MonID)
 {  
-  return new XrdProFile(user, MonID);
+  return new XrdProFile(m_scheduler, user, MonID);
 }
 
 //------------------------------------------------------------------------------
