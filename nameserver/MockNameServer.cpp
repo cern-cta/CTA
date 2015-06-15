@@ -30,6 +30,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/Errnum.hpp"
+#include "common/SmartFd.hpp"
 #include "common/Utils.hpp"
 #include "nameserver/MockNameServer.hpp"
 using cta::exception::Exception;
@@ -245,13 +246,15 @@ void cta::MockNameServer::createFile(
   const std::string fsPath = m_fsDir + path;
   assertFsPathDoesNotExist(fsPath);
 
-  const int fd = open(fsPath.c_str(), O_WRONLY|O_CREAT|O_NOCTTY|O_NONBLOCK, mode);
-  if(fd<0) {
+  SmartFd fd(open(fsPath.c_str(), O_WRONLY|O_CREAT|O_NOCTTY|O_NONBLOCK, mode));
+  if(0 > fd.get()) {
     char buf[256];
     std::ostringstream message;
     message << "createFile() - " << fsPath << " open error. Reason: " << strerror_r(errno, buf, sizeof(buf));
     throw(Exception(message.str()));
   }
+  fd.reset();
+
   if(utimensat(AT_FDCWD, fsPath.c_str(), NULL, 0)) {
     char buf[256];
     std::ostringstream message;

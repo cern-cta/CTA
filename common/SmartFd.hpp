@@ -81,7 +81,7 @@ public:
    *           specified, where a negative number means this SmartFd does not
    *           own a file descriptor.
    */
-  void reset(const int fd) throw();
+  void reset(const int fd = -1) throw();
 
   /**
    * SmartFd assignment operator.

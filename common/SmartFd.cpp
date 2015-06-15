@@ -47,7 +47,7 @@ void cta::SmartFd::setClosedCallback(ClosedCallback closedCallback)
 //-----------------------------------------------------------------------------
 // reset
 //-----------------------------------------------------------------------------
-void cta::SmartFd::reset(const int fd = -1) throw() {
+void cta::SmartFd::reset(const int fd) throw() {
   // If the new file descriptor is not the one already owned
   if(fd != m_fd) {
 
