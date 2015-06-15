@@ -46,7 +46,8 @@ namespace {
 template <class BackendType>
 class OStoreDBWrapper: public SchedulerDatabase {
 public:
-  OStoreDBWrapper(): m_backend(), m_OStoreDB(m_backend) {
+  OStoreDBWrapper(const std::string &context): m_backend(),
+      m_OStoreDB(m_backend) {
     // We need to populate the root entry before using.
     objectstore::RootEntry re(m_backend);
     re.initialize();
@@ -98,8 +99,8 @@ public:
     m_OStoreDB.createTape(requester, vid, logicalLibraryName, tapePoolName, capacityInBytes, comment);
   }
 
-  virtual void createTapePool(const SecurityIdentity& requester, const std::string& name, const uint32_t nbPartialTapes, const std::string& comment) {
-    m_OStoreDB.createTapePool(requester, name, nbPartialTapes, comment);
+  virtual void createTapePool(const std::string& name, const uint32_t nbPartialTapes, const CreationLog& creationLog) {
+    m_OStoreDB.createTapePool(name, nbPartialTapes, creationLog);
   }
 
   virtual void deleteAdminHost(const SecurityIdentity& requester, const std::string& hostName) {
@@ -241,7 +242,7 @@ public:
    * @return A newly created scheduler database object.
    */
   std::unique_ptr<SchedulerDatabase> create() const {
-    return std::unique_ptr<SchedulerDatabase>(new OStoreDBWrapper<BackendType>());
+    return std::unique_ptr<SchedulerDatabase>(new OStoreDBWrapper<BackendType>("UnitTest"));
   }
 }; // class OStoreDBFactory
 

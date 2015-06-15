@@ -994,16 +994,16 @@ cta::StorageClass cta::MockSchedulerDatabase::getStorageClass(
 // createTapePool
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::createTapePool(
-  const SecurityIdentity &requester,
   const std::string &name,
   const uint32_t nbPartialTapes,
-  const std::string &comment) {
+  const CreationLog& creationLog) {
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "INSERT INTO TAPEPOOL(NAME, NBPARTIALTAPES, UID, GID, CREATIONTIME,"
+  query << "INSERT INTO TAPEPOOL(NAME, NBPARTIALTAPES, UID, GID, HOST, CREATIONTIME,"
     " COMMENT) VALUES('" << name << "'," << (int)nbPartialTapes << "," <<
-    requester.getUser().uid << "," << requester.getUser().gid << "," <<
-    (int)time(NULL) << ",'" << comment << "');";
+    creationLog.user.uid << "," << creationLog.user.uid << "," <<
+    "'" << creationLog.host << "', " << 
+    (int)time(NULL) << ",'" << creationLog.comment << "');";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
     std::ostringstream msg;
@@ -1163,7 +1163,7 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes()
   const {
   std::ostringstream query;
   std::list<cta::ArchivalRoute> routes;
-  query << "SELECT STORAGECLASS_NAME, COPYNB, TAPEPOOL, UID, GID,"
+  query << "SELECT STORAGECLASS_NAME, COPYNB, TAPEPOOL, UID, GID, HOST,"
     " CREATIONTIME, COMMENT FROM ARCHIVALROUTE ORDER BY STORAGECLASS_NAME,"
     " COPYNB;";
   sqlite3_stmt *s = NULL;
@@ -1180,10 +1180,13 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes()
       (char *)sqlite3_column_text(statement.get(),idx("STORAGECLASS_NAME")),
       sqlite3_column_int(statement.get(),idx("COPYNB")),
       (char *)sqlite3_column_text(statement.get(),idx("TAPEPOOL")),
-      UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
-      sqlite3_column_int(statement.get(),idx("GID"))),
-      (char *)sqlite3_column_text(statement.get(),idx("COMMENT")),
-      time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME")))
+      CreationLog(
+        UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
+          sqlite3_column_int(statement.get(),idx("GID"))),
+        (char *)sqlite3_column_text(statement.get(),idx("HOST")),
+        time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME"))),
+        (char *)sqlite3_column_text(statement.get(),idx("COMMENT"))
+      )
     ));
   }
   return routes;
@@ -1216,7 +1219,7 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::
   getArchivalRoutesWithoutChecks(const std::string &storageClassName) const {
   std::ostringstream query;
   std::list<cta::ArchivalRoute> routes;
-  query << "SELECT STORAGECLASS_NAME, COPYNB, TAPEPOOL, UID, GID,"
+  query << "SELECT STORAGECLASS_NAME, COPYNB, TAPEPOOL, UID, GID, HOST,"
     " CREATIONTIME, COMMENT FROM ARCHIVALROUTE WHERE STORAGECLASS_NAME='" <<
     storageClassName << "' ORDER BY STORAGECLASS_NAME, COPYNB;";
   sqlite3_stmt *s = NULL;
@@ -1233,10 +1236,13 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::
       (char *)sqlite3_column_text(statement.get(),idx("STORAGECLASS_NAME")),
       sqlite3_column_int(statement.get(),idx("COPYNB")),
       (char *)sqlite3_column_text(statement.get(),idx("TAPEPOOL")),
-      UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
-      sqlite3_column_int(statement.get(),idx("GID"))),
-      (char *)sqlite3_column_text(statement.get(),idx("COMMENT")),
-      time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME")))
+      CreationLog(
+        UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
+          sqlite3_column_int(statement.get(),idx("GID"))),
+        (char *)sqlite3_column_text(statement.get(),idx("HOST")),
+        time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME"))),
+        (char *)sqlite3_column_text(statement.get(),idx("COMMENT"))
+      )
     ));
   }
   return routes;

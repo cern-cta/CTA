@@ -23,6 +23,7 @@
 #include "scheduler/StorageClass.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
+#include "scheduler/ArchivalRoute.hpp"
 #include <algorithm>
 
 namespace cta {
@@ -30,9 +31,21 @@ namespace cta {
 using namespace objectstore;
 
 OStoreDB::OStoreDB(objectstore::Backend& be):
-  m_objectStore(be) {}
+  m_objectStore(be), m_agent(NULL) {}
 
-OStoreDB::~OStoreDB() throw() { }
+
+OStoreDB::~OStoreDB() throw() {}
+
+void OStoreDB::setAgent(objectstore::Agent& agent) {
+  m_agent = & agent;
+  }
+
+void OStoreDB::assertAgentSet() {
+  if (!m_agent)
+    throw AgentNotSet("In OStoreDB::assertAgentSet: Agent pointer not set");
+}
+
+
 
 void OStoreDB::createAdminHost(const SecurityIdentity& requester,
     const std::string& hostName, const std::string& comment) {
@@ -183,26 +196,56 @@ void OStoreDB::createArchivalRoute(const std::string& storageClassName,
 
 std::list<ArchivalRoute> 
   OStoreDB::getArchivalRoutes(const std::string& storageClassName) const {
-  throw exception::Exception("Not Implemented");
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  auto scd = re.dumpStorageClass(storageClassName);
+  rel.release();
+  std::list<ArchivalRoute> ret;
+  for (auto r=scd.routes.begin(); r!=scd.routes.end(); r++) {
+    ret.push_back(ArchivalRoute(storageClassName, 
+      r->copyNumber, r->tapePool, r->log));
+  }
+  return ret;
 }
 
 std::list<ArchivalRoute> OStoreDB::getArchivalRoutes() const {
-  throw exception::Exception("Not Implemented");
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  auto scd = re.dumpStorageClasses();
+  rel.release();
+  std::list<ArchivalRoute> ret;
+  for (auto sc=scd.begin(); sc!=scd.end(); sc++) {
+    for (auto r=sc->routes.begin(); r!=sc->routes.end(); r++) {
+      ret.push_back(ArchivalRoute(sc->storageClass, 
+        r->copyNumber, r->tapePool, r->log));
+    }
+  }
+  return ret;
 }
 
 void OStoreDB::deleteArchivalRoute(const SecurityIdentity& requester, 
   const std::string& storageClassName, const uint16_t copyNb) {
-  throw exception::Exception("Not Implemented");
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  re.removeArchivalRoute(storageClassName, copyNb);
+  re.commit();
 }
 
 void OStoreDB::fileEntryCreatedInNS(const std::string &archiveFile) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 } 
 
-void OStoreDB::createTapePool(const SecurityIdentity& requester, 
-  const std::string& name, const uint32_t nbPartialTapes, 
-  const std::string& comment) {
-  throw exception::Exception("Not Implemented");
+void OStoreDB::createTapePool(const std::string& name,
+  const uint32_t nbPartialTapes, const cta::CreationLog &creationLog) {
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  assertAgentSet();
+  re.addOrGetTapePoolAndCommit(name, *m_agent, creationLog);
+  re.commit();
 }
 
 std::list<TapePool> OStoreDB::getTapePools() const {

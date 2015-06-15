@@ -19,11 +19,13 @@
 #pragma once
 
 #include "scheduler/SchedulerDatabase.hpp"
+#include "objectstore/Agent.hpp"
 
 namespace cta {
   
 namespace objectstore {
-  class Backend;    
+  class Backend;
+  class Agent;
 }
   
 class OStoreDB: public SchedulerDatabase {
@@ -31,6 +33,12 @@ public:
   OStoreDB(objectstore::Backend & be);
   virtual ~OStoreDB() throw();
   
+  /* === Object store and agent handling ==================================== */
+  void setAgent(objectstore::Agent &agent);
+  CTA_GENERATE_EXCEPTION_CLASS(AgentNotSet);
+private:
+  void assertAgentSet();
+public:
 
   /* === Admin host handling ================================================ */
   virtual void createAdminHost(const SecurityIdentity& requester,
@@ -84,9 +92,8 @@ public:
     const std::string& storageClassName, const uint16_t copyNb);
 
   /* === Tape pools handling  =============================================== */
-  virtual void createTapePool(const SecurityIdentity& requester, 
-    const std::string& name, const uint32_t nbPartialTapes, 
-    const std::string& comment);
+  virtual void createTapePool(const std::string& name, 
+    const uint32_t nbPartialTapes, const cta::CreationLog &creationLog);
 
   virtual std::list<TapePool> getTapePools() const;
 
@@ -140,6 +147,7 @@ public:
   
 private:
   objectstore::Backend & m_objectStore;
+  objectstore::Agent * m_agent;
 };
   
 }

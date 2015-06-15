@@ -276,6 +276,15 @@ void cta::objectstore::RootEntry::setArchivalRoute(const std::string& storageCla
   }
 }
 
+void cta::objectstore::RootEntry::removeArchivalRoute(
+  const std::string& storageClass, uint16_t copyNb) {
+  checkPayloadWritable();
+  // Find the storageClass entry
+  auto & sc = serializers::findElement(m_payload.mutable_storageclasses(), storageClass);
+  serializers::removeOccurences(sc.mutable_routes(), copyNb);
+}
+
+
 std::vector<std::string> cta::objectstore::RootEntry::getArchivalRoutes(const std::string storageClass) {
   checkPayloadReadable();
   auto & sc = serializers::findElement(m_payload.storageclasses(), storageClass);

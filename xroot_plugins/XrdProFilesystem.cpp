@@ -844,9 +844,11 @@ int XrdProFilesystem::executeLsrouteCommand(const ParsedRequest &req, XrdOucErrI
     for(std::list<cta::ArchivalRoute>::iterator it = routeList.begin(); it != routeList.end(); it++) {
       responseSS << "\n" << it->getStorageClassName() << ":" << it->getCopyNb() 
               << " " << it->getTapePoolName()
-              << " " << it->getCreator().uid
-              << " " << it->getCreator().gid
-              << " \"" << it->getComment() << "\"";
+              << " " << it->getCreationLog().user.uid
+              << " " << it->getCreationLog().user.gid
+              << " " << it->getCreationLog().host
+              << " " << it->getCreationLog().time
+              << " \"" << it->getCreationLog().comment << "\"";
     }
     eInfo.setErrInfo(responseSS.str().length()+1, responseSS.str().c_str());
     return SFS_DATA;

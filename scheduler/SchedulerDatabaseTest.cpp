@@ -247,8 +247,9 @@ TEST_P(SchedulerDatabaseTest, getArchivalRoutes_incomplete) {
 
   const std::string tapePoolName = "TestTapePool";
   const uint16_t nbPartialTapes = 1;
-  ASSERT_NO_THROW(db.createTapePool(s_adminOnAdminHost, tapePoolName,
-    nbPartialTapes, comment));
+  ASSERT_NO_THROW(db.createTapePool(tapePoolName, nbPartialTapes,
+    CreationLog(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(),
+    time(NULL), comment)));
 
   const uint16_t copyNb = 1;
   ASSERT_NO_THROW(db.createArchivalRoute(storageClassName,
@@ -278,15 +279,17 @@ TEST_P(SchedulerDatabaseTest, getArchivalRoutes_complete) {
   const std::string tapePoolNameA = "TestTapePoolA";
   {
     const uint16_t nbPartialTapes = 1;
-    ASSERT_NO_THROW(db.createTapePool(s_adminOnAdminHost, tapePoolNameA,
-      nbPartialTapes, comment));
+    ASSERT_NO_THROW(db.createTapePool(tapePoolNameA, nbPartialTapes,
+      CreationLog(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(),
+        time(NULL), comment)));
   }
 
   const std::string tapePoolNameB = "TestTapePoolB";
   {
     const uint16_t nbPartialTapes = 1;
-    ASSERT_NO_THROW(db.createTapePool(s_adminOnAdminHost, tapePoolNameB,
-      nbPartialTapes, comment));
+    ASSERT_NO_THROW(db.createTapePool(tapePoolNameB, nbPartialTapes,
+      CreationLog(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(),
+        time(NULL), comment)));
   }
 
   {
@@ -328,8 +331,9 @@ TEST_P(SchedulerDatabaseTest, createArchivalRoute_same_tape_pool_name) {
   const std::string tapePoolName = "TestTapePool";
   {
     const uint16_t nbPartialTapes = 1;
-    ASSERT_NO_THROW(db.createTapePool(s_adminOnAdminHost, tapePoolName,
-      nbPartialTapes, comment));
+    ASSERT_NO_THROW(db.createTapePool(tapePoolName, nbPartialTapes,
+      CreationLog(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(),
+        time(NULL), comment)));
   }
 
   {
@@ -364,15 +368,17 @@ TEST_P(SchedulerDatabaseTest, createArchivalRoute_two_many_routes) {
   const std::string tapePoolNameA = "TestTapePoolA";
   {
     const uint16_t nbPartialTapes = 1;
-    ASSERT_NO_THROW(db.createTapePool(s_adminOnAdminHost, tapePoolNameA,
-      nbPartialTapes, comment));
+    ASSERT_NO_THROW(db.createTapePool(tapePoolNameA, nbPartialTapes,
+      CreationLog(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(),
+        time(NULL), comment)));
   }
 
   const std::string tapePoolNameB = "TestTapePoolB";
   {
     const uint16_t nbPartialTapes = 1;
-    ASSERT_NO_THROW(db.createTapePool(s_adminOnAdminHost, tapePoolNameB,
-      nbPartialTapes, comment));
+    ASSERT_NO_THROW(db.createTapePool(tapePoolNameB, nbPartialTapes,
+      CreationLog(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(),
+        time(NULL), comment)));
   }
 
   {

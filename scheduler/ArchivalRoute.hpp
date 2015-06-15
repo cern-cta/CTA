@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "scheduler/ConfigurationItem.hpp"
 #include "scheduler/UserIdentity.hpp"
+#include "scheduler/CreationLog.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -27,10 +27,12 @@
 
 namespace cta {
 
+class CreationLog;
+
 /**
  * An archival route.
  */
-class ArchivalRoute: public ConfigurationItem {
+class ArchivalRoute {
 public:
 
   /**
@@ -61,9 +63,7 @@ public:
     const std::string &storageClassName,
     const uint16_t copyNb,
     const std::string &tapePoolName,
-    const UserIdentity &creator,
-    const std::string &comment,
-    const time_t creationTime = time(NULL));
+    const CreationLog &creationLog);
 
   /**
    * Returns the name of the storage class that identifies the source disk
@@ -87,6 +87,12 @@ public:
    * @return The name of the destination tape pool.
    */
   const std::string &getTapePoolName() const throw();
+  
+  /**
+   * Get the creation log
+   * @return Reference to the creation log
+   */
+  const CreationLog & getCreationLog() const throw();
 
 private:
 
@@ -105,6 +111,10 @@ private:
    */
   std::string m_tapePoolName;
 
+  /**
+   * The record of the entry's creation
+   */
+  CreationLog m_creationLog;
 }; // class ArchivalRoute
 
 } // namespace cta

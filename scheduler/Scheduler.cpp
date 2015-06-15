@@ -232,7 +232,8 @@ void cta::Scheduler::createTapePool(
   const uint32_t nbPartialTapes,
   const std::string &comment) {
   m_db.assertIsAdminOnAdminHost(requester);
-  m_db.createTapePool(requester, name, nbPartialTapes, comment);
+  m_db.createTapePool(name, nbPartialTapes, CreationLog(requester.getUser(), 
+    requester.getHost(), time(NULL), comment));
 }
 
 //------------------------------------------------------------------------------

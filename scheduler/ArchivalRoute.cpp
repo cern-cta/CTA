@@ -38,13 +38,11 @@ cta::ArchivalRoute::ArchivalRoute(
   const std::string &storageClassName,
   const uint16_t copyNb,
   const std::string &tapePoolName,
-  const UserIdentity &creator,
-  const std::string &comment,
-  const time_t creationTime):
-  ConfigurationItem(creator, comment, creationTime),
+  const CreationLog &creationLog):
   m_storageClassName(storageClassName),
   m_copyNb(copyNb),
-  m_tapePoolName(tapePoolName) {
+  m_tapePoolName(tapePoolName),
+  m_creationLog(creationLog) {
 }
 
 //------------------------------------------------------------------------------

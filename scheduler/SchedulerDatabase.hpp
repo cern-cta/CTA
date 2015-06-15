@@ -259,22 +259,20 @@ public:
   virtual StorageClass getStorageClass(const std::string &name) const = 0;
 
   /**
-   * Creates a tape pool with the specifed name.
+   * Creates a tape pool with the specified name.
    *
-   * @param requester The identity of the requester.
    * @param name The name of the tape pool.
    * @param nbPartialTapes The maximum number of tapes that can be partially
    * full at any moment in time.
-   * @param comment The comment describing the tape pool.
+   * @param creationLog The who, where, when an why of this modification.
    */
   virtual void createTapePool(
-    const SecurityIdentity &requester,
     const std::string &name,
     const uint32_t nbPartialTapes,
-    const std::string &comment) = 0;
+    const CreationLog& creationLog) = 0;
 
   /**
-   * Delete the tape pool with the specifed name.
+   * Delete the tape pool with the specified name.
    *
    * @param requester The identity of the requester.
    * @param name The name of the tape pool.
