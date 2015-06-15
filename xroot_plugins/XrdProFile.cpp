@@ -672,10 +672,11 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
       responseSS << it->getStorageClassName()
                  << " " << it->getCopyNb()
                  << " " << it->getTapePoolName()
-                 << " " << it->getCreator().uid 
-                 << " " << it->getCreator().gid 
-                 << " " << it->getCreationTime() 
-                 << " " << it->getComment();
+                 << " " << it->getCreationLog().user.uid
+                 << " " << it->getCreationLog().user.gid
+                 << " " << it->getCreationLog().host
+                 << " " << it->getCreationLog().time
+                 << " " << it->getCreationLog().comment;
     }
     m_data = responseSS.str();
   }
