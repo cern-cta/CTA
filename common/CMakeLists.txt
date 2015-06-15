@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 
 set (COMMON_LIB_SRC_FILES
+  SmartFd.cpp
   Timer.cpp
   Utils.cpp
   exception/Backtrace.cpp
@@ -20,6 +21,7 @@ target_link_libraries (ctacommon
   uuid)
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
+  SmartFdTest.cpp
   UtilsTest.cpp)
 
 add_library (ctacommonunittests SHARED
