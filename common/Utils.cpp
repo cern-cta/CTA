@@ -24,6 +24,7 @@
 #include <memory>
 #include <sstream>
 #include <stdlib.h>
+#include <strings.h>
 #include <sys/types.h>
 #include <uuid/uuid.h>
 
@@ -259,7 +260,8 @@ std::string cta::Utils::getXattr(const std::string &path,
     return "";
   }
 
-  std::unique_ptr<char[]> value(new char[sizeOfValue]);
+  std::unique_ptr<char[]> value(new char[sizeOfValue + 1]);
+  bzero(value.get(), sizeOfValue + 1);
 
   if(0 > getxattr(path.c_str(), name.c_str(), (void *)value.get(),
     sizeOfValue)) {

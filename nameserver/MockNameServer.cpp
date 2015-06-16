@@ -25,7 +25,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <attr/xattr.h>
 #include <fcntl.h>
 
 #include "common/exception/Exception.hpp"
@@ -164,16 +163,11 @@ cta::MockNameServer::MockNameServer() {
     mkdtemp(path),
     "MockNameServer() - Failed to create temporary directory");
   m_fsDir = path;
-  exception::Errnum::throwOnNonZero(
-    setxattr(m_fsDir.c_str(), "user.CTAStorageClass", "", 0, 0),
-    std::string(__FUNCTION__) + " - Failed to setxattr user.CTAStorageClass on "
-      + m_fsDir);
-  exception::Errnum::throwOnNonZero(
-    setxattr(m_fsDir.c_str(), "user.uid", "", 0, 0),
-    std::string(__FUNCTION__) + " - Failed to setxattr user.uid on " + m_fsDir);
-  exception::Errnum::throwOnNonZero(
-    setxattr(m_fsDir.c_str(), "user.gid", "", 0, 0),
-    std::string(__FUNCTION__) + " - Failed to setxattr user.gid on " + m_fsDir);
+
+  const SecurityIdentity initialRequester;
+  const UserIdentity initialOwner;
+  setDirStorageClass(initialRequester, "/", "");
+  setOwner(initialRequester, "/", initialOwner);
 }
 
 //------------------------------------------------------------------------------
@@ -188,18 +182,12 @@ cta::MockNameServer::~MockNameServer() throw() {
 //------------------------------------------------------------------------------
 // setDirStorageClass
 //------------------------------------------------------------------------------
-void cta::MockNameServer::setDirStorageClass(const SecurityIdentity &requester, const std::string &path, const std::string &storageClassName) {
+void cta::MockNameServer::setDirStorageClass(const SecurityIdentity &requester,
+  const std::string &path, const std::string &storageClassName) {
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsDirExists(fsPath);
-  
-  if(setxattr(fsPath.c_str(), "user.CTAStorageClass", storageClassName.c_str(), storageClassName.length(), 0)) {
-    const int savedErrno = errno;
-    std::ostringstream msg;
-    msg << __FUNCTION__ << " - " << fsPath << " setxattr error. Reason: " <<
-      Utils::errnoToString(savedErrno);
-    throw(exception::Exception(msg.str()));
-  }
+  Utils::setXattr(fsPath.c_str(), "user.CTAStorageClass", storageClassName);
 }  
 
 //------------------------------------------------------------------------------
@@ -211,14 +199,8 @@ void cta::MockNameServer::clearDirStorageClass(
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsDirExists(fsPath);
-  
-  if(setxattr(fsPath.c_str(), "user.CTAStorageClass", "", 0, 0)) {
-    const int savedErrno = errno;
-    std::ostringstream msg;
-    msg << __FUNCTION__ << " - " << fsPath << " setxattr error. Reason: " <<
-      Utils::errnoToString(savedErrno);
-    throw(exception::Exception(msg.str()));
-  }
+
+  setDirStorageClass(requester, path, "");
 }  
 
 //------------------------------------------------------------------------------
@@ -230,16 +212,8 @@ std::string cta::MockNameServer::getDirStorageClass(
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsDirExists(fsPath);
-  
-  char value[1024];
-  bzero(value, sizeof(value));
-  if(0 > getxattr(fsPath.c_str(), "user.CTAStorageClass", value, sizeof(value))) {
-    char buf[256];
-    std::ostringstream msg;
-    msg << "getDirStorageClass() - " << fsPath << " getxattr error. Reason: " << strerror_r(errno, buf, sizeof(buf));
-    throw(exception::Exception(msg.str()));
-  }
-  return std::string(value);
+
+  return Utils::getXattr(fsPath, "user.CTAStorageClass");
 }  
 
 //------------------------------------------------------------------------------
@@ -308,12 +282,8 @@ void cta::MockNameServer::setOwner(
   const std::string gidStr = Utils::toString(owner.gid);
   const std::string fsPath = m_fsDir + path;
 
-  exception::Errnum::throwOnNonZero(
-    setxattr(fsPath.c_str(), "user.uid", uidStr.c_str(), uidStr.length(), 0),
-    std::string(__FUNCTION__) + " - Failed to setxattr user.uid on " + fsPath);
-  exception::Errnum::throwOnNonZero(
-    setxattr(fsPath.c_str(), "user.gid", gidStr.c_str(), gidStr.length(), 0),
-    std::string(__FUNCTION__) + " - Failed to setxattr user.gid on " + fsPath);
+  Utils::setXattr(fsPath, "user.uid", uidStr);
+  Utils::setXattr(fsPath, "user.gid", gidStr);
 }
 
 //------------------------------------------------------------------------------
@@ -362,15 +332,7 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
   }
   
   setDirStorageClass(requester, path, inheritedStorageClass);
-
-  const std::string uidStr = Utils::toString(requester.getUser().uid);
-  const std::string gidStr = Utils::toString(requester.getUser().gid);
-  exception::Errnum::throwOnNonZero(
-    setxattr(fsPath.c_str(), "user.uid", uidStr.c_str(), uidStr.length(), 0),
-    std::string(__FUNCTION__) + " - Failed to setxattr user.uid on " + fsPath);
-  exception::Errnum::throwOnNonZero(
-    setxattr(fsPath.c_str(), "user.gid", gidStr.c_str(), gidStr.length(), 0),
-    std::string(__FUNCTION__) + " - Failed to setxattr user.gid on " + fsPath);
+  setOwner(requester, path, requester.getUser());
 }  
 
 //------------------------------------------------------------------------------
