@@ -804,7 +804,7 @@ TEST_P(SchedulerTest, admin_createTape_new) {
     LogicalLibrary logicalLibrary;
     ASSERT_NO_THROW(logicalLibrary = libraries.front());
     ASSERT_EQ(libraryName, logicalLibrary.getName());
-    ASSERT_EQ(libraryComment, logicalLibrary.getComment());
+    ASSERT_EQ(libraryComment, logicalLibrary.getCreationLog().comment);
   }
 
   const std::string tapePoolName = "TestTapePool";
@@ -820,7 +820,7 @@ TEST_P(SchedulerTest, admin_createTape_new) {
     TapePool tapePool;
     ASSERT_NO_THROW(tapePool = tapePools.front());
     ASSERT_EQ(tapePoolName, tapePool.getName());
-    ASSERT_EQ(comment, tapePool.getComment());
+    ASSERT_EQ(comment, tapePool.getCreationLog().comment);
   } 
 
   const std::string vid = "TestVid";
@@ -885,7 +885,7 @@ TEST_P(SchedulerTest,
     TapePool tapePool;
     ASSERT_NO_THROW(tapePool = tapePools.front());
     ASSERT_EQ(tapePoolName, tapePool.getName());
-    ASSERT_EQ(comment, tapePool.getComment());
+    ASSERT_EQ(comment, tapePool.getCreationLog().comment);
   } 
 
   const std::string vid = "TestVid";
@@ -931,7 +931,7 @@ TEST_P(SchedulerTest, admin_createTape_new_non_existing_pool) {
     LogicalLibrary logicalLibrary;
     ASSERT_NO_THROW(logicalLibrary = libraries.front());
     ASSERT_EQ(libraryName, logicalLibrary.getName());
-    ASSERT_EQ(libraryComment, logicalLibrary.getComment());
+    ASSERT_EQ(libraryComment, logicalLibrary.getCreationLog().comment);
   }
 
   const std::string tapePoolName = "TestTapePool";

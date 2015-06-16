@@ -59,16 +59,16 @@ uint16_t cta::StorageClass::getNbCopies() const throw() {
 }
 
 //------------------------------------------------------------------------------
+// getCreationLog
+//------------------------------------------------------------------------------
+auto cta::StorageClass::getCreationLog() const throw() -> const CreationLog & {
+  return m_creationLog;
+}
+//------------------------------------------------------------------------------
 // operator<
 //------------------------------------------------------------------------------
 bool cta::StorageClass::operator<(const StorageClass& rhs) const {
   return m_name < rhs.m_name;
 }
 
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-auto cta::StorageClass::getCreationLog() const throw() -> const CreationLog & {
-  return m_creationLog;
-}
 

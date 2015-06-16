@@ -49,11 +49,7 @@ public:
    * @param name The name of the storage class.
    * @param nbCopies The number of copies a file associated with this storage
    * class should have on tape.
-   * @param creator The identity of the user that created this configuration
-   * item.
-   * @param comment The comment describing this configuration item.
-   * @param creationTime Optionally the absolute time at which this
-   * configuration item was created.  If no value is given then the current
+   * @param creationLog The who, where, when an why of this modification.
    * time is used.
    */
   StorageClass(

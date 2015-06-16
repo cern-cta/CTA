@@ -110,8 +110,8 @@ public:
   virtual void deleteTape(const SecurityIdentity& requester, const std::string& vid);
 
   /* === Libraries handling  ================================================ */
-  virtual void createLogicalLibrary(const SecurityIdentity& requester, 
-    const std::string& name, const std::string& comment);
+  virtual void createLogicalLibrary(const std::string& name,
+    const cta::CreationLog& creationLog);
 
   virtual std::list<LogicalLibrary> getLogicalLibraries() const;
 

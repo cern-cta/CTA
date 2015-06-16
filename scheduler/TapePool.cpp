@@ -37,12 +37,10 @@ cta::TapePool::~TapePool() throw() {
 cta::TapePool::TapePool(
   const std::string &name,
   const uint32_t nbPartialTapes,
-  const UserIdentity &creator,
-  const std::string &comment,
-  const time_t creationTime):
-  ConfigurationItem(creator, comment, creationTime),
+  const CreationLog &creationLog):
   m_name(name),
-  m_nbPartialTapes(nbPartialTapes) {
+  m_nbPartialTapes(nbPartialTapes),
+  m_creationLog(creationLog) {
 }
 
 //------------------------------------------------------------------------------
@@ -64,4 +62,11 @@ const std::string &cta::TapePool::getName() const throw() {
 //------------------------------------------------------------------------------
 uint32_t cta::TapePool::getNbPartialTapes() const throw() {
   return m_nbPartialTapes;
+}
+
+//------------------------------------------------------------------------------
+// getCreationLog
+//------------------------------------------------------------------------------
+auto cta::TapePool::getCreationLog() const throw() -> const CreationLog & {
+  return m_creationLog;
 }

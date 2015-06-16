@@ -602,10 +602,11 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
     for(auto it = list.begin(); it != list.end(); it++) {
       responseSS << it->getName()  
                  << " " << it->getNbPartialTapes()
-                 << " " << it->getCreator().uid 
-                 << " " << it->getCreator().gid 
-                 << " " << it->getCreationTime() 
-                 << " " << it->getComment();
+                 << " " << it->getCreationLog().user.uid 
+                 << " " << it->getCreationLog().user.gid 
+                 << " " << it->getCreationLog().host
+                 << " " << it->getCreationLog().time
+                 << " " << it->getCreationLog().comment;
     }
     m_data = responseSS.str();
   }
@@ -725,10 +726,11 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
     std::ostringstream responseSS;
     for(auto it = list.begin(); it != list.end(); it++) {
       responseSS << it->getName() 
-                 << " " << it->getCreator().uid 
-                 << " " << it->getCreator().gid 
-                 << " " << it->getCreationTime() 
-                 << " " << it->getComment();
+                 << " " << it->getCreationLog().user.uid 
+                 << " " << it->getCreationLog().user.gid
+                 << " " << it->getCreationLog().host
+                 << " " << it->getCreationLog().time
+                 << " " << it->getCreationLog().comment;
     }
     m_data = responseSS.str();
   }

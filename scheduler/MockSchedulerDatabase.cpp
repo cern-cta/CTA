@@ -314,7 +314,7 @@ cta::TapePool cta::MockSchedulerDatabase::getTapePool(const std::string &name)
   const {
   std::ostringstream query;
   cta::TapePool pool;
-  query << "SELECT NAME, NBPARTIALTAPES, UID, GID, CREATIONTIME, COMMENT"
+  query << "SELECT NAME, NBPARTIALTAPES, UID, GID, HOST, CREATIONTIME, COMMENT"
     " FROM TAPEPOOL WHERE NAME='" << name << "';";
   sqlite3_stmt *s = NULL;
   const int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &s, 0 );
@@ -331,10 +331,13 @@ cta::TapePool cta::MockSchedulerDatabase::getTapePool(const std::string &name)
       pool = TapePool(
         (char *)sqlite3_column_text(statement.get(),idx("NAME")),
         sqlite3_column_int(statement.get(),idx("NBPARTIALTAPES")),
-        UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
-        sqlite3_column_int(statement.get(),idx("GID"))),
-        (char *)sqlite3_column_text(statement.get(),idx("COMMENT")),
-        time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME")))
+        CreationLog(
+          UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
+            sqlite3_column_int(statement.get(),idx("GID"))),
+          (char *)sqlite3_column_text(statement.get(),idx("HOST")),
+          time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME"))),
+          (char *)sqlite3_column_text(statement.get(),idx("COMMENT"))
+        )
       );
     }
     break;
@@ -1044,7 +1047,7 @@ void cta::MockSchedulerDatabase::deleteTapePool(
 std::list<cta::TapePool> cta::MockSchedulerDatabase::getTapePools() const {
   std::ostringstream query;
   std::list<cta::TapePool> pools;
-  query << "SELECT NAME, NBPARTIALTAPES, UID, GID, CREATIONTIME, COMMENT FROM"
+  query << "SELECT NAME, NBPARTIALTAPES, UID, GID, HOST, CREATIONTIME, COMMENT FROM"
     " TAPEPOOL ORDER BY NAME;";
   sqlite3_stmt *s = NULL;
   const int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &s, 0 );
@@ -1059,10 +1062,13 @@ std::list<cta::TapePool> cta::MockSchedulerDatabase::getTapePools() const {
     pools.push_back(TapePool(
       (char *)sqlite3_column_text(statement.get(),idx("NAME")),
       sqlite3_column_int(statement.get(),idx("NBPARTIALTAPES")),
-      UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
-      sqlite3_column_int(statement.get(),idx("GID"))),
-      (char *)sqlite3_column_text(statement.get(),idx("COMMENT")),
-      time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME")))
+      CreationLog(
+          UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
+            sqlite3_column_int(statement.get(),idx("GID"))),
+          (char *)sqlite3_column_text(statement.get(),idx("HOST")),
+          time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME"))),
+          (char *)sqlite3_column_text(statement.get(),idx("COMMENT"))
+        )
     ));
   }
   return pools;
@@ -1252,14 +1258,15 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::
 // createLogicalLibrary
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::createLogicalLibrary(
-  const SecurityIdentity &requester,
   const std::string &name,
-  const std::string &comment) {
+  const cta::CreationLog& creationLog) {
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "INSERT INTO LOGICALLIBRARY(NAME, UID, GID, CREATIONTIME, COMMENT)"
-    " VALUES('" << name << "',"<< requester.getUser().uid << "," <<
-    requester.getUser().gid << "," << (int)time(NULL) << ",'" << comment <<
+  query << "INSERT INTO LOGICALLIBRARY(NAME, UID, GID, HOST, CREATIONTIME, COMMENT)"
+    << " VALUES('" << name << "',"<< creationLog.user.uid << ","
+    << creationLog.user.gid << "," 
+    << " '" << creationLog.host << "', "
+    << creationLog.time << ",'" << creationLog.comment <<
     "');";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
@@ -1302,7 +1309,7 @@ std::list<cta::LogicalLibrary> cta::MockSchedulerDatabase::getLogicalLibraries()
   const {
   std::ostringstream query;
   std::list<cta::LogicalLibrary> list;
-  query << "SELECT NAME, UID, GID, CREATIONTIME, COMMENT"
+  query << "SELECT NAME, UID, GID, HOST, CREATIONTIME, COMMENT"
     " FROM LOGICALLIBRARY ORDER BY NAME;";
   sqlite3_stmt *s = NULL;
   const int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &s, 0 );
@@ -1316,10 +1323,13 @@ std::list<cta::LogicalLibrary> cta::MockSchedulerDatabase::getLogicalLibraries()
     SqliteColumnNameToIndex idx(statement.get());
     list.push_back(LogicalLibrary(
       (char *)sqlite3_column_text(statement.get(),idx("NAME")),
-      UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
-      sqlite3_column_int(statement.get(),idx("GID"))),
-      (char *)sqlite3_column_text(statement.get(),idx("COMMENT")),
-      time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME")))
+      CreationLog(
+        UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
+          sqlite3_column_int(statement.get(),idx("GID"))),
+        (char *)sqlite3_column_text(statement.get(),idx("HOST")),
+        time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME"))),
+        (char *)sqlite3_column_text(statement.get(),idx("COMMENT"))
+      )
     ));
   }
   return list;

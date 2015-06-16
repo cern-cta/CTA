@@ -87,8 +87,8 @@ public:
     m_OStoreDB.createArchivalRoute(storageClassName, copyNb, tapePoolName, creationLog);
   }
 
-  virtual void createLogicalLibrary(const SecurityIdentity& requester, const std::string& name, const std::string& comment) {
-    m_OStoreDB.createLogicalLibrary(requester, name, comment);
+  virtual void createLogicalLibrary(const std::string& name, const cta::CreationLog& creationLog) {
+    m_OStoreDB.createLogicalLibrary(name, creationLog);
   }
 
   virtual void createStorageClass(const std::string& name, const uint16_t nbCopies, const CreationLog& creationLog) {

@@ -20,10 +20,12 @@
 #include "scheduler/SecurityIdentity.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "common/exception/Exception.hpp"
-#include "scheduler/StorageClass.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
 #include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/LogicalLibrary.hpp"
+#include "scheduler/StorageClass.hpp"
+#include "scheduler/TapePool.hpp"
 #include <algorithm>
 
 namespace cta {
@@ -234,27 +236,36 @@ void OStoreDB::deleteArchivalRoute(const SecurityIdentity& requester,
   re.commit();
 }
 
-void OStoreDB::fileEntryCreatedInNS(const std::string &archiveFile) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
-} 
-
 void OStoreDB::createTapePool(const std::string& name,
   const uint32_t nbPartialTapes, const cta::CreationLog &creationLog) {
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
   assertAgentSet();
-  re.addOrGetTapePoolAndCommit(name, *m_agent, creationLog);
+  re.addOrGetTapePoolAndCommit(name, nbPartialTapes, *m_agent, creationLog);
   re.commit();
 }
 
 std::list<TapePool> OStoreDB::getTapePools() const {
-  throw exception::Exception("Not Implemented");
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto tpd = re.dumpTapePools();
+  rel.release();
+  std::list<TapePool> ret;
+  for (auto tp=tpd.begin(); tp!=tpd.end(); tp++) {
+    ret.push_back(cta::TapePool(tp->tapePool, tp->nbPartialTapes, tp->log));
+  }
+  return ret;
 }
 
 void OStoreDB::deleteTapePool(const SecurityIdentity& requester, 
   const std::string& name) {
-  throw exception::Exception("Not Implemented");
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  re.removeTapePoolAndCommit(name);
+  re.commit();
 }
 
 void OStoreDB::createTape(const SecurityIdentity& requester, 
@@ -273,18 +284,35 @@ void OStoreDB::deleteTape(const SecurityIdentity& requester,
   throw exception::Exception("Not Implemented");
 }
 
-void OStoreDB::createLogicalLibrary(const SecurityIdentity& requester,
-  const std::string& name, const std::string& comment) {
-  throw exception::Exception("Not Implemented");
+void OStoreDB::createLogicalLibrary(const std::string& name, 
+  const cta::CreationLog& creationLog) {
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  re.addLibrary(name, creationLog);
+  re.commit();
 }
 
 std::list<LogicalLibrary> OStoreDB::getLogicalLibraries() const {
-  throw exception::Exception("Not Implemented");
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto ll = re.dumpLibraries();
+  rel.release();
+  std::list<LogicalLibrary> ret;
+  for (auto l=ll.begin(); l!=ll.end(); l++) {
+    ret.push_back(LogicalLibrary(l->library, l->log));
+  }
+  return ret;
 }
 
 void OStoreDB::deleteLogicalLibrary(const SecurityIdentity& requester, 
   const std::string& name) {
-  throw exception::Exception("Not Implemented");
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  re.removeLibrary(name);
+  re.commit();
 }
 
 void OStoreDB::queue(const ArchiveToFileRequest& rqst) {
@@ -294,6 +322,10 @@ void OStoreDB::queue(const ArchiveToFileRequest& rqst) {
 void OStoreDB::queue(const ArchiveToDirRequest& rqst) {
   throw exception::Exception("Not Implemented");
 }
+
+void OStoreDB::fileEntryCreatedInNS(const std::string &archiveFile) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+} 
 
 void OStoreDB::deleteArchiveRequest(const SecurityIdentity& requester, 
   const std::string& archiveFile) {

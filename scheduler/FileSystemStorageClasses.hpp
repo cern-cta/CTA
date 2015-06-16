@@ -41,8 +41,7 @@ public:
    * @param name The name of the storage class.
    * @param nbCopies The number of copies a file associated with this storage
    * class should have on tape.
-   * @param creator The identity of the user that created the storage class.
-   * @param comment The comment describing the storage class.
+   * @param creationLog The who, where, when an why of this modification.
    */
   void createStorageClass(
     const std::string &name,

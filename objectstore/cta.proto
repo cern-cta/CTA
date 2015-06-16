@@ -90,7 +90,8 @@ message StorageClass {
 message TapePoolPointer {
   required string name = 70;
   required string address  = 71;
-  required CreationLog log = 72;
+  required uint32 nbpartialtapes = 72;
+  required CreationLog log = 73;
 }
 
 // Description of a library

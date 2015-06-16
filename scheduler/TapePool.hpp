@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "scheduler/ConfigurationItem.hpp"
+#include "scheduler/CreationLog.hpp"
 
 #include <string>
 
@@ -27,7 +27,7 @@ namespace cta {
 /**
  * Class representing a tape pool.
  */
-class TapePool: public ConfigurationItem {
+class TapePool {
 public:
 
   /**
@@ -46,19 +46,13 @@ public:
    * @param name The name of the tape pool.
    * @param nbPartialTapes The maximum number of tapes that can be partially
    * full at any moment in time.
-   * @param creator The identity of the user that created this configuration
-   * item.
-   * @param comment The comment describing this configuration item.
-   * @param creationTime Optionally the absolute time at which this
-   * configuration item was created.  If no value is given then the current
+   * @param creationLog The who, where, when an why of this modification.
    * time is used.
    */
   TapePool(
     const std::string &name,
     const uint32_t nbPartialTapes,
-    const UserIdentity &creator,
-    const std::string &comment,
-    const time_t creationTime = time(NULL));
+    const CreationLog &creationLog);
 
   /**
    * Less than operator.
@@ -82,6 +76,12 @@ public:
    * moment in time.
    */
   uint32_t getNbPartialTapes() const throw();
+  
+  /**
+   * Get the creation log
+   * @return Reference to the creation log
+   */
+  const CreationLog & getCreationLog() const throw();
 
 private:
 
@@ -95,7 +95,11 @@ private:
    * time.
    */
   uint32_t m_nbPartialTapes;
-
+  
+  /**
+   * The record of the entry's creation
+   */
+  CreationLog m_creationLog;
 }; // class TapePool
 
 } // namespace cta

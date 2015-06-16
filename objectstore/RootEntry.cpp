@@ -388,12 +388,14 @@ bool cta::objectstore::RootEntry::libraryExists(const std::string& library) {
   return serializers::isElementPresent(m_payload.libraries(), library);
 }
 
-std::list<std::string> cta::objectstore::RootEntry::dumpLibraries() {
+auto cta::objectstore::RootEntry::dumpLibraries() -> std::list<LibraryDump> {
   checkPayloadReadable();
-  std::list<std::string> ret;
+  std::list<LibraryDump> ret;
   auto & list=m_payload.libraries();
   for (auto i=list.begin(); i!=list.end(); i++) {
-    ret.push_back(i->name());
+    ret.push_back(LibraryDump());
+    ret.back().library = i->name();
+    ret.back().log.deserialize(i->log());
   }
   return ret;
 }
@@ -413,7 +415,7 @@ namespace {
 }
 
 std::string cta::objectstore::RootEntry::addOrGetTapePoolAndCommit(const std::string& tapePool,
-  Agent& agent, const CreationLog& log) {
+  uint32_t nbPartialTapes, Agent& agent, const CreationLog& log) {
   checkPayloadWritable();
   // Check the tape pool does not already exist
   try {
@@ -436,6 +438,7 @@ std::string cta::objectstore::RootEntry::addOrGetTapePoolAndCommit(const std::st
   auto * tpp = m_payload.mutable_tapepoolpointers()->Add();
   tpp->set_address(tapePoolAddress);
   tpp->set_name(tapePool);
+  tpp->set_nbpartialtapes(nbPartialTapes);
   log.serialize(*tpp->mutable_log());
   // We must commit here to ensure the tape pool object is referenced.
   commit();
@@ -492,7 +495,7 @@ std::string cta::objectstore::RootEntry::getTapePoolAddress(const std::string& t
   }
 }
 
-auto cta::objectstore::RootEntry::dumpTapePool() -> std::list<TapePoolDump> {
+auto cta::objectstore::RootEntry::dumpTapePools() -> std::list<TapePoolDump> {
   checkPayloadReadable();
   std::list<TapePoolDump> ret;
   auto & tpl = m_payload.tapepoolpointers();
@@ -500,6 +503,7 @@ auto cta::objectstore::RootEntry::dumpTapePool() -> std::list<TapePoolDump> {
     ret.push_back(TapePoolDump());
     ret.back().address = i->address();
     ret.back().tapePool = i->name();
+    ret.back().nbPartialTapes = i->nbpartialtapes();
     ret.back().log.deserialize(i->log());
   }
   return ret;

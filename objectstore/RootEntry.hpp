@@ -114,14 +114,20 @@ public:
   void addLibrary(const std::string & library, const CreationLog & log);
   void removeLibrary(const std::string & library);
   bool libraryExists(const std::string & library);
-  std::list<std::string> dumpLibraries();
+  class LibraryDump {
+  public:
+    std::string library;
+    CreationLog log;
+  };
+  std::list<LibraryDump> dumpLibraries();
   
   // TapePoolManipulations =====================================================
   CTA_GENERATE_EXCEPTION_CLASS(TapePoolNotEmpty);
   CTA_GENERATE_EXCEPTION_CLASS(WrongTapePool);
   /** This function implicitly creates the tape pool structure and updates 
    * the pointer to it. It needs to implicitly commit the object to the store. */
-  std::string addOrGetTapePoolAndCommit(const std::string & tapePool, Agent & agent,
+  std::string addOrGetTapePoolAndCommit(const std::string & tapePool,
+    uint32_t nbPartialTapes, Agent & agent,
     const CreationLog & log);
   /** This function implicitly deletes the tape pool structure. 
    * Fails if it not empty*/
@@ -131,9 +137,10 @@ public:
   public:
     std::string tapePool;
     std::string address;
+    uint32_t nbPartialTapes;
     CreationLog log;
   };
-  std::list<TapePoolDump> dumpTapePool();
+  std::list<TapePoolDump> dumpTapePools();
   
   // Drive register manipulations ==============================================
   CTA_GENERATE_EXCEPTION_CLASS(DriveRegisterNotEmpty);

@@ -346,9 +346,8 @@ public:
    * @param comment The comment describing the logical library.
    */
   virtual void createLogicalLibrary(
-    const SecurityIdentity &requester,
     const std::string &name,
-    const std::string &comment) = 0;
+    const cta::CreationLog& creationLog) = 0;
 
   /**
    * Deletes the logical library with the specified name.

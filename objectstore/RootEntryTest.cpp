@@ -413,7 +413,7 @@ TEST(RootEntry, Libraries) {
     ASSERT_TRUE(re.libraryExists("library2"));
     ASSERT_FALSE(re.libraryExists("library3"));
     ASSERT_EQ(1, re.dumpLibraries().size());
-    ASSERT_EQ("library2", re.dumpLibraries().front());
+    ASSERT_EQ("library2", re.dumpLibraries().front().library);
   }
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
@@ -448,7 +448,7 @@ TEST (RootEntry, TapePools) {
     re.fetch();
     ASSERT_THROW(re.getTapePoolAddress("tapePool1"),
       cta::objectstore::RootEntry::NotAllocated);
-    tpAddr1 = re.addOrGetTapePoolAndCommit("tapePool1", ag, cl);
+    tpAddr1 = re.addOrGetTapePoolAndCommit("tapePool1", 100, ag, cl);
     // Check that we car read it
     cta::objectstore::TapePool tp(tpAddr1, be);
     cta::objectstore::ScopedSharedLock tpl(tp);
@@ -459,7 +459,7 @@ TEST (RootEntry, TapePools) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    tpAddr2 = re.addOrGetTapePoolAndCommit("tapePool2", ag, cl);
+    tpAddr2 = re.addOrGetTapePoolAndCommit("tapePool2", 100, ag, cl);
     ASSERT_TRUE(be.exists(tpAddr2));
   }
   {

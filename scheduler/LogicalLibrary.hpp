@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "scheduler/ConfigurationItem.hpp"
+#include "scheduler/CreationLog.hpp"
 
 #include <string>
 #include <time.h>
@@ -28,7 +28,7 @@ namespace cta {
 /**
  * Class representing a logical library.
  */
-class LogicalLibrary: public ConfigurationItem {
+class LogicalLibrary  {
 public:
 
   /**
@@ -45,18 +45,12 @@ public:
    * Constructor.
    *
    * @param name The name of the logical library.
-   * @param creator The identity of the user that created this configuration
-   * item.
-   * @param comment The comment describing this configuration item.
-   * @param creationTime Optionally the absolute time at which this
-   * configuration item was created.  If no value is given then the current
+   * @param creationLog The who, where, when an why of this modification.
    * time is used.
    */
   LogicalLibrary(
     const std::string &name,
-    const UserIdentity &creator,
-    const std::string &comment,
-    const time_t creationTime = time(NULL));
+    const CreationLog &creationLog);
 
   /**
    * Returns the name of the logical library.
@@ -64,14 +58,23 @@ public:
    * @return The name of the logical library.
    */
   const std::string &getName() const throw();
-
+    
+  /**
+   * Get the creation log
+   * @return Reference to the creation log
+   */
+  const CreationLog & getCreationLog() const throw();
 private:
 
   /**
    * The name of the logical library.
    */
   std::string m_name;
-
+  
+  /**
+   * The record of the entry's creation
+   */
+  CreationLog m_creationLog;
 }; // class LogicalLibrary
 
 } // namespace cta

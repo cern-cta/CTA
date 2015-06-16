@@ -296,7 +296,8 @@ void cta::Scheduler::createLogicalLibrary(
   const std::string &name,
   const std::string &comment) {
   m_db.assertIsAdminOnAdminHost(requester);
-  m_db.createLogicalLibrary(requester, name, comment);
+  m_db.createLogicalLibrary(name, CreationLog(requester.getUser(),
+      requester.getHost(), time(NULL), comment));
 }
 
 //------------------------------------------------------------------------------
