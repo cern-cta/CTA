@@ -33,6 +33,7 @@
 #include "xroot_plugins/XrdProFile.hpp"
 
 #include "XrdSec/XrdSecEntity.hh"
+#include "cmdline/CTACmd.hpp"
 #include "scheduler/DirIterator.hpp"
 
 #include <iostream>
@@ -336,11 +337,15 @@ std::string XrdProFile::getOptionValue(const std::vector<std::string> &tokens, c
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ad/admin add/rm/ls:\n";
-  help << "\tadd --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">\n";
-  help << "\tch  --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">\n";
-  help << "\trm  --uid/-u <uid> --gid/-g <gid>\n";
-  help << "\tls\n";
+  help << tokens[0] << " ad/admin add/ch/rm/ls:" << std::endl;
+  help << "\tadd --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl;
+  help << "\tch  --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl;
+  help << "\trm  --uid/-u <uid> --gid/-g <gid>" << std::endl;
+  help << "\tls" << std::endl;
+  if(tokens.size()<3){
+    m_data = help.str();
+    return;
+  }
   if("add" == tokens[2]) {
     std::string uid_s = getOptionValue(tokens, "-u", "--uid");
     std::string gid_s = getOptionValue(tokens, "-g", "--gid");
@@ -406,7 +411,7 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::S
                  << " " << it->getCreator().uid 
                  << " " << it->getCreator().gid 
                  << " " << it->getCreationTime() 
-                 << " " << it->getComment();
+                 << " " << it->getComment() << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -420,11 +425,15 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::S
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ah/adminhost add/rm/ls:\n";
-  help << "\tadd --name/-n <host_name> --comment/-m <\"comment\">\n";
-  help << "\tch  --name/-n <host_name> --comment/-m <\"comment\">\n";
-  help << "\trm  --name/-n <host_name>\n";
-  help << "\tls\n";
+  help << tokens[0] << " ah/adminhost add/ch/rm/ls:" << std::endl;
+  help << "\tadd --name/-n <host_name> --comment/-m <\"comment\">" << std::endl;
+  help << "\tch  --name/-n <host_name> --comment/-m <\"comment\">" << std::endl;
+  help << "\trm  --name/-n <host_name>" << std::endl;
+  help << "\tls" << std::endl;
+  if(tokens.size()<3){
+    m_data = help.str();
+    return;
+  }
   if("add" == tokens[2]) {
     std::string name = getOptionValue(tokens, "-n", "--name");
     std::string comment = getOptionValue(tokens, "-m", "--comment");
@@ -459,7 +468,7 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
                  << " " << it->getCreator().uid 
                  << " " << it->getCreator().gid 
                  << " " << it->getCreationTime() 
-                 << " " << it->getComment();
+                 << " " << it->getComment() << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -473,11 +482,15 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " us/user add/rm/ls:\n";
-  help << "\tadd --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">\n";
-  help << "\tch  --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">\n";
-  help << "\trm  --uid/-u <uid> --gid/-g <gid>\n";
-  help << "\tls\n";
+  help << tokens[0] << " us/user add/ch/rm/ls:" << std::endl;
+  help << "\tadd --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl;
+  help << "\tch  --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl;
+  help << "\trm  --uid/-u <uid> --gid/-g <gid>" << std::endl;
+  help << "\tls" << std::endl;
+  if(tokens.size()<3){
+    m_data = help.str();
+    return;
+  }
   if("add" == tokens[2]) {
     std::string uid_s = getOptionValue(tokens, "-u", "--uid");
     std::string gid_s = getOptionValue(tokens, "-g", "--gid");
@@ -543,7 +556,7 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::Se
 //                 << " " << it->getCreator().uid 
 //                 << " " << it->getCreator().gid 
 //                 << " " << it->getCreationTime() 
-//                 << " " << it->getComment();
+//                 << " " << it->getComment() << std::endl;
 //    }
 //    m_data = responseSS.str();
   }
@@ -557,11 +570,15 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::Se
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " tp/tapepool add/ch/rm/ls:\n";
-  help << "\tadd --name/-n <tapepool_name> --partialtapesnumber/-p <number_of_partial_tapes> --comment/-m <\"comment\">\n";
-  help << "\tch  --name/-n <tapepool_name> --partialtapesnumber/-p <number_of_partial_tapes> --comment/-m <\"comment\">\n";
-  help << "\trm  --name/-n <tapepool_name>\n";
-  help << "\tls\n";
+  help << tokens[0] << " tp/tapepool add/ch/rm/ls:" << std::endl;
+  help << "\tadd --name/-n <tapepool_name> --partialtapesnumber/-p <number_of_partial_tapes> --comment/-m <\"comment\">" << std::endl;
+  help << "\tch  --name/-n <tapepool_name> --partialtapesnumber/-p <number_of_partial_tapes> --comment/-m <\"comment\">" << std::endl;
+  help << "\trm  --name/-n <tapepool_name>" << std::endl;
+  help << "\tls" << std::endl;
+  if(tokens.size()<3){
+    m_data = help.str();
+    return;
+  }
   if("add" == tokens[2]) {
     std::string name = getOptionValue(tokens, "-n", "--name");
     std::string comment = getOptionValue(tokens, "-m", "--comment");
@@ -620,11 +637,15 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ar/archiveroute add/ch/rm/ls:\n";
-  help << "\tadd --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">\n";
-  help << "\tch  --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">\n";
-  help << "\trm  --storageclass/-s <storage_class_name> --copynb/-c <copy_number>\n";
-  help << "\tls\n";
+  help << tokens[0] << " ar/archiveroute add/ch/rm/ls:" << std::endl;
+  help << "\tadd --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">" << std::endl;
+  help << "\tch  --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">" << std::endl;
+  help << "\trm  --storageclass/-s <storage_class_name> --copynb/-c <copy_number>" << std::endl;
+  help << "\tls" << std::endl;
+  if(tokens.size()<3){
+    m_data = help.str();
+    return;
+  }
   if("add" == tokens[2]) {
     std::string storageClass = getOptionValue(tokens, "-s", "--storageclass");
     std::string tapePool = getOptionValue(tokens, "-t", "--tapepool");
@@ -676,7 +697,7 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
                  << " " << it->getCreationLog().user.gid
                  << " " << it->getCreationLog().host
                  << " " << it->getCreationLog().time
-                 << " " << it->getCreationLog().comment;
+                 << " " << it->getCreationLog().comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -690,11 +711,15 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ll/logicallibrary add/ch/rm/ls:\n";
-  help << "\tadd --name/-n <logical_library_name> --comment/-m <\"comment\">\n";
-  help << "\tch  --name/-n <logical_library_name> --comment/-m <\"comment\">\n";
-  help << "\trm  --name/-n <logical_library_name>\n";
-  help << "\tls\n";
+  help << tokens[0] << " ll/logicallibrary add/ch/rm/ls:" << std::endl;
+  help << "\tadd --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl;
+  help << "\tch  --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl;
+  help << "\trm  --name/-n <logical_library_name>" << std::endl;
+  help << "\tls" << std::endl;
+  if(tokens.size()<3){
+    m_data = help.str();
+    return;
+  }
   if("add" == tokens[2]) {
     std::string name = getOptionValue(tokens, "-n", "--name");
     std::string comment = getOptionValue(tokens, "-m", "--comment");
@@ -725,7 +750,7 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
     auto list = m_scheduler->getLogicalLibraries(requester);
     std::ostringstream responseSS;
     for(auto it = list.begin(); it != list.end(); it++) {
-      responseSS << it->getName() 
+      responseSS << it->getName()
                  << " " << it->getCreationLog().user.uid 
                  << " " << it->getCreationLog().user.gid
                  << " " << it->getCreationLog().host
@@ -744,12 +769,16 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ta/tape add/ch/rm/reclaim/ls:\n";
-  help << "\tadd     --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes> --comment/-m <\"comment\">\n";
-  help << "\tch      --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes> --comment/-m <\"comment\">\n";
-  help << "\trm      --vid/-v <vid>\n";
-  help << "\treclaim --vid/-v <vid>\n";
-  help << "\tls\n";
+  help << tokens[0] << " ta/tape add/ch/rm/reclaim/ls:" << std::endl;
+  help << "\tadd     --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes> --comment/-m <\"comment\">" << std::endl;
+  help << "\tch      --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes> --comment/-m <\"comment\">" << std::endl;
+  help << "\trm      --vid/-v <vid>" << std::endl;
+  help << "\treclaim --vid/-v <vid>" << std::endl;
+  help << "\tls" << std::endl;
+  if(tokens.size()<3){
+    m_data = help.str();
+    return;
+  }
   if("add" == tokens[2]) {
     std::string vid = getOptionValue(tokens, "-v", "--vid");
     std::string logicalLibrary = getOptionValue(tokens, "-l", "--logicallibrary");
@@ -800,7 +829,7 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::Se
                  << " " << it->getCreator().uid 
                  << " " << it->getCreator().gid 
                  << " " << it->getCreationTime() 
-                 << " " << it->getComment();
+                 << " " << it->getComment() << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -814,11 +843,15 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::Se
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " sc/storageclass add/ch/rm/ls:\n";
-  help << "\tadd --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">\n";
-  help << "\tch  --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">\n";
-  help << "\trm  --name/-n <storage_class_name>\n";
-  help << "\tls\n";
+  help << tokens[0] << " sc/storageclass add/ch/rm/ls:" << std::endl;
+  help << "\tadd --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">" << std::endl;
+  help << "\tch  --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">" << std::endl;
+  help << "\trm  --name/-n <storage_class_name>" << std::endl;
+  help << "\tls" << std::endl;
+  if(tokens.size()<3){
+    m_data = help.str();
+    return;
+  }
   if("add" == tokens[2]) {
     std::string name = getOptionValue(tokens, "-n", "--name");
     std::string comment = getOptionValue(tokens, "-m", "--comment");
@@ -863,7 +896,7 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
                  << " " << it->getCreationLog().user.gid
                  << " " << it->getCreationLog().host
                  << " " << it->getCreationLog().time
-                 << " " << it->getCreationLog().comment;
+                 << " " << it->getCreationLog().comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -877,7 +910,7 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_listongoingarchivals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " loa/listongoingarchivals --tapepool/-t <tapepool_name>\n";
+  help << tokens[0] << " loa/listongoingarchivals --tapepool/-t <tapepool_name>" << std::endl;
   std::string tapePool = getOptionValue(tokens, "-t", "--tapepool");
   std::ostringstream responseSS;
   if(tapePool.empty()) {
@@ -892,7 +925,7 @@ void XrdProFile::xCom_listongoingarchivals(const std::vector<std::string> &token
                    << " " << request->getRequester().getUser().uid
                    << " " << request->getRequester().getUser().gid
                    << " " << request->getRequester().getHost()
-                   << " " << request->getCreationTime();
+                   << " " << request->getCreationTime() << std::endl;
       }    
     }  
   }
@@ -907,7 +940,7 @@ void XrdProFile::xCom_listongoingarchivals(const std::vector<std::string> &token
                  << " " << request->getRequester().getUser().uid
                  << " " << request->getRequester().getUser().gid
                  << " " << request->getRequester().getHost()
-                 << " " << request->getCreationTime();
+                 << " " << request->getCreationTime() << std::endl;
     }
   }
   m_data = responseSS.str();
@@ -918,7 +951,7 @@ void XrdProFile::xCom_listongoingarchivals(const std::vector<std::string> &token
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_listongoingretrievals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lor/listongoingretrievals --vid/-v <vid>\n";
+  help << tokens[0] << " lor/listongoingretrievals --vid/-v <vid>" << std::endl;
   std::string tapeVid = getOptionValue(tokens, "-v", "--vid");
   std::ostringstream responseSS;
   if(tapeVid.empty()) {
@@ -936,7 +969,7 @@ void XrdProFile::xCom_listongoingretrievals(const std::vector<std::string> &toke
                    << " " << request->getRequester().getUser().uid
                    << " " << request->getRequester().getUser().gid
                    << " " << request->getRequester().getHost()
-                   << " " << request->getCreationTime();
+                   << " " << request->getCreationTime() << std::endl;
       }    
     }  
   }
@@ -954,7 +987,7 @@ void XrdProFile::xCom_listongoingretrievals(const std::vector<std::string> &toke
                  << " " << request->getRequester().getUser().uid
                  << " " << request->getRequester().getUser().gid
                  << " " << request->getRequester().getHost()
-                 << " " << request->getCreationTime();
+                 << " " << request->getCreationTime() << std::endl;
     }
   }
   m_data = responseSS.str();
@@ -965,7 +998,7 @@ void XrdProFile::xCom_listongoingretrievals(const std::vector<std::string> &toke
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_listpendingarchivals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lpa/listpendingarchivals --tapepool/-t <tapepool_name>\n";
+  help << tokens[0] << " lpa/listpendingarchivals --tapepool/-t <tapepool_name>" << std::endl;
   m_data = "Not implemented yet!";
 }
   
@@ -974,7 +1007,7 @@ void XrdProFile::xCom_listpendingarchivals(const std::vector<std::string> &token
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_listpendingretrievals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lpr/listpendingretrievals --vid/-v <vid>\n";
+  help << tokens[0] << " lpr/listpendingretrievals --vid/-v <vid>" << std::endl;
   m_data = "Not implemented yet!";
 }
   
@@ -983,7 +1016,7 @@ void XrdProFile::xCom_listpendingretrievals(const std::vector<std::string> &toke
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lds/listdrivestates\n";
+  help << tokens[0] << " lds/listdrivestates" << std::endl;
   m_data = "Not implemented yet!";
 }
   
@@ -992,12 +1025,12 @@ void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, co
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lsc/liststorageclass\n";
+  help << tokens[0] << " lsc/liststorageclass" << std::endl;
   auto list = m_scheduler->getStorageClasses(requester);
   std::ostringstream responseSS;
   for(auto it = list.begin(); it != list.end(); it++) {
     responseSS << it->getName()
-               << " " << it->getNbCopies();
+               << " " << it->getNbCopies() << std::endl;
   }
   m_data = responseSS.str();
 }
@@ -1007,8 +1040,8 @@ void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens, c
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_setstorageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ssc/setstorageclass <dirpath> <storage_class_name>\n";
-  if(tokens.size()<4){
+  help << tokens[0] << " ssc/setstorageclass <dirpath> <storage_class_name>" << std::endl;
+  if(tokens.size()!=4){
     m_data = help.str();
     return;
   }
@@ -1020,8 +1053,8 @@ void XrdProFile::xCom_setstorageclass(const std::vector<std::string> &tokens, co
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_clearstorageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " csc/clearstorageclass <dirpath>\n";
-  if(tokens.size()<3){
+  help << tokens[0] << " csc/clearstorageclass <dirpath>" << std::endl;
+  if(tokens.size()!=3){
     m_data = help.str();
     return;
   }
@@ -1033,8 +1066,8 @@ void XrdProFile::xCom_clearstorageclass(const std::vector<std::string> &tokens, 
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_mkdir(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " mkdir <dirpath>\n";
-  if(tokens.size()<3){
+  help << tokens[0] << " mkdir <dirpath>" << std::endl;
+  if(tokens.size()!=3){
     m_data = help.str();
     return;
   }
@@ -1046,8 +1079,8 @@ void XrdProFile::xCom_mkdir(const std::vector<std::string> &tokens, const cta::S
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_rmdir(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " rmdir <dirpath>\n";
-  if(tokens.size()<3){
+  help << tokens[0] << " rmdir <dirpath>" << std::endl;
+  if(tokens.size()!=3){
     m_data = help.str();
     return;
   }
@@ -1059,8 +1092,8 @@ void XrdProFile::xCom_rmdir(const std::vector<std::string> &tokens, const cta::S
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ls <dirpath>\n";
-  if(tokens.size()<3){
+  help << tokens[0] << " ls <dirpath>" << std::endl;
+  if(tokens.size()!=3){
     m_data = help.str();
     return;
   }
@@ -1081,7 +1114,7 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
                << " " << dirEntry.getOwnerId()
                << " " << dirEntry.getGroupId()
                << " " << dirEntry.getStorageClassName()
-               << " " << dirEntry.getName();
+               << " " << dirEntry.getName() << std::endl;
   }
   m_data = responseSS.str();
 }
@@ -1091,7 +1124,7 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " a/archive <source_file1> [<source_file2> [<source_file3> [...]]] <destination_path>\n";
+  help << tokens[0] << " a/archive <source_file1> [<source_file2> [<source_file3> [...]]] <destination_path>" << std::endl;
   if(tokens.size()<4){
     m_data = help.str();
     return;
@@ -1107,7 +1140,7 @@ void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " r/retrieve <source_file1> [<source_file2> [<source_file3> [...]]] <destination_path>\n";
+  help << tokens[0] << " r/retrieve <source_file1> [<source_file2> [<source_file3> [...]]] <destination_path>" << std::endl;
   if(tokens.size()<4){
     m_data = help.str();
     return;
@@ -1123,7 +1156,7 @@ void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " da/deletearchive <destination_path>\n";
+  help << tokens[0] << " da/deletearchive <destination_path>" << std::endl;
   if(tokens.size()!=3){
     m_data = help.str();
     return;
@@ -1136,7 +1169,7 @@ void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, cons
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_cancelretrieval(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " cr/cancelretrieval <destination_path>\n";
+  help << tokens[0] << " cr/cancelretrieval <destination_path>" << std::endl;
   if(tokens.size()!=3){
     m_data = help.str();
     return;
@@ -1149,37 +1182,37 @@ void XrdProFile::xCom_cancelretrieval(const std::vector<std::string> &tokens, co
 //------------------------------------------------------------------------------
 std::string XrdProFile::getGenericHelp(const std::string &programName) const {
   std::stringstream help;
-  help << "CTA ADMIN commands:\n";
-  help << "\n";
-  help << "For each command there is a short version and a long one, example: op/operator. Subcommands (add/rm/ls/ch/reclaim) do not have short versions.\n";
-  help << "\n";
-  help << programName << " ad/admin          add/rm/ls/ch\n";
-  help << programName << " ah/adminhost      add/rm/ls/ch\n";
-  help << programName << " us/user           add/rm/ls/ch\n";
-  help << programName << " tp/tapepool       add/rm/ls/ch\n";
-  help << programName << " ar/archiveroute   add/rm/ls/ch\n";
-  help << programName << " ll/logicallibrary add/rm/ls/ch\n";
-  help << programName << " ta/tape           add/rm/ls/ch/reclaim\n";
-  help << programName << " sc/storageclass   add/rm/ls/ch\n";
-  help << programName << " loa/listongoingarchivals\n";
-  help << programName << " lor/listongoingretrievals\n";
-  help << programName << " lpa/listpendingarchivals\n";
-  help << programName << " lpr/listpendingretrievals\n";
-  help << programName << " lds/listdrivestates\n";
-  help << "\n";
-  help << "CTA USER commands:\n";
-  help << "\n";
-  help << "For most commands there is a short version and a long one.\n";
-  help << "\n";
-  help << programName << " lsc/liststorageclass\n";
-  help << programName << " ssc/setstorageclass\n";
-  help << programName << " csc/clearstorageclass\n";
-  help << programName << " mkdir\n";
-  help << programName << " rmdir\n";
-  help << programName << " ls\n";
-  help << programName << " a/archive\n";
-  help << programName << " r/retrieve\n";
-  help << programName << " da/deletearchive\n";
-  help << programName << " cr/cancelretrieval\n";
+  help << "CTA ADMIN commands:" << std::endl;
+  help << "" << std::endl;
+  help << "For each command there is a short version and a long one, example: op/operator. Subcommands (add/rm/ls/ch/reclaim) do not have short versions." << std::endl;
+  help << "" << std::endl;
+  help << programName << " ad/admin          add/rm/ls/ch" << std::endl;
+  help << programName << " ah/adminhost      add/rm/ls/ch" << std::endl;
+  help << programName << " us/user           add/rm/ls/ch" << std::endl;
+  help << programName << " tp/tapepool       add/rm/ls/ch" << std::endl;
+  help << programName << " ar/archiveroute   add/rm/ls/ch" << std::endl;
+  help << programName << " ll/logicallibrary add/rm/ls/ch" << std::endl;
+  help << programName << " ta/tape           add/rm/ls/ch/reclaim" << std::endl;
+  help << programName << " sc/storageclass   add/rm/ls/ch" << std::endl;
+  help << programName << " loa/listongoingarchivals" << std::endl;
+  help << programName << " lor/listongoingretrievals" << std::endl;
+  help << programName << " lpa/listpendingarchivals" << std::endl;
+  help << programName << " lpr/listpendingretrievals" << std::endl;
+  help << programName << " lds/listdrivestates" << std::endl;
+  help << "" << std::endl;
+  help << "CTA USER commands:" << std::endl;
+  help << "" << std::endl;
+  help << "For most commands there is a short version and a long one." << std::endl;
+  help << "" << std::endl;
+  help << programName << " lsc/liststorageclass" << std::endl;
+  help << programName << " ssc/setstorageclass" << std::endl;
+  help << programName << " csc/clearstorageclass" << std::endl;
+  help << programName << " mkdir" << std::endl;
+  help << programName << " rmdir" << std::endl;
+  help << programName << " ls" << std::endl;
+  help << programName << " a/archive" << std::endl;
+  help << programName << " r/retrieve" << std::endl;
+  help << programName << " da/deletearchive" << std::endl;
+  help << programName << " cr/cancelretrieval" << std::endl;
   return help.str();
 }
