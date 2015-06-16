@@ -1588,8 +1588,7 @@ TEST_P(SchedulerTest, archive_to_new_user_file_as_admin) {
   }
 
   {
-    const auto rqsts = scheduler.getArchiveRequests(s_userOnUserHost);
-    ASSERT_TRUE(rqsts.empty());
+    ASSERT_NO_THROW(ASSERT_TRUE(scheduler.getArchiveRequests(s_adminOnAdminHost).empty()));
   }
 
   {

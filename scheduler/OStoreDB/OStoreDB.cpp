@@ -191,7 +191,7 @@ void OStoreDB::createArchivalRoute(const std::string& storageClassName,
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  re.setArchivalRoute(storageClassName, copyNb, tapePoolName, 
+  re.addArchivalRoute(storageClassName, copyNb, tapePoolName, 
     objectstore::CreationLog(creationLog));
   re.commit();
 }

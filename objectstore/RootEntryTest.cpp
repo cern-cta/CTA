@@ -102,7 +102,7 @@ TEST(RootEntry, AdminHosts) {
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
     re.removeAdminHost("adminHost1");
-    re.removeAdminHost("noSuch");
+    ASSERT_THROW(re.removeAdminHost("noSuch"), cta::objectstore::RootEntry::NoSuchAdminHost);
     re.commit();
   }
   {
@@ -177,7 +177,7 @@ TEST(RootEntry, AdminUsers) {
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
     re.removeAdminUser(user1prime);
-    re.removeAdminUser(user3);
+    ASSERT_THROW(re.removeAdminUser(user3), cta::objectstore::RootEntry::NoSuchAdminUser);
     re.commit();
   }
   {
@@ -253,7 +253,7 @@ TEST(RootEntry, StorageClassesAndArchivalRoutes) {
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
     ASSERT_NO_THROW(re.removeStorageClass("class2"));
-    ASSERT_NO_THROW(re.removeStorageClass("class4"));
+    ASSERT_THROW(re.removeStorageClass("class4"), cta::objectstore::RootEntry::NoSuchStorageClass);
     re.commit();
   }
   {
@@ -285,8 +285,8 @@ TEST(RootEntry, StorageClassesAndArchivalRoutes) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    re.setArchivalRoute("class1", 0, "pool1_0", cl);
-    re.setArchivalRoute("class3", 2, "pool3_2", cl);
+    ASSERT_NO_THROW(re.addArchivalRoute("class1", 1, "pool1_0", cl));
+    ASSERT_NO_THROW(re.addArchivalRoute("class3", 3, "pool3_2", cl));
     re.commit();
   }
   {
@@ -302,13 +302,13 @@ TEST(RootEntry, StorageClassesAndArchivalRoutes) {
       cta::objectstore::RootEntry::IncompleteEntry);
   }
   {
-    //Check that we can complete a storage class, and overwrite the routes
+    //Check that we can complete a storage class, and cannot overwite the routes
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    re.setArchivalRoute("class3", 0, "pool3_0", cl);
-    re.setArchivalRoute("class3", 1, "pool3_1", cl);
-    re.setArchivalRoute("class3", 2, "pool3_2b", cl);
+    ASSERT_NO_THROW(re.addArchivalRoute("class3", 1, "pool3_0", cl));
+    ASSERT_NO_THROW(re.addArchivalRoute("class3", 2, "pool3_1", cl));
+    ASSERT_THROW(re.addArchivalRoute("class3", 3, "pool3_2b", cl), cta::objectstore::RootEntry::ArchivalRouteAlreadyExists);
     re.commit();
     re.fetch();
     ASSERT_NO_THROW(re.getArchivalRoutes("class3"));
@@ -347,6 +347,9 @@ TEST(RootEntry, StorageClassesAndArchivalRoutes) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
+    re.removeArchivalRoute("class1", 1);
+    re.removeArchivalRoute("class3", 1);
+    re.removeArchivalRoute("class3", 2);
     re.removeStorageClass("class1");
     re.removeStorageClass("class3");
     re.commit();
@@ -393,7 +396,7 @@ TEST(RootEntry, Libraries) {
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
     re.removeLibrary("library1");
-    re.removeAdminHost("library3");
+    ASSERT_THROW(re.removeAdminHost("library3"), cta::objectstore::RootEntry::NoSuchAdminHost);
     re.commit();
   }
   {
@@ -439,7 +442,6 @@ TEST (RootEntry, TapePools) {
     re.addOrGetAgentRegisterPointerAndCommit(ag, cl);
   }
   ag.insertAndRegisterSelf();
-  cta::objectstore::ScopedExclusiveLock agl(ag);
   std::string tpAddr1, tpAddr2;
   {
     // Create the tape pools
@@ -471,6 +473,7 @@ TEST (RootEntry, TapePools) {
     ASSERT_FALSE(be.exists(tpAddr2));
   }
   // Unregister the agent
+  cta::objectstore::ScopedExclusiveLock agl(ag);
   ag.removeAndUnregisterSelf();
   // Delete the root entry
   cta::objectstore::RootEntry re(be);

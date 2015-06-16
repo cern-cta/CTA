@@ -49,6 +49,7 @@ public:
   
   // Manipulations of AdminHosts ===============================================
   void addAdminHost(const std::string & hostname, const CreationLog & log);
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchAdminHost);
   void removeAdminHost(const std::string & hostname);
   bool isAdminHost(const std::string & hostname);
   class AdminHostDump {
@@ -62,6 +63,7 @@ public:
   
   // Manipulations of Admin Users ==============================================
   void addAdminUser(const UserIdentity & user, const CreationLog & log);
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchAdminUser);
   void removeAdminUser(const UserIdentity & user);
   bool isAdminUser(const UserIdentity & user);
   class AdminUserDump {
@@ -75,6 +77,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(MissingEntry);
   CTA_GENERATE_EXCEPTION_CLASS(IncompleteEntry);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchStorageClass);
+  CTA_GENERATE_EXCEPTION_CLASS(StorageClassHasActiveRoutes);
   CTA_GENERATE_EXCEPTION_CLASS(InvalidCopyNumber);
   CTA_GENERATE_EXCEPTION_CLASS(CopyNumberOutOfRange);
 private:
@@ -88,8 +91,10 @@ public:
   void setStorageClassCopyCount(const std::string & storageClass,
     uint16_t copyCount, const CreationLog & cl);
   uint16_t getStorageClassCopyCount(const std::string & storageClass);
-  void setArchivalRoute(const std::string & storageClass, uint16_t copyNb, 
+  CTA_GENERATE_EXCEPTION_CLASS(ArchivalRouteAlreadyExists);
+  void addArchivalRoute(const std::string & storageClass, uint16_t copyNb, 
     const std::string & tapePool, const CreationLog & cl);
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchivalRoute);
   void removeArchivalRoute(const std::string & storageClass, uint16_t copyNb);
 
   /** Ordered vector of archive routes */
@@ -112,6 +117,7 @@ public:
   
   // Manipulations of libraries ================================================
   void addLibrary(const std::string & library, const CreationLog & log);
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchLibrary);
   void removeLibrary(const std::string & library);
   bool libraryExists(const std::string & library);
   class LibraryDump {
@@ -131,6 +137,8 @@ public:
     const CreationLog & log);
   /** This function implicitly deletes the tape pool structure. 
    * Fails if it not empty*/
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchTapePool);
+  CTA_GENERATE_EXCEPTION_CLASS(TapePoolUsedInRoute);
   void removeTapePoolAndCommit(const std::string & tapePool);
   std::string getTapePoolAddress(const std::string & tapePool);
   class TapePoolDump {
