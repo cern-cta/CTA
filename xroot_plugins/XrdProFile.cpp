@@ -321,7 +321,7 @@ std::string XrdProFile::getOptionValue(const std::vector<std::string> &tokens, c
   for(auto it=tokens.begin(); it!=tokens.end(); it++) {
     if(optionShortName == *it || optionLongName == *it) {
       auto it_next=it+1;
-      if(it_next!=tokens.end()) {
+      if(it_next!=tokens.end() && it_next->find("-")!=0) {
         return *it_next;
       }
       else {
