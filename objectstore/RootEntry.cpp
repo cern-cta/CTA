@@ -424,6 +424,7 @@ std::string cta::objectstore::RootEntry::addOrGetTapePoolAndCommit(const std::st
   // Insert the tape pool, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
   std::string tapePoolAddress = agent.nextId("tapePool");
+  ScopedExclusiveLock agl(agent);
   agent.fetch();
   agent.addToOwnership(tapePoolAddress);
   agent.commit();
