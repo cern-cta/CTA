@@ -230,7 +230,7 @@ BEGIN
         -- the second attempt go through
         -- Note that there will be no third attempt as nothing can recreate the DiskCopy
         -- with that id anymore
-        NULL:
+        NULL;
       END;
     END;
   END LOOP;
