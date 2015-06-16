@@ -65,3 +65,10 @@ bool cta::StorageClass::operator<(const StorageClass& rhs) const {
   return m_name < rhs.m_name;
 }
 
+//------------------------------------------------------------------------------
+// getCreationLog
+//------------------------------------------------------------------------------
+auto cta::StorageClass::getCreationLog() const throw() -> const CreationLog & {
+  return m_creationLog;
+}
+

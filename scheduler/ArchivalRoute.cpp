@@ -65,3 +65,10 @@ uint16_t cta::ArchivalRoute::getCopyNb() const throw() {
 const std::string &cta::ArchivalRoute::getTapePoolName() const throw() {
   return m_tapePoolName;
 }
+
+//------------------------------------------------------------------------------
+// getCreationLog
+//------------------------------------------------------------------------------
+auto cta::ArchivalRoute::getCreationLog() const throw() -> const CreationLog & {
+  return m_creationLog;
+}

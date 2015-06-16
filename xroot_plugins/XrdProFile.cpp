@@ -1082,6 +1082,7 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
                << " " << dirEntry.getStorageClassName()
                << " " << dirEntry.getName();
   }
+  m_data = responseSS.str();
 }
   
 //------------------------------------------------------------------------------
@@ -1090,8 +1091,14 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
 void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " a/archive <source_file1> [<source_file2> [<source_file3> [...]]] <destination_path>\n";
-  
-  
+  if(tokens.size()<4){
+    m_data = help.str();
+    return;
+  }
+  auto src_begin = tokens.begin() + 2; //exclude the program name and the archive command
+  auto src_end = tokens.end() - 2; //exclude the destination
+  const std::list<std::string> source_files(src_begin, src_end);
+  m_scheduler->queueArchiveRequest(requester, source_files, tokens[tokens.size()-1]);
 }
   
 //------------------------------------------------------------------------------
@@ -1100,8 +1107,14 @@ void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
 void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " r/retrieve <source_file1> [<source_file2> [<source_file3> [...]]] <destination_path>\n";
-  
-  
+  if(tokens.size()<4){
+    m_data = help.str();
+    return;
+  }
+  auto src_begin = tokens.begin() + 2; //exclude the program name and the archive command
+  auto src_end = tokens.end() - 2; //exclude the destination
+  const std::list<std::string> source_files(src_begin, src_end);
+  m_scheduler->queueRetrieveRequest(requester, source_files, tokens[tokens.size()-1]);
 }
   
 //------------------------------------------------------------------------------
@@ -1110,8 +1123,11 @@ void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
 void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " da/deletearchive <destination_path>\n";
-  
-  
+  if(tokens.size()!=3){
+    m_data = help.str();
+    return;
+  }
+  m_scheduler->deleteArchiveRequest(requester, tokens[2]);
 }
   
 //------------------------------------------------------------------------------
@@ -1120,8 +1136,11 @@ void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, cons
 void XrdProFile::xCom_cancelretrieval(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " cr/cancelretrieval <destination_path>\n";
-  
-  
+  if(tokens.size()!=3){
+    m_data = help.str();
+    return;
+  }
+  m_scheduler->deleteRetrieveRequest(requester, tokens[2]);
 }
 
 //------------------------------------------------------------------------------
