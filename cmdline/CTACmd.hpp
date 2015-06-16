@@ -18,20 +18,17 @@
 
 #pragma once
 
-#include <exception>
-#include <istream>
-#include <ostream>
 #include <string>
 
 /**
  * Class implementing the business logic of the archive command-line tool.
  */
-class CTACmd {
+class CTACopyCmd {
 public:
   /**
    * Constructor.
    */
-  CTACmd() throw();
+  CTACopyCmd() throw();
 
   /**
    * The entry function of the command.
@@ -39,29 +36,35 @@ public:
    * @param argc The number of command-line arguments.
    * @param argv The command-line arguments.
    */
-  int main(const int argc, char **argv) throw();
+  int main(const int argc, const char **argv) const throw();
 
 protected:
-   
-  /**
-   * The name of the program.
-   */
-  const std::string m_programName;
-
-  /**
-   * Writes the command-line usage message of to the specified output stream.
-   *
-   * @param os Output stream to be written to.
-   */
-  void usage(std::ostream &os) const throw();
   
   /**
-   * Sends the archive request and waits for the reply
+   * Sends the command and waits for the reply
    *
    * @param argc The number of command-line arguments.
    * @param argv The command-line arguments. 
    * @return the return code
    */
-  int executeCommand(const int argc, char **argv) ;
+  int sendCommand(const int argc, const char **argv) const;
+  
+  /**
+   * Formats the command path string
+   *
+   * @param argc The number of command-line arguments.
+   * @param argv The command-line arguments. 
+   * @return the command string
+   */
+  std::string formatCommandPath(const int argc, const char **argv) const;
+  
+  /**
+   * Replaces all occurrences in a string "str" of a substring "from" with the string "to"
+   * 
+   * @param str  The original string
+   * @param from The substring to replace
+   * @param to   The replacement string
+   */
+  void replaceAll(std::string& str, const std::string& from, const std::string& to) const;
 
-}; // class LabelCmd
+}; // class CTACopyCmd

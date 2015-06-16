@@ -33,7 +33,6 @@
 #include "xroot_plugins/XrdProFile.hpp"
 
 #include "XrdSec/XrdSecEntity.hh"
-#include "cmdline/CTACmd.hpp"
 #include "scheduler/DirIterator.hpp"
 
 #include <iostream>
@@ -148,7 +147,7 @@ int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t c
     m_data = getGenericHelp("");
     return SFS_OK;
   }
-  if(tokens.size() < 3) {
+  if(tokens.size() < 2) {
     m_data = getGenericHelp(tokens[0]);
     return SFS_OK;
   }
