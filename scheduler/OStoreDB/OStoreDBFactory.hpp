@@ -47,29 +47,32 @@ template <class BackendType>
 class OStoreDBWrapper: public SchedulerDatabase {
 public:
   OStoreDBWrapper(const std::string &context): m_backend(),
-      m_OStoreDB(m_backend) {
+      m_OStoreDB(m_backend), m_agent(m_backend) {
     // We need to populate the root entry before using.
     objectstore::RootEntry re(m_backend);
     re.initialize();
     re.insert();
     objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    objectstore::Agent ag(m_backend);
-    ag.generateName("OStoreDBFactory");
-    ag.initialize();
+    m_agent.generateName("OStoreDBFactory");
+    m_agent.initialize();
     objectstore::CreationLog cl(cta::UserIdentity(1111, 1111), "systemhost", 
       time(NULL), "Initial creation of the  object store structures");
-    re.addOrGetAgentRegisterPointerAndCommit(ag,cl);
+    re.addOrGetAgentRegisterPointerAndCommit(m_agent,cl);
     rel.release();
-    ag.insertAndRegisterSelf();
+    m_agent.insertAndRegisterSelf();
     rel.lock(re);
-    re.addOrGetDriveRegisterPointerAndCommit(ag, cl);
+    re.addOrGetDriveRegisterPointerAndCommit(m_agent, cl);
     rel.release();
-    objectstore::ScopedExclusiveLock agl(ag);
-    ag.removeAndUnregisterSelf();
+    m_OStoreDB.setAgent(m_agent);
   }
   
-  virtual ~OStoreDBWrapper() throw() {}
+  virtual ~OStoreDBWrapper() throw() {
+    m_OStoreDB.setAgent(*((objectstore::Agent*)NULL));
+    objectstore::ScopedExclusiveLock agl(m_agent);
+    m_agent.fetch();
+    m_agent.removeAndUnregisterSelf();
+  }
   
   virtual void assertIsAdminOnAdminHost(const SecurityIdentity& id) const {
     m_OStoreDB.assertIsAdminOnAdminHost(id);
@@ -215,6 +218,7 @@ public:
 private:
   BackendType m_backend;
   cta::OStoreDB m_OStoreDB;
+  objectstore::Agent m_agent;
 };
 
 }
