@@ -52,13 +52,13 @@ public:
   
   std::string getDirStorageClass(const SecurityIdentity &requester, const std::string &path) const;
   
-  void createFile(const SecurityIdentity &requester, const std::string &path, const uint16_t mode);
+  void createFile(const SecurityIdentity &requester, const std::string &path, const mode_t mode);
 
   void setOwner(const SecurityIdentity &requester, const std::string &path, const UserIdentity &owner);
 
   UserIdentity getOwner(const SecurityIdentity &requester, const std::string &path) const;
   
-  void createDir(const SecurityIdentity &requester, const std::string &path, const uint16_t mode);
+  void createDir(const SecurityIdentity &requester, const std::string &path, const mode_t mode);
   
   void deleteFile(const SecurityIdentity &requester, const std::string &path);
   

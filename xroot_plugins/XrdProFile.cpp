@@ -115,6 +115,7 @@ void XrdProFile::commandDispatcher(const std::vector<std::string> &tokens, const
   else if("ssc"   == command || "setstorageclass"       == command) {xCom_setstorageclass(tokens, requester);}
   else if("csc"   == command || "clearstorageclass"     == command) {xCom_clearstorageclass(tokens, requester);}
   else if("mkdir" == command)                                       {xCom_mkdir(tokens, requester);}
+  else if("chown" == command)                                       {xCom_chown(tokens, requester);}
   else if("rmdir" == command)                                       {xCom_rmdir(tokens, requester);}
   else if("ls"    == command)                                       {xCom_ls(tokens, requester);}
   else if("a"     == command || "archive"               == command) {xCom_archive(tokens, requester);}
@@ -158,14 +159,17 @@ int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t c
     return SFS_OK;
   } catch (cta::exception::Exception &ex) {
     m_data = "[ERROR] CTA exception caught: ";
-    m_data += ex.what();
+    m_data += ex.getMessageValue();
+    m_data += "\n";
     return SFS_OK;
   } catch (std::exception &ex) {
     m_data = "[ERROR] Exception caught: ";
     m_data += ex.what();
+    m_data += "\n";
     return SFS_OK;
   } catch (...) {
     m_data = "[ERROR] Unknown exception caught!";
+    m_data += "\n";
     return SFS_OK;
   }
 }
@@ -623,7 +627,7 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
                  << " " << it->getCreationLog().user.gid 
                  << " " << it->getCreationLog().host
                  << " " << it->getCreationLog().time
-                 << " " << it->getCreationLog().comment;
+                 << " " << it->getCreationLog().comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -755,7 +759,7 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
                  << " " << it->getCreationLog().user.gid
                  << " " << it->getCreationLog().host
                  << " " << it->getCreationLog().time
-                 << " " << it->getCreationLog().comment;
+                 << " " << it->getCreationLog().comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -999,7 +1003,7 @@ void XrdProFile::xCom_listongoingretrievals(const std::vector<std::string> &toke
 void XrdProFile::xCom_listpendingarchivals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " lpa/listpendingarchivals --tapepool/-t <tapepool_name>" << std::endl;
-  m_data = "Not implemented yet!";
+  m_data = "Not implemented yet!\n";
 }
   
 //------------------------------------------------------------------------------
@@ -1008,7 +1012,7 @@ void XrdProFile::xCom_listpendingarchivals(const std::vector<std::string> &token
 void XrdProFile::xCom_listpendingretrievals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " lpr/listpendingretrievals --vid/-v <vid>" << std::endl;
-  m_data = "Not implemented yet!";
+  m_data = "Not implemented yet!\n";
 }
   
 //------------------------------------------------------------------------------
@@ -1017,7 +1021,7 @@ void XrdProFile::xCom_listpendingretrievals(const std::vector<std::string> &toke
 void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " lds/listdrivestates" << std::endl;
-  m_data = "Not implemented yet!";
+  m_data = "Not implemented yet!\n";
 }
   
 //------------------------------------------------------------------------------
@@ -1071,7 +1075,27 @@ void XrdProFile::xCom_mkdir(const std::vector<std::string> &tokens, const cta::S
     m_data = help.str();
     return;
   }
-  m_scheduler->createDir(requester, tokens[2], 0777); // we need to set mode appropriately NOT 0777!
+  m_scheduler->createDir(requester, tokens[2], ACCESSPERMS); // we need to set mode appropriately NOT 0777!
+}
+
+//------------------------------------------------------------------------------
+// xCom_chown
+//------------------------------------------------------------------------------
+void XrdProFile::xCom_chown(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+  std::stringstream help;
+  help << tokens[0] << " chown <uid> <gid> <dirpath>" << std::endl;
+  if(tokens.size()!=5){
+    m_data = help.str();
+    return;
+  }
+  std::istringstream uid_ss(tokens[2]);
+  int uid = 0;
+  uid_ss >> uid;
+  std::istringstream gid_ss(tokens[3]);
+  int gid = 0;
+  gid_ss >> gid;
+  cta::UserIdentity owner(uid, gid);
+  m_scheduler->setOwner(requester, tokens[4], owner);
 }
   
 //------------------------------------------------------------------------------
@@ -1101,7 +1125,7 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
   std::ostringstream responseSS;
   while(dirIterator.hasMore()) {
     auto dirEntry = dirIterator.next();
-    responseSS << (S_ISDIR(dirEntry.getMode()) ? "d" : "-")
+    responseSS << ((dirEntry.getType()==dirEntry.ENTRYTYPE_DIRECTORY) ? "d" : "-")
                << ((dirEntry.getMode() & S_IRUSR) ? "r" : "-")
                << ((dirEntry.getMode() & S_IWUSR) ? "w" : "-")
                << ((dirEntry.getMode() & S_IXUSR) ? "x" : "-")
@@ -1208,6 +1232,7 @@ std::string XrdProFile::getGenericHelp(const std::string &programName) const {
   help << programName << " ssc/setstorageclass" << std::endl;
   help << programName << " csc/clearstorageclass" << std::endl;
   help << programName << " mkdir" << std::endl;
+  help << programName << " chown" << std::endl;
   help << programName << " rmdir" << std::endl;
   help << programName << " ls" << std::endl;
   help << programName << " a/archive" << std::endl;

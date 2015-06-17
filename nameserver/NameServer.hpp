@@ -47,7 +47,7 @@ public:
   virtual void createDir(
     const SecurityIdentity &requester,
     const std::string &path,
-    const uint16_t mode) = 0;
+    const mode_t mode) = 0;
 
   /**
    * Deletes the specified directory.
@@ -153,7 +153,7 @@ public:
   virtual void createFile(
     const SecurityIdentity &requester,
     const std::string &path,
-    const uint16_t mode) = 0;
+    const mode_t mode) = 0;
 
   /**
    * Sets the owner of the specified file or directory entry.

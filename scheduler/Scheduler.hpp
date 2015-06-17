@@ -432,7 +432,7 @@ public:
   void createDir(
     const SecurityIdentity &requester,
     const std::string &path,
-    const uint16_t mode);
+    const mode_t mode);
   
   /**
    * Sets the owner of the specified file or directory entry.

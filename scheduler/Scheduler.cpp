@@ -38,6 +38,7 @@
 #include "scheduler/TapePool.hpp"
 #include "scheduler/UserIdentity.hpp"
 
+#include <iostream>
 #include <sstream>
 
 //------------------------------------------------------------------------------
@@ -357,7 +358,7 @@ std::list<cta::Tape> cta::Scheduler::getTapes(
 void cta::Scheduler::createDir(
   const SecurityIdentity &requester,
   const std::string &path,
-  const uint16_t mode) {
+  const mode_t mode) {
   m_ns.createDir(requester, path, mode);
 }
 

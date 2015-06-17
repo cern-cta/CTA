@@ -156,7 +156,8 @@ void cta::MockNameServer::assertStorageClassIsNotInUse(
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MockNameServer::MockNameServer() {  
+cta::MockNameServer::MockNameServer() {
+  umask(0);  
   char path[100];
   strncpy(path, "/tmp/CTATmpFsXXXXXX", 100);
   exception::Errnum::throwOnNull(
@@ -222,7 +223,7 @@ std::string cta::MockNameServer::getDirStorageClass(
 void cta::MockNameServer::createFile(
   const SecurityIdentity &requester,
   const std::string &path,
-  const uint16_t mode) {
+  const mode_t mode) {
   Utils::assertAbsolutePathSyntax(path);  
   const std::string dir = Utils::getEnclosingPath(path);
   assertFsDirExists(m_fsDir + dir);
@@ -313,7 +314,7 @@ cta::UserIdentity cta::MockNameServer::getOwner(
 // createDir
 //------------------------------------------------------------------------------
 void cta::MockNameServer::createDir(const SecurityIdentity &requester,
-  const std::string &path, const uint16_t mode) {  
+  const std::string &path, const mode_t mode) {  
   Utils::assertAbsolutePathSyntax(path);  
   const std::string enclosingPath = Utils::getEnclosingPath(path);
   assertFsDirExists(m_fsDir + enclosingPath);
@@ -322,7 +323,6 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
   const std::string inheritedStorageClass = getDirStorageClass(requester,
     enclosingPath);
   const std::string fsPath = m_fsDir + path;
-  
   if(mkdir(fsPath.c_str(), mode)) {
     const int savedErrno = errno;
     std::ostringstream msg;

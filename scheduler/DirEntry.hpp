@@ -39,7 +39,7 @@ public:
     ENTRYTYPE_DIRECTORY};
 
   /**
-   * Thread safe method that returns the string reprsentation of the specified
+   * Thread safe method that returns the string representation of the specified
    * enumeration value.
    */
   static const char *entryTypeToStr(const EntryType enumValue) throw();
@@ -97,7 +97,7 @@ public:
    *
    * @return The mode bits of the directory entry.
    */
-  uint16_t getMode() const throw();
+  mode_t getMode() const throw();
 
   /**
    * Sets the name of the storage class.
@@ -140,7 +140,7 @@ private:
   /**
    * The mode bits of the directory entry.
    */
-  uint16_t m_mode;
+  mode_t m_mode;
 
   /**
    * The name of the directory's storage class or an empty string if the

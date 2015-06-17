@@ -49,6 +49,7 @@ cta::DirEntry::DirEntry(const EntryType entryType,
   m_name(name),
   m_ownerId(0),
   m_groupId(0),
+  m_mode(0777),
   m_storageClassName(storageClassName) {
 }
 
@@ -84,7 +85,7 @@ uint32_t cta::DirEntry::getGroupId() const throw() {
 //------------------------------------------------------------------------------
 // getMode
 //------------------------------------------------------------------------------
-uint16_t cta::DirEntry::getMode() const throw() {
+mode_t cta::DirEntry::getMode() const throw() {
   return m_mode;
 }
 

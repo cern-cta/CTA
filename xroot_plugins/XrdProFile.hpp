@@ -212,6 +212,13 @@ protected:
   void xCom_mkdir(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
+   * Executes the chown command
+   * 
+   * @param tokens The command line tokens
+   */
+  void xCom_chown(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
+  
+  /**
    * Executes the rmdir command
    * 
    * @param tokens The command line tokens
