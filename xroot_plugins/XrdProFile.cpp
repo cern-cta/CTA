@@ -1154,8 +1154,11 @@ void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
     return;
   }
   auto src_begin = tokens.begin() + 2; //exclude the program name and the archive command
-  auto src_end = tokens.end() - 2; //exclude the destination
+  auto src_end = tokens.end() - 1; //exclude the destination
   const std::list<std::string> source_files(src_begin, src_end);
+  for(auto it=source_files.begin(); it!=source_files.end(); it++) {
+    std::cout << "SRC: " << *it << std::endl;
+  }
   m_scheduler->queueArchiveRequest(requester, source_files, tokens[tokens.size()-1]);
 }
   
@@ -1170,7 +1173,7 @@ void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
     return;
   }
   auto src_begin = tokens.begin() + 2; //exclude the program name and the archive command
-  auto src_end = tokens.end() - 2; //exclude the destination
+  auto src_end = tokens.end() - 1; //exclude the destination
   const std::list<std::string> source_files(src_begin, src_end);
   m_scheduler->queueRetrieveRequest(requester, source_files, tokens[tokens.size()-1]);
 }
