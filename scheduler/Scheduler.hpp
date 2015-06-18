@@ -32,8 +32,8 @@ class ArchivalRoute;
 class ArchiveToDirRequest;
 class ArchiveToFileRequest;
 class ArchiveToTapeCopyRequest;
-class DirEntry;
 class DirIterator;
+class FileStatus;
 class LogicalLibrary;
 class NameServer;
 class RemoteNS;
@@ -514,16 +514,15 @@ public:
     const std::string &path) const;
 
   /**
-   * Returns the directory entry information for the specified directory or file
-   * within the archive namespace.
+   * Returns the status of the specified file or directory within the archive
+   * namespace.
    *
    * @param requester The identity of the requester.
-   * @param path The absolute path of the directory or file within the archive
+   * @param path The absolute path of the file or directory within the archive
    * namespace.
-   * @return The directory entry information for the specified directory or file
-   * within the archive namespace.
+   * @return The status of the file or directory.
    */
-  DirEntry statFile(
+  FileStatus statFile(
     const SecurityIdentity &requester,
     const std::string &path) const;
 

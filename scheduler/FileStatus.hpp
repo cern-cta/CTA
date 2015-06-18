@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include <list>
-#include <stdint.h>
+#include "scheduler/UserIdentity.hpp"
+
 #include <string>
 
 namespace cta {
@@ -40,26 +40,20 @@ public:
   /**
    * Constructor.
    *
-   * Initialises all integer member-variables to 0.
-   *
-   * @param storageClassName The name of the directory's storage class or an
-   * empty string if the directory does not have a storage class.
+   * @param owner The identity of the owner.
+   * @param mode The mode bits of the filei or directory.
+   * @param storageClassName The name of the file or directory's storage class.
+   * An empty string indicates no storage class.
    */
-  FileStatus(const std::string &storageClassName);
+  FileStatus(
+    const UserIdentity &owner,
+    const mode_t mode,
+    const std::string &storageClassName);
 
   /**
-   * Returns the user ID of the owner.
-   *
-   * @return The user ID of the owner.
+   * Returns the identity of the owner.
    */
-  uint32_t getUid() const throw();
-
-  /**
-   * Returns the group ID of the owner.
-   *
-   * @return The group ID of the owner.
-   */
-  uint32_t getGid() const throw();
+  const UserIdentity &getOwner() const throw();
 
   /**
    * Returns the mode bits of the directory entry.
@@ -87,14 +81,9 @@ public:
 private:
 
   /**
-   * The user ID of the directory entry's owner.
+   * The identity of the owner.
    */
-  uint32_t m_ownerId;
-
-  /**
-   * The group ID of the directory entry.
-   */
-  uint32_t m_groupId;
+  UserIdentity m_owner;
 
   /**
    * The mode bits of the directory entry.

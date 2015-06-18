@@ -19,6 +19,7 @@
 #pragma once
 
 #include "scheduler/DirIterator.hpp"
+#include "scheduler/FileStatus.hpp"
 #include "scheduler/SecurityIdentity.hpp"
 
 #include <string>
@@ -84,16 +85,15 @@ public:
     const std::string &path) const = 0;
 
   /**
-   * Returns the directory entry information for the specified directory or file
-   * within the archive namespace.
+   * Returns the status of the specified file or directory within the archive
+   * namespace.
    *
    * @param requester The identity of the requester.
-   * @param path The absolute path of the directory or file within the archive
+   * @param path The absolute path of the file or directory within the archive
    * namespace.
-   * @return The directory entry information for the specified directory or file
-   * within the archive namespace.
+   * @return The status of the file or directory.
    */
-  virtual DirEntry statFile(
+  virtual FileStatus statFile(
     const SecurityIdentity &requester,
     const std::string &path) const = 0;
 

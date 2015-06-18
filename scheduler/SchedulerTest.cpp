@@ -1486,11 +1486,10 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   }
 
   {
-    DirEntry entry;
-    ASSERT_NO_THROW(entry = scheduler.statFile(s_userOnUserHost,
+    FileStatus status;
+    ASSERT_NO_THROW(status = scheduler.statFile(s_userOnUserHost,
       archiveFile));
-    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+    ASSERT_EQ(storageClassName, status.getStorageClassName());
   }
 
   {
@@ -1657,11 +1656,10 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
   }
 
   {
-    DirEntry entry;
-    ASSERT_NO_THROW(entry = scheduler.statFile(s_userOnUserHost,
+    FileStatus status;
+    ASSERT_NO_THROW(status = scheduler.statFile(s_userOnUserHost,
       archiveFile));
-    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+    ASSERT_EQ(storageClassName, status.getStorageClassName());
   }
 
   {
@@ -1730,11 +1728,10 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
   }
 
   {
-    DirEntry entry;
-    ASSERT_NO_THROW(entry = scheduler.statFile(s_userOnUserHost,
+    FileStatus status;
+    ASSERT_NO_THROW(status = scheduler.statFile(s_userOnUserHost,
       archiveFile));
-    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+    ASSERT_EQ(storageClassName, status.getStorageClassName());
   }
 
   {
@@ -1820,11 +1817,10 @@ TEST_P(SchedulerTest, delete_archive_request) {
   }
 
   {
-    DirEntry entry;
-    ASSERT_NO_THROW(entry = scheduler.statFile(s_userOnUserHost,
+    FileStatus status;
+    ASSERT_NO_THROW(status = scheduler.statFile(s_userOnUserHost,
       archiveFile));
-    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStorageClassName());
+    ASSERT_EQ(storageClassName, status.getStorageClassName());
   }
 
   {
@@ -2443,14 +2439,12 @@ TEST_P(SchedulerTest, setOwner_statFile_top_level) {
     const uint16_t mode = 0777;
     ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
 
-    DirEntry entry;
+    FileStatus status;
 
-    ASSERT_NO_THROW(entry = scheduler.statFile(s_userOnUserHost, dirPath));
+    ASSERT_NO_THROW(status = scheduler.statFile(s_userOnUserHost, dirPath));
 
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
-
-    ASSERT_EQ(s_user.uid, entry.getUid());
-    ASSERT_EQ(s_user.gid, entry.getGid());
+    ASSERT_EQ(s_user.uid, status.getOwner().uid);
+    ASSERT_EQ(s_user.gid, status.getOwner().gid);
   }
 }
 

@@ -354,7 +354,8 @@ void cta::MockNameServer::deleteFile(const SecurityIdentity &requester, const st
 //------------------------------------------------------------------------------
 // deleteDir
 //------------------------------------------------------------------------------
-void cta::MockNameServer::deleteDir(const SecurityIdentity &requester, const std::string &path) {
+void cta::MockNameServer::deleteDir(const SecurityIdentity &requester,
+  const std::string &path) {
   if(path == "/") {    
     std::ostringstream msg;
     msg << __FUNCTION__ << " - Cannot delete root directory";
@@ -375,7 +376,53 @@ void cta::MockNameServer::deleteDir(const SecurityIdentity &requester, const std
 //------------------------------------------------------------------------------
 // statFile
 //------------------------------------------------------------------------------
-cta::DirEntry cta::MockNameServer::statFile(
+cta::FileStatus cta::MockNameServer::statFile(
+  const SecurityIdentity &requester,
+  const std::string &path) const {
+
+  const DirEntry entry = getDirEntry(requester, path);
+  const UserIdentity owner(entry.getUid(), entry.getGid());
+  return FileStatus(owner, entry.getMode(), entry.getStorageClassName());
+}
+
+//------------------------------------------------------------------------------
+// getDirEntries
+//------------------------------------------------------------------------------
+std::list<cta::DirEntry> cta::MockNameServer::getDirEntries(
+  const SecurityIdentity &requester,
+  const std::string &path) const {  
+  const std::string fsPath = m_fsDir + path;
+  DIR *const dp = opendir(fsPath.c_str());
+
+  if(dp == NULL) {
+    const int savedErrno = errno;
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - opendir " << fsPath << " error. Reason: \n"
+      << Utils::errnoToString(savedErrno);
+    throw(exception::Exception(msg.str()));
+  }
+  
+  std::list<DirEntry> entries;
+  struct dirent *entry;
+  
+  const bool pathEndsWithASlash = path.at(path.length()-1) == '/';
+  while((entry = readdir(dp))) {
+    const std::string entryName(entry->d_name);
+    if(entryName != "." && entryName != "..") {
+      const std::string entryPath = pathEndsWithASlash ?
+        path + entryName : path + "/" + entryName;
+      entries.push_back(getDirEntry(requester, entryPath));
+    }
+  }
+  
+  closedir(dp);  
+  return entries;
+}
+
+//------------------------------------------------------------------------------
+// getDirEntry
+//------------------------------------------------------------------------------
+cta::DirEntry cta::MockNameServer::getDirEntry(
   const SecurityIdentity &requester,
   const std::string &path) const {
   Utils::assertAbsolutePathSyntax(path);
@@ -411,40 +458,6 @@ cta::DirEntry cta::MockNameServer::statFile(
   } 
   
   return DirEntry(entryType, name, storageClassName);
-}
-
-//------------------------------------------------------------------------------
-// getDirEntries
-//------------------------------------------------------------------------------
-std::list<cta::DirEntry> cta::MockNameServer::getDirEntries(
-  const SecurityIdentity &requester,
-  const std::string &path) const {  
-  const std::string fsPath = m_fsDir + path;
-  DIR *const dp = opendir(fsPath.c_str());
-
-  if(dp == NULL) {
-    const int savedErrno = errno;
-    std::ostringstream msg;
-    msg << __FUNCTION__ << " - opendir " << fsPath << " error. Reason: \n"
-      << Utils::errnoToString(savedErrno);
-    throw(exception::Exception(msg.str()));
-  }
-  
-  std::list<DirEntry> entries;
-  struct dirent *entry;
-  
-  const bool pathEndsWithASlash = path.at(path.length()-1) == '/';
-  while((entry = readdir(dp))) {
-    const std::string entryName(entry->d_name);
-    if(entryName != "." && entryName != "..") {
-      const std::string entryPath = pathEndsWithASlash ?
-        path + entryName : path + "/" + entryName;
-      entries.push_back(statFile(requester, entryPath));
-    }
-  }
-  
-  closedir(dp);  
-  return entries;
 }
 
 //------------------------------------------------------------------------------

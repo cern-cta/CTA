@@ -22,33 +22,26 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::FileStatus::FileStatus():
-  m_ownerId(0),
-  m_groupId(0),
   m_mode(0) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileStatus::FileStatus(const std::string &storageClassName):
-  m_ownerId(0),
-  m_groupId(0),
-  m_mode(0777),
+cta::FileStatus::FileStatus(
+  const UserIdentity &owner,
+  const mode_t mode,
+  const std::string &storageClassName):
+  m_owner(owner),
+  m_mode(mode),
   m_storageClassName(storageClassName) {
 }
 
 //------------------------------------------------------------------------------
-// getUid
+// getOwner
 //------------------------------------------------------------------------------
-uint32_t cta::FileStatus::getUid() const throw() {
-  return m_ownerId;
-}
-
-//------------------------------------------------------------------------------
-// getGid
-//------------------------------------------------------------------------------
-uint32_t cta::FileStatus::getGid() const throw() {
-  return m_groupId;
+const cta::UserIdentity &cta::FileStatus::getOwner() const throw() {
+  return m_owner;
 }
 
 //------------------------------------------------------------------------------

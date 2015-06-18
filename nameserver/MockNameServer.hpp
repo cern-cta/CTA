@@ -64,9 +64,9 @@ public:
   
   void deleteDir(const SecurityIdentity &requester, const std::string &path);
   
-  cta::DirEntry statFile(const SecurityIdentity &requester, const std::string &path) const;
+  FileStatus statFile(const SecurityIdentity &requester, const std::string &path) const;
   
-  cta::DirIterator getDirContents(const SecurityIdentity &requester, const std::string &path) const;
+  DirIterator getDirContents(const SecurityIdentity &requester, const std::string &path) const;
   
   bool regularFileExists(const SecurityIdentity &requester, const std::string &path) const;
 
@@ -90,10 +90,21 @@ private:
    * Throws an exception if the specified user is not the owner of the
    * specified namepsace entry.
    *
+   * @param requester The identity of the requester.
    * @param user The user.
    * @param path The absolute path of the namespace entry.
    */
   void assertIsOwner(const SecurityIdentity &requester, const UserIdentity &user, const std::string &path) const;
+
+  /**
+   * Returns the directory entry corresponding to the specified path.
+   *
+   * @param requester The identity of the requester.
+   * @param The absolute path of the namespace entry.
+   */
+  DirEntry getDirEntry(
+    const SecurityIdentity &requester,
+    const std::string &path) const;
   
 }; // class MockNameServer
 
