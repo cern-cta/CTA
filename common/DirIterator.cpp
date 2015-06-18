@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/DirIterator.hpp"
+#include "common/DirIterator.hpp"
 #include "common/exception/Exception.hpp"
 using cta::exception::Exception;
 

@@ -25,7 +25,7 @@
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/ArchivalRoute.hpp"
-#include "scheduler/DirIterator.hpp"
+#include "common/DirIterator.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MockSchedulerDatabase.hpp"
 #include "scheduler/RetrieveFromTapeCopyRequest.hpp"

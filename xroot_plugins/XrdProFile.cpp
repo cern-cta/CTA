@@ -34,7 +34,7 @@
 
 #include "XrdSec/XrdSecEntity.hh"
 #include "cmdline/CTACmd.hpp"
-#include "scheduler/DirIterator.hpp"
+#include "common/DirIterator.hpp"
 
 #include <iostream>
 #include <pwd.h>

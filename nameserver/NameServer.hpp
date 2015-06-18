@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/FileStatus.hpp"
-#include "scheduler/DirIterator.hpp"
+#include "common/DirIterator.hpp"
 #include "scheduler/SecurityIdentity.hpp"
 
 #include <string>

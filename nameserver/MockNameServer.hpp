@@ -20,7 +20,7 @@
 
 #include "common/UserIdentity.hpp"
 #include "nameserver/NameServer.hpp"
-#include "scheduler/DirIterator.hpp"
+#include "common/DirIterator.hpp"
 #include "scheduler/SecurityIdentity.hpp"
 
 #include <list>

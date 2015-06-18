@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "scheduler/DirEntry.hpp"
+#include "common/DirEntry.hpp"
 #include "scheduler/FileSystemStorageClasses.hpp"
 
 namespace cta {

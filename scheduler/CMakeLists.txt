@@ -17,8 +17,6 @@ set (CTA_SCHEDULER_SRC_FILES
   ArchiveToTapeCopyRequest.cpp
   ConfigurationItem.cpp
   CreationLog.cpp
-  DirEntry.cpp
-  DirIterator.cpp
   DiskException.cpp
   DriveQuota.cpp
   FileAttribute.cpp
