@@ -83,14 +83,14 @@ public:
    *
    * @return The user ID of the directory entry's owner.
    */
-  uint32_t getOwnerId() const throw();
+  uint32_t getUid() const throw();
 
   /**
    * Returns the group ID of the directory entry.
    *
    * @return The group ID of the directory entry.
    */
-  uint32_t getGroupId() const throw();
+  uint32_t getGid() const throw();
 
   /**
    * Returns the mode bits of the directory entry.

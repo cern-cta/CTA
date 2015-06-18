@@ -1135,8 +1135,8 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
                << ((dirEntry.getMode() & S_IROTH) ? "r" : "-")
                << ((dirEntry.getMode() & S_IWOTH) ? "w" : "-")
                << ((dirEntry.getMode() & S_IXOTH) ? "x" : "-")
-               << " " << dirEntry.getOwnerId()
-               << " " << dirEntry.getGroupId()
+               << " " << dirEntry.getUid()
+               << " " << dirEntry.getGid()
                << " " << dirEntry.getStorageClassName()
                << " " << dirEntry.getName() << std::endl;
   }

@@ -69,16 +69,16 @@ const std::string &cta::DirEntry::getName() const throw() {
 }
 
 //------------------------------------------------------------------------------
-// getOwnerId
+// getUid
 //------------------------------------------------------------------------------
-uint32_t cta::DirEntry::getOwnerId() const throw() {
+uint32_t cta::DirEntry::getUid() const throw() {
   return m_ownerId;
 }
 
 //------------------------------------------------------------------------------
-// getGroupId
+// getGid
 //------------------------------------------------------------------------------
-uint32_t cta::DirEntry::getGroupId() const throw() {
+uint32_t cta::DirEntry::getGid() const throw() {
   return m_groupId;
 }
 
