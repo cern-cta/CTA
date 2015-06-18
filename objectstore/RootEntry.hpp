@@ -92,6 +92,7 @@ public:
     uint16_t copyCount, const CreationLog & cl);
   uint16_t getStorageClassCopyCount(const std::string & storageClass);
   CTA_GENERATE_EXCEPTION_CLASS(ArchivalRouteAlreadyExists);
+  CTA_GENERATE_EXCEPTION_CLASS(TapePoolUsedInOtherRoute);
   void addArchivalRoute(const std::string & storageClass, uint16_t copyNb, 
     const std::string & tapePool, const CreationLog & cl);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchivalRoute);

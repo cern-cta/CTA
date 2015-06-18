@@ -203,6 +203,9 @@ std::list<ArchivalRoute>
   re.fetch();
   auto scd = re.dumpStorageClass(storageClassName);
   rel.release();
+  if (scd.routes.size() != scd.copyCount) {
+    throw IncompleteRouting("In OStoreDB::getArchivalRoutes: routes are incomplete");
+  }
   std::list<ArchivalRoute> ret;
   for (auto r=scd.routes.begin(); r!=scd.routes.end(); r++) {
     ret.push_back(ArchivalRoute(storageClassName, 

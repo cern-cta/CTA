@@ -283,7 +283,14 @@ void cta::objectstore::RootEntry::addArchivalRoute(const std::string& storageCla
     cl.serialize(*ar.mutable_log());
     ar.set_tapepool(tapePool);
   } catch (serializers::NotFound &) {
-    // The route is not present yet. Add it.
+    // The route is not present yet. Add it if we do not have the same tape pool
+    // for 2 routes
+    auto & routes = sc.routes();
+    for (auto r=routes.begin(); r != routes.end(); r++) {
+      if (r->tapepool() == tapePool) {
+        throw TapePoolUsedInOtherRoute ("In RootEntry::addArchivalRoute: cannot add a second route to the same tape pool");
+      }
+    }
     auto *ar = sc.mutable_routes()->Add();
     cl.serialize(*ar->mutable_log());
     ar->set_copynb(copyNb);

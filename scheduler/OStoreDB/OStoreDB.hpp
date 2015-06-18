@@ -84,6 +84,7 @@ public:
     const uint16_t copyNb, const std::string& tapePoolName,
     const CreationLog& creationLog);
 
+  CTA_GENERATE_EXCEPTION_CLASS(IncompleteRouting);
   virtual std::list<ArchivalRoute> getArchivalRoutes(const std::string& storageClassName) const;
 
   virtual std::list<ArchivalRoute> getArchivalRoutes() const;
