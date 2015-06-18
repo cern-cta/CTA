@@ -380,9 +380,7 @@ cta::FileStatus cta::MockNameServer::statFile(
   const SecurityIdentity &requester,
   const std::string &path) const {
 
-  const DirEntry entry = getDirEntry(requester, path);
-  const UserIdentity owner(entry.getUid(), entry.getGid());
-  return FileStatus(owner, entry.getMode(), entry.getStorageClassName());
+  return getDirEntry(requester, path).getStatus();
 }
 
 //------------------------------------------------------------------------------
@@ -456,8 +454,11 @@ cta::DirEntry cta::MockNameServer::getDirEntry(
       " is not a directory nor a regular file";
     throw(exception::Exception(msg.str()));
   } 
-  
-  return DirEntry(entryType, name, storageClassName);
+
+  const UserIdentity owner = getOwner(requester, path);
+  FileStatus status(owner, stat_result.st_mode, storageClassName);
+
+  return DirEntry(entryType, name, status);
 }
 
 //------------------------------------------------------------------------------

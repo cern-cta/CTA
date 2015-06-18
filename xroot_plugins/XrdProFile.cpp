@@ -1125,19 +1125,22 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
   std::ostringstream responseSS;
   while(dirIterator.hasMore()) {
     auto dirEntry = dirIterator.next();
+    auto mode = dirEntry.getStatus().getMode();
+    const auto &owner = dirEntry.getStatus().getOwner();
+    const auto storageClassName = dirEntry.getStatus().getStorageClassName();
     responseSS << ((dirEntry.getType()==dirEntry.ENTRYTYPE_DIRECTORY) ? "d" : "-")
-               << ((dirEntry.getMode() & S_IRUSR) ? "r" : "-")
-               << ((dirEntry.getMode() & S_IWUSR) ? "w" : "-")
-               << ((dirEntry.getMode() & S_IXUSR) ? "x" : "-")
-               << ((dirEntry.getMode() & S_IRGRP) ? "r" : "-")
-               << ((dirEntry.getMode() & S_IWGRP) ? "w" : "-")
-               << ((dirEntry.getMode() & S_IXGRP) ? "x" : "-")
-               << ((dirEntry.getMode() & S_IROTH) ? "r" : "-")
-               << ((dirEntry.getMode() & S_IWOTH) ? "w" : "-")
-               << ((dirEntry.getMode() & S_IXOTH) ? "x" : "-")
-               << " " << dirEntry.getUid()
-               << " " << dirEntry.getGid()
-               << " " << dirEntry.getStorageClassName()
+               << ((mode & S_IRUSR) ? "r" : "-")
+               << ((mode & S_IWUSR) ? "w" : "-")
+               << ((mode & S_IXUSR) ? "x" : "-")
+               << ((mode & S_IRGRP) ? "r" : "-")
+               << ((mode & S_IWGRP) ? "w" : "-")
+               << ((mode & S_IXGRP) ? "x" : "-")
+               << ((mode & S_IROTH) ? "r" : "-")
+               << ((mode & S_IWOTH) ? "w" : "-")
+               << ((mode & S_IXOTH) ? "x" : "-")
+               << " " << owner.uid
+               << " " << owner.gid
+               << " " << storageClassName
                << " " << dirEntry.getName() << std::endl;
   }
   m_data = responseSS.str();

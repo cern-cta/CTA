@@ -32,7 +32,7 @@ cta::FileSystemDirEntry::FileSystemDirEntry(
   FileSystemStorageClasses &storageClasses, const DirEntry &entry):
   m_storageClasses(&storageClasses),
   m_entry(entry) {
-  setStorageClassName(entry.getStorageClassName());
+  setStorageClassName(entry.getStatus().getStorageClassName());
 }
 
 //------------------------------------------------------------------------------
@@ -48,7 +48,8 @@ const cta::DirEntry &cta::FileSystemDirEntry::getEntry()
 //------------------------------------------------------------------------------
 void cta::FileSystemDirEntry::setStorageClassName(
   const std::string &storageClassName) {
-  const std::string previousStorageClassName = m_entry.getStorageClassName();
+  const std::string previousStorageClassName =
+    m_entry.getStatus().getStorageClassName();
 
   // If there is a change in storage class
   if(previousStorageClassName != storageClassName) {
@@ -57,6 +58,6 @@ void cta::FileSystemDirEntry::setStorageClassName(
       m_storageClasses->incStorageClassUsageCount(storageClassName);
     }
 
-    m_entry.setStorageClassName(storageClassName);
+    m_entry.getStatus().setStorageClassName(storageClassName);
   }
 }

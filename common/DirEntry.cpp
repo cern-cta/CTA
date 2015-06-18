@@ -34,23 +34,17 @@ const char *cta::DirEntry::entryTypeToStr(const EntryType enumValue)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::DirEntry::DirEntry():
-  m_ownerId(0),
-  m_groupId(0),
-  m_mode(0) {
+cta::DirEntry::DirEntry() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::DirEntry::DirEntry(const EntryType entryType,
-  const std::string &name, const std::string &storageClassName):
+cta::DirEntry::DirEntry(const EntryType entryType, const std::string &name,
+  const FileStatus &status):
   m_entryType(entryType),
   m_name(name),
-  m_ownerId(0),
-  m_groupId(0),
-  m_mode(0777),
-  m_storageClassName(storageClassName) {
+  m_status(status) {
 }
 
 //------------------------------------------------------------------------------
@@ -69,37 +63,15 @@ const std::string &cta::DirEntry::getName() const throw() {
 }
 
 //------------------------------------------------------------------------------
-// getUid
+// getStatus
 //------------------------------------------------------------------------------
-uint32_t cta::DirEntry::getUid() const throw() {
-  return m_ownerId;
+const cta::FileStatus &cta::DirEntry::getStatus() const throw() {
+  return m_status;
 }
 
 //------------------------------------------------------------------------------
-// getGid
+// getStatus
 //------------------------------------------------------------------------------
-uint32_t cta::DirEntry::getGid() const throw() {
-  return m_groupId;
-}
-
-//------------------------------------------------------------------------------
-// getMode
-//------------------------------------------------------------------------------
-mode_t cta::DirEntry::getMode() const throw() {
-  return m_mode;
-}
-
-//------------------------------------------------------------------------------
-// setStorageClassName
-//------------------------------------------------------------------------------
-void cta::DirEntry::setStorageClassName(
-  const std::string &storageClassName) {
-  m_storageClassName = storageClassName;
-}
-  
-//------------------------------------------------------------------------------
-// getStorageClassName
-//------------------------------------------------------------------------------
-const std::string &cta::DirEntry::getStorageClassName() const throw() {
-  return m_storageClassName;
+cta::FileStatus &cta::DirEntry::getStatus() throw() {
+  return m_status;
 }

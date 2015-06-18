@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include <list>
-#include <stdint.h>
+#include "common/FileStatus.hpp"
+
 #include <string>
 
 namespace cta {
@@ -58,11 +58,10 @@ public:
    *
    * @param entryType The type of the entry.
    * @param name The name of the directory entry.
-   * @param storageClassName The name of the directory's storage class or an
-   * empty string if the directory does not have a storage class.
+   * @param status The status of the entry.
    */
   DirEntry(const EntryType entryType, const std::string &name,
-    const std::string &storageClassName);
+    const FileStatus &status);
 
   /**
    * Returns the type of the directory entry.
@@ -79,41 +78,18 @@ public:
   const std::string &getName() const throw();
 
   /**
-   * Returns the user ID of the directory entry's owner.
+   * Returns the status of the entry.
    *
-   * @return The user ID of the directory entry's owner.
+   * @return The status of the entry.
    */
-  uint32_t getUid() const throw();
+  FileStatus &getStatus() throw();
 
   /**
-   * Returns the group ID of the directory entry.
+   * Returns the status of the entry.
    *
-   * @return The group ID of the directory entry.
-   */
-  uint32_t getGid() const throw();
-
-  /**
-   * Returns the mode bits of the directory entry.
-   *
-   * @return The mode bits of the directory entry.
-   */
-  mode_t getMode() const throw();
-
-  /**
-   * Sets the name of the storage class.
-   *
-   * @param storageClassName The name of the storage class.
-   */
-  void setStorageClassName(const std::string &storageClassName);
-
-  /**
-   * Returns the name of the directory's storage class or an empty string if the
-   * directory does not have a storage class.
-   *
-   * @return The name of the directory's storage class or an empty string if the
-   * directory does not have a storage class.
-   */
-  const std::string &getStorageClassName() const throw();
+   * @return The status of the entry.
+   */ 
+  const FileStatus &getStatus() const throw();
 
 private:
 
@@ -128,25 +104,9 @@ private:
   std::string m_name;
 
   /**
-   * The user ID of the directory entry's owner.
+   * The status of the entry.
    */
-  uint32_t m_ownerId;
-
-  /**
-   * The group ID of the directory entry.
-   */
-  uint32_t m_groupId;
-
-  /**
-   * The mode bits of the directory entry.
-   */
-  mode_t m_mode;
-
-  /**
-   * The name of the directory's storage class or an empty string if the
-   * directory does not have a storage class.
-   */
-  std::string m_storageClassName;
+  FileStatus m_status;
 
 }; // class DirEntry
 
