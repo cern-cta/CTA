@@ -39,8 +39,14 @@ int CTACopyCmd::main(const int argc, const char **argv) const throw() {
   // Execute the command
   try {
     rc = sendCommand(argc, argv);
-  } catch(std::exception &ex) {
-    std::cerr << std::endl << "Failed to execute the command. Reason: " << ex.what() << std::endl;
+  } catch(cta::exception::Exception &ex) {
+    std::cerr << "Failed to execute the command. Reason: " << ex.getMessageValue() << std::endl;
+    return 1;
+  } catch (std::exception &ex) {
+    std::cerr << "Failed to execute the command. Reason: " << ex.what() << std::endl;
+    return 1;
+  } catch (...) {
+    std::cerr << "Failed to execute the command for an unknown reason" << std::endl;
     return 1;
   }
 
