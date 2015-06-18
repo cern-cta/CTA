@@ -523,7 +523,7 @@ public:
    * @return The directory entry information for the specified directory or file
    * within the archive namespace.
    */
-  DirEntry statDirEntry(
+  DirEntry statFile(
     const SecurityIdentity &requester,
     const std::string &path) const;
 

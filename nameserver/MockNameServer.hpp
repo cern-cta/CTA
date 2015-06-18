@@ -64,7 +64,7 @@ public:
   
   void deleteDir(const SecurityIdentity &requester, const std::string &path);
   
-  cta::DirEntry statDirEntry(const SecurityIdentity &requester, const std::string &path) const;
+  cta::DirEntry statFile(const SecurityIdentity &requester, const std::string &path) const;
   
   cta::DirIterator getDirContents(const SecurityIdentity &requester, const std::string &path) const;
   

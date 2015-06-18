@@ -1487,7 +1487,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
 
   {
     DirEntry entry;
-    ASSERT_NO_THROW(entry = scheduler.statDirEntry(s_userOnUserHost,
+    ASSERT_NO_THROW(entry = scheduler.statFile(s_userOnUserHost,
       archiveFile));
     ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStorageClassName());
@@ -1658,7 +1658,7 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
 
   {
     DirEntry entry;
-    ASSERT_NO_THROW(entry = scheduler.statDirEntry(s_userOnUserHost,
+    ASSERT_NO_THROW(entry = scheduler.statFile(s_userOnUserHost,
       archiveFile));
     ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStorageClassName());
@@ -1731,7 +1731,7 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
 
   {
     DirEntry entry;
-    ASSERT_NO_THROW(entry = scheduler.statDirEntry(s_userOnUserHost,
+    ASSERT_NO_THROW(entry = scheduler.statFile(s_userOnUserHost,
       archiveFile));
     ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStorageClassName());
@@ -1821,7 +1821,7 @@ TEST_P(SchedulerTest, delete_archive_request) {
 
   {
     DirEntry entry;
-    ASSERT_NO_THROW(entry = scheduler.statDirEntry(s_userOnUserHost,
+    ASSERT_NO_THROW(entry = scheduler.statFile(s_userOnUserHost,
       archiveFile));
     ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStorageClassName());
@@ -2295,7 +2295,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
 
   {
     DirEntry entry;
-    ASSERT_NO_THROW(entry = scheduler.statDirEntry(s_adminOnAdminHost,
+    ASSERT_NO_THROW(entry = scheduler.statFile(s_adminOnAdminHost,
       archiveFile));
     ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStorageClassName());
@@ -2418,7 +2418,7 @@ TEST_P(SchedulerTest, setOwner_getDirContents_top_level) {
   }
 }
 
-TEST_P(SchedulerTest, setOwner_statDirEntry_top_level) {
+TEST_P(SchedulerTest, setOwner_statFile_top_level) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -2445,7 +2445,7 @@ TEST_P(SchedulerTest, setOwner_statDirEntry_top_level) {
 
     DirEntry entry;
 
-    ASSERT_NO_THROW(entry = scheduler.statDirEntry(s_userOnUserHost, dirPath));
+    ASSERT_NO_THROW(entry = scheduler.statFile(s_userOnUserHost, dirPath));
 
     ASSERT_EQ(std::string("grandparent"), entry.getName());
 

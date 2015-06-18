@@ -428,12 +428,12 @@ cta::DirIterator cta::Scheduler::getDirContents(
 }
 
 //------------------------------------------------------------------------------
-// statDirEntry
+// statFile
 //------------------------------------------------------------------------------
-cta::DirEntry cta::Scheduler::statDirEntry(
+cta::DirEntry cta::Scheduler::statFile(
   const SecurityIdentity &requester,
   const std::string &path) const {
-  return m_ns.statDirEntry(requester, path);
+  return m_ns.statFile(requester, path);
 }
 
 //------------------------------------------------------------------------------

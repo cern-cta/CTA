@@ -373,9 +373,9 @@ void cta::MockNameServer::deleteDir(const SecurityIdentity &requester, const std
 }  
 
 //------------------------------------------------------------------------------
-// statDirEntry
+// statFile
 //------------------------------------------------------------------------------
-cta::DirEntry cta::MockNameServer::statDirEntry(
+cta::DirEntry cta::MockNameServer::statFile(
   const SecurityIdentity &requester,
   const std::string &path) const {
   Utils::assertAbsolutePathSyntax(path);
@@ -405,7 +405,7 @@ cta::DirEntry cta::MockNameServer::statDirEntry(
   }
   else {
     std::ostringstream msg;
-    msg << "statDirEntry() - " << m_fsDir+path <<
+    msg << "statFile() - " << m_fsDir+path <<
       " is not a directory nor a regular file";
     throw(exception::Exception(msg.str()));
   } 
@@ -439,7 +439,7 @@ std::list<cta::DirEntry> cta::MockNameServer::getDirEntries(
     if(entryName != "." && entryName != "..") {
       const std::string entryPath = pathEndsWithASlash ?
         path + entryName : path + "/" + entryName;
-      entries.push_back(statDirEntry(requester, entryPath));
+      entries.push_back(statFile(requester, entryPath));
     }
   }
   
