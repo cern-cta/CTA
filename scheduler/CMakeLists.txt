@@ -22,6 +22,7 @@ set (CTA_SCHEDULER_SRC_FILES
   DiskException.cpp
   DriveQuota.cpp
   FileAttribute.cpp
+  FileStatus.cpp
   FileSystemDirEntry.cpp
   FileSystemNode.cpp
   FileSystemStorageClass.cpp

@@ -2359,7 +2359,7 @@ TEST_P(SchedulerTest, getOwner_no_owner_root) {
   ASSERT_THROW(scheduler.getOwner(s_adminOnAdminHost, dirPath), std::exception);
 }
 
-TEST_P(SchedulerTest, setOwner_root) {
+TEST_P(SchedulerTest, setOwner_getOwner_root) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -2373,6 +2373,84 @@ TEST_P(SchedulerTest, setOwner_root) {
 
     ASSERT_NO_THROW(owner = scheduler.getOwner(s_adminOnAdminHost, dirPath));
     ASSERT_EQ(s_user, owner);
+  }
+}
+
+TEST_P(SchedulerTest, setOwner_getDirContents_top_level) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  {
+    const std::string dirPath = "/";
+
+    ASSERT_THROW(scheduler.getOwner(s_adminOnAdminHost, dirPath), std::exception);
+    ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, dirPath, s_user));
+
+    {
+      UserIdentity owner;
+
+      ASSERT_NO_THROW(owner = scheduler.getOwner(s_adminOnAdminHost, dirPath));
+      ASSERT_EQ(s_user, owner);
+    }
+  }
+
+  {
+    const std::string dirPath = "/grandparent";
+
+    const uint16_t mode = 0777;
+    ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
+
+    DirIterator itor;
+
+    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
+
+    ASSERT_TRUE(itor.hasMore());
+
+    DirEntry entry;
+
+    ASSERT_NO_THROW(entry = itor.next());
+
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+
+    ASSERT_EQ(s_user.uid, entry.getUid());
+    ASSERT_EQ(s_user.gid, entry.getGid());
+  }
+}
+
+TEST_P(SchedulerTest, setOwner_statDirEntry_top_level) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+
+  {
+    const std::string dirPath = "/";
+
+    ASSERT_THROW(scheduler.getOwner(s_adminOnAdminHost, dirPath), std::exception);
+    ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, dirPath, s_user));
+
+    {
+      UserIdentity owner;
+
+      ASSERT_NO_THROW(owner = scheduler.getOwner(s_adminOnAdminHost, dirPath));
+      ASSERT_EQ(s_user, owner);
+    }
+  }
+
+  {
+    const std::string dirPath = "/grandparent";
+
+    const uint16_t mode = 0777;
+    ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
+
+    DirEntry entry;
+
+    ASSERT_NO_THROW(entry = scheduler.statDirEntry(s_userOnUserHost, dirPath));
+
+    ASSERT_EQ(std::string("grandparent"), entry.getName());
+
+    ASSERT_EQ(s_user.uid, entry.getUid());
+    ASSERT_EQ(s_user.gid, entry.getGid());
   }
 }
 
