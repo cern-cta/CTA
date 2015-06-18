@@ -18,8 +18,8 @@
 
 #pragma once
 
+#include "common/UserIdentity.hpp"
 #include "scheduler/FileSystemStorageClass.hpp"
-#include "scheduler/UserIdentity.hpp"
 
 #include <list>
 #include <map>

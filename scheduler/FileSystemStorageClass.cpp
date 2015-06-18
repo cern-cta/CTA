@@ -60,7 +60,7 @@ void cta::FileSystemStorageClass::incUsageCount() {
     message << "Cannot increment usage count of storage class " <<
       m_storageClass.getName() << " because its maximum value of UINT64_MAX"
       " has already been reached";
-    throw Exception(message.str());
+    throw exception::Exception(message.str());
   }
   m_usageCount++;
 }
@@ -73,7 +73,7 @@ void cta::FileSystemStorageClass::decUsageCount() {
     std::ostringstream message;
     message << "Cannot decrement usage count of storage class " <<
       m_storageClass.getName() << " because it is already at zero";
-    throw Exception(message.str());
+    throw exception::Exception(message.str());
   }
   m_usageCount--;
 }

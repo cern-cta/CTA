@@ -19,9 +19,8 @@
 #pragma once
 
 #include "common/exception/Exception.hpp"
+#include "common/UserIdentity.hpp"
 #include "scheduler/StorageClass.hpp"
-#include "scheduler/UserIdentity.hpp"
-using cta::exception::Exception;
 
 #include <sstream>
 #include <string>

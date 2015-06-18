@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/UserIdentity.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
 #include "scheduler/ArchivalRoute.hpp"
@@ -29,7 +30,6 @@
 #include "scheduler/Tape.hpp"
 #include "scheduler/TapePool.hpp"
 #include "scheduler/SecurityIdentity.hpp"
-#include "scheduler/UserIdentity.hpp"
 #include "xroot_plugins/XrdProFile.hpp"
 
 #include "XrdSec/XrdSecEntity.hh"

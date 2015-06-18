@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/UserIdentity.hpp"
+#include "common/UserIdentity.hpp"
 
 #include <gtest/gtest.h>
 

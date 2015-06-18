@@ -1,8 +1,10 @@
 cmake_minimum_required (VERSION 2.6)
 
 set (COMMON_LIB_SRC_FILES
+  FileStatus.cpp
   SmartFd.cpp
   Timer.cpp
+  UserIdentity.cpp
   Utils.cpp
   exception/Backtrace.cpp
   exception/Errnum.cpp

@@ -22,7 +22,6 @@ set (CTA_SCHEDULER_SRC_FILES
   DiskException.cpp
   DriveQuota.cpp
   FileAttribute.cpp
-  FileStatus.cpp
   FileSystemDirEntry.cpp
   FileSystemNode.cpp
   FileSystemStorageClass.cpp
@@ -50,7 +49,6 @@ set (CTA_SCHEDULER_SRC_FILES
   TapeCopyLocation.cpp
   TapeException.cpp
   TapePool.cpp
-  UserIdentity.cpp
   UserGroup.cpp
   UserRequest.cpp
   VO.cpp)

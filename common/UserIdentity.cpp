@@ -16,52 +16,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/FileStatus.hpp"
+#include "common/UserIdentity.hpp"
+
+#include <limits>
+#include <ostream>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileStatus::FileStatus():
-  m_mode(0) {
-}
+cta::UserIdentity::UserIdentity() throw():
+  uid(std::numeric_limits<decltype(uid)>::max()),
+  gid(std::numeric_limits<decltype(gid)>::max()) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileStatus::FileStatus(
-  const UserIdentity &owner,
-  const mode_t mode,
-  const std::string &storageClassName):
-  m_owner(owner),
-  m_mode(mode),
-  m_storageClassName(storageClassName) {
+cta::UserIdentity::UserIdentity(
+  const uint32_t u,
+  const uint32_t g) throw():
+  uid(u),
+  gid(g) {
 }
 
 //------------------------------------------------------------------------------
-// getOwner
+// operator==
 //------------------------------------------------------------------------------
-const cta::UserIdentity &cta::FileStatus::getOwner() const throw() {
-  return m_owner;
+bool cta::UserIdentity::operator==(const UserIdentity &rhs) const {
+  return uid == rhs.uid;
 }
 
 //------------------------------------------------------------------------------
-// getMode
+// operator!=
 //------------------------------------------------------------------------------
-mode_t cta::FileStatus::getMode() const throw() {
-  return m_mode;
+bool cta::UserIdentity::operator!=(const UserIdentity &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// setStorageClassName
+// operator<<
 //------------------------------------------------------------------------------
-void cta::FileStatus::setStorageClassName(
-  const std::string &storageClassName) {
-  m_storageClassName = storageClassName;
-}
-  
-//------------------------------------------------------------------------------
-// getStorageClassName
-//------------------------------------------------------------------------------
-const std::string &cta::FileStatus::getStorageClassName() const throw() {
-  return m_storageClassName;
+std::ostream &operator<<(std::ostream &os, const cta::UserIdentity &obj) {
+  os << "(uid=" << obj.uid << " gid=" << obj.gid << ")";
+  return os;
 }

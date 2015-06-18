@@ -62,7 +62,7 @@ void cta::FileSystemNode::deleteAndClearChildren() {
 //------------------------------------------------------------------------------
 cta::FileSystemNode &cta::FileSystemNode::getParent() {
   if(NULL == m_parent) {
-    throw Exception("Internal error");
+    throw exception::Exception("Internal error");
   }
 
   return *m_parent;
@@ -73,7 +73,7 @@ cta::FileSystemNode &cta::FileSystemNode::getParent() {
 //------------------------------------------------------------------------------
 const cta::FileSystemNode &cta::FileSystemNode::getParent() const {
   if(NULL == m_parent) {
-    throw Exception("Internal error");
+    throw exception::Exception("Internal error");
   }
 
   return *m_parent;
@@ -105,7 +105,8 @@ std::list<cta::DirEntry> cta::FileSystemNode::getDirEntries()
     m_children.begin(); itor != m_children.end(); itor++) {
     const FileSystemNode *const childNode = itor->second;
     if(NULL == childNode) {
-      throw(Exception("getDirEntries encountered a NULL child pointer"));
+      throw(exception::Exception(std::string(__FUNCTION__) + " encountered a"
+        " NULL child pointer"));
     }
     const cta::FileSystemDirEntry &childEntry =
       childNode->getFileSystemEntry();
@@ -120,7 +121,7 @@ std::list<cta::DirEntry> cta::FileSystemNode::getDirEntries()
 void cta::FileSystemNode::addChild(FileSystemNode *const child) {
   if(childExists(child->getFileSystemEntry().getEntry().getName())) {
     delete child;
-    throw Exception("FileSystemNode already exists");
+    throw exception::Exception("FileSystemNode already exists");
   }
 
   child->m_parent = this;
@@ -149,10 +150,10 @@ bool cta::FileSystemNode::childExists(const std::string &name) const {
 cta::FileSystemNode &cta::FileSystemNode::getChild(const std::string &name) {
   std::map<std::string, FileSystemNode*>::iterator itor = m_children.find(name);
   if(m_children.end() == itor) {
-    throw Exception("No such file or directory");
+    throw exception::Exception("No such file or directory");
   }
   if(NULL == itor->second) {
-    throw Exception("Unexpected NULL pointer");
+    throw exception::Exception("Unexpected NULL pointer");
   }
   return *(itor->second);
 }
@@ -165,10 +166,10 @@ const cta::FileSystemNode &cta::FileSystemNode::getChild(
   std::map<std::string, FileSystemNode*>::const_iterator itor = 
     m_children.find(name);
   if(m_children.end() == itor) {
-    throw Exception("No such file or directory");
+    throw exception::Exception("No such file or directory");
   }
   if(NULL == itor->second) {
-    throw Exception("Unexpected NULL pointer");
+    throw exception::Exception("Unexpected NULL pointer");
   }
   return *(itor->second);
 }
@@ -179,7 +180,7 @@ const cta::FileSystemNode &cta::FileSystemNode::getChild(
 void cta::FileSystemNode::deleteChild(const std::string &name) {
   std::map<std::string, FileSystemNode*>::iterator itor = m_children.find(name);
   if(m_children.end() == itor) {
-    throw Exception("No such file or directory");
+    throw exception::Exception("No such file or directory");
   }
 
   delete itor->second;

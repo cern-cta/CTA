@@ -16,10 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/UserIdentity.hpp"
+#include "objectstore/cta.pb.h"
+
 #include <string>
 #include <stdint.h>
-#include "objectstore/cta.pb.h"
-#include "scheduler/UserIdentity.hpp"
 
 namespace cta { namespace objectstore {
 

@@ -33,7 +33,7 @@ void cta::FileSystemStorageClasses::createStorageClass(
     StorageClass storageClass(name, nbCopies, creationLog);
     m_storageClasses[name] = storageClass;
   } catch(std::exception &ex) {
-    throw Exception(std::string("Failed to create storage class: ") +
+    throw exception::Exception(std::string("Failed to create storage class: ") +
       ex.what());
   }
 }
@@ -48,7 +48,7 @@ void cta::FileSystemStorageClasses::checkStorageClassDoesNotAlreadyExist(
   if(itor != m_storageClasses.end()) {
     std::ostringstream msg;
     msg << "Storage class " << name << " already exists";
-    throw Exception(msg.str());
+    throw exception::Exception(msg.str());
   }
 }
 
@@ -62,7 +62,7 @@ void cta::FileSystemStorageClasses::deleteStorageClass(
     checkStorageClassIsNotInUse(name);
     m_storageClasses.erase(name);
   } catch(std::exception &ex) {
-    throw Exception(std::string("Failed to delete storage class: ") +
+    throw exception::Exception(std::string("Failed to delete storage class: ") +
       ex.what());
   }
 }
@@ -77,7 +77,7 @@ void cta::FileSystemStorageClasses::checkStorageClassExists(
   if(itor == m_storageClasses.end()) {
     std::ostringstream msg;
     msg << "Storage class " << name << " does not exist";
-    throw Exception(msg.str());
+    throw exception::Exception(msg.str());
   }
 } 
 
@@ -97,7 +97,7 @@ void cta::FileSystemStorageClasses::checkStorageClassIsNotInUse(
   if(itor->second.getUsageCount() > 0) {
     std::ostringstream message;
     message << "Storage class " << name << " is in use";
-    throw Exception(message.str());
+    throw exception::Exception(message.str());
   }
 }
 
@@ -124,7 +124,7 @@ const cta::StorageClass &cta::FileSystemStorageClasses::getStorageClass(
   if(itor == m_storageClasses.end()) {
     std::ostringstream message;
     message << "Storage class " << name << " does not exist";
-    throw Exception(message.str());
+    throw exception::Exception(message.str());
   }
   return itor->second.getStorageClass();
 }
@@ -146,7 +146,7 @@ void cta::FileSystemStorageClasses::incStorageClassUsageCount(
   if(itor == m_storageClasses.end()) {
     std::ostringstream message;
     message << "Storage class " << name << " does not exist";
-    throw Exception(message.str());
+    throw exception::Exception(message.str());
   }
 
   itor->second.incUsageCount();
@@ -169,7 +169,7 @@ void cta::FileSystemStorageClasses::decStorageClassUsageCount(
   if(itor == m_storageClasses.end()) {
     std::ostringstream message;
     message << "Storage class " << name << " does not exist";
-    throw Exception(message.str());
+    throw exception::Exception(message.str());
   }
 
   itor->second.decUsageCount();

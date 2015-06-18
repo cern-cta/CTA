@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/UserIdentity.hpp"
 #include "nameserver/NameServer.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
@@ -35,7 +36,6 @@
 #include "scheduler/StorageClass.hpp"
 #include "scheduler/Tape.hpp"
 #include "scheduler/TapePool.hpp"
-#include "scheduler/UserIdentity.hpp"
 
 #include <iostream>
 #include <memory>

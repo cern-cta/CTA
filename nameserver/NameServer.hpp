@@ -18,8 +18,8 @@
 
 #pragma once
 
+#include "common/FileStatus.hpp"
 #include "scheduler/DirIterator.hpp"
-#include "scheduler/FileStatus.hpp"
 #include "scheduler/SecurityIdentity.hpp"
 
 #include <string>

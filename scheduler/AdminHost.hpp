@@ -18,8 +18,8 @@
 
 #pragma once
 
+#include "common/UserIdentity.hpp"
 #include "scheduler/ConfigurationItem.hpp"
-#include "scheduler/UserIdentity.hpp"
 
 #include <string>
 

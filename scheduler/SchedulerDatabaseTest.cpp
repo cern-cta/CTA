@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/UserIdentity.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
 #include "scheduler/ArchivalRoute.hpp"
@@ -24,7 +25,6 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "scheduler/SecurityIdentity.hpp"
-#include "scheduler/UserIdentity.hpp"
 #include "OStoreDB/OStoreDBFactory.hpp"
 
 #include <exception>

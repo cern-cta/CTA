@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "scheduler/UserIdentity.hpp"
+#include "common/UserIdentity.hpp"
 #include "scheduler/CreationLog.hpp"
 
 #include <stdint.h>
