@@ -1,4 +1,6 @@
 export KRB5RCACHETYPE=none
+# use a copy of the host keytab that is readable by the user stage
+export KRB5_KTNAME=/etc/krb5.keytab.stage
 #workaround for ORACLE11g shipping own GSSAPI
 export LD_PRELOAD=libgssapi_krb5.so.2:libkrb5.so.3:libkrb5support.so.0:libcom_err.so.2
 # extra preloads in case libgssapi is installed
