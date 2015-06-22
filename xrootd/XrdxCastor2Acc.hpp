@@ -33,9 +33,11 @@
 /*-----------------------------------------------------------------------------*/
 #include "XrdAcc/XrdAccAuthorize.hh"
 #include "XrdAcc/XrdAccPrivs.hh"
-/*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2Logging.hpp"
+#include <map>
+#include <set>
 /*-----------------------------------------------------------------------------*/
+
 
 //! Forward declaration
 class XrdOucEnv;
@@ -66,7 +68,7 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
     std::string signature; ///< signature of the 'token'
     std::string manager; ///< hostname of the manager node
     std::string txtype; ///< type of transfer: user/tape/d2duser/d2dbalance/
-                        ///< d2dinternal/d2ddrain
+			///< d2dinternal/d2ddrain
   };
 
 
@@ -133,19 +135,19 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   //!                  and the pointer may be zero.
   //----------------------------------------------------------------------------
   virtual XrdAccPrivs Access(const XrdSecEntity* Entity,
-                             const char* path,
-                             const Access_Operation oper,
-                             XrdOucEnv* Env = 0);
+			     const char* path,
+			     const Access_Operation oper,
+			     XrdOucEnv* Env = 0);
 
 
   //----------------------------------------------------------------------------
   //! Not used
   //----------------------------------------------------------------------------
   virtual int Audit(const int /*accok*/,
-                    const XrdSecEntity* /*Entity*/,
-                    const char* /*path*/,
-                    const Access_Operation /*oper*/,
-                    XrdOucEnv* /*Env = 0*/)
+		    const XrdSecEntity* /*Entity*/,
+		    const char* /*path*/,
+		    const Access_Operation /*oper*/,
+		    XrdOucEnv* /*Env = 0*/)
   {
     return 0;
   }
@@ -156,7 +158,7 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   //! returns a non-zero. Otherwise, zero is returned. Not used.
   //----------------------------------------------------------------------------
   virtual int Test(const XrdAccPrivs /*priv*/,
-                   const Access_Operation /*oper*/)
+		   const Access_Operation /*oper*/)
   {
     return 0;
   }
@@ -192,9 +194,9 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   //! @return true if signing was successful, otherwise false
   //----------------------------------------------------------------------------
   bool SignBase64(unsigned char* input,
-                  int inputlen,
-                  std::string& sb64,
-                  int& sb64len);
+		  int inputlen,
+		  std::string& sb64,
+		  int& sb64len);
 
 
   //----------------------------------------------------------------------------
@@ -204,13 +206,13 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   //!
   //! @param data buffer containgin the full token information
   //! @param base64buffer signature buffer
+  //! @param pub_key public key used for checking the signature
   //! @param path file name path
   //!
   //! @return true if data matches with the signature, otherwise false
   //----------------------------------------------------------------------------
-  bool VerifyUnbase64(const char* data,
-                      unsigned char* base64buffer,
-                      const char* path);
+  bool VerifyUnbase64(const char* data, unsigned char* base64buffer,
+		      EVP_PKEY* pub_key, const char* path);
 
 
   //----------------------------------------------------------------------------
@@ -223,16 +225,17 @@ class XrdxCastor2Acc: public XrdAccAuthorize, public LogId
   //----------------------------------------------------------------------------
   bool Decode(const char* opaque, AuthzInfo& authz);
 
-
+  static const std::string DEFAULT_KEY_ID; ///< default pub key id
   int mLogLevel; ///< acc plugin loglevel
-  std::string mAuthCertfile; ///< file name of public key for signature check
-  std::string mAuthKeyfile; ///< file name of private key for signature creation
   //! client has to show up with a capability in the opaque info if true
   bool mRequireCapability;
   //! client connecting from localhost does not need authorization [default=yes]
-  bool mAllowLocal; ///<
-  EVP_PKEY* mPublicKey; ///< public key used for decryption
-  EVP_PKEY* mPrivateKey; ///< private key used for encryption
+  bool mAllowLocal;
+  EVP_PKEY* mPrivateKey; ///< private key
+  std::string mAuthKeyfile; ///< file name of private key for signature creation
+  //! map of key types to files holding the certificate info (public key)
+  std::map<std::string, std::string> mMapAuthCertFiles;
+  std::map<std::string, EVP_PKEY*> mMapPublicKeys; ///< map of public keys
   XrdSysMutex mDecodeMutex; ///< mutex for decoding
   XrdSysMutex mEncodeMutex; ///< mutex for encoding
 };

@@ -40,6 +40,7 @@
 
 XrdSysError AccEroute(0, "xCastor2Acc_");
 XrdVERSIONINFO(XrdAccAuthorizeObject, xCastor2Acc);
+const std::string XrdxCastor2Acc::DEFAULT_KEY_ID = "default";
 
 //------------------------------------------------------------------------------
 // XrdAccAuthorizeObject() is called to obtain an instance of the auth object
@@ -87,17 +88,28 @@ XrdxCastor2Acc::XrdxCastor2Acc():
   XrdAccAuthorize(),
   LogId(),
   mLogLevel(LOG_INFO),
-  mAuthCertfile(""),
-  mAuthKeyfile(""),
   mRequireCapability(false),
-  mAllowLocal(true)
+  mAllowLocal(true),
+  mAuthKeyfile("")
 { }
 
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-XrdxCastor2Acc::~XrdxCastor2Acc() {}
+XrdxCastor2Acc::~XrdxCastor2Acc()
+{
+  if (mPrivateKey)
+    EVP_PKEY_free(mPrivateKey);
+
+  for (std::map<std::string, EVP_PKEY*>::iterator it = mMapPublicKeys.begin();
+       it != mMapPublicKeys.end(); ++it)
+   {
+     EVP_PKEY_free(it->second);
+   }
+
+  mMapPublicKeys.clear();
+}
 
 
 //------------------------------------------------------------------------------
@@ -133,7 +145,7 @@ XrdxCastor2Acc::Configure(const char* conf_file)
       {
         var += 9;
 
-        // Get th public key certificate - only at headnode
+        // Get th public key certificate - only at diskserver
         if (!strncmp("publickey", var, 9))
         {
           if (!(val = config_stream.GetWord()))
@@ -143,11 +155,24 @@ XrdxCastor2Acc::Configure(const char* conf_file)
           }
           else
           {
-            mAuthCertfile = val;
+	    // Parse the file name holding the key
+	    std::string key_id = val;
+
+	    if (!(val = config_stream.GetWord()))
+	    {
+	      AccEroute.Emsg("Config", "public key type: ", key_id.c_str(),
+			     " missing file holding the key");
+	      NoGo = 1;
+	    }
+	    else
+            {
+	      std::string fn_path = val;
+	      mMapAuthCertFiles.insert(std::make_pair(key_id, fn_path));
+	    }
           }
         }
 
-        // Get the private key certificate - only on diskservers
+        // Get the private key certificate - only at headnode
         if (!strncmp("privatekey", var, 10))
         {
           if (!(val = config_stream.GetWord()))
@@ -256,8 +281,8 @@ XrdxCastor2Acc::Configure(const char* conf_file)
     {
       if (isMan)
       {
-        if (!mAuthCertfile.empty())
-          mAuthCertfile.clear();
+        if (!mMapAuthCertFiles.empty())
+          mMapAuthCertFiles.clear();
 
         if (mAuthKeyfile.empty())
         {
@@ -270,11 +295,20 @@ XrdxCastor2Acc::Configure(const char* conf_file)
         if (!mAuthKeyfile.empty())
           mAuthKeyfile.clear();
 
-        if (mAuthCertfile.empty())
+        if (mMapAuthCertFiles.empty())
         {
-          AccEroute.Emsg("Config", "publickey missing on server node");
+          AccEroute.Emsg("Config", "no publickeys set");
           NoGo = 1;
         }
+	else
+	{
+	  // Check that at least the default key is available
+	  if (mMapAuthCertFiles.find(DEFAULT_KEY_ID) == mMapAuthCertFiles.end())
+	  {
+	    AccEroute.Emsg("Config", "no \"default\" publickey set");
+	    NoGo = 1;
+	  }
+	}
       }
     }
   }
@@ -311,14 +345,17 @@ XrdxCastor2Acc::Configure(const char* conf_file)
 bool
 XrdxCastor2Acc::Init()
 {
-  // Read in the public key
-  if (!mAuthCertfile.empty())
+  EVP_PKEY* pub_key;
+
+  // Read in the public keys
+  for (std::map<std::string, std::string>::iterator it = mMapAuthCertFiles.begin();
+       it != mMapAuthCertFiles.end(); ++it)
   {
-    FILE* fpcert = fopen(mAuthCertfile.c_str(), "r");
+    FILE* fpcert = fopen(it->second.c_str(), "r");
 
     if (fpcert == NULL)
     {
-      xcastor_err("error opening public cert. file:%s" , mAuthCertfile.c_str());
+      xcastor_err("error opening public cert. file:%s" , it->second.c_str());
       return false;
     }
 
@@ -328,17 +365,22 @@ XrdxCastor2Acc::Init()
 
     if (x509public == NULL)
     {
-      xcastor_err("error accessing X509 in file:%s", mAuthCertfile.c_str());
+      xcastor_err("error accessing X509 in file:%s", it->second.c_str());
       return false;
     }
     else
     {
-      mPublicKey = X509_get_pubkey(x509public);
+      pub_key = X509_get_pubkey(x509public);
 
-      if (mPublicKey == NULL)
+      if (pub_key == NULL)
       {
-        xcastor_err("no public key in file:%s", mAuthCertfile.c_str());
+        xcastor_err("no public key in file:%s", it->second.c_str());
         return false;
+      }
+      else
+      {
+	mMapPublicKeys.insert(std::make_pair(it->first, pub_key));
+	pub_key = NULL;
       }
     }
   }
@@ -451,6 +493,7 @@ XrdxCastor2Acc::SignBase64(unsigned char* input,
 bool
 XrdxCastor2Acc::VerifyUnbase64(const char* data,
                                unsigned char* base64buffer,
+			       EVP_PKEY* pub_key,
                                const char* path)
 {
   xcastor::Timing verifytiming("VerifyUb64");
@@ -515,7 +558,7 @@ XrdxCastor2Acc::VerifyUnbase64(const char* data,
   EVP_VerifyInit(&md_ctx, EVP_sha1());
   EVP_VerifyUpdate(&md_ctx, data, strlen((char*)data));
   int err = EVP_VerifyFinal(&md_ctx, ((unsigned char*)(sig_buf)), sig_len,
-                            mPublicKey);
+                            pub_key);
   EVP_MD_CTX_cleanup(&md_ctx);
   TIMING("EVPVERIFY", &verifytiming);
 
@@ -805,9 +848,24 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
       return XrdAccPriv_None;
     }
 
+    // Pick the correct public key to check the signature
+    EVP_PKEY* pub_key = NULL;
+
+    if (!authz.txtype.empty())
+    {
+      std::map<std::string, EVP_PKEY*>::iterator it = mMapPublicKeys.find(authz.txtype);
+
+      if (it != mMapPublicKeys.end())
+	pub_key = it->second;
+    }
+
+    // Use the default one
+    if (pub_key)
+      pub_key = mMapPublicKeys.find(DEFAULT_KEY_ID)->second;
+
     // Verify the signature of authz information
-    if ((!VerifyUnbase64(ref_token.c_str(),
-                         (unsigned char*)authz.signature.c_str(), path)))
+    if ((!VerifyUnbase64(ref_token.c_str(), (unsigned char*)authz.signature.c_str(),
+			 pub_key, path)))
     {
       AccEroute.Emsg("Access", "Verify signature failed for path", path);
       return XrdAccPriv_None;
