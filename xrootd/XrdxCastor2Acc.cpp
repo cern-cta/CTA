@@ -860,7 +860,7 @@ XrdxCastor2Acc::Access(const XrdSecEntity* Entity,
     }
 
     // Use the default one
-    if (pub_key)
+    if (!pub_key)
       pub_key = mMapPublicKeys.find(DEFAULT_KEY_ID)->second;
 
     // Verify the signature of authz information
