@@ -93,7 +93,7 @@ public:
    * namespace.
    * @return The status of the file or directory.
    */
-  virtual FileStatus statFile(
+  virtual ArchiveFileStatus statFile(
     const SecurityIdentity &requester,
     const std::string &path) const = 0;
 

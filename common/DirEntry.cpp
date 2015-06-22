@@ -41,7 +41,7 @@ cta::DirEntry::DirEntry() {
 // constructor
 //------------------------------------------------------------------------------
 cta::DirEntry::DirEntry(const EntryType entryType, const std::string &name,
-  const FileStatus &status):
+  const ArchiveFileStatus &status):
   m_entryType(entryType),
   m_name(name),
   m_status(status) {
@@ -65,13 +65,13 @@ const std::string &cta::DirEntry::getName() const throw() {
 //------------------------------------------------------------------------------
 // getStatus
 //------------------------------------------------------------------------------
-const cta::FileStatus &cta::DirEntry::getStatus() const throw() {
+const cta::ArchiveFileStatus &cta::DirEntry::getStatus() const throw() {
   return m_status;
 }
 
 //------------------------------------------------------------------------------
 // getStatus
 //------------------------------------------------------------------------------
-cta::FileStatus &cta::DirEntry::getStatus() throw() {
+cta::ArchiveFileStatus &cta::DirEntry::getStatus() throw() {
   return m_status;
 }

@@ -64,7 +64,7 @@ public:
   
   void deleteDir(const SecurityIdentity &requester, const std::string &path);
   
-  FileStatus statFile(const SecurityIdentity &requester, const std::string &path) const;
+  ArchiveFileStatus statFile(const SecurityIdentity &requester, const std::string &path) const;
   
   DirIterator getDirContents(const SecurityIdentity &requester, const std::string &path) const;
   

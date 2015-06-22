@@ -430,7 +430,7 @@ cta::DirIterator cta::Scheduler::getDirContents(
 //------------------------------------------------------------------------------
 // statFile
 //------------------------------------------------------------------------------
-cta::FileStatus cta::Scheduler::statFile(
+cta::ArchiveFileStatus cta::Scheduler::statFile(
   const SecurityIdentity &requester,
   const std::string &path) const {
   return m_ns.statFile(requester, path);

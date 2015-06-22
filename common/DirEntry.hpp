@@ -61,7 +61,7 @@ public:
    * @param status The status of the entry.
    */
   DirEntry(const EntryType entryType, const std::string &name,
-    const FileStatus &status);
+    const ArchiveFileStatus &status);
 
   /**
    * Returns the type of the directory entry.
@@ -82,14 +82,14 @@ public:
    *
    * @return The status of the entry.
    */
-  FileStatus &getStatus() throw();
+  ArchiveFileStatus &getStatus() throw();
 
   /**
    * Returns the status of the entry.
    *
    * @return The status of the entry.
    */ 
-  const FileStatus &getStatus() const throw();
+  const ArchiveFileStatus &getStatus() const throw();
 
 private:
 
@@ -106,7 +106,7 @@ private:
   /**
    * The status of the entry.
    */
-  FileStatus m_status;
+  ArchiveFileStatus m_status;
 
 }; // class DirEntry
 

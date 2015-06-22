@@ -28,12 +28,12 @@ namespace cta {
 // Forward declarations for opaque references.
 class AdminHost;
 class AdminUser;
+class ArchiveFileStatus;
 class ArchivalRoute;
 class ArchiveToDirRequest;
 class ArchiveToFileRequest;
 class ArchiveToTapeCopyRequest;
 class DirIterator;
-class FileStatus;
 class LogicalLibrary;
 class NameServer;
 class RemoteNS;
@@ -521,7 +521,7 @@ public:
    * namespace.
    * @return The status of the file or directory.
    */
-  FileStatus statFile(
+  ArchiveFileStatus statFile(
     const SecurityIdentity &requester,
     const std::string &path) const;
 

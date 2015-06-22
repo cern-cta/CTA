@@ -1486,7 +1486,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   }
 
   {
-    FileStatus status;
+    ArchiveFileStatus status;
     ASSERT_NO_THROW(status = scheduler.statFile(s_userOnUserHost,
       archiveFile));
     ASSERT_EQ(storageClassName, status.getStorageClassName());
@@ -1656,7 +1656,7 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
   }
 
   {
-    FileStatus status;
+    ArchiveFileStatus status;
     ASSERT_NO_THROW(status = scheduler.statFile(s_userOnUserHost,
       archiveFile));
     ASSERT_EQ(storageClassName, status.getStorageClassName());
@@ -1728,7 +1728,7 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
   }
 
   {
-    FileStatus status;
+    ArchiveFileStatus status;
     ASSERT_NO_THROW(status = scheduler.statFile(s_userOnUserHost,
       archiveFile));
     ASSERT_EQ(storageClassName, status.getStorageClassName());
@@ -1817,7 +1817,7 @@ TEST_P(SchedulerTest, delete_archive_request) {
   }
 
   {
-    FileStatus status;
+    ArchiveFileStatus status;
     ASSERT_NO_THROW(status = scheduler.statFile(s_userOnUserHost,
       archiveFile));
     ASSERT_EQ(storageClassName, status.getStorageClassName());
@@ -2313,7 +2313,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   }
 
   {
-    FileStatus status;
+    ArchiveFileStatus status;
     ASSERT_NO_THROW(status = scheduler.statFile(s_adminOnAdminHost,
       archiveFile));
     ASSERT_EQ(storageClassName, status.getStorageClassName());
@@ -2504,7 +2504,7 @@ TEST_P(SchedulerTest, setOwner_statFile_top_level) {
     const uint16_t mode = 0777;
     ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
 
-    FileStatus status;
+    ArchiveFileStatus status;
 
     ASSERT_NO_THROW(status = scheduler.statFile(s_userOnUserHost, dirPath));
 

@@ -21,14 +21,14 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileStatus::FileStatus():
+cta::ArchiveFileStatus::ArchiveFileStatus():
   m_mode(0) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileStatus::FileStatus(
+cta::ArchiveFileStatus::ArchiveFileStatus(
   const UserIdentity &owner,
   const mode_t mode,
   const std::string &storageClassName):
@@ -40,21 +40,21 @@ cta::FileStatus::FileStatus(
 //------------------------------------------------------------------------------
 // getOwner
 //------------------------------------------------------------------------------
-const cta::UserIdentity &cta::FileStatus::getOwner() const throw() {
+const cta::UserIdentity &cta::ArchiveFileStatus::getOwner() const throw() {
   return m_owner;
 }
 
 //------------------------------------------------------------------------------
 // getMode
 //------------------------------------------------------------------------------
-mode_t cta::FileStatus::getMode() const throw() {
+mode_t cta::ArchiveFileStatus::getMode() const throw() {
   return m_mode;
 }
 
 //------------------------------------------------------------------------------
 // setStorageClassName
 //------------------------------------------------------------------------------
-void cta::FileStatus::setStorageClassName(
+void cta::ArchiveFileStatus::setStorageClassName(
   const std::string &storageClassName) {
   m_storageClassName = storageClassName;
 }
@@ -62,6 +62,6 @@ void cta::FileStatus::setStorageClassName(
 //------------------------------------------------------------------------------
 // getStorageClassName
 //------------------------------------------------------------------------------
-const std::string &cta::FileStatus::getStorageClassName() const throw() {
+const std::string &cta::ArchiveFileStatus::getStorageClassName() const throw() {
   return m_storageClassName;
 }

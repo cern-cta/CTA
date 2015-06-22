@@ -27,7 +27,7 @@ namespace cta {
 /**
  * The status of a file or a directory.
  */
-class FileStatus {
+class ArchiveFileStatus {
 public:
 
   /**
@@ -35,7 +35,7 @@ public:
    *
    * Initialises all integer member-variables to 0.
    */
-  FileStatus();
+  ArchiveFileStatus();
 
   /**
    * Constructor.
@@ -45,7 +45,7 @@ public:
    * @param storageClassName The name of the file or directory's storage class.
    * An empty string indicates no storage class.
    */
-  FileStatus(
+  ArchiveFileStatus(
     const UserIdentity &owner,
     const mode_t mode,
     const std::string &storageClassName);
@@ -96,6 +96,6 @@ private:
    */
   std::string m_storageClassName;
 
-}; // class FileStatus
+}; // class ArchiveFileStatus
 
 } // namespace cta

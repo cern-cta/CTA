@@ -376,7 +376,7 @@ void cta::MockNameServer::deleteDir(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 // statFile
 //------------------------------------------------------------------------------
-cta::FileStatus cta::MockNameServer::statFile(
+cta::ArchiveFileStatus cta::MockNameServer::statFile(
   const SecurityIdentity &requester,
   const std::string &path) const {
 
@@ -456,7 +456,7 @@ cta::DirEntry cta::MockNameServer::getDirEntry(
   } 
 
   const UserIdentity owner = getOwner(requester, path);
-  FileStatus status(owner, stat_result.st_mode, storageClassName);
+  ArchiveFileStatus status(owner, stat_result.st_mode, storageClassName);
 
   return DirEntry(entryType, name, status);
 }
