@@ -12,12 +12,17 @@ ofs.trace open close
 ofs.persist off
 
 #-------------------------------------------------------------------------------
-# Load access control plugin
+# Load access control plugin. The publickey directive can appear multiple times.
+# The first parameter of the publickey directive is the key type, the second
+# one is the path to the key on the local filesystem. There must be at least
+# one entry holding the default public key. An example of how to add other keys
+# is provided below.
 #-------------------------------------------------------------------------------
 ofs.authlib /usr/lib64/libxrdxcastor2acc.so.2.1
 ofs.authorize
 xcastor2.capability true
-xcastor2.publickey /opt/xrootd/keys/pkey.pem
+xcastor2.publickey default /opt/xrootd/keys/pkey.pem
+#xcastor2.publickey tape /opt/xrootd/keys/tape_pkey.pem
 
 #-------------------------------------------------------------------------------
 # Log level which is the same as the one used by syslog. By default it's INFO.
