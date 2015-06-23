@@ -682,7 +682,7 @@ EXCEPTION WHEN OTHERS THEN
         ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'" fileId=' || varSeg.fileId
         || ' copyNo=' || varSeg.copyNo || ' VID=' || varSeg.vid
         || ' fSeq=' || varSeg.fseq;
-  addSegResult(1, inReqId, SQLCODE, 'Uncaught exception', 0, varParams);
+  addSegResult(0, inReqId, SQLCODE, 'Uncaught Oracle exception', varSeg.fileId, varParams);
   DELETE FROM SetSegsForFilesInputHelper
    WHERE reqId = inReqId;
   COMMIT;
