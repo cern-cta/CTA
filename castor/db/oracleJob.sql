@@ -529,6 +529,9 @@ BEGIN
   END;
   -- on success, check the filesize and the checksum
   IF varErrorMessage IS NULL THEN
+    DECLARE
+      BadChecksum EXCEPTION;
+      PRAGMA EXCEPTION_INIT (BadChecksum, -6502);
     BEGIN
       SELECT csumValue INTO varFCksum
         FROM Cns_file_metadata@remoteNS
@@ -538,7 +541,7 @@ BEGIN
         varNewDcStatus := dconst.DISKCOPY_INVALID;
         varErrorMessage := 'File size/checksum mismatch during replication, the source file is probably corrupted';
       END IF;
-    EXCEPTION WHEN INVALID_NUMBER THEN
+    EXCEPTION WHEN BadChecksum THEN
       -- the checksum is not a number?!
       varNewDcStatus := dconst.DISKCOPY_INVALID;
       varErrorMessage := 'Invalid checksum value "' || inCksumValue || '", giving up';
