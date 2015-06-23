@@ -106,6 +106,15 @@ XrdxCastor2FsFile::open(const char*         path,
     return SFS_ERROR;
   }
 
+  // Set thread uid/gid to the user identity
+  uid_t uid;
+  gid_t gid;
+  XrdOucString str_uid = "";
+  XrdOucString str_gid = "";
+  gMgr->GetIdMapping(client, uid, gid);
+  str_uid += (int) uid;
+  str_gid += (int) gid;
+
   TIMING("MAPPING", &opentiming);
   xcastor_info("path=%s, mode=%0x", map_path.c_str(), open_mode);
 
@@ -243,14 +252,6 @@ XrdxCastor2FsFile::open(const char*         path,
   }
 
   TIMING("PREOPEN", &opentiming);
-  uid_t uid;
-  gid_t gid;
-  XrdOucString str_uid = "";
-  XrdOucString str_gid = "";
-  gMgr->GetIdMapping(client, uid, gid);
-  str_uid += (int) uid;
-  str_gid += (int) gid;
-
   const char* val;
   std::string desired_svc= "";
   std::string allowed_svc = "";
