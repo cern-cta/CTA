@@ -22,6 +22,9 @@
 #include "ObjectOps.hpp"
 #include <string>
 #include "objectstore/cta.pb.h"
+#include "scheduler/CreationLog.hpp"
+#include "CreationLog.hpp"
+#include "Agent.hpp"
 
 namespace cta { namespace objectstore {
   
@@ -41,6 +44,26 @@ public:
   // Set/get name
   void setName(const std::string & name);
   std::string getName();
+  
+  // Tapes management ==========================================================
+  std::string addOrGetTapeAndCommit(const std::string &vid, 
+    const std::string &logicalLibraryName, const uint64_t capacityInBytes, 
+    Agent & agent, const cta::CreationLog & CreationLog);
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchTape);
+  CTA_GENERATE_EXCEPTION_CLASS(WrongTape);
+  void removeTapeAndCommit(const std::string &vid);
+  std::string getTapeAddress(const std::string &vid);
+  class TapeDump {
+  public:
+    std::string vid;
+    std::string address;
+    std::string logicalLibraryName;
+    uint64_t capacityInBytes;
+    objectstore::CreationLog log;
+  };
+  std::list<TapeDump> dumpTapes();
+  
+  // Archival jobs management ==================================================
   
   // Check that the tape pool is empty (of both tapes and jobs)
   bool isEmpty();

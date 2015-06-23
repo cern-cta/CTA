@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/UserIdentity.hpp"
-#include "scheduler/ConfigurationItem.hpp"
+#include "scheduler/CreationLog.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -29,7 +29,7 @@ namespace cta {
 /**
  * Class representing a tape.
  */
-class Tape: public ConfigurationItem {
+class Tape {
 public:
 
   /**
@@ -52,12 +52,7 @@ public:
    * @param capacityInBytes The capacity of the tape.
    * @param dataOnTapeInBytes The amount of data currently stored on the tape in
    * bytes.
-   * @param creator The identity of the user that created this configuration
-   * item.
-   * @param comment The comment describing this configuration item.
-   * @param creationTime Optionally the absolute time at which this
-   * configuration item was created.  If no value is given then the current
-   * time is used.
+   * @param creationLog The who, where, when an why of this modification.
    */
   Tape(
     const std::string &vid,
@@ -65,9 +60,7 @@ public:
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
     const uint64_t dataOnTapeInBytes,
-    const UserIdentity &creator,
-    const std::string &comment,
-    const time_t creationTime = time(NULL));
+    const CreationLog &creationLog);
 
   /**
    * Less than operator.
@@ -111,6 +104,13 @@ public:
    */
   uint64_t getDataOnTapeInBytes() const throw();
 
+  
+  /**
+   * Get the creation log
+   * @return Reference to the creation log
+   */
+  const CreationLog & getCreationLog() const throw();
+  
 private:
 
   /**
@@ -138,6 +138,10 @@ private:
    */
   uint64_t m_dataOnTapeInBytes;
 
+  /**
+   * The record of the entry's creation
+   */
+  CreationLog m_creationLog;
 }; // class Tape
 
 } // namespace cta

@@ -41,15 +41,13 @@ cta::Tape::Tape(
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
     const uint64_t dataOnTapeInBytes,
-    const UserIdentity &creator,
-    const std::string &comment,
-    const time_t creationTime):
-    ConfigurationItem(creator, comment, creationTime),
+    const CreationLog & creationLog):
     m_vid(vid),
     m_logicalLibraryName(logicalLibraryName),
     m_tapePoolName(tapePoolName),
     m_capacityInBytes(capacityInBytes),
-    m_dataOnTapeInBytes(dataOnTapeInBytes) {
+    m_dataOnTapeInBytes(dataOnTapeInBytes),
+    m_creationLog(creationLog){
 }
 
 //------------------------------------------------------------------------------
@@ -92,4 +90,11 @@ uint64_t cta::Tape::getCapacityInBytes() const throw() {
 //------------------------------------------------------------------------------
 uint64_t cta::Tape::getDataOnTapeInBytes() const throw() {
   return m_dataOnTapeInBytes;
+}
+
+//------------------------------------------------------------------------------
+// getCreationLog
+//------------------------------------------------------------------------------
+auto cta::Tape::getCreationLog() const throw() -> const CreationLog & {
+  return m_creationLog;
 }

@@ -578,7 +578,7 @@ cta::Tape cta::MockSchedulerDatabase::getTape(const std::string &vid) const {
   std::ostringstream query;
   cta::Tape tape;
   query << "SELECT VID, LOGICALLIBRARY, TAPEPOOL, CAPACITY_BYTES,"
-    " DATAONTAPE_BYTES, UID, GID, CREATIONTIME, COMMENT FROM TAPE WHERE VID='"
+    " DATAONTAPE_BYTES, UID, GID, HOST, CREATIONTIME, COMMENT FROM TAPE WHERE VID='"
     << vid << "';";
   sqlite3_stmt *s = NULL;
   const int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &s, 0 );
@@ -598,10 +598,11 @@ cta::Tape cta::MockSchedulerDatabase::getTape(const std::string &vid) const {
         (char *)sqlite3_column_text(statement.get(),idx("TAPEPOOL")),
         (uint64_t)sqlite3_column_int64(statement.get(),idx("CAPACITY_BYTES")),
         (uint64_t)sqlite3_column_int64(statement.get(),idx("DATAONTAPE_BYTES")),
-        UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
-        sqlite3_column_int(statement.get(),idx("GID"))),
-        (char *)sqlite3_column_text(statement.get(),idx("COMMENT")),
-        time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME")))
+        CreationLog(UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
+            sqlite3_column_int(statement.get(),idx("GID"))),
+          (char *)sqlite3_column_text(statement.get(),idx("COMMENT")),
+          time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME"))),
+          (char *)sqlite3_column_text(statement.get(),idx("COMMENT")))
       );
     }
     break;
@@ -1374,20 +1375,20 @@ std::list<cta::LogicalLibrary> cta::MockSchedulerDatabase::getLogicalLibraries()
 // createTape
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::createTape(
-  const SecurityIdentity &requester,
   const std::string &vid,
   const std::string &logicalLibraryName,
   const std::string &tapePoolName,
   const uint64_t capacityInBytes,
-  const std::string &comment) {
+  const CreationLog &creationLog) {
   char *zErrMsg = 0;
   std::ostringstream query;
   query << "INSERT INTO TAPE(VID, LOGICALLIBRARY, TAPEPOOL,"
-    " CAPACITY_BYTES, DATAONTAPE_BYTES, UID, GID, CREATIONTIME, COMMENT)"
+    " CAPACITY_BYTES, DATAONTAPE_BYTES, UID, GID, HOST, CREATIONTIME, COMMENT)"
     " VALUES('" << vid << "','" << logicalLibraryName << "','" << tapePoolName
     << "',"<< (long unsigned int)capacityInBytes << ",0," <<
-    requester.getUser().uid << "," << requester.getUser().gid << ","
-    << (int)time(NULL) << ",'" << comment << "');";
+    creationLog.user.uid << "," << creationLog.user.gid << ","
+    << "'" << creationLog.host << "', " << creationLog.time << ",'" 
+    << creationLog.comment << "');";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
     std::ostringstream msg;
@@ -1429,7 +1430,7 @@ std::list<cta::Tape> cta::MockSchedulerDatabase::getTapes() const {
   std::ostringstream query;
   std::list<cta::Tape> tapes;
   query << "SELECT VID, LOGICALLIBRARY, TAPEPOOL, CAPACITY_BYTES,"
-    " DATAONTAPE_BYTES, UID, GID, CREATIONTIME, COMMENT"
+    " DATAONTAPE_BYTES, UID, GID, HOST, CREATIONTIME, COMMENT"
     " FROM TAPE ORDER BY VID;";
   sqlite3_stmt *s = NULL;
   const int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &s, 0 );
@@ -1447,10 +1448,11 @@ std::list<cta::Tape> cta::MockSchedulerDatabase::getTapes() const {
       (char *)sqlite3_column_text(statement.get(),idx("TAPEPOOL")),
       (uint64_t)sqlite3_column_int64(statement.get(),idx("CAPACITY_BYTES")),
       (uint64_t)sqlite3_column_int64(statement.get(),idx("DATAONTAPE_BYTES")),
-      UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
-      sqlite3_column_int(statement.get(),idx("GID"))),
-      (char *)sqlite3_column_text(statement.get(),idx("COMMENT")),
-      time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME")))
+      CreationLog(UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
+          sqlite3_column_int(statement.get(),idx("GID"))),
+        (char *)sqlite3_column_text(statement.get(),idx("COMMENT")),
+        time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME"))),
+        (char *)sqlite3_column_text(statement.get(),idx("COMMENT")))
     ));
   }
   return tapes;

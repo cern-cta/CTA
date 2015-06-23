@@ -16,21 +16,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 
 namespace cta { namespace objectstore {
   
-#define MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(A) \
-  template <> const serializers::ObjectType ObjectOps<serializers::A>::typeId = serializers::A##_t
+class Backend;
+class Agent;
+class GenericObject;
 
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(GenericObject);
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(RootEntry);
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(AgentRegister);
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(Agent);
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(TapePool);
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(DriveRegister);
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(Tape);
+class Tape: public ObjectOps<serializers::Tape> {
+public:
+  Tape(const std::string & address, Backend & os);
+  Tape(GenericObject & go);
+  void initialize(const std::string & vid);
+  void garbageCollect();
+  bool isEmpty();
+  CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
+  void removeIfEmpty();
+  std::string dump();
   
-#undef MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID
-}} 
+  // -- Stored data counting ---------------------------------------------------
+  uint64_t getStoredData();
+  std::string getVid();
+  void setStoredData(uint64_t bytes);
+  void addStoredData(uint64_t bytes);
+};
+
+}}

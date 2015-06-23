@@ -456,6 +456,7 @@ std::string cta::objectstore::RootEntry::addOrGetTapePoolAndCommit(const std::st
   // Insert the tape pool, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
   std::string tapePoolAddress = agent.nextId("tapePool");
+  // TODO Do we expect the agent to be passed locked or not: to be clarified.
   ScopedExclusiveLock agl(agent);
   agent.fetch();
   agent.addToOwnership(tapePoolAddress);
@@ -762,6 +763,6 @@ std::string cta::objectstore::RootEntry::dump () {
 //  if (m_payload.has_jobpool()) ret << "jobPool=" << m_payload.jobpool() << std::endl;
 /*  if (m_payload.has_driveregister()) ret << "driveRegister=" << m_payload.driveregister() << std::endl;
   if (m_payload.has_taperegister()) ret << "tapeRegister=" << m_payload.taperegister() << std::endl;*/
-  ret << ">>>> Root entry dump start" << std::endl;
+  ret << ">>>> Root entry dump end" << std::endl;
   return ret.str();
 }

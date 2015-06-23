@@ -18,44 +18,19 @@ add_library (CTAObjectStore SHARED
   AgentRegister.cpp
   AgentWatchdog.cpp
   TapePool.cpp
+  Tape.cpp
   DriveRegister.cpp
-  #AdminUsersList.cpp
   BackendVFS.cpp
   BackendRados.cpp
   ObjectOps.cpp
   ProtocolBuffersAlgorithms.cpp
-  #FIFO.cpp
   GenericObject.cpp
   GarbageCollector.cpp)
-
-# add_executable(tapeResourceManagerTest tapeResourceManagerTest.cpp)
-# target_link_libraries(tapeResourceManagerTest
-#   protobuf rados CTAObjectStore)
-# 
-# add_executable(dumpStructure dumpStructure.cpp)
-# target_link_libraries(dumpStructure
-#   protobuf rados CTAObjectStore)
-# 
-# add_executable(jobPoster jobPoster.cpp)
-# target_link_libraries(jobPoster
-#   protobuf rados CTAObjectStore)
-# 
-# add_executable(recaller recaller.cpp)
-# target_link_libraries(recaller
-#   protobuf rados CTAObjectStore)
-# 
-# add_executable(garbageCollector garbageCollector.cpp)
-# target_link_libraries(garbageCollector
-#   protobuf rados CTAObjectStore)
-# 
-# add_executable(createEnvironment createEnvironment.cpp)
-# target_link_libraries(createEnvironment
-#   protobuf rados CTAObjectStore)
 
 set(ObjectStoreUnitTests
   BackendTest.cpp
   RootEntryTest.cpp
-  #FIFOTest.cpp
+  TapeTest.cpp
   GarbageCollectorTest.cpp
 )
 

@@ -383,21 +383,19 @@ public:
   /**
    * Creates a tape.
    *
-   * @param requester The identity of the requester.
    * @param vid The volume identifier of the tape.
    * @param logicalLibraryName The name of the logical library to which the tape
    * belongs.
    * @param tapePoolName The name of the tape pool to which the tape belongs.
    * @param capacityInBytes The capacity of the tape.
-   * @param comment The comment describing the logical library.
+   * @param creationLog The who, where, when an why of this modification.
    */
-  void createTape(
-    const SecurityIdentity &requester,
+  virtual void createTape(
     const std::string &vid,
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
-    const std::string &comment);
+    const CreationLog &creationLog);
 
   /**
    * Deletes the tape with the specified volume identifier.

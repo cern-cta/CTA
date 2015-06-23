@@ -101,10 +101,11 @@ public:
   virtual void deleteTapePool(const SecurityIdentity& requester, const std::string& name);
 
   /* === Tapes handling  ==================================================== */
-  virtual void createTape(const SecurityIdentity& requester, 
-    const std::string& vid, const std::string& logicalLibraryName, 
+  CTA_GENERATE_EXCEPTION_CLASS(TapeAlreadyExists);
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchLibrary);
+  virtual void createTape(const std::string& vid, const std::string& logicalLibraryName, 
     const std::string& tapePoolName, const uint64_t capacityInBytes, 
-    const std::string& comment);
+    const cta::CreationLog& creationLog);
 
   virtual std::list<Tape> getTapes() const;
 
@@ -116,6 +117,7 @@ public:
 
   virtual std::list<LogicalLibrary> getLogicalLibraries() const;
 
+  CTA_GENERATE_EXCEPTION_CLASS(LibraryInUse);
   virtual void deleteLogicalLibrary(const SecurityIdentity& requester, const std::string& name);
 
   /* === Archival requests handling  ======================================== */

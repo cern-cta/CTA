@@ -19,6 +19,8 @@
 #include "OStoreDB.hpp"
 #include "scheduler/SecurityIdentity.hpp"
 #include "objectstore/RootEntry.hpp"
+#include "objectstore/TapePool.hpp"
+#include "objectstore/Tape.hpp"
 #include "common/exception/Exception.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
@@ -26,6 +28,7 @@
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/StorageClass.hpp"
 #include "scheduler/TapePool.hpp"
+#include "scheduler/Tape.hpp"
 #include <algorithm>
 
 namespace cta {
@@ -259,13 +262,13 @@ void OStoreDB::createTapePool(const std::string& name,
   re.commit();
 }
 
-std::list<TapePool> OStoreDB::getTapePools() const {
+std::list<cta::TapePool> OStoreDB::getTapePools() const {
   RootEntry re(m_objectStore);
   ScopedSharedLock rel(re);
   re.fetch();
   auto tpd = re.dumpTapePools();
   rel.release();
-  std::list<TapePool> ret;
+  std::list<cta::TapePool> ret;
   for (auto tp=tpd.begin(); tp!=tpd.end(); tp++) {
     ret.push_back(cta::TapePool(tp->tapePool, tp->nbPartialTapes, tp->log));
   }
@@ -281,15 +284,62 @@ void OStoreDB::deleteTapePool(const SecurityIdentity& requester,
   re.commit();
 }
 
-void OStoreDB::createTape(const SecurityIdentity& requester, 
-  const std::string& vid, const std::string& logicalLibraryName, 
+void OStoreDB::createTape(const std::string& vid, 
+  const std::string& logicalLibraryName, 
   const std::string& tapePoolName, const uint64_t capacityInBytes, 
-  const std::string& comment) {
-  throw exception::Exception("Not Implemented");
+  const cta::CreationLog& creationLog) {
+  // To create a tape, we have to
+  // - Find the storage class and lock for write.
+  // - Create the tape object.
+  // - Connect the tape object to the tape pool.
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  // Check the library exists
+  auto libs = re.dumpLibraries();
+  for (auto l=libs.begin(); l!=libs.end(); l++) {
+    if (l->library == logicalLibraryName)
+      goto found;
+  }
+  throw NoSuchLibrary("In OStoreDB::createTape: trying to create a tape in a non-existing library");
+  found:
+  std::string tpAddress = re.getTapePoolAddress(tapePoolName);
+  // Take hold of the tape pool
+  objectstore::TapePool tp(tpAddress, m_objectStore);
+  ScopedExclusiveLock tpl(tp);
+  tp.fetch();
+  // Check that the tape exists and throw an exception if it does.
+  try {
+    tp.getTapeAddress(vid);
+    throw TapeAlreadyExists("In OStoreDB::createTape: trying to create an existing tape.");
+  } catch (cta::exception::Exception &) {}
+  // Create the tape. The tape pool method takes care of the gory details for us.
+  tp.addOrGetTapeAndCommit(vid, logicalLibraryName, capacityInBytes, 
+      *m_agent, creationLog);
+  tp.commit();
 }
 
-std::list<Tape> OStoreDB::getTapes() const {
-  throw exception::Exception("Not Implemented");
+std::list<cta::Tape> OStoreDB::getTapes() const {
+  std::list<cta::Tape> ret;
+  // Got through all tape pools. Get the list of them
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto tpl = re.dumpTapePools();
+  for (auto tpi=tpl.begin(); tpi!=tpl.end(); tpi++) {
+    objectstore::TapePool tp(tpi->address, m_objectStore);
+    ScopedSharedLock tpl(tp);
+    tp.fetch();
+    auto tl=tp.dumpTapes();
+    for (auto ti=tl.begin(); ti!=tl.end(); ti++) {
+      objectstore::Tape t(ti->address, m_objectStore);
+      ScopedSharedLock tl(t);
+      t.fetch();
+      ret.push_back(cta::Tape(ti->vid, ti->logicalLibraryName, tpi->tapePool,
+        ti->capacityInBytes, t.getStoredData(), ti->log));
+    }
+  }
+  return ret;
 }
 
 void OStoreDB::deleteTape(const SecurityIdentity& requester, 
@@ -323,6 +373,18 @@ void OStoreDB::deleteLogicalLibrary(const SecurityIdentity& requester,
   const std::string& name) {
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
+  // Check we are not deleting a non-empty library
+  auto tpl = re.dumpTapePools();
+  for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
+    objectstore::TapePool tp(tpp->address, m_objectStore);
+    ScopedSharedLock tplock(tp);
+    tp.fetch();
+    auto tl=tp.dumpTapes();
+    for (auto t=tl.begin(); t!=tl.end(); t++) {
+      if (t->logicalLibraryName == name)
+        throw LibraryInUse("In OStoreDB::deleteLogicalLibrary: trying to delete a library used by a tape.");
+    }
+  }
   re.fetch();
   re.removeLibrary(name);
   re.commit();
@@ -346,7 +408,7 @@ void OStoreDB::markArchiveRequestForDeletion(const SecurityIdentity& requester,
   throw exception::Exception("Not Implemented");
 }
 
-std::map<TapePool, std::list<ArchiveToTapeCopyRequest> >
+std::map<cta::TapePool, std::list<ArchiveToTapeCopyRequest> >
   OStoreDB::getArchiveRequests() const {
   throw exception::Exception("Not Implemented");
 }
@@ -368,7 +430,7 @@ std::list<RetrieveFromTapeCopyRequest> OStoreDB::getRetrieveRequests(const std::
   throw exception::Exception("Not Implemented");
 }
 
-std::map<Tape, std::list<RetrieveFromTapeCopyRequest> > OStoreDB::getRetrieveRequests() const {
+std::map<cta::Tape, std::list<RetrieveFromTapeCopyRequest> > OStoreDB::getRetrieveRequests() const {
   throw exception::Exception("Not Implemented");
 }
 

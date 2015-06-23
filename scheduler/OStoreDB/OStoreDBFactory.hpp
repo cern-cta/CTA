@@ -98,8 +98,8 @@ public:
     m_OStoreDB.createStorageClass(name, nbCopies, creationLog);
   }
 
-  virtual void createTape(const SecurityIdentity& requester, const std::string& vid, const std::string& logicalLibraryName, const std::string& tapePoolName, const uint64_t capacityInBytes, const std::string& comment) {
-    m_OStoreDB.createTape(requester, vid, logicalLibraryName, tapePoolName, capacityInBytes, comment);
+  virtual void createTape(const std::string& vid, const std::string& logicalLibraryName, const std::string& tapePoolName, const uint64_t capacityInBytes, const cta::CreationLog & creationLog) {
+    m_OStoreDB.createTape(vid, logicalLibraryName, tapePoolName, capacityInBytes, creationLog);
   }
 
   virtual void createTapePool(const std::string& name, const uint32_t nbPartialTapes, const CreationLog& creationLog) {

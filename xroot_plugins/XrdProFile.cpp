@@ -796,7 +796,8 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::Se
     std::istringstream capacity_ss(capacity_s);
     uint64_t capacity = 0;
     capacity_ss >> capacity;
-    m_scheduler->createTape(requester, vid, logicalLibrary, tapePool, capacity, comment);
+    cta::CreationLog log(requester.getUser(), requester.getHost(), time(NULL), comment);
+    m_scheduler->createTape(requester, vid, logicalLibrary, tapePool, capacity, log);
   }
   else if("ch" == tokens[2]) {
     std::string vid = getOptionValue(tokens, "-v", "--vid");
@@ -830,10 +831,11 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::Se
                  << " " << it->getCapacityInBytes()
                  << " " << it->getTapePoolName()
                  << " " << it->getDataOnTapeInBytes()
-                 << " " << it->getCreator().uid 
-                 << " " << it->getCreator().gid 
-                 << " " << it->getCreationTime() 
-                 << " " << it->getComment() << std::endl;
+                 << " " << it->getCreationLog().user.uid 
+                 << " " << it->getCreationLog().user.gid 
+                 << " " << it->getCreationLog().host
+                 << " " << it->getCreationLog().time
+                 << " " << it->getCreationLog().comment << std::endl;
     }
     m_data = responseSS.str();
   }

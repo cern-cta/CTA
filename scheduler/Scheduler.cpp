@@ -328,10 +328,10 @@ void cta::Scheduler::createTape(
   const std::string &logicalLibraryName,
   const std::string &tapePoolName,
   const uint64_t capacityInBytes,
-  const std::string &comment) {
+  const CreationLog &creationLog) {
   m_db.assertIsAdminOnAdminHost(requester);
-  m_db.createTape(requester, vid, logicalLibraryName, tapePoolName,
-    capacityInBytes, comment);
+  m_db.createTape(vid, logicalLibraryName, tapePoolName,
+    capacityInBytes, creationLog);
 }
 
 //------------------------------------------------------------------------------

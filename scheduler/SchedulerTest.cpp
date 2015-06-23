@@ -826,8 +826,10 @@ TEST_P(SchedulerTest, admin_createTape_new) {
   const std::string vid = "TestVid";
   const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
+  CreationLog log(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(), 
+    time(NULL), tapeComment);
   ASSERT_NO_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName, tapePoolName,
-    capacityInBytes, tapeComment));
+    capacityInBytes, log));
   {
     std::list<Tape> tapes;
     ASSERT_NO_THROW(tapes = scheduler.getTapes(s_adminOnAdminHost));
@@ -840,7 +842,7 @@ TEST_P(SchedulerTest, admin_createTape_new) {
     ASSERT_EQ(tapePoolName, tape.getTapePoolName());
     ASSERT_EQ(capacityInBytes, tape.getCapacityInBytes());
     ASSERT_EQ(0, tape.getDataOnTapeInBytes());
-    ASSERT_EQ(tapeComment, tape.getComment());
+    ASSERT_EQ(tapeComment, tape.getCreationLog().comment);
   } 
 }
 
@@ -891,8 +893,10 @@ TEST_P(SchedulerTest,
   const std::string vid = "TestVid";
   const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
+  CreationLog log(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(), 
+    time(NULL), tapeComment);
   ASSERT_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName, tapePoolName,
-    capacityInBytes, tapeComment), std::exception);
+    capacityInBytes, log), std::exception);
 }
 
 TEST_P(SchedulerTest, admin_createTape_new_non_existing_pool) {
@@ -939,8 +943,10 @@ TEST_P(SchedulerTest, admin_createTape_new_non_existing_pool) {
   const std::string vid = "TestVid";
   const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
+  CreationLog log(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(), 
+    time(NULL), tapeComment);
   ASSERT_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName, tapePoolName,
-    capacityInBytes, tapeComment), std::exception);
+    capacityInBytes, log), std::exception);
 }
 
 TEST_P(SchedulerTest, getDirContents_root_dir_is_empty) {
@@ -2276,8 +2282,10 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   const std::string vid = "TestVid";
   const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
-  ASSERT_NO_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName, tapePoolName,
-    capacityInBytes, tapeComment));
+  CreationLog log(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(), 
+    time(NULL), tapeComment);
+  ASSERT_NO_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName,
+    tapePoolName, capacityInBytes, log));
 
   const uint16_t copyNb = 1;
   const std::string archivalRouteComment = "Archival-route comment";
