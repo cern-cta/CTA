@@ -1110,8 +1110,16 @@ XrdxCastor2Fs::stat(const char* path,
   buf->st_mtime   = cstat.mtime;
   buf->st_ctime   = cstat.ctime;
 
+  // If 'm' bit is set, then set the BACKUP_EXISTS flag using the following
+  // convention:
+  //   - file is on disk and was migrated to tape -> BACKUP_EXISTS
+  //   - file is not on disk but migrated to tape -> BACKUP_EXISTS | OFFLINE
+  if (cstat.status == 'm')
+    buf->st_rdev = XRDSFS_HASBKUP;
+
   if (!S_ISDIR(cstat.filemode))
   {
+    // This file is only on tape so we set both flags
     if ((stage_status != "STAGED") &&
         (stage_status != "CANBEMIGR") &&
         (stage_status != "STAGEOUT"))
@@ -1120,8 +1128,7 @@ XrdxCastor2Fs::stat(const char* path,
       buf->st_mode = static_cast<mode_t>(0);
       buf->st_dev  = 0;
       buf->st_ino  = 0;
-      // Extend querying support for files on tape by returning also the
-      // backup exists and is offline flags
+      buf->st_mode = S_IFREG;
       buf->st_rdev = XRDSFS_HASBKUP | XRDSFS_OFFLINE;
     }
 
