@@ -71,10 +71,10 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
   //! Open file
   //----------------------------------------------------------------------------
   int open(const char* fileName,
-           XrdSfsFileOpenMode openMode,
-           mode_t createMode,
-           const XrdSecEntity* client,
-           const char* opaque = 0);
+	   XrdSfsFileOpenMode openMode,
+	   mode_t createMode,
+	   const XrdSecEntity* client,
+	   const char* opaque = 0);
 
 
   //----------------------------------------------------------------------------
@@ -87,15 +87,15 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
   //! Read from file
   //----------------------------------------------------------------------------
   int read(XrdSfsFileOffset fileOffset,   // Preread only
-           XrdSfsXferSize amount);
+	   XrdSfsXferSize amount);
 
 
   //----------------------------------------------------------------------------
   //! Read from file
   //----------------------------------------------------------------------------
   XrdSfsXferSize read(XrdSfsFileOffset fileOffset,
-                      char* buffer,
-                      XrdSfsXferSize buffer_size);
+		      char* buffer,
+		      XrdSfsXferSize buffer_size);
 
 
   //----------------------------------------------------------------------------
@@ -108,8 +108,8 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
   //! Write to file
   //----------------------------------------------------------------------------
   XrdSfsXferSize write(XrdSfsFileOffset fileOffset,
-                       const char* buffer,
-                       XrdSfsXferSize buffer_size);
+		       const char* buffer,
+		       XrdSfsXferSize buffer_size);
 
 
   //----------------------------------------------------------------------------
@@ -145,8 +145,8 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
   //! @return SFS_OK if successful, otherwise SFS_ERROR
   //----------------------------------------------------------------------------
   int PrepareTPC(XrdOucString& path,
-                 XrdOucString& opaque,
-                 const XrdSecEntity* client);
+		 XrdOucString& opaque,
+		 const XrdSecEntity* client);
 
 
   //----------------------------------------------------------------------------
@@ -286,10 +286,10 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
   //! Chmod - masked
   //----------------------------------------------------------------------------
   int chmod(const char* path,
-            XrdSfsMode Mode,
-            XrdOucErrInfo& out_error,
-            const XrdSecEntity* client,
-            const char* opaque = 0)
+	    XrdSfsMode Mode,
+	    XrdOucErrInfo& out_error,
+	    const XrdSecEntity* client,
+	    const char* opaque = 0)
   {
     EPNAME("chmod");
     return Emsg(epname, out_error, ENOSYS, epname, path);
@@ -300,10 +300,10 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
   //! Exists - masked
   //----------------------------------------------------------------------------
   int exists(const char* path,
-             XrdSfsFileExistence& exists_flag,
-             XrdOucErrInfo& out_error,
-             const XrdSecEntity* client,
-             const char* opaque = 0)
+	     XrdSfsFileExistence& exists_flag,
+	     XrdOucErrInfo& out_error,
+	     const XrdSecEntity* client,
+	     const char* opaque = 0)
   {
     EPNAME("exists");
     return Emsg(epname, out_error, ENOSYS, epname, path);
@@ -314,9 +314,9 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
   //! fsctl - masked
   //----------------------------------------------------------------------------
   int fsctl(const int cmd,
-            const char* args,
-            XrdOucErrInfo& out_error,
-            const XrdSecEntity* client)
+	    const char* args,
+	    XrdOucErrInfo& out_error,
+	    const XrdSecEntity* client)
   {
     EPNAME("fsctl");
     return Emsg(epname, out_error, ENOSYS, epname);
@@ -327,10 +327,10 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
   //! Mkdir - masked
   //----------------------------------------------------------------------------
   int mkdir(const char* path,
-            XrdSfsMode Mode,
-            XrdOucErrInfo& out_error,
-            const XrdSecEntity* client,
-            const char* opaque = 0)
+	    XrdSfsMode Mode,
+	    XrdOucErrInfo& out_error,
+	    const XrdSecEntity* client,
+	    const char* opaque = 0)
   {
     EPNAME("mkdir");
     return Emsg(epname, out_error, ENOSYS, epname, path);
@@ -341,8 +341,8 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
   //! Prepare - masked
   //----------------------------------------------------------------------------
   int prepare(XrdSfsPrep& pargs,
-              XrdOucErrInfo& out_error,
-              const XrdSecEntity* client = 0)
+	      XrdOucErrInfo& out_error,
+	      const XrdSecEntity* client = 0)
   {
     EPNAME("prepare");
     return Emsg(epname, out_error, ENOSYS, epname);
@@ -353,9 +353,9 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
   //! Remdir - masked
   //----------------------------------------------------------------------------
   int remdir(const char* path,
-             XrdOucErrInfo& out_error,
-             const XrdSecEntity* client,
-             const char* info = 0)
+	     XrdOucErrInfo& out_error,
+	     const XrdSecEntity* client,
+	     const char* info = 0)
   {
     return Emsg("remdir", out_error, ENOSYS, path);
   }
@@ -365,11 +365,11 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
   //! Rename - masked
   //----------------------------------------------------------------------------
   int rename(const char* oldFileName,
-             const char* newFileName,
-             XrdOucErrInfo& out_error,
-             const XrdSecEntity* client,
-             const char* infoO = 0,
-             const char* infoN = 0)
+	     const char* newFileName,
+	     XrdOucErrInfo& out_error,
+	     const XrdSecEntity* client,
+	     const char* infoO = 0,
+	     const char* infoN = 0)
   {
     EPNAME("rename");
     return Emsg(epname, out_error, ENOSYS, epname, oldFileName);
@@ -380,9 +380,9 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
   //! Remove file - masked
   //----------------------------------------------------------------------------
   int rem(const char* path,
-          XrdOucErrInfo& out_error,
-          const XrdSecEntity* client,
-          const char* info = 0)
+	  XrdOucErrInfo& out_error,
+	  const XrdSecEntity* client,
+	  const char* info = 0)
   {
     EPNAME("rem");
     return Emsg(epname, out_error, ENOSYS, epname, path);
@@ -393,10 +393,10 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
   //! Stat
   //----------------------------------------------------------------------------
   int stat(const char* Name,
-           struct stat* buf,
-           XrdOucErrInfo& out_error,
-           const XrdSecEntity* client,
-           const char* opaque = 0);
+	   struct stat* buf,
+	   XrdOucErrInfo& out_error,
+	   const XrdSecEntity* client,
+	   const char* opaque = 0);
 
 
   //----------------------------------------------------------------------------
@@ -418,9 +418,9 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
   //!         o/w      one of SFS_ERROR, SFS_REDIRECT, or SFS_STALL.
   //----------------------------------------------------------------------------
   int FSctl(const int cmd,
-            XrdSfsFSctl& args,
-            XrdOucErrInfo& eInfo,
-            const XrdSecEntity* client = 0);
+	    XrdSfsFSctl& args,
+	    XrdOucErrInfo& eInfo,
+	    const XrdSecEntity* client = 0);
 
 
   //----------------------------------------------------------------------------
