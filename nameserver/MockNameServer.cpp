@@ -464,7 +464,7 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
 //------------------------------------------------------------------------------
 // getDirContents
 //------------------------------------------------------------------------------
-cta::DirIterator cta::MockNameServer::getDirContents(
+cta::ArchiveDirIterator cta::MockNameServer::getDirContents(
   const SecurityIdentity &requester, const std::string &path) const {
   Utils::assertAbsolutePathSyntax(path);
   assertFsDirExists(m_fsDir+path);

@@ -66,7 +66,7 @@ TEST_F(cta_MockNameServerTest, constructor_consistency) {
   std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
-  DirIterator itor;
+  ArchiveDirIterator itor;
   
   ASSERT_NO_THROW(ns->setOwner(s_adminOnAdminHost, "/", s_user));
   ASSERT_NO_THROW(itor = ns->getDirContents(s_userOnUserHost, "/"));
@@ -80,7 +80,7 @@ TEST_F(cta_MockNameServerTest, mkdir_functionality) {
   std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
-  DirIterator itor;
+  ArchiveDirIterator itor;
 
   ASSERT_NO_THROW(ns->setOwner(s_adminOnAdminHost, "/", s_user));
   ASSERT_NO_THROW(ns->createDir(s_userOnUserHost, "/dir1", 0777));
@@ -97,7 +97,7 @@ TEST_F(cta_MockNameServerTest, createFile_functionality) {
   std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
-  DirIterator itor;
+  ArchiveDirIterator itor;
 
   ASSERT_NO_THROW(ns->setOwner(s_adminOnAdminHost, "/", s_user));
   ASSERT_NO_THROW(ns->createFile(s_userOnUserHost, "/file1", 0666));
@@ -114,7 +114,7 @@ TEST_F(cta_MockNameServerTest, rmdir_functionality) {
   std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
-  DirIterator itor;
+  ArchiveDirIterator itor;
   
   ASSERT_NO_THROW(ns->setOwner(s_adminOnAdminHost, "/", s_user));
   ASSERT_NO_THROW(ns->createDir(s_userOnUserHost, "/dir1", 0777));
@@ -136,7 +136,7 @@ TEST_F(cta_MockNameServerTest, storageClass_functionality) {
   std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
-  DirIterator itor;
+  ArchiveDirIterator itor;
   
   ASSERT_NO_THROW(ns->setOwner(s_adminOnAdminHost, "/", s_user));
   ASSERT_NO_THROW(ns->createDir(s_userOnUserHost, "/dir1", 0777));
@@ -167,7 +167,7 @@ TEST_F(cta_MockNameServerTest, storageClass_inheritance) {
   std::unique_ptr<MockNameServer> ns;
   ASSERT_NO_THROW(ns.reset(new MockNameServer()));
 
-  DirIterator itor;
+  ArchiveDirIterator itor;
   
   ASSERT_NO_THROW(ns->setOwner(s_adminOnAdminHost, "/", s_user));
   ASSERT_NO_THROW(ns->createDir(s_userOnUserHost, "/dir1", 0777));

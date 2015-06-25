@@ -421,7 +421,7 @@ std::string cta::Scheduler::getVidOfFile(
 //------------------------------------------------------------------------------
 // getDirContents
 //------------------------------------------------------------------------------
-cta::DirIterator cta::Scheduler::getDirContents(
+cta::ArchiveDirIterator cta::Scheduler::getDirContents(
   const SecurityIdentity &requester,
   const std::string &path) const {
   return m_ns.getDirContents(requester, path);

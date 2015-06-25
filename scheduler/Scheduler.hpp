@@ -33,7 +33,7 @@ class ArchivalRoute;
 class ArchiveToDirRequest;
 class ArchiveToFileRequest;
 class ArchiveToTapeCopyRequest;
-class DirIterator;
+class ArchiveDirIterator;
 class LogicalLibrary;
 class NameServer;
 class RemoteNS;
@@ -507,7 +507,7 @@ public:
    * @param path The absolute path of the directory.
    * @return An iterator over the contents of the directory.
    */
-  DirIterator getDirContents(
+  ArchiveDirIterator getDirContents(
     const SecurityIdentity &requester,
     const std::string &path) const;
 

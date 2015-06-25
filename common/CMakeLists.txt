@@ -2,8 +2,8 @@ cmake_minimum_required (VERSION 2.6)
 
 set (COMMON_LIB_SRC_FILES
   ArchiveDirEntry.cpp
+  ArchiveDirIterator.cpp
   ArchiveFileStatus.cpp
-  DirIterator.cpp
   exception/Backtrace.cpp
   exception/Errnum.cpp
   exception/Exception.cpp

@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/ArchiveDirIterator.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/UserIdentity.hpp"
 #include "nameserver/NameServer.hpp"
@@ -25,7 +26,6 @@
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/ArchivalRoute.hpp"
-#include "common/DirIterator.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MockSchedulerDatabase.hpp"
 #include "scheduler/RetrieveFromTapeCopyRequest.hpp"

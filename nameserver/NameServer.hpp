@@ -18,8 +18,8 @@
 
 #pragma once
 
+#include "common/ArchiveDirIterator.hpp"
 #include "common/ArchiveFileStatus.hpp"
-#include "common/DirIterator.hpp"
 #include "scheduler/SecurityIdentity.hpp"
 
 #include <string>
@@ -80,7 +80,7 @@ public:
    * @param path The absolute path of the directory.
    * @return An iterator over the contents of the directory.
    */
-  virtual DirIterator getDirContents(
+  virtual ArchiveDirIterator getDirContents(
     const SecurityIdentity &requester,
     const std::string &path) const = 0;
 

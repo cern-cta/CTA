@@ -16,40 +16,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/DirIterator.hpp"
+#include "common/ArchiveDirIterator.hpp"
 #include "common/exception/Exception.hpp"
 using cta::exception::Exception;
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::DirIterator::DirIterator() {
+cta::ArchiveDirIterator::ArchiveDirIterator() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::DirIterator::DirIterator(
+cta::ArchiveDirIterator::ArchiveDirIterator(
   const std::list<ArchiveDirEntry> &entries): m_entries(entries) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::DirIterator::~DirIterator() throw() {
+cta::ArchiveDirIterator::~ArchiveDirIterator() throw() {
 }
 
 //------------------------------------------------------------------------------
 // hasMore
 //------------------------------------------------------------------------------
-bool cta::DirIterator::hasMore() {
+bool cta::ArchiveDirIterator::hasMore() {
   return !m_entries.empty();
 }
 
 //------------------------------------------------------------------------------
 // next
 //------------------------------------------------------------------------------
-const cta::ArchiveDirEntry cta::DirIterator::next() {
+const cta::ArchiveDirEntry cta::ArchiveDirIterator::next() {
   if(m_entries.empty()) {
     throw Exception("Out of bounds: There are no more directory entries");
   }

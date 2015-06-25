@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "cmdline/CTACmd.hpp"
+#include "common/ArchiveDirIterator.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/UserIdentity.hpp"
 #include "scheduler/AdminHost.hpp"
@@ -33,8 +35,6 @@
 #include "xroot_plugins/XrdProFile.hpp"
 
 #include "XrdSec/XrdSecEntity.hh"
-#include "cmdline/CTACmd.hpp"
-#include "common/DirIterator.hpp"
 
 #include <iostream>
 #include <pwd.h>

@@ -29,7 +29,7 @@ namespace cta {
  * through the contents of a directory.
  *
  * \code
- * DirIterator &itor = ...
+ * ArchiveDirIterator &itor = ...
  *
  * while(itor.hasMore())) {
  *   const ArchiveDirEntry &entry = itor.next();
@@ -38,25 +38,25 @@ namespace cta {
  * }
  * \endcode
  */
-class DirIterator {
+class ArchiveDirIterator {
 public:
 
   /**
    * Constructor.
    */
-  DirIterator();
+  ArchiveDirIterator();
 
   /**
    * Constructor.
    *
    * @param entries The directory entries.
    */
-  DirIterator(const std::list<ArchiveDirEntry> &entries);
+  ArchiveDirIterator(const std::list<ArchiveDirEntry> &entries);
 
   /**
    * Destructor.
    */
-  ~DirIterator() throw();
+  ~ArchiveDirIterator() throw();
 
   /**
    * Returns true if there are more directory entries.
@@ -80,6 +80,6 @@ private:
    */
   std::list<ArchiveDirEntry> m_entries;
 
-}; // DirIterator
+}; // ArchiveDirIterator
 
 } // namespace cta

@@ -18,9 +18,9 @@
 
 #pragma once
 
+#include "common/ArchiveDirIterator.hpp"
 #include "common/UserIdentity.hpp"
 #include "nameserver/NameServer.hpp"
-#include "common/DirIterator.hpp"
 #include "scheduler/SecurityIdentity.hpp"
 
 #include <list>
@@ -66,7 +66,7 @@ public:
   
   ArchiveFileStatus statFile(const SecurityIdentity &requester, const std::string &path) const;
   
-  DirIterator getDirContents(const SecurityIdentity &requester, const std::string &path) const;
+  ArchiveDirIterator getDirContents(const SecurityIdentity &requester, const std::string &path) const;
   
   bool regularFileExists(const SecurityIdentity &requester, const std::string &path) const;
 
