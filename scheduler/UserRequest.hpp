@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "scheduler/SecurityIdentity.hpp"
+#include "scheduler/CreationLog.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -52,8 +52,7 @@ public:
    */
   UserRequest(
     const uint64_t priority,
-    const SecurityIdentity &requester,
-    const time_t creationTime = time(NULL));
+    const CreationLog &creationLog);
 
   /**
    * Returns the priority of the request.
@@ -63,18 +62,11 @@ public:
   uint64_t getPriority() const throw();
 
   /**
-   * Returns the identity of the user who made the request.
-   *
-   * @return The identity of the user who made the request.
-   */
-  const SecurityIdentity &getRequester() const throw();
-
-  /**
    * Returns the time at which the user request was created.
    *
    * @return The time at which the user request was created.
    */
-  time_t getCreationTime() const throw();
+  const CreationLog & getCreationLog() const throw();
 
 private:
 
@@ -84,14 +76,9 @@ private:
   uint64_t m_priority;
 
   /**
-   * The identity of the user who made the request.
-   */
-  SecurityIdentity m_requester;
-
-  /**
    * The time at which the user request was created.
    */
-  time_t m_creationTime;
+  CreationLog m_creationLog;
 
 }; // class UserRequest
 

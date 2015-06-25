@@ -121,6 +121,7 @@ public:
   virtual void deleteLogicalLibrary(const SecurityIdentity& requester, const std::string& name);
 
   /* === Archival requests handling  ======================================== */
+  CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
   virtual void queue(const ArchiveToFileRequest& rqst);
 
   virtual void queue(const ArchiveToDirRequest& rqst);

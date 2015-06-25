@@ -19,6 +19,7 @@ add_library (CTAObjectStore SHARED
   AgentWatchdog.cpp
   TapePool.cpp
   Tape.cpp
+  ArchiveToFileRequest.cpp
   DriveRegister.cpp
   BackendVFS.cpp
   BackendRados.cpp

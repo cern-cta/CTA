@@ -35,7 +35,6 @@ cta::ArchiveRequest::~ArchiveRequest() throw() {
 //------------------------------------------------------------------------------
 cta::ArchiveRequest::ArchiveRequest(
   const uint64_t priority,
-  const SecurityIdentity &user, 
-  const time_t creationTime):
-  UserRequest(priority, user, creationTime) {
+  const CreationLog &creationLog):
+  UserRequest(priority, creationLog) {
 }

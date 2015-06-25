@@ -21,10 +21,13 @@
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/TapePool.hpp"
 #include "objectstore/Tape.hpp"
+#include "objectstore/ArchiveToFileRequest.hpp"
 #include "common/exception/Exception.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
 #include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/ArchiveRequest.hpp"
+#include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/StorageClass.hpp"
 #include "scheduler/TapePool.hpp"
@@ -390,8 +393,40 @@ void OStoreDB::deleteLogicalLibrary(const SecurityIdentity& requester,
   re.commit();
 }
 
-void OStoreDB::queue(const ArchiveToFileRequest& rqst) {
+void OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
   throw exception::Exception("Not Implemented");
+  // In order to post the job, construct it first.
+  objectstore::ArchiveToFileRequest atfr(m_agent->nextId("ArchiveToFileRequest"), m_objectStore);
+  atfr.initialize();
+  atfr.setArchiveFile(rqst.getArchiveFile());
+  atfr.setRemoteFile(rqst.getRemoteFile());
+  atfr.setPriority(rqst.getPriority());
+  atfr.setLog(rqst.getCreationLog());
+  // We will need to identity tapepools is order to construct the request
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto & cl = rqst.getCopyNbToPoolMap();
+  for (auto copy=cl.begin(); copy != cl.end(); copy++) {
+    std::string tpaddr = re.getTapePoolAddress(copy->second);
+    atfr.addJob(copy->first, copy->second, tpaddr);
+  }
+  auto jl = atfr.dumpJobs();
+  if (!jl.size()) {
+    throw ArchiveRequestHasNoCopies("In OStoreDB::queue: the archive to file request has no copy");
+  }
+  // We successfully prepared the object. Time to create it and plug it to
+  // the tree.
+  atfr.setOwner(m_agent->getAddressIfSet());
+  atfr.insert();
+  ScopedExclusiveLock atfrl(atfr);
+  // We can now plug the request onto its tape pools
+  for (auto j=jl.begin(); j!=jl.end(); j++) {
+    objectstore::TapePool tp(j->tapePoolAddress, m_objectStore);
+    ScopedExclusiveLock tpl(tp);
+    tp.fetch();
+    //tp.addJob(j);
+  }
 }
 
 void OStoreDB::queue(const ArchiveToDirRequest& rqst) {

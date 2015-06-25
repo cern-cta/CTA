@@ -516,8 +516,9 @@ void cta::Scheduler::queueArchiveToDirRequest(
   const auto archiveToFileRequests = createArchiveToFileRequests(requester,
     remoteFiles, archiveDir, priority);
 
+  CreationLog log(requester.getUser(), requester.getHost(), time(NULL), "");
   m_db.queue(ArchiveToDirRequest(archiveDir, archiveToFileRequests, priority,
-    requester));
+    log));
 
   for(auto itor = archiveToFileRequests.cbegin(); itor !=
     archiveToFileRequests.cend(); itor++) {
@@ -620,12 +621,13 @@ cta::ArchiveToFileRequest cta::Scheduler::createArchiveToFileRequest(
   const auto routes = m_db.getArchivalRoutes(storageClassName);
   const auto copyNbToPoolMap = createCopyNbToPoolMap(routes);
 
+  const CreationLog log(requester.getUser(), requester.getHost(), time(NULL), "");
   return ArchiveToFileRequest(
     remoteFile,
     archiveFile,
     copyNbToPoolMap,
     priority,
-    requester);
+    log);
 }
 
 //------------------------------------------------------------------------------

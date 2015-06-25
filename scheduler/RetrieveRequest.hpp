@@ -50,8 +50,7 @@ public:
    */
   RetrieveRequest(
     const uint64_t priority,
-    const SecurityIdentity &user,
-    const time_t creationTime = time(NULL));
+    const CreationLog &creationLog);
 
 }; // class RetrieveRequest
 

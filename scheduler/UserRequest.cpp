@@ -22,8 +22,7 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::UserRequest::UserRequest():
-  m_priority(0),
-  m_creationTime(time(NULL)) {
+  m_priority(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -31,11 +30,9 @@ cta::UserRequest::UserRequest():
 //------------------------------------------------------------------------------
 cta::UserRequest::UserRequest(
   const uint64_t priority,
-  const SecurityIdentity &requester,
-  const time_t creationTime):
+  const CreationLog & creationLog):
   m_priority(priority),
-  m_requester(requester),
-  m_creationTime(creationTime) {
+  m_creationLog(creationLog) {
 }
 
 //------------------------------------------------------------------------------
@@ -52,15 +49,8 @@ uint64_t cta::UserRequest::getPriority() const throw() {
 }
 
 //------------------------------------------------------------------------------
-// getRequester
+// getCreationLog
 //------------------------------------------------------------------------------
-const cta::SecurityIdentity &cta::UserRequest::getRequester() const throw() {
-  return m_requester;
-}
-
-//------------------------------------------------------------------------------
-// getCreationTime
-//------------------------------------------------------------------------------
-time_t cta::UserRequest::getCreationTime() const throw() {
-  return m_creationTime;
+auto cta::UserRequest::getCreationLog() const throw() -> const CreationLog & {
+  return m_creationLog;
 }

@@ -38,9 +38,8 @@ cta::ArchiveToDirRequest::ArchiveToDirRequest(
   const std::string &archiveDir,
   const std::list<ArchiveToFileRequest> &archiveToFileRequests,
   const uint64_t priority,
-  const SecurityIdentity &user,
-  const time_t creationTime):
-  ArchiveRequest(priority, user, creationTime),
+  const CreationLog & creationLog):
+  ArchiveRequest(priority, creationLog),
   m_archiveDir(archiveDir),
   m_archiveToFileRequests(archiveToFileRequests) {
 }

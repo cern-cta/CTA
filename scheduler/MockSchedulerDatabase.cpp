@@ -218,7 +218,7 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst) {
       copyNb,
       tapePoolName,
       rqst.getPriority(),
-      rqst.getRequester()));
+      rqst.getCreationLog()));
   }
 }
 
@@ -227,15 +227,16 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst) {
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::queue(const ArchiveToTapeCopyRequest &rqst) {
   char *zErrMsg = 0;
-  const SecurityIdentity &requester = rqst.getRequester();
+  const CreationLog &log = rqst.getCreationLog();
   std::ostringstream query;
   query << "INSERT INTO ARCHIVETOTAPECOPYREQUEST(STATE, REMOTEFILE,"
-    " ARCHIVEFILE, TAPEPOOL, COPYNB, PRIORITY, UID, GID, CREATIONTIME) VALUES("
+    " ARCHIVEFILE, TAPEPOOL, COPYNB, PRIORITY, UID, GID, HOST, CREATIONTIME) VALUES("
     << "'PENDING_NS_CREATION','" << rqst.getRemoteFile() << "','" <<
     rqst.getArchiveFile() << "','" << rqst.getTapePoolName() << "'," <<
     rqst.getCopyNb() << "," << rqst.getPriority() << "," <<
-    requester.getUser().uid << "," << requester.getUser().gid << ","
-    << (int)time(NULL) << ");";
+    log.user.uid << "," << log.user.gid << ","
+    << " '" << log.host << "', "
+    << (int)log.time << ");";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
     std::ostringstream msg;
@@ -260,7 +261,7 @@ std::map<cta::TapePool, std::list<cta::ArchiveToTapeCopyRequest> >
   std::ostringstream query;
   std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > rqsts;
   query << "SELECT STATE, REMOTEFILE, ARCHIVEFILE, TAPEPOOL, COPYNB,"
-    " PRIORITY, UID, GID, CREATIONTIME FROM ARCHIVETOTAPECOPYREQUEST"
+    " PRIORITY, UID, GID, HOST, CREATIONTIME FROM ARCHIVETOTAPECOPYREQUEST"
     " ORDER BY ARCHIVEFILE;";
   sqlite3_stmt *s = NULL;
   const int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &s, 0 );
@@ -290,18 +291,18 @@ std::map<cta::TapePool, std::list<cta::ArchiveToTapeCopyRequest> >
     const uint64_t priority = sqlite3_column_int(statement.get(),
       idx("PRIORITY"));
     const UserIdentity requester(requesterUid, requesterGid);
-    const std::string requesterHost = "requester_host";
-    const SecurityIdentity requesterAndHost(requester, requesterHost);
+    const std::string requesterHost = 
+      (char *)sqlite3_column_text(statement.get(),idx("HOST"));
     const time_t creationTime = sqlite3_column_int(statement.get(),
       idx("CREATIONTIME"));
+    const CreationLog log(requester, requesterHost, creationTime, "");
     rqsts[tapePool].push_back(ArchiveToTapeCopyRequest(
       remoteFile,
       archiveFile,
       copyNb,
       tapePoolName,
       priority,
-      requesterAndHost,
-      creationTime
+      log
     ));
   }
   return rqsts;
@@ -366,7 +367,7 @@ std::list<cta::ArchiveToTapeCopyRequest> cta::MockSchedulerDatabase::
   std::ostringstream query;
   std::list<ArchiveToTapeCopyRequest> rqsts;
   query << "SELECT STATE, REMOTEFILE, ARCHIVEFILE, TAPEPOOL, COPYNB,"
-    " PRIORITY, UID, GID, CREATIONTIME FROM ARCHIVETOTAPECOPYREQUEST"
+    " PRIORITY, UID, GID, HOST, CREATIONTIME FROM ARCHIVETOTAPECOPYREQUEST"
     " WHERE TAPEPOOL='" << tapePoolName << "' ORDER BY ARCHIVEFILE;";
   sqlite3_stmt *s = NULL;
   const int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &s, 0 );
@@ -396,18 +397,18 @@ std::list<cta::ArchiveToTapeCopyRequest> cta::MockSchedulerDatabase::
     const uint64_t priority = sqlite3_column_int(statement.get(),
       idx("PRIORITY"));
     const UserIdentity requester(requesterUid, requesterGid);
-    const std::string requesterHost = "requester_host";
-    const SecurityIdentity requesterAndHost(requester, requesterHost);
+    const std::string requesterHost = 
+      (char *)sqlite3_column_text(statement.get(),idx("HOST"));
     const time_t creationTime = sqlite3_column_int(statement.get(),
       idx("CREATIONTIME"));
+    const CreationLog log(requester, requesterHost, creationTime, "");
     rqsts.push_back(ArchiveToTapeCopyRequest(
       remoteFile,
       archiveFile,
       copyNb,
       tapePoolName,
       priority,
-      requesterAndHost,
-      creationTime
+      log
     ));
   }
   return rqsts;

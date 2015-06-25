@@ -61,8 +61,7 @@ public:
     const std::string &archiveFile,
     const std::map<uint16_t, std::string> &copyNbToPoolMap,
     const uint64_t priority,
-    const SecurityIdentity &requester, 
-    const time_t creationTime = time(NULL));
+    const CreationLog & creationLog);
 
   /**
    * Returns the URL of the source remote file to be archived.

@@ -58,9 +58,8 @@ public:
     const std::string &archiveFile,
     const uint16_t copyNb,
     const std::string tapePoolName,
-    const uint64_t priority,
-    const SecurityIdentity &requester, 
-    const time_t creationTime = time(NULL));
+    const uint64_t priority, 
+    const CreationLog & creationLog);
 
   /**
    * Returns the URL of the source remote file to be archived.

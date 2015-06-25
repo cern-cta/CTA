@@ -60,8 +60,7 @@ public:
     const std::string &archiveDir,
     const std::list<ArchiveToFileRequest> &archiveToFileRequests,
     const uint64_t priority,
-    const SecurityIdentity &user,
-    const time_t creationTime = time(NULL));
+    const CreationLog & creationLog);
 
   /**
    * Returns the full path of the destination archive directory.

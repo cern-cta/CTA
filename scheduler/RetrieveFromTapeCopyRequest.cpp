@@ -40,9 +40,8 @@ cta::RetrieveFromTapeCopyRequest::RetrieveFromTapeCopyRequest(
   const TapeCopyLocation &tapeCopy,
   const std::string &remoteFile,
   const uint64_t priority,
-  const SecurityIdentity &user, 
-  const time_t creationTime):
-  RetrieveRequest(priority, user, creationTime),
+  const CreationLog & creationLog):
+  RetrieveRequest(priority, creationLog),
   m_archiveFile(archiveFile),
   m_copyNb(copyNb),
   m_tapeCopy(tapeCopy),

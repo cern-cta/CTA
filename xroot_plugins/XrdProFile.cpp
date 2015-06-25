@@ -928,10 +928,11 @@ void XrdProFile::xCom_listongoingarchivals(const std::vector<std::string> &token
                    << " " << request->getArchiveFile()
                    << " " << request->getCopyNb()
                    << " " << request->getPriority()
-                   << " " << request->getRequester().getUser().uid
-                   << " " << request->getRequester().getUser().gid
-                   << " " << request->getRequester().getHost()
-                   << " " << request->getCreationTime() << std::endl;
+                   << " " << request->getCreationLog().user.uid
+                   << " " << request->getCreationLog().user.gid
+                   << " " << request->getCreationLog().host
+                   << " " << request->getCreationLog().time 
+                   << " \"" << request->getCreationLog().comment << "\"" << std::endl;
       }    
     }  
   }
@@ -943,10 +944,11 @@ void XrdProFile::xCom_listongoingarchivals(const std::vector<std::string> &token
                  << " " << request->getArchiveFile()
                  << " " << request->getCopyNb()
                  << " " << request->getPriority()
-                 << " " << request->getRequester().getUser().uid
-                 << " " << request->getRequester().getUser().gid
-                 << " " << request->getRequester().getHost()
-                 << " " << request->getCreationTime() << std::endl;
+                 << " " << request->getCreationLog().user.uid
+                 << " " << request->getCreationLog().user.gid
+                 << " " << request->getCreationLog().host
+                 << " " << request->getCreationLog().time 
+                 << " \"" << request->getCreationLog().comment << "\"" << std::endl;
     }
   }
   m_data = responseSS.str();
@@ -972,10 +974,11 @@ void XrdProFile::xCom_listongoingretrievals(const std::vector<std::string> &toke
                    << " " << request->getTapeCopy().getBlockId()
                    << " " << request->getTapeCopy().getFseq()
                    << " " << request->getPriority()
-                   << " " << request->getRequester().getUser().uid
-                   << " " << request->getRequester().getUser().gid
-                   << " " << request->getRequester().getHost()
-                   << " " << request->getCreationTime() << std::endl;
+                   << " " << request->getCreationLog().user.uid
+                   << " " << request->getCreationLog().user.gid
+                   << " " << request->getCreationLog().host
+                   << " " << request->getCreationLog().time 
+                   << " \"" << request->getCreationLog().comment << "\"" << std::endl;
       }    
     }  
   }
@@ -990,10 +993,11 @@ void XrdProFile::xCom_listongoingretrievals(const std::vector<std::string> &toke
                  << " " << request->getTapeCopy().getBlockId()
                  << " " << request->getTapeCopy().getFseq()
                  << " " << request->getPriority()
-                 << " " << request->getRequester().getUser().uid
-                 << " " << request->getRequester().getUser().gid
-                 << " " << request->getRequester().getHost()
-                 << " " << request->getCreationTime() << std::endl;
+                 << " " << request->getCreationLog().user.uid
+                 << " " << request->getCreationLog().user.gid
+                 << " " << request->getCreationLog().host
+                 << " " << request->getCreationLog().time 
+                 << " \"" << request->getCreationLog().comment << "\"" << std::endl;
     }
   }
   m_data = responseSS.str();

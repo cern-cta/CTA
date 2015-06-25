@@ -55,8 +55,7 @@ public:
   RetrieveToDirRequest(
     const std::string &remoteDir,
     const uint64_t priority,
-    const SecurityIdentity &user,
-    const time_t creationTime = time(NULL));
+    const CreationLog & creationLog);
 
   /**
    * Returns the URL of the destination remote directory.
