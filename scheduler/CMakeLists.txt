@@ -19,11 +19,6 @@ set (CTA_SCHEDULER_SRC_FILES
   CreationLog.cpp
   DiskException.cpp
   DriveQuota.cpp
-  FileAttribute.cpp
-  FileSystemDirEntry.cpp
-  FileSystemNode.cpp
-  FileSystemStorageClass.cpp
-  FileSystemStorageClasses.cpp
   FileTransfer.cpp
   LogicalLibrary.cpp
   MockSchedulerDatabase.cpp
