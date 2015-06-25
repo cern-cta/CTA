@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "common/Checksum.hpp"
 #include "common/UserIdentity.hpp"
 
 #include <string>
@@ -41,13 +42,15 @@ public:
    * Constructor.
    *
    * @param owner The identity of the owner.
-   * @param mode The mode bits of the filei or directory.
+   * @param mode The mode bits of the file or directory.
+   * @param checksum The checksum of the file.
    * @param storageClassName The name of the file or directory's storage class.
    * An empty string indicates no storage class.
    */
   ArchiveFileStatus(
     const UserIdentity &owner,
     const mode_t mode,
+    const Checksum &checksum,
     const std::string &storageClassName);
 
   /**
@@ -61,6 +64,13 @@ public:
    * @return The mode bits of the directory entry.
    */
   mode_t getMode() const throw();
+
+  /**
+   * Returns the checksum of the file.
+   *
+   * @return The checksum of the file.
+   */
+  const Checksum &getChecksum() const throw();
 
   /**
    * Sets the name of the storage class.
@@ -89,6 +99,11 @@ private:
    * The mode bits of the directory entry.
    */
   mode_t m_mode;
+
+  /**
+   * The checksum of the file.
+   */
+  Checksum m_checksum;
 
   /**
    * The name of the directory's storage class or an empty string if the

@@ -31,7 +31,7 @@ class ArchiveDirEntry {
 public:
 
   /**
-   * Enumeration of the different possible type so directory entry.
+   * Enumeration of the different types of directory entry.
    */
   enum EntryType {
     ENTRYTYPE_NONE,
@@ -41,6 +41,9 @@ public:
   /**
    * Thread safe method that returns the string representation of the specified
    * enumeration value.
+   *
+   * @param enumValue The integer value of the type.
+   * @return The string representation.
    */
   static const char *entryTypeToStr(const EntryType enumValue) throw();
 

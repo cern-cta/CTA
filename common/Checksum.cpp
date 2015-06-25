@@ -16,61 +16,64 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/ArchiveFileStatus.hpp"
+#include "common/Checksum.hpp"
+
+#include <sstream>
 
 //------------------------------------------------------------------------------
-// constructor
+// checksumTypeToStr
 //------------------------------------------------------------------------------
-cta::ArchiveFileStatus::ArchiveFileStatus():
-  m_mode(0) {
+const char *cta::Checksum::checksumTypeToStr(const ChecksumType enumValue)
+  throw() {
+  switch(enumValue) {
+  case CHECKSUMTYPE_NONE   : return "NONE";
+  case CHECKSUMTYPE_ADLER32: return "ADLER32";
+  default                  : return "UNKNOWN";
+  }
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveFileStatus::ArchiveFileStatus(
-  const UserIdentity &owner,
-  const mode_t mode,
-  const Checksum &checksum,
-  const std::string &storageClassName):
-  m_owner(owner),
-  m_mode(mode),
-  m_checksum(checksum),
-  m_storageClassName(storageClassName) {
-}
-
-//------------------------------------------------------------------------------
-// getOwner
-//------------------------------------------------------------------------------
-const cta::UserIdentity &cta::ArchiveFileStatus::getOwner() const throw() {
-  return m_owner;
-}
-
-//------------------------------------------------------------------------------
-// getMode
-//------------------------------------------------------------------------------
-mode_t cta::ArchiveFileStatus::getMode() const throw() {
-  return m_mode;
-}
-
-//------------------------------------------------------------------------------
-// getChecksum
-//------------------------------------------------------------------------------
-const cta::Checksum &cta::ArchiveFileStatus::getChecksum() const throw() {
-  return m_checksum;
-}
-
-//------------------------------------------------------------------------------
-// setStorageClassName
-//------------------------------------------------------------------------------
-void cta::ArchiveFileStatus::setStorageClassName(
-  const std::string &storageClassName) {
-  m_storageClassName = storageClassName;
+cta::Checksum::Checksum(): m_type(CHECKSUMTYPE_NONE) {
 }
   
 //------------------------------------------------------------------------------
-// getStorageClassName
+// constructor
 //------------------------------------------------------------------------------
-const std::string &cta::ArchiveFileStatus::getStorageClassName() const throw() {
-  return m_storageClassName;
+cta::Checksum::Checksum(const ChecksumType &type, const ByteArray &byteArray):
+  m_type(type),
+  m_byteArray(byteArray) {
+}
+
+//------------------------------------------------------------------------------
+// getType
+//------------------------------------------------------------------------------
+cta::Checksum::ChecksumType cta::Checksum::getType() const throw() {
+  return m_type;
+}
+
+//------------------------------------------------------------------------------
+// getByteArray
+//------------------------------------------------------------------------------
+const cta::ByteArray &cta::Checksum::getByteArray() const throw() {
+  return m_byteArray;
+}
+
+//------------------------------------------------------------------------------
+// str
+//------------------------------------------------------------------------------
+std::string cta::Checksum::str() const {
+  const auto arraySize = m_byteArray.getSize();
+  std::ostringstream oss;
+
+  if(0 < arraySize) {
+    const auto bytes = m_byteArray.getBytes();
+    oss << "0x" << std::hex;
+    for(uint32_t i = 0; i < arraySize; i++) {
+      oss << bytes[i];
+    }
+  }
+
+  return oss.str();
 }

@@ -16,61 +16,85 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/ArchiveFileStatus.hpp"
+#include "common/ByteArray.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveFileStatus::ArchiveFileStatus():
-  m_mode(0) {
+cta::ByteArray::ByteArray(): m_size(0), m_bytes(NULL) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveFileStatus::ArchiveFileStatus(
-  const UserIdentity &owner,
-  const mode_t mode,
-  const Checksum &checksum,
-  const std::string &storageClassName):
-  m_owner(owner),
-  m_mode(mode),
-  m_checksum(checksum),
-  m_storageClassName(storageClassName) {
+cta::ByteArray::ByteArray(const uint32_t arraySize, const uint8_t *const bytes) {
+  m_size = arraySize;
+  m_bytes = new uint8_t[m_size];
+
+  for(uint32_t i = 0; i < m_size; i++) {
+    m_bytes[i] = bytes[i];
+  }
 }
 
 //------------------------------------------------------------------------------
-// getOwner
+// constructor
 //------------------------------------------------------------------------------
-const cta::UserIdentity &cta::ArchiveFileStatus::getOwner() const throw() {
-  return m_owner;
+cta::ByteArray::ByteArray(const std::string &bytes) {
+  m_size = bytes.size();
+  m_bytes = new uint8_t[m_size];
+
+  for(uint32_t i = 0; i < m_size; i++) {
+    m_bytes[i] = bytes.at(i);
+  }
 }
 
 //------------------------------------------------------------------------------
-// getMode
+// constructor
 //------------------------------------------------------------------------------
-mode_t cta::ArchiveFileStatus::getMode() const throw() {
-  return m_mode;
+cta::ByteArray::ByteArray(const ByteArray &other) {
+  m_size = other.m_size;
+  m_bytes = new uint8_t[m_size];
+
+  for(uint32_t i = 0; i < m_size; i++) {
+    m_bytes[i] = other.m_bytes[i];
+  }
+} 
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+cta::ByteArray::~ByteArray() throw() {
+  delete[] m_bytes;
 }
 
 //------------------------------------------------------------------------------
-// getChecksum
+// assignment
 //------------------------------------------------------------------------------
-const cta::Checksum &cta::ArchiveFileStatus::getChecksum() const throw() {
-  return m_checksum;
+cta::ByteArray &cta::ByteArray::operator=(const ByteArray &rhs) {
+  if(this != &rhs) {
+    delete[] m_bytes;
+
+    m_size = rhs.m_size;
+    m_bytes = new uint8_t[m_size];
+
+    for(uint32_t i = 0; i < m_size; i++) {
+      m_bytes[i] = rhs.m_bytes[i];
+    }
+  }
+
+  return *this;
 }
 
 //------------------------------------------------------------------------------
-// setStorageClassName
+// getSize
 //------------------------------------------------------------------------------
-void cta::ArchiveFileStatus::setStorageClassName(
-  const std::string &storageClassName) {
-  m_storageClassName = storageClassName;
+uint32_t cta::ByteArray::getSize() const throw() {
+  return m_size;
 }
-  
+
 //------------------------------------------------------------------------------
-// getStorageClassName
+// getBytes
 //------------------------------------------------------------------------------
-const std::string &cta::ArchiveFileStatus::getStorageClassName() const throw() {
-  return m_storageClassName;
+const uint8_t *cta::ByteArray::getBytes() const throw() {
+  return m_bytes;
 }

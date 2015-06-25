@@ -4,6 +4,8 @@ set (COMMON_LIB_SRC_FILES
   ArchiveDirEntry.cpp
   ArchiveDirIterator.cpp
   ArchiveFileStatus.cpp
+  ByteArray.cpp
+  Checksum.cpp
   exception/Backtrace.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
@@ -26,6 +28,8 @@ target_link_libraries (ctacommon
   uuid)
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
+  ByteArrayTest.cpp
+  ChecksumTest.cpp
   RemotePathTest.cpp
   SmartFdTest.cpp
   UtilsTest.cpp)
