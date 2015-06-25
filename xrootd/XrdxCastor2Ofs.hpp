@@ -430,6 +430,17 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
   //----------------------------------------------------------------------------
   void SetLogLevel(int logLevel);
 
+  //----------------------------------------------------------------------------
+  //! Decide if we notify or not the disk manager about ongoing transfers. This
+  //! is used only for testing the functionality of the XRootD server in without
+  //! coupling it with the rest of the CASTOR infrastructure.
+  //!
+  //! @return true if notifications are sent, otherwise false
+  //----------------------------------------------------------------------------
+  inline bool NotifyDiskMgr() const
+  {
+    return mNotifyDMgr;
+  };
 
   XrdSysMutex mTpcMapMutex; ///< mutex to protect access to the TPC map
   std::map<std::string, struct TpcInfo> mTpcMap; ///< TPC map of key to lfn
@@ -457,6 +468,7 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
 
 
   int mLogLevel; ///< log level from configuration file
+  bool mNotifyDMgr; ///< if false skip notifying the diskmgr about transfers
   XrdSysError* Eroute; ///< error object
   XrdSysMutex mMutexTransfers; ///< mutex to protecte access to the transfer list
   std::set<std::string> mSetTransfers; ///< set of ongoing transfers
