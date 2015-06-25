@@ -25,9 +25,9 @@
 namespace cta {
 
 /**
- * A directory entry.
+ * A directory entry within the archive namespace.
  */
-class DirEntry {
+class ArchiveDirEntry {
 public:
 
   /**
@@ -49,7 +49,7 @@ public:
    *
    * Initialises all integer member-variables to 0.
    */
-  DirEntry();
+  ArchiveDirEntry();
 
   /**
    * Constructor.
@@ -60,7 +60,7 @@ public:
    * @param name The name of the directory entry.
    * @param status The status of the entry.
    */
-  DirEntry(const EntryType entryType, const std::string &name,
+  ArchiveDirEntry(const EntryType entryType, const std::string &name,
     const ArchiveFileStatus &status);
 
   /**
@@ -108,6 +108,6 @@ private:
    */
   ArchiveFileStatus m_status;
 
-}; // class DirEntry
+}; // class ArchiveDirEntry
 
 } // namespace cta

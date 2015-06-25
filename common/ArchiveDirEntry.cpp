@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/DirEntry.hpp"
+#include "common/ArchiveDirEntry.hpp"
 
 //------------------------------------------------------------------------------
 // entryTypeToStr
 //------------------------------------------------------------------------------
-const char *cta::DirEntry::entryTypeToStr(const EntryType enumValue)
+const char *cta::ArchiveDirEntry::entryTypeToStr(const EntryType enumValue)
   throw() {
   switch(enumValue) {
   case ENTRYTYPE_NONE     : return "NONE";
@@ -34,13 +34,15 @@ const char *cta::DirEntry::entryTypeToStr(const EntryType enumValue)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::DirEntry::DirEntry() {
+cta::ArchiveDirEntry::ArchiveDirEntry() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::DirEntry::DirEntry(const EntryType entryType, const std::string &name,
+cta::ArchiveDirEntry::ArchiveDirEntry(
+  const EntryType entryType,
+  const std::string &name,
   const ArchiveFileStatus &status):
   m_entryType(entryType),
   m_name(name),
@@ -50,7 +52,7 @@ cta::DirEntry::DirEntry(const EntryType entryType, const std::string &name,
 //------------------------------------------------------------------------------
 // getType
 //------------------------------------------------------------------------------
-cta::DirEntry::EntryType cta::DirEntry::getType()
+cta::ArchiveDirEntry::EntryType cta::ArchiveDirEntry::getType()
   const throw() {
   return m_entryType;
 }
@@ -58,20 +60,20 @@ cta::DirEntry::EntryType cta::DirEntry::getType()
 //------------------------------------------------------------------------------
 // getName
 //------------------------------------------------------------------------------
-const std::string &cta::DirEntry::getName() const throw() {
+const std::string &cta::ArchiveDirEntry::getName() const throw() {
   return m_name;
 }
 
 //------------------------------------------------------------------------------
 // getStatus
 //------------------------------------------------------------------------------
-const cta::ArchiveFileStatus &cta::DirEntry::getStatus() const throw() {
+const cta::ArchiveFileStatus &cta::ArchiveDirEntry::getStatus() const throw() {
   return m_status;
 }
 
 //------------------------------------------------------------------------------
 // getStatus
 //------------------------------------------------------------------------------
-cta::ArchiveFileStatus &cta::DirEntry::getStatus() throw() {
+cta::ArchiveFileStatus &cta::ArchiveDirEntry::getStatus() throw() {
   return m_status;
 }

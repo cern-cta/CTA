@@ -30,7 +30,7 @@ cta::DirIterator::DirIterator() {
 // constructor
 //------------------------------------------------------------------------------
 cta::DirIterator::DirIterator(
-  const std::list<DirEntry> &entries): m_entries(entries) {
+  const std::list<ArchiveDirEntry> &entries): m_entries(entries) {
 }
 
 //------------------------------------------------------------------------------
@@ -49,12 +49,12 @@ bool cta::DirIterator::hasMore() {
 //------------------------------------------------------------------------------
 // next
 //------------------------------------------------------------------------------
-const cta::DirEntry cta::DirIterator::next() {
+const cta::ArchiveDirEntry cta::DirIterator::next() {
   if(m_entries.empty()) {
     throw Exception("Out of bounds: There are no more directory entries");
   }
 
-  DirEntry entry = m_entries.front();
+  ArchiveDirEntry entry = m_entries.front();
   m_entries.pop_front();
   return entry;
 }

@@ -380,13 +380,13 @@ cta::ArchiveFileStatus cta::MockNameServer::statFile(
   const SecurityIdentity &requester,
   const std::string &path) const {
 
-  return getDirEntry(requester, path).getStatus();
+  return getArchiveDirEntry(requester, path).getStatus();
 }
 
 //------------------------------------------------------------------------------
 // getDirEntries
 //------------------------------------------------------------------------------
-std::list<cta::DirEntry> cta::MockNameServer::getDirEntries(
+std::list<cta::ArchiveDirEntry> cta::MockNameServer::getDirEntries(
   const SecurityIdentity &requester,
   const std::string &path) const {  
   const std::string fsPath = m_fsDir + path;
@@ -400,7 +400,7 @@ std::list<cta::DirEntry> cta::MockNameServer::getDirEntries(
     throw(exception::Exception(msg.str()));
   }
   
-  std::list<DirEntry> entries;
+  std::list<ArchiveDirEntry> entries;
   struct dirent *entry;
   
   const bool pathEndsWithASlash = path.at(path.length()-1) == '/';
@@ -409,7 +409,7 @@ std::list<cta::DirEntry> cta::MockNameServer::getDirEntries(
     if(entryName != "." && entryName != "..") {
       const std::string entryPath = pathEndsWithASlash ?
         path + entryName : path + "/" + entryName;
-      entries.push_back(getDirEntry(requester, entryPath));
+      entries.push_back(getArchiveDirEntry(requester, entryPath));
     }
   }
   
@@ -418,9 +418,9 @@ std::list<cta::DirEntry> cta::MockNameServer::getDirEntries(
 }
 
 //------------------------------------------------------------------------------
-// getDirEntry
+// getArchiveDirEntry
 //------------------------------------------------------------------------------
-cta::DirEntry cta::MockNameServer::getDirEntry(
+cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   const SecurityIdentity &requester,
   const std::string &path) const {
   Utils::assertAbsolutePathSyntax(path);
@@ -437,15 +437,15 @@ cta::DirEntry cta::MockNameServer::getDirEntry(
     throw(exception::Exception(msg.str()));
   }
 
-  DirEntry::EntryType entryType;
+  ArchiveDirEntry::EntryType entryType;
   std::string storageClassName;
   
   if(S_ISDIR(stat_result.st_mode)) {
-    entryType = DirEntry::ENTRYTYPE_DIRECTORY;
+    entryType = ArchiveDirEntry::ENTRYTYPE_DIRECTORY;
     storageClassName = getDirStorageClass(requester, path);
   }
   else if(S_ISREG(stat_result.st_mode)) {
-    entryType = DirEntry::ENTRYTYPE_FILE;
+    entryType = ArchiveDirEntry::ENTRYTYPE_FILE;
     storageClassName = getDirStorageClass(requester, enclosingPath);
   }
   else {
@@ -458,7 +458,7 @@ cta::DirEntry cta::MockNameServer::getDirEntry(
   const UserIdentity owner = getOwner(requester, path);
   ArchiveFileStatus status(owner, stat_result.st_mode, storageClassName);
 
-  return DirEntry(entryType, name, status);
+  return ArchiveDirEntry(entryType, name, status);
 }
 
 //------------------------------------------------------------------------------

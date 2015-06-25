@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/DirEntry.hpp"
+#include "common/ArchiveDirEntry.hpp"
 
 #include <list>
 
@@ -32,7 +32,7 @@ namespace cta {
  * DirIterator &itor = ...
  *
  * while(itor.hasMore())) {
- *   const DirEntry &entry = itor.next();
+ *   const ArchiveDirEntry &entry = itor.next();
  *
  *   // Do something with entry
  * }
@@ -51,7 +51,7 @@ public:
    *
    * @param entries The directory entries.
    */
-  DirIterator(const std::list<DirEntry> &entries);
+  DirIterator(const std::list<ArchiveDirEntry> &entries);
 
   /**
    * Destructor.
@@ -71,14 +71,14 @@ public:
    *
    * @return The next directory entry.
    */
-  const DirEntry next();
+  const ArchiveDirEntry next();
 
 private:
 
   /**
    * The directory entries.
    */
-  std::list<DirEntry> m_entries;
+  std::list<ArchiveDirEntry> m_entries;
 
 }; // DirIterator
 

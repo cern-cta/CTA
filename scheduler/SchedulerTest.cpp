@@ -1019,7 +1019,7 @@ TEST_P(SchedulerTest, createDir_top_level) {
 
   ASSERT_TRUE(itor.hasMore());
 
-  DirEntry entry;
+  ArchiveDirEntry entry;
 
   ASSERT_NO_THROW(entry = itor.next());
 
@@ -1050,7 +1050,7 @@ TEST_P(SchedulerTest, createDir_second_level) {
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirEntry entry;
+    ArchiveDirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -1074,7 +1074,7 @@ TEST_P(SchedulerTest, createDir_second_level) {
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirEntry entry;
+    ArchiveDirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -1089,7 +1089,7 @@ TEST_P(SchedulerTest, createDir_second_level) {
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirEntry entry;
+    ArchiveDirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -1133,7 +1133,7 @@ TEST_P(SchedulerTest,
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirEntry entry;
+    ArchiveDirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -1163,7 +1163,7 @@ TEST_P(SchedulerTest,
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirEntry entry;
+    ArchiveDirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -1177,7 +1177,7 @@ TEST_P(SchedulerTest,
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirEntry entry;
+    ArchiveDirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -1219,7 +1219,7 @@ TEST_P(SchedulerTest, deleteDir_existing_top_level) {
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirEntry entry;
+    ArchiveDirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -1258,7 +1258,7 @@ TEST_P(SchedulerTest,
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirEntry entry;
+    ArchiveDirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -1278,7 +1278,7 @@ TEST_P(SchedulerTest,
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirEntry entry;
+    ArchiveDirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -1292,7 +1292,7 @@ TEST_P(SchedulerTest,
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirEntry entry;
+    ArchiveDirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -1308,7 +1308,7 @@ TEST_P(SchedulerTest,
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirEntry entry;
+    ArchiveDirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 
@@ -1344,7 +1344,7 @@ TEST_P(SchedulerTest, setDirStorageClass_top_level) {
 
   ASSERT_TRUE(itor.hasMore());
 
-  DirEntry entry;
+  ArchiveDirEntry entry;
 
   ASSERT_NO_THROW(entry = itor.next());
 
@@ -1392,7 +1392,7 @@ TEST_P(SchedulerTest, clearDirStorageClass_top_level) {
 
   ASSERT_TRUE(itor.hasMore());
 
-  DirEntry entry;
+  ArchiveDirEntry entry;
 
   ASSERT_NO_THROW(entry = itor.next());
 
@@ -1472,10 +1472,10 @@ TEST_P(SchedulerTest, archive_to_new_file) {
     DirIterator itor;
     ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
     ASSERT_TRUE(itor.hasMore());
-    DirEntry entry;
+    ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
     ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(DirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
   }
 
@@ -1484,10 +1484,10 @@ TEST_P(SchedulerTest, archive_to_new_file) {
     ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost,
       "/grandparent"));
     ASSERT_TRUE(itor.hasMore());
-    DirEntry entry;
+    ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
     ASSERT_EQ(std::string("parent_file"), entry.getName());
-    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_FILE, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
   }
 
@@ -1578,10 +1578,10 @@ TEST_P(SchedulerTest, archive_to_new_user_file_as_admin) {
     DirIterator itor;
     ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
     ASSERT_TRUE(itor.hasMore());
-    DirEntry entry;
+    ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
     ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(DirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
   }
 
@@ -1642,10 +1642,10 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     DirIterator itor;
     ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
     ASSERT_TRUE(itor.hasMore());
-    DirEntry entry;
+    ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
     ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(DirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
   }
 
@@ -1654,10 +1654,10 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost,
       "/grandparent"));
     ASSERT_TRUE(itor.hasMore());
-    DirEntry entry;
+    ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
     ASSERT_EQ(std::string("parent_file"), entry.getName());
-    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_FILE, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
   }
 
@@ -1714,10 +1714,10 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     DirIterator itor;
     ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
     ASSERT_TRUE(itor.hasMore());
-    DirEntry entry;
+    ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
     ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(DirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
   }
 
@@ -1726,10 +1726,10 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost,
       "/grandparent"));
     ASSERT_TRUE(itor.hasMore());
-    DirEntry entry;
+    ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
     ASSERT_EQ(std::string("parent_file"), entry.getName());
-    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_FILE, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
   }
 
@@ -1803,10 +1803,10 @@ TEST_P(SchedulerTest, delete_archive_request) {
     DirIterator itor;
     ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
     ASSERT_TRUE(itor.hasMore());
-    DirEntry entry;
+    ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
     ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(DirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
   }
 
@@ -1815,10 +1815,10 @@ TEST_P(SchedulerTest, delete_archive_request) {
     ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost,
       "/grandparent"));
     ASSERT_TRUE(itor.hasMore());
-    DirEntry entry;
+    ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
     ASSERT_EQ(std::string("parent_file"), entry.getName());
-    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_FILE, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
   }
 
@@ -2038,10 +2038,10 @@ TEST_P(SchedulerTest, archive_to_directory) {
     DirIterator itor;
     ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
     ASSERT_TRUE(itor.hasMore());
-    DirEntry entry;
+    ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
     ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(DirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
   }
 
@@ -2051,7 +2051,7 @@ TEST_P(SchedulerTest, archive_to_directory) {
     ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost,
       "/grandparent"));
     while(itor.hasMore()) {
-      const DirEntry entry = itor.next();
+      const ArchiveDirEntry entry = itor.next();
       archiveFileNames.insert(entry.getName());
     }
     ASSERT_EQ(4, archiveFileNames.size());
@@ -2301,10 +2301,10 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     DirIterator itor;
     ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
     ASSERT_TRUE(itor.hasMore());
-    DirEntry entry;
+    ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
     ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(DirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
   }
 
@@ -2313,10 +2313,10 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost,
       "/grandparent"));
     ASSERT_TRUE(itor.hasMore());
-    DirEntry entry;
+    ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
     ASSERT_EQ(std::string("parent_file"), entry.getName());
-    ASSERT_EQ(DirEntry::ENTRYTYPE_FILE, entry.getType());
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_FILE, entry.getType());
     ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
   }
 
@@ -2476,7 +2476,7 @@ TEST_P(SchedulerTest, setOwner_getDirContents_top_level) {
 
     ASSERT_TRUE(itor.hasMore());
 
-    DirEntry entry;
+    ArchiveDirEntry entry;
 
     ASSERT_NO_THROW(entry = itor.next());
 

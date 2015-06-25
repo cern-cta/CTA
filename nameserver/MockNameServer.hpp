@@ -84,7 +84,7 @@ private:
   
   void assertFsPathDoesNotExist(const std::string &path) const;
   
-  std::list<cta::DirEntry> getDirEntries(const SecurityIdentity &requester, const std::string &path) const;
+  std::list<cta::ArchiveDirEntry> getDirEntries(const SecurityIdentity &requester, const std::string &path) const;
 
   /**
    * Throws an exception if the specified user is not the owner of the
@@ -102,7 +102,7 @@ private:
    * @param requester The identity of the requester.
    * @param The absolute path of the namespace entry.
    */
-  DirEntry getDirEntry(
+  ArchiveDirEntry getArchiveDirEntry(
     const SecurityIdentity &requester,
     const std::string &path) const;
   
