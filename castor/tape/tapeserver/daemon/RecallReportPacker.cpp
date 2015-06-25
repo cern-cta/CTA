@@ -152,7 +152,7 @@ void RecallReportPacker::flush(){
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent){
   client::ClientInterface::RequestReport chrono;
-    if(!parent.m_errorHappened){
+    if(!parent.errorHappened()){
       parent.m_client.reportEndOfSession(chrono);
       parent.logRequestReport(chrono,"Nominal RecallReportPacker::EndofSession has been reported",LOG_INFO);
       if (parent.m_watchdog) {
@@ -307,4 +307,12 @@ void RecallReportPacker::WorkerThread::run(){
   
   //When we end up there, we might have still 
 }
+
+//------------------------------------------------------------------------------
+//errorHappened()
+//------------------------------------------------------------------------------
+bool RecallReportPacker::errorHappened() {
+  return m_errorHappened || (m_watchdog && m_watchdog->errorHappened());
+}
+
 }}}}

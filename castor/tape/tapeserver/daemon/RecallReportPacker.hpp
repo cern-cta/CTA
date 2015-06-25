@@ -87,6 +87,11 @@ public:
    */
   void waitThread() { m_workerThread.wait(); }
   
+  /**
+   * Was there an error?
+   */
+  bool errorHappened();
+  
 private:
   //inner classes use to store content while receiving a report 
   class Report {

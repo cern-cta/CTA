@@ -133,7 +133,7 @@ protected:
   castor::server::BlockingQueue<castor::log::Param> m_paramsQueue;
   
   /**
-   * 
+   * Map of all error counts
    */
   std::map<std::string, uint32_t> m_errorCounts;
 
@@ -341,6 +341,14 @@ protected:
     }
     // We ship the new value ASAP to the main thread.
     addParameter(log::Param(errorName, value));
+  }
+  
+  /**
+   * Test whether an error happened
+   */
+  bool errorHappened() {
+    castor::server::MutexLocker locker(&m_mutex);
+    return m_errorCounts.size();
   }
   
   /**

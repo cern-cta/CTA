@@ -411,8 +411,8 @@ TEST(tapeServer, DataTransferSessionFailtoMount) {
   std::string temp = logger.getLog();
   temp += "";
   ASSERT_EQ("V12345", sess.getVid());
-  // Currently, failures are reported by files and recall sessions do not fail.
-  ASSERT_EQ(0, sim.m_sessionErrorCode);
+  // The session is now failing (internal error is reported)
+  ASSERT_EQ(1015, sim.m_sessionErrorCode);
 }
 
 TEST(tapeServer, DataTransferSessionEmptyOnVolReq) {
