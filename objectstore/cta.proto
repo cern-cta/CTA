@@ -155,9 +155,9 @@ message ArchiveJobPointer {
   required string address = 3002;
 }
 
-message RetrieveJobPointer {
-  required uint64 size = 3001;
-  required string address = 3002;
+message RetrievalJobPointer {
+  required uint64 size = 3101;
+  required string address = 3102;
 }
 
 // ------------- Tape pools  ---------------------------------------------------
