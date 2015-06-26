@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/ArchiveFileStatus.hpp"
+#include "common/RemoteFileStatus.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveFileStatus::ArchiveFileStatus():
+cta::RemoteFileStatus::RemoteFileStatus():
   m_mode(0),
   m_size(0) {
 }
@@ -29,7 +29,7 @@ cta::ArchiveFileStatus::ArchiveFileStatus():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveFileStatus::ArchiveFileStatus(
+cta::RemoteFileStatus::RemoteFileStatus(
   const UserIdentity &owner,
   const mode_t mode,
   const uint64_t size,
@@ -45,35 +45,35 @@ cta::ArchiveFileStatus::ArchiveFileStatus(
 //------------------------------------------------------------------------------
 // getOwner
 //------------------------------------------------------------------------------
-const cta::UserIdentity &cta::ArchiveFileStatus::getOwner() const throw() {
+const cta::UserIdentity &cta::RemoteFileStatus::getOwner() const throw() {
   return m_owner;
 }
 
 //------------------------------------------------------------------------------
 // getMode
 //------------------------------------------------------------------------------
-mode_t cta::ArchiveFileStatus::getMode() const throw() {
+mode_t cta::RemoteFileStatus::getMode() const throw() {
   return m_mode;
 }
 
 //------------------------------------------------------------------------------
 // getSize
 //------------------------------------------------------------------------------
-uint64_t cta::ArchiveFileStatus::getSize() const throw() {
+uint64_t cta::RemoteFileStatus::getSize() const throw() {
   return m_size;
 }
 
 //------------------------------------------------------------------------------
 // getChecksum
 //------------------------------------------------------------------------------
-const cta::Checksum &cta::ArchiveFileStatus::getChecksum() const throw() {
+const cta::Checksum &cta::RemoteFileStatus::getChecksum() const throw() {
   return m_checksum;
 }
 
 //------------------------------------------------------------------------------
 // setStorageClassName
 //------------------------------------------------------------------------------
-void cta::ArchiveFileStatus::setStorageClassName(
+void cta::RemoteFileStatus::setStorageClassName(
   const std::string &storageClassName) {
   m_storageClassName = storageClassName;
 }
@@ -81,6 +81,6 @@ void cta::ArchiveFileStatus::setStorageClassName(
 //------------------------------------------------------------------------------
 // getStorageClassName
 //------------------------------------------------------------------------------
-const std::string &cta::ArchiveFileStatus::getStorageClassName() const throw() {
+const std::string &cta::RemoteFileStatus::getStorageClassName() const throw() {
   return m_storageClassName;
 }

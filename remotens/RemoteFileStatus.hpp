@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include "common/Checksum.hpp"
 #include "common/UserIdentity.hpp"
 
 #include <stdint.h>
@@ -27,9 +26,9 @@
 namespace cta {
 
 /**
- * The status of a file or a directory entry in the archive namespace.
+ * The status of a remote file or a directory.
  */
-class ArchiveFileStatus {
+class RemoteFileStatus {
 public:
 
   /**
@@ -37,7 +36,7 @@ public:
    *
    * Initialises all integer member-variables to 0.
    */
-  ArchiveFileStatus();
+  RemoteFileStatus();
 
   /**
    * Constructor.
@@ -45,16 +44,11 @@ public:
    * @param owner The identity of the owner.
    * @param mode The mode bits of the file or directory.
    * @param size The size of the file in bytes.
-   * @param checksum The checksum of the file.
-   * @param storageClassName The name of the file or directory's storage class.
-   * An empty string indicates no storage class.
    */
-  ArchiveFileStatus(
+  RemoteFileStatus(
     const UserIdentity &owner,
     const mode_t mode,
-    const uint64_t size,
-    const Checksum &checksum,
-    const std::string &storageClassName);
+    const uint64_t size);
 
   /**
    * Returns the identity of the owner.
@@ -75,29 +69,6 @@ public:
    */
   uint64_t getSize() const throw();
 
-  /**
-   * Returns the checksum of the file.
-   *
-   * @return The checksum of the file.
-   */
-  const Checksum &getChecksum() const throw();
-
-  /**
-   * Sets the name of the storage class.
-   *
-   * @param storageClassName The name of the storage class.
-   */
-  void setStorageClassName(const std::string &storageClassName);
-
-  /**
-   * Returns the name of the directory's storage class or an empty string if the
-   * directory does not have a storage class.
-   *
-   * @return The name of the directory's storage class or an empty string if the
-   * directory does not have a storage class.
-   */
-  const std::string &getStorageClassName() const throw();
-
 private:
 
   /**
@@ -117,17 +88,6 @@ private:
    */
   uint64_t m_size;
 
-  /**
-   * The checksum of the file.
-   */
-  Checksum m_checksum;
-
-  /**
-   * The name of the directory's storage class or an empty string if the
-   * directory does not have a storage class.
-   */
-  std::string m_storageClassName;
-
-}; // class ArchiveFileStatus
+}; // class RemoteFileStatus
 
 } // namespace cta
