@@ -57,21 +57,40 @@ void cta::objectstore::ArchiveToFileRequest::setArchiveFile(
   m_payload.set_archivefile(archiveFile);
 }
 
+std::string cta::objectstore::ArchiveToFileRequest::getArchiveFile() {
+  checkPayloadReadable();
+  return m_payload.archivefile();
+}
+
+
 void cta::objectstore::ArchiveToFileRequest::setRemoteFile(
   const std::string& remoteFile) {
-  checkHeaderReadable();
+  checkPayloadWritable();
   m_payload.set_remotefile(remoteFile);
 }
+
+std::string cta::objectstore::ArchiveToFileRequest::getRemoteFile() {
+  checkPayloadReadable();
+  return m_payload.remotefile();
+}
+
 
 void cta::objectstore::ArchiveToFileRequest::setPriority(uint64_t priority) {
   checkPayloadWritable();
   m_payload.set_priority(priority);
 }
 
-void cta::objectstore::ArchiveToFileRequest::setLog(
+void cta::objectstore::ArchiveToFileRequest::setCreationLog(
   const objectstore::CreationLog& creationLog) {
-  checkPayloadReadable();
+  checkPayloadWritable();
   creationLog.serialize(*m_payload.mutable_log());
+}
+
+auto cta::objectstore::ArchiveToFileRequest::getCreationLog() -> CreationLog {
+  checkPayloadReadable();
+  CreationLog ret;
+  ret.deserialize(m_payload.log());
+  return ret;
 }
 
 void cta::objectstore::ArchiveToFileRequest::setArchiveToDirRequestAddress(
@@ -94,7 +113,7 @@ auto cta::objectstore::ArchiveToFileRequest::dumpJobs() -> std::list<JobDump> {
 }
 
 uint64_t cta::objectstore::ArchiveToFileRequest::getSize() {
-  checkPayloadWritable();
+  checkPayloadReadable();
   return m_payload.size();
 }
 
@@ -102,6 +121,5 @@ void cta::objectstore::ArchiveToFileRequest::setSize(uint64_t size) {
   checkPayloadWritable();
   m_payload.set_size(size);
 }
-
 
 

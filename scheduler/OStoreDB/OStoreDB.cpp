@@ -409,7 +409,7 @@ void OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
   atfr.setArchiveFile(rqst.getArchiveFile());
   atfr.setRemoteFile(rqst.getRemoteFile());
   atfr.setPriority(rqst.getPriority());
-  atfr.setLog(rqst.getCreationLog());
+  atfr.setCreationLog(rqst.getCreationLog());
   // We will need to identity tapepools is order to construct the request
   RootEntry re(m_objectStore);
   ScopedSharedLock rel(re);

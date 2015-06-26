@@ -20,6 +20,8 @@
 #include "ArchiveToFileRequest.hpp"
 #include "BackendVFS.hpp"
 #include "Agent.hpp"
+#include "CreationLog.hpp"
+#include "UserIdentity.hpp"
 
 namespace unitTests {
   
@@ -27,6 +29,7 @@ TEST(ObjectStore, ArchiveToFileRequestBasicAccess) {
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);
   agent.generateName("unitTest");
+  time_t now;
   std::string tapeAddress = agent.nextId("ArchiveToFileRequest");
   {
     // Try to create the ArchiveToFileRequest entry
@@ -35,8 +38,8 @@ TEST(ObjectStore, ArchiveToFileRequestBasicAccess) {
     atfr.setArchiveFile("cta://dir/file");
     atfr.setRemoteFile("eos://dir2/file2");
     atfr.setSize(12345678);
-    atfr.setLog(cta::CreationLog(cta::UserIdentity(123,456),"testHost", 
-      time(NULL), "Comment"));
+    atfr.setCreationLog(cta::CreationLog(cta::UserIdentity(123,456),"testHost", 
+      now=time(NULL), "Comment"));
     atfr.setPriority(12);
     atfr.insert();
   }
@@ -45,7 +48,15 @@ TEST(ObjectStore, ArchiveToFileRequestBasicAccess) {
     cta::objectstore::ArchiveToFileRequest atfr(tapeAddress, be);
     cta::objectstore::ScopedSharedLock atfrl(atfr);
     atfr.fetch();
-    ASSERT_EQ("cta://dir/file", atfr.getARchiveFile());
+    ASSERT_EQ("cta://dir/file", atfr.getArchiveFile());
+    ASSERT_EQ("eos://dir2/file2", atfr.getRemoteFile());
+    ASSERT_EQ(12345678, atfr.getSize());
+    cta::objectstore::CreationLog log(atfr.getCreationLog());
+    ASSERT_EQ(123, log.user.uid);
+    ASSERT_EQ(456, log.user.gid);
+    ASSERT_EQ("testHost", log.host);
+    ASSERT_EQ(now, log.time);
+    ASSERT_EQ("Comment", log.comment);
   }
 }
 

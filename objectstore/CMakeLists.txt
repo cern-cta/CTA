@@ -34,6 +34,7 @@ set(ObjectStoreUnitTests
   RootEntryTest.cpp
   TapeTest.cpp
   GarbageCollectorTest.cpp
+  ArchiveToFileRequestTest.cpp
 )
 
 add_library(ctaobjectstoreunittests SHARED ${ObjectStoreUnitTests})
