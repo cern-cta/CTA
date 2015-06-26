@@ -27,7 +27,7 @@
 
 namespace unitTests {
 
-TEST(RootEntry, BasicAccess) {
+TEST(ObjectStore, RootEntryBasicAccess) {
   cta::objectstore::BackendVFS be;
   { 
     // Try to create the root entry
@@ -68,7 +68,7 @@ TEST(RootEntry, BasicAccess) {
   ASSERT_EQ(false, re.exists());
 }
 
-TEST(RootEntry, AdminHosts) {
+TEST(ObjectStore, RootEntryAdminHosts) {
   cta::objectstore::BackendVFS be;
   { 
     // Try to create the root entry
@@ -134,7 +134,7 @@ TEST(RootEntry, AdminHosts) {
   ASSERT_EQ(false, re.exists());
 }
   
-TEST(RootEntry, AdminUsers) {
+TEST(ObjectStore, RootEntryAdminUsers) {
   cta::objectstore::BackendVFS be;
   { 
     // Try to create the root entry
@@ -212,7 +212,7 @@ TEST(RootEntry, AdminUsers) {
   ASSERT_EQ(false, re.exists());
 }
 
-TEST(RootEntry, StorageClassesAndArchivalRoutes) {
+TEST(ObjectStore, RootEntryStorageClassesAndArchivalRoutes) {
   cta::objectstore::BackendVFS be;
   { 
     // Try to create the root entry
@@ -362,7 +362,7 @@ TEST(RootEntry, StorageClassesAndArchivalRoutes) {
   ASSERT_EQ(false, re.exists());
 }
 
-TEST(RootEntry, Libraries) {
+TEST(ObjectStore, RootEntryibraries) {
   cta::objectstore::BackendVFS be;
     cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
       "unittesthost", time(NULL), "Creation of unit test agent register");
@@ -426,7 +426,7 @@ TEST(RootEntry, Libraries) {
   ASSERT_EQ(false, re.exists());
 }
 
-TEST (RootEntry, TapePools) {
+TEST (ObjectStore, RootEntryTapePools) {
   cta::objectstore::BackendVFS be;
     cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
       "unittesthost", time(NULL), "Creation of unit test agent register");
@@ -486,7 +486,7 @@ TEST (RootEntry, TapePools) {
   ASSERT_EQ(false, re.exists());
 }
 
-TEST (RootEntry, DriveRegister) {
+TEST (ObjectStore, RootEntryDriveRegister) {
   cta::objectstore::BackendVFS be;
   { 
     // Try to create the root entry
@@ -540,7 +540,7 @@ TEST (RootEntry, DriveRegister) {
   ASSERT_EQ(false, re.exists());
 }
 
-TEST(RootEntry, AgentRegister) {
+TEST(ObjectStore, RootEntryAgentRegister) {
   cta::objectstore::BackendVFS be;
   { 
     // Try to create the root entry

@@ -9,6 +9,7 @@ enum ObjectType {
   TapePool_t = 3;
   DriveRegister_t = 4;
   Tape_t = 5;
+  ArchiveToFileRequest_t = 6;
   GenericObject_t = 1000;
 }
 
@@ -149,12 +150,12 @@ message AgentRegister {
 
 // ------------- Jobs handling -------------------------------------------------
 
-message ArchivalJobPointer {
+message ArchiveJobPointer {
   required uint64 size = 3001;
   required string address = 3002;
 }
 
-message RetrievalJobPointer {
+message RetrieveJobPointer {
   required uint64 size = 3001;
   required string address = 3002;
 }
@@ -172,8 +173,8 @@ message TapePointer {
 message TapePool {
   required string name = 4100;
   repeated TapePointer tapes = 4101;
-  repeated ArchivalJobPointer archivaljobs = 4102;
-  required uint64 ArchivalJobsTotalSize = 4103;
+  repeated ArchiveJobPointer archivaljobs = 4102;
+  required uint64 ArchiveJobsTotalSize = 4103;
 }
 
 // ------------- Tape ----------------------------------------------------------
@@ -192,7 +193,7 @@ message Tape {
   required uint64 bytesstored = 4302;
   repeated MountInfo readmounts = 4303;
   repeated MountInfo writemounts = 4304;
-  repeated RetrievalJobPointer retrievaljobs = 4305;
+  repeated RetrieveJobPointer retrievaljobs = 4305;
 }
 
 // ------------- Archive Jobs --------------------------------------------------
@@ -221,10 +222,11 @@ message ArchiveJobEntry {
 message ArchiveToFileRequest {
   required string remotefile = 4500;
   required string archivefile = 4501;
-  repeated ArchiveJobEntry routes = 4502;
-  required uint64 priority = 4503;
-  required CreationLog log = 4504;
-  optional string archivetodiraddress = 4505;
+  required uint64 size = 4502;
+  repeated ArchiveJobEntry jobs = 4503;
+  required uint64 priority = 4504;
+  required CreationLog log = 4505;
+  optional string archivetodiraddress = 4506;
 }
 
 message ArchiveToDirRequest {

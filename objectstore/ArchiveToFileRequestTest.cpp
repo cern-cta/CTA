@@ -17,36 +17,36 @@
  */
 
 #include <gtest/gtest.h>
-#include "Tape.hpp"
+#include "ArchiveToFileRequest.hpp"
 #include "BackendVFS.hpp"
 #include "Agent.hpp"
 
 namespace unitTests {
   
-TEST(ObjectStore, TapeBasicAccess) {
+TEST(ObjectStore, ArchiveToFileRequestBasicAccess) {
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);
   agent.generateName("unitTest");
-  std::string tapeAddress = agent.nextId("Tape");
-  { 
-    // Try to create the tape entry
-    cta::objectstore::Tape t(tapeAddress, be);
-    t.initialize("V12345");
-    t.insert();
+  std::string tapeAddress = agent.nextId("ArchiveToFileRequest");
+  {
+    // Try to create the ArchiveToFileRequest entry
+    cta::objectstore::ArchiveToFileRequest atfr(tapeAddress, be);
+    atfr.initialize();
+    atfr.setArchiveFile("cta://dir/file");
+    atfr.setRemoteFile("eos://dir2/file2");
+    atfr.setSize(12345678);
+    atfr.setLog(cta::CreationLog(cta::UserIdentity(123,456),"testHost", 
+      time(NULL), "Comment"));
+    atfr.setPriority(12);
+    atfr.insert();
   }
   {
-    // Try to read back and dump the tape
-    cta::objectstore::Tape t(tapeAddress, be);
-    ASSERT_THROW(t.fetch(), cta::exception::Exception);
-    cta::objectstore::ScopedSharedLock lock(t);
-    ASSERT_NO_THROW(t.fetch());
-    t.dump();
+    // Try to load back the Request and dump it.
+    cta::objectstore::ArchiveToFileRequest atfr(tapeAddress, be);
+    cta::objectstore::ScopedSharedLock atfrl(atfr);
+    atfr.fetch();
+    ASSERT_EQ("cta://dir/file", atfr.getARchiveFile());
   }
-  // Delete the root entry
-  cta::objectstore::Tape t(tapeAddress, be);
-  cta::objectstore::ScopedExclusiveLock lock(t);
-  t.fetch();
-  t.removeIfEmpty();
-  ASSERT_EQ(false, t.exists());
 }
+
 }

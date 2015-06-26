@@ -28,7 +28,7 @@
 
 namespace unitTests {
 
-TEST(GarbageCollector, BasicFuctionnality) {
+TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   // Here we check for the ability to detect dead (but empty agents)
   // and clean them up.
   cta::objectstore::BackendVFS be;
@@ -77,7 +77,7 @@ TEST(GarbageCollector, BasicFuctionnality) {
   ASSERT_NO_THROW(re.removeIfEmpty());
 }
 
-TEST(GarbageCollector, AgentRegister) {
+TEST(ObjectStore, GarbageCollectorRegister) {
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);
@@ -134,7 +134,7 @@ TEST(GarbageCollector, AgentRegister) {
   ASSERT_NO_THROW(re.removeIfEmpty());
 }
 
-TEST(GarbageCollector, TapePool) {
+TEST(ObjectStore, GarbageCollectorTapePool) {
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);
@@ -191,7 +191,7 @@ TEST(GarbageCollector, TapePool) {
   ASSERT_NO_THROW(re.removeIfEmpty());
 }
 
-TEST(GarbageCollector, DriveRegister) {
+TEST(ObjectStore, GarbageCollectorDriveRegister) {
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);

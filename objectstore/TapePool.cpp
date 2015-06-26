@@ -40,7 +40,7 @@ void cta::objectstore::TapePool::initialize(const std::string& name) {
   // Setup the object so it's valid
   m_payload.set_name(name);
   // set the archival jobs counter to zero
-  m_payload.set_archivaljobstotalsize(0);
+  m_payload.set_archivejobstotalsize(0);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
@@ -166,7 +166,6 @@ void cta::objectstore::TapePool::garbageCollect() {
   remove();
 }
 
-
 void cta::objectstore::TapePool::setName(const std::string& name) {
   checkPayloadWritable();
   m_payload.set_name(name);
@@ -175,5 +174,13 @@ void cta::objectstore::TapePool::setName(const std::string& name) {
 std::string cta::objectstore::TapePool::getName() {
   checkPayloadReadable();
   return m_payload.name();
+}
+
+void cta::objectstore::TapePool::addJob(const ArchiveToFileRequest::JobDump& job,
+  const std::string & archiveToFileAddress, uint64_t size) {
+  checkPayloadWritable();
+  auto * j = m_payload.add_archivaljobs();
+  j->set_address(archiveToFileAddress);
+  j->set_size(size);
 }
 

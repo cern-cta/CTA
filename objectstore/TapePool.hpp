@@ -23,6 +23,7 @@
 #include <string>
 #include "objectstore/cta.pb.h"
 #include "scheduler/CreationLog.hpp"
+#include "ArchiveToFileRequest.hpp"
 #include "CreationLog.hpp"
 #include "Agent.hpp"
 
@@ -64,6 +65,8 @@ public:
   std::list<TapeDump> dumpTapes();
   
   // Archival jobs management ==================================================
+  void addJob(const ArchiveToFileRequest::JobDump & job,
+    const std::string & archiveToFileAddress, uint64_t size);
   
   // Check that the tape pool is empty (of both tapes and jobs)
   bool isEmpty();

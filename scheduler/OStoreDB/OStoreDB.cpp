@@ -402,7 +402,7 @@ void OStoreDB::deleteLogicalLibrary(const SecurityIdentity& requester,
 }
 
 void OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
-  throw exception::Exception("Not Implemented");
+  assertAgentSet();
   // In order to post the job, construct it first.
   objectstore::ArchiveToFileRequest atfr(m_agent->nextId("ArchiveToFileRequest"), m_objectStore);
   atfr.initialize();
@@ -424,7 +424,13 @@ void OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
     throw ArchiveRequestHasNoCopies("In OStoreDB::queue: the archive to file request has no copy");
   }
   // We successfully prepared the object. Time to create it and plug it to
-  // the tree.
+  // the tree (it will first be referenced by the agent)
+  {
+    objectstore::ScopedExclusiveLock al(*m_agent);
+    m_agent->fetch();
+    m_agent->addToOwnership(atfr.getAddressIfSet());
+    m_agent->commit();
+  }
   atfr.setOwner(m_agent->getAddressIfSet());
   atfr.insert();
   ScopedExclusiveLock atfrl(atfr);
@@ -433,7 +439,18 @@ void OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
     objectstore::TapePool tp(j->tapePoolAddress, m_objectStore);
     ScopedExclusiveLock tpl(tp);
     tp.fetch();
-    //tp.addJob(j);
+    tp.addJob(*j, atfr.getAddressIfSet(), atfr.getSize());
+    tp.commit();
+  }
+  // The request is now fully set. As it's multi-owned, we do not set the owner
+  atfr.setOwner("");
+  atfr.commit();
+  // And remove reference from the agent
+  {
+    objectstore::ScopedExclusiveLock al(*m_agent);
+    m_agent->fetch();
+    m_agent->removeFromOwnership(atfr.getAddressIfSet());
+    m_agent->commit();
   }
 }
 

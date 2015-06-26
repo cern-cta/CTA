@@ -37,10 +37,14 @@ public:
   void addJob(uint16_t copyNumber, const std::string & tapepool,
     const std::string & tapepooladdress);
   void setArchiveFile(const std::string & archiveFile);
+  std::string getArchiveFile();
   void setRemoteFile (const std::string & remoteFile);
+  std::string getRemoteFile();
   void setPriority (uint64_t priority);
   void setLog (const objectstore::CreationLog& creationLog);
   void setArchiveToDirRequestAddress(const std::string & dirRequestAddress);
+  void setSize(uint64_t size);
+  uint64_t getSize();
   class JobDump {
   public:
     uint16_t copyNb;
