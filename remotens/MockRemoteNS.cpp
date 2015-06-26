@@ -27,6 +27,14 @@ cta::MockRemoteNS::~MockRemoteNS() throw() {
 }
 
 //------------------------------------------------------------------------------
+// statFile
+//------------------------------------------------------------------------------
+cta::RemoteFileStatus cta::MockRemoteNS::statFile(const RemotePath &path)
+  const {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+//------------------------------------------------------------------------------
 // regularFileExists
 //------------------------------------------------------------------------------
 bool cta::MockRemoteNS::regularFileExists(const RemotePath &remoteFile)

@@ -53,6 +53,14 @@ void cta::RemoteNSDispatcher::registerProtocolHandler(
 }
 
 //------------------------------------------------------------------------------
+// statFile
+//------------------------------------------------------------------------------
+cta::RemoteFileStatus cta::RemoteNSDispatcher::statFile(const RemotePath &path) 
+  const {
+  return getHandler(path.getProtocol()).statFile(path);
+}
+
+//------------------------------------------------------------------------------
 // regularFileExists
 //------------------------------------------------------------------------------
 bool cta::RemoteNSDispatcher::regularFileExists(const RemotePath &path) const {

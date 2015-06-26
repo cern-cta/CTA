@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/RemoteFileStatus.hpp"
+#include "remotens/RemoteFileStatus.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -32,14 +32,10 @@ cta::RemoteFileStatus::RemoteFileStatus():
 cta::RemoteFileStatus::RemoteFileStatus(
   const UserIdentity &owner,
   const mode_t mode,
-  const uint64_t size,
-  const Checksum &checksum,
-  const std::string &storageClassName):
+  const uint64_t size):
   m_owner(owner),
   m_mode(mode),
-  m_size(size),
-  m_checksum(checksum),
-  m_storageClassName(storageClassName) {
+  m_size(size) {
 }
 
 //------------------------------------------------------------------------------
@@ -61,26 +57,4 @@ mode_t cta::RemoteFileStatus::getMode() const throw() {
 //------------------------------------------------------------------------------
 uint64_t cta::RemoteFileStatus::getSize() const throw() {
   return m_size;
-}
-
-//------------------------------------------------------------------------------
-// getChecksum
-//------------------------------------------------------------------------------
-const cta::Checksum &cta::RemoteFileStatus::getChecksum() const throw() {
-  return m_checksum;
-}
-
-//------------------------------------------------------------------------------
-// setStorageClassName
-//------------------------------------------------------------------------------
-void cta::RemoteFileStatus::setStorageClassName(
-  const std::string &storageClassName) {
-  m_storageClassName = storageClassName;
-}
-  
-//------------------------------------------------------------------------------
-// getStorageClassName
-//------------------------------------------------------------------------------
-const std::string &cta::RemoteFileStatus::getStorageClassName() const throw() {
-  return m_storageClassName;
 }

@@ -43,6 +43,11 @@ protected:
     ~TestRemoteNS() throw() {
     }
 
+    cta::RemoteFileStatus statFile(const cta::RemotePath &path) const {
+      throw cta::exception::Exception(std::string(__FUNCTION__) +
+        " not implemented");
+    }
+
     bool regularFileExists(const cta::RemotePath &path) const {
       incCallCounter("regularFileExists");
       auto itor = std::find(m_files.begin(), m_files.end(), path);

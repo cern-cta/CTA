@@ -457,7 +457,8 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
 
   const UserIdentity owner = getOwner(requester, path);
   const Checksum checksum;
-  ArchiveFileStatus status(owner, stat_result.st_mode, checksum,
+  const uint64_t size = 1234;
+  ArchiveFileStatus status(owner, stat_result.st_mode, size, checksum,
     storageClassName);
 
   return ArchiveDirEntry(entryType, name, status);

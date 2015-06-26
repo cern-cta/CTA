@@ -19,6 +19,7 @@
 #pragma once
 
 #include "common/RemotePath.hpp"
+#include "remotens/RemoteFileStatus.hpp"
 
 namespace cta {
 
@@ -33,6 +34,15 @@ public:
    * Destructor.
    */
   virtual ~RemoteNS() throw() = 0;
+
+  /**
+   * Returns the status of the specified file or directory within the remote
+   * storage system.
+   *
+   * @param path The absolute path of the file or directory.
+   * @return The status of the file or directory.
+   */
+  virtual RemoteFileStatus statFile(const RemotePath &path) const = 0;
 
   /**
    * Returns true if the specified regular file exists.
