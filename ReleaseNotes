@@ -1,3 +1,76 @@
+-------------
+- 2.1.15-10 -
+-------------
+
+  Summary
+  -------
+
+  TO BE DONE
+
+  Stager
+  ------
+
+  TO BE DONE
+
+  Tape
+  ----
+
+  TO BE DONE
+
+  Upgrade Instructions from 2.1.15-8
+  ----------------------------------
+
+  Disk servers
+  ------------
+
+  The XROOT libxrdxcastor2acc.so authorisation plugin is responsible for
+  authenticating disk server to disk server requests.  The location of the
+  corresponding public key is specified by the following parameter within
+  /etc/xrd.cf.server:
+
+    xcastor2.publickey default /opt/xrootd/keys/pkey.pem
+
+  The following example shell commands can be modified accordingly (the second
+  line) to produce a pair of public and private keys for signing and
+  authenticating disk server to disk server XROOT requests:
+
+    openssl genrsa -out key.pem 512
+    openssl req -new -subj "/C=CH/ST=Geneva/L=Geneva/O=CERN/OU=IT/CN=castor-xroot-hostname.cern.ch/emailAddress=castor-operations@cern.ch" -inform PEM -key key.pem -outform PEM -out certreq.pem
+    openssl x509 -days 3650 -signkey key.pem -in certreq.pem -req -out cert.pem
+    openssl x509 -pubkey -in cert.pem > pkey.pem
+    rm -rf cert.pem certreq.pem
+    chmod 0400 key.pem
+
+  Tape servers
+  ------------
+
+  When the tapeserverd daemon is configured to use the XROOT protocol it will
+  need to sign its XROOT requests so that the CASTOR disk servers will be able
+  to authenticate it.  The tapeserverd daemon signs its XROOT requests using a
+  private key.  The location of the private key is specified by the following
+  parameter within /etc/castor/castior.conf:
+
+    TapeServer XrootPrivateKey /opt/xrootd/keys/tape_key.pem
+
+  The XROOT libxrdxcastor2acc.so authorisation plugin is responsible for
+  authenticating tape server requests when they arrive at a CASTOR disk server.
+  The plugin authenticates the requests using a public key.  The location of
+  the public key is specified by the following parameter within
+  /etc/xrd.cf.server:
+
+    xcastor2.publickey tape /opt/xrootd/keys/tape_pkey.pem
+
+  The following example shell commands can be modified accordingly (the second
+  line) to produce a pair of public and private keys for signing and
+  authenticating tapeserverd XROOT requests:
+
+    openssl genrsa -out tape_key.pem 512
+    openssl req -new -subj "/C=CH/ST=Geneva/L=Geneva/O=CERN/OU=IT/CN=castor-xroot-hostname.cern.ch/emailAddress=castor-operations@cern.ch" -inform PEM -key tape_key.pem -outform PEM -out certreq.pem
+    openssl x509 -days 3650 -signkey tape_key.pem -in certreq.pem -req -out cert.pem
+    openssl x509 -pubkey -in cert.pem > tape_pkey.pem
+    rm -rf cert.pem certreq.pem
+    chmod 0400 tape_key.pem
+
 ------------
 - 2.1.15-9 -
 ------------
