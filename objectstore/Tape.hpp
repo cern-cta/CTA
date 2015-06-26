@@ -20,6 +20,7 @@
 
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
+#include "RetrieveToFileRequest.hpp"
 
 namespace cta { namespace objectstore {
   
@@ -37,6 +38,10 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   void removeIfEmpty();
   std::string dump();
+  
+  // Retrieval jobs management ==================================================
+  void addJob(const RetrieveToFileRequest::JobDump & job,
+    const std::string & retrieveToFileAddress, uint64_t size);
   
   // -- Stored data counting ---------------------------------------------------
   uint64_t getStoredData();

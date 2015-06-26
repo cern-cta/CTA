@@ -527,7 +527,18 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
     objectstore::Tape tp(j->tapeAddress, m_objectStore);
     ScopedExclusiveLock tpl(tp);
     tp.fetch();
-    //tp.addJob(j);
+    tp.addJob(*j, rtfr.getAddressIfSet(), rtfr.getSize());
+    tp.commit();
+  }
+  // The request is now fully set. As it's multi-owned, we do not set the owner
+  rtfr.setOwner("");
+  rtfr.commit();
+  // And remove reference from the agent
+  {
+    objectstore::ScopedExclusiveLock al(*m_agent);
+    m_agent->fetch();
+    m_agent->removeFromOwnership(rtfr.getAddressIfSet());
+    m_agent->commit();
   }
 }
 

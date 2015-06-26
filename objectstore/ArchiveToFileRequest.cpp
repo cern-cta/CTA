@@ -88,7 +88,7 @@ auto cta::objectstore::ArchiveToFileRequest::dumpJobs() -> std::list<JobDump> {
     ret.push_back(JobDump());
     ret.back().copyNb = j->copynb();
     ret.back().tapePool = j->tapepool();
-    ret.back().tapePool = j->tapepooladdress();
+    ret.back().tapePoolAddress = j->tapepooladdress();
   }
   return ret;
 }

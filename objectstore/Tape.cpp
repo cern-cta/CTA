@@ -91,7 +91,10 @@ std::string cta::objectstore::Tape::dump() {
   return ret.str();
 }
 
-
-
-
-
+void cta::objectstore::Tape::addJob(const RetrieveToFileRequest::JobDump& job,
+  const std::string & retrieveToFileAddress, uint64_t size) {
+  checkPayloadWritable();
+  auto * j = m_payload.add_retrievaljobs();
+  j->set_address(retrieveToFileAddress);
+  j->set_size(size);
+}
