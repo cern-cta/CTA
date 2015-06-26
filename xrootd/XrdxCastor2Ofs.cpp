@@ -523,15 +523,15 @@ XrdxCastor2OfsFile::open(const char*         path,
     xcastor_debug("send_dm errc=%i, tx_id=%s", openrc, mTransferId.c_str());
     int dm_errno = mover_open_file(mDiskMgrPort, mTransferId.c_str(), &rc, &errmsg);
 
-    // the diskmanager got a failure, return error
+    // The diskmanager got a failure, return error
     if (dm_errno)
     {
-      rc = gSrv->Emsg("open", error, dm_errno, "open due to diskmanager error: ", errmsg); // rc is set to -1
+      rc = gSrv->Emsg("open", error, dm_errno, "open due to diskmanager error: ", errmsg);
     }
-    // the local open failed, return error
+    // The local open failed, return error
     else if (openrc)
     {
-      rc = gSrv->Emsg("open", error, openrc, "open due to failed local open", "");  // rc is set to -1
+      rc = gSrv->Emsg("open", error, openrc, "open due to failed local open", "");
     }
     else
     {
@@ -548,13 +548,22 @@ XrdxCastor2OfsFile::open(const char*         path,
     if (errmsg) free(errmsg);
   }
 
+  // If this is a TPC destination and the TPC open in the OFS layer was successful,
+  // we force the recomputation of the checksum at the end since all writes go
+  // directly to the file without passing through the write method in our plugin.
+  if ((mTpcFlag == TpcFlag::kTpcDstSetup) && mIsRW && (rc == SFS_OK))
+  {
+    mHasWrite = true;
+    mHasAdler = false;
+  }
+
   if (gSrv->mLogLevel == LOG_DEBUG)
   {
     TIMING("DONE", &open_timing);
     open_timing.Print();
   }
 
-  return rc;   // -1 in case of any error, 0 for success
+  return rc; // -1 in case of any error, 0 for success
 }
 
 
@@ -623,43 +632,55 @@ XrdxCastor2OfsFile::close()
 	xs_offset += xs_size;
       }
 
-      mHasAdler = true;
+      if (xs_size == SFS_ERROR)
+	mHasAdler = false;
+      else
+	mHasAdler = true;
     }
 
-    // Deal with ceph pool if any
-    std::string poolAndPath = newpath;
-    char* pool = mEnvOpaque->Get("castor.pool");
-
-    if (pool)
+    if (mHasAdler)
     {
-      poolAndPath = pool;
-      poolAndPath += '/';
-      poolAndPath += newpath;
-    }
+      // Set the checksum and deal with ceph pool if any
+      std::string poolAndPath = newpath;
+      char* pool = mEnvOpaque->Get("castor.pool");
 
-    sprintf(ckSumbuf, "%x", mAdlerXs);
-    xcastor_debug("file xs=%s", ckSumbuf);
+      if (pool)
+      {
+	poolAndPath = pool;
+	poolAndPath += '/';
+	poolAndPath += newpath;
+      }
 
-    if (ceph_posix_setxattr(poolAndPath.c_str(), "user.castor.checksum.type",
-			    ckSumalg, strlen(ckSumalg), 0))
-    {
-      xcastor_err("path=%s unable to set xs type", newpath.c_str());
-      rc = gSrv->Emsg("close", error, EIO, "set checksum type");
+      sprintf(ckSumbuf, "%x", mAdlerXs);
+      xcastor_debug("file xs=%s", ckSumbuf);
+
+      if (ceph_posix_setxattr(poolAndPath.c_str(), "user.castor.checksum.type",
+			      ckSumalg, strlen(ckSumalg), 0))
+      {
+	xcastor_err("path=%s unable to set xs type", newpath.c_str());
+	rc = gSrv->Emsg("close", error, EIO, "set checksum type");
+      }
+      else
+      {
+	if (ceph_posix_setxattr(poolAndPath.c_str(), "user.castor.checksum.value",
+				ckSumbuf, strlen(ckSumbuf), 0))
+	{
+	  xcastor_err("path=%s unable to set xs value", newpath.c_str());
+	  rc = gSrv->Emsg("close", error, EIO, "set checksum");
+	}
+      }
     }
     else
     {
-      if (ceph_posix_setxattr(poolAndPath.c_str(), "user.castor.checksum.value",
-			      ckSumbuf, strlen(ckSumbuf), 0))
-      {
-	xcastor_err("path=%s unable to set xs value", newpath.c_str());
-	rc = gSrv->Emsg("close", error, EIO, "set checksum");
-      }
+      xcastor_err("path=%s unable to compute xs");
+      rc = gSrv->Emsg("close", error, EIO, "compute cehcksum");
     }
   }
 
   TIMING("DONE_XS", &close_timing);
+  int close_rc = XrdOfsFile::close();
 
-  if ((rc = XrdOfsFile::close()))
+  if (rc == SFS_OK && close_rc == SFS_ERROR)
   {
     xcastor_err("path=%s failed closing ofs file", newpath.c_str());
     rc = gSrv->Emsg("close", error, EIO, "closing ofs file");
@@ -927,12 +948,7 @@ XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
   }
   else if (mTpcFlag == TpcFlag::kTpcDstSetup)
   {
-    // This is a TPC destination and we force the recomputation of the checksum
-    // at the end since all writes go directly to the file without passing through
-    // the write method in OFS.
-    mHasWrite = true;
-    mHasAdler = false;
-    // Now we can extract the transfer info
+    // Extract the original transfer info
     XrdOucEnv env_opaque(opaque.c_str());
 
     if (ExtractTransferInfo(env_opaque))
