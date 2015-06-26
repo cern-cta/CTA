@@ -18,7 +18,7 @@
 
 #include "TapePool.hpp"
 #include "GenericObject.hpp"
-#include "ProtcolBuffersAlgorithms.hpp"
+#include "ProtocolBuffersAlgorithms.hpp"
 #include "CreationLog.hpp"
 #include "Tape.hpp"
 

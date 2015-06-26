@@ -17,7 +17,7 @@
  */
 
 #include "AgentRegister.hpp"
-#include "ProtcolBuffersAlgorithms.hpp"
+#include "ProtocolBuffersAlgorithms.hpp"
 #include "GenericObject.hpp"
 
 cta::objectstore::AgentRegister::AgentRegister(Backend & os):

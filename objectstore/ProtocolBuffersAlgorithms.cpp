@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ProtcolBuffersAlgorithms.hpp"
+#include "ProtocolBuffersAlgorithms.hpp"
 
 void cta::objectstore::serializers::removeString(::google::protobuf::RepeatedPtrField< ::std::string>* field, 
   const std::string & value) {

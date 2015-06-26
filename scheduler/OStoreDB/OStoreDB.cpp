@@ -37,6 +37,7 @@
 #include "ArchiveToDirRequest.hpp"
 #include "RetrieveToFileRequest.hpp"
 #include "TapeCopyLocation.hpp"
+#include "RetrieveToDirRequest.hpp"
 #include <algorithm>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
@@ -514,7 +515,10 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
 }
 
 void OStoreDB::queue(const RetrieveToDirRequest& rqst) {
-  throw exception::Exception("Not Implemented");
+  auto & retrieveToFileRequests = rqst.getRetrieveToFileRequests();
+  for(auto req=retrieveToFileRequests.begin(); req!=retrieveToFileRequests.end(); req++) {
+    queue(*req);
+  }
 }
 
 std::list<RetrieveFromTapeCopyRequest> OStoreDB::getRetrieveRequests(const std::string& vid) const {

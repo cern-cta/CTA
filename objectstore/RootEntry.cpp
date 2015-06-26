@@ -22,7 +22,7 @@
 #include "TapePool.hpp"
 #include "DriveRegister.hpp"
 #include <cxxabi.h>
-#include "ProtcolBuffersAlgorithms.hpp"
+#include "ProtocolBuffersAlgorithms.hpp"
 
 // construtor, when the backend store exists.
 // Checks the existence and correctness of the root entry

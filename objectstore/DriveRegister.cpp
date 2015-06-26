@@ -17,7 +17,7 @@
  */
 
 #include "DriveRegister.hpp"
-#include "ProtcolBuffersAlgorithms.hpp"
+#include "ProtocolBuffersAlgorithms.hpp"
 #include "GenericObject.hpp"
 
 cta::objectstore::DriveRegister::DriveRegister(const std::string & address, Backend & os):

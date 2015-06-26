@@ -20,7 +20,7 @@
 #include "AgentRegister.hpp"
 #include "RootEntry.hpp"
 #include "common/exception/Errnum.hpp"
-#include "ProtcolBuffersAlgorithms.hpp"
+#include "ProtocolBuffersAlgorithms.hpp"
 #include <string>
 #include <sstream>
 #include <iomanip>
