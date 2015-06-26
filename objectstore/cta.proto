@@ -195,7 +195,7 @@ message Tape {
   repeated RetrievalJobPointer retrievaljobs = 4305;
 }
 
-// ------------- Jobs ----------------------------------------------------------
+// ------------- Archive Jobs --------------------------------------------------
 
 // The status of the individual archive jobs. The jobs are materialised 
 // by table entries in the ArchiveToFileRequest.
@@ -227,11 +227,50 @@ message ArchiveToFileRequest {
   optional string archivetodiraddress = 4505;
 }
 
-message ArchivalToDirRequest {
+message ArchiveToDirRequest {
   required string archivedir = 4600;
   repeated string filerequestsaddresses = 4601;
   required uint64 priority = 4602;
   required CreationLog log = 4603;
+}
+
+// ------------- Retrieve Jobs -------------------------------------------------
+
+// The status of the individual retrieve jobs. The jobs are materialised 
+// by table entries in the RetrieveToFileRequest.
+// This life cycle represented by the following enum
+
+enum RetrieveJobStatus {
+  RJS_LinkingToTape = 0;
+  RJS_Pending = 1;
+  RJS_Selected = 2;
+  RJS_Complete = 3;
+  RJS_Failed = 99;
+}
+
+message RetrieveJobEntry {
+  required uint32 copynb = 4700;
+  required string tape = 4701;
+  required string tapeaddress = 4702;
+  required RetrieveJobStatus status = 4703;
+  required uint32 totalretries = 4704;
+  required uint32 retrieswithinmount = 4705;
+}
+
+message RetrieveToFileRequest {
+  required string remotefile = 4800;
+  required string archivefile = 4801;
+  repeated RetrieveJobEntry routes = 4802;
+  required uint64 priority = 4803;
+  required CreationLog log = 4804;
+  optional string retrievetodiraddress = 4805;
+}
+
+message RetrieveToDirRequest {
+  required string retrievedir = 4900;
+  repeated string filerequestsaddresses = 4901;
+  required uint64 priority = 4902;
+  required CreationLog log = 4903;
 }
 
 // ------------- Drives handling  ----------------------------------------------

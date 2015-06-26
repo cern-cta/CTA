@@ -128,7 +128,7 @@ public:
   };
   std::list<LibraryDump> dumpLibraries();
   
-  // TapePoolManipulations =====================================================
+  // TapePool Manipulations =====================================================
   CTA_GENERATE_EXCEPTION_CLASS(TapePoolNotEmpty);
   CTA_GENERATE_EXCEPTION_CLASS(WrongTapePool);
   /** This function implicitly creates the tape pool structure and updates 

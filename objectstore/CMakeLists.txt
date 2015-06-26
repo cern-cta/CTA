@@ -20,6 +20,7 @@ add_library (CTAObjectStore SHARED
   TapePool.cpp
   Tape.cpp
   ArchiveToFileRequest.cpp
+  RetrieveToFileRequest.cpp
   DriveRegister.cpp
   BackendVFS.cpp
   BackendRados.cpp

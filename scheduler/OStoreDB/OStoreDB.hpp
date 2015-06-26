@@ -139,6 +139,7 @@ public:
   virtual std::list<ArchiveToTapeCopyRequest> getArchiveRequests(const std::string& tapePoolName) const;
 
   /* === Retrieve requests handling  ======================================== */
+  CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
   virtual void queue(const RetrieveToFileRequest& rqst_);
 
   virtual void queue(const RetrieveToDirRequest& rqst);

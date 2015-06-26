@@ -22,6 +22,7 @@
 #include "objectstore/TapePool.hpp"
 #include "objectstore/Tape.hpp"
 #include "objectstore/ArchiveToFileRequest.hpp"
+#include "objectstore/RetrieveToFileRequest.hpp"
 #include "common/exception/Exception.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
@@ -29,10 +30,16 @@
 #include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
+#include "scheduler/RetrieveToFileRequest.hpp"
 #include "scheduler/StorageClass.hpp"
 #include "scheduler/TapePool.hpp"
 #include "scheduler/Tape.hpp"
+#include "ArchiveToDirRequest.hpp"
+#include "RetrieveToFileRequest.hpp"
+#include "TapeCopyLocation.hpp"
 #include <algorithm>
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
 
 namespace cta {
   
@@ -430,7 +437,10 @@ void OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
 }
 
 void OStoreDB::queue(const ArchiveToDirRequest& rqst) {
-  throw exception::Exception("Not Implemented");
+  auto & archiveToFileRequests = rqst.getArchiveToFileRequests();
+  for(auto req=archiveToFileRequests.begin(); req!=archiveToFileRequests.end(); req++) {
+    queue(*req);
+  }
 }
 
 void OStoreDB::deleteArchiveRequest(const SecurityIdentity& requester, 
@@ -453,8 +463,54 @@ std::list<ArchiveToTapeCopyRequest>
   throw exception::Exception("Not Implemented");
 }
 
-void OStoreDB::queue(const RetrieveToFileRequest& rqst) {
+void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
   throw exception::Exception("Not Implemented");
+  // In order to post the job, construct it first.
+  objectstore::RetrieveToFileRequest rtfr(m_agent->nextId("RetrieveToFileRequest"), m_objectStore);
+  rtfr.initialize();
+  rtfr.setArchiveFile(rqst.getArchiveFile());
+  rtfr.setRemoteFile(rqst.getRemoteFile());
+  rtfr.setPriority(rqst.getPriority());
+  rtfr.setLog(rqst.getCreationLog());
+  // We will need to identity tapes is order to construct the request
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto & tc = rqst.getTapeCopies();
+  auto numberOfCopies = tc.size();
+  srand (time(NULL));
+  auto chosenCopyNumber = rand() % numberOfCopies;
+  auto it = tc.begin();
+  std::advance(it, chosenCopyNumber);
+  auto tapePools = re.dumpTapePools();
+  std::string tapeAddress = "";
+  for(auto pool=tapePools.begin(); pool!=tapePools.end(); pool++) {
+    objectstore::TapePool tp(pool->address, m_objectStore);
+    auto tapes = tp.dumpTapes();
+    for(auto tape=tapes.begin(); tape!=tapes.end(); tape++) {
+      if(tape->vid==it->getVid()) {
+        tapeAddress = tape->address;
+        break;
+      }
+    }
+  }
+  rtfr.addJob(chosenCopyNumber, it->getVid(), tapeAddress);
+  auto jl = rtfr.dumpJobs();
+  if (!jl.size()) {
+    throw RetrieveRequestHasNoCopies("In OStoreDB::queue: the retrieve to file request has no copies");
+  }
+  // We successfully prepared the object. Time to create it and plug it to
+  // the tree.
+  rtfr.setOwner(m_agent->getAddressIfSet());
+  rtfr.insert();
+  ScopedExclusiveLock rtfrl(rtfr);
+  // We can now plug the request onto its tape
+  for (auto j=jl.begin(); j!=jl.end(); j++) {
+    objectstore::Tape tp(j->tapeAddress, m_objectStore);
+    ScopedExclusiveLock tpl(tp);
+    tp.fetch();
+    //tp.addJob(j);
+  }
 }
 
 void OStoreDB::queue(const RetrieveToDirRequest& rqst) {
