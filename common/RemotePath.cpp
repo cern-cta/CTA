@@ -44,7 +44,7 @@ cta::RemotePath::RemotePath(const std::string &raw):
   if(0 >= pos) {
     std::ostringstream msg;
     msg << "Failed to instantiate RemotePath object for URI " << raw <<
-     " because the scheme before the colon is an empty string";
+     " because there is no scheme";
     throw exception::Exception(msg.str());
   }
 
@@ -52,12 +52,11 @@ cta::RemotePath::RemotePath(const std::string &raw):
   if(pos == indexOfLastChar) {
     std::ostringstream msg;
     msg << "Failed to instantiate RemotePath object for URI " << raw <<
-     " because the hierarchical part after the colon is an empty string";
+     " because there nothing after the scheme";
     throw exception::Exception(msg.str());
   }
 
   m_scheme = raw.substr(0, pos);
-  m_hier = raw.substr(pos + 1, indexOfLastChar - pos);
 }
 
 //------------------------------------------------------------------------------
@@ -79,11 +78,4 @@ const std::string &cta::RemotePath::getRaw() const throw() {
 //------------------------------------------------------------------------------
 const std::string &cta::RemotePath::getScheme() const throw() {
   return m_scheme;
-}
-
-//------------------------------------------------------------------------------
-// getHier
-//------------------------------------------------------------------------------
-const std::string &cta::RemotePath::getHier() const throw() {
-  return m_hier;
 }

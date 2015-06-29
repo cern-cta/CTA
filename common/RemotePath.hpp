@@ -56,16 +56,6 @@ public:
    */
   const std::string &getScheme() const throw();
 
-  /**
-   * Returns the hierarchical path part of the remote path. For some examples:
-   *
-   * scheme:file1 would return file1
-   * scheme://abc.com:1234/file2 would return //abc.com:1234/file2
-   *
-   * @return The hierarchical path part of the remote path.
-   */
-  const std::string &getHier() const throw();
-
 private:
 
   /**
@@ -77,14 +67,6 @@ private:
    * The scheme part of the remote path.
    */
   std::string m_scheme;
-
-  /**
-   * The hierarchical path part of the remote path. For some examples:
-   *
-   * scheme:file1 would return file1
-   * scheme://abc.com:1234/file2 would return //abc.com:1234/file2
-   */
-  std::string m_hier;
 
 }; // class RemotePath
 
