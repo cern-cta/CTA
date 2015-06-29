@@ -67,6 +67,13 @@ bool cta::RemotePath::operator==(const RemotePath &rhs) const {
 }
 
 //------------------------------------------------------------------------------
+// operator<
+//------------------------------------------------------------------------------
+bool cta::RemotePath::operator<(const RemotePath &rhs) const {
+  return m_raw < rhs.m_raw;
+}
+
+//------------------------------------------------------------------------------
 // getRaw
 //------------------------------------------------------------------------------
 const std::string &cta::RemotePath::getRaw() const throw() {

@@ -18,7 +18,10 @@
 
 #pragma once
 
+#include "common/RemoteFileStatus.hpp"
 #include "remotens/RemoteNS.hpp"
+
+#include <map>
 
 namespace cta {
 
@@ -66,6 +69,21 @@ public:
    */
   void rename(const RemotePath &remoteFile,
     const RemotePath &newRemoteFile);
+  
+  /**
+   * Adds a directory or file to the remote NS with the desired status
+   * 
+   * @param status The desired status of the entry to be created
+   * @param path The absolute path of the file or directory
+   */
+  void createEntry(const RemotePath &path, const RemoteFileStatus &status);
+  
+private:
+  
+  /**
+   * The fake filesystem entries (dirs and files)
+   */
+  std::map<RemotePath, RemoteFileStatus> m_entries;
 
 }; // class MockRemoteNS
 

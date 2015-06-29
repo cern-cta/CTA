@@ -16,6 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <map>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "common/exception/Exception.hpp"
 #include "common/RemotePath.hpp"
 #include "remotens/MockRemoteNS.hpp"
@@ -29,30 +35,65 @@ cta::MockRemoteNS::~MockRemoteNS() throw() {
 //------------------------------------------------------------------------------
 // statFile
 //------------------------------------------------------------------------------
-cta::RemoteFileStatus cta::MockRemoteNS::statFile(const RemotePath &path)
-  const {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+cta::RemoteFileStatus cta::MockRemoteNS::statFile(const RemotePath &path) const {
+  auto it = m_entries.find(path);
+  if(m_entries.end() == it) {
+    throw exception::Exception("MockRemoteNS: no such file or directory");
+  }
+  return m_entries.at(path);
 }
 
 //------------------------------------------------------------------------------
 // regularFileExists
 //------------------------------------------------------------------------------
-bool cta::MockRemoteNS::regularFileExists(const RemotePath &remoteFile)
-  const {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+bool cta::MockRemoteNS::regularFileExists(const RemotePath &remoteFile) const {
+  auto it = m_entries.find(remoteFile);
+  if(m_entries.end() == it) {
+    return false;
+  }
+  if(!S_ISREG(m_entries.at(remoteFile).getMode())) {
+    return false;
+  }
+  return true;
 }
 
 //------------------------------------------------------------------------------
 // dirExists
 //------------------------------------------------------------------------------
 bool cta::MockRemoteNS::dirExists(const RemotePath &remoteFile) const {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  auto it = m_entries.find(remoteFile);
+  if(m_entries.end() == it) {
+    return false;
+  }
+  if(!S_ISDIR(m_entries.at(remoteFile).getMode())) {
+    return false;
+  }
+  return true;
 }
 
 //------------------------------------------------------------------------------
 // rename
 //------------------------------------------------------------------------------
-void cta::MockRemoteNS::rename(const RemotePath &remoteFile,
-  const RemotePath &newRemoteFile) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+void cta::MockRemoteNS::rename(const RemotePath &remoteFile, const RemotePath &newRemoteFile) {
+  auto it = m_entries.find(newRemoteFile);
+  if(m_entries.end() != it) {
+    throw exception::Exception("MockRemoteNS: destination path exists, cannot overwrite it");
+  }
+  it = m_entries.find(remoteFile);
+  if(m_entries.end() == it) {
+    throw exception::Exception("MockRemoteNS: source path does not exist");
+  }
+  m_entries[newRemoteFile] = m_entries[remoteFile];
+  m_entries.erase(remoteFile);
+}
+
+//------------------------------------------------------------------------------
+// createEntry
+//------------------------------------------------------------------------------
+void cta::MockRemoteNS::createEntry(const RemotePath &path, const RemoteFileStatus &status){
+  auto it = m_entries.find(path);
+  if(m_entries.end() != it) {
+    throw exception::Exception("MockRemoteNS: path exists, cannot overwrite it");
+  }
+  m_entries[path] = status;
 }

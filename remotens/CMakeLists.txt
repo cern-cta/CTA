@@ -11,8 +11,9 @@ add_library (ctaremotens SHARED
 
 add_library (ctaremotenstest SHARED
   MockRemoteNS.cpp
-  MockRemoteNSFactory.cpp
-  RemoteNSDispatcherTest.cpp
+  MockRemoteNSFactory.cpp 
+  MockRemoteNSTest.cpp
+  RemoteNSDispatcherTest.cpp 
   RemoteNSFactory.cpp)
 
 target_link_libraries(ctaremotenstest

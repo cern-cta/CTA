@@ -45,6 +45,11 @@ public:
    * Equals operator.
    */
   bool operator==(const RemotePath &rhs) const;
+  
+  /**
+   * Less than operator
+   */
+  bool operator<(const RemotePath &rhs) const;
 
   /**
    * Returns the raw path in the form "scheme:hierarchical_part".
