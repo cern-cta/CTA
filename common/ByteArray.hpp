@@ -86,6 +86,22 @@ public:
    */
   ByteArray &operator=(const ByteArray &rhs);
 
+  /** 
+   * Returns true if the specified right-hand side is equal to this object.
+   *
+   * @param rhs The object on the right-hand side of the == operator.
+   * @return True if the specified right-hand side is equal to this object.
+   */
+  bool operator==(const ByteArray &rhs) const;
+
+  /**
+   * Returns true if the specified right-hand side is not euqal to this object.
+   *
+   * @param rhs The object on the right-hand side of the != operator.
+   * @return True if the specified right-hand side is not equal to this object.
+   */
+  bool operator!=(const ByteArray &rhs) const;
+
   /**
    * Returns the size of the array in bytes.
    *
@@ -101,7 +117,7 @@ public:
    * @return The contents of the array of bytes or NULL if the array is empty.
    */
   const uint8_t *getBytes() const throw();
-    
+
 private:
 
   /**
@@ -117,3 +133,8 @@ private:
 }; // class ByteArray
 
 } // namespace cta
+
+/**
+ * Output stream operator for the cta::ByteArray class.
+ */
+std::ostream &operator<<(std::ostream &os, const cta::ByteArray &obj);

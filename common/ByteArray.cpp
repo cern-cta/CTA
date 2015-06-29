@@ -18,6 +18,8 @@
 
 #include "common/ByteArray.hpp"
 
+#include <ostream>
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -86,6 +88,34 @@ cta::ByteArray &cta::ByteArray::operator=(const ByteArray &rhs) {
 }
 
 //------------------------------------------------------------------------------
+// operator==
+//------------------------------------------------------------------------------
+bool cta::ByteArray::operator==(const ByteArray &rhs) const {
+  if(this == &rhs) {
+    return true;
+  }
+
+  if(m_size != rhs.m_size) {
+    return false;
+  }
+
+  for(uint32_t i = 0; i < m_size; i++) {
+    if(m_bytes[i] != rhs.m_bytes[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+//------------------------------------------------------------------------------
+// operator!=
+//------------------------------------------------------------------------------
+bool cta::ByteArray::operator!=(const ByteArray &rhs) const {
+  return !operator==(rhs);
+}
+
+//------------------------------------------------------------------------------
 // getSize
 //------------------------------------------------------------------------------
 uint32_t cta::ByteArray::getSize() const throw() {
@@ -97,4 +127,21 @@ uint32_t cta::ByteArray::getSize() const throw() {
 //------------------------------------------------------------------------------
 const uint8_t *cta::ByteArray::getBytes() const throw() {
   return m_bytes;
+}
+
+//------------------------------------------------------------------------------
+// operator<<
+//------------------------------------------------------------------------------
+std::ostream &operator<<(std::ostream &os, const cta::ByteArray &obj) {
+  os << "{";
+
+  const auto size = obj.getSize();
+  const auto bytes = obj.getBytes();
+
+  for(uint32_t i = 0; i < size; i++) {
+    os << bytes[i];
+  }
+
+  os << "}";
+  return os;
 }

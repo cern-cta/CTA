@@ -146,4 +146,64 @@ TEST_F(cta_ByteArrayTest, assignment_operator) {
   ASSERT_NE(byteArray1.getBytes(), byteArray2.getBytes());
 }
 
+TEST_F(cta_ByteArrayTest, equality_operator_eq) {
+  using namespace cta;
+
+  const uint32_t arraySize1 = 4;
+  const uint8_t bytes1[4] = {10, 20, 30, 40};
+  const ByteArray byteArray1(arraySize1, bytes1);
+
+  ASSERT_EQ(arraySize1, byteArray1.getSize());
+  ASSERT_EQ((uint8_t)10, byteArray1.getBytes()[0]);
+  ASSERT_EQ((uint8_t)20, byteArray1.getBytes()[1]);
+  ASSERT_EQ((uint8_t)30, byteArray1.getBytes()[2]);
+  ASSERT_EQ((uint8_t)40, byteArray1.getBytes()[3]);
+
+
+  const uint32_t arraySize2 = 4;
+  const uint8_t bytes2[4] = {10, 20, 30, 40};
+  ByteArray byteArray2(arraySize2, bytes2);
+
+  ASSERT_EQ(arraySize2, byteArray2.getSize());
+  ASSERT_EQ((uint8_t)10, byteArray2.getBytes()[0]);
+  ASSERT_EQ((uint8_t)20, byteArray2.getBytes()[1]);
+  ASSERT_EQ((uint8_t)30, byteArray2.getBytes()[2]);
+  ASSERT_EQ((uint8_t)40, byteArray2.getBytes()[3]);
+
+  ASSERT_EQ(byteArray1, byteArray2);
+}
+
+TEST_F(cta_ByteArrayTest, equality_operator_ne) {
+  using namespace cta;
+
+  const uint32_t arraySize1 = 4;
+  const uint8_t bytes1[4] = {10,20,30,40};
+  const ByteArray byteArray1(arraySize1, bytes1);
+
+  ASSERT_EQ(arraySize1, byteArray1.getSize());
+  ASSERT_EQ((uint8_t)10, byteArray1.getBytes()[0]);
+  ASSERT_EQ((uint8_t)20, byteArray1.getBytes()[1]);
+  ASSERT_EQ((uint8_t)30, byteArray1.getBytes()[2]);
+  ASSERT_EQ((uint8_t)40, byteArray1.getBytes()[3]);
+
+
+  const uint32_t arraySize2 = 10;
+  const uint8_t bytes2[10] = {10, 9, 8, 7 ,6 , 5, 4, 3, 2, 1};
+  ByteArray byteArray2(arraySize2, bytes2);
+
+  ASSERT_EQ(arraySize2, byteArray2.getSize());
+  ASSERT_EQ((uint8_t)10, byteArray2.getBytes()[0]);
+  ASSERT_EQ( (uint8_t)9, byteArray2.getBytes()[1]);
+  ASSERT_EQ( (uint8_t)8, byteArray2.getBytes()[2]);
+  ASSERT_EQ( (uint8_t)7, byteArray2.getBytes()[3]);
+  ASSERT_EQ( (uint8_t)6, byteArray2.getBytes()[4]);
+  ASSERT_EQ( (uint8_t)5, byteArray2.getBytes()[5]);
+  ASSERT_EQ( (uint8_t)4, byteArray2.getBytes()[6]);
+  ASSERT_EQ( (uint8_t)3, byteArray2.getBytes()[7]);
+  ASSERT_EQ( (uint8_t)2, byteArray2.getBytes()[8]);
+  ASSERT_EQ( (uint8_t)1, byteArray2.getBytes()[9]);
+
+  ASSERT_NE(byteArray1, byteArray2);
+}
+
 } // namespace unitTests
