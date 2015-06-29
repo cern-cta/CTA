@@ -626,7 +626,7 @@ cta::ArchiveToFileRequest cta::Scheduler::createArchiveToFileRequest(
   return ArchiveToFileRequest(
     remoteFile,
     archiveFile,
-    fileInfo.getSize(),
+    fileInfo,
     copyNbToPoolMap,
     priority,
     log);

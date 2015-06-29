@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/RemotePath.hpp"
-#include "remotens/RemoteFileStatus.hpp"
+#include "common/RemoteFileStatus.hpp"
 
 namespace cta {
 

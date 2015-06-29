@@ -9,6 +9,7 @@ set (COMMON_LIB_SRC_FILES
   exception/Backtrace.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
+  RemoteFileStatus.cpp
   RemotePath.cpp
   SmartFd.cpp
   strerror_r_wrapper.cpp

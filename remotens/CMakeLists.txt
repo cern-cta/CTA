@@ -3,7 +3,6 @@ cmake_minimum_required (VERSION 2.6)
 set (CTA_REMOTENS_SRC_FILES
   EosNS.cpp
   MockRemoteNS.cpp
-  RemoteFileStatus.cpp
   RemoteNS.cpp
   RemoteNSDispatcher.cpp)
 
