@@ -49,13 +49,11 @@ public:
    *
    * @param remoteFile The URL of the source remote file to be archived.
    * @param archiveFile The full path of the destination archive file.
-   * @param nbCopies The number of archive copies to be created.
+   * @param remoteFileStatus The status gotten from stat-ing the remote file.
    * @param copyNbToPoolMap The mapping from archive copy number to destination
    * tape pool.
    * @param priority The priority of the request.
-   * @param requester The identity of the user who made the request.
-   * @param creationTime Optionally the absolute time at which the user request
-   * was created.  If no value is given then the current time is used.
+   * @param creationLog The creation information
    */
   ArchiveToFileRequest(
     const std::string &remoteFile,
@@ -104,7 +102,7 @@ private:
   std::map<uint16_t, std::string> m_copyNbToPoolMap;
 
   /**
-   * The size of the file.
+   * The status gotten from stat-ing the remote file.
    */
   RemoteFileStatus m_remoteFileStatus;
   
