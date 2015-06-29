@@ -17,7 +17,13 @@
 
   TO BE DONE
 
-  Upgrade Instructions from 2.1.15-8
+  Packaging changes
+  -----------------
+  - CASTOR 2.1.15-10 has been recompiled against xrootd 4.2.1.
+    During the upgrade the xrootd 4.2.1 RPMs will need to be available,
+    otherwise the upgrade will because of missing dependencies.
+
+  Upgrade Instructions from 2.1.15-9
   ----------------------------------
 
   Disk servers
