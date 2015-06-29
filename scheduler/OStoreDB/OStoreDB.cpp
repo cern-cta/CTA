@@ -486,7 +486,7 @@ std::list<ArchiveToTapeCopyRequest>
 }
 
 void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
-  throw exception::Exception("Not Implemented");
+  assertAgentSet();
   // In order to post the job, construct it first.
   objectstore::RetrieveToFileRequest rtfr(m_agent->nextId("RetrieveToFileRequest"), m_objectStore);
   rtfr.initialize();
