@@ -415,11 +415,15 @@ void OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
   ScopedSharedLock rel(re);
   re.fetch();
   auto & cl = rqst.getCopyNbToPoolMap();
+  std::list<cta::objectstore::ArchiveToFileRequest::JobDump> jl;
   for (auto copy=cl.begin(); copy != cl.end(); copy++) {
     std::string tpaddr = re.getTapePoolAddress(copy->second);
     atfr.addJob(copy->first, copy->second, tpaddr);
+    jl.push_back(cta::objectstore::ArchiveToFileRequest::JobDump());
+    jl.back().copyNb = copy->first;
+    jl.back().tapePool = copy->second;
+    jl.back().tapePoolAddress = tpaddr;
   }
-  auto jl = atfr.dumpJobs();
   if (!jl.size()) {
     throw ArchiveRequestHasNoCopies("In OStoreDB::queue: the archive to file request has no copy");
   }

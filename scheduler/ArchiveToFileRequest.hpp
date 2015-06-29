@@ -59,6 +59,7 @@ public:
   ArchiveToFileRequest(
     const std::string &remoteFile,
     const std::string &archiveFile,
+    const uint64_t size,
     const std::map<uint16_t, std::string> &copyNbToPoolMap,
     const uint64_t priority,
     const CreationLog & creationLog);
@@ -101,6 +102,11 @@ private:
    */
   std::map<uint16_t, std::string> m_copyNbToPoolMap;
 
+  /**
+   * The size of the file.
+   */
+  uint64_t m_size;
+  
 }; // class ArchiveToFileRequest
 
 } // namespace cta

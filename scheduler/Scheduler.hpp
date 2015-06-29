@@ -614,7 +614,7 @@ private:
    * The name space of the remote storage system.
    */
   RemoteNS &m_remoteNS;
-
+  
   /**
    * Queues the specified request to archive one or more remote files to an
    * archive directory.
@@ -642,7 +642,7 @@ private:
    */
   void assertStorageClassHasAtLeastOneCopy(
     const StorageClass &storageClass) const;
-
+  
   /**
    * Returns the list of ArchiveToFileRequest objects representing the specified
    * request to archive multiple files to an archive directory.

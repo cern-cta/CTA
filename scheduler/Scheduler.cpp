@@ -620,11 +620,13 @@ cta::ArchiveToFileRequest cta::Scheduler::createArchiveToFileRequest(
   assertStorageClassHasAtLeastOneCopy(storageClass);
   const auto routes = m_db.getArchivalRoutes(storageClassName);
   const auto copyNbToPoolMap = createCopyNbToPoolMap(routes);
+  const auto fileInfo = m_remoteNS.statFile(remoteFile);
 
   const CreationLog log(requester.getUser(), requester.getHost(), time(NULL), "");
   return ArchiveToFileRequest(
     remoteFile,
     archiveFile,
+    fileInfo.getSize(),
     copyNbToPoolMap,
     priority,
     log);
