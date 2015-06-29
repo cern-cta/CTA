@@ -57,10 +57,20 @@ void cta::objectstore::RetrieveToFileRequest::setArchiveFile(
   m_payload.set_archivefile(archiveFile);
 }
 
+std::string cta::objectstore::RetrieveToFileRequest::getArchiveFile() {
+  checkPayloadReadable();
+  return m_payload.archivefile();
+}
+
 void cta::objectstore::RetrieveToFileRequest::setRemoteFile(
   const std::string& remoteFile) {
   checkHeaderReadable();
   m_payload.set_remotefile(remoteFile);
+}
+
+std::string cta::objectstore::RetrieveToFileRequest::getRemoteFile() {
+  checkPayloadReadable();
+  return m_payload.remotefile();
 }
 
 void cta::objectstore::RetrieveToFileRequest::setPriority(uint64_t priority) {
