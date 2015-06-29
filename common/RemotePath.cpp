@@ -17,6 +17,9 @@
  */
 
 #include "common/RemotePath.hpp"
+#include "common/exception/Exception.hpp"
+
+#include <sstream>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -27,31 +30,60 @@ cta::RemotePath::RemotePath() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RemotePath::RemotePath(const std::string &rawPath):
-  m_rawPath(rawPath) {
-  auto pos = rawPath.find(':');
-  if(std::string::npos != pos) {
-    m_protocol = rawPath.substr(0, pos);
+cta::RemotePath::RemotePath(const std::string &raw):
+  m_raw(raw) {
+  auto const pos = raw.find(':');
+
+  if(std::string::npos == pos) {
+    std::ostringstream msg;
+    msg << "Failed to instantiate RemotePath object for URI " << raw <<
+      " because the colon is missing as in scheme:hierarchical_part";
+    throw exception::Exception(msg.str());
   }
+
+  if(0 >= pos) {
+    std::ostringstream msg;
+    msg << "Failed to instantiate RemotePath object for URI " << raw <<
+     " because the scheme before the colon is an empty string";
+    throw exception::Exception(msg.str());
+  }
+
+  const auto indexOfLastChar = raw.length() - 1;
+  if(pos == indexOfLastChar) {
+    std::ostringstream msg;
+    msg << "Failed to instantiate RemotePath object for URI " << raw <<
+     " because the hierarchical part after the colon is an empty string";
+    throw exception::Exception(msg.str());
+  }
+
+  m_scheme = raw.substr(0, pos);
+  m_hier = raw.substr(pos + 1, indexOfLastChar - pos);
 }
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::RemotePath::operator==(const RemotePath &rhs) const {
-  return m_rawPath == rhs.m_rawPath;
+  return m_raw == rhs.m_raw;
 }
 
 //------------------------------------------------------------------------------
-// getRawPath
+// getRaw
 //------------------------------------------------------------------------------
-const std::string &cta::RemotePath::getRawPath() const throw() {
-  return m_rawPath;
+const std::string &cta::RemotePath::getRaw() const throw() {
+  return m_raw;
 }
 
 //------------------------------------------------------------------------------
-// getProtocol
+// getScheme
 //------------------------------------------------------------------------------
-const std::string &cta::RemotePath::getProtocol() const throw() {
-  return m_protocol;
+const std::string &cta::RemotePath::getScheme() const throw() {
+  return m_scheme;
+}
+
+//------------------------------------------------------------------------------
+// getHier
+//------------------------------------------------------------------------------
+const std::string &cta::RemotePath::getHier() const throw() {
+  return m_hier;
 }

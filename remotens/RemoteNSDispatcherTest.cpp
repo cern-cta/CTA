@@ -25,12 +25,13 @@
 #include <gtest/gtest.h>
 #include <list>
 #include <map>
+#include <sstream>
 #include <stdint.h>
 #include <string>
 
 namespace unitTests {
 
-class cta_RemoteNsDispatcherTest : public ::testing::Test {
+class cta_RemoteNSDispatcherTest : public ::testing::Test {
 protected:
   virtual void SetUp() {
   }
@@ -44,8 +45,14 @@ protected:
     }
 
     cta::RemoteFileStatus statFile(const cta::RemotePath &path) const {
-      throw cta::exception::Exception(std::string(__FUNCTION__) +
-        " not implemented");
+      incCallCounter("statFile");
+      auto itor = std::find(m_files.begin(), m_files.end(), path);
+      if(m_files.end() == itor) {
+        std::ostringstream msg;
+        msg << "Remote file " << path.getRaw() << " does not exist";
+        throw cta::exception::Exception(msg.str());
+      }
+      return cta::RemoteFileStatus();
     }
 
     bool regularFileExists(const cta::RemotePath &path) const {
@@ -78,7 +85,7 @@ protected:
         }
       }
       std::ostringstream msg;
-      msg << "Cannot rename " << remoteFile.getRawPath() <<
+      msg << "Cannot rename " << remoteFile.getRaw() <<
         " because it does not exist";
       throw cta::exception::Exception(msg.str());
     }
@@ -103,16 +110,16 @@ private:
     void incCallCounter(const std::string &method) const {
       auto itor = m_callCounts.find(method);
       if(m_callCounts.end() == itor) {
-        m_callCounts[method] = 0;
+        m_callCounts[method] = 1;
       } else {
         itor->second++;
       }
     }
   }; // class TestRemoteNS
 
-}; // class cta_RemoteNsDispatcherTest
+}; // class cta_RemoteNSDispatcherTest
 
-TEST_F(cta_RemoteNsDispatcherTest, registerProtocolHandler) {
+TEST_F(cta_RemoteNSDispatcherTest, registerProtocolHandler) {
   using namespace cta;
 
   RemoteNSDispatcher dispatcher;
@@ -120,7 +127,7 @@ TEST_F(cta_RemoteNsDispatcherTest, registerProtocolHandler) {
   ASSERT_NO_THROW(dispatcher.registerProtocolHandler("test", std::move(ns)));
 }
 
-TEST_F(cta_RemoteNsDispatcherTest, registerProtocolHandler_twice) {
+TEST_F(cta_RemoteNSDispatcherTest, registerProtocolHandler_twice) {
   using namespace cta;
 
   RemoteNSDispatcher dispatcher;
@@ -131,37 +138,65 @@ TEST_F(cta_RemoteNsDispatcherTest, registerProtocolHandler_twice) {
     std::exception);
 }
 
-TEST_F(cta_RemoteNsDispatcherTest, regularFileExists_existing) {
+TEST_F(cta_RemoteNSDispatcherTest, regularFileExists_existing) {
   using namespace cta;
 
   RemoteNSDispatcher dispatcher;
-  const std::string regularFile = "testfile1";
-  TestRemoteNS *testNs = new TestRemoteNS();
-  std::unique_ptr<RemoteNS> ns(testNs);
-  testNs->m_files.push_back(regularFile);
+  const std::string regularFile = "test:///file1";
+  TestRemoteNS *testNS = new TestRemoteNS();
+  std::unique_ptr<RemoteNS> ns(testNS);
+  testNS->m_files.push_back(regularFile);
   ASSERT_NO_THROW(dispatcher.registerProtocolHandler("test", std::move(ns)));
 
-  ASSERT_EQ(0, testNs->getCallCounter("regularFileExists"));
+  ASSERT_EQ(0, testNS->getCallCounter("regularFileExists"));
   bool regularFileExists = false;
   ASSERT_NO_THROW(regularFileExists = dispatcher.regularFileExists(regularFile));
   ASSERT_TRUE(regularFileExists);
-  ASSERT_EQ(1, testNs->getCallCounter("regularFileExists"));
+  ASSERT_EQ(1, testNS->getCallCounter("regularFileExists"));
 }
 
-TEST_F(cta_RemoteNsDispatcherTest, regularFileExists_non_existing) {
+TEST_F(cta_RemoteNSDispatcherTest, regularFileExists_non_existing) {
   using namespace cta;
 
   RemoteNSDispatcher dispatcher;
-  const std::string regularFile = "testfile1";
-  TestRemoteNS *testNs = new TestRemoteNS();
-  std::unique_ptr<RemoteNS> ns(testNs);
+  const std::string regularFile = "test:///testfile1";
+  TestRemoteNS *testNS = new TestRemoteNS();
+  std::unique_ptr<RemoteNS> ns(testNS);
   ASSERT_NO_THROW(dispatcher.registerProtocolHandler("test", std::move(ns)));
 
-  ASSERT_EQ(0, testNs->getCallCounter("regularFileExists"));
+  ASSERT_EQ(0, testNS->getCallCounter("regularFileExists"));
   bool regularFileExists = false;
   ASSERT_NO_THROW(regularFileExists = dispatcher.regularFileExists(regularFile));
   ASSERT_FALSE(regularFileExists);
-  ASSERT_EQ(1, testNs->getCallCounter("regularFileExists"));
+  ASSERT_EQ(1, testNS->getCallCounter("regularFileExists"));
+}
+
+TEST_F(cta_RemoteNSDispatcherTest, statFile_existing) {
+  using namespace cta;
+
+  RemoteNSDispatcher dispatcher;
+  const std::string regularFile = "test:///testfile1";
+  TestRemoteNS *testNS = new TestRemoteNS();
+  std::unique_ptr<RemoteNS> ns(testNS);
+  testNS->m_files.push_back(regularFile);
+  ASSERT_NO_THROW(dispatcher.registerProtocolHandler("test", std::move(ns)));
+
+  ASSERT_EQ(0, testNS->getCallCounter("statFile"));
+  ASSERT_NO_THROW(dispatcher.statFile(regularFile));
+  ASSERT_EQ(1, testNS->getCallCounter("statFile"));
+}
+
+TEST_F(cta_RemoteNSDispatcherTest, statFile_non_existing) {
+  using namespace cta;
+
+  RemoteNSDispatcher dispatcher;
+  const std::string regularFile = "test:///testfile1";
+  TestRemoteNS *testNS = new TestRemoteNS();
+  std::unique_ptr<RemoteNS> ns(testNS);
+  ASSERT_NO_THROW(dispatcher.registerProtocolHandler("test", std::move(ns)));
+
+  ASSERT_EQ(0, testNS->getCallCounter("statFile"));
+  ASSERT_THROW(dispatcher.statFile(regularFile), std::exception);
 }
 
 } // namespace unitTests

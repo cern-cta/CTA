@@ -30,7 +30,7 @@ cta::RemoteNSDispatcher::~RemoteNSDispatcher() throw() {
 }
 
 //------------------------------------------------------------------------------
-// registerProtocolHandler
+// registerProtcolHandler
 //------------------------------------------------------------------------------
 void cta::RemoteNSDispatcher::registerProtocolHandler(
   const std::string &protocol, std::unique_ptr<RemoteNS> handler) {
@@ -57,14 +57,14 @@ void cta::RemoteNSDispatcher::registerProtocolHandler(
 //------------------------------------------------------------------------------
 cta::RemoteFileStatus cta::RemoteNSDispatcher::statFile(const RemotePath &path) 
   const {
-  return getHandler(path.getProtocol()).statFile(path);
+  return getHandler(path.getScheme()).statFile(path);
 }
 
 //------------------------------------------------------------------------------
 // regularFileExists
 //------------------------------------------------------------------------------
 bool cta::RemoteNSDispatcher::regularFileExists(const RemotePath &path) const {
-  return getHandler(path.getProtocol()).regularFileExists(path);
+  return getHandler(path.getScheme()).regularFileExists(path);
 }
 
 //------------------------------------------------------------------------------
@@ -115,7 +115,7 @@ cta::RemoteNS &cta::RemoteNSDispatcher::getHandler(
 // dirExists
 //------------------------------------------------------------------------------
 bool cta::RemoteNSDispatcher::dirExists(const RemotePath &path) const {
-  return getHandler(path.getProtocol()).dirExists(path);
+  return getHandler(path.getScheme()).dirExists(path);
 }
 
 //------------------------------------------------------------------------------
@@ -123,5 +123,5 @@ bool cta::RemoteNSDispatcher::dirExists(const RemotePath &path) const {
 //------------------------------------------------------------------------------
 void cta::RemoteNSDispatcher::rename(const RemotePath &remoteFile,
   const RemotePath &newRemoteFile) {
-  getHandler(remoteFile.getProtocol()).rename(remoteFile, newRemoteFile);
+  getHandler(remoteFile.getScheme()).rename(remoteFile, newRemoteFile);
 }

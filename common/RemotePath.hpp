@@ -24,7 +24,7 @@ namespace cta {
 
 /**
  * The path of a file in a remote storage system of the form
- * "protocol:path".
+ * "scheme://path".
  */
 class RemotePath {
 public:
@@ -37,9 +37,9 @@ public:
   /**
    * Constructor.
    *
-   * @param rawPath The raw path in the form "protocol:path".
+   * @param raw The raw path in the form "scheme:hierarchical_part".
    */
-  RemotePath(const std::string &rawPath);
+  RemotePath(const std::string &raw);
 
   /**
    * Equals operator.
@@ -47,26 +47,44 @@ public:
   bool operator==(const RemotePath &rhs) const;
 
   /**
-   * Returns the protocol part of the remote path.
+   * Returns the raw path in the form "scheme:hierarchical_part".
    */
-  const std::string &getProtocol() const throw();
+  const std::string &getRaw() const throw();
 
   /**
-   * Returns the raw path in the form "protocol:path".
+   * Returns the scheme part of the remote path.
    */
-  const std::string &getRawPath() const throw();
+  const std::string &getScheme() const throw();
+
+  /**
+   * Returns the hierarchical path part of the remote path. For some examples:
+   *
+   * scheme:file1 would return file1
+   * scheme://abc.com:1234/file2 would return //abc.com:1234/file2
+   *
+   * @return The hierarchical path part of the remote path.
+   */
+  const std::string &getHier() const throw();
 
 private:
 
   /**
-   * The raw path in the form "protocol:path".
+   * The raw path in the form "scheme:hierarchical_part".
    */
-  std::string m_rawPath;
+  std::string m_raw;
 
   /**
-   * The protocol part of the remote path.
+   * The scheme part of the remote path.
    */
-  std::string m_protocol;
+  std::string m_scheme;
+
+  /**
+   * The hierarchical path part of the remote path. For some examples:
+   *
+   * scheme:file1 would return file1
+   * scheme://abc.com:1234/file2 would return //abc.com:1234/file2
+   */
+  std::string m_hier;
 
 }; // class RemotePath
 

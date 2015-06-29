@@ -38,9 +38,11 @@ protected:
 TEST_F(cta_RemotePathTest, raw_path_constructor) {
   using namespace cta;
 
-  RemotePath remotePath("xroot:the_file");
+  RemotePath remotePath("xroot://abc.com:1234:the_file");
 
-  ASSERT_EQ(std::string("xroot"), remotePath.getProtocol());
+  ASSERT_EQ(std::string("xroot://abc.com:1234:the_file"), remotePath.getRaw());
+  ASSERT_EQ(std::string("xroot"), remotePath.getScheme());
+  ASSERT_EQ(std::string("//abc.com:1234:the_file"), remotePath.getHier());
 }
 
 } // namespace unitTests
