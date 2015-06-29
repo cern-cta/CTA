@@ -72,16 +72,25 @@ void GenericObject::garbageCollect(ScopedExclusiveLock& lock) {
       AgentRegister ar(*this);
       lock.transfer(ar);
       ar.garbageCollect();
+      // Release the lock now as if we let the caller do, it will point
+      // to the then-removed ar.
+      lock.release();
     } break;
     case serializers::TapePool_t: {
       TapePool tp(*this);
       lock.transfer(tp);
       tp.garbageCollect();
+      // Release the lock now as if we let the caller do, it will point
+      // to the then-removed tp.
+      lock.release();
     } break;
     case serializers::DriveRegister_t: {
       DriveRegister dr(*this);
       lock.transfer(dr);
       dr.garbageCollect();
+      // Release the lock now as if we let the caller do, it will point
+      // to the then-removed dr.
+      lock.release();
     } break;
     default: {
       std::stringstream err;
