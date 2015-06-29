@@ -41,7 +41,8 @@ public:
   void setRemoteFile (const std::string & remoteFile);
   std::string getRemoteFile();
   void setPriority (uint64_t priority);
-  void setLog (const objectstore::CreationLog& creationLog);
+  void setCreationLog (const objectstore::CreationLog& creationLog);
+  CreationLog getCreationLog();
   void setRetrieveToDirRequestAddress(const std::string & dirRequestAddress);
   void setSize(uint64_t size);
   uint64_t getSize();

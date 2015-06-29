@@ -493,7 +493,7 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
   rtfr.setArchiveFile(rqst.getArchiveFile());
   rtfr.setRemoteFile(rqst.getRemoteFile());
   rtfr.setPriority(rqst.getPriority());
-  rtfr.setLog(rqst.getCreationLog());
+  rtfr.setCreationLog(rqst.getCreationLog());
   // We will need to identity tapes is order to construct the request
   RootEntry re(m_objectStore);
   ScopedSharedLock rel(re);

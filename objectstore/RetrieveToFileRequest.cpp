@@ -68,10 +68,17 @@ void cta::objectstore::RetrieveToFileRequest::setPriority(uint64_t priority) {
   m_payload.set_priority(priority);
 }
 
-void cta::objectstore::RetrieveToFileRequest::setLog(
+void cta::objectstore::RetrieveToFileRequest::setCreationLog(
   const objectstore::CreationLog& creationLog) {
   checkPayloadReadable();
   creationLog.serialize(*m_payload.mutable_log());
+}
+
+auto cta::objectstore::RetrieveToFileRequest::getCreationLog() -> CreationLog {
+  checkPayloadReadable();
+  CreationLog ret;
+  ret.deserialize(m_payload.log());
+  return ret;
 }
 
 void cta::objectstore::RetrieveToFileRequest::setRetrieveToDirRequestAddress(
