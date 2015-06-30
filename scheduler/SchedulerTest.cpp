@@ -2367,6 +2367,18 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") == archiveFiles.end());
   }
 
+  // The file has not yet been archived, there is no 'm' bit in the archive
+  // namespace and therefore an attempted retrive request should fail at this point
+  {
+    std::list<std::string> archiveFiles;
+    archiveFiles.push_back("/grandparent/parent_file");
+    ASSERT_THROW(scheduler.queueRetrieveRequest(s_userOnUserHost, archiveFiles,
+      "remoteFile"), std::exception);
+  }
+
+  // Emulate a tape server by ask for a mount and then a file
+
+
   {
     std::list<std::string> archiveFiles;
     archiveFiles.push_back("/grandparent/parent_file");

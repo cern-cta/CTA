@@ -42,6 +42,20 @@
 #include <sstream>
 
 //------------------------------------------------------------------------------
+// TransferFailureToStr
+//------------------------------------------------------------------------------
+const char *cta::Scheduler::TransferFailureToStr(
+  const TransferFailure enumValue) throw() {
+  switch(enumValue) {
+  case TRANSFERFAILURE_NONE         : return "NONE";
+  case TRANSFERFAILURE_TAPEDRIVE    : return "TAPE DRIVE";
+  case TRANSFERFAILURE_TAPELIBRARY  : return "TAPE LIBRARY";
+  case TRANSFERFAILURE_REMOTESTORAGE: return "REMOTE STORAGE";
+  default                           : return "UNKNOWN";
+  }
+}
+
+//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::Scheduler::Scheduler(NameServer &ns,
@@ -686,4 +700,59 @@ void cta::Scheduler::queueRetrieveRequest(
     queueArchiveToFileRequest(requester, remoteFiles.front(), archiveFile);
   }
 */
+}
+
+//------------------------------------------------------------------------------
+// getNextMount
+//------------------------------------------------------------------------------
+cta::TapeMount *cta::Scheduler::getNextMount(const std::string &driveName) {
+  return NULL;
+}
+
+//------------------------------------------------------------------------------
+// finishedMount
+//------------------------------------------------------------------------------
+void cta::Scheduler::finishedMount(const std::string &mountId) {
+}
+
+//------------------------------------------------------------------------------
+// getNextArchival
+//------------------------------------------------------------------------------
+cta::ArchivalFileTransfer *cta::Scheduler::getNextArchival(
+  const std::string &mountId) {
+  return NULL;
+}
+
+//------------------------------------------------------------------------------
+// archivalSuccessful
+//------------------------------------------------------------------------------
+void cta::Scheduler::archivalSuccessful(const std::string &transferId) {
+}
+
+//------------------------------------------------------------------------------
+// archivalFailed
+//------------------------------------------------------------------------------
+void cta::Scheduler::archivalFailed(const std::string &transferId,
+  const TransferFailure failureType, const std::string &errorMessage) {
+}
+
+//------------------------------------------------------------------------------
+// getNextRetrieval
+//------------------------------------------------------------------------------
+cta::RetrievalFileTransfer *cta::Scheduler::getNextRetrieval(
+  const std::string &mountId) {
+  return NULL;
+}
+
+//------------------------------------------------------------------------------
+// retrievalSucceeded
+//------------------------------------------------------------------------------
+void cta::Scheduler::retrievalSucceeded(const std::string &transferId) {
+}
+
+//------------------------------------------------------------------------------
+// retrievalFailed
+//------------------------------------------------------------------------------
+void cta::Scheduler::retrievalFailed(const std::string &transferId,
+  const TransferFailure failureType, const std::string &errorMessage) {
 }

@@ -28,6 +28,7 @@ namespace cta {
 // Forward declarations for opaque references.
 class AdminHost;
 class AdminUser;
+class ArchivalFileTransfer;
 class ArchiveFileStatus;
 class ArchivalRoute;
 class ArchiveToDirRequest;
@@ -35,8 +36,10 @@ class ArchiveToFileRequest;
 class ArchiveToTapeCopyRequest;
 class ArchiveDirIterator;
 class LogicalLibrary;
+class MountRequest;
 class NameServer;
 class RemoteNS;
+class RetrievalFileTransfer;
 class RetrieveFromTapeCopyRequest;
 class RetrieveToDirRequest;
 class RetrieveToFileRequest;
@@ -44,6 +47,7 @@ class SchedulerDatabase;
 class SecurityIdentity;
 class StorageClass;
 class Tape;
+class TapeMount;
 class TapePool;
 class UserIdentity;
 
@@ -52,6 +56,26 @@ class UserIdentity;
  */
 class Scheduler {
 public:
+
+  /**
+   * An enumeration of the different types of file transfer failures.
+   */
+  enum TransferFailure {
+    TRANSFERFAILURE_NONE,
+    TRANSFERFAILURE_TAPEDRIVE,
+    TRANSFERFAILURE_TAPELIBRARY,
+    TRANSFERFAILURE_REMOTESTORAGE
+  };
+
+  /**
+   * Thread safe method that returns the string representation of the specified
+   * enumeration value.
+   *
+   * @param enumValue The integer value of the type.
+   * @return The string representation.
+   */
+  static const char *TransferFailureToStr(const TransferFailure enumValue)
+    throw();
 
   /**
    * Constructor.
@@ -708,6 +732,79 @@ private:
    */
   std::map<uint16_t, std::string> createCopyNbToPoolMap(
     const std::list<ArchivalRoute> &routes) const;
+
+  /**
+   * Returns the next tape mount for the specified tape drive or NULL if there
+   * is currently no work to be done.
+   *
+   * @param driveName The name of the tape drive.
+   * @return The next tape mount for the specified tape drive or NULL if there
+   * is currently no work to be done.
+   */
+  TapeMount *getNextMount(const std::string &driveName);
+
+  /**
+   * Notifies the scheduler that the specified tape mount is over.
+   *
+   * @param mountId The identifier of the tape mount.
+   */
+  void finishedMount(const std::string &mountId);
+
+  /**
+   * Returns the next file transfer to be carried out for the specified tape
+   * mount or NULL if there is no more work to be done.
+   *
+   * @param mountId The identifier of the tape mount.
+   * @return The next file transfer to be carried out for the specified tape
+   * mount or NULL if there is no more work to be done.
+   */
+  ArchivalFileTransfer *getNextArchival(const std::string &mountId);
+
+  /**
+   * Notifies the scheduler that the specified file transfer has been completed
+   * successfully.
+   *
+   * @param transferId The identifier of the file transfer.
+   */
+  void archivalSuccessful(const std::string &transferId);
+
+  /**
+   * Notifies the scheduler that the specified file transfer has failed.
+   *
+   * @param transferId The identifier of the file transfer.
+   * @param failureType The type of failure.
+   * @param errorMessage Human readable description of the failure.
+   */
+  void archivalFailed(const std::string &transferId,
+    const TransferFailure failureType, const std::string &errorMessage);
+
+  /**
+   * Returns the next file transfer to be carried out for the specified tape
+   * mount or NULL if there is no more work to be done.
+   *
+   * @param mountId The identifier of the tape mount.
+   * @return The next file transfer to be carried out for the specified tape
+   * mount or NULL if there is no more work to be done.
+   */
+  RetrievalFileTransfer *getNextRetrieval(const std::string &mountId);
+
+  /**
+   * Notifies the scheduler that the specified file transfer has been completed
+   * successfully.
+   *
+   * @param transferId The identifier of the file transfer.
+   */
+  void retrievalSucceeded(const std::string &transferId);
+
+  /**
+   * Notifies the scheduler that the specified file transfer has failed.
+   *
+   * @param transferId The identifier of the file transfer.
+   * @param failureType The type of failure.
+   * @param errorMessage Human readable description of the failure.
+   */
+  void retrievalFailed(const std::string &transferId,
+    const TransferFailure failureType, const std::string &errorMessage);
 
 }; // class Scheduler
 

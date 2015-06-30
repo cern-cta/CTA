@@ -42,6 +42,7 @@ set (CTA_SCHEDULER_SRC_FILES
   TapeCopyLocation.cpp
   TapeException.cpp
   TapePool.cpp
+  TapeSession.cpp
   UserGroup.cpp
   UserRequest.cpp
   VO.cpp)
