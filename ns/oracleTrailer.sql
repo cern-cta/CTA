@@ -397,7 +397,7 @@ BEGIN
   varParams := 'copyNb='|| inSegEntry.copyNo ||' SegmentSize='|| inSegEntry.segSize
     ||' Compression='|| CASE inSegEntry.comprSize WHEN 0 THEN 'inf' ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END
     ||' TPVID='|| inSegEntry.vid ||' fseq='|| inSegEntry.fseq ||' BlockId="' || varBlockId
-    ||'" gid=' || varFGid ||' ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum
+    ||'" gid=' || varFGid ||' ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || inSegEntry.checksum
     ||' creationTime=' || trunc(varSegCreationTime, 6);
   addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
   COMMIT;
@@ -601,7 +601,7 @@ BEGIN
     ||' Compression='|| CASE inSegEntry.comprSize WHEN 0 THEN 'inf' ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END
     ||' TPVID='|| inSegEntry.vid
     ||' fseq='|| inSegEntry.fseq ||' blockId="' || varBlockId ||'" gid=' || varFGid
-    ||' ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum
+    ||' ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || inSegEntry.checksum
     ||' creationTime=' || trunc(varSegCreationTime, 6) ||' Repack=True';
   addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
   COMMIT;
