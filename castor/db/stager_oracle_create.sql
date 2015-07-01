@@ -440,6 +440,7 @@ AS
   GCTYPE_OVERWRITTEN          CONSTANT PLS_INTEGER :=  5;
   GCTYPE_ADMIN                CONSTANT PLS_INTEGER :=  6;
   GCTYPE_FAILEDD2D            CONSTANT PLS_INTEGER :=  7;
+  GCTYPE_FAILEDRECALL         CONSTANT PLS_INTEGER :=  8;
   
   DELDC_LOST                  CONSTANT PLS_INTEGER :=  4;
   DELDC_NOOP                  CONSTANT PLS_INTEGER :=  6;
@@ -517,6 +518,7 @@ AS
   RECALL_FILE_OVERWRITTEN      CONSTANT VARCHAR2(2048) := 'setFileRecalled: file was overwritten during recall, restarting from scratch or skipping repack';
   RECALL_FILE_DROPPED          CONSTANT VARCHAR2(2048) := 'checkRecallInNS: file was dropped from namespace during recall, giving up';
   RECALL_BAD_CHECKSUM          CONSTANT VARCHAR2(2048) := 'checkRecallInNS: bad checksum detected, will retry if allowed';
+  RECALL_SEG_INCONSISTENT      CONSTANT VARCHAR2(2048) := 'checkRecallInNS: inconsistency detected at segment level, will retry if allowed';
   RECALL_CREATED_CHECKSUM      CONSTANT VARCHAR2(2048) := 'checkRecallInNS: created missing checksum in the namespace';
   RECALL_FAILED                CONSTANT VARCHAR2(2048) := 'setBulkFileRecallResult: recall process failed, will retry if allowed';
   RECALL_PERMANENTLY_FAILED    CONSTANT VARCHAR2(2048) := 'setFileRecalled: recall process failed permanently';
@@ -1578,6 +1580,7 @@ BEGIN
   setObjStatusName('DiskCopy', 'gcType', dconst.GCTYPE_OVERWRITTEN, 'GCTYPE_OVERWRITTEN');
   setObjStatusName('DiskCopy', 'gcType', dconst.GCTYPE_ADMIN, 'GCTYPE_ADMIN');
   setObjStatusName('DiskCopy', 'gcType', dconst.GCTYPE_FAILEDD2D, 'GCTYPE_FAILEDD2D');
+  setObjStatusName('DiskCopy', 'gcType', dconst.GCTYPE_FAILEDRECALL, 'GCTYPE_FAILEDRECALL');
   setObjStatusName('DiskCopy', 'status', dconst.DISKCOPY_VALID, 'DISKCOPY_VALID');
   setObjStatusName('DiskCopy', 'status', dconst.DISKCOPY_FAILED, 'DISKCOPY_FAILED');
   setObjStatusName('DiskCopy', 'status', dconst.DISKCOPY_WAITFS, 'DISKCOPY_WAITFS');
@@ -1592,7 +1595,7 @@ ALTER TABLE DiskCopy
   CHECK (status IN (0, 4, 5, 6, 7, 9, 11));
 ALTER TABLE DiskCopy
   ADD CONSTRAINT CK_DiskCopy_GcType
-  CHECK (gcType IN (0, 1, 2, 3, 4, 5, 6, 7));
+  CHECK (gcType IN (0, 1, 2, 3, 4, 5, 6, 7, 8));
 
 CREATE INDEX I_StagePTGRequest_ReqId ON StagePrepareToGetRequest (reqId);
 CREATE INDEX I_StagePTPRequest_ReqId ON StagePrepareToPutRequest (reqId);
@@ -8218,6 +8221,9 @@ BEGIN
   END;
   -- on success, check the filesize and the checksum
   IF varErrorMessage IS NULL THEN
+    DECLARE
+      BadChecksum EXCEPTION;
+      PRAGMA EXCEPTION_INIT (BadChecksum, -6502);
     BEGIN
       SELECT csumValue INTO varFCksum
         FROM Cns_file_metadata@remoteNS
@@ -8227,7 +8233,7 @@ BEGIN
         varNewDcStatus := dconst.DISKCOPY_INVALID;
         varErrorMessage := 'File size/checksum mismatch during replication, the source file is probably corrupted';
       END IF;
-    EXCEPTION WHEN INVALID_NUMBER THEN
+    EXCEPTION WHEN BadChecksum THEN
       -- the checksum is not a number?!
       varNewDcStatus := dconst.DISKCOPY_INVALID;
       varErrorMessage := 'Invalid checksum value "' || inCksumValue || '", giving up';
@@ -8242,8 +8248,8 @@ BEGIN
   IF varLogMsg = dlf.D2D_D2DDONE_OK AND varErrorMessage IS NOT NULL THEN
     varLogMsg := dlf.D2D_D2DFAILED;
   END IF;
-  varComment := 'transferId="' || inTransferId ||
-         '" destSvcClass=' || getSvcClassName(varDestSvcClass) ||
+  varComment := 'SUBREQID=' || inTransferId ||
+         ' destSvcClass=' || getSvcClassName(varDestSvcClass) ||
          ' destDcId=' || TO_CHAR(varDestDcId) || ' destPath="' || inDestPath ||
          '" euid=' || TO_CHAR(varUid) || ' egid=' || TO_CHAR(varGid) ||
          ' fileSize=' || TO_CHAR(varFileSize) || ' checksum=' || inCksumValue;
@@ -8295,8 +8301,12 @@ BEGIN
         varPath VARCHAR2(2048);
       BEGIN
         SELECT path, status INTO varPath, varStatus FROM DiskCopy WHERE id = varDestDcId;
-        IF varPath != varDestPath OR varStatus != varNewDcStatus THEN
+        IF varPath != varDestPath OR
+           varStatus NOT IN (dconst.DISKCOPY_FAILED, dconst.DISKCOPY_INVALID, dconst.DISKCOPY_BEINGDELETED) THEN
           -- not the expected case, reraise the exception
+          logToDLF(NULL, dlf.LVL_SYSTEM, 'Constraint violation debugging', varFileId, varNsHost,
+                   'transfermanagerd', varComment || ' varPath=' || varPath || ' varDestPath=' ||
+                   varDestPath || ' varStatus=' || varStatus || ' varNewDcStatus=' || varNewDcStatus);
           RAISE;
         END IF;
         -- Expected case, we are happy, exit the loop
@@ -10293,6 +10303,9 @@ CREATE OR REPLACE FUNCTION checkRecallInNS(inCfId IN INTEGER,
   varNSSize INTEGER;
   varNSCsumtype VARCHAR2(2048);
   varNSCsumvalue VARCHAR2(2048);
+  varNSSegSize INTEGER;
+  varNSSegCsumtype VARCHAR2(2048);
+  varNSSegCsumvalue NUMBER;
 BEGIN
   -- retrieve data from the namespace: note the truncation of stagerTime to 5 digits.
   -- This is needed for consistency with the stager code that uses the OCCI API and thus
@@ -10317,29 +10330,49 @@ BEGIN
     RETURN FALSE;
   END IF;
 
-  -- is the checksum set in the namespace ?
-  IF varNSCsumtype IS NULL THEN
-    -- no -> let's set it (note that the function called commits in the remote DB)
-    setSegChecksumWhenNull@remoteNS(inFileId, inCopyNb, inCksumName, inCksumValue);
-    -- log 'checkRecallInNS : created missing checksum in the namespace'
-    logToDLF(inReqId, dlf.LVL_SYSTEM, dlf.RECALL_CREATED_CHECKSUM, inFileId, inNsHost, 'nsd',
-             'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' copyNb=' || TO_CHAR(inCopyNb) ||
-             ' TPVID=' || inVID || ' fseq=' || TO_CHAR(inFseq) || ' checksumType='  || inCksumName ||
-             ' checksumValue=' || TO_CHAR(inCksumValue));
-  ELSE
-    -- is the checksum matching ?
-    -- note that this is probably useless as it was already checked at transfer time
-    IF inCksumName = varNSCsumtype AND TO_CHAR(inCksumValue, 'XXXXXXXX') != varNSCsumvalue THEN
+  -- is the checksum set in the namespace at the file level ?
+  IF varNSCsumtype IS NOT NULL THEN
+    -- is the checksum matching at the file level ?
+    IF inCksumName = 'adler32' AND varNSCsumtype = 'AD' AND
+       TRIM(TO_CHAR(inCksumValue, 'xxxxxxxx')) != TRIM(varNSCsumvalue) THEN
       -- not matching ! log "checkRecallInNS : bad checksum detected, will retry if allowed"
       logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_BAD_CHECKSUM, inFileId, inNsHost, 'tapegatewayd',
                'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
                ' fseq=' || TO_CHAR(inFseq) || ' copyNb=' || TO_CHAR(inCopyNb) || ' checksumType=' || inCksumName ||
-               ' expectedChecksumValue=' || varNSCsumvalue ||
-               ' checksumValue=' || TO_CHAR(inCksumValue, 'XXXXXXXX') ||' '|| inLogContext);
+               ' expectedChecksumValue=' || TRIM(varNSCsumvalue) ||
+               ' checksumValue=' || TRIM(TO_CHAR(inCksumValue, 'xxxxxxxx')) ||' '|| inLogContext);
       retryOrFailRecall(inCfId, inVID, inReqId, inLogContext);
+      UPDATE DiskCopy
+         SET status = dconst.DISKCOPY_INVALID, gctype = dconst.GCTYPE_FAILEDRECALL
+       WHERE castorFile = inCfId
+         AND status = dconst.DISKCOPY_VALID;
       RETURN FALSE;
     END IF;
   END IF;
+
+  -- retrieve segment checksum from the namespace and check consistency
+  SELECT checksum_name, checksum, segsize
+    INTO varNSSegCsumtype, varNSSegCsumvalue, varNSSegSize
+    FROM Cns_Seg_Metadata@RemoteNS
+   WHERE s_fileid = inFileId AND copyno = inCopyNb;
+  -- is the checksum and size matching at the segment level ?
+  IF inCksumName != 'adler32' OR varNSSegCsumtype != 'adler32' OR
+     inCksumValue != varNSSegCsumvalue OR varNSSegSize != varNSSize THEN
+    -- not consistent ! log "checkRecallInNS : inconsistency detected at segment level, will retry if allowed"
+    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_SEG_INCONSISTENT, inFileId, inNsHost, 'tapegatewayd',
+             'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
+             ' fseq=' || TO_CHAR(inFseq) || ' copyNb=' || TO_CHAR(inCopyNb) || ' checksumType=' || inCksumName ||
+             ' expectedChecksumValue=' || varNSSegCsumvalue ||
+             ' checksumValue=' || TRIM(TO_CHAR(inCksumValue, 'xxxxxxxx')) ||
+             ' fileSize=' || varNSSize || ' segSize=' || varNSSegSize ||' '|| inLogContext);
+    retryOrFailRecall(inCfId, inVID, inReqId, inLogContext);
+    UPDATE DiskCopy
+       SET status = dconst.DISKCOPY_INVALID, gctype = dconst.GCTYPE_FAILEDRECALL
+     WHERE castorFile = inCfId
+       AND status = dconst.DISKCOPY_VALID;
+    RETURN FALSE;
+  END IF;
+
   RETURN TRUE;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- file got dropped from the namespace, recall should be cancelled

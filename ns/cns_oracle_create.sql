@@ -585,7 +585,7 @@ BEGIN
   varParams := 'copyNb='|| inSegEntry.copyNo ||' SegmentSize='|| inSegEntry.segSize
     ||' Compression='|| CASE inSegEntry.comprSize WHEN 0 THEN 'inf' ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END
     ||' TPVID='|| inSegEntry.vid ||' fseq='|| inSegEntry.fseq ||' BlockId="' || varBlockId
-    ||'" gid=' || varFGid ||' ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum
+    ||'" gid=' || varFGid ||' ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || inSegEntry.checksum
     ||' creationTime=' || trunc(varSegCreationTime, 6);
   addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
   COMMIT;
@@ -789,7 +789,7 @@ BEGIN
     ||' Compression='|| CASE inSegEntry.comprSize WHEN 0 THEN 'inf' ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END
     ||' TPVID='|| inSegEntry.vid
     ||' fseq='|| inSegEntry.fseq ||' blockId="' || varBlockId ||'" gid=' || varFGid
-    ||' ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum
+    ||' ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || inSegEntry.checksum
     ||' creationTime=' || trunc(varSegCreationTime, 6) ||' Repack=True';
   addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
   COMMIT;
@@ -870,25 +870,9 @@ EXCEPTION WHEN OTHERS THEN
         ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'" fileId=' || varSeg.fileId
         || ' copyNo=' || varSeg.copyNo || ' VID=' || varSeg.vid
         || ' fSeq=' || varSeg.fseq;
-  addSegResult(1, inReqId, SQLCODE, 'Uncaught exception', 0, varParams);
+  addSegResult(0, inReqId, SQLCODE, 'Uncaught Oracle exception', varSeg.fileId, varParams);
   DELETE FROM SetSegsForFilesInputHelper
    WHERE reqId = inReqId;
-  COMMIT;
-END;
-/
-
-/* This function sets the checksum of a segment if there is none and commits.
- * It otherwise exits silently.
- */
-CREATE OR REPLACE PROCEDURE setSegChecksumWhenNull(fid IN INTEGER,
-                                                   copyNb IN INTEGER,
-                                                   cksumType IN VARCHAR2,
-                                                   cksumValue IN INTEGER) AS
-BEGIN
-  UPDATE Cns_seg_metadata
-     SET checksum_name = cksumType, checksum = cksumValue
-   WHERE s_fileid = fid AND copyno = copyNb AND fsec = 1
-     AND checksum_name IS NULL AND checksum IS NULL;
   COMMIT;
 END;
 /
