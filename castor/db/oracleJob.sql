@@ -556,8 +556,8 @@ BEGIN
   IF varLogMsg = dlf.D2D_D2DDONE_OK AND varErrorMessage IS NOT NULL THEN
     varLogMsg := dlf.D2D_D2DFAILED;
   END IF;
-  varComment := 'transferId="' || inTransferId ||
-         '" destSvcClass=' || getSvcClassName(varDestSvcClass) ||
+  varComment := 'SUBREQID=' || inTransferId ||
+         ' destSvcClass=' || getSvcClassName(varDestSvcClass) ||
          ' destDcId=' || TO_CHAR(varDestDcId) || ' destPath="' || inDestPath ||
          '" euid=' || TO_CHAR(varUid) || ' egid=' || TO_CHAR(varGid) ||
          ' fileSize=' || TO_CHAR(varFileSize) || ' checksum=' || inCksumValue;
