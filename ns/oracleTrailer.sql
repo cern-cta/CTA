@@ -689,22 +689,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 /
 
-/* This function sets the checksum of a segment if there is none and commits.
- * It otherwise exits silently.
- */
-CREATE OR REPLACE PROCEDURE setSegChecksumWhenNull(fid IN INTEGER,
-                                                   copyNb IN INTEGER,
-                                                   cksumType IN VARCHAR2,
-                                                   cksumValue IN INTEGER) AS
-BEGIN
-  UPDATE Cns_seg_metadata
-     SET checksum_name = cksumType, checksum = cksumValue
-   WHERE s_fileid = fid AND copyno = copyNb AND fsec = 1
-     AND checksum_name IS NULL AND checksum IS NULL;
-  COMMIT;
-END;
-/
-
 /* This procedure implements the Cns_closex API.
  * inCksumType can be either 'AD' or 'NO' for no checksum.
  */

@@ -939,6 +939,7 @@ BEGIN
   setObjStatusName('DiskCopy', 'gcType', dconst.GCTYPE_OVERWRITTEN, 'GCTYPE_OVERWRITTEN');
   setObjStatusName('DiskCopy', 'gcType', dconst.GCTYPE_ADMIN, 'GCTYPE_ADMIN');
   setObjStatusName('DiskCopy', 'gcType', dconst.GCTYPE_FAILEDD2D, 'GCTYPE_FAILEDD2D');
+  setObjStatusName('DiskCopy', 'gcType', dconst.GCTYPE_FAILEDRECALL, 'GCTYPE_FAILEDRECALL');
   setObjStatusName('DiskCopy', 'status', dconst.DISKCOPY_VALID, 'DISKCOPY_VALID');
   setObjStatusName('DiskCopy', 'status', dconst.DISKCOPY_FAILED, 'DISKCOPY_FAILED');
   setObjStatusName('DiskCopy', 'status', dconst.DISKCOPY_WAITFS, 'DISKCOPY_WAITFS');
@@ -953,7 +954,7 @@ ALTER TABLE DiskCopy
   CHECK (status IN (0, 4, 5, 6, 7, 9, 11));
 ALTER TABLE DiskCopy
   ADD CONSTRAINT CK_DiskCopy_GcType
-  CHECK (gcType IN (0, 1, 2, 3, 4, 5, 6, 7));
+  CHECK (gcType IN (0, 1, 2, 3, 4, 5, 6, 7, 8));
 
 CREATE INDEX I_StagePTGRequest_ReqId ON StagePrepareToGetRequest (reqId);
 CREATE INDEX I_StagePTPRequest_ReqId ON StagePrepareToPutRequest (reqId);

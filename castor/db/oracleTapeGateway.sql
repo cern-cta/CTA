@@ -475,6 +475,9 @@ CREATE OR REPLACE FUNCTION checkRecallInNS(inCfId IN INTEGER,
   varNSSize INTEGER;
   varNSCsumtype VARCHAR2(2048);
   varNSCsumvalue VARCHAR2(2048);
+  varNSSegSize INTEGER;
+  varNSSegCsumtype VARCHAR2(2048);
+  varNSSegCsumvalue NUMBER;
 BEGIN
   -- retrieve data from the namespace: note the truncation of stagerTime to 5 digits.
   -- This is needed for consistency with the stager code that uses the OCCI API and thus
@@ -499,29 +502,49 @@ BEGIN
     RETURN FALSE;
   END IF;
 
-  -- is the checksum set in the namespace ?
-  IF varNSCsumtype IS NULL THEN
-    -- no -> let's set it (note that the function called commits in the remote DB)
-    setSegChecksumWhenNull@remoteNS(inFileId, inCopyNb, inCksumName, inCksumValue);
-    -- log 'checkRecallInNS : created missing checksum in the namespace'
-    logToDLF(inReqId, dlf.LVL_SYSTEM, dlf.RECALL_CREATED_CHECKSUM, inFileId, inNsHost, 'nsd',
-             'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' copyNb=' || TO_CHAR(inCopyNb) ||
-             ' TPVID=' || inVID || ' fseq=' || TO_CHAR(inFseq) || ' checksumType='  || inCksumName ||
-             ' checksumValue=' || TO_CHAR(inCksumValue));
-  ELSE
-    -- is the checksum matching ?
-    -- note that this is probably useless as it was already checked at transfer time
-    IF inCksumName = varNSCsumtype AND TO_CHAR(inCksumValue, 'XXXXXXXX') != varNSCsumvalue THEN
+  -- is the checksum set in the namespace at the file level ?
+  IF varNSCsumtype IS NOT NULL THEN
+    -- is the checksum matching at the file level ?
+    IF inCksumName = 'adler32' AND varNSCsumtype = 'AD' AND
+       TRIM(TO_CHAR(inCksumValue, 'xxxxxxxx')) != TRIM(varNSCsumvalue) THEN
       -- not matching ! log "checkRecallInNS : bad checksum detected, will retry if allowed"
       logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_BAD_CHECKSUM, inFileId, inNsHost, 'tapegatewayd',
                'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
                ' fseq=' || TO_CHAR(inFseq) || ' copyNb=' || TO_CHAR(inCopyNb) || ' checksumType=' || inCksumName ||
-               ' expectedChecksumValue=' || varNSCsumvalue ||
-               ' checksumValue=' || TO_CHAR(inCksumValue, 'XXXXXXXX') ||' '|| inLogContext);
+               ' expectedChecksumValue=' || TRIM(varNSCsumvalue) ||
+               ' checksumValue=' || TRIM(TO_CHAR(inCksumValue, 'xxxxxxxx')) ||' '|| inLogContext);
       retryOrFailRecall(inCfId, inVID, inReqId, inLogContext);
+      UPDATE DiskCopy
+         SET status = dconst.DISKCOPY_INVALID, gctype = dconst.GCTYPE_FAILEDRECALL
+       WHERE castorFile = inCfId
+         AND status = dconst.DISKCOPY_VALID;
       RETURN FALSE;
     END IF;
   END IF;
+
+  -- retrieve segment checksum from the namespace and check consistency
+  SELECT checksum_name, checksum, segsize
+    INTO varNSSegCsumtype, varNSSegCsumvalue, varNSSegSize
+    FROM Cns_Seg_Metadata@RemoteNS
+   WHERE s_fileid = inFileId AND copyno = inCopyNb;
+  -- is the checksum and size matching at the segment level ?
+  IF inCksumName != 'adler32' OR varNSSegCsumtype != 'adler32' OR
+     inCksumValue != varNSSegCsumvalue OR varNSSegSize != varNSSize THEN
+    -- not consistent ! log "checkRecallInNS : inconsistency detected at segment level, will retry if allowed"
+    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_SEG_INCONSISTENT, inFileId, inNsHost, 'tapegatewayd',
+             'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
+             ' fseq=' || TO_CHAR(inFseq) || ' copyNb=' || TO_CHAR(inCopyNb) || ' checksumType=' || inCksumName ||
+             ' expectedChecksumValue=' || varNSSegCsumvalue ||
+             ' checksumValue=' || TRIM(TO_CHAR(inCksumValue, 'xxxxxxxx')) ||
+             ' fileSize=' || varNSSize || ' segSize=' || varNSSegSize ||' '|| inLogContext);
+    retryOrFailRecall(inCfId, inVID, inReqId, inLogContext);
+    UPDATE DiskCopy
+       SET status = dconst.DISKCOPY_INVALID, gctype = dconst.GCTYPE_FAILEDRECALL
+     WHERE castorFile = inCfId
+       AND status = dconst.DISKCOPY_VALID;
+    RETURN FALSE;
+  END IF;
+
   RETURN TRUE;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- file got dropped from the namespace, recall should be cancelled

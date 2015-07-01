@@ -178,6 +178,7 @@ AS
   GCTYPE_OVERWRITTEN          CONSTANT PLS_INTEGER :=  5;
   GCTYPE_ADMIN                CONSTANT PLS_INTEGER :=  6;
   GCTYPE_FAILEDD2D            CONSTANT PLS_INTEGER :=  7;
+  GCTYPE_FAILEDRECALL         CONSTANT PLS_INTEGER :=  8;
   
   DELDC_LOST                  CONSTANT PLS_INTEGER :=  4;
   DELDC_NOOP                  CONSTANT PLS_INTEGER :=  6;
@@ -255,6 +256,7 @@ AS
   RECALL_FILE_OVERWRITTEN      CONSTANT VARCHAR2(2048) := 'setFileRecalled: file was overwritten during recall, restarting from scratch or skipping repack';
   RECALL_FILE_DROPPED          CONSTANT VARCHAR2(2048) := 'checkRecallInNS: file was dropped from namespace during recall, giving up';
   RECALL_BAD_CHECKSUM          CONSTANT VARCHAR2(2048) := 'checkRecallInNS: bad checksum detected, will retry if allowed';
+  RECALL_SEG_INCONSISTENT      CONSTANT VARCHAR2(2048) := 'checkRecallInNS: inconsistency detected at segment level, will retry if allowed';
   RECALL_CREATED_CHECKSUM      CONSTANT VARCHAR2(2048) := 'checkRecallInNS: created missing checksum in the namespace';
   RECALL_FAILED                CONSTANT VARCHAR2(2048) := 'setBulkFileRecallResult: recall process failed, will retry if allowed';
   RECALL_PERMANENTLY_FAILED    CONSTANT VARCHAR2(2048) := 'setFileRecalled: recall process failed permanently';
