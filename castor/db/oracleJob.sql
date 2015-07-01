@@ -609,8 +609,12 @@ BEGIN
         varPath VARCHAR2(2048);
       BEGIN
         SELECT path, status INTO varPath, varStatus FROM DiskCopy WHERE id = varDestDcId;
-        IF varPath != varDestPath OR varStatus != varNewDcStatus THEN
+        IF varPath != varDestPath OR
+           varStatus NOT IN (dconst.DISKCOPY_FAILED, dconst.DISKCOPY_INVALID, dconst.DISKCOPY_BEINGDELETED) THEN
           -- not the expected case, reraise the exception
+          logToDLF(NULL, dlf.LVL_SYSTEM, 'Constraint violation debugging', varFileId, varNsHost,
+                   'transfermanagerd', varComment || ' varPath=' || varPath || ' varDestPath=' ||
+                   varDestPath || ' varStatus=' || varStatus || ' varNewDcStatus=' || varNewDcStatus);
           RAISE;
         END IF;
         -- Expected case, we are happy, exit the loop
