@@ -6,9 +6,9 @@
   -------
 
   This is a minor release bringing a number of bug fixes and enhancements.
-  In particular, this is the first release to be used for field tests of
-  using XROOT for tape transfers. As such, it brings an important configuration
-  change, as detailed in the upgrade instructions.
+  In particular, this is the first release to be used for field testing
+  of the xroot protocol for tape transfers. As such, it brings an important
+  configuration change, as detailed in the upgrade instructions.
 
   Stager
   ------
@@ -51,8 +51,11 @@
           upgrade script available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-10/dbupgrades
 
-       2. Configure the diskservers with the appropriate public keys for xroot:
-          the existing line xcastor2.publickey /path/to/public_key.pem must be replaced by:
+       2. Edit the xrootd configuration file /etc/xrd.cf.server to configure the
+          appropriate public keys for xroot. The existing line
+            xcastor2.publickey /path/to/public_key.pem
+
+          must be replaced by:
 
             xcastor2.publickey default /path/to/public_key.pem
 
@@ -104,7 +107,8 @@
       TapeServer XrootPrivateKey /opt/xrootd/keys/tape_key.pem
 
     The corresponding public key must be deployed in all CASTOR disk servers and
-    its location must be specified in the /etc/xrd.cf.server configuration file.
+    its location must be specified in the /etc/xrd.cf.server configuration file
+    as described above.
 
     The following example shell commands can be modified accordingly (the second
     line) to produce a pair of public and private keys for signing and
