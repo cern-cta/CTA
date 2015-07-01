@@ -82,6 +82,12 @@ private:
    */
   std::string m_server;
   
+  /**
+   * Gets the list of directory entries of a specific path
+   * @param requester The identity of the requester.
+   * @param path      The absolute path of the directory to get the entries from.
+   * @return the list of directory entries of the specified path
+   */
   std::list<cta::ArchiveDirEntry> getDirEntries(const SecurityIdentity &requester, const std::string &path) const;
 
   /**
@@ -90,9 +96,7 @@ private:
    * @param requester The identity of the requester.
    * @param The absolute path of the namespace entry.
    */
-  ArchiveDirEntry getArchiveDirEntry(
-    const SecurityIdentity &requester,
-    const std::string &path) const;
+  ArchiveDirEntry getArchiveDirEntry(const SecurityIdentity &requester, const std::string &path) const;
   
 }; // class CastorNameServer
 
