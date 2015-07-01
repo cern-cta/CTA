@@ -45,6 +45,12 @@ public:
    * Destructor.
    */
   ~MockNameServer() throw();  
+
+  void createStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies); 
+
+  void deleteStorageClass(const SecurityIdentity &requester, const std::string &name);
+
+  void updateStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies);
   
   void setDirStorageClass(const SecurityIdentity &requester, const std::string &path, const std::string &storageClassName);
   

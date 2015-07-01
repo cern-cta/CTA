@@ -98,6 +98,47 @@ public:
     const std::string &path) const = 0;
 
   /**
+   * Creates the specified storage class.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * storage class.
+   * @param name The name of the storage class.
+   * @param nbCopies The number of copies a file associated with this storage
+   * class should have on tape.
+   * @param comment The comment describing the storage class.
+   */
+  virtual void createStorageClass(
+    const SecurityIdentity &requester,
+    const std::string &name,
+    const uint16_t nbCopies) = 0;
+
+  /**
+   * Deletes the specified storage class.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * storage class.
+   * @param name The name of the storage class.
+   */
+  virtual void deleteStorageClass(
+    const SecurityIdentity &requester,
+    const std::string &name) = 0;
+
+  /**
+   * Updates the specified storage class with the specified number of tape
+   * copies.
+   *
+   * @param requester The identity of the user requesting the deletion of the
+   * storage class.
+   * @param name The name of the storage class.
+   * @param nbCopies The number of copies a file associated with this storage
+   * class should have on tape.
+   */
+  virtual void updateStorageClass(
+    const SecurityIdentity &requester,
+    const std::string &name,
+    const uint16_t nbCopies) = 0;
+
+  /**
    * Sets the storage class of the specified directory to the specified value.
    *
    * @param requester The identity of the requester.

@@ -109,6 +109,30 @@ bool cta::MockNameServer::dirExists(const SecurityIdentity &requester,
 }
 
 //------------------------------------------------------------------------------
+// createStorageClass
+//------------------------------------------------------------------------------
+void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
+  const std::string &name, const uint16_t nbCopies) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+  
+//------------------------------------------------------------------------------
+// deleteStorageClass
+//------------------------------------------------------------------------------
+void cta::MockNameServer::deleteStorageClass(const SecurityIdentity &requester,
+  const std::string &name) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+ 
+//------------------------------------------------------------------------------
+// updateStorageClass
+//------------------------------------------------------------------------------
+void cta::MockNameServer::updateStorageClass(const SecurityIdentity &requester,
+  const std::string &name, const uint16_t nbCopies) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+//------------------------------------------------------------------------------
 // assertStorageClassIsNotInUse
 //------------------------------------------------------------------------------
 void cta::MockNameServer::assertStorageClassIsNotInUse(

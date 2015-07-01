@@ -705,7 +705,8 @@ void cta::Scheduler::queueRetrieveRequest(
 //------------------------------------------------------------------------------
 // getNextMount
 //------------------------------------------------------------------------------
-cta::TapeMount *cta::Scheduler::getNextMount(const std::string &driveName) {
+cta::MountRequest *cta::Scheduler::getNextMount(
+  const std::string &logicalLibraryName) {
   return NULL;
 }
 

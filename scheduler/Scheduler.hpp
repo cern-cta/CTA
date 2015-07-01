@@ -47,7 +47,6 @@ class SchedulerDatabase;
 class SecurityIdentity;
 class StorageClass;
 class Tape;
-class TapeMount;
 class TapePool;
 class UserIdentity;
 
@@ -622,6 +621,78 @@ public:
     const std::list<std::string> &archiveFiles,
     const std::string &remoteFileOrDir);
 
+  /**
+   * Returns the next tape mount for the specified logical liubrary.
+   *
+   * @param logicalLibraryName The name of the logical library.
+   * @return The next tape mount or NULL if there is currently no work to bei
+   * done.
+   */
+  MountRequest *getNextMount(const std::string &logicalLibraryName);
+
+  /**
+   * Notifies the scheduler that the specified tape mount is over.
+   *
+   * @param mountId The identifier of the tape mount.
+   */
+  void finishedMount(const std::string &mountId);
+
+  /**
+   * Returns the next file transfer to be carried out for the specified tape
+   * mount or NULL if there is no more work to be done.
+   *
+   * @param mountId The identifier of the tape mount.
+   * @return The next file transfer to be carried out for the specified tape
+   * mount or NULL if there is no more work to be done.
+   */
+  ArchivalFileTransfer *getNextArchival(const std::string &mountId);
+
+  /**
+   * Notifies the scheduler that the specified file transfer has been completed
+   * successfully.
+   *
+   * @param transferId The identifier of the file transfer.
+   */
+  void archivalSuccessful(const std::string &transferId);
+
+  /**
+   * Notifies the scheduler that the specified file transfer has failed.
+   *
+   * @param transferId The identifier of the file transfer.
+   * @param failureType The type of failure.
+   * @param errorMessage Human readable description of the failure.
+   */
+  void archivalFailed(const std::string &transferId,
+    const TransferFailure failureType, const std::string &errorMessage);
+
+  /**
+   * Returns the next file transfer to be carried out for the specified tape
+   * mount or NULL if there is no more work to be done.
+   *
+   * @param mountId The identifier of the tape mount.
+   * @return The next file transfer to be carried out for the specified tape
+   * mount or NULL if there is no more work to be done.
+   */
+  RetrievalFileTransfer *getNextRetrieval(const std::string &mountId);
+
+  /**
+   * Notifies the scheduler that the specified file transfer has been completed
+   * successfully.
+   *
+   * @param transferId The identifier of the file transfer.
+   */
+  void retrievalSucceeded(const std::string &transferId);
+
+  /**
+   * Notifies the scheduler that the specified file transfer has failed.
+   *
+   * @param transferId The identifier of the file transfer.
+   * @param failureType The type of failure.
+   * @param errorMessage Human readable description of the failure.
+   */
+  void retrievalFailed(const std::string &transferId,
+    const TransferFailure failureType, const std::string &errorMessage);
+
 private:
 
   /**
@@ -732,79 +803,6 @@ private:
    */
   std::map<uint16_t, std::string> createCopyNbToPoolMap(
     const std::list<ArchivalRoute> &routes) const;
-
-  /**
-   * Returns the next tape mount for the specified tape drive or NULL if there
-   * is currently no work to be done.
-   *
-   * @param driveName The name of the tape drive.
-   * @return The next tape mount for the specified tape drive or NULL if there
-   * is currently no work to be done.
-   */
-  TapeMount *getNextMount(const std::string &driveName);
-
-  /**
-   * Notifies the scheduler that the specified tape mount is over.
-   *
-   * @param mountId The identifier of the tape mount.
-   */
-  void finishedMount(const std::string &mountId);
-
-  /**
-   * Returns the next file transfer to be carried out for the specified tape
-   * mount or NULL if there is no more work to be done.
-   *
-   * @param mountId The identifier of the tape mount.
-   * @return The next file transfer to be carried out for the specified tape
-   * mount or NULL if there is no more work to be done.
-   */
-  ArchivalFileTransfer *getNextArchival(const std::string &mountId);
-
-  /**
-   * Notifies the scheduler that the specified file transfer has been completed
-   * successfully.
-   *
-   * @param transferId The identifier of the file transfer.
-   */
-  void archivalSuccessful(const std::string &transferId);
-
-  /**
-   * Notifies the scheduler that the specified file transfer has failed.
-   *
-   * @param transferId The identifier of the file transfer.
-   * @param failureType The type of failure.
-   * @param errorMessage Human readable description of the failure.
-   */
-  void archivalFailed(const std::string &transferId,
-    const TransferFailure failureType, const std::string &errorMessage);
-
-  /**
-   * Returns the next file transfer to be carried out for the specified tape
-   * mount or NULL if there is no more work to be done.
-   *
-   * @param mountId The identifier of the tape mount.
-   * @return The next file transfer to be carried out for the specified tape
-   * mount or NULL if there is no more work to be done.
-   */
-  RetrievalFileTransfer *getNextRetrieval(const std::string &mountId);
-
-  /**
-   * Notifies the scheduler that the specified file transfer has been completed
-   * successfully.
-   *
-   * @param transferId The identifier of the file transfer.
-   */
-  void retrievalSucceeded(const std::string &transferId);
-
-  /**
-   * Notifies the scheduler that the specified file transfer has failed.
-   *
-   * @param transferId The identifier of the file transfer.
-   * @param failureType The type of failure.
-   * @param errorMessage Human readable description of the failure.
-   */
-  void retrievalFailed(const std::string &transferId,
-    const TransferFailure failureType, const std::string &errorMessage);
 
 }; // class Scheduler
 
