@@ -38,7 +38,7 @@ def usage(exitCode):
     print 'Usage :'
     print '  draindiskserver -h/--help'
     print '  draindiskserver -a/--add [-S serviceclass] [--file-mask=(NOTONTAPE|ALL)] [--comment=comment] <targets>'
-    print '  draindiskserver -q/--query [-c/--config] [-r/--running] [--script] [<targets>]'
+    print '  draindiskserver -q/--query [-c/--config] [-r/--running] [-x/--extra] [--script] [<targets>]'
     print '  draindiskserver -q/--query -f/--failures [<targets>]'
     print '  draindiskserver -d/--delete <targets>'
     print 'where <targets> = [-m|--mountpoints <mountpoint>[:...]] <diskpool>|<diskServerName> [...]'
@@ -124,10 +124,10 @@ def drainingJobStatusToStr(status):
 
 # first parse the options
 try:
-    options, arguments = getopt.getopt(sys.argv[1:], 'ham:S:qcfrdv',
+    options, arguments = getopt.getopt(sys.argv[1:], 'ham:S:qxcfrdv',
                                   ['help', 'add', 'mountpoints=',
-                                   'svcclass=', 'file-mask=',
-                                   'comment=', 'query', 'config', 'failures',
+                                   'svcclass=', 'file-mask=', 'comment=',
+                                   'query', 'config', 'extra', 'failures',
                                    'running', 'script', 'delete', 'verbose'])
 except Exception, parsingException:
     print parsingException
@@ -146,6 +146,7 @@ runningFlag = False
 scriptFlag = False
 comment = None
 verbose = False
+displayFSFlag = False
 for opt, arg in options:
     if opt in ('-h', '--help'):
         usage(0)
@@ -172,6 +173,8 @@ for opt, arg in options:
         configFlag = True
     elif opt in ('-f', '--failures'):
         failuresFlag = True
+    elif opt in ('-x', '--extra'):
+        displayFSFlag = True
     elif opt in ('-r', '--running'):
         runningFlag = True
     elif opt == '--script':
@@ -187,6 +190,8 @@ for opt, arg in options:
 targets = arguments
 
 # Check consistency of arguments
+if mountPoints:
+    displayFSFlag = True
 if not (addFlag or queryFlag or deleteFlag):
     print 'missing operation, must specify one of --add, --delete or --query'
     usage(1)
@@ -199,8 +204,8 @@ if len(targets) == 0 and (addFlag or deleteFlag):
 if mountPoints != None and not targets:
     print 'targets are mandatory when --mountPoints is used'
     usage(1)
-if (addFlag or deleteFlag) and (configFlag or failuresFlag or runningFlag or scriptFlag):
-    print 'incompatible set of options : --config, --failures, --running and --script are only valid with --query'
+if (addFlag or deleteFlag) and (configFlag or failuresFlag or runningFlag or scriptFlag or displayFSFlag):
+    print 'incompatible set of options : --config, --failures, --extra, --running, and --script are only valid with --query'
     usage(1)
 if (queryFlag or deleteFlag) and (svcClass != None or fileMaskFlag or comment != None):
     print 'incompatible set of options : --query. svcclass, file-mask and comment are only valid with --add'
@@ -232,7 +237,7 @@ def getFileSystems(stcur, shouldNotBeEmpty=False):
     # and complain if nothing was found
     if not fileSystems:
         print 'Unable to find concerned filesystems. Please check node name and/or mount point.'
-        print 'In particular make sur that diskserver name is fully qualified and that mountPoint ends with /'
+        print 'In particular make sure that diskserver name is fully qualified and that mountPoint ends with /'
         sys.exit(1)
     return fileSystems
 
@@ -391,13 +396,23 @@ def queryDrain():
         fileSystems = getFileSystems(stcur)
         # build SQL statement
         stGetDrains = '''
-        SELECT DiskServer.name, FileSystem.mountPoint,
-               DrainingJob.username, DrainingJob.machine, DrainingJob.userComment,
-               DrainingJob.creationTime, DrainingJob.totalFiles, DrainingJob.totalBytes,
-               DrainingJob.fileMask, getSvcClassName(DrainingJob.svcClass),
-               DrainingJob.status, DrainingJob.nbFailedBytes, DrainingJob.nbSuccessBytes,
-               DrainingJob.nbFailedFiles, DrainingJob.nbSuccessFiles,
-               CASE DrainingJob.status WHEN 5 THEN lastModificationTime ELSE getTime() END
+        SELECT DiskServer.name,
+               CASE WHEN GROUPING (FileSystem.mountPoint) = 1
+                    THEN TO_CHAR(COUNT(FileSystem.mountPoint))
+                    ELSE FileSystem.mountPoint END mountPoint,
+               MIN(DrainingJob.username), MIN(DrainingJob.machine),
+               CAST(COLLECT(DISTINCT DrainingJob.userComment) AS strListTable) AS userComment,
+               MIN(DrainingJob.creationTime) creationTime,
+               CASE WHEN GROUPING (FileSystem.mountPoint) = 1
+                    THEN CASE WHEN MIN(fileMask) = MAX(fileMask) THEN MIN(fileMask) ELSE -1 END
+                    ELSE MIN(fileMask) END fileMask,
+               getSvcClassName(MIN(DrainingJob.svcClass)) svcClassName,
+               MIN(DrainingJob.status) status,
+               SUM(DrainingJob.totalFiles) totalFiles, SUM(DrainingJob.totalBytes) totalBytes,
+               SUM(DrainingJob.nbFailedBytes) nbFailedBytes, SUM(DrainingJob.nbSuccessBytes) nbSuccessBytes,
+               SUM(DrainingJob.nbFailedFiles) nbFailedFiles, SUM(DrainingJob.nbSuccessFiles) nbSuccessFiles,
+               DECODE(MIN(DrainingJob.status), 4, MAX(lastModificationTime), 5, MAX(lastModificationTime), getTime()) currentTime,
+               GROUPING (FileSystem.mountPoint)
           FROM DrainingJob, FileSystem, DiskServer
          WHERE DrainingJob.fileSystem = FileSystem.id
            AND FileSystem.diskServer = DiskServer.id'''
@@ -405,7 +420,9 @@ def queryDrain():
             stGetDrains += ' AND FileSystem.id IN (' + ', '.join([str(fs[2]) for fs in fileSystems]) + ')'        
         if runningFlag:
             stGetDrains += ' AND DrainingJob.status IN (0, 1, 2)'  # SUBMITTED, STARTING, RUNNING
-        stGetDrains += ' ORDER BY DiskServer.name, FileSystem.mountPoint'
+        stGetDrains += '''
+           GROUP BY GROUPING SETS ((DiskServer.name, FileSystem.mountPoint), (DiskServer.name))
+           ORDER BY DiskServer.name, GROUPING(DiskServer.name), GROUPING(FileSystem.mountPoint) DESC'''
         # get data
         stcur.execute(stGetDrains)
         results = stcur.fetchall()
@@ -413,37 +430,63 @@ def queryDrain():
         if len(results) == 0:
             print 'Nothing found'
             return
-        # depending on the presence of the config flag, we do not
-        # display the same set of columns
+        # depending on the presence of the config and the displayFS flags, we have four different displays
         if configFlag:
-            titles = ['DiskServer', 'MountPoint', 'UserName', 'Machine', 'SvcClass',
-                      'FileMask', 'Comment']
-            data = [(diskServerName, fsMountPoint, userName, machine, svcClassName,
-                     FileMask.toStr(DJFileMask), DJComment)
-                    for diskServerName, fsMountPoint, userName, machine,
-                    DJComment, creationTime, totalFiles, totalBytes, DJFileMask,
-                    svcClassName, DJStatus, nbFailedBytes, nbSuccessBytes, nbFailedFiles,
-                    nbSuccessFiles, currentTime in results]
+            if displayFSFlag:
+                titles = ['DiskServer', 'MountPoint', 'UserName', 'Machine', 'SvcClass',
+                          'FileMask', 'Comment']
+                data = [(diskServerName, fsMountPoint, userName, machine, svcClassName,
+                         FileMask.toStr(DJFileMask), DJComment if DJComment != [] else None)
+                        for diskServerName, fsMountPoint, userName, machine,
+                        DJComment, creationTime, DJFileMask, svcClassName, DJStatus,
+                        totalFiles, totalBytes, nbFailedBytes, nbSuccessBytes, nbFailedFiles,
+                        nbSuccessFiles, currentTime, grouping in results if not grouping]
+            else:
+                titles = ['DiskServer', 'UserName', 'Machine', 'SvcClass',
+                          'FileMask', 'Comment']
+                data = [(diskServerName, userName, machine, svcClassName,
+                         FileMask.toStr(DJFileMask), DJComment if DJComment != [] else None)
+                        for diskServerName, fsMountPoint, userName, machine,
+                        DJComment, creationTime, DJFileMask, svcClassName, DJStatus,
+                        totalFiles, totalBytes, nbFailedBytes, nbSuccessBytes, nbFailedFiles,
+                        nbSuccessFiles, currentTime, grouping in results if grouping]
         else:
-            titles = ['DiskServer', 'MountPoint', 'Created', 'TFiles', 'TSize',
-                      'RFiles', 'RSize', 'Done', 'Failed', 'RunTime', 'Progress', 'ETC', 'Status']
-            data = [(diskServerName, fsMountPoint, castor_tools.secsToDate(creationTime), totalFiles,
-                     castor_tools.nbToDataAmount(totalBytes), totalFiles-nbFailedFiles-nbSuccessFiles,
-                     castor_tools.nbToDataAmount(totalBytes-nbFailedBytes-nbSuccessBytes),
-                     nbSuccessFiles, nbFailedFiles,
-                     castor_tools.nbToAge(int(currentTime-creationTime)),
-                     castor_tools.printPercentage((nbSuccessBytes+nbFailedBytes), totalBytes),
-                     castor_tools.printETC(nbSuccessBytes+nbFailedBytes, totalBytes, currentTime-creationTime),
-                     drainingJobStatusToStr(DJStatus))
-                    for diskServerName, fsMountPoint, userName, machine,
-                    DJComment, creationTime, totalFiles, totalBytes, DJFileMask,
-                    svcClassName, DJStatus, nbFailedBytes, nbSuccessBytes, nbFailedFiles,
-                    nbSuccessFiles, currentTime in results]
+            if displayFSFlag:
+              titles = ['DiskServer', 'MountPoint', 'SvcClass', 'Created', 'TFiles', 'TSize',
+                        'RFiles', 'RSize', 'Done', 'Failed', 'RunTime', 'Progress', 'ETC', 'Status']
+              data = [(diskServerName, fsMountPoint, svcClassName, castor_tools.secsToDate(creationTime), totalFiles,
+                       castor_tools.nbToDataAmount(totalBytes), totalFiles-nbFailedFiles-nbSuccessFiles,
+                       castor_tools.nbToDataAmount(totalBytes-nbFailedBytes-nbSuccessBytes),
+                       nbSuccessFiles, nbFailedFiles,
+                       castor_tools.nbToAge(int(currentTime-creationTime)),
+                       castor_tools.printPercentage((nbSuccessBytes+nbFailedBytes), totalBytes),
+                       castor_tools.printETC(nbSuccessBytes+nbFailedBytes, totalBytes, currentTime-creationTime),
+                       drainingJobStatusToStr(DJStatus))
+                      for diskServerName, fsMountPoint, userName, machine,
+                      DJComment, creationTime, DJFileMask, svcClassName, DJStatus,
+                      totalFiles, totalBytes, nbFailedBytes, nbSuccessBytes, nbFailedFiles,
+                      nbSuccessFiles, currentTime, grouping in results if not grouping]
+            else:
+              titles = ['DiskServer', 'SvcClass', 'Created', 'TFiles', 'TSize',
+                        'RFiles', 'RSize', 'Done', 'Failed', 'RunTime', 'Progress', 'ETC', 'Status']
+              data = [(diskServerName, svcClassName, castor_tools.secsToDate(creationTime), totalFiles,
+                       castor_tools.nbToDataAmount(totalBytes), totalFiles-nbFailedFiles-nbSuccessFiles,
+                       castor_tools.nbToDataAmount(totalBytes-nbFailedBytes-nbSuccessBytes),
+                       nbSuccessFiles, nbFailedFiles,
+                       castor_tools.nbToAge(int(currentTime-creationTime)),
+                       castor_tools.printPercentage((nbSuccessBytes+nbFailedBytes), totalBytes),
+                       castor_tools.printETC(nbSuccessBytes+nbFailedBytes, totalBytes, currentTime-creationTime),
+                       drainingJobStatusToStr(DJStatus))
+                      for diskServerName, fsMountPoint, userName, machine,
+                      DJComment, creationTime, DJFileMask, svcClassName, DJStatus,
+                      totalFiles, totalBytes, nbFailedBytes, nbSuccessBytes, nbFailedFiles,
+                      nbSuccessFiles, currentTime, grouping in results if grouping]
             if not scriptFlag:
                 zr = zip(*results)
+                # here we divide every total by 2 because results includes everything twice, with grouping = 0 and 1
                 totFiles, totBytes, totFailedBytes, totSuccessBytes, totFailedFiles, totSuccessFiles = \
-                  sum(zr[6]), sum(zr[7]), sum(zr[11]), sum(zr[12]), sum(zr[13]), sum(zr[14])
-                data.append(('', 'TOTAL', castor_tools.secsToDate(time.time()),
+                  sum(zr[9])/2, sum(zr[10])/2, sum(zr[11])/2, sum(zr[12])/2, sum(zr[13])/2, sum(zr[14])/2
+                data.append((('', '') if displayFSFlag else ('',)) + ('TOTAL', castor_tools.secsToDate(time.time()),
                              totFiles, castor_tools.nbToDataAmount(totBytes),
                              totFiles-totFailedFiles-totSuccessFiles,
                              castor_tools.nbToDataAmount(totBytes-totFailedBytes-totSuccessBytes),
