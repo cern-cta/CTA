@@ -97,8 +97,12 @@ def getFSRelatedItems(diskServerIds, diskPoolIds):
            COUNT(FileSystem.mountPoint),
            CASE WHEN GROUPING(DiskServer.name) = 1 THEN ''
                 ELSE CASE WHEN GROUPING(FileSystem.mountPoint) = 1
-                          THEN MIN(getObjStatusName('DiskServer','status', Diskserver.status))
-                          ELSE MIN(getObjStatusName('FileSystem','status', FileSystem.status))
+                          THEN MIN(decode(DrainingJob.id,
+                                          NULL, getObjStatusName('DiskServer','status', DiskServer.status),
+                                          'DISKSERVER_ACTIVEDRAIN'))
+                          ELSE MIN(decode(DrainingJob.id,
+                                          NULL, getObjStatusName('FileSystem','status', FileSystem.status),
+                                          'FILESYSTEM_ACTIVEDRAIN'))
                      END
                 END status,
            CASE WHEN GROUPING(DiskServer.name) = 1 THEN ''
@@ -117,9 +121,10 @@ def getFSRelatedItems(diskServerIds, diskPoolIds):
                      END
                 END id,
            GROUPING(DiskServer.name)
-      FROM DiskServer, FileSystem, DiskPool
+      FROM DiskServer, FileSystem, DiskPool, DrainingJob
      WHERE DiskServer.id = FileSystem.diskServer(+)
        AND FileSystem.diskPool = DiskPool.id (+)
+       AND FileSystem.id = DrainingJob.fileSystem (+)
        AND (DiskServer.dataPool IS NULL OR
             EXISTS (SELECT 1 FROM FileSystem WHERE diskserver=DiskServer.id))'''
     if diskServerIds or diskPoolIds:
