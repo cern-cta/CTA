@@ -76,7 +76,8 @@ $(document).ready(function () {
 			/* Payload */       null,
         ],
         // nb of entry menu
-        "aLengthMenu": [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]],
+        "iDisplayLength": 200,
+        "aLengthMenu": [[20, 200, 2000, 20000], [20, 200, "2K", "20K"]],
         // allow complex header
         "bSortCellsTop": true,
         // pagination type
