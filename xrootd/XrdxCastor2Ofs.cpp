@@ -103,8 +103,7 @@ extern "C"
 XrdxCastor2Ofs::XrdxCastor2Ofs():
   XrdOfs(),
   LogId(),
-  mLogLevel(LOG_INFO),
-  mNotifyDMgr(true)
+  mLogLevel(LOG_INFO)
 { }
 
 
@@ -200,17 +199,6 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute, XrdOucEnv* envP)
   // Set the effective user for all the XrdClients used to issue 'prepares'
   // to redirector
   setenv("XrdClientEUSER", "stage", 1);
-
-  // Check if we need to notify the diskmanager about transfers - this should
-  // be on only for testing
-  val = getenv("XROOTD_NO_DISKMGR_NOTIFY");
-
-  if (val && strncmp(val, "1", 1) == 0)
-  {
-    xcastor_warning("WARNING: Diskmanager notifications disabled");
-    mNotifyDMgr = false;
-  }
-
   return rc;
 }
 
@@ -516,7 +504,7 @@ XrdxCastor2OfsFile::open(const char*         path,
   int rc = openrc;
 
   // Notify the diskmanager
-  if (!mTransferId.empty() && gSrv->NotifyDiskMgr())
+  if (!mTransferId.empty())
   {
     TIMING("NOTIFY_DM", &open_timing);
     char* errmsg = (char*)0;
@@ -696,7 +684,7 @@ XrdxCastor2OfsFile::close()
   // If we have contact info for the diskmanager then we contact it to pass the
   // status otherwise this is a d2d or an rtcpd transfer and we don't need to
   // contact the diskmanager.
-  if (mDiskMgrPort && gSrv->NotifyDiskMgr())
+  if (mDiskMgrPort)
   {
     TIMING("NOTIFY_DM", &close_timing);
     uint64_t sz_file = 0;
