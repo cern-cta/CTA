@@ -132,7 +132,9 @@ public:
  
   /**
    * Throws an exception if the specified storage class is in use within the
-   * specified file or directory.
+   * specified file or directory. This is a nice to have but probably impractical,
+   * due to the fact that to manage large name spaces one would need a running counter
+   * of storage class usages, which could be a major area of contention.
    *
    * @param requester The identity of the requester.
    * @param storageClassName The name of the storage class.
