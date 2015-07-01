@@ -19,63 +19,113 @@
 
   Packaging changes
   -----------------
+
   - CASTOR 2.1.15-10 has been recompiled against xrootd 4.2.1.
     During the upgrade the xrootd 4.2.1 RPMs will need to be available,
-    otherwise the upgrade will because of missing dependencies.
+    otherwise the upgrade will fail because of missing dependencies.
 
   Upgrade Instructions from 2.1.15-9
   ----------------------------------
 
-  Disk servers
-  ------------
+    Stager
+    ------
 
-  The XROOT libxrdxcastor2acc.so authorisation plugin is responsible for
-  authenticating disk server to disk server requests.  The location of the
-  corresponding public key is specified by the following parameter within
-  /etc/xrd.cf.server:
+    The upgrade of the stager to 2.1.15-10 can be performed online while the system is running.
+    However, one need to make sure that after the 2nd step, the xrootd daemons in the
+    diskservers are NOT restarted until the RPMs are upgraded at the 4th step.
 
-    xcastor2.publickey default /opt/xrootd/keys/pkey.pem
+      Instructions
+      ------------
 
-  The following example shell commands can be modified accordingly (the second
-  line) to produce a pair of public and private keys for signing and
-  authenticating disk server to disk server XROOT requests:
+       1. Upgrade the STAGER database using the stager_2.1.15-9_to_2.1.15-10.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-10/dbupgrades
 
-    openssl genrsa -out key.pem 512
-    openssl req -new -subj "/C=CH/ST=Geneva/L=Geneva/O=CERN/OU=IT/CN=castor-xroot-hostname.cern.ch/emailAddress=castor-operations@cern.ch" -inform PEM -key key.pem -outform PEM -out certreq.pem
-    openssl x509 -days 3650 -signkey key.pem -in certreq.pem -req -out cert.pem
-    openssl x509 -pubkey -in cert.pem > pkey.pem
-    rm -rf cert.pem certreq.pem
-    chmod 0400 key.pem
+       2. Configure the diskservers with the appropriate public keys for xroot, as
+          detailed below in the disk servers section, and update the xrd.cf.server
+          config file accordingly. If the tape servers are configured to use the
+          XROOT protocol, then the Tape servers section below must be followed as well.
 
-  Tape servers
-  ------------
+       3. Upgrade the software on the head nodes.
+          Note: All daemons involved in the upgrade will be restarted automatically.
 
-  When the tapeserverd daemon is configured to use the XROOT protocol it will
-  need to sign its XROOT requests so that the CASTOR disk servers will be able
-  to authenticate it.  The tapeserverd daemon signs its XROOT requests using a
-  private key.  The location of the private key is specified by the following
-  parameter within /etc/castor/castior.conf:
+       4. Upgrade the software on the diskservers.
+          Note: All daemons involved in the upgrade will be restarted automatically.
 
-    TapeServer XrootPrivateKey /opt/xrootd/keys/tape_key.pem
+       5. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-10/testsuite
 
-  The XROOT libxrdxcastor2acc.so authorisation plugin is responsible for
-  authenticating tape server requests when they arrive at a CASTOR disk server.
-  The plugin authenticates the requests using a public key.  The location of
-  the public key is specified by the following parameter within
-  /etc/xrd.cf.server:
+       6. Congratulations you have successfully upgraded to the 2.1.15-10 release
+          of CASTOR.
 
-    xcastor2.publickey tape /opt/xrootd/keys/tape_pkey.pem
+    Central services (CUPV, VMGR, VDQM, Nameserver)
+    -----------------------------------------------
 
-  The following example shell commands can be modified accordingly (the second
-  line) to produce a pair of public and private keys for signing and
-  authenticating tapeserverd XROOT requests:
+      The upgrade of the central services to 2.1.15-10 can be performed online while
+      the system is running.
 
-    openssl genrsa -out tape_key.pem 512
-    openssl req -new -subj "/C=CH/ST=Geneva/L=Geneva/O=CERN/OU=IT/CN=castor-xroot-hostname.cern.ch/emailAddress=castor-operations@cern.ch" -inform PEM -key tape_key.pem -outform PEM -out certreq.pem
-    openssl x509 -days 3650 -signkey tape_key.pem -in certreq.pem -req -out cert.pem
-    openssl x509 -pubkey -in cert.pem > tape_pkey.pem
-    rm -rf cert.pem certreq.pem
-    chmod 0400 tape_key.pem
+      Instructions
+      ------------
+
+       1. Apply the appropriate database upgrade scripts from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.15-*/2.1.15-10/dbupgrades
+
+       2. Update the software to use the 2.1.15-10 RPMs. Note: All
+          daemons involved in the upgrade will be restarted automatically.
+
+       3. Upgrade complete.
+
+    Disk servers' xrootd configuration
+    ----------------------------------
+
+    The XROOT libxrdxcastor2acc.so authorisation plugin is responsible for
+    authenticating disk server to disk server requests.  The location of the
+    corresponding public key is specified by the following parameter within
+    /etc/xrd.cf.server:
+
+      xcastor2.publickey default /opt/xrootd/keys/pkey.pem
+
+    The following example shell commands can be modified accordingly (the second
+    line) to produce a pair of public and private keys for signing and
+    authenticating disk server to disk server XROOT requests:
+
+      openssl genrsa -out key.pem 512
+      openssl req -new -subj "/C=CH/ST=Geneva/L=Geneva/O=CERN/OU=IT/CN=castor-xroot-hostname.cern.ch/emailAddress=castor-operations@cern.ch" -inform PEM -key key.pem -outform PEM -out certreq.pem
+      openssl x509 -days 3650 -signkey key.pem -in certreq.pem -req -out cert.pem
+      openssl x509 -pubkey -in cert.pem > pkey.pem
+      rm -rf cert.pem certreq.pem
+      chmod 0400 key.pem
+
+    Tape servers' configuration
+    ---------------------------
+
+    When the tapeserverd daemon is configured to use the XROOT protocol it will
+    need to sign its XROOT requests so that the CASTOR disk servers will be able
+    to authenticate it.  The tapeserverd daemon signs its XROOT requests using a
+    private key.  The location of the private key is specified by the following
+    parameter within /etc/castor/castior.conf:
+
+      TapeServer XrootPrivateKey /opt/xrootd/keys/tape_key.pem
+
+    The XROOT libxrdxcastor2acc.so authorisation plugin is responsible for
+    authenticating tape server requests when they arrive at a CASTOR disk server.
+    The plugin authenticates the requests using a public key.  The location of
+    the public key is specified by the following parameter within
+    /etc/xrd.cf.server:
+
+      xcastor2.publickey tape /opt/xrootd/keys/tape_pkey.pem
+
+    The following example shell commands can be modified accordingly (the second
+    line) to produce a pair of public and private keys for signing and
+    authenticating tapeserverd XROOT requests:
+
+      openssl genrsa -out tape_key.pem 512
+      openssl req -new -subj "/C=CH/ST=Geneva/L=Geneva/O=CERN/OU=IT/CN=castor-xroot-hostname.cern.ch/emailAddress=castor-operations@cern.ch" -inform PEM -key tape_key.pem -outform PEM -out certreq.pem
+      openssl x509 -days 3650 -signkey tape_key.pem -in certreq.pem -req -out cert.pem
+      openssl x509 -pubkey -in cert.pem > tape_pkey.pem
+      rm -rf cert.pem certreq.pem
+      chmod 0400 tape_key.pem
+
 
 ------------
 - 2.1.15-9 -
