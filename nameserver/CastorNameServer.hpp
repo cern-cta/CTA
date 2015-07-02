@@ -74,6 +74,10 @@ public:
   std::string getVidOfFile(const SecurityIdentity &requester, const std::string &path, const uint16_t copyNb) const;
   
   void assertStorageClassIsNotInUse(const SecurityIdentity &requester, const std::string &storageClass, const std::string &path) const;
+  
+  void createStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies);
+
+  void deleteStorageClass(const SecurityIdentity &requester, const std::string &name);
 
 private:
   

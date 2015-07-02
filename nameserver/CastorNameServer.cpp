@@ -36,6 +36,24 @@
 #include "Cns_api.h"
 
 //------------------------------------------------------------------------------
+// createStorageClass
+//------------------------------------------------------------------------------
+void cta::CastorNameServer::createStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies) {
+  struct Cns_fileclass fc;
+  bzero(&fc, sizeof(struct Cns_fileclass));
+  strncpy(fc.name, name.c_str(), CA_MAXCLASNAMELEN);
+  fc.nbcopies = nbCopies;
+  cta::exception::Errnum::throwOnMinusOne(Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc), __FUNCTION__);
+}
+
+//------------------------------------------------------------------------------
+// deleteStorageClass
+//------------------------------------------------------------------------------
+void cta::CastorNameServer::deleteStorageClass(const SecurityIdentity &requester, const std::string &name) {
+  cta::exception::Errnum::throwOnMinusOne(Cns_deleteclass(const_cast<char *>(m_server.c_str()), 0, const_cast<char *>(name.c_str())), __FUNCTION__);
+}
+
+//------------------------------------------------------------------------------
 // regularFileExists
 //------------------------------------------------------------------------------
 bool cta::CastorNameServer::regularFileExists(const SecurityIdentity &requester, const std::string &path) const {  
