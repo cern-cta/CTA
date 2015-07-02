@@ -33,7 +33,7 @@
 #include "common/Utils.hpp"
 #include "nameserver/CastorNameServer.hpp"
 
-#include "Cns_api.h"
+#include <shift/Cns_api.h>
 
 //------------------------------------------------------------------------------
 // createStorageClass
