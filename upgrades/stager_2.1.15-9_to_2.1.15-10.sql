@@ -658,8 +658,9 @@ BEGIN
 END;
 /
 ALTER TABLE DiskCopy DROP CONSTRAINT CK_DiskCopy_GcType;
-ALTER TABLE DiskCopy   ADD CONSTRAINT CK_DiskCopy_GcType
-  CHECK (gcType IN (0, 1, 2, 3, 4, 5, 6, 7, 8));
+ALTER TABLE DiskCopy ADD CONSTRAINT CK_DiskCopy_GcType
+  CHECK (gcType IN (0, 1, 2, 3, 4, 5, 6, 7, 8))
+  NOVALIDATE;
 
 
 /* Recompile all invalid procedures, triggers and functions */
