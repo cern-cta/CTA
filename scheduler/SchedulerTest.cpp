@@ -91,15 +91,12 @@ public:
     m_scheduler.reset(new cta::Scheduler(*(m_ns.get()), *(m_db.get()),
       *(m_mockRemoteNS.get())));
 
-/*
-    MockRemoteNS &mockRemoteNS = *m_mockRemoteNS.get();
-    const RemotePath remotePath(s_remoteFileRawPath1);
-    const UserIdentity remoteFileOwner = s_user;
-    const mode_t remoteFileMode = 0777;
-    const uint64_t remoteFileSize = 1234;
-    const RemoteFileStatus remoteFileStatus(remoteFileOwner, remoteFileMode, remoteFileSize);
-    mockRemoteNS.createEntry(remotePath, remoteFileStatus);
-*/
+    MockRemoteNS &remoteNS = *m_mockRemoteNS.get();
+    remoteNS.createEntry(s_remoteFileRawPath1, RemoteFileStatus(s_user, 0777, 1111));
+    remoteNS.createEntry(s_remoteFileRawPath2, RemoteFileStatus(s_user, 0777, 2222));
+    remoteNS.createEntry(s_remoteFileRawPath3, RemoteFileStatus(s_user, 0777, 3333));
+    remoteNS.createEntry(s_remoteFileRawPath4, RemoteFileStatus(s_user, 0777, 4444));
+
     SchedulerDatabase &db = *m_db.get();
     db.createAdminUser(s_systemOnSystemHost, s_admin,
       "The initial administrator created by the system");
@@ -2068,10 +2065,10 @@ TEST_P(SchedulerTest, archive_to_directory) {
     copyNb, tapePoolName, archivalRouteComment));
 
   std::list<std::string> remoteFiles;
-  remoteFiles.push_back("remoteFile1");
-  remoteFiles.push_back("remoteFile2");
-  remoteFiles.push_back("remoteFile3");
-  remoteFiles.push_back("remoteFile4");
+  remoteFiles.push_back(s_remoteFileRawPath1);
+  remoteFiles.push_back(s_remoteFileRawPath2);
+  remoteFiles.push_back(s_remoteFileRawPath3);
+  remoteFiles.push_back(s_remoteFileRawPath4);
   const std::string archiveFile  = "/grandparent";
   ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile));
 
@@ -2096,10 +2093,10 @@ TEST_P(SchedulerTest, archive_to_directory) {
       archiveFileNames.insert(entry.getName());
     }
     ASSERT_EQ(4, archiveFileNames.size());
-    ASSERT_TRUE(archiveFileNames.find("remoteFile1") != archiveFileNames.end());
-    ASSERT_TRUE(archiveFileNames.find("remoteFile2") != archiveFileNames.end());
-    ASSERT_TRUE(archiveFileNames.find("remoteFile3") != archiveFileNames.end());
-    ASSERT_TRUE(archiveFileNames.find("remoteFile4") != archiveFileNames.end());
+    ASSERT_TRUE(archiveFileNames.find(s_remoteFileRawPath1) != archiveFileNames.end());
+    ASSERT_TRUE(archiveFileNames.find(s_remoteFileRawPath2) != archiveFileNames.end());
+    ASSERT_TRUE(archiveFileNames.find(s_remoteFileRawPath3) != archiveFileNames.end());
+    ASSERT_TRUE(archiveFileNames.find(s_remoteFileRawPath4) != archiveFileNames.end());
   }
 
   {
@@ -2119,10 +2116,10 @@ TEST_P(SchedulerTest, archive_to_directory) {
       archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(4, remoteFiles.size());
-    ASSERT_FALSE(remoteFiles.find("remoteFile1") == remoteFiles.end());
-    ASSERT_FALSE(remoteFiles.find("remoteFile2") == remoteFiles.end());
-    ASSERT_FALSE(remoteFiles.find("remoteFile3") == remoteFiles.end());
-    ASSERT_FALSE(remoteFiles.find("remoteFile4") == remoteFiles.end());
+    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
+    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath2) == remoteFiles.end());
+    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath3) == remoteFiles.end());
+    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath4) == remoteFiles.end());
     ASSERT_EQ(4, archiveFiles.size());
     ASSERT_FALSE(archiveFiles.find("/grandparent/remoteFile1") == remoteFiles.end());
     ASSERT_FALSE(archiveFiles.find("/grandparent/remoteFile2") == remoteFiles.end());
@@ -2142,10 +2139,10 @@ TEST_P(SchedulerTest, archive_to_directory) {
       archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(4, remoteFiles.size());
-    ASSERT_FALSE(remoteFiles.find("remoteFile1") == remoteFiles.end());
-    ASSERT_FALSE(remoteFiles.find("remoteFile2") == remoteFiles.end());
-    ASSERT_FALSE(remoteFiles.find("remoteFile3") == remoteFiles.end());
-    ASSERT_FALSE(remoteFiles.find("remoteFile4") == remoteFiles.end());
+    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
+    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath2) == remoteFiles.end());
+    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath3) == remoteFiles.end());
+    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath4) == remoteFiles.end());
     ASSERT_EQ(4, archiveFiles.size());
     ASSERT_FALSE(archiveFiles.find("/grandparent/remoteFile1") == remoteFiles.end());
     ASSERT_FALSE(archiveFiles.find("/grandparent/remoteFile2") == remoteFiles.end());
@@ -2167,10 +2164,10 @@ TEST_P(SchedulerTest,
   ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
 
   std::list<std::string> remoteFiles;
-  remoteFiles.push_back("remoteFile1");
-  remoteFiles.push_back("remoteFile2");
-  remoteFiles.push_back("remoteFile3");
-  remoteFiles.push_back("remoteFile4");
+  remoteFiles.push_back(s_remoteFileRawPath1);
+  remoteFiles.push_back(s_remoteFileRawPath2);
+  remoteFiles.push_back(s_remoteFileRawPath3);
+  remoteFiles.push_back(s_remoteFileRawPath4);
   const std::string archiveFile  = "/grandparent";
   ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles,
     archiveFile), std::exception);
@@ -2196,10 +2193,10 @@ TEST_P(SchedulerTest, archive_to_directory_with_zero_copy_storage_class) {
     storageClassName));
 
   std::list<std::string> remoteFiles;
-  remoteFiles.push_back("remoteFile1");
-  remoteFiles.push_back("remoteFile2");
-  remoteFiles.push_back("remoteFile3");
-  remoteFiles.push_back("remoteFile4");
+  remoteFiles.push_back(s_remoteFileRawPath1);
+  remoteFiles.push_back(s_remoteFileRawPath2);
+  remoteFiles.push_back(s_remoteFileRawPath3);
+  remoteFiles.push_back(s_remoteFileRawPath4);
   const std::string archiveFile  = "/grandparent";
   ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles,
     archiveFile), std::exception);
@@ -2231,10 +2228,10 @@ TEST_P(SchedulerTest, archive_to_directory_with_no_route) {
     nbPartialTapes, tapePoolComment));
 
   std::list<std::string> remoteFiles;
-  remoteFiles.push_back("remoteFile1");
-  remoteFiles.push_back("remoteFile2");
-  remoteFiles.push_back("remoteFile3");
-  remoteFiles.push_back("remoteFile4");
+  remoteFiles.push_back(s_remoteFileRawPath1);
+  remoteFiles.push_back(s_remoteFileRawPath2);
+  remoteFiles.push_back(s_remoteFileRawPath3);
+  remoteFiles.push_back(s_remoteFileRawPath4);
   const std::string archiveFile  = "/grandparent";
   ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles,
     archiveFile), std::exception);
@@ -2271,10 +2268,10 @@ TEST_P(SchedulerTest, archive_to_directory_with_incomplete_routing) {
     copyNb, tapePoolName, archivalRouteComment));
 
   std::list<std::string> remoteFiles;
-  remoteFiles.push_back("remoteFile1");
-  remoteFiles.push_back("remoteFile2");
-  remoteFiles.push_back("remoteFile3");
-  remoteFiles.push_back("remoteFile4");
+  remoteFiles.push_back(s_remoteFileRawPath1);
+  remoteFiles.push_back(s_remoteFileRawPath2);
+  remoteFiles.push_back(s_remoteFileRawPath3);
+  remoteFiles.push_back(s_remoteFileRawPath4);
   const std::string archiveFile  = "/grandparent";
   ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile), std::exception);
 }
@@ -2468,7 +2465,7 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
     std::list<std::string> archiveFiles;
     archiveFiles.push_back("/non_existing_file");
     ASSERT_THROW(scheduler.queueRetrieveRequest(s_userOnUserHost,
-      archiveFiles, s_remoteFileRawPath1), std::exception);
+      archiveFiles, "mock:non_existing_file"), std::exception);
   }
 }
 
