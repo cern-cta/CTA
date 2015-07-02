@@ -359,6 +359,14 @@ void cta::Scheduler::deleteTape(
 }
 
 //------------------------------------------------------------------------------
+// getTape
+//------------------------------------------------------------------------------
+cta::Tape cta::Scheduler::getTape(const SecurityIdentity &requester,
+  const std::string &vid) const {
+  return m_db.getTape(vid);
+}
+
+//------------------------------------------------------------------------------
 // getTapes
 //------------------------------------------------------------------------------
 std::list<cta::Tape> cta::Scheduler::getTapes(

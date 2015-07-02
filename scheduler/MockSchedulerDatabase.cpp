@@ -1432,7 +1432,7 @@ void cta::MockSchedulerDatabase::deleteTape(
 std::list<cta::Tape> cta::MockSchedulerDatabase::getTapes() const {
   std::ostringstream query;
   std::list<cta::Tape> tapes;
-  query << "SELECT VID, LOGICALLIBRARY, TAPEPOOL, CAPACITY_BYTES,"
+  query << "SELECT VID, NBFILES, LOGICALLIBRARY, TAPEPOOL, CAPACITY_BYTES,"
     " DATAONTAPE_BYTES, UID, GID, HOST, CREATIONTIME, COMMENT"
     " FROM TAPE ORDER BY VID;";
   sqlite3_stmt *s = NULL;

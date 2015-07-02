@@ -424,8 +424,7 @@ public:
   /**
    * Deletes the tape with the specified volume identifier.
    *
-   * @param requester The identity of the user requesting the deletion of the
-   * tape.
+   * @param requester The identity of the requester.
    * @param vid The volume identifier of the tape.
    */
   void deleteTape(
@@ -435,16 +434,19 @@ public:
   /**
    * Returns the tape with the specified volume identifier.
    *
+   * @param requester The identity of the requester.
    * @param vid The volume identifier of the tape.
    * @return The tape with the specified volume identifier.
    */
-  Tape getTape(const std::string &vid) const;
+  Tape getTape(
+    const SecurityIdentity &requester,
+    const std::string &vid) const;
 
   /**
    * Returns the current list of tapes in the lexicographical order of their
    * volume identifiers.
    *
-   * @param requester The identity of the user requesting the list.
+   * @param requester The identity of the requester
    * @return The current list of tapes in the lexicographical order of their
    * volume identifiers.
    */
