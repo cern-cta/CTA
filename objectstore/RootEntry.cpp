@@ -465,7 +465,7 @@ std::string cta::objectstore::RootEntry::addOrGetTapePoolAndCommit(const std::st
   TapePool tp(tapePoolAddress, ObjectOps<serializers::RootEntry>::m_objectStore);
   tp.initialize(tapePool);
   tp.setOwner(agent.getAddressIfSet());
-  tp.setBackupOwner(agent.getAddressIfSet());
+  tp.setBackupOwner("root");
   tp.insert();
   ScopedExclusiveLock tpl(tp);
   // Now move the tape pool's ownership to the root entry
@@ -571,13 +571,11 @@ std::string cta::objectstore::RootEntry::addOrGetDriveRegisterPointerAndCommit(
     agent.fetch();
     agent.addToOwnership(drAddress);
     agent.commit();
-  // Then create the drive register object
+    // Then create the drive register object
     DriveRegister dr(drAddress, m_objectStore);
     dr.initialize();
-    // There is no garbage collection for a drive register: if it is not
-    // plugged to the root entry, it does not exist.
-    dr.setOwner("");
-    dr.setBackupOwner("");
+    dr.setOwner(agent.getAddressIfSet());
+    dr.setBackupOwner(getAddressIfSet());
     dr.insert();
     // Take a lock on drive registry
     ScopedExclusiveLock drLock(dr);

@@ -56,8 +56,11 @@ public:
    * It also handles the passed lock and returns is unlocked.
    * The object is expected to be passed exclusive locked and already fetched.
    * No extra care will be required from the object
+   *
+   * @param lock reference to the generic object's lock
+   * @param presumedOwner address of the agent which pointed to the object
    */
-  void garbageCollect(ScopedExclusiveLock & lock);
+  void garbageCollect(ScopedExclusiveLock & lock, const std::string &presumedOwner);
   
   CTA_GENERATE_EXCEPTION_CLASS(UnsupportedType);
   /**

@@ -35,7 +35,7 @@ public:
   DriveRegister(GenericObject & go);
   void initialize();
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
-  void garbageCollect();
+  void garbageCollect(const std::string &presumedOwner);
   bool isEmpty();
   void addDrive (std::string name);
   void removeDrive (const std::string  & name);

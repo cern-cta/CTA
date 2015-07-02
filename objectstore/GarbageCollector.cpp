@@ -152,9 +152,9 @@ void GarbageCollector::checkHeartbeats() {
   }
 }
 
- void GarbageCollector::cleanupDeadAgent(const std::string & name) {
+ void GarbageCollector::cleanupDeadAgent(const std::string & address) {
    // Check that we are still owners of the agent (sanity check).
-   Agent agent(name, m_objectStore);
+   Agent agent(address, m_objectStore);
    ScopedExclusiveLock agLock(agent);
    agent.fetch();
    if (agent.getOwner() != m_ourAgent.getAddressIfSet()) {
@@ -171,7 +171,7 @@ void GarbageCollector::checkHeartbeats() {
        go.fetch();
        // Call GenericOpbject's garbage collect method, which in turn will
        // delegate to the object type's garbage collector.
-       go.garbageCollect(goLock);
+       go.garbageCollect(goLock, address);
      }
      // In all cases, relinquish ownership for this object
      agent.removeFromOwnership(*obj);

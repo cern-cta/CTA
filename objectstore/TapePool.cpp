@@ -21,6 +21,7 @@
 #include "ProtocolBuffersAlgorithms.hpp"
 #include "CreationLog.hpp"
 #include "Tape.hpp"
+#include "RootEntry.hpp"
 
 cta::objectstore::TapePool::TapePool(const std::string& address, Backend& os):
   ObjectOps<serializers::TapePool>(os, address) { }
@@ -141,25 +142,44 @@ std::string cta::objectstore::TapePool::getTapeAddress(const std::string& vid) {
   return serializers::findElement(m_payload.tapes(), vid).address();
 }
 
-
-
-
-
-
 bool cta::objectstore::TapePool::isEmpty() {
   checkPayloadReadable();
   // Check we have no tapes in pool
   if (m_payload.tapes_size())
     return false;
   // Check we have no archival jobs pending
-  if (m_payload.archivaljobs_size())
+  if (m_payload.archivejobs_size())
     return false;
   // If we made it to here, it seems the pool is indeed empty.
   return true;
 }
 
-void cta::objectstore::TapePool::garbageCollect() {
+void cta::objectstore::TapePool::garbageCollect(const std::string &presumedOwner) {
   checkPayloadWritable();
+  // If the agent is not anymore the owner of the object, then only the very
+  // last operation of the tape pool creation failed. We have nothing to do.
+  if (presumedOwner != m_header.owner())
+    return;
+  // If the owner is still the agent, there are 2 possibilities
+  // 1) The tape pool is referenced in the root entry, and then nothing is needed
+  // besides setting the tape pool's owner to the root entry's address in 
+  // order to enable its usage. Before that, it was considered as a dangling
+  // pointer.
+  {
+    RootEntry re(m_objectStore);
+    ScopedSharedLock rel (re);
+    re.fetch();
+    auto tpd=re.dumpTapePools();
+    for (auto tp=tpd.begin(); tp!=tpd.end(); tp++) {
+      if (tp->address == getAddressIfSet()) {
+        setOwner(re.getAddressIfSet());
+        commit();
+        return;
+      }
+    }
+  }
+  // 2) The tape pool is not referenced by the root entry. It is then effectively
+  // not accessible and should be discarded.
   if (!isEmpty()) {
     throw (NotEmpty("Trying to garbage collect a non-empty TapePool: internal error"));
   }
@@ -179,8 +199,64 @@ std::string cta::objectstore::TapePool::getName() {
 void cta::objectstore::TapePool::addJob(const ArchiveToFileRequest::JobDump& job,
   const std::string & archiveToFileAddress, uint64_t size) {
   checkPayloadWritable();
-  auto * j = m_payload.add_archivaljobs();
+  auto * j = m_payload.add_archivejobs();
   j->set_address(archiveToFileAddress);
   j->set_size(size);
 }
+
+auto cta::objectstore::TapePool::getJobsSummary() -> JobsSummary {
+  checkPayloadReadable();
+  JobsSummary ret;
+  ret.files = m_payload.archivejobs_size();
+  ret.bytes = m_payload.archivejobstotalsize();
+  return ret;
+}
+
+bool cta::objectstore::TapePool::addJobIfNecessary(const ArchiveToFileRequest::JobDump& job, const std::string& archiveToFileAddress, uint64_t size) {
+  checkPayloadWritable();
+  auto & jl=m_payload.archivejobs();
+  for (auto j=jl.begin(); j!= jl.end(); j++) {
+    if (j->address() == archiveToFileAddress)
+      return false;
+  }
+  auto * j = m_payload.add_archivejobs();
+  j->set_address(archiveToFileAddress);
+  j->set_size(size);
+  return true;
+}
+
+void cta::objectstore::TapePool::removeJob(const std::string& archiveToFileAddress) {
+  checkPayloadWritable();
+  auto * jl=m_payload.mutable_archivejobs();
+  bool found = false;
+  do {
+    // Push the found entry all the way to the end.
+    for (size_t i=0; i<(size_t)jl->size(); i++) {
+      if (jl->Get(i).address() == archiveToFileAddress) {
+        found = true;
+        while (i+1 < (size_t)jl->size()) {
+          jl->SwapElements(i, i+1);
+          i++;
+        }
+        break;
+      }
+    }
+    // and remove it
+    if (found)
+      jl->RemoveLast();
+  } while (found);
+}
+
+auto cta::objectstore::TapePool::dumpJobs() -> std::list<JobDump> {
+  checkPayloadReadable();
+  std::list<JobDump> ret;
+  auto & jl=m_payload.archivejobs();
+  for (auto j=jl.begin(); j!=jl.end(); j++) {
+    ret.push_back(JobDump());
+    ret.back().address = j->address();
+    ret.back().size = j->size();
+  }
+  return ret;
+}
+
 

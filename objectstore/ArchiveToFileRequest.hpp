@@ -34,8 +34,29 @@ public:
   ArchiveToFileRequest(const std::string & address, Backend & os);
   ArchiveToFileRequest(GenericObject & go);
   void initialize();
+  // Job management ============================================================
   void addJob(uint16_t copyNumber, const std::string & tapepool,
     const std::string & tapepooladdress);
+  void jobSelect(uint16_t copyNumber, const std::string & owner);
+  void jobSetPending(uint16_t copyNumber);
+  void jobSetSuccessful(uint16_t copyNumber);
+  void jobSetFailed(uint16_t copyNumber);
+  // Duplication of the protbuff statuses
+  enum jobStatus {
+    AJS_LinkingToTapePool = 0,
+    AJS_Pending = 1,
+    AJS_Selected = 2,
+    AJS_Complete = 3,
+    AJS_Failed = 99
+  };
+  enum jobStatus getJobStatus(uint16_t copyNumber);
+  // Handling of the consequences of a job status change for the entire request.
+  // This function returns true if the request got finished.
+  bool finishIfNecessary();
+  // Request management ========================================================
+  void setSuccessful();
+  void setFailed();
+  // ===========================================================================
   void setArchiveFile(const std::string & archiveFile);
   std::string getArchiveFile();
   void setRemoteFile (const std::string & remoteFile);
@@ -53,6 +74,7 @@ public:
     std::string tapePoolAddress;
   };
   std::list<JobDump> dumpJobs();
+  void garbageCollect(const std::string &presumedOwner);
 };
 
 }}

@@ -19,6 +19,7 @@
 #include "ArchiveToFileRequest.hpp"
 #include "GenericObject.hpp"
 #include "CreationLog.hpp"
+#include "TapePool.hpp"
 
 cta::objectstore::ArchiveToFileRequest::ArchiveToFileRequest(
   const std::string& address, Backend& os): 
@@ -46,6 +47,7 @@ void cta::objectstore::ArchiveToFileRequest::addJob(uint16_t copyNumber,
   j->set_copynb(copyNumber);
   j->set_status(serializers::ArchiveJobStatus::AJS_LinkingToTapePool);
   j->set_tapepool(tapepool);
+  j->set_owner("");
   j->set_tapepooladdress(tapepooladdress);
   j->set_totalretries(0);
   j->set_retrieswithinmount(0);
@@ -121,5 +123,71 @@ void cta::objectstore::ArchiveToFileRequest::setSize(uint64_t size) {
   checkPayloadWritable();
   m_payload.set_size(size);
 }
+
+void cta::objectstore::ArchiveToFileRequest::garbageCollect(const std::string &presumedOwner) {
+  checkPayloadWritable();
+  // The behavior here depends on which job the agent is supposed to own.
+  // We should first find this job (if any). This is for covering the case
+  // of a selected job. The Request could also still being connected to tape
+  // pools. In this case we will finish the connection to tape pools unconditionally.
+  auto * jl = m_payload.mutable_jobs();
+  auto s= m_payload.size();
+  s=s;
+  for (auto j=jl->begin(); j!=jl->end(); j++) {
+    auto owner=j->owner();
+    auto status=j->status();
+    if (status==serializers::AJS_LinkingToTapePool ||
+        (status==serializers::AJS_Selected && owner==presumedOwner)) {
+        // If the job was being connected to the tape pool or was selected
+        // by the dead agent, then we have to ensure it is indeed connected to
+        // the tape pool and set its status to pending.
+        // (Re)connect the job to the tape pool and make it pending.
+        // If we fail to reconnect, we have to fail the job and potentially
+        // finish the request.
+      try {
+        TapePool tp(j->tapepooladdress(), m_objectStore);
+        ScopedExclusiveLock tpl(tp);
+        tp.fetch();
+        JobDump jd;
+        jd.copyNb = j->copynb();
+        jd.tapePool = j->tapepool();
+        jd.tapePoolAddress = j->tapepooladdress();
+        if (tp.addJobIfNecessary(jd, getAddressIfSet(), m_payload.size()))
+          tp.commit();
+        j->set_status(serializers::AJS_Pending);
+        commit();
+      } catch (...) {
+        j->set_status(serializers::AJS_Failed);
+        // This could be the end of the request, with various consequences.
+        // This is handled here:
+        if (finishIfNecessary())
+          return;
+      }
+    } else {
+      return;
+    }
+  }
+}
+
+bool cta::objectstore::ArchiveToFileRequest::finishIfNecessary() {
+  checkPayloadWritable();
+  // This function is typically called after changing the status of one job
+  // in memory. If the job is complete, we will just remove it.
+  // TODO: we will have to push the result to the ArchiveToDirRequest when
+  // it gets implemented.
+  // If all the jobs are either complete or failed, we can remove the request.
+  auto & jl=m_payload.jobs();
+  for (auto j=jl.begin(); j!=jl.end(); j++) {
+    if (j->status() != serializers::AJS_Complete 
+        && j->status() != serializers::AJS_Failed) {
+      return false;
+    }
+  }
+  remove();
+  return true;
+}
+
+      
+
 
 

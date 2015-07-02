@@ -35,4 +35,4 @@ namespace cta { namespace objectstore {
   MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(RetrieveToFileRequest);
   
 #undef MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID
-}} 
+}}

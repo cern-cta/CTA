@@ -64,34 +64,37 @@ Backend& GenericObject::objectStore() {
   return m_objectStore;
 }
 
+namespace {
+  using cta::objectstore::GenericObject;
+  using cta::objectstore::ScopedExclusiveLock;
+  template <class C>
+  void garbageCollectWithType(GenericObject * gop, ScopedExclusiveLock& lock,
+      const std::string &presumedOwner) {
+    C typedObject(*gop);
+    lock.transfer(typedObject);
+    typedObject.garbageCollect(presumedOwner);
+    // Release the lock now as if we let the caller do, it will point
+    // to the then-removed typedObject.
+    lock.release();
+  }
+}
 
-void GenericObject::garbageCollect(ScopedExclusiveLock& lock) {
+void GenericObject::garbageCollect(ScopedExclusiveLock& lock, 
+    const std::string &presumedOwner) {
   checkHeaderWritable();
   switch(m_header.type()) {
-    case serializers::AgentRegister_t: {
-      AgentRegister ar(*this);
-      lock.transfer(ar);
-      ar.garbageCollect();
-      // Release the lock now as if we let the caller do, it will point
-      // to the then-removed ar.
-      lock.release();
-    } break;
-    case serializers::TapePool_t: {
-      TapePool tp(*this);
-      lock.transfer(tp);
-      tp.garbageCollect();
-      // Release the lock now as if we let the caller do, it will point
-      // to the then-removed tp.
-      lock.release();
-    } break;
-    case serializers::DriveRegister_t: {
-      DriveRegister dr(*this);
-      lock.transfer(dr);
-      dr.garbageCollect();
-      // Release the lock now as if we let the caller do, it will point
-      // to the then-removed dr.
-      lock.release();
-    } break;
+    case serializers::AgentRegister_t:
+      garbageCollectWithType<AgentRegister>(this, lock, presumedOwner);
+      break;
+    case serializers::TapePool_t:
+      garbageCollectWithType<TapePool>(this, lock, presumedOwner);
+      break;
+    case serializers::DriveRegister_t:
+      garbageCollectWithType<DriveRegister>(this, lock, presumedOwner);
+      break;
+    case serializers::ArchiveToFileRequest_t:
+      garbageCollectWithType<ArchiveToFileRequest>(this, lock, presumedOwner);
+      break;
     default: {
       std::stringstream err;
       err << "In GenericObject::garbageCollect, unsupported type: "

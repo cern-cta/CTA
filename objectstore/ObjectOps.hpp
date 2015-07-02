@@ -294,7 +294,7 @@ public:
   /**
    * This function should be overloaded in the inheriting classes
    */
-  void garbageCollect() {
+  void garbageCollect(const std::string &presumedOwner) {
     throw WrongTypeForGarbageCollection("In ObjectOps::garbageCollect. "
       "This function should have been overloaded in derived class");
   }

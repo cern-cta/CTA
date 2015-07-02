@@ -319,7 +319,13 @@ void OStoreDB::createTape(const std::string& vid,
   objectstore::TapePool tp(tpAddress, m_objectStore);
   ScopedExclusiveLock tpl(tp);
   tp.fetch();
+  // Check the tape pool is owned by the root entry. If not, it should be
+  // considered as a dangling pointer.
+  if (tp.getOwner() != re.getAddressIfSet())
+    throw NoSuchTapePool("In OStoreDB::createTape: trying to create a tape in a"
+      " non-existing tape pool (dangling pointer)");
   // Check that the tape exists and throw an exception if it does.
+  // TODO: we should check in all tape pools (or have a central index)
   try {
     tp.getTapeAddress(vid);
     throw TapeAlreadyExists("In OStoreDB::createTape: trying to create an existing tape.");
@@ -345,6 +351,10 @@ std::list<cta::Tape> OStoreDB::getTapes() const {
     objectstore::TapePool tp(tpi->address, m_objectStore);
     ScopedSharedLock tpl(tp);
     tp.fetch();
+    // Check the tape pool is owned by the root entry. If not, it should be
+    // considered as a dangling pointer (and skip it)
+    if (tp.getOwner() != re.getAddressIfSet())
+      continue;
     auto tl=tp.dumpTapes();
     for (auto ti=tl.begin(); ti!=tl.end(); ti++) {
       objectstore::Tape t(ti->address, m_objectStore);
@@ -395,6 +405,10 @@ void OStoreDB::deleteLogicalLibrary(const SecurityIdentity& requester,
     objectstore::TapePool tp(tpp->address, m_objectStore);
     ScopedSharedLock tplock(tp);
     tp.fetch();
+    // Check the tape pool is owned by the root entry. If not, it should be
+    // considered as a dangling pointer.
+    if (tp.getOwner() != re.getAddressIfSet())
+      continue;
     auto tl=tp.dumpTapes();
     for (auto t=tl.begin(); t!=tl.end(); t++) {
       if (t->logicalLibraryName == name)
@@ -443,13 +457,36 @@ void OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
   atfr.setOwner(m_agent->getAddressIfSet());
   atfr.insert();
   ScopedExclusiveLock atfrl(atfr);
-  // We can now plug the request onto its tape pools
-  for (auto j=jl.begin(); j!=jl.end(); j++) {
-    objectstore::TapePool tp(j->tapePoolAddress, m_objectStore);
-    ScopedExclusiveLock tpl(tp);
-    tp.fetch();
-    tp.addJob(*j, atfr.getAddressIfSet(), atfr.getSize());
-    tp.commit();
+  // We can now plug the request onto its tape pools.
+  // We can discover at that point that a tape pool is actually not
+  // really owned by the root entry, and hence a dangling pointer
+  // We should then unlink the jobs from that already connected
+  // tape pools and abort the job creation.
+  // The list of done tape pools is held here for this purpose
+  std::list<std::string> linkedTapePools;
+  try {
+    for (auto j=jl.begin(); j!=jl.end(); j++) {
+      objectstore::TapePool tp(j->tapePoolAddress, m_objectStore);
+      ScopedExclusiveLock tpl(tp);
+      tp.fetch();
+      if (tp.getOwner() != re.getAddressIfSet())
+        throw NoSuchTapePool("In OStoreDB::queue: non-existing tape pool found "
+            "(dangling pointer): cancelling request creation.");
+      tp.addJob(*j, atfr.getAddressIfSet(), atfr.getSize());
+      tp.commit();
+      linkedTapePools.push_back(j->tapePoolAddress);
+    }
+  } catch (NoSuchTapePool &) {
+    // Unlink the request from already connected tape pools
+    for (auto tpa=linkedTapePools.begin(); tpa!=linkedTapePools.end(); tpa++) {
+      objectstore::TapePool tp(*tpa, m_objectStore);
+      ScopedExclusiveLock tpl(tp);
+      tp.fetch();
+      tp.removeJob(atfr.getAddressIfSet());
+      tp.commit();
+      atfr.remove();
+    }
+    throw;
   }
   // The request is now fully set. As it's multi-owned, we do not set the owner
   atfr.setOwner("");
@@ -461,6 +498,7 @@ void OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
     m_agent->removeFromOwnership(atfr.getAddressIfSet());
     m_agent->commit();
   }
+  return;
 }
 
 void OStoreDB::queue(const ArchiveToDirRequest& rqst) {

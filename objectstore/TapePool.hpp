@@ -67,13 +67,30 @@ public:
   // Archival jobs management ==================================================
   void addJob(const ArchiveToFileRequest::JobDump & job,
     const std::string & archiveToFileAddress, uint64_t size);
+  /// This version will check for existence of the job in the queue before
+  // returns true if a new job was inserted.
+  bool addJobIfNecessary(const ArchiveToFileRequest::JobDump & job,
+    const std::string & archiveToFileAddress, uint64_t size);
+  class JobsSummary {
+  public:
+    uint64_t files;
+    uint64_t bytes;
+  };
+  JobsSummary getJobsSummary();
+  void removeJob(const std::string &archiveToFileAddress);
+  class JobDump {
+  public:
+    uint64_t size;
+    std::string address;
+  };
+  std::list<JobDump> dumpJobs();
   
   // Check that the tape pool is empty (of both tapes and jobs)
   bool isEmpty();
  
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   // Garbage collection
-  void garbageCollect();
+  void garbageCollect(const std::string &presumedOwner);
 };
   
 }}

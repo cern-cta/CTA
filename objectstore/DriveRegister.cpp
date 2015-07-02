@@ -19,6 +19,7 @@
 #include "DriveRegister.hpp"
 #include "ProtocolBuffersAlgorithms.hpp"
 #include "GenericObject.hpp"
+#include "RootEntry.hpp"
 
 cta::objectstore::DriveRegister::DriveRegister(const std::string & address, Backend & os):
   ObjectOps<serializers::DriveRegister>(os, address) { }
@@ -37,8 +38,28 @@ void cta::objectstore::DriveRegister::initialize() {
   m_payloadInterpreted = true;
 }
 
-void cta::objectstore::DriveRegister::garbageCollect() {
+void cta::objectstore::DriveRegister::garbageCollect(const std::string &presumedOwner) {
   checkPayloadWritable();
+  // If the agent is not anymore the owner of the object, then only the very
+  // last operation of the drive register creation failed. We have nothing to do.
+  if (presumedOwner != m_header.owner())
+    return;
+  // If the owner is still the agent, we have 2 possibilities:
+  // 1) The register is referenced by the root entry. We just need to officialize
+  // the ownership on the reguster
+  {
+    RootEntry re(m_objectStore);
+    ScopedSharedLock rel (re);
+    re.fetch();
+    try {
+      if (re.getAgentRegisterAddress() == getAddressIfSet()) {
+        setOwner(re.getAddressIfSet());
+        commit();
+        return;
+      }
+    } catch (RootEntry::NotAllocated &) {}
+  }
+  // 2) The tape pool is not referenced in the root entry. We can just clean it up.
   if (!isEmpty()) {
     throw (NotEmpty("Trying to garbage collect a non-empty AgentRegister: internal error"));
   }

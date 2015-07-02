@@ -174,7 +174,7 @@ message TapePointer {
 message TapePool {
   required string name = 4100;
   repeated TapePointer tapes = 4101;
-  repeated ArchiveJobPointer archivaljobs = 4102;
+  repeated ArchiveJobPointer archivejobs = 4102;
   required uint64 ArchiveJobsTotalSize = 4103;
 }
 
@@ -215,9 +215,10 @@ message ArchiveJobEntry {
   required uint32 copynb = 4400;
   required string tapepool = 4401;
   required string tapepooladdress = 4402;
-  required ArchiveJobStatus status = 4403;
-  required uint32 totalretries = 4404;
-  required uint32 retrieswithinmount = 4405;
+  required string owner = 4403;
+  required ArchiveJobStatus status = 4404;
+  required uint32 totalretries = 4405;
+  required uint32 retrieswithinmount = 4406;
 }
 
 message ArchiveToFileRequest {
