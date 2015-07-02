@@ -505,7 +505,13 @@ void cta::Scheduler::queueArchiveRequest(
       throw exception::Exception(message.str());
     }
 
-    queueArchiveToDirRequest(requester, remoteFiles, archiveDir);
+    // Fetch the file sizes for each file
+    std::list<RemoteFileInfo> rfil;
+    for (auto rf=remoteFiles.begin(); rf!=remoteFiles.end(); rf++) {
+      auto rfStat = m_remoteNS.statFile(*rf);
+      rfil.push_back(RemoteFileInfo(*rf, rfStat.getSize()));
+    }
+    queueArchiveToDirRequest(requester, rfil, archiveDir);
 
   // Else archive to a single file
   } else {
@@ -517,8 +523,9 @@ void cta::Scheduler::queueArchiveRequest(
         " actual=" << remoteFiles.size() << " archiveFile=" << archiveFile;
       throw exception::Exception(message.str());
     }
-
-    queueArchiveToFileRequest(requester, remoteFiles.front(), archiveFile);
+    auto rfStat=m_remoteNS.statFile(remoteFiles.front());
+    queueArchiveToFileRequest(requester, 
+      RemoteFileInfo(remoteFiles.front(), rfStat.getSize()), archiveFile);
   }
 }
 
@@ -527,7 +534,7 @@ void cta::Scheduler::queueArchiveRequest(
 //------------------------------------------------------------------------------
 void cta::Scheduler::queueArchiveToDirRequest(
   const SecurityIdentity &requester,
-  const std::list<std::string> &remoteFiles,
+  const std::list<RemoteFileInfo> &remoteFiles,
   const std::string &archiveDir) {
 
   const uint64_t priority = 0; // TO BE DONE
@@ -567,7 +574,7 @@ void cta::Scheduler::assertStorageClassHasAtLeastOneCopy(
 std::list<cta::ArchiveToFileRequest> cta::Scheduler::
   createArchiveToFileRequests(
   const SecurityIdentity &requester,
-  const std::list<std::string> &remoteFiles,
+  const std::list<RemoteFileInfo> &remoteFiles,
   const std::string &archiveDir,
   const uint64_t priority) {
   const bool archiveDirEndsWithASlash = Utils::endsWith(archiveDir, '/');
@@ -575,7 +582,7 @@ std::list<cta::ArchiveToFileRequest> cta::Scheduler::
 
   for(auto itor = remoteFiles.cbegin(); itor != remoteFiles.cend(); itor++) {
     const auto remoteFile = *itor;
-    const auto remoteFileName = Utils::getEnclosedName(remoteFile);
+    const auto remoteFileName = Utils::getEnclosedName(remoteFile.path);
     const std::string archiveFile = archiveDirEndsWithASlash ?
       archiveDir + remoteFileName : archiveDir + '/' + remoteFileName;
     archiveToFileRequests.push_back(createArchiveToFileRequest(requester,
@@ -615,7 +622,7 @@ void cta::Scheduler::createNSEntryAndUpdateSchedulerDatabase(
 //------------------------------------------------------------------------------
 void cta::Scheduler::queueArchiveToFileRequest(
   const SecurityIdentity &requester,
-  const std::string &remoteFile,
+  const RemoteFileInfo &remoteFile,
   const std::string &archiveFile) {
 
   const uint64_t priority = 0; // TO BE DONE
@@ -631,7 +638,7 @@ void cta::Scheduler::queueArchiveToFileRequest(
 //------------------------------------------------------------------------------
 cta::ArchiveToFileRequest cta::Scheduler::createArchiveToFileRequest(
   const SecurityIdentity &requester,
-  const std::string &remoteFile,
+  const RemoteFileInfo &remoteFile,
   const std::string &archiveFile,
   const uint64_t priority) const {
 
@@ -642,13 +649,12 @@ cta::ArchiveToFileRequest cta::Scheduler::createArchiveToFileRequest(
   assertStorageClassHasAtLeastOneCopy(storageClass);
   const auto routes = m_db.getArchivalRoutes(storageClassName);
   const auto copyNbToPoolMap = createCopyNbToPoolMap(routes);
-  const auto fileInfo = m_remoteNS.statFile(remoteFile);
 
   const CreationLog log(requester.getUser(), requester.getHost(), time(NULL), "");
   return ArchiveToFileRequest(
-    remoteFile,
+    remoteFile.path,
+    remoteFile.size,
     archiveFile,
-    fileInfo,
     copyNbToPoolMap,
     priority,
     log);

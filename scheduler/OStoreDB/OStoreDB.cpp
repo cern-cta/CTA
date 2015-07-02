@@ -426,7 +426,8 @@ void OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
   objectstore::ArchiveToFileRequest atfr(m_agent->nextId("ArchiveToFileRequest"), m_objectStore);
   atfr.initialize();
   atfr.setArchiveFile(rqst.getArchiveFile());
-  atfr.setRemoteFile(rqst.getRemoteFile());
+  atfr.setRemoteFile(rqst.getRemoteFilePath());
+  atfr.setSize(rqst.getRemoteFileSize());
   atfr.setPriority(rqst.getPriority());
   atfr.setCreationLog(rqst.getCreationLog());
   // We will need to identity tapepools is order to construct the request

@@ -56,9 +56,10 @@ public:
    * @param creationLog The creation information
    */
   ArchiveToFileRequest(
-    const std::string &remoteFile,
+    const std::string &remoteFilePath,
+    const uint64_t remoteFileSize,
     const std::string &archiveFile,
-    const RemoteFileStatus &remoteFileStatus,
+    //const RemoteFileStatus &remoteFileStatus,
     const std::map<uint16_t, std::string> &copyNbToPoolMap,
     const uint64_t priority,
     const CreationLog & creationLog);
@@ -68,8 +69,15 @@ public:
    *
    * @return The URL of the source remote file to be archived.
    */
-  const std::string &getRemoteFile() const throw();
+  const std::string &getRemoteFilePath() const throw();
 
+  /**
+   * Returns the size of the file.
+   * 
+   * @return the size of the file.
+   */
+  uint64_t getRemoteFileSize() const throw();
+  
   /**
    * Returns the full path of the destination archive file.
    *
@@ -89,8 +97,13 @@ private:
   /**
    * The URL of the destination remote file to be archived.
    */
-  std::string m_remoteFile;
+  std::string m_remoteFilePath;
 
+  /**
+   * The remote file size
+   */
+  uint64_t m_remoteFileSize;
+  
   /**
    * The full path of the source archive file.
    */
@@ -104,7 +117,7 @@ private:
   /**
    * The status gotten from stat-ing the remote file.
    */
-  RemoteFileStatus m_remoteFileStatus;
+  //RemoteFileStatus m_remoteFileStatus;
   
 }; // class ArchiveToFileRequest
 

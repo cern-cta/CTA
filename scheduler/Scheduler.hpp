@@ -721,6 +721,16 @@ private:
   RemoteNS &m_remoteNS;
   
   /**
+   * A class containing the necessary information to queue an Archive request
+   */
+  class RemoteFileInfo {
+  public:
+    RemoteFileInfo(const std::string & p, const uint64_t s):path(p), size(s) {}
+    std::string path;
+    uint64_t size;
+  };
+  
+  /**
    * Queues the specified request to archive one or more remote files to an
    * archive directory.
    *
@@ -736,7 +746,7 @@ private:
    */
   void queueArchiveToDirRequest(
     const SecurityIdentity &requester,
-    const std::list<std::string> &remoteFiles,
+    const std::list<RemoteFileInfo> &remoteFiles,
     const std::string &archiveDir);
 
   /**
@@ -760,7 +770,7 @@ private:
    */
   std::list<ArchiveToFileRequest> createArchiveToFileRequests(
     const SecurityIdentity &requester,
-    const std::list<std::string> &remoteFiles,
+    const std::list<RemoteFileInfo> &remoteFiles,
     const std::string &archiveDir,
     const uint64_t priority);
 
@@ -785,7 +795,7 @@ private:
    */
   void queueArchiveToFileRequest(
     const SecurityIdentity &requester,
-    const std::string &remoteFile,
+    const RemoteFileInfo &remoteFile,
     const std::string &archiveFile);
 
   /**
@@ -799,7 +809,7 @@ private:
    */
   ArchiveToFileRequest createArchiveToFileRequest(
     const SecurityIdentity &requester,
-    const std::string &remoteFile,
+    const RemoteFileInfo &remoteFile,
     const std::string &archiveFile,
     const uint64_t priority) const;
 

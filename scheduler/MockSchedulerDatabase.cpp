@@ -214,7 +214,7 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst) {
     const uint16_t copyNb = itor->first;
     const std::string &tapePoolName = itor->second;
     queue(ArchiveToTapeCopyRequest(
-      rqst.getRemoteFile(),
+      rqst.getRemoteFilePath(),
       rqst.getArchiveFile(),
       copyNb,
       tapePoolName,
