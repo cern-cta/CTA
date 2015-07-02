@@ -46,6 +46,7 @@ public:
    * Constructor.
    *
    * @param vid The volume identifier of the tape.
+   * @param nbFiles The total number of files stored on the tape.
    * @param logicalLibraryName The name of the logical library to which the tape
    * belongs.
    * @param tapePoolName The name of the tape pool to which the tape belongs.
@@ -56,6 +57,7 @@ public:
    */
   Tape(
     const std::string &vid,
+    const uint64_t nbFiles,
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
@@ -75,6 +77,13 @@ public:
    * @return The volume identifier of the tape.
    */
   const std::string &getVid() const throw();
+
+  /**
+   * Returns the total number of files stored on the tape.
+   *
+   * @return The total number of files stored on the tape.
+   */
+  uint64_t getNbFiles() const throw();
 
   /**
    * Returns the name of the logical library to which the tape belongs.
@@ -117,6 +126,11 @@ private:
    * The volume identifier of the tape.
    */
   std::string m_vid;
+
+  /**
+   * The total number of files stored on the tape.
+   */
+  uint64_t m_nbFiles;
 
   /**
    * The name of the logical library to which the tape belongs.

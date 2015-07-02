@@ -91,7 +91,7 @@ void cta::MockSchedulerDatabase::createSchema() {
       "NBCOPIES       INTEGER,"
       "UID            INTEGER,"
       "GID            INTEGER,"
-      "HOST              TEXT,"
+      "HOST           TEXT,"
       "CREATIONTIME   INTEGER,"
       "COMMENT        TEXT"
       ");"
@@ -100,21 +100,22 @@ void cta::MockSchedulerDatabase::createSchema() {
       "NBPARTIALTAPES INTEGER,"
       "UID            INTEGER,"
       "GID            INTEGER,"
-      "HOST              TEXT,"
+      "HOST           TEXT,"
       "CREATIONTIME   INTEGER,"
       "COMMENT        TEXT"
       ");"
     "CREATE TABLE TAPE("
-      "VID                 TEXT,"
-      "LOGICALLIBRARY TEXT,"
-      "TAPEPOOL       TEXT,"
-      "CAPACITY_BYTES      INTEGER,"
-      "DATAONTAPE_BYTES    INTEGER,"
-      "UID                 INTEGER,"
-      "GID                 INTEGER,"
-      "HOST              TEXT,"
-      "CREATIONTIME        INTEGER,"
-      "COMMENT             TEXT,"
+      "VID              TEXT,"
+      "NBFILES          INTEGER,"
+      "LOGICALLIBRARY   TEXT,"
+      "TAPEPOOL         TEXT,"
+      "CAPACITY_BYTES   INTEGER,"
+      "DATAONTAPE_BYTES INTEGER,"
+      "UID              INTEGER,"
+      "GID              INTEGER,"
+      "HOST             TEXT,"
+      "CREATIONTIME     INTEGER,"
+      "COMMENT          TEXT,"
       "PRIMARY KEY (VID),"
       "FOREIGN KEY (LOGICALLIBRARY) REFERENCES LOGICALLIBRARY(NAME),"
       "FOREIGN KEY (TAPEPOOL) REFERENCES TAPEPOOL(NAME)"
@@ -142,7 +143,7 @@ void cta::MockSchedulerDatabase::createSchema() {
       "NAME           TEXT,"
       "UID            INTEGER,"
       "GID            INTEGER,"
-      "HOST              TEXT,"
+      "HOST            TEXT,"
       "CREATIONTIME   INTEGER,"
       "COMMENT        TEXT,"
       "PRIMARY KEY (NAME)"
@@ -156,7 +157,7 @@ void cta::MockSchedulerDatabase::createSchema() {
       "PRIORITY       INTEGER,"
       "UID            INTEGER,"
       "GID            INTEGER,"
-      "HOST              TEXT,"
+      "HOST           TEXT,"
       "CREATIONTIME   INTEGER,"
       "PRIMARY KEY (ARCHIVEFILE, COPYNB),"
       "FOREIGN KEY (TAPEPOOL) REFERENCES TAPEPOOL(NAME)"
@@ -578,9 +579,9 @@ std::map<cta::Tape, std::list<cta::RetrieveFromTapeCopyRequest> >
 cta::Tape cta::MockSchedulerDatabase::getTape(const std::string &vid) const {
   std::ostringstream query;
   cta::Tape tape;
-  query << "SELECT VID, LOGICALLIBRARY, TAPEPOOL, CAPACITY_BYTES,"
-    " DATAONTAPE_BYTES, UID, GID, HOST, CREATIONTIME, COMMENT FROM TAPE WHERE VID='"
-    << vid << "';";
+  query << "SELECT VID, NBFILES, LOGICALLIBRARY, TAPEPOOL, CAPACITY_BYTES,"
+    " DATAONTAPE_BYTES, UID, GID, HOST, CREATIONTIME, COMMENT FROM TAPE"
+    " WHERE VID='" << vid << "';";
   sqlite3_stmt *s = NULL;
   const int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &s, 0 );
   std::unique_ptr<sqlite3_stmt, SQLiteStatementDeleter> statement(s);
@@ -595,6 +596,7 @@ cta::Tape cta::MockSchedulerDatabase::getTape(const std::string &vid) const {
       SqliteColumnNameToIndex idx(statement.get());
       tape = Tape(
         (char *)sqlite3_column_text(statement.get(),idx("VID")),
+        (uint64_t)sqlite3_column_int64(statement.get(),idx("NBFILES")),
         (char *)sqlite3_column_text(statement.get(),idx("LOGICALLIBRARY")),
         (char *)sqlite3_column_text(statement.get(),idx("TAPEPOOL")),
         (uint64_t)sqlite3_column_int64(statement.get(),idx("CAPACITY_BYTES")),
@@ -1445,6 +1447,7 @@ std::list<cta::Tape> cta::MockSchedulerDatabase::getTapes() const {
     SqliteColumnNameToIndex idx(statement.get());
     tapes.push_back(Tape(
       (char *)sqlite3_column_text(statement.get(),idx("VID")),
+      (uint64_t)sqlite3_column_int64(statement.get(),idx("NBFILES")),
       (char *)sqlite3_column_text(statement.get(),idx("LOGICALLIBRARY")),
       (char *)sqlite3_column_text(statement.get(),idx("TAPEPOOL")),
       (uint64_t)sqlite3_column_int64(statement.get(),idx("CAPACITY_BYTES")),

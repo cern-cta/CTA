@@ -8,7 +8,6 @@ set (CTA_SCHEDULER_SRC_FILES
   AdminHost.cpp
   AdminUser.cpp
   ArchivalFileTransfer.cpp
-  ArchivalMount.cpp
   ArchivalRoute.cpp
   ArchivalRouteId.cpp
   ArchiveRequest.cpp
@@ -23,10 +22,8 @@ set (CTA_SCHEDULER_SRC_FILES
   LogicalLibrary.cpp
   MockSchedulerDatabase.cpp
   MockSchedulerDatabaseFactory.cpp
-  Mount.cpp
   MountCriteria.cpp
   RetrievalFileTransfer.cpp
-  RetrievalMount.cpp
   RetrieveFromTapeCopyRequest.cpp
   RetrieveRequest.cpp
   RetrieveToDirRequest.cpp

@@ -204,6 +204,10 @@ public:
     return m_OStoreDB.getTapePools();
   }
 
+  virtual Tape getTape(const std::string &vid) const {
+    return m_OStoreDB.getTape(vid);
+  }
+
   virtual std::list<Tape> getTapes() const {
     return m_OStoreDB.getTapes();
   }

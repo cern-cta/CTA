@@ -37,12 +37,14 @@ cta::Tape::~Tape() throw() {
 //------------------------------------------------------------------------------
 cta::Tape::Tape(
     const std::string &vid,
+    const uint64_t nbFiles,
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
     const uint64_t dataOnTapeInBytes,
     const CreationLog & creationLog):
     m_vid(vid),
+    m_nbFiles(nbFiles),
     m_logicalLibraryName(logicalLibraryName),
     m_tapePoolName(tapePoolName),
     m_capacityInBytes(capacityInBytes),
@@ -62,6 +64,13 @@ bool cta::Tape::operator<(const Tape &rhs) const throw() {
 //------------------------------------------------------------------------------
 const std::string &cta::Tape::getVid() const throw() {
   return m_vid;
+}
+
+//------------------------------------------------------------------------------
+// getNbFiles
+//------------------------------------------------------------------------------
+uint64_t cta::Tape::getNbFiles() const throw() {
+  return m_nbFiles;
 }
 
 //------------------------------------------------------------------------------

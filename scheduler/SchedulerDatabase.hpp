@@ -422,6 +422,14 @@ public:
     const std::string &vid) = 0;
 
   /**
+   * Returns the tape with the specified volume identifier.
+   *
+   * @param vid The volume identifier of the tape.
+   * @return The tape with the specified volume identifier.
+   */
+  virtual Tape getTape(const std::string &vid) const = 0;
+
+  /**
    * Returns the current list of tapes in the lexicographical order of their
    * volume identifiers.
    *

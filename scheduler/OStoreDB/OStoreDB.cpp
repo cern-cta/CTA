@@ -330,6 +330,10 @@ void OStoreDB::createTape(const std::string& vid,
   tp.commit();
 }
 
+cta::Tape OStoreDB::getTape(const std::string &vid) const {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
 std::list<cta::Tape> OStoreDB::getTapes() const {
   std::list<cta::Tape> ret;
   // Got through all tape pools. Get the list of them
@@ -346,8 +350,9 @@ std::list<cta::Tape> OStoreDB::getTapes() const {
       objectstore::Tape t(ti->address, m_objectStore);
       ScopedSharedLock tl(t);
       t.fetch();
-      ret.push_back(cta::Tape(ti->vid, ti->logicalLibraryName, tpi->tapePool,
-        ti->capacityInBytes, t.getStoredData(), ti->log));
+      const uint64_t nbFiles = 0; // TO BE DONE
+      ret.push_back(cta::Tape(ti->vid, nbFiles, ti->logicalLibraryName,
+        tpi->tapePool, ti->capacityInBytes, t.getStoredData(), ti->log));
     }
   }
   return ret;

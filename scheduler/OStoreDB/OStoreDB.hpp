@@ -107,6 +107,8 @@ public:
     const std::string& tapePoolName, const uint64_t capacityInBytes, 
     const cta::CreationLog& creationLog);
 
+  virtual Tape getTape(const std::string &vid) const;
+
   virtual std::list<Tape> getTapes() const;
 
   virtual void deleteTape(const SecurityIdentity& requester, const std::string& vid);
