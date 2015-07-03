@@ -325,7 +325,7 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
       jd.copyNb = 1;
       jd.tapePool = "TapePool0";
       jd.tapePoolAddress = tpAddr[0];
-      tp.addJob(jd, atfr.getAddressIfSet(), 1000+pass);
+      tp.addJob(jd, atfr.getArchiveFile(), atfr.getAddressIfSet(), 1000+pass);
       tp.commit();
     }
     if (pass < 3) { pass++; continue; }
@@ -339,7 +339,7 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
       jd.copyNb = 2;
       jd.tapePool = "TapePool1";
       jd.tapePoolAddress = tpAddr[1];
-      tp.addJob(jd, atfr.getAddressIfSet(), 1000);
+      tp.addJob(jd, atfr.getArchiveFile(), atfr.getAddressIfSet(), 1000);
       tp.commit();
     }
     if (pass < 4) { pass++; continue; }

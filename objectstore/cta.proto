@@ -152,6 +152,7 @@ message AgentRegister {
 // ------------- Jobs handling -------------------------------------------------
 
 message ArchiveJobPointer {
+  required string path = 3000;
   required uint64 size = 3001;
   required string address = 3002;
 }
@@ -174,8 +175,10 @@ message TapePointer {
 message TapePool {
   required string name = 4100;
   repeated TapePointer tapes = 4101;
-  repeated ArchiveJobPointer archivejobs = 4102;
-  required uint64 ArchiveJobsTotalSize = 4103;
+  repeated ArchiveJobPointer pendingarchivejobs = 4102;
+  repeated ArchiveJobPointer orphanedarchivejobsnscreation = 4103;
+  repeated ArchiveJobPointer orphanedarchivejobsnsdeletion = 4104;
+  required uint64 ArchiveJobsTotalSize = 4105;
 }
 
 // ------------- Tape ----------------------------------------------------------
@@ -204,11 +207,13 @@ message Tape {
 // This life cycle represented by the following enum
 
 enum ArchiveJobStatus {
-  AJS_LinkingToTapePool = 0;
-  AJS_Pending = 1;
+  AJS_PendingNsCreation = 0;
+  AJS_LinkingToTapePool = 1;
+  AJS_PendingMount = 2;
+  AJS_PendingNsDeletion = 99;
   AJS_Selected = 2;
   AJS_Complete = 3;
-  AJS_Failed = 99;
+  AJS_Failed = 999;
 }
 
 message ArchiveJobEntry {

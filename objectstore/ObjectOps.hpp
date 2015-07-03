@@ -36,7 +36,7 @@ protected:
     m_headerInterpreted(false), m_payloadInterpreted(false),
     m_existingObject(false), m_locksCount(0),
     m_locksForWriteCount(0) {}
-  
+public:
   class AddressNotSet: public cta::exception::Exception {
   public:
     AddressNotSet(const std::string & w): cta::exception::Exception(w) {}
@@ -81,7 +81,7 @@ protected:
   public:
     AddressAlreadySet(const std::string & w): cta::exception::Exception(w) {}
   };
-  
+protected:
   void checkHeaderWritable() {
     if (!m_headerInterpreted) 
       throw NotFetched("In ObjectOps::checkHeaderWritable: header not yet fetched or initialized");
@@ -312,7 +312,7 @@ protected:
       std::stringstream err;
       err << "In ObjectOps::getHeaderFromObjectStore wrong object type: "
           << "found=" << m_header.type() << " expected=" << typeId;
-      throw cta::exception::Exception(err.str());
+      throw ObjectOpsBase::WrongType(err.str());
     }
     m_headerInterpreted = true;
   }

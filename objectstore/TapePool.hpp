@@ -66,11 +66,21 @@ public:
   
   // Archival jobs management ==================================================
   void addJob(const ArchiveToFileRequest::JobDump & job,
-    const std::string & archiveToFileAddress, uint64_t size);
+    const std::string & archiveToFileAddress, const std::string & path,
+    uint64_t size);
   /// This version will check for existence of the job in the queue before
   // returns true if a new job was inserted.
   bool addJobIfNecessary(const ArchiveToFileRequest::JobDump & job,
-    const std::string & archiveToFileAddress, uint64_t size);
+    const std::string & archiveToFileAddress, 
+    const std::string & path, uint64_t size);
+  // This version will check 
+  bool addOrphanedJobPendingNsCreation(const ArchiveToFileRequest::JobDump& job,
+    const std::string& archiveToFileAddress, const std::string & path,
+    uint64_t size);
+  bool addOrphanedJobPendingNsDeletion(const ArchiveToFileRequest::JobDump& job,
+    const std::string& archiveToFileAddress,
+    const std::string & path, uint64_t size);
+  
   class JobsSummary {
   public:
     uint64_t files;

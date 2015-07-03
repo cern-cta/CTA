@@ -148,7 +148,9 @@ bool cta::objectstore::TapePool::isEmpty() {
   if (m_payload.tapes_size())
     return false;
   // Check we have no archival jobs pending
-  if (m_payload.archivejobs_size())
+  if (m_payload.pendingarchivejobs_size() 
+      || m_payload.orphanedarchivejobsnscreation_size()
+      || m_payload.orphanedarchivejobsnsdeletion_size())
     return false;
   // If we made it to here, it seems the pool is indeed empty.
   return true;
@@ -197,37 +199,43 @@ std::string cta::objectstore::TapePool::getName() {
 }
 
 void cta::objectstore::TapePool::addJob(const ArchiveToFileRequest::JobDump& job,
-  const std::string & archiveToFileAddress, uint64_t size) {
+  const std::string & archiveToFileAddress, const std::string & path,
+  uint64_t size) {
   checkPayloadWritable();
-  auto * j = m_payload.add_archivejobs();
+  auto * j = m_payload.add_pendingarchivejobs();
   j->set_address(archiveToFileAddress);
   j->set_size(size);
+  j->set_path(path);
 }
 
 auto cta::objectstore::TapePool::getJobsSummary() -> JobsSummary {
   checkPayloadReadable();
   JobsSummary ret;
-  ret.files = m_payload.archivejobs_size();
+  ret.files = m_payload.pendingarchivejobs_size();
   ret.bytes = m_payload.archivejobstotalsize();
   return ret;
 }
 
-bool cta::objectstore::TapePool::addJobIfNecessary(const ArchiveToFileRequest::JobDump& job, const std::string& archiveToFileAddress, uint64_t size) {
+bool cta::objectstore::TapePool::addJobIfNecessary(
+  const ArchiveToFileRequest::JobDump& job, 
+  const std::string& archiveToFileAddress,
+  const std::string & path, uint64_t size) {
   checkPayloadWritable();
-  auto & jl=m_payload.archivejobs();
+  auto & jl=m_payload.pendingarchivejobs();
   for (auto j=jl.begin(); j!= jl.end(); j++) {
     if (j->address() == archiveToFileAddress)
       return false;
   }
-  auto * j = m_payload.add_archivejobs();
+  auto * j = m_payload.add_pendingarchivejobs();
   j->set_address(archiveToFileAddress);
   j->set_size(size);
+  j->set_path(path);
   return true;
 }
 
 void cta::objectstore::TapePool::removeJob(const std::string& archiveToFileAddress) {
   checkPayloadWritable();
-  auto * jl=m_payload.mutable_archivejobs();
+  auto * jl=m_payload.mutable_pendingarchivejobs();
   bool found = false;
   do {
     // Push the found entry all the way to the end.
@@ -250,7 +258,7 @@ void cta::objectstore::TapePool::removeJob(const std::string& archiveToFileAddre
 auto cta::objectstore::TapePool::dumpJobs() -> std::list<JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
-  auto & jl=m_payload.archivejobs();
+  auto & jl=m_payload.pendingarchivejobs();
   for (auto j=jl.begin(); j!=jl.end(); j++) {
     ret.push_back(JobDump());
     ret.back().address = j->address();
@@ -259,4 +267,37 @@ auto cta::objectstore::TapePool::dumpJobs() -> std::list<JobDump> {
   return ret;
 }
 
+bool cta::objectstore::TapePool::addOrphanedJobPendingNsCreation(
+  const ArchiveToFileRequest::JobDump& job, 
+  const std::string& archiveToFileAddress, 
+  const std::string & path,
+  uint64_t size) {
+  checkPayloadWritable();
+  auto & jl=m_payload.orphanedarchivejobsnscreation();
+  for (auto j=jl.begin(); j!= jl.end(); j++) {
+    if (j->address() == archiveToFileAddress)
+      return false;
+  }
+  auto * j = m_payload.add_orphanedarchivejobsnscreation();
+  j->set_address(archiveToFileAddress);
+  j->set_size(size);
+  j->set_path(path);
+  return true;
+}
 
+bool cta::objectstore::TapePool::addOrphanedJobPendingNsDeletion(
+  const ArchiveToFileRequest::JobDump& job, 
+  const std::string& archiveToFileAddress, 
+  const std::string & path, uint64_t size) {
+  checkPayloadWritable();
+  auto & jl=m_payload.orphanedarchivejobsnsdeletion();
+  for (auto j=jl.begin(); j!= jl.end(); j++) {
+    if (j->address() == archiveToFileAddress)
+      return false;
+  }
+  auto * j = m_payload.add_orphanedarchivejobsnsdeletion();
+  j->set_address(archiveToFileAddress);
+  j->set_size(size);
+  j->set_path(path);
+  return true;
+}

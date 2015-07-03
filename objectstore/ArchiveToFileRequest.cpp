@@ -45,7 +45,7 @@ void cta::objectstore::ArchiveToFileRequest::addJob(uint16_t copyNumber,
   checkPayloadWritable();
   auto *j = m_payload.add_jobs();
   j->set_copynb(copyNumber);
-  j->set_status(serializers::ArchiveJobStatus::AJS_LinkingToTapePool);
+  j->set_status(serializers::ArchiveJobStatus::AJS_PendingNsCreation);
   j->set_tapepool(tapepool);
   j->set_owner("");
   j->set_tapepooladdress(tapepooladdress);
@@ -152,9 +152,58 @@ void cta::objectstore::ArchiveToFileRequest::garbageCollect(const std::string &p
         jd.copyNb = j->copynb();
         jd.tapePool = j->tapepool();
         jd.tapePoolAddress = j->tapepooladdress();
-        if (tp.addJobIfNecessary(jd, getAddressIfSet(), m_payload.size()))
+        if (tp.addJobIfNecessary(jd, getAddressIfSet(), 
+          m_payload.archivefile(), m_payload.size()))
           tp.commit();
-        j->set_status(serializers::AJS_Pending);
+        j->set_status(serializers::AJS_PendingMount);
+        commit();
+      } catch (...) {
+        j->set_status(serializers::AJS_Failed);
+        // This could be the end of the request, with various consequences.
+        // This is handled here:
+        if (finishIfNecessary())
+          return;
+      }
+    } else if (status==serializers::AJS_PendingNsCreation) {
+      // If the job is pending NsCreation, we have to queue it in the tape pool's
+      // queue for files orphaned pending ns creation. Some user process will have
+      // to pick them up actively (recovery involves schedulerDB + NameServerDB)
+      try {
+        TapePool tp(j->tapepooladdress(), m_objectStore);
+        ScopedExclusiveLock tpl(tp);
+        tp.fetch();
+        JobDump jd;
+        jd.copyNb = j->copynb();
+        jd.tapePool = j->tapepool();
+        jd.tapePoolAddress = j->tapepooladdress();
+        if (tp.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
+          m_payload.archivefile(), m_payload.size()))
+          tp.commit();
+        j->set_status(serializers::AJS_PendingMount);
+        commit();
+      } catch (...) {
+        j->set_status(serializers::AJS_Failed);
+        // This could be the end of the request, with various consequences.
+        // This is handled here:
+        if (finishIfNecessary())
+          return;
+      }
+    } else if (status==serializers::AJS_PendingNsDeletion) {
+      // If the job is pending NsDeletion, we have to queue it in the tape pool's
+      // queue for files orphaned pending ns deletion. Some user process will have
+      // to pick them up actively (recovery involves schedulerDB + NameServerDB)
+      try {
+        TapePool tp(j->tapepooladdress(), m_objectStore);
+        ScopedExclusiveLock tpl(tp);
+        tp.fetch();
+        JobDump jd;
+        jd.copyNb = j->copynb();
+        jd.tapePool = j->tapepool();
+        jd.tapePoolAddress = j->tapepooladdress();
+        if (tp.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
+          m_payload.archivefile(), m_payload.size()))
+          tp.commit();
+        j->set_status(serializers::AJS_PendingMount);
         commit();
       } catch (...) {
         j->set_status(serializers::AJS_Failed);

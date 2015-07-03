@@ -117,7 +117,7 @@ private:
   /**
    * The status gotten from stat-ing the remote file.
    */
-  // TODO: cleanup if this change is satisfactory.
+  // TODO: cleanup if this change is satisfactory.  
   //RemoteFileStatus m_remoteFileStatus;
   
 }; // class ArchiveToFileRequest
