@@ -1,4 +1,5 @@
 Path:   <tapeFileName>
 Id:     <id1>
 Size:   <size1>
-Flags:  16 (IsReadable)
+MTime:  <mtime1>
+Flags:  144 (IsReadable|BackUpExists)

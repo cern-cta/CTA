@@ -1,4 +1,5 @@
 Path:   <tapeFileName>
 Id:     0
 Size:   <size1>
-Flags:  12 (Other|Offline)
+MTime:  <mtime1>
+Flags:  136 (Offline|BackUpExists)
