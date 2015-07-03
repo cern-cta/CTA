@@ -69,6 +69,14 @@ public:
   virtual void rename(const RemotePath &remoteFile,
     const RemotePath &newRemoteFile) = 0;
 
+  /**
+   * Parses the specified remote file and returns the file name.
+   *
+   * @param path The absolute path of the file.
+   * @return The file name.
+   */
+  virtual std::string getFilename(const RemotePath &remoteFile) const = 0;
+
 }; // class RemoteNS
 
 } // namespace cta

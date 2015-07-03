@@ -125,3 +125,11 @@ void cta::RemoteNSDispatcher::rename(const RemotePath &remoteFile,
   const RemotePath &newRemoteFile) {
   getHandler(remoteFile.getScheme()).rename(remoteFile, newRemoteFile);
 }
+
+//------------------------------------------------------------------------------
+// getFilename
+//------------------------------------------------------------------------------
+std::string cta::RemoteNSDispatcher::getFilename(const RemotePath &remoteFile)
+  const {
+  return getHandler(remoteFile.getScheme()).getFilename(remoteFile);
+}

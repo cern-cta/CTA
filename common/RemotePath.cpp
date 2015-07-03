@@ -57,6 +57,7 @@ cta::RemotePath::RemotePath(const std::string &raw):
   }
 
   m_scheme = raw.substr(0, pos);
+  m_afterScheme = raw.substr(pos + 1, indexOfLastChar - pos);
 }
 
 //------------------------------------------------------------------------------
@@ -74,15 +75,44 @@ bool cta::RemotePath::operator<(const RemotePath &rhs) const {
 }
 
 //------------------------------------------------------------------------------
+// empty
+//------------------------------------------------------------------------------
+bool cta::RemotePath::empty() const {
+  return m_raw.empty();
+}
+
+//------------------------------------------------------------------------------
 // getRaw
 //------------------------------------------------------------------------------
-const std::string &cta::RemotePath::getRaw() const throw() {
+const std::string &cta::RemotePath::getRaw() const {
+  if(empty()) {
+    throw exception::Exception(std::string(__FUNCTION__) +
+      ": Empty remote path");
+  }
+
   return m_raw;
 }
 
 //------------------------------------------------------------------------------
 // getScheme
 //------------------------------------------------------------------------------
-const std::string &cta::RemotePath::getScheme() const throw() {
+const std::string &cta::RemotePath::getScheme() const {
+  if(empty()) {
+    throw exception::Exception(std::string(__FUNCTION__) +
+      ": Empty remote path");
+  }
+
   return m_scheme;
+}
+
+//------------------------------------------------------------------------------
+// getAfterScheme
+//------------------------------------------------------------------------------
+const std::string &cta::RemotePath::getAfterScheme() const {
+  if(empty()) {
+    throw exception::Exception(std::string(__FUNCTION__) +
+      ": Empty remote path");
+  }
+
+  return m_afterScheme;
 }

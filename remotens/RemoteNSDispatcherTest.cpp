@@ -90,6 +90,11 @@ protected:
       throw cta::exception::Exception(msg.str());
     }
 
+    std::string getFilename(const cta::RemotePath &remoteFile) const {
+      incCallCounter("getFilename");
+      return "always_the_same_filename";
+    }
+
     uint64_t getCallCounter(const std::string &method) const {
       auto itor = m_callCounts.find(method);
       if(m_callCounts.end() == itor) {

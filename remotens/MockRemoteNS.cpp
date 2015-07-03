@@ -74,7 +74,8 @@ bool cta::MockRemoteNS::dirExists(const RemotePath &remoteFile) const {
 //------------------------------------------------------------------------------
 // rename
 //------------------------------------------------------------------------------
-void cta::MockRemoteNS::rename(const RemotePath &remoteFile, const RemotePath &newRemoteFile) {
+void cta::MockRemoteNS::rename(const RemotePath &remoteFile,
+  const RemotePath &newRemoteFile) {
   auto it = m_entries.find(newRemoteFile);
   if(m_entries.end() != it) {
     throw exception::Exception("MockRemoteNS: destination path exists, cannot overwrite it");
@@ -88,9 +89,18 @@ void cta::MockRemoteNS::rename(const RemotePath &remoteFile, const RemotePath &n
 }
 
 //------------------------------------------------------------------------------
+// getFilename
+//------------------------------------------------------------------------------
+std::string cta::MockRemoteNS::getFilename(const RemotePath &remoteFile) const {
+  const std::string afterScheme = remoteFile.getAfterScheme();
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+//------------------------------------------------------------------------------
 // createEntry
 //------------------------------------------------------------------------------
-void cta::MockRemoteNS::createEntry(const RemotePath &path, const RemoteFileStatus &status){
+void cta::MockRemoteNS::createEntry(const RemotePath &path,
+  const RemoteFileStatus &status){
   auto it = m_entries.find(path);
   if(m_entries.end() != it) {
     throw exception::Exception("MockRemoteNS: path exists, cannot overwrite it");

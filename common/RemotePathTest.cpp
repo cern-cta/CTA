@@ -35,13 +35,25 @@ protected:
   }
 };
 
+TEST_F(cta_RemotePathTest, default_constructor) {
+  using namespace cta;
+
+  RemotePath remotePath;
+  ASSERT_TRUE(remotePath.empty());
+  ASSERT_THROW(remotePath.getRaw(), std::exception);
+  ASSERT_THROW(remotePath.getScheme(), std::exception);
+  ASSERT_THROW(remotePath.getAfterScheme(), std::exception);
+}
+
 TEST_F(cta_RemotePathTest, raw_path_constructor) {
   using namespace cta;
 
   const RemotePath remotePath("xroot://abc.com:1234:the_file");
 
+  ASSERT_FALSE(remotePath.empty());
   ASSERT_EQ(std::string("xroot://abc.com:1234:the_file"), remotePath.getRaw());
   ASSERT_EQ(std::string("xroot"), remotePath.getScheme());
+  ASSERT_EQ(std::string("//abc.com:1234:the_file"), remotePath.getAfterScheme());
 }
 
 TEST_F(cta_RemotePathTest, raw_path_constructor_empty_string) {

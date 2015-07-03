@@ -69,6 +69,14 @@ public:
    */
   void rename(const RemotePath &remoteFile,
     const RemotePath &newRemoteFile);
+
+  /**
+   * Parses the specified remote file and returns the file name.
+   *
+   * @param path The absolute path of the file.
+   * @return The file name.
+   */
+  std::string getFilename(const RemotePath &remoteFile) const;
   
   /**
    * Adds a directory or file to the remote NS with the desired status
