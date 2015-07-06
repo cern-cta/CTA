@@ -218,6 +218,7 @@ void cta::Scheduler::createStorageClass(
   m_db.assertIsAdminOnAdminHost(requester);
   m_db.createStorageClass(name, nbCopies, CreationLog(requester.getUser(), 
        requester.getHost(), time(NULL), comment));
+  m_ns.createStorageClass(requester, name, nbCopies);
 }
 
 //------------------------------------------------------------------------------
@@ -229,6 +230,7 @@ void cta::Scheduler::deleteStorageClass(
   m_db.assertIsAdminOnAdminHost(requester);
   m_ns.assertStorageClassIsNotInUse(requester, name, "/");
   m_db.deleteStorageClass(requester, name);
+  m_ns.deleteStorageClass(requester, name);
 }
 
 //------------------------------------------------------------------------------

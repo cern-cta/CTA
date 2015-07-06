@@ -7,6 +7,10 @@ add_library (ctanameserver SHARED
 
 target_link_libraries(ctanameserver castorns castorcommon)
 
+add_executable(castornstest CastorNameServerTest.cpp)
+
+target_link_libraries(castornstest ctanameserver ctacommon ctascheduler)
+
 add_library (ctanameservertest SHARED
   MockNameServerFactory.cpp
   MockNameServerTest.cpp

@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "nameserver/CastorNameServer.hpp"
 #include "nameserver/MockNameServer.hpp"
 #include "nameserver/NameServer.hpp"
 #include "remotens/MockRemoteNS.hpp"
@@ -50,7 +51,7 @@ extern "C"
   XrdSfsFileSystem *XrdSfsGetFileSystem (XrdSfsFileSystem* native_fs, XrdSysLogger* lp, const char* configfn)
   {
     return new XrdProFilesystem(
-      new cta::MockNameServer(),
+      new cta::CastorNameServer(),
       new cta::MockSchedulerDatabase(),
       new cta::MockRemoteNS());
   }

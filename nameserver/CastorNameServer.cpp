@@ -36,6 +36,17 @@
 #include <shift/Cns_api.h>
 
 //------------------------------------------------------------------------------
+// updateStorageClass
+//------------------------------------------------------------------------------
+void cta::CastorNameServer::updateStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies){
+  struct Cns_fileclass fc;
+  bzero(&fc, sizeof(struct Cns_fileclass));
+  strncpy(fc.name, name.c_str(), CA_MAXCLASNAMELEN);
+  fc.nbcopies = nbCopies;
+  cta::exception::Errnum::throwOnMinusOne(Cns_modifyclass(const_cast<char *>(m_server.c_str()), 0, const_cast<char *>(name.c_str()), &fc), __FUNCTION__);
+}
+
+//------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
 void cta::CastorNameServer::createStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies) {
@@ -43,6 +54,7 @@ void cta::CastorNameServer::createStorageClass(const SecurityIdentity &requester
   bzero(&fc, sizeof(struct Cns_fileclass));
   strncpy(fc.name, name.c_str(), CA_MAXCLASNAMELEN);
   fc.nbcopies = nbCopies;
+  fc.classid = time(NULL)%100000;
   cta::exception::Errnum::throwOnMinusOne(Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc), __FUNCTION__);
 }
 
@@ -215,16 +227,26 @@ cta::ArchiveFileStatus cta::CastorNameServer::statFile(const SecurityIdentity &r
 std::list<cta::ArchiveDirEntry> cta::CastorNameServer::getDirEntries(const SecurityIdentity &requester, const std::string &path) const {
   Cns_DIR *dirp;
   struct dirent *dp;
-
-  if((dirp = Cns_opendir(path.c_str())) == NULL) {
+  std::string no_final_slash_path(path);
+  if(path!="/") {
+    no_final_slash_path = cta::Utils::trimFinalSlashes(path);
+  }
+  if((dirp = Cns_opendir(no_final_slash_path.c_str())) == NULL) {
     const int savedErrno = errno;
     std::ostringstream msg;
-    msg << __FUNCTION__ << " - opendir " << path << " error. Reason: \n" << Utils::errnoToString(savedErrno);
+    msg << __FUNCTION__ << " - Cns_opendir " << no_final_slash_path << " error. Reason: \n" << Utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }
   std::list<ArchiveDirEntry> entries;
   while((dp = Cns_readdir(dirp)) != NULL) {
-    entries.push_back(getArchiveDirEntry(requester, path+"/"+dp->d_name));
+    std::string entryPath = "";
+    if(no_final_slash_path=="/") {
+      entryPath = no_final_slash_path+dp->d_name;
+    }
+    else {
+      entryPath = no_final_slash_path+"/"+dp->d_name;
+    }
+    entries.push_back(getArchiveDirEntry(requester, entryPath));
   }
   Cns_closedir(dirp);  
   return entries;

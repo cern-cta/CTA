@@ -81,6 +81,15 @@ public:
    * @return The result of trimming the string.
    */
   static std::string trimSlashes(const std::string &s);
+  
+  /**
+   * Returns the result of trimming right slashes from the
+   * specified string.
+   *
+   * @param s The string to be trimmed.
+   * @return The result of trimming the string.
+   */
+  static std::string trimFinalSlashes(const std::string &s);
 
   /**
    * Splits the specified string into a vector of strings using the specified

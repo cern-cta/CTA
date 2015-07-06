@@ -51,7 +51,8 @@ static bool isValidPathChar(const char c) {
          ('A' <= c && c <= 'Z') ||
          ('a' <= c && c <= 'z') ||
          c == '_'               ||
-         c == '/';
+         c == '/'               ||
+         c == '.';
 }
 
 //------------------------------------------------------------------------------
@@ -176,7 +177,23 @@ std::string cta::Utils::trimSlashes(const std::string &s) {
   }
   
   return std::string(it1, it2);
-} 
+}
+
+//-----------------------------------------------------------------------------
+// trimFinalSlashes
+//-----------------------------------------------------------------------------
+std::string cta::Utils::trimFinalSlashes(const std::string &s) {
+  // Find last non slash chararacter
+  std::string::const_iterator it2;
+  size_t endpos = s.find_last_not_of("/");
+  if (std::string::npos != endpos) {
+    it2 = endpos + 1 + s.begin();
+  } else {
+    it2 = s.end();
+  }
+  
+  return std::string(s.begin(), it2);
+}
 
 //-----------------------------------------------------------------------------
 // splitString
