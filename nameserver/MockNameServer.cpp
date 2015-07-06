@@ -115,6 +115,14 @@ void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
   const std::string &name, const uint16_t nbCopies) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
+
+//------------------------------------------------------------------------------
+// createStorageClass
+//------------------------------------------------------------------------------
+void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
+  const std::string &name, const uint16_t nbCopies, const uint64_t id) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
   
 //------------------------------------------------------------------------------
 // deleteStorageClass
