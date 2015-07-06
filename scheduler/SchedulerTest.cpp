@@ -143,6 +143,11 @@ public:
   static const cta::SecurityIdentity s_userOnAdminHost;
   static const cta::SecurityIdentity s_userOnUserHost;
 
+  static const std::string s_remoteFilename1;
+  static const std::string s_remoteFilename2;
+  static const std::string s_remoteFilename3;
+  static const std::string s_remoteFilename4;
+
   static const std::string s_remoteFileRawPath1;
   static const std::string s_remoteFileRawPath2;
   static const std::string s_remoteFileRawPath3;
@@ -179,10 +184,16 @@ const cta::SecurityIdentity SchedulerTest::s_adminOnUserHost(SchedulerTest::s_ad
 const cta::SecurityIdentity SchedulerTest::s_userOnAdminHost(SchedulerTest::s_user, SchedulerTest::s_adminHost);
 const cta::SecurityIdentity SchedulerTest::s_userOnUserHost(SchedulerTest::s_user, SchedulerTest::s_userHost);
 
-const std::string SchedulerTest::s_remoteFileRawPath1("mock:remoteFile1");
-const std::string SchedulerTest::s_remoteFileRawPath2("mock:remoteFile2");
-const std::string SchedulerTest::s_remoteFileRawPath3("mock:remoteFile3");
-const std::string SchedulerTest::s_remoteFileRawPath4("mock:remoteFile4");
+
+const std::string SchedulerTest::s_remoteFilename1("remoteFile1");
+const std::string SchedulerTest::s_remoteFilename2("remoteFile2");
+const std::string SchedulerTest::s_remoteFilename3("remoteFile3");
+const std::string SchedulerTest::s_remoteFilename4("remoteFile4");
+
+const std::string SchedulerTest::s_remoteFileRawPath1(std::string("mock:") + s_remoteFilename1);
+const std::string SchedulerTest::s_remoteFileRawPath2(std::string("mock:") + s_remoteFilename2);
+const std::string SchedulerTest::s_remoteFileRawPath3(std::string("mock:") + s_remoteFilename3);
+const std::string SchedulerTest::s_remoteFileRawPath4(std::string("mock:") + s_remoteFilename4);
 
 TEST_P(SchedulerTest, createStorageClass_new_as_adminOnAdminHost) {
   using namespace cta;
@@ -2094,10 +2105,10 @@ TEST_P(SchedulerTest, archive_to_directory) {
       archiveFileNames.insert(entry.getName());
     }
     ASSERT_EQ(4, archiveFileNames.size());
-    ASSERT_TRUE(archiveFileNames.find(s_remoteFileRawPath1) != archiveFileNames.end());
-    ASSERT_TRUE(archiveFileNames.find(s_remoteFileRawPath2) != archiveFileNames.end());
-    ASSERT_TRUE(archiveFileNames.find(s_remoteFileRawPath3) != archiveFileNames.end());
-    ASSERT_TRUE(archiveFileNames.find(s_remoteFileRawPath4) != archiveFileNames.end());
+    ASSERT_TRUE(archiveFileNames.find(s_remoteFilename1) != archiveFileNames.end());
+    ASSERT_TRUE(archiveFileNames.find(s_remoteFilename2) != archiveFileNames.end());
+    ASSERT_TRUE(archiveFileNames.find(s_remoteFilename3) != archiveFileNames.end());
+    ASSERT_TRUE(archiveFileNames.find(s_remoteFilename4) != archiveFileNames.end());
   }
 
   {
