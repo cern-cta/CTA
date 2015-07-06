@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "common/RemotePathAndStatus.hpp"
 #include "scheduler/ArchiveRequest.hpp"
 
 #include <stdint.h>
@@ -44,7 +45,7 @@ public:
   /**
    * Constructor.
    *
-   * @param remoteFile The URL of the source remote file to be archived.
+   * @param remoteFile The path and status of the remote file to be archived.
    * @param archiveFile The full path of the destination archive file.
    * @param copyNb The tape copy number.
    * @param tapePoolName The name of the destination tape pool.
@@ -54,7 +55,7 @@ public:
    * was created.  If no value is given then the current time is used.
    */
   ArchiveToTapeCopyRequest(
-    const std::string &remoteFile,
+    const RemotePathAndStatus &remoteFile,
     const std::string &archiveFile,
     const uint16_t copyNb,
     const std::string tapePoolName,
@@ -62,11 +63,11 @@ public:
     const CreationLog & creationLog);
 
   /**
-   * Returns the URL of the source remote file to be archived.
+   * Returns the path and status of the remote file to be archived.
    *
-   * @return The URL of the source remote file to be archived.
+   * @return The path and status of the remote file to be archived.
    */
-  const std::string &getRemoteFile() const throw();
+  const RemotePathAndStatus &getRemoteFile() const throw();
 
   /**
    * Returns the full path of the destination archive file.
@@ -92,9 +93,9 @@ public:
 private:
 
   /**
-   * The URL of the destination remote file to be archived.
+   * The path and status of the remote file to be archived.
    */
-  std::string m_remoteFile;
+  RemotePathAndStatus m_remoteFile;
 
   /**
    * The full path of the source archive file.

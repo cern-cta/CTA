@@ -106,9 +106,9 @@ TEST_F(cta_MockRemoteNsTest, statFile) {
   ASSERT_NO_THROW(rns.createEntry(rp, status));
   RemoteFileStatus result;
   ASSERT_NO_THROW(result = rns.statFile(rp));
-  ASSERT_TRUE(result.getMode()==mode);
-  ASSERT_TRUE(result.getOwner()==owner);
-  ASSERT_TRUE(result.getSize()==size);
+  ASSERT_EQ(mode, result.mode);
+  ASSERT_EQ(owner, result.owner);
+  ASSERT_EQ(size, result.size);
 }
 
 TEST_F(cta_MockRemoteNsTest, rename) {
@@ -125,9 +125,9 @@ TEST_F(cta_MockRemoteNsTest, rename) {
   ASSERT_NO_THROW(rns.rename(rp, new_rp));  
   RemoteFileStatus result;
   ASSERT_NO_THROW(result = rns.statFile(new_rp));
-  ASSERT_TRUE(result.getMode()==mode);
-  ASSERT_TRUE(result.getOwner()==owner);
-  ASSERT_TRUE(result.getSize()==size);
+  ASSERT_EQ(mode, result.mode);
+  ASSERT_EQ(owner, result.owner);
+  ASSERT_EQ(size, result.size);
 }
 
 } // namespace unitTests

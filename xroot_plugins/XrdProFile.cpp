@@ -924,7 +924,7 @@ void XrdProFile::xCom_listongoingarchivals(const std::vector<std::string> &token
     for(auto pool = poolList.begin(); pool != poolList.end(); pool++) {
       for(auto request = pool->second.begin(); request!=pool->second.end(); request++) {
         responseSS << pool->first.getName()
-                   << " " << request->getRemoteFile()
+                   << " " << request->getRemoteFile().path.getRaw()
                    << " " << request->getArchiveFile()
                    << " " << request->getCopyNb()
                    << " " << request->getPriority()
@@ -940,7 +940,7 @@ void XrdProFile::xCom_listongoingarchivals(const std::vector<std::string> &token
     auto requestList = m_scheduler->getArchiveRequests(requester, tapePool);    
     for(auto request = requestList.begin(); request!=requestList.end(); request++) {
       responseSS << tapePool
-                 << " " << request->getRemoteFile()
+                 << " " << request->getRemoteFile().path.getRaw()
                  << " " << request->getArchiveFile()
                  << " " << request->getCopyNb()
                  << " " << request->getPriority()

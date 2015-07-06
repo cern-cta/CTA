@@ -11,6 +11,7 @@ set (COMMON_LIB_SRC_FILES
   exception/Exception.cpp
   RemoteFileStatus.cpp
   RemotePath.cpp
+  RemotePathAndStatus.cpp
   SmartFd.cpp
   strerror_r_wrapper.cpp
   Timer.cpp

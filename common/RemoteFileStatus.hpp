@@ -28,9 +28,7 @@ namespace cta {
 /**
  * The status of a remote file or a directory.
  */
-class RemoteFileStatus {
-public:
-
+struct RemoteFileStatus {
   /**
    * Constructor.
    *
@@ -51,42 +49,21 @@ public:
     const uint64_t size);
 
   /**
-   * Returns the identity of the owner.
-   */
-  const UserIdentity &getOwner() const throw();
-
-  /**
-   * Returns the mode bits of the directory entry.
-   *
-   * @return The mode bits of the directory entry.
-   */
-  mode_t getMode() const throw();
-
-  /**
-   * Returns the size of the file in bytes.
-   *
-   * @return The size of the file in bytes.
-   */
-  uint64_t getSize() const throw();
-
-private:
-
-  /**
    * The identity of the owner.
    */
-  UserIdentity m_owner;
+  UserIdentity owner;
 
   /**
    * The mode bits of the directory entry.
    */
-  mode_t m_mode;
+  mode_t mode;
 
   /**
    * Returns the size of the file in bytes.
    *
    * @return The size of the file in bytes.
    */
-  uint64_t m_size;
+  uint64_t size;
 
 }; // class RemoteFileStatus
 

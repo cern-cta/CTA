@@ -16,24 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/RemoteFileStatus.hpp"
+#include "common/RemotePathAndStatus.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RemoteFileStatus::RemoteFileStatus():
-  mode(0),
-  size(0) {
+cta::RemotePathAndStatus::RemotePathAndStatus() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RemoteFileStatus::RemoteFileStatus(
-  const UserIdentity &owner,
-  const mode_t mode,
-  const uint64_t size):
-  owner(owner),
-  mode(mode),
-  size(size) {
+cta::RemotePathAndStatus::RemotePathAndStatus(
+  const RemotePath &path,
+  const RemoteFileStatus &status):
+  path(path),
+  status(status) {
 }

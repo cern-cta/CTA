@@ -148,6 +148,15 @@ TEST_F(cta_UtilsTest,
   ASSERT_EQ(std::string("/grandparent/parent/"), enclosingPath);
 }
 
+TEST_F(cta_UtilsTest, getEnclosedName_just_enclosed_name) {
+  using namespace cta;
+
+  const std::string enclosedName = "child";
+  std::string result;
+  ASSERT_NO_THROW(result = Utils::getEnclosedName(enclosedName));
+  ASSERT_EQ(enclosedName, result);
+}
+
 TEST_F(cta_UtilsTest, getEnclosedName) {
   using namespace cta;
 

@@ -34,7 +34,7 @@ cta::ArchiveToTapeCopyRequest::~ArchiveToTapeCopyRequest() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::ArchiveToTapeCopyRequest::ArchiveToTapeCopyRequest(
-  const std::string &remoteFile,
+  const RemotePathAndStatus &remoteFile,
   const std::string &archiveFile,
   const uint16_t copyNb,
   const std::string tapePoolName,
@@ -50,7 +50,8 @@ cta::ArchiveToTapeCopyRequest::ArchiveToTapeCopyRequest(
 //------------------------------------------------------------------------------
 // getRemoteFile
 //------------------------------------------------------------------------------
-const std::string &cta::ArchiveToTapeCopyRequest::getRemoteFile() const throw() {
+const cta::RemotePathAndStatus &cta::ArchiveToTapeCopyRequest::getRemoteFile()
+  const throw() {
   return m_remoteFile;
 }
 

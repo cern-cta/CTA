@@ -34,26 +34,23 @@ cta::ArchiveToFileRequest::~ArchiveToFileRequest() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::ArchiveToFileRequest::ArchiveToFileRequest(
-  const std::string &remoteFile,
-  const uint64_t remoteFileSize,
+  const RemotePathAndStatus &remoteFile,
   const std::string &archiveFile,
-  //const RemoteFileStatus &remoteFileStatus,
   const std::map<uint16_t, std::string> &copyNbToPoolMap,
   const uint64_t priority,
   const CreationLog & creationLog):
   ArchiveRequest(priority, creationLog),
-  m_remoteFilePath(remoteFile),
-  m_remoteFileSize(remoteFileSize),
+  m_remoteFile(remoteFile),
   m_archiveFile(archiveFile),
-  m_copyNbToPoolMap(copyNbToPoolMap)/*,
-  m_remoteFileStatus(remoteFileStatus)*/ {
+  m_copyNbToPoolMap(copyNbToPoolMap) {
 }
 
 //------------------------------------------------------------------------------
 // getRemoteFile
 //------------------------------------------------------------------------------
-const std::string &cta::ArchiveToFileRequest::getRemoteFilePath() const throw() {
-  return m_remoteFilePath;
+const cta::RemotePathAndStatus &cta::ArchiveToFileRequest::getRemoteFile()
+  const throw() {
+  return m_remoteFile;
 }
 
 //------------------------------------------------------------------------------
@@ -69,11 +66,4 @@ const std::string &cta::ArchiveToFileRequest::getArchiveFile() const throw() {
 const std::map<uint16_t, std::string> &cta::ArchiveToFileRequest::
   getCopyNbToPoolMap() const throw() {
   return m_copyNbToPoolMap;
-}
-
-//------------------------------------------------------------------------------
-// getRemoteFileSize
-//------------------------------------------------------------------------------
-uint64_t cta::ArchiveToFileRequest::getRemoteFileSize() const throw() {
-  return m_remoteFileSize;
 }

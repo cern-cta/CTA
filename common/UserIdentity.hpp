@@ -26,8 +26,7 @@ namespace cta {
 /**
  * Class reprsenting the identity of a user.
  */
-class UserIdentity {
-public:
+struct UserIdentity {
 
   /**
    * Constructor.

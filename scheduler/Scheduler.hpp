@@ -39,6 +39,7 @@ class LogicalLibrary;
 class MountRequest;
 class NameServer;
 class RemoteNS;
+class RemotePathAndStatus;
 class RetrievalFileTransfer;
 class RetrieveFromTapeCopyRequest;
 class RetrieveToDirRequest;
@@ -740,13 +741,14 @@ private:
    * destination directory.
    *
    * @param requester The identity of the user requesting the archival.
-   * @param remoteFiles The URLs of one or more remote files.
+   * @param remoteFiles The paths and statuses of the files in the  remote
+   * storage systems.
    * @param archiveDir The full path of the destination directory within the
    * archive namespace.
    */
   void queueArchiveToDirRequest(
     const SecurityIdentity &requester,
-    const std::list<RemoteFileInfo> &remoteFiles,
+    const std::list<RemotePathAndStatus> &remoteFiles,
     const std::string &archiveDir);
 
   /**
@@ -763,14 +765,15 @@ private:
    * request to archive multiple files to an archive directory.
    *
    * @param requester The identity of the requester.
-   * @param remoteFiles The URLs of the remote files.
+   * @param remoteFiles The paths and statuses of the files in the remote
+   * storage systems.
    * @param archiveFile The full path of the destination directory within the
    * archive namespace.
    * @param priority The priority of the request.
    */
   std::list<ArchiveToFileRequest> createArchiveToFileRequests(
     const SecurityIdentity &requester,
-    const std::list<RemoteFileInfo> &remoteFiles,
+    const std::list<RemotePathAndStatus> &remoteFiles,
     const std::string &archiveDir,
     const uint64_t priority);
 
@@ -789,27 +792,27 @@ private:
    * destination directory.
    *
    * @param requester The identity of the requester.
-   * @param remoteFile The URL of the remote file.
+   * @param remoteFile The path and status of the remote file.
    * @param archiveFile The full path of the destination file within the
    * archive namespace.
    */
   void queueArchiveToFileRequest(
     const SecurityIdentity &requester,
-    const RemoteFileInfo &remoteFile,
+    const RemotePathAndStatus &remoteFile,
     const std::string &archiveFile);
 
   /**
    * Returns the ArchiveToFileRequest object representing the specified request.
    *
    * @param requester The identity of the requester.
-   * @param remoteFile The URL of the remote file.
+   * @param remoteFile The path and status of the remote file.
    * @param archiveFile The full path of the destination file within the
    * archive namespace.
    * @param priority The priority of the request.
    */
   ArchiveToFileRequest createArchiveToFileRequest(
     const SecurityIdentity &requester,
-    const RemoteFileInfo &remoteFile,
+    const RemotePathAndStatus &remoteFile,
     const std::string &archiveFile,
     const uint64_t priority) const;
 

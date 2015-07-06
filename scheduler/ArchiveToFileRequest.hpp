@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/RemoteFileStatus.hpp"
+#include "common/RemotePathAndStatus.hpp"
 #include "scheduler/ArchiveRequest.hpp"
 
 #include <map>
@@ -47,7 +47,7 @@ public:
   /**
    * Constructor.
    *
-   * @param remoteFile The URL of the source remote file to be archived.
+   * @param remoteFile The path and status of the remote file to be archived.
    * @param archiveFile The full path of the destination archive file.
    * @param remoteFileStatus The status gotten from stat-ing the remote file.
    * @param copyNbToPoolMap The mapping from archive copy number to destination
@@ -56,28 +56,19 @@ public:
    * @param creationLog The creation information
    */
   ArchiveToFileRequest(
-    const std::string &remoteFilePath,
-    const uint64_t remoteFileSize,
+    const RemotePathAndStatus &remoteFilePath,
     const std::string &archiveFile,
-    //const RemoteFileStatus &remoteFileStatus,
     const std::map<uint16_t, std::string> &copyNbToPoolMap,
     const uint64_t priority,
     const CreationLog & creationLog);
 
   /**
-   * Returns the URL of the source remote file to be archived.
+   * Returns the path and status of the remote file to be archived.
    *
-   * @return The URL of the source remote file to be archived.
+   * @return The path and status of the remote file to be archived.
    */
-  const std::string &getRemoteFilePath() const throw();
+  const RemotePathAndStatus &getRemoteFile() const throw();
 
-  /**
-   * Returns the size of the file.
-   * 
-   * @return the size of the file.
-   */
-  uint64_t getRemoteFileSize() const throw();
-  
   /**
    * Returns the full path of the destination archive file.
    *
@@ -95,15 +86,10 @@ public:
 private:
 
   /**
-   * The URL of the destination remote file to be archived.
+   * The path ans status of the remote file to be archived.
    */
-  std::string m_remoteFilePath;
+  RemotePathAndStatus m_remoteFile;
 
-  /**
-   * The remote file size
-   */
-  uint64_t m_remoteFileSize;
-  
   /**
    * The full path of the source archive file.
    */
@@ -114,12 +100,6 @@ private:
    */
   std::map<uint16_t, std::string> m_copyNbToPoolMap;
 
-  /**
-   * The status gotten from stat-ing the remote file.
-   */
-  // TODO: cleanup if this change is satisfactory.  
-  //RemoteFileStatus m_remoteFileStatus;
-  
 }; // class ArchiveToFileRequest
 
 } // namespace cta

@@ -24,6 +24,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/RemotePath.hpp"
+#include "common/Utils.hpp"
 #include "remotens/MockRemoteNS.hpp"
 
 //------------------------------------------------------------------------------
@@ -51,7 +52,7 @@ bool cta::MockRemoteNS::regularFileExists(const RemotePath &remoteFile) const {
   if(m_entries.end() == it) {
     return false;
   }
-  if(!S_ISREG(m_entries.at(remoteFile).getMode())) {
+  if(!S_ISREG(m_entries.at(remoteFile).mode)) {
     return false;
   }
   return true;
@@ -65,7 +66,7 @@ bool cta::MockRemoteNS::dirExists(const RemotePath &remoteFile) const {
   if(m_entries.end() == it) {
     return false;
   }
-  if(!S_ISDIR(m_entries.at(remoteFile).getMode())) {
+  if(!S_ISDIR(m_entries.at(remoteFile).mode)) {
     return false;
   }
   return true;
@@ -93,7 +94,8 @@ void cta::MockRemoteNS::rename(const RemotePath &remoteFile,
 //------------------------------------------------------------------------------
 std::string cta::MockRemoteNS::getFilename(const RemotePath &remoteFile) const {
   const std::string afterScheme = remoteFile.getAfterScheme();
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  const std::string afterSchemeTrimmed = Utils::trimSlashes(afterScheme);
+  return Utils::getEnclosedName(afterSchemeTrimmed);
 }
 
 //------------------------------------------------------------------------------

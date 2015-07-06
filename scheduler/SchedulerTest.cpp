@@ -1550,7 +1550,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin();
       rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile());
+      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
       archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
@@ -1568,7 +1568,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
       rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile());
+      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
       archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
@@ -1720,7 +1720,7 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin();
       rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile());
+      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
       archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
@@ -1738,7 +1738,7 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
       rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile());
+      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
       archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
@@ -1792,7 +1792,7 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin();
       rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile());
+      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
       archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
@@ -1881,7 +1881,7 @@ TEST_P(SchedulerTest, delete_archive_request) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin();
       rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile());
+      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
       archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
@@ -1899,7 +1899,7 @@ TEST_P(SchedulerTest, delete_archive_request) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
       rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile());
+      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
       archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
@@ -2113,7 +2113,7 @@ TEST_P(SchedulerTest, archive_to_directory) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin();
       rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile());
+      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
       archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(4, remoteFiles.size());
@@ -2136,7 +2136,7 @@ TEST_P(SchedulerTest, archive_to_directory) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
       rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile());
+      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
       archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(4, remoteFiles.size());
@@ -2379,7 +2379,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin();
       rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile());
+      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
       archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());
@@ -2397,7 +2397,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
       rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile());
+      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
       archiveFiles.insert(rqstItor->getArchiveFile());
     }
     ASSERT_EQ(1, remoteFiles.size());

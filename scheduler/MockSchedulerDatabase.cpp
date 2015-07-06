@@ -150,7 +150,11 @@ void cta::MockSchedulerDatabase::createSchema() {
       ");"
     "CREATE TABLE ARCHIVETOTAPECOPYREQUEST("
       "STATE          TEXT,"
-      "REMOTEFILE     TEXT,"
+      "REMOTEFILEPATH TEXT,"
+      "REMOTEFILEUID  INTEGER,"
+      "REMOTEFILEGID  INTEGER,"
+      "REMOTEFILESIZE INTEGER,"
+      "REMOTEFILEMODE INTEGER,"
       "ARCHIVEFILE    TEXT,"
       "TAPEPOOL       TEXT,"
       "COPYNB         INTEGER,"
@@ -214,7 +218,7 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst) {
     const uint16_t copyNb = itor->first;
     const std::string &tapePoolName = itor->second;
     queue(ArchiveToTapeCopyRequest(
-      rqst.getRemoteFilePath(),
+      rqst.getRemoteFile(),
       rqst.getArchiveFile(),
       copyNb,
       tapePoolName,
@@ -230,14 +234,24 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToTapeCopyRequest &rqst) {
   char *zErrMsg = 0;
   const CreationLog &log = rqst.getCreationLog();
   std::ostringstream query;
-  query << "INSERT INTO ARCHIVETOTAPECOPYREQUEST(STATE, REMOTEFILE,"
-    " ARCHIVEFILE, TAPEPOOL, COPYNB, PRIORITY, UID, GID, HOST, CREATIONTIME) VALUES("
-    << "'PENDING_NS_CREATION','" << rqst.getRemoteFile() << "','" <<
-    rqst.getArchiveFile() << "','" << rqst.getTapePoolName() << "'," <<
-    rqst.getCopyNb() << "," << rqst.getPriority() << "," <<
-    log.user.uid << "," << log.user.gid << ","
-    << " '" << log.host << "', "
-    << (int)log.time << ");";
+  query << "INSERT INTO ARCHIVETOTAPECOPYREQUEST(STATE, REMOTEFILEPATH,"
+    " REMOTEFILEUID, REMOTEFILEGID, REMOTEFILESIZE, REMOTEFILEMODE, ARCHIVEFILE,"
+    " TAPEPOOL, COPYNB, PRIORITY, UID, GID, HOST, CREATIONTIME)"
+    " VALUES("
+    "'PENDING_NS_CREATION','" <<
+    rqst.getRemoteFile().path.getRaw() << "'," <<
+    rqst.getRemoteFile().status.owner.uid << "," <<
+    rqst.getRemoteFile().status.owner.gid << "," <<
+    rqst.getRemoteFile().status.size << "," <<
+    rqst.getRemoteFile().status.mode << ",'" <<
+    rqst.getArchiveFile() << "','" <<
+    rqst.getTapePoolName() << "'," <<
+    rqst.getCopyNb() << "," <<
+    rqst.getPriority() << "," <<
+    log.user.uid << "," <<
+    log.user.gid << ",'" <<
+    log.host << "', " <<
+    (int)log.time << ");";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
     std::ostringstream msg;
@@ -261,7 +275,8 @@ std::map<cta::TapePool, std::list<cta::ArchiveToTapeCopyRequest> >
   cta::MockSchedulerDatabase::getArchiveRequests() const {
   std::ostringstream query;
   std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > rqsts;
-  query << "SELECT STATE, REMOTEFILE, ARCHIVEFILE, TAPEPOOL, COPYNB,"
+  query << "SELECT STATE, REMOTEFILEPATH, REMOTEFILEUID, REMOTEFILEGID,"
+    " REMOTEFILESIZE, REMOTEFILEMODE, ARCHIVEFILE, TAPEPOOL, COPYNB,"
     " PRIORITY, UID, GID, HOST, CREATIONTIME FROM ARCHIVETOTAPECOPYREQUEST"
     " ORDER BY ARCHIVEFILE;";
   sqlite3_stmt *s = NULL;
@@ -277,28 +292,40 @@ std::map<cta::TapePool, std::list<cta::ArchiveToTapeCopyRequest> >
     const std::string tapePoolName =
       (char *)sqlite3_column_text(statement.get(), idx("TAPEPOOL"));
     const TapePool tapePool = getTapePool(tapePoolName);
-    const std::string remoteFile = (char *)sqlite3_column_text(statement.get(),
-      idx("REMOTEFILE"));
-    const std::string archiveFile = (char *)sqlite3_column_text(statement.get(),
-      idx("ARCHIVEFILE"));
-    const uint16_t copyNb = sqlite3_column_int(statement.get(), idx("COPYNB"));
-    const std::string tapePolMName = (char *)sqlite3_column_text(
-      statement.get(), idx("TAPEPOOL"));
-    const uint16_t requesterUid = sqlite3_column_int(statement.get(),
-      idx("UID"));
-    const uint16_t requesterGid = sqlite3_column_int(statement.get(),
-      idx("GID"));
+    const std::string remoteFilePath =
+      (char *)sqlite3_column_text(statement.get(), idx("REMOTEFILEPATH"));
+    const uint32_t remoteFileUid =
+      sqlite3_column_int(statement.get(), idx("REMOTEFILEUID"));
+    const uint32_t remoteFileGid =
+      sqlite3_column_int(statement.get(), idx("REMOTEFILEGID"));
+    const uint64_t remoteFileSize =
+      sqlite3_column_int(statement.get(), idx("REMOTEFILESIZE"));
+    const mode_t remoteFileMode =
+      sqlite3_column_int(statement.get(), idx("REMOTEFILEMODE"));
+    const std::string archiveFile =
+      (char *)sqlite3_column_text(statement.get(), idx("ARCHIVEFILE"));
+    const uint16_t copyNb =
+      sqlite3_column_int(statement.get(), idx("COPYNB"));
+    const std::string tapePolMName =
+      (char *)sqlite3_column_text(statement.get(), idx("TAPEPOOL"));
+    const uint16_t requesterUid =
+      sqlite3_column_int(statement.get(), idx("UID"));
+    const uint16_t requesterGid =
+      sqlite3_column_int(statement.get(), idx("GID"));
     const std::map<uint16_t, std::string> copyNbToPoolMap;
-    const uint64_t priority = sqlite3_column_int(statement.get(),
-      idx("PRIORITY"));
+    const uint64_t priority =
+      sqlite3_column_int(statement.get(), idx("PRIORITY"));
     const UserIdentity requester(requesterUid, requesterGid);
     const std::string requesterHost = 
       (char *)sqlite3_column_text(statement.get(),idx("HOST"));
-    const time_t creationTime = sqlite3_column_int(statement.get(),
-      idx("CREATIONTIME"));
-    const CreationLog log(requester, requesterHost, creationTime, "");
+    const time_t creationTime =
+      sqlite3_column_int(statement.get(), idx("CREATIONTIME"));
+    const UserIdentity remoteFileOwner(remoteFileUid, remoteFileGid);
+    const RemoteFileStatus remoteFileStatus(remoteFileOwner, remoteFileMode,
+      remoteFileSize);
+    const CreationLog log(requester, requesterHost, creationTime);
     rqsts[tapePool].push_back(ArchiveToTapeCopyRequest(
-      remoteFile,
+      RemotePathAndStatus(remoteFilePath, remoteFileStatus),
       archiveFile,
       copyNb,
       tapePoolName,
@@ -367,7 +394,8 @@ std::list<cta::ArchiveToTapeCopyRequest> cta::MockSchedulerDatabase::
   getArchiveRequests(const std::string &tapePoolName) const {
   std::ostringstream query;
   std::list<ArchiveToTapeCopyRequest> rqsts;
-  query << "SELECT STATE, REMOTEFILE, ARCHIVEFILE, TAPEPOOL, COPYNB,"
+  query << "SELECT STATE, REMOTEFILEPATH, REMOTEFILEUID, REMOTEFILEGID,"
+    " REMOTEFILESIZE, REMOTEFILEMODE, ARCHIVEFILE, TAPEPOOL, COPYNB,"
     " PRIORITY, UID, GID, HOST, CREATIONTIME FROM ARCHIVETOTAPECOPYREQUEST"
     " WHERE TAPEPOOL='" << tapePoolName << "' ORDER BY ARCHIVEFILE;";
   sqlite3_stmt *s = NULL;
@@ -383,8 +411,16 @@ std::list<cta::ArchiveToTapeCopyRequest> cta::MockSchedulerDatabase::
     const std::string tapePoolName =
       (char *)sqlite3_column_text(statement.get(), idx("TAPEPOOL"));
     const TapePool tapePool = getTapePool(tapePoolName);
-    const std::string remoteFile = (char *)sqlite3_column_text(statement.get(),
-      idx("REMOTEFILE"));
+    const std::string remoteFilePath =
+      (char *)sqlite3_column_text(statement.get(), idx("REMOTEFILEPATH"));
+    const uint32_t remoteFileUid =
+      sqlite3_column_int(statement.get(), idx("REMOTEFILEUID"));
+    const uint32_t remoteFileGid =
+      sqlite3_column_int(statement.get(), idx("REMOTEFILEGID"));
+    const uint64_t remoteFileSize =
+      sqlite3_column_int(statement.get(), idx("REMOTEFILESIZE"));
+    const mode_t remoteFileMode =
+      sqlite3_column_int(statement.get(), idx("REMOTEFILEMODE"));
     const std::string archiveFile = (char *)sqlite3_column_text(statement.get(),
       idx("ARCHIVEFILE"));
     const uint16_t copyNb = sqlite3_column_int(statement.get(), idx("COPYNB"));
@@ -402,9 +438,12 @@ std::list<cta::ArchiveToTapeCopyRequest> cta::MockSchedulerDatabase::
       (char *)sqlite3_column_text(statement.get(),idx("HOST"));
     const time_t creationTime = sqlite3_column_int(statement.get(),
       idx("CREATIONTIME"));
+    const UserIdentity remoteFileOwner(remoteFileUid, remoteFileGid);
+    const RemoteFileStatus remoteFileStatus(remoteFileOwner, remoteFileMode,
+      remoteFileSize);
     const CreationLog log(requester, requesterHost, creationTime, "");
     rqsts.push_back(ArchiveToTapeCopyRequest(
-      remoteFile,
+      RemotePathAndStatus(remoteFilePath, remoteFileStatus),
       archiveFile,
       copyNb,
       tapePoolName,

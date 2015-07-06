@@ -18,49 +18,40 @@
 
 #pragma once
 
-#include "common/UserIdentity.hpp"
-
-#include <string>
+#include "common/RemoteFileStatus.hpp"
+#include "common/RemotePath.hpp"
 
 namespace cta {
 
 /**
- * Class containing the security information necessary to authorise a user
- * submitting a requests from a specific host.
+ * The path and status of a file in a remote storage system.
  */
-struct CreationLog {
-
+struct RemotePathAndStatus {
   /**
    * Constructor.
    */
-  CreationLog();
+  RemotePathAndStatus();
 
   /**
    * Constructor.
+   *
+   * @param path The path of the file in the remote storage system.
+   * @param status The status of the file in the remote storage system.
    */
-  CreationLog(const UserIdentity &user, const std::string &host,
-    const time_t time,  const std::string & comment = "");
+  RemotePathAndStatus(
+    const RemotePath &path,
+    const RemoteFileStatus &status);
 
   /**
-   * The identity of the creator.
+   * The path of the file in the remote storage system.
    */
-  UserIdentity user;
+  RemotePath path;
 
   /**
-   * The network name of the host from which they are submitting a request.
+   * The status of the file in the remote storage system.
    */
-  std::string host;
-  
-  /**
-   * The time of creation
-   */
-  time_t time;
-  
-  /**
-   * The comment at creation time
-   */
-  std::string comment;
+  RemoteFileStatus status;
 
-}; // struct CreationLog
+}; // class RemotePathAndStatus
 
 } // namespace cta
