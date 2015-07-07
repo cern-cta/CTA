@@ -61,13 +61,6 @@ cta::RemoteFileStatus cta::RemoteNSDispatcher::statFile(const RemotePath &path)
 }
 
 //------------------------------------------------------------------------------
-// regularFileExists
-//------------------------------------------------------------------------------
-bool cta::RemoteNSDispatcher::regularFileExists(const RemotePath &path) const {
-  return getHandler(path.getScheme()).regularFileExists(path);
-}
-
-//------------------------------------------------------------------------------
 // getHandler
 //------------------------------------------------------------------------------
 const cta::RemoteNS &cta::RemoteNSDispatcher::getHandler(
@@ -109,13 +102,6 @@ cta::RemoteNS &cta::RemoteNSDispatcher::getHandler(
   }
 
   return *(itor->second);
-}
-
-//------------------------------------------------------------------------------
-// dirExists
-//------------------------------------------------------------------------------
-bool cta::RemoteNSDispatcher::dirExists(const RemotePath &path) const {
-  return getHandler(path.getScheme()).dirExists(path);
 }
 
 //------------------------------------------------------------------------------

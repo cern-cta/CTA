@@ -45,34 +45,6 @@ cta::RemoteFileStatus cta::MockRemoteNS::statFile(const RemotePath &path) const 
 }
 
 //------------------------------------------------------------------------------
-// regularFileExists
-//------------------------------------------------------------------------------
-bool cta::MockRemoteNS::regularFileExists(const RemotePath &remoteFile) const {
-  auto it = m_entries.find(remoteFile);
-  if(m_entries.end() == it) {
-    return false;
-  }
-  if(!S_ISREG(m_entries.at(remoteFile).mode)) {
-    return false;
-  }
-  return true;
-}
-
-//------------------------------------------------------------------------------
-// dirExists
-//------------------------------------------------------------------------------
-bool cta::MockRemoteNS::dirExists(const RemotePath &remoteFile) const {
-  auto it = m_entries.find(remoteFile);
-  if(m_entries.end() == it) {
-    return false;
-  }
-  if(!S_ISDIR(m_entries.at(remoteFile).mode)) {
-    return false;
-  }
-  return true;
-}
-
-//------------------------------------------------------------------------------
 // rename
 //------------------------------------------------------------------------------
 void cta::MockRemoteNS::rename(const RemotePath &remoteFile,

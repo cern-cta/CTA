@@ -41,6 +41,9 @@
 
 #include <iostream>
 #include <sstream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 //------------------------------------------------------------------------------
 // TransferFailureToStr
@@ -705,8 +708,9 @@ void cta::Scheduler::queueRetrieveRequest(
   const std::list<std::string> &archiveFiles,
   const std::string &remoteFileOrDir) {
 
-  const bool retreiveToDir = m_remoteNS.dirExists(remoteFileOrDir);
-  if(retreiveToDir) {
+  RemoteFileStatus remoteStat = m_remoteNS.statFile(remoteFileOrDir);
+  const bool retrieveToDir = S_ISDIR(remoteStat.mode);
+  if(retrieveToDir) {
   // Else retrieve to a single file
   } else {
   }

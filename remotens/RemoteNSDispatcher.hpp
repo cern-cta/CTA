@@ -59,22 +59,6 @@ public:
   RemoteFileStatus statFile(const RemotePath &path) const;
 
   /**
-   * Returns true if the specified regular file exists.
-   *
-   * @param path The absolute path of the file.
-   * @return True if the specified directory exists.
-   */
-  bool regularFileExists(const RemotePath &path) const;
-
-  /**
-   * Returns true if the specified directory exists.
-   *
-   * @param path The absolute path of the file.
-   * @return True if the specified directory exists.
-   */
-  bool dirExists(const RemotePath &path) const;
-
-  /**
    * Renames the specified remote file to the specified new name.
    *
    * @param remoteFile The current path.

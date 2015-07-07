@@ -20,6 +20,9 @@
 #include "remotens/MockRemoteNS.hpp"
 
 #include <gtest/gtest.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 namespace unitTests {
 
@@ -41,13 +44,11 @@ TEST_F(cta_MockRemoteNsTest, createNonExistingFile) {
   const uint64_t size = 50;
   const RemoteFileStatus status(owner, mode, size);
   const RemotePath rp("eos:/path/to/file");
-  bool regularFileExists = true;
-  ASSERT_NO_THROW(regularFileExists = rns.regularFileExists(rp));
-  ASSERT_FALSE(regularFileExists);
+  ASSERT_THROW(rns.statFile(rp), std::exception);
   ASSERT_NO_THROW(rns.createEntry(rp, status));
-  regularFileExists = false;
-  ASSERT_NO_THROW(regularFileExists = rns.regularFileExists(rp));
-  ASSERT_TRUE(regularFileExists);
+  RemoteFileStatus remoteStat;
+  ASSERT_NO_THROW(remoteStat = rns.statFile(rp));
+  ASSERT_TRUE(S_ISREG(remoteStat.mode));
 }
 
 TEST_F(cta_MockRemoteNsTest, createExistingFile) {
@@ -72,13 +73,11 @@ TEST_F(cta_MockRemoteNsTest, createNonExistingDir) {
   const uint64_t size = 50;
   const RemoteFileStatus status(owner, mode, size);
   const RemotePath rp("eos:/path/to/dir");
-  bool dirExists = true;
-  ASSERT_NO_THROW(dirExists = rns.dirExists(rp));
-  ASSERT_FALSE(dirExists);
+  ASSERT_THROW(rns.statFile(rp), std::exception);
   ASSERT_NO_THROW(rns.createEntry(rp, status));
-  dirExists = false;
-  ASSERT_NO_THROW(dirExists = rns.dirExists(rp));
-  ASSERT_TRUE(dirExists);
+  RemoteFileStatus remoteStat;
+  ASSERT_NO_THROW(remoteStat = rns.statFile(rp));
+  ASSERT_TRUE(S_ISDIR(remoteStat.mode));
 }
 
 TEST_F(cta_MockRemoteNsTest, createExistingDir) {
