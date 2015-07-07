@@ -58,8 +58,8 @@ void cta::CastorNameServer::createStorageClass(
   bzero(&fc, sizeof(struct Cns_fileclass));
   strncpy(fc.name, name.c_str(), CA_MAXCLASNAMELEN);
   fc.nbcopies = nbCopies;
-  fc.classid = time(NULL)%100000;
-  exception::Errnum::throwOnMinusOne(Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc), __FUNCTION__);
+  fc.classid = time(NULL)%10000; //should be 5 digits allowed but it actually works only if you provide 4 digits... go figure!
+  cta::exception::Errnum::throwOnMinusOne(Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc), __FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -129,7 +129,13 @@ void cta::CastorNameServer::clearDirStorageClass(
   const SecurityIdentity &requester, const std::string &path) { 
   Utils::assertAbsolutePathSyntax(path);
   char no_class[]="NO_CLASS";
-  exception::Errnum::throwOnMinusOne(Cns_chclass(path.c_str(), 0, no_class), __FUNCTION__);
+  struct Cns_fileclass fc;
+  bzero(&fc, sizeof(struct Cns_fileclass));
+  strncpy(fc.name, no_class, CA_MAXCLASNAMELEN);
+  fc.nbcopies = 0;
+  fc.classid = time(NULL)%10000; //should be 5 digits allowed but it actually works only if you provide 4 digits... go figure!
+  Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc); //we don't care if this fails: the class might already exist
+  cta::exception::Errnum::throwOnMinusOne(Cns_chclass(path.c_str(), 0, no_class), __FUNCTION__);
 }  
 
 //------------------------------------------------------------------------------
