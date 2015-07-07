@@ -83,7 +83,7 @@ castor::tape::tapeserver::daemon::DataTransferConfig
   config.remoteFileProtocol = castorConf.getConfEntString(
     "TapeServer", "RemoteFileProtocol", "RFIO", log);
   config.xrootPrivateKey = castorConf.getConfEntString(
-    "TapeServer", "XrootPrivateKey", "/etc/castor/tape_key.pem", log);
+    "TapeServer", "XrootPrivateKey", "/etc/castor/xrd_tape_key.pem", log);
   config.moverHandlerPort = castorConf.getConfEntInt(
     "DiskManager", "MoverHandlerPort", MOVERHANDLERPORT, log);
 

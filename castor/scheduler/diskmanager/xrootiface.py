@@ -55,7 +55,7 @@ def buildXrootURL(diskserver, path, transferId, transferType):
                  'castor.exptime' : str(int(time.time()) + 3600)}
 
   # get Xroot RSA key
-  keyFile = config.getValue('XROOT', 'PrivateKey', '/etc/castor/key.pem')
+  keyFile = config.getValue('XROOT', 'PrivateKey', '/etc/castor/xrd_key.pem')
   key = RSA.importKey(open(keyFile, 'r').read())
   # sign opaque part obtained by concatenating the values
   opaque_token = ''.join([opaque_dict['castor.pfn1'],

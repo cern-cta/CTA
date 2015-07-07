@@ -21,8 +21,8 @@ ofs.persist off
 ofs.authlib /usr/lib64/libxrdxcastor2acc.so.2.1
 ofs.authorize
 xcastor2.capability true
-xcastor2.publickey default /etc/castor/pkey.pem
-#xcastor2.publickey tape /etc/castor/tape_pkey.pem
+xcastor2.publickey default /etc/castor/xrd_pkey.pem
+#xcastor2.publickey tape /etc/castor/xrd_tape_pkey.pem
 
 #-------------------------------------------------------------------------------
 # Log level which is the same as the one used by syslog. By default it's INFO.

@@ -48,7 +48,7 @@ xcastor2.stagermap /                     default
 #-------------------------------------------------------------------------------
 xcastor2.targetport 1095
 xcastor2.capability true
-xcastor2.privatekey /etc/castor/key.pem
+xcastor2.privatekey /etc/castor/xrd_key.pem
 xcastor2.tokenlocktime 60
 xcastor2.proc /var/log/xroot/manager
 
