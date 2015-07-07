@@ -125,7 +125,7 @@ public:
     const SecurityIdentity &requester,
     const std::string &name,
     const uint16_t nbCopies,
-    const uint64_t id) = 0;
+    const uint32_t id) = 0;
 
   /**
    * Deletes the specified storage class.

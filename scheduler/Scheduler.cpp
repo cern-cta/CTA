@@ -222,6 +222,28 @@ void cta::Scheduler::createStorageClass(
 }
 
 //------------------------------------------------------------------------------
+// createStorageClass
+//------------------------------------------------------------------------------
+void cta::Scheduler::createStorageClass(
+  const SecurityIdentity &requester,
+  const std::string &name,
+  const uint16_t nbCopies,
+  const uint32_t id,
+  const std::string &comment) {
+  m_db.assertIsAdminOnAdminHost(requester);
+  if(99999 < id) {
+    std::ostringstream msg;
+    msg << "Failed to create storage class " << name << " with numeric"
+    " identifier " << id << " because the identifier is greater than the"
+    " maximum permitted value of 99999";
+    throw exception::Exception(msg.str());
+  }
+  m_db.createStorageClass(name, nbCopies, CreationLog(requester.getUser(), 
+       requester.getHost(), time(NULL), comment));
+  m_ns.createStorageClass(requester, name, nbCopies, id);
+}
+
+//------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteStorageClass(

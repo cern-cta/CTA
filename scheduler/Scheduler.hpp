@@ -275,6 +275,24 @@ public:
     const std::string &comment);
 
   /**
+   * Creates the specified storage class.
+   *
+   * @param requester The identity of the user requesting the creation of the
+   * storage class.
+   * @param name The name of the storage class.
+   * @param nbCopies The number of copies a file associated with this storage
+   * class should have on tape.
+   * @param id The numeric identifer of the storage class.
+   * @param comment The comment describing the storage class.
+   */
+  void createStorageClass(
+    const SecurityIdentity &requester,
+    const std::string &name,
+    const uint16_t nbCopies,
+    const uint32_t id,
+    const std::string &comment);
+
+  /**
    * Deletes the specified storage class.
    *
    * @param requester The identity of the user requesting the deletion of the

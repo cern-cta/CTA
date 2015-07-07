@@ -77,7 +77,7 @@ public:
   
   void createStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies);
 
-  void createStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies, const uint64_t id);
+  void createStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies, const uint32_t id);
 
   void deleteStorageClass(const SecurityIdentity &requester, const std::string &name);
   

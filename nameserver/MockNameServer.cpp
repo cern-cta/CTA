@@ -113,23 +113,46 @@ bool cta::MockNameServer::dirExists(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
   const std::string &name, const uint16_t nbCopies) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  const uint32_t id = getNextStorageClassId();
+  createStorageClass(requester, name, nbCopies, id);
 }
 
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
 void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
-  const std::string &name, const uint16_t nbCopies, const uint64_t id) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
-}
-  
+  const std::string &name, const uint16_t nbCopies, const uint32_t id) {
+  if(99999 < id) {
+    std::ostringstream msg;
+    msg << "Failed to create storage class " << name << " with numeric"
+    " identifier " << id << " because the identifier is greater than the"
+    " maximum permitted value of 99999";
+    throw exception::Exception(msg.str());
+  }
+
+  assertStorageClassNameDoesNotExist(name);
+  assertStorageClassIdDoesNotExist(id);
+
+  m_storageClasses.push_back(StorageClassNameAndId(name, id));
+} 
+
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
 void cta::MockNameServer::deleteStorageClass(const SecurityIdentity &requester,
   const std::string &name) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  for(auto itor = m_storageClasses.begin(); itor != m_storageClasses.end();
+    itor++) {
+    if(name == itor->name) {
+      m_storageClasses.erase(itor);
+      return;
+    }
+  }
+
+  std::ostringstream msg;
+  msg << "Failed to delete storage class " << name << " because it does not"
+    " exist";
+  throw exception::Exception(msg.str());
 }
  
 //------------------------------------------------------------------------------
@@ -514,4 +537,51 @@ std::string cta::MockNameServer::getVidOfFile(
   const std::string &path,
   const uint16_t copyNb) const {
   return "T00001"; //everything is on one tape for the moment:)
+}
+
+//------------------------------------------------------------------------------
+// assertStorageClassNameDoesNotExist
+//------------------------------------------------------------------------------
+void cta::MockNameServer::assertStorageClassNameDoesNotExist(
+  const std::string &name) const {
+  for(auto itor = m_storageClasses.begin(); itor != m_storageClasses.end();
+    itor++) {
+    if(name == itor->name) {
+      std::ostringstream msg;
+      msg << "Storage class " << name << " already exists in the archive"
+        " namespace";
+      throw exception::Exception(msg.str());
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// assertStorageClassIdDoesNotExist
+//------------------------------------------------------------------------------
+void cta::MockNameServer::assertStorageClassIdDoesNotExist(const uint32_t id)
+  const {
+  for(auto itor = m_storageClasses.begin(); itor != m_storageClasses.end(); 
+    itor++) {
+    if(id == itor->id) {
+      std::ostringstream msg;
+      msg << "Storage class numeric idenitifier " << id << " already exists in"
+        " the archive namespace";
+      throw exception::Exception(msg.str());
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// getNextStorageClassId
+//------------------------------------------------------------------------------
+uint32_t cta::MockNameServer::getNextStorageClassId() const {
+  for(uint32_t id = 1; id <= 99999; id++) {
+    try {
+      assertStorageClassIdDoesNotExist(id);
+      return id;
+    } catch(...) {
+    }
+  }
+
+  throw exception::Exception("Ran out of numeric storage identifiers");
 }
