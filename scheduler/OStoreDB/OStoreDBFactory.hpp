@@ -212,8 +212,8 @@ public:
     return m_OStoreDB.getTapes();
   }
 
-  virtual void queue(const ArchiveToFileRequest& rqst) {
-    m_OStoreDB.queue(rqst);
+  virtual std::unique_ptr<ArchiveToFileRequestCreation> queue(const ArchiveToFileRequest& rqst) {
+    return m_OStoreDB.queue(rqst);
   }
 
   virtual void queue(const ArchiveToDirRequest& rqst) {

@@ -523,7 +523,8 @@ void cta::Scheduler::queueArchiveRequest(
       const auto rfStat = m_remoteNS.statFile(*rf);
       rfil.push_back(RemotePathAndStatus(*rf, rfStat));
     }
-    queueArchiveToDirRequest(requester, rfil, archiveDir);
+//    queueArchiveToDirRequest(requester, rfil, archiveDir);
+    throw cta::exception::Exception("Archive to Dir not supported in surrent prototype");
 
   // Else archive to a single file
   } else {
@@ -544,28 +545,28 @@ void cta::Scheduler::queueArchiveRequest(
 //------------------------------------------------------------------------------
 // queueArchiveToDirRequest
 //------------------------------------------------------------------------------
-void cta::Scheduler::queueArchiveToDirRequest(
-  const SecurityIdentity &requester,
-  const std::list<RemotePathAndStatus> &remoteFiles,
-  const std::string &archiveDir) {
-
-  const uint64_t priority = 0; // TO BE DONE
-
-  const auto storageClassName = m_ns.getDirStorageClass(requester, archiveDir);
-  const auto storageClass = m_db.getStorageClass(storageClassName);
-  assertStorageClassHasAtLeastOneCopy(storageClass);
-  const auto archiveToFileRequests = createArchiveToFileRequests(requester,
-    remoteFiles, archiveDir, priority);
-
-  CreationLog log(requester.getUser(), requester.getHost(), time(NULL), "");
-  m_db.queue(ArchiveToDirRequest(archiveDir, archiveToFileRequests, priority,
-    log));
-
-  for(auto itor = archiveToFileRequests.cbegin(); itor !=
-    archiveToFileRequests.cend(); itor++) {
-    createNSEntryAndUpdateSchedulerDatabase(requester, *itor);
-  }
-}
+//void cta::Scheduler::queueArchiveToDirRequest(
+//  const SecurityIdentity &requester,
+//  const std::list<RemotePathAndStatus> &remoteFiles,
+//  const std::string &archiveDir) {
+//
+//  const uint64_t priority = 0; // TO BE DONE
+//
+//  const auto storageClassName = m_ns.getDirStorageClass(requester, archiveDir);
+//  const auto storageClass = m_db.getStorageClass(storageClassName);
+//  assertStorageClassHasAtLeastOneCopy(storageClass);
+//  const auto archiveToFileRequests = createArchiveToFileRequests(requester,
+//    remoteFiles, archiveDir, priority);
+//
+//  CreationLog log(requester.getUser(), requester.getHost(), time(NULL), "");
+//  m_db.queue(ArchiveToDirRequest(archiveDir, archiveToFileRequests, priority,
+//    log));
+//
+//  for(auto itor = archiveToFileRequests.cbegin(); itor !=
+//    archiveToFileRequests.cend(); itor++) {
+//    createNSEntryAndUpdateSchedulerDatabase(requester, *itor);
+//  }
+//}
 
 //------------------------------------------------------------------------------
 // assertStorageClassHasAtLeastOneCopy
@@ -609,7 +610,8 @@ std::list<cta::ArchiveToFileRequest> cta::Scheduler::
 //------------------------------------------------------------------------------
 void cta::Scheduler::createNSEntryAndUpdateSchedulerDatabase(
   const SecurityIdentity &requester,
-  const ArchiveToFileRequest &rqst) {
+  const ArchiveToFileRequest &rqst,
+  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> & requestCreation) {
 
   try {
     m_ns.createFile(requester, rqst.archiveFile, 0666);
@@ -617,7 +619,8 @@ void cta::Scheduler::createNSEntryAndUpdateSchedulerDatabase(
     // Try our best to cleanup the scheduler database.  The garbage collection
     // logic will try again if we fail.
     try {
-      m_db.deleteArchiveRequest(requester, rqst.archiveFile);
+      requestCreation->cancel();
+      //m_db.deleteArchiveRequest(requester, rqst.archiveFile);
     } catch(...) {
     }
 
@@ -625,8 +628,8 @@ void cta::Scheduler::createNSEntryAndUpdateSchedulerDatabase(
     // problem here was the failure to create an entry in the NS
     throw nsEx;
   }
-
-  m_db.fileEntryCreatedInNS(requester, rqst.archiveFile);
+  requestCreation->complete();
+  //m_db.fileEntryCreatedInNS(requester, rqst.archiveFile);
 }
 
 //------------------------------------------------------------------------------
@@ -641,8 +644,9 @@ void cta::Scheduler::queueArchiveToFileRequest(
   const ArchiveToFileRequest rqst = createArchiveToFileRequest(requester,
     remoteFile, archiveFile, priority);
 
-  m_db.queue(rqst);
-  createNSEntryAndUpdateSchedulerDatabase(requester, rqst);
+  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> 
+    requestCreation (m_db.queue(rqst));
+  createNSEntryAndUpdateSchedulerDatabase(requester, rqst, requestCreation);
 }
 
 //------------------------------------------------------------------------------

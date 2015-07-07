@@ -20,10 +20,12 @@
 
 #include "common/RemotePathAndStatus.hpp"
 #include "scheduler/ArchiveRequest.hpp"
+#include "SchedulerDatabase.hpp"
 
 #include <map>
 #include <stdint.h>
 #include <string>
+#include <memory>
 
 namespace cta {
 
@@ -42,6 +44,18 @@ struct ArchiveToFileRequest: public ArchiveRequest {
    * Destructor.
    */
   ~ArchiveToFileRequest() throw();
+  
+  /**
+   * Explicit copy constructor
+   * @param other
+   */
+  ArchiveToFileRequest(const ArchiveToFileRequest & other):
+  ArchiveRequest(other)
+  {
+    archiveFile = other.archiveFile;
+    remoteFile = other.remoteFile;
+    copyNbToPoolMap = other.copyNbToPoolMap;
+  }
 
   /**
    * Constructor.
@@ -62,7 +76,7 @@ struct ArchiveToFileRequest: public ArchiveRequest {
     const CreationLog & creationLog);
 
   /**
-   * The path ans status of the remote file to be archived.
+   * The path and status of the remote file to be archived.
    */
   RemotePathAndStatus remoteFile;
 

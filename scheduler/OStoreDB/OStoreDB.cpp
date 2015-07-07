@@ -253,33 +253,14 @@ void OStoreDB::deleteArchivalRoute(const SecurityIdentity& requester,
 
 void OStoreDB::fileEntryCreatedInNS(const SecurityIdentity& requester,
   const std::string &archiveFile) {
+  throw exception::Exception("Not Implemented");
+}
+
+void OStoreDB::ArchiveToFileRequestCreation::complete() {
+  // We inherited all the objects from the creation.
+  // Lock is still here at that point.
   // First we need to find the atfr again. The only way is in the agent's owned 
   // objects
-  // TODO: this is crude and should be superseeded by different interface.
-  std::string atfrAddress;
-  {
-    ScopedExclusiveLock agl(*m_agent);
-    m_agent->fetch();
-    auto ol = m_agent->getOwnershipList();
-    for (auto addr=ol.begin(); addr!=ol.end(); addr++) {
-      try {
-        objectstore::ArchiveToFileRequest atfr(*addr, m_objectStore);
-        ScopedSharedLock atrfl(atfr);
-        atfr.fetch();
-        if (atfr.getArchiveFile() == archiveFile) {
-          atfrAddress = atfr.getAddressIfSet();
-          break;
-        }
-      } catch (objectstore::ObjectOpsBase::WrongType &) {
-        continue;
-      }
-    }
-  }
-  objectstore::ArchiveToFileRequest atfr(atfrAddress, m_objectStore);
-  // Time to plug the request to the tree
-  // the tree (it will first be referenced by the agent)
-  ScopedExclusiveLock atfrl(atfr);
-  atfr.fetch();
   objectstore::RootEntry re(m_objectStore);
   // We can now plug the request onto its tape pools.
   // We can discover at that point that a tape pool is actually not
@@ -288,7 +269,7 @@ void OStoreDB::fileEntryCreatedInNS(const SecurityIdentity& requester,
   // tape pools and abort the job creation.
   // The list of done tape pools is held here for this purpose
   // Reconstruct the job list
-  auto jl = atfr.dumpJobs();
+  auto jl = m_request.dumpJobs();
   std::list<std::string> linkedTapePools;
   try {
     for (auto j=jl.begin(); j!=jl.end(); j++) {
@@ -298,7 +279,7 @@ void OStoreDB::fileEntryCreatedInNS(const SecurityIdentity& requester,
       if (tp.getOwner() != re.getAddressIfSet())
         throw NoSuchTapePool("In OStoreDB::queue: non-existing tape pool found "
             "(dangling pointer): cancelling request creation.");
-      tp.addJob(*j, atfr.getAddressIfSet(), atfr.getArchiveFile(), atfr.getSize());
+      tp.addJob(*j, m_request.getAddressIfSet(), m_request.getArchiveFile(), m_request.getSize());
       tp.commit();
       linkedTapePools.push_back(j->tapePoolAddress);
     }
@@ -308,24 +289,68 @@ void OStoreDB::fileEntryCreatedInNS(const SecurityIdentity& requester,
       objectstore::TapePool tp(*tpa, m_objectStore);
       ScopedExclusiveLock tpl(tp);
       tp.fetch();
-      tp.removeJob(atfr.getAddressIfSet());
+      tp.removeJob(m_request.getAddressIfSet());
       tp.commit();
-      atfr.remove();
+      m_request.remove();
     }
     throw;
   }
   // The request is now fully set. As it's multi-owned, we do not set the owner
-  atfr.setOwner("");
-  atfr.commit();
+  m_request.setOwner("");
+  m_request.commit();
+  m_lock.release();
   // And remove reference from the agent
   {
     objectstore::ScopedExclusiveLock al(*m_agent);
     m_agent->fetch();
-    m_agent->removeFromOwnership(atfr.getAddressIfSet());
+    m_agent->removeFromOwnership(m_request.getAddressIfSet());
     m_agent->commit();
   }
+  m_closed=true;
   return;
-} 
+}
+
+void OStoreDB::ArchiveToFileRequestCreation::cancel() {
+  // We inherited everything from the creation, and all we have to
+  // do here is to delete the request from storage and dereference it from
+  // the agent's entry
+  if (m_closed) {
+    throw ArchveRequestAlreadyCompleteOrCanceled(
+      "In OStoreDB::ArchiveToFileRequestCreation::cancel: trying the close "
+      "the request creation twice");
+  }
+  m_request.remove();
+  {
+    objectstore::ScopedExclusiveLock al(*m_agent);
+    m_agent->fetch();
+    m_agent->removeFromOwnership(m_request.getAddressIfSet());
+    m_agent->commit();
+  }
+  m_closed=true;
+  return;
+}
+
+OStoreDB::ArchiveToFileRequestCreation::~ArchiveToFileRequestCreation() {
+  // We have to determine whether complete() or cancel() were called, in which
+  // case there is nothing to do, or not, in which case we have to garbage
+  // collect the archive to file request. This will queue it to the appropriate
+  // tape pool(s) orphanesArchiveToFileCreations. The schedule will then 
+  // determine its fate depending on the status of the NS entry creation
+  // (no entry, just cancel, already created in NS, carry on).
+  if (m_closed)
+    return;
+  try {
+    m_request.garbageCollect(m_agent->getAddressIfSet());
+    {
+      objectstore::ScopedExclusiveLock al(*m_agent);
+      m_agent->fetch();
+      m_agent->removeFromOwnership(m_request.getAddressIfSet());
+      m_agent->commit();
+    }
+    m_closed=true;
+  } catch (...) {}
+}
+
 
 void OStoreDB::fileEntryDeletedFromNS(const SecurityIdentity& requester,
   const std::string &archiveFile) {
@@ -515,10 +540,14 @@ void OStoreDB::deleteLogicalLibrary(const SecurityIdentity& requester,
   re.commit();
 }
 
-void OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
+std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
+  OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
   assertAgentSet();
-  // In order to post the job, construct it first.
-  objectstore::ArchiveToFileRequest atfr(m_agent->nextId("ArchiveToFileRequest"), m_objectStore);
+  // Construct the return value immediately
+  std::unique_ptr<cta::OStoreDB::ArchiveToFileRequestCreation> 
+    internalRet(new cta::OStoreDB::ArchiveToFileRequestCreation(m_agent, m_objectStore));
+  cta::objectstore::ArchiveToFileRequest & atfr = internalRet->m_request;
+  atfr.setAddress(m_agent->nextId("ArchiveToFileRequest"));
   atfr.initialize();
   atfr.setArchiveFile(rqst.archiveFile);
   atfr.setRemoteFile(rqst.remoteFile.path.getRaw());
@@ -550,7 +579,8 @@ void OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
     m_agent->commit();
   }
   atfr.setOwner(m_agent->getAddressIfSet());
-  atfr.insert();  
+  atfr.insert();
+  internalRet->m_lock.lock(atfr);  
   // We successfully prepared the object. It will remain attached to the agent 
   // entry for the time being and get plugged to the tape pools on a second
   // pass. 
@@ -559,7 +589,9 @@ void OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
   // In the mean time, the step 2 of this insertion will be done by finding the
   // archiveRequest from the agent's owned object. Crude, but should not be too
   // bad as the agent is not supposed to own many objects in this place.
-
+  std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> ret;
+  ret.reset(internalRet.release());
+  return ret;
 }
 
 void OStoreDB::queue(const ArchiveToDirRequest& rqst) {

@@ -19,6 +19,7 @@
 #pragma once
 
 #include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/SecurityIdentity.hpp"
 
 #include <sqlite3.h>
 
@@ -40,19 +41,43 @@ public:
    */
   ~MockSchedulerDatabase() throw();
 
+  /*
+   * Subclass allowing the tracking and automated cleanup of a 
+   * ArchiveToFile requests on the SchdulerDB. Those 2 operations (creation+close
+   * or cancel) surround an NS operation. This class can keep references, locks,
+   * etc... handy to simplify the implementation of the completion and cancelling
+   * (plus the destructor in case the caller fails half way through).
+   */ 
+  class ArchiveToFileRequestCreation:
+    public SchedulerDatabase::ArchiveToFileRequestCreation {
+  public:
+    ArchiveToFileRequestCreation(sqlite3 * dbHandle, 
+      const std::string & archiveFile,
+      const SecurityIdentity & requester,
+      MockSchedulerDatabase & parent);
+    virtual void complete();
+    virtual void cancel();
+    virtual ~ArchiveToFileRequestCreation();
+  private:
+    sqlite3 *m_dbHandle;
+    std::string m_archiveFile;
+    SecurityIdentity m_requester;
+    MockSchedulerDatabase & m_parent;
+  };
   /**
    * Queues the specified request.
    *
    * @param rqst The request.
    */
-  void queue(const ArchiveToDirRequest &rqst);
+  
+   void queue(const ArchiveToDirRequest &rqst);
 
   /**
    * Queues the specified request.
    *
    * @param rqst The request.
    */
-  void queue(const ArchiveToFileRequest &rqst);
+  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> queue(const ArchiveToFileRequest &rqst);
 
   /**
    * Returns all of the queued archive requests.  The returned requests are

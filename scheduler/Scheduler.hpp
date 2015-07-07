@@ -22,6 +22,8 @@
 #include <map>
 #include <stdint.h>
 #include <string>
+#include <memory>
+#include "scheduler/SchedulerDatabase.hpp"
 
 namespace cta {
 
@@ -742,10 +744,10 @@ private:
    * @param archiveDir The full path of the destination directory within the
    * archive namespace.
    */
-  void queueArchiveToDirRequest(
-    const SecurityIdentity &requester,
-    const std::list<RemotePathAndStatus> &remoteFiles,
-    const std::string &archiveDir);
+//  void queueArchiveToDirRequest(
+//    const SecurityIdentity &requester,
+//    const std::list<RemotePathAndStatus> &remoteFiles,
+//    const std::string &archiveDir);
 
   /**
    * Throws an exception if the specified storage class has a tape copy count
@@ -779,7 +781,8 @@ private:
    */
   void createNSEntryAndUpdateSchedulerDatabase(
     const SecurityIdentity &requester,
-    const ArchiveToFileRequest &rqst);
+    const ArchiveToFileRequest &rqst,
+    std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> & requestCreation);
 
   /**
    * Queues the specifed request to archive one remote file to on archive file.

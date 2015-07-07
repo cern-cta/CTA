@@ -25,6 +25,10 @@ cta::objectstore::ArchiveToFileRequest::ArchiveToFileRequest(
   const std::string& address, Backend& os): 
   ObjectOps<serializers::ArchiveToFileRequest>(os, address) { }
 
+cta::objectstore::ArchiveToFileRequest::ArchiveToFileRequest(
+  Backend& os): 
+  ObjectOps<serializers::ArchiveToFileRequest>(os) { }
+
 cta::objectstore::ArchiveToFileRequest::ArchiveToFileRequest(GenericObject& go):
   ObjectOps<serializers::ArchiveToFileRequest>(go.objectStore()) {
   // Here we transplant the generic object into the new object

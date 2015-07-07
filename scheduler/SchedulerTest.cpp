@@ -1719,7 +1719,8 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
   }
 
   {
-    const auto rqsts = scheduler.getArchiveRequests(s_userOnUserHost);
+    decltype(scheduler.getArchiveRequests(s_userOnUserHost)) rqsts;
+    ASSERT_NO_THROW(rqsts = scheduler.getArchiveRequests(s_userOnUserHost));
     ASSERT_EQ(1, rqsts.size());
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());
@@ -1880,7 +1881,8 @@ TEST_P(SchedulerTest, delete_archive_request) {
   }
 
   {
-    const auto rqsts = scheduler.getArchiveRequests(s_userOnUserHost);
+    decltype(scheduler.getArchiveRequests(s_userOnUserHost)) rqsts;
+    ASSERT_NO_THROW(rqsts = scheduler.getArchiveRequests(s_userOnUserHost));
     ASSERT_EQ(1, rqsts.size());
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());
@@ -2379,7 +2381,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   }
 
   {
-    const auto rqsts = scheduler.getArchiveRequests(s_userOnUserHost);
+    decltype(scheduler.getArchiveRequests(s_userOnUserHost)) rqsts;
+    ASSERT_NO_THROW(rqsts = scheduler.getArchiveRequests(s_userOnUserHost));
     ASSERT_EQ(1, rqsts.size());
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());

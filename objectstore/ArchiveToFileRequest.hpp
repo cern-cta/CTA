@@ -32,6 +32,7 @@ class CreationLog;
 class ArchiveToFileRequest: public ObjectOps<serializers::ArchiveToFileRequest> {
 public:
   ArchiveToFileRequest(const std::string & address, Backend & os);
+  ArchiveToFileRequest(Backend & os);
   ArchiveToFileRequest(GenericObject & go);
   void initialize();
   // Job management ============================================================

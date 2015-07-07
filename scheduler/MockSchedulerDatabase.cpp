@@ -200,6 +200,7 @@ cta::MockSchedulerDatabase::~MockSchedulerDatabase() throw() {
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
+
 void cta::MockSchedulerDatabase::queue(const ArchiveToDirRequest &rqst) {
   for(auto itor = rqst.getArchiveToFileRequests().cbegin();
     itor != rqst.getArchiveToFileRequests().cend(); itor++) {
@@ -208,10 +209,66 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToDirRequest &rqst) {
 }
 
 //------------------------------------------------------------------------------
+// ArchiveToFileRequestCreation's constructor
+//------------------------------------------------------------------------------
+
+cta::MockSchedulerDatabase::
+  ArchiveToFileRequestCreation::ArchiveToFileRequestCreation(
+   sqlite3 * dbHandle, const std::string& archiveFile,
+   const SecurityIdentity & requester, MockSchedulerDatabase & parent): 
+     m_dbHandle(dbHandle), m_archiveFile(archiveFile), m_requester(requester),
+     m_parent(parent){}
+
+//------------------------------------------------------------------------------
+// ArchiveToFileRequestCreation::complete
+//------------------------------------------------------------------------------
+void cta::MockSchedulerDatabase::
+  ArchiveToFileRequestCreation::complete() {
+  char *zErrMsg = 0;
+  std::ostringstream query;
+  query << "UPDATE ARCHIVETOTAPECOPYREQUEST SET STATE='PENDING_MOUNT' WHERE"
+    " STATE='PENDING_NS_CREATION' AND ARCHIVEFILE='" << m_archiveFile << "';";
+  if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
+    &zErrMsg)) {
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - SQLite error: " << zErrMsg;
+    sqlite3_free(zErrMsg);
+    throw(exception::Exception(msg.str()));
+  }
+  const int nbRowsModified = sqlite3_changes(m_dbHandle);
+  if(0 >= nbRowsModified) {
+    std::ostringstream msg;
+    msg << "There are no archive requests in status PENDING_MOUNT for archive"
+      " file " << m_archiveFile;
+    throw(exception::Exception(msg.str()));
+  }
+}
+
+//------------------------------------------------------------------------------
+// ArchiveToFileRequestCreation::~ArchiveToFileRequestCreation
+//------------------------------------------------------------------------------
+
+cta::MockSchedulerDatabase::ArchiveToFileRequestCreation::~ArchiveToFileRequestCreation() {
+  // TODO: add management of abandoned transaction is necessary.
+  // Currently do nothing.
+}
+
+//------------------------------------------------------------------------------
+// ArchiveToFileRequestCreation::cancel
+//------------------------------------------------------------------------------
+void cta::MockSchedulerDatabase::ArchiveToFileRequestCreation::cancel() {
+  m_parent.deleteArchiveRequest(m_requester, m_archiveFile);
+}
+
+
+
+//------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst) {
-  const std::map<uint16_t, std::string> &copyNbToPoolMap = rqst.copyNbToPoolMap;
+std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
+  cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst) {
+  const std::map<uint16_t, std::string> &copyNbToPoolMap =
+    rqst.copyNbToPoolMap;
   for(auto itor = copyNbToPoolMap.begin(); itor != copyNbToPoolMap.end();
     itor++) {
     const uint16_t copyNb = itor->first;
@@ -224,6 +281,11 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst) {
       rqst.priority,
       rqst.creationLog));
   }
+  return
+    std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> (
+      new ArchiveToFileRequestCreation(m_dbHandle, rqst.archiveFile,
+      SecurityIdentity(rqst.creationLog.user, rqst.creationLog.host),
+        *this));
 }
 
 //------------------------------------------------------------------------------

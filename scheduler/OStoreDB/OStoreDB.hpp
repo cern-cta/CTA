@@ -20,6 +20,7 @@
 
 #include "scheduler/SchedulerDatabase.hpp"
 #include "objectstore/Agent.hpp"
+#include "objectstore/ArchiveToFileRequest.hpp"
 
 namespace cta {
   
@@ -126,7 +127,27 @@ public:
 
   /* === Archival requests handling  ======================================== */
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
-  virtual void queue(const ArchiveToFileRequest& rqst);
+  CTA_GENERATE_EXCEPTION_CLASS(ArchveRequestAlreadyCompleteOrCanceled);
+  class ArchiveToFileRequestCreation: 
+   public cta::SchedulerDatabase::ArchiveToFileRequestCreation {
+  public:
+    ArchiveToFileRequestCreation(objectstore::Agent * agent, 
+      objectstore::Backend & be): m_request(be), m_lock(), m_objectStore(be), 
+      m_agent(agent), m_closed(false) {}
+    virtual void complete();
+    virtual void cancel();
+    virtual ~ArchiveToFileRequestCreation();
+  private:
+    objectstore::ArchiveToFileRequest m_request;
+    objectstore::ScopedExclusiveLock m_lock;
+    objectstore::Backend & m_objectStore;
+    objectstore::Agent * m_agent;
+    bool m_closed;
+    friend class cta::OStoreDB;
+  };
+    
+  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> 
+    queue(const ArchiveToFileRequest& rqst);
 
   virtual void queue(const ArchiveToDirRequest& rqst);
 
