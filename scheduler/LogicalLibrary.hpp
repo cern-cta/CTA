@@ -28,8 +28,7 @@ namespace cta {
 /**
  * Class representing a logical library.
  */
-class LogicalLibrary  {
-public:
+struct LogicalLibrary  {
 
   /**
    * Constructor.
@@ -53,28 +52,15 @@ public:
     const CreationLog &creationLog);
 
   /**
-   * Returns the name of the logical library.
-   *
-   * @return The name of the logical library.
-   */
-  const std::string &getName() const throw();
-    
-  /**
-   * Get the creation log
-   * @return Reference to the creation log
-   */
-  const CreationLog & getCreationLog() const throw();
-private:
-
-  /**
    * The name of the logical library.
    */
-  std::string m_name;
+  std::string name;
   
   /**
    * The record of the entry's creation
    */
-  CreationLog m_creationLog;
+  CreationLog creationLog;
+
 }; // class LogicalLibrary
 
 } // namespace cta

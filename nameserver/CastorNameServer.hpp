@@ -67,10 +67,6 @@ public:
   
   ArchiveDirIterator getDirContents(const SecurityIdentity &requester, const std::string &path) const;
   
-  bool regularFileExists(const SecurityIdentity &requester, const std::string &path) const;
-
-  bool dirExists(const SecurityIdentity &requester, const std::string &path) const;
-  
   std::string getVidOfFile(const SecurityIdentity &requester, const std::string &path, const uint16_t copyNb) const;
   
   void assertStorageClassIsNotInUse(const SecurityIdentity &requester, const std::string &storageClass, const std::string &path) const;

@@ -25,10 +25,9 @@
 namespace cta {
 
 /**
- * Class representing a tape pool.
+ * A tape pool.
  */
-class TapePool {
-public:
+struct TapePool {
 
   /**
    * Constructor.
@@ -62,44 +61,21 @@ public:
   bool operator<(const TapePool &rhs) const throw();
 
   /**
-   * Returns the name of the tape pool.
-   *
-   * @return The name of the tape pool.
-   */
-  const std::string &getName() const throw();
-
-  /**
-   * Returns the maximum number of tapes that can be partially full at any
-   * moment in time.
-   *
-   * @return The maximum number of tapes that can be partially full at any
-   * moment in time.
-   */
-  uint32_t getNbPartialTapes() const throw();
-  
-  /**
-   * Get the creation log
-   * @return Reference to the creation log
-   */
-  const CreationLog & getCreationLog() const throw();
-
-private:
-
-  /**
    * The name of the tape pool.
    */
-  std::string m_name;
+  std::string name;
 
   /**
    * The maximum number of tapes that can be partially full at any moment in
    * time.
    */
-  uint32_t m_nbPartialTapes;
+  uint32_t nbPartialTapes;
   
   /**
    * The record of the entry's creation
    */
-  CreationLog m_creationLog;
+  CreationLog creationLog;
+
 }; // class TapePool
 
 } // namespace cta

@@ -223,8 +223,8 @@ TEST_P(SchedulerTest, createStorageClass_new_as_adminOnAdminHost) {
 
     StorageClass storageClass;
     ASSERT_NO_THROW(storageClass = storageClasses.front());
-    ASSERT_EQ(name, storageClass.getName());
-    ASSERT_EQ(nbCopies, storageClass.getNbCopies());
+    ASSERT_EQ(name, storageClass.name);
+    ASSERT_EQ(nbCopies, storageClass.nbCopies);
   }
 }
 
@@ -312,8 +312,8 @@ TEST_P(SchedulerTest,
 
     StorageClass storageClass;
     ASSERT_NO_THROW(storageClass = storageClasses.front());
-    ASSERT_EQ(name, storageClass.getName());
-    ASSERT_EQ(nbCopies, storageClass.getNbCopies());
+    ASSERT_EQ(name, storageClass.name);
+    ASSERT_EQ(nbCopies, storageClass.nbCopies);
   }
   
   ASSERT_THROW(scheduler.createStorageClass(s_adminOnAdminHost, name, nbCopies,
@@ -344,13 +344,13 @@ TEST_P(SchedulerTest,
       s_adminOnAdminHost));
     ASSERT_EQ(4, storageClasses.size());
 
-    ASSERT_EQ(std::string("a"), storageClasses.front().getName());
+    ASSERT_EQ(std::string("a"), storageClasses.front().name);
     storageClasses.pop_front();
-    ASSERT_EQ(std::string("b"), storageClasses.front().getName());
+    ASSERT_EQ(std::string("b"), storageClasses.front().name);
     storageClasses.pop_front();
-    ASSERT_EQ(std::string("c"), storageClasses.front().getName());
+    ASSERT_EQ(std::string("c"), storageClasses.front().name);
     storageClasses.pop_front();
-    ASSERT_EQ(std::string("d"), storageClasses.front().getName());
+    ASSERT_EQ(std::string("d"), storageClasses.front().name);
   }
 }
 
@@ -379,8 +379,8 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_existing) {
   
     StorageClass storageClass;
     ASSERT_NO_THROW(storageClass = storageClasses.front());
-    ASSERT_EQ(name, storageClass.getName());
-    ASSERT_EQ(nbCopies, storageClass.getNbCopies());
+    ASSERT_EQ(name, storageClass.name);
+    ASSERT_EQ(nbCopies, storageClass.nbCopies);
 
     ASSERT_NO_THROW(scheduler.deleteStorageClass(s_adminOnAdminHost, name));
   }
@@ -420,8 +420,8 @@ TEST_P(SchedulerTest,
 
     StorageClass storageClass;
     ASSERT_NO_THROW(storageClass = storageClasses.front());
-    ASSERT_EQ(storageClassName, storageClass.getName());
-    ASSERT_EQ(nbCopies, storageClass.getNbCopies());
+    ASSERT_EQ(storageClassName, storageClass.name);
+    ASSERT_EQ(nbCopies, storageClass.nbCopies);
   }
 
   ASSERT_NO_THROW(scheduler.setDirStorageClass(s_adminOnAdminHost, "/",
@@ -438,8 +438,8 @@ TEST_P(SchedulerTest,
 
     StorageClass storageClass;
     ASSERT_NO_THROW(storageClass = storageClasses.front());
-    ASSERT_EQ(storageClassName, storageClass.getName());
-    ASSERT_EQ(nbCopies, storageClass.getNbCopies());
+    ASSERT_EQ(storageClassName, storageClass.name);
+    ASSERT_EQ(nbCopies, storageClass.nbCopies);
   }
 
   ASSERT_NO_THROW(scheduler.clearDirStorageClass(s_adminOnAdminHost, "/"));
@@ -483,8 +483,8 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
 
     StorageClass storageClass;
     ASSERT_NO_THROW(storageClass = storageClasses.front());
-    ASSERT_EQ(storageClassName, storageClass.getName());
-    ASSERT_EQ(nbCopies, storageClass.getNbCopies());
+    ASSERT_EQ(storageClassName, storageClass.name);
+    ASSERT_EQ(nbCopies, storageClass.nbCopies);
   }
 
   const std::string tapePoolName = "TestTapePool";
@@ -499,7 +499,7 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
 
     TapePool tapePool;
     ASSERT_NO_THROW(tapePool = tapePools.front());
-    ASSERT_EQ(tapePoolName, tapePool.getName());
+    ASSERT_EQ(tapePoolName, tapePool.name);
   }
 
   const uint16_t copyNb = 1;
@@ -514,9 +514,9 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
 
     ArchivalRoute archivalRoute;
     ASSERT_NO_THROW(archivalRoute = archivalRoutes.front());
-    ASSERT_EQ(storageClassName, archivalRoute.getStorageClassName());
-    ASSERT_EQ(copyNb, archivalRoute.getCopyNb());
-    ASSERT_EQ(tapePoolName, archivalRoute.getTapePoolName());
+    ASSERT_EQ(storageClassName, archivalRoute.storageClassName);
+    ASSERT_EQ(copyNb, archivalRoute.copyNb);
+    ASSERT_EQ(tapePoolName, archivalRoute.tapePoolName);
   }
 
   ASSERT_THROW(scheduler.deleteStorageClass(s_adminOnAdminHost, storageClassName),
@@ -530,8 +530,8 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
 
     StorageClass storageClass;
     ASSERT_NO_THROW(storageClass = storageClasses.front());
-    ASSERT_EQ(storageClassName, storageClass.getName());
-    ASSERT_EQ(nbCopies, storageClass.getNbCopies());
+    ASSERT_EQ(storageClassName, storageClass.name);
+    ASSERT_EQ(nbCopies, storageClass.nbCopies);
   }
 
   ASSERT_NO_THROW(scheduler.deleteArchivalRoute(s_adminOnAdminHost, storageClassName,
@@ -613,9 +613,9 @@ TEST_P(SchedulerTest, admin_deleteTapePool_in_use) {
 
     ArchivalRoute archivalRoute;
     ASSERT_NO_THROW(archivalRoute = archivalRoutes.front());
-    ASSERT_EQ(storageClassName, archivalRoute.getStorageClassName());
-    ASSERT_EQ(copyNb, archivalRoute.getCopyNb());
-    ASSERT_EQ(tapePoolName, archivalRoute.getTapePoolName());
+    ASSERT_EQ(storageClassName, archivalRoute.storageClassName);
+    ASSERT_EQ(copyNb, archivalRoute.copyNb);
+    ASSERT_EQ(tapePoolName, archivalRoute.tapePoolName);
   }
 
   ASSERT_THROW(scheduler.deleteTapePool(s_adminOnAdminHost, tapePoolName), std::exception);
@@ -628,9 +628,9 @@ TEST_P(SchedulerTest, admin_deleteTapePool_in_use) {
 
     ArchivalRoute archivalRoute;
     ASSERT_NO_THROW(archivalRoute = archivalRoutes.front());
-    ASSERT_EQ(storageClassName, archivalRoute.getStorageClassName());
-    ASSERT_EQ(copyNb, archivalRoute.getCopyNb());
-    ASSERT_EQ(tapePoolName, archivalRoute.getTapePoolName());
+    ASSERT_EQ(storageClassName, archivalRoute.storageClassName);
+    ASSERT_EQ(copyNb, archivalRoute.copyNb);
+    ASSERT_EQ(tapePoolName, archivalRoute.tapePoolName);
   }
 }
 
@@ -671,9 +671,9 @@ TEST_P(SchedulerTest, admin_createArchivalRoute_new) {
 
     ArchivalRoute archivalRoute;
     ASSERT_NO_THROW(archivalRoute = archivalRoutes.front());
-    ASSERT_EQ(storageClassName, archivalRoute.getStorageClassName());
-    ASSERT_EQ(copyNb, archivalRoute.getCopyNb());
-    ASSERT_EQ(tapePoolName, archivalRoute.getTapePoolName());
+    ASSERT_EQ(storageClassName, archivalRoute.storageClassName);
+    ASSERT_EQ(copyNb, archivalRoute.copyNb);
+    ASSERT_EQ(tapePoolName, archivalRoute.tapePoolName);
   }
 }
 
@@ -714,9 +714,9 @@ TEST_P(SchedulerTest,
 
     ArchivalRoute archivalRoute;
     ASSERT_NO_THROW(archivalRoute = archivalRoutes.front());
-    ASSERT_EQ(storageClassName, archivalRoute.getStorageClassName());
-    ASSERT_EQ(copyNb, archivalRoute.getCopyNb());
-    ASSERT_EQ(tapePoolName, archivalRoute.getTapePoolName());
+    ASSERT_EQ(storageClassName, archivalRoute.storageClassName);
+    ASSERT_EQ(copyNb, archivalRoute.copyNb);
+    ASSERT_EQ(tapePoolName, archivalRoute.tapePoolName);
   }
 
   ASSERT_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
@@ -760,9 +760,9 @@ TEST_P(SchedulerTest, admin_deleteArchivalRoute_existing) {
 
     ArchivalRoute archivalRoute;
     ASSERT_NO_THROW(archivalRoute = archivalRoutes.front());
-    ASSERT_EQ(storageClassName, archivalRoute.getStorageClassName());
-    ASSERT_EQ(copyNb, archivalRoute.getCopyNb());
-    ASSERT_EQ(tapePoolName, archivalRoute.getTapePoolName());
+    ASSERT_EQ(storageClassName, archivalRoute.storageClassName);
+    ASSERT_EQ(copyNb, archivalRoute.copyNb);
+    ASSERT_EQ(tapePoolName, archivalRoute.tapePoolName);
   }
 
   ASSERT_NO_THROW(scheduler.deleteArchivalRoute(s_adminOnAdminHost, storageClassName,
@@ -841,8 +841,8 @@ TEST_P(SchedulerTest, admin_createTape_new) {
   
     LogicalLibrary logicalLibrary;
     ASSERT_NO_THROW(logicalLibrary = libraries.front());
-    ASSERT_EQ(libraryName, logicalLibrary.getName());
-    ASSERT_EQ(libraryComment, logicalLibrary.getCreationLog().comment);
+    ASSERT_EQ(libraryName, logicalLibrary.name);
+    ASSERT_EQ(libraryComment, logicalLibrary.creationLog.comment);
   }
 
   const std::string tapePoolName = "TestTapePool";
@@ -857,8 +857,8 @@ TEST_P(SchedulerTest, admin_createTape_new) {
     
     TapePool tapePool;
     ASSERT_NO_THROW(tapePool = tapePools.front());
-    ASSERT_EQ(tapePoolName, tapePool.getName());
-    ASSERT_EQ(comment, tapePool.getCreationLog().comment);
+    ASSERT_EQ(tapePoolName, tapePool.name);
+    ASSERT_EQ(comment, tapePool.creationLog.comment);
   } 
 
   const std::string vid = "TestVid";
@@ -875,23 +875,23 @@ TEST_P(SchedulerTest, admin_createTape_new) {
   
     Tape tape;
     ASSERT_NO_THROW(tape = tapes.front());
-    ASSERT_EQ(vid, tape.getVid());
-    ASSERT_EQ(libraryName, tape.getLogicalLibraryName());
-    ASSERT_EQ(tapePoolName, tape.getTapePoolName());
-    ASSERT_EQ(capacityInBytes, tape.getCapacityInBytes());
-    ASSERT_EQ(0, tape.getDataOnTapeInBytes());
-    ASSERT_EQ(tapeComment, tape.getCreationLog().comment);
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(libraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(0, tape.dataOnTapeInBytes);
+    ASSERT_EQ(tapeComment, tape.creationLog.comment);
   } 
 
   {
     Tape tape;
     ASSERT_NO_THROW(tape = scheduler.getTape(s_adminOnAdminHost, vid));
-    ASSERT_EQ(vid, tape.getVid());
-    ASSERT_EQ(libraryName, tape.getLogicalLibraryName());
-    ASSERT_EQ(tapePoolName, tape.getTapePoolName());
-    ASSERT_EQ(capacityInBytes, tape.getCapacityInBytes());
-    ASSERT_EQ(0, tape.getDataOnTapeInBytes());
-    ASSERT_EQ(tapeComment, tape.getCreationLog().comment);
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(libraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(0, tape.dataOnTapeInBytes);
+    ASSERT_EQ(tapeComment, tape.creationLog.comment);
   }
 }
 
@@ -935,8 +935,8 @@ TEST_P(SchedulerTest,
     
     TapePool tapePool;
     ASSERT_NO_THROW(tapePool = tapePools.front());
-    ASSERT_EQ(tapePoolName, tapePool.getName());
-    ASSERT_EQ(comment, tapePool.getCreationLog().comment);
+    ASSERT_EQ(tapePoolName, tapePool.name);
+    ASSERT_EQ(comment, tapePool.creationLog.comment);
   } 
 
   const std::string vid = "TestVid";
@@ -983,8 +983,8 @@ TEST_P(SchedulerTest, admin_createTape_new_non_existing_pool) {
   
     LogicalLibrary logicalLibrary;
     ASSERT_NO_THROW(logicalLibrary = libraries.front());
-    ASSERT_EQ(libraryName, logicalLibrary.getName());
-    ASSERT_EQ(libraryComment, logicalLibrary.getCreationLog().comment);
+    ASSERT_EQ(libraryName, logicalLibrary.name);
+    ASSERT_EQ(libraryComment, logicalLibrary.creationLog.comment);
   }
 
   const std::string tapePoolName = "TestTapePool";
@@ -1072,7 +1072,7 @@ TEST_P(SchedulerTest, createDir_top_level) {
 
   ASSERT_NO_THROW(entry = itor.next());
 
-  ASSERT_EQ(std::string("grandparent"), entry.getName());
+  ASSERT_EQ(std::string("grandparent"), entry.name);
 }
 
 TEST_P(SchedulerTest, createDir_second_level) {
@@ -1103,7 +1103,7 @@ TEST_P(SchedulerTest, createDir_second_level) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(std::string("grandparent"), entry.name);
   }
 
   ASSERT_TRUE(scheduler.getDirStorageClass(s_userOnUserHost, "/grandparent").empty());
@@ -1127,7 +1127,7 @@ TEST_P(SchedulerTest, createDir_second_level) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(std::string("grandparent"), entry.name);
   }
 
   {
@@ -1142,7 +1142,7 @@ TEST_P(SchedulerTest, createDir_second_level) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("parent"), entry.getName());
+    ASSERT_EQ(std::string("parent"), entry.name);
   }
 
   ASSERT_TRUE(scheduler.getDirStorageClass(s_userOnUserHost,
@@ -1186,7 +1186,7 @@ TEST_P(SchedulerTest,
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(std::string("grandparent"), entry.name);
 
     ASSERT_TRUE(scheduler.getDirStorageClass(s_userOnUserHost, "/grandparent").empty());
 
@@ -1216,7 +1216,7 @@ TEST_P(SchedulerTest,
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(std::string("grandparent"), entry.name);
   }
 
   {
@@ -1230,7 +1230,7 @@ TEST_P(SchedulerTest,
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("parent"), entry.getName());
+    ASSERT_EQ(std::string("parent"), entry.name);
   }
 
   ASSERT_EQ(std::string("TestStorageClass"),
@@ -1272,7 +1272,7 @@ TEST_P(SchedulerTest, deleteDir_existing_top_level) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(std::string("grandparent"), entry.name);
   }
 
   ASSERT_NO_THROW(scheduler.deleteDir(s_userOnUserHost, "/grandparent"));
@@ -1311,7 +1311,7 @@ TEST_P(SchedulerTest,
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(std::string("grandparent"), entry.name);
   }
 
   {
@@ -1331,7 +1331,7 @@ TEST_P(SchedulerTest,
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(std::string("grandparent"), entry.name);
   }
 
   {
@@ -1345,7 +1345,7 @@ TEST_P(SchedulerTest,
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("parent"), entry.getName());
+    ASSERT_EQ(std::string("parent"), entry.name);
   }
 
   ASSERT_THROW(scheduler.deleteDir(s_userOnUserHost, "/grandparent"), std::exception);
@@ -1361,7 +1361,7 @@ TEST_P(SchedulerTest,
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("parent"), entry.getName());
+    ASSERT_EQ(std::string("parent"), entry.name);
   }
 }
 
@@ -1397,7 +1397,7 @@ TEST_P(SchedulerTest, setDirStorageClass_top_level) {
 
   ASSERT_NO_THROW(entry = itor.next());
 
-  ASSERT_EQ(std::string("grandparent"), entry.getName());
+  ASSERT_EQ(std::string("grandparent"), entry.name);
 
   {
     std::string name;
@@ -1445,7 +1445,7 @@ TEST_P(SchedulerTest, clearDirStorageClass_top_level) {
 
   ASSERT_NO_THROW(entry = itor.next());
 
-  ASSERT_EQ(std::string("grandparent"), entry.getName());
+  ASSERT_EQ(std::string("grandparent"), entry.name);
 
   {
     std::string name;
@@ -1523,9 +1523,9 @@ TEST_P(SchedulerTest, archive_to_new_file) {
     ASSERT_TRUE(itor.hasMore());
     ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
+    ASSERT_EQ(std::string("grandparent"), entry.name);
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.type);
+    ASSERT_EQ(storageClassName, entry.status.storageClassName);
   }
 
   {
@@ -1535,16 +1535,16 @@ TEST_P(SchedulerTest, archive_to_new_file) {
     ASSERT_TRUE(itor.hasMore());
     ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("parent_file"), entry.getName());
-    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_FILE, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
+    ASSERT_EQ(std::string("parent_file"), entry.name);
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_FILE, entry.type);
+    ASSERT_EQ(storageClassName, entry.status.storageClassName);
   }
 
   {
     ArchiveFileStatus status;
-    ASSERT_NO_THROW(status = scheduler.statFile(s_userOnUserHost,
+    ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_userOnUserHost,
       archiveFile));
-    ASSERT_EQ(storageClassName, status.getStorageClassName());
+    ASSERT_EQ(storageClassName, status.storageClassName);
   }
 
   {
@@ -1554,15 +1554,15 @@ TEST_P(SchedulerTest, archive_to_new_file) {
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());
     const TapePool &pool = poolItor->first;
-    ASSERT_TRUE(tapePoolName == pool.getName());
+    ASSERT_TRUE(tapePoolName == pool.name);
     auto poolRqsts = poolItor->second;
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin();
       rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
-      archiveFiles.insert(rqstItor->getArchiveFile());
+      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
+      archiveFiles.insert(rqstItor->archiveFile);
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
@@ -1579,8 +1579,8 @@ TEST_P(SchedulerTest, archive_to_new_file) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
       rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
-      archiveFiles.insert(rqstItor->getArchiveFile());
+      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
+      archiveFiles.insert(rqstItor->archiveFile);
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
@@ -1630,9 +1630,9 @@ TEST_P(SchedulerTest, archive_to_new_user_file_as_admin) {
     ASSERT_TRUE(itor.hasMore());
     ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
+    ASSERT_EQ(std::string("grandparent"), entry.name);
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.type);
+    ASSERT_EQ(storageClassName, entry.status.storageClassName);
   }
 
   {
@@ -1694,9 +1694,9 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     ASSERT_TRUE(itor.hasMore());
     ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
+    ASSERT_EQ(std::string("grandparent"), entry.name);
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.type);
+    ASSERT_EQ(storageClassName, entry.status.storageClassName);
   }
 
   {
@@ -1706,16 +1706,16 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     ASSERT_TRUE(itor.hasMore());
     ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("parent_file"), entry.getName());
-    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_FILE, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
+    ASSERT_EQ(std::string("parent_file"), entry.name);
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_FILE, entry.type);
+    ASSERT_EQ(storageClassName, entry.status.storageClassName);
   }
 
   {
     ArchiveFileStatus status;
-    ASSERT_NO_THROW(status = scheduler.statFile(s_userOnUserHost,
+    ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_userOnUserHost,
       archiveFile));
-    ASSERT_EQ(storageClassName, status.getStorageClassName());
+    ASSERT_EQ(storageClassName, status.storageClassName);
   }
 
   {
@@ -1724,15 +1724,15 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());
     const TapePool &pool = poolItor->first;
-    ASSERT_TRUE(tapePoolName == pool.getName());
+    ASSERT_TRUE(tapePoolName == pool.name);
     auto poolRqsts = poolItor->second;
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin();
       rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
-      archiveFiles.insert(rqstItor->getArchiveFile());
+      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
+      archiveFiles.insert(rqstItor->archiveFile);
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
@@ -1749,8 +1749,8 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
       rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
-      archiveFiles.insert(rqstItor->getArchiveFile());
+      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
+      archiveFiles.insert(rqstItor->archiveFile);
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
@@ -1766,9 +1766,9 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     ASSERT_TRUE(itor.hasMore());
     ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
+    ASSERT_EQ(std::string("grandparent"), entry.name);
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.type);
+    ASSERT_EQ(storageClassName, entry.status.storageClassName);
   }
 
   {
@@ -1778,16 +1778,16 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     ASSERT_TRUE(itor.hasMore());
     ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("parent_file"), entry.getName());
-    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_FILE, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
+    ASSERT_EQ(std::string("parent_file"), entry.name);
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_FILE, entry.type);
+    ASSERT_EQ(storageClassName, entry.status.storageClassName);
   }
 
   {
     ArchiveFileStatus status;
-    ASSERT_NO_THROW(status = scheduler.statFile(s_userOnUserHost,
+    ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_userOnUserHost,
       archiveFile));
-    ASSERT_EQ(storageClassName, status.getStorageClassName());
+    ASSERT_EQ(storageClassName, status.storageClassName);
   }
 
   {
@@ -1796,15 +1796,15 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());
     const TapePool &pool = poolItor->first;
-    ASSERT_TRUE(tapePoolName == pool.getName());
+    ASSERT_TRUE(tapePoolName == pool.name);
     auto poolRqsts = poolItor->second;
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin();
       rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
-      archiveFiles.insert(rqstItor->getArchiveFile());
+      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
+      archiveFiles.insert(rqstItor->archiveFile);
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
@@ -1855,9 +1855,9 @@ TEST_P(SchedulerTest, delete_archive_request) {
     ASSERT_TRUE(itor.hasMore());
     ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
+    ASSERT_EQ(std::string("grandparent"), entry.name);
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.type);
+    ASSERT_EQ(storageClassName, entry.status.storageClassName);
   }
 
   {
@@ -1867,16 +1867,16 @@ TEST_P(SchedulerTest, delete_archive_request) {
     ASSERT_TRUE(itor.hasMore());
     ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("parent_file"), entry.getName());
-    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_FILE, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
+    ASSERT_EQ(std::string("parent_file"), entry.name);
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_FILE, entry.type);
+    ASSERT_EQ(storageClassName, entry.status.storageClassName);
   }
 
   {
     ArchiveFileStatus status;
-    ASSERT_NO_THROW(status = scheduler.statFile(s_userOnUserHost,
+    ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_userOnUserHost,
       archiveFile));
-    ASSERT_EQ(storageClassName, status.getStorageClassName());
+    ASSERT_EQ(storageClassName, status.storageClassName);
   }
 
   {
@@ -1885,15 +1885,15 @@ TEST_P(SchedulerTest, delete_archive_request) {
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());
     const TapePool &pool = poolItor->first;
-    ASSERT_TRUE(tapePoolName == pool.getName());
+    ASSERT_TRUE(tapePoolName == pool.name);
     auto poolRqsts = poolItor->second;
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin();
       rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
-      archiveFiles.insert(rqstItor->getArchiveFile());
+      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
+      archiveFiles.insert(rqstItor->archiveFile);
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
@@ -1910,8 +1910,8 @@ TEST_P(SchedulerTest, delete_archive_request) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
       rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
-      archiveFiles.insert(rqstItor->getArchiveFile());
+      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
+      archiveFiles.insert(rqstItor->archiveFile);
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
@@ -1933,7 +1933,8 @@ TEST_P(SchedulerTest, delete_archive_request) {
     ASSERT_TRUE(poolRqsts.empty());
   }
 
-  ASSERT_FALSE(scheduler.regularFileExists(s_userOnUserHost, "/grandparent/parent_file"));
+  ASSERT_THROW(scheduler.statArchiveFile(s_userOnUserHost,
+    "/grandparent/parent_file"), std::exception);
 }
 
 TEST_P(SchedulerTest, archive_to_new_file_with_no_storage_class) {
@@ -2090,9 +2091,9 @@ TEST_P(SchedulerTest, archive_to_directory) {
     ASSERT_TRUE(itor.hasMore());
     ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
+    ASSERT_EQ(std::string("grandparent"), entry.name);
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.type);
+    ASSERT_EQ(storageClassName, entry.status.storageClassName);
   }
 
   {
@@ -2102,7 +2103,7 @@ TEST_P(SchedulerTest, archive_to_directory) {
       "/grandparent"));
     while(itor.hasMore()) {
       const ArchiveDirEntry entry = itor.next();
-      archiveFileNames.insert(entry.getName());
+      archiveFileNames.insert(entry.name);
     }
     ASSERT_EQ(4, archiveFileNames.size());
     ASSERT_TRUE(archiveFileNames.find(s_remoteFilename1) != archiveFileNames.end());
@@ -2117,15 +2118,15 @@ TEST_P(SchedulerTest, archive_to_directory) {
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());
     const TapePool &pool = poolItor->first;
-    ASSERT_TRUE(tapePoolName == pool.getName());
+    ASSERT_TRUE(tapePoolName == pool.name);
     const auto poolRqsts = poolItor->second;
     ASSERT_EQ(4, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin();
       rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
-      archiveFiles.insert(rqstItor->getArchiveFile());
+      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
+      archiveFiles.insert(rqstItor->archiveFile);
     }
     ASSERT_EQ(4, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
@@ -2147,8 +2148,8 @@ TEST_P(SchedulerTest, archive_to_directory) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
       rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
-      archiveFiles.insert(rqstItor->getArchiveFile());
+      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
+      archiveFiles.insert(rqstItor->archiveFile);
     }
     ASSERT_EQ(4, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
@@ -2325,8 +2326,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   
     LogicalLibrary logicalLibrary;
     ASSERT_NO_THROW(logicalLibrary = libraries.front());
-    ASSERT_EQ(libraryName, logicalLibrary.getName());
-    ASSERT_EQ(libraryComment, logicalLibrary.getCreationLog().comment);
+    ASSERT_EQ(libraryName, logicalLibrary.name);
+    ASSERT_EQ(libraryComment, logicalLibrary.creationLog.comment);
   }
 
   const std::string vid = "TestVid";
@@ -2353,9 +2354,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_TRUE(itor.hasMore());
     ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
-    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
+    ASSERT_EQ(std::string("grandparent"), entry.name);
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.type);
+    ASSERT_EQ(storageClassName, entry.status.storageClassName);
   }
 
   {
@@ -2365,16 +2366,16 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_TRUE(itor.hasMore());
     ArchiveDirEntry entry;
     ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("parent_file"), entry.getName());
-    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_FILE, entry.getType());
-    ASSERT_EQ(storageClassName, entry.getStatus().getStorageClassName());
+    ASSERT_EQ(std::string("parent_file"), entry.name);
+    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_FILE, entry.type);
+    ASSERT_EQ(storageClassName, entry.status.storageClassName);
   }
 
   {
     ArchiveFileStatus status;
-    ASSERT_NO_THROW(status = scheduler.statFile(s_adminOnAdminHost,
+    ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_adminOnAdminHost,
       archiveFile));
-    ASSERT_EQ(storageClassName, status.getStorageClassName());
+    ASSERT_EQ(storageClassName, status.storageClassName);
   }
 
   {
@@ -2383,15 +2384,15 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());
     const TapePool &pool = poolItor->first;
-    ASSERT_TRUE(tapePoolName == pool.getName());
+    ASSERT_TRUE(tapePoolName == pool.name);
     auto poolRqsts = poolItor->second;
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin();
       rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
-      archiveFiles.insert(rqstItor->getArchiveFile());
+      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
+      archiveFiles.insert(rqstItor->archiveFile);
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
@@ -2408,8 +2409,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     std::set<std::string> archiveFiles;
     for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
       rqstItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile().path.getRaw());
-      archiveFiles.insert(rqstItor->getArchiveFile());
+      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
+      archiveFiles.insert(rqstItor->archiveFile);
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
@@ -2442,15 +2443,15 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     auto tapeItor = rqsts.cbegin();
     ASSERT_FALSE(tapeItor == rqsts.cend());
     const Tape &tape = tapeItor->first;
-    ASSERT_TRUE(vid == tape.getVid());
+    ASSERT_TRUE(vid == tape.vid);
     auto tapeRqsts = tapeItor->second;
     ASSERT_EQ(1, tapeRqsts.size());
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
     for(auto rqstItor = tapeRqsts.cbegin(); rqstItor != tapeRqsts.cend();
       tapeItor++) {
-      remoteFiles.insert(rqstItor->getRemoteFile());
-      archiveFiles.insert(rqstItor->getArchiveFile());
+      remoteFiles.insert(rqstItor->remoteFile);
+      archiveFiles.insert(rqstItor->archiveFile);
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
@@ -2542,10 +2543,10 @@ TEST_P(SchedulerTest, setOwner_getDirContents_top_level) {
 
     ASSERT_NO_THROW(entry = itor.next());
 
-    ASSERT_EQ(std::string("grandparent"), entry.getName());
+    ASSERT_EQ(std::string("grandparent"), entry.name);
 
-    ASSERT_EQ(s_user.uid, entry.getStatus().getOwner().uid);
-    ASSERT_EQ(s_user.gid, entry.getStatus().getOwner().gid);
+    ASSERT_EQ(s_user.uid, entry.status.owner.uid);
+    ASSERT_EQ(s_user.gid, entry.status.owner.gid);
   }
 }
 
@@ -2576,10 +2577,11 @@ TEST_P(SchedulerTest, setOwner_statFile_top_level) {
 
     ArchiveFileStatus status;
 
-    ASSERT_NO_THROW(status = scheduler.statFile(s_userOnUserHost, dirPath));
+    ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_userOnUserHost,
+      dirPath));
 
-    ASSERT_EQ(s_user.uid, status.getOwner().uid);
-    ASSERT_EQ(s_user.gid, status.getOwner().gid);
+    ASSERT_EQ(s_user.uid, status.owner.uid);
+    ASSERT_EQ(s_user.gid, status.owner.gid);
   }
 }
 

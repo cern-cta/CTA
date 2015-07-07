@@ -30,8 +30,7 @@ namespace cta {
  * Class representing a user request to retrieve a single tape copy of an
  * archived file to a single remote file.
  */
-class RetrieveFromTapeCopyRequest: public RetrieveRequest {
-public:
+struct RetrieveFromTapeCopyRequest: public RetrieveRequest {
 
   /**
    * Constructor.
@@ -64,55 +63,25 @@ public:
     const CreationLog &creationLog);
 
   /**
-   * Returns the full path of the source archive file.
-   *
-   * @return The full path of the source archive file.
-   */
-  const std::string &getArchiveFile() const throw();
-
-  /**
-   * Returns the tape copy number.
-   *
-   * @return The tape copy number.
-   */
-  uint64_t getCopyNb() const throw();
-
-  /**
-   * Returns the physical location of the copy on tape.
-   *
-   * @return The physical location of the copy on tape.
-   */
-  const TapeCopyLocation &getTapeCopy() const throw();
-
-  /**
-   * Returns the URL of the destination remote file.
-   *
-   * @return The URL of the destination remote file.
-   */
-  const std::string &getRemoteFile() const throw();
-
-private:
-
-  /**
    * The full path of the source archive file.
    */
-  std::string m_archiveFile;
+  std::string archiveFile;
 
   /**
    * The tape copy number.
    */
-  uint64_t m_copyNb;
+  uint64_t copyNb;
 
   /**
    * The location of the copy on tape.
    */
-  TapeCopyLocation m_tapeCopy;
+  TapeCopyLocation tapeCopy;
 
   /**
    * The URL of the destination remote file.
    */
-  std::string m_remoteFile;
+  std::string remoteFile;
 
-}; // class RetrieveFromTapeCopyRequest
+}; // struct RetrieveFromTapeCopyRequest
 
 } // namespace cta

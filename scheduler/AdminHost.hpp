@@ -26,10 +26,9 @@
 namespace cta {
 
 /**
- * Class representing a administration host.
+ * An administration host.
  */
-class AdminHost: public ConfigurationItem {
-public:
+struct AdminHost: public ConfigurationItem {
 
   /**
    * Constructor.
@@ -60,19 +59,10 @@ public:
     const time_t creationTime = time(NULL));
 
   /**
-   * Returns the network name of the administration host.
-   *
-   * @return The network name of the administration host.
-   */
-  const std::string &getName() const throw();
-
-private:
-
-  /**
    * The network name of the administration host.
    */
-  std::string m_name;
+  std::string name;
 
-}; // class AdminHost
+}; // struct AdminHost
 
 } // namespace cta

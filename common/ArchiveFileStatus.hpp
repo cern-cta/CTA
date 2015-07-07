@@ -29,8 +29,7 @@ namespace cta {
 /**
  * The status of a file or a directory entry in the archive namespace.
  */
-class ArchiveFileStatus {
-public:
+struct ArchiveFileStatus {
 
   /**
    * Constructor.
@@ -57,76 +56,32 @@ public:
     const std::string &storageClassName);
 
   /**
-   * Returns the identity of the owner.
-   */
-  const UserIdentity &getOwner() const throw();
-
-  /**
-   * Returns the mode bits of the directory entry.
-   *
-   * @return The mode bits of the directory entry.
-   */
-  mode_t getMode() const throw();
-
-  /**
-   * Returns the size of the file in bytes.
-   *
-   * @return The size of the file in bytes.
-   */
-  uint64_t getSize() const throw();
-
-  /**
-   * Returns the checksum of the file.
-   *
-   * @return The checksum of the file.
-   */
-  const Checksum &getChecksum() const throw();
-
-  /**
-   * Sets the name of the storage class.
-   *
-   * @param storageClassName The name of the storage class.
-   */
-  void setStorageClassName(const std::string &storageClassName);
-
-  /**
-   * Returns the name of the directory's storage class or an empty string if the
-   * directory does not have a storage class.
-   *
-   * @return The name of the directory's storage class or an empty string if the
-   * directory does not have a storage class.
-   */
-  const std::string &getStorageClassName() const throw();
-
-private:
-
-  /**
    * The identity of the owner.
    */
-  UserIdentity m_owner;
+  UserIdentity owner;
 
   /**
    * The mode bits of the directory entry.
    */
-  mode_t m_mode;
+  mode_t mode;
 
   /**
    * Returns the size of the file in bytes.
    *
    * @return The size of the file in bytes.
    */
-  uint64_t m_size;
+  uint64_t size;
 
   /**
    * The checksum of the file.
    */
-  Checksum m_checksum;
+  Checksum checksum;
 
   /**
    * The name of the directory's storage class or an empty string if the
    * directory does not have a storage class.
    */
-  std::string m_storageClassName;
+  std::string storageClassName;
 
 }; // class ArchiveFileStatus
 

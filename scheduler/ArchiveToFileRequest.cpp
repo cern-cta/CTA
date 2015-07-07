@@ -40,30 +40,7 @@ cta::ArchiveToFileRequest::ArchiveToFileRequest(
   const uint64_t priority,
   const CreationLog & creationLog):
   ArchiveRequest(priority, creationLog),
-  m_remoteFile(remoteFile),
-  m_archiveFile(archiveFile),
-  m_copyNbToPoolMap(copyNbToPoolMap) {
-}
-
-//------------------------------------------------------------------------------
-// getRemoteFile
-//------------------------------------------------------------------------------
-const cta::RemotePathAndStatus &cta::ArchiveToFileRequest::getRemoteFile()
-  const throw() {
-  return m_remoteFile;
-}
-
-//------------------------------------------------------------------------------
-// getArchiveFile
-//------------------------------------------------------------------------------
-const std::string &cta::ArchiveToFileRequest::getArchiveFile() const throw() {
- return m_archiveFile;
-}
-
-//------------------------------------------------------------------------------
-// getCopyNbToPoolMap
-//------------------------------------------------------------------------------
-const std::map<uint16_t, std::string> &cta::ArchiveToFileRequest::
-  getCopyNbToPoolMap() const throw() {
-  return m_copyNbToPoolMap;
+  remoteFile(remoteFile),
+  archiveFile(archiveFile),
+  copyNbToPoolMap(copyNbToPoolMap) {
 }

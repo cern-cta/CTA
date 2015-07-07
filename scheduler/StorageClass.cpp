@@ -23,7 +23,7 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::StorageClass::StorageClass():
-  m_nbCopies(0) {
+  nbCopies(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -39,36 +39,16 @@ cta::StorageClass::StorageClass(
   const std::string &name,
   const uint16_t nbCopies,
   const CreationLog &creationLog):
-  m_name(name),
-  m_nbCopies(nbCopies),
-  m_creationLog(creationLog) {
+  name(name),
+  nbCopies(nbCopies),
+  creationLog(creationLog) {
 }
 
-//------------------------------------------------------------------------------
-// getName
-//------------------------------------------------------------------------------
-const std::string &cta::StorageClass::getName() const throw() {
-  return m_name;
-}
-
-//------------------------------------------------------------------------------
-// getNbCopies
-//------------------------------------------------------------------------------
-uint16_t cta::StorageClass::getNbCopies() const throw() {
-  return m_nbCopies;
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-auto cta::StorageClass::getCreationLog() const throw() -> const CreationLog & {
-  return m_creationLog;
-}
 //------------------------------------------------------------------------------
 // operator<
 //------------------------------------------------------------------------------
 bool cta::StorageClass::operator<(const StorageClass& rhs) const {
-  return m_name < rhs.m_name;
+  return name < rhs.name;
 }
 
 

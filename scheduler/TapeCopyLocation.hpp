@@ -26,8 +26,7 @@ namespace cta {
 /**
  * The location of a tape copy.
  */
-class TapeCopyLocation {
-public:
+struct TapeCopyLocation {
 
   /**
    * Constructor.
@@ -45,43 +44,20 @@ public:
     const uint64_t blockId);
 
   /**
-   * Returns the volume identifier of the tape.
-   *
-   * @return The volume identifier of the tape.
-   */
-  const std::string &getVid() const throw();
-
-  /**
-   * Returns the sequence number of the file.
-   *
-   * @return The sequence number of the file.
-   */
-  uint64_t getFseq() const throw();
-
-  /**
-   * Returns the block identifier of the file.
-   *
-   * @return The block identifier of the file.
-   */
-  uint64_t getBlockId() const throw();
-
-private:
-
-  /**
    * The volume identifier of the tape.
    */
-  std::string m_vid;
+  std::string vid;
 
   /**
    * The sequence number of the file.
    */
-  uint64_t m_fseq;
+  uint64_t fseq;
 
   /**
    * The block identifier of the file.
    */
-  uint64_t m_blockId;
+  uint64_t blockId;
 
-}; // class TapeCopyLocation
+}; // struct TapeCopyLocation
 
 } // namepsace cta

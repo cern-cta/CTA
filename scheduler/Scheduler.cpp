@@ -441,24 +441,6 @@ void cta::Scheduler::deleteDir(
 }
 
 //------------------------------------------------------------------------------
-// regularFileExists
-//------------------------------------------------------------------------------
-bool cta::Scheduler::regularFileExists(
-  const SecurityIdentity &requester,
-  const std::string &path) const {
-  return m_ns.regularFileExists(requester, path);
-}
-
-//------------------------------------------------------------------------------
-// dirExists
-//------------------------------------------------------------------------------
-bool cta::Scheduler::dirExists(
-  const SecurityIdentity &requester,
-  const std::string &path) const {
-  return m_ns.dirExists(requester, path);
-}
-  
-//------------------------------------------------------------------------------
 // getVidOfFile
 //------------------------------------------------------------------------------
 std::string cta::Scheduler::getVidOfFile(
@@ -478,9 +460,9 @@ cta::ArchiveDirIterator cta::Scheduler::getDirContents(
 }
 
 //------------------------------------------------------------------------------
-// statFile
+// statArchiveFile
 //------------------------------------------------------------------------------
-cta::ArchiveFileStatus cta::Scheduler::statFile(
+cta::ArchiveFileStatus cta::Scheduler::statArchiveFile(
   const SecurityIdentity &requester,
   const std::string &path) const {
   return m_ns.statFile(requester, path);
@@ -522,7 +504,9 @@ void cta::Scheduler::queueArchiveRequest(
   const std::list<std::string> &remoteFiles,
   const std::string &archiveFileOrDir) {
 
-  const bool archiveToDir = m_ns.dirExists(requester, archiveFileOrDir);
+  const ArchiveFileStatus archiveStat = m_ns.statFile(requester,
+    archiveFileOrDir);
+  const bool archiveToDir = S_ISDIR(archiveStat.mode);
   if(archiveToDir) {
     const std::string &archiveDir = archiveFileOrDir;
     if(remoteFiles.empty()) {
@@ -588,9 +572,9 @@ void cta::Scheduler::queueArchiveToDirRequest(
 //------------------------------------------------------------------------------
 void cta::Scheduler::assertStorageClassHasAtLeastOneCopy(
   const StorageClass &storageClass) const {
-  if(0 == storageClass.getNbCopies()) {
+  if(0 == storageClass.nbCopies) {
     std::ostringstream message;
-    message << "Storage class " << storageClass.getName() <<
+    message << "Storage class " << storageClass.name <<
       " has a tape copy count of 0";
     throw(exception::Exception(message.str()));
   }
@@ -628,12 +612,12 @@ void cta::Scheduler::createNSEntryAndUpdateSchedulerDatabase(
   const ArchiveToFileRequest &rqst) {
 
   try {
-    m_ns.createFile(requester, rqst.getArchiveFile(), 0666);
+    m_ns.createFile(requester, rqst.archiveFile, 0666);
   } catch(std::exception &nsEx) {
     // Try our best to cleanup the scheduler database.  The garbage collection
     // logic will try again if we fail.
     try {
-      m_db.deleteArchiveRequest(requester, rqst.getArchiveFile());
+      m_db.deleteArchiveRequest(requester, rqst.archiveFile);
     } catch(...) {
     }
 
@@ -642,7 +626,7 @@ void cta::Scheduler::createNSEntryAndUpdateSchedulerDatabase(
     throw nsEx;
   }
 
-  m_db.fileEntryCreatedInNS(requester, rqst.getArchiveFile());
+  m_db.fileEntryCreatedInNS(requester, rqst.archiveFile);
 }
 
 //------------------------------------------------------------------------------
@@ -695,7 +679,7 @@ std::map<uint16_t, std::string> cta::Scheduler::createCopyNbToPoolMap(
   std::map<uint16_t, std::string> copyNbToPoolMap;
     for(auto itor = routes.begin(); itor != routes.end(); itor++) {
     const ArchivalRoute &route = *itor;
-    copyNbToPoolMap[route.getCopyNb()] = route.getTapePoolName();
+    copyNbToPoolMap[route.copyNb] = route.tapePoolName;
   }
   return copyNbToPoolMap;
 }

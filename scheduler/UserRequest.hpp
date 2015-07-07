@@ -29,8 +29,7 @@ namespace cta {
 /**
  * Abstract class representing a user request.
  */
-class UserRequest {
-public:
+struct UserRequest {
 
   /**
    * Constructor.
@@ -55,30 +54,14 @@ public:
     const CreationLog &creationLog);
 
   /**
-   * Returns the priority of the request.
-   *
-   * @return The priority of the request.
-   */
-  uint64_t getPriority() const throw();
-
-  /**
-   * Returns the time at which the user request was created.
-   *
-   * @return The time at which the user request was created.
-   */
-  const CreationLog & getCreationLog() const throw();
-
-private:
-
-  /**
    * The priority of the request.
    */
-  uint64_t m_priority;
+  uint64_t priority;
 
   /**
    * The time at which the user request was created.
    */
-  CreationLog m_creationLog;
+  CreationLog creationLog;
 
 }; // class UserRequest
 

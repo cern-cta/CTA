@@ -38,7 +38,9 @@
 //------------------------------------------------------------------------------
 // updateStorageClass
 //------------------------------------------------------------------------------
-void cta::CastorNameServer::updateStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies){
+void cta::CastorNameServer::updateStorageClass(
+  const SecurityIdentity &requester, const std::string &name,
+  const uint16_t nbCopies){
   struct Cns_fileclass fc;
   bzero(&fc, sizeof(struct Cns_fileclass));
   strncpy(fc.name, name.c_str(), CA_MAXCLASNAMELEN);
@@ -49,7 +51,9 @@ void cta::CastorNameServer::updateStorageClass(const SecurityIdentity &requester
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void cta::CastorNameServer::createStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies) {
+void cta::CastorNameServer::createStorageClass(
+  const SecurityIdentity &requester, const std::string &name,
+  const uint16_t nbCopies) {
   struct Cns_fileclass fc;
   bzero(&fc, sizeof(struct Cns_fileclass));
   strncpy(fc.name, name.c_str(), CA_MAXCLASNAMELEN);
@@ -61,7 +65,9 @@ void cta::CastorNameServer::createStorageClass(const SecurityIdentity &requester
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void cta::CastorNameServer::createStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies, const uint32_t id) {
+void cta::CastorNameServer::createStorageClass(
+  const SecurityIdentity &requester, const std::string &name,
+  const uint16_t nbCopies, const uint32_t id) {
   if(99999 < id) {
     std::ostringstream msg;
     msg << "Failed to create storage class " << name << " with numeric"
@@ -81,44 +87,17 @@ void cta::CastorNameServer::createStorageClass(const SecurityIdentity &requester
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
-void cta::CastorNameServer::deleteStorageClass(const SecurityIdentity &requester, const std::string &name) {
+void cta::CastorNameServer::deleteStorageClass(
+  const SecurityIdentity &requester, const std::string &name) {
   exception::Errnum::throwOnMinusOne(Cns_deleteclass(const_cast<char *>(m_server.c_str()), 0, const_cast<char *>(name.c_str())), __FUNCTION__);
-}
-
-//------------------------------------------------------------------------------
-// regularFileExists
-//------------------------------------------------------------------------------
-bool cta::CastorNameServer::regularFileExists(const SecurityIdentity &requester, const std::string &path) const {  
-  Utils::assertAbsolutePathSyntax(path);
-  struct Cns_filestat statbuf;  
-  if(Cns_stat(path.c_str(), &statbuf)) {
-    return false;
-  }  
-  if(!S_ISREG(statbuf.filemode)) {
-    return false;
-  }  
-  return true;
-}
-
-//------------------------------------------------------------------------------
-// dirExists
-//------------------------------------------------------------------------------
-bool cta::CastorNameServer::dirExists(const SecurityIdentity &requester, const std::string &path) const {  
-  Utils::assertAbsolutePathSyntax(path);
-  struct Cns_filestat statbuf;  
-  if(Cns_stat(path.c_str(), &statbuf)) {
-    return false;
-  }  
-  if(!S_ISDIR(statbuf.filemode)) {
-    return false;
-  }  
-  return true;
 }
 
 //------------------------------------------------------------------------------
 // assertStorageClassIsNotInUse
 //------------------------------------------------------------------------------
-void cta::CastorNameServer::assertStorageClassIsNotInUse(const SecurityIdentity &requester, const std::string &storageClass, const std::string &path) const {
+void cta::CastorNameServer::assertStorageClassIsNotInUse(
+  const SecurityIdentity &requester, const std::string &storageClass,
+  const std::string &path) const {
 }
 
 //------------------------------------------------------------------------------
@@ -136,7 +115,9 @@ cta::CastorNameServer::~CastorNameServer() throw() {
 //------------------------------------------------------------------------------
 // setDirStorageClass
 //------------------------------------------------------------------------------
-void cta::CastorNameServer::setDirStorageClass(const SecurityIdentity &requester, const std::string &path, const std::string &storageClassName) { 
+void cta::CastorNameServer::setDirStorageClass(
+  const SecurityIdentity &requester, const std::string &path,
+  const std::string &storageClassName) { 
   Utils::assertAbsolutePathSyntax(path);
   exception::Errnum::throwOnMinusOne(Cns_chclass(path.c_str(), 0, const_cast<char *>(storageClassName.c_str())), __FUNCTION__);
 }  
@@ -144,7 +125,8 @@ void cta::CastorNameServer::setDirStorageClass(const SecurityIdentity &requester
 //------------------------------------------------------------------------------
 // clearDirStorageClass
 //------------------------------------------------------------------------------
-void cta::CastorNameServer::clearDirStorageClass(const SecurityIdentity &requester, const std::string &path) { 
+void cta::CastorNameServer::clearDirStorageClass(
+  const SecurityIdentity &requester, const std::string &path) { 
   Utils::assertAbsolutePathSyntax(path);
   char no_class[]="NO_CLASS";
   exception::Errnum::throwOnMinusOne(Cns_chclass(path.c_str(), 0, no_class), __FUNCTION__);
@@ -165,13 +147,9 @@ std::string cta::CastorNameServer::getDirStorageClass(const SecurityIdentity &re
 //------------------------------------------------------------------------------
 // createFile
 //------------------------------------------------------------------------------
-void cta::CastorNameServer::createFile(const SecurityIdentity &requester, const std::string &path, const mode_t mode) {
+void cta::CastorNameServer::createFile(const SecurityIdentity &requester,
+  const std::string &path, const mode_t mode) {
   Utils::assertAbsolutePathSyntax(path);
-  if(regularFileExists(requester, path)) {
-    std::ostringstream msg;
-    msg << "createFile() - " << path << " already exists.";
-    throw(exception::Exception(msg.str()));
-  }
   exception::Errnum::throwOnMinusOne(Cns_creat(path.c_str(), mode), __FUNCTION__);
   setOwner(requester, path, requester.getUser());
 }
@@ -227,7 +205,8 @@ void cta::CastorNameServer::deleteDir(const SecurityIdentity &requester, const s
 //------------------------------------------------------------------------------
 // statFile
 //------------------------------------------------------------------------------
-cta::ArchiveFileStatus cta::CastorNameServer::statFile(const SecurityIdentity &requester, const std::string &path) const {
+cta::ArchiveFileStatus cta::CastorNameServer::statFile(
+  const SecurityIdentity &requester, const std::string &path) const {
   Utils::assertAbsolutePathSyntax(path);
   struct Cns_filestatcs statbuf;  
   exception::Errnum::throwOnMinusOne(Cns_statcs(path.c_str(), &statbuf), __FUNCTION__);

@@ -520,16 +520,16 @@ void OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
   // In order to post the job, construct it first.
   objectstore::ArchiveToFileRequest atfr(m_agent->nextId("ArchiveToFileRequest"), m_objectStore);
   atfr.initialize();
-  atfr.setArchiveFile(rqst.getArchiveFile());
-  atfr.setRemoteFile(rqst.getRemoteFile().path.getRaw());
-  atfr.setSize(rqst.getRemoteFile().status.size);
-  atfr.setPriority(rqst.getPriority());
-  atfr.setCreationLog(rqst.getCreationLog());
+  atfr.setArchiveFile(rqst.archiveFile);
+  atfr.setRemoteFile(rqst.remoteFile.path.getRaw());
+  atfr.setSize(rqst.remoteFile.status.size);
+  atfr.setPriority(rqst.priority);
+  atfr.setCreationLog(rqst.creationLog);
   // We will need to identity tapepools is order to construct the request
   RootEntry re(m_objectStore);
   ScopedSharedLock rel(re);
   re.fetch();
-  auto & cl = rqst.getCopyNbToPoolMap();
+  auto & cl = rqst.copyNbToPoolMap;
   std::list<cta::objectstore::ArchiveToFileRequest::JobDump> jl;
   for (auto copy=cl.begin(); copy != cl.end(); copy++) {
     std::string tpaddr = re.getTapePoolAddress(copy->second);
@@ -596,8 +596,8 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
   rtfr.initialize();
   rtfr.setArchiveFile(rqst.getArchiveFile());
   rtfr.setRemoteFile(rqst.getRemoteFile());
-  rtfr.setPriority(rqst.getPriority());
-  rtfr.setCreationLog(rqst.getCreationLog());
+  rtfr.setPriority(rqst.priority);
+  rtfr.setCreationLog(rqst.creationLog);
   // We will need to identity tapes is order to construct the request
   RootEntry re(m_objectStore);
   ScopedSharedLock rel(re);
@@ -614,13 +614,13 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
     objectstore::TapePool tp(pool->address, m_objectStore);
     auto tapes = tp.dumpTapes();
     for(auto tape=tapes.begin(); tape!=tapes.end(); tape++) {
-      if(tape->vid==it->getVid()) {
+      if(tape->vid==it->vid) {
         tapeAddress = tape->address;
         break;
       }
     }
   }
-  rtfr.addJob(chosenCopyNumber, it->getVid(), tapeAddress);
+  rtfr.addJob(chosenCopyNumber, it->vid, tapeAddress);
   auto jl = rtfr.dumpJobs();
   if (!jl.size()) {
     throw RetrieveRequestHasNoCopies("In OStoreDB::queue: the retrieve to file request has no copies");

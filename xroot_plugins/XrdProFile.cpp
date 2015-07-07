@@ -468,7 +468,7 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
     auto list = m_scheduler->getAdminHosts(requester);
     std::ostringstream responseSS;
     for(auto it = list.begin(); it != list.end(); it++) {
-      responseSS << it->getName() 
+      responseSS << it->name 
                  << " " << it->getCreator().uid 
                  << " " << it->getCreator().gid 
                  << " " << it->getCreationTime() 
@@ -621,13 +621,13 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
     auto list = m_scheduler->getTapePools(requester);
     std::ostringstream responseSS;
     for(auto it = list.begin(); it != list.end(); it++) {
-      responseSS << it->getName()  
-                 << " " << it->getNbPartialTapes()
-                 << " " << it->getCreationLog().user.uid 
-                 << " " << it->getCreationLog().user.gid 
-                 << " " << it->getCreationLog().host
-                 << " " << it->getCreationLog().time
-                 << " " << it->getCreationLog().comment << std::endl;
+      responseSS << it->name  
+                 << " " << it->nbPartialTapes
+                 << " " << it->creationLog.user.uid 
+                 << " " << it->creationLog.user.gid 
+                 << " " << it->creationLog.host
+                 << " " << it->creationLog.time
+                 << " " << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -694,14 +694,14 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
     auto list = m_scheduler->getArchivalRoutes(requester);
     std::ostringstream responseSS;
     for(auto it = list.begin(); it != list.end(); it++) {
-      responseSS << it->getStorageClassName()
-                 << " " << it->getCopyNb()
-                 << " " << it->getTapePoolName()
-                 << " " << it->getCreationLog().user.uid
-                 << " " << it->getCreationLog().user.gid
-                 << " " << it->getCreationLog().host
-                 << " " << it->getCreationLog().time
-                 << " " << it->getCreationLog().comment << std::endl;
+      responseSS << it->storageClassName
+                 << " " << it->copyNb
+                 << " " << it->tapePoolName
+                 << " " << it->creationLog.user.uid
+                 << " " << it->creationLog.user.gid
+                 << " " << it->creationLog.host
+                 << " " << it->creationLog.time
+                 << " " << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -754,12 +754,12 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
     auto list = m_scheduler->getLogicalLibraries(requester);
     std::ostringstream responseSS;
     for(auto it = list.begin(); it != list.end(); it++) {
-      responseSS << it->getName()
-                 << " " << it->getCreationLog().user.uid 
-                 << " " << it->getCreationLog().user.gid
-                 << " " << it->getCreationLog().host
-                 << " " << it->getCreationLog().time
-                 << " " << it->getCreationLog().comment << std::endl;
+      responseSS << it->name
+                 << " " << it->creationLog.user.uid 
+                 << " " << it->creationLog.user.gid
+                 << " " << it->creationLog.host
+                 << " " << it->creationLog.time
+                 << " " << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -826,16 +826,16 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::Se
     auto list = m_scheduler->getTapes(requester);
     std::ostringstream responseSS;
     for(auto it = list.begin(); it != list.end(); it++) {
-      responseSS << it->getVid()
-                 << " " << it->getLogicalLibraryName()
-                 << " " << it->getCapacityInBytes()
-                 << " " << it->getTapePoolName()
-                 << " " << it->getDataOnTapeInBytes()
-                 << " " << it->getCreationLog().user.uid 
-                 << " " << it->getCreationLog().user.gid 
-                 << " " << it->getCreationLog().host
-                 << " " << it->getCreationLog().time
-                 << " " << it->getCreationLog().comment << std::endl;
+      responseSS << it->vid
+                 << " " << it->logicalLibraryName
+                 << " " << it->capacityInBytes
+                 << " " << it->tapePoolName
+                 << " " << it->dataOnTapeInBytes
+                 << " " << it->creationLog.user.uid 
+                 << " " << it->creationLog.user.gid 
+                 << " " << it->creationLog.host
+                 << " " << it->creationLog.time
+                 << " " << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -896,13 +896,13 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
     auto list = m_scheduler->getStorageClasses(requester);
     std::ostringstream responseSS;
     for(auto it = list.begin(); it != list.end(); it++) {
-      responseSS << it->getName()
-                 << " " << it->getNbCopies()
-                 << " " << it->getCreationLog().user.uid
-                 << " " << it->getCreationLog().user.gid
-                 << " " << it->getCreationLog().host
-                 << " " << it->getCreationLog().time
-                 << " " << it->getCreationLog().comment << std::endl;
+      responseSS << it->name
+                 << " " << it->nbCopies
+                 << " " << it->creationLog.user.uid
+                 << " " << it->creationLog.user.gid
+                 << " " << it->creationLog.host
+                 << " " << it->creationLog.time
+                 << " " << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -923,16 +923,16 @@ void XrdProFile::xCom_listongoingarchivals(const std::vector<std::string> &token
     auto poolList = m_scheduler->getArchiveRequests(requester);  
     for(auto pool = poolList.begin(); pool != poolList.end(); pool++) {
       for(auto request = pool->second.begin(); request!=pool->second.end(); request++) {
-        responseSS << pool->first.getName()
-                   << " " << request->getRemoteFile().path.getRaw()
-                   << " " << request->getArchiveFile()
-                   << " " << request->getCopyNb()
-                   << " " << request->getPriority()
-                   << " " << request->getCreationLog().user.uid
-                   << " " << request->getCreationLog().user.gid
-                   << " " << request->getCreationLog().host
-                   << " " << request->getCreationLog().time 
-                   << " \"" << request->getCreationLog().comment << "\"" << std::endl;
+        responseSS << pool->first.name
+                   << " " << request->remoteFile.path.getRaw()
+                   << " " << request->archiveFile
+                   << " " << request->copyNb
+                   << " " << request->priority
+                   << " " << request->creationLog.user.uid
+                   << " " << request->creationLog.user.gid
+                   << " " << request->creationLog.host
+                   << " " << request->creationLog.time 
+                   << " \"" << request->creationLog.comment << "\"" << std::endl;
       }    
     }  
   }
@@ -940,15 +940,15 @@ void XrdProFile::xCom_listongoingarchivals(const std::vector<std::string> &token
     auto requestList = m_scheduler->getArchiveRequests(requester, tapePool);    
     for(auto request = requestList.begin(); request!=requestList.end(); request++) {
       responseSS << tapePool
-                 << " " << request->getRemoteFile().path.getRaw()
-                 << " " << request->getArchiveFile()
-                 << " " << request->getCopyNb()
-                 << " " << request->getPriority()
-                 << " " << request->getCreationLog().user.uid
-                 << " " << request->getCreationLog().user.gid
-                 << " " << request->getCreationLog().host
-                 << " " << request->getCreationLog().time 
-                 << " \"" << request->getCreationLog().comment << "\"" << std::endl;
+                 << " " << request->remoteFile.path.getRaw()
+                 << " " << request->archiveFile
+                 << " " << request->copyNb
+                 << " " << request->priority
+                 << " " << request->creationLog.user.uid
+                 << " " << request->creationLog.user.gid
+                 << " " << request->creationLog.host
+                 << " " << request->creationLog.time 
+                 << " \"" << request->creationLog.comment << "\"" << std::endl;
     }
   }
   m_data = responseSS.str();
@@ -966,19 +966,19 @@ void XrdProFile::xCom_listongoingretrievals(const std::vector<std::string> &toke
     auto vidList = m_scheduler->getRetrieveRequests(requester);  
     for(auto vid = vidList.begin(); vid != vidList.end(); vid++) {
       for(auto request = vid->second.begin(); request!=vid->second.end(); request++) {
-        responseSS << vid->first.getVid()
-                   << " " << request->getArchiveFile()
-                   << " " << request->getRemoteFile()
-                   << " " << request->getCopyNb()
-                   << " " << request->getTapeCopy().getVid()
-                   << " " << request->getTapeCopy().getBlockId()
-                   << " " << request->getTapeCopy().getFseq()
-                   << " " << request->getPriority()
-                   << " " << request->getCreationLog().user.uid
-                   << " " << request->getCreationLog().user.gid
-                   << " " << request->getCreationLog().host
-                   << " " << request->getCreationLog().time 
-                   << " \"" << request->getCreationLog().comment << "\"" << std::endl;
+        responseSS << vid->first.vid
+                   << " " << request->archiveFile
+                   << " " << request->remoteFile
+                   << " " << request->copyNb
+                   << " " << request->tapeCopy.vid
+                   << " " << request->tapeCopy.blockId
+                   << " " << request->tapeCopy.fseq
+                   << " " << request->priority
+                   << " " << request->creationLog.user.uid
+                   << " " << request->creationLog.user.gid
+                   << " " << request->creationLog.host
+                   << " " << request->creationLog.time 
+                   << " \"" << request->creationLog.comment << "\"" << std::endl;
       }    
     }  
   }
@@ -986,18 +986,18 @@ void XrdProFile::xCom_listongoingretrievals(const std::vector<std::string> &toke
     auto requestList = m_scheduler->getRetrieveRequests(requester, tapeVid);    
     for(auto request = requestList.begin(); request!=requestList.end(); request++) {
       responseSS << tapeVid
-                 << " " << request->getArchiveFile()
-                 << " " << request->getRemoteFile()
-                 << " " << request->getCopyNb()
-                 << " " << request->getTapeCopy().getVid()
-                 << " " << request->getTapeCopy().getBlockId()
-                 << " " << request->getTapeCopy().getFseq()
-                 << " " << request->getPriority()
-                 << " " << request->getCreationLog().user.uid
-                 << " " << request->getCreationLog().user.gid
-                 << " " << request->getCreationLog().host
-                 << " " << request->getCreationLog().time 
-                 << " \"" << request->getCreationLog().comment << "\"" << std::endl;
+                 << " " << request->archiveFile
+                 << " " << request->remoteFile
+                 << " " << request->copyNb
+                 << " " << request->tapeCopy.vid
+                 << " " << request->tapeCopy.blockId
+                 << " " << request->tapeCopy.fseq
+                 << " " << request->priority
+                 << " " << request->creationLog.user.uid
+                 << " " << request->creationLog.user.gid
+                 << " " << request->creationLog.host
+                 << " " << request->creationLog.time 
+                 << " \"" << request->creationLog.comment << "\"" << std::endl;
     }
   }
   m_data = responseSS.str();
@@ -1039,8 +1039,7 @@ void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens, c
   auto list = m_scheduler->getStorageClasses(requester);
   std::ostringstream responseSS;
   for(auto it = list.begin(); it != list.end(); it++) {
-    responseSS << it->getName()
-               << " " << it->getNbCopies() << std::endl;
+    responseSS << it->name << " " << it->nbCopies << std::endl;
   }
   m_data = responseSS.str();
 }
@@ -1131,10 +1130,10 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
   std::ostringstream responseSS;
   while(dirIterator.hasMore()) {
     auto dirEntry = dirIterator.next();
-    auto mode = dirEntry.getStatus().getMode();
-    const auto &owner = dirEntry.getStatus().getOwner();
-    const auto storageClassName = dirEntry.getStatus().getStorageClassName();
-    responseSS << ((dirEntry.getType()==dirEntry.ENTRYTYPE_DIRECTORY) ? "d" : "-")
+    auto mode = dirEntry.status.mode;
+    const auto &owner = dirEntry.status.owner;
+    const auto storageClassName = dirEntry.status.storageClassName;
+    responseSS << ((dirEntry.type==dirEntry.ENTRYTYPE_DIRECTORY) ? "d" : "-")
                << ((mode & S_IRUSR) ? "r" : "-")
                << ((mode & S_IWUSR) ? "w" : "-")
                << ((mode & S_IXUSR) ? "x" : "-")
@@ -1147,7 +1146,7 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
                << " " << owner.uid
                << " " << owner.gid
                << " " << storageClassName
-               << " " << dirEntry.getName() << std::endl;
+               << " " << dirEntry.name << std::endl;
   }
   m_data = responseSS.str();
 }

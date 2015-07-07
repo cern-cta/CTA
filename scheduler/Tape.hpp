@@ -29,8 +29,7 @@ namespace cta {
 /**
  * Class representing a tape.
  */
-class Tape {
-public:
+struct Tape {
 
   /**
    * Constructor.
@@ -72,90 +71,40 @@ public:
   bool operator<(const Tape &rhs) const throw();
 
   /**
-   * Returns the volume identifier of the tape.
-   *
-   * @return The volume identifier of the tape.
-   */
-  const std::string &getVid() const throw();
-
-  /**
-   * Returns the total number of files stored on the tape.
-   *
-   * @return The total number of files stored on the tape.
-   */
-  uint64_t getNbFiles() const throw();
-
-  /**
-   * Returns the name of the logical library to which the tape belongs.
-   *
-   * @return The name of the logical library to which the tape belongs.
-   */
-  const std::string &getLogicalLibraryName() const throw();
-
-  /**
-   * Returns the name of the tape pool to which the tape belongs.
-   *
-   * @return The name of the tape pool to which the tape belongs.
-   */
-  const std::string &getTapePoolName() const throw();
-
-  /**
-   * Returns the capacity of the tape.
-   *
-   * @return The capacity of the tape.
-   */
-  uint64_t getCapacityInBytes() const throw();
-
-  /**
-   * Returns the amount of data on the tape.
-   *
-   * @return The amount of data on the tape.
-   */
-  uint64_t getDataOnTapeInBytes() const throw();
-
-  
-  /**
-   * Get the creation log
-   * @return Reference to the creation log
-   */
-  const CreationLog & getCreationLog() const throw();
-  
-private:
-
-  /**
    * The volume identifier of the tape.
    */
-  std::string m_vid;
+  std::string vid;
 
   /**
    * The total number of files stored on the tape.
    */
-  uint64_t m_nbFiles;
+  uint64_t nbFiles;
 
   /**
    * The name of the logical library to which the tape belongs.
    */
-  std::string m_logicalLibraryName;
+  std::string logicalLibraryName;
 
   /**
    * The name of the tape pool to which the tape belongs.
    */
-  std::string m_tapePoolName;
+  std::string tapePoolName;
 
   /**
    * The capacity of the tape.
    */
-  uint64_t m_capacityInBytes;
+  uint64_t capacityInBytes;
 
   /**
    * The amount of data on the tape.
    */
-  uint64_t m_dataOnTapeInBytes;
+  uint64_t dataOnTapeInBytes;
 
   /**
    * The record of the entry's creation
    */
-  CreationLog m_creationLog;
+  CreationLog creationLog;
+
 }; // class Tape
 
 } // namespace cta

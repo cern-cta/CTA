@@ -29,8 +29,7 @@ namespace cta {
 /**
  * A user request to archive a remote file to a copy on tape.
  */
-class ArchiveToTapeCopyRequest: public ArchiveRequest {
-public:
+struct ArchiveToTapeCopyRequest: public ArchiveRequest {
 
   /**
    * Constructor.
@@ -63,54 +62,24 @@ public:
     const CreationLog & creationLog);
 
   /**
-   * Returns the path and status of the remote file to be archived.
-   *
-   * @return The path and status of the remote file to be archived.
-   */
-  const RemotePathAndStatus &getRemoteFile() const throw();
-
-  /**
-   * Returns the full path of the destination archive file.
-   *
-   * @return The full path of the destination archive file.
-   */
-  const std::string &getArchiveFile() const throw();
-
-  /**
-   * Returns the tape copy number.
-   *
-   * @return The tape copy number.
-   */
-  uint16_t getCopyNb() const throw();
-
-  /**
-   * Returns the name of the destination tape pool.
-   *
-   * @return the name of the destination tape pool.
-   */
-  const std::string &getTapePoolName() const throw();
-
-private:
-
-  /**
    * The path and status of the remote file to be archived.
    */
-  RemotePathAndStatus m_remoteFile;
+  RemotePathAndStatus remoteFile;
 
   /**
    * The full path of the source archive file.
    */
-  std::string m_archiveFile;
+  std::string archiveFile;
 
   /**
    * The tape copy number.
    */
-  uint16_t m_copyNb;
+  uint16_t copyNb;
 
   /**
    * The name of the destination tape pool.
    */
-  std::string m_tapePoolName;
+  std::string tapePoolName;
 
 }; // class ArchiveToTapeCopyRequest
 

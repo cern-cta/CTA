@@ -69,46 +69,6 @@ void cta::MockNameServer::assertFsPathDoesNotExist(const std::string &path)
 }
 
 //------------------------------------------------------------------------------
-// regularFileExists
-//------------------------------------------------------------------------------
-bool cta::MockNameServer::regularFileExists(const SecurityIdentity &requester,
-  const std::string &path) const {
-  Utils::assertAbsolutePathSyntax(path);
-  const std::string fsPath = m_fsDir + path;
-  struct stat stat_result;
-  
-  if(::stat(fsPath.c_str(), &stat_result)) {
-    return false;
-  }
-  
-  if(!S_ISREG(stat_result.st_mode)) {
-    return false;
-  }
-  
-  return true;
-}
-
-//------------------------------------------------------------------------------
-// dirExists
-//------------------------------------------------------------------------------
-bool cta::MockNameServer::dirExists(const SecurityIdentity &requester,
-  const std::string &path) const {
-  Utils::assertAbsolutePathSyntax(path);
-  const std::string fsPath = m_fsDir + path;
-  struct stat stat_result;
-
-  if(::stat(fsPath.c_str(), &stat_result)) {
-    return false;
-  }
-
-  if(!S_ISDIR(stat_result.st_mode)) {
-    return false;
-  }
-
-  return true;
-}
-
-//------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
 void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
@@ -435,7 +395,7 @@ cta::ArchiveFileStatus cta::MockNameServer::statFile(
   const SecurityIdentity &requester,
   const std::string &path) const {
 
-  return getArchiveDirEntry(requester, path).getStatus();
+  return getArchiveDirEntry(requester, path).status;
 }
 
 //------------------------------------------------------------------------------

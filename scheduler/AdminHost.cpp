@@ -39,12 +39,5 @@ cta::AdminHost::AdminHost(
   const std::string &comment,
   const time_t creationTime):
   ConfigurationItem(creator, comment, creationTime),
-  m_name(name) {
-}
-
-//------------------------------------------------------------------------------
-// getName
-//------------------------------------------------------------------------------
-const std::string &cta::AdminHost::getName() const throw() {
-  return m_name;
+  name(name) {
 }

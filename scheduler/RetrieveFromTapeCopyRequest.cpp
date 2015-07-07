@@ -42,39 +42,8 @@ cta::RetrieveFromTapeCopyRequest::RetrieveFromTapeCopyRequest(
   const uint64_t priority,
   const CreationLog & creationLog):
   RetrieveRequest(priority, creationLog),
-  m_archiveFile(archiveFile),
-  m_copyNb(copyNb),
-  m_tapeCopy(tapeCopy),
-  m_remoteFile(remoteFile) {
-}
-
-//------------------------------------------------------------------------------
-// getCopyNb
-//------------------------------------------------------------------------------
-uint64_t cta::RetrieveFromTapeCopyRequest::getCopyNb() const throw(){
-  return m_copyNb;
-}
-
-//------------------------------------------------------------------------------
-// getArchiveFile
-//------------------------------------------------------------------------------
-const std::string &cta::RetrieveFromTapeCopyRequest::getArchiveFile() const
-  throw() {
-  return m_archiveFile;
-}
-
-//------------------------------------------------------------------------------
-// getTapeCopy
-//------------------------------------------------------------------------------
-const cta::TapeCopyLocation &cta::RetrieveFromTapeCopyRequest::getTapeCopy()
-  const throw() {
-  return m_tapeCopy;
-}
-
-//------------------------------------------------------------------------------
-// getRemoteFile
-//------------------------------------------------------------------------------
-const std::string &cta::RetrieveFromTapeCopyRequest::getRemoteFile() const
-  throw() {
-  return m_remoteFile;
+  archiveFile(archiveFile),
+  copyNb(copyNb),
+  tapeCopy(tapeCopy),
+  remoteFile(remoteFile) {
 }

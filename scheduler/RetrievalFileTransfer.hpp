@@ -26,10 +26,9 @@
 namespace cta {
 
 /**
- * Class representing the transfer of a single copy of a tape file to a remote
- * file.
+ * The transfer of a single copy of a tape file to a remote file.
  */
-class RetrievalFileTransfer: public FileTransfer {
+struct RetrievalFileTransfer: public FileTransfer {
 public:
 
   /**
@@ -59,19 +58,10 @@ public:
     const std::string &remoteFile);
 
   /**
-   * Returns the location of the source tape file.
-   *
-   * @return The location of the source tape file.
-   */
-  const TapeCopyLocation &getTapeFile() const throw();
-
-private:
-
-  /**
    * The location of the source tape file.
    */
-  const TapeCopyLocation m_tapeFile;
+  TapeCopyLocation tapeFile;
 
-}; // class RetrievalFileTransfer
+}; // struct RetrievalFileTransfer
 
 } // namespace cta

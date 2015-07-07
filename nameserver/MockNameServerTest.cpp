@@ -87,7 +87,7 @@ TEST_F(cta_MockNameServerTest, mkdir_functionality) {
   ASSERT_THROW(ns->createDir(s_userOnUserHost, "/dir1", 0777), std::exception);
   ASSERT_NO_THROW(itor = ns->getDirContents(s_userOnUserHost, "/"));
   ASSERT_EQ(itor.hasMore(), true);
-  ASSERT_EQ(itor.next().getName(), "dir1");
+  ASSERT_EQ(itor.next().name, "dir1");
   ASSERT_EQ(itor.hasMore(), false);
 }
 
@@ -104,7 +104,7 @@ TEST_F(cta_MockNameServerTest, createFile_functionality) {
   ASSERT_THROW(ns->createFile(s_userOnUserHost, "/file1", 0666), std::exception);
   ASSERT_NO_THROW(itor = ns->getDirContents(s_userOnUserHost, "/"));
   ASSERT_EQ(itor.hasMore(), true);
-  ASSERT_EQ(itor.next().getName(), "file1");
+  ASSERT_EQ(itor.next().name, "file1");
   ASSERT_EQ(itor.hasMore(), false);
 }
 

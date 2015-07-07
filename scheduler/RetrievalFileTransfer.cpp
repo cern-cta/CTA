@@ -40,13 +40,5 @@ cta::RetrievalFileTransfer::RetrievalFileTransfer(
   const uint32_t copyNb,
   const std::string &remoteFile):
   FileTransfer(id, userRequestId, copyNb, remoteFile),
-  m_tapeFile(tapeFile) {
-}
-
-//------------------------------------------------------------------------------
-// getTapeFile
-//------------------------------------------------------------------------------
-const cta::TapeCopyLocation &cta::RetrievalFileTransfer::getTapeFile() const
-  throw() {
-  return m_tapeFile;
+  tapeFile(tapeFile) {
 }

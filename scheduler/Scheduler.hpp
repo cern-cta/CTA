@@ -518,28 +518,6 @@ public:
    const std::string &path);
 
   /**
-   * Returns true if the specified regular file exists.
-   *
-   * @param requester The identity of the requester.
-   * @param path The absolute path of the file.
-   * @return True if the specified directory exists.
-   */
-  bool regularFileExists(
-    const SecurityIdentity &requester,
-    const std::string &path) const;
-
-  /**
-   * Returns true if the specified directory exists.
-   *
-   * @param requester The identity of the requester.
-   * @param path The absolute path of the file.
-   * @return True if the specified directory exists.
-   */
-  bool dirExists(
-    const SecurityIdentity &requester,
-    const std::string &path) const;
-  
-  /**
    * Returns the volume identifier of the tape on which the specified tape copy
    * has been archived.
    *
@@ -572,7 +550,7 @@ public:
    * namespace.
    * @return The status of the file or directory.
    */
-  ArchiveFileStatus statFile(
+  ArchiveFileStatus statArchiveFile(
     const SecurityIdentity &requester,
     const std::string &path) const;
 

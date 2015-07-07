@@ -22,7 +22,7 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::ArchivalRoute::ArchivalRoute():
-  m_copyNb(0) {
+  copyNb(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -39,36 +39,8 @@ cta::ArchivalRoute::ArchivalRoute(
   const uint16_t copyNb,
   const std::string &tapePoolName,
   const CreationLog &creationLog):
-  m_storageClassName(storageClassName),
-  m_copyNb(copyNb),
-  m_tapePoolName(tapePoolName),
-  m_creationLog(creationLog) {
-}
-
-//------------------------------------------------------------------------------
-// getStorageClassName
-//------------------------------------------------------------------------------
-const std::string &cta::ArchivalRoute::getStorageClassName() const throw() {
-  return m_storageClassName;
-}
-
-//------------------------------------------------------------------------------
-// getCopyNb
-//------------------------------------------------------------------------------
-uint16_t cta::ArchivalRoute::getCopyNb() const throw() {
-  return m_copyNb;
-}
-
-//------------------------------------------------------------------------------
-// getTapePoolName
-//------------------------------------------------------------------------------
-const std::string &cta::ArchivalRoute::getTapePoolName() const throw() {
-  return m_tapePoolName;
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-auto cta::ArchivalRoute::getCreationLog() const throw() -> const CreationLog & {
-  return m_creationLog;
+  storageClassName(storageClassName),
+  copyNb(copyNb),
+  tapePoolName(tapePoolName),
+  creationLog(creationLog) {
 }

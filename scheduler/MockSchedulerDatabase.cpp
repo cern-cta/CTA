@@ -211,19 +211,18 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToDirRequest &rqst) {
 // queue
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst) {
-  const std::map<uint16_t, std::string> &copyNbToPoolMap =
-    rqst.getCopyNbToPoolMap();
+  const std::map<uint16_t, std::string> &copyNbToPoolMap = rqst.copyNbToPoolMap;
   for(auto itor = copyNbToPoolMap.begin(); itor != copyNbToPoolMap.end();
     itor++) {
     const uint16_t copyNb = itor->first;
     const std::string &tapePoolName = itor->second;
     queue(ArchiveToTapeCopyRequest(
-      rqst.getRemoteFile(),
-      rqst.getArchiveFile(),
+      rqst.remoteFile,
+      rqst.archiveFile,
       copyNb,
       tapePoolName,
-      rqst.getPriority(),
-      rqst.getCreationLog()));
+      rqst.priority,
+      rqst.creationLog));
   }
 }
 
@@ -232,22 +231,22 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst) {
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::queue(const ArchiveToTapeCopyRequest &rqst) {
   char *zErrMsg = 0;
-  const CreationLog &log = rqst.getCreationLog();
+  const CreationLog &log = rqst.creationLog;
   std::ostringstream query;
   query << "INSERT INTO ARCHIVETOTAPECOPYREQUEST(STATE, REMOTEFILEPATH,"
     " REMOTEFILEUID, REMOTEFILEGID, REMOTEFILESIZE, REMOTEFILEMODE, ARCHIVEFILE,"
     " TAPEPOOL, COPYNB, PRIORITY, UID, GID, HOST, CREATIONTIME)"
     " VALUES("
     "'PENDING_NS_CREATION','" <<
-    rqst.getRemoteFile().path.getRaw() << "'," <<
-    rqst.getRemoteFile().status.owner.uid << "," <<
-    rqst.getRemoteFile().status.owner.gid << "," <<
-    rqst.getRemoteFile().status.size << "," <<
-    rqst.getRemoteFile().status.mode << ",'" <<
-    rqst.getArchiveFile() << "','" <<
-    rqst.getTapePoolName() << "'," <<
-    rqst.getCopyNb() << "," <<
-    rqst.getPriority() << "," <<
+    rqst.remoteFile.path.getRaw() << "'," <<
+    rqst.remoteFile.status.owner.uid << "," <<
+    rqst.remoteFile.status.owner.gid << "," <<
+    rqst.remoteFile.status.size << "," <<
+    rqst.remoteFile.status.mode << ",'" <<
+    rqst.archiveFile << "','" <<
+    rqst.tapePoolName << "'," <<
+    rqst.copyNb << "," <<
+    rqst.priority << "," <<
     log.user.uid << "," <<
     log.user.gid << ",'" <<
     log.host << "', " <<
@@ -262,8 +261,8 @@ void cta::MockSchedulerDatabase::queue(const ArchiveToTapeCopyRequest &rqst) {
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
   if(0 >= nbRowsModified) {
     std::ostringstream msg;
-    msg << "Archive request for copy " << rqst.getCopyNb() <<
-      " of archive file " << rqst.getArchiveFile() << " already exists";
+    msg << "Archive request for copy " << rqst.copyNb <<
+      " of archive file " << rqst.archiveFile << " already exists";
     throw(exception::Exception(msg.str()));
   }
 }
@@ -557,7 +556,7 @@ void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst) {
   std::ostringstream query;
   query << "INSERT INTO RETRIEVEFROMTAPECOPYREQUEST(ARCHIVEFILE, REMOTEFILE, COPYNB, VID, FSEQ, BLOCKID, PRIORITY, UID,"
     " GID, HOST, CREATIONTIME) VALUES(" << (int)cta::RetrieveFromTapeCopyRequestState::PENDING <<
-    ",'" << rqst.getArchiveFile() << "','" << rqst.getRemoteFile() << "'," <<
+    ",'" << rqst.archiveFile << "','" << rqst.remoteFile << "'," <<
     requester.getUser().uid << "," << requester.getUser().gid <<
     "," << (int)time(NULL) << ");";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
@@ -1163,7 +1162,7 @@ void cta::MockSchedulerDatabase::createArchivalRoute(
   const std::list<ArchivalRoute> routes = getArchivalRoutesWithoutChecks(
     storageClassName);
   const StorageClass storageClass = getStorageClass(storageClassName);
-  if(routes.size() >= storageClass.getNbCopies()) {
+  if(routes.size() >= storageClass.nbCopies) {
     std::ostringstream msg;
     msg << "Too many archival routes for storage class "
       << storageClassName;
@@ -1203,10 +1202,10 @@ void cta::MockSchedulerDatabase::assertTapePoolIsNotAlreadyADestination(
   const std::list<ArchivalRoute> &routes,
   const std::string &tapePoolName) const {
   for(auto itor = routes.begin(); itor != routes.end(); itor++) {
-    if(tapePoolName == itor->getTapePoolName()) {
+    if(tapePoolName == itor->tapePoolName) {
       std::ostringstream msg;
       msg << "Tape pool " << tapePoolName << " is already an archival"
-        " destination for storage class " << itor->getStorageClassName();
+        " destination for storage class " << itor->storageClassName;
       throw exception::Exception(msg.str());
     }
   }
@@ -1286,7 +1285,7 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes(
     storageClassName);
 
   const StorageClass storageClass = getStorageClass(storageClassName);
-  if(routes.size() < storageClass.getNbCopies()) {
+  if(routes.size() < storageClass.nbCopies) {
     std::ostringstream msg;
     msg << "Incomplete archival routes for storage class "
       << storageClassName;

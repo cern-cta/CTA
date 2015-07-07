@@ -27,8 +27,7 @@ namespace cta {
 /**
  * A directory entry within the archive namespace.
  */
-class ArchiveDirEntry {
-public:
+struct ArchiveDirEntry {
 
   /**
    * Enumeration of the different types of directory entry.
@@ -59,57 +58,27 @@ public:
    *
    * Initialises all integer member-variables to 0.
    *
-   * @param entryType The type of the entry.
+   * @param type The type of the entry.
    * @param name The name of the directory entry.
    * @param status The status of the entry.
    */
-  ArchiveDirEntry(const EntryType entryType, const std::string &name,
+  ArchiveDirEntry(const EntryType type, const std::string &name,
     const ArchiveFileStatus &status);
-
-  /**
-   * Returns the type of the directory entry.
-   *
-   * @return The type of the directory entry.
-   */
-  EntryType getType() const throw();
-
-  /**
-   * Returns the name of the directory entry.
-   *
-   * @return The name of the directory entry.
-   */
-  const std::string &getName() const throw();
-
-  /**
-   * Returns the status of the entry.
-   *
-   * @return The status of the entry.
-   */
-  ArchiveFileStatus &getStatus() throw();
-
-  /**
-   * Returns the status of the entry.
-   *
-   * @return The status of the entry.
-   */ 
-  const ArchiveFileStatus &getStatus() const throw();
-
-private:
 
   /**
    * The type of the directory entry.
    */
-  EntryType m_entryType;
+  EntryType type;
 
   /**
    * The name of the directory entry.
    */
-  std::string m_name;
+  std::string name;
 
   /**
    * The status of the entry.
    */
-  ArchiveFileStatus m_status;
+  ArchiveFileStatus status;
 
 }; // class ArchiveDirEntry
 

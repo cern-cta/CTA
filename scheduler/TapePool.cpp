@@ -22,7 +22,7 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::TapePool::TapePool():
-  m_nbPartialTapes(0) {
+  nbPartialTapes(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -38,35 +38,14 @@ cta::TapePool::TapePool(
   const std::string &name,
   const uint32_t nbPartialTapes,
   const CreationLog &creationLog):
-  m_name(name),
-  m_nbPartialTapes(nbPartialTapes),
-  m_creationLog(creationLog) {
+  name(name),
+  nbPartialTapes(nbPartialTapes),
+  creationLog(creationLog) {
 }
 
 //------------------------------------------------------------------------------
 // operator<
 //------------------------------------------------------------------------------
 bool cta::TapePool::operator<(const TapePool &rhs) const throw() {
-  return m_name < rhs.m_name;
-}
-
-//------------------------------------------------------------------------------
-// getName
-//------------------------------------------------------------------------------
-const std::string &cta::TapePool::getName() const throw() {
-  return m_name;
-}
-
-//------------------------------------------------------------------------------
-// getNbPartialTapes
-//------------------------------------------------------------------------------
-uint32_t cta::TapePool::getNbPartialTapes() const throw() {
-  return m_nbPartialTapes;
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-auto cta::TapePool::getCreationLog() const throw() -> const CreationLog & {
-  return m_creationLog;
+  return name < rhs.name;
 }

@@ -36,19 +36,5 @@ cta::LogicalLibrary::~LogicalLibrary() throw() {
 cta::LogicalLibrary::LogicalLibrary(
   const std::string &name,
   const CreationLog &creationLog):
-  m_name(name), m_creationLog(creationLog) {
-}
-
-//------------------------------------------------------------------------------
-// getName
-//------------------------------------------------------------------------------
-const std::string &cta::LogicalLibrary::getName() const throw() {
-  return m_name;
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-auto cta::LogicalLibrary::getCreationLog() const throw() -> const CreationLog & {
-  return m_creationLog;
+  name(name), creationLog(creationLog) {
 }

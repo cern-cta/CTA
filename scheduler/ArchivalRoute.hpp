@@ -30,8 +30,7 @@ namespace cta {
 /**
  * An archival route.
  */
-class ArchivalRoute {
-public:
+struct ArchivalRoute {
 
   /**
    * Constructor.
@@ -60,55 +59,25 @@ public:
     const CreationLog &creationLog);
 
   /**
-   * Returns the name of the storage class that identifies the source disk
-   * files.
-   *
-   * @return The name of the storage class that identifies the source disk
-   * files.
-   */
-  const std::string &getStorageClassName() const throw();
-
-  /**
-   * Returns the tape copy number.
-   *
-   * @return The tape copy number.
-   */
-  uint16_t getCopyNb() const throw();
-
-  /**
-   * Returns the name of the destination tape pool.
-   *
-   * @return The name of the destination tape pool.
-   */
-  const std::string &getTapePoolName() const throw();
-  
-  /**
-   * Get the creation log
-   * @return Reference to the creation log
-   */
-  const CreationLog & getCreationLog() const throw();
-
-private:
-
-  /**
    * The name of the storage class that identifies the source disk files.
    */
-  std::string m_storageClassName;
+  std::string storageClassName;
 
   /**
    * The tape copy number.
    */
-  uint32_t m_copyNb;
+  uint32_t copyNb;
 
   /**
    * The name of the destination tape pool.
    */
-  std::string m_tapePoolName;
+  std::string tapePoolName;
 
   /**
    * The record of the entry's creation
    */
-  CreationLog m_creationLog;
+  CreationLog creationLog;
+
 }; // class ArchivalRoute
 
 } // namespace cta

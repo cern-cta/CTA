@@ -30,8 +30,7 @@ class CreationLog;
 /**
  * Class representing an archive storage-class.
  */
-class StorageClass {
-public:
+struct StorageClass {
 
   /**
    * Constructor.
@@ -58,28 +57,6 @@ public:
     const CreationLog &creationLog);
 
   /**
-   * Returns the name of the storage class.
-   *
-   * @return The name of the storage class.
-   */
-  const std::string &getName() const throw();
-
-  /**
-   * Returns the number of copies a file associated with this storage
-   * class should have on tape.
-   *
-   * @return The number of copies a file associated with this storage
-   * class should have on tape.
-   */
-  uint16_t getNbCopies() const throw();
-  
-  /**
-   * Get the creation log
-   * @return Reference to the creation log
-   */
-  const CreationLog & getCreationLog() const throw();
-  
-  /**
    * Returns true if the specified right-hand side is greater than this object.
    *
    * @param rhs The object on the right-hand side of the < operator.
@@ -87,23 +64,22 @@ public:
    */
   bool operator<(const StorageClass &rhs) const;
 
-private:
-
   /**
    * The name of the storage class.
    */
-  std::string m_name;
+  std::string name;
 
   /**
    * The number of copies a file associated with this storage
    * class should have on tape.
    */
-  uint16_t m_nbCopies;
+  uint16_t nbCopies;
   
   /**
    * The record of the entry's creation
    */
-  CreationLog m_creationLog;
+  CreationLog creationLog;
+
 }; // class StorageClass
 
 } // namespace cta

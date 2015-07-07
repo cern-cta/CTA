@@ -41,38 +41,8 @@ cta::ArchiveToTapeCopyRequest::ArchiveToTapeCopyRequest(
   const uint64_t priority,
   const CreationLog &creationLog):
   ArchiveRequest(priority, creationLog),
-  m_remoteFile(remoteFile),
-  m_archiveFile(archiveFile),
-  m_copyNb(copyNb),
-  m_tapePoolName(tapePoolName) {
-}
-
-//------------------------------------------------------------------------------
-// getRemoteFile
-//------------------------------------------------------------------------------
-const cta::RemotePathAndStatus &cta::ArchiveToTapeCopyRequest::getRemoteFile()
-  const throw() {
-  return m_remoteFile;
-}
-
-//------------------------------------------------------------------------------
-// getArchiveFile
-//------------------------------------------------------------------------------
-const std::string &cta::ArchiveToTapeCopyRequest::getArchiveFile() const throw() {
- return m_archiveFile;
-}
-
-//------------------------------------------------------------------------------
-// getCopyNb
-//------------------------------------------------------------------------------
-uint16_t cta::ArchiveToTapeCopyRequest::getCopyNb() const throw() {
-  return m_copyNb;
-}
-
-//------------------------------------------------------------------------------
-// getTapePoolName
-//------------------------------------------------------------------------------
-const std::string &cta::ArchiveToTapeCopyRequest::getTapePoolName() const
-  throw() {
-  return m_tapePoolName;
+  remoteFile(remoteFile),
+  archiveFile(archiveFile),
+  copyNb(copyNb),
+  tapePoolName(tapePoolName) {
 }

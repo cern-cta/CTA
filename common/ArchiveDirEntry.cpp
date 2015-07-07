@@ -41,39 +41,10 @@ cta::ArchiveDirEntry::ArchiveDirEntry() {
 // constructor
 //------------------------------------------------------------------------------
 cta::ArchiveDirEntry::ArchiveDirEntry(
-  const EntryType entryType,
+  const EntryType type,
   const std::string &name,
   const ArchiveFileStatus &status):
-  m_entryType(entryType),
-  m_name(name),
-  m_status(status) {
-}
-
-//------------------------------------------------------------------------------
-// getType
-//------------------------------------------------------------------------------
-cta::ArchiveDirEntry::EntryType cta::ArchiveDirEntry::getType()
-  const throw() {
-  return m_entryType;
-}
-
-//------------------------------------------------------------------------------
-// getName
-//------------------------------------------------------------------------------
-const std::string &cta::ArchiveDirEntry::getName() const throw() {
-  return m_name;
-}
-
-//------------------------------------------------------------------------------
-// getStatus
-//------------------------------------------------------------------------------
-const cta::ArchiveFileStatus &cta::ArchiveDirEntry::getStatus() const throw() {
-  return m_status;
-}
-
-//------------------------------------------------------------------------------
-// getStatus
-//------------------------------------------------------------------------------
-cta::ArchiveFileStatus &cta::ArchiveDirEntry::getStatus() throw() {
-  return m_status;
+  type(type),
+  name(name),
+  status(status) {
 }

@@ -174,7 +174,7 @@ TEST_P(SchedulerDatabaseTest, create_new_admin_host) {
     const AdminHost &adminHost = adminHosts.front();
     ASSERT_EQ(s_system, adminHost.getCreator());
     ASSERT_EQ(comment, adminHost.getComment());
-    ASSERT_EQ(s_adminHost, adminHost.getName());
+    ASSERT_EQ(s_adminHost, adminHost.name);
   }
 }
 
@@ -227,7 +227,7 @@ TEST_P(SchedulerDatabaseTest, create_assert_admin_on_admin_host) {
     const AdminHost &adminHost = adminHosts.front();
     ASSERT_EQ(s_system, adminHost.getCreator());
     ASSERT_EQ(hostComment, adminHost.getComment());
-    ASSERT_EQ(s_adminHost, adminHost.getName());
+    ASSERT_EQ(s_adminHost, adminHost.name);
   }
 }
 

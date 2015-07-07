@@ -246,28 +246,6 @@ public:
     const SecurityIdentity &requester,
     const std::string &path) = 0;
 
-  /**
-   * Returns true if the specified regular file exists.
-   *
-   * @param requester The identity of the requester.
-   * @param path The absolute path of the file.
-   * @return True if the specified directory exists.
-   */
-  virtual bool regularFileExists(
-    const SecurityIdentity &requester,
-    const std::string &path) const = 0;
-
-  /**
-   * Returns true if the specified directory exists.
-   *
-   * @param requester The identity of the requester.
-   * @param path The absolute path of the file.
-   * @return True if the specified directory exists.
-   */
-  virtual bool dirExists(
-    const SecurityIdentity &requester,
-    const std::string &path) const = 0;
-
 }; // class NameServer
 
 } // namespace 

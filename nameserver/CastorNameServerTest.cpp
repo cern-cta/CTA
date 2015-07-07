@@ -11,7 +11,8 @@ int main() {
     cta::ArchiveDirIterator it = ns.getDirContents(requester, "/");
     while(it.hasMore()) {
       cta::ArchiveDirEntry entry = it.next();
-      std::cout << entry.getName() << " " << entry.entryTypeToStr(entry.getType()) << std::endl;
+      std::cout << entry.name << " " << entry.entryTypeToStr(entry.type) <<
+        std::endl;
     }
     ns.createDir(requester, "/cta", 0777);
     ns.deleteDir(requester, "/cta");

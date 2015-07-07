@@ -53,8 +53,6 @@ public:
     const uint64_t priority,
     const CreationLog & creationLog);
 
-private:
-
 }; // class ArchiveRequest
 
 } // namespace cta

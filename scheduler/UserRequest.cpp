@@ -22,7 +22,7 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::UserRequest::UserRequest():
-  m_priority(0) {
+  priority(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -31,26 +31,12 @@ cta::UserRequest::UserRequest():
 cta::UserRequest::UserRequest(
   const uint64_t priority,
   const CreationLog & creationLog):
-  m_priority(priority),
-  m_creationLog(creationLog) {
+  priority(priority),
+  creationLog(creationLog) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 cta::UserRequest::~UserRequest() throw() {
-}
-
-//------------------------------------------------------------------------------
-// getPriority
-//------------------------------------------------------------------------------
-uint64_t cta::UserRequest::getPriority() const throw() {
-  return m_priority;
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-auto cta::UserRequest::getCreationLog() const throw() -> const CreationLog & {
-  return m_creationLog;
 }
