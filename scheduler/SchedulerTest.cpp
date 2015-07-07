@@ -1515,7 +1515,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   std::list<std::string> remoteFiles;
   remoteFiles.push_back(s_remoteFileRawPath1);
   const std::string archiveFile  = "/grandparent/parent_file";
-  /*ASSERT_NO_THROW*/(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile));
+  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile));
 
   {
     ArchiveDirIterator itor;
