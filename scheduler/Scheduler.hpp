@@ -18,12 +18,13 @@
 
 #pragma once
 
+#include "scheduler/SchedulerDatabase.hpp"
+
 #include <list>
 #include <map>
+#include <memory>
 #include <stdint.h>
 #include <string>
-#include <memory>
-#include "scheduler/SchedulerDatabase.hpp"
 
 namespace cta {
 
@@ -545,14 +546,15 @@ public:
 
   /**
    * Returns the status of the specified file or directory within the archive
-   * namespace.
+   * namespace or NULL if the file or directory does not exist.
    *
    * @param requester The identity of the requester.
    * @param path The absolute path of the file or directory within the archive
    * namespace.
-   * @return The status of the file or directory.
+   * @return The status of the file or directory or NULL the the file or
+   * directory does not exist.
    */
-  ArchiveFileStatus statArchiveFile(
+  std::unique_ptr<ArchiveFileStatus> statArchiveFile(
     const SecurityIdentity &requester,
     const std::string &path) const;
 
@@ -774,15 +776,6 @@ private:
     const std::list<RemotePathAndStatus> &remoteFiles,
     const std::string &archiveDir,
     const uint64_t priority);
-
-  /**
-   * Tries to create the entry in the archive namespace corresponding to the
-   * specified archive request and records the result in the scheduler database.
-   */
-  void createNSEntryAndUpdateSchedulerDatabase(
-    const SecurityIdentity &requester,
-    const ArchiveToFileRequest &rqst,
-    std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> & requestCreation);
 
   /**
    * Queues the specifed request to archive one remote file to on archive file.

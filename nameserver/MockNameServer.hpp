@@ -72,7 +72,7 @@ public:
   
   void deleteDir(const SecurityIdentity &requester, const std::string &path);
   
-  ArchiveFileStatus statFile(const SecurityIdentity &requester, const std::string &path) const;
+  std::unique_ptr<ArchiveFileStatus> statFile(const SecurityIdentity &requester, const std::string &path) const;
   
   ArchiveDirIterator getDirContents(const SecurityIdentity &requester, const std::string &path) const;
   
@@ -109,6 +109,19 @@ private:
   ArchiveDirEntry getArchiveDirEntry(
     const SecurityIdentity &requester,
     const std::string &path) const;
+
+  /**
+   * Returns the directory entry corresponding to the specified path and stat()
+   * result.
+   *
+   * @param requester The identity of the requester.
+   * @param The absolute path of the namespace entry.
+   * @param statResult The result of running stat().
+   */
+  ArchiveDirEntry getArchiveDirEntry(
+    const SecurityIdentity &requester,
+    const std::string &path,
+    const struct stat statResult) const;
 
   /**
    * The string name and numeric idenitifer of a storage class.

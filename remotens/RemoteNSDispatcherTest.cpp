@@ -44,27 +44,15 @@ protected:
     ~TestRemoteNS() throw() {
     }
 
-    cta::RemoteFileStatus statFile(const cta::RemotePath &path) const {
+    std::unique_ptr<cta::RemoteFileStatus> statFile(const cta::RemotePath &path)
+      const {
+      using namespace cta;
       incCallCounter("statFile");
       auto itor = std::find(m_files.begin(), m_files.end(), path);
       if(m_files.end() == itor) {
-        std::ostringstream msg;
-        msg << "Remote file " << path.getRaw() << " does not exist";
-        throw cta::exception::Exception(msg.str());
+        return std::unique_ptr<RemoteFileStatus>();
       }
-      return cta::RemoteFileStatus();
-    }
-
-    bool regularFileExists(const cta::RemotePath &path) const {
-      incCallCounter("regularFileExists");
-      auto itor = std::find(m_files.begin(), m_files.end(), path);
-      return m_files.end() != itor;
-    }
-
-    bool dirExists(const cta::RemotePath &path) const {
-      incCallCounter("dirExists");
-      auto itor = std::find(m_dirs.begin(), m_dirs.end(), path);
-      return m_dirs.end() != itor;
+      return std::unique_ptr<RemoteFileStatus>(new RemoteFileStatus());
     }
 
     void rename(const cta::RemotePath &remoteFile,
@@ -154,7 +142,9 @@ TEST_F(cta_RemoteNSDispatcherTest, statFile_existing) {
   ASSERT_NO_THROW(dispatcher.registerProtocolHandler("test", std::move(ns)));
 
   ASSERT_EQ(0, testNS->getCallCounter("statFile"));
-  ASSERT_NO_THROW(dispatcher.statFile(regularFile));
+  std::unique_ptr<RemoteFileStatus> remoteStat;
+  ASSERT_NO_THROW(remoteStat = dispatcher.statFile(regularFile));
+  ASSERT_TRUE(remoteStat.get());
   ASSERT_EQ(1, testNS->getCallCounter("statFile"));
 }
 
@@ -168,7 +158,9 @@ TEST_F(cta_RemoteNSDispatcherTest, statFile_non_existing) {
   ASSERT_NO_THROW(dispatcher.registerProtocolHandler("test", std::move(ns)));
 
   ASSERT_EQ(0, testNS->getCallCounter("statFile"));
-  ASSERT_THROW(dispatcher.statFile(regularFile), std::exception);
+  std::unique_ptr<RemoteFileStatus> remoteStat;
+  ASSERT_NO_THROW(remoteStat = dispatcher.statFile(regularFile));
+  ASSERT_FALSE(remoteStat.get());
 }
 
 } // namespace unitTests

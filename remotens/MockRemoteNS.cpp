@@ -36,12 +36,14 @@ cta::MockRemoteNS::~MockRemoteNS() throw() {
 //------------------------------------------------------------------------------
 // statFile
 //------------------------------------------------------------------------------
-cta::RemoteFileStatus cta::MockRemoteNS::statFile(const RemotePath &path) const {
+std::unique_ptr<cta::RemoteFileStatus> cta::MockRemoteNS::statFile(
+  const RemotePath &path) const {
   auto it = m_entries.find(path);
   if(m_entries.end() == it) {
-    throw exception::Exception("MockRemoteNS: no such file or directory");
+    return std::unique_ptr<RemoteFileStatus>();
   }
-  return m_entries.at(path);
+  return std::unique_ptr<RemoteFileStatus>(
+    new RemoteFileStatus(m_entries.at(path)));
 }
 
 //------------------------------------------------------------------------------

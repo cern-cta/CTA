@@ -22,6 +22,7 @@
 #include "common/ArchiveFileStatus.hpp"
 #include "scheduler/SecurityIdentity.hpp"
 
+#include <memory>
 #include <string>
 
 namespace cta {
@@ -86,14 +87,15 @@ public:
 
   /**
    * Returns the status of the specified file or directory within the archive
-   * namespace.
+   * namespace or NULL if the file or directory does not exist.
    *
    * @param requester The identity of the requester.
    * @param path The absolute path of the file or directory within the archive
    * namespace.
-   * @return The status of the file or directory.
+   * @return The status of the file or directory or NULL if the file or
+   * directory does not exist.
    */
-  virtual ArchiveFileStatus statFile(
+  virtual std::unique_ptr<ArchiveFileStatus> statFile(
     const SecurityIdentity &requester,
     const std::string &path) const = 0;
 

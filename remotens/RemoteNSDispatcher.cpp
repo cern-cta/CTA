@@ -55,8 +55,8 @@ void cta::RemoteNSDispatcher::registerProtocolHandler(
 //------------------------------------------------------------------------------
 // statFile
 //------------------------------------------------------------------------------
-cta::RemoteFileStatus cta::RemoteNSDispatcher::statFile(const RemotePath &path) 
-  const {
+std::unique_ptr<cta::RemoteFileStatus> cta::RemoteNSDispatcher::statFile(
+  const RemotePath &path) const {
   return getHandler(path.getScheme()).statFile(path);
 }
 

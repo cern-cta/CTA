@@ -462,7 +462,7 @@ cta::ArchiveDirIterator cta::Scheduler::getDirContents(
 //------------------------------------------------------------------------------
 // statArchiveFile
 //------------------------------------------------------------------------------
-cta::ArchiveFileStatus cta::Scheduler::statArchiveFile(
+std::unique_ptr<cta::ArchiveFileStatus> cta::Scheduler::statArchiveFile(
   const SecurityIdentity &requester,
   const std::string &path) const {
   return m_ns.statFile(requester, path);
@@ -504,9 +504,9 @@ void cta::Scheduler::queueArchiveRequest(
   const std::list<std::string> &remoteFiles,
   const std::string &archiveFileOrDir) {
 
-  const ArchiveFileStatus archiveStat = m_ns.statFile(requester,
-    archiveFileOrDir);
-  const bool archiveToDir = S_ISDIR(archiveStat.mode);
+  const std::unique_ptr<ArchiveFileStatus> archiveStat =
+    m_ns.statFile(requester, archiveFileOrDir);
+  const bool archiveToDir = archiveStat.get() && S_ISDIR(archiveStat->mode);
   if(archiveToDir) {
     const std::string &archiveDir = archiveFileOrDir;
     if(remoteFiles.empty()) {
@@ -521,14 +521,26 @@ void cta::Scheduler::queueArchiveRequest(
     std::list<RemotePathAndStatus> rfil;
     for (auto rf = remoteFiles.begin(); rf != remoteFiles.end(); rf++) {
       const auto rfStat = m_remoteNS.statFile(*rf);
-      rfil.push_back(RemotePathAndStatus(*rf, rfStat));
+      if(NULL == rfStat.get()) {
+        std::ostringstream msg;
+        msg << "Failed to fetch status of remote file " << *rf <<
+          " because the file does not exist";
+        throw exception::Exception(msg.str());
+      }
+      rfil.push_back(RemotePathAndStatus(*rf, *rfStat));
     }
 //    queueArchiveToDirRequest(requester, rfil, archiveDir);
-    throw cta::exception::Exception("Archive to Dir not supported in surrent prototype");
+    throw exception::Exception("Archive to Dir not supported in current prototype");
 
   // Else archive to a single file
   } else {
     const std::string &archiveFile = archiveFileOrDir;
+    if(archiveStat.get()) {
+      std::ostringstream msg;
+      msg << "Failed to archive to a single file because the destination file "
+        << archiveFile << " already exists in the archive namespace";
+    }
+
     if(1 != remoteFiles.size()) {
       std::ostringstream message;
       message << "Invalid archive to file request:"
@@ -537,8 +549,14 @@ void cta::Scheduler::queueArchiveRequest(
       throw exception::Exception(message.str());
     }
     const auto rfStat = m_remoteNS.statFile(remoteFiles.front());
+    if(NULL == rfStat.get()) {
+      std::ostringstream msg;
+      msg << "Failed to fetch status of remote file " << remoteFiles.front() <<
+        " because the file does not exist";
+      throw exception::Exception(msg.str());
+    }
     queueArchiveToFileRequest(requester, 
-      RemotePathAndStatus(remoteFiles.front(), rfStat), archiveFile);
+      RemotePathAndStatus(remoteFiles.front(), *rfStat), archiveFile);
   }
 }
 
@@ -606,13 +624,19 @@ std::list<cta::ArchiveToFileRequest> cta::Scheduler::
 }
 
 //------------------------------------------------------------------------------
-// createNSEntryAndUpdateSchedulerDatabase
+// queueArchiveToFileRequest
 //------------------------------------------------------------------------------
-void cta::Scheduler::createNSEntryAndUpdateSchedulerDatabase(
+void cta::Scheduler::queueArchiveToFileRequest(
   const SecurityIdentity &requester,
-  const ArchiveToFileRequest &rqst,
-  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> & requestCreation) {
+  const RemotePathAndStatus &remoteFile,
+  const std::string &archiveFile) {
 
+  const uint64_t priority = 0; // TO BE DONE
+  const ArchiveToFileRequest rqst = createArchiveToFileRequest(requester,
+    remoteFile, archiveFile, priority);
+
+  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> 
+    requestCreation (m_db.queue(rqst));
   try {
     m_ns.createFile(requester, rqst.archiveFile, 0666);
   } catch(std::exception &nsEx) {
@@ -629,24 +653,6 @@ void cta::Scheduler::createNSEntryAndUpdateSchedulerDatabase(
     throw nsEx;
   }
   requestCreation->complete();
-  //m_db.fileEntryCreatedInNS(requester, rqst.archiveFile);
-}
-
-//------------------------------------------------------------------------------
-// queueArchiveToFileRequest
-//------------------------------------------------------------------------------
-void cta::Scheduler::queueArchiveToFileRequest(
-  const SecurityIdentity &requester,
-  const RemotePathAndStatus &remoteFile,
-  const std::string &archiveFile) {
-
-  const uint64_t priority = 0; // TO BE DONE
-  const ArchiveToFileRequest rqst = createArchiveToFileRequest(requester,
-    remoteFile, archiveFile, priority);
-
-  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> 
-    requestCreation (m_db.queue(rqst));
-  createNSEntryAndUpdateSchedulerDatabase(requester, rqst, requestCreation);
 }
 
 //------------------------------------------------------------------------------
@@ -696,40 +702,25 @@ void cta::Scheduler::queueRetrieveRequest(
   const std::list<std::string> &archiveFiles,
   const std::string &remoteFileOrDir) {
 
-  RemoteFileStatus remoteStat = m_remoteNS.statFile(remoteFileOrDir);
-  const bool retrieveToDir = S_ISDIR(remoteStat.mode);
+  const auto remoteStat = m_remoteNS.statFile(remoteFileOrDir);
+  const bool retrieveToDir = remoteStat.get() && S_ISDIR(remoteStat->mode);
   if(retrieveToDir) {
+    const std::string &remoteDir = remoteFileOrDir;
+    std::ostringstream msg;
+    msg << "Failed to queue request to retrieve to the " << remoteDir <<
+      " directory because this functionality is not impelemented";
+    throw exception::Exception(msg.str());
   // Else retrieve to a single file
   } else {
-  }
-/*
-  const bool retreiveToDir = m_ns.dirExists(requester, archiveFileOrDir);
-  if(archiveToDir) {
-    const std::string &archiveDir = archiveFileOrDir;
-    if(remoteFiles.empty()) {
-      std::ostringstream message;
-      message << "Invalid archive to directory request:"
-        " The must be at least one remote file:"
-        " archiveDir=" << archiveDir;
-      throw exception::Exception(message.str());
+    const std::string &remoteFile = remoteFileOrDir;
+
+    if(remoteStat.get()) {
+      std::ostringstream msg;
+      msg << "Failed to queue request to retrieve to the single file " <<
+        remoteFile << " because the remote file already exists";
+      throw exception::Exception(msg.str());
     }
-
-    queueArchiveToDirRequest(requester, remoteFiles, archiveDir);
-
-  // Else archive to a single file
-  } else {
-    const std::string &archiveFile = archiveFileOrDir;
-    if(1 != remoteFiles.size()) {
-      std::ostringstream message;
-      message << "Invalid archive to file request:"
-        " The must be one and only one remote file:"
-        " actual=" << remoteFiles.size() << " archiveFile=" << archiveFile;
-      throw exception::Exception(message.str());
-    }
-
-    queueArchiveToFileRequest(requester, remoteFiles.front(), archiveFile);
   }
-*/
 }
 
 //------------------------------------------------------------------------------

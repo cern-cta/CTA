@@ -34,6 +34,7 @@
 #include "nameserver/CastorNameServer.hpp"
 
 #include <shift/Cns_api.h>
+#include <shift/serrno.h>
 
 //------------------------------------------------------------------------------
 // updateStorageClass
@@ -68,11 +69,11 @@ void cta::CastorNameServer::createStorageClass(
 void cta::CastorNameServer::createStorageClass(
   const SecurityIdentity &requester, const std::string &name,
   const uint16_t nbCopies, const uint32_t id) {
-  if(99999 < id) {
+  if(9999 < id) {
     std::ostringstream msg;
     msg << "Failed to create storage class " << name << " with numeric"
     " identifier " << id << " because the identifier is greater than the"
-    " maximum permitted value of 99999";
+    " maximum permitted value of 9999";
     throw exception::Exception(msg.str());
   }
 
@@ -211,11 +212,21 @@ void cta::CastorNameServer::deleteDir(const SecurityIdentity &requester, const s
 //------------------------------------------------------------------------------
 // statFile
 //------------------------------------------------------------------------------
-cta::ArchiveFileStatus cta::CastorNameServer::statFile(
+std::unique_ptr<cta::ArchiveFileStatus> cta::CastorNameServer::statFile(
   const SecurityIdentity &requester, const std::string &path) const {
   Utils::assertAbsolutePathSyntax(path);
   struct Cns_filestatcs statbuf;  
-  exception::Errnum::throwOnMinusOne(Cns_statcs(path.c_str(), &statbuf), __FUNCTION__);
+  if(Cns_statcs(path.c_str(), &statbuf)) {
+    const int savedSerrno = serrno;
+    if(ENOENT == serrno) {
+      return std::unique_ptr<ArchiveFileStatus>();
+    }
+
+    std::ostringstream msg;
+    msg << "Failed to stat file " << path << ": " <<
+      Utils::errnoToString(savedSerrno);
+    throw exception::Exception(msg.str());
+  }
   const UserIdentity owner(statbuf.uid, statbuf.gid);
   const mode_t mode(statbuf.filemode);
   const uint64_t size(statbuf.filesize);
@@ -223,7 +234,8 @@ cta::ArchiveFileStatus cta::CastorNameServer::statFile(
   struct Cns_fileclass cns_fileclass;
   exception::Errnum::throwOnMinusOne(Cns_queryclass(const_cast<char *>(m_server.c_str()), statbuf.fileclass, NULL, &cns_fileclass), __FUNCTION__);
   const std::string storageClassName(cns_fileclass.name);
-  return cta::ArchiveFileStatus(owner, mode, size, checksum, storageClassName);
+  return std::unique_ptr<ArchiveFileStatus>(
+    new ArchiveFileStatus(owner, mode, size, checksum, storageClassName));
 }
 
 //------------------------------------------------------------------------------

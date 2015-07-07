@@ -51,12 +51,13 @@ public:
 
   /**
    * Returns the status of the specified file or directory within the remote
-   * storage system.
+   * storage system or NULL if the fil eor directory does not exist.
    *
    * @param path The absolute path of the file or directory.
-   * @return The status of the file or directory.
+   * @return The status of the file or directory or NULL if the file or
+   * directory does not exist.
    */
-  RemoteFileStatus statFile(const RemotePath &path) const;
+  std::unique_ptr<RemoteFileStatus> statFile(const RemotePath &path) const;
 
   /**
    * Renames the specified remote file to the specified new name.

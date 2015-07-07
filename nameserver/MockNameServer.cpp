@@ -37,9 +37,9 @@
 // assertFsDirExists
 //------------------------------------------------------------------------------
 void cta::MockNameServer::assertFsDirExists(const std::string &path) const {
-  struct stat stat_result;
+  struct stat statResult;
 
-  if(::stat(path.c_str(), &stat_result)) {
+  if(::stat(path.c_str(), &statResult)) {
     const int savedErrno = errno;
     std::ostringstream msg;
     msg << __FUNCTION__ << " - " << path << " stat error. Reason: " <<
@@ -47,7 +47,7 @@ void cta::MockNameServer::assertFsDirExists(const std::string &path) const {
     throw(exception::Exception(msg.str()));
   }
 
-  if(!S_ISDIR(stat_result.st_mode)) {
+  if(!S_ISDIR(statResult.st_mode)) {
     std::ostringstream msg;
     msg << "assertFsDirExists() - " << path << " is not a directory";
     throw(exception::Exception(msg.str()));
@@ -59,9 +59,9 @@ void cta::MockNameServer::assertFsDirExists(const std::string &path) const {
 //------------------------------------------------------------------------------
 void cta::MockNameServer::assertFsPathDoesNotExist(const std::string &path)
   const {
-  struct stat stat_result;
+  struct stat statResult;
 
-  if(::stat(path.c_str(), &stat_result) == 0) {
+  if(::stat(path.c_str(), &statResult) == 0) {
     std::ostringstream msg;
     msg << "assertFsPathExist() - " << path << " exists.";
     throw(exception::Exception(msg.str()));
@@ -82,11 +82,11 @@ void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
   const std::string &name, const uint16_t nbCopies, const uint32_t id) {
-  if(99999 < id) {
+  if(9999 < id) {
     std::ostringstream msg;
     msg << "Failed to create storage class " << name << " with numeric"
     " identifier " << id << " because the identifier is greater than the"
-    " maximum permitted value of 99999";
+    " maximum permitted value of 9999";
     throw exception::Exception(msg.str());
   }
 
@@ -391,11 +391,30 @@ void cta::MockNameServer::deleteDir(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 // statFile
 //------------------------------------------------------------------------------
-cta::ArchiveFileStatus cta::MockNameServer::statFile(
+std::unique_ptr<cta::ArchiveFileStatus> cta::MockNameServer::statFile(
   const SecurityIdentity &requester,
   const std::string &path) const {
+  Utils::assertAbsolutePathSyntax(path);
+  const std::string name = Utils::getEnclosedName(path);
+  const std::string enclosingPath = Utils::getEnclosingPath(path);
+  const std::string fsPath = m_fsDir + path;
 
-  return getArchiveDirEntry(requester, path).status;
+  struct stat statResult;
+  if(::stat(fsPath.c_str(), &statResult)) {
+    const int savedErrno = errno;
+    if(ENOENT == savedErrno) {
+      return std::unique_ptr<cta::ArchiveFileStatus>();
+    }
+
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - " << fsPath << " stat error. Reason: " <<
+      Utils::errnoToString(savedErrno);
+    throw(exception::Exception(msg.str()));
+  }
+
+  ArchiveDirEntry entry = getArchiveDirEntry(requester, path, statResult);
+  return std::unique_ptr<ArchiveFileStatus>(
+    new ArchiveFileStatus(entry.status));
 }
 
 //------------------------------------------------------------------------------
@@ -439,12 +458,10 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   const SecurityIdentity &requester,
   const std::string &path) const {
   Utils::assertAbsolutePathSyntax(path);
-  const std::string name = Utils::getEnclosedName(path);
-  const std::string enclosingPath = Utils::getEnclosingPath(path);
   const std::string fsPath = m_fsDir + path;
 
-  struct stat stat_result;
-  if(::stat(fsPath.c_str(), &stat_result)) {
+  struct stat statResult;
+  if(::stat(fsPath.c_str(), &statResult)) {
     const int savedErrno = errno;
     std::ostringstream msg;
     msg << __FUNCTION__ << " - " << fsPath << " stat error. Reason: " <<
@@ -452,28 +469,39 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
     throw(exception::Exception(msg.str()));
   }
 
+  return getArchiveDirEntry(requester, path, statResult);
+}
+
+//------------------------------------------------------------------------------
+// getArchiveDirEntry
+//------------------------------------------------------------------------------
+cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
+  const SecurityIdentity &requester,
+  const std::string &path,
+  const struct stat statResult) const {
+  Utils::assertAbsolutePathSyntax(path);
+  const std::string enclosingPath = Utils::getEnclosingPath(path);
+  const std::string name = Utils::getEnclosedName(path);
   ArchiveDirEntry::EntryType entryType;
   std::string storageClassName;
   
-  if(S_ISDIR(stat_result.st_mode)) {
+  if(S_ISDIR(statResult.st_mode)) {
     entryType = ArchiveDirEntry::ENTRYTYPE_DIRECTORY;
     storageClassName = getDirStorageClass(requester, path);
-  }
-  else if(S_ISREG(stat_result.st_mode)) {
+  } else if(S_ISREG(statResult.st_mode)) {
     entryType = ArchiveDirEntry::ENTRYTYPE_FILE;
     storageClassName = getDirStorageClass(requester, enclosingPath);
-  }
-  else {
+  } else {
     std::ostringstream msg;
     msg << "statFile() - " << m_fsDir+path <<
-      " is not a directory nor a regular file";
+      " is neither a directory nor a regular file";
     throw(exception::Exception(msg.str()));
   } 
 
   const UserIdentity owner = getOwner(requester, path);
   const Checksum checksum;
   const uint64_t size = 1234;
-  ArchiveFileStatus status(owner, stat_result.st_mode, size, checksum,
+  ArchiveFileStatus status(owner, statResult.st_mode, size, checksum,
     storageClassName);
 
   return ArchiveDirEntry(entryType, name, status);
@@ -535,7 +563,7 @@ void cta::MockNameServer::assertStorageClassIdDoesNotExist(const uint32_t id)
 // getNextStorageClassId
 //------------------------------------------------------------------------------
 uint32_t cta::MockNameServer::getNextStorageClassId() const {
-  for(uint32_t id = 1; id <= 99999; id++) {
+  for(uint32_t id = 1; id <= 9999; id++) {
     try {
       assertStorageClassIdDoesNotExist(id);
       return id;
