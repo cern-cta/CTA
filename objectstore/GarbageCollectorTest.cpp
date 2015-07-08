@@ -304,9 +304,9 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
     cta::objectstore::ArchiveToFileRequest atfr(atfrAddr, be);
     atfr.initialize();
     atfr.setArchiveFile("cta:/file");
-    atfr.setRemoteFile("eos:/file");
+    atfr.setRemoteFile(cta::RemotePathAndStatus(cta::RemotePath("eos:/file"), 
+      cta::RemoteFileStatus(cta::UserIdentity(123,456), 0744, 1000+pass)));
     atfr.setPriority(0);
-    atfr.setSize(1000+pass);
     cta::objectstore::CreationLog log(cta::objectstore::UserIdentity(123,456),
         "unitTestHost", time(NULL), "ArchiveJobForGarbageCollection");
     atfr.setCreationLog(log);

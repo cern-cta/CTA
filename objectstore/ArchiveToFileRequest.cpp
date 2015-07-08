@@ -20,6 +20,7 @@
 #include "GenericObject.hpp"
 #include "CreationLog.hpp"
 #include "TapePool.hpp"
+#include "UserIdentity.hpp"
 
 cta::objectstore::ArchiveToFileRequest::ArchiveToFileRequest(
   const std::string& address, Backend& os): 
@@ -70,14 +71,24 @@ std::string cta::objectstore::ArchiveToFileRequest::getArchiveFile() {
 
 
 void cta::objectstore::ArchiveToFileRequest::setRemoteFile(
-  const std::string& remoteFile) {
+  const RemotePathAndStatus& remoteFile) {
   checkPayloadWritable();
-  m_payload.set_remotefile(remoteFile);
+  m_payload.mutable_remotefile()->set_mode(remoteFile.status.mode);
+  m_payload.mutable_remotefile()->set_size(remoteFile.status.size);
+  m_payload.mutable_remotefile()->set_path(remoteFile.path.getRaw());
+  cta::objectstore::UserIdentity ui(remoteFile.status.owner.uid, remoteFile.status.owner.gid);
+  ui.serialize(*m_payload.mutable_remotefile()->mutable_owner());
 }
 
-std::string cta::objectstore::ArchiveToFileRequest::getRemoteFile() {
+cta::RemotePathAndStatus cta::objectstore::ArchiveToFileRequest::getRemoteFile() {
   checkPayloadReadable();
-  return m_payload.remotefile();
+  RemotePath retPath(m_payload.remotefile().path());
+  cta::objectstore::UserIdentity ui;
+  ui.deserialize(m_payload.remotefile().owner());
+  RemoteFileStatus retStatus(ui,
+      m_payload.remotefile().mode(),
+      m_payload.remotefile().size());
+  return cta::RemotePathAndStatus(retPath, retStatus);
 }
 
 
@@ -85,6 +96,12 @@ void cta::objectstore::ArchiveToFileRequest::setPriority(uint64_t priority) {
   checkPayloadWritable();
   m_payload.set_priority(priority);
 }
+
+uint64_t cta::objectstore::ArchiveToFileRequest::getPriority() {
+  checkPayloadReadable();
+  return m_payload.priority();
+}
+
 
 void cta::objectstore::ArchiveToFileRequest::setCreationLog(
   const objectstore::CreationLog& creationLog) {
@@ -118,16 +135,6 @@ auto cta::objectstore::ArchiveToFileRequest::dumpJobs() -> std::list<JobDump> {
   return ret;
 }
 
-uint64_t cta::objectstore::ArchiveToFileRequest::getSize() {
-  checkPayloadReadable();
-  return m_payload.size();
-}
-
-void cta::objectstore::ArchiveToFileRequest::setSize(uint64_t size) {
-  checkPayloadWritable();
-  m_payload.set_size(size);
-}
-
 void cta::objectstore::ArchiveToFileRequest::garbageCollect(const std::string &presumedOwner) {
   checkPayloadWritable();
   // The behavior here depends on which job the agent is supposed to own.
@@ -135,7 +142,7 @@ void cta::objectstore::ArchiveToFileRequest::garbageCollect(const std::string &p
   // of a selected job. The Request could also still being connected to tape
   // pools. In this case we will finish the connection to tape pools unconditionally.
   auto * jl = m_payload.mutable_jobs();
-  auto s= m_payload.size();
+  auto s= m_payload.remotefile().size();
   s=s;
   for (auto j=jl->begin(); j!=jl->end(); j++) {
     auto owner=j->owner();
@@ -157,7 +164,7 @@ void cta::objectstore::ArchiveToFileRequest::garbageCollect(const std::string &p
         jd.tapePool = j->tapepool();
         jd.tapePoolAddress = j->tapepooladdress();
         if (tp.addJobIfNecessary(jd, getAddressIfSet(), 
-          m_payload.archivefile(), m_payload.size()))
+          m_payload.archivefile(), m_payload.remotefile().size()))
           tp.commit();
         j->set_status(serializers::AJS_PendingMount);
         commit();
@@ -181,7 +188,7 @@ void cta::objectstore::ArchiveToFileRequest::garbageCollect(const std::string &p
         jd.tapePool = j->tapepool();
         jd.tapePoolAddress = j->tapepooladdress();
         if (tp.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
-          m_payload.archivefile(), m_payload.size()))
+          m_payload.archivefile(), m_payload.remotefile().size()))
           tp.commit();
         j->set_status(serializers::AJS_PendingMount);
         commit();
@@ -205,7 +212,7 @@ void cta::objectstore::ArchiveToFileRequest::garbageCollect(const std::string &p
         jd.tapePool = j->tapepool();
         jd.tapePoolAddress = j->tapepooladdress();
         if (tp.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
-          m_payload.archivefile(), m_payload.size()))
+          m_payload.archivefile(), m_payload.remotefile().size()))
           tp.commit();
         j->set_status(serializers::AJS_PendingMount);
         commit();

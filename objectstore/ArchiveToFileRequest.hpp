@@ -20,6 +20,7 @@
 
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
+#include "common/RemotePathAndStatus.hpp"
 #include <list>
 
 namespace cta { namespace objectstore {
@@ -60,14 +61,13 @@ public:
   // ===========================================================================
   void setArchiveFile(const std::string & archiveFile);
   std::string getArchiveFile();
-  void setRemoteFile (const std::string & remoteFile);
-  std::string getRemoteFile();
+  void setRemoteFile (const RemotePathAndStatus & remoteFile);
+  cta::RemotePathAndStatus getRemoteFile();
   void setPriority (uint64_t priority);
+  uint64_t getPriority();
   void setCreationLog (const objectstore::CreationLog& creationLog);
   CreationLog getCreationLog();
   void setArchiveToDirRequestAddress(const std::string & dirRequestAddress);
-  void setSize(uint64_t size);
-  uint64_t getSize();
   class JobDump {
   public:
     uint16_t copyNb;

@@ -157,8 +157,6 @@ public:
 
   virtual void fileEntryDeletedFromNS(const SecurityIdentity &requester, const std::string &archiveFile);
 
-  virtual void fileEntryCreatedInNS(const SecurityIdentity &requester, const std::string &archiveFile);
-
   virtual std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > getArchiveRequests() const;
 
   virtual std::list<ArchiveToTapeCopyRequest> getArchiveRequests(const std::string& tapePoolName) const;

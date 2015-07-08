@@ -36,8 +36,8 @@ TEST(ObjectStore, ArchiveToFileRequestBasicAccess) {
     cta::objectstore::ArchiveToFileRequest atfr(tapeAddress, be);
     atfr.initialize();
     atfr.setArchiveFile("cta://dir/file");
-    atfr.setRemoteFile("eos://dir2/file2");
-    atfr.setSize(12345678);
+    atfr.setRemoteFile(cta::RemotePathAndStatus(cta::RemotePath("eos://dir2/file2"), 
+      cta::RemoteFileStatus(cta::UserIdentity(123,456), 0744, 12345678)));
     atfr.setCreationLog(cta::CreationLog(cta::UserIdentity(123,456),"testHost", 
       now=time(NULL), "Comment"));
     atfr.setPriority(12);
@@ -49,8 +49,8 @@ TEST(ObjectStore, ArchiveToFileRequestBasicAccess) {
     cta::objectstore::ScopedSharedLock atfrl(atfr);
     atfr.fetch();
     ASSERT_EQ("cta://dir/file", atfr.getArchiveFile());
-    ASSERT_EQ("eos://dir2/file2", atfr.getRemoteFile());
-    ASSERT_EQ(12345678, atfr.getSize());
+    ASSERT_EQ("eos://dir2/file2", atfr.getRemoteFile().path.getRaw());
+    ASSERT_EQ(12345678, atfr.getRemoteFile().status.size);
     cta::objectstore::CreationLog log(atfr.getCreationLog());
     ASSERT_EQ(123, log.user.uid);
     ASSERT_EQ(456, log.user.gid);

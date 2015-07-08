@@ -37,6 +37,9 @@ public:
   CreationLog (const cta::UserIdentity& user, const std::string & hn, uint64_t t,
     const std::string & c): cta::CreationLog(
       cta::UserIdentity(user),hn ,t, c) {}
+  operator cta::CreationLog() {
+    return cta::CreationLog(user, host, time, comment);
+  } 
   void serialize (cta::objectstore::serializers::CreationLog & log) const {
     log.mutable_user()->set_uid(user.uid);
     log.mutable_user()->set_gid(user.gid);

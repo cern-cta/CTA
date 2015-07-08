@@ -216,6 +216,13 @@ enum ArchiveJobStatus {
   AJS_Failed = 999;
 }
 
+message FilePathAndStatus {
+  required string path = 4450;
+  required uint64 mode = 4451;
+  required uint64 size = 4452;
+  required UserIdentity owner = 4453;
+}
+
 message ArchiveJobEntry {
   required uint32 copynb = 4400;
   required string tapepool = 4401;
@@ -227,13 +234,12 @@ message ArchiveJobEntry {
 }
 
 message ArchiveToFileRequest {
-  required string remotefile = 4500;
+  required FilePathAndStatus remotefile = 4500;
   required string archivefile = 4501;
-  required uint64 size = 4502;
-  repeated ArchiveJobEntry jobs = 4503;
-  required uint64 priority = 4504;
-  required CreationLog log = 4505;
-  optional string archivetodiraddress = 4506;
+  repeated ArchiveJobEntry jobs = 4502;
+  required uint64 priority = 4503;
+  required CreationLog log = 4504;
+  optional string archivetodiraddress = 4505;
 }
 
 message ArchiveToDirRequest {

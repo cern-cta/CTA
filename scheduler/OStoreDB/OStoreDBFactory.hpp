@@ -146,10 +146,6 @@ public:
     m_OStoreDB.deleteTapePool(requester, name);
   }
 
-  virtual void fileEntryCreatedInNS(const SecurityIdentity& requester, const std::string& archiveFile) {
-    m_OStoreDB.fileEntryCreatedInNS(requester, archiveFile);
-  }
-
   virtual void fileEntryDeletedFromNS(const SecurityIdentity& requester, const std::string &archiveFile) {
     m_OStoreDB.fileEntryDeletedFromNS(requester, archiveFile);
   }
@@ -173,7 +169,7 @@ public:
   }
 
   virtual std::list<ArchiveToTapeCopyRequest> getArchiveRequests(const std::string& tapePoolName) const {
-    return getArchiveRequests(tapePoolName);
+    return m_OStoreDB.getArchiveRequests(tapePoolName);
   }
 
   virtual std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > getArchiveRequests() const {

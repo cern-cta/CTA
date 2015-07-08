@@ -38,6 +38,7 @@
 #include "RetrieveToFileRequest.hpp"
 #include "TapeCopyLocation.hpp"
 #include "RetrieveToDirRequest.hpp"
+#include "ArchiveToTapeCopyRequest.hpp"
 #include <algorithm>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
@@ -251,11 +252,6 @@ void OStoreDB::deleteArchivalRoute(const SecurityIdentity& requester,
   re.commit();
 }
 
-void OStoreDB::fileEntryCreatedInNS(const SecurityIdentity& requester,
-  const std::string &archiveFile) {
-  throw exception::Exception("Not Implemented");
-}
-
 void OStoreDB::ArchiveToFileRequestCreation::complete() {
   // We inherited all the objects from the creation.
   // Lock is still here at that point.
@@ -279,7 +275,8 @@ void OStoreDB::ArchiveToFileRequestCreation::complete() {
       if (tp.getOwner() != re.getAddressIfSet())
         throw NoSuchTapePool("In OStoreDB::queue: non-existing tape pool found "
             "(dangling pointer): cancelling request creation.");
-      tp.addJob(*j, m_request.getAddressIfSet(), m_request.getArchiveFile(), m_request.getSize());
+      tp.addJob(*j, m_request.getAddressIfSet(), m_request.getArchiveFile(), 
+        m_request.getRemoteFile().status.size);
       tp.commit();
       linkedTapePools.push_back(j->tapePoolAddress);
     }
@@ -550,8 +547,7 @@ std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
   atfr.setAddress(m_agent->nextId("ArchiveToFileRequest"));
   atfr.initialize();
   atfr.setArchiveFile(rqst.archiveFile);
-  atfr.setRemoteFile(rqst.remoteFile.path.getRaw());
-  atfr.setSize(rqst.remoteFile.status.size);
+  atfr.setRemoteFile(rqst.remoteFile);
   atfr.setPriority(rqst.priority);
   atfr.setCreationLog(rqst.creationLog);
   // We will need to identity tapepools is order to construct the request
@@ -613,12 +609,92 @@ void OStoreDB::markArchiveRequestForDeletion(const SecurityIdentity& requester,
 
 std::map<cta::TapePool, std::list<ArchiveToTapeCopyRequest> >
   OStoreDB::getArchiveRequests() const {
-  throw exception::Exception("Not Implemented");
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  std::map<cta::TapePool, std::list<ArchiveToTapeCopyRequest> > ret;
+  auto tpl = re.dumpTapePools();
+  rel.release();
+  for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
+    cta::TapePool tp(tpp->tapePool, tpp->nbPartialTapes, tpp->log);
+    objectstore::TapePool ostp(tpp->address, m_objectStore);
+    ScopedSharedLock ostpl(ostp);
+    ostp.fetch();
+    auto arl = ostp.dumpJobs();
+    ostpl.release();
+    for (auto ar=arl.begin(); ar!=arl.end(); ar++) {
+      objectstore::ArchiveToFileRequest osar(ar->address, m_objectStore);
+      ScopedSharedLock osarl(osar);
+      osar.fetch();
+      // Find which copy number is for this tape pool.
+      // skip the request if not found
+      auto jl = osar.dumpJobs();
+      uint16_t copynb;
+      bool copyndFound=false;
+      for (auto j=jl.begin(); j!=jl.end(); j++) {
+        if (j->tapePool == tpp->tapePool) {
+          copynb = j->copyNb;
+          copyndFound = true;
+          break;
+        }
+      }
+      if (!copyndFound) continue;
+      ret[tp].push_back(cta::ArchiveToTapeCopyRequest(
+        osar.getRemoteFile(),
+        osar.getArchiveFile(),
+        copynb,
+        tpp->tapePool,
+        osar.getPriority(),
+        osar.getCreationLog()));
+    }
+  }
+  return ret;
 }
 
 std::list<ArchiveToTapeCopyRequest>
   OStoreDB::getArchiveRequests(const std::string& tapePoolName) const {
-  throw exception::Exception("Not Implemented");
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  auto tpl = re.dumpTapePools();
+  rel.release();
+  for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
+    if (tpp->tapePool != tapePoolName) continue;
+    std::list<ArchiveToTapeCopyRequest> ret;
+    cta::TapePool tp(tpp->tapePool, tpp->nbPartialTapes, tpp->log);
+    objectstore::TapePool ostp(tpp->address, m_objectStore);
+    ScopedSharedLock ostpl(ostp);
+    ostp.fetch();
+    auto arl = ostp.dumpJobs();
+    ostpl.release();
+    for (auto ar=arl.begin(); ar!=arl.end(); ar++) {
+      objectstore::ArchiveToFileRequest osar(ar->address, m_objectStore);
+      ScopedSharedLock osarl(osar);
+      osar.fetch();
+      // Find which copy number is for this tape pool.
+      // skip the request if not found
+      auto jl = osar.dumpJobs();
+      uint16_t copynb;
+      bool copyndFound=false;
+      for (auto j=jl.begin(); j!=jl.end(); j++) {
+        if (j->tapePool == tpp->tapePool) {
+          copynb = j->copyNb;
+          copyndFound = true;
+          break;
+        }
+      }
+      if (!copyndFound) continue;
+      ret.push_back(cta::ArchiveToTapeCopyRequest(
+        osar.getRemoteFile(),
+        osar.getArchiveFile(),
+        copynb,
+        tpp->tapePool,
+        osar.getPriority(),
+        osar.getCreationLog()));
+    }
+    return ret;
+  }
+  throw NoSuchTapePool("In OStoreDB::getArchiveRequests: tape pool not found");
 }
 
 void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {

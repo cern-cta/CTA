@@ -1550,7 +1550,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
 
   {
     decltype(scheduler.getArchiveRequests(s_userOnUserHost)) rqsts;
-    ASSERT_NO_THROW(rqsts = scheduler.getArchiveRequests(s_userOnUserHost));
+    /*ASSERT_NO_THROW*/(rqsts = scheduler.getArchiveRequests(s_userOnUserHost));
     ASSERT_EQ(1, rqsts.size());
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());
