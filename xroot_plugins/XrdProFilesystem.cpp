@@ -26,6 +26,7 @@
 #include "scheduler/ArchivalRoute.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
+#include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "scheduler/MockSchedulerDatabase.hpp"
 #include "scheduler/RetrieveFromTapeCopyRequest.hpp"
 #include "scheduler/StorageClass.hpp"
@@ -37,6 +38,8 @@
 #include "XrdOuc/XrdOucString.hh"
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdVersion.hh"
+#include "objectstore/BackendVFS.hpp"
+#include "objectstore/RootEntry.hpp"
 
 #include <memory>
 #include <iostream>
@@ -46,13 +49,61 @@
 
 XrdVERSIONINFO(XrdSfsGetFileSystem,XrdPro)
 
+cta::objectstore::BackendVFS g_backend;
+
+class BackendPopulator {
+public:
+    BackendPopulator(cta::objectstore::Backend & be): m_backend(be),
+      m_agent(m_backend) {
+    // We need to populate the root entry before using.
+    cta::objectstore::RootEntry re(m_backend);
+    re.initialize();
+    re.insert();
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    m_agent.generateName("OStoreDBFactory");
+    m_agent.initialize();
+    cta::objectstore::CreationLog cl(cta::UserIdentity(1111, 1111), "systemhost", 
+      time(NULL), "Initial creation of the  object store structures");
+    re.addOrGetAgentRegisterPointerAndCommit(m_agent,cl);
+    rel.release();
+    m_agent.insertAndRegisterSelf();
+    rel.lock(re);
+    re.addOrGetDriveRegisterPointerAndCommit(m_agent, cl);
+    rel.release();
+  }
+  
+  virtual ~BackendPopulator() throw() {
+    cta::objectstore::ScopedExclusiveLock agl(m_agent);
+    m_agent.fetch();
+    m_agent.removeAndUnregisterSelf();
+  }
+  
+  cta::objectstore::Agent & getAgent() { return m_agent;  }
+private:
+  cta::objectstore::Backend & m_backend;
+  cta::objectstore::Agent m_agent;
+} g_backendPopulator(g_backend);
+
+class OStoreDBWithAgent: public cta::OStoreDB {
+public:
+  OStoreDBWithAgent(cta::objectstore::Backend & be, cta::objectstore::Agent & ag):
+  cta::OStoreDB(be) {
+    cta::OStoreDB::setAgent(ag);
+  }
+  virtual ~OStoreDBWithAgent() throw () {
+    cta::OStoreDB::setAgent(*((cta::objectstore::Agent *)NULL));
+  }
+
+} g_OStoreDB(g_backend, g_backendPopulator.getAgent());
+
 extern "C"
 {
   XrdSfsFileSystem *XrdSfsGetFileSystem (XrdSfsFileSystem* native_fs, XrdSysLogger* lp, const char* configfn)
   {
     return new XrdProFilesystem(
       new cta::CastorNameServer(),
-      new cta::MockSchedulerDatabase(),
+      & g_OStoreDB,
       new cta::MockRemoteNS());
   }
 }
@@ -265,6 +316,5 @@ XrdProFilesystem::XrdProFilesystem(
 XrdProFilesystem::~XrdProFilesystem() {
   delete m_scheduler;
   delete m_ns;
-  delete m_scheddb;
   delete m_remoteStorage;
 }

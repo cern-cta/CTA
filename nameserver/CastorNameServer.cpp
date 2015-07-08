@@ -132,10 +132,13 @@ void cta::CastorNameServer::clearDirStorageClass(
   char no_class[]="NO_CLASS";
   struct Cns_fileclass fc;
   bzero(&fc, sizeof(struct Cns_fileclass));
-  strncpy(fc.name, no_class, CA_MAXCLASNAMELEN);
-  fc.nbcopies = 0;
-  fc.classid = time(NULL)%10000; //should be 5 digits allowed but it actually works only if you provide 4 digits... go figure!
-  Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc); //we don't care if this fails: the class might already exist
+  if(Cns_queryclass(const_cast<char *>(m_server.c_str()), 0, no_class, &fc)) {
+    bzero(&fc, sizeof(struct Cns_fileclass));
+    strncpy(fc.name, no_class, CA_MAXCLASNAMELEN);
+    fc.nbcopies = 0;
+    fc.classid = 1;
+    exception::Errnum::throwOnMinusOne(Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc), std::string(__FUNCTION__) + " - Cns_enterclass");
+  }
   cta::exception::Errnum::throwOnMinusOne(Cns_chclass(path.c_str(), 0, no_class), __FUNCTION__);
 }  
 

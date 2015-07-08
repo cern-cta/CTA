@@ -11,7 +11,7 @@ set (CTAProtoFiles
 
 PROTOBUF_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
 
-add_library (CTAObjectStore SHARED
+add_library (CTAObjectStore
   ${CTAProtoSources}
   RootEntry.cpp
   Agent.cpp
@@ -39,4 +39,4 @@ set(ObjectStoreUnitTests
 
 add_library(ctaobjectstoreunittests SHARED ${ObjectStoreUnitTests})
 target_link_libraries(ctaobjectstoreunittests
-  protobuf rados ctacommon gtest gmock)
+  protobuf rados ctacommon gtest gmock CTAObjectStore)
