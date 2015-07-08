@@ -850,8 +850,8 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::Se
 void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " sc/storageclass add/ch/rm/ls:" << std::endl;
-  help << "\tadd --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">" << std::endl;
-  help << "\tch  --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">" << std::endl;
+  help << "\tadd --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --id/-i <unique_class_id> --comment/-m <\"comment\">" << std::endl;
+  help << "\tch  --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --id/-i <unique_class_id> --comment/-m <\"comment\">" << std::endl;
   help << "\trm  --name/-n <storage_class_name>" << std::endl;
   help << "\tls" << std::endl;
   if(tokens.size()<3){
@@ -862,27 +862,35 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
     std::string name = getOptionValue(tokens, "-n", "--name");
     std::string comment = getOptionValue(tokens, "-m", "--comment");
     std::string copynb_s = getOptionValue(tokens, "-c", "--copynb");
-    if(name.empty()||comment.empty()||copynb_s.empty()) {
+    std::string id_s = getOptionValue(tokens, "-i", "--id");
+    if(name.empty()||comment.empty()||copynb_s.empty()||id_s.empty()) {
       m_data = help.str();
       return;
     }
     std::istringstream copynb_ss(copynb_s);
     int copynb = 0;
     copynb_ss >> copynb;
-    m_scheduler->createStorageClass(requester, name, copynb, comment);
+    std::istringstream id_ss(id_s);
+    int id = 0;
+    id_ss >> id;
+    m_scheduler->createStorageClass(requester, name, copynb, id, comment);
   }
   else if("ch" == tokens[2]) {
     std::string name = getOptionValue(tokens, "-n", "--name");
     std::string comment = getOptionValue(tokens, "-m", "--comment");
     std::string copynb_s = getOptionValue(tokens, "-c", "--copynb");
-    if(name.empty()||comment.empty()||copynb_s.empty()) {
+    std::string id_s = getOptionValue(tokens, "-i", "--id");
+    if(name.empty()||comment.empty()||copynb_s.empty()||id_s.empty()) {
       m_data = help.str();
       return;
     }
     std::istringstream copynb_ss(copynb_s);
     int copynb = 0;
     copynb_ss >> copynb;
-//    m_scheduler->modifyStorageClass(requester, name, copynb, comment);
+    std::istringstream id_ss(id_s);
+    int id = 0;
+    id_ss >> id;
+//    m_scheduler->modifyStorageClass(requester, name, copynb, id, comment);
   }
   else if("rm" == tokens[2]) {
     std::string name = getOptionValue(tokens, "-n", "--name");

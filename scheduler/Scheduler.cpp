@@ -234,11 +234,11 @@ void cta::Scheduler::createStorageClass(
   const uint32_t id,
   const std::string &comment) {
   m_db.assertIsAdminOnAdminHost(requester);
-  if(99999 < id) {
+  if(9999 < id) {
     std::ostringstream msg;
     msg << "Failed to create storage class " << name << " with numeric"
     " identifier " << id << " because the identifier is greater than the"
-    " maximum permitted value of 99999";
+    " maximum permitted value of 9999";
     throw exception::Exception(msg.str());
   }
   m_db.createStorageClass(name, nbCopies, CreationLog(requester.getUser(), 
