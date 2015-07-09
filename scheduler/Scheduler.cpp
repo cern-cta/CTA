@@ -219,6 +219,13 @@ void cta::Scheduler::createStorageClass(
   const uint16_t nbCopies,
   const std::string &comment) {
   m_db.assertIsAdminOnAdminHost(requester);
+  if(0 == nbCopies) {
+    std::ostringstream msg;
+    msg << "Failed to create storage class " << name << " nbCopies must be"
+      " greater than 0";
+    throw exception::Exception(msg.str());
+  }
+
   m_db.createStorageClass(name, nbCopies, CreationLog(requester.getUser(), 
        requester.getHost(), time(NULL), comment));
   m_ns.createStorageClass(requester, name, nbCopies);
@@ -234,6 +241,12 @@ void cta::Scheduler::createStorageClass(
   const uint32_t id,
   const std::string &comment) {
   m_db.assertIsAdminOnAdminHost(requester);
+  if(0 == nbCopies) {
+    std::ostringstream msg;
+    msg << "Failed to create storage class " << name << " nbCopies must be"
+      " greater than 0";
+    throw exception::Exception(msg.str());
+  }
   if(9999 < id) {
     std::ostringstream msg;
     msg << "Failed to create storage class " << name << " with numeric"

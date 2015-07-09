@@ -1964,7 +1964,7 @@ TEST_P(SchedulerTest, archive_to_new_file_with_no_storage_class) {
   ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile), std::exception);
 }
 
-TEST_P(SchedulerTest, archive_to_new_file_with_zero_copy_storage_class) {
+TEST_P(SchedulerTest, create_zero_copy_storage_class) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1974,19 +1974,8 @@ TEST_P(SchedulerTest, archive_to_new_file_with_zero_copy_storage_class) {
   const std::string storageClassName = "TestStorageClass";
   const uint16_t nbCopies = 0;
   const std::string storageClassComment = "Storage-class comment";
-  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
-    nbCopies, storageClassComment));
-
-  const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0777;
-  ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
-  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_userOnUserHost, dirPath,
-    storageClassName));
-
-  std::list<std::string> remoteFiles;
-  remoteFiles.push_back(s_remoteFileRawPath1);
-  const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile), std::exception);
+  ASSERT_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
+    nbCopies, storageClassComment), std::exception);
 }
 
 TEST_P(SchedulerTest, archive_to_new_file_with_no_route) {
@@ -2187,35 +2176,6 @@ TEST_P(SchedulerTest,
   const std::string dirPath = "/grandparent";
   const uint16_t mode = 0777;
   ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
-
-  std::list<std::string> remoteFiles;
-  remoteFiles.push_back(s_remoteFileRawPath1);
-  remoteFiles.push_back(s_remoteFileRawPath2);
-  remoteFiles.push_back(s_remoteFileRawPath3);
-  remoteFiles.push_back(s_remoteFileRawPath4);
-  const std::string archiveFile  = "/grandparent";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles,
-    archiveFile), std::exception);
-}
-
-TEST_P(SchedulerTest, archive_to_directory_with_zero_copy_storage_class) {
-  using namespace cta;
-
-  Scheduler &scheduler = getScheduler();
-
-  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
-
-  const std::string storageClassName = "TestStorageClass";
-  const uint16_t nbCopies = 0;
-  const std::string storageClassComment = "Storage-class comment";
-  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
-    nbCopies, storageClassComment));
-
-  const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0777;
-  ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
-  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_userOnUserHost, dirPath,
-    storageClassName));
 
   std::list<std::string> remoteFiles;
   remoteFiles.push_back(s_remoteFileRawPath1);
