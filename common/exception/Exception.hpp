@@ -16,30 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/******************************************************************************
- *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
- *
- * Copyright (C) 2003  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- *
- *
- *
- * @author Castor Dev team, castor-dev@cern.ch
- *****************************************************************************/
-
 #pragma once
 
 #include "common/exception/Backtrace.hpp"
@@ -60,23 +36,14 @@ namespace cta {
     public:
 
       /**
-       * Empty Constructor
-       * @param serrno the serrno code of the corresponding C error
+       * Constructor.
+       *
        * @param context optional context string added to the message
        * at initialisation time.
        * @param embedBacktrace whether to embed a backtrace of where the
        * exception was throw in the message
        */
-      Exception(int se, std::string context="", bool embedBacktrace=true);
-
-      /**
-       * Empty Constructor with implicit serrno = SEINERNAL;
-       * @param context optional context string added to the message
-       * at initialisation time.
-       * @param embedBacktrace whether to embed a backtrace of where the
-       * exception was throw in the message
-       */
-      Exception(std::string context="", bool embedBacktrace=true);
+      Exception(const std::string &context="", const bool embedBacktrace=true);
       
       /**
        * Copy Constructor
@@ -165,5 +132,3 @@ class A: public cta::exception::Exception {                 \
 public:                                                     \
   A(const std::string & w): cta::exception::Exception(w) {} \
 }
-  
-
