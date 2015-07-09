@@ -70,12 +70,6 @@ sec.protocol /usr/lib64/ unix
 # GSI authentication
 sec.protocol gsi -crl:1 -cert:/etc/grid-security/xrootd-server/xrootd-server-cert.pem -key:/etc/grid-security/xrootd-server/xrootd-server-key.pem -gridmap:/etc/grid-security/grid-mapfile -d:0 -gmapopt:2
 
-# To configure krb5 as the default
-#sec.protbind * only krb5
+# Configure gsi+krb5 as the default
+sec.protbind * only krb5 gsi
 
-# Configure unix authentication for diskservers to communicate back with the
-# redirector. Note: This should really use strong authentication!
-#sec.protbind diskserver.domainname only unix
-
-# Configure gsi+krb5 only at CERN
-#sec.protbind *.cern.ch only krb5 gsi
