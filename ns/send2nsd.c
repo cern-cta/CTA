@@ -34,7 +34,6 @@ int send2nsdx(int *socketp,
   int actual_replen = 0;
   int alloced = 0;
   int c;
-  char Cnshost[CA_MAXHOSTNAMELEN+1];
   Csec_context_t ctx;
   int errflag = 0;
   char func[16];
@@ -70,14 +69,19 @@ int send2nsdx(int *socketp,
   } else if (socketp == NULL && thip->fd >= 0) {
     s = thip->fd;  /* connection opened by Cns_starttrans */
   } else {   /* connection not yet opened */
+    char Cnshost[CA_MAXHOSTNAMELEN+1];
+
     sin.sin_family = AF_INET;
     sin.sin_port = 0;
-    if (host && *host)
-      strcpy (Cnshost, host);
-    else if ((p = getenv (CNS_HOST_ENV)) || (p = getconfent (CNS_SCE, "HOST", 0)))
-      strcpy (Cnshost, p);
-    else {
-      strcpy (Cnshost, "castorns");
+    if (host && *host) {
+      strncpy (Cnshost, host, sizeof(Cnshost));
+      Cnshost[sizeof(Cnshost) - 1] = '\0';
+    } else if ((p = getenv (CNS_HOST_ENV)) || (p = getconfent (CNS_SCE, "HOST", 0))) {
+      strncpy (Cnshost, p, sizeof(Cnshost));
+      Cnshost[sizeof(Cnshost) - 1] = '\0';
+    } else {
+      serrno = ENHOSTNOTSET;
+      return (-1);
     }
     /* If the user has decided to enable the security mode then the port can not be set
      * via host:port but with the specific SECURITY_PORT options

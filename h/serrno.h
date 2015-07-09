@@ -216,7 +216,8 @@
 #define ENSCLASSNOSEGS ENSBASEOFF+5	/* File class does not allow a copy on tape */
 #define ENSTOOMANYSEGS ENSBASEOFF+6	/* Too many copies on tape */
 #define ENSOVERWHENREP ENSBASEOFF+7	/* Cannot overwrite valid segment when replacing */
-#define ENSMAXERR      ENSBASEOFF+7
+#define ENHOSTNOTSET   ENSBASEOFF+8	/* CNS HOST not set */
+#define ENSMAXERR      ENSBASEOFF+8
 
 /*
  *------------------------------------------------------------------------

@@ -35,6 +35,7 @@ Cns_apiinit(struct Cns_api_thread_info **thip)
     (*thip)->defserver[0] = '\0';
     if ((p = getenv (CNS_HOST_ENV)) || (p = getconfent (CNS_SCE, "HOST", 0))) {
       strncpy((*thip)->defserver, p, sizeof((*thip)->defserver));
+      (*thip)->defserver[sizeof((*thip)->defserver) - 1] = '\0';
     }
   }
   return (0);

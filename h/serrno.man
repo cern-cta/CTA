@@ -502,6 +502,10 @@ The following error values are returned only by the name server package:
 .TP
 .B ENSTOOMANYSEGS
 (1406) Too many copies on tape
+.B ENSOVERWHENREP
+(1407) Cannot overwrite valid segment when replacing
+.B ENHOSTNOTSET
+(1408) CNS HOST not set
 
 .SH RFIO ERRORS
 The following error values are returned only by the remote file I/O package:
