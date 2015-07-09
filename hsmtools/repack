@@ -348,7 +348,7 @@ def cancelRepack():
         SELECT reqId
           FROM StageRepackRequest
          WHERE StageRepackRequest.RepackVID = :vid
-           AND status IN (6, 0, 1) -- SUBMITTED, STARTING, ONGOING
+           AND status IN (6, 0, 1, 4) -- SUBMITTED, STARTING, ONGOING, ABORTING
         '''
         stAbort = '''
         BEGIN
