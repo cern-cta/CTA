@@ -163,6 +163,18 @@ public:
   static std::string errnoToString(const int errnoValue) throw();
 
   /**
+   * Determines the string representation of the specified SHIFT/CASTOR error
+   * number.
+   *
+   * Please note this method is thread safe.
+   *
+   * @param serrnoValue The serrno value.
+   * @return The string representation of the specified SHIFT/CASTOR error
+   * number.
+   */
+  std::string serrnoToString(const int serrnoValue) throw();
+
+  /**
    * Converts the specified string to an unsigned integer.
    *
    * @param str The string.

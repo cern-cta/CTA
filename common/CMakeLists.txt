@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 
+include_directories(/usr/include/shift)
+
 set (COMMON_LIB_SRC_FILES
   ArchiveDirEntry.cpp
   ArchiveDirIterator.cpp
@@ -25,8 +27,9 @@ add_library (ctacommon SHARED
   ${COMMON_LIB_SRC_FILES})
 
 target_link_libraries (ctacommon
-  ${SQLITE3_LIBRARY_RELEASE}
+  castorcommon
   pthread
+  ${SQLITE3_LIBRARY_RELEASE}
   uuid)
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
