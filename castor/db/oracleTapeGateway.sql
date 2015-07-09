@@ -506,12 +506,12 @@ BEGIN
   IF varNSCsumtype IS NOT NULL THEN
     -- is the checksum matching at the file level ?
     IF inCksumName = 'adler32' AND varNSCsumtype = 'AD' AND
-       TRIM(TO_CHAR(inCksumValue, 'xxxxxxxx')) != TRIM(varNSCsumvalue) THEN
+       TRIM(TO_CHAR(inCksumValue, 'xxxxxxxx')) != TRIM(LOWER(varNSCsumvalue)) THEN
       -- not matching ! log "checkRecallInNS : bad checksum detected, will retry if allowed"
       logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_BAD_CHECKSUM, inFileId, inNsHost, 'tapegatewayd',
                'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
                ' fseq=' || TO_CHAR(inFseq) || ' copyNb=' || TO_CHAR(inCopyNb) || ' checksumType=' || inCksumName ||
-               ' expectedChecksumValue=' || TRIM(varNSCsumvalue) ||
+               ' expectedChecksumValue=' || TRIM(LOWER(varNSCsumvalue)) ||
                ' checksumValue=' || TRIM(TO_CHAR(inCksumValue, 'xxxxxxxx')) ||' '|| inLogContext);
       retryOrFailRecall(inCfId, inVID, inReqId, inLogContext);
       UPDATE DiskCopy
