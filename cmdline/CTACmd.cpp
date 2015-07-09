@@ -94,6 +94,10 @@ std::string CTACopyCmd::formatCommandPath(const int argc, const char **argv) con
   std::string cmdPath = "root://localhost//";
   std::string arg = encode(std::string(argv[0]));
   replaceAll(arg, "/", "_");  
+  //need to add this because xroot removes consecutive slashes, and the 
+  //cryptopp base64 algorithm may produce consecutive slashes. This is solved 
+  //in cryptopp-5.6.3 (using Base64URLEncoder instead of Base64Encoder) but we 
+  //currently have cryptopp-5.6.2. To be changed in the future...
   cmdPath += arg;
   for(int i=1; i<argc; i++) {
     std::string arg = encode(std::string(argv[i]));

@@ -159,7 +159,11 @@ int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t c
   std::stringstream ss(fileName);
   std::string item;
   while (std::getline(ss, item, '&')) {
-    replaceAll(item, "_", "/");
+    replaceAll(item, "_", "/"); 
+    //need to add this because xroot removes consecutive slashes, and the 
+    //cryptopp base64 algorithm may produce consecutive slashes. This is solved 
+    //in cryptopp-5.6.3 (using Base64URLEncoder instead of Base64Encoder) but we 
+    //currently have cryptopp-5.6.2. To be changed in the future...
     item = decode(item);
     tokens.push_back(item);
   }
