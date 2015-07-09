@@ -202,6 +202,7 @@ const char *sys_nserrlist[ENSMAXERR-ENSBASEOFF+2] =
    "File class does not allow a copy on tape",
    "Too many copies on tape",
    "Cannot overwrite valid segment when replacing",
+   "CNS HOST not set",
    "BAD ERROR NUMBER"
   };
 
