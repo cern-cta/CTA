@@ -58,6 +58,14 @@ protected:
   std::string m_data;
   
   /**
+   * Decodes a string in base 64
+   * 
+   * @param msg string to decode
+   * @return decoded string
+   */
+  std::string decode(const std::string msg) const;
+  
+  /**
    * Checks whether client has correct permissions and fills the SecurityIdentity structure
    * 
    * @param req     parsed request

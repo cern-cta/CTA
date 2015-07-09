@@ -21,6 +21,9 @@
 
 #include "XrdCl/XrdClCopyProcess.hh"
 
+#include <cryptopp/base64.h>
+#include <cryptopp/osrng.h>
+
 #include <iostream>
 
 //------------------------------------------------------------------------------
@@ -89,12 +92,12 @@ int CTACopyCmd::sendCommand(const int argc, const char **argv) const {
 //------------------------------------------------------------------------------
 std::string CTACopyCmd::formatCommandPath(const int argc, const char **argv) const {
   std::string cmdPath = "root://localhost//";
-  std::string arg = argv[0];
-  replaceAll(arg, "&", "_#_and_#_");
+  std::string arg = encode(std::string(argv[0]));
+  replaceAll(arg, "/", "_");  
   cmdPath += arg;
   for(int i=1; i<argc; i++) {
-    std::string arg = argv[i];
-    replaceAll(arg, "&", "_#_and_#_");
+    std::string arg = encode(std::string(argv[i]));
+    replaceAll(arg, "/", "_");
     cmdPath += "&";
     cmdPath += arg;
   }
@@ -112,4 +115,14 @@ void CTACopyCmd::replaceAll(std::string& str, const std::string& from, const std
     str.replace(start_pos, from.length(), to);
     start_pos += to.length();
   }
+}
+
+//------------------------------------------------------------------------------
+// encode
+//------------------------------------------------------------------------------
+std::string CTACopyCmd::encode(const std::string msg) const {
+  std::string ret;
+  const bool noNewLineInBase64Output = false;
+  CryptoPP::StringSource ss1(msg, true, new CryptoPP::Base64Encoder(new CryptoPP::StringSink(ret), noNewLineInBase64Output));
+  return ret;
 }

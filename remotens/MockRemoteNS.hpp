@@ -35,6 +35,16 @@ public:
    * Destructor.
    */
   ~MockRemoteNS() throw();
+  
+  /**
+   * Constructor.
+   */
+  MockRemoteNS();
+  
+  /**
+   * Constructor.
+   */
+  MockRemoteNS(std::map<RemotePath, RemoteFileStatus> &entries);
 
   /**
    * Returns the status of the specified file or directory within the remote

@@ -36,6 +36,8 @@
 
 #include "XrdSec/XrdSecEntity.hh"
 
+#include <cryptopp/base64.h>
+#include <cryptopp/osrng.h>
 #include <iostream>
 #include <pwd.h>
 #include <sstream>
@@ -127,6 +129,15 @@ void XrdProFile::commandDispatcher(const std::vector<std::string> &tokens, const
 }
 
 //------------------------------------------------------------------------------
+// decode
+//------------------------------------------------------------------------------
+std::string XrdProFile::decode(const std::string msg) const {
+  std::string ret;
+  CryptoPP::StringSource ss1(msg, true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(ret)));
+  return ret;
+}
+
+//------------------------------------------------------------------------------
 // open
 //------------------------------------------------------------------------------
 int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client, const char *opaque) {
@@ -137,11 +148,19 @@ int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t c
     return checkResult;
   }
   
+  if(!strlen(fileName)) { //this should never happen
+    m_data = getGenericHelp("");
+    return SFS_OK;
+  }
+  
+  fileName++;//let's skip the first slash which is always prepended since we are asking for an absolute path
+  
   std::vector<std::string> tokens;
   std::stringstream ss(fileName);
   std::string item;
   while (std::getline(ss, item, '&')) {
-    replaceAll(item, "_#_and_#_", "&");
+    replaceAll(item, "_", "/");
+    item = decode(item);
     tokens.push_back(item);
   }
   

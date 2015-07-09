@@ -97,14 +97,18 @@ public:
 
 } g_OStoreDB(g_backend, g_backendPopulator.getAgent());
 
+
+cta::MockRemoteNS g_remotens;
+
 extern "C"
 {
   XrdSfsFileSystem *XrdSfsGetFileSystem (XrdSfsFileSystem* native_fs, XrdSysLogger* lp, const char* configfn)
   {
+    g_remotens.createEntry(cta::RemotePath("mock://file1"), cta::RemoteFileStatus(cta::UserIdentity(getuid(), getgid()), 0777, 12345));
     return new XrdProFilesystem(
       new cta::CastorNameServer(),
-      & g_OStoreDB,
-      new cta::MockRemoteNS());
+      &g_OStoreDB,
+      &g_remotens);
   }
 }
 

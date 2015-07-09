@@ -66,5 +66,13 @@ protected:
    * @param to   The replacement string
    */
   void replaceAll(std::string& str, const std::string& from, const std::string& to) const;
+  
+  /**
+   * Encodes a string in base 64
+   * 
+   * @param msg string to encode
+   * @return encoded string
+   */
+  std::string encode(const std::string msg) const;
 
 }; // class CTACopyCmd
