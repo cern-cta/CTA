@@ -300,7 +300,10 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
     agA.addToOwnership(atfrAddr);
     agA.commit();
     if (pass < 1) { pass++; continue; }
-    // - created, but not linked to tape pools
+    // - created, but not linked to tape pools. Those jobs will be in PendingNSCreation
+    // state. The request will be garbage collected to the orphaned queue.
+    // The scheduler will then determine whether the request should be pushed
+    // further or cancelled, depending on the NS status.
     cta::objectstore::ArchiveToFileRequest atfr(atfrAddr, be);
     atfr.initialize();
     atfr.setArchiveFile("cta:/file");
@@ -316,6 +319,14 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
     atfr.insert();
     cta::objectstore::ScopedExclusiveLock atfrl(atfr);
     if (pass < 2) { pass++; continue; }
+    // - Change the jobs statuses from PendingNSCreation to LinkingToTapePool.
+    // They will be automatically connected to the tape pool by the garbage 
+    // collector from that moment on.
+    {
+      atfr.setJobsLinkingToTapePool();
+      atfr.commit();
+    }
+    if (pass < 3) { pass++; continue; }
     // - Referenced in the first tape pool
     {
       cta::objectstore::TapePool tp(tpAddr[0], be);
@@ -325,10 +336,10 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
       jd.copyNb = 1;
       jd.tapePool = "TapePool0";
       jd.tapePoolAddress = tpAddr[0];
-      tp.addJob(jd, atfr.getArchiveFile(), atfr.getAddressIfSet(), 1000+pass);
+      tp.addJob(jd, atfr.getAddressIfSet(), atfr.getArchiveFile(), 1000+pass);
       tp.commit();
     }
-    if (pass < 3) { pass++; continue; }
+    if (pass < 4) { pass++; continue; }
     // TODO: partially migrated or selected
     // - Referenced in the second tape pool
     {
@@ -339,10 +350,10 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
       jd.copyNb = 2;
       jd.tapePool = "TapePool1";
       jd.tapePoolAddress = tpAddr[1];
-      tp.addJob(jd, atfr.getArchiveFile(), atfr.getAddressIfSet(), 1000);
+      tp.addJob(jd, atfr.getAddressIfSet(), atfr.getArchiveFile(), 1000+pass);
       tp.commit();
     }
-    if (pass < 4) { pass++; continue; }
+    if (pass < 5) { pass++; continue; }
     // - Still marked a not owned but referenced in the agent
     {
       atfr.setOwner("");
@@ -364,10 +375,17 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
   // All 4 requests should be linked in both tape pools
   {
     cta::objectstore::TapePool tp0(tpAddr[0], be);
-    cta::objectstore::ScopedExclusiveLock tp0l(tp0);
+    cta::objectstore::ScopedExclusiveLock tp0lock(tp0);
     tp0.fetch();
-    auto d=tp0.dumpJobs();
+    auto d0=tp0.dumpJobs();
+    cta::objectstore::TapePool tp1(tpAddr[1], be);
+    cta::objectstore::ScopedExclusiveLock tp1lock(tp1);
+    tp1.fetch();
+    auto d1=tp1.dumpJobs();
+    // We expect all jobs with sizes 1002-1005 inclusive to be connected to
+    // their respective tape pools.
     ASSERT_EQ(4, tp0.getJobsSummary().files);
+    ASSERT_EQ(4, tp1.getJobsSummary().files);
   }
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);

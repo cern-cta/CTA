@@ -55,6 +55,8 @@ public:
   // Handling of the consequences of a job status change for the entire request.
   // This function returns true if the request got finished.
   bool finishIfNecessary();
+  // Mark all jobs as pending mount (following their linking to a tape pool)
+  void setJobsLinkingToTapePool();
   // Request management ========================================================
   void setSuccessful();
   void setFailed();

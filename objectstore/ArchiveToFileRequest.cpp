@@ -58,6 +58,14 @@ void cta::objectstore::ArchiveToFileRequest::addJob(uint16_t copyNumber,
   j->set_retrieswithinmount(0);
 }
 
+void cta::objectstore::ArchiveToFileRequest::setJobsLinkingToTapePool() {
+  checkPayloadWritable();
+  auto * jl=m_payload.mutable_jobs();
+  for (auto j=jl->begin(); j!=jl->end(); j++) {
+    j->set_status(serializers::AJS_LinkingToTapePool);
+  }
+}
+
 void cta::objectstore::ArchiveToFileRequest::setArchiveFile(
   const std::string& archiveFile) {
   checkPayloadWritable();
@@ -190,8 +198,6 @@ void cta::objectstore::ArchiveToFileRequest::garbageCollect(const std::string &p
         if (tp.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
           m_payload.archivefile(), m_payload.remotefile().size()))
           tp.commit();
-        j->set_status(serializers::AJS_PendingMount);
-        commit();
       } catch (...) {
         j->set_status(serializers::AJS_Failed);
         // This could be the end of the request, with various consequences.

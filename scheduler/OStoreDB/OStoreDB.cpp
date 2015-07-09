@@ -255,8 +255,9 @@ void OStoreDB::deleteArchivalRoute(const SecurityIdentity& requester,
 void OStoreDB::ArchiveToFileRequestCreation::complete() {
   // We inherited all the objects from the creation.
   // Lock is still here at that point.
-  // First we need to find the atfr again. The only way is in the agent's owned 
-  // objects
+  // First, record that we are fine for next step.
+  m_request.setJobsLinkingToTapePool();
+  m_request.commit();
   objectstore::RootEntry re(m_objectStore);
   // We can now plug the request onto its tape pools.
   // We can discover at that point that a tape pool is actually not
@@ -292,7 +293,8 @@ void OStoreDB::ArchiveToFileRequestCreation::complete() {
     }
     throw;
   }
-  // The request is now fully set. As it's multi-owned, we do not set the owner
+  // The request is now fully set. As it's multi-owned, we do not set the owner,
+  // just to disown it from the agent.
   m_request.setOwner("");
   m_request.commit();
   m_lock.release();
