@@ -320,5 +320,4 @@ XrdProFilesystem::XrdProFilesystem(
 XrdProFilesystem::~XrdProFilesystem() {
   delete m_scheduler;
   delete m_ns;
-  delete m_remoteStorage;
 }
