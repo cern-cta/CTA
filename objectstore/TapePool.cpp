@@ -238,6 +238,7 @@ void cta::objectstore::TapePool::removeJob(const std::string& archiveToFileAddre
   auto * jl=m_payload.mutable_pendingarchivejobs();
   bool found = false;
   do {
+    found = false;
     // Push the found entry all the way to the end.
     for (size_t i=0; i<(size_t)jl->size(); i++) {
       if (jl->Get(i).address() == archiveToFileAddress) {

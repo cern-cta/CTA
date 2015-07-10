@@ -109,6 +109,28 @@ public:
     const SecurityIdentity &requester,
     const std::string &archiveFile);
 
+  /*
+   * Subclass allowing the tracking and automated cleanup of a 
+   * ArchiveToFile requests on the SchdulerDB for deletion.
+   * This will mark the request as to be deleted, and then add it to the agent's
+   * list. In a second step, the request will be completely deleted when calling
+   * the complete() method.
+   * In case of failure, the request will be queued to the orphaned requests queue,
+   * so that the scheduler picks it up later.
+   */ 
+  class ArchiveToFileRequestCancelation: public SchedulerDatabase::ArchiveToFileRequestCancelation {
+  public:
+    ArchiveToFileRequestCancelation(const SecurityIdentity &requester,
+      const std::string &archiveFile, MockSchedulerDatabase & parent): m_requester(requester), 
+      m_archiveFile(archiveFile), m_parent(parent) {}
+    virtual void complete();
+    virtual ~ArchiveToFileRequestCancelation() {};
+  private:
+    SecurityIdentity m_requester;
+    std::string m_archiveFile;
+    MockSchedulerDatabase & m_parent;
+  };
+  
   /**
    * Marks the specified archive request for deletion.  The request can only be
    * fully deleted once the corresponding entry has been deleted from the
@@ -118,19 +140,7 @@ public:
    * @param archiveFile The absolute path of the destination file within the
    * archive namespace.
    */
-  void markArchiveRequestForDeletion(
-    const SecurityIdentity &requester,
-    const std::string &archiveFile);
-
-  /**
-   * Notifies the scheduler database that the specified file entry has been
-   * deleted from the archive namespace.
-   *
-   * @param requester The identity of the requester.
-   * @param archiveFile The absolute path of the file within the archive
-   * namespace.
-   */
-  void fileEntryDeletedFromNS(
+  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(
     const SecurityIdentity &requester,
     const std::string &archiveFile);
 

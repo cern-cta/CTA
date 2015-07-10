@@ -37,50 +37,14 @@ protected:
     m_existingObject(false), m_locksCount(0),
     m_locksForWriteCount(0) {}
 public:
-  class AddressNotSet: public cta::exception::Exception {
-  public:
-    AddressNotSet(const std::string & w): cta::exception::Exception(w) {}
-  };
-  
-  class NotLocked: public cta::exception::Exception {
-  public:
-    NotLocked(const std::string & w): cta::exception::Exception(w) {}
-  };
-  
-  class AlreadyLocked: public cta::exception::Exception {
-  public:
-    AlreadyLocked(const std::string & w): cta::exception::Exception(w) {}
-  };
-  
-  class WrongType: public cta::exception::Exception {
-  public:
-    WrongType(const std::string & w): cta::exception::Exception(w) {}
-  };
-  
-  class NotNewObject: public cta::exception::Exception {
-  public:
-    NotNewObject(const std::string & w): cta::exception::Exception(w) {}
-  };
-  
-  class NewObject: public cta::exception::Exception {
-  public:
-    NewObject(const std::string & w): cta::exception::Exception(w) {}
-  };
-  
-  class NotFetched: public cta::exception::Exception {
-  public:
-    NotFetched(const std::string & w): cta::exception::Exception(w) {}
-  };
-  
-  class NotInitialized: public cta::exception::Exception {
-  public:
-    NotInitialized(const std::string & w): cta::exception::Exception(w) {}
-  };
-  
-  class AddressAlreadySet: public cta::exception::Exception {
-  public:
-    AddressAlreadySet(const std::string & w): cta::exception::Exception(w) {}
-  };
+  CTA_GENERATE_EXCEPTION_CLASS(AddressNotSet);
+  CTA_GENERATE_EXCEPTION_CLASS(NotLocked);  
+  CTA_GENERATE_EXCEPTION_CLASS(WrongType);
+  CTA_GENERATE_EXCEPTION_CLASS(NotNewObject);
+  CTA_GENERATE_EXCEPTION_CLASS(NewObject);
+  CTA_GENERATE_EXCEPTION_CLASS(NotFetched);
+  CTA_GENERATE_EXCEPTION_CLASS(NotInitialized);  
+  CTA_GENERATE_EXCEPTION_CLASS(AddressAlreadySet);
 protected:
   void checkHeaderWritable() {
     if (!m_headerInterpreted) 

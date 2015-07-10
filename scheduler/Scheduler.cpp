@@ -99,9 +99,11 @@ std::list<cta::ArchiveToTapeCopyRequest> cta::Scheduler::getArchiveRequests(
 void cta::Scheduler::deleteArchiveRequest(
   const SecurityIdentity &requester,
   const std::string &archiveFile) {
-  m_db.markArchiveRequestForDeletion(requester, archiveFile);
+  std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation>
+    reqCancelation(
+      m_db.markArchiveRequestForDeletion(requester, archiveFile));
   m_ns.deleteFile(requester, archiveFile);
-  m_db.fileEntryDeletedFromNS(requester, archiveFile);
+  reqCancelation->complete();
 }
 
 //------------------------------------------------------------------------------

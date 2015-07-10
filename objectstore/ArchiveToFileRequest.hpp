@@ -57,6 +57,10 @@ public:
   bool finishIfNecessary();
   // Mark all jobs as pending mount (following their linking to a tape pool)
   void setJobsLinkingToTapePool();
+  // Mark all the jobs as being deleted, in case of a cancellation
+  void setJobsFailed();
+  // Mark all the jobs as pending deletion from NS.
+  void setJobsPendingNSdeletion();
   // Request management ========================================================
   void setSuccessful();
   void setFailed();

@@ -127,7 +127,7 @@ public:
 
   /* === Archival requests handling  ======================================== */
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
-  CTA_GENERATE_EXCEPTION_CLASS(ArchveRequestAlreadyCompleteOrCanceled);
+  CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyCompleteOrCanceled);
   class ArchiveToFileRequestCreation: 
    public cta::SchedulerDatabase::ArchiveToFileRequestCreation {
   public:
@@ -151,11 +151,26 @@ public:
 
   virtual void queue(const ArchiveToDirRequest& rqst);
 
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRequest);
+  CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyDeleted);
   virtual void deleteArchiveRequest(const SecurityIdentity& requester, const std::string& archiveFile);
-
-  virtual void markArchiveRequestForDeletion(const SecurityIdentity &requester, const std::string &archiveFile);
-
-  virtual void fileEntryDeletedFromNS(const SecurityIdentity &requester, const std::string &archiveFile);
+  class ArchiveToFileRequestCancelation:
+    public SchedulerDatabase::ArchiveToFileRequestCancelation {
+  public:
+    ArchiveToFileRequestCancelation(objectstore::Agent * agent, 
+      objectstore::Backend & be): m_request(be), m_lock(), m_objectStore(be), 
+      m_agent(agent), m_closed(false) {} 
+    virtual ~ArchiveToFileRequestCancelation();
+    virtual void complete();
+  private:
+    objectstore::ArchiveToFileRequest m_request;
+    objectstore::ScopedExclusiveLock m_lock;
+    objectstore::Backend & m_objectStore;
+    objectstore::Agent * m_agent;
+    bool m_closed;
+    friend class OStoreDB;
+  };
+  virtual std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const SecurityIdentity &requester, const std::string &archiveFile);
 
   virtual std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > getArchiveRequests() const;
 

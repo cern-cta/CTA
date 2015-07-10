@@ -544,7 +544,8 @@ void cta::MockSchedulerDatabase::deleteArchiveRequest(
 //------------------------------------------------------------------------------
 // markArchiveRequestForDeletion
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::markArchiveRequestForDeletion(
+std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation> 
+  cta::MockSchedulerDatabase::markArchiveRequestForDeletion(
   const SecurityIdentity &requester,
   const std::string &archiveFile) {
   char *zErrMsg = 0;
@@ -565,14 +566,12 @@ void cta::MockSchedulerDatabase::markArchiveRequestForDeletion(
       " does not exist";
     throw(exception::Exception(msg.str()));
   }
+  return std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation>(
+      new ArchiveToFileRequestCancelation(requester, archiveFile, *this));
 }
 
-//------------------------------------------------------------------------------
-// fileEntryDeletedFromNS
-//------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::fileEntryDeletedFromNS(
-  const SecurityIdentity &requester, const std::string &archiveFile) {
-  deleteArchiveRequest(requester, archiveFile);
+void cta::MockSchedulerDatabase::ArchiveToFileRequestCancelation::complete() {
+  m_parent.deleteArchiveRequest(m_requester, m_archiveFile);
 }
 
 //------------------------------------------------------------------------------

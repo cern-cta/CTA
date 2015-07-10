@@ -314,7 +314,7 @@ void OStoreDB::ArchiveToFileRequestCreation::cancel() {
   // do here is to delete the request from storage and dereference it from
   // the agent's entry
   if (m_closed) {
-    throw ArchveRequestAlreadyCompleteOrCanceled(
+    throw ArchiveRequestAlreadyCompleteOrCanceled(
       "In OStoreDB::ArchiveToFileRequestCreation::cancel: trying the close "
       "the request creation twice");
   }
@@ -348,12 +348,6 @@ OStoreDB::ArchiveToFileRequestCreation::~ArchiveToFileRequestCreation() {
     }
     m_closed=true;
   } catch (...) {}
-}
-
-
-void OStoreDB::fileEntryDeletedFromNS(const SecurityIdentity& requester,
-  const std::string &archiveFile) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 void OStoreDB::createTapePool(const std::string& name,
@@ -542,7 +536,7 @@ void OStoreDB::deleteLogicalLibrary(const SecurityIdentity& requester,
 std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
   OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
   assertAgentSet();
-  // Construct the return value immediately
+  // Construct the return valucta::OStoreDBe immediately
   std::unique_ptr<cta::OStoreDB::ArchiveToFileRequestCreation> 
     internalRet(new cta::OStoreDB::ArchiveToFileRequestCreation(m_agent, m_objectStore));
   cta::objectstore::ArchiveToFileRequest & atfr = internalRet->m_request;
@@ -601,13 +595,135 @@ void OStoreDB::queue(const ArchiveToDirRequest& rqst) {
 
 void OStoreDB::deleteArchiveRequest(const SecurityIdentity& requester, 
   const std::string& archiveFile) {
-  throw exception::Exception("Not Implemented");
+  // First of, find the archive request form all the tape pools.
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  auto tpl = re.dumpTapePools();
+  rel.release();
+  for (auto tpp=tpl.begin(); tpp!= tpl.end(); tpp++) {
+    objectstore::TapePool tp(tpp->address, m_objectStore);
+    ScopedSharedLock tplock(tp);
+    tp.fetch();
+    auto ajl=tp.dumpJobs();
+    tplock.release();
+    for (auto ajp=ajl.begin(); ajp!=ajl.end(); ajp++) {
+      objectstore::ArchiveToFileRequest atfr(ajp->address, m_objectStore);
+      ScopedSharedLock atfrl(atfr);
+      atfr.fetch();
+      if (atfr.getArchiveFile() == archiveFile) {
+        atfrl.release();
+        objectstore::ScopedExclusiveLock al(*m_agent);
+        m_agent->fetch();
+        m_agent->addToOwnership(atfr.getAddressIfSet());
+        m_agent->commit();
+        ScopedExclusiveLock atfrxl(atfr);
+        atfr.fetch();
+        atfr.setJobsFailed();
+        atfr.setOwner(m_agent->getAddressIfSet());
+        atfr.commit();
+        auto jl = atfr.dumpJobs();
+        for (auto j=jl.begin(); j!=jl.end(); j++) {
+          try {
+            objectstore::TapePool tp(j->tapePoolAddress, m_objectStore);
+            ScopedExclusiveLock tpl(tp);
+            tp.fetch();
+            tp.removeJob(atfr.getAddressIfSet());
+            tp.commit();
+          } catch (...) {}
+        }
+        atfr.remove();
+        m_agent->removeFromOwnership(atfr.getAddressIfSet());
+        m_agent->commit();
+      }
+    }
+  }
+  throw NoSuchArchiveRequest("In OStoreDB::deleteArchiveRequest: ArchiveToFileRequest not found");
 }
 
-void OStoreDB::markArchiveRequestForDeletion(const SecurityIdentity& requester,
+std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation>
+  OStoreDB::markArchiveRequestForDeletion(const SecurityIdentity& requester,
   const std::string& archiveFile) {
-  throw exception::Exception("Not Implemented");
+  assertAgentSet();
+  // Construct the return value immediately
+  std::unique_ptr<cta::OStoreDB::ArchiveToFileRequestCancelation>
+    internalRet(new cta::OStoreDB::ArchiveToFileRequestCancelation(m_agent, m_objectStore));
+  cta::objectstore::ArchiveToFileRequest & atfr = internalRet->m_request;
+  cta::objectstore::ScopedExclusiveLock & atfrl = internalRet->m_lock;
+  // Attempt to find the request
+  objectstore::RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto tpl=re.dumpTapePools();
+  rel.release();
+  for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
+    try {
+      objectstore::TapePool tp(tpp->address, m_objectStore);
+      ScopedSharedLock tpl(tp);
+      tp.fetch();
+      auto arl = tp.dumpJobs();
+      tpl.release();
+      for (auto arp=arl.begin(); arp!=arl.end(); arp++) {
+        objectstore::ArchiveToFileRequest tatfr(arp->address, m_objectStore);
+        objectstore::ScopedSharedLock tatfrl(tatfr);
+        tatfr.fetch();
+        if (tatfr.getArchiveFile() == archiveFile) {
+          // Point the agent to the request
+          ScopedExclusiveLock agl(*m_agent);
+          m_agent->fetch();
+          m_agent->addToOwnership(arp->address);
+          m_agent->commit();
+          agl.release();
+          // Mark all jobs are being pending NS deletion (for being deleted them selves) 
+          tatfrl.release();
+          atfr.setAddress(arp->address);
+          atfrl.lock(atfr);
+          atfr.fetch();
+          atfr.setJobsPendingNSdeletion();
+          atfr.commit();
+          // Unlink the jobs from the tape pools (it is safely referenced in the agent)
+          auto atpl=atfr.dumpJobs();
+          for (auto atpp=atpl.begin(); atpp!=atpl.end(); atpp++) {
+            objectstore::TapePool atp(atpp->tapePoolAddress, m_objectStore);
+            objectstore::ScopedExclusiveLock atpl(atp);
+            atp.fetch();
+            atp.removeJob(arp->address);
+            atp.commit();
+          }
+          // Return the object to the caller, so complete() can be called later.
+          std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation> ret;
+          ret.reset(internalRet.release());
+          return ret;
+        }
+      }
+    } catch (...) {}
+  }
+  throw NoSuchArchiveRequest("In OStoreDB::markArchiveRequestForDeletion: ArchiveToFileRequest no found");
+  }
+
+void OStoreDB::ArchiveToFileRequestCancelation::complete() {
+  if (m_closed)
+    throw ArchiveRequestAlreadyDeleted("OStoreDB::ArchiveToFileRequestCancelation::complete(): called twice");
+  // We just need to delete the object and forget it
+  m_request.remove();
+  objectstore::ScopedExclusiveLock al (*m_agent);
+  m_agent->fetch();
+  m_agent->removeFromOwnership(m_request.getAddressIfSet());
+  m_agent->commit();
+  m_closed = true;
+  }
+
+OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
+  if (!m_closed) {
+    m_request.garbageCollect(m_agent->getAddressIfSet());
+    objectstore::ScopedExclusiveLock al (*m_agent);
+    m_agent->fetch();
+    m_agent->removeFromOwnership(m_request.getAddressIfSet());
+    m_agent->commit();
+  }
 }
+
+
 
 std::map<cta::TapePool, std::list<ArchiveToTapeCopyRequest> >
   OStoreDB::getArchiveRequests() const {

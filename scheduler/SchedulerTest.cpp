@@ -1925,7 +1925,7 @@ TEST_P(SchedulerTest, delete_archive_request) {
     ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") == archiveFiles.end());
   }
 
-  ASSERT_NO_THROW(scheduler.deleteArchiveRequest(s_userOnUserHost,
+  /*ASSERT_NO_THROW*/(scheduler.deleteArchiveRequest(s_userOnUserHost,
     "/grandparent/parent_file"));
 
   {

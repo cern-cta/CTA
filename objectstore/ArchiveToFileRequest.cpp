@@ -66,6 +66,22 @@ void cta::objectstore::ArchiveToFileRequest::setJobsLinkingToTapePool() {
   }
 }
 
+void cta::objectstore::ArchiveToFileRequest::setJobsFailed() {
+  checkPayloadWritable();
+  auto * jl=m_payload.mutable_jobs();
+  for (auto j=jl->begin(); j!=jl->end(); j++) {
+    j->set_status(serializers::AJS_Failed);
+  }
+}
+
+void cta::objectstore::ArchiveToFileRequest::setJobsPendingNSdeletion() {
+  checkPayloadWritable();
+  auto * jl=m_payload.mutable_jobs();
+  for (auto j=jl->begin(); j!=jl->end(); j++) {
+    j->set_status(serializers::AJS_PendingNsDeletion);
+  }
+}
+
 void cta::objectstore::ArchiveToFileRequest::setArchiveFile(
   const std::string& archiveFile) {
   checkPayloadWritable();
