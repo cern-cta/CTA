@@ -28,7 +28,7 @@
 #include <fcntl.h>
 
 #include "common/exception/Exception.hpp"
-#include "common/exception/Errnum.hpp"
+#include "common/exception/Serrnum.hpp"
 #include "common/SmartFd.hpp"
 #include "common/Utils.hpp"
 #include "nameserver/CastorNameServer.hpp"
@@ -46,7 +46,7 @@ void cta::CastorNameServer::updateStorageClass(
   bzero(&fc, sizeof(struct Cns_fileclass));
   strncpy(fc.name, name.c_str(), CA_MAXCLASNAMELEN);
   fc.nbcopies = nbCopies;
-  exception::Errnum::throwOnMinusOne(Cns_modifyclass(const_cast<char *>(m_server.c_str()), 0, const_cast<char *>(name.c_str()), &fc), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_modifyclass(const_cast<char *>(m_server.c_str()), 0, const_cast<char *>(name.c_str()), &fc), __FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ void cta::CastorNameServer::createStorageClass(
   strncpy(fc.name, name.c_str(), CA_MAXCLASNAMELEN);
   fc.nbcopies = nbCopies;
   fc.classid = time(NULL)%10000; //should be 5 digits allowed but it actually works only if you provide 4 digits... go figure!
-  cta::exception::Errnum::throwOnMinusOne(Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc), __FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -82,7 +82,7 @@ void cta::CastorNameServer::createStorageClass(
   strncpy(fc.name, name.c_str(), CA_MAXCLASNAMELEN);
   fc.nbcopies = nbCopies;
   fc.classid = id;
-  exception::Errnum::throwOnMinusOne(Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc), __FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -90,7 +90,7 @@ void cta::CastorNameServer::createStorageClass(
 //------------------------------------------------------------------------------
 void cta::CastorNameServer::deleteStorageClass(
   const SecurityIdentity &requester, const std::string &name) {
-  exception::Errnum::throwOnMinusOne(Cns_deleteclass(const_cast<char *>(m_server.c_str()), 0, const_cast<char *>(name.c_str())), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_deleteclass(const_cast<char *>(m_server.c_str()), 0, const_cast<char *>(name.c_str())), __FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -120,7 +120,7 @@ void cta::CastorNameServer::setDirStorageClass(
   const SecurityIdentity &requester, const std::string &path,
   const std::string &storageClassName) { 
   Utils::assertAbsolutePathSyntax(path);
-  exception::Errnum::throwOnMinusOne(Cns_chclass(path.c_str(), 0, const_cast<char *>(storageClassName.c_str())), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_chclass(path.c_str(), 0, const_cast<char *>(storageClassName.c_str())), __FUNCTION__);
 }  
 
 //------------------------------------------------------------------------------
@@ -137,9 +137,9 @@ void cta::CastorNameServer::clearDirStorageClass(
     strncpy(fc.name, no_class, CA_MAXCLASNAMELEN);
     fc.nbcopies = 0;
     fc.classid = 1;
-    exception::Errnum::throwOnMinusOne(Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc), std::string(__FUNCTION__) + " - Cns_enterclass");
+    exception::Serrnum::throwOnMinusOne(Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc), std::string(__FUNCTION__) + " - Cns_enterclass");
   }
-  cta::exception::Errnum::throwOnMinusOne(Cns_chclass(path.c_str(), 0, no_class), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_chclass(path.c_str(), 0, no_class), __FUNCTION__);
 }  
 
 //------------------------------------------------------------------------------
@@ -148,9 +148,9 @@ void cta::CastorNameServer::clearDirStorageClass(
 std::string cta::CastorNameServer::getDirStorageClass(const SecurityIdentity &requester, const std::string &path) const { 
   Utils::assertAbsolutePathSyntax(path);
   struct Cns_filestat statbuf;  
-  exception::Errnum::throwOnMinusOne(Cns_stat(path.c_str(), &statbuf), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_stat(path.c_str(), &statbuf), __FUNCTION__);
   struct Cns_fileclass cns_fileclass;
-  exception::Errnum::throwOnMinusOne(Cns_queryclass(const_cast<char *>(m_server.c_str()), statbuf.fileclass, NULL, &cns_fileclass), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_queryclass(const_cast<char *>(m_server.c_str()), statbuf.fileclass, NULL, &cns_fileclass), __FUNCTION__);
   return cns_fileclass.name;
 }  
 
@@ -160,7 +160,7 @@ std::string cta::CastorNameServer::getDirStorageClass(const SecurityIdentity &re
 void cta::CastorNameServer::createFile(const SecurityIdentity &requester,
   const std::string &path, const mode_t mode) {
   Utils::assertAbsolutePathSyntax(path);
-  exception::Errnum::throwOnMinusOne(Cns_creat(path.c_str(), mode), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_creat(path.c_str(), mode), __FUNCTION__);
   setOwner(requester, path, requester.getUser());
 }
 
@@ -169,7 +169,7 @@ void cta::CastorNameServer::createFile(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 void cta::CastorNameServer::setOwner(const SecurityIdentity &requester, const std::string &path, const UserIdentity &owner) {
   Utils::assertAbsolutePathSyntax(path);
-  exception::Errnum::throwOnMinusOne(Cns_chown(path.c_str(), owner.uid, owner.gid), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_chown(path.c_str(), owner.uid, owner.gid), __FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -178,7 +178,7 @@ void cta::CastorNameServer::setOwner(const SecurityIdentity &requester, const st
 cta::UserIdentity cta::CastorNameServer::getOwner(const SecurityIdentity &requester, const std::string &path) const {
   Utils::assertAbsolutePathSyntax(path);
   struct Cns_filestat statbuf;  
-  exception::Errnum::throwOnMinusOne(Cns_stat(path.c_str(), &statbuf), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_stat(path.c_str(), &statbuf), __FUNCTION__);
   return UserIdentity(statbuf.uid, statbuf.gid);
 }
 
@@ -187,7 +187,7 @@ cta::UserIdentity cta::CastorNameServer::getOwner(const SecurityIdentity &reques
 //------------------------------------------------------------------------------
 void cta::CastorNameServer::createDir(const SecurityIdentity &requester, const std::string &path, const mode_t mode) {  
   Utils::assertAbsolutePathSyntax(path);
-  exception::Errnum::throwOnMinusOne(Cns_mkdir(path.c_str(), mode), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_mkdir(path.c_str(), mode), __FUNCTION__);
   setOwner(requester, path, requester.getUser());
 }  
 
@@ -196,7 +196,7 @@ void cta::CastorNameServer::createDir(const SecurityIdentity &requester, const s
 //------------------------------------------------------------------------------
 void cta::CastorNameServer::deleteFile(const SecurityIdentity &requester, const std::string &path) {  
   Utils::assertAbsolutePathSyntax(path);
-  exception::Errnum::throwOnMinusOne(Cns_unlink(path.c_str()), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_unlink(path.c_str()), __FUNCTION__);
 }  
 
 //------------------------------------------------------------------------------
@@ -209,7 +209,7 @@ void cta::CastorNameServer::deleteDir(const SecurityIdentity &requester, const s
     throw(exception::Exception(msg.str()));
   }
   Utils::assertAbsolutePathSyntax(path);
-  exception::Errnum::throwOnMinusOne(Cns_rmdir(path.c_str()), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_rmdir(path.c_str()), __FUNCTION__);
 }  
 
 //------------------------------------------------------------------------------
@@ -235,7 +235,7 @@ std::unique_ptr<cta::ArchiveFileStatus> cta::CastorNameServer::statFile(
   const uint64_t size(statbuf.filesize);
   const Checksum checksum(Checksum::CHECKSUMTYPE_ADLER32, std::string(statbuf.csumvalue));
   struct Cns_fileclass cns_fileclass;
-  exception::Errnum::throwOnMinusOne(Cns_queryclass(const_cast<char *>(m_server.c_str()), statbuf.fileclass, NULL, &cns_fileclass), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_queryclass(const_cast<char *>(m_server.c_str()), statbuf.fileclass, NULL, &cns_fileclass), __FUNCTION__);
   const std::string storageClassName(cns_fileclass.name);
   return std::unique_ptr<ArchiveFileStatus>(
     new ArchiveFileStatus(owner, mode, size, checksum, storageClassName));
@@ -279,7 +279,7 @@ cta::ArchiveDirEntry cta::CastorNameServer::getArchiveDirEntry(const SecurityIde
   Utils::assertAbsolutePathSyntax(path);
   
   struct Cns_filestatcs statbuf;  
-  exception::Errnum::throwOnMinusOne(Cns_statcs(path.c_str(), &statbuf), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_statcs(path.c_str(), &statbuf), __FUNCTION__);
   
   const std::string name = Utils::getEnclosedName(path);
   const std::string enclosingPath = Utils::getEnclosingPath(path);
@@ -326,7 +326,7 @@ std::string cta::CastorNameServer::getVidOfFile(const SecurityIdentity &requeste
   memset(&file_uniqueid, 0, sizeof(struct Cns_fileid));
   int nbseg = 0;
   struct Cns_segattrs *segattrs = NULL;
-  exception::Errnum::throwOnMinusOne(Cns_getsegattrs(path.c_str(), &file_uniqueid, &nbseg, &segattrs));
+  exception::Serrnum::throwOnMinusOne(Cns_getsegattrs(path.c_str(), &file_uniqueid, &nbseg, &segattrs));
   std::string vid("");
   for(int i=0; i<nbseg; i++) {
     if((segattrs+i)->copyno==copyNb) {
