@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/db/oracleConstants.sql
+ *                 stager_2.1.15-8_to_2.1.15-9.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,183 +17,61 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
+ * This script upgrades a CASTOR v2.1.15-9 STAGER database to v2.1.15-10
  *
- *
- * @author castor-dev@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-/**
- * Package containing the definition of all tape-archive related PL/SQL
- * constants.
- */
-CREATE OR REPLACE PACKAGE tconst
-AS
-  -- TPMODE
-  WRITE_DISABLE                CONSTANT PLS_INTEGER :=  0;
-  WRITE_ENABLE                 CONSTANT PLS_INTEGER :=  1;
-
-  RECALLMOUNT_NEW              CONSTANT PLS_INTEGER := 0;
-  RECALLMOUNT_WAITDRIVE        CONSTANT PLS_INTEGER := 1;
-  RECALLMOUNT_RECALLING        CONSTANT PLS_INTEGER := 2;
-
-  RECALLJOB_PENDING            CONSTANT PLS_INTEGER := 1;
-  RECALLJOB_SELECTED           CONSTANT PLS_INTEGER := 2;
-  RECALLJOB_RETRYMOUNT         CONSTANT PLS_INTEGER := 3;
-  RECALLJOB_SELECTED2NDCOPY    CONSTANT PLS_INTEGER := 4;
-
-  MIGRATIONMOUNT_WAITTAPE      CONSTANT PLS_INTEGER := 0;
-  MIGRATIONMOUNT_SEND_TO_VDQM  CONSTANT PLS_INTEGER := 1;
-  MIGRATIONMOUNT_WAITDRIVE     CONSTANT PLS_INTEGER := 2;
-  MIGRATIONMOUNT_MIGRATING     CONSTANT PLS_INTEGER := 3;
-
-  MIGRATIONJOB_PENDING         CONSTANT PLS_INTEGER := 0;
-  MIGRATIONJOB_SELECTED        CONSTANT PLS_INTEGER := 1;
-  MIGRATIONJOB_WAITINGONRECALL CONSTANT PLS_INTEGER := 3;
-
-  REPACK_SUBMITTED             CONSTANT PLS_INTEGER := 6;
-  REPACK_STARTING              CONSTANT PLS_INTEGER := 0;
-  REPACK_ONGOING               CONSTANT PLS_INTEGER := 1;
-  REPACK_FINISHED              CONSTANT PLS_INTEGER := 2;
-  REPACK_FAILED                CONSTANT PLS_INTEGER := 3;
-  REPACK_ABORTING              CONSTANT PLS_INTEGER := 4;
-  REPACK_ABORTED               CONSTANT PLS_INTEGER := 5;
-
-  TAPE_DISABLED                CONSTANT PLS_INTEGER := 1;
-  TAPE_EXPORTED                CONSTANT PLS_INTEGER := 2;
-  TAPE_BUSY                    CONSTANT PLS_INTEGER := 4;
-  TAPE_FULL                    CONSTANT PLS_INTEGER := 8;
-  TAPE_RDONLY                  CONSTANT PLS_INTEGER := 16;
-  TAPE_ARCHIVED                CONSTANT PLS_INTEGER := 32;
-END tconst;
-/
-
-CREATE OR REPLACE FUNCTION tapeStatusToString(status IN NUMBER) RETURN VARCHAR2 AS
-  res VARCHAR2(2048);
-  rebuildValue NUMBER := 0;
+/* Stop on errors */
+WHENEVER SQLERROR EXIT FAILURE
 BEGIN
-  IF status = 0 THEN RETURN 'OK'; END IF;
-  IF BITAND(status, tconst.TAPE_DISABLED) != 0 THEN
-    res := res || '|DISABLED';
-    rebuildValue := rebuildValue + tconst.TAPE_DISABLED;
-  END IF;
-  IF BITAND(status, tconst.TAPE_EXPORTED) != 0  THEN
-    res := res || '|EXPORTED';
-    rebuildValue := rebuildValue + tconst.TAPE_EXPORTED;
-  END IF;
-  IF BITAND(status, tconst.TAPE_BUSY) != 0  THEN
-    res := res || '|BUSY';
-    rebuildValue := rebuildValue + tconst.TAPE_BUSY;
-  END IF;
-  IF BITAND(status, tconst.TAPE_FULL) != 0  THEN
-    res := res || '|FULL';
-    rebuildValue := rebuildValue + tconst.TAPE_FULL;
-  END IF;
-  IF BITAND(status, tconst.TAPE_RDONLY) != 0  THEN
-    res := res || '|RDONLY';
-    rebuildValue := rebuildValue + tconst.TAPE_RDONLY;
-  END IF;
-  IF BITAND(status, tconst.TAPE_ARCHIVED) != 0  THEN
-    res := res || '|ARCHIVED';
-    rebuildValue := rebuildValue + tconst.TAPE_ARCHIVED;
-  END IF;
-  IF res IS NULL THEN
-    res := 'UNKNOWN:' || TO_CHAR(status);
-  ELSE
-    res := SUBSTR(res, 2);
-    IF rebuildValue != status THEN
-      res := res || '|UNKNOWN:' || TO_CHAR(status-rebuildValue);
-    END IF;
-  END IF;
-  RETURN res;
+  -- If we have encountered an error rollback any previously non committed
+  -- operations. This prevents the UPDATE of the UpgradeLog from committing
+  -- inconsistent data to the database.
+  ROLLBACK;
+  UPDATE UpgradeLog
+     SET failureCount = failureCount + 1
+   WHERE schemaVersion = '2_1_15_0'
+     AND release = '2_1_15_11'
+     AND state != 'COMPLETE';
+  COMMIT;
 END;
 /
 
-/**
- * Package containing the definition of all disk related PL/SQL constants.
- */
-CREATE OR REPLACE PACKAGE dconst
-AS
-
-  CASTORFILE_NOTONTAPE        CONSTANT PLS_INTEGER :=  0;
-  CASTORFILE_ONTAPE           CONSTANT PLS_INTEGER :=  1;
-  CASTORFILE_DISKONLY         CONSTANT PLS_INTEGER :=  2;
-
-  DISKCOPY_VALID              CONSTANT PLS_INTEGER :=  0;
-  DISKCOPY_FAILED             CONSTANT PLS_INTEGER :=  4;
-  DISKCOPY_WAITFS             CONSTANT PLS_INTEGER :=  5;
-  DISKCOPY_STAGEOUT           CONSTANT PLS_INTEGER :=  6;
-  DISKCOPY_INVALID            CONSTANT PLS_INTEGER :=  7;
-  DISKCOPY_BEINGDELETED       CONSTANT PLS_INTEGER :=  9;
-  DISKCOPY_WAITFS_SCHEDULING  CONSTANT PLS_INTEGER := 11;
-
-  DISKSERVER_PRODUCTION       CONSTANT PLS_INTEGER := 0;
-  DISKSERVER_DRAINING         CONSTANT PLS_INTEGER := 1;
-  DISKSERVER_DISABLED         CONSTANT PLS_INTEGER := 2;
-  DISKSERVER_READONLY         CONSTANT PLS_INTEGER := 3;
-
-  FILESYSTEM_PRODUCTION       CONSTANT PLS_INTEGER := 0;
-  FILESYSTEM_DRAINING         CONSTANT PLS_INTEGER := 1;
-  FILESYSTEM_DISABLED         CONSTANT PLS_INTEGER := 2;
-  FILESYSTEM_READONLY         CONSTANT PLS_INTEGER := 3;
-  
-  DRAININGJOB_SUBMITTED       CONSTANT PLS_INTEGER := 0;
-  DRAININGJOB_STARTING        CONSTANT PLS_INTEGER := 1;
-  DRAININGJOB_RUNNING         CONSTANT PLS_INTEGER := 2;
-  DRAININGJOB_FAILED          CONSTANT PLS_INTEGER := 4;
-  DRAININGJOB_FINISHED        CONSTANT PLS_INTEGER := 5;
-
-  DRAIN_FILEMASK_NOTONTAPE    CONSTANT PLS_INTEGER := 0;
-  DRAIN_FILEMASK_ALL          CONSTANT PLS_INTEGER := 1;
-  
-  SUBREQUEST_START            CONSTANT PLS_INTEGER :=  0;
-  SUBREQUEST_RESTART          CONSTANT PLS_INTEGER :=  1;
-  SUBREQUEST_RETRY            CONSTANT PLS_INTEGER :=  2;
-  SUBREQUEST_WAITSCHED        CONSTANT PLS_INTEGER :=  3;
-  SUBREQUEST_WAITTAPERECALL   CONSTANT PLS_INTEGER :=  4;
-  SUBREQUEST_WAITSUBREQ       CONSTANT PLS_INTEGER :=  5;
-  SUBREQUEST_READY            CONSTANT PLS_INTEGER :=  6;
-  SUBREQUEST_FAILED           CONSTANT PLS_INTEGER :=  7;
-  SUBREQUEST_FINISHED         CONSTANT PLS_INTEGER :=  8;
-  SUBREQUEST_FAILED_FINISHED  CONSTANT PLS_INTEGER :=  9;
-  SUBREQUEST_ARCHIVED         CONSTANT PLS_INTEGER := 11;
-  SUBREQUEST_REPACK           CONSTANT PLS_INTEGER := 12;
-  SUBREQUEST_READYFORSCHED    CONSTANT PLS_INTEGER := 13;
-
-  GETNEXTSTATUS_NOTAPPLICABLE CONSTANT PLS_INTEGER :=  0;
-  GETNEXTSTATUS_FILESTAGED    CONSTANT PLS_INTEGER :=  1;
-  GETNEXTSTATUS_NOTIFIED      CONSTANT PLS_INTEGER :=  2;
-
-  DISKPOOLQUERYTYPE_DEFAULT   CONSTANT PLS_INTEGER :=  0;
-  DISKPOOLQUERYTYPE_AVAILABLE CONSTANT PLS_INTEGER :=  1;
-  DISKPOOLQUERYTYPE_TOTAL     CONSTANT PLS_INTEGER :=  2;
-
-  DISKPOOLSPACETYPE_FREE      CONSTANT PLS_INTEGER :=  0;
-  DISKPOOLSPACETYPE_CAPACITY  CONSTANT PLS_INTEGER :=  1;
-
-  GCTYPE_AUTO                 CONSTANT PLS_INTEGER :=  0;
-  GCTYPE_USER                 CONSTANT PLS_INTEGER :=  1;
-  GCTYPE_TOOMANYREPLICAS      CONSTANT PLS_INTEGER :=  2;
-  GCTYPE_DRAINING             CONSTANT PLS_INTEGER :=  3;
-  GCTYPE_NSSYNCH              CONSTANT PLS_INTEGER :=  4;
-  GCTYPE_OVERWRITTEN          CONSTANT PLS_INTEGER :=  5;
-  GCTYPE_ADMIN                CONSTANT PLS_INTEGER :=  6;
-  GCTYPE_FAILEDD2D            CONSTANT PLS_INTEGER :=  7;
-  GCTYPE_FAILEDRECALL         CONSTANT PLS_INTEGER :=  8;
-  
-  DELDC_LOST                  CONSTANT PLS_INTEGER :=  4;
-  DELDC_NOOP                  CONSTANT PLS_INTEGER :=  6;
-
-  DISK2DISKCOPYJOB_PENDING    CONSTANT PLS_INTEGER :=  0;
-  DISK2DISKCOPYJOB_SCHEDULED  CONSTANT PLS_INTEGER :=  1;
-  DISK2DISKCOPYJOB_RUNNING    CONSTANT PLS_INTEGER :=  2;
-
-  REPLICATIONTYPE_USER        CONSTANT PLS_INTEGER :=  0;
-  REPLICATIONTYPE_INTERNAL    CONSTANT PLS_INTEGER :=  1;
-  REPLICATIONTYPE_DRAINING    CONSTANT PLS_INTEGER :=  2;
-  REPLICATIONTYPE_REBALANCE   CONSTANT PLS_INTEGER :=  3;
-
-END dconst;
+/* Verify that the script is running against the correct schema and version */
+DECLARE
+  unused VARCHAR(100);
+BEGIN
+  SELECT release INTO unused FROM CastorVersion
+   WHERE schemaName = 'STAGER'
+     AND release LIKE '2_1_15_10%';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Error, we cannot apply this script
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the STAGER before this one.');
+END;
 /
+
+INSERT INTO UpgradeLog (schemaVersion, release, type)
+VALUES ('2_1_15_0', '2_1_15_11', 'TRANSPARENT');
+COMMIT;
+
+/* Job management */
+BEGIN
+  FOR a IN (SELECT * FROM user_scheduler_jobs)
+  LOOP
+    -- Stop any running jobs
+    IF a.state = 'RUNNING' THEN
+      dbms_scheduler.stop_job(a.job_name, force=>TRUE);
+    END IF;
+    -- Schedule the start date of the job to 15 minutes from now. This
+    -- basically pauses the job for 15 minutes so that the upgrade can
+    -- go through as quickly as possible.
+    dbms_scheduler.set_attribute(a.job_name, 'START_DATE', SYSDATE + 15/1440);
+  END LOOP;
+END;
+/
+
+
 
 /**
  * Package containing the definition of all DLF levels and messages logged from the SQL-to-DLF API
@@ -332,49 +210,110 @@ AS
 END dlf;
 /
 
-/**
- * Package containing the definition of some relevant (s)errno values and messages.
- */
-CREATE OR REPLACE PACKAGE serrno AS
-  /* (s)errno values */
-  ENOENT          CONSTANT PLS_INTEGER := 2;    /* No such file or directory */
-  EINTR           CONSTANT PLS_INTEGER := 4;    /* Interrupted system call */
-  EACCES          CONSTANT PLS_INTEGER := 13;   /* Permission denied */
-  EBUSY           CONSTANT PLS_INTEGER := 16;   /* Device or resource busy */
-  EEXIST          CONSTANT PLS_INTEGER := 17;   /* File exists */
-  EISDIR          CONSTANT PLS_INTEGER := 21;   /* Is a directory */
-  EINVAL          CONSTANT PLS_INTEGER := 22;   /* Invalid argument */
-  ENOSPC          CONSTANT PLS_INTEGER := 28;   /* No space left on device */
+/* Commit a successful file migration */
+CREATE OR REPLACE PROCEDURE tg_setFileMigrated(inMountTrId IN NUMBER, inFileId IN NUMBER,
+                                               inReqId IN VARCHAR2, inLogContext IN VARCHAR2) AS
+  varNsHost VARCHAR2(2048);
+  varCfId NUMBER;
+  varCopyNb INTEGER;
+  varVID VARCHAR2(10);
+  varOrigVID VARCHAR2(10);
+  varMigJobCount INTEGER;
+  varParams VARCHAR2(4000);
+  varMigStartTime NUMBER;
+  varSrId INTEGER;
+  varNbJobsDeleted INTEGER := 0;
+BEGIN
+  varNsHost := getConfigOption('stager', 'nsHost', '');
+  -- Lock the CastorFile
+  SELECT CF.id INTO varCfId FROM CastorFile CF
+   WHERE CF.fileid = inFileId 
+     AND CF.nsHost = varNsHost
+     FOR UPDATE;
 
-  SEINTERNAL      CONSTANT PLS_INTEGER := 1015; /* Internal error */
-  SECHECKSUM      CONSTANT PLS_INTEGER := 1037; /* Bad checksum */
-  ENSFILECHG      CONSTANT PLS_INTEGER := 1402; /* File has been overwritten, request ignored */
-  ENSNOSEG        CONSTANT PLS_INTEGER := 1403; /* Segment had been deleted */
-  ENSTOOMANYSEGS  CONSTANT PLS_INTEGER := 1406; /* Too many copies on tape */
-  ENSOVERWHENREP  CONSTANT PLS_INTEGER := 1407; /* Cannot overwrite valid segment when replacing */
-  ERTWRONGSIZE    CONSTANT PLS_INTEGER := 1613; /* (Recalled) file size incorrect */
-  ESTKILLED       CONSTANT PLS_INTEGER := 1713; /* aborted by kill */
-  ESTNOTAVAIL     CONSTANT PLS_INTEGER := 1718; /* File is currently not available */
-  ESTNOSEGFOUND   CONSTANT PLS_INTEGER := 1723; /* File has no copy on tape or no diskcopies are accessible */
-  ESTNOTAPEROUTE  CONSTANT PLS_INTEGER := 1727; /* File recreation canceled since the file cannot be routed to tape */
-  
-  /* messages */
-  ENOENT_MSG          CONSTANT VARCHAR2(2048) := 'No such file or directory';
-  EINTR_MSG           CONSTANT VARCHAR2(2048) := 'Interrupted system call';
-  EACCES_MSG          CONSTANT VARCHAR2(2048) := 'Permission denied';
-  EBUSY_MSG           CONSTANT VARCHAR2(2048) := 'Device or resource busy';
-  EEXIST_MSG          CONSTANT VARCHAR2(2048) := 'File exists';
-  EISDIR_MSG          CONSTANT VARCHAR2(2048) := 'Is a directory';
-  EINVAL_MSG          CONSTANT VARCHAR2(2048) := 'Invalid argument';
-  
-  SEINTERNAL_MSG      CONSTANT VARCHAR2(2048) := 'Internal error';
-  SECHECKSUM_MSG      CONSTANT VARCHAR2(2048) := 'Checksum mismatch between segment and file';
-  ENSFILECHG_MSG      CONSTANT VARCHAR2(2048) := 'File has been overwritten, request ignored';
-  ENSNOSEG_MSG        CONSTANT VARCHAR2(2048) := 'Segment had been deleted';
-  ENSTOOMANYSEGS_MSG  CONSTANT VARCHAR2(2048) := 'Too many copies on tape';
-  ENSOVERWHENREP_MSG  CONSTANT VARCHAR2(2048) := 'Cannot overwrite valid segment when replacing';
-  ERTWRONGSIZE_MSG    CONSTANT VARCHAR2(2048) := 'Incorrect file size';
-  ESTNOSEGFOUND_MSG   CONSTANT VARCHAR2(2048) := 'File has no copy on tape or no diskcopies are accessible';
-  ESTNOTAPEROUTE_MSG  CONSTANT VARCHAR2(2048) := 'File recreation canceled since the file cannot be routed to tape';
-END serrno;
+  -- try to delete the corresponding migration job
+  DELETE FROM MigrationJob
+   WHERE castorFile = varCfId
+     AND mountTransactionId = inMountTrId
+  RETURNING destCopyNb, VID, originalVID, creationTime
+    INTO varCopyNb, varVID, varOrigVID, varMigStartTime;
+  varNbJobsDeleted := sql%rowcount;
+
+  -- If there was no migration job to delete
+  IF 0 = varNbJobsDeleted THEN
+    -- check if another migration should be performed
+    SELECT /*+ INDEX_RS_ASC(MigrationJob I_MigrationJob_CFVID) */
+           count(*) INTO varMigJobCount
+      FROM MigrationJob
+     WHERE castorFile = varCfId;
+
+    IF varMigJobCount = 0 THEN
+      -- no more migrations, delete all migrated segments 
+      DELETE FROM MigratedSegment
+       WHERE castorFile = varCfId;
+    END IF;
+
+    -- log an explanation and return
+    -- this is not an error, a migration job can be deleted before it is completed
+    varParams := 'mountTransactionId='|| to_char(inMountTrId) || ' ' || inLogContext;
+    logToDLF(inReqid, dlf.LVL_SYSTEM, dlf.MIGRATION_JOB_DOES_NOT_EXIST, inFileId, varNsHost, 'tapegatewayd', varParams);
+    RETURN;
+  END IF;
+
+  -- check if another migration should be performed
+  SELECT /*+ INDEX_RS_ASC(MigrationJob I_MigrationJob_CFVID) */
+         count(*) INTO varMigJobCount
+    FROM MigrationJob
+   WHERE castorFile = varCfId;
+  IF varMigJobCount = 0 THEN
+    -- no more migrations, delete all migrated segments 
+    DELETE FROM MigratedSegment
+     WHERE castorFile = varCfId;
+    -- And mark CastorFile as ONTAPE
+    UPDATE CastorFile
+       SET tapeStatus= dconst.CASTORFILE_ONTAPE
+     WHERE id = varCfId;
+  ELSE
+    -- another migration ongoing, keep track of the one just completed
+    INSERT INTO MigratedSegment (castorFile, copyNb, vid)
+    VALUES (varCfId, varCopyNb, varVID);
+  END IF;
+  -- Do we have to deal with a repack ?
+  IF varOrigVID IS NOT NULL THEN
+    -- Yes we do, then archive the repack subrequest associated
+    -- Note that there may be several if we are dealing with old bad tapes
+    -- that have 2 copies of the same file on them. Thus we take one at random
+    SELECT /*+ INDEX_RS_ASC(SR I_Subrequest_CastorFile) */ SR.id INTO varSrId
+      FROM SubRequest SR, StageRepackRequest Req
+      WHERE SR.castorfile = varCfId
+        AND SR.status = dconst.SUBREQUEST_REPACK
+        AND SR.request = Req.id
+        AND Req.RepackVID = varOrigVID
+        AND ROWNUM < 2;
+    archiveSubReq(varSrId, dconst.SUBREQUEST_FINISHED);
+  END IF;
+  -- Log 'db updates after full migration completed'
+  varParams := 'TPVID='|| varVID ||' mountTransactionId='|| to_char(inMountTrId) ||
+    ' migrationTime=' || to_char(trunc(getTime() - varMigStartTime, 0)) || ' '|| inLogContext;
+  logToDLF(inReqid, dlf.LVL_SYSTEM, dlf.MIGRATION_COMPLETED, inFileId, varNsHost, 'tapegatewayd', varParams);
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Log 'file not found, giving up'
+  varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' '|| inLogContext;
+  logToDLF(inReqid, dlf.LVL_ERROR, dlf.MIGRATION_NOT_FOUND, inFileId, varNsHost, 'tapegatewayd', varParams);
+END;
 /
+
+
+
+/* Recompile all invalid procedures, triggers and functions */
+/************************************************************/
+BEGIN
+  recompileAll();
+END;
+/
+
+/* Flag the schema upgrade as COMPLETE */
+/***************************************/
+UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
+ WHERE release = '2_1_15_10';
+COMMIT;

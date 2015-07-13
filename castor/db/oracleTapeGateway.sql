@@ -1640,6 +1640,7 @@ CREATE OR REPLACE PROCEDURE tg_setFileMigrated(inMountTrId IN NUMBER, inFileId I
   varParams VARCHAR2(4000);
   varMigStartTime NUMBER;
   varSrId INTEGER;
+  varNbJobsDeleted INTEGER := 0;
 BEGIN
   varNsHost := getConfigOption('stager', 'nsHost', '');
   -- Lock the CastorFile
@@ -1647,12 +1648,36 @@ BEGIN
    WHERE CF.fileid = inFileId 
      AND CF.nsHost = varNsHost
      FOR UPDATE;
-  -- delete the corresponding migration job, create the new migrated segment
+
+  -- try to delete the corresponding migration job
   DELETE FROM MigrationJob
    WHERE castorFile = varCfId
      AND mountTransactionId = inMountTrId
   RETURNING destCopyNb, VID, originalVID, creationTime
     INTO varCopyNb, varVID, varOrigVID, varMigStartTime;
+  varNbJobsDeleted := sql%rowcount;
+
+  -- If there was no migration job to delete
+  IF 0 = varNbJobsDeleted THEN
+    -- check if another migration should be performed
+    SELECT /*+ INDEX_RS_ASC(MigrationJob I_MigrationJob_CFVID) */
+           count(*) INTO varMigJobCount
+      FROM MigrationJob
+     WHERE castorFile = varCfId;
+
+    IF varMigJobCount = 0 THEN
+      -- no more migrations, delete all migrated segments 
+      DELETE FROM MigratedSegment
+       WHERE castorFile = varCfId;
+    END IF;
+
+    -- log an explanation and return
+    -- this is not an error, a migration job can be deleted before it is completed
+    varParams := 'mountTransactionId='|| to_char(inMountTrId) || ' ' || inLogContext;
+    logToDLF(inReqid, dlf.LVL_SYSTEM, dlf.MIGRATION_JOB_DOES_NOT_EXIST, inFileId, varNsHost, 'tapegatewayd', varParams);
+    RETURN;
+  END IF;
+
   -- check if another migration should be performed
   SELECT /*+ INDEX_RS_ASC(MigrationJob I_MigrationJob_CFVID) */
          count(*) INTO varMigJobCount
