@@ -29,12 +29,12 @@ namespace exception {
     virtual ~Errnum() throw() {};
     int errorNumber() const { return m_errnum; }
     std::string strError() const { return m_strerror; }
-    static void throwOnReturnedErrno(int err, std::string context = "");
-    static void throwOnNonZero(int status, std::string context = "");
-    static void throwOnZero(int status, std::string context = "");
-    static void throwOnNull(void * f, std::string context = "");
-    static void throwOnNegative(int ret, std::string context = "");
-    static void throwOnMinusOne(int ret, std::string context = "");
+    static void throwOnReturnedErrno(const int err, const std::string &context = "");
+    static void throwOnNonZero(const int status, const std::string &context = "");
+    static void throwOnZero(const int status, const std::string &context = "");
+    static void throwOnNull(const void *const f, const std::string &context = "");
+    static void throwOnNegative(const int ret, const std::string &context = "");
+    static void throwOnMinusOne(const int ret, const std::string &context = "");
   protected:
     void ErrnumConstructorBottomHalf(const std::string & what);
     int m_errnum;

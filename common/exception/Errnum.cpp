@@ -43,26 +43,26 @@ void Errnum::ErrnumConstructorBottomHalf(const std::string & what) {
   getMessage().str(w2.str());
 }
 
-void Errnum::throwOnReturnedErrno (int err, std::string context) {
+void Errnum::throwOnReturnedErrno (const int err, const std::string &context) {
   if (err) throw Errnum(err, context);
 }
 
-void Errnum::throwOnNonZero(int status, std::string context) {
+void Errnum::throwOnNonZero(const int status, const std::string &context) {
   if (status) throw Errnum(context);
 }
 
-void Errnum::throwOnZero(int status, std::string context) {
+void Errnum::throwOnZero(const int status, const std::string &context) {
   if (!status) throw Errnum(context);
 }
 
-void Errnum::throwOnNull(void * f, std::string context) {
+void Errnum::throwOnNull(const void *const f, const std::string &context) {
   if (NULL == f) throw Errnum(context);
 }
 
-void Errnum::throwOnNegative(int ret, std::string context) {
+void Errnum::throwOnNegative(const int ret, const std::string &context) {
   if (ret < 0) throw Errnum(context);
 }
 
-void Errnum::throwOnMinusOne(int ret, std::string context) {
+void Errnum::throwOnMinusOne(const int ret, const std::string &context) {
   if (-1 == ret) throw Errnum(context);
 }
