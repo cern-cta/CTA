@@ -11,6 +11,7 @@ set (COMMON_LIB_SRC_FILES
   exception/Backtrace.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
+  exception/Serrnum.cpp
   RemoteFileStatus.cpp
   RemotePath.cpp
   RemotePathAndStatus.cpp
