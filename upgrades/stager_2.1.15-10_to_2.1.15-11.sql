@@ -241,18 +241,6 @@ BEGIN
 
   -- If there was no migration job to delete
   IF 0 = varNbJobsDeleted THEN
-    -- check if another migration should be performed
-    SELECT /*+ INDEX_RS_ASC(MigrationJob I_MigrationJob_CFVID) */
-           count(*) INTO varMigJobCount
-      FROM MigrationJob
-     WHERE castorFile = varCfId;
-
-    IF varMigJobCount = 0 THEN
-      -- no more migrations, delete all migrated segments 
-      DELETE FROM MigratedSegment
-       WHERE castorFile = varCfId;
-    END IF;
-
     -- log an explanation and return
     -- this is not an error, a migration job can be deleted before it is completed
     varParams := 'mountTransactionId='|| to_char(inMountTrId) || ' ' || inLogContext;
