@@ -715,11 +715,13 @@ void OStoreDB::ArchiveToFileRequestCancelation::complete() {
 
 OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
   if (!m_closed) {
-    m_request.garbageCollect(m_agent->getAddressIfSet());
-    objectstore::ScopedExclusiveLock al (*m_agent);
-    m_agent->fetch();
-    m_agent->removeFromOwnership(m_request.getAddressIfSet());
-    m_agent->commit();
+    try {
+      m_request.garbageCollect(m_agent->getAddressIfSet());
+      objectstore::ScopedExclusiveLock al (*m_agent);
+      m_agent->fetch();
+      m_agent->removeFromOwnership(m_request.getAddressIfSet());
+      m_agent->commit();
+    } catch (...) {}
   }
 }
 
