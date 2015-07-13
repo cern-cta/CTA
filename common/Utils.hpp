@@ -172,7 +172,7 @@ public:
    * @return The string representation of the specified SHIFT/CASTOR error
    * number.
    */
-  std::string serrnoToString(const int serrnoValue) throw();
+  static std::string serrnoToString(const int serrnoValue) throw();
 
   /**
    * Converts the specified string to an unsigned integer.
