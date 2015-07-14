@@ -46,7 +46,7 @@ void cta::CastorNameServer::updateStorageClass(
   bzero(&fc, sizeof(struct Cns_fileclass));
   strncpy(fc.name, name.c_str(), CA_MAXCLASNAMELEN);
   fc.nbcopies = nbCopies;
-  exception::Serrnum::throwOnMinusOne(Cns_modifyclass(const_cast<char *>(m_server.c_str()), 0, const_cast<char *>(name.c_str()), &fc), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_modifyclass(m_server.c_str(), 0, name.c_str(), &fc), __FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ void cta::CastorNameServer::createStorageClass(
   strncpy(fc.name, name.c_str(), CA_MAXCLASNAMELEN);
   fc.nbcopies = nbCopies;
   fc.classid = time(NULL)%10000; //should be 5 digits allowed but it actually works only if you provide 4 digits... go figure!
-  exception::Serrnum::throwOnMinusOne(Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_enterclass(m_server.c_str(), &fc), __FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -82,7 +82,7 @@ void cta::CastorNameServer::createStorageClass(
   strncpy(fc.name, name.c_str(), CA_MAXCLASNAMELEN);
   fc.nbcopies = nbCopies;
   fc.classid = id;
-  exception::Serrnum::throwOnMinusOne(Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_enterclass(m_server.c_str(), &fc), __FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -90,7 +90,7 @@ void cta::CastorNameServer::createStorageClass(
 //------------------------------------------------------------------------------
 void cta::CastorNameServer::deleteStorageClass(
   const SecurityIdentity &requester, const std::string &name) {
-  exception::Serrnum::throwOnMinusOne(Cns_deleteclass(const_cast<char *>(m_server.c_str()), 0, const_cast<char *>(name.c_str())), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_deleteclass(m_server.c_str(), 0, name.c_str()), __FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -120,7 +120,7 @@ void cta::CastorNameServer::setDirStorageClass(
   const SecurityIdentity &requester, const std::string &path,
   const std::string &storageClassName) { 
   Utils::assertAbsolutePathSyntax(path);
-  exception::Serrnum::throwOnMinusOne(Cns_chclass(path.c_str(), 0, const_cast<char *>(storageClassName.c_str())), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_chclass(path.c_str(), 0, storageClassName.c_str()), __FUNCTION__);
 }  
 
 //------------------------------------------------------------------------------
@@ -132,12 +132,12 @@ void cta::CastorNameServer::clearDirStorageClass(
   char no_class[]="NO_CLASS";
   struct Cns_fileclass fc;
   bzero(&fc, sizeof(struct Cns_fileclass));
-  if(Cns_queryclass(const_cast<char *>(m_server.c_str()), 0, no_class, &fc)) {
+  if(Cns_queryclass(m_server.c_str(), 0, no_class, &fc)) {
     bzero(&fc, sizeof(struct Cns_fileclass));
     strncpy(fc.name, no_class, CA_MAXCLASNAMELEN);
     fc.nbcopies = 0;
     fc.classid = 1;
-    exception::Serrnum::throwOnMinusOne(Cns_enterclass(const_cast<char *>(m_server.c_str()), &fc), std::string(__FUNCTION__) + " - Cns_enterclass");
+    exception::Serrnum::throwOnMinusOne(Cns_enterclass(m_server.c_str(), &fc), std::string(__FUNCTION__) + " - Cns_enterclass");
   }
   exception::Serrnum::throwOnMinusOne(Cns_chclass(path.c_str(), 0, no_class), __FUNCTION__);
 }  
@@ -150,7 +150,7 @@ std::string cta::CastorNameServer::getDirStorageClass(const SecurityIdentity &re
   struct Cns_filestat statbuf;  
   exception::Serrnum::throwOnMinusOne(Cns_stat(path.c_str(), &statbuf), __FUNCTION__);
   struct Cns_fileclass cns_fileclass;
-  exception::Serrnum::throwOnMinusOne(Cns_queryclass(const_cast<char *>(m_server.c_str()), statbuf.fileclass, NULL, &cns_fileclass), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_queryclass(m_server.c_str(), statbuf.fileclass, NULL, &cns_fileclass), __FUNCTION__);
   return cns_fileclass.name;
 }  
 
@@ -235,7 +235,7 @@ std::unique_ptr<cta::ArchiveFileStatus> cta::CastorNameServer::statFile(
   const uint64_t size(statbuf.filesize);
   const Checksum checksum(Checksum::CHECKSUMTYPE_ADLER32, std::string(statbuf.csumvalue));
   struct Cns_fileclass cns_fileclass;
-  exception::Serrnum::throwOnMinusOne(Cns_queryclass(const_cast<char *>(m_server.c_str()), statbuf.fileclass, NULL, &cns_fileclass), __FUNCTION__);
+  exception::Serrnum::throwOnMinusOne(Cns_queryclass(m_server.c_str(), statbuf.fileclass, NULL, &cns_fileclass), __FUNCTION__);
   const std::string storageClassName(cns_fileclass.name);
   return std::unique_ptr<ArchiveFileStatus>(
     new ArchiveFileStatus(owner, mode, size, checksum, storageClassName));
