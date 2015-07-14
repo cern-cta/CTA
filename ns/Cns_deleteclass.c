@@ -16,7 +16,7 @@
 #include "serrno.h"
 
 int
-Cns_deleteclass(char *server, int classid, char *class_name)
+Cns_deleteclass(const char *server, int classid, const char *class_name)
 {
   int c;
   char func[16];
