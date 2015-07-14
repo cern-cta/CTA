@@ -16,7 +16,7 @@
 #include "serrno.h"
 
 int
-Cns_modifyclass(char *server, int classid, char *class_name, struct Cns_fileclass *Cns_fileclass)
+Cns_modifyclass(const char *server, int classid, const char *class_name, const struct Cns_fileclass *Cns_fileclass)
 {
   int c;
   char func[16];
