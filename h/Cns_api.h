@@ -252,7 +252,7 @@ EXTERN_C int Cns_delsegbycopyno (const char *, struct Cns_fileid *, int);
 EXTERN_C int Cns_du (const char *, int, u_signed64 *, u_signed64 *);
 EXTERN_C int Cns_endsess ();
 EXTERN_C int Cns_endtrans ();
-EXTERN_C int Cns_enterclass (char *, struct Cns_fileclass *);
+EXTERN_C int Cns_enterclass (const char *, const struct Cns_fileclass *);
 EXTERN_C int Cns_errmsg (char *, char *, ...);
 EXTERN_C int Cns_getacl (const char *, int, struct Cns_acl *);
 EXTERN_C int Cns_getcomment (const char *, char *);

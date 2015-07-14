@@ -9,8 +9,8 @@ Cns_enterclass \- define a new fileclass in the name server
 .br
 \fB#include "Cns_api.h"\fR
 .sp
-.BI "int Cns_enterclass (char *" server ,
-.BI "struct Cns_fileclass *" Cns_fileclass )
+.BI "int Cns_enterclass (const char *" server ,
+.BI "const struct Cns_fileclass *" Cns_fileclass )
 .SH DESCRIPTION
 .B Cns_enterclass
 defines a new fileclass in the name server.

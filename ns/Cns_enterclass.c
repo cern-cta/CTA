@@ -16,7 +16,7 @@
 #include "serrno.h"
 
 int
-Cns_enterclass(char *server, struct Cns_fileclass *Cns_fileclass)
+Cns_enterclass(const char *server, const struct Cns_fileclass *Cns_fileclass)
 {
   int c;
   char func[16];
