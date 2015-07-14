@@ -16,3 +16,6 @@ all.export /
 # Turn off asynchronous i/o
 xrootd.async off
 
+# Use a port other than 1094, already used by EOS xroot server
+xrd.port 10955
+

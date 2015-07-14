@@ -91,7 +91,7 @@ int CTACopyCmd::sendCommand(const int argc, const char **argv) const {
 // formatCommandPath
 //------------------------------------------------------------------------------
 std::string CTACopyCmd::formatCommandPath(const int argc, const char **argv) const {
-  std::string cmdPath = "root://localhost//";
+  std::string cmdPath = "root://localhost:10955//";
   std::string arg = encode(std::string(argv[0]));
   replaceAll(arg, "/", "_");  
   //need to add this because xroot removes consecutive slashes, and the 
