@@ -275,7 +275,7 @@ EXTERN_C Cns_DIR *Cns_opendir (const char *);
 EXTERN_C Cns_DIR *Cns_opendirg (const char *, const char *);
 EXTERN_C Cns_DIR *Cns_opendirxg (char *, const char *, const char *);
 EXTERN_C int Cns_ping (char *, char *);
-EXTERN_C int Cns_queryclass (char *, int, char *, struct Cns_fileclass *);
+EXTERN_C int Cns_queryclass (const char *, int, const char *, struct Cns_fileclass *);
 EXTERN_C struct dirent *Cns_readdir (Cns_DIR *);
 EXTERN_C struct Cns_direncomm *Cns_readdirc (Cns_DIR *);
 EXTERN_C struct Cns_direnstatg *Cns_readdirg (Cns_DIR *);

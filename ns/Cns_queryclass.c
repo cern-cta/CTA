@@ -17,7 +17,7 @@
 #include "serrno.h"
 
 int
-Cns_queryclass(char *server, int classid, char *class_name, struct Cns_fileclass *Cns_fileclass)
+Cns_queryclass(const char *server, int classid, const char *class_name, struct Cns_fileclass *Cns_fileclass)
 {
   int c;
   char func[16];

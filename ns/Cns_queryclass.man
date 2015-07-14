@@ -9,9 +9,9 @@ Cns_queryclass \- query about a fileclass definition in the name server
 .br
 \fB#include "Cns_api.h"\fR
 .sp
-.BI "int Cns_queryclass (char *" server ,
+.BI "int Cns_queryclass (const char *" server ,
 .BI "int " classid ,
-.BI "char *" class_name ,
+.BI "const char *" class_name ,
 .BI "struct Cns_fileclass *" Cns_fileclass )
 .SH DESCRIPTION
 .B Cns_queryclass
