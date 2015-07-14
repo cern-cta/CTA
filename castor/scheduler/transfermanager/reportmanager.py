@@ -126,7 +126,7 @@ class ReportManagerThread(threading.Thread):
                 stcur.callproc('storeReports', [strParams, strNums])
             except Exception, e:
                 # "Caught exception in ReportManager thread" message
-                dlf.writeerr(msgs.REPORTMANAGEREXCEPTION, error=str(e))
+                dlf.writeerr(msgs.REPORTMANAGEREXCEPTION, error=str(e), strParams=str(strParams), strNums=str(strNums))
                 # check whether we should reconnect to DB, and do so if needed
                 self.dbConnection().checkForReconnection(e)
             # Wait until the next DB update
