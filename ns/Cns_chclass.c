@@ -16,7 +16,7 @@
 #include "serrno.h"
 
 int
-Cns_chclass(const char *path, int classid, char *class_name)
+Cns_chclass(const char *path, int classid, const char *class_name)
 {
   char *actual_path;
   int c;

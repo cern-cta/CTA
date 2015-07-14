@@ -11,7 +11,7 @@ Cns_chclass \- change class of a CASTOR directory in the name server
 .sp
 .BI "int Cns_chclass (const char *" path ,
 .BI "int " classid ,
-.BI "char *" class_name )
+.BI "const char *" class_name )
 .SH DESCRIPTION
 .B Cns_chclass
 changes the class of a CASTOR directory or file in the name server.

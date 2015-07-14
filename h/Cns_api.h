@@ -235,7 +235,7 @@ EXTERN_C int Cns_access (const char *, int);
 EXTERN_C int Cns_accessUser (const char *, int, uid_t, gid_t);
 EXTERN_C int Cns_aborttrans ();
 EXTERN_C int Cns_apiinit (struct Cns_api_thread_info **);
-EXTERN_C int Cns_chclass (const char *, int, char *);
+EXTERN_C int Cns_chclass (const char *, int, const char *);
 EXTERN_C int Cns_chdir (const char *);
 EXTERN_C int Cns_chmod (const char *, mode_t);
 EXTERN_C int Cns_chown (const char *, uid_t, gid_t);
