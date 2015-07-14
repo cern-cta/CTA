@@ -160,6 +160,8 @@ def getDataPoolRelatedData(diskServerIds, dataPoolIds):
             sqlStatement += 'DiskServer.dataPool IN (' + \
                             ', '.join([str(x) for x in dataPoolIds]) + ')'
         if diskServerIds:
+            if dataPoolIds:
+                sqlStatement += ' OR '
             sqlStatement += 'DiskServer.id IN (' + \
                             ', '.join([str(x) for x in diskServerIds]) + ')'
         sqlStatement += ')'
