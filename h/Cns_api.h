@@ -310,10 +310,10 @@ EXTERN_C mode_t Cns_umask (mode_t);
 EXTERN_C int Cns_unlink (const char *);
 EXTERN_C int Cns_unlinkbyvid (char *, const char *);
 EXTERN_C int Cns_utime (const char *, struct utimbuf *);
-EXTERN_C int send2nsd (int *, char *, char *, int, char *, int);
+EXTERN_C int send2nsd (int *, const char *, const char *, int, char *, int);
 EXTERN_C int Cns_setid (uid_t, gid_t);
 EXTERN_C int Cns_getid (uid_t *, gid_t *);
 EXTERN_C int Cns_getrealid (uid_t *, gid_t *);
 EXTERN_C int Cns_unsetid ();
-EXTERN_C int send2nsdx (int *, char *, char *, int, char *, int, void **, int *);
+EXTERN_C int send2nsdx (int *, const char *, const char *, int, char *, int, void **, int *);
 

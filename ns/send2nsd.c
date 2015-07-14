@@ -23,8 +23,8 @@
 /* send2nsd - send a request to the name server and wait for the reply */
 
 int send2nsdx(int *socketp,
-              char *host,
-              char *reqp,
+              const char *host,
+              const char *reqp,
               int reql,
               char *user_repbuf,
               int user_repbuf_len,
@@ -326,8 +326,8 @@ int send2nsdx(int *socketp,
 
 
 int send2nsd(int *socketp,
-             char *host,
-             char *reqp,
+             const char *host,
+             const char *reqp,
              int reql,
              char *user_repbuf,
              int user_repbuf_len)
