@@ -1177,7 +1177,9 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
                << " " << owner.uid
                << " " << owner.gid
                << " " << storageClassName
-               << " " << dirEntry.name << std::endl;
+               << " " << dirEntry.name 
+               << " " << dirEntry.status.checksum.str()
+               << " " << dirEntry.status.size << std::endl;
   }
   m_data = responseSS.str();
 }
