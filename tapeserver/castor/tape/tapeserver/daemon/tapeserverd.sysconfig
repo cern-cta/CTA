@@ -1,6 +1,0 @@
-# Arguments for the tape server daemon
-#   -f             keep process in the foreground, do not fork
-#   -h             display help and exit
-#   -c             config file location (castor.conf)
-#
-#TAPEBRIDGED_OPTIONS=
