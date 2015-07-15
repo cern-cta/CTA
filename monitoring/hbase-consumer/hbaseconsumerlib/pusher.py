@@ -74,6 +74,8 @@ class Pusher(threading.Thread):
     def _handle_disconnect(self, exc):
         """ Handle a disconnect """
         logging.error(str(exc))
+        if connection:
+            connection.close()
         self._connect()
         return
 
